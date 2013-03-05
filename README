@@ -1,0 +1,5 @@
+This file is placed here as a placeholder, so new Subversion
+repositores aren't toally empty. Software that monitors the
+health of this Subversion server depends on at least one file
+being present in each repository. Please don not delete this
+file.
