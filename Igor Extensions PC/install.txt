@@ -1,0 +1,5 @@
+To install the Abeles XOP please follow the following instructions.	
+1) Read the licence first.
+2) Please update to the latest IGOR version.  (if you have the demo version, please download the most recent release).
+3) Place the abeles.xop abeles help.ihf files in a directory where you can remember where you put them (e.g. the Motofit directory)
+4) Create a shortcut (or alias) to the Abeles.xop file and place the shortcut in the \Igor Pro Folder\Igor Extensions\ folder.
