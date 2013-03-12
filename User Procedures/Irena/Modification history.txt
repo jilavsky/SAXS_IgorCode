@@ -13,6 +13,8 @@ Reflectivity - added "Motofit" as data type for use with this tool.
 Added scroll buttons to scroll vertically content of panels for small displays. Modified tools: Unified Fit, Modeling II, Size Distribution, Gunier-Porod, Fractals tool, Analytical models, Small-angle diffraction, Pair-distace dist., Reflectivity, ASCII import, ASCII Export, Data manipulation I, Data manipulation II, Data mining tool, Plotting tool I. 
 Added "User" defined structure factor (implemented in Modeling II)
 Added panel version control for: Fractals tool, Small-angle diffraction, ASCII export, ASCII Import
+Data Manipulation II - modified to add ability to create errors (=uncertainties), scale and rebin to number of points. Modified GUI to separate processing, errors generation and post processing (scaling/rebinning). 
+
 
 2.50 1/4/2013
 Universal Installer - Modified to be able to update xops and made more robust. It will attempt to download file 10x before giving up to fix problem with ANL proxy. 

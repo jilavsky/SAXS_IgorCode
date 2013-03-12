@@ -1,7 +1,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.37
-constant IR3MversionNumber = 2.37
-constant IR1DversionNumber = 2.37
+#pragma version=2.38
+constant IR3MversionNumber = 2.38
+constant IR1DversionNumber = 2.38
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.37
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.38 added vertical scrolling to Data manipulation II and I. 
 //2.37 converted to rtGlobals=3 
 //2.36 fixed saving data bug which failed on liberal names (again). 
 //2.35 added ScaleData option
@@ -28,7 +29,7 @@ constant IR1DversionNumber = 2.37
 
 //version 2.1 modified to use new control procedures using subpanels... Hope this will work as advertised.
 //2.11 added log-x rebinning as option. 
-//2.20 add Data Manipualtion II - manipualting multiple data sets. For now only avergaging multiple data sets but can be made more extensive
+//2.20 add Data Manipualtion II - manipulating multiple data sets. For now only avergaging multiple data sets but can be made more extensive
 //2.21  modified Data manipulation II to be able to subtract one wave from many data sets. 
 
 
@@ -2763,37 +2764,39 @@ Function IR3M_DataManipulationIIPanel()
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
 
       TabControl ProcessingTabs  pos={0,300},size={400,147},tabLabel(0)="Processing", value= 0, proc=IR3M_DataManIITabProc
+    	 TabControl ProcessingTabs  tabLabel(1)="Data selection", tabLabel(2)="Errors", tabLabel(3)="Post Processing"
 
 //Subtract one data set from all	
 
 
-	CheckBox ScaleData,pos={200,325},size={80,14},title="Scale Data (last step)?",proc= IR3M_CheckProc
-	CheckBox ScaleData,variable= root:Packages:DataManipulationII:ScaleData, help={"Scale Data - done last"}
-	SetVariable ScaleDataByValue,variable= root:Packages:DataManipulationII:ScaleDataByValue,noProc, frame=1, disable=!(ScaleData)
-	SetVariable ScaleDataByValue,pos={200,345},size={160,25},title="Scale by =", help={"How much to scale data by?"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+
 	CheckBox SubtractDataFromAll,pos={15,325},size={80,14},title="Subtract Data?",proc= IR3M_CheckProc
 	CheckBox SubtractDataFromAll,variable= root:Packages:DataManipulationII:SubtractDataFromAll, help={"Subtract one set of data from all"}
-
-	CheckBox NormalizeData,pos={15,345},size={80,14},title="Normalize Data?",proc= IR3M_CheckProc
+	CheckBox NormalizeData,pos={15,340},size={80,14},title="Normalize Data?",proc= IR3M_CheckProc
 	CheckBox NormalizeData,variable= root:Packages:DataManipulationII:NormalizeData, help={"Normalize data to another data set or value"}
-	CheckBox AverageWaves,pos={15,365},size={80,14},title="Average Waves?",proc= IR3M_CheckProc
+	CheckBox AverageWaves,pos={15,355},size={80,14},title="Average Waves?",proc= IR3M_CheckProc
 	CheckBox AverageWaves,variable= root:Packages:DataManipulationII:AverageWaves, help={"Average waves using Q values of the first selected wave"}
-	CheckBox AverageNWaves,pos={15,385},size={80,14},title="Average every N Waves?",proc= IR3M_CheckProc
+	CheckBox AverageNWaves,pos={15,370},size={80,14},title="Average every N Waves?",proc= IR3M_CheckProc
 	CheckBox AverageNWaves,variable= root:Packages:DataManipulationII:AverageNWaves, help={"Average every N selected waves using Q values of the first selected wave"}
 	SetVariable NforAveraging,variable= root:Packages:DataManipulationII:NforAveraging,noProc, frame=1, disable=!(AverageNWaves)
-	SetVariable NforAveraging,pos={150,385},size={120,25},title="N =", help={"N for averaging N waves"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
-	CheckBox GenerateStatisticsForAveWvs,pos={150,365},size={80,14},title="Generate Statistics For AveWvs?", proc= IR3M_CheckProc, disable=!(AverageWaves||AverageNWaves)
+	SetVariable NforAveraging,pos={150,370},size={120,25},title="N =", help={"N for averaging N waves"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+	CheckBox GenerateStatisticsForAveWvs,pos={150,355},size={80,14},title="Generate Statistics For AveWvs?", proc= IR3M_CheckProc, disable=!(AverageWaves||AverageNWaves)
 	CheckBox GenerateStatisticsForAveWvs,variable= root:Packages:DataManipulationII:GenerateStatisticsForAveWvs, help={"Generate Sdev of each point"}
-//error decisions, ErrorUseStdDev;ErrorUseStdErOfMean
-	
-	CheckBox GenerateMinMax,pos={10,405},size={80,14},title="Min/Max?", noproc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-	CheckBox GenerateMinMax,variable= root:Packages:DataManipulationII:GenerateMinMax, help={"Generate Sdev of each point?"}, mode=0
-	CheckBox ErrorUseStdDev,pos={120,405},size={80,14},title="Std Deviation?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-	CheckBox ErrorUseStdDev,variable= root:Packages:DataManipulationII:ErrorUseStdDev, help={"Generate Sdev of each point?"}, mode=1
-	CheckBox ErrorUseStdErOfMean,pos={250,405},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-	CheckBox ErrorUseStdErOfMean,variable= root:Packages:DataManipulationII:ErrorUseStdErOfMean, help={"Generate Standard error of mean of each point?"}, mode=1
 
-	CheckBox NormalizeDataToData,pos={10,405},size={80,14},title="Normalize to Data?",proc= IR3M_CheckProc, disable=!(NormalizeData)
+	CheckBox PassTroughProcessing,pos={15,385},size={80,14},title="Pass through",proc= IR3M_CheckProc
+	CheckBox PassTroughProcessing,variable= root:Packages:DataManipulationII:PassTroughProcessing, help={"Normalize data to another data set or value"}
+
+//error decisions, ErrorUseStdDev;ErrorUseStdErOfMean
+
+	
+	CheckBox GenerateMinMax,pos={10,390},size={80,14},title="Min/Max?", noproc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox GenerateMinMax,variable= root:Packages:DataManipulationII:GenerateMinMax, help={"Generate Sdev of each point?"}, mode=0
+	CheckBox ErrorUseStdDev,pos={120,390},size={80,14},title="Std Deviation?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox ErrorUseStdDev,variable= root:Packages:DataManipulationII:ErrorUseStdDev, help={"Generate Sdev of each point?"}, mode=1
+	CheckBox ErrorUseStdErOfMean,pos={250,390},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox ErrorUseStdErOfMean,variable= root:Packages:DataManipulationII:ErrorUseStdErOfMean, help={"Generate Standard error of mean of each point?"}, mode=1
+	
+	CheckBox NormalizeDataToData,pos={15,405},size={80,14},title="Normalize to Data?",proc= IR3M_CheckProc, disable=!(NormalizeData)
 	CheckBox NormalizeDataToData,variable= root:Packages:DataManipulationII:NormalizeDataToData, help={"Normalize to value obtained fro another data set"}
 	SetVariable NormalizeDataToValue,variable= root:Packages:DataManipulationII:NormalizeDataToValue,noproc, frame=1, disable=!(NormalizeData)
 	SetVariable NormalizeDataToValue,pos={150,405},size={180,25},title="Normalization value =", help={"Value for normalziation"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
@@ -2801,6 +2804,28 @@ Function IR3M_DataManipulationIIPanel()
 	SetVariable NormalizeDataQmin,pos={120,425},size={120,25},title="Q min =", help={"Q min to start normalization area"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
 	SetVariable NormalizeDataQmax,variable= root:Packages:DataManipulationII:NormalizeDataQmax,proc=IR3M_DataManIISetVarProc, frame=1, disable=!(NormalizeData)
 	SetVariable NormalizeDataQmax,pos={250,425},size={120,25},title="Q max =", help={"Q max to start normalization area"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+	
+	//Tab 3 controls...
+
+	NVAR CreatePctErrors = root:Packages:DataManipulationII:CreatePctErrors
+	CheckBox CreateErrors,pos={15,325},size={16,14},proc=IR3M_CheckProc,title="Create new Errors?",variable= root:Packages:DataManipulationII:CreateErrors, help={"If input data do not contain errors, create errors as sqrt of intensity?"}
+	CheckBox CreateSQRTErrors,pos={15,340},size={16,14},proc=IR3M_CheckProc,title="Create SQRT Errors?",variable= root:Packages:DataManipulationII:CreateSQRTErrors, help={"If input data do not contain errors, create errors as sqrt of intensity?"}
+	CheckBox CreatePercentErrors,pos={170,340},size={16,14},proc=IR3M_CheckProc,title="Create n% Errors?",variable= root:Packages:DataManipulationII:CreatePctErrors, help={"If input data do not contain errors, create errors as n% of intensity?, select how many %"}
+	SetVariable PercentErrorsToUse, pos={170,360}, size={100,20},title="Error %?:", noproc, disable=!(CreatePctErrors)
+	SetVariable PercentErrorsToUse variable= root:packages:DataManipulationII:PercentErrorsToUse,help={"Input how many percent error you want to create."}
+
+	//Tab 4 controls
+	CheckBox ScaleData,pos={15,325},size={80,14},title="Scale Data?",proc= IR3M_CheckProc
+	CheckBox ScaleData,variable= root:Packages:DataManipulationII:ScaleData, help={"Scale Data - done last"}
+	SetVariable ScaleDataByValue,variable= root:Packages:DataManipulationII:ScaleDataByValue,noProc, frame=1, disable=!(ScaleData)
+	SetVariable ScaleDataByValue,pos={200,325},size={160,25},title="Scale by =", help={"How much to scale data by?"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+	NVAR ReduceNumPnts = root:Packages:DataManipulationII:ReduceNumPnts
+	CheckBox ReduceNumPnts,pos={15,345},size={16,14},proc=IR3M_CheckProc,title="Reduce points?",variable= root:Packages:DataManipulationII:ReduceNumPnts, help={"Check to log-reduce number of points"}
+	SetVariable TargetNumberOfPoints, pos={110,345}, size={110,20},title="Num points=", noproc, disable=!(ReduceNumPnts)
+	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:DataManipulationII:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipualtion I"}
+	SetVariable ReducePntsParam, pos={240,345}, size={130,20},title="Red. pnts. Param=", noproc, disable=!(ReduceNumPnts)
+	SetVariable ReducePntsParam limits={0.5,10,0},value= root:packages:DataManipulationII:ReducePntsParam,help={"Log reduce points parameter, typically 3-5"}
+
 	
 	//Experimental data input
 	NewPanel /W=(0,325,398,448) /HOST=# /N=SubDta
@@ -2943,57 +2968,87 @@ end
 Function IR3M_DataManIITabProc(tca) : TabControl
 	STRUCT WMTabControlAction &tca
 
-				NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
-				NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
-				NVAR AverageWaves = root:Packages:DataManipulationII:AverageWaves
-				NVAR NormalizeData = root:Packages:DataManipulationII:NormalizeData
-				NVAR AverageNWaves = root:Packages:DataManipulationII:AverageNWaves
-				NVAR GenerateStatisticsForAveWvs=root:Packages:DataManipulationII:GenerateStatisticsForAveWvs
-				NVAR NormalizeDataToData= root:Packages:DataManipulationII:NormalizeDataToData
+	NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
+	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
+	NVAR AverageWaves = root:Packages:DataManipulationII:AverageWaves
+	NVAR NormalizeData = root:Packages:DataManipulationII:NormalizeData
+	NVAR AverageNWaves = root:Packages:DataManipulationII:AverageNWaves
+	NVAR GenerateStatisticsForAveWvs=root:Packages:DataManipulationII:GenerateStatisticsForAveWvs
+	NVAR NormalizeDataToData= root:Packages:DataManipulationII:NormalizeDataToData
+	NVAR CreateErrors= root:Packages:DataManipulationII:CreateErrors
+	NVAR CreateSQRTErrors= root:Packages:DataManipulationII:CreateSQRTErrors
+	NVAR CreatePctErrors= root:Packages:DataManipulationII:CreatePctErrors
+	NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
+	NVAR PassTroughProcessing=root:Packages:DataManipulationII:PassTroughProcessing
 
-	CheckBox ScaleData,pos={200,325},size={80,14},title="Scale Data?",proc= IR3M_CheckProc
-	CheckBox ScaleData,variable= root:Packages:DataManipulationII:ScaleData, help={"Scale Data - done last"}
-	SetVariable ScaleDataByValue,variable= root:Packages:DataManipulationII:ScaleDataByValue,noProc, frame=1, disable=!(ScaleData)
-	SetVariable ScaleDataByValue,pos={150,385},size={120,25},title="Scale by =", help={"How much to scale data by?"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+//	CheckBox ScaleData,pos={200,325},size={80,14},title="Scale Data?",proc= IR3M_CheckProc
+//	CheckBox ScaleData,variable= root:Packages:DataManipulationII:ScaleData, help={"Scale Data - done last"}
+//	SetVariable ScaleDataByValue,variable= root:Packages:DataManipulationII:ScaleDataByValue,noProc, frame=1, disable=!(ScaleData)
+//	SetVariable ScaleDataByValue,pos={150,385},size={120,25},title="Scale by =", help={"How much to scale data by?"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
 
+	if(PassTroughProcessing+AverageNWaves+AverageWaves+NormalizeData+SubtractDataFromAll!=1)
+		PassTroughProcessing=1
+		AverageNWaves=0
+		AverageWaves=0
+		NormalizeData=0
+		SubtractDataFromAll=0
+	endif
 
 	switch( tca.eventCode )
 		case 2: // mouse up
 			Variable tab = tca.tab
 			
+			CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=(!(AverageWaves)||(tab!=0))
+			CheckBox ScaleData,win=DataManipulationII,disable=(tab!=3)
+			Checkbox PassTroughProcessing,win=DataManipulationII,disable=(tab!=0)
+			SetVariable ScaleDataByValue, win=DataManipulationII, disable=(!(ScaleData)||(tab!=3))
+			CheckBox ErrorUseStdDev, win=DataManipulationII, disable=(!(GenerateStatisticsForAveWvs&&AverageWaves)||(tab!=0))
+			CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=(!(GenerateStatisticsForAveWvs&&AverageWaves)||(tab!=0))
+			CheckBox GenerateMinMax win=DataManipulationII,disable=(!(GenerateStatisticsForAveWvs&&AverageWaves)||(tab!=0))
+			CheckBox NormalizeDataToData , win=DataManipulationII,disable=(!(NormalizeData)||(tab!=0))
+			if(tab==0 && NormalizeData)
+				SetVariable NormalizeDataToValue , win=DataManipulationII,disable=((2*NormalizeDataToData))
+			else
+				SetVariable NormalizeDataToValue , win=DataManipulationII,disable=(1)
+			endif
+			SetVariable NormalizeDataQmin , win=DataManipulationII,disable=(!(NormalizeData)||(tab!=0))
+			SetVariable NormalizeDataQmax , win=DataManipulationII,disable=(!(NormalizeData)	||(tab!=0))		
+			SetVariable NforAveraging , win=DataManipulationII,disable=(!(AverageNWaves)||(tab!=0))		
+				
+			CheckBox NormalizeData , win=DataManipulationII,disable=(tab!=0)				
+			CheckBox SubtractDataFromAll, win=DataManipulationII,disable=(tab!=0)
+			CheckBox AverageWaves,win=DataManipulationII,disable=(tab!=0)	
+			CheckBox AverageNWaves,win=DataManipulationII,disable=(tab!=0)		
+			
+			CheckBox ReduceNumPnts,win=DataManipulationII,disable=(tab!=3)		
+			SetVariable TargetNumberOfPoints,win=DataManipulationII,disable=(tab!=3||!ReduceNumPnts)		
+			SetVariable ReducePntsParam,win=DataManipulationII,disable=(tab!=3 || !ReduceNumPnts)		
+				
+			CheckBox CreateErrors,win=DataManipulationII,disable=(tab!=2)		
+			CheckBox CreateSQRTErrors,win=DataManipulationII,disable=(tab!=2||!CreateErrors)		
+			CheckBox CreatePercentErrors,win=DataManipulationII,disable=(tab!=2||!CreateErrors)		
+			SetVariable PercentErrorsToUse,win=DataManipulationII,disable=(tab!=2||!CreateErrors||!CreatePctErrors)		
 			if(tab==0)
 				SetWindow DataManipulationII#SubDta , hide =1
-				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=!(AverageWaves)
-				CheckBox ScaleData,win=DataManipulationII,disable=0	
-				SetVariable ScaleDataByValue, win=DataManipulationII, disable=!(ScaleData)
-				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-				CheckBox GenerateMinMax win=DataManipulationII,disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-				CheckBox NormalizeDataToData , win=DataManipulationII,disable=!(NormalizeData)
-				SetVariable NormalizeDataToValue , win=DataManipulationII,disable=(2*NormalizeDataToData)
-				SetVariable NormalizeDataQmin , win=DataManipulationII,disable=!(NormalizeData)
-				SetVariable NormalizeDataQmax , win=DataManipulationII,disable=!(NormalizeData)				
-				CheckBox NormalizeData , win=DataManipulationII,disable=0				
-				CheckBox SubtractDataFromAll, win=DataManipulationII,disable=0	
-				CheckBox AverageWaves,win=DataManipulationII,disable=0	
-				CheckBox AverageNWaves,win=DataManipulationII,disable=0		
 				IR3M_DataManIINormUpdateVal()
 			elseif(tab==1)
 				SetWindow DataManipulationII#SubDta , hide =0
-				CheckBox ScaleData,win=DataManipulationII,disable=1	
-				SetVariable ScaleDataByValue, win=DataManipulationII, disable=1
-				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=1
-				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=1
-				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=1
-				CheckBox GenerateMinMax win=DataManipulationII,disable=1
-				CheckBox NormalizeDataToData , win=DataManipulationII,disable=1
-				SetVariable NormalizeDataToValue , win=DataManipulationII,disable=1
-				SetVariable NormalizeDataQmin , win=DataManipulationII,disable=1
-				SetVariable NormalizeDataQmax , win=DataManipulationII,disable=1				
-				CheckBox NormalizeData , win=DataManipulationII,disable=1				
-				CheckBox SubtractDataFromAll, win=DataManipulationII,disable=1		
-				CheckBox AverageNWaves,win=DataManipulationII,disable=1		
-				CheckBox AverageWaves,win=DataManipulationII,disable=1	
+			elseif(tab==2)
+				SetWindow DataManipulationII#SubDta , hide =1
+//				CheckBox ScaleData,win=DataManipulationII,disable=1	
+//				SetVariable ScaleDataByValue, win=DataManipulationII, disable=1
+//				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=1
+//				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=1
+//				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=1
+//				CheckBox GenerateMinMax win=DataManipulationII,disable=1
+//				CheckBox NormalizeDataToData , win=DataManipulationII,disable=1
+//				SetVariable NormalizeDataToValue , win=DataManipulationII,disable=1
+//				SetVariable NormalizeDataQmin , win=DataManipulationII,disable=1
+//				SetVariable NormalizeDataQmax , win=DataManipulationII,disable=1				
+//				CheckBox NormalizeData , win=DataManipulationII,disable=1				
+//				CheckBox SubtractDataFromAll, win=DataManipulationII,disable=1		
+//				CheckBox AverageNWaves,win=DataManipulationII,disable=1		
+//				CheckBox AverageWaves,win=DataManipulationII,disable=1	
 			endif
 			
 			
@@ -3113,6 +3168,7 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 				NVAR AverageNWaves = root:Packages:DataManipulationII:AverageNWaves
 				NVAR GenerateStatisticsForAveWvs=root:Packages:DataManipulationII:GenerateStatisticsForAveWvs
 				SVAR NameModifier=root:Packages:DataManipulationII:NameModifier
+				NVAR PassTroughProcessing=root:Packages:DataManipulationII:PassTroughProcessing
 
 			if(stringmatch(cba.CtrlName, "GenerateStatisticsForAveWvs"))
 				CheckBox ErrorUseStdDev win=DataManipulationII, disable=!checked
@@ -3129,12 +3185,43 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 				//NVAR ErrorUseStdErOfMean = root:Packages:DataManipulationII:ErrorUseStdErOfMean
 				SetVariable ScaleDataByValue, win=DataManipulationII,disable=!(ScaleData)
 			endif			
+			if(stringmatch(cba.CtrlName, "CreateErrors"))
+				NVAR CreateErrors= root:Packages:DataManipulationII:CreateErrors
+				NVAR CreateSQRTErrors= root:Packages:DataManipulationII:CreateSQRTErrors
+				NVAR CreatePctErrors= root:Packages:DataManipulationII:CreatePctErrors
+				if(CreatePctErrors+CreateSQRTErrors!=1)
+					CreateSQRTErrors=0
+					CreatePctErrors=1
+				endif
+			endif			
+			if(stringmatch(cba.CtrlName, "CreateSQRTErrors"))
+				NVAR CreateSQRTErrors= root:Packages:DataManipulationII:CreateSQRTErrors
+				NVAR CreatePctErrors= root:Packages:DataManipulationII:CreatePctErrors
+				CreatePctErrors=!CreateSQRTErrors
+			endif			
+			if(stringmatch(cba.CtrlName, "CreatePercentErrors"))
+				NVAR CreateSQRTErrors= root:Packages:DataManipulationII:CreateSQRTErrors
+				NVAR CreatePctErrors= root:Packages:DataManipulationII:CreatePctErrors
+				CreateSQRTErrors=!CreatePctErrors
+			endif			
 
 			if(stringmatch(cba.CtrlName,"ErrorUseStdErOfMean"))
 				NVAR ErrorUseStdDev= root:Packages:DataManipulationII:ErrorUseStdDev
 				NVAR ErrorUseStdErOfMean = root:Packages:DataManipulationII:ErrorUseStdErOfMean
 				ErrorUseStdDev=!ErrorUseStdErOfMean
 			endif			
+			if(stringmatch(cba.CtrlName,"PassTroughProcessing"))
+				if(checked)
+					SubtractDataFromAll=0
+					AverageNWaves=0
+					NormalizeData = 0
+					//PassTroughProcessing=0
+					NormalizeDataToValue=0
+					NormalizeDataToData=0
+				endif
+			endif			
+
+
 			if(stringmatch(cba.CtrlName,"NormalizeData")||stringmatch(cba.CtrlName,"NormalizeDataToData"))
 				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=!(AverageWaves)
 				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=!(AverageWaves)
@@ -3159,6 +3246,7 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 					SubtractDataFromAll=0
 					AverageNWaves=0
 					AverageWaves = 0
+					PassTroughProcessing=0
 					SetVariable NforAveraging win=DataManipulationII,disable=!(AverageWaves)
 					NameModifier="_norm"
 				else
@@ -3178,6 +3266,7 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 					SubtractDataFromAll=0
 					AverageNWaves=0
 					NormalizeData = 0
+					PassTroughProcessing=0
 					//NormalizeDataToValue=0
 					NormalizeDataToData=0
 					SetVariable NforAveraging win=DataManipulationII,disable=!(AverageNWaves)
@@ -3201,6 +3290,7 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 					SubtractDataFromAll=0
 					AverageWaves=0
 					NormalizeData = 0
+					PassTroughProcessing=0
 					NormalizeDataToData=0
 					NameModifier="_ave"
 				else
@@ -3223,6 +3313,7 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 				GenerateStatisticsForAveWvs = 0
 				AverageNWaves=0
 				NormalizeData = 0
+				PassTroughProcessing=0
 				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=1
 				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=1
 				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=1
@@ -3267,7 +3358,10 @@ End
 ///******************************************************************************************
 ///******************************************************************************************
 Function IR3M_DataManIIFixTabControl()
-
+	
+	variable CurTab
+	ControlInfo /W=DataManipulationII ProcessingTabs
+	CurTab=V_Value
 	NVAR NormalizeData = root:Packages:DataManipulationII:NormalizeData
 	NVAR NormalizeDataToData=root:Packages:DataManipulationII:NormalizeDataToData
 	NVAR AverageWaves = root:Packages:DataManipulationII:AverageWaves
@@ -3276,11 +3370,14 @@ Function IR3M_DataManIIFixTabControl()
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
 	
 	if(!(NormalizeData * NormalizeDataToData) && !SubtractDataFromAll)
-		TabControl ProcessingTabs win=DataManipulationII, tabLabel(0)="Processing",tabLabel(1)="", value= 0
+		TabControl ProcessingTabs win=DataManipulationII, tabLabel(0)="Processing",tabLabel(1)="", value= CurTab
 	elseif(NormalizeDataToData || SubtractDataFromAll)
-		TabControl ProcessingTabs win=DataManipulationII, tabLabel(0)="Processing", tabLabel(1)="Data selection", value= 0
+		TabControl ProcessingTabs win=DataManipulationII, tabLabel(0)="Processing", tabLabel(1)="Data selection", value= CurTab
 	endif
-
+	STRUCT WMTabControlAction tca
+	tca.eventCode =2
+	tca.tab = CurTab
+      IR3M_DataManIITabProc(tca)
 
 
 end
@@ -3686,6 +3783,14 @@ Function IR3M_ProcessTheDataFunction()
 	NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
 	NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
 
+	NVAR CreateErrors=root:Packages:DataManipulationII:CreateErrors
+	NVAR CreateSQRTErrors = root:Packages:DataManipulationII:CreateSQRTErrors
+	NVAR CreatePercentErrors = root:Packages:DataManipulationII:CreatePctErrors
+	NVAR PercentErrorsToUse= root:Packages:DataManipulationII:PercentErrorsToUse
+	NVAR TargetNumberOfPoints=root:Packages:DataManipulationII:TargetNumberOfPoints
+	NVAR ReducePntsParam = root:Packages:DataManipulationII:ReducePntsParam
+	NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
+	NVAR PassTroughProcessing= root:Packages:DataManipulationII:PassTroughProcessing
 
 	variable NumberOfProcessedDataSets=0	
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll	
@@ -3711,6 +3816,28 @@ Function IR3M_ProcessTheDataFunction()
 			Duplicate/O AveragedDataYwaveMax, ManipIIProcessedDataYMax
 		endif
 		print "Averaged "+num2str(NumberOfProcessedDataSets)+" data sets together"
+		if(CreateErrors)
+			if(CreateSQRTErrors)			
+				IN2G_GenerateSASErrors(ManipIIProcessedDataY,ManipIIProcessedDataE,3,0, 0,1,3)
+				print "Created new errors using Square root method"
+			else
+				IN2G_GenerateSASErrors(ManipIIProcessedDataY,ManipIIProcessedDataE,3,0,PercentErrorsToUse/100 ,0,3)
+				print "Created new errors using Percent method using "+num2str(PercentErrorsToUse)+" percent"
+			endif
+			//Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points)
+				//	wave IntWave,ErrWave
+				//	variable Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points
+				//this function will generate some kind of SAXS errors using many different methods... 
+				// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
+				// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
+				// min number of points is 3
+				//smooth final error wave, note minimum number of points to use is 2
+		endif
+		if(ReduceNumPnts)
+			Duplicate/free ManipIIProcessedDataY, TempQError
+			IR1I_ImportRebinData(ManipIIProcessedDataY,ManipIIProcessedDataX,ManipIIProcessedDataE,TempQError,TargetNumberOfPoints, ReducePntsParam)
+			print "Reduced number of points to "+Num2str(TargetNumberOfPoints)
+		endif		
 		if(ScaleData)
 				//NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
 				ManipIIProcessedDataY*=ScaleDataByValue
@@ -3771,6 +3898,29 @@ Function IR3M_ProcessTheDataFunction()
 				Duplicate/O AveragedDataYwaveMax, ManipIIProcessedDataYMax
 			endif
 			//here we need to force saving of the data...
+			print "Averaged "+num2str(NumNewWaves)+" combinations of "+num2str(NforAveraging)+"data sets"
+			if(CreateErrors)
+				if(CreateSQRTErrors)			
+					IN2G_GenerateSASErrors(ManipIIProcessedDataY,ManipIIProcessedDataE,3,0, 0,1,3)
+					print "Created new errors using Square root method"
+				else
+					IN2G_GenerateSASErrors(ManipIIProcessedDataY,ManipIIProcessedDataE,3,0,PercentErrorsToUse/100 ,0,3)
+					print "Created new errors using Percent method using "+num2str(PercentErrorsToUse)+" percent"
+				endif
+				//Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points)
+					//	wave IntWave,ErrWave
+					//	variable Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points
+					//this function will generate some kind of SAXS errors using many different methods... 
+					// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
+					// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
+					// min number of points is 3
+					//smooth final error wave, note minimum number of points to use is 2
+			endif
+			if(ReduceNumPnts)
+				Duplicate/free ManipIIProcessedDataY, TempQError
+				IR1I_ImportRebinData(ManipIIProcessedDataY,ManipIIProcessedDataX,ManipIIProcessedDataE,TempQError,TargetNumberOfPoints, ReducePntsParam)
+				print "Reduced number of points to "+Num2str(TargetNumberOfPoints)
+			endif		
 			if(ScaleData)
 					//NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
 					ManipIIProcessedDataY*=ScaleDataByValue
@@ -3781,17 +3931,13 @@ Function IR3M_ProcessTheDataFunction()
 					if(WaveExists(ManipIIProcessedDataYMax))
 						ManipIIProcessedDataYMax*=ScaleDataByValue
 					endif
+				print "Scaled averaged data by "+num2str(ScaleDataByValue)
 			endif
 			
 			IR3M_SaveProcessedData()
-
 			IR3M_DisplayDataManipII(0, OutFldrNm=OutFldrNm,OutXWvNm=OutXWvNm,OutYWvNm=OutYWvNm,OutEWvNm=OutEWvNm)	
 
 		endfor
-		print "Averaged "+num2str(NumNewWaves)+" combinations of "+num2str(NforAveraging)+"data sets"
-		if(ScaleData)
-			print "Scaled averaged data by "+num2str(ScaleDataByValue)
-		endif
 	elseif(SubtractDataFromAll)
 		SVAR SubFldrNm = root:Packages:SASDataModIISubDta:DataFolderName
 		SVAR SubYWvNm = root:Packages:SASDataModIISubDta:IntensityWaveName
@@ -3808,30 +3954,30 @@ Function IR3M_ProcessTheDataFunction()
 			Wave SubtrWvE
 			SubtrWvE=0
 		endif
-
 		print "Subtracting data from  :   "+SubFldrNm+"      from waves in following folders : "
-
-		NumberOfProcessedDataSets = IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmplt,Ytmplt,Etmplt)
-	
+		NumberOfProcessedDataSets = IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmplt,Ytmplt,Etmplt)	
 		IR3M_DisplayDataManipII(1)	
 		print "Processed data from "+num2str(NumberOfProcessedDataSets)+" folders"
 	elseif(NormalizeData)
 		IR3M_DataManIINormUpdateVal()
 		print "Normalizing data in following folders : "
-
 		NumberOfProcessedDataSets = IR3M_NormalizeData(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
-	
 		IR3M_DisplayDataManipII(1)	
-		print "Normalzied data from "+num2str(NumberOfProcessedDataSets)+" folders"
-	else		//want to ONLY scale???
-		DoALert 0, "This feature needs to be finished"
-		return 0
+		print "Normalized data from "+num2str(NumberOfProcessedDataSets)+" folders"
+	elseif(PassTroughProcessing)	//want to ONLY scale/reduce number of points etc... ???
+		print "Processing data from following folders : "
+		NumberOfProcessedDataSets = IR3M_ProcessListOfFoldersONLY(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
+		IR3M_DisplayDataManipII(1)	
+		print "Processed data from "+num2str(NumberOfProcessedDataSets)+" folders"
+	else
+		Abort "Unknown processing requested in Data Manipulation II. This is bug, report it" 
 	endif
 
 	
 	KillWaves/Z AveragedDataXwave, AveragedDataYwave, AveragedDataEwave, AveragedDataYwaveMin, AveragedDataYwaveMax
 	
 	setDataFolder oldDF
+	return 0
 
 end
 ///******************************************************************************************
@@ -3909,6 +4055,39 @@ Function IR3M_NormalizeData(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
 				//OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm
 				NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
 				NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
+				NVAR CreateErrors=root:Packages:DataManipulationII:CreateErrors
+				NVAR CreateSQRTErrors = root:Packages:DataManipulationII:CreateSQRTErrors
+				NVAR CreatePercentErrors = root:Packages:DataManipulationII:CreatePctErrors
+				NVAR PercentErrorsToUse= root:Packages:DataManipulationII:PercentErrorsToUse
+				NVAR TargetNumberOfPoints=root:Packages:DataManipulationII:TargetNumberOfPoints
+				NVAR ReducePntsParam = root:Packages:DataManipulationII:ReducePntsParam
+				NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
+
+				if(CreateErrors)
+					if(!WaveExists(TempSubtractedEWv0123))
+						Duplicate TempSubtractedEWv0123, TempSubtractedEWv0123
+					endif
+					if(CreateSQRTErrors)			
+						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0, 0,1,3)
+						Note/NOCR TempSubtractedYWv0123, "Created new errors sqrt;"	
+					else
+						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0,PercentErrorsToUse/100 ,0,3)
+						Note/NOCR TempSubtractedYWv0123, "Created new errors using percent ="+num2str(PercentErrorsToUse)+";"	
+					endif
+					//Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points)
+						//	wave IntWave,ErrWave
+						//	variable Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points
+						//this function will generate some kind of SAXS errors using many different methods... 
+						// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
+						// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
+						// min number of points is 3
+						//smooth final error wave, note minimum number of points to use is 2
+				endif
+				if(ReduceNumPnts)
+					Duplicate/free TempSubtractedYWv0123, TempQError
+					IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
+					Note/NOCR TempSubtractedYWv0123, "Reduced number of points to ="+num2str(TargetNumberOfPoints)+";"	
+				endif		
 				if(ScaleData)
 					TempSubtractedYWv0123*=ScaleDataByValue
 					Note/NOCR TempSubtractedYWv0123, "Scaled by="+num2str(ScaleDataByValue)+";"	
@@ -3916,6 +4095,7 @@ Function IR3M_NormalizeData(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
 						TempSubtractedEWv0123*=ScaleDataByValue
 						Note/NOCR TempSubtractedEWv0123, "Scaled by="+num2str(ScaleDataByValue)+";"	
 					endif
+					//print "Scaled data by "+num2str(ScaleDataByValue)
 				endif
 				IR3M_PresetOutputWvsNms()
 	
@@ -3942,8 +4122,18 @@ Function IR3M_NormalizeData(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
 					endif
 					setDataFolder tempFldrNm
 					print "Created new data in "+OutFldrNm+" by normalzing data from data in "+FldrNamesTWv[i]
+					if(CreateErrors)
+						if(CreateSQRTErrors)
+							print "Created new errors using Square root method for "+OutFldrNm
+						else
+							print "Created new errors using Percent method using "+num2str(PercentErrorsToUse)+" percent for "+OutFldrNm
+						endif
+					endif					
+					if(ReduceNumPnts)
+						print "Reduced number of points to "+Num2str(TargetNumberOfPoints)+" for "+OutFldrNm
+					endif
 					if(ScaleData)
-						print "Data in "+OutFldrNm+" were then also scaled by "+num2str(ScaleDataByValue)
+						print "Data in "+OutFldrNm+" were then also scaled by "+num2str(ScaleDataByValue)+" for "+OutFldrNm
 					endif
 				endif
 				NumberOfProcessedDataSets+=1
@@ -3964,7 +4154,162 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
+Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etmplt)
+	Wave/T FldrNamesTWv
+	WAve SelFldrs
+	String Xtmplt,Ytmplt,Etmplt
 
+	variable NumberOfProcessedDataSets=0
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:
+	NewDataFolder /O/S root:Packages
+	NewDataFolder /O/S root:Packages:DataManipulationII
+	//OK before we even do anything, let's do some checking on the parameters called... 
+	if(numpnts(FldrNamesTWv)!=numpnts(SelFldrs))
+		abort "Bad call to IR3M_AverageMultipleWaves"
+	endif
+	//Ok, now let's create the data to do statistics on
+	variable NumOfFoldersToTest=numpnts(SelFldrs)
+	variable i, j
+	//and now we need to save them... 
+	NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
+	NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
+	NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
+	NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
+	NVAR CreateErrors=root:Packages:DataManipulationII:CreateErrors
+	NVAR CreateSQRTErrors = root:Packages:DataManipulationII:CreateSQRTErrors
+	NVAR CreatePercentErrors = root:Packages:DataManipulationII:CreatePctErrors
+	NVAR PercentErrorsToUse= root:Packages:DataManipulationII:PercentErrorsToUse
+	NVAR TargetNumberOfPoints=root:Packages:DataManipulationII:TargetNumberOfPoints
+	NVAR ReducePntsParam = root:Packages:DataManipulationII:ReducePntsParam
+	NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
+	String NewWaveNote="Data processed by : "
+	if(CreateErrors)
+		NewWaveNote+="Creating errors "
+		if(CreateSQRTErrors)
+			NewWaveNote+="using square root method "
+		else
+			NewWaveNote+="using fractional method with error being "+num2str(PercentErrorsToUse)+" percent "
+		endif
+	endif
+	if(ReduceNumPnts)
+		NewWaveNote+=" reducing number of points to "+num2str(TargetNumberOfPoints)
+	endif
+	if(ScaleData)
+		NewWaveNote+=" scaling by "+num2str(ScaleDataByValue)
+	endif
+
+	j=0
+	variable HadError=0
+	For(i=0;i<NumOfFoldersToTest;i+=1)
+		if(SelFldrs[i]>0)		//set to 1, selected
+			wave/Z tmpWvX=$(FldrNamesTWv[i]+PossiblyQuoteName(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt)))
+			wave/Z tmpWvY=$(FldrNamesTWv[i]+PossiblyQuoteName(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)))
+			wave/Z tmpWvE=$(FldrNamesTWv[i]+PossiblyQuoteName(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Etmplt)))
+			SVAR DataFolderName = root:Packages:DataManipulationII:DataFolderName
+				SVAR IntensityWaveName = root:Packages:DataManipulationII:IntensityWaveName
+				SVAR QWavename = root:Packages:DataManipulationII:QWavename
+				SVAR ErrorWaveName = root:Packages:DataManipulationII:ErrorWaveName
+				DataFolderName=FldrNamesTWv[i]
+				IntensityWaveName=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)
+				QWavename=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt)
+				ErrorWaveName=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Etmplt)
+			
+			if(WaveExists(tmpWvX) && WaveExists(tmpWvY))
+				Duplicate/O tmpWvX, TempSubtractedXWv0123
+				Duplicate/O tmpWvY, TempSubtractedYWv0123
+				Note/NOCR TempSubtractedYWv0123, NewWaveNote//+" from wave: "+GetWavesDataFolder(tmpWvY,2)+";"	
+				Note/NOCR TempSubtractedXWv0123, NewWaveNote//+" from wave: "+GetWavesDataFolder(tmpWvY,2)+";"
+				if(WaveExists(tmpWvE))
+					Duplicate/O tmpWvE, TempSubtractedEWv0123
+				endif
+
+				if(CreateErrors)
+					if(!WaveExists(TempSubtractedEWv0123))
+						Duplicate TempSubtractedEWv0123, TempSubtractedEWv0123
+					endif
+					if(CreateSQRTErrors)			
+						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0, 0,1,3)
+					else
+						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0,PercentErrorsToUse/100 ,0,3)
+					endif
+					//Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points)
+						//	wave IntWave,ErrWave
+						//	variable Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points
+						//this function will generate some kind of SAXS errors using many different methods... 
+						// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
+						// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
+						// min number of points is 3
+						//smooth final error wave, note minimum number of points to use is 2
+				endif
+				if(ReduceNumPnts)
+					Duplicate/free TempSubtractedYWv0123, TempQError
+					IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
+				endif		
+				if(ScaleData)
+					TempSubtractedYWv0123*=ScaleDataByValue
+					Note/NOCR TempSubtractedYWv0123, "Scaled by="+num2str(ScaleDataByValue)+";"	
+					if(WaveExists(TempSubtractedEWv0123))
+						TempSubtractedEWv0123*=ScaleDataByValue
+						Note/NOCR TempSubtractedEWv0123, "Scaled by="+num2str(ScaleDataByValue)+";"	
+					endif
+				endif
+				IR3M_PresetOutputWvsNms()
+	
+				SVAR OutFldrNm = root:Packages:DataManipulationII:ResultsDataFolderName
+				SVAR OutYWvNm = root:Packages:DataManipulationII:ResultsIntWaveName
+				SVAR OutXWvNm = root:Packages:DataManipulationII:ResultsQvecWaveName
+				SVAR OutEWvNm = root:Packages:DataManipulationII:ResultsErrWaveName
+
+				Wave/Z testWvX=$(IN2G_CheckFldrNmSemicolon(OutFldrNm,1)+PossiblyQuoteName(OutXWvNm))
+				Wave/Z testWvY=$(IN2G_CheckFldrNmSemicolon(OutFldrNm,1)+PossiblyQuoteName(OutYWvNm))
+				Wave/Z testWvE=$(IN2G_CheckFldrNmSemicolon(OutFldrNm,1)+PossiblyQuoteName(OutEWvNm))
+				
+				if(WaveExists(testWvX)||WaveExists(testWvY)||WaveExists(testWvE))
+					HadError=1
+					Print "Could not save data in the folder : "+OutFldrNm
+					Print "The data in this folder already exist and this tool cannot overwrite the data" 
+				else
+					string tempFldrNm=GetDataFolder(1)
+					IN2G_CreateAndSetArbFolder(OutFldrNm)
+					Duplicate TempSubtractedXWv0123, $((OutXWvNm))
+					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
+					Wave/Z TempSubtractedEWv0123= $(tempFldrNm+"TempSubtractedEWv0123")
+					if(WaveExists(TempSubtractedEWv0123))
+						Duplicate TempSubtractedEWv0123, $((OutEWvNm))
+					endif
+					setDataFolder tempFldrNm
+					print "Created new data in "+OutFldrNm+" by processing data in "+FldrNamesTWv[i]
+					if(CreateErrors)
+						if(CreateSQRTErrors)
+							print "Created new errors using Square root method for "+OutFldrNm
+						else
+							print "Created new errors using Percent method using "+num2str(PercentErrorsToUse)+" percent for "+OutFldrNm
+						endif
+					endif					
+					if(ReduceNumPnts)
+						print "Reduced number of points to "+Num2str(TargetNumberOfPoints)+" for "+OutFldrNm
+					endif
+					if(ScaleData)
+						print "Data in "+OutFldrNm+" were then also scaled by "+num2str(ScaleDataByValue)+" for "+OutFldrNm
+					endif
+				endif
+				NumberOfProcessedDataSets+=1
+			else
+				Print "Error found... " + FldrNamesTWv[i] + " selected data were not found. Please, check data selection and if persistent, report this as error."
+				KillWaves/Z TempSubtractedXWv0123, TempSubtractedYWv0123, TempSubtractedEWv0123
+				
+			endif
+		endif
+	endfor
+	
+	if(HadError)
+		DoAlert  0, "Note there were errors while processing the data, see details in history area"
+	endif
+	KillWaves/Z AverageWvsTempMatrix, tempWvForStatistics, TempSubtractedXWv0123, TempSubtractedYWv0123, TempSubtractedEWv0123, tempLogDataToSubtractAtrighQ, WaveToSubtractLog
+	setDataFolder oldDf
+	return NumberOfProcessedDataSets
+end
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
@@ -4041,6 +4386,38 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 				//OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm
 				NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
 				NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
+				NVAR ScaleData = root:Packages:DataManipulationII:ScaleData
+				NVAR ScaleDataByValue = root:Packages:DataManipulationII:ScaleDataByValue
+				NVAR CreateErrors=root:Packages:DataManipulationII:CreateErrors
+				NVAR CreateSQRTErrors = root:Packages:DataManipulationII:CreateSQRTErrors
+				NVAR CreatePercentErrors = root:Packages:DataManipulationII:CreatePctErrors
+				NVAR PercentErrorsToUse= root:Packages:DataManipulationII:PercentErrorsToUse
+				NVAR TargetNumberOfPoints=root:Packages:DataManipulationII:TargetNumberOfPoints
+				NVAR ReducePntsParam = root:Packages:DataManipulationII:ReducePntsParam
+				NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
+
+				if(CreateErrors)
+					if(!WaveExists(TempSubtractedEWv0123))
+						Duplicate TempSubtractedEWv0123, TempSubtractedEWv0123
+					endif
+					if(CreateSQRTErrors)			
+						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0, 0,1,3)
+					else
+						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0,PercentErrorsToUse/100 ,0,3)
+					endif
+					//Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points)
+						//	wave IntWave,ErrWave
+						//	variable Pts_avg,Pts_avg_multiplier, IntMultiplier,MultiplySqrt,Smooth_Points
+						//this function will generate some kind of SAXS errors using many different methods... 
+						// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
+						// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
+						// min number of points is 3
+						//smooth final error wave, note minimum number of points to use is 2
+				endif
+				if(ReduceNumPnts)
+					Duplicate/free TempSubtractedYWv0123, TempQError
+					IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
+				endif		
 				if(ScaleData)
 					TempSubtractedYWv0123*=ScaleDataByValue
 					Note/NOCR TempSubtractedYWv0123, "Scaled by="+num2str(ScaleDataByValue)+";"	
@@ -4075,8 +4452,18 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 					endif
 					setDataFolder tempFldrNm
 					print "Created new data in "+OutFldrNm+" by subtracting requested data from data in "+FldrNamesTWv[i]
+					if(CreateErrors)
+						if(CreateSQRTErrors)
+							print "Created new errors using Square root method for "+OutFldrNm
+						else
+							print "Created new errors using Percent method using "+num2str(PercentErrorsToUse)+" percent for "+OutFldrNm
+						endif
+					endif					
+					if(ReduceNumPnts)
+						print "Reduced number of points to "+Num2str(TargetNumberOfPoints)+" for "+OutFldrNm
+					endif
 					if(ScaleData)
-						print "Data in "+OutFldrNm+" were also scaled after subtraction by "+num2str(ScaleDataByValue)
+						print "Data in "+OutFldrNm+" were then also scaled by "+num2str(ScaleDataByValue)+" for "+OutFldrNm
 					endif
 				endif
 				NumberOfProcessedDataSets+=1
@@ -4428,7 +4815,8 @@ Function IR3M_InitDataManipulationII()
 	ListOfVariables+="GraphLogX;GraphLogY;GraphColorScheme1;GraphColorScheme2;GraphColorScheme3;GraphFontSize;"
 	ListOfVariables+="AverageWaves;AverageNWaves;NforAveraging;GenerateStatisticsForAveWvs;SubtractDataFromAll;"
 	ListOfVariables+="NormalizeData;NormalizeDataToData;NormalizeDataToValue;NormalizeDataQmin;NormalizeDataQmax;"
-	ListOfVariables+="ScaleData;ScaleDataByValue;"
+	ListOfVariables+="ScaleData;ScaleDataByValue;CreateErrors;CreateSQRTErrors;CreatePctErrors;PercentErrorsToUse;"
+	ListOfVariables+="ReduceNumPnts;TargetNumberOfPoints;ReducePntsParam;PassTroughProcessing;"
 //
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	ListOfStrings+="Waves_Xtemplate;Waves_Ytemplate;Waves_Etemplate;"
@@ -4450,7 +4838,18 @@ Function IR3M_InitDataManipulationII()
 		make/T/N=1 SelectedItems
 		SelectedItems[0]="DataFolderName;"
 	endif
-	
+	NVAR ReducePntsParam
+	if(ReducePntsParam<=1)
+		ReducePntsParam=5
+	endif
+	NVAR TargetNumberOfPoints
+	if(TargetNumberOfPoints<=0)
+		TargetNumberOfPoints=200
+	endif
+	NVAR PercentErrorsToUse
+	if(PercentErrorsToUse<=0)
+		PercentErrorsToUse=1
+	endif
 	NVAR ErrorUseStdDev
 	NVAR ErrorUseStdErOfMean
 	if(ErrorUseStdDev+ErrorUseStdErOfMean!=1)
@@ -4627,6 +5026,7 @@ Function IR3M_AppendDataToGraph([OutFldrNmL,OutXWvNmL,OutYWvNmL,OutEWvNmL])
 	NVAR AverageWaves = root:Packages:DataManipulationII:AverageWaves
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
 	NVAR NormalizeData = root:Packages:DataManipulationII:NormalizeData
+	NVAR PassTroughProcessing = root:Packages:DataManipulationII:PassTroughProcessing
 
 	NVAR GenerateMinMax=root:Packages:DataManipulationII:GenerateMinMax
 	variable i, j
@@ -4672,7 +5072,7 @@ Function IR3M_AppendDataToGraph([OutFldrNmL,OutXWvNmL,OutYWvNmL,OutEWvNmL])
 			endif
 		endif
 	endif
-	if(DisplayResults && (SubtractDataFromAll || NormalizeData))
+	if(DisplayResults && (SubtractDataFromAll || NormalizeData || PassTroughProcessing))
 		Wave/T FldrNamesTWv = root:Packages:DataManipulationII:PreviewSelectedFolder
 		Wave SelFldrs = root:Packages:DataManipulationII:SelectedFoldersWv
 		SVAR  Xtmplt=root:Packages:DataManipulationII:Waves_Xtemplate
