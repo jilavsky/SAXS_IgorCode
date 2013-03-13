@@ -1,7 +1,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=0.91		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=0.92		//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716Ð719, Boualem Hammouda, A new GuinierÐPorod model
-Constant IR3GPversionNumber=0.91
+Constant IR3GPversionNumber=0.92
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -15,8 +15,9 @@ Constant IR3GPversionNumber=0.91
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
-// 0.9 - original release, unfinished, barely functional, no manual support. 
-//0.91 GUI improvements, local fits improvements. 
+// 	0.9 - original release, unfinished, barely functional, no manual support. 
+//	0.91 GUI improvements, local fits improvements. 
+//	0.92 More code developemnt, added Uncertainity evaluation and scripting tool. 
 
 //Menu "SAS"
 //	"Gunier Porod Fit", IR3GP_Main()
@@ -79,11 +80,11 @@ structure GunierPorodLevel
 	variable  Rg2LowLimit
 	variable  Rg2HighLimit
 	variable  Rg2Error
-	variable  d
-	int16  dFit
-	variable  dLowLimit
-	variable  dHighLimit
-	variable  dError
+	variable  P
+	int16  PFit
+	variable  PLowLimit
+	variable  PHighLimit
+	variable  PError
 	variable  s1
 	int16  s1Fit
 	variable  s1LowLimit
@@ -151,15 +152,15 @@ Function IR3GP_MoveStrToGlobals(Par)
 	Level_Rg2Error = Par.Rg2Error
 
 	NVAR Level_P
-	Level_P = Par.D
+	Level_P = Par.P
 	NVAR Level_PFit
-	Level_PFit = Par.DFit
+	Level_PFit = Par.PFit
 	NVAR Level_PLowLimit
-	Level_PLowLimit = Par.DLowLimit
+	Level_PLowLimit = Par.PLowLimit
 	NVAR Level_PHighLimit
-	Level_PHighLimit = Par.DHighLimit
+	Level_PHighLimit = Par.PHighLimit
 	NVAR Level_PError
-	Level_PError = Par.DError
+	Level_PError = Par.PError
 
 	NVAR Level_S1
 	Level_S1 = Par.S1
@@ -255,15 +256,15 @@ Function IR3GP_MoveGlobalsToStr(Par)
 	 Par.Rg2Error = Level_Rg2Error
 
 	NVAR Level_P
-	 Par.D = Level_P
+	 Par.P = Level_P
 	NVAR Level_PFit
-	 Par.DFit = Level_PFit
+	 Par.PFit = Level_PFit
 	NVAR Level_PLowLimit
-	 Par.DLowLimit = Level_PLowLimit
+	 Par.PLowLimit = Level_PLowLimit
 	NVAR Level_PHighLimit
-	 Par.DHighLimit = Level_PHighLimit
+	 Par.PHighLimit = Level_PHighLimit
 	NVAR Level_PError
-	 Par.DError = Level_PError
+	 Par.PError = Level_PError
 
 	NVAR Level_S1
 	 Par.S1 = Level_S1
@@ -321,6 +322,26 @@ Function IR3GP_MoveGlobalsToStr(Par)
 end
 //******************************************************************************************
 //******************************************************************************************
+Function IR3GP_MoveLevelToWave(level)
+	variable level
+	
+	STRUCT GunierPorodLevel Par
+	IR3GP_MoveGlobalsToStr(Par)
+	Wave LevelStructure = $("root:Packages:Irena:GuinierPorod:Level"+num2str(level)+"Structure")
+	StructPut Par, LevelStructure
+end
+//******************************************************************************************
+//******************************************************************************************
+Function IR3GP_LoadLevelFromWave(level)
+	variable level
+	
+	STRUCT GunierPorodLevel Par
+	Wave LevelStructure = $("root:Packages:Irena:GuinierPorod:Level"+num2str(level)+"Structure")
+	StructGet Par, LevelStructure
+	IR3GP_MoveStrToGlobals(Par)
+end
+//******************************************************************************************
+//******************************************************************************************
 Function IR3GP_SaveStructureToWave(Par, level)
 	STRUCT GunierPorodLevel &Par
 	variable level
@@ -353,9 +374,9 @@ Function IR2GP_CalculateGPlevel(Qvector,Intensity,Par )
 // G2 = G1* exp(-Q2^2*((Rg1^2/(3-s1))-(Rg2^2/(3-s2)))) * Q2^(s2-s1)
 // Q1 = sqrt((d - s1)*(3 - s1)/2) / Rg1
 // D = G * exp(-Q1^2 * Rg^2/(3-s))*Q1^(d-s) = G*exp(-(d-s)/2)*((3-s)*(d-s)/2)^((d-s)/2) /Rg^(d-s)
-	variable Q1val = sqrt((Par.d - Par.s1)*(3 - Par.s1)/2) / Par.Rg1
+	variable Q1val = sqrt((Par.P - Par.s1)*(3 - Par.s1)/2) / Par.Rg1
 	//print "Q1 = "+num2str(Q1val)
-	variable Dval=Par.G*exp(-(Par.d-Par.s1)/2)*((3-Par.s1)*(Par.d-Par.s1)/2)^((Par.d-Par.s1)/2) /Par.Rg1^(Par.d-Par.s1)
+	variable Dval=Par.G*exp(-(Par.P-Par.s1)/2)*((3-Par.s1)*(Par.P-Par.s1)/2)^((Par.P-Par.s1)/2) /Par.Rg1^(Par.P-Par.s1)
 	//print "D = "+num2str(Dval)
 	variable Q2val = sqrt((1 - Par.s2)/((2/(3-Par.s2)*Par.Rg2^2) - (2/(3-Par.s1))*Par.Rg1^2) )
 	Q2val = numtype(Q2val)==0 ? Q2val : 0
@@ -373,9 +394,9 @@ Function IR2GP_CalculateGPlevel(Qvector,Intensity,Par )
 	endif
 	if(MidQRangePntMax>0)
 		Intensity[LowQRangePntMax+1,MidQRangePntMax] = Par.G/(Qvector[p]^Par.s1) * exp(-1 * Qvector[p]^2 * Par.Rg1^2 / (3-Par.s1))
-		Intensity[MidQRangePntMax+1,] = Dval / (Qvector[p]^Par.d)
+		Intensity[MidQRangePntMax+1,] = Dval / (Qvector[p]^Par.P)
 	elseif(MidQRangePntMax<0)
-		Intensity = Dval / (Qvector[p]^Par.d)
+		Intensity = Dval / (Qvector[p]^Par.P)
 	endif
 
 	if(Par.RgCutOff>0)
@@ -492,39 +513,15 @@ Function IR3DP_MainPanelFunction()
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Irena:GuinierPorod","IR3DP_MainPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,1)
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 28,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 90,26,"Gunier Porod"
 	TitleBox MainTitle title="Gunier Porod",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={260,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,176,339,176
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,176},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 10,200,"Gunier-Porod model input"
 	TitleBox Info2 title="Gunier-Porod model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 200,275,"Fit?:"
 	TitleBox Info3 title="Fit?  Low limit:    High Limit:",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12,fstyle=3,fColor=(0,0,65535)
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-///	DrawText 230,275,"Low limit:    High Limit:"
-//	DrawText 10,600,"Fit using least square fitting ?"
 	TitleBox Info4 title="Fit using least square fitting ?",pos={3,584},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12,fstyle=3,fColor=(0,0,65535)
-//	DrawPoly 113,225,1,1,{113,225,113,225}
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 330,612,350,612
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={20,3},pos={330,610},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
-//	DrawText 4,640,"Results:"
 	TitleBox Info5 title="Results:",pos={3,625},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12,fstyle=3,fColor=(0,0,65535)
-//	SetDrawEnv fsize= 10
-//	DrawText 50,453,"For local fits, set S2=0, Rg2=1e10, S1=0"
 	TitleBox Info6 title="For local fits, set S2=0, Rg2=1e10, S1=0",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
-	//SetDrawEnv fsize= 10
-	//DrawText 50,470,"And follow order of the buttons --->"
 	TitleBox Info7 title="And follow order of the buttons --->",pos={10,459},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
 	NVAR Level_G = root:Packages:Irena:GuinierPorod:Level_G
 	NVAR Level_S2 = root:Packages:Irena:GuinierPorod:Level_S2
@@ -566,7 +563,7 @@ Function IR3DP_MainPanelFunction()
 
 
 //	Button EvaluateSpecialCases,pos={10,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Analyze Results", help={"Analyze special Cases"}
-//	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Uncertainity Evaluation", help={"Analyze confidence range for different parameters"}
+	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Uncertainity Evaluation", help={"Analyze confidence range for different parameters"}
 	SetVariable SASBackground,pos={15,565},size={160,16},proc=IR3GP_PanelSetVarProc,title="SAS Background", help={"SAS background"},bodyWidth=80, format="%0.4g"
 	SetVariable SASBackground,limits={-inf,Inf,0.05*SASBackground},value= root:Packages:Irena:GuinierPorod:SASBackground
 	CheckBox FitBackground,pos={195,566},size={63,14},proc=IR3GP_PanelCheckboxProc,title="Fit Bckg?"
@@ -796,7 +793,6 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:Irena:GuinierPorod
 	variable i
 
-
 	if(cmpstr(ctrlName,"RemovePointWcsrA")==0)
 		//here we load the data and create default values
 //		ControlInfo/W=LSQF2_MainPanel DataTabs
@@ -815,6 +811,22 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 		//if(V_Flag)
 			//AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
 		//endif
+	endif
+	if(cmpstr(ctrlName,"ScriptingTool")==0)
+		IR2S_ScriptingTool() 
+		Autopositionwindow /M=1/R=IR3DP_MainPanel IR2S_ScriptingToolPnl
+		NVAR GUseIndra2data=root:Packages:Irena:GuinierPorod:UseIndra2Data
+		NVAR GUseQRSdata=root:Packages:Irena:GuinierPorod:UseQRSdata
+		NVAR STUseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
+		NVAR STUseQRSData = root:Packages:Irena:ScriptingTool:UseQRSdata
+		STUseIndra2Data = GUseIndra2data
+		STUseQRSData = GUseQRSdata
+		if(STUseIndra2Data+STUseQRSData!=1)
+			Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
+			STUseQRSData=1
+			GUseQRSdata=1
+		endif
+		IR2S_UpdateListOfAvailFiles()
 	endif
 
 	if (cmpstr(ctrlName,"DrawGraphs")==0 || cmpstr(ctrlName,"DrawGraphsSkipDialogs")==0)
@@ -863,7 +875,7 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 	if (cmpstr(ctrlName,"GraphDistribution")==0)
 		IR3GP_GraphModelData()
 	endif
-	if (cmpstr(ctrlName,"DoFitting")==0)
+	if (cmpstr(ctrlName,"DoFitting")==0 || cmpstr(ctrlName,"DoFittingSkipReset")==0)
 		variable skipreset=0
 		if(cmpstr(ctrlName,"DoFittingSkipReset")==0)
 			skipreset = 1
@@ -887,6 +899,9 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 	endif
 	if (cmpstr(ctrlName,"CopyToFolder")==0)
 		IR3GP_CopyDataBackToFolder("")
+	endif
+	if (cmpstr(ctrlName,"CopyTFolderNoQuestions")==0)
+		IR3GP_CopyDataBackToFolder("", Saveme="Yes")
 	endif
 	if (cmpstr(ctrlName,"LevelXFitRg1AndG")==0)
 		//IR3GP_CopyDataBackToFolder("")
@@ -920,7 +935,11 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 	if (cmpstr(ctrlName,"CleanupGraph")==0)
 		IR3GP_CleanUpGraph(1,1)
 	endif
-
+	if(cmpstr(ctrlName,"ConfidenceEvaluation")==0)
+		//here we graph the distribution
+		IR3GP_ConfidenceEvaluation()
+	endif
+	setDataFolder oldDf
 end
 ///******************************************************************************************
 ///******************************************************************************************
@@ -1017,6 +1036,12 @@ Function IR3GP_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCont
 		NVAR HighLimit=$("root:Packages:Irena:GuinierPorod:"+ctrlName+"HighLimit")
 		LowLimit = varNum * 0.2
 		HighLimit = varNum * 5
+	endif
+	if((stringmatch(ctrlName,"Level_P*")||stringmatch(ctrlName,"Level_S*")))
+		NVAR LowLimit=$("root:Packages:Irena:GuinierPorod:"+ctrlName+"LowLimit")
+		NVAR HighLimit=$("root:Packages:Irena:GuinierPorod:"+ctrlName+"HighLimit")
+		LowLimit = 1
+		HighLimit = 4.2
 	endif
 	STRUCT GunierPorodLevel Par
 	NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
@@ -1411,13 +1436,13 @@ Function IR3GP_SetDefaults(Level, enforceReset)
 	NVAR Level_P
 	Level_P = 4
 	NVAR Level_PFit
-	//Level_PFit = Par.DFit
+	//Level_PFit = Par.PFit
 	NVAR Level_PLowLimit
-	//Level_PLowLimit = Par.DLowLimit
+	//Level_PLowLimit = Par.PLowLimit
 	NVAR Level_PHighLimit
-	//Level_PHighLimit = Par.DHighLimit
+	//Level_PHighLimit = Par.PHighLimit
 	NVAR Level_PError
-	//Level_PError = Par.DError
+	//Level_PError = Par.PError
 
 	NVAR Level_S1
 	Level_S1 = 0
@@ -1746,7 +1771,7 @@ Function IR3GP_SetErrorsToZero()
 			Par.GError=0
 			Par.Rg1Error=0
 			Par.Rg2Error=0
-			Par.dError=0
+			Par.PError=0
 			Par.s1Error=0
 			Par.s2Error=0
 			IR3GP_SaveStructureToWave(Par, i)
@@ -1760,6 +1785,7 @@ end
 
 Function IR3GP_FixLimits()
 
+	string OldDf=GetDataFolder(1)
 	variable i
 	NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
 	STRUCT GunierPorodLevel Par	
@@ -1771,8 +1797,8 @@ Function IR3GP_FixLimits()
 			Par.Rg1HighLimit=5 * Par.Rg1
 			Par.Rg2LowLimit=0.2 * Par.Rg2
 			Par.Rg2HighLimit=5 * Par.Rg2
-			Par.dLowLimit=1
-			Par.dHighLimit=4.2
+			Par.PLowLimit=1
+			Par.PHighLimit=4.2
 			Par.s1LowLimit=1
 			Par.s1HighLimit=4
 			Par.s2LowLimit=1 
@@ -1785,6 +1811,7 @@ Function IR3GP_FixLimits()
 	endfor
 	IR3GP_LoadStructureFromWave(Par, ActiveLevel)
 	IR3GP_MoveStrToGlobals(Par)	
+	setDataFolder oldDf
 	
 end
 ///******************************************************************************************
@@ -1860,10 +1887,10 @@ Function IR3GP_InsertOneLevelTagInGrph(Lnmb)
 			LogLogTag+="Rg 1 \t= "+num2str(Par.Rg1)+"[A]   \t  "+"\r"
 		endif	
 	endif
-	if (Par.DError>0)
-		LogLogTag+="P \t= "+num2str(Par.D)+"  \t +/-"+num2str(Par.DError)+"\r"
+	if (Par.PError>0)
+		LogLogTag+="P \t= "+num2str(Par.P)+"  \t +/-"+num2str(Par.PError)+"\r"
 	else
-		LogLogTag+="P \t= "+num2str(Par.D)+"  \t   "	+"\r"
+		LogLogTag+="P \t= "+num2str(Par.P)+"  \t   "	+"\r"
 	endif
 	if (Par.RgCutOff>0)
 		LogLogTag+="Assumed RgCutOff  = "+num2str(Par.RgCutOff)+"\r"
@@ -2060,21 +2087,29 @@ Function IR3GP_AppendWNOfDist(level,ListOfWavesForNotes)
 	variable i
 	For(i=0;i<ItemsInList(ListOfWavesForNotes);i+=1)
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_S2",num2str(Par.S2))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_S2Fit",num2str(Par.S2Fit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_S2Error",num2str(Par.S2Error))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_Rg2",num2str(Par.Rg2))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_Rg2Fit",num2str(Par.Rg2Fit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_Rg2Error",num2str(Par.Rg2Error))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_S1",num2str(Par.S1))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_S1Fit",num2str(Par.S1Fit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_S1Error",num2str(Par.S1Error))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_G",num2str(Par.G))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_GFit",num2str(Par.GFit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_GError",num2str(Par.GError))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_Rg1",num2str(Par.Rg1))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_Rg1Fit",num2str(Par.Rg1Fit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_RgError",num2str(Par.Rg1Error))
-		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_P",num2str(Par.d))
-		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_PError",num2str(Par.dError))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_P",num2str(Par.P))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_PFit",num2str(Par.PFit))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_PError",num2str(Par.PError))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_UseCorrelations",num2str(Par.UseCorrelations))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_ETA",num2str(Par.ETA))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_ETAFit",num2str(Par.ETAFit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_ETAError",num2str(Par.ETAError))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_PACK",num2str(Par.PACK))
+		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_PACKFit",num2str(Par.PACKFit))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_PACKError",num2str(Par.PACKError))
 		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"_RgCutOff",num2str(Par.RgCutOff))
 //		IN2G_AppendorReplaceWaveNote(stringFromList(i,ListOfWavesForNotes),"Level"+num2str(level)+"Invariant",num2str(Invariant))
@@ -2163,14 +2198,24 @@ Function IR3GP_RecoverOneLevelParam(level,OldNote)
 	Par.GError=NumberByKey("Level"+num2str(level)+"_GError", OldNote,"=")
 	Par.Rg1=NumberByKey("Level"+num2str(level)+"_Rg1", OldNote,"=")
 	Par.Rg1Error=NumberByKey("Level"+num2str(level)+"_Rg1Error", OldNote,"=")
-	Par.d=NumberByKey("Level"+num2str(level)+"_P", OldNote,"=")
-	Par.dError=NumberByKey("Level"+num2str(level)+"_PError", OldNote,"=")
+	Par.P=NumberByKey("Level"+num2str(level)+"_P", OldNote,"=")
+	Par.PError=NumberByKey("Level"+num2str(level)+"_PError", OldNote,"=")
 	Par.ETA=NumberByKey("Level"+num2str(level)+"_ETA", OldNote,"=")
 	Par.ETAError=NumberByKey("Level"+num2str(level)+"_ETAError", OldNote,"=")
 	Par.PACK=NumberByKey("Level"+num2str(level)+"_PACK", OldNote,"=")
 	Par.PACKError=NumberByKey("Level"+num2str(level)+"_PACKError", OldNote,"=")
 	Par.UseCorrelations=NumberByKey("Level"+num2str(level)+"_UseCorrelations", OldNote,"=")
 	Par.RgCutOff=NumberByKey("Level"+num2str(level)+"_RgCutOff", OldNote,"=")
+
+	Par.S2Fit	=NumberByKey("Level"+num2str(level)+"_S2Fit", OldNote,"=")
+	Par.Rg2Fit	=NumberByKey("Level"+num2str(level)+"_Rg2Fit", OldNote,"=")
+	Par.S1Fit	=NumberByKey("Level"+num2str(level)+"_S1Fit", OldNote,"=")
+	Par.GFit		=NumberByKey("Level"+num2str(level)+"_GFit", OldNote,"=")
+	Par.Rg1Fit	=NumberByKey("Level"+num2str(level)+"_Rg1Fit", OldNote,"=")
+	Par.PFit		=NumberByKey("Level"+num2str(level)+"_PFit", OldNote,"=")
+	Par.ETAFit	=NumberByKey("Level"+num2str(level)+"_ETAFit", OldNote,"=")
+	Par.PACKFit	=NumberByKey("Level"+num2str(level)+"_PACKFit", OldNote,"=")
+
 	IR3GP_SaveStructureToWave(Par, level)
 end
 
@@ -2392,6 +2437,11 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 		abort "Nothing to do"
 	endif
 	NVAR Gvalue=$("Level_G")
+	NVAR Rg1=$("Level_Rg1")
+	NVAR Pval=$("Level_P")
+	NVAR S1=$("Level_S1")
+	NVAR S2=$("Level_S2")
+	NVAR Rg2=$("Level_Rg2")
 
 	DoWindow GunierPorod_LogLogPlot
 	if(V_Flag)
@@ -2404,15 +2454,10 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 		SetDataFolder oldDf
 		abort "Set both cursors before fitting"
 	endif
-	//now handle calibration - G value needs to be modified if this is S1 or S2
 	variable CalibrationValue, CalibrationQ, OldG
 	oldG=Gvalue
+	//now handle calibration - G value needs to be modified if this is S1 or S2
 	if(whichOne==2)		//this is S1
-		NVAR Rg1=$("Level_Rg1")
-		NVAR Pval=$("Level_P")
-		NVAR S1=$("Level_S1")
-		NVAR S2=$("Level_S2")
-		NVAR Rg2=$("Level_Rg2")
 		CalibrationQ= 0.5*pi/Rg1
 		CalibrationValue = IR2GP_CalculateGPValue(CalibrationQ,Pval,Rg1,Gvalue,S1,Rg2,S2,0)
 	endif
@@ -2423,17 +2468,13 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	CoefficientInput[1]=Pp
 	LocalEwave[0]=CoefficientInput[0]/20
 	LocalEwave[1]=Pp/20
-	CoefNames={"Level"+num2str(level)+"B","Level"+num2str(level)+"P"}
-	
+	CoefNames={"Level"+num2str(level)+"B","Level"+num2str(level)+"P"}	
 	Make/D/O/N=2 New_FitCoefficients
 	New_FitCoefficients[0] = {CoefficientInput[0],Pp}
 	Make/O/T/N=2 T_Constraints
 	T_Constraints = {"K1 > 1","K1 < 4.2"}
-
-	Variable V_FitError=0			//This should prevent errors from being generated
-	
+	Variable V_FitError=0			//This should prevent errors from being generated	
 	FuncFit/Q/N IR3GP_PowerLawFitAllATOnce New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave  /C=T_Constraints 
-
 	if (V_FitError!=0)	//there was error in fitting
 		beep
 		//IR1A_UpdatePorodFit(level,0)
@@ -2453,6 +2494,23 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	if(whichOne==2)		//this is S1
 		scalingFactor = CalibrationValue/IR2GP_CalculateGPValue(CalibrationQ,Pval,Rg1,Gvalue,Pp,Rg2,S2,0)
 		Gvalue = Gvalue*scalingFactor
+	endif
+	//now handle calibration - G value needs to be modified if this is P but Rg = 1e6 (no Guinier area for even first slope)
+	if(whichOne==1&&Rg1>5.999e5)		//this is P
+		CalibrationQ = OriginalQvector[pcsr(A)]
+		variable FitIntValue = New_FitCoefficients[0]*CalibrationQ^(-Pp)
+		Gvalue = (FitIntValue  * CalibrationQ^Pval * Rg1^(Pval) ) / (exp(-Pval/2)*(3*Pval/2)^(Pval/2))
+		NVAR GLowLimit = $("Level_GLowLimit")
+		NVAR GHighLimit = $("Level_GHighLimit")
+		GLowLimit = Gvalue/10
+		GHighLimit = Gvalue*10
+	endif
+	//set fitting limits
+	if(PpLowLimit>Pp)
+		PpLowLimit = 1
+	endif
+	if(PpHighLimit<Pp)
+		PpHighLimit =4
 	endif
 	
 	IR3GP_MoveGlobalsToStr(Par)	
@@ -2568,8 +2626,8 @@ function IR3GP_CalculateInvariant(level)
 	runifiedfit[0]=runifiedfit[1]	
 	rUnifiedfitq2=rUnifiedfit*qunifiedfit^2				// Int * Q^2 wave
 	Qv=areaXY(qUnifiedfit, rUnifiedfitq2, 0, MaxQ)		//invariant, need to add "Porod tail"
-	tempB=rUnifiedfit[newnumpnts-1]*maxQ^(Par.D)			//makes -4 extension match last point of fit
-	Qv+=abs((tempB*maxQ^(3-Par.D))/(Par.D-2))				//extends with -4 exponent
+	tempB=rUnifiedfit[newnumpnts-1]*maxQ^(Par.P)			//makes -4 extension match last point of fit
+	Qv+=abs((tempB*maxQ^(3-Par.P))/(Par.P-2))				//extends with -4 exponent
 	//invariant+=abs(tempB*maxQ^(3-abs(tempPorod))/(abs(tempPorod)-2))//This one extrapolates with origional P	
 	 Par.Invariant = Qv* 1e24
 	 IR3GP_SaveStructureToWave(Par, level)
@@ -2578,4 +2636,1046 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************		
+
+///          Confidence evaluation code
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+Function IR3GP_ConfidenceEvaluation()
+	string OldDf=getDataFolder(1)
+	setDataFolder root:Packages:Irena:GuinierPorod
+
+	IR3GP_ConfEvResetList()
+	DoWindow IR3GP_ConfEvaluationPanel
+	if(!V_Flag)
+		IR3GP_ConfEvaluationPanelF()
+	else
+		DoWindow/F IR3GP_ConfEvaluationPanel
+	endif
+	IR1_CreateResultsNbk()
+	setDataFolder OldDf
+end
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+Function IR3GP_ConfEvaluationPanelF() 
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(405,136,793,600) as "Gunier-Porod Uncertainity Evaluation"
+	DoWIndow/C IR3GP_ConfEvaluationPanel
+	//ShowTools/A
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (1,4,52428)
+	DrawText 60,29,"Parameter Uncertainity Evaluation "
+	SVAR ConEvSelParameter=root:Packages:Irena:GuinierPorod:ConEvSelParameter
+	PopupMenu SelectParameter,pos={8,59},size={163,20},proc=IR3GP_ConfEvPopMenuProc,title="Select parameter  "
+	PopupMenu SelectParameter,help={"Select parameter to evaluate, it had to be fitted"}
+	PopupMenu SelectParameter,popvalue=ConEvSelParameter,value= #"IR3GP_ConfEvalBuildListOfParams()"
+	SetVariable ParameterMin,pos={15,94},size={149,14},bodyWidth=100,title="Min value"
+	SetVariable ParameterMin,value= root:Packages:Irena:GuinierPorod:ConfEvMinVal
+	SetVariable ParameterMax,pos={13,117},size={151,14},bodyWidth=100,title="Max value"
+	SetVariable ParameterMax,value= root:Packages:Irena:GuinierPorod:ConfEvMaxVal
+	SetVariable ParameterNumSteps,pos={192,103},size={153,14},bodyWidth=100,title="Num Steps"
+	SetVariable ParameterNumSteps,value= root:Packages:Irena:GuinierPorod:ConfEvNumSteps
+	SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+	PopupMenu Method,pos={70,150},size={212,20},proc=IR3GP_ConfEvPopMenuProc,title="Method   "
+	PopupMenu Method,help={"Select method to be used for analysis"}
+	PopupMenu Method,mode=1,popvalue=Method,value= #"\"Sequential, fix param;Sequential, reset, fix param;Centered, fix param;Random, fix param;Random, fit param;Vary data, fit params;\""
+	checkbox AutoOverwrite pos={20,180}, title="Automatically overwrite prior results?", variable=root:Packages:Irena:GuinierPorod:ConfEvAutoOverwrite
+	Checkbox AutoOverwrite help={"Check to avoid being asked if you want to overwrite prior results"}
+	checkbox ConfEvAutoCalcTarget pos={20,200},title="Calculate ChiSq range?", variable=root:Packages:Irena:GuinierPorod:ConfEvAutoCalcTarget
+	Checkbox ConfEvAutoCalcTarget help={"Check to calculate the ChiSquae range"}, proc=IR3GP_ConfEvalCheckProc
+	checkbox ConfEvFixRanges pos={260,180}, title="Fix fit limits?", variable=root:Packages:Irena:GuinierPorod:ConfEvFixRanges
+	Checkbox ConfEvFixRanges help={"Check to avoid being asked if you want to fix ranges during analysis"}
+	NVAR tmpVal=root:Packages:Irena:GuinierPorod:ConfEvAutoCalcTarget
+	SetVariable ConfEvTargetChiSqRange,pos={200,200}, limits={1,inf,0.003}, format="%1.4g", size={173,14},bodyWidth=80,title="ChiSq range target"
+	SetVariable ConfEvTargetChiSqRange,value= root:Packages:Irena:GuinierPorod:ConfEvTargetChiSqRange, disable=2*tmpVal
+	Button GetHelp,pos={284,37},size={90,20},proc=IR3GP_ConfEvButtonProc,title="Get Help"
+	Button AnalyzeSelParam,pos={18,225},size={150,20},proc=IR3GP_ConfEvButtonProc,title="Analyze selected Parameter"
+	Button AddSetToList,pos={187,225},size={150,20},proc=IR3GP_ConfEvButtonProc,title="Add  Parameter to List"
+	Button AnalyzeListOfParameters,pos={18,250},size={150,20},proc=IR3GP_ConfEvButtonProc,title="Analyze list of Parameters"
+	Button ResetList,pos={187,250},size={150,20},proc=IR3GP_ConfEvButtonProc,title="Reset List"
+	Button RecoverFromAbort,pos={18,430},size={150,20},proc=IR3GP_ConfEvButtonProc,title="Recover from abort"
+EndMacro
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+Function IR3GP_ConfEvalCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			SetVariable ConfEvTargetChiSqRange,win= GunierPorod_LogLogPlot, disable=2*checked
+			if(checked)
+				IR3GP_ConfEvalCalcChiSqTarget()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+Function IR3GP_ConfEvalCalcChiSqTarget()
+
+		string oldDf=GetDataFolder (1)
+
+	NVAR ConfEvAutoCalcTarget=root:Packages:Irena:GuinierPorod:ConfEvAutoCalcTarget
+	NVAR ConfEvTargetChiSqRange = root:Packages:Irena:GuinierPorod:ConfEvTargetChiSqRange
+	DoWIndow GunierPorod_LogLogPlot
+	if(V_Flag&&ConfEvAutoCalcTarget)
+		variable startRange, endRange, Allpoints
+		startRange=pcsr(A,"GunierPorod_LogLogPlot")
+		endRange=pcsr(B,"GunierPorod_LogLogPlot")
+		Allpoints = abs(endRange - startRange)
+	//	ConfEvTargetChiSqRange = Allpoints
+		
+		NVAR NumberOfLevels= root:Packages:Irena:GuinierPorod:NumberOfLevels	
+		string ParamNames="Rg1;G;P;Rg2;S1;S2;ETA;Pack;"
+		variable i, j, NumFItVals
+		string tempName, varName
+		NumFItVals=0
+		STRUCT GunierPorodLevel Par
+		NVAR FitSASBackground=root:Packages:Irena:GuinierPorod:FitSASBackground
+		if(FitSASBackground)
+			NumFItVals+=1
+		endif
+		For(i=1;i<=NumberOfLevels;i+=1)
+			IR3GP_LoadLevelFromWave(i)	
+			For(j=0;j<ItemsInList(ParamNames);j+=1)
+				tempName="Level"+num2str(i)+"_"+stringFromList(j,ParamNames)
+				varName="Level"+"_"+stringFromList(j,ParamNames)
+				NVAR fitMe=$("root:Packages:Irena:GuinierPorod:"+varName+"Fit")
+				if(fitMe)
+					NumFItVals+=1
+				endif
+			endfor
+		endfor
+		//print "Found "+num2str(NumFItVals)+" fitted parameters"
+		//method I tried...
+		//ConfEvTargetChiSqRange = Allpoints/(Allpoints - NumFItVals)
+		//ConfEvTargetChiSqRange = (round(1000*ConfEvTargetChiSqRange))/1000
+		//method from Mateus
+		variable DF = Allpoints - NumFItVals - 1		//DegreesOfFreedom
+		variable parY0 = 1.01431
+		variable parA1=0.05621
+		variable parT1=117.48129
+		variable parA2=0.0336
+		variable parT2=737.73587
+		variable parA3=0.10412
+		variable parT3=23.25466
+		ConfEvTargetChiSqRange = parY0 + parA1*exp(-DF/parT1) + parA2*exp(-DF/parT2) + parA3*exp(-DF/parT3)
+		ConfEvTargetChiSqRange = (round(10000*ConfEvTargetChiSqRange))/10000
+		
+	endif
+	setDataFolder oldDf
+	return ConfEvTargetChiSqRange
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+
+Function/S IR3GP_ConfEvalBuildListOfParams()
+	
+	string OldDf=getDataFolder(1)
+	setDataFolder root:Packages:Irena:GuinierPorod
+	variable i,j
+	SVAR ConfEvListOfParameters=root:Packages:Irena:GuinierPorod:ConfEvListOfParameters
+	NVAR NumberOfLevels= root:Packages:Irena:GuinierPorod:NumberOfLevels
+	//Build list of paramters which user was fitting, and therefore we can analyze stability for them
+	
+	string ParamNames="Rg1;G;P;Rg2;S1;S2;ETA;Pack;"
+	ConfEvListOfParameters=""
+	string tempName
+	STRUCT GunierPorodLevel Par
+	For(i=1;i<=NumberOfLevels;i+=1)
+		IR3GP_LoadStructureFromWave(Par, i)	
+		IR3GP_MoveStrToGlobals(Par)
+		For(j=0;j<ItemsInList(ParamNames);j+=1)
+			tempName="Level"+num2str(i)+"_"+stringFromList(j,ParamNames)
+			NVAR fitMe=$"Level_"+stringFromList(j,ParamNames)+"Fit"
+			if(fitMe)
+				ConfEvListOfParameters+=tempName+";"
+			endif
+		endfor
+	endfor	
+	//print ConfEvListOfParameters
+	SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+	SVAR ConEvSelParameter=root:Packages:Irena:GuinierPorod:ConEvSelParameter
+	if(strlen(Method)<5)
+		Method = "Sequential, fix param"
+	endif
+	ConEvSelParameter = stringFromList(0,ConfEvListOfParameters)
+	IR3GP_ConEvSetValues(ConEvSelParameter)
+	setDataFolder OldDf
+	return ConfEvListOfParameters+"UncertainityEffect;"
+end
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+Function IR3GP_ConEvSetValues(popStr)
+	string popStr
+		SVAR ConEvSelParameter=root:Packages:Irena:GuinierPorod:ConEvSelParameter
+		ConEvSelParameter = "Level_"+popStr[7,inf]
+		variable SelLevel= str2num(popStr[5,5])
+		STRUCT GunierPorodLevel Par
+		IR3GP_LoadStructureFromWave(Par, SelLevel)	
+		IR3GP_MoveStrToGlobals(Par)
+		NVAR/Z CurPar = $("root:Packages:Irena:GuinierPorod:"+ConEvSelParameter)
+		if(!NVAR_Exists(CurPar))
+			//something wrong here, bail out
+			return 0
+		endif
+		NVAR CurparLL =  $("root:Packages:Irena:GuinierPorod:"+ConEvSelParameter+"LowLimit")
+		NVAR CurparHL =  $("root:Packages:Irena:GuinierPorod:"+ConEvSelParameter+"HighLimit")
+		NVAR ConfEvMinVal =  root:Packages:Irena:GuinierPorod:ConfEvMinVal
+		NVAR ConfEvMaxVal =  root:Packages:Irena:GuinierPorod:ConfEvMaxVal
+		NVAR ConfEvNumSteps =  root:Packages:Irena:GuinierPorod:ConfEvNumSteps
+		if(ConfEvNumSteps<3)
+			ConfEvNumSteps=20
+		endif
+		if(stringMatch(ConEvSelParameter,"*Rg*"))
+			ConfEvMinVal = 0.8*CurPar
+			ConfEvMaxVal = 1.2 * Curpar
+		elseif(stringMatch(ConEvSelParameter,"*P"))
+			ConfEvMinVal = 0.9*CurPar
+			ConfEvMaxVal = 1.1 * Curpar
+		elseif(stringMatch(ConEvSelParameter,"*G"))
+			ConfEvMinVal = 0.5*CurPar
+			ConfEvMaxVal = 2* Curpar
+		elseif(stringMatch(ConEvSelParameter,"*S*"))
+			ConfEvMinVal = 0.9*CurPar
+			ConfEvMaxVal = 1.1* Curpar
+		elseif(stringMatch(ConEvSelParameter,"*Eta"))
+			ConfEvMinVal = 0.9*CurPar
+			ConfEvMaxVal = 1.1* Curpar
+		elseif(stringMatch(ConEvSelParameter,"*Pack"))
+			ConfEvMinVal = 0.9*CurPar
+			ConfEvMaxVal = 1.1* Curpar
+		endif
+		//check limits...
+		if(CurparLL>ConfEvMinVal)
+			ConfEvMinVal = 1.01*CurparLL
+		endif
+		if(CurparHL<ConfEvMaxVal)
+			ConfEvMaxVal = 0.99 * CurparHL
+		endif
+
+end
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+Function IR3GP_ConfEvPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			if(stringMatch(pa.ctrlName,"SelectParameter"))
+				if(stringmatch(popStr,"UncertainityEffect"))
+					SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+					Method = "Vary data, fit params"
+					SetVariable ParameterMin, win=IR3GP_ConfEvaluationPanel, disable=1
+					SetVariable ParameterMax, win=IR3GP_ConfEvaluationPanel, disable=1
+					PopupMenu Method, win=IR3GP_ConfEvaluationPanel, mode=6
+					//IR3GP_ConEvSetValues(popStr)
+		 		else
+					SetVariable ParameterMin, win=IR3GP_ConfEvaluationPanel, disable=0
+					SetVariable ParameterMax, win=IR3GP_ConfEvaluationPanel, disable=0
+					SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+					PopupMenu Method, win=IR3GP_ConfEvaluationPanel, mode=1
+					Method = "Sequential, fix param"
+					IR3GP_ConEvSetValues(popStr)
+				endif
+			endif
+			if(stringMatch(pa.ctrlname,"Method"))
+				//here we do what is needed
+				SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+				Method = popStr
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+Function IR3GP_ConfEvButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	SVAR SampleFullName=root:Packages:Irena:GuinierPorod:DataFolderName
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringMatch(ba.ctrlName,"GetHelp"))
+				//Generate help 
+				IR3GP_ConfEvHelp()
+			endif
+			if(stringMatch(ba.ctrlName,"AnalyzeSelParam"))
+				//analyze this parameter 
+				//SVAR ParamName = root:Packages:Irena:GuinierPorod:ConEvSelParameter
+				ControlInfo /W=IR3GP_ConfEvaluationPanel  SelectParameter
+				SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+				NVAR MinValue =root:Packages:Irena:GuinierPorod:ConfEvMinVal
+				NVAR MaxValue =root:Packages:Irena:GuinierPorod:ConfEvMaxVal
+				NVAR NumSteps =root:Packages:Irena:GuinierPorod:ConfEvNumSteps
+				IR1_AppendAnyText("Evaluated sample :"+StringFromList(ItemsInList(SampleFullName,":")-1,SampleFullName,":"), 1)	
+				IR3GP_ConEvEvaluateParameter(S_Value,MinValue,MaxValue,NumSteps,Method)
+			endif
+			if(stringMatch(ba.ctrlName,"AddSetToList"))
+				//add this parameter to list
+				IR3GP_ConfEvAddToList()
+			endif
+			if(stringMatch(ba.ctrlName,"ResetList"))
+				//add this parameter to list
+				IR3GP_ConfEvResetList()
+			endif
+			if(stringMatch(ba.ctrlName,"AnalyzeListOfParameters"))
+				//analyze list of parameters
+				IR1_AppendAnyText("Evaluated sample :"+StringFromList(ItemsInList(SampleFullName,":")-1,SampleFullName,":"), 1)	
+				IR3GP_ConfEvAnalyzeList()
+			endif
+			if(stringMatch(ba.ctrlName,"RecoverFromAbort"))
+				//Recover from abort
+				//print ("root:ConfidenceEvaluation:"+possiblyquoteName(StringFromList(ItemsInList(SampleFullName,":")-1,SampleFullName,":")))
+				IR3GP_ConEvRestoreBackupSet("root:ConfidenceEvaluation:"+possiblyquoteName(StringFromList(ItemsInList(SampleFullName,":")-1,SampleFullName,":")))
+			endif
+
+
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+Function IR3GP_ConfEvResetList()
+
+	string OldDf=getDataFolder(1)
+	setDataFolder root:Packages:Irena:GuinierPorod
+	DoWIndow IR3GP_ConfEvaluationPanel
+	if(V_Flag)
+		ControlInfo /W=IR3GP_ConfEvaluationPanel  ListOfParamsToProcess
+		if(V_Flag==11)
+			KillControl /W=IR3GP_ConfEvaluationPanel  ListOfParamsToProcess	
+		endif
+	endif
+	Wave/Z ConEvParamNameWv
+	Wave/Z ConEvMethodWv
+	Wave/Z ConEvMinValueWv
+	Wave/Z ConEvMaxValueWv
+	Wave/Z ConEvNumStepsWv
+	Wave/Z ConEvListboxWv
+	SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+	Method = "Sequential, fix param"
+	
+	Killwaves/Z ConEvParamNameWv, ConEvMethodWv, ConEvMinValueWv, ConEvMaxValueWv, ConEvNumStepsWv, ConEvListboxWv
+	setDataFolder oldDf
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+static Function IR3GP_ConfEvAnalyzeList()
+
+	string OldDf=getDataFolder(1)
+	setDataFolder root:Packages:Irena:GuinierPorod
+	DoWIndow IR3GP_ConfEvaluationPanel
+	if(!V_Flag)
+		abort
+	endif
+	Wave/T/Z ConEvParamNameWv
+	if(!WaveExists(ConEvParamNameWv))
+		abort "List of parameters to process does not exist"
+	endif
+	Wave/T ConEvMethodWv
+	Wave ConEvMinValueWv
+	Wave ConEvMaxValueWv
+	Wave ConEvNumStepsWv
+	Wave ConEvListboxWv
+	variable i
+		
+		SVAR ParamName = root:Packages:Irena:GuinierPorod:ConEvSelParameter
+		SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+		NVAR MinValue =root:Packages:Irena:GuinierPorod:ConfEvMinVal
+		NVAR MaxValue =root:Packages:Irena:GuinierPorod:ConfEvMaxVal
+		NVAR NumSteps =root:Packages:Irena:GuinierPorod:ConfEvNumSteps
+	
+	For(i=0;i<numpnts(ConEvParamNameWv);i+=1)
+		ParamName=ConEvParamNameWv[i]
+		//print "Evaluating stability of "+ParamName
+		//PopupMenu SelectParameter, win=IR3GP_ConfEvaluationPanel, popmatch = ParamName
+		//DoUpdate /W=IR3GP_ConfEvaluationPanel
+		Method=ConEvMethodWv[i]
+		MinValue=ConEvMinValueWv[i]
+		MaxValue=ConEvMaxValueWv[i]
+		NumSteps=ConEvNumStepsWv[i]
+		print "Evaluating stability of "+ParamName
+		IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps,Method)
+	endfor
+
+	DoWIndow IR3GP_ConfEvaluationPanel
+	if(V_Flag)
+		DoWIndow/F IR3GP_ConfEvaluationPanel
+	endif
+	
+	setDataFolder oldDf
+end
+
+
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+static Function IR3GP_ConfEvAddToList()
+
+	string OldDf=getDataFolder(1)
+	setDataFolder root:Packages:Irena:GuinierPorod
+	//SVAR ParamName = root:Packages:Irena:GuinierPorod:ConEvSelParameter
+	string ParamName
+	ControlInfo /W=IR3GP_ConfEvaluationPanel  SelectParameter 
+	ParamName = S_Value
+	SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+	NVAR MinValue =root:Packages:Irena:GuinierPorod:ConfEvMinVal
+	NVAR MaxValue =root:Packages:Irena:GuinierPorod:ConfEvMaxVal
+	NVAR NumSteps =root:Packages:Irena:GuinierPorod:ConfEvNumSteps
+		
+	Wave/Z/T ConEvParamNameWv=root:Packages:Irena:GuinierPorod:ConEvParamNameWv
+	if(!WaveExists(ConEvParamNameWv))
+		make/O/N=1/T ConEvParamNameWv, ConEvMethodWv, ConEvListboxWv
+		make/O/N=1 ConEvMinValueWv, ConEvMaxValueWv, ConEvNumStepsWv
+	else
+		redimension/N=(numpnts(ConEvParamNameWv)+1) ConEvParamNameWv, ConEvMethodWv, ConEvListboxWv
+		redimension/N=(numpnts(ConEvParamNameWv)+1)  ConEvMinValueWv, ConEvMaxValueWv, ConEvNumStepsWv
+	endif
+	ConEvParamNameWv[numpnts(ConEvParamNameWv)-1]=ParamName
+	ConEvMethodWv[numpnts(ConEvParamNameWv)-1]=Method
+	ConEvMinValueWv[numpnts(ConEvParamNameWv)-1]=MinValue
+	ConEvMaxValueWv[numpnts(ConEvParamNameWv)-1]=MaxValue
+	ConEvNumStepsWv[numpnts(ConEvParamNameWv)-1]=NumSteps
+	ConEvListboxWv[numpnts(ConEvParamNameWv)-1]=ParamName+": "+Method+";Min="+num2str(MinValue)+";Max="+num2str(MaxValue)+"Steps="+num2str(NumSteps)
+	
+	ControlInfo /W=IR3GP_ConfEvaluationPanel  ListOfParamsToProcess
+	if(V_Flag!=11)
+		ListBox ListOfParamsToProcess win=IR3GP_ConfEvaluationPanel, pos={10,280}, size={370,140}, mode=0
+		ListBox ListOfParamsToProcess listWave=root:Packages:Irena:GuinierPorod:ConEvListboxWv
+		ListBox ListOfParamsToProcess help={"This is list of parameters selected to be processed"}	
+	endif
+	setDataFolder oldDf
+end
+
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+static function IR3GP_ConEvFixParamsIfNeeded()
+	
+	string OldDf=GetDataFolder(1)
+	NVAR ConfEvFixRanges = root:Packages:Irena:GuinierPorod:ConfEvFixRanges
+	if(ConfEvFixRanges)
+		IR3GP_FixLimits()
+	endif
+	setDataFolder oldDf
+end 
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps,Method)
+	Variable MinValue,MaxValue,NumSteps
+	String ParamName,Method
+	
+	DoWindow ChisquaredAnalysis
+	if(V_Flag)
+		DoWindow/K ChisquaredAnalysis
+	endif
+	DoWindow ChisquaredAnalysis2
+	if(V_Flag)
+		DoWindow/K ChisquaredAnalysis2
+	endif
+	//create folder where we dump this thing...
+	NewDataFolder/O/S root:ConfidenceEvaluation
+	SVAR SampleFullName=root:Packages:Irena:GuinierPorod:DataFolderName
+	NVAR ConfEvAutoOverwrite = root:Packages:Irena:GuinierPorod:ConfEvAutoOverwrite
+	string Samplename=StringFromList(ItemsInList(SampleFullName,":")-1,SampleFullName,":")
+	SampleName=IN2G_RemoveExtraQuote(Samplename,1,1)
+	NewDataFolder /S/O $(Samplename)
+	Wave/Z/T BackupParamNames
+	if(checkName(ParamName,11)!=0 && !ConfEvAutoOverwrite)
+		DoALert /T="Folder Name Conflict" 1, "Folder with name "+ParamName+" found, do you want to overwrite prior Confidence Evaluation results?"
+		if(!V_Flag)
+			abort
+		endif
+	endif
+	if(!WaveExists(BackupParamNames))
+		IR3GP_ConEvBackupCurrentSet(GetDataFolder(1))
+		print "Stored setting in case of abort, this can be reset by button Reset from abort"
+	endif
+	NewDataFolder /S/O $(ParamName)
+	string BackupFilesLocation=GetDataFolder(1)
+	IR3GP_ConEvBackupCurrentSet(BackupFilesLocation)
+	//calculate chiSquare target if users asks for it..
+	IR3GP_ConfEvalCalcChiSqTarget()
+	NVAR ConfEvAutoCalcTarget=root:Packages:Irena:GuinierPorod:ConfEvAutoCalcTarget
+	NVAR ConfEvTargetChiSqRange = root:Packages:Irena:GuinierPorod:ConfEvTargetChiSqRange
+	variable i, currentParValue, tempi
+	make/O/N=0  $(ParamName+"ChiSquare")
+	Wave ChiSquareValues=$(ParamName+"ChiSquare")
+	NVAR AchievedChisq = root:Packages:Irena:GuinierPorod:AchievedChisq
+	variable SortForAnalysis=0
+	variable FittedParameter=0
+
+
+	if(stringMatch(ParamName,"UncertainityEffect"))
+		if(stringMatch(Method,"Vary data, fit params"))
+			Wave OriginalIntensity = root:Packages:Irena:GuinierPorod:OriginalIntensity
+			Wave OriginalError = root:Packages:Irena:GuinierPorod:OriginalError
+			Duplicate/O OriginalIntensity, ConEvIntensityBackup
+			For(i=0;i<NumSteps+1;i+=1)
+				OriginalIntensity = ConEvIntensityBackup + gnoise(OriginalError[p])
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				Wave/T CoefNames=root:Packages:Irena:GuinierPorod:CoefNames
+				Wave ValuesAfterFit=root:Packages:Irena:GuinierPorod:W_coef
+				Wave ValuesBeforeFit = root:Packages:Irena:GuinierPorod:CoefficientInput
+				Duplicate/O CoefNames, ConfEvCoefNames
+				Wave/Z ConfEvStartValues
+				if(!WaveExists(ConfEvStartValues))
+					Duplicate/O 	ValuesAfterFit, ConfEvEndValues
+					Duplicate/O 	ValuesBeforeFit, ConfEvStartValues
+				else
+					Wave ConfEvStartValues
+					Wave ConfEvEndValues
+					redimension/N=(-1,i+1) ConfEvEndValues, ConfEvStartValues
+					ConfEvStartValues[][i] = ValuesBeforeFit[p]
+					ConfEvEndValues[][i] = ValuesAfterFit[p]
+				endif
+				redimension/N=(i+1) ChiSquareValues
+				ChiSquareValues[i]=AchievedChisq
+				DoUpdate
+				sleep/s 1	
+				IR3GP_ConEvRestoreBackupSet(BackupFilesLocation)		
+			endfor	
+			OriginalIntensity = ConEvIntensityBackup
+			IR3GP_ConEvRestoreBackupSet(BackupFilesLocation)
+			SetDataFolder BackupFilesLocation
+			IR3GP_ConEvAnalyzeEvalResults2(ParamName)
+		endif	
+	else		//parameter methods
+		//Metod = "Sequential, fix param;Sequential, reset, fix param;Random, fix param;Random, fit param;"
+		variable SelLevel= str2num(ParamName[5,5])
+		STRUCT GunierPorodLevel Par		
+		make/O/N=0 $(ParamName+"StartValue"), $(ParamName+"EndValue"), $(ParamName+"ChiSquare")
+		Wave StartValues=$(ParamName+"StartValue")
+		Wave EndValues=$(ParamName+"EndValue")
+		IR3GP_LoadLevelFromWave(SelLevel)		
+		NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+		variable StartHere=Param
+		variable step=(MaxValue-MinValue)/(NumSteps)
+		if(stringMatch(Method,"Sequential, fix param"))
+			For(i=0;i<NumSteps+1;i+=1)
+				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
+				currentParValue = MinValue+ i* step
+				StartValues[i]=currentParValue
+					IR3GP_LoadLevelFromWave(SelLevel)		
+					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+					ParamFit=0
+					Param = currentParValue
+					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				EndValues[i]=Param
+				ChiSquareValues[i]=AchievedChisq
+				DoUpdate
+				sleep/s 1
+			endfor
+			SortForAnalysis=0
+			FittedParameter=0
+		elseif(stringMatch(Method,"Sequential, reset, fix param"))
+			For(i=0;i<NumSteps+1;i+=1)
+				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
+				currentParValue = MinValue+ i* step
+				StartValues[i]=currentParValue
+					IR3GP_LoadLevelFromWave(SelLevel)		
+					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+					ParamFit=0
+					Param = currentParValue
+					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				EndValues[i]=Param
+				ChiSquareValues[i]=AchievedChisq
+				DoUpdate
+				sleep/s 1	
+				IR3GP_PanelButtonProc("RevertFitting")		
+			endfor
+			SortForAnalysis=0
+			FittedParameter=0
+		elseif(stringMatch(Method,"Centered, fix param"))
+			tempi=0
+			variable NumSteps2=Ceil(NumSteps/2)
+			For(i=0;i<NumSteps2;i+=1)
+				tempi+=1
+				redimension/N=(tempi) StartValues, EndValues, ChiSquareValues
+				currentParValue = StartHere - i* step
+				StartValues[tempi-1]=currentParValue
+					IR3GP_LoadLevelFromWave(SelLevel)		
+					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+					ParamFit=0
+					Param = currentParValue
+					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				EndValues[tempi-1]=Param
+				ChiSquareValues[tempi-1]=AchievedChisq
+				DoUpdate
+				sleep/s 1	
+			endfor
+			IR3GP_ConEvRestoreBackupSet(BackupFilesLocation)		
+			For(i=0;i<NumSteps2;i+=1)		//and now 
+				tempi+=1
+				redimension/N=(tempi) StartValues, EndValues, ChiSquareValues
+				currentParValue = StartHere + i* step
+				StartValues[tempi-1]=currentParValue
+					IR3GP_LoadLevelFromWave(SelLevel)		
+					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+					ParamFit=0
+					Param = currentParValue
+					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				EndValues[tempi-1]=Param
+				ChiSquareValues[tempi-1]=AchievedChisq
+				DoUpdate
+				sleep/s 1	
+			endfor
+			IR3GP_ConEvRestoreBackupSet(BackupFilesLocation)		
+			SortForAnalysis=1
+			FittedParameter=0
+		elseif(stringMatch(Method,"Random, fix param"))
+			For(i=0;i<NumSteps+1;i+=1)
+				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
+				currentParValue = MinValue + (0.5+enoise(0.5))*(MaxValue-MinValue)
+				StartValues[i]=currentParValue
+					IR3GP_LoadLevelFromWave(SelLevel)		
+					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+					ParamFit=0
+					Param = currentParValue
+					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				EndValues[i]=Param
+				ChiSquareValues[i]=AchievedChisq
+				DoUpdate
+				sleep/s 1	
+				//IR3GP_ConEvRestoreBackupSettings(BackupFilesLocation)		
+			endfor
+			SortForAnalysis=1
+			FittedParameter=0
+		elseif(stringMatch(Method,"Random, fit param"))
+			For(i=0;i<NumSteps+1;i+=1)
+				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
+				currentParValue = MinValue + (0.5+enoise(0.5))*(MaxValue-MinValue)
+				StartValues[i]=currentParValue
+					IR3GP_LoadLevelFromWave(SelLevel)		
+					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+					ParamFit=1
+					Param = currentParValue
+					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_ConEvFixParamsIfNeeded()
+				IR3GP_PanelButtonProc("DoFittingSkipReset")
+				EndValues[i]=Param
+				ChiSquareValues[i]=AchievedChisq
+				DoUpdate
+				sleep/s 1	
+				//IR3GP_ConEvRestoreBackupSettings(BackupFilesLocation)		
+			endfor	
+			SortForAnalysis=1
+			FittedParameter=1
+		endif
+		IR3GP_LoadLevelFromWave(SelLevel)		
+		NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+		ParamFit=1
+		IR3GP_MoveLevelToWave(SelLevel)		
+		
+		IR3GP_ConEvRestoreBackupSet(BackupFilesLocation)
+		IR3GP_PanelButtonProc("GraphDistribution")
+	
+		//something changed data folder, set it back for following functions
+		SetDataFolder BackupFilesLocation
+		IR3GP_ConEvAnalyzeEvalResults(ParamName, SortForAnalysis,FittedParameter)
+	endif	//end of parameters analysis
+	DoWIndow IR3GP_ConfEvaluationPanel
+	if(V_Flag)
+		DoWIndow/F IR3GP_ConfEvaluationPanel
+	endif
+
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+static Function IR3GP_ConEvAnalyzeEvalResults2(ParamName)
+	string ParamName
+	print GetDataFOlder(1)
+	SVAR SampleFullName=root:Packages:Irena:GuinierPorod:DataFolderName
+	NVAR CoefEVNumSteps=root:Packages:Irena:GuinierPorod:ConfEVNumSteps
+	Wave ConfEvStartValues=$("ConfEvStartValues")
+	Wave ConfEvEndValues=$("ConfEvEndValues")
+	Wave/T ConfEvCoefNames=$("ConfEvCoefNames")
+	Wave ChiSquareValues=$(ParamName+"ChiSquare")
+	
+	variable i
+	for(i=0;i<numpnts(ChiSquareValues);i+=1)
+		if(ChiSquareValues[i]==0)
+			ChiSquareValues[i]=NaN
+		endif
+	endfor
+	
+	DoWindow ChisquaredAnalysis
+	if(V_Flag)
+		DoWindow/K ChisquaredAnalysis
+	endif
+	DoWindow ChisquaredAnalysis2
+	if(V_Flag)
+		DoWindow/K ChisquaredAnalysis2
+	endif
+	variable levellow, levelhigh
+
+	IR1_CreateResultsNbk()
+	//IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
+	IR1_AppendAnyText("Effect of data uncertainities on variability of parameters", 2)
+	IR1_AppendAnyText(SampleFullName, 2)	
+	IR1_AppendAnyText("  ", 0)
+	IR1_AppendAnyText("Run "+num2str(CoefEVNumSteps)+" fittings using data modified by random Gauss noise within \"Errors\" ", 2)
+	IR1_AppendAnyText("To get following statistical results ", 0)
+	wavestats/Q ChiSquareValues
+	variable MeanChiSquare=V_avg
+	variable StdDevChiSquare=V_sdev
+	IR1_AppendAnyText("Chi-square values : \taverage = "+num2str(MeanChiSquare)+"\tst. dev. = "+num2str(StdDevChiSquare), 0)	
+
+	variable j
+	string tempStrName
+	For(j=0;j<numpnts(ConfEvCoefNames);j+=1)
+		tempStrName=ConfEvCoefNames[j]
+		Duplicate/Free/O/R=[j][] ConfEvEndValues, tempWv
+		wavestats/Q tempWv
+		IR1_AppendAnyText(tempStrName+" : \taverage = "+num2str(V_avg)+"\tst. dev. = "+num2str(V_sdev), 0)	
+		
+	endfor
+		 
+
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+static Function IR3GP_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedParameter)
+	string ParamName
+	variable SortForAnalysis,FittedParameter
+	
+	NVAR ConfEvTargetChiSqRange = root:Packages:Irena:GuinierPorod:ConfEvTargetChiSqRange
+	SVAR SampleFullName=root:Packages:Irena:GuinierPorod:DataFolderName
+	Wave StartValues=$(ParamName+"StartValue")
+	Wave EndValues=$(ParamName+"EndValue")
+	Wave ChiSquareValues=$(ParamName+"ChiSquare")
+	SVAR Method = root:Packages:Irena:GuinierPorod:ConEvMethod
+	if(SortForAnalysis)
+		Sort EndValues, EndValues, StartValues, ChiSquareValues
+	endif
+	
+	variable i
+	for(i=0;i<numpnts(ChiSquareValues);i+=1)
+		if(ChiSquareValues[i]==0)
+			ChiSquareValues[i]=NaN
+		endif
+	endfor
+	
+	DoWindow ChisquaredAnalysis
+	if(V_Flag)
+		DoWindow/K ChisquaredAnalysis
+	endif
+	DoWindow ChisquaredAnalysis2
+	if(V_Flag)
+		DoWindow/K ChisquaredAnalysis2
+	endif
+	variable levellow, levelhigh
+
+	if(FittedParameter)	//fitted parameter, chi-square analysis needs a bit different... 
+		wavestats/Q ChiSquareValues
+		variable MeanChiSquare=V_avg
+		variable StdDevChiSquare=V_sdev
+	
+		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
+		DoWindow/C/T ChisquaredAnalysis,ParamName+"Chi-squared analysis of "+SampleFullName
+		Label left "Achieved Chi-squared"
+		Label bottom "End "+ParamName+" value"
+		ModifyGraph mirror=1
+		ModifyGraph mode=3,marker=19
+		SetAxis left (V_avg-1.5*(V_avg-V_min)),(V_avg+1.5*(V_max-V_avg))
+		
+		wavestats/Q EndValues
+		variable MeanEndValue=V_avg
+		variable StdDevEndValue=V_sdev
+		Display/W=(35,44,555,335)/K=1 EndValues vs StartValues
+		DoWindow/C/T ChisquaredAnalysis2,ParamName+" reproducibility analysis of "+SampleFullName
+		Label left "End "+ParamName+" value"
+		Label bottom "Start "+ParamName+" value"
+		ModifyGraph mirror=1
+		ModifyGraph mode=3,marker=19		
+		variable TempDisplayRange=max(V_avg-V_min, V_max-V_avg)
+		SetAxis left (V_avg-1.5*(TempDisplayRange)),(V_avg+1.5*(TempDisplayRange))
+		duplicate/O ChiSquareValues, EndValuesGraphAvg, EndValuesGraphMin, EndValuesGraphMax
+		EndValuesGraphAvg = V_avg
+		EndValuesGraphMin = V_avg-V_sdev
+		EndValuesGraphMax = V_avg+V_sdev
+		AppendToGraph EndValuesGraphMax,EndValuesGraphMin,EndValuesGraphAvg vs StartValues	
+		ModifyGraph lstyle(EndValuesGraphMax)=1,rgb(EndValuesGraphMax)=(0,0,0)
+		ModifyGraph lstyle(EndValuesGraphMin)=1,rgb(EndValuesGraphMin)=(0,0,0)
+		ModifyGraph lstyle(EndValuesGraphAvg)=7,lsize(EndValuesGraphAvg)=2
+		ModifyGraph rgb(EndValuesGraphAvg)=(0,0,0)
+		TextBox/C/N=text0/F=0/A=LT "Average = "+num2str(V_avg)+"\rStandard deviation = "+num2str(V_sdev)+"\rMinimum = "+num2str(V_min)+", maximum = "+num2str(V_min)
+	
+		AutoPositionWindow/M=0/R=IR3GP_ConfEvaluationPanel ChisquaredAnalysis
+		AutoPositionWindow/M=0/R=ChisquaredAnalysis ChisquaredAnalysis2
+
+		IR1_CreateResultsNbk()
+//		IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
+		IR1_AppendAnyText("Unified fit uncertainity of parameter "+ParamName, 2)
+		IR1_AppendAnyText("  ", 0)
+		IR1_AppendAnyText("Method used to evaluate parameter reproducibility: "+Method, 0)	
+		//IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)
+		//IR1_AppendAnyText("Range of "+ParamName+" in which the chi-squared < 1.037*"+num2str(V_min)+" is from "+num2str(levellow)+" to "+ num2str(levelhigh), 0)
+		IR1_AppendAnyGraph("ChisquaredAnalysis")
+		IR1_AppendAnyGraph("ChisquaredAnalysis2")
+		IR1_AppendAnyText("  ", 0)
+		IR1_CreateResultsNbk()
+	
+	else	//parameter fixed..		
+		wavestats/q ChiSquareValues
+		
+		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
+		DoWindow/C/T ChisquaredAnalysis,ParamName+" Chi-squared analysis "
+		Label left "Achieved Chi-squared"
+		Label bottom ParamName+" value"
+		ModifyGraph mirror=1
+		ModifyGraph mode=3,marker=19
+		Findlevels/Q/N=2 ChiSquareValues, ConfEvTargetChiSqRange*V_min
+		if(V_Flag!=0)
+			print  "The range of parameters analyzed for "+ParamName +" was not sufficiently large, code did not find large enough values for chi-squared"
+			IR1_CreateResultsNbk()
+//			IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
+			IR1_AppendAnyText("Unified fit evaluation of parameter "+ParamName+" failed", 2)
+			IR1_AppendAnyText("  ", 0)
+			IR1_AppendAnyText("Method used to evaluate parameter stability: "+Method, 0)	
+			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)
+			IR1_AppendAnyText("Range of "+ParamName+" in which the chi-squared < "+num2str(ConfEvTargetChiSqRange)+"*"+num2str(V_min)+" was not between "+num2str(EndValues[0])+" to "+ num2str(EndValues[inf]), 0)
+			IR1_CreateResultsNbk()		
+			IR1_AppendAnyText("  ", 0)
+		else   
+			Wave W_FindLevels
+			levellow=EndValues[W_FindLevels[0]]
+			levelhigh=EndValues[W_FindLevels[1]]
+			Tag/C/N=MinTagLL/F=0/L=2/TL=0/X=0.00/Y=30.00 $(nameofwave(ChiSquareValues)), W_FindLevels[0],"\\JCLow edge\r\\JC"+num2str(levellow)
+			Tag/C/N=MinTagHL/F=0/L=2/TL=0/X=0.00/Y=30.00 $(nameofwave(ChiSquareValues)), W_FindLevels[1],"\\JCHigh edge\r\\JC"+num2str(levelhigh)
+			//Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[V_minLoc])+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
+			Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[V_minLoc])//+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
+			AutoPositionWindow/M=0/R=IR3GP_ConfEvaluationPanel ChisquaredAnalysis
+			IR1_CreateResultsNbk()
+	//		IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
+			IR1_AppendAnyText("Unified fit evaluation of parameter "+ParamName, 2)
+			IR1_AppendAnyText("  ", 0)
+			IR1_AppendAnyText("Method used to evaluate parameter stability: "+Method, 0)	
+			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)
+			IR1_AppendAnyText("Range of "+ParamName+" in which the chi-squared < "+num2str(ConfEvTargetChiSqRange)+"*"+num2str(V_min)+" is from "+num2str(levellow)+" to "+ num2str(levelhigh), 0)
+			IR1_AppendAnyText("           **************************************************     ", 0)
+			IR1_AppendAnyText("\"Simplistic presentation\" for publications :    >>>>   "+ParamName+" =  "+IN2G_roundToUncertainity(EndValues[V_minLoc], (levelhigh - levellow)/2,2),0)
+			IR1_AppendAnyText("           **************************************************     ", 0)
+			IR1_AppendAnyGraph("ChisquaredAnalysis")
+			IR1_AppendAnyText("  ", 0)
+			IR1_CreateResultsNbk()
+		endif
+	endif
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+Function IR3GP_ConEvRestoreBackupSet(BackupLocation)
+	string BackupLocation
+	//restores backup waves (names/values) for all parameters used in current folder
+	string OldDf=GetDataFOlder(1)
+	setDataFolder $(BackupLocation)
+	Wave/T BackupParamNames
+	Wave BackupParamValues
+	variable i, j, curLevel
+	string tempName, CurShortName
+	For(i=0;i<numpnts(BackupParamValues);i+=1)
+			tempName=BackupParamNames[i]
+			if(!stringmatch(tempName,"SASBackground"))
+				CurShortName = tempName[0,4]+ tempName[6,inf]
+				curLevel=str2num(tempName[5,5])
+				NVAR CurPar = $("root:Packages:Irena:GuinierPorod:"+CurShortName)
+				IR3GP_LoadLevelFromWave(curLevel)
+				CurPar = BackupParamValues[i]
+				IR3GP_MoveLevelToWave(curLevel)
+			else
+				NVAR CurPar = $("root:Packages:Irena:GuinierPorod:"+tempName)
+				CurPar = BackupParamValues[i]
+			endif
+	endfor	
+	setDataFolder oldDf
+	
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+static Function IR3GP_ConEvBackupCurrentSet(BackupLocation)
+	string BackupLocation
+	//creates backup waves (names/values) for all parameters used in current folder
+	string OldDf=GetDataFOlder(1)
+	//create folder where we dump this thing...
+	setDataFolder $(BackupLocation)
+	NVAR NumberOfLevels= root:Packages:Irena:GuinierPorod:NumberOfLevels	
+	string ParamNames="Rg1;Rg2;G;P;S1;S2;ETA;Pack;"
+	make/O/N=1/T BackupParamNames
+	make/O/N=1 BackupParamValues
+	variable i, j
+	string tempName, VarName
+	BackupParamNames[0]="SASBackground"
+	NVAR SASBackground=root:Packages:Irena:GuinierPorod:SASBackground
+	BackupParamValues=SASBackground
+	For(i=1;i<=NumberOfLevels;i+=1)
+		IR3GP_LoadLevelFromWave(i)		
+		For(j=0;j<ItemsInList(ParamNames);j+=1)
+			tempName="Level"+num2str(i)+"_"+stringFromList(j,ParamNames)
+			VarName = "Level_"+stringFromList(j,ParamNames)
+			NVAR CurPar = $("root:Packages:Irena:GuinierPorod:"+VarName)
+			redimension/N=(numpnts(BackupParamValues)+1) BackupParamValues, BackupParamNames
+			BackupParamNames[numpnts(BackupParamNames)-1]=tempName
+			BackupParamValues[numpnts(BackupParamNames)-1]=CurPar
+		endfor
+	endfor	
+	setDataFolder oldDf	
+end
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
+
+
+Function IR3GP_ConfEvHelp()
+
+	DoWindow ConfidenceEvaluationHelp
+	if(V_Flag)
+		DoWindow/F ConfidenceEvaluationHelp
+	else
+		String nb = "ConfidenceEvaluationHelp"
+		NewNotebook/N=$nb/F=1/V=1/K=1/W=(444,66,960,820)
+		Notebook $nb defaultTab=36, statusWidth=252
+		Notebook $nb showRuler=1, rulerUnits=1, updating={1, 3600}
+		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
+		Notebook $nb ruler=Normal, fSize=14, fStyle=1, textRGB=(52428,1,1), text="Uncertainity evaluation for Guinier - Porod parameters\r"
+		Notebook $nb fSize=-1, fStyle=1, textRGB=(0,1,3), text="\r"
+		Notebook $nb text="This tool is used to estimate uncertainities for the fitted parameters. "
+		Notebook $nb text="It is likely that the right uncertainity is some combination of the two implemented methods - or the larger one...", fStyle=-1, text="\r"
+		Notebook $nb fStyle=1, text="\r"
+		Notebook $nb text="1. \"Uncertainity effect\" \r", fStyle=-1
+		//Notebook $nb text="1. Sequential, fix param", fStyle=-1
+		Notebook $nb text="Evaluates the influence of DATA uncertainities on uncertainity of Guinier - Porod parameter(s). "
+		Notebook $nb text="Code varies Intensity data within user provided uncertainities (\"errors\"). All parameters currently selected for fitting are evaluted at once.\r"
+		Notebook $nb fStyle=1, text="2. Uncertainity for individual parameters \r", fStyle=-1
+		Notebook $nb text="Analysis of quality of fits achievable with tested parameter variation.  "
+		Notebook $nb text="The tool will fix tested parameter within the user defined range and fit the other parameters to the data. Plot of achieved chi-squared as function of the fixed value of the tested parameter "
+		Notebook $nb text="is used to estimate uncertainity. User needs to pick method of analysis as described below. User can analyze one parameter or create list of parameters and analyze them sequentially. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="All parameters which are supposed to be varied during analysis must have \"Fit?\" checkbox checked before the tool si started. Correct fitting limits may be set or use \"Fix fit limits\" checkbox. "
+		Notebook $nb text="Range of data for fitting must be selected correctly with cursors (Unified fit) or set for data with controls (Modeling II). The code does not mo"
+		Notebook $nb text="dify fitting range. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="for \"Uncertainity effect\" but for the single parameter tests the results are untested. It may work, but if not - let me know... \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="For each evaluated parameter the input is its name, range of values (Min/Max) to be stepped through and number "
+		Notebook $nb text="of steps (default 20) to take. Depending on the type of parameter, different default Min/Max are generated for thi"
+		Notebook $nb text="s analysis when parameter is selected. If the default for any parameters is systematically wrong, let me know and I'll fix it. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="You may need to play with fitting limits as it is likely there may be some fitting failures with wrong limits or using too large testing range. No attempt is made \r"
+		Notebook $nb text="to gracefully recover from major fitting disasters. The main help is use of button \"Recover from abort\" if you have to abort the fittings.  \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="After analysis is done, results are recorded in the ResultsNotebook and waves with results for further a"
+		Notebook $nb text="nalysis are stored in root:ConfidenceEvaluation:<SampleName>:<Parametername>. Stored are waves names as"
+		Notebook $nb text=" follows: <Parameter>ChiSquare, <Parameter>StartValue, <Parameter>EndValue. If the parameter is not fitt"
+		Notebook $nb text="ed during evaluation Start and End values are the same. \r"
+		Notebook $nb fStyle=1, text="\r"
+		Notebook $nb text="Analysis of effect of data uncertainities (\"Uncertainity effect\")", fStyle=-1, text=":\r"
+		Notebook $nb fStyle=1, text="Vary data, fit parameters", fStyle=-1
+		Notebook $nb text=": Data are varied by adding to input intensity Gaussian noise with standard deviation equal to the unc"
+		Notebook $nb text="rtainities provided by user (aka: \"Error data\"). No other scaling is done. "
+		Notebook $nb text="All selected parameters are fitted selected number of times and statistics is generated in notebook.     \r"
+		Notebook $nb text="\r"
+		Notebook $nb fStyle=1, text="Methods for analysis for individual parameters", fStyle=-1, text=":\r"
+		Notebook $nb fStyle=1, text="1. Sequential, fix param", fStyle=-1
+		Notebook $nb text=": Tested parameter is set to Min and all other parameters selected by user for fitting are fit"
+		Notebook $nb text="ted. Chi-squared is recorded. Parameter is increased by step (Max-Min/NumberOfSteps) and fitting is done"
+		Notebook $nb text=" again - using the result of the prior fit as starting condition.     \r"
+		Notebook $nb text="\r"
+		Notebook $nb fStyle=1, text="2. Sequential, reset, fix param", fStyle=-1
+		Notebook $nb text=": Tested parameter is set to Min and all other parameters selected by user for fitting  are fi"
+		Notebook $nb text="tted. Chi-squared is recorded. Unified fit is reset to have the parameters which were set byu user before the evaluation"
+		Notebook $nb text=" was started. Parameter is increased by step (Max-Min/NumberOfSteps) and fitting is done again - therefore using t"
+		Notebook $nb text="he original user settings as the starting condition.  \r"
+		Notebook $nb text="\r"
+		Notebook $nb fStyle=1, text="3. Centered, fix param", fStyle=-1
+		Notebook $nb text=": Tested parameter is varied from start value towards Min, using previous fit result as starting condi"
+		Notebook $nb text="tion. When Min is reached, the UF is reset to start position and parameter is varied up to Max"
+		Notebook $nb text=". Chi-squared is recorded for each parameter value.\r"
+		Notebook $nb text="\r"
+		Notebook $nb fStyle=1, text="4. Random, fix param", fStyle=-1
+		Notebook $nb text=": User defined number of random values for the tested parameter are selected in the user defined  range of data"
+		Notebook $nb text=" and for each the fit is performed while using the prior setting as starting condition. Chi-squared is r"
+		Notebook $nb text="ecorded.\r"
+		Notebook $nb text="\r"
+		Notebook $nb fStyle=1, text="5. Random, fit param", fStyle=-1
+		Notebook $nb text=": User defined number of random starting values for the parameter are selected in the user defined range"
+		Notebook $nb text=" of data and for each the fit is performed - including fitting this parameter - using prior setting as s"
+		Notebook $nb text="tarting condition. Chi-squared is recorded as well as starting and ending parameter values. "
+		Notebook $nb selection={startOfFile, startOfFile}, findText={"",1}
+	endif
+
+end
+
+//******************************************************************************************************************
+//******************************************************************************************************************
+//******************************************************************************************************************
 

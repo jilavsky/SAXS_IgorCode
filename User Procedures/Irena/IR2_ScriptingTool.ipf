@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
-Constant IR2SversionNumber=1.11
+#pragma version=1.12
+Constant IR2SversionNumber=1.12
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -18,6 +18,7 @@ Constant IR2SversionNumber=1.11
 //1.09 significant increase in speed due to changes to Control procedures.
 //1.10 added handling of uncertainities (errors) for Results data type (needed for Sizes)
 //1.11 modified to handle d, t, and m type QRS data (d-spacing, two theta, and distance) for needs to Nika users
+//1.12 Added Guinier-Porod as controlled tool and fixed minor Folder selection bug for other tools 
 
 //**************************************************************************************
 //**************************************************************************************
@@ -235,6 +236,9 @@ Function IR2S_ButtonProc(ctrlName) : ButtonControl
 	if(stringmatch(ctrlName,"FitWithUnified"))
 		IR2S_FItWithUnifiedFit()
 	endif
+	if(stringmatch(ctrlName,"FitWithGuinierPorod"))
+		IR2S_FitWithGuinierPorod()
+	endif
 	if(stringmatch(ctrlName,"FitWithSizes"))
 		IR2S_FItWithSizes(0)
 	endif
@@ -317,7 +321,7 @@ end
 
 Window IR2S_ScriptingToolPnl() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel/K=1 /W=(28,44,412,615) as "Scripting tool"
+	NewPanel/K=1 /W=(28,44,412,625) as "Scripting tool"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65535)
 	DrawText 29,29,"Scripting tool"
@@ -364,24 +368,28 @@ Window IR2S_ScriptingToolPnl()
 
 	Button FitWithUnified,pos={90,375},size={200,15},proc=IR2S_ButtonProc,title="Run Unified Fit on selected data"
 	Button FitWithUnified,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
-	Button FitWithSizes,pos={20,400},size={160,15},proc=IR2S_ButtonProc,title="Run Size dist. no uncert."
+
+	Button FitWithGuinierPorod,pos={90,395},size={200,15},proc=IR2S_ButtonProc,title="Run Guinier-Porod on selected data"
+	Button FitWithGuinierPorod,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
+
+	Button FitWithSizes,pos={20,415},size={160,15},proc=IR2S_ButtonProc,title="Run Size dist. no uncert."
 	Button FitWithSizes,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
-	Button FitWithSizesU,pos={210,400},size={160,15},proc=IR2S_ButtonProc,title="Run Size distr. w/uncert."
+	Button FitWithSizesU,pos={210,415},size={160,15},proc=IR2S_ButtonProc,title="Run Size distr. w/uncert."
 	Button FitWithSizesU,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
-	Button FitWithMoldelingII,pos={90,425},size={200,15},proc=IR2S_ButtonProc,title="Run Modeling II on selected data"
+	Button FitWithMoldelingII,pos={90,435},size={200,15},proc=IR2S_ButtonProc,title="Run Modeling II on selected data"
 	Button FitWithMoldelingII,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
-	Button CallPlottingToolII,pos={20,450},size={160,15},proc=IR2S_ButtonProc,title="Run (w/reset) Plotting tool"
+	Button CallPlottingToolII,pos={20,455},size={160,15},proc=IR2S_ButtonProc,title="Run (w/reset) Plotting tool"
 	Button CallPlottingToolII,fSize=10,fStyle=2
-	Button CallPlottingToolIIA,pos={210,450},size={160,15},proc=IR2S_ButtonProc,title="Append to Plotting tool"
+	Button CallPlottingToolIIA,pos={210,455},size={160,15},proc=IR2S_ButtonProc,title="Append to Plotting tool"
 	Button CallPlottingToolIIA,fSize=10,fStyle=2
 
-	CheckBox SaveResultsInNotebook,pos={30,480},size={64,14},proc=IR2S_CheckProc,title="Save results in notebook?"
+	CheckBox SaveResultsInNotebook,pos={30,490},size={64,14},proc=IR2S_CheckProc,title="Save results in notebook?"
 	CheckBox SaveResultsInNotebook,variable= root:Packages:Irena:ScriptingTool:SaveResultsInNotebook
-	CheckBox ResetBeforeNextFit,pos={30,500},size={64,14},proc=IR2S_CheckProc,title="Reset before next fit? (Unified/Modeling II)"
+	CheckBox ResetBeforeNextFit,pos={30,510},size={64,14},proc=IR2S_CheckProc,title="Reset before next fit? (Unified/Modeling II)"
 	CheckBox ResetBeforeNextFit,variable= root:Packages:Irena:ScriptingTool:ResetBeforeNextFit
-	CheckBox SaveResultsInFldrs,pos={30,520},size={64,14},proc=IR2S_CheckProc,title="Save results in folders?"
+	CheckBox SaveResultsInFldrs,pos={30,530},size={64,14},proc=IR2S_CheckProc,title="Save results in folders?"
 	CheckBox SaveResultsInFldrs,variable= root:Packages:Irena:ScriptingTool:SaveResultsInFldrs
-	CheckBox SaveResultsInWaves,pos={30,540},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling II)?"
+	CheckBox SaveResultsInWaves,pos={30,550},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling II)?"
 	CheckBox SaveResultsInWaves,variable= root:Packages:Irena:ScriptingTool:SaveResultsInWaves
 
 	IR2S_UpdateListOfAvailFiles()
@@ -818,7 +826,9 @@ Function IR2S_CallWithPlottingToolII(reset)
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "IR1P_ControlPanel"
 			IR2C_PanelPopupControl(PU_Struct)
-			PopupMenu SelectDataFolder win=IR1P_ControlPanel, popmatch=CurrentFolderName
+			//PopupMenu SelectDataFolder win=IR1P_ControlPanel, popmatch=CurrentFolderName
+			PopupMenu SelectDataFolder win=IR1P_ControlPanel, value="---;"+IR2P_GenStringOfFolders(winNm="IR1P_ControlPanel")
+			PopupMenu SelectDataFolder win=IR1P_ControlPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
 			//not enough if using results, which user can select what to plot very specifically...
 			if(STUseResults)
 				if(stringmatch(ResultsGenerationToUse,"Latest"))
@@ -942,7 +952,9 @@ Function IR2S_FItWithModelingII()
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "LSQF2_MainPanel"
 			IR2C_PanelPopupControl(PU_Struct)
-			PopupMenu SelectDataFolder win=LSQF2_MainPanel, popmatch=CurrentFolderName
+			//PopupMenu SelectDataFolder win=LSQF2_MainPanel, popmatch=CurrentFolderName
+			PopupMenu SelectDataFolder win=LSQF2_MainPanel, value="---;"+IR2P_GenStringOfFolders(winNm="LSQF2_MainPanel")
+			PopupMenu SelectDataFolder win=LSQF2_MainPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
 			//preset the right setting of the tool here, just in case...
 			IR2L_Data_TabPanelControl("",0)	//sets the tab 0 active.
 			IR2L_DataTabCheckboxProc("DisplayDataControls",1)
@@ -1065,7 +1077,9 @@ Function IR2S_FItWithSizes(Uncert)
 				
 			//this should create the new graph...
 			IR1R_GraphIfAllowed("GraphIfAllowedSkipRecover")
-			PopupMenu SelectDataFolder win=IR1R_SizesInputPanel, popmatch=DataFolderName
+			//PopupMenu SelectDataFolder win=IR1R_SizesInputPanel, popmatch=DataFolderName
+			PopupMenu SelectDataFolder win=IR1R_SizesInputPanel, value="---;"+IR2P_GenStringOfFolders(winNm="IR1R_SizesInputPanel")
+			PopupMenu SelectDataFolder win=IR1R_SizesInputPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
 			//now we need to set back the cursors.
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
@@ -1112,6 +1126,122 @@ end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
+Function IR2S_FitWithGuinierPorod()
+
+	DoWindow IR3DP_MainPanel
+	if(!V_Flag)
+		Abort  "The Unified fit tool panel and graph must be opened"
+	else
+		DoWIndow/F IR3DP_MainPanel 
+	endif
+	
+	DoWindow GunierPorod_LogLogPlot
+	if(!V_Flag)
+		Abort  "The Guinier Porod tool panel and graph must be opened"
+	else
+		DoWIndow/F GunierPorod_LogLogPlot 
+	endif
+
+
+	string OldDF=GetDataFolder(1)
+	setDataFolder root:Packages:Irena:ScriptingTool
+	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
+	NVAR STUseQRSdata =root:Packages:Irena:ScriptingTool:UseQRSdata
+	
+	NVAR PTUseIndra2Data=root:Packages:Irena:GuinierPorod:UseIndra2Data
+	NVAR PTUseQRSdata=root:Packages:Irena:GuinierPorod:UseQRSdata
+	PTUseQRSdata=STUseQRSdata
+	PTUseIndra2Data=STUseIndra2Data
+
+
+	Wave/T ListOfAvailableData = root:Packages:Irena:ScriptingTool:ListOfAvailableData
+	Wave SelectionOfAvailableData =root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
+	NVAR UseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
+	variable NumOfSelectedFiles = sum(SelectionOfAvailableData)
+	NVAR SaveResultsInNotebook = root:Packages:Irena:ScriptingTool:SaveResultsInNotebook
+	NVAR ResetBeforeNextFit = root:Packages:Irena:ScriptingTool:ResetBeforeNextFit
+	NVAR SaveResultsInFldrs = root:Packages:Irena:ScriptingTool:SaveResultsInFldrs
+	SVAR StartFolderName = root:Packages:Irena:ScriptingTool:StartFolderName
+	string LStartFolder
+	if(stringmatch(StartFolderName,"---"))
+		LStartFolder="root:"
+	else
+		LStartFolder=StartFolderName
+	endif
+	
+	variable i
+	string CurrentFolderName
+	variable StartQ, EndQ		//need to store these from cursor positions (if set)
+	DoWIndow IR1_LogLogPlotU
+	if(V_Flag)
+		Wave Ywv = csrXWaveRef(A  , "GunierPorod_LogLogPlot" )
+		StartQ = Ywv[pcsr(A  , "GunierPorod_LogLogPlot" )]
+		EndQ = Ywv[pcsr(B  , "GunierPorod_LogLogPlot" )]
+	endif
+	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
+		if(SelectionOfAvailableData[i]>0.5)
+			//here process the Unified...
+			//CurrentFolderName="root:"
+			//if(UseIndra2Data)
+			//	CurrentFolderName+="USAXS:"
+			//endif
+			CurrentFolderName = LStartFolder + ListOfAvailableData[i]
+			//OK, now we know which files to process	
+			//now stuff the name of the new folder in the folder name in Unified...
+			SVAR DataFolderName = root:Packages:Irena:GuinierPorod:DataFolderName
+			DataFolderName = CurrentFolderName
+			//now except for case when we use Indra 2 data we need to reload the other wave names... 
+			STRUCT WMPopupAction PU_Struct
+			PU_Struct.ctrlName = "SelectDataFolder"
+			PU_Struct.popNum=0
+			PU_Struct.eventcode=2
+			PU_Struct.popStr=DataFolderName
+			PU_Struct.win = "IR3DP_MainPanel"
+			IR2C_PanelPopupControl(PU_Struct)
+			PopupMenu SelectDataFolder win=IR3DP_MainPanel, value="---;"+IR2P_GenStringOfFolders(winNm="IR3DP_MainPanel")
+			PopupMenu SelectDataFolder win=IR3DP_MainPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
+			
+			//this should create the new graph...
+			IR3GP_PanelButtonProc("DrawGraphsSkipDialogs")
+			//now we need to set back the cursors.
+			if(StartQ>0)
+				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+				if(binarysearch(Qwave,StartQ)>0)
+					Cursor  /P /W=IR1_LogLogPlotU A  OriginalIntensity binarysearch(Qwave,StartQ)
+				endif	
+			endif
+			if(EndQ>0)
+				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+				if(binarysearch(Qwave,EndQ)>0)
+					Cursor  /P /W=IR1_LogLogPlotU B  OriginalIntensity binarysearch(Qwave,EndQ)	
+				endif
+			endif
+			
+			variable/g root:Packages:Irena:GuinierPorod:FitFailed
+			//do fitting
+			IR3GP_PanelButtonProc("DoFittingSkipReset")
+			DoUpdate
+			NVAR FitFailed=root:Packages:Irena:GuinierPorod:FitFailed
+			
+			if(SaveResultsInNotebook)
+				IR2S_SaveResInNbkGunPor(FitFailed)
+			endif
+			if(SaveResultsInFldrs && !FitFailed)
+				IR3GP_PanelButtonProc("CopyTFolderNoQuestions")
+			endif
+			if(ResetBeforeNextFit && !FitFailed)
+				IR3GP_PanelButtonProc("RevertFitting")   
+			endif
+			KillVariables  FitFailed
+		endif
+		
+	
+	endfor
+	
+	
+
+	setDataFolder OldDF
+end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
@@ -1190,7 +1320,9 @@ Function IR2S_FItWithUnifiedFit()
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "IR1A_ControlPanel"
 			IR2C_PanelPopupControl(PU_Struct)
-			PopupMenu SelectDataFolder win=IR1A_ControlPanel, popmatch=DataFolderName
+			//PopupMenu SelectDataFolder win=IR1A_ControlPanel, popmatch=DataFolderName
+			PopupMenu SelectDataFolder win=IR1A_ControlPanel, value="---;"+IR2P_GenStringOfFolders(winNm="IR1A_ControlPanel")
+			PopupMenu SelectDataFolder win=IR1A_ControlPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
 			
 			//this should create the new graph...
 			IR1A_InputPanelButtonProc("DrawGraphsSkipDialogs")
@@ -1234,6 +1366,120 @@ Function IR2S_FItWithUnifiedFit()
 	setDataFolder OldDF
 end
 
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+
+Function IR2S_SaveResInNbkGunPor(FitFailed)
+	variable FitFailed
+	
+		DoWIndow ScriptingToolNbk
+
+		if(!V_Flag)
+			NewNotebook /F=1 /K=1 /N=ScriptingToolNbk /W=(400,20,1000,700 ) as "Results of scripting tool runs"		
+		endif
+		SVAR DataFolderName = root:Packages:Irena:GuinierPorod:DataFolderName
+
+
+		Notebook ScriptingToolNbk   selection={endOfFile, endOfFile}
+		Notebook ScriptingToolNbk text="\r"
+		Notebook ScriptingToolNbk text="\r"
+		Notebook ScriptingToolNbk text="\r"
+		Notebook ScriptingToolNbk text="***********************************************\r"
+		Notebook ScriptingToolNbk text="***********************************************\r"
+		Notebook ScriptingToolNbk text=date()+"   "+time()+"\r"
+		Notebook ScriptingToolNbk text="Gunier-Porod results from folder :   "+ DataFolderName+"\r"
+		Notebook ScriptingToolNbk text="\r"
+		if(FitFailed)
+			Notebook ScriptingToolNbk text="Fit failed\r"
+		else
+			Notebook ScriptingToolNbk  scaling={50,50}, frame=1, picture={GunierPorod_LogLogPlot,2,1}	
+			Notebook ScriptingToolNbk text="\r"
+			IR2S_RecordResultsToNbkGP()
+		endif
+end	
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+
+
+Function IR2S_RecordResultsToNbkGP()	
+
+	string OldDF=GetDataFolder(1)
+	setdataFolder root:Packages:Irena_UnifFit
+
+	NVAR NumberOfLevels=root:Packages:Irena:GuinierPorod:NumberOfLevels
+
+	NVAR SASBackground=root:Packages:Irena:GuinierPorod:SASBackground
+	NVAR FitSASBackground=root:Packages:Irena:GuinierPorod:FitSASBackground
+	NVAR SubtractBackground=root:Packages:Irena:GuinierPorod:SubtractBackground
+	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
+	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
+
+	SVAR DataAreFrom=root:Packages:Irena:GuinierPorod:DataFolderName
+	SVAR IntensityWaveName=root:Packages:Irena:GuinierPorod:IntensityWaveName
+	SVAR QWavename=root:Packages:Irena:GuinierPorod:QWavename
+	SVAR ErrorWaveName=root:Packages:Irena:GuinierPorod:ErrorWaveName
+
+	Notebook ScriptingToolNbk   selection={endOfFile, endOfFile}
+	Notebook ScriptingToolNbk text="\r"
+	Notebook ScriptingToolNbk text="Summary of Gunier Porod fit results :"+"\r"
+	if(UseSMRData)
+		Notebook ScriptingToolNbk text="Slit smeared data were. Slit length [A^-1] = "+num2str(SlitLengthUnif)+"\r"
+	endif
+	Notebook ScriptingToolNbk text="Name of data waves Int/Q/Error \t"+IntensityWaveName+"\t"+QWavename+"\t"+ErrorWaveName+"\r"
+	Notebook ScriptingToolNbk text="Number of levels: "+num2str(NumberOfLevels)+"\r"
+	Notebook ScriptingToolNbk text="SAS background = "+num2str(SASBackground)+", was fitted? = "+num2str(FitSASBackground)+"       (yes=1/no=0)"+"\r"
+	Notebook ScriptingToolNbk text="\r"
+	variable i
+	STRUCT GunierPorodLevel Par
+	For (i=1;i<=NumberOfLevels;i+=1)
+		IR3GP_LoadStructureFromWave(Par, i)
+		Notebook ScriptingToolNbk text="***********  Level  "+num2str(i)+"\r"
+		Notebook ScriptingToolNbk text="P     \t \t"+ num2str(Par.P)+"\t\t+/- "+num2str(Par.PError)+"\t,  \tfitted? = "+num2str(Par.PFit)+"\r"
+		if(Par.Rg1>=1e6)
+			Notebook ScriptingToolNbk text="\t Guinier 1 not assumed, using just power law slope"+"\r"
+		else
+			Notebook ScriptingToolNbk text="Rg1     \t\t"+ num2str(Par.Rg1)+"\t\t+/- "+num2str(Par.Rg1Error)+"\t,  \tfitted? = "+num2str(Par.Rg1Fit)+"\r"
+			Notebook ScriptingToolNbk text="G      \t\t"+ num2str(Par.G)+"\t\t+/- "+num2str(Par.GError)+"\t,  \tfitted? = "+num2str(Par.GFit)+"\r"
+			if(Par.S1>0)
+				Notebook ScriptingToolNbk text="S1     \t \t"+ num2str(Par.S1)+"\t\t+/- "+num2str(Par.S1Error)+"\t,  \tfitted? = "+num2str(Par.S1Fit)+"\r"
+				if(Par.Rg2>=1e10)
+					Notebook ScriptingToolNbk text="\t Guinier 2 not assumed, using just power law slope 2"+"\r"
+				else
+					Notebook ScriptingToolNbk text="Rg2     \t \t"+ num2str(Par.Rg2)+"\t\t+/- "+num2str(Par.Rg2Error)+"\t,  \tfitted? = "+num2str(Par.Rg2Fit)+"\r"
+				endif
+				if(Par.S2>0)
+					Notebook ScriptingToolNbk text="S2     \t \t"+ num2str(Par.S2)+"\t\t+/- "+num2str(Par.S2Error)+"\t,  \tfitted? = "+num2str(Par.S2Fit)+"\r"
+				endif
+			endif
+		endif
+		if(Par.RgCutOff>0)
+			Notebook ScriptingToolNbk text="RgCO     \t \t"+ num2str(Par.RgCutOff)+"\r"
+		endif
+		if(Par.UseCorrelations)
+			Notebook ScriptingToolNbk text="\tAssumed Correlations (Structure factor)"+"\r"
+			Notebook ScriptingToolNbk text="ETA     \t \t"+ num2str(Par.ETA)+"\t\t+/- "+num2str(Par.ETAError)+"\t,  \tfitted? = "+num2str(Par.ETAFit)+"\r"
+			Notebook ScriptingToolNbk text="Pack     \t \t"+ num2str(Par.Pack)+"\t\t+/- "+num2str(Par.PackError)+"\t,  \tfitted? = "+num2str(Par.PackFit)+"\r"
+		endif
+	endfor
+	
+		NVAR AchievedChisq=root:Packages:Irena:GuinierPorod:AchievedChisq
+		Notebook ScriptingToolNbk text="Chi-Squared \t"+ num2str(AchievedChisq)+"\r"
+
+		DoWindow /F GunierPorod_LogLogPlot
+		if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
+			Notebook ScriptingToolNbk text="Points selected for fitting \t"+ num2str(pcsr(A)) + "   to \t"+num2str(pcsr(B))+"\r"
+		else
+			Notebook ScriptingToolNbk text="Whole range of data selected for fitting"+"\r"
+		endif
+				
+	setdataFolder oldDf
+end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
