@@ -1,5 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
+#pragma version 1.01
 
+
+
+// 1.01 changed way error bars are added and added SMR error bars capability.  
 
 
 
@@ -75,16 +79,24 @@ function IR2D_DWSAttachErrorBars()
 			else
 				if (Stringmatch (activetrace,"M_DSM_int*"))
 					if (waveexists(M_DSM_Error))
-						ErrorBars $activetrace Y,wave=(M_DSM_Error,M_DSM_Error);DelayUpdate
+						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(M_DSM_Error,M_DSM_Error);DelayUpdate
 					endif
 				elseif (Stringmatch (activetrace,"*DSM_int*"))
 					if (waveexists(DSM_Error))
-						ErrorBars $activetrace Y,wave=(DSM_Error,DSM_Error);DelayUpdate
+						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(DSM_Error,DSM_Error);DelayUpdate
+					endif
+				elseif (Stringmatch (activetrace,"M_SMR_int*"))
+					if (waveexists(M_SMR_Error))
+						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(M_SMR_Error,M_SMR_Error);DelayUpdate
+					endif
+				elseif (Stringmatch (activetrace,"*SMR_int*"))
+					if (waveexists(SMR_Error))
+						ErrorBars/T=0/L=1.2 $activetrace Y,wave=(SMR_Error,SMR_Error);DelayUpdate
 					endif
 				elseif (Stringmatch (activetrace,"R*"))
 					ewave="s"+activetrace[1,32]
 					if (waveexists($ewave))
-						ErrorBars $activetrace Y,wave=($ewave,$ewave);DelayUpdate
+						ErrorBars/T=0/L=1.2 $activetrace Y,wave=($ewave,$ewave);DelayUpdate
 					endif
 				endif
 			endif

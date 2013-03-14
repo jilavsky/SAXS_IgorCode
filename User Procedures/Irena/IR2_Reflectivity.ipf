@@ -2227,7 +2227,7 @@ static Function IR2R_SaveDataToFolder()
 	if(strlen(DataFolderName)<1)
 		abort "Save data error, DataFolderName is not correct"
 	endif
-	if(stringmatch(DataFolderName, "*root:Packages:*"))		//using Moldeling tool
+	if(stringmatch(DataFolderName, "*root:Packages:*"))		//using Modeling tool
 		string NewFldrName
 		NewFldrName="ReflectivityModeling"
 		Prompt NewFldrName, "Using model, need to create new folder for the results"

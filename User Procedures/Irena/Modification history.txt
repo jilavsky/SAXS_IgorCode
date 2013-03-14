@@ -14,6 +14,7 @@ Added scroll buttons to scroll vertically content of panels for small displays. 
 Added "User" defined structure factor (implemented in Modeling II)
 Added panel version control for: Fractals tool, Small-angle diffraction, ASCII export, ASCII Import
 Data Manipulation II - modified to add ability to create errors (=uncertainties), scale and rebin to number of points. Modified GUI to separate processing, errors generation and post processing (scaling/rebinning). 
+Plotting tool II - changed how error bars are displayed and enables SMR data error bars. 
 
 
 2.50 1/4/2013

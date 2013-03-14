@@ -3997,7 +3997,7 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 			Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[V_minLoc])//+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
 			AutoPositionWindow/M=0/R=LSQF2_MainPanel ChisquaredAnalysis
 			IR1_CreateResultsNbk()
-			IR1_AppendAnyText("Moldeling II Evaluation of parameter "+ParamName, 2)
+			IR1_AppendAnyText("Modeling II Evaluation of parameter "+ParamName, 2)
 			IR1_AppendAnyText("  ", 0)
 			IR1_AppendAnyText("Method used to evaluate parameter stability: "+Method, 0)	
 			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)

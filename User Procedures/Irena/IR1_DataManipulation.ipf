@@ -3570,7 +3570,11 @@ Function IR3M_PresetOutputWvsNms()
 	else
 		ResultsIntWaveName  = IN2G_RemoveExtraQuote(IntensityWaveName,1,1)[0,25]+NameModifier
 		ResultsQvecWaveName = IN2G_RemoveExtraQuote(QWavename,1,1)[0,25]+NameModifier
-		ResultsErrWaveName =  IN2G_RemoveExtraQuote(ErrorWaveName,1,1)[0,25]+NameModifier
+		if(!stringmatch(ErrorWaveName,"---")&&!stringmatch(IntensityWaveName,ErrorWaveName))
+			ResultsErrWaveName =  IN2G_RemoveExtraQuote(ErrorWaveName,1,1)[0,25]+NameModifier
+		else
+			ResultsErrWaveName = "s"+ResultsIntWaveName[1,inf]
+		endif
 	endif
 end
 
@@ -4448,7 +4452,7 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
 					Wave/Z TempSubtractedEWv0123= $(tempFldrNm+"TempSubtractedEWv0123")
 					if(WaveExists(TempSubtractedEWv0123))
-						Duplicate TempSubtractedEWv0123, $((OutEWvNm))
+						Duplicate/O TempSubtractedEWv0123, $((OutEWvNm))
 					endif
 					setDataFolder tempFldrNm
 					print "Created new data in "+OutFldrNm+" by subtracting requested data from data in "+FldrNamesTWv[i]
