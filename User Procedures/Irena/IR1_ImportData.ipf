@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
+#pragma version=2.16
 Constant IR1IversionNumber = 2.15
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 added cleanup of weird characters (,),%, {, } of names. Allowed by igor but cause problems to my opther code. 
 //2.15 added vertical scrolling for panel. 
 //2.14 added option to trunkate long names in front or end.
 //2.13 FIxed bug when selection Qmax for trimming larger than Qmax f data resulted in no data in the file at all. Fixed note when scaling data.
@@ -492,9 +493,9 @@ Function IR1I_RecordResults(selectedFile)
 
 	//and print in history, so user has some feedback...
 	print "Imported data from :"+DataPathName+selectedFile+"\r"
-	print "\tData stored in :\t\t\t"+NewFldrNm
+	print "\tData stored in :\t\t\t"+IR1I_RemoveBadCharacters(NewFldrNm)
 	if(DataContainErrors || CreateSQRTErrors || CreatePercentErrors)
-		print  "\tNew Wave names are :\t"+ NewIntName+"\t"+NewQName+"\t"+NewEName+"\r"
+		print  "\tNew Wave names are :\t"+ IR1I_RemoveBadCharacters(NewIntName)+"\t"+IR1I_RemoveBadCharacters(NewQName)+"\t"+IR1I_RemoveBadCharacters(NewEName)+"\r"
 	else //no errors...
 		print  "\tNew Wave names are :\t"+ NewIntName+"\t"+NewQName+"\r"
 		print  "\tNo errors were loaded or created \r"
@@ -721,6 +722,7 @@ Function IR1I_NameImportedWaves(selectedFile)
 	string NewIntName, NewQName, NewEName, NewQEName, tempFirstPart, tempLastPart
 	
 	if(stringMatch(NewIntensityWaveName,"*<fileName>*")==0)
+		NewIntName = IR1I_RemoveBadCharacters(NewIntName)
 		NewIntName = CleanupName(NewIntensityWaveName, 1 )
 		NewIntName=IR1I_TrunkateName(NewIntName,TrunkateStart,TrunkateEnd)
 	else
@@ -731,9 +733,11 @@ Function IR1I_NameImportedWaves(selectedFile)
 		else
 			NewIntName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
 		endif
+		NewIntName = IR1I_RemoveBadCharacters(NewIntName)
 		NewIntName = CleanupName(NewIntName, 1 )
 	endif
 	if(stringMatch(NewQwaveName,"*<fileName>*")==0)
+		NewQName =IR1I_RemoveBadCharacters(NewQName)
 		NewQName = CleanupName(NewQwaveName, 1 )
 		NewQName=IR1I_TrunkateName(NewQName,TrunkateStart,TrunkateEnd)
 	else
@@ -744,9 +748,11 @@ Function IR1I_NameImportedWaves(selectedFile)
 		else
 			NewQName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
 		endif
+		NewQName =IR1I_RemoveBadCharacters(NewQName)
 		NewQName = CleanupName(NewQName, 1 )
 	endif
 	if(stringMatch(NewErrorWaveName,"*<fileName>*")==0)
+		NewEName =IR1I_RemoveBadCharacters(NewEName)
 		NewEName = CleanupName(NewErrorWaveName, 1 )
 		NewEName=IR1I_TrunkateName(NewEName,TrunkateStart,TrunkateEnd)
 	else
@@ -757,9 +763,11 @@ Function IR1I_NameImportedWaves(selectedFile)
 		else
 			NewEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
 		endif
+		NewEName =IR1I_RemoveBadCharacters(NewEName)
 		NewEName = CleanupName(NewEName, 1 )
 	endif
 	if(stringMatch(NewQErrorWaveName,"*<fileName>*")==0)
+		NewQEName =IR1I_RemoveBadCharacters(NewQEName)
 		NewQEName = CleanupName(NewQErrorWaveName, 1 )
 		NewQEName=IR1I_TrunkateName(NewQEName,TrunkateStart,TrunkateEnd)
 	else
@@ -770,6 +778,7 @@ Function IR1I_NameImportedWaves(selectedFile)
 		else
 			NewQEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
 		endif
+		NewQEName =IR1I_RemoveBadCharacters(NewQEName)
 		NewQEName = CleanupName(NewQEName, 1 )
 	endif
 	NVAr AutomaticallyOverwrite = root:Packages:ImportData:AutomaticallyOverwrite
@@ -807,6 +816,22 @@ Function IR1I_NameImportedWaves(selectedFile)
 //	SVAR NewErrorWaveName= root:packages:ImportData:NewErrorWaveName
 
 	IR1I_KillAutoWaves()
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function/S IR1I_RemoveBadCharacters(StringName)
+	string StringName
+	
+	//here we can clean up waht Igor allows but would be major problem with my code, such as ( or ) from names
+	make/Free/T/N=0 ListOfBadChars
+	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@"}
+	variable i
+	For (i=0;i<numpnts(ListOfBadChars);i+=1)
+		StringName = ReplaceString(ListOfBadChars[i], StringName, "_" )
+	endfor
+	return StringName
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -907,6 +932,7 @@ Function IR1I_CreateImportDataFolder(selectedFile)
 				selectedFile = stringFromList(0,selectedFile,".")
 			endif
 			selectedFile=IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd)
+			selectedFile =IR1I_RemoveBadCharacters(selectedFile)
 			selectedFile = CleanupName(selectedFile, 1 )
 			NewDataFolder/O/S $selectedFile
 		endif
