@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.04
+#pragma version=1.05
 
+//1.05 FIxed bump to Compiler when no data selected in Data selection popup. 
 //1.04 2/2013, JIL: modified to enable calibration per weight
 //1.03 2/2013 fixed Process next sample for changed control procedures. 
 //1.02 4/2012 modified q shifts step to be 0.5e-6, 10x less than before. 
@@ -301,7 +302,10 @@ static Function IN3_LoadData()
 			abort
 		endif
 		LastSample = DFloc
-		Wave OrigAR_encoder=$(DFloc+"AR_encoder")
+		Wave/Z OrigAR_encoder=$(DFloc+"AR_encoder")
+		if(!WaveExists(OrigAR_encoder))
+			return 0
+		endif
 		Duplicate/O OrigAR_encoder, AR_encoder
 		Wave OrigPD_range=$(DFloc+"PD_range")
 		Duplicate/O OrigPD_range, PD_range

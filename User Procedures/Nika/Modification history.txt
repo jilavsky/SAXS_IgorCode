@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 1.61 xxxxx
+Modified to compile on computers even without xop and abort & produce message when xop is called with instructions. 
 Fixed Pilatus ESRF edf file format. Header was set to 1024 bytes, which is incorrect, it is n*512Bytes. Changed to look for separator and cleaned up the header to match Nika/Irena wave note styles(removed unneeded spaces). 
 Modified 15IDD pinSAXS, WAXS support to use new Nexus data, fixed few bugs in calculations. 
 Added scroll buttons to enable scrolling of the main panel content for smaller displays. 

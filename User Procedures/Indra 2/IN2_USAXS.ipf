@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.28
+#pragma version = 1.29
 
+//1.29 modified not to fail to compile when XML xop is not present. 
 //1.28 release to update error calculation for I0 autoranging. 
 //1.27 release from 4/30/2012, updates for autoranging I0
 //1.26 release 1.74 of Indra package, 2/16/2012. Some minor fixes.
@@ -3228,6 +3229,7 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 
 
 	// define the namespaces
+#if	Exists("XMLcreateFile")
 	fileID = XMLcreateFile(xmlFile, "SASroot", "cansas1d/1.0", "")
 	XMLsetAttr(fileID,		"/SASroot", 				"", "version", "1.0")
 	XMLsetAttr(fileID,		"/SASroot", 				"", "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -3242,7 +3244,7 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "Title", SpecComment, 1)
 	
 	//need to create here appropriate RunInfo we can use in the future, something like:  "APS_USAXS=32-ID; scan=S81; file=08_21.dat; dataType=slit-smeared; MSAXS=no" 
-	string RunInfo = "APS_USAXS=32-ID;"
+	string RunInfo = "APS_USAXS=15-ID;"
 	RunInfo +="scan="+StringByKey("SCAN_N", note(Qvec), "=")+";"
 	RunInfo +="file="+StringByKey("DATAFILE", note(Qvec), "=")+";"
 	if(stringmatch(IndraDataType,"*smr"))
@@ -3376,6 +3378,7 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 	 string XSLFileName
 	 XSLFileName = RemoveFromList(StringFromList(ItemsInList(xmlFile,":")-1, xmlFile  , ":"), xmlFile  ,":")
 	 XSLFileName +="example.xsl"
+
 	 variable refnum2
 	Open/Z/R  refnum2 as XSLFileName
 	if(V_Flag!=0)
@@ -3388,6 +3391,9 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 	else
 		close refnum2
 	endif
+#else
+		Abort "XML xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
+#endif
 END
 
 Function IN2_FixXMLHeader( XMLFileName)
@@ -3926,6 +3932,7 @@ FUNCTION IN2_metadata2XML(fileID, parent, index, section, node, theList)
 	STRING theItem, theKey, theValue
 	VARIABLE i, pos
 
+#if Exists("XMLaddNode")
 	XMLaddNode(fileID, parent, "", node, "", 1)
 	parent += "/"+node+"[" + num2str(index) + "]"
 	XMLsetAttr(fileID,	parent, "", "name", section)
@@ -3939,6 +3946,9 @@ FUNCTION IN2_metadata2XML(fileID, parent, index, section, node, theList)
 			XMLaddNode(fileID, parent, "", theKey, theValue, 1)
 		ENDIF
 	ENDFOR
+#else
+		Abort "XML xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
+#endif
 END
 
 static FUNCTION/S IN2_listConvert(rawList)

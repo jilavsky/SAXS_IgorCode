@@ -153,7 +153,10 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 
-	Wave PD_Range							//these waves should be here
+	Wave/Z PD_Range							//these waves should be here
+	if(!WaveExists(PD_Range))
+		abort 
+	endif
 	Wave USAXS_PD
 	Wave Monitor
 	Wave MeasTime

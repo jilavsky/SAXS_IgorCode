@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 modified to compile even when xml xop is not available. 
 //2.23 fixed bug on ESRF edf data format for Pilatus, where I assume 1024 bytes header, but it is actually n*512bytes with separator. Modified code to handle those. 
 //2.22 fixes bug for Pilatus 300K and adds Pilatus 6M (untested)
 //2.21 adds TPA XML based file loader
@@ -123,6 +124,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		
 
 	elseif(cmpstr(FileType,"TPA/XML")==0)
+#if	Exists("XMLopenfile")
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".xml")!=0)
 			FileNameToLoad= FileName+ ".xml"
@@ -161,6 +163,9 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NewNote = ReplaceString("\n", NewNote, "")
 		NewNote = ReplaceString("2%", NewNote, " ")
 		NI2_CreateWvNoteNbk(NewNote)
+#else
+	DoAlert 0, "XML xop is not installed, this feature is not available. Please install xops using latest Universal Installer.pxp or Java installer or install manually."
+#endif
 	elseif(cmpstr(FileType,".hdf")==0)
 #if(exists("HDF5OpenFile")==4)
 		FileNameToLoad= FileName

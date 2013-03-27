@@ -1,10 +1,11 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.00
+#pragma version = 1.01
 
 #include <WaveSelectorWidget>
 
 #pragma moduleName=NikaHDF5Browser
 
+//1.01 modified to compile when hdf5 xop is not available. 
 // 1.0 initial release. Not working yet, but need to go ahead with release. 
 //This is modified version of HDF5 Browser.ipf version 1.03 modified for use with Nika package by jan Ilavsky, January 2011
 // ilavsky@aps.anl.gov
@@ -28,7 +29,8 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName)
 		DoAlert 0, "Set Hdf options first"
 	endif
 	variable locFileID
-	
+
+#if Exists("HDF5OpenFile")	
 	HDF5OpenFile/R/P=$(PathName) locFileID as fileName
 	//Need to create temp folder to handle the whole group of stuff here...
 	string oldDf=GetDataFolder (1)
@@ -53,6 +55,10 @@ Function/S NI2_LoadGeneralHDFFile(CalledFrom, fileName, PathName)
 	endif
 	
 	return "LoadedWave"
+	
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 end
 
  Function NI2_ParseNikaData()		//here we parse loaded groups for Nika. Notre - Nika expects ONE 2D image from the hdf file... 
@@ -220,6 +226,8 @@ Function/S NI2_GetGroupHierarchy(fileID, startPath, level, mode)
 
 	String indent = ""			// Used only for mode 0.
 	Variable i, j
+
+#if Exists("HDF5ListGroup")	
 	
 	// This gives full hierarchy with full paths
 	HDF5ListGroup /F /R /TYPE=1 fileID, startPath
@@ -242,6 +250,9 @@ Function/S NI2_GetGroupHierarchy(fileID, startPath, level, mode)
 	endif
 	
 	return result
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function/S GetFileHierarchy(bd, mode)
@@ -412,6 +423,7 @@ Function/S NI2_GetPreviewString(locationID, objectType, di, fullPath, attributeN
 		endfor
 	endif
 
+#if Exists("HDF5LoadData")	
 	strswitch(di.datatype_class_str)
 		case "H5T_INTEGER":
 		case "H5T_FLOAT":
@@ -499,11 +511,15 @@ Function/S NI2_GetPreviewString(locationID, objectType, di, fullPath, attributeN
 	endswitch
 	
 	return value
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function FillDatasetsList(bd)
 	STRUCT NI2HDF5BrowserData &bd
 
+#if Exists("HDF5ListGroup")	
 	HDF5ListGroup /TYPE=2 bd.fileID, bd.groupPath
 	Variable numItemsInList = ItemsInList(S_HDF5ListGroup)
 	
@@ -544,11 +560,15 @@ static Function FillDatasetsList(bd)
 			bd.datasetsList[i][4] = preview
 		endfor
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 		
 static Function FillGroupAttributesList(bd)
 	STRUCT NI2HDF5BrowserData &bd
 
+#if Exists("HDF5ListAttributes")	
 	Variable numAttributes = 0
 	String groupPath = bd.groupPath
 	if (strlen(groupPath) > 0)
@@ -594,11 +614,15 @@ static Function FillGroupAttributesList(bd)
 			bd.groupAttributesList[i][4] = preview
 		endfor
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 		
 static Function FillDatasetAttributesList(bd)
 	STRUCT NI2HDF5BrowserData &bd
 
+#if Exists("HDF5ListAttributes")	
 	Variable numAttributes = 0
 	String datasetPath = NI2_SelectedDatasetPath(bd)
 	if (strlen(datasetPath) > 0)
@@ -644,6 +668,9 @@ static Function FillDatasetAttributesList(bd)
 			bd.datasetAttributesList[i][4] = preview
 		endfor
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 	
 static Function FillLists(bd)
@@ -800,6 +827,7 @@ StrConstant NI2_kLoadAllMembersString = "_Load_All_Members_"
 static Function SetMembersPopupMenu(bd)
 	STRUCT NI2HDF5BrowserData &bd
 	
+#if Exists("HDF5OpenFile")	
 	Variable hideMembers
 	String memberList
 
@@ -839,6 +867,9 @@ static Function SetMembersPopupMenu(bd)
 	String cmd				// What a pain. Can't use local variable with PopupMenu value=
 	sprintf cmd, "PopupMenu Members, win=%s, value=\"%s\"", bd.browserName, memberList
 	Execute cmd
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 Function NI2_HDF5GetReadOnlySetting(browserName)
@@ -1000,6 +1031,7 @@ End
 static Function CreateFileButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	
+#if Exists("HDF5OpenFile")	
 	String browserName = NI2_HDF5GetTopBrowserName()
 
 	STRUCT NI2HDF5BrowserData bd
@@ -1011,11 +1043,15 @@ static Function CreateFileButtonProc(ctrlName) : ButtonControl
 	if (V_flag == 0)		// Create OK?
 		UpdateAfterFileCreateOrOpen(1, browserName, fileID, S_path, S_fileName)
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function OpenFileButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	
+#if Exists("HDF5OpenFile")	
 	String browserName = NI2_HDF5GetTopBrowserName()
 	
 	Variable readOnly = NI2_HDF5GetReadOnlySetting(browserName)
@@ -1031,12 +1067,16 @@ static Function OpenFileButtonProc(ctrlName) : ButtonControl
 	if (V_flag == 0)					// Open OK?
 		UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 // This detects if the file is no longer open, such as if you save the experiment, quit Igor and then reopen the experiment.
 Function NI2_FileWasUnexpectedlyClosed(bd)
 	STRUCT NI2HDF5BrowserData &bd
 
+#if Exists("HDF5OpenFile")	
 	if (bd.fileID == 0)
 		return 0				// File is closed but not unexpectedly.
 	endif
@@ -1047,6 +1087,9 @@ Function NI2_FileWasUnexpectedlyClosed(bd)
 	endif
 	
 	return 0
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function FileWasClosed(bd)			// Does cleanup after a file is closed.
@@ -1068,6 +1111,7 @@ End
 static Function CloseFileButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	
+#if Exists("HDF5OpenFile")	
 	String browserName = NI2_HDF5GetTopBrowserName()
 
 	STRUCT NI2HDF5BrowserData bd
@@ -1076,11 +1120,15 @@ static Function CloseFileButtonProc(ctrlName) : ButtonControl
 	HDF5CloseFile bd.fileID
 	CloseSavePanels()
 	FileWasClosed(bd)
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function LoadDatasetButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
+#if Exists("HDF5OpenFile")	
 	String browserName
 	STRUCT NI2HDF5BrowserData bd
 	
@@ -1151,11 +1199,15 @@ static Function LoadDatasetButtonProc(ctrlName) : ButtonControl
 			HDF5LoadData /O /SLAB=slabWave /TRAN=(transpose2D) /COMP={compMode,memberName} /GRPH=(graphDisplayMode) /T=(tableDisplayMode) bd.fileID, datasetPath
 		endif
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function LoadGroupButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
+#if Exists("HDF5OpenFile")	
 	String browserName = NI2_HDF5GetTopBrowserName()
 
 	STRUCT NI2HDF5BrowserData bd
@@ -1195,6 +1247,9 @@ static Function LoadGroupButtonProc(ctrlName) : ButtonControl
 			wavePaths = StringFromList(p, S_objectPaths)
 		endif
 	endif
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 Function NI2_AttachListWaves(bd)
@@ -1209,6 +1264,7 @@ End
 Function NI2_HDF5BrowserPanelHook(infoStr)
 	String infoStr
 
+#if Exists("HDF5OpenFile")	
 	String browserName= StringByKey("WINDOW",infoStr)
 	String event= StringByKey("EVENT",infoStr)
 
@@ -1250,12 +1306,16 @@ Function NI2_HDF5BrowserPanelHook(infoStr)
 	endswitch
 	
 	return 0
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 Function NI2_SelectDataset(bd, datasetName)
 	STRUCT NI2HDF5BrowserData &bd
 	String datasetName
 
+#if Exists("HDF5OpenFile")	
 	String info
 
 	if (strlen(datasetName) == 0)
@@ -1273,6 +1333,9 @@ Function NI2_SelectDataset(bd, datasetName)
 	DrawDatasetInfo(bd)
 	SetButtonStates(bd)
 	FillDatasetAttributesList(bd)
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 Function NI2_UpdateAfterGroupSelected(bd, fullGroupPath)
@@ -1342,6 +1405,7 @@ Function NI2_HandleDatasetDoubleClick(s, bd)
 	STRUCT WMListboxAction &s
 	STRUCT NI2HDF5BrowserData &bd
 
+#if Exists("HDF5OpenFile")	
 	String datasetPath = NI2_SelectedDatasetPath(bd)
 	if (strlen(datasetPath) == 0)
 		return -1
@@ -1355,6 +1419,9 @@ Function NI2_HandleDatasetDoubleClick(s, bd)
 			// Load dataset here.
 			break	
 	endswitch
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function DatasetsListActionProc(s, bd) : ListboxControl
@@ -1947,6 +2014,7 @@ End
 Function NI2_HDF5DisplayDumpOfSelGroup(bd)
 	STRUCT NI2HDF5BrowserData &bd
 	
+#if Exists("HDF5OpenFile")	
 	String path = NI2_SelectedGroupPath(bd)
 	if (strlen(path) == 0)
 		return -1
@@ -1962,11 +2030,15 @@ Function NI2_HDF5DisplayDumpOfSelGroup(bd)
 	Notebook HDF5DumpNotebook selection={startOfFile, endOfFile}
 	Notebook HDF5DumpNotebook text=S_HDF5Dump
 	Notebook HDF5DumpNotebook selection={startOfFile, startOfFile}, findText={"",1}
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function DisplayDumpOfSelectedDataset(bd)
 	STRUCT NI2HDF5BrowserData &bd
 	
+#if Exists("HDF5OpenFile")	
 	String datasetPath = NI2_SelectedDatasetPath(bd)
 	if (strlen(datasetPath) == 0)
 		return -1
@@ -1984,12 +2056,16 @@ static Function DisplayDumpOfSelectedDataset(bd)
 	Notebook HDF5DumpNotebook selection={startOfFile, endOfFile}
 	Notebook HDF5DumpNotebook text=S_HDF5Dump
 	Notebook HDF5DumpNotebook selection={startOfFile, startOfFile}, findText={"",1}
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function DisplayDumpOfSelectedAttribute(bd, isGroupAttribute)
 	STRUCT NI2HDF5BrowserData &bd
 	Variable isGroupAttribute
 	
+#if Exists("HDF5OpenFile")	
 	String path = NI2_SelectedAttributePath(bd, isGroupAttribute)
 	if (strlen(path) == 0)
 		return -1
@@ -2003,6 +2079,9 @@ static Function DisplayDumpOfSelectedAttribute(bd, isGroupAttribute)
 	Notebook HDF5DumpNotebook selection={startOfFile, endOfFile}
 	Notebook HDF5DumpNotebook text=S_HDF5Dump
 	Notebook HDF5DumpNotebook selection={startOfFile, startOfFile}, findText={"",1}
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 // *** DISPLAY IN GRAPH ***
@@ -2427,6 +2506,7 @@ static Function LoadSelectedDataForDisplay(bd, isAttribute, objectType, listOfWa
 	String &listOfWavesLoaded		// Output: List of waves loaded.
 	String &errorMessage				// Output: Error message or ""
 	
+#if Exists("HDF5OpenFile")	
 	Variable err = 0
 	errorMessage = ""
 
@@ -2564,6 +2644,9 @@ static Function LoadSelectedDataForDisplay(bd, isAttribute, objectType, listOfWa
 
 	SetDataFolder savedDataFolder
 	return err
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 Function NI2_HDF5DisplaySelectedDataset(bd)
@@ -3157,6 +3240,7 @@ Function NI2_HDF5DatasetRank(locationID, name)
 	Variable locationID
 	String name
 
+#if Exists("HDF5OpenFile")	
 	STRUCT NI2_HDF5DataInfo di
 	NI2_InitHDF5DataInfo(di)			// Set input fields.
 
@@ -3166,6 +3250,9 @@ Function NI2_HDF5DatasetRank(locationID, name)
 	endif
 	Variable rank = di.ndims
 	return rank
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 //	HDF5AttributeRank(locationID, name)
@@ -3176,6 +3263,7 @@ Function NI2_HDF5AttributeRank(locationID, objectName, objectType, attributeName
 	Variable objectType
 	String attributeName
 
+#if Exists("HDF5OpenFile")	
 	STRUCT NI2_HDF5DataInfo di
 	NI2_InitHDF5DataInfo(di)			// Set input fields.
 
@@ -3185,6 +3273,9 @@ Function NI2_HDF5AttributeRank(locationID, objectName, objectType, attributeName
 	endif
 	Variable rank = di.ndims
 	return rank
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 Constant NI2_kHDF5DatatypeInfoVersion = 1000		// 1000 means 1.000.
@@ -3285,6 +3376,7 @@ End
 static Function SaveButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	
+#if Exists("HDF5OpenFile")	
 	String panelName = WinName(0, 64)
 	String message
 	
@@ -3382,6 +3474,9 @@ static Function SaveButtonProc(ctrlName) : ButtonControl
 			endif
 			break
 	endswitch
+#else
+	Abort "Hdf5 xop is not found. Reinstall xops using one of the Installers or link the hdf5.xop from Igor distribution to your Igor extensions folder"
+#endif
 End
 
 static Function DoneButtonProc(ctrlName) : ButtonControl

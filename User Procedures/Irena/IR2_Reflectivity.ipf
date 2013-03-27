@@ -20,6 +20,7 @@ Constant IR2RversionNumber=1.12
 //1.10 added Remove/Insert layer capability, made minor change which increases speed by about 20% when all imaginary SLDs are set to 0 (neutrons typically).  
 //1.11 added Motofit data types for convenience. 
 //1.12 modified panel to be scrollable
+//1.13 modifed to remove xop dependence. Now it will compile without xop but complain on run, if xop is not installed. 
 
 Function IR2R_ReflectivitySimpleToolMain()
 
@@ -1019,6 +1020,8 @@ End
 static Function IR2R_CalculateReflectivityNewRW(w, RR, qq, dq)
 	Wave w, RR, qq, dq
 	variable bkg
+
+#if	Exists("Abeles_imagALl")
 	
 	NVAR UseResolutionWave = root:Packages:Refl_SimpleTool:UseResolutionWave	
 	make/free/d/n=(numpnts(qq), 2) xtemp
@@ -1077,7 +1080,9 @@ static Function IR2R_CalculateReflectivityNewRW(w, RR, qq, dq)
 		w[6] = bkg
 		fastop RR = (bkg) + RR
 	endif
-	
+#else
+		Abort "Reflectivity (Abeles) xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
+#endif	
 	
 End
 
@@ -1089,6 +1094,8 @@ End
 static Function IR2R_CalculateReflectivityNew(w,RR,qq, resolution) 
 	Wave w, RR,qq
 	variable resolution
+
+#if	Exists("Abeles_imagALl")
 
 	variable mode, bkg
 	variable plotyp 
@@ -1163,7 +1170,9 @@ static Function IR2R_CalculateReflectivityNew(w,RR,qq, resolution)
 	//add in the linear background again
 	w[6] = bkg
 	fastop RR = (bkg) + RR
-		
+#else
+		Abort "Reflectivity (Abeles) xop not installed, this feature is not available. Use one of the installers and install the xop support before using this feature."
+#endif		
 
 End
 

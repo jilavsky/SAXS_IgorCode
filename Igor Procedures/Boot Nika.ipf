@@ -9,7 +9,6 @@ end
 
 Function LoadNi12DSAS()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>6.19)
-#if(exists("HDF5SaveData")==4)
 		Execute/P "INSERTINCLUDE \"NI1_Loader\""
 		Execute/P "COMPILEPROCEDURES "
 		NewDataFolder/O root:Packages			//create the folder for string variable
@@ -18,9 +17,6 @@ Function LoadNi12DSAS()
 		Nika12DSASItem1Str= "---"
 		BuildMenu "SAS 2D"
 		Execute/P "NI1_ReadIrenaGUIPackagePrefs()"
-#else
-	DoAlert 0, "Hdf5 xop is not installed, please install manually or run install xop command from Universal Installer.pxp version 1.10 or higher."
-#endif
 	else
 		DoAlert 0, "Your version of Igor is lower than 6.20, these macros need version 6.20 or higher. Please, update..."  
 	endif

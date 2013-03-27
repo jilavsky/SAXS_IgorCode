@@ -9,7 +9,9 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 Revision history:
 ______________________________________________________________________________________
 xxxxx
-Added calibration to weight, for now cannot calculat weight of sample in the beam, 
+Added calibration to weight, for now cannot calculate weight of sample in the beam, 
+Modified to compile on computers even without xop and abort & produce message when xop is called with instructions. 
+
 
 1.77 11/5/2012
 Added I0_gain to the data reduction so the gain of I0 can be changing during scan. 
