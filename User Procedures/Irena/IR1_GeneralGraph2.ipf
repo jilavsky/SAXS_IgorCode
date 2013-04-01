@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.08
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,7 +9,8 @@
 
 
 //to do: need to handle better the symbols and line types, limit for 8 types is just way too little. 
-
+//2.10 modified to handle different Intensity units for calibration 
+//2.09 added units to lookup string so we can propagate them forward. 
 //2.08 changed rainbow colorization method to produce prettier color scheme. based on Data manipulation II method (Tishler likely). 
 //2.07 modified name of backup waves to use only _B at the end increasing length of names to 30. Should match enforced user length on import now. 
 //2.06 modified movie creation to avoid debugger when problems happen. 
@@ -160,7 +161,7 @@ Function IR1P_RecordDataForGraph()
 	
 	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
 	SVAR ListOfDataOrgWvNames=root:Packages:GeneralplottingTool:ListOfDataOrgWvNames
-//	SVAR ListOfDataFormating=root:Packages:GeneralplottingTool:ListOfDataFormating
+	SVAR ListOfDataFormating=root:Packages:GeneralplottingTool:ListOfDataFormating
 	
 	variable NumberOfDataPresent,i
 	NumberOfDataPresent=ItemsInList(ListOfDataFolderNames)
@@ -174,6 +175,15 @@ Function IR1P_RecordDataForGraph()
 	//print "Added "+DFloc+DFInt+" to the Plotting tool"
 	
 	ListOfDataFolderNames+=DFloc+DFInt+";"
+	//now add any units in teh last wave added to 
+	Wave InputIntWv=$(DFloc+DFInt)
+	string NewInputUnit=StringByKey("Units", note(InputIntWv), "=" , ";")
+	string LastInputUnit = StringByKey("Units", ListOfDataFormating, "=")
+	NVAR DoNotCheckYAxisUnits = root:Packages:GeneralplottingTool:DoNotCheckYAxisUnits
+	if(!DoNotCheckYAxisUnits && NumberOfDataPresent>0 && strlen(LastInputUnit)>0 && !stringmatch(LastInputUnit, newInputUnit))
+		DoAlert 0, "Units for Y data do not match; prior data: "+LastInputUnit+", new data : "+NewInputUnit+". This message can be disabled in \"Change graph details\"."
+	endif
+	ListOfDataFormating=ReplaceStringByKey("Units", ListOfDataFormating, newInputUnit , "=")
 	ListOfDataOrgWvNames=ReplaceStringByKey("IntWave"+num2str(NumberOfDataPresent), ListOfDataOrgWvNames, DFloc+DFInt , "=")
 	ListOfDataOrgWvNames=ReplaceStringByKey("QWave"+num2str(NumberOfDataPresent), ListOfDataOrgWvNames, DFloc+DFQ , "=")
 	if (strlen(DFE)>1)
@@ -202,7 +212,7 @@ Function IR1P_CreateDataToPlot()
 	//ListOfDataWaveNames contains full path to ploted waves
 	//ListOfGraphFormating contains info, which data should be ploted...
 	
-	variable i, imax=ItemsInList(ListOfDataOrgWvNames)/3		//there should be always 3 items in each list per data set ploted
+	variable i, imax=floor(ItemsInList(ListOfDataOrgWvNames)/3)		//there should be always 3 items in each list per data set ploted + common units added later
 	string DataX=stringByKey("DataX", ListOfGraphFormating,"=")
 	string DataY=stringByKey("DataY", ListOfGraphFormating,"=")
 	string DataE=stringByKey("DataE", ListOfGraphFormating,"=")
@@ -1317,7 +1327,8 @@ Function IR1P_SynchronizeListAndVars()
 	endif
 	PopupMenu XAxisDataType, win=IR1P_ControlPanel,mode=1,popvalue=StringByKey("DataX", FormatingStr, "=") //,value= "Q;Q^2;Q^3;Q^4;"
 	PopupMenu YAxisDataType,win=IR1P_ControlPanel, mode=1,popvalue=StringByKey("DataY", FormatingStr, "=")//,value= "I;I^2;I^3;I^4;I*Q^4;1/I;ln(Q^2*I);"
-	
+	IR1P_UpdateAxisName("Y",StringByKey("DataY", FormatingStr, "="))
+	IR1P_UpdateAxisName("X",StringByKey("DataX", FormatingStr, "="))
 	NVAR GraphUseBW = root:Packages:GeneralplottingTool:GraphUseBW
 	if(GraphUseBW+GraphUseColors+GraphUseRainbow!=1)
 		GraphUseBW=0
@@ -1329,24 +1340,29 @@ Function IR1P_SynchronizeListAndVars()
 	else
 		IR1P_GraphUseRainbow(GraphUseRainbow, GraphUseBW)
 	endif
+	variable i
 	if (GraphUseSymbols)
-			FormatingStr=ReplaceStringByKey("mode[0]",FormatingStr, "4","=")
-			FormatingStr=ReplaceStringByKey("mode[1]",FormatingStr, "4","=")
-			FormatingStr=ReplaceStringByKey("mode[2]",FormatingStr, "4","=")
-			FormatingStr=ReplaceStringByKey("mode[3]",FormatingStr, "4","=")
-			FormatingStr=ReplaceStringByKey("mode[4]",FormatingStr, "4","=")
+		For(i=0;i<62;i+=1)
+			FormatingStr=ReplaceStringByKey("mode["+num2str(i)+"]",FormatingStr, "4","=")
+			//FormatingStr=ReplaceStringByKey("mode[1]",FormatingStr, "4","=")
+			//FormatingStr=ReplaceStringByKey("mode[2]",FormatingStr, "4","=")
+			//FormatingStr=ReplaceStringByKey("mode[3]",FormatingStr, "4","=")
+			//FormatingStr=ReplaceStringByKey("mode[4]",FormatingStr, "4","=")
 
-			FormatingStr=ReplaceStringByKey("marker[0]",FormatingStr, "8","=")
-			FormatingStr=ReplaceStringByKey("marker[1]",FormatingStr, "17","=")
-			FormatingStr=ReplaceStringByKey("marker[2]",FormatingStr, "5","=")
-			FormatingStr=ReplaceStringByKey("marker[3]",FormatingStr, "12","=")
-			FormatingStr=ReplaceStringByKey("marker[4]",FormatingStr, "16","=")
+			FormatingStr=ReplaceStringByKey("marker["+num2str(i)+"]",FormatingStr, num2str(i),"=")
+			//FormatingStr=ReplaceStringByKey("marker[1]",FormatingStr, "17","=")
+			//FormatingStr=ReplaceStringByKey("marker[2]",FormatingStr, "5","=")
+			//FormatingStr=ReplaceStringByKey("marker[3]",FormatingStr, "12","=")
+			//FormatingStr=ReplaceStringByKey("marker[4]",FormatingStr, "16","=")
+		endfor	
 	else
-			FormatingStr=ReplaceStringByKey("mode[0]",FormatingStr, "0","=")
-			FormatingStr=ReplaceStringByKey("mode[1]",FormatingStr, "0","=")
-			FormatingStr=ReplaceStringByKey("mode[2]",FormatingStr, "0","=")
-			FormatingStr=ReplaceStringByKey("mode[3]",FormatingStr, "0","=")
-			FormatingStr=ReplaceStringByKey("mode[4]",FormatingStr, "0","=")		
+		For(i=0;i<62;i+=1)
+			FormatingStr=ReplaceStringByKey("mode["+num2str(i)+"]",FormatingStr, "0","=")
+			//FormatingStr=ReplaceStringByKey("mode[1]",FormatingStr, "0","=")
+			//FormatingStr=ReplaceStringByKey("mode[2]",FormatingStr, "0","=")
+			//FormatingStr=ReplaceStringByKey("mode[3]",FormatingStr, "0","=")
+			//FormatingStr=ReplaceStringByKey("mode[4]",FormatingStr, "0","=")	
+		endfor	
 	endif
 end
 //**********************************************************************************************************

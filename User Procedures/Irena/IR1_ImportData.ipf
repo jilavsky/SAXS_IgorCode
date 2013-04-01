@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.16
-Constant IR1IversionNumber = 2.15
+#pragma version=2.17
+Constant IR1IversionNumber = 2.17
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 added controls for Units - Arbitrary, cm2/cm3, and cm2/g are known units for now...
 //2.16 added cleanup of weird characters (,),%, {, } of names. Allowed by igor but cause problems to my opther code. 
 //2.15 added vertical scrolling for panel. 
 //2.14 added option to trunkate long names in front or end.
@@ -70,7 +71,7 @@ end
 
 Proc IR1I_ImportData() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(3,40,430,700) as "Import data"
+	NewPanel /K=1 /W=(3,40,430,720) as "Import data"
 	DoWindow/C IR1I_ImportData
 //	SetDrawLayer UserBack
 //	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,16384,65280)
@@ -191,7 +192,7 @@ Proc IR1I_ImportData()
 
 	CheckBox UseFileNameAsFolder,pos={10,420},size={16,14},proc=IR1I_CheckProc,title="Use File Nms As Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
 	CheckBox IncludeExtensionInName,pos={240,420},size={16,14},proc=IR1I_CheckProc,title="Include Extension in fldr nm?",variable= root:Packages:ImportData:IncludeExtensionInName, help={"Include file extension in imported data foldername?"}, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
-	CheckBox UseIndra2Names,pos={10,436},size={16,14},proc=IR1I_CheckProc,title="Use Indra 2 wave names?",variable= root:Packages:ImportData:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
+	CheckBox UseIndra2Names,pos={10,436},size={16,14},proc=IR1I_CheckProc,title="Use USAXS names?",variable= root:Packages:ImportData:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
 	CheckBox ImportSMRdata,pos={150,436},size={16,14},proc=IR1I_CheckProc,title="Slit smeared?",variable= root:Packages:ImportData:ImportSMRdata, help={"Check if the data are slit smeared, changes suggested Indra data names to SMR_Qvec, SMR_Int, SMR_error"}
 	CheckBox ImportSMRdata, disable= !root:Packages:ImportData:UseIndra2Names
 	CheckBox UseQRSNames,pos={10,452},size={16,14},proc=IR1I_CheckProc,title="Use QRS wave names?",variable= root:Packages:ImportData:UseQRSNames, help={"Use QRS name structure? (Q_filename, R_filename, S_filename)"}
@@ -221,15 +222,19 @@ Proc IR1I_ImportData()
 //	PopupMenu SelectFolderNewData,pos={1,525},size={250,21},proc=IR1I_PopMenuProc,title="Select data folder", help={"Select folder with data"}
 //	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
 
-	SetVariable NewDataFolderName, pos={5,550}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
+	CheckBox DataCalibratedArbitrary,pos={10,547},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
+	CheckBox DataCalibratedVolume,pos={150,547},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/cm3",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
+	CheckBox DataCalibratedWeight,pos={290,547},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/g",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
+
+	SetVariable NewDataFolderName, pos={5,570}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
 	SetVariable NewDataFolderName value= root:packages:ImportData:NewDataFolderName,help={"Folder for the new data. Will be created, if does not exist. Use popup above to preselect."}
-	SetVariable NewQwaveName, pos={5,570}, size={320,20},title="Q wave names ", proc=IR1I_setvarProc
+	SetVariable NewQwaveName, pos={5,590}, size={320,20},title="Q wave names ", proc=IR1I_setvarProc
 	SetVariable NewQwaveName, value= root:packages:ImportData:NewQWaveName,help={"Input name for the new Q wave"}
-	SetVariable NewIntensityWaveName, pos={5,590}, size={320,20},title="Intensity names", proc=IR1I_setvarProc
+	SetVariable NewIntensityWaveName, pos={5,610}, size={320,20},title="Intensity names", proc=IR1I_setvarProc
 	SetVariable NewIntensityWaveName, value= root:packages:ImportData:NewIntensityWaveName,help={"Input name for the new intensity wave"}
-	SetVariable NewErrorWaveName, pos={5,610}, size={320,20},title="Error wv names", proc=IR1I_setvarProc
+	SetVariable NewErrorWaveName, pos={5,630}, size={320,20},title="Error wv names", proc=IR1I_setvarProc
 	SetVariable NewErrorWaveName, value= root:packages:ImportData:NewErrorWaveName,help={"Input name for the new Error wave"}
-	SetVariable NewQErrorWaveName, pos={5,630}, size={320,20},title="Q Error wv names", proc=IR1I_setvarProc
+	SetVariable NewQErrorWaveName, pos={5,650}, size={320,20},title="Q Error wv names", proc=IR1I_setvarProc
 	SetVariable NewQErrorWaveName, value= root:packages:ImportData:NewQErrorWaveName,help={"Input name for the new Q data Error wave"}
 
 	Button ImportData,pos={330,610},size={80,30}, proc=IR1I_ButtonProc,title="Import"
@@ -458,6 +463,10 @@ Function IR1I_RecordResults(selectedFile)
 	NVAR QvectInA=root:Packages:ImportData:QvectInA
 	NVAR QvectInNM=root:Packages:ImportData:QvectInNM
 
+	NVAR DataCalibratedArbitrary=root:Packages:ImportData:DataCalibratedArbitrary
+	NVAR DataCalibratedVolume=root:Packages:ImportData:DataCalibratedVolume
+	NVAR DataCalibratedWeight=root:Packages:ImportData:DataCalibratedWeight
+
 	IR1_CreateLoggbook()		//this creates the logbook
 	SVAR nbl=root:Packages:SAS_Modeling:NotebookName
 
@@ -486,6 +495,13 @@ Function IR1I_RecordResults(selectedFile)
 		IR1L_AppendAnyText("Q was in A")	
 	elseif(QvectInNM)
 		IR1L_AppendAnyText("Q was in nm, scaled to A ")	
+	endif
+	if(DataCalibratedArbitrary)
+		IR1L_AppendAnyText("Intensity was imported on relative scale")	
+	elseif(DataCalibratedVolume)
+		IR1L_AppendAnyText("Intensity was imported with volume calibration [cm2/cm3]")	
+	elseif(DataCalibratedWeight)
+		IR1L_AppendAnyText("Intensity was imported with weight calibration [cm2/g]")	
 	endif
 	if(SkipLines)
 		IR1L_AppendAnyText("Following number of lines was skiped from the original file "+num2str(SkipNumberOfLines))	
@@ -630,6 +646,18 @@ Function IR1I_NameImportedWaves(selectedFile)
 			note/NOCR TempError, "Data scaled by="+num2str(ScaleImportedDataBy)+";"
 		endif
 	endif
+	//lets insert here thre Units intot he wave notes...
+	NVAR DataCalibratedArbitrary=root:Packages:ImportData:DataCalibratedArbitrary
+	NVAR DataCalibratedVolume=root:Packages:ImportData:DataCalibratedVolume
+	NVAR DataCalibratedWeight=root:Packages:ImportData:DataCalibratedWeight
+	if(DataCalibratedWeight)
+		note/NOCR TempIntensity, "Units=cm2/g;"	
+	elseif(DataCalibratedVolume)
+		note/NOCR TempIntensity, "Units=cm2/cm3;"	
+	elseif(DataCalibratedArbitrary)
+		note/NOCR TempIntensity, "Units=Arbitrary;"	
+	endif
+	
 	//here we will deal with erros, if the user needs to create them
 	NVAR CreateSQRTErrors=root:Packages:ImportData:CreateSQRTErrors
 	NVAR CreatePercentErrors=root:Packages:ImportData:CreatePercentErrors
@@ -1235,6 +1263,25 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	SVAR NewErrorWaveName= root:packages:ImportData:NewErrorWaveName
 	SVAR NewQErrorWaveName= root:packages:ImportData:NewQErrorWaveName
 
+	NVAR DataCalibratedArbitrary = root:Packages:ImportData:DataCalibratedArbitrary
+	NVAR DataCalibratedVolume = root:Packages:ImportData:DataCalibratedVolume
+	NVAR DataCalibratedWeight = root:Packages:ImportData:DataCalibratedWeight
+	if(cmpstr(ctrlName,"DataCalibratedArbitrary")==0)	
+		//DataCalibratedArbitrary = 0
+		DataCalibratedVolume = 0
+		DataCalibratedWeight = 0
+	endif
+	if(cmpstr(ctrlName,"DataCalibratedVolume")==0)	
+		DataCalibratedArbitrary = 0
+		//DataCalibratedVolume = 0
+		DataCalibratedWeight = 0
+	endif
+	if(cmpstr(ctrlName,"DataCalibratedWeight")==0)	
+		DataCalibratedArbitrary = 0
+		DataCalibratedVolume = 0
+		//DataCalibratedWeight = 0
+	endif
+
 	if(cmpstr(ctrlName,"UseFileNameAsFolder")==0)	
 		CheckBox IncludeExtensionInName, disable=!(checked)
 		if (checked && UseIndra2Names)
@@ -1800,6 +1847,7 @@ Function IR1I_InitializeImportData()
 	ListOfVariables += "IncludeExtensionInName;RemoveNegativeIntensities;AutomaticallyOverwrite;"	
 	ListOfVariables += "TrimData;TrimDataQMin;TrimDataQMax;ReduceNumPnts;TargetNumberOfPoints;ReducePntsParam;"	
 	ListOfVariables += "NumOfPointsFound;TrunkateStart;TrunkateEnd;"	
+	ListOfVariables += "DataCalibratedArbitrary;DataCalibratedVolume;DataCalibratedWeight;"	
 
 		//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -1849,6 +1897,15 @@ Function IR1I_InitializeImportData()
 			test =5
 		endif
 	endfor		
+	
+	NVAR DataCalibratedArbitrary
+	NVAR DataCalibratedVolume
+	NVAR DataCalibratedWeight
+	if(DataCalibratedArbitrary+DataCalibratedVolume+DataCalibratedWeight!=1)
+		DataCalibratedArbitrary = 1
+		DataCalibratedVolume = 0
+		DataCalibratedWeight = 0
+	endif
 	NVAR TrunkateStart
 	NVAR TrunkateEnd
 	if(TrunkateStart+TrunkateEnd!=1)

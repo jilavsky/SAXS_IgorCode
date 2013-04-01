@@ -334,7 +334,7 @@ Window IR2S_ScriptingToolPnl()
 	PopupMenu StartFolderSelection,pos={10,40},size={130,15},proc=IR2S_PopMenuProc,title="Select start folder"
 	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:ScriptingTool:StartFolderName,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:ScriptingTool:UseIndra2Data, root:Packages:Irena:ScriptingTool:UseQRSdata,2,1)"
 
-	CheckBox UseIndra2data,pos={302,45},size={76,14},proc=IR2S_CheckProc,title="Indra 2 data?"
+	CheckBox UseIndra2data,pos={302,45},size={76,14},proc=IR2S_CheckProc,title="USAXS?"
 	CheckBox UseIndra2data,variable= root:Packages:Irena:ScriptingTool:UseIndra2Data
 	CheckBox UseQRSdata,pos={302,63},size={64,14},proc=IR2S_CheckProc,title="QRS data?"
 	CheckBox UseQRSdata,variable= root:Packages:Irena:ScriptingTool:UseQRSdata

@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
+#pragma version =1.01
 
-
+//1.01 modified for weight calibration
 
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -60,13 +61,14 @@ Function IN3_ColorMainGraph(PdRanges)
 	SVAR DataFolderName=root:Packages:Indra3:DataFolderName
 	Wave/Z PD_range=$(DataFolderName+"PD_Range")
 	//set PdRanges to 1 to have colored main data in correct colors., 0 to uncolor
-	if(WaveExists(PD_range))
+	DoWIndow RcurvePlotGraph
+	if(WaveExists(PD_range)&&V_Flag)
 		if(PdRanges)
 			Duplicate/O PD_range, root:Packages:USAXS:MyColorWave							//creates new color wave
 			IN3_MakeMyColors(PD_range,root:Packages:USAXS:MyColorWave)						//creates colors in it
-	 		ModifyGraph /W=RcurvePlotGraph mode=4, zColor(R_Int)={root:Packages:USAXS:MyColorWave,0,10,Rainbow}
+	 		ModifyGraph /W=RcurvePlotGraph/Z mode=4, zColor(R_Int)={root:Packages:USAXS:MyColorWave,0,10,Rainbow}
 		else
-	 		ModifyGraph /W=RcurvePlotGraph  mode=4, zColor(R_Int)=0
+	 		ModifyGraph /W=RcurvePlotGraph/Z  mode=4, zColor(R_Int)=0
 		endif
 	endif
 end
@@ -204,7 +206,11 @@ Function IN3_CalculateCalibration()
 
 	NVAR CalibrateToWeight 	=	root:Packages:Indra3:CalibrateToWeight
 	NVAR CalibrateToVolume 	=	root:Packages:Indra3:CalibrateToVolume
+	NVAR CalibrateArbitrary 	=	root:Packages:Indra3:CalibrateArbitrary
 	NVAR SampleWeightInBeam 	=	root:Packages:Indra3:SampleWeightInBeam
+	NVAR SampleDensity 		=	root:Packages:Indra3:SampleDensity
+	NVAR SampleWeightInBeam 	=	root:Packages:Indra3:SampleWeightInBeam
+	NVAR BeamExposureArea	=	root:Packages:Indra3:BeamExposureArea
 	NVAR BLPeakWidth			=	root:Packages:Indra3:BlankFWHM
 	NVAR BLPeakMax			=	root:Packages:Indra3:BlankMaximum
 	NVAR SampleThickness		=	root:Packages:Indra3:SampleThickness
@@ -284,20 +290,16 @@ Function IN3_CalculateCalibration()
 	if(CalibrateToVolume)		//old system, use thickness, area of beam cancels from the blank and Kfactor is as usually known...
 		Kfactor = Kfactor*SampleThickness*0.1
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"cm2/cm3","=")
-	else					//use weight. Assume the weight in the beam is already scaled per beam area?
+	elseif(CalibrateArbitrary)		//arbitrary, use thickness 1mm, data are on relative scale anyway.
+		Kfactor = Kfactor*1*0.1
+		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"Arbitrary","=")
+	else				//use weight. Assume the weight in the beam is already scaled per beam area?
+		//first calculate the amount of sample in the beam...
 		Kfactor = Kfactor * SampleWeightInBeam		//SampleWeightInBeam should be in g and be real weight of sample [g/in beam area], not unit weight [g/cm2]
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"cm2/g","=")
-	endif
-	
-	
-	
+	endif	
 	ASBParameters=ReplaceNumberByKey("Kfactor",ASBParameters,Kfactor,"=")
 	ASBParameters=ReplaceNumberByKey("OmegaFactor",ASBParameters,OmegaFactor,"=")
-
-//	IN2G_AppendAnyText("Blank width :\t"+num2str(BLPeakWidthL))
-//	IN2G_AppendAnyText("Sample thickness :\t\t"+num2str(SampleThickness))
-//	IN2G_AppendAnyText("K factor :\t\t"+num2str(Kfactor))
-//	IN2G_AppendAnyText("Omega Factor :\t"+num2str(Omegafactor))
 	setDataFolder OldDf	
 
 end
@@ -482,12 +484,13 @@ Function IN3_SaveData()
 	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
 	SVAR ListOfASBParametersL=root:Packages:Indra3:ListOfASBParameters
 
+	NVAR CalibrateArbitrary=root:Packages:Indra3:CalibrateArbitrary
 	NVAR CalibrateToWeight=root:Packages:Indra3:CalibrateToWeight
 	NVAR CalibrateToVolume=root:Packages:Indra3:CalibrateToVolume
 	NVAR SampleWeightInBeam=root:Packages:Indra3:SampleWeightInBeam
 	NVAR CalculateWeight=root:Packages:Indra3:CalculateWeight
 	NVAR BeamExposureArea=root:Packages:Indra3:BeamExposureArea
-	NVAR SampleWeightAbsorption=root:Packages:Indra3:SampleWeightAbsorption
+	NVAR SampleDensity=root:Packages:Indra3:SampleDensity
 	
 	///////////
 	Wave/Z SMR_Int=root:Packages:Indra3:SMR_Int
@@ -582,14 +585,19 @@ Function IN3_SaveData()
 		if(CalibrateToWeight)
 			if(CalculateWeight)
 				IN2G_AppendAnyText("Calculated weight :\t\t")
-				IN2G_AppendAnyText("SampleWeightAbsorption :\t\t"+num2str(SampleWeightAbsorption))
+				IN2G_AppendAnyText("SampleDensity :\t\t"+num2str(SampleDensity))
 				IN2G_AppendAnyText("SampleTransmission :\t\t"+num2str(SampleTransmission))
 				IN2G_AppendAnyText("SampleTransmissionPeakToPeak :\t\t"+num2str(SampleTransmissionPeakToPeak))
 				IN2G_AppendAnyText("User defined or calculate weigth of Sample :\t\t"+num2str(SampleWeightInBeam))
 			else
 				IN2G_AppendAnyText("Sample weight :\t\t"+num2str(SampleWeightInBeam))
+				IN2G_AppendAnyText("SampleTransmission :\t\t"+num2str(SampleTransmission))
+				IN2G_AppendAnyText("SampleTransmissionPeakToPeak :\t\t"+num2str(SampleTransmissionPeakToPeak))
 			endif
-		else //(CalibrateToVolume, default)
+		elseif(CalibrateArbitrary) //calibrate arbitrary...
+				IN2G_AppendAnyText("SampleTransmission :\t\t"+num2str(SampleTransmission))
+				IN2G_AppendAnyText("SampleTransmissionPeakToPeak :\t\t"+num2str(SampleTransmissionPeakToPeak))		
+		else		//(CalibrateToVolume, default)
 			if(CalculateThickness)
 				IN2G_AppendAnyText("Calculated thickness :\t\t")
 				IN2G_AppendAnyText("SampleLinAbsorption :\t\t"+num2str(SampleLinAbsorption))
@@ -599,6 +607,8 @@ Function IN3_SaveData()
 				IN2G_AppendAnyText("SampleFilledFraction :\t\t"+num2str(SampleFilledFraction))
 			else
 				IN2G_AppendAnyText("Sample Thickness :\t\t"+num2str(SampleThickness))
+				IN2G_AppendAnyText("SampleTransmission :\t\t"+num2str(SampleTransmission))
+				IN2G_AppendAnyText("SampleTransmissionPeakToPeak :\t\t"+num2str(SampleTransmissionPeakToPeak))
 			endif
 		endif
 		
@@ -617,6 +627,8 @@ Function IN3_SaveData()
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("M_SMR_Int","Units","cm2/g")
+				elseif(CalibrateArbitrary)
+					IN2G_AppendorReplaceWaveNote("M_SMR_Int","Units","Arbitrary")
 				else
 					IN2G_AppendorReplaceWaveNote("M_SMR_Int","Units","cm2/cm3")
 				endif
@@ -639,6 +651,8 @@ Function IN3_SaveData()
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("SMR_Int","Units","cm2/g")
+				elseif(CalibrateArbitrary)
+					IN2G_AppendorReplaceWaveNote("SMR_Int","Units","Arbitrary")
 				else
 					IN2G_AppendorReplaceWaveNote("SMR_Int","Units","cm2/cm3")
 				endif
@@ -664,6 +678,8 @@ Function IN3_SaveData()
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("M_DSM_Int","Units","cm2/g")
+				elseif(CalibrateArbitrary)
+					IN2G_AppendorReplaceWaveNote("M_DSM_Int","Units","Arbitrary")
 				else
 					IN2G_AppendorReplaceWaveNote("M_DSM_Int","Units","cm2/cm3")
 				endif
@@ -686,6 +702,8 @@ Function IN3_SaveData()
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("DSM_Int","Units","cm2/g")
+				elseif(CalibrateArbitrary)
+					IN2G_AppendorReplaceWaveNote("DSM_Int","Units","Arbitrary")
 				else
 					IN2G_AppendorReplaceWaveNote("DSM_Int","Units","cm2/cm3")
 				endif
@@ -723,7 +741,7 @@ Function IN3_SaveData()
 		if(CalibrateToWeight)
 			if(CalculateWeight)
 				IN2G_AppendNoteToAllWaves("CalculateWeight",num2str(CalculateWeight))
-				IN2G_AppendNoteToAllWaves("SampleWeightAbsorption",num2str(SampleWeightAbsorption))
+				IN2G_AppendNoteToAllWaves("SampleDensity",num2str(SampleDensity))
 				IN2G_AppendNoteToAllWaves("SampleWeight",num2str(SampleWeightInBeam))
 			else
 				IN2G_AppendNoteToAllWaves("SampleWeight",num2str(SampleWeightInBeam))	
@@ -1065,21 +1083,34 @@ end
 
 Function IN3_CalculateSampleThickness()
 
+	NVAR CalibrateToWeight = root:Packages:Indra3:CalibrateToWeight
 	NVAR CalculateThickness = root:Packages:Indra3:CalculateThickness
 	NVAR SampleThickness = root:Packages:Indra3:SampleThickness
 	NVAR SampleTransmission = root:Packages:Indra3:SampleTransmission
 	NVAR SampleLinAbsorption = root:Packages:Indra3:SampleLinAbsorption
 	NVAR SampleFilledFraction = root:Packages:Indra3:SampleFilledFraction
-	
+	NVAR CalculateWeight= root:Packages:Indra3:CalculateWeight
+	NVAR SampleDensity= root:Packages:Indra3:SampleDensity
+ 	NVAR SampleWeightInBeam= root:Packages:Indra3:SampleWeightInBeam
+ 	NVAR SampleFilledFraction= root:Packages:Indra3:SampleFilledFraction
+	NVAR BeamExposureArea= root:Packages:Indra3:BeamExposureArea	
 	//transm =  exp(-mu * T)
 	// T =  (1/SampleFilledFraction) *(- ln(transm)/mu )
 	//mu = (1/SampleFilledFraction) *(- ln(transm)/T )
-	if(CalculateThickness)
-		SampleThickness = -10*(1/SampleFilledFraction) *( ln(SampleTransmission)/SampleLinAbsorption )
-	else
-		SampleLinAbsorption =  -10*(1/SampleFilledFraction) *( ln(SampleTransmission)/SampleThickness )
-	endif
-	
+	if(CalibrateToWeight)
+		if(CalculateWeight)
+			if(CalculateThickness)
+				SampleThickness = -10 *( ln(SampleTransmission)/SampleLinAbsorption )
+			endif
+			SampleWeightInBeam = BeamExposureArea * SampleThickness * SampleDensity	
+		endif
+	else	
+		if(CalculateThickness)
+			SampleThickness = -10*(1/SampleFilledFraction) *( ln(SampleTransmission)/SampleLinAbsorption )
+		else
+			SampleLinAbsorption =  -10*(1/SampleFilledFraction) *( ln(SampleTransmission)/SampleThickness )
+		endif
+	endif	
 end
 
 //***********************************************************************************************************************************

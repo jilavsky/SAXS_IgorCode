@@ -1,7 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.78
+#pragma version = 1.79
 
-
+//1.79 improved weight calibration
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 //*****************************************************************************************************************
@@ -59,7 +59,7 @@ Function IN3_Initialize()
 	ListOfVariables+="BeamCenter;MaximumIntensity;PeakWidth;PeakWidthArcSec;"
 	ListOfVariables+="SampleQOffset;DisplayPeakCenter;DisplayAlignSaAndBlank;SampleAngleOffset;"
 
-	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleWeightAbsorption;"
+	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
 
 	ListOfVariables+="BlankWidth;MSAXSCorrection;UseMSAXSCorrection;"
 	ListOfVariables+="MSAXSStartPoint;MSAXSEndPoint;BlankFWHM;BlankMaximum;"
@@ -192,48 +192,48 @@ Function IN3_MainPanel()
 	NVAR CalculateThickness=root:Packages:Indra3:CalculateThickness
 	NVAR CalibrateToWeight=root:Packages:Indra3:CalibrateToWeight
 	NVAR CalibrateToVolume=root:Packages:Indra3:CalibrateToVolume
+	NVAR CalibrateArbitrary=root:Packages:Indra3:CalibrateArbitrary
 
-	CheckBox CalibrateToVolume,pos={20,230},size={90,14},proc=IN3_MainPanelCheckBox,title="Calibrate [cm2/cm3]"
+	CheckBox CalibrateArbitrary,pos={20,225},size={90,14},proc=IN3_MainPanelCheckBox,title="Calibrate Arbitrary"
+	CheckBox CalibrateArbitrary,variable= root:Packages:Indra3:CalibrateArbitrary, help={"Check, if you not want to calibrate data"}
+	CheckBox CalibrateToVolume,pos={20,240},size={90,14},proc=IN3_MainPanelCheckBox,title="Calibrate [cm2/cm3]"
 	CheckBox CalibrateToVolume,variable= root:Packages:Indra3:CalibrateToVolume, help={"Check, if you want to calibrate data to sample volume"}
-	CheckBox CalibrateToWeight,pos={220,230},size={90,14},proc=IN3_MainPanelCheckBox,title="Calibrate [cm2/g]"
+	CheckBox CalibrateToWeight,pos={20,255},size={90,14},proc=IN3_MainPanelCheckBox,title="Calibrate [cm2/g]"
 	CheckBox CalibrateToWeight,variable= root:Packages:Indra3:CalibrateToWeight, help={"Check, if you want to calibrate data to sample weight"}
 
-	CheckBox CalculateThickness,pos={20,252},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Thickness", disable=CalibrateToWeight
+	CheckBox CalculateThickness,pos={220,230},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Thickness"
 	CheckBox CalculateThickness,variable= root:Packages:Indra3:CalculateThickness, help={"Check, if you want to calculate sample thickness from transmission"}
 
 	CheckBox CalculateWeight,pos={220,252},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Weight", disable=CalibrateToVolume
 	CheckBox CalculateWeight,variable= root:Packages:Indra3:CalculateWeight, help={"Check, if you want to calculate sample weight from transmission"}
 
-	SetVariable SampleThickness,pos={5,275},size={280,22},title="Sample Thickness [mm] =", bodyWidth=100
+	SetVariable SampleThickness,pos={5,285},size={280,22},title="Sample Thickness [mm] =", bodyWidth=100
 	SetVariable SampleThickness,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged
-	SetVariable SampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:SampleThickness, noedit=CalculateThickness, frame=!CalculateThickness
+	SetVariable SampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness||CalculateWeight)//, frame=!(CalculateThickness&&CalculateWeight)
 
-	Button RecoverDefault,pos={290,273},size={80,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
+	Button RecoverDefault,pos={290,283},size={80,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
 
-	SetVariable SampleWeightInBeam,pos={5,300},size={280,22},title="Sample weight [g] ="
-	SetVariable SampleWeightInBeam,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable SampleWeightInBeam,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
-
-
-	SetVariable SampleTransmission,pos={5,325},size={280,22},title="Sample Transmission ="
+	SetVariable SampleTransmission,pos={5,335},size={280,22},title="Sample Transmission ="
 	SetVariable SampleTransmission,font="Times New Roman",fSize=14, bodyWidth=100
 	SetVariable SampleTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmission, noedit=0, frame=0
 
-
-
-	SetVariable SampleLinAbsorption,pos={5,350},size={280,22},title="Sample absorp. coef [1/cm] ="
+	SetVariable SampleLinAbsorption,pos={5,360},size={280,22},title="Sample absorp. coef [1/cm] ="
 	SetVariable SampleLinAbsorption,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleLinAbsorption,limits={0,Inf,0},variable= root:Packages:Indra3:SampleLinAbsorption, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable SampleWeightAbsorption,pos={5,375},size={280,22},title="Sample absorp. coef [1/g] ="
-	SetVariable SampleWeightAbsorption,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable SampleWeightAbsorption,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightAbsorption, noedit=!CalculateWeight, frame=CalculateWeight
+	SetVariable SampleDensity,pos={5,385},size={280,22},title="Sample density [g/cm3] ="
+	SetVariable SampleDensity,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
+	SetVariable SampleDensity,limits={0,Inf,0},variable= root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
 
-	SetVariable SampleFilledFraction,pos={5,400},size={280,22},title="Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
+	SetVariable SampleWeightInBeam,pos={5,410},size={280,22},title="Sample weight [g] ="
+	SetVariable SampleWeightInBeam,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
+	SetVariable SampleWeightInBeam,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
+
+	SetVariable SampleFilledFraction,pos={5,410},size={280,22},title="Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
 	SetVariable SampleFilledFraction,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleFilledFraction,limits={0,Inf,0},variable= root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable BeamExposureArea,pos={5,425},size={280,22},title="Beam area [mm\\S2\\M]  =", help={"Calculated area of the beam from slit positions, do not change unless it is error"}
+	SetVariable BeamExposureArea,pos={5,435},size={280,22},title="Beam area [mm2]  =", help={"Calculated area of the beam from slit positions, do not change unless it is error"}
 	SetVariable BeamExposureArea,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable BeamExposureArea,limits={0,Inf,0},variable= root:Packages:Indra3:BeamExposureArea, noedit=!CalculateWeight, frame=CalculateWeight
 

@@ -47,7 +47,7 @@ Window IR1U_ControlPanel()
 	DrawText 16,635,"Results:"
 
 	//Experimental data input
-	CheckBox UseIndra2Data,pos={217,26},size={141,14},proc=IR1U_InputPanelCheckboxProc,title="Use Indra 2 data structure"
+	CheckBox UseIndra2Data,pos={217,26},size={141,14},proc=IR1U_InputPanelCheckboxProc,title="Use USAXS structure"
 	CheckBox UseIndra2Data,value= root:packages:SAS_Modeling:UseIndra2data, help={"Check, if you are using Indra 2 produced data with the orginal names, uncheck if the names of data waves are different"}
 	CheckBox UseQRSData,pos={217,40},size={141,14},proc=IR1U_InputPanelCheckboxProc,title="Use QRS data structure"
 	CheckBox UseQRSData,value= root:packages:SAS_Modeling:UseQRSdata, help={"Check, if you are using QRS names, uncheck if the names of data waves are different"}

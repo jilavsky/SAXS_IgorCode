@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.24
+#pragma version = 1.25
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 changed "Indra 2" to "USAXS" to make bit more sense for human beings. 
 //1.24 added Guinier-Porod data type
 //1.23 fixed user defined data types of QIS type (with type at the end
 //1.22 fixed FOlder popup to show only last folder name and indicate which subfolder the data came from. 
@@ -482,8 +483,8 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 
 //	//Experimental data input
 	if(strlen(AllowedIrenaTypes)>0)
-		CheckBox UseIndra2Data,pos={100,25},size={141,14},proc=IR2C_InputPanelCheckboxProc,title="Indra 2 data"
-		CheckBox UseIndra2Data,variable= $(CntrlLocation+":UseIndra2data"), help={"Check, if you are using Indra 2 produced data with the orginal names, uncheck if the names of data waves are different"}
+		CheckBox UseIndra2Data,pos={100,25},size={141,14},proc=IR2C_InputPanelCheckboxProc,title="USAXS"
+		CheckBox UseIndra2Data,variable= $(CntrlLocation+":UseIndra2data"), help={"Check, if you are using USAXS - Indra 2 - produced data with the orginal names, uncheck if the names of data waves are different"}
 	endif
 	CheckBox UseQRSData,pos={100,39},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="QRS (QIS)"
 	CheckBox UseQRSData,variable= $(CntrlLocation+":UseQRSdata"), help={"Check, if you are using QRS or QIS names, uncheck if the names of data waves are different"}

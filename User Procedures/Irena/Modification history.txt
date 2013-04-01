@@ -8,6 +8,7 @@ Modified to compile on computers even without xop and abort & produce message wh
 Guinier-Porod Fit - created first version of this tool. 
 Control procedures - modified to show only last folder but work transparently for the tools. 
 Control procedures - added G(r) as data type of Irena results.  
+Control procedures - changed "Indra 2 data" to "USAXS". More human readable. 
 Unified fit - fixed Checking of validity levels not to declare level without Guinier part to be invalid. 
 Unified fit - added "No limits" checkbox and support code to fit without limits.
 Reflectivity - added "Motofit" as data type for use with this tool. 
@@ -15,7 +16,9 @@ Added scroll buttons to scroll vertically content of panels for small displays. 
 Added "User" defined structure factor (implemented in Modeling II)
 Added panel version control for: Fractals tool, Small-angle diffraction, ASCII export, ASCII Import
 Data Manipulation II - modified to add ability to create errors (=uncertainties), scale and rebin to number of points. Modified GUI to separate processing, errors generation and post processing (scaling/rebinning). 
-Plotting tool II - changed how error bars are displayed and enables SMR data error bars. 
+Plotting tool II - changed how error bars are displayed and enables SMR data error bars.
+Plotting tool I - added ability to use calibration unit (arbitrary, cm2/cm3 or cm2/g) from the USAXS data. Added checkbox to avoid units checking.  
+ASCII Import data - added controls to select import units for Intensity [options: Arbitrary, Volume…cm2/cm3, Weight…cm2/g] 
 
 
 2.50 1/4/2013

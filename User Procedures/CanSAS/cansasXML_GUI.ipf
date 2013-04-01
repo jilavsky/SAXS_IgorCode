@@ -128,7 +128,7 @@ Proc CS_XMLGUIImportDataPanel() 			//main panel
 	Button Preview,help={"Preview selected file."}
 
 	CheckBox UseFileNameAsFolder,pos={10,380},size={16,14},proc=CS_XMLGUICheckProc,title="Use File Nms As Fldr Nms?",variable= root:Packages:CS_XMLreader_GUI:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
-	CheckBox UseIndra2Names,pos={10,395},size={16,14},proc=CS_XMLGUICheckProc,title="Use Indra 2 data names?",variable= root:Packages:CS_XMLreader_GUI:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
+	CheckBox UseIndra2Names,pos={10,395},size={16,14},proc=CS_XMLGUICheckProc,title="Use USAXS names?",variable= root:Packages:CS_XMLreader_GUI:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
 	CheckBox UseQRSNames,pos={10,410},size={16,14},proc=CS_XMLGUICheckProc,title="Use QRS data names?",variable= root:Packages:CS_XMLreader_GUI:UseQRSNames, help={"Use QRS name structure? (Q_filename, R_filename, S_filename)"}
 	CheckBox UseQISNames,pos={230,395},size={16,14},proc=CS_XMLGUICheckProc,title="Use QIS data names?",variable= root:Packages:CS_XMLreader_GUI:UseQISNames, help={"Use NIST QIS naming structure? (filename_Q, filename_I, filename_S etc..)"}
 

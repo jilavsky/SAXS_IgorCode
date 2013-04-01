@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.13
+#pragma version=2.14
 #include <KBColorizeTraces>
 Constant IR1PversionNumber=2.13
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.14 Modified to handle different units for Intensity calibration. Addec control in Change Graph details panel. 
 //2.13 Added vertical scrolling
 //2.12 fix in Scripting tool call which caused problems when starting with no data type chosen. Defaults properly to qrs now. 
 //2.11 Updated way the Gizmo procedures are handled, will load only when Gizmo panel is opened. 
@@ -1196,6 +1197,10 @@ Window IR1P_ChangeGraphDetailsPanel()
 	CheckBox GraphLegendShortNms pos={10,280},title="Only last folder in Legend?", variable=root:Packages:GeneralplottingTool:GraphLegendShortNms
 	CheckBox GraphLegendShortNms proc=IR1P_GenPlotCheckBox, help={"Check to have legend use only last folder name."}	
 
+	CheckBox CheckYAxisUnits pos={170,220},title="Do not check Y data units?", variable=root:Packages:GeneralplottingTool:DoNotCheckYAxisUnits
+	CheckBox CheckYAxisUnits proc=IR1P_GenPlotCheckBox, help={"Check to skip checking the units for Y wave. Will not warn when different are loaded"}	
+
+
 	CheckBox DisplayTimeAndDate pos={170,280},title="Date & time stamp?", variable=root:Packages:GeneralplottingTool:DisplayTimeAndDate
 	CheckBox DisplayTimeAndDate proc=IR1P_GenPlotCheckBox, help={"Display date and time in the lower right corner"}	
 
@@ -1620,6 +1625,8 @@ Function IR1P_UpdateAxisName(which,WhatTypeSelected)
 	SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating	//this contains data formating
 	SVAR GraphXAxisName=root:Packages:GeneralplottingTool:GraphXAxisName
 	SVAR GraphYAxisName=root:Packages:GeneralplottingTool:GraphYAxisName
+	SVAR ListOfDataFormating=root:Packages:GeneralplottingTool:ListOfDataFormating
+	string Units=stringbykey("Units",ListOfDataFormating,"=",";")
 	string NewLabel
 	
 	if (cmpstr(which,"X")==0)
@@ -1639,19 +1646,25 @@ Function IR1P_UpdateAxisName(which,WhatTypeSelected)
 		GraphXAxisName=NewLabel
 			
 	elseif (cmpstr(which,"Y")==0)
+			if(strlen(Units)<1)
+				Units="cm\S2\M/cm\S3\M"
+			else
+				Units=ReplaceString("cm2/g", Units, "cm\S2\M/g")
+				Units=ReplaceString("cm2/cm3", Units, "cm\S2\M/cm\S3\M")
+			endif
 
 		if(cmpstr(WhatTypeSelected,"Y")==0)
-			NewLabel="Intensity [cm\S-1\M]"
+			NewLabel="Intensity ["+Units+"]"
 		elseif(cmpstr(WhatTypeSelected,"Y^2")==0)
-			NewLabel="Intensity\S2\M [cm\S-2\M]"
+			NewLabel="Intensity\S2\M [("+Units+")\S2\M]"
 		elseif(cmpstr(WhatTypeSelected,"Y^3")==0)
-			NewLabel="Intensity\S3\M [cm\S-3\M]"
+			NewLabel="Intensity\S3\M [("+Units+")\S3\M]"
 		elseif(cmpstr(WhatTypeSelected,"Y^4")==0)
-			NewLabel="Intensity\S4\M [cm\S-4\M]"
+			NewLabel="Intensity\S4\M [("+Units+")\S4\M]"
 		elseif(cmpstr(WhatTypeSelected,"1/Y")==0)
-			NewLabel="Intensity\S-1\M [cm]"
+			NewLabel="Intensity\S-1\M [("+Units+")\S-1\M]"
 		elseif(cmpstr(WhatTypeSelected,"sqrt(1/Y)")==0)
-			NewLabel="sqrt(Intensity\S-1\M) [cm\S-0.5\M]"
+			NewLabel="sqrt(Intensity\S-1\M) [sqrt("+Units+")]"
 		elseif(cmpstr(WhatTypeSelected,"ln(Y*X^2)")==0)
 			NewLabel="ln(Intensity * q\S2\M)"
 		elseif(cmpstr(WhatTypeSelected,"ln(Y)")==0)
@@ -1659,9 +1672,9 @@ Function IR1P_UpdateAxisName(which,WhatTypeSelected)
 		elseif(cmpstr(WhatTypeSelected,"ln(Y*X)")==0)
 			NewLabel="ln(Intensity * q)"
 		elseif(cmpstr(WhatTypeSelected,"Y*X^2")==0)
-			NewLabel="Intensity * q\S2\M [cm\S-1\M * A\S-2\M]"
+			NewLabel="Intensity * q\S2\M ["+Units+" * A\S-2\M]"
 		elseif(cmpstr(WhatTypeSelected,"Y*X^4")==0)
-			NewLabel="Intensity * q\S4\M [cm\S-1\M * A\S-4\M]"
+			NewLabel="Intensity * q\S4\M ["+Units+" * A\S-4\M]"
 		else
 			NewLabel=""
 		endif
@@ -1710,7 +1723,7 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	ListOfVariables+="GraphWindowWidth;GraphWindowHeight;GraphTicksIn;GraphLegendSize;GraphLegendFrame;"
 	ListOfVariables+="ModifyDataBackground;ModifyDataMultiplier;ModifyDataQshift;ModifyDataErrorMult;"
 	ListOfVariables+="TrimPointLargeQ;TrimPointSmallQ;FittingParam1;FittingParam2;FittingParam3;FittingParam4;FittingParam5;"
-	ListOfVariables+="FitUseErrors;Xoffset;Yoffset;"
+	ListOfVariables+="FitUseErrors;Xoffset;Yoffset;DoNotCheckYAxisUnits;"
 	//3D graphs special controls
 	ListOfVariables+="Graph3DClrMin;Graph3DClrMax;Graph3DAngle;Graph3DAxLength;Graph3DLogColors;Graph3DColorsReverse;"
 	ListOfVariables+="GizmoNumLevels;GizmoUseLogColors;GizmoDisplayGrids;GizmoDisplayLabels;GizmoEstimatedVoronoiTime;"
