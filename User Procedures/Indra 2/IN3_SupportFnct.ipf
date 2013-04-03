@@ -120,6 +120,9 @@ Function IN3_CalculateTransmission(SkipEstimate)
 	NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
 	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
 	SVAR FolderName = root:Packages:Indra3:DataFolderName
+	if (!DataFolderExists(FolderName ))
+		return 0
+	endif
 	if(isBlank)
 		SampleTransmissionPeakToPeak=1
 	else
@@ -1068,6 +1071,8 @@ Function IN3_MSAXSHookFunction(H_Struct)
 	 	NVAR SampleTransmission= root:Packages:Indra3:SampleTransmission
 	 	NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
 		SampleTransmission = SampleTransmissionPeakToPeak * MSAXSCorrection
+			//recalculate what needs to be done...
+		IN3_RecalculateData(2)
 		setDataFolder oldDf
 	endif
     return 0        // 0 if nothing done, else 1
@@ -1102,7 +1107,9 @@ Function IN3_CalculateSampleThickness()
 			if(CalculateThickness)
 				SampleThickness = -10 *( ln(SampleTransmission)/SampleLinAbsorption )
 			endif
-			SampleWeightInBeam = BeamExposureArea * SampleThickness * SampleDensity	
+			//SampleWeightInBeam = BeamExposureArea * SampleThickness * SampleDensity	
+			// this should be normalized to 1mm2 of beam area as the empty normalizes everything to mm2
+			SampleWeightInBeam = SampleDensity * (0.01 * SampleThickness/10)	//this is V in cm3 - 1mm2 * thickness - converted to cm  	
 		endif
 	else	
 		if(CalculateThickness)

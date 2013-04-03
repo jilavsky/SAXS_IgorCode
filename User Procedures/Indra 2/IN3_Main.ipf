@@ -214,7 +214,7 @@ Function IN3_MainPanel()
 	Button RecoverDefault,pos={290,283},size={80,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
 
 	SetVariable SampleTransmission,pos={5,335},size={280,22},title="Sample Transmission ="
-	SetVariable SampleTransmission,font="Times New Roman",fSize=14, bodyWidth=100
+	SetVariable SampleTransmission,font="Times New Roman",fSize=14, bodyWidth=100, proc=IN3_ParametersChanged
 	SetVariable SampleTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmission, noedit=0, frame=0
 
 	SetVariable SampleLinAbsorption,pos={5,360},size={280,22},title="Sample absorp. coef [1/cm] ="
@@ -225,7 +225,7 @@ Function IN3_MainPanel()
 	SetVariable SampleDensity,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleDensity,limits={0,Inf,0},variable= root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
 
-	SetVariable SampleWeightInBeam,pos={5,410},size={280,22},title="Sample weight [g] ="
+	SetVariable SampleWeightInBeam,pos={5,410},size={300,22},title="Sample weight [g/mm2 bm area] ="
 	SetVariable SampleWeightInBeam,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleWeightInBeam,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
 
