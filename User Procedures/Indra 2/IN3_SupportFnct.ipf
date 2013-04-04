@@ -296,10 +296,13 @@ Function IN3_CalculateCalibration()
 	elseif(CalibrateArbitrary)		//arbitrary, use thickness 1mm, data are on relative scale anyway.
 		Kfactor = Kfactor*1*0.1
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"Arbitrary","=")
-	else				//use weight. Assume the weight in the beam is already scaled per beam area?
+	elseif(CalibrateToWeight)			//use weight. Assume the weight in the beam is already scaled per beam area?
 		//first calculate the amount of sample in the beam...
-		Kfactor = Kfactor * SampleWeightInBeam		//SampleWeightInBeam should be in g and be real weight of sample [g/in beam area], not unit weight [g/cm2]
+		Kfactor = Kfactor * SampleWeightInBeam		//SampleWeightInBeam should be in g and be weight of sample [g/in 1 cm2 of beam area]
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"cm2/g","=")
+	else						//prior system, nothing selected.
+		Kfactor = Kfactor*SampleThickness*0.1
+		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"cm2/cm3","=")
 	endif	
 	ASBParameters=ReplaceNumberByKey("Kfactor",ASBParameters,Kfactor,"=")
 	ASBParameters=ReplaceNumberByKey("OmegaFactor",ASBParameters,OmegaFactor,"=")
@@ -1086,7 +1089,7 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 
-Function IN3_CalculateSampleThickness()
+Function IN3_CalcSampleWeightOrThickness()
 
 	NVAR CalibrateToWeight = root:Packages:Indra3:CalibrateToWeight
 	NVAR CalculateThickness = root:Packages:Indra3:CalculateThickness
@@ -1109,7 +1112,7 @@ Function IN3_CalculateSampleThickness()
 			endif
 			//SampleWeightInBeam = BeamExposureArea * SampleThickness * SampleDensity	
 			// this should be normalized to 1mm2 of beam area as the empty normalizes everything to mm2
-			SampleWeightInBeam = SampleDensity * (0.01 * SampleThickness/10)	//this is V in cm3 - 1mm2 * thickness - converted to cm  	
+			SampleWeightInBeam = SampleDensity * (SampleThickness/10)	//this is V in cm3 * thickness converted to cm  	
 		endif
 	else	
 		if(CalculateThickness)

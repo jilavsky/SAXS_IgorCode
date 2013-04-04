@@ -504,11 +504,11 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	NVAR CalculateThickness=root:Packages:Indra3:CalculateThickness
 	if (cmpstr("CalculateThickness",ctrlName)==0)
 		NI3_TabPanelControl("",0)
-		IN3_CalculateSampleThickness()
+		IN3_CalcSampleWeightOrThickness()
 	endif
 	if (cmpstr("CalculateWeight",ctrlName)==0)
 		NI3_TabPanelControl("",0)
-		IN3_CalculateSampleThickness()
+		IN3_CalcSampleWeightOrThickness()
 	endif
 
 	if (stringmatch("CalibrateToVolume",ctrlName))
@@ -1359,7 +1359,7 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable SampleLinAbsorption,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!CalculateThickness, frame=CalculateThickness
 	SetVariable SampleDensity,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToWeight || CalibrateArbitrary), frame=CalculateWeight, noedit=!CalculateWeight
 	SetVariable SampleFilledFraction,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToVolume || CalibrateArbitrary),noedit=!CalculateThickness, frame=CalculateThickness
-	SetVariable BeamExposureArea, win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!(CalculateWeight&&CalibrateToWeight), frame=!CalculateWeight
+	//SetVariable BeamExposureArea, win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!(CalculateWeight&&CalibrateToWeight), frame=!CalculateWeight
 
 
 

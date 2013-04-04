@@ -11,6 +11,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 		// 1 - recalculate R wave without estimating center, just when the PD parameters are changed...
 		// 2 - changed Q parameters, recalcualte just the Q vales... 
 	
+	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 	NVAR IsBlank = root:Packages:Indra3:IsBlank
@@ -29,14 +30,14 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 	endif
 	if(StepFrom<=3 && !IsBlank)
 			// calculate transmission (can be done, we have the data now) and scale the data to it... 
-		//IN3_CorrectQandTransmission()
-		IN3_CalculateSampleThickness()
+		IN3_CalcSampleWeightOrThickness()
 	endif
 	if(StepFrom<=4 && !IsBlank)
 	// subtract sample and Blank to create SMR data...
-		IN3_CalculateCalibration()
 		IN3_CalculateMSAXSCorrection()
 		IN3_CalculateTransmission(1)
+		IN3_CalcSampleWeightOrThickness()
+		IN3_CalculateCalibration()
 		IN3_RecalcSubtractSaAndBlank()
 		//and store Q position for starting next time
 		DoWIndow RcurvePlotGraph
@@ -122,7 +123,10 @@ Function IN3_calculateRwaveQvec()	//this creates log log plot for check of dark 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 
-	Wave ar_encoder	
+	Wave/Z ar_encoder	
+	if(!WaveExists(ar_encoder))
+		abort
+	endif
 	SVAR MeasurementParameters
 	SVAR specComment
 	NVAR SampleAngleOffset

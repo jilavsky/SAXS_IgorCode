@@ -889,9 +889,9 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=0
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=0
 			endif
-			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2) )
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,  ]=NaN
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,  ]=NaN
 			endif
 			ResultsInt =  TempIntInterp2 -TempInt1
 			ResultsE = sqrt(TempE1^2 + TempEInterp2^2)
@@ -911,7 +911,7 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1, ]=NaN
 			endif
 			ResultsInt =  TempIntInterp2 - TempInt1
 			IN2G_ReplaceNegValsByNaNWaves(ResultsInt,ResultsQ,ResultsEtemp)

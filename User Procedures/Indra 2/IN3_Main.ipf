@@ -225,7 +225,7 @@ Function IN3_MainPanel()
 	SetVariable SampleDensity,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleDensity,limits={0,Inf,0},variable= root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
 
-	SetVariable SampleWeightInBeam,pos={5,410},size={300,22},title="Sample weight [g/mm2 bm area] ="
+	SetVariable SampleWeightInBeam,pos={5,410},size={300,22},title="Sample weight [g/cm2 bm area] ="
 	SetVariable SampleWeightInBeam,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleWeightInBeam,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
 
@@ -233,9 +233,9 @@ Function IN3_MainPanel()
 	SetVariable SampleFilledFraction,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleFilledFraction,limits={0,Inf,0},variable= root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable BeamExposureArea,pos={5,435},size={280,22},title="Beam area [mm2]  =", help={"Calculated area of the beam from slit positions, do not change unless it is error"}
-	SetVariable BeamExposureArea,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
-	SetVariable BeamExposureArea,limits={0,Inf,0},variable= root:Packages:Indra3:BeamExposureArea, noedit=!CalculateWeight, frame=CalculateWeight
+	//SetVariable BeamExposureArea,pos={5,435},size={280,22},title="Beam area [mm2]  =", help={"Calculated area of the beam from slit positions, do not change unless it is error"}
+	//SetVariable BeamExposureArea,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
+	//SetVariable BeamExposureArea,limits={0,Inf,0},variable= root:Packages:Indra3:BeamExposureArea, noedit=!CalculateWeight, frame=CalculateWeight
 
 
 	//tab 2 - geometry controls
