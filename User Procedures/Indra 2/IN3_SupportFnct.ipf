@@ -298,7 +298,9 @@ Function IN3_CalculateCalibration()
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"Arbitrary","=")
 	elseif(CalibrateToWeight)			//use weight. Assume the weight in the beam is already scaled per beam area?
 		//first calculate the amount of sample in the beam...
-		Kfactor = Kfactor * SampleWeightInBeam		//SampleWeightInBeam should be in g and be weight of sample [g/in 1 cm2 of beam area]
+		
+		//Kfactor = Kfactor*SampleThickness*0.1 * SampleDensity		//SampleWeightInBeam should be in g and be weight of sample [g/in 1 cm2 of beam area]
+		Kfactor = Kfactor*SampleWeightInBeam							//SampleWeightInBeam should be in g and be weight of sample in [g/cm2 of beam area]
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"cm2/g","=")
 	else						//prior system, nothing selected.
 		Kfactor = Kfactor*SampleThickness*0.1
@@ -1112,13 +1114,15 @@ Function IN3_CalcSampleWeightOrThickness()
 			endif
 			//SampleWeightInBeam = BeamExposureArea * SampleThickness * SampleDensity	
 			// this should be normalized to 1mm2 of beam area as the empty normalizes everything to mm2
-			SampleWeightInBeam = SampleDensity * (SampleThickness/10)	//this is V in cm3 * thickness converted to cm  	
+			SampleWeightInBeam = SampleThickness*0.1 * SampleDensity	//this is g/cm * thickness converted to cm  	
+		else
+			SampleDensity = SampleWeightInBeam /  (SampleThickness /10)
 		endif
 	else	
 		if(CalculateThickness)
 			SampleThickness = -10*(1/SampleFilledFraction) *( ln(SampleTransmission)/SampleLinAbsorption )
 		else
-			SampleLinAbsorption =  -10*(1/SampleFilledFraction) *( ln(SampleTransmission)/SampleThickness )
+			SampleLinAbsorption =  -ln(SampleTransmission) / (SampleThickness/(10*(1/SampleFilledFraction)))
 		endif
 	endif	
 end

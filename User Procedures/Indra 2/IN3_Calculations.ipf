@@ -1080,7 +1080,11 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	//W[3]>1		//modified 7/6/2010 per request from Fan. K3 coefficient needs to be large enough to avoid weird Peak shapes.
 	Make/O/T/N=1 T_Constraints
 	T_Constraints[0] = {"K3>1.3"}
+	variable V_FitError=0
 	FuncFit/Q/NTHR=0  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	if(V_FitError>0)
+		abort "Peak profiel fitting function error. Please select wider range of data or change fitting function (Guass is good choice)"
+	endif
 	NVAR BeamCenter
 	NVAR MaximumIntensity
 	NVAR PeakWidth		
