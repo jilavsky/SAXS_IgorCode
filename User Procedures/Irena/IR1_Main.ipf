@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.51
+#pragma version=2.52
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.52 added check for update to run every 30 days and remind users about proper citations.
 //2.51 added Guinier-Porod model (beta version of the tool)
 //2.50 major update, added uncertainity estimation to Sizes and Modeling II. Reflectivity changes. 
 //2.49 Minor fixes
@@ -126,6 +127,8 @@ Menu "SAS"
 		Submenu "Help, About, Manuals, Remove Irena"
 			"About", IR1_AboutPanel()
 			help={"Get Panel with info about this release of Irena macros"}
+			"Check for updates", IR2C_CheckIrenaUpdate(1)
+			help={"Run Check for update and present citations to use in publications"}	
 			"Open Irena pdf manual", IR2_OpenIrenaManual()
 			help={"Opens your pdf reader (Acrobat) with Irena manual in it"}
 			"Open Form and Structure Factor description", IR2T_LoadFFDescription()
@@ -166,7 +169,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
 	
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
-
+	IR2C_CheckIrenaUpdate(0)
 end
 //****************************************************************************************
 //****************************************************************************************
@@ -315,6 +318,7 @@ structure IrenaPanelDefaults
 	uint32 AxisLabelSize			//font size as integer
 	int16 LegendUseFolderName		//font size as integer
 	int16 LegendUseWaveName		//font size as integer
+	variable LastUpdateCheck
 	uint32 reserved[100]			// Reserved for future use
 	
 endstructure
@@ -343,7 +347,7 @@ Function IR2C_ReadIrenaGUIPackagePrefs()
 		print "Read Irena Penals and graphs preferences from local machine and applied them. "
 		print "Note that this may have changed font size and type selection originally saved with the existing experiment."
 		print "To change them please use \"Configure default fonts and names\""
-		if(Defs.Version==1)		//Lets declare the one we know as 1
+		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
 			DefaultFontType=Defs.PanelFontType
 			DefaultFontSize = Defs.defaultFontSize
 			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
@@ -392,7 +396,7 @@ Function IR2C_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 
-	Defs.Version			=		1
+	Defs.Version			=		2
 	Defs.PanelFontType	 	= 		DefaultFontType
 	Defs.defaultFontSize 	= 		DefaultFontSize 
 	Defs.LegendSize 			= 		LegendSize
@@ -2046,3 +2050,549 @@ Function IR1_ExportASCIIResults(standardOrUser)
 end
 	
 
+//**************************************************************** 
+//**************************************************************** 
+//***********************************
+//***********************************
+
+Function IR2C_CheckIrenaUpdate(CalledFromMenu)
+	variable CalledFromMenu
+	//CalledFromMenu=1 run always...
+	struct  IrenaPanelDefaults Defs
+	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+	if(V_Flag==0 && CalledFromMenu==0)		
+		//print Defs
+		if(Defs.Version==2)		//Lets declare the one we know as 1
+			if(datetime - Defs.LastUpdateCheck >30 * 24 * 60 * 60 || CalledFromMenu)
+				//call check version procedure and advise user on citations
+				IR2C_CheckVersions()
+				Defs.LastUpdateCheck = datetime
+				SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+			endif
+		else
+			Defs.Version			=		2
+			Defs.LastUpdateCheck = datetime
+			IR2C_CheckVersions()
+			SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+		endif
+	else		//either preferences do not exist or user asked for the check
+		Defs.Version			=		2
+		Defs.LastUpdateCheck = datetime
+		IR2C_CheckVersions()
+		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+	endif
+	
+end
+
+//**************************************************************** 
+//**************************************************************** 
+static Function IR2C_CheckVersions()
+	string PackageString	
+	//create list of Igor procedure files on this machine
+	IR2C_ListIgorProcFiles()
+	DoWIndow CheckForUpdatePanel
+	if(V_Flag)
+		DoWIndow/F CheckForUpdatePanel								
+	else
+		Execute("CheckForUpdatePanel()")			
+	endif
+	//Irena code
+	string OldDf=GetDataFolder(1)
+	//create location for the results waves...
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:UseProcedureFiles
+	variable/g InstalledIrenaVersion
+	variable/g WebIrenaVersion		
+	InstalledIrenaVersion = IR2C_FindFileVersion("Boot Irena1 modeling.ipf")	
+	//now get the web based version.
+	NewPath  /O/Q TempPath  (SpecialDirPath("temporary", 0, 0, 0 ))
+	//download the file
+	variable InstallHadFatalError
+	InstallHadFatalError = IR2C_DownloadFile("IgorCode/Igor Procedures/Boot Irena1 modeling.ipf","TempPath", "Boot Irena1 modeling.ipf")
+	sleep/s 1
+	WebIrenaVersion = IR2C_FindVersionOfSingleFile("Boot Irena1 modeling.ipf","TempPath")
+	if(InstallHadFatalError || numtype(WebIrenaVersion)!=0)
+		DoAlert 0, "Check for latest Irena version failed. Check you Internet connection. Try later again..."
+	endif
+	DeleteFile /Z /P=tempPath "Boot Irena1 modeling.ipf"	
+	SetDataFOlder OldDf
+end	
+//**************************************************************** 
+//**************************************************************** 
+static Function IR2C_FindFileVersion(FilenameStr)
+	string FilenameStr
+	
+	Wave/T PathToFIles= root:Packages:UseProcedureFiles:PathToFIles
+	Wave/T FileNames=root:Packages:UseProcedureFiles:FileNames
+	Wave FileVersions =root:Packages:UseProcedureFiles:FileVersions
+	variable i, imax=Numpnts(FileNames), versionFound
+	string tempname
+	versionFound=-1
+	For(i=0;i<imax;i+=1)
+		tempname = FileNames[i]
+		if(stringmatch(tempname,FileNameStr))
+			versionFound = FileVersions[i]
+			return versionFound
+		endif
+	endfor
+	return -1
+end
+//**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+
+static Function IR2C_FindVersionOfSingleFile(tempFileName,PathStr)
+	string tempFileName, PathStr
+		
+		string tempScraptext
+		Grep/P=$(PathStr)/Z/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+		sleep/s (0.02)
+		tempScraptext = GetScrapText()
+		if(strlen(tempScraptext)>10)		//found line with #pragma version"
+			tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
+			tempScraptext = replaceString("version",tempScraptext,"")		//remove version
+			tempScraptext = replaceString("=",tempScraptext,"")			//remove =
+			tempScraptext = replaceString("\t",tempScraptext,"  ")			//remove optional tabulators, some actually use them. 
+			tempScraptext = RemoveEnding(tempScraptext,"\r")			//remove optional tabulators, some actually use them. 
+			//forget about the comments behind the text. 
+                    //str2num is actually quite clever in this and converts start of the string which makes sense. 
+			return str2num(tempScraptext)
+		else             //no version found, set to NaN
+			return NaN
+		endif
+
+end
+
+
+//**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+static Function IR2C_ListIgorProcFiles()
+	GetFileFolderInfo/Q/Z/P=Igor "Igor Procedures"	
+	if(V_Flag==0)
+		IR2C_ListProcFiles(S_Path,1 )
+	endif
+	GetFileFolderInfo/Q/Z IR2C_GetIgorUserFilesPath()+"Igor Procedures:"
+	if(V_Flag==0)
+		IR2C_ListProcFiles(IR2C_GetIgorUserFilesPath()+"Igor Procedures:",0)
+	endif
+	KillPath/Z tempPath
+end
+ //**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+static Function IR2C_ListProcFiles(PathStr, resetWaves)
+	string PathStr
+	variable resetWaves
+	
+	String abortMessage	//HR Used if we have to abort because of an unexpected error
+	
+	string OldDf=GetDataFolder(1)
+	//create location for the results waves...
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:UseProcedureFiles
+	//if this is top call to the routine we need to wipe out the waves so we remove old junk
+	string CurFncName=GetRTStackInfo(1)
+	string CallingFncName=GetRTStackInfo(2)
+	variable runningTopLevel=0
+	if(!stringmatch(CurFncName,CallingFncName))
+		runningTopLevel=1
+	endif
+	if(resetWaves)
+			Make/O/N=0/T FileNames		
+			Make/O/N=0/T PathToFiles
+			Make/O/N=0 FileVersions
+	endif
+	
+	
+	//if this was first call, now the waves are gone.
+	//and now we need to create the output waves
+	Wave/Z/T FileNames
+	Wave/Z/T PathToFiles
+	Wave/Z FIleVersions
+	If(!WaveExists(FileNames) || !WaveExists(PathToFiles) || !WaveExists(FIleVersions))
+		Make/O/T/N=0 FileNames, PathToFIles
+		Make/O/N=0 FileVersions
+		Wave/T FileNames
+		Wave/T PathToFiles
+		Wave FileVersions
+		//I am not sure if we really need all of those declarations, but, well, it should not hurt...
+	endif 
+	
+	//this is temporary path to the place we are looking into now...  
+	NewPath/Q/O tempPath, PathStr
+	if (V_flag != 0)		//HR Add error checking to prevent infinite loop
+		sprintf abortMessage, "Unexpected error creating a symbolic path pointing to \"%s\"", PathStr
+		Print abortMessage	// To make debugging easier
+		Abort abortMessage
+	endif
+
+	//list al items in this path
+	string ItemsInTheFolder= IndexedFile(tempPath,-1,"????")+IndexedDir(tempPath, -1, 0 )
+	
+	//HR If there is a shortcut in "Igor Procedures", ItemsInTheFolder will include something like "HDF5 Browser.ipf.lnk". Windows shortcuts are .lnk files.	
+	
+	//remove all . files. 
+	ItemsInTheFolder = GrepList(ItemsInTheFolder, "^\." ,1)
+	//Now we removed all junk files on Macs (starting with .)
+	//now lets check what each of these files are and add to the right lists or follow...
+	variable i, imax=ItemsInList(ItemsInTheFolder)
+	string tempFileName, tempScraptext, tempPathStr
+	variable IamOnMac, isItXOP
+	if(stringmatch(IgorInfo(2),"Windows"))
+		IamOnMac=0
+	else
+		IamOnMac=1
+	endif
+	For(i=0;i<imax;i+=1)
+		tempFileName = stringfromlist(i,ItemsInTheFolder)
+		GetFileFolderInfo/Z/Q/P=tempPath tempFileName
+		isItXOP = IamOnMac * stringmatch(tempFileName, "*xop*" )
+		
+		if(V_isAliasShortcut)
+			//HR If tempFileName is "HDF5 Browser.ipf.lnk", or any other shortcut to a file, S_aliasPath is a path to a file, not a folder.
+			//HR Thus the "NewPath tempPath" command will fail.
+			//HR Thus tempPath will retain its old value, causing you to recurse the same folder as before, resulting in an infinite loop.
+			
+			//is alias, need to follow and look further. Use recursion...
+			if(strlen(S_aliasPath)>3)		//in case user has stale alias, S_aliasPath has 0 length. Need to skip this pathological case. 
+				//HR Recurse only if S_aliasPath points to a folder. I don't really know what I'm doing here but this seems like it will prevent the infinite loop.
+				GetFileFolderInfo/Z/Q/P=tempPath S_aliasPath	
+				isItXOP = IamOnMac * stringmatch(S_aliasPath, "*xop*" )
+				if (V_flag==0 && V_isFolder&&!isItXOP)		//this is folder, so all items in the folder are included... Except XOP is folder too... 
+					IR2C_ListProcFiles(S_aliasPath, 0)
+				elseif(V_flag==0 && (!V_isFolder || isItXOP))	//this is link to file. Need to include the info on the file...
+					//*************
+					Redimension/N=(numpnts(FileNames)+1) FileNames, PathToFiles,FileVersions
+					tempFileName =stringFromList(ItemsInList(S_aliasPath,":")-1, S_aliasPath,":")
+					tempPathStr = RemoveFromList(tempFileName, S_aliasPath,":")
+					FileNames[numpnts(FileNames)] = tempFileName
+					PathToFiles[numpnts(FileNames)] = tempPathStr
+					//try to get version from #pragma version = ... This seems to be the most robust way I found...
+					if(stringmatch(tempFileName, "*.ipf"))
+						Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+						sleep/s (0.02)
+						tempScraptext = GetScrapText()
+						if(strlen(tempScraptext)>10)		//found line with #pragma version"
+							tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
+							tempScraptext = replaceString("version",tempScraptext,"")		//remove version
+							tempScraptext = replaceString("=",tempScraptext,"")			//remove =
+							tempScraptext = replaceString("\t",tempScraptext,"  ")			//remove optional tabulators, some actually use them. 
+							tempScraptext = removeending(tempScraptext," \r")			//remove optional tabulators, some actually use them. 
+							//forget about the comments behind the text. 
+		                                       //str2num is actually quite clever in this and converts start of the string which makes sense. 
+							FileVersions[numpnts(FileNames)]=str2num(tempScraptext)
+						else             //no version found, set to NaN
+							FileVersions[numpnts(FileNames)]=NaN
+						endif
+					else                    //no version for non-ipf files
+						FileVersions[numpnts(FileNames)]=NaN
+					endif
+				//************
+
+
+				endif
+			endif
+			//and now when we got back, fix the path definition to previous or all will crash...
+			NewPath/Q/O tempPath, PathStr
+			if (V_flag != 0)		//HR Add error checking to prevent infinite loop
+				sprintf abortMessage, "Unexpected error creating a symbolic path pointing to \"%s\"", PathStr
+				Print abortMessage	// To make debugging easier
+				Abort abortMessage
+			endif
+		elseif(V_isFolder&&!isItXOP)	
+			//is folder, need to follow into it. Use recursion.
+			IR2C_ListProcFiles(PathStr+tempFileName+":", 0)
+			//and fix the path back or all will fail...
+			NewPath/Q/O tempPath, PathStr
+			if (V_flag != 0)		//HR Add error checking to prevent infinite loop
+				sprintf abortMessage, "Unexpected error creating a symbolic path pointing to \"%s\"", PathStr
+				Print abortMessage	// To make debugging easier
+				Abort abortMessage
+			endif
+		elseif(V_isFile||isItXOP)
+			//this is real file. Store information as needed. 
+			Redimension/N=(numpnts(FileNames)+1) FileNames, PathToFiles,FileVersions
+			FileNames[numpnts(FileNames)-1] = tempFileName
+			PathToFiles[numpnts(FileNames)-1] = PathStr
+			//try to get version from #pragma version = ... This seems to be the most robust way I found...
+			if(stringmatch(tempFileName, "*.ipf"))
+				Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+				sleep/s(0.02)
+				tempScraptext = GetScrapText()
+				if(strlen(tempScraptext)>10)		//found line with #pragma version"
+					tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
+					tempScraptext = replaceString("version",tempScraptext,"")		//remove version
+					tempScraptext = replaceString("=",tempScraptext,"")			//remove =
+					tempScraptext = replaceString("\t",tempScraptext,"  ")			//remove optional tabulators, some actually use them. 
+					//forget about the comments behind the text. 
+                                       //str2num is actually quite clever in this and converts start of the string which makes sense. 
+					FileVersions[numpnts(FileNames)-1]=str2num(tempScraptext)
+				else             //no version found, set to NaN
+					FileVersions[numpnts(FileNames)-1]=NaN
+				endif
+			else                    //no version for non-ipf files
+				FileVersions[numpnts(FileNames)-1]=NaN
+			endif
+		endif
+	endfor
+//	if(runningTopLevel)
+//		//some output here...
+//		print "Found   "+num2str(numpnts(FileNames))+"  files in   "+PathStr+" folder, its subfolders and linked folders and subfolders"
+//		KillPath/Z tempPath
+//	endif
+ 
+	setDataFolder OldDf
+end
+
+
+//***********************************
+//***********************************
+//***********************************
+//***********************************
+static Function /S IR2C_Windows2IgorPath(pathIn)
+	String pathIn
+	String pathOut = ParseFilePath(5, pathIn, ":", 0, 0)
+	return pathOut
+End
+//***********************************
+//***********************************
+//***********************************
+//***********************************
+
+static Function/S IR2C_GetIgorUserFilesPath()
+	// This should be a Macintosh path but, because of a bug prior to Igor Pro 6.20B03
+	// it may be a Windows path.
+	String path = SpecialDirPath("Igor Pro User Files", 0, 0, 0)
+	path = IR2C_Windows2IgorPath(path)
+	return path
+End
+
+//***********************************
+//***********************************
+//**************************************************************** 
+//**************************************************************** 
+
+static Function IR2C_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
+	string StringWithPathAndname, LocalPath, LocalName
+
+	variable InstallUsingLocalCopy = 0
+	variable InstallUsinghttp = 1
+	variable i
+	variable APSError=0
+	variable OtherError=0
+	if(InstallUsingLocalCopy)		 
+		string tempFldrNm
+		tempFldrNm = removeFromList("IgorCode",StringWithPathAndname,"/")
+		PathInfo LocalCopyForInstallation
+		if(V_Flag==0)		//local copy path was not found.
+			//let's try to find in where Igor experiment started from, that path is known as "home"
+			string ItemsInTheFolder= IndexedDir(home, -1, 0 )
+			if(stringmatch(ItemsInTheFolder, "*IgorCode;*" ))
+				PathInfo/S home
+				NewPath /C/O/Q  LocalCopyForInstallation, S_Path+"IgorCode:"
+				Print "Found IgorCode folder in location where this experiment started, using that folder as file source"
+			else		
+				NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
+				if(V_Flag!=0)
+					abort "Local copy of Installation files not found and user cancelled. Visit: http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html if you want to download it" 
+				endif
+			endif
+		endif
+		PathInfo LocalCopyForInstallation
+		GetFileFolderInfo  /P=$(LocalPath) /Q /Z S_Path+ReplaceString("/", tempFldrNm, ":")
+		if(V_Flag!=0)
+			NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
+		endif
+		PathInfo LocalCopyForInstallation
+		CopyFile /O/P=$(LocalPath)/Z S_Path+ReplaceString("/", tempFldrNm, ":")  as LocalName 
+		// Remove ReadOnly property from the file. This is important on WIndows when copying from CD or DVD
+		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName
+	elseif(!InstallUsinghttp)
+		string httpurl="http://ftp.xray.aps.anl.gov/usaxs/"
+		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
+		String httpPath = httpurl+StringWithPathAndname	//HR Use local variable for easier debugging.
+		//HR Print ftpPath	//HR For debugging
+			//// Get a binary image file from a web server and then
+			//// save the image to a file on the desktop.
+		httpPath =  ReplaceString(" ", httpPath, "%20")		//handle just spaces here... 
+		String fileBytes, tempPathStr
+		Variable error = GetRTError(1)
+		i=0
+		Do
+			 fileBytes = FetchURL(httpPath)
+			 error = GetRTError(1)
+			 sleep/S 0.2
+			 if(error!=0)
+				 print "file: "+httpPath+" download FAILED, this was http download attempt No: "+num2str(i)
+				// print "file: "+httpPath+" downloaded "+num2str(i+1)+" times"
+				 print "Trying to download same file using ftp"
+				 tempPathStr = ReplaceString("http://ftp.xray.aps.anl.gov/usaxs/", httpPath, "ftp://ftp.xray.aps.anl.gov/pub/usaxs/")
+				 fileBytes = FetchURL(tempPathStr)
+				 error = GetRTError(1)
+				 sleep/S 0.2
+				 if(error!=0)
+					 print "file: "+tempPathStr+" download FAILED, this was ftp download attempt No: "+num2str(i+1)
+				 else
+					 print "file: "+tempPathStr+" downloaded succesfully by ftp, this was ftp download attempt No: "+num2str(i+1)
+				 endif
+			endif
+			i+=1
+		while((error!=0 || GrepString(fileBytes, "ERROR: Proxy Error" ))&& i<5)
+		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy Error" ) || i>=5)
+			if(GrepString(fileBytes, "ERROR: Proxy Error" ) )
+				Print "********************     APS Proxy error           *******************"
+				Print "**** Please, try installing later again or try using ftp protocol or local copy method."
+				Print "**** Also, report problem to ilavsky@aps.anl.gov  the following, so we can get this fixed:"
+				Print "APS proxy error has consistently produced error while trying to download following file:"+StringWithPathAndname
+				Print Date() +"   "+time()
+				print "Igor version :"+IgorInfo(3)
+				APSError+=1
+			elseif(error != 0 || i>=5)
+				Print "*************         S E R V E R      E R R O R                 ****************"
+				Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
+				Print "Failed to get from http/ftp server following file.....   " + StringWithPathAndname
+				Print Date() +"   "+time()
+				print "Igor version :"+IgorInfo(3)
+			endif
+			print "********************  end of error message  ********************"
+			OtherError=1
+		else
+			Variable refNum
+			Open/P=$(LocalPath)  refNum as LocalName
+			FBinWrite refNum, fileBytes
+			Close refNum
+			SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
+		endif
+		//FTPDownload /O/V=0/P=$(LocalPath)/Z ftpPath, LocalName	
+	else
+		string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/"
+		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
+		String ftpPath = url+StringWithPathAndname	//HR Use local variable for easier debugging.
+		//HR Print ftpPath	//HR For debugging
+		//ftpPath = ReplaceString("GenCurvefit", ftpPath, "GenCurveFit", 1)	//HR Quick and Dirty fix - change spelling so we find the file on the FTP server.
+		FTPDownload /O/V=0/P=$(LocalPath)/Z ftpPath, LocalName	
+	
+		if(V_flag!=0)	//ftp failed...
+			Print "*************                  E R R O R                       ****************"
+			Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
+			Print "Failed to load from ftp server following file.....   " + StringWithPathAndname
+			Print Date() +"   "+time()
+			print "Igor version :"+IgorInfo(3)
+			print "********************  end of error message  ********************"
+		else //ftyp success, change the read only flag here...
+		// Remove ReadOnly property from the file:
+		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
+		endif
+	endif
+	variable nosuccess
+	if(V_Flag!=0)
+		nosuccess=1
+	endif
+	return OtherError+APSError
+	
+end
+
+//**************************************************************** 
+//**************************************************************** 
+//***********************************
+//***********************************
+
+
+//Motofit paper [J. Appl. Cryst. 39, 273-276]
+//http://scripts.iucr.org/cgi-bin/paper?S0021889806005073
+//J. Appl. Cryst. (2006). 39, 273-276    [ doi:10.1107/S0021889806005073 ]
+//A. Nelson, Co-refinement of multiple-contrast neutron/X-ray reflectivity data using MOTOFIT
+//
+
+
+
+Function IR2C_CheckVersionButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringmatch(ba.ctrlName,"OpenIrenaWebPage"))
+				//open web page with Irena
+				BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html"
+			endif
+			if(stringmatch(ba.ctrlName,"OpenIrenaManuscriptWebPage"))
+				//open web page with Irena
+				BrowseURL "http://dx.doi.org/10.1107/S0021889809002222"
+			endif
+			if(stringmatch(ba.ctrlName,"OpenGCManuscriptWebPage"))
+				//doi:10.1007/s11661-009-9950-x
+				BrowseURL "http://www.jomgateway.net/ArticlePage.aspx?DOI=10.1007/s11661-009-9950-x"
+			endif
+			if(stringmatch(ba.ctrlName,"OpenMotofitManuscriptWebPage"))
+				//doi:10.1007/s11661-009-9950-x
+				BrowseURL "http://scripts.iucr.org/cgi-bin/paper?S0021889806005073"
+			endif
+			if(stringmatch(ba.ctrlName,"OpenUFManuscriptWebPage"))
+				BrowseURL "http://scripts.iucr.org/cgi-bin/paper?S0021889895005292"
+			endif		
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************** 
+//**************************************************************** 
+//***********************************
+//***********************************
+
+Window CheckForUpdatePanel() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /W=(116,68,880,550)/K=1 as "Irena check for updates"
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65535)
+	DrawText 114,37,"Once-per-month reminder to check for Irena update"
+	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (65535,0,0)
+	DrawText 27,110,"Reminder: When publishing data analyzed using Irena package, please cite following manuscripts:"
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,133,"J. Ilavsky and P. Jemian, Irena: tool suite for modeling and analysis of small- angle scattering "
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,158,"J. Appl. Cryst. (2009). 42, 347Ð353"
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,205,"Glassy Carbon Absolute Int. Calibration: F. Zhang, J. Ilavsky, G. G. Long, J. P.G. Quintana, "
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,230,"A. J. Allen, and P. Jemian, Glassy Carbon as an Absolute Intensity Calibration Standard"
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,255,"for Small-Angle Scattering, MMTA, DOI: 10.1007/s11661-009-9950-x"
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,320,"Reflectivity: A. Nelson, Co-refinement of multiple-contrast neutron/X-ray reflectivity"
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,345,"data using MOTOFIT, Appl. Cryst. (2006). 39, 273-276"
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,390,"Unified Fit: G. Beaucage, Approximations Leading to a Unified Exponential/Power-Law "
+	SetDrawEnv textrgb= (0,0,65535)
+	DrawText 27,415,"Approach to Small-Angle Scattering, J. Appl. Cryst. (1995). 28, 717-728"
+
+	SetDrawEnv fstyle= 2,fsize= 10,textrgb= (0,0,0)
+	DrawText 10,470,"This tool runs automatically every 30 days on each computer. It can be also called from the SAS sub-menu as \"Check for updates\""
+
+	SetVariable InstalledIrenaVersion,pos={48,56},size={199,15},bodyWidth=100,title="Installed Irena Version"
+	SetVariable InstalledIrenaVersion,help={"This is the current Irena version installed"}
+	SetVariable InstalledIrenaVersion,fStyle=1
+	SetVariable InstalledIrenaVersion,limits={0,0,0},value= root:Packages:UseProcedureFiles:InstalledIrenaVersion,noedit= 1
+	SetVariable WebIrenaVersion,pos={297,56},size={183,15},bodyWidth=100,title="Web Irena Version"
+	SetVariable WebIrenaVersion,help={"This is the current Irena version installed"}
+	SetVariable WebIrenaVersion,fStyle=1
+	SetVariable WebIrenaVersion,limits={0,0,0},value= root:Packages:UseProcedureFiles:WebIrenaVersion,noedit= 1
+	Button OpenIrenaWebPage,pos={551,53},size={150,20},proc=IR2C_CheckVersionButtonProc,title="Open Irena web page"
+	Button OpenIrenaManuscriptWebPage,pos={551,143},size={150,20},proc=IR2C_CheckVersionButtonProc,title="Manuscript web page"
+	Button OpenGCManuscriptWebPage,pos={551,240},size={150,20},proc=IR2C_CheckVersionButtonProc,title="Manuscript web page"
+	Button OpenMotofitManuscriptWebPage,pos={551,325},size={150,20},proc=IR2C_CheckVersionButtonProc,title="Manuscript web page"
+	Button OpenUFManuscriptWebPage,pos={551,402},size={150,20},proc=IR2C_CheckVersionButtonProc,title="Manuscript web page"
+EndMacro
+//**************************************************************** 
+//**************************************************************** 
+//***********************************
+//***********************************
