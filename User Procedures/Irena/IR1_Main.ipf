@@ -2090,11 +2090,11 @@ static Function IR2C_CheckVersions()
 	string PackageString	
 	//create list of Igor procedure files on this machine
 	IR2C_ListIgorProcFiles()
-	DoWIndow CheckForUpdatePanel
+	DoWIndow CheckForIrenaUpdatePanel
 	if(V_Flag)
-		DoWIndow/F CheckForUpdatePanel								
+		DoWIndow/F CheckForIrenaUpdatePanel								
 	else
-		Execute("CheckForUpdatePanel()")			
+		Execute("CheckForIrenaUpdatePanel()")			
 	endif
 	//Irena code
 	string OldDf=GetDataFolder(1)
@@ -2548,7 +2548,7 @@ End
 //***********************************
 //***********************************
 
-Window CheckForUpdatePanel() : Panel
+Window CheckForIrenaUpdatePanel() : Panel
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /W=(116,68,880,550)/K=1 as "Irena check for updates"
 	SetDrawLayer UserBack
