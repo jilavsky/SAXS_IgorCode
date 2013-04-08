@@ -1,7 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.79
+#pragma version = 1.78
 
-//1.79 improved weight calibration
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 //*****************************************************************************************************************

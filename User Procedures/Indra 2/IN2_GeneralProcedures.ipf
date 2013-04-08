@@ -328,11 +328,13 @@
 //FUNCTIONS AND PROCEDURES FOR USE IN ALL INDRA 2 MACROS	
 Function ING2_AddScrollControl()
 	//string WindowName
-	getWindow kwTopWin, wsize
+	getWindow kwTopWin, wsizeDC
 	//CheckBox ScrollWidown title="\\W614",proc=IN2G_ScrollWindowCheckProc, pos={V_right-75,2}
 	Button ScrollButtonUp title="\\W617",pos={(V_right-V_left)-17,2},size={15,15}, proc=IN2G_ScrollButtonProc
 	Button ScrollButtonDown title="\\W623",pos={(V_right-V_left)-17,17},size={15,15}, proc=IN2G_ScrollButtonProc
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 
 Function IN2G_ScrollButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
@@ -353,6 +355,8 @@ Function IN2G_ScrollButtonProc(ba) : ButtonControl
 
 	return 0
 End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
 	variable HowMuch
 	string WIndowName			

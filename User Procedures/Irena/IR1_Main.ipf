@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.52
+#pragma version=2.51
 
 
 //*************************************************************************\
@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.52 added check for update to run every 30 days and remind users about proper citations.
+//2.51 added check for update to run every 30 days and remind users about proper citations.
 //2.51 added Guinier-Porod model (beta version of the tool)
 //2.50 major update, added uncertainity estimation to Sizes and Modeling II. Reflectivity changes. 
 //2.49 Minor fixes
@@ -40,8 +40,8 @@
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
 
 //define manul date
-constant CurrentManualDateInSecs=  3439748159 			//this is mod date for Manual version 2.50
-constant CurrentVersionNumber = 2.50
+constant CurrentManualDateInSecs=  3448114446 			//this is mod date for Manual version 2.51
+constant CurrentVersionNumber = 2.51
 
 
 Menu "SAS"
@@ -340,6 +340,7 @@ Function IR2C_ReadIrenaGUIPackagePrefs()
 	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
 	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
 	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
 	if(V_Flag==0)		
@@ -350,6 +351,7 @@ Function IR2C_ReadIrenaGUIPackagePrefs()
 		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
 			DefaultFontType=Defs.PanelFontType
 			DefaultFontSize = Defs.defaultFontSize
+			LastUpdateCheck = Defs.LastUpdateCheck
 			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
 				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
 			else
@@ -394,17 +396,19 @@ Function IR2C_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
 	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
 	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 
 	Defs.Version			=		2
 	Defs.PanelFontType	 	= 		DefaultFontType
 	Defs.defaultFontSize 	= 		DefaultFontSize 
-	Defs.LegendSize 			= 		LegendSize
+	Defs.LegendSize 		= 		LegendSize
 	Defs.TagSize 			= 		TagSize
 	Defs.AxisLabelSize 		= 		AxisLabelSize
 	Defs.LegendUseFolderName = 	LegendUseFolderName
-	Defs.LegendUseWaveName = 		LegendUseWaveName
+	Defs.LegendUseWaveName = 	LegendUseWaveName
 	Defs.LegendFontType	= 		FontType
+	Defs.LastUpdateCheck	=		LastUpdateCheck
 	
 	if(KillThem)
 	//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does nto work below 6.10
@@ -430,7 +434,7 @@ Function IR2C_InitConfigMain()
 	string ListOfVariables
 	string ListOfStrings
 	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;"
+	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
 	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
 	variable i
 	//and here we create them
@@ -910,7 +914,7 @@ Function IR2_OpenIrenaManual()
 	GetFileFolderInfo/Z=1/Q WhereAreProcedures+manualPath
 	variable foundIt=V_Flag
 	variable ManualModDate=V_modificationDate
-	//printf "The current manual date is: %+015.4f\r", V_modificationDate
+	printf "The current manual date is: %+015.4f\r", V_modificationDate
 	if(ManualModDate>0)
 		//print  V_modificationDate
 		print "Found version of Manual is from : " + secs2Date(ManualModDate,1)
@@ -2441,9 +2445,9 @@ static Function IR2C_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
 				 endif
 			endif
 			i+=1
-		while((error!=0 || GrepString(fileBytes, "ERROR: Proxy Error" ))&& i<5)
-		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy Error" ) || i>=5)
-			if(GrepString(fileBytes, "ERROR: Proxy Error" ) )
+		while((error!=0 || GrepString(fileBytes, "ERROR: Proxy" ))&& i<5)
+		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy" ) || i>=5)
+			if(GrepString(fileBytes, "ERROR: Proxy" ) )
 				Print "********************     APS Proxy error           *******************"
 				Print "**** Please, try installing later again or try using ftp protocol or local copy method."
 				Print "**** Also, report problem to ilavsky@aps.anl.gov  the following, so we can get this fixed:"

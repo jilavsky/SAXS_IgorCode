@@ -8,7 +8,7 @@
 //*************************************************************************/
   
  //1.61 added Monthly check for updates and reminder with citations 
- //1.60  forgot to write what was changed
+ //1.60  15idd support changes
  //1.59 Minor updates 
 //1.58 Fixed GUI fonts/size controls issues on Widonws 7, modified Configure Nika preferences to include action on double click.
 //1.57 New mailing list, SSRL SAXS support, fixes to 15ID SAXS etc. 
@@ -136,6 +136,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 //	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
 	
 //	IR2C_CheckWIndowsProcVersions(WindowProcNames)
+
 	NI1_CheckNikaUpdate(0)
 end
 
@@ -181,7 +182,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.22a)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2013"
-	DrawText 49,103,"Release 1.60 from 1/4/2013"
+	DrawText 49,103,"Release 1.61 from 4/8/2013"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xor.aps.anl.gov/staff/ilavsky/index.html"
 
@@ -189,7 +190,7 @@ Function NI1_AboutPanel()
 	DrawText 11,210,"into 1 D data"
 	DrawText 11,230,"     "
 	DrawText 11,250," "
-	DrawText 11,265,"Igor 6.22 compatible"
+	DrawText 11,265,"Igor 6.31 compatible"
 end
 
 //*****************************************************************************************************************
@@ -319,6 +320,7 @@ Function NI1_ConfigMain()		//call configuration routine
 
 	//this is main configuration utility... 
 	NI1_InitConfigMain()
+	NI1_ReadIrenaGUIPackagePrefs()	
 	DoWindow NI1_MainConfigPanel
 	if(!V_Flag)
 		Execute ("NI1_MainConfigPanel()")
@@ -355,12 +357,12 @@ endstructure
 //***********************************************************
 
 Function NI1_ReadIrenaGUIPackagePrefs()
-
 	struct  NikaPanelDefaults Defs
 	NI1_InitConfigMain()
 	SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
 	NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
 	NVAR SelectedUncertainity=root:Packages:NikaConfigFolder:SelectedUncertainity
+	NVAR LastUpdateCheck=root:Packages:NikaConfigFolder:LastUpdateCheck
 //	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
 //	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
 //	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
@@ -385,7 +387,8 @@ Function NI1_ReadIrenaGUIPackagePrefs()
 		elseif(Defs.Version==2)		//Lets declare the one we know as 1
 			DefaultFontType		=	Defs.PanelFontType
 			DefaultFontSize 		= 	Defs.defaultFontSize
-			SelectedUncertainity= 	Defs.Uncertainity
+			SelectedUncertainity	= 	Defs.Uncertainity
+			LastUpdateCheck 		=	Defs.LastUpdateCheck 
 			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
 				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
 			else
@@ -448,6 +451,7 @@ Function NI1_SaveIrenaGUIPackagePrefs(KillThem)
 	SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
 	NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
 	NVAR SelectedUncertainity=root:Packages:NikaConfigFolder:SelectedUncertainity
+	NVAR LastUpdateCheck = root:Packages:NikaConfigFolder:LastUpdateCheck
 //	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
 //	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
 //	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
@@ -459,7 +463,7 @@ Function NI1_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.PanelFontType	 	= 		DefaultFontType
 	Defs.defaultFontSize 	= 		DefaultFontSize 
 	Defs.Uncertainity		= 		SelectedUncertainity
-//	Defs.TagSize 			= 		TagSize
+	Defs.LastUpdateCheck	= 		LastUpdateCheck
 //	Defs.AxisLabelSize 		= 		AxisLabelSize
 //	Defs.LegendUseFolderName = 	LegendUseFolderName
 //	Defs.LegendUseWaveName = 		LegendUseWaveName
@@ -491,7 +495,7 @@ Function NI1_InitConfigMain()
 	string ListOfVariables
 	string ListOfStrings
 	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="DefaultFontSize;SelectedUncertainity;"
+	ListOfVariables="DefaultFontSize;SelectedUncertainity;LastUpdateCheck;"
 	ListOfStrings="ListOfKnownFontTypes;DefaultFontType;"
 	variable i
 	//and here we create them
@@ -502,35 +506,7 @@ Function NI1_InitConfigMain()
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
 	endfor	
-	//Now set default values
-//	String VariablesDefaultValues
-//	String StringsDefaultValues
-//	if (stringMatch(IgorInfo(3),"*Windows*"))		//Windows
-//		VariablesDefaultValues="LegendSize:8;TagSize:8;AxisLabelSize:8;LegendUseFolderName:0;LegendUseWaveName:0;"
-//	else
-//		VariablesDefaultValues="LegendSize:10;TagSize:10;AxisLabelSize:10;LegendUseFolderName:0;LegendUseWaveName:0;"
-//	endif
-//	StringsDefaultValues="FontType:"+StringFromList(0, IR2C_CreateUsefulFontList() ) +";"
-//
-//	variable CurVarVal
-//	string CurVar, CurStr, CurStrVal
-//	For(i=0;i<ItemsInList(VariablesDefaultValues);i+=1)
-//		CurVar = StringFromList(0,StringFromList(i, VariablesDefaultValues),":")
-//		CurVarVal = numberByKey(CurVar, VariablesDefaultValues)
-//		NVAR temp=$(CurVar)
-//		if(temp==0)
-//			temp = CurVarVal
-//		endif
-//	endfor
-//	For(i=0;i<ItemsInList(StringsDefaultValues);i+=1)
-//		CurStr = StringFromList(0,StringFromList(i, StringsDefaultValues),":")
-//		CurStrVal = stringByKey(CurStr, StringsDefaultValues)
-//		SVAR tempS=$(CurStr)
-//		if(strlen(tempS)<1)
-//			tempS = CurStrVal
-//		endif
-//	endfor
-	
+		
 	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
 	ListOfKnownFontTypes=NI1_CreateUsefulFontList()
 	setDataFolder OldDf
@@ -1135,9 +1111,9 @@ static Function NI1_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
 				 endif
 			endif
 			i+=1
-		while((error!=0 || GrepString(fileBytes, "ERROR: Proxy Error" ))&& i<5)
-		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy Error" ) || i>=5)
-			if(GrepString(fileBytes, "ERROR: Proxy Error" ) )
+		while((error!=0 || GrepString(fileBytes, "ERROR: Proxy" ))&& i<5)
+		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy" ) || i>=5)
+			if(GrepString(fileBytes, "ERROR: Proxy" ) )
 				Print "********************     APS Proxy error           *******************"
 				Print "**** Please, try installing later again or try using ftp protocol or local copy method."
 				Print "**** Also, report problem to ilavsky@aps.anl.gov  the following, so we can get this fixed:"

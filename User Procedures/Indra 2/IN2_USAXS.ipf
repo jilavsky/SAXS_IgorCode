@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.29
+#pragma version = 1.30
 
+//1.30 added weight calibration
 //1.29 modified not to fail to compile when XML xop is not present. 
 //1.28 release to update error calculation for I0 autoranging. 
 //1.27 release from 4/30/2012, updates for autoranging I0
@@ -131,7 +132,7 @@ Function IN2_AboutPanel()
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.0"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2012"
-	DrawText 49,103,"release 1.75 from 4/30/2012"
+	DrawText 49,103,"release 1.78 from 4/8/2013"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xor.aps.anl.gov/"
 end
