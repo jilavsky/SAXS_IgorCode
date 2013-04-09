@@ -1,0 +1,70 @@
+Procedures IN2_GeneralProcedures.ipf matching *
+
+IN2G_AppendAnyText
+	checks for definitions and existence of logbook and appends the text to the end of the logbook
+	
+IN2G_AppendNoteToAllWaves(key,value)
+	appends (or replaces) key:value (str) pair to all waves in the folder
+	
+IN2G_AppendOrReplaceList(List,Key,Value,sep)
+	appends or repalaces the key:value pair in the list with separator between (use : or =)
+	
+IN2G_AppendorReplaceWaveNote(WaveNm,Key,Value)
+	Appends or replaces in note for wave $Wavename the key:Value
+	
+IN2G_AutoAlignGraphAndPanel
+	Aligns next to each other graph (left) and panel (right)
+	
+IN2G_BasicGraphStyle
+	My basic graph style used in these macros. May be made later platform specific...
+	
+IN2G_CleanupFolderOfWaves
+	Deletes waves with names starting on fit_ and W_, which are used by Igor fitting routines
+	
+IN2G_ConvertDataDirToList(str)
+	Converts string returned by FolderDirectory function into list of folders. Meant for directories of specXX types...
+	
+IN2G_CreateListOfItemsInFolder(datafolder, itemtype)
+	Generates list of items in directory specified. 1-directories, 2-waves, 4 - variables, 8- strings
+	
+IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortType)
+	Returns list of folders with waves of given type. Long (1) type is full path, short (0) is  only folder names.
+	 
+IN2G_FixTheFileName
+	Fixes file names from known info in the folder. May need tweaking for this version of Indra.
+
+IN2G_GetMeListOfEPICSKeys
+	Returns list of "useful" - UPD related - keywords used by spec...
+	
+IN2G_GetMeMostLikelyEPICSKey(str)
+	Returns list of EPICS keywords closest to str.
+	
+IN2G_KillAllGraphsAndTables
+	Kills all of the graphs and tables.
+	
+IN2G_KillGraphsAndTables
+	Kills top graph and, if exists, panel for UPD control.
+	
+IN2G_KillTopGraph
+	Name says it all...
+	
+IN2G_RemovePointWithCursorA
+	Sets point with cursor A to NaN, for R  wave creation also sets USAXS_PD point to NaN, to work with change of UPD parameters.
+
+IN2G_ReplaceColons(str)
+	Returns string with : replaced by _. 
+
+IN2G_ReplaceOrChangeList(MyList,Key,NewValue)
+	Returns MyList after replacing - or appending if needed - pair Key:NewValue
+
+IN2G_ResetGraph
+	Basically ctrl-A for graph. Users convenience...
+	
+IN2G_ReversXAxis
+	Guess what...
+	
+IN2G_ScreenWidthHeight(width/height)
+	Returns number such, that - independent on platform and screen resolution - the size of graph can be set in %. Use after multiplying by proper % size (60 for 60%).
+	
+IN2G_WindowTitle(WindowsName)
+	Returns WindowTitle of the WindowName.
