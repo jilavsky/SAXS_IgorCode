@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.25
+#pragma version = 1.26
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.26 work around user names for folder with [] in the name. 
 //1.25 changed "Indra 2" to "USAXS" to make bit more sense for human beings. 
 //1.24 added Guinier-Porod data type
 //1.23 fixed user defined data types of QIS type (with type at the end
@@ -1982,9 +1983,10 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		endif
 		//fix the short name of the folder...
 		string oldpopStr=popStr
-		string tempStr5
+		string tempStr5=ReplaceString("[", popStr, "\[")
+		tempStr5=ReplaceString("]", tempStr5, "\]")
 		variable i
-		popStr = GrepList(RealLongListOfFolder, popStr,0  , ";" )
+		popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
 		if(ItemsInList(popStr , ";")>1)
 			For(i=0;i<ItemsInList(popStr , ";");i+=1)
 				tempStr5 = StringFromList(i,popStr,";")

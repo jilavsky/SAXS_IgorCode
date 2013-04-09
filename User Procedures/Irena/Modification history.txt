@@ -3,6 +3,12 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.52 xxxx
+Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
+
+
+
+
 2.51 4/8/2013
 Added monthly check for updates and reminder of references for publications.
 Modified to compile on computers even without xop and abort & produce message when xop is called with instructions. 
