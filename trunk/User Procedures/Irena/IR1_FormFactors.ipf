@@ -736,8 +736,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-threadsafe static Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax, Param1, Param2,Param3,Param4,VolDefL)
+//
+threadsafe  static Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax, Param1, Param2,Param3,Param4,VolDefL)
 	variable Qvalue, radius, radiusMin,radiusMax, Param1, Param2	,Param3,Param4,VolumePower						//does the math for Sphere Form factor function
 	string VolDefL
 	//Param1 is skin thickness in A  
