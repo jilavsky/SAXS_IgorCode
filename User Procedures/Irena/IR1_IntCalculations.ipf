@@ -406,29 +406,26 @@ Function IR1_CalcIntFromOneDist(DistNum,OriginalQvector)
 		ParticlePar3=UserPar3
 		ParticlePar4=UserPar4
 		ParticlePar5=UserPar5
+	elseif(cmpstr(ShapeType,"Janus CoreShell Micelle*")==0)						//Janus core shell Micelle has 5 parameters
+		ParticlePar1=UserPar1
+		ParticlePar2=UserPar2
+		ParticlePar3=UserPar3
+		ParticlePar4=UserPar4
+		ParticlePar5=UserPar5
 	elseif(cmpstr(ShapeType,"CoreShell")==0)				//CoreShell - 2 parameters
-	//	NVAR CoreShellThicknessRatio=root:Packages:Sizes:CoreShellThicknessRatio	//radius of primary particle
 		ParticlePar1=Param1
-	//	NVAR CoreShellContrastRatio=root:Packages:Sizes:CoreShellContrastRatio	
 		ParticlePar2=Param2	
 		ParticlePar3=Param3	
 		ParticlePar4=Param4	
 	elseif(cmpstr(ShapeType,"Fractal aggregate")==0)				//Fractal aggregate - 2 parameters
-	//	NVAR FractalRadiusOfPriPart=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
 		ParticlePar1=Param1
-	//	NVAR FractalDimension=root:Packages:Sizes:FractalDimension	
 		ParticlePar2=Param2	
 	elseif(cmpstr(ShapeType,"Unified_Tube")==0)				//Tube - 3 parameters
-	//	NVAR TubeLength=root:Packages:Sizes:TubeLength			//TubeLength
 		ParticlePar1=Param1
-	//	NVAR TubeWallThickness=root:Packages:Sizes:TubeWallThickness		//WallThickness
 		ParticlePar2=Param2	
 	elseif(cmpstr(ShapeType,"CoreShellCylinder")==0)				//Tube - 3 parameters
-	//	NVAR TubeLength=root:Packages:Sizes:TubeLength			//TubeLength
 		ParticlePar1=Param1
-	//	NVAR TubeWallThickness=root:Packages:Sizes:TubeWallThickness		//WallThickness
 		ParticlePar2=Param2	
-	//	NVAR TubeCoreContrastRatio=root:Packages:Sizes:TubeCoreContrastRatio		//CoreContrastRatio
 		ParticlePar3=Param3	
 		ParticlePar4=Param4	
 		ParticlePar5=Param5	
@@ -445,7 +442,7 @@ Function IR1_CalcIntFromOneDist(DistNum,OriginalQvector)
 	//now handle the contarst by copying data into the G_matrix
 	Duplicate/O G_matrixFF, $("G_matrix_"+num2str(DistNum))				//G_matrixFF (root:Packages:Sizes:G_matrixFF)  contains form factor without contrast, except for Tube and Core shell...  
 	Wave G_matrix=$("G_matrix_"+num2str(DistNum))
-	if(cmpstr(ShapeType,"CoreShell")==0 || cmpstr(ShapeType,"CoreShellCylinder")==0)
+	if(stringmatch(ShapeType,"CoreShell") || stringmatch(ShapeType,"CoreShellCylinder") || stringmatch(ShapeType,"Janus CoreShell Micelle*"))
 		G_matrix=G_matrixFF * 1e20			//this shape contains contrast already in...
 	else
 		G_matrix=G_matrixFF * DistContrast*1e20		//this multiplies by scattering contrast

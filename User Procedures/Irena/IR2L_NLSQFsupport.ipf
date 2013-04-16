@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
+#pragma version=1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,7 +7,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
- //1.13 modified data stored in wavenote to minimize stuff saved there.
+//1.15 added Form and Structrue factor description as Igor help file. Added buttons to call the help file from GUI. 
+//1.14 Modified to handle Janus CoreShell Micelle FF
+//1.13 modified data stored in wavenote to minimize stuff saved there.
 //1.12 removed exp[ress calls to font and fsize for panels to enable user controls over these parameters
 //1.11 Modifed local Guinier and Power law fits to handle multiple contrasts for data when using multiple input data sets. 
 //1.10 Added Scripting tool button and features around it, it is enabled ONLY for Single Data set input
@@ -166,6 +168,24 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
 		endif
 	endif
+
+	if(stringmatch(ctrlName,"GetFFHelp"))
+		ControlInfo /W=LSQF2_MainPanel FormFactorPop 
+		//print S_Value
+		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+		if(V_Flag)
+			DisplayHelpTopic /Z "Form Factors & Structure factors"
+		endif
+	endif
+	if(stringmatch(ctrlName,"GetSFHelp"))
+		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
+		//print S_Value
+		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+		if(V_Flag)
+			DisplayHelpTopic /Z "Form Factors & Structure factors"
+		endif
+	endif
+
 	if(stringmatch(ctrlName,"FitRgandG"))
 		ControlInfo/W=LSQF2_MainPanel DistTabs
 		IR2L_FitLocalGuinier(V_Value+1)
@@ -1041,7 +1061,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 	else
 		F_sw=3		//unused yet.
 	endif
-	if(stringmatch(FormFactor, "CoreShell*"))
+	if(stringmatch(FormFactor, "CoreShell*") || stringmatch(FormFactor, "Janus CoreShell Micelle*"))
 		CS_sw=0
 	else
 		CS_sw=1			//we have delta rho squared not rho here.
@@ -1075,6 +1095,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("CheckBox RdistLog,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistLog_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 
 		Execute("PopupMenu FormFactorPop,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(tab+1)+",root:Packages:FormFactorCalc:ListOfFormFactors+\"Unified_Level;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
+		Execute("Button GetFFHelp,win=LSQF2_MainPanel, disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 
 		Execute("PopupMenu PopSizeDistShape,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(tab+1)+",\"LogNormal;Gauss;LSW;Schulz-Zimm;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 		//diffraction stuff
@@ -1229,6 +1250,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		SVAR StrA=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(tab+1))
 		SVAR StrB=root:Packages:StructureFactorCalc:ListOfStructureFactors
 		Execute("PopupMenu StructureFactorModel win=LSQF2_MainPanel, mode=WhichListItem(\""+StrA+"\",\""+StrB+"\" )+1, disable=(!"+num2str(DisplayModelControls)+"||! "+num2str(F_sw<=1)+"|| !"+num2str(UsePop)+")")
+		Execute("Button GetSFHelp win=LSQF2_MainPanel, disable=(!"+num2str(DisplayModelControls)+"||! "+num2str(F_sw<=1)+"|| !"+num2str(UsePop)+")")
 		//contrasts
 		Execute("SetVariable Contrast,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(!SameContr || !MID)+")")
 

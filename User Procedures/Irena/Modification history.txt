@@ -5,6 +5,9 @@ Code modification history
 ********************************************
 2.52 xxxx
 Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
+Form factors/Modeling II - Added Janus CoreShell micelles form factor.
+Form factors - removed algebraic form factors. Useless, use Unified ones if needed. 
+Form/Structure factors - created Igor help file with the description. Added call buttons from Modeling II GUI. Needs to be finished on Sizes. 
 
 
 
