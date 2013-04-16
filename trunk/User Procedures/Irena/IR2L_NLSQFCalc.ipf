@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.05
+#pragma version=1.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.05 fixed problem with calcualtions of peak positions
+//1.06 added Janus CoreShell Micelle
+//1.05 fixed problem with calculations of peak positions
 //1.04 changed min size used by the tool to 1A. Lot of users seems to be using this at really high qs... 
 //1.03 Add Diffraction peak and Unified level as Populations, increase number of populations to 10
 //1.02 added Unified level as Form factor
@@ -703,7 +704,7 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 		//Duplicate/O G_matrixFF, $("G_matrix_"+num2str(DistNum))				//G_matrixFF (root:Packages:Sizes:G_matrixFF)  contains form factor without contrast, except for Tube and Core shell...  
 		//Wave G_matrix=$("G_matrix_"+num2str(DistNum))
 		//here need to use copy of the G matrix, so we do not include contrast in it...
-		if(cmpstr(FormFactor,"CoreShell")==0 || cmpstr(FormFactor,"CoreShellCylinder")==0 || cmpstr(FormFactor,"CoreShellShell")==0)
+		if(cmpstr(FormFactor,"CoreShell")==0 || cmpstr(FormFactor,"CoreShellCylinder")==0 || cmpstr(FormFactor,"CoreShellShell")==0|| stringmatch(FormFactor,"Janus CoreShell Micelle*"))
 			MatrixOP/O GmatrixTemp = Gmatrix * 1e20			//this shape contains contrast already in...
 		else
 			MatrixOP/O GmatrixTemp = Gmatrix * LocalContrast*1e20		//this multiplies by scattering contrast

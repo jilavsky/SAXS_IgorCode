@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.20
 
 
 //*************************************************************************\
@@ -16,6 +16,8 @@
 //2.16 COreShellCylinder should now be multicore
 //2.17 changed old obsolete BessJ into Besselj - newer implementation in Igor Pro
 //2.18 added SphereWHSLocMonoSq - requested by masato, this is sphere with Hard spheres Percus-Yevic structure factor which has distance which is related linearly to size of the sphere itself. 
+//2.19 removed algebraic form factor and added Janus Core Shell micelles, added special list of form factor for Size Distribution, which cannot handle complex shapes (and should not)... 
+//2.20 Added Form and Structure factor description as Igor Help file. 
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix
@@ -71,6 +73,8 @@
 // IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder) 
 // it is text function... 
 
+static constant JanusCoreShellMicNumIngtPnts=66		//weird, with 40 there are specific radii where code fails to produces NaN
+
 Function IR1T_InitFormFactors()
 	//here we initialize the form factor calculations
 	
@@ -78,9 +82,9 @@ Function IR1T_InitFormFactors()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
-	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Algebraic_Globules;Algebraic_Rods;Algebraic_Disks;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
-	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;"
-//	ListOfFormFactors+="Unified_Level;"
+	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
+	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;"
+	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
 	string/g CoreShellVolumeDefinition
 	SVAR CoreShellVolumeDefinition			//this will be user choice for definition of volume of core shell particle: "Whole particle;Core;Shell;", NIST standard definition is Whole particle, default... 
 	if(strlen(CoreShellVolumeDefinition)<1)
@@ -99,29 +103,33 @@ end
 
 Function IR2T_LoadFFDescription()
 
+	//try to open Igor help file frist and only if that fails call pdf file...
+	DisplayHelpTopic /Z "Form Factors & Structure factors"
+	if(V_Flag)
+
 		string WhereIsManual
 		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_FormFactors.ipf")
 		String manualPath = ParseFilePath(5,"FormFactorList.pdf","*",0,0)
        	String cmd 
+		if (stringmatch(IgorInfo(3), "*Macintosh*"))
+	             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
+	               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
+	               ExecuteScriptText cmd
+	      		if (strlen(S_value)>2)
+	//			DoAlert 0, S_value
+			endif
 	
-	if (stringmatch(IgorInfo(3), "*Macintosh*"))
-             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
-               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
-               ExecuteScriptText cmd
-      		if (strlen(S_value)>2)
-//			DoAlert 0, S_value
+		else 
+			//manualPath = "User Procedures\Irena\Irena manual.pdf"
+			//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
+			WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
+			whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
+			NewNotebook/F=0 /N=NewBatchFile
+			Notebook NewBatchFile, text=whereIsManual//+"\r"
+			SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat"
+			DoWindow/K NewBatchFile
+			ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat\""
 		endif
-
-	else 
-		//manualPath = "User Procedures\Irena\Irena manual.pdf"
-		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
-		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
-		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
-		NewNotebook/F=0 /N=NewBatchFile
-		Notebook NewBatchFile, text=whereIsManual//+"\r"
-		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat"
-		DoWindow/K NewBatchFile
-		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat\""
 	endif
 end
 
@@ -192,6 +200,20 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 		//						CoreRho=ParticlePar4			// rho for core material
 		//						Shell1Rho=ParticlePar5			// rho for shell 1 material
 		//						Shell2Rho=particlePar6			// rho for shell 2 material
+		//
+		//Janus CoreShell Micelle 1	//particle size is total size of the particle (R0 in the figure in description)
+		//							Shell_Thickness=ParticlePar1			//shell thickness A
+		//							SolventRho=ParticlePar2		// rho for solvent material
+		//							CoreRho=ParticlePar3			// rho for core material
+		//							Shell1Rho=ParticlePar4			// rho for shell 1 material
+		//							Shell2Rho=particlePar5			// rho for shell 2 material
+		//Janus CoreShell Micelle 2	//particle size here is shell thickness!!!
+		//							Core_Size=ParticlePar1			// Core radius A
+		//							SolventRho=ParticlePar2		// rho for solvent material
+		//							CoreRho=ParticlePar3			// rho for core material
+		//							Shell1Rho=ParticlePar4			// rho for shell 1 material
+		//							Shell2Rho=particlePar5			// rho for shell 2 material
+		
 		//Fractal aggregate	 	FractalRadiusOfPriPart=ParticlePar1=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
 		//						FractalDimension=ParticlePar2=root:Packages:Sizes:FractalDimension			//Fractal dimension
 		//
@@ -254,7 +276,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				reason = "Qvector value"
 			endif
 		endfor
-		For(i=0;i<1+floor(numpnts(R_dist)/5);i+=1)
+		For(i=0;i<floor(numpnts(R_dist)/5);i+=1)
 			if(cmpstr(StringByKey("R_"+num2str(i), OldNote),num2str(R_dist[i]))!=0 )		//check every 5th R value written in wave note
 				Recalculate=1
 				reason = "Radius value"
@@ -270,7 +292,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 			variable FractalRadiusOfPriPart
 			variable FractalDimension, thickness
 			variable QR, QH, topp, bott, Rd, QRd, sqqt, argument, surchi, rP, Qj, bP, bM, length,WallThickness
-			variable CoreShellCoreRho,CoreShellThickness,CoreShellShellRho, CoreShellSolvntRho
+			variable CoreShellCoreRho,CoreShellThickness,CoreShellShellRho, CoreShellSolvntRho, Shell_Thickness, Core_Size
 			variable CoreContrastRatio, CoreShell_1_Thickness, CoreShell_2_Thickness, Shell1Rho, Shell2Rho, SolventRho, CoreRho
 			
 	
@@ -489,70 +511,97 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 					multithread TempWave*= IR1T_FractalAggofSpheresVol(CurrentR,FractalRadiusOfPriPart,FractalDimension,1,1,1)^VolumePower		//DWS 6 2 2005
 					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
 				endfor
-			elseif(cmpstr(ParticleModel,"Algebraic_Rods")==0)				//Pete's rods model, apparently using AJA code from whenever
-				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
+			elseif(cmpstr(ParticleModel,"Janus CoreShell Micelle 1")==0)
+				//Janus CoreShell Micelle 1	//particle size is total size of the particle (R0 in the figure in description)
+				Shell_Thickness=ParticlePar1			//shell thickness A
+				SolventRho=ParticlePar5		// rho for solvent material
+				CoreRho=ParticlePar2			// rho for core material
+				Shell1Rho=ParticlePar3			// rho for shell 1 material
+				Shell2Rho=particlePar4			// rho for shell 2 material											
 				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
 					currentR=R_dist[i]
-					for(j=0;j<numpnts(TempWave);j+=1)						//calulate separately TempWave
-						QR = currentR * Q_vec[j]
-						QH = Q_vec[j] * AspectRatio * currentR
-						topp = 1 + 2*pi*QH^3 * QR/(9 * (4 + QR^2)) + (QH^3 * QR^4)/8
-						bott = 1 + QH^2 * (1 + QH^2 * QR)/9 + (QH^4 * QR^7)/16
-						tempWave[j] = (2*pi*AspectRatio * currentR^3)^VolumePower * topp/bott
-					endfor
+					multithread TempWave=IR1T_JanusFF(Q_vec[p], CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho,CurrentR-Shell_Thickness)		//this is already 2nd power and should be normalized by volume 
+					multithread TempWave*= IR1T_JanusVp(CurrentR,CoreRho, Shell1Rho, Shell2Rho,CurrentR-Shell_Thickness)^VolumePower			//scale by volume
 					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
 				endfor
-			elseif(cmpstr(ParticleModel,"Algebraic_Disks")==0)				//Pete's disk model, apparently using AJA code from whenever
-				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
+			elseif(cmpstr(ParticleModel,"Janus CoreShell Micelle 2")==0)
+				//Janus CoreShell Micelle 2	//particle size here is shell thickness!!!
+				Core_Size=ParticlePar1			//Core radius A
+				SolventRho=ParticlePar5		// rho for solvent material
+				CoreRho=ParticlePar2			// rho for core material
+				Shell1Rho=ParticlePar3			// rho for shell 1 material
+				Shell2Rho=particlePar4			// rho for shell 2 material											
 				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
 					currentR=R_dist[i]
-					for(j=0;j<numpnts(TempWave);j+=1)
-						QR = currentR * Q_vec[j]
-						Rd = currentR * AspectRatio						//disk radius
-						QH = Q_vec[j] *  currentR
-						QRd = Q_vec[j] *  currentR * AspectRatio
-						topp = 1 + QRd^3 / (3 + QH^2) + (QH^2 * QRd / 3)^2
-						bott = 1 + QRd^2 * (1 + QH * QRd^2)/16 + (QH^3 * QRd^2 / 3)^2
-						tempWave[j] = (2*pi*AspectRatio * currentR^3)^VolumePower * topp/bott
-					endfor
+					multithread TempWave=IR1T_JanusFF(Q_vec[p], Core_Size+CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho,Core_Size)		//this is already 2nd power and should be normalized by volume 
+					multithread TempWave*= IR1T_JanusVp(Core_Size+CurrentR,CoreRho, Shell1Rho, Shell2Rho,Core_Size)^VolumePower			//scale by volume
 					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
 				endfor
-			elseif(cmpstr(ParticleModel,"Algebraic_Globules")==0)			//Pete's Globules model, apparently using AJA code from whenever
-				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
-				if(AspectRatio<0.99)
-					sqqt = sqrt(1-AspectRatio^2)
-					argument = (2 - AspectRatio^2 + 2*sqqt)/(AspectRatio^2)
-					surchi = (1 + AspectRatio^2 * ln(argument) / (2*sqqt)) / (2 * AspectRatio)
-				elseif(AspectRatio>1.01)
-					sqqt = sqrt(AspectRatio^2 - 1)
-					argument = sqqt / AspectRatio
-					surchi = (1 + AspectRatio^2 * asin(argument) / (sqqt)) / (2 * AspectRatio)
-				else														//AspectRatio==1
-					surchi = 1
-				endif
-				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
-					currentR=R_dist[i]
-					for(j=0;j<numpnts(TempWave);j+=1)
-						QR = currentR * Q_vec[j]
-						bott = 1 + QR^2 * (2 + AspectRatio^2)/15 + 2 * AspectRatio * QR^4 / (9 * surchi)
-						tempWave[j] = (4/3 * pi * AspectRatio * currentR^3)^VolumePower  /  bott
-					endfor
-					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
-				endfor
-		elseif(cmpstr(ParticleModel,"Algebraic_Spheres")==0)		//Pete's Algebraic Spheres model, apparently using Petes old code from whenever
-				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
-					currentR=R_dist[i]
-					rP = currentR + IR1T_BinWidthInRadia(R_dist,i)
-					for(j=0;j<numpnts(TempWave);j+=1)
-						Qj = Q_vec[j]
-						bP = rp/2 + (Qj^2)	*(rP^3)/6 + (0.25*(Qj * rP^2) - 0.625/Qj) * sin(2 * Qj * rP) + 0.75 * rP * cos(2 * Qj * rP)
-						bM = currentR/2 + (Qj^2)*(currentR^3)/6 + (0.25 * (Qj * currentR^2) - 0.625/Qj) * sin(2 * Qj * currentR) + 0.75 * currentR * cos(2 * Qj * currentR)			
-						topp = bP - bM
-						bott = Qj^6 * (rP^4 - currentR^4) * currentR^3
-						tempWave[j] =  36 * (4/3 * pi * currentR^3)^VolumePower * topp/bott
-					endfor
-					Gmatrix[][i]=TempWave[p]								//and here put it into G wave	
-				endfor
+
+//			elseif(cmpstr(ParticleModel,"Algebraic_Rods")==0)				//Pete's rods model, apparently using AJA code from whenever
+//				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
+//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
+//					currentR=R_dist[i]
+//					for(j=0;j<numpnts(TempWave);j+=1)						//calulate separately TempWave
+//						QR = currentR * Q_vec[j]
+//						QH = Q_vec[j] * AspectRatio * currentR
+//						topp = 1 + 2*pi*QH^3 * QR/(9 * (4 + QR^2)) + (QH^3 * QR^4)/8
+//						bott = 1 + QH^2 * (1 + QH^2 * QR)/9 + (QH^4 * QR^7)/16
+//						tempWave[j] = (2*pi*AspectRatio * currentR^3)^VolumePower * topp/bott
+//					endfor
+//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
+//				endfor
+//			elseif(cmpstr(ParticleModel,"Algebraic_Disks")==0)				//Pete's disk model, apparently using AJA code from whenever
+//				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
+//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
+//					currentR=R_dist[i]
+//					for(j=0;j<numpnts(TempWave);j+=1)
+//						QR = currentR * Q_vec[j]
+//						Rd = currentR * AspectRatio						//disk radius
+//						QH = Q_vec[j] *  currentR
+//						QRd = Q_vec[j] *  currentR * AspectRatio
+//						topp = 1 + QRd^3 / (3 + QH^2) + (QH^2 * QRd / 3)^2
+//						bott = 1 + QRd^2 * (1 + QH * QRd^2)/16 + (QH^3 * QRd^2 / 3)^2
+//						tempWave[j] = (2*pi*AspectRatio * currentR^3)^VolumePower * topp/bott
+//					endfor
+//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
+//				endfor
+//			elseif(cmpstr(ParticleModel,"Algebraic_Globules")==0)			//Pete's Globules model, apparently using AJA code from whenever
+//				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
+//				if(AspectRatio<0.99)
+//					sqqt = sqrt(1-AspectRatio^2)
+//					argument = (2 - AspectRatio^2 + 2*sqqt)/(AspectRatio^2)
+//					surchi = (1 + AspectRatio^2 * ln(argument) / (2*sqqt)) / (2 * AspectRatio)
+//				elseif(AspectRatio>1.01)
+//					sqqt = sqrt(AspectRatio^2 - 1)
+//					argument = sqqt / AspectRatio
+//					surchi = (1 + AspectRatio^2 * asin(argument) / (sqqt)) / (2 * AspectRatio)
+//				else														//AspectRatio==1
+//					surchi = 1
+//				endif
+//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
+//					currentR=R_dist[i]
+//					for(j=0;j<numpnts(TempWave);j+=1)
+//						QR = currentR * Q_vec[j]
+//						bott = 1 + QR^2 * (2 + AspectRatio^2)/15 + 2 * AspectRatio * QR^4 / (9 * surchi)
+//						tempWave[j] = (4/3 * pi * AspectRatio * currentR^3)^VolumePower  /  bott
+//					endfor
+//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
+//				endfor
+//		elseif(cmpstr(ParticleModel,"Algebraic_Spheres")==0)		//Pete's Algebraic Spheres model, apparently using Petes old code from whenever
+//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
+//					currentR=R_dist[i]
+//					rP = currentR + IR1T_BinWidthInRadia(R_dist,i)
+//					for(j=0;j<numpnts(TempWave);j+=1)
+//						Qj = Q_vec[j]
+//						bP = rp/2 + (Qj^2)	*(rP^3)/6 + (0.25*(Qj * rP^2) - 0.625/Qj) * sin(2 * Qj * rP) + 0.75 * rP * cos(2 * Qj * rP)
+//						bM = currentR/2 + (Qj^2)*(currentR^3)/6 + (0.25 * (Qj * currentR^2) - 0.625/Qj) * sin(2 * Qj * currentR) + 0.75 * currentR * cos(2 * Qj * currentR)			
+//						topp = bP - bM
+//						bott = Qj^6 * (rP^4 - currentR^4) * currentR^3
+//						tempWave[j] =  36 * (4/3 * pi * currentR^3)^VolumePower * topp/bott
+//					endfor
+//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave	
+//				endfor
 		else
 			Gmatrix[][]=NaN		
 		endif
@@ -590,23 +639,6 @@ end
 
 
 
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1882,7 +1914,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 
 	//need to disable usused fitting parameters so the code which is using this package does not have to contain list of form factors... 
 	
-	//go through all form factors knwon and set the ones unsused to zeroes...
+	//go through all form factors known and set the ones unsused to zeroes...
 	if(stringmatch(CurFF,"Unified_Sphere")||stringmatch(CurFF,"NoFF_setTo1"))			//no parameters at all...
 		FitP1=0
 		FitP2=0
@@ -1915,14 +1947,13 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 
 	elseif(stringmatch(CurFF,"CoreShellCylinder"))
 	
+	elseif(stringmatch(CurFF,"Janus CoreShell Micelle 1"))
+	
+	elseif(stringmatch(CurFF,"Janus CoreShell Micelle 2"))
+	
 	elseif(stringmatch(CurFF,"User"))
 	
 	elseif(stringmatch(CurFF,"Integreated_Spheroid"))
-		FitP2=0
-		FitP3=0
-		FitP4=0
-		FitP5=0
-	elseif(stringmatch(CurFF,"Algebraic_*"))
 		FitP2=0
 		FitP3=0
 		FitP4=0
@@ -1989,7 +2020,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	//Algebraic_Globules		AspectRatio = ParticlePar1
 	//Algebraic_Rods			AspectRatio = ParticlePar1, AR > 10
 	//Algebraic_Disks			AspectRatio = ParticlePar1, AR < 0.1
-//first variable......
+	//first variable......
 	NVAR/Z CurVal= $(P1Str)
 	if(!NVAR_Exists(CurVal))
 		Abort "at least one parameter must exist for this shape, bug"
@@ -2031,6 +2062,10 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		SetVariable P1Value, title="Length = ", help={"Length in angstroems"} 
 	elseif(stringmatch(CurrentFF,"Fractal aggregate"))
 		SetVariable P1Value, title="Frctl rad. prim part = ", help={"Fractal Radius of primary particle"} 
+	elseif(stringmatch(CurrentFF,"Janus CoreShell Micelle 1"))
+		SetVariable P1Value, title="Shell thickness [A] = ", help={"Thickness of the shell for Janus CoreShell micelle"} 
+	elseif(stringmatch(CurrentFF,"Janus CoreShell Micelle 2"))
+		SetVariable P1Value, title="Core radius [A] = ", help={"Radius of core for Janus CoreShell Micelle"} 
 	endif
 
 		//Fractal aggregate	 	FractalRadiusOfPriPart=ParticlePar1=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
@@ -2063,8 +2098,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		endif
 	endif
 
-	if(stringmatch(CurrentFF,"User") || stringmatch(CurrentFF,"CoreShellCylinder") || stringmatch(CurrentFF,"CoreShell") || stringmatch(CurrentFF,"CoreShellShell"))
-		//define next 3 parameters ( need at least 4 arams for these three...)
+	if(stringmatch(CurrentFF,"User") || stringmatch(CurrentFF,"CoreShellCylinder") || stringmatch(CurrentFF,"CoreShell") || stringmatch(CurrentFF,"CoreShellShell") || stringmatch(CurrentFF,"Janus CoreShell Micelle*"))
+		//define next 3 parameters ( need at least 4 params for these three...)
 		NVAR/Z CurVal= $(FitP2Str)
 		NVAR/Z CurVal2= $(LowP2Str)
 		NVAR/Z CurVal3= $(HighP2Str)
@@ -2118,10 +2153,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			SetVariable P1Value, title="CoreShellThickness [A]= ", help={"Thickness of the core shell layer in Angstroems"} 
 			SetVariable P2Value, title="Core Rho = ", help={"Scattering length density of core"} 
 			SetVariable P3Value, title="Shell Rho = ", help={"Scattering length density of shell "} 
-			SetVariable P4Value, title="Solvent Rho = ", help={"Solvent Scattering length density"} 
-		
+			SetVariable P4Value, title="Solvent Rho = ", help={"Solvent Scattering length density"} 		
 		endif
-		if(stringmatch(CurrentFF,"CoreShellCylinder" ) ||stringmatch(CurrentFF,"CoreShellShell" ) || stringmatch(CurrentFF,"User"))
+		if(stringmatch(CurrentFF,"CoreShellCylinder" ) ||stringmatch(CurrentFF,"CoreShellShell" ) || stringmatch(CurrentFF,"User")||stringmatch(CurrentFF,"Janus CoreShell Micelle*"))
 			//add fifth set of values... 
 			NVAR/Z CurVal= $(FitP5Str)
 			NVAR/Z CurVal2= $(LowP5Str)
@@ -2151,7 +2185,17 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			SetVariable P5Value, title="Solvent Rho = ", help={"Solvent Scattering length density"} 
 		
 		endif
-		if(stringmatch(CurrentFF,"User"))
+		if(stringmatch(CurrentFF,"Janus CoreShell Micelle*"))
+		//CoreShell				CoreShellThickness=ParticlePar1			//skin thickness in Angstroems
+		//						CoreRho=ParticlePar2		// rho for core material
+		//						ShellRho=ParticlePar3			// rho for shell material
+		//						SolventRho=ParticlePar4			// rho for solvent material
+			SetVariable P2Value, title="Core Rho = ", help={"Scattering length density of core"} 
+			SetVariable P3Value, title="Shell 1 Rho = ", help={"Scattering length density of shell "} 
+			SetVariable P4Value, title="Shell 2 Rho = ", help={"Scattering length density of shell "} 		
+			SetVariable P5Value, title="Solvent Rho = ", help={"Solvent Scattering length density"} 
+		endif
+	if(stringmatch(CurrentFF,"User"))
 		//User					uses user provided functions. There are two userprovided fucntions necessary - F(q,R,par1,par2,par3,par4,par5)
 		//						and V(R,par1,par2,par3,par4,par5)
 		//						the names for these need to be provided in strings... 
@@ -2812,6 +2856,94 @@ Function IR1T_Make76GaussPoints(w76,z76)
 	    w76[38] = .0410570369162294
 
 End		//Make76GaussPoints()
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//			Janus coreshell Micelle functions... 
+//*****************************************************************************************************************
+threadsafe static Function IR1T_JanusFF(Qv, Ro, RhoA, RhoB, RhoC, RhoSolv,Ri)
+	variable Qv, Ro, RhoA, RhoB, RhoC, RhoSolv, Ri
+
+	variable numP=JanusCoreShellMicNumIngtPnts	
+	// Ro = Ro in Fig 1
+	// Ri =  Ri in Fig 1
+	//define parameters as per manuscript. 
+	variable mu 		//cos(th), where th is that from the figure 7 going from 0 to pi/2
+	//we need to integrate this per whole particle - remember to weigh by cos(th) in the integration as AnisoPorod used to be
+	variable kv		//is Q * mu
+	variable DrhoBA	= RhoA - RhoB	// RhoA - RhoB
+	variable DrhoCA = RhoA - RhoC	//RhoA - RhoC
+	// now we need to do the calculations.
+	variable Vp = IR1T_JanusVp(Ro,RhoA, RhoB, RhoC,Ri)
+	make/O/N=(numP) IntgWvMu, weightFac
+	SetScale /I x, 0, pi/2,"", IntgWvMu, weightFac
+	weightFac = sin(x)
+	multithread IntgWvMu = IR1T_JanusOneMu(Qv,Ro,Ri, DrhoBA, DrhoCA, RhoB, RhoC, Qv*cos(x), numP, Vp, cos(x))
+	IntgWvMu[0]=IntgWvMu[1]			//IntgWvMu[0] = NaN so needs to be repalced by next point. Known numercial issue... 
+	IntgWvMu *=weightFac
+	return 2* area(IntgWvMu, 0, pi/2)
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+threadsafe static Function IR1T_JanusOneMu(Qv,Ro,Ri, DrhoBA, DrhoCA, RhoB, RhoC, kv, numP, Vp, mu )
+	variable Qv,Ro,Ri, DrhoBA, DrhoCA, RhoB, RhoC, kv, numP, Vp, mu
+	
+	variable Prefactor =  4 * pi^2 /(Qv^2 * (1 - mu^2) * Vp^2)
+	variable part1, part2, part3, part4
+	part1 = (RhoB + RhoC) * IR1T_JanusIntgCos(kv,Qv, Ro,mu, numP)
+	part2 = (DrhoBA + DrhoCA) * IR1T_JanusIntgCos(kv,Qv, Ri,mu, numP)
+	part3 = (RhoB - RhoC) * IR1T_JanusIntgSin(kv,Qv, Ro,mu, numP)
+	part4 = (DrhoBA - DrhoCA) * IR1T_JanusIntgSin(kv,Qv, Ri,mu, numP)
+	
+	return Prefactor * ((part1+part2)^2+(part3+part4)^2)	 
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+threadsafe static Function IR1T_JanusIntgCos(kv,Qv, Rx,mu, numP)
+	variable kv,Qv, Rx,mu, numP	
+	make/Free/N=(numP) IntgWv
+	SetScale /I x, 0, Rx ,"", IntgWv 
+	IntgWv = cos(kv * x) * IR1T_JanusF(Qv, Rx,x,mu)
+	return area(IntgWv , 0, Rx)
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+threadsafe static Function IR1T_JanusIntgSin(kv,Qv, Rx,mu, numP)
+	variable kv,Qv, Rx,mu, numP	
+	make/Free/N=(numP) IntgWv
+	SetScale /I x, 0, Rx ,"", IntgWv 
+	IntgWv = sin(kv * x) * IR1T_JanusF(Qv, Rx,x,mu)
+	return area(IntgWv , 0, Rx)
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+threadsafe static Function IR1T_JanusF(Qv, Rj,Zv,mu)
+	variable Qv, Rj, Zv, mu
+	variable part1 = sqrt(Rj^2 - Zv^2)
+	variable BesArg= Qv * sqrt(1-mu^2)*part1
+	variable part2 = Besselj(1,BesArg)
+	return part1 * part2	
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+threadsafe static Function IR1T_JanusVp(Ro,RhoA, RhoB, RhoC,Ri )	
+	variable Ro,RhoA, RhoB, RhoC,Ri
+	return (4/3)*pi*(((RhoB+RhoC)/2)*(Ro^3 - Ri^3) + RhoA*Ri^3)	
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

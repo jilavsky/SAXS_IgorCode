@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.08
-Constant IR2LversionNumber = 1.08
+#pragma version=1.09
+Constant IR2LversionNumber = 1.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.08
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 added form and structure factor description as Igor help file with the buttons from the panel directly. 
 //1.08 added scroll buttons to move content up down for small displays. 
 //1.07 removed all font and font size from panel definitions to enable user control
 //1.06 added init of FormFactors, why it was not there yet? 
@@ -225,9 +226,12 @@ Function IR2L_MainPanel()
 		PopupMenu FormFactorPop mode=1, value=#"(root:Packages:FormFactorCalc:ListOfFormFactors)"
 		PopupMenu FormFactorPop help={"Select form factor to be used for this population of scatterers"}
 
-		PopupMenu PopSizeDistShape title="Distribution type : ",proc=IR2L_PanelPopupControl, pos={190,320}
+		PopupMenu PopSizeDistShape title="Distribution type : ",proc=IR2L_PanelPopupControl, pos={190,295}
 		PopupMenu PopSizeDistShape mode=1, value="LogNormal;Gauss;LSW;Schulz-Zimm;"
 		PopupMenu PopSizeDistShape help={"Select Distribution type for this population"}
+
+		Button GetFFHelp,pos={320,320},size={80,15}, proc=IR2L_InputPanelButtonProc,title="F.F. Help", help={"Get help for Form factors"}
+		Button GetSFHelp,pos={320,468},size={80,15}, proc=IR2L_InputPanelButtonProc,title="S.F. Help", help={"Get Help for Structure factor"}
 
 // Unified controls
 		Button FitRgAndG,pos={220,320},size={80,20}, proc=IR2L_InputPanelButtonProc,title="Fit Rg/G bwtn csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
@@ -278,7 +282,7 @@ Function IR2L_MainPanel()
 		SetVariable UF_RGCOMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop1, noproc
 		SetVariable UF_RGCOMax,pos={290,435},size={80,15},title="Max ", help={"High limit for P"} 
 
-		PopupMenu KFactor,pos={250,455},size={170,21},proc=IR2L_PanelPopupControl,title="k factor :"
+		PopupMenu KFactor,pos={240,452},size={170,15},proc=IR2L_PanelPopupControl,title="k factor :"
 		PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 //particulate controls
@@ -420,7 +424,7 @@ Function IR2L_MainPanel()
 		//interferences
 //		CheckBox UseInterference,pos={40,435},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Use Structure factor?"
 //		CheckBox UseInterference,variable= root:Packages:IR2L_NLSQF:UseInterference_pop1, help={"Check to use structure factor"}
-		PopupMenu StructureFactorModel title="Structure Factor : ",proc=IR2L_PanelPopupControl, pos={10,465}
+		PopupMenu StructureFactorModel title="Structure Factor : ",proc=IR2L_PanelPopupControl, pos={10,468}
 		PopupMenu StructureFactorModel value=#"(root:Packages:StructureFactorCalc:ListOfStructureFactors)"
 		SVAR StrA=root:Packages:IR2L_NLSQF:StructureFactor_pop1
 		SVAR StrB=root:Packages:StructureFactorCalc:ListOfStructureFactors

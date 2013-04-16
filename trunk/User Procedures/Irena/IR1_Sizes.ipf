@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.07
+#pragma version = 2.08
 Constant IR1RSversionNumber=2.07
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.08 Modified to handle only some of the form factors. This tool really should not handle Janus CoreShell Micelle. 
 //2.07 Added Scrolling buttons to move up down for small displays. 
 //2.06 Added ability to generate uncertainities for size distributions. Attempted to fix Regularization by forcing min values to be fraction of maximum of the dirttribution
 //2.05 removed all font and font size from panel definitions to enable user control
@@ -372,7 +373,7 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	Wave G_matrix=root:Packages:Sizes:G_matrix
 	NVAR ScatteringContrast=root:Packages:Sizes:ScatteringContrast
 	
-	if(cmpstr(ShapeType,"CoreShell")==0 || cmpstr(ShapeType,"Tube")==0)	
+	if(cmpstr(ShapeType,"CoreShell")==0 || cmpstr(ShapeType,"Tube")==0 || stringmatch(ShapeType,"Janus CoreShell Micelle*"))	
 		G_matrix=G_matrixFF * 1e20		//this case the contrast is part of the calculations already... 
 	else
 		G_matrix=G_matrixFF * ScatteringContrast*1e20		//this multiplyies by scattering contrast
@@ -2494,6 +2495,7 @@ Window IR1R_SizesInputPanel()
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Sizes","IR1R_SizesInputPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,0)
+	//root:Packages:FormFactorCalc:ListOfFormFactorsSD
 	CheckBox ShowDiagnostics,pos={10,165},size={141,14},title="Diagnostics?", help={"Check to show extendend diagnostics during evaluation"}
 	CheckBox ShowDiagnostics,variable= root:Packages:Sizes:ShowDiagnostics
 	Button GraphIfAllowed,pos={10,183},size={100,20},proc=IR1R_GraphDataButton,title="Graph", help={"Push to graph data"}
@@ -2534,7 +2536,7 @@ Window IR1R_SizesInputPanel()
 
 //shapes
 	PopupMenu ShapeModel,pos={10,418},size={223,21},proc=IR1R_PopMenuProc,title="Select particle shape model", help={"Particle shape models in the code. Set appropriate Aspect ratio. "}
-	PopupMenu ShapeModel,mode=1,popvalue=root:Packages:Sizes:ShapeType,value= root:Packages:FormFactorCalc:ListOfFormFactors
+	PopupMenu ShapeModel,mode=1,popvalue=root:Packages:Sizes:ShapeType,value= root:Packages:FormFactorCalc:ListOfFormFactorsSD
 
 	SetVariable AspectRatio,pos={10,444},size={140,16},title="Aspect Ratio ", help={"Aspect ratio for spheroids and other particles with AR"}
 	SetVariable AspectRatio,limits={0,Inf,0.1},value= root:Packages:Sizes:AspectRatio
