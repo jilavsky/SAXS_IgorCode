@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.01
+#pragma version =1.02
 
 //1.01 modified for weight calibration
+//1.02 added pinDiode tranmsission
 
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -119,6 +120,7 @@ Function IN3_CalculateTransmission(SkipEstimate)
 	NVAR SampleTransmission=root:Packages:Indra3:SampleTransmission
 	NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
 	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
+	NVAR UsePinTransmission=root:Packages:Indra3:UsePinTransmission
 	SVAR FolderName = root:Packages:Indra3:DataFolderName
 	if (!DataFolderExists(FolderName ))
 		return 0
@@ -130,7 +132,7 @@ Function IN3_CalculateTransmission(SkipEstimate)
 			SampleTransmissionPeakToPeak = MaximumIntensity/BlankMaximum
 		endif
 		SampleTransmission = SampleTransmissionPeakToPeak
-		if(UseMSAXSCorrection)
+		if(UseMSAXSCorrection||UsePinTransmission)
 			SampleTransmission*=MSAXSCorrection
 		endif
 	endif	
@@ -354,9 +356,11 @@ Function IN3_RecalcSubtractSaAndBlank()
 		NVAR SampleTransmission
 		NVAR MSAXSCorrection = root:Packages:Indra3:MSAXSCorrection
 		NVAR UseMSAXSCorrection = root:Packages:Indra3:UseMSAXSCorrection
+		NVAR UsePinTransmission = root:Packages:Indra3:UsePinTransmission
+		NVAR USAXSPinTvalue = root:Packages:Indra3:USAXSPinTvalue
 		string USAXSorSBUSAXS
 		variable MSAXSCorLocal=1
-		if(UseMSAXSCorrection)
+		if(UseMSAXSCorrection || UsePinTransmission)
 			MSAXSCorLocal = MSAXSCorrection
 		endif
 		NVAR SubtractFlatBackground=root:Packages:Indra3:SubtractFlatBackground
@@ -400,12 +404,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 				ModifyGraph gaps=0
 			endif
 		endif
-
-//		IN2G_AppendAnyText("Transmission :\t\t"+num2str(SampleTransmission))
-//		IN2G_AppendAnyText("SMR data created")
-
-		USAXSorSBUSAXS="USAXS"
-		
+		USAXSorSBUSAXS="USAXS"		
 	else
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
@@ -490,6 +489,10 @@ Function IN3_SaveData()
 	NVAR SampleTransmissionPeakToPeak=root:Packages:Indra3:SampleTransmissionPeakToPeak
 	NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
 	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
+	NVAR UsePinTransmission=root:Packages:Indra3:UsePinTransmission
+	NVAR USAXSPinTvalue=root:Packages:Indra3:USAXSPinTvalue
+
+
 	SVAR ListOfASBParametersL=root:Packages:Indra3:ListOfASBParameters
 
 	NVAR CalibrateArbitrary=root:Packages:Indra3:CalibrateArbitrary
@@ -620,7 +623,7 @@ Function IN3_SaveData()
 			endif
 		endif
 		
-		if(UseMSAXSCorrection)
+		if(UseMSAXSCorrection || UsePinTransmission)
 			IN2G_AppendAnyText("MSAXSCorrection :\t\t"+num2str(MSAXSCorrection))
 		endif
 
@@ -741,7 +744,11 @@ Function IN3_SaveData()
 		IN2G_AppendNoteToAllWaves("SampleTransmission",num2str(SampleTransmission))
 		IN2G_AppendNoteToAllWaves("SampleTransmissionPeakToPeak",num2str(SampleTransmissionPeakToPeak))
 		IN2G_AppendNoteToAllWaves("UseMSAXSCorrection",num2str(UseMSAXSCorrection))
-		if(UseMSAXSCorrection)
+		IN2G_AppendNoteToAllWaves("UsePinTransmission",num2str(UsePinTransmission))
+		if(USAXSPinTvalue>0)
+			IN2G_AppendNoteToAllWaves("pinDiodeTransmission",num2str(USAXSPinTvalue))
+		endif
+		if(UseMSAXSCorrection||UsePinTransmission)
 			IN2G_AppendNoteToAllWaves("MSAXSCorrection",num2str(MSAXSCorrection))
 		else
 			IN2G_AppendNoteToAllWaves("MSAXSCorrection",num2str(1))

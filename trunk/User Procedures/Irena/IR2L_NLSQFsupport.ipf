@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
+#pragma version=1.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 fixed fix limits check so if the value is negative, it sorts out limits correctly. Needed for core shell systems with negative SLD
 //1.15 added Form and Structrue factor description as Igor help file. Added buttons to call the help file from GUI. 
 //1.14 Modified to handle Janus CoreShell Micelle FF
 //1.13 modified data stored in wavenote to minimize stuff saved there.
@@ -3221,7 +3222,7 @@ end
 Function  IR2L_FixLimits(scale)
 	variable scale
 	
-	variable i, j
+	variable i, j, tempValue
 	//Input Data parameters... Will have _setX attached, in this method background needs to be here...
 	//0.1 - 10x
 	string ListOfDataVariables="UseTheData;"
@@ -3237,6 +3238,11 @@ Function  IR2L_FixLimits(scale)
 			if(BckgFit)
 				BckgMin = scale*0.1 * Bckg
 				BckgMax = scale*10 * Bckg
+				if(BckgMin>BckgMax)
+					tempValue=BckgMin
+					BckgMin=BckgMax
+					BckgMax=tempValue
+				endif
 			endif
 		endif
 	endfor
@@ -3289,6 +3295,11 @@ Function  IR2L_FixLimits(scale)
 						MinVarVal= 0.5 * VarVal/scale
 						MaxVarVal=scale*2 * VarVal
 					endif
+				if(MinVarVal>MaxVarVal)
+					tempValue=MinVarVal
+					MinVarVal=MaxVarVal
+					MaxVarVal=tempValue
+				endif
 				endif
 			endfor
 		endif

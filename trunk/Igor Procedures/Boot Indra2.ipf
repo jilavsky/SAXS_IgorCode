@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.78
+#pragma version=1.79
 
+//1.79 added ability to read pinDiode Transmission measured first during 4/2013
 //1.78 added weight calibration 
 //1.77 Use I0 and I00 ranges now included in spec files. 
 //1.76 5/30/2012 GUI improvements

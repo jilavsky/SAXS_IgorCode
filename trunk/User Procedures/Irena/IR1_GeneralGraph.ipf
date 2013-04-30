@@ -1,7 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.14
+#pragma version=2.15
 #include <KBColorizeTraces>
-Constant IR1PversionNumber=2.13
+Constant IR1PversionNumber=2.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 added contour plot and basic controls. 
 //2.14 Modified to handle different units for Intensity calibration. Addec control in Change Graph details panel. 
 //2.13 Added vertical scrolling
 //2.12 fix in Scripting tool call which caused problems when starting with no data type chosen. Defaults properly to qrs now. 
@@ -40,7 +41,7 @@ Function IR1P_GeneralPlotTool()
 	IN2G_CheckScreenSize("height",670)
 
 	String ListOfWindowsToClose="GizmoControlPanel;Irena_Gizmo;GeneralGraph;PlotingToolWaterfallGrph;IR1P_ControlPanel;IR1P_RemoveDataPanel;"
-	ListOfWindowsToClose+="PlotingToolWaterfallGrph;IR1P_ModifyDataPanel;IR1P_FittingDataPanel;IR1P_ChangeGraphDetailsPanel;"
+	ListOfWindowsToClose+="PlotingToolWaterfallGrph;IR1P_ModifyDataPanel;IR1P_FittingDataPanel;IR1P_ChangeGraphDetailsPanel;PlotingToolContourGrph;"
 	
 	variable i
 	For(i=0;i<ItemsInList(ListOfWindowsToClose);i+=1)
@@ -106,14 +107,15 @@ Window IR1P_ControlPanel()
 
 	IR2C_AddDataControls("GeneralplottingTool","IR1P_ControlPanel","M_DSM_Int;DSM_Int;M_SMR_Int;SMR_Int","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,0)
 //IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves)
+	Button ScriptingTool,pos={302,138},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Scripting tool", help={"Start scripting tool to add multiple data at once"}
 	Button AddDataToGraph,pos={2,158},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Add data", help={"Click to add data into the list of data to be displayed in the graph"}
 	Button RemoveData,pos={102,158},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Remove data", help={"Click to remove data  from the list of data to be displayed in the graph"}
 	Button CreateGraph,pos={202,158},size={95,20}, proc=IR1P_InputPanelButtonProc,title="(Re)Graph (2D)", help={"Click to create graph or regraph with newly added data"}
 	Button ResetAll,pos={302,158},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Kill Graph, Reset", help={"Click here to kill graph and reset this tool (remove all data sets from graph)"}
-	Button ScriptingTool,pos={302,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Scripting tool", help={"Start scripting tool to add multiple data at once"}
 	Button Create3DGraph,pos={202,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="(Re)Graph (3D,Wf)", help={"Click to create 3D graph or regraph with newly added data"}
-	Button CreateMovie,pos={102,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Create Movie", help={"Click to create movie from 2D or 3D graph"}
-	Button CreateGizmoGraph,pos={2,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Gizmo (3D)", help={"Click to create 3D graph using Gizmo"}
+	Button CreateMovie,pos={2,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Create Movie", help={"Click to create movie from 2D or 3D graph"}
+	Button CreateGizmoGraph,pos={102,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Gizmo (3D)", help={"Click to create 3D graph using Gizmo"}
+	Button CreateContourPlot,pos={302,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Contour plot", help={"Create contour plot"}
 
 //graph controls
 	PopupMenu GraphType,pos={1,210},size={178,21},proc=IR1P_PanelPopupControl,title="Graph style", help={"Select graph type to create, needed data types will be created if necessary"}
@@ -454,6 +456,16 @@ Function IR1P_InputPanelButtonProc(ctrlName) : ButtonControl
 
 		if (IsAllAllRight)
 			IR1P_Create3DGraph()
+		else
+			Abort "Data not selected properly"
+		endif
+		DoWIndow/F IR1P_ControlPanel
+	endif
+	if (cmpstr(ctrlName,"CreateContourPlot")==0)
+		//here goes what is done, when user pushes Graph button
+		IsAllAllRight=1
+		if (IsAllAllRight)
+			IR1P_CreateCountourGraph()
 		else
 			Abort "Data not selected properly"
 		endif
@@ -1711,7 +1723,7 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	ListOfStrings="ListOfDataFolderNames;ListOfDataWaveNames;ListOfGraphFormating;ListOfDataOrgWvNames;ListOfDataFormating;SelectedDataToModify;"
 	ListOfStrings+="GraphXAxisName;GraphYAxisName;SelectedDataToRemove;GraphLegendPosition;ModifyIntName;ModifyQname;ModifyErrName;"
 	ListOfStrings+="ListOfRemovedPoints;FittingSelectedFitFunction;FittingFunctionDescription;"
-	ListOfStrings+="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
+	ListOfStrings+="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;ContGraph3DColorScale;"
 
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;DisplayTimeAndDate;"
 	ListOfVariables+="GraphLogX;GraphLogY;GraphErrors;GraphXMajorGrid;GraphXMinorGrid;GraphYMajorGrid;GraphYMinorGrid;"
@@ -1728,6 +1740,8 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	ListOfVariables+="Graph3DClrMin;Graph3DClrMax;Graph3DAngle;Graph3DAxLength;Graph3DLogColors;Graph3DColorsReverse;"
 	ListOfVariables+="GizmoNumLevels;GizmoUseLogColors;GizmoDisplayGrids;GizmoDisplayLabels;GizmoEstimatedVoronoiTime;"
 	ListOfStrings+="Graph3DColorScale;Graph3DVisibility;"
+	//Contour special controls
+	ListOfVariables+="ContMinValue;ContMaxValue;ContNumCountours;ContDisplayContValues;ContLogContours;ContUseOnlyRedColor;ContSmoothOverValue;"
 	//Movie special controls
 	ListOfVariables+="MovieUse2Dgraph;MovieUse3DGraph;MovieReplaceData;MovieFrameRate;MovieFileOpened;MovieDisplayDelay;"
 	ListOfStrings+=""
@@ -1756,6 +1770,10 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR ListOfGraphFormating
 	SVAR FittingSelectedFitFunction
 	FittingSelectedFitFunction = "---"
+	SVAR ContGraph3DColorScale
+	if(strlen(ContGraph3DColorScale)<1)
+		ContGraph3DColorScale="none"
+	endif
 	
 	ListOfVariables="GraphErrors;GraphXMajorGrid;GraphXMinorGrid;GraphYMajorGrid;GraphYMinorGrid;"
 	ListOfVariables+="GraphLegend;GraphUseColors;GraphUseSymbols;GraphXMirrorAxis;GraphYMirrorAxis;GraphLineWidth;"
@@ -1799,7 +1817,11 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	if(GizmoNumLevels<5)
 		GizmoNumLevels=100
 	endif
-
+	
+	NVAR ContNumCountours
+	if(ContNumCountours<10)
+		ContNumCountours=11
+	endif
        NVAR Graph3DAngle
        if(Graph3DAngle<10||numtype(Graph3DAngle)!=0)
     		  Graph3DAngle = 30

@@ -632,7 +632,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level2RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level2RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgCOHighLimit, help={"RgCutOff high limit"}
 
-	//Button Level2SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
+	Button Level2SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level2LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level2LinkRGCO,variable= root:Packages:Irena_UnifFit:Level2LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 

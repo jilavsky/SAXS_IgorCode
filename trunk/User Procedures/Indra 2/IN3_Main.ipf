@@ -1,6 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.78
+#pragma version = 1.80
 
+//1.80 Added few more items on Tab0 
+//1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 //*****************************************************************************************************************
@@ -60,7 +62,7 @@ Function IN3_Initialize()
 
 	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
 
-	ListOfVariables+="BlankWidth;MSAXSCorrection;UseMSAXSCorrection;"
+	ListOfVariables+="BlankWidth;MSAXSCorrection;UseMSAXSCorrection;UsePinTransmission;USAXSPinTvalue;"
 	ListOfVariables+="MSAXSStartPoint;MSAXSEndPoint;BlankFWHM;BlankMaximum;"
 
 	ListOfVariables+="SubtractFlatBackground;UserSavedData;"
@@ -104,8 +106,13 @@ Function IN3_Initialize()
 	endif
 	NVAR CalibrateToWeight
 	NVAR CalibrateToVolume
+	NVAR CalibrateArbitrary
 	//add check so Volume is default and only 1 is selected. 
-	
+	if(CalibrateArbitrary+CalibrateToVolume+CalibrateToWeight!=1)
+		 CalibrateToWeight=0
+		 CalibrateToVolume=1
+		 CalibrateArbitrary=0
+	endif
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
@@ -232,9 +239,19 @@ Function IN3_MainPanel()
 	SetVariable SampleFilledFraction,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleFilledFraction,limits={0,Inf,0},variable= root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
 
-	//SetVariable BeamExposureArea,pos={5,435},size={280,22},title="Beam area [mm2]  =", help={"Calculated area of the beam from slit positions, do not change unless it is error"}
-	//SetVariable BeamExposureArea,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged, bodyWidth=100
-	//SetVariable BeamExposureArea,limits={0,Inf,0},variable= root:Packages:Indra3:BeamExposureArea, noedit=!CalculateWeight, frame=CalculateWeight
+	SetVariable USAXSPinTvalue,pos={5,435},size={280,22},title="pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
+	SetVariable USAXSPinTvalue,font="Times New Roman",fSize=14, bodyWidth=100
+	SetVariable USAXSPinTvalue,limits={0,1,0},variable= root:Packages:Indra3:USAXSPinTvalue, noedit=1, frame=CalculateWeight
+
+	CheckBox UsePinTransmission,pos={290,437},size={90,14},proc=IN3_MainPanelCheckBox,title="Use?"//, disable=CalibrateToVolume
+	CheckBox UsePinTransmission,variable= root:Packages:Indra3:UsePinTransmission, help={"Use pin diode trnamission (if exists)"}
+
+	SetVariable PeakToPeakTransmission,pos={5,460},size={300,22},title="Peak-to-Peak T =", frame=0, noedit=1
+	SetVariable PeakToPeakTransmission,font="Times New Roman",fSize=14, bodyWidth=100
+	SetVariable PeakToPeakTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmissionPeakToPeak
+	SetVariable MSAXSCorrectionT0,pos={5,485},size={300,22},title="MSAXS/pinSAXS Cor =", frame=0, noedit=1
+	SetVariable MSAXSCorrectionT0,font="Times New Roman",fSize=14, bodyWidth=100
+	SetVariable MSAXSCorrectionT0,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
 
 
 	//tab 2 - geometry controls

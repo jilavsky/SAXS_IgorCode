@@ -1,6 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.06
+#pragma version=1.09
 
+//1.09 controsl for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/pinSAXS correction
+//1.08 added pin diode transmission
+//1.07 added (beta version now) measurement of transmission by using diode on front of the A stage
 //1.06 modified for weight calibration
 //1.05 FIxed bump to Compiler when no data selected in Data selection popup. 
 //1.04 2/2013, JIL: modified to enable calibration per weight
@@ -57,6 +60,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		IN3_FitDefaultTop()
 		IN3_RecalculateData(4)
 		IN3_FitDefaultTop()
+		IN3_GetDiodeTransmission(0)
 		IN3_RecalculateData(1)
 		TabControl DataTabs , value= 0, win=USAXSDataReduction
 		NI3_TabPanelControl("",0)
@@ -116,6 +120,57 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	setDataFolder OldDf
 end
 
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+
+Function IN3_GetDiodeTransmission(SkipMessage)
+	variable SkipMessage
+	SVAR MeasurementParameters = root:Packages:Indra3:MeasurementParameters
+	SVAR BlankName = root:Packages:Indra3:BlankName
+	SVAR BLMeasurementParameters = $(BlankName+"MeasurementParameters")
+	NVAR SampleTransmissionPeakToPeak = root:Packages:Indra3:SampleTransmissionPeakToPeak
+	NVAR MSAXSCorrection = root:Packages:Indra3:MSAXSCorrection
+	NVAR SampleTransmission = root:Packages:Indra3:SampleTransmission
+	NVAR UsePinTransmission=	root:Packages:Indra3:UsePinTransmission
+	
+	
+	variable USAXSPinT_Measure 	=NumberByKey("USAXSPinT_Measure", MeasurementParameters, "=", ";")
+	variable USAXSPinT_AyPosition	=NumberByKey("USAXSPinT_AyPosition", MeasurementParameters, "=", ";")
+	variable USAXSPinT_Time		=NumberByKey("USAXSPinT_Time", MeasurementParameters, "=", ";")
+	variable USAXSPinT_pinCounts	=NumberByKey("USAXSPinT_pinCounts", MeasurementParameters, "=", ";")
+	variable USAXSPinT_pinGain		=NumberByKey("USAXSPinT_pinGain", MeasurementParameters, "=", ";")
+	variable USAXSPinT_I0Counts	=NumberByKey("USAXSPinT_I0Counts", MeasurementParameters, "=", ";")
+	variable USAXSPinT_I0Gain		=NumberByKey("USAXSPinT_I0Gain", MeasurementParameters, "=", ";")
+
+	variable BLUSAXSPinT_Measure 		=NumberByKey("USAXSPinT_Measure", BLMeasurementParameters, "=", ";")
+	variable BLUSAXSPinT_AyPosition	=NumberByKey("USAXSPinT_AyPosition", BLMeasurementParameters, "=", ";")
+	variable BLUSAXSPinT_Time			=NumberByKey("USAXSPinT_Time", BLMeasurementParameters, "=", ";")
+	variable BLUSAXSPinT_pinCounts		=NumberByKey("USAXSPinT_pinCounts", BLMeasurementParameters, "=", ";")
+	variable BLUSAXSPinT_pinGain		=NumberByKey("USAXSPinT_pinGain", BLMeasurementParameters, "=", ";")
+	variable BLUSAXSPinT_I0Counts		=NumberByKey("USAXSPinT_I0Counts", BLMeasurementParameters, "=", ";")
+	variable BLUSAXSPinT_I0Gain		=NumberByKey("USAXSPinT_I0Gain", BLMeasurementParameters, "=", ";")
+
+	NVAR/Z USAXSPinTvalue = root:Packages:Indra3:USAXSPinTvalue
+	if(!NVAR_Exists(USAXSPinTvalue))
+		variable/g root:Packages:Indra3:USAXSPinTvalue
+	endif
+	USAXSPinTvalue=0
+	if(USAXSPinT_Measure && BLUSAXSPinT_Measure)
+		USAXSPinTvalue = ((USAXSPinT_pinCounts/USAXSPinT_pinGain)/(USAXSPinT_I0Counts/USAXSPinT_I0Gain))/((BLUSAXSPinT_pinCounts/BLUSAXSPinT_pinGain)/(BLUSAXSPinT_I0Counts/BLUSAXSPinT_I0Gain))
+		if(!SkipMessage)
+			print "Found pin Diode measured transmission for these measurements = "+num2str(USAXSPinTvalue)
+		endif
+		if(UsePinTransmission && USAXSPinTvalue>0)
+			MSAXSCorrection = USAXSPinTvalue / SampleTransmissionPeakToPeak
+		endif
+	else
+		UsePinTransmission=0
+	endif
+	
+	
+end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -490,6 +545,8 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	NVAR CalibrateToWeight=root:Packages:Indra3:CalibrateToWeight
 	NVAR CalibrateToVolume=root:Packages:Indra3:CalibrateToVolume
 	NVAR CalibrateArbitrary=root:Packages:Indra3:CalibrateArbitrary
+	NVAR UsePinTransmission=root:Packages:Indra3:UsePinTransmission
+	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
 
 	
 	if (cmpstr("IsBlank",ctrlName)==0)
@@ -551,7 +608,20 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	endif
 	
 	if (cmpstr("UseMSAXSCorrection",ctrlName)==0)
+		IF(checked)
+			 UsePinTransmission=0
+		endif
 		NI3_TabPanelControl("",4)
+		//IN3_CalculateMSAXSCorrection()
+		//IN3_CalculateTransmission(1)
+		//IN3_CalculateSampleThickness()
+		IN3_RecalculateData(3)
+	endif
+	if (cmpstr("UsePinTransmission",ctrlName)==0)
+		IF(checked)
+			 UseMSAXSCorrection=0
+		endif
+		NI3_TabPanelControl("",0)
 		//IN3_CalculateMSAXSCorrection()
 		//IN3_CalculateTransmission(1)
 		//IN3_CalculateSampleThickness()
@@ -1349,12 +1419,19 @@ Function NI3_TabPanelControl(name,tab)
 	NVAR CalibrateToWeight=root:Packages:Indra3:CalibrateToWeight
 	NVAR CalibrateToVolume=root:Packages:Indra3:CalibrateToVolume
 	NVAR CalibrateArbitrary=root:Packages:Indra3:CalibrateArbitrary
+	NVAR UsePinTransmission=root:Packages:Indra3:UsePinTransmission
+	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
 
 	Button RecoverDefault,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalibrateToVolume,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalibrateToWeight,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalibrateArbitrary,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 
+	SetVariable USAXSPinTvalue, win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
+	CheckBox UsePinTransmission, win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
+	SetVariable MSAXSCorrectionT0, win=USAXSDataReduction, disable=(tab!=0 || IsBlank || (!UsePinTransmission && !UseMSAXSCorrection) )
+	SetVariable PeakToPeakTransmission, win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
+	
 	CheckBox CalculateThickness,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalculateWeight,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToWeight )
 	SetVariable SampleThickness,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=(CalculateThickness), frame=!CalculateThickness
@@ -1402,10 +1479,9 @@ Function NI3_TabPanelControl(name,tab)
 	Button RecoverDefaultBlnkVals,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 
 
-	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
 	CheckBox UseMSAXSCorrection,win=USAXSDataReduction, disable=(tab!=4 || IsBlank)	
 	//UseMSAXSCorrection
-	SetVariable MSAXSCorrection,win=USAXSDataReduction, disable=(tab!=4 || !UseMSAXSCorrection || IsBlank)
+	SetVariable MSAXSCorrection,win=USAXSDataReduction, disable=(tab!=4 || !(UseMSAXSCorrection ||UsePinTransmission) || IsBlank)
 	SetVariable MSAXSStartPoint,win=USAXSDataReduction, disable=(tab!=4 || !UseMSAXSCorrection || IsBlank)
 	SetVariable MSAXSEndPoint,win=USAXSDataReduction, disable=(tab!=4 || !UseMSAXSCorrection || IsBlank)
 	String ExistingSubWindows=ChildWindowList("USAXSDataReduction") 
