@@ -18,6 +18,7 @@
 //2.18 added SphereWHSLocMonoSq - requested by masato, this is sphere with Hard spheres Percus-Yevic structure factor which has distance which is related linearly to size of the sphere itself. 
 //2.19 removed algebraic form factor and added Janus Core Shell micelles, added special list of form factor for Size Distribution, which cannot handle complex shapes (and should not)... 
 //2.20 Added Form and Structure factor description as Igor Help file. 
+//2.21 FIxed Janus FF micelle and added version 3 - core as particle shape
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix
@@ -83,7 +84,7 @@ Function IR1T_InitFormFactors()
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
 	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
-	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;"
+	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;"
 	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
 	string/g CoreShellVolumeDefinition
 	SVAR CoreShellVolumeDefinition			//this will be user choice for definition of volume of core shell particle: "Whole particle;Core;Shell;", NIST standard definition is Whole particle, default... 
@@ -209,6 +210,12 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 		//							Shell2Rho=particlePar5			// rho for shell 2 material
 		//Janus CoreShell Micelle 2	//particle size here is shell thickness!!!
 		//							Core_Size=ParticlePar1			// Core radius A
+		//							SolventRho=ParticlePar2		// rho for solvent material
+		//							CoreRho=ParticlePar3			// rho for core material
+		//							Shell1Rho=ParticlePar4			// rho for shell 1 material
+		//							Shell2Rho=particlePar5			// rho for shell 2 material
+		//Janus CoreShell Micelle 3	//particle size here is core radius!!!
+		//							Shell_Thickness=ParticlePar1	// Shell Thickness A
 		//							SolventRho=ParticlePar2		// rho for solvent material
 		//							CoreRho=ParticlePar3			// rho for core material
 		//							Shell1Rho=ParticlePar4			// rho for shell 1 material
@@ -520,7 +527,9 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				Shell2Rho=particlePar4			// rho for shell 2 material											
 				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
 					currentR=R_dist[i]
-					multithread TempWave=IR1T_JanusFF(Q_vec[p], CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho,CurrentR-Shell_Thickness)		//this is already 2nd power and should be normalized by volume 
+					multithread TempWave=IR1T_JanusFF(Q_vec[p], CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho,CurrentR-Shell_Thickness)	//this is already ^2
+					TempWave*= IR1T_JanusAveContrast(CurrentR-Shell_Thickness, Shell_Thickness, CoreRho, Shell1Rho, Shell2Rho, SolventRho)		//need to crrect for contrast as the above formula 
+					//contians only one delta-rho. Average delta-rho seems to fix this... params: Rcore, RShell, RhoCore, RhoA, RhoB, ShoSolv
 					multithread TempWave*= IR1T_JanusVp(CurrentR,CoreRho, Shell1Rho, Shell2Rho,CurrentR-Shell_Thickness)^VolumePower			//scale by volume
 					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
 				endfor
@@ -533,8 +542,29 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				Shell2Rho=particlePar4			// rho for shell 2 material											
 				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
 					currentR=R_dist[i]
-					multithread TempWave=IR1T_JanusFF(Q_vec[p], Core_Size+CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho,Core_Size)		//this is already 2nd power and should be normalized by volume 
+					multithread TempWave=IR1T_JanusFF(Q_vec[p], Core_Size+CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho,Core_Size)	//this is already ^2
+					TempWave*= IR1T_JanusAveContrast(Core_Size, CurrentR, CoreRho, Shell1Rho, Shell2Rho, SolventRho)//Rcore, RShell, RhoCore, RhoA, RhoB, ShoSolv
 					multithread TempWave*= IR1T_JanusVp(Core_Size+CurrentR,CoreRho, Shell1Rho, Shell2Rho,Core_Size)^VolumePower			//scale by volume
+					//print IR1T_JanusVp(Core_Size+CurrentR,CoreRho, Shell1Rho, Shell2Rho,Core_Size)
+					//multithread TempWave*= IR1T_SphereVolume(Core_Size+CurrentR)^VolumePower			//scale by volume
+					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
+				endfor
+			elseif(cmpstr(ParticleModel,"Janus CoreShell Micelle 3")==0)
+				//Janus CoreShell Micelle 3		//particle size here is shell thickness!!!
+				Shell_Thickness=ParticlePar1	//Core radius A
+				SolventRho=ParticlePar5		// rho for solvent material
+				CoreRho=ParticlePar2			// rho for core material
+				Shell1Rho=ParticlePar3			// rho for shell 1 material
+				Shell2Rho=particlePar4			// rho for shell 2 material											
+				variable NormVal
+				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
+					currentR=R_dist[i]
+					NormVal=IR1T_JanusFF(0.00001, CurrentR+Shell_Thickness, CoreRho, Shell1Rho, Shell2Rho, SolventRho,CurrentR)
+					multithread TempWave=IR1T_JanusFF(Q_vec[p], CurrentR+Shell_Thickness, CoreRho, Shell1Rho, Shell2Rho, SolventRho,CurrentR)	//this is already ^2
+					TempWave*= IR1T_JanusAveContrast(CurrentR, Shell_Thickness, CoreRho, Shell1Rho, Shell2Rho, SolventRho)//Rcore, RShell, RhoCore, RhoA, RhoB, ShoSolv
+					multithread TempWave*= IR1T_JanusVp(CurrentR+Shell_Thickness,CoreRho, Shell1Rho, Shell2Rho,CurrentR)^VolumePower			//scale by volume
+					//print IR1T_JanusVp(Core_Size+CurrentR,CoreRho, Shell1Rho, Shell2Rho,Core_Size)
+					//multithread TempWave*= (IR1T_SphereVolume(CurrentR+Shell_Thickness)^VolumePower)/NormVal 			//scale by volume
 					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
 				endfor
 
@@ -542,7 +572,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 //				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
 //				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
 //					currentR=R_dist[i]
-//					for(j=0;j<numpnts(TempWave);j+=1)						//calulate separately TempWave
+//					for(j=0;j<numpnts(TempWave);j+=1)						//calculate separately TempWave
 //						QR = currentR * Q_vec[j]
 //						QH = Q_vec[j] * AspectRatio * currentR
 //						topp = 1 + 2*pi*QH^3 * QR/(9 * (4 + QR^2)) + (QH^3 * QR^4)/8
@@ -677,8 +707,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-threadsafe Function IR1T_CalcCoreShellShellFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax, CoreShell_1_Thickness, CoreShell_2_Thickness,SolventRho,CoreRho, Shell1Rho,Shell2Rho,VolDefL)
+//
+threadsafe static Function IR1T_CalcCoreShellShellFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax, CoreShell_1_Thickness, CoreShell_2_Thickness,SolventRho,CoreRho, Shell1Rho,Shell2Rho,VolDefL)
 	variable Qvalue, radius, radiusMin,radiusMax, CoreShell_1_Thickness, CoreShell_2_Thickness,SolventRho,CoreRho, Shell1Rho,Shell2Rho, VolumePower
 	string VolDefL
 	
@@ -768,8 +798,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//
-threadsafe  static Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax, Param1, Param2,Param3,Param4,VolDefL)
+//static
+threadsafe   Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax, Param1, Param2,Param3,Param4,VolDefL)
 	variable Qvalue, radius, radiusMin,radiusMax, Param1, Param2	,Param3,Param4,VolumePower						//does the math for Sphere Form factor function
 	string VolDefL
 	//Param1 is skin thickness in A  
@@ -805,9 +835,7 @@ threadsafe  static Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,Volume
 		result+=tempResult//* (IR1T_SphereVolume(tempRad))				//scale by volume add the values together...
 	endFor
 	result=result/numbOfSteps											//this averages the values obtained over the interval....
-	result=result*	(Param2 - Param3)						 			//this scales to contrast difference between shell and core
-	//another change, 7/3/2006... To sync with NIST macros... Need to plug in the voluem here again...
-	//result=result* (IR1_SphereVolume(tempRad))^VolumePower							//multiply by volume of sphere
+	result=result*(Param2 - Param3)						 			//this scales to contrast difference between shell and core
 	result=result*(IR1T_SphereVolume(radius))						//multiply by volume of sphere)
 	
 	//Now add the shell (skin) 
@@ -827,17 +855,14 @@ threadsafe  static Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,Volume
 	endFor
 	result1=result1/numbOfSteps										//this averages the values obtained over the interval....
 	result1=result1*(Param3 - Param4)									//this scales to contrast difference between shell and solvent
-	//another change, 7/3/2006... To sync with NIST macros... Need to plug in the volume here again...
 	result1=result1*(IR1T_SphereVolume(radius+Param1))				//multiply by volume of sphere)
 	
 	variable finalResult=(result + result1)^2											//summ and square them together
-	//finalResult = finalResult / (IR1T_SphereVolume(radius+Param1))				//scale down volume scaling from above... This assumes the volume of particle is volue of core+shell
 	finalResult = finalResult / (IR1T_CoreShellVolume(radius,Param1,VolDefL))				//scale down volume scaling from above... This assumes the volue of particle is the volume of core ONLY
 	//note, after this step we have left Volume^1 in the current form factor!!!! result and result1 both contain Volume^1, then they are squared, and we took out only volume^1... 
 	
 	//this is end of the calculations for form factor... Now we can return, except this form factor contains the contrasts, so future calculations cannot multiply by this form factor...
 	//this will be done at higher level... 
-	//result = result *(IR1T_SphereVolume(radius+Param1))^VolumePower   			//add usual volume scaling needed in G matrix...  
 //	setDataFolder OldDf
 	
 	return finalResult													//and return the value, which is now average over the QR interval.
@@ -1951,6 +1976,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	
 	elseif(stringmatch(CurFF,"Janus CoreShell Micelle 2"))
 	
+	elseif(stringmatch(CurFF,"Janus CoreShell Micelle 3"))
+	
 	elseif(stringmatch(CurFF,"User"))
 	
 	elseif(stringmatch(CurFF,"Integreated_Spheroid"))
@@ -2025,7 +2052,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	if(!NVAR_Exists(CurVal))
 		Abort "at least one parameter must exist for this shape, bug"
 	endif
-	SetVariable P1Value,limits={0,Inf,0},variable= $(P1Str), proc=IR1T_FFCntrlPnlSetVarProc
+	SetVariable P1Value,limits={-inf,Inf,0},variable= $(P1Str), proc=IR1T_FFCntrlPnlSetVarProc
 	SetVariable P1Value,pos={5,100},size={180,15},title="Aspect ratio = ", help={"Aspect ratio of this shape (Form factor). Larger than 1 is elongated, less than 1 is prolated object"}
 	NVAR/Z CurVal= $(FitP1Str)
 	NVAR/Z CurVal2= $(LowP1Str)
@@ -2035,9 +2062,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		CheckBox FitP1Value,pos={200,100},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 		CheckBox FitP1Value,variable= $(FitP1Str), help={"Fit this parameter?"}
 		NVAR disableMe= $(FitP1Str)
-		SetVariable P1LowLim,limits={0,Inf,0},variable= $(LowP1Str), disable=!disableMe
+		SetVariable P1LowLim,limits={-inf,Inf,0},variable= $(LowP1Str), disable=!disableMe
 		SetVariable P1LowLim,pos={220,100},size={80,15},title=" ", help={"Low limit for fitting param 1"}
-		SetVariable P1HighLim,limits={0,Inf,0},variable= $(HighP1Str), disable=!disableMe
+		SetVariable P1HighLim,limits={-inf,Inf,0},variable= $(HighP1Str), disable=!disableMe
 		SetVariable P1HighLim,pos={320,100},size={80,15},title=" ", help={"High limit for fitting param 1"}
 	endif
 	
@@ -2066,6 +2093,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		SetVariable P1Value, title="Shell thickness [A] = ", help={"Thickness of the shell for Janus CoreShell micelle"} 
 	elseif(stringmatch(CurrentFF,"Janus CoreShell Micelle 2"))
 		SetVariable P1Value, title="Core radius [A] = ", help={"Radius of core for Janus CoreShell Micelle"} 
+	elseif(stringmatch(CurrentFF,"Janus CoreShell Micelle 3"))
+		SetVariable P1Value, title="Shell thickness [A] = ", help={"Thickness of the shell for Janus CoreShell micelle"} 
 	endif
 
 		//Fractal aggregate	 	FractalRadiusOfPriPart=ParticlePar1=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
@@ -2075,15 +2104,15 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		NVAR/Z CurVal= $(FitP2Str)
 		NVAR/Z CurVal2= $(LowP2Str)
 		NVAR/Z CurVal3= $(HighP2Str)
-		SetVariable P2Value,limits={0,Inf,0},variable= $(P2Str), proc=IR1T_FFCntrlPnlSetVarProc
+		SetVariable P2Value,limits={-inf,Inf,0},variable= $(P2Str), proc=IR1T_FFCntrlPnlSetVarProc
 		SetVariable P2Value,pos={5,120},size={180,15},title="Fractal dimension = ", help={"Fractal dimension"} 
 		if (strlen(FitP2Str)>6 && NVAR_Exists(CurVal)&& NVAR_Exists(CurVal2)&& NVAR_Exists(CurVal3))
 			CheckBox FitP2Value,pos={200,120},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP2Value,variable= $(FitP2Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP2Str)
-			SetVariable P2LowLim,limits={0,Inf,0},variable= $(LowP2Str), disable=!disableMe
+			SetVariable P2LowLim,limits={-inf,Inf,0},variable= $(LowP2Str), disable=!disableMe
 			SetVariable P2LowLim,pos={220,120},size={80,15},title=" ", help={"Low limit for fitting param 2"} 
-			SetVariable P2HighLim,limits={0,Inf,0},variable= $(HighP2Str), disable=!disableMe
+			SetVariable P2HighLim,limits={-inf,Inf,0},variable= $(HighP2Str), disable=!disableMe
 			SetVariable P2HighLim,pos={320,120},size={80,15},title=" ", help={"High limit for fitting param 2"} 
 		endif
 	endif
@@ -2103,45 +2132,45 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		NVAR/Z CurVal= $(FitP2Str)
 		NVAR/Z CurVal2= $(LowP2Str)
 		NVAR/Z CurVal3= $(HighP2Str)
-		SetVariable P2Value,limits={0,Inf,0},variable= $(P2Str), proc=IR1T_FFCntrlPnlSetVarProc
+		SetVariable P2Value,limits={-inf,Inf,0},variable= $(P2Str), proc=IR1T_FFCntrlPnlSetVarProc
 		SetVariable P2Value,pos={5,120},size={180,15},title="Fractal dimension = ", help={"Fractal dimension"} 
 		if (strlen(FitP2Str)>6 && NVAR_Exists(CurVal)&& NVAR_Exists(CurVal2)&& NVAR_Exists(CurVal3))
 			CheckBox FitP2Value,pos={200,120},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP2Value,variable= $(FitP2Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP2Str)
-			SetVariable P2LowLim,limits={0,Inf,0},variable= $(LowP2Str), disable=!disableMe
+			SetVariable P2LowLim,limits={-inf,Inf,0},variable= $(LowP2Str), disable=!disableMe
 			SetVariable P2LowLim,pos={220,120},size={80,15},title=" ", help={"Low limit for fitting param 2"} 
-			SetVariable P2HighLim,limits={0,Inf,0},variable= $(HighP2Str), disable=!disableMe
+			SetVariable P2HighLim,limits={-inf,Inf,0},variable= $(HighP2Str), disable=!disableMe
 			SetVariable P2HighLim,pos={320,120},size={80,15},title=" ", help={"High limit for fitting param 2"} 
 		endif
 
 		NVAR/Z CurVal= $(FitP3Str)
 		NVAR/Z CurVal2= $(LowP3Str)
 		NVAR/Z CurVal3= $(HighP3Str)
-		SetVariable P3Value,limits={0,Inf,0},variable= $(P3Str), proc=IR1T_FFCntrlPnlSetVarProc
+		SetVariable P3Value,limits={-inf,Inf,0},variable= $(P3Str), proc=IR1T_FFCntrlPnlSetVarProc
 		SetVariable P3Value,pos={5,140},size={180,15},title="Fractal dimension = ", help={"Fractal dimension"} 
 		if (strlen(FitP3Str)>6 && NVAR_Exists(CurVal)&& NVAR_Exists(CurVal2)&& NVAR_Exists(CurVal3))
 			CheckBox FitP3Value,pos={200,140},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP3Value,variable= $(FitP3Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP3Str)
-			SetVariable P3LowLim,limits={0,Inf,0},variable= $(LowP3Str), disable=!disableMe
+			SetVariable P3LowLim,limits={-inf,Inf,0},variable= $(LowP3Str), disable=!disableMe
 			SetVariable P3LowLim,pos={220,140},size={80,15},title=" ", help={"Low limit for fitting param 3"} 
-			SetVariable P3HighLim,limits={0,Inf,0},variable= $(HighP3Str), disable=!disableMe
+			SetVariable P3HighLim,limits={-inf,Inf,0},variable= $(HighP3Str), disable=!disableMe
 			SetVariable P3HighLim,pos={320,140},size={80,15},title=" ", help={"High limit for fitting param 3"} 
 		endif
 
 		NVAR/Z CurVal= $(FitP4Str)
 		NVAR/Z CurVal2= $(LowP4Str)
 		NVAR/Z CurVal3= $(HighP4Str)
-		SetVariable P4Value,limits={0,Inf,0},variable= $(P4Str), proc=IR1T_FFCntrlPnlSetVarProc
+		SetVariable P4Value,limits={-inf,Inf,0},variable= $(P4Str), proc=IR1T_FFCntrlPnlSetVarProc
 		SetVariable P4Value,pos={5,160},size={180,15},title="Fractal dimension = ", help={"Fractal dimension"} 
 		if (strlen(FitP4Str)>6 && NVAR_Exists(CurVal)&& NVAR_Exists(CurVal2)&& NVAR_Exists(CurVal3))
 			CheckBox FitP4Value,pos={200,160},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP4Value,variable= $(FitP4Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP4Str)
-			SetVariable P4LowLim,limits={0,Inf,0},variable= $(LowP4Str), disable=!disableMe
+			SetVariable P4LowLim,limits={-inf,Inf,0},variable= $(LowP4Str), disable=!disableMe
 			SetVariable P4LowLim,pos={220,160},size={80,15},title=" ", help={"Low limit for fitting param 4"} 
-			SetVariable P4HighLim,limits={0,Inf,0},variable= $(HighP4Str), disable=!disableMe
+			SetVariable P4HighLim,limits={-inf,Inf,0},variable= $(HighP4Str), disable=!disableMe
 			SetVariable P4HighLim,pos={320,160},size={80,15},title=" ", help={"High limit for fitting param 4"} 
 		endif
 		
@@ -2160,15 +2189,15 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			NVAR/Z CurVal= $(FitP5Str)
 			NVAR/Z CurVal2= $(LowP5Str)
 			NVAR/Z CurVal3= $(HighP5Str)
-			SetVariable P5Value,limits={0,Inf,0},variable= $(P5Str), proc=IR1T_FFCntrlPnlSetVarProc
+			SetVariable P5Value,limits={-inf,Inf,0},variable= $(P5Str), proc=IR1T_FFCntrlPnlSetVarProc
 			SetVariable P5Value,pos={5,180},size={180,15},title="Fractal dimension = ", help={"Fractal dimension"} 
 			if (strlen(FitP5Str)>6 && NVAR_Exists(CurVal)&& NVAR_Exists(CurVal2)&& NVAR_Exists(CurVal3))
 				CheckBox FitP5Value,pos={200,180},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 				CheckBox FitP5Value,variable= $(FitP5Str), help={"Fit this parameter?"}
 				NVAR disableMe= $(FitP5Str)
-				SetVariable P5LowLim,limits={0,Inf,0},variable= $(LowP5Str), disable=!disableMe
+				SetVariable P5LowLim,limits={-inf,Inf,0},variable= $(LowP5Str), disable=!disableMe
 				SetVariable P5LowLim,pos={220,180},size={80,15},title=" ", help={"Low limit for fitting param 5"} 
-				SetVariable P5HighLim,limits={0,Inf,0},variable= $(HighP5Str), disable=!disableMe
+				SetVariable P5HighLim,limits={-inf,Inf,0},variable= $(HighP5Str), disable=!disableMe
 				SetVariable P5HighLim,pos={320,180},size={80,15},title=" ", help={"High limit for fitting param5"} 
 			endif		
 		endif
@@ -2230,15 +2259,15 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			NVAR/Z CurVal= $(FitP6Str)
 			NVAR/Z CurVal2= $(LowP6Str)
 			NVAR/Z CurVal3= $(HighP6Str)
-			SetVariable P6Value,limits={0,Inf,0},variable= $(P6Str), proc=IR1T_FFCntrlPnlSetVarProc
+			SetVariable P6Value,limits={-inf,Inf,0},variable= $(P6Str), proc=IR1T_FFCntrlPnlSetVarProc
 			SetVariable P6Value,pos={5,200},size={180,15},title="Shell 2 rho = ", help={"Scattering length density of external shell"} 
 			if (strlen(FitP6Str)>6 && NVAR_Exists(CurVal)&& NVAR_Exists(CurVal2)&& NVAR_Exists(CurVal3))
 				CheckBox FitP6Value,pos={200,200},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 				CheckBox FitP6Value,variable= $(FitP6Str), help={"Fit this parameter?"}
 				NVAR disableMe= $(FitP6Str)
-				SetVariable P6LowLim,limits={0,Inf,0},variable= $(LowP6Str), disable=!disableMe
+				SetVariable P6LowLim,limits={-inf,Inf,0},variable= $(LowP6Str), disable=!disableMe
 				SetVariable P6LowLim,pos={220,200},size={80,15},title=" ", help={"Low limit for fitting param 5"} 
-				SetVariable P6HighLim,limits={0,Inf,0},variable= $(HighP6Str), disable=!disableMe
+				SetVariable P6HighLim,limits={-inf,Inf,0},variable= $(HighP6Str), disable=!disableMe
 				SetVariable P6HighLim,pos={320,200},size={80,15},title=" ", help={"High limit for fitting param5"} 
 			endif		
 
@@ -2271,6 +2300,7 @@ Function IR1T_FFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 	Variable varNum
 	String varStr
 	String varName
+	variable tempValue
 
 	if(stringmatch("P1Value",ctrlName))
 		ControlInfo/W=FormFactorControlScreen P1value
@@ -2281,6 +2311,11 @@ Function IR1T_FFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P1HighLimVar=$(S_DataFolder+S_value)
 		P1LowLimVar=0.8 *  P1Var
 		P1HighLimVar= 1.2 * P1Var
+		if(P1LowLimVar>P1HighLimVar)
+			tempValue=P1LowLimVar
+			P1LowLimVar=P1HighLimVar
+			P1HighLimVar=tempValue
+		endif
 	endif
 
 	if(stringmatch("P2Value",ctrlName))
@@ -2292,6 +2327,11 @@ Function IR1T_FFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P2HighLimVar=$(S_DataFolder+S_value)
 		P2LowLimVar=0.8 *  P2Var
 		P2HighLimVar= 1.2 * P2Var
+		if(P2LowLimVar>P2HighLimVar)
+			tempValue=P2LowLimVar
+			P2LowLimVar=P2HighLimVar
+			P2HighLimVar=tempValue
+		endif
 	endif
 
 	if(stringmatch("P3Value",ctrlName))
@@ -2303,6 +2343,11 @@ Function IR1T_FFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P3HighLimVar=$(S_DataFolder+S_value)
 		P3LowLimVar=0.8 *  P3Var
 		P3HighLimVar= 1.2 * P3Var
+		if(P3LowLimVar>P3HighLimVar)
+			tempValue=P3LowLimVar
+			P3LowLimVar=P3HighLimVar
+			P3HighLimVar=tempValue
+		endif
 	endif
 
 
@@ -2315,6 +2360,11 @@ Function IR1T_FFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P4HighLimVar=$(S_DataFolder+S_value)
 		P4LowLimVar=0.8 *  P4Var
 		P4HighLimVar= 1.2 * P4Var
+		if(P4LowLimVar>P4HighLimVar)
+			tempValue=P4LowLimVar
+			P4LowLimVar=P4HighLimVar
+			P4HighLimVar=tempValue
+		endif
 	endif
 
 
@@ -2327,28 +2377,43 @@ Function IR1T_FFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P5HighLimVar=$(S_DataFolder+S_value)
 		P5LowLimVar=0.8 *  P5Var
 		P5HighLimVar= 1.2 * P5Var
+		if(P5LowLimVar>P5HighLimVar)
+			tempValue=P5LowLimVar
+			P5LowLimVar=P5HighLimVar
+			P5HighLimVar=tempValue
+		endif
 	endif
 
 	if(stringmatch("P6Value",ctrlName))
 		ControlInfo/W=FormFactorControlScreen P6value
 		NVAR P6Var=$(S_DataFolder+S_value)
 		ControlInfo/W=FormFactorControlScreen P6LowLim
-		NVAR P5LowLimVar=$(S_DataFolder+S_value)
+		NVAR P6LowLimVar=$(S_DataFolder+S_value)
 		ControlInfo/W=FormFactorControlScreen P6HighLim
-		NVAR P5HighLimVar=$(S_DataFolder+S_value)
-		P5LowLimVar=0.8 *  P6Var
-		P5HighLimVar= 1.2 * P6Var
+		NVAR P6HighLimVar=$(S_DataFolder+S_value)
+		P6LowLimVar=0.8 *  P6Var
+		P6HighLimVar= 1.2 * P6Var
+		if(P6LowLimVar>P6HighLimVar)
+			tempValue=P6LowLimVar
+			P6LowLimVar=P6HighLimVar
+			P6HighLimVar=tempValue
+		endif
 	endif
 
 	if(stringmatch("P7Value",ctrlName))
 		ControlInfo/W=FormFactorControlScreen P7value
 		NVAR P7Var=$(S_DataFolder+S_value)
 		ControlInfo/W=FormFactorControlScreen P7LowLim
-		NVAR P5LowLimVar=$(S_DataFolder+S_value)
+		NVAR P7LowLimVar=$(S_DataFolder+S_value)
 		ControlInfo/W=FormFactorControlScreen P7HighLim
-		NVAR P5HighLimVar=$(S_DataFolder+S_value)
-		P5LowLimVar=0.8 *  P7Var
-		P5HighLimVar= 1.2 * P7Var
+		NVAR P7HighLimVar=$(S_DataFolder+S_value)
+		P7LowLimVar=0.8 *  P7Var
+		P7HighLimVar= 1.2 * P7Var
+		if(P7LowLimVar>P7HighLimVar)
+			tempValue=P7LowLimVar
+			P7LowLimVar=P7HighLimVar
+			P7HighLimVar=tempValue
+		endif
 	endif
 
 end
@@ -2863,9 +2928,14 @@ End		//Make76GaussPoints()
 //*****************************************************************************************************************
 //			Janus coreshell Micelle functions... 
 //*****************************************************************************************************************
-threadsafe static Function IR1T_JanusFF(Qv, Ro, RhoA, RhoB, RhoC, RhoSolv,Ri)
+//static 
+threadsafe  Function IR1T_JanusFF(Qv, Ro, RhoA, RhoB, RhoC, RhoSolv,Ri)
 	variable Qv, Ro, RhoA, RhoB, RhoC, RhoSolv, Ri
 
+	variable RhoARel, RhoBRel, RhoCRel
+	RhoARel = RhoA - RhoSolv
+	RhoBRel = RhoB - RhoSolv
+	RhoCRel = RhoC - RhoSolv
 	variable numP=JanusCoreShellMicNumIngtPnts	
 	// Ro = Ro in Fig 1
 	// Ri =  Ri in Fig 1
@@ -2873,18 +2943,30 @@ threadsafe static Function IR1T_JanusFF(Qv, Ro, RhoA, RhoB, RhoC, RhoSolv,Ri)
 	variable mu 		//cos(th), where th is that from the figure 7 going from 0 to pi/2
 	//we need to integrate this per whole particle - remember to weigh by cos(th) in the integration as AnisoPorod used to be
 	variable kv		//is Q * mu
-	variable DrhoBA	= RhoA - RhoB	// RhoA - RhoB
-	variable DrhoCA = RhoA - RhoC	//RhoA - RhoC
+	variable DrhoBA	= RhoARel - RhoBRel	// RhoA - RhoB
+	variable DrhoCA = RhoARel - RhoCRel	//RhoA - RhoC
 	// now we need to do the calculations.
-	variable Vp = IR1T_JanusVp(Ro,RhoA, RhoB, RhoC,Ri)
+	variable Vp = IR1T_JanusVp(Ro,RhoARel, RhoBRel, RhoCRel,Ri)
 	make/O/N=(numP) IntgWvMu, weightFac
 	SetScale /I x, 0, pi/2,"", IntgWvMu, weightFac
 	weightFac = sin(x)
-	multithread IntgWvMu = IR1T_JanusOneMu(Qv,Ro,Ri, DrhoBA, DrhoCA, RhoB, RhoC, Qv*cos(x), numP, Vp, cos(x))
-	IntgWvMu[0]=IntgWvMu[1]			//IntgWvMu[0] = NaN so needs to be repalced by next point. Known numercial issue... 
+	multithread IntgWvMu = IR1T_JanusOneMu(Qv,Ro,Ri, DrhoBA, DrhoCA, RhoBRel, RhoCRel, Qv*cos(x), numP, Vp, cos(x))
+	IntgWvMu[0]=IntgWvMu[1]			//IntgWvMu[0] = NaN so needs to be replaced by next point. Known numercial issue... 
 	IntgWvMu *=weightFac
-	return 2* area(IntgWvMu, 0, pi/2)
+	return area(IntgWvMu, 0, pi/2) 
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR1T_JanusAveContrast(Rcore, RShell, RhoCore, RhoA, RhoB, RhoSolv)
+	variable Rcore, RShell, RhoCore, RhoA, RhoB, RhoSolv
+
+	variable CoreVolume = 4/3 * pi * Rcore^3
+	variable ShellVolume = 4/3 * pi * (Rcore+RShell)^3 - CoreVolume
+	variable SummContr = CoreVolume*(RhoCore-RhoSolv) + 0.5*ShellVolume*(RhoA-RhoSolv) +  0.5*ShellVolume*(RhoB-RhoSolv)
+	variable DeltaRho = (SummContr / (CoreVolume+ShellVolume))
+	return abs(DeltaRho)
+end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 threadsafe static Function IR1T_JanusOneMu(Qv,Ro,Ri, DrhoBA, DrhoCA, RhoB, RhoC, kv, numP, Vp, mu )

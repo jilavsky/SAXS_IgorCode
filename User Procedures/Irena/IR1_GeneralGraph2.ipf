@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.10
+#pragma version=2.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,7 @@
 
 
 //to do: need to handle better the symbols and line types, limit for 8 types is just way too little. 
+//2.11 added contour plot and basic handling
 //2.10 modified to handle different Intensity units for calibration 
 //2.09 added units to lookup string so we can propagate them forward. 
 //2.08 changed rainbow colorization method to produce prettier color scheme. based on Data manipulation II method (Tishler likely). 
@@ -1935,8 +1936,232 @@ Function IR1P_Create3DGraph()
 	IR1P_UpdateColorAndFormat3DPlot(1)
 end
 
+
 //************************************************************************************************************************
 //************************************************************************************************************************
+//************************************************************************************************************************
+//************************************************************************************************************************
+
+Function IR1P_CreateCountourGraph()
+
+	DoWIndow PlotingToolContourGrph
+	if(V_Flag)
+		DoWIndow/K PlotingToolContourGrph
+	endif
+	IR1P_CreateDataToPlot()
+	IR1P_genGraphCreateDataWF()
+	Wave PlottingTool_Int_M=root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_M
+	Duplicate/O PlottingTool_Int_M, PlottingTool_Int_Contour
+	wave PlottingTool_Int_Contour=root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_Contour
+	NVAR ContSmoothOverValue=root:Packages:GeneralplottingTool:ContSmoothOverValue
+	if(ContSmoothOverValue>2)
+		MatrixFilter /N=(ContSmoothOverValue) avg PlottingTool_Int_Contour
+	endif
+	SVAR Graph3DColorScale = root:Packages:GeneralplottingTool:ContGraph3DColorScale
+	Display /K=1/W=(405,467,950,900) as "Plotting tool I Contour plot"
+	AppendMatrixContour PlottingTool_Int_Contour vs {PlottingTool_Q,*}
+	ModifyGraph mirror=2
+	DoWindow/C PlotingToolContourGrph
+	ControlBar /T/W=PlotingToolContourGrph 52
+	SetVariable ContNumCountours,pos={10,2},size={170,15},title="Number of contours",bodyWidth=70
+	SetVariable ContNumCountours, proc=IR1P_ContSetVarProc, help={"Number of contours to use"}
+	SetVariable ContNumCountours,limits={11,inf,5},value= root:Packages:GeneralplottingTool:ContNumCountours
+	SetVariable ContMinValue,pos={10,18},size={170,15},title="Min Contour val ",bodyWidth=70
+	SetVariable ContMinValue, proc=IR1P_ContSetVarProc, help={"Value of minimum Contour"}
+	SetVariable ContMinValue,limits={0,inf,0},value= root:Packages:GeneralplottingTool:ContMinValue
+	SetVariable ContMaxValue,pos={10,35},size={170,15},title="Max Contour val",bodyWidth=70
+	SetVariable ContMaxValue, proc=IR1P_ContSetVarProc, help={"change length of slanted axis"}
+	SetVariable ContMaxValue,limits={0,inf,0},value= root:Packages:GeneralplottingTool:ContMaxValue
+	Checkbox ContDisplayContValues, pos={200,5}, title="Labels?", size={100,15}, variable=root:Packages:GeneralplottingTool:ContDisplayContValues, proc=IR1P_ContCheckProc
+	PopupMenu ColorTable,pos={200,30},size={150,20},title="Colors:", help={"Select color table"}
+	PopupMenu ColorTable,mode=1,popvalue=Graph3DColorScale,value= #"CTabList()", bodyWidth=100, proc=IR1P_ContPopMenuProc
+	PopupMenu SmoothOverValue,pos={350,30},size={150,20},title="Smooth val:", help={"Smooth value"}, proc=IR1P_ContPopMenuProc
+	PopupMenu SmoothOverValue,mode=1,popvalue=num2str(ContSmoothOverValue),value= "0;3;5;9;", bodyWidth=40
+	Checkbox ContLogContours, pos={300,5}, title="Log countours?", size={100,15}, variable=root:Packages:GeneralplottingTool:ContLogContours, proc=IR1P_ContCheckProc
+	Checkbox ContUseOnlyRedColor, pos={400,5}, title="Only red?", size={100,15}, variable=root:Packages:GeneralplottingTool:ContUseOnlyRedColor, proc=IR1P_ContCheckProc
+
+	IR1P_FormatContourPlot()
+end
+//************************************************************************************************************************
+//************************************************************************************************************************
+Function IR1P_FormatContourPlot()
+	DoWIndow PlotingToolContourGrph
+	if(!V_Flag)
+		return 0
+	else
+		DoWIndow/F PlotingToolContourGrph
+	endif
+
+	SVAR Graph3DColorScale = root:Packages:GeneralplottingTool:ContGraph3DColorScale
+	NVAR GraphLeftAxisAuto = root:Packages:GeneralplottingTool:GraphLeftAxisAuto
+	NVAR GraphLeftAxisMin = root:Packages:GeneralplottingTool:GraphLeftAxisMin
+	NVAR GraphLeftAxisMax = root:Packages:GeneralplottingTool:GraphLeftAxisMax
+	NVAR GraphBottomAxisAuto= root:Packages:GeneralplottingTool:GraphBottomAxisAuto
+	NVAR GraphBottomAxisMin= root:Packages:GeneralplottingTool:GraphBottomAxisMin
+	NVAR GraphBottomAxisMax = root:Packages:GeneralplottingTool:GraphBottomAxisMax
+	NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
+	NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+	NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
+	NVAR ContDisplayContValues = root:Packages:GeneralplottingTool:ContDisplayContValues
+	NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
+	NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+	NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
+	NVAR ContDisplayContValues = root:Packages:GeneralplottingTool:ContDisplayContValues
+	NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
+	NVAR ContUseOnlyRedColor = root:Packages:GeneralplottingTool:ContUseOnlyRedColor
+	
+	WAVE PlottingTool_Int_Contour=root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_Contour
+	WAVE PlottingTool_Q = root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Q
+	//let's set the min/max values right...
+//	if(!GraphLeftAxisAuto)
+//		SetAxis left GraphLeftAxisMin, GraphLeftAxisMax
+//	else
+//		SetAxis/A left
+//	endif	
+	//SVAR GraphYAxisName = root:Packages:GeneralplottingTool:GraphYAxisName
+	if(!GraphBottomAxisAuto)
+		SetAxis bottom GraphBottomAxisMin, GraphBottomAxisMax
+	else
+		SetAxis/A bottom
+	endif	
+	SVAR GraphXAxisName = root:Packages:GeneralplottingTool:GraphXAxisName
+	Label bottom GraphXAxisName
+	//Label left GraphYAxisName
+	if(!GraphLeftAxisAuto)
+		ContMinValue = GraphLeftAxisMin
+		ContMaxValue = GraphLeftAxisMax
+		ModifyContour PlottingTool_Int_Contour autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
+	else
+		ModifyContour PlottingTool_Int_Contour autoLevels={*,*,ContNumCountours}
+		ContMinValue = GraphLeftAxisMin
+		ContMaxValue = GraphLeftAxisMax
+	endif	
+	SetVariable ContMinValue,limits={ContMinValue,ContMaxValue,((ContMaxValue-ContMinValue)/25)},win= PlotingToolContourGrph
+	SetVariable ContMaxValue,limits={ContMinValue,ContMaxValue,((ContMaxValue-ContMinValue)/25)},win= PlotingToolContourGrph
+
+	ModifyContour PlottingTool_Int_Contour labels=2*ContDisplayContValues
+	NVAR ContUseOnlyRedColor = root:Packages:GeneralplottingTool:ContUseOnlyRedColor
+	if(ContUseOnlyRedColor)
+		ModifyContour PlottingTool_Int_Contour labelRGB=(65535, 0, 0 )
+	else
+		ModifyContour PlottingTool_Int_Contour ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+	endif
+	NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
+	ModifyContour PlottingTool_Int_Contour logLines=ContLogContours
+
+
+end
+
+
+//************************************************************************************************************************
+//************************************************************************************************************************
+Function IR1P_ContSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	switch( sva.eventCode )
+		case 1: // mouse up
+			if(stringmatch(sva.ctrlName,"ContNumCountours")||stringmatch(sva.ctrlName,"ContMinValue")||stringmatch(sva.ctrlName,"ContMaxValue"))
+				//do something
+				NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
+				NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
+				NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+				ModifyContour PlottingTool_Int_Contour autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
+			endif
+			break
+		case 2: // Enter key
+			if(stringmatch(sva.ctrlName,"ContNumCountours")||stringmatch(sva.ctrlName,"ContMinValue")||stringmatch(sva.ctrlName,"ContMaxValue"))
+				//do something
+				NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
+				NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
+				NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+				ModifyContour PlottingTool_Int_Contour autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
+			endif
+			break
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//************************************************************************************************************************
+//************************************************************************************************************************
+Function IR1P_ContCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			if(stringmatch(cba.ctrlName,"ContDisplayContValues"))
+				NVAR ContDisplayContValues = root:Packages:GeneralplottingTool:ContDisplayContValues
+				ModifyContour PlottingTool_Int_Contour labels=2*ContDisplayContValues
+				//do something
+			endif
+			NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
+			NVAR ContUseOnlyRedColor = root:Packages:GeneralplottingTool:ContUseOnlyRedColor
+			if(stringmatch(cba.ctrlName,"ContUseOnlyRedColor"))
+				NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
+				ContLogContours=0
+				ModifyContour PlottingTool_Int_Contour rgbLines=(65535,0,0 )
+				//do something
+			endif
+			if(stringmatch(cba.ctrlName,"ContLogContours"))
+				NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
+				ModifyContour PlottingTool_Int_Contour logLines=ContLogContours
+				//do something
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//************************************************************************************************************************
+//************************************************************************************************************************
+Function IR1P_ContPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			if(stringmatch(pa.ctrlName,"ColorTable"))
+				SVAR Graph3DColorScale = root:Packages:GeneralplottingTool:ContGraph3DColorScale
+				Graph3DColorScale = popStr
+				NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
+				NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+				NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
+				NVAR ContUseOnlyRedColor = root:Packages:GeneralplottingTool:ContUseOnlyRedColor
+				ContUseOnlyRedColor=0
+				if(stringMatch(Graph3DColorScale,"none"))
+					ModifyContour PlottingTool_Int_Contour labelRGB=(65535, 0, 0 )
+				else
+					ModifyContour PlottingTool_Int_Contour ctabLines={ContMinValue, ContMaxValue, $(Graph3DColorScale), 1 }
+					ModifyContour PlottingTool_Int_Contour logLines=ContLogContours
+				endif
+			endif
+			if(stringmatch(pa.ctrlName,"SmoothOverValue"))
+				NVAR ContSmoothOverValue=root:Packages:GeneralplottingTool:ContSmoothOverValue
+				WAVE PlottingTool_Int_M = root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_M
+				WAVE PlottingTool_Int_Contour = root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_Contour
+				Duplicate /O PlottingTool_Int_M, PlottingTool_Int_Contour
+				ContSmoothOverValue = str2num(pa.popStr)
+				if(ContSmoothOverValue>2)
+					MatrixFilter /N=(ContSmoothOverValue) avg PlottingTool_Int_Contour
+				endif
+				IR1P_FormatContourPlot()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
 //************************************************************************************************************************
 //************************************************************************************************************************
 Function IR1P_Plot3D_CheckProc(cba) : CheckBoxControl

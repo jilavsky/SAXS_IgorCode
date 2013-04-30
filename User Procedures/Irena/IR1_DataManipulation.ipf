@@ -843,8 +843,8 @@ static Function IR1D_ConvertData()
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=Nan
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=Nan
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1]), ]=Nan
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1]), ]=Nan
 			endif
 			ResultsInt = TempInt1 - TempIntInterp2
 			ResultsE = sqrt(TempE1^2 + TempEInterp2^2)

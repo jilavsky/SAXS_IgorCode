@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.02
+#pragma version 1.03
 
+//1.03 added pinDiode tranmission
 //1.02 updated to use 	I0AmpGain			
 //1.01 updated IN3_calculateRwaveQvec to enable analysis of scans down (as usually) or up (as needed for GIUSAXS)
 
@@ -30,11 +31,12 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 	endif
 	if(StepFrom<=3 && !IsBlank)
 			// calculate transmission (can be done, we have the data now) and scale the data to it... 
-		IN3_CalcSampleWeightOrThickness()
+		//IN3_CalcSampleWeightOrThickness()
 	endif
 	if(StepFrom<=4 && !IsBlank)
 	// subtract sample and Blank to create SMR data...
 		IN3_CalculateMSAXSCorrection()
+		IN3_GetDiodeTransmission(1)
 		IN3_CalculateTransmission(1)
 		IN3_CalcSampleWeightOrThickness()
 		IN3_CalculateCalibration()

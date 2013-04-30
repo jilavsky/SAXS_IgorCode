@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.03
+#pragma version=2.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.04 minor fix for liberal names users keep using
 //2.03 converted to rtGlobals=3
 //2.02 removed all font and font size from panel definitions to enable user control
 //2.01 added license for ANL
@@ -208,9 +209,9 @@ Function IR1F_BackupData(ListOfDataAvailable, FolderWithData, NewBackupFldr)
 		Wave/Z QWave = $QWvname
 		Wave/Z SWave = $SWvname
 		if(WaveExists(RWave) && WaveExists(QWave) &&WaveExists(SWave))
-			Duplicate /O RWave, $(NewBackupFldr+RWvname)
-			Duplicate /O QWave, $(NewBackupFldr+QWvname)
-			Duplicate /O SWave, $(NewBackupFldr+SWvname)
+			Duplicate /O RWave, $(NewBackupFldr+possiblyquotename(RWvname))
+			Duplicate /O QWave, $(NewBackupFldr+possiblyquotename(QWvname))
+			Duplicate /O SWave, $(NewBackupFldr+possiblyquotename(SWvname))
 		endif
 	endfor
 	

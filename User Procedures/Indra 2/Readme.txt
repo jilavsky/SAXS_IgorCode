@@ -8,6 +8,9 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+1.79 4/24/2013
+Added ability to use pinDIode Transmission for USAXS measured first time in April 2013. 
+
 1.78 4/8/2013
 Added calibration to weight, can calculate weight of sample in the beam, and can use transmission to calculate also thickness of 100% dense sample. Therefore it can use area of the beam with transmission, line absorption coefficient and density of the material for  cm2/g calibration. 
 Modified to compile on computers even without xop and abort & produce message when xop is called with instructions. 
