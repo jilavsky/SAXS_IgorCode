@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.06
+#pragma version=2.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.07 fix to invariant calculations for levels which are using RgCuttOff. The invariant was incorrectly calculated for these levels before. 
 //2.06 minor fix for Igor 6.30 
 //2.05 adds COnfidence evaluation tool
 //2.04 fixed tabulated contrasts for the Analyze results which included e10 even though panel showed that is should nto be included... This caused many orders of magnitude wrong results. 
@@ -903,6 +904,7 @@ Function IR1A_UpdatePorodSfcandInvariant()
 		NVAR Rg=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"Rg")
 		NVAR SurfaceToVolRat=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"SurfaceToVolRat")
 		NVAR Invariant=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"Invariant")
+		NVAR RgCO=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"RgCO")
 
 		Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
 		variable maxQ=2*pi/(Rg/10)
@@ -914,7 +916,10 @@ Function IR1A_UpdatePorodSfcandInvariant()
 		SurfToVolInvariant=SurfToVolInt*SurfToVolQvec^2		// Int * Q^2 wave
 		
 		Invariant=areaXY(SurfToVolQvec, SurfToVolInvariant, 0, maxQ )		//invariant, need to add "Porod tail"
-		Invariant+=abs(B*maxQ^(3-abs(Porod))/2)							//Ok, this should be Porod tail 
+		//but not when we use RgCo, as that really has no Porod tail...
+		if(RgCO<0.1)
+			Invariant+=abs(B*maxQ^(3-abs(Porod))/2)							//Ok, this should be Porod tail 
+		endif
 		//Invariant is at this time in cm^-1 * A^-3  (Gregg Beaucage)
 		if (Porod>=3.95 && Porod<=4.05)
 			SurfaceToVolRat=1e4*pi*B/Invariant
@@ -963,7 +968,7 @@ Function IR1A_SurfToVolCalcInvarVec(level, Qvector, IntensityVector)
 	
 	IntensityVector=G*exp(-Qvector^2*Rg^2/3)+(B/QstarVector^P) * exp(-RGCO^2 * Qvector^2/3)
 	
-	if (Pack>0.01)
+	if (Corelations)
 		IntensityVector/=(1+pack*IR1A_SphereAmplitude(Qvector,ETA))
 	endif
 	

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
+#pragma version=1.14
 Constant IR2SversionNumber=1.12
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -19,6 +19,8 @@ Constant IR2SversionNumber=1.12
 //1.10 added handling of uncertainities (errors) for Results data type (needed for Sizes)
 //1.11 modified to handle d, t, and m type QRS data (d-spacing, two theta, and distance) for needs to Nika users
 //1.12 Added Guinier-Porod as controlled tool and fixed minor Folder selection bug for other tools 
+//1.13 modified to handle chanigng of the data type between the scripting tool and the tool being called. 
+//1.14 fixed bug in calling Plotting tool with results
 
 //**************************************************************************************
 //**************************************************************************************
@@ -784,6 +786,20 @@ Function IR2S_CallWithPlottingToolII(reset)
 	PTUseResults=STUseResults
 	PTUseQRSdata=STUseQRSdata
 	PTUseIndra2Data=STUseIndra2Data
+	STRUCT WMCheckboxAction CB_Struct
+	CB_Struct.eventcode=2
+	if(PTUseIndra2Data)
+		CB_Struct.ctrlName="UseIndra2Data"
+	elseif(PTUseQRSdata)
+		CB_Struct.ctrlName="UseQRSData"
+	elseif(PTUseResults)
+		CB_Struct.ctrlName="UseResults"
+	else
+		Abort "error, report it"
+	endif
+	CB_Struct.checked=1
+	CB_Struct.win="IR1P_ControlPanel"	
+	IR2C_InputPanelCheckboxProc(CB_Struct)
 	Wave/T ListOfAvailableData = root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData =root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 	NVAR UseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
@@ -911,8 +927,18 @@ Function IR2S_FItWithModelingII()
 	PTUseModelData=0
 	PTUseQRSdata=STUseQRSdata
 	PTUseIndra2Data=STUseIndra2Data
-
-
+	STRUCT WMCheckboxAction CB_Struct
+	CB_Struct.eventcode=2
+	if(PTUseIndra2Data)
+		CB_Struct.ctrlName="UseIndra2Data"
+	elseif(PTUseQRSdata)
+		CB_Struct.ctrlName="UseQRSData"
+	else
+		Abort "error, report it"
+	endif
+	CB_Struct.checked=1
+	CB_Struct.win="LSQF2_MainPanel"
+	IR2C_InputPanelCheckboxProc(CB_Struct)
 	Wave/T ListOfAvailableData = root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData =root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 	NVAR UseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
@@ -1033,6 +1059,18 @@ Function IR2S_FItWithSizes(Uncert)
 	NVAR PTUseQRSdata=root:Packages:Sizes:UseQRSdata
 	PTUseQRSdata=STUseQRSdata
 	PTUseIndra2Data=STUseIndra2Data
+	STRUCT WMCheckboxAction CB_Struct
+	CB_Struct.eventcode=2
+	if(PTUseIndra2Data)
+		CB_Struct.ctrlName="UseIndra2Data"
+	elseif(PTUseQRSdata)
+		CB_Struct.ctrlName="UseQRSData"
+	else
+		Abort "error, report it"
+	endif
+	CB_Struct.checked=1
+	CB_Struct.win="IR1R_SizesInputPanel"
+	IR2C_InputPanelCheckboxProc(CB_Struct)
 
 
 	Wave/T ListOfAvailableData = root:Packages:Irena:ScriptingTool:ListOfAvailableData
@@ -1152,8 +1190,18 @@ Function IR2S_FitWithGuinierPorod()
 	NVAR PTUseQRSdata=root:Packages:Irena:GuinierPorod:UseQRSdata
 	PTUseQRSdata=STUseQRSdata
 	PTUseIndra2Data=STUseIndra2Data
-
-
+	STRUCT WMCheckboxAction CB_Struct
+	CB_Struct.eventcode=2
+	if(PTUseIndra2Data)
+		CB_Struct.ctrlName="UseIndra2Data"
+	elseif(PTUseQRSdata)
+		CB_Struct.ctrlName="UseQRSData"
+	else
+		Abort "error, report it"
+	endif
+	CB_Struct.checked=1
+	CB_Struct.win="IR3DP_MainPanel"
+	IR2C_InputPanelCheckboxProc(CB_Struct)
 	Wave/T ListOfAvailableData = root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData =root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 	NVAR UseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
@@ -1274,6 +1322,18 @@ Function IR2S_FItWithUnifiedFit()
 	NVAR PTUseQRSdata=root:Packages:Irena_UnifFit:UseQRSdata
 	PTUseQRSdata=STUseQRSdata
 	PTUseIndra2Data=STUseIndra2Data
+	STRUCT WMCheckboxAction CB_Struct
+	CB_Struct.eventcode=2
+	if(PTUseIndra2Data)
+		CB_Struct.ctrlName="UseIndra2Data"
+	elseif(PTUseQRSdata)
+		CB_Struct.ctrlName="UseQRSData"
+	else
+		Abort "error, report it"
+	endif
+	CB_Struct.checked=1
+	CB_Struct.win="IR1A_ControlPanel"
+	IR2C_InputPanelCheckboxProc(CB_Struct)
 
 
 	Wave/T ListOfAvailableData = root:Packages:Irena:ScriptingTool:ListOfAvailableData

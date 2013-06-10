@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.30
-Constant NI1AversionNumber = 2.30
+#pragma version=2.31
+Constant NI1AversionNumber = 2.31
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.30
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.31 added *.maccd and combined all mpa formats into one loader (*.mpa). Have 4 versions of this format, three I had working versions, csv I did tno. SO the three are loaded, csv gives error. 
 //2.30 added move up down controls for small screens
 //2.29 updated graphs so they will not plot same data multiple times and changed where 15IDD data are stored.
 //2.28 fixed bug in line profile ASCII export causing problem with data expoort for line and no names of waves being exported. 
@@ -156,8 +157,8 @@ Function NI1A_Initialize2Dto1DConversion()
 	NewDataFolder/O/S root:Packages:Convert2Dto1D
 
 	//internal loaders
-	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;mpa/bin;mpa/asc;mp/bin;mp/asc;BSRC/Gold;DND/txt;RIGK/Raxis;ADSC;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
-	ListOfKnownExtensions+="SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;"
+	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;DND/txt;RIGK/Raxis;ADSC;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
+	ListOfKnownExtensions+="SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;"//mpa/bin;mpa/asc;mp/bin;mp/asc
 #if(Exists("ccp4unpack"))	
 	ListOfKnownExtensions+="MarIP/xop;"
 #endif
