@@ -3,6 +3,9 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.62 XXXX
+Added *.mccd file format (tif, actually) and combined mpa file formats into the same loader. I am missing "csv" working example so that is not working, but asc, dat, and spe (internal names) are working now. 
+
 1.61 4/8/2013
 Added monthly check for updates and reminder of references for publications.
 Modified to compile on computers even without xop and abort & produce message when xop is called with instructions. 

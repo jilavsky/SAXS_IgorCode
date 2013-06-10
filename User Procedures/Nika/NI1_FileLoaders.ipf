@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.26
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26 modified and tested various version of mpa formats. Found internal switch and combined all mpa formats into one. Should work until somone has another format. 
+//2.25 added marCCD (mccd) file format - it is basically tiff file with header, which is not containing much useful information as far as I can figure out... 
 //2.24 modified to compile even when xml xop is not available. 
 //2.23 fixed bug on ESRF edf data format for Pilatus, where I assume 1024 bytes header, but it is actually n*512bytes with separator. Modified code to handle those. 
 //2.22 fixes bug for Pilatus 300K and adds Pilatus 6M (untested)
@@ -78,6 +80,22 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Redimension/N=(-1,-1,0) 	LoadedWvHere			//this is fix for 3 layer tiff files...
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+".tif"+";"
+	elseif(cmpstr(FileType,"MarCCD")==0)
+		FileNameToLoad= FileName
+		//STRUCT Mar_Tiff_Flea_Header RH			//this is useless, there seems to be really no information in the test files I got. 
+		//open /R/P=$(PathName) RefNum as FileNameToLoad
+		//	FBinRead/b=2 RefNum, RH
+		//	close RefNum
+		//	print RH
+		ImageLoad/P=$(PathName)/T=tiff/O/N=$(NewWaveName) FileNameToLoad
+		if(V_flag==0)		//return 0 if not succesuful.
+			return 0
+		endif
+		wave LoadedWvHere=$(NewWaveName)
+		Redimension/N=(-1,-1,0) 	LoadedWvHere			//this is fix for 3 layer tiff files...
+		NewNote+="DataFileName="+FileNameToLoad+";"
+		NewNote+="DataFileType="+".tif"+";"
+
 
 	elseif(cmpstr(FileType,"SSRLMatSAXS")==0)
 		FileNameToLoad= FileName
@@ -698,6 +716,64 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"mp/bin"+";"
 		NewNote+=FujiHeader
+	elseif(cmpstr(FileType,"mpa")==0)
+		FileNameToLoad= FileName
+		testLine=""
+		testLine=PadString (testLine, 300000, 0x20)
+		open /R/P=$(PathName) RefNum as FileNameToLoad
+		FreadLine/N=2048 /T=";" RefNum, testLine
+		testLine=ReplaceString("\r\n", testLine, ";" )
+		close RefNum
+		testLine=ReplaceString("\n", testLine, ";" )
+		testLine=ReplaceString(" ", testLine, "" )
+		testLine=testLine[0,strsearch(testLine, "[DAT", 0 )-1]
+		string mpatype=StringByKey("mpafmt", testLine, "=", ";")
+		variable mparange=1024^2 //NumberByKey("range", testLine, "=", ";")
+		numBytes=NumberByKey("range", testLine , "=" , ";")
+		print "Found mpa type in the file: " + mpatype
+		killwaves/Z Loadedwave0,Loadedwave1
+		if(stringmatch(mpatype,"dat"))			//surprise, thsi is bin type... 
+			testLine=""
+			testLine=PadString (testLine, 300000, 0x20)
+			open /R/P=$(PathName) RefNum as FileNameToLoad
+			FBinRead RefNum, testLine
+			Offset=(strsearch(testLine, "[CDAT0,1048576 ]", 0))+22
+			close RefNum
+			GBLoadWave/B/T={96,4}/S=(Offset)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
+				if(V_flag==0)		//check if we loaded at least some data...
+					return 0
+				endif
+			wave Loadedwave0
+			Redimension/N=(1024,1024) Loadedwave0
+		elseif(stringmatch(mpatype,"asc"))
+			variable MPAACSDataOffset=NI1_mpaFindFirstDataLine(pathName, FileNameToLoad) + 1
+			LoadWave /J /D /O/N=Loadedwave /K=0 /L={0,MPAACSDataOffset,0,0,0}/P=$(PathName) FileNameToLoad
+			if(V_flag==0)		//check if we loaded at least some data...
+				return 0
+			endif
+			wave Loadedwave0
+			Redimension/N=(1024,1024) Loadedwave0
+		elseif(stringmatch(mpatype,"spe"))
+			variable MPAACSDataOffsetSpe=NI1_mpaFindFirstDataLine(pathName, FileNameToLoad) + 8
+			variable MPAACDNumPoints= NI1_MPASpeFindNumDataLines(pathName, FileNameToLoad)
+	 		LoadWave /M /F={10, 8, 0}/O/N=Loadedwave/L={0,MPAACSDataOffsetSpe,0,0,0}/P=$(PathName) FileNameToLoad
+			if(V_flag==0)		//check if we loaded at least some data...
+				return 0
+			endif
+			wave Loadedwave0
+			MatrixOp/O Loadedwave0 =Loadedwave0^t  
+			//redimension/N=(MPAACDNumPoints) Loadedwave0
+			print sqrt(MPAACDNumPoints)
+			Redimension/N=(sqrt(MPAACDNumPoints),sqrt(MPAACDNumPoints)) Loadedwave0
+		elseif(stringmatch(mpatype,"csv"))
+			Abort "CSV mpa file format is not finished, did not have functional test case example. Provide me the example and I'll finish this. " 
+		endif
+		duplicate/O Loadedwave0, $(NewWaveName)
+		killwaves Loadedwave0
+		NewNote+="DataFileName="+FileNameToLoad+";"
+		NewNote+="DataFileType="+"mpa type :"+mpatype+";"
+		NewNote+=testLine
+
 	elseif(cmpstr(FileType,"mp/bin")==0)
 		FileNameToLoad= FileName
 		open /R/P=$(PathName) RefNum as FileNameToLoad
@@ -717,31 +793,31 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		killwaves Loadedwave0
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"mp/bin"+";"
-	elseif(cmpstr(FileType,"mpa/bin")==0)
-		FileNameToLoad= FileName
-		open /R/P=$(PathName) RefNum as FileNameToLoad
-		testLine=""
-		testLine=PadString (testLine, 20000, 0x20)
-		FBinRead RefNum, testLine
-		Offset=(strsearch(testLine, "[CDAT0,1048576 ]", 0))+22
-		testLine=ReplaceString("\r\n", testLine, ";" )
-		numBytes=NumberByKey("range", testLine , "=" , ";")
-		close RefNum
-		killwaves/Z Loadedwave0,Loadedwave1
-		GBLoadWave/B/T={96,4}/S=(Offset)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
-			if(V_flag==0)		//check if we loaded at least some data...
-				return 0
-			endif
-		wave Loadedwave0
-		Redimension/N=(1024,1024) Loadedwave0
-		Loadedwave0[1023,1023]=0
-		duplicate/O Loadedwave0, $(NewWaveName)
-		killwaves Loadedwave0
-		NewNote+="DataFileName="+FileNameToLoad+";"
-		NewNote+="DataFileType="+"mpa/bin"+";"
-		Offset=(strsearch(testLine, "[DATA0,1024 ]", 0))-1
-		testLine=testLine[0,offset]
-		NewNote+=testLine
+//	elseif(cmpstr(FileType,"mpa/bin")==0)
+//		FileNameToLoad= FileName
+//		open /R/P=$(PathName) RefNum as FileNameToLoad
+//		testLine=""
+//		testLine=PadString (testLine, 20000, 0x20)
+//		FBinRead RefNum, testLine
+//		Offset=(strsearch(testLine, "[CDAT0,1048576 ]", 0))+22
+//		testLine=ReplaceString("\r\n", testLine, ";" )
+//		numBytes=NumberByKey("range", testLine , "=" , ";")
+//		close RefNum
+//		killwaves/Z Loadedwave0,Loadedwave1
+//		GBLoadWave/B/T={96,4}/S=(Offset)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
+//			if(V_flag==0)		//check if we loaded at least some data...
+//				return 0
+//			endif
+//		wave Loadedwave0
+//		Redimension/N=(1024,1024) Loadedwave0
+//		Loadedwave0[1023,1023]=0
+//		duplicate/O Loadedwave0, $(NewWaveName)
+//		killwaves Loadedwave0
+//		NewNote+="DataFileName="+FileNameToLoad+";"
+//		NewNote+="DataFileType="+"mpa/bin"+";"
+//		Offset=(strsearch(testLine, "[DATA0,1024 ]", 0))-1
+//		testLine=testLine[0,offset]
+//		NewNote+=testLine
 	elseif(cmpstr(FileType,"mpa/UC")==0)
 		FileNameToLoad= FileName
 		open /R/P=$(PathName) RefNum as FileNameToLoad
@@ -754,12 +830,14 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		numBytes=NumberByKey("range", testLine , "=" , ";")
 		close RefNum
 		killwaves/Z Loadedwave0,Loadedwave1
-		LoadWave/J/N=Loadedwave/K=0/P=$(PathName)/L={0,(2050+87),0,0,0} FileNameToLoad 
+		LoadWave/J/D/N=Loadedwave/K=0/P=$(PathName)/L={0,(2050+87),0,0,0} FileNameToLoad 
 			if(V_flag==0)		//check if we loaded at least some data...
 				return 0
 			endif
 		wave Loadedwave0
 		Redimension/N=(1024,1024) Loadedwave0
+		//Make/N=(1024,1024)/Free tempWvTxt2Num
+		//tempWvTxt2Num = str2num(Loadedwave0[p,q])
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
 		NewNote+="DataFileName="+FileNameToLoad+";"
@@ -768,19 +846,19 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		testLine=testLine[0,offset]
 		NewNote+=testLine
 
-	elseif(cmpstr(FileType,"mpa/asc")==0)
-		FileNameToLoad= FileName
-		killwaves/Z Loadedwave0,Loadedwave1,Loadedwave2,Loadedwave3
-		LoadWave/G/P=$(PathName)/A=Loadedwave FileNameToLoad
-			if(V_flag==0)		//check if we loaded at least some data...
-				return 0
-			endif
-		wave Loadedwave0
-		Redimension/N=(sqrt(numpnts(Loadedwave0)),sqrt(numpnts(Loadedwave0))) Loadedwave0
-		duplicate/O Loadedwave0, $(NewWaveName)
-		killwaves Loadedwave0
-		NewNote+="DataFileName="+FileNameToLoad+";"
-		NewNote+="DataFileType="+"mpa/asc"+";"
+//	elseif(cmpstr(FileType,"mpa/asc")==0)
+//		FileNameToLoad= FileName
+//		killwaves/Z Loadedwave0,Loadedwave1,Loadedwave2,Loadedwave3
+//		LoadWave/G/P=$(PathName)/A=Loadedwave FileNameToLoad
+//			if(V_flag==0)		//check if we loaded at least some data...
+//				return 0
+//			endif
+//		wave Loadedwave0
+//		Redimension/N=(sqrt(numpnts(Loadedwave0)),sqrt(numpnts(Loadedwave0))) Loadedwave0
+//		duplicate/O Loadedwave0, $(NewWaveName)
+//		killwaves Loadedwave0
+//		NewNote+="DataFileName="+FileNameToLoad+";"
+//		NewNote+="DataFileType="+"mpa/asc"+";"
 	elseif(cmpstr(FileType,"ascii512x512")==0)
 		killwaves/Z Loadedwave0,Loadedwave1,Loadedwave2,Loadedwave3
 		loadwave/P=$(PathName)/J/O/M/N=Loadedwave FileName
@@ -864,19 +942,19 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			close tempFilNmNum
 		endif
 		//end of special section for case or parameter file... This al section should be skipped for any other ASCIi files. 
-	elseif(cmpstr(FileType,"mp/asc")==0)
-		FileNameToLoad= FileName
-		killwaves/Z Loadedwave0,Loadedwave1
-		LoadWave/G/P=$(PathName)/A=Loadedwave FileNameToLoad
-			if(V_flag==0)		//check if we loaded at least some data...
-				return 0
-			endif
-		wave Loadedwave0
-		Redimension/N=(sqrt(numpnts(Loadedwave0)),sqrt(numpnts(Loadedwave0))) Loadedwave0
-		duplicate/O Loadedwave0, $(NewWaveName)
-		killwaves Loadedwave0
-		NewNote+="DataFileName="+FileNameToLoad+";"
-		NewNote+="DataFileType="+"mp/asc"+";"
+//	elseif(cmpstr(FileType,"mp/asc")==0)
+//		FileNameToLoad= FileName
+//		killwaves/Z Loadedwave0,Loadedwave1
+//		LoadWave/G/P=$(PathName)/A=Loadedwave FileNameToLoad
+//			if(V_flag==0)		//check if we loaded at least some data...
+//				return 0
+//			endif
+//		wave Loadedwave0
+//		Redimension/N=(sqrt(numpnts(Loadedwave0)),sqrt(numpnts(Loadedwave0))) Loadedwave0
+//		duplicate/O Loadedwave0, $(NewWaveName)
+//		killwaves Loadedwave0
+//		NewNote+="DataFileName="+FileNameToLoad+";"
+//		NewNote+="DataFileType="+"mp/asc"+";"
 	elseif(cmpstr(FileType,"BSRC/Gold")==0)
 		FileNameToLoad= FileName
 		killwaves/Z Loadedwave0,Loadedwave1
@@ -3084,3 +3162,375 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
+//    **********         Mar  header - this is header per Rayonix for marTiff file used by mar225 tiff file (mccd)
+structure Mar_Tiff_Flea_Header
+		      //* File/header format parameters (256 bytes) */
+		      UINT32        header_type;    				//* flag for header type  (can be used as 	magic number) */
+		      char header_name[16];         			//* header name (MARCCD) */
+		      UINT32        header_major_version; 		//* header_major_version (n.) */
+		      UINT32        header_minor_version;       	//* header_minor_version (.n) */
+		      UINT32        header_byte_order;			//* BIG_ENDIAN (Motorola,MIPS); LITTLE_ENDIAN (DEC, Intel) */
+		      UINT32        data_byte_order;      		//* BIG_ENDIAN (Motorola,MIPS); LITTLE_ENDIAN (DEC, Intel) */
+		      UINT32        header_size;
+		      UINT32        frame_type;
+		      UINT32        magic_number;  				//* in bytes             */
+													//* flag for frame type */
+													//* to be used as a flag - usually to indicate new file */
+		      UINT32        compression_type;     		//* type of image compression    */
+		      UINT32        compression1;		//* compression parameter 1 *//
+		      UINT32        compression2;		//* compression parameter 2 *//
+		      UINT32        compression3;		//* compression parameter 3 *//
+		      UINT32        compression4;		//* compression parameter 4 *//
+		      UINT32        compression5;
+		      UINT32        compression6;
+		      UINT32        nheaders;		  //* total number of headers  *//
+		      UINT32        nfast;			//* number of pixels in one line *//
+		      UINT32        nslow;			//* number of lines in image     *//
+		      UINT32        depth;			//* number of bytes per pixel    *//
+		      UINT32        record_length;  				//* number of pixels between succesive rows */
+		      UINT32        signif_bits;    				//* true depth of data, in bits  */
+		      UINT32        data_type;      				//* (signed,unsigned,float...) */
+			UINT32        saturated_value;		 //* value marks pixel as saturated */
+			UINT32        sequence;				//* TRUE or FALSE */
+			UINT32        nimages;				//* total number of images - size of each is nfast*(nslow/nimages) */
+		      UINT32        origin;					////* corner of origin           *//
+			UINT32        overflow_location;		                              //* direction of fast axis     *//
+			UINT32        orientation;		//* FOLLOWING_HEADER, FOLLOWING_DATA *//
+			UINT32        view_direction;   //* direction to view frame      *//
+			UINT32        over_8_bits;		//* # of pixels with counts > 255 *//
+			UINT32        over_16_bits;		//* # of pixels with count > 65535 *//
+			UINT32        multiplexed;		//* # of images in fast direction *//
+			UINT32        nfastimages;		//* multiplex flag *//
+			UINT32        nslowimages;		//* multiplex flag *//
+			UINT32        darkcurrent_applied; //* flags correction has been applied -
+							//* multiplex flag *// hold magic number ? *//
+		      UINT32        bias_applied;     //* flags correction has been applied -	hold magic number ? *//
+		      UINT32        flatfield_applied;  //* flags correction has been applied -		hold magic number ? *//      
+		      UINT32        distortion_applied; //* flags correction has been applied -		hold magic number ? *//
+		      UINT32        original_header_type; //* Header//frame type from file that		frame is read from *//
+		      UINT32        file_saved;         //* Flag that file has been saved, should		be zeroed if modified *//
+		      UINT32        n_valid_pixels;     //* Number of pixels holding valid data -		first N pixels *//
+		      UINT32        defectmap_applied; //* flags correction has been applied -		hold magic number ? *//
+		      UINT32        subimage_nfast;          //* when divided into subimages (eg.		frameshifted) *//
+		      UINT32        subimage_nslow;       //* when divided into subimages (eg.		frameshifted) *//
+		      UINT32        subimage_origin_fast; //* when divided into subimages (eg.		frameshifted) *//
+		      UINT32        subimage_origin_slow; //* when divided into subimages (eg.		frameshifted) *//
+		      UINT32        readout_pattern;
+				//* BITCode-1=A,2=B,4=C,8= //* at this value and above, data //* Describes how this frame needs D *//
+		      UINT32        saturation_level;		//are not reliable *//
+		      UINT32        orientation_code;		//		to be rotated to make it "right" *//
+			UINT32        frameshift_multiplexed;  //* frameshift multiplex flag *//
+		      UINT32        prescan_nfast;
+		//preceeding imaging pixels - fast direction *//
+		      UINT32        prescan_nslow;
+		//preceeding imaging pixels - slow direction *//
+		      UINT32        postscan_nfast;
+		//followng imaging pixels - fast direction *//
+		      UINT32        postscan_nslow;
+		//followng imaging pixels - slow direction *//
+		      UINT32        prepost_trimmed;
+		//scan pixels have been removed *//
+		//* Number of non-image pixels
+		//* Number of non-image pixels
+		//* Number of non-image pixels
+		//* Number of non-image pixels
+		//* trimmed==1 means pre and post
+		//char reserve1[(64-55)*sizeof(INT32)-16];
+		char reserve1[70];
+		//* Data statistics (128) *//
+		UINT32        total_counts[2];
+		//* 64 bit integer range = 1.85E19*//
+		//* mean * 1000 *//
+		//*rms*1000*//
+		//* number of pixels with 0 value -
+		//* number of pixels with saturated
+		//* Flag that stats OK - ie data not
+		UINT32		 special_counts1[2];
+		UINT32		 special_counts2[2];
+		UINT32		 min;
+		UINT32		 max;
+		INT32		mean;
+		UINT32		 rms;
+		UINT32		 n_zeros;
+
+		//not included in stats in unsigned data *//
+		      UINT32        n_saturated;
+		//value - not included in stats *//
+		      UINT32        stats_uptodate;
+		//changed since last calculation *//
+		        UINT32        pixel_noise[19];         //* 1000*base noise value (ADUs) *//
+//		      char reserve2[(32-13-MAXIMAGES)*sizeof(INT32)];
+//		      char reserve2[(32-13-MAXIMAGES)*sizeof(INT32)];
+//		#if 0
+		      //* More statistics (256) *//
+//		      UINT16 percentile[128];
+//		#else
+		      //* Sample Changer info *//
+		      char          barcode[16];
+		      UINT32        barcode_angle;
+		      UINT32        barcode_status;
+		      //* Pad to 256 bytes *//
+//		      char reserve2a[(64-6)*sizeof(INT32)];
+		      char reserve2a[232];
+//		#endif
+		      //* Goniostat parameters (128 bytes) *//
+		INT32 xtal_to_detector;		      //* 1000*distance in millimeters *//
+		INT32 beam_x;		//* 1000*x beam position (pixels) *//
+		INT32 beam_y;		//* 1000*y beam position (pixels) *//
+		INT32 integration_time;		      //* integration time in milliseconds *//
+		INT32 exposure_time;		//* exposure time in milliseconds *//
+		INT32 readout_time;		//* readout time in milliseconds *//
+		INT32 nreads;		//* number of readouts to get this image *//
+		INT32 start_twotheta;		//* 1000*two_theta angle *//
+		INT32 start_omega;		//* 1000*omega angle *//
+		INT32 start_chi;		       //* 1000*gamma angle *//
+		INT32 start_kappa;
+		INT32 start_phi;
+		INT32 start_delta;
+		INT32 start_gamma;
+		INT32 start_xtal_to_detector;     //* 1000*distance in mm (dist in um)*//
+		INT32 rotation_axis;		//* active rotation axis (index into above ie.		0=twotheta,1=omega...) *//
+	      INT32 rotation_range;
+	      INT32 detector_rotx;
+	      INT32 detector_roty;
+		INT32 detector_rotz;
+	      INT32 total_dose;
+		 //* 1000*rotation angle *//
+		 //* 1000*rotation of detector around X *//
+		 //* 1000*rotation of detector around Y *//
+		 //* 1000*rotation of detector around Z *//
+		 //* Hz-sec (counts) integrated over full
+		INT32 detector_type;
+		INT32 pixelsize_x;
+		INT32 pixelsize_y;
+		//* detector type *//
+		//* pixel size (nanometers) *//
+		//* pixel size (nanometers) *//
+		      //* 1000*chi angle *//
+		//* 1000*kappa angle *//
+		      //* 1000*phi angle *//
+		//* 1000*delta angle *//
+		//* 1000*gamma angle *//
+		INT32 end_twotheta;
+		INT32 end_omega;
+		INT32 end_chi;
+		INT32 end_kappa;
+		INT32 end_phi;
+		INT32 end_delta;
+		INT32 end_gamma;
+		INT32 end_xtal_to_detector; //* 1000*distance in mm (dist in um)*//
+		//* 1000*two_theta angle *//
+		      //* 1000*omega angle *//
+		//* 1000*chi angle *//
+		      //* 1000*kappa angle *//
+		//* 1000*phi angle *//
+		      //* 1000*delta angle *//
+		//exposure *//
+//		      char reserve3[(32-29)*sizeof(INT32)]; //* Pad Gonisotat parameters to 128 bytes *//
+		     char reserve3[12]; 				//* Pad Gonisotat parameters to 128 bytes *//
+		      //* Detector parameters (128 bytes) *//
+		      //* 1000*mean bias value *//
+		//* photons // 100 ADUs *//
+		INT32 mean_bias;
+		INT32 photons_per_100adu;
+		INT32 measured_bias[1];   //* 1000*mean bias value for each image*//
+  	  	INT32 measured_temperature[1];  //* Temperature of each detector in milliKelvins *//
+		INT32 measured_pressure[1];     //* Pressure of each chamber in		microTorr *//
+		//* Retired reserve4 when MAXIMAGES set to 9 from 16 and two fields removed,		and temp and pressure added
+	     // char reserve4[(32-(5+3*MAXIMAGES))*sizeof(INT32)];
+	      char reserve4[96];
+		      //* X-ray source and optics parameters (128 bytes) *//
+		      //* X-ray source parameters (14*4 bytes) *//
+		INT32 source_type;
+		INT32 source_dx;
+		INT32 source_dy;
+		INT32 source_wavelength;
+		INT32 source_power;
+		INT32 source_voltage;
+		INT32 source_current;
+		INT32 source_bias;
+		INT32 source_polarization_x;      //* () *//
+		INT32 source_polarization_y;      //* () *//
+		INT32 source_intensity_0;   //* (arbitrary units) *//
+		INT32 source_intensity_1;   //* (arbitrary units) *//
+		char reserve_source[8];
+		//* X-ray optics_parameters (8*4 bytes) *//
+		INT32 optics_type;
+		INT32 optics_dx;
+		INT32 optics_dy;
+		INT32 optics_wavelength;
+		INT32 optics_dispersion;
+		INT32 optics_crossfire_x;
+		INT32 optics_crossfire_y;
+		INT32 optics_angle;
+		//* Optics type (code)*//
+		      //* Optics param. - (size microns) *//
+		      //* Optics param. - (size microns) *//
+		      //* Optics param. - (size microns) *//
+		      //* Optics param. - (*10E6) *//
+		//* Optics param. - (microRadians) *//
+		//* Optics param. - (microRadians) *//
+		//* Optics param. - (monoch. 2theta -
+		//* (code) - target, synch. etc *//
+		      //* Optics param. - (size microns) *//
+		      //* Optics param. - (size microns) *//
+		      //* wavelength (femtoMeters) *//
+		//* (Watts) *//
+		//* (Volts) *//
+		//* (microAmps) *//
+		//* (Volts) *//
+		//microradians) *//
+	       INT32 optics_polarization_x;      //* () *//
+		 INT32 optics_polarization_y;      //* () *//
+	      char reserve_optics[16];
+	      char reserve5[16]; //* Pad X-ray parameters to 128 bytes *//
+		//* File parameters (1024 bytes) *//
+		char filetitle[128];
+		char filepath[128];
+		char filename[64];
+		//* Title
+		//* path name for data file
+		//* name of data file
+	        char acquire_timestamp[32]; //* date and time of acquisition
+		  char header_timestamp[32];  //* date and time of header update   *//
+	        char save_timestamp[32];    //* date and time file saved         *//
+		  char file_comment1[400];     //* comments  - can be used as desired     *//
+		  char file_comment2[112];     //* comments  - can be used as desired     *//
+	      char reserve6[1024-(128+128+64+(3*32)+512)]; //* Pad File parameters to		1024 bytes *//
+		      //* Dataset parameters (512 bytes) *//
+	        char dataset_comment1[400];  //* comments  - can be used as desired     *//
+	        char dataset_comment2[112];  //* comments  - can be used as desired     *//
+		      //* Reserved for user definable data - will not be used by Mar! *//
+	      char user_data1[400];
+	      char user_data2[112];
+		      //* char pad[----] USED UP! *//     //* pad out to 3072 bytes *//
+endstructure
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+static Function NI1_mpaFindFirstDataLine(pathName, filePath)
+	String pathName		// Name of symbolic path or ""
+	String filePath			// Name of file or partial path relative to symbolic path.
+ 
+	Variable refNum
+ 
+	Open/R/P=$pathName refNum as filePath
+ 
+	String buffer, text
+	Variable line = 0
+ 
+	do
+		FReadLine refNum, buffer
+		if (strlen(buffer) == 0)
+			Close refNum
+			return -1						// The expected keyword was not found in the file
+		endif
+		text = buffer[0,5]
+		if (CmpStr(text, "[CDAT0") == 0)		// Line does start with "[DATA" ?
+			Close refNum
+			return line + 1					// Success: The next line is the first data line.
+		endif
+		line += 1
+	while(1)
+ 
+	return -1		// We will never get here
+End
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function NI1_MPASpeFindNumDataLines(pathName, filePath)
+	String pathName		// Name of symbolic path or "" to display dialog.
+	String filePath			// Name of file or "" to display dialog. Can also be full or partial path relative to symbolic path.
+ 
+
+	Variable refNum
+ 
+	Open/R/P=$pathName refNum as filePath
+ 	variable TicksStart=ticks
+	String buffer, text
+	Variable line = 0
+ 
+	do
+		FReadLine refNum, buffer
+		if (strlen(buffer) == 0)
+			Close refNum
+			return -1						// The expected keyword was not found in the file
+		endif
+		text = buffer[0,5]
+		if (CmpStr(text, "[CDAT0") == 0)		// Line does start with "[DATA" ?
+			break
+		endif
+		line += 1
+	while(1)
+	do
+		FReadLine refNum, buffer
+		if (strlen(buffer) == 0)
+			Close refNum
+			return -1						// end of file reached
+		endif
+		text = buffer[0,4]
+		if (CmpStr(text, "$DATA") == 0)		// Line does start with "[CDAT0?" ?
+			break
+		endif
+		line += 1
+	while(1)
+ 	line=0
+	FReadLine refNum, buffer
+	if (strlen(buffer) == 0)
+		Close refNum
+		return -1						// end of file reached
+	endif
+	variable startPnt, endPnt
+	string tempStr=NI1_COnvertLineIntoList(buffer)
+	StartPnt= str2num(StringFromList(0, tempStr , ";"))
+	endPnt= str2num(StringFromList(1, tempStr , ";"))
+	return endPnt
+End
+
+Function/S NI1_COnvertLineIntoList(LineWhiteSpaceSeparated)
+	string LineWhiteSpaceSeparated
+	
+	string NewList
+	NewList = ReplaceString("\r", LineWhiteSpaceSeparated, "")
+	NewList = NI1_ReduceSpaceRunsInString(LineWhiteSpaceSeparated,1)
+	NewList = NI1_TrimLeadingWhiteSpace(NewList)
+	NewList = ReplaceString(" ", NewList, ";")
+	return NewList+";"
+end
+
+Function/T NI1_ZapControlCodes(str)			// remove parts of string with ASCII code < 32
+	String str
+	Variable i = 0
+	do
+		if (char2num(str[i,i])<32)
+			str[i,i+1] = str[i+1,i+1]
+		endif
+		i += 1
+	while(i<strlen(str))
+	return str
+End
+Function/T NI1_ReduceSpaceRunsInString(str,minRun)
+	String str
+	Variable minRun
+
+	String spaces = PadString("  ", 16, 0x20)	// spaces contains 256 spaces
+	String new = spaces[0,minRun-1]				// replacement string
+	Variable i = strlen(spaces)-1
+	do
+		str = ReplaceString(spaces[0,i], str, new) 	//ChangePartsOfString(str,spaces[0,i],new)
+		i -= 1
+	while(i>=minRun)
+	return str
+End
+Function/T NI1_TrimLeadingWhiteSpace(str)	// remove any leading white space from str
+	String str
+	Variable i
+	i = -1
+	do
+		i += 1
+	while (char2num(str[i])<=32)
+	return str[i,strlen(str)-1]
+End

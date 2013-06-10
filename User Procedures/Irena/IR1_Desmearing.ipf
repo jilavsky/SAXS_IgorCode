@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version = 2.04
+#pragma version = 2.05
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.05 fixed index running out again. 
 //2.04 converted to rtGlobals=3
 //2.03  Modified all controls not to define font and font size to enable proper control by user 
 //2.02 changed to use optimized IR2P_ListOfWavesOfType function 
@@ -2649,7 +2650,7 @@ Function IR1B_GetErrors(SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector)
 	while (i<imax-1)
 
 	DsmErrors[0]=DsmErrors[1]									//some error needed for 1st point
-	DsmErrors[imax]=DsmErrors[imax-1]								//and error for last point	
+	DsmErrors[imax-1]=DsmErrors[imax-2]								//and error for last point	
 
 	Smooth /E=2 3, DsmErrors
 	
