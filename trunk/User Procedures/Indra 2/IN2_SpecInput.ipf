@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion= 4.0	// Requires Igor Pro v4.0 or later.
-#pragma version = 1.18
+#pragma version = 1.19
 
+//1.19 changed checkIntegrity logic not to check for first few points for I0 value. Due to autoranging that may fail. 
 //1.18 updated to pass specMotors to USAXS folder as it is now needed later (and may be useful). 2/2013 JIL
 //1.17 updated to pass I0 gain to UPD parameters so it can be used as we now have I0gain autoranging... Reading I0_range column if exists
 // 4/18/2012 JIL
@@ -1137,7 +1138,7 @@ Function IN2_CheckScanIntegrity()		//checks if the scan has proper number of poi
 		variable/G root:Packages:USAXS:LimitValForMoniToAssumeBeamDump=5000
 		NVAR MonitorLimit=root:Packages:USAXS:LimitValForMoniToAssumeBeamDump
 	endif
-	wavestats/Q Monitor
+	wavestats/Q/R=[5, ] Monitor
 	if (V_min<MonitorLimit)			//assumption - the monitor count below 5000 is beam dump
 		DoAlert 1, "Monitor counts for "+GetDataFolder(1)+" is very low, probably beam dump. Do you want to skip the scan?"
 	endif

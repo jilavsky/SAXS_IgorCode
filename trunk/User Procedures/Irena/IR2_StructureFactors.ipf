@@ -1,5 +1,5 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.04
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version=1.05
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.05 changed back to rtGlobals=2, need to check code much more to make it 3
 //1.04 added User as structure factor. Requested feature. 
 //1.03 changed limits on Radius paraeter so it is not reset when larger than 0.1, got in my way when fitting some weird stuff... 
 //1.02 added license for ANL

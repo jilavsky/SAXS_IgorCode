@@ -1,7 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
+#pragma version=2.16
 #include <KBColorizeTraces>
-Constant IR1PversionNumber=2.15
+Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 fixed forgotten Style storing path, which was still saving styles to ProgramFiles area. Permissions problem on some systems. Fixed and moving file to new location. 
 //2.15 added contour plot and basic controls. 
 //2.14 Modified to handle different units for Intensity calibration. Addec control in Change Graph details panel. 
 //2.13 Added vertical scrolling
@@ -3184,13 +3185,34 @@ Function IR1P_InitExportStyles()
 	endfor
 
 	sort WaveOfStylesInIgor, WaveOfStylesInIgor
-	//above handles files within Igor
-	
-	//Now outside
-	PathInfo Igor
-	string IgorPathStr=S_Path
+	//above handles files within Igor	
+	//Now outside - first new location as of 7/14/2013 in Users area. 
+	string IgorPathStr=SpecialDirPath("Igor Pro User Files", 0, 0, 0 )
 	string/g StylePath=IgorPathStr+"User Procedures:Irena_Saved_styles"
 	NewPath/C/O/Q plottingToolStyles, StylePath
+	//now, if located in old place, we need to move the styles...
+	PathInfo Igor
+	string oldIgorPathStr = S_Path	
+	string tempFileName, tmpNbkName
+	tmpNbkName="tmpNbk123"
+	NewPath/O/Q/Z OldPlottingToolStyles, oldIgorPathStr+"User Procedures:Irena_Saved_styles"
+	if(V_Flag==0)	//path exists... 
+		string ListOfOldExternalStyles=IndexedFile(OldPlottingToolStyles,-1,".dat")
+		For(i=0;i<ItemsInList(ListOfOldExternalStyles);i+=1)
+			tempFileName = StringFromList(0,StringFromList(i, ListOfOldExternalStyles),".")+".dat"
+			OpenNotebook /P=OldPlottingToolStyles /V=0 /N=tmpNbkName tempFileName
+			//check if such stype exists and handle name change..
+			OpenNotebook /Z/P=plottingToolStyles /V=0 /N=TestNbk tempFileName
+			if (V_Flag==0)	//notebook opened, therefore it exists
+				tempFileName=tempFileName+"_moved"
+			endif
+			//OK, now the name should be unique, unless use has perverse naming system
+			SaveNotebook /S=3/O/P=plottingToolStyles tmpNbkName as tempFileName
+			DoWindow /D/K tmpNbkName
+		endfor	
+	endif
+	KillPath /Z OldPlottingToolStyles
+	//by now, if there were styles in the old location, they have been moved to new location. 
 	string ListOfExternalStyles=IndexedFile(plottingToolStyles,-1,".dat")
 
 	Make/O/T/N=(ItemsInList(ListOfExternalStyles)) WaveOfStylesOutsideIgor

@@ -1,5 +1,5 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.38
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version=2.41
 constant IR3MversionNumber = 2.38
 constant IR1DversionNumber = 2.38
 
@@ -9,6 +9,9 @@ constant IR1DversionNumber = 2.38
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.41 fixed Log-rebinning of data. Note, it overlays log-x scale over the data and siply binns down (same as Nika, different than ASCII data import)
+//2.40 fix when in Manipulation II someone closes Items in selected folder panel. 
+//2.39 cxhanged back to rtGlobals=2, this is driving me nuts... 
 //2.38 added vertical scrolling to Data manipulation II and I. 
 //2.37 converted to rtGlobals=3 
 //2.36 fixed saving data bug which failed on liberal names (again). 
@@ -1161,15 +1164,17 @@ static Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
 	//Log rebinning, if requested.... 
 	//create log distribution of points...
 	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-	tempNewLogDist = exp((0.8*LogBinParam/100) * p)
-	variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
-	tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
+	//this does not seem to work... JIL 7/14/2013
+	//tempNewLogDist = exp((0.8*LogBinParam/NumberOfPoints) * p)
+	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
+	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
 	variable StartQ, EndQ
-	startQ=TempQ[0]
-	endQ=TempQ[numpnts(TempQ)-1]
-	tempNewLogDist = startQ + (tempNewLogDist[p])*((endQ-startQ))
+	startQ=log(TempQ[0])
+	endQ=log(TempQ[numpnts(TempQ)-1])
+	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
+	tempNewLogDist = 10^(tempNewLogDist)
 	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
-	tempNewLogDist[numpnts(tempNewLogDist)-1]=tempNewLogDist[numpnts(tempNewLogDist)-2]
+	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
 	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
 	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
 	Rebinned_tempInt=0
@@ -3095,7 +3100,10 @@ Function  IR3M_DataMinerCheckProc(CB_Struct) : CheckBoxControl
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:DataManipulationII
-
+	DoWIndow ItemsInFolderPanel_DMII
+	if(!V_Flag)
+		IR3M_MakePanelWithListBox()	
+	endif
 
 	if(CB_Struct.eventCode ==2)
 		if(stringmatch(CB_Struct.ctrlName,"ManualFolderSelection") )
@@ -3672,10 +3680,10 @@ Function IR3M_FindListOfFolders()
 	Wave/Z testE=$(Waves_Etemplate)
 	if(WaveExists(testX) && WaveExists(testY) && WaveExists(testE))		//RegEx not needed this is directly the name...
 			Redimension/N=(numpnts(PreviewSelectedFolder)+1) PreviewSelectedFolder
-			PreviewSelectedFolder[numpnts(PreviewSelectedFolder)]=GetDataFolder(1)
+			PreviewSelectedFolder[numpnts(PreviewSelectedFolder)-1]=GetDataFolder(1)
 	elseif(WaveExists(testX) && WaveExists(testY)&&strlen(Waves_Etemplate)<1)		//No error wave, but again, direct match names to X and Y
 				Redimension/N=(numpnts(PreviewSelectedFolder)+1) PreviewSelectedFolder
-				PreviewSelectedFolder[numpnts(PreviewSelectedFolder)]=GetDataFolder(1)
+				PreviewSelectedFolder[numpnts(PreviewSelectedFolder)-1]=GetDataFolder(1)
 	else		//User wants to find partially defined waves. Much more trouble...
 		//OK, let's figure out, which all waves should be ploted...
 		ListOfAllWaves = stringFromList(1,DataFolderDir(2),":")

@@ -1,5 +1,5 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version = 2.05
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version = 2.06
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.05 fixed index running out again. 
 //2.04 converted to rtGlobals=3
 //2.03  Modified all controls not to define font and font size to enable proper control by user 
@@ -594,9 +595,9 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	//modified 5/14/2010 to manage cases when slit length is higher than last Q point. Basically, we need to manage extending the data automatically for use with other tools then desmearing. 
 	//fixes for interpolate function behavior when asking for data outside the range of x values...
 	variable oldNumPnts=numpnts(Q_vec_sm)
-	Duplicate/O Int_to_smear, tempInt_to_smear
+	Duplicate/O/Free Int_to_smear, tempInt_to_smear
 	Redimension /N=(2*oldNumPnts) tempInt_to_smear		//double the points here.
-	Duplicate/O Q_vec_sm, tempQ_vec_sm
+	Duplicate/O/Free Q_vec_sm, tempQ_vec_sm
 	Redimension/N=(2*oldNumPnts) tempQ_vec_sm
 	tempQ_vec_sm[oldNumPnts, ] =tempQ_vec_sm[oldNumPnts-1] +20* tempQ_vec_sm[p-oldNumPnts]			//creates extension of number of points up to 20*original length
 	tempInt_to_smear[oldNumPnts, ]  = tempInt_to_smear[oldNumPnts-1] * (1-(tempQ_vec_sm[p]  - tempQ_vec_sm[oldNumPnts])/(20*tempQ_vec_sm[oldNumPnts-1]))//extend the data by simple fixed value... 
@@ -612,7 +613,7 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	DataLengths=numpnts(Smeared_int)
 	
 		For(i=0;i<DataLengths;i+=1) 
-			Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
+			multithread Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
 			Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
 		endfor
 

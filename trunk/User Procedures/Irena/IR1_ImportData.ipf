@@ -1,5 +1,5 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version=2.18
 Constant IR1IversionNumber = 2.17
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
@@ -8,6 +8,8 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 modified log-rebinning to use more simple log-scale, control parameter is removed. Changed to rtGlobals=2
+//         modified so any separator and leading spaces are removed when storing header info in wave note. 
 //2.17 added controls for Units - Arbitrary, cm2/cm3, and cm2/g are known units for now...
 //2.16 added cleanup of weird characters (,),%, {, } of names. Allowed by igor but cause problems to my opther code. 
 //2.15 added vertical scrolling for panel. 
@@ -73,36 +75,16 @@ Proc IR1I_ImportData()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,40,430,720) as "Import data"
 	DoWindow/C IR1I_ImportData
-//	SetDrawLayer UserBack
-//	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,16384,65280)
-//	DrawText 84,31,"Import Data in Igor"
 	TitleBox MainTitle title="Import Data in Igor",pos={40,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 2,linefgc= (16384,16384,65280)
-//	DrawLine 21,44,363,44
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawText 41,123,"List of available files"
 	TitleBox Info1 title="List of available files",pos={30,107},frame=0,fstyle=1, fixedSize=1,size={120,20},fSize=12,fColor=(0,0,52224)
-//	DrawText 216,231,"Column 1"
 	TitleBox Info21 title="Column 1",pos={216,215},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-//	DrawText 216,248,"Column 2"
 	TitleBox Info22 title="Column 2",pos={216,232},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-//	DrawText 216,265,"Column 3"
 	TitleBox Info23 title="Column 3",pos={216,249},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-//	DrawText 216,282,"Column 4"
 	TitleBox Info24 title="Column 4",pos={216,266},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-//	DrawText 216,299,"Column 5"
 	TitleBox Info25 title="Column 5",pos={216,283},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-//	DrawText 216,316,"Column 6"
 	TitleBox Info26 title="Column 6",pos={216,300},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-//	DrawText 291,211,"Qvec  Int      Err   QErr"
 	TitleBox Info6 title="Qvec  Int      Err   QErr",pos={285,195},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=12
-
-//	TitleBox Info3 title="Fit?",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12
-//	TitleBox Info4 title="Low limit:    High Limit:",pos={230,262},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12
-//	TitleBox Info5 title="Fit using least square fitting ?",pos={2,583},frame=0,fstyle=2, fixedSize=0,size={140,15},fSize=10,fColor=(0,0,52224)
-
-
-
 	Button SelectDataPath,pos={99,53},size={130,20}, proc=IR1I_ButtonProc,title="Select data path"
 	Button SelectDataPath,help={"Select data path to the data"}
 	SetVariable DataPathString,pos={2,85},size={415,19},title="Data path :", noedit=1
@@ -214,8 +196,8 @@ Proc IR1I_ImportData()
 	CheckBox ReduceNumPnts,pos={10,507},size={16,14},proc=IR1I_CheckProc,title="Reduce points?",variable= root:Packages:ImportData:ReduceNumPnts, help={"Check to log-reduce number of points"}
 	SetVariable TargetNumberOfPoints, pos={110,505}, size={110,20},title="Num points=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
 	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:ImportData:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipualtion I"}
-	SetVariable ReducePntsParam, pos={240,505}, size={170,20},title="Red. pnts. Param=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
-	SetVariable ReducePntsParam limits={0.5,10,0},value= root:packages:ImportData:ReducePntsParam,help={"Log reduce points parameter, typically 3-5"}
+//	SetVariable ReducePntsParam, pos={240,505}, size={170,20},title="Red. pnts. Param=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
+//	SetVariable ReducePntsParam limits={0.5,10,0},value= root:packages:ImportData:ReducePntsParam,help={"Log reduce points parameter, typically 3-5"}
 
 	CheckBox TrunkateStart,pos={10,527},size={16,14},proc=IR1I_CheckProc,title="Truncate start of long names?",variable= root:Packages:ImportData:TrunkateStart, help={"Truncate names longer than 24 characters in front"}
 	CheckBox TrunkateEnd,pos={240,527},size={16,14},proc=IR1I_CheckProc,title="Truncate end of long names?",variable= root:Packages:ImportData:TrunkateEnd, help={"Truncate names longer than 24 characters at the end"}
@@ -323,13 +305,23 @@ Function  IR1I_ImportRebinData(TempInt,TempQ,TempE,TempQr,NumberOfPoints, LogBin
 	//create log distribution of points...
 	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
 	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
-	tempNewLogDist = exp((0.8*LogBinParam/100) * p)
-	variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
-	tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
+	//tempNewLogDist = exp((0.8*LogBinParam/100) * p)
+	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
+	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
+		//this does not seem to work... JIL 7/14/2013
+	//tempNewLogDist = exp((0.8*LogBinParam/NumberOfPoints) * p)
+	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
+	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
 	variable StartQ, EndQ
-	startQ=TempQ[0]
-	endQ=TempQ[numpnts(TempQ)-1]
-	tempNewLogDist = startQ + (tempNewLogDist[p])*((endQ-startQ))
+	if(TempQ[0]<1e-8)
+		findlevel/P TempQ, 1e-8
+		startQ=log(TempQ[ceil(V_LevelX)])
+	else
+		startQ=log(TempQ[0])
+	endif
+	endQ=log(TempQ[numpnts(TempQ)-1])
+	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
+	tempNewLogDist = 10^(tempNewLogDist)
 	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
 	tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-2]
 	Rebinned_tempInt=0
@@ -568,7 +560,7 @@ Function IR1I_NameImportedWaves(selectedFile)
  	       String text
   	      For(j=0;j<SkipNumberOfLines;j+=1)
    	             FReadLine refNum, text
- 			HeaderFromData+=IN2G_ZapControlCodes(text)+";"
+ 			HeaderFromData+=ZapNonLetterNumStart(IN2G_ZapControlCodes(text))+";"
 		endfor        
 	      Close refNum
 	endif	
@@ -1752,10 +1744,10 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	if(cmpstr(ctrlName,"ReduceNumPnts")==0)
 		if(checked)
 			SetVariable TargetNumberOfPoints, disable=0
-			SetVariable ReducePntsParam, disable=0	
+			//SetVariable ReducePntsParam, disable=0	
 		else
 			SetVariable TargetNumberOfPoints, disable=1
-			SetVariable ReducePntsParam, disable=1
+			//SetVariable ReducePntsParam, disable=1
 		endif
 	endif
 	

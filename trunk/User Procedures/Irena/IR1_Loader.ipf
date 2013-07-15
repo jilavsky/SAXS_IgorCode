@@ -1,5 +1,5 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.09
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.09 converted to rtGlobals=3
 //2.08 added GuinierPorod fit package
 //2.07 change how to look for files (now looking relative to this file location). This should enable in the future multiple Irean versions to be installed.
