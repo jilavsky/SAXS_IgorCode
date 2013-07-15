@@ -1,5 +1,5 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.04
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version=2.05
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.05 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.04 minor fix for liberal names users keep using
 //2.03 converted to rtGlobals=3
 //2.02 removed all font and font size from panel definitions to enable user control
