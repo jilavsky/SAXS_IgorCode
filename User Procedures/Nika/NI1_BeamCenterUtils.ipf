@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.11
-Constant NI1BCversionNumber = 2.11
+#pragma version=2.12
+Constant NI1BCversionNumber = 2.12
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12 added double click function to the file selection listbox, modified CheckVersion procedure to avoid Igor crash.
 //2.11 added three new NIST calibration standards, provided by Christina.Reinhard@diamond.ac.uk 
 //2.10 added SSRLMatSAXS format. 
 //2.09 added Math name string so one can easier find Ag behenate data
@@ -39,7 +40,7 @@ Function NIBC_MainCheckVersion()
 			DoAlert /T="The Beam center panel was created by old version of Nika " 1, "Beamcenter tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWindow/K NI1_CreateBmCntrFieldPanel
-				NI1_CreateBmCntrFile()
+				Execute/P("NI1_CreateBmCntrFile()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				NI1A_Initialize2Dto1DConversion()
 				NI1BC_InitCreateBmCntrFile()
@@ -96,7 +97,7 @@ Function NI1BC_CreateBmCntrField()
 	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1BC_ListBoxProc
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
 	ListBox CCDDataSelection,listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
-	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0
+	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0, proc = NI1_BMUListBoxProc
 	SetVariable BCMatchNameString,pos={220,75},size={200,16},title="Match name (grep)"
 	SetVariable BCMatchNameString,help={"HowUse string to match to name"}, proc=NI1BC_SetVarProc
 	SetVariable BCMatchNameString, variable= root:Packages:Convert2Dto1D:BCMatchNameString
@@ -293,6 +294,23 @@ Function NI1BC_CreateBmCntrField()
 
 	setDataFolder OldDf
 end
+ //*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function NI1_BMUListBoxProc(ctrlName,row,col,event) : ListBoxControl
+	String ctrlName
+	Variable row
+	Variable col
+	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+					//5=cell select with shift key, 6=begin edit, 7=end
+	Variable i
+	if(event==3)		//double click
+			NI1BC_BmCntrButtonProc("CreateROIWorkImage")
+	endif
+	return 0
+End
+
  //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

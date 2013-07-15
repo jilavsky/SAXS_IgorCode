@@ -4,12 +4,17 @@ Code modification history
 -latest stuff first
 ********************************************
 2.52 xxxx
+Changed back everything to rtGlobals=2, major issues in the code run were found. 
 Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
 Form factors/Modeling II - Added Janus CoreShell micelles form factor.
 Form factors - removed algebraic form factors. Useless, use Unified ones if needed. 
 Form/Structure factors - created Igor help file with the description. Added call buttons from Modeling II GUI. Needs to be finished on Sizes. 
 Plotting tool I - added basic contour plot capabilities
 Unified fit - fixed invariant calculation for levels using RgCuttOff. these levels had previously calculated higher invariant value then correct. 
+Data Manipulation I- fixed log rebining of data which was not working. Note, it overlays log-x scale over the data and then simply averages points in each bin. Similar to Nika.
+ASCII Data Import - fixed log rebining and removed the parameter, which no one understood anyway. It is not being used now.
+ASCII Data Import - header information, when attached to wave note is now cleaned of any leading special characters and leading spaces. This allows USAXS exported ASCII data import with meaningful wave note and should work for everyone.    
+All panels - changed orientation of the two arrows at the top right to move content of the window. Wrong logic used originally, now same as regular PC/Mac GUI system.  
 
 
 

@@ -1,13 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.02
+#pragma version=1.03
 //#include "cansasXML", version>=1.09
 
 // file :     cansasXML_GUI.ipf
 // author: Jan Ilavsky
-// date:     2008-8-4
 // purpose: provide GUI for Ior Pro reader to read canSAS 1 - D reduced SAS data in XML files
 // URL:    http://www.smallangles.net/wgwiki/index.php/cansas1d_documentation
 
+//1.03  6/27/2013 Fixed bnug which failed load for XML files containing only one data set. 
 //1.02  Modified all controls not to define font and font size to enable proper control by user 
 //ver 1.01, 9/3/09, JIL.... Fixed CS_XMLGUICopyOneFldrWithDta to simplify final folder structure when only one SASdata (the most common case) is present
 
@@ -409,6 +409,7 @@ Function CS_XMLGUIImportDataFnct()
 	for(i=0;i<imax;i+=1)
 		if (WaveOfSelections[i])
 			selectedfile = WaveOfFiles[i]
+			print fixedPathStr+selectedfile
 			IF (CS_XmlReader(fixedPathStr+selectedfile) == 0)					// did the XML reader return without an error code?
 				CS_XMLGUICopyXmlDataToFinalFldr()								// move the data to my directory, data from the file are in subfolders
 			ENDIF
@@ -473,9 +474,7 @@ Function CS_XMLGUICopyOneFldrWithDta(FolderNameStr, MoreFoldersFound)
 	if(MoreFoldersFound && !stringmatch(tempNameFldr, "*<DataName>*" ))
 		tempNameFldr +=":<DataName>:"
 	endif
-	
-	
-	if(ItemsInList(IN2G_CreateListOfItemsInFolder(GetDataFOlder(1), 1), ";")==1)		//this items is number of SAS data in this folder. If 1, then all data are here and not in subfolders
+	if(ItemsInList(IN2G_CreateListOfItemsInFolder(GetDataFOlder(1), 1), ";") < 1)		//this items is number of SAS data folders in this folder. If 0, then all data are here and not in subfolders
 		tempName = ReplaceString("<DataName>",tempName, GetDataFolder(0))
 	//	tempNameFldr =ReplaceString(":<DataName>:",tempNameFldr, "")		//change 9 03 09 to simplify final data structure...
 		tempNameFldr =FolderNameStr

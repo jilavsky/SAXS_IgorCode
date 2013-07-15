@@ -1,6 +1,6 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.09
-Constant IR2LversionNumber = 1.09
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version=1.10
+Constant IR2LversionNumber = 1.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 changed back to rtGlobals=2, need to check code much more to make it 3
 //1.09 added form and structure factor description as Igor help file with the buttons from the panel directly. 
 //1.08 added scroll buttons to move content up down for small displays. 
 //1.07 removed all font and font size from panel definitions to enable user control

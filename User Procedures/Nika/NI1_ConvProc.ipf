@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.25
+#pragma version=2.26
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26 added double clicks to Mask listbox and to Empty/Dark listboxes. 
 //2.25 adds TPA/XML code
 //2.24 minor GUI improvements
 //2.23 Refresh now sets top data set as selected. Added first version of background task monitoring folder...
@@ -3390,7 +3391,7 @@ Proc NI1A_Convert2Dto1DPanel()
 	ListBox MaskListBoxSelection,pos={83,375},size={260,100}, row=0
 	ListBox MaskListBoxSelection,help={"Select 2D data set for mask"}
 	ListBox MaskListBoxSelection,listWave=root:Packages:Convert2Dto1D:ListOf2DMaskData
-	ListBox MaskListBoxSelection,row= 0,mode= 1,selRow= 0
+	ListBox MaskListBoxSelection,row= 0,mode= 1,selRow= 0, proc=NI1_MaskListBoxProc
 	Button LoadMask,pos={192,480},size={150,20},proc=NI1A_ButtonProc,title="Load mask"
 	Button LoadMask,help={"Load the mask file "}
 	Button CreateMask,pos={24,480},size={150,20},proc=NI1A_ButtonProc,title="Create new mask"
@@ -3424,7 +3425,7 @@ Proc NI1A_Convert2Dto1DPanel()
 	ListBox Select2DMaskDarkWave,pos={23,354},size={351,100},disable=1, row=0
 	ListBox Select2DMaskDarkWave,help={"Select data file to be used as empty beam or dark field"}
 	ListBox Select2DMaskDarkWave,listWave=root:Packages:Convert2Dto1D:ListOf2DEmptyData
-	ListBox Select2DMaskDarkWave,row= 0,mode= 1,selRow= 0
+	ListBox Select2DMaskDarkWave,row= 0,mode= 1,selRow= 0, proc=NI1_EmpDarkListBoxProc
 	Button LoadEmpty,pos={51,460},size={130,20},proc=NI1A_ButtonProc,title="Load Empty"
 	Button LoadEmpty,help={"Load empty data"}
 	Button LoadDarkField,pos={41,483},size={160,20},proc=NI1A_ButtonProc,title="Load Dark Field"

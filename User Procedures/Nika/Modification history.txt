@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 1.62 XXXX
+Added double click action to other list boxes in Main panel and in Beam center tool
 Added *.mccd file format (tif, actually) and combined mpa file formats into the same loader. I am missing "csv" working example so that is not working, but asc, dat, and spe (internal names) are working now. 
 
 1.61 4/8/2013

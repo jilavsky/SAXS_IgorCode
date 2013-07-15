@@ -1,6 +1,9 @@
-#pragma rtGlobals=3		// Use modern global access method.
-#pragma version = 1.64
+#pragma rtGlobals=2		// Use modern global access method.
+#pragma version = 1.67
 
+//1.67 added ZapNonLetterNumStart(strIN) which removes any non letter, non number start of the string for ASCII importer.
+//1.66 Spline smoothing changed to use FREE waves. Changed direction of panel content move buttnos. 
+//1.65 changed back to rtGlobals=2, need to check code much more to make it 3
 //1.64 added checkbox, checkbox procedure and scrolling hook function for panels, fixed another indexes running out
 //1.63 changed to rtGlobals=3
 //1.62 added IN2G_roundToUncertainity(val, uncert,N)	 to prepare presentation of results with uncertainities for graphs and notebooks
@@ -336,25 +339,6 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function IN2G_ScrollButtonProc(ba) : ButtonControl
-	STRUCT WMButtonAction &ba
-
-	switch( ba.eventCode )
-		case 2: // mouse up
-			// click code here
-			if(stringmatch(ba.ctrlName,"ScrollButtonUp"))
-				IN2G_MoveControlsPerRequest(ba.win,-60)
-			endif
-			if(stringmatch(ba.ctrlName,"ScrollButtonDown"))
-				IN2G_MoveControlsPerRequest(ba.win, 60)
-			endif			
-			break
-		case -1: // control being killed
-			break
-	endswitch
-
-	return 0
-End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
@@ -2781,6 +2765,26 @@ Function/T IN2G_ZapControlCodes(str)
 	return str
 End
 
+Function/T ZapNonLetterNumStart(strIN)
+	string strIN
+	
+	Variable i = 0
+	//a = 97, A=65
+	//z =122, Z=90
+	//0 = 48
+	//9 = 57
+	variable tV
+	do
+		tV = char2num(strIN[0])
+		if (tv<48 || (tv>57 && tv<65) || (tv>90 && tv<97) || tv>122)			
+			strIN = strIN[1,strlen(strIn)-1]
+		else
+			break
+		endif
+	while(strlen(strIN)>0)
+	return strIN
+end
+
 
 
 Function/S IN2G_GetUniqueFileName(filename)
@@ -3003,6 +3007,10 @@ Function IN2G_VolumeFraction(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 
 	return VolumeFraction
 end
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
 
 //Number density Result is in 1/A3
 Function IN2G_NumberDensity(FD,Ddist,MinPoint,MaxPoint, removeNegs)
@@ -3053,6 +3061,10 @@ Function IN2G_NumberDensity(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	return NumberDensity
 end
 
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
 
 //Specific Surface Result is in A2/A3
 Function IN2G_SpecificSurface(FD,Ddist,MinPoint,MaxPoint, removeNegs)
@@ -3102,6 +3114,10 @@ Function IN2G_SpecificSurface(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 
 	return SpecificSurface
 end
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
 
 
 //Volume weighted mean diameter
@@ -3154,6 +3170,10 @@ Function IN2G_VWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 
 	return VWMeanDiameter
 end
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
 
 //Number weighted mean diameter
 Function IN2G_NWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
@@ -3205,6 +3225,10 @@ Function IN2G_NWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 
 	return NWMeanDiameter
 end
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
 
 //Volume weighted Standard deviation
 Function IN2G_VWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
@@ -3259,6 +3283,10 @@ Function IN2G_VWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	return VWStandardDeviation
 end
 
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
 
 //Number weighted Standard deviation
 Function IN2G_NWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
@@ -3546,10 +3574,10 @@ Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 			WaveCWvExisted=0
 		endif
 		Redimension/R/D/N=(numpnts(yWv)) AWv,CWv
-		Make/O/D/N=(n2+1) bWv, dWv		//the first n1 indexes will not be used
+		Make/O/D/Free/N=(n2+1) bWv, dWv		//the first n1 indexes will not be used
 		m1=n1-1
 		m2=n2+1
-		Make/O/D/N=(m2+1) rWv, r1Wv, r2Wv, tWv, t1Wv, uWv, vWv
+		Make/O/D/Free/N=(m2+1) rWv, r1Wv, r2Wv, tWv, t1Wv, uWv, vWv
 		rWv=0
 		bWv=0
 		dWv=0
@@ -3653,3 +3681,31 @@ Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 		KillWaves/Z bWv, dWv, rWv, r1Wv, r2Wv, tWv, t1Wv, uWv, vWv
 		setDataFolder OldDf
 end
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+
+Function IN2G_ScrollButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringmatch(ba.ctrlName,"ScrollButtonUp"))
+				IN2G_MoveControlsPerRequest(ba.win,60)
+			endif
+			if(stringmatch(ba.ctrlName,"ScrollButtonDown"))
+				IN2G_MoveControlsPerRequest(ba.win, -60)
+			endif			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************
+//*******************************************************************

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 added double clicks to Empty and Dark Listboxesa s well as maskListbox on main panel
 //2.26 modified and tested various version of mpa formats. Found internal switch and combined all mpa formats into one. Should work until somone has another format. 
 //2.25 added marCCD (mccd) file format - it is basically tiff file with header, which is not containing much useful information as far as I can figure out... 
 //2.24 modified to compile even when xml xop is not available. 
@@ -2507,6 +2508,71 @@ Function NI1_MainListBoxProc(ctrlName,row,col,event) : ListBoxControl
 			NI1A_ButtonProc("DisplaySelectedFile")
 		endif
 	endif
+	endif
+	return 0
+End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//***************************************** **************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_MaskListBoxProc(ctrlName,row,col,event) : ListBoxControl
+	String ctrlName
+	Variable row
+	Variable col
+	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+					//5=cell select with shift key, 6=begin edit, 7=end
+	Variable i
+	if(event==3)		//double click
+			NI1A_ButtonProc("LoadMask")
+	endif
+	return 0
+End
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//***************************************** **************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_EmpDarkListBoxProc(ctrlName,row,col,event) : ListBoxControl
+	String ctrlName
+	Variable row
+	Variable col
+	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+					//5=cell select with shift key, 6=begin edit, 7=end
+	NVAR useDarkField=root:Packages:Convert2Dto1D:useDarkField
+	NVAR useEmptyField=root:Packages:Convert2Dto1D:useEmptyField
+	if(event==3)		//double click
+		switch(useDarkField+useEmptyField)
+		case 1:
+			if(useDarkField)
+				NI1A_ButtonProc("LoadDarkField")
+			else	//empty
+				NI1A_ButtonProc("LoadEmpty")
+			endif
+			break
+		case 2:
+			String FieldType
+			FieldType ="Empty field"
+			prompt FieldType, "Field type", popup, "Empty Field;Dark Field;"
+			DoPrompt "Select type of field", FieldType
+			//DoAlert /T="Double click Selection" 2, "Is this empty field (Yes), Dark field (No), or Cancel?" 
+			if(!V_Flag)
+				if(stringmatch(FieldType,"Empty Field"))
+					NI1A_ButtonProc("LoadEmpty")
+				elseif(stringmatch(FieldType,"Dark Field"))
+					NI1A_ButtonProc("LoadDarkField")
+				endif
+			endif
+			break
+		default:
+			//donothing
+		endswitch
+			
 	endif
 	return 0
 End
