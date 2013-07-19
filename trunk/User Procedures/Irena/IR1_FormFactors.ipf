@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.22
 
 
 //*************************************************************************\
@@ -19,6 +19,7 @@
 //2.19 removed algebraic form factor and added Janus Core Shell micelles, added special list of form factor for Size Distribution, which cannot handle complex shapes (and should not)... 
 //2.20 Added Form and Structure factor description as Igor Help file. 
 //2.21 FIxed Janus FF micelle and added version 3 - core as particle shape
+//2.22 Significantly reduced the form factors availabe to Size distribution tool. COmplicated FF make no sense. 
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix
@@ -85,7 +86,7 @@ Function IR1T_InitFormFactors()
 	
 	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
 	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;"
-	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
+	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
 	string/g CoreShellVolumeDefinition
 	SVAR CoreShellVolumeDefinition			//this will be user choice for definition of volume of core shell particle: "Whole particle;Core;Shell;", NIST standard definition is Whole particle, default... 
 	if(strlen(CoreShellVolumeDefinition)<1)
@@ -2601,10 +2602,10 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 			elseif(cmpstr(DistShapeModel,"User")==0)	
 					infostr = FunctionInfo(UserVolumeFnctName)
 					if (strlen(infostr) == 0)
-						Abort
+						Abort "Bad name passed to User FF as Volume function"
 					endif
 					if(NumberByKey("N_PARAMS", infostr)!=6 || NumberByKey("RETURNTYPE", infostr)!=4)
-						Abort
+						Abort "Bad number of parameters passed to User FF for Form factor or Volume"
 					endif
 				cmd2="root:Packages:FormFactorCalc:tempVolCalc="+UserVolumeFnctName+"("+num2str(tempRadius)+","+num2str(UserPar1)+","+num2str(UserPar2)+","+num2str(UserPar3)+","+num2str(UserPar4)+","+num2str(UserPar5)+")"
 				Execute (cmd2)

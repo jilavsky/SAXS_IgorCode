@@ -98,31 +98,12 @@ Proc IR1D_DataManipulationPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,415,700) as "Data Manipulation"
 	DoWIndow/C IR1D_DataManipulationPanel
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 57,28,"Data manipulation input panel"
 	TitleBox MainTitle title="Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,158,339,158
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,430,339,430
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,508,339,508
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,505},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,540,339,540
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,539},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 8,190,"Second set data input"
-//	DrawText 28,342,"Modify data 1                                          Modify Data 2"
 	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,300,339,300
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	//Experimental data input

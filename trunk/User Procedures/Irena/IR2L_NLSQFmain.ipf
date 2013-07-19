@@ -9,6 +9,7 @@ Constant IR2LversionNumber = 1.10
 //*************************************************************************/
 
 //1.10 changed back to rtGlobals=2, need to check code much more to make it 3
+//        changes terms for storing data back to folder. Previously used Save, which confused users... 
 //1.09 added form and structure factor description as Igor help file with the buttons from the panel directly. 
 //1.08 added scroll buttons to move content up down for small displays. 
 //1.07 removed all font and font size from panel definitions to enable user control
@@ -17,7 +18,7 @@ Constant IR2LversionNumber = 1.10
 //1.04 added ability to remove points from data if needed by using RemovePntwCsrA
 //1.03 modified to handle Unified fit and Diffraction peak as separate tools, change number of models to 10
 //1.02 added Unified level as Form factor
-//1.01 added license for ANL
+//1.01 added license for ANL 
 
 
 
@@ -87,17 +88,9 @@ Function IR2L_MainPanel()
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;"
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
-	//SetDrawLayer UserBack
-	//SetDrawEnv fname= "Times New Roman", save
-	//SetDrawEnv fname= "Times New Roman",fsize= 28,fstyle= 3,textrgb= (0,0,52224)
-	//DrawText 90,26,"Modeling II "
 	TitleBox MainTitle title="Modeling II",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},fSize=24,fColor=(0,0,52224)
 
-	//SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	//DrawLine 16,176,339,176
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,176},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
 
 	Button RemoveAllDataSets, pos={5,155},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Remove all", help={"Remove all data from tool"}
@@ -473,42 +466,14 @@ Function IR2L_MainPanel()
 		Button PasteTagsToGraph, pos={210,630},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Tags to graph", help={"Add tags to graph"}
 		Button RemoveTagsFromGraph, pos={210,655},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Remove Tags", help={"Remove tags from graph"}
 
-		Button SaveInDataFolder, pos={310,605},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Save in Folder", help={"Save result in the data folder"}
-		Button SaveInNotebook, pos={310,630},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Save in Notebook", help={"Save result in output notebook"}	
-		Button SaveInWaves, pos={310,655},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Save in Waves", help={"Save result in the separate folder in waves"}
+		Button SaveInDataFolder, pos={310,605},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Store in Folder", help={"Copy result in the data folder"}
+		Button SaveInNotebook, pos={310,630},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Store in Notebook", help={"Store result in output notebook"}	
+		Button SaveInWaves, pos={310,655},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Store in Waves", help={"Store result in the separate folder in waves"}
 
 
 
 	IR2L_Model_TabPanelControl("",0)
 	IR2L_DataTabCheckboxProc("MultipleInputData",MultipleInputData)		//carefull this will make graph to be top window!!!
-	
-	
-//	ListOfPopulationVariables+="RdistAuto;RdistrSemiAuto;RdistMan;RdistManMin;RdisManMax;RdistLog;RdistNumPnts;RdistNeglectTails;"	
-//	ListOfPopulationVariables+="Contrast;Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"	
-//	ListOfPopulationVariables+="Volume;VolumeFit;VolumeMin;VolumeMax;"	
-//	ListOfPopulationVariables+="LNMinSize;LNMinSizeFit;LNMinSizeMin;LNMinSizeMax;LNMeanSize;LNMeanSizeFit;LNMeanSizeMin;LNMeanSizeMax;LNSdeviation;LNSdeviationFit;LNSdeviationMin;LNSdeviationMax;"	
-//	ListOfPopulationVariables+="GMeanSize;GMeanSizeFit;GMeanSizeMin;GMeanSizeMax;GWidth;GWidthFit;GWidthMin;GWidthMax;LSWLocation;LSWLocationFit;LSWLocationMin;LSWLocationMax;"	
-//	ListOfPopulationsStrings+="PopFormFactor;"	
-//	ListOfPopulationsStrings+="PopSizeDistShape;"	
-
-
-
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,171,339,171
-//	DrawText 20,210,"Preview Options:"
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,340,"Output Options:"
-////	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-////	DrawText 200,275,"Fit?:"
-////	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-////	DrawText 230,275,"Low limit:    High Limit:"
-////	DrawText 10,600,"Fit using least square fitting ?"
-////	DrawPoly 113,225,1,1,{113,225,113,225}
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,310,339,310
-////	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
-////	DrawText 4,640,"Results:"
-
 end
 
 

@@ -35,7 +35,7 @@ Function IR2S_ScriptingTool()
 
 	IN2G_CheckScreenSize("height",670)
 	
-	IR2S_InitScritingTool()
+	IR2S_InitScriptingTool()
 	
 	IR2S_UpdateListOfAvailFiles()
 	IR2S_SortListOfAvailableFldrs()
@@ -62,7 +62,7 @@ Function IR2S_MainCheckVersion()
 				Execute/P("DoWindow/K IR2S_ScriptingToolPnl")
 				Execute/P("IR2S_ScriptingTool()")
 			else		//at least reinitialize the variables so we avoid major crashes...
-				IR2S_InitScritingTool()
+				IR2S_InitScriptingTool()
 				IR2S_UpdateListOfAvailFiles()
 				IR2S_SortListOfAvailableFldrs()
 			endif
@@ -704,7 +704,7 @@ end
 
 
 
-Function IR2S_InitScritingTool()
+Function IR2S_InitScriptingTool()
 	
 	string OldDF=GetDataFolder(1)
 	NewDataFolder/O/S root:Packages

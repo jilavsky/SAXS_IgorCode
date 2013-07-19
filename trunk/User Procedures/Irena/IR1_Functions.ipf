@@ -13,7 +13,7 @@
 //2.04 added IR2R_InsertRemoveLayers in the KillAllPanels
 
 //This macro file is part of Igor macros package called "Irena", 
-//the full package should be available from usaxs.xor.aps.anl.gov/
+//the full package should be available from usaxs.xray.aps.anl.gov/
 //this package contains 
 // Igor functions for modeling of SAS from various distributions of scatterers...
 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.09
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 fixed bug when Scripting tool panel could get out of sync with main UF panel. 
 //2.09 added NoLimits option
 //2.08 fixed checking of level validity not to fail on levels with only power law part. 
 //2.07 adds confidence evaluation tool 
@@ -1503,9 +1504,17 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		STUseIndra2Data = GUseIndra2data
 		STUseQRSData = GUseQRSdata
 		if(STUseIndra2Data+STUseQRSData!=1)
-			Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
+			//Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
 			STUseQRSData=1
 			GUseQRSdata=1
+			STUseIndra2Data = 0
+			GUseIndra2data = 0
+			STRUCT WMCheckboxAction CB_Struct
+			CB_Struct.eventcode = 2
+			CB_Struct.ctrlName = "UseQRSdata"
+			CB_Struct.checked = 1
+			CB_Struct.win = "IR1A_ControlPanel"
+			IR2C_InputPanelCheckboxProc(CB_Struct)		
 		endif
 		IR2S_UpdateListOfAvailFiles()
 	endif
@@ -1568,63 +1577,6 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1A_FitLocalPorod(V_Value+1)
 		IR1A_GraphModelData()
 	endif
-
-	
-//	if(cmpstr(ctrlName,"Level1FitRgAndG")==0)
-//		//here we fit Rg and G area - Guiner fit level 1
-//		IR1A_FitLocalGuinier(1)
-//		IR1A_GraphModelData()
-//	endif
-//
-//	if(cmpstr(ctrlName,"Level1FitPAndB")==0)
-//		//here we fit P and B area - Porod fit level 1
-//		IR1A_FitLocalPorod(1)
-//		IR1A_GraphModelData()
-//	endif
-//	if(cmpstr(ctrlName,"Level2FitRgAndG")==0)
-//		//here we fit Rg and G area - Guiner fit level 2
-//		IR1A_FitLocalGuinier(2)
-//		IR1A_GraphModelData()
-//	endif
-//
-//	if(cmpstr(ctrlName,"Level2FitPAndB")==0)
-//		//here we fit P and B area - Porod fit level 2
-//		IR1A_FitLocalPorod(2)
-//		IR1A_GraphModelData()
-//	endif
-//	if(cmpstr(ctrlName,"Level3FitRgAndG")==0)
-//		//here we fit Rg and G area - Guiner fit level 3
-//		IR1A_FitLocalGuinier(3)
-//		IR1A_GraphModelData()
-//	endif
-//
-//	if(cmpstr(ctrlName,"Level3FitPAndB")==0)
-//		//here we fit P and B area - Porod fit level 3
-//		IR1A_FitLocalPorod(3)
-//		IR1A_GraphModelData()
-//	endif
-//	if(cmpstr(ctrlName,"Level4FitRgAndG")==0)
-//		//here we fit Rg and G area - Guiner fit level 4
-//		IR1A_FitLocalGuinier(4)
-//		IR1A_GraphModelData()
-//	endif
-//
-//	if(cmpstr(ctrlName,"Level4FitPAndB")==0)
-//		//here we fit P and B area - Porod fit level 4
-//		IR1A_FitLocalPorod(4)
-//		IR1A_GraphModelData()
-//	endif
-//	if(cmpstr(ctrlName,"Level5FitRgAndG")==0)
-//		//here we fit Rg and G area - Guiner fit level 5
-//		IR1A_FitLocalGuinier(5)
-//		IR1A_GraphModelData()
-//	endif
-//
-//	if(cmpstr(ctrlName,"Level5FitPAndB")==0)
-//		//here we fit P and B area - Porod fit level 5
-//		IR1A_FitLocalPorod(5)
-//		IR1A_GraphModelData()
-//	endif
 	if(cmpstr(ctrlName,"Level1SetRGCODefault")==0)
 		//set RGCO default
 		NVAR Level1RGCO=root:Packages:Irena_UnifFit:Level1RGCO

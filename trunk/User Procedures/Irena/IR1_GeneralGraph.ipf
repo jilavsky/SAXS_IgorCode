@@ -9,7 +9,8 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.16 fixed forgotten Style storing path, which was still saving styles to ProgramFiles area. Permissions problem on some systems. Fixed and moving file to new location. 
+//2.16 fixed forgotten Style storing path, which was still saving styles to ProgramFiles area. Permissions problem on some systems. Fixed and moving file to new location.
+//        fixed Scripting tool problem when the controsl could get stale between thw Plotting tool and scripting tool panels.  
 //2.15 added contour plot and basic controls. 
 //2.14 Modified to handle different units for Intensity calibration. Addec control in Change Graph details panel. 
 //2.13 Added vertical scrolling
@@ -91,15 +92,8 @@ end
 Window IR1P_ControlPanel() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,402,690) as "General Plotting tool"
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 57,22,"Plotting tool input panel"
 	TitleBox MainTitle title="Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,200,339,200
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,200},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 8,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
 	string UserDataTypes="Isas;"
 	string UserNameString="CanSAS"
@@ -107,7 +101,6 @@ Window IR1P_ControlPanel()
 	string EUserLookup="Isas:Idev;"
 
 	IR2C_AddDataControls("GeneralplottingTool","IR1P_ControlPanel","M_DSM_Int;DSM_Int;M_SMR_Int;SMR_Int","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,0)
-//IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves)
 	Button ScriptingTool,pos={302,138},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Scripting tool", help={"Start scripting tool to add multiple data at once"}
 	Button AddDataToGraph,pos={2,158},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Add data", help={"Click to add data into the list of data to be displayed in the graph"}
 	Button RemoveData,pos={102,158},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Remove data", help={"Click to remove data  from the list of data to be displayed in the graph"}
@@ -538,13 +531,19 @@ Function IR1P_InputPanelButtonProc(ctrlName) : ButtonControl
 			STUseQRSData = GUseQRSdata
 			STUseResults = GUseResults
 			if(STUseIndra2Data+STUseQRSData+STUseResults!=1)
-				DoAlert 0, "At this time this scripting can be used ONLY for QRS, Irena results and Indra2 data. Defaulting to QRS."
+				//DoAlert 0, "At this time this scripting can be used ONLY for QRS, Irena results and Indra2 data. Defaulting to QRS."
 				STUseQRSData=1
 				GUseQRSdata=1
+				STRUCT WMCheckboxAction CB_Struct
+				CB_Struct.eventcode = 2
+				CB_Struct.ctrlName = "UseQRSdata"
+				CB_Struct.checked = 1
+				CB_Struct.win = "IR1P_ControlPanel"
 				STUseIndra2Data = 0
 				GUseIndra2data = 0
 				STUseResults = 0
 				GUseResults = 0
+				IR2C_InputPanelCheckboxProc(CB_Struct)		
 			endif
 			IR2S_UpdateListOfAvailFiles()
 			IR2S_CheckProc("Something",0)

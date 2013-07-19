@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.15
+#pragma version =1.16
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 added double click option to ListBox and added shift to accomodate tools when Start MASK draw is selected. 
 //1.15 update for reversed color tables
 //1.14 adds Nexus file format proper filter
 //1.13 adds storing _mask file in hdf (5)., fixed low intensity masking... Did it ever work? 
@@ -67,7 +68,7 @@ Function NI1M_CreateImageROIPanel()
 	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1M_ListBoxProc
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
 	ListBox CCDDataSelection,listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInCCDPath
-	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0
+	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0, proc=NI1_PrepMaskListBoxProc
 
 	Button CreateROIWorkImage,pos={150,260},size={100,20},proc=NI1M_RoiDrawButtonProc,title="Make Image"
 
@@ -121,6 +122,35 @@ Function NI1M_CreateImageROIPanel()
 
 	setDataFolder OldDf
 end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+
+
+Function NI1_PrepMaskListBoxProc(ctrlName,row,col,event) : ListBoxControl
+	String ctrlName
+	Variable row
+	Variable col
+	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+					//5=cell select with shift key, 6=begin edit, 7=end
+	Variable i
+	if(cmpstr(ctrlName,"CCDDataSelection")==0)
+		if(event==3)		//double click
+				NI1M_RoiDrawButtonProc("CreateROIWorkImage")
+		endif
+	endif
+	return 0
+End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//***************************************** **************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -324,6 +354,9 @@ Function NI1M_RoiDrawButtonProc(ctrlName) : ButtonControl
 		SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
 		DoWindow/F  CCDImageForMask 
 		AutoPositionWindow/M=0 /R=NI1M_ImageROIPanel CCDImageForMask 
+		GetWindow CCDImageForMask wsize
+		//print V_left, V_top, V_right, V_bottom
+		MoveWindow/W=CCDImageForMask V_left+33, V_top, V_right+33, V_bottom
 		DoWindow/F CCDImageForMask
 	endif
 	if( CmpStr(ctrlName,"FinishROI") == 0 )

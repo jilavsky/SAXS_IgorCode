@@ -135,7 +135,7 @@ Function IN2_AboutPanel()
 	DrawText 52,64,"@ Jan Ilavsky, 2012"
 	DrawText 49,103,"release 1.79 from 4/23/2013"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
-	DrawText 11,156,"http://usaxs.xor.aps.anl.gov/"
+	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end
 
 Function IN2A_CleanupAllWIndows()

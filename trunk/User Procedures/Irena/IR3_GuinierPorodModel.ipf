@@ -1,7 +1,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=0.92		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1		//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716Ð719, Boualem Hammouda, A new GuinierÐPorod model
-Constant IR3GPversionNumber=0.92
+Constant IR3GPversionNumber=1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -15,9 +15,12 @@ Constant IR3GPversionNumber=0.92
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
-// 	0.9 - original release, unfinished, barely functional, no manual support. 
-//	0.91 GUI improvements, local fits improvements. 
-//	0.92 More code developemnt, added Uncertainity evaluation and scripting tool. 
+//1.00 first release, July 2013
+//0.94 fixed bug which caused major problems fitting SMR data. Improvemnts of starting values for local fits. 
+//0.93 Fixed bug which caused Scripting tool to get out of sync with main panel. 
+//0.92 More code developemnt, added Uncertainity evaluation and scripting tool. 
+//0.91 GUI improvements, local fits improvements. 
+//0.9 - original release, unfinished, barely functional, no manual support. 
 
 //Menu "SAS"
 //	"Gunier Porod Fit", IR3GP_Main()
@@ -345,18 +348,20 @@ end
 Function IR3GP_SaveStructureToWave(Par, level)
 	STRUCT GunierPorodLevel &Par
 	variable level
-	
-	Wave LevelStructure = $("root:Packages:Irena:GuinierPorod:Level"+num2str(level)+"Structure")
-	StructPut Par, LevelStructure
+	if(level>0)	
+		Wave LevelStructure = $("root:Packages:Irena:GuinierPorod:Level"+num2str(level)+"Structure")
+		StructPut Par, LevelStructure
+	endif
 end
 //******************************************************************************************
 //******************************************************************************************
 Function IR3GP_LoadStructureFromWave(Par, level)
 	STRUCT GunierPorodLevel &Par
 	variable level
-	
-	Wave LevelStructure = $("root:Packages:Irena:GuinierPorod:Level"+num2str(level)+"Structure")
-	StructGet Par, LevelStructure
+	if(level>0)
+		Wave LevelStructure = $("root:Packages:Irena:GuinierPorod:Level"+num2str(level)+"Structure")
+		StructGet Par, LevelStructure
+	endif
 end
 //******************************************************************************************
 //******************************************************************************************
@@ -375,19 +380,13 @@ Function IR2GP_CalculateGPlevel(Qvector,Intensity,Par )
 // Q1 = sqrt((d - s1)*(3 - s1)/2) / Rg1
 // D = G * exp(-Q1^2 * Rg^2/(3-s))*Q1^(d-s) = G*exp(-(d-s)/2)*((3-s)*(d-s)/2)^((d-s)/2) /Rg^(d-s)
 	variable Q1val = sqrt((Par.P - Par.s1)*(3 - Par.s1)/2) / Par.Rg1
-	//print "Q1 = "+num2str(Q1val)
 	variable Dval=Par.G*exp(-(Par.P-Par.s1)/2)*((3-Par.s1)*(Par.P-Par.s1)/2)^((Par.P-Par.s1)/2) /Par.Rg1^(Par.P-Par.s1)
-	//print "D = "+num2str(Dval)
 	variable Q2val = sqrt((1 - Par.s2)/((2/(3-Par.s2)*Par.Rg2^2) - (2/(3-Par.s1))*Par.Rg1^2) )
 	Q2val = numtype(Q2val)==0 ? Q2val : 0
-	//print "Q2 = "+num2str(Q2val)
 	variable G2val = Par.G * exp(-Q2val^2*((Par.Rg1^2/(3-Par.s1))-(Par.Rg2^2/(3-Par.s2)))) * Q2val^(Par.s2-Par.s1)
-	//print "G2 = "+num2str(G2val)
 	variable LowQRangePntMax, MidQRangePntMax
 	LowQRangePntMax = BinarySearch(Qvector, Q2val )
 	MidQRangePntMax = BinarySearch(Qvector, Q1val )
-	//print LowQRangePntMax
-	//print MidQRangePntMax
 	Intensity = 0
 	if(LowQRangePntMax>0)
 		Intensity[0,LowQRangePntMax] = G2val/(Qvector[p]^Par.s2) * exp(-1 * Qvector[p]^2 * Par.Rg2^2 / (3-Par.s2))
@@ -430,13 +429,37 @@ Function IR2GP_CalculateGPValue(Qval,Pval,Rg1,Gval,S1,Rg2,S2,Background)
 // for Q<Q2		: 	I(Q) = G2/Q2^s2 * exp(-Q^2 * Rg2^2 / (3-s2))
 // for Q<Q1		: 	I(Q) = G1/Q^s1 * exp(-Q^2 * Rg1^2 / (3-s1))
 // for Q>=Q1 	: 	I(Q) = D / Q^d
-	if(Qval>=Q1val)
-		return Dval/Qval^Pval
-	elseif(Qval>Q2val || numtype(Q2val)!=0)
-		return Gval/Qval^S1 * exp(-Qval^2 * Rg1^2 / (3-S1))
-	else
-		return G2val/Q2val^s2 * exp(-Qval^2 * Rg2^2 / (3-s2))
+	wave Qvec=root:Packages:Irena:GuinierPorod:OriginalQvector
+	Duplicate/FREE Qvec, TempInt
+	STRUCT GunierPorodLevel Par
+	par.G=Gval
+	par.Rg1=Rg1
+	par.Rg2=Rg2
+	par.P=Pval
+	par.s1=S1
+	par.s2=S2
+	par.RgCutOff=0
+	par.UseCorrelations=0
+	par.ETA=0
+	par.PACK=0
+	IR2GP_CalculateGPlevel(Qvec,TempInt,Par )
+
+	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
+	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
+	if(UseSMRData)
+		duplicate/Free  TempInt, TempIntSMR
+		IR1B_SmearData(TempInt, Qvec, SlitLengthUnif, TempIntSMR)
+		TempInt=TempIntSMR
 	endif
+
+	return tempInt[BinarySearch(Qvec, Qval)]
+//	if(Qval>=Q1val)
+//		return Dval/Qval^Pval
+//	elseif(Qval>Q2val || numtype(Q2val)!=0)
+//		return Gval/Qval^S1 * exp(-Qval^2 * Rg1^2 / (3-S1))
+//	else
+//		return G2val/Q2val^s2 * exp(-Qval^2 * Rg2^2 / (3-s2))
+//	endif
 
 //	if(Par.RgCutOff>0)
 //		Intensity*= exp(-1 * Par.RgCutOff^2 * Qvector^2/3)
@@ -516,13 +539,15 @@ Function IR3DP_MainPanelFunction()
 	TitleBox MainTitle title="Gunier Porod",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={260,24},fSize=22,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,176},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Gunier-Porod model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
+	TitleBox Info2 title="Gunier-Porod model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
 	TitleBox Info3 title="Fit?  Low limit:    High Limit:",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12,fstyle=3,fColor=(0,0,65535)
 	TitleBox Info4 title="Fit using least square fitting ?",pos={3,584},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12,fstyle=3,fColor=(0,0,65535)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={20,3},pos={330,610},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info5 title="Results:",pos={3,625},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12,fstyle=3,fColor=(0,0,65535)
-	TitleBox Info6 title="For local fits, set S2=0, Rg2=1e10, S1=0",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
-	TitleBox Info7 title="And follow order of the buttons --->",pos={10,459},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
+//	TitleBox Info6 title="For local fits, set S2=0, Rg2=1e10, S1=0",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
+//	TitleBox Info7 title="And follow order of the buttons --->",pos={10,459},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
+	TitleBox Info6 title="For local fits follow order of the buttons --->",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
+//	TitleBox Info7 title="And follow order of the buttons --->",pos={10,459},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
 	NVAR Level_G = root:Packages:Irena:GuinierPorod:Level_G
 	NVAR Level_S2 = root:Packages:Irena:GuinierPorod:Level_S2
 	NVAR Level_Rg2 = root:Packages:Irena:GuinierPorod:Level_Rg2
@@ -541,8 +566,6 @@ Function IR3DP_MainPanelFunction()
 	Button DrawGraphs,pos={5,150},size={100,20},proc=IR3GP_PanelButtonProc,title="Graph data", help={"Create a graph (log-log) of your experiment data"}
 	Button GraphDistribution,pos={5,210},size={90,20},proc=IR3GP_PanelButtonProc,title="Graph Model", help={"Add results of your model in the graph with data"}
 	Button ScriptingTool,pos={280,155},size={100,15},proc=IR3GP_PanelButtonProc,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
-	//SetVariable SubtractBackground,limits={0,Inf,0.1},value= root:Packages:Irena:GuinierPorod:SubtractBackground
-	//SetVariable SubtractBackground,pos={110,162},size={150,16},title="Subtract backg.",proc=IR3GP_PanelSetVarProc, help={"Subtract flat background from data"}
 	CheckBox UpdateAutomatically,pos={110,205},size={225,14},proc=IR3GP_PanelCheckboxProc,title="Update automatically?"
 	CheckBox UpdateAutomatically,variable= root:Packages:Irena:GuinierPorod:UpdateAutomatically, help={"When checked the graph updates automatically anytime you make change in model parameters"}
 	CheckBox UseNoLimits,pos={275,205},size={63,14},proc=IR3GP_PanelCheckboxProc,title="No limits?"
@@ -550,19 +573,14 @@ Function IR3DP_MainPanelFunction()
 	CheckBox DisplayLocalFits,pos={110,220},size={225,14},proc=IR3GP_PanelCheckboxProc,title="Display local (Porod & Guinier) fits?"
 	CheckBox DisplayLocalFits,variable= root:Packages:Irena:GuinierPorod:DisplayLocalFits, help={"Check to display in graph local Porod and Guinier fits for selected level, fits change with changes in values of P, B, Rg and G"}
 
-//	CheckBox ExportLocalFits,pos={190,606},size={225,14},proc=IR1A_InputPanelCheckboxProc,title="Store local (Porod & Guinier) fits?"
-//	CheckBox ExportLocalFits,variable= root:Packages:Irena_UnifFit:ExportLocalFits, help={"Check to store local Porod and Guinier fits for all existing levels together with full Unified fit"}
 	Button DoFitting,pos={175,584},size={70,20},proc=IR3GP_PanelButtonProc,title="Fit", help={"Do least sqaures fitting of the whole model, find good starting conditions and proper limits before fitting"}
 	Button RevertFitting,pos={255,584},size={100,20},proc=IR3GP_PanelButtonProc,title="Revert back",help={"Return back befoire last fitting attempt"}
-//	Button ResetUnified,pos={3,605},size={80,15},proc=IR1A_InputPanelButtonProc,title="reset unif?", help={"Reset variables to default values?"}
 	Button FixLimits,pos={93,605},size={80,15},proc=IR3GP_PanelButtonProc,title="Fix limits?", help={"Reset variables to default values?"}
 	Button CopyToFolder,pos={55,623},size={120,20},proc=IR3GP_PanelButtonProc,title="Results -> Data Folder", help={"Copy results of the modeling into original data folder"}
-//	Button ExportData,pos={180,623},size={90,20},proc=IR1A_InputPanelButtonProc,title="Export ASCII", help={"Export ASCII data out of Igor"}
 	Button MarkGraphs,pos={277,623},size={110,20},proc=IR3GP_PanelButtonProc,title="Results -> graphs", help={"Insert text boxes with results into the graphs for printing"}
 	Button CleanupGraph,pos={277,645},size={110,20},proc=IR3GP_PanelButtonProc,title="Clean graph", help={"Remove text boxes with results into the graphs for printing"}
 
 
-//	Button EvaluateSpecialCases,pos={10,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Analyze Results", help={"Analyze special Cases"}
 	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Uncertainity Evaluation", help={"Analyze confidence range for different parameters"}
 	SetVariable SASBackground,pos={15,565},size={160,16},proc=IR3GP_PanelSetVarProc,title="SAS Background", help={"SAS background"},bodyWidth=80, format="%0.4g"
 	SetVariable SASBackground,limits={-inf,Inf,0.05*SASBackground},value= root:Packages:Irena:GuinierPorod:SASBackground
@@ -822,9 +840,17 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 		STUseIndra2Data = GUseIndra2data
 		STUseQRSData = GUseQRSdata
 		if(STUseIndra2Data+STUseQRSData!=1)
-			Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
+			//Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
 			STUseQRSData=1
 			GUseQRSdata=1
+			STUseIndra2Data = 0
+			GUseIndra2data = 0
+			STRUCT WMCheckboxAction CB_Struct
+			CB_Struct.eventcode = 2
+			CB_Struct.ctrlName = "UseQRSdata"
+			CB_Struct.checked = 1
+			CB_Struct.win = "IR3DP_MainPanel"
+			IR2C_InputPanelCheckboxProc(CB_Struct)		
 		endif
 		IR2S_UpdateListOfAvailFiles()
 	endif
@@ -867,6 +893,9 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 		//	AutoPositionWIndow /M=1/E  /R=IR1_LogLogPlotU IR1_IQ4_Q_PlotU
 			if (recovered)
 				IR3GP_GraphModelData()		//graph the data here, all parameters should be defined
+				//need to fix number of levels, which tab seems to be stale...
+				NVAR NumberOfLevels = root:Packages:Irena:GuinierPorod:NumberOfLevels
+				PopupMenu NumberOfLevels win=IR3DP_MainPanel, mode=(NumberOfLevels+1)
 			endif
 		else
 			Abort "Data not selected properly"
@@ -1078,7 +1107,8 @@ end
 ///******************************************************************************************
 Function IR3GP_UpdateIfSelected()
 	NVAR AutoUpdate=root:Packages:Irena:GuinierPorod:UpdateAutomatically
-	if(AutoUpdate)
+	DoWindow GunierPorod_LogLogPlot
+	if(AutoUpdate && V_Flag)
 		IR3GP_CalculateModelIntensity()
 	endif
 end
@@ -1727,6 +1757,10 @@ Function IR3GP_ResetParamsAfterBadFit()
 
 	variable i, NumOfParam
 	NumOfParam=numpnts(CoefNames)
+	if(NumOfParam<1)
+		beep
+		abort "Record of old parameters is bad." 
+	endif
 	string ParamName=""
 	variable level
 
@@ -2258,6 +2292,10 @@ Function IR3GP_FitLocalGuinier(Level, WhichOne)
 		NVAR G=$("root:Packages:Irena:GuinierPorod:Level_G")
 		NVAR GLowLimit=$("root:Packages:Irena:GuinierPorod:Level_GLowLimit")
 		NVAR GHighLimit=$("root:Packages:Irena:GuinierPorod:Level_GHighLimit")
+		NVAR Rg1=$("root:Packages:Irena:GuinierPorod:Level_Rg1")
+		NVAR Rg2=$("root:Packages:Irena:GuinierPorod:Level_Rg2")
+		NVAR S1=$("root:Packages:Irena:GuinierPorod:Level_S1")
+		NVAR S2=$("root:Packages:Irena:GuinierPorod:Level_S2")
 	Variable LocalRg, LocalG
 	
 	DoWIndow/F GunierPorod_LogLogPlot
@@ -2267,11 +2305,15 @@ Function IR3GP_FitLocalGuinier(Level, WhichOne)
 	endif
 
 	if(WhichOne==1)		//Rg1
-		LocalRg = Rg
-		LocalG = G
+		LocalRg = 2*pi/((OriginalQvector[pcsr(A)]+OriginalQvector[pcsr(B)])/2)
+		LocalG = (OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
+		RG2=0
+		S1=0
+		S2=0
 	elseif(WhichOne==2)			//Rg2
 		LocalRg = Rg
 		LocalG = (OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
+		S2=0
 	else
 		return 0
 	endif
@@ -2442,6 +2484,18 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	NVAR S1=$("Level_S1")
 	NVAR S2=$("Level_S2")
 	NVAR Rg2=$("Level_Rg2")
+	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
+	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
+
+
+	if(whichOne==1)		//this is D
+		S1=0
+		S2=0
+		Rg2=0
+	elseif(whichOne==2)
+		S2=0
+		Rg2=0
+	endif
 
 	DoWindow GunierPorod_LogLogPlot
 	if(V_Flag)
@@ -2458,16 +2512,29 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	oldG=Gvalue
 	//now handle calibration - G value needs to be modified if this is S1 or S2
 	if(whichOne==2)		//this is S1
+//		if(S1>0)	//this is wrong, If this is S1, the S1 before fitting must be 0 or the whole thing goes haywire...
+//			Abort "To do local fit for S1 you need to have reasonably good fit for Rg1, G, and P done WITH S1=0"
+//		endif
+		if(Rg1>=1e6)	//this is wrong, Rg1 cannot be 1e6 (that is used to remove the Guinier from model and leave only last Powerlaw slope. 
+			Abort "wrong Rg1 value found, this level makes no sense at this moment"
+		endif
 		CalibrationQ= 0.5*pi/Rg1
 		CalibrationValue = IR2GP_CalculateGPValue(CalibrationQ,Pval,Rg1,Gvalue,S1,Rg2,S2,0)
 	endif
 
 	Make/D/O/N=2 CoefficientInput, New_FitCoefficients, LocalEwave
 	Make/O/T/N=2 CoefNames
-	CoefficientInput[0]=(OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
-	CoefficientInput[1]=Pp
-	LocalEwave[0]=CoefficientInput[0]/20
-	LocalEwave[1]=Pp/20
+	//CoefficientInput[1]= Pp >=1 ? Pp : 2
+	Pp = abs((log(OriginalIntensity[pcsr(A)])-log(OriginalIntensity[pcsr(B)]))/(log(OriginalQvector[pcsr(B)])-log(OriginalQvector[pcsr(A)])))
+	if(UseSMRData)
+		Pp+=1
+	endif
+	CoefficientInput[1] = Pp
+	//print (OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
+	//print ((OriginalQvector[pcsr(A)]+OriginalQvector[pcsr(B)])/2)
+	CoefficientInput[0]=((OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2)/(((OriginalQvector[pcsr(A)]+OriginalQvector[pcsr(B)])/2)^Pp)
+	LocalEwave[0]=CoefficientInput[0]/30
+	LocalEwave[1]=CoefficientInput[1]/50
 	CoefNames={"Level"+num2str(level)+"B","Level"+num2str(level)+"P"}	
 	Make/D/O/N=2 New_FitCoefficients
 	New_FitCoefficients[0] = {CoefficientInput[0],Pp}
@@ -2481,10 +2548,8 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
 	
-	FitInt=New_FitCoefficients[0]*OriginalQvector^(-New_FitCoefficients[1])
 	Pp=abs(New_FitCoefficients[1])
-	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
-	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
+	FitInt=New_FitCoefficients[0]*OriginalQvector^(-Pp)
 	if(UseSMRData)
 		duplicate/Free  FitInt, UnifiedFitIntensitySM
 		IR1B_SmearData(FitInt, OriginalQvector, SlitLengthUnif, UnifiedFitIntensitySM)
@@ -2494,6 +2559,7 @@ Function IR3GP_FitLocalPorod(Level, whichOne)
 	if(whichOne==2)		//this is S1
 		scalingFactor = CalibrationValue/IR2GP_CalculateGPValue(CalibrationQ,Pval,Rg1,Gvalue,Pp,Rg2,S2,0)
 		Gvalue = Gvalue*scalingFactor
+		//Gvalue =IR2GP_CalculateGPValue(CalibrationQ,Pval,Rg1,Gvalue,Pp,Rg2,S2,0)
 	endif
 	//now handle calibration - G value needs to be modified if this is P but Rg = 1e6 (no Guinier area for even first slope)
 	if(whichOne==1&&Rg1>5.999e5)		//this is P
@@ -2549,14 +2615,14 @@ Function IR3GP_PowerLawFitAllATOnce(parwave,ywave,xwave) : FitFunc
 	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
 	Wave OriginalQvector =root:Packages:Irena:GuinierPorod:OriginalQvector
-	Duplicate/free OriginalQvector, tempPowerLawInt
+	Duplicate/FREE OriginalQvector, tempPowerLawInt
 	tempPowerLawInt = Prefactor * OriginalQvector^(-slope)
 	if(UseSMRData)
-		duplicate/free  tempPowerLawInt, tempPowerLawIntSM
+		duplicate/FREE  tempPowerLawInt, tempPowerLawIntSM
 		IR1B_SmearData(tempPowerLawInt, OriginalQvector, SlitLengthUnif, tempPowerLawIntSM)
 		tempPowerLawInt=tempPowerLawIntSM
 	endif
-	
+	doUpdate
 	ywave = tempPowerLawInt[binarysearch(OriginalQvector,xwave[0])+p]
 End
 
