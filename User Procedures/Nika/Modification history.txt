@@ -6,6 +6,7 @@ Code modification history
 1.62 XXXX
 Added double click action to other list boxes in Main panel and in Beam center tool
 Added *.mccd file format (tif, actually) and combined mpa file formats into the same loader. I am missing "csv" working example so that is not working, but asc, dat, and spe (internal names) are working now. 
+Mask tool - Added double click function and offset when Start mask draw is selected to accommodate tools. 
 
 1.61 4/8/2013
 Added monthly check for updates and reminder of references for publications.

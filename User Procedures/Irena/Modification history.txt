@@ -13,9 +13,14 @@ Plotting tool I - added basic contour plot capabilities
 Unified fit - fixed invariant calculation for levels using RgCuttOff. these levels had previously calculated higher invariant value then correct. 
 Data Manipulation I- fixed log rebining of data which was not working. Note, it overlays log-x scale over the data and then simply averages points in each bin. Similar to Nika.
 ASCII Data Import - fixed log rebining and removed the parameter, which no one understood anyway. It is not being used now.
-ASCII Data Import - header information, when attached to wave note is now cleaned of any leading special characters and leading spaces. This allows USAXS exported ASCII data import with meaningful wave note and should work for everyone.    
+ASCII Data Import - header information, when attached to wave note is now cleaned of any leading special characters and leading spaces. This allows USAXS exported ASCII data import with meaningful wave note and should work for everyone.   
+ASCII Data Import - Remove Int<0 is now Remove Int<=0. Note that on import the all Q<=0 points are also removed.  
 All panels - changed orientation of the two arrows at the top right to move content of the window. Wrong logic used originally, now same as regular PC/Mac GUI system.  
-
+Size distribution - reduced significantly the number of available form factors. Complex FFs make no sense in this tool. 
+Scripting tool - modified calling routines to avoid getting stale state of controls. This should prevent "error, report it" message. 
+All tools - changed all cases when I used "Save in É" in buttons to "Store in É" to prevent confusion of users that this actually saves Igor experiment. 
+Main procedures - Changed all web addresses to new xray.aps.anl.gov, changed Manual and Manuscript download to http protocol, ftp was failing.  
+Guinier-Porod fit - finally local fits to smeared data seems to be under control. Updated manual with real description of the tool and elevated the version to 1.0, first release version. Need to finish some nice outputs, but I think it is finally useable even on smeared data. 
 
 
 

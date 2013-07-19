@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 fixed bug when scripting tool got out of sync with main Modeling II panel. 
 //1.16 fixed fix limits check so if the value is negative, it sorts out limits correctly. Needed for core shell systems with negative SLD
 //1.15 added Form and Structrue factor description as Igor help file. Added buttons to call the help file from GUI. 
 //1.14 Modified to handle Janus CoreShell Micelle FF
@@ -208,9 +209,17 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		STUseIndra2Data = GUseIndra2data
 		STUseQRSData = GUseQRSdata
 		if(STUseIndra2Data+STUseQRSData!=1)
-			Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
+			//Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
 			STUseQRSData=1
 			GUseQRSdata=1
+			STUseIndra2Data = 0
+			GUseIndra2data = 0
+			STRUCT WMCheckboxAction CB_Struct
+			CB_Struct.eventcode = 2
+			CB_Struct.ctrlName = "UseQRSdata"
+			CB_Struct.checked = 1
+			CB_Struct.win = "LSQF2_MainPanel"
+			IR2C_InputPanelCheckboxProc(CB_Struct)		
 		endif
 		IR2S_UpdateListOfAvailFiles()
 		

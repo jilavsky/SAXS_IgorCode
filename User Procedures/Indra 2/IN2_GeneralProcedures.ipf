@@ -348,6 +348,23 @@ static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
 	controls = RemoveFromList("ScrollButtonDown", controls )
 	controls = RemoveFromList("ScrollButtonUp", controls )
 	ModifyControlList controls, win=$WIndowName, pos+={0,HowMuch}	
+	//now have to deal with special cases, in the case of Data manipulation we have two subwindows
+//	if(stringmatch(WindowName,"IR1D_DataManipulationPanel"))
+//		variable OriginalHeight, NewTop, NewBottom, NewTop2, NewBottom2
+//		GetWindow IR1D_DataManipulationPanel#Top wsize
+//		OriginalHeight = V_Bottom-V_top
+//		NewTop = V_top+HowMuch
+//		NewBottom = V_bottom+HowMuch
+////		if(NewTop<0)
+////			NewTop=0
+////			NewBottom = OriginalHeight
+////		endif
+//		MoveSubwindow/W=IR1D_DataManipulationPanel#Top fnum=(V_left, NewTop, V_right, NewBottom )
+//		//GetWindow IR1D_DataManipulationPanel#Bot wsize
+//		NewTop2 = NewTop+OriginalHeight+3
+//		NewBottom2 = NewBottom+OriginalHeight+3
+//		MoveSubwindow/W=IR1D_DataManipulationPanel#Bot fnum=(V_left, NewTop2, V_right, NewBottom2 )
+//	endif
 end
 
 

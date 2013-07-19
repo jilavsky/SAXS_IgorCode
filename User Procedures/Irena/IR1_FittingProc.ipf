@@ -12,7 +12,7 @@
 //2.02 removed old method of genetic optimization
 
 //This macro file is part of Igor macros package called "Irena", 
-//the full package should be available from usaxs.xor.aps.anl.gov/
+//the full package should be available from usaxs.xray.aps.anl.gov/
 //this package contains 
 // Igor functions for modeling of SAS from various distributions of scatterers...
 

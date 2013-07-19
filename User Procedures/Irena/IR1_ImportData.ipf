@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma version=2.18
-Constant IR1IversionNumber = 2.17
+Constant IR1IversionNumber = 2.18
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant IR1TrimNameLength = 28
 
 //2.18 modified log-rebinning to use more simple log-scale, control parameter is removed. Changed to rtGlobals=2
 //         modified so any separator and leading spaces are removed when storing header info in wave note. 
+//         Remove negative intensities now removes 0 also (Int<=0 are removed). Same for Q<=0. 
 //2.17 added controls for Units - Arbitrary, cm2/cm3, and cm2/g are known units for now...
 //2.16 added cleanup of weird characters (,),%, {, } of names. Allowed by igor but cause problems to my opther code. 
 //2.15 added vertical scrolling for panel. 
@@ -179,7 +180,7 @@ Proc IR1I_ImportData()
 	CheckBox ImportSMRdata, disable= !root:Packages:ImportData:UseIndra2Names
 	CheckBox UseQRSNames,pos={10,452},size={16,14},proc=IR1I_CheckProc,title="Use QRS wave names?",variable= root:Packages:ImportData:UseQRSNames, help={"Use QRS name structure? (Q_filename, R_filename, S_filename)"}
 	CheckBox UseQISNames,pos={150,452},size={16,14},proc=IR1I_CheckProc,title="Use QIS (NIST) wv nms?",variable= root:Packages:ImportData:UseQISNames, help={"Use QIS name structure? (filename_q, filename_i, filename_s)"}
-	CheckBox RemoveNegativeIntensities,pos={10,468},size={16,14},proc=IR1I_CheckProc,title="Remove Int<0?",variable= root:Packages:ImportData:RemoveNegativeIntensities, help={"Remove Intensities smaller than 0?"}
+	CheckBox RemoveNegativeIntensities,pos={10,468},size={16,14},proc=IR1I_CheckProc,title="Remove Int<=0?",variable= root:Packages:ImportData:RemoveNegativeIntensities, help={"Remove Intensities smaller than 0?"}
 
 
 	CheckBox ScaleImportedDataCheckbox,pos={240,436},size={16,14},proc=IR1I_CheckProc,title="Scale Imported data?",variable= root:Packages:ImportData:ScaleImportedData, help={"Check to scale (multiply by) factor imported data. Both Intensity and error will be scaled by same number. Insert appriate number below."}
@@ -674,10 +675,10 @@ Function IR1I_NameImportedWaves(selectedFile)
 	//let's celan up the data from negative Qs, if there are any...
 	//data are in  		TempQvector, TempIntensity, TempError
 	//w = w[p]==0 ? NaN : w[p]
-	TempQvector = TempQvector[p]<0 ?  NaN :  TempQvector[p]
+	TempQvector = TempQvector[p]<=0 ?  NaN :  TempQvector[p]
 	NVAR RemoveNegativeIntensities = root:packages:ImportData:RemoveNegativeIntensities
 	if(RemoveNegativeIntensities)
-		TempIntensity = TempIntensity[p]<0 ?  NaN :  TempIntensity[p]	
+		TempIntensity = TempIntensity[p]<=0 ?  NaN :  TempIntensity[p]	
 	endif
 
 	if(WaveExists(TempError)&&WaveExists(TempQError))	//have 4 waves

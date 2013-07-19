@@ -184,7 +184,7 @@ Function NI1_AboutPanel()
 	DrawText 52,64,"@ ANL, 2013"
 	DrawText 49,103,"Release 1.61 from 4/8/2013"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
-	DrawText 11,156,"http://usaxs.xor.aps.anl.gov/staff/ilavsky/index.html"
+	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 
 	DrawText 11,190,"Set of macros to convert 2D SAS images"
 	DrawText 11,210,"into 1 D data"

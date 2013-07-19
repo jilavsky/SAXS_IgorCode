@@ -402,40 +402,13 @@ Window IR1A_ControlPanel()
 	IR2C_AddDataControls("Irena_UnifFit","IR1A_ControlPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,1)
 
 	TitleBox MainTitle title="Unified modeling input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-	//SetDrawLayer UserBack
-	//SetDrawEnv fname= "Times New Roman", save
-	//SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-	//DrawText 50,23,"Unified modeling input panel"
-
-	//SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	//DrawLine 16,181,339,181
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	//DrawPoly 113,225,1,1,{113,225,113,225}
-	//SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	//DrawLine 330,612,350,612
-	//TitleBox FakeLine2 title=" ",fixedSize=1,size={20,3},pos={330,612},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-
-	//SetDrawEnv fsize= 16,fstyle= 1
-	//DrawText 18,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	//SetDrawEnv fsize= 16,fstyle= 1
-	//DrawText 20,209,"Unified model input"
 	TitleBox Info2 title="Unified model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 200,275,"Fit?:"
 	TitleBox Info3 title="Fit?",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 230,275,"Low limit:    High Limit:"
 	TitleBox Info4 title="Low limit:    High Limit:",pos={230,262},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12
-//	DrawText 10,600,"Fit using least square fitting ?"
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
 	TitleBox Info5 title="Fit using least square fitting ?",pos={2,583},frame=0,fstyle=2, fixedSize=0,size={140,15},fSize=10,fColor=(0,0,52224)
-//	DrawText 4,640,"Results:"
 	TitleBox Info6 title="Results",pos={2,624},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=12,fColor=(0,0,52224)
-
-
-
-
 	//Experimental data input
 	CheckBox UseSMRData,pos={170,40},size={141,14},proc=IR1A_InputPanelCheckboxProc,title="SMR data"
 	CheckBox UseSMRData,variable= root:packages:Irena_UnifFit:UseSMRData, help={"Check, if you are using slit smeared data"}

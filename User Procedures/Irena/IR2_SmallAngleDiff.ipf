@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.08
-Constant IR2DversionNumber=1.087
+#pragma version = 1.09
+Constant IR2DversionNumber=1.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.087
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 cahnged term for storing data back to folder, Previously used  save, which confused users. 
 //1.08 added panel version control and made panel vertically scrollable. 
 //1.07 removed all font and font size from panel definitions to enable user control
 //1.06 fixed the PercusYevickSQFQ to actually use F(Q)^2 
@@ -422,7 +423,7 @@ Window IR2D_ControlPanel()
 	Button RemoveResultsFromGraph,pos={130,595},size={100,20}, proc=IR2D_InputPanelButtonProc,title="Remove tags", help={"Append results to graphs"}
 	Button Fit,pos={250,570},size={100,20}, proc=IR2D_InputPanelButtonProc,title="Fit", help={"Fit model data"}
 	Button ResetFit,pos={250,595},size={100,20}, proc=IR2D_InputPanelButtonProc,title="Revert back", help={"Fit model data"}
-	Button SaveDataInFoldr,pos={16,595},size={100,20}, proc=IR2D_InputPanelButtonProc,title="Save In Fldr", help={"Save model data to original folder"}
+	Button SaveDataInFoldr,pos={16,595},size={100,20}, proc=IR2D_InputPanelButtonProc,title="Store In Fldr", help={"Copy model data to original folder"}
 
 	CheckBox AppendResiduals,pos={10,620},size={100,14},proc=IR2D_InputPanelCheckboxProc2,title="Display Residuals?"
 	CheckBox AppendResiduals,variable= root:packages:Irena_SAD:AppendResiduals, help={"Check, if you want to display residuals in the graph"}

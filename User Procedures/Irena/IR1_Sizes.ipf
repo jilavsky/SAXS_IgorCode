@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.08
+#pragma version = 2.09
 Constant IR1RSversionNumber=2.07
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.09 fixed case when Scripting tool could get out of sync with the Sizes calling it.
 //2.08 Modified to handle only some of the form factors. This tool really should not handle Janus CoreShell Micelle. 
 //2.07 Added Scrolling buttons to move up down for small displays. 
 //2.06 Added ability to generate uncertainities for size distributions. Attempted to fix Regularization by forcing min values to be fraction of maximum of the dirttribution
@@ -639,10 +640,18 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 		STUseQRSData = GUseQRSdata
 		STUseResults=0
 		if(STUseIndra2Data+STUseResults+STUseQRSData!=1)
-			Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
+			//Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
 			STUseQRSData=1
 			GUseQRSdata=1
 			STUseResults=0
+			STUseIndra2Data = 0
+			GUseIndra2data = 0
+			STRUCT WMCheckboxAction CB_Struct
+			CB_Struct.eventcode = 2
+			CB_Struct.ctrlName = "UseQRSdata"
+			CB_Struct.checked = 1
+			CB_Struct.win = "IR1R_SizesInputPanel"
+			IR2C_InputPanelCheckboxProc(CB_Struct)		
 		endif
 		IR2S_UpdateListOfAvailFiles()
 	endif
@@ -2451,43 +2460,20 @@ end
 Window IR1R_SizesInputPanel() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(6,10,385,670) as "Size distribution"
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,15872,65280)
-//	DrawText 70,22,"Sizes input panel"
 	TitleBox MainTitle title="Sizes input panel",pos={90,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={250,24},fSize=20,fColor=(0,0,52224)
-//	DrawLine 8,33,100,33
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={72,3},pos={8,26},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawLine 8,209,349,209
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={340,3},pos={8,209},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawLine 140,407,348,407
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={210,3},pos={140,407},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawLine 8,487,348,487
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={340,3},pos={8,487},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawLine 8,583,348,583
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={148,3},pos={200,583},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawLine 9,291,350,291
 	TitleBox FakeLine6 title=" ",fixedSize=1,size={340,3},pos={8,285},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
-//	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,0,0)
-//	DrawText 5,54,"Data"
 	TitleBox Info1 title="Data : ",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=16,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,0,0)
-//	DrawText 90,310,"Fitting parameters"
 	TitleBox Info2 title="Fitting parameters",pos={5,290},frame=0,fstyle=1, fixedSize=1,size={150,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,0,0)
-//	DrawText 5,417,"Particle model"
 	TitleBox Info3 title="Particle model",pos={5,402},frame=0,fstyle=1, fixedSize=1,size={100,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,0,0)
-//	DrawText 8,509,"Method: "
 	TitleBox Info4 title="Method",pos={5,492},frame=0,fstyle=1, fixedSize=1,size={90,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (65280,0,0)
-//	DrawText 74,231,"Distribution parameters"
 	TitleBox Info5 title="Distribution parameters",pos={5,213},frame=0,fstyle=1, fixedSize=1,size={190,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,52224)
-//	DrawText 48,599,"Set range of data to fit with cursors!!"
 	TitleBox Info6 title="Set range of data to fit with cursors!!",pos={5,579},frame=0,fstyle=1, fixedSize=1,size={190,20},fSize=10,fColor=(0,0,52224)
-//	DrawText 20,650,"You need to store the results or they are lost!!"
 	TitleBox Info7 title="You need to store the results or they are lost!!",pos={5,643},frame=0,fstyle=1, fixedSize=1,size={250,20},fSize=10,fColor=(0,0,52224)
 
 	string UserDataTypes=""

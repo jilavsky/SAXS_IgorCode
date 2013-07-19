@@ -1,6 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.51
+#pragma version=2.52
 
+//define manual date and release verison 
+constant CurrentManualDateInSecs=  3448114446 			//this is mod date for Manual version 2.51
+constant CurrentVersionNumber = 2.51
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +11,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.52 Summer 2013 release. 
+//		modified Manual and Manuscript download routine to use http. ftp was failing, not sure why. 
+//		changed all web addresses to new (xray.aps.anl.gov)
 //2.51 added check for update to run every 30 days and remind users about proper citations.
 //2.51 added Guinier-Porod model (beta version of the tool)
 //2.50 major update, added uncertainity estimation to Sizes and Modeling II. Reflectivity changes. 
@@ -29,19 +35,12 @@
 //the full package should be available from www.uni.aps.anl.gov/~ilavsky
 //this package contains 
 // Igor functions for modeling of SAS from various distributions of scatterers...
-
 //Jan Ilavsky, February 2010
-
 //please, read Readme in the distribution zip file with more details on the program
 //report any problems to: ilavsky@aps.anl.gov
-
-
 //main functions.
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
 
-//define manul date
-constant CurrentManualDateInSecs=  3448114446 			//this is mod date for Manual version 2.51
-constant CurrentVersionNumber = 2.51
 
 
 Menu "SAS"
@@ -863,10 +862,25 @@ Function IR2_GetIrenaManuscript()
        	NewPath/O/Q tempPath, WhereAreProcedures
 		DoAlert 1,  "Local copy of manuscript not found. Should Igor try to download from APS public web site?"
 		if(V_Flag==1)
-			string url="ftp://ftp.xor.aps.anl.gov/pub/usaxs/IrenaManuscript.pdf"
-			FTPDownload /O/V=7/P=tempPath/Z url, "IrenaManuscript.pdf"	
-			if(V_flag!=0)	//ftp failed...
-				Abort "ftp of manuscript failed, please send e-mail to author to get your copy"
+//			string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/IrenaManuscript.pdf"
+//			FTPDownload /O/V=7/P=tempPath/Z url, "IrenaManuscript.pdf"	
+//			if(V_flag!=0)	//ftp failed...
+//				Abort "ftp of manuscript failed, please send e-mail to author to get your copy"
+//			endif
+			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
+			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/IrenaManuscript.pdf", "%20")		//handle just spaces here... 
+			String fileBytes, tempPathStr
+			Variable error = GetRTError(1)
+			 fileBytes = FetchURL(httpPath)
+			 error = GetRTError(1)
+			 sleep/S 0.2
+			 if(error!=0)
+				 print "Manuscript download FAILED, please download from directly from Irena web page "
+			else
+				Open/P=tempPath  refNum as "IrenaManuscript.pdf"
+				FBinWrite refNum, fileBytes
+				Close refNum
+				SetFileFolderInfo/P=tempPath/RO=0  "IrenaManuscript.pdf"		
 			endif
 		else
 			abort
@@ -923,15 +937,35 @@ Function IR2_OpenIrenaManual()
        	NewPath/O/Q tempPath, WhereAreProcedures
 		DoAlert 1,  "Local copy of manual not found or is obsolete. Should Igor try to download from APS public web site?"
 		if(V_Flag==1)
-			string url="ftp://ftp.xor.aps.anl.gov/pub/usaxs/Irena Manual.pdf"
-			FTPDownload /O/V=7/P=tempPath/Z url, "Irena Manual.pdf"	
-			if(V_flag!=0)	//ftp failed...
-				Abort "ftp of manual failed, please download the manual from web site and place into ..\Irena folder with the macros."
+			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
+			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/Irena Manual.pdf", "%20")		//handle just spaces here... 
+			String fileBytes, tempPathStr
+			Variable error = GetRTError(1)
+			 fileBytes = FetchURL(httpPath)
+			 error = GetRTError(1)
+			 sleep/S 0.2
+			 if(error!=0)
+				 print "Manual download FAILED, please download from directly from Irena web page "
+			else
+				Open/P=tempPath  refNum as "Irena Manual.pdf"
+				FBinWrite refNum, fileBytes
+				Close refNum
+				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
 			endif
+
+				//		if(V_Flag==1)
+				//			string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"
+				//			FTPDownload /O/V=7/P=tempPath/Z url, "Irena Manual.pdf"	
+				//			if(V_flag!=0)	//ftp failed...
+				//				Abort "ftp of manual failed, please download the manual from web site and place into ..\Irena folder with the macros."
+				//			endif
+				//		else
+				//			abort
+				//		endif
 		else
 			abort
 		endif
-		killPath tempPath
+		killPath tempPath	
 	endif
 	
 	if (stringmatch(IgorInfo(2), "*Macintosh*"))
@@ -959,14 +993,14 @@ end
 Function IR2_OpenHelpMoviePage()
 	DoAlert 1,"Your web browser will open page with help movies. OK? (You must have QuickTime installed)"
 	if(V_flag==1)
-		BrowseURL "http://usaxs.xor.aps.anl.gov/staff/ilavsky/IrenaHelpMovies.html"
+		BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaHelpMovies.html"
 	endif
 End
 
 Function IR2_OpenIrenaPage()
 	DoAlert 1,"Your web browser will Irena home page. OK?"
 	if(V_flag==1)
-		BrowseURL "http://usaxs.xor.aps.anl.gov/staff/ilavsky/irena.html"
+		BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html"
 	endif
 End
 
@@ -995,13 +1029,13 @@ Function IR1_AboutPanel()
 	DoWindow/C About_Irena_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro >=6.22A"
+	DrawText 23,30,"Irena macros for Igor Pro >=6.32A"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 100,60,"@ ANL, 2013"
 	DrawText 10,80,"release "+num2str(CurrentVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
-	DrawText 11,120,"http://usaxs.xor.aps.anl.gov/staff/ilavsky/irena.htm"
+	DrawText 11,120,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.htm"
 	SetDrawEnv fsize= 14, fstyle=1
 	DrawText 11,148,"Reference: Jan Ilavsky and Pete R. Jemian"
 	SetDrawEnv fsize= 14, fstyle=1
