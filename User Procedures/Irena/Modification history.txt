@@ -8,10 +8,14 @@ Changed back everything to rtGlobals=2, major issues in the code run were found.
 Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
 Form factors/Modeling II - Added Janus CoreShell micelles form factor.
 Form factors - removed algebraic form factors. Useless, use Unified ones if needed. 
-Form/Structure factors - created Igor help file with the description. Added call buttons from Modeling II GUI. Needs to be finished on Sizes. 
+Form/Structure factors - created Igor help file with the description. Added call buttons from Modeling II & Size Distribution GUIs. 
 Plotting tool I - added basic contour plot capabilities
-Unified fit - fixed invariant calculation for levels using RgCuttOff. these levels had previously calculated higher invariant value then correct. 
+Unified fit - fixed invariant calculation for levels using RgCuttOff. These levels had previously calculated higher invariant value then correct. 
+Unified fit - added optional panel (default is to show it) which let's users check fitting parameters before fitting is done same as in Modeling II. Modified code for Uncertainty evaluation and Scripting tool to handle this change and skip the panel. 
+Unified fit - removed FitRgCO option for all levels. I think it is not sensible to try to fit this.  
+Unified fit - local fits now will guess starting parameters from cursor position and will not use user input parameters (that kept failing with many users). 
 Data Manipulation I- fixed log rebining of data which was not working. Note, it overlays log-x scale over the data and then simply averages points in each bin. Similar to Nika.
+Data Manipulation II - checked behavior and fixed some GUI and behavioral problems, especially with Data subtraction. 
 ASCII Data Import - fixed log rebining and removed the parameter, which no one understood anyway. It is not being used now.
 ASCII Data Import - header information, when attached to wave note is now cleaned of any leading special characters and leading spaces. This allows USAXS exported ASCII data import with meaningful wave note and should work for everyone.   
 ASCII Data Import - Remove Int<0 is now Remove Int<=0. Note that on import the all Q<=0 points are also removed.  
@@ -21,6 +25,7 @@ Scripting tool - modified calling routines to avoid getting stale state of contr
 All tools - changed all cases when I used "Save in É" in buttons to "Store in É" to prevent confusion of users that this actually saves Igor experiment. 
 Main procedures - Changed all web addresses to new xray.aps.anl.gov, changed Manual and Manuscript download to http protocol, ftp was failing.  
 Guinier-Porod fit - finally local fits to smeared data seems to be under control. Updated manual with real description of the tool and elevated the version to 1.0, first release version. Need to finish some nice outputs, but I think it is finally useable even on smeared data. 
+Reflectivity - added option to calculate model at 5x denser Q points. Check and fixed some GUI problems. Need to update manual, it is obsolete, but do nto have time now. 
 
 
 

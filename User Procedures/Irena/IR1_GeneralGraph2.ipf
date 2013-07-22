@@ -1,14 +1,14 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.11
+#pragma version=2.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
-
 //to do: need to handle better the symbols and line types, limit for 8 types is just way too little. 
+
+//2.12 Minor improvement to Countour plot. 
 //2.11 added contour plot and basic handling
 //2.10 modified to handle different Intensity units for calibration 
 //2.09 added units to lookup string so we can propagate them forward. 
@@ -2025,7 +2025,7 @@ Function IR1P_FormatContourPlot()
 		SetAxis/A bottom
 	endif	
 	SVAR GraphXAxisName = root:Packages:GeneralplottingTool:GraphXAxisName
-	Label bottom GraphXAxisName
+	Label /W=PlotingToolContourGrph bottom GraphXAxisName
 	//Label left GraphYAxisName
 	if(!GraphLeftAxisAuto)
 		ContMinValue = GraphLeftAxisMin
@@ -2041,6 +2041,10 @@ Function IR1P_FormatContourPlot()
 
 	ModifyContour PlottingTool_Int_Contour labels=2*ContDisplayContValues
 	NVAR ContUseOnlyRedColor = root:Packages:GeneralplottingTool:ContUseOnlyRedColor
+	if(stringmatch(Graph3DColorScale,"none"))
+		Graph3DColorScale = "Rainbow"
+		PopupMenu ColorTable win=PlotingToolContourGrph, mode=2
+	endif
 	if(ContUseOnlyRedColor)
 		ModifyContour PlottingTool_Int_Contour labelRGB=(65535, 0, 0 )
 	else
@@ -2048,7 +2052,13 @@ Function IR1P_FormatContourPlot()
 	endif
 	NVAR ContLogContours = root:Packages:GeneralplottingTool:ContLogContours
 	ModifyContour PlottingTool_Int_Contour logLines=ContLogContours
-
+	NVAR GraphLogX = root:Packages:GeneralplottingTool:GraphLogX
+	if(GraphLogX)
+		ModifyGraph /W=PlotingToolContourGrph log(bottom)=1
+	else
+		ModifyGraph  /W=PlotingToolContourGrph log(bottom)=0
+	endif
+	Label/W=PlotingToolContourGrph left "Data Order"
 
 end
 

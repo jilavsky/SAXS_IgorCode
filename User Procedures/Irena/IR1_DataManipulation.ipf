@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.41
-constant IR3MversionNumber = 2.38
-constant IR1DversionNumber = 2.38
+#pragma version=2.43
+constant IR3MversionNumber = 2.39			//Data manipulation II panel version number
+constant IR1DversionNumber = 2.39			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,8 @@ constant IR1DversionNumber = 2.38
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.43 DM II - Fixed problems with Subtract data selection (stale values, controls misbehave). 
+//2.42 DM II - minor fix for error wave creating when naming seemed to fail.
 //2.41 fixed Log-rebinning of data. Note, it overlays log-x scale over the data and siply binns down (same as Nika, different than ASCII data import)
 //2.40 fix when in Manipulation II someone closes Items in selected folder panel. 
 //2.39 cxhanged back to rtGlobals=2, this is driving me nuts... 
@@ -2689,31 +2691,12 @@ Function IR3M_DataManipulationIIPanel()
 		popupmenu ErrorDataName, pos={500,500}, disable=1
 
 	Button DisplayTestFolder, pos={150,79},size={100,13}, proc=IR3M_DataManIIPanelButtonProc,title="Graph Test data", help={"Show selected folder data in graph"}
-
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 50,23,"Data manipulation II panel"
 	TitleBox MainTitle title="Data manipulation II panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-///	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,100,339,100
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,100},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Test folder"
 	TitleBox Info1 title="Test folder",pos={10,33},frame=0,fstyle=3, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,123,"Which data:"
 	TitleBox Info2 title="Which data:",pos={10,110},frame=0,fstyle=3, fixedSize=1,size={150,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,470,"Output Options:"
 	TitleBox Info6 title="Output Options:",pos={2,452},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
-	//SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	//DrawLine 16,300,339,300
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,452,339,452
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,450},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-
-
 
 //Waves_Xtemplate;Waves_Ytemplate;Waves_Etemplate
 	//Graph controls
@@ -2837,7 +2820,14 @@ Function IR3M_DataManipulationIIPanel()
 	setVariable Qmax, disable=1
 	setVariable QNumPoints, disable=1
 	Checkbox QlogScale, disable=1
-	
+		SVAR SubFldrNm = root:Packages:SASDataModIISubDta:DataFolderName
+		SVAR SubYWvNm = root:Packages:SASDataModIISubDta:IntensityWaveName
+		SVAR SubXWvNm = root:Packages:SASDataModIISubDta:QWavename
+		SVAR SubEWvNm = root:Packages:SASDataModIISubDta:ErrorWaveName
+	SubFldrNm="---"
+	SubYWvNm="---"
+	SubXWvNm="---"
+	SubEWvNm="---"
 	SetActiveSubwindow ##
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
 	
@@ -2967,11 +2957,6 @@ Function IR3M_DataManIITabProc(tca) : TabControl
 	NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
 	NVAR PassTroughProcessing=root:Packages:DataManipulationII:PassTroughProcessing
 
-//	CheckBox ScaleData,pos={200,325},size={80,14},title="Scale Data?",proc= IR3M_CheckProc
-//	CheckBox ScaleData,variable= root:Packages:DataManipulationII:ScaleData, help={"Scale Data - done last"}
-//	SetVariable ScaleDataByValue,variable= root:Packages:DataManipulationII:ScaleDataByValue,noProc, frame=1, disable=!(ScaleData)
-//	SetVariable ScaleDataByValue,pos={150,385},size={120,25},title="Scale by =", help={"How much to scale data by?"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
-
 	if(PassTroughProcessing+AverageNWaves+AverageWaves+NormalizeData+SubtractDataFromAll!=1)
 		PassTroughProcessing=1
 		AverageNWaves=0
@@ -3019,22 +3004,8 @@ Function IR3M_DataManIITabProc(tca) : TabControl
 				IR3M_DataManIINormUpdateVal()
 			elseif(tab==1)
 				SetWindow DataManipulationII#SubDta , hide =0
-			elseif(tab==2)
+			elseif(tab>=2)
 				SetWindow DataManipulationII#SubDta , hide =1
-//				CheckBox ScaleData,win=DataManipulationII,disable=1	
-//				SetVariable ScaleDataByValue, win=DataManipulationII, disable=1
-//				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=1
-//				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=1
-//				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=1
-//				CheckBox GenerateMinMax win=DataManipulationII,disable=1
-//				CheckBox NormalizeDataToData , win=DataManipulationII,disable=1
-//				SetVariable NormalizeDataToValue , win=DataManipulationII,disable=1
-//				SetVariable NormalizeDataQmin , win=DataManipulationII,disable=1
-//				SetVariable NormalizeDataQmax , win=DataManipulationII,disable=1				
-//				CheckBox NormalizeData , win=DataManipulationII,disable=1				
-//				CheckBox SubtractDataFromAll, win=DataManipulationII,disable=1		
-//				CheckBox AverageNWaves,win=DataManipulationII,disable=1		
-//				CheckBox AverageWaves,win=DataManipulationII,disable=1	
 			endif
 			
 			
@@ -3939,7 +3910,7 @@ Function IR3M_ProcessTheDataFunction()
 		Wave/Z SubtrWvX = $(SubFldrNm+possiblyquoteName(SubXWvNm))
 		Wave/Z SubtrWvY = $(SubFldrNm+possiblyquoteName(SubYWvNm))
 		if(!WaveExists(SubtrWvX)||!WaveExists(SubtrWvY))
-			abort "Bad call to Subtract waves, selected wave to subtract does not exists"
+			abort "Waves which are suppose to be subtracted do not exists. Please, select data to subtract or restart the tool if it keeps failing. "
 		endif
 		Wave/Z SubtrWvE= $(SubFldrNm+possiblyquoteName(SubEWvNm))
 		if(!WaveExists(SubtrWvE))
@@ -4219,7 +4190,7 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etm
 
 				if(CreateErrors)
 					if(!WaveExists(TempSubtractedEWv0123))
-						Duplicate TempSubtractedEWv0123, TempSubtractedEWv0123
+						Duplicate/O TempSubtractedYWv0123, TempSubtractedEWv0123
 					endif
 					if(CreateSQRTErrors)			
 						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0, 0,1,3)
@@ -4253,6 +4224,21 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etm
 				SVAR OutYWvNm = root:Packages:DataManipulationII:ResultsIntWaveName
 				SVAR OutXWvNm = root:Packages:DataManipulationII:ResultsQvecWaveName
 				SVAR OutEWvNm = root:Packages:DataManipulationII:ResultsErrWaveName
+				if(strlen(OutEWvNm)<1)		//no name specified..
+					if(stringmatch(OutYWvNm,"SMR_Int"))
+						OutEWvNm="SMR_Error"
+					elseif(stringmatch(OutYWvNm,"DSM_Int"))
+						OutEWvNm="DSM_Error"
+					elseif(stringmatch(OutYWvNm,"M_DSM_Int"))
+						OutEWvNm="M_DSM_Error"
+					elseif(stringmatch(OutYWvNm,"M_SMR_Int"))
+						OutEWvNm="M_SMR_Error"
+					elseif(stringmatch(OutYWvNm,"r*")&&stringmatch(OutXWvNm,"q*"))
+						OutEWvNm="s"+OutYWvNm[1,inf]
+					else
+						OutEWvNm="NewlygeneratedError"
+					endif
+				endif
 
 				Wave/Z testWvX=$(IN2G_CheckFldrNmSemicolon(OutFldrNm,1)+PossiblyQuoteName(OutXWvNm))
 				Wave/Z testWvY=$(IN2G_CheckFldrNmSemicolon(OutFldrNm,1)+PossiblyQuoteName(OutYWvNm))

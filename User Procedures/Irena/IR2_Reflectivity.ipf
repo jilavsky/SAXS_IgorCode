@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
-Constant IR2RversionNumber=1.12
+#pragma version=1.14
+Constant IR2RversionNumber=1.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -21,6 +21,7 @@ Constant IR2RversionNumber=1.12
 //1.11 added Motofit data types for convenience. 
 //1.12 modified panel to be scrollable
 //1.13 modifed to remove xop dependence. Now it will compile without xop but complain on run, if xop is not installed. 
+//1.14 added option to oversample the data, with this choise selected the model will have 5x as many points. 
 
 Function IR2R_ReflectivitySimpleToolMain()
 
@@ -79,60 +80,27 @@ Window IR2R_ReflSimpleToolMainPanel()
 
 
 	SetDrawLayer UserBack
-//	SetDrawEnv linefgc= (65535,65535,65535),fillfgc= (60928,60928,60928)
-//	DrawRect 1,156,387,193
-//	SetDrawLayer UserBack
-//	SetDrawEnv fillfgc= (65280,65280,32768)
-//	DrawRect 1,570,387,615
-//	SetDrawEnv fillfgc= (32768,65280,32768)
-//	DrawRect 1,501,387,569
-//	SetDrawEnv fillfgc= (48896,59904,65280)
-//	DrawRect 1,235,387,264
-
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 58,28,"Simple reflectivity tool"
 	TitleBox MainTitle title="Simple reflectivity tool",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,194,339,194
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,191},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 2,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,28},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 20,fstyle= 1, textrgb= (52224,0,0)
-//	DrawText 5,217,"Model input:"
 	TitleBox Info2 title="Model input:",pos={10,196},frame=0,fstyle=3, fixedSize=1,size={150,20},fSize=14
-//	SetDrawEnv fsize= 12, fstyle= 1
-//	DrawText 187,303,"Fit? Link?"
 	TitleBox Info3 title="Fit? Link?  Low L/LinkTo  High L/Ratio",pos={190,286},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=10
-//	SetDrawEnv fsize= 10, fstyle= 1
-//	DrawText 245,303,"Low L/LinkTo   High L/Ratio"
-//	TitleBox Info4 title="Low L/LinkTo   High L/Ratio",pos={245,300},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12
-//	SetDrawEnv fsize= 16,fstyle= 1, textrgb= (0,0,52224)
-//	DrawText 10,258,"Top environment "
 	TitleBox Info5 title="Top environment",pos={2,237},frame=0,fstyle=3,fSize=14,fColor=(0,0,52224)
 	TitleBox Info5 fixedSize=1,size={384,27},anchor=LC,labelBack=(16385,65535,65535)
-//	SetDrawEnv fsize= 16,fstyle= 1, textrgb= (0,0,52224)
-//	DrawText 10,520,"Substrate "
 	TitleBox Info6 title="Substrate",frame=0,fstyle=3, fixedSize=1,fSize=14,fColor=(0,0,52224), pos={2,500},size={385,70}, labelBack=(32768,65280,32768)
 	TitleBox Info8 title=" ",frame=0,fstyle=3, fixedSize=1,fSize=14,fColor=(0,0,52224), pos={2,570},size={385,43}, labelBack=(65280,65280,32768)
-
-//	SetDrawEnv linebgc= (56576,56576,56576)
-//	SetDrawEnv linepat= 4
-//	SetDrawEnv fillpat= 2
-//	SetDrawEnv fillfgc= (56576,56576,56576)
-//	DrawRect 10,380,375,403
-//	SetDrawEnv fsize= 12
-//	DrawText 20,398,"SLD units - either * 10^-6 [1/A^2] or * 10^10  [1/cm^2]"
 	TitleBox Info7 title="SLD units - either * 10^-6 [1/A^2] or * 10^10  [1/cm^2]",pos={10,386},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=10
 
 
 	//************************
 	Button DrawGraphs,pos={270,39},size={100,18}, proc=IR2R_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}, fColor=(65280,65280,48896)
 
-	CheckBox ZeroAtTheSubstrate,pos={10,160},size={63,14},proc=IR2R_InputPanelCheckboxProc,title="0 at the substrate?"
+	CheckBox OversampleModel,pos={10,148},size={63,14},proc=IR2R_InputPanelCheckboxProc,title="Oversample model?"
+	CheckBox OversampleModel,variable= root:Packages:Refl_SimpleTool:OversampleModel, help={"Check if you want to calculate model for 5x as many points"}
+
+	CheckBox ZeroAtTheSubstrate,pos={10,162},size={63,14},proc=IR2R_InputPanelCheckboxProc,title="0 at the substrate?"
 	CheckBox ZeroAtTheSubstrate,variable= root:Packages:Refl_SimpleTool:ZeroAtTheSubstrate, help={"Check if you want to Define SLD profile with 0 at the substrate"}
-	CheckBox L1AtTheBottom,pos={10,175},size={63,14},proc=IR2R_InputPanelCheckboxProc,title="L1 at the substrate?"
+	CheckBox L1AtTheBottom,pos={10,176},size={63,14},proc=IR2R_InputPanelCheckboxProc,title="L1 at the substrate?"
 	CheckBox L1AtTheBottom,variable= root:Packages:Refl_SimpleTool:L1AtTheBottom, help={"Check if you want to Define SLD profile with Layer 1 at the substrate, else Layer 1 is at the top"}
 
 
@@ -345,56 +313,6 @@ End
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
-Function IR2R_ReflSliderProc(sa) : SliderControl
-	STRUCT WMSliderAction &sa
-
-	//print sa.eventCode
-
-	switch( sa.eventCode )
-		//Variable curval = sa.curval
-		case -1: // control being killed
-			break
-		case 4 : // mouse up
-				string CtrlName=sa.ctrlName
-				string LLName=CtrlName[0,13]+"LL"+CtrlName[16,inf]
-				string ULName=CtrlName[0,13]+"UL"+CtrlName[16,inf]
-				NVAR LLVal=$("root:Packages:Refl_SimpleTool:"+LLName)
-				NVAR ULVal=$("root:Packages:Refl_SimpleTool:"+ULName)
-				LLVal = sa.curval * 0.5
-				ULVal = sa.curVal * 1.5
-				Execute("Slider "+CtrlName+",limits={"+num2str(LLVal)+","+num2str(ULVal)+",0}")
-				NVAR AutoUpdate=root:Packages:Refl_SimpleTool:AutoUpdate
-				if (AutoUpdate)
-					IR2R_UpdateLinkedVariables()
-					IR2R_CalculateModelResults()
-					IR2R_CalculateSLDProfile()
-					IR2R_GraphModelResults()	
-					DoWindow IR2R_ReflSimpleToolMainPanel
-					if(V_Flag)
-						DoWIndow/F IR2R_ReflSimpleToolMainPanel
-					endif	
-				endif
-		default:
-			if( sa.eventCode & 1 ) // value set
-				NVAR AutoUpdate=root:Packages:Refl_SimpleTool:AutoUpdate
-				//print "recalculate"
-				if (AutoUpdate)
-					IR2R_UpdateLinkedVariables()
-					IR2R_CalculateModelResults()
-					IR2R_CalculateSLDProfile()
-					//IR2R_GraphModelResults()		
-					DoWindow IR2R_ReflSimpleToolMainPanel
-					if(V_Flag)
-						DoWIndow/F IR2R_ReflSimpleToolMainPanel
-					endif	
-				endif
-				
-			endif
-			break
-	endswitch
-
-	return 0
-End
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
@@ -581,7 +499,7 @@ static Function IR2R_InitializeSimpleTool()
 	ListOfVariables+="SLD_Real_Top;SLD_Imag_Top;SLD_Real_Bot;SLD_Imag_Bot;ZeroAtTheSubstrate;UpdateDuringFitting;"
 	ListOfVariables+="Roughness_Bot;FitRoughness_Bot;Roughness_BotLL;Roughness_BotUL;Roughness_BotError;"
 	ListOfVariables+="Background;BackgroundStep;FitBackground;BackgroundLL;BackgroundUL;BackgroundError;"
-	ListOfVariables+="L1AtTheBottom;"
+	ListOfVariables+="L1AtTheBottom;OversampleModel;"
 
 	ListOfVariables+="Res_DeltaLambdaOverLambda;Res_DeltaLambda;Res_Lambda;Res_SourceDivergence;Res_DetectorSize;Res_DetectorDistance;"
 	ListOfVariables+="Res_DetectorAngularResolution;Res_sampleSize;Res_beamHeight;"
@@ -1555,7 +1473,7 @@ Function IR2R_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	NVAR AutoUpdate=root:Packages:Refl_SimpleTool:AutoUpdate
-	if ( (stringmatch(ctrlName,"Link*") || cmpstr(ctrlName,"AutoUpdate")==0 ||  cmpstr(ctrlName,"L1AtTheBottom")==0 ||  cmpstr(ctrlName,"ZeroAtTheSubstrate")==0 ) && AutoUpdate)
+	if ( (stringmatch(ctrlName,"OversampleModel")  || (stringmatch(ctrlName,"Link*") || cmpstr(ctrlName,"AutoUpdate")==0 ||  cmpstr(ctrlName,"L1AtTheBottom")==0 ||  cmpstr(ctrlName,"ZeroAtTheSubstrate")==0 ) && AutoUpdate))
 		IR2R_CalculateModelResults()
 		IR2R_CalculateSLDProfile()
 		IR2R_GraphModelResults()		
@@ -1567,7 +1485,6 @@ Function IR2R_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Execute ("PopupMenu ResolutionWaveName, disable=!root:Packages:Refl_SimpleTool:UseResolutionWave, win=IR2R_ReflSimpleToolMainPanel")
 		Execute ("SetVariable Resolution, disable=root:Packages:Refl_SimpleTool:UseResolutionWave, win=IR2R_ReflSimpleToolMainPanel")
 	endif
-
 	if (cmpstr(ctrlName,"ZeroAtTheSubstrate")==0)
 		DoWindow IR2R_SLDProfile
 		if(V_Flag)
@@ -2342,12 +2259,20 @@ static Function IR2R_CalculateModelResults()
 		endfor
 	endif
 
-	Duplicate/O OriginalQvector, ModelQvector, ModelIntensity
 	NVAR Resoln=root:Packages:Refl_SimpleTool:Resoln
+	NVAR OversampleModel=root:Packages:Refl_SimpleTool:OversampleModel
 	NVAR UseResolutionWave=root:Packages:Refl_SimpleTool:UseResolutionWave
 	SVAR ResolutionWaveName=root:Packages:Refl_SimpleTool:ResolutionWaveName
 	SVAR DataFolderName=root:Packages:Refl_SimpleTool:DataFolderName
 	Wave/Z ResolutionWave=$(DataFolderName+ResolutionWaveName)
+	if(OversampleModel)
+		Make/O/N=(5*numpnts(OriginalQvector)) ModelQvector, ModelIntensity
+		ModelQvector  = OriginalQvector[p/5]
+		
+	else
+		Duplicate/O OriginalQvector, ModelQvector, ModelIntensity
+	endif
+
 	if(UseResolutionWave)	
 		if(!WaveExists(ResolutionWave))
 			abort "Resolution wave does not exist"
@@ -3400,3 +3325,68 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
+
+
+
+
+Function IR2R_ReflSliderProc(sa) : SliderControl
+	STRUCT WMSliderAction &sa
+
+	//print sa.eventCode
+
+	switch( sa.eventCode )
+		//Variable curval = sa.curval
+		case -1: // control being killed
+			break
+		case 4 : // mouse up
+				string CtrlName=sa.ctrlName
+				string LLName=CtrlName[0,13]+"LL"+CtrlName[16,inf]
+				string ULName=CtrlName[0,13]+"UL"+CtrlName[16,inf]
+				NVAR LLVal=$("root:Packages:Refl_SimpleTool:"+LLName)
+				NVAR ULVal=$("root:Packages:Refl_SimpleTool:"+ULName)
+				if(sa.curval==0)
+					if(stringmatch(CtrlName,"*Thickness*"))
+						sa.curval = 10
+					elseif(stringmatch(CtrlName,"*_Real_*"))
+						sa.curval = 1
+					elseif(stringmatch(CtrlName,"*_Imag_*"))
+						sa.curval = 1e-5
+					elseif(stringmatch(CtrlName,"*Roughness*"))
+						sa.curval = 1
+					endif
+				endif
+				LLVal = sa.curval * 0.5
+				ULVal = sa.curVal * 1.5
+				Execute("Slider "+CtrlName+",limits={"+num2str(LLVal)+","+num2str(ULVal)+",0}")
+				NVAR AutoUpdate=root:Packages:Refl_SimpleTool:AutoUpdate
+				if (AutoUpdate)
+					IR2R_UpdateLinkedVariables()
+					IR2R_CalculateModelResults()
+					IR2R_CalculateSLDProfile()
+					IR2R_GraphModelResults()	
+					DoWindow IR2R_ReflSimpleToolMainPanel
+					if(V_Flag)
+						DoWIndow/F IR2R_ReflSimpleToolMainPanel
+					endif	
+				endif
+		default:
+			if( sa.eventCode & 1 ) // value set
+				NVAR AutoUpdate=root:Packages:Refl_SimpleTool:AutoUpdate
+				//print "recalculate"
+				if (AutoUpdate)
+					IR2R_UpdateLinkedVariables()
+					IR2R_CalculateModelResults()
+					IR2R_CalculateSLDProfile()
+					//IR2R_GraphModelResults()		
+					DoWindow IR2R_ReflSimpleToolMainPanel
+					if(V_Flag)
+						DoWIndow/F IR2R_ReflSimpleToolMainPanel
+					endif	
+				endif
+				
+			endif
+			break
+	endswitch
+
+	return 0
+End

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.07
+#pragma version=2.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.09 changed local fits to guess needed starting parameters from the values selected by cursors. 
+//2.08 changes to provide optional panel with review of fitting parameters before fitting   
 //2.07 fix to invariant calculations for levels which are using RgCuttOff. The invariant was incorrectly calculated for these levels before. 
 //2.06 minor fix for Igor 6.30 
 //2.05 adds COnfidence evaluation tool
@@ -274,12 +276,13 @@ Function IR1A_FitLocalPorod(Level)
 	NVAR BLowLimit=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"BLowLimit")
 	NVAR BHighLimit=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"BHighLimit")
 
+	Pp = abs((log(OriginalIntensity[pcsr(A)])-log(OriginalIntensity[pcsr(B)]))/(log(OriginalQvector[pcsr(B)])-log(OriginalQvector[pcsr(A)])))
 		
 	variable LocalB
 	if (MassFractal)
 		LocalB=(G*Pp/Rg^Pp)*exp(gammln(Pp/2))
 	else
-		LocalB=B
+		LocalB=OriginalIntensity[pcsr(A)]*(OriginalQvector[pcsr(A)])^Pp
 	endif
 	
 	if (!FitB && !FitP)
@@ -401,14 +404,16 @@ Function IR1A_FitLocalGuinier(Level)
 	IR1A_SetErrorsToZero()
 //	Wave w=root:Packages:Irena_UnifFit:CoefficientInput
 //	Wave/T CoefNames=root:Packages:Irena_UnifFit:CoefNames		//text wave with names of parameters
+	variable LocalRg = 2*pi/((OriginalQvector[pcsr(A)]+OriginalQvector[pcsr(B)])/2)
+	variable LocalG = (OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
 
 	Make/D/O/N=2 New_FitCoefficients, CoefficientInput, LocalEwave
 	Make/O/T/N=2 CoefNames
-	New_FitCoefficients[0] = G
-	New_FitCoefficients[1] = Rg
-	LocalEwave[0]=(G/20)
-	LocalEwave[1]=(Rg/20)
-	CoefficientInput[0]={G,Rg}
+	New_FitCoefficients[0] = LocalG
+	New_FitCoefficients[1] = LocalRg
+	LocalEwave[0]=(LocalG/20)
+	LocalEwave[1]=(LocalRg/20)
+	CoefficientInput[0]={LocalG,LocalRg}
 	CoefNames={"Level"+num2str(level)+"G","Level"+num2str(level)+"Rg"}
 //	Make/O/T/N=0 T_Constraints
 //	T_Constraints=""
@@ -929,7 +934,7 @@ Function IR1A_UpdatePorodSfcandInvariant()
 			SurfaceToVolRat=NaN
 		endif
 		Invariant = Invariant * 10^24		//and now it is in cm-4
-		print Invariant
+//		print Invariant
 	endfor
 	
 	KillWaves/Z SurfToVolQvec, SurfToVolInt, SurfToVolInvariant
@@ -4348,6 +4353,9 @@ static Function IR1A_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	IR1A_ConEvBackupCurrentSettings(BackupFilesLocation)
 	//calculate chiSquare target if users asks for it..
 	IR1A_ConfEvalCalcChiSqTarget()
+	NVAR SkipFitControlDialog=root:Packages:Irena_UnifFit:SkipFitControlDialog
+	variable oldSkipFitControlDialog = SkipFitControlDialog
+	SkipFitControlDialog = 1
 	NVAR ConfEvAutoCalcTarget=root:Packages:Irena_UnifFit:ConfEvAutoCalcTarget
 	NVAR ConfEvTargetChiSqRange = root:Packages:Irena_UnifFit:ConfEvTargetChiSqRange
 	variable i, currentParValue, tempi
@@ -4509,6 +4517,7 @@ static Function IR1A_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	
 		IR1A_ConEvAnalyzeEvalResults(ParamName, SortForAnalysis,FittedParameter)
 	endif	//end of parameters analysis
+	SkipFitControlDialog = oldSkipFitControlDialog
 	DoWIndow IR1A_ConfEvaluationPanel
 	if(V_Flag)
 		DoWIndow/F IR1A_ConfEvaluationPanel
