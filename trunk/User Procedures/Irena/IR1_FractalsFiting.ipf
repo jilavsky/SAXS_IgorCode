@@ -153,7 +153,7 @@ Function IR1V_ConstructTheFittingCommand()
 //Mass fractal 1 part	
 	if (MassFr1_FitPhi && UseMassFract1)		
 		if (MassFr1_PhiMin > MassFr1_Phi || MassFr1_PhiMax < MassFr1_Phi)
-			abort "Maas fractal 1 Phi limits set incorrenctly, fix the limits before fitting"
+			abort "Maas fractal 1 Phi limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -164,7 +164,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (MassFr1_FitRadius && UseMassFract1)	
 		if (MassFr1_RadiusMin > MassFr1_Radius || MassFr1_RadiusMax < MassFr1_Radius)
-			abort "Mass fractal 1 Radius limits set incorrenctly, fix the limits before fitting"
+			abort "Mass fractal 1 Radius limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -175,7 +175,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (MassFr1_FitDv && UseMassFract1)		
 		if (MassFr1_DvMin > MassFr1_Dv || MassFr1_DvMax < MassFr1_Dv)
-			abort "Level 1 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 P limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -186,7 +186,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (MassFr1_FitKsi && UseMassFract1)	
 		if (MassFr1_KsiMin > MassFr1_Ksi || MassFr1_KsiMax < MassFr1_Ksi)
-			abort "Mass fractal 1 Ksi limits set incorrenctly, fix the limits before fitting"
+			abort "Mass fractal 1 Ksi limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -201,7 +201,7 @@ Function IR1V_ConstructTheFittingCommand()
 
 	if (MassFr2_FitPhi && UseMassFract2)		
 		if (MassFr2_PhiMin > MassFr2_Phi || MassFr2_PhiMax < MassFr2_Phi)
-			abort "Mass fractal 1 Phi limits set incorrenctly, fix the limits before fitting"
+			abort "Mass fractal 1 Phi limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -212,7 +212,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (MassFr2_FitRadius && UseMassFract2)	
 		if (MassFr2_RadiusMin > MassFr2_Radius || MassFr2_RadiusMax < MassFr2_Radius)
-			abort "Mass fractal 1 Radius limits set incorrenctly, fix the limits before fitting"
+			abort "Mass fractal 1 Radius limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -223,7 +223,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (MassFr2_FitDv && UseMassFract2)		
 		if (MassFr2_DvMin > MassFr2_Dv || MassFr2_DvMax < MassFr2_Dv)
-			abort "Level 1 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 P limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -234,7 +234,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (MassFr2_FitKsi && UseMassFract2)	
 		if (MassFr2_KsiMin > MassFr2_Ksi || MassFr2_KsiMax < MassFr2_Ksi)
-			abort "Mass fractal 1 Ksi limits set incorrenctly, fix the limits before fitting"
+			abort "Mass fractal 1 Ksi limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -250,7 +250,7 @@ Function IR1V_ConstructTheFittingCommand()
 //Surface fractal 1 part	
 	if (SurfFr1_FitSurface && UseSurfFract1)		//are we fitting distribution 1 volume?
 		if (SurfFr1_SurfaceMin > SurfFr1_Surface || SurfFr1_SurfaceMax < SurfFr1_Surface)
-			abort "Surface Fractal 1 Surface limits set incorrenctly, fix the limits before fitting"
+			abort "Surface Fractal 1 Surface limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -261,7 +261,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (SurfFr1_FitKsi && UseSurfFract1)		//are we fitting distribution 1 location?
 		if (SurfFr1_KsiMin > SurfFr1_Ksi || SurfFr1_KsiMax < SurfFr1_Ksi)
-			abort "Surface fractal 1 Ksi limits set incorrenctly, fix the limits before fitting"
+			abort "Surface fractal 1 Ksi limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -272,7 +272,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (SurfFr1_FitDS && UseSurfFract1)		//are we fitting distribution 1 location?
 		if (SurfFr1_DSMin > SurfFr1_DS || SurfFr1_DSMax < SurfFr1_DS)
-			abort "Surface fractal 1 DS limits set incorrenctly, fix the limits before fitting"
+			abort "Surface fractal 1 DS limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -284,7 +284,7 @@ Function IR1V_ConstructTheFittingCommand()
 //Surface fractal 2 part	
 	if (SurfFr2_FitSurface && UseSurfFract2)		//are we fitting distribution 1 volume?
 		if (SurfFr2_SurfaceMin > SurfFr2_Surface || SurfFr2_SurfaceMax < SurfFr2_Surface)
-			abort "Surface Fractal 1 Surface limits set incorrenctly, fix the limits before fitting"
+			abort "Surface Fractal 1 Surface limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -295,7 +295,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (SurfFr2_FitKsi && UseSurfFract2)		//are we fitting distribution 1 location?
 		if (SurfFr2_KsiMin > SurfFr2_Ksi || SurfFr2_KsiMax < SurfFr2_Ksi)
-			abort "Surface fractal 1 Ksi limits set incorrenctly, fix the limits before fitting"
+			abort "Surface fractal 1 Ksi limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
@@ -306,7 +306,7 @@ Function IR1V_ConstructTheFittingCommand()
 	endif
 	if (SurfFr2_FitDS && UseSurfFract2)		//are we fitting distribution 1 location?
 		if (SurfFr2_DSMin > SurfFr2_DS || SurfFr2_DSMax < SurfFr2_DS)
-			abort "Surface fractal 1 DS limits set incorrenctly, fix the limits before fitting"
+			abort "Surface fractal 1 DS limits set incorrectly, fix the limits before fitting"
 		endif
 		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints

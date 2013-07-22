@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.03
+#pragma version=2.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,9 +7,10 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.01 added license for ANL
-//2.02 user found bug int eh code which caused fitting of RgCo parameters from not used levels. 
+//2.04 changes to provide user with fit parameters review panel before fitting
 //2.03 added NoLimits option
+//2.02 user found bug int eh code which caused fitting of RgCo parameters from not used levels. 
+//2.01 added license for ANL
 
 
 //*****************************************************************************************************************
@@ -198,17 +199,22 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	NVAR  Level5Corelations=root:Packages:Irena_UnifFit:Level5Corelations
 	NVAR  Level5MassFractal=root:Packages:Irena_UnifFit:Level5MassFractal
 	NVAR  Level5LinkRGCO=root:Packages:Irena_UnifFit:Level5LinkRGCO
+
+
+	NVAR  SkipFitControlDialog=root:Packages:Irena_UnifFit:SkipFitControlDialog
+
+
 ///now we can make various parts of the fitting routines...
 //
 	//First check the reasonability of all parameters
 
 	IR1A_CorrectLimitsAndValues()
-	if(UseNoLimits)			//this also fixes limits so user does not have to worry about them, since they arenot being used for fitting anyway. 
+	if(UseNoLimits)			//this also fixes limits so user does not have to worry about them, since they are not being used for fitting anyway. 
 		IR1A_FixLimits()
 	endif
 
 	//
-	Make/D/N=0/O W_coef
+	Make/D/N=0/O W_coef, LowLimit, HighLimit
 	Make/T/N=0/O CoefNames, LowLimCoefName, HighLimCoefNames
 	Make/D/O/T/N=0 T_Constraints
 	T_Constraints=""
@@ -217,9 +223,11 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	//the following was commnted out for unknown reason before 6/28/09 and rtherefore background could nto be fitted. 
 	//fixed by JIL on this date... 
 	if (FitSASBackground)		//are we fitting background?
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames //, T_Constraints
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit  //, T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=SASBackground
 		CoefNames[numpnts(CoefNames)-1]="SASBackground"
+		LowLimit[numpnts(W_Coef)-1]=NaN
+		HighLimit[numpnts(W_Coef)-1]=NaN
 		LowLimCoefName[numpnts(CoefNames)-1]=""
 		HighLimCoefNames[numpnts(CoefNames)-1]=""
 	//	T_Constraints[0] = {"K"+num2str(numpnts(W_coef)-1)+" > 0"}
@@ -227,11 +235,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 //Level1 part	
 	if (Level1FitRg && NumberOfLevels>0)		//are we fitting distribution 1 Rg?
 		if (Level1RgLowLimit > Level1Rg || Level1RgHighLimit < Level1Rg)
-			abort "Level 1 Rg limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 Rg limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1Rg
+		LowLimit[numpnts(W_Coef)-1]=Level1RgLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1RgHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level1Rg"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -240,11 +250,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level1FitG && NumberOfLevels>0)		//are we fitting distribution 1 location?
 		if (Level1GLowLimit > Level1G || Level1GHighLimit < Level1G)
-			abort "Level 1 G limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 G limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1G
+		LowLimit[numpnts(W_Coef)-1]=Level1GLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1GHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level1G"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -253,12 +265,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level1FitP && NumberOfLevels>0)		//are we fitting distribution 1 location?
 		if (Level1PLowLimit > Level1P || Level1PHighLimit < Level1P)
-			abort "Level 1 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 P limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1P
 		CoefNames[numpnts(CoefNames)-1]="Level1P"
+		LowLimit[numpnts(W_Coef)-1]=Level1PLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1PHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level1PLowLimit)}
@@ -266,11 +280,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level1FitB && NumberOfLevels>0)		//are we fitting distribution 1 location?
 		if (Level1BLowLimit > Level1B || Level1BHighLimit < Level1B)
-			abort "Level 1 B limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 B limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1B
+		LowLimit[numpnts(W_Coef)-1]=Level1BLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1BHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level1B"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -279,11 +295,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level1FitETA && Level1Corelations && NumberOfLevels>0)		//are we fitting distribution 1 location?
 		if (Level1ETALowLimit > Level1ETA || Level1ETAHighLimit < Level1ETA)
-			abort "Level 1 ETA limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 ETA limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1ETA
+		LowLimit[numpnts(W_Coef)-1]=Level1ETALowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1ETAHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level1ETA"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -292,12 +310,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level1FitPACK && Level1Corelations && NumberOfLevels>0)		//are we fitting distribution 1 location?
 		if (Level1PACKLowLimit > Level1PACK || Level1PACKHighLimit < Level1PACK)
-			abort "Level 1 PACK limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 PACK limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1PACK
 		CoefNames[numpnts(CoefNames)-1]="Level1PACK"
+		LowLimit[numpnts(W_Coef)-1]=Level1PACKLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1PACKHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level1PACKLowLimit)}
@@ -305,11 +325,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level1FitRGCO && NumberOfLevels>0 && !Level1LinkRGCO)		//are we fitting distribution 1 location?
 		if (Level1RGCOLowLimit > Level1RGCO || Level1RGCOHighLimit < Level1RGCO)
-			abort "Level 1 RGCO limits set incorrenctly, fix the limits before fitting"
+			abort "Level 1 RGCO limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level1RGCO
+		LowLimit[numpnts(W_Coef)-1]=Level1RGCOLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level1RGCOHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level1RGCO"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -320,11 +342,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 //Level2 part	
 	if (Level2FitRg && NumberOfLevels>1)		//are we fitting distribution 1 volume?
 		if (Level2RgLowLimit > Level2Rg || Level2RgHighLimit < Level2Rg)
-			abort "Level 2 Rg limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 Rg limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2Rg
+		LowLimit[numpnts(W_Coef)-1]=Level2RgLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2RgHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level2Rg"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -333,12 +357,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level2FitG && NumberOfLevels>1)		//are we fitting distribution 1 location?
 		if (Level2GLowLimit > Level2G || Level2GHighLimit < Level2G)
-			abort "Level 2 G limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 G limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2G
 		CoefNames[numpnts(CoefNames)-1]="Level2G"
+		LowLimit[numpnts(W_Coef)-1]=Level2GLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2GHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level2GLowLimit)}
@@ -346,12 +372,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level2FitP && NumberOfLevels>1)		//are we fitting distribution 1 location?
 		if (Level2PLowLimit > Level2P || Level2PHighLimit < Level2P)
-			abort "Level 2 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 P limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2P
 		CoefNames[numpnts(CoefNames)-1]="Level2P"
+		LowLimit[numpnts(W_Coef)-1]=Level2PLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2PHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level2PLowLimit)}
@@ -359,12 +387,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level2FitB && NumberOfLevels>1)		//are we fitting distribution 1 location?
 		if (Level2BLowLimit > Level2B || Level2BHighLimit < Level2B)
-			abort "Level 2 B limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 B limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2B
 		CoefNames[numpnts(CoefNames)-1]="Level2B"
+		LowLimit[numpnts(W_Coef)-1]=Level2BLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2BHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level2BLowLimit)}
@@ -372,11 +402,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level2FitETA && Level2Corelations && NumberOfLevels>1)		//are we fitting distribution 1 location?
 		if (Level2ETALowLimit > Level2ETA || Level2ETAHighLimit < Level2ETA)
-			abort "Level 2 ETA limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 ETA limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2ETA
+		LowLimit[numpnts(W_Coef)-1]=Level2ETALowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2ETAHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level2ETA"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -385,12 +417,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level2FitPACK && Level2Corelations && NumberOfLevels>1)		//are we fitting distribution 1 location?
 		if (Level2PACKLowLimit > Level2PACK || Level2PACKHighLimit < Level2PACK)
-			abort "Level 2 PACK limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 PACK limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2PACK
 		CoefNames[numpnts(CoefNames)-1]="Level2PACK"
+		LowLimit[numpnts(W_Coef)-1]=Level2PACKLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2PACKHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level2PACKLowLimit)}
@@ -398,12 +432,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level2FitRGCO && NumberOfLevels>1 && !Level2LinkRGCO)		//are we fitting distribution 1 location?
 		if (Level2RGCOLowLimit > Level2RgCO || Level2RgCOHighLimit < Level2RgCO)
-			abort "Level 2 RgCO limits set incorrenctly, fix the limits before fitting"
+			abort "Level 2 RgCO limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level2RGCO
 		CoefNames[numpnts(CoefNames)-1]="Level2RGCO"
+		LowLimit[numpnts(W_Coef)-1]=Level2RGCOLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level2RGCOHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level2RGCOLowLimit)}
@@ -412,12 +448,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 //Level3 part	
 	if (Level3FitRg && NumberOfLevels>2)		//are we fitting distribution 1 volume?
 		if (Level3RgLowLimit > Level3Rg || Level3RgHighLimit < Level3Rg)
-			abort "Level 3 Rg limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 Rg limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3Rg
 		CoefNames[numpnts(CoefNames)-1]="Level3Rg"
+		LowLimit[numpnts(W_Coef)-1]=Level3RgLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3RgHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level3RgLowLimit)}
@@ -425,11 +463,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level3FitG && NumberOfLevels>2)		//are we fitting distribution 1 location?
 		if (Level3GLowLimit > Level3G || Level3GHighLimit < Level3G)
-			abort "Level 3 G limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 G limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3G
+		LowLimit[numpnts(W_Coef)-1]=Level3GLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3GHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level3G"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -438,11 +478,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level3FitP && NumberOfLevels>2)		//are we fitting distribution 1 location?
 		if (Level3PLowLimit > Level3P || Level3PHighLimit < Level3P)
-			abort "Level 3 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 P limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3P
+		LowLimit[numpnts(W_Coef)-1]=Level3PLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3PHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level3P"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -451,12 +493,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level3FitB && NumberOfLevels>2)		//are we fitting distribution 1 location?
 		if (Level3BLowLimit > Level3B || Level3BHighLimit < Level3B)
-			abort "Level 3 B limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 B limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames , LowLimit, HighLimit
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3B
 		CoefNames[numpnts(CoefNames)-1]="Level3B"
+		LowLimit[numpnts(W_Coef)-1]=Level3BLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3BHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level3BLowLimit)}
@@ -464,12 +508,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level3FitETA && Level3Corelations && NumberOfLevels>2)		//are we fitting distribution 1 location?
 		if (Level3ETALowLimit > Level3ETA || Level3ETAHighLimit < Level3ETA)
-			abort "Level 3 ETA limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 ETA limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3ETA
 		CoefNames[numpnts(CoefNames)-1]="Level3ETA"
+		LowLimit[numpnts(W_Coef)-1]=Level3ETALowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3ETAHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level3ETALowLimit)}
@@ -477,12 +523,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level3FitPACK && Level3Corelations && NumberOfLevels>2)		//are we fitting distribution 1 location?
 		if (Level3PACKLowLimit > Level3PACK || Level3PACKHighLimit < Level3PACK)
-			abort "Level 3 PACK limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 PACK limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3PACK
 		CoefNames[numpnts(CoefNames)-1]="Level3PACK"
+		LowLimit[numpnts(W_Coef)-1]=Level3PACKLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3PACKHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level3PACKLowLimit)}
@@ -490,11 +538,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level3FitRGCO && NumberOfLevels>2 && !Level3LinkRGCO)		//are we fitting distribution 1 location?
 		if (Level3RGCOLowLimit > Level3RgCO || Level3RgCOHighLimit < Level3RgCO)
-			abort "Level 3 RgCO limits set incorrenctly, fix the limits before fitting"
+			abort "Level 3 RgCO limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level3RGCO
+		LowLimit[numpnts(W_Coef)-1]=Level3RGCOLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level3RGCOHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level3RGCO"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -504,12 +554,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 //Level4 part	
 	if (Level4FitRg && NumberOfLevels>3)		//are we fitting distribution 1 volume?
 		if (Level4RgLowLimit > Level4Rg || Level4RgHighLimit < Level4Rg)
-			abort "Level 4Rg limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4Rg limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4Rg
 		CoefNames[numpnts(CoefNames)-1]="Level4Rg"
+		LowLimit[numpnts(W_Coef)-1]=Level4RgLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4RgHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level4RgLowLimit)}
@@ -517,12 +569,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level4FitG && NumberOfLevels>3)		//are we fitting distribution 1 location?
 		if (Level4GLowLimit > Level4G || Level4GHighLimit < Level4G)
-			abort "Level 4 G limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4 G limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4G
 		CoefNames[numpnts(CoefNames)-1]="Level4G"
+		LowLimit[numpnts(W_Coef)-1]=Level4GLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4GHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level4GLowLimit)}
@@ -530,11 +584,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level4FitP && NumberOfLevels>3)		//are we fitting distribution 1 location?
 		if (Level4PLowLimit > Level4P || Level4PHighLimit < Level4P)
-			abort "Level 4 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4 P limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4P
+		LowLimit[numpnts(W_Coef)-1]=Level4PLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4PHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level4P"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -543,11 +599,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level4FitB && NumberOfLevels>3)		//are we fitting distribution 1 location?
 		if (Level4BLowLimit > Level4B || Level4BHighLimit < Level4B)
-			abort "Level 4 B limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4 B limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4B
+		LowLimit[numpnts(W_Coef)-1]=Level4BLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4BHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level4B"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -556,11 +614,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level4FitETA && Level4Corelations && NumberOfLevels>3)		//are we fitting distribution 1 location?
 		if (Level4ETALowLimit > Level4ETA || Level4ETAHighLimit < Level4ETA)
-			abort "Level 4 ETA limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4 ETA limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4ETA
+		LowLimit[numpnts(W_Coef)-1]=Level4ETALowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4ETAHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level4ETA"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -569,11 +629,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level4FitPACK && Level4Corelations && NumberOfLevels>3)		//are we fitting distribution 1 location?
 		if (Level4PACKLowLimit > Level4PACK || Level4PACKHighLimit < Level4PACK)
-			abort "Level 4 PACK limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4 PACK limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4PACK
+		LowLimit[numpnts(W_Coef)-1]=Level4PACKLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4PACKHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level4PACK"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -582,11 +644,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level4FitRGCO && NumberOfLevels>3 && !Level4LinkRGCO)		//are we fitting distribution 1 location?
 		if (Level4RGCOLowLimit > Level4RgCO || Level4RgCOHighLimit < Level4RgCO)
-			abort "Level 4 RgCO limits set incorrenctly, fix the limits before fitting"
+			abort "Level 4 RgCO limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames , LowLimit, HighLimit
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level4RGCO
+		LowLimit[numpnts(W_Coef)-1]=Level4RGCOLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level4RGCOHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level4RGCO"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -596,11 +660,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 //Level5 part	
 	if (Level5FitRg && NumberOfLevels>4)		//are we fitting distribution 1 volume?
 		if (Level5RgLowLimit > Level5Rg || Level5RgHighLimit < Level5Rg)
-			abort "Level 5 Rg limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 Rg limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5Rg
+		LowLimit[numpnts(W_Coef)-1]=Level5RgLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5RgHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level5Rg"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -609,12 +675,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level5FitG && NumberOfLevels>4)		//are we fitting distribution 1 location?
 		if (Level5GLowLimit > Level5G || Level5GHighLimit < Level5G)
-			abort "Level 5 G limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 G limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5G
 		CoefNames[numpnts(CoefNames)-1]="Level5G"
+		LowLimit[numpnts(W_Coef)-1]=Level5GLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5GHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level5GLowLimit)}
@@ -622,11 +690,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level5FitP && NumberOfLevels>4)		//are we fitting distribution 1 location?
 		if (Level5PLowLimit > Level5P || Level5PHighLimit < Level5P)
-			abort "Level 5 P limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 P limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5P
+		LowLimit[numpnts(W_Coef)-1]=Level5PLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5PHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level5P"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -635,11 +705,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level5FitB && NumberOfLevels>4)		//are we fitting distribution 1 location?
 		if (Level5BLowLimit > Level5B || Level5BHighLimit < Level5B)
-			abort "Level 5 B limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 B limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5B
+		LowLimit[numpnts(W_Coef)-1]=Level5BLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5BHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level5B"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -648,11 +720,13 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level5FitETA && Level5Corelations && NumberOfLevels>4)		//are we fitting distribution 1 location?
 		if (Level5ETALowLimit > Level5ETA || Level5ETAHighLimit < Level5ETA)
-			abort "Level 5 ETA limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 ETA limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5ETA
+		LowLimit[numpnts(W_Coef)-1]=Level5ETALowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5ETAHighLimit
 		CoefNames[numpnts(CoefNames)-1]="Level5ETA"
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
@@ -661,12 +735,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level5FitPACK && Level5Corelations && NumberOfLevels>4)		//are we fitting distribution 1 location?
 		if (Level5PACKLowLimit > Level5PACK || Level5PACKHighLimit < Level5PACK)
-			abort "Level 5 PACK limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 PACK limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames , LowLimit, HighLimit
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5PACK
 		CoefNames[numpnts(CoefNames)-1]="Level5PACK"
+		LowLimit[numpnts(W_Coef)-1]=Level5PACKLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5PACKHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level5PACKLowLimit)}
@@ -674,12 +750,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	endif
 	if (Level5FitRGCO && NumberOfLevels>4 && !Level5LinkRGCO)		//are we fitting distribution 1 location?
 		if (Level5RGCOLowLimit > Level5RgCO || Level5RgCOHighLimit < Level5RgCO)
-			abort "Level 5 RgCO limits set incorrenctly, fix the limits before fitting"
+			abort "Level 5 RgCO limits set incorrectly, fix the limits before fitting"
 		endif
-		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+		Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, LowLimit, HighLimit 
 		Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 		W_Coef[numpnts(W_Coef)-1]=Level5RGCO
 		CoefNames[numpnts(CoefNames)-1]="Level5RGCO"
+		LowLimit[numpnts(W_Coef)-1]=Level5RGCOLowLimit
+		HighLimit[numpnts(W_Coef)-1]=Level5RGCOHighLimit
 		LowLimCoefName[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"LowLimit"
 		HighLimCoefNames[numpnts(CoefNames)-1]=CoefNames[numpnts(CoefNames)-1]+"HighLimit"
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level5RGCOLowLimit)}
@@ -698,6 +776,20 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	Wave OriginalQvector
 	Wave OriginalIntensity
 	Wave OriginalError	
+
+	if(!SkipFitControlDialog)
+		IR1A_CheckFittingParamsFnct()
+		PauseForUser IR1A_CheckFittingParams
+
+		NVAR UserCanceled=root:Packages:Irena_UnifFit:UserCanceled
+		if (UserCanceled)
+			setDataFolder OldDf
+			abort
+		endif
+	endif
+
+
+
 	
 	Variable V_chisq
 	Duplicate/O W_Coef, E_wave, CoefficientInput
@@ -1921,3 +2013,129 @@ Function IR1A_RecoverOneLevelParam(i,OldNote)
 
 
 end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1A_CheckFittingParamsFnct() 
+	//PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(400,140,970,600) as "Check fitting parameters"
+	Dowindow/C IR1A_CheckFittingParams
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65280)
+	DrawText 39,28,"Unified Fit Params & Limits"
+	SetDrawEnv fstyle= 1,fsize= 14
+	DrawText 20,55,"Verify the list of fitted parameters. Then continue......"
+	variable Qmin, Qmax
+	Qmin=Nan
+	Qmax=inf
+	Wave OriginalQvector = root:Packages:Irena_UnifFit:OriginalQvector
+	if(strlen(csrInfo(A))>0)		//cursor set
+		Qmin = OriginalQvector(pcsr(A))
+	endif
+	Qmin = numtype(Qmin) == 0 ? Qmin :  OriginalQvector[0]
+	if(strlen(csrInfo(B))>0)	//cursor set
+		Qmax = OriginalQvector(pcsr(B))
+	endif
+	Qmax = numtype(Qmax) == 0 ? Qmax :  OriginalQvector[numpnts(OriginalQvector)-1]
+	SetDrawEnv fstyle= 1,fsize= 14
+	DrawText 30,80, "Data Selected for Fitting are "+num2str(pcsr(B)-pcsr(A))+" points from point   "+num2str(pcsr(A)) + "   to   "+num2str(pcsr(B)) 
+	SetDrawEnv fstyle= 1,fsize= 14
+	DrawText 30,105, "This is Q range from Qmin = " + num2str(Qmin) + " A\S-1\M  to  Qmax = "+num2str(Qmax) + "  A\S-1\M"
+	
+	Button CancelBtn,pos={10,420},size={135,20},proc=IR1A_CheckFitPrmsButtonProc,title="Cancel fitting"
+	Button ContinueBtn,pos={160,420},size={135,20},proc=IR1A_CheckFitPrmsButtonProc,title="Continue fitting"
+	CheckBox SkipFitControlDialog,pos={315,422},size={63,14},noproc,title="Skip this panel next time?"
+	CheckBox SkipFitControlDialog,variable= root:Packages:Irena_UnifFit:SkipFitControlDialog, help={"Check if you want to skip the check parameters dialo for fitting"}
+
+
+	String fldrSav0= GetDataFolder(1)
+	SetDataFolder root:Packages:Irena_UnifFit:
+	Wave W_coef=root:Packages:Irena_UnifFit:W_coef
+	Wave/T CoefNames=root:Packages:Irena_UnifFit:CoefNames
+	Duplicate/T/O CoefNames, ParameterWarnings
+	variable i
+	string tmpStr
+	For(i=0;i<Numpnts(CoefNames);i+=1)
+		ParameterWarnings[i]=""
+		tmpStr = CoefNames[i]
+		if(stringmatch(tmpStr,"Background"))
+			ParameterWarnings[i]=""		//no problem ever here
+		elseif(stringmatch(tmpStr[6,7], "Rg")&& !stringmatch(tmpStr[6,9], "RGCO"))  //"Level1Rg"
+			if(!stringmatch(tmpStr[0,5]+"G",CoefNames[i+1]))
+				ParameterWarnings[i]="G is not fitted?"		
+			endif
+		elseif(stringmatch(tmpStr[6], "G")&& !stringmatch(tmpStr[6,8], "GCO"))  //"Level1Rg"
+			if(!stringmatch(tmpStr[0,5]+"Rg",CoefNames[i-1]))
+				ParameterWarnings[i]="Rg is not fitted?"		
+			endif
+		elseif(stringmatch(tmpStr[6], "P")&& !stringmatch(tmpStr[6,8], "PAC"))  //"Level1Rg"
+			if(!stringmatch(tmpStr[0,5]+"B",CoefNames[i +1]))
+				ParameterWarnings[i]="B is not fitted?"		
+			endif
+		elseif(stringmatch(tmpStr[6], "B")&& !stringmatch(tmpStr[6,8], "PAC"))  //"Level1Rg"
+			if(!stringmatch(tmpStr[0,5]+"P",CoefNames[i -1]))
+				ParameterWarnings[i]="P is not fitted?"		
+			endif
+		elseif(stringmatch(tmpStr[6,9], "PACK"))  //"Level1Rg"
+			if(!stringmatch(tmpStr[0,5]+"ETA",CoefNames[i -1]))
+				ParameterWarnings[i]="ETA is not fitted?"		
+			endif
+		elseif(stringmatch(tmpStr[6,8], "ETA"))  //"Level1Rg"
+			if(!stringmatch(tmpStr[0,5]+"PACK",CoefNames[i +1]))
+				ParameterWarnings[i]="PACK is not fitted?"		
+			endif
+		elseif(stringmatch(tmpStr[6,9], "RGCO"))  //"Level1Rg"
+				ParameterWarnings[i]="Fitting RgCO is BAD idea..."		
+		endif
+
+	endfor
+	NVAR UseNoLimits = root:Packages:Irena_UnifFit:UseNoLimits
+	WAVE HighLimit=root:Packages:Irena_UnifFit:HighLimit
+	WAVE LowLimit=root:Packages:Irena_UnifFit:LowLimit
+	if(!UseNoLimits)
+		Edit/W=(0.05,0.25,0.95,0.90)/HOST=#  CoefNames, W_coef, LowLimit, HighLimit, ParameterWarnings
+		ModifyTable format(Point)=1,width(Point)=0,width(CoefNames)=100,title(CoefNames)="Fitted Coef Name"
+		ModifyTable width(W_coef)=90,title(W_coef.y)="Start value",alignment=1, sigDigits(W_coef)=2
+		ModifyTable width(LowLimit)=90,title(LowLimit.y)="Low limit", sigDigits(LowLimit)=2
+		ModifyTable width(HighLimit)=90,title(HighLimit.y)="High limit", sigDigits(HighLimit)=2
+		ModifyTable width(ParameterWarnings)=125,title(ParameterWarnings.y)="Warnings:"
+		ModifyTable showParts=254
+	else
+		Edit/W=(0.05,0.25,0.95,0.90)/HOST=#  CoefNames, W_coef, ParameterWarnings
+		ModifyTable format(Point)=1,width(Point)=0,alignment=2,width(CoefNames)=150,title(CoefNames)="Fitted Coef Name"
+		ModifyTable width(W_coef)=120,title(W_coef.y)="Start value",alignment=1,sigDigits(W_coef)=2
+		ModifyTable width(ParameterWarnings)=225,title(ParameterWarnings.y)="Warnings:"
+		ModifyTable showParts=254
+	endif
+	SetDataFolder fldrSav0
+	RenameWindow #,T0
+	SetActiveSubwindow ##
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR1A_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
+	String ctrlName
+	
+	if(stringmatch(ctrlName,"*CancelBtn*"))
+		variable/g root:Packages:Irena_UnifFit:UserCanceled=1
+		DoWindow/K IR1A_CheckFittingParams
+	endif
+
+	if(stringmatch(ctrlName,"*ContinueBtn*"))
+		variable/g root:Packages:Irena_UnifFit:UserCanceled=0
+		DoWindow/K IR1A_CheckFittingParams
+	endif
+
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************

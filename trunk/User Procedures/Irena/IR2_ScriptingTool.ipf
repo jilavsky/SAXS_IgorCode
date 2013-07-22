@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
-Constant IR2SversionNumber=1.12
+#pragma version=1.15
+Constant IR2SversionNumber=1.15
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -21,6 +21,7 @@ Constant IR2SversionNumber=1.12
 //1.12 Added Guinier-Porod as controlled tool and fixed minor Folder selection bug for other tools 
 //1.13 modified to handle chanigng of the data type between the scripting tool and the tool being called. 
 //1.14 fixed bug in calling Plotting tool with results
+//1.15 added skip review of fitting parameters for Unified fit improvement. 
 
 //**************************************************************************************
 //**************************************************************************************
@@ -1350,7 +1351,9 @@ Function IR2S_FItWithUnifiedFit()
 	else
 		LStartFolder=StartFolderName
 	endif
-	
+	NVAR SkipFitControlDialog = root:Packages:Irena_UnifFit:SkipFitControlDialog
+	variable oldSkipFitControlDialog = SkipFitControlDialog
+	SkipFitControlDialog = 1
 	variable i
 	string CurrentFolderName
 	variable StartQ, EndQ		//need to store these from cursor positions (if set)
@@ -1420,7 +1423,7 @@ Function IR2S_FItWithUnifiedFit()
 		
 	
 	endfor
-	
+	SkipFitControlDialog = oldSkipFitControlDialog
 	
 
 	setDataFolder OldDF

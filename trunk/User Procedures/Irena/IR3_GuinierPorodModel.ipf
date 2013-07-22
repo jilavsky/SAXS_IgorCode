@@ -1578,7 +1578,7 @@ Function IR3GP_FitData(skipreset)
 				NVAR HighLimit=$("root:Packages:Irena:GuinierPorod:"+tempStr+"HighLimit")
 		
 				if ((LowLimit > Param || HighLimit < Param)&&!UseNoLimits)
-					abort "Level "+num2str(i)+" "+tempStr+" limits set incorrenctly, fix the limits before fitting"
+					abort "Level "+num2str(i)+" "+tempStr+" limits set incorrectly, fix the limits before fitting"
 				endif
 				Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
 				Redimension /N=(numpnts(T_Constraints)+2) T_Constraints

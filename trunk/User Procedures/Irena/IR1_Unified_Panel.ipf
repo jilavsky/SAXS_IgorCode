@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.10
-Constant IR1AversionNumber=2.10
+#pragma version=2.12
+Constant IR1AversionNumber=2.11
 
 
 //*************************************************************************\
@@ -9,6 +9,8 @@ Constant IR1AversionNumber=2.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12 removed FitRgCO for all levels. DO tno expect anyone to miss it. But if needed, can be returned easily. 
+//2.11 added option providing user with fit parameters review panel before fitting
 //2.10 added scroll controls to move panel conent up or down for small displays.
 //2.09 added "No limits" checkbox
 //2.08 added ability to analyze effects of uncertainities on the results of the fits. 
@@ -160,6 +162,7 @@ Function IR1A_Initialize(enforceReset)
 	ListOfVariables+="Level5Corelations;Level5MassFractal;Level5DegreeOfAggreg;Level5SurfaceToVolRat;Level5Invariant;"
 	ListOfVariables+="Level5RgError;Level5GError;Level5PError;Level5BError;Level5ETAError;Level5PACKError;Level5RGCOError;"
 	ListOfVariables+="SASBackground;SASBackgroundError;SASBackgroundStep;FitSASBackground;UpdateAutomatically;DisplayLocalFits;ActiveTab;ExportLocalFIts;"
+	ListOfVariables+="SkipFitControlDialog;"
 
 	ListOfVariables+="ConfEvMinVal;ConfEvMaxVal;ConfEvNumSteps;ConfEvVaryParam;ConfEvChiSq;ConfEvAutoOverwrite;ConfEvFixRanges;"
 	ListOfVariables+="ConfEvTargetChiSqRange;ConfEvAutoCalcTarget;"
@@ -222,6 +225,12 @@ Function IR1A_SetInitialValues(enforce)
 		if (enforce)
 			testVar=0
 		endif
+	endfor
+	//version 2.52 change, disable RgCO fitting 
+	ListOfVariables="Level1FitRgCO;Level2FitRgCO;Level3FitRgCO;Level4FitRgCO;Level5FitRgCO;"
+	For(i=0;i<itemsInList(ListOfVariables);i+=1)
+		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
+		testVar=0
 	endfor
 	
 	//and here values to 0.000001
@@ -429,6 +438,8 @@ Window IR1A_ControlPanel()
 	CheckBox UseNoLimits,variable= root:Packages:Irena_UnifFit:UseNoLimits, help={"Check if you want to fit without use of limits"}
 	CheckBox DisplayLocalFits,pos={110,225},size={225,14},proc=IR1A_InputPanelCheckboxProc,title="Display local (Porod & Guinier) fits?"
 	CheckBox DisplayLocalFits,variable= root:Packages:Irena_UnifFit:DisplayLocalFits, help={"Check to display in graph local Porod and Guinier fits for selected level, fits change with changes in values of P, B, Rg and G"}
+	Button LevelXFitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	Button LevelXFitPAndB,pos={230,408},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit P/B bwtn cursors", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
 	
 	TitleBox PhysValidityWarning title="Level may not be physically feasible", pos={10,410},size={300,16}
 	TitleBox PhysValidityWarning fstyle=1,fColor=(64000,1,1), disable=1, frame=5
@@ -449,8 +460,8 @@ Window IR1A_ControlPanel()
 	SetVariable SASBackground,limits={-inf,Inf,0.05*root:Packages:Irena_UnifFit:SASBackground},value= root:Packages:Irena_UnifFit:SASBackground
 	CheckBox FitBackground,pos={195,566},size={63,14},proc=IR1A_InputPanelCheckboxProc,title="Fit Bckg?"
 	CheckBox FitBackground,variable= root:Packages:Irena_UnifFit:FitSASBackground, help={"Check if you want the background to be fitting parameter"}
-	Button LevelXFitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
-	Button LevelXFitPAndB,pos={230,408},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit P/B bwtn cursors", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
+	CheckBox SkipFitControlDialog,pos={270,566},size={63,14},proc=IR1A_InputPanelCheckboxProc,title="Skip Fit Check?"
+	CheckBox SkipFitControlDialog,variable= root:Packages:Irena_UnifFit:SkipFitControlDialog, help={"Check if you want to skip the check parameters dialo for fitting"}
 
 	//Dist Tabs definition
 	TabControl DistTabs,pos={5,240},size={370,320},proc=IR1A_TabPanelControl
@@ -506,12 +517,12 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level1RgCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level1RgCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level1RgCO, help={"Size, where the power law dependence ends, 0 or sometimes Rg of lower level, for level 1 it is 0"}
-	CheckBox Level1FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-	CheckBox Level1FitRGCO,variable= root:Packages:Irena_UnifFit:Level1FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-	SetVariable Level1RgCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level1RgCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgCoLowLimit, help={"RgCutOff low limit"}
-	SetVariable Level1RgCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level1RgCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgCOHighLimit, help={"RgCutOff high limit"}
+//	CheckBox Level1FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
+//	CheckBox Level1FitRGCO,variable= root:Packages:Irena_UnifFit:Level1FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
+//	SetVariable Level1RgCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level1RgCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgCoLowLimit, help={"RgCutOff low limit"}
+//	SetVariable Level1RgCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level1RgCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level1SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level1LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -598,12 +609,12 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level2RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level2RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level2RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-	CheckBox Level2FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-	CheckBox Level2FitRGCO,variable= root:Packages:Irena_UnifFit:Level2FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-	SetVariable Level2RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level2RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgCoLowLimit, help={"RgCutOff low limit"}
-	SetVariable Level2RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level2RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgCOHighLimit, help={"RgCutOff high limit"}
+//	CheckBox Level2FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
+//	CheckBox Level2FitRGCO,variable= root:Packages:Irena_UnifFit:Level2FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
+//	SetVariable Level2RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level2RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgCoLowLimit, help={"RgCutOff low limit"}
+//	SetVariable Level2RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level2RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level2SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level2LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -688,12 +699,12 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level3RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level3RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level3RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-	CheckBox Level3FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-	CheckBox Level3FitRGCO,variable= root:Packages:Irena_UnifFit:Level3FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-	SetVariable Level3RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level3RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgCoLowLimit, help={"RgCutOff low limit"}
-	SetVariable Level3RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level3RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgCOHighLimit, help={"RgCutOff high limit"}
+//	CheckBox Level3FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
+//	CheckBox Level3FitRGCO,variable= root:Packages:Irena_UnifFit:Level3FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
+//	SetVariable Level3RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level3RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgCoLowLimit, help={"RgCutOff low limit"}
+//	SetVariable Level3RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level3RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level3SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level3LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -778,13 +789,13 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level4RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level4RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level4RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-	CheckBox Level4FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-	CheckBox Level4FitRGCO,variable= root:Packages:Irena_UnifFit:Level4FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-	SetVariable Level4RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level4RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgCoLowLimit, help={"RgCutOff low limit"}
-	SetVariable Level4RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level4RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgCOHighLimit, help={"RgCutOff high limit"}
-
+//	CheckBox Level4FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
+//	CheckBox Level4FitRGCO,variable= root:Packages:Irena_UnifFit:Level4FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
+//	SetVariable Level4RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level4RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgCoLowLimit, help={"RgCutOff low limit"}
+//	SetVariable Level4RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level4RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgCOHighLimit, help={"RgCutOff high limit"}
+//
 	Button Level4SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level4LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level4LinkRGCO,variable= root:Packages:Irena_UnifFit:Level4LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
@@ -869,12 +880,12 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level5RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level5RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level5RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-	CheckBox Level5FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-	CheckBox Level5FitRGCO,variable= root:Packages:Irena_UnifFit:Level5FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-	SetVariable Level5RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level5RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgCoLowLimit, help={"RgCutOff low limit"}
-	SetVariable Level5RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-	SetVariable Level5RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgCOHighLimit, help={"RgCutOff high limit"}
+//	CheckBox Level5FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
+//	CheckBox Level5FitRGCO,variable= root:Packages:Irena_UnifFit:Level5FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
+//	SetVariable Level5RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level5RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgCoLowLimit, help={"RgCutOff low limit"}
+//	SetVariable Level5RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
+//	SetVariable Level5RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level5SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level5LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -1006,9 +1017,9 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level1EtaStep,disable= (tab!=0 || Nmbdist<1  ||  Level1Corelations!=1)
 //		SetVariable Level1PackStep,disable= (tab!=0 || Nmbdist<1||  Level1Corelations!=1)
 		SetVariable Level1RgCO,disable= (tab!=0 || Nmbdist<1)
-		CheckBox Level1FitRGCO,disable= (tab!=0 || Nmbdist<1 || Level1LinkRGCO) 
-		SetVariable Level1RgCOLowLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitRGCO!=1|| Level1LinkRGCO)
-		SetVariable Level1RgCOHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitRGCO!=1|| Level1LinkRGCO)
+//		CheckBox Level1FitRGCO,disable= (tab!=0 || Nmbdist<1 || Level1LinkRGCO) 
+//		SetVariable Level1RgCOLowLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitRGCO!=1|| Level1LinkRGCO)
+//		SetVariable Level1RgCOHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitRGCO!=1|| Level1LinkRGCO)
 		Button Level1SetRGCODefault,disable= (tab!=0 || Nmbdist<1 || tab==0)
 		CheckBox Level1LinkRGCO,disable= (tab!=0 || Nmbdist<1 || tab==0)
 		PopupMenu Level1KFactor,disable= (tab!=0 || Nmbdist<1)
@@ -1073,9 +1084,9 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level2EtaStep,disable= (tab!=1 || Nmbdist<2  ||  Level2Corelations!=1)
 //		SetVariable Level2PackStep,disable= (tab!=1 || Nmbdist<2||  Level2Corelations!=1)
 		SetVariable Level2RGCO,disable= (tab!=1 || Nmbdist<2)
-		CheckBox Level2FitRGCO,disable= (tab!=1 || Nmbdist<2 || Level2LinkRGCO)
-		SetVariable Level2RGCOLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitRGCO!=1 || Level2LinkRGCO)
-		SetVariable Level2RGCOHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitRGCO!=1 || Level2LinkRGCO)
+//		CheckBox Level2FitRGCO,disable= (tab!=1 || Nmbdist<2 || Level2LinkRGCO)
+//		SetVariable Level2RGCOLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitRGCO!=1 || Level2LinkRGCO)
+//		SetVariable Level2RGCOHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitRGCO!=1 || Level2LinkRGCO)
 		Button Level2SetRGCODefault,disable= (tab!=1 || Nmbdist<2)
 		CheckBox Level2LinkRGCO,disable= (tab!=1 || Nmbdist<2)
 		PopupMenu Level2KFactor,disable= (tab!=1 || Nmbdist<2)
@@ -1145,9 +1156,9 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level3EtaStep,disable= (tab!=2 || Nmbdist<3  ||  Level3Corelations!=1)
 //		SetVariable Level3PackStep,disable= (tab!=2 || Nmbdist<3||  Level3Corelations!=1)
 		SetVariable Level3RGCO,disable= (tab!=2 || Nmbdist<3)
-		CheckBox Level3FitRGCO,disable= (tab!=2 || Nmbdist<3 || Level3LinkRGCO)
-		SetVariable Level3RGCOLowLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitRGCO!=1 || Level3LinkRGCO)
-		SetVariable Level3RGCOHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitRGCO!=1 || Level3LinkRGCO)
+//		CheckBox Level3FitRGCO,disable= (tab!=2 || Nmbdist<3 || Level3LinkRGCO)
+//		SetVariable Level3RGCOLowLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitRGCO!=1 || Level3LinkRGCO)
+//		SetVariable Level3RGCOHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitRGCO!=1 || Level3LinkRGCO)
 		Button Level3SetRGCODefault,disable= (tab!=2 || Nmbdist<3)
 		CheckBox Level3LinkRGCO,disable= (tab!=2 || Nmbdist<3)
 		PopupMenu Level3KFactor,disable= (tab!=2 || Nmbdist<3)
@@ -1217,9 +1228,9 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level4EtaStep,disable= (tab!=3 || Nmbdist<4  ||  Level4Corelations!=1)
 //		SetVariable Level4PackStep,disable= (tab!=3 || Nmbdist<4||  Level4Corelations!=1)
 		SetVariable Level4RGCO,disable= (tab!=3 || Nmbdist<4)
-		CheckBox Level4FitRGCO,disable= (tab!=3 || Nmbdist<4 || Level4LinkRGCO)
-		SetVariable Level4RGCOLowLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitRGCO!=1 || Level4LinkRGCO)
-		SetVariable Level4RGCOHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitRGCO!=1 || Level4LinkRGCO)
+//		CheckBox Level4FitRGCO,disable= (tab!=3 || Nmbdist<4 || Level4LinkRGCO)
+//		SetVariable Level4RGCOLowLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitRGCO!=1 || Level4LinkRGCO)
+//		SetVariable Level4RGCOHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitRGCO!=1 || Level4LinkRGCO)
 		Button Level4SetRGCODefault,disable= (tab!=3 || Nmbdist<4)
 		CheckBox Level4LinkRGCO,disable= (tab!=3 || Nmbdist<4)
 		PopupMenu Level4KFactor,disable= (tab!=3 || Nmbdist<4)
@@ -1288,9 +1299,9 @@ Function IR1A_TabPanelControl(name,tab)
 //		SetVariable Level5EtaStep,disable= (tab!=4 || Nmbdist<5  ||  Level5Corelations!=1)
 //		SetVariable Level5PackStep,disable= (tab!=4 || Nmbdist<5||  Level5Corelations!=1)
 		SetVariable Level5RGCO,disable= (tab!=4 || Nmbdist<5)
-		CheckBox Level5FitRGCO,disable= (tab!=4 || Nmbdist<5 || Level5LinkRGCO)
-		SetVariable Level5RGCOLowLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitRGCO!=1 || Level5LinkRGCO)
-		SetVariable Level5RGCOHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitRGCO!=1 || Level5LinkRGCO)
+//		CheckBox Level5FitRGCO,disable= (tab!=4 || Nmbdist<5 || Level5LinkRGCO)
+//		SetVariable Level5RGCOLowLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitRGCO!=1 || Level5LinkRGCO)
+//		SetVariable Level5RGCOHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitRGCO!=1 || Level5LinkRGCO)
 		Button Level5SetRGCODefault,disable= (tab!=4 || Nmbdist<5)
 		CheckBox Level5LinkRGCO,disable= (tab!=4 || Nmbdist<5)
 		PopupMenu Level5KFactor,disable= (tab!=4 || Nmbdist<5)

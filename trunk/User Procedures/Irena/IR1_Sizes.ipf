@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.09
-Constant IR1RSversionNumber=2.07
+#pragma version = 2.10
+Constant IR1RSversionNumber=2.10
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 added button to Form factor help file which links correctly. 
 //2.09 fixed case when Scripting tool could get out of sync with the Sizes calling it.
 //2.08 Modified to handle only some of the form factors. This tool really should not handle Janus CoreShell Micelle. 
 //2.07 Added Scrolling buttons to move up down for small displays. 
@@ -656,6 +657,15 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 		IR2S_UpdateListOfAvailFiles()
 	endif
 
+
+	if(stringmatch(ctrlName,"GetFFHelp"))
+		ControlInfo /W=IR1R_SizesInputPanel ShapeModel 
+		//print S_Value
+		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+		if(V_Flag)
+			DisplayHelpTopic /Z "Form Factors & Structure factors"
+		endif
+	endif
 	setDataFolder OldDf
 end	
 
@@ -2523,6 +2533,8 @@ Window IR1R_SizesInputPanel()
 //shapes
 	PopupMenu ShapeModel,pos={10,418},size={223,21},proc=IR1R_PopMenuProc,title="Select particle shape model", help={"Particle shape models in the code. Set appropriate Aspect ratio. "}
 	PopupMenu ShapeModel,mode=1,popvalue=root:Packages:Sizes:ShapeType,value= root:Packages:FormFactorCalc:ListOfFormFactorsSD
+
+	Button GetFFHelp,pos={290,418},size={80,15}, proc=IR1R_GraphDataButton,title="F.F. Help", help={"Get help for Form factors"}
 
 	SetVariable AspectRatio,pos={10,444},size={140,16},title="Aspect Ratio ", help={"Aspect ratio for spheroids and other particles with AR"}
 	SetVariable AspectRatio,limits={0,Inf,0.1},value= root:Packages:Sizes:AspectRatio

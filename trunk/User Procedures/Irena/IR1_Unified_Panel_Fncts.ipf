@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.10
+#pragma version=2.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12 Removed FitRgCO option
+//2.11 changes to provide user with fit parameters review panel befroe fitting
 //2.10 fixed bug when Scripting tool panel could get out of sync with main UF panel. 
 //2.09 added NoLimits option
 //2.08 fixed checking of level validity not to fail on levels with only power law part. 
@@ -1040,7 +1042,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level2RGCO=Level1Rg	
 		Level2LinkRGCO=checked
 		Level2FitRGCO=0
-		Checkbox Level2FitRGCO, value=Level2FitRGCO
+		//Checkbox Level2FitRGCO, value=Level2FitRGCO
 		Checkbox Level2LinkRGCO, value=Level2LinkRGCO
 		IR1A_TabPanelControl("Checkbox",1)
 		IR1A_AutoUpdateIfSelected()
@@ -1102,7 +1104,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level3LinkRGCO=checked
 		Level3FitRGCO=0
 		Checkbox Level3LinkRGCO, value=Level3LinkRGCO
-		Checkbox Level3FitRGCO, value=Level3FitRGCO
+		//Checkbox Level3FitRGCO, value=Level3FitRGCO
 		IR1A_TabPanelControl("Checkbox",2)
 		IR1A_AutoUpdateIfSelected()
 //Level4 controls
@@ -1163,7 +1165,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level4LinkRGCO=checked
 		Level4FitRGCO=0
 		Checkbox Level4LinkRGCO, value=Level4LinkRGCO
-		Checkbox Level4FitRGCO, value=Level4FitRGCO
+		//Checkbox Level4FitRGCO, value=Level4FitRGCO
 		IR1A_TabPanelControl("Checkbox",3)
 		IR1A_AutoUpdateIfSelected()
 //Level5 controls
@@ -1224,7 +1226,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level5LinkRGCO=checked
 		Level5FitRGCO=0
 		Checkbox Level5LinkRGCO, value=Level5LinkRGCO
-		Checkbox Level5FitRGCO, value=Level5FitRGCO
+		//Checkbox Level5FitRGCO, value=Level5FitRGCO
 		IR1A_TabPanelControl("Checkbox",4)
 		IR1A_AutoUpdateIfSelected()
 	endif
@@ -1614,11 +1616,21 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 	endif
 
 	DoWIndow/F IR1A_ControlPanel
-	DoWIndow UnifiedEvaluationPanel
-	if(V_Flag)
-		AutoPositionWindow/M=0 /R=IR1A_ControlPanel UnifiedEvaluationPanel
+	if(cmpstr(ctrlName,"EvaluateSpecialCases")==0)
+		DoWIndow UnifiedEvaluationPanel
+		if(V_Flag)
+			DoWIndow/F UnifiedEvaluationPanel
+			AutoPositionWindow/M=0 /R=IR1A_ControlPanel UnifiedEvaluationPanel
+		endif
 	endif
 	
+	if(cmpstr(ctrlName,"ConfidenceEvaluation")==0)
+		DoWIndow IR1A_ConfEvaluationPanel
+		if(V_Flag)
+			DoWindow/F IR1A_ConfEvaluationPanel
+			AutoPositionWindow/M=0 /R=IR1A_ControlPanel IR1A_ConfEvaluationPanel
+		endif
+	endif
 	setDataFolder oldDF
 end
 
