@@ -182,7 +182,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.22a)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2013"
-	DrawText 49,103,"Release 1.61 from 4/8/2013"
+	DrawText 49,103,"Release 1.62 from 7/23/2013"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 
@@ -750,6 +750,10 @@ Function NI1_CheckNikaUpdate(CalledFromMenu)
 		Defs.LastUpdateCheck = datetime
 		NI1_CheckVersions()
 		SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
+	endif
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.32)
+			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (7/2013) to version 6.32A. Please, update your Igor to the latest version."  
+			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	 
 end
