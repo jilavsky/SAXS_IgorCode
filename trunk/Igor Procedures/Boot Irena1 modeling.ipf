@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.51
+#pragma version=2.52
 
 Menu "Macros"
 //	"Load Irena SAS Modeling Macros", LoadIR1Modeling()
@@ -22,7 +22,6 @@ Proc LoadIR1Modeling()
 		variable StylesExist=V_Flag
 		GetfILEfOLDERiNFO/Q/Z/P=UserProcPath "Irena1_CalcSavedCompounds"
 		variable CompoundsExist=V_Flag
-		
 		if(StylesExist==0 || CompoundsExist==0)
 			MessageStr ="Old folders for Styles and Compounds found! \nRename folders \"Irena1_Saved_styles\" into \"Irena_Saved_styles\""
 			MessageStr +=" and \"Irena1_CalcSavedCompounds\" into \"Irena_CalcSavedCompounds\" if these exist in User procedures"

@@ -2,8 +2,8 @@
 #pragma version=2.52
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs=  3448114446 			//this is mod date for Manual version 2.51
-constant CurrentVersionNumber = 2.51
+constant CurrentManualDateInSecs=  3457421952 			//this is mod date for Manual version 2.52
+constant CurrentVersionNumber = 2.52
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -44,7 +44,7 @@ constant CurrentVersionNumber = 2.51
 
 
 Menu "SAS"
-	help = {"Irena SAS modeling macros, version 2.50 released 1/4/2013 by Jan Ilavsky"}
+	help = {"Irena SAS modeling macros, version 2.52 released 7/23/2013 by Jan Ilavsky"}
 	Submenu "Data import & export"
 		"Import ASCII data", IR1I_ImportDataMain()
 		help={"Import data from ASCII file into Igor for use with macros"}
@@ -2118,6 +2118,11 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 		Defs.LastUpdateCheck = datetime
 		IR2C_CheckVersions()
 		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+	endif
+
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.32)
+			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (7/2013) to version 6.32A. Please, update your Igor to latest version."  
+			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	
 end
