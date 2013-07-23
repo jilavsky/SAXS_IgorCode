@@ -3,7 +3,7 @@ Code modification history
 
 -latest stuff first
 ********************************************
-2.52 xxxx
+2.52 7/23/2013
 Changed back everything to rtGlobals=2, major issues in the code run were found. 
 Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
 Form factors/Modeling II - Added Janus CoreShell micelles form factor.
