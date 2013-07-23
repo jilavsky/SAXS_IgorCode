@@ -8,6 +8,7 @@ Changed back everything to rtGlobals=2, major issues in the code run were found.
 Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
 Form factors/Modeling II - Added Janus CoreShell micelles form factor.
 Form factors - removed algebraic form factors. Useless, use Unified ones if needed. 
+Form factors - added CoreShellPrecipitate. Core shell particle where shell thickness is calculated for each particle size in such manner, that average contrast of the particle is the same as surrounding matrix. Seems surprisingly common in my experience. Read manual!
 Form/Structure factors - created Igor help file with the description. Added call buttons from Modeling II & Size Distribution GUIs. 
 Plotting tool I - added basic contour plot capabilities
 Unified fit - fixed invariant calculation for levels using RgCuttOff. These levels had previously calculated higher invariant value then correct. 

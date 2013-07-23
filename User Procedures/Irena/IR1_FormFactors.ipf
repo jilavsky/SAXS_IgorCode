@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.22
+#pragma version=2.23
 
 
 //*************************************************************************\
@@ -19,7 +19,9 @@
 //2.19 removed algebraic form factor and added Janus Core Shell micelles, added special list of form factor for Size Distribution, which cannot handle complex shapes (and should not)... 
 //2.20 Added Form and Structure factor description as Igor Help file. 
 //2.21 FIxed Janus FF micelle and added version 3 - core as particle shape
-//2.22 Significantly reduced the form factors availabe to Size distribution tool. COmplicated FF make no sense. 
+//2.22 Significantly reduced the form factors availabe to Size distribution tool. Complicated FF make no sense. 
+//2.23 Added CoreShellPrecipitate FF
+
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix
@@ -85,7 +87,7 @@ Function IR1T_InitFormFactors()
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
 	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
-	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;"
+	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;"
 	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
 	string/g CoreShellVolumeDefinition
 	SVAR CoreShellVolumeDefinition			//this will be user choice for definition of volume of core shell particle: "Whole particle;Core;Shell;", NIST standard definition is Whole particle, default... 
@@ -195,6 +197,10 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 		//CoreShell				CoreShellThickness=ParticlePar1			//skin thickness in Angstroems
 		//						CoreRho=ParticlePar2		// rho for core material
 		//						ShellRho=ParticlePar3			// rho for shell material
+		//						SolventRho=ParticlePar4			// rho for solvent material
+		//CoreShellPrecipitate	>>>>> calculated:   CoreShellThickness=ParticlePar1	//skin thickness in Angstroems
+		//						CoreRho=ParticlePar2				// rho for core material
+		//						ShellRho=ParticlePar3				// rho for shell material
 		//						SolventRho=ParticlePar4			// rho for solvent material
 		//CoreShell	Shell		CoreShell_1_Thickness=ParticlePar1			//inner shell thickness A
 		//						CoreShell_2_Thickness=ParticlePar2			//outer shell thickneess A
@@ -478,6 +484,26 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						else
 							VolDefL="Whole Particle"
 						endif	
+						multithread TempWave=IR1T_CalculateCoreShellFFPoints(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, CoreShellThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho,VolDefL)								//and here we multiply by N(r)
+						//note, the above calculated form factor contains volume^1 in it... So we need to multiply by volume^(power-1) here. Also we use volume of the core for particle volume!!!
+						multithread TempWave*=(IR1T_CoreShellVolume(currentR,CoreShellThickness, VolDefL))^(VolumePower-1)				//Multiplication by volume to appropriate power. Here is now the question - what is the volue of this particle? Here the volue is core only... 
+						//TempWave*=IR1T_SphereVolume(currentR+CoreShellThickness)^VolumePower	//This means the volue of particle is core + shell...
+						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
+					endfor
+			elseif (cmpstr(ParticleModel,"CoreShellPrecipitate")==0)						
+				CoreShellCoreRho=ParticlePar2			//rho of core
+				CoreShellShellRho=ParticlePar3			//rho of shell
+				CoreShellSolvntRho=ParticlePar4			//rho of solvent
+					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
+						currentR=R_dist[i]								//this is current radius
+						CoreShellThickness=IR1T_FixCoreShellPrecipitate(currentR,0,CoreShellCoreRho,CoreShellShellRho,CoreShellSolvntRho,2)			//skin thickness calculated by formula... 
+						ParticlePar1 = CoreShellThickness
+						if(ParticlePar1<0)
+							Abort "Negative shell thickness calculated in CoreShell;Precipitate Form factor. Aborting"
+						endif
+						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
+						VolDefL="Core"
 						multithread TempWave=IR1T_CalculateCoreShellFFPoints(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, CoreShellThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho,VolDefL)								//and here we multiply by N(r)
 						//note, the above calculated form factor contains volume^1 in it... So we need to multiply by volume^(power-1) here. Also we use volume of the core for particle volume!!!
 						multithread TempWave*=(IR1T_CoreShellVolume(currentR,CoreShellThickness, VolDefL))^(VolumePower-1)				//Multiplication by volume to appropriate power. Here is now the question - what is the volue of this particle? Here the volue is core only... 
@@ -1270,7 +1296,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-threadsafe  static Function IR1T_CoreShellVolume(radius,thick,CoreShellVolumeDefinition )							//returns the tube volume...
+threadsafe  static Function IR1T_CoreShellVolume(radius,thick,CoreShellVolumeDefinition )							//returns the shell volume...
 	variable radius, thick
 	string CoreShellVolumeDefinition
 
@@ -1283,6 +1309,61 @@ threadsafe  static Function IR1T_CoreShellVolume(radius,thick,CoreShellVolumeDef
 	endif
 end
 
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+
+Function IR1T_FixCoreShellPrecipitate(Radius,ShellThick,ContrastCore,ContrastShell,ContrastSolvent,WhichToFix)
+	variable Radius,ShellThick,ContrastCore,ContrastShell,ContrastSolvent,WhichToFix
+	//WhichToFix = 1 for calculating Shell contrast, 2 for calculating the Shell thickness
+	
+	variable result, tempVShell
+	// IR1T_CoreShellVolume(radius,thick,CoreShellVolumeDefinition )		//CoreShellVolumeDefinition =  "Core", "Whole Particle", "Shell"
+	if(WhichToFix==1)		//WhichToFix = 1 for calculating Shell Contrast
+		result = (ContrastSolvent*IR1T_CoreShellVolume(radius,ShellThick,"Whole Particle") - ContrastCore*IR1T_CoreShellVolume(radius,ShellThick,"Core"))/IR1T_CoreShellVolume(radius,ShellThick,"Shell" )
+	else
+		//tempVShell =  (ContrastSolvent*IR1T_CoreShellVolume(radius,ShellThick,"Whole Particle") - ContrastCore*IR1T_CoreShellVolume(radius,ShellThick,"Core"))/ ContrastShell //IR1T_CoreShellVolume(radius,ShellThick,"Shell" )
+		tempVShell = IR1T_CoreShellVolume(radius,ShellThick,"Core") *(ContrastSolvent - ContrastCore ) / (ContrastShell - ContrastSolvent)
+		result = IR1T_Solve3rdPolyShellVol(tempVShell,Radius)
+	endif
+	return result	
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+
+static Function IR1T_Solve3rdPolyShellVol(Volume,Radius)
+	variable Volume,Radius
+	
+	string OldDf=GetDataFolder(1)
+	
+	setDataFolder root:Packages:Irena	
+	variable a, b, c, d, result
+	a = 1
+	b = 3*Radius
+	c = 3* Radius* Radius
+	d = -3 * Volume / (4*pi)
+	make/Free/N=4 polyCoefWave
+	polyCoefWave={d,c,b,a}
+	FindRoots/P=polyCoefWave
+	Wave/C W_PolyRoots
+	variable i 
+	result = NaN
+	For(i=2;i>=0;i-=1)
+		if(imag(W_polyRoots[i])==0)
+			result = real(W_polyRoots[i])
+		endif
+	endfor
+	KilLWaves W_polyRoots
+	setDataFolder OldDf
+	return result
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1969,6 +2050,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		FitP5=0
 	elseif(stringmatch(CurFF,"CoreShell"))
 		FitP5=0
+	elseif(stringmatch(CurFF,"CoreShellPrecipitate"))
+		FitP1=0
+		FitP5=0
 	elseif(stringmatch(CurFF,"CoreShellShell"))
 
 	elseif(stringmatch(CurFF,"CoreShellCylinder"))
@@ -2039,15 +2123,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	SetVariable FormFactor title="Form factor: ", pos={10,50}, noedit=1, size={300,16},disable=2,frame=0,fstyle=1
 	SetVariable FormFactor variable=CurrentFF
 	SetVariable FormFactor help={"Form factor to be used"}
-
 	//Unified_Sphere			none needed
-
-	//for these we need just one parameter, that is aspect ratio....
-	//spheroid				AspectRatio = ParticlePar1
-	//Integrated_Spheroid		AspectRatio=ParticlePar1
-	//Algebraic_Globules		AspectRatio = ParticlePar1
-	//Algebraic_Rods			AspectRatio = ParticlePar1, AR > 10
-	//Algebraic_Disks			AspectRatio = ParticlePar1, AR < 0.1
 	//first variable......
 	NVAR/Z CurVal= $(P1Str)
 	if(!NVAR_Exists(CurVal))
@@ -2084,8 +2160,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		tempLowVal=2			//minimum distance possible is 2x radius
 	elseif(stringmatch(CurrentFF,"Unified_Rod"))
 		SetVariable P1Value, title="Length = ", help={"Length of the rod. Same units as radius"} 
-	elseif(stringmatch(CurrentFF,"Unified_RodAR"))
-		SetVariable P1Value, title="Aspect ratio = ", help={"Aspect ratio of the rod. Length / radius"} 
+	elseif(stringmatch(CurrentFF,"Unified_Rod"))
+		SetVariable P1Value, title="Length = ", help={"Length of the rod. Same units as radius"} 
 	elseif(stringmatch(CurrentFF,"Unified_tube"))
 		SetVariable P1Value, title="Length = ", help={"Length in angstroems"} 
 	elseif(stringmatch(CurrentFF,"Fractal aggregate"))
@@ -2128,7 +2204,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		endif
 	endif
 
-	if(stringmatch(CurrentFF,"User") || stringmatch(CurrentFF,"CoreShellCylinder") || stringmatch(CurrentFF,"CoreShell") || stringmatch(CurrentFF,"CoreShellShell") || stringmatch(CurrentFF,"Janus CoreShell Micelle*"))
+	if(stringmatch(CurrentFF,"User") || stringmatch(CurrentFF,"CoreShellCylinder") || stringmatch(CurrentFF,"CoreShell*")|| stringmatch(CurrentFF,"Janus CoreShell Micelle*"))
 		//define next 3 parameters ( need at least 4 params for these three...)
 		NVAR/Z CurVal= $(FitP2Str)
 		NVAR/Z CurVal2= $(LowP2Str)
@@ -2181,6 +2257,15 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		//						ShellRho=ParticlePar3			// rho for shell material
 		//						SolventRho=ParticlePar4			// rho for solvent material
 			SetVariable P1Value, title="CoreShellThickness [A]= ", help={"Thickness of the core shell layer in Angstroems"} 
+			SetVariable P2Value, title="Core Rho = ", help={"Scattering length density of core"} 
+			SetVariable P3Value, title="Shell Rho = ", help={"Scattering length density of shell "} 
+			SetVariable P4Value, title="Solvent Rho = ", help={"Solvent Scattering length density"} 		
+		endif
+		if(stringmatch(CurrentFF,"CoreShellPrecipitate"))
+			SetVariable P1Value, title="Shell is calculated = ", help={"Thickness of the shell, linked to contrast"},disable=2
+			CheckBox FitP1Value,disable=1
+			SetVariable P1LowLim,disable=1
+			SetVariable P1HighLim,disable=1
 			SetVariable P2Value, title="Core Rho = ", help={"Scattering length density of core"} 
 			SetVariable P3Value, title="Shell Rho = ", help={"Scattering length density of shell "} 
 			SetVariable P4Value, title="Solvent Rho = ", help={"Solvent Scattering length density"} 		
