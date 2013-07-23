@@ -723,7 +723,13 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 			//DistModelIntensity = resultMO
 			Killwaves/Z GmatrixTemp
 		endif
-	
+
+		//special cases, we need to update some parameters here...
+		if(stringmatch(FormFactor,"CoreShellPrecipitate"))
+			wavestats/Q Radius
+			FF_Param1 = IR1T_FixCoreShellPrecipitate(V_avg,0,FF_Param2,FF_Param3,FF_Param4,2)
+		endif
+			
 		//Interference, if needed
 //		NVAR UseInterference = $("root:Packages:IR2L_NLSQF:UseInterference_pop"+num2str(pop))
 //		if(UseInterference)

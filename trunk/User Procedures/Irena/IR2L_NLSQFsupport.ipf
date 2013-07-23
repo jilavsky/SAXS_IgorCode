@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
+#pragma version=1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 fixed bug when reinitialization of Unified levels would add G=100 even when Rg=1e10. Fix GUI issue when adding new data set and recovering the stored result. 
+//		Fixes for too long ParamNames in Analysis of uncertainities.
 //1.17 fixed bug when scripting tool got out of sync with main Modeling II panel. 
 //1.16 fixed fix limits check so if the value is negative, it sorts out limits correctly. Needed for core shell systems with negative SLD
 //1.15 added Form and Structrue factor description as Igor help file. Added buttons to call the help file from GUI. 
@@ -153,6 +155,14 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		if(V_Flag)
 			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
 		endif
+		//next needs to be done to set teh controls correctly... 
+		NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
+		NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
+		DisplayModelControls = 0
+		DisplayInputDataControls = 1
+		TabControl DataTabs,win=LSQF2_MainPanel, value= V_Value, disable =!DisplayInputDataControls
+		TabControl DistTabs,win=LSQF2_MainPanel, disable=!DisplayModelControls
+		IR2L_Data_TabPanelControl("",V_Value)
 	endif
 	if(cmpstr(ctrlName,"AddDataSetSkipRecover")==0)
 		//here we load the data and create default values
@@ -2194,17 +2204,6 @@ Function IR2L_SetInitialValues(enforce)
 		endfor
 
 		for(j=1;j<=10;j+=1)	//"Contrast;Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"
-			ListOfVariables = "UF_G;"
-			For(i=0;i<itemsInList(ListOfVariables);i+=1)
-				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
-				if(testVar==0)
-					testVar=100
-					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
-					testVar=10
-					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
-					testVar=1000		
-				endif
-			endfor
 			ListOfVariables = "UF_Rg;"
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
 				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
@@ -2216,6 +2215,21 @@ Function IR2L_SetInitialValues(enforce)
 					testVar=1000		
 				endif
 			endfor
+
+			ListOfVariables = "UF_G;"
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				NVAR/Z testVarRg=$(ReplaceString("_G",StringFromList(i,ListOfVariables),"_Rg")+"_pop"+num2str(j))
+				if(testVar==0 && testVarRg<1e+10)
+					testVar=100
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=10
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=1000		
+				endif
+			endfor
+
+
 			ListOfVariables = "UF_B;"
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
 				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
@@ -3641,13 +3655,18 @@ end
 
 static Function IR2L_ConEvAnalyzeEvalResults2(ParamName)
 	string ParamName
-	print GetDataFOlder(1)
+	//print GetDataFOlder(1)
+	
+	string LParamName=ParamName
+	if(strlen(ParamName)>15)
+		LParamName=Paramname[0,14]
+	endif
 	SVAR SampleFullName=root:Packages:IR2L_NLSQF:DataFolderName
 	NVAR ConfEVNumSteps=root:Packages:IR2L_NLSQF:ConfEVNumSteps
 	Wave ConfEvStartValues=$("ConfEvStartValues")
 	Wave ConfEvEndValues=$("ConfEvEndValues")
 	Wave/T ConfEvCoefNames=$("ConfEvCoefNames")
-	Wave ChiSquareValues=$(ParamName+"ChiSquare")
+	Wave ChiSquareValues=$(LParamName+"ChiSquare")
 	
 	variable i
 	for(i=0;i<numpnts(ChiSquareValues);i+=1)
@@ -3700,6 +3719,11 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	Variable MinValue,MaxValue,NumSteps
 	String ParamName,Method
 	
+	string LParamName=ParamName
+	if(strlen(ParamName)>15)
+		LParamName=Paramname[0,14]
+	endif
+	
 	DoWindow ChisquaredAnalysis
 	if(V_Flag)
 		DoWindow/K ChisquaredAnalysis
@@ -3716,8 +3740,8 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	SampleName=IN2G_RemoveExtraQuote(Samplename,1,1)
 	NewDataFolder /S/O $(Samplename)
 	Wave/Z/T BackupParamNames	
-	if(checkName(ParamName,11)!=0 && !ConfEvAutoOverwrite)
-		DoALert /T="Folder Name Conflict" 1, "Folder with name "+ParamName+" found, do you want to overwrite prior Confidence Evaluation results?"
+	if(checkName(LParamName,11)!=0 && !ConfEvAutoOverwrite)
+		DoALert /T="Folder Name Conflict" 1, "Folder with name "+LParamName+" found, do you want to overwrite prior Confidence Evaluation results?"
 		if(!V_Flag)
 			abort
 		endif
@@ -3726,7 +3750,7 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 		IR2L_ConEvBackupCurrentSettings(GetDataFolder(1))
 		print "Stored setting in case of abort, this can be reset by button Reset from abort"
 	endif
-	NewDataFolder /S/O $(ParamName)
+	NewDataFolder /S/O $(LParamName)
 	string BackupFilesLocation=GetDataFolder(1)
 	IR2L_ConEvBackupCurrentSettings(BackupFilesLocation)
 	//calculate chiSquare target if users asks for it..
@@ -3734,8 +3758,8 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	NVAR ConfEvAutoCalcTarget=root:Packages:IR2L_NLSQF:ConfEvAutoCalcTarget
 	NVAR ConfEvTargetChiSqRange = root:Packages:IR2L_NLSQF:ConfEvTargetChiSqRange
 	variable i, currentParValue, tempi
-	make/O/N=0  $(ParamName+"ChiSquare")
-	Wave ChiSquareValues=$(ParamName+"ChiSquare")
+	make/O/N=0  $(LParamName+"ChiSquare")
+	Wave ChiSquareValues=$(LParamName+"ChiSquare")
 	NVAR AchievedChisq = root:Packages:IR2L_NLSQF:AchievedChisq
 	variable SortForAnalysis=0
 	variable FittedParameter=0
@@ -3803,9 +3827,9 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 		else		//set
 			NVAR ParamFit=$("root:Packages:IR2L_NLSQF:"+ReplaceString("_set", ParamName, "Fit_set"))
 		endif
-		make/O/N=0 $(ParamName+"StartValue"), $(ParamName+"EndValue"), $(ParamName+"ChiSquare")
-		Wave StartValues=$(ParamName+"StartValue")
-		Wave EndValues=$(ParamName+"EndValue")
+		make/O/N=0 $(LParamName+"StartValue"), $(LParamName+"EndValue"), $(LParamName+"ChiSquare")
+		Wave StartValues=$(LParamName+"StartValue")
+		Wave EndValues=$(LParamName+"EndValue")
 		variable StartHere=Param
 		variable step=(MaxValue-MinValue)/(NumSteps)
 		if(stringMatch(Method,"Sequential, fix param"))
@@ -3933,11 +3957,15 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 	string ParamName
 	variable SortForAnalysis,FittedParameter
 	
+	string LParamName=ParamName
+	if(strlen(Paramname)>15)
+		LParamName=ParamName[0,14]
+	endif
 	NVAR ConfEvTargetChiSqRange = root:Packages:IR2L_NLSQF:ConfEvTargetChiSqRange
 	SVAR SampleFullName=root:Packages:IR2L_NLSQF:FolderName_set1
-	Wave StartValues=$(ParamName+"StartValue")
-	Wave EndValues=$(ParamName+"EndValue")
-	Wave ChiSquareValues=$(ParamName+"ChiSquare")
+	Wave StartValues=$(LParamName+"StartValue")
+	Wave EndValues=$(LParamName+"EndValue")
+	Wave ChiSquareValues=$(LParamName+"ChiSquare")
 	SVAR Method = root:Packages:IR2L_NLSQF:ConEvMethod
 	if(SortForAnalysis)
 		Sort EndValues, EndValues, StartValues, ChiSquareValues
