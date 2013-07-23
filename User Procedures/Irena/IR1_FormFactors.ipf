@@ -1343,7 +1343,7 @@ static Function IR1T_Solve3rdPolyShellVol(Volume,Radius)
 	
 	string OldDf=GetDataFolder(1)
 	
-	setDataFolder root:Packages:Irena	
+	setDataFolder root:Packages:FormFactorCalc	
 	variable a, b, c, d, result
 	a = 1
 	b = 3*Radius
