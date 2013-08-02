@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 Added change the tab names, noFittingLimits support and changed GUI for SD to gain space. 
 //1.10 changed back to rtGlobals=2, need to check code much more to make it 3
 //        changes terms for storing data back to folder. Previously used Save, which confused users... 
 //1.09 added form and structure factor description as Igor help file with the buttons from the panel directly. 
@@ -90,33 +91,35 @@ Function IR2L_MainPanel()
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
 	TitleBox MainTitle title="Modeling II",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},fSize=24,fColor=(0,0,52224)
 
-	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,176},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine1 title=" ",fixedSize=1,size={270,3},pos={16,184},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
 
-	Button RemoveAllDataSets, pos={5,155},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Remove all", help={"Remove all data from tool"}
-	Button UnuseAllDataSets, pos={100,155},size={90,18}, proc=IR2L_InputPanelButtonProc,title="unUse all", help={"Set all data set to not Use"}
-	Button ConfigureGraph, pos={195,155},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Config Graph", help={"Set parameters for graph"}
-	Button ReGraph, pos={290,155},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Graph (ReGraph)", help={"Create or Recreate graph"}
-	Button ScriptingTool, pos={290,180},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Scripting tool", help={"Open Scripting tool to analyze multipel data sets subsequently"}
+	Button RemoveAllDataSets, pos={5,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Remove all", help={"Remove all data from tool"}
+	Button UnuseAllDataSets, pos={100,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="unUse all", help={"Set all data set to not Use"}
+	Button ConfigureGraph, pos={195,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Config Graph", help={"Set parameters for graph"}
+	Button ReGraph, pos={290,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Graph (ReGraph)", help={"Create or Recreate graph"}
+	Button ScriptingTool, pos={290,168},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Scripting tool", help={"Open Scripting tool to analyze multipel data sets subsequently"}
+	Button MoreSDParameters, pos={165,168},size={120,18}, proc=IR2L_InputPanelButtonProc,title="Size Dist. Type", help={"Get panel with size-distribution parameters"}
 
-	CheckBox DisplayInputDataControls,pos={10,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Data controls", mode=1
+	CheckBox DisplayInputDataControls,pos={10,188},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Data cntrls", mode=1
 	CheckBox DisplayInputDataControls,variable= root:Packages:IR2L_NLSQF:DisplayInputDataControls, help={"Select to get data controls"}
-	CheckBox DisplayModelControls,pos={120,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Model controls", mode=1
+	CheckBox DisplayModelControls,pos={90,188},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Model cntrls", mode=1
 	CheckBox DisplayModelControls,variable= root:Packages:IR2L_NLSQF:DisplayModelControls, help={"Select to get model controls"}
-
-
-
-	CheckBox MultipleInputData,pos={10,200},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Multiple Input Data sets?"
-	CheckBox MultipleInputData,variable= root:Packages:IR2L_NLSQF:MultipleInputData, help={"Do you want to use multiple input data sets in this tool?"}
-
-	CheckBox UseNumberDistributions,pos={170,200},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Number Dist?"
-	CheckBox UseNumberDistributions,variable= root:Packages:IR2L_NLSQF:UseNumberDistributions, help={"Use number distributions? Default is volume distributions."}
-	CheckBox RecalculateAutomatically,pos={310,200},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Auto Recalc?"
+	CheckBox RecalculateAutomatically,pos={300,188},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Auto Recalculate?"
 	CheckBox RecalculateAutomatically,variable= root:Packages:IR2L_NLSQF:RecalculateAutomatically, help={"Check to have everything recalculate when change is made. SLOW!"}
 
+	CheckBox MultipleInputData,pos={10,203},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Multiple Input Data sets?"
+	CheckBox MultipleInputData,variable= root:Packages:IR2L_NLSQF:MultipleInputData, help={"Do you want to use multiple input data sets in this tool?"}
+	CheckBox NoFittingLimits,pos={300,203},size={25,90},proc=IR2L_DataTabCheckboxProc,title="No Fitting Limits?"
+	CheckBox NoFittingLimits,variable= root:Packages:IR2L_NLSQF:NoFittingLimits, help={"Check to do fitting without fitting limits."}
 
-	CheckBox SameContrastForDataSets,pos={220,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Different contrasts for data sets?"
+
+	CheckBox SameContrastForDataSets,pos={175,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Vary contrasts?"
 	CheckBox SameContrastForDataSets,variable= root:Packages:IR2L_NLSQF:SameContrastForDataSets, help={"Check if contrast varies between data sets for one population?"}
+//	CheckBox DimensionIsDiameter,pos={290,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="SD use Diameters?"
+//	CheckBox DimensionIsDiameter,variable= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter, help={"Check if Size Distribution dimension is diameter?"}
+//	CheckBox UseNumberDistributions,pos={170,200},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Number Dist?"
+//	CheckBox UseNumberDistributions,variable= root:Packages:IR2L_NLSQF:UseNumberDistributions, help={"Use number distributions? Default is volume distributions."}
 
 	NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
 	NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
@@ -216,10 +219,14 @@ Function IR2L_MainPanel()
 		CheckBox RdistLog,pos={10,295},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Log R dist?"
 		CheckBox RdistLog,variable= root:Packages:IR2L_NLSQF:RdistLog_pop1, help={"Use Log binning for R distribution?"}
 //	SVAR ListOfFormFactors=root:Packages:FormFactorCalc:ListOfFormFactors
-		PopupMenu FormFactorPop title="Form Factor : ",proc=IR2L_PanelPopupControl, pos={10,320}
+		PopupMenu FormFactorPop title="Form Factor : ",proc=IR2L_PanelPopupControl, pos={10,315}
 		PopupMenu FormFactorPop mode=1, value=#"(root:Packages:FormFactorCalc:ListOfFormFactors)"
 		PopupMenu FormFactorPop help={"Select form factor to be used for this population of scatterers"}
-
+		
+		SetVariable SizeDist_DimensionType,variable= root:Packages:IR2L_NLSQF:SizeDist_DimensionType, noproc, disable=0,frame=0,valueColor=(39321,1,1), noedit=1
+		SetVariable SizeDist_DimensionType,pos={100,335},size={300,15},title="Size Dist.  is : ", help={"Is SD using Number/Volume distribution and diameters or radia? "} 
+		SetVariable SizeDist_DimensionType fstyle=3,fColor=(52428,1,1)
+		
 		PopupMenu PopSizeDistShape title="Distribution type : ",proc=IR2L_PanelPopupControl, pos={190,295}
 		PopupMenu PopSizeDistShape mode=1, value="LogNormal;Gauss;LSW;Schulz-Zimm;"
 		PopupMenu PopSizeDistShape help={"Select Distribution type for this population"}
@@ -474,6 +481,7 @@ Function IR2L_MainPanel()
 
 	IR2L_Model_TabPanelControl("",0)
 	IR2L_DataTabCheckboxProc("MultipleInputData",MultipleInputData)		//carefull this will make graph to be top window!!!
+	IR2L_SetTabsNames()
 end
 
 
@@ -484,3 +492,23 @@ end
 //*****************************************************************************************************************
 
 
+Function ModelingII_MoreDetailsF() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1 /W=(188,240,613,383) as "Modeling II more parameters"
+	DoWindow/C ModelingII_MoreDetails
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)
+	DrawText 108,24,"Set Size distribution parameters"
+	CheckBox DimensionIsDiameter,pos={13,35},size={203,14},proc=IR2L_DataTabCheckboxProc,title="Size dist. use Diameters? (default is radia)"
+	CheckBox DimensionIsDiameter,help={"Check if Size Distribution dimension is diameter?"}
+	CheckBox DimensionIsDiameter,variable= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+	CheckBox UseNumberDistributions,pos={13,60},size={278,14},proc=IR2L_DataTabCheckboxProc,title="Size Dist. use Number distribution? (default is volume dist.)"
+	CheckBox UseNumberDistributions,help={"Use number distributions? Default is volume distributions."}
+	CheckBox UseNumberDistributions,variable= root:Packages:IR2L_NLSQF:UseNumberDistributions
+	Button Continue_SDDetails,pos={149,109},size={114,24},proc=IR2L_InputPanelButtonProc,title="Continue"
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************

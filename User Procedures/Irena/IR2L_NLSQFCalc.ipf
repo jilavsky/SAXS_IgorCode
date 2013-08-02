@@ -51,17 +51,23 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 			if(stringMatch(Model,"Size dist."))	//old code
 				//first create waves for Distributions
 				wave/Z Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+				wave/Z Diameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(i))
 				wave/Z NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
 				wave/Z VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
-				if(!skipCreateDistWvs || WaveExists(Radius) || WaveExists(NumDist) || WaveExists(VolumeDist))
+				if(!skipCreateDistWvs || WaveExists(Radius)  || WaveExists(Diameter) ||  WaveExists(NumDist) || WaveExists(VolumeDist))
 					IR2L_CreateDistributionWaves(i)
-					//print "created dist waves"
 				endif
 				//next we calculate the distributions (Guass, Log-Normal or LSW)
 				wave NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
 				wave VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
 				wave Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
-				IR2L_CalculateDistributions(i, Radius, NumDist,VolumeDist)
+				wave Diameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(i))
+				NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+				if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+					IR2L_CalculateDistributions(i, Diameter, NumDist,VolumeDist)			
+				else
+					IR2L_CalculateDistributions(i, Radius, NumDist,VolumeDist)			
+				endif		
 				// Calculate intensity of the population...
 				For(j=1;j<=10;j+=1)	//j is dataset
 					IR2L_CalcIntPopXDataSetY(i,j)
@@ -355,7 +361,7 @@ Function IR2L_CalcSumOfDistribution() //Sums the existing populations and create
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	variable i, tempLength=0
-	Make/O/N=0/D DistRadia
+	Make/O/N=0/D DistRadia, DistDiameters
 	
 	For(i=1;i<11;i+=1)
 		NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
@@ -380,6 +386,10 @@ Function IR2L_CalcSumOfDistribution() //Sums the existing populations and create
 			DeletePoints i,1, DistRadia
 		endif
 	endfor
+
+	Duplicate/O DistRadia, DistDiameters
+	DistDiameters = 2 * DistRadia
+
 	Duplicate/O DistRadia, TempVolDist, TempNumDist, TotalVolumeDist, TotalNumberDist
 	Redimension/D TempVolDist, TempNumDist, TotalVolumeDist, TotalNumberDist	
 	TotalVolumeDist=0
@@ -390,7 +400,12 @@ Function IR2L_CalcSumOfDistribution() //Sums the existing populations and create
 		SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(i))
 		SVAR Model=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(i))
 		if(UseThePop&&!(stringMatch(Model,"Unified level")||stringMatch(Model,"Diffraction peak")))
-			IR2L_CalculateDistributions(i, DistRadia, TempNumDist,TempVolDist)
+			NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+			if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+				IR2L_CalculateDistributions(i, DistDiameters, TempNumDist,TempVolDist)		
+			else
+				IR2L_CalculateDistributions(i, DistRadia, TempNumDist,TempVolDist)		
+			endif		
 			TotalVolumeDist+=TempVolDist
 			TotalNumberDist+=TempNumDist
 		endif
@@ -520,6 +535,7 @@ Function IR2L_AppendWvsGraphSizeDist()
 	NVAR SizeDistDisplayVolDist = root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist
 	NVAR SizeDistLogVolDist = root:Packages:IR2L_NLSQF:SizeDistLogVolDist
 	NVAR SizeDistLogNumDist = root:Packages:IR2L_NLSQF:SizeDistLogNumDist
+	SVAR SizeDist_DimensionType=root:Packages:IR2L_NLSQF:SizeDist_DimensionType
 	
 	variable i
 
@@ -564,7 +580,7 @@ Function IR2L_AppendWvsGraphSizeDist()
 		endif
 	endfor
 
-	Label/Z /W=GraphSizeDistributions bottom "Radius [A]"
+	Label/Z /W=GraphSizeDistributions bottom SizeDist_DimensionType+" [A]"
 	if(SizeDistDisplayNumDist)
 		Label /Z/W=GraphSizeDistributions right "Number distribution [1/(A*cm\\S3\\M)]"
 	endif
@@ -714,13 +730,10 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 			duplicate/O NumDist, TepNumbDist
 			TepNumbDist=NumDist[p]* IR1_BinWidthInDiameters(Radius,p)
 			MatrixOp/O ModelInt =GmatrixTemp x TepNumbDist 
-			//ModelInt = resultMO
-			//Killwaves resultMO
 		else
 			duplicate/O VolDist, TepVolumeDist
 			TepVolumeDist=VolDist[p]* IR1_BinWidthInDiameters(Radius,p)
 			MatrixOp/O ModelInt =GmatrixTemp x TepVolumeDist 
-			//DistModelIntensity = resultMO
 			Killwaves/Z GmatrixTemp
 		endif
 
@@ -729,31 +742,19 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 			wavestats/Q Radius
 			FF_Param1 = IR1T_FixCoreShellPrecipitate(V_avg,0,FF_Param2,FF_Param3,FF_Param4,2)
 		endif
-			
-		//Interference, if needed
-//		NVAR UseInterference = $("root:Packages:IR2L_NLSQF:UseInterference_pop"+num2str(pop))
-//		if(UseInterference)
-			NVAR Phi = $("root:Packages:IR2L_NLSQF:StructureParam2_pop"+num2str(pop))
-			NVAR Eta = $("root:Packages:IR2L_NLSQF:StructureParam1_pop"+num2str(pop))
-			NVAR WellDepthPert = $("root:Packages:IR2L_NLSQF:StructureParam3_pop"+num2str(pop))
-			NVAR WellWidthStick = $("root:Packages:IR2L_NLSQF:StructureParam4_pop"+num2str(pop))
-			NVAR Par5 = $("root:Packages:IR2L_NLSQF:StructureParam5_pop"+num2str(pop))
-			NVAR Par6 = $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(pop))
+		
+		NVAR Phi = $("root:Packages:IR2L_NLSQF:StructureParam2_pop"+num2str(pop))
+		NVAR Eta = $("root:Packages:IR2L_NLSQF:StructureParam1_pop"+num2str(pop))
+		NVAR WellDepthPert = $("root:Packages:IR2L_NLSQF:StructureParam3_pop"+num2str(pop))
+		NVAR WellWidthStick = $("root:Packages:IR2L_NLSQF:StructureParam4_pop"+num2str(pop))
+		NVAR Par5 = $("root:Packages:IR2L_NLSQF:StructureParam5_pop"+num2str(pop))
+		NVAR Par6 = $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(pop))
+		//OK, new method... 
+		SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(pop))
+		SVAR SFUserSFformula = $("root:Packages:IR2L_NLSQF:SFUserSQFormula_pop"+num2str(pop))
+		ModelInt *=  IR2S_CalcStructureFactor(StrFac,ModelQ,Eta,Phi,WellDepthPert,WellWidthStick,Par5,Par6, UserStrFacFormula=SFUserSFformula)		//this returns 1 in case of dilute system
+	endif
 
-//	ListOfPopulationVariables+="StructureParam3;StructureParam3Fit;StructureParam3Min;StructureParam3Max;StructureParam4;StructureParam4Fit;StructureParam4Min;StructureParam4Max;"
-///	ListOfPopulationVariables+="StructureParam5;StructureParam5Fit;StructureParam5Min;StructureParam5Max;"
-//			//interference		 Int(q, with interference) =Int(q)*(1-8*phi*spherefactor(q,eta))   ????????????????
-//			ModelInt /= (1+phi*IR1A_SphereAmplitude(ModelQ[p],Eta))
-			//OK, new method... 
-			SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(pop))
-			SVAR SFUserSFformula = $("root:Packages:IR2L_NLSQF:SFUserSQFormula_pop"+num2str(pop))
-			ModelInt *=  IR2S_CalcStructureFactor(StrFac,ModelQ,Eta,Phi,WellDepthPert,WellWidthStick,Par5,Par6, UserStrFacFormula=SFUserSFformula)		//this returns 1 in case of dilute system
-		endif
-//	endif
-
-
-//	endif
-//
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
@@ -963,7 +964,7 @@ Function IR2L_CalculateDistributions(pop,Radius,NumDist,VolumeDist) //calculates
 	NVAR SZMeanSize=$("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(pop))
 	NVAR SZWidth=$("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(pop))
 	NVAR LSWLocation=$("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(pop))
-	Duplicate/O VolumeDist, tempDist, TempVolDistL
+	Duplicate/Free VolumeDist, tempDist, TempVolDistL
 	Redimension/D tempDist, TempVolDistL
 	if(stringmatch(DistShape,"LogNormal"))
 		tempDist = IR1_LogNormProbability(Radius[p],LNMinSize,LNMeanSize, LNSDeviation)
@@ -974,7 +975,14 @@ Function IR2L_CalculateDistributions(pop,Radius,NumDist,VolumeDist) //calculates
 	else
 		tempDist = IR1_LSWProbability(Radius[p],LSWLocation,0, 0)
 	endif
-	IR2L_CalculateAveVolWave(TempVolDistL,Radius,pop)
+	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+	if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+		Duplicate/Free Radius, tmpRadius
+		tmpRadius = Radius/2
+		IR2L_CalculateAveVolWave(TempVolDistL,tmpRadius,pop)
+	else
+		IR2L_CalculateAveVolWave(TempVolDistL,Radius,pop)
+	endif		
 	//calibrate - set volumes... 
 	//This is for  number distributions
 			//this is to calculate the number distribution, so the volume is right
@@ -993,10 +1001,24 @@ Function IR2L_CalculateDistributions(pop,Radius,NumDist,VolumeDist) //calculates
 		VolumeDist = tempDist
   		NumDist = VolumeDist /TempVolDistL	
 	endif
-	ScaleVol = Volume/areaXY(Radius,VolumeDist,-inf,inf)
-	VolumeDist = VolumeDist * ScaleVol
-	NumDist = NumDist * ScaleVol
-	KillWaves/Z TempVolDistL, tempDist
+
+	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+	if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+		Duplicate/Free Radius, tmpRadius
+		tmpRadius = Radius/2
+		ScaleVol = Volume/areaXY(tmpRadius,VolumeDist,-inf,inf)
+		VolumeDist = VolumeDist * ScaleVol
+		NumDist = NumDist * ScaleVol
+	else
+		ScaleVol = Volume/areaXY(Radius,VolumeDist,-inf,inf)
+		VolumeDist = VolumeDist * ScaleVol
+		NumDist = NumDist * ScaleVol
+	endif		
+
+//	ScaleVol = Volume/areaXY(Radius,VolumeDist,-inf,inf)
+//	VolumeDist = VolumeDist * ScaleVol
+//	NumDist = NumDist * ScaleVol
+	//KillWaves/Z TempVolDistL, tempDist
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
@@ -1043,6 +1065,7 @@ Function IR2L_CreateDistributionWaves(pop)
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
 	SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(pop))
+	SVAR Model=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(pop))	
 
 //	string ThisDataFldrNm="NLSQF_Data"+num2str(pop)+"_Set"+num2str(dataSet)
 //	NewDataFolder/O/S $(ThisDataFldrNm)
@@ -1055,6 +1078,7 @@ Function IR2L_CreateDistributionWaves(pop)
 	NVAR RdistNumPnts=$("root:Packages:IR2L_NLSQF:RdistNumPnts_pop"+num2str(pop))
 	NVAR RdistNeglectTails=$("root:Packages:IR2L_NLSQF:RdistNeglectTails_pop"+num2str(pop))
 	SVAR PopSizeDistShape=$("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(pop))
+	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
 
 	if(stringmatch(PopSizeDistShape,"LogNormal"))
 		NVAR location = $("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(pop))
@@ -1074,19 +1098,36 @@ Function IR2L_CreateDistributionWaves(pop)
 		NVAR shape = $("root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(pop))
 	endif
 
-	if(!stringMatch(FormFactor,"Unified_Level"))	 
-		make/O/N=(RdistNumPnts) $("Radius_Pop"+num2str(pop)), $("VolumeDist_Pop"+num2str(pop)), $("NumberDist_Pop"+num2str(pop))
+	if(stringMatch(Model,"Size Dist."))	 
+		make/O/N=(RdistNumPnts) $("Radius_Pop"+num2str(pop)),$("Diameter_Pop"+num2str(pop)), $("VolumeDist_Pop"+num2str(pop)), $("NumberDist_Pop"+num2str(pop))
 		Wave Radius=$("Radius_Pop"+num2str(pop))
-		if(RdistMan)
-			if(RdistLog)
-				Radius=10^(log(RdistManMin)+p*((log(RdistManMax)-log(RdistManMin))/(RdistNumPnts-1)))
-			else
-				Radius=RdistManMin+p*(RdistManMax-RdistManMin)/(RdistNumPnts-1)
+		Wave Diameter=$("Diameter_Pop"+num2str(pop))
+		if(DimensionIsDiameter)
+			if(RdistMan)
+				if(RdistLog)
+					Diameter=10^(log(RdistManMin)+p*((log(RdistManMax)-log(RdistManMin))/(RdistNumPnts-1)))
+				else
+					Diameter=RdistManMin+p*(RdistManMax-RdistManMin)/(RdistNumPnts-1)
+				endif
+			elseif(RdistrSemiAuto)			//thsi is auto, but stopped when fitting... Needs to somehow pass to here that we are fitting... 
+				IR2L_GenerateRadiiDist(PopSizeDistShape, Diameter, RdistNumPnts, RdistNeglectTails, location,scale, shape)
+			else		//auto is default
+				IR2L_GenerateRadiiDist(PopSizeDistShape, Diameter, RdistNumPnts, RdistNeglectTails, location,scale, shape)
 			endif
-		elseif(RdistrSemiAuto)			//thsi is auto, but stopped when fitting... Needs to somehow pass to here that we are fitting... 
-			IR2L_GenerateRadiiDist(PopSizeDistShape, Radius, RdistNumPnts, RdistNeglectTails, location,scale, shape)
-		else		//auto is default
-			IR2L_GenerateRadiiDist(PopSizeDistShape, Radius, RdistNumPnts, RdistNeglectTails, location,scale, shape)
+			Radius = Diameter/2
+		else			//use Radiii	
+			if(RdistMan)
+				if(RdistLog)
+					Radius=10^(log(RdistManMin)+p*((log(RdistManMax)-log(RdistManMin))/(RdistNumPnts-1)))
+				else
+					Radius=RdistManMin+p*(RdistManMax-RdistManMin)/(RdistNumPnts-1)
+				endif
+			elseif(RdistrSemiAuto)			//thsi is auto, but stopped when fitting... Needs to somehow pass to here that we are fitting... 
+				IR2L_GenerateRadiiDist(PopSizeDistShape, Radius, RdistNumPnts, RdistNeglectTails, location,scale, shape)
+			else		//auto is default
+				IR2L_GenerateRadiiDist(PopSizeDistShape, Radius, RdistNumPnts, RdistNeglectTails, location,scale, shape)
+			endif
+			Diameter = 2*Radius
 		endif
 	else
 		make/O/N=(100) $("Radius_Pop"+num2str(pop)), $("VolumeDist_Pop"+num2str(pop)), $("NumberDist_Pop"+num2str(pop))

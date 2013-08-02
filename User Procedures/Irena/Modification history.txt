@@ -3,6 +3,13 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.53
+Data manipulation 1 - fix log rebinning when Q data start with points where Q<=0
+Controls procedure - modified handling Irena results waves, mainly the Y wave. Faster. 
+All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
+Modeling II - added no fitting limits option
+Modeling II - enabled use of radii or diameters. Changed GUI to simplify and added visual description of what type of distribution is used and which tabs are being used. 
+
 2.52 7/23/2013
 Changed back everything to rtGlobals=2, major issues in the code run were found. 
 Control Procedures - fixed failure to work for qrs waves when folder name contained []. 

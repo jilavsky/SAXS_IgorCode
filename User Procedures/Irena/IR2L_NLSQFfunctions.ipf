@@ -632,8 +632,11 @@ Function IR2L_Fitting(SkipDialogs)
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
+	NVAR NoFittingLimits = root:Packages:IR2L_NLSQF:NoFittingLimits
 
-
+	if(NoFittingLimits)
+		IR2L_FixLimits(1)		//let's avoid dialog bombing on limits... 
+	endif
 	//Create the fitting parameters, these will have _pop added and we need to add them to list of parameters to fit...
 	string ListOfPopulationVariables=""
 
@@ -1018,6 +1021,11 @@ Function IR2L_Fitting(SkipDialogs)
 	endfor
 	Duplicate/O IntWvForFit, MaskWaveGenOpt
 	MaskWaveGenOpt=1
+	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
+
+	if(NoFittingLimits && UseGeneticOptimization)
+			Abort "Genetic optimization cannot be used without fitting limits!"
+	endif
 	
 	if(!SkipDialogs)
 		IR2L_CheckFittingParamsFnct()
@@ -1032,20 +1040,31 @@ Function IR2L_Fitting(SkipDialogs)
 	
 
 	IR2L_RecordResults("before")
-	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
 	Duplicate/O IntWvForFit, tempDestWave
 	Variable V_FitError=0			//This should prevent errors from being generated
 	//and now the fit...
-	if(UseGeneticOptimization)
+	if(NoFittingLimits)
+		if(UseGeneticOptimization)
 #if Exists("gencurvefit")
-	  	gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
+			Abort "Genetic optiomization cannot be used without fitting limits!"
+		  	//gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
 #else
-		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
+			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
-	else
-		FuncFit /N/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
+		else
+			FuncFit /N/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D
+		endif
+	else		//old code, use fitting limits
+		if(UseGeneticOptimization)
+#if Exists("gencurvefit")
+		  	gencurvefit  /I=1 /W=EWvForFit /M=MaskWaveGenOpt /N /TOL=0.002 /K={50,20,0.7,0.5} /X=QWvForFit IR2L_FitFunction, IntWvForFit  , W_Coef, HoldStr, Gen_Constraints  	
+#else
+			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
+#endif
+		else
+			FuncFit /N/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
+		endif
 	endif
-
 	variable LimitsReached
 	String ListOfLimitsReachedParams
 	LimitsReached=0
@@ -1354,75 +1373,6 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 	if(!SVAR_Exists(ListOfVariables) || !SVAR_Exists(ListOfDataVariables) || !SVAR_Exists(ListOfPopulationVariables) || !SVAR_Exists(ListOfStrings) || !SVAR_Exists(ListOfDataStrings) || !SVAR_Exists(ListOfPopulationsStrings))
 		abort "Error in parameters in SaveResultsInDdataFolder routine. Send the file to author for bug fix, please"
 	endif
-	
-//	variable i, j 
-
-//	//and here we store them in the List to use in the wave note...
-//	string ListOfParameters=""
-//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-//		NVAR testVar = $( StringFromList(i,ListOfVariables))
-//		ListOfParameters+=StringFromList(i,ListOfVariables)+"="+num2str(testVar)+";"
-//	endfor		
-//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-//		SVAR testStr = $(StringFromList(i,ListOfStrings))
-//		ListOfParameters+=StringFromList(i,ListOfStrings)+"="+testStr+";"
-//	endfor	
-//	//following needs to run 10 times to create 10 sets for 10 data sets...
-//	for(j=1;j<=10;j+=1)	
-//		NVAR UseSet=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(j))
-//		if(UseSet)
-//			for(i=0;i<itemsInList(ListOfDataVariables);i+=1)	
-//				NVAR testVar = $(StringFromList(i,ListOfDataVariables)+"_set"+num2str(j))
-//				ListOfParameters+=StringFromList(i,ListOfDataVariables)+"_set"+num2str(j)+"="+num2str(testVar)+";"
-//			endfor	
-//		endif
-//	endfor
-//	//following needs to run 6 times to create 10 different populations sets of variables and strings	
-//	for(j=1;j<=10;j+=1)	
-//		NVAR UsePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(j))
-//		if(UsePop)
-//			SVAR Model = $("root:Packages:IR2L_NLSQF:Model_pop"+num2str(j))
-//			for(i=0;i<itemsInList(ListOfPopulationVariables);i+=1)	
-//				NVAR testVar = $(StringFromList(i,ListOfPopulationVariables)+"_pop"+num2str(j))
-//				ListOfParameters+=StringFromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
-//			endfor
-//			if(stringmatch(Model,"Size dist."))
-//				for(i=0;i<itemsInList(ListOfPopulationVariablesSD);i+=1)	
-//					NVAR testVar = $(StringFromList(i,ListOfPopulationVariablesSD)+"_pop"+num2str(j))
-//					ListOfParameters+=StringFromList(i,ListOfPopulationVariablesSD)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
-//				endfor
-//			elseif(stringmatch(Model,"Unified level"))
-//				for(i=0;i<itemsInList(ListOfPopulationVariablesUF);i+=1)	
-//					NVAR testVar = $(StringFromList(i,ListOfPopulationVariablesUF)+"_pop"+num2str(j))
-//					ListOfParameters+=StringFromList(i,ListOfPopulationVariablesUF)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
-//				endfor
-//			elseif(stringmatch(Model,"Diffraction Peak"))
-//				for(i=0;i<itemsInList(ListOfPopulationVariablesDP);i+=1)	
-//					NVAR testVar = $(StringFromList(i,ListOfPopulationVariablesDP)+"_pop"+num2str(j))
-//					ListOfParameters+=StringFromList(i,ListOfPopulationVariablesDP)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
-//				endfor
-//			endif
-//		endif
-//	endfor		
-//	//following 10 times as these are data sets
-//	for(j=1;j<=10;j+=1)	
-//		NVAR UseSet=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(j))
-//		if(UseSet)
-//			for(i=0;i<itemsInList(ListOfDataStrings);i+=1)	
-//				SVAR testStr = $(StringFromList(i,ListOfDataStrings)+"_set"+num2str(j))
-//				ListOfParameters+=StringFromList(i,ListOfDataStrings)+"_set"+num2str(j)+"="+testStr+";"
-//			endfor	
-//		endif
-//	endfor		
-//	for(j=1;j<=10;j+=1)	
-//		NVAR UsePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(j))
-//		if(UsePop)
-//			for(i=0;i<itemsInList(ListOfPopulationsStrings);i+=1)	
-//				SVAR testStr = $(StringFromList(i,ListOfPopulationsStrings)+"_pop"+num2str(j))
-//				ListOfParameters+=StringFromList(i,ListOfPopulationsStrings)+"_pop"+num2str(j)+"="+testStr+";"
-//			endfor	
-//		endif
-//	endfor							
 
 
 	string tempList
@@ -1431,7 +1381,7 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 	string ListOfParameters=""
 
 	//Main parameters
-	tempList="UseIndra2Data;UseQRSdata;UseSMRData;MultipleInputData;UseNumberDistributions;DisplaySinglePopInt;"
+	tempList="UseIndra2Data;UseQRSdata;UseSMRData;MultipleInputData;UseNumberDistributions;DisplaySinglePopInt;SizeDist_DimensionIsDiameter;"
 	tempList+="SameContrastForDataSets;VaryContrastForDataSets;DisplayInputDataControls;DisplayModelControls;UseGeneticOptimization;UseLSQF;"
 	tempList+="GraphXMin;GraphXMax;GraphYMin;GraphYMax;SizeDistDisplayNumDist;SizeDistDisplayVolDist;"
 	tempList+="SizeDistLogVolDist;SizeDistLogNumDist;SizeDistLogX;"
@@ -1617,15 +1567,16 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
 
-
 	SVAR DataFolderName = $("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(whichDataSet))
 	
 	Wave Intensity		= $("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(whichDataSet))
 	Wave Qvector 		= $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(whichDataSet))
 	Wave Radii 			= root:Packages:IR2L_NLSQF:DistRadia
+	Wave Diameters		= root:Packages:IR2L_NLSQF:DistDiameters
 	Wave NumberDist 	= root:Packages:IR2L_NLSQF:TotalNumberDist
 	Wave VolumeDist 	= root:Packages:IR2L_NLSQF:TotalVolumeDist
 	NVAR useModelData  = root:Packages:IR2L_NLSQF:useModelData
+	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
 	
 	string UsersComment, ExportSeparateDistributions
 	UsersComment="Result from LSQF2 Modeling "+date()+"  "+time()
@@ -1666,8 +1617,14 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	print "Created results wave : "+DataFolderName+("IntensityModelLSQF2_"+num2str(ii))
 	Duplicate Qvector, $("QvectorModelLSQF2_"+num2str(ii))
 	print "Created results wave : "+DataFolderName+("QvectorModelLSQF2_"+num2str(ii))
-	Duplicate Radii, $("RadiiModelLSQF2_"+num2str(ii))
-	print "Created results wave : "+DataFolderName+("RadiiModelLSQF2_"+num2str(ii))
+	if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+		Duplicate Diameters, $("DiametersModelLSQF2_"+num2str(ii))
+		print "Created results wave : "+DataFolderName+("DiametersModelLSQF2_"+num2str(ii))
+	else
+		Duplicate Radii, $("RadiiModelLSQF2_"+num2str(ii))
+		print "Created results wave : "+DataFolderName+("RadiiModelLSQF2_"+num2str(ii))			
+	endif		
+//do we have to scale these here??? Good question, I am not sure. 
 	Duplicate NumberDist, $("NumberDistModelLSQF2_"+num2str(ii))
 	print "Created results wave : "+DataFolderName+("NumberDistModelLSQF2_"+num2str(ii))
 	Duplicate VolumeDist, $("VolumeDistModelLSQF2_"+num2str(ii))
@@ -1691,15 +1648,26 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	note/NOCR MytempWave, WaveNoteText
 	Redimension/D MytempWave
 		
-	Wave MytempWave=$("RadiiModelLSQF2_"+num2str(ii))
-	tempname = "RadiiModelLSQF2_"+num2str(ii)
-	IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
-	IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
-	IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-	IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
-	note/NOCR MytempWave, WaveNoteText
-	Redimension/D MytempWave
-		
+	if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+		Wave MytempWave=$("DiametersModelLSQF2_"+num2str(ii))
+		tempname = "DiametersModelLSQF2_"+num2str(ii)
+		IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
+		IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+		IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+		IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+		note/NOCR MytempWave, WaveNoteText
+		Redimension/D MytempWave
+	else
+		Wave MytempWave=$("RadiiModelLSQF2_"+num2str(ii))
+		tempname = "RadiiModelLSQF2_"+num2str(ii)
+		IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
+		IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+		IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+		IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+		note/NOCR MytempWave, WaveNoteText
+		Redimension/D MytempWave
+	endif		
+
 	Wave MytempWave=$("NumberDistModelLSQF2_"+num2str(ii))
 	tempname = "NumberDistModelLSQF2_"+num2str(ii)
 	IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
@@ -1708,6 +1676,9 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm3")
 	note/NOCR MytempWave, WaveNoteText
 	Redimension/D MytempWave
+	if(DimensionIsDiameter)
+		MytempWave/=2		//correct for converting SD to diameters
+	endif
 		
 	Wave MytempWave=$("VolumeDistModelLSQF2_"+num2str(ii))
 	tempname = "VolumeDistModelLSQF2_"+num2str(ii)
@@ -1717,6 +1688,9 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	IN2G_AppendorReplaceWaveNote(tempname,"Units","fraction")
 	note/NOCR MytempWave, WaveNoteText
 	Redimension/D MytempWave
+	if(DimensionIsDiameter)
+		MytempWave/=2		//correct for converting SD to diameters
+	endif
 	
 	variable j
 		
@@ -1727,15 +1701,21 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				Wave Intensity		= $("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(whichDataSet)+"_pop"+num2str(j))
 				Wave Qvector 		= $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(whichDataSet))
 				Wave Radii 			=  $("root:Packages:IR2L_NLSQF:Radius"+"_pop"+num2str(j))
+				Wave Diameter 		=  $("root:Packages:IR2L_NLSQF:Diameter"+"_pop"+num2str(j))
 				Wave NumberDist 	=  $("root:Packages:IR2L_NLSQF:NumberDist"+"_pop"+num2str(j))
 				Wave VolumeDist 	=  $("root:Packages:IR2L_NLSQF:VolumeDist"+"_pop"+num2str(j))
-				
+
 				Duplicate Intensity, $("IntensityModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				print "Created results wave : "+DataFolderName+("IntensityModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				Duplicate Qvector, $("QvectorModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				print "Created results wave : "+DataFolderName+("QvectorModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
-				Duplicate Radii, $("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
-				print "Created results wave : "+DataFolderName+("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+				if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+					Duplicate Diameter, $("DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					print "Created results wave : "+DataFolderName+("DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+				else
+					Duplicate Radii, $("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					print "Created results wave : "+DataFolderName+("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+				endif		
 				Duplicate NumberDist, $("NumberDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				print "Created results wave : "+DataFolderName+("NumberDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				Duplicate VolumeDist, $("VolumeDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
@@ -1759,14 +1739,25 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				note MytempWave, WaveNoteText
 				Redimension/D MytempWave
 		
-				Wave MytempWave=$("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
-				tempname = "RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii)
-				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
-				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
-				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
-				note MytempWave, WaveNoteText
-				Redimension/D MytempWave
+				if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
+					Wave MytempWave=$("DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					tempname = "DiameterModelLSQF2pop"+num2str(j)+"_"+num2str(ii)
+					IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
+					IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+					IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+					IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+					note MytempWave, WaveNoteText
+					Redimension/D MytempWave
+				else
+					Wave MytempWave=$("RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
+					tempname = "RadiiModelLSQF2pop"+num2str(j)+"_"+num2str(ii)
+					IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
+					IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+					IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+					IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+					note MytempWave, WaveNoteText
+					Redimension/D MytempWave
+				endif		
 		
 				Wave MytempWave=$("NumberDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				tempname = "NumberDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii)
@@ -1776,7 +1767,10 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm3")
 				note MytempWave, WaveNoteText
 				Redimension/D MytempWave
-		
+				if(DimensionIsDiameter)
+					MytempWave/=2		//correct for converting SD to diameters
+				endif
+					
 				Wave MytempWave=$("VolumeDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii))
 				tempname = "VolumeDistModelLSQF2pop"+num2str(j)+"_"+num2str(ii)
 				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
@@ -1785,6 +1779,10 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				IN2G_AppendorReplaceWaveNote(tempname,"Units","fraction")
 				note MytempWave, WaveNoteText
 				Redimension/D MytempWave
+				if(DimensionIsDiameter)
+					MytempWave/=2		//correct for converting SD to diameters
+				endif
+					
 				
 			endif
 		endfor

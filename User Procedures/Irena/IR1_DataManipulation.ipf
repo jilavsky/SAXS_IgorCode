@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.39			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.44 DM1 - fix rebinning on log scale to handle data with first Q=0
 //2.43 DM II - Fixed problems with Subtract data selection (stale values, controls misbehave). 
 //2.42 DM II - minor fix for error wave creating when naming seemed to fail.
 //2.41 fixed Log-rebinning of data. Note, it overlays log-x scale over the data and siply binns down (same as Nika, different than ASCII data import)
@@ -1151,8 +1152,12 @@ static Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
 	//tempNewLogDist = exp((0.8*LogBinParam/NumberOfPoints) * p)
 	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
 	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
-	variable StartQ, EndQ
-	startQ=log(TempQ[0])
+	variable StartQ, EndQ, iii
+	iii=-1
+	do		//search for first Q point laregr than 0, seems some users have data starting with Q<=0
+		iii+=1
+		startQ=log(TempQ[iii])
+	while(TempQ[iii]<=0)
 	endQ=log(TempQ[numpnts(TempQ)-1])
 	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
 	tempNewLogDist = 10^(tempNewLogDist)
