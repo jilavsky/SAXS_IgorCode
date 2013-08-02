@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
+#pragma version=1.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 fixed IR2L_FixLimits function to set some high limit when parameter=0, added support for NoFitLimits feature
+//		support for changet the tab of used tabs names.. 
 //1.18 fixed bug when reinitialization of Unified levels would add G=100 even when Rg=1e10. Fix GUI issue when adding new data set and recovering the stored result. 
 //		Fixes for too long ParamNames in Analysis of uncertainities.
 //1.17 fixed bug when scripting tool got out of sync with main Modeling II panel. 
@@ -112,217 +114,6 @@ end
 //******************************************************************************************
 //******************************************************************************************
 
-Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
-	String ctrlName
-
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:IR2L_NLSQF
-	variable i
-
-
-	if(cmpstr(ctrlName,"RemovePointWcsrA")==0)
-		//here we load the data and create default values
-		ControlInfo/W=LSQF2_MainPanel DataTabs
-		//IR2L_LoadDataIntoSet(V_Value+1,0)
-		//NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
-		//UseTheData_set=1
-		IR2L_Data_TabPanelControl("",V_Value)
-		if(IR2L_RemovePntCsrA(V_Value))
-			IR2L_RecalculateIfSelected()
-		endif
-		//IR2L_AppendDataIntoGraph(V_Value+1)
-		//IR2L_AppendOrRemoveLocalPopInts()
-		//IR2L_FormatInputGraph()
-		//IR2L_FormatLegend()
-		//DoWIndow LSQF_MainGraph
-		//if(V_Flag)
-			//AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
-		//endif
-	endif
-
-	if(cmpstr(ctrlName,"AddDataSet")==0)
-		//here we load the data and create default values
-		ControlInfo/W=LSQF2_MainPanel DataTabs
-		IR2L_LoadDataIntoSet(V_Value+1,0)
-		NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
-		UseTheData_set=1
-		IR2L_Data_TabPanelControl("",V_Value)
-		IR2L_AppendDataIntoGraph(V_Value+1)
-		IR2L_AppendOrRemoveLocalPopInts()
-		IR2L_FormatInputGraph()
-		IR2L_FormatLegend()
-		DoWIndow LSQF_MainGraph
-		if(V_Flag)
-			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
-		endif
-		//next needs to be done to set teh controls correctly... 
-		NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
-		NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
-		DisplayModelControls = 0
-		DisplayInputDataControls = 1
-		TabControl DataTabs,win=LSQF2_MainPanel, value= V_Value, disable =!DisplayInputDataControls
-		TabControl DistTabs,win=LSQF2_MainPanel, disable=!DisplayModelControls
-		IR2L_Data_TabPanelControl("",V_Value)
-	endif
-	if(cmpstr(ctrlName,"AddDataSetSkipRecover")==0)
-		//here we load the data and create default values
-		ControlInfo/W=LSQF2_MainPanel DataTabs
-		IR2L_LoadDataIntoSet(V_Value+1,1)
-		NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
-		UseTheData_set=1
-		IR2L_Data_TabPanelControl("",V_Value)
-		IR2L_AppendDataIntoGraph(V_Value+1)
-		IR2L_AppendOrRemoveLocalPopInts()
-		IR2L_FormatInputGraph()
-		IR2L_FormatLegend()
-		DoWIndow LSQF_MainGraph
-		if(V_Flag)
-			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
-		endif
-	endif
-
-	if(stringmatch(ctrlName,"GetFFHelp"))
-		ControlInfo /W=LSQF2_MainPanel FormFactorPop 
-		//print S_Value
-		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
-		if(V_Flag)
-			DisplayHelpTopic /Z "Form Factors & Structure factors"
-		endif
-	endif
-	if(stringmatch(ctrlName,"GetSFHelp"))
-		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
-		//print S_Value
-		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
-		if(V_Flag)
-			DisplayHelpTopic /Z "Form Factors & Structure factors"
-		endif
-	endif
-
-	if(stringmatch(ctrlName,"FitRgandG"))
-		ControlInfo/W=LSQF2_MainPanel DistTabs
-		IR2L_FitLocalGuinier(V_Value+1)
-		IR2L_CalculateIntensity(0,0)
-	endif
-	if(stringmatch(ctrlName,"FitPandB"))
-		ControlInfo/W=LSQF2_MainPanel DistTabs
-		IR2L_FitLocalPorod(V_Value+1)
-		IR2L_CalculateIntensity(0,0)
-	endif
-
-	if(stringmatch(ctrlName,"ScriptingTool"))
-		IR2S_ScriptingTool()
-		AutoPositionWindow/M=1/R=LSQF2_MainPanel IR2S_ScriptingToolPnl
-		NVAR GUseIndra2data=root:Packages:IR2L_NLSQF:UseIndra2Data
-		NVAR GUseQRSdata=root:Packages:IR2L_NLSQF:UseQRSdata
-		NVAR STUseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
-		NVAR STUseQRSData = root:Packages:Irena:ScriptingTool:UseQRSdata
-		STUseIndra2Data = GUseIndra2data
-		STUseQRSData = GUseQRSdata
-		if(STUseIndra2Data+STUseQRSData!=1)
-			//Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
-			STUseQRSData=1
-			GUseQRSdata=1
-			STUseIndra2Data = 0
-			GUseIndra2data = 0
-			STRUCT WMCheckboxAction CB_Struct
-			CB_Struct.eventcode = 2
-			CB_Struct.ctrlName = "UseQRSdata"
-			CB_Struct.checked = 1
-			CB_Struct.win = "LSQF2_MainPanel"
-			IR2C_InputPanelCheckboxProc(CB_Struct)		
-		endif
-		IR2S_UpdateListOfAvailFiles()
-		
-	endif
-	if(stringmatch(ctrlName,"Recalculate"))
-		IR2L_CalculateIntensity(0,0)
-	endif
-	if(stringmatch(ctrlName,"ReverseFit"))
-		IR2L_ResetParamsAfterBadFit()
-	endif
-	if(stringmatch(ctrlName,"FitModel"))
-		IR2L_Fitting(0)
-	endif
-	if(stringmatch(ctrlName,"FitModelSkipDialogs"))
-		IR2L_Fitting(1)
-	endif
-	if(cmpstr(ctrlName,"RemoveAllDataSets")==0)
-		IR2L_RemoveAllDataSets()
-	endif
-	if(cmpstr(ctrlName,"UnuseAllDataSets")==0)
-		IR2L_unUseAllDataSets()
-	endif
-	if(cmpstr(ctrlName,"SaveInDataFolder")==0)
-		IR2L_SaveResultsInDataFolder(0)
-	endif
-	if(cmpstr(ctrlName,"SaveInDataFolderSkipDialog")==0)
-		IR2L_SaveResultsInDataFolder(1)
-	endif
-	if(cmpstr(ctrlName,"SaveInWaves")==0)
-		IR2L_SaveResultsInWaves(0)
-	endif
-	if(cmpstr(ctrlName,"SaveInWavesSkipDialog")==0)
-		IR2L_SaveResultsInWaves(1)
-	endif
-	if(cmpstr(ctrlName,"PasteTagsToGraph")==0)
-		IR2L_AddRemoveTagsToGraph(1)
-	endif
-	if(cmpstr(ctrlName,"RemoveTagsFromGraph")==0)
-		IR2L_AddRemoveTagsToGraph(0)
-	endif
-	if(cmpstr(ctrlName,"FixLimitsTight")==0)
-		IR2L_FixLimits(1)
-	endif
-	if(cmpstr(ctrlName,"FixLimitsLoose")==0)
-		IR2L_FixLimits(3)
-	endif
-	if(cmpstr(ctrlName,"AnalyzeUncertainities")==0)
-		IR2L_AnalyzeUncertainities()
-	endif
-	
-	if(cmpstr(ctrlName,"ReadCursors")==0)
-		ControlInfo/W=LSQF2_MainPanel DataTabs
-		IR2L_SetQminQmaxWCursors(V_Value+1)
-	endif
-	if(cmpstr(ctrlName,"ConfigureGraph")==0)
-		IR2C_ConfigMain()
-		PauseForUser IR2C_MainConfigPanel
-		IR2L_FormatInputGraph()
-		IR2L_FormatLegend()
-	endif
-	if(cmpstr(ctrlName,"ReGraph")==0)
-		DoWindow LSQF_MainGraph
-		if(V_Flag)
-			DoWindow/K LSQF_MainGraph
-		endif
-		NVAR MultipleInputData = root:Packages:IR2L_NLSQF:MultipleInputData
-		variable MaxDataSets=10
-		if(!MultipleInputData)
-			MaxDataSets=1
-		endif
-		For(i=1;i<=MaxDataSets;i+=1)
-			NVAR UseTheData_set=$("UseTheData_set"+num2str(i))
-			if(UseTheData_set)
-				IR2L_AppendDataIntoGraph(i)
-			endif
-		endfor
-		IR2L_AppendOrRemoveLocalPopInts()	
-		IR2L_FormatInputGraph()
-		IR2L_FormatLegend()
-		DoWIndow LSQF_MainGraph
-		if(V_Flag)
-			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
-		endif
-	endif
-
-	if(cmpstr(ctrlName,"SaveInNotebook")==0)
-			IR2L_SaveResultsInNotebook()
-	endif
-
-		
-	DoWindow/F LSQF2_MainPanel
-	setDataFolder oldDF
-end
 
 //****************************************************************************************************************
 //****************************************************************************************************************
@@ -806,7 +597,8 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 
 			string SFUserSFformula = "root:Packages:IR2L_NLSQF:SFUserSQFormula_pop"+num2str(whichDataSet)
 			//the Structure factor package will take of making the fit parameters fo hidden parameters uncheckedm if they are checked.  
-			IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,P6Str,FitP6Str,LowP6Str,HighP6Str,SFUserSFformula)
+			NVAR NoFittingLimits = root:Packages:IR2L_NLSQF:NoFittingLimits
+			IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,P6Str,FitP6Str,LowP6Str,HighP6Str,SFUserSFformula,NoFittingLimits=NoFittingLimits)
 			DoWIndow  StructureFactorControlScreen
 			if(V_Flag)
 					SetWindow StructureFactorControlScreen  hook(Update)=IR2L_UpdateHook
@@ -885,6 +677,8 @@ End
 Function  IR2L_CallPanelFromFFpackage(which)
 	variable which
 
+	NVAR NoFittingLimits=root:Packages:IR2L_NLSQF:NoFittingLimits
+
 	SVAR FormFactor = $("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(which))
 	if(stringmatch(FormFactor,"Unified_Level"))
 		string TitleStr11="Unified Fit parameters for Population "+num2str(which)
@@ -921,7 +715,7 @@ Function  IR2L_CallPanelFromFFpackage(which)
 		string LowP6Str="root:Packages:IR2L_NLSQF:FormFactor_Param6Min_pop"+num2str(which)
 		string HighP6Str="root:Packages:IR2L_NLSQF:FormFactor_Param6Max_pop"+num2str(which)
 	 
-	 	IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,FFUserFFformula,FFUserVolumeFormula, P6Str=P6Str,FitP6Str=FitP6Str,LowP6Str=LowP6Str,HighP6Str=HighP6Str)
+	 	IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,FFUserFFformula,FFUserVolumeFormula, P6Str=P6Str,FitP6Str=FitP6Str,LowP6Str=LowP6Str,HighP6Str=HighP6Str,NoFittingLimits=NoFittingLimits)
 	endif
 	
 	DoWIndow  FormFactorControlScreen
@@ -1044,6 +838,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 	
 	NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
 	NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
+	NVAR NoFittingLimits = root:Packages:IR2L_NLSQF:NoFittingLimits
 	NVAR UsePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(tab+1))
 	NVAR RdistAuto=$("root:Packages:IR2L_NLSQF:RdistAuto_pop"+num2str(tab+1))
 	NVAR RdistManual=$("root:Packages:IR2L_NLSQF:RdistMan_pop"+num2str(tab+1))
@@ -1115,6 +910,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("CheckBox RdistLog,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistLog_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 
 		Execute("PopupMenu FormFactorPop,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(tab+1)+",root:Packages:FormFactorCalc:ListOfFormFactors+\"Unified_Level;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SizeDist_DimensionType,win=LSQF2_MainPanel,  disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 		Execute("Button GetFFHelp,win=LSQF2_MainPanel, disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 
 		Execute("PopupMenu PopSizeDistShape,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(tab+1)+",\"LogNormal;Gauss;LSW;Schulz-Zimm;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
@@ -1123,20 +919,20 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("SetVariable DiffPeakPar1,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable DiffPeakPar1,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar1_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox DiffPeakPar1Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar1Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar1Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar1Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar1Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 
 		Execute("SetVariable DiffPeakPar2,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable DiffPeakPar2,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar2_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox DiffPeakPar2Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar2Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar2Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar2Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar2Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 
 		Execute("SetVariable DiffPeakPar3,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable DiffPeakPar3,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar3_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox DiffPeakPar3Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar3Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar3Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar3Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar3Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 		
 		if(stringmatch(PeakProfile, "Pseudo-Voigt"))
 			Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title=\"Eta           = \"")	
@@ -1148,8 +944,8 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox DiffPeakPar4Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar4Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar4Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar4Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable DiffPeakPar4Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
 		variable tempSw
 		if((DisplayModelControls)&&(F_sw==2)&&(UsePop==1))
 			tempSw=2
@@ -1166,65 +962,65 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("SetVariable Volume,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Volume_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable Volume,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:Volume_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox FitVolume,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable VolumeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DisplayVolumeLims)+")")
-		Execute("SetVariable VolumeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DisplayVolumeLims)+")")
+		Execute("SetVariable VolumeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DisplayVolumeLims)+")")
+		Execute("SetVariable VolumeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DisplayVolumeLims)+")")
 
 		NVAR DLNM1=$("root:Packages:IR2L_NLSQF:LNMinSizeFit_pop"+num2str(tab+1))
 		Execute("SetVariable LNMinSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable LNMinSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox LNMinSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNMinSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM1)+")")
-		Execute("SetVariable LNMinSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM1)+")")
+		Execute("SetVariable LNMinSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM1)+")")
+		Execute("SetVariable LNMinSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM1)+")")
 
 		NVAR DLNM2=$("root:Packages:IR2L_NLSQF:LNMeanSizeFit_pop"+num2str(tab+1))
 		Execute("SetVariable LNMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable LNMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox LNMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM2)+")")
-		Execute("SetVariable LNMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM2)+")")
+		Execute("SetVariable LNMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM2)+")")
+		Execute("SetVariable LNMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM2)+")")
 
 		NVAR DLNM3=$("root:Packages:IR2L_NLSQF:LNSdeviationFit_pop"+num2str(tab+1))
 		Execute("SetVariable LNSdeviation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable LNSdeviation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox LNSdeviationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNSdeviationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM3)+")")
-		Execute("SetVariable LNSdeviationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM3)+")")
+		Execute("SetVariable LNSdeviationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM3)+")")
+		Execute("SetVariable LNSdeviationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM3)+")")
 
 		NVAR DGM1=$("root:Packages:IR2L_NLSQF:GMeanSizeFit_pop"+num2str(tab+1))
 		Execute("SetVariable GMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable GMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox GMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable GMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM1)+")")
-		Execute("SetVariable GMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM1)+")")
+		Execute("SetVariable GMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM1)+")")
+		Execute("SetVariable GMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM1)+")")
 
 		NVAR DGM2=$("root:Packages:IR2L_NLSQF:GWidthFit_pop"+num2str(tab+1))
 		Execute("SetVariable GWidth,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable GWidth,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox GWidthFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable GWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM2)+")")
-		Execute("SetVariable GWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM2)+")")
+		Execute("SetVariable GWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM2)+")")
+		Execute("SetVariable GWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM2)+")")
 
 		NVAR DSZM1=$("root:Packages:IR2L_NLSQF:SZMeanSizeFit_pop"+num2str(tab+1))
 		Execute("SetVariable SZMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable SZMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox SZMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SZMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM1)+")")
-		Execute("SetVariable SZMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM1)+")")
+		Execute("SetVariable SZMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM1)+")")
+		Execute("SetVariable SZMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM1)+")")
 
 		NVAR DSZM2=$("root:Packages:IR2L_NLSQF:SZWidthFit_pop"+num2str(tab+1))
 		Execute("SetVariable SZWidth,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable SZWidth,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox SZWidthFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SZWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM2)+")")
-		Execute("SetVariable SZWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM2)+")")
+		Execute("SetVariable SZWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM2)+")")
+		Execute("SetVariable SZWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM2)+")")
 
 
 		NVAR DLSW1=$("root:Packages:IR2L_NLSQF:LSWLocationFit_pop"+num2str(tab+1))
 		Execute("SetVariable LSWLocation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable LSWLocation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox LSWLocationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LSWLocationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLSW1)+")")
-		Execute("SetVariable LSWLocationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLSW1)+")")
+		Execute("SetVariable LSWLocationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLSW1)+")")
+		Execute("SetVariable LSWLocationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLSW1)+")")
 		//unified fit controls		
 		Execute("Button FitRgAndG,win=LSQF2_MainPanel,"+" disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
 		Execute("Button FitPandB,win=LSQF2_MainPanel,"+" disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
@@ -1233,36 +1029,36 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("SetVariable UF_G,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable UF_G,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox UF_GFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_GMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF1)+")")
-		Execute("SetVariable UF_GMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF1)+")")
+		Execute("SetVariable UF_GMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF1)+")")
+		Execute("SetVariable UF_GMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF1)+")")
 
 		NVAR UNF2=$("root:Packages:IR2L_NLSQF:UF_RgFit_pop"+num2str(tab+1))
 		Execute("SetVariable UF_Rg,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable UF_Rg,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox UF_RgFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_RgMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF2)+")")
-		Execute("SetVariable UF_RgMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF2)+")")
+		Execute("SetVariable UF_RgMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF2)+")")
+		Execute("SetVariable UF_RgMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF2)+")")
 
 		NVAR UNF3=$("root:Packages:IR2L_NLSQF:UF_BFit_pop"+num2str(tab+1))
 		Execute("SetVariable UF_B,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable UF_B,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox UF_BFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_BMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF3)+")")
-		Execute("SetVariable UF_BMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF3)+")")
+		Execute("SetVariable UF_BMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF3)+")")
+		Execute("SetVariable UF_BMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF3)+")")
 
 		NVAR UNF4=$("root:Packages:IR2L_NLSQF:UF_PFit_pop"+num2str(tab+1))
 		Execute("SetVariable UF_P,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_P_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable UF_P,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_P_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox UF_PFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_PMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF4)+")")
-		Execute("SetVariable UF_PMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF4)+")")
+		Execute("SetVariable UF_PMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF4)+")")
+		Execute("SetVariable UF_PMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF4)+")")
 
 		NVAR UNF5=$("root:Packages:IR2L_NLSQF:UF_RGCOFit_pop"+num2str(tab+1))
 		Execute("SetVariable UF_RGCO,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCO_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
 		Execute("SetVariable UF_RGCO,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_RGCO_pop"+num2str(tab+1)+"}")
 		Execute("Checkbox UF_RGCOFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_RGCOMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF5)+")")
-		Execute("SetVariable UF_RGCOMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF5)+")")
+		Execute("SetVariable UF_RGCOMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF5)+")")
+		Execute("SetVariable UF_RGCOMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF5)+")")
 		
 		NVAR UF_K=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(tab+1))
 		Execute("PopupMenu KFactor,win=LSQF2_MainPanel, mode=(WhichListItem(\""+num2str(UF_K)+"\",\"1;1.06;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
@@ -1635,6 +1431,30 @@ end
 //*****************************************************************************************************************
 
 
+Function IR2L_SetTabsNames()
+
+	//change tab names to have * if used...
+	variable i
+	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+	if(MultipleInputData)
+		For(i=1;i<=10;i+=1)
+			NVAR UseTheTab=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
+			if(UseTheTab)
+				Execute("TabControl DataTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr125\\\\K(65535,0,0)"+num2str(i)+".\"")
+			else
+				Execute("TabControl DataTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr100\\\\K(0,0,0)"+num2str(i)+".\"")
+			endif
+		endfor
+	endif
+	For(i=1;i<=10;i+=1)
+		NVAR UseTheTab=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
+		if(UseTheTab)
+			Execute("tabControl DistTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr125\\\\K(65535,0,0)"+num2str(i)+"P\"")
+		else
+			Execute("tabControl DistTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr100\\\\K(0,0,0)"+num2str(i)+" P\"")
+		endif
+	endfor
+end
 
 
 //*****************************************************************************************************************
@@ -1657,7 +1477,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 	variable WhichPopSet= V_Value+1
 
 	if (stringMatch(ctrlName,"UseThePop"))
-
+		IR2L_SetTabsNames()
 	endif
 	//RdistrSemiAuto, RdistMan, RdistAuto
 	NVAR RdistrSemiAuto=$("root:Packages:IR2L_NLSQF:RdistrSemiAuto_pop"+num2str(WhichPopSet))
@@ -1887,10 +1707,12 @@ Function IR2L_Initialize()
 	//here define the lists of variables and strings needed, separate names by ;...
 	
 	//Main parameters
-	ListOfVariables="UseIndra2Data;UseQRSdata;UseSMRData;MultipleInputData;UseNumberDistributions;RecalculateAutomatically;DisplaySinglePopInt;"
+	ListOfVariables="UseIndra2Data;UseQRSdata;UseSMRData;MultipleInputData;UseNumberDistributions;RecalculateAutomatically;DisplaySinglePopInt;NoFittingLimits;"
 	ListOfVariables+="SameContrastForDataSets;VaryContrastForDataSets;DisplayInputDataControls;DisplayModelControls;UseGeneticOptimization;UseLSQF;"
+	ListOfVariables+="SizeDist_DimensionIsDiameter;"
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;ListOfKnownPeakShapes;"
-	ListOfStrings+="ConfEvListOfParameters;ConEvSelParameter;ConEvMethod;"
+	ListOfStrings+="ConfEvListOfParameters;ConEvSelParameter;ConEvMethod;SizeDist_DimensionType;"
+	//SizeDist_DimensionType = "Radius" or "Diameter"
 
 	ListOfVariables+="GraphXMin;GraphXMax;GraphYMin;GraphYMax;SizeDistDisplayNumDist;SizeDistDisplayVolDist;"
 	ListOfVariables+="SizeDistLogVolDist;SizeDistLogNumDist;SizeDistLogX;"
@@ -2002,6 +1824,22 @@ Function IR2L_Initialize()
 	NVAR UseGeneticOptimization
 	NVAR UseLSQF
 	UseLSQF = !UseGeneticOptimization
+	
+		SVAR SizeDist_DimensionType= root:Packages:IR2L_NLSQF:SizeDist_DimensionType
+		NVAR SizeDist_DimensionIsDiameter= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+		NVAR SizeDistDisplayNumDist = root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist
+		NVAR SizeDistDisplayVolDist = root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist
+		SizeDist_DimensionType= ""
+		if(SizeDistDisplayNumDist)
+			SizeDist_DimensionType = "Number distribution of "
+		else
+			SizeDist_DimensionType = "Volume distribution of "
+		endif
+		if(SizeDist_DimensionIsDiameter)
+			SizeDist_DimensionType += "Diameters"
+		else
+			SizeDist_DimensionType += "Radia"
+		endif
 
 	String/g rgbIntensity_set1="(52224,0,0)"
 	String/g rgbIntensity_set2="(0,39168,0)"
@@ -2360,148 +2198,6 @@ Function IR2L_SetInitialValues(enforce)
 	endfor
 end
 
-Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
-	String ctrlName
-	Variable checked
-
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:IR2L_NLSQF
-	
-	ControlInfo/W=LSQF2_MainPanel DataTabs
-	variable WhichDataSet= V_Value+1
-	if(V_disable)//disabled, so the model tab is visible
-		ControlInfo/W=LSQF2_MainPanel DistTabs
-	endif
-
-	if (stringMatch(ctrlName,"BackgroundFit_set"))
-//		IR2L_Data_TabPanelControl("",V_Value)
-	endif
-	if (stringMatch(ctrlName,"UseTheData_set"))
-		if(checked)
-			IR2L_AppendDataIntoGraph(WhichDataSet)
-		else
-			IR2L_RemoveDataFromGraph(WhichDataSet)
-		endif
-		IR2L_AppendOrRemoveLocalPopInts()
-		IR2L_FormatInputGraph()
-		//IR2L_FormatLegend()		//part of IR2L_AppendOrRemoveLocalPopInts
-		IR2L_RecalculateIfSelected()
-	endif
-	if (stringMatch(ctrlName,"MultipleInputData"))
-		if(checked)
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(0)="1.",tabLabel(1)="2."
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(2)="3.",tabLabel(3)="4."
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(4)="5.",tabLabel(5)="6."
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(6)="7.",tabLabel(7)="8."
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(8)="9.",tabLabel(9)="10.", value=0
-			CheckBox SameContrastForDataSets,win=LSQF2_MainPanel,disable=0
-			Button ScriptingTool,win=LSQF2_MainPanel,disable=1
-			IR2L_InputPanelButtonProc("Regraph")
-			IR2L_Model_TabPanelControl("",V_Value)	
-		else
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(0)="Input Data",tabLabel(1)=""
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(2)="",tabLabel(3)=""
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(4)="",tabLabel(5)=""
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(6)="",tabLabel(7)=""
-			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(8)="",tabLabel(9)="", value=0
-			CheckBox SameContrastForDataSets,win=LSQF2_MainPanel,disable=1
-			Button ScriptingTool,win=LSQF2_MainPanel,disable=0
-			IR2L_InputPanelButtonProc("Regraph")
-			IR2L_Model_TabPanelControl("",V_Value)	
-		endif
-		IR2L_RecalculateIfSelected()
-	endif
-
-
-	if (stringMatch(ctrlName,"SameContrastForDataSets"))
-		NVAR SameContrastForDataSets
-		NVAR VaryContrastForDataSets
-		VaryContrastForDataSets = !SameContrastForDataSets
-		IR2L_Model_TabPanelControl("",V_Value)	
-		IR2L_RecalculateIfSelected()
-	endif
-	
-	NVAR DisplayInputDataControls
-	NVAR DisplayModelControls
-	if (stringMatch(ctrlName,"DisplayInputDataControls"))
-		DisplayModelControls=!DisplayInputDataControls
-		TabControl DataTabs, win=LSQF2_MainPanel, disable=!DisplayInputDataControls
-		ControlInfo/W=LSQF2_MainPanel DistTabs
-		IR2L_Model_TabPanelControl("",V_Value)
-		TabControl DistTabs, win=LSQF2_MainPanel, disable=!DisplayModelControls
-	endif
-	if (stringMatch(ctrlName,"DisplayModelControls"))
-		DisplayInputDataControls=!DisplayModelControls
-		TabControl DataTabs, win=LSQF2_MainPanel, disable=!DisplayInputDataControls
-		ControlInfo/W=LSQF2_MainPanel DistTabs
-		IR2L_Model_TabPanelControl("",V_Value)
-		TabControl DistTabs, win=LSQF2_MainPanel, disable=!DisplayModelControls
-	endif
-
-	NVAR UseUserErrors_set = $("UseUserErrors_set"+num2str(WhichDataSet))
-	NVAR UseSQRTErrors_set = $("UseSQRTErrors_set"+num2str(WhichDataSet))
-	NVAR UsePercentErrors_set = $("UsePercentErrors_set"+num2str(WhichDataSet))
-	if (stringMatch(ctrlName,"UseUserErrors_set"))
-		if(UseUserErrors_set)
-			UseSQRTErrors_set=0
-			UsePercentErrors_set=0
-		else
-			UseSQRTErrors_set=1
-			UsePercentErrors_set=0
-		endif	
-		IR2L_RecalculateErrors(WhichDataSet)
-	endif
-	if (stringMatch(ctrlName,"UseSQRTErrors_set"))
-		if(UseSQRTErrors_set)
-			UseUserErrors_set=0
-			UsePercentErrors_set=0
-		else
-			UseUserErrors_set=0
-			UsePercentErrors_set=1
-		endif	
-		IR2L_RecalculateErrors(WhichDataSet)
-	endif
-	if (stringMatch(ctrlName,"UsePercentErrors_set"))
-		if(UsePercentErrors_set)
-			UseUserErrors_set=0
-			UseSQRTErrors_set=0
-		else
-			UseUserErrors_set=0
-			UseSQRTErrors_set=1
-		endif	
-		IR2L_RecalculateErrors(WhichDataSet)
-	endif
-	if (stringMatch(ctrlName,"RecalculateAutomatically"))
-		IR2L_RecalculateIfSelected()
-	endif
-	if (stringMatch(ctrlName,"UseNumberDistributions"))
-		NVAR SizeDistDisplayNumDist = root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist
-		NVAR SizeDistDisplayVolDist = root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist
-		if(Checked)
-			SizeDistDisplayNumDist =1
-		//	SizeDistDisplayVolDist = 0
-		else
-		//	SizeDistDisplayNumDist =0
-			SizeDistDisplayVolDist = 1
-		endif
-		IR2L_RecalculateIfSelected()
-	endif
-
-	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
-	NVAR UseLSQF=root:Packages:IR2L_NLSQF:UseLSQF
-	if (stringMatch(ctrlName,"UseGeneticOptimization"))
-		UseLSQF=!UseGeneticOptimization
-	endif
-	if (stringMatch(ctrlName,"UseLSQF"))
-		UseGeneticOptimization=!UseLSQF
-	endif
-
-
-	ControlInfo/W=LSQF2_MainPanel DataTabs
-	IR2L_Data_TabPanelControl("",V_Value)
-	DoWindow/F LSQF2_MainPanel
-	setDataFolder OldDf
-end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -3317,6 +3013,9 @@ Function  IR2L_FixLimits(scale)
 					else
 						MinVarVal= 0.5 * VarVal/scale
 						MaxVarVal=scale*2 * VarVal
+					endif
+					if(MaxVarVal<=0)
+						MaxVarVal=1
 					endif
 				if(MinVarVal>MaxVarVal)
 					tempValue=MinVarVal
@@ -4365,3 +4064,492 @@ end
 //******************************************************************************************************************
 //******************************************************************************************************************
 
+
+//******************************************************************************************************
+//******************************************************************************************************
+//******************************************************************************************************
+//******************************************************************************************************
+//******************************************************************************************************
+Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
+	String ctrlName
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:IR2L_NLSQF
+	variable i
+
+	if(stringmatch(ctrlName,"Continue_SDDetails"))
+		DoWindow/K ModelingII_MoreDetails
+	endif
+
+	if(cmpstr(ctrlName,"RemovePointWcsrA")==0)
+		//here we load the data and create default values
+		ControlInfo/W=LSQF2_MainPanel DataTabs
+		//IR2L_LoadDataIntoSet(V_Value+1,0)
+		//NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
+		//UseTheData_set=1
+		IR2L_Data_TabPanelControl("",V_Value)
+		if(IR2L_RemovePntCsrA(V_Value))
+			IR2L_RecalculateIfSelected()
+		endif
+		//IR2L_AppendDataIntoGraph(V_Value+1)
+		//IR2L_AppendOrRemoveLocalPopInts()
+		//IR2L_FormatInputGraph()
+		//IR2L_FormatLegend()
+		//DoWIndow LSQF_MainGraph
+		//if(V_Flag)
+			//AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
+		//endif
+	endif
+
+	if(cmpstr(ctrlName,"AddDataSet")==0)
+		//here we load the data and create default values
+		ControlInfo/W=LSQF2_MainPanel DataTabs
+		IR2L_LoadDataIntoSet(V_Value+1,0)
+		NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
+		UseTheData_set=1
+		IR2L_Data_TabPanelControl("",V_Value)
+		IR2L_AppendDataIntoGraph(V_Value+1)
+		IR2L_AppendOrRemoveLocalPopInts()
+		IR2L_FormatInputGraph()
+		IR2L_FormatLegend()
+		DoWIndow LSQF_MainGraph
+		if(V_Flag)
+			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
+		endif
+		//next needs to be done to set teh controls correctly... 
+		NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
+		NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
+		DisplayModelControls = 0
+		DisplayInputDataControls = 1
+		TabControl DataTabs,win=LSQF2_MainPanel, value= V_Value, disable =!DisplayInputDataControls
+		TabControl DistTabs,win=LSQF2_MainPanel, disable=!DisplayModelControls
+		IR2L_Data_TabPanelControl("",V_Value)
+	endif
+	if(cmpstr(ctrlName,"AddDataSetSkipRecover")==0)
+		//here we load the data and create default values
+		ControlInfo/W=LSQF2_MainPanel DataTabs
+		IR2L_LoadDataIntoSet(V_Value+1,1)
+		NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
+		UseTheData_set=1
+		IR2L_Data_TabPanelControl("",V_Value)
+		IR2L_AppendDataIntoGraph(V_Value+1)
+		IR2L_AppendOrRemoveLocalPopInts()
+		IR2L_FormatInputGraph()
+		IR2L_FormatLegend()
+		DoWIndow LSQF_MainGraph
+		if(V_Flag)
+			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
+		endif
+	endif
+
+	if(stringmatch(ctrlName,"GetFFHelp"))
+		ControlInfo /W=LSQF2_MainPanel FormFactorPop 
+		//print S_Value
+		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+		if(V_Flag)
+			DisplayHelpTopic /Z "Form Factors & Structure factors"
+		endif
+	endif
+	if(stringmatch(ctrlName,"GetSFHelp"))
+		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
+		//print S_Value
+		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+		if(V_Flag)
+			DisplayHelpTopic /Z "Form Factors & Structure factors"
+		endif
+	endif
+
+
+	if(stringmatch(ctrlName,"MoreSDParameters"))
+		ModelingII_moreDetailsF()
+		PauseForUser ModelingII_MoreDetails
+	endif
+	
+	if(stringmatch(ctrlName,"FitRgandG"))
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+		IR2L_FitLocalGuinier(V_Value+1)
+		IR2L_CalculateIntensity(0,0)
+	endif
+	if(stringmatch(ctrlName,"FitPandB"))
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+		IR2L_FitLocalPorod(V_Value+1)
+		IR2L_CalculateIntensity(0,0)
+	endif
+
+	if(stringmatch(ctrlName,"ScriptingTool"))
+		IR2S_ScriptingTool()
+		AutoPositionWindow/M=1/R=LSQF2_MainPanel IR2S_ScriptingToolPnl
+		NVAR GUseIndra2data=root:Packages:IR2L_NLSQF:UseIndra2Data
+		NVAR GUseQRSdata=root:Packages:IR2L_NLSQF:UseQRSdata
+		NVAR STUseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
+		NVAR STUseQRSData = root:Packages:Irena:ScriptingTool:UseQRSdata
+		STUseIndra2Data = GUseIndra2data
+		STUseQRSData = GUseQRSdata
+		if(STUseIndra2Data+STUseQRSData!=1)
+			//Abort "At this time this scripting can be used ONLY for QRS and Indra2 data"
+			STUseQRSData=1
+			GUseQRSdata=1
+			STUseIndra2Data = 0
+			GUseIndra2data = 0
+			STRUCT WMCheckboxAction CB_Struct
+			CB_Struct.eventcode = 2
+			CB_Struct.ctrlName = "UseQRSdata"
+			CB_Struct.checked = 1
+			CB_Struct.win = "LSQF2_MainPanel"
+			IR2C_InputPanelCheckboxProc(CB_Struct)		
+		endif
+		IR2S_UpdateListOfAvailFiles()
+		
+	endif
+	if(stringmatch(ctrlName,"Recalculate"))
+		IR2L_CalculateIntensity(0,0)
+	endif
+	if(stringmatch(ctrlName,"ReverseFit"))
+		IR2L_ResetParamsAfterBadFit()
+	endif
+	if(stringmatch(ctrlName,"FitModel"))
+		IR2L_Fitting(0)
+	endif
+	if(stringmatch(ctrlName,"FitModelSkipDialogs"))
+		IR2L_Fitting(1)
+	endif
+	if(cmpstr(ctrlName,"RemoveAllDataSets")==0)
+		IR2L_RemoveAllDataSets()
+	endif
+	if(cmpstr(ctrlName,"UnuseAllDataSets")==0)
+		IR2L_unUseAllDataSets()
+	endif
+	if(cmpstr(ctrlName,"SaveInDataFolder")==0)
+		IR2L_SaveResultsInDataFolder(0)
+	endif
+	if(cmpstr(ctrlName,"SaveInDataFolderSkipDialog")==0)
+		IR2L_SaveResultsInDataFolder(1)
+	endif
+	if(cmpstr(ctrlName,"SaveInWaves")==0)
+		IR2L_SaveResultsInWaves(0)
+	endif
+	if(cmpstr(ctrlName,"SaveInWavesSkipDialog")==0)
+		IR2L_SaveResultsInWaves(1)
+	endif
+	if(cmpstr(ctrlName,"PasteTagsToGraph")==0)
+		IR2L_AddRemoveTagsToGraph(1)
+	endif
+	if(cmpstr(ctrlName,"RemoveTagsFromGraph")==0)
+		IR2L_AddRemoveTagsToGraph(0)
+	endif
+	if(cmpstr(ctrlName,"FixLimitsTight")==0)
+		IR2L_FixLimits(1)
+	endif
+	if(cmpstr(ctrlName,"FixLimitsLoose")==0)
+		IR2L_FixLimits(3)
+	endif
+	if(cmpstr(ctrlName,"AnalyzeUncertainities")==0)
+		IR2L_AnalyzeUncertainities()
+	endif
+	
+	if(cmpstr(ctrlName,"ReadCursors")==0)
+		ControlInfo/W=LSQF2_MainPanel DataTabs
+		IR2L_SetQminQmaxWCursors(V_Value+1)
+	endif
+	if(cmpstr(ctrlName,"ConfigureGraph")==0)
+		IR2C_ConfigMain()
+		PauseForUser IR2C_MainConfigPanel
+		IR2L_FormatInputGraph()
+		IR2L_FormatLegend()
+	endif
+	if(cmpstr(ctrlName,"ReGraph")==0)
+		DoWindow LSQF_MainGraph
+		if(V_Flag)
+			DoWindow/K LSQF_MainGraph
+		endif
+		NVAR MultipleInputData = root:Packages:IR2L_NLSQF:MultipleInputData
+		variable MaxDataSets=10
+		if(!MultipleInputData)
+			MaxDataSets=1
+		endif
+		For(i=1;i<=MaxDataSets;i+=1)
+			NVAR UseTheData_set=$("UseTheData_set"+num2str(i))
+			if(UseTheData_set)
+				IR2L_AppendDataIntoGraph(i)
+			endif
+		endfor
+		IR2L_AppendOrRemoveLocalPopInts()	
+		IR2L_FormatInputGraph()
+		IR2L_FormatLegend()
+		DoWIndow LSQF_MainGraph
+		if(V_Flag)
+			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
+		endif
+	endif
+
+	if(cmpstr(ctrlName,"SaveInNotebook")==0)
+			IR2L_SaveResultsInNotebook()
+	endif
+
+		
+	DoWindow/F LSQF2_MainPanel
+	setDataFolder oldDF
+end
+
+
+
+Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
+	String ctrlName
+	Variable checked
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:IR2L_NLSQF
+	
+	ControlInfo/W=LSQF2_MainPanel DataTabs
+	variable WhichDataSet= V_Value+1
+	if(V_disable)//disabled, so the model tab is visible
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+	endif
+
+	if (stringMatch(ctrlName,"BackgroundFit_set"))
+//		IR2L_Data_TabPanelControl("",V_Value)
+	endif
+	if (stringMatch(ctrlName,"NoFittingLimits"))
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+		IR2L_Model_TabPanelControl("",V_Value)
+		DoWIndow FormFactorControlScreen
+		NVAR NoFittingLimits = root:Packages:IR2L_NLSQF:NoFittingLimits
+		if(V_Flag)
+			SetWindow FormFactorControlScreen note="NoFittingLimits="+num2str(NoFittingLimits)+";"
+			COntrolInfo/W=FormFactorControlScreen FitP1Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP1Value",1)
+			endif
+			COntrolInfo/W=FormFactorControlScreen FitP2Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP2Value",1)
+			endif
+			COntrolInfo/W=FormFactorControlScreen FitP3value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP3Value",1)
+			endif
+			COntrolInfo/W=FormFactorControlScreen FitP4Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP4Value",1)
+			endif
+			COntrolInfo/W=FormFactorControlScreen FitP5Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP5Value",1)
+			endif
+			COntrolInfo/W=FormFactorControlScreen FitP6Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP6Value",1)
+			endif
+			COntrolInfo/W=FormFactorControlScreen FitP7Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR1T_FFCntrlPnlCheckboxProc("FitP7Value",1)
+			endif
+ 		endif
+		DoWIndow StructureFactorControlScreen
+		if(V_Flag)
+			SetWindow StructureFactorControlScreen note="NoFittingLimits="+num2str(NoFittingLimits)+";"
+			COntrolInfo/W=StructureFactorControlScreen FitP1Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP1Value",1)
+			endif
+			COntrolInfo/W=StructureFactorControlScreen FitP2Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP2Value",1)
+			endif
+			COntrolInfo/W=StructureFactorControlScreen FitP3value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP3Value",1)
+			endif
+			COntrolInfo/W=StructureFactorControlScreen FitP4Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP4Value",1)
+			endif
+			COntrolInfo/W=StructureFactorControlScreen FitP5Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP5Value",1)
+			endif
+			COntrolInfo/W=StructureFactorControlScreen FitP6Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP6Value",1)
+			endif
+			COntrolInfo/W=StructureFactorControlScreen FitP7Value
+			if(V_Flag==2 && V_disable==0 && V_Value)
+				IR2S_SFCntrlPnlCheckboxProc("FitP7Value",1)
+			endif
+ 		endif
+ 		IR2L_InputPanelButtonProc("FixLimitsTight")
+	endif
+
+	if (stringMatch(ctrlName,"UseTheData_set"))
+		if(checked)
+			IR2L_AppendDataIntoGraph(WhichDataSet)
+		else
+			IR2L_RemoveDataFromGraph(WhichDataSet)
+		endif
+		IR2L_AppendOrRemoveLocalPopInts()
+		IR2L_FormatInputGraph()
+		IR2L_SetTabsNames()
+		//IR2L_FormatLegend()		//part of IR2L_AppendOrRemoveLocalPopInts
+		IR2L_RecalculateIfSelected()
+	endif
+	if (stringMatch(ctrlName,"MultipleInputData"))
+		if(checked)
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(0)="1.",tabLabel(1)="2."
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(2)="3.",tabLabel(3)="4."
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(4)="5.",tabLabel(5)="6."
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(6)="7.",tabLabel(7)="8."
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(8)="9.",tabLabel(9)="10.", value=0
+			CheckBox SameContrastForDataSets,win=LSQF2_MainPanel,disable=0
+			Button ScriptingTool,win=LSQF2_MainPanel,disable=1
+			IR2L_InputPanelButtonProc("Regraph")
+			IR2L_Model_TabPanelControl("",V_Value)	
+			IR2L_SetTabsNames()
+		else
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(0)="Input Data",tabLabel(1)=""
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(2)="",tabLabel(3)=""
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(4)="",tabLabel(5)=""
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(6)="",tabLabel(7)=""
+			TabControl DataTabs,win=LSQF2_MainPanel,tabLabel(8)="",tabLabel(9)="", value=0
+			CheckBox SameContrastForDataSets,win=LSQF2_MainPanel,disable=1
+			Button ScriptingTool,win=LSQF2_MainPanel,disable=0
+			IR2L_InputPanelButtonProc("Regraph")
+			IR2L_Model_TabPanelControl("",V_Value)	
+		endif
+		IR2L_RecalculateIfSelected()
+	endif
+
+
+	if (stringMatch(ctrlName,"SameContrastForDataSets"))
+		NVAR SameContrastForDataSets
+		NVAR VaryContrastForDataSets
+		VaryContrastForDataSets = !SameContrastForDataSets
+		IR2L_Model_TabPanelControl("",V_Value)	
+		IR2L_RecalculateIfSelected()
+	endif
+
+	if (stringMatch(ctrlName,"DimensionIsDiameter"))
+		//DoAlert 0, "Need to change here (IR2L_DataTabCheckboxProc) also graphs..."
+		IR2L_RecalculateIfSelected()
+		SVAR SizeDist_DimensionType= root:Packages:IR2L_NLSQF:SizeDist_DimensionType
+		NVAR SizeDist_DimensionIsDiameter= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+		NVAR SizeDistDisplayNumDist = root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist
+		NVAR SizeDistDisplayVolDist = root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist
+		SizeDist_DimensionType= ""
+		if(SizeDistDisplayNumDist)
+			SizeDist_DimensionType = "Number distribution of "
+		else
+			SizeDist_DimensionType = "Volume distribution of "
+		endif
+		if(SizeDist_DimensionIsDiameter)
+			SizeDist_DimensionType += "Diameters"
+		else
+			SizeDist_DimensionType += "Radia"
+		endif
+		IR2L_AppendWvsGraphSizeDist()
+	endif
+	
+	NVAR DisplayInputDataControls
+	NVAR DisplayModelControls
+	if (stringMatch(ctrlName,"DisplayInputDataControls"))
+		DisplayModelControls=!DisplayInputDataControls
+		TabControl DataTabs, win=LSQF2_MainPanel, disable=!DisplayInputDataControls
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+		IR2L_Model_TabPanelControl("",V_Value)
+		TabControl DistTabs, win=LSQF2_MainPanel, disable=!DisplayModelControls
+		IR2L_SetTabsNames()
+	endif
+	if (stringMatch(ctrlName,"DisplayModelControls"))
+		DisplayInputDataControls=!DisplayModelControls
+		TabControl DataTabs, win=LSQF2_MainPanel, disable=!DisplayInputDataControls
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+		IR2L_Model_TabPanelControl("",V_Value)
+		TabControl DistTabs, win=LSQF2_MainPanel, disable=!DisplayModelControls
+		IR2L_SetTabsNames()
+	endif
+
+	NVAR UseUserErrors_set = $("UseUserErrors_set"+num2str(WhichDataSet))
+	NVAR UseSQRTErrors_set = $("UseSQRTErrors_set"+num2str(WhichDataSet))
+	NVAR UsePercentErrors_set = $("UsePercentErrors_set"+num2str(WhichDataSet))
+	if (stringMatch(ctrlName,"UseUserErrors_set"))
+		if(UseUserErrors_set)
+			UseSQRTErrors_set=0
+			UsePercentErrors_set=0
+		else
+			UseSQRTErrors_set=1
+			UsePercentErrors_set=0
+		endif	
+		IR2L_RecalculateErrors(WhichDataSet)
+	endif
+	if (stringMatch(ctrlName,"UseSQRTErrors_set"))
+		if(UseSQRTErrors_set)
+			UseUserErrors_set=0
+			UsePercentErrors_set=0
+		else
+			UseUserErrors_set=0
+			UsePercentErrors_set=1
+		endif	
+		IR2L_RecalculateErrors(WhichDataSet)
+	endif
+	if (stringMatch(ctrlName,"UsePercentErrors_set"))
+		if(UsePercentErrors_set)
+			UseUserErrors_set=0
+			UseSQRTErrors_set=0
+		else
+			UseUserErrors_set=0
+			UseSQRTErrors_set=1
+		endif	
+		IR2L_RecalculateErrors(WhichDataSet)
+	endif
+	if (stringMatch(ctrlName,"RecalculateAutomatically"))
+		IR2L_RecalculateIfSelected()
+	endif
+	if (stringMatch(ctrlName,"UseNumberDistributions"))
+		NVAR SizeDistDisplayNumDist = root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist
+		NVAR SizeDistDisplayVolDist = root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist
+		if(Checked)
+			SizeDistDisplayNumDist =1
+			SizeDistDisplayVolDist = 0
+		else
+			SizeDistDisplayNumDist =0
+			SizeDistDisplayVolDist = 1
+		endif
+		IR2L_RecalculateIfSelected()
+		SVAR SizeDist_DimensionType= root:Packages:IR2L_NLSQF:SizeDist_DimensionType
+		NVAR SizeDist_DimensionIsDiameter= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+		SizeDist_DimensionType= ""
+		if(SizeDistDisplayNumDist)
+			SizeDist_DimensionType = "Number distribution of "
+		else
+			SizeDist_DimensionType = "Volume distribution of "
+		endif
+		if(SizeDist_DimensionIsDiameter)
+			SizeDist_DimensionType += "Diameters"
+		else
+			SizeDist_DimensionType += "Radia"
+		endif
+	endif
+
+	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
+	NVAR UseLSQF=root:Packages:IR2L_NLSQF:UseLSQF
+	if (stringMatch(ctrlName,"UseGeneticOptimization"))
+		UseLSQF=!UseGeneticOptimization
+		NVAR NoFittingLimits=root:Packages:IR2L_NLSQF:NoFittingLimits
+		NoFittingLimits=0
+		if(checked)
+			Execute/P("IR2L_DataTabCheckboxProc(\"NoFittingLimits\",0)")
+		endif
+	endif
+	if (stringMatch(ctrlName,"UseLSQF"))
+		UseGeneticOptimization=!UseLSQF
+	endif
+
+
+	ControlInfo/W=LSQF2_MainPanel DataTabs
+	IR2L_Data_TabPanelControl("",V_Value)
+	DoWindow/F LSQF2_MainPanel
+	DoWIndow ModelingII_MoreDetails
+	if(V_Flag)
+		DoWIndow/F ModelingII_MoreDetails
+	endif
+	setDataFolder OldDf
+end

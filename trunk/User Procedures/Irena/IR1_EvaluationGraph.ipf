@@ -1,12 +1,12 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.03
+#pragma version=2.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//2.04 some improvements to handle radii and diameters. 
 //2.03  Modified all controls not to define font and font size to enable proper control by user 
 //2.02 modified display to show "size" instead of diameter, Modeling II is using radii, so the results are in readii. Also, need to fix the absolute calibrations sometimes...
 //2.01 added license for ANL
@@ -1206,6 +1206,9 @@ Function IR1G_ResetGraphAfterChanges()
 	Variable i, Ind
 	ind = 65280/NumDisplayedWaves
 	String FromName=""
+	variable DisplayedDia, DisplayedRad
+	DisplayedDia=0
+	DisplayedRad=0
 	For(i=0;i<NumDisplayedWaves;i+=1)
 		tempName= StringFromList(i, listOfWaves )
 		if(stringmatch(tempname,"CumulativeSizeDist"))
@@ -1236,6 +1239,13 @@ Function IR1G_ResetGraphAfterChanges()
 			ModifyGraph/Z marker($tempname)=19, rgb($tempname)=(i*ind,65280-(i*ind),0)
 			ModifyGraph/Z msize($tempname)=3,lsize($tempname)=2
 			wave w = TraceNameToWaveRef("IR1G_OneSampleEvaluationGraph", tempname )
+			wave wx=XWaveRefFromTrace("IR1G_OneSampleEvaluationGraph", tempname )
+			if(stringmatch(nameOfWave(wx),"*Radi*"))
+				DisplayedRad=1
+			endif
+			if(stringmatch(nameOfWave(wx),"*Diameter*"))
+				DisplayedDia=1
+			endif
 			curNote = note(w)
 			LegendStuff +="\s("+tempname+") "+stringByKey("SizesDataFrom", curNote,"=",";")+" "+tempname+"\r"
 		endif
@@ -1244,6 +1254,13 @@ Function IR1G_ResetGraphAfterChanges()
 			ModifyGraph/Z msize($tempname)=3,lsize($tempname)=2
 			wave w = TraceNameToWaveRef("IR1G_OneSampleEvaluationGraph", tempname )
 			curNote = note(w)
+			wave wx=XWaveRefFromTrace("IR1G_OneSampleEvaluationGraph", tempname )
+			if(stringmatch(nameOfWave(wx),"*Radi*"))
+				DisplayedRad=1
+			endif
+			if(stringmatch(nameOfWave(wx),"*Diameter*"))
+				DisplayedDia=1
+			endif
 			LegendStuff +="\s("+tempname+") "+stringByKey("SizesDataFrom", curNote,"=",";")+" "+tempname+"\r"
 		endif
 		
@@ -1252,8 +1269,18 @@ Function IR1G_ResetGraphAfterChanges()
 	ModifyGraph lblMargin(bottom)=6
 	ModifyGraph axOffset(bottom)=0.388889
 	ModifyGraph lblLatPos(bottom)=9
-
-	Label/Z bottom "Scatterers diameters [A]"
+	string BottomLabel="Scatterers "
+	if(DisplayedRad)
+		BottomLabel+="radii "
+	endif
+	if(DisplayedRad&&DisplayedDia)
+		BottomLabel+="_and_also_ "
+	endif
+	if(DisplayedDia)
+		BottomLabel+="diameters "
+	endif
+	BottomLabel+="[A]"
+	Label/Z bottom BottomLabel
 	Label/Z left "Volume distribution [cm\\S3\\M/cm\\S3\\MA\\S1\\M]"
 	Label/Z right "Number distribution [1/cm\\S3\\MA\\S1\\M]"
 	TextBox/C/N=SampleName/F=0/A=RT "\\F'Times New Roman'\\Z12"+LegendStuff

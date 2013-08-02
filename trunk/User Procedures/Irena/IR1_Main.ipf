@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed
 //2.52 Summer 2013 release. 
 //		modified Manual and Manuscript download routine to use http. ftp was failing, not sure why. 
 //		changed all web addresses to new (xray.aps.anl.gov)
@@ -169,7 +170,39 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
+	IR2C_CheckPlatformGUIFonts()
 end
+//****************************************************************************************
+//****************************************************************************************
+static Function IR2C_CheckPlatformGUIFonts()
+
+	SVAR/Z Platform = root:Packages:Irena_Platform
+	if(!SVAR_Exists(Platform))
+		string/g root:Packages:Irena_Platform
+		SVAR Platform = root:Packages:Irena_Platform
+		Platform = ""
+	endif
+	string oldPlatform = Platform
+	string CurPlatform = IgorInfo(2)
+	if(!stringMatch(Platform, CurPlatform))
+		IR2C_ConfigMain()  
+		STRUCT WMButtonAction   ba
+		ba.eventCode = 2
+		ba.ctrlName="DefaultValues"
+		IR2C_KillPrefsButtonProc(ba)
+		Platform = CurPlatform  
+		ba.eventCode = 2
+		ba.ctrlName="OKBUtton" 
+		IR2C_KillPrefsButtonProc(ba) 
+		if(STRLEN(oldPlatform)>0)
+			print "****   Detected that this experiment moved from : "+oldPlatform+"; to current platform : "+CurPlatform
+			print "therefore I have reset the GUI fonts on the current plaform" 
+		else
+			print "****   Could not detect prior plaform for this experiment, or it is new experiment. Set default GUI fonts for current platform : "+CurPlatform
+		endif
+	endif
+end
+
 //****************************************************************************************
 //****************************************************************************************
 

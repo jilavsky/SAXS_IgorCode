@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 
 
 //*************************************************************************\
@@ -21,6 +21,7 @@
 //2.21 FIxed Janus FF micelle and added version 3 - core as particle shape
 //2.22 Significantly reduced the form factors availabe to Size distribution tool. Complicated FF make no sense. 
 //2.23 Added CoreShellPrecipitate FF
+//2.24 added support for "No fitting limits" GUI option.
 
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
@@ -1994,11 +1995,16 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,FFUserFFformula,FFUserVolumeFormula,[P6Str,FitP6Str,LowP6Str,HighP6Str,P7Str,FitP7Str,LowP7Str,HighP7Str])
+Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,FFUserFFformula,FFUserVolumeFormula,[P6Str,FitP6Str,LowP6Str,HighP6Str,P7Str,FitP7Str,LowP7Str,HighP7Str,NoFittingLimits])
 	string TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,P2Str,FitP2Str,LowP2Str,HighP2Str,P3Str,FitP3Str,LowP3Str,HighP3Str,P4Str,FitP4Str,LowP4Str,HighP4Str,P5Str,FitP5Str,LowP5Str,HighP5Str,FFUserFFformula,FFUserVolumeFormula
 	string P6Str,FitP6Str,LowP6Str,HighP6Str,P7Str,FitP7Str,LowP7Str,HighP7Str
+	variable NoFittingLimits
 	//to use this panel, provide strings with paths to controled variables - or "" if the variable does not exist
 	
+	variable NoFittingLimitsL=0
+	if(!ParamIsDefault(NoFittingLimits))	
+		NoFittingLimitsL=NoFittingLimits
+	endif
 	string OldDf=GetDataFolder(1)
 	if(!DataFolderExists("root:Packages:FormFactorCalc"))
 		IR1T_InitFormFactors()
@@ -2115,6 +2121,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	DrawText 236,93,"Low limit?"
 	SetDrawEnv fstyle= 1
 	DrawText 326,93,"High Limit"
+	SetWindow FormFactorControlScreen note="NoFittingLimits="+num2str(NoFittingLimits)+";"
 
 	SVAR/Z CurrentFF=$(FFStr)
 	if(!SVAR_Exists(CurrentFF))
@@ -2139,9 +2146,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		CheckBox FitP1Value,pos={200,100},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 		CheckBox FitP1Value,variable= $(FitP1Str), help={"Fit this parameter?"}
 		NVAR disableMe= $(FitP1Str)
-		SetVariable P1LowLim,limits={-inf,Inf,0},variable= $(LowP1Str), disable=!disableMe
+		SetVariable P1LowLim,limits={-inf,Inf,0},variable= $(LowP1Str), disable=(!disableMe||NoFittingLimitsL)
 		SetVariable P1LowLim,pos={220,100},size={80,15},title=" ", help={"Low limit for fitting param 1"}
-		SetVariable P1HighLim,limits={-inf,Inf,0},variable= $(HighP1Str), disable=!disableMe
+		SetVariable P1HighLim,limits={-inf,Inf,0},variable= $(HighP1Str), disable=(!disableMe||NoFittingLimitsL)
 		SetVariable P1HighLim,pos={320,100},size={80,15},title=" ", help={"High limit for fitting param 1"}
 	endif
 	
@@ -2187,9 +2194,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			CheckBox FitP2Value,pos={200,120},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP2Value,variable= $(FitP2Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP2Str)
-			SetVariable P2LowLim,limits={-inf,Inf,0},variable= $(LowP2Str), disable=!disableMe
+			SetVariable P2LowLim,limits={-inf,Inf,0},variable= $(LowP2Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P2LowLim,pos={220,120},size={80,15},title=" ", help={"Low limit for fitting param 2"} 
-			SetVariable P2HighLim,limits={-inf,Inf,0},variable= $(HighP2Str), disable=!disableMe
+			SetVariable P2HighLim,limits={-inf,Inf,0},variable= $(HighP2Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P2HighLim,pos={320,120},size={80,15},title=" ", help={"High limit for fitting param 2"} 
 		endif
 	endif
@@ -2215,9 +2222,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			CheckBox FitP2Value,pos={200,120},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP2Value,variable= $(FitP2Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP2Str)
-			SetVariable P2LowLim,limits={-inf,Inf,0},variable= $(LowP2Str), disable=!disableMe
+			SetVariable P2LowLim,limits={-inf,Inf,0},variable= $(LowP2Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P2LowLim,pos={220,120},size={80,15},title=" ", help={"Low limit for fitting param 2"} 
-			SetVariable P2HighLim,limits={-inf,Inf,0},variable= $(HighP2Str), disable=!disableMe
+			SetVariable P2HighLim,limits={-inf,Inf,0},variable= $(HighP2Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P2HighLim,pos={320,120},size={80,15},title=" ", help={"High limit for fitting param 2"} 
 		endif
 
@@ -2230,9 +2237,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			CheckBox FitP3Value,pos={200,140},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP3Value,variable= $(FitP3Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP3Str)
-			SetVariable P3LowLim,limits={-inf,Inf,0},variable= $(LowP3Str), disable=!disableMe
+			SetVariable P3LowLim,limits={-inf,Inf,0},variable= $(LowP3Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P3LowLim,pos={220,140},size={80,15},title=" ", help={"Low limit for fitting param 3"} 
-			SetVariable P3HighLim,limits={-inf,Inf,0},variable= $(HighP3Str), disable=!disableMe
+			SetVariable P3HighLim,limits={-inf,Inf,0},variable= $(HighP3Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P3HighLim,pos={320,140},size={80,15},title=" ", help={"High limit for fitting param 3"} 
 		endif
 
@@ -2245,9 +2252,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 			CheckBox FitP4Value,pos={200,160},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 			CheckBox FitP4Value,variable= $(FitP4Str), help={"Fit this parameter?"}
 			NVAR disableMe= $(FitP4Str)
-			SetVariable P4LowLim,limits={-inf,Inf,0},variable= $(LowP4Str), disable=!disableMe
+			SetVariable P4LowLim,limits={-inf,Inf,0},variable= $(LowP4Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P4LowLim,pos={220,160},size={80,15},title=" ", help={"Low limit for fitting param 4"} 
-			SetVariable P4HighLim,limits={-inf,Inf,0},variable= $(HighP4Str), disable=!disableMe
+			SetVariable P4HighLim,limits={-inf,Inf,0},variable= $(HighP4Str), disable=(!disableMe||NoFittingLimitsL)
 			SetVariable P4HighLim,pos={320,160},size={80,15},title=" ", help={"High limit for fitting param 4"} 
 		endif
 		
@@ -2281,9 +2288,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 				CheckBox FitP5Value,pos={200,180},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 				CheckBox FitP5Value,variable= $(FitP5Str), help={"Fit this parameter?"}
 				NVAR disableMe= $(FitP5Str)
-				SetVariable P5LowLim,limits={-inf,Inf,0},variable= $(LowP5Str), disable=!disableMe
+				SetVariable P5LowLim,limits={-inf,Inf,0},variable= $(LowP5Str), disable=(!disableMe||NoFittingLimitsL)
 				SetVariable P5LowLim,pos={220,180},size={80,15},title=" ", help={"Low limit for fitting param 5"} 
-				SetVariable P5HighLim,limits={-inf,Inf,0},variable= $(HighP5Str), disable=!disableMe
+				SetVariable P5HighLim,limits={-inf,Inf,0},variable= $(HighP5Str), disable=(!disableMe||NoFittingLimitsL)
 				SetVariable P5HighLim,pos={320,180},size={80,15},title=" ", help={"High limit for fitting param5"} 
 			endif		
 		endif
@@ -2351,9 +2358,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 				CheckBox FitP6Value,pos={200,200},size={25,16},proc=IR1T_FFCntrlPnlCheckboxProc,title=" "
 				CheckBox FitP6Value,variable= $(FitP6Str), help={"Fit this parameter?"}
 				NVAR disableMe= $(FitP6Str)
-				SetVariable P6LowLim,limits={-inf,Inf,0},variable= $(LowP6Str), disable=!disableMe
+				SetVariable P6LowLim,limits={-inf,Inf,0},variable= $(LowP6Str), disable=(!disableMe||NoFittingLimitsL)
 				SetVariable P6LowLim,pos={220,200},size={80,15},title=" ", help={"Low limit for fitting param 5"} 
-				SetVariable P6HighLim,limits={-inf,Inf,0},variable= $(HighP6Str), disable=!disableMe
+				SetVariable P6HighLim,limits={-inf,Inf,0},variable= $(HighP6Str), disable=(!disableMe||NoFittingLimitsL)
 				SetVariable P6HighLim,pos={320,200},size={80,15},title=" ", help={"High limit for fitting param5"} 
 			endif		
 
@@ -2522,40 +2529,46 @@ Function IR1T_FFCntrlPnlCheckboxProc(ctrlName,checked) : CheckBoxControl
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:FormFactorCalc
 	SVAR ListOfFormFactors=root:Packages:FormFactorCalc:ListOfFormFactors
+	GetWindow FormFactorControlScreen note
+	variable NoFittingLimits = NumberByKey("NoFittingLimits", S_Value,"=",";")
+	if(numtype(NoFittingLimits))
+		NoFittingLimits = 0
+	endif
+
 //	SVAR FFParamPanelControls=root:Packages:FormFactorCalc:FFParamPanelControls
 	string ListOfParams="TitleStr;FFStr;P1Str;FitP1Str;LowP1Str;HighP1Str;P2Str;FitP2Str;LowP2Str;HighP2Str;P3Str;FitP3Str;LowP3Str;HighP3Str;P4Str;FitP4Str;LowP4Str;HighP4Str;P5Str;FitP5Str;LowP5Str;HighP5Str"
 
 	if(stringMatch(ctrlName,"FitP1Value"))
-		SetVariable P1LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P1HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P1LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P1HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP2Value"))
-		SetVariable P2LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P2HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P2LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P2HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP3Value"))
-		SetVariable P3LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P3HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P3LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P3HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP4Value"))
-		SetVariable P4LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P4HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P4LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P4HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP5Value"))
-		SetVariable P5LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P5HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P5LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P5HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP6Value"))
-		SetVariable P6LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P6HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P6LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P6HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP7Value"))
-		SetVariable P7LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P7HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P7LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P7HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 	if(stringMatch(ctrlName,"FitP8Value"))
-		SetVariable P8LowLim,disable=!(checked), win=FormFactorControlScreen
-		SetVariable P8HighLim,disable=!(checked), win=FormFactorControlScreen
+		SetVariable P8LowLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
+		SetVariable P8HighLim,disable=(!(checked)||NoFittingLimits), win=FormFactorControlScreen
 	endif
 
 	setDataFolder OldDf
