@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.09
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 fixed bug which caused in local fits held parameters to change in fitting routine to their starting guesses. 
 //2.09 changed local fits to guess needed starting parameters from the values selected by cursors. 
 //2.08 changes to provide optional panel with review of fitting parameters before fitting   
 //2.07 fix to invariant calculations for levels which are using RgCuttOff. The invariant was incorrectly calculated for these levels before. 
@@ -276,8 +277,11 @@ Function IR1A_FitLocalPorod(Level)
 	NVAR BLowLimit=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"BLowLimit")
 	NVAR BHighLimit=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"BHighLimit")
 
-	Pp = abs((log(OriginalIntensity[pcsr(A)])-log(OriginalIntensity[pcsr(B)]))/(log(OriginalQvector[pcsr(B)])-log(OriginalQvector[pcsr(A)])))
-		
+	if(FitP)	//fitting P, let's give it some good starting value... 
+		Pp = abs((log(OriginalIntensity[pcsr(A)])-log(OriginalIntensity[pcsr(B)]))/(log(OriginalQvector[pcsr(B)])-log(OriginalQvector[pcsr(A)])))
+	else
+		//ntohing to do, we will not be changing P
+	endif
 	variable LocalB
 	if (MassFractal)
 		LocalB=(G*Pp/Rg^Pp)*exp(gammln(Pp/2))
@@ -288,6 +292,11 @@ Function IR1A_FitLocalPorod(Level)
 	if (!FitB && !FitP)
 		beep
 		abort "No fitting parameter allowed to vary, select parameters to vary and set fitting limits"
+	endif
+
+	if(!FitB) 	//B should be fitted always.... 
+		FitB = 1
+		print "Changed settings to fit B, this parameters needs to be fitted always."
 	endif
 
 	IR1A_SetErrorsToZero()
@@ -406,6 +415,12 @@ Function IR1A_FitLocalGuinier(Level)
 //	Wave/T CoefNames=root:Packages:Irena_UnifFit:CoefNames		//text wave with names of parameters
 	variable LocalRg = 2*pi/((OriginalQvector[pcsr(A)]+OriginalQvector[pcsr(B)])/2)
 	variable LocalG = (OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
+	if(!FitG)
+		localG=G		//not fitting G, needs to be set to current GUI value
+	endif
+	if(!FitRg)
+		localRg=Rg		//not fitting Rg, needs to be set to current GUI value. 
+	endif
 
 	Make/D/O/N=2 New_FitCoefficients, CoefficientInput, LocalEwave
 	Make/O/T/N=2 CoefNames

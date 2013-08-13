@@ -9,6 +9,9 @@ Controls procedure - modified handling Irena results waves, mainly the Y wave. F
 All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
 Modeling II - added no fitting limits option
 Modeling II - enabled use of radii or diameters. Changed GUI to simplify and added visual description of what type of distribution is used and which tabs are being used. 
+Modeling II - fixed the Form factor and Structure factor help file to work also on Windows and fixed it extension. 
+Unified fit - fixed bug introduced in last update which prevented fitting with fixed P, Rg, and G. Changed the code to always include fitting B as that is probably necessary. 
+Main system - added Form factor and Structure factor panels to "Kill all" procedure. 
 
 2.52 7/23/2013
 Changed back everything to rtGlobals=2, major issues in the code run were found. 
