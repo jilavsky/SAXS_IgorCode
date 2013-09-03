@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.43
+#pragma version=2.45
 constant IR3MversionNumber = 2.39			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.39			//Data manipulation I panel version number
+constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.39			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.45 Data Manipulation I - added Merge data feature and preserve cursor position through data adding. Changed steps in GUI for Int multipliers and background.
 //2.44 DM1 - fix rebinning on log scale to handle data with first Q=0
 //2.43 DM II - Fixed problems with Subtract data selection (stale values, controls misbehave). 
 //2.42 DM II - minor fix for error wave creating when naming seemed to fail.
@@ -32,11 +33,11 @@ constant IR1DversionNumber = 2.39			//Data manipulation I panel version number
 //2.24 when using SMR data changed the output string to add _comb. This is most useful for 15IDD pinSAXS data
 //2.23 fix for notebook name not existing if not initialized correctly...
 //2.22 added license for ANL
+//2.21  modified Data manipulation II to be able to subtract one wave from many data sets. 
+//2.20 add Data Manipualtion II - manipulating multiple data sets. For now only avergaging multiple data sets but can be made more extensive
+//2.11 added log-x rebinning as option. 
 
 //version 2.1 modified to use new control procedures using subpanels... Hope this will work as advertised.
-//2.11 added log-x rebinning as option. 
-//2.20 add Data Manipualtion II - manipulating multiple data sets. For now only avergaging multiple data sets but can be made more extensive
-//2.21  modified Data manipulation II to be able to subtract one wave from many data sets. 
 
 
 ///******************************************************************************************
@@ -159,9 +160,10 @@ Proc IR1D_DataManipulationPanel()
 
 	SetActiveSubwindow ##
 
-	Button CopyGraphData,pos={5,310},size={120,17}, proc=IR1D_InputPanelButtonProc,title="Add data and Graph", help={"Create graph"}
-	Button ResetModify,pos={140,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Reset Modify", help={"Reset the modify data parameters and return all removed points"}
-	Button AutoScale,pos={250,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}
+	Button CopyGraphData,pos={5,310},size={120,17}, proc=IR1D_InputPanelButtonProc,title="Add Data and Graph", help={"Create graph"}
+	Button ResetModify,pos={130,310},size={60,17}, proc=IR1D_InputPanelButtonProc,title="Reset", help={"Reset the modify data parameters and return all removed points"}
+	Button AutoScale,pos={200,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}
+	Button MergeData,pos={310,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="MergeData", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. "}
 
 	SetVariable Data1_IntMultiplier, pos={5,344}, size={150,15},title="Multiply Int by", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_IntMultiplier)}
 	SetVariable Data1_IntMultiplier, value= root:Packages:SASDataModification:Data1_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
@@ -338,11 +340,11 @@ Function IR1D_setvarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	endif
 	if(cmpstr(ctrlName,"Data1_IntMultiplier")==0)
 		IR1D_RecalculateData()
-		SetVariable Data1_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.1*abs(varNum)}
+		SetVariable Data1_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*abs(varNum)}
 	endif 
 	if(cmpstr(ctrlName,"Data1_Background")==0)
 		IR1D_RecalculateData()
-		SetVariable Data1_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.1*abs(varNum)}
+		SetVariable Data1_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*abs(varNum)}
 	endif 
 	if(cmpstr(ctrlName,"Data1_Qshift")==0)
 		IR1D_RecalculateData()
@@ -353,11 +355,11 @@ Function IR1D_setvarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	 
 	if(cmpstr(ctrlName,"Data2_IntMultiplier")==0)
 		IR1D_RecalculateData()
-		SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.1*varNum}
+		SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*varNum}
 	endif 
 	if(cmpstr(ctrlName,"Data2_Background")==0)
 		IR1D_RecalculateData()
-		SetVariable Data2_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.1*varNum}
+		SetVariable Data2_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*varNum}
 	endif 
 	if(cmpstr(ctrlName,"Data2_Qshift")==0)
 		IR1D_RecalculateData()
@@ -372,11 +374,32 @@ End
 //**********************************************************************************************************
 Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
+		string OldAcsrWvName, OldBcsrWvName
+		variable OldAcsrPnt, OldBcsrPnt
 	
 	if(cmpstr(ctrlName,"CopyGraphData")==0)
+		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
+		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
+		if(strlen(OldAcsrWvName)>0)
+			OldAcsrPnt = pcsr(A,"IR1D_DataManipulationGraph")
+		else
+			OldAcsrPnt=Nan
+		endif
+		if(strlen(OldBcsrWvName)>0)
+			OldBcsrPnt = pcsr(B,"IR1D_DataManipulationGraph")
+		else
+			OldBcsrPnt=Nan
+		endif
 		IR1D_ResetModifyData()
 		IR1D_CopyDataAndGraph()
 		IR1D_PresetOutputStrings()
+		DoUpdate
+		if(numtype(OldAcsrPnt)==0)
+			Cursor/P A,  $OldAcsrWvName,  OldAcsrPnt
+		endif
+		if(numtype(OldBcsrPnt)==0)
+			Cursor/P B,  $OldBcsrWvName,  OldBcsrPnt
+		endif
 	endif
 	if(cmpstr(ctrlName,"ResetModify")==0)
 		IR1D_ResetModifyData()
@@ -398,6 +421,32 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1D_AutoScale()
 		IR1D_RecalculateData()
 	endif
+	if(cmpstr(ctrlName,"MergeData")==0)
+		//store where cursors are
+		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
+		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
+		if(strlen(OldAcsrWvName)<1||strlen(OldBcsrWvName)<1)
+			abort "Cursors not set. Place A cursor on start of Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+		endif
+		OldAcsrPnt = pcsr(A,"IR1D_DataManipulationGraph")
+		OldBcsrPnt = pcsr(B,"IR1D_DataManipulationGraph")
+		IR1D_ResetModifyData()
+		IR1D_CopyDataAndGraph()
+		IR1D_PresetOutputStrings()
+		DoUpdate
+		Cursor/P A,  $OldAcsrWvName,  OldAcsrPnt
+		Cursor/P B,  $OldBcsrWvName,  OldBcsrPnt
+		IR1D_MergeData()
+		NVAR CombineData=root:Packages:SASDataModification:CombineData
+		CombineData =1 
+		IR1D_InputPanelCheckboxProc2("CombineData",1)
+		IR1D_RemoveSmallQpnt()
+		IR1D_RemoveLargeQpnt()
+		IR1D_RecalculateData()
+		IR1D_ConvertData()
+		IR1D_SmoothData()
+		IR1D_AppendResultToGraph()
+	endif
 	if(cmpstr(ctrlName,"ConvertData")==0)
 		IR1D_ConvertData()
 		IR1D_SmoothData()
@@ -414,6 +463,115 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+Function IR1D_MergeData()
+
+	string OldDf
+	OldDf= GetDataFOlder(1)
+	setDataFolder root:Packages:SASDataModification
+	
+	if ((strlen(CsrWave(A,"IR1D_DataManipulationGraph"))==0) || (strlen(CsrWave(B,"IR1D_DataManipulationGraph"))==0))
+		Abort "Please position both cursors in the graph so they select the overlap region to use"
+	endif
+
+	NVAR Data1_IntMultiplier=root:Packages:SASDataModification:Data1_IntMultiplier
+	NVAR Data2_IntMultiplier=root:Packages:SASDataModification:Data2_IntMultiplier
+	NVAR Data1_Background=root:Packages:SASDataModification:Data1_Background
+	NVAR Data2_Background=root:Packages:SASDataModification:Data2_Background
+	Data1_IntMultiplier=1
+	Data2_IntMultiplier = 1
+	Data1_Background = 0
+	Data2_Background=0
+	
+	IR1D_RecalculateData()
+	
+	Wave/Z Intensity1=root:Packages:SASDataModification:Intensity1
+	Wave/Z Intensity2=root:Packages:SASDataModification:Intensity2
+	Wave/Z Qvector1=root:Packages:SASDataModification:Qvector1
+	Wave/Z Qvector2=root:Packages:SASDataModification:Qvector2
+	Wave/Z Error1=root:Packages:SASDataModification:Error1
+	Wave/Z Error2=root:Packages:SASDataModification:Error2
+
+	variable startQ, endQ
+	startQ = CsrXWaveRef(A,"IR1D_DataManipulationGraph")[pcsr(A,"IR1D_DataManipulationGraph")]
+	endQ = CsrXWaveRef(B,"IR1D_DataManipulationGraph")[pcsr(B,"IR1D_DataManipulationGraph")]
+	
+	if (!WaveExists(Intensity1) || !WaveExists(Intensity2) || !WaveExists(Qvector1) || !WaveExists(Qvector2))
+		Abort "Bad call to IR1D_MergeData routine"
+	endif
+	if(WaveExists(Error1))
+		Duplicate/Free Error1, TempErr1
+	else
+		Duplicate/Free Intensity1, TempErr1
+	endif
+	if(WaveExists(Error2))
+		Duplicate/Free Error2, TempErr2
+	else
+		Duplicate/Free Intensity2, TempErr2
+	endif
+	
+	
+	variable StartQp, EndQp
+	StartQp = BinarySearch(Qvector1, startQ )
+	EndQp = BinarySearch(Qvector1, endQ )
+
+	Duplicate/O/Free Intensity1, TempInt1
+	Duplicate/O/Free Intensity2, TempInt2
+	Duplicate/O/Free Qvector1, TempQ1
+	Duplicate/O/Free Qvector2, TempQ2
+	IN2G_RemoveNaNsFrom3Waves(TempInt1,TempQ1,TempErr1)
+	IN2G_RemoveNaNsFrom3Waves(TempInt2,TempQ2,TempErr2)
+	Duplicate/O/Free/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
+	Duplicate/O/Free/R=[StartQp, EndQp] TempQ1, TempQ1Part
+	Duplicate/O/Free/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
+	
+	TempInt2Part = TempInt2[BinarySearch(Qvector2, TempQ1Part[p])]
+	TempErr2Part = TempErr2[BinarySearch(Qvector2, TempQ1Part[p])]
+	variable integral1, integral2, scalingFactor, highQDifference	
+	integral1=areaXY(TempQ1, TempInt1, startQ, endQ )
+	integral2=areaXY(TempQ2, TempInt2, startQ, endQ )
+	scalingFactor = integral1/integral2
+	highQDifference = TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1]
+	
+	Concatenate /O {TempQ1Part, TempInt1Part, TempInt2Part, TempErr1Part, TempErr2Part}, TempIntCombined
+	
+	variable ValueEst= 0.1* IR1D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference)
+	//print ValueEst
+	Optimize/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst)/Q IR1D_FindMergeValues,TempIntCombined
+	Wave W_Extremum	
+	KillWaves TempIntCombined
+	Data1_IntMultiplier=1
+	Data2_IntMultiplier = W_Extremum[0]
+	Data1_Background = W_Extremum[1]
+	Data2_Background=0
+	SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*Data2_IntMultiplier}
+	SetVariable Data1_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*abs(Data1_Background)}
+	IR1D_RecalculateData()
+	//print "Merged data with following parameters: ScalingFct = "+num2str(Data2_IntMultiplier)+" , and bckg = "+num2str(Data1_Background)
+	//EvaluatePar()
+	setDataFolder OldDf
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR1D_FindMergeValues(w, scalingFactor, highQDifference)
+	Wave w
+	Variable scalingFactor,highQDifference
+	variable PowerLaw=0
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights
+	tempDifference = ((w[p][1]-highQDifference) - (scalingFactor * w[p][2]))	//difference between the two values
+	tempDifference = tempDifference^2										//distance squared... 
+	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
+	tempDifference/=tempWeights											//normalize the difference by uncertainity
+	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
+	return sum(tempDifference)												//total distance as defined above. 
+End
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
 static Function IR1D_RecordResults()
 
 	string OldDF=GetDataFolder(1)
@@ -1387,10 +1545,10 @@ static Function IR1D_AutoScale()
 	if (!WaveExists(Intensity1) || !WaveExists(Intensity2) || !WaveExists(Qvector1) || !WaveExists(Qvector2))
 		abort
 	endif
-	Duplicate/O Intensity1, TempInt1
-	Duplicate/O Intensity2, TempInt2
-	Duplicate/O Qvector1, TempQ1, bla1
-	Duplicate/O Qvector2, TempQ2, bla2
+	Duplicate/O/Free Intensity1, TempInt1
+	Duplicate/O/Free Intensity2, TempInt2
+	Duplicate/O/Free Qvector1, TempQ1, bla1
+	Duplicate/O/Free Qvector2, TempQ2, bla2
 	variable integral1, integral2
 	IN2G_RemoveNaNsFrom3Waves(TempInt1,TempQ1,bla1)
 	IN2G_RemoveNaNsFrom3Waves(TempInt2,TempQ2,bla2)
@@ -1402,7 +1560,6 @@ static Function IR1D_AutoScale()
 	Data1_IntMultiplier=1
 	Data2_IntMultiplier = integral1/integral2
 
-	KillWaves/Z TempInt1,TempInt2, TempQ1, TempQ2, bla1, bla2
 	setDataFolder OldDf
 end
 //**********************************************************************************************************
@@ -1424,6 +1581,9 @@ static Function IR1D_RemoveListQpnt()
 	endif	
 	Cursor /P /W=IR1D_DataManipulationGraph A  $currentWave CurrentPoint+1	
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 static Function IR1D_RemoveSmallQpnt()
 	
 	NVAR Data1RemoveSmallQ=root:Packages:SASDataModification:Data1RemoveSmallQ
@@ -1436,6 +1596,9 @@ static Function IR1D_RemoveSmallQpnt()
 		Data2RemoveSmallQ=pcsr(A)
 	endif	
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 static Function IR1D_RemoveLargeQpnt()
 	
 	NVAR Data1RemoveLargeQ=root:Packages:SASDataModification:Data1RemoveLargeQ
@@ -1505,7 +1668,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function IR1D_RecalculateData()
+ Function IR1D_RecalculateData()
 
 	NVAR Data1_IntMultiplier=root:Packages:SASDataModification:Data1_IntMultiplier
 	NVAR Data1_ErrMultiplier=root:Packages:SASDataModification:Data1_ErrMultiplier

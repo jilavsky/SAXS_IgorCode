@@ -4,14 +4,17 @@ Code modification history
 -latest stuff first
 ********************************************
 2.53
-Data manipulation 1 - fix log rebinning when Q data start with points where Q<=0
+Data manipulation 1 - fix log rebinning when Q data starts with points where Q<=0. This used to fail. 
+Data manipulation I - added simple method of merging data (for different q ranges). Sets background for Data1 and scales Data2 (and optimizes the two values to get best fit). 
+Data manipulation I - preserve cursor positions through adding data.
 Controls procedure - modified handling Irena results waves, mainly the Y wave. Faster. 
 All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
 Modeling II - added no fitting limits option
 Modeling II - enabled use of radii or diameters. Changed GUI to simplify and added visual description of what type of distribution is used and which tabs are being used. 
 Modeling II - fixed the Form factor and Structure factor help file to work also on Windows and fixed it extension. 
 Unified fit - fixed bug introduced in last update which prevented fitting with fixed P, Rg, and G. Changed the code to always include fitting B as that is probably necessary. 
-Main system - added Form factor and Structure factor panels to "Kill all" procedure. 
+Main system - added Form factor and Structure factor panels to "Kill all graph & panels" procedure. 
+Ploting Tool I - fixed minor bug caused by Igor Pro behavior change which caused Modify data always to remove at least first and last point. 
 
 2.52 7/23/2013
 Changed back everything to rtGlobals=2, major issues in the code run were found. 
