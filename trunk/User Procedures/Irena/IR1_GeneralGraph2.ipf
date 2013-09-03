@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.12
+#pragma version=2.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //*************************************************************************/
 //to do: need to handle better the symbols and line types, limit for 8 types is just way too little. 
 
+//2.13 Fixed bug caused by igor 6.30 which caused Data modification ot trim first and last points from data always. 
 //2.12 Minor improvement to Countour plot. 
 //2.11 added contour plot and basic handling
 //2.10 modified to handle different Intensity units for calibration 
@@ -1554,8 +1555,12 @@ Function IR1P_RecalcModifyData()	//and this function modifies the data with para
 	endif
 	NVAR TrimPointSmallQ=root:Packages:GeneralplottingTool:TrimPointSmallQ
 	NVAR TrimPointLargeQ=root:Packages:GeneralplottingTool:TrimPointLargeQ
-	OrgInt[0,TrimPointSmallQ-1]=NaN
-	OrgInt[TrimPointLargeQ+1,inf]=NaN
+	if(TrimPointSmallQ>0)
+		OrgInt[0,TrimPointSmallQ-1]=NaN
+	endif
+	if(TrimPointLargeQ<numpnts(OrgInt)-1)
+		OrgInt[TrimPointLargeQ+1,numpnts(OrgInt)-1]=NaN
+	endif
 	
 	variable i, cursorNow
 	string tempPntNum, tempWvName
