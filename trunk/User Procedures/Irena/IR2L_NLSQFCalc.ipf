@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.06
+#pragma version=1.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 added to Unified fit ability to calculate B from G/Rg/P based on Guinier/Porod model. 
+//1.07 fix to catch error for peak FWHM when data raneg is not good enough to calculate
 //1.06 added Janus CoreShell Micelle
 //1.05 fixed problem with calculations of peak positions
 //1.04 changed min size used by the tool to 1A. Lot of users seems to be using this at really high qs... 
@@ -163,12 +165,21 @@ Function IR2L_CalcDiffIntPopXDataSetY(pop,dataSet)
 		if (!WaveExists (Qwave))
 			Abort "Select original data first"
 		endif
-		Duplicate/O/R=[BinarySearch(Qwave, QMin),BinarySearch(Qwave, QMax)] Qwave, $("Qmodel_set"+num2str(DataSet))
+		variable StartPoint, EndPoint
+		StartPoint = BinarySearch(Qwave, QMin)
+		EndPoint = BinarySearch(Qwave, QMax)
+		if(StartPoint<0)
+			StartPoint=0
+		endif
+		if(EndPoint<0)
+			EndPoint = numpnts(Qwave)-1
+		endif
+		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
 		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		ModelInt=0
-		Duplicate/O ModelInt, tempInt
+		Duplicate/FREE ModelInt, tempInt
 
 		//find the form factor parameters and name:
 		SVAR DiffPeakProfile=$("root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(pop))	
@@ -252,8 +263,12 @@ Function IR2L_CalcDiffIntPopXDataSetY(pop,dataSet)
 			PeakQPosition = ModelQ[V_maxloc]
 			DiffPeakDPos = 2*pi/PeakQPosition
 			FindLevels/Q  tempInt, V_max/2 
-			Wave W_FindLevels
-			PeakFWHM = abs(ModelQ[W_FindLevels[1]] - ModelQ[W_FindLevels[0]])
+			if(V_flag==0)
+				Wave W_FindLevels
+				PeakFWHM = abs(ModelQ[W_FindLevels[1]] - ModelQ[W_FindLevels[0]])
+			else
+				PeakFWHM=nan
+			endif
 
 		ModelInt=LocalContrast*tempInt
 	endif
@@ -291,7 +306,16 @@ Function IR2L_CalcUnifiedIntPopXDataSetY(pop,dataSet)
 		if (!WaveExists (Qwave))
 			Abort "Select original data first"
 		endif
-		Duplicate/O/R=[BinarySearch(Qwave, QMin),BinarySearch(Qwave, QMax)] Qwave, $("Qmodel_set"+num2str(DataSet))
+		variable StartPoint, EndPoint
+		StartPoint = BinarySearch(Qwave, QMin)
+		EndPoint = BinarySearch(Qwave, QMax)
+		if(StartPoint<0)
+			StartPoint=0
+		endif
+		if(EndPoint<0)
+			EndPoint = numpnts(Qwave)-1
+		endif
+		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
 		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
@@ -323,8 +347,17 @@ Function IR2L_CalcUnifiedIntPopXDataSetY(pop,dataSet)
 		NVAR P=$("root:Packages:IR2L_NLSQF:UF_P_pop"+num2str(pop))
 		NVAR RGCO=$("root:Packages:IR2L_NLSQF:UF_RGCO_pop"+num2str(pop))
 		NVAR Kval=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(pop))
+		NVAR/Z LinkB=$("root:Packages:IR2L_NLSQF:UF_LinkB_pop"+num2str(pop))
+		variable LLinkB=0
+		if(NVAR_Exists(LinkB))
+			LLinkB=LinkB
+		endif
 		//now the distribution waves...
 		//calculate Unified fit....
+		if(LLinkB)
+			B = G * exp(-1*P/2)*(3*P/2)^(P/2)*(1/Rg^P) 
+		endif
+		
 		Duplicate /O ModelQ, QstarVector
 		QstarVector=ModelQ/(erf(Kval*ModelQ*Rg/sqrt(6)))^3
 		ModelInt=LocalContrast*G*exp(-ModelQ^2*Rg^2/3)+(LocalContrast*B/QstarVector^P) * exp(-RGCO^2 * ModelQ^2/3)
@@ -673,7 +706,16 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 		if (!WaveExists (Qwave))
 			Abort "Select original data first"
 		endif
-		Duplicate/O/R=[BinarySearch(Qwave, QMin),BinarySearch(Qwave, QMax)] Qwave, $("Qmodel_set"+num2str(DataSet))
+		variable StartPoint, EndPoint
+		StartPoint = BinarySearch(Qwave, QMin)
+		EndPoint = BinarySearch(Qwave, QMax)
+		if(StartPoint<0)
+			StartPoint=0
+		endif
+		if(EndPoint<0)
+			EndPoint = numpnts(Qwave)-1
+		endif
+		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
 		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
+#pragma version=1.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -18,6 +18,7 @@
  //1.09 fix for checking for the limits, which was done for all parameters (UF/Diff) even when these were not fitted. 
  //1.10 removed all font and font size from panel definitions to enable user control
  //1.11 modified data stored in wavenote to minimize stuff saved there.
+ //1.12 added additional fitting constraints 
  
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -48,6 +49,7 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 		NVAR GraphYMin = root:Packages:IR2L_NLSQF:GraphYMin
 		NVAR GraphYMax = root:Packages:IR2L_NLSQF:GraphYMax
 		SVAR UserDataSetName = $("root:Packages:IR2L_NLSQF:UserDataSetName_set"+num2str(whichDataSet))
+		NVAR RebinDataTo = root:Packages:IR2L_NLSQF:RebinDataTo
 		
 	if(strlen(InputFoldrName)<4)
 		abort
@@ -115,21 +117,26 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	NewErrorName = InputErrorName
 	
 	Duplicate/O inputI, $("Intensity_set"+num2str(whichDataSet))
+	Wave IntWv = $("Intensity_set"+num2str(whichDataSet))
 	Duplicate/O inputQ, $("Q_set"+num2str(whichDataSet))
+	Wave QWv = $("Q_set"+num2str(whichDataSet))
 	if(UseUserErrors)		//handle special cases of errors not loaded in Igor
-		Duplicate/O inputE, $("Error_set"+num2str(whichDataSet))		
+		Duplicate/O inputE, $("Error_set"+num2str(whichDataSet))	
+		Wave ErrorWv=	$("Error_set"+num2str(whichDataSet))
 	elseif(UseSQRTErrors)
 		Duplicate/O inputI, $("Error_set"+num2str(whichDataSet))	
 		Wave ErrorWv=$("Error_set"+num2str(whichDataSet))	
-		Wave IntWv= $("Intensity_set"+num2str(whichDataSet))
 		ErrorWv=sqrt(IntWv)
 	else
 		Duplicate/O inputI, $("Error_set"+num2str(whichDataSet))	
 		Wave ErrorWv=$("Error_set"+num2str(whichDataSet))	
-		Wave IntWv= $("Intensity_set"+num2str(whichDataSet))
 		ErrorWv=0.01*(IntWv)
 	endif
-	Duplicate/O inputI, $("IntensityMask_set"+num2str(whichDataSet))
+	if(RebinDataTo>0)
+		IR1D_rebinData(IntWv,QWv,ErrorWv,RebinDataTo, 1)
+	endif
+	
+	Duplicate/O IntWv, $("IntensityMask_set"+num2str(whichDataSet))
 	Wave Mask = $("IntensityMask_set"+num2str(whichDataSet))
 	Mask = 5
 
@@ -632,6 +639,14 @@ Function IR2L_Fitting(SkipDialogs)
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
+	SVAR/Z AdditionalFittingConstraints = root:Packages:IR2L_NLSQF:AdditionalFittingConstraints
+	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
+	if(!SVAR_Exists(AdditionalFittingConstraints))
+		string/g AdditionalFittingConstraints
+	endif
+	if(UseGeneticOptimization)		//not availabel for GenOpt for now...
+		AdditionalFittingConstraints=""
+	endif
 	NVAR NoFittingLimits = root:Packages:IR2L_NLSQF:NoFittingLimits
 
 	if(NoFittingLimits)
@@ -639,9 +654,12 @@ Function IR2L_Fitting(SkipDialogs)
 	endif
 	//Create the fitting parameters, these will have _pop added and we need to add them to list of parameters to fit...
 	string ListOfPopulationVariables=""
+	string tempStrN=""
 
-	Make/O/N=0/T T_Constraints
+	Make/O/N=0/T T_Constraints, ParamNamesK, ParamNames
 	T_Constraints=""
+	ParamNamesK=""
+	ParamNames=""
 	Make/D/N=0/O W_coef
 	Make/O/N=(0,2) Gen_Constraints
 	Make/T/N=0/O CoefNames
@@ -677,12 +695,14 @@ Function IR2L_Fitting(SkipDialogs)
 							abort
 						endif
 					endif
-					Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+					Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 					Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 					W_Coef[numpnts(W_Coef)-1]=CurVarTested
 					CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
 					LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
 					HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+					ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+					ParamNames[numpnts(CoefNames)-1]={"Volume"}
 					T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 					T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}	
 					Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
@@ -731,12 +751,14 @@ Function IR2L_Fitting(SkipDialogs)
 								abort
 							endif
 						endif
-						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						W_Coef[numpnts(W_Coef)-1]=CurVarTested
 						CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
 						LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
 						HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+						ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+						ParamNames[numpnts(CoefNames)-1]={stringfromList(i,ListOfPopulationVariables)}
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
 						Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
@@ -784,12 +806,14 @@ Function IR2L_Fitting(SkipDialogs)
 							abort
 						endif
 					endif
-					Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+					Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 					Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 					W_Coef[numpnts(W_Coef)-1]=CurVarTested
 					CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
 					LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
 					HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+					ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+					ParamNames[numpnts(CoefNames)-1]={IR1T_IdentifySFParamName(StrFac,i+1)}
 					T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 					T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
 					Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
@@ -832,12 +856,14 @@ Function IR2L_Fitting(SkipDialogs)
 								abort
 							endif
 						endif
-						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						W_Coef[numpnts(W_Coef)-1]=CurVarTested
 						CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
 						LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
 						HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+						ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+						ParamNames[numpnts(CoefNames)-1]={IR1T_IdentifyFFParamName(FormFactor,i+1)}
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
 						Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
@@ -874,12 +900,14 @@ Function IR2L_Fitting(SkipDialogs)
 								abort
 							endif
 						endif
-						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						W_Coef[numpnts(W_Coef)-1]=CurVarTested
 						CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
 						LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
 						HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+						ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+						ParamNames[numpnts(CoefNames)-1]={stringfromList(i,ListOfPopulationVariables)[3,8]}
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
 						Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
@@ -921,17 +949,34 @@ Function IR2L_Fitting(SkipDialogs)
 								abort
 							endif
 						endif
-						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 						W_Coef[numpnts(W_Coef)-1]=CurVarTested
 						CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
 						LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
 						HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+						ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
 						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
 						Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
 						Gen_Constraints[numpnts(CoefNames)-1][0] = CuVarMin
 						Gen_Constraints[numpnts(CoefNames)-1][1] = CuVarMax
+						//meaningful names...
+						switch(i)	// numeric switch
+							case 0:		// execute if case matches expression
+								tempStrN = "Scaling"
+								break						// exit from switch
+							case 1:		// execute if case matches expression
+								tempStrN = "Position"
+								break
+							case 2:		// execute if case matches expression
+								tempStrN = "Width"
+								break
+							case 3:		// execute if case matches expression
+								tempStrN = "Eta"
+								break
+						endswitch
+						ParamNames[numpnts(CoefNames)-1]={tempStrN}
 					endif
 				endfor
 			endif	
@@ -966,12 +1011,14 @@ Function IR2L_Fitting(SkipDialogs)
 							abort
 						endif
 					endif
-					Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames
+					Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
 					Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
 					W_Coef[numpnts(W_Coef)-1]=CurVarTested
 					CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfDataVariables)+"_set"+num2str(j)
 					LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfDataVariables)+"Min_set"+num2str(j)
 					HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfDataVariables)+"Max_set"+num2str(j)
+					ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+					ParamNames[numpnts(CoefNames)-1]={"Background"}
 					T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
 					T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
 					Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
@@ -1021,7 +1068,6 @@ Function IR2L_Fitting(SkipDialogs)
 	endfor
 	Duplicate/O IntWvForFit, MaskWaveGenOpt
 	MaskWaveGenOpt=1
-	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
 
 	if(NoFittingLimits && UseGeneticOptimization)
 			Abort "Genetic optimization cannot be used without fitting limits!"
@@ -1037,8 +1083,22 @@ Function IR2L_Fitting(SkipDialogs)
 			abort
 		endif
 	endif
-	
-
+	//add more constraints, is user added them or if thy already are in AdditionalFittingConstraints
+	if(strlen(AdditionalFittingConstraints)>3)
+		AdditionalFittingConstraints = RemoveEnding(AdditionalFittingConstraints , ";")+";"
+	else
+		AdditionalFittingConstraints=""
+	endif
+	variable NumOfAddOnConstr=ItemsInList(AdditionalFittingConstraints,";")
+	if(NumOfAddOnConstr>0)		//there are some
+		print "Added following fitting constraints : "+AdditionalFittingConstraints
+		variable oldConstNum=numpnts(T_Constraints)
+		redimension/N=(oldConstNum+NumOfAddOnConstr) T_Constraints
+		variable ij
+		for (ij=0;ij<NumOfAddOnConstr;ij+=1)
+			T_Constraints[oldConstNum+ij] = StringFromList(ij, AdditionalFittingConstraints, ";")
+		endfor	
+	endif
 	IR2L_RecordResults("before")
 	Duplicate/O IntWvForFit, tempDestWave
 	Variable V_FitError=0			//This should prevent errors from being generated
@@ -1092,7 +1152,7 @@ Function IR2L_Fitting(SkipDialogs)
 				ListOfLimitsReachedParams+=ParamName+";"
 			endif
 		endfor
-		if(LimitsReached)
+		if(LimitsReached && !NoFittingLimits)
 			print "Following parameters may have reached their Min/Max limits during fitting:"
 			print  ListOfLimitsReachedParams
 			if(!SkipDialogs)
@@ -1131,8 +1191,13 @@ end
 //*****************************************************************************************************************
 
 Function IR2L_CheckFittingParamsFnct() 
+
+	DoWIndow IR2L_CheckFittingParams
+	if(V_Flag)
+		DoWindow/K IR2L_CheckFittingParams
+	endif
 	//PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(400,140,870,600) as "Check fitting parameters"
+	NewPanel /K=1/W=(400,140,1000,600) as "Check fitting parameters"
 	Dowindow/C IR2L_CheckFittingParams
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65280)
@@ -1155,10 +1220,17 @@ Function IR2L_CheckFittingParamsFnct()
 	endif
 	Button CancelBtn,pos={27,420},size={150,20},proc=IR2L_CheckFitPrmsButtonProc,title="Cancel fitting"
 	Button ContinueBtn,pos={187,420},size={150,20},proc=IR2L_CheckFitPrmsButtonProc,title="Continue fitting"
+	if(!UseGeneticOptimization)
+		SetVariable AdditionalFittingConstraints, size={500,20}, pos={25,400}, variable=AdditionalFittingConstraints, noproc, title = "Add Fitting Constraints : "
+		SetVariable AdditionalFittingConstraints, help={"Add usual Igor constraints separated by ; - e.g., \"K0<K1;\""}
+	endif
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:IR2L_NLSQF:
 	Wave Gen_Constraints,W_coef
-	Wave/T CoefNames
+	Duplicate/O W_coef, PopNumber
+	Wave/T CoefNames, ParamNamesK, ParamNames
+	PopNumber = str2num((CoefNames[p])[strlen(CoefNames[p])-1,40])
+	SVAR AdditionalFittingConstraints
 	SetDimLabel 1,0,Min,Gen_Constraints
 	SetDimLabel 1,1,Max,Gen_Constraints
 	variable i
@@ -1166,13 +1238,15 @@ Function IR2L_CheckFittingParamsFnct()
 		SetDimLabel 0,i,$(CoefNames[i]),Gen_Constraints
 	endfor
 	if(UseGeneticOptimization)
+		//Edit/W=(0.05,0.25,0.95,0.865)/HOST=#  ParamNamesK, Gen_Constraints.ld,W_coef
 		Edit/W=(0.05,0.25,0.95,0.865)/HOST=#  Gen_Constraints.ld,W_coef
 //		ModifyTable format(Point)=1,width(Point)=0, width(Gen_Constraints)=110
 //		ModifyTable alignment(W_coef)=1,sigDigits(W_coef)=4,title(W_coef)="Curent value"
 //		ModifyTable alignment(Gen_Constraints)=1,sigDigits(Gen_Constraints)=4,title(Gen_Constraints)="Limits"
 //		ModifyTable statsArea=85
 		ModifyTable format(Point)=1,width(Point)=0,alignment(W_coef.y)=1,sigDigits(W_coef.y)=4
-		ModifyTable width(W_coef.y)=90,title(W_coef.y)="Start value",width(Gen_Constraints.l)=172
+		//title(ParamNamesK)="Constr.",width(ParamNamesK)=35
+		ModifyTable width(W_coef.y)=90,title(W_coef.y)="Start value",width(Gen_Constraints.l)=142
 //		ModifyTable title[1]="Min"
 //		ModifyTable title[2]="Max"
 		ModifyTable alignment(Gen_Constraints.d)=1,sigDigits(Gen_Constraints.d)=4,width(Gen_Constraints.d)=72
@@ -1180,8 +1254,11 @@ Function IR2L_CheckFittingParamsFnct()
 //		ModifyTable statsArea=85
 //		ModifyTable statsArea=20
 	else
-		Edit/W=(0.05,0.18,0.95,0.865)/HOST=#  CoefNames
-		ModifyTable format(Point)=1,width(Point)=0,width(CoefNames)=144,title(CoefNames)="Fitted Coef Name"
+		Edit/W=(0.03,0.18,0.98,0.865)/HOST=#  ParamNamesK, CoefNames, ParamNames, PopNumber, W_coef
+		ModifyTable format(Point)=1,width(Point)=0,width(CoefNames)=144,title(CoefNames)="Internal name", title(ParamNamesK)="Constr.",width(ParamNamesK)=40
+		ModifyTable width(W_coef.y)=90,title(W_coef.y)="Start value", alignment(ParamNamesK)=1, alignment=1
+		ModifyTable width(PopNumber)=25,title(PopNumber)="Pop", alignment(PopNumber)=1
+		ModifyTable width(ParamNames)=100,title(ParamNames)="Name"
 //		ModifyTable statsArea=85
 	endif
 	SetDataFolder fldrSav0

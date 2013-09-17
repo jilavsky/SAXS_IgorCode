@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.05
+#pragma version=1.06
 Constant IR2PrversionNumber=1.05
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.05
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.06 minor cahnge for notebook call function. 
 //1.05 added panel version control and made panel vertically scrollable
 //1.04  Modified all controls not to define font and font size to enable proper control by user 
 //1.03 added graph with Gamma(r) per request
@@ -947,6 +948,12 @@ Function IR1_CreateResultsNbk()
 		IR1_InsertDateAndTime(nbl)
 	endif
 
+
+
+	DoWIndow ModelingII_Results
+	if(V_Flag)
+		DoWIndow/F ModelingII_Results
+	endif
 end
 
 //*****************************************************************************************************************

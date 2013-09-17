@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.05
-Constant IR2EversionNumber = 1.05
+#pragma version=1.06
+Constant IR2EversionNumber = 1.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,8 @@ Constant IR2EversionNumber = 1.05
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.06 modified GUI to disable Export Data & notes on main panel, when Multiple data selection panel is opened. Confused users. Changeds call to pull up without initialization, if exists. 
+//		changed mode for Listbox to enable shift-click selection of range of data, use ctrl/cmd for one-by-one data selection
 //1.05 added in panel version control and added vertical scrolling 
 //1.04 fixed Multiple data export which was broken by update to control procedures
 //1.03 fixed QRS data export which was not working due to eventCode missing in structure
@@ -19,13 +21,19 @@ Constant IR2EversionNumber = 1.05
 
 Function IR2E_UniversalDataExport()
 
-	//initialize, as usually
-	IR2E_InitUnivDataExport()
 	//check for panel if exists - pull up, if not create
 	DoWindow UnivDataExportPanel
 	if(V_Flag)
 		DoWindow/F UnivDataExportPanel
+		DoWIndow IR2E_MultipleDataSelectionPnl
+		if(V_Flag)
+			DoWindow/F IR2E_MultipleDataSelectionPnl
+		endif
 	else
+		//initialize, as usually
+		IR2E_InitUnivDataExport()
+		NVAR ExportMultipleDataSets = root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
+		ExportMultipleDataSets=0		//do nto start in multiple data export, it does not set parameters well...  
 		IR2E_UnivDataExportPanel()
 		ING2_AddScrollControl()
 		UpdatePanelVersionNumber("UnivDataExportPanel", IR2EversionNumber)
@@ -62,25 +70,11 @@ Function IR2E_UnivDataExportPanel()
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;R_Int;"
 	IR2C_AddDataControls("IR2_UniversalDataExport","UnivDataExportPanel",AllowedIrenaTypes,"AllCurrentlyAllowedTypes","","","","", 0,0)
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 50,23,"Universal data export panel"
 	TitleBox MainTitle title="Universal data export panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,181,339,181
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,27},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=16,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,210,"Preview Options:"
 	TitleBox Info2 title="Preview Options:",pos={20,190},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=16,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,340,"Output Options:"
 	TitleBox Info3 title="Output Options:",pos={20,320},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=16,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,310,339,310
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,307},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	CheckBox ExportMultipleDataSets,pos={100,160},size={225,14},proc=IR2E_UnivExpCheckboxProc,title="Export multiple data sets?"
@@ -113,6 +107,8 @@ Function IR2E_UnivDataExportPanel()
 	SetVariable HeaderSeparator,pos={3,560},size={180,25},title="Header separator:", help={"This is symnol at the start of header line. Include here spaces if you want them..."},fstyle=1
 //
 	Button ExportData, pos={100,600},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Export Data & Notes", help={"Save ASCII file with data and notes for these data"}
+	NVAR MultipleData=root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
+	Button ExportData, disable=2*MultipleData
 //;
 
 end
@@ -126,7 +122,10 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 
 //	DoAlert 0,"Fix IR2E_UnivExpCheckboxProc"
 	if(CB_Struct.EventCode==2)
+		NVAR MultipleData=root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
+		Button ExportData, win=UnivDataExportPanel, disable=2*MultipleData
 		if(CB_Struct.checked)
+
 			IR2E_UpdateListOfAvailFiles()
 			DoWindow IR2E_MultipleDataSelectionPnl
 			if(!V_Flag)
@@ -139,7 +138,7 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 				DrawText 29,29,"Multiple Data Export selection"
 				DrawText 10,255,"Configure Universal export tool panel options"
 				DrawText 10,275,"Select multiple data above and export : "
-				ListBox DataFolderSelection,pos={4,35},size={372,200}, mode=4
+				ListBox DataFolderSelection,pos={4,35},size={372,200}, mode=10
 				ListBox DataFolderSelection,listWave=root:Packages:IR2_UniversalDataExport:ListOfAvailableData
 				ListBox DataFolderSelection,selWave=root:Packages:IR2_UniversalDataExport:SelectionOfAvailableData
 
@@ -152,12 +151,13 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 				Button NoData,fSize=10,fStyle=2
 				Button ProcessAllData,pos={240,285},size={150,15},proc=IR2E_ButtonProc,title="Export selected data"
 				Button ProcessAllData,fSize=10,fStyle=2
-
+				Button ProcessAllData fColor=(65535,16385,16385)
 			else
 			
 				DoWindow/F IR2E_MultipleDataSelectionPnl
 				
 			endif
+			AutoPositionWindow/M=0 /R=UnivDataExportPanel IR2E_MultipleDataSelectionPnl
 		else
 			DoWindow IR2E_MultipleDataSelectionPnl
 			if(V_Flag)

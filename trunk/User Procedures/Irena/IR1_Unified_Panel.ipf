@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.12
-Constant IR1AversionNumber=2.11
+#pragma version=2.14
+Constant IR1AversionNumber=2.14
 
 
 //*************************************************************************\
@@ -9,6 +9,8 @@ Constant IR1AversionNumber=2.11
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.14 Added option to rebin data to lower number of points on data load. 
+//2.13 added option to link B to Rg/G/P using Hammouda Calculations
 //2.12 removed FitRgCO for all levels. DO tno expect anyone to miss it. But if needed, can be returned easily. 
 //2.11 added option providing user with fit parameters review panel before fitting
 //2.10 added scroll controls to move panel conent up or down for small displays.
@@ -162,7 +164,8 @@ Function IR1A_Initialize(enforceReset)
 	ListOfVariables+="Level5Corelations;Level5MassFractal;Level5DegreeOfAggreg;Level5SurfaceToVolRat;Level5Invariant;"
 	ListOfVariables+="Level5RgError;Level5GError;Level5PError;Level5BError;Level5ETAError;Level5PACKError;Level5RGCOError;"
 	ListOfVariables+="SASBackground;SASBackgroundError;SASBackgroundStep;FitSASBackground;UpdateAutomatically;DisplayLocalFits;ActiveTab;ExportLocalFIts;"
-	ListOfVariables+="SkipFitControlDialog;"
+	ListOfVariables+="SkipFitControlDialog;RebinDataTo;"
+	ListOfVariables+="Level1LinkB;Level2LinkB;Level3LinkB;Level4LinkB;Level5LinkB;"
 
 	ListOfVariables+="ConfEvMinVal;ConfEvMaxVal;ConfEvNumSteps;ConfEvVaryParam;ConfEvChiSq;ConfEvAutoOverwrite;ConfEvFixRanges;"
 	ListOfVariables+="ConfEvTargetChiSqRange;ConfEvAutoCalcTarget;"
@@ -212,6 +215,7 @@ Function IR1A_SetInitialValues(enforce)
 	ListOfVariables+="Level4FitRg;Level4FitG;Level4FitP;Level4FitB;Level4FitETA;Level4FitPACK;Level4FitRgCO;Level4MassFractal;Level4LinkRgCO;Level4Corelations;"
 	ListOfVariables+="Level5FitRg;Level5FitG;Level5FitP;Level5FitB;Level5FitETA;Level5FitPACK;Level5FitRgCO;Level5MassFractal;Level5LinkRgCO;Level5Corelations;"
 	ListOfVariables+="FitSASBackground;UpdateAutomatically;DisplayLocalFits;ActiveTab;DisplayLocalFits;UseIndra2Data;UseRQSdata;SubtractBackground;UseSMRData;SlitLengthUnif;"
+	ListOfVariables+="Level1LinkB;Level2LinkB;Level3LinkB;Level4LinkB;Level5LinkB;"
 	For(i=0;i<itemsInList(ListOfVariables);i+=1)
 		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
 		if(enforce)
@@ -401,7 +405,7 @@ end
 
 Window IR1A_ControlPanel() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,390,720) as "Unified fit"
+	NewPanel /K=1 /W=(2.25,43.25,396,720) as "Unified fit"
 	DefaultGUIControls /W=IR1A_ControlPanel ///Mac os9
 
 	string UserDataTypes=""
@@ -410,6 +414,8 @@ Window IR1A_ControlPanel()
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Irena_UnifFit","IR1A_ControlPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,1)
 
+	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:Irena_UnifFit:RebinDataTo, noproc
+	SetVariable RebinDataTo,pos={290,130},size={100,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 	TitleBox MainTitle title="Unified modeling input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
@@ -489,8 +495,10 @@ Window IR1A_ControlPanel()
 	SetVariable Level1RgHighLimit,pos={300,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level1RgHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgHighLimit, help={"High limit for Rg fitting"}
 
-	CheckBox Level1MassFractal,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+	CheckBox Level1MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level1MassFractal,variable= root:Packages:Irena_UnifFit:Level1MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level1LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+	CheckBox Level1LinkB,variable= root:Packages:Irena_UnifFit:Level1LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level1SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level1SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level1SurfaceToVolRat
 
@@ -579,8 +587,10 @@ Window IR1A_ControlPanel()
 
 	//Button Level2FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level2MassFractal,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+	CheckBox Level2MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level2MassFractal,variable= root:Packages:Irena_UnifFit:Level2MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level2LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+	CheckBox Level2LinkB,variable= root:Packages:Irena_UnifFit:Level2LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level2SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level2SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level2SurfaceToVolRat
 
@@ -668,8 +678,10 @@ Window IR1A_ControlPanel()
 
 	//Button Level3FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level3MassFractal,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+	CheckBox Level3MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level3MassFractal,variable= root:Packages:Irena_UnifFit:Level3MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level3LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+	CheckBox Level3LinkB,variable= root:Packages:Irena_UnifFit:Level3LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level3SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level3SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level3SurfaceToVolRat
 
@@ -758,8 +770,10 @@ Window IR1A_ControlPanel()
 
 	//Button Level4FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level4MassFractal,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+	CheckBox Level4MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level4MassFractal,variable= root:Packages:Irena_UnifFit:Level4MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level4LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+	CheckBox Level4LinkB,variable= root:Packages:Irena_UnifFit:Level4LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level4SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level4SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level4SurfaceToVolRat
 
@@ -849,8 +863,10 @@ Window IR1A_ControlPanel()
 
 	//Button Level5FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
-	CheckBox Level5MassFractal,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
+	CheckBox Level5MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level5MassFractal,variable= root:Packages:Irena_UnifFit:Level5MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
+	CheckBox Level5LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
+	CheckBox Level5LinkB,variable= root:Packages:Irena_UnifFit:Level5LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
 	SetVariable Level5SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level5SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level5SurfaceToVolRat
 
@@ -970,6 +986,7 @@ Function IR1A_TabPanelControl(name,tab)
 		NVAR Level1FitRGCO=root:Packages:Irena_UnifFit:Level1FitRGCO
 		NVAR Level1MassFractal=root:Packages:Irena_UnifFit:Level1MassFractal
 		NVAR Level1LinkRGCO=root:Packages:Irena_UnifFit:Level1LinkRGCO
+		NVAR Level1LinkB=root:Packages:Irena_UnifFit:Level1LinkB
 
 		Button LevelXFitRgAndG,disable= ((tab+1)> Nmbdist)
 		Button LevelXFitPAndB,disable= ((tab+1)> Nmbdist)
@@ -994,12 +1011,15 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level1P,disable= (tab!=0 || Nmbdist<1)
 		CheckBox Level1FitP,disable= (tab!=0 || Nmbdist<1)
 		SetVariable Level1PLowLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitP!=1 || UseNoLimits)
-		SetVariable Level1PHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitP!=1) || UseNoLimits
+		SetVariable Level1PHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitP!=1|| UseNoLimits)
 	
-		SetVariable Level1B,disable= (tab!=0 || Nmbdist<1 || Level1MassFractal)
-		CheckBox Level1FitB,disable= (tab!=0 || Nmbdist<1 ||Level1MassFractal)
-		SetVariable Level1BLowLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitB!=1 || Level1MassFractal || UseNoLimits)
-		SetVariable Level1BHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitB!=1 || Level1MassFractal || UseNoLimits)
+		variable DisplayMe= (tab!=0 || Nmbdist<1 || Level1MassFractal || Level1LinkB)
+		DisplayMe = (Level1LinkB>0 && tab==0) ? 2*DisplayMe : DisplayMe
+		SetVariable Level1B,disable= (DisplayMe)
+		CheckBox Level1LinkB,disable= (tab!=0 || Nmbdist<1)
+		CheckBox Level1FitB,disable= (tab!=0 || Nmbdist<1 ||Level1MassFractal || Level1LinkB)
+		SetVariable Level1BLowLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitB!=1 || Level1MassFractal  || Level1LinkB || UseNoLimits)
+		SetVariable Level1BHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitB!=1 || Level1MassFractal  || Level1LinkB || UseNoLimits)
 		
 		SetVariable Level1DegreeOfAggreg,disable= (tab!=0 || Nmbdist<1 || !Level1MassFractal || tab==0)	//this control exists only for higher levels...
 		CheckBox Level1Corelations, value=Level1Corelations
@@ -1038,6 +1058,7 @@ Function IR1A_TabPanelControl(name,tab)
 		NVAR Level2FitRGCO=root:Packages:Irena_UnifFit:Level2FitRGCO
 		NVAR Level2MassFractal=root:Packages:Irena_UnifFit:Level2MassFractal
 		NVAR Level2LinkRGCO=root:Packages:Irena_UnifFit:Level2LinkRGCO
+		NVAR Level2LinkB=root:Packages:Irena_UnifFit:Level2LinkB
 		
 		TitleBox Level2Title,disable= (tab!=1 || Nmbdist<2)
 		SetVariable Level2Rg,disable= (tab!=1 || Nmbdist<2)
@@ -1059,10 +1080,13 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level2PLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitP!=1 || UseNoLimits)
 		SetVariable Level2PHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitP!=1 || UseNoLimits)
 	
-		SetVariable Level2B,disable= (tab!=1 || Nmbdist<2 || Level2MassFractal)
-		CheckBox Level2FitB,disable= (tab!=1 || Nmbdist<2 ||Level2MassFractal)
-		SetVariable Level2BLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitB!=1 || Level2MassFractal || UseNoLimits)
-		SetVariable Level2BHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitB!=1 || Level2MassFractal || UseNoLimits)
+		DisplayMe= (tab!=1 || Nmbdist<2 || Level2MassFractal || Level2LinkB)
+		DisplayMe = (Level2LinkB>0 && tab==1) ? 2*DisplayMe : DisplayMe
+		SetVariable Level2B,disable= (DisplayMe)
+		CheckBox Level2LinkB,disable= (tab!=2 || Nmbdist<2)
+		CheckBox Level2FitB,disable= (tab!=1 || Nmbdist<2 ||Level2MassFractal || Level2LinkB)
+		SetVariable Level2BLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitB!=1 || Level2MassFractal || Level2LinkB || UseNoLimits)
+		SetVariable Level2BHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitB!=1 || Level2MassFractal || Level2LinkB || UseNoLimits)
 		
 		SetVariable Level2DegreeOfAggreg,disable= (tab!=1 || Nmbdist<2 || !Level2MassFractal)
 	
@@ -1106,6 +1130,7 @@ Function IR1A_TabPanelControl(name,tab)
 		NVAR Level3FitRGCO=root:Packages:Irena_UnifFit:Level3FitRGCO
 		NVAR Level3MassFractal=root:Packages:Irena_UnifFit:Level3MassFractal
 		NVAR Level3LinkRGCO=root:Packages:Irena_UnifFit:Level3LinkRGCO
+		NVAR Level3LinkB=root:Packages:Irena_UnifFit:Level3LinkB
 		
 		TitleBox Level3Title,disable= (tab!=2 || Nmbdist<3)
 		SetVariable Level3Rg,disable= (tab!=2 || Nmbdist<3)
@@ -1131,10 +1156,13 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level3PLowLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitP!=1 || UseNoLimits)
 		SetVariable Level3PHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitP!=1 || UseNoLimits)
 	
-		SetVariable Level3B,disable= (tab!=2 || Nmbdist<3 || Level3MassFractal)
-		CheckBox Level3FitB,disable= (tab!=2 || Nmbdist<3 ||Level3MassFractal)
-		SetVariable Level3BLowLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitB!=1 || Level3MassFractal || UseNoLimits)
-		SetVariable Level3BHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitB!=1 || Level3MassFractal || UseNoLimits)
+		DisplayMe= (tab!=2 || Nmbdist<3 || Level3MassFractal || Level3LinkB)
+		DisplayMe = (Level3LinkB>0 && tab==2) ? 2*DisplayMe : DisplayMe
+		SetVariable Level3B,disable= (DisplayMe)
+		CheckBox Level3LinkB,disable= (tab!=2 || Nmbdist<3)
+		CheckBox Level3FitB,disable= (tab!=2 || Nmbdist<3 ||Level3MassFractal || Level3LinkB)
+		SetVariable Level3BLowLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitB!=1 || Level3MassFractal || Level3LinkB || UseNoLimits)
+		SetVariable Level3BHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitB!=1 || Level3MassFractal || Level3LinkB || UseNoLimits)
 		
 		SetVariable Level3DegreeOfAggreg,disable= (tab!=2 || Nmbdist<3 || !Level3MassFractal)
 	
@@ -1178,6 +1206,7 @@ Function IR1A_TabPanelControl(name,tab)
 		NVAR Level4FitRGCO=root:Packages:Irena_UnifFit:Level4FitRGCO
 		NVAR Level4MassFractal=root:Packages:Irena_UnifFit:Level4MassFractal
 		NVAR Level4LinkRGCO=root:Packages:Irena_UnifFit:Level4LinkRGCO
+		NVAR Level4LinkB=root:Packages:Irena_UnifFit:Level4LinkB
 		
 		TitleBox Level4Title,disable= (tab!=3 || Nmbdist<4)
 		SetVariable Level4Rg,disable= (tab!=3 || Nmbdist<4)
@@ -1203,10 +1232,13 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level4PLowLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitP!=1 || UseNoLimits)
 		SetVariable Level4PHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitP!=1 || UseNoLimits)
 	
-		SetVariable Level4B,disable= (tab!=3 || Nmbdist<4 || Level4MassFractal)
-		CheckBox Level4FitB,disable= (tab!=3 || Nmbdist<4 ||Level4MassFractal)
-		SetVariable Level4BLowLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitB!=1 || Level4MassFractal || UseNoLimits)
-		SetVariable Level4BHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitB!=1 || Level4MassFractal || UseNoLimits)
+		DisplayMe= (tab!=3 || Nmbdist<4 || Level4MassFractal || Level4LinkB)
+		DisplayMe = (Level4LinkB>0 && tab==3) ? 2*DisplayMe : DisplayMe
+		SetVariable Level4B,disable= (DisplayMe)
+		CheckBox Level4LinkB,disable= (tab!=3 || Nmbdist<4)
+		CheckBox Level4FitB,disable= (tab!=3 || Nmbdist<4 ||Level4MassFractal || Level4LinkB)
+		SetVariable Level4BLowLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitB!=1 || Level4MassFractal || UseNoLimits || Level4LinkB)
+		SetVariable Level4BHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitB!=1 || Level4MassFractal || UseNoLimits || Level4LinkB)
 		
 		SetVariable Level4DegreeOfAggreg,disable= (tab!=3 || Nmbdist<4 || !Level4MassFractal)
 	
@@ -1249,6 +1281,7 @@ Function IR1A_TabPanelControl(name,tab)
 		NVAR Level5FitRGCO=root:Packages:Irena_UnifFit:Level5FitRGCO
 		NVAR Level5MassFractal=root:Packages:Irena_UnifFit:Level5MassFractal
 		NVAR Level5LinkRGCO=root:Packages:Irena_UnifFit:Level5LinkRGCO
+		NVAR Level5LinkB=root:Packages:Irena_UnifFit:Level5LinkB
 		
 		TitleBox Level5Title,disable= (tab!=4 || Nmbdist<5)
 		SetVariable Level5Rg,disable= (tab!=4 || Nmbdist<5)
@@ -1274,10 +1307,13 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level5PLowLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitP!=1 || UseNoLimits)
 		SetVariable Level5PHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitP!=1 || UseNoLimits)
 		
-		SetVariable Level5B,disable= (tab!=4 || Nmbdist<5 || Level5MassFractal)
-		CheckBox Level5FitB,disable= (tab!=4 || Nmbdist<5 ||Level5MassFractal)
-		SetVariable Level5BLowLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitB!=1 || Level5MassFractal || UseNoLimits)
-		SetVariable Level5BHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitB!=1 || Level5MassFractal || UseNoLimits)
+		DisplayMe= (tab!=4 || Nmbdist<5 || Level5MassFractal || Level5LinkB)
+		DisplayMe = (Level5LinkB>0 && tab==4) ? 2*DisplayMe : DisplayMe
+		SetVariable Level5B,disable= (DisplayMe)
+		CheckBox Level5LinkB,disable= (tab!=4 || Nmbdist<5)
+		CheckBox Level5FitB,disable= (tab!=4 || Nmbdist<5 ||Level5MassFractal || Level5LinkB)
+		SetVariable Level5BLowLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitB!=1 || Level5MassFractal || UseNoLimits || Level5LinkB)
+		SetVariable Level5BHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitB!=1 || Level5MassFractal || UseNoLimits || Level5LinkB)
 		
 		SetVariable Level5DegreeOfAggreg,disable= (tab!=4 || Nmbdist<5 || !Level5MassFractal)
 		

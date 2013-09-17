@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.10
-Constant IR1RSversionNumber=2.10
+#pragma version = 2.12
+Constant IR1RSversionNumber=2.12
 
 
 //*************************************************************************\
@@ -9,6 +9,8 @@ Constant IR1RSversionNumber=2.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12 added RebinDataTo option on import to change data binning if needed. 
+//2.11 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
 //2.10 added button to Form factor help file which links correctly. 
 //2.09 fixed case when Scripting tool could get out of sync with the Sizes calling it.
 //2.08 Modified to handle only some of the form factors. This tool really should not handle Janus CoreShell Micelle. 
@@ -620,13 +622,7 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 	setDataFolder root:Packages:Sizes
 
 	if(stringmatch(ctrlName,"GraphIfAllowed"))
-//		DoWIndow IR1R_SizesInputGraph
-//		if (V_Flag)
-//			DoWindow/K IR1R_SizesInputGraph
-//		endif
-
-		IR1R_GraphIfAllowed(ctrlName)		
-	
+		IR1R_GraphIfAllowed(ctrlName)			
 		DoWIndow/F IR1R_SizesInputPanel
 	endif
 	if(stringMatch(ctrlName,"ScriptingTool"))
@@ -655,6 +651,7 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 			IR2C_InputPanelCheckboxProc(CB_Struct)		
 		endif
 		IR2S_UpdateListOfAvailFiles()
+		IR2S_SortListOfAvailableFldrs()
 	endif
 
 
@@ -757,6 +754,11 @@ Function IR1R_SelectAndCopyData()		//this function selects data to be used and c
 	
 	Wave IntensityOriginal=root:Packages:Sizes:IntensityOriginal
 	Wave ErrorsOriginal=root:Packages:Sizes:ErrorsOriginal
+	Wave SizesQvector= root:Packages:Sizes:Q_vecOriginal
+	NVAR RebinDataTo=root:Packages:Sizes:RebinDataTo
+	if(RebinDataTo>0)
+		IR1D_rebinData(IntensityOriginal,SizesQvector,ErrorsOriginal,RebinDataTo, 1)
+	endif
 
 	Duplicate/O IntensityOriginal BackgroundWave			//this background wave is to help user to subtract background
 	Duplicate/O IntensityOriginal DeletePointsMaskWave		//this wave is used to delete points by using this as amark wave and seting points to 
@@ -881,7 +883,7 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	ListOfVariables+="NNLS_MaxNumIterations;NNLS_ApproachParameter;"
 	ListOfVariables+="UseRegularization;UseMaxEnt;UseTNNLS;"
 	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
-	ListOfVariables+="StartFItQvalue;EndFItQvalue;"
+	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;"
 	
 //	ListOfStrings="DataFolderName;OriginalIntensityWvName;OriginalQvectorWvName;OriginalErrorWvName;SizesParameters;"
 	ListOfStrings="DataFolderName;SizesParameters;"
@@ -2469,7 +2471,7 @@ end
 
 Window IR1R_SizesInputPanel() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(6,10,385,670) as "Size distribution"
+	NewPanel /K=1 /W=(6,10,406,670) as "Size distribution"
 	TitleBox MainTitle title="Sizes input panel",pos={90,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={250,24},fSize=20,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={72,3},pos={8,26},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={340,3},pos={8,209},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -2491,6 +2493,8 @@ Window IR1R_SizesInputPanel()
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Sizes","IR1R_SizesInputPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,0)
+	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:Sizes:RebinDataTo, noproc
+	SetVariable RebinDataTo,pos={290,130},size={105,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 	//root:Packages:FormFactorCalc:ListOfFormFactorsSD
 	CheckBox ShowDiagnostics,pos={10,165},size={141,14},title="Diagnostics?", help={"Check to show extendend diagnostics during evaluation"}
 	CheckBox ShowDiagnostics,variable= root:Packages:Sizes:ShowDiagnostics

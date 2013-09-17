@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.10
-Constant IR2LversionNumber = 1.10
+#pragma version=1.12
+Constant IR2LversionNumber = 1.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,8 @@ Constant IR2LversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 added to Unified levels ability to link B to G/Rg/P values. Removed ability to fit RgCO. 
+//		Added option to rebin the data on import. 
 //1.11 Added change the tab names, noFittingLimits support and changed GUI for SD to gain space. 
 //1.10 changed back to rtGlobals=2, need to check code much more to make it 3
 //        changes terms for storing data back to folder. Previously used Save, which confused users... 
@@ -86,10 +88,15 @@ Function IR2L_MainPanel()
 	//PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,42,410,730) as "Modeling II main panel"
 	DoWindow/C LSQF2_MainPanel
+	//DefaultGUIControls /W=LSQF2_MainPanel /Mac native
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;"
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
 	TitleBox MainTitle title="Modeling II",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},fSize=24,fColor=(0,0,52224)
+
+
+	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:IR2L_NLSQF:RebinDataTo, noproc
+	SetVariable RebinDataTo,pos={290,130},size={110,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={270,3},pos={16,184},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
@@ -235,8 +242,11 @@ Function IR2L_MainPanel()
 		Button GetSFHelp,pos={320,468},size={80,15}, proc=IR2L_InputPanelButtonProc,title="S.F. Help", help={"Get Help for Structure factor"}
 
 // Unified controls
-		Button FitRgAndG,pos={220,320},size={80,20}, proc=IR2L_InputPanelButtonProc,title="Fit Rg/G bwtn csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
-		Button FitPandB,pos={315,320},size={80,20}, proc=IR2L_InputPanelButtonProc,title="Fit P/B bwtn csrs", help={"Do local fit of Powerlaw dependence between the cursors amd put resulting values into the Rg and G fields"}
+		Button FitRgAndG,pos={200,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit Rg/G bwtn csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+		Button FitPandB,pos={301,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit P/B bwtn csrs", help={"Do local fit of Powerlaw dependence between the cursors amd put resulting values into the Rg and G fields"}
+
+		CheckBox UF_LinkB,pos={20,328},size={20,16},proc=IR2L_ModelTabCheckboxProc,title="Link B to G/Rg/P?"
+		CheckBox UF_LinkB,variable= root:Packages:IR2L_NLSQF:UF_LinkB_pop1, help={"Link B to G/Rg/B based on Guinier/Porod model?"}
 
 		SetVariable UF_G,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_G_pop1,proc=IR2L_PopSetVarProc
 		SetVariable UF_G,pos={8,355},size={140,15},title="G = ", help={"G for Unified level"} 
@@ -276,14 +286,14 @@ Function IR2L_MainPanel()
 
 		SetVariable UF_RGCO,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCO_pop1,proc=IR2L_PopSetVarProc
 		SetVariable UF_RGCO,pos={8,435},size={140,15},title="Rg cut off = ", help={"Rg cut off for higher Unified levels, see reference or manual for meaning"} 
-		CheckBox UF_RGCOFit,pos={155,435},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
-		CheckBox UF_RGCOFit,variable= root:Packages:IR2L_NLSQF:UF_RGCOFit_pop1, help={"Fit the P?"}
-		SetVariable UF_RGCOMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMin_pop1,noproc
-		SetVariable UF_RGCOMin,pos={200,435},size={80,15},title="Min ", help={"Low limit for P"} 
-		SetVariable UF_RGCOMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop1, noproc
-		SetVariable UF_RGCOMax,pos={290,435},size={80,15},title="Max ", help={"High limit for P"} 
+//		CheckBox UF_RGCOFit,pos={155,435},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+//		CheckBox UF_RGCOFit,variable= root:Packages:IR2L_NLSQF:UF_RGCOFit_pop1, help={"Fit the P?"}
+//		SetVariable UF_RGCOMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMin_pop1,noproc
+//		SetVariable UF_RGCOMin,pos={200,435},size={80,15},title="Min ", help={"Low limit for P"} 
+//		SetVariable UF_RGCOMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop1, noproc
+//		SetVariable UF_RGCOMax,pos={290,435},size={80,15},title="Max ", help={"High limit for P"} 
 
-		PopupMenu KFactor,pos={240,452},size={170,15},proc=IR2L_PanelPopupControl,title="k factor :"
+		PopupMenu KFactor,pos={220,452},size={170,15},proc=IR2L_PanelPopupControl,title="k factor :"
 		PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 //particulate controls
