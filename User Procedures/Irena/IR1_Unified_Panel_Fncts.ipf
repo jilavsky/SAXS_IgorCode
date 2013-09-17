@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.12
+#pragma version=2.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.14 added IR2S_SortListOfAvailableFldrs() to scripting tool call. Added option to rebin data on import. 
+//2.13 added option to link B to Rg/G/P values using Hammouda calculations
 //2.12 Removed FitRgCO option
 //2.11 changes to provide user with fit parameters review panel befroe fitting
 //2.10 fixed bug when Scripting tool panel could get out of sync with main UF panel. 
@@ -928,6 +930,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	elseif(cmpstr(ctrlName,"Level1MassFractal")==0)
 		//here we control the data structure checkbox
 		NVAR Level1MassFractal=root:Packages:Irena_UnifFit:Level1MassFractal
+		NVAR Level1LinkB=root:Packages:Irena_UnifFit:Level1LinkB
 		NVAR Level1FitB=root:Packages:Irena_UnifFit:Level1FitB
 		NVAR Level1PHighLimit=root:Packages:Irena_UnifFit:Level1PHighLimit
 		NVAR Level1PLowLimit=root:Packages:Irena_UnifFit:Level1PLowLimit
@@ -939,6 +942,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			Level1P=2
 			Level1K=1.06
 			PopupMenu Level1KFactor, mode=2
+			Level1LinkB = 0
 		else
 			Level1PHighLimit=4
 			Level1PLowLimit=1
@@ -948,12 +952,34 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level1MassFractal=checked
 		Level1FitB=0
 		Checkbox Level1MassFractal, value=Level1MassFractal
-		Checkbox Level1FitB, value=0
+		Checkbox Level1FitB, value=Level1FitB
+		Checkbox Level1LinkB, value=Level1LinkB
 		IR1A_TabPanelControl("Checkbox",0)
 		IR1A_UpdateLocalFitsIfSelected()
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
-		IR1A_AutoUpdateIfSelected()
+		IR1A_AutoUpdateIfSelected()	
+	elseif (cmpstr(ctrlName,"Level1LinkB")==0)
+		NVAR Level1LinkB=root:Packages:Irena_UnifFit:Level1LinkB
+		NVAR Level1MassFractal=root:Packages:Irena_UnifFit:Level1MassFractal
+		NVAR Level1FitB=root:Packages:Irena_UnifFit:Level1FitB
+		NVAR Level1PHighLimit=root:Packages:Irena_UnifFit:Level1PHighLimit
+		NVAR Level1PLowLimit=root:Packages:Irena_UnifFit:Level1PLowLimit
+		NVAR Level1P=root:Packages:Irena_UnifFit:Level1P
+		NVAR Level1K=root:Packages:Irena_UnifFit:Level1K
+		if (checked==1)
+			Level1MassFractal = 0
+			Level1FitB = 0
+		else
+		endif
+		Checkbox Level1MassFractal, value=Level1MassFractal
+		Checkbox Level1FitB, value=Level1FitB
+		Checkbox Level1LinkB, value=Level1LinkB
+		IR1A_TabPanelControl("Checkbox",0)
+		IR1A_UpdateLocalFitsIfSelected()
+		IR1A_UpdateMassFractCalc()
+		IR1A_UpdatePorodSfcandInvariant()
+		IR1A_AutoUpdateIfSelected()			
 	elseif (cmpstr(ctrlName,"Level1Corelations")==0)
 		IR1A_TabPanelControl("Checkbox",0)
 		IR1A_UpdateLocalFitsIfSelected()
@@ -989,6 +1015,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	elseif (cmpstr(ctrlName,"Level2MassFractal")==0)
 		//here we control the data structure checkbox
 		NVAR Level2MassFractal=root:Packages:Irena_UnifFit:Level2MassFractal
+		NVAR Level2LinkB=root:Packages:Irena_UnifFit:Level2LinkB
 		NVAR Level2FitB=root:Packages:Irena_UnifFit:Level2FitB
 		NVAR Level2PHighLimit=root:Packages:Irena_UnifFit:Level2PHighLimit
 		NVAR Level2PLowLimit=root:Packages:Irena_UnifFit:Level2PLowLimit
@@ -1000,6 +1027,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			Level2P=2
 			Level2K=1.06
 			PopupMenu Level2KFactor, mode=2
+			Level2LinkB = 0
 		else
 			Level2PHighLimit=4
 			Level2PLowLimit=1
@@ -1010,11 +1038,33 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level2FitB=0
 		Checkbox Level2FitB, value=0
 		Checkbox Level2MassFractal, value=Level2MassFractal
+		Checkbox Level2LinkB, value=Level2LinkB
 		IR1A_TabPanelControl("Checkbox",1)
 		IR1A_UpdateLocalFitsIfSelected()
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
 		IR1A_AutoUpdateIfSelected()
+	elseif (cmpstr(ctrlName,"Level2LinkB")==0)
+		NVAR Level2LinkB=root:Packages:Irena_UnifFit:Level2LinkB
+		NVAR Level2MassFractal=root:Packages:Irena_UnifFit:Level2MassFractal
+		NVAR Level2FitB=root:Packages:Irena_UnifFit:Level2FitB
+		NVAR Level2PHighLimit=root:Packages:Irena_UnifFit:Level2PHighLimit
+		NVAR Level2PLowLimit=root:Packages:Irena_UnifFit:Level2PLowLimit
+		NVAR Level2P=root:Packages:Irena_UnifFit:Level2P
+		NVAR Level2K=root:Packages:Irena_UnifFit:Level2K
+		if (checked==1)
+			Level2MassFractal = 0
+			Level2FitB = 0
+		else
+		endif
+		Checkbox Level2MassFractal, value=Level2MassFractal
+		Checkbox Level2FitB, value=Level2FitB
+		Checkbox Level2LinkB, value=Level2LinkB
+		IR1A_TabPanelControl("Checkbox",1)
+		IR1A_UpdateLocalFitsIfSelected()
+		IR1A_UpdateMassFractCalc()
+		IR1A_UpdatePorodSfcandInvariant()
+		IR1A_AutoUpdateIfSelected()			
 	elseif (cmpstr(ctrlName,"Level2Corelations")==0)
 		IR1A_TabPanelControl("Checkbox",1)
 		IR1A_UpdateLocalFitsIfSelected()
@@ -1050,6 +1100,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	elseif (cmpstr(ctrlName,"Level3MassFractal")==0)
 		//here we control the data structure checkbox
 		NVAR Level3MassFractal=root:Packages:Irena_UnifFit:Level3MassFractal
+		NVAR Level3LinkB=root:Packages:Irena_UnifFit:Level3LinkB
 		NVAR Level3FitB=root:Packages:Irena_UnifFit:Level3FitB
 		NVAR Level3PHighLimit=root:Packages:Irena_UnifFit:Level3PHighLimit
 		NVAR Level3PLowLimit=root:Packages:Irena_UnifFit:Level3PLowLimit
@@ -1061,6 +1112,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			Level3P=2
 			Level3K=1.06
 			PopupMenu Level3KFactor, mode=2
+			Level3LinkB = 0
 		else
 			Level3PHighLimit=4
 			Level3PLowLimit=1
@@ -1071,11 +1123,33 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level3MassFractal=checked
 		Checkbox Level3MassFractal, value=Level3MassFractal
 		Checkbox Level3FitB, value=0
+		Checkbox Level3LinkB, value=Level3LinkB
 		IR1A_TabPanelControl("Checkbox",2)
 		IR1A_UpdateLocalFitsIfSelected()
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
 		IR1A_AutoUpdateIfSelected()
+	elseif (cmpstr(ctrlName,"Level3LinkB")==0)
+		NVAR Level3LinkB=root:Packages:Irena_UnifFit:Level3LinkB
+		NVAR Level3MassFractal=root:Packages:Irena_UnifFit:Level3MassFractal
+		NVAR Level3FitB=root:Packages:Irena_UnifFit:Level3FitB
+		NVAR Level3PHighLimit=root:Packages:Irena_UnifFit:Level3PHighLimit
+		NVAR Level3PLowLimit=root:Packages:Irena_UnifFit:Level3PLowLimit
+		NVAR Level3P=root:Packages:Irena_UnifFit:Level3P
+		NVAR Level3K=root:Packages:Irena_UnifFit:Level3K
+		if (checked==1)
+			Level3MassFractal = 0
+			Level3FitB = 0
+		else
+		endif
+		Checkbox Level3MassFractal, value=Level3MassFractal
+		Checkbox Level3FitB, value=Level3FitB
+		Checkbox Level3LinkB, value=Level3LinkB
+		IR1A_TabPanelControl("Checkbox",2)
+		IR1A_UpdateLocalFitsIfSelected()
+		IR1A_UpdateMassFractCalc()
+		IR1A_UpdatePorodSfcandInvariant()
+		IR1A_AutoUpdateIfSelected()			
 	elseif (cmpstr(ctrlName,"Level3Corelations")==0)
 		IR1A_TabPanelControl("Checkbox",2)
 		IR1A_UpdateLocalFitsIfSelected()
@@ -1111,6 +1185,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	elseif (cmpstr(ctrlName,"Level4MassFractal")==0)
 		//here we control the data structure checkbox
 		NVAR Level4MassFractal=root:Packages:Irena_UnifFit:Level4MassFractal
+		NVAR Level4LinkB=root:Packages:Irena_UnifFit:Level4LinkB
 		NVAR Level4FitB=root:Packages:Irena_UnifFit:Level4FitB
 		NVAR Level4PHighLimit=root:Packages:Irena_UnifFit:Level4PHighLimit
 		NVAR Level4PLowLimit=root:Packages:Irena_UnifFit:Level4PLowLimit
@@ -1122,6 +1197,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			Level4P=2
 			Level4K=1.06
 			PopupMenu Level4KFactor, mode=2
+			Level4LinkB = 0
 		else
 			Level4PHighLimit=4
 			Level4PLowLimit=1
@@ -1132,11 +1208,33 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level4FitB=0
 		Checkbox Level4FitB, value=0
 		Checkbox Level4MassFractal, value=Level4MassFractal
+		Checkbox Level4LinkB, value=Level4LinkB
 		IR1A_TabPanelControl("Checkbox",3)
 		IR1A_UpdateLocalFitsIfSelected()
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
 		IR1A_AutoUpdateIfSelected()
+	elseif (cmpstr(ctrlName,"Level4LinkB")==0)
+		NVAR Level4LinkB=root:Packages:Irena_UnifFit:Level4LinkB
+		NVAR Level4MassFractal=root:Packages:Irena_UnifFit:Level4MassFractal
+		NVAR Level4FitB=root:Packages:Irena_UnifFit:Level4FitB
+		NVAR Level4PHighLimit=root:Packages:Irena_UnifFit:Level4PHighLimit
+		NVAR Level4PLowLimit=root:Packages:Irena_UnifFit:Level4PLowLimit
+		NVAR Level4P=root:Packages:Irena_UnifFit:Level4P
+		NVAR Level4K=root:Packages:Irena_UnifFit:Level4K
+		if (checked==1)
+			Level4MassFractal = 0
+			Level4FitB = 0
+		else
+		endif
+		Checkbox Level4MassFractal, value=Level4MassFractal
+		Checkbox Level4FitB, value=Level4FitB
+		Checkbox Level4LinkB, value=Level4LinkB
+		IR1A_TabPanelControl("Checkbox",3)
+		IR1A_UpdateLocalFitsIfSelected()
+		IR1A_UpdateMassFractCalc()
+		IR1A_UpdatePorodSfcandInvariant()
+		IR1A_AutoUpdateIfSelected()			
 	elseif (cmpstr(ctrlName,"Level4Corelations")==0)
 		IR1A_TabPanelControl("Checkbox",3)
 		IR1A_UpdateLocalFitsIfSelected()
@@ -1172,6 +1270,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	elseif (cmpstr(ctrlName,"Level5MassFractal")==0)
 		//here we control the data structure checkbox
 		NVAR Level5MassFractal=root:Packages:Irena_UnifFit:Level5MassFractal
+		NVAR Level5LinkB=root:Packages:Irena_UnifFit:Level5LinkB
 		NVAR Level5FitB=root:Packages:Irena_UnifFit:Level5FitB
 		NVAR Level5PHighLimit=root:Packages:Irena_UnifFit:Level5PHighLimit
 		NVAR Level5PLowLimit=root:Packages:Irena_UnifFit:Level5PLowLimit
@@ -1183,6 +1282,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			Level5P=2
 			Level5K=1.06
 			PopupMenu Level5KFactor, mode=2
+			Level5LinkB = 0
 		else
 			Level5PHighLimit=4
 			Level5PLowLimit=1
@@ -1193,11 +1293,33 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Level5MassFractal=checked
 		Checkbox Level5MassFractal, value=Level5MassFractal
 		Checkbox Level5FitB, value=0
+		Checkbox Level5LinkB, value=Level5LinkB
 		IR1A_TabPanelControl("Checkbox",4)
 		IR1A_UpdateLocalFitsIfSelected()
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
 		IR1A_AutoUpdateIfSelected()
+	elseif (cmpstr(ctrlName,"Level5LinkB")==0)
+		NVAR Level5LinkB=root:Packages:Irena_UnifFit:Level5LinkB
+		NVAR Level5MassFractal=root:Packages:Irena_UnifFit:Level5MassFractal
+		NVAR Level5FitB=root:Packages:Irena_UnifFit:Level5FitB
+		NVAR Level5PHighLimit=root:Packages:Irena_UnifFit:Level5PHighLimit
+		NVAR Level5PLowLimit=root:Packages:Irena_UnifFit:Level5PLowLimit
+		NVAR Level5P=root:Packages:Irena_UnifFit:Level5P
+		NVAR Level5K=root:Packages:Irena_UnifFit:Level5K
+		if (checked==1)
+			Level5MassFractal = 0
+			Level5FitB = 0
+		else
+		endif
+		Checkbox Level5MassFractal, value=Level5MassFractal
+		Checkbox Level5FitB, value=Level5FitB
+		Checkbox Level5LinkB, value=Level5LinkB
+		IR1A_TabPanelControl("Checkbox",4)
+		IR1A_UpdateLocalFitsIfSelected()
+		IR1A_UpdateMassFractCalc()
+		IR1A_UpdatePorodSfcandInvariant()
+		IR1A_AutoUpdateIfSelected()			
 	elseif (cmpstr(ctrlName,"Level5Corelations")==0)
 		IR1A_TabPanelControl("Checkbox",4)
 		IR1A_UpdateLocalFitsIfSelected()
@@ -1248,10 +1370,11 @@ Function IR1A_GraphMeasuredData(Package)
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Irena_UnifFit
-	SVAR DataFolderName
-	SVAR IntensityWaveName
-	SVAR QWavename
-	SVAR ErrorWaveName
+	SVAR DataFolderName=root:Packages:Irena_UnifFit:DataFolderName
+	SVAR IntensityWaveName=root:Packages:Irena_UnifFit:IntensityWaveName
+	SVAR QWavename=root:Packages:Irena_UnifFit:QWavename
+	SVAR ErrorWaveName=root:Packages:Irena_UnifFit:ErrorWaveName
+	NVAR RebinDataTo=root:Packages:Irena_UnifFit:RebinDataTo
 	variable cursorAposition, cursorBposition
 	
 	//fix for liberal names
@@ -1282,6 +1405,10 @@ Function IR1A_GraphMeasuredData(Package)
 		OriginalQvector = OriginalQvector[p]<=0 ? NaN : OriginalQvector[p] 
 	endif
 	IN2G_RemoveNaNsFrom3Waves(OriginalQvector,OriginalIntensity, OriginalError)
+	if(RebinDataTo>0)
+		IR1D_rebinData(OriginalIntensity,OriginalQvector,OriginalError,RebinDataTo, 1)
+	endif
+	
 	NVAR/Z SubtractBackground=root:Packages:Irena_UnifFit:SubtractBackground
 	if(NVAR_Exists(SubtractBackground) && (cmpstr(Package,"Unified")==0))
 		OriginalIntensity =OriginalIntensity - SubtractBackground
@@ -1403,7 +1530,7 @@ Proc  IR1_LogLogPlotU()
 	Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
 	DoWindow/C IR1_LogLogPlotU
 	ModifyGraph mode(OriginalIntensity)=3
-	ModifyGraph msize(OriginalIntensity)=1
+	ModifyGraph msize(OriginalIntensity)=0
 	ModifyGraph log=1
 	ModifyGraph mirror=1
 	ShowInfo
@@ -1519,6 +1646,7 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 			IR2C_InputPanelCheckboxProc(CB_Struct)		
 		endif
 		IR2S_UpdateListOfAvailFiles()
+		IR2S_SortListOfAvailableFldrs()
 	endif
 
 	if(cmpstr(ctrlName,"GraphDistribution")==0)
@@ -2010,7 +2138,8 @@ Function IR1A_AppendModelToMeasuredData()
 	cursor/P/W=IR1_LogLogPlotU B, OriginalIntensity, CsrBPos	
 	ModifyGraph/W=IR1_LogLogPlotU rgb(UnifiedFitIntensity)=(0,0,0)
 	ModifyGraph/W=IR1_LogLogPlotU mode(OriginalIntensity)=3
-	ModifyGraph/W=IR1_LogLogPlotU msize(OriginalIntensity)=1
+	ModifyGraph/W=IR1_LogLogPlotU msize(OriginalIntensity)=0
+	ModifyGraph/W=IR1_LogLogPlotU marker(OriginalIntensity)=8
 	ShowInfo/W=IR1_LogLogPlotU
 	TextBox/W=IR1_LogLogPlotU/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR1_LogLogPlotU/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+Folder+WvName	

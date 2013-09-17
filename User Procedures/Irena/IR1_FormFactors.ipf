@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.25
 
 
 //*************************************************************************\
@@ -22,7 +22,7 @@
 //2.22 Significantly reduced the form factors availabe to Size distribution tool. Complicated FF make no sense. 
 //2.23 Added CoreShellPrecipitate FF
 //2.24 added support for "No fitting limits" GUI option.
-
+//2.25 fixed minor glitch when some form factor screen could be initiealized with nan as parameter name, which causes major problems numbericaly for AUtoupdate settings. 
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix
@@ -2102,6 +2102,28 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		FitP5=0
 	endif
 
+	variable ji
+	string tempStr, tempStr2
+		NVAR/Z CurVal= $(P1Str)
+		if(NVAR_Exists(CurVal) && numtype(CurVal)!=0)		//something si wrong, this should be number, lets set something here as crash prevention
+			CurVal = 1
+		endif
+		NVAR/Z CurVal= $(P2Str)
+		if(NVAR_Exists(CurVal) && numtype(CurVal)!=0)		//something si wrong, this should be number, lets set something here as crash prevention
+			CurVal = 1
+		endif
+		NVAR/Z CurVal= $(P3Str)
+		if(NVAR_Exists(CurVal) && numtype(CurVal)!=0)		//something si wrong, this should be number, lets set something here as crash prevention
+			CurVal = 1
+		endif
+		NVAR/Z CurVal= $(P4Str)
+		if(NVAR_Exists(CurVal) && numtype(CurVal)!=0)		//something si wrong, this should be number, lets set something here as crash prevention
+			CurVal = 1
+		endif
+		NVAR/Z CurVal= $(P5Str)
+		if(NVAR_Exists(CurVal) && numtype(CurVal)!=0)		//something si wrong, this should be number, lets set something here as crash prevention
+			CurVal = 1
+		endif
 
 	if(stringmatch(CurFF,"Unified_Sphere")||stringmatch(CurFF,"NoFF_setTo1"))			//does not need this screen!!!
 		setDataFolder OldDf
@@ -2590,7 +2612,8 @@ Function/T IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder)
 	
 	Make/O/T/N=5 Spheroid,Cylinder,CylinderAR,CoreShell,CoreShellCylinder,User,Integrated_Spheroid
 	Make/O/T/N=5 Algebraic_Globules,Algebraic_Rods,Algebraic_Disks,Unified_Sphere,Unified_Rod
-	Make/O/T/N=5 Unified_RodAR,Unified_Disk,Unified_Tube,'Fractal Aggregate', NoFF_setTo1
+	Make/O/T/N=5 Unified_RodAR,Unified_Disk,Unified_Tube,'Fractal Aggregate', NoFF_setTo1, CoreShellPrecipitate
+	Make/O/T/N=5 SphereWHSLocMonoSq, 'Janus CoreShell Micelle 1','Janus CoreShell Micelle 2','Janus CoreShell Micelle 3' 
 	Make/O/T/N=6 CoreShellShell
 	
 	Spheroid 				= {"Aspect Ratio","","","",""}
@@ -2612,6 +2635,11 @@ Function/T IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder)
 	Unified_Disk		= {"Thickness","","","",""}
 	Unified_Tube		= {"Length","Thickness","","",""}
 	'Fractal Aggregate'	= {"Radius Primary Particle","Fractal dimension","","",""}
+	SphereWHSLocMonoSq = {"Dist/R ratio","PY Fraction","","",""}
+	'Janus CoreShell Micelle 1' = {"Shell Thickness [A]","Core Rho","Shell 1 Rho","Shell 2 Rho","Solvent Rho"}
+	'Janus CoreShell Micelle 2' = {"Core radius [A]","Core Rho","Shell 1 Rho","Shell 2 Rho","Solvent Rho"}
+	'Janus CoreShell Micelle 3' = {"Shell Thickness [A]","Core Rho","Shell 1 Rho","Shell 2 Rho","Solvent Rho"}
+	CoreShellPrecipitate = {"Shell thickness calc","Core Rho","Shell Rho","Solvent Rho"}
 	
 	Wave/T/Z Lookup=$(FormFactorName) 
 	if(WaveExists(Lookup))

@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.45
+#pragma version=2.46
 constant IR3MversionNumber = 2.39			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.46 slight modification of IR1D_rebinData for use by Modeling II, Size Distribution and Unified fit. 
 //2.45 Data Manipulation I - added Merge data feature and preserve cursor position through data adding. Changed steps in GUI for Int multipliers and background.
 //2.44 DM1 - fix rebinning on log scale to handle data with first Q=0
 //2.43 DM II - Fixed problems with Subtract data selection (stale values, controls misbehave). 
@@ -1294,7 +1295,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-static Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
+Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
 	wave TempInt,TempQ,TempE
 	variable NumberOfPoints, LogBinParam
 
@@ -1302,7 +1303,11 @@ static Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
 	OldDf = GetDataFOlder(1)
 	NewDataFolder/O/S root:packages
 	NewDataFolder/O/S root:packages:TempDataRebin
-	
+	variable OldNumPnts=numpnts(TempInt)
+	if(OldNumPnts<NumberOfPoints)
+		print "User requeseted rebinning of data, but old number of points is less than requested point number, no rebinning done"
+		return 0
+	endif
 	//Log rebinning, if requested.... 
 	//create log distribution of points...
 	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
@@ -1354,9 +1359,8 @@ static Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
 	TempInt=Rebinned_tempInt
 	TempQ=Rebinned_TempQ
 	TempE=Rebinned_TempErr
+	print "User requested rebinning of data from "+num2str(OldNumPnts)+" to "+num2str(NumberOfPoints)+" points was done"
 	
-//	KillWaves/Z Rebinned_tempInt, Rebinned_TempQ,Rebinned_TempErr
-
 	setDataFolder OldDF
 	KillDataFolder/Z root:packages:TempDataRebin
 end

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.28
+#pragma version = 1.29
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.29 hopefully fixed problem, when parent folder appeared, when subfolders were masked off by Wv grep string  
 //1.28 modifed and changed handling of Results wave names, mainly Y wave name. It is a mess - need to check this in details... 
 //1.27 added Diameters waves for Modeling II
 //1.26 work around user names for folder with [] in the name. 
@@ -1011,10 +1012,16 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	string LocallyAllowedIndra2Data=StringByKey(TopPanel, ControlAllowedIrenaTypes,"=",">")
 	string LocallyAllowedResultsData=StringByKey(TopPanel, ControlAllowedResultsTypes,"=",">")
 	SVAR/Z FolderMatchStr=$("root:Packages:IrenaControlProcs:"+possiblyQuoteName(winNm)+":FolderMatchStr")
+	SVAR/Z WaveMatchStr = $("root:Packages:IrenaControlProcs:"+possiblyQuoteName(winNm)+":WaveMatchStr")
 	if(!SVAR_Exists(FolderMatchStr))
 		string/g $("root:Packages:IrenaControlProcs:"+possiblyQuoteName(winNm)+":FolderMatchStr")
 		SVAR FolderMatchStr=$("root:Packages:IrenaControlProcs:"+possiblyQuoteName(winNm)+":FolderMatchStr")
 		FolderMatchStr=""
+	endif
+	if(!SVAR_Exists(WaveMatchStr))
+		string/g $("root:Packages:IrenaControlProcs:"+possiblyQuoteName(winNm)+":WaveMatchStr")
+		SVAR WaveMatchStr=$("root:Packages:IrenaControlProcs:"+possiblyQuoteName(winNm)+":WaveMatchStr")
+		WaveMatchStr=""
 	endif
 	setDataFolder $(CntrlLocation)
 	NVAR UseIndra2Structure=$(CntrlLocation+":UseIndra2Data")
@@ -1083,11 +1090,11 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
 				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r||i$", 1, ResultingWave)
 				//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
-				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,ResultingWave)
-				//match to user mask using greplist
 				if(strlen(FolderMatchStr)>0)
 					ListOfQFolders=GrepList(ListOfQFolders, FolderMatchStr )
 				endif
+				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,ResultingWave,WaveMatchStr)
+				//match to user mask using greplist
 				//done, now rest...
 				ListOfQFolders=IR2P_CleanUpPackagesFolder(ListOfQFolders)
 				ListOfQFolders=IR2P_RemoveDuplicateStrfLst(ListOfQFolders)
@@ -1115,7 +1122,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			//done, now rest...
 			tempResult=IR2P_CleanUpPackagesFolder(tempResult)
 			//the following will remove the folders which accidentally contain not-full duplex of waves and display ONLY folders with the right duplexes of waves.... 
-			result = IR2P_CheckForRightINResultsWvs(TopPanel,tempResult)
+			result = IR2P_CheckForRightINResultsWvs(TopPanel,tempResult,WaveMatchStr)
 			string/G $(CntrlLocation+":ListOfResultsFolders")
 			variable/g $(CntrlLocation+":SetTimeOfResultsFoldersStr")
 			SVAR/Z ListOfResultsFolders = $(CntrlLocation+":ListOfResultsFolders")
@@ -1143,7 +1150,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				temp1 = stringFromList(j,tempResult)
 				for(i=0;i<ItemsInList(LocallyAllowedUserData);i+=1)			//each type of data one by one...
 					temp2=stringFromList(i,LocallyAllowedUserData)
-					if(cmpstr("---",IR2P_CheckForRightUsrTripletWvs(TopPanel,stringFromList(j,tempResult),stringFromList(i,LocallyAllowedUserData)))!=0 )//&& AlreadyIn<1)
+					if(cmpstr("---",IR2P_CheckForRightUsrTripletWvs(TopPanel,stringFromList(j,tempResult),stringFromList(i,LocallyAllowedUserData), WaveMatchStr))!=0 )//&& AlreadyIn<1)
 						result += stringFromList(j,tempResult)+";"
 						break
 					endif
@@ -1275,8 +1282,8 @@ end
 //*****************************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames)
-	string TopPanel, FullFldrNames
+static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames,WNMStr)
+	string TopPanel, FullFldrNames, WNMStr
 
 	string oldDf=GetDataFolder(1)
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
@@ -1302,31 +1309,33 @@ static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames)
 	for(i=0;i<ItemsInList(FullFldrNames);i+=1)
 		FullFldrName = stringFromList(i,FullFldrNames)
 		AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
-		matchX=0
-		tempresult=""
-		For(j=0;j<ItemsInList(LocallyAllowedResultsData);j+=1)
-			allYwaves=IR2P_ListOfWavesOfType(stringFromList(j,LocallyAllowedResultsData)+"_*",AllWaves)
-			For(jj=0;jj<ItemsInList(allYWaves);jj+=1)
-				currentYWave=stringFromList(jj,AllYWaves)
-				currentXWave = StringByKey(StringFromList(0,currentYWave,"_"), ResultsDataTypesLookup)
-				TMPX1 = STRINGFROMLIST(0,currentXWave,",")
-				TMPX2 = stringfromList(1,currentXWave,",")
-				if(strlen(TMPX2)<1)
-					TMPX2="tndksno jiorhew"
-				endif
-				currentEwave = StringByKey(StringFromList(0,currentYWave,"_"), ResultsEDataTypesLookup)
-				//if(stringmatch(";"+AllWaves, "*;"+currentXWave+"_"+StringFromList(1,currentYWave,"_")+"*" ) || cmpstr("x-scaling",currentXWave)==0)
-				if(GrepString(AllWaves, TMPX1+"_"+StringFromList(1,currentYWave,"_") ) || cmpstr("x-scaling",currentXWave)==0 || GrepString(AllWaves, TMPX2+"_"+StringFromList(1,currentYWave,"_") ) )
-					matchX=1
-					tempresult=FullFldrName+";"
-					break
+//		if(strlen(WNMStr)==0 || GrepString(AllWaves, WNMStr))		//this is not supported for results... Sorry :-)
+			matchX=0
+			tempresult=""
+			For(j=0;j<ItemsInList(LocallyAllowedResultsData);j+=1)
+				allYwaves=IR2P_ListOfWavesOfType(stringFromList(j,LocallyAllowedResultsData)+"_*",AllWaves)
+				For(jj=0;jj<ItemsInList(allYWaves);jj+=1)
+					currentYWave=stringFromList(jj,AllYWaves)
+					currentXWave = StringByKey(StringFromList(0,currentYWave,"_"), ResultsDataTypesLookup)
+					TMPX1 = STRINGFROMLIST(0,currentXWave,",")
+					TMPX2 = stringfromList(1,currentXWave,",")
+					if(strlen(TMPX2)<1)
+						TMPX2="tndksno jiorhew"
+					endif
+					currentEwave = StringByKey(StringFromList(0,currentYWave,"_"), ResultsEDataTypesLookup)
+					//if(stringmatch(";"+AllWaves, "*;"+currentXWave+"_"+StringFromList(1,currentYWave,"_")+"*" ) || cmpstr("x-scaling",currentXWave)==0)
+					if(GrepString(AllWaves, TMPX1+"_"+StringFromList(1,currentYWave,"_") ) || cmpstr("x-scaling",currentXWave)==0 || GrepString(AllWaves, TMPX2+"_"+StringFromList(1,currentYWave,"_") ) )
+						matchX=1
+						tempresult=FullFldrName+";"
+						break
+					endif
+				endfor
+				if(matchX)
+					break	
 				endif
 			endfor
-			if(matchX)
-				break	
-			endif
-		endfor
-		result+=tempresult
+			result+=tempresult
+//		endif
 	endfor
 	if(strlen(result)>1)
 		return result
@@ -1343,9 +1352,10 @@ end
 //*****************************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave)
+static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr)
 	string TopPanel
 	wave/T ResultingWave
+	string WNMStr			//waveName match string used by user...
 	//FullFldrNames
 
 	string oldDf=GetDataFolder(1)
@@ -1361,7 +1371,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave)
 	variable RequireErrorWvs = numberByKey(TopPanel, ControlRequireErrorWvs)
 	string result=""
 	string tempResult="" , FullFldrName
- 	variable i,j, matchX=0,matchE=0
+ 	variable i,j, matchX=0,matchE=0, matchU=0
 	string AllWaves
 	string allRwaves
 	string tempStr
@@ -1375,22 +1385,24 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave)
 		//allRwaves=IR2P_ListOfWavesOfType("r*",AllWaves)
 		allRwaves=GrepList(AllWaves,"(?i)^r")
 		tempresult=""
-			for(j=0;j<ItemsInList(allRwaves);j+=1)
-				matchX=0
-				matchE=0
-				tempStr = stringFromList(j,allRwaves)[1,inf]
-				if(stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*m"+tempStr+";*" ))
-					matchX=1
-				endif
-				if(stringmatch(";"+AllWaves,";*s"+tempStr+";*" ))
-					matchE=1
-				endif
-				if(matchX && (matchE || !RequireErrorWvs))
-					tempResult+= FullFldrName+";"
-					break
-				endif
-			endfor
-			result+=tempresult
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+				for(j=0;j<ItemsInList(allRwaves);j+=1)
+					matchX=0
+					matchE=0
+					tempStr = stringFromList(j,allRwaves)[1,inf]
+					if(stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*m"+tempStr+";*" ))
+						matchX=1
+					endif
+					if(stringmatch(";"+AllWaves,";*s"+tempStr+";*" ))
+						matchE=1
+					endif
+					if(matchX && (matchE || !RequireErrorWvs))
+						tempResult+= FullFldrName+";"
+						break
+					endif
+				endfor
+				result+=tempresult
+			endif
 	//endfor
 	//for(i=0;i<ItemsInList(FullFldrNames);i+=1)			//and this for qis NIST standard
 		//FullFldrName = stringFromList(i,FullFldrNames)
@@ -1398,21 +1410,23 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave)
 		//allRwaves=IR2P_ListOfWavesOfType("*i",AllWaves)
 		allRwaves=GrepList(AllWaves,"(?i)i$")
 		tempresult=""
-			for(j=0;j<ItemsInList(allRwaves);j+=1)
-				matchX=0
-				matchE=0
-				if(stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"q;*" ))
-					matchX=1
-				endif
-				if(stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"s;*" ))
-					matchE=1
-				endif
-				if(matchX && matchE)
-					tempResult+= FullFldrName+";"
-					break
-				endif
-			endfor
-			result+=tempresult
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+				for(j=0;j<ItemsInList(allRwaves);j+=1)
+					matchX=0
+					matchE=0
+					if(stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"q;*" ))
+						matchX=1
+					endif
+					if(stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"s;*" ))
+						matchE=1
+					endif
+					if(matchX && matchE)
+						tempResult+= FullFldrName+";"
+						break
+					endif
+				endfor
+				result+=tempresult
+			endif
 	endfor
 //	print ticks-startTime
 	if(strlen(result)>1)
@@ -1466,8 +1480,8 @@ end
 //**************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTypeSearchedFor)
-	string TopPanel, FullFldrNames,DataTypeSearchedFor
+static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTypeSearchedFor,WNMStr)
+	string TopPanel, FullFldrNames,DataTypeSearchedFor, WNMStr
 
 	string oldDf=GetDataFolder(1)
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
@@ -1501,41 +1515,45 @@ static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTy
 			AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
 			allRwaves=IR2P_ListOfWavesOfType(DataTypeSearchedFor,AllWaves)
 			tempresult=""
-			for(j=0;j<ItemsInList(allRwaves);j+=1)
-				matchX=0
-				matchE=0
-				if(stringmatch(";"+AllWaves, ";*"+LocallyAllowedUserXData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserXData),inf]+";*" )||stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-strlen(LocallyAllowedUserXData)-1]+LocallyAllowedUserXData+";*" )||stringmatch(XwaveType,"x-scaling"))
-					//matchX=1
-					if(RequireErrorWvs)
-						if(stringmatch(";"+AllWaves,";*"+LocallyAllowedUserEData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserEData),inf]+";*" ) || stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves)) - strlen(LocallyAllowedUserEData)-1]+LocallyAllowedUserEData+";*" ))
-							tempResult+= FullFldrName+";"
-							break
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+				for(j=0;j<ItemsInList(allRwaves);j+=1)
+					matchX=0
+					matchE=0
+					if(stringmatch(";"+AllWaves, ";*"+LocallyAllowedUserXData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserXData),inf]+";*" )||stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-strlen(LocallyAllowedUserXData)-1]+LocallyAllowedUserXData+";*" )||stringmatch(XwaveType,"x-scaling"))
+						//matchX=1
+						if(RequireErrorWvs)
+							if(stringmatch(";"+AllWaves,";*"+LocallyAllowedUserEData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserEData),inf]+";*" ) || stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves)) - strlen(LocallyAllowedUserEData)-1]+LocallyAllowedUserEData+";*" ))
+								tempResult+= FullFldrName+";"
+								break
+							else
+								//not the right combination
+							endif
 						else
-							//not the right combination
+							tempResult+= FullFldrName+";"
+							break					
 						endif
 					else
-						tempResult+= FullFldrName+";"
-						break					
+						//not the right combination
 					endif
-				else
-					//not the right combination
-				endif
-			endfor
-			result+=tempresult
+				endfor
+				result+=tempresult
+			endif
 		else												//asume Indra2 type system
 			AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
-			matchX=0
-			matchE=0
-			if(stringmatch(";"+AllWaves, "*;"+XwaveType+";*" )||stringmatch(XwaveType,"x-scaling"))
-				matchX=1
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+				matchX=0
+				matchE=0
+				if(stringmatch(";"+AllWaves, "*;"+XwaveType+";*" )||stringmatch(XwaveType,"x-scaling"))
+					matchX=1
+				endif
+				if(stringmatch(";"+AllWaves, "*;"+EwaveType+";*" ))
+					matchE=1
+				endif
+				if(matchX && (matchE || !RequireErrorWvs))
+					tempResult+= FullFldrName+";"
+				endif
+				result+=tempresult
 			endif
-			if(stringmatch(";"+AllWaves, "*;"+EwaveType+";*" ))
-				matchE=1
-			endif
-			if(matchX && (matchE || !RequireErrorWvs))
-				tempResult+= FullFldrName+";"
-			endif
-			result+=tempresult
 		endif
 	endfor
 	if(strlen(result)>1)

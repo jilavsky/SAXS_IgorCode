@@ -212,6 +212,14 @@ Function IR1A_UnifiedCalcIntOne(level)
 	NVAR Corelations=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"Corelations")
 	NVAR MassFractal=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"MassFractal")
 	NVAR LinkRGCO=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"LinkRGCO")
+	NVAR/Z LevelLinkB = $("root:Packages:Irena_UnifFit:Level"+num2str(level)+"LinkB")
+	variable LocalLinkB=0
+	if(NVAR_Exists(LevelLinkB))
+		LocalLinkB = LevelLinkB
+	endif
+	if(LocalLinkB)
+		B = G * exp(-1*P/2)*(3*P/2)^(P/2)*(1/Rg^P) 
+	endif
 	if (LinkRGCO==1 && level>=2)
 		NVAR RgLowerLevel=$("root:Packages:Irena_UnifFit:Level"+num2str(level-1)+"Rg")	
 		RGCO=RgLowerLevel

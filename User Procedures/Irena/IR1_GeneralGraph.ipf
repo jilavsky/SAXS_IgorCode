@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.16
+#pragma version=2.17
 #include <KBColorizeTraces>
 Constant IR1PversionNumber=2.16
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
 //2.16 fixed forgotten Style storing path, which was still saving styles to ProgramFiles area. Permissions problem on some systems. Fixed and moving file to new location.
 //        fixed Scripting tool problem when the controsl could get stale between thw Plotting tool and scripting tool panels.  
 //2.15 added contour plot and basic controls. 
@@ -546,6 +547,7 @@ Function IR1P_InputPanelButtonProc(ctrlName) : ButtonControl
 				IR2C_InputPanelCheckboxProc(CB_Struct)		
 			endif
 			IR2S_UpdateListOfAvailFiles()
+			IR2S_SortListOfAvailableFldrs()
 			IR2S_CheckProc("Something",0)
 	endif
 
