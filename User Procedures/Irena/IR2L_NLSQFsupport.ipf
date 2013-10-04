@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 fixed bug when Analyze uncertainities would not get number of fitted points due to changed folder. 
 //1.21 fixed Background GUI which has step set to 0 after chanigng the tabs.
 //1.20 added to Unified level ability to link B to G/Rg/P based on Guinier/Porod theory. Remoeved abuility to fit RgCO at all. 
 //1.19 fixed IR2L_FixLimits function to set some high limit when parameter=0, added support for NoFitLimits feature
@@ -3887,7 +3888,7 @@ Function IR2L_ConfEvalCalcChiSqTarget()
 	if(V_Flag&&ConfEvAutoCalcTarget)
 		variable startRange, endRange, Allpoints
 		For(i=1;i<=10;i+=1)
-			CheckDisplayed /W=LSQF_MainGraph $("Q_set"+num2str(i))
+			CheckDisplayed /W=LSQF_MainGraph $("root:Packages:IR2L_NLSQF:Q_set"+num2str(i))
 			if(V_Flag)
 				NVAR Qmin_set= $("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(i))
 				NVAR Qmax_set = $("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(i))

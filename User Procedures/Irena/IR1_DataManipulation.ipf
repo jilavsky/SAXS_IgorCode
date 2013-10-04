@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.46
+#pragma version=2.47
 constant IR3MversionNumber = 2.39			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.47 fixed step for Modeling I Data 2
 //2.46 slight modification of IR1D_rebinData for use by Modeling II, Size Distribution and Unified fit. 
 //2.45 Data Manipulation I - added Merge data feature and preserve cursor position through data adding. Changed steps in GUI for Int multipliers and background.
 //2.44 DM1 - fix rebinning on log scale to handle data with first Q=0
@@ -356,11 +357,11 @@ Function IR1D_setvarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	 
 	if(cmpstr(ctrlName,"Data2_IntMultiplier")==0)
 		IR1D_RecalculateData()
-		SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*varNum}
+		SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*abs(varNum)}
 	endif 
 	if(cmpstr(ctrlName,"Data2_Background")==0)
 		IR1D_RecalculateData()
-		SetVariable Data2_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*varNum}
+		SetVariable Data2_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*abs(varNum)}
 	endif 
 	if(cmpstr(ctrlName,"Data2_Qshift")==0)
 		IR1D_RecalculateData()

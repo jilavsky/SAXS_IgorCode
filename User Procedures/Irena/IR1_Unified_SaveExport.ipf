@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.01
+#pragma version=2.02
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.02 added print startement when Unified fit results are saved so users have some feedback. 
 //2.01 added license for ANL
 
 
@@ -240,6 +241,7 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
 	IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
 	IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+	print "Saved into folder : "+GetDataFolder(1)+" Unified fit result : "+tempname
 
 	tempname="UnifiedFitQvector_"+num2str(ii)
 	Duplicate /O tempUnifiedFitQvector, $tempname
@@ -269,6 +271,7 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
 			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 		endfor
+		print "Saved also the local fits for the Unified fit." 
 	endif
 	setDataFolder root:Packages:Irena_UnifFit
 

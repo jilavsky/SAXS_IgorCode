@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.12
-Constant IR1RSversionNumber=2.12
+#pragma version = 2.13
+Constant IR1RSversionNumber=2.13
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.12
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.13 added automatic run of "Calculate parameters" after succesful run. Changed all graph fonts to follow the User defined settings.   
 //2.12 added RebinDataTo option on import to change data binning if needed. 
 //2.11 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
 //2.10 added button to Form factor help file which links correctly. 
@@ -380,7 +381,7 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	if(cmpstr(ShapeType,"CoreShell")==0 || cmpstr(ShapeType,"Tube")==0 || stringmatch(ShapeType,"Janus CoreShell Micelle*"))	
 		G_matrix=G_matrixFF * 1e20		//this case the contrast is part of the calculations already... 
 	else
-		G_matrix=G_matrixFF * ScatteringContrast*1e20		//this multiplyies by scattering contrast
+		G_matrix=G_matrixFF * ScatteringContrast*1e20		//this multiplies by scattering contrast
 	endif
 	//done with G matrix processing, if it slit smeared let's fix it and that is all....
 	if (cmpstr(SlitSmearedData, "Yes")==0)				//if we are working with slit smeared data
@@ -412,6 +413,12 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	SizesParameters=ReplaceStringByKey("MethodRun", SizesParameters, MethodRun,"=")
 
 	IR1R_FinishGraph()								//finish the graph to proper shape
+	NVAR ChiSquare=root:Packages:Sizes:ChiSquare
+	if(numtype(ChiSquare)!=0)
+		return 0
+	else	
+		return 1
+	endif
 	
 	setDataFolder OldDf
 end	
@@ -883,7 +890,7 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	ListOfVariables+="NNLS_MaxNumIterations;NNLS_ApproachParameter;"
 	ListOfVariables+="UseRegularization;UseMaxEnt;UseTNNLS;"
 	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
-	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;"
+	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;AutoCalculateParameters;"
 	
 //	ListOfStrings="DataFolderName;OriginalIntensityWvName;OriginalQvectorWvName;OriginalErrorWvName;SizesParameters;"
 	ListOfStrings="DataFolderName;SizesParameters;"
@@ -2160,23 +2167,24 @@ end
 	ModifyGraph/W=IR1R_SizesInputGraph log(bottom)=1
 	ModifyGraph/W=IR1R_SizesInputGraph log(top)=GraphLogTopAxis
 	ModifyGraph/W=IR1R_SizesInputGraph log(right)=GraphLogRightAxis
-	Label/W=IR1R_SizesInputGraph top "Particle diameter [A]"
+	Label/W=IR1R_SizesInputGraph top "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Particle diameter [A]"
 	ModifyGraph/W=IR1R_SizesInputGraph lblMargin(top)=30,lblLatPos(top)=100
-	Label/W=IR1R_SizesInputGraph right "Particle vol. distribution f(D)"
-	Label/W=IR1R_SizesInputGraph left "Intensity"
+	Label/W=IR1R_SizesInputGraph right "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Particle vol. distribution f(D)"
+	Label/W=IR1R_SizesInputGraph left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph/W=IR1R_SizesInputGraph lblPos(left)=50
 	ModifyGraph/W=IR1R_SizesInputGraph lblMargin(right)=20
-	Label/W=IR1R_SizesInputGraph bottom "Q [A\\S-1\\M]"	
+	Label/W=IR1R_SizesInputGraph bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"	
 	ModifyGraph/W=IR1R_SizesInputGraph axisEnab(left)={0.15,1}
 	ModifyGraph/W=IR1R_SizesInputGraph axisEnab(right)={0.15,1}
 	ModifyGraph/W=IR1R_SizesInputGraph lblMargin(top)=30
 	ModifyGraph/W=IR1R_SizesInputGraph axisEnab(ChisquaredAxis)={0,0.15}
 	ModifyGraph/W=IR1R_SizesInputGraph freePos(ChisquaredAxis)=0
-	Label/W=IR1R_SizesInputGraph ChisquaredAxis "Residuals"
+	Label/W=IR1R_SizesInputGraph ChisquaredAxis "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Residuals"
 	ModifyGraph/W=IR1R_SizesInputGraph lblPos(ChisquaredAxis)=50,lblLatPos=0
 	ModifyGraph/W=IR1R_SizesInputGraph mirror(ChisquaredAxis)=1
 	SetAxis/W=IR1R_SizesInputGraph /A/E=2 ChisquaredAxis
 	ModifyGraph/W=IR1R_SizesInputGraph nticks(ChisquaredAxis)=3
+	ModifyGraph/W=IR1R_SizesInputGraph fSize=str2num(IR2C_LkUpDfltVar("AxisLabelSize"))
 
 	ModifyGraph/W=IR1R_SizesInputGraph mode(Intensity)=3,marker(Intensity)=5,msize(Intensity)=3
 	
@@ -2221,7 +2229,7 @@ end
 
 	IN2G_GenerateLegendForGraph(7,0,1)
 	Legend/J/C/N=Legend1/J/A=LB/X=-8/Y=-8/W=IR1R_SizesInputGraph
-	string LegendText2="\\Z09\K(0,0,65280)Method used: "+MethodRun+"\r"
+	string LegendText2="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Method used: "+MethodRun+"\r"
 	if(numtype(NumberIterations)!=0)
 		LegendText2+="No success, change parameters and run again"
 	elseif(NumberIterations==0)
@@ -2454,7 +2462,8 @@ static  Function IR1R_ReturnFitBack(ctrlName)			//copies data back to folder wit
 		IN2G_AppendorReplaceWaveNote(tempnameNumNm,StringFromList(i,ListOfStrings),(TempStr))	
 	endfor	
 	
-	print "Mean size of distribution"+num2str(MeanSize)
+	print "Copied fitted Size Distribution data to folder :   " + fldrName
+	print "Mean size of distribution      "+num2str(MeanSize)
 
 	SizesParameters=ReplaceStringByKey("MeanSizeOfDistribution", SizesParameters, num2str(MeanSize),"=")
 	
@@ -2602,25 +2611,6 @@ Window IR1R_SizesInputPanel()
 EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR1R_ButtonProc(ba) : ButtonControl
-	STRUCT WMButtonAction &ba
-
-	switch( ba.eventCode )
-		case 2: // mouse up
-			// click code here
-				if(stringmatch(ba.ctrlName,"EstimateUncertainities"))
-					IR1R_SizesEstimateErrors()				
-				endif
-				if(stringMatch(ba.ctrlName,"RunSizes"))
-					IR1R_SizesFitting("RunSizes")
-				endif
-			break
-		case -1: // control being killed
-			break
-	endswitch
-
-	return 0
-End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
@@ -2645,10 +2635,11 @@ Function IR1R_SizesEstimateErrors()
 	Duplicate/O ScaledByMultiplierErrors, ScaledByMultiplierErrorsbackup
 	//now let's generate new data and run this multiple time...
 	variable i
+	variable FailedInFitting=0
 	Make/O/Free/N=(numpnts(CurrentResultSizeDistribution),10) StatisticsSizeDistributions
 	For(i=0;i<10;i+=1)
 		IntensityOriginal = IntensityOriginalBackup + gnoise(ErrorsOriginal[p])
-		IR1R_SizesFitting("RunSizes")
+		FailedInFitting+=IR1R_SizesFitting("RunSizes")
 		if(sum(CurrentResultSizeDistribution)>0)
 			StatisticsSizeDistributions[][i] = CurrentResultSizeDistribution[p]
 		else//filed fit
@@ -2665,6 +2656,11 @@ Function IR1R_SizesEstimateErrors()
 	endfor
 	ErrorBars/W=IR1R_SizesInputGraph CurrentResultSizeDistribution Y,wave=(CurrentResultSizeDistErrors,CurrentResultSizeDistErrors)
 	IntensityOriginal = IntensityOriginalBackup
+	if(numtype(FailedInFitting)==0)
+		return 1	//success
+	else
+		return 0
+	endif
 	
 	setDataFolder OldDf
 end
@@ -3277,22 +3273,24 @@ Proc  IR1R_SizesInputGraph()
 	Button KillThisWindow pos={5,5}, size={90,15},  title="Kill window", proc=IN2G_KillGraphsAndTables
 	Button ResetWindow pos={5,25}, size={90,15},  title="Reset window", proc=IN2G_ResetGraph
 	Button CalculateVolume pos={250,40}, size={100,15},  title="Calculate Parameters", proc=IN2R_CalculateVolume, help={"Calculates volume, mean, mode and median of  scatterers between cursors. Set cursors on bar graph."}
+	Checkbox AutoCalculateParameters, pos={380,40}, title="Calculate params. automatically?", noproc,variable=root:Packages:Sizes:AutoCalculateParameters, help={"Check to have Calculate parameters run after each run"}
 	Checkbox LogParticleAxis, pos={250,5}, title="Log Particle size axis?", proc = IR1R_GraphCheckboxes, help={"Check to have logarithmic particle size (top) axis"}
 	Checkbox LogParticleAxis, variable=root:Packages:Sizes:GraphLogTopAxis
 	Checkbox LogDistVolumeAxis, pos={250,20}, title="Log Particle Volume axis?", proc = IR1R_GraphCheckboxes, help={"Check to have logarithmic particle voilume distribution (right) axis"}
 	Checkbox LogDistVolumeAxis, variable=root:Packages:Sizes:GraphLogRightAxis
 	ModifyGraph log=1
-	Label left "Intensity"
+	Label left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph lblPos(left)=50
-	Label bottom "Q [A\\S-1\\M]"
+	Label bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
+	ModifyGraph fSize=str2num(IR2C_LkUpDfltVar("AxisLabelSize"))
 	ShowInfo
 	variable testQRS
 	testQRS = root:Packages:Sizes:UseQRSdata
 	if(strlen(StringByKey("UserSampleName", note(IntensityOriginal), "="))>1)
-		Textbox/N=text0/S=3/A=RT "The sample evaluated is:  "+StringByKey("UserSampleName", note(IntensityOriginal), "=")
+		Textbox/N=text0/S=3/A=RT  "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+StringByKey("UserSampleName", note(IntensityOriginal), "=")
 	else
 		if(testQRS==1)
-			Textbox/N=text0/S=3/A=RT "The sample evaluated is:  "+root:Packages:Sizes:IntensityWaveName
+			Textbox/N=text0/S=3/A=RT "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+root:Packages:Sizes:IntensityWaveName
 		else
 			Textbox/K/N=text0
 		endif	
@@ -3369,17 +3367,17 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 	print "Mean diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(meanDia)
 	print "Mode diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(modeDia)
 	print "Median diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(medianDia)
-	string tagText = "Volume of scatterers = "+num2str(volume)+"\r"
+	string tagText = "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"\r"
 	CheckDisplayed /W=IR1R_SizesInputGraph MyEWave
  	if(WaveExists(MyEWave)&&V_Flag)
-		tagText = "Volume of scatterers = "+num2str(volume)+"  +/- "+num2str((volumeMax-VolumeMin)/2)+"\r"
+		tagText =  "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"  +/- "+num2str((volumeMax-VolumeMin)/2)+"\r"
 	endif
 	tagText += "Mean diameter = "+num2str(meanDia)+"\r"
 	tagText += "Mode diameter = "+num2str(modeDia)+"\r"
 	tagText += "Median diameter = "+num2str(medianDia)+"\r"
 	tagText += "Range of diameters from "+num2str(MyXWave[pcsr(A)])+"  to " +num2str(MyXWave[pcsr(B)])+"  [A]"
 	
-	Tag/C/N=Label1/B=1 CurrentResultSizeDistribution, (pcsr(A) + pcsr(B))/2,tagText
+	Tag/C/N=Label1/A=LB/X=-10.00/Y=40.00/B=1 CurrentResultSizeDistribution, (pcsr(A) + pcsr(B))/2,tagText
 	if(movedCursors)
 		if(numtype(OrigStartPointA)==0)
 			Cursor  /P /W=IR1R_SizesInputGraph A  IntensityOriginal  OrigStartPointA
@@ -3466,9 +3464,9 @@ Function IR1R_AppendIntOriginal()		//appends (and removes) and configures in gra
 	RemoveFromGraph/Z IntensityOriginal
 	AppendToGraph IntensityOriginal vs Q_vecOriginal
 	
-	Label left "Intensity"
+	Label left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph lblPos(left)=50
-	Label bottom "Q [A\\S-1\\M]"
+	Label bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 
 	ModifyGraph mode(IntensityOriginal)=3
 	ModifyGraph msize(IntensityOriginal)=2
@@ -3477,6 +3475,7 @@ Function IR1R_AppendIntOriginal()		//appends (and removes) and configures in gra
 	ErrorBars IntensityOriginal Y,wave=(DeletePointsMaskErrorWave,DeletePointsMaskErrorWave)
 	Cursor/P A IntensityOriginal, csrApos
 	Cursor/P B IntensityOriginal, csrBpos
+	ModifyGraph fSize=str2num(IR2C_LkUpDfltVar("AxisLabelSize"))
 	
 	setDataFolder OldDf
 end
@@ -3907,10 +3906,10 @@ Proc  IR1S_RegDiagnosticsWindow()
 	AppendToGraph /R CurrentChiSqW //vs DiagLogAVal
 	AppendToGraph/L=ChiMinAlphaS CurChiSqMinusAlphaEntropyW
 	SetDataFolder fldrSav
-	Label left "Entropy or Smoothness"
-	Label bottom "Iteration"
-	Label right "Current ChiSquared"
-	Label ChiMinAlphaS "Current ChiSq - alpha*S"
+	Label left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Entropy or Smoothness"
+	Label bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Iteration"
+	Label right "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Current ChiSquared"
+	Label ChiMinAlphaS "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Current ChiSq - alpha*S"
 	ModifyGraph mirror(bottom)=1, log(right)=1
 	ModifyGraph mode=4,marker(CurrentEntropyW)=19
 	ModifyGraph marker(CurrentChiSqW)=5,rgb(CurrentChiSqW)=(0,0,65280)
@@ -4589,7 +4588,7 @@ static Function IR1R_TNNLS(G_matrix,ModelDistribution,Intensity, Qvector, errors
 		NumberIterations=numIter
 		if(mod(NumberIterations,10)==0)
 			IR1R_NNLSUpdateDataForGrph()
-			LegendText2="\\Z09\K(0,0,65280)Method used: NNLS \r"
+			LegendText2="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Method used: NNLS \r"
 			LegendText2+="working....  Number of iterations ="+num2str(NumberIterations)
 			TextBox/C/F=0/N=Legend2/X=0.00/Y=-9.00 LegendText2
 		endif
@@ -4601,3 +4600,40 @@ static Function IR1R_TNNLS(G_matrix,ModelDistribution,Intensity, Qvector, errors
 	setDataFolder OldDf
 	
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_ButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	variable success
+	NVAR/Z AutoCalculateParameters=root:Packages:Sizes:AutoCalculateParameters
+	if(!NVAR_Exists(AutoCalculateParameters))
+		variable/g root:Packages:Sizes:AutoCalculateParameters
+		NVAR AutoCalculateParameters=root:Packages:Sizes:AutoCalculateParameters
+	endif
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+				if(stringmatch(ba.ctrlName,"EstimateUncertainities"))
+					success=IR1R_SizesEstimateErrors()				
+					if(success&&AutoCalculateParameters)
+						IN2R_CalculateVolume("")
+					endif
+				endif
+				if(stringMatch(ba.ctrlName,"RunSizes"))
+					success=IR1R_SizesFitting("RunSizes")
+					if(success&&AutoCalculateParameters)
+						IN2R_CalculateVolume("")
+					endif
+				endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End

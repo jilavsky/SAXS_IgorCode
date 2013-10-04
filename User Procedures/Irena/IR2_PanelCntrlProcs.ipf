@@ -2217,6 +2217,8 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		string oldpopStr=popStr
 		string tempStr5=ReplaceString("[", popStr, "\[")
 		tempStr5=ReplaceString("]", tempStr5, "\]")
+		tempStr5=ReplaceString("(", tempStr5, "\(")
+		tempStr5=ReplaceString(")", tempStr5, "\)")
 		variable i
 		popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
 		if(ItemsInList(popStr , ";")>1)
