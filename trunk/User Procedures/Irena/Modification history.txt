@@ -9,6 +9,7 @@ Data manipulation I - added simple method of merging data (for different q range
 Data manipulation I - preserve cursor positions through adding data.
 Controls procedures - modified handling Irena results waves, mainly the Y wave. Faster. 
 Controls procedures - modified to avoids showing folders, which are disallowed by use of wave name grep string. This was showing parent folder before, which caused some confusion. 
+Controls procedures - fixed case when it was unable to get to folders with same names in different parent folders. 
 All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
 Modeling II - added no fitting limits option
 Modeling II - added optional Constraints input to enable more user control of the fitting and relationships between the parameters.
