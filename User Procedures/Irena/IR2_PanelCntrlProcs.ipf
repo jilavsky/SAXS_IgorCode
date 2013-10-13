@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.29
+#pragma version = 1.32
 
 
 //*************************************************************************\
@@ -8,6 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.32 modifed IR2C_PanelPopupControl to handle folders with same names in differnet folders. Prior version picked the first one ONLY. `
+//1.31 fix for Irena results which caused loss of _GenerationNumber sometimes. 
+//1.30 Data manipulation I, fixed Flrd match for Test data folder...
 //1.29 hopefully fixed problem, when parent folder appeared, when subfolders were masked off by Wv grep string  
 //1.28 modifed and changed handling of Results wave names, mainly Y wave name. It is a mess - need to check this in details... 
 //1.27 added Diameters waves for Modeling II
@@ -1091,7 +1094,13 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r||i$", 1, ResultingWave)
 				//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
 				if(strlen(FolderMatchStr)>0)
-					ListOfQFolders=GrepList(ListOfQFolders, FolderMatchStr )
+					variable ii
+					for(ii=numpnts(ResultingWave)-1;ii>=0;ii-=1)
+						if(!GrepString(ResultingWave[ii],FolderMatchStr))
+							DeletePoints ii, 1, ResultingWave
+						endif
+					endfor
+					//ListOfQFolders=GrepList(ListOfQFolders, FolderMatchStr )
 				endif
 				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,ResultingWave,WaveMatchStr)
 				//match to user mask using greplist
@@ -1189,6 +1198,13 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	string/g $(CntrlLocation+":RealLongListOfFolder")
 	SVAR RealLongListOfFolder = $(CntrlLocation+":RealLongListOfFolder")
 	RealLongListOfFolder = result
+	string/g $(CntrlLocation+":ShortListOfFolders")
+	SVAR ShortListOfFolders = $(CntrlLocation+":ShortListOfFolders")
+	ShortListOfFolders = resultShort
+//	print StringFromList(21, result )
+//	print ItemsInList(result  )
+//	print StringFromList(21, resultShort )
+//	print ItemsInList(resultShort  )
 	setDataFolder OldDf
 	return resultShort
 end
@@ -1955,8 +1971,8 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 										result+="x-scaling"+";"
 									endif
 								if(setControls==0)
-										IntDf=tempStringY
-										QDf=tempStringX
+										IntDf=tempStringY+EndStr
+										QDf=tempStringX+EndStr
 										EDf="---"
 										setControls=1
 									endif
@@ -2128,6 +2144,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		WaveMatchStr=""
 	endif
 	setDataFolder $(CntrlLocation)
+	variable i
 
  
 	NVAR UseIndra2Structure=$(CntrlLocation+":UseIndra2Data")
@@ -2209,28 +2226,50 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 	endif
 
 	if (cmpstr(ctrlName,"SelectDataFolder")==0)
+		//attempt to fix for same named folders
 		SVAR/Z RealLongListOfFolder = $(CntrlLocation+":RealLongListOfFolder")
 		if(!SVAR_Exists(RealLongListOfFolder))
 			Abort "Stale control procedures. Please, reopen the panel for the tool you are trying to use and try operating once manually. If persists, send this Igor experiment to Jan Ilavsky, ilavsky@aps.anl.gov"
 		endif
-		//fix the short name of the folder...
-		string oldpopStr=popStr
-		string tempStr5=ReplaceString("[", popStr, "\[")
-		tempStr5=ReplaceString("]", tempStr5, "\]")
-		tempStr5=ReplaceString("(", tempStr5, "\(")
-		tempStr5=ReplaceString(")", tempStr5, "\)")
-		variable i
-		popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
-		if(ItemsInList(popStr , ";")>1)
-			For(i=0;i<ItemsInList(popStr , ";");i+=1)
-				tempStr5 = StringFromList(i,popStr,";")
-				if(stringmatch(oldpopStr,StringFromList(ItemsInList(tempStr5,":")-1,tempStr5,":")))
-					popStr=tempStr5
-					//break
-				endif
-			endfor
+		//let's try to look up using popNum
+		//but we need to find how many paths with "-----------" are here before the popNum
+		variable NumPathLines=0
+		string ShortList
+		SVAR/Z ShortListOfFolders= $(CntrlLocation+":ShortListOfFolders")
+		if(SVAR_Exists(ShortListOfFolders))
+			ShortList=ShortListOfFolders
+		else
+			ShortList=IR2P_GenStringOfFolders(winNm=TopPanel)
 		endif
-		popStr=RemoveEnding(popStr, ";")
+		For(i=0;i<popNum;i+=1)
+			if(stringmatch(StringFromList(i, ShortList),"*----------*"))
+				NumPathLines+=1
+			endif
+		endfor
+	//	print ShortList
+///		print popNum
+//		print NumPathLines
+//		print popNum-NumPathLines-2
+//		print StringFromList(popNum-NumPathLines-2, RealLongListOfFolder)
+//		//fix the short name of the folder...
+//		string oldpopStr=popStr
+//		string tempStr5=ReplaceString("[", popStr, "\[")
+//		tempStr5=ReplaceString("]", tempStr5, "\]")
+//		tempStr5=ReplaceString("(", tempStr5, "\(")
+//		tempStr5=ReplaceString(")", tempStr5, "\)")
+//		popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
+//		if(ItemsInList(popStr , ";")>1)
+//			For(i=0;i<ItemsInList(popStr , ";");i+=1)
+//				tempStr5 = StringFromList(i,popStr,";")
+//				if(stringmatch(oldpopStr,StringFromList(ItemsInList(tempStr5,":")-1,tempStr5,":")))
+//					popStr=tempStr5
+//					//break
+//				endif
+//			endfor
+//		endif
+//		popStr=RemoveEnding(popStr, ";")
+		// the 2 to subtract here... One of for "---" and second because popNum is 1 based, while StringFromList is 0 based.  
+		popStr=StringFromList(popNum-NumPathLines-2, RealLongListOfFolder)
 		String tempDf=GetDataFolder(1)
 		setDataFolder root:Packages:IrenaControlProcs
 		setDataFolder $(TopPanel)
