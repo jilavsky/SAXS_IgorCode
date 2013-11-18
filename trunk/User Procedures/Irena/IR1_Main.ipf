@@ -405,7 +405,10 @@ Function IR2C_ReadIrenaGUIPackagePrefs()
 			endif
 		endif
 	else 		//problem loading package defaults
-		DoAlert 1, "GUI and Graph defaults (font size and type preferences) are not set. Do you want to set them now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
+		Struct WMButtonAction ba
+		ba.ctrlName="DefaultValues"
+		IR2C_KillPrefsButtonProc(ba)
+		DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
 		if(V_Flag==1)
 			Execute("IR2C_MainConfigPanel() ")
 		endif	
@@ -443,7 +446,7 @@ Function IR2C_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.LastUpdateCheck	=		LastUpdateCheck
 	
 	if(KillThem)
-	//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does nto work below 6.10
+	//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
 	//	IR2C_ReadIrenaGUIPackagePrefs()
 	else
 		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs

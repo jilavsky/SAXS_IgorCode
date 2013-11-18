@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
+#pragma version=1.18
 Constant IR2SversionNumber=1.15
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -22,6 +22,9 @@ Constant IR2SversionNumber=1.15
 //1.13 modified to handle chanigng of the data type between the scripting tool and the tool being called. 
 //1.14 fixed bug in calling Plotting tool with results
 //1.15 added skip review of fitting parameters for Unified fit improvement. 
+//1.16 fix to make compatible with changes in Controls procedures. 
+//1.17 minor fix when list fo folders contained ;; somehow and we got stale content in the listbox. 
+//1.18 will set cursors for first and last point of data, if not set by user ahead of fitting. Sync FolderNameStr and set WavenameStr=""
 
 //**************************************************************************************
 //**************************************************************************************
@@ -691,6 +694,9 @@ Function IR2S_UpdateListOfAvailFiles()
 			j+=1
 		endif
 	endfor
+	if(j<ItemsInList(CurrentFolders , ";"))
+		DeletePoints j, numpnts(ListOfAvailableData)-j, ListOfAvailableData, SelectionOfAvailableData
+	endif
 	SelectionOfAvailableData = 0
 	setDataFolder OldDF
 end
@@ -826,6 +832,11 @@ Function IR2S_CallWithPlottingToolII(reset)
 	if(reset)
 		IR1P_InputPanelButtonProc("ResetAll")				//resent graph?
 	endif	
+	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:FolderMatchStr
+	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:WaveMatchStr
+	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	WaveMatchStr=""
+	FolderMatchStr=ScriptToolFMS
 	variable AddedFiles=0
 	Print " **** working : adding data sets to plotting tool"
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
@@ -838,7 +849,7 @@ Function IR2S_CallWithPlottingToolII(reset)
 			//now except for case when we use Indra 2 data we need to reload the other wave names... 
 			STRUCT WMPopupAction PU_Struct
 			PU_Struct.ctrlName = "SelectDataFolder"
-			PU_Struct.popNum=0
+			PU_Struct.popNum=-1
 			PU_Struct.eventcode=2
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "IR1P_ControlPanel"
@@ -876,7 +887,7 @@ Function IR2S_CallWithPlottingToolII(reset)
 				PopupMenu IntensityDataName win=IR1P_ControlPanel, popmatch=TempYName
 				//and update errors if needed...
 				PU_Struct.ctrlName = "IntensityDataName"
-				PU_Struct.popNum=0
+				PU_Struct.popNum=-1
 				PU_Struct.eventcode=2
 				PU_Struct.popStr=TempYName
 				PU_Struct.win = "IR1P_ControlPanel"			
@@ -963,6 +974,11 @@ Function IR2S_FItWithModelingII()
 	NVAR CurMaxQ=root:Packages:IR2L_NLSQF:Qmax_set1
 	StartQ=CurMinQ
 	EndQ=CurMaxQ
+	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:LSQF2_MainPanel:FolderMatchStr
+	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:LSQF2_MainPanel:WaveMatchStr
+	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	WaveMatchStr=""
+	FolderMatchStr=ScriptToolFMS
 	
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
@@ -974,7 +990,7 @@ Function IR2S_FItWithModelingII()
 			//now except for case when we use Indra 2 data we need to reload the other wave names... 
 			STRUCT WMPopupAction PU_Struct
 			PU_Struct.ctrlName = "SelectDataFolder"
-			PU_Struct.popNum=0
+			PU_Struct.popNum=-1
 			PU_Struct.eventcode=2
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "LSQF2_MainPanel"
@@ -1093,11 +1109,34 @@ Function IR2S_FItWithSizes(Uncert)
 	string CurrentFolderName
 	variable StartQ, EndQ		//need to store these from cursor positions (if set)
 	DoWIndow IR1R_SizesInputGraph
+//	if(V_Flag)
+//		Wave Ywv = csrXWaveRef(A  , "IR1R_SizesInputGraph" )
+//		StartQ = Ywv[pcsr(A  , "IR1R_SizesInputGraph" )]
+//		EndQ = Ywv[pcsr(B  , "IR1R_SizesInputGraph" )]
+//	endif
 	if(V_Flag)
-		Wave Ywv = csrXWaveRef(A  , "IR1R_SizesInputGraph" )
-		StartQ = Ywv[pcsr(A  , "IR1R_SizesInputGraph" )]
-		EndQ = Ywv[pcsr(B  , "IR1R_SizesInputGraph" )]
+		if(strlen(CsrInfo(A , "IR1R_SizesInputGraph"))>0)
+			Wave Ywv = csrXWaveRef(A  , "IR1R_SizesInputGraph" )
+			StartQ = Ywv[pcsr(A  , "IR1R_SizesInputGraph" )]
+		else
+			Wave Qwave = root:Packages:Sizes:Q_vecOriginal
+			StartQ=Qwave[0]
+		endif
+		if(strlen(CsrInfo(B , "IR1R_SizesInputGraph"))>0)
+			Wave Ywv = csrXWaveRef(B  , "IR1R_SizesInputGraph" )
+			EndQ = Ywv[pcsr(B  , "IR1R_SizesInputGraph" )]
+		else
+			Wave Qwave = root:Packages:Sizes:Q_vecOriginal
+			EndQ=Qwave[numpnts(Qwave)-1]
+		endif
+		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
+	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1R_SizesInputPanel:FolderMatchStr
+	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1R_SizesInputPanel:WaveMatchStr
+	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	WaveMatchStr=""
+	FolderMatchStr=ScriptToolFMS
+
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
 			CurrentFolderName = LStartFolder + ListOfAvailableData[i]
@@ -1108,7 +1147,7 @@ Function IR2S_FItWithSizes(Uncert)
 			//now except for case when we use Indra 2 data we need to reload the other wave names... 
 			STRUCT WMPopupAction PU_Struct
 			PU_Struct.ctrlName = "SelectDataFolder"
-			PU_Struct.popNum=0
+			PU_Struct.popNum=-1
 			PU_Struct.eventcode=2
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "IR1R_SizesInputPanel"
@@ -1122,13 +1161,13 @@ Function IR2S_FItWithSizes(Uncert)
 			//now we need to set back the cursors.
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
-				if(binarysearch(Qwave,StartQ)>0)
+				if(binarysearch(Qwave,StartQ)>=0)
 					Cursor  /P /W=IR1R_SizesInputGraph A  IntensityOriginal binarysearch(Qwave,StartQ)
 				endif	
 			endif
 			if(EndQ>0)
 				Wave Qwave = root:Packages:Sizes:Q_vecOriginal
-				if(binarysearch(Qwave,EndQ)>0)
+				if(binarysearch(Qwave,EndQ)>=0)
 					Cursor  /P /W=IR1R_SizesInputGraph B  IntensityOriginal binarysearch(Qwave,EndQ)	
 				endif
 			endif
@@ -1221,12 +1260,34 @@ Function IR2S_FitWithGuinierPorod()
 	variable i
 	string CurrentFolderName
 	variable StartQ, EndQ		//need to store these from cursor positions (if set)
-	DoWIndow IR1_LogLogPlotU
+	DoWIndow GunierPorod_LogLogPlot
+//	if(V_Flag)
+//		Wave Ywv = csrXWaveRef(A  , "GunierPorod_LogLogPlot" )
+//		StartQ = Ywv[pcsr(A  , "GunierPorod_LogLogPlot" )]
+//		EndQ = Ywv[pcsr(B  , "GunierPorod_LogLogPlot" )]
+//	endif
 	if(V_Flag)
-		Wave Ywv = csrXWaveRef(A  , "GunierPorod_LogLogPlot" )
-		StartQ = Ywv[pcsr(A  , "GunierPorod_LogLogPlot" )]
-		EndQ = Ywv[pcsr(B  , "GunierPorod_LogLogPlot" )]
+		if(strlen(CsrInfo(A , "GunierPorod_LogLogPlot"))>0)
+			Wave Ywv = csrXWaveRef(A  , "GunierPorod_LogLogPlot" )
+			StartQ = Ywv[pcsr(A  , "GunierPorod_LogLogPlot" )]
+		else
+			Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+			StartQ=Qwave[0]
+		endif
+		if(strlen(CsrInfo(B , "GunierPorod_LogLogPlot"))>0)
+			Wave Ywv = csrXWaveRef(B  , "GunierPorod_LogLogPlot" )
+			EndQ = Ywv[pcsr(B  , "GunierPorod_LogLogPlot" )]
+		else
+			Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
+			EndQ=Qwave[numpnts(Qwave)-1]
+		endif
+		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
+	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR3DP_MainPanel:FolderMatchStr
+	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR3DP_MainPanel:WaveMatchStr
+	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	WaveMatchStr=""
+	FolderMatchStr=ScriptToolFMS
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
 			//here process the Unified...
@@ -1242,7 +1303,7 @@ Function IR2S_FitWithGuinierPorod()
 			//now except for case when we use Indra 2 data we need to reload the other wave names... 
 			STRUCT WMPopupAction PU_Struct
 			PU_Struct.ctrlName = "SelectDataFolder"
-			PU_Struct.popNum=0
+			PU_Struct.popNum=-1
 			PU_Struct.eventcode=2
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "IR3DP_MainPanel"
@@ -1255,13 +1316,13 @@ Function IR2S_FitWithGuinierPorod()
 			//now we need to set back the cursors.
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
-				if(binarysearch(Qwave,StartQ)>0)
+				if(binarysearch(Qwave,StartQ)>=0)
 					Cursor  /P /W=IR1_LogLogPlotU A  OriginalIntensity binarysearch(Qwave,StartQ)
 				endif	
 			endif
 			if(EndQ>0)
 				Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
-				if(binarysearch(Qwave,EndQ)>0)
+				if(binarysearch(Qwave,EndQ)>=0)
 					Cursor  /P /W=IR1_LogLogPlotU B  OriginalIntensity binarysearch(Qwave,EndQ)	
 				endif
 			endif
@@ -1359,10 +1420,27 @@ Function IR2S_FItWithUnifiedFit()
 	variable StartQ, EndQ		//need to store these from cursor positions (if set)
 	DoWIndow IR1_LogLogPlotU
 	if(V_Flag)
-		Wave Ywv = csrXWaveRef(A  , "IR1_LogLogPlotU" )
-		StartQ = Ywv[pcsr(A  , "IR1_LogLogPlotU" )]
-		EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
+		if(strlen(CsrInfo(A , "IR1_LogLogPlotU"))>0)
+			Wave Ywv = csrXWaveRef(A  , "IR1_LogLogPlotU" )
+			StartQ = Ywv[pcsr(A  , "IR1_LogLogPlotU" )]
+		else
+			Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
+			StartQ=Qwave[0]
+		endif
+		if(strlen(CsrInfo(B , "IR1_LogLogPlotU"))>0)
+			Wave Ywv = csrXWaveRef(B  , "IR1_LogLogPlotU" )
+			EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
+		else
+			Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
+			EndQ=Qwave[numpnts(Qwave)-1]
+		endif
+		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
+	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1A_ControlPanel:FolderMatchStr
+	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1A_ControlPanel:WaveMatchStr
+	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	WaveMatchStr=""
+	FolderMatchStr=ScriptToolFMS
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
 			//here process the Unified...
@@ -1378,7 +1456,7 @@ Function IR2S_FItWithUnifiedFit()
 			//now except for case when we use Indra 2 data we need to reload the other wave names... 
 			STRUCT WMPopupAction PU_Struct
 			PU_Struct.ctrlName = "SelectDataFolder"
-			PU_Struct.popNum=0
+			PU_Struct.popNum=-1
 			PU_Struct.eventcode=2
 			PU_Struct.popStr=DataFolderName
 			PU_Struct.win = "IR1A_ControlPanel"
@@ -1392,13 +1470,13 @@ Function IR2S_FItWithUnifiedFit()
 			//now we need to set back the cursors.
 			if(StartQ>0)
 				Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
-				if(binarysearch(Qwave,StartQ)>0)
+				if(binarysearch(Qwave,StartQ)>=0)
 					Cursor  /P /W=IR1_LogLogPlotU A  OriginalIntensity binarysearch(Qwave,StartQ)
 				endif	
 			endif
 			if(EndQ>0)
 				Wave Qwave = root:Packages:Irena_UnifFit:OriginalQvector
-				if(binarysearch(Qwave,EndQ)>0)
+				if(binarysearch(Qwave,EndQ)>=0)
 					Cursor  /P /W=IR1_LogLogPlotU B  OriginalIntensity binarysearch(Qwave,EndQ)	
 				endif
 			endif

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.22
+#pragma version=1.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.24 minor fix in Uncertainity evaluation. 
+//1.23 Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor. 
 //1.22 fixed bug when Analyze uncertainities would not get number of fitted points due to changed folder. 
 //1.21 fixed Background GUI which has step set to 0 after chanigng the tabs.
 //1.20 added to Unified level ability to link B to G/Rg/P based on Guinier/Porod theory. Remoeved abuility to fit RgCO at all. 
@@ -520,7 +522,18 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		if(stringmatch(FormFactor,"User"))
 			IR1T_GenerateHelpForUserFF()
 		endif
-		
+		//SphereWHSLocMonoSq
+		if(stringmatch(popStr,"SphereWHSLocMonoSq"))
+			SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(V_Value+1))
+			StrFac = "Dilute system"
+			PopupMenu StructureFactorModel win=LSQF2_MainPanel, value=#"(root:Packages:StructureFactorCalc:ListOfStructureFactors)"
+			SVAR StrB=root:Packages:StructureFactorCalc:ListOfStructureFactors
+			PopupMenu StructureFactorModel win=LSQF2_MainPanel, mode=WhichListItem("Dilute system",StrB )+1
+		endif
+	endif
+
+	if (stringmatch(ctrlName,"DataUnits"))
+		IR2L_SetDataUnits(popStr)
 	endif
 
 	if (stringmatch(ctrlName,"DiffPeakProfile"))
@@ -559,7 +572,15 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 			ControlInfo/W=LSQF2_MainPanel DistTabs
 			whichDataSet= V_Value+1
 			SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(whichDataSet))
-			StrFac = popStr
+			SVAR FormFactor = $("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(whichDataSet))
+			if(stringmatch(FormFactor,"SphereWHSLocMonoSq"))
+				StrFac = "Dilute system"			
+				PopupMenu StructureFactorModel win=LSQF2_MainPanel, value=#"(root:Packages:StructureFactorCalc:ListOfStructureFactors)"
+				SVAR StrB=root:Packages:StructureFactorCalc:ListOfStructureFactors
+				PopupMenu StructureFactorModel win=LSQF2_MainPanel, mode=WhichListItem("Dilute system",StrB )+1
+			else
+				StrFac = popStr
+			endif
 			DoWindow StructureFactorControlScreen
 			if(V_Flag)
 				DoWindow/K StructureFactorControlScreen
@@ -1740,6 +1761,7 @@ Function IR2L_Initialize()
 	ListOfVariables+="SameContrastForDataSets;VaryContrastForDataSets;DisplayInputDataControls;DisplayModelControls;UseGeneticOptimization;UseLSQF;"
 	ListOfVariables+="SizeDist_DimensionIsDiameter;"
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;ListOfKnownPeakShapes;"
+	ListOfStrings+="DataCalibrationUnits;PanelVolumeDesignation;IntCalibrationUnits;VolDistCalibrationUnits;NumDistCalibrationUnits;"	
 	ListOfStrings+="ConfEvListOfParameters;ConEvSelParameter;ConEvMethod;SizeDist_DimensionType;"
 	//SizeDist_DimensionType = "Radius" or "Diameter"
 
@@ -1900,7 +1922,6 @@ Function IR2L_Initialize()
 			endif
 		endfor	
 	endfor		
-
 	setDataFolder OldDf
 
 end
@@ -1984,6 +2005,19 @@ Function IR2L_SetInitialValues(enforce)
 	NVAR SizeDistDisplayVolDist
 	if(SizeDistDisplayNumDist + SizeDistDisplayVolDist <1)
 		SizeDistDisplayVolDist=1
+	endif
+
+	SVAR DataCalibrationUnits
+	SVAR PanelVolumeDesignation
+	SVAR IntCalibrationUnits
+	SVAR VolDistCalibrationUnits
+	SVAR NumDistCalibrationUnits
+	if(strlen(DataCalibrationUnits)<2)
+		DataCalibrationUnits="Arbitrary"
+		PanelVolumeDesignation="Scale"
+		IntCalibrationUnits="Arbitrary"
+		VolDistCalibrationUnits="Arbitrary"
+		NumDistCalibrationUnits="Arbitrary"
 	endif
 
 	for(i=1;i<=10;i+=1)	
@@ -2177,8 +2211,8 @@ Function IR2L_SetInitialValues(enforce)
 		endfor
 
 	for(i=1;i<=10;i+=1)	
-		NVAR DataScalingFactor=$("DataScalingFactor_set"+num2str(i))
-		NVAR ErrorScalingFactor=$("ErrorScalingFactor_set"+num2str(i))
+		NVAR DataScalingFactor=$("root:Packages:IR2L_NLSQF:DataScalingFactor_set"+num2str(i))
+		NVAR ErrorScalingFactor=$("root:Packages:IR2L_NLSQF:ErrorScalingFactor_set"+num2str(i))
 		if(DataScalingFactor==0)
 			DataScalingFactor=1
 		endif
@@ -2220,6 +2254,13 @@ Function IR2L_SetInitialValues(enforce)
 			NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
 			if(testVar==0)
 				testVar=j*150
+			endif
+		endfor
+		ListOfVariables = "LNMinSize;"
+		For(i=0;i<itemsInList(ListOfVariables);i+=1)
+			NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+			if(testVar==0)
+				testVar=4
 			endif
 		endfor
 
@@ -2505,7 +2546,10 @@ Function IR2L_SvNbk_ModelInf()
 				IR2L_AppendAnyText("Summary results for population "+num2str(i),1)	
 				IR2L_AppendAnyText("     ",0)	
 				IR2L_AppendAnyText("               This population was Size Distribution ",0)	
-				ListOfPopulationVariables="Volume;Mean;Mode;Median;FWHM;"	
+				ListOfPopulationVariables="Mean;Mode;Median;FWHM;"	
+				SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation	
+				NVAR testVar = $("root:Packages:IR2L_NLSQF:Volume"+"_pop"+num2str(i))
+				IR2L_AppendAnyText(PanelVolumeDesignation+"\t=\t"+num2str(testVar),0)
 				for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
 					NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
 					IR2L_AppendAnyText(StringFromList(k,ListOfPopulationVariables)+"\t=\t"+num2str(testVar),0)
@@ -3892,7 +3936,7 @@ Function IR2L_ConfEvalCalcChiSqTarget()
 			if(V_Flag)
 				NVAR Qmin_set= $("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(i))
 				NVAR Qmax_set = $("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(i))
-				Wave Qwv=$("Q_set"+num2str(i))
+				Wave Qwv=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(i))
 				findlevel/P/Q Qwv, Qmin_set
 				startRange = V_LevelX
 				findlevel/P/Q Qwv, Qmax_set
@@ -4107,7 +4151,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	variable i
 
 	if(stringmatch(ctrlName,"Continue_SDDetails"))
-		DoWindow/K ModelingII_MoreDetails
+		DoWindow/K LSQF2_ModelingII_MoreDetails
 	endif
 
 	if(cmpstr(ctrlName,"RemovePointWcsrA")==0)
@@ -4133,8 +4177,8 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName,"AddDataSet")==0)
 		//here we load the data and create default values
 		ControlInfo/W=LSQF2_MainPanel DataTabs
-		IR2L_LoadDataIntoSet(V_Value+1,0)
-		NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
+		IR2L_LoadDataIntoSet(V_Value+1,0)			//also sets units
+		NVAR UseTheData_set=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(V_Value+1))
 		UseTheData_set=1
 		IR2L_Data_TabPanelControl("",V_Value)
 		IR2L_AppendDataIntoGraph(V_Value+1)
@@ -4158,7 +4202,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		//here we load the data and create default values
 		ControlInfo/W=LSQF2_MainPanel DataTabs
 		IR2L_LoadDataIntoSet(V_Value+1,1)
-		NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
+		NVAR UseTheData_set=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(V_Value+1))
 		UseTheData_set=1
 		IR2L_Data_TabPanelControl("",V_Value)
 		IR2L_AppendDataIntoGraph(V_Value+1)
@@ -4181,17 +4225,21 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	endif
 	if(stringmatch(ctrlName,"GetSFHelp"))
 		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
-		//print S_Value
-		DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
-		if(V_Flag)
-			DisplayHelpTopic /Z "Form Factors & Structure factors"
+		if(Stringmatch(S_Value,"Dilute system"))
+			DisplayHelpTopic /Z "Form Factors & Structure factors"	
+		else
+			//print S_Value
+			DisplayHelpTopic /Z "Form Factors & Structure factors["+S_Value+"]"
+			if(V_Flag)
+				DisplayHelpTopic /Z "Form Factors & Structure factors"
+			endif
 		endif
 	endif
 
 
 	if(stringmatch(ctrlName,"MoreSDParameters"))
-		ModelingII_moreDetailsF()
-		PauseForUser ModelingII_MoreDetails
+		LSQF2_ModelingII_MoreDetailsF()
+		PauseForUser LSQF2_ModelingII_MoreDetails
 	endif
 	
 	if(stringmatch(ctrlName,"FitRgandG"))
@@ -4297,7 +4345,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 			MaxDataSets=1
 		endif
 		For(i=1;i<=MaxDataSets;i+=1)
-			NVAR UseTheData_set=$("UseTheData_set"+num2str(i))
+			NVAR UseTheData_set=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 			if(UseTheData_set)
 				IR2L_AppendDataIntoGraph(i)
 			endif
@@ -4496,9 +4544,9 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		IR2L_SetTabsNames()
 	endif
 
-	NVAR UseUserErrors_set = $("UseUserErrors_set"+num2str(WhichDataSet))
-	NVAR UseSQRTErrors_set = $("UseSQRTErrors_set"+num2str(WhichDataSet))
-	NVAR UsePercentErrors_set = $("UsePercentErrors_set"+num2str(WhichDataSet))
+	NVAR UseUserErrors_set = $("root:Packages:IR2L_NLSQF:UseUserErrors_set"+num2str(WhichDataSet))
+	NVAR UseSQRTErrors_set = $("root:Packages:IR2L_NLSQF:UseSQRTErrors_set"+num2str(WhichDataSet))
+	NVAR UsePercentErrors_set = $("root:Packages:IR2L_NLSQF:UsePercentErrors_set"+num2str(WhichDataSet))
 	if (stringMatch(ctrlName,"UseUserErrors_set"))
 		if(UseUserErrors_set)
 			UseSQRTErrors_set=0
@@ -4576,9 +4624,9 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 	ControlInfo/W=LSQF2_MainPanel DataTabs
 	IR2L_Data_TabPanelControl("",V_Value)
 	DoWindow/F LSQF2_MainPanel
-	DoWIndow ModelingII_MoreDetails
+	DoWIndow LSQF2_ModelingII_MoreDetails
 	if(V_Flag)
-		DoWIndow/F ModelingII_MoreDetails
+		DoWIndow/F LSQF2_ModelingII_MoreDetails
 	endif
 	setDataFolder OldDf
 end

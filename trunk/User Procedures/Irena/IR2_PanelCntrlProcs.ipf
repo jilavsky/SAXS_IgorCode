@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.32
+#pragma version = 1.34
 
 
 //*************************************************************************\
@@ -8,6 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.34 enabled use of following characters in Wavenames: (){}%#^$?|&@, Fixed time cashing problem which caused folder match string to be "retained" for 5 seconds. 
+//		minor change in GUI locations. 
+//1.33 IR2C_PanelPopupControl changed to handle cases when multiple pairs/triplets of waves reside in the same folder. 
 //1.32 modifed IR2C_PanelPopupControl to handle folders with same names in differnet folders. Prior version picked the first one ONLY. `
 //1.31 fix for Irena results which caused loss of _GenerationNumber sometimes. 
 //1.30 Data manipulation I, fixed Flrd match for Test data folder...
@@ -669,14 +672,14 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 		CheckBox UseIndra2Data,pos={100,25},size={141,14},proc=IR2C_InputPanelCheckboxProc,title="USAXS"
 		CheckBox UseIndra2Data,variable= $(CntrlLocation+":UseIndra2data"), help={"Check, if you are using USAXS - Indra 2 - produced data with the orginal names, uncheck if the names of data waves are different"}
 	endif
-	CheckBox UseQRSData,pos={100,39},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="QRS (QIS)"
+	CheckBox UseQRSData,pos={100,40},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="QRS (QIS)"
 	CheckBox UseQRSData,variable= $(CntrlLocation+":UseQRSdata"), help={"Check, if you are using QRS or QIS names, uncheck if the names of data waves are different"}
 	if(strlen(AllowedResultsTypes)>0)
 		CheckBox UseResults,pos={200,25},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="Irena results"
 		CheckBox UseResults,variable= $(CntrlLocation+":UseResults"), help={"Check, if you want to use results of Irena macros"}
 	endif
 	if(strlen(AllowedUserTypes)>0)
-		CheckBox UseUserDefinedData,pos={200,39},size={90,14},proc=IR2C_InputPanelCheckboxProc,title=UserNameString
+		CheckBox UseUserDefinedData,pos={200,40},size={90,14},proc=IR2C_InputPanelCheckboxProc,title=UserNameString
 		CheckBox UseUserDefinedData,variable= $(CntrlLocation+":UseUserDefinedData"), help={"Check, if you want to use "+UserNameString+" data"}
 	endif
 	if(AllowModelData>0)
@@ -691,11 +694,11 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 
 	PopupMenu SelectDataFolder,pos={10,56},size={270,21},proc=IR2C_PanelPopupControl,title="Data fldr:", help={"Select folder with data"}, bodywidth=220
 	execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+TopPanel+"\")")
-	PopupMenu QvecDataName,pos={15,78},size={265,21},proc=IR2C_PanelPopupControl,title="Wave with X   ", help={"Select wave with data to be used on X axis (Q, diameters, etc)"}, bodywidth=200
+	PopupMenu QvecDataName,pos={15,79},size={265,21},proc=IR2C_PanelPopupControl,title="Wave with X   ", help={"Select wave with data to be used on X axis (Q, diameters, etc)"}, bodywidth=200
 	execute("PopupMenu QvecDataName,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_ListOfWaves(\"Xaxis\",\"*\",\""+TopPanel+"\")")
 	PopupMenu IntensityDataName,pos={15,102},size={265,21},proc=IR2C_PanelPopupControl,title="Wave with Y   ", help={"Select wave with data to be used on Y data (Intensity, distributions)"}, bodywidth=200
 	execute("PopupMenu IntensityDataName,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\")")
-	PopupMenu ErrorDataName,pos={15,127},size={265,21},proc=IR2C_PanelPopupControl,title="Error Wave   ", help={"Select wave with error data"}, bodywidth=200
+	PopupMenu ErrorDataName,pos={15,126},size={265,21},proc=IR2C_PanelPopupControl,title="Error Wave   ", help={"Select wave with error data"}, bodywidth=200
 	execute("PopupMenu ErrorDataName,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\")")
 
 	SetVariable Qmin, pos={8,60},size={220,20}, proc=IR2C_ModelQSetVarProc,title="Min value for Q [A]   ", help={"Value of Q min "}
@@ -727,6 +730,28 @@ end
 Function IR2C_NamesSetVarProc(SV_Struct) : SetVariableControl
 	STRUCT WMSetVariableAction &SV_Struct
 
+	if(SV_Struct.eventcode==1 || SV_Struct.eventcode==2)
+		string TopPanel
+		TopPanel = SV_Struct.win
+		SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
+		string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations)
+		NVAR/Z SetTimeOfIndraFoldersStr = $(CntrlLocation+":SetTimeOfIndraFoldersStr")
+		NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
+		NVAR/Z SetTimeOfResultsFoldersStr = $(CntrlLocation+":SetTimeOfResultsFoldersStr")
+		NVAR/Z SetTimeOfUserDefFoldersStr = $(CntrlLocation+":SetTimeOfUserDefFoldersStr")
+		if(NVAR_Exists(SetTimeOfIndraFoldersStr))
+			SetTimeOfIndraFoldersStr=0
+		endif
+		if(NVAR_Exists(SetTimeOfQFoldersStr))
+			SetTimeOfQFoldersStr=0
+		endif
+		if(NVAR_Exists(SetTimeOfResultsFoldersStr))
+			SetTimeOfResultsFoldersStr=0
+		endif
+		if(NVAR_Exists(SetTimeOfUserDefFoldersStr))
+			SetTimeOfUserDefFoldersStr=0
+		endif
+	endif
 	if(SV_Struct.eventcode<1 || SV_Struct.eventcode>5)
 		return 0
 	endif
@@ -1054,7 +1079,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
 				//really does not like *
-				tempResult=GrepList(tempResult, FolderMatchStr )
+				tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
 			endif
 			//done, now rest...
 			//now prune the folders off the ones which do not contain full triplet of waves...
@@ -1096,7 +1121,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				if(strlen(FolderMatchStr)>0)
 					variable ii
 					for(ii=numpnts(ResultingWave)-1;ii>=0;ii-=1)
-						if(!GrepString(ResultingWave[ii],FolderMatchStr))
+					//	if(!GrepString(ResultingWave[ii],FolderMatchStr))
+						if(!GrepString(ResultingWave[ii],IR2C_PreparematchString(FolderMatchStr)))
 							DeletePoints ii, 1, ResultingWave
 						endif
 					endfor
@@ -1126,7 +1152,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			tempResult=IN2G_FindFolderWithWvTpsList("root:", 10,temp3, 1) //contains list of all folders which contain any of the tested Y waves... But may not contain the whole duplex of waves...
 					//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
-				tempResult=GrepList(tempResult, FolderMatchStr )
+				tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
 			endif
 			//done, now rest...
 			tempResult=IR2P_CleanUpPackagesFolder(tempResult)
@@ -1150,7 +1176,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			tempResult=IN2G_FindFolderWithWvTpsList("root:", 10,LocallyAllowedUserData, 1) //contains list of all folders which contain any of the tested Intensity waves...
 			//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
-				tempResult=GrepList(tempResult, FolderMatchStr )
+				tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
 			endif
 			//done, now rest...
 			tempResult=IR2P_CleanUpPackagesFolder(tempResult)
@@ -1177,22 +1203,22 @@ Function/T IR2P_GenStringOfFolders([winNm])
 		
             //match to user mask using greplist
             if(strlen(FolderMatchStr)>0)
-                  result=GrepList(result, FolderMatchStr )
+                  result=GrepList(result, IR2C_PreparematchString(FolderMatchStr) )
             endif
 	endif
 	//create short list...
-	String LastFolderPath, tempStrItem, FolderPath
-	//tempStrItem //= stringFromList(0,result)		//item 0
+	String LastFolderPath, tempStrItem, FolderPath, resultShortWP
+	resultShortWP=""
 	LastFolderPath = ""//		RemoveFromList(stringFromList(ItemsInList(tempStrItem,":")-1, tempStrItem,":"), tempStrItem,":")	//stringFromList(ItemsInList(stringFromList(j,result),":")-1,stringFromList(j,result),":")+";"
-	//LastFolderPath+=" ----------- "
-	//resultShort+=LastFolderPath+" ----------- "+";"
 	for(i=0;i<ItemsInList(result,";");i+=1)
 		tempStrItem = stringFromList(i,result)
 		FolderPath = RemoveFromList(stringFromList(ItemsInList(tempStrItem,":")-1, tempStrItem,":"), tempStrItem,":")
 		if(!stringMatch(FolderPath, LastFolderPath ))
 			resultShort+=FolderPath+" ----------- "+";"
+			resultShortWP+=FolderPath+" ----------- "+";"
 		endif
 		resultShort+=stringFromList(ItemsInList(tempStrItem,":")-1,tempStrItem,":")+";"
+		resultShortWP+=tempStrItem+";"
 		LastFolderPath = FolderPath
 	endfor
 	string/g $(CntrlLocation+":RealLongListOfFolder")
@@ -1200,11 +1226,14 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	RealLongListOfFolder = result
 	string/g $(CntrlLocation+":ShortListOfFolders")
 	SVAR ShortListOfFolders = $(CntrlLocation+":ShortListOfFolders")
-	ShortListOfFolders = resultShort
-//	print StringFromList(21, result )
-//	print ItemsInList(result  )
-//	print StringFromList(21, resultShort )
-//	print ItemsInList(resultShort  )
+	ShortListOfFolders = resultShortWP
+//print "the long one"
+//print resultShortWP
+//print "now the shorter one"
+//print resultShort
+//print "done"
+//print StringFromList(20,resultShortWP)
+//print StringFromList(20,resultShort)
 	setDataFolder OldDf
 	return resultShort
 end
@@ -1325,7 +1354,7 @@ static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames,WNMStr)
 	for(i=0;i<ItemsInList(FullFldrNames);i+=1)
 		FullFldrName = stringFromList(i,FullFldrNames)
 		AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
-//		if(strlen(WNMStr)==0 || GrepString(AllWaves, WNMStr))		//this is not supported for results... Sorry :-)
+//		if(strlen(WNMStr)==0 || GrepString(AllWaves, IR2C_PrepareMatchString(WNMStr)))		//this is not supported for results... Sorry :-)
 			matchX=0
 			tempresult=""
 			For(j=0;j<ItemsInList(LocallyAllowedResultsData);j+=1)
@@ -1401,7 +1430,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 		//allRwaves=IR2P_ListOfWavesOfType("r*",AllWaves)
 		allRwaves=GrepList(AllWaves,"(?i)^r")
 		tempresult=""
-			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, IR2C_PrepareMatchString(WNMStr)))
 				for(j=0;j<ItemsInList(allRwaves);j+=1)
 					matchX=0
 					matchE=0
@@ -1426,7 +1455,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 		//allRwaves=IR2P_ListOfWavesOfType("*i",AllWaves)
 		allRwaves=GrepList(AllWaves,"(?i)i$")
 		tempresult=""
-			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, IR2C_PrepareMatchString(WNMStr)))
 				for(j=0;j<ItemsInList(allRwaves);j+=1)
 					matchX=0
 					matchE=0
@@ -1531,7 +1560,7 @@ static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTy
 			AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
 			allRwaves=IR2P_ListOfWavesOfType(DataTypeSearchedFor,AllWaves)
 			tempresult=""
-			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, IR2C_PrepareMatchString(WNMStr)))
 				for(j=0;j<ItemsInList(allRwaves);j+=1)
 					matchX=0
 					matchE=0
@@ -1556,7 +1585,7 @@ static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTy
 			endif
 		else												//asume Indra2 type system
 			AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
-			if(strlen(WNMStr)==0 || GrepString(allRwaves, WNMStr))
+			if(strlen(WNMStr)==0 || GrepString(allRwaves, IR2C_PrepareMatchString(WNMStr)))
 				matchX=0
 				matchE=0
 				if(stringmatch(";"+AllWaves, "*;"+XwaveType+";*" )||stringmatch(XwaveType,"x-scaling"))
@@ -1731,7 +1760,7 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 	elseif(UseUserDefinedData) 
 		//match the names if user wants...
 		if(strlen(WaveMatchStr)>0)
-			tempResult = GrepList(TempResult, WaveMatchStr)
+			tempResult = GrepList(TempResult, IR2C_PrepareMatchString(WaveMatchStr))
 		endif
 		if(cmpstr(DataType,"Xaxis")==0)
 			for(i=0;i<itemsInList(LocallyAllowedUserData);i+=1)
@@ -1902,9 +1931,9 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 		
 		//match the names if user wants...
 		if(strlen(WaveMatchStr)>0)
-			tempStringX = GrepList(tempStringX, WaveMatchStr)
-			tempStringY = GrepList(tempStringY, WaveMatchStr)
-			tempStringE = GrepList(tempStringE, WaveMatchStr)
+			tempStringX = GrepList(tempStringX, IR2C_PrepareMatchString(WaveMatchStr))
+			tempStringY = GrepList(tempStringY, IR2C_PrepareMatchString(WaveMatchStr))
+			tempStringE = GrepList(tempStringE, IR2C_PrepareMatchString(WaveMatchStr))
 		endif
 		if (cmpstr(DataType,"Yaxis")==0)
 			For (j=0;j<ItemsInList(tempStringY);j+=1)
@@ -2119,11 +2148,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 
 	//part to copy everywhere...	
 	string oldDf=GetDataFolder(1)
-	string TopPanel=Pa.win
-	//WinName(0,65)
-	//GetWindow $(TopPanel), activeSW
-	//TopPanel = S_Value
-	
+	string TopPanel=Pa.win	
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
@@ -2156,6 +2181,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 	SVAR QDf=$(CntrlLocation+":QWaveName")
 	SVAR EDf=$(CntrlLocation+":ErrorWaveName")
 	String infostr = ""
+	string oldpopStr=popStr
 	///endof common block  	
 	//
 
@@ -2166,10 +2192,9 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		if((UseIndra2Structure || UseQRSStructure || UseResults || UseUserDefinedData))
 			IntDf=stringFromList(0,IR2P_ListOfWaves("Yaxis",popStr,TopPanel)+";")		
 			EDf=stringFromList(0,IR2P_ListOfWaves("Error",popStr,TopPanel)+";")
-			//Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
-			//Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
-			Execute ("PopupMenu IntensityDataName mode=1, value=IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
-			Execute ("PopupMenu ErrorDataName mode=1, value=IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
+			//10/27/2013 - changed lies below, why were the top lines commented out when they work (and the ones below do not?)
+			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
+			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
 		endif
 		//now we need to deal with allowing x-scaling...
 		if(cmpstr(popStr,"x-scaling")==0)
@@ -2231,45 +2256,39 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		if(!SVAR_Exists(RealLongListOfFolder))
 			Abort "Stale control procedures. Please, reopen the panel for the tool you are trying to use and try operating once manually. If persists, send this Igor experiment to Jan Ilavsky, ilavsky@aps.anl.gov"
 		endif
-		//let's try to look up using popNum
-		//but we need to find how many paths with "-----------" are here before the popNum
-		variable NumPathLines=0
-		string ShortList
-		SVAR/Z ShortListOfFolders= $(CntrlLocation+":ShortListOfFolders")
-		if(SVAR_Exists(ShortListOfFolders))
-			ShortList=ShortListOfFolders
-		else
-			ShortList=IR2P_GenStringOfFolders(winNm=TopPanel)
-		endif
-		For(i=0;i<popNum;i+=1)
-			if(stringmatch(StringFromList(i, ShortList),"*----------*"))
-				NumPathLines+=1
+		
+		if(popNum>=0)
+			//let's try to look up using popNum
+			//but we need to find how many paths with "-----------" are here before the popNum
+			//variable NumPathLines=0
+			string ShortList
+			SVAR/Z ShortListOfFolders= $(CntrlLocation+":ShortListOfFolders")
+			if(SVAR_Exists(ShortListOfFolders))
+				ShortList=ShortListOfFolders
+			else
+				ShortList=IR2P_GenStringOfFolders(winNm=TopPanel)
 			endif
-		endfor
-	//	print ShortList
-///		print popNum
-//		print NumPathLines
-//		print popNum-NumPathLines-2
-//		print StringFromList(popNum-NumPathLines-2, RealLongListOfFolder)
-//		//fix the short name of the folder...
-//		string oldpopStr=popStr
-//		string tempStr5=ReplaceString("[", popStr, "\[")
-//		tempStr5=ReplaceString("]", tempStr5, "\]")
-//		tempStr5=ReplaceString("(", tempStr5, "\(")
-//		tempStr5=ReplaceString(")", tempStr5, "\)")
-//		popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
-//		if(ItemsInList(popStr , ";")>1)
-//			For(i=0;i<ItemsInList(popStr , ";");i+=1)
-//				tempStr5 = StringFromList(i,popStr,";")
-//				if(stringmatch(oldpopStr,StringFromList(ItemsInList(tempStr5,":")-1,tempStr5,":")))
-//					popStr=tempStr5
-//					//break
-//				endif
-//			endfor
-//		endif
-//		popStr=RemoveEnding(popStr, ";")
+			popStr=StringFromList(popNum-2, ShortListOfFolders)	//one for "---" and one for 0 vs 1 based info. 
+		else
+			//fix the short name of the folder... - old method which uses name to keep compatible with other code... 
+			oldpopStr=popStr
+			string tempStr5=ReplaceString("[", popStr, "\[")
+			tempStr5=ReplaceString("]", tempStr5, "\]")
+			tempStr5=ReplaceString("(", tempStr5, "\(")
+			tempStr5=ReplaceString(")", tempStr5, "\)")
+			popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
+			if(ItemsInList(popStr , ";")>1)
+				For(i=0;i<ItemsInList(popStr , ";");i+=1)
+					tempStr5 = StringFromList(i,popStr,";")
+					if(stringmatch(oldpopStr,StringFromList(ItemsInList(tempStr5,":")-1,tempStr5,":")))
+						popStr=tempStr5
+						//break
+					endif
+				endfor
+			endif
+			popStr=RemoveEnding(popStr, ";")
+		endif
 		// the 2 to subtract here... One of for "---" and second because popNum is 1 based, while StringFromList is 0 based.  
-		popStr=StringFromList(popNum-NumPathLines-2, RealLongListOfFolder)
 		String tempDf=GetDataFolder(1)
 		setDataFolder root:Packages:IrenaControlProcs
 		setDataFolder $(TopPanel)
@@ -2280,6 +2299,18 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		SVAR TempEList 
 		setDataFolder tempDF
 		Dtf=popStr
+		if(stringmatch(oldpopStr,"---"))
+			QDf="---"
+			IntDf="---"
+			EDf="---"
+			TempXList="---"
+			TempYList="---"
+			TempEList="---"
+			Execute ("PopupMenu IntensityDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
+			Execute ("PopupMenu QvecDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
+			Execute ("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			return 0
+		endif
 		TempXList=IR2P_ListOfWaves("Xaxis","*",TopPanel)
 		QDf=stringFromList(0,TempXlist)
 		TempYlist=IR2P_ListOfWaves("Yaxis","*",TopPanel)
@@ -2287,14 +2318,11 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		TempEList=IR2P_ListOfWaves("Error","*",TopPanel)
 		EDf=stringFromList(0,TempElist)
 		if(strlen(WaveMatchStr)>0 && strlen(TempXList)>5)		
-			TempXList=GrepList(TempXList,WaveMatchStr)	
+			TempXList=GrepList(TempXList,IR2C_PrepareMatchString(WaveMatchStr))	
 			if(strlen(TempXList)<1)
 				TempXList="---;"	
 			endif
 		endif
-//		Execute ("PopupMenu IntensityDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
-//		Execute ("PopupMenu QvecDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
-//		Execute ("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 		if (UseIndra2Structure)
 			QDf=stringFromList(0,TempXlist)
 			IntDf=stringFromList(0,TempYlist)
@@ -2304,11 +2332,15 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 		elseif(UseQRSStructure)
 			QDf=stringFromList(0,TempXlist)
-			IntDf=stringFromList(0,TempYlist)
-			EDf=stringFromList(0,TempElist)
-			Execute ("PopupMenu IntensityDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
+			IntDf=stringFromList(0,IR2P_ListOfWaves("Yaxis",QDf,TopPanel)+";")		
+			EDf=stringFromList(0,IR2P_ListOfWaves("Error",QDf,TopPanel)+";")
+		//	IntDf=stringFromList(0,TempYlist)
+		//	EDf=stringFromList(0,TempElist)
+//			Execute ("PopupMenu IntensityDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
-			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+//			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanelFixed+"\"), win="+TopPanel)
+			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanelFixed+"\"), win="+TopPanel)
 		elseif(UseResults)
 			QDf=stringFromList(0,TempXlist)
 			IntDf=stringFromList(0,TempYlist)
@@ -2536,3 +2568,72 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 	
 	return KnownToolResults
 end
+//**********************************************************************************************
+//**********************************************************************************************
+
+Function/S IR2C_PrepareMatchString(StrIn)
+	string StrIn
+	string StrOut = ""
+	variable ic
+	for (ic=0;ic<strlen(StrIn);ic+=1)
+		StrOut = StrOut + IR2C_EscapeCharTable(StrIn[ic])
+	endfor
+	return StrOut
+end
+
+// build your escape code table here
+
+Function/S IR2C_EscapeCharTable(cstr)
+	string cstr
+	string estr = ""
+	strswitch(cstr)
+		case "(":
+			estr = "\\"
+			break
+		case ")":
+			estr = "\\"
+			break
+		case "{":
+			estr = "\\"
+			break
+		case "}":
+			estr = "\\"
+			break
+		case "%":
+			estr = "\\"
+			break
+		case "#":
+			estr = "\\"
+			break
+		case "^":
+			estr = "\\"
+			break
+		case "$":
+			estr = "\\"
+			break
+		case "?":
+			estr = "\\"
+			break
+		case "|":
+			estr = "\\"
+			break
+		case "&":
+			estr = "\\"
+			break
+		case "=":
+			estr = "\\"
+			break
+		case "-":
+			estr = "\\"
+			break
+		case ".":
+			estr = "\\"
+			break
+		default:
+			break
+	endswitch
+	
+	return (estr + cstr)
+end
+//**********************************************************************************************
+//**********************************************************************************************

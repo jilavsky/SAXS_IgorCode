@@ -4,16 +4,26 @@ Code modification history
 -latest stuff first
 ********************************************
 2.53
+Force users to use Igor 6.3x
+Import ASCII - enabled use of following characters in names: (){}%#^$?|&@ 
+Controls procedures - enabled use of following characters in names: (){}%#^$?|&@ 
+… note: this means the Fldr and Wv match fields are now “string match” matching part of the name, cannot use Grep commands with control characters, as I have to escape all of the control characters as they are now considered part of the name…  
+Form factors/Modeling II - added Parallelepiped using NIST XOP. If the XOP is installed, this shape is available and works. Fast… Need to convert more Form factors to XOP, it is fast!
 Data manipulation 1 - fix log rebinning when Q data starts with points where Q<=0. This used to fail. 
 Data manipulation I - added simple method of merging data (for different q ranges). Sets background for Data1 and scales Data2 (and optimizes the two values to get best fit). 
 Data manipulation I - preserve cursor positions through adding data.
 Controls procedures - modified handling Irena results waves, mainly the Y wave. Faster. 
 Controls procedures - modified to avoids showing folders, which are disallowed by use of wave name grep string. This was showing parent folder before, which caused some confusion. 
 Controls procedures - fixed case when it was unable to get to folders with same names in different parent folders. 
+Control procedures - QRS data handling fixes (again…) Minor location of controls fixes. 
+Control procedures - Fixed time delay when the Folder match string was retained for 5 seconds due to cashing. 
+Scripting tool - modified to set cursors to first and last point of data, if they are not set by user ahead of fitting. 
 All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
 Modeling II - added no fitting limits option
+Modeling II - propagates Intensity units through and made GUI changes to match those.
+modeling II - removed option to combine SpehereWithLocallyMonoDispersed Sq and any structure factor (it is nonsense). 
 Modeling II - added optional Constraints input to enable more user control of the fitting and relationships between the parameters.
-Modeling II - Unified levels - added ability tot link B to Rg/G/P based on Hammouda's Guinier/Porod and removed ability to fit RgCO. If anyone needs it, I can add it back.
+Modeling II - Unified levels - added ability to link B to Rg/G/P based on Hammouda's Guinier/Porod and removed ability to fit RgCO. If anyone needs it, I can add it back.
 Modeling II - enabled use of radii or diameters. Changed GUI to simplify and added visual description of what type of distribution is used and which tabs are being used. 
 Modeling II - fixed bug in Analyze uncertainties which caused the code not to read number of fitted points, getting wrong Chi-square range
 Modeling II - fixed the Form factor and Structure factor help file to work also on Windows and fixed it extension. 
@@ -24,6 +34,11 @@ Sizes - Changed all Graph fonts to follow user defined choices. Added option to 
 Main system - added Form factor and Structure factor panels to "Kill all graph & panels" procedure. 
 Plotting Tool I - fixed minor bug caused by Igor Pro behavior change which caused Modify data always to remove at least first and last point. 
 Export ASCII data - modified GUI to be more obvious (user problems) and changed Listbox mode to enable range of data selection for multiple data sets. 
+Import ASCII - Removed error when file being imported has less columns than found originally, if these are not being imported and used.
+Data Manipulation I - disabled Q shift, let’s see if anyone complains. 
+Reflectivity - minor change in behavior, when starting or recovering parameters, it will set all sliders to the middle of their range. 
+Reflectivity - attempted to fix when some users have data with NaNs and attempt to fit to them, which fails. Cleaning up NaNs from data before fit now. 
+ 
 
 2.52 7/23/2013
 Changed back everything to rtGlobals=2, major issues in the code run were found. 

@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.12
-Constant IR2LversionNumber = 1.12
+#pragma version=1.13
+Constant IR2LversionNumber = 1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.12
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 modified to handle Intensity units and propagated theorugh GUI and data export. 
 //1.12 added to Unified levels ability to link B to G/Rg/P values. Removed ability to fit RgCO. 
 //		Added option to rebin the data on import. 
 //1.11 Added change the tab names, noFittingLimits support and changed GUI for SD to gain space. 
@@ -106,7 +107,7 @@ Function IR2L_MainPanel()
 	Button ConfigureGraph, pos={195,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Config Graph", help={"Set parameters for graph"}
 	Button ReGraph, pos={290,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Graph (ReGraph)", help={"Create or Recreate graph"}
 	Button ScriptingTool, pos={290,168},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Scripting tool", help={"Open Scripting tool to analyze multipel data sets subsequently"}
-	Button MoreSDParameters, pos={165,168},size={120,18}, proc=IR2L_InputPanelButtonProc,title="Size Dist. Type", help={"Get panel with size-distribution parameters"}
+	Button MoreSDParameters, pos={5,167},size={140,18}, proc=IR2L_InputPanelButtonProc,title="More parameters", help={"Get panel with more parameters parameters"},valueColor=(65535,0,0)
 
 	CheckBox DisplayInputDataControls,pos={10,188},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Data cntrls", mode=1
 	CheckBox DisplayInputDataControls,variable= root:Packages:IR2L_NLSQF:DisplayInputDataControls, help={"Select to get data controls"}
@@ -121,12 +122,23 @@ Function IR2L_MainPanel()
 	CheckBox NoFittingLimits,variable= root:Packages:IR2L_NLSQF:NoFittingLimits, help={"Check to do fitting without fitting limits."}
 
 
-	CheckBox SameContrastForDataSets,pos={175,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Vary contrasts?"
+	CheckBox SameContrastForDataSets,pos={175,188},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Vary contrasts?"
 	CheckBox SameContrastForDataSets,variable= root:Packages:IR2L_NLSQF:SameContrastForDataSets, help={"Check if contrast varies between data sets for one population?"}
 //	CheckBox DimensionIsDiameter,pos={290,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="SD use Diameters?"
 //	CheckBox DimensionIsDiameter,variable= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter, help={"Check if Size Distribution dimension is diameter?"}
 //	CheckBox UseNumberDistributions,pos={170,200},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Number Dist?"
 //	CheckBox UseNumberDistributions,variable= root:Packages:IR2L_NLSQF:UseNumberDistributions, help={"Use number distributions? Default is volume distributions."}
+	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
+	SetVariable DataCalibrationUnits, variable= root:Packages:IR2L_NLSQF:DataCalibrationUnits, noedit=1,noproc,frame=0, pos={175,204}
+	SetVariable DataCalibrationUnits, title="Units:", valueColor=(65535,0,0),labelBack=0, size={120,15}, help={"Units for Intensity, change with \"More parameetrs\" button"}
+
+//	variable modeVal = 1 + WhichListItem(DataCalibrationUnits, "Arbitrary;cm2/cm3;cm2/g;")
+//	if(modeVal<1||modeVal>3)
+//		modeVal=1
+//	endif
+//	PopupMenu DataUnits title="Units : ",proc=IR2L_PanelPopupControl, pos={280,218}
+//	PopupMenu DataUnits mode=modeVal, value="Arbitrary;cm2/cm3;cm2/g;"
+//	PopupMenu DataUnits help={"Units for data"}
 
 	NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
 	NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
@@ -191,6 +203,7 @@ Function IR2L_MainPanel()
 		IR2L_Data_TabPanelControl("",0)
 	//Confing ASAXS or SAXS part here
 
+	SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation
 	//Dist Tabs definition
 	TabControl DistTabs,pos={2,220},size={400,380},proc=IR2L_Model_TabPanelControl
 	TabControl DistTabs,tabLabel(0)="1 P",tabLabel(1)="2 P"
@@ -298,7 +311,7 @@ Function IR2L_MainPanel()
 
 //particulate controls
 		SetVariable Volume,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Volume_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Volume,pos={8,355},size={140,15},title="Volume = ", help={"Volume of this population (fractional, should be between 0 and 1 if contrast and calibrated data)"} 
+		SetVariable Volume,pos={8,355},size={140,15},title=PanelVolumeDesignation, help={"Volume of this population (fractional, should be between 0 and 1 if contrast and calibrated data)"} 
 		CheckBox FitVolume,pos={155,355},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox FitVolume,variable= root:Packages:IR2L_NLSQF:VolumeFit_pop1, help={"Fit the volume?"}
 		SetVariable VolumeMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:VolumeMin_pop1,noproc
@@ -346,7 +359,7 @@ Function IR2L_MainPanel()
 		SetVariable GMeanSizeMax,pos={290,375},size={80,15},title="Max ", help={"High limit for mean size for Gaussian distribution"} 
 
 		SetVariable GWidth,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:GWidth_pop1,proc=IR2L_PopSetVarProc
-		SetVariable GWidth,pos={8,395},size={140,15},title="Width [A]= ", help={"Gaussian width size [A]"} 
+		SetVariable GWidth,pos={8,395},size={140,15},title="Std. dev. [A]= ", help={"Gaussian Std. dev. of size [A]"} 
 		CheckBox GWidthFit,pos={155,395},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox GWidthFit,variable= root:Packages:IR2L_NLSQF:GWidthFit_pop1, help={"Fit the width for Gaussian distribution?"}
 		SetVariable GWidthMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:GWidthMin_pop1, noproc
@@ -502,10 +515,10 @@ end
 //*****************************************************************************************************************
 
 
-Function ModelingII_MoreDetailsF() : Panel
+Function LSQF2_ModelingII_MoreDetailsF() : Panel
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(188,240,613,383) as "Modeling II more parameters"
-	DoWindow/C ModelingII_MoreDetails
+	DoWindow/C LSQF2_ModelingII_MoreDetails
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)
 	DrawText 108,24,"Set Size distribution parameters"
@@ -515,7 +528,16 @@ Function ModelingII_MoreDetailsF() : Panel
 	CheckBox UseNumberDistributions,pos={13,60},size={278,14},proc=IR2L_DataTabCheckboxProc,title="Size Dist. use Number distribution? (default is volume dist.)"
 	CheckBox UseNumberDistributions,help={"Use number distributions? Default is volume distributions."}
 	CheckBox UseNumberDistributions,variable= root:Packages:IR2L_NLSQF:UseNumberDistributions
-	Button Continue_SDDetails,pos={149,109},size={114,24},proc=IR2L_InputPanelButtonProc,title="Continue"
+	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
+	variable modeVal = 1 + WhichListItem(DataCalibrationUnits, "Arbitrary;cm2/cm3;cm2/g;")
+	if(modeVal<1||modeVal>3)
+		modeVal=1
+	endif
+	PopupMenu DataUnits title="Units : ",proc=IR2L_PanelPopupControl, pos={13,90}
+	PopupMenu DataUnits mode=modeVal, value="Arbitrary;cm2/cm3;cm2/g;"
+	PopupMenu DataUnits help={"Units for data"}
+
+	Button Continue_SDDetails,pos={220,109},size={114,24},proc=IR2L_InputPanelButtonProc,title="Continue"
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
