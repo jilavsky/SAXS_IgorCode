@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
+#pragma version=1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,18 +7,19 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.01 added license for ANL
-//1.02 removed old method of genetic optimization
-//1.03 added Unified level as Form factor
-//1.04 fixed ability to export separate populations data. It was not finished before. 
-//1.05 Add Diffraction peak and Unified level as Populations, increase number of populations to 10
-//1.06 Fixed fitting for Diffraction peaks, when for shapes with only 3 parameters we may have tried to fit 4 parameters (was no checking on peak profile shape).
-//1.07 Added button to the main graph to select fitting range of data directly from graph. 
-//1.08 Modification for Srciting tool of way the fitting function is called. 
- //1.09 fix for checking for the limits, which was done for all parameters (UF/Diff) even when these were not fitted. 
- //1.10 removed all font and font size from panel definitions to enable user control
- //1.11 modified data stored in wavenote to minimize stuff saved there.
+//1.13 	Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor.
  //1.12 added additional fitting constraints 
+ //1.11 modified data stored in wavenote to minimize stuff saved there.
+ //1.10 removed all font and font size from panel definitions to enable user control
+ //1.09 fix for checking for the limits, which was done for all parameters (UF/Diff) even when these were not fitted. 
+//1.08 Modification for Srciting tool of way the fitting function is called. 
+//1.07 Added button to the main graph to select fitting range of data directly from graph. 
+//1.06 Fixed fitting for Diffraction peaks, when for shapes with only 3 parameters we may have tried to fit 4 parameters (was no checking on peak profile shape).
+//1.05 Add Diffraction peak and Unified level as Populations, increase number of populations to 10
+//1.04 fixed ability to export separate populations data. It was not finished before. 
+//1.03 added Unified level as Form factor
+//1.02 removed old method of genetic optimization
+//1.01 added license for ANL
  
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -50,6 +51,7 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 		NVAR GraphYMax = root:Packages:IR2L_NLSQF:GraphYMax
 		SVAR UserDataSetName = $("root:Packages:IR2L_NLSQF:UserDataSetName_set"+num2str(whichDataSet))
 		NVAR RebinDataTo = root:Packages:IR2L_NLSQF:RebinDataTo
+		string WvNote
 		
 	if(strlen(InputFoldrName)<4)
 		abort
@@ -65,12 +67,16 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	if(UseIndra2Data)
 		if(stringmatch(InputIntName, "*SMR*" ) && stringmatch(InputQName,"*SMR*") &&stringmatch(InputErrorName,"*SMR*")  )
 			SlitSmeared_set=1
-			string WvNote=note(inputI)
+			WvNote=note(inputI)
 			SlitLength_set=NumberByKey("SlitLength", WvNote , "=" , ";")
 		else
 			SlitSmeared_set=0
 			SlitLength_set=0
 		endif
+	endif
+	if(whichDataSet==1)
+		WvNote=note(inputI)
+		IR2L_SetDataUnits(StringByKey("Units", WvNote , "=" , ";"))			
 	endif
 	
 	if(!WaveExists(InputI) || !WaveExists(InputQ))
@@ -470,6 +476,7 @@ Function IR2L_FormatInputGraph()
 	NVAR GraphXMax = root:Packages:IR2L_NLSQF:GraphXMax
 	NVAR GraphYMin = root:Packages:IR2L_NLSQF:GraphYMin
 	NVAR GraphYMax = root:Packages:IR2L_NLSQF:GraphYMax
+	SVAR IntCalibrationUnits=root:Packages:IR2L_NLSQF:IntCalibrationUnits
 	DoWindow LSQF_MainGraph
 	if(V_Flag)
 		DoWindow/F LSQF_MainGraph
@@ -480,7 +487,7 @@ Function IR2L_FormatInputGraph()
 		ModifyGraph/Z/W=LSQF_MainGraph log=1
 		ShowInfo/W=LSQF_MainGraph 
 		ModifyGraph/Z/W=LSQF_MainGraph mirror=1
-		Label/Z/W=LSQF_MainGraph left "Intensity [cm\\S-1\\M or arbitrary units]"
+		Label/Z/W=LSQF_MainGraph left "Intensity ["+IntCalibrationUnits+"]"
 		Label/Z/W=LSQF_MainGraph bottom "Q [A\\S-1\\M]"
 		SetAxis/Z left GraphYMin,GraphYMax
 		SetAxis/Z bottom GraphXMin,GraphXMax
@@ -1446,6 +1453,12 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 	SVAR/Z ListOfStrings=root:Packages:IR2L_NLSQF:ListOfStrings
 	SVAR/Z ListOfDataStrings=root:Packages:IR2L_NLSQF:ListOfDataStrings
 	SVAR/Z ListOfPopulationsStrings=root:Packages:IR2L_NLSQF:ListOfPopulationsStrings
+	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
+	SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation
+	SVAR IntCalibrationUnits=root:Packages:IR2L_NLSQF:IntCalibrationUnits
+	SVAR VolDistCalibrationUnits=root:Packages:IR2L_NLSQF:VolDistCalibrationUnits
+	SVAR NumDistCalibrationUnits=root:Packages:IR2L_NLSQF:NumDistCalibrationUnits
+	NVAR UseNumberDistributions = root:Packages:IR2L_NLSQF:UseNumberDistributions
 
 	if(!SVAR_Exists(ListOfVariables) || !SVAR_Exists(ListOfDataVariables) || !SVAR_Exists(ListOfPopulationVariables) || !SVAR_Exists(ListOfStrings) || !SVAR_Exists(ListOfDataStrings) || !SVAR_Exists(ListOfPopulationsStrings))
 		abort "Error in parameters in SaveResultsInDdataFolder routine. Send the file to author for bug fix, please"
@@ -1654,6 +1667,12 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	Wave VolumeDist 	= root:Packages:IR2L_NLSQF:TotalVolumeDist
 	NVAR useModelData  = root:Packages:IR2L_NLSQF:useModelData
 	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
+	SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation
+	SVAR IntCalibrationUnits=root:Packages:IR2L_NLSQF:IntCalibrationUnits
+	SVAR VolDistCalibrationUnits=root:Packages:IR2L_NLSQF:VolDistCalibrationUnits
+	SVAR NumDistCalibrationUnits=root:Packages:IR2L_NLSQF:NumDistCalibrationUnits
+	NVAR UseNumberDistributions = root:Packages:IR2L_NLSQF:UseNumberDistributions
 	
 	string UsersComment, ExportSeparateDistributions
 	UsersComment="Result from LSQF2 Modeling "+date()+"  "+time()
@@ -1712,7 +1731,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 	IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-	IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
+	IN2G_AppendorReplaceWaveNote(tempname,"Units",IntCalibrationUnits)
 	note/NOCR MytempWave, WaveNoteText
 	Redimension/D MytempWave
 		
@@ -1750,7 +1769,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 	IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-	IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm3")
+	IN2G_AppendorReplaceWaveNote(tempname,"Units",NumDistCalibrationUnits)
 	note/NOCR MytempWave, WaveNoteText
 	Redimension/D MytempWave
 	if(DimensionIsDiameter)
@@ -1762,7 +1781,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 	IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-	IN2G_AppendorReplaceWaveNote(tempname,"Units","fraction")
+	IN2G_AppendorReplaceWaveNote(tempname,"Units",VolDistCalibrationUnits)
 	note/NOCR MytempWave, WaveNoteText
 	Redimension/D MytempWave
 	if(DimensionIsDiameter)
@@ -1803,7 +1822,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
+				IN2G_AppendorReplaceWaveNote(tempname,"Units",IntCalibrationUnits)
 				note MytempWave, WaveNoteText
 				Redimension/D MytempWave
 
@@ -1841,7 +1860,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm3")
+				IN2G_AppendorReplaceWaveNote(tempname,"Units",NumDistCalibrationUnits)
 				note MytempWave, WaveNoteText
 				Redimension/D MytempWave
 				if(DimensionIsDiameter)
@@ -1853,7 +1872,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
 				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","fraction")
+				IN2G_AppendorReplaceWaveNote(tempname,"Units",VolDistCalibrationUnits)
 				note MytempWave, WaveNoteText
 				Redimension/D MytempWave
 				if(DimensionIsDiameter)
@@ -2299,7 +2318,11 @@ Function IR2L_RecordModelResults(which)
 		
 	if(UseThePop)
 		IR1L_AppendAnyText("Used population "+num2str(i)+",  listing of parameters:\r")
-			ListOfPopulationVariables="Volume;Mean;Mode;Median;FWHM;"	
+		SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation	
+		NVAR testVar = $("Volume"+"_pop"+num2str(i))
+		IR1L_AppendAnyText(PanelVolumeDesignation+"_pop"+num2str(i)+"\t=\t"+num2str(testVar))
+		
+		ListOfPopulationVariables="Mean;Mode;Median;FWHM;"	
 			for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
 				NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
 				IR1L_AppendAnyText(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i)+"\t=\t"+num2str(testVar))
@@ -2309,27 +2332,15 @@ Function IR2L_RecordModelResults(which)
 			SVAR PopSizeDistShape = $("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(i))		
 				if(stringmatch(PopSizeDistShape, "Gauss") )
 					IR1L_AppendAnyText("DistributionShape_pop"+num2str(i)+"\t=\tGauss;")
-					//NVAR GMeanSize =  $("root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(i))	
-					//IR1L_AppendAnyText("GaussMean_pop"+num2str(i)+"\t=\t"+num2str(GMeanSize))
 					Ir2L_WriteOneFitVarPop("GMeanSize", i)
-					//NVAR GWidth =  $("root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(i))	
-					//IR1L_AppendAnyText("GaussWidth_pop"+num2str(i)+"\t=\t"+num2str(GWidth))
 					Ir2L_WriteOneFitVarPop("GWidth", i)
 				elseif(stringmatch(PopSizeDistShape, "LogNormal" ))
 					IR1L_AppendAnyText("DistributionShape_pop"+num2str(i)+"\t=\tLogNormal;")
-					//NVAR LNMinSize =  $("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(i))	
 					Ir2L_WriteOneFitVarPop("LNMinSize", i)
-					//IR1L_AppendAnyText("LogNormalMin_pop"+num2str(i)+"\t=\t"+num2str(LNMinSize))
-					//NVAR LNMeanSize =  $("root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(i))	
 					Ir2L_WriteOneFitVarPop("LNMeanSize", i)
-					//IR1L_AppendAnyText("LogNormalMean_pop"+num2str(i)+"\t=\t"+num2str(LNMeanSize))
-					//NVAR LNSdeviation =  $("root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(i))	
-					//IR1L_AppendAnyText("LogNormalSdeviation_pop"+num2str(i)+"t=\t"+num2str(LNSdeviation))
 					Ir2L_WriteOneFitVarPop("LNSdeviation", i)
 				else //LSW
 					IR1L_AppendAnyText("DistributionShape_pop"+num2str(i)+"=LSW;")
-					//NVAR LSWLocation =  $("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(i))	
-					//IR1L_AppendAnyText("LSWLocation_pop"+num2str(i)+"\t=\t"+num2str(LSWLocation))				
 					Ir2L_WriteOneFitVarPop("LSWLocation", i)
 				endif
 					
@@ -2440,6 +2451,60 @@ end
 //*****************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR2L_SetDataUnits(UnitString)
+	string UnitString
+	
+	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
+	SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation
+	SVAR IntCalibrationUnits=root:Packages:IR2L_NLSQF:IntCalibrationUnits
+	SVAR VolDistCalibrationUnits=root:Packages:IR2L_NLSQF:VolDistCalibrationUnits
+	SVAR NumDistCalibrationUnits=root:Packages:IR2L_NLSQF:NumDistCalibrationUnits
+	NVAR UseNumberDistributions = root:Packages:IR2L_NLSQF:UseNumberDistributions
+	if(strlen(UnitString)<2||stringMatch(UnitString,"arbitrary"))
+		DataCalibrationUnits="Arbitrary"
+		PanelVolumeDesignation="Scale        "
+		IntCalibrationUnits="Arbitrary"
+		VolDistCalibrationUnits="Arbitrary"
+		NumDistCalibrationUnits="Arbitrary"
+	elseif(strlen(UnitString)<2||stringMatch(UnitString,"cm2/cm3"))
+		DataCalibrationUnits="cm2/cm3"
+		PanelVolumeDesignation="Fract. [c*(1-c)]"
+		IntCalibrationUnits="cm\S2\M/cm\S3\M"
+		VolDistCalibrationUnits="Fraction [c*(1-c)]"
+		NumDistCalibrationUnits="N/cm3"
+	elseif(strlen(UnitString)<2||stringMatch(UnitString,"cm2/g"))
+		DataCalibrationUnits="cm2/g"
+		PanelVolumeDesignation="Vol (cm3/g)"
+		IntCalibrationUnits="cm\S2\M/g\M"
+		VolDistCalibrationUnits="cm3/g"
+		NumDistCalibrationUnits="N/g"
+	else
+		DataCalibrationUnits="Arbitrary"
+		PanelVolumeDesignation="Scale"
+		IntCalibrationUnits="Arbitrary"
+		VolDistCalibrationUnits="Arbitrary"
+		NumDistCalibrationUnits="Arbitrary"
+	endif
+
+	//set popup with units....
+	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
+	variable modeVal = 1 + WhichListItem(DataCalibrationUnits, "Arbitrary;cm2/cm3;cm2/g;")
+	if(modeVal<1||modeVal>3)
+		modeVal=1
+	endif
+	SetVariable Volume,win=LSQF2_MainPanel,title=PanelVolumeDesignation	
+	
+	
+	DoWIndow LSQF2_ModelingII_MoreDetails
+	if(V_Flag)
+		PopupMenu DataUnits win=LSQF2_ModelingII_MoreDetails, mode=modeVal
+	endif
+	DoWIndow LSQF_MainGraph
+	if(V_Flag)
+		IR2L_FormatInputGraph()
+	endif
+end
+
 //*****************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

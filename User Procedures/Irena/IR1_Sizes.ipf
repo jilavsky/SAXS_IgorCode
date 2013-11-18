@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.13
+#pragma version = 2.14
 Constant IR1RSversionNumber=2.13
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.14 modified Tag position with results, keeps runnign out of frame. 
 //2.13 added automatic run of "Calculate parameters" after succesful run. Changed all graph fonts to follow the User defined settings.   
 //2.12 added RebinDataTo option on import to change data binning if needed. 
 //2.11 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
@@ -3377,7 +3378,7 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 	tagText += "Median diameter = "+num2str(medianDia)+"\r"
 	tagText += "Range of diameters from "+num2str(MyXWave[pcsr(A)])+"  to " +num2str(MyXWave[pcsr(B)])+"  [A]"
 	
-	Tag/C/N=Label1/A=LB/X=-10.00/Y=40.00/B=1 CurrentResultSizeDistribution, (pcsr(A) + pcsr(B))/2,tagText
+	Tag/C/N=Label1/A=LB/X=-10.00/Y=5.00/B=1 CurrentResultSizeDistribution, (pcsr(A) + pcsr(B))/2,tagText
 	if(movedCursors)
 		if(numtype(OrigStartPointA)==0)
 			Cursor  /P /W=IR1R_SizesInputGraph A  IntensityOriginal  OrigStartPointA

@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.47
+#pragma version=2.48
 constant IR3MversionNumber = 2.39			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
+constant IR1DversionNumber = 2.41			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.40			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.41 disabled Q shift in Modeling I, let's see if anyone complains... 
 //2.47 fixed step for Modeling I Data 2
 //2.46 slight modification of IR1D_rebinData for use by Modeling II, Size Distribution and Unified fit. 
 //2.45 Data Manipulation I - added Merge data feature and preserve cursor position through data adding. Changed steps in GUI for Int multipliers and background.
@@ -171,7 +172,7 @@ Proc IR1D_DataManipulationPanel()
 	SetVariable Data1_IntMultiplier, value= root:Packages:SASDataModification:Data1_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
 	SetVariable Data1_Background, pos={5,360}, size={150,15},title="Sbtrct bckg   ", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data1_Background)}
 	SetVariable Data1_Background, value= root:Packages:SASDataModification:Data1_Background,help={"Subtract bacground from intensity"}
-	SetVariable Data1_Qshift, pos={5,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc
+	SetVariable Data1_Qshift, pos={5,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=2
 	SetVariable Data1_Qshift, value= root:Packages:SASDataModification:Data1_Qshift,help={"Offset in Q by"}
 	SetVariable Data1_ErrMulitplier, pos={5,392}, size={150,15},title="Error multiplier", proc=IR1D_setvarProc
 	SetVariable Data1_ErrMulitplier, value= root:Packages:SASDataModification:Data1_ErrMultiplier,help={"Multiply intesnity by"}
@@ -180,7 +181,7 @@ Proc IR1D_DataManipulationPanel()
 	SetVariable Data2_IntMultiplier, value= root:Packages:SASDataModification:Data2_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
 	SetVariable Data2_Background, pos={185,360}, size={150,15},title="Sbtrct bckg   ", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_Background)}
 	SetVariable Data2_Background, value= root:Packages:SASDataModification:Data2_Background,help={"Subtract bacground from intensity"}
-	SetVariable Data2_Qshift, pos={185,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc
+	SetVariable Data2_Qshift, pos={185,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=2
 	SetVariable Data2_Qshift, value= root:Packages:SASDataModification:Data2_Qshift,help={"Offset in Q by"}
 	SetVariable Data2_ErrMulitplier, pos={185,392}, size={150,15},title="Error multiplier", proc=IR1D_setvarProc
 	SetVariable Data2_ErrMulitplier, value= root:Packages:SASDataModification:Data2_ErrMultiplier,help={"Multiply intesnity by"}

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
+#pragma version=1.15
 Constant IR2RversionNumber=1.14
 
 //*************************************************************************\
@@ -8,20 +8,21 @@ Constant IR2RversionNumber=1.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.01 added license for ANL
-//1.02 removed old method of Genetic optimization
-//1.03 fixed minor bug when SLD step change disalowed negative SLDs
-//1.04 added ability to export Model result to new folder if there are no input data.  
-//1.05 added double precision ParametersIn wave as seems to be needed by new version of Abeles.xop, added to check version for panesl and widened range of thicknesses displayed. 
-//1.06 removed all font and font size from panel definitions to enable user control
-//1.07 added information about Motofit and using new Andrew Melsons function speeded up by ~ 40x
-//1.08 added sliders to control the parameters. Seems to work very well, need testing.  Added ability to use dq as resolution wave, not only % resolution. 
-//1.09 added ability to link parameters. Major change in GUI. Added saving fitting uncertainities into already existing "Error" variables. Made many functions static.  
-//1.10 added Remove/Insert layer capability, made minor change which increases speed by about 20% when all imaginary SLDs are set to 0 (neutrons typically).  
-//1.11 added Motofit data types for convenience. 
-//1.12 modified panel to be scrollable
-//1.13 modifed to remove xop dependence. Now it will compile without xop but complain on run, if xop is not installed. 
+//1.15 added fixlimits on start to move al sliders into the middle of their range. Attempted to fix problems with some users fitting data with NaNs by cleaning up data before fit. 
 //1.14 added option to oversample the data, with this choise selected the model will have 5x as many points. 
+//1.13 modifed to remove xop dependence. Now it will compile without xop but complain on run, if xop is not installed. 
+//1.12 modified panel to be scrollable
+//1.11 added Motofit data types for convenience. 
+//1.10 added Remove/Insert layer capability, made minor change which increases speed by about 20% when all imaginary SLDs are set to 0 (neutrons typically).  
+//1.09 added ability to link parameters. Major change in GUI. Added saving fitting uncertainities into already existing "Error" variables. Made many functions static.  
+//1.08 added sliders to control the parameters. Seems to work very well, need testing.  Added ability to use dq as resolution wave, not only % resolution. 
+//1.07 added information about Motofit and using new Andrew Melsons function speeded up by ~ 40x
+//1.06 removed all font and font size from panel definitions to enable user control
+//1.05 added double precision ParametersIn wave as seems to be needed by new version of Abeles.xop, added to check version for panesl and widened range of thicknesses displayed. 
+//1.04 added ability to export Model result to new folder if there are no input data.  
+//1.03 fixed minor bug when SLD step change disalowed negative SLDs
+//1.02 removed old method of Genetic optimization
+//1.01 added license for ANL
 
 Function IR2R_ReflectivitySimpleToolMain()
 
@@ -39,6 +40,7 @@ Function IR2R_ReflectivitySimpleToolMain()
 	print "The reflectometry analysis in IRENA is based on functionality from the Motofit package (written by Andrew Nelson, www.sourceforge.net/projects/motofit)."
 	print "If you use this functionality please cite the Motofit paper [J. Appl. Cryst. 39, 273-276]"
 	print "*****"
+	IR2R_FixLimits()
 end
 
 
@@ -1262,7 +1264,9 @@ End
 
 
 //Control procedures for simple tool Mottfit 
-
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
@@ -1818,6 +1822,7 @@ Function IR2R_InputPanelButtonProc(ctrlName) : ButtonControl
 				IR2R_CalculateModelResults()
 				IR2R_CalculateSLDProfile()
 				IR2R_GraphModelResults()
+				IR2R_FixLimits()
 			endif
 		else
 			Abort "Data not selected properly"
@@ -1883,7 +1888,7 @@ static Function IR2R_FixLimits()
 			NVAR ValueVarLL=$("root:Packages:Refl_SimpleTool:"+tempVarName+"LL"+num2str(i))
 			NVAR ValueVarUL=$("root:Packages:Refl_SimpleTool:"+tempVarName+"UL"+num2str(i))
 			ValueVarLL = ValueVar/2
-			ValueVarUL = ValueVar*2
+			ValueVarUL = ValueVar*1.5
 			Execute("Slider "+tempVarName+"SL"+num2str(i)+" limits={"+num2str(ValueVarLL)+","+num2str(ValueVarUL)+",0}")
 		endfor
 	endfor
@@ -1894,7 +1899,7 @@ static Function IR2R_FixLimits()
 			NVAR ValueVarLL=$("root:Packages:Refl_SimpleTool:"+tempVarName+"LL")
 			NVAR ValueVarUL=$("root:Packages:Refl_SimpleTool:"+tempVarName+"UL")
 			ValueVarLL = ValueVar/2
-			ValueVarUL = ValueVar*2
+			ValueVarUL = ValueVar*1.5
 	endfor
 
 end
@@ -2530,13 +2535,20 @@ static Function IR2R_SimpleToolFit()
 			cursor B OriginalIntensity binarysearch(OriginalQvector,temp)
 		endif
 		
-		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave, ErrorFractionWave, tempFitWv		
+		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
-		tempFitWv=NaN
 		if(UseResolutionWave)
 			Duplicate/O/R=[pcsr(A),pcsr(B)] ResolutionWave, FitResolutionWave	
 		endif
+		if(UseResolutionWave)
+			IN2G_RemoveNaNsFrom4Waves(FitIntensityWave,FitQvectorWave,FitErrorWave,FitResolutionWave)
+		else
+			IN2G_RemoveNaNsFrom3Waves(FitIntensityWave,FitQvectorWave,FitErrorWave)
+		endif
+		Duplicate/O FitIntensityWave, ErrorFractionWave, tempFitWv		
+		tempFitWv=NaN
+
 		ErrorFractionWave = FitErrorWave / FitIntensityWave
 		FitIntensityWave = FitIntensityWave * FitQvectorWave^FitIQN
 		FitErrorWave = FitIntensityWave * ErrorFractionWave 
@@ -2567,13 +2579,19 @@ static Function IR2R_SimpleToolFit()
 			endif
 		endif
 	else		//no cursors used....
-		Duplicate/O OriginalIntensity, FitIntensityWave, ErrorFractionWave, tempFitWv	
+		Duplicate/O OriginalIntensity, FitIntensityWave	
 		Duplicate/O OriginalQvector, FitQvectorWave
 		Duplicate/O OriginalError, FitErrorWave
-		tempFitWv=NaN
 		if(UseResolutionWave)
 			Duplicate/O ResolutionWave, FitResolutionWave	
 		endif
+		if(UseResolutionWave)
+			IN2G_RemoveNaNsFrom4Waves(FitIntensityWave,FitQvectorWave,FitErrorWave,FitResolutionWave)
+		else
+			IN2G_RemoveNaNsFrom3Waves(FitIntensityWave,FitQvectorWave,FitErrorWave)
+		endif
+		Duplicate/O FitIntensityWave, ErrorFractionWave, tempFitWv		
+		tempFitWv=NaN
 		ErrorFractionWave = FitErrorWave / FitIntensityWave
 		FitIntensityWave = FitIntensityWave * FitQvectorWave^FitIQN
 		FitErrorWave = FitIntensityWave * ErrorFractionWave
@@ -3024,7 +3042,7 @@ static Function IR2R_ResRecalculateResolution()
 	SVAR DataFolderName
 	SVAR QWavename
 	SetDataFolder $(DataFolderName)
-	Wave Qwave=$(QWavename)
+	Wave Qwave=root:Packages:Refl_SimpleTool:OriginalQvector
 	Wave ResWv=CreatedFromParamaters
 	setDataFolder root:Packages:Refl_SimpleTool
 

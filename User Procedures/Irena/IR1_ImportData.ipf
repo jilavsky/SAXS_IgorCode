@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.19
 Constant IR1IversionNumber = 2.18
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
@@ -8,6 +8,8 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.19 Removed error when file being imported has less columns than found originally, if these are not being imported and used.
+//		enabled use of following characters in names: (){}%#^$?|&@
 //2.18 modified log-rebinning to use more simple log-scale, control parameter is removed. Changed to rtGlobals=2
 //         modified so any separator and leading spaces are removed when storing header info in wave note. 
 //         Remove negative intensities now removes 0 also (Int<=0 are removed). Same for Q<=0. 
@@ -553,6 +555,7 @@ Function IR1I_NameImportedWaves(selectedFile)
 	NVAR FoundNWaves = root:Packages:ImportData:FoundNWaves
 	NVAR TrunkateStart = root:Packages:ImportData:TrunkateStart
 	NVAR TrunkateEnd = root:Packages:ImportData:TrunkateEnd
+	variable GenError=0
 
 	if(!SkipLines)			//lines automatically skipped, so the header may make sense, add to header...
 	        Open/R/P=ImportDataPath refNum as selectedFile
@@ -598,17 +601,24 @@ Function IR1I_NameImportedWaves(selectedFile)
 			numOfQErrs+=1
 		endif
 		if(!WaveExists(CurrentWave))
+			GenError=0
 			string Messg="Error, the column of data selected did not exist in the data file. The missing column is : "
 			if(testIntStr)
 				Messg+="Intensity"
+				GenError=1
 			elseif(testQvecStr)
 				Messg+="Q vector"
+				GenError=1
 			elseif(testErrStr)
 				Messg+="Error"
+				GenError=1
 			elseif(testQErrStr)
 				Messg+="Q Error"
+				GenError=1
 			endif
-			DoAlert 0, Messg 
+			if(GenError)
+				DoAlert 0, Messg 
+			endif
 		endif
 	endfor
 	if (numOfInts!=1 || numOfQs!=1 || numOfErrs>1|| numOfQErrs>1)
@@ -845,13 +855,13 @@ end
 Function/S IR1I_RemoveBadCharacters(StringName)
 	string StringName
 	
-	//here we can clean up waht Igor allows but would be major problem with my code, such as ( or ) from names
-	make/Free/T/N=0 ListOfBadChars
-	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@"}
-	variable i
-	For (i=0;i<numpnts(ListOfBadChars);i+=1)
-		StringName = ReplaceString(ListOfBadChars[i], StringName, "_" )
-	endfor
+	//here we can clean up what Igor allows but would be major problem with my code, such as ( or ) from names
+//	make/Free/T/N=0 ListOfBadChars
+//	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@"}
+//	variable i
+//	For (i=0;i<numpnts(ListOfBadChars);i+=1)
+//		StringName = ReplaceString(ListOfBadChars[i], StringName, "_" )
+//	endfor
 	return StringName
 end
 //************************************************************************************************************

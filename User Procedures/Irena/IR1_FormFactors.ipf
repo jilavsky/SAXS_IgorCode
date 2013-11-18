@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.25
+#pragma version=2.26
 
 
 //*************************************************************************\
@@ -8,21 +8,23 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.11 added license for ANL
-//2.12 removed minor bug in Cylinder FF
-//2.13 added Core-shell-shell FF
-//2.14 Converted much of the code to thread safe functions to increase speed, reduced number of point in cylinder integration to 181 from 500, seemed too much. Changed all temp waves to /free
-//2.15 fixed check for no change, when for cases with very few points in R (less than 5) the check was failing. 
-//2.16 COreShellCylinder should now be multicore
-//2.17 changed old obsolete BessJ into Besselj - newer implementation in Igor Pro
-//2.18 added SphereWHSLocMonoSq - requested by masato, this is sphere with Hard spheres Percus-Yevic structure factor which has distance which is related linearly to size of the sphere itself. 
-//2.19 removed algebraic form factor and added Janus Core Shell micelles, added special list of form factor for Size Distribution, which cannot handle complex shapes (and should not)... 
-//2.20 Added Form and Structure factor description as Igor Help file. 
-//2.21 FIxed Janus FF micelle and added version 3 - core as particle shape
-//2.22 Significantly reduced the form factors availabe to Size distribution tool. Complicated FF make no sense. 
-//2.23 Added CoreShellPrecipitate FF
-//2.24 added support for "No fitting limits" GUI option.
+//2.26 added Rectangular Parallelepiped (cuboid and other similar shapes) USING NIST XOP - IF the XOP is installed, Parallelpiped is available. Fast, need to convert more FFs to this... 
 //2.25 fixed minor glitch when some form factor screen could be initiealized with nan as parameter name, which causes major problems numbericaly for AUtoupdate settings. 
+//2.24 added support for "No fitting limits" GUI option.
+//2.23 Added CoreShellPrecipitate FF
+//2.22 Significantly reduced the form factors availabe to Size distribution tool. Complicated FF make no sense. 
+//2.21 FIxed Janus FF micelle and added version 3 - core as particle shape
+//2.20 Added Form and Structure factor description as Igor Help file. 
+//2.19 removed algebraic form factor and added Janus Core Shell micelles, added special list of form factor for Size Distribution, which cannot handle complex shapes (and should not)... 
+//2.18 added SphereWHSLocMonoSq - requested by masato, this is sphere with Hard spheres Percus-Yevic structure factor which has distance which is related linearly to size of the sphere itself. 
+//2.17 changed old obsolete BessJ into Besselj - newer implementation in Igor Pro
+//2.16 COreShellCylinder should now be multicore
+//2.15 fixed check for no change, when for cases with very few points in R (less than 5) the check was failing. 
+//2.14 Converted much of the code to thread safe functions to increase speed, reduced number of point in cylinder integration to 181 from 500, seemed too much. Changed all temp waves to /free
+//2.13 added Core-shell-shell FF
+//2.12 removed minor bug in Cylinder FF
+//2.11 added license for ANL
+
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix
@@ -79,6 +81,7 @@
 // it is text function... 
 
 static constant JanusCoreShellMicNumIngtPnts=66		//weird, with 40 there are specific radii where code fails to produces NaN
+static constant PerpParallelepipedPnts=180
 
 Function IR1T_InitFormFactors()
 	//here we initialize the form factor calculations
@@ -88,7 +91,10 @@ Function IR1T_InitFormFactors()
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
 	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
-	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;"
+	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;"//"
+#if exists("ParallelepipedX")
+	ListOfFormFactors+="---NIST XOP : ;RectParallelepiped;"
+#endif	
 	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
 	string/g CoreShellVolumeDefinition
 	SVAR CoreShellVolumeDefinition			//this will be user choice for definition of volume of core shell particle: "Whole particle;Core;Shell;", NIST standard definition is Whole particle, default... 
@@ -228,6 +234,10 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 		//							CoreRho=ParticlePar3			// rho for core material
 		//							Shell1Rho=ParticlePar4			// rho for shell 1 material
 		//							Shell2Rho=particlePar5			// rho for shell 2 material
+		//RectParallelepiped			//needs side and two scaling paramaters
+		//							SideBScale =ParticlePar1		// B = A * P1
+		//							SideCScale=ParticlePar2			// C = A * P2
+	
 		
 		//Fractal aggregate	 	FractalRadiusOfPriPart=ParticlePar1=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
 		//						FractalDimension=ParticlePar2=root:Packages:Sizes:FractalDimension			//Fractal dimension
@@ -406,7 +416,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						//TempWave*=IR1T_SphereVolume(currentR)		//----------	Volume included in the above procedure due to integration
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
-			elseif (cmpstr(ParticleModel,"Unified_Disk")==0 || cmpstr(ParticleModel,"Unified_Disc")==0)						// cylinder
+			elseif (cmpstr(ParticleModel,"Unified_Disk")==0 || cmpstr(ParticleModel,"Unified_Disc")==0)						// Unified disk
 				thickness=ParticlePar1
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
@@ -422,7 +432,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						TempWave*=IR1T_UnifiedRodVolume(currentR,length,0,0,0,0)^VolumePower		
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
-			elseif (cmpstr(ParticleModel,"Unified_Tube")==0)						// cylinder
+			elseif (cmpstr(ParticleModel,"Unified_Tube")==0)						// Unified tube
 				length=ParticlePar1
 				Thickness=ParticlePar2
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
@@ -431,7 +441,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						TempWave*=IR1T_UnifiedTubeVolume(currentR,length,thickness,0,0,0)^VolumePower		
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
-			elseif (cmpstr(ParticleModel,"Unified_RodAR")==0)						// cylinder
+			elseif (cmpstr(ParticleModel,"Unified_RodAR")==0)						// Unified rod
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
 						length=ParticlePar1*2*currentR						//this is length = 2 * AR * R
@@ -439,13 +449,38 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						TempWave*=IR1T_UnifiedRodVolume(currentR,length,0,0,0,0)^VolumePower		
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
-			elseif (cmpstr(ParticleModel,"Unified_Sphere")==0)						// cylinder
+			elseif (cmpstr(ParticleModel,"Unified_Sphere")==0)						// Unified sphere
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
 						TempWave=(IR1T_UnifiedSphereFF(Q_vec[p],currentR,thickness,0,0,0,0 ) )^2
 						TempWave*=IR1T_UnifiedsphereVolume(currentR,thickness,0,0,0,0)^VolumePower	
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
+			elseif (cmpstr(ParticleModel,"RectParallelepiped")==0)						// parralelepiped
+#if Exists("ParallelepipedX")
+						make/O/N=6/D RecParallParams
+						Make/Free/N=3 RecParallSidePars
+						RecParallSidePars={2,2*ParticlePar1,2*ParticlePar2}
+						Sort RecParallSidePars, RecParallSidePars
+						For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
+							currentR=R_dist[i]								//this is current radius
+							//	 Input (fitting) variables are:
+							//[0] scale factor
+							//[1] Edge A (A)
+							//[2] Edge B (A)
+							//[3] Edge C (A)
+							//[4] contrast (A^-2)
+							//[5] incoherent background (cm^-1)
+							RecParallParams={1,currentR*RecParallSidePars[0],currentR*RecParallSidePars[1],currentR*RecParallSidePars[2],1e-4,0}
+							MultiThread TempWave = ParallelepipedX(RecParallParams,Q_vec)
+							//TempWave=(IR1T_RecParallFormFactor(Q_vec[p],currentR,ParticlePar1,ParticlePar2,0,0,0 ) )^2
+							TempWave*=IR1T_RecParallVolume(currentR,ParticlePar1,ParticlePar2,0,0,0)^(VolumePower-1)	//one is already done in the xop. 
+							Gmatrix[][i]=TempWave[p]							//and here put it into G wave
+						endfor
+#else
+						DoAlert 0, "The information about NIST xop for form factor calculations is incorrect, please, restart the tool you are using"
+						IR1T_InitFormFactors()
+#endif
 			elseif (cmpstr(ParticleModel,"NoFF_setTo1")==0)						// NoFF_setTo1 - fvor SF testing, returns 1 for ev ery pooint
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]										//this is current radius
@@ -729,6 +764,60 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR1T_RecParallVolume(A,P1,P2,P3,P4,P5)
+	Variable A, P1, P2,P3,P4,P5
+	//A is size, 
+	variable side=2*A   	//size going in is "radius"Ê
+	return side*side*side*P1*P2
+end
+//*****************************************************************************************************************
+//
+//Function IR1T_RecParallFormFactor(Qv,A,P1,P2,P3,P4,P5)
+//	variable Qv,A,P1,P2,P3,P4,P5
+//	//size going in is "radius" , formula requires side length, which is radius * 2
+//	variable FormFactor=2/pi* IR1T_ParallExtIntegral(Qv,2*A, P1, P2)
+//	return FormFactor
+//endÊ
+//
+////*****************************************************************************************************************
+//threadsafe static Function IR1T_Parall_InternalPart(Qv,A2, P1, P2,Alfa,Bta)
+//	variable Qv,A2, P1, P2,Alfa,Bta
+//	
+//	variable sinAlfa=sin(Alfa)
+//	variable cosAlfa=cos(Alfa)
+//	variable cosBta=cos(Bta)
+//	variable sinBta=sin(Bta)
+//	variable qa=Qv*A2
+//	variable qb=Qv*P1*A2
+//	variable qc=Qv*P2*A2	
+//	variable result=sinc(qa*sinAlfa*cosBta)
+//	result*=sinc(qb*sinAlfa*cosBta)
+//	//result*=sin(qb*sinAlfa*cosBta)/(qb*sinAlfa*sinBta)	//tyhis is typo in Pedersen97 manuscript... 
+//	result*=sinc(qc*cosAlfa)
+//	result*=sinAlfa
+//	return result
+//end
+////*****************************************************************************************************************
+//threadsafe static Function IR1T_Parall_IntIntegral(Qv,A2, P1, P2,Bta)
+//	variable Qv,A2, P1, P2,Bta
+//	
+//	make/FREE/N=(PerpParallelepipedPnts) TempIntgWv
+//	SetScale/I x, 0, pi/2 , TempIntgWv
+//	multithread TempIntgWv=IR1T_Parall_InternalPart(Qv,A2, P1, P2,x,Bta)
+//	TempIntgWv[0]=0
+//	return area(TempIntgWv)
+//end	
+////*****************************************************************************************************************
+//static Function  IR1T_ParallExtIntegral(Qv,A2, P1, P2)	
+//	variable Qv,A2, P1, P2
+//	
+//	make/FREE/N=(PerpParallelepipedPnts) TempIntgExtWv
+//	setScale/I x, 0, pi/2, TempIntgExtWv
+//	//multithread TempIntgExtWv = IR1T_Parall_IntIntegral(Qv,A, P1, P2,x)	//here x is beta
+//	TempIntgExtWv = IR1T_Parall_IntIntegral(Qv,A2, P1, P2,x)	//here x is beta
+//	return area(TempIntgExtWv)
+//end	
+////*********** end of the code
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -2045,7 +2134,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		FitP3=0
 		FitP4=0
 		FitP5=0
-	elseif(stringmatch(CurFF,"SphereWHSLocMonoSq"))		//uses 2 parameters...
+	elseif(stringmatch(CurFF,"SphereWHSLocMonoSq")||stringmatch(CurFF,"RectParallelepiped"))		//uses 2 parameters...
 		FitP3=0
 		FitP4=0
 		FitP5=0
@@ -2183,6 +2272,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		SetVariable P1Value, title="Aspect ratio = ", help={"Aspect ratio of the cylinder. Length / radius"} 
 	elseif(stringmatch(CurrentFF,"Unified_Disk"))
 		SetVariable P1Value, title="Thickness = ", help={"Thickness of the disk in same units as radius"} 
+	elseif(stringmatch(CurrentFF,"RectParallelepiped"))
+		SetVariable P1Value, title="Side B ratio = ", help={"Scaling ratio for side B"} 
 	elseif(stringmatch(CurrentFF,"SphereWHSLocMonoSq"))
 		SetVariable P1Value, title="Dist/R ratio = ", help={"Ratio of PY nearest neighbor distance to Size of particle"} 
 		NVAR tempLowVal=$(LowP1Str)
@@ -2206,7 +2297,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		//Fractal aggregate	 	FractalRadiusOfPriPart=ParticlePar1=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
 		//						FractalDimension=ParticlePar2=root:Packages:Sizes:FractalDimension			//Fractal dimension
 
-	if(stringmatch(CurrentFF,"Fractal aggregate")|| stringmatch(CurrentFF,"Unified_Tube") || stringmatch(CurrentFF,"SphereWHSLocMonoSq") )
+	if(stringmatch(CurrentFF,"Fractal aggregate")|| stringmatch(CurrentFF,"Unified_Tube") || stringmatch(CurrentFF,"SphereWHSLocMonoSq") || stringmatch(CurrentFF,"RectParallelepiped") )
 		NVAR/Z CurVal= $(FitP2Str)
 		NVAR/Z CurVal2= $(LowP2Str)
 		NVAR/Z CurVal3= $(HighP2Str)
@@ -2224,8 +2315,9 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	endif
 	if(stringmatch(CurrentFF,"Unified_Tube"))
 		SetVariable P2Value,title="Wall thickness = ", help={"Wall thickness in A"} 	
-	endif
-	if(stringmatch(CurrentFF,"SphereWHSLocMonoSq"))
+	elseif(stringmatch(CurrentFF,"RectParallelepiped"))
+		SetVariable P2Value, title="Side C ratio = ", help={"Scaling ratio for side C"} 
+	elseif(stringmatch(CurrentFF,"SphereWHSLocMonoSq"))
 		SetVariable P2Value,title="PY Fraction = ", help={"volume fraction for Percus Yevic model"} 	
 		NVAR tempVal=$(LowP2Str)
 		if(tempVal>0.9)

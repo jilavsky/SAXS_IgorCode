@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.05
+#pragma version=2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 changed to use MoveWave and handle also QR data. Needs to be tested for QR data
 //2.05 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.04 minor fix for liberal names users keep using
 //2.03 converted to rtGlobals=3
@@ -166,15 +167,35 @@ Function	IR1F_MoveData(ListOfDataAvailable, FolderWithData,NewFldrPath )
 				SaFldrName=CleanupName(SaFldrName, 0 )
 			endif
 			NewDataFolder/O/S $(SaFldrName)
-			Duplicate /O RWave, $(RWvname)
-			Duplicate /O QWave, $(QWvname)
-			Duplicate /O SWave, $(SWvname)
-//			Duplicate /O RWave, $(NewFldrPath+SaFldrName+":"+RWvname)
-//			Duplicate /O QWave, $(NewFldrPath+SaFldrName+":"+QWvname)
-//			Duplicate /O SWave, $(NewFldrPath+SaFldrName+":"+SWvname)
-			
-			KillWaves/Z RWave, QWave, SWave
+			Wave/Z testR= $(RWvname)
+			Wave/Z testQ= $(QWvname)
+			Wave/Z testS= $(SWvname)
+			if((!WaveExists(testR))&&(!WaveExists(testQ))&&(!WaveExists(testS)))		
+				MoveWave RWave, $(RWvname)
+				MoveWave QWave, $(QWvname)
+				MoveWave SWave, $(SWvname)
+			else
+				Print "Cannot move waves into folder : "+SaFldrName+" since there are already waves with same name"
+			endif
+			//KillWaves/Z RWave, QWave, SWave
+		elseif(WaveExists(RWave) && WaveExists(QWave))
+			SetDataFolder NewFldrPath
+			if(DataFolderExists(SaFldrName))
+				SaFldrName=UniqueName(SaFldrName,11,0)
+				SaFldrName=CleanupName(SaFldrName, 0 )
+			endif
+			NewDataFolder/O/S $(SaFldrName)
+			Wave/Z testR= $(RWvname)
+			Wave/Z testQ= $(QWvname)
+			if((!WaveExists(testR))&&(!WaveExists(testQ)))		
+				MoveWave RWave, $(RWvname)
+				MoveWave QWave, $(QWvname)
+			else
+				Print "Cannot move waves into folder : "+SaFldrName+" since there are already waves with same name"
+			endif
+			//KillWaves/Z RWave, QWave, SWave
 		endif
+
 	endfor
 	
 	setDataFolder OldDf
@@ -213,9 +234,11 @@ Function IR1F_BackupData(ListOfDataAvailable, FolderWithData, NewBackupFldr)
 			Duplicate /O RWave, $(NewBackupFldr+possiblyquotename(RWvname))
 			Duplicate /O QWave, $(NewBackupFldr+possiblyquotename(QWvname))
 			Duplicate /O SWave, $(NewBackupFldr+possiblyquotename(SWvname))
+		elseif(WaveExists(RWave) && WaveExists(QWave))
+			Duplicate /O RWave, $(NewBackupFldr+possiblyquotename(RWvname))
+			Duplicate /O QWave, $(NewBackupFldr+possiblyquotename(QWvname))
 		endif
-	endfor
-	
+	endfor	
 	setDataFOlder OldDf
 end
 
@@ -237,6 +260,8 @@ Function/T IR1F_CreateListQRSOfData(FolderWithData)
 			Wave/Z testQ=$(TempQWaveName)
 			Wave/Z testS=$(TempSWaveName)
 			if(WaveExists(testQ) && WaveExists(testS))
+				ListOfQRSWaves+=TempRWaveName+";"
+			elseif(WaveExists(testQ))
 				ListOfQRSWaves+=TempRWaveName+";"
 			endif
 			
