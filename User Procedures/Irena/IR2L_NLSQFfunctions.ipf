@@ -2468,13 +2468,14 @@ Function IR2L_SetDataUnits(UnitString)
 		NumDistCalibrationUnits="Arbitrary"
 	elseif(strlen(UnitString)<2||stringMatch(UnitString,"cm2/cm3"))
 		DataCalibrationUnits="cm2/cm3"
-		PanelVolumeDesignation="Fract. [c*(1-c)]"
+		//PanelVolumeDesignation="Fract. [c*(1-c)]"
+		PanelVolumeDesignation="Fraction"
 		IntCalibrationUnits="cm\S2\M/cm\S3\M"
-		VolDistCalibrationUnits="Fraction [c*(1-c)]"
+		VolDistCalibrationUnits="Fraction"
 		NumDistCalibrationUnits="N/cm3"
 	elseif(strlen(UnitString)<2||stringMatch(UnitString,"cm2/g"))
 		DataCalibrationUnits="cm2/g"
-		PanelVolumeDesignation="Vol (cm3/g)"
+		PanelVolumeDesignation="Vol [cm3/g]"
 		IntCalibrationUnits="cm\S2\M/g\M"
 		VolDistCalibrationUnits="cm3/g"
 		NumDistCalibrationUnits="N/g"

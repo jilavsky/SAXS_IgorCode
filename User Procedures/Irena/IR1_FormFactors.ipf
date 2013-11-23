@@ -81,7 +81,7 @@
 // it is text function... 
 
 static constant JanusCoreShellMicNumIngtPnts=66		//weird, with 40 there are specific radii where code fails to produces NaN
-static constant PerpParallelepipedPnts=180
+//static constant PerpParallelepipedPnts=180
 
 Function IR1T_InitFormFactors()
 	//here we initialize the form factor calculations
@@ -458,7 +458,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 					endfor
 			elseif (cmpstr(ParticleModel,"RectParallelepiped")==0)						// parralelepiped
 #if Exists("ParallelepipedX")
-						make/O/N=6/D RecParallParams
+						make/O/N=7/D RecParallParams
 						Make/Free/N=3 RecParallSidePars
 						RecParallSidePars={2,2*ParticlePar1,2*ParticlePar2}
 						Sort RecParallSidePars, RecParallSidePars
@@ -471,7 +471,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 							//[3] Edge C (A)
 							//[4] contrast (A^-2)
 							//[5] incoherent background (cm^-1)
-							RecParallParams={1,currentR*RecParallSidePars[0],currentR*RecParallSidePars[1],currentR*RecParallSidePars[2],1e-4,0}
+							RecParallParams={1e-8,currentR*RecParallSidePars[0],currentR*RecParallSidePars[1],currentR*RecParallSidePars[2],1,0,0}
 							MultiThread TempWave = ParallelepipedX(RecParallParams,Q_vec)
 							//TempWave=(IR1T_RecParallFormFactor(Q_vec[p],currentR,ParticlePar1,ParticlePar2,0,0,0 ) )^2
 							TempWave*=IR1T_RecParallVolume(currentR,ParticlePar1,ParticlePar2,0,0,0)^(VolumePower-1)	//one is already done in the xop. 

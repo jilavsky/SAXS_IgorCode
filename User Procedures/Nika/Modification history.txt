@@ -3,6 +3,10 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.63 
+Added calibration of Intensity popup and “Units=Arbitrary” or “cm2/cm3” or “cm2/g” for Intensity to help Irena to handle calibration of data. 
+Attempted to add cbf Pilatus file format, but example data provided by user were incorrect , so code has been disabled again. 
+
 1.62 7/23/2013
 Added double click action to other list boxes in Main panel and in Beam center tool
 Added *.mccd file format (tif, actually) and combined mpa file formats into the same loader. I am missing "csv" working example so that is not working, but asc, dat, and spe (internal names) are working now. 

@@ -2429,11 +2429,11 @@ static  Function IR1R_ReturnFitBack(ctrlName)			//copies data back to folder wit
 
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"Wname","SizesVolumeDistribution")
-	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"Units","cm3/cm3")
+	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"Units","cm3/cm3/A")
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"MeanSizeOfDistribution",num2str(MeanSize))
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"Wname","SizesNumberDistribution")
-	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"Units","1/cm3")
+	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"Units","1/cm3/A")
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"MeanSizeOfDistribution",num2str(MeanSize))
 
 	//create record of all Sizes parameters to add to all of the waves as wave note...

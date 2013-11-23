@@ -43,6 +43,6 @@
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
-#include "::Irena:IR2_PanelCntrlProcs", version>=1.26
+#include "::Irena:IR2_PanelCntrlProcs", version>=1.34
 
 

@@ -105,7 +105,7 @@ Proc IR1I_ImportData()
 	ListBox ListOfAvailableData,selWave=root:Packages:ImportData:WaveOfSelections
 	ListBox ListOfAvailableData,mode= 4, proc=IR1_ImportListBoxProc
 
-	SetVariable NameMatchString,pos={10,375},size={180,19},proc=IR1I_SetVarProc,title="Match name (RegEx):"
+	SetVariable NameMatchString,pos={10,375},size={180,19},proc=IR1I_SetVarProc,title="Match name (string):"
 	SetVariable NameMatchString,help={"Insert RegEx select only data with matching name (uses grep)"}
 	SetVariable NameMatchString,value= root:Packages:ImportData:NameMatchString
 

@@ -179,10 +179,10 @@ Function NI1_AboutPanel()
 	DoWindow/C About_Nika_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.22a)"
+	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.32)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2013"
-	DrawText 49,103,"Release 1.62 from 7/23/2013"
+	DrawText 49,103,"Release 1.63 from 11/25/2013"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 
@@ -190,7 +190,7 @@ Function NI1_AboutPanel()
 	DrawText 11,210,"into 1 D data"
 	DrawText 11,230,"     "
 	DrawText 11,250," "
-	DrawText 11,265,"Igor 6.31 compatible"
+	DrawText 11,265,"Igor 6.3x compatible"
 end
 
 //*****************************************************************************************************************

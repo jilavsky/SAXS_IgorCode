@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 adds DataCalibrationString to GUI and Intensity/q/theta/d/distance data 
 //2.26 added double clicks to Mask listbox and to Empty/Dark listboxes. 
 //2.25 adds TPA/XML code
 //2.24 minor GUI improvements
@@ -1253,6 +1254,11 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			NI1_PilatusLoaderPanelFnct()
 		endif
 	endif
+	if(cmpstr(ctrlName,"DataCalibrationString")==0)
+		//set appropriate extension
+		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
+		DataCalibrationString = popStr
+	endif
 
 
 //		//Select2DMaskType
@@ -1529,9 +1535,6 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName,"OnLineDataProcessing")==0)
 		NI1A_OnLineDataProcessing()		
 	endif
-	
-	
-	
 	
 	if(cmpstr(ctrlName,"DisplaySelectedFile")==0)
 		//set selections for using RAW/Converted data...
@@ -2491,6 +2494,9 @@ end
 Function/S NI1A_CalibrationNote()
 
 	string newNote=""
+		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
+		newNote+="Units="+DataCalibrationString+";"
+
 		NVAR UseSampleThickness=root:Packages:Convert2Dto1D:UseSampleThickness
 		NVAR UseSampleThicknFnct=root:Packages:Convert2Dto1D:UseSampleThicknFnct
 		SVAR SampleThicknFnct=root:Packages:Convert2Dto1D:SampleThicknFnct
@@ -3203,7 +3209,10 @@ Proc NI1A_Convert2Dto1DPanel()
 	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
 	PopupMenu SelectEndOfRange,pos={158,240},size={211,21},proc=NI1A_PopMenuProc,title="End"
 	PopupMenu SelectEndOfRange,help={"Select last 2D data to process"}
-	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
+	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
+	PopupMenu DataCalibrationString,pos={275,235},size={211,21},proc=NI1A_PopMenuProc,title="Int. Calibration:"
+	PopupMenu DataCalibrationString,help={"Select data calibration string"}
+	PopupMenu DataCalibrationString,mode=1+WhichListItem(root:Packages:Convert2Dto1D:DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
 	CheckBox TrimFrontOfName,pos={10,260},size={100,18},proc=NI1A_CheckProc,title="Trim Front of Name"
 	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
 	CheckBox TrimEndOfName,pos={130,260},size={100,18},proc=NI1A_CheckProc,title="Trim End of Name"
@@ -4629,6 +4638,20 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 	if(cmpstr("UseSampleThickness",ctrlName)==0)
 	endif
+
+	if(stringmatch(ctrlName,"UseSampleThickness")|| StringMatch(ctrlName, "UseSampleTransmission" )||stringmatch(ctrlName,"UseSampleCorrectionFactor"))
+		if(UseCorrectionFactor && UseSampleThickness && UseSampleTransmission)
+			SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
+			DataCalibrationString="cm2/cm3"
+			PopupMenu DataCalibrationString,win=NI1A_Convert2Dto1DPanel, mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" )
+		else
+			SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
+			DataCalibrationString="Arbitrary"
+			PopupMenu DataCalibrationString,win=NI1A_Convert2Dto1DPanel, mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" )
+		endif
+	
+	endif
+
 
 	if(cmpstr("UseSampleThicknFnct",ctrlName)==0)
 		SetVariable SampleThickness,disable=(checked), win=NI1A_Convert2Dto1DPanel
