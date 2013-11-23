@@ -2878,7 +2878,7 @@ Function IR3M_DataManipulationIIPanel()
 	PopupMenu StartFolder,pos={10,133},size={180,20},proc=IR3M_PanelPopupControl,title="Start Folder", help={"Select folder where to start. Only subfolders will be searched"}
 	PopupMenu StartFolder,mode=(WhichListItem(StartFolder, IR3M_ListFoldersWithSubfolders("root:", 25))+1),value=  #"IR3M_ListFoldersWithSubfolders(\"root:\", 25)"
 	SetVariable FolderMatchString,value= root:Packages:DataManipulationII:FolderMatchString,noProc, frame=1
-	SetVariable FolderMatchString,pos={10,165},size={350,25},title="Folder (RegEx) (\" \" for all):", help={"RegEx to match folder name to. \"  \" for all, \"XYZ\" for folders containing XYZ, etc..."}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+	SetVariable FolderMatchString,pos={10,165},size={350,25},title="Folder (RegEx) (\" \" for all):", help={"String to match in folder name to. \"  \" for all, \"XYZ\" for folders containing XYZ, etc..."}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
 
 	SetVariable Waves_Xtemplate,variable= root:Packages:DataManipulationII:Waves_Xtemplate,noProc, frame=1
 	SetVariable Waves_Xtemplate,pos={3,200},size={250,25},title="X data (RegEx):", help={"Template for X data waves"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)

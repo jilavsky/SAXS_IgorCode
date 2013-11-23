@@ -2272,10 +2272,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		else
 			//fix the short name of the folder... - old method which uses name to keep compatible with other code... 
 			oldpopStr=popStr
-			string tempStr5=ReplaceString("[", popStr, "\[")
-			tempStr5=ReplaceString("]", tempStr5, "\]")
-			tempStr5=ReplaceString("(", tempStr5, "\(")
-			tempStr5=ReplaceString(")", tempStr5, "\)")
+			string tempStr5=IR2C_PrepareMatchString(popStr)
 			popStr = GrepList(RealLongListOfFolder, tempStr5,0  , ";" )
 			if(ItemsInList(popStr , ";")>1)
 				For(i=0;i<ItemsInList(popStr , ";");i+=1)

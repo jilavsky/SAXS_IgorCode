@@ -5,7 +5,6 @@ Code modification history
 ********************************************
 2.53
 Force users to use Igor 6.3x
-Import ASCII - enabled use of following characters in names: (){}%#^$?|&@ 
 Controls procedures - enabled use of following characters in names: (){}%#^$?|&@ 
 … note: this means the Fldr and Wv match fields are now “string match” matching part of the name, cannot use Grep commands with control characters, as I have to escape all of the control characters as they are now considered part of the name…  
 Form factors/Modeling II - added Parallelepiped using NIST XOP. If the XOP is installed, this shape is available and works. Fast… Need to convert more Form factors to XOP, it is fast!
@@ -30,11 +29,13 @@ Modeling II - fixed the Form factor and Structure factor help file to work also 
 Unified fit - fixed bug introduced in last update which prevented fitting with fixed P, Rg, and G. Changed the code to always include fitting B as that is probably necessary. 
 Unified fit - added optional Constraints input to enable more user control of the fitting and relationships between the parameters.
 Unified fit - added option to link B to G/Rg/P values using Hammouda's Guinier/Porod relationship 
-Sizes - Changed all Graph fonts to follow user defined choices. Added option to run automatically Calculate parameter on whole distribution. 
+Size distribution - Changed all Graph fonts to follow user defined choices. Added option to run automatically Calculate parameter on whole distribution. 
+Size distribution - Fixed units of saved distributions to : Volume distribution cm3/cm3/A and Number distribution 1/cm3/A.
 Main system - added Form factor and Structure factor panels to "Kill all graph & panels" procedure. 
 Plotting Tool I - fixed minor bug caused by Igor Pro behavior change which caused Modify data always to remove at least first and last point. 
 Export ASCII data - modified GUI to be more obvious (user problems) and changed Listbox mode to enable range of data selection for multiple data sets. 
 Import ASCII - Removed error when file being imported has less columns than found originally, if these are not being imported and used.
+Import ASCII - enabled use of following characters in names: (){}%#^$?|&@ 
 Data Manipulation I - disabled Q shift, let’s see if anyone complains. 
 Reflectivity - minor change in behavior, when starting or recovering parameters, it will set all sliders to the middle of their range. 
 Reflectivity - attempted to fix when some users have data with NaNs and attempt to fit to them, which fails. Cleaning up NaNs from data before fit now. 

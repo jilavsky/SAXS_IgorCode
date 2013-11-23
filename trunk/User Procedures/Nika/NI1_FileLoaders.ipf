@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.27 added double clicks to Empty and Dark Listboxesa s well as maskListbox on main panel
+//2.28 attempted to add Pilatus cbf format, code is half way through but the example makes no sense and does not work... abandon until proper image is avbaialbel.  
+//2.27 added double clicks to Empty and Dark Listboxes as well as maskListbox on main panel
 //2.26 modified and tested various version of mpa formats. Found internal switch and combined all mpa formats into one. Should work until somone has another format. 
 //2.25 added marCCD (mccd) file format - it is basically tiff file with header, which is not containing much useful information as far as I can figure out... 
 //2.24 modified to compile even when xml xop is not available. 
@@ -140,8 +141,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			print "Loaded header from associated txt file and stored to wave note:    " + headerStr
 			NewNote+=headerStr
 		endif
-		
-
 	elseif(cmpstr(FileType,"TPA/XML")==0)
 #if	Exists("XMLopenfile")
 		FileNameToLoad= FileName
@@ -505,16 +504,42 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		//  read header in the file... , available ONLY for Tiff (4096 bytes) and edf (n*512 bytes)
 		//see: http://www.esrf.eu/Instrumentation/software/data-analysis/OurSoftware/SAXS/SaxsHeader
 		variable PilskipBytes
+		variable headerLength1
 		if(stringmatch(FileNameToLoad, "*.edf" ))
 			open /R/P=$(PathName) RefNum as FileNameToLoad
 			testLine=""
 			testLine=PadString (testLine, 16800, 0x20)
 			FBinRead RefNum, testLine
 			close RefNum
-			variable headerLength1=(strsearch(testLine, "}", 0))
+			headerLength1=(strsearch(testLine, "}", 0))
 			headerLength1 = ceil(headerLength1/512 ) * 512
 			//PilskipBytes=1024
 			PilskipBytes=headerLength1
+		elseif(stringmatch(FileNameToLoad, "*.cbf" ))
+			open /R/P=$(PathName) RefNum as FileNameToLoad
+			testLine=""
+			testLine=PadString (testLine, 16800, 0x20)
+			FBinRead RefNum, testLine
+			close RefNum
+			PilskipBytes=headerLength1
+			testLine=ReplaceString("\r\n\r\n", testLine, ";")
+			testLine=ReplaceString("\r\n", testLine, ";")
+			testLine=ReplaceString("#", testLine, "")
+			testLine=ReplaceString(";;;;", testLine, ";")
+			testLine=ReplaceString(";;;", testLine, ";")
+			testLine=ReplaceString(";;", testLine, ";")
+			testLine = NI1_ZapControlCodes(testLine)	
+			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
+			headerLength1=NumberByKey("X-Binary-Size-Padding", testLine , ":", ";")
+			//headerLength1 = ceil(headerLength1/512 ) * 512
+			PilskipBytes=1+NumberByKey("X-Binary-Size-Padding", testLine , ":", ";")
+			
+			PilskipBytes = 6604
+			//NI1_PrintControlCodes(testLine)				
+			//testLine= NI1_COnvertLineIntoList(testLine)
+//print headerLength1
+//print testLine
+//abort
 		elseif(stringmatch(FileNameToLoad, "*.tif" )||stringmatch(FileNameToLoad, "*.tiff" ))
 			PilskipBytes=4096
 		else
@@ -533,9 +558,18 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		//end read header
 		//clean up header to make it more like our headers...
 		//testLine = ReplaceString("\r\n", testLine, "")
+//			testLine=ReplaceString("\r\n\r\n", testLine, ";")
+//			testLine=ReplaceString("\r\n", testLine, ";")
+//			testLine=ReplaceString("#", testLine, "")
+//			testLine=ReplaceString(";;;;", testLine, ";")
+//			testLine=ReplaceString(";;;", testLine, ";")
+//			testLine=ReplaceString(";;", testLine, ";")
+//			testLine = NI1_ZapControlCodes(testLine)	
+//			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 		testLine = ReplaceString("\n", testLine, "")
 		testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
 		testLine = ReplaceString("}", testLine, "<<<<End of ESRF header;")
+			print testLine
 		For(iii=0;iii<15;iii+=1)
 			testLine = ReplaceString("  ", testLine, " ")
 		endfor
@@ -544,13 +578,15 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		
 		//read the Pilatus file itself
 		variable PilatusColorDepthVar=str2num(PilatusColorDepth)
-		//color depth can be 8, 16, or 32 unsigned integers or unsigned integer 64, but that is not supported by Igor, to denote them in Igor as unnsigned, need to add 64 ...
+		//color depth can be 8, 16, or 32 signed integers or unsigned integer 64, but that is not supported by Igor, to denote them in Igor as unnsigned, need to add 64 ...
 		if(PilatusColorDepthVar<64 && PilatusSignedData)   //PilatusSignedData=1 when unsigned integers, default signed integers
 			PilatusColorDepthVar+=64		//now we have proper 8, 16, or 32 unsigned integers for Igor... 
 		endif
 		
               killwaves/Z Loadedwave0,Loadedwave1
               if(stringMatch(PilatusFileType,"edf"))
+       	       GBLoadWave/B/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
+              elseif(stringMatch(PilatusFileType,"cbf"))
        	       GBLoadWave/B/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
        	 elseif(stringMatch(PilatusFileType,"tiff")||stringMatch(PilatusFileType,"tif"))
        	       GBLoadWave/B=(1)/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
@@ -1374,7 +1410,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 
 		PopupMenu PilatusFileType,pos={15,100},size={122,21},proc=NI1_PilatusPopMenuProc,title="File Type :  "
 		PopupMenu PilatusFileType,help={"Select file type :"}
-		PopupMenu PilatusFileType,mode=1,popvalue=PilatusFileType,value= #"\"tiff;edf;img;float-tiff;\""
+		PopupMenu PilatusFileType,mode=1,popvalue=PilatusFileType,value= #"\"tiff;edf;img;float-tiff;\""		//cbf removed as it is not working and cannot be tested... 
 
 		PopupMenu PilatusColorDepth,pos={15,130},size={122,21},proc=NI1_PilatusPopMenuProc,title="Color depth :  "
 		PopupMenu PilatusColorDepth,help={"Color depth (likely 32) :"}

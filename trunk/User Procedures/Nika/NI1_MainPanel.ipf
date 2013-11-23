@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.31
-Constant NI1AversionNumber = 2.31
+#pragma version=2.32
+Constant NI1AversionNumber = 2.32
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2010, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.31
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.32 adds DataCalibrationStgring to data and GUI
 //2.31 added *.maccd and combined all mpa formats into one loader (*.mpa). Have 4 versions of this format, three I had working versions, csv I did tno. SO the three are loaded, csv gives error. 
 //2.30 added move up down controls for small screens
 //2.29 updated graphs so they will not plot same data multiple times and changed where 15IDD data are stored.
@@ -247,7 +248,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="DoubleClickConverts;TrimFrontOfName;TrimEndOfName;"
 
 
-	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;"
+	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;DataCalibrationString;"
 	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;"
 	ListOfStrings+="CCDDataPath;CCDfileName;CCDFileExtension;FileNameToLoad;ColorTableName;CurrentMaskFileName;ExportMaskFileName;"
 	ListOfStrings+="ConfigurationDataPath;LastLoadedConfigFile;ConfFileUserComment;ConfFileUserName;"
@@ -362,7 +363,10 @@ Function NI1A_Initialize2Dto1DConversion()
 		NIGBNumberOfYPoints = 1024
 	endif
 
-
+	SVAR DataCalibrationString
+	if(strlen(DataCalibrationString)<3)
+		DataCalibrationString="Arbitrary"
+	endif
 	SVAR DataFileExtension
 	if (strlen(DataFileExtension)<1)
 		DataFileExtension = ".tif"
@@ -1149,8 +1153,12 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					Wave wv4= $("qz_"+UseName)	
 					Wave wv5= $("qy_"+UseName)
 					Wave wv7= $("az_"+UseName)	
+					note ww2, "Units=1/A;"
+					note ww4, "Units=1/A;"
+					note ww5, "Units=1/A;"
 				if(stringmatch(LineProf_CurveType, "GI*"))
 						Wave/Z wv6= $("qx_"+UseName)	
+						note ww6, "Units=1/A;"
 						Sort wv2, wv1, wv2, wv3, wv4, wv5, wv6, wv7
 				elseif(stringmatch(LineProf_CurveType, "Ellipse"))
 						Sort wv7, wv1, wv2, wv3, wv4, wv5, wv7
@@ -1236,21 +1244,25 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			if (UseQvector)
 				Duplicate/O Intensity, $("r_"+UseName)
 				Duplicate/O Qvector, $("q_"+UseName)
+				note $("q_"+UseName), "Units=1/A;"
 				Duplicate/O Error, $("s_"+UseName)
 				Duplicate/O Qsmearing, $("w_"+UseName)
 			elseif(UseTheta)
 				Duplicate/O Intensity, $("r_"+UseName)
 				Duplicate/O TwoTheta, $("t_"+UseName)
+				note $("t_"+UseName), "Units=degree;"
 				Duplicate/O Error, $("s_"+UseName)
 				Duplicate/O TwoThetaWidth, $("w_"+UseName)
 			elseif(UseDspacing)
 				Duplicate/O Intensity, $("r_"+UseName)
 				Duplicate/O Dspacing, $("d_"+UseName)
+				note $("d_"+UseName), "Units=A;"
 				Duplicate/O Error, $("s_"+UseName)
 				Duplicate/O DspacingWidth, $("w_"+UseName)		
 			elseif(UseDistanceFromCenter)
 				Duplicate/O Intensity, $("r_"+UseName)
 				Duplicate/O DistanceInmm, $("m_"+UseName)
+				note $("m_"+UseName), "Units=mm;"
 				Duplicate/O Error, $("s_"+UseName)
 				Duplicate/O DistacneInmmWidth, $("w_"+UseName)		
 			else

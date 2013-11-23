@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.52
+#pragma version=2.53
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs=  3457421952 			//this is mod date for Manual version 2.52
-constant CurrentVersionNumber = 2.52
+constant CurrentManualDateInSecs=   3468066750  		//this is mod date for Manual version 2.53
+constant CurrentVersionNumber = 2.53
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory

@@ -8,7 +8,7 @@ Constant IR2LversionNumber = 1.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.13 modified to handle Intensity units and propagated theorugh GUI and data export. 
+//1.13 modified to handle Intensity units and propagated through GUI and data export. 
 //1.12 added to Unified levels ability to link B to G/Rg/P values. Removed ability to fit RgCO. 
 //		Added option to rebin the data on import. 
 //1.11 Added change the tab names, noFittingLimits support and changed GUI for SD to gain space. 
