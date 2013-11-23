@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.52
+#pragma version=2.53
 
 Menu "Macros"
 //	"Load Irena SAS Modeling Macros", LoadIR1Modeling()
@@ -8,7 +8,7 @@ end
 
 
 Proc LoadIR1Modeling()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.10)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.30)
 		//check for old version of Irena
 		pathInfo Igor
 		NewPath/Q/O UserProcPath , S_path+"User procedures"
@@ -37,6 +37,6 @@ Proc LoadIR1Modeling()
 		BuildMenu "SAS"
 		Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
 	else
-		DoAlert 0, "Your version of Igor is lower than 6.04, these macros need version 6.04 or higher, please update your Igor 6.0 version to latest release "  
+		DoAlert 0, "Your version of Igor is lower than 6.30, these macros need version 6.30 or higher, please update your Igor 6 to the latest release "  
 	endif
 end

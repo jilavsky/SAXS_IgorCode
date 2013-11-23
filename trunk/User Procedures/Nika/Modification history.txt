@@ -3,9 +3,9 @@ Code modification history
 
 -latest stuff first
 ********************************************
-1.63 
+1.63 11/23/2013
 Added calibration of Intensity popup and “Units=Arbitrary” or “cm2/cm3” or “cm2/g” for Intensity to help Irena to handle calibration of data. 
-Attempted to add cbf Pilatus file format, but example data provided by user were incorrect , so code has been disabled again. 
+Attempted to add cbf Pilatus file format, but example data provided by user were incorrect, so code has been disabled again. 
 
 1.62 7/23/2013
 Added double click action to other list boxes in Main panel and in Beam center tool
