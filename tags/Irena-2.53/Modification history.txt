@@ -1,0 +1,641 @@
+Irena package 
+Code modification history 
+
+-latest stuff first
+********************************************
+2.53
+Force users to use Igor 6.3x
+Controls procedures - enabled use of following characters in names: (){}%#^$?|&@ 
+… note: this means the Fldr and Wv match fields are now “string match” matching part of the name, cannot use Grep commands with control characters, as I have to escape all of the control characters as they are now considered part of the name…  
+Form factors/Modeling II - added Parallelepiped using NIST XOP. If the XOP is installed, this shape is available and works. Fast… Need to convert more Form factors to XOP, it is fast!
+Data manipulation 1 - fix log rebinning when Q data starts with points where Q<=0. This used to fail. 
+Data manipulation I - added simple method of merging data (for different q ranges). Sets background for Data1 and scales Data2 (and optimizes the two values to get best fit). 
+Data manipulation I - preserve cursor positions through adding data.
+Controls procedures - modified handling Irena results waves, mainly the Y wave. Faster. 
+Controls procedures - modified to avoids showing folders, which are disallowed by use of wave name grep string. This was showing parent folder before, which caused some confusion. 
+Controls procedures - fixed case when it was unable to get to folders with same names in different parent folders. 
+Control procedures - QRS data handling fixes (again…) Minor location of controls fixes. 
+Control procedures - Fixed time delay when the Folder match string was retained for 5 seconds due to cashing. 
+Scripting tool - modified to set cursors to first and last point of data, if they are not set by user ahead of fitting. 
+All panels - Added check to detect, that experiment moved from other platform (Win/OSX) and if detected, reset fonts to default of the new platform. 
+Modeling II - added no fitting limits option
+Modeling II - propagates Intensity units through and made GUI changes to match those.
+modeling II - removed option to combine SpehereWithLocallyMonoDispersed Sq and any structure factor (it is nonsense). 
+Modeling II - added optional Constraints input to enable more user control of the fitting and relationships between the parameters.
+Modeling II - Unified levels - added ability to link B to Rg/G/P based on Hammouda's Guinier/Porod and removed ability to fit RgCO. If anyone needs it, I can add it back.
+Modeling II - enabled use of radii or diameters. Changed GUI to simplify and added visual description of what type of distribution is used and which tabs are being used. 
+Modeling II - fixed bug in Analyze uncertainties which caused the code not to read number of fitted points, getting wrong Chi-square range
+Modeling II - fixed the Form factor and Structure factor help file to work also on Windows and fixed it extension. 
+Unified fit - fixed bug introduced in last update which prevented fitting with fixed P, Rg, and G. Changed the code to always include fitting B as that is probably necessary. 
+Unified fit - added optional Constraints input to enable more user control of the fitting and relationships between the parameters.
+Unified fit - added option to link B to G/Rg/P values using Hammouda's Guinier/Porod relationship 
+Size distribution - Changed all Graph fonts to follow user defined choices. Added option to run automatically Calculate parameter on whole distribution. 
+Size distribution - Fixed units of saved distributions to : Volume distribution cm3/cm3/A and Number distribution 1/cm3/A.
+Main system - added Form factor and Structure factor panels to "Kill all graph & panels" procedure. 
+Plotting Tool I - fixed minor bug caused by Igor Pro behavior change which caused Modify data always to remove at least first and last point. 
+Export ASCII data - modified GUI to be more obvious (user problems) and changed Listbox mode to enable range of data selection for multiple data sets. 
+Import ASCII - Removed error when file being imported has less columns than found originally, if these are not being imported and used.
+Import ASCII - enabled use of following characters in names: (){}%#^$?|&@ 
+Data Manipulation I - disabled Q shift, let’s see if anyone complains. 
+Reflectivity - minor change in behavior, when starting or recovering parameters, it will set all sliders to the middle of their range. 
+Reflectivity - attempted to fix when some users have data with NaNs and attempt to fit to them, which fails. Cleaning up NaNs from data before fit now. 
+ 
+
+2.52 7/23/2013
+Changed back everything to rtGlobals=2, major issues in the code run were found. 
+Control Procedures - fixed failure to work for qrs waves when folder name contained []. 
+Form factors/Modeling II - Added Janus CoreShell micelles form factor.
+Form factors - removed algebraic form factors. Useless, use Unified ones if needed. 
+Form factors - added CoreShellPrecipitate. Core shell particle where shell thickness is calculated for each particle size in such manner, that average contrast of the particle is the same as surrounding matrix. Seems surprisingly common in my experience. Read manual!
+Form/Structure factors - created Igor help file with the description. Added call buttons from Modeling II & Size Distribution GUIs. 
+Plotting tool I - added basic contour plot capabilities
+Unified fit - fixed invariant calculation for levels using RgCuttOff. These levels had previously calculated higher invariant value then correct. 
+Unified fit - added optional panel (default is to show it) which let's users check fitting parameters before fitting is done same as in Modeling II. Modified code for Uncertainty evaluation and Scripting tool to handle this change and skip the panel. 
+Unified fit - removed FitRgCO option for all levels. I think it is not sensible to try to fit this.  
+Unified fit - local fits now will guess starting parameters from cursor position and will not use user input parameters (that kept failing with many users). 
+Data Manipulation I- fixed log rebining of data which was not working. Note, it overlays log-x scale over the data and then simply averages points in each bin. Similar to Nika.
+Data Manipulation II - checked behavior and fixed some GUI and behavioral problems, especially with Data subtraction. 
+ASCII Data Import - fixed log rebining and removed the parameter, which no one understood anyway. It is not being used now.
+ASCII Data Import - header information, when attached to wave note is now cleaned of any leading special characters and leading spaces. This allows USAXS exported ASCII data import with meaningful wave note and should work for everyone.   
+ASCII Data Import - Remove Int<0 is now Remove Int<=0. Note that on import the all Q<=0 points are also removed.  
+All panels - changed orientation of the two arrows at the top right to move content of the window. Wrong logic used originally, now same as regular PC/Mac GUI system.  
+Size distribution - reduced significantly the number of available form factors. Complex FFs make no sense in this tool. 
+Scripting tool - modified calling routines to avoid getting stale state of controls. This should prevent "error, report it" message. 
+All tools - changed all cases when I used "Save in …" in buttons to "Store in …" to prevent confusion of users that this actually saves Igor experiment. 
+Main procedures - Changed all web addresses to new xray.aps.anl.gov, changed Manual and Manuscript download to http protocol, ftp was failing.  
+Guinier-Porod fit - finally local fits to smeared data seems to be under control. Updated manual with real description of the tool and elevated the version to 1.0, first release version. Need to finish some nice outputs, but I think it is finally useable even on smeared data. 
+Reflectivity - added option to calculate model at 5x denser Q points. Check and fixed some GUI problems. Need to update manual, it is obsolete, but do nto have time now. 
+
+
+
+2.51 4/8/2013
+Added monthly check for updates and reminder of references for publications.
+Modified to compile on computers even without xop and abort & produce message when xop is called with instructions. 
+Guinier-Porod Fit - created first version of this tool. 
+Control procedures - modified to show only last folder but work transparently for the tools. 
+Control procedures - added G(r) as data type of Irena results.  
+Control procedures - changed "Indra 2 data" to "USAXS". More human readable. 
+Unified fit - fixed Checking of validity levels not to declare level without Guinier part to be invalid. 
+Unified fit - added "No limits" checkbox and support code to fit without limits.
+Reflectivity - added "Motofit" as data type for use with this tool. 
+Added scroll buttons to scroll vertically content of panels for small displays. Modified tools: Unified Fit, Modeling II, Size Distribution, Gunier-Porod, Fractals tool, Analytical models, Small-angle diffraction, Pair-distace dist., Reflectivity, ASCII import, ASCII Export, Data manipulation I, Data manipulation II, Data mining tool, Plotting tool I. 
+Added "User" defined structure factor (implemented in Modeling II)
+Added panel version control for: Fractals tool, Small-angle diffraction, ASCII export, ASCII Import
+Data Manipulation II - modified to add ability to create errors (=uncertainties), scale and rebin to number of points. Modified GUI to separate processing, errors generation and post processing (scaling/rebinning). 
+Plotting tool II - changed how error bars are displayed and enables SMR data error bars.
+Plotting tool I - added ability to use calibration unit (arbitrary, cm2/cm3 or cm2/g) from the USAXS data. Added checkbox to avoid units checking.  
+ASCII Import data - added controls to select import units for Intensity [options: Arbitrary, Volume…cm2/cm3, Weight…cm2/g] 
+
+
+2.50 1/4/2013
+Universal Installer - Modified to be able to update xops and made more robust. It will attempt to download file 10x before giving up to fix problem with ANL proxy. 
+Size Distribution - ability to estimate uncertainty. Propagated the uncertainty to SizeDistribution through rest of the code and support in calculations of volume. 
+Data Manipulation - fixed problem when the new data folder name was too long, which was failing. Cut the length to 31 characters ONLY. 
+Control procedures - improved speed by caching IR2P_GenStringOfFolders to reuse list if it is newer than 5 seconds. Major speed improvement for scripting tool - changed for all data types.
+Control procedures - added ability handle trs, drs, and mrs data as qrs system. These data are produced by Nika when user wants output as d-spacing, two theta and distance. 
+Scripting tool - modified user feedback due to increase in speed of Control procedures.  
+Scripting tool - modified to handle Size Distribution with uncertainties evaluation. 
+Added DataManipulationII panels to "Kill all Irena panels" function. 
+Form factors - added SphereWHSLocMonoSq - this is sphere with Percus Yevic Hard spheres Structure factor which is a fraction of sphere size.  
+Reflectivity - about 40x increase in speed due to improvements Andrew made in last few years. Added sliders to control parameters - seems to be now fast enough. 
+Reflectivity - Added ability to use dq and dq^2 as resolution wave, not only % resolution. 
+Reflectivity - Added ability to link parameters. Major change in GUI. Added button to "Fix limits".
+Reflectivity - Added saving fitting uncertainties into already existing "Error" variables. Made many functions static. 
+Reflectivity - Added ability to insert or remove layer (requested feature).  
+Reflectivity - Added fudging errors for data when user chooses not to provide them. Original code set them to 0, which really did not fit. Using my own function from GeneralProcedures. 
+Unified fit - added ability to analyze effect of the data uncertainties on the results  
+Modeling II - added Fix Fitting limits buttons - two - "tight" (L1) setting smaller range and "loose" (L2) setting wider range. 
+Modeling II - added ability to analyze uncertainties/stabilities for parameters as is currently available in Unified fit. 
+Analytical models - small fixes in Treubner-Strey GUI. 
+
+2.49 11/5/2012
+Universal export - Fixed bug which prevented QRS data from being processed. 
+Import ASCII - removed popup with folder selection. Keeps confusing users (class observation). Type folder name in manually, if you need to. 
+Data Manipulation II - modified GUI to make thing bit more obvious. 
+Data Manipulation II - fixed handling liberal names, modified NameModifier to reflect the operation done. 
+Data Manipulation II - added tool to normalize data sets to area under the curve in range of Qs defined by user. Requested feature. 
+Unified fit - added ability to analyze the uncertainity/stability of each parameter.  
+
+
+2.48 8/13/2012
+Updated Manual. 
+XMLutils xop updated to fix speed in loading xml data files 
+Data mining - fixes to length of Modeling II results of wavenote parameters searches names.
+GUI fonts control - fixed bug in Windows 7 which caused that fonts were not changed. 
+GUI fonts control - removed all declared fonts and sizes for panels so user has controls over the GUI visualization 
+Modeling II - Reduced number of parameters stored in wave note and therefore exported to minimize garbage. 
+Plotting tool I - removed one ipf file and added for now invisible KBColorizeTraces package to use with some graphs. 
+Plotting tool I - added "Gizmo" based 3D plotting tool. Still under development, but actually useable.  
+ASCII data import - added ability to reduce data to smaller number of points on import with suggestion to reduce number of points when too large number is found. Also added double click action on file selection - now it will check number of columns in the file and display the file (like clicking "Test" and "Preview" buttons)
+DataManipualtion II - converted match strings to RegEx and modified GUI to be bit more user friendly. 
+Debye-Bueche - fixed formula used. User reported bug. 
+
+
+2.47 5/30/2012
+New irena_users mailing list. See http://www.aps.anl.gov/mailman/listinfo/irena_users for details. 
+Control procedures - speed up (by factor of 10 or more) qrs data structure search. Hopefully did not break anything. 
+Scripting tool  - Yet another fix - fixed Size distribution fitting, which was not loading new files.
+Scripting tool - added ability to handle Irena results (generations 0 to 0 and last) and be used with Plotting tool I. 
+Plotting tool I - Added Rainbow and BW options. 
+Plotting tool I - Added 3D graph option, fixed ZoomAndSetLimits marquee bug which caused troubles when used on graph other than on GeneralGraph. 
+Plotting tool I - added ability to create movies. Both 2D and 3D movies are supported. 
+ASCII Importer  - Fixed bug in which threw error when data without error wave were loaded.
+ASCII Importer  - Added name match string (RegEx, grep) for the ASCII importer to help with file selection. Added checkbox to automatically overwrite existing data.  
+ASCII importer - added ability to trim data to specific q range on import. 
+Data miner -  added Match string for Items in the folder and Wave note/string values. Added "Latest generation" option, which will find highest generation (meant for results) in case something is named XYDSA_0, XYDSA_1, etc. 
+Data Miner - added multiple selection when appropriate. Shift-click selects contiguous range, ctrl/cmd select discontiguous cells. 
+Data Miner - converted Folder Match string to Regular expression. 
+Modeling I and II - change min size allowed internally to 1A. Seems like many users are pushing limits to high-qs. 
+
+2.46 4/30/2012
+Removed Motofit ipfs distributed with Irena as they were out of date and caused conflicts with Motofit users. Updated xop. 
+Added Reflectivity to check version routines. Changed (per request) range of thickness displayed in the Reflectivity SLD plot. Widened from 4% more to 8% more than the thickness of the system. 
+Form factors - upgraded Core Shell cylinder to be multicore.
+Controls procedures - fixed problems with user defined data structure and hopefully improved performance on qrs and qis data structures. 
+ASCII import - default to use qrs name structure and use file names as folder names. 
+Scripting tool - fixed bug which caused one-before-last qrs data set to be invisible. 
+Scripting tool - enabled better selection options: cmd/ctrl click selects one item, shift-click selects range of items. Added option to sort the data in number of different ways. 
+Scripting tool, Sizes, and Import ASCII - added version check for panels. Will force restart of tool if procedure version has changed. 
+Size distribution - added button to open Scripting tool and also added version control to panel. 
+Modeling II - added scripting tool button and supporting features.
+Unified fit - removed bug which caused that RgCo from higher levels was fitted if the checkbox was selected, even when the level was not used. 
+Unified fit - added button to call Scripting tool 
+Plotting tool II - added option to be controlled by Scripting tool, so it can be used to produce easily graphs with many data sets in it. 
+Modeling II - fixed bug in Shulz-Zimm distribution which prevented parameters from fitting. 
+
+
+
+
+2.45 2/27/2012/Users/ilavsky/Igor Pro Folder/User Procedures/Indra 2/Readme.txt
+Added to Data Manipulations II ability to average N data sets at time, so one can "chunk" the data together. Requested feature. 
+Reflectivity - added ability to store results in new folder when user created "model" data. It will now ask for new folder name and store results in root:NewFoldername. It does remember this name for subsequent saves. 
+Updated manual.
+Fixed Modeling II bug when Unified local fit P/B set wrong limits(Rg/G). Typo. Fixed checking for limits in Fitting which checked for Unified and Diffraction also parameters which were not fitted. Added checking if the parameters did not reach (to within 2%) their limits which will put up now dialog to user and print list of parameters in the history area. 
+
+2.44 2/18/2012
+Fix in fitting for Modeling II - fitting of peak profile shapes did not check if the  shape has 3 or 4 parameters and may have tried to fit 4 parameters even though that was not right. Fixed problem in checking for background fitting parameters causing confusing messages. 
+Updated Analytical models to include option to use Genetic optimization. Seemed way too easy, I wonder what I forgot. 
+Data miner tool, updated to work better with wave notes of QRS data coming from Nexus. They have : in the key names, so I need to work around that. 
+Added Analytical models and Data miner to panel control for updated tool.
+Minor fix in Unified analysis where the contrast for the included materials contained 10^10 but code assume it does not contain the 10^10 and hence we got many orders of magnitude differences. Changed included set of contrasts so users do not have to include e10 in the numbers.
+Reflectivity: fixed minor bug which disallowed negative SLDs when SLD step was changed. 
+Scripting tool: Fixed minor bug in controls of Size distribution and added controls for Modeling II with ability to run that tool with single input data set. 
+
+
+2.43 1/10/2012
+Modeling II major upgrade. Now there are 10 "populations", each can be either size distribution, Unified level, or Diffraction peak. ALso added Normalized residual display and made some more fixes and changes. Added "Add tags to graph" option and cleaned up the notebook output so it is more useful. 
+Started upgrading tools to be aware which version of Irena they were run with and force user to restart tool when panel opened with old version is detected. Should prevent some of the crashes when incompatible up[grade is done. 
+Changed how the loader works. Now the loader will look for files relatively related to the loader files itself. This should enable in the future having multiple Irena packages installed and be able to switch among them. I am not sure why would any user need to have it, but I need it myself for debugging purposes… 
+Unified fit - modified so parameters change their limits as they are changed from GUI. 
+
+
+2.42 11/15/2011
+Small Angle Diffraction tool … Fixed the PercusYevickSQFQ to use F(Q)^2
+FormFactorPackage - per user request I have modified what can be to make as many FF as possible multithreaded. Now it uses multiple cores, when possible. Also I have modified some integration waves in the code to reduce the cpu time. 
+
+2.41 7/29/2011
+Modeling II … Changed Unified fit included to use Contrast (both G and B are multiplied by the contrast),. This should enable to use with data sets with different contrasts for the Unified data, such as combined neutron/X-ray data or Anomalous X-ray data. Fixed display bug which prevented Rg, B, and P to appear in some cases. 
+Modeling II … Added Core-Shell-Shell form factor per request. 
+Modeling II … Fixed display issue when Contrast was displayed even for CoreShell models for which it is NOT used. NOTE: as it is, these models cannot be used with multiple data sets with different contrasts since the form factor parameters contain the contrasts.  
+Modeling II … Fixed bug in export of data when Model data are used. Now user is asked to for name for new (will be created) or existing folder so the data are safely saved in way user can figure out. 
+Modeling II … Fixed logbook record when it recorded wrong type of distribution type in the logbook. User reported bug.
+Modeling II … Fixed storing of the results, now storing the individual distribution results (as waves) works. This has not been apparently ever finished.
+Modeling II … Changed limits on Structure factor parameter 1 - previously if it was smaller than 10 or so, it was reset to 50, it was getting into my way and so the limit is changed to 0.5.  
+All - fixed inability to select any folder/data when no checkbox was selected. 
+Small-angle diffraction - added LorenzSquared peak, Skewed Normal, Percus-Yevick S(q), and Percus-Yevick S(q)*F(q) as another peak shapes. 
+Small-angle diffraction - fixed few bugs: FitRg had typo and so Rg was never fitted. 
+PDDF … added display of Gamma function (gamma = pddf/(4*pi*r^2)) per request… Is anyone actually using this? 
+Bug fix - fixed bug which caused problems compiling when Genetic optimization xop was not present. 
+
+2.40 June 16, 2011
+Modeling II - added Unified Level as one of the Form factor parameters. Surprisingly, this was major complication and change and hence there may be some residual bugs yet to be discovered. 
+Modeling II - added Shultz-Zimm distribution. 
+Minor fixes in Modeling II and CalcIntgCylinderFF
+Fix link to Irena web page. 
+Speed up QRS data selection routines to help users with large QRS folders.
+Remove old method of genetic optimization, now will run ONLy when xop is installed or will through abort. This way we do not need the GeneticOptimisation.ipf which was causing issues with Motofit. 
+Unified - tried to speed up GUI response and avoid unnecessary recalculations. The bug in Igor native GUI controls speed update on mac requires this panel to be set on mac to old (os9) GUI appearance. Bug reported to WM.  
+Removed CursorMovedHook function to avoid conflicts, converted to Window hook functions when necessary.
+
+
+2.39 9/25/2010
+Added ANL license
+Import ASCII tool will now prevent users from cresting n% errors on import with n~0 (resulting in errors=0 for all points). Really happened.  
+
+2.38 8/27/2010
+Modified Data Manipulation II to be able to subtract one wave from many waves.  
+Fixes for Igor 6.20.
+Added Ciccariello-Benedetti tool to Analytical models. I still have questions on calibration of slit smeared data (difference between infinite and finite slit length), but it may work now. Manual chapter added. 
+Added preconfigured special plots into Ploting tool I. (Porod, Guinier, Kratky,…). Will need to add fits also. May be next release...
+
+2.37 2/23/2010
+Data manipulation - enable errors of 0 values to let users use wrong errors from some instruments. NOTE: other tools will fail, if errors are 0!
+Minor Fixes in Cromer Liberman and Scattering contrast calculator (fixed values for Au) code. 
+Added new tool - Data Manipulation II. Intended for many data sets at once - at this moment it can only average data, but can be modified to add more functionality. 
+Added InterPrecipitate Structure factor per user request. See updated Form factor and Structure Factor description pdf file. 
+Modified Unified fit - added now "Analyze Unified" tool with new Greg Beaucage's advancements, modified graphing of Unified to follow user choices for legend font and font size. 
+
+2.36 July 17, 2009
+Fixed bug, when many tools could not fit background. Apparently created in version 2.34 when trying not to limit background to positive numbers only. Now there is no limit in fitting on background, in Genetic optimization (where limits must be) the limit is +/- 10* background/ 
+
+2.35 July 10, 2009
+Fixed bug in Reflectivity tool, when if using errors with Genetic optimization (using xop) the code stopped with error "wave does not exist". Typo.   
+Fixed 6.10 update bug, when actionFunctions would cause weird behavior related to not checking evenCode. Checked rest of Irena and Nika, not problems found.  
+Desmearing - fixed bug when background was not recalculated when value for Q start was changed in the panel. 
+Fixed bug when background in Unified could not be fitted. This part of code was commented out for unknown reason...
+Fix bug in DataMiner, after latest improvements did not call right procedures. Problem with structure-based popup controls.  
+Fixed bug in Data Selection Tools which went crazy when different panels used different types of naming structure and folders were not selected.
+Got reports about problems in 6.10 which I cannot reproduce on Mac. Need to test on Windows. 
+Added feature to modeling 1. If used only for modeling with no input data, now I present user with dialog where they can create new folder for the model data storage. ANy path will be created, if Igor-sensible path is given.  
+
+
+2.34 March 2009
+Irena manuscript is published to Journal of Applied Crystallography (2009). The reference is J. Appl. Cryst 42 (2009), 347-353. Added to About and also added option to open the manuscript (and download copy from APS web site).
+Added package preferences for Panel and Graph fonts and font sizes. These are now specific to given computer and experiment. Computer has priority when new experiment is created.  Panel fonts are specific to platform too. It is logistical mess what and when is applied, but hopefully will work for most well. 
+Added Treubner-Streus model into original Gels model and changed name to Analytical models.  
+Changed all (hopefully) GUI and fit functions to enable negative background. This was requested by one of the reviewers of the manuscript in J Appl. Cryst. Apparently our neutron colleagues have problems with over-subtracting background. 
+Changed Panel control tools to require errors for Indra type-data. Seem to cause minor issues with users trying to use Indra type names and having no errors...
+Fix Scattering Contrast calc, which had electron radius as 0.28 only, instead of 0.28179. This caused small difference in values compared to other calculators.
+Changed desmearing to allow desmearing with both slit length and slit width and enable for both use of trapezoidal slit profile. 
+
+2.32a
+Quick fix for removal of Window and panel macros - forgot to name them properly when changed to Proc. Hope I found all calls...
+
+2.32
+Removed all panel and windows macros from the menus - they should not be called through Igor GUI, just through Irena commands as they are not initiated otherwise. 
+Found serious bug in CoreShell model - volume of particle was defined incorrectly (3/4*pi*r^3 instead of 4/3*pi*r^3) which resulted in volumes calculated to be off by factor of 1.78. This bug was found by careful user who did some creative testing. 
+ 
+
+2.31
+Modify Data tool - added option to reduce data on log-scale. Added explanation in manual. Strongly encouraged as reading... 
+Plotting tool I - Fixed bug when Remove data panel was coming up behind the main panel...  Similar when checkboxes were changed when the panels were reordered... 
+PDDF - added calculation of errors for resulting PDDF using obscure (GNOM) MonteCarlo method for regularization and similar method for Moore method. 
+Added (but not finished) ability to select this error for the Panel Controls. Needs fixing still.. 
+PDDF - export of semi-GNOM files. Seem to be working - tested on DAMMIN. Really weird data file format. 
+Import ASCII data - added some print into history statements so user knows what actually happened. 
+Tested on Igor 6.10 beta. All seems to compile and tested packages seem to work. No problems in GUI on Mac seen yet. 
+
+2.30
+Added tool to analyze SAS using Pair distance distribution function.  
+Fixed Multiple data export tool when it showed one less data set than should have been.
+Added CanSAS XML loader. Requires canSASXML.ipf and XMLutils - XOP (http://www.igorexchange.com/project/XMLutils).
+Fixed Data manipulation tool - after change in controls procedures it did not create _mod wave names... 
+Modified and improved Diffraction tool. Now has many more peak shapes, two options of dealing with peak-SAS relationship and al standard goodies - data saving and other things...
+Added "paste to notebook" to Size distribution. 
+Included Plotting tool II - Dale's tool for plotting data. 
+
+
+beta 2.29 - never released. 
+Fixed recording CoreShell cylinder (and other 4 and 5 parameters Form factors) in Modeling I. 
+Added new tool - Plotting tool II - modified tool by Dale W Schaefer which can control any top graph. No manual yet.
+Fixed bug in wrong label on Evaluation graph. Mixed Number and volume distribution.
+Limited length of export data name on Macintosh to 25 + extension. Had troubles without this limit.  
+Added NIST "QIS" data naming structure to loader - but not much value, as they insist on loading it by themselves, which makes our life difficult for data with no errors... 
+
+2.28
+Modifications to SA diffraction tool - many...
+Modeling II - on load the name of either folder (Indra) or int wave (QRS) will be put in User name for the data... Trying to help users keep sane. 
+Bug fixes:
+Modeling II - when I renamed Tube onto coreShellCylinder, I have created bug which resulted in wrong intensity calibrations for this Form factor. Fixed. 
+Modeling I - fixed problem when the Panel for CoreShellCylinder did not pop up when FF was selected. Fixed. 
+
+
+
+2.27
+Fixed GUI for Unified_tube. Note, it is using yet another definition of volume - just to make sure, here is the list:
+Unified_tube   volume is volume of the shell only. Core has same contrast as solvent.
+OK - fix... Added controls to tube (renamed to CoreShellCylinder) and CoreShell on what is the definition of the volume: Whole particle (NIST definition), Core, or Shell. This should fix all. Unified_tube volume is only the shell, as that is how the form factor is written... 
+Export tool... Added comment to history area when data are exported. 
+Export tool .... Added multiple data sets export tool. Should enable export of same data in sequence. 
+Unified - fixed save in folder which broke during coding of scripting tool. 
+Updated manual and FF description. 
+
+2.26 
+Fixed core-shell cylinder, aka tube by using NIST code. Should work for all test cases Andrew came up with... 
+
+2.25 January 6 2007
+Added tool for analysis of small-angle diffraction. Still beta and needs to be finished. 
+Some fixes for Data selection tool as requested by Dale Schaefer.  
+SOme fixes in export of data for Modeling II. Not likely to be problem for users, but some waves did not have correctly set name and units. 
+
+2.24 December 27, 2007
+Added Scripting tool. Should be able to run Unified and Size distribution on Indra and QRS data. This is likely little bit buggy tool (a lot of unpredictable failures is likely), so let's call it beta version for now...
+
+2.23 December 5, 2007
+Fixed problem with need to reopen all opened panel introduced in previous version... Now it should work even for old experiments created prior version 2.22.
+
+2.22 December 2, 2007
+Added controls for Scaling factor in Reflectivity. Requested change. 
+Modified PanelCntrlProcs to be able to be used on subpanels (child panels or graphs). Major change - converted all control procs to structures. Note, it had impact on DataMiner also, where I needed to change one function. But, now it can be used for multiple data selection on single (Host) panel by using child panels. Now I can fix the data manipulation tool to use this... 
+
+2.21 November 8th, 2007
+Fix problem when in Modeling I the control panel for the form factor parameters came below the main panel introduced in the last version.
+Change in PanelControl Procedures - now will not search for any waves in the Packages folder... 
+Reflectivity - fixed window alignment and loss of focus for panel as previously done for other packages... 
+Reflectivity - allow storing results with no layers (substrate only). Fixed minor bug related to wavenote storing (when previous wave note is there, Igor 6 will not remove it, it will append "\r" and new text, unless /NOCR is used. 
+Fixed lost attention for Plotting tool. 
+Added new tool for evaluation of size distributions. Updated manual.  
+Added Menu Item to generate for user e-mail to send me back bug or feedback with some info. 
+
+2.16 & 2.20
+Added "stickiness" to wave name in Data miner. When user selects folder in which previously selected wave existed, it will be automatically selected also. 
+Added mean/mode/median to the calculator for Size distribution. 
+Changed internal name of some variables not to conflict with function names (beta, gamma)
+Reflectivity & Modeling tools - Added capability to run genetic optimization function using xop on both Mac and PC. Likely only Igor 6 compatible... Note: if xop is not found, uses old code...   
+Unified - Returned back the Slit smearing controls in Unified, which disappeared some time ago. Fixed some controls. Note: behavior change, the slit smearing checkbox does not control the wave selection anymore but the wave selection controls the checkbox. Necessary due to use of common data selection library.  
+Modeling II - added output of data into formated notebook, so user can dump human-readable stuff somewhere. Fixed note keeping in SAS notebook. Some minor bug fixes related to the note keeping. 
+Modeling I - some fixes related to use of slit smeared data. 
+Sizes - some fixes related to use of slit smeared data.  
+Scattering contrast calculator - fixed display of internally stored compounds, when started... 
+
+
+2.15 July 15, 2007
+Fixed case when number distribution from Size distribution was inf (failed generating volume of scatterers wave). 
+Fixed Modeling II when Q selection filed if user set cursors in opposite sense (square to low Q and circle to high Q). Fixed error on Mac when on load the Q range was incorrectly set to first point (only) of the data. Apparently, on Mac you cannot use for last point in wave the wave[inf]... 
+Modified dataMiner to create shorter namers - for some results the names were getting beyond Igor 32 characters limit and users could not get to some parameters. 
+Added libary of structure factors to be used. This is ONLY for Modeling II, the others are using old "interferences". Would be really difficult to change. Currently available: Interferences, Hard spheres, Square Well, Hayer Penfold MSA, and Sticky hard spheres. Code for the new ones is from NIST macros. 
+Modified Form factor description pdf file to include Structure factors.
+Changed names in menus, as I am writing the manuscript about Irena I realized, that the current names are not the best. 
+Added Genetic optimization method to Modeling I, Modeling II and Reflectivity. Genetic optimization is much slower but acheives results in very complicated cases amazingly well... Some changes in GUI were needed. 
+Modifed PanelControlProcedures to enable user to write "hook" functions which can be run after the selection is made... Important: There are 4 hook functions, run after folder, Q, intensity, and error data are selected, names must be exactly: IR2_ContrProc_F_Hook_Proc(), IR2_ContrProc_Q_Hook_Proc(), IR2_ContrProc_R_Hook_Proc(), and IR2_ContrProc_E_Hook_Proc(). User needs to make sure these can be called with no parameters and that they will not fail if called by different panel!!! This is important, as they will be called from any panel whic is using this package, so they have to be proof to that. I suggest checking on the name of top active panel window or the current folder...  Example of function is below: 
+Function IR2_ContrProc_Q_Hook_Proc()
+	print getDataFolder(0)
+end
+Added in General procedures function to generate errors for SAS data using different methods.... Looks very interesting for use in packages. 
+Modified Scattering contrast calc and calls to pdf files to manage when user procedures are not in the Igor folder or user has not right to write there. 
+Changed limits for Reflectivity to allow negative SLD values for all fields. 
+Fixed typo, which caused the Normalized error not to be recalculated during graphing data. 
+Unified - fixed bug which caused error when user tried to subtract background. The code was calling old (SAS modeling) procedure and not the new Unified procedure. Introduced in version 2.12.
+
+
+2.13 December 21, 2006
+Fixes to New LSQF - previous beta version could not work with slit smeared data and few other bugs were found... Still should be considered beta version, but I have used it and it works. Just is very cumbersome due to large number of parameters allowed and associated controls. 
+New feature for Igor 6 - for log plots in general ploting tool now Igor 6 can do log-offsets. Note, this will cause problems, when experiment with file created on Igor 6 is opened in Igor 5 and general graph is opened, as Igor recreation macor will fail with error message. 
+Fixes in the NewControlProcedures package - user defined part did not work as advertised... Needs to ne checked again. 
+Bug fix to common library... IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortType)modified to find also empty folders, when search wave name is "*"... Question are the consequences... 
+
+2.12 BETA September 5, 2006
+Added beta version of new Least square fitting package. Not finished yet, but need to get out to get tested... 
+Most packages now can generate input data for modeling only, so one does not need to use any experimental data. Convenient for simple modeling...  Not finished saving of the data in new folder yet. 
+Potentially INCOMPATIBLE CHANGE with previously saved experiments which have opened Unified panel - moved Unifed fit into separate folder. Was (for historical reasons)using the same folder as LSQF. It was using the same waves as LSQF and this was bad for parallel use of the tools. Unfied needs to be restarted...
+Converted Unified to use the new control procedures.
+Fixed bug in Fractals model, when saving data into the folder generated error due to wrong list of parameters.
+Added into the ControlProcedures ability to generate distribution of q values (lin/log) - can be used for modeling...
+Converted LSQF (old) into use of these new Control procedures. Painless, but minor change in behavior of GUI... 
+Converted Gels and Fractals into the new Control procedures
+Converted desmearing into new Control procedures
+Converted invariant in Unified fit to cm^-4 from cm^-1*A^-3
+
+Need to ADD in Unified Invariant calculator...
+//comment :
+// the invariant is:
+//   2*pi^2*FI(1-FI)*delta-rho-squared
+// Need to convert the Unified provided invariant to cm^-4 by multiplying by 10^24 (from cm^-1A^-3 to cm^-4)
+
+
+2.11 April 5, 2006
+New control procs - sped up searching for qrs data (created IN2G_NewFindFolderWithWaveTypes, which should be faster, but may behave differently. Use with caution).
+General ploting tool - changed to new control functions. Was drop dead easy... 
+	- Allowed use of x-wave scaling for Irena results (SLD profile uses that) and generic data. Need to be tested more and verified. 
+Form factors package - added capability to create control panel for given form factor parameters. Will convert all packages to this method - one place to maintain the code when adding new form factor. 
+Reflectivity - added SLD to export (was missing), add switch to define start of thickness at the substrate (more natural anyway)... Changed also the amount of points in substrate & in air.
+	- added possibility to update plots during fitting... 
+	- added calculator of resolution. Need to be checked... 
+	- fixed bug - the imaginary part of SLD was not used correctly - should be negative, but was used positive. Fixed and te results now match Parrats code. 
+	- added option for use of xop from Andy. If xop functions are present, faster xop code will be used (5x faster), if not, old Igor Parrats code will be used. Should be transparent. 
+	the xop should be available from : http://members.optusnet.com.au/~andyfaff/ 
+Fractals - Fixed bug when mass fractal for beta =1 (sphere) shape model failed. Also, sped up the calculations for beta =1 since skipped the integration and used sphere FF... Only used for beta = 1 exactly. Anything else and slow calc is used. 
+Data miner - some more fixes to improve performance...
+Fixed bug in General Graph when Execute("Legend ..." had parameters order wrong...
+
+2.10 October 11, 2005
+Modified Anomalous Scattering contrast calculator to provide (f+f') and f" in cm^-2 units for use as real and imaginary contrast of material in reflectivity. 
+Added option into Scattering contrast calculator to save data within Igor experiment or outside Igor experiment as before. 
+Sizes - major update. Added option of using no errors and creation of errors by various methods inside the tool itself. Changed ot Panel control procedures. Need to fix "bailout" due to acheieved Chisquare. At this time does not work with
+no errors (as should be expected) and the only tool which can reach solution in IPG/TNNLS. Needs more work.
+
+2.10 beta October 30,2005 
+New tool:  Data miner - tool to pull out of experiment various useful info from variables, strings, wave notes and plot all waves in subtree... Not finished yet. QRS system is still problem, but great for Indra named waves and for results also OK. 
+New tool - Reflectivity with code by Andy Nelson
+Tweaked search in the Panel control procedures. Now faster (much faster) searching for results waves.  
+Found major bug in LSQF. Fitting had major bug in whcih could cause troubles. The check on number of populations was not done properly and caused failure in fitting under some conditions. At least 3 years old!!!
+
+2.07 October 4, 2005
+Added minor control into Data manipulation tool to prevent user from not realizing there is nothing to do with data and therefore nothing to save. 
+Added date and time stamp to each entry to logbook. 
+Set default fonts (for tools which use the user defined stuff) to 10 points on Mac and 8 on Windows.
+Fixed bug in Logbook name (too long name).
+
+2.06 September 27, 2005 
+Optimized some internal functions in the Panel control procedures and increased speed by factor of ~5x... Major improvement for larger files. 
+
+2.05 September 26, 2005
+Added new package - Universal data export tool. In principle handles any 2-3 column dat aand exports as Header + 2-3 columns separated by tabs. 
+Added code to set and use in graphs user default variables and font names. For now set to provide default font sizes for legedn, axis etc. 
+Sync with Dale Schefers corrections for form factors. Added Unified tube in process. May be made the Fractal aggregate to work(?)
+Data manipulation - fixed bug achich caused data point reduction to fail without errors....
+Created new control package which provides controls for data selection for arbitrary tool... Now I need to use it in other packages. 
+Fixed GUI for the fixed Core shell FFs. 
+Added Unified_tube and modified controls for it.
+Fixed bug in IR2P_LogPowerWithNaNsRetained which casued last point not being right.
+Data import tool - will now add automatically skipped lines into wave note as header recording.
+
+
+2.05 beta March 2005
+Added macros logging data processing into log book for: Data import tool, Data manipulation tool, Desmearing, Sizes, 
+Checked and modified recording for Unified, 
+Added Desmearing windows in "Kill all Irena windows macro"
+Started to fix problem with LSQF user models, apparently I forgot to made modifications necessary for use of the new set of form factors...
+Fixed bug in import data function IR1I_RecordResults(), which seemed to point to wrong folder:
+Sizes - added IPG/TNNLS code. Changed GUI to allow easier use with more different methods.
+Sizes - Changed in Sizes behavior of button "Calculate volume" on the graph. If no checkboxes found on the right data, all of the data are calculated.
+Sizes - added more logic to display right name of the sample - will handle qrs data and will skip the name for other types of data
+Sizes - fixed storing parameters of new form factors in wave notes and added IPG/TNNLS method in it... 
+Sizes - added button for maxEnt to set the sky background to appropriate number
+LSQF - modified ASCII export data - changed comment character to # and removed empty lines. Requested feature (PRJ).
+ImportData - added feature to allow including extension as part of folder name... Requested feature.
+General plotting tool - allowed use of qrs data without errors (requested)... Needed major change of support function IR1_ListOfWaves and IR1_GenStringOfFolders where I needed to add switch to allow use of the qr data only. Potential for major problems.. 
+General plotting tool - Corrected names for ploted functions, added ln(Y) (requested)...
+General plotting tool - added option to offset data horizontally and vertically...
+General ploting tool - fixed bug when sometimes text was printed on graph accidentally... 
+Data manipulations - allowed use of data without errors in qrs data. 
+Unified - fixed minor bug in local fits which displayed wrong locall fits after fitting... 
+Form factors - attempted to fix problem with Core Shell models - both spheres as well as cylinders (aka tubes). Needed to update also GUI and may have caused many problems. Need to fix...
+
+
+2.04	December 2004
+!!!!!! Moved package to "Irena" folder from "Irena 1" and also moved the Styles and Compounds folder to "Irena_xxxx"...
+Removed following functions: IR1R_SelectShapeModel, IR1U_StyleButtonCotrol, IR1_CalcIntgPr_x_Vr, IR1_CalcWidthOfBin, IR1_LogLogPlotStyle
+Added list of form factors - and verified function. Have removed non functioning integrated alg spheroid and fixed few bugs found. 
+Added Unified form factors by Dale Schaefer... Added also cylinderAR and Unified_cylinerAR - both use aspect ratio instead of length... 
+Enabled Unified to use smeared data... Whole Unified now works USING desmeared data parameters, but will happily use smeared data... Note, that now the slopes may not agree - the Porod in smeared data is -3. But P will be 4! Note, thsi tool now can be used for desearing...
+Added feature - graphs now should have time and data stamp. For General geraph it is optional (switch on "Graph details"). 
+Fixed bug when in LSQF when recovering the popups and controls were not set correctly
+Returned back the log notebook menuitem, fixed bug for loging LSQF, but I think it is the only LSQF & Unified which makes record. Need to add the others.  
+Fixed bug in Data manipulation, where single quotes ' were added to new data names, which was wrong and caused problems. Added some cleanup for teh names, so user cannot really screw up...
+Fixed small bug in note in Desmearing, where the name of waves with results was not properly written in... Caused problems in other tools.
+Gels tool -fixed error in initialization (background error variable was not created).
+Added capability to call directly SMR data in Data manipulation tool...
+Added capability to call directly SMR data in General Graph tool. 
+Added reset tool for Unified (requested)
+Added in Unified display of single level of Unified (included in local fits display) to aid users in how the unified level looks. 
+Set default RgCutoff for all levels to 0.
+
+2.03
+Fixed bug which caused Number Distribution from sizes to be set to 0... 
+Found major bug for desmearing - one index was wrong and the last point was screwed up. this caused problems for data, which did not terminate in flat background (USANS, desktop USAXS) and caused major crash of the desmear routine.
+Added capability to use User defined form factor and volume for the particle in both Sizes and LSQF package. Checked following form factors;
+	spheres, cylinder, algebraic cylinder	- found OK
+	algebraic disk - have problems with it.
+Changed one of general procedures to work more reasonably, but this caused major flurry of bugs in folder selection throughout the package. Should be all removed?
+Fixed bug when using slit smeared data in models which caused error - the temporary folder may have not existed, if slit smearing was not run before. 
+Sizes - fixed bug withloading slit smeared data...Changed little bit the GUI.
+Added function which should (on both PC and Mac) open Irena manual in default pdf reader. Not much checking done, so this function may fail under non-standard conditions.
+Desmearing - For USAXS data (Indra2) added button for next sample, so user does not have to select any more folders and can go through all samples in row. 
+General ploting tool - Added tool to calculate area under the curve - volume or number of particles for size distributions.
+		- fixed saving Igor recreation macro
+Added some basic SAXS ploting tools - place in graph line with some slope and fit line and powerlaw... These came from USAXS macros and previously from Gregg Beaucage. 
+Major source of possible bugs - changed behavior of IN2G_FindFoldersWithWaveType function, now the * needs to be included with the string to search for....
+Added tool for Debye-Bueche modeling of polymers. 
+
+2.02 
+Minor fix for desmearing listed above, not included other fixes listed above... 
+
+2.01
+LSQF - Added option to use smeared data. Internally smeares the data with provided slit length. Should work fine with fitting... Fixed problem in LogNormal Dist, when SDeviation was >1.3 or so. Volume step is now changing (step 0.03) with the value. Few bug fixes of minor nature. 
+Data manipulation tool - added automatic creation of errors for spline smoothing, so data which do not contain erros can be spline smooth. Asigned 0.005* vlaue as error. This error does not get propagated further and is removed after spline smoothing.
+Desmearing - fixed bug causing problems when creating error bars for desmeared data and used smoothing on range of data.
+	   -  added few more features in way the desmearing can be done (run preselected number of iterations, iterate until average normalized residual is < selected number...). Added modified way the desmearing can be run - "dampeneed"... 
+General graph - fixed bug with wave selection for "irena 1 result" - name was incorrect, could not find some folders... FIxed recording of parameters related to use of interferences
+Modified manual with help of Pete Jemian. 
+
+2.00
+Common for sizes and Standard models:
+Use of common library or form factors and method to calculate intensity - through G  matrix. This should make it much easier to add new shapes if needed...
+
+Sizes:
+Added different shapes using Pete's code - seems to work, was not verified independently....
+Modified Sizes graph view and added button to calculate volume of scatterers...
+Regularization - changed D_matrix calculation to MatrixOp - speed increase at least 30x in this step...
+Fixed bug when Data selection for Sizes would not work for really short weird names... 
+Control of diamter and volume axis - provide log scaling through checkbox.
+
+Standard models:
+Allow export of separate population distributions.
+Standard models LSQF - fixed bug which caused controls to be put under some conditions into graph instead of panel... 
+Setting cursors to wrong wave will nto cause problems now...
+Internally the code now calculates using either number distribution OR volume distribution. Previously used only number distributions, which caused some artefacts sometimes...
+Mimnimum volume set to 1e-5, basic number of bins increased.
+Fixed bug for step in one of teh setVariables. 
+Changed names of parameters for particle size distribtions to more common names, specific for each distribution type. Very messy, but hopefully user friendly.  
+
+General Plotting tool:
+FIxed bug in General ploting tool which caused that under some conditions the set variable for strings/variables was set into the graph instead of panel... 
+Modified names for wave pull down menus in General ploting tool... 
+Remove data in general plot did not update graph when data were removed. Fixed.
+Fixed bug causing small panels to disappear on change. 
+Fixed bug in grid checkboxes, they were controlling the other axis than name indicated...
+
+Data manipulation
+Internal modification of code for Data manipulation... Moved internal controls, seems to be working. Needs more checking.
+Added option to pass through Data 2 set, so the user can save each component separately and also save combined data. Requested feature. 
+Changed order of user input for results wave names to be Q/I/E...
+Added Spline smoothing.
+
+Others:
+Added more text to screen size checking, which should advise users on 1024x768 screens.
+All control panels now should have more user friendly names...
+Now checking for latest version of Igor 4 - 4.09. Had problems with macros not compiling on 4.02... Force users to update to 4.09... 
+Many bugs in LSQF-User models to list... 
+
+Desmearing:
+Added Spline smoothing.
+Modification for desmearing - switches between fast and slow mode on fly to work on USANS data also...  Added user controls for this so user can switch as he/she wishes... 
+Added starting guesses for power law fit... Wavemetrics method failed badly under some conditions...
+Changed where data are searched when Indra 2 data are slected (requested feature). No need to have data in root:USAXS folder anymore... ALl folders are searched for tripplets with SMR_xxx waves... 
+Fixed bug in General ploting tool when the automatic wave selection for Indra 2 data failed for M_DSM waves... 
+
+Fractals:
+Fixed bug with limits for internal number of poitns for iteration, which was plainly wrong...
+*******************************************************
+*******************************************************
+*******************************************************
+1.60a
+Fixed font call in Button which caused problems on Mac OS10. Changed CromerLiberman package to be within the Irena 1 folder and use Irena standard function name template.
+
+Version 1.60
+Scattering contrast calculator with CromanLiberman code for anomalous effects. Should provide all functionality of previous (old) version. ALos stored compounds are now saved in Igor Procedures subfolder, not in subfolder of Irena1. This should be  safe place for it on Macs... 
+Fixed nasty bug in control commands for many tools introduced in previous release by modification of one common procedure. 
+
+
+Version 1.53
+Sizes - fix for cases when user canceled in the middle of run and did not clean waves properly. Increased default number of iterations to 100. Fast computers.
+Ploting tool - Changed where styles are stored. This should fix problems with updating the macros on Mac, when replacing the folder on Mac would wipe out stored styles for user... Chnaged axis description in puldowns from q and I to X and Y... The tool can display also different data than Intensity vs q. Changed use to q instead of Q. 
+Scattering contrast calculator - stores now data in different folder in User Procedures to avoid danger on Macs, that updating macros by replacing folder wipes out stored compounds... 
+All - changes font and font size for all buttons to Times and 10 pnts.
+
+12/17/2003
+Version 1.52
+Requested feature - added checkbox for export of local fits from Unified. Allows to switch on and off this feature. 
+
+12/11/2003
+Version 1.51 
+Typos in new code. Standard bug fixes with wave names etc...
+Fixed numerical error in Fractal model. 
+
+12/8/2003
+Version 1.50 Major update - new feature added
+Added Fractal model by Andrew Allen, read the manual for this piece of code... Careful, when using, this is still under development. 
+Modified functions to enable loading "BKG_Int" etc (Indra 2) waves as part of Indra 2 data structure... 
+Added capability to display results (both Int/Q fits and Size distributions) in the General graph... Will have to polish interface for this in the future.
+General plotting tool - added capability to export tiff and jpg files, save my own (Irena 1 ploting tool) recreation macros etc. 
+In various panels now the step used in click up/down for variables will also changet the step for next clisk to either 10% or 5% of the value currently set in the variable. This gives "dynamic" steps, necessary for variables which change a lot (radius, background,...). 
+
+--------------------------------------------
+10/29/2003
+Version 1.35
+Added subtract background from data in Unified. Requested feature.
+
+10/23/2003
+Version 1.34
+All tools - reduced necessary screen height available to minimum necessary for panels to be fully on the screen.
+Ploting tool - changed default plot style to log-log plot with axis description. Should fix problems seen on Igor 5 (beta). 
+Ploting tool - Fixed bug which caused corruption of data records if user tried to import wrongly selected data.
+Standard models - added saving of interference parameters (and recovery)
+Standard models - fixed shape step issue (at startup was set incorrectly due to typo).
+Standard models - added power-law size distribution for fractal materials. This is being worked on so it WILL change in future releases... Use at your own peril. 
+Data manipulation - added rebinning. Can now reduce number of points by integer number. Removes points, does not do integration...
+Unified - will now save also local fits into original data folder (requested feature).
+Unified - work around Igor bug in 4.08 version which caused crash of Igor when recovering some of the saved unified fits.
+Desmearing - Fixed bug (hopefully) which crashed Igor. CursonMovedHook function was causing troubles. 
+Import data - Fixed bug - conversion to A-1 from nm-1 when loading Qs in nm-1 was wrong.
+
+
+9/16/2003
+Version 1.32
+Finished version 1 of scattering contrast calculator. Alows to save and load compounds now...
+
+8/21/2003
+Version 1.31
+Patched few cosmetic problems. Nothing major...
+
+8/19/2003 
+Version 1.30
+Dixed bug in Data Manipulations routine, which caused troubles under some conditions of Q overlap, when data were subtracted or summed... 
+
+8/7 2003
+Version 1.29
+Minor bug fix of scattering contrast calculator... Fixed N problem and recalcualtion when matrix is changed... 
+
+
+8/1/2003
+Version 1.27 
+Created Scattering contrast calculator. Working on creating tables of X-ray and neutron preporeties of elements... A lot on numbers. Source - Periodic table from Alpha Aesar (element weights) and Kostorz book for neutrons.
+Added check for the tools, which checks for screen size (in pixles) and will prevent tools to run if the screen height is not large enough for them...
+
+7/11/2003
+modified Unified model RGCO starting values to 0 for all levels, users routienly do not have any clue what this parameter means and the value of 0 will cause less disastrous consequences.
+Fixed help in UNIFIED Pack. 
+Fixed bug in fitting in General plotting tool, which caused non-fatal error in linear fit.
+
+current version 1.26 from 7/7/2003
