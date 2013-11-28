@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
-Constant IR2RversionNumber=1.14
+#pragma version=1.16
+Constant IR2RversionNumber=1.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 fixed annoying bug which caused sliders to be drawn over graph when parameters were recoved.
 //1.15 added fixlimits on start to move al sliders into the middle of their range. Attempted to fix problems with some users fitting data with NaNs by cleaning up data before fit. 
 //1.14 added option to oversample the data, with this choise selected the model will have 5x as many points. 
 //1.13 modifed to remove xop dependence. Now it will compile without xop but complain on run, if xop is not installed. 
@@ -1889,7 +1890,7 @@ static Function IR2R_FixLimits()
 			NVAR ValueVarUL=$("root:Packages:Refl_SimpleTool:"+tempVarName+"UL"+num2str(i))
 			ValueVarLL = ValueVar/2
 			ValueVarUL = ValueVar*1.5
-			Execute("Slider "+tempVarName+"SL"+num2str(i)+" limits={"+num2str(ValueVarLL)+","+num2str(ValueVarUL)+",0}")
+			Execute("Slider "+tempVarName+"SL"+num2str(i)+",win=IR2R_ReflSimpleToolMainPanel, limits={"+num2str(ValueVarLL)+","+num2str(ValueVarUL)+",0}")
 		endfor
 	endfor
 	ListOfVariables="Background;Roughness_Bot;ScalingFactor;"
@@ -1975,6 +1976,7 @@ static Function IR2R_RecoverOldParameters()
 		PopupMenu NumberOfLevels mode=NumberOfLayers+1
 		TabControl DistTabs value=0
 		IR2R_TabPanelControl("",0)
+		DoWindow/F IR2R_ReflSimpleToolMainPanel
 		return 1
 	else
 		return 0

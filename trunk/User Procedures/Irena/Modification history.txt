@@ -3,6 +3,12 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.54
+ASCII Import - added “RemoveFromNameString” which allows users to remove part of name which is of no interest. 
+Reflectivity - fixed annoying bug which caused sliders to be drawn over one of the graphs instead of updating the positions in the main panel. 
+Control Procedures - minor fix to handle weird transient bug
+
+
 2.53 11/23/2013
 Force users to use Igor 6.3x
 Controls procedures - enabled use of following characters in names: (){}%#^$?|&@ 

@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.19
-Constant IR1IversionNumber = 2.18
+#pragma version=2.20
+Constant IR1IversionNumber = 2.20
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 added RemoveStringFromName to remove part of name which user does not want to see... 
 //2.19 Removed error when file being imported has less columns than found originally, if these are not being imported and used.
 //		enabled use of following characters in names: (){}%#^$?|&@
 //2.18 modified log-rebinning to use more simple log-scale, control parameter is removed. Changed to rtGlobals=2
@@ -76,7 +77,7 @@ end
 
 Proc IR1I_ImportData() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(3,40,430,720) as "Import data"
+	NewPanel /K=1 /W=(3,40,430,740) as "Import data"
 	DoWindow/C IR1I_ImportData
 	TitleBox MainTitle title="Import Data in Igor",pos={40,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -199,30 +200,30 @@ Proc IR1I_ImportData()
 	CheckBox ReduceNumPnts,pos={10,507},size={16,14},proc=IR1I_CheckProc,title="Reduce points?",variable= root:Packages:ImportData:ReduceNumPnts, help={"Check to log-reduce number of points"}
 	SetVariable TargetNumberOfPoints, pos={110,505}, size={110,20},title="Num points=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
 	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:ImportData:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipualtion I"}
-//	SetVariable ReducePntsParam, pos={240,505}, size={170,20},title="Red. pnts. Param=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
-//	SetVariable ReducePntsParam limits={0.5,10,0},value= root:packages:ImportData:ReducePntsParam,help={"Log reduce points parameter, typically 3-5"}
 
 	CheckBox TrunkateStart,pos={10,527},size={16,14},proc=IR1I_CheckProc,title="Truncate start of long names?",variable= root:Packages:ImportData:TrunkateStart, help={"Truncate names longer than 24 characters in front"}
 	CheckBox TrunkateEnd,pos={240,527},size={16,14},proc=IR1I_CheckProc,title="Truncate end of long names?",variable= root:Packages:ImportData:TrunkateEnd, help={"Truncate names longer than 24 characters at the end"}
 //	PopupMenu SelectFolderNewData,pos={1,525},size={250,21},proc=IR1I_PopMenuProc,title="Select data folder", help={"Select folder with data"}
 //	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
+	SetVariable RemoveStringFromName, pos={5,547}, size={250,20},title="Remove Str From Name=", noproc
+	SetVariable RemoveStringFromName value= root:packages:ImportData:RemoveStringFromName,help={"Input string to be removed from name, leve empty if none"}
 
-	CheckBox DataCalibratedArbitrary,pos={10,547},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
-	CheckBox DataCalibratedVolume,pos={150,547},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/cm3",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
-	CheckBox DataCalibratedWeight,pos={290,547},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/g",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
+	CheckBox DataCalibratedArbitrary,pos={10,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
+	CheckBox DataCalibratedVolume,pos={150,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/cm3",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
+	CheckBox DataCalibratedWeight,pos={290,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/g",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
 
-	SetVariable NewDataFolderName, pos={5,570}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
+	SetVariable NewDataFolderName, pos={5,590}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
 	SetVariable NewDataFolderName value= root:packages:ImportData:NewDataFolderName,help={"Folder for the new data. Will be created, if does not exist. Use popup above to preselect."}
-	SetVariable NewQwaveName, pos={5,590}, size={320,20},title="Q wave names ", proc=IR1I_setvarProc
+	SetVariable NewQwaveName, pos={5,610}, size={320,20},title="Q wave names ", proc=IR1I_setvarProc
 	SetVariable NewQwaveName, value= root:packages:ImportData:NewQWaveName,help={"Input name for the new Q wave"}
-	SetVariable NewIntensityWaveName, pos={5,610}, size={320,20},title="Intensity names", proc=IR1I_setvarProc
+	SetVariable NewIntensityWaveName, pos={5,630}, size={320,20},title="Intensity names", proc=IR1I_setvarProc
 	SetVariable NewIntensityWaveName, value= root:packages:ImportData:NewIntensityWaveName,help={"Input name for the new intensity wave"}
-	SetVariable NewErrorWaveName, pos={5,630}, size={320,20},title="Error wv names", proc=IR1I_setvarProc
+	SetVariable NewErrorWaveName, pos={5,650}, size={320,20},title="Error wv names", proc=IR1I_setvarProc
 	SetVariable NewErrorWaveName, value= root:packages:ImportData:NewErrorWaveName,help={"Input name for the new Error wave"}
-	SetVariable NewQErrorWaveName, pos={5,650}, size={320,20},title="Q Error wv names", proc=IR1I_setvarProc
+	SetVariable NewQErrorWaveName, pos={5,670}, size={320,20},title="Q Error wv names", proc=IR1I_setvarProc
 	SetVariable NewQErrorWaveName, value= root:packages:ImportData:NewQErrorWaveName,help={"Input name for the new Q data Error wave"}
 
-	Button ImportData,pos={330,610},size={80,30}, proc=IR1I_ButtonProc,title="Import"
+	Button ImportData,pos={330,630},size={80,30}, proc=IR1I_ButtonProc,title="Import"
 	Button ImportData,help={"Import the selected data files."}
 
 	IR1I_CheckProc("UseQRSNames",1)
@@ -397,52 +398,53 @@ Function IR1I_RecordResults(selectedFile)
 	SVAR NewQWaveName=root:Packages:ImportData:NewQWaveName
 	SVAR NewErrorWaveName=root:Packages:ImportData:NewErrorWaveName	
 	SVAR NewQErrorWaveName=root:Packages:ImportData:NewQErrorWaveName	
+	SVAR RemoveStringFromName=root:Packages:ImportData:RemoveStringFromName
 	string NewFldrNm,NewIntName, NewQName, NewEName, NewQEName, tempFirstPart, tempLastPart
 	NVAR TrunkateStart=root:Packages:ImportData:TrunkateStart	
 	NVAR TrunkateEnd=root:Packages:ImportData:TrunkateEnd	
 	
 	if(stringMatch(NewDataFolderName,"*<fileName>*")==0)
 		NewFldrNm = CleanupName(NewDataFolderName, 1 )
-		NewFldrNm=IR1I_TrunkateName(NewFldrNm,TrunkateStart,TrunkateEnd)
+		NewFldrNm=IR1I_TrunkateName(NewFldrNm,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewDataFolderName[0,strsearch(NewDataFolderName, "<fileName>", 0 )-1]
 		tempLastPart  = NewDataFolderName[strsearch(NewDataFolderName, "<fileName>", 0 )+10,inf]
-		NewFldrNm = TempFirstPart+CleanupName(IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd), 1 )+tempLastPart
+		NewFldrNm = TempFirstPart+CleanupName(IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName), 1 )+tempLastPart
 	endif
 	if(stringMatch(NewIntensityWaveName,"*<fileName>*")==0)
 		NewIntName = CleanupName(NewIntensityWaveName, 1 )
-		NewIntName = IR1I_TrunkateName(NewIntensityWaveName,TrunkateStart,TrunkateEnd)
+		NewIntName = IR1I_TrunkateName(NewIntensityWaveName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewIntensityWaveName[0,strsearch(NewIntensityWaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewIntensityWaveName[strsearch(NewIntensityWaveName, "<fileName>", 0 )+10,inf]
-		NewIntName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+		NewIntName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		NewIntName = CleanupName(NewIntName, 1 )
 	endif
 	if(stringMatch(NewQwaveName,"*<fileName>*")==0)
 		NewQName = CleanupName(NewQwaveName, 1 )
-		NewQName = IR1I_TrunkateName(NewQwaveName,TrunkateStart,TrunkateEnd)
+		NewQName = IR1I_TrunkateName(NewQwaveName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewQwaveName[0,strsearch(NewQwaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewQwaveName[strsearch(NewQwaveName, "<fileName>", 0 )+10,inf]
-		NewQName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+		NewQName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		NewQName = CleanupName(NewQName, 1 )
 	endif
 	if(stringMatch(NewErrorWaveName,"*<fileName>*")==0)
 		NewEName = CleanupName(NewErrorWaveName, 1 )
-		NewEName = IR1I_TrunkateName(NewErrorWaveName,TrunkateStart,TrunkateEnd)
+		NewEName = IR1I_TrunkateName(NewErrorWaveName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewErrorWaveName[0,strsearch(NewErrorWaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewErrorWaveName[strsearch(NewErrorWaveName, "<fileName>", 0 )+10,inf]
-		NewEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+		NewEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		NewEName = CleanupName(NewEName, 1 )
 	endif
 	if(stringMatch(NewQErrorWaveName,"*<fileName>*")==0)
 		NewQEName = CleanupName(NewQErrorWaveName, 1 )
-		NewQEName=IR1I_TrunkateName(NewQErrorWaveName,TrunkateStart,TrunkateEnd)
+		NewQEName=IR1I_TrunkateName(NewQErrorWaveName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewQErrorWaveName[0,strsearch(NewQErrorWaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewQErrorWaveName[strsearch(NewQErrorWaveName, "<fileName>", 0 )+10,inf]
-		NewQEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+		NewQEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		NewQEName = CleanupName(NewQEName, 1 )
 	endif
 
@@ -520,18 +522,19 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function/S IR1I_TrunkateName(InputName,TrunkateStart,TrunkateEnd)
-	string InputName
+Function/S IR1I_TrunkateName(InputName,TrunkateStart,TrunkateEnd, RemoveStringFromName)
+	string InputName, RemoveStringFromName
 	variable TrunkateStart,TrunkateEnd
 	
-	variable inpuLength=strlen(InputName)
+	string ModName=ReplaceString(RemoveStringFromName, InputName, "")
+	variable inpuLength=strlen(ModName)
 	variable removePoints=inpuLength - IR1TrimNameLength
-	string TempStr=InputName	
+	string TempStr=ModName	
 	if(removePoints>0)
 		if(TrunkateEnd)
-			tempStr=InputName[0,IR1TrimNameLength-1]
+			tempStr=ModName[0,IR1TrimNameLength-1]
 		elseif(TrunkateStart)
-			tempStr=InputName[removePoints,inf]
+			tempStr=ModName[removePoints,inf]
 		endif
 	endif
 	return cleanupName(tempStr,1)
@@ -749,20 +752,21 @@ Function IR1I_NameImportedWaves(selectedFile)
 	SVAR NewQwaveName= root:packages:ImportData:NewQWaveName
 	SVAR NewErrorWaveName= root:packages:ImportData:NewErrorWaveName
 	SVAR NewQErrorWaveName= root:packages:ImportData:NewQErrorWaveName
+	SVAR RemoveStringFromName=root:Packages:ImportData:RemoveStringFromName
 	NVAR IncludeExtensionInName=root:packages:ImportData:IncludeExtensionInName
 	string NewIntName, NewQName, NewEName, NewQEName, tempFirstPart, tempLastPart
 	
 	if(stringMatch(NewIntensityWaveName,"*<fileName>*")==0)
 		NewIntName = IR1I_RemoveBadCharacters(NewIntName)
 		NewIntName = CleanupName(NewIntensityWaveName, 1 )
-		NewIntName=IR1I_TrunkateName(NewIntName,TrunkateStart,TrunkateEnd)
+		NewIntName=IR1I_TrunkateName(NewIntName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewIntensityWaveName[0,strsearch(NewIntensityWaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewIntensityWaveName[strsearch(NewIntensityWaveName, "<fileName>", 0 )+10,inf]
 		if(IncludeExtensionInName)
-			NewIntName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd)+tempLastPart
+			NewIntName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		else
-			NewIntName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+			NewIntName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		endif
 		NewIntName = IR1I_RemoveBadCharacters(NewIntName)
 		NewIntName = CleanupName(NewIntName, 1 )
@@ -770,14 +774,14 @@ Function IR1I_NameImportedWaves(selectedFile)
 	if(stringMatch(NewQwaveName,"*<fileName>*")==0)
 		NewQName =IR1I_RemoveBadCharacters(NewQName)
 		NewQName = CleanupName(NewQwaveName, 1 )
-		NewQName=IR1I_TrunkateName(NewQName,TrunkateStart,TrunkateEnd)
+		NewQName=IR1I_TrunkateName(NewQName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewQwaveName[0,strsearch(NewQwaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewQwaveName[strsearch(NewQwaveName, "<fileName>", 0 )+10,inf]
 		if(IncludeExtensionInName)
-			NewQName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd)+tempLastPart
+			NewQName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		else
-			NewQName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+			NewQName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		endif
 		NewQName =IR1I_RemoveBadCharacters(NewQName)
 		NewQName = CleanupName(NewQName, 1 )
@@ -785,14 +789,14 @@ Function IR1I_NameImportedWaves(selectedFile)
 	if(stringMatch(NewErrorWaveName,"*<fileName>*")==0)
 		NewEName =IR1I_RemoveBadCharacters(NewEName)
 		NewEName = CleanupName(NewErrorWaveName, 1 )
-		NewEName=IR1I_TrunkateName(NewEName,TrunkateStart,TrunkateEnd)
+		NewEName=IR1I_TrunkateName(NewEName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewErrorWaveName[0,strsearch(NewErrorWaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewErrorWaveName[strsearch(NewErrorWaveName, "<fileName>", 0 )+10,inf]
 		if(IncludeExtensionInName)
-			NewEName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd)+tempLastPart
+			NewEName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		else
-			NewEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+			NewEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		endif
 		NewEName =IR1I_RemoveBadCharacters(NewEName)
 		NewEName = CleanupName(NewEName, 1 )
@@ -800,14 +804,14 @@ Function IR1I_NameImportedWaves(selectedFile)
 	if(stringMatch(NewQErrorWaveName,"*<fileName>*")==0)
 		NewQEName =IR1I_RemoveBadCharacters(NewQEName)
 		NewQEName = CleanupName(NewQErrorWaveName, 1 )
-		NewQEName=IR1I_TrunkateName(NewQEName,TrunkateStart,TrunkateEnd)
+		NewQEName=IR1I_TrunkateName(NewQEName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewQErrorWaveName[0,strsearch(NewQErrorWaveName, "<fileName>", 0 )-1]
 		tempLastPart  = NewQErrorWaveName[strsearch(NewQErrorWaveName, "<fileName>", 0 )+10,inf]
 		if(IncludeExtensionInName)
-			NewQEName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd)+tempLastPart
+			NewQEName = TempFirstPart+IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		else
-			NewQEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd)+tempLastPart
+			NewQEName = TempFirstPart+IR1I_TrunkateName(StringFromList(0,selectedFile,"."),TrunkateStart,TrunkateEnd,RemoveStringFromName)+tempLastPart
 		endif
 		NewQEName =IR1I_RemoveBadCharacters(NewQEName)
 		NewQEName = CleanupName(NewQEName, 1 )
@@ -949,6 +953,8 @@ Function IR1I_CreateImportDataFolder(selectedFile)
 	NVAR IncludeExtensionInName = root:packages:ImportData:IncludeExtensionInName
 	NVAR TrunkateStart = root:packages:ImportData:TrunkateStart
 	NVAR TrunkateEnd = root:packages:ImportData:TrunkateEnd
+	SVAR RemoveStringFromName=root:Packages:ImportData:RemoveStringFromName
+
 	variable i
 	string tempFldrName, tempSelectedFile
 	setDataFolder root:
@@ -962,7 +968,7 @@ Function IR1I_CreateImportDataFolder(selectedFile)
 			if(!IncludeExtensionInName)
 				selectedFile = stringFromList(0,selectedFile,".")
 			endif
-			selectedFile=IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd)
+			selectedFile=IR1I_TrunkateName(selectedFile,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 			selectedFile =IR1I_RemoveBadCharacters(selectedFile)
 			selectedFile = CleanupName(selectedFile, 1 )
 			NewDataFolder/O/S $selectedFile
@@ -1840,7 +1846,7 @@ Function IR1I_InitializeImportData()
 	variable i
 	
 	ListOfStrings = "DataPathName;DataExtension;IntName;QvecName;ErrorName;NewDataFolderName;NewIntensityWaveName;"
-	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;NameMatchString;TooManyPointsWarning;"
+	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;NameMatchString;TooManyPointsWarning;RemoveStringFromName;"
 	ListOfVariables = "UseFileNameAsFolder;UseIndra2Names;UseQRSNames;DataContainErrors;UseQISNames;"
 	ListOfVariables += "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;FoundNWaves;"	
 	ListOfVariables += "Col2Int;Col2Qvec;Col2Err;Col2QErr;Col3Int;Col3Qvec;Col3Err;Col3QErr;Col4Int;Col4Qvec;Col4Err;Col4QErr;"	
