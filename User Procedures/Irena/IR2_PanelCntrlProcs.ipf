@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.34
+#pragma version = 1.35
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.35 fixed weird problem when after change from USAXS to qrs data set, first time user got wrong set of data when same folder contained both USAXS and qrs data.
 //1.34 enabled use of following characters in Wavenames: (){}%#^$?|&@, Fixed time cashing problem which caused folder match string to be "retained" for 5 seconds. 
 //		minor change in GUI locations. 
 //1.33 IR2C_PanelPopupControl changed to handle cases when multiple pairs/triplets of waves reside in the same folder. 
@@ -2329,13 +2330,9 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 		elseif(UseQRSStructure)
 			QDf=stringFromList(0,TempXlist)
+			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
 			IntDf=stringFromList(0,IR2P_ListOfWaves("Yaxis",QDf,TopPanel)+";")		
 			EDf=stringFromList(0,IR2P_ListOfWaves("Error",QDf,TopPanel)+";")
-		//	IntDf=stringFromList(0,TempYlist)
-		//	EDf=stringFromList(0,TempElist)
-//			Execute ("PopupMenu IntensityDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
-			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
-//			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanelFixed+"\"), win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanelFixed+"\"), win="+TopPanel)
 		elseif(UseResults)
