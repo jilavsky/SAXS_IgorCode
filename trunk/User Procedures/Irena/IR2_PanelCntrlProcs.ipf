@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.35
+#pragma version = 1.36
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.36 fixed another bug in qrs data structrue handling. 
 //1.35 fixed weird problem when after change from USAXS to qrs data set, first time user got wrong set of data when same folder contained both USAXS and qrs data.
 //1.34 enabled use of following characters in Wavenames: (){}%#^$?|&@, Fixed time cashing problem which caused folder match string to be "retained" for 5 seconds. 
 //		minor change in GUI locations. 
@@ -1685,6 +1686,7 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 	SVAR EwaveUserDataTypesLookup=root:Packages:IrenaControlProcs:EwaveUserDataTypesLookup
 	SVAR ResultsEDataTypesLookup=root:Packages:IrenaControlProcs:ResultsEDataTypesLookup
 
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations)
 	SVAR/Z WaveMatchStr=$("root:Packages:IrenaControlProcs:"+possiblyQuoteName(TopPanel)+":WaveMatchStr")
 	if(!SVAR_Exists(WaveMatchStr))
 		string/g $("root:Packages:IrenaControlProcs:"+possiblyQuoteName(TopPanel)+":WaveMatchStr")
@@ -1692,7 +1694,6 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 		WaveMatchStr=""
 	endif
 	
-	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations)
 	string LocallyAllowedIndra2Data=StringByKey(TopPanel, ControlAllowedIrenaTypes,"=",">")
 	string LocallyAllowedResultsData=StringByKey(TopPanel, ControlAllowedResultsTypes,"=",">")
 	string LocallyAllowedUserData=StringByKey(TopPanel, ControlAllowedUserTypes,"=",">")
@@ -2290,13 +2291,16 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		String tempDf=GetDataFolder(1)
 		setDataFolder root:Packages:IrenaControlProcs
 		setDataFolder $(TopPanel)
-		string TopPanelFixed=PossiblyQuoteName(TopPanel)
+		string TopPanelFixed=PossiblyQuoteName(TopPanel)			//this seems to be problem later, wonder why do I have it here... 
 		string/g TempYList, tempXList, tempEList
 		SVAR TempYList 
 		SVAR TempXList 
 		SVAR TempEList 
 		setDataFolder tempDF
 		Dtf=popStr
+//		Execute ("PopupMenu IntensityDataName noproc, win="+TopPanel)
+//		Execute ("PopupMenu QvecDataName noproc, win="+TopPanel)
+//		Execute ("PopupMenu ErrorDataName noproc, win="+TopPanel)
 		if(stringmatch(oldpopStr,"---"))
 			QDf="---"
 			IntDf="---"
@@ -2315,7 +2319,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		IntDf=stringFromList(0,TempYlist)
 		TempEList=IR2P_ListOfWaves("Error","*",TopPanel)
 		EDf=stringFromList(0,TempElist)
-		if(strlen(WaveMatchStr)>0 && strlen(TempXList)>5)		
+		if(strlen(WaveMatchStr)>0 && strlen(TempXList)>5&&!UseIndra2Structure)		
 			TempXList=GrepList(TempXList,IR2C_PrepareMatchString(WaveMatchStr))	
 			if(strlen(TempXList)<1)
 				TempXList="---;"	
@@ -2333,8 +2337,10 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
 			IntDf=stringFromList(0,IR2P_ListOfWaves("Yaxis",QDf,TopPanel)+";")		
 			EDf=stringFromList(0,IR2P_ListOfWaves("Error",QDf,TopPanel)+";")
-			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanelFixed+"\"), win="+TopPanel)
-			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanelFixed+"\"), win="+TopPanel)
+			Execute ("PopupMenu IntensityDataName mode="+num2str(WhichListItem(IntDf, TempYlist, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
+			Execute ("PopupMenu ErrorDataName mode="+num2str(WhichListItem(EDf, tempEList, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+//			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)
+//			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)
 		elseif(UseResults)
 			QDf=stringFromList(0,TempXlist)
 			IntDf=stringFromList(0,TempYlist)
@@ -2357,6 +2363,11 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 		endif
+
+//		Execute ("PopupMenu IntensityDataName proc=IR2C_PanelPopupControl, win="+TopPanel)
+//		Execute ("PopupMenu QvecDataName proc=IR2C_PanelPopupControl, win="+TopPanel)
+//		Execute ("PopupMenu ErrorDataName proc=IR2C_PanelPopupControl, win="+TopPanel)
+
 
 	 	//allow user function through hook function...
 		infostr = FunctionInfo("IR2_ContrProc_F_Hook_Proc")
