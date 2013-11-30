@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.48
-constant IR3MversionNumber = 2.39			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.41			//Data manipulation I panel version number
+#pragma version=2.49
+constant IR3MversionNumber = 2.49			//Data manipulation II panel version number
+constant IR1DversionNumber = 2.49			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -9,7 +9,8 @@ constant IR1DversionNumber = 2.41			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.41 disabled Q shift in Modeling I, let's see if anyone complains... 
+//2.49 improvements for Data Manipulation II in handling cursors. 
+//2.48 disabled Q shift in Modeling I, let's see if anyone complains... 
 //2.47 fixed step for Modeling I Data 2
 //2.46 slight modification of IR1D_rebinData for use by Modeling II, Size Distribution and Unified fit. 
 //2.45 Data Manipulation I - added Merge data feature and preserve cursor position through data adding. Changed steps in GUI for Int multipliers and background.
@@ -103,13 +104,13 @@ end
 
 Proc IR1D_DataManipulationPanel()
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,415,700) as "Data Manipulation"
+	NewPanel /K=1 /W=(2.25,43.25,415,720) as "Data Manipulation"
 	DoWIndow/C IR1D_DataManipulationPanel
 	TitleBox MainTitle title="Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,505},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,539},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,509},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
@@ -137,6 +138,8 @@ Proc IR1D_DataManipulationPanel()
 	setVariable Qmax, pos={10,52}
 	setVariable QNumPoints, pos={10,78}
 	Checkbox QlogScale, pos={10,103}
+	SetVariable DataUnits, pos={300,109}, size={90,15},title="Units:", noproc, variable=root:Packages:SASDataModification:DataUnits, disable=2
+	SetVariable DataUnits ,help={"Intensity units for data set 1"}
 	
 	
 	SetActiveSubwindow ##
@@ -160,6 +163,8 @@ Proc IR1D_DataManipulationPanel()
 	setVariable Qmax, pos={10,52}
 	setVariable QNumPoints, pos={10,78}
 	Checkbox QlogScale, pos={10,103}
+	SetVariable DataUnits, pos={300,109}, size={90,15},title="Units:", noproc, variable=root:Packages:SASDataModification:DataUnits2, disable=2
+	SetVariable DataUnits ,help={"Intensity units for data set 2"}
 
 	SetActiveSubwindow ##
 
@@ -223,35 +228,39 @@ Proc IR1D_DataManipulationPanel()
 	Slider LogBinningPar value=0.001,limits={0.5,10,0}, ticks=0
 	Slider LogBinningPar help={"Slide to change log-binning parameter"}		
 
-	CheckBox SmoothInLogScale,pos={10,511},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (log)"
+	CheckBox SmoothInLogScale,pos={10,515},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (log)"
 	CheckBox SmoothInLogScale,variable= root:packages:SASDataModification:SmoothInLogScale, help={"Check, if you want to smooth data in log scale. Select window correctly"}
-	CheckBox SmoothInLinScale,pos={100,511},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (lin)"
+	CheckBox SmoothInLinScale,pos={100,515},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (lin)"
 	CheckBox SmoothInLinScale,variable= root:packages:SASDataModification:SmoothInLinScale, help={"Check, if you want to smooth data in linera scale. Select window correctly."}
-	SetVariable SmoothWindow, pos={200,511}, size={170,20},title="Smoothing window?"
+	SetVariable SmoothWindow, pos={200,515}, size={170,20},title="Smoothing window?"
 	SetVariable SmoothWindow value= root:packages:SASDataModification:SmoothWindow,help={"Window for smoothing"}
 
-	CheckBox SmoothSpline,pos={10,524},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth Spline"
+	CheckBox SmoothSpline,pos={10,534},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth Spline"
 	CheckBox SmoothSpline,variable= root:packages:SASDataModification:SmoothSplines, help={"Check, if you want to smooth data using splines."}
-	Slider SmoothSplineSlider pos={100,527},size={270,10},vert=0, side=0
+	Slider SmoothSplineSlider pos={100,537},size={270,10},vert=0, side=0
 	Slider SmoothSplineSlider proc=IR1D_SliderProc,variable=root:packages:SASDataModification:SmoothSplinesParam
 	Slider SmoothSplineSlider value=0.001,limits={1e-6,22,0}, ticks=0
 	Slider SmoothSplineSlider help={"Slide to change smoothing parameter"}		
 
-	PopupMenu SelectFolderNewData,pos={1,545},size={250,21},proc=IR1D_PanelPopupControl,title="Pick new data folder", help={"Select folder with data"}
+	PopupMenu SelectFolderNewData,pos={1,562},size={250,21},proc=IR1D_PanelPopupControl,title="Pick new data folder", help={"Select folder with data"}
 	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
 
-	SetVariable NewDataFolderName, pos={5,570}, size={390,20},title="New data folder:", proc=IR1D_setvarProc
+	PopupMenu DataUnits,pos={250,562},size={250,21},proc=IR1D_PanelPopupControl,title="Int. Units", help={"Select output Intensity units"}
+	PopupMenu DataUnits,mode=1,popvalue="Arbitrary",value="Arbitrary;cm2/cm3;cm3/g;"
+
+
+	SetVariable NewDataFolderName, pos={5,590}, size={390,20},title="New data folder:", proc=IR1D_setvarProc
 	SetVariable NewDataFolderName value= root:packages:SASDataModification:NewDataFolderName,help={"Folder for the new data. Will be created, if does not exist. Use popup above to preselect."}
-	SetVariable NewQwaveName, pos={5,590}, size={320,20},title="New Q wave nm", proc=IR1D_setvarProc
+	SetVariable NewQwaveName, pos={5,610}, size={320,20},title="New Q wave nm", proc=IR1D_setvarProc
 	SetVariable NewQwaveName, value= root:packages:SASDataModification:NewQWaveName,help={"Input name for the new Q wave"}
-	SetVariable NewIntensityWaveName, pos={5,610}, size={320,20},title="New Intensity nm", proc=IR1D_setvarProc
+	SetVariable NewIntensityWaveName, pos={5,630}, size={320,20},title="New Intensity nm", proc=IR1D_setvarProc
 	SetVariable NewIntensityWaveName, value= root:packages:SASDataModification:NewIntensityWaveName,help={"Input name for the new intensity wave"}
-	SetVariable NewErrorWaveName, pos={5,630}, size={320,20},title="New Error name", proc=IR1D_setvarProc
+	SetVariable NewErrorWaveName, pos={5,650}, size={320,20},title="New Error name", proc=IR1D_setvarProc
 	SetVariable NewErrorWaveName, value= root:packages:SASDataModification:NewErrorWaveName,help={"Input name for the new Error wave"}
 
 
-	Button ConvertData, pos={330,600},size={60,25}, proc=IR1D_InputPanelButtonProc,title="GO", help={"Do the selected conversion"}
-	Button SaveData,pos={330,630},size={60,25}, proc=IR1D_InputPanelButtonProc,title="SAVE", help={"Save the result of conversion"}
+	Button ConvertData, pos={330,610},size={60,25}, proc=IR1D_InputPanelButtonProc,title="GO", help={"Do the selected conversion"}
+	Button SaveData,pos={330,640},size={60,25}, proc=IR1D_InputPanelButtonProc,title="SAVE", help={"Save the result of conversion"}
 
 end
 //***********************************************************************************************************************************
@@ -397,10 +406,10 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1D_CopyDataAndGraph()
 		IR1D_PresetOutputStrings()
 		DoUpdate
-		if(numtype(OldAcsrPnt)==0)
+		if(numtype(OldAcsrPnt)==0 && !StringMatch(OldAcsrWvName, "ResultsInt" ))
 			Cursor/P A,  $OldAcsrWvName,  OldAcsrPnt
 		endif
-		if(numtype(OldBcsrPnt)==0)
+		if(numtype(OldBcsrPnt)==0&& !StringMatch(OldBcsrWvName, "ResultsInt" ))
 			Cursor/P B,  $OldBcsrWvName,  OldBcsrPnt
 		endif
 	endif
@@ -428,8 +437,8 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		//store where cursors are
 		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
 		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
-		if(strlen(OldAcsrWvName)<1||strlen(OldBcsrWvName)<1)
-			abort "Cursors not set. Place A cursor on start of Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+		if(strlen(OldAcsrWvName)<1||strlen(OldBcsrWvName)<1||stringmatch(OldBcsrWvName,"ResultsInt")||stringmatch(OldAcsrWvName,"ResultsInt"))
+			abort "Cursors not set correctly. Place A cursor on start of Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
 		endif
 		OldAcsrPnt = pcsr(A,"IR1D_DataManipulationGraph")
 		OldBcsrPnt = pcsr(B,"IR1D_DataManipulationGraph")
@@ -738,6 +747,7 @@ static Function  IR1D_SaveData()
 	SVAR NewIntensityWaveName=root:Packages:SASDataModification:NewIntensityWaveName
 	SVAR NewQWavename=root:Packages:SASDataModification:NewQWavename
 	SVAR NewErrorWaveName=root:Packages:SASDataModification:NewErrorWaveName
+	SVAR OutputDataUnits=root:Packages:SASDataModification:OutputDataUnits
 	//check for name errors
 	if(strlen(NewIntensityWaveName)>30)
 		NewIntensityWaveName=NewIntensityWaveName[0,30]
@@ -756,6 +766,7 @@ static Function  IR1D_SaveData()
 	Wave/Z ResultsInt = root:packages:SASDataModification:ResultsInt
 	Wave/Z ResultsQ = root:packages:SASDataModification:ResultsQ
 	Wave/Z ResultsE = root:packages:SASDataModification:ResultsE
+	
 
 	if ((strlen(NewDataFolderName)<=1) || (strlen(NewIntensityWaveName)<=0)|| (strlen(NewQWaveName)<=0))
 		Abort "Input output waves names"
@@ -809,6 +820,16 @@ static Function  IR1D_SaveData()
 		endif 
 		Duplicate/O ResultsInt, $NewIntensityWaveName
 		Duplicate/O ResultsQ, $NewQWaveName
+		Wave TmpIntNote=$NewIntensityWaveName
+		Wave TmpQnote=$NewQWaveName
+		string OldNote
+		OldNOte=note(TmpIntNote)
+		OldNOte=ReplaceStringByKey("Units", OldNOte, OutputDataUnits, "=" , ";")
+		note/K TmpIntNote, OldNOte
+		OldNOte=note(TmpQnote)
+		OldNOte=ReplaceStringByKey("Units", OldNOte, "A-1", "=" , ";")
+		note/K TmpQnote, OldNOte
+		
 		if (WaveExists(ResultsE) && (strlen(NewErrorWaveName)>0))
 			Wave/Z testOutputE=$NewErrorWaveName
 			if (WaveExists(testOutputE))
@@ -1918,6 +1939,9 @@ static Function IR1D_CopyDataLocally()
 	SVAR IntensityWaveName2=root:Packages:SASDataModificationBot:IntensityWaveName
 	SVAR QWavename2=root:Packages:SASDataModificationBot:QWavename
 	SVAR ErrorWaveName2=root:Packages:SASDataModificationBot:ErrorWaveName
+	SVAR DataUnits=root:Packages:SASDataModification:DataUnits
+	SVAR DataUnits2=root:Packages:SASDataModification:DataUnits2
+	SVAR OutputDataUnits=root:Packages:SASDataModification:OutputDataUnits
 	//fix for liberal names
 	if (cmpstr(IntensityWaveName1[0],"'")!=0)
 		IntensityWaveName1 = PossiblyQuoteName(IntensityWaveName1)
@@ -1985,6 +2009,23 @@ static Function IR1D_CopyDataLocally()
 		Duplicate/O EWv2, $("root:Packages:SASDataModification:Error2")
 		Duplicate/O EWv2, $("root:Packages:SASDataModification:OriginalError2")
 	endif
+	
+	string TmpUnits
+	//data 1 handling...
+	TmpUnits=StringByKey("Units", note(IntWv1), "=", ";")
+	if(StringMatch(TmpUnits, "cm2/cm3") || StringMatch(TmpUnits, "cm2/g"))
+		DataUnits = TmpUnits
+	else
+		DataUnits = "Arbitrary"
+	endif
+	TmpUnits=StringByKey("Units", note(IntWv2), "=", ";")
+	if(StringMatch(TmpUnits, "cm2/cm3") || StringMatch(TmpUnits, "cm2/g"))
+		DataUnits2 = TmpUnits
+	else
+		DataUnits2 = "Arbitrary"
+	endif
+	OutputDataUnits = DataUnits
+	Execute("PopupMenu DataUnits popmatch=\""+OutputDataUnits+"\", win=IR1D_DataManipulationPanel")
 	setDataFolder OldDf
 end
 //**********************************************************************************************************
@@ -2328,312 +2369,6 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //popup procedure
-Function IR1D_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-
-	SVAR DataFolderName1=root:Packages:SASDataModification:DataFolderName1
-	SVAR IntensityWaveName1=root:Packages:SASDataModification:IntensityWaveName1
-	SVAR QWavename1=root:Packages:SASDataModification:QWavename1
-	SVAR ErrorWaveName1=root:Packages:SASDataModification:ErrorWaveName1
-
-	SVAR DataFolderName2=root:Packages:SASDataModification:DataFolderName2
-	SVAR IntensityWaveName2=root:Packages:SASDataModification:IntensityWaveName2
-	SVAR QWavename2=root:Packages:SASDataModification:QWavename2
-	SVAR ErrorWaveName2=root:Packages:SASDataModification:ErrorWaveName2
-
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:SASDataModification
-		NVAR UseIndra2Data=root:Packages:SASDataModification:UseIndra2Data
-		NVAR UseQRSData=root:Packages:SASDataModification:UseQRSdata
-		SVAR Dtf=root:Packages:SASDataModification:DataFolderName
-		SVAR IntDf=root:Packages:SASDataModification:IntensityWaveName
-		SVAR QDf=root:Packages:SASDataModification:QWaveName
-		SVAR EDf=root:Packages:SASDataModification:ErrorWaveName
-
-//		IntDf=""
-//		Dtf=""
-//		QDf=""
-//		EDf=""
-	if (cmpstr(ctrlName,"SelectDataFolder")==0)
-		//here we do what needs to be done when we select data folder
-		Dtf=popStr
-		PopupMenu IntensityDataName mode=1
-		PopupMenu QvecDataName mode=1
-		PopupMenu ErrorDataName mode=1
-		if (UseIndra2Data)
-			IntDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,1))
-			QDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,1))
-			EDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,1))
-			PopupMenu IntensityDataName value=IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,1)
-			PopupMenu QvecDataName value=IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,1)
-			PopupMenu ErrorDataName value=IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,1)
-		else
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-		if(UseQRSdata)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","SASDataModification",1,1)
-			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","SASDataModification",1,1)
-			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","SASDataModification",1,1)
-		endif
-		if(!UseQRSdata && !UseIndra2Data)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","SASDataModification",0,0)
-			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","SASDataModification",0,0)
-			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","SASDataModification",0,0)
-		endif
-		if (cmpstr(popStr,"---")==0)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-		DataFolderName1=Dtf
-		IntensityWaveName1=IntDf
-		QWavename1=QDf
-		ErrorWaveName1=EDf
-	endif
-	
-
-	if (cmpstr(ctrlName,"IntensityDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			IntDf=popStr
-			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-				QDf="q"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Wave/Z IsThereError=$(Dtf+possiblyquotename(EDf))
-				if(WaveExists(IsThereError))
-					Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"SASDataModification\",0,1)")
-				else
-					EDf=""
-				endif
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"SASDataModification\",0,1)")
-			elseif(UseIndra2Data)
-				QDf=ReplaceString("Int", popStr, "Qvec")
-				EDf=ReplaceString("Int", popStr, "Error")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,1)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,1)")
-			endif
-		else
-			IntDf=""
-		endif
-		IntensityWaveName1=IntDf
-		QWavename1=QDf
-		ErrorWaveName1=EDf
-	endif
-
-	if (cmpstr(ctrlName,"QvecDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			QDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-				IntDf="r"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"SASDataModification\",0,1)")
-				Wave/Z IsThereError=$(Dtf+possiblyquotename(EDf))
-				if(WaveExists(IsThereError))
-					Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"SASDataModification\",0,1)")
-				else
-					EDf=""
-				endif
-			elseif(UseIndra2Data)
-				IntDf=ReplaceString("Qvec", popStr, "Int")
-				EDf=ReplaceString("Qvec", popStr, "Error")
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,1)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,1)")
-			endif
-		else
-			QDf=""
-		endif
-		IntensityWaveName1=IntDf
-		QWavename1=QDf
-		ErrorWaveName1=EDf
-	endif
-	
-	if (cmpstr(ctrlName,"ErrorDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			EDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-				IntDf="r"+popStr[1,inf]
-				QDf="q"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"SASDataModification\",0)")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"SASDataModification\",0)")
-			elseif(UseIndra2Data)
-				IntDf=ReplaceString("Error", popStr, "Int")
-				Qdf=ReplaceString("Error", popStr, "Qvec")
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,1)")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,1)")
-			endif
-		else
-			EDf=""
-		endif
-		IntensityWaveName1=IntDf
-		QWavename1=QDf
-		ErrorWaveName1=EDf
-	endif
-
-	//ANd now the other population	
-		NVAR UseIndra2Data2=root:Packages:SASDataModification:UseIndra2Data2
-		NVAR UseQRSData2=root:Packages:SASDataModification:UseQRSdata2
-		SVAR Dtf2=root:Packages:SASDataModification:DataFolderName2
-		SVAR IntDf2=root:Packages:SASDataModification:IntensityWaveName2
-		SVAR QDf2=root:Packages:SASDataModification:QWaveName2
-		SVAR EDf2=root:Packages:SASDataModification:ErrorWaveName2
-	if (cmpstr(ctrlName,"SelectDataFolder2")==0)
-		//here we do what needs to be done when we select data folder
-		Dtf2=popStr
-		PopupMenu IntensityDataName2 mode=1
-		PopupMenu QvecDataName2 mode=1
-		PopupMenu ErrorDataName2 mode=1
-		if (UseIndra2Data2)
-			IntDf2=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,2))
-			QDf2=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,2))
-			EDf2=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,2))
-			PopupMenu IntensityDataName2 value=IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,2)
-			PopupMenu QvecDataName2 value=IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,2)
-			PopupMenu ErrorDataName2 value=IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,2)
-		else
-			IntDf2=""
-			QDf2=""
-			EDf2=""
-			PopupMenu IntensityDataName2 value="---"
-			PopupMenu QvecDataName2  value="---"
-			PopupMenu ErrorDataName2  value="---"
-		endif
-		if(UseQRSdata2)
-			IntDf2=""
-			QDf2=""
-			EDf2=""
-			PopupMenu IntensityDataName2  value="---;"+IR1_ListOfWaves2("DSM_Int","SASDataModification",1,1)
-			PopupMenu QvecDataName2  value="---;"+IR1_ListOfWaves2("DSM_Qvec","SASDataModification",1,1)
-			PopupMenu ErrorDataName2  value="---;"+IR1_ListOfWaves2("DSM_Error","SASDataModification",1,1)
-		endif
-		if(!UseQRSdata2 && !UseIndra2Data2)
-			IntDf2=""
-			QDf2=""
-			EDf2=""
-			PopupMenu IntensityDataName2  value="---;"+IR1_ListOfWaves2("DSM_Int","SASDataModification",1,1)
-			PopupMenu QvecDataName2  value="---;"+IR1_ListOfWaves2("DSM_Qvec","SASDataModification",1,1)
-			PopupMenu ErrorDataName2  value="---;"+IR1_ListOfWaves2("DSM_Error","SASDataModification",1,1)
-		endif
-		if (cmpstr(popStr,"---")==0)
-			IntDf2=""
-			QDf2=""
-			EDf2=""
-			PopupMenu IntensityDataName2  value="---"
-			PopupMenu QvecDataName2  value="---"
-			PopupMenu ErrorDataName2  value="---"
-		endif
-		DataFolderName2=Dtf2
-		IntensityWaveName2=IntDf2
-		QWavename2=QDf2
-		ErrorWaveName2=EDf2
-	endif
-	
-
-	if (cmpstr(ctrlName,"IntensityDataName2")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			IntDf2=popStr
-			if (UseQRSData2 && strlen(QDf2)==0 && strlen(EDf2)==0)
-				QDf2="q"+popStr[1,inf]
-				EDf2="s"+popStr[1,inf]
-				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Qvec\",\"SASDataModification\",2,1)")
-				Wave/Z IsThereError2=$(Dtf2+possiblyquotename(EDf2))
-				if(WaveExists(IsThereError2))
-					Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Error\",\"SASDataModification\",2,1)")
-				else
-					EDf2=""
-				endif
-			elseif(UseIndra2Data2)
-				QDf2=ReplaceString("Int", popStr, "Qvec")
-				EDf2=ReplaceString("Int", popStr, "Error")
-				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,2)")
-				Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,2)")
-			endif
-		else
-			IntDf2=""
-		endif
-		IntensityWaveName2=IntDf2
-		QWavename2=QDf2
-		ErrorWaveName2=EDf2
-	endif
-
-	if (cmpstr(ctrlName,"QvecDataName2")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			QDf2=popStr
-			if (UseQRSData2 && strlen(IntDf2)==0 && strlen(EDf2)==0)
-				IntDf2="r"+popStr[1,inf]
-				EDf2="s"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Int\",\"SASDataModification\",2,1)")
-				Wave/Z IsThereError2=$(Dtf2+possiblyquotename(EDf2))
-				if(WaveExists(IsThereError2))
-					Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Error\",\"SASDataModification\",2,1)")
-				else
-					EDf2=""
-				endif
-			elseif(UseIndra2Data2)
-				IntDf2=ReplaceString("Qvec", popStr, "Int")
-				EDf2=ReplaceString("Qvec", popStr, "Error")
-				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,2)")
-				Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,2)")
-			endif
-		else
-			QDf2=""
-		endif
-		IntensityWaveName2=IntDf2
-		QWavename2=QDf2
-		ErrorWaveName2=EDf2
-	endif
-	
-	if (cmpstr(ctrlName,"ErrorDataName2")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			EDf2=popStr
-			if (UseQRSData2 && strlen(QDf2)==0 && strlen(IntDf2)==0)
-				IntDf2="r"+popStr[1,inf]
-				QDf2="q"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Int\",\"SASDataModification\",2,1)")
-				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Qvec\",\"SASDataModification\",2,1)")
-			elseif(UseIndra2Data2)
-				IntDf2=ReplaceString("Error", popStr, "Int")
-				Qdf2=ReplaceString("Error", popStr, "Qvec")
-				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,2)")
-				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,2)")
-			endif
-		else
-			EDf2=""
-		endif
-		IntensityWaveName2=IntDf2
-		QWavename2=QDf2
-		ErrorWaveName2=EDf2
-	endif
-
-	if (cmpstr(ctrlName,"SelectFolderNewData")==0)
-		//here goes what needs to be done, when we select this popup...
-		SVAR NewDataFolderName=root:Packages:SASDataModification:NewDataFolderName
-		NewDataFolderName=popStr
-	endif
-
-
-
-end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2654,8 +2389,8 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 	SetDataFolder root:Packages:SASDataModification					//go into the folder
 
 	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
-	ListOfStrings+="DataFolderName2;IntensityWaveName2;QWavename2;ErrorWaveName2;"
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;DataUnits;OutputDataUnits;"
+	ListOfStrings+="DataFolderName2;IntensityWaveName2;QWavename2;ErrorWaveName2;DataUnits2;"
 	ListOfVariables="UseIndra2Data;UseQRSdata;"
 	ListOfVariables+="UseIndra2Data2;UseQRSdata2;"
 
@@ -2701,9 +2436,6 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 		LogReduceParam=1
 	endif
 
-
-
-								
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
 	endfor	
@@ -2733,7 +2465,14 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 		test =inf
 	endfor		
 	
-	NVAR SmoothWindow
+	SVAR DataUnits
+	DataUnits="Arbitrary"
+	SVAR DataUnits2
+	DataUnits2="Arbitrary"
+	SVAR OutputDataUnits
+	OutputDataUnits="Arbitrary"
+
+									NVAR SmoothWindow
 	SmoothWindow = 3
 
 	ListOfStrings="DataFolderName1;IntensityWaveName1;QWavename1;ErrorWaveName1;"
@@ -2968,6 +2707,9 @@ Function IR3M_DataManipulationIIPanel()
 	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:DataManipulationII:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipualtion I"}
 	SetVariable ReducePntsParam, pos={240,345}, size={130,20},title="Red. pnts. Param=", noproc, disable=!(ReduceNumPnts)
 	SetVariable ReducePntsParam limits={0.5,10,0},value= root:packages:DataManipulationII:ReducePntsParam,help={"Log reduce points parameter, typically 3-5"}
+	SVAR OutputDataUnits = root:packages:DataManipulationII:OutputDataUnits
+	PopupMenu DataUnits,pos={15,365},size={250,21},proc=IR3M_PanelPopupControl,title="Int. Units",value="Arbitrary;cm2/cm3;cm3/g;"
+	PopupMenu DataUnits,popmatch=OutputDataUnits, help={"Select output Intensity units"}
 
 	
 	//Experimental data input
@@ -3168,7 +2910,8 @@ Function IR3M_DataManIITabProc(tca) : TabControl
 			CheckBox ReduceNumPnts,win=DataManipulationII,disable=(tab!=3)		
 			SetVariable TargetNumberOfPoints,win=DataManipulationII,disable=(tab!=3||!ReduceNumPnts)		
 			SetVariable ReducePntsParam,win=DataManipulationII,disable=(tab!=3 || !ReduceNumPnts)		
-				
+			PopupMenu DataUnits,win=DataManipulationII,disable=(tab!=3)	
+							
 			CheckBox CreateErrors,win=DataManipulationII,disable=(tab!=2)		
 			CheckBox CreateSQRTErrors,win=DataManipulationII,disable=(tab!=2||!CreateErrors)		
 			CheckBox CreatePercentErrors,win=DataManipulationII,disable=(tab!=2||!CreateErrors)		
@@ -3586,8 +3329,12 @@ Function IR3M_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		IR3M_AppendLegend()
 	endif
 	if (cmpstr(ctrlName,"StartFolder")==0)
-		SVAR StartFolder
+		SVAR StartFolder=root:Packages:DataManipulationII:StartFolder
 		StartFolder=popStr
+	endif
+	if (cmpstr(ctrlName,"DataUnits")==0)
+		SVAR OutputDataUnits=root:Packages:DataManipulationII:OutputDataUnits
+		OutputDataUnits=popStr
 	endif
 	
 	
@@ -4427,6 +4174,18 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etm
 					IN2G_CreateAndSetArbFolder(OutFldrNm)
 					Duplicate TempSubtractedXWv0123, $((OutXWvNm))
 					Duplicate TempSubtractedYWv0123, $((OutYWvNm))
+					//set units
+					SVAR OutputDataUnits = root:packages:DataManipulationII:OutputDataUnits
+					Wave TmpIntNote=$((OutYWvNm))
+					Wave TmpQnote=$((OutXWvNm))
+					string OldNote
+					OldNOte=note(TmpIntNote)
+					OldNOte=ReplaceStringByKey("Units", OldNOte, OutputDataUnits, "=" , ";")
+					note/K TmpIntNote, OldNOte
+					OldNOte=note(TmpQnote)
+					OldNOte=ReplaceStringByKey("Units", OldNOte, "A-1", "=" , ";")
+					note/K TmpQnote, OldNOte
+					//end of set units...
 					Wave/Z TempSubtractedEWv0123= $(tempFldrNm+"TempSubtractedEWv0123")
 					if(WaveExists(TempSubtractedEWv0123))
 						Duplicate TempSubtractedEWv0123, $((OutEWvNm))
@@ -4971,7 +4730,7 @@ Function IR3M_InitDataManipulationII()
 	ListOfVariables+="ScaleData;ScaleDataByValue;CreateErrors;CreateSQRTErrors;CreatePctErrors;PercentErrorsToUse;"
 	ListOfVariables+="ReduceNumPnts;TargetNumberOfPoints;ReducePntsParam;PassTroughProcessing;"
 //
-	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;OutputDataUnits;"
 	ListOfStrings+="Waves_Xtemplate;Waves_Ytemplate;Waves_Etemplate;"
 	ListOfStrings+="StartFolder;FolderMatchString;LastSelectedItem;"
 	ListOfStrings+="ResultsDataFolderName;ResultsIntWaveName;ResultsQvecWaveName;ResultsErrWaveName;NameModifier;"
@@ -5017,6 +4776,11 @@ Function IR3M_InitDataManipulationII()
 	NVAR ScaleDataByValue
 	if(ScaleDataByValue<=0)
 		ScaleDataByValue=1
+	endif
+	
+	SVAR OutputDataUnits
+	if(strlen(OutputDataUnits)<5)
+		OutputDataUnits="Arbitrary"
 	endif
 	
 	NVAR GraphFontSize
@@ -5317,6 +5081,16 @@ Function IR3M_SaveProcessedData()
 		Duplicate/O ManipIIProcessedDataY, $(OutFldrNm+OutYWvNm)
 		Duplicate/O ManipIIProcessedDataE, $(OutFldrNm+OutEWvNm)
 		
+		SVAR OutputDataUnits = root:packages:DataManipulationII:OutputDataUnits
+		Wave TmpIntNote=$(OutFldrNm+OutYWvNm)
+		Wave TmpQnote=$(OutFldrNm+OutXWvNm)
+		string OldNote
+		OldNOte=note(TmpIntNote)
+		OldNOte=ReplaceStringByKey("Units", OldNOte, OutputDataUnits, "=" , ";")
+		note/K TmpIntNote, OldNOte
+		OldNOte=note(TmpQnote)
+		OldNOte=ReplaceStringByKey("Units", OldNOte, "A-1", "=" , ";")
+		note/K TmpQnote, OldNOte
 
 	setDataFolder OldDf
 
@@ -5326,3 +5100,314 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
+
+Function IR1D_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
+	String ctrlName
+	Variable popNum
+	String popStr
+
+	SVAR DataFolderName1=root:Packages:SASDataModification:DataFolderName1
+	SVAR IntensityWaveName1=root:Packages:SASDataModification:IntensityWaveName1
+	SVAR QWavename1=root:Packages:SASDataModification:QWavename1
+	SVAR ErrorWaveName1=root:Packages:SASDataModification:ErrorWaveName1
+
+	SVAR DataFolderName2=root:Packages:SASDataModification:DataFolderName2
+	SVAR IntensityWaveName2=root:Packages:SASDataModification:IntensityWaveName2
+	SVAR QWavename2=root:Packages:SASDataModification:QWavename2
+	SVAR ErrorWaveName2=root:Packages:SASDataModification:ErrorWaveName2
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:SASDataModification
+		NVAR UseIndra2Data=root:Packages:SASDataModification:UseIndra2Data
+		NVAR UseQRSData=root:Packages:SASDataModification:UseQRSdata
+		SVAR Dtf=root:Packages:SASDataModification:DataFolderName
+		SVAR IntDf=root:Packages:SASDataModification:IntensityWaveName
+		SVAR QDf=root:Packages:SASDataModification:QWaveName
+		SVAR EDf=root:Packages:SASDataModification:ErrorWaveName
+
+//		IntDf=""
+//		Dtf=""
+//		QDf=""
+//		EDf=""
+	if (cmpstr(ctrlName,"SelectDataFolder")==0)
+		//here we do what needs to be done when we select data folder
+		Dtf=popStr
+		PopupMenu IntensityDataName mode=1
+		PopupMenu QvecDataName mode=1
+		PopupMenu ErrorDataName mode=1
+		if (UseIndra2Data)
+			IntDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,1))
+			QDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,1))
+			EDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,1))
+			PopupMenu IntensityDataName value=IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,1)
+			PopupMenu QvecDataName value=IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,1)
+			PopupMenu ErrorDataName value=IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,1)
+		else
+			IntDf=""
+			QDf=""
+			EDf=""
+			PopupMenu IntensityDataName value="---"
+			PopupMenu QvecDataName  value="---"
+			PopupMenu ErrorDataName  value="---"
+		endif
+		if(UseQRSdata)
+			IntDf=""
+			QDf=""
+			EDf=""
+			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","SASDataModification",1,1)
+			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","SASDataModification",1,1)
+			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","SASDataModification",1,1)
+		endif
+		if(!UseQRSdata && !UseIndra2Data)
+			IntDf=""
+			QDf=""
+			EDf=""
+			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","SASDataModification",0,0)
+			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","SASDataModification",0,0)
+			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","SASDataModification",0,0)
+		endif
+		if (cmpstr(popStr,"---")==0)
+			IntDf=""
+			QDf=""
+			EDf=""
+			PopupMenu IntensityDataName  value="---"
+			PopupMenu QvecDataName  value="---"
+			PopupMenu ErrorDataName  value="---"
+		endif
+		DataFolderName1=Dtf
+		IntensityWaveName1=IntDf
+		QWavename1=QDf
+		ErrorWaveName1=EDf
+	endif
+	
+	if(stringmatch(ctrlName,"DataUnits"))	
+		SVAR DataUnits=root:Packages:SASDataModification:OutputDataUnits
+		DataUnits = popStr
+	endif
+
+	if (cmpstr(ctrlName,"IntensityDataName")==0)
+		//here goes what needs to be done, when we select this popup...
+		if (cmpstr(popStr,"---")!=0)
+			IntDf=popStr
+			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
+				QDf="q"+popStr[1,inf]
+				EDf="s"+popStr[1,inf]
+				Wave/Z IsThereError=$(Dtf+possiblyquotename(EDf))
+				if(WaveExists(IsThereError))
+					Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"SASDataModification\",0,1)")
+				else
+					EDf=""
+				endif
+				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"SASDataModification\",0,1)")
+			elseif(UseIndra2Data)
+				QDf=ReplaceString("Int", popStr, "Qvec")
+				EDf=ReplaceString("Int", popStr, "Error")
+				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,1)")
+				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,1)")
+			endif
+		else
+			IntDf=""
+		endif
+		IntensityWaveName1=IntDf
+		QWavename1=QDf
+		ErrorWaveName1=EDf
+	endif
+
+	if (cmpstr(ctrlName,"QvecDataName")==0)
+		//here goes what needs to be done, when we select this popup...
+		if (cmpstr(popStr,"---")!=0)
+			QDf=popStr
+			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
+				IntDf="r"+popStr[1,inf]
+				EDf="s"+popStr[1,inf]
+				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"SASDataModification\",0,1)")
+				Wave/Z IsThereError=$(Dtf+possiblyquotename(EDf))
+				if(WaveExists(IsThereError))
+					Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"SASDataModification\",0,1)")
+				else
+					EDf=""
+				endif
+			elseif(UseIndra2Data)
+				IntDf=ReplaceString("Qvec", popStr, "Int")
+				EDf=ReplaceString("Qvec", popStr, "Error")
+				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,1)")
+				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:SASDataModification:ErrorWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,1)")
+			endif
+		else
+			QDf=""
+		endif
+		IntensityWaveName1=IntDf
+		QWavename1=QDf
+		ErrorWaveName1=EDf
+	endif
+	
+	if (cmpstr(ctrlName,"ErrorDataName")==0)
+		//here goes what needs to be done, when we select this popup...
+		if (cmpstr(popStr,"---")!=0)
+			EDf=popStr
+			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
+				IntDf="r"+popStr[1,inf]
+				QDf="q"+popStr[1,inf]
+				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"SASDataModification\",0)")
+				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"SASDataModification\",0)")
+			elseif(UseIndra2Data)
+				IntDf=ReplaceString("Error", popStr, "Int")
+				Qdf=ReplaceString("Error", popStr, "Qvec")
+				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:SASDataModification:IntensityWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,1)")
+				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:SASDataModification:QWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,1)")
+			endif
+		else
+			EDf=""
+		endif
+		IntensityWaveName1=IntDf
+		QWavename1=QDf
+		ErrorWaveName1=EDf
+	endif
+
+	//ANd now the other population	
+		NVAR UseIndra2Data2=root:Packages:SASDataModification:UseIndra2Data2
+		NVAR UseQRSData2=root:Packages:SASDataModification:UseQRSdata2
+		SVAR Dtf2=root:Packages:SASDataModification:DataFolderName2
+		SVAR IntDf2=root:Packages:SASDataModification:IntensityWaveName2
+		SVAR QDf2=root:Packages:SASDataModification:QWaveName2
+		SVAR EDf2=root:Packages:SASDataModification:ErrorWaveName2
+	if (cmpstr(ctrlName,"SelectDataFolder2")==0)
+		//here we do what needs to be done when we select data folder
+		Dtf2=popStr
+		PopupMenu IntensityDataName2 mode=1
+		PopupMenu QvecDataName2 mode=1
+		PopupMenu ErrorDataName2 mode=1
+		if (UseIndra2Data2)
+			IntDf2=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,2))
+			QDf2=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,2))
+			EDf2=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,2))
+			PopupMenu IntensityDataName2 value=IR1_ListIndraWavesForPopups("DSM_Int","SASDataModification",1,2)
+			PopupMenu QvecDataName2 value=IR1_ListIndraWavesForPopups("DSM_Qvec","SASDataModification",1,2)
+			PopupMenu ErrorDataName2 value=IR1_ListIndraWavesForPopups("DSM_Error","SASDataModification",1,2)
+		else
+			IntDf2=""
+			QDf2=""
+			EDf2=""
+			PopupMenu IntensityDataName2 value="---"
+			PopupMenu QvecDataName2  value="---"
+			PopupMenu ErrorDataName2  value="---"
+		endif
+		if(UseQRSdata2)
+			IntDf2=""
+			QDf2=""
+			EDf2=""
+			PopupMenu IntensityDataName2  value="---;"+IR1_ListOfWaves2("DSM_Int","SASDataModification",1,1)
+			PopupMenu QvecDataName2  value="---;"+IR1_ListOfWaves2("DSM_Qvec","SASDataModification",1,1)
+			PopupMenu ErrorDataName2  value="---;"+IR1_ListOfWaves2("DSM_Error","SASDataModification",1,1)
+		endif
+		if(!UseQRSdata2 && !UseIndra2Data2)
+			IntDf2=""
+			QDf2=""
+			EDf2=""
+			PopupMenu IntensityDataName2  value="---;"+IR1_ListOfWaves2("DSM_Int","SASDataModification",1,1)
+			PopupMenu QvecDataName2  value="---;"+IR1_ListOfWaves2("DSM_Qvec","SASDataModification",1,1)
+			PopupMenu ErrorDataName2  value="---;"+IR1_ListOfWaves2("DSM_Error","SASDataModification",1,1)
+		endif
+		if (cmpstr(popStr,"---")==0)
+			IntDf2=""
+			QDf2=""
+			EDf2=""
+			PopupMenu IntensityDataName2  value="---"
+			PopupMenu QvecDataName2  value="---"
+			PopupMenu ErrorDataName2  value="---"
+		endif
+		DataFolderName2=Dtf2
+		IntensityWaveName2=IntDf2
+		QWavename2=QDf2
+		ErrorWaveName2=EDf2
+	endif
+	
+
+	if (cmpstr(ctrlName,"IntensityDataName2")==0)
+		//here goes what needs to be done, when we select this popup...
+		if (cmpstr(popStr,"---")!=0)
+			IntDf2=popStr
+			if (UseQRSData2 && strlen(QDf2)==0 && strlen(EDf2)==0)
+				QDf2="q"+popStr[1,inf]
+				EDf2="s"+popStr[1,inf]
+				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Qvec\",\"SASDataModification\",2,1)")
+				Wave/Z IsThereError2=$(Dtf2+possiblyquotename(EDf2))
+				if(WaveExists(IsThereError2))
+					Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Error\",\"SASDataModification\",2,1)")
+				else
+					EDf2=""
+				endif
+			elseif(UseIndra2Data2)
+				QDf2=ReplaceString("Int", popStr, "Qvec")
+				EDf2=ReplaceString("Int", popStr, "Error")
+				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,2)")
+				Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,2)")
+			endif
+		else
+			IntDf2=""
+		endif
+		IntensityWaveName2=IntDf2
+		QWavename2=QDf2
+		ErrorWaveName2=EDf2
+	endif
+
+	if (cmpstr(ctrlName,"QvecDataName2")==0)
+		//here goes what needs to be done, when we select this popup...
+		if (cmpstr(popStr,"---")!=0)
+			QDf2=popStr
+			if (UseQRSData2 && strlen(IntDf2)==0 && strlen(EDf2)==0)
+				IntDf2="r"+popStr[1,inf]
+				EDf2="s"+popStr[1,inf]
+				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Int\",\"SASDataModification\",2,1)")
+				Wave/Z IsThereError2=$(Dtf2+possiblyquotename(EDf2))
+				if(WaveExists(IsThereError2))
+					Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Error\",\"SASDataModification\",2,1)")
+				else
+					EDf2=""
+				endif
+			elseif(UseIndra2Data2)
+				IntDf2=ReplaceString("Qvec", popStr, "Int")
+				EDf2=ReplaceString("Qvec", popStr, "Error")
+				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,2)")
+				Execute ("PopupMenu ErrorDataName2 mode=1, value=root:Packages:SASDataModification:ErrorWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"SASDataModification\",1,2)")
+			endif
+		else
+			QDf2=""
+		endif
+		IntensityWaveName2=IntDf2
+		QWavename2=QDf2
+		ErrorWaveName2=EDf2
+	endif
+	
+	if (cmpstr(ctrlName,"ErrorDataName2")==0)
+		//here goes what needs to be done, when we select this popup...
+		if (cmpstr(popStr,"---")!=0)
+			EDf2=popStr
+			if (UseQRSData2 && strlen(QDf2)==0 && strlen(IntDf2)==0)
+				IntDf2="r"+popStr[1,inf]
+				QDf2="q"+popStr[1,inf]
+				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Int\",\"SASDataModification\",2,1)")
+				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListOfWaves2(\"DSM_Qvec\",\"SASDataModification\",2,1)")
+			elseif(UseIndra2Data2)
+				IntDf2=ReplaceString("Error", popStr, "Int")
+				Qdf2=ReplaceString("Error", popStr, "Qvec")
+				Execute ("PopupMenu IntensityDataName2 mode=1, value=root:Packages:SASDataModification:IntensityWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"SASDataModification\",1,2)")
+				Execute ("PopupMenu QvecDataName2 mode=1, value=root:Packages:SASDataModification:QWaveName2+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"SASDataModification\",1,2)")
+			endif
+		else
+			EDf2=""
+		endif
+		IntensityWaveName2=IntDf2
+		QWavename2=QDf2
+		ErrorWaveName2=EDf2
+	endif
+
+	if (cmpstr(ctrlName,"SelectFolderNewData")==0)
+		//here goes what needs to be done, when we select this popup...
+		SVAR NewDataFolderName=root:Packages:SASDataModification:NewDataFolderName
+		NewDataFolderName=popStr
+	endif
+
+
+
+end
