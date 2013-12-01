@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.36
+#pragma version = 1.37
 
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.36 fixed another bug in qrs data structrue handling. 
+//1.37 yet another bug - this time on "any" name type, when the Wv string was not matching the folders. 
+//1.36 fixed another bug in qrs data structure handling. 
 //1.35 fixed weird problem when after change from USAXS to qrs data set, first time user got wrong set of data when same folder contained both USAXS and qrs data.
 //1.34 enabled use of following characters in Wavenames: (){}%#^$?|&@, Fixed time cashing problem which caused folder match string to be "retained" for 5 seconds. 
 //		minor change in GUI locations. 
@@ -1130,7 +1131,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 					endfor
 					//ListOfQFolders=GrepList(ListOfQFolders, FolderMatchStr )
 				endif
-				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,ResultingWave,WaveMatchStr)
+				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,ResultingWave,WaveMatchStr)		
 				//match to user mask using greplist
 				//done, now rest...
 				ListOfQFolders=IR2P_CleanUpPackagesFolder(ListOfQFolders)
@@ -1207,6 +1208,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
             if(strlen(FolderMatchStr)>0)
                   result=GrepList(result, IR2C_PreparematchString(FolderMatchStr) )
             endif
+           result= IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
 	endif
 	//create short list...
 	String LastFolderPath, tempStrItem, FolderPath, resultShortWP
