@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.14
+#pragma version=2.15
 Constant IR1AversionNumber=2.14
 
 
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 added checkbox to limit warnings in the history area..., Fixes provided by DWS
 //2.14 Added option to rebin data to lower number of points on data load. 
 //2.13 added option to link B to Rg/G/P using Hammouda Calculations
 //2.12 removed FitRgCO for all levels. DO tno expect anyone to miss it. But if needed, can be returned easily. 
@@ -127,7 +128,7 @@ Function IR1A_Initialize(enforceReset)
 	
 	//here define the lists of variables and strings needed, separate names by ;...
 	
-	ListOfVariables="UseIndra2Data;UseQRSdata;NumberOfLevels;SubtractBackground;UseSMRData;SlitLengthUnif;UseNoLimits;"
+	ListOfVariables="UseIndra2Data;UseQRSdata;NumberOfLevels;SubtractBackground;UseSMRData;SlitLengthUnif;UseNoLimits;ExtendedWarnings;"
 	ListOfVariables+="Level1Rg;Level1FitRg;Level1RgLowLimit;Level1RgHighLimit;Level1G;Level1FitG;Level1GLowLimit;Level1GHighLimit;"
 	ListOfVariables+="Level1RgStep;Level1GStep;Level1PStep;Level1BStep;Level1EtaStep;Level1PackStep;"
 	ListOfVariables+="Level1P;Level1FitP;Level1PLowLimit;Level1PHighLimit;Level1B;Level1FitB;Level1BLowLimit;Level1BHighLimit;"
@@ -252,6 +253,14 @@ Function IR1A_SetInitialValues(enforce)
 		endif
 	endfor
 	
+	//and here to 1 - force to 1
+	ListOfVariables="ExtendedWarnings;"
+	For(i=0;i<itemsInList(ListOfVariables);i+=1)
+		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
+		if (enforce)
+			testVar=1
+		endif
+	endfor
 	
 	//and here to 1
 	ListOfVariables="Level1RgStep;Level1GStep;Level1PStep;Level1BStep;Level1EtaStep;Level1K;"
@@ -462,6 +471,10 @@ Window IR1A_ControlPanel()
 	Button MarkGraphs,pos={277,623},size={110,20},proc=IR1A_InputPanelButtonProc,title="Results to graphs", help={"Insert text boxes with results into the graphs for printing"}
 	Button EvaluateSpecialCases,pos={10,645},size={120,20},proc=IR1A_InputPanelButtonProc,title="Analyze Results", help={"Analyze special Cases"}
 	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR1A_InputPanelButtonProc,title="Uncertainity Evaluation", help={"Analyze confidence range for different parameters"}
+
+	CheckBox ExtendedWarnings,pos={285,650},size={80,16},noproc,title="Ext. warnings?"
+	CheckBox ExtendedWarnings,variable= root:Packages:Irena_UnifFit:ExtendedWarnings, help={"Print extended warnings in the history area?"}
+
 	SetVariable SASBackground,pos={15,565},size={160,16},proc=IR1A_PanelSetVarProc,title="SAS Background", help={"SAS background"},bodyWidth=80, format="%0.4g"
 	SetVariable SASBackground,limits={-inf,Inf,0.05*root:Packages:Irena_UnifFit:SASBackground},value= root:Packages:Irena_UnifFit:SASBackground
 	CheckBox FitBackground,pos={195,566},size={63,14},proc=IR1A_InputPanelCheckboxProc,title="Fit Bckg?"
@@ -972,6 +985,7 @@ Function IR1A_TabPanelControl(name,tab)
 	PopupMenu NumberOfLevels mode=NmbDist+1
 
 	NVAR UseNoLimits=root:Packages:Irena_UnifFit:UseNoLimits
+	NVAR ExtendedWarnings=root:Packages:Irena_UnifFit:ExtendedWarnings
 
 //	Level1 controls
 	if((cmpstr(name,"Checkbox")!=0 ) || ((cmpstr(name,"Checkbox")==0)&&(tab==0)))
@@ -991,7 +1005,7 @@ Function IR1A_TabPanelControl(name,tab)
 		Button LevelXFitRgAndG,disable= ((tab+1)> Nmbdist)
 		Button LevelXFitPAndB,disable= ((tab+1)> Nmbdist)
 
-		TitleBox PhysValidityWarning, disable=(IR1A_CheckOneUnifiedLevel(tab+1,1)!=0 || Nmbdist<tab+1)
+		TitleBox PhysValidityWarning, disable=(IR1A_CheckOneUnifiedLevel(tab+1,ExtendedWarnings)!=0 || Nmbdist<tab+1)
 		
 		TitleBox Level1Title, disable= (tab!=0 || Nmbdist<1)
 		SetVariable Level1Rg,disable= (tab!=0 || Nmbdist<1)

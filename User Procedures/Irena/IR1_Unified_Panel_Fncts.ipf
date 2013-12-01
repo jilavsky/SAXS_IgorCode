@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.14
+#pragma version=2.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 added Extended option for warnings to avoid history area poluting. Fixes provided by DWS
 //2.14 added IR2S_SortListOfAvailableFldrs() to scripting tool call. Added option to rebin data on import. 
 //2.13 added option to link B to Rg/G/P values using Hammouda calculations
 //2.12 Removed FitRgCO option
@@ -1996,21 +1997,26 @@ end
 ///******************************************************************************************
 Function IR1A_CheckAllUnifiedLevels()
 	variable i
-	print "             *************          "
-	print "Check for physicall feasibility of Unified levels used : "
-	For(i=1;i<=5;i+=1)
-		IR1A_CheckOneUnifiedLevel(i,1)
-	endfor
-	print " ***   Note: these checks are only approximate   **********          "
-	
+	NVAR ExtendedWarnings=root:Packages:Irena_UnifFit:ExtendedWarnings
+	if(ExtendedWarnings)
+		print "             *************          "
+		print "Check for physicall feasibility of Unified levels used : "
+	endif
+		For(i=1;i<=5;i+=1)
+			IR1A_CheckOneUnifiedLevel(i,ExtendedWarnings)
+		endfor
+	if(ExtendedWarnings)
+		print " ***   Note: these checks are only approximate   **********          "
+	endif
 end
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1A_CheckOneUnifiedLevel(LevelNumber, printResult)
+Function IR1A_CheckOneUnifiedLevel(LevelNumber,printResult)
 	variable LevelNumber, printResult
 	
+//NVAR printResult=root:Packages:Irena_UnifFit:ExtendedWarnings
 	NVAR RgVal = $("root:Packages:Irena_UnifFit:Level"+num2str(LevelNumber)+"Rg")
 	NVAR GVal = $("root:Packages:Irena_UnifFit:Level"+num2str(LevelNumber)+"G")
 	NVAR PVal = $("root:Packages:Irena_UnifFit:Level"+num2str(LevelNumber)+"P")

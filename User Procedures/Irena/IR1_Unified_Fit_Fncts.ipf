@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.10
+#pragma version=2.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.11 added DWS changes to two phase model and made fixes to invariant calculations
 //2.10 fixed bug which caused in local fits held parameters to change in fitting routine to their starting guesses. 
 //2.09 changed local fits to guess needed starting parameters from the values selected by cursors. 
 //2.08 changes to provide optional panel with review of fitting parameters before fitting   
@@ -946,7 +947,8 @@ Function IR1A_UpdatePorodSfcandInvariant()
 		Invariant=areaXY(SurfToVolQvec, SurfToVolInvariant, 0, maxQ )		//invariant, need to add "Porod tail"
 		//but not when we use RgCo, as that really has no Porod tail...
 		if(RgCO<0.1)
-			Invariant+=abs(B*maxQ^(3-abs(Porod))/2)							//Ok, this should be Porod tail 
+			//Invariant+=abs(B*maxQ^(3-abs(Porod))/2)		//Ok, this should be Porod tail < 12/2/2013 DWS not correct ...
+			Invariant+=-B*maxQ^(3-abs(Porod))/(3-abs(Porod))			// 12/2/2013 modified by dws					
 		endif
 		//Invariant is at this time in cm^-1 * A^-3  (Gregg Beaucage)
 		if (Porod>=3.95 && Porod<=4.05)
@@ -1229,7 +1231,7 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	SetVariable TwoPhaseSystem_comment2, title=" ",value=root:Packages:Irena_AnalUnifFit:TwoPhaseSystem_comment2, noedit=1
 	SetVariable TwoPhaseSystem_comment2, pos={5,330}, size={365,20}, frame=0, help={"Comments"}	
 
-	SetVariable TwoPhaseMediaContrast, pos={20,350}, size={300,20}, title="Scattering contrast [cm-4]    =     ", help={"Scattering contrast calculated for the two materials"}
+	SetVariable TwoPhaseMediaContrast, pos={20,350}, size={300,20}, title="Scattering contrast [10^20 cm-4]    =     ", help={"Scattering contrast calculated for the two materials"}
 	SetVariable TwoPhaseMediaContrast, variable=root:Packages:Irena_AnalUnifFit:TwoPhaseMediaContrast,limits={0,inf,0}, noedit=1, bodyWidth=80, format="%.4g"
 
 	SetVariable BforTwoPhMat, pos={20,370}, size={300,20}, title="Porod Constant [A\S-4\Mcm\S-1\M]    =     ", format="%.4g"
@@ -1239,7 +1241,7 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	SetVariable TwoPhaseSystem_comment3, title=" ",value=root:Packages:Irena_AnalUnifFit:TwoPhaseSystem_comment3, noedit=1
 	SetVariable TwoPhaseSystem_comment3, pos={5,290}, size={365,20}, frame=0, help={"Comments"}	
 
-	SetVariable DensityMinorityPhase2, pos={20,325}, size={300,20}, title="Minority phase density    =     ", help={"Skeleton phase (solid) density, should be minority phase"}
+	SetVariable DensityMinorityPhase2, pos={20,325}, size={300,20}, title="Minority phase density[g/cm3]  =     ", help={"Skeleton phase (solid) density, should be minority phase"}
 	SetVariable DensityMinorityPhase2, variable=root:Packages:Irena_AnalUnifFit:DensityMinorityPhase,limits={0,inf,0}, proc=IR2U_SetVarProc, bodyWidth=80, format="%.4g"
 	//model 4
 	SetVariable TwoPhaseSystem_comment4, title=" ",value=root:Packages:Irena_AnalUnifFit:TwoPhaseSystem_comment4, noedit=1
@@ -1266,13 +1268,17 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	SetVariable PartANalRHard, variable=root:Packages:Irena_AnalUnifFit:PartANalRHard,limits={0,inf,0}, proc=IR2U_SetVarProc, bodyWidth=80, format="%.4g"
 
 	//other buttons...	
-	Button PrintToGraph, pos={5,482}, size={200,20}, title="Print to Graph"
+	Button PrintToGraph, pos={5,482}, size={150,20}, title="Print to Graph"
 	Button PrintToGraph proc=IR2U_ButtonProc, help={"Create tag with results in the graph"}
+	Button Invariantbutt pos={205,482} ,size={150,20},proc=IR2U_ButtonProc, help={"Calculate invariant"}
+	Button Invariantbutt title="Calc. Invariant btwn Crs"
 	NVAR CurrentResults=root:packages:Irena_AnalUnifFit:CurrentResults
 	if(CurrentResults)
 		Button PrintToGraph, title="Print to Unified Fit Graph"
+		Button Invariantbutt, disable=0
 	else
 		Button PrintToGraph, title="Print to top Graph"
+		Button Invariantbutt, disable=1
 	endif
 	
 	Button OpenScattContrCalc, pos={5,275}, size={200,20}, title="Open Scatt. Contr. Calc"
@@ -1370,7 +1376,7 @@ Function IR2U_InitUnifAnalysis()
 	SVAR Porod_ErrorMessage
 	Porod_ErrorMessage=""
 	SVAR DensitiesLegend
-	DensitiesLegend = "Density [g/cm3]           SLD density 10^10 [1/(cm2 g)]"
+	DensitiesLegend = "Density [g/cm3]              SL/g  10^10 [cm/ g)]"
 	
 	SVAR TwoPhaseSystem_reference
 	TwoPhaseSystem_reference = "Ref: N. Hu, et al. J. Membrane Sci., V. 379, Is. 1Ð2, 2011, p. 138Ð145." 
@@ -1760,10 +1766,12 @@ Function IR2U_CheckProc(cba) : CheckBoxControl
 			if(stringMatch(cba.ctrlName,"CurrentResults"))
 				StoredResults=!CurrentResults
 				Button PrintToGraph, win=UnifiedEvaluationPanel, title="Print to Unified Fit Graph"
+				Button Invariantbutt, win=UnifiedEvaluationPanel, disable=0
 			endif
 			if(stringMatch(cba.ctrlName,"StoredResults"))
 				CurrentResults=!StoredResults
 				Button PrintToGraph, win=UnifiedEvaluationPanel, title="Print to top Graph"
+				Button Invariantbutt, win=UnifiedEvaluationPanel, disable=1
 			endif
 			IR2U_ClearVariables()
 			SVAR Model=root:Packages:Irena_AnalUnifFit:Model
@@ -2458,6 +2466,24 @@ Function IR2U_ButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
+			If (cmpstr(ba.ctrlName,"KillInvWindow")==0)				//Kill invariant window and waves  **DWS
+				string DF=getdatafolder(1)
+				DoWindow/F InvariantGraph
+				Wave w = CsrWaveRef(A)
+				if (!WaveExists(w))		// Cursor is not on any wave.
+					Doalert 0, "Cursor is not on any graph\r Put cursor A on a trace"
+					abort
+				endif
+				string WDF=getwavesDataFolder(w,3)
+				setdatafolder $WDF
+				dowindow/k InvariantGraph
+				killwaves/z rwaveq2,qq2,rq2,backqq2,backrq2,frontqq2,frontrq2,rlevel1,qlevel1
+				setdatafolder DF
+			endif
+			If (cmpstr(ba.ctrlName,"Invariantbutt")==0)				//Calculate invariant
+				IR2U_CalculateInvariantbutton()			//calculated invariant from original data by integrating between cursors  **DWS
+					//InvariantbuttonUnified()//used unified levels
+			endif
 			if(stringMatch(ba.ctrlName,"SaveToHistory"))
 				//here code to print results to history area
 				IR2U_SaveResultsperUsrReq("History")
@@ -2491,6 +2517,88 @@ Function IR2U_ButtonProc(ba) : ButtonControl
 	endswitch
 
 	return 0
+End
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IR2U_CalculateInvariantbutton()//**DWS  procedure when "csr invariant" button is pushed  
+//now part of Irena
+	string OldDf=GetDataFolder(1)
+	NVAR Rg=root:Packages:Irena_UnifFit:Level1Rg
+	variable extrapts=20 //number of points in extrapolation waves
+	variable maxqextrap=25/Rg//max q for porod extrapolation
+	Variable overlap=1//number of overlaped points for Porod extrapolation
+	
+	SVAR rwavename=root:Packages:Irena_UnifFit:IntensityWaveName
+	SVAR qwavename=root:Packages:Irena_UnifFit:QWavename
+	SVAR swavename=root:Packages:Irena_UnifFit:IntensityWaveName
+	SVAR datafoldername=root:Packages:Irena_UnifFit:DataFolderName
+	NVAR majorityphi=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi//phi is picked up from unified fit data evaluation panel
+	NVAR dens=root:Packages:Irena_AnalUnifFit:SampleBulkDensity
+	
+	setdatafolder datafoldername
+	rwavename = ReplaceString("'", rwavename, "")
+	qwavename = ReplaceString("'", qwavename, "")
+	swavename = ReplaceString("'", swavename, "")
+	wave rwave =$rwavename
+	wave qwave=$qwavename
+	wave swave=$swavename
+	setdatafolder root:Packages:Irena_UnifFit:		//do nto contaminate users data folder, just store it in Unified Fit folder... 
+	Duplicate/o rwave,$"root:Packages:Irena_UnifFit:rwaveq2"
+	wave rwaveq2=$"root:Packages:Irena_UnifFit:rwaveq2"
+	 rwaveq2=rwave*qwave^2
+	  DoWindow/F IR1_LogLogPlotU
+	 If (0==WinType("IR1_LogLogPlotU" ))
+	  	Doalert 0, "Load a unified fit in the Unified modeling input panel"
+	  	abort
+	 endif
+	 if ((strlen(CsrInfo(A)) == 0)||(strlen(CsrInfo(B)) == 0))
+	 	Doalert 0, "Cursors not on graph"
+	 	abort
+	 endif
+	//bring graph to top
+	variable npts=pcsr(b)-pcsr(a)+1
+	make /o/n=(npts)  rq2,qq2
+	rq2=rwaveq2[P+pcsr(a)]
+	qq2=qwave[P+pcsr(a)]
+	NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(1)+"B")	
+	make/O/N=(extrapts) frontrq2,frontqq2,backrq2,backqq2
+	frontqq2=P*qq2[0]/(extrapts-1)
+	frontrq2=P*frontqq2[P]^2*rq2[0]/qq2[0]^2/(extrapts-1)
+	backqq2=qq2[numpnts(qq2)-overlap]+P*(maxqextrap-qq2[numpnts(qq2)-overlap])/extrapts
+	backrq2=B/backqq2^2
+	print abs((B*hcsr(B)^-1))
+	print areaXY(backqq2, backrq2)
+	variable invariant=areaXY(qq2, rq2)+areaXY(frontqq2,frontrq2)+abs((B*hcsr(B)^-1))//extends with -4 exponent
+	//print "Qlowq extenstion = "+ num2str(areaxy(frontqq2,frontrq2))
+	//print  "Qdata part = "+ num2str(areaXY(qq2, rq2))
+	//Print  "Qtail using formula = "+num2str(abs((B*hcsr(B)^-1)))
+	string outtext= "Qv = "+num2str(1e24*(areaXY(qq2, rq2)+areaXY(frontqq2,frontrq2)+abs((B*hcsr(B)^-1))))+" cm^-4"
+	//print "__"
+	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
+	variable majchord=4*majorityphi/Sv
+	variable minchord=4* (1-majorityphi)/Sv
+	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/cm3\rlmin = "+num2str(minchord*1e4)+" \rlmaj = "+num2str(majchord*1e4)+" "		
+	Tag/C/N=text1df/F=0 OriginalIntensity, pcsr(B),outtext
+	dowindow/R/k InvariantGraph
+	display/K=2/W=(270,375,570,750)  rq2 vs qq2 as "q2 I(q) vs q"
+	//appendtograph rq2 vs qq2
+	Cursor /A=1  A  rq2  0
+	ModifyGraph grid=2,tick=2,mirror=1,fStyle=1,fSize=15,font="Times"
+	Button KillInvWindow,pos={230,1},size={70,20},proc=IR2U_ButtonProc,title="Kill Window"	
+	ModifyGraph log=0
+	SetAxis bottom 0,maxqextrap
+	Label left "\\F'arial'\\Z18I(q)á(q \\S2\\M)"
+	Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
+	textbox/C/N=text1df/F=0  outtext
+	HideTools/A
+	appendtograph frontrq2 vs frontqq2
+	appendtograph backrq2 vs backqq2
+	ModifyGraph rgb(frontrq2)=(8738,8738,8738)
+	ModifyGraph rgb(backrq2)=(8738,8738,8738)
+	dowindow/c InvariantGraph
+	setDataFolder OldDf
 End
 
 //***********************************************************
@@ -3298,7 +3406,9 @@ Function IR2U_TwoPhaseModelCalc()
 					phi =(SampleBulkDensity-DensityMajorityPhase)/(DensityMinorityPhase-DensityMajorityPhase)//phi is vol. Fraction of the dense phase.
 			while ((abs((DensityMinorityPhase-densold)/DensityMinorityPhase))>.00001)
 				MinorityPhasePhi= phi
-				contrast = (DensityMinorityPhase * SLDDensityMinorityPhase)^2			
+				MajorityPhasePhi=(1-phi)  
+				//contrast = (DensityMinorityPhase * SLDDensityMinorityPhase)^2	//**DWS appears wrong	11/25/2013
+				contrast = (DensityMinorityPhase * SLDDensityMinorityPhase-DensityMinorityPhase*SLDDensityMinorityPhase)^2	//**DWS Corrected 11/25/2013
 		endif
 		SurfacePerVolume=(1e-4*Pi*Bloc/Qinv)*MajorityPhasePhi*MinorityPhasePhi   //m^2/cm^3 calculate from densities and Qp 
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
@@ -3639,7 +3749,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 				break
 			endif
 		endfor
-		TextBox/C/W=$(GraphName)/N=$("UnifiedAnalysis"+num2str(SelectedLevel)+"_"+num2str(i))/F=0/A=MC NewTextBoxStr
+		TextBox/C/W=$(GraphName)/N=$("UnifiedAnalysis"+num2str(SelectedLevel)+"_"+num2str(i))/F=0/B=1/A=MC NewTextBoxStr//**dws
 		
 	endif
 	
@@ -3682,9 +3792,10 @@ function IR2U_InvariantForMultipleLevels(uptolevel)
 		Qv=areaXY(qUnifiedfit, rUnifiedfitq2, 0, MaxQ)//invariant, need to add "Porod tail"//what about (1/2Pi^2)?
 		tempB=rUnifiedfit[newnumpnts-1]*maxQ^4//makes -4 extension match last point of fit
 			//invariant+=abs(tempB*maxQ^(3-abs(tempPorod))/(abs(tempPorod)-2))//This one extrapolates with origional P	
-		Qv+=abs((tempB*maxQ^(3-4))/(4-2))//extends with -4 exponent
+		//Qv+=abs((tempB*maxQ^(3-4))/(4-2))//extends with -4 exponent>>> incorrect DWV 12/2/2013
+		Qv+=-tempB*maxQ^(3-abs(-4))/(3-abs(-4))//extends with -4 exponent  **DWS
 		killwaves/Z rUnifiedfitq2,runifiedfit
-		print Qv
+		//print Qv
 		return Qv// cm-1A-3  mult by 1e24 for cm-4
 end
 //***********************************************************

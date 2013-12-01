@@ -2693,8 +2693,9 @@ function IR3GP_CalculateInvariant(level)
 	rUnifiedfitq2=rUnifiedfit*qunifiedfit^2				// Int * Q^2 wave
 	Qv=areaXY(qUnifiedfit, rUnifiedfitq2, 0, MaxQ)		//invariant, need to add "Porod tail"
 	tempB=rUnifiedfit[newnumpnts-1]*maxQ^(Par.P)			//makes -4 extension match last point of fit
-	Qv+=abs((tempB*maxQ^(3-Par.P))/(Par.P-2))				//extends with -4 exponent
-	//invariant+=abs(tempB*maxQ^(3-abs(tempPorod))/(abs(tempPorod)-2))//This one extrapolates with origional P	
+	//Qv+=abs((tempB*maxQ^(3-Par.P))/(Par.P-2))				//extends with -4 exponent
+	Qv+=abs((-tempB*maxQ^(3-Par.P))/(3-Par.P))				//extends with -4 exponent - dws 12/2/2013
+	//invariant+=abs(tempB*maxQ^(3-abs(tempPorod))/(abs(tempPorod)-2))//This one extrapolates with original P.. Wrong, DWS	
 	 Par.Invariant = Qv* 1e24
 	 IR3GP_SaveStructureToWave(Par, level)
 	return Qv* 1e24  // cm-1A-3  mult by 1e24 for cm-4
