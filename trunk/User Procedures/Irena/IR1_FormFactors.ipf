@@ -25,6 +25,10 @@
 //2.12 removed minor bug in Cylinder FF
 //2.11 added license for ANL
 
+//	note to myself: when adding Form factor, fix also :
+		//IR1T_CreateAveSurfaceAreaWave
+		//IR1T_CreateAveVolumeWave
+//
 
 //this is utility package providing various form factors to be used by Standard model package and Sizes
 //this package provides function which generates "G" matrix

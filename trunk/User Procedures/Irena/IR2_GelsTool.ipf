@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.07
-Constant IR2HversionNumber = 4.07
+#pragma version=4.08
+Constant IR2HversionNumber = 4.08
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.08 added RgCo for Unified level
 //4.07 madepanel scrollable
 //4.06 FIxed C1 parameter lower limit for Treubner Strey model, which can be negative, so the low limit must be -inf. 
 //4.05 Fixed (?) Debuy-Bueched model formula as reported by Fan on 8/10/2012
@@ -108,7 +109,7 @@ static Function IR2H_Initialize()
 	//Unified level
 	ListOfVariables+="LowQslope;LowQPrefactor;FitLowQslope;FitLowQPrefactor;LowQslopeLowLimit;LowQPrefactorLowLimit;"
 	ListOfVariables+="LowQslopeError;LowQPrefactorError;LowQslopeHighLimit;LowQPrefactorHighLimit;"
-	ListOfVariables+="LowQRg;FitLowQRg;LowQRgLowLimit;LowQRgHighLimit;LowQRgError;"
+	ListOfVariables+="LowQRg;FitLowQRg;LowQRgLowLimit;LowQRgHighLimit;LowQRgError;LowQRgCO;"
 	ListOfVariables+="LowQRgPrefactor;FitLowQRgPrefactor;LowQRgPrefactorLowLimit;LowQRgPrefactorHighLimit;LowQRgPrefactorError;"
 	//Debye-Bueche parameters	
 	ListOfVariables+="DBPrefactor;DBEta;DBcorrL;DBWavelength;UseDB;"
@@ -323,7 +324,7 @@ end
 
 Proc IR2H_ControlPanel() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,20,380,670) as "Analytical models"
+	NewPanel /K=1 /W=(2.25,20,390,670) as "Analytical models"
 	DoWindow/C IR2H_Controlpanel
 
 	string UserDataTypes=""
@@ -332,35 +333,14 @@ Proc IR2H_ControlPanel()
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Gels_Modeling","IR2H_ControlPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
 
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 20,22,"Analytical models input panel"
 	TitleBox MainTitle title="Analytical models input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,181,339,181
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 8,49,"Data input"
 	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 17,209,"Modeling input"
 	TitleBox Info2 title="Modeling input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
-//	SetDrawEnv fstyle= 1
-//	SetDrawEnv fsize= 12,fstyle= 1
-///	DrawText 69,441,"Limits for fitting "
 	TitleBox Info3 title="Limits for fitting",pos={69,425},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 10,fstyle= 1
-	//DrawText 10,575,"Fit :"
 	DrawLine 24,420,344,420
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={24,420},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	DrawLine 225,390,225,456
-//	DrawLine 229,390,229,456
-//	DrawPoly 113,225,1,1,{113,225,113,225}
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,585,339,585
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,585},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
-//	DrawText 5,615,"Results:"
 	TitleBox Info6 title="Results",pos={2,605},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
 
 	//Experimental data input
@@ -388,8 +368,8 @@ Proc IR2H_ControlPanel()
 	endif
 	Button RevertFitting,pos={255,560},size={100,20}, proc=IR2H_InputPanelButtonProc,title="Revert fit", help={"Return values before last fit attempmt. Use to recover from unsuccesfull fit."}
 
-	Button ResultsToGraph,pos={80,590},size={100,20}, proc=IR2H_InputPanelButtonProc,title="Results to graph", help={"Paste results into the graph...."}
-	Button ResultsToNotebook,pos={200,590},size={140,20}, proc=IR2H_InputPanelButtonProc,title="Results to Notebook", help={"Paste results into the notebook"}
+	Button ResultsToGraph,pos={80,593},size={100,20}, proc=IR2H_InputPanelButtonProc,title="Results to graph", help={"Paste results into the graph...."}
+	Button ResultsToNotebook,pos={200,593},size={140,20}, proc=IR2H_InputPanelButtonProc,title="Results to Notebook", help={"Paste results into the notebook"}
 
 	Button CopyToFolder,pos={80,620},size={100,20}, proc=IR2H_InputPanelButtonProc,title="Store in Data Folder", help={"Copy results back to data folder for future use."}
 	Button ExportData,pos={200,620},size={100,20}, proc=IR2H_InputPanelButtonProc,title="Export ASCII", help={"Export ASCII data out from Igor."}
@@ -402,7 +382,7 @@ Proc IR2H_ControlPanel()
 	CheckBox FitBackground,variable= root:Packages:Gels_Modeling:FitSASBackground, help={"Fit the background during least square fitting?"}
 
 	//Dist Tabs definition
-	TabControl DistTabs,pos={3,260},size={363,270},proc=IR2H_TabPanelControl
+	TabControl DistTabs,pos={5,260},size={370,270},proc=IR2H_TabPanelControl
 	TabControl DistTabs,fSize=10,tabLabel(0)="Unified", tabLabel(1)="Debye-Bueche",tabLabel(2)="Teubner-Strey",tabLabel(3)="Ciccar.-Bened."
 
 	//unified level controls
@@ -419,6 +399,9 @@ Proc IR2H_ControlPanel()
 	SetVariable LowQslope,limits={0,5,0.1},value= root:Packages:Gels_Modeling:LowQslope, help={"Power law slope of low-Q region"}
 	Button EstimateLowQ,pos={250,348},size={100,20}, proc=IR2H_InputPanelButtonProc
 	Button EstimateLowQ, title="Estimate slope", help={"Fit power law to estimate slope of low q region"}, disable=!(root:Packages:Gels_Modeling:UseLowQInDB)
+
+	SetVariable LowQRgCO,pos={30,390},size={180,16},title="RgCO     ",proc=IR2H_PanelSetVarProc, disable=!(root:Packages:Gels_Modeling:UseLowQInDB)
+	SetVariable LowQRgCO,limits={0,inf,10},value= root:Packages:Gels_Modeling:LowQRgCO, help={"Rg cutt off for low-Q region"}
 	
 	SetVariable LowQRgPrefactorLowLimit,pos={32,450},size={50,16},title=" ", help={"Low fitting limit for G"}
 	SetVariable LowQRgPrefactorLowLimit,limits={0,Inf,0},variable= root:Packages:Gels_Modeling:LowQRgPrefactorLowLimit,disable=!(root:Packages:Gels_Modeling:UseLowQInDB)
@@ -2167,6 +2150,8 @@ static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 	NVAR DBcorrL=root:Packages:Gels_Modeling:DBcorrL
 	NVAR LowQslope=root:Packages:Gels_Modeling:LowQslope
 	NVAR LowQPrefactor=root:Packages:Gels_Modeling:LowQPrefactor
+	NVAR LowQRgCO=root:Packages:Gels_Modeling:LowQRgCO
+	
 	NVAR DBWavelength=root:Packages:Gels_Modeling:DBWavelength
 	NVAR SASBackground=root:Packages:Gels_Modeling:SASBackground
 	NVAR UseLowQInDB=root:Packages:Gels_Modeling:UseLowQInDB
@@ -2209,7 +2194,7 @@ static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 	endif
 	if(UseLowQInDB)										//Unified
 		QstarVector=OriginalQvector/(erf(OriginalQvector*LowQRg/sqrt(6)))^3	
-		DBtempInt2=LowQRgPrefactor*exp(-OriginalQvector^2*LowQRg^2/3)+(LowQPrefactor/QstarVector^LowQslope)
+		DBtempInt2=LowQRgPrefactor*exp(-OriginalQvector^2*LowQRg^2/3)+(LowQPrefactor/QstarVector^LowQslope)* exp(-LowQRgCO^2 * OriginalQvector^2/3)
 		//DBtempInt2 = LowQPrefactor * OriginalQvector^(-1*LowQslope)
 	else
 		DBtempInt2 = 0
@@ -2681,7 +2666,7 @@ Function IR2H_TabPanelControl(name,tab)
 	SetVariable LowQRgHighLimit, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
 	CheckBox FitLowQRgPrefactor, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
 	CheckBox FitLowQRg, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
-
+	SetVariable LowQRgCO, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
 
 	NVAR UseDB=root:Packages:Gels_Modeling:UseDB
 	CheckBox UseDB, disable= (tab!=1), win=IR2H_ControlPanel
@@ -2857,6 +2842,10 @@ Function IR2H_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		IR2H_AutoUpdateIfSelected()
 		NVAR myval = root:Packages:Gels_Modeling:LowQslope
 		SetVariable LowQslope,win=IR2H_ControlPanel, limits={0.1,5,myval/20}
+	endif
+	if (cmpstr(ctrlName,"LowQRgCO")==0)
+		//here goes what happens when user changes the volume in distribution
+		IR2H_AutoUpdateIfSelected()
 	endif
 	if (cmpstr(ctrlName,"LowQRgPrefactor")==0)
 		//here goes what happens when user changes the volume in distribution
