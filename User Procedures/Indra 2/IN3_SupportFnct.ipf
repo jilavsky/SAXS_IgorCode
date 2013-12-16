@@ -365,13 +365,14 @@ Function IN3_RecalcSubtractSaAndBlank()
 		endif
 		NVAR SubtractFlatBackground=root:Packages:Indra3:SubtractFlatBackground
 
-	string IsItSBUSAXS=StringByKey("SPECCOMMAND", note(R_Int), "=")[0,7]
+	string IsItSBUSAXS
+	IsItSBUSAXS=StringByKey("SPECCOMMAND", note(R_Int), "=")[0,7]
 	string oldNoteValue
 
 	IN2G_RemoveNaNsFrom5Waves(R_Int,R_Int,R_error,R_Qvec,R_Qvec)
 	IN2G_RemoveNaNsFrom3Waves(BL_R_Int,BL_R_error,BL_R_Qvec)
 //	
-	if (cmpstr(IsItSBUSAXS,"sbuascan")!=0)			//if this is sbuascan, go to other part, otherwise create SMR data
+	if (stringmatch(IsItSBUSAXS,"uascan*"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, SMR_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
 		logBlankR=log(BL_R_Int)
@@ -404,8 +405,47 @@ Function IN3_RecalcSubtractSaAndBlank()
 				ModifyGraph gaps=0
 			endif
 		endif
-		USAXSorSBUSAXS="USAXS"		
-	else
+		USAXSorSBUSAXS="USAXS"	
+	elseif (stringmatch(IsItSBUSAXS,"flyScan*"))			//if this is sbuascan, go to other part, otherwise create SMR data
+		Duplicate /O R_Int, SMR_Int
+		Duplicate /Free R_Int, logBlankInterp, BlankInterp
+		Duplicate/Free BL_R_Int, logBlankR
+		logBlankR=log(BL_R_Int)
+		LogBlankInterp=interp(R_Qvec, BL_R_Qvec, logBlankR)
+		BlankInterp=10^LogBlankInterp
+		SMR_Int= (R_Int - BlankInterp)/(Kfactor*MSAXSCorLocal)
+		SMR_Int -= SubtractFlatBackground
+		Duplicate/O R_error, SMR_Error
+		Duplicate/Free BL_R_error, log_BL_R_error
+		log_BL_R_error=log(abs(BL_R_error))
+		SMR_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
+		SMR_Error/=9		//errors seemed just too large, this is arbitrary correction... 
+		Duplicate/O R_Qvec, SMR_Qvec		
+		//remove points which are surely not useful
+		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_error 
+		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_error 
+		//end append data
+		DoWindow RcurvePlotGraph
+		if(V_Flag)
+			checkdisplayed /W=RcurvePlotGraph SMR_Int
+			if(!V_Flag)
+				AppendToGraph/R/W=RcurvePlotGraph SMR_Int vs SMR_Qvec
+				Label right "SMR Intensity"
+				ModifyGraph lsize(SMR_Int)=2
+				ErrorBars SMR_Int Y,wave=(SMR_Error,SMR_Error)
+				ModifyGraph rgb(SMR_Int)=(1,16019,65535)
+				ModifyGraph log=1
+				ModifyGraph gaps=0
+			endif
+		endif
+		USAXSorSBUSAXS="FlyUSAXS"	
+#if(exists("IN3_FlyScanRebinData2")==6)
+			NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
+			if(FlyScanRebinToPoints>0)
+				IN3_FlyScanRebinData2(SMR_Qvec, SMR_Int, SMR_error,FlyScanRebinToPoints)
+			endif
+#endif
+	elseif (stringmatch(IsItSBUSAXS,"sbuascan"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
 		logBlankR=log(BL_R_Int)
@@ -436,6 +476,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 				ModifyGraph gaps=0
 			endif
 		endif
+	else
+		Abort "Bad type of scan selected in IN3_RecalcSubtractSaAndBlank()"
 	endif
 
 	setDataFolder OldDf	

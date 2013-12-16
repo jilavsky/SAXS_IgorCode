@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.80
+#pragma version = 1.81
 
+//1.81 adds panel check for version and FlyScan data reduction
 //1.80 Added few more items on Tab0 
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
@@ -27,6 +28,7 @@ Function IN3_Main()
 
 	setDataFolder OldDf
 end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -70,6 +72,9 @@ Function IN3_Initialize()
 
 	ListOfVariables+="UseModifiedGauss;UseGauss;UseLorenz;"
 
+
+	ListOfVariables+="FlyScanRebinToPoints;"
+
 	// these are created automatically... "DataFoldername;IntensityWavename;QWavename;ErrorWaveName;"
 	ListOfStrings="SampleName;BlankName;userFriendlySamplename;userFriendlyBlankName;"
 	ListOfStrings+="ListOfASBParameters;LastSample;"
@@ -91,6 +96,10 @@ Function IN3_Initialize()
 		SampleFilledFraction=1
 	endif
 	NVAR DisplayPeakCenter
+	NVAR FlyScanRebinToPoints
+	if(FlyScanRebinToPoints<100)
+		FlyScanRebinToPoints=300
+	endif
 	NVAR DisplayAlignSaAndBlank
 	if(DisplayPeakCenter+DisplayAlignSaAndBlank!=1)
 		DisplayPeakCenter=1
@@ -246,13 +255,16 @@ Function IN3_MainPanel()
 	CheckBox UsePinTransmission,pos={290,437},size={90,14},proc=IN3_MainPanelCheckBox,title="Use?"//, disable=CalibrateToVolume
 	CheckBox UsePinTransmission,variable= root:Packages:Indra3:UsePinTransmission, help={"Use pin diode trnamission (if exists)"}
 
-	SetVariable PeakToPeakTransmission,pos={5,460},size={300,22},title="Peak-to-Peak T =", frame=0, noedit=1
+	SetVariable PeakToPeakTransmission,pos={5,455},size={300,22},title="Peak-to-Peak T =", frame=0, noedit=1
 	SetVariable PeakToPeakTransmission,font="Times New Roman",fSize=14, bodyWidth=100
 	SetVariable PeakToPeakTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmissionPeakToPeak
-	SetVariable MSAXSCorrectionT0,pos={5,485},size={300,22},title="MSAXS/pinSAXS Cor =", frame=0, noedit=1
+	SetVariable MSAXSCorrectionT0,pos={5,475},size={300,22},title="MSAXS/pinSAXS Cor =", frame=0, noedit=1
 	SetVariable MSAXSCorrectionT0,font="Times New Roman",fSize=14, bodyWidth=100
 	SetVariable MSAXSCorrectionT0,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
 
+	SetVariable FlyScanRebinToPoints,pos={5,495},size={300,22},title="FlyScan rebin to ="
+	SetVariable FlyScanRebinToPoints,font="Times New Roman",fSize=14, bodyWidth=100
+	SetVariable FlyScanRebinToPoints,limits={0,Inf,0},variable= root:Packages:Indra3:FlyScanRebinToPoints
 
 	//tab 2 - geometry controls
 

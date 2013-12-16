@@ -514,7 +514,7 @@ Function/T IR2S_GenStringOfFolders(StartFolder,UseIndra2Structure, UseQRSStructu
 //		ListOfQFolders=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "q*", 1)
 //		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
 			make/N=0/FREE/T ResultingWave
-			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, "(?i)^r||i$", 1, ResultingWave)
+			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, "(?i)^r|i$", 1, ResultingWave)
 			//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
 			result=IR2S_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
 	elseif (UseResults)

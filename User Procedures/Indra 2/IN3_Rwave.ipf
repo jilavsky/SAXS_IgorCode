@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.03
+#pragma version 1.04
 
+//1.04 added FlyScan code and modified fit to peak center to guess top 40% of intensity only. 
 //1.03 added pinDiode tranmission
 //1.02 updated to use 	I0AmpGain			
 //1.01 updated IN3_calculateRwaveQvec to enable analysis of scans down (as usually) or up (as needed for GIUSAXS)
@@ -70,7 +71,7 @@ Function IN3_FitPeakCenterEstimate()
 	Wave PD_Intensity
 	WaveStats/Q PD_Intensity
 
-	FindLevels/Q PD_Intensity, 0.5*V_max						//finds fitting interval
+	FindLevels/Q PD_Intensity, 0.6*V_max						//finds fitting interval
 	if (V_LevelsFound==2)
 		Wave W_FindLevels
 		//check that we have at least 5 points...

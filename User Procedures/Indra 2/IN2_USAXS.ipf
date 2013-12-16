@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.31
+#pragma version = 1.32
 
+//1.32 added FlyScan and panel check for Indra version
 //1.31 added ability to use pinDiode transmission measured first time 4/2013
 //1.30 added weight calibration
 //1.29 modified not to fail to compile when XML xop is not present. 
@@ -16,6 +17,8 @@ Menu "USAXS"
 	help={"Import USAXS data from APS USAXS instrument - from Spec file"}
 	"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
 	help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
+	"Import USAXS FlyScan data", IN3_FlyScanMain()
+	help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
 	"---"
 	"Reduce data main",IN3_Main()
 	help={"Open main panel for Indra 3 package and initialize"}
@@ -101,7 +104,50 @@ Menu "USAXS"
 	help={"Information about the version"}
 end
 
+//****************************************************************************************
+//****************************************************************************************
+//****************************************************************************************
 
+static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
+
+	//these are tools which have been upgraded to this functionality
+	//Modeling II = LSQF2_MainPanel
+	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;"
+//	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
+//	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
+//	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
+//	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
+	
+	IN3_CheckWIndowsProcVersions(WindowProcNames)
+	//IR2C_CheckIrenaUpdate(0)
+	//IR2C_CheckPlatformGUIFonts()
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IN3_CheckWIndowsProcVersions(WindowProcNames)
+	string WindowProcNames
+	
+	variable i  
+	string PanelName
+	String ProcedureName
+	For(i=0;i<ItemsInList(WindowProcNames);i+=1)
+		PanelName = StringFromList(0, StringFromList(i, WindowProcNames, ";")  , "=")
+		ProcedureName = StringFromList(1, StringFromList(i, WindowProcNames, ";")  , "=")
+		DoWIndow $(PanelName)
+		if(V_Flag)
+			Execute (ProcedureName+"()") 
+		endif
+	endfor
+	
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 Function IN2D_DesmearSlowMainRedir()
 
 	//Lets be little bit more proactive. 
@@ -118,11 +164,12 @@ Function IN2D_DesmearSlowMainRedir()
 	else
 		DoAlert 0, "Desmearing routine is now part of Irena package (menu SAS). Download from www.uni.aps.anl.gov/~ilavsky/irena.html. Load from Macros menu." 
 	endif
-	
-	
-
-//	
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 
 Function IN2_AboutPanel()
 	PauseUpdate; Silent 1		// building window...
@@ -137,6 +184,11 @@ Function IN2_AboutPanel()
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 
 Function IN2A_CleanupAllWIndows()
 	//this routine kills all open windows of this package at the start of any routine...
@@ -184,10 +236,12 @@ Function IN2A_CleanupAllWIndows()
 	if (V_Flag)
 		DoWindow/K FinalDesmeared
 	endif
-
-
-
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 //*******************Main body*********************
 Function IN2A_CreateRWave()							//create R wave 
 

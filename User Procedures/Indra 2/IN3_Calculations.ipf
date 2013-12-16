@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.09
+#pragma version=1.10
 
-//1.09 controsl for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/pinSAXS correction
+//1.10 adds FLyScan support
+//1.09 controls for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/pinSAXS correction
 //1.08 added pin diode transmission
 //1.07 added (beta version now) measurement of transmission by using diode on front of the A stage
 //1.06 modified for weight calibration
@@ -806,7 +807,7 @@ static Function IN3_PeakCenter()
 	ErrorBars PD_Intensity Y,wave=(PD_Error,PD_Error)
 	variable center = (PeakCenterFitEndPoint + PeakCenterFitStartPoint)/2
 	variable start = max(center - 1.5 * (center - PeakCenterFitStartPoint),0)
-	variable end1 = min(center + 2 * (PeakCenterFitEndPoint-center),numpnts(AR_encoder))
+	variable end1 = min(center + 1.8 * (PeakCenterFitEndPoint-center),numpnts(AR_encoder))
 	SetAxis bottom AR_encoder[start],AR_encoder[end1]
 	Cursor/P A PD_Intensity PeakCenterFitStartPoint
 	Cursor/P B PD_Intensity PeakCenterFitEndPoint
@@ -1153,7 +1154,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	variable V_FitError=0
 	FuncFit/Q/NTHR=0  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	if(V_FitError>0)
-		abort "Peak profiel fitting function error. Please select wider range of data or change fitting function (Guass is good choice)"
+		abort "Peak profile fitting function error. Please select wider range of data or change fitting function (Gauss is good choice)"
 	endif
 	NVAR BeamCenter
 	NVAR MaximumIntensity
@@ -1440,6 +1441,7 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable SampleLinAbsorption,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!CalculateThickness, frame=CalculateThickness
 	SetVariable SampleDensity,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToWeight || CalibrateArbitrary), frame=CalculateWeight, noedit=!CalculateWeight
 	SetVariable SampleFilledFraction,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToVolume || CalibrateArbitrary),noedit=!CalculateThickness, frame=CalculateThickness
+	SetVariable FlyScanRebinToPoints,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	//SetVariable BeamExposureArea, win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!(CalculateWeight&&CalibrateToWeight), frame=!CalculateWeight
 
 

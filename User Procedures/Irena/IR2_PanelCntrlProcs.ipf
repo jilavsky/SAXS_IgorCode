@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.37
+#pragma version = 1.38
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.38 fixed bug which added require errors to qrs data when changed form USAXS data and fixed RegularExpression bug which increased qrs folder search time. 
 //1.37 yet another bug - this time on "any" name type, when the Wv string was not matching the folders. 
 //1.36 fixed another bug in qrs data structure handling. 
 //1.35 fixed weird problem when after change from USAXS to qrs data set, first time user got wrong set of data when same folder contained both USAXS and qrs data.
@@ -931,6 +932,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 			UseResults=0
 			UseUserDefinedData=0
 			UseModelData=0
+			ControlRequireErrorWvs = ReplaceStringByKey(TopPanel, ControlRequireErrorWvs, "0"  , ":"  , ";")		//no require errors, let user change that later, if needed.
 		endif
 	endif
 	if (cmpstr(ctrlName,"UseResults")==0)
@@ -940,6 +942,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 			UseQRSData=0
 			UseUserDefinedData=0
 			UseModelData=0
+			ControlRequireErrorWvs = ReplaceStringByKey(TopPanel, ControlRequireErrorWvs, "0"  , ":"  , ";")		//no require errors, let user change that later, if needed.
 			Execute ("SetVariable WaveMatchStr disable=1, win="+TopPanel)
 		endif
 	endif
@@ -949,6 +952,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 			UseIndra2Data=0
 			UseQRSData=0
 			UseResults=0
+			ControlRequireErrorWvs = ReplaceStringByKey(TopPanel, ControlRequireErrorWvs, "0"  , ":"  , ";")		//no require errors, let user change that later, if needed.
 			UseModelData=0
 		endif
 	endif
@@ -1119,7 +1123,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				variable/g  $(CntrlLocation+":SetTimeOfQFoldersStr")
 				SVAR/Z  ListOfQFoldersLookup = $(CntrlLocation+":ListOfQFolders")
 				NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
-				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r||i$", 1, ResultingWave)
+				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, ResultingWave)
 				//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
 				if(strlen(FolderMatchStr)>0)
 					variable ii
