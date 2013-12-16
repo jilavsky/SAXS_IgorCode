@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma IgorVersion=6.2	//requires Igor version 6 or higher
-#pragma version=1.79
+#pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
+#pragma version=1.80
 
+//1.80 added FlyScan data reduction
 //1.79 minor changes to use USAXS PD transmission measurements
 // 1.78 added wieght calibration
 // 1.77 update, small changes, use of I0gain and I00gain
@@ -39,10 +40,13 @@
 #include ":IN3_Rwave", version>=1
 #include ":IN3_SupportFnct", version>=1.02
 
+#include ":IN3_FLyScan", version>=0.1
+
 #include ":Spec", version>=2.2
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
 #include "::Irena:IR2_PanelCntrlProcs", version>=1.34
 
+#include <HDF5 Browser>
 
