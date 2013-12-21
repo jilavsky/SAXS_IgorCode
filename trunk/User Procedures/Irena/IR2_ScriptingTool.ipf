@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
+#pragma version=1.19
 Constant IR2SversionNumber=1.15
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,24 +7,25 @@ Constant IR2SversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.01 added license for ANL
-//1.02 FIxed Scripting of Size distribution where we wer emissing eventcode=2  which caused the data not to be updated beteen fits.
-//1.03 support for single data set Modeling II
-//1.04 fixed bug where the tool was missign the one before last folder (wrong wave length)... 
-//1.05 fixed bug in scripting Unified fit, eventcode was not set correctly.  Added match string (using grep, no * needed), added check versions. 
-//1.06 added sorting order controls and added functionality for the Ploting tool I 
-//1.07 yet another fix for Size distribution tool;. It was not loading the new data properly. 
-//1.08 added Scripting ability for results in Ploting tool I
-//1.09 significant increase in speed due to changes to Control procedures.
-//1.10 added handling of uncertainities (errors) for Results data type (needed for Sizes)
-//1.11 modified to handle d, t, and m type QRS data (d-spacing, two theta, and distance) for needs to Nika users
-//1.12 Added Guinier-Porod as controlled tool and fixed minor Folder selection bug for other tools 
-//1.13 modified to handle chanigng of the data type between the scripting tool and the tool being called. 
-//1.14 fixed bug in calling Plotting tool with results
-//1.15 added skip review of fitting parameters for Unified fit improvement. 
-//1.16 fix to make compatible with changes in Controls procedures. 
-//1.17 minor fix when list fo folders contained ;; somehow and we got stale content in the listbox. 
+//1.19 fix for Diameters/Radii option in Modeling II - it was failing to add such data in Plotting tool. 
 //1.18 will set cursors for first and last point of data, if not set by user ahead of fitting. Sync FolderNameStr and set WavenameStr=""
+//1.17 minor fix when list fo folders contained ;; somehow and we got stale content in the listbox. 
+//1.16 fix to make compatible with changes in Controls procedures. 
+//1.15 added skip review of fitting parameters for Unified fit improvement. 
+//1.14 fixed bug in calling Plotting tool with results
+//1.13 modified to handle chanigng of the data type between the scripting tool and the tool being called. 
+//1.12 Added Guinier-Porod as controlled tool and fixed minor Folder selection bug for other tools 
+//1.11 modified to handle d, t, and m type QRS data (d-spacing, two theta, and distance) for needs to Nika users
+//1.10 added handling of uncertainities (errors) for Results data type (needed for Sizes)
+//1.09 significant increase in speed due to changes to Control procedures.
+//1.08 added Scripting ability for results in Ploting tool I
+//1.07 yet another fix for Size distribution tool;. It was not loading the new data properly. 
+//1.06 added sorting order controls and added functionality for the Ploting tool I 
+//1.05 fixed bug in scripting Unified fit, eventcode was not set correctly.  Added match string (using grep, no * needed), added check versions. 
+//1.04 fixed bug where the tool was missign the one before last folder (wrong wave length)... 
+//1.03 support for single data set Modeling II
+//1.02 FIxed Scripting of Size distribution where we wer emissing eventcode=2  which caused the data not to be updated beteen fits.
+//1.01 added license for ANL
 
 //**************************************************************************************
 //**************************************************************************************
@@ -816,10 +817,10 @@ Function IR2S_CallWithPlottingToolII(reset)
 	NVAR SaveResultsInFldrs = root:Packages:Irena:ScriptingTool:SaveResultsInFldrs
 	NVAR SaveResultsInWaves = root:Packages:Irena:ScriptingTool:SaveResultsInWaves
 	SVAR StartFolderName = root:Packages:Irena:ScriptingTool:StartFolderName
-		SVAR SelectedResultsTool=root:Packages:Irena:ScriptingTool:SelectedResultsTool
-		SVAR SelectedResultsType=root:Packages:Irena:ScriptingTool:SelectedResultsType
-		SVAR ResultsGenerationToUse=root:Packages:Irena:ScriptingTool:ResultsGenerationToUse
-		SVAR ResultsDataTypesLookup=root:Packages:IrenaControlProcs:ResultsDataTypesLookup
+	SVAR SelectedResultsTool=root:Packages:Irena:ScriptingTool:SelectedResultsTool
+	SVAR SelectedResultsType=root:Packages:Irena:ScriptingTool:SelectedResultsType
+	SVAR ResultsGenerationToUse=root:Packages:Irena:ScriptingTool:ResultsGenerationToUse
+	SVAR ResultsDataTypesLookup=root:Packages:IrenaControlProcs:ResultsDataTypesLookup
 
 	string LStartFolder, TempXName, TempYName
 	if(stringmatch(StartFolderName,"---"))
@@ -828,7 +829,7 @@ Function IR2S_CallWithPlottingToolII(reset)
 		LStartFolder=StartFolderName
 	endif
 	variable i, j
-	string CurrentFolderName, TempStr, result, tempStr2
+	string CurrentFolderName, TempStr, result, tempStr2, tempStr3
 	if(reset)
 		IR1P_InputPanelButtonProc("ResetAll")				//resent graph?
 	endif	
@@ -839,6 +840,8 @@ Function IR2S_CallWithPlottingToolII(reset)
 	FolderMatchStr=ScriptToolFMS
 	variable AddedFiles=0
 	Print " **** working : adding data sets to plotting tool"
+	string LastDiameterOrRadius=""
+	variable raiseWarning=0
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
 			CurrentFolderName = LStartFolder + ListOfAvailableData[i]
@@ -872,16 +875,59 @@ Function IR2S_CallWithPlottingToolII(reset)
 					endfor
 					TempYName=result
 					tempStr2 = removeending(result, "_"+StringFromList(ItemsInList(result,"_")-1, result, "_"))
-					//tempStr2 = StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
-					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")
+					//for some (Modeling II there are two x-wave options, need to figure out which one is present...
+					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
+					TempXName=RemoveEnding(TempXName , ",")+","
+					if(ItemsInList(TempXName,",")>1)
+						j=0
+						Do
+							tempStr3=stringFromList(j,TempXName,",")
+							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")+"*" ))
+								TempXName=tempStr3
+								break
+							endif
+							j+=1
+						while(j<ItemsInList(TempXName,","))	
+					endif
+					TempXName=RemoveEnding(TempXName , ",")
+					TempXName=TempXName+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")
 				else	//known result we want to use... It should exist (guarranteed by prior code)
+					DFREF TestFldr=$(CurrentFolderName)
 					TempYName=SelectedResultsType+ResultsGenerationToUse
-					TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")+ResultsGenerationToUse
+					TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")
+					TempXName=RemoveEnding(TempXName , ",")+","
+					if(ItemsInList(TempXName,",")>1)
+						j=0
+						Do
+							tempStr3=stringFromList(j,TempXName,",")
+							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+ResultsGenerationToUse+"*" ))
+								TempXName=tempStr3+ResultsGenerationToUse
+								break
+							endif
+							j+=1
+						while(j<ItemsInList(TempXName,","))	
+					endif
+					//TempXName=RemoveEnding(TempXName , ",")
+					//TempXName=TempXName+ResultsGenerationToUse
+					//TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")+ResultsGenerationToUse
 				endif
-
+				if(strlen(LastDiameterOrRadius)==0)
+					LastDiameterOrRadius=TempXName[0,10]
+				else
+					if(!StringMatch(LastDiameterOrRadius, TempXName[0,10]))
+						raiseWarning=1
+					endif
+				endif
 				SVAR XnameStr=root:Packages:GeneralplottingTool:QWavename
 				XnameStr = TempXName
 				PopupMenu QvecDataName win=IR1P_ControlPanel, popmatch=TempXName
+				PU_Struct.ctrlName = "QvecDataName"
+				PU_Struct.popNum=-1
+				PU_Struct.eventcode=2
+				PU_Struct.popStr=TempXName
+				PU_Struct.win = "IR1P_ControlPanel"			
+				IR2C_PanelPopupControl(PU_Struct)
+
 				SVAR YnameStr=root:Packages:GeneralplottingTool:IntensityWaveName
 				YnameStr = TempYName
 				PopupMenu IntensityDataName win=IR1P_ControlPanel, popmatch=TempYName
@@ -900,8 +946,12 @@ Function IR2S_CallWithPlottingToolII(reset)
 			endif
 		endif	
 	endfor
+	if(raiseWarning)
+		//data contained both Radii and Diameters, this may not make much sense....
+		DoAlert /T="User Warning" 0, "Added data included both Diameters and Radii as x-axis, this may not make much sense to plot!" 
+	endif
 	if(AddedFiles==0)
-		//user did tno select any data, probaby screwed up...
+		//user did not select any data, probaby screwed up...
 		DoAlert /T="User Warning" 0, "No data were selected in the data selector listbox. Please, select one or more data then run again" 
 	endif
 	IR1P_InputPanelButtonProc("CreateGraph")				//create graph

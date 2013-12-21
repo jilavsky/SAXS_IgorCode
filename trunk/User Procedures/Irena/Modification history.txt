@@ -12,6 +12,7 @@ Data manipulation I - added controls for Units of the input data (just show) and
 Data manipulation II - added Units controls. 
 Analytical model - added Rg cutoff parameter to Unified level. Requested feature…
 Modeling II - fixed export of Schulz-Zimm distribution parameters to notebook and waves, which seemed to unfinished. 
+Scripting tool - fix for Plotting tool controls which were failing on Modeling II diameter/radii option. 
 
 
 2.53 11/23/2013
