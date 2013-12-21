@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
+#pragma version=1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 fixed export to waves which was not working for Schulz-Zimm distribution type. 
 //1.14 On import redimension waves as double precision to make sure some users do not run out of precision with their waves. 
 //1.13 	Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor.
 //1.12 added additional fitting constraints 
@@ -2009,6 +2010,9 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 					ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="SZMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="SZWidth_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
 				elseif(stringmatch(PopSizeDistShape, "LogNormal" ))
 					ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=LogNormal;"
 					NVAR LNMinSize =  $("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(i))	
@@ -2019,6 +2023,20 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 					ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"="+num2str(LNSdeviation)+";"
 					ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
+					ListOfParameters+="SZMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="SZWidth_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
+				elseif(stringMatch(PopSizeDistShape, "Schulz-Zimm" ))
+					ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=Schulz-Zimm;"
+					NVAR SZMeanSize =  $("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(i))	
+					ListOfParameters+="SZMeanSize_pop"+num2str(i)+"="+num2str(SZMeanSize)+";"
+					NVAR SZwidth =  $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(i))	
+					ListOfParameters+="SZWidth_pop"+num2str(i)+"="+num2str(SZwidth)+";"
+					ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
 				else //LSW
 					ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=LSW;"
@@ -2026,9 +2044,12 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 					ListOfParameters+="LSWLocation_pop"+num2str(i)+"="+num2str(LSWLocation)+";"				
 					ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
+					ListOfParameters+="SZMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="SZWidth_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
+					//ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
 				endif
 				// For factor parameters.... messy... 
 				SVAR FormFac=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(i))
