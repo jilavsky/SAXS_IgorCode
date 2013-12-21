@@ -8,6 +8,11 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+xxxx
+Added first support of FlyUsaxs scans
+Change in size of error bars, the old one are simply too large. 
+
+
 1.79 4/24/2013
 Added ability to use pinDiode Transmission for USAXS measured first time in April 2013. 
 
