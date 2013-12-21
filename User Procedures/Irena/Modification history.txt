@@ -5,6 +5,7 @@ Code modification history
 ********************************************
 2.54
 ASCII Import - added “RemoveFromNameString” which allows users to remove part of name which is of no interest. 
+ASCII Import - import data as double precision to avoid some users running out of precision when their intensity has unusual values due to calibration. also made minor change in MOdeling II to address this. 
 Reflectivity - fixed annoying bug which caused sliders to be drawn over one of the graphs instead of updating the positions in the main panel. 
 Control Procedures - minor fix to handle weird transient bug and some case when the controls were failing. 
 Data manipulation I - added controls for Units of the input data (just show) and output data (select).  

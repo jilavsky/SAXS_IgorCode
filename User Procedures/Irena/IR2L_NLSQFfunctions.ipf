@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
+#pragma version=1.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,11 +7,12 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 On import redimension waves as double precision to make sure some users do not run out of precision with their waves. 
 //1.13 	Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor.
- //1.12 added additional fitting constraints 
- //1.11 modified data stored in wavenote to minimize stuff saved there.
- //1.10 removed all font and font size from panel definitions to enable user control
- //1.09 fix for checking for the limits, which was done for all parameters (UF/Diff) even when these were not fitted. 
+//1.12 added additional fitting constraints 
+//1.11 modified data stored in wavenote to minimize stuff saved there.
+//1.10 removed all font and font size from panel definitions to enable user control
+//1.09 fix for checking for the limits, which was done for all parameters (UF/Diff) even when these were not fitted. 
 //1.08 Modification for Srciting tool of way the fitting function is called. 
 //1.07 Added button to the main graph to select fitting range of data directly from graph. 
 //1.06 Fixed fitting for Diffraction peaks, when for shapes with only 3 parameters we may have tried to fit 4 parameters (was no checking on peak profile shape).
@@ -138,6 +139,9 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 		Wave ErrorWv=$("Error_set"+num2str(whichDataSet))	
 		ErrorWv=0.01*(IntWv)
 	endif
+	//need to make sure all waves are double precision due to some users using weird scaling...
+	redimension/D IntWv, QWv, ErrorWv
+	
 	if(RebinDataTo>0)
 		IR1D_rebinData(IntWv,QWv,ErrorWv,RebinDataTo, 1)
 	endif

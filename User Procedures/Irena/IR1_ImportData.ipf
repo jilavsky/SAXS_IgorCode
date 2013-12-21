@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma version=2.20
-Constant IR1IversionNumber = 2.20
+Constant IR1IversionNumber = 2.21
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 changed import to load data as double precision waves. SOme users were running out of precision. 
 //2.20 added RemoveStringFromName to remove part of name which user does not want to see... 
 //2.19 Removed error when file being imported has less columns than found originally, if these are not being imported and used.
 //		enabled use of following characters in names: (){}%#^$?|&@
@@ -881,9 +882,9 @@ Function IR1I_ImportOneFile(selectedFile)
 	IR1I_KillAutoWaves()
 //	LoadWave/Q/A/G/P=ImportDataPath  selectedfile
 	if (SkipLines)
-		LoadWave/Q/A/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
+		LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
 	else
-		LoadWave/Q/A/G/P=ImportDataPath  selectedfile
+		LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
 		SkipNumberOfLines = IR1I_CountHeaderLines("ImportDataPath", selectedfile)
 	endif
 
@@ -1093,10 +1094,10 @@ Function IR1I_TestImport()
 	killWaves/Z wave0, wave1, wave2, wave3, wave4, wave5, wave6,wave7,wave8,wave9
 	
 	if (SkipLines)
-		LoadWave/Q/A/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
+		LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
 		FoundNWaves = V_Flag
 	else
-		LoadWave/Q/A/G/P=ImportDataPath  selectedfile
+		LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
 		FoundNWaves = V_Flag
 	endif
 	wave wave0
