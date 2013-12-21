@@ -10,7 +10,8 @@ Reflectivity - fixed annoying bug which caused sliders to be drawn over one of t
 Control Procedures - minor fix to handle weird transient bug and some case when the controls were failing. 
 Data manipulation I - added controls for Units of the input data (just show) and output data (select).  
 Data manipulation II - added Units controls. 
-Analytical model - added Rg cutt off parameter to Unified level. Requested feature…
+Analytical model - added Rg cutoff parameter to Unified level. Requested feature…
+Modeling II - fixed export of Schulz-Zimm distribution parameters to notebook and waves, which seemed to unfinished. 
 
 
 2.53 11/23/2013

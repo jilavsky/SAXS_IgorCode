@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.24
+#pragma version=1.25
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 fixed Notebook recording of Shulz-Zimm distribution type
 //1.24 minor fix in Uncertainity evaluation. 
 //1.23 Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor. 
 //1.22 fixed bug when Analyze uncertainities would not get number of fitted points due to changed folder. 
@@ -2572,6 +2573,12 @@ Function IR2L_SvNbk_ModelInf()
 					IR2L_AppendAnyText("LogNormalMean"+"\t=\t"+num2str(LNMeanSize),0)
 					NVAR LNSdeviation =  $("root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(i))	
 					IR2L_AppendAnyText("LogNormalSdeviation"+"\t=\t"+num2str(LNSdeviation),0)
+				elseif(stringMatch(PopSizeDistShape, "Schulz-Zimm" ))
+					IR2L_AppendAnyText("DistributionShape"+"\t=\tSchulz-Zimm",0)
+					NVAR SZMeanSize =  $("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(i))	
+					IR2L_AppendAnyText("Schulz-Zimm Mean"+"\t=\t"+num2str(SZMeanSize),0)
+					NVAR SZdeviation =  $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(i))	
+					IR2L_AppendAnyText("Schulz-Zimm Width"+"\t=\t"+num2str(SZdeviation),0)
 				else //LSW
 					IR2L_AppendAnyText("DistributionShape"+"\t=\tLSW",0)
 					NVAR LSWLocation =  $("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(i))	
