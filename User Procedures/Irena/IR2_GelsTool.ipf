@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.08
-Constant IR2HversionNumber = 4.08
+#pragma version=4.09
+Constant IR2HversionNumber = 4.09
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.08
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.09 added Linking of RgCO to Corr Lenght (DB and TS models, added display of data for given tab. 
 //4.08 added RgCo for Unified level
 //4.07 madepanel scrollable
 //4.06 FIxed C1 parameter lower limit for Treubner Strey model, which can be negative, so the low limit must be -inf. 
@@ -104,7 +105,7 @@ static Function IR2H_Initialize()
 	//here define the lists of variables and strings needed, separate names by ;...
 	
 	ListOfVariables="UseIndra2Data;UseQRSdata;CurrentTab;UseLowQInDB;"
-	ListOfVariables+="UseSlitSmearedData;SlitLength;UseGeneticOptimization;"	
+	ListOfVariables+="UseSlitSmearedData;SlitLength;UseGeneticOptimization;DisplayIndividualFits;"	
 	ListOfVariables+="SASBackground;SASBackgroundStep;FitSASBackground;UpdateAutomatically;SASBackgroundError;"
 	//Unified level
 	ListOfVariables+="LowQslope;LowQPrefactor;FitLowQslope;FitLowQPrefactor;LowQslopeLowLimit;LowQPrefactorLowLimit;"
@@ -132,7 +133,7 @@ static Function IR2H_Initialize()
 	ListOfVariables+="BC_PorodsSpecSurfAreaError;BC_CoatingsThicknessError;BC_LayerScatLengthDensError;"
 	
 
-	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;LowQLinkRGCOTo;"
 	
 	variable i
 	//and here we create them
@@ -224,6 +225,10 @@ static Function IR2H_SetInitialValues()
 	
 	NVAR DBWavelength=root:Packages:Gels_Modeling:DBWavelength
 
+	SVAR LowQLinkRGCOTo=root:Packages:Gels_Modeling:LowQLinkRGCOTo
+	if(strlen(LowQLinkRGCOTo)<2)
+		LowQLinkRGCOTo="---"
+	endif
 	if(LowQRg<=0)
 		LowQRg=1e5
 		LowQRgLowLimit=1
@@ -355,6 +360,8 @@ Proc IR2H_ControlPanel()
 	Button GraphDistribution,pos={32,217},size={50,20}, proc=IR2H_InputPanelButtonProc,title="Graph", help={"Graph manually. Used if UpdateAutomatically is not selected."}
 	CheckBox UpdateAutomatically,pos={200,190},size={225,14},proc=IR2H_InputPanelCheckboxProc,title="Update graphs automatically?"
 	CheckBox UpdateAutomatically,variable= root:Packages:Gels_Modeling:UpdateAutomatically, help={"Graph automatically anytime distribution parameters are changed. May be slow..."}
+	CheckBox DisplayIndividualFits,pos={200,210},size={225,14},proc=IR2H_InputPanelCheckboxProc,title="Display Individual Models?"
+	CheckBox DisplayIndividualFits,variable= root:Packages:Gels_Modeling:DisplayIndividualFits, help={"Graph also models for anyd specific tab.."}
 
 
 	CheckBox UseGeneticOptimization,pos={5,562},size={225,14},proc=IR2H_InputPanelCheckboxProc,title="Use Genetic Opt.?"
@@ -402,7 +409,10 @@ Proc IR2H_ControlPanel()
 
 	SetVariable LowQRgCO,pos={30,390},size={180,16},title="RgCO     ",proc=IR2H_PanelSetVarProc, disable=!(root:Packages:Gels_Modeling:UseLowQInDB)
 	SetVariable LowQRgCO,limits={0,inf,10},value= root:Packages:Gels_Modeling:LowQRgCO, help={"Rg cutt off for low-Q region"}
-	
+	PopupMenu LinkRgCO,pos={220,387},size={100,16}, title="Link to:",proc=IR2H_PanelPopupControl, help={"Select to have RgCO linked to parameters"}
+	PopupMenu LinkRgCO value="---;DBCorrLength;TSCorrLength;"		
+	PopupMenu LinkRgCO  popmatch=root:Packages:Gels_Modeling:LowQLinkRGCOTo	
+
 	SetVariable LowQRgPrefactorLowLimit,pos={32,450},size={50,16},title=" ", help={"Low fitting limit for G"}
 	SetVariable LowQRgPrefactorLowLimit,limits={0,Inf,0},variable= root:Packages:Gels_Modeling:LowQRgPrefactorLowLimit,disable=!(root:Packages:Gels_Modeling:UseLowQInDB)
 	SetVariable LowQRgPrefactorHighLimit,pos={98,450},size={130,16},title=" <        G       < ", help={"High fitting limit for G"}
@@ -566,75 +576,6 @@ Function IR2H_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Gels_Modeling
 
-	if (cmpstr(ctrlName,"UseIndra2Data")==0)
-		//here we control the data structure checkbox
-		NVAR UseIndra2Data=root:Packages:Gels_Modeling:UseIndra2Data
-		NVAR UseQRSData=root:Packages:Gels_Modeling:UseQRSData
-		UseIndra2Data=checked
-		if (checked)
-			UseQRSData=0
-		endif
-		Checkbox UseIndra2Data, value=UseIndra2Data
-		Checkbox UseQRSData, value=UseQRSData
-		SVAR Dtf=root:Packages:Gels_Modeling:DataFolderName
-		SVAR IntDf=root:Packages:Gels_Modeling:IntensityWaveName
-		SVAR QDf=root:Packages:Gels_Modeling:QWaveName
-		SVAR EDf=root:Packages:Gels_Modeling:ErrorWaveName
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
-			PopupMenu SelectDataFolder mode=1
-			PopupMenu IntensityDataName   mode=1, value="---"
-			PopupMenu QvecDataName    mode=1, value="---"
-			PopupMenu ErrorDataName    mode=1, value="---"
-	endif
-	if (cmpstr(ctrlName,"UseQRSData")==0)
-		//here we control the data structure checkbox
-		NVAR UseQRSData=root:Packages:Gels_Modeling:UseQRSData
-		NVAR UseIndra2Data=root:Packages:Gels_Modeling:UseIndra2Data
-		UseQRSData=checked
-		if (checked)
-			UseIndra2Data=0
-		endif
-		Checkbox UseIndra2Data, value=UseIndra2Data
-		Checkbox UseQRSData, value=UseQRSData
-		SVAR Dtf=root:Packages:Gels_Modeling:DataFolderName
-		SVAR IntDf=root:Packages:Gels_Modeling:IntensityWaveName
-		SVAR QDf=root:Packages:Gels_Modeling:QWaveName
-		SVAR EDf=root:Packages:Gels_Modeling:ErrorWaveName
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
-			PopupMenu SelectDataFolder mode=1
-			PopupMenu IntensityDataName   mode=1, value="---"
-			PopupMenu QvecDataName    mode=1, value="---"
-			PopupMenu ErrorDataName    mode=1, value="---"
-	endif
-	if (cmpstr(ctrlName,"UseSlitSmearedData")==0)
-		//here we control the data structure checkbox
-		NVAR UseSlitSmearedData=root:Packages:Gels_Modeling:UseSlitSmearedData
-		SetVariable SlitLength disable=!(UseSlitSmearedData), win=IR2H_ControlPanel
-		NVAR UseIndra2Data=root:Packages:Gels_Modeling:UseIndra2Data
-		NVAR UseQRSData=root:Packages:Gels_Modeling:UseQRSData
-		Checkbox UseIndra2Data, value=UseIndra2Data
-		Checkbox UseQRSData, value=UseQRSData
-		SVAR Dtf=root:Packages:Gels_Modeling:DataFolderName
-		SVAR IntDf=root:Packages:Gels_Modeling:IntensityWaveName
-		SVAR QDf=root:Packages:Gels_Modeling:QWaveName
-		SVAR EDf=root:Packages:Gels_Modeling:ErrorWaveName
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
-			PopupMenu SelectDataFolder mode=1
-			PopupMenu IntensityDataName   mode=1, value="---"
-			PopupMenu QvecDataName    mode=1, value="---"
-			PopupMenu ErrorDataName    mode=1, value="---"
-		PopupMenu SelectDataFolder,win=IR2H_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Gels_Modeling:UseIndra2Data, root:Packages:Gels_Modeling:UseQRSData,root:Packages:Gels_Modeling:UseSlitSmearedData,0)"
-		IR2H_AutoUpdateIfSelected()	
-	endif
 
 	if (cmpstr(ctrlName,"FitBackground")==0)
 		//here we control the data structure checkbox
@@ -662,19 +603,38 @@ Function IR2H_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	//	Checkbox UpdateAutomatically, value=UpdateAutomatically
 		IR2H_AutoUpdateIfSelected()
 	endif
+	SVAR LowQLinkRGCOTo=root:Packages:Gels_Modeling:LowQLinkRGCOTo
+	NVAR UseLowQInDB=root:Packages:Gels_Modeling:UseLowQInDB
+	NVAR UseDB=root:Packages:Gels_Modeling:UseDB
+	NVAR UseTS=root:Packages:Gels_Modeling:UseTS
 
 	if (cmpstr(ctrlName,"UseLowQInDB")==0)
-		NVAR UseLowQInDB=root:Packages:Gels_Modeling:UseLowQInDB
+		if(UseLowQInDB)
+			if(StringMatch(LowQLinkRGCOTo, "DBCorrLength" )&&!UseDB)
+				LowQLinkRGCOTo="---"
+			endif
+			if(StringMatch(LowQLinkRGCOTo, "TSCorrLength" )&&!UseTS)
+				LowQLinkRGCOTo="---"
+			endif
+		endif
 		IR2H_TabPanelControl("",0)
 		IR2H_AutoUpdateIfSelected()
 	endif
 	if (cmpstr(ctrlName,"UseDB")==0)
-		NVAR UseDB=root:Packages:Gels_Modeling:UseDB
+		if(!UseDB)
+			if(StringMatch(LowQLinkRGCOTo, "DBCorrLength" ))
+				LowQLinkRGCOTo="---"
+			endif
+		endif
 		IR2H_TabPanelControl("",1)
 		IR2H_AutoUpdateIfSelected()
 	endif
 	if (cmpstr(ctrlName,"UseTS")==0)
-		NVAR UseTS=root:Packages:Gels_Modeling:UseTS
+		if(!UseDB)
+			if(StringMatch(LowQLinkRGCOTo, "TSCorrLength" ))
+				LowQLinkRGCOTo="---"
+			endif
+		endif
 		IR2H_TabPanelControl("",2)
 		IR2H_AutoUpdateIfSelected()
 	endif
@@ -697,971 +657,6 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function IR2H_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:Gels_Modeling
-		SVAR Dtf=root:Packages:Gels_Modeling:DataFolderName
-		NVAR UseIndra2Data=root:Packages:Gels_Modeling:UseIndra2Data
-		NVAR UseQRSData=root:Packages:Gels_Modeling:UseQRSdata
-		SVAR IntDf=root:Packages:Gels_Modeling:IntensityWaveName
-		SVAR QDf=root:Packages:Gels_Modeling:QWaveName
-		SVAR EDf=root:Packages:Gels_Modeling:ErrorWaveName
-		NVAR UseSlitSmearedData=root:Packages:Gels_Modeling:UseSlitSmearedData
-
-	if (cmpstr(ctrlName,"SelectDataFolder")==0)
-		//here we do what needs to be done when we select data folder
-		Dtf=popStr
-		PopupMenu IntensityDataName mode=1
-		PopupMenu QvecDataName mode=1
-		PopupMenu ErrorDataName mode=1
-		if (UseIndra2Data)
-			if(UseSlitSmearedData)
-				if(stringmatch(IR1_ListOfWaves("SMR_Int","Gels_Modeling",0,0), "*M_SMR_Int*") &&stringmatch(IR1_ListOfWaves("SMR_Qvec","Gels_Modeling",0,0), "*M_SMR_Qvec*")  &&stringmatch(IR1_ListOfWaves("SMR_Error","Gels_Modeling",0,0), "*M_SMR_Error*") )			
-					IntDf="M_SMR_Int"
-					QDf="M_SMR_Qvec"
-					EDf="M_SMR_Error"
-					PopupMenu IntensityDataName value="M_SMR_Int;SMR_Int"
-					PopupMenu QvecDataName value="M_SMR_Qvec;SMR_Qvec"
-					PopupMenu ErrorDataName value="M_SMR_Error;SMR_Error"
-				else
-					if(!stringmatch(IR1_ListOfWaves("SMR_Int","Gels_Modeling",0,0), "*M_SMR_Int*") &&!stringmatch(IR1_ListOfWaves("SMR_Qvec","Gels_Modeling",0,0), "*M_SMR_Qvec*")  &&!stringmatch(IR1_ListOfWaves("SMR_Error","Gels_Modeling",0,0), "*M_SMR_Error*") )			
-						IntDf="SMR_Int"
-						QDf="SMR_Qvec"
-						EDf="SMR_Error"
-						PopupMenu IntensityDataName value="SMR_Int"
-						PopupMenu QvecDataName value="SMR_Qvec"
-						PopupMenu ErrorDataName value="SMR_Error"
-					endif
-				ENDIF
-			else
-				if(stringmatch(IR1_ListOfWaves("DSM_Int","Gels_Modeling",0,0), "*M_BKG_Int*") &&stringmatch(IR1_ListOfWaves("DSM_Qvec","Gels_Modeling",0,0), "*M_BKG_Qvec*")  &&stringmatch(IR1_ListOfWaves("DSM_Error","Gels_Modeling",0,0), "*M_BKG_Error*") )			
-					IntDf="M_BKG_Int"
-					QDf="M_BKG_Qvec"
-					EDf="M_BKG_Error"
-					PopupMenu IntensityDataName value="M_BKG_Int;M_DSM_Int;DSM_Int"
-					PopupMenu QvecDataName value="M_BKG_Qvec;M_DSM_Qvec;DSM_Qvec"
-					PopupMenu ErrorDataName value="M_BKG_Error;M_DSM_Error;DSM_Error"
-				elseif(stringmatch(IR1_ListOfWaves("DSM_Int","Gels_Modeling",0,0), "*BKG_Int*") &&stringmatch(IR1_ListOfWaves("DSM_Qvec","Gels_Modeling",0,0), "*BKG_Qvec*")  &&stringmatch(IR1_ListOfWaves("DSM_Error","Gels_Modeling",0,0), "*BKG_Error*") )			
-					IntDf="BKG_Int"
-					QDf="BKG_Qvec"
-					EDf="BKG_Error"
-					PopupMenu IntensityDataName value="BKG_Int;DSM_Int"
-					PopupMenu QvecDataName value="BKG_Qvec;DSM_Qvec"
-					PopupMenu ErrorDataName value="BKG_Error;DSM_Error"
-				elseif(stringmatch(IR1_ListOfWaves("DSM_Int","Gels_Modeling",0,0), "*M_DSM_Int*") &&stringmatch(IR1_ListOfWaves("DSM_Qvec","Gels_Modeling",0,0), "*M_DSM_Qvec*")  &&stringmatch(IR1_ListOfWaves("DSM_Error","Gels_Modeling",0,0), "*M_DSM_Error*") )			
-					IntDf="M_DSM_Int"
-					QDf="M_DSM_Qvec"
-					EDf="M_DSM_Error"
-					PopupMenu IntensityDataName value="M_DSM_Int;DSM_Int"
-					PopupMenu QvecDataName value="M_DSM_Qvec;DSM_Qvec"
-					PopupMenu ErrorDataName value="M_DSM_Error;DSM_Error"
-				else
-					if(!stringmatch(IR1_ListOfWaves("DSM_Int","Gels_Modeling",0,0), "*M_DSM_Int*") &&!stringmatch(IR1_ListOfWaves("DSM_Qvec","Gels_Modeling",0,0), "*M_DSM_Qvec*")  &&!stringmatch(IR1_ListOfWaves("DSM_Error","Gels_Modeling",0,0), "*M_DSM_Error*") )			
-						IntDf="DSM_Int"
-						QDf="DSM_Qvec"
-						EDf="DSM_Error"
-						PopupMenu IntensityDataName value="DSM_Int"
-						PopupMenu QvecDataName value="DSM_Qvec"
-						PopupMenu ErrorDataName value="DSM_Error"
-					endif
-				endif
-			endif
-		else
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-		if(UseQRSdata)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Gels_Modeling",0,0)
-			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Gels_Modeling",0,0)
-			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Gels_Modeling",0,0)
-		endif
-		if(!UseQRSdata && !UseIndra2Data)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Gels_Modeling",0,0)
-			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Gels_Modeling",0,0)
-			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Gels_Modeling",0,0)
-		endif
-		if (cmpstr(popStr,"---")==0)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-	endif
-	
-
-	if (cmpstr(ctrlName,"IntensityDataName")==0)
-		if (cmpstr(popStr,"---")!=0)
-			IntDf=popStr
-			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-				QDf="q"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Gels_Modeling:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Gels_Modeling\",0,0)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Gels_Modeling:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Gels_Modeling\",0,0)")
-			endif
-		else
-			IntDf=""	
-		endif
-	endif
-
-	if (cmpstr(ctrlName,"QvecDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			QDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-				IntDf="r"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Gels_Modeling:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Gels_Modeling\",0,0)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Gels_Modeling:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Gels_Modeling\",0,0)")
-			endif
-		else
-			QDf=""
-		endif
-	endif
-	
-	if (cmpstr(ctrlName,"ErrorDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			EDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-				IntDf="r"+popStr[1,inf]
-				QDf="q"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Gels_Modeling:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Gels_Modeling\",0,0)")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Gels_Modeling:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Gels_Modeling\",0,0)")
-			endif
-		else
-			EDf=""
-		endif
-	endif
-	
-	if (cmpstr(ctrlName,"NumberOfDistributions")==0)
-		//here goes what happens when we change number of distributions
-		NVAR nmbdist=root:Packages:Gels_Modeling:NumberOfDistributions
-		nmbdist=popNum-1
-		IR2H_FixTabsInPanel()
-		IR2H_AutoUpdateIfSelected()
-		DoWindow IR2H_InterferencePanel
-			if (V_Flag)
-				DoWindow/F IR2H_InterferencePanel
-	//			IR2H_TabPanelControlInterf("name",nmbdist-1)
-			endif
-	endif
-	
-	if (cmpstr(ctrlName,"Dis1_ShapePopup")==0)
-		//here goes what happens when user selects shape in the panel
-		//and that means, depending on the shape selected we need to get another panel with parameters
-		//we have 3 universal shape parameters available for each shape type:
-		//Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3
-		IR2H_ResetScatShapeFitParam(1)		//Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3
-
-				
-		//kill spheroid window if exists...
-		DoWindow Shape_Model_Input_Panel
-		if (V_Flag)
-			DoWindow/K Shape_Model_Input_Panel
-		endif
-		//create new window as needed
-		if (cmpstr(popStr,"spheroid")==0 || cmpstr(popStr,"Algebraic_Globules")==0 || cmpstr(popStr,"Algebraic_Disks")==0 || cmpstr(popStr,"Integrated_Spheroid")==0)
-			Execute ("Dis_Spheroid_Input_Panel(1)")
-		endif
-		if (cmpstr(popStr,"cylinder")==0 || cmpstr(popStr,"Algebraic_Rods")==0)
-			Execute ("Dis_cylinder_Panel(1)")
-		endif
-		if (cmpstr(popStr,"tube")==0)
-			Execute ("Dis_tube_Panel(1)")
-		endif
-		if (cmpstr(popStr,"CoreShell")==0)
-			Execute ("Dis_CoreShell_Input_Panel(1)")
-		endif
-		if (cmpstr(popStr,"Fractal Aggregate")==0)
-			Execute ("Dis_FractalAgg_Input_Panel(1)")
-		endif
-		
-		SVAR Dist1ShapeModel=root:Packages:Gels_Modeling:Dist1ShapeModel
-		Dist1ShapeModel=popstr
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-	
-	if (cmpstr(ctrlName,"Dis1_DistributionType")==0)
-		//here goes what happens when user selects different dist type
-		SVAR Dist1DistributionType=root:Packages:Gels_Modeling:Dist1DistributionType
-		Dist1DistributionType=popStr
-		NVAR Dist1FitShape=root:Packages:Gels_Modeling:Dist1FitShape
-		NVAR Dist1FitLocation=root:Packages:Gels_Modeling:Dist1FitLocation
-		NVAR Dist1FitScale=root:Packages:Gels_Modeling:Dist1FitScale
-		if (cmpstr(popStr,"Gauss")==0)
-			SetVariable Dis1_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_Scale, disable=0,title="Width        ", win=IR2H_ControlPanel
-			SetVariable Dis1_Location, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis1_LocationStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis1_LocationLow,disable= (!Dist1FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis1_LocationHigh,disable= (!Dist1FitLocation),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitLocation,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleLow,disable= (!Dist1FitScale), win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleHigh,disable=(!Dist1FitScale),title="  < Width <       ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitScale,disable= 0,title="Fit width?", win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis1_FitShape,disable= 1, win=IR2H_ControlPanel
-			
-			TitleBox 	Dis1_Gauss, disable=0
-			TitleBox 	Dis1_LogNormal, disable=1
-			TitleBox 	Dis1_LSW, disable=1
-			TitleBox 	Dis1_PowerLaw, disable=1
-			
-			//Dist1FitScale = 0
-			//Dist1FitLocation = 0
-			Dist1FitShape = 0
-		endif
-		if (cmpstr(popStr,"LogNormal")==0)
-			SetVariable Dis1_shape, disable=0,title="Sdeviation  ", win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis1_Scale, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis1_Location, disable=0,title="Min size  ", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis1_LocationStep, disable=0, win=IR2H_ControlPanel
-
-			SetVariable Dis1_LocationLow,disable= (!Dist1FitLocation), win=IR2H_ControlPanel
- 			SetVariable Dis1_LocationHigh,disable= (!Dist1FitLocation),title="  < Min. size <   ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitLocation,disable= 0,title="Fit min. size?", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleLow,disable=(!Dist1FitScale), win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleHigh,disable= (!Dist1FitScale),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitScale,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeLow,disable= (!Dist1FitShape), win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeHigh,disable=(!Dist1FitShape),title=" < Sdeviation < ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitShape,disable= 0,title="Fit Sdev.?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis1_Gauss, disable=1
-			TitleBox 	Dis1_LogNormal, disable=0
-			TitleBox 	Dis1_LSW, disable=1
-			TitleBox 	Dis1_PowerLaw, disable=1
-			//Dist1FitScale = 0
-			//Dist1FitLocation = 0
-			//Dist1FitShape = 0
-		endif
-		if (cmpstr(popStr,"LSW")==0)
-			SetVariable Dis1_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_Scale, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_Location, disable=0,title="Location  ", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_LocationStep, disable=0, win=IR2H_ControlPanel
-			
-			SetVariable Dis1_LocationLow,disable= (!Dist1FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis1_LocationHigh,disable= (!Dist1FitLocation),title="  < location <     ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitLocation,disable= 0,title="Fit Location?", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis1_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis1_FitShape,disable= 1, win=IR2H_ControlPanel
-
-			TitleBox 	Dis1_Gauss, disable=1
-			TitleBox 	Dis1_LogNormal, disable=1
-			TitleBox 	Dis1_LSW, disable=0
-			TitleBox 	Dis1_PowerLaw, disable=1
-
-			Dist1FitScale = 0
-			//Dist1FitLocation = 0
-			Dist1FitShape = 0
-		endif
-		if (cmpstr(popStr,"PowerLaw")==0)
-			SetVariable Dis1_shape, disable=0,title="Power slope   ", win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis1_Scale, disable=0,title="Minimum Dia   ", win=IR2H_ControlPanel
-			SetVariable Dis1_Location, disable=0,title="Maximum Dia  ", win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis1_LocationStep, disable=1, win=IR2H_ControlPanel
-			
-			SetVariable Dis1_LocationLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_LocationHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis1_FitLocation,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis1_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeLow,disable= 0, win=IR2H_ControlPanel
-			SetVariable Dis1_ShapeHigh,disable= 0,title=" < slope < ", win=IR2H_ControlPanel
-			CheckBox Dis1_FitShape,disable= 0,title="Fit slope?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis1_Gauss, disable=1
-			TitleBox 	Dis1_LogNormal, disable=1
-			TitleBox 	Dis1_LSW, disable=1
-			TitleBox 	Dis1_PowerLaw, disable=0
-			Dist1FitScale = 0
-			Dist1FitLocation = 0
-			//Dist1FitShape = 0
-		endif
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-
-
-	if (cmpstr(ctrlName,"Dis2_ShapePopup")==0)
-		//here goes what happens when user selects shape in the panel
-		//and that means, depending on the shape selected we need to get another panel with parameters
-		//we have 3 universal shape parameters available for each shape type:
-		//Dist2ScatShapeParam1;Dist2ScatShapeParam2;Dist2ScatShapeParam3
-		IR2H_ResetScatShapeFitParam(2)		//Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3
-		
-		//kill shpheroid window if exists...
-		DoWindow Shape_Model_Input_Panel
-		if (V_Flag)
-			DoWindow/K Shape_Model_Input_Panel
-		endif
-		//create new window as needed
-		if (cmpstr(popStr,"spheroid")==0 || cmpstr(popStr,"Algebraic_Globules")==0 || cmpstr(popStr,"Algebraic_Disks")==0 || cmpstr(popStr,"Integrated_Spheroid")==0)
-			Execute ("Dis_Spheroid_Input_Panel(2)")
-		endif
-		if (cmpstr(popStr,"cylinder")==0 || cmpstr(popStr,"Algebraic_Rods")==0)
-			Execute ("Dis_cylinder_Panel(2)")
-		endif
-		if (cmpstr(popStr,"tube")==0)
-			Execute ("Dis_tube_Panel(2)")
-		endif
-		if (cmpstr(popStr,"CoreShell")==0)
-			Execute ("Dis_CoreShell_Input_Panel(2)")
-		endif
-		if (cmpstr(popStr,"Fractal Aggregate")==0)
-			Execute ("Dis_FractalAgg_Input_Panel(2)")
-		endif
-		SVAR Dist2ShapeModel=root:Packages:Gels_Modeling:Dist2ShapeModel
-		Dist2ShapeModel=popStr
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-	//	IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-	
-	if (cmpstr(ctrlName,"Dis2_DistributionType")==0)
-		//here goes what happens when user selects different dist type
-		SVAR Dist2DistributionType=root:Packages:Gels_Modeling:Dist2DistributionType
-		NVAR Dist2FitShape=root:Packages:Gels_Modeling:Dist2FitShape
-		NVAR Dist2FitLocation=root:Packages:Gels_Modeling:Dist2FitLocation
-		NVAR Dist2FitScale=root:Packages:Gels_Modeling:Dist2FitScale
-		Dist2DistributionType=popStr
-		if (cmpstr(popStr,"Gauss")==0)
-			SetVariable Dis2_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_Scale, disable=0,title="Width        ", win=IR2H_ControlPanel
-			SetVariable Dis2_Location, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis2_LocationStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis2_LocationLow,disable= (!Dist2FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis2_LocationHigh,disable= (!Dist2FitLocation),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitLocation,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleLow,disable= (!Dist2FitScale), win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleHigh,disable=(!Dist2FitScale),title="  < Width <       ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitScale,disable= 0,title="Fit width?", win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis2_FitShape,disable= 1, win=IR2H_ControlPanel
-			
-			TitleBox 	Dis2_Gauss, disable=0
-			TitleBox 	Dis2_LogNormal, disable=1
-			TitleBox 	Dis2_LSW, disable=1
-			TitleBox 	Dis2_PowerLaw, disable=1
-			
-			//Dist2FitScale = 0
-			//Dist2FitLocation = 0
-			Dist2FitShape = 0
-		endif
-		if (cmpstr(popStr,"LogNormal")==0)
-			SetVariable Dis2_shape, disable=0,title="Sdeviation  ", win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis2_Scale, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis2_Location, disable=0,title="Min size  ", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis2_LocationStep, disable=0, win=IR2H_ControlPanel
-
-			SetVariable Dis2_LocationLow,disable= (!Dist2FitLocation), win=IR2H_ControlPanel
- 			SetVariable Dis2_LocationHigh,disable= (!Dist2FitLocation),title="  < Min. size <   ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitLocation,disable= 0,title="Fit min. size?", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleLow,disable=(!Dist2FitScale), win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleHigh,disable= (!Dist2FitScale),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitScale,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeLow,disable= (!Dist2FitShape), win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeHigh,disable=(!Dist2FitShape),title=" < Sdeviation < ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitShape,disable= 0,title="Fit Sdev.?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis2_Gauss, disable=1
-			TitleBox 	Dis2_LogNormal, disable=0
-			TitleBox 	Dis2_LSW, disable=1
-			TitleBox 	Dis2_PowerLaw, disable=1
-			//Dist2FitScale = 0
-			//Dist2FitLocation = 0
-			//Dist2FitShape = 0
-		endif
-		if (cmpstr(popStr,"LSW")==0)
-			SetVariable Dis2_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_Scale, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_Location, disable=0,title="Location  ", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_LocationStep, disable=0, win=IR2H_ControlPanel
-			
-			SetVariable Dis2_LocationLow,disable= (!Dist2FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis2_LocationHigh,disable= (!Dist2FitLocation),title="  < location <     ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitLocation,disable= 0,title="Fit Location?", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis2_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis2_FitShape,disable= 1, win=IR2H_ControlPanel
-
-			TitleBox 	Dis2_Gauss, disable=1
-			TitleBox 	Dis2_LogNormal, disable=1
-			TitleBox 	Dis2_LSW, disable=0
-			TitleBox 	Dis2_PowerLaw, disable=1
-
-			Dist2FitScale = 0
-			//Dist2FitLocation = 0
-			Dist2FitShape = 0
-		endif
-		if (cmpstr(popStr,"PowerLaw")==0)
-			SetVariable Dis2_shape, disable=0,title="Power slope   ", win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis2_Scale, disable=0,title="Minimum Dia   ", win=IR2H_ControlPanel
-			SetVariable Dis2_Location, disable=0,title="Maximum Dia  ", win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis2_LocationStep, disable=1, win=IR2H_ControlPanel
-			
-			SetVariable Dis2_LocationLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_LocationHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis2_FitLocation,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis2_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeLow,disable= 0, win=IR2H_ControlPanel
-			SetVariable Dis2_ShapeHigh,disable= 0,title=" < slope < ", win=IR2H_ControlPanel
-			CheckBox Dis2_FitShape,disable= 0,title="Fit slope?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis2_Gauss, disable=1
-			TitleBox 	Dis2_LogNormal, disable=1
-			TitleBox 	Dis2_LSW, disable=1
-			TitleBox 	Dis2_PowerLaw, disable=0
-			Dist2FitScale = 0
-			Dist2FitLocation = 0
-			//Dist2FitShape = 0
-		endif
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-
-
-	if (cmpstr(ctrlName,"Dis3_ShapePopup")==0)
-		//here goes what happens when user selects shape in the panel
-		//and that means, depending on the shape selected we need to get another panel with parameters
-		//we have 3 universal shape parameters available for each shape type:
-		//Dist3ScatShapeParam1;Dist3ScatShapeParam2;Dist3ScatShapeParam3
-		IR2H_ResetScatShapeFitParam(3)		//Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3
-		
-		//kill shpheroid window if exists...
-		DoWindow Shape_Model_Input_Panel
-		if (V_Flag)
-			DoWindow/K Shape_Model_Input_Panel
-		endif
-		//create new window as needed
-		if (cmpstr(popStr,"spheroid")==0 || cmpstr(popStr,"Algebraic_Globules")==0 || cmpstr(popStr,"Algebraic_Disks")==0 || cmpstr(popStr,"Integrated_Spheroid")==0)
-			Execute ("Dis_Spheroid_Input_Panel(3)")
-		endif
-		if (cmpstr(popStr,"cylinder")==0 || cmpstr(popStr,"Algebraic_Rods")==0)
-			Execute ("Dis_cylinder_Panel(3)")
-		endif
-		if (cmpstr(popStr,"tube")==0)
-			Execute ("Dis_tube_Panel(3)")
-		endif
-		if (cmpstr(popStr,"CoreShell")==0)
-			Execute ("Dis_CoreShell_Input_Panel(3)")
-		endif
-		if (cmpstr(popStr,"Fractal Aggregate")==0)
-			Execute ("Dis_FractalAgg_Input_Panel(3)")
-		endif
-		SVAR Dist3ShapeModel=root:Packages:Gels_Modeling:Dist3ShapeModel
-		Dist3ShapeModel=popStr
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-
-		IR2H_AutoUpdateIfSelected()
-	endif
-	
-	if (cmpstr(ctrlName,"Dis3_DistributionType")==0)
-		//here goes what happens when user selects different dist type
-		SVAR Dist3DistributionType=root:Packages:Gels_Modeling:Dist3DistributionType
-		NVAR Dist3FitShape=root:Packages:Gels_Modeling:Dist3FitShape
-		NVAR Dist3FitLocation=root:Packages:Gels_Modeling:Dist3FitLocation
-		NVAR Dist3FitScale=root:Packages:Gels_Modeling:Dist3FitScale
-		Dist3DistributionType=popStr
-		if (cmpstr(popStr,"Gauss")==0)
-			SetVariable Dis3_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_Scale, disable=0,title="Width        ", win=IR2H_ControlPanel
-			SetVariable Dis3_Location, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis3_LocationStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis3_LocationLow,disable= (!Dist3FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis3_LocationHigh,disable= (!Dist3FitLocation),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitLocation,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleLow,disable= (!Dist3FitScale), win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleHigh,disable=(!Dist3FitScale),title="  < Width <       ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitScale,disable= 0,title="Fit width?", win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis3_FitShape,disable= 1, win=IR2H_ControlPanel
-			
-			TitleBox 	Dis3_Gauss, disable=0
-			TitleBox 	Dis3_LogNormal, disable=1
-			TitleBox 	Dis3_LSW, disable=1
-			TitleBox 	Dis3_PowerLaw, disable=1
-			
-			//Dist3FitScale = 0
-			//Dist3FitLocation = 0
-			Dist3FitShape = 0
-		endif
-		if (cmpstr(popStr,"LogNormal")==0)
-			SetVariable Dis3_shape, disable=0,title="Sdeviation  ", win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis3_Scale, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis3_Location, disable=0,title="Min size  ", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis3_LocationStep, disable=0, win=IR2H_ControlPanel
-
-			SetVariable Dis3_LocationLow,disable= (!Dist3FitLocation), win=IR2H_ControlPanel
- 			SetVariable Dis3_LocationHigh,disable= (!Dist3FitLocation),title="  < Min. size <   ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitLocation,disable= 0,title="Fit min. size?", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleLow,disable=(!Dist3FitScale), win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleHigh,disable= (!Dist3FitScale),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitScale,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeLow,disable= (!Dist3FitShape), win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeHigh,disable=(!Dist3FitShape),title=" < Sdeviation < ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitShape,disable= 0,title="Fit Sdev.?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis3_Gauss, disable=1
-			TitleBox 	Dis3_LogNormal, disable=0
-			TitleBox 	Dis3_LSW, disable=1
-			TitleBox 	Dis3_PowerLaw, disable=1
-			//Dist3FitScale = 0
-			//Dist3FitLocation = 0
-			//Dist3FitShape = 0
-		endif
-		if (cmpstr(popStr,"LSW")==0)
-			SetVariable Dis3_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_Scale, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_Location, disable=0,title="Location  ", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_LocationStep, disable=0, win=IR2H_ControlPanel
-			
-			SetVariable Dis3_LocationLow,disable= (!Dist3FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis3_LocationHigh,disable= (!Dist3FitLocation),title="  < location <     ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitLocation,disable= 0,title="Fit Location?", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis3_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis3_FitShape,disable= 1, win=IR2H_ControlPanel
-
-			TitleBox 	Dis3_Gauss, disable=1
-			TitleBox 	Dis3_LogNormal, disable=1
-			TitleBox 	Dis3_LSW, disable=0
-			TitleBox 	Dis3_PowerLaw, disable=1
-
-			Dist3FitScale = 0
-			//Dist3FitLocation = 0
-			Dist3FitShape = 0
-		endif
-		if (cmpstr(popStr,"PowerLaw")==0)
-			SetVariable Dis3_shape, disable=0,title="Power slope   ", win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis3_Scale, disable=0,title="Minimum Dia   ", win=IR2H_ControlPanel
-			SetVariable Dis3_Location, disable=0,title="Maximum Dia  ", win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis3_LocationStep, disable=1, win=IR2H_ControlPanel
-			
-			SetVariable Dis3_LocationLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_LocationHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis3_FitLocation,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis3_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeLow,disable= 0, win=IR2H_ControlPanel
-			SetVariable Dis3_ShapeHigh,disable= 0,title=" < slope < ", win=IR2H_ControlPanel
-			CheckBox Dis3_FitShape,disable= 0,title="Fit slope?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis3_Gauss, disable=1
-			TitleBox 	Dis3_LogNormal, disable=1
-			TitleBox 	Dis3_LSW, disable=1
-			TitleBox 	Dis3_PowerLaw, disable=0
-			Dist3FitScale = 0
-			Dist3FitLocation = 0
-			//Dist3FitShape = 0
-		endif
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-
-	if (cmpstr(ctrlName,"Dis4_ShapePopup")==0)
-		//here goes what happens when user selects shape in the panel
-		//and that means, depending on the shape selected we need to get another panel with parameters
-		//we have 3 universal shape parameters available for each shape type:
-		//Dist4ScatShapeParam1;Dist4ScatShapeParam2;Dist4ScatShapeParam3
-		IR2H_ResetScatShapeFitParam(4)
-		
-		//kill shpheroid window if exists...
-		DoWindow Shape_Model_Input_Panel
-		if (V_Flag)
-			DoWindow/K Shape_Model_Input_Panel
-		endif
-		//create new window as needed
-		if (cmpstr(popStr,"spheroid")==0 || cmpstr(popStr,"Algebraic_Globules")==0 || cmpstr(popStr,"Algebraic_Disks")==0 || cmpstr(popStr,"Integrated_Spheroid")==0)
-			Execute ("Dis_Spheroid_Input_Panel(4)")
-		endif
-		if (cmpstr(popStr,"cylinder")==0 || cmpstr(popStr,"Algebraic_Rods")==0)
-			Execute ("Dis_cylinder_Panel(4)")
-		endif
-		if (cmpstr(popStr,"tube")==0)
-			Execute ("Dis_tube_Panel(4)")
-		endif
-		if (cmpstr(popStr,"CoreShell")==0)
-			Execute ("Dis_CoreShell_Input_Panel(4)")
-		endif
-		if (cmpstr(popStr,"Fractal Aggregate")==0)
-			Execute ("Dis_FractalAgg_Input_Panel(4)")
-		endif
-		SVAR Dist4ShapeModel=root:Packages:Gels_Modeling:Dist4ShapeModel
-		Dist4ShapeModel=popStr
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-	
-	if (cmpstr(ctrlName,"Dis4_DistributionType")==0)
-		//here goes what happens when user selects different dist type
-		SVAR Dist4DistributionType=root:Packages:Gels_Modeling:Dist4DistributionType
-		NVAR Dist4FitShape=root:Packages:Gels_Modeling:Dist4FitShape
-		NVAR Dist4FitLocation=root:Packages:Gels_Modeling:Dist4FitLocation
-		NVAR Dist4FitScale=root:Packages:Gels_Modeling:Dist4FitScale
-		Dist4DistributionType=popStr
-		if (cmpstr(popStr,"Gauss")==0)
-			SetVariable Dis4_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_Scale, disable=0,title="Width        ", win=IR2H_ControlPanel
-			SetVariable Dis4_Location, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis4_LocationStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis4_LocationLow,disable= (!Dist4FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis4_LocationHigh,disable= (!Dist4FitLocation),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitLocation,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleLow,disable= (!Dist4FitScale), win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleHigh,disable=(!Dist4FitScale),title="  < Width <       ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitScale,disable= 0,title="Fit width?", win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis4_FitShape,disable= 1, win=IR2H_ControlPanel
-			
-			TitleBox 	Dis4_Gauss, disable=0
-			TitleBox 	Dis4_LogNormal, disable=1
-			TitleBox 	Dis4_LSW, disable=1
-			TitleBox 	Dis4_PowerLaw, disable=1
-			
-			//Dist4FitScale = 0
-			//Dist4FitLocation = 0
-			Dist4FitShape = 0
-		endif
-		if (cmpstr(popStr,"LogNormal")==0)
-			SetVariable Dis4_shape, disable=0,title="Sdeviation  ", win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis4_Scale, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis4_Location, disable=0,title="Min size  ", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis4_LocationStep, disable=0, win=IR2H_ControlPanel
-
-			SetVariable Dis4_LocationLow,disable= (!Dist4FitLocation), win=IR2H_ControlPanel
- 			SetVariable Dis4_LocationHigh,disable= (!Dist4FitLocation),title="  < Min. size <   ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitLocation,disable= 0,title="Fit min. size?", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleLow,disable=(!Dist4FitScale), win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleHigh,disable= (!Dist4FitScale),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitScale,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeLow,disable= (!Dist4FitShape), win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeHigh,disable=(!Dist4FitShape),title=" < Sdeviation < ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitShape,disable= 0,title="Fit Sdev.?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis4_Gauss, disable=1
-			TitleBox 	Dis4_LogNormal, disable=0
-			TitleBox 	Dis4_LSW, disable=1
-			TitleBox 	Dis4_PowerLaw, disable=1
-			//Dist4FitScale = 0
-			//Dist4FitLocation = 0
-			//Dist4FitShape = 0
-		endif
-		if (cmpstr(popStr,"LSW")==0)
-			SetVariable Dis4_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_Scale, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_Location, disable=0,title="Location  ", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_LocationStep, disable=0, win=IR2H_ControlPanel
-			
-			SetVariable Dis4_LocationLow,disable= (!Dist4FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis4_LocationHigh,disable= (!Dist4FitLocation),title="  < location <     ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitLocation,disable= 0,title="Fit Location?", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis4_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis4_FitShape,disable= 1, win=IR2H_ControlPanel
-
-			TitleBox 	Dis4_Gauss, disable=1
-			TitleBox 	Dis4_LogNormal, disable=1
-			TitleBox 	Dis4_LSW, disable=0
-			TitleBox 	Dis4_PowerLaw, disable=1
-
-			Dist4FitScale = 0
-			//Dist4FitLocation = 0
-			Dist4FitShape = 0
-		endif
-		if (cmpstr(popStr,"PowerLaw")==0)
-			SetVariable Dis4_shape, disable=0,title="Power slope   ", win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis4_Scale, disable=0,title="Minimum Dia   ", win=IR2H_ControlPanel
-			SetVariable Dis4_Location, disable=0,title="Maximum Dia  ", win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis4_LocationStep, disable=1, win=IR2H_ControlPanel
-			
-			SetVariable Dis4_LocationLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_LocationHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis4_FitLocation,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis4_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeLow,disable= 0, win=IR2H_ControlPanel
-			SetVariable Dis4_ShapeHigh,disable= 0,title=" < slope < ", win=IR2H_ControlPanel
-			CheckBox Dis4_FitShape,disable= 0,title="Fit slope?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis4_Gauss, disable=1
-			TitleBox 	Dis4_LogNormal, disable=1
-			TitleBox 	Dis4_LSW, disable=1
-			TitleBox 	Dis4_PowerLaw, disable=0
-			Dist4FitScale = 0
-			Dist4FitLocation = 0
-			//Dist4FitShape = 0
-		endif
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-	//	IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-
-
-	if (cmpstr(ctrlName,"Dis5_ShapePopup")==0)
-		//here goes what happens when user selects shape in the panel
-		//and that means, depending on the shape selected we need to get another panel with parameters
-		//we have 3 universal shape parameters available for each shape type:
-		//Dist5ScatShapeParam1;Dist5ScatShapeParam2;Dist5ScatShapeParam3
-		IR2H_ResetScatShapeFitParam(5)
-		
-		//kill shpheroid window if exists...
-		DoWindow Shape_Model_Input_Panel
-		if (V_Flag)
-			DoWindow/K Shape_Model_Input_Panel
-		endif
-		//create new window as needed
-		if (cmpstr(popStr,"spheroid")==0 || cmpstr(popStr,"Algebraic_Globules")==0 || cmpstr(popStr,"Algebraic_Disks")==0 || cmpstr(popStr,"Integrated_Spheroid")==0)
-			Execute ("Dis_Spheroid_Input_Panel(5)")
-		endif
-		if (cmpstr(popStr,"cylinder")==0 || cmpstr(popStr,"Algebraic_Rods")==0)
-			Execute ("Dis_cylinder_Panel(5)")
-		endif
-		if (cmpstr(popStr,"tube")==0)
-			Execute ("Dis_tube_Panel(5)")
-		endif
-		if (cmpstr(popStr,"CoreShell")==0)
-			Execute ("Dis_CoreShell_Input_Panel(5)")
-		endif
-		if (cmpstr(popStr,"Fractal Aggregate")==0)
-			Execute ("Dis_FractalAgg_Input_Panel(5)")
-		endif
-		SVAR Dist5ShapeModel=root:Packages:Gels_Modeling:Dist5ShapeModel
-		Dist5ShapeModel=popStr
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-//		IR2H_UpdateModeMedianMean()		//modified for 5
-
-		IR2H_AutoUpdateIfSelected()
-	endif
-	
-	if (cmpstr(ctrlName,"Dis5_DistributionType")==0)
-		//here goes what happens when user selects different dist type
-		SVAR Dist5DistributionType=root:Packages:Gels_Modeling:Dist5DistributionType
-		NVAR Dist5FitShape=root:Packages:Gels_Modeling:Dist5FitShape
-		NVAR Dist5FitLocation=root:Packages:Gels_Modeling:Dist5FitLocation
-		NVAR Dist5FitScale=root:Packages:Gels_Modeling:Dist5FitScale
-		Dist5DistributionType=popStr
-
-		if (cmpstr(popStr,"Gauss")==0)
-			SetVariable Dis5_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_Scale, disable=0,title="Width        ", win=IR2H_ControlPanel
-			SetVariable Dis5_Location, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis5_LocationStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis5_LocationLow,disable= (!Dist5FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis5_LocationHigh,disable= (!Dist5FitLocation),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitLocation,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleLow,disable= (!Dist5FitScale), win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleHigh,disable=(!Dist5FitScale),title="  < Width <       ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitScale,disable= 0,title="Fit width?", win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis5_FitShape,disable= 1, win=IR2H_ControlPanel
-			
-			TitleBox 	Dis5_Gauss, disable=0
-			TitleBox 	Dis5_LogNormal, disable=1
-			TitleBox 	Dis5_LSW, disable=1
-			TitleBox 	Dis5_PowerLaw, disable=1
-			
-			//Dist5FitScale = 0
-			//Dist5FitLocation = 0
-			Dist5FitShape = 0
-		endif
-		if (cmpstr(popStr,"LogNormal")==0)
-			SetVariable Dis5_shape, disable=0,title="Sdeviation  ", win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis5_Scale, disable=0,title="Mean size", win=IR2H_ControlPanel
-			SetVariable Dis5_Location, disable=0,title="Min size  ", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis5_LocationStep, disable=0, win=IR2H_ControlPanel
-
-			SetVariable Dis5_LocationLow,disable= (!Dist5FitLocation), win=IR2H_ControlPanel
- 			SetVariable Dis5_LocationHigh,disable= (!Dist5FitLocation),title="  < Min. size <   ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitLocation,disable= 0,title="Fit min. size?", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleLow,disable=(!Dist5FitScale), win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleHigh,disable= (!Dist5FitScale),title="  < Mean size < ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitScale,disable= 0,title="Fit mean size?", win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeLow,disable= (!Dist5FitShape), win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeHigh,disable=(!Dist5FitShape),title=" < Sdeviation < ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitShape,disable= 0,title="Fit Sdev.?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis5_Gauss, disable=1
-			TitleBox 	Dis5_LogNormal, disable=0
-			TitleBox 	Dis5_LSW, disable=1
-			TitleBox 	Dis5_PowerLaw, disable=1
-			//Dist5FitScale = 0
-			//Dist5FitLocation = 0
-			//Dist5FitShape = 0
-		endif
-		if (cmpstr(popStr,"LSW")==0)
-			SetVariable Dis5_shape, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_Scale, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_Location, disable=0,title="Location  ", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_LocationStep, disable=0, win=IR2H_ControlPanel
-			
-			SetVariable Dis5_LocationLow,disable= (!Dist5FitLocation), win=IR2H_ControlPanel
-			SetVariable Dis5_LocationHigh,disable= (!Dist5FitLocation),title="  < location <     ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitLocation,disable= 0,title="Fit Location?", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis5_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis5_FitShape,disable= 1, win=IR2H_ControlPanel
-
-			TitleBox 	Dis5_Gauss, disable=1
-			TitleBox 	Dis5_LogNormal, disable=1
-			TitleBox 	Dis5_LSW, disable=0
-			TitleBox 	Dis5_PowerLaw, disable=1
-
-			Dist5FitScale = 0
-			//Dist5FitLocation = 0
-			Dist5FitShape = 0
-		endif
-		if (cmpstr(popStr,"PowerLaw")==0)
-			SetVariable Dis5_shape, disable=0,title="Power slope   ", win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeStep, disable=0, win=IR2H_ControlPanel
-			SetVariable Dis5_Scale, disable=0,title="Minimum Dia   ", win=IR2H_ControlPanel
-			SetVariable Dis5_Location, disable=0,title="Maximum Dia  ", win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleStep, disable=1, win=IR2H_ControlPanel
-			SetVariable Dis5_LocationStep, disable=1, win=IR2H_ControlPanel
-			
-			SetVariable Dis5_LocationLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_LocationHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis5_FitLocation,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleLow,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ScaleHigh,disable= 1, win=IR2H_ControlPanel
-			CheckBox Dis5_FitScale,disable= 1, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeLow,disable= 0, win=IR2H_ControlPanel
-			SetVariable Dis5_ShapeHigh,disable= 0,title=" < slope < ", win=IR2H_ControlPanel
-			CheckBox Dis5_FitShape,disable= 0,title="Fit slope?", win=IR2H_ControlPanel
-
-			TitleBox 	Dis5_Gauss, disable=1
-			TitleBox 	Dis5_LogNormal, disable=1
-			TitleBox 	Dis5_LSW, disable=1
-			TitleBox 	Dis5_PowerLaw, disable=0
-			Dist5FitScale = 0
-			Dist5FitLocation = 0
-			//Dist5FitShape = 0
-		endif
-		//create and recalculate the distributions
-		IR1_CreateDistributionWaves()
-		IR1_CalculateDistributions()		//modified for 5
-		//update the mode median and mean
-	//	IR2H_UpdateModeMedianMean()		//modified for 5
-		IR2H_AutoUpdateIfSelected()
-	endif
-	setDataFolder oldDF
-
-End
 
 
 
@@ -2134,7 +1129,7 @@ static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 
 	
 	Duplicate/O OriginalIntensity, DBModelIntensity,DBModelIntensityQ4,DBModelIntensityQ3, DBTempInt1, DBtempInt2, DBTempInt3, DBModelIntSqrtN1, DBTempIntTS
-	Duplicate/O OriginalIntensity, CiccBenModelIntensity
+	Duplicate/O OriginalIntensity, CiccBenModelIntensity, UnifiedModelInt, DBModelInt, TSModelInt, CBModelInt
 	Duplicate/O OriginalQvector, DBModelQvector, QstarVector
 	DBTempInt1=0
 	DBtempInt2=0
@@ -2174,6 +1169,14 @@ static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 	NVAR BC_CoatingsThickness=root:Packages:Gels_Modeling:BC_CoatingsThickness				//[A]
 	NVAR SlitLength = root:Packages:Gels_Modeling:SlitLength	
 	NVAR UseSlitSmearedData = root:Packages:Gels_Modeling:UseSlitSmearedData	
+	SVAR LowQLinkRGCOTo=root:Packages:Gels_Modeling:LowQLinkRGCOTo
+	//value="---;DBCorrLength;TSCorrLength;"
+	if(StringMatch(LowQLinkRGCOTo, "DBCorrLength") )
+		LowQRgCO=DBcorrL
+	elseif(StringMatch(LowQLinkRGCOTo, "TSCorrLength") )
+		TSCorrelationLength = 1/sqrt(0.5*sqrt(TSAvalue/TSC2Value)+TSC1Value/4/TSC2Value)
+		LowQRgCO=TSCorrelationLength
+	endif
 	// first Debye-Bueche theory
 	//I(q) = (4*pi*K*eta^2*corrL^2)/(1+q^2*corrL^2)^2
 	//K = 8*pi^2*n^2*lambda^-4
@@ -2238,8 +1241,24 @@ static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 	if(UseSlitSmearedData&&numtype(SlitLength)==0)
 		//print "slit smeared"
 		IR1B_SmearData(DBTempInt3, OriginalQvector, slitLength, DBModelIntensity)
+		if(sum(DBModelInt)>0)
+			IR1B_SmearData(DBTempInt1, OriginalQvector, slitLength, DBModelInt)
+		endif
+		if(sum(UnifiedModelInt)>0)
+			IR1B_SmearData(DBtempInt2, OriginalQvector, slitLength, UnifiedModelInt)
+		endif
+		if(sum(TSModelInt)>0)
+			IR1B_SmearData(DBTempIntTS, OriginalQvector, slitLength, TSModelInt)
+		endif
+		if(sum(CBModelInt)>0)
+			IR1B_SmearData(CiccBenModelIntensity, OriginalQvector, slitLength, CBModelInt)
+		endif
 	else
 		DBModelIntensity= DBTempInt3	
+		DBModelInt = DBTempInt1
+		UnifiedModelInt = DBtempInt2
+		TSModelInt = DBTempIntTS
+		CBModelInt = CiccBenModelIntensity
 	endif
 
 	//and now deal with infinite slit length case for  Benedetti-Ciccariello model
@@ -2247,6 +1266,7 @@ static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 		//print (pi^2*n12^2*alpha*BC_PorodsSpecSurfArea / (OriginalQvector[120]^3*1e32))	
 		CiccBenModelIntensity = (pi^2*n12^2*alpha*BC_PorodsSpecSurfArea / (OriginalQvector^3*1e32)) * (1+Rnu*IR2H_CiccBenFiFunction(OriginalQvector*BC_CoatingsThickness))
 		DBModelIntensity= CiccBenModelIntensity
+		CBModelInt = CiccBenModelIntensity
 	endif
 
 
@@ -2647,6 +1667,7 @@ Function IR2H_TabPanelControl(name,tab)
 	NVAR CurrentTab=root:Packages:Gels_Modeling:CurrentTab
 	CurrentTab=tab
 	NVAR UseUnif=root:Packages:Gels_Modeling:UseLowQInDB
+	variable tempV
 	
 	CheckBox UseLowQInDB, disable= (tab!=0), win=IR2H_ControlPanel
 	SetVariable LowQRgPrefactor, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
@@ -2666,7 +1687,18 @@ Function IR2H_TabPanelControl(name,tab)
 	SetVariable LowQRgHighLimit, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
 	CheckBox FitLowQRgPrefactor, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
 	CheckBox FitLowQRg, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
-	SetVariable LowQRgCO, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel
+	SVAR LowQLinkRGCOTo=root:Packages:Gels_Modeling:LowQLinkRGCOTo
+	PopupMenu LinkRgCO, disable= (tab!=0 || UseUnif==0), win=IR2H_ControlPanel, popmatch=LowQLinkRGCOTo
+	if((tab!=0 || UseUnif==0))		//1 when should be hidden...
+		tempV=1
+	else		//shuld be displayed, so either 0 (full access) or 2 (no access)
+		if(!StringMatch(LowQLinkRGCOTo, "---"))
+			tempV=2
+		else
+			tempV=0
+		endif	
+	endif
+	SetVariable LowQRgCO, disable= tempV, win=IR2H_ControlPanel
 
 	NVAR UseDB=root:Packages:Gels_Modeling:UseDB
 	CheckBox UseDB, disable= (tab!=1), win=IR2H_ControlPanel
@@ -2724,10 +1756,87 @@ Function IR2H_TabPanelControl(name,tab)
 	CheckBox FitBC_CoatingsThickness,disable= (tab!=3 || UseCiccBen==0), win=IR2H_ControlPanel
 
 	setDataFolder oldDF
-
+	IR2H_SetTabsNames()
+	IR2H_AppendIndividualData()
 End
 
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR2H_AppendIndividualData()
+	
+	ControlInfo /W=IR2H_Controlpanel  DistTabs
+	
+	NVAR UseUnif=root:Packages:Gels_Modeling:UseLowQInDB
+	NVAR UseDB=root:Packages:Gels_Modeling:UseDB
+	NVAR UseTS=root:Packages:Gels_Modeling:UseTS
+	NVAR UseCiccBen=root:Packages:Gels_Modeling:UseCiccBen
+	NVAR DisplayIndividualFits = root:Packages:Gels_Modeling:DisplayIndividualFits
+	DOWindow IR2H_LogLogPlotGels
+	if(V_Flag)
+		RemoveFromGraph /W=IR2H_LogLogPlotGels /Z DBModelInt, UnifiedModelInt, TSModelInt, CBModelInt
+		if(DisplayIndividualFits)
+			Wave/Z Qv = root:Packages:Gels_Modeling:DBModelQvector
+			Wave/Z CBInt=root:Packages:Gels_Modeling:CBModelInt
+			Wave/Z TSInt = root:Packages:Gels_Modeling:TSModelInt
+			Wave/Z DBInt = root:Packages:Gels_Modeling:DBModelInt
+			Wave/Z UFInt = root:Packages:Gels_Modeling:UnifiedModelInt
+			if(V_Value==0 && WaveExists(UFInt))
+				AppendToGraph /W=IR2H_LogLogPlotGels  UFInt  vs Qv
+				ModifyGraph /W=IR2H_LogLogPlotGels lstyle(UnifiedModelInt)=2,rgb(UnifiedModelInt)=(0,0,65535)
+				ModifyGraph /W=IR2H_LogLogPlotGels lsize(UnifiedModelInt)=2
+			elseif(V_Value==1 && WaveExists(DBInt))
+				AppendToGraph /W=IR2H_LogLogPlotGels  DBInt  vs Qv 
+				ModifyGraph /W=IR2H_LogLogPlotGels lstyle(DBModelInt)=2,rgb(DBModelInt)=(0,0,65535)
+				ModifyGraph /W=IR2H_LogLogPlotGels lsize(DBModelInt)=2
+			elseif(V_Value==2 && WaveExists(TSInt))
+				AppendToGraph /W=IR2H_LogLogPlotGels  TSInt  vs Qv 
+				ModifyGraph /W=IR2H_LogLogPlotGels lstyle(TSModelInt)=2,rgb(TSModelInt)=(0,0,65535)
+				ModifyGraph /W=IR2H_LogLogPlotGels lsize(TSModelInt)=2
+			elseif(V_Value==3 && WaveExists(CBInt))
+				AppendToGraph /W=IR2H_LogLogPlotGels  CBInt  vs Qv 
+				ModifyGraph /W=IR2H_LogLogPlotGels lstyle(CBModelInt)=2,rgb(CBModelInt)=(0,0,65535)
+				ModifyGraph /W=IR2H_LogLogPlotGels lsize(CBModelInt)=2
+			endif
+		endif
+	endif
 
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR2H_SetTabsNames()
+
+	//change tab names to have * if used...
+	NVAR UseUnif=root:Packages:Gels_Modeling:UseLowQInDB
+	NVAR UseDB=root:Packages:Gels_Modeling:UseDB
+	NVAR UseTS=root:Packages:Gels_Modeling:UseTS
+	NVAR UseCiccBen=root:Packages:Gels_Modeling:UseCiccBen
+//	TabControl DistTabs,pos={5,260},size={370,270},proc=IR2H_TabPanelControl
+//	TabControl DistTabs,fSize=10,tabLabel(0)="Unified", tabLabel(1)="Debye-Bueche",tabLabel(2)="Teubner-Strey",tabLabel(3)="Ciccar.-Bened."
+
+	if(UseUnif)
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(0)=\"\\\\Zr125\\\\K(65535,0,0) Unified\"")
+	else
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(0)=\"\\\\Zr100\\\\K(0,0,0) Unified\"")
+	endif
+	if(UseDB)
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(1)=\"\\\\Zr125\\\\K(65535,0,0) Debye-Bueche\"")
+	else
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(1)=\"\\\\Zr100\\\\K(0,0,0) Debye-Bueche\"")
+	endif
+	if(UseTS)
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(2)=\"\\\\Zr125\\\\K(65535,0,0) Teubner-Strey\"")
+	else
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(2)=\"\\\\Zr100\\\\K(0,0,0) Teubner-Strey\"")
+	endif
+	if(UseCiccBen)
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(3)=\"\\\\Zr125\\\\K(65535,0,0) Ciccar.-Bened.\"")
+	else
+		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(3)=\"\\\\Zr100\\\\K(0,0,0) Ciccar.-Bened.\"")
+	endif
+
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -3740,3 +2849,59 @@ static Function IR2H_ExportASCIIResults()
 end
 	
 
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
+Function IR2H_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
+	String ctrlName
+	Variable popNum
+	String popStr
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Gels_Modeling
+		SVAR LowQLinkRGCOTo=root:Packages:Gels_Modeling:LowQLinkRGCOTo
+		NVAR UseDB=root:Packages:Gels_Modeling:UseDB
+		NVAR UseTS=root:Packages:Gels_Modeling:UseTS
+		NVAR LowQRcCO=root:Packages:Gels_Modeling:LowQRgCO
+		NVAR DBCorrL=root:Packages:Gels_Modeling:DBCorrL
+		NVAR TSCorrelationLength=root:Packages:Gels_Modeling:TSCorrelationLength
+
+	if (cmpstr(ctrlName,"LinkRgCO")==0)
+		LowQLinkRGCOTo=popStr
+		if(stringmatch(popStr,"TSCorrLength"))
+			if(!UseTS)
+				DoAlert /T="Model not available" 1, "Treubner-Strey model is not used, do you want to enable it?"
+				if(V_Flag==1)
+					UseTS=1
+				else
+					LowQLinkRGCOTo="---"
+					PopupMenu LinkRgCO value="---;DBCorrLength;TSCorrLength;"	, popmatch=LowQLinkRGCOTo	
+				 	abort 
+				endif
+			endif
+			LowQRcCO = TSCorrelationLength
+		elseif(stringmatch(popStr,"DBCorrLength"))
+			if(!UseDB)
+				DoAlert /T="Model not available" 1, "Debye-Bueche model is not used, do you want to enable it?"
+				if(V_Flag==1)
+					UseDB=1
+				else
+					LowQLinkRGCOTo="---"
+					PopupMenu LinkRgCO value="---;DBCorrLength;TSCorrLength;"	, popmatch=LowQLinkRGCOTo	
+				 	abort 
+				endif
+			endif
+			LowQRcCO = DBCorrL
+		endif
+		IR2H_TabPanelControl("",0)
+	endif
+
+	setDataFolder oldDF
+
+End
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
