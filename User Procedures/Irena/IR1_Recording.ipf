@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.01
+#pragma version=2.02
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.02 Dale added some Porod note taking for Unified fit model. 
 //2.01 added license for ANL
 
 
@@ -202,6 +203,19 @@ Function IR1L_AppendAnyText(TextToBeInserted)		//this function checks for exista
 	endif
 end
 
+Function IR1L_AppendAnyPorodText(TextToBeInserted)		//**DWS
+	string TextToBeInserted						//and appends text to the end of the notebook
+	Silent 1
+	TextToBeInserted=TextToBeInserted+"\r"
+    SVAR/Z nbl=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+	if(SVAR_exists(nbl))
+		if (strsearch(WinList("*",";","WIN:16"),nbl,0)!=-1)				//Logs data in Logbook
+			Notebook $nbl selection={endOfFile, endOfFile}
+			Notebook $nbl text=TextToBeInserted
+		endif
+	endif
+end
+
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -239,6 +253,40 @@ Function IR1_CreateLoggbook()
 	endif
 
 end
+
+Function IR1_CreatePorodLogbook()//***DWS
+
+	SVAR/Z nb=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+	if(!SVAR_Exists(nb))
+		NewDataFolder/O root:Packages
+		NewDataFolder/O root:Packages:Irena_AnalUnifFit
+		String/G root:Packages:Irena_AnalUnifFit:PorodNotebookName=""
+		SVAR nb=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+		nb="PorodAnalysisResults"
+	endif
+	Silent 1
+	if (strsearch(WinList("*",";","WIN:16"),nb,0)!=-1) 		///Logbook exists
+		DoWindow/B $nb
+	else
+
+
+	NewNotebook/N=$nb/F=1/V=1/K=3/W=(83,131,1766,800) as "PorodAnalysisResults"
+	Notebook $nb defaultTab=144, statusWidth=238
+	Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
+	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={180,252+1*8192,360+3*8192}, rulerDefaults={"Arial",10,0,(0,0,0)}
+	Notebook $nb newRuler=logbookRuler, justification=0, margins={0,0,1578}, spacing={0,0,0}, tabs={204+1*8192,258+1*8192,319+1*8192,388+1*8192,432+1*8192,503+1*8192,580+1*8192,665+1*8192,746+1*8192,839+1*8192,912+1*8192,980+1*8192,1035+1*8192,1097+1*8192,1167+1*8192,1268+1*8192,1377+1*8192,1476+1*8192}, rulerDefaults={"Arial",14,1,(0,0,0)}
+	Notebook $nb ruler=logbookRuler, fSize=10
+	Notebook $nb text="rWave\tMethod\tLvl\tIrenaLvls\tUseCsrs\tB[cm-1A-4]\tQv[Cm-1A-3 ]\tpiB/Q[m2/cm3]\tMinDens[g/cm3]\tMajDens[g/cm3]\tS"
+	Notebook $nb text="amDens[g/cm3]\tphimin\tSv[m2/cm3]\tSm[m2/g]\tMinChord[A]\tMajChord[A]\t10^-10xSLmin[cm/g]\t10^-10xSLmaj[cm/g]\r"
+	Notebook $nb fSize=-1
+	Notebook $nb text="rWv\tMeth\tLvl\tLvls\tCsrs\tB\tQv\tpiBoQ\tMinDen\tMajDen\tSamDen\tphimin\tSv\tSm\tMinCh\tMajCh\tSLmin \tSLmaj\r"
+	Notebook $nb text="\r"
+
+	
+	endif
+end
+	
+	
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
