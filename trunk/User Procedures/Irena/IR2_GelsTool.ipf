@@ -55,6 +55,10 @@ Function IR2H_GelsMainFnct()
 	if (V_Flag)
 		DoWindow/K IR2H_LogLogPlotGels	
 	endif
+	DoWindow IR2H_ResidualsPlot
+	if (V_Flag)
+		DoWindow/K IR2H_ResidualsPlot	
+	endif
 	DoWindow IR2H_ControlPanel
 	if (V_Flag)
 		DoWindow/K IR2H_ControlPanel
@@ -1019,22 +1023,43 @@ static Function IR2H_GraphModelData()
 	Wave OriginalQvector=root:Packages:Gels_Modeling:OriginalQvector
 	Wave OriginalError=root:Packages:Gels_Modeling:OriginalError
 	IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
-	
-//	IR1_CalculateNormalizedError("fit")
-//	//append waves to the two top graphs with measured data
+	Wave DBModelIntensity=root:Packages:Gels_Modeling:DBModelIntensity
+	IR2H_CalcAndPlotResiduals(OriginalIntensity,OriginalError, DBModelIntensity)
 	IR2H_AppendModelToMeasuredData()
 	TextBox/W=IR2H_SI_Q2_PlotGels/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR2H_IQ4_Q_PlotGels/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR2H_LogLogPlotGels/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
-//	DoWindow IR2H_InterferencePanel
-//	if (V_Flag)
-//		DoWindow/F IR2H_InterferencePanel
-//	endif
+	TextBox/W=IR2H_ResidualsPlot/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 
 end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR2H_CalcAndPlotResiduals(OriginalIntensity,OriginalError, DBModelIntensity)
+	wave OriginalIntensity,OriginalError, DBModelIntensity
+	
+	string OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Gels_Modeling:
+	Duplicate/O OriginalIntensity, Residuals
+	Residuals = (OriginalIntensity - DBModelIntensity) / OriginalError
+	
+	DoWindow IR2H_ResidualsPlot
+	if(!V_Flag)
+		Display/K=1 /W=(667,585,1328,804) Residuals vs DBModelQvector as "Residuals"
+		DoWindow/C IR2H_ResidualsPlot
+		ModifyGraph mode=2
+		ModifyGraph lSize=3
+		ModifyGraph mirror=1
+		Label left "Normalized Residual"
+		Label bottom "Q[A\\S-1\\M]"
+		SetAxis/A/E=2 left
+		ModifyGraph log(bottom)=1
+	else
+		DoWIndow/F IR2H_ResidualsPlot
+	endif
+
+	setDataFolder OldDf
+end	
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
