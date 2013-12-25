@@ -624,7 +624,7 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "IR1I_ImportData;IR1V_ControlPanel;IR1V_LogLogPlotV;IR1V_IQ4_Q_PlotV;IR2S_ScriptingToolPnl;IR2Pr_PDFInputGraph;IR2Pr_ControlPanel;"
 	ListOfWindows += "PlotingToolWaterfallGrph;LSQF2_MainPanel;LSQF_MainGraph;GraphSizeDistributions;LSQF_ResidualsGraph;Irena_Gizmo;GizmoControlPanel;"
 	ListOfWindows += "DataMiningTool;ItemsInFolderPanel;ItemsInFolderPanel_DMII;DataManipulationII;IR2R_InsertRemoveLayers;PlotingToolContourGrph;"
-	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;"
+	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;IR2H_ResidualsPlot;"
 	
 	variable i
 	string TempNm
