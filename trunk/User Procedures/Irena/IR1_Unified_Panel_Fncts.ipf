@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
+#pragma version=2.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 added some Dale's modifications
 //2.15 added Extended option for warnings to avoid history area poluting. Fixes provided by DWS
 //2.14 added IR2S_SortListOfAvailableFldrs() to scripting tool call. Added option to rebin data on import. 
 //2.13 added option to link B to Rg/G/P values using Hammouda calculations
@@ -823,7 +824,11 @@ Function IR1A_FixLimitsInPanel(VarName)
 	elseif(stringmatch(VarName,"*G"))
 		testVariableLL = 0.1*testVariable
 		testVariableHL = testVariable/0.1
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.05*testVariable)+"}")		
+		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.05*testVariable)+"}")	
+	elseif(stringmatch(VarName,"*ETA"))//**DWS
+		testVariableLL = 0.5*testVariable
+		testVariableHL = 2*testVariable	
+		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.01*testVariable)+"}")	
 	else	
 		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.05*testVariable)+"}")
 		testVariableLL = 0.2*testVariable
@@ -2144,7 +2149,7 @@ Function IR1A_AppendModelToMeasuredData()
 	cursor/P/W=IR1_LogLogPlotU B, OriginalIntensity, CsrBPos	
 	ModifyGraph/W=IR1_LogLogPlotU rgb(UnifiedFitIntensity)=(0,0,0)
 	ModifyGraph/W=IR1_LogLogPlotU mode(OriginalIntensity)=3
-	ModifyGraph/W=IR1_LogLogPlotU msize(OriginalIntensity)=0
+	ModifyGraph/W=IR1_LogLogPlotU msize(OriginalIntensity)=2//***DWS
 	ModifyGraph/W=IR1_LogLogPlotU marker(OriginalIntensity)=8
 	ShowInfo/W=IR1_LogLogPlotU
 	TextBox/W=IR1_LogLogPlotU/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	

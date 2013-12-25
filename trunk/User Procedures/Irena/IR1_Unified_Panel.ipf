@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
-Constant IR1AversionNumber=2.14
+#pragma version=2.16
+Constant IR1AversionNumber=2.16
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 changed ETA step to be 1% of the value, Dale said 5% is too much, changed surf/VOl ratio to fi*(1-fi)*Surf/Vol ratio as correct per DWS. 
 //2.15 added checkbox to limit warnings in the history area..., Fixes provided by DWS
 //2.14 Added option to rebin data to lower number of points on data load. 
 //2.13 added option to link B to Rg/G/P using Hammouda Calculations
@@ -512,7 +513,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level1MassFractal,variable= root:Packages:Irena_UnifFit:Level1MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
 	CheckBox Level1LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
 	CheckBox Level1LinkB,variable= root:Packages:Irena_UnifFit:Level1LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
-	SetVariable Level1SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="Surf / Vol", help={"Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
+	SetVariable Level1SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="fi(1-fi)*Surf/Vol", help={"Fi * (1-fi) * Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
 	SetVariable Level1SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level1SurfaceToVolRat
 
 	SetVariable Level1B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"}
@@ -556,7 +557,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level1Corelations,variable= root:Packages:Irena_UnifFit:Level1Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level1ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level1ETA,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level1Eta},value= root:Packages:Irena_UnifFit:Level1ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level1ETA,limits={0,inf,0.01*root:Packages:Irena_UnifFit:Level1Eta},value= root:Packages:Irena_UnifFit:Level1ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level1FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitETA,variable= root:Packages:Irena_UnifFit:Level1FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level1ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -650,7 +651,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level2Corelations,variable= root:Packages:Irena_UnifFit:Level2Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level2ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level2ETA,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level2Eta},value= root:Packages:Irena_UnifFit:Level2ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level2ETA,limits={0,inf,0.01*root:Packages:Irena_UnifFit:Level2Eta},value= root:Packages:Irena_UnifFit:Level2ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level2FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitETA,variable= root:Packages:Irena_UnifFit:Level2FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level2ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -742,7 +743,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level3Corelations,variable= root:Packages:Irena_UnifFit:Level3Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level3ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level3ETA,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level3Eta},value= root:Packages:Irena_UnifFit:Level3ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level3ETA,limits={0,inf,0.01*root:Packages:Irena_UnifFit:Level3Eta},value= root:Packages:Irena_UnifFit:Level3ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level3FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitETA,variable= root:Packages:Irena_UnifFit:Level3FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level3ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
