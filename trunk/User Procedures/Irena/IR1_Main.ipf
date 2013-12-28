@@ -6,7 +6,7 @@ constant CurrentManualDateInSecs=   3468066750  		//this is mod date for Manual 
 constant CurrentVersionNumber = 2.53
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2013, Argonne National Laboratory
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

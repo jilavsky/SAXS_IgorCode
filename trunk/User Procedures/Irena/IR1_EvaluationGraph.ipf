@@ -1,11 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.04
+#pragma version=2.05
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2013, Argonne National Laboratory
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+//2.05 modified IR1G_CreateAveVolSfcWvUsingNote by cleaning up unneeded code. 
 //2.04 some improvements to handle radii and diameters. 
 //2.03  Modified all controls not to define font and font size to enable proper control by user 
 //2.02 modified display to show "size" instead of diameter, Modeling II is using radii, so the results are in readii. Also, need to fix the absolute calibrations sometimes...
@@ -1476,25 +1478,18 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 
 	string OldDf=getDataFolder(1)
 	SetDataFolder  root:Packages:SASDataEvaluation
-	variable Par1, Par2, Par3, Par4, Par5
+	variable Par1, Par2, Par3, Par4, Par5, Par6
 	variable UPar1, UPar2, UPar3, UPar4, UPar5
 	string UserVolFunct="", ShapeType=""
 	
 	
 	if(stringmatch(NoteStr,"*SizesDataFrom*"))		//date from Size dsistributioon package
+		//ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
 		shapeType= StringByKey("ShapeType", NoteStr , "=" ,";")
 		if(strlen(ShapeType)<3)
 			DoAlert 0, "Bad ShapeType in IR1G_CreateAveVolSfcWvUsingNote"
 		endif
-		if(stringMatch(ShapeType,"CoreShell"))
-			Par1 = numberByKey("CoreShellThickness", NoteStr , "=" ,";")
-			Par2 = numberByKey("CoreShellCoreRho", NoteStr , "=" ,";")
-			Par3 = numberByKey("CoreShellShellRho", NoteStr , "=" ,";")
-			Par4 = numberByKey("CoreShellSolvntRho", NoteStr , "=" ,";")
-		elseif(stringMatch(ShapeType,"Fractal Aggregate"))
-			Par1 = numberByKey("FractalRadiusOfPriPart", NoteStr , "=" ,";")
-			Par2 = numberByKey("FractalDimension", NoteStr , "=" ,";")
-		elseif(stringMatch(ShapeType,"Cylinder"))
+		if(stringMatch(ShapeType,"Cylinder"))
 			Par1 = numberByKey("CylinderLength", NoteStr , "=" ,";")
 		elseif(stringMatch(ShapeType,"Unified_Sphere"))
 		
@@ -1505,24 +1500,9 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 		elseif(stringMatch(ShapeType,"Unified_Tube"))
 			Par1 = numberByKey("TubeLength", NoteStr , "=" ,";")
 			Par2 = numberByKey("TubeWallThickness", NoteStr , "=" ,";")
-		elseif(stringMatch(ShapeType,"Tube"))
-			Par1 = numberByKey("TubeLength", NoteStr , "=" ,";")
-			Par2 = numberByKey("TubeWallThickness", NoteStr , "=" ,";")
-			Par3 = numberByKey("CoreShellCoreRho", NoteStr , "=" ,";")
-			Par4 = numberByKey("CoreShellShellRho", NoteStr , "=" ,";")
-			Par5 = numberByKey("CoreShellSolvntRho", NoteStr , "=" ,";")
-		elseif(stringMatch(ShapeType,"User"))
-			UserVolFunct = StringByKey("User_FormFactorVol", NoteStr , "=" ,";")
-			UPar1 = numberByKey("UserFFPar1", NoteStr , "=" ,";")
-			UPar2 = numberByKey("UserFFPar2", NoteStr , "=" ,";")
-			UPar3 = numberByKey("UserFFPar3", NoteStr , "=" ,";")
-			UPar4 = numberByKey("UserFFPar4", NoteStr , "=" ,";")
-			UPar5 = numberByKey("UserFFPar5", NoteStr , "=" ,";")
-			
-		else
+		else	//spheroid, CylinderAR, Integrated_Spheroid,Unified_RodAR,NoFF_setTo1
 			Par1 = numberByKey("AspectRatio", NoteStr , "=" ,";")		
 		endif
-	
 	elseif(stringmatch(NoteStr,"*DistributionTypeModelled*"))		//date from Modeling I package, total of size distribution..
 		print "These data may contain mixture of shapes for different populations. Please select the right population number to evaluate"
 		NVAR EvaluatePopulationNumber=root:Packages:SASDataEvaluation:EvaluatePopulationNumber

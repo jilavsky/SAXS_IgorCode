@@ -2,7 +2,7 @@
 #pragma version=1.25
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2013, Argonne National Laboratory
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -22,7 +22,7 @@
 //1.15 added Form and Structrue factor description as Igor help file. Added buttons to call the help file from GUI. 
 //1.14 Modified to handle Janus CoreShell Micelle FF
 //1.13 modified data stored in wavenote to minimize stuff saved there.
-//1.12 removed exp[ress calls to font and fsize for panels to enable user controls over these parameters
+//1.12 removed express calls to font and fsize for panels to enable user controls over these parameters
 //1.11 Modifed local Guinier and Power law fits to handle multiple contrasts for data when using multiple input data sets. 
 //1.10 Added Scripting tool button and features around it, it is enabled ONLY for Single Data set input
 //1.09 fixed bug in fitting local P and B in unified model which was setting wrong limits. Added ability to remove points from data.

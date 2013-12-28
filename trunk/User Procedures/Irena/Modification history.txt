@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 2.54
+All files - extended copyright to 2005 - 2014
 ASCII Import - added “RemoveFromNameString” which allows users to remove part of name which is of no interest. 
 ASCII Import - import data as double precision to avoid some users running out of precision when their intensity has unusual values due to calibration. also made minor change in Modeling II to address this. 
 ASCII Import - modified log-q points rebinning to keep minimum q step (matching difference between the first two points after trimming). This should be more robust. 
@@ -17,6 +18,8 @@ Analytical models - added residuals plot per user request.
 Modeling II - fixed export of Schulz-Zimm distribution parameters to notebook and waves, which seemed to unfinished. 
 Scripting tool - fix for Plotting tool controls which were failing on Modeling II diameter/radii option. 
 Unified fit - number of fixes made by DWS with corrections to analysis tools, some output and also GUI changes. 
+Form Factor package - fixed support functions which were missing some of the FF and did not produce Volume or Surface conversions. 
+Evaluate Size distributions - minor fixes for new form factors. 
 
 
 2.53 11/23/2013
