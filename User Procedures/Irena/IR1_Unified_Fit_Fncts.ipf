@@ -4618,7 +4618,7 @@ static Function IR1A_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	NewDataFolder /S/O $(Samplename)
 	Wave/Z/T BackupParamNames
 	if(checkName(ParamName,11)!=0 && !ConfEvAutoOverwrite)
-		DoALert /T="Folder Name Conflict" 1, "Folder with name "+ParamName+" found, do you want to overwrite prior Confidence Evaluation results?"
+		DoALert /T="Folder Name Conflict" 1, "Folder with name "+ParamName+" found, do you want to overwrite prior Analyze uncertainity / Confidence Evaluation results?"
 		if(!V_Flag)
 			abort
 		endif

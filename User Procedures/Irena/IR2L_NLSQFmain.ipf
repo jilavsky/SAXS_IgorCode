@@ -487,7 +487,7 @@ Function IR2L_MainPanel()
 
 
 		Button Recalculate, pos={10,630},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Calculate Model", help={"Recalculate model"}
-		Button AnalyzeUncertainities, pos={10,655},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Anal. uncerts.", help={"Run procedures to analyze uncertaitnities for parameters"}
+		Button AnalyzeUncertainities, pos={10,655},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Anal. Uncertainity", help={"Run procedures to analyze uncertaitnities for parameters"}
 		Button FitModel, pos={110,630},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Fit Model", help={"Fit the model"}
 		Button ReverseFit, pos={110,655},size={90,20}, proc=IR2L_InputPanelButtonProc,title="Reverese Fit", help={"Reverse fit"}
 
