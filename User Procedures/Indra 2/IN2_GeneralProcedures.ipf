@@ -1,6 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.67
+#pragma version = 1.68
 
+//1.86 added for log rebining functions tool to find start value to match minimum step. 
 //1.67 added ZapNonLetterNumStart(strIN) which removes any non letter, non number start of the string for ASCII importer.
 //1.66 Spline smoothing changed to use FREE waves. Changed direction of panel content move buttnos. 
 //1.65 changed back to rtGlobals=2, need to check code much more to make it 3
@@ -424,6 +425,40 @@ end
 //		endfor
 //	endif
 //End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN2G_FindCorrectStart(StartValue,EndValue,NumPoints,MinStep)
+	variable StartValue,EndValue,NumPoints,MinStep
+	
+	variable AngleDiff=abs(EndValue-StartValue)
+	variable startX, endX, LastMinStep, LastStartAngle, calcStep
+	variable difer		//=10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+	if(StartValue<=0.01)
+		StartValue=1
+	endif
+	startX=log(StartValue)
+	endX=log(StartValue+AngleDiff)
+	LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+	LastStartAngle = StartValue
+	if(LastMinStep<MinStep)		//need to decrease the start angle
+		Do
+			LastStartAngle+=0.1
+			startX = log(LastStartAngle)
+			endX = log(LastStartAngle+AngleDiff)
+			calcStep= 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+		while((calcStep<MinStep)&&(LastStartAngle<300))
+		return LastStartAngle
+	else			//need to increase start angle
+		Do
+			LastStartAngle-=LastStartAngle/20
+			startX = log(LastStartAngle)
+			endX = log(LastStartAngle+AngleDiff)
+			calcStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+		while((calcStep>MinStep)&&(LastStartAngle>0))
+		return LastStartAngle
+	endif
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

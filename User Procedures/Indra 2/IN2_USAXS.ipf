@@ -659,41 +659,42 @@ Function IN2A_CalculateRWave(df, askForFactor)				//Recalculate the R wave in fo
 	endif
 	
 	//Fix for nonlinearity of the photodiode observed in August 2006
-		variable DataCollectedEpoch
-		DataCollectedEpoch = NumberByKey("EPOCH", note(PD_Intensity)  ,"=" ,";")
-		if (numtype(DataCollectedEpoch)!=0)
-			DataCollectedEpoch = 1154542000
-		endif
-		//found correct number by comparing glassy carbon to be 1.095 - 1.105... measured by PD linearity 1.056
-		//may be the right number is 1.056^2 = 1.115 ???
-		//this is mystery. 
-		if(DataCollectedEpoch > 1154542500 && DataCollectedEpoch < (1154542500 + 24*60*60*35))   //set for data with EPOCH between 
-			NVAR/Z PowerLawCorrectionFactor=root:Packages:USAXS:PowerLawCorrectionFactor
-			if(!NVAR_Exists(PowerLawCorrectionFactor))
-				variable/g root:Packages:USAXS:PowerLawCorrectionFactor=1.13
-				NVAR PowerLawCorrectionFactor=root:Packages:USAXS:PowerLawCorrectionFactor
-			endif
-			variable PowerLawCorrectionFactorL=PowerLawCorrectionFactor
-			if(askForFactor)
-				Prompt PowerLawCorrectionFactorL, "Diode linearity correction exponent"
-				DoPrompt "Data in August 2006 may have problem of diode non linearity, check exponent",  PowerLawCorrectionFactorL
-				if(V_Flag==0)
-					PowerLawCorrectionFactor=PowerLawCorrectionFactorL
-				else
-					PowerLawCorrectionFactor=0
-					abort
-				endif
-			endif
-			if(PowerLawCorrectionFactor>0.9 && PowerLawCorrectionFactor<1.2)
-					//correct PD_Intensity 
-					//according to Andrew (8/10/2006) the corrected intensity is:
-					// Icorrected = (Imeasured/Imax)^(1/ PowerLawCorrectionFactor) * Imax
-					wavestats/Q PD_Intensity
-					PD_Intensity = ((PD_Intensity/V_max)^(1/PowerLawCorrectionFactor)) * V_max
-			else
-					DoAlert 0, "Correction factor out of range, no correction applied"
-			endif
-		endif
+	//removed 12/2013. This was wrong - this was bad tilt and it cannot be fixed this way anyway... 
+//		variable DataCollectedEpoch
+//		DataCollectedEpoch = NumberByKey("EPOCH", note(PD_Intensity)  ,"=" ,";")
+//		if (numtype(DataCollectedEpoch)!=0)
+//			DataCollectedEpoch = 1154542000
+//		endif
+//		//found correct number by comparing glassy carbon to be 1.095 - 1.105... measured by PD linearity 1.056
+//		//may be the right number is 1.056^2 = 1.115 ???
+//		//this is mystery. 
+//		if(DataCollectedEpoch > 1154542500 && DataCollectedEpoch < (1154542500 + 24*60*60*35))   //set for data with EPOCH between 
+//			NVAR/Z PowerLawCorrectionFactor=root:Packages:USAXS:PowerLawCorrectionFactor
+//			if(!NVAR_Exists(PowerLawCorrectionFactor))
+//				variable/g root:Packages:USAXS:PowerLawCorrectionFactor=1.13
+//				NVAR PowerLawCorrectionFactor=root:Packages:USAXS:PowerLawCorrectionFactor
+//			endif
+//			variable PowerLawCorrectionFactorL=PowerLawCorrectionFactor
+//			if(askForFactor)
+//				Prompt PowerLawCorrectionFactorL, "Diode linearity correction exponent"
+//				DoPrompt "Data in August 2006 may have problem of diode non linearity, check exponent",  PowerLawCorrectionFactorL
+//				if(V_Flag==0)
+//					PowerLawCorrectionFactor=PowerLawCorrectionFactorL
+//				else
+//					PowerLawCorrectionFactor=0
+//					abort
+//				endif
+//			endif
+//			if(PowerLawCorrectionFactor>0.9 && PowerLawCorrectionFactor<1.2)
+//					//correct PD_Intensity 
+//					//according to Andrew (8/10/2006) the corrected intensity is:
+//					// Icorrected = (Imeasured/Imax)^(1/ PowerLawCorrectionFactor) * Imax
+//					wavestats/Q PD_Intensity
+//					PD_Intensity = ((PD_Intensity/V_max)^(1/PowerLawCorrectionFactor)) * V_max
+//			else
+//					DoAlert 0, "Correction factor out of range, no correction applied"
+//			endif
+//		endif
 	
 	//end of the fix...
 	
