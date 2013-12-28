@@ -1,6 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.68
+#pragma version = 1.69
 
+//1.69 modified IN2G_roundToUncertainity to handle very small numbers. 
 //1.86 added for log rebining functions tool to find start value to match minimum step. 
 //1.67 added ZapNonLetterNumStart(strIN) which removes any non letter, non number start of the string for ASCII importer.
 //1.66 Spline smoothing changed to use FREE waves. Changed direction of panel content move buttnos. 
@@ -625,12 +626,20 @@ Function/S IN2G_roundToUncertainity(val, uncert,N)		//returns properlly formated
 	
 	uncert = IN2G_roundSignificant(uncert,N)  		//this rounds uncert to N sig. digits
 	variable decPlaces, allPlaces
-	string tempStr
-	variable tempVar
+	string tempStr, tmpExpStr
+	variable tempVar, tmpExpNum
 	if (uncert<1)		//only decimal places in uncertainity
 		sprintf tempStr, "%g", uncert
-		decPlaces = strlen(tempStr)-2
-		val = IN2G_roundDecimalPlaces(val,decPlaces)
+		if(stringmatch(tempStr,"*e-*"))
+			tmpExpStr = tempStr[strsearch(tempStr, "e-", 0),inf]
+			tmpExpNum = str2num("1"+tmpExpStr)
+			decPlaces = strlen(tempStr[0,strsearch(tempStr, "e-", 0)-1])-1
+			val = IN2G_roundDecimalPlaces(val/tmpExpNum,decPlaces)
+			val*=tmpExpNum	
+		else
+			decPlaces = strlen(tempStr)-2
+			val = IN2G_roundDecimalPlaces(val,decPlaces)		
+		endif
 	elseif(uncert>=1)
 		if((ceil(uncert)-uncert)==0)		//the rounded uncertinity is integer
 			decPlaces=0
@@ -645,10 +654,10 @@ Function/S IN2G_roundToUncertainity(val, uncert,N)		//returns properlly formated
 		endif
 	endif
 	string ValStr, UncertStr
-	if(val<1e6)
+	if(val<1e6&&val>1e-4)
 		sprintf ValStr, "%."+num2str(decPlaces)+"f" ,val
 	else
-		sprintf ValStr, "%e" ,val
+		sprintf ValStr, "%g" ,val
 	endif
 	sprintf UncertStr, "%g" ,uncert
 	return ValStr+" +/- "+UncertStr

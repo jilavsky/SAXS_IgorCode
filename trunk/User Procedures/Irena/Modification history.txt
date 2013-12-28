@@ -16,6 +16,7 @@ Analytical models - added Rg cutoff parameter to Unified level. Requested featur
 Analytical models - added linking of Rg cutoff to Corr Lengths and added ability to display separate data for the tabs. Minor improvements. 
 Analytical models - added residuals plot per user request. 
 Modeling II - fixed export of Schulz-Zimm distribution parameters to notebook and waves, which seemed to unfinished. 
+Modeling II - fixed bug in Analyze uncertainty which caused problems when parameter name was simply too long. Made shorter by replacing parts of the string. 
 Scripting tool - fix for Plotting tool controls which were failing on Modeling II diameter/radii option. 
 Unified fit - number of fixes made by DWS with corrections to analysis tools, some output and also GUI changes. 
 Form Factor package - fixed support functions which were missing some of the FF and did not produce Volume or Surface conversions. 

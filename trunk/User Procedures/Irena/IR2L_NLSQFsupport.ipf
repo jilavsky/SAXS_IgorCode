@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.25
+#pragma version=1.26
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.26 changed in Unicertainity analysis length of paramName to 20 characters. 
 //1.25 fixed Notebook recording of Shulz-Zimm distribution type
 //1.24 minor fix in Uncertainity evaluation. 
 //1.23 Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor. 
@@ -3428,6 +3429,21 @@ end
 //******************************************************************************************************************
 //******************************************************************************************************************
 //******************************************************************************************************************
+static Function/T IR2L_FIxParamName(ParamName)	
+	string ParamName
+	string NewName
+	NewName=ParamName
+	if(StringMatch(NewName, "FormFactor*" ))
+		NewName = ReplaceString("FormFactor", NewName, "FF")
+	endif
+	if(StringMatch(NewName, "Structure*" ))
+		NewName = ReplaceString("Structure", NewName, "SF_")
+	endif
+	if(strlen(NewName)>20)
+		NewName=NewName[0,19]
+	endif
+	return NewName
+end
 //******************************************************************************************************************
 //******************************************************************************************************************
 //******************************************************************************************************************
@@ -3436,10 +3452,7 @@ static Function IR2L_ConEvAnalyzeEvalResults2(ParamName)
 	string ParamName
 	//print GetDataFOlder(1)
 	
-	string LParamName=ParamName
-	if(strlen(ParamName)>15)
-		LParamName=Paramname[0,14]
-	endif
+	string LParamName=IR2L_FIxParamName(ParamName)
 	SVAR SampleFullName=root:Packages:IR2L_NLSQF:DataFolderName
 	NVAR ConfEVNumSteps=root:Packages:IR2L_NLSQF:ConfEVNumSteps
 	Wave ConfEvStartValues=$("ConfEvStartValues")
@@ -3498,10 +3511,7 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	Variable MinValue,MaxValue,NumSteps
 	String ParamName,Method
 	
-	string LParamName=ParamName
-	if(strlen(ParamName)>15)
-		LParamName=Paramname[0,14]
-	endif
+	string LParamName=IR2L_FIxParamName(ParamName)
 	
 	DoWindow ChisquaredAnalysis
 	if(V_Flag)
@@ -3736,10 +3746,8 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 	string ParamName
 	variable SortForAnalysis,FittedParameter
 	
-	string LParamName=ParamName
-	if(strlen(Paramname)>15)
-		LParamName=ParamName[0,14]
-	endif
+	string LParamName=IR2L_FIxParamName(ParamName)
+	
 	NVAR ConfEvTargetChiSqRange = root:Packages:IR2L_NLSQF:ConfEvTargetChiSqRange
 	SVAR SampleFullName=root:Packages:IR2L_NLSQF:FolderName_set1
 	Wave StartValues=$(LParamName+"StartValue")
@@ -4087,6 +4095,7 @@ Function IR2L_ConEvSetValues(popStr)
 			//something wrong here, bail out
 			return 0
 		endif
+		IR2L_FixLimits(1)
 		if(StringMatch(popStr, "Backg*") )
 			NVAR CurparLL =  $("root:Packages:IR2L_NLSQF:"+ReplaceString("_set", ConEvSelParameter, "Min_set" ) )
 			NVAR CurparHL =  $("root:Packages:IR2L_NLSQF:"+ReplaceString("_set", ConEvSelParameter, "Max_set" ))

@@ -471,7 +471,7 @@ Window IR1A_ControlPanel()
 	Button ExportData,pos={180,623},size={90,20},proc=IR1A_InputPanelButtonProc,title="Export ASCII", help={"Export ASCII data out of Igor"}
 	Button MarkGraphs,pos={277,623},size={110,20},proc=IR1A_InputPanelButtonProc,title="Results to graphs", help={"Insert text boxes with results into the graphs for printing"}
 	Button EvaluateSpecialCases,pos={10,645},size={120,20},proc=IR1A_InputPanelButtonProc,title="Analyze Results", help={"Analyze special Cases"}
-	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR1A_InputPanelButtonProc,title="Uncertainity Evaluation", help={"Analyze confidence range for different parameters"}
+	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR1A_InputPanelButtonProc,title="Anal. Uncertainity", help={"Analyze confidence range for different parameters"}
 
 	CheckBox ExtendedWarnings,pos={285,650},size={80,16},noproc,title="Ext. warnings?"
 	CheckBox ExtendedWarnings,variable= root:Packages:Irena_UnifFit:ExtendedWarnings, help={"Print extended warnings in the history area?"}
