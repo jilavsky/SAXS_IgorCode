@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.20
-Constant IR1IversionNumber = 2.21
+#pragma version=2.22
+Constant IR1IversionNumber = 2.22
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2013, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 changed Import rebinning on log scale to match minimum step (defined as the difference between first two original points left after trimming and 0 int removal). 
 //2.21 changed import to load data as double precision waves. SOme users were running out of precision. 
 //2.20 added RemoveStringFromName to remove part of name which user does not want to see... 
 //2.19 Removed error when file being imported has less columns than found originally, if these are not being imported and used.
@@ -310,23 +311,29 @@ Function  IR1I_ImportRebinData(TempInt,TempQ,TempE,TempQr,NumberOfPoints, LogBin
 	//create log distribution of points...
 	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
 	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
-	//tempNewLogDist = exp((0.8*LogBinParam/100) * p)
-	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
-	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
-		//this does not seem to work... JIL 7/14/2013
-	//tempNewLogDist = exp((0.8*LogBinParam/NumberOfPoints) * p)
-	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
-	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
 	variable StartQ, EndQ
+	variable RealStart, RealEnd, MinStep, StartX,EndX,startOld
 	if(TempQ[0]<1e-8)
 		findlevel/P TempQ, 1e-8
 		startQ=log(TempQ[ceil(V_LevelX)])
+		RealStart = TempQ[ceil(V_LevelX)]
+		MinStep = TempQ[ceil(V_LevelX)+1] - TempQ[ceil(V_LevelX)]
 	else
 		startQ=log(TempQ[0])
+		RealStart =TempQ[0]
+		MinStep = TempQ[1] - TempQ[0]
 	endif
 	endQ=log(TempQ[numpnts(TempQ)-1])
+	RealEnd = TempQ[numpnts(TempQ)-1]
+	//this did not guarrantee minimum step... Use method developed for Fly USAXS scans 12/2013
+	StartX = IN2G_FindCorrectStart(RealStart,RealEnd,NumberOfPoints,MinStep)
+	EndX = StartX +(RealEnd - RealStart)
+	startQ=log(StartX)
+	endQ = log(EndX)
 	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
 	tempNewLogDist = 10^(tempNewLogDist)
+	startOld = tempNewLogDist[0]
+	tempNewLogDist += RealStart - startOld
 	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
 	tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-2]
 	Rebinned_tempInt=0

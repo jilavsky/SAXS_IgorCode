@@ -187,6 +187,7 @@ static Function IN3_ReturnCursorBack()
 	NVAR/Z OldStartQValueForEvaluation
 	if(NVAR_Exists(OldStartQValueForEvaluation))
 		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, OldStartQValueForEvaluation ))
+		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
 	endif
 
 	setDataFolder OldDf
@@ -1018,7 +1019,7 @@ Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 //	if(strlen(CsrInfo(A, "RcurvePlot")) <1  || strlen(CsrInfo(B, "RcurvePlot"))<1)
 //		return 0
 //	endif
-	CurveFit/Q/H="1000"  gauss PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1	//Gauss
+	CurveFit/Q/H="1000" /L=50  gauss PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1	//Gauss
 //	print "Fitted Gaussian between points  "+num2str(PeakCenterFitStartPoint)+"   and    "+num2str(PeakCenterFitEndPoint)+"    reached Chi-squared/numpoints    " +num2str(V_chisq/(PeakCenterFitEndPoint-PeakCenterFitStartPoint))
 //	string ModifyWave
 //	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit
@@ -1146,13 +1147,16 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 		startPointL = W_FindLevels[floor(V_LevelX)]
 		endPointL = W_FindLevels[ceil(V_LevelX)]
 	endif
+//	Cursor/P /W=RcurvePlotGraph#PeakCenter A  PD_Intensity  startPointL 
+//	Cursor/P /W=RcurvePlotGraph#PeakCenter B  PD_Intensity  endPointL 
 	W_coef[2] = abs(Ar_encoder[startPointL] - Ar_encoder[endPointL])/(2*(2*ln(2))^0.5)
 	W_coef[3]=2
 	//W[3]>1		//modified 7/6/2010 per request from Fan. K3 coefficient needs to be large enough to avoid weird Peak shapes.
 	Make/O/T/N=1 T_Constraints
 	T_Constraints[0] = {"K3>1.3"}
 	variable V_FitError=0
-	FuncFit/Q/NTHR=0  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	//FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	if(V_FitError>0)
 		abort "Peak profile fitting function error. Please select wider range of data or change fitting function (Gauss is good choice)"
 	endif
@@ -1258,7 +1262,7 @@ Function IN3_FitLorenzianTop(ctrlname) : Buttoncontrol			// calls the Lorenzian 
 	endif
 
 	K0=0
-	CurveFit/Q/H="1000"  lor PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 //Lorenzian
+	CurveFit/Q/H="1000" /L=50  lor PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1 //Lorenzian
 //	print "Fitted Lorenzian between points  "+num2str(PeakCenterFitStartPoint)+"   and    "+num2str(PeakCenterFitEndPoint)+"    reached Chi-squared/numpoints     " +num2str(V_chisq/(PeakCenterFitEndPoint-PeakCenterFitStartPoint))
 //	string ModifyWave
 //	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit

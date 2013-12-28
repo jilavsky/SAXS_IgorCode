@@ -385,6 +385,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O BL_R_error, log_BL_R_error
 		log_BL_R_error=log(abs(BL_R_error))
 		SMR_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
+		SMR_Error/=3		//change 12/2013 seems our error estimates are simply too large... 
 		KillWaves/Z log_BL_R_error
 		Duplicate/O R_Qvec, SMR_Qvec
 		
@@ -419,7 +420,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/Free BL_R_error, log_BL_R_error
 		log_BL_R_error=log(abs(BL_R_error))
 		SMR_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
-		SMR_Error/=9		//errors seemed just too large, this is arbitrary correction... 
+		SMR_Error/=3		//errors seemed just too large, this is arbitrary correction... 
 		Duplicate/O R_Qvec, SMR_Qvec		
 		//remove points which are surely not useful
 		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_error 

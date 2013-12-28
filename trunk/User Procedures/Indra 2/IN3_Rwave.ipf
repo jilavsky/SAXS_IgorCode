@@ -69,6 +69,7 @@ Function IN3_FitPeakCenterEstimate()
 	NVAR PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint
 	Wave PD_Intensity
+	variable NumP
 	WaveStats/Q PD_Intensity
 
 	FindLevels/Q PD_Intensity, 0.6*V_max						//finds fitting interval
@@ -76,11 +77,12 @@ Function IN3_FitPeakCenterEstimate()
 		Wave W_FindLevels
 		//check that we have at least 5 points...
 		if((W_FindLevels[1]-W_FindLevels[0])<6)
-			W_FindLevels[0]=W_FindLevels[0]-3
+			NumP= (6-(W_FindLevels[1]-W_FindLevels[0]))/2
+			W_FindLevels[0]=W_FindLevels[0]-NumP
 			if(W_FindLevels[0]<0)
 				W_FindLevels[0]=0
 			endif
-			W_FindLevels[1]=W_FindLevels[1]+3
+			W_FindLevels[1]=W_FindLevels[1]+NumP
 		endif
 		PeakCenterFitStartPoint = floor(W_FindLevels[0])
 		PeakCenterFitEndPoint =  ceil(W_FindLevels[1])

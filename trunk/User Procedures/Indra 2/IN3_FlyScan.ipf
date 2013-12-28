@@ -2,10 +2,10 @@
 #pragma version=0.1
 Constant IN3_FlyImportVersionNumber=0.1
 //FlyScan data reduction
-Constant AmplifierPreRage1BlockTime=0.09
-Constant AmplifierPreRage2BlockTime=0.12
+Constant AmplifierPreRage1BlockTime=0.09  //09
+Constant AmplifierPreRage2BlockTime=0.12	//12
 Constant AmplifierPreRage3BlockTime=0.13
-Constant AmplifierPreRage4BlockTime=0.16
+Constant AmplifierPreRage4BlockTime=0.15
 Constant AmplifierRange1BlockTime=0.02
 Constant AmplifierRange2BlockTime=0.04
 Constant AmplifierRange3BlockTime=0.04
@@ -368,7 +368,7 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD
 	Duplicate/O GainWv, PD_range
-	ArValues = Ar_start[0] - Ar_increment[0]*p
+	ArValues = Ar_increment[0]*p
 	Duplicate/O ArValues, Ar_encoder
 	
 	//need to appedn the wave notes...
@@ -392,19 +392,22 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	//Need to shift Ar_encoder by something to get really log scale rebinning... Cannot be negative, so need to calculate some small offset 
 	//now we need to mask off the bad points... 
 	IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
+	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 	variable ArOffset, scanningDown
 	scanningDown = (Ar_encoder[0] > Ar_encoder[1]) ? 1 : 0
 	if(scanningDown)	//scanning down in angle
-		ArOffset = Ar_encoder[0] - (Ar_encoder[10]-Ar_encoder[0])
-		Ar_encoder -= ArOffset
+	//	ArOffset = Ar_encoder[0] - (Ar_encoder[10]-Ar_encoder[0])
+		//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],Ar_start[0]+Ar_encoder[0],NumberOfTempPoints,Ar_increment[0])
+		//Ar_encoder += ArOffset
 		Ar_encoder = abs(Ar_encoder)
 	else		//scanning up in angle
-		ArOffset = Ar_encoder[0] + (Ar_encoder[10]-Ar_encoder[0])
-		Ar_encoder -= ArOffset
+		//ArOffset = Ar_encoder[0] + (Ar_encoder[10]-Ar_encoder[0])
+		//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[0],Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],NumberOfTempPoints,Ar_increment[0])
+		//Ar_encoder += ArOffset
 	endif
-	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints)
-	Ar_encoder +=ArOffset
+	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints, Ar_increment[0])
+	//Ar_encoder -=ArOffset
+//	Ar_encoder +=Ar_start[0]
 	//put AR on regular angular scale...
 	//fix cases when PD_range is not integer, if they are still there...
 	PD_range[] = (PD_range[p]-floor(PD_range[p])==0) ? PD_range : nan
@@ -442,7 +445,6 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-//**********************************************************************************************************
 
 Function IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
 	wave Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range
@@ -451,58 +453,81 @@ Function IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_
 	TimeRangeBefore={AmplifierPreRage1BlockTime,AmplifierPreRage2BlockTime,AmplifierPreRage3BlockTime,AmplifierPreRage4BlockTime,0}
 	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,0}
 	variable NumPntsW=numpnts(MeasTime)
-	Differentiate/METH=1  PD_range /D=GainChanges
-	GainChanges = abs(GainChanges)
+	//Differentiate/METH=1  PD_range /D=GainChanges
+	//GainChanges = abs(GainChanges)
 	//contains 0 where gain does not change and 1 where the gain changes... 
 	variable i, curGain, maskTime, j, maskTimeUp
-	For(i=0;i<numpnts(PD_range);i+=1)
-		if(GainChanges[i]>0)
-			//OK, the gain is being just changed
-			curGain = PD_range[i]
-			curGain = (curGain<6) ? curGain : 5
-			maskTime = TimeRangeAfter[curGain-1]
-			maskTimeUp = TimeRangeBefore[curGain-1]
-			USAXS_PD[i]=nan
-			j=1
-			Do
-				USAXS_PD[i+j]=nan
-				maskTime -=MeasTime[i+j]
-				j+=1
-			 while ((maskTime>0)&&((i+j)<NumPntsW))
-			j=1
-			Do
-				USAXS_PD[i-j]=nan
-				maskTimeUp -=MeasTime[i-j]
-				j+=1
-			 while (maskTimeUp>0&&((i-j)>=0))
-		endif
-	
+	//deal with range change for gain 1
+	FindLevels/Q  /D=RangeChanges  /P  PD_range, 1.1 
+	For(i=0;i<numpnts(RangeChanges);i+=1)
+		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage1BlockTime, AmplifierRange1BlockTime)
 	endfor
-	IN2G_RemoveNaNsFrom5Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
+	FindLevels /Q /D=RangeChanges  /P  PD_range, 2.1 
+	For(i=0;i<numpnts(RangeChanges);i+=1)
+		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage2BlockTime, AmplifierRange2BlockTime)
+	endfor
+	FindLevels /Q /D=RangeChanges  /P  PD_range, 3.1 
+	For(i=0;i<numpnts(RangeChanges);i+=1)
+		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage3BlockTime, AmplifierRange3BlockTime)
+	endfor
+	FindLevels /Q /D=RangeChanges  /P  PD_range, 4.1 
+	For(i=0;i<numpnts(RangeChanges);i+=1)
+		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage4BlockTime, AmplifierRange4BlockTime)
+	endfor
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+
+Function IN3_MaskPointsForGivenTime(IntWv,TimeWv,PointNum,MaskTimeUp, MaskTimeDown)
+	wave IntWv,TimeWv
+	variable PointNum,MaskTimeUp, MaskTimeDown
+	variable NumPntsW
+	NumPntsW = numpnts(IntWv)
+	variable i, maskTime
+	i=0
+	Do
+		IntWv[PointNum+i]=nan
+		maskTimeDown -=TimeWv[PointNum+i]
+		i+=1
+	 while ((maskTimeDown>0)&&((PointNum+i)<NumPntsW))
+	i =1
+	Do
+		IntWv[PointNum-i]=nan
+		maskTimeUp -=TimeWv[PointNum-i]
+		i+=1
+	 while (maskTimeUp>0&&((PointNum-i)>=0))
+	
+	
+end
 //**********************************************************************************************************
-Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints)
+//**********************************************************************************************************
+Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints, MinStep)
 	wave WvX, WvTime, Wv2, Wv3, Wv4
-	variable NumberOfPoints
-	//note, Wv2, Wv3, Wv4 are averages, but Time is full time (no avergaing).... 
+	variable NumberOfPoints, MinStep
+	//	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints)
+	//note, WvX, Wv4 (pd_range), and WvTime is averages, but others are full time (no avergaing).... also, do not count if Wv3 are Nans
 	string OldDf
 	variable OldNumPnts=numpnts(WvX)
 	if(OldNumPnts<NumberOfPoints)
 		print "User requested rebinning of data, but old number of points is less than requested point number, no rebinning done"
 		return 0
 	endif
+	variable StartX, EndX, iii, isGrowing, CorrectStart, logStartX, logEndX
+	CorrectStart = WvX[0]
+	StartX = IN2G_FindCorrectStart(WvX[0],WvX[numpnts(WvX)-1],NumberOfPoints,MinStep)
+	EndX = StartX +abs(WvX[numpnts(WvX)-1] -  WvX[0])
 	//Log rebinning, if requested.... 
 	//create log distribution of points...
-	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-	variable StartX, EndX, iii, isGrowing
 	isGrowing = (WvX[0] < WvX[numpnts(WvX)-1]) ? 1 : 0
-	startX=log(WvX[0])
-	endX=log(WvX[numpnts(WvX)-1])
-	tempNewLogDist = startX + p*(endX-startX)/numpnts(tempNewLogDist)
+	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
+	logstartX=log(startX)
+	logendX=log(endX)
+	tempNewLogDist = logstartX + p*(logendX-logstartX)/numpnts(tempNewLogDist)
 	tempNewLogDist = 10^(tempNewLogDist)
+	startX = tempNewLogDist[0]
+	tempNewLogDist += CorrectStart - StartX
+	
 	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
 	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
 	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
@@ -521,28 +546,32 @@ Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints)
 		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
 		if(isGrowing)
 			Do
-				Rebinned_WvX[i] += WvX[j]
-				Rebinned_WvTime[i]+=WvTime[j]
-				Rebinned_Wv2[i]+=Wv2[j]
-				Rebinned_Wv3[i] += Wv3[j]
-				Rebinned_Wv4[i] += Wv4[j]
-				cntPoints+=1
+				if(numtype(Wv3[j])==0)
+					Rebinned_WvX[i] += WvX[j]
+					Rebinned_WvTime[i]+=WvTime[j]
+					Rebinned_Wv2[i]+=Wv2[j]
+					Rebinned_Wv3[i] += Wv3[j]
+					Rebinned_Wv4[i] += Wv4[j]
+					cntPoints+=1
+				endif
 				j+=1
 			While(WvX[j-1]<BinHighEdge && j<OldNumPnts)
 		else
 			Do
-				Rebinned_WvX[i] += WvX[j]
-				Rebinned_WvTime[i]+=WvTime[j]
-				Rebinned_Wv2[i]+=Wv2[j]
-				Rebinned_Wv3[i] += Wv3[j]
-				Rebinned_Wv4[i] += Wv4[j]
-				cntPoints+=1
+				if(numtype(Wv3[j])==0)
+					Rebinned_WvX[i] += WvX[j]
+					Rebinned_WvTime[i]+=WvTime[j]
+					Rebinned_Wv2[i]+=Wv2[j]
+					Rebinned_Wv3[i] += Wv3[j]
+					Rebinned_Wv4[i] += Wv4[j]
+					cntPoints+=1
+				endif
 				j+=1
 			While((WvX[j-1]>BinHighEdge) && (j<OldNumPnts))
 		endif
-		Rebinned_WvTime[i]/=cntPoints		//need average time per exposure for backgground subtraction... 
-		Rebinned_Wv2[i]/=cntPoints
-		Rebinned_Wv3[i]/=cntPoints
+		Rebinned_WvTime[i]/=cntPoints		//need average time per exposure for background subtraction... 
+		//Rebinned_Wv2[i]/=cntPoints
+		//Rebinned_Wv3[i]/=cntPoints
 		Rebinned_Wv4[i]/=cntPoints
 		Rebinned_WvX[i]/=cntPoints
 	endfor
