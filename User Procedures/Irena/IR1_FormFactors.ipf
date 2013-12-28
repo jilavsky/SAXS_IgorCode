@@ -1,13 +1,15 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2013, Argonne National Laboratory
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//2.27 fixed IR1T_CreateAveVolumeWave, IR1T_CreateAveSurfaceAreaWave  to have all form factors, do nto foget to fix next time when adding new FF
 //2.26 added Rectangular Parallelepiped (cuboid and other similar shapes) USING NIST XOP - IF the XOP is installed, Parallelpiped is available. Fast, need to convert more FFs to this... 
 //2.25 fixed minor glitch when some form factor screen could be initiealized with nan as parameter name, which causes major problems numbericaly for AUtoupdate settings. 
 //2.24 added support for "No fitting limits" GUI option.
@@ -241,6 +243,9 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 		//RectParallelepiped			//needs side and two scaling paramaters
 		//							SideBScale =ParticlePar1		// B = A * P1
 		//							SideCScale=ParticlePar2			// C = A * P2
+		//CoreShellPrecipitate		sphere with built in Percus yevick Sf
+		//							PY length/radius ratio =ParticlePar1
+		//							PY volume = ParticlePar2
 	
 		
 		//Fractal aggregate	 	FractalRadiusOfPriPart=ParticlePar1=root:Packages:Sizes:FractalRadiusOfPriPart	//radius of primary particle
@@ -403,7 +408,8 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
 			elseif (cmpstr(ParticleModel,"SphereWHSLocMonoSq")==0)						// sphere with Hard Spheres locally monodispersed Sq
-				length=ParticlePar1
+					//PY length=ParticlePar1
+					//PY volume = ParticlePar2
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
 						IR1_SphereWHSLocMonoSq(TempWave,Q_vec,currentR,ParticlePar1,ParticlePar2,ParticlePar3,ParticlePar4,ParticlePar5)		//here we calculate one column of data
@@ -768,11 +774,19 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR1T_RecParallVolume(A,P1,P2,P3,P4,P5)
+static Function IR1T_RecParallVolume(A,P1,P2,P3,P4,P5)
 	Variable A, P1, P2,P3,P4,P5
 	//A is size, 
 	variable side=2*A   	//size going in is "radius"Ê
 	return side*side*side*P1*P2
+end
+//*****************************************************************************************************************
+static Function IR1T_RecParallSurface(A,P1,P2,P3,P4,P5)
+	Variable A, P1, P2,P3,P4,P5
+	//A is size, 
+	variable side=2*A   	//size going in is "radius"Ê
+	//Surface Area = 2lw + 2lh + 2wh
+	return 2*side*side*P1+2*side*side*P2+2*side*side*P1*P2
 end
 //*****************************************************************************************************************
 //
@@ -2787,19 +2801,19 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 			
 			if(cmpstr(DistShapeModel,"Unified_sphere")==0 || cmpstr(DistShapeModel,"Algebraic_Spheres")==0)		//spheroid, volume 4/3 pi * r^3 *beta
 				tempVolume+=IR1T_UnifiedsphereVolume(tempRadius,0,0,0,0,0)
-			elseif(cmpstr(DistShapeModel,"spheroid")==0 ||cmpstr(DistShapeModel,"Integrated_Spheroid")==0)		//spheroid, volume 4/3 pi * r^3 *beta
+			elseif(cmpstr(DistShapeModel,"Spheroid")==0 ||cmpstr(DistShapeModel,"Integrated_Spheroid")==0)		//spheroid, volume 4/3 pi * r^3 *beta
 				tempVolume+=IR1T_SpheroidVolume(tempRadius, Par1)
-			elseif(cmpstr(DistShapeModel,"Algebraic_Globules")==0)		//globule 4/3 pi * r^3 *beta
+			elseif(cmpstr(DistShapeModel,"Algebraic_Globules")==0)									//globule 4/3 pi * r^3 *beta
 				tempVolume+=4/3*pi*(tempRadius^3)*Par1
-			elseif(cmpstr(DistShapeModel,"Algebraic_Disks")==0)		//Alg disk, 
+			elseif(cmpstr(DistShapeModel,"Algebraic_Disks")==0)										//Alg disk, 
 				tempVolume+=2*pi*(tempRadius^3)*Par1
 			elseif(cmpstr(DistShapeModel,"Unified_Disc")==0 ||cmpstr(DistShapeModel,"Unified_Disk")==0)				//Uni & rod disk, 
 				tempVolume+=IR1T_UnifiedDiscVolume(tempRadius,Par1,0,0,0,0) 					//2*pi*(tempRadius^2)*DistScatShapeParam1
-			elseif(cmpstr(DistShapeModel,"Unified_rod")==0)									//Uni & rod disk, 
+			elseif(cmpstr(DistShapeModel,"Unified_rod")==0)											//Uni & rod disk, 
 				tempVolume+=IR1T_UnifiedRodVolume(tempRadius,Par1,0,0,0,0) 					//2*pi*(tempRadius^2)*DistScatShapeParam1
 			elseif(cmpstr(DistShapeModel,"Unified_rodAR")==0)									//Uni & rod disk, 
 				tempVolume+=IR1T_UnifiedRodVolume(tempRadius,2*Par1*tempRadius,0,0,0,0) 					//2*pi*(tempRadius^2)*DistScatShapeParam1
-			elseif(cmpstr(DistShapeModel,"Algebraic_Rods")==0)		//Alg rod, 
+			elseif(cmpstr(DistShapeModel,"Algebraic_Rods")==0)										//Alg rod, 
 				tempVolume+=2*pi*(tempRadius^3)*Par1
 			elseif(cmpstr(DistShapeModel,"cylinder")==0)											//cylinder volume = pi* r^2 * length
 				tempVolume+=IR1T_CylinderVolume(tempRadius, Par1)
@@ -2808,12 +2822,9 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 			elseif(cmpstr(DistShapeModel,"CoreShellCylinder")==0)							//CoreShellCylinder volume = pi* (r+CoreShellCylinder wall thickness)^2 * length
 				SVAR CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
 				tempVolume+=IR1T_TubeVolume(tempRadius,Par1,Par2, CoreShellVolumeDefinition)
-			elseif(cmpstr(DistShapeModel,"Unified_tube")==0)			//tube volume = pi* (r+tube wall thickness)^2 * length
+			elseif(cmpstr(DistShapeModel,"Unified_tube")==0)									//tube volume = pi* (r+tube wall thickness)^2 * length
 				tempVolume+=IR1T_UnifiedTubeVolume(tempRadius,Par1,Par2,par3,1, 1)
-			elseif(cmpstr(DistShapeModel,"coreshell")==0)
-				//In curretn implementation (7/5/2006) we assume volue of particle is the volue of CORE, as we use core diameter(radius) for particle description... 
-				//tempVolume+=4/3*pi*((tempRadius+DistScatShapeParam1)^3)			
-				//tempVolume+=4/3*pi*((tempRadius)^3)			
+			elseif(cmpstr(DistShapeModel,"CoreShell")==0)
 				tempVolume+=IR1T_CoreShellVolume(tempRadius,Par1,VolDefL)	
 			elseif(cmpstr(DistShapeModel,"CoreShellShell")==0)
 				tempVolume+=IR1T_CoreShellVolume(tempRadius,Par1+Par2,VolDefL)	
@@ -2821,6 +2832,14 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 				tempVolume+=IR1T_FractalAggofSpheresVol(tempRadius, Par1,Par2, 1, 1, 1)
 			elseif(cmpstr(DistShapeModel,"NoFF_setTo1")==0)
 				tempVolume+=1
+			elseif(cmpstr(DistShapeModel,"SphereWHSLocMonoSq")==0)
+				tempVolume+=IR1T_SpheroidVolume(tempRadius, 1)
+			elseif(cmpstr(DistShapeModel,"Janus CoreShell Micelle*")==0)
+				tempVolume+=IR1T_JanusVp(tempRadius,Par1,Par2,Par3,Par4 )
+			elseif(cmpstr(DistShapeModel,"CoreShellPrecipitate")==0)
+				tempVolume+=IR1T_CoreShellVolume(tempRadius,Par1,VolDefL)
+			elseif(cmpstr(DistShapeModel,"RectParallelepiped")==0)
+				tempVolume+=IR1T_RecParallVolume(tempRadius,Par1,Par2,1,1,1)
 			elseif(cmpstr(DistShapeModel,"User")==0)	
 					infostr = FunctionInfo(UserVolumeFnctName)
 					if (strlen(infostr) == 0)
@@ -2906,16 +2925,24 @@ Function IR1T_CreateAveSurfaceAreaWave(AveSurfaceAreaWave,Distdiameters,DistShap
 					tempSurface+=2*pi*tempRadius^2 + ((Par1*tempRadius)*2 * pi * tempRadius)
 			elseif(cmpstr(DistShapeModel,"CoreShellCylinder")==0)												//Par 1 = length, Par 2 = wall thickness... Assume two surfaces together...
 					tempSurface+=2*pi*((tempRadius+Par2)^2 - tempRadius^2) + (Par1 * pi * tempRadius) + (Par1 * pi * (tempRadius+Par2))
-			elseif(cmpstr(DistShapeModel,"Unifiedtube")==0)										//Par 1 = length, Par 2 = wall thickness... Assume two surfaces together..
+			elseif(cmpstr(DistShapeModel,"Unified_tube")==0)										//Par 1 = length, Par 2 = wall thickness... Assume two surfaces together..
 					tempSurface+=2*pi*((tempRadius+Par2)^2 - tempRadius^2) + (Par1 * pi * tempRadius) + (Par1 * pi * (tempRadius+Par2))
-			elseif(cmpstr(DistShapeModel,"coreshell")==0)										//Par 1 = cores shell thickness, take both surfaces....
+			elseif(cmpstr(DistShapeModel,"CoreShell")==0)										//Par 1 = cores shell thickness, take both surfaces....
 				tempSurface+=4*pi*tempRadius^2 + 4*pi*(tempRadius+Par1)^2
 			elseif(cmpstr(DistShapeModel,"CoreShellShell")==0)										//Par 1 = cores shell thickness, take both surfaces....
 				tempSurface+=4*pi*tempRadius^2 + 4*pi*(tempRadius+Par1+Par2)^2
 			elseif(cmpstr(DistShapeModel,"Fractal Aggregate")==0)
-				tempSurface+=NaN										//no idea....
+				tempSurface+=NaN																	//no idea....
 			elseif(cmpstr(DistShapeModel,"NoFF_setTo1")==0)
-				tempSurface+=1
+				tempSurface+=1																	//no idea....
+			elseif(cmpstr(DistShapeModel,"SphereWHSLocMonoSq")==0)								//ignore PY Sf internally, this is simply sphere. 
+				tempSurface+=4*pi*tempRadius^2
+			elseif(cmpstr(DistShapeModel,"Janus CoreShell Micelle*")==0)
+				tempSurface+=4*pi*tempRadius^2 + 4*pi*(tempRadius+Par1)^2						//this is basically simple Core Shell particle form this point of view... 
+			elseif(cmpstr(DistShapeModel,"CoreShellPrecipitate")==0)
+				tempSurface+=4*pi*tempRadius^2 + 4*pi*(tempRadius+Par1)^2						//this is basically simple Core Shell particle form this point of view... 
+			elseif(cmpstr(DistShapeModel,"RectParallelepiped")==0)									//Surface Area = 2lw + 2lh + 2wh
+				tempSurface+=IR1T_RecParallSurface(tempRadius,Par1,Par2,Par3,Par4,Par5)
 			elseif(cmpstr(DistShapeModel,"User")==0)				//no idea... 
 //					infostr = FunctionInfo(UserVolumeFnctName)
 //					if (strlen(infostr) == 0)
