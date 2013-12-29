@@ -22,6 +22,7 @@ Scripting tool - fix for Plotting tool controls which were failing on Modeling I
 Scripting tool - if Plotting tool is not opened, Scripting tool will open it now instead of throwing error.  
 Unified fit - number of fixes made by DWS with corrections to analysis tools, some output and also GUI changes. 
 Form Factor package - fixed support functions which were missing some of the FF and did not produce Volume or Surface conversions. 
+Form Factor package - Cylinder, CylinderAR, and Spheroid will now use NIST XOP, if available (many times faster). 
 Evaluate Size distributions - minor fixes for new form factors. 
 
 
