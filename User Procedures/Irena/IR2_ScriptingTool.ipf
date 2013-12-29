@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.19
+#pragma version=1.20
 Constant IR2SversionNumber=1.15
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant IR2SversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Gunier-Porod and Size Dist with uncertainities appering in wrong time. 
 //1.19 fix for Diameters/Radii option in Modeling II - it was failing to add such data in Plotting tool. 
 //1.18 will set cursors for first and last point of data, if not set by user ahead of fitting. Sync FolderNameStr and set WavenameStr=""
 //1.17 minor fix when list fo folders contained ;; somehow and we got stale content in the listbox. 
@@ -180,6 +181,8 @@ Function IR2S_CheckProc(ctrlName,checked) : CheckBoxControl
 	Button FitWithUnified,win= IR2S_ScriptingToolPnl , disable=UseResults
 	Button FitWithSizes,win= IR2S_ScriptingToolPnl , disable=UseResults
 	Button FitWithMoldelingII,win= IR2S_ScriptingToolPnl , disable=UseResults
+	Button FitWithGuinierPorod,win= IR2S_ScriptingToolPnl , disable=UseResults
+	Button FitWithSizesU,win= IR2S_ScriptingToolPnl , disable=UseResults
 	//Button CallPlottingToolII,pos={90,450},size={200,15},proc=IR2S_ButtonProc,title="Run Plotting tool with selected data"
 	PopupMenu ToolResultsSelector win= IR2S_ScriptingToolPnl , disable=!UseResults
 	PopupMenu ResultsTypeSelector win= IR2S_ScriptingToolPnl , disable=!UseResults
@@ -776,7 +779,8 @@ Function IR2S_CallWithPlottingToolII(reset)
 	variable reset
 	DoWindow IR1P_ControlPanel
 	if(!V_Flag)
-		Abort  "The Plotting Tool II panel must be opened"
+		//Abort  "The Plotting Tool II panel must be opened"
+		IR1P_GeneralPlotTool()
 	else
 		DoWIndow/F IR1P_ControlPanel 
 	endif
@@ -907,8 +911,8 @@ Function IR2S_CallWithPlottingToolII(reset)
 							j+=1
 						while(j<ItemsInList(TempXName,","))	
 					endif
-					//TempXName=RemoveEnding(TempXName , ",")
-					//TempXName=TempXName+ResultsGenerationToUse
+					TempXName=RemoveEnding(TempXName , ",")
+					TempXName=TempXName+ResultsGenerationToUse
 					//TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")+ResultsGenerationToUse
 				endif
 				if(strlen(LastDiameterOrRadius)==0)
