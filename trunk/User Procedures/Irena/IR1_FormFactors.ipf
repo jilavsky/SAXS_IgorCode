@@ -1,6 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 
+Constant AlwaysRecalculateFF = 0			//set to 1 to recalculate always the FF. 
+#define UseXOPforFFCalcs					//comment out to prevent use of xops
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,7 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//2.28 added controls for debugging (at the top) and added Cylinder and Spheroid as optional XOP form factor.
 //2.27 fixed IR1T_CreateAveVolumeWave, IR1T_CreateAveSurfaceAreaWave  to have all form factors, do nto foget to fix next time when adding new FF
 //2.26 added Rectangular Parallelepiped (cuboid and other similar shapes) USING NIST XOP - IF the XOP is installed, Parallelpiped is available. Fast, need to convert more FFs to this... 
 //2.25 fixed minor glitch when some form factor screen could be initiealized with nan as parameter name, which causes major problems numbericaly for AUtoupdate settings. 
@@ -98,7 +100,7 @@ Function IR1T_InitFormFactors()
 	
 	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
 	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;"//"
-#if exists("ParallelepipedX")
+#if (exists("ParallelepipedX")&&defined(UseXOPforFFCalcs))
 	ListOfFormFactors+="---NIST XOP : ;RectParallelepiped;"
 #endif	
 	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
@@ -316,6 +318,10 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				reason = "Radius value"
 			endif
 		endfor
+		if(AlwaysRecalculateFF)
+				Recalculate=1
+				reason = "User choice"
+		endif
 
 	if(Recalculate)
 			redimension/D/N=(M,N) Gmatrix				//redimension G matrix to right size
@@ -328,7 +334,8 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 			variable QR, QH, topp, bott, Rd, QRd, sqqt, argument, surchi, rP, Qj, bP, bM, length,WallThickness
 			variable CoreShellCoreRho,CoreShellThickness,CoreShellShellRho, CoreShellSolvntRho, Shell_Thickness, Core_Size
 			variable CoreContrastRatio, CoreShell_1_Thickness, CoreShell_2_Thickness, Shell1Rho, Shell2Rho, SolventRho, CoreRho
-			
+			make /free/D/N=6 CylinderParWv			//note, must be DP
+			make /free/D/N=6 SpheroidParWv			//note, must be DP
 	
 
 			if (cmpstr(ParticleModel,"Spheroid")==0)							//standard (not integrated) spheroid using medium point approximation
@@ -343,8 +350,26 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				else														//OK, spheroid...
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
+#if (Exists("EllipsoidFormX")&&defined(UseXOPforFFCalcs))
+					//The input variables are (and output)
+						//[0] scale
+						//[1] Axis of rotation
+						//[2] two equal radii
+						//[3] sld ellipsoid
+						//[4] sld solvent (A^-2)
+						//[5] background (cm^-1)
+						//	MultiThread yw = CylinderFormX(cw,xw)
+						SpheroidParWv={1,currentR*aspectRatio,currentR,1e-4,0,0}
+						MultiThread TempWave = EllipsoidFormX(SpheroidParWv,Q_vec[p])		//includes VOlumePower=1
+						if(VolumePower==2)
+							MultiThread 	TempWave*=IR1T_SpheroidVolume(currentR,aspectRatio)
+						elseif(VolumePower==0)
+							MultiThread 	TempWave/=IR1T_SpheroidVolume(currentR,aspectRatio)
+						endif
+#else
 						IR1T_CalcSpheroidFormFactor(TempWave,Q_vec,currentR,aspectRatio)	//here we calculate one column of data
 						TempWave*=IR1T_SpheroidVolume(currentR,aspectRatio)^VolumePower		//multiply by volume of spheroid^VolumePower
+#endif
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
 				endif
@@ -353,7 +378,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						
 					String infostr = FunctionInfo(User_FormFactorFnct)
 					if (strlen(infostr) == 0)
-						Abort "Form facotr user function does not exist"
+						Abort "Form factor user function does not exist"
 					endif
 					if(NumberByKey("N_PARAMS", infostr)!=7 || NumberByKey("RETURNTYPE", infostr)!=4 )
 						Abort "Form factor function does not have the right number of parameters or does not return variable"
@@ -403,7 +428,25 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						currentR=R_dist[i]								//this is current radius
 						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
+#if (Exists("CylinderFormX")&&defined(UseXOPforFFCalcs))
+					//The input variables are (and output)
+						//[0] scale
+						//[1] cylinder RADIUS (A)
+						//[2] total cylinder LENGTH (A)
+						//[3] sld cylinder (A^-2)
+						//[4] sld solvent
+						//[5] background (cm^-1)
+						//	MultiThread yw = CylinderFormX(cw,xw)
+						CylinderParWv={1,currentR,length,1e-4,0,0}
+						MultiThread TempWave = CylinderFormX(CylinderParWv,Q_vec[p])		//includes VOlumePower=1
+						if(VolumePower==2)
+							MultiThread 	TempWave*=IR1T_CylinderVolume(currentR,length)
+						elseif(VolumePower==0)
+							MultiThread 	TempWave/=IR1T_CylinderVolume(currentR,length)
+						endif
+#else
 						multithread TempWave=IR1_CalcIntgCylinderFFPnts(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, length)		//here we calculate one column of data
+#endif
 						//TempWave*=IR1T_SphereVolume(currentR)		//----------	Volume included in the above procedure due to integration
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
@@ -422,7 +465,25 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						length=2*ParticlePar1*currentR						//and this is length - aspect ratio * currrentR * 2
 						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
+#if (Exists("CylinderFormX")&&defined(UseXOPforFFCalcs))
+					//The input variables are (and output)
+						//[0] scale
+						//[1] cylinder RADIUS (A)
+						//[2] total cylinder LENGTH (A)
+						//[3] sld cylinder (A^-2)
+						//[4] sld solvent
+						//[5] background (cm^-1)
+						//	MultiThread yw = CylinderFormX(cw,xw)
+						CylinderParWv={1,currentR,length,1e-4,0,0}
+						MultiThread TempWave = CylinderFormX(CylinderParWv,Q_vec[p])		//includes VOlumePower=1
+						if(VolumePower==2)
+							MultiThread 	TempWave*=IR1T_CylinderVolume(currentR,length)
+						elseif(VolumePower==0)
+							MultiThread 	TempWave/=IR1T_CylinderVolume(currentR,length)
+						endif
+#else
 						multithread TempWave=IR1_CalcIntgCylinderFFPnts(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, length)		//here we calculate one column of data
+#endif
 						//TempWave*=IR1T_SphereVolume(currentR)		//----------	Volume included in the above procedure due to integration
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
@@ -467,7 +528,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						Gmatrix[][i]=TempWave[p]							//and here put it into G wave
 					endfor
 			elseif (cmpstr(ParticleModel,"RectParallelepiped")==0)						// parralelepiped
-#if Exists("ParallelepipedX")
+#if (Exists("ParallelepipedX")&&defined(UseXOPforFFCalcs))
 						make/O/N=7/D RecParallParams
 						Make/Free/N=3 RecParallSidePars
 						RecParallSidePars={2,2*ParticlePar1,2*ParticlePar2}
@@ -641,70 +702,6 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
 				endfor
 
-//			elseif(cmpstr(ParticleModel,"Algebraic_Rods")==0)				//Pete's rods model, apparently using AJA code from whenever
-//				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
-//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
-//					currentR=R_dist[i]
-//					for(j=0;j<numpnts(TempWave);j+=1)						//calculate separately TempWave
-//						QR = currentR * Q_vec[j]
-//						QH = Q_vec[j] * AspectRatio * currentR
-//						topp = 1 + 2*pi*QH^3 * QR/(9 * (4 + QR^2)) + (QH^3 * QR^4)/8
-//						bott = 1 + QH^2 * (1 + QH^2 * QR)/9 + (QH^4 * QR^7)/16
-//						tempWave[j] = (2*pi*AspectRatio * currentR^3)^VolumePower * topp/bott
-//					endfor
-//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
-//				endfor
-//			elseif(cmpstr(ParticleModel,"Algebraic_Disks")==0)				//Pete's disk model, apparently using AJA code from whenever
-//				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
-//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
-//					currentR=R_dist[i]
-//					for(j=0;j<numpnts(TempWave);j+=1)
-//						QR = currentR * Q_vec[j]
-//						Rd = currentR * AspectRatio						//disk radius
-//						QH = Q_vec[j] *  currentR
-//						QRd = Q_vec[j] *  currentR * AspectRatio
-//						topp = 1 + QRd^3 / (3 + QH^2) + (QH^2 * QRd / 3)^2
-//						bott = 1 + QRd^2 * (1 + QH * QRd^2)/16 + (QH^3 * QRd^2 / 3)^2
-//						tempWave[j] = (2*pi*AspectRatio * currentR^3)^VolumePower * topp/bott
-//					endfor
-//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
-//				endfor
-//			elseif(cmpstr(ParticleModel,"Algebraic_Globules")==0)			//Pete's Globules model, apparently using AJA code from whenever
-//				aspectRatio=ParticlePar1									//Aspect ratio is set by particleparam1
-//				if(AspectRatio<0.99)
-//					sqqt = sqrt(1-AspectRatio^2)
-//					argument = (2 - AspectRatio^2 + 2*sqqt)/(AspectRatio^2)
-//					surchi = (1 + AspectRatio^2 * ln(argument) / (2*sqqt)) / (2 * AspectRatio)
-//				elseif(AspectRatio>1.01)
-//					sqqt = sqrt(AspectRatio^2 - 1)
-//					argument = sqqt / AspectRatio
-//					surchi = (1 + AspectRatio^2 * asin(argument) / (sqqt)) / (2 * AspectRatio)
-//				else														//AspectRatio==1
-//					surchi = 1
-//				endif
-//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
-//					currentR=R_dist[i]
-//					for(j=0;j<numpnts(TempWave);j+=1)
-//						QR = currentR * Q_vec[j]
-//						bott = 1 + QR^2 * (2 + AspectRatio^2)/15 + 2 * AspectRatio * QR^4 / (9 * surchi)
-//						tempWave[j] = (4/3 * pi * AspectRatio * currentR^3)^VolumePower  /  bott
-//					endfor
-//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave
-//				endfor
-//		elseif(cmpstr(ParticleModel,"Algebraic_Spheres")==0)		//Pete's Algebraic Spheres model, apparently using Petes old code from whenever
-//				For (i=0;i<N;i+=1)											//calculate the G matrix in columns!!!
-//					currentR=R_dist[i]
-//					rP = currentR + IR1T_BinWidthInRadia(R_dist,i)
-//					for(j=0;j<numpnts(TempWave);j+=1)
-//						Qj = Q_vec[j]
-//						bP = rp/2 + (Qj^2)	*(rP^3)/6 + (0.25*(Qj * rP^2) - 0.625/Qj) * sin(2 * Qj * rP) + 0.75 * rP * cos(2 * Qj * rP)
-//						bM = currentR/2 + (Qj^2)*(currentR^3)/6 + (0.25 * (Qj * currentR^2) - 0.625/Qj) * sin(2 * Qj * currentR) + 0.75 * currentR * cos(2 * Qj * currentR)			
-//						topp = bP - bM
-//						bott = Qj^6 * (rP^4 - currentR^4) * currentR^3
-//						tempWave[j] =  36 * (4/3 * pi * currentR^3)^VolumePower * topp/bott
-//					endfor
-//					Gmatrix[][i]=TempWave[p]								//and here put it into G wave	
-//				endfor
 		else
 			Gmatrix[][]=NaN		
 		endif
@@ -1766,7 +1763,7 @@ static Function IR1T_CalcIntgSpheroidFFPoints(Qvalue,radius,AR)		//we have to in
 
 	Make/O/D/N=50/Free IntgWave
 	SetScale/I x 0,1,"", IntgWave
-	IntgWave=IR1T_CalcSpheroidFFPoints(Qvalue,radius,AR, x)	//this 
+	multithread IntgWave=IR1T_CalcSpheroidFFPoints(Qvalue,radius,AR, x)	//this 
 	IntgWave*=IntgWave						//calculate second power before integration, thsi was bug
 	variable result= area(IntgWave, 0,1)
 	setDataFolder OldDf
