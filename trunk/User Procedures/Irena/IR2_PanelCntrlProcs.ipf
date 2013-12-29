@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.38
+#pragma version = 1.39
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.39 fixed qis data selection bug. Further fixes to Irena results handling. 
 //1.38 fixed bug which added require errors to qrs data when changed form USAXS data and fixed RegularExpression bug which increased qrs folder search time. 
 //1.37 yet another bug - this time on "any" name type, when the Wv string was not matching the folders. 
 //1.36 fixed another bug in qrs data structure handling. 
@@ -145,187 +146,6 @@ Function IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, 
 	IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves,AllowModelData)
 	
 end
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//Function IR2C_ReInitTheListOfFIleTypes()
-//
-//	string OldDf=GetDataFolder(1)
-//	setdatafolder root:
-//	NewDataFolder/O/S root:Packages
-//	NewDataFolder/O/S IrenaControlProcs
-//
-//	SVAR/Z XwaveDataTypesLookup
-//	if(!SVAR_Exists(XwaveDataTypesLookup))
-//		string/g XwaveDataTypesLookup
-//	endif
-//	XwaveDataTypesLookup="DSM_Int:DSM_Qvec;"
-//	XwaveDataTypesLookup+="M_DSM_Int:M_DSM_Qvec;"
-//	XwaveDataTypesLookup+="BCK_Int:BCK_Qvec;"
-//	XwaveDataTypesLookup+="M_BCK_Int:M_BCK_Qvec;"
-//	XwaveDataTypesLookup+="SMR_Int:SMR_Qvec;"
-//	XwaveDataTypesLookup+="M_SMR_Int:M_SMR_Qvec;"
-//	XwaveDataTypesLookup+="R_Int:R_Qvec;"
-////	XwaveDataTypesLookup+="r*:q*;"
-////	XwaveDataTypesLookup+="DSM_Int:DSM_Qvec;"
-//	
-//	SVAR/Z EwaveDataTypesLookup
-//	if(!SVAR_Exists(EwaveDataTypesLookup))
-//		string/g EwaveDataTypesLookup
-//	endif
-//	EwaveDataTypesLookup="DSM_Int:DSM_Error;"
-//	EwaveDataTypesLookup+="M_DSM_Int:M_DSM_Error;"
-//	EwaveDataTypesLookup+="BCK_Int:BCK_Error;"
-//	EwaveDataTypesLookup+="M_BCK_Int:M_BCK_Error;"
-//	EwaveDataTypesLookup+="SMR_Int:SMR_Error;"
-//	EwaveDataTypesLookup+="M_SMR_Int:M_SMR_Error;"
-//	EwaveDataTypesLookup+="R_Int:R_Error;"
-////	EwaveDataTypesLookup+="r*:s*;"
-//	
-//
-//	SVAR/Z ResultsEDataTypesLookup
-//	if(!SVAR_Exists(ResultsEDataTypesLookup))
-//		string/g ResultsEDataTypesLookup
-//	endif
-//	ResultsEDataTypesLookup="PDDFDistFunction:PDDFErrors;"		//PDDF has error estimates for the result... 
-//	ResultsEDataTypesLookup+="SizesVolumeDistribution:SizesVolumeDistErrors;"		//Sizes now have errors also 
-//	ResultsEDataTypesLookup+="SizesNumberDistribution:SizesNumberDistErrors;"		//Sizes now have errors also 
-//	
-//	SVAR/Z ResultsDataTypesLookup
-//	if(!SVAR_Exists(ResultsDataTypesLookup))
-//		string/g ResultsDataTypesLookup
-//	endif
-//	//sizes
-//	ResultsDataTypesLookup="SizesFitIntensity:SizesFitQvector;"
-//	ResultsDataTypesLookup+="SizesVolumeDistribution:SizesDistDiameter;"
-//	ResultsDataTypesLookup+="SizesNumberDistribution:SizesDistDiameter;"
-//	//unified
-//	ResultsDataTypesLookup+="UnifiedFitIntensity:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UnifSizeDistVolumeDist:UnifSizeDistRadius;"
-//	ResultsDataTypesLookup+="UnifSizeDistNumberDist:UnifSizeDistRadius;"
-//	ResultsDataTypesLookup+="UniLocalLevel1Unified:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel1Pwrlaw:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel1Guinier:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel2Unified:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel2Pwrlaw:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel2Guinier:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel3Unified:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel3Pwrlaw:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel3Guinier:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel4Unified:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel4Pwrlaw:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel4Guinier:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel5Unified:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel5Pwrlaw:UnifiedFitQvector;"
-//	ResultsDataTypesLookup+="UniLocalLevel5Guinier:UnifiedFitQvector;"
-//	
-//	//LSQF
-//	ResultsDataTypesLookup+="ModelingNumberDistribution:ModelingDiameters;"
-//	ResultsDataTypesLookup+="ModelingVolumeDistribution:ModelingDiameters;"
-//	ResultsDataTypesLookup+="ModelingIntensity:ModelingQvector;"
-//	ResultsDataTypesLookup+="ModelingNumDist_Pop1:ModelingDia_Pop1;"
-//	ResultsDataTypesLookup+="ModelingVolDist_Pop1:ModelingDia_Pop1;"
-//	ResultsDataTypesLookup+="ModelingNumDist_Pop2:ModelingDia_Pop2;"
-//	ResultsDataTypesLookup+="ModelingVolDist_Pop2:ModelingDia_Pop2;"
-//	ResultsDataTypesLookup+="ModelingNumDist_Pop3:ModelingDia_Pop3;"
-//	ResultsDataTypesLookup+="ModelingVolDist_Pop3:ModelingDia_Pop3;"
-//	ResultsDataTypesLookup+="ModelingNumDist_Pop4:ModelingDia_Pop4;"
-//	ResultsDataTypesLookup+="ModelingVolDist_Pop4:ModelingDia_Pop4;"
-//	ResultsDataTypesLookup+="ModelingNumDist_Pop5:ModelingDia_Pop5;"
-//	ResultsDataTypesLookup+="ModelingVolDist_Pop5:ModelingDia_Pop5;"
-//	//Fractals
-//	ResultsDataTypesLookup+="FractFitIntensity:FractFitQvector;"
-//	ResultsDataTypesLookup+="Mass1FractFitInt:Mass1FractFitQvec;"
-//	ResultsDataTypesLookup+="Surf1FractFitInt:Surf1FractFitQvec;"
-//	ResultsDataTypesLookup+="Mass2FractFitInt:Mass2FractFitQvec;"
-//	ResultsDataTypesLookup+="Surf2FractFitInt:Surf2FractFitQvec;"
-//	ResultsDataTypesLookup+="Mass3FractFitInt:Mass3FractFitQvec;"
-//	ResultsDataTypesLookup+="Surf3FractFitInt:Surf3FractFitQvec;"
-//	ResultsDataTypesLookup+="Mass4FractFitInt:Mass4FractFitQvec;"
-//	ResultsDataTypesLookup+="Surf4FractFitInt:Surf4FractFitQvec;"
-//	ResultsDataTypesLookup+="Mass5FractFitInt:Mass5FractFitQvec;"
-//	ResultsDataTypesLookup+="Surf5FractFitInt:Surf5FractFitQvec;"
-//	//Small-angle diffraction
-//	ResultsDataTypesLookup+="SADModelIntensity:SADModelQ;"
-//	ResultsDataTypesLookup+="SADModelIntPeak1:SADModelQPeak1;"
-//	ResultsDataTypesLookup+="SADModelIntPeak2:SADModelQPeak2;"
-//	ResultsDataTypesLookup+="SADModelIntPeak3:SADModelQPeak3;"
-//	ResultsDataTypesLookup+="SADModelIntPeak4:SADModelQPeak4;"
-//	ResultsDataTypesLookup+="SADModelIntPeak5:SADModelQPeak5;"
-//	ResultsDataTypesLookup+="SADModelIntPeak6:SADModelQPeak6;"
-//	ResultsDataTypesLookup+="SADUnifiedIntensity:SADUnifiedQvector;"
-//	//Gels
-//	ResultsDataTypesLookup+="DebyeBuecheModelInt:DebyeBuecheModelQvec;"//old, now next line...
-//	ResultsDataTypesLookup+="AnalyticalModelInt:AnalyticalModelQvec;"
-//	//Reflcecitivty
-//	ResultsDataTypesLookup+="ReflModel:ReflQ;"
-//	ResultsDataTypesLookup+="SLDProfile:SLDProfileX;SLDProfile:x-scaling;"
-//	//PDDF
-//	ResultsDataTypesLookup+="PDDFIntensity:PDDFQvector;"
-//	ResultsDataTypesLookup+="PDDFChiSquared:PDDFQvector;"
-//	ResultsDataTypesLookup+="PDDFDistFunction:PDDFDistances;"
-//	ResultsDataTypesLookup+="PDDFGammaFunction:PDDFDistances;"
-//	//Guinier-Porod
-//	ResultsDataTypesLookup+="GuinierPorodFitIntensity:GuinierPorodFitQvector;"//old, now next line...
-//	
-//	//NLQSF2
-//	ResultsDataTypesLookup+="IntensityModelLSQF2:QvectorModelLSQF2;"
-//	ResultsDataTypesLookup+="IntensityModelLSQF2pop6:QvectorModelLSQF2pop6;"
-//	ResultsDataTypesLookup+="IntensityModelLSQF2pop1:QvectorModelLSQF2pop1;"
-//	ResultsDataTypesLookup+="IntensityModelLSQF2pop2:QvectorModelLSQF2pop2;"
-//	ResultsDataTypesLookup+="IntensityModelLSQF2pop3:QvectorModelLSQF2pop3;"
-//	ResultsDataTypesLookup+="IntensityModelLSQF2pop5:QvectorModelLSQF2pop5;"
-//	ResultsDataTypesLookup+="IntensityModelLSQF2pop4:QvectorModelLSQF2pop4;"
-//
-//	NVAR/Z DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
-//	variable LDimensionISDiameter = 0	
-//	if(NVAR_Exists(DimensionIsDiameter))
-//		LDimensionISDiameter = DimensionIsDiameter
-//	endif
-//	if(LDimensionISDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2:DiametersModelLSQF2;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2:DiametersModelLSQF2;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop1:DiametersModelLSQF2pop1;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop1:DiametersModelLSQF2pop1;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop2:DiametersModelLSQF2pop2;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop2:DiametersModelLSQF2pop2;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop3:DiametersModelLSQF2pop3;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop3:DiametersModelLSQF2pop3;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop4:DiametersModelLSQF2pop4;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop4:DiametersModelLSQF2pop4;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop5:DiametersModelLSQF2pop5;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop5:DiametersModelLSQF2pop5;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop6:DiametersModelLSQF2pop6;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop6:DiametersModelLSQF2pop6;"
-//	else
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2:RadiiModelLSQF2;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2:RadiiModelLSQF2;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop1:RadiiModelLSQF2pop1;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop1:RadiiModelLSQF2pop1;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop2:RadiiModelLSQF2pop2;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop2:RadiiModelLSQF2pop2;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop3:RadiiModelLSQF2pop3;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop3:RadiiModelLSQF2pop3;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop4:RadiiModelLSQF2pop4;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop4:RadiiModelLSQF2pop4;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop5:RadiiModelLSQF2pop5;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop5:RadiiModelLSQF2pop5;"
-//		ResultsDataTypesLookup+="VolumeDistModelLSQF2pop6:RadiiModelLSQF2pop6;"
-//		ResultsDataTypesLookup+="NumberDistModelLSQF2pop6:RadiiModelLSQF2pop6;"
-//	endif		
-//
-//
-//
-//
-//	//CumulativeSizeDist Curve from Evaluate Size dist
-//	ResultsDataTypesLookup+="CumulativeSizeDist:CumulativeDistDiameters;"
-//	ResultsDataTypesLookup+="CumulativeSfcArea:CumulativeDistDiameters;"
-//	ResultsDataTypesLookup+="MIPVolume:MIPPressure;"
-//
-//
-//	setDataFolder OldDf
-//
-//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1946,11 +1766,22 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 		if (cmpstr(DataType,"Yaxis")==0)
 			For (j=0;j<ItemsInList(tempStringY);j+=1)
 				tmpstr2 = StringFromList(j,tempStringY)
-				ts=tmpstr2[1,inf]
-				tx=tempStringX
-				if (((stringMatch(";"+tx,"*q"+ts+";*")||stringMatch(";"+tx,"*t"+ts+";*")||stringMatch(";"+tx,"*d"+ts+";*")||stringMatch(";"+tx,"*m"+ts+";*")) && (!RequireErrorWvs || stringMatch(";"+tempStringE,"*s"+ts+";*"))) || (stringMatch(";"+tx,"*q"+ts+";*")) || (stringMatch(";"+tx,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"q;*") && (stringMatch(";"+tempStringE,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"s;*"))))
-					if(cmpstr(MatchMeTo,"*")==0 || cmpstr(tmpstr2,"r"+MatchMeTo[1,inf])==0 || cmpstr(tmpstr2,"r"+MatchMeTo[2,inf])==0)
-						result+=StringFromList(j,tempStringY)+";"
+				//split to handle QRS and qis 
+				if(StringMatch(tmpstr2[strlen(tmpstr2)-2,inf], "_i"))
+					ts=tmpstr2[0,strlen(tmpstr2)-2]
+					tx=tempStringX
+					if ((stringMatch(tx,ts+"q;*")) && (!RequireErrorWvs || stringMatch(";"+tempStringE,ts+"s;*")))
+						if(cmpstr(MatchMeTo,"*")==0 || cmpstr(tmpstr2,MatchMeTo[0,strlen(MatchMeTo)-2]+"i")==0)
+							result+=StringFromList(j,tempStringY)+";"
+						endif
+					endif
+				else
+					ts=tmpstr2[1,inf]
+					tx=tempStringX
+					if (((stringMatch(";"+tx,"*q"+ts+";*")||stringMatch(";"+tx,"*t"+ts+";*")||stringMatch(";"+tx,"*d"+ts+";*")||stringMatch(";"+tx,"*m"+ts+";*")) && (!RequireErrorWvs || stringMatch(";"+tempStringE,"*s"+ts+";*"))) || (stringMatch(";"+tx,"*q"+ts+";*")) || (stringMatch(";"+tx,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"q;*") && (stringMatch(";"+tempStringE,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"s;*"))))
+						if(cmpstr(MatchMeTo,"*")==0 || cmpstr(tmpstr2,"r"+MatchMeTo[1,inf])==0 || cmpstr(tmpstr2,"r"+MatchMeTo[2,inf])==0)
+							result+=StringFromList(j,tempStringY)+";"
+						endif
 					endif
 				endif
 			endfor
@@ -1978,9 +1809,9 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 					if(cmpstr(MatchMeTo,"*")==0 || cmpstr(tmpstr2,"s"+MatchMeTo[1,inf])==0  || cmpstr(tmpstr2,"s"+MatchMeTo[2,inf])==0)
 						result+=StringFromList(j,tempStringE)+";"
 					endif
-				//thsi needed to be spliut sicne QIS data starting with s and ending with _s as error were not trerated right 3/25/2012
-				elseif (stringMatch(";"+tempStringY,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"i;*")&& stringMatch(";"+tempStringX,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"q;*"))		//QIS
-					if((cmpstr(MatchMeTo,"*")==0 || cmpstr(tmpstr2,"s"+MatchMeTo[1,inf])==0  || cmpstr(tmpstr2,"s"+MatchMeTo[2,inf])==0)&&(stringmatch(tmpstr2,"*_s")))
+				//thsi needed to be split since QIS data starting with s and ending with _s as error were not trerated right 3/25/2012
+				elseif (stringMatch(tempStringY,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"i;*")&& stringMatch(tempStringX,"*"+tmpstr2[0,strlen(tmpstr2)-2]+"q;*"))		//QIS
+					if((cmpstr(MatchMeTo,"*")==0) || (cmpstr(tmpstr2,MatchMeTo[0,strlen(MatchMeTo)-2]+"s")==0 ))			///&&(stringmatch(tmpstr2,"*_s")))
 						result+=StringFromList(j,tempStringE)+";"
 					endif
 				endif
@@ -2200,7 +2031,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		if((UseIndra2Structure || UseQRSStructure || UseResults || UseUserDefinedData))
 			IntDf=stringFromList(0,IR2P_ListOfWaves("Yaxis",popStr,TopPanel)+";")		
 			EDf=stringFromList(0,IR2P_ListOfWaves("Error",popStr,TopPanel)+";")
-			//10/27/2013 - changed lies below, why were the top lines commented out when they work (and the ones below do not?)
+			//10/27/2013 - changed lines below, why were the top lines commented out when they work (and the ones below do not?)
 			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
 		endif
