@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.12
-Constant NI1BCversionNumber = 2.12
+#pragma version=2.13
+Constant NI1BCversionNumber = 2.13
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.13 added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data. 
 //2.12 added double click function to the file selection listbox, modified CheckVersion procedure to avoid Igor crash.
 //2.11 added three new NIST calibration standards, provided by Christina.Reinhard@diamond.ac.uk 
 //2.10 added SSRLMatSAXS format. 
@@ -171,7 +172,7 @@ Function NI1BC_CreateBmCntrField()
 //Tab 1
 	PopupMenu BmCalibrantName,pos={13,340},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="Calibrant:"
 	PopupMenu BmCalibrantName,help={"Select type of calibrant to be used"}
-	PopupMenu BmCalibrantName,mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ag behenate;LaB6;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si) Extended;\""
+	PopupMenu BmCalibrantName,mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ceria_2;Ceria_3;Ag behenate;LaB6;LaB6_2;LaB6_3;LaB6_4;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si)_2;SRM 640d (Si)_3;\""
 	CheckBox BMCalibrantDisplayCircles title="Display?",pos={320,310}
 	CheckBox BMCalibrantDisplayCircles proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMCalibrantDisplayCircles
 	CheckBox BMCalibrantDisplayCircles help={"Display circles in image?"}
@@ -236,7 +237,6 @@ Function NI1BC_CreateBmCntrField()
 	PopupMenu BMFunctionName,pos={180,310},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="Peak shape function:"
 	PopupMenu BMFunctionName,help={"Select type of function to fit to peaks"}
 	PopupMenu BMFunctionName,mode=(1+WhichListItem(BMFunctionName,"Gauss;Lorenz;GaussWithSlopedBckg;")),value= #"\"Gauss;Lorenz;GaussWithSlopedBckg;\""
-
 	CheckBox BMFitBeamCenter title="Refine beam center?",pos={20,340}
 	CheckBox BMFitBeamCenter proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMFitBeamCenter
 	CheckBox BMFitBeamCenter help={"Refine beam center?"}
@@ -1174,6 +1174,20 @@ Function NI1BC_BmCntrCheckProc(ctrlName,checked) : CheckBoxControl
 		NI1BC_DisplayHelpCircle()
 	endif
 
+	NVAR BMFitSDD = root:Packages:Convert2Dto1D:BMFitSDD
+	NVAR BMFitWavelength = root:Packages:Convert2Dto1D:BMFitWavelength
+	IF(cmpstr(ctrlName,"BMFitSDD")==0)
+		//CheckBox BMFitWavelength, win=NI1_CreateBmCntrFieldPanel, disable=2*BMFitSDD
+		if(BMFitSDD)
+			BMFitWavelength=0
+		endif
+	endif
+	IF(cmpstr(ctrlName,"BMFitWavelength")==0)
+	//	CheckBox BMFitSDD, win=NI1_CreateBmCntrFieldPanel, disable=2*BMFitWavelength
+		if(BMFitSDD)
+			BMFitSDD=0
+		endif
+	endif
 
 	IF(cmpstr(ctrlName,"BMUseMask")==0)
 		NI1BC_DisplayMask()
@@ -1276,6 +1290,32 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
+		elseif(cmpstr(popStr,"Ceria_2")==0)
+			BMCalibrantD1=1.6316742
+			BMCalibrantD2=1.5622091
+			BMCalibrantD3=1.3529128
+			BMCalibrantD4=1.2415179
+			BMCalibrantD5=1.2100820
+			//these data are from : http://www.sci.himeji-tech.ac.jp/material/cryst_struct/LTVcam/sokutei/ceo2.htm
+			//and further d spacings: 1.35278, 1.24139, 1.20996, 1.10454...
+			BMUseCalibrantD1=1
+			BMUseCalibrantD2=1
+			BMUseCalibrantD3=1
+			BMUseCalibrantD4=1
+			BMUseCalibrantD5=1
+		elseif(cmpstr(popStr,"Ceria_3")==0)
+			BMCalibrantD1=1.3529128
+			BMCalibrantD2=1.2415179
+			BMCalibrantD3=1.2100820
+			BMCalibrantD4=1.1046486
+			BMCalibrantD5=1.0414727
+			//these data are from : http://www.sci.himeji-tech.ac.jp/material/cryst_struct/LTVcam/sokutei/ceo2.htm
+			//and further d spacings: 1.35278, 1.24139, 1.20996, 1.10454...
+			BMUseCalibrantD1=1
+			BMUseCalibrantD2=1
+			BMUseCalibrantD3=1
+			BMUseCalibrantD4=1
+			BMUseCalibrantD5=1
 		elseif(cmpstr(popStr,"Ag behenate")==0)
 			//The number I use is q = 0.1076 (1/Angstrom), d = 58.380 Angstroms.  The
 			//reference is T.C. Huang et al, J. Appl. Cryst. (1993), 26, 180-184.
@@ -1296,6 +1336,39 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMCalibrantD3=2.39999	//111/45
 			BMCalibrantD4=2.07845	//200/23.6
 			BMCalibrantD5=1.85902	//210/55
+			BMUseCalibrantD1=1
+			BMUseCalibrantD2=1
+			BMUseCalibrantD3=1
+			BMUseCalibrantD4=1
+			BMUseCalibrantD5=1
+		elseif(cmpstr(popStr,"LaB6_2")==0)
+			BMCalibrantD1=2.0784581	
+			BMCalibrantD2=1.8590294	
+			BMCalibrantD3=1.6970539	
+			BMCalibrantD4=1.4696918	
+			BMCalibrantD5=1.3856387	
+			BMUseCalibrantD1=1
+			BMUseCalibrantD2=1
+			BMUseCalibrantD3=1
+			BMUseCalibrantD4=1
+			BMUseCalibrantD5=1
+		elseif(cmpstr(popStr,"LaB6_3")==0)
+			BMCalibrantD1=1.4696918	
+			BMCalibrantD2=1.3856387	
+			BMCalibrantD3=1.3145323	
+			BMCalibrantD4=1.2533574	
+			BMCalibrantD5=1.1999983	
+			BMUseCalibrantD1=1
+			BMUseCalibrantD2=1
+			BMUseCalibrantD3=1
+			BMUseCalibrantD4=1
+			BMUseCalibrantD5=1
+		elseif(cmpstr(popStr,"LaB6_4")==0)
+			BMCalibrantD1=1.2533574	
+			BMCalibrantD2=1.1999983	
+			BMCalibrantD3=1.1529211	
+			BMCalibrantD4=1.1109826	
+			BMCalibrantD5=1.0392291	
 			BMUseCalibrantD1=1
 			BMUseCalibrantD2=1
 			BMUseCalibrantD3=1
@@ -1337,7 +1410,19 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"SRM 640d (Si) Extended")==0)
+		elseif(cmpstr(popStr,"SRM 640d (Si)_2")==0)
+			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
+			BMCalibrantD1=1.3578075
+			BMCalibrantD2=1.2460096
+			BMCalibrantD3=1.1086452
+			BMCalibrantD4=1.0452407
+			BMCalibrantD5=0.9601149
+			BMUseCalibrantD1=1
+			BMUseCalibrantD2=1
+			BMUseCalibrantD3=1
+			BMUseCalibrantD4=1
+			BMUseCalibrantD5=1
+		elseif(cmpstr(popStr,"SRM 640d (Si)_3")==0)
 			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
 			BMCalibrantD1=1.1086452
 			BMCalibrantD2=1.0452407
@@ -1682,8 +1767,12 @@ Function NI1BC_InitCreateBmCntrFile()
 	if(strlen(BMFunctionName)<1)
 		BMFunctionName="Gauss"
 	endif	
-
-
+	NVAR BMFitSDD
+	NVAR BMFitWavelength
+	if(BMFitSDD+BMFitWavelength>1)
+		BMFitSDD=1
+		BMFitWavelength=0
+	endif
 	setDataFolder OldDf
 end
 
