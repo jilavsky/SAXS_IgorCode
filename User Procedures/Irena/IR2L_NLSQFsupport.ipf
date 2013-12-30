@@ -2640,27 +2640,27 @@ Function IR2L_SvNbk_ModelInf()
 					if(!stringmatch(StrFac, "*Dilute system*"))
 						NVAR SFParam1= $("root:Packages:IR2L_NLSQF:StructureParam1_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,1))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,1)+"\t"+"StructureParam1"+"\t=\t"+num2str(SFParam1),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,1)+" ("+"StructureParam1"+")\t=\t"+num2str(SFParam1),0)
 						endif
 						NVAR SFParam2= $("root:Packages:IR2L_NLSQF:StructureParam2_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,2))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,2)+"\t"+"StructureParam2"+"\t=\t"+num2str(SFParam2),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,2)+" ("+"StructureParam2"+")\t=\t"+num2str(SFParam2),0)
 						endif
 						NVAR SFParam3= $("root:Packages:IR2L_NLSQF:StructureParam3_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,3))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,3)+"\t"+"StructureParam3"+"\t=\t"+num2str(SFParam3),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,3)+" ("+"StructureParam3"+")\t=\t"+num2str(SFParam3),0)
 						endif
 						NVAR SFParam4= $("root:Packages:IR2L_NLSQF:StructureParam4_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,4))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,4)+"\t"+"StructureParam4"+"\t=\t"+num2str(SFParam4),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,4)+" ("+"StructureParam4"+")\t=\t"+num2str(SFParam4),0)
 						endif
 						NVAR SFParam5= $("root:Packages:IR2L_NLSQF:StructureParam5_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,5))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,5)+"\t"+"StructureParam5"+"\t=\t"+num2str(SFParam5),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,5)+" ("+"StructureParam5"+")\t=\t"+num2str(SFParam5),0)
 						endif
 						NVAR SFParam6= $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(i))
 						if(strlen(IR1T_IdentifySFParamName(StrFac,6))>0)
-							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+"\t"+"StructureParam6"+"\t=\t"+num2str(SFParam6),0)
+							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+" ("+"StructureParam6"+")\t=\t"+num2str(SFParam6),0)
 						endif
 					endif	
 

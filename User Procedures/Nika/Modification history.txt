@@ -6,7 +6,7 @@ Code modification history
 1.64
 All files - extended copyright to 2005 - 2014
 Installer - version 1.23 will handle stale links to hdf5 xops. 
-
+Beam center utils - added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data
 
 1.63 11/23/2013
 Added calibration of Intensity popup and “Units=Arbitrary” or “cm2/cm3” or “cm2/g” for Intensity to help Irena to handle calibration of data. 
