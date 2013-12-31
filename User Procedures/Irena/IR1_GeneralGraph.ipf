@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.17
-#include <KBColorizeTraces>
+//#include <KBColorizeTraces>
 Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 added infinite number of colors and symbols to Vary Colors/symbols. (repeating set of 10). Cleaned up old crud in code. removed KBColorizeTraces, not needed anymore. 
 //2.17 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
 //2.16 fixed forgotten Style storing path, which was still saving styles to ProgramFiles area. Permissions problem on some systems. Fixed and moving file to new location.
 //        fixed Scripting tool problem when the controsl could get stale between thw Plotting tool and scripting tool panels.  
@@ -1351,151 +1352,11 @@ Function IR1P_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSdata
 	NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
 	SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
+	SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
+	SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
+	SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
+	NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSdata
 
-	if (cmpstr(ctrlName,"SelectDataFolder")==0)
-		Dtf=popStr
-		PopupMenu IntensityDataName mode=1
-		PopupMenu QvecDataName mode=1
-		PopupMenu ErrorDataName mode=1
-		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
-		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
-		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
-		if (UseIndra2Data)
-			IntDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","GeneralplottingTool",1,1))
-			QDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","GeneralplottingTool",1,1))
-			EDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","GeneralplottingTool",1,1))
-			PopupMenu IntensityDataName value=IR1_ListIndraWavesForPopups("DSM_Int","GeneralplottingTool",1,1)
-			PopupMenu QvecDataName value=IR1_ListIndraWavesForPopups("DSM_Qvec","GeneralplottingTool",1,1)
-			PopupMenu ErrorDataName value=IR1_ListIndraWavesForPopups("DSM_Error","GeneralplottingTool",1,1)
-		else
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-		if(UseQRSdata)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1P_ListOfWaves("Yaxis")
-			PopupMenu QvecDataName  value="---;"+IR1P_ListOfWaves("Xaxis")
-			PopupMenu ErrorDataName  value="---;"+IR1P_ListOfWaves("Error")
-		endif
-		if(UseResults)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1P_ListOfWaves("Yaxis")
-			PopupMenu QvecDataName  value="---;"+IR1P_ListOfWaves("Xaxis")
-			PopupMenu ErrorDataName  value="---;"+IR1P_ListOfWaves("Error")
-		endif
-		if(!UseQRSdata && !UseIndra2Data && !UseResults)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1P_ListOfWaves("Yaxis")
-			PopupMenu QvecDataName  value="---;"+IR1P_ListOfWaves("Xaxis")
-			PopupMenu ErrorDataName  value="---;"+IR1P_ListOfWaves("Error")
-		endif
-		if (cmpstr(popStr,"---")==0)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-	endif
-	
-		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
-		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
-		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
-		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSdata
-
-	if (cmpstr(ctrlName,"IntensityDataName")==0)
-		if (cmpstr(popStr,"---")!=0)
-			IntDf=popStr
-			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-				QDf="q"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:GeneralplottingTool:QWaveName+\";---;\"+IR1P_ListOfWaves(\"Xaxis\")")
-				Wave/Z IsThereError=$(Dtf+possiblyquotename(EDf))
-				if(WaveExists(IsThereError))
-					Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1P_ListOfWaves(\"Error\")")
-				else
-					EDf=""
-				endif
-			elseif(UseIndra2Data)
-				QDf=ReplaceString("Int", popStr, "Qvec")
-				EDf=ReplaceString("Int", popStr, "Error")
-				//Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:GeneralplottingTool:QWaveName+\";---;\"+IR1P_ListOfWaves(\"Xaxis\")")
-				//Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1P_ListOfWaves(\"Error\")")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:GeneralplottingTool:QWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"GeneralplottingTool\",1,1)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"GeneralplottingTool\",1,1)")
-				//IR1_ListIndraWavesForPopups(WhichWave,WhereAreControls,IncludeSMR,OneOrTwo)
-			elseif(UseResults)// && strlen(QDf)==0 && strlen(EDf)==0)
-				QDf=IR1P_CheckRightResultsWvs(popStr)
-				EDf=""
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:GeneralplottingTool:QWaveName+\";---;\"+IR1P_ListOfWaves(\"Xaxis\")")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1P_ListOfWaves(\"Error\")")
-			endif
-		else
-			IntDf=""
-		endif
-	endif
-
-	if (cmpstr(ctrlName,"QvecDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			QDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-				IntDf="r"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:GeneralplottingTool:IntensityWaveName+\";---;\"+IR1P_ListOfWaves(\"Yaxis\")")
-				Wave/Z IsThereError=$(Dtf+possiblyquotename(EDf))
-				if(WaveExists(IsThereError))
-					Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1P_ListOfWaves(\"Error\")")
-				else
-					EDf=""
-				endif
-			elseif(UseIndra2Data)
-				IntDf=ReplaceString("Qvec", popStr, "Int")
-				EDf=ReplaceString("Qvec", popStr, "Error")
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:GeneralplottingTool:IntensityWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"GeneralplottingTool\",1,1)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Error\",\"GeneralplottingTool\",1,1)")
-			elseif(UseResults)// && strlen(QDf)==0 && strlen(EDf)==0)
-				IntDf=IR1P_CheckRightResultsWvs(popStr)
-				EDf=""
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:GeneralplottingTool:IntensityWaveName+\";---;\"+IR1P_ListOfWaves(\"Yaxis\")")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:GeneralplottingTool:ErrorWaveName+\";---;\"+IR1P_ListOfWaves(\"Error\")")
-			endif
-		else
-			QDf=""
-		endif
-	endif
-	
-	if (cmpstr(ctrlName,"ErrorDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			EDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-				IntDf="r"+popStr[1,inf]
-				QDf="q"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:GeneralplottingTool:IntensityWaveName+\";---;\"+IR1P_ListOfWaves(\"Yaxis\")")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:GeneralplottingTool:QWaveName+\";---;\"+IR1P_ListOfWaves(\"Xaxis\")")
-			elseif(UseIndra2Data)
-				IntDf=ReplaceString("Error", popStr, "Int")
-				QDf=ReplaceString("Error", popStr, "Qvec")
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:GeneralplottingTool:IntensityWaveName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Int\",\"GeneralplottingTool\",1,1)")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:GeneralplottingTool:QvecDataName+\";---;\"+IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"GeneralplottingTool\",1,1)")
-			endif
-		else
-			EDf=""		
-		endif
-	endif
-	
 	if (cmpstr(ctrlName,"GraphType")==0)
 		//here goes what needs to be done, when we select this popup...
 		//reformat the graph and make sure the right data exist and are in the graph.
@@ -1861,15 +1722,8 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	LogLog="log(bottom)=1;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity [cm\S-1\M];"
 	LogLog+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
 	LogLog+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"//Graph Window Width=450;Graph Window Height=400
-	LogLog+="Graph Use Rainbow=0;Graph Use BW=0;"	
-	LogLog+="mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;mode[8]=4;mode[9]=4;Graph vary Lines=1;"
+	LogLog+="Graph Use Rainbow=0;Graph Use BW=0;Graph use Colors=1;Graph vary Lines=1;"	
 	LogLog+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
-	LogLog+="marker[0]=19;marker[1]=16;marker[2]=17;marker[3]=23;marker[4]=26;marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;"
-	LogLog+="rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
-	LogLog+="rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);"
-	LogLog+="rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);"
-	LogLog+="rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);"
-	LogLog+="lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;"
 	LogLog+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	LogLog+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	LogLog+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1879,12 +1733,8 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	VolumeDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Diameter [A];Label left=Volume distribution (f(D));DataY=Y;"
 	VolumeDistribution+="DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=1.37359350144832e-06;Axis left max=0.0110271775364775;Axis bottom min=10;"
 	VolumeDistribution+="Axis bottom max=5000;standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
-	VolumeDistribution+="mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;mode[8]=4;mode[9]=4;Graph vary Lines=1;"
-	VolumeDistribution+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;"
-	VolumeDistribution+="marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);"
-	VolumeDistribution+="rgb[5]=(32680,0,32680);rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);"
-	VolumeDistribution+="rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);"
-	VolumeDistribution+="rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;"	
+	VolumeDistribution+="Graph use Colors=1;"
+	VolumeDistribution+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
 	VolumeDistribution+="Legend=2;GraphLegendShortNms=0;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	VolumeDistribution+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	VolumeDistribution+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
@@ -1894,11 +1744,8 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR PDDF
 	PDDF="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Distance [A];Label left=p(r);DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;"
 	PDDF+="Axis left min=-7.75876036780322e-07;Axis left max=7.4190884970254e-05;Axis bottom min=0;Axis bottom max=300;standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;"
-	PDDF+="Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;mode[8]=4;mode[9]=4;Graph vary Lines=1;"
-	PDDF+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;marker[5]=29;marker[6]=18;marker[7]=15;"
-	PDDF+="marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);"
-	PDDF+="rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);"
-	PDDF+="rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;"
+	PDDF+="Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;Graph vary Lines=1;"
+	PDDF+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;;"
 	PDDF+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	PDDF+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	PDDF+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
@@ -1909,12 +1756,9 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Porod
 	Porod= "log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q\S4\M [A\S-4\M];Label left=Intensity * q\S4\M [cm\S-1\M * A\S-4\M];DataY=Y*X^4;DataX=X^4;"
 	Porod+= "DataE=Y*X^4;Axis left auto=1;Axis bottom auto=1;Axis left min=6.05481104002939e-09;Axis left max=0.0596273984790896;Axis bottom min=1.43458344252644e-16;Axis bottom max=0.0256131682633957;standoff=0;"
-  	Porod+= "Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;"
-  	Porod+= "mode[7]=4;mode[8]=4;mode[9]=4;Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;"
-	Porod+= "marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
-  	Porod+= "rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);"
-	Porod+= "rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;"
- 	Porod+= " lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+  	Porod+= "Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+  	Porod+= "Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+ 	Porod+= "Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Porod+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Porod+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Porod+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1923,12 +1767,9 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Debye_Bueche
 	Debye_Bueche= "log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q\S2\M [A\S-2\M];Label left=sqrt(Intensity\S-1\M) [cm\S-0.5\M];DataY=sqrt(1/Y);DataX=X^2;DataE=sqrt(1/Y);"
 	Debye_Bueche+= "Axis left auto=1;Axis bottom auto=1;Axis left min=0.000153926221956687;Axis left max=0.655403445936652;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;"
-  	Debye_Bueche+= "Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;"
-  	Debye_Bueche+= "mode[7]=4;mode[8]=4;mode[9]=4;Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;"
-	Debye_Bueche+= "marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
-  	Debye_Bueche+= "rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);"
-	Debye_Bueche+= "rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;"
-  	Debye_Bueche+= "lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+  	Debye_Bueche+= "Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+  	Debye_Bueche+= "Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+  	Debye_Bueche+= "Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Debye_Bueche+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Debye_Bueche+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Debye_Bueche+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1937,12 +1778,9 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Guinier
 	Guinier="log(bottom)=0;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q\S2\M [A\S-2\M];Label left=Intensity [cm\S-1\M];DataY=Y;DataX=X^2;DataE=Y;Axis left auto=1;"
 	Guinier+="Axis bottom auto=1;Axis left min=5.41957359517844;Axis left max=1.78135123888276e+15;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;Graph use Lines=1;"
-  	Guinier+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;"
-	Guinier+="mode[8]=4;mode[9]=4;Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;"
-  	Guinier+="marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
-	Guinier+="rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);"
-  	Guinier+="rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;"
-	Guinier+="lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+  	Guinier+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+	Guinier+="Graph vary Lines=1;"
+  	Guinier+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Guinier+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Guinier+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Guinier+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1951,12 +1789,9 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Kratky
  	Kratky="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity * q\S2\M [cm\S-1\M * A\S-2\M];DataY=Y*X^2;DataX=X;DataE=Y*X^2;"
  	Kratky+="Axis left auto=1;Axis bottom auto=1;Axis left min=0.260499250084115;Axis left max=5.25105256354487;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;Graph use Lines=1;"
-   	Kratky+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;"
- 	Kratky+="mode[8]=4;mode[9]=4;Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;"
-   	Kratky+="marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
- 	Kratky+="rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);"
-   	Kratky+="rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;"
- 	Kratky+="lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+   	Kratky+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+ 	Kratky+="Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+   	Kratky+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Kratky+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Kratky+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Kratky+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1966,12 +1801,9 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Zimm
 	Zimm="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q\S2\M [A\S-2\M];Label left=Intensity\S-1\M [cm];DataY=1/Y;DataX=X^2;DataE=1/Y;Axis left auto=1;"
 	Zimm+="Axis bottom auto=1;Axis left min=0.0266669243574142;Axis left max=6.07712268829346;Axis bottom min=0.000145193684147671;Axis bottom max=1.37456679344177;standoff=0;Graph use Lines=1;"
-  	Zimm+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;"
-	Zimm+="mode[8]=4;mode[9]=4;Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;marker[0]=8;marker[1]=17;marker[2]=5;marker[3]=12;marker[4]=16;"
-  	Zimm+="marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
-	Zimm+="rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);"
-  	Zimm+="rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;"
-	Zimm+="lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+  	Zimm+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+	Zimm+="Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+ 	Zimm+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Zimm+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Zimm+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Zimm+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1980,14 +1812,8 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	ListOfGraphFormating="log(bottom)=1;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity [cm\S-1\M];"
 	ListOfGraphFormating+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
 	ListOfGraphFormating+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
-	ListOfGraphFormating+="mode[0]=4;mode[1]=4;mode[2]=4;mode[3]=4;mode[4]=4;Graph use Colors=1;mode[5]=4;mode[6]=4;mode[7]=4;mode[8]=4;mode[9]=4;Graph vary Lines=1;"
+	ListOfGraphFormating+="Graph use Colors=1;Graph vary Lines=1;"
 	ListOfGraphFormating+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
-	ListOfGraphFormating+="marker[0]=19;marker[1]=16;marker[2]=17;marker[3]=23;marker[4]=26;marker[5]=29;marker[6]=18;marker[7]=15;marker[8]=14;"
-	ListOfGraphFormating+="rgb[0]=(65280,0,0);rgb[1]=(0,0,65280);rgb[2]=(0,65280,0);rgb[3]=(32680,32680,0);rgb[4]=(0,32680,32680);rgb[5]=(32680,0,32680);"
-	ListOfGraphFormating+="rgb[6]=(32680,32680,32680);rgb[7]=(65280,32680,32680);rgb[8]=(32680,32680,65280);rgb[9]=(65280,0,0);rgb[10]=(0,0,65280);"
-	ListOfGraphFormating+="rgb[11]=(32680,32680,65280);rgb[12]=(0,65280,0);rgb[13]=(32680,32680,0);rgb[14]=(0,32680,32680);rgb[15]=(32680,0,32680);"
-	ListOfGraphFormating+="rgb[16]=(32680,32680,32680);rgb[17]=(65280,32680,32680);rgb[18]=(32680,32680,65280);"
-	ListOfGraphFormating+="lStyle[0]=0;lStyle[1]=1;lStyle[2]=2;lStyle[3]=3;lStyle[4]=4;lStyle[5]=5;lStyle[6]=6;lStyle[7]=7;lStyle[8]=8;"
 	ListOfGraphFormating+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	ListOfGraphFormating+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	ListOfGraphFormating+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"

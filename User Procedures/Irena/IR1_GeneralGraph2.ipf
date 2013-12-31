@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.13
+#pragma version=2.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //*************************************************************************/
 //to do: need to handle better the symbols and line types, limit for 8 types is just way too little. 
 
+//2.14 added infinite number of colors and symbols to Vary COlors/symbols. (repeating set of 10). 
 //2.13 Fixed bug caused by igor 6.30 which caused Data modification ot trim first and last points from data always. 
 //2.12 Minor improvement to Countour plot. 
 //2.11 added contour plot and basic handling
@@ -619,11 +620,6 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 			GraphUseColors=0
 			GraphUseBW = 0
 		endif
-		if(!GraphUseRainbow)
-			IR1P_GraphUseColorsOld(GraphUseColors, GraphUseBW)
-		else
-			IR1P_GraphUseRainbow(GraphUseRainbow, GraphUseBW)
-		endif
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Rainbow",ListOfGraphFormating, num2str(GraphUseRainbow),"=")
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Colors",ListOfGraphFormating, num2str(GraphUseColors),"=")
 		ListOfGraphFormating=ReplaceStringByKey("Graph use BW",ListOfGraphFormating, num2str(GraphUseBW),"=")
@@ -638,11 +634,6 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 			GraphUseBW = 0
 			GraphUseRainbow = 0
 		endif
-		if(!GraphUseRainbow)
-			IR1P_GraphUseColorsOld(GraphUseColors, GraphUseBW)
-		else
-			IR1P_GraphUseRainbow(GraphUseRainbow * GraphUseColors, GraphUseBW)
-		endif
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Rainbow",ListOfGraphFormating, num2str(GraphUseRainbow),"=")
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Colors",ListOfGraphFormating, num2str(GraphUseColors),"=")
 		ListOfGraphFormating=ReplaceStringByKey("Graph use BW",ListOfGraphFormating, num2str(GraphUseBW),"=")
@@ -656,11 +647,6 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 			GraphUseColors = 0
 			GraphUseRainbow = 0
 		endif
-		if(!GraphUseRainbow)
-			IR1P_GraphUseColorsOld(GraphUseColors, GraphUseBW)
-		else
-			IR1P_GraphUseRainbow(GraphUseRainbow * GraphUseColors, GraphUseBW)
-		endif
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Rainbow",ListOfGraphFormating, num2str(GraphUseRainbow),"=")
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Colors",ListOfGraphFormating, num2str(GraphUseColors),"=")
 		ListOfGraphFormating=ReplaceStringByKey("Graph use BW",ListOfGraphFormating, num2str(GraphUseBW),"=")
@@ -672,18 +658,16 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 		variable UseLinesAlso=NumberByKey("Graph use Lines",ListOfGraphFormating,"=",";")
 
 		if ((checked==1)&&(UseLinesAlso==1))
-			IR1P_SetSymbolsAndLines()	
+
 		else
 			ListOfGraphFormating=ReplaceStringByKey("Graph use Lines",ListOfGraphFormating, "1","=")
 			NVAR GraphUseLines=root:Packages:GeneralplottingTool:GraphUseLines
 			GraphUseLines=1
-			IR1P_SetSymbolsAndLines()
 		endif
 	endif
 	if (cmpstr("GraphVarySymbols",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Graph vary Symbols",ListOfGraphFormating, num2str(checked),"=")
-		IR1P_SetSymbolsAndLines()			
 	endif
 	if (cmpstr("GraphUseSymbolSet1",ctrlName)==0)
 		ListOfGraphFormating=ReplaceStringByKey("GraphUseSymbolSet1",ListOfGraphFormating, num2str(checked),"=")
@@ -692,7 +676,6 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 			GraphUseSymbolSet2=0
 			ListOfGraphFormating=ReplaceStringByKey("GraphUseSymbolSet2",ListOfGraphFormating, "0","=")
 		endif
-		IR1P_SetSymbolsAndLines()
 	endif
 	if (cmpstr("GraphUseSymbolSet2",ctrlName)==0)
 		ListOfGraphFormating=ReplaceStringByKey("GraphUseSymbolSet2",ListOfGraphFormating, num2str(checked),"=")
@@ -701,66 +684,16 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 			GraphUseSymbolSet1=0
 			ListOfGraphFormating=ReplaceStringByKey("GraphUseSymbolSet1",ListOfGraphFormating, "0","=")
 		endif
-		IR1P_SetSymbolsAndLines()
-	endif
-	
+	endif	
 	if (cmpstr("GraphVaryLines",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Graph vary Lines",ListOfGraphFormating, num2str(checked),"=")
-		if (checked==1)
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[0]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[1]",ListOfGraphFormating, "1","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[2]",ListOfGraphFormating, "2","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[3]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[4]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[5]",ListOfGraphFormating, "5","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[6]",ListOfGraphFormating, "6","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[7]",ListOfGraphFormating, "7","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[8]",ListOfGraphFormating, "8","=")
-		else
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[0]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[1]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[2]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[3]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[4]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[5]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[6]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[7]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("lStyle[8]",ListOfGraphFormating, "0","=")
-		endif
 	endif
-
 	if (cmpstr("GraphUseLines",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Graph use Lines",ListOfGraphFormating, num2str(checked),"=")
 		variable UseSymbolsAlso=NumberByKey("Graph use Symbols",ListOfGraphFormating,"=",";")
-		if ((checked==1)&&(UseSymbolsAlso==1))
-			ListOfGraphFormating=ReplaceStringByKey("mode[0]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[1]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[2]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[3]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[4]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[5]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[6]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[7]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[8]",ListOfGraphFormating, "4","=")
-		else
-			ListOfGraphFormating=ReplaceStringByKey("Graph use Symbols",ListOfGraphFormating, "1","=")
-			NVAR GraphUseSymbols=root:Packages:GeneralplottingTool:GraphUseSymbols
-			GraphUseSymbols=1
-			ListOfGraphFormating=ReplaceStringByKey("mode[0]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[1]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[2]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[3]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[4]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[5]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[6]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[7]",ListOfGraphFormating, "3","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[8]",ListOfGraphFormating, "3","=")
-		endif
 	endif
-
-
 	if (cmpstr("GraphLeftAxisAuto",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Axis left auto",ListOfGraphFormating, num2str(checked),"=")
@@ -781,118 +714,71 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("GraphLegendShortNms",ListOfGraphFormating, num2str(checked),"=")
 	endif
-
-DoUpdate
-
 	//And here we should update everytime
-	IR1P_UpdateGenGraph()
-	
+	IR1P_UpdateGenGraph()	
 End
 
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-static Function IR1P_GraphUseColorsOld(checked, GraphUseBW)
-	variable checked, GraphUseBW
+static Function IR1P_GraphUseColorsOld(UseOldColors, GraphUseBW)
+	variable UseOldColors, GraphUseBW
 
 	SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
-	ListOfGraphFormating=ReplaceStringByKey("Graph use Colors",ListOfGraphFormating, num2str(checked),"=")
 	variable i
-	
-		if (checked==1)
-			ListOfGraphFormating=ReplaceStringByKey("rgb[0]",ListOfGraphFormating, "(65280,0,0)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[1]",ListOfGraphFormating, "(0,0,65280)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[2]",ListOfGraphFormating, "(0,65280,0)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[3]",ListOfGraphFormating, "(32680,32680,0)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[4]",ListOfGraphFormating, "(0,32680,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[5]",ListOfGraphFormating, "(32680,0,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[6]",ListOfGraphFormating, "(32680,32680,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[7]",ListOfGraphFormating, "(65280,32680,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[8]",ListOfGraphFormating, "(32680,32680,65280)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[9]",ListOfGraphFormating, "(65280,0,0)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[10]",ListOfGraphFormating, "(0,0,65280)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[11]",ListOfGraphFormating, "(32680,32680,65280)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[12]",ListOfGraphFormating, "(0,65280,0)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[13]",ListOfGraphFormating, "(32680,32680,0)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[14]",ListOfGraphFormating, "(0,32680,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[15]",ListOfGraphFormating, "(32680,0,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[16]",ListOfGraphFormating, "(32680,32680,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[17]",ListOfGraphFormating, "(65280,32680,32680)","=")
-			ListOfGraphFormating=ReplaceStringByKey("rgb[18]",ListOfGraphFormating, "(32680,32680,65280)","=")
-		else
-		string ColorCode
-		if(GraphUseBW)
-			ColorCode = "(0,0,0)"
-		else
-			ColorCode="(65280,0,0)"
-		endif
-		    For(i=0;i<256;i+=1)
-			ListOfGraphFormating=ReplaceStringByKey("rgb["+num2str(i)+"]",ListOfGraphFormating,ColorCode ,"=")
-		    endfor
-		endif
+      if(UseOldColors+GraphUseBW!=1)
+      		UseOldColors=0
+      		GraphUseBW=1
+      endif
+	ListOfGraphFormating=ReplaceStringByKey("Graph use Colors",ListOfGraphFormating, num2str(UseOldColors),"=")
+	ListOfGraphFormating=ReplaceStringByKey("Graph use BW",ListOfGraphFormating, num2str(GraphUseBW),"=")
+	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
+      variable NumberOfWaves=ItemsInList(ListOfDataFolderNames)
+	make/Free/N=11 rw,gw,bw
+	rw = {65280, 0,            0,         0,  65535,      65535, 0,          65280, 29524, 13107, 0}
+	gw = {0,	         0,           65280, 0,  32764,      65535,  65535, 16385, 0,         13107, 34817}
+	bw = {0,         65280,   0,          0,  16385,     0,          65535,  55749, 58982,  13107, 52428}
+      if(GraphUseBW)
+      		ModifyGraph/W=GeneralGraph rgb=(0,0,0)
+      else		//use odl colors... 
+      		For(i=0;i<NumberOfWaves;i+=1)
+		       ModifyGraph/Z/W=GeneralGraph rgb[i]=( rw[i-10*floor(i/10)], gw[i-10*floor(i/10)], bw[i-10*floor(i/10)] )
+		endfor
+	endif	
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-static Function IR1P_GraphUseRainbow(checked, GraphUseBW)
-	variable checked, GraphUseBW
+//
+static Function IR1P_GraphUseRainbow(UseRainbow, GraphUseBW)
+	variable UseRainbow, GraphUseBW
 
 	SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
 	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
-	//ListOfGraphFormating=ReplaceStringByKey("Graph use Colors",ListOfGraphFormating, num2str(checked),"=")
       variable NumberOfWaves=ItemsInList(ListOfDataFolderNames)
 	Variable i
-		if (checked==1)
-// 	       Variable i, NumTraces, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
-//              w = NumberOfWaves/2
-//	        For(i=0;i<NumberOfWaves;i+=1)
-//                      io = 0
-//	                iRed = exp(-(i-io)^2/w)
-//	                io = NumberOfWaves/2
-//	                iBlue = exp(-(i-io)^2/w)
-//	                io = NumberOfWaves
-//	                iGreen = exp(-(i-io)^2/w)
-//     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
-//	                Red = 65535 * (iRed/ColorNorm)
-//	                Blue = 65535 * (iBlue/ColorNorm)
-//	                Green = 65535 * (iGreen/ColorNorm)
-//	               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
-//			    ListOfGraphFormating=ReplaceStringByKey("rgb["+num2str(i)+"]",ListOfGraphFormating, "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")","=")
-//		    endfor
- 			//requested 2013-02 : use prettier method from Data manipualtion II
- 		    	   //Variable k, km, rev=0
-			    variable r,g,b,scale
-			   // k = NumberOfWaves
-			   // km = k
-			    colortab2wave Rainbow
-			    wave M_colors
-			   // do
-			    For(i=0;i<NumberOfWaves;i+=1)
-			       // k-=1
-			        //scale = (rev==0 ? k : (km-k-1))  / (km-1) * dimsize(M_colors,0)
-			        scale =  (NumberOfWaves-i)  / (NumberOfWaves-1) * dimsize(M_colors,0)
-			        r = M_colors[scale][0]
-			        g = M_colors[scale][1]
-			        b = M_colors[scale][2]
-				  ListOfGraphFormating=ReplaceStringByKey("rgb["+num2str(i)+"]",ListOfGraphFormating, "("+num2str(r)+","+num2str(g)+","+num2str(b)+")","=")
-			       // ModifyGraph/Z rgb[k]=( r, g, b )
-			    //while(k>0)
-			    endfor
-			    killwaves/Z M_colors
-			
-		else
-			string ColorCode
-			if(GraphUseBW)
-				ColorCode = "(0,0,0)"
-			else
-				ColorCode="(65280,0,0)"
-			endif
-		    For(i=0;i<256;i+=1)
-			ListOfGraphFormating=ReplaceStringByKey("rgb["+num2str(i)+"]",ListOfGraphFormating,ColorCode ,"=")
-		    endfor
-		endif
+      if(UseRainbow+GraphUseBW!=1)
+      		UseRainbow=0
+      		GraphUseBW=1
+      endif
+	ListOfGraphFormating=ReplaceStringByKey("Graph use Rainbow",ListOfGraphFormating, num2str(UseRainbow),"=")
+	ListOfGraphFormating=ReplaceStringByKey("Graph use BW",ListOfGraphFormating, num2str(GraphUseBW),"=")
+      if(GraphUseBW)
+      		ModifyGraph/W=GeneralGraph rgb=(0,0,0)
+	else			//rainbow... 
+	    variable r,g,b,scale
+	    colortab2wave Rainbow
+	    wave M_colors
+	    For(i=0;i<NumberOfWaves;i+=1)
+	        scale =  (NumberOfWaves-i)  / (NumberOfWaves-1) * dimsize(M_colors,0)
+	        r = M_colors[scale][0]
+	        g = M_colors[scale][1]
+	        b = M_colors[scale][2]
+	       ModifyGraph/Z/W=GeneralGraph rgb[i]=( r, g, b )
+	    endfor
+	    killwaves/Z M_colors
+	endif
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -909,53 +795,53 @@ Function  IR1P_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	if (cmpstr("GraphXAxisName",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Label bottom",ListOfGraphFormating, varStr,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("Xoffset",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Xoffset",ListOfGraphFormating, varStr,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("Yoffset",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Yoffset",ListOfGraphFormating, varStr,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphYAxisName",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceStringByKey("Label left",ListOfGraphFormating, varStr,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphLineWidth",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceNumberByKey("lsize",ListOfGraphFormating, varNum,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphSymbolSize",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceNumberByKey("msize",ListOfGraphFormating, varNum,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 
 	if (cmpstr("GraphLeftAxisMin",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceNumberByKey("Axis left min",ListOfGraphFormating, varNum,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphLeftAxisMax",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceNumberByKey("Axis left max",ListOfGraphFormating, varNum,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphBottomAxisMin",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceNumberByKey("Axis bottom min",ListOfGraphFormating, varNum,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphBottomAxisMax",ctrlName)==0)
 		//anything needs to be done here?
 		ListOfGraphFormating=ReplaceNumberByKey("Axis bottom max",ListOfGraphFormating, varNum,"=")
-		DoWindow/F IR1P_ControlPanel
+		//DoWindow/F IR1P_ControlPanel
 	endif
 	if (cmpstr("GraphAxisWidth",ctrlName)==0)
 		//anything needs to be done here?
@@ -986,8 +872,6 @@ Function  IR1P_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		//anything needs to be done here?
 		IR1P_RecalcModifyData()
 	endif
-	
-	
 	//And here we should update everytime
 	IR1P_UpdateGenGraph()
 End
@@ -1023,12 +907,12 @@ Function IR1P_UpdateGenGraph()
 	IR1P_FixAxesInGraph()
 	IR1P_SetGraphSize(0,0, NumberByKey("Graph Window Width", ListOfGraphFormating,"=",";"),NumberByKey("Graph Window Height", ListOfGraphFormating,"=",";"))
 	//done
+	variable ColorsDone=0
 	DoWindow generalGraph
 	if (V_Flag)
 		DoWindow/F generalGraph
 		ListOfWaves=TraceNameList("generalGraph", ";", 1 )
 		For(i=0;i<imax;i+=1)
-//			Dowindow/F generalGraph
 			if(cmpstr(StringFromList(i,ListOfGraphFormating)[0,4],"Label")==0)
 				Execute (IN2G_ChangePartsOfString(StringFromList(i,ListOfGraphFormating),"="," \"")+"\"")	
 			elseif (cmpstr(StringFromList(i,ListOfGraphFormating)[0,5],"Legend")==0)
@@ -1038,8 +922,6 @@ Function IR1P_UpdateGenGraph()
 				IR1P_AttachErrorBars(NumberByKey("ErrorBars",ListOfGraphFormating,"="))
 			elseif(cmpstr(StringFromList(i,ListOfGraphFormating)[0,3],"Data")==0)
 				//these lines contain data formating (which data are plot) and this macro needs to skip them
-			elseif(cmpstr(StringFromList(i,ListOfGraphFormating)[0,4],"Graph")==0)
-				//these lines contain some other graph formating and this macro needs to skip them
 			elseif(cmpstr(StringFromList(i,ListOfGraphFormating)[0,17],"DisplayTimeAndDate")==0)
 				//these lines contain some other graph formating and this macro needs to skip them
 				if(NumberByKey("DisplayTimeAndDate", ListOfGraphFormating,"=",";"))
@@ -1051,23 +933,32 @@ Function IR1P_UpdateGenGraph()
 				//these lines contain axis formating (about axis ranges) and this macro needs to skip them
 			elseif(cmpstr(StringFromList(i,ListOfGraphFormating)[0,6],"Xoffset")==0 || cmpstr(StringFromList(i,ListOfGraphFormating)[0,6],"Yoffset")==0)
 				//these lines contain axis formating (about axis ranges) and this macro needs to skip them
+			elseif(stringmatch(StringFromList(i,ListOfGraphFormating),"Graph use Symbols*"))
+				//need to modify the way the markers are used...
+				IR1P_SetSymbolsAndLines()
+			elseif(stringmatch(StringFromList(i,ListOfGraphFormating),"Graph use Colors*") || stringmatch(StringFromList(i,ListOfGraphFormating),"Graph use Rainbow*") || stringmatch(StringFromList(i,ListOfGraphFormating),"Graph use BW*"))
+				//need to modify the way the colors are used...
+				if(!ColorsDone)
+					if(NumberByKey("Graph use Colors", ListOfGraphFormating,"=",";"))
+						IR1P_GraphUseColorsOld(1, 0)
+					elseif(NumberByKey("Graph use Rainbow", ListOfGraphFormating,"=",";"))
+						IR1P_GraphUseRainbow(1, 0)
+					else		//BW
+						IR1P_GraphUseRainbow(0, 1)
+					endif
+					ColorsDone=1
+				endif
+			elseif(cmpstr(StringFromList(i,ListOfGraphFormating)[0,4],"Graph")==0)
+				//these lines contain some other graph formating and this macro needs to skip them
 			else
+				//print StringFromList(i,ListOfGraphFormating)
 				Execute ("ModifyGraph /Z "+StringFromList(i,ListOfGraphFormating))
 			endif
 		endfor
 		SVAR ListOfWavesNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
 		variable tempXLin, tempXlog, tempYLin, tempYlog
 		For(j=0;j<ItemsInList(ListOfWaves);j+=1)
-			//change 12 1 2006, Igor 6 now has multiplicative offset...
-			if(NumberByKey("IGORVERS", IgorInfo(0) )< 6)	//Igor 5 only
-				Xofst=numberByKey("Xoffset",ListOfGraphFormating,"=")*j
-				Yofst=numberByKey("Yoffset",ListOfGraphFormating,"=")*j
-				Xofst = numtype(Xofst)==0 ?  Xofst : 0
-				Yofst = numtype(Yofst)==0 ? Yofst : 0
-				ModifyGraph/W=GeneralGraph offset($(stringFromList(j,ListOfWaves)))={Xofst,Yofst}
-			else	//Igor 6, so need to check what is axis
 				//log(bottom)=1;log(left)=1
-				
 				if(NumberByKey("log(bottom)", ListOfGraphFormating ,"="))	//log x axis
 					Xofst=numberByKey("Xoffset",ListOfGraphFormating,"=")^j
 					Xofst = numtype(Xofst)==0 ?  Xofst : 0
@@ -1091,15 +982,13 @@ Function IR1P_UpdateGenGraph()
 					tempYLog = 0
 				endif
 				Execute("ModifyGraph/W=GeneralGraph offset("+stringFromList(j,ListOfWaves)+")={"+num2str(tempXLin)+","+num2str(tempYLin)+"},muloffset("+stringFromList(j,ListOfWaves)+")={"+num2str(tempXLog)+","+num2str(tempYLog)+"}")
-				//ModifyGraph muloffset(SMR_Int#1)={2,2}
-			endif
 		endfor
 	endif
 	//and if 3d graph exists, let's update it also...
 	IR1P_UpdateColorAndFormat3DPlot(1)
 	//print "update now"
 	DoUpdate
-//	DOWIndow/F IR1P_ControlPanel
+	DOWIndow/F IR1P_ControlPanel
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1188,6 +1077,7 @@ Function IR1P_ApplySelectedStyle(StyleString)
 		SVAR FormatingString=root:Packages:GeneralplottingTool:ListOfGraphFormating
 		FormatingString=StringToApply
 		IR1P_SynchronizeListAndVars()
+		IR1P_SetSymbolsAndLines()
 		IR1P_UpdateGenGraph()
 		NVAR LegendYes=root:Packages:GeneralplottingTool:GraphLegend
 		NVAR LongLegend=root:Packages:GeneralplottingTool:GraphLegendUseFolderNms
@@ -1337,35 +1227,17 @@ Function IR1P_SynchronizeListAndVars()
 		GraphUseColors=1
 		GraphUseRainbow=0
 	endif
-	if(GraphUseColors)
-		IR1P_GraphUseColorsOld(GraphUseColors, GraphUseBW)
-	else
-		IR1P_GraphUseRainbow(GraphUseRainbow, GraphUseBW)
-	endif
 	variable i
-	if (GraphUseSymbols)
-		For(i=0;i<62;i+=1)
-			FormatingStr=ReplaceStringByKey("mode["+num2str(i)+"]",FormatingStr, "4","=")
-			//FormatingStr=ReplaceStringByKey("mode[1]",FormatingStr, "4","=")
-			//FormatingStr=ReplaceStringByKey("mode[2]",FormatingStr, "4","=")
-			//FormatingStr=ReplaceStringByKey("mode[3]",FormatingStr, "4","=")
-			//FormatingStr=ReplaceStringByKey("mode[4]",FormatingStr, "4","=")
-
-			FormatingStr=ReplaceStringByKey("marker["+num2str(i)+"]",FormatingStr, num2str(i),"=")
-			//FormatingStr=ReplaceStringByKey("marker[1]",FormatingStr, "17","=")
-			//FormatingStr=ReplaceStringByKey("marker[2]",FormatingStr, "5","=")
-			//FormatingStr=ReplaceStringByKey("marker[3]",FormatingStr, "12","=")
-			//FormatingStr=ReplaceStringByKey("marker[4]",FormatingStr, "16","=")
-		endfor	
-	else
-		For(i=0;i<62;i+=1)
-			FormatingStr=ReplaceStringByKey("mode["+num2str(i)+"]",FormatingStr, "0","=")
-			//FormatingStr=ReplaceStringByKey("mode[1]",FormatingStr, "0","=")
-			//FormatingStr=ReplaceStringByKey("mode[2]",FormatingStr, "0","=")
-			//FormatingStr=ReplaceStringByKey("mode[3]",FormatingStr, "0","=")
-			//FormatingStr=ReplaceStringByKey("mode[4]",FormatingStr, "0","=")	
-		endfor	
-	endif
+//	FormatingStr=ReplaceStringByKey("Graph use Symbols",FormatingStr, "GraphUseSymbols","=")
+	//clean up the formating string of the old crud, we should be using new method here... 
+	string RemoveList=""
+	For(i=0;i<ItemsInList(FormatingStr, ";");i+=1)
+		RemoveList= GrepList(FormatingStr, "^mode" ,0,";" )
+		RemoveList+= GrepList(FormatingStr, "^marker" ,0,";" )
+		RemoveList+= GrepList(FormatingStr, "^rgb" ,0,";" )
+		RemoveList+= GrepList(FormatingStr, "^lStyle" ,0,";" )
+	endfor
+	FormatingStr = RemoveFromList(RemoveList, FormatingStr  , ";")
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1723,11 +1595,8 @@ end
 //************************************************************************************************************************
 
 Function IR1P_RemoveSmallData()
-  
-
 	//sets to NaNs data with Q smaller than where the cursor A is in GeneralGraph
-	//is cursor A on the wave listed in the list Box, let's put it there...
-	
+	//is cursor A on the wave listed in the list Box, let's put it there...	
 		SVAR ModifyIntName=root:Packages:GeneralplottingTool:ModifyIntName
 		string CsrAFullWaveRef=IR1P_CursorAWave()
 		if (cmpstr(ModifyIntName,CsrAFullWaveRef)!=0)
@@ -1745,11 +1614,8 @@ end
 //************************************************************************************************************************
 
 Function IR1P_RemoveLargeData()
-  
-
 	//sets to NaNs data with Q smaller than where the cursor A is in GeneralGraph
-	//is cursor A on the wave listed in the list Box, let's put it there...
-	
+	//is cursor A on the wave listed in the list Box, let's put it there...	
 		SVAR ModifyIntName=root:Packages:GeneralplottingTool:ModifyIntName
 		string CsrBFullWaveRef=IR1P_CursorBWave()
 		if (cmpstr(ModifyIntName,CsrBFullWaveRef)!=0)
@@ -1764,20 +1630,14 @@ end
 //************************************************************************************************************************
 //************************************************************************************************************************
 //************************************************************************************************************************
-
-
 Function IR1P_RemoveOneDataPoint()
-  
-
 	//sets to NaNs data point where the cursor A is in GeneralGraph
-	//is cursor A on the wave listed in the list Box, let's put it there...
-	
+	//is cursor A on the wave listed in the list Box, let's put it there...	
 		SVAR ModifyIntName=root:Packages:GeneralplottingTool:ModifyIntName
 		string CsrAFullWaveRef=IR1P_CursorAWave()
 		if (cmpstr(ModifyIntName,CsrAFullWaveRef)!=0)
 			Abort "Cursor is not on the right wave"
-		endif
-		
+		endif		
 		variable PointWithCsrA=pcsr(A,"GeneralGraph" )
 		SVAR ListOfRemovedPoints = root:Packages:GeneralplottingTool:ListOfRemovedPoints
 		ListOfRemovedPoints += num2str(PointWithCsrA)+";"
@@ -1814,76 +1674,46 @@ End
 Function IR1P_SetSymbolsAndLines()
 
 	SVAR 	ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
-
-
+	variable VaryLines=NumberByKey("Graph vary Lines",ListOfGraphFormating,"=",";")
 	variable UseLinesAlso=NumberByKey("Graph use Lines",ListOfGraphFormating,"=",";")
 	variable GraphVarySymbols=NumberByKey("Graph Vary Symbols",ListOfGraphFormating,"=",";")
 	variable GraphUseSymbols=NumberByKey("Graph Use Symbols",ListOfGraphFormating,"=",";")
 	variable GraphUseSymbolSet1=NumberByKey("GraphUseSymbolSet1",ListOfGraphFormating,"=",";")
 	variable GraphUseSymbolSet2=NumberByKey("GraphUseSymbolSet2",ListOfGraphFormating,"=",";")
-
+	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
+      variable NumberOfWaves=ItemsInList(ListOfDataFolderNames)
+	variable i
 	if (GraphUseSymbols && UseLinesAlso)
-		//	ListOfGraphFormating=ReplaceStringByKey("mode",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[0]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[1]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[2]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[3]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[4]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[5]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[6]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[7]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[8]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[9]",ListOfGraphFormating, "4","=")
+			ModifyGraph/W=GeneralGraph mode = 4 
+	elseif (!GraphUseSymbols && UseLinesAlso)
+			ModifyGraph/W=GeneralGraph mode = 0 
+	elseif (GraphUseSymbols && !UseLinesAlso)
+			ModifyGraph/W=GeneralGraph mode = 3 
 	endif
-	if (!GraphUseSymbols && UseLinesAlso)
-		//	ListOfGraphFormating=ReplaceStringByKey("mode",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[0]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[1]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[2]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[3]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[4]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[5]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[6]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[7]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[8]",ListOfGraphFormating, "0","=")
-			ListOfGraphFormating=ReplaceStringByKey("mode[9]",ListOfGraphFormating, "0","=")		
-	endif
-
-	if (GraphVarySymbols)
+	make/Free/N=10 ClosedSymb, OpenSymb
+	ClosedSymb = {19,16,17, 23, 26, 29 ,18, 15, 14, 52,60}
+	OpenSymb = {8, 5, 6, 22, 25, 28, 7, 4, 3, 56, 61}
+	if (GraphVarySymbols && GraphUseSymbols)
 		if (GraphUseSymbolSet2)
-			ListOfGraphFormating=ReplaceStringByKey("marker[0]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[1]",ListOfGraphFormating, "5","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[2]",ListOfGraphFormating, "6","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[3]",ListOfGraphFormating, "22","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[4]",ListOfGraphFormating, "25","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[5]",ListOfGraphFormating, "28","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[6]",ListOfGraphFormating, "7","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[7]",ListOfGraphFormating, "4","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[8]",ListOfGraphFormating, "3","=")		
-	// plne 19,16,17, 23, 26, 29 ,18, 15, 14
-	// otevrene 8, 5, 6, 22, 25, 28, 7, 4, 3
+			For(i=0;i<NumberOfWaves;i+=1)
+		   	    ModifyGraph/Z/W=GeneralGraph marker[i]=OpenSymb[i-10*floor(i/10)]
+			endfor	
 		else		//symbol set1
-			ListOfGraphFormating=ReplaceStringByKey("marker[0]",ListOfGraphFormating, "19","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[1]",ListOfGraphFormating, "16","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[2]",ListOfGraphFormating, "17","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[3]",ListOfGraphFormating, "23","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[4]",ListOfGraphFormating, "26","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[5]",ListOfGraphFormating, "29","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[6]",ListOfGraphFormating, "18","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[7]",ListOfGraphFormating, "15","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[8]",ListOfGraphFormating, "14","=")
+			For(i=0;i<NumberOfWaves;i+=1)
+		   	    ModifyGraph/Z/W=GeneralGraph marker[i]=ClosedSymb[i-10*floor(i/10)]
+			endfor
 		endif
 	else		//do not vary
-		//	ListOfGraphFormating=ReplaceStringByKey("marker",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[0]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[1]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[2]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[3]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[4]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[5]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[6]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[7]",ListOfGraphFormating, "8","=")
-			ListOfGraphFormating=ReplaceStringByKey("marker[8]",ListOfGraphFormating, "8","=")
+			ModifyGraph/W=GeneralGraph marker = 8 
+	endif
+	if (UseLinesAlso)
+		if (VaryLines)
+			For(i=0;i<NumberOfWaves;i+=1)
+		   	    ModifyGraph/Z/W=GeneralGraph lstyle[i]=i-18*floor(i/18)
+			endfor	
+		endif
+	else		//do not vary
+			ModifyGraph/W=GeneralGraph lstyle = 0 
 	endif
 
 end 
