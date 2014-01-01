@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.12
+#pragma version=2.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.13 more DWS changes, CUncerttainity analysis - modfied to change the tab to currently analyzed level tab. 
 //2.12 many changes by Dale, corrections etc. Accepted all assumed working. 
 //2.11 added DWS changes to two phase model and made fixes to invariant calculations
 //2.10 fixed bug which caused in local fits held parameters to change in fitting routine to their starting guesses. 
@@ -3595,7 +3596,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 	variable Qv=InvariantUsed//***DWS
 	variable B=PiBoverQ*Qv/pi//***DWS
 	string Text//***DWS
-	if((excel==0)&&(!StringMatch(where, "Graph" )==0)) //***DWS  If excel==1 Igor prints a spreadsheet compatible list in history or logbook
+	if((excel==0)||(!StringMatch(where, "graph" )==0)) //***DWS  If excel==1 Igor prints a spreadsheet compatible list in history or logbook
 	if(stringMatch(where,"History"))
 		Print " "
 		Print "******************   Results for two phase analysis of Unified fit results ***************************"
@@ -3666,12 +3667,11 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			Print "    Calculated: phi = "+num2str(MinorityPhasePhi)
 			Print "    Calculated: Rhard (from Rg)= "+num2str(PartANalRHard)+" [A] "
 			Print "    Calculated: Particle Density (particles in cm^3) = "+num2str(PartAnalParticleDensity)+" [1/cm^3] (from I(0)/(Vp^2 * contrast)) " 
-
+		endif
 		print "******************************************************************************************************"
 		print " "
-	
 		
-	elseif(stringMatch(where,"History"))//***DWS was logbook
+	elseif(stringMatch(where,"Logbook"))
 
 			IR1_CreateLoggbook()
 			IR1_PullUpLoggbook()
@@ -3685,7 +3685,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			IR1L_AppendAnyText("     Error name : "+DataEName)
 			IR1L_AppendAnyText("  ")
 			IR1L_AppendAnyText( "     Selected level : "+num2str(SelectedLevel))
-		endif
+	
 		if(stringmatch(Model,"TwoPhaseSys1"))
 		
 				IR1L_AppendAnyText( "    Method 1: B/Q, skeletal density, and sample density known")
@@ -3833,18 +3833,23 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			NewTextBoxStr+= "\r"+  "    Calculated: Rhard (from Rg)= "+num2str(PartANalRHard)+" [A] "
 			NewTextBoxStr+= "\r"+  "    Calculated: Particle Density (particles "+Onepercm3+") = "+num2str(PartAnalParticleDensity)+Onepercm3+" (from I(0)/(Vp^2 * contrast)) " 
 		endif
-		string AnotList=AnnotationList(GraphName)
-		variable i
-		For(i=0;i<100;i+=1)
-			if(!stringMatch(AnotList,"*UnifiedAnalysis"+num2str(SelectedLevel)+"_"+num2str(i)+"*"))
-				break
-			endif
-		endfor
-		TextBox/C/W=$(GraphName)/N=$("UnifiedAnalysis"+num2str(SelectedLevel)+"_"+num2str(i))/F=0/B=1/A=MC NewTextBoxStr
-		
-		endif   //***DWS
+		string list=WinList(Graphname, ";", "" )//**DWS  skips if graph does not exist		
+		IF  (!stringmatch(list,""))
+			string AnotList=AnnotationList(GraphName)
+			variable i
+			For(i=0;i<100;i+=1)
+				if(!stringMatch(AnotList,"*UnifiedAnalysis"+num2str(SelectedLevel)+"_"+num2str(i)+"*"))
+					break
+				endif
+			endfor
+			TextBox/C/W=$(GraphName)/N=$("UnifiedAnalysis"+num2str(SelectedLevel)+"_"+num2str(i))/F=0/B=1/A=MC NewTextBoxStr
+		else
+			Doalert 0, "Graph does not exist"
+		endif
+	endif
 	
-	elseif  ((excel==1)&&(StringMatch(where, "graph" )==0))//excel//***DWS
+	
+	elseif((excel==1)&&(StringMatch(where, "graph" )==0))//***DWS
 		variable N=strlen(model)-1
 		string mdl=model[N]
 		variable SL=SelectedLevel
@@ -3860,13 +3865,13 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			TEXT2+="\t"+num2str(SurfacePerVolume/SamplebulkDensity)+"\t"+num2str(MinorityCordLength)+"\t"+num2str(MajorityCordLength)
 			TEXT2+="\t"+   num2str(SLDDensityMinorityPhase)   +"\t "+  num2str(SLDDensityMajorityPhase)
 		
-	If(!printlogbook)// ie print to history ***DWS
+		If(!printlogbook)// ie print to history ***DWS
 			Print TEXT	
 			print TEXT2
 		else
 			IR1L_AppendAnyPorodText(text2)// print to log book excel compatible***DWS
 		endif
-	Endif//***DWS
+	Endif
 end
 
 //***********************************************************
@@ -4601,6 +4606,12 @@ static Function IR1A_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	Variable MinValue,MaxValue,NumSteps
 	String ParamName,Method
 	
+
+	variable LevelUsed=str2num(ParamName[5])
+	TabControl DistTabs win=IR1A_ControlPanel, value=(LevelUsed-1)
+	IR1A_TabPanelControl("",LevelUsed-1)
+	//DoUpdate
+
 	DoWindow ChisquaredAnalysis
 	if(V_Flag)
 		DoWindow/K ChisquaredAnalysis
