@@ -2,6 +2,13 @@
 #pragma IgorVersion= 4.0	// Requires Igor Pro v4.0 or later.
 #pragma version = 1.19
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //1.19 changed checkIntegrity logic not to check for first few points for I0 value. Due to autoranging that may fail. 
 //1.18 updated to pass specMotors to USAXS folder as it is now needed later (and may be useful). 2/2013 JIL
 //1.17 updated to pass I0 gain to UPD parameters so it can be used as we now have I0gain autoranging... Reading I0_range column if exists

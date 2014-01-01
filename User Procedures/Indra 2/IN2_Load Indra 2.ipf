@@ -2,6 +2,13 @@
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
 #pragma version=1.80
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //1.80 added FlyScan data reduction
 //1.79 minor changes to use USAXS PD transmission measurements
 // 1.78 added wieght calibration

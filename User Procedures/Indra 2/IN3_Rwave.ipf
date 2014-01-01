@@ -1,6 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version 1.04
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //1.04 added FlyScan code and modified fit to peak center to guess top 40% of intensity only. 
 //1.03 added pinDiode tranmission
 //1.02 updated to use 	I0AmpGain			
