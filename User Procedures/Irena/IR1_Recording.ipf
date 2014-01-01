@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.02
+#pragma version=2.03
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 DWS changes
 //2.02 Dale added some Porod note taking for Unified fit model. 
 //2.01 added license for ANL
 
@@ -209,10 +210,11 @@ Function IR1L_AppendAnyPorodText(TextToBeInserted)		//**DWS
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:Irena_AnalUnifFit:PorodNotebookName
 	if(SVAR_exists(nbl))
-		if (strsearch(WinList("*",";","WIN:16"),nbl,0)!=-1)				//Logs data in Logbook
-			Notebook $nbl selection={endOfFile, endOfFile}
-			Notebook $nbl text=TextToBeInserted
+		if (strsearch(WinList("*",";","WIN:16"),nbl,0)==-1)				//Create PorodAnalysisResults notebook if necessary
+			IR1_CreatePorodLogbook()		
 		endif
+		Notebook $nbl selection={endOfFile, endOfFile}
+		Notebook $nbl text=TextToBeInserted		
 	endif
 end
 
