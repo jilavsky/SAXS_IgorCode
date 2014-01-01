@@ -1,6 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version =1.02
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //1.01 modified for weight calibration
 //1.02 added pinDiode tranmsission
 

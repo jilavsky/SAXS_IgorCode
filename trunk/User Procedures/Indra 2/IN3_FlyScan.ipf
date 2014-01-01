@@ -1,6 +1,14 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=0.1
 Constant IN3_FlyImportVersionNumber=0.1
+
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //FlyScan data reduction
 Constant AmplifierPreRage1BlockTime=0.09  //09
 Constant AmplifierPreRage2BlockTime=0.12	//12
@@ -27,7 +35,7 @@ Function IN3_FlyScanMain()
 	IN3_FlyScanInitializeImport()
 	IN3_FlyScanImportPanelFnct()
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber)
+	IN3_UpdatePanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber)
 
 end
 //************************************************************************************************************
@@ -38,8 +46,8 @@ end
 Function IN3_FlyScanCheckVersion()	
 	DoWindow IN3_FlyScanImportPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber))
-			DoAlert /T="The Fly Scan Import panel was created by old version of Nika " 1, "FlyScan Import needs to be restarted to work properly. Restart now?"
+		if(!IN3_CheckPanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber))
+			DoAlert /T="The Fly Scan Import panel was created by old version of Indra " 1, "FlyScan Import needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IN3_FlyScanMain()")
 			else		//at least reinitialize the variables so we avoid major crashes...

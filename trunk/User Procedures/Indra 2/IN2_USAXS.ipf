@@ -2,6 +2,13 @@
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
 #pragma version = 1.32
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //1.32 added FlyScan and panel check for Indra version
 //1.31 added ability to use pinDiode transmission measured first time 4/2013
 //1.30 added weight calibration
@@ -112,21 +119,18 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 
 	//these are tools which have been upgraded to this functionality
 	//Modeling II = LSQF2_MainPanel
-	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;"
+	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
 //	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
 //	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
 //	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
 //	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
 	
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
-	//IR2C_CheckIrenaUpdate(0)
-	//IR2C_CheckPlatformGUIFonts()
 end
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
+//****************************************************************************************
+//****************************************************************************************
+//****************************************************************************************
+
 Function IN3_CheckWIndowsProcVersions(WindowProcNames)
 	string WindowProcNames
 	
@@ -143,6 +147,38 @@ Function IN3_CheckWIndowsProcVersions(WindowProcNames)
 	endfor
 	
 end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN3_UpdatePanelVersionNumber(panelName, CurentProcVersion)
+	string panelName
+	variable CurentProcVersion
+	DoWIndow $panelName
+	if(V_Flag)
+		SetWindow $(panelName), note="IndraProcVersion:"+num2str(CurentProcVersion)+";"
+	endif
+end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+Function IN3_CheckPanelVersionNumber(panelName, CurentProcVersion)
+	string panelName
+	variable CurentProcVersion
+
+	DoWIndow $panelName
+	if(V_Flag)	
+		GetWindow $(panelName), note
+		if(stringmatch(stringbyKey("IndraProcVersion",S_value),num2str(CurentProcVersion))) //matches
+			return 1
+		else
+			return 0
+		endif
+	else
+		return 1
+	endif
+end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

@@ -2,6 +2,12 @@
 #pragma version=0.2
 
 
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 
 // This is  version 1 of Igor Pro macros for reduction of desktop USAXS (Osmotic/Rigaku) data to pass them into Indra 2 package.
 // Note, this is BETA version 2

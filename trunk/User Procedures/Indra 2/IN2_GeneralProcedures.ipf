@@ -1,6 +1,14 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.69
+#pragma version = 1.70
 
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
+//1.70 added ANL copyright
 //1.69 modified IN2G_roundToUncertainity to handle very small numbers. 
 //1.86 added for log rebining functions tool to find start value to match minimum step. 
 //1.67 added ZapNonLetterNumStart(strIN) which removes any non letter, non number start of the string for ASCII importer.

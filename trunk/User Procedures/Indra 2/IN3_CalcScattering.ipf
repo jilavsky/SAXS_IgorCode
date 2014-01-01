@@ -1,5 +1,14 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.0
+
+
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
 //calculate scattering profile from model
 //date: 7/9/09 JIL version 1
 // 1/12/2010 JIL, fixed intensity calcualtions to remove points in user data at low and high Q which do not exist (caused troubles for model) 
