@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
+#pragma version=2.19
 //#include <KBColorizeTraces>
 Constant IR1PversionNumber=2.16
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.19 minor fix for Change Graph details panel visibility
 //2.18 added infinite number of colors and symbols to Vary Colors/symbols. (repeating set of 10). Cleaned up old crud in code. removed KBColorizeTraces, not needed anymore. 
 //2.17 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
 //2.16 fixed forgotten Style storing path, which was still saving styles to ProgramFiles area. Permissions problem on some systems. Fixed and moving file to new location.
@@ -1428,6 +1429,10 @@ Function IR1P_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating	//this contains data formating
 		ListOfGraphFormating=ReplaceStringByKey("Graph legend Position", ListOfGraphFormating, PosShortcut,"=")
 		IR1P_UpdateGenGraph()
+	endif
+	DoWIndow IR1P_ChangeGraphDetailsPanel
+	if(V_Flag)
+		DoWIndow/F IR1P_ChangeGraphDetailsPanel
 	endif
 	
 end

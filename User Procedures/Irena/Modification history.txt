@@ -5,21 +5,22 @@ Code modification history
 ********************************************
 2.54
 All files - extended copyright to 2005 - 2014
-Installer - version 1.23 will handle stale links to hdf5 xops. 
+Installer - version 1.23 will overwrite stale links to hdf5 xops, created on OSX when updating Igor from 6.2x to 6.3x etc. 
 ASCII Import - added “RemoveFromNameString” which allows users to remove part of name which is of no interest. 
 ASCII Import - import data as double precision to avoid some users running out of precision when their intensity has unusual values due to calibration. also made minor change in Modeling II to address this. 
 ASCII Import - modified log-q points rebinning to keep minimum q step (matching difference between the first two points after trimming). This should be more robust. 
 Control Procedures - minor fix to handle weird transient bug and some case when the controls were failing. Fixes for handling of Irena results and QIS data type.
-Plotting tool - modified to have infinite number of colors and symbols (well, repeating set of 10) and modified how formating string is stored. This may change how old graphs look (colors and symbols). 
+Plotting tool - modified to have infinite number of colors and symbols (well, repeating set of 10) and modified how formatting string is stored. This may change how old graphs look (colors and symbols). 
+Plotting tool - minor fix for Change Graph details panel visibility
 Data manipulation I - added controls for Units of the input data (just show) and output data (select).  
 Data manipulation II - added Units controls. 
 Analytical models - added Rg cutoff parameter to Unified level. Requested feature…
-Analytical models - added linking of Rg cutoff to Corr Lengths and added ability to display separate data for the tabs. Minor improvements. 
+Analytical models - added linking of Rg cutoff to Corr. Lengths and added ability to display separate data for the tabs. Minor improvements. 
 Analytical models - added residuals plot per user request. 
 Modeling II - fixed export of Schulz-Zimm distribution parameters to notebook and waves, which seemed to unfinished. 
 Modeling II - fixed bug in Analyze uncertainty which caused problems when parameter name was simply too long. Made shorter by replacing parts of the string. 
 Scripting tool - fix for Plotting tool controls which were failing on Modeling II diameter/radii option. 
-Scripting tool - if Plotting tool is not opened, Scripting tool will open it now instead of throwing error.  
+Scripting tool - if Plotting tool is not opened, Scripting tool will open it now instead of throwing error. Fixed Sync of Folder match strings.  
 Unified fit - number of fixes made by DWS with corrections to analysis tools, some output and also GUI changes. 
 Form Factor package - fixed support functions which were missing some of the FF and did not produce Volume or Surface conversions. 
 Form Factor package - Cylinder, CylinderAR, and Spheroid will now use NIST XOP, if available (many times faster). 

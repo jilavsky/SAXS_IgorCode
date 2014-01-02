@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.01		//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 Constant IR3GPversionNumber=1
 
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.01 	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //1.00 first release, July 2013
 //0.94 fixed bug which caused major problems fitting SMR data. Improvemnts of starting values for local fits. 
 //0.93 Fixed bug which caused Scripting tool to get out of sync with main panel. 
@@ -837,6 +838,8 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 		NVAR GUseQRSdata=root:Packages:Irena:GuinierPorod:UseQRSdata
 		NVAR STUseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
 		NVAR STUseQRSData = root:Packages:Irena:ScriptingTool:UseQRSdata
+		NVAR STUseResults = root:Packages:Irena:ScriptingTool:UseResults
+		STUseResults=0
 		STUseIndra2Data = GUseIndra2data
 		STUseQRSData = GUseQRSdata
 		if(STUseIndra2Data+STUseQRSData!=1)

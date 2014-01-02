@@ -1,13 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.14
+#pragma version=2.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-//to do: need to handle better the symbols and line types, limit for 8 types is just way too little. 
 
+//2.15 minor fix for Change Graph details panel visibility
 //2.14 added infinite number of colors and symbols to Vary COlors/symbols. (repeating set of 10). 
 //2.13 Fixed bug caused by igor 6.30 which caused Data modification ot trim first and last points from data always. 
 //2.12 Minor improvement to Countour plot. 
@@ -716,6 +716,10 @@ Function IR1P_GenPlotCheckBox(ctrlName,checked) : CheckBoxControl
 	endif
 	//And here we should update everytime
 	IR1P_UpdateGenGraph()	
+	DoWIndow IR1P_ChangeGraphDetailsPanel
+	if(V_Flag)
+		DoWIndow/F IR1P_ChangeGraphDetailsPanel
+	endif
 End
 
 //**********************************************************************************************************
@@ -874,6 +878,10 @@ Function  IR1P_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	endif
 	//And here we should update everytime
 	IR1P_UpdateGenGraph()
+	DoWIndow IR1P_ChangeGraphDetailsPanel
+	if(V_Flag)
+		DoWIndow/F IR1P_ChangeGraphDetailsPanel
+	endif
 End
 
 //**********************************************************************************************************

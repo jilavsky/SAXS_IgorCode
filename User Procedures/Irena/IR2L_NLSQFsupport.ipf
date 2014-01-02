@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.26
+#pragma version=1.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.27	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //1.26 changed in Unicertainity analysis length of paramName to 20 characters. 
 //1.25 fixed Notebook recording of Shulz-Zimm distribution type
 //1.24 minor fix in Uncertainity evaluation. 
@@ -4276,6 +4277,8 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		NVAR GUseQRSdata=root:Packages:IR2L_NLSQF:UseQRSdata
 		NVAR STUseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
 		NVAR STUseQRSData = root:Packages:Irena:ScriptingTool:UseQRSdata
+		NVAR STUseResults = root:Packages:Irena:ScriptingTool:UseResults
+		STUseResults=0
 		STUseIndra2Data = GUseIndra2data
 		STUseQRSData = GUseQRSdata
 		if(STUseIndra2Data+STUseQRSData!=1)

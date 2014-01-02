@@ -795,6 +795,12 @@ Function IR2S_CallWithPlottingToolII(reset)
 	NVAR PTUseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
 	NVAR PTUseQRSdata=root:Packages:GeneralplottingTool:UseQRSdata
 	NVAR PTUseResults=root:Packages:GeneralplottingTool:UseResults
+	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:FolderMatchStr
+	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:WaveMatchStr
+	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+
+	WaveMatchStr=""
+	FolderMatchStr=ScriptToolFMS
 	PTUseResults=STUseResults
 	PTUseQRSdata=STUseQRSdata
 	PTUseIndra2Data=STUseIndra2Data
@@ -837,11 +843,6 @@ Function IR2S_CallWithPlottingToolII(reset)
 	if(reset)
 		IR1P_InputPanelButtonProc("ResetAll")				//resent graph?
 	endif	
-	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:FolderMatchStr
-	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:WaveMatchStr
-	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	WaveMatchStr=""
-	FolderMatchStr=ScriptToolFMS
 	variable AddedFiles=0
 	Print " **** working : adding data sets to plotting tool"
 	string LastDiameterOrRadius=""
