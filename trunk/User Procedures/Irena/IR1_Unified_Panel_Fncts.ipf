@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.16
+#pragma version=2.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //2.16 added some Dale's modifications
 //2.15 added Extended option for warnings to avoid history area poluting. Fixes provided by DWS
 //2.14 added IR2S_SortListOfAvailableFldrs() to scripting tool call. Added option to rebin data on import. 
@@ -1636,6 +1637,8 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		NVAR GUseQRSdata=root:Packages:Irena_UnifFit:UseQRSdata
 		NVAR STUseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
 		NVAR STUseQRSData = root:Packages:Irena:ScriptingTool:UseQRSdata
+		NVAR STUseResults = root:Packages:Irena:ScriptingTool:UseResults
+		STUseResults=0
 		STUseIndra2Data = GUseIndra2data
 		STUseQRSData = GUseQRSdata
 		if(STUseIndra2Data+STUseQRSData!=1)
