@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.53
+#pragma version=2.54
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs=   3468066750  		//this is mod date for Manual version 2.53
-constant CurrentVersionNumber = 2.53
+constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
+constant CurrentVersionNumber = 2.54
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.53
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.54 version release, January 2014
 //2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed
 //2.52 Summer 2013 release. 
 //		modified Manual and Manuscript download routine to use http. ftp was failing, not sure why. 
@@ -32,20 +33,13 @@ constant CurrentVersionNumber = 2.53
 
 // from version 2.26 I skipped numbers to match the current Irena version number (2.38) 
 
-//This macro file is part of Igor macros package called "Irena", 
-//the full package should be available from www.uni.aps.anl.gov/~ilavsky
-//this package contains 
-// Igor functions for modeling of SAS from various distributions of scatterers...
-//Jan Ilavsky, February 2010
-//please, read Readme in the distribution zip file with more details on the program
 //report any problems to: ilavsky@aps.anl.gov
-//main functions.
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
 
 
 
 Menu "SAS"
-	help = {"Irena SAS modeling macros, version 2.52 released 7/23/2013 by Jan Ilavsky"}
+	help = {"Irena SAS modeling macros, version 2.54 released 1/5/2014 by Jan Ilavsky"}
 	Submenu "Data import & export"
 		"Import ASCII data", IR1I_ImportDataMain()
 		help={"Import data from ASCII file into Igor for use with macros"}
@@ -1065,9 +1059,9 @@ Function IR1_AboutPanel()
 	DoWindow/C About_Irena_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro >=6.32A"
+	DrawText 23,30,"Irena macros for Igor Pro >=6.34"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2013"
+	DrawText 100,60,"@ ANL, 2014"
 	DrawText 10,80,"release "+num2str(CurrentVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)

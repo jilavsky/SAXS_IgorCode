@@ -8,7 +8,7 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
-1.80
+1.80 1/5/2014
 Added support of FlyUsaxs scans based on data collected 12/2013. 
 Change in size of error bars, the old one are simply too large. Step scan reduced by ~5, fly scan reduced by 3. Will need to be changed. 
 Added version control for panels
