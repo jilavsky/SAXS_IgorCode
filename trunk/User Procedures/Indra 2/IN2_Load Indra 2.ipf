@@ -31,19 +31,19 @@
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.2
 #include ":IN2_GAUSAXS 1", version>=1
-#include ":IN2_GeneralProcedures", version>=1.67
+#include ":IN2_GeneralProcedures", version>=1.70
 #include ":IN2_ImportX23", version>=1.10
 #include ":IN2_Merging Data", version>=1.10
 #include ":IN2_NotebookLogging", version>=1.10
 #include ":IN2_PlottingTools", version>=1.13
 #include ":IN2_SpecInput", version>=1.19
 #include ":IN2_Standard Plots", version>=1.13
-#include ":IN2_USAXS", version>=1.31
+#include ":IN2_USAXS", version>=1.32
 #include ":IN2_XtalCalculationsP", version>=1
 
 #include ":IN3_CalcScattering", version>=1
-#include ":IN3_Calculations", version>=1.09
-#include ":IN3_Main", version>=1.80
+#include ":IN3_Calculations", version>=1.10
+#include ":IN3_Main", version>=1.81
 #include ":IN3_Rwave", version>=1
 #include ":IN3_SupportFnct", version>=1.02
 
@@ -53,7 +53,7 @@
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
-#include "::Irena:IR2_PanelCntrlProcs", version>=1.34
+#include "::Irena:IR2_PanelCntrlProcs", version>=1.39
 
 #include <HDF5 Browser>
 
