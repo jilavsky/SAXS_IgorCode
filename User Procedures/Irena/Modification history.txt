@@ -3,6 +3,9 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.55 
+ASCII export - fixed bug which prevented Multiple QRS data export.  
+
 2.54 1/5/2014
 All files - extended copyright to 2005 - 2014
 Installer - version 1.23 will overwrite stale links to hdf5 xops, created on OSX when updating Igor from 6.2x to 6.3x etc. 

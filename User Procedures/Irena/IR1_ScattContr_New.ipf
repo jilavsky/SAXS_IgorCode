@@ -1,4 +1,4 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals=3		// Use modern global access method.
 #pragma version=2.16
 
 
@@ -1874,7 +1874,8 @@ Function IR1K_F0FPrimeGraph() : Graph
 		abort "No data available, push Recalculate button first"
 	endif
 	wave Fprime_2=root:Packages:ScatteringContrast:F0Fprime_2
-	Display/K=1 /W=(449.25,137.75,897.75,331.25) F0Fprime_1, F0Fprime_2
+	//Display/K=1 /W=(449.25,137.75,897.75,331.25) F0Fprime_1, F0Fprime_2
+	Display/K=1 /W=(449.25,137.75,897.75,331.25) Fprime_1, Fprime_2
 	DoWindow/C F0FPrimeGrph
 	SetDataFolder fldrSav0
 	ModifyGraph mirror=1

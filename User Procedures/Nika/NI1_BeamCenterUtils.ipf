@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.13
-Constant NI1BCversionNumber = 2.13
+Constant NI1BCversionNumber = 2.14
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.14 minor fix
 //2.13 added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data. 
 //2.12 added double click function to the file selection listbox, modified CheckVersion procedure to avoid Igor crash.
 //2.11 added three new NIST calibration standards, provided by Christina.Reinhard@diamond.ac.uk 
@@ -1468,7 +1469,7 @@ Function NI1BC_UpdateBmCntrListBox()
 		Wave SelofCCDDataInBmCntrDPath=root:Packages:Convert2Dto1D:SelofCCDDataInBmCntrDPath
 		SVAR DataFileExtension=root:Packages:Convert2Dto1D:BmCntrFileType
 		SVAR/Z BCMatchNameString=root:Packages:Convert2Dto1D:BCMatchNameString
-		if(!WaveExists(BCMatchNameString))
+		if(!SVAR_Exists(BCMatchNameString))
 			string/g root:Packages:Convert2Dto1D:BCMatchNameString
 		endif
 		
