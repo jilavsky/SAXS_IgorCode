@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.06
+#pragma version=1.07
 Constant IR2EversionNumber = 1.06
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.06
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.07 fixed multiple data erxport with QRS
 //1.06 modified GUI to disable Export Data & notes on main panel, when Multiple data selection panel is opened. Confused users. Changeds call to pull up without initialization, if exists. 
 //		changed mode for Listbox to enable shift-click selection of range of data, use ctrl/cmd for one-by-one data selection
 //1.05 added in panel version control and added vertical scrolling 
@@ -221,6 +222,9 @@ Function IR2E_ExportMultipleFiles()
 		if(!UseQRSdata)		//just stuff in Folder name and go ahead...
 			if(SelectionOfAvailableData[i])
 				DataFolderName = StartFolderName+ListOfAvailableData[i]
+				if(!DataFolderExists(DataFolderName ))
+					Abort "Problem with data folder definition. Please \"Update list\" and try again" 
+				endif
 				IR2E_LoadDataInTool()		
 				DoUpdate
 				sleep/S 1	
@@ -229,13 +233,18 @@ Function IR2E_ExportMultipleFiles()
 		else	//we need to set all strings for qrs data... 
 			if(SelectionOfAvailableData[i])
 				DataFolderName = StartFolderName+ListOfAvailableData[i]
+				if(!DataFolderExists(DataFolderName ))
+					Abort "Problem with data folder definition. Please \"Update list\" and try again" 
+				endif
 				//now for qrs we need to reload the other wave names... 
 				STRUCT WMPopupAction PU_Struct
 				PU_Struct.ctrlName = "SelectDataFolder"
-				PU_Struct.popNum=0
+				PU_Struct.popNum=-1
 				PU_Struct.eventCode=2
 				PU_Struct.popStr=DataFolderName
 				PU_Struct.win = "UnivDataExportPanel"
+				//PopupMenu SelectDataFolder win=UnivDataExportPanel, popmatch=DataFolderName
+				PopupMenu SelectDataFolder win=UnivDataExportPanel, popmatch=StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":")
 				IR2C_PanelPopupControl(PU_Struct)
 				IR2E_LoadDataInTool()		
 				DoUpdate
