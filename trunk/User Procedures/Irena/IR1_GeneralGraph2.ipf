@@ -85,27 +85,6 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-//this is added into selection in Marquee.
-//if run, sets limits to marquee selection and switches into manual mode for axis range
-Function ZoomAndSetLimits(): GraphMarquee
-	//this will zoom graph and set limits to the appropriate numbers
-	GetMarquee/K left, bottom
-	if(!stringmatch(S_MarqueeWin"GeneralGraph"))
-		return 0	
-	endif
-	SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
-	ListOfGraphFormating=ReplaceStringByKey("Axis left auto",ListOfGraphFormating,"0","=" )
-	ListOfGraphFormating=ReplaceStringByKey("Axis bottom auto",ListOfGraphFormating,"0","=" )
-	ListOfGraphFormating=ReplaceStringByKey("Axis left min",ListOfGraphFormating,num2str(V_bottom),"=" )
-	ListOfGraphFormating=ReplaceStringByKey("Axis left max",ListOfGraphFormating,num2str(V_top),"=" )
-	ListOfGraphFormating=ReplaceStringByKey("Axis bottom min",ListOfGraphFormating,num2str(V_left),"=" )
-	ListOfGraphFormating=ReplaceStringByKey("Axis bottom max",ListOfGraphFormating,num2str(V_right),"=" )
-	IR1P_SynchronizeListAndVars()
-	IR1P_UpdateGenGraph()
-end
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
 //makes graph 
 Proc  IR1P_makeGraphWindow() 
 	DoWindow GeneralGraph

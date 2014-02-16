@@ -297,7 +297,7 @@ Function IN3_MainPanel()
 	SetVariable MSAXSCorrectionT0,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
 
 	SetVariable FlyScanRebinToPoints,pos={5,495},size={300,22},title="FlyScan rebin to ="
-	SetVariable FlyScanRebinToPoints,font="Times New Roman",fSize=14, bodyWidth=100
+	SetVariable FlyScanRebinToPoints,font="Times New Roman",fSize=14, bodyWidth=100, proc=IN3_ParametersChanged
 	SetVariable FlyScanRebinToPoints,limits={0,Inf,0},variable= root:Packages:Indra3:FlyScanRebinToPoints
 
 	//tab 2 - geometry controls

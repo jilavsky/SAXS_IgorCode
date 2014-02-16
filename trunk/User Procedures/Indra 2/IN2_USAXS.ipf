@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.32
+#pragma version = 1.33
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.33 added Remove points with marquee
 //1.32 added FlyScan and panel check for Indra version
 //1.31 added ability to use pinDiode transmission measured first time 4/2013
 //1.30 added weight calibration
@@ -17,6 +18,10 @@
 //1.27 release from 4/30/2012, updates for autoranging I0
 //1.26 release 1.74 of Indra package, 2/16/2012. Some minor fixes.
 //1.25 release 1.73 of Indra package, 2/19/2012. Added new Xtal calculator.
+
+Menu "GraphMarquee"
+	"Remove Points with Marquee", RemovePointsWithMarquee()
+End
 
 
 Menu "USAXS"
@@ -179,6 +184,38 @@ Function IN3_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	endif
 end
 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//this is added into selection in Marquee.
+//if run, sets limits to marquee selection and switches into manual mode for axis range
+
+Function RemovePointsWithMarquee()
+	//this will zoom graph and set limits to the appropriate numbers
+	GetMarquee/K left, bottom
+	if(!stringmatch(S_MarqueeWin"RcurvePlotGraph"))
+		return 0	
+	endif
+	variable pointNumberToBeRemoved=xcsr(A)
+	Wave IntWv=root:Packages:Indra3:R_Int
+	Wave QWv=root:Packages:Indra3:R_Qvec
+	getmarquee/W=RcurvePlotGraph bottom
+	variable StartPntX, EndPntX, StartPntY, EndPntY
+	StartPntX = BinarySearch(QWv, V_left )
+	EndPntX = BinarySearch(QWv, V_right )+1
+	StartPntY = BinarySearch(IntWv, V_top )
+	EndPntY = BinarySearch(IntWv, V_bottom )+1
+	variable StartPnt, EndPnt
+	StartPnt=StartPntX
+	if(StartPntY>StartPntX)
+		StartPnt = StartPntY
+	endif
+	EndPnt = EndPntX
+	if(EndPntX>EndPntY)
+		EndPnt = EndPntY
+	endif
+	IntWv[StartPnt, EndPnt]=NaN
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
