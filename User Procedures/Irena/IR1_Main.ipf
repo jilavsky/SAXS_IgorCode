@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.54
+#pragma version=2.55
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.54
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.55 moved Zoom and set limits to GraphMarquee menu. 
 //2.54 version release, January 2014
 //2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed
 //2.52 Summer 2013 release. 
@@ -37,6 +38,9 @@ constant CurrentVersionNumber = 2.54
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
 
 
+Menu "GraphMarquee"
+	"Zoom and set limits", ZoomAndSetLimits()
+End
 
 Menu "SAS"
 	help = {"Irena SAS modeling macros, version 2.54 released 1/5/2014 by Jan Ilavsky"}
@@ -310,6 +314,27 @@ Function CheckPanelVersionNumber(panelName, CurentProcVersion)
 	endif
 end
 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//this is added into selection in Marquee.
+//if run, sets limits to marquee selection and switches into manual mode for axis range
+Function ZoomAndSetLimits()
+	//this will zoom graph and set limits to the appropriate numbers
+	GetMarquee/K left, bottom
+	if(!stringmatch(S_MarqueeWin"GeneralGraph"))
+		return 0	
+	endif
+	SVAR ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
+	ListOfGraphFormating=ReplaceStringByKey("Axis left auto",ListOfGraphFormating,"0","=" )
+	ListOfGraphFormating=ReplaceStringByKey("Axis bottom auto",ListOfGraphFormating,"0","=" )
+	ListOfGraphFormating=ReplaceStringByKey("Axis left min",ListOfGraphFormating,num2str(V_bottom),"=" )
+	ListOfGraphFormating=ReplaceStringByKey("Axis left max",ListOfGraphFormating,num2str(V_top),"=" )
+	ListOfGraphFormating=ReplaceStringByKey("Axis bottom min",ListOfGraphFormating,num2str(V_left),"=" )
+	ListOfGraphFormating=ReplaceStringByKey("Axis bottom max",ListOfGraphFormating,num2str(V_right),"=" )
+	IR1P_SynchronizeListAndVars()
+	IR1P_UpdateGenGraph()
+end
 //***********************************************************
 //***********************************************************
 //***********************************************************

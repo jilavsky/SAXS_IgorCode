@@ -75,10 +75,14 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		NI3_TabPanelControl("",0)
 		DoWIndow/F USAXSDataReduction
 	endif
+	if (cmpstr(ctrlName,"RemovePointsRange")==0)
+		RemovePointsWithMarquee()
+	endif
 	if (cmpstr(ctrlName,"Recalculate")==0)
 		IN3_RecalculateData(1)	
 		DoWIndow/F USAXSDataReduction
 	endif
+
 	if (cmpstr(ctrlName,"SaveResults")==0)
 		IN3_SaveData()	
 		NVAR UserSavedData=root:Packages:Indra3:UserSavedData
@@ -108,7 +112,6 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	endif
 
 
-
 	if (cmpstr(ctrlName,"RemovePoint")==0)
 		if (strlen(CsrWave(A))==0)
 			Abort "cursor A is not in the graph...nothing to do..."
@@ -136,9 +139,16 @@ end
 
 Function IN3_GetDiodeTransmission(SkipMessage)
 	variable SkipMessage
+
+	NVAR isBlank=	root:Packages:Indra3:isBlank
+	if(isBlank)
+		return 0
+	endif
+
+
 	SVAR MeasurementParameters = root:Packages:Indra3:MeasurementParameters
 	SVAR BlankName = root:Packages:Indra3:BlankName
-	SVAR BLMeasurementParameters = $(BlankName+"MeasurementParameters")
+	SVAR/Z BLMeasurementParameters = $(BlankName+"MeasurementParameters")
 	NVAR SampleTransmissionPeakToPeak = root:Packages:Indra3:SampleTransmissionPeakToPeak
 	NVAR MSAXSCorrection = root:Packages:Indra3:MSAXSCorrection
 	NVAR SampleTransmission = root:Packages:Indra3:SampleTransmission
@@ -715,8 +725,10 @@ static Function IN3_RcurvePlot()
 	SetVariable SampleAngleOffset,limits={-inf,inf,0.5e-6},variable= root:Packages:Indra3:SampleQOffset
 
 	Button Recalculate,pos={150,25},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
+	Button Recalculate fColor=(40969,65535,16385)
+	Button RemovePointsRange,pos={250,3},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Rem pnts w/Marquee", help={"Remove point by selecting Range with Marquee"}
 	Button RemovePoint,pos={250,25},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Remove pnt w/csr A", help={"Remove point with cursor A"}
-	Button FixGain,pos={250,3},size={90,20},font="Times New Roman",fSize=10, proc=IN3_GraphButtonProc,title="Fix Gain w/c A"
+	Button FixGain,pos={150,6},size={90,15},font="Times New Roman",fSize=10, proc=IN3_GraphButtonProc,title="Fix Gain w/c A"
 
 	CheckBox UseModifiedGauss title="Mod. Gauss",proc=IN3_RplotCheckProc
 	CheckBox UseModifiedGauss variable=root:Packages:Indra3:UseModifiedGauss,mode=1,pos={345,1}
@@ -773,6 +785,7 @@ Function IN3_FixDispControlsInRcurvePlot()
 
 	Button Recalculate,win=RcurvePlotGraph, disable =DisplayAlignSaAndBlank
 	Button RemovePoint,win=RcurvePlotGraph, disable =DisplayAlignSaAndBlank
+	Button RemovePointsRange,win=RcurvePlotGraph, disable =DisplayAlignSaAndBlank
 	Button FixGain,win=RcurvePlotGraph, disable =DisplayAlignSaAndBlank
 
 	Checkbox UseModifiedGauss,win=RcurvePlotGraph, disable =DisplayAlignSaAndBlank

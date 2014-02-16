@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.16
+#pragma version=2.17
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 minor fix to avoid p and x outside the assignement loop Igor error. 
 //2.16  Modified all controls not to define font and font size to enable proper control by user 
 //2.15 minor fix - do not update controls on Main panel, if user closed it when went to ANomalous calculator. 
 //2.14 fixed the label for SL per gram as noticed by Dale 
@@ -2676,13 +2677,13 @@ Function IR1K_AnomContrWaves(which)
 			tempMolWght+= CorrectedElContent * ElementWeight	
 			tempSumAtomNumb+=CorrectedElContent
 		//	here we need to fill in the waves with data from CromerLiberman 
-			For(j=0;j<(numpnts(FPrime));j+=1)
-				FPrime[j]+=IR1_Get_RealPartfp(ELType, x) *CorrectedElContent
-				FDoublePrime[j]+=IR1_Get_ImagPartfpp(ELType, x) *CorrectedElContent
-				F0[j]+=IR1_Get_f0(ELType,Anom_QvalueUsed)*CorrectedElContent
+			//For(j=0;j<(numpnts(FPrime));j+=1)
+				FPrime+=IR1_Get_RealPartfp(ELType, x) *CorrectedElContent
+				FDoublePrime+=IR1_Get_ImagPartfpp(ELType, x) *CorrectedElContent
+				F0+=IR1_Get_f0(ELType,Anom_QvalueUsed)*CorrectedElContent
 
-				MuOverRho[j]+=IR1_Get_MuOverRho(ELType, x)*CorrectedElContent*ElementWeight			//scale by weight of this atom in the molecule
-			endfor
+				MuOverRho+=IR1_Get_MuOverRho(ELType, x)*CorrectedElContent*ElementWeight			//scale by weight of this atom in the molecule
+			//endfor
 		endif
 	endfor
 	//and now set the molecular weight to result....

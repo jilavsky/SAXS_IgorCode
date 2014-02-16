@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.1
-Constant IN3_FlyImportVersionNumber=0.1
+#pragma version=0.15
+Constant IN3_FlyImportVersionNumber=0.15
 
 
 //*************************************************************************\
@@ -10,15 +10,18 @@ Constant IN3_FlyImportVersionNumber=0.1
 //*************************************************************************/
 
 //FlyScan data reduction
-Constant AmplifierPreRage1BlockTime=0.09  //09
-Constant AmplifierPreRage2BlockTime=0.12	//12
-Constant AmplifierPreRage3BlockTime=0.13
-Constant AmplifierPreRage4BlockTime=0.15
-Constant AmplifierRange1BlockTime=0.02
-Constant AmplifierRange2BlockTime=0.04
-Constant AmplifierRange3BlockTime=0.04
-Constant AmplifierRange4BlockTime=0.25
+//Constant AmplifierPreRage1BlockTime=0.09  //09
+//Constant AmplifierPreRage2BlockTime=0.12	//12
+//Constant AmplifierPreRage3BlockTime=0.13
+//Constant AmplifierPreRage4BlockTime=0.15
+Constant AmplifierRange1BlockTime=0.00
+Constant AmplifierRange2BlockTime=0.00
+Constant AmplifierRange3BlockTime=0.00
+Constant AmplifierRange4BlockTime=0.00
+Constant AmplifierRange5BlockTime=0.4
 
+//0.15 many changes, I0gain, new gain change masking method, use records from mca changes to create UPD_gain etc.  
+// 0.11 added transmission handling
 //version 0.1 developement of import functions and GUIs
 
 
@@ -331,6 +334,7 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave I0Wv=:entry:flyScan:mca2
 	Wave updWv=:entry:flyScan:mca3
 	Wave GainWv=:entry:flyScan:mca4
+	Wave I0GainWv=:entry:flyScan:mca5
 	Duplicate/Free TimeWv, ArValues
 	Redimension /D ArValues
 	Wave Ar_start=:entry:flyScan:AR_start
@@ -359,6 +363,18 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave I00GainW =:entry:metadata:I00AmpGain
 	Wave I0GainW = :entry:metadata:I0AmpGain
 	Wave/T TimeW=:entry:metadata:timeStamp
+	Wave/Z USAXSPinT_I0Counts=:entry:metadata:trans_I0_counts
+	Wave/Z USAXSPinT_I0Gain=:entry:metadata:trans_I0_gain
+	Wave/Z USAXSPinT_AyPosition=:entry:metadata:trans_pin_aypos
+	Wave/Z USAXSPinT_pinCounts=:entry:metadata:trans_pin_counts
+	Wave/Z USAXSPinT_pinGain=:entry:metadata:trans_pin_gain
+	Wave/Z USAXSPinT_Time= :entry:metadata:trans_pin_time
+	//USAXSPinT_Measure=1;USAXSPinT_AyPosition=11.1725;USAXSPinT_Time=3;USAXSPinT_pinCounts=1918487;
+	//USAXSPinT_pinGain=1000000;USAXSPinT_I0Counts=219754;USAXSPinT_I0Gain=10000000;
+	Wave mcsChangePnts = :entry:flyScan:changes_mcsChan
+	Wave ampGain = :entry:flyScan:changes_ampGain
+	Wave ampReqGain = :entry:flyScan:changes_ampReqGain
+	
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
 	newDataFolder/O/S $(SpecFileName)
@@ -376,10 +392,11 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD
 	Duplicate/O GainWv, PD_range
-	ArValues = Ar_increment[0]*p
-	Duplicate/O ArValues, Ar_encoder
+	Duplicate/O I0GainWv, I0gain
 	
-	//need to appedn the wave notes...
+	ArValues = Ar_increment[0]*p
+	Duplicate/O ArValues, Ar_encoder	
+	//need to append the wave notes...
 	//DATAFILE=12_09_flyusaxs2.dat;EPOCH=1386631536;TZ=-6;SCAN_N=15;SECONDS=3469455865;DATE=Mon, Dec 9, 2013;HOUR=17:44:25
 	//COMMENT=PS_spheres_1_3um;SpecCommand=uascan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 793 -0.1 189 1 600 0.333333;
 	//SpecComment=PS_spheres_1_3um;SpecScan=spec15;USAXSDataFolder=root:USAXS:'12_09_flyusaxs2':S15_PS_spheres_1_3um
@@ -392,34 +409,65 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	note/K USAXS_PD, WaveNote
 	note/K PD_range, WaveNote
 	note/K Ar_encoder, WaveNote
-	
 	redimension/D Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range
-	PD_range = PD_range/MeasTime
-	PD_range = round(PD_range*500)+1
 	MeasTime*=2e-08		//convert to seconds
-	//Need to shift Ar_encoder by something to get really log scale rebinning... Cannot be negative, so need to calculate some small offset 
-	//now we need to mask off the bad points... 
-	IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
+	make/Free/N=5 TimeRangeAfter
+	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,AmplifierRange5BlockTime}
+	//create PD_range using records, not mca channel...
+	variable iii, iiimax=numpnts(mcsChangePnts)
+	variable StartRc, EndRc
+	For(iii=0;iii<iiimax;iii+=1)
+		if(mcsChangePnts[iii]>0 || iii<4)
+			if(ampGain[iii]!=ampReqGain[iii])
+				StartRc = mcsChangePnts[iii]
+			endif
+			if(ampGain[iii]==ampReqGain[iii])
+				EndRc = mcsChangePnts[iii]
+				PD_range[StartRc,EndRc] = nan
+				PD_range[EndRc+1,] = ampGain[iii]+1
+				IN3_MaskPointsForGivenTime(PD_range,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+			endif
+		endif
+	endfor
+	I0gain = I0gain/MeasTime
+	I0gain = 10^round(I0gain/1e5)
+				//Need to shift Ar_encoder by something to get really log scale rebinning... Cannot be negative, so need to calculate some small offset 
+				//now we need to mask off the bad points... 
+				//IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
 	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 	variable ArOffset, scanningDown
 	scanningDown = (Ar_encoder[0] > Ar_encoder[1]) ? 1 : 0
 	if(scanningDown)	//scanning down in angle
-	//	ArOffset = Ar_encoder[0] - (Ar_encoder[10]-Ar_encoder[0])
-		//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],Ar_start[0]+Ar_encoder[0],NumberOfTempPoints,Ar_increment[0])
-		//Ar_encoder += ArOffset
+					//	ArOffset = Ar_encoder[0] - (Ar_encoder[10]-Ar_encoder[0])
+					//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],Ar_start[0]+Ar_encoder[0],NumberOfTempPoints,Ar_increment[0])
+					//Ar_encoder += ArOffset
 		Ar_encoder = abs(Ar_encoder)
 	else		//scanning up in angle
-		//ArOffset = Ar_encoder[0] + (Ar_encoder[10]-Ar_encoder[0])
-		//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[0],Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],NumberOfTempPoints,Ar_increment[0])
-		//Ar_encoder += ArOffset
+					//ArOffset = Ar_encoder[0] + (Ar_encoder[10]-Ar_encoder[0])
+					//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[0],Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],NumberOfTempPoints,Ar_increment[0])
+					//Ar_encoder += ArOffset
+		Ar_encoder = abs(Ar_encoder)
 	endif
-	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints, Ar_increment[0])
-	//Ar_encoder -=ArOffset
-//	Ar_encoder +=Ar_start[0]
-	//put AR on regular angular scale...
-	//fix cases when PD_range is not integer, if they are still there...
-	PD_range[] = (PD_range[p]-floor(PD_range[p])==0) ? PD_range : nan
-	IN2G_RemoveNaNsFrom5Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
+					//	//attempt to remvoe oscillations...
+					//	duplicate/O MeasTime, MeasTimeSmooth, MeasTimeRatio
+					//	Smooth/E=3/EVEN/B 50, MeasTimeSmooth
+					//	MeasTimeRatio = MeasTime / MeasTimeSmooth
+					//	duplicate/O  Monitor, MonitorOrg
+					//	Duplicate/O MonitorOrg, AveI0Wv 
+					//	duplicate/O MeasTime, MeasTimeOrg
+					//	AveI0Wv = MonitorOrg  / MeasTime	//* I0gain
+
+	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, NumberOfTempPoints, Ar_increment[0])
+	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
+				//Ar_encoder -=ArOffset
+				//Ar_encoder +=Ar_start[0]
+				//put AR on regular angular scale...
+				//fix cases when PD_range is not integer, if they are still there...
+				//PD_range[] = (PD_range[p]-floor(PD_range[p])==0) ? PD_range : nan
+
+	//Ok, this should remove points with I0 < 90% of average value 
+	//IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
+
 	//let's make some standard strings we need.
 	string/g PathToRawData
 	PathToRawData=RawFolderWithData
@@ -447,71 +495,93 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	MeasurementParameters+="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
 	MeasurementParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
 	MeasurementParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
-	
+	if(WaveExists(USAXSPinT_pinCounts))
+		if(USAXSPinT_pinCounts[0]>100)
+		MeasurementParameters+=";USAXSPinT_Measure=1;USAXSPinT_AyPosition="+num2str(USAXSPinT_AyPosition[0])+";USAXSPinT_Time="+num2str(USAXSPinT_Time[0])+";USAXSPinT_pinCounts="+num2str(USAXSPinT_pinCounts[0])+";"
+		MeasurementParameters+="USAXSPinT_pinGain="+num2str(USAXSPinT_pinGain[0])+";USAXSPinT_I0Counts="+num2str(USAXSPinT_I0Counts[0])+";USAXSPinT_I0Gain="+num2str(USAXSPinT_I0Gain[0])+";"
+		endif
+	endif
 	setDataFolder OldDf
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-Function IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
-	wave Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range
-	
-	make/Free/N=5 TimeRangeAfter, TimeRangeBefore
-	TimeRangeBefore={AmplifierPreRage1BlockTime,AmplifierPreRage2BlockTime,AmplifierPreRage3BlockTime,AmplifierPreRage4BlockTime,0}
-	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,0}
-	variable NumPntsW=numpnts(MeasTime)
-	//Differentiate/METH=1  PD_range /D=GainChanges
-	//GainChanges = abs(GainChanges)
-	//contains 0 where gain does not change and 1 where the gain changes... 
-	variable i, curGain, maskTime, j, maskTimeUp
-	//deal with range change for gain 1
-	FindLevels/Q  /D=RangeChanges  /P  PD_range, 1.1 
-	For(i=0;i<numpnts(RangeChanges);i+=1)
-		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage1BlockTime, AmplifierRange1BlockTime)
-	endfor
-	FindLevels /Q /D=RangeChanges  /P  PD_range, 2.1 
-	For(i=0;i<numpnts(RangeChanges);i+=1)
-		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage2BlockTime, AmplifierRange2BlockTime)
-	endfor
-	FindLevels /Q /D=RangeChanges  /P  PD_range, 3.1 
-	For(i=0;i<numpnts(RangeChanges);i+=1)
-		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage3BlockTime, AmplifierRange3BlockTime)
-	endfor
-	FindLevels /Q /D=RangeChanges  /P  PD_range, 4.1 
-	For(i=0;i<numpnts(RangeChanges);i+=1)
-		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage4BlockTime, AmplifierRange4BlockTime)
-	endfor
-end
+//
+//Function IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
+//	wave Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range
+//	
+//	make/Free/N=5 TimeRangeAfter, TimeRangeBefore
+//	TimeRangeBefore={AmplifierPreRage1BlockTime,AmplifierPreRage2BlockTime,AmplifierPreRage3BlockTime,AmplifierPreRage4BlockTime,0}
+//	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,0}
+//	variable NumPntsW=numpnts(MeasTime)
+//	//Differentiate/METH=1  PD_range /D=GainChanges
+//	//GainChanges = abs(GainChanges)
+//	//contains 0 where gain does not change and 1 where the gain changes... 
+//	variable i, curGain, maskTime, j, maskTimeUp
+//	//deal with range change for gain 1
+//	FindLevels/Q  /D=RangeChanges  /P  PD_range, 1.1 
+//	For(i=0;i<numpnts(RangeChanges);i+=1)
+//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage1BlockTime, AmplifierRange1BlockTime)
+//	endfor
+//	FindLevels /Q /D=RangeChanges  /P  PD_range, 2.1 
+//	For(i=0;i<numpnts(RangeChanges);i+=1)
+//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage2BlockTime, AmplifierRange2BlockTime)
+//	endfor
+//	FindLevels /Q /D=RangeChanges  /P  PD_range, 3.1 
+//	For(i=0;i<numpnts(RangeChanges);i+=1)
+//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage3BlockTime, AmplifierRange3BlockTime)
+//	endfor
+//	FindLevels /Q /D=RangeChanges  /P  PD_range, 4.1 
+//	For(i=0;i<numpnts(RangeChanges);i+=1)
+//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage4BlockTime, AmplifierRange4BlockTime)
+//	endfor
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-Function IN3_MaskPointsForGivenTime(IntWv,TimeWv,PointNum,MaskTimeUp, MaskTimeDown)
-	wave IntWv,TimeWv
-	variable PointNum,MaskTimeUp, MaskTimeDown
+Function IN3_MaskPointsForGivenTime(MaskedWave,TimeWv,PointNum, MaskTimeDown)
+	wave MaskedWave,TimeWv
+	variable PointNum, MaskTimeDown
 	variable NumPntsW
-	NumPntsW = numpnts(IntWv)
+	NumPntsW = numpnts(MaskedWave)
 	variable i, maskTime
 	i=0
-	Do
-		IntWv[PointNum+i]=nan
-		maskTimeDown -=TimeWv[PointNum+i]
-		i+=1
-	 while ((maskTimeDown>0)&&((PointNum+i)<NumPntsW))
-	i =1
-	Do
-		IntWv[PointNum-i]=nan
-		maskTimeUp -=TimeWv[PointNum-i]
-		i+=1
-	 while (maskTimeUp>0&&((PointNum-i)>=0))
-	
-	
+	if(MaskTimeDown>0)
+		Do
+			MaskedWave[PointNum+i]=nan
+			maskTimeDown -=TimeWv[PointNum+i]
+			i+=1
+		 while ((maskTimeDown>0)&&((PointNum+i)<NumPntsW))
+	endif
 end
+
+//
+//Function IN3_MaskPointsForGivenTime(IntWv,TimeWv,PointNum,MaskTimeUp, MaskTimeDown)
+//	wave IntWv,TimeWv
+//	variable PointNum,MaskTimeUp, MaskTimeDown
+//	variable NumPntsW
+//	NumPntsW = numpnts(IntWv)
+//	variable i, maskTime
+//	i=0
+//	Do
+//		IntWv[PointNum+i]=nan
+//		maskTimeDown -=TimeWv[PointNum+i]
+//		i+=1
+//	 while ((maskTimeDown>0)&&((PointNum+i)<NumPntsW))
+//	i =1
+//	Do
+//		IntWv[PointNum-i]=nan
+//		maskTimeUp -=TimeWv[PointNum-i]
+//		i+=1
+//	 while (maskTimeUp>0&&((PointNum-i)>=0))
+//	
+//	
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints, MinStep)
-	wave WvX, WvTime, Wv2, Wv3, Wv4
+Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,Wv5,NumberOfPoints, MinStep)
+	wave WvX, WvTime, Wv2, Wv3, Wv4, Wv5
 	variable NumberOfPoints, MinStep
 	//	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints)
 	//note, WvX, Wv4 (pd_range), and WvTime is averages, but others are full time (no avergaing).... also, do not count if Wv3 are Nans
@@ -539,11 +609,12 @@ Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints, MinStep
 	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
 	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
 	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
-	make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvTime, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4
+	make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvTime, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4, Rebinned_Wv5
 	Rebinned_WvTime=0
 	Rebinned_Wv2=0	
 	Rebinned_Wv3=0	
 	Rebinned_Wv4=0	
+	Rebinned_Wv5=0	
 	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
 	//first assume that we can step through this easily...
 	variable cntPoints, BinHighEdge
@@ -560,6 +631,7 @@ Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints, MinStep
 					Rebinned_Wv2[i]+=Wv2[j]
 					Rebinned_Wv3[i] += Wv3[j]
 					Rebinned_Wv4[i] += Wv4[j]
+					Rebinned_Wv5[i] += Wv5[j]
 					cntPoints+=1
 				endif
 				j+=1
@@ -572,6 +644,7 @@ Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints, MinStep
 					Rebinned_Wv2[i]+=Wv2[j]
 					Rebinned_Wv3[i] += Wv3[j]
 					Rebinned_Wv4[i] += Wv4[j]
+					Rebinned_Wv5[i] += Wv5[j]
 					cntPoints+=1
 				endif
 				j+=1
@@ -582,14 +655,16 @@ Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,NumberOfPoints, MinStep
 		//Rebinned_Wv3[i]/=cntPoints
 		Rebinned_Wv4[i]/=cntPoints
 		Rebinned_WvX[i]/=cntPoints
+		Rebinned_Wv5[i]/=cntPoints
 	endfor
 	
-	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, WvTime, Wv2, Wv3, Wv4
+	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, WvTime, Wv2, Wv3, Wv4, Wv5
 	WvX=Rebinned_WvX
 	WvTime=Rebinned_WvTime
 	Wv2=Rebinned_Wv2
 	Wv3=Rebinned_Wv3
 	Wv4=Rebinned_Wv4
+	Wv5=Rebinned_Wv5
 		
 end
 
@@ -653,6 +728,9 @@ Function IN3_FlyScanRebinData2(WvX, Wv1, Wv2,NumberOfPoints)
 		Rebinned_Wv2[i]=sqrt(Rebinned_Wv2[i])		//this is standard deviation
 		Rebinned_Wv2[i]/=sqrt(cntPoints)			//and this makes is SEM - standard error of mean
 		Rebinned_WvX[i]/=cntPoints
+		if(j>=OldNumPnts-1)
+			break
+		endif
 	endfor	
 	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, Wv1, Wv2
 	WvX=Rebinned_WvX

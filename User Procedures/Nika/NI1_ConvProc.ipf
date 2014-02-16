@@ -97,7 +97,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	wave DspacingA=$("root:Packages:Convert2Dto1D:Dspacing_"+orientation)
 	wave DspacingWidthA=$("root:Packages:Convert2Dto1D:DspacingWidth_"+orientation)
 
-	wave DistanceInmmA=$("root:Packages:Convert2Dto1D:DistanceInmm_"+orientation)
+	wave/Z DistanceInmmA=$("root:Packages:Convert2Dto1D:DistanceInmm_"+orientation)
 	wave DistacneInmmWidthA=$("root:Packages:Convert2Dto1D:DistacneInmmWidth_"+orientation)
 	
 	NVAR DoGeometryCorrection=root:Packages:Convert2Dto1D:DoGeometryCorrection
