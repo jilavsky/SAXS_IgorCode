@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.54
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.56 changed the ZoomAndSetLimits to be dynamic menu item
 //2.55 moved Zoom and set limits to GraphMarquee menu. 
 //2.54 version release, January 2014
 //2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed
@@ -38,8 +39,9 @@ constant CurrentVersionNumber = 2.54
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
 
 
-Menu "GraphMarquee"
-	"Zoom and set limits", ZoomAndSetLimits()
+Menu "GraphMarquee", dynamic
+     IR2_MenuItemForGraph("Zoom And Set Limits","GeneralGraph"),/Q, ZoomAndSetLimits()
+	//"Zoom and set limits", ZoomAndSetLimits()
 End
 
 Menu "SAS"
@@ -152,6 +154,17 @@ end
 
 
 
+//****************************************************************************************
+//****************************************************************************************
+//****************************************************************************************
+Function/S IR2_MenuItemForGraph(menuItem, onlyForThisGraph)
+	String menuItem, onlyForThisGraph
+	String topGraph=WinName(0,1,1)
+	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
+		return menuItem
+	endif
+	return "" 	// disappearing menu item
+End
 //****************************************************************************************
 //****************************************************************************************
 //****************************************************************************************

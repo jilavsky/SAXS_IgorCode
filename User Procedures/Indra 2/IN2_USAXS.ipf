@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.33
+#pragma version = 1.34
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.34 changed RemovePointswith marquee to be dynamic menuitem.
 //1.33 added Remove points with marquee
 //1.32 added FlyScan and panel check for Indra version
 //1.31 added ability to use pinDiode transmission measured first time 4/2013
@@ -19,8 +20,19 @@
 //1.26 release 1.74 of Indra package, 2/16/2012. Some minor fixes.
 //1.25 release 1.73 of Indra package, 2/19/2012. Added new Xtal calculator.
 
-Menu "GraphMarquee"
-	"Remove Points with Marquee", RemovePointsWithMarquee()
+Menu "GraphMarquee", dynamic
+      IN2_MenuItemForGraph("Remove Points With Marquee","RcurvePlotGraph"),/Q, RemovePointsWithMarquee()
+
+	//"Remove Points with Marquee", RemovePointsWithMarquee()
+End
+
+Function/S IN2_MenuItemForGraph(menuItem, onlyForThisGraph)
+	String menuItem, onlyForThisGraph
+	String topGraph=WinName(0,1,1)
+	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
+		return menuItem
+	endif
+	return "" 	// disappearing menu item
 End
 
 
@@ -192,29 +204,52 @@ end
 
 Function RemovePointsWithMarquee()
 	//this will zoom graph and set limits to the appropriate numbers
-	GetMarquee/K left, bottom
+	GetMarquee left, bottom
 	if(!stringmatch(S_MarqueeWin"RcurvePlotGraph"))
 		return 0	
 	endif
-	variable pointNumberToBeRemoved=xcsr(A)
-	Wave IntWv=root:Packages:Indra3:R_Int
-	Wave QWv=root:Packages:Indra3:R_Qvec
-	getmarquee/W=RcurvePlotGraph bottom
-	variable StartPntX, EndPntX, StartPntY, EndPntY
-	StartPntX = BinarySearch(QWv, V_left )
-	EndPntX = BinarySearch(QWv, V_right )+1
-	StartPntY = BinarySearch(IntWv, V_top )
-	EndPntY = BinarySearch(IntWv, V_bottom )+1
+	variable isBlank = 1
+	CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:SMR_Int
+	if(V_Flag>0)
+		isBlank = 0
+		Wave IntWv=root:Packages:Indra3:SMR_Int
+		Wave QWv  =root:Packages:Indra3:SMR_Qvec
+	endif
+	CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:DSM_Int
+	if(V_Flag>0)
+		isBlank = 0
+		Wave IntWv=root:Packages:Indra3:DSM_Int
+		Wave QWv  =root:Packages:Indra3:DSM_Qvec
+	endif
+	if(isBlank)
+		Wave IntWv=root:Packages:Indra3:R_Int
+		Wave QWv  =root:Packages:Indra3:R_Qvec
+	endif 
+	if(isBlank) 
+		getmarquee/W=RcurvePlotGraph left, bottom
+	else
+		getmarquee/W=RcurvePlotGraph right, bottom
+	endif
+	variable StartPntX, EndPntX
+	FindLevel/Q QWv, V_left 
+	if(!V_Flag)
+		StartPntX = floor(V_levelX)
+	else
+		StartPntX = 0
+	endif
+	FindLevel/Q QWv, V_right 
+	if(!V_Flag)
+		EndPntX = ceil(V_levelX)
+	else
+		EndPntX = numpnts(QWv)-1
+	endif
 	variable StartPnt, EndPnt
-	StartPnt=StartPntX
-	if(StartPntY>StartPntX)
-		StartPnt = StartPntY
-	endif
-	EndPnt = EndPntX
-	if(EndPntX>EndPntY)
-		EndPnt = EndPntY
-	endif
-	IntWv[StartPnt, EndPnt]=NaN
+	variable i
+	For(i=StartPntX;i<=EndPntX;i+=1)
+		if(IntWv[i]<V_top && IntWv[i]>V_bottom)
+			IntWv[i]=NaN
+		endif
+	endfor
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************

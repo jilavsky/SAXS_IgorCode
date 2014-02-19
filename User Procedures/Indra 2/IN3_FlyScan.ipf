@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.15
-Constant IN3_FlyImportVersionNumber=0.15
+#pragma version=0.16
+Constant IN3_FlyImportVersionNumber=0.16
 
 
 //*************************************************************************\
@@ -8,6 +8,12 @@ Constant IN3_FlyImportVersionNumber=0.15
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+//0.16 modified sorting of the h5 files in the GUI. 
+//0.15 many changes, I0gain, new gain change masking method, use records from mca changes to create UPD_gain etc.  
+// 0.11 added transmission handling
+//version 0.1 developement of import functions and GUIs
+
 
 //FlyScan data reduction
 //Constant AmplifierPreRage1BlockTime=0.09  //09
@@ -20,9 +26,6 @@ Constant AmplifierRange3BlockTime=0.00
 Constant AmplifierRange4BlockTime=0.00
 Constant AmplifierRange5BlockTime=0.4
 
-//0.15 many changes, I0gain, new gain change masking method, use records from mca changes to create UPD_gain etc.  
-// 0.11 added transmission handling
-//version 0.1 developement of import functions and GUIs
 
 
 
@@ -169,9 +172,14 @@ Function IN3_FSUpdateListOfFilesInWvs()
 		imax = ItemsInList(ListOfAllFiles,";")
 		Redimension/N=(imax) WaveOfSelections
 		Redimension/N=(imax) WaveOfFiles
+		Duplicate/Free WaveOfSelections, TmpSortWv
 		for (i=0;i<imax;i+=1)
 			WaveOfFiles[i] = stringFromList(i, ListOfAllFiles,";")
 		endfor
+		For(i=0;i<numpnts(TmpSortWv);i+=1)
+			TmpSortWv[i] = str2num(StringFromList(0, WaveOfFiles[i] , "_")[1,inf])
+		endfor
+		Sort TmpSortWv, WaveOfFiles
 	else
 		Redimension/N=0 WaveOfSelections
 		Redimension/N=0 WaveOfFiles
