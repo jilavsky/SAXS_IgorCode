@@ -5,6 +5,7 @@ Code modification history
 ********************************************
 2.55 
 ASCII export - fixed bug which prevented Multiple QRS data export.  
+Plotting tool I - made “Zoom and Set limits” marquee item dynamic, so it shows only on the right graph. 
 
 2.54 1/5/2014
 All files - extended copyright to 2005 - 2014

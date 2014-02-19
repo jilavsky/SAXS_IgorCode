@@ -3,6 +3,10 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.65 2/20/2014
+Fixed minor bug in LP profiles note handling. Matching release for Indra package. 
+
+
 1.64 1/5/2014
 All files - extended copyright to 2005 - 2014
 Installer - version 1.23 will handle stale links to hdf5 xops. 

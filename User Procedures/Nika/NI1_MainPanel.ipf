@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.32
+#pragma version=2.33
 Constant NI1AversionNumber = 2.32
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.32
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.33 fixed bug in LP profille wave names for notes addition. 
 //2.32 adds DataCalibrationStgring to data and GUI
 //2.31 added *.maccd and combined all mpa formats into one loader (*.mpa). Have 4 versions of this format, three I had working versions, csv I did tno. SO the three are loaded, csv gives error. 
 //2.30 added move up down controls for small screens
@@ -1153,12 +1154,12 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					Wave wv4= $("qz_"+UseName)	
 					Wave wv5= $("qy_"+UseName)
 					Wave wv7= $("az_"+UseName)	
-					note ww2, "Units=1/A;"
-					note ww4, "Units=1/A;"
-					note ww5, "Units=1/A;"
+					note wv2, "Units=1/A;"
+					note wv4, "Units=1/A;"
+					note wv5, "Units=1/A;"
 				if(stringmatch(LineProf_CurveType, "GI*"))
 						Wave/Z wv6= $("qx_"+UseName)	
-						note ww6, "Units=1/A;"
+						note wv6, "Units=1/A;"
 						Sort wv2, wv1, wv2, wv3, wv4, wv5, wv6, wv7
 				elseif(stringmatch(LineProf_CurveType, "Ellipse"))
 						Sort wv7, wv1, wv2, wv3, wv4, wv5, wv7
