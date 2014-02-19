@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.64
+#pragma version=1.65
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
   
+  //1.65 minor changes, timed with Indra 2 release. 
  //1.64 match current release number 
  //1.61 added Monthly check for updates and reminder with citations 
  //1.60  15idd support changes
@@ -183,7 +184,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2014"
-	DrawText 49,103,"Release 1.64 from 1/5/2014"
+	DrawText 49,103,"Release 1.65 from 2/20/2014"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 

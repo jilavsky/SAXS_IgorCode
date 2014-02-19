@@ -26,15 +26,6 @@ Menu "GraphMarquee", dynamic
 	//"Remove Points with Marquee", RemovePointsWithMarquee()
 End
 
-Function/S IN2_MenuItemForGraph(menuItem, onlyForThisGraph)
-	String menuItem, onlyForThisGraph
-	String topGraph=WinName(0,1,1)
-	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
-		return menuItem
-	endif
-	return "" 	// disappearing menu item
-End
-
 
 Menu "USAXS"
 	"Import RAW Data [SPEC]", In2_ImportData()
@@ -127,6 +118,21 @@ Menu "USAXS"
 	"About", IN2_AboutPanel()
 	help={"Information about the version"}
 end
+
+
+//****************************************************************************************
+//****************************************************************************************
+//****************************************************************************************
+
+Function/S IN2_MenuItemForGraph(menuItem, onlyForThisGraph)
+	String menuItem, onlyForThisGraph
+	String topGraph=WinName(0,1,1)
+	if( CmpStr(topGraph,onlyForThisGraph) == 0 )
+		return menuItem
+	endif
+	return "" 	// disappearing menu item
+End
+
 
 //****************************************************************************************
 //****************************************************************************************
@@ -287,8 +293,8 @@ Function IN2_AboutPanel()
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.0"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ Jan Ilavsky, 2012"
-	DrawText 49,103,"release 1.79 from 4/23/2013"
+	DrawText 52,64,"@ Jan Ilavsky, 2014"
+	DrawText 49,103,"release 1.82 from 2/20/2014"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end

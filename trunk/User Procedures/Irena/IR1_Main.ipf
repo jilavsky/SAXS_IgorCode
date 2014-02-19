@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.55
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
-constant CurrentVersionNumber = 2.54
+constant CurrentVersionNumber = 2.55
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -11,8 +11,7 @@ constant CurrentVersionNumber = 2.54
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.56 changed the ZoomAndSetLimits to be dynamic menu item
-//2.55 moved Zoom and set limits to GraphMarquee menu. 
+//2.55 moved Zoom and set limits to GraphMarquee menu, changed the ZoomAndSetLimits to be dynamic menu item
 //2.54 version release, January 2014
 //2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed
 //2.52 Summer 2013 release. 

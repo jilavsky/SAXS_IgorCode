@@ -55,11 +55,11 @@
 #include ":IR1_LSQF_UserFncts", version>=2.01
 #include ":IR1_LSQF_UserModelMain", version>=2.01
 #include ":IR1_LSQF_UserPanel", version>=2.02
-#include ":IR1_Main", version>=2.54
+#include ":IR1_Main", version>=2.55
 #include ":IR1_Panel", version>=2.03
 //#include ":IR1_PlotStylesMngr", version>=2.01
 #include ":IR1_Recording", version>=2.03
-#include ":IR1_ScattContr_New", version>=2.16
+#include ":IR1_ScattContr_New", version>=2.17
 #include ":IR1_Sizes", version>=2.14
 #include ":IR1_SupportFncts", version>=2.03
 #include ":IR1_Unified_Fit_Fncts", version>=2.13
@@ -75,7 +75,7 @@
 #include ":IR2_ScriptingTool", version>=1.20
 #include ":IR2_SmallAngleDiff", version>=1.09
 #include ":IR2_StructureFactors", version>=1.06
-#include ":IR2_UniversalDataExport", version>=1.06
+#include ":IR2_UniversalDataExport", version>=1.07
 #include ":IR2L_NLSQFCalc", version>=1.08
 #include ":IR2L_NLSQFfunctions", version>=1.15
 #include ":IR2L_NLSQFmain", version>=1.13

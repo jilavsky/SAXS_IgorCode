@@ -1,6 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.80
+#pragma version=1.82
 
+//1.82 first user release of FLyScan support
+//1.81 developement FLyScan version
 //1.80 added FlyScan support and some GUI changes. 
 //1.79 added ability to read pinDiode Transmission measured first during 4/2013
 //1.78 added weight calibration 
@@ -73,8 +75,8 @@ Function IN2L_GenerateReadMe()
 	Notebook $nb showRuler=1, rulerUnits=2, updating={1, 3600}
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
 	Notebook $nb newRuler=Header, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",14,0,(0,0,0)}
-	Notebook $nb ruler=Header, text="Quick Manual for Indra2 version of USAXS macros\r"
-	Notebook $nb ruler=Normal, text="This is version 1.80 of Indra macros, date: 1/1/2014\r"
+	Notebook $nb ruler=Header, text="Quick Manual for Indra 2 version of USAXS macros\r"
+	Notebook $nb ruler=Normal, text="This is version 1.82 of Indra macros, date: 2/20/2014\r"
 	Notebook $nb text="\r"
 	Notebook $nb text="Procedure review:\r"
 	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import RAW data\", \"Import Desktop..\", \"Import USAXS FlyScan data\".\r"

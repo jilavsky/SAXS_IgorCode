@@ -21,8 +21,8 @@
 #include ":NI1_InstrumentSupport",version>=1.00
 #include ":NI1_LineProfCalcs",version>=2.09
 #include ":NI1_LineProfile", version>=2.02
-#include ":NI1_main", version>=1.64
-#include ":NI1_MainPanel", version>=2.32
+#include ":NI1_main", version>=1.65
+#include ":NI1_MainPanel", version>=2.33
 #include ":NI1_mar345", version>=1.03
 #include ":NI1_mask", version>=1.16
 #include ":NI1_pix2Dsensitivity",version>=1.02
