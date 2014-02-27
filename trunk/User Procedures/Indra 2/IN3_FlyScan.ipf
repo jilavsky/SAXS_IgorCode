@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.16
+#pragma version=0.17
 Constant IN3_FlyImportVersionNumber=0.16
 
 
@@ -9,6 +9,7 @@ Constant IN3_FlyImportVersionNumber=0.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.17  fixed for use of only 3 mcs channels (removed upd and I0 gains). 
 //0.16 modified sorting of the h5 files in the GUI. 
 //0.15 many changes, I0gain, new gain change masking method, use records from mca changes to create UPD_gain etc.  
 // 0.11 added transmission handling
@@ -314,6 +315,9 @@ Function IN3_FlyScanLoadHdf5File()
 			KillWindow $(browserName)
 			RawFolderWithData = GetDataFOlder(1)+shortFileName
 			print "Imported HDF5 file : "+RawFolderWithData
+#if(exists("AfterFlyImportHook")==6)
+		AfterFlyImportHook(RawFolderWithData)
+#endif	
 			IN3_FSConvertToUSAXS(RawFolderWithData)
 			print "Converted : "+RawFolderWithData+" into USAXS data"
 		endif
@@ -341,8 +345,8 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave TimeWv=:entry:flyScan:mca1
 	Wave I0Wv=:entry:flyScan:mca2
 	Wave updWv=:entry:flyScan:mca3
-	Wave GainWv=:entry:flyScan:mca4
-	Wave I0GainWv=:entry:flyScan:mca5
+//	Wave GainWv=:entry:flyScan:mca4
+//	Wave I0GainWv=:entry:flyScan:mca5
 	Duplicate/Free TimeWv, ArValues
 	Redimension /D ArValues
 	Wave Ar_start=:entry:flyScan:AR_start
@@ -399,8 +403,8 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD
-	Duplicate/O GainWv, PD_range
-	Duplicate/O I0GainWv, I0gain
+	Duplicate/O TimeWv, PD_range
+	Duplicate/O TimeWv, I0gain
 	
 	ArValues = Ar_increment[0]*p
 	Duplicate/O ArValues, Ar_encoder	
@@ -422,8 +426,11 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	make/Free/N=5 TimeRangeAfter
 	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,AmplifierRange5BlockTime}
 	//create PD_range using records, not mca channel...
-	variable iii, iiimax=numpnts(mcsChangePnts)
+	variable iii, iiimax=numpnts(mcsChangePnts)-1
 	variable StartRc, EndRc
+	if(iiimax<1)		//Fix for scanning when no range changes happen... 
+		PD_range = 4
+	endif
 	For(iii=0;iii<iiimax;iii+=1)
 		if(mcsChangePnts[iii]>0 || iii<4)
 			if(ampGain[iii]!=ampReqGain[iii])
@@ -437,11 +444,10 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 			endif
 		endif
 	endfor
-	I0gain = I0gain/MeasTime
-	I0gain = 10^round(I0gain/1e5)
-				//Need to shift Ar_encoder by something to get really log scale rebinning... Cannot be negative, so need to calculate some small offset 
-				//now we need to mask off the bad points... 
-				//IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
+	//for now use fixed I0 gain.. 
+	I0gain = I0gainW[0]
+	//I0gain = 10^round(I0gain/1e5)
+	// need to fix this to use mcs channels, but thoisae are not yet ready... 
 	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 	variable ArOffset, scanningDown
 	scanningDown = (Ar_encoder[0] > Ar_encoder[1]) ? 1 : 0
