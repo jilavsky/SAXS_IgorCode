@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.17
-Constant IN3_FlyImportVersionNumber=0.16
+#pragma version=0.18
+Constant IN3_FlyImportVersionNumber=0.18
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IN3_FlyImportVersionNumber=0.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.18 modified for new file format (3/1/2014), version =1, use dead time from Pvs etc., moved raw folder in spec file FLy folder. 
 //0.17  fixed for use of only 3 mcs channels (removed upd and I0 gains). 
 //0.16 modified sorting of the h5 files in the GUI. 
 //0.15 many changes, I0gain, new gain change masking method, use records from mca changes to create UPD_gain etc.  
@@ -16,11 +17,12 @@ Constant IN3_FlyImportVersionNumber=0.16
 //version 0.1 developement of import functions and GUIs
 
 
+//note, to run somthign just after hdf5 file import use function 
+//		AfterFlyImportHook(RawFolderWithData)
+//	parameter is string with hdf file location. 
+
 //FlyScan data reduction
-//Constant AmplifierPreRage1BlockTime=0.09  //09
-//Constant AmplifierPreRage2BlockTime=0.12	//12
-//Constant AmplifierPreRage3BlockTime=0.13
-//Constant AmplifierPreRage4BlockTime=0.15
+//this is for early data only, now this is in hdf file. 
 Constant AmplifierRange1BlockTime=0.00
 Constant AmplifierRange2BlockTime=0.00
 Constant AmplifierRange3BlockTime=0.00
@@ -43,7 +45,7 @@ Function IN3_FlyScanMain()
 	IN3_FlyScanImportPanelFnct()
 	ING2_AddScrollControl()
 	IN3_UpdatePanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber)
-
+	IN3_FSUpdateListOfFilesInWvs()
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -97,6 +99,8 @@ Function IN3_FlyScanImportPanelFnct()
 	SetVariable NameMatchString,pos={10,370},size={180,15},proc=IN3_FlyScanSetVarProc,title="Match name (string):"
 	SetVariable NameMatchString,help={"Insert name match string to display only some data"}
 	SetVariable NameMatchString,value= root:Packages:USAXS_FlyScanImport:NameMatchString
+	CheckBox LatestOnTopInPanel,pos={250,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
+
 	Button SelectAll,pos={7,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Select All"
 	Button SelectAll,help={"Select all waves in the list"}
 	Button DeSelectAll,pos={120,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Deselect All"
@@ -107,6 +111,7 @@ Function IN3_FlyScanImportPanelFnct()
 	Button ImportData,help={"Import the selected data files."}
 	Button ConfigureBehavior,pos={240,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
 	Button ConfigureBehavior,help={"Import the selected data files."}
+
 
 //	Button Preview,pos={300,152},size={80,15}, proc=IR1I_ButtonProc,title="Preview"
 //	Button Preview,help={"Preview selected file."}
@@ -147,6 +152,8 @@ Function IN3_FSUpdateListOfFilesInWvs()
 	SVAR DataPathName = root:Packages:USAXS_FlyScanImport:DataPathString
 	SVAR DataExtension  = root:Packages:USAXS_FlyScanImport:DataExtension
 	SVAR NameMatchString = root:Packages:USAXS_FlyScanImport:NameMatchString
+	NVAR LatestOnTopInPanel = root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel
+	
 	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
 	string ListOfAllFiles
@@ -180,7 +187,11 @@ Function IN3_FSUpdateListOfFilesInWvs()
 		For(i=0;i<numpnts(TmpSortWv);i+=1)
 			TmpSortWv[i] = str2num(StringFromList(0, WaveOfFiles[i] , "_")[1,inf])
 		endfor
-		Sort TmpSortWv, WaveOfFiles
+		if(LatestOnTopInPanel)
+			Sort/R TmpSortWv, WaveOfFiles
+		else
+			Sort TmpSortWv, WaveOfFiles
+		endif
 	else
 		Redimension/N=0 WaveOfSelections
 		Redimension/N=0 WaveOfFiles
@@ -288,7 +299,7 @@ Function IN3_FlyScanLoadHdf5File()
 	endif	
 	variable i, Overwrite
 	string FileName, ListOfExistingFolders
-	String browserName, shortFileName, RawFolderWithData
+	String browserName, shortFileName, RawFolderWithData, SpecFileName, RawFolderWithFldr
 	Variable locFileID
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
@@ -304,22 +315,43 @@ Function IN3_FlyScanLoadHdf5File()
 			endif
 			CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
+		 	DoWindow/Hide=1 browserName
 			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?
 				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
-			endif
-			HDf5Browser#LoadGroupButtonProc("LoadGroup")
+			
+				HDf5Browser#LoadGroupButtonProc("LoadGroup")
+				
+				KillWaves/Z Config_Version
+				HDF5LoadData /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
+				Wave/T Config_Version
+		
+				HDf5Browser#CloseFileButtonProc("CloseFIle")
 	
-			HDf5Browser#CloseFileButtonProc("CloseFIle")
-	
-			KillWindow $(browserName)
-			RawFolderWithData = GetDataFOlder(1)+shortFileName
-			print "Imported HDF5 file : "+RawFolderWithData
+				KillWindow $(browserName)
+				RawFolderWithData = GetDataFOlder(1)+shortFileName
+				RawFolderWithFldr = GetDataFolder(1)
+				variable/g $(RawFolderWithData+":HdfWriterVersion")
+				NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
+				HdfWriterVersion = str2num(Config_Version[0])
+				KillWaves/Z Config_Version
+
+				Wave/T SpecFileNameWv=$(RawFolderWithData+":entry:metadata:SPEC_data_file")
+				SpecFileName=SpecFileNameWv[0]
+				SpecFileName=stringFromList(0,SpecFileName,".")
+				NewDataFolder/O $(SpecFileName+"_Fly")
+				MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(SpecFileName+"_Fly"))
+				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(SpecFileName+"_Fly")+":"+shortFileName
+				print "Imported HDF5 file : "+RawFolderWithData
 #if(exists("AfterFlyImportHook")==6)
-		AfterFlyImportHook(RawFolderWithData)
+			AfterFlyImportHook(RawFolderWithData)
 #endif	
-			IN3_FSConvertToUSAXS(RawFolderWithData)
-			print "Converted : "+RawFolderWithData+" into USAXS data"
+				IN3_FSConvertToUSAXS(RawFolderWithData)
+				print "Converted : "+RawFolderWithData+" into USAXS data"
+			else
+				DoAlert 0, "Could not open "+FileName
+			endif
+
 		endif
 	endfor
 	setDataFolder OldDf
@@ -330,7 +362,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IN3_FSConvertToUSAXS(RawFolderWithData)
+Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	string RawFolderWithData
 	
 	string OldDf=GetDataFolder(1)
@@ -341,14 +373,11 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave/T SpecFileNameWv=:entry:metadata:SPEC_data_file
 	SpecFileName=SpecFileNameWv[0]
 	SpecFileName=stringFromList(0,SpecFileName,".")
+	NVAR HdfWriterVersion = HdfWriterVersion
 	//wave data to locate
 	Wave TimeWv=:entry:flyScan:mca1
 	Wave I0Wv=:entry:flyScan:mca2
 	Wave updWv=:entry:flyScan:mca3
-//	Wave GainWv=:entry:flyScan:mca4
-//	Wave I0GainWv=:entry:flyScan:mca5
-	Duplicate/Free TimeWv, ArValues
-	Redimension /D ArValues
 	Wave Ar_start=:entry:flyScan:AR_start
 	Wave Ar_increment=:entry:flyScan:Ar_increment
 	Wave updG1=:entry:metadata:upd_gain0
@@ -381,12 +410,39 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave/Z USAXSPinT_pinCounts=:entry:metadata:trans_pin_counts
 	Wave/Z USAXSPinT_pinGain=:entry:metadata:trans_pin_gain
 	Wave/Z USAXSPinT_Time= :entry:metadata:trans_pin_time
+
 	//USAXSPinT_Measure=1;USAXSPinT_AyPosition=11.1725;USAXSPinT_Time=3;USAXSPinT_pinCounts=1918487;
 	//USAXSPinT_pinGain=1000000;USAXSPinT_I0Counts=219754;USAXSPinT_I0Gain=10000000;
-	Wave mcsChangePnts = :entry:flyScan:changes_mcsChan
-	Wave ampGain = :entry:flyScan:changes_ampGain
-	Wave ampReqGain = :entry:flyScan:changes_ampReqGain
-	
+	make/Free/N=5 TimeRangeAfterUPD, TimeRangeAfterI0
+	if(HdfWriterVersion<1)
+		Wave mcsChangePnts = :entry:flyScan:changes_mcsChan
+		Wave ampGain = :entry:flyScan:changes_ampGain
+		Wave ampReqGain = :entry:flyScan:changes_ampReqGain
+		TimeRangeAfterUPD = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,AmplifierRange5BlockTime}
+		TimeRangeAfterI0 = {0,0,0,0,0}
+	elseif(HdfWriterVersion==1)
+		Wave AmplifierUsed = :entry:flyScan:upd_flyScan_amplifier		//1 for DDPCA300, 0 for DLPCA200
+		Wave DDPCA300_ampGain = :entry:flyScan:changes_DDPCA300_ampGain
+		Wave DDPCA300_ampReqGain = :entry:flyScan:changes_DDPCA300_ampReqGain
+		Wave DDPCA300_mcsChan = :entry:flyScan:changes_DDPCA300_mcsChan
+		Wave DLPCA200_ampGain = :entry:flyScan:changes_DLPCA200_ampGain
+		Wave DLPCA200_ampReqGain = :entry:flyScan:changes_DLPCA200_ampReqGain
+		Wave DLPCA200_mcsChan = :entry:flyScan:changes_DLPCA200_mcsChan
+		Wave I00_ampGain = :entry:flyScan:changes_I00_ampGain
+		Wave I00_ampReqGain = :entry:flyScan:changes_I00_ampReqGain
+		Wave I00_mcsChan = :entry:flyScan:changes_I00_mcsChan
+		Wave I0_ampGain = :entry:flyScan:changes_I0_ampGain
+		Wave I0_ampReqGain = :entry:flyScan:changes_I0_ampReqGain
+		Wave I0_mcsChan = :entry:flyScan:changes_I0_mcsChan
+		Wave mcaFrequency = :entry:flyScan:mca_clock_frequency
+		Wave updMaskR1 = :entry:metadata:upd_amp_change_mask_time0
+		Wave updMaskR2 = :entry:metadata:upd_amp_change_mask_time1
+		Wave updMaskR3 = :entry:metadata:upd_amp_change_mask_time2
+		Wave updMaskR4 = :entry:metadata:upd_amp_change_mask_time3
+		Wave updMaskR5 = :entry:metadata:upd_amp_change_mask_time4
+		TimeRangeAfterUPD = {updMaskR1[0],updMaskR2[0],updMaskR3[0],updMaskR4[0],updMaskR5[0]}
+		TimeRangeAfterI0 = {0,0,0,0,0}
+	endif
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
 	newDataFolder/O/S $(SpecFileName)
@@ -396,23 +452,23 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 		if(StringMatch(ListOfExistingFolders, "*,"+FileName+",*" ))
 			DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
 			if(V_Flag!=1)
-				return 0
+				return ""
 			endif	
 		endif
+
  	newDataFolder/O/S $(FileName)
 	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD
 	Duplicate/O TimeWv, PD_range
 	Duplicate/O TimeWv, I0gain
-	
-	ArValues = Ar_increment[0]*p
+	//create AR data
+	Duplicate/Free TimeWv, ArValues
+	Redimension /D ArValues
+	ArValues = abs(Ar_increment[0])*p
 	Duplicate/O ArValues, Ar_encoder	
+	redimension/D MeasTime, Monitor, USAXS_PD
 	//need to append the wave notes...
-	//DATAFILE=12_09_flyusaxs2.dat;EPOCH=1386631536;TZ=-6;SCAN_N=15;SECONDS=3469455865;DATE=Mon, Dec 9, 2013;HOUR=17:44:25
-	//COMMENT=PS_spheres_1_3um;SpecCommand=uascan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 793 -0.1 189 1 600 0.333333;
-	//SpecComment=PS_spheres_1_3um;SpecScan=spec15;USAXSDataFolder=root:USAXS:'12_09_flyusaxs2':S15_PS_spheres_1_3um
-	//;RawFolder=root:raw:'12_09_flyusaxs2':spec15:;UserSampleName=S15_PS_spheres_1_3um;Wname=AR_encoder;
 	string WaveNote
 	WaveNote="DATAFILE="+SpecFileNameWv[0]+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+"flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
 	WaveNote+=";SpecComment="+SampleNameW[0]+";"
@@ -421,67 +477,32 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	note/K USAXS_PD, WaveNote
 	note/K PD_range, WaveNote
 	note/K Ar_encoder, WaveNote
-	redimension/D Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range
-	MeasTime*=2e-08		//convert to seconds
-	make/Free/N=5 TimeRangeAfter
-	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,AmplifierRange5BlockTime}
 	//create PD_range using records, not mca channel...
-	variable iii, iiimax=numpnts(mcsChangePnts)-1
-	variable StartRc, EndRc
-	if(iiimax<1)		//Fix for scanning when no range changes happen... 
-		PD_range = 4
-	endif
-	For(iii=0;iii<iiimax;iii+=1)
-		if(mcsChangePnts[iii]>0 || iii<4)
-			if(ampGain[iii]!=ampReqGain[iii])
-				StartRc = mcsChangePnts[iii]
-			endif
-			if(ampGain[iii]==ampReqGain[iii])
-				EndRc = mcsChangePnts[iii]
-				PD_range[StartRc,EndRc] = nan
-				PD_range[EndRc+1,] = ampGain[iii]+1
-				IN3_MaskPointsForGivenTime(PD_range,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
-			endif
+	if(HdfWriterVersion<1)
+		MeasTime*=2e-08				//convert to seconds
+		IN3_FSCreateGainWave(PD_range,ampReqGain,ampGain,mcsChangePnts, TimeRangeAfterUPD,MeasTime)
+		I0gain = I0gainW[0]
+	elseif(HdfWriterVersion==1)
+		MeasTime/=mcaFrequency[0]		//convert to seconds
+		if(AmplifierUsed)		//DDPCA300
+			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
+		else						//DLPCA200
+			IN3_FSCreateGainWave(PD_range,DLPCA200_ampReqGain,DLPCA200_ampGain,DLPCA200_mcsChan, TimeRangeAfterUPD,MeasTime)
 		endif
-	endfor
-	//for now use fixed I0 gain.. 
-	I0gain = I0gainW[0]
-	//I0gain = 10^round(I0gain/1e5)
-	// need to fix this to use mcs channels, but thoisae are not yet ready... 
-	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-	variable ArOffset, scanningDown
-	scanningDown = (Ar_encoder[0] > Ar_encoder[1]) ? 1 : 0
-	if(scanningDown)	//scanning down in angle
-					//	ArOffset = Ar_encoder[0] - (Ar_encoder[10]-Ar_encoder[0])
-					//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],Ar_start[0]+Ar_encoder[0],NumberOfTempPoints,Ar_increment[0])
-					//Ar_encoder += ArOffset
-		Ar_encoder = abs(Ar_encoder)
-	else		//scanning up in angle
-					//ArOffset = Ar_encoder[0] + (Ar_encoder[10]-Ar_encoder[0])
-					//ArOffset = FindCorrectStart(Ar_start[0]+Ar_encoder[0],Ar_start[0]+Ar_encoder[numpnts(Ar_encoder)-1],NumberOfTempPoints,Ar_increment[0])
-					//Ar_encoder += ArOffset
-		Ar_encoder = abs(Ar_encoder)
+		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
+	
 	endif
-					//	//attempt to remvoe oscillations...
-					//	duplicate/O MeasTime, MeasTimeSmooth, MeasTimeRatio
-					//	Smooth/E=3/EVEN/B 50, MeasTimeSmooth
-					//	MeasTimeRatio = MeasTime / MeasTimeSmooth
-					//	duplicate/O  Monitor, MonitorOrg
-					//	Duplicate/O MonitorOrg, AveI0Wv 
-					//	duplicate/O MeasTime, MeasTimeOrg
-					//	AveI0Wv = MonitorOrg  / MeasTime	//* I0gain
-
+				//	variable ArOffset, scanningDown
+				//	scanningDown = (Ar_encoder[0] > Ar_encoder[1]) ? 1 : 0
+				//	if(scanningDown)	//scanning down in angle
+				//		Ar_encoder = abs(Ar_encoder)
+				//	else		//scanning up in angle
+				//		Ar_encoder = abs(Ar_encoder)
+				//	endif
+	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, NumberOfTempPoints, Ar_increment[0])
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
-				//Ar_encoder -=ArOffset
-				//Ar_encoder +=Ar_start[0]
-				//put AR on regular angular scale...
-				//fix cases when PD_range is not integer, if they are still there...
-				//PD_range[] = (PD_range[p]-floor(PD_range[p])==0) ? PD_range : nan
-
-	//Ok, this should remove points with I0 < 90% of average value 
-	//IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
-
+	
 	//let's make some standard strings we need.
 	string/g PathToRawData
 	PathToRawData=RawFolderWithData
@@ -497,13 +518,6 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 	UPDParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
 	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"
 	string/g MeasurementParameters
-	//DCM_energy=10.5;UPD2mode=2;UPD2range=4;UPD2vfc=100000;UPD2gain=1000000000000;UPD2selected=1;
-	//UPD2gain1=10000;UPD2bkg1=2;UPD2bkgErr1=0;UPD2gain2=1000000;UPD2bkg2=2;UPD2bkgErr2=0;
-	//UPD2gain3=100000000;UPD2bkg3=2;UPD2bkgErr3=0;UPD2gain4=10000000000;UPD2bkg4=182.4;UPD2bkgErr4=4.77493;
-	//UPD2gain5=1000000000000;UPD2bkg5=17440.4;UPD2bkgErr5=824.622;thickness=1;ARenc_0=17.8206;SAD=189;
-	//SDD=793;CCD_DX=0;CCD_DY=44.5;DIODE_DX=64.9087;DIODE_DY=26.2812;UATERM=1;USAXSPinT_Measure=0
-	//USAXSPinT_AyPosition=11.1724;USAXSPinT_Time=3;USAXSPinT_pinCounts=0;USAXSPinT_pinGain=0;USAXSPinT_I0Counts=0;USAXSPinT_I0Gain=0;
-	//
 	MeasurementParameters="DCM_energy="+num2str(DCM_energyW[0])+";SAD="+num2str(SADW[0])+";SDD="+num2str(SDDW[0])+";thickness="+num2str(SampleThicknessW[0])+";"
 	MeasurementParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"
 	MeasurementParameters+="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
@@ -516,6 +530,33 @@ Function IN3_FSConvertToUSAXS(RawFolderWithData)
 		endif
 	endif
 	setDataFolder OldDf
+	return SpecFileName
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
+	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
+	
+	variable iii, iiimax=numpnts(mcsChangePnts)-1
+	variable StartRc, EndRc
+	if(iiimax<1)		//Fix for scanning when no range changes happen... 
+		GainWv = 4
+	endif
+	For(iii=0;iii<iiimax;iii+=1)
+		if(mcsChangePnts[iii]>0 || iii<4)
+			if(ampGain[iii]!=ampGainReq[iii])
+				StartRc = mcsChangePnts[iii]
+			endif
+			if(ampGain[iii]==ampGainReq[iii])
+				EndRc = mcsChangePnts[iii]
+				GainWv[StartRc,EndRc] = nan
+				GainWv[EndRc+1,] = ampGain[iii]+1
+				IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+			endif
+		endif
+	endfor
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -921,15 +962,7 @@ Function IN3_FlyScanInitializeImport()
 	ListOfStrings = "DataPathString;DataExtension;SelectedFileName;NewDataFolderName;NameMatchString;"
 //	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;;TooManyPointsWarning;RemoveStringFromName;"
 	ListOfVariables = "NumberOfOutputPoints;DoubleClickImports;DoubleClickOpensInBrowser;NumberOfTempPoints;"
-//	ListOfVariables += "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;FoundNWaves;"	
-//	ListOfVariables += "Col2Int;Col2Qvec;Col2Err;Col2QErr;Col3Int;Col3Qvec;Col3Err;Col3QErr;Col4Int;Col4Qvec;Col4Err;Col4QErr;"	
-//	ListOfVariables += "Col5Int;Col5Qvec;Col5Err;Col5QErr;Col6Int;Col6Qvec;Col6Err;Col6QErr;Col7Int;Col7Qvec;Col7Err;Col7QErr;"	
-//	ListOfVariables += "QvectInA;QvectInNM;CreateSQRTErrors;CreatePercentErrors;PercentErrorsToUse;"
-//	ListOfVariables += "ScaleImportedData;ScaleImportedDataBy;ImportSMRdata;SkipLines;SkipNumberOfLines;"	
-//	ListOfVariables += "IncludeExtensionInName;RemoveNegativeIntensities;AutomaticallyOverwrite;"	
-//	ListOfVariables += "TrimData;TrimDataQMin;TrimDataQMax;ReduceNumPnts;TargetNumberOfPoints;ReducePntsParam;"	
-//	ListOfVariables += "NumOfPointsFound;TrunkateStart;TrunkateEnd;"	
-//	ListOfVariables += "DataCalibratedArbitrary;DataCalibratedVolume;DataCalibratedWeight;"	
+	ListOfVariables = "LatestOnTopInPanel;"
 
 		//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
