@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.18
-Constant IN3_FlyImportVersionNumber=0.18
+#pragma version=0.19
+Constant IN3_FlyImportVersionNumber=0.19
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IN3_FlyImportVersionNumber=0.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.19 fixed missing checkbox procedure and added first attempt to support xpcs data 
 //0.18 modified for new file format (3/1/2014), version =1, use dead time from Pvs etc., moved raw folder in spec file FLy folder. 
 //0.17  fixed for use of only 3 mcs channels (removed upd and I0 gains). 
 //0.16 modified sorting of the h5 files in the GUI. 
@@ -99,7 +100,8 @@ Function IN3_FlyScanImportPanelFnct()
 	SetVariable NameMatchString,pos={10,370},size={180,15},proc=IN3_FlyScanSetVarProc,title="Match name (string):"
 	SetVariable NameMatchString,help={"Insert name match string to display only some data"}
 	SetVariable NameMatchString,value= root:Packages:USAXS_FlyScanImport:NameMatchString
-	CheckBox LatestOnTopInPanel,pos={250,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
+	CheckBox LatestOnTopInPanel,pos={240,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
+	CheckBox ReduceXPCSdata,pos={240,390},size={16,14},proc=IN3_FlyCheckProc,title="Reduce XPCS data?",variable= root:Packages:USAXS_FlyScanImport:ReduceXPCSdata, help={"Check to redeuce XPCS not USAXS data"}
 
 	Button SelectAll,pos={7,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Select All"
 	Button SelectAll,help={"Select all waves in the list"}
@@ -109,8 +111,9 @@ Function IN3_FlyScanImportPanelFnct()
 	Button OpenFileInBrowser,help={"Check file in HDF5 Browser"}
 	Button ImportData,pos={120,440},size={100,30},proc=IN3_FlyScanButtonProc,title="Import"
 	Button ImportData,help={"Import the selected data files."}
-	Button ConfigureBehavior,pos={240,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
+	Button ConfigureBehavior,pos={240,440},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
 	Button ConfigureBehavior,help={"Import the selected data files."}
+
 
 
 //	Button Preview,pos={300,152},size={80,15}, proc=IR1I_ButtonProc,title="Preview"
@@ -130,6 +133,22 @@ EndMacro
 
 //************************************************************************************************************
 //************************************************************************************************************
+Function IN3_FlyCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			if(stringmatch(cba.ctrlName,"LatestOnTopInPanel"))
+				IN3_FSUpdateListOfFilesInWvs()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
 //************************************************************************************************************
 //************************************************************************************************************
 
@@ -291,6 +310,7 @@ Function IN3_FlyScanLoadHdf5File()
 	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
 	SVAR DataExtension = root:Packages:USAXS_FlyScanImport:DataExtension
+	NVAR ReduceXPCSdata = root:Packages:USAXS_FlyScanImport:ReduceXPCSdata
 	
 	variable NumSelFiles=sum(WaveOfSelections)	
 	variable OpenMultipleFiles=0
@@ -298,7 +318,7 @@ Function IN3_FlyScanLoadHdf5File()
 		return 0
 	endif	
 	variable i, Overwrite
-	string FileName, ListOfExistingFolders
+	string FileName, ListOfExistingFolders, tmpDtaFldr, shortNameBckp, TargetRawFoldername
 	String browserName, shortFileName, RawFolderWithData, SpecFileName, RawFolderWithFldr
 	Variable locFileID
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
@@ -322,32 +342,56 @@ Function IN3_FlyScanLoadHdf5File()
 			
 				HDf5Browser#LoadGroupButtonProc("LoadGroup")
 				
-				KillWaves/Z Config_Version
-				HDF5LoadData /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
-				Wave/T Config_Version
-		
+				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
+					KillWaves/Z Config_Version
+					HDF5LoadData /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
+					Wave/T Config_Version
+				endif
 				HDf5Browser#CloseFileButtonProc("CloseFIle")
 	
 				KillWindow $(browserName)
 				RawFolderWithData = GetDataFOlder(1)+shortFileName
 				RawFolderWithFldr = GetDataFolder(1)
-				variable/g $(RawFolderWithData+":HdfWriterVersion")
-				NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
-				HdfWriterVersion = str2num(Config_Version[0])
-				KillWaves/Z Config_Version
-
-				Wave/T SpecFileNameWv=$(RawFolderWithData+":entry:metadata:SPEC_data_file")
-				SpecFileName=SpecFileNameWv[0]
-				SpecFileName=stringFromList(0,SpecFileName,".")
-				NewDataFolder/O $(SpecFileName+"_Fly")
-				MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(SpecFileName+"_Fly"))
-				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(SpecFileName+"_Fly")+":"+shortFileName
+				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
+					variable/g $(RawFolderWithData+":HdfWriterVersion")
+					NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
+					HdfWriterVersion = str2num(Config_Version[0])
+					KillWaves/Z Config_Version					
+					Wave/T SpecFileNameWv=$(RawFolderWithData+":entry:metadata:SPEC_data_file")
+					SpecFileName=SpecFileNameWv[0]
+					SpecFileName=stringFromList(0,SpecFileName,".")
+					TargetRawFoldername = SpecFileName+"_Fly"
+				else
+					TargetRawFoldername = "Mythen_data"
+				endif
+				NewDataFolder/O $(TargetRawFoldername)
+				if(DataFolderExists(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName))
+					DoAlert /T="Folder name conflict" 1, "Folder : "+shortFileName+" already exists, overwrite (Yes) it or create unique name (No)?"
+					if(V_Flag==1)
+						KillDataFolder  $(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName)
+					elseif(V_Flag==2)
+						tmpDtaFldr = GetDataFolder(1)
+						setDataFolder (SpecFileName+"_Fly")
+						shortNameBckp = shortFileName
+						shortFileName = UniqueName(shortFileName, 11, 0 )
+					      setDataFolder tmpDtaFldr
+					      RenameDataFolder $(shortNameBckp), $(shortFileName)
+					endif
+				endif
+				MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))
+				
+				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+shortFileName
 				print "Imported HDF5 file : "+RawFolderWithData
 #if(exists("AfterFlyImportHook")==6)
 			AfterFlyImportHook(RawFolderWithData)
 #endif	
-				IN3_FSConvertToUSAXS(RawFolderWithData)
-				print "Converted : "+RawFolderWithData+" into USAXS data"
+				if(ReduceXPCSdata)
+					print "here belongs XPCS data conversion routine in the future" 
+					print "IN3_FlyScanLoadHdf5File()"
+				else
+					IN3_FSConvertToUSAXS(RawFolderWithData)	
+					print "Converted : "+RawFolderWithData+" into USAXS data"
+				endif
 			else
 				DoAlert 0, "Could not open "+FileName
 			endif
@@ -960,9 +1004,9 @@ Function IN3_FlyScanInitializeImport()
 	variable i
 	
 	ListOfStrings = "DataPathString;DataExtension;SelectedFileName;NewDataFolderName;NameMatchString;"
-//	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;;TooManyPointsWarning;RemoveStringFromName;"
+
 	ListOfVariables = "NumberOfOutputPoints;DoubleClickImports;DoubleClickOpensInBrowser;NumberOfTempPoints;"
-	ListOfVariables = "LatestOnTopInPanel;"
+	ListOfVariables += "LatestOnTopInPanel;ReduceXPCSdata;"
 
 		//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
