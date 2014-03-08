@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.19
+#pragma version=0.21
 Constant IN3_FlyImportVersionNumber=0.19
 
 
@@ -9,6 +9,8 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.21 fixed gain creation
+//0.20 changed DCM_energy to energy as changed in the files
 //0.19 fixed missing checkbox procedure and added first attempt to support xpcs data 
 //0.18 modified for new file format (3/1/2014), version =1, use dead time from Pvs etc., moved raw folder in spec file FLy folder. 
 //0.17  fixed for use of only 3 mcs channels (removed upd and I0 gains). 
@@ -113,21 +115,6 @@ Function IN3_FlyScanImportPanelFnct()
 	Button ImportData,help={"Import the selected data files."}
 	Button ConfigureBehavior,pos={240,440},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
 	Button ConfigureBehavior,help={"Import the selected data files."}
-
-
-
-//	Button Preview,pos={300,152},size={80,15}, proc=IR1I_ButtonProc,title="Preview"
-//	Button Preview,help={"Preview selected file."}
-
-//	TitleBox TooManyPointsWarning variable=root:Packages:ImportData:TooManyPointsWarning,fColor=(0,0,0)
-//	TitleBox TooManyPointsWarning pos={220,170},size={150,19}, disable=1
-	
-//	CheckBox ReduceNumPnts,pos={10,507},size={16,14},proc=IR1I_CheckProc,title="Reduce points?",variable= root:Packages:ImportData:ReduceNumPnts, help={"Check to log-reduce number of points"}
-//	SetVariable TargetNumberOfPoints, pos={110,505}, size={110,20},title="Num points=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
-//	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:ImportData:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipualtion I"}
-//
-////	PopupMenu SelectFolderNewData,pos={1,525},size={250,21},proc=IR1I_PopMenuProc,title="Select data folder", help={"Select folder with data"}
-////	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
 
 EndMacro
 
@@ -441,7 +428,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave updBkgErr5=:entry:metadata:upd_bkgErr4	
 	Wave/T SampleNameW=:entry:sample:name
 	Wave SampleThicknessW = :entry:sample:thickness
-	Wave DCM_energyW=:entry:instrument:monochromator:DCM_energy
+	Wave DCM_energyW=:entry:instrument:monochromator:energy
 	Wave SDDW=:entry:metadata:detector_distance
 	Wave SADW=:entry:metadata:analyzer_distance
 	Wave/T SpecSourceFilenameW=:entry:metadata:SPEC_data_file
@@ -512,6 +499,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	ArValues = abs(Ar_increment[0])*p
 	Duplicate/O ArValues, Ar_encoder	
 	redimension/D MeasTime, Monitor, USAXS_PD
+	redimension/S PD_range, I0gain
 	//need to append the wave notes...
 	string WaveNote
 	WaveNote="DATAFILE="+SpecFileNameWv[0]+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+"flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
@@ -528,21 +516,13 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		I0gain = I0gainW[0]
 	elseif(HdfWriterVersion==1)
 		MeasTime/=mcaFrequency[0]		//convert to seconds
-		if(AmplifierUsed)		//DDPCA300
+		if(AmplifierUsed[0])		//DDPCA300
 			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
 		else						//DLPCA200
 			IN3_FSCreateGainWave(PD_range,DLPCA200_ampReqGain,DLPCA200_ampGain,DLPCA200_mcsChan, TimeRangeAfterUPD,MeasTime)
 		endif
 		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
-	
 	endif
-				//	variable ArOffset, scanningDown
-				//	scanningDown = (Ar_encoder[0] > Ar_encoder[1]) ? 1 : 0
-				//	if(scanningDown)	//scanning down in angle
-				//		Ar_encoder = abs(Ar_encoder)
-				//	else		//scanning up in angle
-				//		Ar_encoder = abs(Ar_encoder)
-				//	endif
 	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, NumberOfTempPoints, Ar_increment[0])
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
@@ -583,58 +563,30 @@ end
 Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
 	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
 	
+	GainWv = ampGain[0]
 	variable iii, iiimax=numpnts(mcsChangePnts)-1
 	variable StartRc, EndRc
 	if(iiimax<1)		//Fix for scanning when no range changes happen... 
 		GainWv = 4
 	endif
+	StartRc = 0
+	EndRc = 0
 	For(iii=0;iii<iiimax;iii+=1)
-		if(mcsChangePnts[iii]>0 || iii<4)
+		if(mcsChangePnts[iii]>0 || iii<3 )
 			if(ampGain[iii]!=ampGainReq[iii])
 				StartRc = mcsChangePnts[iii]
 			endif
 			if(ampGain[iii]==ampGainReq[iii])
 				EndRc = mcsChangePnts[iii]
-				GainWv[StartRc,EndRc] = nan
-				GainWv[EndRc+1,] = ampGain[iii]+1
-				IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+				if(EndRc<numpnts(GainWv)-1)
+					GainWv[StartRc,EndRc] = nan
+					GainWv[EndRc+1,] = ampGain[iii]+1
+					IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+				endif
 			endif
 		endif
 	endfor
 end
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//
-//Function IN3_FlyScanMaskGainChanges(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range)
-//	wave Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range
-//	
-//	make/Free/N=5 TimeRangeAfter, TimeRangeBefore
-//	TimeRangeBefore={AmplifierPreRage1BlockTime,AmplifierPreRage2BlockTime,AmplifierPreRage3BlockTime,AmplifierPreRage4BlockTime,0}
-//	TimeRangeAfter = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,0}
-//	variable NumPntsW=numpnts(MeasTime)
-//	//Differentiate/METH=1  PD_range /D=GainChanges
-//	//GainChanges = abs(GainChanges)
-//	//contains 0 where gain does not change and 1 where the gain changes... 
-//	variable i, curGain, maskTime, j, maskTimeUp
-//	//deal with range change for gain 1
-//	FindLevels/Q  /D=RangeChanges  /P  PD_range, 1.1 
-//	For(i=0;i<numpnts(RangeChanges);i+=1)
-//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage1BlockTime, AmplifierRange1BlockTime)
-//	endfor
-//	FindLevels /Q /D=RangeChanges  /P  PD_range, 2.1 
-//	For(i=0;i<numpnts(RangeChanges);i+=1)
-//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage2BlockTime, AmplifierRange2BlockTime)
-//	endfor
-//	FindLevels /Q /D=RangeChanges  /P  PD_range, 3.1 
-//	For(i=0;i<numpnts(RangeChanges);i+=1)
-//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage3BlockTime, AmplifierRange3BlockTime)
-//	endfor
-//	FindLevels /Q /D=RangeChanges  /P  PD_range, 4.1 
-//	For(i=0;i<numpnts(RangeChanges);i+=1)
-//		IN3_MaskPointsForGivenTime(USAXS_PD,MeasTime,RangeChanges[i],AmplifierPreRage4BlockTime, AmplifierRange4BlockTime)
-//	endfor
-//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -655,28 +607,6 @@ Function IN3_MaskPointsForGivenTime(MaskedWave,TimeWv,PointNum, MaskTimeDown)
 	endif
 end
 
-//
-//Function IN3_MaskPointsForGivenTime(IntWv,TimeWv,PointNum,MaskTimeUp, MaskTimeDown)
-//	wave IntWv,TimeWv
-//	variable PointNum,MaskTimeUp, MaskTimeDown
-//	variable NumPntsW
-//	NumPntsW = numpnts(IntWv)
-//	variable i, maskTime
-//	i=0
-//	Do
-//		IntWv[PointNum+i]=nan
-//		maskTimeDown -=TimeWv[PointNum+i]
-//		i+=1
-//	 while ((maskTimeDown>0)&&((PointNum+i)<NumPntsW))
-//	i =1
-//	Do
-//		IntWv[PointNum-i]=nan
-//		maskTimeUp -=TimeWv[PointNum-i]
-//		i+=1
-//	 while (maskTimeUp>0&&((PointNum-i)>=0))
-//	
-//	
-//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,Wv5,NumberOfPoints, MinStep)
