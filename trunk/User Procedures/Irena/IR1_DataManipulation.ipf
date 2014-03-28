@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.49
+#pragma version=2.50
 constant IR3MversionNumber = 2.49			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.49			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.49			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.50 minor fix for case when we are creating error waves with qrs data. It was nto naming new error wave correctly. 
 //2.49 improvements for Data Manipulation II in handling cursors. 
 //2.48 disabled Q shift in Modeling I, let's see if anyone complains... 
 //2.47 fixed step for Modeling I Data 2
@@ -4098,7 +4099,11 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etm
 				DataFolderName=FldrNamesTWv[i]
 				IntensityWaveName=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)
 				QWavename=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt)
-				ErrorWaveName=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Etmplt)
+				if(strlen(Etmplt)>0)		//not emoty, so user is matching error wave, it shoudl exist...
+					ErrorWaveName=IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Etmplt)
+				else			//empty, the erro wave does not exist...
+					ErrorWaveName="s"+IntensityWaveName[1,inf]		//using qrs naming system... 
+				endif
 			
 			if(WaveExists(tmpWvX) && WaveExists(tmpWvY))
 				Duplicate/O tmpWvX, TempSubtractedXWv0123
