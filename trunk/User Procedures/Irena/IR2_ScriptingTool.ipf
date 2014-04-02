@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.20
-Constant IR2SversionNumber=1.15
+#pragma version=1.21
+Constant IR2SversionNumber=1.21
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 added for QRS data wave name match string. 
 //1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Gunier-Porod and Size Dist with uncertainities appering in wrong time. 
 //1.19 fix for Diameters/Radii option in Modeling II - it was failing to add such data in Plotting tool. 
 //1.18 will set cursors for first and last point of data, if not set by user ahead of fitting. Sync FolderNameStr and set WavenameStr=""
@@ -177,6 +178,7 @@ Function IR2S_CheckProc(ctrlName,checked) : CheckBoxControl
 		IR2S_UpdateListOfAvailFiles()
 		IR2S_SortListOfAvailableFldrs()
 	endif
+	Setvariable WaveNameMatchString, win= IR2S_ScriptingToolPnl ,disable =!UseQRSdata
 
 	Button FitWithUnified,win= IR2S_ScriptingToolPnl , disable=UseResults
 	Button FitWithSizes,win= IR2S_ScriptingToolPnl , disable=UseResults
@@ -203,6 +205,10 @@ Function IR2S_ScriptToolSetVarProc(sva) : SetVariableControl
 		case 1: // mouse up
 		case 2: // Enter key
 			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
+				IR2S_UpdateListOfAvailFiles()
+				IR2S_SortListOfAvailableFldrs()
+			endif
+			if(stringmatch(sva.ctrlName,"WaveNameMatchString"))
 				IR2S_UpdateListOfAvailFiles()
 				IR2S_SortListOfAvailableFldrs()
 			endif
@@ -365,12 +371,14 @@ Window IR2S_ScriptingToolPnl()
 	ListBox DataFolderSelection,selWave=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 
 	//SVAR FolderNameMatchString=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	SetVariable FolderNameMatchString,pos={10,325},size={150,15}, proc=IR2S_ScriptToolSetVarProc,title="Match (RegEx)"
+	SetVariable FolderNameMatchString,pos={10,325},size={170,15}, proc=IR2S_ScriptToolSetVarProc,title="Match (RegEx)"
 	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	SetVariable WaveNameMatchString,pos={200,325},size={170,15}, proc=IR2S_ScriptToolSetVarProc,title="Wave Match (RegEx)"
+	Setvariable WaveNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:ScriptingTool:WaveNameMatchString, disable =!root:Packages:Irena:ScriptingTool:UseQRSdata
 
-	Button AllData,pos={170,325},size={100,15},proc=IR2S_ButtonProc,title="Select all data"
+	Button AllData,pos={170,350},size={100,15},proc=IR2S_ButtonProc,title="Select all data"
 	Button AllData,fSize=10,fStyle=2
-	Button NoData,pos={270,325},size={100,15},proc=IR2S_ButtonProc,title="DeSelect all data"
+	Button NoData,pos={270,350},size={100,15},proc=IR2S_ButtonProc,title="DeSelect all data"
 	Button NoData,fSize=10,fStyle=2
 
 	PopupMenu SortFolders,pos={10,348},size={130,20},fStyle=2,proc=IR2S_PopMenuProc,title="Sort Folders"
@@ -664,6 +672,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 
+//WaveNameMatchString
 
 
 Function IR2S_UpdateListOfAvailFiles()
@@ -675,7 +684,8 @@ Function IR2S_UpdateListOfAvailFiles()
 	NVAR UseQRSdata=root:Packages:Irena:ScriptingTool:UseQRSData
 	NVAR UseResults=root:Packages:Irena:ScriptingTool:UseResults
 	SVAR StartFolderName=root:Packages:Irena:ScriptingTool:StartFolderName
-	string LStartFolder
+	SVAR WaveNameMatchString=root:Packages:Irena:ScriptingTool:WaveNameMatchString
+	string LStartFolder, FolderContent
 	if(stringmatch(StartFolderName,"---"))
 		LStartFolder="root:"
 	else
@@ -685,7 +695,7 @@ Function IR2S_UpdateListOfAvailFiles()
 
 	Wave/T ListOfAvailableData=root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
-	variable i, j
+	variable i, j, match
 	string TempStr
 		
 	Redimension/N=(ItemsInList(CurrentFolders , ";")) ListOfAvailableData, SelectionOfAvailableData
@@ -700,6 +710,23 @@ Function IR2S_UpdateListOfAvailFiles()
 	endfor
 	if(j<ItemsInList(CurrentFolders , ";"))
 		DeletePoints j, numpnts(ListOfAvailableData)-j, ListOfAvailableData, SelectionOfAvailableData
+	endif
+	//now we need to clean up the folder list if wave name match string is used, valid ONLy for qrs data type...
+	if(strlen(WaveNameMatchString)>0 && UseQRSdata)
+		For(i=numpnts(ListOfAvailableData)-1;I>=0;i-=1)
+		      match = 0
+			TempStr = LStartFolder+ListOfAvailableData[i]
+			For(j=0;j<CountObjects(TempStr, 1);j+=1)
+//print GetIndexedObjName(TempStr, 1, j)
+				if(GrepString(GetIndexedObjName(TempStr, 1, j),"(?i)^r.*"+WaveNameMatchString+"|"+WaveNameMatchString+".*(?i)i$"))
+					match = 1
+				endif
+			endfor
+			if(!match)
+				DeletePoints i, 1, ListOfAvailableData, SelectionOfAvailableData	
+			endif
+		endfor
+		
 	endif
 	SelectionOfAvailableData = 0
 	setDataFolder OldDF
@@ -728,6 +755,7 @@ Function IR2S_InitScriptingTool()
 
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfStrings="StartFolderName;FolderNameMatchString;FolderSortString;SelectedResultsType;SelectedResultsTool;ResultsGenerationToUse;"
+	ListOfStrings+="WaveNameMatchString;"
 	//"DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;SaveResultsInNotebook;ResetBeforeNextFit;SaveResultsInFldrs;SaveResultsInWaves;"
 
@@ -791,6 +819,7 @@ Function IR2S_CallWithPlottingToolII(reset)
 	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
 	NVAR STUseQRSdata =root:Packages:Irena:ScriptingTool:UseQRSdata
 	NVAR STUseResults=root:Packages:Irena:ScriptingTool:UseResults
+
 	
 	NVAR PTUseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
 	NVAR PTUseQRSdata=root:Packages:GeneralplottingTool:UseQRSdata
@@ -798,8 +827,12 @@ Function IR2S_CallWithPlottingToolII(reset)
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1P_ControlPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-
-	WaveMatchStr=""
+	SVAR ScriptToolWMS=root:Packages:Irena:ScriptingTool:WaveNameMatchString
+	if(STUseQRSdata)
+		WaveMatchStr=ScriptToolWMS
+	else
+		WaveMatchStr=""
+	endif
 	FolderMatchStr=ScriptToolFMS
 	PTUseResults=STUseResults
 	PTUseQRSdata=STUseQRSdata
@@ -1032,7 +1065,12 @@ Function IR2S_FItWithModelingII()
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:LSQF2_MainPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:LSQF2_MainPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	WaveMatchStr=""
+	SVAR ScriptToolWMS=root:Packages:Irena:ScriptingTool:WaveNameMatchString
+	if(STUseQRSdata)
+		WaveMatchStr=ScriptToolWMS
+	else
+		WaveMatchStr=""
+	endif
 	FolderMatchStr=ScriptToolFMS
 	
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
@@ -1189,7 +1227,12 @@ Function IR2S_FItWithSizes(Uncert)
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1R_SizesInputPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1R_SizesInputPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	WaveMatchStr=""
+	SVAR ScriptToolWMS=root:Packages:Irena:ScriptingTool:WaveNameMatchString
+	if(STUseQRSdata)
+		WaveMatchStr=ScriptToolWMS
+	else
+		WaveMatchStr=""
+	endif
 	FolderMatchStr=ScriptToolFMS
 
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
@@ -1341,7 +1384,12 @@ Function IR2S_FitWithGuinierPorod()
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR3DP_MainPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR3DP_MainPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	WaveMatchStr=""
+	SVAR ScriptToolWMS=root:Packages:Irena:ScriptingTool:WaveNameMatchString
+	if(STUseQRSdata)
+		WaveMatchStr=ScriptToolWMS
+	else
+		WaveMatchStr=""
+	endif
 	FolderMatchStr=ScriptToolFMS
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
@@ -1494,7 +1542,12 @@ Function IR2S_FItWithUnifiedFit()
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1A_ControlPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1A_ControlPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	WaveMatchStr=""
+	SVAR ScriptToolWMS=root:Packages:Irena:ScriptingTool:WaveNameMatchString
+	if(STUseQRSdata)
+		WaveMatchStr=ScriptToolWMS
+	else
+		WaveMatchStr=""
+	endif
 	FolderMatchStr=ScriptToolFMS
 	For(i=0;i<numpnts(ListOfAvailableData);i+=1)
 		if(SelectionOfAvailableData[i]>0.5)
