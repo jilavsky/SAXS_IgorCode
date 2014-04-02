@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.28
+#pragma version=2.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.29 added Pilatus 3 200k (with dimensions 487,407) 
 //2.28 attempted to add Pilatus cbf format, code is half way through but the example makes no sense and does not work... abandon until proper image is avbaialbel.  
 //2.27 added double clicks to Empty and Dark Listboxes as well as maskListbox on main panel
 //2.26 modified and tested various version of mpa formats. Found internal switch and combined all mpa formats into one. Should work until somone has another format. 
@@ -611,6 +612,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	             Redimension/N=(1475,1679) Loadedwave0
  	        elseif(stringmatch(PilatusType,"Pilatus6M"))
  	             Redimension/N=(2463,2527) Loadedwave0
+ 	        elseif(stringmatch(PilatusType,"Pilatus3_200k"))
+ 	             Redimension/N=(487,407) Loadedwave0   
  	        else
  	        	Abort "Unknown Pilatus Type"
  	        endif
@@ -1406,7 +1409,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 		DrawText 10,280,"to add functionality.  Called after loading the file."
 		PopupMenu PilatusType,pos={15,70},size={122,21},proc=NI1_PilatusPopMenuProc,title="Detector Type :  "
 		PopupMenu PilatusType,help={"Select detector type :"}
-		PopupMenu PilatusType,mode=1,popvalue=PilatusType,value= #"\"Pilatus100k;Pilatus300k;Pilatus300k-w;Pilatus1M;Pilatus2M;Pilatus6M;\""
+		PopupMenu PilatusType,mode=1,popvalue=PilatusType,value= #"\"Pilatus100k;Pilatus300k;Pilatus300k-w;Pilatus1M;Pilatus2M;Pilatus6M;Pilatus3_200k;\""
 
 		PopupMenu PilatusFileType,pos={15,100},size={122,21},proc=NI1_PilatusPopMenuProc,title="File Type :  "
 		PopupMenu PilatusFileType,help={"Select file type :"}
