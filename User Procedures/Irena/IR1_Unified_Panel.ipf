@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.16
+#pragma version=2.17
 Constant IR1AversionNumber=2.16
 
 
@@ -9,11 +9,12 @@ Constant IR1AversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 fixed Link B to G/Rg/P for Level 2, typo in the code. 
 //2.16 changed ETA step to be 1% of the value, Dale said 5% is too much, changed surf/VOl ratio to fi*(1-fi)*Surf/Vol ratio as correct per DWS. 
 //2.15 added checkbox to limit warnings in the history area..., Fixes provided by DWS
 //2.14 Added option to rebin data to lower number of points on data load. 
 //2.13 added option to link B to Rg/G/P using Hammouda Calculations
-//2.12 removed FitRgCO for all levels. DO tno expect anyone to miss it. But if needed, can be returned easily. 
+//2.12 removed FitRgCO for all levels. DO not expect anyone to miss it. But if needed, can be returned easily. 
 //2.11 added option providing user with fit parameters review panel before fitting
 //2.10 added scroll controls to move panel conent up or down for small displays.
 //2.09 added "No limits" checkbox
@@ -1098,7 +1099,7 @@ Function IR1A_TabPanelControl(name,tab)
 		DisplayMe= (tab!=1 || Nmbdist<2 || Level2MassFractal || Level2LinkB)
 		DisplayMe = (Level2LinkB>0 && tab==1) ? 2*DisplayMe : DisplayMe
 		SetVariable Level2B,disable= (DisplayMe)
-		CheckBox Level2LinkB,disable= (tab!=2 || Nmbdist<2)
+		CheckBox Level2LinkB,disable= (tab!=1 || Nmbdist<2)
 		CheckBox Level2FitB,disable= (tab!=1 || Nmbdist<2 ||Level2MassFractal || Level2LinkB)
 		SetVariable Level2BLowLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitB!=1 || Level2MassFractal || Level2LinkB || UseNoLimits)
 		SetVariable Level2BHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitB!=1 || Level2MassFractal || Level2LinkB || UseNoLimits)

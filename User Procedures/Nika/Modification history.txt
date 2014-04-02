@@ -3,6 +3,9 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.66 xxxxx
+Added Pilatus 3, 200k.
+
 1.65 2/20/2014
 Fixed minor bug in LP profiles note handling. Matching release for Indra package. 
 
