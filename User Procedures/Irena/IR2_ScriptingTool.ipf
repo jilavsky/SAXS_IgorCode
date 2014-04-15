@@ -696,7 +696,8 @@ Function IR2S_UpdateListOfAvailFiles()
 	Wave/T ListOfAvailableData=root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 	variable i, j, match
-	string TempStr
+	string TempStr, FolderCont
+
 		
 	Redimension/N=(ItemsInList(CurrentFolders , ";")) ListOfAvailableData, SelectionOfAvailableData
 	j=0
@@ -716,15 +717,20 @@ Function IR2S_UpdateListOfAvailFiles()
 		For(i=numpnts(ListOfAvailableData)-1;I>=0;i-=1)
 		      match = 0
 			TempStr = LStartFolder+ListOfAvailableData[i]
-			For(j=0;j<CountObjects(TempStr, 1);j+=1)
-//print GetIndexedObjName(TempStr, 1, j)
-				if(GrepString(GetIndexedObjName(TempStr, 1, j),"(?i)^r.*"+WaveNameMatchString+"|"+WaveNameMatchString+".*(?i)i$"))
-					match = 1
-				endif
-			endfor
-			if(!match)
-				DeletePoints i, 1, ListOfAvailableData, SelectionOfAvailableData	
+			DFREF tmpDFR = $(TempStr)
+			//FolderCont = ReplaceString(",",RemoveEnding(StringFromList(1,DataFolderDir(2, tmpDFR ),":"),";\r"),";")+";"
+			FolderCont = IN2G_ConvertDataDirToList(DataFolderDir(2,tmpDFR))
+			if(strlen(GrepList(FolderCont,"(?i)^r.*"+WaveNameMatchString+"|"+WaveNameMatchString+".*(?i)i$"))<1)
+				DeletePoints i, 1, ListOfAvailableData, SelectionOfAvailableData
 			endif
+//			For(j=0;j<CountObjects(TempStr, 1);j+=1)
+//				if(GrepString(GetIndexedObjName(TempStr, 1, j),"(?i)^r.*"+WaveNameMatchString+"|"+WaveNameMatchString+".*(?i)i$"))
+//					match = 1
+//				endif
+//			endfor
+//			if(!match)
+//				DeletePoints i, 1, ListOfAvailableData, SelectionOfAvailableData	
+//			endif
 		endfor
 		
 	endif

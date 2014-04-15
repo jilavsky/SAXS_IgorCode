@@ -891,7 +891,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	string ListOfQFolders
 	string result="", tempResult, resultShort=""
 	variable i, j, StartTime, AlreadyIn
-	string tempStr="", temp1, temp2, temp3
+	string tempStr="", temp1, temp2, temp3, FixedMatchString
 	variable StaleWave=1
 
 
@@ -930,32 +930,31 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			SetTimeOfIndraFoldersStr = datetime
 		endif	
 	elseif (UseQRSStructure)
-			Wave/Z/T ResultingWave=$(CntrlLocation+":ResultingWave")
+			//Wave/Z/T ResultingWave=$(CntrlLocation+":ResultingWave")
 			SVAR/Z  ListOfQFoldersLookup = $(CntrlLocation+":ListOfQFolders")
 			NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
 			if(SVAR_Exists(ListOfQFoldersLookup) && (datetime - SetTimeOfQFoldersStr) < 5)
 				result=ListOfQFoldersLookup	
 				SetTimeOfQFoldersStr = datetime
 			else
-				make/N=0/O/T $(CntrlLocation+":ResultingWave")
-				Wave/T ResultingWave=$(CntrlLocation+":ResultingWave")
+				//make/N=0/O/T $(CntrlLocation+":ResultingWave")
+				//Wave/T ResultingWave=$(CntrlLocation+":ResultingWave")
+				make/N=0/T/Free TempResultingWave
 				string/g  $(CntrlLocation+":ListOfQFolders")
 				variable/g  $(CntrlLocation+":SetTimeOfQFoldersStr")
 				SVAR/Z  ListOfQFoldersLookup = $(CntrlLocation+":ListOfQFolders")
 				NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
-				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, ResultingWave)
-				//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
+				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, TempResultingWave)
 				if(strlen(FolderMatchStr)>0)
+				      FixedMatchString = IR2C_PreparematchString(FolderMatchStr)
 					variable ii
-					for(ii=numpnts(ResultingWave)-1;ii>=0;ii-=1)
-					//	if(!GrepString(ResultingWave[ii],FolderMatchStr))
-						if(!GrepString(ResultingWave[ii],IR2C_PreparematchString(FolderMatchStr)))
-							DeletePoints ii, 1, ResultingWave
+					for(ii=numpnts(TempResultingWave)-1;ii>=0;ii-=1)
+						if(!GrepString(TempResultingWave[ii],FixedMatchString))
+							DeletePoints ii, 1, TempResultingWave
 						endif
 					endfor
-					//ListOfQFolders=GrepList(ListOfQFolders, FolderMatchStr )
 				endif
-				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,ResultingWave,WaveMatchStr)		
+				ListOfQFolders=IR2P_CheckForRightQRSTripletWvs(TopPanel,TempResultingWave,WaveMatchStr)		
 				//match to user mask using greplist
 				//done, now rest...
 				ListOfQFolders=IR2P_CleanUpPackagesFolder(ListOfQFolders)
@@ -2221,96 +2220,6 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//
-//Function/T IR2C_ListWavesForPopups(WhichWave,TopPanel,CntrlLocation,UseIndra2Structure,UseQRSStructure,UseResults)
-//	string WhichWave,CntrlLocation, TopPanel
-//	variable UseIndra2Structure,UseQRSStructure,UseResults		
-//
-//	string result=""
-//	string AllWaves=""
-//	variable i, j
-//	SVAR Dtf=$(CntrlLocation+":DataFolderName")
-//	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
-//	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
-//	SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
-//	SVAR ControlRequireErrorWvs=root:Packages:IrenaControlProcs:ControlRequireErrorWvs
-//
-//	SVAR XwaveDataTypesLookup=root:Packages:IrenaControlProcs:XwaveDataTypesLookup
-//	SVAR EwaveDataTypesLookup=root:Packages:IrenaControlProcs:EwaveDataTypesLookup
-//	SVAR ResultsDataTypesLookup=root:Packages:IrenaControlProcs:ResultsDataTypesLookup
-//
-//	string LocallyAllowedIndra2Data=StringByKey(TopPanel, ControlAllowedIrenaTypes,"=",">")
-//	string LocallyAllowedResultsData=StringByKey(TopPanel, ControlAllowedResultsTypes,"=",">")
-//	
-//	AllWaves = IN2G_CreateListOfItemsInFolder(Dtf,2)
-//	if (cmpstr(WhichWave,"Y")==0)
-//		if(UseIndra2Structure)
-//			For(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)
-//				For(j=0;j<ItemsInList(AllWaves);j+=1)
-//					if(cmpstr(stringfromList(i,LocallyAllowedIndra2Data),stringfromList(j,AllWaves))==0)
-//						result+=stringfromList(i,LocallyAllowedIndra2Data)+";"
-//					endif
-//				endfor	
-//			endfor
-//		elseif(UseQRSStructure)
-//			For(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)
-//				For(j=0;j<ItemsInList(AllWaves);j+=1)
-//					if(cmpstr(stringfromList(i,LocallyAllowedIndra2Data),stringfromList(j,AllWaves))==0)
-//						result+=stringfromList(i,LocallyAllowedIndra2Data)+";"
-//					endif
-//				endfor	
-//			endfor
-//		endif
-//	endif
-//	if (cmpstr(WhichWave,"X")==0)
-//		if(UseIndra2Structure)
-//			For(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)
-//				For(j=0;j<ItemsInList(AllWaves);j+=1)
-//					if(cmpstr(stringByKey(stringfromList(i,LocallyAllowedIndra2Data),XwaveDataTypesLookup),stringfromList(j,AllWaves))==0)
-//						result+=stringByKey(stringfromList(i,LocallyAllowedIndra2Data),XwaveDataTypesLookup)+";"
-//					endif
-//				endfor	
-//			endfor
-//		elseif(UseQRSStructure)
-//			For(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)
-//				For(j=0;j<ItemsInList(AllWaves);j+=1)
-//					if(cmpstr(stringfromList(i,LocallyAllowedIndra2Data),stringfromList(j,AllWaves))==0)
-//						result+=stringfromList(i,LocallyAllowedIndra2Data)+";"
-//					endif
-//				endfor	
-//			endfor
-//		endif
-//	endif
-//	if (cmpstr(WhichWave,"E")==0)
-//		if(UseIndra2Structure)
-//			For(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)
-//				For(j=0;j<ItemsInList(AllWaves);j+=1)
-//					if(cmpstr(stringByKey(stringfromList(i,LocallyAllowedIndra2Data),EwaveDataTypesLookup),stringfromList(j,AllWaves))==0)
-//						result+=stringByKey(stringfromList(i,LocallyAllowedIndra2Data),EwaveDataTypesLookup)+";"
-//					endif
-//				endfor	
-//			endfor
-//		elseif(UseQRSStructure)
-//			For(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)
-//				For(j=0;j<ItemsInList(AllWaves);j+=1)
-//					if(cmpstr(stringfromList(i,LocallyAllowedIndra2Data),stringfromList(j,AllWaves))==0)
-//						result+=stringfromList(i,LocallyAllowedIndra2Data)+";"
-//					endif
-//				endfor	
-//			endfor
-//		endif
-//	endif
-//	return result
-//end
-//
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-//**********************************************************************************************
-//**********************************************************************************************
 
 Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortType, ResultingWave)
         String startDF, WaveTypes                  // startDF requires trailing colon.
@@ -2323,10 +2232,6 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
         
        dfSave = GetDataFolder(1)
      	 DFREF startDFRef = $(startDF)
-   	 //if (!DataFolderRefStatus(startDFRef))
-  	//	return 0
-  	 //endif
-       //SetDataFolder startDF
       templist = IN2G_ConvertDataDirToList(DataFolderDir(2,startDFRef))
       //templist = IN2G_ConvertDataDirToList(DataFolderDir(2))
  	if (strlen(GrepList(templist,WaveTypes))>0)
@@ -2338,7 +2243,6 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
 		      			ResultingWave[numpnts(ResultingWave)-1]=GetDataFolder(0)
 	      		endif
       	endif
- 
         levels -= 1
         if (levels <= 0)
                 return 1
@@ -2364,7 +2268,6 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
            	 	endif
         endfor
         
-      // SetDataFolder(dfSave)
         return 1
 End
 

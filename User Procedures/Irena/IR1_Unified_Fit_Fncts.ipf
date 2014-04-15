@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.13
+#pragma version=2.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.13 more DWS changes, CUncerttainity analysis - modfied to change the tab to currently analyzed level tab. 
+//2.14 corrected Invariant analysis to do correctly phi*(1-phi) calculation to get phi. 
+//2.13 more DWS changes, Uncerttainity analysis - modfied to change the tab to currently analyzed level tab. 
 //2.12 many changes by Dale, corrections etc. Accepted all assumed working. 
 //2.11 added DWS changes to two phase model and made fixes to invariant calculations
 //2.10 fixed bug which caused in local fits held parameters to change in fitting routine to their starting guesses. 
@@ -1901,8 +1902,12 @@ Function IR2U_CalculateInvariantVals()
 		InvariantValue=0
 		InvariantPhaseVolume=0
 	endif
-	InvariantPhaseVolume = (InvariantValue / InvariantUserContrast)*1e-20/(2*pi^2)
+	InvariantPhaseVolume = (InvariantValue / InvariantUserContrast)*1e-20/(2*pi^2)		//4/14/2014, JIL, this is really phi*(1-phi). 
+	if(InvariantPhaseVolume>0.249)
+		DoALert 0, "Calculated volume is too large when we do phi*(1-phi). Seems like there is problem with calibration of contrast"
+	endif
 	
+	InvariantPhaseVolume = (1-sqrt(1-4*InvariantPhaseVolume))/2					//this is quadratic equation solver
 end
 //***********************************************************
 //***********************************************************

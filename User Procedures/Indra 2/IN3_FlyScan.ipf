@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.21
+#pragma version=0.23
 Constant IN3_FlyImportVersionNumber=0.19
 
 
@@ -9,6 +9,8 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.23 changed defaults to 5000 points on import. 
+//0.22 improvement to backward compatibility from February 2014
 //0.21 fixed gain creation
 //0.20 changed DCM_energy to energy as changed in the files
 //0.19 fixed missing checkbox procedure and added first attempt to support xpcs data 
@@ -331,7 +333,11 @@ Function IN3_FlyScanLoadHdf5File()
 				
 				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
 					KillWaves/Z Config_Version
-					HDF5LoadData /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
+					HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
+					if(V_Flag!=0)
+						Make/T/N=1 Config_Version
+						Config_Version[0]="0"
+					endif
 					Wave/T Config_Version
 				endif
 				HDf5Browser#CloseFileButtonProc("CloseFIle")
@@ -428,7 +434,10 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave updBkgErr5=:entry:metadata:upd_bkgErr4	
 	Wave/T SampleNameW=:entry:sample:name
 	Wave SampleThicknessW = :entry:sample:thickness
-	Wave DCM_energyW=:entry:instrument:monochromator:energy
+	Wave/Z DCM_energyW=:entry:instrument:monochromator:energy
+	if(!WaveExists(DCM_energyW))
+		Wave/Z DCM_energyW=:entry:instrument:monochromator:DCM_energy
+	endif
 	Wave SDDW=:entry:metadata:detector_distance
 	Wave SADW=:entry:metadata:analyzer_distance
 	Wave/T SpecSourceFilenameW=:entry:metadata:SPEC_data_file
@@ -957,7 +966,7 @@ Function IN3_FlyScanInitializeImport()
 	endif
 	NVAR NumberOfTempPoints
 	if(NumberOfTempPoints<5000)
-		NumberOfTempPoints=20000
+		NumberOfTempPoints=5000
 	endif
 	Make/O/T/N=0 WaveOfFiles
 	Make/O/N=0 WaveOfSelections
