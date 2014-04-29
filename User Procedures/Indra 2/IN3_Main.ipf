@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.82
+#pragma version = 1.83
 
 
 //*************************************************************************\
@@ -8,13 +8,14 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.83 updated Flyscan support for April 2014 version, minor improvements
 //1.82 FLyScan support, preliminary version
 //1.81 adds panel check for version and FlyScan data reduction, added check version control on Main panel and Fly Import panel. 
 //1.80 Added few more items on Tab0 
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=1.82
+Constant IN3_ReduceDataMainVersionNumber=1.83
 
 //************************************************************************************************************
 //************************************************************************************************************

@@ -8,6 +8,13 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+1.84
+Created on log-rebinning routine and propagated that routine (General Procedures 1.71) through the system, mainly FLyScan, replacing all log-rebinning other routines.
+
+1.83 4/18/2014
+Flyscan updated support to support Flyscans from April 2014
+Read comments from spec file now can use Grepstring to pull only specific lines from the spec file (kind of work as grep on the spec file). 
+
 1.82 2/20/2014
 FlyScan support, firs user suitable version. 
 Added Remove points with marquee option

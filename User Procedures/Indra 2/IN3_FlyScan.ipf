@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.23
+#pragma version=0.24
 Constant IN3_FlyImportVersionNumber=0.19
 
 
@@ -9,6 +9,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.24 modified to use Rebinninng procedure from General procedures - requires Gen Proc version 1.71 nad higher
 //0.23 changed defaults to 5000 points on import. 
 //0.22 improvement to backward compatibility from February 2014
 //0.21 fixed gain creation
@@ -533,7 +534,8 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
 	endif
 	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, NumberOfTempPoints, Ar_increment[0])
+	//IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, NumberOfTempPoints, Ar_increment[0])
+	IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
 	
 	//let's make some standard strings we need.
@@ -618,165 +620,163 @@ end
 
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,Wv5,NumberOfPoints, MinStep)
-	wave WvX, WvTime, Wv2, Wv3, Wv4, Wv5
-	variable NumberOfPoints, MinStep
-	//	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints)
-	//note, WvX, Wv4 (pd_range), and WvTime is averages, but others are full time (no avergaing).... also, do not count if Wv3 are Nans
-	string OldDf
-	variable OldNumPnts=numpnts(WvX)
-	if(OldNumPnts<NumberOfPoints)
-		print "User requested rebinning of data, but old number of points is less than requested point number, no rebinning done"
-		return 0
-	endif
-	variable StartX, EndX, iii, isGrowing, CorrectStart, logStartX, logEndX
-	CorrectStart = WvX[0]
-	StartX = IN2G_FindCorrectStart(WvX[0],WvX[numpnts(WvX)-1],NumberOfPoints,MinStep)
-	EndX = StartX +abs(WvX[numpnts(WvX)-1] -  WvX[0])
-	//Log rebinning, if requested.... 
-	//create log distribution of points...
-	isGrowing = (WvX[0] < WvX[numpnts(WvX)-1]) ? 1 : 0
-	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-	logstartX=log(startX)
-	logendX=log(endX)
-	tempNewLogDist = logstartX + p*(logendX-logstartX)/numpnts(tempNewLogDist)
-	tempNewLogDist = 10^(tempNewLogDist)
-	startX = tempNewLogDist[0]
-	tempNewLogDist += CorrectStart - StartX
-	
-	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
-	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
-	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
-	make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvTime, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4, Rebinned_Wv5
-	Rebinned_WvTime=0
-	Rebinned_Wv2=0	
-	Rebinned_Wv3=0	
-	Rebinned_Wv4=0	
-	Rebinned_Wv5=0	
-	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
-	//first assume that we can step through this easily...
-	variable cntPoints, BinHighEdge
-	//variable i will be from 0 to number of new points, moving through destination waves
-	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
-	For(i=0;i<NumberOfPoints;i+=1)
-		cntPoints=0
-		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
-		if(isGrowing)
-			Do
-				if(numtype(Wv3[j])==0)
-					Rebinned_WvX[i] += WvX[j]
-					Rebinned_WvTime[i]+=WvTime[j]
-					Rebinned_Wv2[i]+=Wv2[j]
-					Rebinned_Wv3[i] += Wv3[j]
-					Rebinned_Wv4[i] += Wv4[j]
-					Rebinned_Wv5[i] += Wv5[j]
-					cntPoints+=1
-				endif
-				j+=1
-			While(WvX[j-1]<BinHighEdge && j<OldNumPnts)
-		else
-			Do
-				if(numtype(Wv3[j])==0)
-					Rebinned_WvX[i] += WvX[j]
-					Rebinned_WvTime[i]+=WvTime[j]
-					Rebinned_Wv2[i]+=Wv2[j]
-					Rebinned_Wv3[i] += Wv3[j]
-					Rebinned_Wv4[i] += Wv4[j]
-					Rebinned_Wv5[i] += Wv5[j]
-					cntPoints+=1
-				endif
-				j+=1
-			While((WvX[j-1]>BinHighEdge) && (j<OldNumPnts))
-		endif
-		Rebinned_WvTime[i]/=cntPoints		//need average time per exposure for background subtraction... 
-		//Rebinned_Wv2[i]/=cntPoints
-		//Rebinned_Wv3[i]/=cntPoints
-		Rebinned_Wv4[i]/=cntPoints
-		Rebinned_WvX[i]/=cntPoints
-		Rebinned_Wv5[i]/=cntPoints
-	endfor
-	
-	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, WvTime, Wv2, Wv3, Wv4, Wv5
-	WvX=Rebinned_WvX
-	WvTime=Rebinned_WvTime
-	Wv2=Rebinned_Wv2
-	Wv3=Rebinned_Wv3
-	Wv4=Rebinned_Wv4
-	Wv5=Rebinned_Wv5
-		
-end
-
+//Function IN3_FlyScanRebinData(WvX, WvTime, Wv2, Wv3, Wv4,Wv5,NumberOfPoints, MinStep)
+//	wave WvX, WvTime, Wv2, Wv3, Wv4, Wv5
+//	variable NumberOfPoints, MinStep
+//	//	IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range,NumberOfTempPoints)
+//	//note, WvX, Wv4 (pd_range), and WvTime is averages, but others are full time (no avergaing).... also, do not count if Wv3 are Nans
+//	string OldDf
+//	variable OldNumPnts=numpnts(WvX)
+//	if(OldNumPnts<NumberOfPoints)
+//		print "User requested rebinning of data, but old number of points is less than requested point number, no rebinning done"
+//		return 0
+//	endif
+//	variable StartX, EndX, iii, isGrowing, CorrectStart, logStartX, logEndX
+//	CorrectStart = WvX[0]
+//	StartX = IN2G_FindCorrectStart(WvX[0],WvX[numpnts(WvX)-1],NumberOfPoints,MinStep)
+//	EndX = StartX +abs(WvX[numpnts(WvX)-1] -  WvX[0])
+//	//Log rebinning, if requested.... 
+//	//create log distribution of points...
+//	isGrowing = (WvX[0] < WvX[numpnts(WvX)-1]) ? 1 : 0
+//	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
+//	logstartX=log(startX)
+//	logendX=log(endX)
+//	tempNewLogDist = logstartX + p*(logendX-logstartX)/numpnts(tempNewLogDist)
+//	tempNewLogDist = 10^(tempNewLogDist)
+//	startX = tempNewLogDist[0]
+//	tempNewLogDist += CorrectStart - StartX
+//	
+//	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
+//	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
+//	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
+//	make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvTime, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4, Rebinned_Wv5
+//	Rebinned_WvTime=0
+//	Rebinned_Wv2=0	
+//	Rebinned_Wv3=0	
+//	Rebinned_Wv4=0	
+//	Rebinned_Wv5=0	
+//	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
+//	//first assume that we can step through this easily...
+//	variable cntPoints, BinHighEdge
+//	//variable i will be from 0 to number of new points, moving through destination waves
+//	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
+//	For(i=0;i<NumberOfPoints;i+=1)
+//		cntPoints=0
+//		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
+//		if(isGrowing)
+//			Do
+//				if(numtype(Wv3[j])==0)
+//					Rebinned_WvX[i] += WvX[j]
+//					Rebinned_WvTime[i]+=WvTime[j]
+//					Rebinned_Wv2[i]+=Wv2[j]
+//					Rebinned_Wv3[i] += Wv3[j]
+//					Rebinned_Wv4[i] += Wv4[j]
+//					Rebinned_Wv5[i] += Wv5[j]
+//					cntPoints+=1
+//				endif
+//				j+=1
+//			While(WvX[j-1]<BinHighEdge && j<OldNumPnts)
+//		else
+//			Do
+//				if(numtype(Wv3[j])==0)
+//					Rebinned_WvX[i] += WvX[j]
+//					Rebinned_WvTime[i]+=WvTime[j]
+//					Rebinned_Wv2[i]+=Wv2[j]
+//					Rebinned_Wv3[i] += Wv3[j]
+//					Rebinned_Wv4[i] += Wv4[j]
+//					Rebinned_Wv5[i] += Wv5[j]
+//					cntPoints+=1
+//				endif
+//				j+=1
+//			While((WvX[j-1]>BinHighEdge) && (j<OldNumPnts))
+//		endif
+//		Rebinned_WvTime[i]/=cntPoints		//need average time per exposure for background subtraction... 
+//		//Rebinned_Wv2[i]/=cntPoints
+//		//Rebinned_Wv3[i]/=cntPoints
+//		Rebinned_Wv4[i]/=cntPoints
+//		Rebinned_WvX[i]/=cntPoints
+//		Rebinned_Wv5[i]/=cntPoints
+//	endfor
+//	
+//	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, WvTime, Wv2, Wv3, Wv4, Wv5
+//	WvX=Rebinned_WvX
+//	WvTime=Rebinned_WvTime
+//	Wv2=Rebinned_Wv2
+//	Wv3=Rebinned_Wv3
+//	Wv4=Rebinned_Wv4
+//	Wv5=Rebinned_Wv5
+//		
+//end
+//
 
 //************************************************************************************************************
 //************************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IN3_FlyScanRebinData2(WvX, Wv1, Wv2,NumberOfPoints)
-	wave WvX, Wv1, Wv2
-	variable NumberOfPoints
-	//assume W2 is error!!!!
-	string OldDf
-	variable OldNumPnts=numpnts(WvX)
-	if(OldNumPnts<NumberOfPoints)
-		print "User requeseted rebinning of data, but old number of points is less than requested point number, no rebinning done"
-		return 0
-	endif
-	//Log rebinning, if requested.... 
-	//create log distribution of points...
-	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-	variable StartX, EndX, iii, isGrowing
-	isGrowing = (WvX[0] < WvX[numpnts(WvX)-1]) ? 1 : 0
-	startX=log(WvX[0])
-	endX=log(WvX[numpnts(WvX)-1])
-	tempNewLogDist = startX + p*(endX-startX)/numpnts(tempNewLogDist)
-	tempNewLogDist = 10^(tempNewLogDist)
-	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
-	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
-	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
-	make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_Wv1, Rebinned_Wv2
-	Rebinned_Wv1=0
-	Rebinned_Wv2=0	
-	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
-	//first assume that we can step through this easily...
-	variable cntPoints, BinHighEdge
-	//variable i will be from 0 to number of new points, moving through destination waves
-	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
-	For(i=0;i<NumberOfPoints;i+=1)
-		cntPoints=0
-		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
-		if(isGrowing)
-			Do
-				Rebinned_Wv1[i]+=Wv1[j]
-				Rebinned_Wv2[i]+=(Wv2[j])^2		//sum of squares
-				Rebinned_WvX[i] += WvX[j]
-				cntPoints+=1
-				j+=1
-			While(WvX[j-1]<BinHighEdge && j<OldNumPnts)
-		else
-			Do
-				Rebinned_Wv1[i]+=Wv1[j]
-				Rebinned_Wv2[i]+=(Wv2[j])^2		//sum of squares
-				Rebinned_WvX[i] += WvX[j]
-				cntPoints+=1
-				j+=1
-			While(WvX[j-1]>BinHighEdge && j<OldNumPnts)
-		endif
-		Rebinned_Wv1[i]/=cntPoints
-		Rebinned_Wv2[i]/=cntPoints		
-		Rebinned_Wv2[i]=sqrt(Rebinned_Wv2[i])		//this is standard deviation
-		Rebinned_Wv2[i]/=sqrt(cntPoints)			//and this makes is SEM - standard error of mean
-		Rebinned_WvX[i]/=cntPoints
-		if(j>=OldNumPnts-1)
-			break
-		endif
-	endfor	
-	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, Wv1, Wv2
-	WvX=Rebinned_WvX
-	Wv1=Rebinned_Wv1
-	Wv2=Rebinned_Wv2		
-end
-
-
+//Function IN3_FlyScanRebinData2(WvX, Wv1, Wv2,NumberOfPoints)
+//	wave WvX, Wv1, Wv2
+//	variable NumberOfPoints
+//	//assume W2 is error!!!!
+//	string OldDf
+//	variable OldNumPnts=numpnts(WvX)
+//	if(OldNumPnts<NumberOfPoints)
+//		print "User requeseted rebinning of data, but old number of points is less than requested point number, no rebinning done"
+//		return 0
+//	endif
+//	//Log rebinning, if requested.... 
+//	//create log distribution of points...
+//	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
+//	variable StartX, EndX, iii, isGrowing
+//	isGrowing = (WvX[0] < WvX[numpnts(WvX)-1]) ? 1 : 0
+//	startX=log(WvX[0])
+//	endX=log(WvX[numpnts(WvX)-1])
+//	tempNewLogDist = startX + p*(endX-startX)/numpnts(tempNewLogDist)
+//	tempNewLogDist = 10^(tempNewLogDist)
+//	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
+//	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
+//	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
+//	make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_Wv1, Rebinned_Wv2
+//	Rebinned_Wv1=0
+//	Rebinned_Wv2=0	
+//	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
+//	//first assume that we can step through this easily...
+//	variable cntPoints, BinHighEdge
+//	//variable i will be from 0 to number of new points, moving through destination waves
+//	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
+//	For(i=0;i<NumberOfPoints;i+=1)
+//		cntPoints=0
+//		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
+//		if(isGrowing)
+//			Do
+//				Rebinned_Wv1[i]+=Wv1[j]
+//				Rebinned_Wv2[i]+=(Wv2[j])^2		//sum of squares
+//				Rebinned_WvX[i] += WvX[j]
+//				cntPoints+=1
+//				j+=1
+//			While(WvX[j-1]<BinHighEdge && j<OldNumPnts)
+//		else
+//			Do
+//				Rebinned_Wv1[i]+=Wv1[j]
+//				Rebinned_Wv2[i]+=(Wv2[j])^2		//sum of squares
+//				Rebinned_WvX[i] += WvX[j]
+//				cntPoints+=1
+//				j+=1
+//			While(WvX[j-1]>BinHighEdge && j<OldNumPnts)
+//		endif
+//		Rebinned_Wv1[i]/=cntPoints
+//		Rebinned_Wv2[i]/=cntPoints		
+//		Rebinned_Wv2[i]=sqrt(Rebinned_Wv2[i])		//this is standard deviation
+//		Rebinned_Wv2[i]/=sqrt(cntPoints)			//and this makes is SEM - standard error of mean
+//		Rebinned_WvX[i]/=cntPoints
+//		if(j>=OldNumPnts-1)
+//			break
+//		endif
+//	endfor	
+//	Redimension/N=(numpnts(Rebinned_WvX))/D WvX, Wv1, Wv2
+//	WvX=Rebinned_WvX
+//	Wv1=Rebinned_Wv1
+//	Wv2=Rebinned_Wv2		
+//end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -806,7 +806,7 @@ Function IN3_FlyScanConfigurePnlF()
 
 	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 	PopupMenu SelectTempNumPoints,pos={15,90},size={250,21},proc=IN3_FlyScanPopMenuProc,title="Temp Number of points", help={"For slower computers select smaller number"}
-	PopupMenu SelectTempNumPoints,mode=(1+WhichListItem(num2str(NumberOfTempPoints), "20000;10000;5000;")),value= "20000;10000;5000;"
+	PopupMenu SelectTempNumPoints,mode=(1+WhichListItem(num2str(NumberOfTempPoints), "5000;10000;20000;")),value= "5000;10000;20000;"
 
 end
 //************************************************************************************************************
@@ -970,56 +970,7 @@ Function IN3_FlyScanInitializeImport()
 	endif
 	Make/O/T/N=0 WaveOfFiles
 	Make/O/N=0 WaveOfSelections
-//	
-//	ListOfVariables = "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;"	
-//	ListOfVariables += "Col2Int;Col2Qvec;Col2Err;Col2QErr;Col3Int;Col3Qvec;Col3Err;Col3QErr;Col4Int;Col4Qvec;Col4Err;Col4QErr;"	
-//	ListOfVariables += "Col5Int;Col5Qvec;Col5Err;Col5QErr;Col6Int;Col6Qvec;Col6Err;Col6QErr;Col7Int;Col7Qvec;Col7Err;Col7QErr;"	
-//	ListOfVariables += "QvectInNM;CreateSQRTErrors;CreatePercentErrors;"	
-//	ListOfVariables += "ScaleImportedData;ImportSMRdata;SkipLines;SkipNumberOfLines;UseQISNames;UseIndra2Names;NumOfPointsFound;"	
-//
-//	//Set numbers to 0
-//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-//		NVAR test=$(StringFromList(i,ListOfVariables))
-//		test =0
-//	endfor		
-//	ListOfVariables = "QvectInA;PercentErrorsToUse;ScaleImportedDataBy;UseFileNameAsFolder;UseQRSNames;"	
-//	//Set numbers to 1
-//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-//		NVAR test=$(StringFromList(i,ListOfVariables))
-//		test =1
-//	endfor		
-//	ListOfVariables = "TargetNumberOfPoints;"	
-//	//Set numbers to 1
-//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-//		NVAR test=$(StringFromList(i,ListOfVariables))
-//		if(test<1)
-//			test =200
-//		endif
-//	endfor		
-//	ListOfVariables = "ReducePntsParam;"	
-//	//Set numbers to 1
-//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-//		NVAR test=$(StringFromList(i,ListOfVariables))
-//		if(test<0.5)
-//			test =5
-//		endif
-//	endfor		
-//	
-//	NVAR DataCalibratedArbitrary
-//	NVAR DataCalibratedVolume
-//	NVAR DataCalibratedWeight
-//	if(DataCalibratedArbitrary+DataCalibratedVolume+DataCalibratedWeight!=1)
-//		DataCalibratedArbitrary = 1
-//		DataCalibratedVolume = 0
-//		DataCalibratedWeight = 0
-//	endif
-//	NVAR TrunkateStart
-//	NVAR TrunkateEnd
-//	if(TrunkateStart+TrunkateEnd!=1)
-//		TrunkateStart=0
-//		TrunkateEnd=1
-//	endif
-//	IR1I_UpdateListOfFilesInWvs()
+
 end
 
 

@@ -1,6 +1,6 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma IgorVersion= 4.0	// Requires Igor Pro v4.0 or later.
-#pragma version = 1.19
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma IgorVersion= 6.0	// Requires Igor Pro v4.0 or later.
+#pragma version = 1.20
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 added Grapsrtring to extract information from spec file. 
 //1.19 changed checkIntegrity logic not to check for first few points for I0 value. Due to autoranging that may fail. 
 //1.18 updated to pass specMotors to USAXS folder as it is now needed later (and may be useful). 2/2013 JIL
 //1.17 updated to pass I0 gain to UPD parameters so it can be used as we now have I0gain autoranging... Reading I0_range column if exists
@@ -1925,8 +1926,9 @@ Function IN2_ExtractComments()					// scans spec file to extract #S lines and of
 	
 	IN2_CreateNbkForSpecComments()
 	
-	SVAR CommentsBook=root:CommentsBook
-	SVAR DarkCurrentsInclude=root:DarkCurrentsInclude
+	SVAR CommentsBook=root:Packages:CommentsBook
+	SVAR DarkCurrentsInclude=root:Packages:DarkCurrentsInclude
+	SVAR CommentGrepString=root:Packages:CommentGrepString
 	
 	Notebook $CommentsBook selection={endOfFile, endOfFile}
 	Notebook $CommentsBook text="Spec file:   " +fullFilePath+"\r"
@@ -1943,12 +1945,26 @@ Function IN2_ExtractComments()					// scans spec file to extract #S lines and of
 			if (cmpstr(line[0,1],"#S")==0)
 				line="\r"+line
 			endif
-			if (cmpstr("yes", DarkCurrentsInclude)!=0)
-				if (stringmatch(line, "*dark current*")==0)
-					Notebook $CommentsBook text=line
+			if (stringmatch(DarkCurrentsInclude,"no"))
+				if(strlen(CommentGrepString)>0)
+					if (GrepString(line, CommentGrepString))
+						if (stringmatch(line, "*dark current*")==0)
+							Notebook $CommentsBook text=line
+						endif
+					endif	
+				else
+					if(stringmatch(line, "*dark current*")==0)
+						Notebook $CommentsBook text=line
+					endif
 				endif
-			else			
-				Notebook $CommentsBook text=line
+			else
+				if(strlen(CommentGrepString)>0)
+					if (GrepString(line, CommentGrepString))
+							Notebook $CommentsBook text=line
+					endif	
+				else
+						Notebook $CommentsBook text=line
+				endif
 			endif
 					
 	i += 1
@@ -1957,7 +1973,7 @@ Function IN2_ExtractComments()					// scans spec file to extract #S lines and of
 	close fileVar
 	
 	KillWaves/Z SortingWave
-	KillStrings CommentsBook, DarkCurrentsInclude
+	KillStrings CommentsBook, DarkCurrentsInclude, CommentGrepString
 EndMacro
 
 
@@ -1968,8 +1984,10 @@ Function IN2_CreateNbkForSpecComments()
 	Prompt nbL, "Give me Name for the Notebook, 11 letters max"
 	String DarkCurrentsYes="no"
 	Prompt DarkCurrentsYes, "Include dark current comments?", popup, "no;yes"
+	String CommentGrepStr=""
+	Prompt CommentGrepStr, "Use grepString to select which comments?"
 
-	DoPrompt "Create notebook for Spec comments name", nbl, DarkCurrentsYes
+	DoPrompt "Create notebook for Spec comments name", nbl, DarkCurrentsYes, CommentGrepStr
 	
 	nbl=CleanupName(nbl,0)
 	nbl=nbl[0,32]
@@ -1994,8 +2012,9 @@ Function IN2_CreateNbkForSpecComments()
 	Notebook $nbL ruler=Normal,  justification=0, rulerDefaults={"Arial",10,1,(0,0,0)}
 
 	
-	string/G root:CommentsBook=nbL
-	string/G root:DarkCurrentsInclude=DarkCurrentsYes
+	string/G root:Packages:CommentsBook=nbL
+	string/G root:Packages:DarkCurrentsInclude=DarkCurrentsYes
+	string/G root:Packages:CommentGrepString=CommentGrepStr
 End
 
 

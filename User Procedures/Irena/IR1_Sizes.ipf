@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.14
+#pragma version = 2.15
 Constant IR1RSversionNumber=2.13
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 modifed to use rebinnign routine from general prodecures
 //2.14 modified Tag position with results, keeps runnign out of frame. 
 //2.13 added automatic run of "Calculate parameters" after succesful run. Changed all graph fonts to follow the User defined settings.   
 //2.12 added RebinDataTo option on import to change data binning if needed. 
@@ -765,7 +766,8 @@ Function IR1R_SelectAndCopyData()		//this function selects data to be used and c
 	Wave SizesQvector= root:Packages:Sizes:Q_vecOriginal
 	NVAR RebinDataTo=root:Packages:Sizes:RebinDataTo
 	if(RebinDataTo>0)
-		IR1D_rebinData(IntensityOriginal,SizesQvector,ErrorsOriginal,RebinDataTo, 1)
+		//IR1D_rebinData(IntensityOriginal,SizesQvector,ErrorsOriginal,RebinDataTo, 1)
+		IN2G_RebinLogData(SizesQvector,IntensityOriginal,RebinDataTo,0,Wsdev = ErrorsOriginal)
 	endif
 
 	Duplicate/O IntensityOriginal BackgroundWave			//this background wave is to help user to subtract background
