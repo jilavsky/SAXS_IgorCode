@@ -6,8 +6,11 @@ Code modification history
 2.55 
 ASCII export - fixed bug which prevented Multiple QRS data export.  
 Plotting tool I - made “Zoom and Set limits” marquee item dynamic, so it shows only on the right graph. 
+Plotting tool I - added Int*Q^3 as plotting data option
 Unified fit - fixed bug in GUI of level 2 not showing Link B to G/Rg/P
 Scripting tool - added wave name match string to QRS data type. 
+All packages - created on log-rebinning routine and propagated that routine (General Procedures 1.71) through the system, replacing all log-rebinning other routines. 
+Data Manipulation I - removed the slider for log-rebinning, it seems not functional for some time and new code does not accept this parameter anyway. May need to address this in the future again. 
 
 2.54 1/5/2014
 All files - extended copyright to 2005 - 2014

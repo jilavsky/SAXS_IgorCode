@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
+#pragma version=1.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 modified to use rebinning routien from Geneeral procedures
 //1.15 fixed export to waves which was not working for Schulz-Zimm distribution type. 
 //1.14 On import redimension waves as double precision to make sure some users do not run out of precision with their waves. 
 //1.13 	Propagated through Modeling II Intensity units. Removed option to combine SphereWithLocallyMonodispersedSq with any structrue factor.
@@ -144,7 +145,8 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	redimension/D IntWv, QWv, ErrorWv
 	
 	if(RebinDataTo>0)
-		IR1D_rebinData(IntWv,QWv,ErrorWv,RebinDataTo, 1)
+		//IR1D_rebinData(IntWv,QWv,ErrorWv,RebinDataTo, 1)
+		IN2G_RebinLogData(QWv,IntWv,RebinDataTo,0,Wsdev=ErrorWv)
 	endif
 	
 	Duplicate/O IntWv, $("IntensityMask_set"+num2str(whichDataSet))

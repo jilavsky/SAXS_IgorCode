@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.19
+#pragma version=2.20
 //#include <KBColorizeTraces>
 Constant IR1PversionNumber=2.16
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 added Int*Q^3 as plotting option. 
 //2.19 minor fix for Change Graph details panel visibility
 //2.18 added infinite number of colors and symbols to Vary Colors/symbols. (repeating set of 10). Cleaned up old crud in code. removed KBColorizeTraces, not needed anymore. 
 //2.17 added IR2S_SortListOfAvailableFldrs() to call to scripting tool
@@ -128,7 +129,7 @@ Window IR1P_ControlPanel()
 	PopupMenu XAxisDataType,pos={10,300},size={178,21},proc=IR1P_PanelPopupControl,title="X axis data", help={"Select data to be displayed on X axis, needed data types will be created if necessary"}
 	PopupMenu XAxisDataType,mode=1,popvalue="X",value= "X;X^2;X^3;X^4;"
 	PopupMenu YAxisDataType,pos={220,300},size={178,21},proc=IR1P_PanelPopupControl,title="Y axis data", help={"Select data to be displayed on Y axis, needed data types will be created if necessary"}
-	PopupMenu YAxisDataType,mode=1,popvalue="I",value= "Y;Y^2;Y^3;Y^4;Y*X^4;Y*X^2;1/Y;sqrt(1/Y);ln(Y);ln(Y*X);ln(Y*X^2);"
+	PopupMenu YAxisDataType,mode=1,popvalue="I",value= "Y;Y^2;Y^3;Y^4;Y*X^4;Y*X^3;Y*X^2;1/Y;sqrt(1/Y);ln(Y);ln(Y*X);ln(Y*X^2);"
 
 	CheckBox GraphLogX pos={12,330},title="Log X axis?", variable=root:Packages:GeneralplottingTool:GraphLogX
 	CheckBox GraphLogX proc=IR1P_GenPlotCheckBox, help={"Select to modify horizontal axis to log scale, uncheck for linear scale"}
@@ -1555,6 +1556,8 @@ Function IR1P_UpdateAxisName(which,WhatTypeSelected)
 			NewLabel="Intensity * q\S2\M ["+Units+" * A\S-2\M]"
 		elseif(cmpstr(WhatTypeSelected,"Y*X^4")==0)
 			NewLabel="Intensity * q\S4\M ["+Units+" * A\S-4\M]"
+		elseif(cmpstr(WhatTypeSelected,"Y*X^3")==0)
+			NewLabel="Intensity * q\S3\M ["+Units+" * A\S-3\M]"
 		else
 			NewLabel=""
 		endif

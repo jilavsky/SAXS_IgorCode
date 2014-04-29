@@ -297,86 +297,86 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-Function  IR1I_ImportRebinData(TempInt,TempQ,TempE,TempQr,NumberOfPoints, LogBinParam)
-	wave TempInt,TempQ,TempE, TempQr
-	variable NumberOfPoints, LogBinParam
-
-	string OldDf
-	OldDf = GetDataFOlder(1)
-	NewDataFolder/O/S root:packages
-	NewDataFolder/O/S root:packages:TempDataRebin
-	
-	//Log rebinning, if requested.... 
-	//create log distribution of points...
-	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
-	variable StartQ, EndQ
-	variable RealStart, RealEnd, MinStep, StartX,EndX,startOld
-	if(TempQ[0]<1e-8)
-		findlevel/P TempQ, 1e-8
-		startQ=log(TempQ[ceil(V_LevelX)])
-		RealStart = TempQ[ceil(V_LevelX)]
-		MinStep = TempQ[ceil(V_LevelX)+1] - TempQ[ceil(V_LevelX)]
-	else
-		startQ=log(TempQ[0])
-		RealStart =TempQ[0]
-		MinStep = TempQ[1] - TempQ[0]
-	endif
-	endQ=log(TempQ[numpnts(TempQ)-1])
-	RealEnd = TempQ[numpnts(TempQ)-1]
-	//this did not guarrantee minimum step... Use method developed for Fly USAXS scans 12/2013
-	StartX = IN2G_FindCorrectStart(RealStart,RealEnd,NumberOfPoints,MinStep)
-	EndX = StartX +(RealEnd - RealStart)
-	startQ=log(StartX)
-	endQ = log(EndX)
-	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
-	tempNewLogDist = 10^(tempNewLogDist)
-	startOld = tempNewLogDist[0]
-	tempNewLogDist += RealStart - startOld
-	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
-	tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-2]
-	Rebinned_tempInt=0
-	Rebinned_TempErr=0	
-	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
-	//first assume that we can step through this easily...
-	variable cntPoints, BinHighEdge
-	//variable i will be from 0 to number of new points, moving through destination waves
-	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
-	For(i=0;i<NumberOfPoints;i+=1)
-		cntPoints=0
-		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
-		Do
-			Rebinned_tempInt[i]+=TempInt[j]
-			Rebinned_TempErr[i]+=TempE[j]
-			Rebinned_TempQ[i] += TempQ[j]
-			cntPoints+=1
-		j+=1
-		While(TempQ[j]<BinHighEdge && j<numpnts(TempInt))
-		Rebinned_tempInt[i]/=	cntPoints
-		Rebinned_TempErr[i]/=cntPoints
-		Rebinned_TempQ[i]/=cntPoints
-	endfor
-	
-	Rebinned_TempQ = (Rebinned_TempQ[p]>0) ? Rebinned_TempQ[p] : NaN
-	//Rebinned_TempQ[numpnts(Rebinned_TempQ)-1]=NaN
-	
-	IN2G_RemoveNaNsFrom3Waves(Rebinned_tempInt,Rebinned_TempErr,Rebinned_TempQ)
-
-	
-	Redimension/N=(numpnts(Rebinned_tempInt))/D TempInt,TempQ,TempE, TempQr
-	TempInt=Rebinned_tempInt
-	TempQ=Rebinned_TempQ
-	TempE=Rebinned_TempErr
-	//temp Qr has changed, it now is represented by Q lmits of the new Q wave
-	
-	TempQr = (TempQ[p]-TempQ[p-1])/2 + (TempQ[p+1] - TempQ[p])/2
-	TempQr[0] = TempQ[1]-TempQ[0]
-	TempQr[numpnts(TempQ)-1] = TempQ[numpnts(TempQ)-1] - TempQ[numpnts(TempQ)-2]
-
-	setDataFolder OldDF
-	KillDataFolder/Z root:packages:TempDataRebin
-end
+//replaced by IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
+//Function  IR1I_ImportRebinData(TempInt,TempQ,TempE,TempQr,NumberOfPoints, LogBinParam)
+//	wave TempInt,TempQ,TempE, TempQr
+//	variable NumberOfPoints, LogBinParam
+//
+//	string OldDf
+//	OldDf = GetDataFOlder(1)
+//	NewDataFolder/O/S root:packages
+//	NewDataFolder/O/S root:packages:TempDataRebin
+//	
+//	//Log rebinning, if requested.... 
+//	//create log distribution of points...
+//	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
+//	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
+//	variable StartQ, EndQ
+//	variable RealStart, RealEnd, MinStep, StartX,EndX,startOld
+//	if(TempQ[0]<1e-8)
+//		findlevel/P TempQ, 1e-8
+//		startQ=log(TempQ[ceil(V_LevelX)])
+//		RealStart = TempQ[ceil(V_LevelX)]
+//		MinStep = TempQ[ceil(V_LevelX)+1] - TempQ[ceil(V_LevelX)]
+//	else
+//		startQ=log(TempQ[0])
+//		RealStart =TempQ[0]
+//		MinStep = TempQ[1] - TempQ[0]
+//	endif
+//	endQ=log(TempQ[numpnts(TempQ)-1])
+//	RealEnd = TempQ[numpnts(TempQ)-1]
+//	//this did not guarrantee minimum step... Use method developed for Fly USAXS scans 12/2013
+//	StartX = IN2G_FindCorrectLogScaleStart(RealStart,RealEnd,NumberOfPoints,MinStep)
+//	EndX = StartX +(RealEnd - RealStart)
+//	startQ=log(StartX)
+//	endQ = log(EndX)
+//	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
+//	tempNewLogDist = 10^(tempNewLogDist)
+//	startOld = tempNewLogDist[0]
+//	tempNewLogDist += RealStart - startOld
+//	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
+//	tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDistBinWidth)-2]
+//	Rebinned_tempInt=0
+//	Rebinned_TempErr=0	
+//	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
+//	//first assume that we can step through this easily...
+//	variable cntPoints, BinHighEdge
+//	//variable i will be from 0 to number of new points, moving through destination waves
+//	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
+//	For(i=0;i<NumberOfPoints;i+=1)
+//		cntPoints=0
+//		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
+//		Do
+//			Rebinned_tempInt[i]+=TempInt[j]
+//			Rebinned_TempErr[i]+=TempE[j]
+//			Rebinned_TempQ[i] += TempQ[j]
+//			cntPoints+=1
+//		j+=1
+//		While(TempQ[j]<BinHighEdge && j<numpnts(TempInt))
+//		Rebinned_tempInt[i]/=	cntPoints
+//		Rebinned_TempErr[i]/=cntPoints
+//		Rebinned_TempQ[i]/=cntPoints
+//	endfor
+//	
+//	Rebinned_TempQ = (Rebinned_TempQ[p]>0) ? Rebinned_TempQ[p] : NaN
+//	//Rebinned_TempQ[numpnts(Rebinned_TempQ)-1]=NaN
+//	
+//	IN2G_RemoveNaNsFrom3Waves(Rebinned_tempInt,Rebinned_TempErr,Rebinned_TempQ)
+//
+//	
+//	Redimension/N=(numpnts(Rebinned_tempInt))/D TempInt,TempQ,TempE, TempQr
+//	TempInt=Rebinned_tempInt
+//	TempQ=Rebinned_TempQ
+//	TempE=Rebinned_TempErr
+//	//temp Qr has changed, it now is represented by Q lmits of the new Q wave
+//	
+//	TempQr = (TempQ[p]-TempQ[p-1])/2 + (TempQ[p+1] - TempQ[p])/2
+//	TempQr[0] = TempQ[1]-TempQ[0]
+//	TempQr[numpnts(TempQ)-1] = TempQ[numpnts(TempQ)-1] - TempQ[numpnts(TempQ)-2]
+//
+//	setDataFolder OldDF
+//	KillDataFolder/Z root:packages:TempDataRebin
+//end
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -741,16 +741,19 @@ Function IR1I_NameImportedWaves(selectedFile)
 	NVAR ReduceNumPnts= root:packages:ImportData:ReduceNumPnts
 	NVAR TargetNumberOfPoints= root:packages:ImportData:TargetNumberOfPoints
 	if(ReduceNumPnts)
-	
+		variable tempMinStep=TempQvector[1]-TempQvector[0]
 		if(WaveExists(TempError)&&WaveExists(TempQError))	//have 4 waves
-			IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
+			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep,Wsdev=TempError,Wxsdev=TempQError)
+			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
 		elseif(WaveExists(TempError)&&!WaveExists(TempQError))	//have 3 waves
 			Duplicate/O TempError, TempQError
-			IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
+			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep,Wsdev=TempError,Wxwidth=TempQError)
+			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
 		else	//only 2 waves 
-			Duplicate/O TempIntensity, TempError, TempQError
-			IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
-			KillWaves TempError, TempQError
+			Duplicate/O TempIntensity, TempQError
+			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep, Wxwidth=TempQError)
+			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
+			//KillWaves TempError, TempQError
 		endif
 	endif
 	

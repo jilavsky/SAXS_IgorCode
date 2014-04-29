@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.03
+#pragma version =1.04
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.04 modified to use rebinning routine from General procedures (requires General procedures version 1.71 and higher
 //1.03 fixed error calculations to include transmission, needed for highly scattering but highly absorbing samples, for which errors were unrealistically large. 
 //1.01 modified for weight calibration
 //1.02 added pinDiode tranmsission
@@ -430,7 +431,6 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/Free BL_R_error, log_BL_R_error
 		log_BL_R_error=log(abs(BL_R_error))
 		SMR_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
-		SMR_Error/=3		//errors seemed just too large, this is arbitrary correction... 
 		SMR_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
 		Duplicate/O R_Qvec, SMR_Qvec		
 		//remove points which are surely not useful
@@ -451,12 +451,12 @@ Function IN3_RecalcSubtractSaAndBlank()
 			endif
 		endif
 		USAXSorSBUSAXS="FlyUSAXS"	
-#if(exists("IN3_FlyScanRebinData2")==6)
-			NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
-			if(FlyScanRebinToPoints>0)
-				IN3_FlyScanRebinData2(SMR_Qvec, SMR_Int, SMR_error,FlyScanRebinToPoints)
-			endif
-#endif
+		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
+		if(FlyScanRebinToPoints>0)
+			//IN3_FlyScanRebinData2(SMR_Qvec, SMR_Int, SMR_error,FlyScanRebinToPoints)
+			variable tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
+			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_error)
+		endif
 	elseif (stringmatch(IsItSBUSAXS,"sbuascan"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
+#pragma version=2.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 modified to use rebinning routien from Geneeral procedures
 //2.17 added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //2.16 added some Dale's modifications
 //2.15 added Extended option for warnings to avoid history area poluting. Fixes provided by DWS
@@ -1413,7 +1414,8 @@ Function IR1A_GraphMeasuredData(Package)
 	endif
 	IN2G_RemoveNaNsFrom3Waves(OriginalQvector,OriginalIntensity, OriginalError)
 	if(RebinDataTo>0)
-		IR1D_rebinData(OriginalIntensity,OriginalQvector,OriginalError,RebinDataTo, 1)
+		IN2G_RebinLogData(OriginalQvector,OriginalIntensity,RebinDataTo,0,Wsdev=OriginalError)
+		//IR1D_rebinData(OriginalIntensity,OriginalQvector,OriginalError,RebinDataTo, 1)
 	endif
 	
 	NVAR/Z SubtractBackground=root:Packages:Irena_UnifFit:SubtractBackground

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
+#pragma version=2.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 added Int*Q^3 as plotting option. 
 //2.15 minor fix for Change Graph details panel visibility
 //2.14 added infinite number of colors and symbols to Vary COlors/symbols. (repeating set of 10). 
 //2.13 Fixed bug caused by igor 6.30 which caused Data modification ot trim first and last points from data always. 
@@ -293,6 +294,16 @@ Function IR1P_CreateDataToPlot()
 			Wave IntNew=$(tempFullName)
 			Wave QWvOld=$(tempQwaveName)
 			IntNew=IntNew * QWvOld^2
+			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
+		elseif(cmpstr(DataY,"Y*X^3")==0)		//Want to plot I^2, create data and name...
+			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
+			tempShortName=tempShortName[0,26]	+ "_IQ3"			//Igor names are limited to 30 characters
+			tempShortName = possiblyQuoteName(tempShortName)
+			tempFullName=tempPath+tempShortName
+			Duplicate/o IntOrg, $tempFullName
+			Wave IntNew=$(tempFullName)
+			Wave QWvOld=$(tempQwaveName)
+			IntNew=IntNew * QWvOld^3
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"Y*X^4")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)

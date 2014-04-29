@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.50
+#pragma version=2.51
 constant IR3MversionNumber = 2.49			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.49			//Data manipulation I panel version number
+constant IR1DversionNumber = 2.51			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -9,6 +9,8 @@ constant IR1DversionNumber = 2.49			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.51 removed slider with log-rebinning parameter. Did not work for some time and cannot find easy way to fix it. 
+//		Converted to use of rebinnign routine from General procedures. 
 //2.50 minor fix for case when we are creating error waves with qrs data. It was nto naming new error wave correctly. 
 //2.49 improvements for Data Manipulation II in handling cursors. 
 //2.48 disabled Q shift in Modeling I, let's see if anyone complains... 
@@ -224,10 +226,10 @@ Proc IR1D_DataManipulationPanel()
 	CheckBox LogReducePointNumber,variable= root:packages:SASDataModification:LogReducePointNumber, help={"Check, to log-reduce points. Higher Q points are avearaged."}
 	SetVariable LogReducePointNumberTo, pos={300,480}, size={90,20},title=" ", proc=IR1D_setvarProc
 	SetVariable LogReducePointNumberTo, value= root:Packages:SASDataModification:ReducePointNumberTo,help={"Select number of resulting points"}
-	Slider LogBinningPar pos={100,495},size={270,10},vert=0, side=0
-	Slider LogBinningPar proc=IR1D_SliderProc,variable=root:packages:SASDataModification:LogReduceParam
-	Slider LogBinningPar value=0.001,limits={0.5,10,0}, ticks=0
-	Slider LogBinningPar help={"Slide to change log-binning parameter"}		
+//	Slider LogBinningPar pos={100,495},size={270,10},vert=0, side=0
+//	Slider LogBinningPar proc=IR1D_SliderProc,variable=root:packages:SASDataModification:LogReduceParam
+//	Slider LogBinningPar value=0.001,limits={0.5,10,0}, ticks=0
+//	Slider LogBinningPar help={"Slide to change log-binning parameter"}		
 
 	CheckBox SmoothInLogScale,pos={10,515},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (log)"
 	CheckBox SmoothInLogScale,variable= root:packages:SASDataModification:SmoothInLogScale, help={"Check, if you want to smooth data in log scale. Select window correctly"}
@@ -950,19 +952,25 @@ static Function IR1D_ConvertData()
 	elseif (LogReducePointNumber)
 		NVAR ReducePointNumberTo=root:packages:SASDataModification:ReducePointNumberTo
 		NVAR LogReduceParam=root:packages:SASDataModification:LogReduceParam
+		variable tempWidth = TempQ1[1]-TempQ1[0]
 		If (WaveExists(TempInt1)&&WaveExists(TempQ1)&&WaveExists(TempE1))
 			IN2G_RemoveNaNsFrom3Waves(TempInt1,TempQ1,TempE1)
 			Duplicate/O TempInt1, ResultsInt
 			Duplicate/O TempQ1, ResultsQ
 			Duplicate/O TempE1, ResultsE
-			IR1D_rebinData(ResultsInt,ResultsQ,ResultsE,ReducePointNumberTo, LogReduceParam)
+			//IR1D_rebinData(ResultsInt,ResultsQ,ResultsE,ReducePointNumberTo, LogReduceParam)
+			//print LogReduceParam* tempWidth
+			//IN2G_RebinLogData(ResultsQ,ResultsInt,ReducePointNumberTo,LogReduceParam* tempWidth, Wsdev=ResultsE)
+			IN2G_RebinLogData(ResultsQ,ResultsInt,ReducePointNumberTo, 0, Wsdev=ResultsE)
 		elseif(WaveExists(TempInt1)&&WaveExists(TempQ1))
 			IN2G_RemoveNaNsFrom2Waves(TempInt1,TempQ1)
 			Duplicate/O TempInt1, ResultsInt
 			Duplicate/O TempQ1, ResultsQ
-			Duplicate/O TempInt1, ResultsE
-			IR1D_rebinData(ResultsInt,ResultsQ,ResultsE,ReducePointNumberTo, LogReduceParam)
-			KillWaves/Z ResultsE
+			//Duplicate/O TempInt1, ResultsE
+			//IR1D_rebinData(ResultsInt,ResultsQ,ResultsE,ReducePointNumberTo, LogReduceParam)
+			//KillWaves/Z ResultsE
+			//IN2G_RebinLogData(ResultsQ,ResultsInt,ReducePointNumberTo,LogReduceParam* tempWidth)
+			IN2G_RebinLogData(ResultsQ,ResultsInt,ReducePointNumberTo,0)
 		endif
 	elseif (CombineData)
 		If (WaveExists(TempInt1)&&WaveExists(TempQ1)&&WaveExists(TempE1)&&WaveExists(TempInt2)&&WaveExists(TempQ2)&&WaveExists(TempE2))
@@ -1318,76 +1326,76 @@ static Function IR1D_ConvertData()
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
-	wave TempInt,TempQ,TempE
-	variable NumberOfPoints, LogBinParam
-
-	string OldDf
-	OldDf = GetDataFOlder(1)
-	NewDataFolder/O/S root:packages
-	NewDataFolder/O/S root:packages:TempDataRebin
-	variable OldNumPnts=numpnts(TempInt)
-	if(OldNumPnts<NumberOfPoints)
-		print "User requeseted rebinning of data, but old number of points is less than requested point number, no rebinning done"
-		return 0
-	endif
-	//Log rebinning, if requested.... 
-	//create log distribution of points...
-	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
-	//this does not seem to work... JIL 7/14/2013
-	//tempNewLogDist = exp((0.8*LogBinParam/NumberOfPoints) * p)
-	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
-	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
-	variable StartQ, EndQ, iii
-	iii=-1
-	do		//search for first Q point laregr than 0, seems some users have data starting with Q<=0
-		iii+=1
-		startQ=log(TempQ[iii])
-	while(TempQ[iii]<=0)
-	endQ=log(TempQ[numpnts(TempQ)-1])
-	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
-	tempNewLogDist = 10^(tempNewLogDist)
-	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
-	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
-	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
-	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
-	Rebinned_tempInt=0
-	Rebinned_TempErr=0	
-	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
-	//first assume that we can step through this easily...
-	variable cntPoints, BinHighEdge
-	//variable i will be from 0 to number of new points, moving through destination waves
-	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
-	For(i=0;i<NumberOfPoints;i+=1)
-		cntPoints=0
-		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
-		Do
-			Rebinned_tempInt[i]+=TempInt[j]
-			Rebinned_TempErr[i]+=TempE[j]
-			Rebinned_TempQ[i] += TempQ[j]
-			cntPoints+=1
-		j+=1
-		While(TempQ[j]<BinHighEdge)
-		Rebinned_tempInt[i]/=	cntPoints
-		Rebinned_TempErr[i]/=cntPoints
-		Rebinned_TempQ[i]/=cntPoints
-	endfor
-	
-	Rebinned_TempQ = (Rebinned_TempQ[p]>0) ? Rebinned_TempQ[p] : NaN
-	
-	IN2G_RemoveNaNsFrom3Waves(Rebinned_tempInt,Rebinned_TempErr,Rebinned_TempQ)
-
-	
-	Redimension/N=(numpnts(Rebinned_tempInt))/D TempInt,TempQ,TempE
-	TempInt=Rebinned_tempInt
-	TempQ=Rebinned_TempQ
-	TempE=Rebinned_TempErr
-	print "User requested rebinning of data from "+num2str(OldNumPnts)+" to "+num2str(NumberOfPoints)+" points was done"
-	
-	setDataFolder OldDF
-	KillDataFolder/Z root:packages:TempDataRebin
-end
+//replaced by IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W1, W2, W3, W4, W5])
+//Function IR1D_rebinData(TempInt,TempQ,TempE,NumberOfPoints, LogBinParam)
+//	wave TempInt,TempQ,TempE
+//	variable NumberOfPoints, LogBinParam
+//
+//	string OldDf
+//	OldDf = GetDataFOlder(1)
+//	NewDataFolder/O/S root:packages
+//	NewDataFolder/O/S root:packages:TempDataRebin
+//	variable OldNumPnts=numpnts(TempInt)
+//	if(OldNumPnts<NumberOfPoints)
+//		print "User requeseted rebinning of data, but old number of points is less than requested point number, no rebinning done"
+//		return 0
+//	endif
+//	//Log rebinning, if requested.... 
+//	//create log distribution of points...
+//	make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
+//	//this does not seem to work... JIL 7/14/2013
+//	//tempNewLogDist = exp((0.8*LogBinParam/NumberOfPoints) * p)
+//	//variable tempLogDistRange = tempNewLogDist[numpnts(tempNewLogDist)-1] - tempNewLogDist[0]
+//	//tempNewLogDist =((tempNewLogDist-1)/tempLogDistRange)
+//	variable StartQ, EndQ, iii
+//	iii=-1
+//	do		//search for first Q point laregr than 0, seems some users have data starting with Q<=0
+//		iii+=1
+//		startQ=log(TempQ[iii])
+//	while(TempQ[iii]<=0)
+//	endQ=log(TempQ[numpnts(TempQ)-1])
+//	tempNewLogDist = startQ + p*(endQ-startQ)/numpnts(tempNewLogDist)
+//	tempNewLogDist = 10^(tempNewLogDist)
+//	redimension/N=(numpnts(tempNewLogDist)+1) tempNewLogDist
+//	tempNewLogDist[numpnts(tempNewLogDist)-1]=2*tempNewLogDist[numpnts(tempNewLogDist)-2]-tempNewLogDist[numpnts(tempNewLogDist)-3]
+//	tempNewLogDistBinWidth = tempNewLogDist[p+1] - tempNewLogDist[p]
+//	make/O/D/FREE/N=(NumberOfPoints) Rebinned_TempQ, Rebinned_tempInt, Rebinned_TempErr
+//	Rebinned_tempInt=0
+//	Rebinned_TempErr=0	
+//	variable i, j	//, startIntg=TempQ[1]-TempQ[0]
+//	//first assume that we can step through this easily...
+//	variable cntPoints, BinHighEdge
+//	//variable i will be from 0 to number of new points, moving through destination waves
+//	j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(TempInt)
+//	For(i=0;i<NumberOfPoints;i+=1)
+//		cntPoints=0
+//		BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
+//		Do
+//			Rebinned_tempInt[i]+=TempInt[j]
+//			Rebinned_TempErr[i]+=TempE[j]
+//			Rebinned_TempQ[i] += TempQ[j]
+//			cntPoints+=1
+//		j+=1
+//		While(TempQ[j]<BinHighEdge)
+//		Rebinned_tempInt[i]/=	cntPoints
+//		Rebinned_TempErr[i]/=cntPoints
+//		Rebinned_TempQ[i]/=cntPoints
+//	endfor
+//	
+//	Rebinned_TempQ = (Rebinned_TempQ[p]>0) ? Rebinned_TempQ[p] : NaN
+//	
+//	IN2G_RemoveNaNsFrom3Waves(Rebinned_tempInt,Rebinned_TempErr,Rebinned_TempQ)
+//
+//	
+//	Redimension/N=(numpnts(Rebinned_tempInt))/D TempInt,TempQ,TempE
+//	TempInt=Rebinned_tempInt
+//	TempQ=Rebinned_TempQ
+//	TempE=Rebinned_TempErr
+//	print "User requested rebinning of data from "+num2str(OldNumPnts)+" to "+num2str(NumberOfPoints)+" points was done"
+//	
+//	setDataFolder OldDF
+//	KillDataFolder/Z root:packages:TempDataRebin
+//end
 
 
 //**********************************************************************************************************
@@ -3677,7 +3685,7 @@ Function IR3M_ProcessTheDataFunction()
 	NVAR ReducePntsParam = root:Packages:DataManipulationII:ReducePntsParam
 	NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
 	NVAR PassTroughProcessing= root:Packages:DataManipulationII:PassTroughProcessing
-
+	variable tempWidth
 	variable NumberOfProcessedDataSets=0	
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll	
 	if(sum(SelFldrs)<1)
@@ -3720,8 +3728,10 @@ Function IR3M_ProcessTheDataFunction()
 				//smooth final error wave, note minimum number of points to use is 2
 		endif
 		if(ReduceNumPnts)
-			Duplicate/free ManipIIProcessedDataY, TempQError
-			IR1I_ImportRebinData(ManipIIProcessedDataY,ManipIIProcessedDataX,ManipIIProcessedDataE,TempQError,TargetNumberOfPoints, ReducePntsParam)
+			//Duplicate/free ManipIIProcessedDataY, TempQError
+			tempWidth=ManipIIProcessedDataX[1]-ManipIIProcessedDataX[0]
+			IN2G_RebinLogData(ManipIIProcessedDataX,ManipIIProcessedDataY,ReducePntsParam,tempWidth,Wsdev=ManipIIProcessedDataE)
+			//IR1I_ImportRebinData(ManipIIProcessedDataY,ManipIIProcessedDataX,ManipIIProcessedDataE,TempQError,TargetNumberOfPoints, ReducePntsParam)
 			print "Reduced number of points to "+Num2str(TargetNumberOfPoints)
 		endif		
 		if(ScaleData)
@@ -3803,8 +3813,10 @@ Function IR3M_ProcessTheDataFunction()
 					//smooth final error wave, note minimum number of points to use is 2
 			endif
 			if(ReduceNumPnts)
-				Duplicate/free ManipIIProcessedDataY, TempQError
-				IR1I_ImportRebinData(ManipIIProcessedDataY,ManipIIProcessedDataX,ManipIIProcessedDataE,TempQError,TargetNumberOfPoints, ReducePntsParam)
+				//Duplicate/free ManipIIProcessedDataY, TempQError
+				tempWidth=ManipIIProcessedDataX[1]-ManipIIProcessedDataX[0]
+				IN2G_RebinLogData(ManipIIProcessedDataX,ManipIIProcessedDataY,ReducePntsParam,tempWidth,Wsdev=ManipIIProcessedDataE)
+				//IR1I_ImportRebinData(ManipIIProcessedDataY,ManipIIProcessedDataX,ManipIIProcessedDataE,TempQError,TargetNumberOfPoints, ReducePntsParam)
 				print "Reduced number of points to "+Num2str(TargetNumberOfPoints)
 			endif		
 			if(ScaleData)
@@ -3970,8 +3982,10 @@ Function IR3M_NormalizeData(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
 						//smooth final error wave, note minimum number of points to use is 2
 				endif
 				if(ReduceNumPnts)
-					Duplicate/free TempSubtractedYWv0123, TempQError
-					IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
+					//Duplicate/free TempSubtractedYWv0123, TempQError
+					variable tempWidth=TempSubtractedXWv0123[1]-TempSubtractedXWv0123[0]
+					IN2G_RebinLogData(TempSubtractedXWv0123,TempSubtractedYWv0123,TargetNumberOfPoints,tempWidth,Wsdev=TempSubtractedEWv0123)
+				//	IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
 					Note/NOCR TempSubtractedYWv0123, "Reduced number of points to ="+num2str(TargetNumberOfPoints)+";"	
 				endif		
 				if(ScaleData)
@@ -4133,8 +4147,10 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etm
 						//smooth final error wave, note minimum number of points to use is 2
 				endif
 				if(ReduceNumPnts)
-					Duplicate/free TempSubtractedYWv0123, TempQError
-					IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
+					//Duplicate/free TempSubtractedYWv0123, TempQError
+					variable TempWidth=TempSubtractedXWv0123[1]-TempSubtractedXWv0123[0]
+					IN2G_RebinLogData(TempSubtractedXWv0123,TempSubtractedYWv0123,TargetNumberOfPoints,TempWidth,Wsdev=TempSubtractedEWv0123)		
+					//IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
 				endif		
 				if(ScaleData)
 					TempSubtractedYWv0123*=ScaleDataByValue
@@ -4312,6 +4328,7 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 				NVAR TargetNumberOfPoints=root:Packages:DataManipulationII:TargetNumberOfPoints
 				NVAR ReducePntsParam = root:Packages:DataManipulationII:ReducePntsParam
 				NVAR ReduceNumPnts= root:Packages:DataManipulationII:ReduceNumPnts
+				variable tempWidth
 
 				if(CreateErrors)
 					if(!WaveExists(TempSubtractedEWv0123))
@@ -4332,8 +4349,10 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 						//smooth final error wave, note minimum number of points to use is 2
 				endif
 				if(ReduceNumPnts)
-					Duplicate/free TempSubtractedYWv0123, TempQError
-					IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
+					//Duplicate/free TempSubtractedYWv0123, TempQError
+					tempWidth = TempSubtractedXWv0123[1]-TempSubtractedXWv0123[0]
+					IN2G_RebinLogData(TempSubtractedXWv0123,TempSubtractedYWv0123,TargetNumberOfPoints,tempWidth,Wsdev=TempSubtractedEWv0123)
+					//IR1I_ImportRebinData(TempSubtractedYWv0123,TempSubtractedXWv0123,TempSubtractedEWv0123,TempQError,TargetNumberOfPoints, ReducePntsParam)
 				endif		
 				if(ScaleData)
 					TempSubtractedYWv0123*=ScaleDataByValue

@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.70
+#pragma version = 1.71
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.71 added new log-rebinning routine using IgorExchange version of the code. Need to update other code topp use it. Modified to use standard error of mean. 
 //1.70 added ANL copyright
 //1.69 modified IN2G_roundToUncertainity to handle very small numbers. 
 //1.86 added for log rebining functions tool to find start value to match minimum step. 
@@ -32,6 +33,8 @@
 // e-mail me: ilavsky@aps.anl.gov.
 
 //This is list of procedures with short description. 
+//Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
+//  Rebins data (x,y.etc) on log scale oiptionally with enforcing minimum step size. 
 //
 //Function IN2G_ScrollHook(info)
 //  Should make panels scrollable, will need to test. 
@@ -338,6 +341,282 @@
 //*****************************************************************************************************************
 
 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//This routine will rebin data on log scale. It will produce new Wx and Wy with new NumberOfPoints
+//If MinStep > 0 it will try to set the values so the minimum step on log scale is MinStep
+//optional Wsdev is standard deviation for each Wy value, it will be propagated through - sum(sdev^2)/numpnts in each bin. 
+//optional Wxwidth will generate width of each new bin in x. NOTE: the edge is half linear distance between the two points, no log  
+//skewing is done for edges. Therefore the width is really half of the distance between p-1 and p+1 points.  
+//optional W1-5 will be averaged for each bin , so this is way to propagate other data one may need to. 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W1, W2, W3, W4, W5])
+		Wave Wx, Wy
+		Variable NumberOfPoints, MinStep
+		Wave Wsdev,Wxsdev
+		Wave Wxwidth
+		Wave W1, W2, W3, W4, W5
+		variable CalcSdev, CalcWidth, CalcW1, CalcW2, CalcW3, CalcW4, CalcW5, CalcXSdev
+		CalcSdev = ParamIsDefault(Wsdev) ?  0 : 1
+		CalcXSdev = ParamIsDefault(Wxsdev) ?  0 : 1
+		CalcWidth = ParamIsDefault(Wxwidth) ?  0 : 1
+		CalcW1 = ParamIsDefault(W1) ?  0 : 1
+		CalcW2 = ParamIsDefault(W2) ?  0 : 1
+		CalcW3 = ParamIsDefault(W3) ?  0 : 1
+		CalcW4 = ParamIsDefault(W4) ?  0 : 1
+		CalcW5 = ParamIsDefault(W5) ?  0 : 1
+		
+		variable OldNumPnts=numpnts(Wx)
+		if(3*NumberOfPoints>OldNumPnts)
+			print "User requested rebinning of data, but old number of points is less than 3*requested number of points, no rebinning done"
+			return 0
+		endif
+		variable StartX, EndX, iii, isGrowing, CorrectStart, logStartX, logEndX
+		if(Wx[0]<=0)				//log scale cannot start at 0, so let's pick something close to what user wanted...  
+			Wx[0] = Wx[1]/2
+		endif
+		CorrectStart = Wx[0]
+		if(MinStep>0)
+			StartX = IN2G_FindCorrectLogScaleStart(Wx[0],Wx[numpnts(Wx)-1],NumberOfPoints,MinStep)
+		else
+			StartX = CorrectStart
+		endif
+		Endx = StartX +abs(Wx[numpnts(Wx)-1] - Wx[0])
+		isGrowing = (Wx[0] < Wx[numpnts(Wx)-1]) ? 1 : 0
+		make/O/D/FREE/N=(NumberOfPoints) tempNewLogDist, tempNewLogDistBinWidth
+		logstartX=log(startX)
+		logendX=log(endX)
+		tempNewLogDist = logstartX + p*(logendX-logstartX)/numpnts(tempNewLogDist)
+		tempNewLogDist = 10^(tempNewLogDist)
+		startX = tempNewLogDist[0]
+		tempNewLogDist += CorrectStart - StartX
+	
+ 		tempNewLogDistBinWidth[1,numpnts(tempNewLogDist)-2] = tempNewLogDist[p+1] - tempNewLogDist[p-1]
+ 		tempNewLogDistBinWidth[0] = tempNewLogDistBinWidth[1]
+ 		tempNewLogDistBinWidth[numpnts(tempNewLogDist)-1] = tempNewLogDistBinWidth[numpnts(tempNewLogDist)-2]
+		make/O/D/FREE/N=(NumberOfPoints) Rebinned_WvX, Rebinned_WvY, Rebinned_Wv1, Rebinned_Wv2,Rebinned_Wv3, Rebinned_Wv4, Rebinned_Wv5, Rebinned_Wsdev, Rebinned_Wxsdev
+		Rebinned_WvX=0
+		Rebinned_WvY=0
+		Rebinned_Wv1=0	
+		Rebinned_Wv2=0	
+		Rebinned_Wv3=0	
+		Rebinned_Wv4=0	
+		Rebinned_Wv5=0	
+		Rebinned_Wsdev=0	
+		Rebinned_Wxsdev=0	
+
+		variable i, j
+		variable cntPoints, BinHighEdge
+		//variable i will be from 0 to number of new points, moving through destination waves
+		j=0		//this variable goes through data to be reduced, therefore it goes from 0 to numpnts(Wx)
+		For(i=0;i<NumberOfPoints;i+=1)
+			cntPoints=0
+			BinHighEdge = tempNewLogDist[i]+tempNewLogDistBinWidth[i]/2
+			if(isGrowing)
+				Do
+					Rebinned_WvX[i] 	+= Wx[j]
+					Rebinned_WvY[i]	+= Wy[j]
+					if(CalcW1)
+						Rebinned_Wv1[i]	+= W1[j]
+					endif
+					if(CalcW2)
+						Rebinned_Wv2[i]	+= W2[j]
+					endif
+					if(CalcW3)
+						Rebinned_Wv3[i]	+= W3[j]
+					endif
+					if(CalcW4)
+						Rebinned_Wv4[i] 	+= W4[j]
+					endif
+					if(CalcW5)
+						Rebinned_Wv5[i] 	+= W5[j]
+					endif
+					if(CalcSdev)
+						Rebinned_Wsdev[i] += Wsdev[j]^2
+					endif
+					if(CalcXSdev)
+						Rebinned_WXsdev[i] += WXsdev[j]^2
+					endif
+					cntPoints+=1
+					j+=1
+				While(Wx[j-1]<BinHighEdge && j<OldNumPnts)
+			else
+				Do
+					Rebinned_WvX[i] 	+= Wx[j]
+					Rebinned_WvY[i]	+= Wy[j]
+					if(CalcW1)
+						Rebinned_Wv1[i]	+= W1[j]
+					endif
+					if(CalcW2)
+						Rebinned_Wv2[i]	+= W2[j]
+					endif
+					if(CalcW3)
+						Rebinned_Wv3[i]	+= W3[j]
+					endif
+					if(CalcW4)
+						Rebinned_Wv4[i] 	+= W4[j]
+					endif
+					if(CalcW5)
+						Rebinned_Wv5[i] 	+= W5[j]
+					endif
+					if(CalcSdev)
+						Rebinned_Wsdev[i] += Wsdev[j]^2
+					endif
+					if(CalcXSdev)
+						Rebinned_WXsdev[i] += WXsdev[j]^2
+					endif
+					cntPoints+=1
+					j+=1
+				While((Wx[j-1]>BinHighEdge) && (j<OldNumPnts))
+			endif
+			Rebinned_WvX[i]/=cntPoints	 
+			Rebinned_WvY[i]/=cntPoints
+			if(CalcW1)
+				Rebinned_Wv1[i]/=cntPoints
+			endif
+			if(CalcW2)
+				Rebinned_Wv2[i]/=cntPoints
+			endif
+			if(CalcW3)
+				Rebinned_Wv3[i]/=cntPoints
+			endif
+			if(CalcW4)
+				Rebinned_Wv4[i]/=cntPoints
+			endif
+			if(CalcW5)
+				Rebinned_Wv5[i]/=cntPoints
+			endif
+			if(CalcSdev)
+				Rebinned_Wsdev[i]=sqrt(Rebinned_Wsdev[i])/(cntPoints)	 
+			endif
+			if(CalcXSdev)
+				Rebinned_Wxsdev[i]=sqrt(Rebinned_Wxsdev[i])/(cntPoints)	 
+			endif
+		endfor
+
+	Redimension/N=(numpnts(Rebinned_WvX))/D Wx, Wy
+	Wx=Rebinned_WvX
+	Wy=Rebinned_WvY
+
+	if(CalcW1)
+		Redimension/N=(numpnts(Rebinned_WvX))/D W1
+		W1=Rebinned_Wv1
+	endif
+	if(CalcW2)
+		Redimension/N=(numpnts(Rebinned_WvX))/D W2
+		W2=Rebinned_Wv2
+	endif
+	if(CalcW3)
+		Redimension/N=(numpnts(Rebinned_WvX))/D W3
+		W3=Rebinned_Wv3
+	endif
+	if(CalcW4)
+		Redimension/N=(numpnts(Rebinned_WvX))/D W4
+		W4=Rebinned_Wv4
+	endif
+	if(CalcW5)
+		Redimension/N=(numpnts(Rebinned_WvX))/D W5
+		W5=Rebinned_Wv5
+	endif
+
+	if(CalcSdev)
+		Redimension/N=(numpnts(Rebinned_WvX))/D Wsdev
+		Wsdev = Rebinned_Wsdev
+	endif
+	if(CalcxSdev)
+		Redimension/N=(numpnts(Rebinned_WvX))/D Wxsdev
+		Wxsdev = Rebinned_Wxsdev
+	endif
+	
+	if(CalcWidth)
+		Redimension/N=(numpnts(Rebinned_WvX))/D Wxwidth
+		Wxwidth = tempNewLogDistBinWidth
+	endif
+end		
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
+	variable StartValue,EndValue,NumPoints,MinStep
+	//find Start/end values for log scale so the step betwen first and second point is MinStep
+	variable TotalValueDiff=abs(EndValue-StartValue)
+	variable startX, endX, LastMinStep, LastStartValue, calcStep
+	variable difer, NumIterations
+	if(StartValue<=1e-8)
+		StartValue=0.01
+	endif
+	startX=log(StartValue)
+	endX=log(StartValue+TotalValueDiff)
+	LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+	LastStartValue = StartValue
+	NumIterations = 0
+	if(LastMinStep<MinStep)		//need to decrease the start value
+		LastStartValue-=TotalValueDiff/(2*NumPoints)
+		Do
+			LastStartValue+=TotalValueDiff/(2*NumPoints)
+			startX = log(LastStartValue)
+			endX = log(LastStartValue+TotalValueDiff)
+			calcStep= 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+			NumIterations+=1
+		while((calcStep<MinStep) && (NumIterations<500))
+		if(NumIterations>=500)
+			abort "Cannot find correct minstep for log distribution" 
+		endif
+		return LastStartValue
+	else								//need to increase start value
+		LastStartValue+=TotalValueDiff/20
+		Do
+			LastStartValue-=TotalValueDiff/20
+			startX = log(LastStartValue)
+			endX = log(LastStartValue+TotalValueDiff)
+			calcStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+		while((calcStep>MinStep)&&(LastStartValue>0) && (NumIterations<500))
+		if(NumIterations>=500)
+			abort "Cannot find correct minstep for log distribution" 
+		endif
+		return LastStartValue
+	endif
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//Function IN2G_FindCorrectStart(StartValue,EndValue,NumPoints,MinStep)
+//	variable StartValue,EndValue,NumPoints,MinStep
+//	
+//	variable AngleDiff=abs(EndValue-StartValue)
+//	variable startX, endX, LastMinStep, LastStartAngle, calcStep
+//	variable difer		//=10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//	if(StartValue<=0.01)
+//		StartValue=1
+//	endif
+//	startX=log(StartValue)
+//	endX=log(StartValue+AngleDiff)
+//	LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//	LastStartAngle = StartValue
+//	if(LastMinStep<MinStep)		//need to decrease the start angle
+//		Do
+//			LastStartAngle+=0.1
+//			startX = log(LastStartAngle)
+//			endX = log(LastStartAngle+AngleDiff)
+//			calcStep= 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//		while((calcStep<MinStep)&&(LastStartAngle<300))
+//		return LastStartAngle
+//	else			//need to increase start angle
+//		Do
+//			LastStartAngle-=LastStartAngle/20
+//			startX = log(LastStartAngle)
+//			endX = log(LastStartAngle+AngleDiff)
+//			calcStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//		while((calcStep>MinStep)&&(LastStartAngle>0))
+//		return LastStartAngle
+//	endif
+//end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 //FUNCTIONS AND PROCEDURES FOR USE IN ALL INDRA 2 MACROS	
 Function ING2_AddScrollControl()
 	//string WindowName
@@ -375,98 +654,6 @@ static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
 //		NewBottom2 = NewBottom+OriginalHeight+3
 //		MoveSubwindow/W=IR1D_DataManipulationPanel#Bot fnum=(V_left, NewTop2, V_right, NewBottom2 )
 //	endif
-end
-
-
-//Function IN2G_ScrollWindowCheckProc(cba) : CheckBoxControl
-//	STRUCT WMCheckboxAction &cba
-//
-//	switch( cba.eventCode )
-//		case 2: // mouse up
-//			Variable checked = cba.checked
-//			if(Checked)
-//				SetWindow kwTopWin hook(scroll)=IN2G_ScrollHook
-//			else
-//				SetWindow kwTopWin hook(scroll)=$""
-//			endif
-//			break
-//		case -1: // control being killed
-//			break
-//	endswitch
-//	return 0
-//End
-//
-//Function IN2G_ScrollHook(info)
-//	Struct WMWinHookStruct &info
-// 
-//	strswitch( info.eventName )
-//		case "mouseWheel":
-//			// If the mouse wheel is above a subwindow, info.name won't be the top level window
-//			// This test allows the scroll wheel to work normally when over a table subwindow.
-//			Variable mouseIsOverSubWindow= ItemsInList(info.WinName,"#") > 1
-//			if( !mouseIsOverSubWindow )
-//				String controls = ControlNameList(info.winName)
-//				Variable shiftKeyIsDown = info.eventMod & 0x2
-//				print "shiftKeyIsDown = "+num2str(shiftKeyIsDown)
-//				print "info.wheelDy = "+num2str(info.wheelDy)
-//				if( shiftKeyIsDown )
-//					ModifyControlList controls, win=$info.winName, pos+={info.wheelDy,0}	// left/right
-//				else
-//					ModifyControlList controls, win=$info.winName, pos+={0,info.wheelDy}	// up/down
-//				endif
-//			endif
-//			break
-//	endswitch
-//	return 0	// process all events normally
-//End
-//
-//Function IN2G_ScrollHook(info)
-//	Struct WMWinHookStruct &info
-// 
-//	if(info.eventCode == 22)
-////		variable ActiveXStart, ActiveXEnd, ActiveYEnd, ActiveYStart
-//		ControlInfo /W=$(info.winName)  ScrollTab
-//		string controls = ControlNameList(info.winName)
-//		variable i
-//		for(i=0;i<itemsinlist(controls);i+=1)
-//			string control = stringfromlist(i,controls)
-//			ModifyControl $control pos+={0,info.wheelDy}
-//		endfor
-//	endif
-//End
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-Function IN2G_FindCorrectStart(StartValue,EndValue,NumPoints,MinStep)
-	variable StartValue,EndValue,NumPoints,MinStep
-	
-	variable AngleDiff=abs(EndValue-StartValue)
-	variable startX, endX, LastMinStep, LastStartAngle, calcStep
-	variable difer		//=10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-	if(StartValue<=0.01)
-		StartValue=1
-	endif
-	startX=log(StartValue)
-	endX=log(StartValue+AngleDiff)
-	LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-	LastStartAngle = StartValue
-	if(LastMinStep<MinStep)		//need to decrease the start angle
-		Do
-			LastStartAngle+=0.1
-			startX = log(LastStartAngle)
-			endX = log(LastStartAngle+AngleDiff)
-			calcStep= 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-		while((calcStep<MinStep)&&(LastStartAngle<300))
-		return LastStartAngle
-	else			//need to increase start angle
-		Do
-			LastStartAngle-=LastStartAngle/20
-			startX = log(LastStartAngle)
-			endX = log(LastStartAngle+AngleDiff)
-			calcStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-		while((calcStep>MinStep)&&(LastStartAngle>0))
-		return LastStartAngle
-	endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
