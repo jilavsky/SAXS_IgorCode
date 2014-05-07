@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.71
+#pragma version = 1.72
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.72 updated log rebinning search for parameters using Optimize. Much better... 
 //1.71 added new log-rebinning routine using IgorExchange version of the code. Need to update other code topp use it. Modified to use standard error of mean. 
 //1.70 added ANL copyright
 //1.69 modified IN2G_roundToUncertainity to handle very small numbers. 
@@ -541,45 +542,64 @@ end
 //**********************************************************************************************************
 Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
 	variable StartValue,EndValue,NumPoints,MinStep
-	//find Start/end values for log scale so the step betwen first and second point is MinStep
-	variable TotalValueDiff=abs(EndValue-StartValue)
-	variable startX, endX, LastMinStep, LastStartValue, calcStep
-	variable difer, NumIterations
-	if(StartValue<=1e-8)
-		StartValue=0.01
-	endif
-	startX=log(StartValue)
-	endX=log(StartValue+TotalValueDiff)
-	LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-	LastStartValue = StartValue
-	NumIterations = 0
-	if(LastMinStep<MinStep)		//need to decrease the start value
-		LastStartValue-=TotalValueDiff/(2*NumPoints)
-		Do
-			LastStartValue+=TotalValueDiff/(2*NumPoints)
-			startX = log(LastStartValue)
-			endX = log(LastStartValue+TotalValueDiff)
-			calcStep= 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-			NumIterations+=1
-		while((calcStep<MinStep) && (NumIterations<500))
-		if(NumIterations>=500)
-			abort "Cannot find correct minstep for log distribution" 
-		endif
-		return LastStartValue
-	else								//need to increase start value
-		LastStartValue+=TotalValueDiff/20
-		Do
-			LastStartValue-=TotalValueDiff/20
-			startX = log(LastStartValue)
-			endX = log(LastStartValue+TotalValueDiff)
-			calcStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
-		while((calcStep>MinStep)&&(LastStartValue>0) && (NumIterations<500))
-		if(NumIterations>=500)
-			abort "Cannot find correct minstep for log distribution" 
-		endif
-		return LastStartValue
-	endif
+	Make/Free/N=3 w
+	w={EndValue-StartValue, NumPoints,MinStep}
+	Optimize /H=100/L=1e-5/I=100/T=(MinStep/50)/Q myFindStartValueFunc, w
+	//Test this works?
+//	variable startX=log(V_minloc)
+//	variable endX=log(V_minloc+range)
+//	variable LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//	print LastMinStep
+	return V_minloc
 end
+static Function myFindStartValueFunc(w,x1)
+	Wave w		//this is {totalRange, NumSteps,MinStep}
+	Variable x1	//this is startValue where we need to start with log stepping...
+	variable LastMinStep = 10^(log(X1) + (log(X1+w[0])-log(X1))/w[1]) - 10^(log(X1))
+	return abs(LastMinStep-w[2])
+End
+
+//Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
+//	variable StartValue,EndValue,NumPoints,MinStep
+//	//find Start/end values for log scale so the step betwen first and second point is MinStep
+//	variable TotalValueDiff=abs(EndValue-StartValue)
+//	variable startX, endX, LastMinStep, LastStartValue, calcStep
+//	variable difer, NumIterations
+//	if(StartValue<=1e-8)
+//		StartValue=0.01
+//	endif
+//	startX=log(StartValue)
+//	endX=log(StartValue+TotalValueDiff)
+//	LastMinStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//	LastStartValue = StartValue
+//	NumIterations = 0
+//	if(LastMinStep>MinStep)		//need to increase the start value
+//		LastStartValue-=TotalValueDiff/(2*NumPoints)
+//		Do
+//			LastStartValue+=TotalValueDiff/(2*NumPoints)
+//			startX = log(LastStartValue)
+//			endX = log(LastStartValue+TotalValueDiff)
+//			calcStep= 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//			NumIterations+=1
+//		while((calcStep<MinStep) && (NumIterations<500))
+//		if(NumIterations>=500)
+//			abort "Cannot find correct minstep for log distribution" 
+//		endif
+//		return LastStartValue
+//	else								//need to decrease start value
+//		LastStartValue+=TotalValueDiff/(2*NumPoints)
+//		Do
+//			LastStartValue-=TotalValueDiff/(2*NumPoints)
+//			startX = log(LastStartValue)
+//			endX = log(LastStartValue+TotalValueDiff)
+//			calcStep = 10^(startX + (endX-startX)/NumPoints) - 10^(startX)
+//		while((calcStep>MinStep)&&(LastStartValue>0) && (NumIterations<500))
+//		if(NumIterations>=500)
+//			abort "Cannot find correct minstep for log distribution" 
+//		endif
+//		return LastStartValue
+//	endif
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
