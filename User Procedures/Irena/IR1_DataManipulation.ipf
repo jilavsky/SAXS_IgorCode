@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.51
+#pragma version=2.52
 constant IR3MversionNumber = 2.49			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.51			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.51			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.52 fixed bug where Data manipulation tool II could fail when wave names were liberal. 
 //2.51 removed slider with log-rebinning parameter. Did not work for some time and cannot find easy way to fix it. 
 //		Converted to use of rebinnign routine from General procedures. 
 //2.50 minor fix for case when we are creating error waves with qrs data. It was nto naming new error wave correctly. 
@@ -4481,7 +4482,7 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Ou
 	variable i, j
 	for (i=0;i<NumOfFoldersToTest;i+=1)
 		if(SelFldrs[i])
-			wave/Z tmpWv=$(FldrNamesTWv[i]+IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt))
+			wave/Z tmpWv=$(FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt)))
 			break
 		endif
 	endfor
@@ -4499,11 +4500,11 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Ou
 	j=0
 	For(i=0;i<NumOfFoldersToTest;i+=1)
 		if(SelFldrs[i]>0)		//set to 1, selected
-			wave/Z tmpWvX=$(FldrNamesTWv[i]+IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt))
-			wave/Z tmpWvY=$(FldrNamesTWv[i]+IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt))
+			wave/Z tmpWvX=$(FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt)))
+			wave/Z tmpWvY=$(FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)))
 			if(WaveExists(tmpWvX) && WaveExists(tmpWvY))
 				AverageWvsTempMatrix[][j]=interp(AveragedDataXwave[p], tmpWvX, tmpWvY )
-				NewWaveNote+=FldrNamesTWv[i]+IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt) +","
+				NewWaveNote+=FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)) +","
 			else
 				AverageWvsTempMatrix[p][j]=Nan
 				Print "Error found... " + FldrNamesTWv[i] + " selected data were not found. Please, check data selection and if persistent, report this as error."
