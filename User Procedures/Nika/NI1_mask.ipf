@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.16
+#pragma version =1.17
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 added ability to load 2DCalibrated data to support masking of those data. 
 //1.16 added double click option to ListBox and added shift to accomodate tools when Start MASK draw is selected. 
 //1.15 update for reversed color tables
 //1.14 adds Nexus file format proper filter
@@ -49,7 +50,10 @@ Function NI1M_CreateImageROIPanel()
 	NVAR ImageRangeMaxLimit=root:Packages:Convert2Dto1D:ImageRangeMaxLimit
 	NVAR ImageRangeMinLimit=root:Packages:Convert2Dto1D:ImageRangeMinLimit
 	NVAR MaskOffLowIntPoints=root:Packages:Convert2Dto1D:MaskOffLowIntPoints
+	NVAR UseCalibrated2DData=root:Packages:Convert2Dto1D:UseCalibrated2DData
 	NVAR LowIntToMaskOff=root:Packages:Convert2Dto1D:LowIntToMaskOff
+	SVAR ListOfKnownExtensions=root:Packages:Convert2Dto1D:ListOfKnownExtensions
+	SVAR ListOfKnownCalibExtensions=root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 	
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(22,58,450,560) as "Create MASK panel"
@@ -59,11 +63,20 @@ Function NI1M_CreateImageROIPanel()
 	DrawText 62,30,"Prepare mask file"
 	DrawText 18,92,"Select data set to use:"
 
-	Button SelectPathToData,pos={27,44},size={150,20},proc=NI1M_RoiDrawButtonProc,title="Select path to data"
+	Button SelectPathToData,pos={7,44},size={150,20},proc=NI1M_RoiDrawButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Adds drawing tools to top image graph. Use rectangle, circle or polygon."}
-	PopupMenu CCDFileExtension,pos={207,44},size={101,21},proc=NI1M_MaskPopMenuProc,title="File type:"
+
+	CheckBox UseCalibrated2DData title="Calibrated 2D data?",pos={237,30}
+	CheckBox UseCalibrated2DData proc=NI1M_MaskCheckProc,variable=root:Packages:Convert2Dto1D:UseCalibrated2DData
+	CheckBox UseCalibrated2DData help={"Select, if using precalibrated 2D data?"}
+
+	PopupMenu CCDFileExtension,pos={237,54},size={101,21},proc=NI1M_MaskPopMenuProc,title="File type:"
 	PopupMenu CCDFileExtension,help={"Select image type of data to be used"}
 	PopupMenu CCDFileExtension,mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+	if(UseCalibrated2DData)
+		CCDFileExtension = stringfromlist(0,ListOfKnownCalibExtensions)
+		PopupMenu CCDFileExtension,mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
+	endif
 
 	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1M_ListBoxProc
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
@@ -213,6 +226,19 @@ Function NI1M_MaskCheckProc(ctrlName,checked) : CheckBoxControl
 		NI1M_MaskUpdateColors()
 	endif
 
+	IF(cmpstr(ctrlName,"UseCalibrated2DData")==0)
+		SVAR CCDFileExtension = root:Packages:Convert2Dto1D:CCDFileExtension
+		SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
+		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
+		if(checked)
+			CCDFileExtension = stringfromlist(0,ListOfKnownCalibExtensions)
+			PopupMenu CCDFileExtension,win=NI1M_ImageROIPanel, mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
+		else
+			CCDFileExtension = stringfromlist(0,ListOfKnownExtensions)
+			PopupMenu CCDFileExtension,win=NI1M_ImageROIPanel,mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+		endif
+	endif
+
 	setDataFolder OldDf
 End
 //*******************************************************************************************************************************************
@@ -233,6 +259,7 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 	endif
 	NVAR MaskOffLowIntPoints = root:Packages:Convert2Dto1D:MaskOffLowIntPoints
 	NVAR LowIntToMaskOff = root:Packages:Convert2Dto1D:LowIntToMaskOff
+	Wave MaskCCDImage = root:Packages:Convert2Dto1D:MaskCCDImage
 
 	String MaskLowIntInfo="MaskOffLowIntPoints:"+num2str(MaskOffLowIntPoints)+";LowIntToMaskOff:"+num2str(LowIntToMaskOff)+">"
 
@@ -242,9 +269,17 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 	DoWindow/F NI1M_ImageROIPanel
 
 
+	string CommandStr
 	DrawAction /L=ProgFront /W=CCDImageForMask commands
-	string CommandStr=MaskLowIntInfo+S_recreation
-	ImageGenerateROIMask/E=1/I=0 MaskCCDImage		//sets mask to 0
+	if(strlen(S_recreation)>0)
+		CommandStr=MaskLowIntInfo+S_recreation
+		ImageGenerateROIMask/E=1/I=0 MaskCCDImage		//sets mask to 0
+	else
+		CommandStr=MaskLowIntInfo
+		Duplicate/O MaskCCDImage, M_ROIMask
+		Redimension/B/U M_ROIMask
+		M_ROIMask = 1
+	endif
 	Wave M_ROIMask
 	note M_ROIMask ,  CommandStr
 	//SVAR FileNameToLoad
@@ -689,8 +724,8 @@ Function NI1M_MaskUpdateColors()
 			MatrixOp/O/NTHR=1 UnderLevelImage= MaskCCDImage
 			AppendImage/T/W=CCDImageForMask UnderLevelImage
 			variable tempLimit=LowIntToMaskOff
-			if(tempLimit<1)
-				tempLimit=1
+			if(tempLimit<1e-10)
+				tempLimit=1e-10
 			endif
 			if(MaskDisplayLogImage)
 				tempLimit=log(tempLimit)

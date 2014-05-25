@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.33
-Constant NI1AversionNumber = 2.32
+#pragma version=2.34
+Constant NI1AversionNumber = 2.34
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.32
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.34 added possibility of importing 2DCalibrated data (EQSANS). 
 //2.33 fixed bug in LP profille wave names for notes addition. 
 //2.32 adds DataCalibrationStgring to data and GUI
 //2.31 added *.maccd and combined all mpa formats into one loader (*.mpa). Have 4 versions of this format, three I had working versions, csv I did tno. SO the three are loaded, csv gives error. 
@@ -164,6 +165,7 @@ Function NI1A_Initialize2Dto1DConversion()
 #if(Exists("ccp4unpack"))	
 	ListOfKnownExtensions+="MarIP/xop;"
 #endif
+	string/g ListOfKnownCalibExtensions="EQSANS400x400;"
 	//add Fit2D known types of PC 
 	//tif					tif file
 	//GeneralBinary		configurable binary loader using GBLoadWave
@@ -235,7 +237,10 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="ProcessNImagesAtTime;SaveGSASdata;FIlesSortOrder;"
 	//errors control
 	ListOfVariables+="ErrorCalculationsUseOld;ErrorCalculationsUseStdDev;ErrorCalculationsUseSEM;"
+	//2DCalibratedDataInput
+	ListOfVariables+="UseCalibrated2DData;"
 
+	
 	ListOfVariables+="UseLineProfile;UseSectors;"
 	ListOfVariables+="LineProf_UseBothHalfs;LineProf_DistanceFromCenter;LineProf_Width;LineProf_DistanceQ;LineProf_WidthQ;"
 	ListOfVariables+="LineProfileDisplayWithQ;LineProfileDisplayWithQy;LineProfileDisplayWithQz;LineProfileDisplayWithAzA;LineProfileDisplayLogX;LineProfileDisplayLogY;"

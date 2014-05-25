@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.22
+#pragma version=2.23
 Constant IR1IversionNumber = 2.22
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.23 added sorting of imported waves as some users seem to have data which are not increasing in q. Weird, but possible... DOne before optional rebinning. 
 //2.22 changed Import rebinning on log scale to match minimum step (defined as the difference between first two original points left after trimming and 0 int removal). 
 //2.21 changed import to load data as double precision waves. SOme users were running out of precision. 
 //2.20 added RemoveStringFromName to remove part of name which user does not want to see... 
@@ -737,6 +738,16 @@ Function IR1I_NameImportedWaves(selectedFile)
 			IN2G_RemoveNaNsFrom2Waves(TempQvector, TempIntensity)
 		endif
 	endif	
+	//just in case, we need to sort the data (some users have data which are not sorted...
+	if(WaveExists(TempError))
+		if(waveExists(TempQError))
+			sort TempQvector,TempQvector, TempIntensity, TempError,TempQError
+		else
+			sort TempQvector,TempQvector, TempIntensity, TempError
+		endif
+		sort TempQvector,TempQvector, TempIntensity
+	endif
+
 	//here rebind the data down....
 	NVAR ReduceNumPnts= root:packages:ImportData:ReduceNumPnts
 	NVAR TargetNumberOfPoints= root:packages:ImportData:TargetNumberOfPoints

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.13
+#pragma version=2.15
 Constant NI1BCversionNumber = 2.14
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 add avoidace in case user is using Calibrated 2D data. 
 //2.14 minor fix
 //2.13 added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data. 
 //2.12 added double click function to the file selection listbox, modified CheckVersion procedure to avoid Igor crash.
@@ -26,6 +27,10 @@ Constant NI1BCversionNumber = 2.14
 Function NI1_CreateBmCntrFile()
 	
 	NI1A_Initialize2Dto1DConversion()
+	NVAR UseCalibrated2DData =root:Packages:Convert2Dto1D:UseCalibrated2DData
+	if(UseCalibrated2DData)
+		Abort "This tool cannot be used when Calibrated 2D data are used. It makes no sense. Uncheck the checkbox on the main panel and the try again." 
+	endif
 	NI1BC_InitCreateBmCntrFile()
 	NI1BC_CreateBmCntrField()
 	NI1_UpdatePanelVersionNumber("NI1_CreateBmCntrFieldPanel",NI1BCversionNumber)
@@ -78,6 +83,9 @@ Function NI1BC_CreateBmCntrField()
 	NVAR BMBeamCenterYStep=root:Packages:Convert2Dto1D:BMBeamCenterYStep
 	NVAR BMHelpCircleRadius=root:Packages:Convert2Dto1D:BMHelpCircleRadius
 	NVAR BMMaxCircleRadius=root:Packages:Convert2Dto1D:BMMaxCircleRadius
+	
+	NVAR UseCalibrated2DData = root:Packages:Convert2Dto1D:UseCalibrated2DData
+	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 
 //	NVAR =root:Packages:Convert2Dto1D:
 	
@@ -89,9 +97,10 @@ Function NI1BC_CreateBmCntrField()
 	DrawText 10,25,"Refinement of Beam Center & Calibration"
 	DrawText 18,92,"Select data set to use:"
 
-	Button SelectPathToData,pos={27,35},size={150,20},proc=NI1BC_BmCntrButtonProc,title="Select path to data"
+	Button SelectPathToData,pos={27,35},size={130,20},proc=NI1BC_BmCntrButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Sets path to data where BmCntr image is"}
-	PopupMenu BmCntrFileType,pos={207,35},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="File type:"
+
+	PopupMenu BmCntrFileType,pos={247,35},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="File type:"
 	PopupMenu BmCntrFileType,help={"Select image type of data to be used"}
 	PopupMenu BmCntrFileType,mode=1,popvalue=BmCntrFileType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	TitleBox BCPathInfoStrt, pos={3,60}, size={350,20}, variable=root:Packages:Convert2Dto1D:BCPathInfoStr, fsize=9, frame=0, fstyle=2, fColor=(0,12800,32000)
@@ -101,7 +110,7 @@ Function NI1BC_CreateBmCntrField()
 	ListBox CCDDataSelection,listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
 	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0, proc = NI1_BMUListBoxProc
 	SetVariable BCMatchNameString,pos={220,75},size={200,16},title="Match name (grep)"
-	SetVariable BCMatchNameString,help={"HowUse string to match to name"}, proc=NI1BC_SetVarProc
+	SetVariable BCMatchNameString,help={"Use string to match to name"}, proc=NI1BC_SetVarProc
 	SetVariable BCMatchNameString, variable= root:Packages:Convert2Dto1D:BCMatchNameString
 
 	Button CreateROIWorkImage,pos={325,225},size={100,20},proc=NI1BC_BmCntrButtonProc,title="Make Image"

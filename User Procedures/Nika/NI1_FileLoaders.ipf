@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.29
+#pragma version=2.30
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.30 adds EQSANS calibrated data
 //2.29 added Pilatus 3 200k (with dimensions 487,407) 
 //2.28 attempted to add Pilatus cbf format, code is half way through but the example makes no sense and does not work... abandon until proper image is avbaialbel.  
 //2.27 added double clicks to Empty and Dark Listboxes as well as maskListbox on main panel
@@ -83,13 +84,68 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Redimension/N=(-1,-1,0) 	LoadedWvHere			//this is fix for 3 layer tiff files...
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+".tif"+";"
+	elseif(cmpstr(FileType,"EQSANS400x400")==0)
+		FileNameToLoad= FileName
+		KillWaves/Z wave0,wave1,wave2,wave3,wave4
+		LoadWave/Q/A/D/G/P=$(PathName)  FileNameToLoad
+		Wave wave0
+		Wave wave1
+		Wave wave2
+		wave wave3
+		Duplicate/O wave0, Qx2D
+		Duplicate/O wave1, Qy2D
+		Duplicate/O wave3, Err2D
+		Duplicate/O wave2, Int2D
+		KillWaves/Z wave0,wave1,wave2,wave3,wave4
+		redimension/N=(400,400) Qx2D, Qy2D, Int2D, Err2D
+		ImageRotate/O/H Int2D
+		ImageRotate/O/C Int2D
+		Duplicate/O Int2D, $(NewWaveName)
+		if(stringmatch(NewWaveName, "CCDImageToConvert"))
+			//create Angles wave
+			matrixOp/O AnglesWave = atan(Qy2D/Qx2D)
+			AnglesWave += pi/2
+			AnglesWave = Qx2D > 0 ? AnglesWave : AnglesWave+pi
+			//create Q waves
+			matrixOP/O Qx2D = powR(Qx2D,2)
+			matrixOP/O Qy2D = powR(Qy2D,2)
+			matrixOp/O Q2DWave = sqrt(Qx2D + Qy2D)
+			//fix their data orientation...
+			ImageRotate/O/H AnglesWave
+			ImageRotate/O/H Q2DWave
+			ImageRotate/O/H Err2D
+			ImageRotate/O/C AnglesWave
+			ImageRotate/O/C Q2DWave
+			ImageRotate/O/C Err2D
+			//get beam center, needed basically only for the drawings. 
+			Wavestats/Q Q2DWave
+			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+			BeamCenterX = V_minRowLoc
+	 		BeamCenterY = V_minColLoc
+	 		//OK, now we need to fake at least SDD to make sure some drawings work well...
+	 		NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
+			NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+			NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX								//in millimeters
+			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY								//in millimeters
+			Wavelength = 2			//set to 2A, makes no sense for TOF instrument, but need to have something...
+			Duplicate/O Q2DWave, Theta2DWave
+			Multithread Theta2DWave = asin(Q2DWave / (4*pi/Wavelength))
+			//Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+			//Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
+			//Multithread Theta2DWave = sqrt(((p-BeamCenterX)*PixelSizeX)^2 + ((q-BeamCenterY)*PixelSizeY)^2)
+			//the distance of point 0,0 in mm is:
+			variable dist00 = sqrt((BeamCenterX*PixelSizeX)^2 + (BeamCenterY*PixelSizeY)^2)
+			//Theta2DWave[0][0] = atan(dist00/SampleToCCDDistance)/2
+			//2*tan(Theta2DWave[0][0]) = dist00/SampleToCCDDistance
+			SampleToCCDDistance = abs(dist00/(2*tan(Theta2DWave[0][0])))
+			Duplicate/O Err2D, CCDImageToConvert_Errs
+		endif
+		Killwaves/Z Int2D, Qx2D, Qy2D, Err2D
+		NewNote+="DataFileName="+FileNameToLoad+";"
+		NewNote+="DataFileType="+"EQSANS400x400"+";"
 	elseif(cmpstr(FileType,"MarCCD")==0)
 		FileNameToLoad= FileName
-		//STRUCT Mar_Tiff_Flea_Header RH			//this is useless, there seems to be really no information in the test files I got. 
-		//open /R/P=$(PathName) RefNum as FileNameToLoad
-		//	FBinRead/b=2 RefNum, RH
-		//	close RefNum
-		//	print RH
 		ImageLoad/P=$(PathName)/T=tiff/O/N=$(NewWaveName) FileNameToLoad
 		if(V_flag==0)		//return 0 if not succesuful.
 			return 0
@@ -98,8 +154,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Redimension/N=(-1,-1,0) 	LoadedWvHere			//this is fix for 3 layer tiff files...
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+".tif"+";"
-
-
 	elseif(cmpstr(FileType,"SSRLMatSAXS")==0)
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".tif")!=0)
@@ -1087,7 +1141,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	             FileNameToLoad= FileName
 	               variable dummy_i0
 	               wave/Z IonChamber_1, IonChamber_0, I1_I0
-	               variable dummy_i1_1,dummy_i1,dummy_i1_2, dummy_time,Ring,wave0
+	               variable dummy_i1_1,dummy_i1,dummy_i1_2, dummy_time,Ring
 	               LDataType=16+64
 	               LByteOrder=1
 	               LFloatType=1

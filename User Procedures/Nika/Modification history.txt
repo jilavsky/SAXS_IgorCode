@@ -5,6 +5,7 @@ Code modification history
 ********************************************
 1.66 xxxxx
 Added Pilatus 3, 200k.
+Added ability to import 2D calibrated data, for now ASCII (qx qy I dI) from EQSANS. 
 
 1.65 2/20/2014
 Fixed minor bug in LP profiles note handling. Matching release for Indra package. 
