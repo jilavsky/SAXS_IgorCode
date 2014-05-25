@@ -12,6 +12,7 @@ Scripting tool - added wave name match string to QRS data type.
 All packages - created on log-rebinning routine and propagated that routine (General Procedures 1.71) through the system, replacing all log-rebinning other routines. 
 Data Manipulation I - removed the slider for log-rebinning, it seems not functional for some time and new code does not accept this parameter anyway. May need to address this in the future again. 
 Data Manipulation II - fixed bug which caused failure when wave names were liberal. 
+ASCII import - added q sorting as some users seem to have data which are not necessarily q increasing and it causes troubles for analysis packages. 
 
 2.54 1/5/2014
 All files - extended copyright to 2005 - 2014
