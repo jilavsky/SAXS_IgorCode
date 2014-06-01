@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 fixed /NTHR=0, 1 is simply wrong... 
 //2.15 add avoidace in case user is using Calibrated 2D data. 
 //2.14 minor fix
 //2.13 added many more lines for Lab6, Si, and Ce standards. Modified to disable fitting both SDD and Wavelength, very unlikely this would be possible with most data. 
@@ -27,8 +28,8 @@ Constant NI1BCversionNumber = 2.14
 Function NI1_CreateBmCntrFile()
 	
 	NI1A_Initialize2Dto1DConversion()
-	NVAR UseCalibrated2DData =root:Packages:Convert2Dto1D:UseCalibrated2DData
-	if(UseCalibrated2DData)
+	NVAR UseCalib2DData =root:Packages:Convert2Dto1D:UseCalib2DData
+	if(UseCalib2DData)
 		Abort "This tool cannot be used when Calibrated 2D data are used. It makes no sense. Uncheck the checkbox on the main panel and the try again." 
 	endif
 	NI1BC_InitCreateBmCntrFile()
@@ -84,7 +85,7 @@ Function NI1BC_CreateBmCntrField()
 	NVAR BMHelpCircleRadius=root:Packages:Convert2Dto1D:BMHelpCircleRadius
 	NVAR BMMaxCircleRadius=root:Packages:Convert2Dto1D:BMMaxCircleRadius
 	
-	NVAR UseCalibrated2DData = root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
 	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 
 //	NVAR =root:Packages:Convert2Dto1D:
@@ -1154,14 +1155,14 @@ Function NI1BC_BmCntrCheckProc(ctrlName,checked) : CheckBoxControl
 			redimension/S BmCntrCCDImg
 			ImageStats BmCntrCCDImg
 			if(BmCntrDisplayLogImage)
-				MatrixOp/O/NTHR=1 BmCntrDisplayImage=log(BmCntrCCDImg)
+				MatrixOp/O/NTHR=0 BmCntrDisplayImage=log(BmCntrCCDImg)
 				V_min=log(V_min)
 				V_max=log(V_max)
 				if(numType(V_min)!=0)
 					V_min=0
 				endif
 			else
-				MatrixOp/O/NTHR=1 BmCntrDisplayImage=BmCntrCCDImg
+				MatrixOp/O/NTHR=0 BmCntrDisplayImage=BmCntrCCDImg
 			endif
 			NVAR ImageRangeMin= root:Packages:Convert2Dto1D:BMImageRangeMin
 			NVAR ImageRangeMax = root:Packages:Convert2Dto1D:BMImageRangeMax
@@ -1637,7 +1638,7 @@ Function NI1BC_BmCntrCreateImage()
 	NVAR BMStandardTransmission=root:Packages:Convert2Dto1D:BMStandardTransmission
 	if(BMSubtractBlank)
 		Wave Empty=  root:Packages:Convert2Dto1D:EmptyData
-		MatrixOP /NTHR=1  /O  BmCntrDisplayImage = BmCntrCCDImg - Empty * BMStandardTransmission
+		MatrixOP /NTHR=0  /O  BmCntrDisplayImage = BmCntrCCDImg - Empty * BMStandardTransmission
 		MatrixOp /O BmCntrCCDImg = BmCntrDisplayImage
 	else
 		MatrixOp /O BmCntrDisplayImage = BmCntrCCDImg	
@@ -1648,14 +1649,14 @@ Function NI1BC_BmCntrCreateImage()
 
 	ImageStats BmCntrCCDImg
 	if(BmCntrDisplayLogImage)
-		MatrixOp/O/NTHR=1 BmCntrDisplayImage=log(BmCntrCCDImg)
+		MatrixOp/O/NTHR=0 BmCntrDisplayImage=log(BmCntrCCDImg)
 		V_min=log(V_min)
 		V_max=log(V_max)
 		if(numType(V_min)!=0)
 			V_min=0
 		endif
 	else
-		MatrixOp/O/NTHR=1 BmCntrDisplayImage=BmCntrCCDImg
+		MatrixOp/O/NTHR=0 BmCntrDisplayImage=BmCntrCCDImg
 	endif
 	NVAR InvertImages=root:Packages:Convert2Dto1D:InvertImages
 	if(InvertImages)
@@ -2203,9 +2204,9 @@ Function NI1BC_GetEvaluationPaths(CalibrantLine,numberOfSectors)
 
 	Wave BmCntrImage=root:Packages:Convert2Dto1D:BmCntrCCDImg
 	if(BMUseMask && WaveExists(M_ROIMask))
-		MatrixOp/O/NTHR=1 BmCntrImageMsk=BmCntrImage / M_ROIMask
+		MatrixOp/O/NTHR=0 BmCntrImageMsk=BmCntrImage / M_ROIMask
 	else	
-		MatrixOp/O/NTHR=1 BmCntrImageMsk=BmCntrImage 
+		MatrixOp/O/NTHR=0 BmCntrImageMsk=BmCntrImage 
 	endif
 	Wave BmCntrImageMsk=root:Packages:Convert2Dto1D:BmCntrImageMsk
 	//we need to get path for each direction, pick 30 directions, each therefore 6 degrees appart
