@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.30
+#pragma version=2.31
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.31 fixed /NTHR=1 to /NTHR=0
 //2.30 adds EQSANS calibrated data
 //2.29 added Pilatus 3 200k (with dimensions 487,407) 
 //2.28 attempted to add Pilatus cbf format, code is half way through but the example makes no sense and does not work... abandon until proper image is avbaialbel.  
@@ -520,7 +521,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			Multithread tempWvForLoad += Loadedwave0[p+iii*2048*2048]
 		endfor
 		if(NumImages>1)
-			MatrixOp/O/NTHR=1 tempWvForLoad = tempWvForLoad/NumImages
+			MatrixOp/O/NTHR=0 tempWvForLoad = tempWvForLoad/NumImages
 		endif
 		Redimension/N=(2048,2048) tempWvForLoad
 		duplicate/O tempWvForLoad, $(NewWaveName)
@@ -3050,7 +3051,7 @@ static Function NI1_ReadFujiImgFile(PathName, filename, FujiFileHeader)
 		//scale data to max sensitivity of the reader, so data from same instrument with different sensitivity can be compared... 
 		variable tempVar = (MaxSensitivity/Sensitivity)/FudgeToFit2D
 		//Loadedwave0 =  tempVar *10^(Latitude*(Loadedwave0[p]/Gval) - 0.5)
-		MatrixOp/O/NTHR=1 Loadedwave0 =  tempVar *powR(10,(Latitude*(Loadedwave0/Gval) - 0.5))
+		MatrixOp/O/NTHR=0 Loadedwave0 =  tempVar *powR(10,(Latitude*(Loadedwave0/Gval) - 0.5))
 
 		//Now, Heinz has this normalized somehow by area of pixel... Weird, I would assume I need to divide by area, not multiply. Leave it out for now... 
 	//	variable pixelSizeX = NumberByKey("PixelSizeX", FujiFileHeader , ":", ";")
@@ -3649,6 +3650,9 @@ Function NI1_MPASpeFindNumDataLines(pathName, filePath)
 	return endPnt
 End
 
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
 Function/S NI1_COnvertLineIntoList(LineWhiteSpaceSeparated)
 	string LineWhiteSpaceSeparated
 	
@@ -3660,6 +3664,9 @@ Function/S NI1_COnvertLineIntoList(LineWhiteSpaceSeparated)
 	return NewList+";"
 end
 
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
 Function/T NI1_ZapControlCodes(str)			// remove parts of string with ASCII code < 32
 	String str
 	Variable i = 0
@@ -3671,6 +3678,9 @@ Function/T NI1_ZapControlCodes(str)			// remove parts of string with ASCII code 
 	while(i<strlen(str))
 	return str
 End
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
 Function/T NI1_ReduceSpaceRunsInString(str,minRun)
 	String str
 	Variable minRun
@@ -3684,6 +3694,9 @@ Function/T NI1_ReduceSpaceRunsInString(str,minRun)
 	while(i>=minRun)
 	return str
 End
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
 Function/T NI1_TrimLeadingWhiteSpace(str)	// remove any leading white space from str
 	String str
 	Variable i
@@ -3693,3 +3706,252 @@ Function/T NI1_TrimLeadingWhiteSpace(str)	// remove any leading white space from
 	while (char2num(str[i])<=32)
 	return str[i,strlen(str)-1]
 End
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+
+Function ReadNexusCanSAS()
+
+	variable GroupID
+	Variable fileID, result
+	variable i, j
+	string AttribList, PathToData, ListOfDataSets, ListOfGroups, DataIdentification
+	string tempStr, TempDataPath, TempQPath, TempMaskPath, TempIdevPath, tempStr2
+	
+	HDF5OpenFile/P=HDF5Data/R/I fileID as ""
+	if (V_flag != 0)
+		Print "HDF5OpenFile failed"
+		return -1
+	endif
+	HDF5ListGroup /F /R /TYPE=1  /Z fileID , "/"
+	ListOfGroups = S_HDF5ListGroup
+	For (i=0;i<ItemsInList(ListOfGroups);i+=1)
+		AttribList = HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
+		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata") && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
+			PathToData = stringfromlist(i,ListOfGroups)
+			print "Found location of data : " + PathToData
+			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
+			ListOfDataSets = S_HDF5ListGroup
+			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
+				tempStr = HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
+				if(numberByKey("signal", tempStr)	)
+					TempDataPath = stringfromlist(j,ListOfDataSets)
+					tempStr2 = stringByKey("axes", tempStr)
+					if(stringmatch(tempStr2,"Q"))
+						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Q"
+					elseif(stringmatch(tempStr2,"Qx,Qy"))
+						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Qx"+";"
+						TempQPath += TempDataPath[0,strlen(TempDataPath)-2]+"Qy"
+					else
+						abort "Problem identifying Q axes"
+					endif
+					if(StringMatch(ListOfDataSets,"*Mask*"))
+						TempMaskPath = TempDataPath[0,strlen(TempDataPath)-2]+"Mask"
+					endif
+					if(StringMatch(ListOfDataSets,"*Idev*"))
+						TempIdevPath = TempDataPath[0,strlen(TempDataPath)-2]+"Idev"
+					endif
+					DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
+
+				endif			
+			endfor
+		endif
+	endfor
+	print DataIdentification
+	HDF5CloseFile fileID  
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+static Function/S HdfReadAllAttributes(fileID, Location, isDataSet)
+	variable fileID
+	String Location
+	variable isDataSet
+	
+	variable DataType
+	DataType = 1	//group
+	if(isDataSet)
+		DataType = 2
+	endif
+	HDF5ListAttributes /TYPE=(DataType)/Z  fileID , Location
+	if(V_Flag!=0)
+		Print "Reading attributes failed"
+		abort 
+	endif
+	string ListofAttributesNames, KeyWordAttribsList
+	KeyWordAttribsList = ""
+	ListofAttributesNames = S_HDF5ListAttributes				//Set to a semicolon-separated list of attribute names.
+	variable i
+	For(i=0;i<itemsinlist(ListofAttributesNames);i+=1)
+		killwaves/Z attribValue
+		HDF5LoadData /A=stringfromlist(i,ListofAttributesNames)  /N=attribValue  /O /Q   /TYPE=(DataType) fileID , Location
+		Wave  attribValue
+		if(WaveType(attribValue ,1)==2)
+			Wave/T  attribValueT=attribValue
+			KeyWordAttribsList+=stringfromlist(i,ListofAttributesNames)+":"+attribValueT[0]+";"
+		else
+			KeyWordAttribsList+=stringfromlist(i,ListofAttributesNames)+":"+num2str(attribValue[0])+";"
+		endif
+		
+	endfor
+	return KeyWordAttribsList
+end
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+// write out Nexus/CanSAS file for Nika
+Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy])
+		String Hdf5FileName
+		wave Iwv, dIwv, Qwv, Mask, Qx, Qy
+		
+		variable usedIwv, useQwv, useMask, useQx, useQy, use3Q
+		usedIwv= !ParamIsDefault(dIwv) 
+		useQwv= !ParamIsDefault(Qwv) 
+		useMask= !ParamIsDefault(Mask) 
+		useQx= !ParamIsDefault(Qx) 
+		useQy= !ParamIsDefault(Qy) 
+		use3Q = useQx*useQy
+		if(use3Q + useQwv != 1)
+			abort "Wrong Q data passed to WriteHdf5CanSASData"
+		endif
+		//Writes Nexus/CanSAS data based on proposed format:
+		// to this structure (NX_class attribute MUST name a NeXus base class)
+		//
+		///sasentry01							<-- HDF5 group
+		//ÊÊ@NX_class = "NXentry"			<-- NeXus requires this
+		//ÊÊ@canSAS_class = "SASentry"		<-- this is between you and me, for now. Perhaps optional?
+		//
+		//ÊÊ/sasdata01						<-- HDF5 group
+		//ÊÊÊÊ@NX_class = "NXdata"			<-- NeXus requires this
+		//ÊÊÊÊ@canSAS_class = "SASdata"		<-- this is between you and me, for now.
+		//ÊÊÊÊ@canSAS_version = "0.1"		<-- this is between you and me, for now.
+		//	Ê	@I_axes = "Q,Q"				<-- canSAS 2012 agreed model
+		//	Ê	@Q_indices = "0,1"			<-- canSAS 2012 agreed model
+		//	Ê	@Mask_indices = "0,1"			<-- canSAS 2012 agreed model
+		//
+		//	ÊI: float[M,N]					<-- HDF5 dataset, the intensity array
+		//	ÊÊÊÊ@uncertainty="Idev"		<-- canSAS 2012 agreed model
+		//	ÊÊÊÊ@signal=1					<-- NeXus requires this
+		//		   @axes="Q"					<-- NeXus suggests this is identified
+		//	ÊIdev: float[M,N]				<-- HDF5 dataset, the intensity array <<<<optional
+		//	ÊQ: float[M,N]					<-- HDF5 dataset, |Q| at each pixel  <<<<optional
+		//or
+		//	Ê	@I_axes = "Qx,Qy"				<-- canSAS 2012 agreed model
+		//	Qx: float[M,N] ÊÊ<-- Qx at each pixel
+		//	Qy: float[M,N] ÊÊ<-- Qy at each pixel
+		//	Qz: float[M,N] ÊÊ<-- Qz at each pixel (might be all zero)
+
+	variable GroupID
+	Variable fileID, result
+	HDF5CreateFile/P=Convert2Dto1DOutputPath /O /Z fileID as Hdf5FileName
+	if (V_flag != 0)
+		Print "HDF5CreateFile failed"
+		return -1
+	endif
+	HDF5CreateGroup fileID , "/sasentry01" , groupID
+	HDF5OpenGroup fileID , "/sasentry01" , groupID
+	// Write an attributes to the sasentry01 group
+	Make /FREE /T /N=1 groupAttribute = "NXentry"				//NX_class
+		//HDF5SaveData /A="NX_class" groupAttribute, fileID, "/sasentry01/"
+	NIA1_HdfSaveAttrib("NX_class","NXentry","/sasentry01/", fileID)
+	NIA1_HdfSaveAttrib( "canSAS_class","SASentry","/sasentry01/", fileID)
+	HDF5CreateGroup fileID , "/sasentry01/sasdata01" , groupID
+	HDF5OpenGroup fileID , "/sasentry01/sasdata01" , groupID
+	//attributes
+	NIA1_HdfSaveAttrib("NX_class","NXdata","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("canSAS_class","SASdata","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("canSAS_version","0.1","/sasentry01/sasdata01", fileID)
+	if(useQwv)
+		//now this is for use |Q|
+		NIA1_HdfSaveAttrib("I_axes","Q,Q","/sasentry01/sasdata01", fileID)
+	else
+		//now this is for use Qx, Qy
+		NIA1_HdfSaveAttrib("I_axes","Qx,Qy","/sasentry01/sasdata01", fileID)
+	endif
+	NIA1_HdfSaveAttrib("signal","I","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("Q_indices","0,1","/sasentry01/sasdata01", fileID)
+	if(useMask)
+		//this is if we use Mask 
+		NIA1_HdfSaveAttrib("Mask_indices","0,1","/sasentry01/sasdata01", fileID)
+	endif
+	// Save wave as dataset
+	HDF5SaveData /O /Z /GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1} Iwv, fileID, "/sasentry01/sasdata01/I"
+	if (V_flag != 0)
+		Print "HDF5SaveData failed"
+		result = -1
+	endif
+	NIA1_HdfSaveAttribIntg("signal",1,"/sasentry01/sasdata01/I", fileID)
+	//Now deal with Q axes...
+	if(useQwv)
+		NIA1_HdfSaveAttrib("axes","Q","/sasentry01/sasdata01/I", fileID)
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Qwv , fileID, "/sasentry01/sasdata01/Q"
+		if (V_flag != 0)
+			Print "HDF5SaveData failed"
+			result = -1
+		endif
+	else		//UIse Qx, Qy, Qz
+		NIA1_HdfSaveAttrib("axes","Qx,Qy","/sasentry01/sasdata01/I", fileID)
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Qx , fileID, "/sasentry01/sasdata01/Qx"
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Qy , fileID, "/sasentry01/sasdata01/Qy"
+		Duplicate/Free Qx, Qz
+		Qz=0
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Qz , fileID, "/sasentry01/sasdata01/Qz"
+	endif
+	//Now deal with Uncertainty
+	if(usedIwv)
+		NIA1_HdfSaveAttrib("uncertainty","Idev","/sasentry01/sasdata01/I", fileID)
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   dIwv, fileID, "/sasentry01/sasdata01/Idev"
+		if(useQwv)
+			NIA1_HdfSaveAttrib("axes","Q","/sasentry01/sasdata01/Idev", fileID)
+		else
+			NIA1_HdfSaveAttrib("axes","Qx,Qy","/sasentry01/sasdata01/Idev", fileID)
+		endif
+	else	//no uncertainty
+		NIA1_HdfSaveAttrib("uncertainty","","/sasentry01/sasdata01/I", fileID)
+	endif
+	//Now deal with mask. 
+	if(useMask)
+		//note, mask is 1 when the point is removed, 0 when is used. 
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Mask, fileID, "/sasentry01/sasdata01/Mask"
+	endif
+	if (V_flag != 0)
+		Print "HDF5SaveData failed"
+		result = -1
+	endif
+	HDF5CloseFile fileID  
+end
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+static Function NIA1_HdfSaveAttrib(AttribName,AttribValue,AttribLoc, fileID)
+	string AttribName,AttribValue,AttribLoc
+	Variable fileID
+	make/T/Free/N=1 groupAttribute
+	groupAttribute = AttribValue									
+	HDF5SaveData /A=AttribName groupAttribute, fileID, AttribLoc
+	if (V_flag != 0)
+		Print "HDF5SaveData failed when saving Attribute "+AttribName+" with value of "+AttribValue+" at location of "+AttribLoc
+	endif	
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+static Function NIA1_HdfSaveAttribIntg(AttribName,AttribValue,AttribLoc, fileID)
+	string AttribName,AttribLoc
+	Variable fileID, AttribValue
+	make/U/W/Free/N=1 groupAttribute
+	groupAttribute = AttribValue									
+	HDF5SaveData /A=AttribName groupAttribute, fileID, AttribLoc
+	if (V_flag != 0)
+		Print "HDF5SaveData failed when saving Attribute "+AttribName+" with value of "+num2str(AttribValue)+" at location of "+AttribLoc
+	endif	
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+

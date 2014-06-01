@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.17
+#pragma version =1.18
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 fixed /NTHR=1 to /NTHR=0
 //1.17 added ability to load 2DCalibrated data to support masking of those data. 
 //1.16 added double click option to ListBox and added shift to accomodate tools when Start MASK draw is selected. 
 //1.15 update for reversed color tables
@@ -50,7 +51,7 @@ Function NI1M_CreateImageROIPanel()
 	NVAR ImageRangeMaxLimit=root:Packages:Convert2Dto1D:ImageRangeMaxLimit
 	NVAR ImageRangeMinLimit=root:Packages:Convert2Dto1D:ImageRangeMinLimit
 	NVAR MaskOffLowIntPoints=root:Packages:Convert2Dto1D:MaskOffLowIntPoints
-	NVAR UseCalibrated2DData=root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 	NVAR LowIntToMaskOff=root:Packages:Convert2Dto1D:LowIntToMaskOff
 	SVAR ListOfKnownExtensions=root:Packages:Convert2Dto1D:ListOfKnownExtensions
 	SVAR ListOfKnownCalibExtensions=root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
@@ -66,14 +67,14 @@ Function NI1M_CreateImageROIPanel()
 	Button SelectPathToData,pos={7,44},size={150,20},proc=NI1M_RoiDrawButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Adds drawing tools to top image graph. Use rectangle, circle or polygon."}
 
-	CheckBox UseCalibrated2DData title="Calibrated 2D data?",pos={237,30}
-	CheckBox UseCalibrated2DData proc=NI1M_MaskCheckProc,variable=root:Packages:Convert2Dto1D:UseCalibrated2DData
-	CheckBox UseCalibrated2DData help={"Select, if using precalibrated 2D data?"}
+	CheckBox UseCalib2DData title="Calibrated 2D data?",pos={237,30}
+	CheckBox UseCalib2DData proc=NI1M_MaskCheckProc,variable=root:Packages:Convert2Dto1D:UseCalib2DData
+	CheckBox UseCalib2DData help={"Select, if using precalibrated 2D data?"}
 
 	PopupMenu CCDFileExtension,pos={237,54},size={101,21},proc=NI1M_MaskPopMenuProc,title="File type:"
 	PopupMenu CCDFileExtension,help={"Select image type of data to be used"}
 	PopupMenu CCDFileExtension,mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
-	if(UseCalibrated2DData)
+	if(UseCalib2DData)
 		CCDFileExtension = stringfromlist(0,ListOfKnownCalibExtensions)
 		PopupMenu CCDFileExtension,mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
 	endif
@@ -226,7 +227,7 @@ Function NI1M_MaskCheckProc(ctrlName,checked) : CheckBoxControl
 		NI1M_MaskUpdateColors()
 	endif
 
-	IF(cmpstr(ctrlName,"UseCalibrated2DData")==0)
+	IF(cmpstr(ctrlName,"UseCalib2DData")==0)
 		SVAR CCDFileExtension = root:Packages:Convert2Dto1D:CCDFileExtension
 		SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
@@ -294,7 +295,7 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 		wave MaskCCDImage
 	//	MatrixOP/O/NTHR=1 LowIntPointmask = greater(MaskCCDImage -LowIntToMaskOff, 0)		
 	//	MatrixOP/O/NTHR=1 M_ROIMask =M_ROIMask * greater(MaskCCDImage, LowIntToMaskOff)		
-		MatrixOP/O/NTHR=1 M_ROIMask =M_ROIMask * greater(MaskCCDImage -TempLowIntToMsk,0)
+		MatrixOP/O/NTHR=0 M_ROIMask =M_ROIMask * greater(MaskCCDImage -TempLowIntToMsk,0)
 	endif
 	redimension/B/U M_ROIMask
 
@@ -721,7 +722,7 @@ Function NI1M_MaskUpdateColors()
 			removeimage/W=CCDImageForMask UnderLevelImage
 		endif
 		if(MaskOffLowIntPoints)
-			MatrixOp/O/NTHR=1 UnderLevelImage= MaskCCDImage
+			MatrixOp/O/NTHR=0 UnderLevelImage= MaskCCDImage
 			AppendImage/T/W=CCDImageForMask UnderLevelImage
 			variable tempLimit=LowIntToMaskOff
 			if(tempLimit<1e-10)

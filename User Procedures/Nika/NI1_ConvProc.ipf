@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.28
+#pragma version=2.29
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.29 fixed /NTHR=1 to /NTHR=0
 //2.28 add ability to load and use 2D calibrated data (from EQSANS for now)
 //2.27 adds DataCalibrationString to GUI and Intensity/q/theta/d/distance data 
 //2.26 added double clicks to Mask listbox and to Empty/Dark listboxes. 
@@ -146,7 +147,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	tempInt = Calibrated2DDataSet
 	IndexSort LUT, tempInt
 	//Duplicate/O tempInt, TempIntSqt
-	MatrixOp/O/NTHR=1 TempIntSqt = tempInt* tempInt
+	MatrixOp/O/NTHR=0 TempIntSqt = tempInt* tempInt
 	counter = HistogramWv[0]
 	For(j=1;j<QvectorNumberPoints;j+=1)
 		numbins = HistogramWv[j]
@@ -156,8 +157,8 @@ Function NI1A_AverageDataPerUserReq(orientation)
 		endif
 		Counter+=numbins
 	endfor
-	MatrixOp/O/NTHR=1 TempSumXi=Intensity				//OK, now we have sumXi saved
-	MatrixOp/O/NTHR=1 Intensity=Intensity/HistogramWv	//This is average intensity....
+	MatrixOp/O/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
+	MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv	//This is average intensity....
 	//version 1.43 December 2009, changed uncertainity estimates. Three new methods now available. Old method which has weird formula, standard deviation and standard error fof mean ...
 	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
@@ -165,7 +166,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	//change in the Configuration panel. 	
 	if(ErrorCalculationsUseOld)	//this is teh old code... Hopefully I did not screw up. 
 		Error=sqrt(abs(Error - (TempSumXi^2))/(HistogramWv - 1))	
-		MatrixOp/O/NTHR=1 Error=Error/HistogramWv
+		MatrixOp/O/NTHR=0 Error=Error/HistogramWv
 	else //now new code. Need to calculate standard deviation anyway... 
 		//variance Ê= (Error - (Intensity^2 / Histogram)) / (Histogram - 1)
 		//st deviation = sqrt(variance)
@@ -280,7 +281,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 	NVAR Use2DPolarizationCor = root:Packages:Convert2Dto1D:Use2DPolarizationCor
 	NVAR DoPolarizationCorrection = root:Packages:Convert2Dto1D:DoPolarizationCorrection
 
-	NVAR UseCalibrated2DData=root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 	
 	Wave DataWave=root:Packages:Convert2Dto1D:CCDImageToConvert
 	Wave/Z EmptyRunWave=root:Packages:Convert2Dto1D:EmptyData
@@ -293,17 +294,17 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 			abort "Mask problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
-	if(UseDarkField&&!UseCalibrated2DData)
+	if(UseDarkField&&!UseCalib2DData)
 		if(!WaveExists(DarkCurrentWave) || DimSize(DarkCurrentWave, 0)!=DimSize(DataWave, 0) || DimSize(DarkCurrentWave, 1)!=DimSize(DataWave, 1))
 			abort "Dark field problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
-	if(UseEmptyField&&!UseCalibrated2DData)
+	if(UseEmptyField&&!UseCalib2DData)
 		if(!WaveExists(EmptyRunWave) || DimSize(EmptyRunWave, 0)!=DimSize(DataWave, 0) || DimSize(EmptyRunWave, 1)!=DimSize(DataWave, 1))
 			abort "Empty data problem - either does not exist or has differnet dimensions that data "
 		endif
 	endif
-	if(UsePixelSensitivity&&!UseCalibrated2DData)
+	if(UsePixelSensitivity&&!UseCalib2DData)
 		if(!WaveExists(Pix2DSensitivity) || DimSize(Pix2DSensitivity, 0)!=DimSize(DataWave, 0) || DimSize(Pix2DSensitivity, 1)!=DimSize(DataWave, 1))
 			abort "Pix2D Sensitivity problem - either does not exist or has differnet dimensions that data "
 		endif
@@ -318,7 +319,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 	variable tempVal
 	variable CalibrationPrefactor=1
 	
-	if(!UseCalibrated2DData)
+	if(!UseCalib2DData)
 		if(UseCorrectionFactor)
 			CalibrationPrefactor*=CorrectionFactor
 		endif
@@ -338,30 +339,30 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		redimension/S tempDataWv, tempEmptyField
 		
 		if(UsePixelSensitivity)
-			MatrixOP/O/NTHR=1 tempDataWv=tempDataWv/Pix2DSensitivity
+			MatrixOP/O/NTHR=0 tempDataWv=tempDataWv/Pix2DSensitivity
 		endif
 		if(UseDarkField)
 			if(UseSampleMeasTime && UseDarkMeasTime)
 				if(UsePixelSensitivity)
 					tempVal = SampleMeasurementTime/BackgroundMeasTime
-					MatrixOP/O/NTHR=1 tempDataWv = tempDataWv - (tempVal*DarkCurrentWave/Pix2DSensitivity)
+					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - (tempVal*DarkCurrentWave/Pix2DSensitivity)
 				else
 					tempVal = SampleMeasurementTime/BackgroundMeasTime
-					MatrixOP/O/NTHR=1 tempDataWv = tempDataWv - (tempVal*DarkCurrentWave)
+					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - (tempVal*DarkCurrentWave)
 				endif
 			else
 				if(UsePixelSensitivity)
-					MatrixOP/O/NTHR=1 tempDataWv = tempDataWv - (DarkCurrentWave/Pix2DSensitivity)
+					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - (DarkCurrentWave/Pix2DSensitivity)
 				else
-					MatrixOP/O/NTHR=1 tempDataWv = tempDataWv - DarkCurrentWave
+					MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - DarkCurrentWave
 				endif
 			endif
 		endif
 		if(UseSubtractFixedOffset)
-			MatrixOP/O/NTHR=1 tempDataWv = tempDataWv - SubtractFixedOffset
+			MatrixOP/O/NTHR=0 tempDataWv = tempDataWv - SubtractFixedOffset
 		endif
 		if(UseSampleTransmission)
-			MatrixOP/O/NTHR=1 tempDataWv=tempDataWv/SampleTransmission
+			MatrixOP/O/NTHR=0 tempDataWv=tempDataWv/SampleTransmission
 		endif
 		tempEmptyField=0
 		variable ScalingConstEF=1
@@ -369,10 +370,10 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		if(UseEmptyField)
 			tempEmptyField = EmptyRunWave
 			if(UsePixelSensitivity)
-				MatrixOP/O/NTHR=1 tempEmptyField = tempEmptyField/Pix2DSensitivity
+				MatrixOP/O/NTHR=0 tempEmptyField = tempEmptyField/Pix2DSensitivity
 			endif
 			if(UseSubtractFixedOffset)
-				MatrixOP/O/NTHR=1 tempEmptyField = tempEmptyField - SubtractFixedOffset
+				MatrixOP/O/NTHR=0 tempEmptyField = tempEmptyField - SubtractFixedOffset
 			endif
 		
 			if(UseMonitorForEF)
@@ -385,33 +386,33 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 				if(UseSampleMeasTime && UseEmptyMeasTime)
 					if(UsePixelSensitivity)
 						tempVal = EmptyMeasurementTime/BackgroundMeasTime
-						MatrixOP/O/NTHR=1 tempEmptyField=tempEmptyField - (tempVal*(DarkCurrentWave/Pix2DSensitivity))
+						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - (tempVal*(DarkCurrentWave/Pix2DSensitivity))
 					else
 						tempVal = EmptyMeasurementTime/BackgroundMeasTime
-						MatrixOP/O/NTHR=1 tempEmptyField=tempEmptyField - (tempVal*DarkCurrentWave)
+						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - (tempVal*DarkCurrentWave)
 					endif
 				else
 					if(UsePixelSensitivity)
-						MatrixOP/O/NTHR=1 tempEmptyField=tempEmptyField - (DarkCurrentWave/Pix2DSensitivity)
+						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - (DarkCurrentWave/Pix2DSensitivity)
 					else
-						MatrixOP/O/NTHR=1 tempEmptyField=tempEmptyField - DarkCurrentWave
+						MatrixOP/O/NTHR=0 tempEmptyField=tempEmptyField - DarkCurrentWave
 					endif
 				endif
 			endif
 	
 		endif
 	
-		MatrixOP/O/NTHR=1 Calibrated2DDataSet = CalibrationPrefactor * (tempDataWv - ScalingConstEF * tempEmptyField)
+		MatrixOP/O/NTHR=0 Calibrated2DDataSet = CalibrationPrefactor * (tempDataWv - ScalingConstEF * tempEmptyField)
 		
 		if(DoGeometryCorrection)  		//geometry correction (= cos(angle)^3) for solid angle projection, added 6/24/2006 to do in 2D data, not in 1D as done (incorrectly also) before using Dales routine.
 			NI1A_GenerateGeometryCorr2DWave()
 			Wave GeometryCorrection
-			MatrixOp/O/NTHR=1 Calibrated2DDataSet = Calibrated2DDataSet / GeometryCorrection
+			MatrixOp/O/NTHR=0 Calibrated2DDataSet = Calibrated2DDataSet / GeometryCorrection
 		endif
 		if(DoPolarizationCorrection)		//added 8/31/09 to enable 2D corection for polarization
 			NI1A_Generate2DPolCorrWv()
 			Wave polar2DWave
-			MatrixOp/O/NTHR=1 Calibrated2DDataSet = Calibrated2DDataSet / polar2DWave 		//changed to "/" on October 12 2009 since due to use MatrixOp in new formula the calculate values are less than 1 and this is now correct. 
+			MatrixOp/O/NTHR=0 Calibrated2DDataSet = Calibrated2DDataSet / polar2DWave 		//changed to "/" on October 12 2009 since due to use MatrixOp in new formula the calculate values are less than 1 and this is now correct. 
 		endif
 		
 	
@@ -530,13 +531,13 @@ Function NI1A_Generate2DPolCorrWv()
 	if(NeedToUpdate)
 		print "Updated Polarization correction 2D wave" 
 		variable OffsetInRadians=StartAngle2DPolCor *pi/180
-		MatrixOp/O/NTHR=1   A2Theta2DWave =  2 * Theta2DWave
+		MatrixOp/O/NTHR=0   A2Theta2DWave =  2 * Theta2DWave
 		if(Use1DPolarizationCor)
 			//	Int=Int/( (1+cos((2theta))^2)/2	)
-		    	MatrixOP/O/NTHR=1 polar2DWave = (1+cos(A2Theta2DWave))/2
+		    	MatrixOP/O/NTHR=0 polar2DWave = (1+cos(A2Theta2DWave))/2
 		else			//at least partially polarized radiation
 			if(abs(StartAngle2DPolCor)<1)
-			     	MatrixOP/O/NTHR=1 polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(AnglesWave),2)+powR(sin(AnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(AnglesWave),2)+powR(cos(AnglesWave),2)))
+			     	MatrixOP/O/NTHR=0 polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(AnglesWave),2)+powR(sin(AnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(AnglesWave),2)+powR(cos(AnglesWave),2)))
 			//note, matrixOp cannot do 1/ therefore changed to use 1/ in calling function....
 			else
 				Duplicate/O AnglesWave, TempAnglesWave
@@ -544,7 +545,7 @@ Function NI1A_Generate2DPolCorrWv()
 				NVAR beamCenterY=root:Packages:Convert2Dto1D:beamCenterY
 				//Now angle from 0 degrees, so we can do sectors if necessary
 				TempAnglesWave = abs(atan2((BeamCenterY-q),(BeamCenterX-p))-pi+OffsetInRadians)			
-			       MatrixOP/O/NTHR=1 polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(TempAnglesWave),2)+powR(sin(TempAnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(TempAnglesWave),2)+powR(cos(TempAnglesWave),2)))
+			       MatrixOP/O/NTHR=0 polar2DWave = (TwoDPolarizFract*(powR(cos(A2Theta2DWave),2) * powR(cos(TempAnglesWave),2)+powR(sin(TempAnglesWave),2)) +(1-TwoDPolarizFract)*(powR(cos(A2Theta2DWave),2)*powR(sin(TempAnglesWave),2)+powR(cos(TempAnglesWave),2)))
 				KillWaves TempAnglesWave
 			endif
 		endif
@@ -614,8 +615,8 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 	endif
 	variable Ltemp = Wavelength / (4 * pi)
 //    theta=2*asin(qwave * Lambda /( 4 * pi) )		//theta here is really 2Theta, since it is angle between beam in and out... 
-	MatrixOp/O/NTHR=1 GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
-	MatrixOp/O/NTHR=1 GeometryCorrection = powR(cos(GeometryCorrection),3)
+	MatrixOp/O/NTHR=0 GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
+	MatrixOp/O/NTHR=0 GeometryCorrection = powR(cos(GeometryCorrection),3)
 	Wave GeometryCorrection
 	Redimension/S GeometryCorrection
 	
@@ -1004,14 +1005,14 @@ Function NI1A_CreateLUT(orientation)
 	SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
 	variable centerAngleRad, WidthAngleRad, startAngleFIxed, endAgleFixed
 	//apply mask, if selected
-	MatrixOp/O/NTHR=1 MaskedQ2DWave=Q2DWave
+	MatrixOp/O/NTHR=0 MaskedQ2DWave=Q2DWave
 	redimension/S MaskedQ2DWave
 	if(UseMask)
 		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-		MatrixOp/O/NTHR=1 MaskedQ2DWave = Q2DWave * M_ROIMask
+		MatrixOp/O/NTHR=0 MaskedQ2DWave = Q2DWave * M_ROIMask
 	endif
 	if(cmpstr(orientation,"C")!=0)
-		MatrixOp/O/NTHR=1  tempAnglesMask = AnglesWave
+		MatrixOp/O/NTHR=0  tempAnglesMask = AnglesWave
 		centerAngleRad= (pi/180)*str2num(StringFromList(0, orientation,  "_"))
 		WidthAngleRad= (pi/180)*str2num(StringFromList(1, orientation,  "_"))
 		
@@ -1026,7 +1027,7 @@ Function NI1A_CreateLUT(orientation)
 			Multithread tempAnglesMask = (AnglesWave[p][q] > startAngleFixed && AnglesWave[p][q] <endAgleFixed)? 1 : 0
 		endif
 		
-		MatrixOp/O/NTHR=1 MaskedQ2DWave = MaskedQ2DWave * tempAnglesMask
+		MatrixOp/O/NTHR=0 MaskedQ2DWave = MaskedQ2DWave * tempAnglesMask
 		killwaves tempAnglesMask
 	endif
 	//radius data are masked now 
@@ -1061,7 +1062,7 @@ Function NI1A_Create2DQWave(DataWave)
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
-	NVAR UseCalibrated2DData=root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 	Wave/Z Q2DWave
 	string NoteStr
 	NoteStr = note(DataWave)
@@ -1075,12 +1076,12 @@ Function NI1A_Create2DQWave(DataWave)
 
 	NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt							//tilt in degrees
 	NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt								//tilt in degrees
-	if(!UseCalibrated2DData)		//if we use calibrated data, they come with Qwave...
+	if(!UseCalib2DData)		//if we use calibrated data, they come with Qwave...
 		//OK, existing radius wave was not correct or did not exist, make the right one... 
 		print "Creating 2D Q wave"
 		//Create wave for q distribution
-		MatrixOp/O/NTHR=1 Q2DWave=DataWave
-		MatrixOp/O/NTHR=1 Theta2DWave=DataWave
+		MatrixOp/O/NTHR=0 Q2DWave=DataWave
+		MatrixOp/O/NTHR=0 Theta2DWave=DataWave
 		Redimension/S Q2DWave
 		Redimension/S Theta2DWave
 		variable ts=ticks
@@ -1092,7 +1093,7 @@ Function NI1A_Create2DQWave(DataWave)
 			//the QsDWave now contains the distance from beam center  Results should be in mm.... 
 			//added to calculate the theta values...
 			 Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
-			// MatrixOp/O/NTHR=1 Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
+			// MatrixOp/O/NTHR=0 Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
 			print "No tilts used, time was = "+num2str((ticks-ts)/60)
 		endif
 		Theta2DWave[beamCenterX][beamCenterY] = NaN
@@ -1131,9 +1132,9 @@ Function NI1A_Create2DAngleWave(DataWave)
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	string NoteStr
-	NVAR UseCalibrated2DData=root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 	Wave/Z AnglesWave
-	if(!UseCalibrated2DData)
+	if(!UseCalib2DData)
 		print "Creating Angle wave"
 
 		NVAR beamCenterX=root:Packages:Convert2Dto1D:beamCenterX
@@ -1189,31 +1190,31 @@ Function NI1A_Check2DConversionData()
 	NVAR UseSampleTransmission=root:Packages:Convert2Dto1D:UseSampleTransmission
 	NVAR UseSubtractFixedOffset=root:Packages:Convert2Dto1D:UseSubtractFixedOffset
 	NVAR UsePixelSensitivity= root:Packages:Convert2Dto1D:UsePixelSensitivity
-	NVAR UseCalibrated2DData=root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 	if (!WaveExists(DataWave))
 		Abort "Data wave does not exist"
 	endif
-	if(!UseCalibrated2DData && (UseEmptyField && (WaveExists(EmptyRunWave)!=1)))
+	if(!UseCalib2DData && (UseEmptyField && (WaveExists(EmptyRunWave)!=1)))
 		Abort "Empty wave does not exist"
 	endif
-	if(!UseCalibrated2DData && (UseDarkField && (WaveExists(DarkCurrentWave)!=1)))
+	if(!UseCalib2DData && (UseDarkField && (WaveExists(DarkCurrentWave)!=1)))
 		Abort "Dark field wave does not exist"
 	endif
-	if(!UseCalibrated2DData && (UsePixelSensitivity && (WaveExists(Pix2DSensitivity)!=1)))
+	if(!UseCalib2DData && (UsePixelSensitivity && (WaveExists(Pix2DSensitivity)!=1)))
 		Abort "Pix2D sensitivity wave does not exist"
 	endif
 	//check the waves for dimensions, they must be the same....
-	if(!UseCalibrated2DData && UsePixelSensitivity)
+	if(!UseCalib2DData && UsePixelSensitivity)
 		if(DimSize(DataWave,0)!=dimsize(Pix2DSensitivity,0) || DimSize(DataWave,1)!=DimSize(Pix2DSensitivity,1))
 			Abort "Error, the pix2D sensitivity wave does not have the same dimensions" 
 		endif
 	endif
-	if(!UseCalibrated2DData && UseEmptyField)
+	if(!UseCalib2DData && UseEmptyField)
 		if(DimSize(DataWave,0)!=dimsize(EmptyRunWave,0) || DimSize(DataWave,1)!=DimSize(EmptyRunWave,1))
 			Abort "Error, the empty wave does not have the same dimensions" 
 		endif
 	endif
-	if(!UseCalibrated2DData && UseDarkField)
+	if(!UseCalib2DData && UseDarkField)
 		if(DimSize(DataWave,0)!=dimsize(DarkCurrentWave,0) || DimSize(DataWave,1)!=DimSize(DarkCurrentWave,1))
 			Abort "Error, the dark field wave does not have the same dimensions" 
 		endif
@@ -1243,6 +1244,16 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
+	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+	SVAR Calib2DDataOutputFormat =root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
+
+	if(StringMatch(ctrlName,"Calib2DDataOutputFormat"))
+		Calib2DDataOutputFormat = popStr
+	endif
+	if(StringMatch(ctrlName,"RebinCalib2DData"))
+		RebinCalib2DDataToPnts = popStr
+	endif
+
 	if(cmpstr(ctrlName,"Select2DDataType")==0)
 		//set appropriate extension
 		SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
@@ -1275,33 +1286,13 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
 		DataCalibrationString = popStr
 	endif
-
-
-//		//Select2DMaskType
-//	if(cmpstr(ctrlName,"Select2DMaskType")==0)
-//		//set appropriate extension
-//		SVAR MaskFileExtension=root:Packages:Convert2Dto1D:MaskFileExtension
-//		if(cmpstr(popStr,"GeneralBinary")==0)
-//			NI1_GBLoaderPanelFnct()
-//		endif
-//		if(cmpstr(popStr,"Pilatus")==0)
-//			NI1_PilatusLoaderPanelFnct()
-//		endif
-//		if (cmpstr(popStr,"tif")==0)
-//			MaskFileExtension=".tif"
-//		elseif (cmpstr(popStr,"Mar")==0)
-//			MaskFileExtension="????"
-//		elseif (cmpstr(popStr,"BrukerCCD")==0)
-//			DataFileExtension="BrukerCCD"
-//		else	//if (cmpstr(popStr,"any")==0)
-//			MaskFileExtension="????"
-//		endif
-//		NI1A_UpdateMainMaskListBox()
-//	
-//	endif
+	if(cmpstr(ctrlName,"RebinCalib2DDataToPnts")==0)
+		//set appropriate extension
+		SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+		RebinCalib2DDataToPnts = popStr
+	endif
 
 	if(cmpstr(ctrlName,"FIlesSortOrder")==0)
-
 		NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
 		FIlesSortOrder = popNum-1
 		NI1A_UpdateDataListBox()
@@ -1816,7 +1807,7 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	NewNote +="Processed on="+date()+","+time()+";"
 	Note/K CCDImageToConvert 
 	Note CCDImageToConvert, NewNote 
-	MatrixOp/O/NTHR=1   CCDImageToConvert_dis=CCDImageToConvert
+	MatrixOp/O/NTHR=0   CCDImageToConvert_dis=CCDImageToConvert
 	Note CCDImageToConvert_dis, NewNote
 	setDataFolder OldDf
 	return LoadedOK
@@ -1856,9 +1847,9 @@ Function NI1A_DisplayTheRight2DWave()
 			Redimension/S CCDImageToConvert_dis
 			Redimension/S waveToDisplay
 			if(ImageDisplayLogScaled)
-				MatrixOp/O/NTHR=1 CCDImageToConvert_dis =  log(waveToDisplay)
+				MatrixOp/O/NTHR=0 CCDImageToConvert_dis =  log(waveToDisplay)
 			else
-				MatrixOp/O/NTHR=1 CCDImageToConvert_dis = waveToDisplay
+				MatrixOp/O/NTHR=0 CCDImageToConvert_dis = waveToDisplay
 			endif
 		
 		//fix the sliders
@@ -1940,7 +1931,7 @@ Function NI1A_DisplayOneDataSet()
 				OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 			else
 				TempNote=note(CCDImageToConvert)
-				MatrixOp/O/NTHR=1  tempWave=CCDImageToConvert+tempWave
+				MatrixOp/O/NTHR=0  tempWave=CCDImageToConvert+tempWave
 				numLoadedImages+=1
 				OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 			endif
@@ -1949,7 +1940,7 @@ Function NI1A_DisplayOneDataSet()
 	OldNote+="NumberOfAveragedFiles="+num2str(numLoadedImages)+";"
 	Wave tempWave=root:Packages:Convert2Dto1D:CCDImageToConvertTemp
 	redimension/D tempWave
-	MatrixOp/O/NTHR=1   CCDImageToConvert=tempWave/numLoadedImages
+	MatrixOp/O/NTHR=0   CCDImageToConvert=tempWave/numLoadedImages
 	KillWaves/Z tempWave
 	note/K CCDImageToConvert
 	note CCDImageToConvert, OldNote
@@ -2178,6 +2169,7 @@ Function NI1A_LoadManyDataSetsForConv()
 					NI1A_TopCCDImageUpdateColors(1)
 					NI1A_DoDrawingsInto2DGraph()
 					NI1A_Convert2DTo1D()
+					NI1A_Export2DData()
 					DoUpdate
 				endfor
 				currentframe=1
@@ -2213,6 +2205,7 @@ Function NI1A_LoadManyDataSetsForConv()
 						NI1A_TopCCDImageUpdateColors(1)
 						NI1A_DoDrawingsInto2DGraph()
 						NI1A_Convert2DTo1D()
+						NI1A_Export2DData()
 						DoUpdate
 					endfor
 				duplicate/o BSLframelistsequence, $("root:SAS:BSLframelistsequence")
@@ -2232,6 +2225,7 @@ Function NI1A_LoadManyDataSetsForConv()
 			NI1A_DisplayTheRight2DWave()
 			NI1A_DoDrawingsInto2DGraph()
 			NI1A_Convert2DTo1D()
+			NI1A_Export2DData()
 			DoUpdate
 		endif
 		endif
@@ -2344,7 +2338,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 							OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 						else
 							TempNote=note(CCDImageToConvert)
-							MatrixOp/O/NTHR=1 tempWave=CCDImageToConvert+tempWave
+							MatrixOp/O/NTHR=0 tempWave=CCDImageToConvert+tempWave
 							numLoadedImages+=1
 							OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 						endif
@@ -2363,7 +2357,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 					SampleI0= LocSampleI0/numLoadedImages
 				OldNote+=NI1A_CalibrationNote()
 			
-				MatrixOp/O/NTHR=1 CCDImageToConvert=tempWave/numLoadedImages
+				MatrixOp/O/NTHR=0 CCDImageToConvert=tempWave/numLoadedImages
 				KillWaves/Z tempWave
 				note/K CCDImageToConvert
 				note CCDImageToConvert, OldNote
@@ -2371,6 +2365,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 				NI1A_DisplayTheRight2DWave()
 				NI1A_DoDrawingsInto2DGraph()
 				NI1A_Convert2DTo1D()
+				NI1A_Export2DData()
 				DoUpdate
 			endif
 		endif
@@ -2472,7 +2467,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 					OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 				else
 					TempNote=note(CCDImageToConvert)
-					MatrixOp/O/NTHR=1 tempWave=CCDImageToConvert+tempWave
+					MatrixOp/O/NTHR=0 tempWave=CCDImageToConvert+tempWave
 					numLoadedImages+=1
 					OldNote+="DataFileName"+num2str(numLoadedImages)+"="+StringByKey("DataFileName", TempNote , "=", ";")+";"
 				endif
@@ -2488,7 +2483,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 		SampleI0= LocSampleI0/numLoadedImages
 	OldNote+=NI1A_CalibrationNote()
 
-	MatrixOp/O/NTHR=1 CCDImageToConvert=tempWave/numLoadedImages
+	MatrixOp/O/NTHR=0 CCDImageToConvert=tempWave/numLoadedImages
 	KillWaves/Z tempWave
 	note/K CCDImageToConvert
 	note CCDImageToConvert, OldNote
@@ -2496,6 +2491,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 	NI1A_DisplayTheRight2DWave()
 	NI1A_DoDrawingsInto2DGraph()
 	NI1A_Convert2DTo1D()
+	NI1A_Export2DData()
 	DoUpdate
 	setDataFolder OldDf
 end
@@ -2833,9 +2829,9 @@ Function NI1A_PrepareLogDataIfWanted(DataWaveName)
 	Redimension/S waveToDisplayDis
 	NVAR ImageDisplayLogScaled=root:Packages:Convert2Dto1D:ImageDisplayLogScaled
 		if(ImageDisplayLogScaled)
-			MatrixOp/O/NTHR=1 waveToDisplayDis = log(waveToDisplay)
+			MatrixOp/O/NTHR=0 waveToDisplayDis = log(waveToDisplay)
 		else
-			MatrixOp/O/NTHR=1 waveToDisplayDis = waveToDisplay
+			MatrixOp/O/NTHR=0 waveToDisplayDis = waveToDisplay
 		endif
 	setDataFolder OldDF
 end
@@ -2910,9 +2906,9 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	redimension/S NewCCDDataDis
 	NVAR ImageDisplayLogScaled=root:Packages:Convert2Dto1D:ImageDisplayLogScaled
 	if(ImageDisplayLogScaled)
-		MatrixOp/O/NTHR=1 NewCCDDataDis=log(NewCCDData)
+		MatrixOp/O/NTHR=0 NewCCDDataDis=log(NewCCDData)
 	else
-		MatrixOp/O/NTHR=1 NewCCDDataDis=NewCCDData
+		MatrixOp/O/NTHR=0 NewCCDDataDis=NewCCDData
 	endif
 	NVAR InvertImages=root:Packages:Convert2Dto1D:InvertImages
 	if(InvertImages)
@@ -3192,9 +3188,16 @@ Proc NI1A_Convert2Dto1DPanel()
 	PopupMenu Select2DDataType,pos={290,30},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu Select2DDataType,help={"Select type of 2D images being loaded"}
 	PopupMenu Select2DDataType,mode=2,popvalue=root:Packages:Convert2Dto1D:DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
-	CheckBox UseCalibrated2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
-	CheckBox UseCalibrated2DData,help={"Import 2D calibrated data, not raw image data"}
-	CheckBox UseCalibrated2DData,variable= root:Packages:Convert2Dto1D:UseCalibrated2DData
+	CheckBox UseCalib2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
+	CheckBox UseCalib2DData,help={"Import 2D calibrated data, not raw image data"}
+	CheckBox UseCalib2DData,variable= root:Packages:Convert2Dto1D:UseCalib2DData
+	//NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
+	//SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+	//SVAR ListOfKnownCalibExtensions=root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
+	if(root:Packages:Convert2Dto1D:UseCalib2DData)
+		root:Packages:Convert2Dto1D:DataFileExtension = StringFromList(0,root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions)
+		PopupMenu Select2DDataType,mode=2,popvalue=root:Packages:Convert2Dto1D:DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
+	endif
 
 	CheckBox InvertImages,pos={150,75},size={146,14},proc=NI1A_CheckProc,title="Invert 0, 0 corner?"
 	CheckBox InvertImages,help={"Check to have 0,0 in left BOTTOM corner, uncheck to have 0,0 in left TOP corner. Only for newly loaded images!"}
@@ -3245,6 +3248,7 @@ Proc NI1A_Convert2Dto1DPanel()
 	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Param"
 	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Emp/Dk"
 	TabControl Convert2Dto1DTab,tabLabel(4)="Sectors",tabLabel(5)="Prev", tabLabel(6)="LineProf", value= 0
+	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
 	SetVariable SampleToDetectorDistance,pos={24,309},size={230,16},Disable=1,proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
 	SetVariable SampleToDetectorDistance,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleToCCDDistance
@@ -3656,10 +3660,27 @@ Proc NI1A_Convert2Dto1DPanel()
 	Button ConvertSelectedFiles,help={"Convert selected files (1 by 1) using parameters selected in the tabs"}
 	Button AveConvertSelectedFiles,pos={15,627},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert sel. files"
 	Button AveConvertSelectedFiles,help={"Average and convert files selected above using parameters set here"}
-//added 6 30 2009 as test
-//Button SlicingButton,pos={170,627},size={120,18},proc=SlicingPanel ,title="Slice sel. file", font="Times New Roman",fSize=11
+	//added 6 30 2009 as test
+	//Button SlicingButton,pos={170,627},size={120,18},proc=SlicingPanel ,title="Slice sel. file", font="Times New Roman",fSize=11
 
+	//Tab 7 - export 2D calibrated data
+	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
+	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
+	CheckBox InclMaskCalib2DData,pos={15,330},size={90,14},title="Include Mask?", mode=0, proc=NI1A_CheckProc
+	CheckBox InclMaskCalib2DData,help={"Include Mask with 2D calibrated data?"}, variable=root:Packages:Convert2Dto1D:InclMaskCalib2DData
+	CheckBox UseQxyCalib2DData,pos={15,350},size={90,14},title="Use Qx/Qy (not |Q|)?", mode=0, proc=NI1A_CheckProc
+	CheckBox UseQxyCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:UseQxyCalib2DData
+	CheckBox RebinCalib2DData,pos={15,370},size={90,14},title="Rebin Data?", mode=0, proc=NI1A_CheckProc
+	CheckBox RebinCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:RebinCalib2DData
+	PopupMenu RebinCalib2DDataToPnts,pos={150,370},size={214,21},proc=NI1A_PopMenuProc,title="Rebin to:"
+	PopupMenu RebinCalib2DDataToPnts,help={"Select Line profile method to use"}
+	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
 
+	PopupMenu Calib2DDataOutputFormat,pos={212,525},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
+	PopupMenu Calib2DDataOutputFormat,help={"Select type of 2D images being loaded"}
+	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=root:Packages:Convert2Dto1D:Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
+
+	//bottom controls
 	Slider ImageRangeMin,pos={15,647},size={150,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
 	Slider ImageRangeMin,limits={root:Packages:Convert2Dto1D:ImageRangeMinLimit,root:Packages:Convert2Dto1D:ImageRangeMaxLimit,0}
 	Slider ImageRangeMax,pos={15,663},size={150,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
@@ -3671,7 +3692,7 @@ Proc NI1A_Convert2Dto1DPanel()
 	SetVariable ProcessNImagesAtTime,pos={335,589},size={80,16},title="N = "
 	SetVariable ProcessNImagesAtTime,help={"Howmany images at time should be averaged?"}, limits={1,inf,1}
 	SetVariable ProcessNImagesAtTime,variable= root:Packages:Convert2Dto1D:ProcessNImagesAtTime, proc=NI1A_SetVarProcMainPanel
-//
+	//
 	CheckBox SkipBadFiles,pos={185,605},size={120,16},title="Skip bad files?"
 	CheckBox SkipBadFiles,help={"Skip images with low maximum intensity?"}
 	CheckBox SkipBadFiles,variable= root:Packages:Convert2Dto1D:SkipBadFiles
@@ -4045,7 +4066,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	NVAR DezingerEmpty= root:Packages:Convert2Dto1D:DezingerEmpty
 	NVAR DezingerDarkField= root:Packages:Convert2Dto1D:DezingerDarkField
 
-	NVAR UseCalibrated2DData= root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData= root:Packages:Convert2Dto1D:UseCalib2DData
 
 	NVAR UseSampleThicknFnct= root:Packages:Convert2Dto1D:UseSampleThicknFnct
 	NVAR UseSampleTransmFnct= root:Packages:Convert2Dto1D:UseSampleTransmFnct
@@ -4056,36 +4077,39 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	NVAR UseSampleMonitorFnct= root:Packages:Convert2Dto1D:UseSampleMonitorFnct
 	NVAR UseEmptyMonitorFnct= root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
 	NVAR UseSampleCorrectFnct= root:Packages:Convert2Dto1D:UseSampleCorrectFnct
-
+	
+	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
+	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
+ 
 	//tab 0 controls
-	SetVariable SampleToDetectorDistance,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable PixleSizeX, disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable PixleSizeY,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleToDetectorDistance,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable PixleSizeX, disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable PixleSizeY,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable BeamCenterX,disable=(tabNum!=0), win=NI1A_Convert2Dto1DPanel
 	SetVariable BeamCenterY,disable=(tabNum!=0), win=NI1A_Convert2Dto1DPanel
-	SetVariable HorizontalTilt,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable VerticalTilt,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	TitleBox GeometryDesc,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable Wavelength,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable XrayEnergy,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleThickness,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleTransmission,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleCorrectionFactor,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSolidAngle,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseDarkField,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseEmptyField,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSubtractFixedOffset,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseI0ToCalibrate,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleMeasTime,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseEmptyMeasTime,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseDarkMeasTime,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UsePixelSensitivity,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseMOnitorForEF,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable CalibrationFormula,disable=(tabNum!=0||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable HorizontalTilt,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable VerticalTilt,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	TitleBox GeometryDesc,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable Wavelength,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable XrayEnergy,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleThickness,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleTransmission,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleCorrectionFactor,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSolidAngle,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseDarkField,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseEmptyField,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSubtractFixedOffset,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseI0ToCalibrate,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleMeasTime,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseEmptyMeasTime,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseDarkMeasTime,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UsePixelSensitivity,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseMOnitorForEF,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable CalibrationFormula,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
 	//tab 1 controls
-	CheckBox DoGeometryCorrection,disable=(tabNum!=1||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox DoPolarizationCorrection,disable=(tabNum!=1||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox DoGeometryCorrection,disable=(tabNum!=1||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox DoPolarizationCorrection,disable=(tabNum!=1||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
 	//tab 2 controls
 	CheckBox UseMask,disable=(tabNum!=2), win=NI1A_Convert2Dto1DPanel
@@ -4101,43 +4125,43 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	//tab 1 controls
 	NVAR UseI0ToCalibrate=root:Packages:Convert2Dto1D:UseI0ToCalibrate
 	NVAR UseMonitorForEF= root:Packages:Convert2Dto1D:UseMonitorForEF
-	SetVariable SampleThickness,disable=(tabNum!=1 || !UseSampleThickness || UseSampleThicknFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness || !UseSampleThicknFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleThickness,disable=(tabNum!=1 || !UseSampleThickness || UseSampleThicknFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness || !UseSampleThicknFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable SampleTransmission,disable=(tabNum!=1 || !UseSampleTransmission || UseSampleTransmFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission || !UseSampleTransmFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleTransmission,disable=(tabNum!=1 || !UseSampleTransmission || UseSampleTransmFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleTransmFnct,disable=(tabNum!=1 || !UseSampleTransmission || !UseSampleTransmFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable SampleI0,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF) || UseSampleMonitorFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleMonitorFnct,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF)||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleMonitorFnct,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF) || !UseSampleMonitorFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleI0,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF) || UseSampleMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleMonitorFnct,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleMonitorFnct,disable=(tabNum!=1 || (!UseI0ToCalibrate && !UseMonitorForEF) || !UseSampleMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable SampleMeasurementTime,disable=(tabNum!=1 || !UseSampleMeasTime || UseSampleMeasTimeFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleMeasTimeFnct,disable=(tabNum!=1 || !UseSampleMeasTime||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleMeasTimeFnct,disable=(tabNum!=1 || !UseSampleMeasTime || !UseSampleMeasTimeFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleMeasurementTime,disable=(tabNum!=1 || !UseSampleMeasTime || UseSampleMeasTimeFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleMeasTimeFnct,disable=(tabNum!=1 || !UseSampleMeasTime||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleMeasTimeFnct,disable=(tabNum!=1 || !UseSampleMeasTime || !UseSampleMeasTimeFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable EmptyMeasurementTime,disable=(tabNum!=1 || !UseEmptyMeasTime || UseEmptyTimeFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseEmptyTimeFnct,disable=(tabNum!=1 || !UseEmptyMeasTime||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable EmptyTimeFnct,disable=(tabNum!=1 || !UseEmptyMeasTime || !UseEmptyTimeFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable EmptyMeasurementTime,disable=(tabNum!=1 || !UseEmptyMeasTime || UseEmptyTimeFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseEmptyTimeFnct,disable=(tabNum!=1 || !UseEmptyMeasTime||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable EmptyTimeFnct,disable=(tabNum!=1 || !UseEmptyMeasTime || !UseEmptyTimeFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable BackgroundMeasTime,disable=(tabNum!=1 || !UseDarkMeasTime || UseBackgTimeFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseBackgTimeFnct,disable=(tabNum!=1 || !UseDarkMeasTime||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable BackgTimeFnct,disable=(tabNum!=1 || !UseDarkMeasTime || !UseBackgTimeFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable BackgroundMeasTime,disable=(tabNum!=1 || !UseDarkMeasTime || UseBackgTimeFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseBackgTimeFnct,disable=(tabNum!=1 || !UseDarkMeasTime||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable BackgTimeFnct,disable=(tabNum!=1 || !UseDarkMeasTime || !UseBackgTimeFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable CorrectionFactor,disable=(tabNum!=1 || !UseCorrectionFactor || UseSampleCorrectFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseSampleCorrectFnct,disable=(tabNum!=1 || !UseCorrectionFactor||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleCorrectFnct,disable=(tabNum!=1 || !UseCorrectionFactor || !UseSampleCorrectFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable CorrectionFactor,disable=(tabNum!=1 || !UseCorrectionFactor || UseSampleCorrectFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseSampleCorrectFnct,disable=(tabNum!=1 || !UseCorrectionFactor||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleCorrectFnct,disable=(tabNum!=1 || !UseCorrectionFactor || !UseSampleCorrectFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 
-	SetVariable EmptyI0,disable=(tabNum!=1 ||  (!UseMonitorForEF) || UseEmptyMonitorFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseEmptyMonitorFnct,disable=(tabNum!=1 || (!UseMonitorForEF)||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable EmptyMonitorFnct,disable=(tabNum!=1 || (!UseMonitorForEF) || !UseEmptyMonitorFnct||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable SubtractFixedOffset,disable=(tabNum!=1 || !UseSubtractFixedOffset||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable EmptyI0,disable=(tabNum!=1 ||  (!UseMonitorForEF) || UseEmptyMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseEmptyMonitorFnct,disable=(tabNum!=1 || (!UseMonitorForEF)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable EmptyMonitorFnct,disable=(tabNum!=1 || (!UseMonitorForEF) || !UseEmptyMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable SubtractFixedOffset,disable=(tabNum!=1 || !UseSubtractFixedOffset||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	//tab 3 controls
-	CheckBox DezingerCCDData,disable=(tabNum!=3||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox DezingerEmpty,disable=(tabNum!=3 || !UseEmptyField||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox DezingerDark,disable=(tabNum!=3 || !UseDarkField||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	if((DezingerCCDData || DezingerEmpty || DezingerDarkField) && tabNum==3&& !UseCalibrated2DData)
+	CheckBox DezingerCCDData,disable=(tabNum!=3||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox DezingerEmpty,disable=(tabNum!=3 || !UseEmptyField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox DezingerDark,disable=(tabNum!=3 || !UseDarkField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	if((DezingerCCDData || DezingerEmpty || DezingerDarkField) && tabNum==3&& !UseCalib2DData)
 	NVAR UseLineProfile=root:Packages:Convert2Dto1D:UseLineProfile
 			SetVariable DezingerRatio, disable=0, win=NI1A_Convert2Dto1DPanel
 			SetVariable DezingerHowManyTimes, disable=0, win=NI1A_Convert2Dto1DPanel
@@ -4145,19 +4169,19 @@ Function NI1A_TabProc(ctrlName,tabNum)
 			SetVariable DezingerRatio, disable=1, win=NI1A_Convert2Dto1DPanel
 			SetVariable DezingerHowManyTimes, disable=1, win=NI1A_Convert2Dto1DPanel
 	endif
-	PopupMenu SelectBlank2DDataType,disable=(tabNum!=3||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	ListBox Select2DMaskDarkWave,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	PopupMenu SelectBlank2DDataType,disable=(tabNum!=3||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	ListBox Select2DMaskDarkWave,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	if(tabNum==3)
 		NI1A_UpdateEmptyDarkListBox()
 	endif
-	Button LoadEmpty,disable=(tabNum!=3 || !UseEmptyField||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	Button LoadDarkField,disable=(tabNum!=3 || !UseDarkField||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	Button LoadPixel2DSensitivity,disable=(tabNum!=3 || !UsePixelSensitivity||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable CurrentEmptyName,disable=(tabNum!=3 || !UseEmptyField||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable CurrentDarkFieldName,disable=(tabNum!=3 || !UseDarkField||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable CurrentPixSensFileName,disable=(tabNum!=3 || !UsePixelSensitivity||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	Button SelectMaskDarkPath,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
-	SetVariable EmptyDarkNameMatchStr,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalibrated2DData), win=NI1A_Convert2Dto1DPanel
+	Button LoadEmpty,disable=(tabNum!=3 || !UseEmptyField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	Button LoadDarkField,disable=(tabNum!=3 || !UseDarkField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	Button LoadPixel2DSensitivity,disable=(tabNum!=3 || !UsePixelSensitivity||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable CurrentEmptyName,disable=(tabNum!=3 || !UseEmptyField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable CurrentDarkFieldName,disable=(tabNum!=3 || !UseDarkField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable CurrentPixSensFileName,disable=(tabNum!=3 || !UsePixelSensitivity||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	Button SelectMaskDarkPath,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable EmptyDarkNameMatchStr,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	//tab 4 controls
 	NVAR UseQvector=root:Packages:Convert2Dto1D:UseQvector
 	NVAR UseDspacing=root:Packages:Convert2Dto1D:UseDspacing
@@ -4188,9 +4212,11 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	CheckBox OverwriteDataIfExists,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
 	CheckBox ExportDataOutOfIgor,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
 	CheckBox SaveGSASdata,disable=(tabNum!=4 || !UseTheta||!UseSectors), win=NI1A_Convert2Dto1DPanel
-	CheckBox Use2DdataName,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
-	Button CreateOutputPath,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
-	SetVariable OutputFileName,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
+
+	CheckBox Use2DdataName,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
+	Button CreateOutputPath,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
+	SetVariable OutputFileName,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
+
 	CheckBox DisplayDataAfterProcessing,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel	
 	//end of common block for line profiel and secotrs
 	CheckBox DoSectorAverages,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
@@ -4233,6 +4259,15 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable LineProf_LineAzAngle,disable=(tabNum!=6||!UseLineProfile||!stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel
 	SetVariable LineProf_EllipseAR,disable=(tabNum!=6||!UseLineProfile||!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
 	SetVariable LineProf_GIIncAngle,disable=(tabNum!=6||!UseLineProfile||(!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal line")&&!stringMatch(KnWCT,"GI_Vertical line"))), win=NI1A_Convert2Dto1DPanel
+
+//tab 7 controls
+	CheckBox ExpCalib2DData,disable=(tabNum!=7), win=NI1A_Convert2Dto1DPanel
+	CheckBox InclMaskCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox UseQxyCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox RebinCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+	PopupMenu RebinCalib2DDataToPnts,disable=(tabNum!=7||!ExpCalib2DData||!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
+	PopupMenu Calib2DDataOutputFormat,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+
 	
 	return 0
 End
@@ -4472,7 +4507,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR UseDspacing = root:Packages:Convert2Dto1D:UseDspacing
 	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
 	NVAR UseDistanceFromCenter = root:Packages:Convert2Dto1D:UseDistanceFromCenter
-	NVAR UseCalibrated2DData = root:Packages:Convert2Dto1D:UseCalibrated2DData
+	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
 	
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
 
@@ -4483,6 +4518,18 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName
 
+	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
+	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
+	
+	if(StringMatch(ctrlName,"RebinCalib2DData"))
+		PopupMenu RebinCalib2DDataToPnts,disable=(!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
+	endif
+	if(StringMatch(ctrlName,"InclMaskCalib2DData"))
+		if(!UseMask)
+			InclMaskCalib2DData =0
+			DoAlert 0, "Mask is not used, cannot include it in the export file"
+		endif
+	endif
 	if(StringMatch("TrimFrontOfName",ctrlName))
 		if(checked)
 			TrimEndOfName=0
@@ -4497,7 +4544,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			TrimFrontOfName=0
 		endif
 	endif
-	if(StringMatch("UseCalibrated2DData",ctrlName))
+	if(StringMatch("UseCalib2DData",ctrlName))
 		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
 		SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 		SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
@@ -4831,9 +4878,9 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			endif
 			Redimension/S waveToDisplayDis
 			if(checked)
-				MatrixOp/O/NTHR=1 waveToDisplayDis = log(waveToDisplay)
+				MatrixOp/O/NTHR=0 waveToDisplayDis = log(waveToDisplay)
 			else
-				MatrixOp/O/NTHR=1 waveToDisplayDis = waveToDisplay
+				MatrixOp/O/NTHR=0 waveToDisplayDis = waveToDisplay
 			endif
 		endif
 		NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
@@ -4888,7 +4935,9 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif		
 	endif
 
-	
+	if(stringmatch("ExpCalib2DData",ctrlName))
+		NI1A_TabProc("",7)
+	endif
 	setDataFolder OldDf
 End
 //*******************************************************************************************************************************************
@@ -5632,9 +5681,9 @@ Function NI1A_DezingerImage(image)
         Duplicate/O image, dup, DiffWave, FilteredDiffWave
         Redimension/S DiffWave, FilteredDiffWave    	    // make single precision
         MatrixFilter /N=3 median image				    // 3x3 median filter (integer result if image integer, fp if fp)
-        MatrixOp/O/NTHR=1 DiffWave = dup / (abs(image))          	  	    // difference between raw and filtered, high values (>35) are cosmics and high signals
+        MatrixOp/O/NTHR=0 DiffWave = dup / (abs(image))          	  	    // difference between raw and filtered, high values (>35) are cosmics and high signals
        //image = SelectNumber(DiffWave>DezingerRatio,dup,image)    // choose filtered (image) if difference is great
-   	MatrixOp/O/NTHR=1 image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
+   	MatrixOp/O/NTHR=0 image = dup * (-1)*(greater(Diffwave,DezingerRatio)-1) + image*(greater(Diffwave,DezingerRatio))
 	//the MatrxiOp is 3x faster than the original line.... 
 	note image, OldNote
         KillWaves/Z DiffWave, FilteredDiffWave, dup
@@ -6664,3 +6713,110 @@ End
 //*************************************************************************************************
 //*************************************************************************************************
 
+Function NI1A_Export2DData()
+	//exports 2D calibrated data if user requests it
+	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
+	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
+	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
+	NVAR UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
+	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+	if(!ExpCalib2DData)
+		return 0
+	endif
+	//here we get only if user wants to export 2D calibrated data...
+	//check the wave of interest exist...
+	wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
+	if(!WaveExists(Calibrated2DDataSet))
+			Abort "Error in NI1A_Export2DData. Calibrated data do not exist..."
+			return 0
+	endif
+	wave/Z Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
+	if(!WaveExists(Q2DWave))
+			Abort "Error in NI1A_Export2DData. Q2DWave data do not exist..."
+			return 0
+	endif
+	//check for Mask presence...
+	if(InclMaskCalib2DData)
+		Wave/Z Mask = root:Packages:Convert2Dto1D:M_ROIMask
+		if(!WaveExists(Mask))
+				Abort "Error in NI1A_Export2DData. Mask data do not exist..."
+				return 0
+		endif
+	endif
+	Duplicate/Free Calibrated2DDataSet, IntExp2DData
+	Duplicate/Free Q2DWave, QExp2DData
+	if(InclMaskCalib2DData)
+		Duplicate/Free Mask, MaskExp2DData
+		//Igor Mask has 0 where masked, 1 where used. This is opposite (of course) to what Nexus/CanSAS uses:
+		//Pete:   mask is 1 when the point is removed, 0 when is used. 
+		//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
+		MaskExp2DData = !MaskExp2DData
+	endif
+	if(UseQxyCalib2DData)
+		Wave AnglesWave= root:Packages:Convert2Dto1D:AnglesWave
+		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWave)
+		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWave)
+	endif
+
+	if(RebinCalib2DData)
+		//here we need to create proper rebinned data
+		
+	else
+		//exporting data in theri original size. This may be large for SAXS data sets!
+	endif
+
+	//get the file name right...
+	string LocalUserFileName
+	string UseName
+	string LongUseName
+	SVAR LoadedFile=root:Packages:Convert2Dto1D:FileNameToLoad
+	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
+	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
+	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
+	NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
+	if (Use2DdataName)
+		UseName=NI1A_TrimCleanDataName(LoadedFile)+".h5"
+	else
+		if(strlen(UserFileName)<1)	//user did not set the file name
+			if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
+				LocalUserFileName = TempOutputDataname
+			else
+				Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
+				DoPrompt /HELP="Input name for the data to be stored, max 20 characters" "Input name for the 1D data", LocalUserFileName
+				if(V_Flag)
+					abort
+				endif
+				TempOutputDataname = LocalUserFileName
+				TempOutputDatanameUserFor = LoadedFile
+			endif
+			UseName=NI1A_TrimCleanDataName(LocalUserFileName)+".h5"
+		else
+			UseName=NI1A_TrimCleanDataName(UserFileName)+".h5"
+		endif
+	endif
+	if(InclMaskCalib2DData)
+		//NI1A_WriteHdf5CanSASData("CanSAS_Q_dI_Mask.h5", I2D, dIwv=Idev,Qwv=Q2D, Mask=mask)
+		if(UseQxyCalib2DData)
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData)
+		else
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData)
+		endif
+	else
+		if(UseQxyCalib2DData)
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData)
+		else
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData,Qwv=QExp2DData)
+		endif	
+	endif
+		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI_Mask.h5", IntExp2DData,Qx=Qx, Qy=Qy, Mask=mask)
+		//	NI1A_WriteHdf5CanSASData("CanSAS_Q_dI.h5", I2D, dIwv=Idev,Qwv=Q2D)
+		//	NI1A_WriteHdf5CanSASData("CanSAS_Q.h5", I2D,Qwv=Q2D)
+		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI_Mask.h5", I2D, dIwv=Idev,Qx=Qx, Qy=Qy, Mask=mask)
+		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI.h5", I2D, dIwv=Idev,Qx=Qx, Qy=Qy)
+		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy.h5", I2D,Qx=Qx, Qy=Qy)	
+end
+
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************

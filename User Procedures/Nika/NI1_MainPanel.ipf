@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.34
+#pragma version=2.35
 Constant NI1AversionNumber = 2.34
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.34
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.35 fixed /NTHR=1 to /NTHR=0, major changes supporting export of 2D calibrated data
 //2.34 added possibility of importing 2DCalibrated data (EQSANS). 
 //2.33 fixed bug in LP profille wave names for notes addition. 
 //2.32 adds DataCalibrationStgring to data and GUI
@@ -165,7 +166,6 @@ Function NI1A_Initialize2Dto1DConversion()
 #if(Exists("ccp4unpack"))	
 	ListOfKnownExtensions+="MarIP/xop;"
 #endif
-	string/g ListOfKnownCalibExtensions="EQSANS400x400;"
 	//add Fit2D known types of PC 
 	//tif					tif file
 	//GeneralBinary		configurable binary loader using GBLoadWave
@@ -206,6 +206,10 @@ Function NI1A_Initialize2Dto1DConversion()
 //	PRINC		PRINCETON CCD FORMAT :X-ray image intensifier system
 //	RIGK		RIGAKU R-AXIS : Riguka image plate scanner format
 
+	//Calibrated data In and Out
+	string/g ListOfKnownCalibExtensions="canSAS/Nexus;EQSANS400x400;"
+	string/g ListOfOutCalibExtensions="canSAS/Nexus;EQSANS400x400;"
+
 	string/g ListOfVariables
 	string/g ListOfStrings
 	
@@ -237,22 +241,19 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="ProcessNImagesAtTime;SaveGSASdata;FIlesSortOrder;"
 	//errors control
 	ListOfVariables+="ErrorCalculationsUseOld;ErrorCalculationsUseStdDev;ErrorCalculationsUseSEM;"
-	//2DCalibratedDataInput
-	ListOfVariables+="UseCalibrated2DData;"
+	//2DCalibratedDataInput & output
+	ListOfVariables+="UseCalib2DData;ExpCalib2DData;RebinCalib2DData;InclMaskCalib2DData;UseQxyCalib2DData;"
 
-	
 	ListOfVariables+="UseLineProfile;UseSectors;"
 	ListOfVariables+="LineProf_UseBothHalfs;LineProf_DistanceFromCenter;LineProf_Width;LineProf_DistanceQ;LineProf_WidthQ;"
 	ListOfVariables+="LineProfileDisplayWithQ;LineProfileDisplayWithQy;LineProfileDisplayWithQz;LineProfileDisplayWithAzA;LineProfileDisplayLogX;LineProfileDisplayLogY;"
 	ListOfVariables+="LineProfileUseRAW;LineProfileUseCorrData;LineProf_EllipseAR;LineProf_LineAzAngle;LineProf_GIIncAngle;"
 	ListOfVariables+="DisplayQValsOnImage;DisplayQvalsWIthGridsOnImg;DisplayColorScale;"	
-	
 	//movie creation controls
 	ListOfVariables+="Movie_Use2DRAWdata;Movie_Use2DProcesseddata;Movie_Use1DData;Movie_AppendFileName;Movie_AppendAutomatically;Movie_DisplayLogInt;Movie_FrameRate;Movie_FileOpened;"
 	ListOfVariables+="Movie_UseMain2DImage;Movie_UseUserHookFnct;"
 	//Behavior controls
 	ListOfVariables+="DoubleClickConverts;TrimFrontOfName;TrimEndOfName;"
-
 
 	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;DataCalibrationString;"
 	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;"
@@ -262,10 +263,10 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfStrings+="Fit2Dlocation;MainPathInfoStr;"
 	ListOfStrings+="SampleThicknFnct;SampleTransmFnct;SampleMonitorFnct;SampleCorrectFnct;SampleMeasTimeFnct;"
 	ListOfStrings+="EmptyTimeFnct;BackgTimeFnct;EmptyMonitorFnct;"
-
 	ListOfStrings+="LineProf_CurveType;LineProf_KnownCurveTypes;RemoveStringFromName;"
-
 	ListOfStrings+="SampleNameMatchStr;EmptyDarkNameMatchStr;Movie_FileName;Movie_Last1DdataSet;"
+	//2DCalibratedDataInput & output
+	ListOfStrings+="RebinCalib2DDataToPnts;Calib2DDataOutputFormat;"
 
 	//now for General Binary Input
 	ListOfVariables+="NIGBSkipHeaderBytes;NIGBSkipAfterEndTerm;NIGBUseSearchEndTerm;NIGBNumberOfXPoints;NIGBNumberOfYPoints;NIGBSaveHeaderInWaveNote;"
@@ -322,7 +323,14 @@ Function NI1A_Initialize2Dto1DConversion()
 	endif
 	//set starting values
 
-
+	SVAR RebinCalib2DDataToPnts
+	if(strlen(RebinCalib2DDataToPnts)<1)
+		RebinCalib2DDataToPnts="100x100"
+	endif
+	SVAR Calib2DDataOutputFormat
+	if(strlen(Calib2DDataOutputFormat)<1)
+		Calib2DDataOutputFormat="CanSAS/Nexus"
+	endif
 
 	SVAR PilatusFileType
 	if(strlen(PilatusFileType)<1)
@@ -781,7 +789,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		redimension/S MaskedRadius2DWave
 		if(UseMask)
 			wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-			MatrixOp/O/NTHR=1 MaskedRadius2DWave = PixRadius2DWave * M_ROIMask
+			MatrixOp/O/NTHR=0 MaskedRadius2DWave = PixRadius2DWave * M_ROIMask
 		endif
 		if(cmpstr(CurOrient,"C")!=0)
 			duplicate/O AnglesWave,tempAnglesMask
@@ -799,7 +807,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 				MultiThread tempAnglesMask = (AnglesWave[p][q] > startAngleFixed && AnglesWave[p][q] <endAgleFixed)? 1 : 0
 			endif
 			
-			MatrixOp/O/NTHR=1 MaskedRadius2DWave = MaskedRadius2DWave * tempAnglesMask
+			MatrixOp/O/NTHR=0 MaskedRadius2DWave = MaskedRadius2DWave * tempAnglesMask
 			killwaves tempAnglesMask
 		endif
 		//radius data are masked now 

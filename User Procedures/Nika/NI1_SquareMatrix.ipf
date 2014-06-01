@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.03
+#pragma version=1.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.04 fixed /NTHR=1 to /NTHR=0
 //1.03 fixed masking which was failing due to bug. 
 //1.02 added mutlithread and MatrixOp/NTHR=1 where seemed possible to use multile cores
 //1.01 added license for ANL
@@ -38,9 +39,9 @@ Function NI1_MakeSectorGraph()
 	
 	Duplicate/O SquareMap, SquareMap_dis
 	if(A2DLineoutDisplayLogInt)
-		MatrixOP/O/NTHR=1 SquareMap_dis=log(SquareMap)
+		MatrixOP/O/NTHR=0 SquareMap_dis=log(SquareMap)
 	else
-		MatrixOP/O/NTHR=1 SquareMap_dis=SquareMap
+		MatrixOP/O/NTHR=0 SquareMap_dis=SquareMap
 	endif
 	
 	wavestats/Q   SquareMap_dis
@@ -198,7 +199,7 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 		Note MaskSquareImage, NewNote
 	endif
 	if(A2DmaskImage)
-		MatrixOP/O/NTHR=1 SquareMap=SquareMap*(MaskSquareImage/MaskSquareImage)
+		MatrixOP/O/NTHR=0 SquareMap=SquareMap*(MaskSquareImage/MaskSquareImage)
 	endif
 	SetScale/P y SectorsGraphStartAngle,AngleStep,"", SquareMap
 	KillWaves/Z MaskedImage

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.09
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 fixed /NTHR=1 to /NTHR=0
 //2.09 fixed note/NOCR which was embedding new line in wrong place
 //2.08 tried to fix az direction and display. Seems to work now but what a mess with direction definitions.
 //2.07 fixed ellipse (circle) display and output, added angle as one of output waves and modified graph to enable it display. 
@@ -99,9 +100,9 @@ Function NI1A_LineProf_CreateLP()
 		//first check if our mask is OK here...
 		if(UseMask)
 			wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-			MatrixOp/O/NTHR=1 MaskedQ2DWave = CCDImageToConvert *( M_ROIMask/M_ROIMask)
+			MatrixOp/O/NTHR=0 MaskedQ2DWave = CCDImageToConvert *( M_ROIMask/M_ROIMask)
 		else
-			MatrixOp/O/NTHR=1 MaskedQ2DWave = CCDImageToConvert
+			MatrixOp/O/NTHR=0 MaskedQ2DWave = CCDImageToConvert
 		endif
 		//first create xwave and ywave for the ImageLineProfile...
 		variable length
