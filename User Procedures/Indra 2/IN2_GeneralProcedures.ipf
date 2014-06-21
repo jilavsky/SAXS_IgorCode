@@ -552,7 +552,7 @@ Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
 //	print LastMinStep
 	return V_minloc
 end
-static Function myFindStartValueFunc(w,x1)
+Function myFindStartValueFunc(w,x1)
 	Wave w		//this is {totalRange, NumSteps,MinStep}
 	Variable x1	//this is startValue where we need to start with log stepping...
 	variable LastMinStep = 10^(log(X1) + (log(X1+w[0])-log(X1))/w[1]) - 10^(log(X1))
