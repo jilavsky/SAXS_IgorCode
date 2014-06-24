@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.18
+#pragma version =1.19
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 Added right click "Refresh content" to Listbox
 //1.18 fixed /NTHR=1 to /NTHR=0
 //1.17 added ability to load 2DCalibrated data to support masking of those data. 
 //1.16 added double click option to ListBox and added shift to accomodate tools when Start MASK draw is selected. 
@@ -145,27 +146,32 @@ end
 
 
 
-Function NI1_PrepMaskListBoxProc(ctrlName,row,col,event) : ListBoxControl
-	String ctrlName
-	Variable row
-	Variable col
-	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
-					//5=cell select with shift key, 6=begin edit, 7=end
+Function NI1_PrepMaskListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
 	Variable i
-	if(cmpstr(ctrlName,"CCDDataSelection")==0)
-		if(event==3)		//double click
+	string items=""
+	if(cmpstr(lba.ctrlName,"CCDDataSelection")==0)
+		switch (lba.eventCode)
+			case 3 :				//double click
 				NI1M_RoiDrawButtonProc("CreateROIWorkImage")
-		endif
+				break
+			case 1 : 
+				if (lba.eventMod & 0x10)	// rightclick
+				// list of items for PopupContextualMenu
+				items = "Refresh Content;"	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				switch (V_flag)
+					case 1:
+						NI1M_UpdateMaskListBox()	
+						break
+				endswitch		
+			endif
+		endswitch
 	endif
 	return 0
 End
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-//***************************************** **************************************************************************************************
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

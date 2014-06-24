@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.24
+#pragma version=0.25
 Constant IN3_FlyImportVersionNumber=0.19
 
 
@@ -9,6 +9,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.25 modified to handle too long file anmes as users cannot learn not to do this... 
 //0.24 modified to use Rebinninng procedure from General procedures - requires Gen Proc version 1.71 nad higher
 //0.23 changed defaults to 5000 points on import. 
 //0.22 improvement to backward compatibility from February 2014
@@ -344,8 +345,14 @@ Function IN3_FlyScanLoadHdf5File()
 				HDf5Browser#CloseFileButtonProc("CloseFIle")
 	
 				KillWindow $(browserName)
-				RawFolderWithData = GetDataFOlder(1)+shortFileName
-				RawFolderWithFldr = GetDataFolder(1)
+				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
+				string TempStrName=PossiblyQuoteName(shortFileName)
+				if(DataFolderExists(TempStrName))		//Name exists and folder is fine... 
+					RawFolderWithData = GetDataFOlder(1)+TempStrName
+					RawFolderWithFldr = GetDataFolder(1)
+				else		//something failed. Expect too long name
+						Abort "Cannot find raw data, somehting went worng. Send Nexus file to Jan so we can get this fixed."
+				endif
 				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
 					variable/g $(RawFolderWithData+":HdfWriterVersion")
 					NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
@@ -372,9 +379,28 @@ Function IN3_FlyScanLoadHdf5File()
 					      RenameDataFolder $(shortNameBckp), $(shortFileName)
 					endif
 				endif
-				MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))
+				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
+				if(DataFolderExists(targetFldrname))
+				//	DoAlert /T="RAW data folder exists" 2, "FOlder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
+				//	if(V_Flag==1)
+						KillDataFolder targetFldrname
+				//		MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+				//	elseif(V_Flag==2)
+//						string OldDf1=getDataFolder(1)
+//						SetDataFolder TargetRawFoldername
+//						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrName,1,1), 11, 0 ))
+//						SetDataFolder OldDf1		
+//						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
+//						TempStrName = TempStrNameNew		
+//					else
+//						Abort 
+//					endif
+//				else
+//					MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+				endif
+				MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				
-				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+shortFileName
+				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				print "Imported HDF5 file : "+RawFolderWithData
 #if(exists("AfterFlyImportHook")==6)
 			AfterFlyImportHook(RawFolderWithData)
@@ -490,12 +516,12 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	string FileName, ListOfExistingFolders
 	FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
 	ListOfExistingFolders = DataFolderDir(1)
-		if(StringMatch(ListOfExistingFolders, "*,"+FileName+",*" ))
-			DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
+	if(StringMatch(ListOfExistingFolders, "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ))
+		DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
 			if(V_Flag!=1)
 				return ""
 			endif	
-		endif
+	endif
 
  	newDataFolder/O/S $(FileName)
 	Duplicate/O TimeWv, MeasTime
