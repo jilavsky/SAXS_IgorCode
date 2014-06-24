@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.31
+#pragma version=2.32
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.32 Added right click "Refresh content" to Listboxes inmain panel as well as some othe rfunctionality
 //2.31 fixed /NTHR=1 to /NTHR=0
 //2.30 adds EQSANS calibrated data
 //2.29 added Pilatus 3 200k (with dimensions 487,407) 
@@ -2571,38 +2572,88 @@ end
 
 
 
-Function NI1_MainListBoxProc(ctrlName,row,col,event) : ListBoxControl
-	String ctrlName
-	Variable row
-	Variable col
-	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
-					//5=cell select with shift key, 6=begin edit, 7=end
+Function NI1_MainListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
 	Variable i
-	if(cmpstr(ctrlName,"Select2DInputWave")==0)
-		wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
-		wave/t ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
-		NVAR DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts
-	if(event==4)
-		controlinfo/W=NI1A_Convert2Dto1Dpanel Select2DDataType
-		if(cmpstr(S_Value,"BSL/SAXS")==0 || cmpstr(S_Value,"BSL/WAXS")==0)
-			
-			for(i=0;i<(dimsize(ListOf2DSampleDataNumbers,0));i+=1)
-				if(ListOf2DSampleDataNumbers[i]==1)
-					NI1_BSLloadbslinfo(ListOf2DSampleData[i])
-					break //just display fist selected file
-				endif
-			endfor
-			execute "NI1_BSLWindow()"
-		endif
-	endif
-	if(event==3)		//double click
-		if(DoubleClickConverts) 
-			NI1A_ButtonProc("ConvertSelectedFiles")
-		else
-			NI1A_ButtonProc("DisplaySelectedFile")
-		endif
-	endif
-	endif
+	string items=""
+	wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
+	wave/t ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
+	NVAR DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts
+	NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
+	switch (lba.eventCode)
+		case 4:
+			controlinfo/W=NI1A_Convert2Dto1Dpanel Select2DDataType
+			if(cmpstr(S_Value,"BSL/SAXS")==0 || cmpstr(S_Value,"BSL/WAXS")==0)
+				for(i=0;i<(dimsize(ListOf2DSampleDataNumbers,0));i+=1)
+					if(ListOf2DSampleDataNumbers[i]==1)
+						NI1_BSLloadbslinfo(ListOf2DSampleData[i])
+						break //just display fist selected file
+					endif
+				endfor
+				execute "NI1_BSLWindow()"
+			endif
+			break
+		case 3:			//double click
+			if(DoubleClickConverts) 
+				NI1A_ButtonProc("ConvertSelectedFiles")
+			else
+				NI1A_ButtonProc("DisplaySelectedFile")
+			endif
+			break
+		case 1:
+			if (lba.eventMod & 0x10)	// rightclick
+				// list of items for PopupContextualMenu
+				items = "Refresh Content;Select All;Deselect All;Sort;Sort2;Sort _001;Invert Sort _001;Reverse Sort;Reverse Sort2;"	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				switch (V_flag)
+					case 1:	// "Refresh Content"
+						//refresh content, but here it will depend where we call it from.
+						ControlInfo/W=NI1A_Convert2Dto1DPanel Select2DInputWave
+						variable oldSets=V_startRow
+						NI1A_UpdateDataListBox()	
+						ListBox Select2DInputWave,win=NI1A_Convert2Dto1DPanel,row=V_startRow
+						break;
+					case 2:	// "Select All;"
+					      ListOf2DSampleDataNumbers = 1
+						break;
+					case 3:	// "Deselect All"
+					      ListOf2DSampleDataNumbers = 0
+						break;
+					case 4:	// "Sort"
+						FIlesSortOrder = 1
+						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						NI1A_UpdateDataListBox()	
+						break;
+					case 5:	// "Sort2"
+						FIlesSortOrder = 2
+						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						NI1A_UpdateDataListBox()	
+						break;
+					case 6:	// "_001"
+						FIlesSortOrder = 3
+						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						NI1A_UpdateDataListBox()	
+						break;
+					case 7:	// "Invert _001"
+						FIlesSortOrder = 4
+						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						NI1A_UpdateDataListBox()	
+						break;
+					case 8:	// "Invert Sort"
+						FIlesSortOrder = 5
+						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						NI1A_UpdateDataListBox()	
+						break;
+					case 9:	// "Invert Sort2"
+						FIlesSortOrder = 6
+						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						NI1A_UpdateDataListBox()	
+						break;
+					endswitch
+			endif
+		endswitch
 	return 0
 End
 //*******************************************************************************************************************************************
@@ -2612,16 +2663,27 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1_MaskListBoxProc(ctrlName,row,col,event) : ListBoxControl
-	String ctrlName
-	Variable row
-	Variable col
-	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
-					//5=cell select with shift key, 6=begin edit, 7=end
+Function NI1_MaskListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
 	Variable i
-	if(event==3)		//double click
+	string items=""
+	switch (lba.eventCode)
+		case 3:		//double click
 			NI1A_ButtonProc("LoadMask")
-	endif
+		break
+		case 1:		
+			if (lba.eventMod & 0x10)	// rightclick
+				// list of items for PopupContextualMenu
+				items = "Refresh Content;"	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				if(V_Flag)
+					NI1A_UpdateEmptyDarkListBox()	
+				endif
+			endif
+		break	
+	endswitch	
 	return 0
 End
 
@@ -2632,42 +2694,68 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1_EmpDarkListBoxProc(ctrlName,row,col,event) : ListBoxControl
-	String ctrlName
-	Variable row
-	Variable col
-	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
-					//5=cell select with shift key, 6=begin edit, 7=end
+Function NI1_EmpDarkListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
 	NVAR useDarkField=root:Packages:Convert2Dto1D:useDarkField
 	NVAR useEmptyField=root:Packages:Convert2Dto1D:useEmptyField
-	if(event==3)		//double click
-		switch(useDarkField+useEmptyField)
-		case 1:
-			if(useDarkField)
-				NI1A_ButtonProc("LoadDarkField")
-			else	//empty
-				NI1A_ButtonProc("LoadEmpty")
-			endif
-			break
-		case 2:
-			String FieldType
-			FieldType ="Empty field"
-			prompt FieldType, "Field type", popup, "Empty Field;Dark Field;"
-			DoPrompt "Select type of field", FieldType
-			//DoAlert /T="Double click Selection" 2, "Is this empty field (Yes), Dark field (No), or Cancel?" 
-			if(!V_Flag)
-				if(stringmatch(FieldType,"Empty Field"))
-					NI1A_ButtonProc("LoadEmpty")
-				elseif(stringmatch(FieldType,"Dark Field"))
+	SVAR EmptyDarkNameMatchStr=root:Packages:Convert2Dto1D:EmptyDarkNameMatchStr
+	string items = ""
+	switch (lba.eventCode)
+		case 3 :
+			switch(useDarkField+useEmptyField)
+			case 1:
+				if(useDarkField)
 					NI1A_ButtonProc("LoadDarkField")
+				else	//empty
+					NI1A_ButtonProc("LoadEmpty")
 				endif
+				break
+			case 2:
+				String FieldType
+				FieldType ="Empty field"
+				prompt FieldType, "Field type", popup, "Empty Field;Dark Field;"
+				DoPrompt "Select type of field", FieldType
+				//DoAlert /T="Double click Selection" 2, "Is this empty field (Yes), Dark field (No), or Cancel?" 
+				if(!V_Flag)
+					if(stringmatch(FieldType,"Empty Field"))
+						NI1A_ButtonProc("LoadEmpty")
+					elseif(stringmatch(FieldType,"Dark Field"))
+						NI1A_ButtonProc("LoadDarkField")
+					endif
+				endif
+				break
+			default:
+				//donothing
+			endswitch
+		break
+		case 1:
+			if (lba.eventMod & 0x10)	// rightclick
+				// list of items for PopupContextualMenu
+				items = "Refresh Content;Match \"Empty\";Match \"Blank\";Match \"Dark\";"	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				switch (V_flag)
+					case 1:
+						NI1A_UpdateEmptyDarkListBox()	
+						break
+					case 2:
+						EmptyDarkNameMatchStr = "(?i)Empty"
+						NI1A_UpdateEmptyDarkListBox()	
+						break
+					case 3:
+						EmptyDarkNameMatchStr = "(?i)Blank"
+						NI1A_UpdateEmptyDarkListBox()	
+						break
+ 					case 4:
+						EmptyDarkNameMatchStr = "(?i)Dark"
+						NI1A_UpdateEmptyDarkListBox()	
+						break
+						
+				endswitch
 			endif
-			break
-		default:
-			//donothing
-		endswitch
-			
-	endif
+		break
+	endswitch
 	return 0
 End
 

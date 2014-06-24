@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
+#pragma version=2.17
 Constant NI1BCversionNumber = 2.14
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.14
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 Added right click "Refresh content" to Listbox
 //2.16 fixed /NTHR=0, 1 is simply wrong... 
 //2.15 add avoidace in case user is using Calibrated 2D data. 
 //2.14 minor fix
@@ -309,16 +310,52 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1_BMUListBoxProc(ctrlName,row,col,event) : ListBoxControl
-	String ctrlName
-	Variable row
-	Variable col
-	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
-					//5=cell select with shift key, 6=begin edit, 7=end
+Function NI1_BMUListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
 	Variable i
-	if(event==3)		//double click
+	string items=""
+	SVAR BmCalibrantName=root:Packages:Convert2Dto1D:BmCalibrantName
+	SVAR BCMatchNameString = root:Packages:Convert2Dto1D:BCMatchNameString
+	switch (lba.eventCode)
+		case 3 :				//double click
 			NI1BC_BmCntrButtonProc("CreateROIWorkImage")
-	endif
+			break
+		case 1 : 
+			if (lba.eventMod & 0x10)	// rightclick
+				// list of items for PopupContextualMenu
+				items = "Refresh Content;Match \"AgBehenate\";Match \"LaB6\";Match \"640d\";"	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				switch (V_flag)
+					case 1:
+						NI1BC_UpdateBmCntrListBox()	
+						break
+					case 2:
+						BCMatchNameString = "(?i)Behenate"
+						NI1BC_UpdateBmCntrListBox()	
+						BmCalibrantName = "Ag behenate"
+						NI1BC_BmCntrPopMenuProc("BmCalibrantName",5,"Ag behenate")
+						//"User;Ceria;Ceria_2;Ceria_3;Ag behenate;LaB6;LaB6_2;LaB6_3;LaB6_4;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si)_2;SRM 640d (Si)_3;\""
+						PopupMenu BmCalibrantName,win=NI1_CreateBmCntrFieldPanel, mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ceria_2;Ceria_3;Ag behenate;LaB6;LaB6_2;LaB6_3;LaB6_4;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si)_2;SRM 640d (Si)_3;\""
+						break
+					case 3:
+						BCMatchNameString = "(?i)LaB6"
+						NI1BC_UpdateBmCntrListBox()	
+						BmCalibrantName = "LaB6"
+						NI1BC_BmCntrPopMenuProc("BmCalibrantName",6,"LaB6")
+						PopupMenu BmCalibrantName,win=NI1_CreateBmCntrFieldPanel, mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ceria_2;Ceria_3;Ag behenate;LaB6;LaB6_2;LaB6_3;LaB6_4;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si)_2;SRM 640d (Si)_3;\""
+						break
+					case 4:
+						BCMatchNameString = "(?i)640d"
+						NI1BC_UpdateBmCntrListBox()	
+						BmCalibrantName = "SRM 640d (Si)"
+						NI1BC_BmCntrPopMenuProc("BmCalibrantName",13,"SRM 640d (Si)")
+						PopupMenu BmCalibrantName,win=NI1_CreateBmCntrFieldPanel, mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ceria_2;Ceria_3;Ag behenate;LaB6;LaB6_2;LaB6_3;LaB6_4;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si)_2;SRM 640d (Si)_3;\""
+						break
+				endswitch		
+			endif
+		endswitch
 	return 0
 End
 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.29
+#pragma version=2.30
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -7,7 +7,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//2.30 Added right click "Refresh content" to Listbox and other functionality
 //2.29 fixed /NTHR=1 to /NTHR=0
 //2.28 add ability to load and use 2D calibrated data (from EQSANS for now)
 //2.27 adds DataCalibrationString to GUI and Intensity/q/theta/d/distance data 
@@ -3063,6 +3063,12 @@ Function NI1A_UpdateDataListBox()
 					sort/R tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
 					KillWaves/Z tempSortWv
 					ListOf2DSampleDataNumbers[0]=1
+				elseif(FIlesSortOrder==5)
+					sort/R ListOf2DSampleData, ListOf2DSampleData, ListOf2DSampleDataNumbers
+					ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers)-1]=1
+				elseif(FIlesSortOrder==5)
+					sort/R/A ListOf2DSampleData, ListOf2DSampleData, ListOf2DSampleDataNumbers
+					ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers)-1]=1
 				else
 				
 				endif
@@ -3204,10 +3210,13 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox InvertImages,variable= root:Packages:Convert2Dto1D:InvertImages
 	PopupMenu FIlesSortOrder,pos={275,73},size={111,13},proc=NI1A_PopMenuProc,title="Sort order: "
 	PopupMenu FIlesSortOrder,help={"Select Sorting of data"}
-	PopupMenu FIlesSortOrder,mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;"
+	PopupMenu FIlesSortOrder,mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= "None;Sort;Sort2;_001;Invert_001;Invert Sort;Invert Sort2;"
 
-	Button RefreshList,pos={330,97},size={100,18},proc=NI1A_ButtonProc,title="Refresh"
-	Button RefreshList,help={"Refresh lisbox"}
+//	Button RefreshList,pos={330,97},size={100,18},proc=NI1A_ButtonProc,title="Refresh"
+//	Button RefreshList,help={"Refresh lisbox"}
+	TitleBox RefreshList1 title="Refresh using Right click",pos={325,99},frame=0,fstyle=1, fixedSize=1,size={120,11},fSize=9
+	//TitleBox RefreshList2 title="",pos={340,105},frame=0,fstyle=1, fixedSize=1,size={100,11},fSize=9
+
 	Button SaveCurrentToolSetting,pos={330,117},size={100,18},proc=NI1A_ButtonProc,title="Save/Load Config"
 	Button SaveCurrentToolSetting,help={"Save or recall configuration of this panel"}
 	Button ExportDisplayedImage,pos={330,137},size={100,18},proc=NI1A_ButtonProc,title="Export image"
@@ -3221,7 +3230,7 @@ Proc NI1A_Convert2Dto1DPanel()
 	SetVariable SampleNameMatchStr,pos={10,214},size={135,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
 	SetVariable SampleNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleNameMatchStr
 
-	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0
+	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0, clickEventModifiers=4
 	ListBox Select2DInputWave,help={"Select data file to be converted, you can select multiple data sets"}
 	ListBox Select2DInputWave,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	ListBox Select2DInputWave,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
@@ -3420,7 +3429,7 @@ Proc NI1A_Convert2Dto1DPanel()
 //	PopupMenu Select2DMaskType,pos={232,339},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 //	PopupMenu Select2DMaskType,help={"Masks made by this code are tiff files, the should be: xxxx_mask.ext (tif)"}
 //	PopupMenu Select2DMaskType,mode=1,popvalue=root:Packages:Convert2Dto1D:MaskFileExtension,value= #"\"tif;\""
-	ListBox MaskListBoxSelection,pos={83,375},size={260,100}, row=0
+	ListBox MaskListBoxSelection,pos={83,375},size={260,100}, row=0, clickEventModifiers=4
 	ListBox MaskListBoxSelection,help={"Select 2D data set for mask"}
 	ListBox MaskListBoxSelection,listWave=root:Packages:Convert2Dto1D:ListOf2DMaskData
 	ListBox MaskListBoxSelection,row= 0,mode= 1,selRow= 0, proc=NI1_MaskListBoxProc
