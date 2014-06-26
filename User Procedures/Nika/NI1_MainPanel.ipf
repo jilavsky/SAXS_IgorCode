@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.35
-Constant NI1AversionNumber = 2.34
+#pragma version=2.36
+Constant NI1AversionNumber = 2.36
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.34
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.36 changed name of mani panel function. Added hook functions. 
 //2.35 fixed /NTHR=1 to /NTHR=0, major changes supporting export of 2D calibrated data
 //2.34 added possibility of importing 2DCalibrated data (EQSANS). 
 //2.33 fixed bug in LP profille wave names for notes addition. 
@@ -135,7 +136,7 @@ Function NI1A_Convert2Dto1DMainPanel()
 	if(V_Flag)
 		DoWindow/K NI1A_Convert2Dto1DPanel
 	endif
-	Execute("NI1A_Convert2Dto1DPanel()")
+	NI1A_Convert2Dto1DPanelFnct()
 	ING2_AddScrollControl()
 	//SetWindow NI1A_Convert2Dto1DPanel hook(scroll)=IN2G_ScrollHook
 	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber)
@@ -1479,10 +1480,14 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	else
 		Abort "error in NI1A_DisplayLineoutAfterProc"
 	endif
-		//ModifyGraph/Z rgb[0]=(0,0,0), rgb[1]=(65280,0,0), rgb[2]=(0,65280,0),rgb[3]=(0,0,65280), rgb[4]=(52224,0,41728), rgb[5]=(52224,52224,0), rgb[6]=(0,0,39168)
-		Legend/C/N=text0/A=RT
-		ModifyGraph mirror=1
-		IN2G_ColorTopGrphRainbow()
+	Legend/C/N=text0/A=RT
+	ModifyGraph mirror=1
+	IN2G_ColorTopGrphRainbow()
+
+#if Exists("Nika_Hook_AfterDisplayLineout")
+	Nika_Hook_AfterDisplayLineout(int,Qvec,Err)
+#endif
+
 End
 
 //end

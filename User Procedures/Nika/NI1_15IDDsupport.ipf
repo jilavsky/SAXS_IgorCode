@@ -736,7 +736,7 @@ Function NI1_15IDDSetDefaultNx()
 
 	DoWIndow NI1A_Convert2Dto1DPanel
 	if(!V_Flag)
-		Execute("NI1A_Convert2Dto1DPanel()")
+		NI1A_Convert2Dto1DPanelFnct()
 		NI1A_TabProc("nothing",0)
 	endif
 	PopupMenu SelectBlank2DDataType win=NI1A_Convert2Dto1DPanel, mode=4

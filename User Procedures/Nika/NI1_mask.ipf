@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.19
+#pragma version =1.20
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 modified call to hook function
 //1.19 Added right click "Refresh content" to Listbox
 //1.18 fixed /NTHR=1 to /NTHR=0
 //1.17 added ability to load 2DCalibrated data to support masking of those data. 
@@ -532,10 +533,13 @@ Function NI1M_MaskCreateImage()
 	NVAR MaskDisplayLogImage=root:Packages:Convert2Dto1D:MaskDisplayLogImage
 	wave OriginalCCD
 	//allow user function modification to the image through hook function...
-		String infostr = FunctionInfo("ModifyImportedImageHook")
-		if (strlen(infostr) >0)
-			Execute("ModifyImportedImageHook(OriginalCCD)")
-		endif
+#if Exists("ModifyImportedImageHook")
+	ModifyImportedImageHook(BmCntrCCDImg)
+#endif
+//		String infostr = FunctionInfo("ModifyImportedImageHook")
+//		if (strlen(infostr) >0)
+//			Execute("ModifyImportedImageHook(OriginalCCD)")
+//		endif
 	//end of allow user modification of imported image through hook function
 	duplicate/O OriginalCCD, MaskCCDImage
 	redimension/S MaskCCDImage
