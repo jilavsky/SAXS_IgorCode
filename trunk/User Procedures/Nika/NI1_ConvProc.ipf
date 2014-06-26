@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.30
+#pragma version=2.31
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -7,6 +7,9 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+
+//2.31 added hook functions, required change in main panel function from macro to function and therefore also renaming it. 
 //2.30 Added right click "Refresh content" to Listbox and other functionality
 //2.29 fixed /NTHR=1 to /NTHR=0
 //2.28 add ability to load and use 2D calibrated data (from EQSANS for now)
@@ -1797,10 +1800,13 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	//record import data for future use...
 	wave CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	//allow user function modification to the image through hook function...
-		String infostr = FunctionInfo("ModifyImportedImageHook")
-		if (strlen(infostr) >0)
-			Execute("ModifyImportedImageHook(CCDImageToConvert)")
-		endif
+#if Exists("ModifyImportedImageHook")
+	ModifyImportedImageHook(BmCntrCCDImg)
+#endif
+//		String infostr = FunctionInfo("ModifyImportedImageHook")
+//		if (strlen(infostr) >0)
+//			Execute("ModifyImportedImageHook(CCDImageToConvert)")
+//		endif
 	//end of allow user modification of imported image through hook function
 	redimension/S CCDImageToConvert
 	string NewNote=note(CCDImageToConvert)
@@ -2895,10 +2901,13 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	wave NewCCDData = $(NewWaveName)
 
 	//allow user function modification to the image through hook function...
-		String infostr = FunctionInfo("ModifyImportedImageHook")
-		if (strlen(infostr) >0)
-			Execute("ModifyImportedImageHook("+NewWaveName+")")
-		endif
+#if Exists("ModifyImportedImageHook")
+	ModifyImportedImageHook(BmCntrCCDImg)
+#endif
+//		String infostr = FunctionInfo("ModifyImportedImageHook")
+//		if (strlen(infostr) >0)
+//			Execute("ModifyImportedImageHook("+NewWaveName+")")
+//		endif
 	//end of allow user modification of imported image through hook function
 
 	duplicate/O NewCCDData, $(NewWaveName+"_dis")
@@ -3175,15 +3184,17 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Proc NI1A_Convert2Dto1DPanel()
+Function NI1A_Convert2Dto1DPanelFnct()
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
-	DoWindow/C NI1A_Convert2Dto1DPanel
+	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
+	//DoWindow/C NI1A_Convert2Dto1DPanel
 	//SetDrawLayer UserBack
 	//SetDrawEnv fsize= 18,fstyle= 1,textrgb= (0,12800,52224)
 	//DrawText 48,20,"2D to 1D data conversion panel"
 	//DrawText 10,89,"Select input data here"
 	//DrawText 11,249,"Select contiguous range:"
+	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+
 	TitleBox MainTitle title="2D to 1D data conversion panel",pos={48,5},frame=0,fstyle=3, fixedSize=1,size={300,24},fSize=18,fColor=(1,4,52428)
 	TitleBox Info1 title="Select input data here",pos={5,72},frame=0,fstyle=1, fixedSize=1,size={130,20},fSize=12,fColor=(1,4,52428)
 	TitleBox Info2 title="Select contiguous range:",pos={5,232},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
@@ -3193,16 +3204,19 @@ Proc NI1A_Convert2Dto1DPanel()
 	TitleBox PathInfoStrt, pos={3,55}, size={350,20}, variable=root:Packages:Convert2Dto1D:MainPathInfoStr, fsize=9, frame=0, fstyle=2, fColor=(0,12800,32000)
 	PopupMenu Select2DDataType,pos={290,30},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu Select2DDataType,help={"Select type of 2D images being loaded"}
-	PopupMenu Select2DDataType,mode=2,popvalue=root:Packages:Convert2Dto1D:DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+	PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	CheckBox UseCalib2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
 	CheckBox UseCalib2DData,help={"Import 2D calibrated data, not raw image data"}
 	CheckBox UseCalib2DData,variable= root:Packages:Convert2Dto1D:UseCalib2DData
 	//NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
 	//SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 	//SVAR ListOfKnownCalibExtensions=root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
-	if(root:Packages:Convert2Dto1D:UseCalib2DData)
-		root:Packages:Convert2Dto1D:DataFileExtension = StringFromList(0,root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions)
-		PopupMenu Select2DDataType,mode=2,popvalue=root:Packages:Convert2Dto1D:DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
+	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
+	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
+	if(UseCalib2DData)
+		DataFileExtension = StringFromList(0,ListOfKnownCalibExtensions)
+		PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
 	endif
 
 	CheckBox InvertImages,pos={150,75},size={146,14},proc=NI1A_CheckProc,title="Invert 0, 0 corner?"
@@ -3210,7 +3224,8 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox InvertImages,variable= root:Packages:Convert2Dto1D:InvertImages
 	PopupMenu FIlesSortOrder,pos={275,73},size={111,13},proc=NI1A_PopMenuProc,title="Sort order: "
 	PopupMenu FIlesSortOrder,help={"Select Sorting of data"}
-	PopupMenu FIlesSortOrder,mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= "None;Sort;Sort2;_001;Invert_001;Invert Sort;Invert Sort2;"
+	NVAR FIlesSortOrder = root:Packages:Convert2Dto1D:FIlesSortOrder
+	PopupMenu FIlesSortOrder,mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001;Invert_001;Invert Sort;Invert Sort2;"
 
 //	Button RefreshList,pos={330,97},size={100,18},proc=NI1A_ButtonProc,title="Refresh"
 //	Button RefreshList,help={"Refresh lisbox"}
@@ -3243,7 +3258,8 @@ Proc NI1A_Convert2Dto1DPanel()
 	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
 	PopupMenu DataCalibrationString,pos={275,235},size={211,21},proc=NI1A_PopMenuProc,title="Int. Calibration:"
 	PopupMenu DataCalibrationString,help={"Select data calibration string"}
-	PopupMenu DataCalibrationString,mode=1+WhichListItem(root:Packages:Convert2Dto1D:DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
+	SVAR DataCalibrationString = root:Packages:Convert2Dto1D:DataCalibrationString
+	PopupMenu DataCalibrationString,mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
 	CheckBox TrimFrontOfName,pos={10,260},size={100,18},proc=NI1A_CheckProc,title="Trim Front of Name"
 	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
 	CheckBox TrimEndOfName,pos={130,260},size={100,18},proc=NI1A_CheckProc,title="Trim End of Name"
@@ -3475,7 +3491,8 @@ Proc NI1A_Convert2Dto1DPanel()
 	Button SelectMaskDarkPath,help={"Select Data path where Empty and Dark files are"}
 	PopupMenu SelectBlank2DDataType,pos={270,330},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu SelectBlank2DDataType,help={"Select type of 2D images being loaded"}
-	PopupMenu SelectBlank2DDataType,mode=2,popvalue=root:Packages:Convert2Dto1D:DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
+	PopupMenu SelectBlank2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	SetVariable CurrentEmptyName,pos={19,533},size={350,16},title="Empty file:"
 	SetVariable CurrentEmptyName,help={"Name of file currently used as empty beam"}
 	SetVariable CurrentEmptyName,frame=0, noedit=1
@@ -3536,7 +3553,8 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox QbinningLogarithmic,help={"Check to have binning in q (d or theta) logarithmic"}
 	CheckBox QbinningLogarithmic,variable= root:Packages:Convert2Dto1D:QbinningLogarithmic
 	SetVariable QbinPoints,pos={172,370},size={160,16},title="Number of points"
-	SetVariable QbinPoints,help={"Number of points in Q you want to create"}, disable = (root:Packages:Convert2Dto1D:QvectorMaxNumPnts)
+	NVAR QvectorMaxNumPnts = root:Packages:Convert2Dto1D:QvectorMaxNumPnts
+	SetVariable QbinPoints,help={"Number of points in Q you want to create"}, disable = (QvectorMaxNumPnts)
 	SetVariable QbinPoints,limits={0,Inf,10},value= root:Packages:Convert2Dto1D:QvectorNumberPoints
 	CheckBox QvectorMaxNumPnts,pos={172,350},size={130,14},title="Max num points?",proc=NI1A_CheckProc
 	CheckBox QvectorMaxNumPnts,help={"Use Max possible number of points? Num pnts = num pixels"}
@@ -3578,8 +3596,8 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox ExportDataOutOfIgor,pos={20,500},size={122,14},title="Export data as ASCII?"
 	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
 	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
-
-	CheckBox SaveGSASdata,pos={150,500},size={122,14},title="GSAS?", disable=!(root:Packages:Convert2Dto1D:UseTheta)
+	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
+	CheckBox SaveGSASdata,pos={150,500},size={122,14},title="GSAS?", disable=!(UseTheta)
 	CheckBox SaveGSASdata,help={"Check to export data out of Igoras GSAS data"}
 	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
 
@@ -3633,7 +3651,8 @@ Proc NI1A_Convert2Dto1DPanel()
 
 	PopupMenu LineProf_CurveType,pos={20,355},size={214,21},proc=NI1A_PopMenuProc,title="Path type:"
 	PopupMenu LineProf_CurveType,help={"Select Line profile method to use"}
-	PopupMenu LineProf_CurveType,mode=1,popvalue=root:Packages:Convert2Dto1D:LineProf_CurveType,value= #"root:Packages:Convert2Dto1D:LineProf_KnownCurveTypes"
+	SVAR LineProf_CurveType = root:Packages:Convert2Dto1D:LineProf_CurveType
+	PopupMenu LineProf_CurveType,mode=1,popvalue=LineProf_CurveType,value= #"root:Packages:Convert2Dto1D:LineProf_KnownCurveTypes"
 //Shape specific controls.
 	SetVariable LineProf_GIIncAngle,pos={220,355},size={210,16},title="GI inc. angle [deg] "
 	SetVariable LineProf_GIIncAngle,help={"Incident angle for GISAXS configuration in degrees?"}, limits={-inf, inf,0.01}
@@ -3683,17 +3702,21 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox RebinCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:RebinCalib2DData
 	PopupMenu RebinCalib2DDataToPnts,pos={150,370},size={214,21},proc=NI1A_PopMenuProc,title="Rebin to:"
 	PopupMenu RebinCalib2DDataToPnts,help={"Select Line profile method to use"}
-	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
+	SVAR RebinCalib2DDataToPnts = root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
 
 	PopupMenu Calib2DDataOutputFormat,pos={212,525},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
 	PopupMenu Calib2DDataOutputFormat,help={"Select type of 2D images being loaded"}
-	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=root:Packages:Convert2Dto1D:Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
+	SVAR Calib2DDataOutputFormat = root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
+	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
 
 	//bottom controls
+	NVAR ImageRangeMinLimit = root:Packages:Convert2Dto1D:ImageRangeMinLimit
+	NVAR ImageRangeMaxLimit = root:Packages:Convert2Dto1D:ImageRangeMaxLimit
 	Slider ImageRangeMin,pos={15,647},size={150,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
-	Slider ImageRangeMin,limits={root:Packages:Convert2Dto1D:ImageRangeMinLimit,root:Packages:Convert2Dto1D:ImageRangeMaxLimit,0}
+	Slider ImageRangeMin,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
 	Slider ImageRangeMax,pos={15,663},size={150,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
-	Slider ImageRangeMax,limits={root:Packages:Convert2Dto1D:ImageRangeMinLimit,root:Packages:Convert2Dto1D:ImageRangeMaxLimit,0}
+	Slider ImageRangeMax,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
 
 	Button AveConvertNFiles,pos={170,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert N files"
 	Button AveConvertNFiles,help={"Average N files at time, convert all files selected above using parameters set here"}
@@ -3708,7 +3731,8 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox SkipBadFiles proc=NI1A_CheckProc
 	SetVariable MaxIntForBadFile,pos={300,610},size={120,16},title="Min. Int = "
 	SetVariable MaxIntForBadFile,help={"Bad file has less than this intensity?"}, limits={0,inf,1}
-	SetVariable MaxIntForBadFile,variable= root:Packages:Convert2Dto1D:MaxIntForBadFile, disable=!(root:Packages:Convert2Dto1D:SkipBadFiles)
+	NVAR SkipBadFiles = root:Packages:Convert2Dto1D:SkipBadFiles
+	SetVariable MaxIntForBadFile,variable= root:Packages:Convert2Dto1D:MaxIntForBadFile, disable=!(SkipBadFiles)
 
 	CheckBox DisplayRaw2DData,pos={185,623},size={120,16},title="Display RAW data?"
 	CheckBox DisplayRaw2DData,help={"In the 2D image, display raw data?"}, mode=1
@@ -3719,9 +3743,10 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox DisplayProcessed2DData,variable= root:Packages:Convert2Dto1D:DisplayProcessed2DData
 	CheckBox DisplayProcessed2DData proc=NI1A_CheckProc
 
+	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 
 	PopupMenu ColorTablePopup,pos={170,658},size={107,21},proc=NI1A_PopMenuProc,title="Colors"
-	PopupMenu ColorTablePopup,mode=1,popvalue=root:Packages:Convert2Dto1D:ColorTableName,value= #"\"Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;\""
+	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"\"Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;\""
 	CheckBox ImageDisplayBeamCenter,variable= root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph, help={"Display beam center on teh image?"}
 	CheckBox ImageDisplayBeamCenter proc=NI1A_CheckProc, pos={310,630},size={120,16},title="Display beam center?"
 	CheckBox ImageDisplaySectors,variable= root:Packages:Convert2Dto1D:DisplaySectorsIn2DGraph, help={"Display sectors(if selected) in the image?"}
@@ -3750,16 +3775,20 @@ Proc NI1A_Convert2Dto1DPanel()
 	CheckBox UseUserDefMinMax,help={"Display image with color scale?"}
 	CheckBox UseUserDefMinMax,variable= root:Packages:Convert2Dto1D:UseUserDefMinMax
 	CheckBox UseUserDefMinMax proc=NI1A_CheckProc
-
+	NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
 	SetVariable UserImageRangeMin,pos={140,680},size={100,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMin,help={"Select minimum intensity to display?"}, limits={0,inf,0}
-	SetVariable UserImageRangeMin,variable= root:Packages:Convert2Dto1D:UserImageRangeMin, disable=!(root:Packages:Convert2Dto1D:UseUserDefMinMax)
+	SetVariable UserImageRangeMin,variable= root:Packages:Convert2Dto1D:UserImageRangeMin, disable=!(UseUserDefMinMax)
 
 	SetVariable UserImageRangeMax,pos={140,695},size={100,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMax,help={"Select minimum intensity to display?"}, limits={0,inf,0}
-	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax, disable=!(root:Packages:Convert2Dto1D:UseUserDefMinMax)
+	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax, disable=!(UseUserDefMinMax)
 	
 	NI1A_FixMovieButton()
+	print Exists("Nika_Hook_ModifyMainPanel")
+#if Exists("Nika_Hook_ModifyMainPanel")
+	Nika_Hook_ModifyMainPanel()
+#endif
 EndMacro
 
 

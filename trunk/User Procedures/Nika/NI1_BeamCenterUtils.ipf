@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
-Constant NI1BCversionNumber = 2.14
+#pragma version=2.18
+Constant NI1BCversionNumber = 2.18
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 modified call to hook function
 //2.17 Added right click "Refresh content" to Listbox
 //2.16 fixed /NTHR=0, 1 is simply wrong... 
 //2.15 add avoidace in case user is using Calibrated 2D data. 
@@ -1657,10 +1658,13 @@ Function NI1BC_BmCntrCreateImage()
 	NVAR BmCntrDisplayLogImage=root:Packages:Convert2Dto1D:BmCntrDisplayLogImage
 	wave BmCntrCCDImg
 	//allow user function modification to the image through hook function...
-		String infostr = FunctionInfo("ModifyImportedImageHook")
-		if (strlen(infostr) >0)
-			Execute("ModifyImportedImageHook(BmCntrCCDImg)")
-		endif
+#if Exists("ModifyImportedImageHook")
+	ModifyImportedImageHook(BmCntrCCDImg)
+#endif
+//		String infostr = FunctionInfo("ModifyImportedImageHook")
+//		if (strlen(infostr) >0)
+//			Execute("ModifyImportedImageHook(BmCntrCCDImg)")
+//		endif
 	//end of allow user modification of imported image through hook function
 	variable i
 	NVAR BMDezinger=root:Packages:Convert2Dto1D:BMDezinger

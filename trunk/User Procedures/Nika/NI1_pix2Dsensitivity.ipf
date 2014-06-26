@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.02
+#pragma version=1.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,8 +7,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.01 added license for ANL
+//1.03 modified call to hook function
 //1.02 adds ability to use mask for calculation of Flood field. 
+//1.01 added license for ANL
 
 
 
@@ -416,10 +417,13 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		NI1A_UniversalLoader("Convert2Dto1DFloodPath",FileNameToLoad,FloodFileType,"FloodFieldImg")
 		wave FloodFieldImg
 		//allow user function modification to the image through hook function...
-		infostr = FunctionInfo("ModifyImportedImageHook")
-		if (strlen(infostr) >0)
-			Execute("ModifyImportedImageHook(FloodFieldImg)")
-		endif
+#if Exists("ModifyImportedImageHook")
+	ModifyImportedImageHook(BmCntrCCDImg)
+#endif
+//		infostr = FunctionInfo("ModifyImportedImageHook")
+//		if (strlen(infostr) >0)
+//			Execute("ModifyImportedImageHook(FloodFieldImg)")
+//		endif
 		//end of allow user modification of imported image through hook function
 		redimension/S FloodFieldImg
 		if(ImgExisted)
@@ -430,10 +434,13 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		NI1A_UniversalLoader("Convert2Dto1DFloodPath",FileNameToLoad,FloodFileType,"FloodFieldImg")
 		wave FloodFieldImg
 		//allow user function modification to the image through hook function...
-		infostr = FunctionInfo("ModifyImportedImageHook")
-		if (strlen(infostr) >0)
-			Execute("ModifyImportedImageHook(FloodFieldImg)")
-		endif
+#if Exists("ModifyImportedImageHook")
+	ModifyImportedImageHook(BmCntrCCDImg)
+#endif
+//		infostr = FunctionInfo("ModifyImportedImageHook")
+//		if (strlen(infostr) >0)
+//			Execute("ModifyImportedImageHook(FloodFieldImg)")
+//		endif
 		//end of allow user modification of imported image through hook function
 		redimension/S FloodFieldImg
 	endif
