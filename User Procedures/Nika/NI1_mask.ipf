@@ -534,7 +534,7 @@ Function NI1M_MaskCreateImage()
 	wave OriginalCCD
 	//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook")
-	ModifyImportedImageHook(BmCntrCCDImg)
+	ModifyImportedImageHook(OriginalCCD)
 #endif
 //		String infostr = FunctionInfo("ModifyImportedImageHook")
 //		if (strlen(infostr) >0)

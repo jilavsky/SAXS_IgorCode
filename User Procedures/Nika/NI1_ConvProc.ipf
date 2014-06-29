@@ -1792,6 +1792,7 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
 	FileNameToLoad = SelectedFileToLoad
 	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 	
 	variable loadedOK=NI1A_UniversalLoader("Convert2Dto1DDataPath",SelectedFileToLoad,DataFileExtension,"CCDImageToConvert")
 	if(LoadedOK==0)
@@ -1799,9 +1800,12 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	endif
 	//record import data for future use...
 	wave CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(UseCalib2DData)	//imported calibrated data, this thing is also calibrated data set
+		Duplicate/O CCDImageToConvert, Calibrated2DData
+	endif
 	//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook")
-	ModifyImportedImageHook(BmCntrCCDImg)
+	ModifyImportedImageHook(CCDImageToConvert)
 #endif
 //		String infostr = FunctionInfo("ModifyImportedImageHook")
 //		if (strlen(infostr) >0)
@@ -2902,7 +2906,7 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 
 	//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook")
-	ModifyImportedImageHook(BmCntrCCDImg)
+	ModifyImportedImageHook(NewCCDData)
 #endif
 //		String infostr = FunctionInfo("ModifyImportedImageHook")
 //		if (strlen(infostr) >0)
@@ -3021,7 +3025,7 @@ Function NI1A_UpdateDataListBox()
 			realExtension=".hdf"
 		elseif(cmpstr(DataFileExtension, "TPA/XML")==0)
 			realExtension=".xml"
-		elseif(cmpstr(DataFileExtension, "Nexus")==0)
+		elseif(stringmatch(DataFileExtension, "*Nexus*"))
 			realExtension=".hdf"
 		elseif(cmpstr(DataFileExtension, "SSRLMatSAXS")==0)
 			realExtension=".tif"
@@ -6753,14 +6757,44 @@ End
 
 Function NI1A_Export2DData()
 	//exports 2D calibrated data if user requests it
+
 	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
-	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
-	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
-	NVAR UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
-	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
 	if(!ExpCalib2DData)
 		return 0
 	endif
+	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
+	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
+	NVAR UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
+	NVAR BeamCenterX=root:Packages:Convert2Dto1D:BeamCenterX
+	NVAR BeamCenterY=root:Packages:Convert2Dto1D:BeamCenterY
+	
+	variable XDimension, YDimension
+	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+	strswitch(RebinCalib2DDataToPnts)	// string switch
+		case "100x100":		// execute if case matches expression
+			XDimension=100
+			YDimension=100
+			break					// exit from switch
+		case "200x200":		// execute if case matches expression
+			XDimension=200
+			YDimension=200
+			break					// exit from switch
+		case "300x300":		// execute if case matches expression
+			XDimension=300
+			YDimension=300
+			break					// exit from switch
+		case "400x400":		// execute if case matches expression
+			XDimension=400
+			YDimension=400
+			break					// exit from switch
+		case "600x600":		// execute if case matches expression
+			XDimension=600
+			YDimension=600
+			break					// exit from switch
+		default:							// optional default expression executed
+			XDimension=800
+			YDimension=800
+		endswitch
 	//here we get only if user wants to export 2D calibrated data...
 	//check the wave of interest exist...
 	wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
@@ -6789,18 +6823,23 @@ Function NI1A_Export2DData()
 		//Pete:   mask is 1 when the point is removed, 0 when is used. 
 		//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
 		MaskExp2DData = !MaskExp2DData
+	else
+		Duplicate/Free Q2DWave, MaskExp2DData		//fake for possible rebinning...
 	endif
-	if(UseQxyCalib2DData)
-		Wave AnglesWave= root:Packages:Convert2Dto1D:AnglesWave
-		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWave)
-		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWave)
-	endif
+	Wave AnglesWave= root:Packages:Convert2Dto1D:AnglesWave
+	Duplicate/Free AnglesWave, AnglesWaveExp
 
 	if(RebinCalib2DData)
 		//here we need to create proper rebinned data
-		
+		NI1A_RebinOnLogScale2DData(IntExp2DData,QExp2DData, AnglesWaveExp, MaskExp2DData, XDimension, YDimension,BeamCenterX, BeamCenterY)
+		MatrixOp/O MaskExp2DData = ceil(MaskExp2DData)	//any point which had mask in it will be masked, I need to revisit this later, if this works. 
 	else
-		//exporting data in theri original size. This may be large for SAXS data sets!
+		//exporting data in their original size. This may be large for SAXS data sets!
+	endif
+	//create Qx and Qy if needed, using rebinned data 
+	if(UseQxyCalib2DData)
+		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
+		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
 	endif
 
 	//get the file name right...
@@ -6855,6 +6894,114 @@ Function NI1A_Export2DData()
 end
 
 
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+
+Function NI1A_RebinOnLogScale2DData(Calibrated2DData,Qmatrix, AnglesWave, Mask, XDimension, YDimension,BeamCenterX, BeamCenterY)
+	wave Calibrated2DData,Qmatrix, AnglesWave, Mask
+	variable XDimension, YDimension, BeamCenterX, BeamCenterY
+	//here we rebin the data using fake log binning and return really weird data
+	//how to rebin the data.
+	variable Dim1=DimSize(Calibrated2DData, 0 )		//this is hwo many points we have here. 
+	variable Dim2=DimSize(Calibrated2DData, 1)		//this is hwo many points we have here. 
+	//assume this is X, so here is how much user wants: XDimension, beam center is BeamCenterX
+	variable distance1, distance2
+	distance1 = (Dim1 - BeamCenterX)
+	distance2 = BeamCenterX
+	//this way distance1+distance2 = Dim1
+	variable Rebin1, Rebin2
+	Rebin1 = ceil(XDimension * distance1/Dim1)
+	Rebin2 = ceil(XDimension * distance2/Dim1)
+	//now we need to spread around points correctly... N is original number of points, M is output number of points. 
+	//average in each M point is N/M, so M array starts from 1 and goes to 2*N/M - 1, use Round to have the values integers.
+	Make/Free/N=(ceil(Rebin1)) Rebin1Wv, Rebin2Wv
+	Rebin1Wv = round(1+p/(Rebin1-1) * ((2*distance1/Rebin1)-2))
+	Rebin2Wv = round(1+p/(Rebin2-1) * ((2*distance2/Rebin2)-2))
+	//now rebinning...
+	make/Free/N=(XDimension,Dim2) CalDataRebin1, QmatrixRebin1, MaskRebin1,AnglesRebin1
+	variable i, j, ii, jj, iii
+	ii = -1
+	jj = BeamCenterX
+	For(i=ceil(BeamCenterX*XDimension/Dim1);i<XDimension;i+=1)
+		ii+=1
+		FOr(j=0;j<Rebin1Wv[ii];j+=1)
+			CalDataRebin1[i][] += Calibrated2DData[j+jj][q]
+			QmatrixRebin1[i][] += Qmatrix[j+jj][q]
+			AnglesRebin1[i][] += AnglesWave[j+jj][q]
+			MaskRebin1[i][] 	+= Mask[j+jj][q]
+		endfor
+		CalDataRebin1[i][]/=Rebin1Wv[ii]
+		QmatrixRebin1[i][]/=Rebin1Wv[ii]
+		AnglesRebin1[i][]/=Rebin1Wv[ii]
+		MaskRebin1[i][]/=Rebin1Wv[ii]
+		jj += Rebin1Wv[ii]
+	endfor
+	//now the other side
+	ii = -1
+	jj = BeamCenterX
+	For(i=floor(BeamCenterX*XDimension/Dim1);i>=0;i-=1)
+		ii+=1
+		FOr(j=0;j<Rebin2Wv[ii];j+=1)
+			CalDataRebin1[i][] += Calibrated2DData[jj-j][q]
+			QmatrixRebin1[i][] += Qmatrix[jj-j][q]
+			AnglesRebin1[i][] += AnglesWave[jj-j][q]
+			MaskRebin1[i][] += Mask[jj-j][q]
+		endfor
+		CalDataRebin1[i][]/=Rebin2Wv[ii]
+		QmatrixRebin1[i][]/=Rebin2Wv[ii]
+		AnglesRebin1[i][]/=Rebin2Wv[ii]
+		MaskRebin1[i][]/=Rebin2Wv[ii]
+		jj -= Rebin2Wv[ii]
+	endfor
+	//now the other dimension
+	distance1 = (Dim2 - BeamCenterY)
+	distance2 = BeamCenterY
+	Rebin1 = ceil(YDimension * distance1/Dim2)
+	Rebin2 = ceil(YDimension * distance2/Dim2)
+	Make/Free/N=(ceil(Rebin2)) Rebin1Wv2, Rebin2Wv2
+	Rebin1Wv2 = round(1+p/(Rebin1-1) * ((2*distance1/Rebin1)-2))
+	Rebin2Wv2 = round(1+p/(Rebin2-1) * ((2*distance2/Rebin2)-2))
+	make/Free/N=(XDimension,YDimension) CalDataRebin2, QmatrixRebin2, MaskRebin2, AnglesRebin2
+	ii = -1
+	jj = BeamCenterY
+	For(i=ceil(BeamCenterY*YDimension/Dim2);i<YDimension;i+=1)
+		ii+=1
+		FOr(j=0;j<Rebin1Wv2[ii];j+=1)
+			CalDataRebin2[][i] += CalDataRebin1[p][j+jj]
+			QmatrixRebin2[][i] += QmatrixRebin1[p][j+jj]
+			AnglesRebin2[][i] += AnglesRebin1[p][j+jj]
+			MaskRebin2[][i] 	+= MaskRebin1[p][j+jj]
+		endfor
+		CalDataRebin2[][i]/=Rebin1Wv2[ii]
+		QmatrixRebin2[][i]/=Rebin1Wv2[ii]
+		AnglesRebin2[][i]/=Rebin1Wv2[ii]
+		MaskRebin2[][i]/=Rebin1Wv2[ii]
+		jj += Rebin1Wv2[ii]
+	endfor
+	//now the other side
+	ii = -1
+	jj = BeamCenterY
+	For(i=floor(BeamCenterY*YDimension/Dim1);i>=0;i-=1)
+		ii+=1
+		FOr(j=0;j<Rebin2Wv2[ii];j+=1)
+			CalDataRebin2[][i] += CalDataRebin1[p][jj-j]
+			QmatrixRebin2[][i] += QmatrixRebin1[p][jj-j]
+			AnglesRebin2[][i] += AnglesRebin1[p][jj-j]
+			MaskRebin2[][i] += MaskRebin1[p][jj-j]
+		endfor
+		CalDataRebin2[][i]/=Rebin2Wv2[ii]
+		QmatrixRebin2[][i]/=Rebin2Wv2[ii]
+		AnglesRebin2[][i]/=Rebin2Wv2[ii]
+		MaskRebin2[][i]/=Rebin2Wv2[ii]
+		jj -= Rebin2Wv2[ii]
+	endfor	
+	Duplicate/O CalDataRebin2,Calibrated2DData
+	Duplicate/O QmatrixRebin2,Qmatrix
+	Duplicate/O AnglesRebin2,AnglesWave
+	Duplicate/O MaskRebin2,Mask
+end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************

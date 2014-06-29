@@ -418,7 +418,7 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		wave FloodFieldImg
 		//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook")
-	ModifyImportedImageHook(BmCntrCCDImg)
+	ModifyImportedImageHook(FloodFieldImg)
 #endif
 //		infostr = FunctionInfo("ModifyImportedImageHook")
 //		if (strlen(infostr) >0)
@@ -435,7 +435,7 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		wave FloodFieldImg
 		//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook")
-	ModifyImportedImageHook(BmCntrCCDImg)
+	ModifyImportedImageHook(FloodFieldImg)
 #endif
 //		infostr = FunctionInfo("ModifyImportedImageHook")
 //		if (strlen(infostr) >0)
