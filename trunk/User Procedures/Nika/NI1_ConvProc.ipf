@@ -1807,10 +1807,6 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 #if Exists("ModifyImportedImageHook")
 	ModifyImportedImageHook(CCDImageToConvert)
 #endif
-//		String infostr = FunctionInfo("ModifyImportedImageHook")
-//		if (strlen(infostr) >0)
-//			Execute("ModifyImportedImageHook(CCDImageToConvert)")
-//		endif
 	//end of allow user modification of imported image through hook function
 	redimension/S CCDImageToConvert
 	string NewNote=note(CCDImageToConvert)
@@ -6874,15 +6870,15 @@ Function NI1A_Export2DData()
 	if(InclMaskCalib2DData)
 		//NI1A_WriteHdf5CanSASData("CanSAS_Q_dI_Mask.h5", I2D, dIwv=Idev,Qwv=Q2D, Mask=mask)
 		if(UseQxyCalib2DData)
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData)
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp)
 		else
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData)
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
 		endif
 	else
 		if(UseQxyCalib2DData)
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData)
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp)
 		else
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData,Qwv=QExp2DData)
+			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
 		endif	
 	endif
 		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI_Mask.h5", IntExp2DData,Qx=Qx, Qy=Qy, Mask=mask)

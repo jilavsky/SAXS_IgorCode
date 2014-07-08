@@ -72,6 +72,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	string headerStr=""
 	variable i
 	Variable LoadedOK=1			//set to 1 if loaded seemed OK
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 
 	if(cmpstr(FileType,".tif")==0 || cmpstr(FileType,"tiff")==0)
 		FileNameToLoad= FileName
@@ -614,15 +615,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		endif
 		//end read header
 		//clean up header to make it more like our headers...
-		//testLine = ReplaceString("\r\n", testLine, "")
-//			testLine=ReplaceString("\r\n\r\n", testLine, ";")
-//			testLine=ReplaceString("\r\n", testLine, ";")
-//			testLine=ReplaceString("#", testLine, "")
-//			testLine=ReplaceString(";;;;", testLine, ";")
-//			testLine=ReplaceString(";;;", testLine, ";")
-//			testLine=ReplaceString(";;", testLine, ";")
-//			testLine = NI1_ZapControlCodes(testLine)	
-//			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 		testLine = ReplaceString("\n", testLine, "")
 		testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
 		testLine = ReplaceString("}", testLine, "<<<<End of ESRF header;")
@@ -784,6 +776,11 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		endif
 		NewNote+="DataFileName="+FileNameToLoad+"_"+AveFrame+";"
 		NewNote+="DataFileType="+FileType+";"
+	elseif(UseCalib2DData&&cmpstr(FileType,"canSAS/Nexus")==0)
+		//import CanSAS file format and convert to proper calibrated data.
+		FileNameToLoad = FileName
+		NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
+		
 	elseif(cmpstr(FileType,"Nexus")==0)
 		FileNameToLoad = FileName
 		NI2NX_NexusReader(PathName, FileNameToLoad)
@@ -3798,20 +3795,133 @@ End
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
+Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
+	string PathName, FileNameToLoad, NewWaveName
+	
+	string FileContent=ReadNexusCanSAS(PathName, FileNameToLoad)
+	variable fileID, UsedQXY, UsedAzimAngle
+	string TempStr, TempStr1
+	UsedQXY = 0
+	UsedAzimAngle = 0
+	//Abort "Need finishing NI1_ReadCalibCanSASNexusFile"
+	if (stringmatch(NewWaveName,"CCDImageToConvert"))
+	
+		//DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
+		//  DataWv:/sasentry01/sasdata01/I;QWv:/sasentry01/sasdata01/Q;IdevWv:;MaskWv:;
+
+			HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
+			//load data - Intensity
+			TempStr = StringByKey("DataWv", FileContent, ":", ";")
+			HDF5LoadData /N=CCDImageToConvert  /O  fileID , TempStr 
+			//load data - Qvector
+			TempStr = StringByKey("QWv", FileContent, ":", ";")
+			if(ItemsInList(TempStr)<2)	//only Q wave
+				HDF5LoadData /N=Q2Dwave  /O  fileID , TempStr 
+			else		//assume Qx, Qy
+				TempStr1=stringfromList(0,TempStr)
+				if(stringmatch(TempStr1,"Qx"))
+					HDF5LoadData /N=Qx2D  /O  fileID , TempStr 
+				elseif(stringmatch(TempStr1,"Qy"))
+					HDF5LoadData /N=Qy2D  /O  fileID , TempStr 
+				endif
+				TempStr1=stringfromList(1,TempStr)
+				if(stringmatch(TempStr1,"Qx"))
+					HDF5LoadData /N=Qx2D  /O  fileID , TempStr 
+				elseif(stringmatch(TempStr1,"Qy"))
+					HDF5LoadData /N=Qy2D  /O  fileID , TempStr 
+				endif			
+				UsedQXY=1	
+			endif
+			TempStr = StringByKey("IdevWv", FileContent, ":", ";")
+			if(strlen(TempStr)>2)	//only Q wave
+				HDF5LoadData /N=CCDImageToConvert_Errs  /O  fileID , TempStr 
+			endif
+			TempStr = StringByKey("MaskWv", FileContent, ":", ";")
+			if(strlen(TempStr)>2)	//only Q wave
+				HDF5LoadData /N=M_ROIMask  /O  fileID , TempStr 
+			endif
+			TempStr = StringByKey("AzimAngles", FileContent, ":", ";")
+			if(strlen(TempStr)>2)	//Azimuthal wave exists
+				HDF5LoadData /N=AnglesWave  /O  fileID , TempStr 
+				UsedAzimAngle=1
+			endif
+			HDF5CloseFile fileID  
+
+			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+			if(UsedQXY)
+				Wave Qx2D
+				Wave Qy2D
+				if(!UsedAzimAngle)
+					MatrixOP/O AnglesWave = atan(Qy2D/Qx2D)
+					AnglesWave += pi/2
+					AnglesWave = Qx2D > 0 ? AnglesWave : AnglesWave+pi
+				endif
+				//create Q waves
+				matrixOP/O Qx2D = powR(Qx2D,2)
+				matrixOP/O Qy2D = powR(Qy2D,2)
+				matrixOp/O Q2DWave = sqrt(Qx2D + Qy2D)
+				Wavestats/Q Q2DWave
+				BeamCenterX = V_minRowLoc
+		 		BeamCenterY = V_minColLoc
+			else		//used just Q, need to create AzimuthalWave
+				Wave Q2Dwave
+				Wavestats/Q Q2DWave
+				BeamCenterX = V_minRowLoc
+		 		BeamCenterY = V_minColLoc
+				if(!UsedAzimAngle)
+					Duplicate/O Qvector, AnglesWave
+					Multithread AnglesWave = abs(atan2((BeamCenterY-q),(BeamCenterX-p))-pi)		
+				endif	
+			endif
+			Redimension/S AnglesWave
+			
+	 		NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
+			NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+			NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX								//in millimeters
+			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY								//in millimeters
+			Wavelength = 1			
+			Duplicate/O Q2DWave, Theta2DWave
+			Multithread Theta2DWave = asin(Q2DWave / (4*pi/Wavelength))
+			variable dist00 = sqrt((BeamCenterX*PixelSizeX)^2 + (BeamCenterY*PixelSizeY)^2)
+			SampleToCCDDistance = abs(dist00/(2*tan(Theta2DWave[0][0])))
+			
+//			//fix their data orientation...
+//			ImageRotate/O/H AnglesWave
+//			ImageRotate/O/H Q2DWave
+//			ImageRotate/O/H Err2D
+//			ImageRotate/O/C AnglesWave
+//			ImageRotate/O/C Q2DWave
+//			ImageRotate/O/C Err2D
+//	 		//OK, now we need to fake at least SDD to make sure some drawings work well...
+	else
+		Abort "this should nto really happen, these are calibrated data and no other image is appropriate"
+	
+	endif
 
 
-Function ReadNexusCanSAS()
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
 
+Function/S ReadNexusCanSAS(PathName, FileNameToLoad)
+	string PathName, FileNameToLoad
+	
 	variable GroupID
 	Variable fileID, result
 	variable i, j
 	string AttribList, PathToData, ListOfDataSets, ListOfGroups, DataIdentification
-	string tempStr, TempDataPath, TempQPath, TempMaskPath, TempIdevPath, tempStr2
+	string tempStr, TempDataPath, TempQPath, TempMaskPath, TempIdevPath, tempStr2, TempAzAPath
+	TempDataPath=""
+	TempQPath=""
+	TempMaskPath=""
+	TempIdevPath=""
 	
-	HDF5OpenFile/P=HDF5Data/R/I fileID as ""
+	HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 	if (V_flag != 0)
 		Print "HDF5OpenFile failed"
-		return -1
+		return ""
 	endif
 	HDF5ListGroup /F /R /TYPE=1  /Z fileID , "/"
 	ListOfGroups = S_HDF5ListGroup
@@ -3841,14 +3951,17 @@ Function ReadNexusCanSAS()
 					if(StringMatch(ListOfDataSets,"*Idev*"))
 						TempIdevPath = TempDataPath[0,strlen(TempDataPath)-2]+"Idev"
 					endif
-					DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
+					if(StringMatch(ListOfDataSets,"*AzimAngles*"))
+						TempAzAPath = TempDataPath[0,strlen(TempDataPath)-2]+"AzimAngles"
+					endif
+					DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"+"AzimAngles:"+TempAzAPath+";"
 
 				endif			
 			endfor
 		endif
 	endfor
-	print DataIdentification
 	HDF5CloseFile fileID  
+	return DataIdentification
 end
 //*************************************************************************************************
 //*************************************************************************************************
@@ -3892,9 +4005,9 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 // write out Nexus/CanSAS file for Nika
-Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy])
+Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy,AzimAngles])
 		String Hdf5FileName
-		wave Iwv, dIwv, Qwv, Mask, Qx, Qy
+		wave Iwv, dIwv, Qwv, Mask, Qx, Qy, AzimAngles
 		
 		variable usedIwv, useQwv, useMask, useQx, useQy, use3Q
 		usedIwv= !ParamIsDefault(dIwv) 
@@ -4006,6 +4119,7 @@ Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy])
 		//note, mask is 1 when the point is removed, 0 when is used. 
 		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Mask, fileID, "/sasentry01/sasdata01/Mask"
 	endif
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   AzimAngles, fileID, "/sasentry01/sasdata01/AzimAngles"
 	if (V_flag != 0)
 		Print "HDF5SaveData failed"
 		result = -1
