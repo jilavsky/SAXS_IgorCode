@@ -1,6 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
-//#include <KBColorizeTraces>
+#pragma version=2.21
 Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
@@ -9,6 +8,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 chaged units for common system cm-1sr-1
 //2.20 added Int*Q^3 as plotting option. 
 //2.19 minor fix for Change Graph details panel visibility
 //2.18 added infinite number of colors and symbols to Vary Colors/symbols. (repeating set of 10). Cleaned up old crud in code. removed KBColorizeTraces, not needed anymore. 
@@ -1530,8 +1530,8 @@ Function IR1P_UpdateAxisName(which,WhatTypeSelected)
 			if(strlen(Units)<1)
 				Units="cm\S2\M/cm\S3\M"
 			else
-				Units=ReplaceString("cm2/g", Units, "cm\S2\M/g")
-				Units=ReplaceString("cm2/cm3", Units, "cm\S2\M/cm\S3\M")
+				Units=ReplaceString("cm2/g", Units, "cm\S2\Mg\S-1\Msr\S-1\M")
+				Units=ReplaceString("cm2/cm3", Units, "cm\S-1\Msr\S-1\M")
 			endif
 
 		if(cmpstr(WhatTypeSelected,"Y")==0)

@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.72
+#pragma version = 1.73
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.73 added IN2G_CheckForSlitSmearedRange() which checks if the slit smearing Qmax > 3*Slit length
 //1.72 updated log rebinning search for parameters using Optimize. Much better... 
 //1.71 added new log-rebinning routine using IgorExchange version of the code. Need to update other code topp use it. Modified to use standard error of mean. 
 //1.70 added ANL copyright
@@ -34,6 +35,9 @@
 // e-mail me: ilavsky@aps.anl.gov.
 
 //This is list of procedures with short description. 
+//Function IN2G_CheckForSlitSmearedRange(slitSmearedData,Qmax, SlitLength)
+//   aborts execution with errro message if qmax < 3* slit length for slit smerared data
+//
 //Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
 //  Rebins data (x,y.etc) on log scale oiptionally with enforcing minimum step size. 
 //
@@ -340,7 +344,23 @@
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IN2G_CheckForSlitSmearedRange(slitSmearedData,Qmax, SlitLength,[userMessage])
+	variable slitSmearedData,Qmax, SlitLength
+	string userMessage
+	
+	variable isUM= ParamIsDefault(userMessage)
+	
+	if(slitSmearedData)
+		if(Qmax<3* SlitLength)
+			if(isUM)
+				abort "For slit smeared data you need to model/fit to Qmax at least 3* Slit length" 
+			else
+				abort "For slit smeared data you need to model/fit to Qmax at least 3* Slit length."+userMessage 
+			endif
+		endif
+	endif
 
+end
 
 //**********************************************************************************************************
 //**********************************************************************************************************

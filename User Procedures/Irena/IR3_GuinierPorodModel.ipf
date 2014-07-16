@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.01		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.02		//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 Constant IR3GPversionNumber=1
 
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.02 added check for qmax when fitting slit smeared data and fixed minor slitlength setvariable bug (it was trying to set limits...)
 //1.01 	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //1.00 first release, July 2013
 //0.94 fixed bug which caused major problems fitting SMR data. Improvemnts of starting values for local fits. 
@@ -1063,7 +1064,7 @@ Function IR3GP_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCont
 			Level_Rg1Fit=0
 		endif
 	endif
-	if(!(stringmatch(ctrlName,"SASBackground")||stringmatch(ctrlName,"Level_RgCutOff")))
+	if(!(stringmatch(ctrlName,"SASBackground")||stringmatch(ctrlName,"Level_RgCutOff")||stringmatch(ctrlName,"SlitLength")))
 		NVAR LowLimit=$("root:Packages:Irena:GuinierPorod:"+ctrlName+"LowLimit")
 		NVAR HighLimit=$("root:Packages:Irena:GuinierPorod:"+ctrlName+"HighLimit")
 		LowLimit = varNum * 0.2
@@ -1146,7 +1147,6 @@ Function IR3GP_CalculateModelIntensity()
 	 
 	NVAR SASBackground=root:Packages:Irena:GuinierPorod:SASBackground
 	ModelIntensity+=SASBackground	
-	//ModelCurrentLevel+=SASBackground
 	
 	if(UseSMRData)
 		duplicate/free ModelIntensity, ModelIntensitySM
@@ -1606,12 +1606,14 @@ Function IR3GP_FitData(skipreset)
 	Wave OriginalQvector
 	Wave OriginalIntensity
 	Wave OriginalError	
+
+	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
+	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
+	IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "GunierPorod_LogLogPlot")], SlitLengthUnif)
 	
 	Variable V_chisq, level
 	Duplicate/O W_Coef, E_wave, CoefficientInput
 	E_wave=W_coef/100
-
-//	IR1A_RecordResults("before")
 
 	Variable V_FitError=0			//This should prevent errors from being generated
 		variable NumParams=numpnts(CoefNames)

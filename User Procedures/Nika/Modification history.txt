@@ -6,8 +6,9 @@ Code modification history
 1.66 xxxxx
 Added right click menus to most Listboxes,users can now refresh the content and there is also some more functionality where appropriate
 Added Pilatus 3, 200k.
-Added ability to import 2D calibrated data, for now ASCII (qx qy I dI) from EQSANS and CanSAS/Nexus (hdf5 file format)
-Major new feature - export 2D calibrated data. Either full resolution or pseudo log-q rebinned data. Useable for 2D fitting programs. 
+Added ability to import 2D calibrated data, for now ASCII (qx qy I dI) from EQSANS and NIST (DAT). 
+Added flexible support for CanSAS/Nexus (hdf5 file format). Can export to new or append to existing CanSAS/Nexus file - for now 2D calibrated data. Working on appending 1D data. Can also import a calibrated 2D data set from CanSAS/Nexus file. 
+Major new feature - export 2D calibrated data. Either full resolution or pseudo log-q rebinned data. Usable for 2D fitting programs. 
 
 
 

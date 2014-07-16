@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.31
+#pragma version=2.34
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,7 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//2.34 can read/write canSAS?Nexus files. Can log-bin 2D data and use those. 
+//2.33 fixed display of files for CanSAS/Nexus file type
+//2.32 fixed case, when user wanted to display processed data, but the images were created/updated before the processed data were even created. 
 //2.31 added hook functions, required change in main panel function from macro to function and therefore also renaming it. 
 //2.30 Added right click "Refresh content" to Listbox and other functionality
 //2.29 fixed /NTHR=1 to /NTHR=0
@@ -1260,6 +1262,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	if(cmpstr(ctrlName,"Select2DDataType")==0)
 		//set appropriate extension
 		SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+		NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 		DataFileExtension = popStr
 		NI1A_UpdateDataListBox()
 		if(cmpstr(popStr,"GeneralBinary")==0)
@@ -1270,7 +1273,8 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		endif
 		if(cmpstr(popStr,"ESRFedf")==0)
 			NI1_ESRFEdfLoaderPanelFnct()
-		endif
+		endif	
+		CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData && StringMatch(DataFileExtension, "canSAS/Nexus"))
 	endif
 	if(cmpstr(ctrlName,"SelectBlank2DDataType")==0)
 		//set appropriate extension
@@ -2171,10 +2175,11 @@ Function NI1A_LoadManyDataSetsForConv()
 					note/K CCDImageToConvert
 					note CCDImageToConvert, OldNote
 					NI1A_DezingerDataSetIfAskedFor(DataWaveName)
+					NI1A_Convert2DTo1D()
 					NI1A_DisplayLoadedFile()
 					NI1A_TopCCDImageUpdateColors(1)
 					NI1A_DoDrawingsInto2DGraph()
-					NI1A_Convert2DTo1D()
+//					NI1A_Convert2DTo1D()
 					NI1A_Export2DData()
 					DoUpdate
 				endfor
@@ -2207,10 +2212,11 @@ Function NI1A_LoadManyDataSetsForConv()
 						note CCDImageToConvert, OldNote
 						NI1A_DezingerDataSetIfAskedFor(DataWaveName)
 						//	NI1A_PrepareLogDataIfWanted(DataWaveName)		//creates the DataWaveNameDis wave...
+						NI1A_Convert2DTo1D()
 						NI1A_DisplayLoadedFile()
 						NI1A_TopCCDImageUpdateColors(1)
 						NI1A_DoDrawingsInto2DGraph()
-						NI1A_Convert2DTo1D()
+//						NI1A_Convert2DTo1D()
 						NI1A_Export2DData()
 						DoUpdate
 					endfor
@@ -2227,10 +2233,11 @@ Function NI1A_LoadManyDataSetsForConv()
 					note/K CCDImageToConvert
 					note CCDImageToConvert, OldNote
 			NI1A_DezingerDataSetIfAskedFor(DataWaveName)
+			NI1A_Convert2DTo1D()
 			NI1A_DisplayLoadedFile()
 			NI1A_DisplayTheRight2DWave()
 			NI1A_DoDrawingsInto2DGraph()
-			NI1A_Convert2DTo1D()
+//			NI1A_Convert2DTo1D()
 			NI1A_Export2DData()
 			DoUpdate
 		endif
@@ -2367,10 +2374,10 @@ Function NI1A_AveLoadNDataSetsForConv()
 				KillWaves/Z tempWave
 				note/K CCDImageToConvert
 				note CCDImageToConvert, OldNote
+				NI1A_Convert2DTo1D()
 				NI1A_DisplayLoadedFile()
 				NI1A_DisplayTheRight2DWave()
 				NI1A_DoDrawingsInto2DGraph()
-				NI1A_Convert2DTo1D()
 				NI1A_Export2DData()
 				DoUpdate
 			endif
@@ -3195,7 +3202,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	//DrawText 11,249,"Select contiguous range:"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
-	TitleBox MainTitle title="2D to 1D data conversion panel",pos={48,5},frame=0,fstyle=3, fixedSize=1,size={300,24},fSize=18,fColor=(1,4,52428)
+	TitleBox MainTitle title="2D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3, fixedSize=1,size={300,24},fSize=18,fColor=(1,4,52428)
 	TitleBox Info1 title="Select input data here",pos={5,72},frame=0,fstyle=1, fixedSize=1,size={130,20},fSize=12,fColor=(1,4,52428)
 	TitleBox Info2 title="Select contiguous range:",pos={5,232},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
 //first data selection part
@@ -3208,9 +3215,6 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox UseCalib2DData,pos={165,33},size={146,14},proc=NI1A_CheckProc,title="Calibrated 2D data?"
 	CheckBox UseCalib2DData,help={"Import 2D calibrated data, not raw image data"}
 	CheckBox UseCalib2DData,variable= root:Packages:Convert2Dto1D:UseCalib2DData
-	//NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
-	//SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
-	//SVAR ListOfKnownCalibExtensions=root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 	SVAR ListOfKnownCalibExtensions = root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
@@ -3218,6 +3222,10 @@ Function NI1A_Convert2Dto1DPanelFnct()
 		DataFileExtension = StringFromList(0,ListOfKnownCalibExtensions)
 		PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
 	endif
+
+	CheckBox ReverseBinnedData,pos={298,50},size={146,14},proc=NI1A_CheckProc,title="Unbin if needed?"
+	CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData|| !StringMatch(DataFileExtension, "canSAS/Nexus"))
+	CheckBox ReverseBinnedData,variable= root:Packages:Convert2Dto1D:ReverseBinnedData
 
 	CheckBox InvertImages,pos={150,75},size={146,14},proc=NI1A_CheckProc,title="Invert 0, 0 corner?"
 	CheckBox InvertImages,help={"Check to have 0,0 in left BOTTOM corner, uncheck to have 0,0 in left TOP corner. Only for newly loaded images!"}
@@ -3591,20 +3599,22 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox OverwriteDataIfExists,help={"Overwrite data in current Igor experiment if they already exist"}
 	CheckBox OverwriteDataIfExists,variable= root:Packages:Convert2Dto1D:OverwriteDataIfExists
 	
+	CheckBox AppendToNexusFile,pos={20,490},size={170,14},title="Append to original image (Nexus ONLY)?"
+	CheckBox AppendToNexusFile,help={"Append to Nexus file, useable ONLy if sourceis Nexus"}
+	CheckBox AppendToNexusFile,variable= root:Packages:Convert2Dto1D:AppendToNexusFile,proc=NI1A_CheckProc
 
-
-	CheckBox ExportDataOutOfIgor,pos={20,500},size={122,14},title="Export data as ASCII?"
+	CheckBox ExportDataOutOfIgor,pos={20,510},size={122,14},title="Export data as ASCII?"
 	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
 	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
 	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
-	CheckBox SaveGSASdata,pos={150,500},size={122,14},title="GSAS?", disable=!(UseTheta)
+	CheckBox SaveGSASdata,pos={150,510},size={122,14},title="GSAS?", disable=!(UseTheta)
 	CheckBox SaveGSASdata,help={"Check to export data out of Igoras GSAS data"}
 	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
 
-	CheckBox Use2DdataName,pos={20,528},size={170,14},title="Use input data name for output?"
+	CheckBox Use2DdataName,pos={20,531},size={170,14},title="Use input data name for output?"
 	CheckBox Use2DdataName,help={"Check to have output data named after input data name"}
 	CheckBox Use2DdataName,variable= root:Packages:Convert2Dto1D:Use2DdataName
-	Button CreateOutputPath,pos={212,500},size={160,20},title="Select output path"
+	Button CreateOutputPath,pos={250,505},size={160,20},title="Select output path"
 	Button CreateOutputPath,help={"Select path to export data into"},proc=NI1A_ButtonProc
 	SetVariable OutputFileName,pos={20,554},size={360,16},title="ASCII data name"
 	SetVariable OutputFileName,help={"Input string for 1D data"}
@@ -3666,7 +3676,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable LineProf_LineAzAngle,help={"Azimuthal angle for line going through center in degrees?"}, limits={0, 179.999,1}
 	SetVariable LineProf_LineAzAngle,variable= root:Packages:Convert2Dto1D:LineProf_LineAzAngle, proc=NI1A_SetVarProcMainPanel
 	
-//other controls	
+	//other controls	
 	SetVariable LineProf_DistanceFromCenter,pos={20,405},size={220,16},title="Distance from center [in pixles] "
 	SetVariable LineProf_DistanceFromCenter,help={"Distacne from center in pixels?"}, limits={-inf, inf,1}
 	SetVariable LineProf_DistanceFromCenter,variable= root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter, proc=NI1A_SetVarProcMainPanel
@@ -3678,19 +3688,14 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable LineProf_Width,variable= root:Packages:Convert2Dto1D:LineProf_Width
 	SetVariable LineProf_WidthQ,pos={280,425},size={100,17},title="Q =  "
 	SetVariable LineProf_WidthQ,help={"Width in q units"},format="%.4f"
-	SetVariable LineProf_WidthQ,limits={-inf,inf,0},variable= root:Packages:Convert2Dto1D:LineProf_WidthQ
-
- 
-//last few items under the tabs area
+	SetVariable LineProf_WidthQ,limits={-inf,inf,0},variable= root:Packages:Convert2Dto1D:LineProf_WidthQ 
+	//last few items under the tabs area
 	Button DisplaySelectedFile,pos={14,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Display sel. file(s)"
 	Button DisplaySelectedFile,help={"Average selected files and display, only correction is dezingering!"}
 	Button ConvertSelectedFiles,pos={15,607},size={150,18},proc=NI1A_ButtonProc,title="Convert sel. files 1 at time"
 	Button ConvertSelectedFiles,help={"Convert selected files (1 by 1) using parameters selected in the tabs"}
 	Button AveConvertSelectedFiles,pos={15,627},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert sel. files"
 	Button AveConvertSelectedFiles,help={"Average and convert files selected above using parameters set here"}
-	//added 6 30 2009 as test
-	//Button SlicingButton,pos={170,627},size={120,18},proc=SlicingPanel ,title="Slice sel. file", font="Times New Roman",fSize=11
-
 	//Tab 7 - export 2D calibrated data
 	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
 	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
@@ -3705,7 +3710,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SVAR RebinCalib2DDataToPnts = root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
 	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
 
-	PopupMenu Calib2DDataOutputFormat,pos={212,525},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
+	PopupMenu Calib2DDataOutputFormat,pos={220,530},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
 	PopupMenu Calib2DDataOutputFormat,help={"Select type of 2D images being loaded"}
 	SVAR Calib2DDataOutputFormat = root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
 	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
@@ -4118,6 +4123,12 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	
 	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
 	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
+	NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile
+	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+
+	//other control on the panel...
+	CheckBox ReverseBinnedData, disable=!(UseCalib2DData|| StringMatch(DataFileExtension, "canSAS/Nexus")), win=NI1A_Convert2Dto1DPanel	
+
  
 	//tab 0 controls
 	SetVariable SampleToDetectorDistance,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
@@ -4248,14 +4259,15 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	//the nextset will be used also in Line profile, so make it appear also when that is selected on its tab...
 	CheckBox StoreDataInIgor,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
 	CheckBox OverwriteDataIfExists,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
-	CheckBox ExportDataOutOfIgor,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
+	CheckBox ExportDataOutOfIgor,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel 
 	CheckBox SaveGSASdata,disable=(tabNum!=4 || !UseTheta||!UseSectors), win=NI1A_Convert2Dto1DPanel
 
-	CheckBox Use2DdataName,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
-	Button CreateOutputPath,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
-	SetVariable OutputFileName,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
+	CheckBox AppendToNexusFile,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
+	CheckBox Use2DdataName,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
+	Button CreateOutputPath,disable=(!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
+	SetVariable OutputFileName,disable=(!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
 
-	CheckBox DisplayDataAfterProcessing,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel	
+	CheckBox DisplayDataAfterProcessing,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel	
 	//end of common block for line profiel and secotrs
 	CheckBox DoSectorAverages,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	SetVariable NumberOfSectors,disable=(tabNum!=4 || !DoSectorAverages||!UseSectors), win=NI1A_Convert2Dto1DPanel
@@ -4304,7 +4316,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	CheckBox UseQxyCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
 	CheckBox RebinCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
 	PopupMenu RebinCalib2DDataToPnts,disable=(tabNum!=7||!ExpCalib2DData||!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
-	PopupMenu Calib2DDataOutputFormat,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+	PopupMenu Calib2DDataOutputFormat,disable=(tabNum!=7||!ExpCalib2DData || AppendToNexusFile), win=NI1A_Convert2Dto1DPanel
 
 	
 	return 0
@@ -4556,9 +4568,16 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName
 
+
+	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
+	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
 	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
 	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
-	
+	NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile
+
+	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+
+
 	if(StringMatch(ctrlName,"RebinCalib2DData"))
 		PopupMenu RebinCalib2DDataToPnts,disable=(!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
 	endif
@@ -4582,6 +4601,22 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			TrimFrontOfName=0
 		endif
 	endif
+	if(stringmatch("AppendToNexusFile",ctrlName))
+		if(!StringMatch(DataFileExtension, "Nexus"))
+			DoALert /T="Cannot use this", 0, "Appending to original file can be done ONLY for Nexus file"
+			AppendToNexusFile = 0
+		endif
+		COntrolInfo/W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
+		NI1A_TabProc("",V_Value)
+	endif
+	
+	
+	if(stringmatch("ExpCalib2DData",ctrlName))
+		if(ExpCalib2DData&&UseCalib2DData)
+			DoALert /T="Careful on this", 0, "Loading 2D Calibrated data and exporting them at the same time. You can overwrite your 2D data. Make sure you use different output formats or paths!"
+		endif
+		NI1A_TabProc("",7)
+	endif
 	if(StringMatch("UseCalib2DData",ctrlName))
 		SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
 		SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
@@ -4592,6 +4627,10 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		else
 			DataFileExtension = stringfromlist(0,ListOfKnownExtensions)
 			PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions", mode=2				
+		endif
+		CheckBox ReverseBinnedData, disable=!(UseCalib2DData|| StringMatch(DataFileExtension, "canSAS/Nexus")), win=NI1A_Convert2Dto1DPanel	
+		if(ExpCalib2DData&&UseCalib2DData)
+			DoALert /T="Careful on this", 0, "Loading 2D Calibrated data and exporting them at the same time. You can overwrite your 2D data. Make sure you use different output formats or paths!"
 		endif
 		NI1A_TabProc("",0)
 		NI1A_UpdateDataListBox()
@@ -4973,9 +5012,6 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif		
 	endif
 
-	if(stringmatch("ExpCalib2DData",ctrlName))
-		NI1A_TabProc("",7)
-	endif
 	setDataFolder OldDf
 End
 //*******************************************************************************************************************************************
@@ -6763,7 +6799,6 @@ Function NI1A_Export2DData()
 	NVAR UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
 	NVAR BeamCenterX=root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR BeamCenterY=root:Packages:Convert2Dto1D:BeamCenterY
-	
 	variable XDimension, YDimension
 	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
 	strswitch(RebinCalib2DDataToPnts)	// string switch
@@ -6814,7 +6849,7 @@ Function NI1A_Export2DData()
 	Duplicate/Free Calibrated2DDataSet, IntExp2DData
 	Duplicate/Free Q2DWave, QExp2DData
 	if(InclMaskCalib2DData)
-		Duplicate/Free Mask, MaskExp2DData
+		Duplicate/O Mask, MaskExp2DData
 		//Igor Mask has 0 where masked, 1 where used. This is opposite (of course) to what Nexus/CanSAS uses:
 		//Pete:   mask is 1 when the point is removed, 0 when is used. 
 		//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
@@ -6827,12 +6862,19 @@ Function NI1A_Export2DData()
 
 	if(RebinCalib2DData)
 		//here we need to create proper rebinned data
+		//first need to create UnbinnedQx, and UnbinnedQy
+		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
+		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
+		make/Free/N=(DimSize(QxExp2DData, 0)) UnbinnedQx
+		make/Free/N=(DimSize(QyExp2DData, 1)) UnbinnedQy
+		UnbinnedQx = QxExp2DData[BeamCenterX][p]
+		UnbinnedQy = QyExp2DData[p][BeamCenterY]
 		NI1A_RebinOnLogScale2DData(IntExp2DData,QExp2DData, AnglesWaveExp, MaskExp2DData, XDimension, YDimension,BeamCenterX, BeamCenterY)
 		MatrixOp/O MaskExp2DData = ceil(MaskExp2DData)	//any point which had mask in it will be masked, I need to revisit this later, if this works. 
 	else
 		//exporting data in their original size. This may be large for SAXS data sets!
 	endif
-	//create Qx and Qy if needed, using rebinned data 
+	//create Qx and Qy if needed, using rebinned data, if these were created.
 	if(UseQxyCalib2DData)
 		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
 		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
@@ -6847,46 +6889,61 @@ Function NI1A_Export2DData()
 	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
 	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
 	NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
-	if (Use2DdataName)
-		UseName=NI1A_TrimCleanDataName(LoadedFile)+".h5"
+	NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile	
+
+	if(AppendToNexusFile)
+			UseName=LoadedFile		//this is file we imported, now we need to append to it. 
 	else
-		if(strlen(UserFileName)<1)	//user did not set the file name
-			if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
-				LocalUserFileName = TempOutputDataname
-			else
-				Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
-				DoPrompt /HELP="Input name for the data to be stored, max 20 characters" "Input name for the 1D data", LocalUserFileName
-				if(V_Flag)
-					abort
-				endif
-				TempOutputDataname = LocalUserFileName
-				TempOutputDatanameUserFor = LoadedFile
-			endif
-			UseName=NI1A_TrimCleanDataName(LocalUserFileName)+".h5"
+		if (Use2DdataName)
+			UseName=NI1A_TrimCleanDataName(LoadedFile)+".h5"
 		else
-			UseName=NI1A_TrimCleanDataName(UserFileName)+".h5"
+			if(strlen(UserFileName)<1)	//user did not set the file name
+				if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
+					LocalUserFileName = TempOutputDataname
+				else
+					Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
+					DoPrompt /HELP="Input name for the data to be stored, max 20 characters" "Input name for the 1D data", LocalUserFileName
+					if(V_Flag)
+						abort
+					endif
+					TempOutputDataname = LocalUserFileName
+					TempOutputDatanameUserFor = LoadedFile
+				endif
+				UseName=NI1A_TrimCleanDataName(LocalUserFileName)+".h5"
+			else
+				UseName=NI1A_TrimCleanDataName(UserFileName)+".h5"
+			endif
 		endif
 	endif
 	if(InclMaskCalib2DData)
-		//NI1A_WriteHdf5CanSASData("CanSAS_Q_dI_Mask.h5", I2D, dIwv=Idev,Qwv=Q2D, Mask=mask)
 		if(UseQxyCalib2DData)
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp)
+			if(RebinCalib2DData)
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+			else
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp)
+			endif
 		else
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
+			if(RebinCalib2DData)
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+			else
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
+			endif
 		endif
 	else
 		if(UseQxyCalib2DData)
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp)
+			if(RebinCalib2DData)
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+			else
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp)
+			endif
 		else
-			NI1A_WriteHdf5CanSASData(UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
+			if(RebinCalib2DData)
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+			else
+				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
+			endif
 		endif	
 	endif
-		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI_Mask.h5", IntExp2DData,Qx=Qx, Qy=Qy, Mask=mask)
-		//	NI1A_WriteHdf5CanSASData("CanSAS_Q_dI.h5", I2D, dIwv=Idev,Qwv=Q2D)
-		//	NI1A_WriteHdf5CanSASData("CanSAS_Q.h5", I2D,Qwv=Q2D)
-		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI_Mask.h5", I2D, dIwv=Idev,Qx=Qx, Qy=Qy, Mask=mask)
-		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy_dI.h5", I2D, dIwv=Idev,Qx=Qx, Qy=Qy)
-		//	NI1A_WriteHdf5CanSASData("CanSAS_Qxy.h5", I2D,Qx=Qx, Qy=Qy)	
 end
 
 

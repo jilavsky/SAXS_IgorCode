@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.09
-Constant IR2HversionNumber = 4.09
+#pragma version=4.10
+Constant IR2HversionNumber = 4.10
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.10 addede check for slit smeared data if qmax is high enough (3* slit length). 
 //4.09 added Linking of RgCO to Corr Lenght (DB and TS models, added display of data for given tab. 
 //4.08 added RgCo for Unified level
 //4.07 madepanel scrollable
@@ -581,6 +582,9 @@ Function IR2H_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	setDataFolder root:Packages:Gels_Modeling
 
 
+	if (cmpstr(ctrlName,"UseSlitSmearedData")==0)
+		setVariable slitlength, win=IR2H_Controlpanel, disable=!checked
+	endif
 	if (cmpstr(ctrlName,"FitBackground")==0)
 		//here we control the data structure checkbox
 //		NVAR FitSASBackground=root:Packages:Gels_Modeling:FitSASBackground
@@ -748,6 +752,10 @@ Function IR2H_InputPanelButtonProc(ctrlName) : ButtonControl
 
 	if(cmpstr(ctrlName,"DoFitting")==0)
 		//here we call the fitting routine
+		NVAR UseSlitSmearedData=root:Packages:Gels_Modeling:UseSlitSmearedData
+		NVAR SlitLength=root:Packages:Gels_Modeling:SlitLength
+		Wave OriginalQvector=root:Packages:Gels_Modeling:OriginalQvector
+		IN2G_CheckForSlitSmearedRange(UseSlitSmearedData,OriginalQvector [pcsr(B  , "IR2H_LogLogPlotGels")], SlitLength)
 		IR2H_ConstructTheFittingCommand()
 	endif
 		

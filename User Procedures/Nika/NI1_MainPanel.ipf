@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.36
-Constant NI1AversionNumber = 2.36
+#pragma version=2.37
+Constant NI1AversionNumber = 2.37
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,7 +8,8 @@ Constant NI1AversionNumber = 2.36
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.36 changed name of mani panel function. Added hook functions. 
+//2.37 Modifications needed for 2D calibrated data input/output, added Append to Nexus file (2D data for now).  
+//2.36 changed name of main panel function. Added hook functions. Modified code to remove extension from loaded file name for use as name of data later. 
 //2.35 fixed /NTHR=1 to /NTHR=0, major changes supporting export of 2D calibrated data
 //2.34 added possibility of importing 2DCalibrated data (EQSANS). 
 //2.33 fixed bug in LP profille wave names for notes addition. 
@@ -208,7 +209,7 @@ Function NI1A_Initialize2Dto1DConversion()
 //	RIGK		RIGAKU R-AXIS : Riguka image plate scanner format
 
 	//Calibrated data In and Out
-	string/g ListOfKnownCalibExtensions="canSAS/Nexus;EQSANS400x400;"
+	string/g ListOfKnownCalibExtensions="canSAS/Nexus;EQSANS400x400;NIST_DAT_128x128;"
 	string/g ListOfOutCalibExtensions="canSAS/Nexus;EQSANS400x400;"
 
 	string/g ListOfVariables
@@ -243,7 +244,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	//errors control
 	ListOfVariables+="ErrorCalculationsUseOld;ErrorCalculationsUseStdDev;ErrorCalculationsUseSEM;"
 	//2DCalibratedDataInput & output
-	ListOfVariables+="UseCalib2DData;ExpCalib2DData;RebinCalib2DData;InclMaskCalib2DData;UseQxyCalib2DData;"
+	ListOfVariables+="UseCalib2DData;ExpCalib2DData;RebinCalib2DData;InclMaskCalib2DData;UseQxyCalib2DData;ReverseBinnedData;AppendToNexusFile;"
 
 	ListOfVariables+="UseLineProfile;UseSectors;"
 	ListOfVariables+="LineProf_UseBothHalfs;LineProf_DistanceFromCenter;LineProf_Width;LineProf_DistanceQ;LineProf_WidthQ;"
@@ -1335,7 +1336,21 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			endif
 			KillWaves TextWv
 		endif
-		
+
+		NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile
+		if(AppendToNexusFile)
+			OldNote=note(Intensity)
+			//DataType = "qrs", "trs", "drs", "distrs"
+			if (UseQvector)
+				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "qrs", Intensity, Error, Qvector, Qsmearing, CurOrient, OldNote)
+			elseif(UseTheta)
+				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "trs", Intensity, Error, TwoTheta, TwoThetaWidth, CurOrient, OldNote)
+			elseif(UseDspacing)
+				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "drs", Intensity, Error, Dspacing, DspacingWidth, CurOrient, OldNote)
+			elseif(UseDistanceFromCenter)
+				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "trs", Intensity, Error, DistanceInmm, DistacneInmmWidth, CurOrient, OldNote)
+			endif
+		endif
 		if(DisplayDataAfterProcessing)
 			if (UseQvector)
 				Wave Int=$("r_"+UseName)
@@ -1381,7 +1396,8 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	SVAR RemoveStringFromName = root:Packages:Convert2Dto1D:RemoveStringFromName
 	string NewName
-	NewName = ReplaceString(RemoveStringFromName, InputName, "")
+	NewName = StringFromList(0, InputName, ".")
+	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	if(TrimEndOfName)
 		NewName= NewName[0,20]
 	else
