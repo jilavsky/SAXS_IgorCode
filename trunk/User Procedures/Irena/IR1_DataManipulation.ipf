@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.52
-constant IR3MversionNumber = 2.49			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.51			//Data manipulation I panel version number
+#pragma version=2.53
+constant IR3MversionNumber = 2.53			//Data manipulation II panel version number
+constant IR1DversionNumber = 2.53			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.51			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.53 Data Manipulation I - added convert to D and Two-Theta for Data 1
 //2.52 fixed bug where Data manipulation tool II could fail when wave names were liberal. 
 //2.51 removed slider with log-rebinning parameter. Did not work for some time and cannot find easy way to fix it. 
 //		Converted to use of rebinnign routine from General procedures. 
@@ -113,7 +114,7 @@ Proc IR1D_DataManipulationPanel()
 	TitleBox MainTitle title="Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,509},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -227,16 +228,16 @@ Proc IR1D_DataManipulationPanel()
 	CheckBox LogReducePointNumber,variable= root:packages:SASDataModification:LogReducePointNumber, help={"Check, to log-reduce points. Higher Q points are avearaged."}
 	SetVariable LogReducePointNumberTo, pos={300,480}, size={90,20},title=" ", proc=IR1D_setvarProc
 	SetVariable LogReducePointNumberTo, value= root:Packages:SASDataModification:ReducePointNumberTo,help={"Select number of resulting points"}
-//	Slider LogBinningPar pos={100,495},size={270,10},vert=0, side=0
-//	Slider LogBinningPar proc=IR1D_SliderProc,variable=root:packages:SASDataModification:LogReduceParam
-//	Slider LogBinningPar value=0.001,limits={0.5,10,0}, ticks=0
-//	Slider LogBinningPar help={"Slide to change log-binning parameter"}		
+	CheckBox Data1ConvertToD,pos={10,495},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Data 1 convert to d"
+	CheckBox Data1ConvertToD,variable= root:packages:SASDataModification:Data1ConvertToD, help={"Check, if you want to convert Data 1 to d spacing"}
+	CheckBox Data1ConvertToTheta,pos={200,495},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Data 1 convert to 2-theta"
+	CheckBox Data1ConvertToTheta,variable= root:packages:SASDataModification:Data1ConvertToTheta, help={"Check, if you want to convert Data 1 to 2-theta angles"}
 
-	CheckBox SmoothInLogScale,pos={10,515},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (log)"
+	CheckBox SmoothInLogScale,pos={10,520},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (log)"
 	CheckBox SmoothInLogScale,variable= root:packages:SASDataModification:SmoothInLogScale, help={"Check, if you want to smooth data in log scale. Select window correctly"}
-	CheckBox SmoothInLinScale,pos={100,515},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (lin)"
+	CheckBox SmoothInLinScale,pos={100,520},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth (lin)"
 	CheckBox SmoothInLinScale,variable= root:packages:SASDataModification:SmoothInLinScale, help={"Check, if you want to smooth data in linera scale. Select window correctly."}
-	SetVariable SmoothWindow, pos={200,515}, size={170,20},title="Smoothing window?"
+	SetVariable SmoothWindow, pos={200,520}, size={170,20},title="Smoothing window?"
 	SetVariable SmoothWindow value= root:packages:SASDataModification:SmoothWindow,help={"Window for smoothing"}
 
 	CheckBox SmoothSpline,pos={10,534},size={141,14},proc=IR1D_InputPanelCheckboxProc2,title="Smooth Spline"
@@ -856,14 +857,27 @@ static Function IR1D_AppendResultToGraph()
 	RemoveFromGraph/W=IR1D_DataManipulationGraph/Z ResultsInt
 	Legend/N=text0/K/W=IR1D_DataManipulationGraph
 	
+	NVAR Data1ConvertToD=root:packages:SASDataModification:Data1ConvertToD
+	NVAR Data1ConvertToTheta = root:packages:SASDataModification:Data1ConvertToTheta
 	
 	Wave/Z ResultsInt = root:packages:SASDataModification:ResultsInt
 	Wave/Z ResultsQ = root:packages:SASDataModification:ResultsQ
 	Wave/Z ResultsE = root:packages:SASDataModification:ResultsE
 	
 	if(WaveExists(ResultsInt)&&WaveExists(ResultsQ))
-		AppendToGraph/W=IR1D_DataManipulationGraph ResultsInt vs ResultsQ
-		ModifyGraph/W=IR1D_DataManipulationGraph lsize(ResultsInt)=2,rgb(ResultsInt)=(0,0,0)
+		if(Data1ConvertToD || Data1ConvertToTheta)
+			AppendToGraph/W=IR1D_DataManipulationGraph/T ResultsInt vs ResultsQ
+			ModifyGraph/W=IR1D_DataManipulationGraph lsize(ResultsInt)=2,rgb(ResultsInt)=(0,0,0)
+			if(Data1ConvertToD)
+				Label top "d-spacing [A]"
+			elseif(Data1ConvertToTheta)
+				Label top "Two-theta [degrees]"
+			endif
+		else
+			AppendToGraph/W=IR1D_DataManipulationGraph ResultsInt vs ResultsQ
+			ModifyGraph/W=IR1D_DataManipulationGraph lsize(ResultsInt)=2,rgb(ResultsInt)=(0,0,0)
+			ModifyGraph mirror=1
+		endif
 	endif
 	if (WaveExists(ResultsE))
 		ErrorBars/W=IR1D_DataManipulationGraph ResultsInt Y,wave=(ResultsE,ResultsE)
@@ -901,6 +915,8 @@ static Function IR1D_ConvertData()
 	NVAR ReducePointNumberBy = root:packages:SASDataModification:ReducePointNumberBy
 	NVAR LogReducePointNumber =root:packages:SASDataModification:LogReducePointNumber
 	NVAR ReducePointNumberTo = root:packages:SASDataModification:ReducePointNumberTo
+	NVAR Data1ConvertToD = root:packages:SASDataModification:Data1ConvertToD
+	NVAR Data1ConvertToTheta = root:packages:SASDataModification:Data1ConvertToTheta
 
 	Wave/Z Intensity1=root:Packages:SASDataModification:Intensity1
 	Wave/Z Qvector1=root:Packages:SASDataModification:Qvector1
@@ -1312,12 +1328,31 @@ static Function IR1D_ConvertData()
 		else
 			DoAlert 0, "Incorrect data, you need two sets of at least Intensity and Q (errors are optional)"
 		endif
+	elseif  (Data1ConvertToD)
+		If (WaveExists(TempInt1)&&WaveExists(TempQ1)&&WaveExists(TempE1))
+			IN2G_RemoveNaNsFrom3Waves(TempInt1,TempQ1,TempE1)
+			Duplicate/O TempInt1, ResultsInt
+			Duplicate/O TempQ1, ResultsQ
+			Duplicate/O TempE1, ResultsE
+			ResultsQ = 2*pi/TempQ1
+		else
+			DoAlert 0, "Incorrect data, you need two sets of at least Intensity and Q (errors are optional)"
+		endif
+	elseif  (Data1ConvertToTheta)
+		If (WaveExists(TempInt1)&&WaveExists(TempQ1)&&WaveExists(TempE1))
+			IN2G_RemoveNaNsFrom3Waves(TempInt1,TempQ1,TempE1)
+			Duplicate/O TempInt1, ResultsInt
+			Duplicate/O TempQ1, ResultsQ
+			Duplicate/O TempE1, ResultsE
+			NVAR ConvertToThetaWavelength=root:Packages:SASDataModification:ConvertToThetaWavelength
+			print ConvertToThetaWavelength
+			ResultsQ = 360/pi*asin(TempQ1 * ConvertToThetaWavelength / (4 *pi))
+		else
+			DoAlert 0, "Incorrect data, you need two sets of at least Intensity and Q (errors are optional)"
+		endif
 	else
 		Abort "Nothing to do... Select action by selecting checbox above"
 	endif
-	//IN2G_RemoveNaNsFrom3Waves(TempInt1,TempQ1,TempE1)
-	//IN2G_RemNaNsFromAWave
-	//IN2G_RemoveNaNsFrom3Waves(TempInt2,TempQ2,TempE2)
 	KillWaves/Z TempInt1, TempInt2, TempQ1, TempQ2, TempE1, TempE2
 	KillWaves/Z TempIntLog2, TempIntInterp2
 	KillWaves/Z TempIntLog1, TempIntInterp1
@@ -1876,6 +1911,9 @@ static Function IR1D_PresetOutputStrings()
 	SVAR NewIntensityWaveName=root:Packages:SASDataModification:NewIntensityWaveName
 	SVAR NewQWavename=root:Packages:SASDataModification:NewQWavename
 	SVAR NewErrorWaveName=root:Packages:SASDataModification:NewErrorWaveName
+
+	NVAR Data1ConvertToD=root:Packages:SASDataModification:Data1ConvertToD
+	NVAR Data1ConvertToTheta	=root:Packages:SASDataModification:Data1ConvertToTheta
 	
 	NewDataFolderName = DataFolderName1
 	NewIntensityWaveName = IntensityWaveName1
@@ -1914,18 +1952,19 @@ static Function IR1D_PresetOutputStrings()
 		NewIntensityWaveName = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
 		NewIntensityWaveName = NewIntensityWaveName[0,26]
 		NewIntensityWaveName = NewIntensityWaveName+"_mod"
-	//	NewIntensityWaveName = PossiblyQuoteName(NewIntensityWaveName)
 		//Q vector
 		NewQWavename = IN2G_RemoveExtraQuote(NewQWavename,1,1)
 		NewQWavename = NewQWavename[0,26]
 		NewQWavename = NewQWavename+"_mod"
-	//	NewQWavename = PossiblyQuoteName(NewQWavename)
 		//error
 		NewErrorWaveName = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
 		NewErrorWaveName = NewErrorWaveName[0,26]
 		NewErrorWaveName = NewErrorWaveName+"_mod"
-	//	NewErrorWaveName = PossiblyQuoteName(NewErrorWaveName)
-		
+		if(Data1ConvertToD)
+			NewQWavename = "d"+NewQWavename[1,inf]
+		elseif(Data1ConvertToTheta)
+			NewQWavename =  "t"+NewQWavename[1,inf]
+		endif
 	endif
 	
 		
@@ -1952,6 +1991,7 @@ static Function IR1D_CopyDataLocally()
 	SVAR DataUnits=root:Packages:SASDataModification:DataUnits
 	SVAR DataUnits2=root:Packages:SASDataModification:DataUnits2
 	SVAR OutputDataUnits=root:Packages:SASDataModification:OutputDataUnits
+	NVAR UseModelDataBot= root:Packages:SASDataModificationBot:UseModelData
 	//fix for liberal names
 	if (cmpstr(IntensityWaveName1[0],"'")!=0)
 		IntensityWaveName1 = PossiblyQuoteName(IntensityWaveName1)
@@ -1974,10 +2014,11 @@ static Function IR1D_CopyDataLocally()
 	Wave/Z IntWv1=$(DataFolderName1+IntensityWaveName1) 
 	Wave/Z QWv1=$(DataFolderName1+QWavename1) 
 	Wave/Z EWv1=$(DataFolderName1+ErrorWaveName1) 
-	Wave/Z IntWv2=$(DataFolderName2+IntensityWaveName2) 
-	Wave/Z QWv2=$(DataFolderName2+QWavename2) 
-	Wave/Z EWv2=$(DataFolderName2+ErrorWaveName2) 
-	
+	if(UseModelDataBot&&stringmatch(IntensityWaveName2,"ModelInt") || (!(UseModelDataBot)&&!stringmatch(IntensityWaveName2,"ModelInt")))
+		Wave/Z IntWv2=$(DataFolderName2+IntensityWaveName2) 
+		Wave/Z QWv2=$(DataFolderName2+QWavename2) 
+		Wave/Z EWv2=$(DataFolderName2+ErrorWaveName2) 
+	endif
 	Wave/Z KillWv1=root:Packages:SASDataModification:Intensity1
 	Wave/Z KillWv2=root:Packages:SASDataModification:Qvector1
 	Wave/Z KillWv3=root:Packages:SASDataModification:Error1
@@ -2010,10 +2051,20 @@ static Function IR1D_CopyDataLocally()
 	if (WaveExists(IntWv2))
 		Duplicate/O IntWv2, $("root:Packages:SASDataModification:Intensity2")
 		Duplicate/O IntWv2, $("root:Packages:SASDataModification:OriginalIntensity2")
+	else		//fake Intensity 2 with 1 in it...
+		Duplicate/O IntWv1, $("root:Packages:SASDataModification:Intensity2")
+		Duplicate/O IntWv1, $("root:Packages:SASDataModification:OriginalIntensity2")
+		Wave IntWv = $("root:Packages:SASDataModification:Intensity2")
+		IntWv = 1
+		Wave IntWv = $("root:Packages:SASDataModification:OriginalIntensity2")
+		IntWv = 1
 	endif
 	if (WaveExists(QWv2))
 		Duplicate/O QWv2, $("root:Packages:SASDataModification:Qvector2")
 		Duplicate/O QWv2, $("root:Packages:SASDataModification:OriginalQvector2")
+	else		//fake Intensity 2 with 1 in it...
+		Duplicate/O QWv1, $("root:Packages:SASDataModification:Qvector2")
+		Duplicate/O QWv1, $("root:Packages:SASDataModification:OriginalQvector2")
 	endif
 	if (WaveExists(EWv2))
 		Duplicate/O EWv2, $("root:Packages:SASDataModification:Error2")
@@ -2028,11 +2079,13 @@ static Function IR1D_CopyDataLocally()
 	else
 		DataUnits = "Arbitrary"
 	endif
-	TmpUnits=StringByKey("Units", note(IntWv2), "=", ";")
-	if(StringMatch(TmpUnits, "cm2/cm3") || StringMatch(TmpUnits, "cm2/g"))
-		DataUnits2 = TmpUnits
-	else
-		DataUnits2 = "Arbitrary"
+	if(WaveExists(IntWv2))
+		TmpUnits=StringByKey("Units", note(IntWv2), "=", ";")
+		if(StringMatch(TmpUnits, "cm2/cm3") || StringMatch(TmpUnits, "cm2/g"))
+			DataUnits2 = TmpUnits
+		else
+			DataUnits2 = "Arbitrary"
+		endif
 	endif
 	OutputDataUnits = DataUnits
 	Execute("PopupMenu DataUnits popmatch=\""+OutputDataUnits+"\", win=IR1D_DataManipulationPanel")
@@ -2187,6 +2240,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 	NVAR SubtractData2AndDivideByThem = root:packages:SASDataModification:SubtractData2AndDivideByThem
 	NVAR ReducePointNumber=root:packages:SASDataModification:ReducePointNumber
 	NVAR LogReducePointNumber=root:packages:SASDataModification:LogReducePointNumber
+	NVAR Data1ConvertToD=root:packages:SASDataModification:Data1ConvertToD
+	NVAR Data1ConvertToTheta=root:packages:SASDataModification:Data1ConvertToTheta
 
 	if(cmpstr("CombineData", ctrlName)==0)
 		if(checked)
@@ -2201,6 +2256,9 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0	
 			ReducePointNumber=0	
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
+
 		endif
 	endif
 	if(cmpstr("SubtractData", ctrlName)==0)
@@ -2216,6 +2274,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("SumData", ctrlName)==0)
@@ -2231,6 +2291,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("RescaleToNewQscale", ctrlName)==0)
@@ -2246,6 +2308,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("SubtractData2", ctrlName)==0)
@@ -2261,6 +2325,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("PassData1Through", ctrlName)==0)
@@ -2276,6 +2342,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("DivideData1byData2", ctrlName)==0)
@@ -2291,6 +2359,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("SubtractData2AndDivideByThem", ctrlName)==0)
@@ -2306,6 +2376,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			//SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("ReducePointNumber", ctrlName)==0)
@@ -2321,6 +2393,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			//ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("LogReducePointNumber", ctrlName)==0)
@@ -2336,6 +2410,8 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			//LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
 		endif
 	endif
 	if(cmpstr("PassData2Through", ctrlName)==0)
@@ -2351,6 +2427,56 @@ Function IR1D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 			SubtractData2AndDivideByThem=0		
 			ReducePointNumber=0
 			LogReducePointNumber=0
+			Data1ConvertToD=0
+			Data1ConvertToTheta=0
+		endif
+	endif
+
+	if(cmpstr("Data1ConvertToD", ctrlName)==0)
+		if(checked)
+			CombineData=0
+			SubtractData=0
+			SumData=0
+			SubtractData2=0
+			PassData1Through=0
+			PassData2Through=0
+			RescaleToNewQscale=0
+			DivideData1byData2=0
+			SubtractData2AndDivideByThem=0		
+			ReducePointNumber=0
+			LogReducePointNumber=0
+			//Data1ConvertToD=0
+			Data1ConvertToTheta=0
+		endif
+	endif
+
+	if(cmpstr("Data1ConvertToTheta", ctrlName)==0)
+		if(checked)
+			CombineData=0
+			SubtractData=0
+			SumData=0
+			SubtractData2=0
+			PassData1Through=0
+			PassData2Through=0
+			RescaleToNewQscale=0
+			DivideData1byData2=0
+			SubtractData2AndDivideByThem=0		
+			ReducePointNumber=0
+			LogReducePointNumber=0
+			Data1ConvertToD=0
+			//Data1ConvertToTheta=0
+			NVAR ConvertToThetaWavelength=root:Packages:SASDataModification:ConvertToThetaWavelength
+			if(ConvertToThetaWavelength<0.01)
+				ConvertToThetaWavelength = 1
+			endif
+			variable ConvertToThetaWavelengthLoc
+			ConvertToThetaWavelengthLoc=ConvertToThetaWavelength
+			Prompt ConvertToThetaWavelengthLoc, "Input wavelength to use"
+			DoPrompt/Help="Need wavelength in A to calculate Two theta" "Input wavelength in A", ConvertToThetaWavelengthLoc
+			if(V_flag)
+				abort
+			endif
+			ConvertToThetaWavelength = ConvertToThetaWavelengthLoc
 		endif
 	endif
 
@@ -2422,7 +2548,7 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 	ListOfVariables="Data1RemoveSmallQ;Data1RemoveLargeQ;SmoothWindow;"
 	ListOfVariables+="CombineData;SubtractData;SumData;RescaleToNewQscale;SmoothInLogScale;SmoothInLinScale;"
 	ListOfVariables+="ReducePointNumber;ReducePointNumberBy;LogReducePointNumber;ReducePointNumberTo;LogReduceParam;"
-	ListOfVariables+="Data2RemoveSmallQ;Data2RemoveLargeQ;"
+	ListOfVariables+="Data2RemoveSmallQ;Data2RemoveLargeQ;Data1ConvertToD;Data1ConvertToTheta;ConvertToThetaWavelength;"
 	ListOfVariables+="Data1_IntMultiplier;Data1_ErrMultiplier;Data1_Qshift;Data1_Background;"
 	ListOfVariables+="Data2_IntMultiplier;Data2_ErrMultiplier;Data2_Qshift;Data2_Background;"
 	ListOfVariables+="PassData1Through;PassData2Through;SubtractData2;DivideData1byData2;SubtractData2AndDivideByThem;"
@@ -2482,7 +2608,7 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 	SVAR OutputDataUnits
 	OutputDataUnits="Arbitrary"
 
-									NVAR SmoothWindow
+	NVAR SmoothWindow
 	SmoothWindow = 3
 
 	ListOfStrings="DataFolderName1;IntensityWaveName1;QWavename1;ErrorWaveName1;"

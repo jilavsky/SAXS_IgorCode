@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.15
+#pragma version = 2.16
 Constant IR1RSversionNumber=2.13
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 check if for slit smeared dta athe Qmax is at least 3* slit length
 //2.15 modifed to use rebinnign routine from general prodecures
 //2.14 modified Tag position with results, keeps runnign out of frame. 
 //2.13 added automatic run of "Calculate parameters" after succesful run. Changed all graph fonts to follow the User defined settings.   
@@ -4620,6 +4621,11 @@ Function IR1R_ButtonProc(ba) : ButtonControl
 	endif
 	switch( ba.eventCode )
 		case 2: // mouse up
+			NVAR UseSMRData=root:Packages:Sizes:UseSlitSmearedData
+			NVAR SlitLengthUnif=root:Packages:Sizes:SlitLength
+			Wave OriginalQvector=root:Packages:Sizes:Q_vecOriginal
+			IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1R_SizesInputGraph")], SlitLengthUnif)
+
 			// click code here
 				if(stringmatch(ba.ctrlName,"EstimateUncertainities"))
 					success=IR1R_SizesEstimateErrors()				

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.09
+#pragma version = 1.10
 Constant IR2DversionNumber=1.09
 
 //*************************************************************************\
@@ -8,7 +8,8 @@ Constant IR2DversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.09 cahnged term for storing data back to folder, Previously used  save, which confused users. 
+//1.10 added check fro slit smeared data if qmax is sufficently high (3* slit length is minimum). 
+//1.09 changed term for storing data back to folder, Previously used  save, which confused users. 
 //1.08 added panel version control and made panel vertically scrollable. 
 //1.07 removed all font and font size from panel definitions to enable user control
 //1.06 fixed the PercusYevickSQFQ to actually use F(Q)^2 
@@ -1479,7 +1480,6 @@ Function IR2D_CalculateIntensity(force)
 	NVAR PwrLawSlope=root:Packages:Irena_SAD:PwrLawSlope
 	NVAR PwrLawPref=root:Packages:Irena_SAD:PwrLawPref
 	NVAR DisplayPeaks=root:Packages:Irena_SAD:DisplayPeaks
-	NVAR SlitLength=root:Packages:Irena_SAD:SlitLength
 	Wave/Z OriginalIntensity=root:Packages:Irena_SAD:OriginalIntensity
 	Wave/Z OriginalQvector=root:Packages:Irena_SAD:OriginalQvector
 	Wave/Z OriginalError=root:Packages:Irena_SAD:OriginalError
@@ -1500,6 +1500,9 @@ Function IR2D_CalculateIntensity(force)
 	if(strlen(CsrInfo(B,"IR2D_LogLogPlotSAD")))
 		endPoint = pcsr(B,"IR2D_LogLogPlotSAD")
 	endif
+	
+	IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [endPoint], SlitLength)
+	
 	Duplicate/O /R=[startpoint,endpoint]  OriginalQvector, ModelQvector
 	Duplicate/O /R=[startpoint,endpoint]  OriginalError, TempErrors
 	Duplicate/O /R=[startpoint,endpoint]  OriginalIntensity, ModelIntensity, tempInt, tempInt2, ResInt, Residuals, NormalizedResiduals

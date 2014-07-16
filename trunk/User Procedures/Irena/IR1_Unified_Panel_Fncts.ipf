@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.18 modified to use rebinning routien from Geneeral procedures
+//2.19 catch for slit smeared data if the Qmax is too small. It must be at least 3*slit length
+//2.18 modified to use rebinning routine from General procedures
 //2.17 added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //2.16 added some Dale's modifications
 //2.15 added Extended option for warnings to avoid history area poluting. Fixes provided by DWS
@@ -1619,6 +1620,10 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		if(cmpstr(ctrlName,"DoFittingSkipReset")==0)
 			skipreset = 1
 		endif
+		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
+		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
+		Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
+		IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
 		IR1A_ConstructTheFittingCommand(skipreset)
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
@@ -1662,6 +1667,10 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 
 	if(cmpstr(ctrlName,"GraphDistribution")==0)
 		//here we graph the distribution
+		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
+		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
+		Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
+		IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
 		IR1A_GraphModelData()
 	endif
 	if(cmpstr(ctrlName,"FixLimits")==0)
@@ -1981,7 +1990,6 @@ end
 
 
 Function IR1A_GraphModelData()
-
 		IR1A_UnifiedCalculateIntensity()
 		//now calculate the normalized error wave
 		IR1A_CalculateNormalizedError("graph")

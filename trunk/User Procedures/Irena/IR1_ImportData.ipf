@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.23
-Constant IR1IversionNumber = 2.22
+#pragma version=2.24
+Constant IR1IversionNumber = 2.24
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 minor change in how calibration units are displayed in the panel. 
 //2.23 added sorting of imported waves as some users seem to have data which are not increasing in q. Weird, but possible... DOne before optional rebinning. 
 //2.22 changed Import rebinning on log scale to match minimum step (defined as the difference between first two original points left after trimming and 0 int removal). 
 //2.21 changed import to load data as double precision waves. SOme users were running out of precision. 
@@ -211,9 +212,9 @@ Proc IR1I_ImportData()
 	SetVariable RemoveStringFromName, pos={5,547}, size={250,20},title="Remove Str From Name=", noproc
 	SetVariable RemoveStringFromName value= root:packages:ImportData:RemoveStringFromName,help={"Input string to be removed from name, leve empty if none"}
 
-	CheckBox DataCalibratedArbitrary,pos={10,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
-	CheckBox DataCalibratedVolume,pos={150,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/cm3",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
-	CheckBox DataCalibratedWeight,pos={290,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm2/g",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
+	CheckBox DataCalibratedArbitrary,pos={10,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary\S \M",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
+	CheckBox DataCalibratedVolume,pos={150,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
+	CheckBox DataCalibratedWeight,pos={290,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S2\Mg\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
 
 	SetVariable NewDataFolderName, pos={5,590}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
 	SetVariable NewDataFolderName value= root:packages:ImportData:NewDataFolderName,help={"Folder for the new data. Will be created, if does not exist. Use popup above to preselect."}

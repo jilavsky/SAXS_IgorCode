@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.32
+#pragma version=2.34
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.34 adds abiulity to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
+//2.33 can read and write calibrated canSAS/nexus files. Can write new files or append to existing one (2D data for now). 
+//   can revert log-q binning of 2D data. 
 //2.32 Added right click "Refresh content" to Listboxes inmain panel as well as some othe rfunctionality
 //2.31 fixed /NTHR=1 to /NTHR=0
 //2.30 adds EQSANS calibrated data
@@ -29,7 +32,7 @@
 //2.13 set point 1023,1023 of mpa/bin to 0. Seems we have a problem here. This is not the right solution, but works for now. 
 //2.12 try to catch failed loads... return 1 if load succeeded, 0 if not. Update upstrea to deal with the report...
 //2.11 adds Pilatus 300k and 300k-w
-//2.10 adds GE detecotr for 1ID loader
+//2.10 adds GE detector for 1ID loader
 //2.09 adds Nexus file loader to support 15ID SAXS beamline, all aux data for now are in wave note and not used. Need to finish
 //        fixed Pilatus loader bugs, start working on HDF5 loader, but this is mess for now... Need test data
 //2.08 adds BSL changes per JOSH requests
@@ -68,7 +71,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	string NewNote=""
 	string testLine
 	variable RefNum, NumBytes, len, lineNumber
-	variable Offset
+	variable Offset, dist00
 	string headerStr=""
 	variable i
 	Variable LoadedOK=1			//set to 1 if loaded seemed OK
@@ -97,8 +100,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		wave wave3
 		Duplicate/O wave0, Qx2D
 		Duplicate/O wave1, Qy2D
-		Duplicate/O wave3, Err2D
 		Duplicate/O wave2, Int2D
+		Duplicate/O wave3, Err2D
 		KillWaves/Z wave0,wave1,wave2,wave3,wave4
 		redimension/N=(400,400) Qx2D, Qy2D, Int2D, Err2D
 		ImageRotate/O/H Int2D
@@ -138,7 +141,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			//Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
 			//Multithread Theta2DWave = sqrt(((p-BeamCenterX)*PixelSizeX)^2 + ((q-BeamCenterY)*PixelSizeY)^2)
 			//the distance of point 0,0 in mm is:
-			variable dist00 = sqrt((BeamCenterX*PixelSizeX)^2 + (BeamCenterY*PixelSizeY)^2)
+			dist00 = sqrt((BeamCenterX*PixelSizeX)^2 + (BeamCenterY*PixelSizeY)^2)
 			//Theta2DWave[0][0] = atan(dist00/SampleToCCDDistance)/2
 			//2*tan(Theta2DWave[0][0]) = dist00/SampleToCCDDistance
 			SampleToCCDDistance = abs(dist00/(2*tan(Theta2DWave[0][0])))
@@ -147,6 +150,70 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Killwaves/Z Int2D, Qx2D, Qy2D, Err2D
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"EQSANS400x400"+";"
+	elseif(cmpstr(FileType,"NIST_DAT_128x128")==0)
+		FileNameToLoad= FileName
+		KillWaves/Z wave0,wave1,wave2,wave3,wave4, wave5, wave6, wave7
+		LoadWave/Q/A/D/G/P=$(PathName)  FileNameToLoad
+		Wave wave0		//qx
+		Wave wave1		//qy
+		Wave wave2		//I(Qx,qy)
+		wave wave3		//dI
+		wave wave4		//Qz
+		wave wave5		//SigmaQ_parallel???
+		wave wave6		//SigmaQPerp
+		wave wave7		//fsubS (beamstop shadow)
+		Duplicate/O wave0, Qx2D
+		Duplicate/O wave1, Qy2D
+		Duplicate/O wave2, Int2D
+		Duplicate/O wave3, Err2D
+		KillWaves/Z wave0,wave1,wave2,wave3,wave4, wave5, wave6, wave7
+		redimension/N=(128,128) Qx2D, Qy2D, Int2D, Err2D
+		ImageRotate/O/H Int2D
+		ImageRotate/O/C Int2D
+		Duplicate/O Int2D, $(NewWaveName)
+		if(stringmatch(NewWaveName, "CCDImageToConvert"))
+			//create Angles wave
+			matrixOp/O AnglesWave = atan(Qy2D/Qx2D)
+			AnglesWave += pi/2
+			AnglesWave = Qx2D > 0 ? AnglesWave : AnglesWave+pi
+			//create Q waves
+			matrixOP/O Qx2D = powR(Qx2D,2)
+			matrixOP/O Qy2D = powR(Qy2D,2)
+			matrixOp/O Q2DWave = sqrt(Qx2D + Qy2D)
+			//fix their data orientation...
+			ImageRotate/O/H AnglesWave
+			ImageRotate/O/H Q2DWave
+			ImageRotate/O/H Err2D
+			ImageRotate/O/C AnglesWave
+			ImageRotate/O/C Q2DWave
+			ImageRotate/O/C Err2D
+			//get beam center, needed basically only for the drawings. 
+			Wavestats/Q Q2DWave
+			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+			BeamCenterX = V_minRowLoc
+	 		BeamCenterY = V_minColLoc
+	 		//OK, now we need to fake at least SDD to make sure some drawings work well...
+	 		NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
+			NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+			NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX								//in millimeters
+			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY								//in millimeters
+			Wavelength = 2			//set to 2A, makes no sense for TOF instrument, but need to have something...
+			Duplicate/O Q2DWave, Theta2DWave
+			Multithread Theta2DWave = asin(Q2DWave / (4*pi/Wavelength))
+			//Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
+			//Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
+			//Multithread Theta2DWave = sqrt(((p-BeamCenterX)*PixelSizeX)^2 + ((q-BeamCenterY)*PixelSizeY)^2)
+			//the distance of point 0,0 in mm is:
+			dist00 = sqrt((BeamCenterX*PixelSizeX)^2 + (BeamCenterY*PixelSizeY)^2)
+			//Theta2DWave[0][0] = atan(dist00/SampleToCCDDistance)/2
+			//2*tan(Theta2DWave[0][0]) = dist00/SampleToCCDDistance
+			SampleToCCDDistance = abs(dist00/(2*tan(Theta2DWave[0][0])))
+			Duplicate/O Err2D, CCDImageToConvert_Errs
+		endif
+		Killwaves/Z Int2D, Qx2D, Qy2D, Err2D
+		NewNote+="DataFileName="+FileNameToLoad+";"
+		NewNote+="DataFileType="+"NIST_DAT_128x128"+";"
 	elseif(cmpstr(FileType,"MarCCD")==0)
 		FileNameToLoad= FileName
 		ImageLoad/P=$(PathName)/T=tiff/O/N=$(NewWaveName) FileNameToLoad
@@ -1120,7 +1187,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		PathInfo $(PathName)
 		FileNameToLoad=  S_path + FileName
 		//GBLoadWave/B/T={80,80}/S=7680/W=1/O/N=TempLoadWave FileNameToLoad
-		LoadedOK=ReadBrukerCCD_SMARTFile(FileNameToLoad, NewWaveName)
+		LoadedOK=NI1_ReadBrukerCCD_SMARTFile(FileNameToLoad, NewWaveName)
 			if(!LoadedOK)		//check if we loaded at least some data...
 				return 0
 			endif
@@ -1472,7 +1539,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 		PopupMenu PilatusColorDepth,help={"Color depth (likely 32) :"}
 		PopupMenu PilatusColorDepth,mode=1,popvalue=PilatusColorDepth,value= #"\"8;16;32;64;\""
 		
-		Button PilatusSetDefaultPars, pos={15,160}, size={250,20}, title="Set default device values", proc=Pilatus_ButtonProc
+		Button PilatusSetDefaultPars, pos={15,160}, size={250,20}, title="Set default device values", proc=NI1_Pilatus_ButtonProc
 		Button PilatusSetDefaultPars, help={"Use this to set default pixel size"}
 
 		CheckBox PilatusSignedData,pos={220,134},size={158,14},noproc,title="UnSigned integers?"
@@ -1484,7 +1551,7 @@ EndMacro
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function Pilatus_ButtonProc(ba) : ButtonControl
+Function NI1_Pilatus_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
 	switch( ba.eventCode )
@@ -1551,7 +1618,7 @@ End
 //*******************************************************************************************************************************************
 
 
-Function ReadBrukerCCD_SMARTFile(FileToOpen, NewWaveName)	//returns wave with image in the current data folder, temp folder is deleted
+Function NI1_ReadBrukerCCD_SMARTFile(FileToOpen, NewWaveName)	//returns wave with image in the current data folder, temp folder is deleted
 	String FileToOpen
 	String NewWaveName		
 	
@@ -3798,55 +3865,68 @@ End
 Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 	string PathName, FileNameToLoad, NewWaveName
 	
-	string FileContent=ReadNexusCanSAS(PathName, FileNameToLoad)
-	variable fileID, UsedQXY, UsedAzimAngle
+	string FileContent=NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
+	variable fileID, UsedQXY, UsedAzimAngle, UnbinnedQx, UnbinnedQy, HaveMask, HaveErrors
 	string TempStr, TempStr1
 	UsedQXY = 0
 	UsedAzimAngle = 0
 	//Abort "Need finishing NI1_ReadCalibCanSASNexusFile"
 	if (stringmatch(NewWaveName,"CCDImageToConvert"))
-	
 		//DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
 		//  DataWv:/sasentry01/sasdata01/I;QWv:/sasentry01/sasdata01/Q;IdevWv:;MaskWv:;
-
 			HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 			//load data - Intensity
-			TempStr = StringByKey("DataWv", FileContent, ":", ";")
+			TempStr = StringByKey("DataWv", FileContent, ":", ",")
 			HDF5LoadData /N=CCDImageToConvert  /O  fileID , TempStr 
 			//load data - Qvector
-			TempStr = StringByKey("QWv", FileContent, ":", ";")
+			TempStr = StringByKey("QWv", FileContent, ":", ",")
 			if(ItemsInList(TempStr)<2)	//only Q wave
 				HDF5LoadData /N=Q2Dwave  /O  fileID , TempStr 
 			else		//assume Qx, Qy
 				TempStr1=stringfromList(0,TempStr)
-				if(stringmatch(TempStr1,"Qx"))
-					HDF5LoadData /N=Qx2D  /O  fileID , TempStr 
-				elseif(stringmatch(TempStr1,"Qy"))
-					HDF5LoadData /N=Qy2D  /O  fileID , TempStr 
+				if(stringmatch(TempStr1,"*Qx"))
+					HDF5LoadData /N=Qx2D  /O  fileID , TempStr1 
+				elseif(stringmatch(TempStr1,"*Qy"))
+					HDF5LoadData /N=Qy2D  /O  fileID , TempStr1 
 				endif
 				TempStr1=stringfromList(1,TempStr)
-				if(stringmatch(TempStr1,"Qx"))
-					HDF5LoadData /N=Qx2D  /O  fileID , TempStr 
-				elseif(stringmatch(TempStr1,"Qy"))
-					HDF5LoadData /N=Qy2D  /O  fileID , TempStr 
+				if(stringmatch(TempStr1,"*Qx"))
+					HDF5LoadData /N=Qx2D  /O  fileID , TempStr1 
+				elseif(stringmatch(TempStr1,"*Qy"))
+					HDF5LoadData /N=Qy2D  /O  fileID , TempStr1 
 				endif			
 				UsedQXY=1	
 			endif
-			TempStr = StringByKey("IdevWv", FileContent, ":", ";")
+			TempStr = StringByKey("IdevWv", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//only Q wave
 				HDF5LoadData /N=CCDImageToConvert_Errs  /O  fileID , TempStr 
+				HaveErrors=1
 			endif
-			TempStr = StringByKey("MaskWv", FileContent, ":", ";")
+			TempStr = StringByKey("MaskWv", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//only Q wave
 				HDF5LoadData /N=M_ROIMask  /O  fileID , TempStr 
+				Wave M_ROIMask
+				M_ROIMask = !M_ROIMask		//again, opposite logic for Nexus and Igor. 
+				HaveMask=1
 			endif
-			TempStr = StringByKey("AzimAngles", FileContent, ":", ";")
+			TempStr = StringByKey("AzimAngles", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//Azimuthal wave exists
 				HDF5LoadData /N=AnglesWave  /O  fileID , TempStr 
 				UsedAzimAngle=1
 			endif
+			TempStr = StringByKey("UnbinnedQx", FileContent, ":", ",")
+			if(strlen(TempStr)>2)	//Azimuthal wave exists
+				HDF5LoadData /N=UnbinnedQx  /O  fileID , TempStr 
+				UnbinnedQx=1
+			endif
+			TempStr = StringByKey("UnbinnedQy", FileContent, ":", ",")
+			if(strlen(TempStr)>2)	//Azimuthal wave exists
+				HDF5LoadData /N=UnbinnedQy  /O  fileID , TempStr 
+				UnbinnedQy=1
+			endif
 			HDF5CloseFile fileID  
 
+			NVAR ReverseBinnedData=root:Packages:Convert2Dto1D:ReverseBinnedData
 			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
 			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
 			if(UsedQXY)
@@ -3875,6 +3955,22 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				endif	
 			endif
 			Redimension/S AnglesWave
+//			//now need to check, if the data are not rebinned... 
+			if(UnbinnedQx && UnbinnedQy&&ReverseBinnedData)
+				if(HaveMask)
+					if(HaveErrors)
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy, Mask=M_ROIMask, Idev2D=CCDImageToConvert_Errs )		//[Mask, Idev2D] 
+					else
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy, Mask=M_ROIMask)		//[Mask, Idev2D] 		
+					endif
+				else
+					if(HaveErrors)
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy, Idev2D=CCDImageToConvert_Errs )		//[Mask, Idev2D] 
+					else
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy)		//[Mask, Idev2D] 
+					endif
+				endif
+			endif
 			
 	 		NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
 			NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
@@ -3884,18 +3980,16 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			Duplicate/O Q2DWave, Theta2DWave
 			Multithread Theta2DWave = asin(Q2DWave / (4*pi/Wavelength))
 			variable dist00 = sqrt((BeamCenterX*PixelSizeX)^2 + (BeamCenterY*PixelSizeY)^2)
-			SampleToCCDDistance = abs(dist00/(2*tan(Theta2DWave[0][0])))
-			
-//			//fix their data orientation...
-//			ImageRotate/O/H AnglesWave
-//			ImageRotate/O/H Q2DWave
-//			ImageRotate/O/H Err2D
-//			ImageRotate/O/C AnglesWave
-//			ImageRotate/O/C Q2DWave
-//			ImageRotate/O/C Err2D
-//	 		//OK, now we need to fake at least SDD to make sure some drawings work well...
+			SampleToCCDDistance = abs(dist00/(2*tan(Theta2DWave[0][0])))							
+			killwaves/Z Qx2D, Qy2D
+	elseif (stringmatch(NewWaveName,"OriginalCCD"))		//this is for mask... 
+			HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
+			//load data - Intensity
+			TempStr = StringByKey("DataWv", FileContent, ":", ",")
+			HDF5LoadData /N=OriginalCCD  /O  fileID , TempStr 
+			HDF5CloseFile fileID  
 	else
-		Abort "this should nto really happen, these are calibrated data and no other image is appropriate"
+		Abort "this should not really happen, these are calibrated data and no other image is appropriate"
 	
 	endif
 
@@ -3905,7 +3999,61 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 
-Function/S ReadNexusCanSAS(PathName, FileNameToLoad)
+Function NI1_RevertBinnedDataSet(Int2D, Q2DWave, AnglesWave,BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy,[Mask, Idev2D] )
+	wave Int2D, Q2DWave, AnglesWave,UnbinnedQx, UnbinnedQy, Mask, Idev2D
+	variable BeamCenterX, BeamCenterY
+
+	variable  useMask, useIdev
+	useMask= !ParamIsDefault(Mask) 
+	useIdev= !ParamIsDefault(Idev2D) 
+	//first, create vectors of QxBinned, QyBinned
+	make/O/N=(dimsize(Q2DWave,0)) QxBinned
+	make/O/N=(dimsize(Q2DWave,1)) QyBinned
+	QyBinned = Q2DWave[p][BeamCenterY]
+	QyBinned = (AnglesWave[p][BeamCenterY]<pi) ?   QyBinned[p] : -1*QyBinned[p]
+	
+	QxBinned = Q2DWave[BeamCenterX][p]
+	QxBinned = (AnglesWave[BeamCenterX][p]<(pi)) ?   QxBinned[p] : -1*QxBinned[p]
+		//next need to create new full size Azimuthal Wave and Qwave,
+	Make/o/N=(numpnts(UnbinnedQx), numpnts(UnbinnedQy)) 	UnbinnedQy2D, UnbinnedQx2D
+	UnbinnedQx2D[][] = UnbinnedQx[q]
+	UnbinnedQy2D[][] = UnbinnedQy[p]
+	MatrixOP/O/O AnglesWaveFull = atan(UnbinnedQy2D/UnbinnedQx2D)
+	AnglesWaveFull -= pi/2
+	AnglesWaveFull = abs(AnglesWaveFull)
+	AnglesWaveFull = UnbinnedQx2D[p][q] > 0 ? AnglesWaveFull : AnglesWaveFull+pi
+	//AnglesWaveFull = (numtype(AnglesWaveFull[p][q])==2 && UnbinnedQy2D[p][q] > 0) ? AnglesWaveFull : 0
+	//AnglesWaveFull = (numtype(AnglesWaveFull[p][q])==2 && UnbinnedQy2D[p][q] < 0) ? AnglesWaveFull : pi
+
+	//create Q waves
+	matrixOp/O Q2DWaveFull = sqrt(UnbinnedQx2D*UnbinnedQx2D + UnbinnedQy2D*UnbinnedQy2D)
+	Duplicate/O AnglesWaveFull, Int2DFull
+	Int2DFull = Int2D[BinarySearchInterp(QyBinned, UnbinnedQy[p])][BinarySearchInterp(QxBinned, UnbinnedQx[q])]
+	if(useMask) 
+		Duplicate/O AnglesWaveFull, MaskFull
+		MaskFull = Mask[BinarySearchInterp(QyBinned, UnbinnedQy[p])][BinarySearchInterp(QxBinned, UnbinnedQx[q])]
+		Duplicate/O MaskFull, Mask
+	endif
+	if(useIdev) 
+		Duplicate/O AnglesWaveFull, Idev2DFull
+		Idev2DFull = Idev2D[BinarySearchInterp(QyBinned, UnbinnedQy[p])][BinarySearchInterp(QxBinned, UnbinnedQx[q])]
+		Duplicate/O Idev2DFull, Idev2D
+	endif
+	Duplicate/O Int2DFull, Int2D
+	Duplicate/O AnglesWaveFull, AnglesWave
+	Duplicate/O Q2DWaveFull, Q2DWave
+	Wavestats/Q Q2DWaveFull
+	NVAR BCX = root:Packages:Convert2Dto1D:BeamCenterX
+	NVAR BCY = root:Packages:Convert2Dto1D:BeamCenterY
+	BCX = V_minRowLoc
+	BCY = V_minColLoc
+end
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	string PathName, FileNameToLoad
 	
 	variable GroupID
@@ -3913,10 +4061,13 @@ Function/S ReadNexusCanSAS(PathName, FileNameToLoad)
 	variable i, j
 	string AttribList, PathToData, ListOfDataSets, ListOfGroups, DataIdentification
 	string tempStr, TempDataPath, TempQPath, TempMaskPath, TempIdevPath, tempStr2, TempAzAPath
+	string OrigQxPath, OrigQyPath
 	TempDataPath=""
 	TempQPath=""
 	TempMaskPath=""
 	TempIdevPath=""
+	OrigQxPath=""
+	OrigQyPath=""
 	
 	HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 	if (V_flag != 0)
@@ -3926,14 +4077,14 @@ Function/S ReadNexusCanSAS(PathName, FileNameToLoad)
 	HDF5ListGroup /F /R /TYPE=1  /Z fileID , "/"
 	ListOfGroups = S_HDF5ListGroup
 	For (i=0;i<ItemsInList(ListOfGroups);i+=1)
-		AttribList = HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
+		AttribList = NI1_HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
 		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata") && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
 			PathToData = stringfromlist(i,ListOfGroups)
 			print "Found location of data : " + PathToData
 			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
 			ListOfDataSets = S_HDF5ListGroup
 			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
-				tempStr = HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
+				tempStr = NI1_HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
 				if(numberByKey("signal", tempStr)	)
 					TempDataPath = stringfromlist(j,ListOfDataSets)
 					tempStr2 = stringByKey("axes", tempStr)
@@ -3954,7 +4105,15 @@ Function/S ReadNexusCanSAS(PathName, FileNameToLoad)
 					if(StringMatch(ListOfDataSets,"*AzimAngles*"))
 						TempAzAPath = TempDataPath[0,strlen(TempDataPath)-2]+"AzimAngles"
 					endif
-					DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"+"AzimAngles:"+TempAzAPath+";"
+					if(StringMatch(ListOfDataSets,"*UnbinnedQx*"))
+						OrigQxPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQx"
+					endif
+					if(StringMatch(ListOfDataSets,"*UnbinnedQy*"))
+						OrigQyPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQy"
+					endif
+					DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
+					DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
+					DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
 
 				endif			
 			endfor
@@ -3967,7 +4126,7 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 
-static Function/S HdfReadAllAttributes(fileID, Location, isDataSet)
+static Function/S NI1_HdfReadAllAttributes(fileID, Location, isDataSet)
 	variable fileID
 	String Location
 	variable isDataSet
@@ -4005,16 +4164,18 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 // write out Nexus/CanSAS file for Nika
-Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy,AzimAngles])
+Function NI1A_WriteHdf52DCanSASData(AppendToNexusFile, Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy,AzimAngles,UnbinnedQx,UnbinnedQy])
+		variable AppendToNexusFile		//set to 1 if appending to existing Nexus file
 		String Hdf5FileName
-		wave Iwv, dIwv, Qwv, Mask, Qx, Qy, AzimAngles
-		
-		variable usedIwv, useQwv, useMask, useQx, useQy, use3Q
+		wave Iwv, dIwv, Qwv, Mask, Qx, Qy, AzimAngles, UnbinnedQx,UnbinnedQy
+
+		variable usedIwv, useQwv, useMask, useQx, useQy, use3Q, useUnbinnedQxy
 		usedIwv= !ParamIsDefault(dIwv) 
 		useQwv= !ParamIsDefault(Qwv) 
 		useMask= !ParamIsDefault(Mask) 
 		useQx= !ParamIsDefault(Qx) 
 		useQy= !ParamIsDefault(Qy) 
+		useUnbinnedQxy =  !ParamIsDefault(UnbinnedQx) 
 		use3Q = useQx*useQy
 		if(use3Q + useQwv != 1)
 			abort "Wrong Q data passed to WriteHdf5CanSASData"
@@ -4048,10 +4209,18 @@ Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy,Az
 
 	variable GroupID
 	Variable fileID, result
-	HDF5CreateFile/P=Convert2Dto1DOutputPath /O /Z fileID as Hdf5FileName
-	if (V_flag != 0)
-		Print "HDF5CreateFile failed"
-		return -1
+	if(AppendToNexusFile)
+		HDF5OpenFile/P=Convert2Dto1DDataPath /Z fileID as Hdf5FileName
+		if (V_flag != 0)
+			Print "HDF5OpenFile failed"
+			return -1
+		endif
+	else
+		HDF5CreateFile/P=Convert2Dto1DOutputPath /O /Z fileID as Hdf5FileName
+		if (V_flag != 0)
+			Print "HDF5CreateFile failed"
+			return -1
+		endif
 	endif
 	HDF5CreateGroup fileID , "/sasentry01" , groupID
 	HDF5OpenGroup fileID , "/sasentry01" , groupID
@@ -4112,20 +4281,138 @@ Function NI1A_WriteHdf5CanSASData(Hdf5FileName, Iwv, [dIwv, Qwv, Mask, Qx, Qy,Az
 			NIA1_HdfSaveAttrib("axes","Qx,Qy","/sasentry01/sasdata01/Idev", fileID)
 		endif
 	else	//no uncertainty
-		NIA1_HdfSaveAttrib("uncertainty","","/sasentry01/sasdata01/I", fileID)
+		//NIA1_HdfSaveAttrib("uncertainty","","/sasentry01/sasdata01/I", fileID)
+		//per Pete, if dIw dows not exist, do not even mention the attribute. 
 	endif
 	//Now deal with mask. 
 	if(useMask)
 		//note, mask is 1 when the point is removed, 0 when is used. 
 		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Mask, fileID, "/sasentry01/sasdata01/Mask"
 	endif
+	//deal with unibnnedQxy for rebinned data
+	if(useUnbinnedQxy)
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   UnbinnedQx, fileID, "/sasentry01/sasdata01/UnbinnedQx"
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   UnbinnedQy, fileID, "/sasentry01/sasdata01/UnbinnedQy"
+	endif
+	
 	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   AzimAngles, fileID, "/sasentry01/sasdata01/AzimAngles"
 	if (V_flag != 0)
 		Print "HDF5SaveData failed"
 		result = -1
 	endif
 	HDF5CloseFile fileID  
+	if(AppendToNexusFile)
+		pathinfo Convert2Dto1DDataPath
+		print "Wrote 2D calibrated data into Nexus/CanSAS file : "+S_path+Hdf5FileName
+	else
+		pathinfo Convert2Dto1DOutputPath
+		print "Wrote 2D calibrated data into Nexus/CanSAS file : "+S_path+Hdf5FileName
+	endif	
 end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+// write out Nexus/CanSAS file for Nika
+Function NI1A_WriteHdf51DCanSASData(AppendToNexusFile, Hdf5FileName, DataType, Iwv, dIwv, Qwv, dQwv, CurOrient, NOteData)
+		variable AppendToNexusFile		//set to 1 if appending to existing Nexus file
+		String Hdf5FileName, CurOrient, NoteData, DataType
+		wave Iwv, dIwv, Qwv, dQwv
+		
+		//DataType = "qrs", "trs", "drs", "distrs"
+		
+		//this needs to change as I now need to store 1D data there... 
+		//Writes Nexus/CanSAS data based on proposed format:
+		// to this structure (NX_class attribute MUST name a NeXus base class)
+		//
+		///sasentry01							<-- HDF5 group
+		//ÊÊ@NX_class = "NXentry"			<-- NeXus requires this
+		//ÊÊ@canSAS_class = "SASentry"		<-- this is between you and me, for now. Perhaps optional?
+		//
+		//ÊÊ/sasdata01						<-- HDF5 group
+		//ÊÊÊÊ@NX_class = "NXdata"			<-- NeXus requires this
+		//ÊÊÊÊ@canSAS_class = "SASdata"		<-- this is between you and me, for now.
+		//ÊÊÊÊ@canSAS_version = "0.1"		<-- this is between you and me, for now.
+		//	Ê	@I_axes = "Q,Q"				<-- canSAS 2012 agreed model
+		//	Ê	@Q_indices = "0,1"			<-- canSAS 2012 agreed model
+		//	Ê	@Mask_indices = "0,1"			<-- canSAS 2012 agreed model
+		//
+		//	ÊI: float[M,N]					<-- HDF5 dataset, the intensity array
+		//	ÊÊÊÊ@uncertainty="Idev"		<-- canSAS 2012 agreed model
+		//	ÊÊÊÊ@signal=1					<-- NeXus requires this
+		//		   @axes="Q"					<-- NeXus suggests this is identified
+		//	ÊIdev: float[M,N]				<-- HDF5 dataset, the intensity array <<<<optional
+		//	ÊQ: float[M,N]					<-- HDF5 dataset, |Q| at each pixel  <<<<optional
+		//or
+		//	Ê	@I_axes = "Qx,Qy"				<-- canSAS 2012 agreed model
+		//	Qx: float[M,N] ÊÊ<-- Qx at each pixel
+		//	Qy: float[M,N] ÊÊ<-- Qy at each pixel
+		//	Qz: float[M,N] ÊÊ<-- Qz at each pixel (might be all zero)
+print "finish NI1A_WriteHdf51DCanSASData routine to export/append to Nexus data of 1D sectors" 
+return 0
+//to do - change where the data go and how they go there. Find way to indicate what type of sector it is etc. 
+
+	variable GroupID
+	Variable fileID, result
+	if(AppendToNexusFile)
+		HDF5OpenFile/P=Convert2Dto1DDataPath /Z fileID as Hdf5FileName
+		if (V_flag != 0)
+			Print "HDF5OpenFile failed"
+			return -1
+		endif
+	else
+		HDF5CreateFile/P=Convert2Dto1DOutputPath /O /Z fileID as Hdf5FileName
+		if (V_flag != 0)
+			Print "HDF5CreateFile failed"
+			return -1
+		endif
+	endif
+	HDF5CreateGroup fileID , "/sasentry01" , groupID
+	HDF5OpenGroup fileID , "/sasentry01" , groupID
+	// Write an attributes to the sasentry01 group
+	Make /FREE /T /N=1 groupAttribute = "NXentry"				//NX_class
+		//HDF5SaveData /A="NX_class" groupAttribute, fileID, "/sasentry01/"
+	NIA1_HdfSaveAttrib("NX_class","NXentry","/sasentry01/", fileID)
+	NIA1_HdfSaveAttrib( "canSAS_class","SASentry","/sasentry01/", fileID)
+	HDF5CreateGroup fileID , "/sasentry01/sasdata01" , groupID
+	HDF5OpenGroup fileID , "/sasentry01/sasdata01" , groupID
+	//attributes
+	NIA1_HdfSaveAttrib("NX_class","NXdata","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("canSAS_class","SASdata","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("canSAS_version","0.1","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("I_axes","Q,Q","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("signal","I","/sasentry01/sasdata01", fileID)
+	NIA1_HdfSaveAttrib("Q_indices","0,1","/sasentry01/sasdata01", fileID)
+	// Save wave as dataset
+	HDF5SaveData /O /Z /GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1} Iwv, fileID, "/sasentry01/sasdata01/I"
+	if (V_flag != 0)
+		Print "HDF5SaveData failed"
+		result = -1
+	endif
+	NIA1_HdfSaveAttribIntg("signal",1,"/sasentry01/sasdata01/I", fileID)
+	//Now deal with Q axes...
+	NIA1_HdfSaveAttrib("axes","Q","/sasentry01/sasdata01/I", fileID)
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   Qwv , fileID, "/sasentry01/sasdata01/Q"
+	if (V_flag != 0)
+		Print "HDF5SaveData failed"
+		result = -1
+	endif
+	//Now deal with Uncertainty
+	NIA1_HdfSaveAttrib("uncertainty","Idev","/sasentry01/sasdata01/I", fileID)
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32} /MAXD={-1,-1}   dIwv, fileID, "/sasentry01/sasdata01/Idev"
+	NIA1_HdfSaveAttrib("axes","Q","/sasentry01/sasdata01/Idev", fileID)
+	HDF5CloseFile fileID  
+	if(AppendToNexusFile)
+		pathinfo Convert2Dto1DDataPath
+		print "Wrote 1D data into Nexus/CanSAS file : "+S_path+Hdf5FileName
+	else
+		pathinfo Convert2Dto1DOutputPath
+		print "Wrote 1D data into Nexus/CanSAS file : "+S_path+Hdf5FileName
+	endif	
+end
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
 
 //*************************************************************************************************
 //*************************************************************************************************

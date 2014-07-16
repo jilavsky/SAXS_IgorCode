@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.27
+#pragma version=1.28
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.28 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.27	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //1.26 changed in Unicertainity analysis length of paramName to 20 characters. 
 //1.25 fixed Notebook recording of Shulz-Zimm distribution type
@@ -924,6 +925,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 
 
 		Execute("CheckBox UseThePop,win=LSQF2_MainPanel ,variable=root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+")")
+		Execute("SetVariable UserName,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UserName_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")") 
 		Execute("PopupMenu PopulationType,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1)+",\"Size dist.;Unified level;Diffraction Peak;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")")
 		
 		
@@ -1786,7 +1788,7 @@ Function IR2L_Initialize()
 	ListOfPopulationVariables="UseThePop;"
 	ListOfPopulationVariables+="Contrast;Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"	
 		//Form factor parameters
-	ListOfPopulationsStrings+="Model;FormFactor;FFUserFFformula;FFUserVolumeFormula;StructureFactor;PopSizeDistShape;SFUserSQFormula;"	
+	ListOfPopulationsStrings+="Model;FormFactor;FFUserFFformula;FFUserVolumeFormula;StructureFactor;PopSizeDistShape;SFUserSQFormula;UserName;"	
 
 		//R distribution parameters
 	ListOfPopulationVariablesSD="RdistAuto;RdistrSemiAuto;RdistMan;RdistManMin;RdistManMax;RdistLog;RdistNumPnts;RdistNeglectTails;"	

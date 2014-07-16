@@ -44,7 +44,16 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 	//find which pops and data sets are used
 	variable pop, dataSet, i, j 
 	//here we calculate intensity for all used populations and used datasets
-	
+	For(j=1;j<=10;j+=1)	//j is dataset
+			//check if the slit smeared data are nto fitted to too small Qmax
+			NVAR UseMe=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(j))
+			NVAR Qmax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(j))
+			NVAR SlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(j))
+			NVAR SlitLength=$("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(j))
+			if(UseMe)
+				IN2G_CheckForSlitSmearedRange(SlitSmeared,Qmax, SlitLength,userMessage="Insufficient data range found for data set "+num2str(j))
+			endif
+	endfor			
 	for(i=1;i<11;i+=1)
 		NVAR Use=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
 		SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(i))

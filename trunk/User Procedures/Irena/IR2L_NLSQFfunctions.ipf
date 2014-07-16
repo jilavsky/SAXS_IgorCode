@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.16 modified to use rebinning routien from Geneeral procedures
 //1.15 fixed export to waves which was not working for Schulz-Zimm distribution type. 
 //1.14 On import redimension waves as double precision to make sure some users do not run out of precision with their waves. 
@@ -577,7 +578,6 @@ Function IR2L_FormatLegend()
 				if(numtype(curset)!=0)
 					return 1
 				endif
-
 				SVAR curSource=$("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(curset))
 				SVAR UserDataSetName=$("root:Packages:IR2L_NLSQF:UserDataSetName_set"+num2str(curset))
 				UserDataSetNameL=UserDataSetName
@@ -607,9 +607,14 @@ Function IR2L_FormatLegend()
 				else
 					curpop = str2num(stringFromList(i,AllWaves)[24,inf])
 				endif
+				SVAR UserName = $("root:Packages:IR2L_NLSQF:UserName_pop"+num2str(curpop))
 				SVAR curSource=$("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(curset))
 				SVAR UserDataSetName=$("root:Packages:IR2L_NLSQF:UserDataSetName_set"+num2str(curset))
-				UserDataSetNameL="Pop "+num2str(curpop)+" Model for "+UserDataSetName
+				if(strlen(UserName)<1)	//user did tno set name, use Pop X as name...
+					UserDataSetNameL="Pop "+num2str(curpop)+" model for "+UserDataSetName
+				else
+					UserDataSetNameL=UserName+" for "+UserDataSetName
+				endif
 				curFldrName = stringFromList(ItemsInList(curSource,":")-1,curSource,":")
 				SVAR curIntName=$("root:Packages:IR2L_NLSQF:IntensityDataName_set"+num2str(curset))
 				curIntNameL="Pop "+num2str(curpop)+" Model for "+curIntName

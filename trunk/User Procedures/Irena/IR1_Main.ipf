@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.55
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.56 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
 //2.55 moved Zoom and set limits to GraphMarquee menu, changed the ZoomAndSetLimits to be dynamic menu item
 //2.54 version release, January 2014
 //2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed
@@ -268,6 +269,8 @@ Function/S IR2C_LkUpDfltStr(StrName)
 	setDataFolder OldDf
 	return result
 end
+//***********************************************************
+//***********************************************************
 
 Function/S IR2C_LkUpDfltVar(VarName)
 	string VarName
@@ -286,9 +289,9 @@ Function/S IR2C_LkUpDfltVar(VarName)
 		NVAR curVariable = $(VarName)
 	endif	
 	if(curVariable>=10)
-		result = num2str(	curVariable)
+		result = num2str(curVariable)
 	else
-		result = "0"+num2str(	curVariable)
+		result = "0"+num2str(curVariable)
 	endif
 	setDataFolder OldDf
 	return result
@@ -745,18 +748,16 @@ Proc IR2P_FitLineWithCursors()
 
 	string destwavename="fit_"+CsrWave(A)
 	CurveFit line CsrWaveRef(A)(xcsr(A),xcsr(B)) /X=CsrXWaveRef(A) /D
-	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, 0.5*numpnts($destwavename), "\Z09Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
+	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, 0.5*numpnts($destwavename), "\Z"+IR2C_LkUpDfltVar("LegendSize")+"Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
 end
+//*****************************************
+//*****************************************
+//*****************************************
 
 Proc IR2P_FitPowerLawWithCursors()
 
 	string olddf=GetDataFolder(1)
-	
-	if (!DataFolderExists("root:Packages:FittingData:"))
-		NewDataFolder root:Packages:FittingData		//create Desmear folder, if it does not exist
-	endif
-
-	setDataFolder root:Packages:FittingData
+	NewDataFolder/O/S root:Packages:FittingData
 	
 	string name="MyFitWave"
 	string LegendName="Curvefitres"
@@ -773,10 +774,10 @@ Proc IR2P_FitPowerLawWithCursors()
 		
 	IR2P_LogPowerWithNaNsRetained($name)
 	
-	//here we will try to figure out, if the data are plotted wrt to leftor right axis...
+	//here we will try to figure out, if the data are plotted wrt to left or right axis...
 	string YwvName=CsrWave(A)
 	string AxType=StringByKey("AXISFLAGS", TraceInfo("",YwvName,0) )//this checks only for first occurence of the wave with this name
-	//this needs to be made more clever, other axis and other occurenc es of the wave with the name...
+	//this needs to be made more clever, other axis and other occurences of the wave with the name...
 	if (cmpstr(AxType,"/R")==0)
 		Append/R $name vs CsrXWaveRef(A)
 	else
@@ -784,12 +785,16 @@ Proc IR2P_FitPowerLawWithCursors()
 	endif
 	Modify lsize($name)=2
 	String pw=num2str(K1),pr=num2str(10^K0),DIN=num2str((V_siga*10^K0)/2.3026),ca=num2str(pcsr(A)),cb=num2str(pcsr(B)),gf=num2str(V_Pr),DP=num2str(V_sigb)
-	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z10Power Law Slope= "+pw+"\Z10 ± "+DP+"\Z08\rPrefactor= "+pr+"\Z08 cm\S-1\M\Z08 ± "+DIN+"\Z08\rx Cursor A::B= "+ca+"\Z08 :: "+cb+"\Z08\rGoodness of fit= "+gf
+	string LSs=IR2C_LkUpDfltVar("LegendSize")
+	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z"+LSs+"Power Law Slope= "+pw+"\Z"+LSs+" ± "+DP+"\Z"+LSs+"\rPrefactor= "+pr+"\Z"+LSs+" ± "+DIN+"\Z"+LSs+"\rx Cursor A::B= "+ca+"\Z"+LSs+" :: "+cb+"\Z"+LSs+"\rGoodness of fit= "+gf
 
 	KillWaves/Z LogYFitData, LogXFitData
 
 	SetDataFolder $olddf
 end
+//*****************************************
+//*****************************************
+//*****************************************
 
 Function IR2P_FindFreeDestWaveNumber(name)
 	string name
@@ -802,6 +807,9 @@ Function IR2P_FindFreeDestWaveNumber(name)
 	i+=1
 	while (i<50)
 end
+//*****************************************
+//*****************************************
+//*****************************************
 
 Function IR2P_LogPowerWithNaNsRetained(MyFitWave)
 	wave MyFitWave
@@ -816,11 +824,15 @@ Function IR2P_LogPowerWithNaNsRetained(MyFitWave)
 	while (i<PointsNumber)
 end
 //*****************************************
+//*****************************************
+//*****************************************
 
 Function IR2P_DrawLineOf3Slope()
 	IR2P_DrawLineOfRequiredSlope(3,3,1,"-3")
 End
 
+//*****************************************
+//*****************************************
 //*****************************************
 
 Function IR2P_DrawLineOf2Slope()

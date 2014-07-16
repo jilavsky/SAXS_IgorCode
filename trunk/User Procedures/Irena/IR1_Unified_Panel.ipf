@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
-Constant IR1AversionNumber=2.16
+#pragma version=2.18
+Constant IR1AversionNumber=2.18
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 changed Surf/Volume ratio per Dale Schaefer's description.  
 //2.17 fixed Link B to G/Rg/P for Level 2, typo in the code. 
 //2.16 changed ETA step to be 1% of the value, Dale said 5% is too much, changed surf/VOl ratio to fi*(1-fi)*Surf/Vol ratio as correct per DWS. 
 //2.15 added checkbox to limit warnings in the history area..., Fixes provided by DWS
@@ -514,7 +515,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level1MassFractal,variable= root:Packages:Irena_UnifFit:Level1MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
 	CheckBox Level1LinkB,pos={20,350},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link B to G/Rg/P?"
 	CheckBox Level1LinkB,variable= root:Packages:Irena_UnifFit:Level1LinkB, help={"If the B should be calculated based on Guinier/Porods law?"}
-	SetVariable Level1SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="fi(1-fi)*Surf/Vol", help={"Fi * (1-fi) * Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A"}
+	SetVariable Level1SurfToVolRat,pos={230,350},size={130,16},proc=IR1A_PanelSetVarProc,title="pi B/Q [m2/cm3]", help={"S/(V*fi(1-fi)) - Surface to volume ratio if P=4 (Porod law) in m2/cm3 if input Q in is A^-1"}
 	SetVariable Level1SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level1SurfaceToVolRat
 
 	SetVariable Level1B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"}

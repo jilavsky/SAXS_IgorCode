@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.13
-Constant IR2LversionNumber = 1.13
+#pragma version=1.15
+Constant IR2LversionNumber = 1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,8 @@ Constant IR2LversionNumber = 1.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
+//1.14 added check to chatch for slit smeared data when Qmax is too small, require at least 3* slit length
 //1.13 modified to handle Intensity units and propagated through GUI and data export. 
 //1.12 added to Unified levels ability to link B to G/Rg/P values. Removed ability to fit RgCO. 
 //		Added option to rebin the data on import. 
@@ -124,22 +126,9 @@ Function IR2L_MainPanel()
 
 	CheckBox SameContrastForDataSets,pos={175,188},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Vary contrasts?"
 	CheckBox SameContrastForDataSets,variable= root:Packages:IR2L_NLSQF:SameContrastForDataSets, help={"Check if contrast varies between data sets for one population?"}
-//	CheckBox DimensionIsDiameter,pos={290,184},size={25,16},proc=IR2L_DataTabCheckboxProc,title="SD use Diameters?"
-//	CheckBox DimensionIsDiameter,variable= root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter, help={"Check if Size Distribution dimension is diameter?"}
-//	CheckBox UseNumberDistributions,pos={170,200},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Number Dist?"
-//	CheckBox UseNumberDistributions,variable= root:Packages:IR2L_NLSQF:UseNumberDistributions, help={"Use number distributions? Default is volume distributions."}
 	SVAR DataCalibrationUnits=root:Packages:IR2L_NLSQF:DataCalibrationUnits
 	SetVariable DataCalibrationUnits, variable= root:Packages:IR2L_NLSQF:DataCalibrationUnits, noedit=1,noproc,frame=0, pos={175,204}
 	SetVariable DataCalibrationUnits, title="Units:", valueColor=(65535,0,0),labelBack=0, size={120,15}, help={"Units for Intensity, change with \"More parameetrs\" button"}
-
-//	variable modeVal = 1 + WhichListItem(DataCalibrationUnits, "Arbitrary;cm2/cm3;cm2/g;")
-//	if(modeVal<1||modeVal>3)
-//		modeVal=1
-//	endif
-//	PopupMenu DataUnits title="Units : ",proc=IR2L_PanelPopupControl, pos={280,218}
-//	PopupMenu DataUnits mode=modeVal, value="Arbitrary;cm2/cm3;cm2/g;"
-//	PopupMenu DataUnits help={"Units for data"}
-
 	NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
 	NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
@@ -215,26 +204,29 @@ Function IR2L_MainPanel()
 		CheckBox UseThePop,pos={2,241},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Use?",  fstyle=1
 		CheckBox UseThePop,variable= root:Packages:IR2L_NLSQF:UseThePop_pop1, help={"Use the population in calculations?"}
 
+		SetVariable UserName,variable= root:Packages:IR2L_NLSQF:UserName_pop1, proc=IR2L_PopSetVarProc
+		SetVariable UserName,pos={170,241},size={230,10},title="What is this?:", help={"User name for this population. What is this?"} 
+
 		PopupMenu PopulationType title="Model : ",proc=IR2L_PanelPopupControl, pos={5,254}
 		PopupMenu PopulationType mode=1, value="Size dist.;Unified level;Diffraction Peak;"
 		PopupMenu PopulationType help={"Select Model to be used for this population"}
 
-		CheckBox RdistAuto,pos={180,250},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="R dist auto?", mode=1
+		CheckBox RdistAuto,pos={180,257},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="R dist auto?", mode=1
 		CheckBox RdistAuto,variable= root:Packages:IR2L_NLSQF:RdistAuto_pop1, help={"Use automatic method to determin Rmin and Rmax?"}
-		CheckBox RdistrSemiAuto,pos={260,250},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Semi-auto?", mode=1
+		CheckBox RdistrSemiAuto,pos={260,257},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Semi-auto?", mode=1
 		CheckBox RdistrSemiAuto,variable= root:Packages:IR2L_NLSQF:RdistrSemiAuto_pop1, help={"Use automatic method for Rmin R max except in fitting?"}
-		CheckBox RdistMan,pos={340,250},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Manual?", mode=1
+		CheckBox RdistMan,pos={340,257},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Manual?", mode=1
 		CheckBox RdistMan,variable= root:Packages:IR2L_NLSQF:RdistMan_pop1, help={"Manually set Rmin R max?"}
 
 		SetVariable RdistNumPnts,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistNumPnts_pop1, proc=IR2L_PopSetVarProc
-		SetVariable RdistNumPnts,pos={5,273},size={110,15},title="Num pnts:", help={"Number of points in the population"} 
+		SetVariable RdistNumPnts,pos={5,275},size={110,15},title="Num pnts:", help={"Number of points in the population"} 
 		SetVariable RdistManMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistManMin_pop1, noproc
-		SetVariable RdistManMin,pos={140,273},size={100,15},title="R min:", help={"This is R min selected for this population"} 
+		SetVariable RdistManMin,pos={140,275},size={100,15},title="R min:", help={"This is R min selected for this population"} 
 		SetVariable RdistManMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistManMax_pop1, noproc
-		SetVariable RdistManMax,pos={260,273},size={100,15},title="R max:", help={"This is R max selected for this population"} 
+		SetVariable RdistManMax,pos={260,275},size={100,15},title="R max:", help={"This is R max selected for this population"} 
 
 		SetVariable RdistNeglectTails,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistNeglectTails_pop1, proc=IR2L_PopSetVarProc
-		SetVariable RdistNeglectTails,pos={140,273},size={180,15},title="R dist neglect tails:", help={"What fraction of population to neglect, see manual, 0.01 is good"} 
+		SetVariable RdistNeglectTails,pos={140,275},size={180,15},title="R dist neglect tails:", help={"What fraction of population to neglect, see manual, 0.01 is good"} 
 
 		CheckBox RdistLog,pos={10,295},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Log R dist?"
 		CheckBox RdistLog,variable= root:Packages:IR2L_NLSQF:RdistLog_pop1, help={"Use Log binning for R distribution?"}

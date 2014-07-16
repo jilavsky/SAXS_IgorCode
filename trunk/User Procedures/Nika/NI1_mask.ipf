@@ -597,7 +597,7 @@ Function NI1M_UpdateMaskListBox()
 			RealExtension=CCDFileExtension
 		elseif(cmpstr(CCDFileExtension,".hdf")==0)
 			RealExtension=CCDFileExtension
-		elseif(cmpstr(CCDFileExtension,"Nexus")==0)
+		elseif(cmpstr(CCDFileExtension,"*Nexus*")==0)
 			RealExtension=".hdf"
 		else
 			RealExtension="????"
@@ -608,18 +608,23 @@ Function NI1M_UpdateMaskListBox()
 			abort
 		endif
 		
-		ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,RealExtension)
 		if(cmpstr(RealExtension,"hdf"))
+			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".h5")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf5")
+		else
+			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,RealExtension)
 		endif
-			if(strlen(ListOfAvailableCompounds)<2)	//none found
-				ListOfAvailableCompounds="--none--;"
-			endif
+		if(strlen(ListOfAvailableCompounds)<2)	//none found
+			ListOfAvailableCompounds="--none--;"
+		endif
+		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, "^((?!.plist).)*$" ) //.plist files on Mac files... 
+		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, "^((?!.DS_Store).)*$" ) //.DS_Store files on Mac files... 
+		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, "^((?!^\._).)*$" ) //this should remove on PCs the files starting with ._ (OSX system files). 
+		ListOfAvailableCompounds=NI1A_CleanListOfFilesForTypes(ListOfAvailableCompounds,CCDFileExtension, EmptyDarkNameMatchStr)
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) ListOfCCDDataInCCDPath
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) SelectionsofCCDDataInCCDPath
 		variable i
-		ListOfCCDDataInCCDPath=NI1A_CleanListOfFilesForTypes(ListOfCCDDataInCCDPath,CCDFileExtension, EmptyDarkNameMatchStr)
 		For(i=0;i<ItemsInList(ListOfAvailableCompounds);i+=1)
 			ListOfCCDDataInCCDPath[i]=StringFromList(i, ListOfAvailableCompounds)
 		endfor
