@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.25
+#pragma version=0.26
 Constant IN3_FlyImportVersionNumber=0.19
 
 
@@ -9,6 +9,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.26 Added three modes for FlyScans (Array, Trajectory, Fixed)
 //0.25 modified to handle too long file anmes as users cannot learn not to do this... 
 //0.24 modified to use Rebinninng procedure from General procedures - requires Gen Proc version 1.71 nad higher
 //0.23 changed defaults to 5000 points on import. 
@@ -428,7 +429,7 @@ end
 
 Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	string RawFolderWithData
-	
+
 	string OldDf=GetDataFolder(1)
 	setDataFolder RawFolderWithData
 	//here we need to deal with hdf5 data
@@ -477,7 +478,19 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave/Z USAXSPinT_pinCounts=:entry:metadata:trans_pin_counts
 	Wave/Z USAXSPinT_pinGain=:entry:metadata:trans_pin_gain
 	Wave/Z USAXSPinT_Time= :entry:metadata:trans_pin_time
-
+	Wave/Z  AR_Finish = :entry:flyScan:AR_Finish
+	Wave/Z  AR_NumPulsePositions = :entry:flyScan:AR_NumPulsePositions
+	Wave/Z  AR_PulseMode = :entry:flyScan:AR_PulseMode
+	if(!WaveExists(AR_PulseMode))
+		Make/O/N=1 :entry:flyScan:AR_PulseMode
+		Wave  AR_PulseMode = :entry:flyScan:AR_PulseMode
+		AR_PulseMode = 0
+	endif
+	Wave/Z  AR_PulsePositions = :entry:flyScan:AR_PulsePositions
+	Wave/Z  AR_pulses= :entry:flyScan:AR_pulses
+	Wave/Z  AR_waypoints= :entry:flyScan:AR_waypoints
+//temp for developement today...
+//HdfWriterVersion = 1.1
 	//USAXSPinT_Measure=1;USAXSPinT_AyPosition=11.1725;USAXSPinT_Time=3;USAXSPinT_pinCounts=1918487;
 	//USAXSPinT_pinGain=1000000;USAXSPinT_I0Counts=219754;USAXSPinT_I0Gain=10000000;
 	make/Free/N=5 TimeRangeAfterUPD, TimeRangeAfterI0
@@ -487,7 +500,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		Wave ampReqGain = :entry:flyScan:changes_ampReqGain
 		TimeRangeAfterUPD = {AmplifierRange1BlockTime,AmplifierRange2BlockTime,AmplifierRange3BlockTime,AmplifierRange4BlockTime,AmplifierRange5BlockTime}
 		TimeRangeAfterI0 = {0,0,0,0,0}
-	elseif(HdfWriterVersion==1)
+	elseif(HdfWriterVersion>=1)
 		Wave AmplifierUsed = :entry:flyScan:upd_flyScan_amplifier		//1 for DDPCA300, 0 for DLPCA200
 		Wave DDPCA300_ampGain = :entry:flyScan:changes_DDPCA300_ampGain
 		Wave DDPCA300_ampReqGain = :entry:flyScan:changes_DDPCA300_ampReqGain
@@ -530,9 +543,25 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Duplicate/O TimeWv, PD_range
 	Duplicate/O TimeWv, I0gain
 	//create AR data
-	Duplicate/Free TimeWv, ArValues
-	Redimension /D ArValues
-	ArValues = abs(Ar_increment[0])*p
+	if(HdfWriterVersion<1.1)
+		Duplicate/Free TimeWv, ArValues
+		Redimension /D ArValues
+		ArValues = abs(Ar_increment[0])*p
+	else
+		if(AR_PulseMode[0]==0)		//trajectory using fixed point system.
+			Duplicate/Free TimeWv, ArValues
+			Redimension /D ArValues
+			ArValues = abs(Ar_increment[0])*p
+		elseif(AR_PulseMode[0]==1)		// this is using PSO pulse positions, typically 2-8k points. 
+			Duplicate/Free AR_PulsePositions, ArValues
+			Redimension /D ArValues
+		elseif(AR_PulseMode[0]==2)		//this is using trajectory way points, typically 200 points
+			Duplicate/Free AR_waypoints, ArValues
+			Redimension /D ArValues
+		else
+			Abort "Unknown data collection method" 
+		endif
+	endif
 	Duplicate/O ArValues, Ar_encoder	
 	redimension/D MeasTime, Monitor, USAXS_PD
 	redimension/S PD_range, I0gain
@@ -550,7 +579,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		MeasTime*=2e-08				//convert to seconds
 		IN3_FSCreateGainWave(PD_range,ampReqGain,ampGain,mcsChangePnts, TimeRangeAfterUPD,MeasTime)
 		I0gain = I0gainW[0]
-	elseif(HdfWriterVersion==1)
+	elseif(HdfWriterVersion==1 && HdfWriterVersion==1.1) 
 		MeasTime/=mcaFrequency[0]		//convert to seconds
 		if(AmplifierUsed[0])		//DDPCA300
 			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
@@ -559,11 +588,11 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		endif
 		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
 	endif
-	NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-	//IN3_FlyScanRebinData(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain, NumberOfTempPoints, Ar_increment[0])
-	IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
+	if(AR_PulseMode[0]==0)		//only needed for fixed point spositions, the others are already manageable number of points.
+		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
+		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
+	endif
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
-	
 	//let's make some standard strings we need.
 	string/g PathToRawData
 	PathToRawData=RawFolderWithData
