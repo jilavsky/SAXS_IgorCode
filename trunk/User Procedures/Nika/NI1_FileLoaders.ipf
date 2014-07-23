@@ -4062,12 +4062,14 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	string AttribList, PathToData, ListOfDataSets, ListOfGroups, DataIdentification
 	string tempStr, TempDataPath, TempQPath, TempMaskPath, TempIdevPath, tempStr2, TempAzAPath
 	string OrigQxPath, OrigQyPath
-	TempDataPath=""
-	TempQPath=""
-	TempMaskPath=""
-	TempIdevPath=""
-	OrigQxPath=""
-	OrigQyPath=""
+	TempDataPath=" "
+	TempQPath=" "
+	TempAzAPath=" "
+	TempMaskPath=" "
+	TempIdevPath=" "
+	OrigQxPath=" "
+	OrigQyPath=" "
+	DataIdentification=" "
 	
 	HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 	if (V_flag != 0)
