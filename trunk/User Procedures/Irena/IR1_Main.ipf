@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.57
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.55
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.57 fixed ListProRoutine which had troubles with links
 //2.56 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
 //2.55 moved Zoom and set limits to GraphMarquee menu, changed the ZoomAndSetLimits to be dynamic menu item
 //2.54 version release, January 2014
@@ -2309,9 +2310,7 @@ end
 static Function IR2C_ListProcFiles(PathStr, resetWaves)
 	string PathStr
 	variable resetWaves
-	
 	String abortMessage	//HR Used if we have to abort because of an unexpected error
-	
 	string OldDf=GetDataFolder(1)
 	//create location for the results waves...
 	NewDataFolder/O/S root:Packages
@@ -2328,8 +2327,6 @@ static Function IR2C_ListProcFiles(PathStr, resetWaves)
 			Make/O/N=0/T PathToFiles
 			Make/O/N=0 FileVersions
 	endif
-	
-	
 	//if this was first call, now the waves are gone.
 	//and now we need to create the output waves
 	Wave/Z/T FileNames
@@ -2343,7 +2340,6 @@ static Function IR2C_ListProcFiles(PathStr, resetWaves)
 		Wave FileVersions
 		//I am not sure if we really need all of those declarations, but, well, it should not hurt...
 	endif 
-	
 	//this is temporary path to the place we are looking into now...  
 	NewPath/Q/O tempPath, PathStr
 	if (V_flag != 0)		//HR Add error checking to prevent infinite loop
@@ -2351,12 +2347,9 @@ static Function IR2C_ListProcFiles(PathStr, resetWaves)
 		Print abortMessage	// To make debugging easier
 		Abort abortMessage
 	endif
-
 	//list al items in this path
 	string ItemsInTheFolder= IndexedFile(tempPath,-1,"????")+IndexedDir(tempPath, -1, 0 )
-	
 	//HR If there is a shortcut in "Igor Procedures", ItemsInTheFolder will include something like "HDF5 Browser.ipf.lnk". Windows shortcuts are .lnk files.	
-	
 	//remove all . files. 
 	ItemsInTheFolder = GrepList(ItemsInTheFolder, "^\." ,1)
 	//Now we removed all junk files on Macs (starting with .)
@@ -2393,6 +2386,7 @@ static Function IR2C_ListProcFiles(PathStr, resetWaves)
 					tempPathStr = RemoveFromList(tempFileName, S_aliasPath,":")
 					FileNames[numpnts(FileNames)] = tempFileName
 					PathToFiles[numpnts(FileNames)] = tempPathStr
+					NewPath/Q/O tempPath, tempPathStr
 					//try to get version from #pragma version = ... This seems to be the most robust way I found...
 					if(stringmatch(tempFileName, "*.ipf"))
 						Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
