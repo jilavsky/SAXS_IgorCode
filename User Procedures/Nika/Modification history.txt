@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 1.66 xxxxx
+Added Cbf file format importer (it has compression, so it was bit more work). 
 Added right click menus to most Listboxes,users can now refresh the content and there is also some more functionality where appropriate
 Added Pilatus 3, 200k.
 Added ability to import 2D calibrated data, for now ASCII (qx qy I dI) from EQSANS and NIST (DAT). 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.34
+#pragma version=2.35
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.35 adds Pilatus Cbf compressed files (finally solved the problem)... 
 //2.34 adds abiulity to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
 //2.33 can read and write calibrated canSAS/nexus files. Can write new files or append to existing one (2D data for now). 
 //   can revert log-q binning of 2D data. 
@@ -646,25 +647,14 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine=PadString (testLine, 16800, 0x20)
 			FBinRead RefNum, testLine
 			close RefNum
-			PilskipBytes=headerLength1
-			testLine=ReplaceString("\r\n\r\n", testLine, ";")
-			testLine=ReplaceString("\r\n", testLine, ";")
-			testLine=ReplaceString("#", testLine, "")
-			testLine=ReplaceString(";;;;", testLine, ";")
-			testLine=ReplaceString(";;;", testLine, ";")
-			testLine=ReplaceString(";;", testLine, ";")
-			testLine = NI1_ZapControlCodes(testLine)	
-			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
-			headerLength1=NumberByKey("X-Binary-Size-Padding", testLine , ":", ";")
-			//headerLength1 = ceil(headerLength1/512 ) * 512
-			PilskipBytes=1+NumberByKey("X-Binary-Size-Padding", testLine , ":", ";")
-			
-			PilskipBytes = 6604
-			//NI1_PrintControlCodes(testLine)				
-			//testLine= NI1_COnvertLineIntoList(testLine)
-//print headerLength1
-//print testLine
-//abort
+			PilskipBytes=strsearch(testLine, "\014\032\004\325" , 0)		//this is string I found in test images
+			if(PilskipBytes<5)	//string not found...
+				PilskipBytes=strsearch(testLine, "\012\026\004\213" , 0)	//thsi is per http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2 what should be there. Go figure... 
+			endif
+			if(PilskipBytes<5)
+				Abort "Failed to find start of binary section in the Cbf file"
+			endif
+			testLine = testLine[0, PilskipBytes]
 		elseif(stringmatch(FileNameToLoad, "*.tif" )||stringmatch(FileNameToLoad, "*.tiff" ))
 			PilskipBytes=4096
 		else
@@ -682,28 +672,45 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		endif
 		//end read header
 		//clean up header to make it more like our headers...
-		testLine = ReplaceString("\n", testLine, "")
-		testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
-		testLine = ReplaceString("}", testLine, "<<<<End of ESRF header;")
-			print testLine
-		For(iii=0;iii<15;iii+=1)
-			testLine = ReplaceString("  ", testLine, " ")
-		endfor
-		testLine = ReplaceString(" = ", testLine, "=")
-		testLine = ReplaceString(" ;", testLine, ";")
-		
+		if(stringmatch(FileNameToLoad, "*.cbf" ))
+			testLine=ReplaceString("\r\n\r\n", testLine, ";")
+			testLine=ReplaceString("\r\n", testLine, ";")
+			testLine=ReplaceString("#", testLine, "")
+			testLine=ReplaceString(";;;;", testLine, ";")
+			testLine=ReplaceString(";;;", testLine, ";")
+			testLine=ReplaceString(";;", testLine, ";")
+			testLine = ReplaceString(":", testLine, "=")
+			testLine = ReplaceString(" = ", testLine, "=")
+			testLine = ReplaceString("= ", testLine, "=")
+			testLine = NI1_ZapControlCodes(testLine)	
+			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
+			testLine = "Start of Cbf header>>>;"+testLine+"<<<<End of Cbf header;"
+		else
+			testLine = ReplaceString("\n", testLine, "")
+			testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
+			testLine = ReplaceString("}", testLine, "<<<<End of ESRF header;")
+			For(iii=0;iii<15;iii+=1)
+				testLine = ReplaceString("  ", testLine, " ")
+			endfor
+			testLine = ReplaceString(" = ", testLine, "=")
+			testLine = ReplaceString(" ;", testLine, ";")
+		endif
 		//read the Pilatus file itself
 		variable PilatusColorDepthVar=str2num(PilatusColorDepth)
 		//color depth can be 8, 16, or 32 signed integers or unsigned integer 64, but that is not supported by Igor, to denote them in Igor as unnsigned, need to add 64 ...
 		if(PilatusColorDepthVar<64 && PilatusSignedData)   //PilatusSignedData=1 when unsigned integers, default signed integers
 			PilatusColorDepthVar+=64		//now we have proper 8, 16, or 32 unsigned integers for Igor... 
 		endif
-		
               killwaves/Z Loadedwave0,Loadedwave1
               if(stringMatch(PilatusFileType,"edf"))
        	       GBLoadWave/B/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
               elseif(stringMatch(PilatusFileType,"cbf"))
-       	       GBLoadWave/B/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
+              	//check if the cbf conforms to what we expect...
+              	if(StringMatch(testLine , "*LITTLE_ENDIAN*") && StringMatch(testLine, "*x-CBF_BYTE_OFFSET*"))
+				NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, "Loadedwave0")
+			else
+				abort "Unknown cbf file"
+			endif
        	 elseif(stringMatch(PilatusFileType,"tiff")||stringMatch(PilatusFileType,"tif"))
        	       GBLoadWave/B=(1)/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
        	 elseif(stringMatch(PilatusFileType,"float-tiff"))
@@ -953,31 +960,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		killwaves Loadedwave0
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"mp/bin"+";"
-//	elseif(cmpstr(FileType,"mpa/bin")==0)
-//		FileNameToLoad= FileName
-//		open /R/P=$(PathName) RefNum as FileNameToLoad
-//		testLine=""
-//		testLine=PadString (testLine, 20000, 0x20)
-//		FBinRead RefNum, testLine
-//		Offset=(strsearch(testLine, "[CDAT0,1048576 ]", 0))+22
-//		testLine=ReplaceString("\r\n", testLine, ";" )
-//		numBytes=NumberByKey("range", testLine , "=" , ";")
-//		close RefNum
-//		killwaves/Z Loadedwave0,Loadedwave1
-//		GBLoadWave/B/T={96,4}/S=(Offset)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
-//			if(V_flag==0)		//check if we loaded at least some data...
-//				return 0
-//			endif
-//		wave Loadedwave0
-//		Redimension/N=(1024,1024) Loadedwave0
-//		Loadedwave0[1023,1023]=0
-//		duplicate/O Loadedwave0, $(NewWaveName)
-//		killwaves Loadedwave0
-//		NewNote+="DataFileName="+FileNameToLoad+";"
-//		NewNote+="DataFileType="+"mpa/bin"+";"
-//		Offset=(strsearch(testLine, "[DATA0,1024 ]", 0))-1
-//		testLine=testLine[0,offset]
-//		NewNote+=testLine
 	elseif(cmpstr(FileType,"mpa/UC")==0)
 		FileNameToLoad= FileName
 		open /R/P=$(PathName) RefNum as FileNameToLoad
@@ -1005,20 +987,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Offset=(strsearch(testLine, "[DAT", 0))-1
 		testLine=testLine[0,offset]
 		NewNote+=testLine
-
-//	elseif(cmpstr(FileType,"mpa/asc")==0)
-//		FileNameToLoad= FileName
-//		killwaves/Z Loadedwave0,Loadedwave1,Loadedwave2,Loadedwave3
-//		LoadWave/G/P=$(PathName)/A=Loadedwave FileNameToLoad
-//			if(V_flag==0)		//check if we loaded at least some data...
-//				return 0
-//			endif
-//		wave Loadedwave0
-//		Redimension/N=(sqrt(numpnts(Loadedwave0)),sqrt(numpnts(Loadedwave0))) Loadedwave0
-//		duplicate/O Loadedwave0, $(NewWaveName)
-//		killwaves Loadedwave0
-//		NewNote+="DataFileName="+FileNameToLoad+";"
-//		NewNote+="DataFileType="+"mpa/asc"+";"
 	elseif(cmpstr(FileType,"ascii512x512")==0)
 		killwaves/Z Loadedwave0,Loadedwave1,Loadedwave2,Loadedwave3
 		loadwave/P=$(PathName)/J/O/M/N=Loadedwave FileName
@@ -1533,7 +1501,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 
 		PopupMenu PilatusFileType,pos={15,100},size={122,21},proc=NI1_PilatusPopMenuProc,title="File Type :  "
 		PopupMenu PilatusFileType,help={"Select file type :"}
-		PopupMenu PilatusFileType,mode=1,popvalue=PilatusFileType,value= #"\"tiff;edf;img;float-tiff;\""		//cbf removed as it is not working and cannot be tested... 
+		PopupMenu PilatusFileType,mode=1,popvalue=PilatusFileType,value= #"\"tiff;edf;img;float-tiff;cbf;\""		//cbf removed as it is not working and cannot be tested... 
 
 		PopupMenu PilatusColorDepth,pos={15,130},size={122,21},proc=NI1_PilatusPopMenuProc,title="Color depth :  "
 		PopupMenu PilatusColorDepth,help={"Color depth (likely 32) :"}
@@ -4446,3 +4414,116 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 
+//			loads Cbf file and uncompresses it
+//*************************************************************************************************
+
+Function NI1A_LoadCbfCompresedImage(PathName,FileNameToLoad, WaveNameToCreate)
+	string PathName,  FileNameToLoad, WaveNameToCreate
+	//this function loads and uncompresses the Cbf compressed file format using:
+	// conversions="x-CBF_BYTE_OFFSET";Content-Transfer-Encoding=BINARY;X-Binary-Element-Type="signed 32-bit integer";X-Binary-Element-Byte-Order=LITTLE_ENDIAN;
+	//It searches for start of binary data, checks how much data there should be and creates 1D wave (stream) with the data in the current data folder. 
+	variable SkipBytes
+	variable filevar
+	variable bufSize 
+	variable sizeToExpect
+	string testLine
+	//locate start of the binary data
+	open /R/P=$(PathName) filevar as FileNameToLoad
+	testLine=""
+	testLine=PadString (testLine, 16800, 0x20)
+	FBinRead filevar, testLine
+	close filevar
+	SkipBytes=strsearch(testLine, "\014\032\004\325" , 0)+4		//this is tring I found in test images
+	if(SkipBytes<5)													//string not found...
+		SkipBytes=strsearch(testLine, "\012\026\004\213" , 0)+4	//this is per http://www.bernstein-plus-sons.com/software/CBF/doc/CBFlib.html#3.2.2 what should be there. Go figure... 
+	endif
+	if(SkipBytes<5)
+		Abort "Failed to find start of binary section in the Cbf file"	//string still not found. This is problem. 
+	endif
+	//now how much data are we expecting???
+	testLine=ReplaceString("\r\n\r\n", testLine, ";")
+	testLine=ReplaceString("\r\n", testLine, ";")
+	testLine=ReplaceString("#", testLine, "")
+	testLine=ReplaceString(";;;;", testLine, ";")
+	testLine=ReplaceString(";;;", testLine, ";")
+	testLine=ReplaceString(";;", testLine, ";")
+	testLine = ReplaceString(":", testLine, "=")
+	sizeToExpect = NumberByKey("X-Binary-Number-of-Elements", testLine, "=", ";")
+	//read the data in binary free wave so we can use them here
+	Open /Z/R/P=$(PathName)/T="????" filevar as FileNameToLoad
+	if (V_flag)
+		close filevar
+		Abort "Cannot open file, something is wrong here"				// could not open file
+	endif
+	FSetPos fileVar, SkipBytes											//start of the image
+	FStatus fileVar
+	bufSize = V_logEOF-V_filePos										//this is how mcuh data we have in the image starting at the binary data start
+	make/B/O/N=(bufSize)/Free BufWv									//signed 1 byte wave for the data
+	make/O/N=(sizeToExpect)/Free ResultImage							//here go teh converted singed integers. Note, they can be 8, 16, or 32 bits. 64bits not supported here. 
+	FBinRead/B=1/F=1 fileVar, BufWv									//read 1 Byte each into singed integers wave
+	close filevar
+	//and not decompress the data here 	
+	variable i, j, PixelValue, ReadValue
+	j=0																	// j is index of the signed 1 byte wave (stream of data in) 
+	PixelValue = 0														//value in current pixel in image. 
+	For(i=0;i<(sizeToExpect);i+=1)										//i is index for output wave
+		if(j>bufSize-1)
+			break														//just in case, we run our of j. Should never happen
+		endif
+		ReadValue = BufWv[j]											//read 1 Byte integer
+		if(ReadValue>-128)												//this is useable value if +/- 127
+			PixelValue += ReadValue										//add to prior pixel value
+			ResultImage[i] = PixelValue									//store in output stream
+			j+=1														// move to another j point 
+		elseif(ReadValue==-128)										// This is indicator that the difference did not fit in 1Byte, read 2 bytes and use those.
+			j+=1														// move to another point to start reading the 2 bytes
+			ReadValue = NI1A_Conv2Bytes(BufWv[j],BufWv[j+1])			//read and convert 2 Bytes in integer
+			if(ReadValue>-32768)										//this is useable value, use these two bytes
+				PixelValue += ReadValue									//add to prior pixel value
+				ResultImage[i] = PixelValue								//store in output stream
+				j+=2													//move to another j point  
+			elseif(ReadValue==-32768)									// This is indicator that the difference did not fit in 2Bytes, read 4 bytes and use those.
+				j+=2													//move to another point to start reading the 4 bytes 
+				ReadValue = NI1A_Conv4Bytes(BufWv[j],BufWv[j+1], BufWv[j+2], BufWv[j+3])		//read and convert next 4 Bytes in integer
+				if(abs(ReadValue)<2147483648)						//this is correct value for 32 bits
+					PixelValue += ReadValue								//add to prior pixel value
+					ResultImage[i] = PixelValue							//store in output stream
+					j+=4												//move to another j point 
+				else														//abort, do not support 64 byte integers (no such detector exists... 
+					abort "64 bits data are not supported"
+				endif
+			else
+				print "error"
+			endif
+		else
+			print "error"
+		endif
+	endfor
+	Duplicate/O ResultImage, $(WaveNameToCreate)					//create wave user requested. Note, this is 1D wave and needs to be redimensioned to 2D wave (image). Could be done here... 
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+static Function NI1A_Conv2Bytes(B1,B2)		
+	variable B1, B2
+	//takes two signed integer bytes, and converts them to 16 bit signed integer, little-endian, two's complement signed interpretation
+	//assume B1 is first byte for little-endian should be unsigned integer as it is the smaller part of the data
+	//assume B2 contains the larger valeus and sign
+	variable unsB1=(B1>=0) ? B1 : (256 + B1)	//this should convert two's complement signed interpretation to Usigned interpretation
+	// see : http://en.wikipedia.org/wiki/Signed_number_representations
+	//good description is also : http://www.mathcs.emory.edu/~cheung/Courses/561/Syllabus/1-Intro/2-data-repr/signed.html
+	return unsB1 + 256*B2
+end
+static Function NI1A_Conv4Bytes(B1,B2, B3, B4)		
+	variable B1, B2, B3, B4
+	//takes four signed integer bytes, and converts them to 32 bit signed integer, little-endian, two's complement signed interpretation
+	//assume B1, B2, B3 are first bytes for little-endian should be unsigned integer as it is the smaller part of the data
+	//assume B4 contains the larger valeus and sign
+	variable unsB1=(B1>=0) ? B1 : (256 + B1)	//this should convert two's complement signed interpretation to Usigned interpretation
+	variable unsB2=(B2>=0) ? B2 : (256 + B2)	//this should convert two's complement signed interpretation to Usigned interpretation
+	variable unsB3=(B3>=0) ? B3 : (256 + B3)	//this should convert two's complement signed interpretation to Usigned interpretation
+	// see : http://en.wikipedia.org/wiki/Signed_number_representations
+	//good description is also : http://www.mathcs.emory.edu/~cheung/Courses/561/Syllabus/1-Intro/2-data-repr/signed.html
+	return unsB1 + 256*unsB2 + 256*256*unsB3 + 256*256*256*B4
+end
