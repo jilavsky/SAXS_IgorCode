@@ -1,13 +1,14 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.65
+#pragma version=1.66
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-  
-  //1.65 minor changes, timed with Indra 2 release. 
+ 
+ //1.66 fixed ListProRoutine which had troubles with links 
+ //1.65 minor changes, timed with Indra 2 release. 
  //1.64 match current release number 
  //1.61 added Monthly check for updates and reminder with citations 
  //1.60  15idd support changes
@@ -863,9 +864,7 @@ end
 static Function NI1_ListProcFiles(PathStr, resetWaves)
 	string PathStr
 	variable resetWaves
-	
 	String abortMessage	//HR Used if we have to abort because of an unexpected error
-	
 	string OldDf=GetDataFolder(1)
 	//create location for the results waves...
 	NewDataFolder/O/S root:Packages
@@ -882,8 +881,6 @@ static Function NI1_ListProcFiles(PathStr, resetWaves)
 			Make/O/N=0/T PathToFiles
 			Make/O/N=0 FileVersions
 	endif
-	
-	
 	//if this was first call, now the waves are gone.
 	//and now we need to create the output waves
 	Wave/Z/T FileNames
@@ -905,10 +902,8 @@ static Function NI1_ListProcFiles(PathStr, resetWaves)
 		Print abortMessage	// To make debugging easier
 		Abort abortMessage
 	endif
-
 	//list al items in this path
 	string ItemsInTheFolder= IndexedFile(tempPath,-1,"????")+IndexedDir(tempPath, -1, 0 )
-	
 	//HR If there is a shortcut in "Igor Procedures", ItemsInTheFolder will include something like "HDF5 Browser.ipf.lnk". Windows shortcuts are .lnk files.	
 	
 	//remove all . files. 
@@ -927,7 +922,6 @@ static Function NI1_ListProcFiles(PathStr, resetWaves)
 		tempFileName = stringfromlist(i,ItemsInTheFolder)
 		GetFileFolderInfo/Z/Q/P=tempPath tempFileName
 		isItXOP = IamOnMac * stringmatch(tempFileName, "*xop*" )
-		
 		if(V_isAliasShortcut)
 			//HR If tempFileName is "HDF5 Browser.ipf.lnk", or any other shortcut to a file, S_aliasPath is a path to a file, not a folder.
 			//HR Thus the "NewPath tempPath" command will fail.
@@ -948,6 +942,7 @@ static Function NI1_ListProcFiles(PathStr, resetWaves)
 					FileNames[numpnts(FileNames)] = tempFileName
 					PathToFiles[numpnts(FileNames)] = tempPathStr
 					//try to get version from #pragma version = ... This seems to be the most robust way I found...
+					NewPath/Q/O tempPath, tempPathStr
 					if(stringmatch(tempFileName, "*.ipf"))
 						Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
 						sleep/s (0.02)
