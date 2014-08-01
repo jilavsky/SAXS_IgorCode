@@ -1,5 +1,8 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=0.26
+#include <Peak AutoFind>
+
+
 Constant IN3_FlyImportVersionNumber=0.19
 
 
@@ -9,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.27 Attempt to fix vibrations when happen... 
 //0.26 Added three modes for FlyScans (Array, Trajectory, Fixed)
 //0.25 modified to handle too long file anmes as users cannot learn not to do this... 
 //0.24 modified to use Rebinninng procedure from General procedures - requires Gen Proc version 1.71 nad higher
@@ -370,7 +374,7 @@ Function IN3_FlyScanLoadHdf5File()
 				if(DataFolderExists(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName))
 					DoAlert /T="Folder name conflict" 1, "Folder : "+shortFileName+" already exists, overwrite (Yes) it or create unique name (No)?"
 					if(V_Flag==1)
-						KillDataFolder  $(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName)
+						KillDataFolder/Z  $(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName)
 					elseif(V_Flag==2)
 						tmpDtaFldr = GetDataFolder(1)
 						setDataFolder (SpecFileName+"_Fly")
@@ -384,7 +388,7 @@ Function IN3_FlyScanLoadHdf5File()
 				if(DataFolderExists(targetFldrname))
 				//	DoAlert /T="RAW data folder exists" 2, "FOlder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
 				//	if(V_Flag==1)
-						KillDataFolder targetFldrname
+						KillDataFolder/Z targetFldrname
 				//		MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				//	elseif(V_Flag==2)
 //						string OldDf1=getDataFolder(1)
@@ -403,7 +407,7 @@ Function IN3_FlyScanLoadHdf5File()
 				
 				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				print "Imported HDF5 file : "+RawFolderWithData
-#if(exists("AfterFlyImportHook")==6)
+#if(exists("AfterFlyImportHook")==6) 
 			AfterFlyImportHook(RawFolderWithData)
 #endif	
 				if(ReduceXPCSdata)
@@ -522,6 +526,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		Wave updMaskR5 = :entry:metadata:upd_amp_change_mask_time4
 		TimeRangeAfterUPD = {updMaskR1[0],updMaskR2[0],updMaskR3[0],updMaskR4[0],updMaskR5[0]}
 		TimeRangeAfterI0 = {0,0,0,0,0}
+		//Ar positions read at 10Hz 
+		Wave changes_AR_PSOpulse = :entry:flyScan:changes_AR_PSOpulse
+		Wave changes_AR_angle = :entry:flyScan:changes_AR_angle
 	endif
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
@@ -562,6 +569,16 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 			Abort "Unknown data collection method" 
 		endif
 	endif
+	//let's figure out, if all worked as expected. test for now.
+	Duplicate/O changes_AR_PSOpulse, AR_PSOpulse
+	Duplicate/O changes_AR_angle, AR_angle
+	Duplicate/O ArValues, Ar_encoder	
+	Duplicate/O 	changes_AR_angle, DiffARValues
+	variable EndOFData = BinarySearch(AR_angle, 0.1)
+	DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
+	//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from. 
+	IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
+	IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
 	Duplicate/O ArValues, Ar_encoder	
 	redimension/D MeasTime, Monitor, USAXS_PD
 	redimension/S PD_range, I0gain
@@ -622,6 +639,220 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	setDataFolder OldDf
 	return SpecFileName
 end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
+	wave PSO_Wave, AnglesWave
+	
+	variable i, j, jstart, NumNANsRemoved, NumPointsFixed
+	//first remove all points which have 0 chan in them (except the last one). Any motion here is before we start moving.  
+	For(i=0;i<numpnts(PSO_Wave);i+=1)
+		if(PSO_Wave[i]==0 && PSO_Wave[i+1]==0)
+			PSO_Wave[i]=NaN
+			NumNANsRemoved+=1
+		else
+			break
+		endif
+	endfor
+	//note, now we may need to clean up the end of same positions in PSO pulse, which is indication, that we had vibrations at this time.,..
+	For(i=numpnts(PSO_Wave)-1;i>0;i-=1)
+		if((PSO_Wave[i]-PSO_Wave[i-1])<0.5)
+			PSO_Wave[i]=NaN
+			NumNANsRemoved+=1
+		else
+			break
+		endif
+	endfor
+	IN2G_RemoveNaNsFrom2Waves(PSO_Wave, AnglesWave)
+	//now fix the hickups...
+	//Duplicate/O PSO_Wave, PSO_WaveBackup
+	Differentiate/METH=2 PSO_Wave/D=PSO_Wave_DIF
+	jstart=-1
+	For(i=0;i<numpnts(PSO_Wave_DIF);i+=1)
+		if(PSO_Wave_DIF[i]==0)
+			j+=1
+			if(jstart<0)
+				jstart=i-1
+			endif
+			NumPointsFixed+=1
+		else			
+			if(j>1&& (PSO_Wave_DIF[jstart+j+1]>2))			//need tyo aoid counting cases when the stage is within one PSO pulse for long time. 	
+				PSO_Wave[jstart,jstart+j] = ceil(PSO_Wave[jstart]+ ((p-jstart)/(j+1))*(PSO_Wave_DIF[jstart+j+1]))
+			else
+				NumPointsFixed-=j
+			endif
+			j=0
+			jstart=-1
+		endif
+	endfor	
+	Print "PSO_Angles data needed to remove "+num2str(NumNANsRemoved)+" start/end points and redistribute Stale PSO pulses over "+num2str(NumPointsFixed)+" points"
+	KillWaves PSO_Wave_DIF
+end 
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
+	wave AR_encoder,AR_PSOpulse,AR_angle
+	
+	duplicate/Free AR_angle, DiffARValues, DiffARValuesNorm
+	DiffARValues[1,numpnts(DiffARValues)-2] = (AR_angle - Ar_encoder[AR_PSOpulse[p]])
+	DiffARValuesNorm[1,numpnts(DiffARValues)-2] = (AR_angle - Ar_encoder[AR_PSOpulse[p]])/(Ar_encoder[AR_PSOpulse[p]]-Ar_encoder[AR_PSOpulse[p]-1])
+	DiffARValues[0]=DiffARValues[1]
+	DiffARValuesNorm[0]=DiffARValuesNorm[1]
+	Duplicate/Free DiffARValuesNorm,DiffARValues_Smooth
+	Smooth/M=0 2, DiffARValues_Smooth
+	Differentiate/METH=2 DiffARValues_Smooth/D=DiffARValues_SMDIF
+	DiffARValues_SMDIF=DiffARValues_SMDIF[p]*(1-p/numpnts(DiffARValues_SMDIF))
+	DiffARValues_SMDIF*=-1		//convert minima to maxima...
+	WAVE/Z wx=$("_calculated_")
+	Variable/C estimates= EstPeakNoiseAndSmfact(DiffARValues_SMDIF,0, 0.5*numpnts(DiffARValues_SMDIF)-1)
+	Variable noiselevel=real(estimates)
+	Variable smoothingFactor=imag(estimates)
+	variable PeaksFound=IN3_AutoFindPeaksWorker(DiffARValues_SMDIF,wx , 0, numpnts(DiffARValues_SMDIF)-1, 100, 3, noiseLevel, smoothingFactor)
+	if(PeaksFound>0)
+		wave W_AutoPeakInfo
+		variable i, numPks, posPnt, StartPnt, EndPnt, MaxValue, WidthOfPeak
+		numPks = DimSize(W_AutoPeakInfo, 0)
+		//need to srort this since it seems not to come sorted...
+		make/O/N=(numPks) PeakPositionsWv, PeakWidthWv,MaxValueWv
+		PeakPositionsWv = W_AutoPeakInfo[p][0]
+		PeakWidthWv = W_AutoPeakInfo[p][1]
+		MaxValueWv = W_AutoPeakInfo[p][2]
+		sort PeakPositionsWv, PeakPositionsWv, PeakWidthWv,MaxValueWv
+		//clear up peaks too low (less then 0.5 MaxValue) 
+		For(i=0;i<numpnts(MaxValueWv);i+=1)
+			if(MaxValueWv[i]<0.5)
+				MaxValueWv[i]=Nan
+			endif
+		endfor
+		IN2G_RemoveNaNsFrom3Waves(PeakPositionsWv, PeakWidthWv,MaxValueWv)
+		numPks=numpnts(PeakPositionsWv)
+		if(numPks>0)
+			make/O/N=(numPks+1,3) RemoveInformation		//q=0 is average value before teh first point, q=1 is position of the first point, q=2 is position of the last point
+			// if q=1 = value of last point it's value till the end. 
+			RemoveInformation=0
+			variable priorAveStartP, NumPeaks
+			priorAveStartP = 2
+			NumPeaks=0
+			For(i=0;i<numPks;i+=1)
+				//locate the peaks start and end and create list of points to remove from 
+		//		print "Position"+num2str(W_AutoPeakInfo[i][0])
+		//		print "Width "+num2str(W_AutoPeakInfo[i][1])
+				MaxValue = MaxValueWv[i]
+				MaxValue = (MaxValue/20>0.5) ? (MaxValue/20>0.5) : 0.5
+				posPnt=PeakPositionsWv[i]
+				WidthOfPeak = PeakWidthWv[i]
+				StartPnt=floor(posPnt-1.3*PeakWidthWv[i])
+				EndPnt = ceil(posPnt+1.3*PeakWidthWv[i])
+			//	print "Height "+num2str(W_AutoPeakInfo[i][2])
+			//	FindPeak /B=2 /M=2/N/P/R=(StartPnt,EndPnt) DiffARValues_SMDIF
+				FindLevels /D=FIndLevelsPeak/Q /N=2 /P  /R=(StartPnt,EndPnt) DiffARValues_SMDIF, MaxValue
+				Wave FIndLevelsPeak
+				if (numpnts(FIndLevelsPeak)>1)
+					//print "Start p : "+num2str(floor(FIndLevelsPeak[0])) + "     End p : "+num2str(ceil(FIndLevelsPeak[1]))
+					RemoveInformation[i][1]	= AR_PSOpulse[floor(FIndLevelsPeak[0])]
+					RemoveInformation[i][2]	= AR_PSOpulse[ceil(FIndLevelsPeak[1])]
+					RemoveInformation[i][0]	= mean(DiffARValues , priorAveStartP, FIndLevelsPeak[0])
+					priorAveStartP = FIndLevelsPeak[1]+1
+					NumPeaks+=1
+				endif
+			endfor
+			RemoveInformation[NumPeaks][1]	= AR_PSOpulse(numpnts(AR_PSOpulse)-1)
+			RemoveInformation[NumPeaks][2]	= inf
+			RemoveInformation[NumPeaks][0]	= mean(DiffARValues , priorAveStartP, priorAveStartP+200)			//avoid end effects, seems to bomb at the end due to speed. 
+			print "Found following oscillations areas : line 0 - average offset before oscillation, line 1 start point, line 2 end point."
+			print RemoveInformation
+			IN3_FixTheOscilllations()
+			print "Attempted to remove the oscillations"
+			IN3_FailedPositionsFixedGraph()
+		else
+			print "NO osciallations found, no attempt to fix them" 
+			killwaves /Z RemoveInformation
+		endif
+	else
+		print "NO osciallations found, no attempt to fix them" 
+		killwaves /Z RemoveInformation
+	endif
+	KIllwaves/Z DiffARValues_SMDIF, RemoveInformation, W_AutoPeakInfo, FIndLevelsPeak, PeakPositionsWv, PeakWidthWv,MaxValueWv
+end
+	
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN3_AutoFindPeaksWorker(w, wx, pBegin, pEnd, maxPeaks, minPeakPercent, noiseLevel, smoothingFactor)
+	WAVE w
+	WAVE/Z wx
+	Variable pBegin, pEnd
+	Variable maxPeaks, minPeakPercent, noiseLevel, smoothingFactor
+	
+	Variable peaksFound= AutoFindPeaks(w,pBegin,pEnd,noiseLevel,smoothingFactor,maxPeaks)
+	if( peaksFound > 0 )
+		WAVE W_AutoPeakInfo
+		// Remove too-small peaks
+		peaksFound= TrimAmpAutoPeakInfo(W_AutoPeakInfo,minPeakPercent/100)
+		if( peaksFound > 0 )
+			// Make waves to display in a graph
+			// The x values in W_AutoPeakInfo are still actually points, not X
+			Make/O/N=(peaksFound) WA_PeakCentersY = w[W_AutoPeakInfo[p][0]]
+			AdjustAutoPeakInfoForX(W_AutoPeakInfo,w,wx)
+			Make/O/N=(peaksFound) WA_PeakCentersX = W_AutoPeakInfo[p][0]
+		endif
+	endif
+	if( peaksFound < 1 )
+		return 0
+	endif
+	return peaksFound
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IN3_FailedPositionsFixedGraph() : Graph
+	PauseUpdate; Silent 1		// building window...
+	wave MeasTime
+	wave Ar_encoder
+	Display/K=1 /W=(640,52,1250,753) MeasTime vs Ar_encoder
+	ModifyGraph log=1
+	SetAxis left 266169.802796858,26038485.0119416
+	SetAxis bottom 10.895,10.914
+EndMacro
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IN3_FixTheOscilllations()
+	//uses information from prior code which finds oscillations and removes them.
+	Wave MeasTime
+	Wave Monitor
+	Wave USAXS_PD
+	Wave PD_range
+	Wave I0gain
+	Wave/Z RemoveInformation
+	if(WaveExists(RemoveInformation))
+		Wave Ar_encoder	
+		Variable i, StartARshift, StartRemoval, EndRemoval, ShiftArBy
+		StartARshift = 0
+		For(i=0;i<dimsize(RemoveInformation,0);i+=1)
+			if(RemoveInformation[i][1]>0)		//seems to get some errors with lines containing only 0
+				StartRemoval= RemoveInformation[i][1]
+				EndRemoval=RemoveInformation[i][2]
+				ShiftArBy=RemoveInformation[i][0]
+				Ar_encoder[StartARshift,StartRemoval-1]+=ShiftArBy
+				if(numtype(EndRemoval)==0)
+					Ar_encoder[StartRemoval,EndRemoval]=NaN
+				endif
+				StartARshift=EndRemoval+1
+			endif
+		endfor
+		IN2G_RemoveNaNsFrom6Waves(MeasTime,Monitor,USAXS_PD,PD_range,I0gain,Ar_encoder)
+	else
+	//	print "Nothing to fix here"
+	endif
+end
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
