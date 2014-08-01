@@ -667,7 +667,7 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 	endfor
 	IN2G_RemoveNaNsFrom2Waves(PSO_Wave, AnglesWave)
 	//now fix the hickups...
-	//Duplicate/O PSO_Wave, PSO_WaveBackup
+	Duplicate/O PSO_Wave, PSO_WaveBackup
 	Differentiate/METH=2 PSO_Wave/D=PSO_Wave_DIF
 	jstart=-1
 	For(i=0;i<numpnts(PSO_Wave_DIF);i+=1)
@@ -688,7 +688,7 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 		endif
 	endfor	
 	Print "PSO_Angles data needed to remove "+num2str(NumNANsRemoved)+" start/end points and redistribute Stale PSO pulses over "+num2str(NumPointsFixed)+" points"
-	KillWaves PSO_Wave_DIF
+	//KillWaves PSO_Wave_DIF
 end 
 
 //**********************************************************************************************************
