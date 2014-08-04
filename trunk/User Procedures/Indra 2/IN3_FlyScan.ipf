@@ -44,6 +44,26 @@ Constant AmplifierRange5BlockTime=0.4
 
 
 
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function AfterFlyImportHook(RawFolderWithData)
+	string RawFolderWithData
+	
+	//print RawFolderWithData
+	//go to folder and fins mca1, display it and see, what  is happening. 
+	wave timePulses=$(RawFolderWithData+":entry:flyScan:mca1")
+	wave AnglePositions=$(RawFolderWithData+":entry:flyScan:Ar_PulsePositions")
+	display/K=1 timePulses 
+//	display/K=1 timePulses vs AnglePositions
+//	SetAxis bottom 10.895,10.914
+	ModifyGraph log=1
+	DoWindow/C $(stringFromList(3,RawFolderWithData,":")) 
+end
+
+
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -323,12 +343,12 @@ Function IN3_FlyScanLoadHdf5File()
 			shortFileName = ReplaceString("."+DataExtension, FileName, "")
 			//check if such data exist already...
 			ListOfExistingFolders = DataFolderDir(1)
-			if(StringMatch(ListOfExistingFolders, "*"+shortFileName+"*" ))
-				DoAlert /T="Non unique name alert..." 1, "Raw folder with "+shortFileName+" name already found, Overwrite?" 
-				if(V_Flag==3)
-					return 0
-				endif	
-			endif
+//			if(StringMatch(ListOfExistingFolders, "*"+shortFileName+"*" ))
+//				DoAlert /T="Non unique name alert..." 1, "Raw folder with "+shortFileName+" name already found, Overwrite?" 
+//				if(V_Flag==3)
+//					return 0
+//				endif	
+//			endif
 			CreateNewHDF5Browser()
 		 	browserName = WinName(0, 64)
 		 	DoWindow/Hide=1 browserName
@@ -356,7 +376,7 @@ Function IN3_FlyScanLoadHdf5File()
 					RawFolderWithData = GetDataFOlder(1)+TempStrName
 					RawFolderWithFldr = GetDataFolder(1)
 				else		//something failed. Expect too long name
-						Abort "Cannot find raw data, somehting went worng. Send Nexus file to Jan so we can get this fixed."
+						Abort "Cannot find raw data, something went wrong. Send Nexus file to Jan so we can get this fixed."
 				endif
 				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
 					variable/g $(RawFolderWithData+":HdfWriterVersion")
@@ -371,43 +391,43 @@ Function IN3_FlyScanLoadHdf5File()
 					TargetRawFoldername = "Mythen_data"
 				endif
 				NewDataFolder/O $(TargetRawFoldername)
-				if(DataFolderExists(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName))
-					DoAlert /T="Folder name conflict" 1, "Folder : "+shortFileName+" already exists, overwrite (Yes) it or create unique name (No)?"
-					if(V_Flag==1)
-						KillDataFolder/Z  $(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName)
-					elseif(V_Flag==2)
-						tmpDtaFldr = GetDataFolder(1)
-						setDataFolder (SpecFileName+"_Fly")
-						shortNameBckp = shortFileName
-						shortFileName = UniqueName(shortFileName, 11, 0 )
-					      setDataFolder tmpDtaFldr
-					      RenameDataFolder $(shortNameBckp), $(shortFileName)
-					endif
-				endif
+//				if(DataFolderExists(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName))
+//					DoAlert /T="Folder name conflict" 1, "Folder : "+shortFileName+" already exists, overwrite (Yes) it or create unique name (No)?"
+//					if(V_Flag==1)
+//						KillDataFolder/Z  $(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName)
+//					elseif(V_Flag==2)
+//						tmpDtaFldr = GetDataFolder(1)
+//						setDataFolder (":"+possiblyquoteName(TargetRawFoldername))
+//						shortNameBckp = shortFileName
+//						shortFileName = UniqueName(shortFileName, 11, 0 )
+//					      setDataFolder tmpDtaFldr
+//					      RenameDataFolder $(shortNameBckp), $(shortFileName)
+//					endif
+//				endif
 				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				if(DataFolderExists(targetFldrname))
-				//	DoAlert /T="RAW data folder exists" 2, "FOlder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
-				//	if(V_Flag==1)
+					DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
+					if(V_Flag==1)
 						KillDataFolder/Z targetFldrname
-				//		MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
-				//	elseif(V_Flag==2)
-//						string OldDf1=getDataFolder(1)
-//						SetDataFolder TargetRawFoldername
-//						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrName,1,1), 11, 0 ))
-//						SetDataFolder OldDf1		
-//						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
-//						TempStrName = TempStrNameNew		
-//					else
-//						Abort 
-//					endif
-//				else
-//					MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+						MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+					elseif(V_Flag==2)
+						string OldDf1=getDataFolder(1)
+						SetDataFolder TargetRawFoldername
+						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrName,1,1), 11, 0 ))
+						SetDataFolder OldDf1		
+						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
+						TempStrName = TempStrNameNew		
+					else
+						Abort 
+					endif
+				else
+					MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				endif
-				MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+				//MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				
 				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				print "Imported HDF5 file : "+RawFolderWithData
-#if(exists("AfterFlyImportHook")==6) 
+#if(exists("AfterFlyImportHook")==6)  
 			AfterFlyImportHook(RawFolderWithData)
 #endif	
 				if(ReduceXPCSdata)
@@ -559,9 +579,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 			Duplicate/Free TimeWv, ArValues
 			Redimension /D ArValues
 			ArValues = abs(Ar_increment[0])*p
-		elseif(AR_PulseMode[0]==1)		// this is using PSO pulse positions, typically 2-8k points. 
+		elseif(AR_PulseMode[0]==1)		// this is using PSO pulse positions, typically 2-8k points, need to also trim extra end as we always save 8k points
 			Duplicate/Free AR_PulsePositions, ArValues
-			Redimension /D ArValues
+			Redimension /D/N=(AR_pulses[0]) ArValues
 		elseif(AR_PulseMode[0]==2)		//this is using trajectory way points, typically 200 points
 			Duplicate/Free AR_waypoints, ArValues
 			Redimension /D ArValues
@@ -667,7 +687,7 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 	endfor
 	IN2G_RemoveNaNsFrom2Waves(PSO_Wave, AnglesWave)
 	//now fix the hickups...
-	Duplicate/O PSO_Wave, PSO_WaveBackup
+	//Duplicate/O PSO_Wave, PSO_WaveBackup
 	Differentiate/METH=2 PSO_Wave/D=PSO_Wave_DIF
 	jstart=-1
 	For(i=0;i<numpnts(PSO_Wave_DIF);i+=1)
@@ -688,96 +708,97 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 		endif
 	endfor	
 	Print "PSO_Angles data needed to remove "+num2str(NumNANsRemoved)+" start/end points and redistribute Stale PSO pulses over "+num2str(NumPointsFixed)+" points"
-	//KillWaves PSO_Wave_DIF
+	KillWaves PSO_Wave_DIF
 end 
 
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-Function IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
-	wave AR_encoder,AR_PSOpulse,AR_angle
-	
-	duplicate/Free AR_angle, DiffARValues, DiffARValuesNorm
-	DiffARValues[1,numpnts(DiffARValues)-2] = (AR_angle - Ar_encoder[AR_PSOpulse[p]])
-	DiffARValuesNorm[1,numpnts(DiffARValues)-2] = (AR_angle - Ar_encoder[AR_PSOpulse[p]])/(Ar_encoder[AR_PSOpulse[p]]-Ar_encoder[AR_PSOpulse[p]-1])
-	DiffARValues[0]=DiffARValues[1]
-	DiffARValuesNorm[0]=DiffARValuesNorm[1]
-	Duplicate/Free DiffARValuesNorm,DiffARValues_Smooth
-	Smooth/M=0 2, DiffARValues_Smooth
-	Differentiate/METH=2 DiffARValues_Smooth/D=DiffARValues_SMDIF
-	DiffARValues_SMDIF=DiffARValues_SMDIF[p]*(1-p/numpnts(DiffARValues_SMDIF))
-	DiffARValues_SMDIF*=-1		//convert minima to maxima...
-	WAVE/Z wx=$("_calculated_")
-	Variable/C estimates= EstPeakNoiseAndSmfact(DiffARValues_SMDIF,0, 0.5*numpnts(DiffARValues_SMDIF)-1)
-	Variable noiselevel=real(estimates)
-	Variable smoothingFactor=imag(estimates)
-	variable PeaksFound=IN3_AutoFindPeaksWorker(DiffARValues_SMDIF,wx , 0, numpnts(DiffARValues_SMDIF)-1, 100, 3, noiseLevel, smoothingFactor)
-	if(PeaksFound>0)
-		wave W_AutoPeakInfo
-		variable i, numPks, posPnt, StartPnt, EndPnt, MaxValue, WidthOfPeak
-		numPks = DimSize(W_AutoPeakInfo, 0)
-		//need to srort this since it seems not to come sorted...
-		make/O/N=(numPks) PeakPositionsWv, PeakWidthWv,MaxValueWv
-		PeakPositionsWv = W_AutoPeakInfo[p][0]
-		PeakWidthWv = W_AutoPeakInfo[p][1]
-		MaxValueWv = W_AutoPeakInfo[p][2]
-		sort PeakPositionsWv, PeakPositionsWv, PeakWidthWv,MaxValueWv
-		//clear up peaks too low (less then 0.5 MaxValue) 
-		For(i=0;i<numpnts(MaxValueWv);i+=1)
-			if(MaxValueWv[i]<0.5)
-				MaxValueWv[i]=Nan
-			endif
-		endfor
-		IN2G_RemoveNaNsFrom3Waves(PeakPositionsWv, PeakWidthWv,MaxValueWv)
-		numPks=numpnts(PeakPositionsWv)
-		if(numPks>0)
-			make/O/N=(numPks+1,3) RemoveInformation		//q=0 is average value before teh first point, q=1 is position of the first point, q=2 is position of the last point
-			// if q=1 = value of last point it's value till the end. 
-			RemoveInformation=0
-			variable priorAveStartP, NumPeaks
-			priorAveStartP = 2
-			NumPeaks=0
-			For(i=0;i<numPks;i+=1)
-				//locate the peaks start and end and create list of points to remove from 
-		//		print "Position"+num2str(W_AutoPeakInfo[i][0])
-		//		print "Width "+num2str(W_AutoPeakInfo[i][1])
-				MaxValue = MaxValueWv[i]
-				MaxValue = (MaxValue/20>0.5) ? (MaxValue/20>0.5) : 0.5
-				posPnt=PeakPositionsWv[i]
-				WidthOfPeak = PeakWidthWv[i]
-				StartPnt=floor(posPnt-1.3*PeakWidthWv[i])
-				EndPnt = ceil(posPnt+1.3*PeakWidthWv[i])
-			//	print "Height "+num2str(W_AutoPeakInfo[i][2])
-			//	FindPeak /B=2 /M=2/N/P/R=(StartPnt,EndPnt) DiffARValues_SMDIF
-				FindLevels /D=FIndLevelsPeak/Q /N=2 /P  /R=(StartPnt,EndPnt) DiffARValues_SMDIF, MaxValue
-				Wave FIndLevelsPeak
-				if (numpnts(FIndLevelsPeak)>1)
-					//print "Start p : "+num2str(floor(FIndLevelsPeak[0])) + "     End p : "+num2str(ceil(FIndLevelsPeak[1]))
-					RemoveInformation[i][1]	= AR_PSOpulse[floor(FIndLevelsPeak[0])]
-					RemoveInformation[i][2]	= AR_PSOpulse[ceil(FIndLevelsPeak[1])]
-					RemoveInformation[i][0]	= mean(DiffARValues , priorAveStartP, FIndLevelsPeak[0])
-					priorAveStartP = FIndLevelsPeak[1]+1
-					NumPeaks+=1
-				endif
-			endfor
-			RemoveInformation[NumPeaks][1]	= AR_PSOpulse(numpnts(AR_PSOpulse)-1)
-			RemoveInformation[NumPeaks][2]	= inf
-			RemoveInformation[NumPeaks][0]	= mean(DiffARValues , priorAveStartP, priorAveStartP+200)			//avoid end effects, seems to bomb at the end due to speed. 
-			print "Found following oscillations areas : line 0 - average offset before oscillation, line 1 start point, line 2 end point."
-			print RemoveInformation
-			IN3_FixTheOscilllations()
-			print "Attempted to remove the oscillations"
-			IN3_FailedPositionsFixedGraph()
-		else
-			print "NO osciallations found, no attempt to fix them" 
-			killwaves /Z RemoveInformation
-		endif
-	else
-		print "NO osciallations found, no attempt to fix them" 
-		killwaves /Z RemoveInformation
-	endif
-	KIllwaves/Z DiffARValues_SMDIF, RemoveInformation, W_AutoPeakInfo, FIndLevelsPeak, PeakPositionsWv, PeakWidthWv,MaxValueWv
-end
+////**********************************************************************************************************
+////**********************************************************************************************************
+////**********************************************************************************************************
+//Function IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
+//	wave AR_encoder,AR_PSOpulse,AR_angle
+//	
+//	duplicate/Free AR_angle, DiffARValues, DiffARValuesNorm
+//	DiffARValues[1,numpnts(DiffARValues)-2] = (AR_angle - Ar_encoder[AR_PSOpulse[p]])
+//	DiffARValuesNorm[1,numpnts(DiffARValues)-2] = (AR_angle - Ar_encoder[AR_PSOpulse[p]])/(Ar_encoder[AR_PSOpulse[p]]-Ar_encoder[AR_PSOpulse[p]-1])
+//	DiffARValues[0]=DiffARValues[1]
+//	DiffARValuesNorm[0]=DiffARValuesNorm[1]
+//	Duplicate/Free DiffARValuesNorm,DiffARValues_Smooth
+//	Smooth/M=0 2, DiffARValues_Smooth
+//	Differentiate/METH=2 DiffARValues_Smooth/D=DiffARValues_SMDIF
+//	DiffARValues_SMDIF=DiffARValues_SMDIF[p]*(1-p/numpnts(DiffARValues_SMDIF))
+//	DiffARValues_SMDIF*=-1		//convert minima to maxima...
+//	WAVE/Z wx=$("_calculated_")
+//	Variable/C estimates= EstPeakNoiseAndSmfact(DiffARValues_SMDIF,0, 0.5*numpnts(DiffARValues_SMDIF)-1)
+//	Variable noiselevel=real(estimates)
+//	Variable smoothingFactor=imag(estimates)
+//	variable PeaksFound=IN3_AutoFindPeaksWorker(DiffARValues_SMDIF,wx , 0, numpnts(DiffARValues_SMDIF)-1, 100, 3, noiseLevel, smoothingFactor)
+//	if(PeaksFound>0)
+//		wave W_AutoPeakInfo
+//		variable i, numPks, posPnt, StartPnt, EndPnt, MaxValue, WidthOfPeak
+//		numPks = DimSize(W_AutoPeakInfo, 0)
+//		//need to srort this since it seems not to come sorted...
+//		make/O/N=(numPks) PeakPositionsWv, PeakWidthWv,MaxValueWv
+//		PeakPositionsWv = W_AutoPeakInfo[p][0]
+//		PeakWidthWv = W_AutoPeakInfo[p][1]
+//		MaxValueWv = W_AutoPeakInfo[p][2]
+//		sort PeakPositionsWv, PeakPositionsWv, PeakWidthWv,MaxValueWv
+//		//clear up peaks too low (less then 0.5 MaxValue) 
+//		For(i=0;i<numpnts(MaxValueWv);i+=1)
+//			if(MaxValueWv[i]<0.5)
+//				MaxValueWv[i]=Nan
+//			endif
+//		endfor
+//		IN2G_RemoveNaNsFrom3Waves(PeakPositionsWv, PeakWidthWv,MaxValueWv)
+//		numPks=numpnts(PeakPositionsWv)
+//		if(numPks>0)
+//			make/O/N=(numPks+1,3) RemoveInformation		//q=0 is average value before teh first point, q=1 is position of the first point, q=2 is position of the last point
+//			// if q=1 = value of last point it's value till the end. 
+//			RemoveInformation=0
+//			variable priorAveStartP, NumPeaks
+//			priorAveStartP = 2
+//			NumPeaks=0
+//			For(i=0;i<numPks;i+=1)
+//				//locate the peaks start and end and create list of points to remove from 
+//		//		print "Position"+num2str(W_AutoPeakInfo[i][0])
+//		//		print "Width "+num2str(W_AutoPeakInfo[i][1])
+//				MaxValue = MaxValueWv[i]
+//				MaxValue = (MaxValue/20>0.5) ? (MaxValue/20>0.5) : 0.5
+//				posPnt=PeakPositionsWv[i]
+//				WidthOfPeak = PeakWidthWv[i]
+//				StartPnt=floor(posPnt-1.3*PeakWidthWv[i])
+//				EndPnt = ceil(posPnt+1.3*PeakWidthWv[i])
+//			//	print "Height "+num2str(W_AutoPeakInfo[i][2])
+//			//	FindPeak /B=2 /M=2/N/P/R=(StartPnt,EndPnt) DiffARValues_SMDIF
+//				FindLevels /D=FIndLevelsPeak/Q /N=2 /P  /R=(StartPnt,EndPnt) DiffARValues_SMDIF, MaxValue
+//				Wave FIndLevelsPeak
+//				if (numpnts(FIndLevelsPeak)>1)
+//					//print "Start p : "+num2str(floor(FIndLevelsPeak[0])) + "     End p : "+num2str(ceil(FIndLevelsPeak[1]))
+//					RemoveInformation[i][1]	= AR_PSOpulse[floor(FIndLevelsPeak[0])]
+//					RemoveInformation[i][2]	= AR_PSOpulse[ceil(FIndLevelsPeak[1])]
+//					RemoveInformation[i][0]	= mean(DiffARValues , priorAveStartP, FIndLevelsPeak[0])
+//					priorAveStartP = FIndLevelsPeak[1]+1
+//					NumPeaks+=1
+//				endif
+//			endfor
+//			RemoveInformation[NumPeaks][1]	= AR_PSOpulse(numpnts(AR_PSOpulse)-1)
+//			RemoveInformation[NumPeaks][2]	= inf
+//			RemoveInformation[NumPeaks][0]	= mean(DiffARValues , priorAveStartP, priorAveStartP+200)			//avoid end effects, seems to bomb at the end due to speed. 
+//			print "Found following oscillations areas : line 0 - average offset before oscillation, line 1 start point, line 2 end point."
+//			print RemoveInformation
+//			IN3_FixTheOscilllations()
+//			print "Attempted to remove the oscillations"
+//			IN3_FailedPositionsFixedGraph()
+//		else
+//			print "NO osciallations found, no attempt to fix them" 
+//			killwaves /Z RemoveInformation
+//		endif
+//	else
+//		print "NO osciallations found, no attempt to fix them" 
+//		killwaves /Z RemoveInformation
+//	endif
+//	KIllwaves/Z DiffARValues_SMDIF, RemoveInformation, W_AutoPeakInfo, FIndLevelsPeak, PeakPositionsWv, PeakWidthWv,MaxValueWv
+//	KIllwaves/Z WA_PeakCentersY,WA_PeakCentersX
+//end
 	
 //**********************************************************************************************************
 //**********************************************************************************************************
