@@ -569,6 +569,8 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Duplicate/O updWv, USAXS_PD
 	Duplicate/O TimeWv, PD_range
 	Duplicate/O TimeWv, I0gain
+	variable OscillationsFound
+	OscillationsFound=0
 	//create AR data
 	if(HdfWriterVersion<1.1)
 		Duplicate/Free TimeWv, ArValues
@@ -582,9 +584,15 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		elseif(AR_PulseMode[0]==1)		// this is using PSO pulse positions, typically 2-8k points, need to also trim extra end as we always save 8k points
 			Duplicate/Free AR_PulsePositions, ArValues
 			Redimension /D/N=(AR_pulses[0]) ArValues
+			if(numpnts(MeasTime)!=numpnts(ArValues))
+				OscillationsFound=1
+			endif
 		elseif(AR_PulseMode[0]==2)		//this is using trajectory way points, typically 200 points
 			Duplicate/Free AR_waypoints, ArValues
 			Redimension /D ArValues
+			if(numpnts(MeasTime)!=numpnts(ArValues))
+				OscillationsFound=1
+			endif
 		else
 			Abort "Unknown data collection method" 
 		endif
@@ -596,10 +604,13 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Duplicate/O 	changes_AR_angle, DiffARValues
 	variable EndOFData = BinarySearch(AR_angle, 0.1)
 	DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
-	//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from. 
-	IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
-	IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
-	Duplicate/O ArValues, Ar_encoder	
+	if(OscillationsFound)
+		//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from. 
+		print "Found that there were likely vibrations during scan, doing fix using PSO channel record" 
+		IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
+		Redimension /D/N=(numpnts(MeasTime)) ArValues
+		IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
+	endif
 	redimension/D MeasTime, Monitor, USAXS_PD
 	redimension/S PD_range, I0gain
 	//need to append the wave notes...
@@ -627,7 +638,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	endif
 	if(AR_PulseMode[0]==0)		//only needed for fixed point spositions, the others are already manageable number of points.
 		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
+//		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
 	endif
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
 	//let's make some standard strings we need.
@@ -676,7 +687,7 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 			break
 		endif
 	endfor
-	//note, now we may need to clean up the end of same positions in PSO pulse, which is indication, that we had vibrations at this time.,..
+	//note, now we may need to clean up the end of same positions in PSO pulse, which is indication, that we had failure somehwere upstream... 
 	For(i=numpnts(PSO_Wave)-1;i>0;i-=1)
 		if((PSO_Wave[i]-PSO_Wave[i-1])<0.5)
 			PSO_Wave[i]=NaN
@@ -698,7 +709,7 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 			endif
 			NumPointsFixed+=1
 		else			
-			if(j>1&& (PSO_Wave_DIF[jstart+j+1]>2))			//need tyo aoid counting cases when the stage is within one PSO pulse for long time. 	
+			if(j>0&& (PSO_Wave_DIF[jstart+j+1]>1))			//need to avoid counting cases when the stage is within one PSO pulse for long time. 	
 				PSO_Wave[jstart,jstart+j] = ceil(PSO_Wave[jstart]+ ((p-jstart)/(j+1))*(PSO_Wave_DIF[jstart+j+1]))
 			else
 				NumPointsFixed-=j
@@ -707,13 +718,81 @@ Function IN3_CleanUpStaleMCAChannel(PSO_Wave, AnglesWave)
 			jstart=-1
 		endif
 	endfor	
-	Print "PSO_Angles data needed to remove "+num2str(NumNANsRemoved)+" start/end points and redistribute Stale PSO pulses over "+num2str(NumPointsFixed)+" points"
+	//now colapse the points where multiple points are same by averaging the points. 
+	Duplicate/Free PSO_Wave, PSOWaveShort, AnglesWaveShort
+	PSOWaveShort=nan
+	AnglesWaveShort=nan
+	variable tempPSO, tempAr, NumSamePts
+	tempPSO=0
+	tempAr=0
+	NumSamePts=0
+	j=0
+	For(i=0;i<numpnts(PSO_Wave)-1;i+=1)
+		if(PSO_Wave[i]==PSO_Wave[i+1])
+			tempPSO+=PSO_Wave[i]
+			tempAr+=AnglesWave[i]
+			NumSamePts+=1
+		else
+			tempPSO+=PSO_Wave[i]
+			tempAr+=AnglesWave[i]
+			NumSamePts+=1
+			PSOWaveShort[j]  = tempPSO/NumSamePts
+			AnglesWaveShort[j]=  tempAr/NumSamePts
+			tempPSO=0
+			tempAr=0
+			NumSamePts=0
+			j+=1
+		endif
+	endfor
+	PSO_Wave=nan
+	AnglesWave=nan
+	IN2G_RemoveNaNsFrom2Waves(PSOWaveShort, AnglesWaveShort)
+	PSO_Wave[0,numpnts(PSOWaveShort)-1] = PSOWaveShort[p]
+//	PSO_Wave[numpnts(PSOWaveShort), numpnts(PSO_Wave)-1]  = PSOWaveShort[numpnts(PSOWaveShort)-1]+p-numpnts(PSOWaveShort)
+	AnglesWave[0,numpnts(PSOWaveShort)-1] = AnglesWaveShort[p]
+//	AnglesWave[numpnts(PSOWaveShort), numpnts(PSO_Wave)-1]  = AnglesWaveShort[numpnts(PSOWaveShort)-1]
+	IN2G_RemoveNaNsFrom2Waves(PSO_Wave, AnglesWave)
 	KillWaves PSO_Wave_DIF
+
+//	variable OrgLength=numpnts(PSO_Wave)
+//	Duplicate/O PSO_Wave, PSO_WaveSmooth
+//	PSO_WaveSmooth[10,numpnts(PSO_Wave)-3] = ((PSO_Wave[p]/(PSO_Wave[p-2]+PSO_Wave[p-1]+PSO_Wave[p+1]+PSO_Wave[p+2])>2)) ? PSO_Wave[p] : (PSO_Wave[p-2]+PSO_Wave[p-1]+PSO_Wave[p+1]+PSO_Wave[p+2])/4 
+//	//IN2G_RemoveNaNsFrom2Waves(PSO_Wave, AnglesWave)
+//	NumNANsRemoved+=OrgLength - numpnts(PSO_Wave)
+	Print "PSO_Angles data needed to remove "+num2str(NumNANsRemoved)+" start/end points and redistribute Stale PSO pulses over "+num2str(NumPointsFixed)+" points"
 end 
 
 ////**********************************************************************************************************
 ////**********************************************************************************************************
 ////**********************************************************************************************************
+Function IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
+	wave AR_encoder,AR_PSOpulse,AR_angle
+	
+	//just fix the AR_encoder to use PSO records
+	//AR_encoder is angle vs PSO pulse as x coordinate
+	//AR_angle is angle and PSO pulse is its PSO coordinate, this is sparse data set. 
+	variable i, CurArVal,  curPnt, curEnc
+	For(i=0;i<numpnts(AR_encoder);i+=1)
+		curPnt = BinarySearchInterp(AR_PSOpulse, i )
+		if(numtype(curPnt)==0)
+			CurArVal = AR_angle[BinarySearchInterp(AR_PSOpulse, i )]
+			curEnc = AR_encoder[i]
+			//and fix the AR_encoder only if the value is different by mroe then "slopy" factor of 2e-5
+			if(abs(AR_encoder[i]-CurArVal)>1e-5)
+				AR_encoder[i] = CurArVal
+			endif
+		else
+			AR_encoder[i] = nan
+		endif
+	endfor
+	
+	
+	
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
 //Function IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
 //	wave AR_encoder,AR_PSOpulse,AR_angle
 //	
@@ -851,7 +930,10 @@ Function IN3_FixTheOscilllations()
 	Wave USAXS_PD
 	Wave PD_range
 	Wave I0gain
+	wave AR_PSOpulse
+	wave AR_angle
 	Wave/Z RemoveInformation
+	variable shiftARPSOpulse
 	if(WaveExists(RemoveInformation))
 		Wave Ar_encoder	
 		Variable i, StartARshift, StartRemoval, EndRemoval, ShiftArBy
@@ -861,9 +943,11 @@ Function IN3_FixTheOscilllations()
 				StartRemoval= RemoveInformation[i][1]
 				EndRemoval=RemoveInformation[i][2]
 				ShiftArBy=RemoveInformation[i][0]
-				Ar_encoder[StartARshift,StartRemoval-1]+=ShiftArBy
+				Ar_encoder[StartARshift,StartRemoval-1]+=ShiftArBy		//?????
 				if(numtype(EndRemoval)==0)
-					Ar_encoder[StartRemoval,EndRemoval]=NaN
+					shiftARPSOpulse= BinarySearch(AR_PSOpulse, EndRemoval)		//this fixes the PSO record
+					AR_PSOpulse[shiftARPSOpulse,numpnts(AR_PSOpulse)-1] -= EndRemoval - StartRemoval
+					Ar_encoder[StartRemoval,1.4*EndRemoval]=NaN
 				endif
 				StartARshift=EndRemoval+1
 			endif
