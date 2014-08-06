@@ -584,12 +584,16 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		elseif(AR_PulseMode[0]==1)		// this is using PSO pulse positions, typically 2-8k points, need to also trim extra end as we always save 8k points
 			Duplicate/Free AR_PulsePositions, ArValues
 			Redimension /D/N=(AR_pulses[0]) ArValues
+			ArValues[1,numpnts(ArValues)-1] = (ArValues[p]+ArValues[p-1])/2		// shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point. 
+			DeletePoints 0, 1, ArValues					//the system does not report any data for first channel. HLe settings.
 			if(numpnts(MeasTime)!=numpnts(ArValues))
 				OscillationsFound=1
 			endif
 		elseif(AR_PulseMode[0]==2)		//this is using trajectory way points, typically 200 points
 			Duplicate/Free AR_waypoints, ArValues
 			Redimension /D ArValues
+			ArValues[1,numpnts(ArValues)-1] = (ArValues[p]+ArValues[p-1])/2		// shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point. 
+			DeletePoints 0, 1, ArValues					//the system does not report any data for first channel. HLe settings.
 			if(numpnts(MeasTime)!=numpnts(ArValues))
 				OscillationsFound=1
 			endif
@@ -597,11 +601,10 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 			Abort "Unknown data collection method" 
 		endif
 	endif
-	//let's figure out, if all worked as expected. test for now.
-	Duplicate/O changes_AR_PSOpulse, AR_PSOpulse
-	Duplicate/O changes_AR_angle, AR_angle
 	Duplicate/O ArValues, Ar_encoder	
-	Duplicate/O 	changes_AR_angle, DiffARValues
+	//let's figure out, if all worked as expected.
+	Duplicate/O/Free changes_AR_PSOpulse, AR_PSOpulse
+	Duplicate/O/Free changes_AR_angle, AR_angle, DiffARValues
 	variable EndOFData = BinarySearch(AR_angle, 0.1)
 	DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
 	if(OscillationsFound)
@@ -636,9 +639,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		endif
 		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
 	endif
-	if(AR_PulseMode[0]==0)		//only needed for fixed point spositions, the others are already manageable number of points.
+	if(AR_PulseMode[0]==0)		//only needed for fixed point positions, the others are already manageable number of points.
 		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
-//		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
+		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
 	endif
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
 	//let's make some standard strings we need.
