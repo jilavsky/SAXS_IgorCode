@@ -49,19 +49,19 @@ Constant AmplifierRange5BlockTime=0.4
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function AfterFlyImportHook(RawFolderWithData)
-	string RawFolderWithData
-	
-	//print RawFolderWithData
-	//go to folder and fins mca1, display it and see, what  is happening. 
-	wave timePulses=$(RawFolderWithData+":entry:flyScan:mca1")
-	wave AnglePositions=$(RawFolderWithData+":entry:flyScan:Ar_PulsePositions")
-	display/K=1 timePulses 
-//	display/K=1 timePulses vs AnglePositions
-//	SetAxis bottom 10.895,10.914
-	ModifyGraph log=1
-	DoWindow/C $(stringFromList(3,RawFolderWithData,":")) 
-end
+//Function AfterFlyImportHook(RawFolderWithData)
+//	string RawFolderWithData
+//	
+//	//print RawFolderWithData
+//	//go to folder and fins mca1, display it and see, what  is happening. 
+//	wave timePulses=$(RawFolderWithData+":entry:flyScan:mca1")
+//	wave AnglePositions=$(RawFolderWithData+":entry:flyScan:Ar_PulsePositions")
+//	display/K=1 timePulses 
+////	display/K=1 timePulses vs AnglePositions
+////	SetAxis bottom 10.895,10.914
+//	ModifyGraph log=1
+//	DoWindow/C $(stringFromList(3,RawFolderWithData,":")) 
+//end
 
 
 //************************************************************************************************************
