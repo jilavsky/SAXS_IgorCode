@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.26
+#pragma version=0.28
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.28 fixed I0 gaincalcualtions (and fixed FLyscan program on LAX). 
 //0.27 Attempt to fix vibrations when happen... 
 //0.26 Added three modes for FlyScans (Array, Trajectory, Fixed)
 //0.25 modified to handle too long file anmes as users cannot learn not to do this... 
@@ -630,7 +631,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		MeasTime*=2e-08				//convert to seconds
 		IN3_FSCreateGainWave(PD_range,ampReqGain,ampGain,mcsChangePnts, TimeRangeAfterUPD,MeasTime)
 		I0gain = I0gainW[0]
-	elseif(HdfWriterVersion==1 && HdfWriterVersion==1.1) 
+	elseif(HdfWriterVersion==1 || HdfWriterVersion==1.1) 
 		MeasTime/=mcaFrequency[0]		//convert to seconds
 		if(AmplifierUsed[0])		//DDPCA300
 			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
@@ -638,6 +639,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 			IN3_FSCreateGainWave(PD_range,DLPCA200_ampReqGain,DLPCA200_ampGain,DLPCA200_mcsChan, TimeRangeAfterUPD,MeasTime)
 		endif
 		IN3_FSCreateGainWave(I0gain,I0_ampReqGain,I0_ampGain,I0_mcsChan, TimeRangeAfterI0,MeasTime)
+		I0gain = 10^(I0gain[p]+5)
 	endif
 	if(AR_PulseMode[0]==0)		//only needed for fixed point positions, the others are already manageable number of points.
 		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
