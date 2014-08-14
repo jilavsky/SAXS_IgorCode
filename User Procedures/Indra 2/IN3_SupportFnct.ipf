@@ -928,8 +928,11 @@ Function IN3_CalculateMSAXSCorrection()
 		NVAR Wavelength=root:Packages:Indra3:Wavelength
 		NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
 		NVAR SampleTransmissionPeakToPeak=root:Packages:Indra3:SampleTransmissionPeakToPeak
-		Wave R_Int
-		Wave BL_R_Int
+		Wave/Z R_Int
+		Wave/Z BL_R_Int
+		if(!WaveExists(R_Int) || !WaveExists(BL_R_Int))
+			abort
+		endif
 		Wave R_Qvec=root:Packages:Indra3:R_Qvec
 		Wave BL_R_Qvec = root:Packages:Indra3:BL_R_Qvec
 	
