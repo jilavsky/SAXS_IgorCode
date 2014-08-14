@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.83
+#pragma version = 1.84
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.84 updated Flyscan for August 2014 and added overwrite for UPD range 5 dark current
 //1.83 updated Flyscan support for April 2014 version, minor improvements
 //1.82 FLyScan support, preliminary version
 //1.81 adds panel check for version and FlyScan data reduction, added check version control on Main panel and Fly Import panel. 
@@ -104,7 +105,7 @@ Function IN3_Initialize()
 	ListOfVariables+="MSAXSStartPoint;MSAXSEndPoint;BlankFWHM;BlankMaximum;"
 
 	ListOfVariables+="SubtractFlatBackground;UserSavedData;"
-	ListOfVariables+="TrimDataStart;TrimDataEnd;"
+	ListOfVariables+="TrimDataStart;TrimDataEnd;OverwriteUPD_DK5;"
 
 	ListOfVariables+="UseModifiedGauss;UseGauss;UseLorenz;"
 
@@ -352,36 +353,39 @@ Function IN3_MainPanel()
 	NVAR UPD_DK3Err=root:packages:Indra3:UPD_DK3Err
 	NVAR UPD_DK4Err=root:packages:Indra3:UPD_DK4Err
 	NVAR UPD_DK5Err=root:packages:Indra3:UPD_DK5Err
-	SetVariable Bkg1,pos={20,390},size={200,22},proc=IN3_UPDParametersChanged,title="Background 1"
+	SetVariable Bkg1,pos={20,380},size={200,18},proc=IN3_UPDParametersChanged,title="Background 1"
 	SetVariable Bkg1,font="Times New Roman",fSize=14,format="%g", labelBack=(65280,0,0)
 	SetVariable Bkg1,limits={0,Inf,UPD_DK1Err},value= root:Packages:Indra3:UPD_DK1
-	SetVariable Bkg2,pos={20,415},size={200,22},proc=IN3_UPDParametersChanged,title="Background 2"
+	SetVariable Bkg2,pos={20,405},size={200,18},proc=IN3_UPDParametersChanged,title="Background 2"
 	SetVariable Bkg2,font="Times New Roman",fSize=14,format="%g",labelBack=(0,52224,0)
 	SetVariable Bkg2,limits={0,Inf,UPD_DK2Err},value= root:Packages:Indra3:UPD_DK2
-	SetVariable Bkg3,pos={20, 440},size={200,22},proc=IN3_UPDParametersChanged,title="Background 3"
+	SetVariable Bkg3,pos={20, 430},size={200,18},proc=IN3_UPDParametersChanged,title="Background 3"
 	SetVariable Bkg3,font="Times New Roman",fSize=14,format="%g",labelBack=(0,0,65280)
 	SetVariable Bkg3,limits={0,Inf,UPD_DK3Err},value= root:Packages:Indra3:UPD_DK3
-	SetVariable Bkg4,pos={20,465},size={200,22},proc=IN3_UPDParametersChanged,title="Background 4"
+	SetVariable Bkg4,pos={20,455},size={200,18},proc=IN3_UPDParametersChanged,title="Background 4"
 	SetVariable Bkg4,font="Times New Roman",fSize=14,format="%g",labelBack=(65280,35512,15384)
 	SetVariable Bkg4,limits={0,Inf,UPD_DK4Err},value= root:Packages:Indra3:UPD_DK4
-	SetVariable Bkg5,pos={20,490},size={200,22},proc=IN3_UPDParametersChanged,title="Background 5"
+	SetVariable Bkg5,pos={20,480},size={200,18},proc=IN3_UPDParametersChanged,title="Background 5"
 	SetVariable Bkg5,font="Times New Roman",fSize=14,format="%g",labelBack=(29696,4096,44800)
 	SetVariable Bkg5,limits={0,Inf,UPD_DK5Err},value= root:Packages:Indra3:UPD_DK5
-	SetVariable Bkg1Err,pos={225,390},size={90,22},title="Err"
+	SetVariable Bkg1Err,pos={225,380},size={90,18},title="Err"
 	SetVariable Bkg1Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(65280,0,0)
 	SetVariable Bkg1Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK1Err,noedit=1
-	SetVariable Bkg2Err,pos={225,415},size={90,22},title="Err"
+	SetVariable Bkg2Err,pos={225,405},size={90,18},title="Err"
 	SetVariable Bkg2Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(0,52224,0)
 	SetVariable Bkg2Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK2Err,noedit=1
-	SetVariable Bkg3Err,pos={225,440},size={90,22},title="Err"
+	SetVariable Bkg3Err,pos={225,430},size={90,18},title="Err"
 	SetVariable Bkg3Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(0,0,65280)
 	SetVariable Bkg3Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK3Err,noedit=1
-	SetVariable Bkg4Err,pos={225,465},size={90,22},title="Err"
+	SetVariable Bkg4Err,pos={225,455},size={90,18},title="Err"
 	SetVariable Bkg4Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(65280,35512,15384)
 	SetVariable Bkg4Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK4Err,noedit=1
-	SetVariable Bkg5Err,pos={225,490},size={90,22},title="Err"
+	SetVariable Bkg5Err,pos={225,480},size={90,18},title="Err"
 	SetVariable Bkg5Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(29696,4096,44800)
 	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK5Err,noedit=1
+	SetVariable Bkg5Overwrite,pos={20,500},size={300,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
+	SetVariable Bkg5Overwrite,font="Times New Roman",fSize=14,format="%g"
+	SetVariable Bkg5Overwrite,limits={0,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
 
 //calibration stuff...
 	SetVariable MaximumIntensity,pos={8,230},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2

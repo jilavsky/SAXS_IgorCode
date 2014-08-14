@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.10
+#pragma version=1.11
 
 
 //*************************************************************************\
@@ -8,8 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
-//1.10 adds FLyScan support
+//1.11 adds Overwrite for UPD dark current range 5
+//1.10 adds FlyScan support
 //1.09 controls for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/pinSAXS correction
 //1.08 added pin diode transmission
 //1.07 added (beta version now) measurement of transmission by using diode on front of the A stage
@@ -411,6 +411,12 @@ static Function IN3_LoadData()
 		string/g PathToRawData = OrigPathToRawData
 		SVAR userFriendlySamplename = root:Packages:Indra3:userFriendlySamplename
 		userFriendlySamplename = OrigSpecComment
+		//fix BK5 is user specified its change...
+		NVAR OverwriteUPD_DK5 = root:Packages:Indra3:OverwriteUPD_DK5
+		if(OverwriteUPD_DK5>0)
+			UPDParameters=ReplaceNumberByKey("Bkg5",UPDParameters, OverwriteUPD_DK5,"=")
+		endif
+
 		
 		SVAR Parameters=root:Packages:Indra3:ListOfASBParameters
 		Parameters=ReplaceStringByKey("Sample",Parameters,DFloc,"=")		//write results into ASBparameters
@@ -1419,6 +1425,16 @@ Function IN3_UPDParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableC
 	if (!cmpstr(ctrlName,"Bkg5"))						//Changing Bkg 5
 		UPDList=ReplaceNumberByKey("Bkg5",UPDList, varNum,"=")
 	endif
+	if (!cmpstr(ctrlName,"Bkg5Overwrite"))						//Changing Bkg 5
+		NVAR UPD_DK5=root:Packages:Indra3:UPD_DK5
+		UPDList=ReplaceNumberByKey("Bkg5",UPDList, varNum,"=")
+		if(varNum>0)
+			UPD_DK5 = varNum
+		else
+			SVAR MeasurementParameters = root:Packages:Indra3:MeasurementParameters
+			UPD_DK5 = NumberByKey("Bkg5", MeasurementParameters, "=", ";")
+		endif
+	endif
 
 
 	IN3_RecalculateData(1)			//and here we recalcualte the R wave
@@ -1487,6 +1503,7 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable Bkg3Err,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Bkg4Err,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Bkg5Err,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable Bkg5Overwrite,win=USAXSDataReduction, disable=(tab!=1)
 
 
 	SetVariable SpecCommand,win=USAXSDataReduction, disable=(tab!=2)
