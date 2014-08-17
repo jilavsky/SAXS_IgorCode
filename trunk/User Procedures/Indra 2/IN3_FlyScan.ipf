@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.28
+#pragma version=0.29
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.29 fixed problem with liberal h5 file names (containing ".") which caused havock in addressing folders.  
 //0.28 fixed I0 gaincalcualtions (and fixed FLyscan program on LAX). 
 //0.27 Attempt to fix vibrations when happen... 
 //0.26 Added three modes for FlyScans (Array, Trajectory, Fixed)
@@ -373,7 +374,7 @@ Function IN3_FlyScanLoadHdf5File()
 				KillWindow $(browserName)
 				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
 				string TempStrName=PossiblyQuoteName(shortFileName)
-				if(DataFolderExists(TempStrName))		//Name exists and folder is fine... 
+				if(DataFolderExists(shortFileName))		//Name exists and folder is fine... 
 					RawFolderWithData = GetDataFOlder(1)+TempStrName
 					RawFolderWithFldr = GetDataFolder(1)
 				else		//something failed. Expect too long name
@@ -410,7 +411,7 @@ Function IN3_FlyScanLoadHdf5File()
 					DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
 					if(V_Flag==1)
 						KillDataFolder/Z targetFldrname
-						MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+						MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
 					elseif(V_Flag==2)
 						string OldDf1=getDataFolder(1)
 						SetDataFolder TargetRawFoldername
@@ -422,9 +423,8 @@ Function IN3_FlyScanLoadHdf5File()
 						Abort 
 					endif
 				else
-					MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+					MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				endif
-				//MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				
 				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				print "Imported HDF5 file : "+RawFolderWithData
@@ -556,6 +556,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	newDataFolder/O/S $(SpecFileName)
 	string FileName, ListOfExistingFolders
 	FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
+	FileName = IN2G_RemoveExtraQuote(FileName,1,1)
 	ListOfExistingFolders = DataFolderDir(1)
 	if(StringMatch(ListOfExistingFolders, "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ))
 		DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
