@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
+#pragma version=1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 added Mask creation for horizon using vaccum chamber in 2014-08
 //1.12 added WAXS controls for 2013-01
 //1.11 fixed minor bug related to USAXS blank checking for pinSAXS caused by version 1.10
 //1.10 modified function searching for thickenss of the sample, added use of pin diode for tranmsission measurements
@@ -318,6 +319,7 @@ Function NI1_15IDDCreateBadPixMask()
 	SetDataFolder root:Packages:Convert2Dto1D
 	Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
+	M_ROIMask[][0,6]=0
 	M_ROIMask[86][17] = 0
 	M_ROIMask[58][112] = 0
 	
