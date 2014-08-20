@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.39
+#pragma version = 1.40
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.40 added to IR2P_CleanUpPackagesFolder to remove als any data in root:raw: folder. Not sure if this is OK, but they are there annoying. 
 //1.39 fixed qis data selection bug. Further fixes to Irena results handling. 
 //1.38 fixed bug which added require errors to qrs data when changed form USAXS data and fixed RegularExpression bug which increased qrs folder search time. 
 //1.37 yet another bug - this time on "any" name type, when the Wv string was not matching the folders. 
@@ -833,7 +834,7 @@ Function/T IR2P_CleanUpPackagesFolder(FolderList)
 		string newList=""
 		For(I=0;i<ItemsInList(FolderList , ";" );i+=1)
 			tempstr=StringFromList(i, FolderList , ";")
-			if(!stringmatch(Tempstr,"root:packages:*"))
+			if(!(stringmatch(Tempstr,"root:packages:*")||stringmatch(Tempstr,"root:raw:*")))
 				NewList+=Tempstr+";"
 			endif
 		endfor

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.34
+#pragma version=2.35
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.34 can read/write canSAS?Nexus files. Can log-bin 2D data and use those. 
+//2.35 moved Dezinger to tab 2 - some users thought, that dezingenring is available only for empty and dark.  
+//2.34 can read/write canSAS/Nexus files. Can log-bin 2D data and use those. 
 //2.33 fixed display of files for CanSAS/Nexus file type
 //2.32 fixed case, when user wanted to display processed data, but the images were created/updated before the processed data were even created. 
 //2.31 added hook functions, required change in main panel function from macro to function and therefore also renaming it. 
@@ -1768,7 +1769,7 @@ Function NI1A_CheckParametersForConv()
 	NVAR StoreDataInIgor= root:Packages:Convert2Dto1D:StoreDataInIgor
 	NVAR ExportDataFromIgor= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
 	if(ExportDataFromIgor+StoreDataInIgor<1)
-		Print "No 1D reduction setting was found... Data are processed, but unless ou save 2D processed image, nothing is saved for you."
+		Print "No 1D reduction setting was found... Data are processed, but unless you save 2D processed image, nothing is saved for you."
 	endif
 	setDataFolder OldDf
 end
@@ -1958,6 +1959,7 @@ Function NI1A_DisplayOneDataSet()
 		NI1A_DisplayStatsLoadedFile("CCDImageToConvert")
 		NI1A_TopCCDImageUpdateColors(1)
 		NI1A_DoDrawingsInto2DGraph()
+		NI1A_CallImageHookFunction()
 		DoWIndow Sample_Information
 		if(V_FLag)
 			AutopositionWindow/M=0/R=CCDImageToConvertFig Sample_Information
@@ -2179,7 +2181,7 @@ Function NI1A_LoadManyDataSetsForConv()
 					NI1A_DisplayLoadedFile()
 					NI1A_TopCCDImageUpdateColors(1)
 					NI1A_DoDrawingsInto2DGraph()
-//					NI1A_Convert2DTo1D()
+					NI1A_CallImageHookFunction()
 					NI1A_Export2DData()
 					DoUpdate
 				endfor
@@ -2216,7 +2218,7 @@ Function NI1A_LoadManyDataSetsForConv()
 						NI1A_DisplayLoadedFile()
 						NI1A_TopCCDImageUpdateColors(1)
 						NI1A_DoDrawingsInto2DGraph()
-//						NI1A_Convert2DTo1D()
+						NI1A_CallImageHookFunction()
 						NI1A_Export2DData()
 						DoUpdate
 					endfor
@@ -2237,7 +2239,7 @@ Function NI1A_LoadManyDataSetsForConv()
 			NI1A_DisplayLoadedFile()
 			NI1A_DisplayTheRight2DWave()
 			NI1A_DoDrawingsInto2DGraph()
-//			NI1A_Convert2DTo1D()
+			NI1A_CallImageHookFunction()
 			NI1A_Export2DData()
 			DoUpdate
 		endif
@@ -2249,6 +2251,13 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+Function NI1A_CallImageHookFunction()
+	if(exists("AfterDisplayImageHook")==6)
+		Execute("AfterDisplayImageHook()")
+	endif
+
+end
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -2378,6 +2387,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 				NI1A_DisplayLoadedFile()
 				NI1A_DisplayTheRight2DWave()
 				NI1A_DoDrawingsInto2DGraph()
+				NI1A_CallImageHookFunction()
 				NI1A_Export2DData()
 				DoUpdate
 			endif
@@ -2500,10 +2510,11 @@ Function NI1A_AveLoadManyDataSetsForConv()
 	KillWaves/Z tempWave
 	note/K CCDImageToConvert
 	note CCDImageToConvert, OldNote
+	NI1A_Convert2DTo1D()
 	NI1A_DisplayLoadedFile()
 	NI1A_DisplayTheRight2DWave()
 	NI1A_DoDrawingsInto2DGraph()
-	NI1A_Convert2DTo1D()
+	NI1A_CallImageHookFunction()
 	NI1A_Export2DData()
 	DoUpdate
 	setDataFolder OldDf
@@ -2935,6 +2946,7 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	DoWindow/C EmptyOrDarkImage
 	AutoPositionWindow/E/M=0/R=NI1A_Convert2Dto1DPanel EmptyOrDarkImage
 	NI1A_TopCCDImageUpdateColors(1)
+	NI1A_CallImageHookFunction()
 	setDataFolder OldDf
 end
 
@@ -3351,97 +3363,107 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable CalibrationFormula,limits={-Inf,Inf,0},value= root:Packages:Convert2Dto1D:CalibrationFormula
 //tab 2 sample and calibration values
 
-	CheckBox DoGeometryCorrection,pos={20,310},size={100,14},title="Geometry correction?",proc=NI1A_CheckProc
+	CheckBox DoGeometryCorrection,pos={20,308},size={100,14},title="Geometry corr?",proc=NI1A_CheckProc
 	CheckBox DoGeometryCorrection,help={"Correct for change in relative angular size and obliqueness of off-axis pixels. Correction to the output intensities to be equivalent to 2-theta scan. "}
 	CheckBox DoGeometryCorrection,variable= root:Packages:Convert2Dto1D:DoGeometryCorrection
 
-	CheckBox DoPolarizationCorrection,pos={220,310},size={100,14},title="Polarization correction?",proc=NI1A_CheckProc
+	CheckBox DoPolarizationCorrection,pos={220,308},size={100,14},title="Polarization corr?",proc=NI1A_CheckProc
 	CheckBox DoPolarizationCorrection,help={"Correct intensities for Polarization correction."}
 	CheckBox DoPolarizationCorrection,variable= root:Packages:Convert2Dto1D:DoPolarizationCorrection
+
+	CheckBox DezingerCCDData,pos={20,328},size={112,14},title="Dezinger 2D Data?"
+	CheckBox DezingerCCDData,help={"Remove speckles from image"}, proc=NI1A_CheckProc
+	CheckBox DezingerCCDData,variable= root:Packages:Convert2Dto1D:DezingerCCDData
+	SetVariable DezingerRatio,pos={150,328},size={100,16},title="Dez. Ratio"
+	SetVariable DezingerRatio,help={"Dezinger ratio for removing speckles (usually 1.5 to 2)"}
+	SetVariable DezingerRatio,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:DezingerRatio
+	SetVariable DezingerHowManyTimes,pos={260,328},size={140,16},title="Dez. N times, N="
+	SetVariable DezingerHowManyTimes,help={"Dezinger multiplicity, runs sample through the dezinger filter so many times..."}
+	SetVariable DezingerHowManyTimes,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:DezingerHowManyTimes
 	
 
-	CheckBox UseSampleThicknFnct,pos={15,340},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseSampleThicknFnct,pos={15,355},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseSampleThicknFnct,help={"Check is thickness=Function(sampleName) for function name input."}
 	CheckBox UseSampleThicknFnct,variable= root:Packages:Convert2Dto1D:UseSampleThicknFnct
-	SetVariable SampleThickness,pos={193,340},size={180,16},title="Sample thickness [mm]"
+	SetVariable SampleThickness,pos={193,355},size={180,16},title="Sample thickness [mm]"
 	SetVariable SampleThickness,help={"Input sample thickness in mm"}
 	SetVariable SampleThickness,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleThickness
-	SetVariable SampleThicknFnct,pos={93,340},size={300,16},title="Sa Thickness =", proc=NI1A_SetVarProcMainPanel
+	SetVariable SampleThicknFnct,pos={93,355},size={300,16},title="Sa Thickness =", proc=NI1A_SetVarProcMainPanel
 	SetVariable SampleThicknFnct,help={"Input function name which returns thickness in mm."}
 	SetVariable SampleThicknFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleThicknFnct
 	
-	CheckBox UseSampleTransmFnct,pos={15,365},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseSampleTransmFnct,pos={15,380},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseSampleTransmFnct,help={"Check is transmission=Function(sampleName) for function name input."}
 	CheckBox UseSampleTransmFnct,variable= root:Packages:Convert2Dto1D:UseSampleTransmFnct
-	SetVariable SampleTransmFnct,pos={93,365},size={300,16},title="Sa Transmis =", proc=NI1A_SetVarProcMainPanel
+	SetVariable SampleTransmFnct,pos={93,380},size={300,16},title="Sa Transmis =", proc=NI1A_SetVarProcMainPanel
 	SetVariable SampleTransmFnct,help={"Input function name which returns transmission (0 - 1)."}
 	SetVariable SampleTransmFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleTransmFnct
-	SetVariable SampleTransmission,pos={193,365},size={180,16},title="Sample transmission"
+	SetVariable SampleTransmission,pos={193,380},size={180,16},title="Sample transmission"
 	SetVariable SampleTransmission,help={"Input sample transmission"}
 	SetVariable SampleTransmission,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleTransmission
 
 
-	CheckBox UseSampleCorrectFnct,pos={15,395},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseSampleCorrectFnct,pos={15,405},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseSampleCorrectFnct,help={"Check is Correction factor=Function(sampleName) for function name input."}
 	CheckBox UseSampleCorrectFnct,variable= root:Packages:Convert2Dto1D:UseSampleCorrectFnct
-	SetVariable SampleCorrectFnct,pos={93,395},size={300,16},title="Corr factor =",proc=NI1A_SetVarProcMainPanel
+	SetVariable SampleCorrectFnct,pos={93,405},size={300,16},title="Corr factor =",proc=NI1A_SetVarProcMainPanel
 	SetVariable SampleCorrectFnct,help={"Input function name which returns Corection/Calibration factor."}
 	SetVariable SampleCorrectFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleCorrectFnct
-	SetVariable CorrectionFactor,pos={193,395},size={180,16},title="Correction factor    "
+	SetVariable CorrectionFactor,pos={193,405},size={180,16},title="Correction factor    "
 	SetVariable CorrectionFactor,help={"Corection factor to multiply Measured data by "}
 	SetVariable CorrectionFactor,limits={1e-32,Inf,0.1},value= root:Packages:Convert2Dto1D:CorrectionFactor
 
-	CheckBox UseSampleMeasTimeFnct,pos={15,418},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseSampleMeasTimeFnct,pos={15,430},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseSampleMeasTimeFnct,help={"Check is Measurement time=Function(sampleName) for function name input."}
 	CheckBox UseSampleMeasTimeFnct,variable= root:Packages:Convert2Dto1D:UseSampleMeasTimeFnct
-	SetVariable SampleMeasTimeFnct,pos={93,418},size={300,16},title="Sample Meas time =",proc=NI1A_SetVarProcMainPanel
+	SetVariable SampleMeasTimeFnct,pos={93,430},size={300,16},title="Sample Meas time =",proc=NI1A_SetVarProcMainPanel
 	SetVariable SampleMeasTimeFnct,help={"Input function name which returns Sample measurement time."}
 	SetVariable SampleMeasTimeFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleMeasTimeFnct
-	SetVariable SampleMeasurementTime,pos={123,418},size={250,16},title="Sample measurement time [s]"
+	SetVariable SampleMeasurementTime,pos={123,430},size={250,16},title="Sample measurement time [s]"
 	SetVariable SampleMeasurementTime,limits={1e-32,Inf,1},value= root:Packages:Convert2Dto1D:SampleMeasurementTime
 
 
-	CheckBox UseEmptyTimeFnct,pos={15,438},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseEmptyTimeFnct,pos={15,455},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseEmptyTimeFnct,help={"Check is Empty meas. time = Function(sampleName) for function name input."}
 	CheckBox UseEmptyTimeFnct,variable= root:Packages:Convert2Dto1D:UseEmptyTimeFnct
-	SetVariable EmptyTimeFnct,pos={93,438},size={300,16},title="Empty meas time =",proc=NI1A_SetVarProcMainPanel
+	SetVariable EmptyTimeFnct,pos={93,455},size={300,16},title="Empty meas time =",proc=NI1A_SetVarProcMainPanel
 	SetVariable EmptyTimeFnct,help={"Input function name which returns Empty measurement time."}
 	SetVariable EmptyTimeFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:EmptyTimeFnct
-	SetVariable EmptyMeasurementTime,pos={123,438},size={250,16},title="Empty measurement time [s]  "
+	SetVariable EmptyMeasurementTime,pos={123,455},size={250,16},title="Empty measurement time [s]  "
 	SetVariable EmptyMeasurementTime,help={"Empty beam measurement time"}
 	SetVariable EmptyMeasurementTime,limits={1e-32,Inf,1},value= root:Packages:Convert2Dto1D:EmptyMeasurementTime
 
-	CheckBox UseBackgTimeFnct,pos={15,460},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseBackgTimeFnct,pos={15,480},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseBackgTimeFnct,help={"Check is Background meas. time = Function(sampleName) for function name input."}
 	CheckBox UseBackgTimeFnct,variable= root:Packages:Convert2Dto1D:UseBackgTimeFnct
-	SetVariable BackgTimeFnct,pos={93,460},size={300,16},title="Backgr meas time =",proc=NI1A_SetVarProcMainPanel
+	SetVariable BackgTimeFnct,pos={93,480},size={300,16},title="Backgr meas time =",proc=NI1A_SetVarProcMainPanel
 	SetVariable BackgTimeFnct,help={"Input function name which returns Background measurement time."}
 	SetVariable BackgTimeFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:BackgTimeFnct
-	SetVariable BackgroundMeasTime,pos={93,460},size={280,16},title="Background measurement time [s]  "
+	SetVariable BackgroundMeasTime,pos={93,480},size={280,16},title="Background measurement time [s]  "
 	SetVariable BackgroundMeasTime,help={"Background beam measurement time"}
 	SetVariable BackgroundMeasTime,limits={1e-32,Inf,1},value= root:Packages:Convert2Dto1D:BackgroundMeasTime
 
-	SetVariable SubtractFixedOffset,pos={153,490},size={220,16},title="Fixed offset for CCD images"
+	SetVariable SubtractFixedOffset,pos={153,505},size={220,16},title="Fixed offset for CCD images"
 	SetVariable SubtractFixedOffset,help={"Subtract fixed offset value for CCD images"}
 	SetVariable SubtractFixedOffset,limits={-inf,Inf,1},value= root:Packages:Convert2Dto1D:SubtractFixedOffset
 
-	CheckBox UseSampleMonitorFnct,pos={15,525},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseSampleMonitorFnct,pos={15,530},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseSampleMonitorFnct,help={"Check is Sample Monitor = Function(sampleName) for function name input."}
 	CheckBox UseSampleMonitorFnct,variable= root:Packages:Convert2Dto1D:UseSampleMonitorFnct
-	SetVariable SampleMonitorFnct,pos={93,525},size={300,16},title="Sample monitor =",proc=NI1A_SetVarProcMainPanel
+	SetVariable SampleMonitorFnct,pos={93,530},size={300,16},title="Sample monitor =",proc=NI1A_SetVarProcMainPanel
 	SetVariable SampleMonitorFnct,help={"Input function name which returns Sample monitor (I0) count"}
 	SetVariable SampleMonitorFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleMonitorFnct
-	SetVariable SampleI0,pos={153,525},size={220,16},title="Sample Monitor counts"
+	SetVariable SampleI0,pos={153,530},size={220,16},title="Sample Monitor counts"
 	SetVariable SampleI0,help={"Monitor counts for sample"}
 	SetVariable SampleI0,limits={1e-32,Inf,1},value= root:Packages:Convert2Dto1D:SampleI0
 
-	CheckBox UseEmptyMonitorFnct,pos={15,550},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
+	CheckBox UseEmptyMonitorFnct,pos={15,555},size={50,14},title="Use fnct?",proc=NI1A_CheckProc
 	CheckBox UseEmptyMonitorFnct,help={"Check is Empty Monitor = Function(sampleName) for function name input."}
 	CheckBox UseEmptyMonitorFnct,variable= root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
-	SetVariable EmptyMonitorFnct,pos={93,550},size={300,16},title="Empty Mon cnts =",proc=NI1A_SetVarProcMainPanel
+	SetVariable EmptyMonitorFnct,pos={93,555},size={300,16},title="Empty Mon cnts =",proc=NI1A_SetVarProcMainPanel
 	SetVariable EmptyMonitorFnct,help={"Input function name which returns Empty monitor (I0) counts"}
 	SetVariable EmptyMonitorFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:EmptyMonitorFnct
-	SetVariable EmptyI0,pos={153,550},size={220,16},title="Empty Monitor counts  "
+	SetVariable EmptyI0,pos={153,555},size={220,16},title="Empty Monitor counts  "
 	SetVariable EmptyI0,help={"Monitor counts for empty beam"}
 	SetVariable EmptyI0,limits={1e-32,Inf,1},value= root:Packages:Convert2Dto1D:EmptyI0
 //tab 3 mask part
@@ -3472,22 +3494,12 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable CurrentMaskName,labelBack=(32768,32768,65280),frame=0
 	SetVariable CurrentMaskName,limits={-Inf,Inf,0},value= root:Packages:Convert2Dto1D:CurrentMaskFileName,noedit= 1
 //tab 4 Empty, dark and pixel sensitivity
-	CheckBox DezingerCCDData,pos={22,310},size={112,14},title="Dezinger 2D Data?"
-	CheckBox DezingerCCDData,help={"Remove speckles from image"}, proc=NI1A_CheckProc
-	CheckBox DezingerCCDData,variable= root:Packages:Convert2Dto1D:DezingerCCDData
-	CheckBox DezingerEmpty,pos={256,464},size={101,14},title="Dezinger Empty"
-	CheckBox DezingerEmpty,help={"Remove speckles from empty"}, proc=NI1A_CheckProc
-	CheckBox DezingerEmpty,variable= root:Packages:Convert2Dto1D:DezingerEmpty
-	CheckBox DezingerDark,pos={255,485},size={95,14},title="Dezinger Dark"
-	CheckBox DezingerDark,help={"Remove speckles from dark field"}, proc=NI1A_CheckProc
-	CheckBox DezingerDark,variable= root:Packages:Convert2Dto1D:DezingerDarkField
-	SetVariable DezingerRatio,pos={150,310},size={100,16},title="Dez. Ratio"
-	SetVariable DezingerRatio,help={"Dezinger ratio for removing speckles (usually 1.5 to 2)"}
-	SetVariable DezingerRatio,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:DezingerRatio
-	SetVariable DezingerHowManyTimes,pos={260,310},size={140,16},title="Dez. N times, N="
-	SetVariable DezingerHowManyTimes,help={"Dezinger multiplicity, runs sample through the dezinger filter so many times..."}
-	SetVariable DezingerHowManyTimes,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:DezingerHowManyTimes
-	ListBox Select2DMaskDarkWave,pos={23,354},size={351,100},disable=1, row=0
+	Button SelectMaskDarkPath,pos={10,310},size={240,20},proc=NI1A_ButtonProc,title="Select path to mask, dark & pix sens. files"
+	Button SelectMaskDarkPath,help={"Select Data path where Empty and Dark files are"}
+	PopupMenu SelectBlank2DDataType,pos={270,310},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
+	PopupMenu SelectBlank2DDataType,help={"Select type of 2D images being loaded"}
+
+	ListBox Select2DMaskDarkWave,pos={23,335},size={351,120},disable=1, row=0
 	ListBox Select2DMaskDarkWave,help={"Select data file to be used as empty beam or dark field"}
 	ListBox Select2DMaskDarkWave,listWave=root:Packages:Convert2Dto1D:ListOf2DEmptyData
 	ListBox Select2DMaskDarkWave,row= 0,mode= 1,selRow= 0, proc=NI1_EmpDarkListBoxProc
@@ -3495,10 +3507,12 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	Button LoadEmpty,help={"Load empty data"}
 	Button LoadDarkField,pos={41,483},size={160,20},proc=NI1A_ButtonProc,title="Load Dark Field"
 	Button LoadDarkField,help={"Load dark field data"}
-	Button SelectMaskDarkPath,pos={10,330},size={240,20},proc=NI1A_ButtonProc,title="Select path to mask, dark & pix sens. files"
-	Button SelectMaskDarkPath,help={"Select Data path where Empty and Dark files are"}
-	PopupMenu SelectBlank2DDataType,pos={270,330},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
-	PopupMenu SelectBlank2DDataType,help={"Select type of 2D images being loaded"}
+	CheckBox DezingerEmpty,pos={256,464},size={101,14},title="Dezinger Empty"
+	CheckBox DezingerEmpty,help={"Remove speckles from empty"}, proc=NI1A_CheckProc
+	CheckBox DezingerEmpty,variable= root:Packages:Convert2Dto1D:DezingerEmpty
+	CheckBox DezingerDark,pos={255,485},size={95,14},title="Dezinger Dark"
+	CheckBox DezingerDark,help={"Remove speckles from dark field"}, proc=NI1A_CheckProc
+	CheckBox DezingerDark,variable= root:Packages:Convert2Dto1D:DezingerDarkField
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 	PopupMenu SelectBlank2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	SetVariable CurrentEmptyName,pos={19,533},size={350,16},title="Empty file:"
@@ -3790,10 +3804,10 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax, disable=!(UseUserDefMinMax)
 	
 	NI1A_FixMovieButton()
-	print Exists("Nika_Hook_ModifyMainPanel")
-#if Exists("Nika_Hook_ModifyMainPanel")
-	Nika_Hook_ModifyMainPanel()
-#endif
+	//print Exists("Nika_Hook_ModifyMainPanel")
+	if(Exists("Nika_Hook_ModifyMainPanel")==6)
+		Execute("Nika_Hook_ModifyMainPanel()")
+	endif
 EndMacro
 
 
@@ -4207,10 +4221,10 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable EmptyMonitorFnct,disable=(tabNum!=1 || (!UseMonitorForEF) || !UseEmptyMonitorFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable SubtractFixedOffset,disable=(tabNum!=1 || !UseSubtractFixedOffset||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	//tab 3 controls
-	CheckBox DezingerCCDData,disable=(tabNum!=3||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox DezingerCCDData,disable=(tabNum!=1||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	CheckBox DezingerEmpty,disable=(tabNum!=3 || !UseEmptyField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	CheckBox DezingerDark,disable=(tabNum!=3 || !UseDarkField||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
-	if((DezingerCCDData || DezingerEmpty || DezingerDarkField) && tabNum==3&& !UseCalib2DData)
+	if((DezingerCCDData || DezingerEmpty || DezingerDarkField) && tabNum==1&& !UseCalib2DData)
 	NVAR UseLineProfile=root:Packages:Convert2Dto1D:UseLineProfile
 			SetVariable DezingerRatio, disable=0, win=NI1A_Convert2Dto1DPanel
 			SetVariable DezingerHowManyTimes, disable=0, win=NI1A_Convert2Dto1DPanel
@@ -4987,7 +5001,10 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	
-	if(cmpstr("DezingerCCDData",ctrlName)==0 || cmpstr("DezingerEmpty",ctrlName)==0 || cmpstr("DezingerDark",ctrlName)==0)
+	if(cmpstr("DezingerCCDData",ctrlName)==0)
+		NI1A_TabProc("nothing",1)	//this sets the displayed variables accordingly
+	endif
+	if(cmpstr("DezingerEmpty",ctrlName)==0 || cmpstr("DezingerDark",ctrlName)==0)
 		NI1A_TabProc("nothing",3)	//this sets the displayed variables accordingly
 	endif
 
