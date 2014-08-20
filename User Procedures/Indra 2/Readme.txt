@@ -8,8 +8,11 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
-1.84
+1.84 8/20/2014
 Created on log-rebinning routine and propagated that routine (General Procedures 1.71) through the system, mainly FLyScan, replacing all log-rebinning other routines.
+Major development to handle Flyscan data, should handle all data up to August 2014.
+Added ability to overwrite range 5 dark current for all imported data (sometimes needed).
+Small other improvements in GUI and data handling. 
 
 1.83 4/18/2014
 Flyscan updated support to support Flyscans from April 2014

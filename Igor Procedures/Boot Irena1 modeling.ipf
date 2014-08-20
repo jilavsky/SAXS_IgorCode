@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 
 Menu "Macros"
 //	"Load Irena SAS Modeling Macros", LoadIR1Modeling()

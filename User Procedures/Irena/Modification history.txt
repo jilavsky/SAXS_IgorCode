@@ -3,7 +3,7 @@ Code modification history
 
 -latest stuff first
 ********************************************
-2.55 
+2.56 8/20/2014
 ASCII export - fixed bug which prevented Multiple QRS data export.  
 Plotting tool I - made “Zoom and Set limits” marquee item dynamic, so it shows only on the right graph. 
 Plotting tool I - added Int*Q^3 as plotting data option
@@ -16,7 +16,7 @@ Data Manipulation II - fixed bug which caused failure when wave names were liber
 ASCII import - added q sorting as some users seem to have data which are not necessarily q increasing and it causes troubles for analysis packages.
 All packages - added check for slit smeared data to force Qmax to be at least 3*SlitLength. It does not work otherwise.  
 Modeling II - added User Name string to each population, so user can (when individual populations are displayed) sort out what he/she is looking at. Similar to names for each data set. 
-FitPowerLawWithCursors and FitLineWithCursors now follow user selected font size and power law does nto have units (depends on data calibration). 
+FitPowerLawWithCursors and FitLineWithCursors now follow user selected font size and power law does not have units (depends on data calibration). 
 
 2.54 1/5/2014
 All files - extended copyright to 2005 - 2014

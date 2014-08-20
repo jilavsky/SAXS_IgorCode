@@ -3,7 +3,7 @@ Code modification history
 
 -latest stuff first
 ********************************************
-1.66 xxxxx
+1.66 8/20/2014
 Main panel - moved dezinering controls from tab4 to tab2, some users thought that dezinering was available only for Empty/dark and not for sample images… 
 Hook functions - added new: ImportedImageHookFunction which can be used to modify any image after load, AfterDisplayImageHook, which modifies detector images displayed by Nika. Fixed PilatusHookFunction. 
 Removed some print statements to reduce amount of information in history area. 

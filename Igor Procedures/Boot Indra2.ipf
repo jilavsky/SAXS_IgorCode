@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.82
+#pragma version=1.84
 
+//1.84 release with Flyscan support for various modes up to August 2014 measurements. Should handle all of the different modes. 
 //1.82 first user release of FLyScan support
 //1.81 developement FLyScan version
 //1.80 added FlyScan support and some GUI changes. 
@@ -76,23 +77,23 @@ Function IN2L_GenerateReadMe()
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
 	Notebook $nb newRuler=Header, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",14,0,(0,0,0)}
 	Notebook $nb ruler=Header, text="Quick Manual for Indra 2 version of USAXS macros\r"
-	Notebook $nb ruler=Normal, text="This is version 1.82 of Indra macros, date: 2/20/2014\r"
+	Notebook $nb ruler=Normal, text="This is version 1.84 of Indra macros, date: 8/20/2014\r"
 	Notebook $nb text="\r"
-	Notebook $nb text="Procedure review:\r"
+	Notebook $nb text="Data reduction summary:\r"
 	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import RAW data\", \"Import Desktop..\", \"Import USAXS FlyScan data\".\r"
 	Notebook $nb text="2.\tmenu \"USAXS\" - \"Reduce data main\"\tThis will open main panel which is used to reduce data.\r"
 	Notebook $nb text="\tIf you want absolute intensities, you will need to know the sample thickness at this time.  If you don'"
 	Notebook $nb text="t have that \tnow, you will need to repeat this procedure from this step. [NOTE: not exactly true, you ca"
-	Notebook $nb text="n calculate t, if you \tknow linear absorption coefficient]\r"
-	Notebook $nb text="\tIf we measured USAXS transmission using pinDiode, use it (and do nto use MSAXS correction)\r"
-	Notebook $nb text="\tIf we did tno measure pinDIode, may be you need to MSAXS correction - but only if data are contaminated"
+	Notebook $nb text="n calculate it, if you \tknow linear absorption coefficient]\r"
+	Notebook $nb text="\tIf we measured USAXS transmission (most likely) using pinDiode, it will be used automatically (MSAXS correction is not\r"
+	Notebook $nb text="\tneeded) If we did not measure pinDIode, may be you need to MSAXS correction - but only if data are contaminated"
 	Notebook $nb text="\r"
 	Notebook $nb text="\tby mulitple scattering in the main tool.\r"
 	Notebook $nb text="\tMain menu also allows user to subtract background and export the data for use in external programs.\r"
 	Notebook $nb text="\tThis is not needed and should not be used if data evaluation tools in Irena are going to be used.\r"
 	Notebook $nb text="2a.\tIf you use FlyScan, you may need to select FlyScan rebin to number of points...\r"
 	Notebook $nb text="\tFor regular samples - 200 - 300 points\r"
-	Notebook $nb text="\tFor Samples with monodispersed systems/.diff peaks: 1000-3000 may be necessary\r"
+	Notebook $nb text="\tFor Samples with monodispersed systems/.diff peaks: 1000-2000 may be necessary\r"
 	Notebook $nb text="\tDo NOT produce unnecessary many points - data will take much more time to analyze.  \r"
 	Notebook $nb text="3.\tOther possible useful tools:\r"
 	Notebook $nb text="\tTo Desmear data you will need Irena package which contains the desmearing routine in \"Other tools\"\r"
