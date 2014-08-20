@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.57
+#pragma version=2.56
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs=   3471691930  		//this is mod date for Manual version 2.54
-constant CurrentVersionNumber = 2.55
+constant CurrentManualDateInSecs=   3491371127  		//this is mod date for Manual version 2.56
+constant CurrentVersionNumber = 2.56
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -11,8 +11,8 @@ constant CurrentVersionNumber = 2.55
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.57 fixed ListProRoutine which had troubles with links
-//2.56 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
+//2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
+//2.55 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
 //2.55 moved Zoom and set limits to GraphMarquee menu, changed the ZoomAndSetLimits to be dynamic menu item
 //2.54 version release, January 2014
 //2.53  Added check for platform when opening Igor experiment. GUI fonts are really crazy if these are not fixed

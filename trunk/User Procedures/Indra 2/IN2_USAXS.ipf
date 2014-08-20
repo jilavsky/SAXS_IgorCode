@@ -28,12 +28,12 @@ End
 
 
 Menu "USAXS"
+	"Import USAXS FlyScan data", IN3_FlyScanMain()
+	help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
 	"Import RAW Data [SPEC]", In2_ImportData()
 	help={"Import USAXS data from APS USAXS instrument - from Spec file"}
 	"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
 	help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
-	"Import USAXS FlyScan data", IN3_FlyScanMain()
-	help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
 	"---"
 	"Reduce data main",IN3_Main()
 	help={"Open main panel for Indra 3 package and initialize"}
@@ -294,7 +294,7 @@ Function IN2_AboutPanel()
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.0"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2014"
-	DrawText 49,103,"release 1.83 from 4/18/2014"
+	DrawText 49,103,"release 1.84 from 8/20/2014"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end
