@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.37
-Constant NI1AversionNumber = 2.37
+#pragma version=2.38
+Constant NI1AversionNumber = 2.38
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,8 @@ Constant NI1AversionNumber = 2.37
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.38 moved Dezinering on tab2. 
+//2.38 Fixed naming of data when more then one "." is present in the name. It is now allowed on USAXS instrument.
 //2.37 Modifications needed for 2D calibrated data input/output, added Append to Nexus file (2D data for now).  
 //2.36 changed name of main panel function. Added hook functions. Modified code to remove extension from loaded file name for use as name of data later. 
 //2.35 fixed /NTHR=1 to /NTHR=0, major changes supporting export of 2D calibrated data
@@ -822,7 +824,7 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		MaxNumPntsLookupWvLBL[numpnts(MaxNumPntsLookupWv)]= CurOrient
 		MaxNumPntsLookupWv[numpnts(MaxNumPntsLookupWv)]= QvectorNumberPoints
 		
-		print "Recalcaulted the right number of points LUT"
+		print "Recalculated the right number of points LUT"
 
 		return 2
 	endif
@@ -1395,8 +1397,16 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	SVAR RemoveStringFromName = root:Packages:Convert2Dto1D:RemoveStringFromName
-	string NewName
-	NewName = StringFromList(0, InputName, ".")
+	string NewName, tempStr
+	tempStr = ReplaceString(".", InputName, "")
+	variable NumDots= strlen(InputName) - strlen(tempStr)
+	if(NumDots==0)
+		NewName = InputName
+	elseif(NumDots==1)	
+		NewName = StringFromList(0, InputName, ".")
+	else		// more then one "." in the name, remove extension, assume last "." separates extension. 
+		NewName = InputName[0, strsearch( InputName,".", inf, 1)-1]
+	endif	
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	if(TrimEndOfName)
 		NewName= NewName[0,20]

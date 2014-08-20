@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.35
+#pragma version=2.36
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.36 modified PilatusHookFunction and asdded ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
 //2.35 adds Pilatus Cbf compressed files (finally solved the problem)... 
 //2.34 adds abiulity to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
 //2.33 can read and write calibrated canSAS/nexus files. Can write new files or append to existing one (2D data for now). 
@@ -611,7 +612,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	       FileNameToLoad= FileName
 	       //read TXT header file, available at ALS... 
 	       if(PilatusReadAuxTxtHeader)
-       	       Print FileName
+       	       //Print FileName
        	       Make/T /O headertxt0
        	       String txtFile
        	       txtFile = FileNameToLoad 
@@ -623,7 +624,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
       		        	EmptyI0 = str2num(headertxt0[1])
       		        else
               		SampleI0 = str2num(headertxt0[1])
-              		Print SampleI0
+              		//Print SampleI0
           		    endif
 		endif
 		
@@ -741,9 +742,13 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
  	        endif
          //     Loadedwave0[12][162] /= 100.0
               duplicate/O Loadedwave0, $(NewWaveName)
-#if(exists("PilatusHookFunction")==3)
-		PilatusHookFunction(FileNameToLoad)
-#endif             
+              //call Hook function 
+              if(exists("PilatusHookFunction")==6)
+              	Execute("PilatusHookFunction("+NewWaveName+")")
+              endif
+//#if(exists("PilatusHookFunction")==3)
+//		PilatusHookFunction(FileNameToLoad)
+//#endif             
               killwaves Loadedwave0
               NewNote+="DataFileName="+FileNameToLoad+";"
               NewNote+="DataFileType="+PilatusType+";"
@@ -753,7 +758,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		string RigakuHeader = NI1A_ReadRigakuUsingStructure(PathName, FileNameToLoad)
 		//variable offsetFile = NI1A_FindFirstNonZeroChar(PathName, FileNameToLoad)
 		variable offsetFile = NumberByKey("RecordLengthByte", RigakuHeader )
-		print "Found offset in the file to be: "+num2str(offsetFile)
+		//print "Found offset in the file to be: "+num2str(offsetFile)
 		variable 	RigNumOfXPoint=NumberByKey("xDirectionPixNumber", RigakuHeader)
 		variable 	RigNumOfYPoint=NumberByKey("yDirectionPixNumber", RigakuHeader)
 		if (numtype(offsetFile)!=0 || offsetFile<250)		//check for meaningful offset
@@ -930,7 +935,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			wave Loadedwave0
 			MatrixOp/O Loadedwave0 =Loadedwave0^t  
 			//redimension/N=(MPAACDNumPoints) Loadedwave0
-			print sqrt(MPAACDNumPoints)
+			//print sqrt(MPAACDNumPoints)
 			Redimension/N=(sqrt(MPAACDNumPoints),sqrt(MPAACDNumPoints)) Loadedwave0
 		elseif(stringmatch(mpatype,"csv"))
 			Abort "CSV mpa file format is not finished, did not have functional test case example. Provide me the example and I'll finish this. " 
@@ -1252,10 +1257,10 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	              else 
 	              	dummy_i1 = 1
 	              endif
-	              Print dummy_i1
+	              //Print dummy_i1
 	              SampleI0 = dummy_i1
 	                SampleI0 = dummy_i1;
-	               Print NIGBNumberOfYPoints
+	               //Print NIGBNumberOfYPoints
 	               killwaves/Z Loadedwave0,Loadedwave1
 	               GBLoadWave/Q/B=(LByteOrder)/T={LDataType,4}/S=(skipBytes)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
  				if(V_Flag==0)		//check if we loaded at least some data...
@@ -1273,6 +1278,9 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Abort "Uknown CCD image to load..."
 	endif
 	pathInfo $(PathName)
+      if(exists("ImportedImageHookFunction")==6)
+              	Execute("ImportedImageHookFunction("+NewWaveName+")")
+      endif
 	wave loadedwv=$(NewWaveName)
 	NewNote+=";"+"DataFilePath="+S_path+";"+note(loadedwv)+";"
 	print "Loaded file   " +FileNameToLoad
@@ -3278,7 +3286,7 @@ static Function NI2NX_NexusReader(FilePathName,Filename)
 			HDF5CloseFile fileID
 			string CurrFolder=getDataFolder(1)
 			string LoadedDataWvNm = NI2NX_CleanUpHDF5Structure(CurrFolder)
-			print "Loaded following wave: "+GetDataFOlder(1)+LoadedDataWvNm
+			//print "Loaded following wave: "+GetDataFOlder(1)+LoadedDataWvNm
 			wave LoadedWave = $(LoadedWvStr+LoadedDataWvNm)
 			Duplicate/O LoadedWave, $("root:Packages:Convert2Dto1D:"+"Loadedwave0")
 		endif
@@ -4050,7 +4058,7 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 		AttribList = NI1_HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
 		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata") && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
 			PathToData = stringfromlist(i,ListOfGroups)
-			print "Found location of data : " + PathToData
+			//print "Found location of data : " + PathToData
 			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
 			ListOfDataSets = S_HDF5ListGroup
 			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)

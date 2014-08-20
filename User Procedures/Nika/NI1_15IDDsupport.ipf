@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
+#pragma version=1.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 widen the angular range for sector average for pinSAXS - seems to be OK now with vacuum chamber.  
 //1.13 added Mask creation for horizon using vaccum chamber in 2014-08
 //1.12 added WAXS controls for 2013-01
 //1.11 fixed minor bug related to USAXS blank checking for pinSAXS caused by version 1.10
@@ -432,7 +433,7 @@ Function NI1_15IDDSetDefaultNx()
 				DoCircularAverage = 1
 				NumberOfSectors = 1
 				SectorsStartAngle = 270
-				SectorsHalfWidth = 10
+				SectorsHalfWidth = 30
 				DisplayDataAfterProcessing = 1
 				StoreDataInIgor = 1
 				OverwriteDataIfExists = 1
@@ -533,7 +534,7 @@ Function NI1_15IDDSetDefaultNx()
 				DoSectorAverages = 1
 				NumberOfSectors = 1
 				SectorsStartAngle = 270
-				SectorsHalfWidth = 10
+				SectorsHalfWidth = 30
 				DisplayDataAfterProcessing = 1
 				StoreDataInIgor = 1
 				OverwriteDataIfExists = 1
@@ -1578,7 +1579,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		if(!SAXSGenSmearedPinData)
 			return 0
 		endif
-		if(SAXSGenSmearedPinData && (!GrepString(listOfOrientations,"270_10")||!GrepString(listOfOrientations,"VLp_0")))
+		if(SAXSGenSmearedPinData && (!(GrepString(listOfOrientations,"270_30")||GrepString(listOfOrientations,"270_10"))||!GrepString(listOfOrientations,"VLp_0")))
 			Print "Could not create requested slit smeared pinSAXS data since the right sector and line profiles are not available"
 			return 0
 		endif 
@@ -1594,13 +1595,17 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	string useName, LocalUserFileName
 	string CurOrient
 	//our secotr...
-	CurOrient="270_10"
+	if(GrepString(listOfOrientations,"270_30"))
+		CurOrient="270_30"
+	else
+		CurOrient="270_10"				//old setting
+	endif
 	if (Use2DdataName)
 		//variable tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
 		UseName=NI1A_TrimCleanDataName(LoadedFile)+"_"+CurOrient
 		
-	elseif(strlen(UserFileName)<1)	//user did nto set the file name
+	elseif(strlen(UserFileName)<1)	//user did not set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
 		else

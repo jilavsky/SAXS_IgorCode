@@ -4,12 +4,16 @@ Code modification history
 -latest stuff first
 ********************************************
 1.66 xxxxx
+Main panel - moved dezinering controls from tab4 to tab2, some users thought that dezinering was available only for Empty/dark and not for sample images… 
+Hook functions - added new: ImportedImageHookFunction which can be used to modify any image after load, AfterDisplayImageHook, which modifies detector images displayed by Nika. Fixed PilatusHookFunction. 
+Removed some print statements to reduce amount of information in history area. 
 Added Cbf file format importer (it has compression, so it was bit more work). 
 Added right click menus to most Listboxes,users can now refresh the content and there is also some more functionality where appropriate
 Added Pilatus 3, 200k.
 Added ability to import 2D calibrated data, for now ASCII (qx qy I dI) from EQSANS and NIST (DAT). 
 Added flexible support for CanSAS/Nexus (hdf5 file format). Can export to new or append to existing CanSAS/Nexus file - for now 2D calibrated data. Working on appending 1D data. Can also import a calibrated 2D data set from CanSAS/Nexus file. 
 Major new feature - export 2D calibrated data. Either full resolution or pseudo log-q rebinned data. Usable for 2D fitting programs. 
+15id support - change sector for pinSAXS & WAXS analysis from 10 to 30 degrees halfwidth. 
 
 
 
