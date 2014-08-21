@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.34
+#pragma version = 1.36
 
 
 //*************************************************************************\
@@ -9,6 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.36 added Remove RAW folder to shrink size of Experiments
+//1.35 yet another change in Menu items to make it more obvious
 //1.34 changed RemovePointswith marquee to be dynamic menuitem.
 //1.33 added Remove points with marquee
 //1.32 added FlyScan and panel check for Indra version
@@ -28,18 +30,18 @@ End
 
 
 Menu "USAXS"
-	"Import USAXS FlyScan data", IN3_FlyScanMain()
+	"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
 	help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
-	"Import RAW Data [SPEC]", In2_ImportData()
+	"Import USAXS Stepscan Data [SPEC]", In2_ImportData()
 	help={"Import USAXS data from APS USAXS instrument - from Spec file"}
 	"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
 	help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
 	"---"
-	"Reduce data main",IN3_Main()
+	"Reduce data",IN3_Main()
 	help={"Open main panel for Indra 3 package and initialize"}
+	"--"
 	"Calculate Scattering from model", IN3M_CalculateDataFromModel()
 	help={"Use model and sample parameters to calculate scattering"}
-	"--"
 	Submenu "Old stuff"
 		"Create R wave", IN2A_CreateRWave()
 		help={"Correct measured data for dark currents and find beam center"}
@@ -65,6 +67,8 @@ Menu "USAXS"
 
 //	"Desmear Fast", IN2D_DesmearFastMain()  //removed since no one used it, but code stays...
 	"--"
+	"Shrink Igor experiment size",IN3_ShrinkIgorFileSize() 
+	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
 	"Export data",IN2B_ExportAllData() 
 	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
 
@@ -169,6 +173,26 @@ Function IN3_CheckWIndowsProcVersions(WindowProcNames)
 		endif
 	endfor
 	
+end
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN3_ShrinkIgorFileSize()
+	if(DataFolderExists("root:raw"))
+		DoAlert /T="Confirm you want to do this" 1, "Do you want to delete folder with raw data to shrink the Igor experiment size? Most users never need it so this should be safe to do."
+		if(V_flag)
+			//IgorInfo
+			KillDataFolder/Z root:raw
+			if(V_Flag!=0)
+				DoAlert/T="Error message" 0, "Raw data folder could not be deleted. Likely data from it are used in some graph or table. Close those graphs and tables and try again." 
+			else
+				print "Deleted raw data folder from this experiment to shrink it down"
+			endif
+		endif
+	else
+		print "Raw data folder does not exist, it therefore cannot be deleted. Likely you already deleted the raw data folder."
+	endif
 end
 //***********************************************************
 //***********************************************************
