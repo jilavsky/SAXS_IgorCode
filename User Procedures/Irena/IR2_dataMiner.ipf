@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.08
+#pragma version=1.09
 Constant IR2MversionNumber = 1.07
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2MversionNumber = 1.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 bug fixes, bug found by igor 7. 
 //1.08 fixed IR2M_CreateWaveName(WaveNameStr,ItemNameStr) for Modeling II waves
 //        removed all font and font size from panel definitions to enable user control
 //1.07 who knows?
@@ -889,7 +890,8 @@ Function IR2M_ConvertWavestoMineOthers()
 		
 		curWvName = IR2M_CreateWaveName(FrontPart,EndPart2)
 		Wave/T CurStrWave= $(curWvName)
-		if(strlen(CurStrWave)>0)
+		//if(strlen(CurStrWave)>0)
+		if(numpnts(CurStrWave)>0)			//bug found by Igor 7. Not sure what the fixs should be... 
 			if(IR2M_isWaveNumbers(CurStrWave))
 				make/O/N=(numpnts(CurStrWave)) $wName
 				Wave TempNumWave = $wName

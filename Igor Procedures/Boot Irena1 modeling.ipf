@@ -11,7 +11,7 @@ Proc LoadIR1Modeling()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.30)
 		//check for old version of Irena
 		pathInfo Igor
-		NewPath/Q/O UserProcPath , S_path+"User procedures"
+		NewPath/Q/O/Z UserProcPath , S_path+"User procedures"
 		GetfILEfOLDERiNFO/Q/Z/P=UserProcPath "Irena 1"
 		string MessageStr="Original Irena folder found in User Procedures! \nFrom the version 2.04 Irena should be installed in \"Irena\" folder."
 		MessageStr +=" Delete old version in folder \"Irena 1\" and the folder itself and install new version in \"Irena\" folder"
