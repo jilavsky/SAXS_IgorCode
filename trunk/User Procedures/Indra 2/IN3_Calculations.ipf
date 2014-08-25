@@ -1,6 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
-
+#pragma version=1.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 increased Modified Guass fitting range slightly. 
 //1.11 adds Overwrite for UPD dark current range 5
 //1.10 adds FlyScan support
 //1.09 controls for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/pinSAXS correction
@@ -1163,7 +1163,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	wavestats/Q tempPDInt
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
-	FindLevels /N=5 /P/Q  tempPDInt, V_max/2
+	FindLevels /N=5 /P/Q  tempPDInt, V_max/3
 	wave W_FindLevels
 	variable startPointL, endPointL
 	if(Numpnts(W_FindLevels)==2)

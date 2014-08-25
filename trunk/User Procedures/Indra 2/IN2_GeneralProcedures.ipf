@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.73
+#pragma version = 1.74
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.74 added IN2G_EstimateFolderSize(FolderName)
 //1.73 added IN2G_CheckForSlitSmearedRange() which checks if the slit smearing Qmax > 3*Slit length
 //1.72 updated log rebinning search for parameters using Optimize. Much better... 
 //1.71 added new log-rebinning routine using IgorExchange version of the code. Need to update other code topp use it. Modified to use standard error of mean. 
@@ -341,6 +342,35 @@
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+//*************************************************************************************************************************************
+// Calculates the experiment size and returns it in bytes
+// Last Modified 2012/07/09 by Jamie Boyd
+Function IN2G_EstimateFolderSize (dataFolder)
+	string dataFolder
+	
+	variable expSize
+	// this folder
+	variable iObj, nObjs = CountObjects(dataFolder, 1), aWaveType
+	for (iObj =0; iObj < nObjs; iObj +=1, expSize += 320)
+		WAVE aWave = $dataFolder + GetIndexedObjName(dataFolder, 1, iObj )
+		aWaveType = WaveType (aWave)
+		if ((aWaveType & 0x2) || (aWaveType & 0x20)) // 32 bit int or 32 bit float
+			expSize += 4 * NumPnts (aWave) * SelectNumber((aWaveType & 0x1) , 1,2)
+		elseif(aWaveType & 0x4) // 64 bit float
+			expSize += 8 * NumPnts (aWave) * SelectNumber((aWaveType & 0x1) , 1,2)
+		elseif(aWaveType & 0x8) // 8 bit int
+			expSize += NumPnts (aWave) * SelectNumber((aWaveType & 0x1) , 1,2)
+		elseif(aWaveType & 0x10) // 16 bit int
+			expSize += 2 * NumPnts (aWave) * SelectNumber((aWaveType & 0x1) ,1,2)
+		endif
+	endfor
+	// subfolders
+	nObjs = CountObjects(dataFolder, 4)
+	for (iObj =0; iObj < nObjs; iObj += 1)
+		expSize += IN2G_EstimateFolderSize ( dataFolder + possiblyquoteName(GetIndexedObjName (dataFolder, 4, iObj)) + ":")
+	endfor
+	return expSize
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
