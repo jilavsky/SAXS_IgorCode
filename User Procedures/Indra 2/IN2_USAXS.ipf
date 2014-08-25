@@ -180,7 +180,8 @@ end
 //***********************************************************
 Function IN3_ShrinkIgorFileSize()
 	if(DataFolderExists("root:raw"))
-		DoAlert /T="Confirm you want to do this" 1, "Do you want to delete folder with raw data to shrink the Igor experiment size? Most users never need it so this should be safe to do."
+		variable DeleteSize= IN2G_EstimateFolderSize("root:raw:")
+		DoAlert /T="Confirm you want to do this" 1, "Do you want to delete folder with raw data to shrink the Igor experiment size? You should save approximately "+num2str(1.1*DeleteSize/1000000)+" MB. Most users never need it so this should be safe to do."
 		if(V_flag)
 			//IgorInfo
 			KillDataFolder/Z root:raw
