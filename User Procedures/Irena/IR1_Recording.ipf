@@ -329,7 +329,7 @@ Function IR1_InsertDateAndTime(nbl)
 	
 	Silent 1
 	string bucket11
-	Variable/D now=datetime
+	Variable now=datetime
 	bucket11=Secs2Date(now,0)+",  "+Secs2Time(now,0) +"\r"
 	//SVAR nbl=root:Packages:SAS_Modeling:NotebookName
 	Notebook $nbl selection={endOfFile, endOfFile}

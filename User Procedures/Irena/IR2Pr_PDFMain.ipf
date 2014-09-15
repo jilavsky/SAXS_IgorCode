@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.06
+#pragma version=1.07
 Constant IR2PrversionNumber=1.05
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.05
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.07 removed wave/d, Function/d and variable/d. Obsolete
 //1.06 minor cahnge for notebook call function. 
 //1.05 added panel version control and made panel vertically scrollable
 //1.04  Modified all controls not to define font and font size to enable proper control by user 
@@ -1404,10 +1405,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function/d IR2Pr_MooreRg(cw,q)
-	wave/d cw; variable/d q
+static Function  IR2Pr_MooreRg(cw,q)
+	wave cw; variable q
 	variable n=0,nmax=numpnts(cw)-5
-	variable/d POR=0.0,dmax=cw[nmax+2]
+	variable POR=0.0,dmax=cw[nmax+2]
 	do
 		POR+=cw[n]*((-1)^n)*((pi*(n+1))^2-6)/((n+1)^3)
 		n+=1
@@ -1421,10 +1422,10 @@ End
 //*****************************************************************************************************************
 
 
-static Function/d IR2Pr_MoorePOR(cw,r,dmax)
-	wave/d cw; variable/d r,dmax
+static Function  IR2Pr_MoorePOR(cw,r,dmax)
+	wave cw; variable r,dmax
 	variable n=0,nmax=numpnts(cw)-5
-	variable/d POR=0.0
+	variable POR=0.0
 	if (r<=dmax) 
 	do
 		POR+=4*r*cw[n]*sin((n+1)*pi*r/dmax)
@@ -1441,12 +1442,12 @@ End
 
 
 
-Function/d IR2Pr_MooreIORFF(cw,q)
-	wave/d cw; variable/d q
+Function  IR2Pr_MooreIORFF(cw,q)
+	wave cw; variable q
 	variable n=0,nmax=numpnts(cw)-5
-	variable/d POR=0.0,dmax=cw[nmax+2]
-	variable/d dq=dmax*q
-	variable/d fpd=8*(pi^2)*dmax*(sin(dq))/q
+	variable POR=0.0,dmax=cw[nmax+2]
+	variable dq=dmax*q
+	variable fpd=8*(pi^2)*dmax*(sin(dq))/q
 	do
 		POR+=cw[n]*(n+1)*((-1)^n)*fpd/(((n+1)*pi)^2-dq^2)
 		n+=1
@@ -1461,10 +1462,10 @@ End
 //*****************************************************************************************************************
 
 
-static Function/d IR2Pr_MooreINaught(cw,q)
-	wave/d cw; variable/d q
+static Function  IR2Pr_MooreINaught(cw,q)
+	wave cw; variable q
 	variable n=0,nmax=numpnts(cw)-5
-	variable/d POR=0.0,dmax=cw[nmax+2]
+	variable POR=0.0,dmax=cw[nmax+2]
 	do
 		POR+=cw[n]*8*(dmax^2)*((-1)^n)/(n+1)
 		n+=1

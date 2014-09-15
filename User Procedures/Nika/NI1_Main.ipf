@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.66
+#pragma version=1.67
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.67 Release to fix Mask tool broken in 1.66 release. 
  //1.66 fixed ListProRoutine which had troubles with links 
  //1.65 minor changes, timed with Indra 2 release. 
  //1.64 match current release number 
@@ -185,7 +186,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2014"
-	DrawText 49,103,"Release 1.66 from 8/20/2014"
+	DrawText 49,103,"Release 1.67 from 9/15/2014"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 

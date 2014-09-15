@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.09
+#pragma version=1.10
 Constant IR2MversionNumber = 1.07
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2MversionNumber = 1.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 removed wave/d, Function/d and variable/d. Obsolete
 //1.09 bug fixes, bug found by igor 7. 
 //1.08 fixed IR2M_CreateWaveName(WaveNameStr,ItemNameStr) for Modeling II waves
 //        removed all font and font size from panel definitions to enable user control
@@ -1467,7 +1468,7 @@ end
 ///******************************************************************************************
 Function IR2M_InsertDateAndTime()
 
-	Variable/D now=datetime
+	Variable now=datetime
 	string bucket11=Secs2Date(now,0)+",  "+Secs2Time(now,0) +"\r"
 	string nbl="DataMinerNotebook"
 	Notebook $nbl selection={endOfFile, endOfFile}
