@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.74
+#pragma version = 1.75
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.75 removed wave/d, Function/d and variable/d. Obsolete
 //1.74 added IN2G_EstimateFolderSize(FolderName)
 //1.73 added IN2G_CheckForSlitSmearedRange() which checks if the slit smearing Qmax > 3*Slit length
 //1.72 updated log rebinning search for parameters using Optimize. Much better... 
@@ -1694,9 +1695,9 @@ End
 //**********************************************************************************************
 
 Function IN2G_IntegrateXY(xWave, yWave)
-	Wave/D xWave, yWave						// input/output X, Y waves
+	Wave xWave, yWave						// input/output X, Y waves
 	
-	Variable/D yp,ypm1,sum=0
+	variable yp,ypm1,sum=0
 	Variable pt=1,n=numpnts(yWave)
 	ypm1=yWave[0]
 	yWave[0]= 0

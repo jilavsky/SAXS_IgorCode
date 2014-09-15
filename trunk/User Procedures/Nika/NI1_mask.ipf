@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.20
+#pragma version =1.21
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 fixed update MaskListobox, fixed bug preventing listbox update. 
 //1.20 modified call to hook function
 //1.19 Added right click "Refresh content" to Listbox
 //1.18 fixed /NTHR=1 to /NTHR=0
@@ -593,11 +594,11 @@ Function NI1M_UpdateMaskListBox()
 		SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
 		SVAR EmptyDarkNameMatchStr=root:Packages:Convert2Dto1D:EmptyDarkNameMatchStr
 		string RealExtension				//for starnge extensions
-		if(cmpstr(CCDFileExtension,".tif")==0)
+		if(stringmatch(CCDFileExtension,".tif"))
 			RealExtension=CCDFileExtension
-		elseif(cmpstr(CCDFileExtension,".hdf")==0)
+		elseif(stringmatch(CCDFileExtension,".hdf"))
 			RealExtension=CCDFileExtension
-		elseif(cmpstr(CCDFileExtension,"*Nexus*")==0)
+		elseif(stringmatch(CCDFileExtension,"*Nexus*"))
 			RealExtension=".hdf"
 		else
 			RealExtension="????"
@@ -608,7 +609,7 @@ Function NI1M_UpdateMaskListBox()
 			abort
 		endif
 		
-		if(cmpstr(RealExtension,"hdf"))
+		if(stringmatch(RealExtension,"hdf"))
 			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".h5")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf5")
