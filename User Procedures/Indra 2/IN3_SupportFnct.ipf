@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.04
+#pragma version =1.05
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.05 modfied IN3_RecalcSubtractSaAndBlank to handle 2dFlyscans... 
 //1.04 modified to use rebinning routine from General procedures (requires General procedures version 1.71 and higher
 //1.03 fixed error calculations to include transmission, needed for highly scattering but highly absorbing samples, for which errors were unrealistically large. 
 //1.01 modified for weight calibration
@@ -235,70 +236,22 @@ Function IN3_CalculateCalibration()
 		abort
 	endif
 	variable SampleToDetectorDistance=numberByKey("SDDistance",MeasurementParameters,"=")		//need to get it
-//	if (numtype(SampleToDetectorDistance)==2)														//this is fix for trouble when Raw-to_USAXS is run out of sequence
-//		IN2A_GetMeasParam()
-//		SampleToDetectorDistance=numberByKey("SDDistance",MeasurementParameters,"=")
-//	endif
 	Variable OmegaFactor,ASStageWidthAtHalfMax
 	NVAR Kfactor
 	variable BLPeakWidthL
-//	// first check that the EPICS parameters really have useful number there
-//	if (numtype(SampleThickness)!=0)
-//		SampleThickness=1
-//	endif
-//	//and then, if we already set sample thickness before, we will ovewrite it here...
-//	if (NumType(NumberByKey("SaThickness", ASBParameters ,"=" ,";"))!=2)			//this carries forward the old sample thickness - the previous 
-//		SampleThickness=NumberByKey("SaThickness", ASBParameters ,"=" ,";")		//sample sample thickness is offered
-//	endif
-//														//lets check if we have old sample thickness in the wave note for R_Int here
-//	variable oldthickness=NumberByKey("Thickness", note(R_Int) ,"=",";")
-//	if (numtype(oldthickness)==0)			//if it existed in the wave note, we will offer that to user
-//		SampleThickness=oldthickness
-//	endif
-//	Prompt SampleThickness, "Input sample thickness in mm for "+GetDataFolder(1)
-//	
+
 	if (cmpstr(StringByKey("Calibrate", ASBParameters,"=",";"),"USAXS")==0)		//USAXS callibration, width given by SDD and PD size
 		BLPeakWidthL=BLPeakWidth*3600													//W_coef[3]*3600*2
-//		Prompt BLPeakWidthL, "?Overwrite the Blank width at half max (arc-sec)"
-//		DoPrompt "USAXS Calibration user input for  "+GetDataFolder(1), BLPeakWidthL, SampleThickness
-//			if (V_Flag)
-//				Abort 
-//			endif	
-//		if(SampleThickness<=0)
-//			Prompt SampleThickness, "ERROR, sample thickness is <= 0! Please input correct sample thickness"
-//			DoPrompt "Fix incorrect sample thickness", SampleThickness
-//			if(V_Flag)
-//				Abort
-//			endif
-//			if(SampleThickness<=0)
-//				SampleThickness=100
-//				DoAlert 1, "Sample thickness set to 100mm, your absolute intensity calibration is probably inccorrect. Do you still want to continue?"
-//				if(V_Flag!=1)
-//					abort
-//				endif
-//			endif
-//		endif
-//		
-//		
 		OmegaFactor= (PhotoDiodeSize/SampleToDetectorDistance)*(BLPeakWidthL/3600)*(pi/180)
 		Kfactor=BLPeakMax*OmegaFactor 				// *SampleThickness*0.1  ; 0.1 converts the thickness of sample from mm to cm
 	endif
+
 	if (cmpstr(StringByKey("Calibrate", ASBParameters,"=",";"),"SBUSAXS")==0)	//SBUSAXS callibration, width given by rocking curve width
 		BLPeakWidthL=BLPeakWidth*3600												//W_coef[3]*3600*2
 		ASStageWidthAtHalfMax=BLPeakWidthL
-//		string MyWarnig="Fix for Signlebounce Intensity for this is dividing data by 1.66 (sqrt(1.32^2+1^2)"
-//		Prompt BLPeakWidthL, "?Overwrite measured Blank FWHM (arc-sec)"
-//		Prompt ASStageWidthAtHalfMax, "?AS stage width FWHM (arc-sec)"
-//		Prompt MyWarnig, "Single sidebounces used, the calibration with default peak width is incorrect !!"
-//		DoPrompt "SBUSAXS Calibration user input for  "+GetDataFolder(1), BLPeakWidthL, ASStageWidthAtHalfMax, MyWarnig, SampleThickness
-//			if (V_Flag)
-//				Abort 
-//			endif	
 		OmegaFactor=(ASStageWidthAtHalfMax/3600)*(pi/180)*(BLPeakWidthL/3600)*(pi/180)	//Is this correct callibration for SBUSAXS?????
 		Kfactor=BLPeakMax*OmegaFactor				//*SampleThickness*0.1   ; 0.1 converts the thickness of sample from mm to cm
-
 		IN2G_AppendAnyText("AS stage width :\t"+num2str(ASStageWidthAtHalfMax))
-
 	endif
 	//scale by thickness or weight here...
 	if(CalibrateToVolume)		//old system, use thickness, area of beam cancels from the blank and Kfactor is as usually known...
@@ -309,7 +262,6 @@ Function IN3_CalculateCalibration()
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"Arbitrary","=")
 	elseif(CalibrateToWeight)			//use weight. Assume the weight in the beam is already scaled per beam area?
 		//first calculate the amount of sample in the beam...
-		
 		//Kfactor = Kfactor*SampleThickness*0.1 * SampleDensity		//SampleWeightInBeam should be in g and be weight of sample [g/in 1 cm2 of beam area]
 		Kfactor = Kfactor*SampleWeightInBeam							//SampleWeightInBeam should be in g and be weight of sample in [g/cm2 of beam area]
 		ASBParameters=ReplaceStringByKey("CalibrationUnit",ASBParameters,"cm2/g","=")
@@ -334,53 +286,50 @@ Function IN3_RecalcSubtractSaAndBlank()
 	setDataFolder root:Packages:Indra3
 
 	NVAR SampleTransmission = root:Packages:Indra3:SampleTransmission
-
-
-		SVAR ASBparameters=ListOfASBParameters
-		Wave R_Int
-		Wave R_error
-		Wave R_Qvec
-		Wave BL_R_Int
-		Wave BL_R_error
-		Wave BL_R_Qvec
-		//Wave R_Int
-		//Wave R_Qvec
-		variable Kfactor=NumberByKey("Kfactor", ASBparameters,"=",";")
-		variable StartPointCut = BinarySearch(R_Qvec, 7e-5 )
-		variable EndPointCut = numpnts(R_Qvec)
-		DoWindow RcurvePlotGraph
-		NVAR TrimDataStart=root:Packages:Indra3:TrimDataStart
-		NVAR TrimDataEnd=root:Packages:Indra3:TrimDataEnd
-		if(V_Flag)
-			if(strlen(CsrInfo(A, "RcurvePlotGraph"))>0)
-				StartPointCut = pcsr(A , "RcurvePlotGraph")
-				TrimDataStart = StartPointCut
-			endif 
-			if(strlen(CsrInfo(B, "RcurvePlotGraph"))>0)
-				EndPointCut = pcsr(B , "RcurvePlotGraph")
-				TrimDataEnd = EndPointCut
-			endif
-		endif		
-//		variable Kfactor=1
-		NVAR SampleTransmission
-		NVAR MSAXSCorrection = root:Packages:Indra3:MSAXSCorrection
-		NVAR UseMSAXSCorrection = root:Packages:Indra3:UseMSAXSCorrection
-		NVAR UsePinTransmission = root:Packages:Indra3:UsePinTransmission
-		NVAR USAXSPinTvalue = root:Packages:Indra3:USAXSPinTvalue
-		string USAXSorSBUSAXS
-		variable MSAXSCorLocal=1
-		if(UseMSAXSCorrection || UsePinTransmission)
-			MSAXSCorLocal = MSAXSCorrection
+	SVAR ASBparameters=ListOfASBParameters
+	Wave R_Int
+	Wave R_error
+	Wave R_Qvec
+	Wave BL_R_Int
+	Wave BL_R_error
+	Wave BL_R_Qvec
+	variable Kfactor=NumberByKey("Kfactor", ASBparameters,"=",";")
+	variable StartPointCut = BinarySearch(R_Qvec, 7e-5 )
+	variable EndPointCut = numpnts(R_Qvec)
+	DoWindow RcurvePlotGraph
+	NVAR TrimDataStart=root:Packages:Indra3:TrimDataStart
+	NVAR TrimDataEnd=root:Packages:Indra3:TrimDataEnd
+	if(V_Flag)
+		if(strlen(CsrInfo(A, "RcurvePlotGraph"))>0)
+			StartPointCut = pcsr(A , "RcurvePlotGraph")
+			TrimDataStart = StartPointCut
+		endif 
+		if(strlen(CsrInfo(B, "RcurvePlotGraph"))>0)
+			EndPointCut = pcsr(B , "RcurvePlotGraph")
+			TrimDataEnd = EndPointCut
 		endif
-		NVAR SubtractFlatBackground=root:Packages:Indra3:SubtractFlatBackground
+	endif		
+	NVAR SampleTransmission
+	NVAR MSAXSCorrection = root:Packages:Indra3:MSAXSCorrection
+	NVAR UseMSAXSCorrection = root:Packages:Indra3:UseMSAXSCorrection
+	NVAR UsePinTransmission = root:Packages:Indra3:UsePinTransmission
+	NVAR USAXSPinTvalue = root:Packages:Indra3:USAXSPinTvalue
+	string USAXSorSBUSAXS
+	variable MSAXSCorLocal=1
+	if(UseMSAXSCorrection || UsePinTransmission)
+		MSAXSCorLocal = MSAXSCorrection
+	endif
+	NVAR SubtractFlatBackground=root:Packages:Indra3:SubtractFlatBackground
 
 	string IsItSBUSAXS
 	IsItSBUSAXS=StringByKey("SPECCOMMAND", note(R_Int), "=")[0,7]
-	string oldNoteValue
+	string oldNoteValue			
+	variable tempMinStep
+
 
 	IN2G_RemoveNaNsFrom5Waves(R_Int,R_Int,R_error,R_Qvec,R_Qvec)
 	IN2G_RemoveNaNsFrom3Waves(BL_R_Int,BL_R_error,BL_R_Qvec)
-//	
+
 	if (stringmatch(IsItSBUSAXS,"uascan*"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, SMR_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
@@ -418,7 +367,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 			endif
 		endif
 		USAXSorSBUSAXS="USAXS"	
-	elseif (stringmatch(IsItSBUSAXS,"flyScan*"))			//if this is sbuascan, go to other part, otherwise create SMR data
+	elseif (stringmatch(IsItSBUSAXS,"flyScan*"))			//if this is slit smeared flyscan create SMR data
 		Duplicate /O R_Int, SMR_Int
 		Duplicate /Free R_Int, logBlankInterp, BlankInterp
 		Duplicate/Free BL_R_Int, logBlankR
@@ -453,9 +402,45 @@ Function IN3_RecalcSubtractSaAndBlank()
 		USAXSorSBUSAXS="FlyUSAXS"	
 		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
 		if(FlyScanRebinToPoints>0)
-			//IN3_FlyScanRebinData2(SMR_Qvec, SMR_Int, SMR_error,FlyScanRebinToPoints)
-			variable tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
+			tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
 			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_error)
+		endif
+	elseif (stringmatch(IsItSBUSAXS,"sbflySca"))			//if this is sbflyscan, creade DSM data
+		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
+		Duplicate/O BL_R_Int, logBlankR
+		logBlankR=log(BL_R_Int)
+		LogBlankInterp=interp(R_Qvec, BL_R_Qvec, logBlankR)
+		BlankInterp=10^LogBlankInterp
+		DSM_Int=  (R_Int - BlankInterp)/(MSAXSCorLocal*Kfactor)
+		DSM_Int -=SubtractFlatBackground
+		KillWaves/Z logBlankInterp, BlankInterp, logBlankR
+		Duplicate/O R_error, DSM_Error
+		Duplicate/O BL_R_error, log_BL_R_error
+		log_BL_R_error=log(abs(BL_R_error))
+		DSM_Error=sqrt((R_error)^2/SampleTransmission^2 + (10^(interp(R_Qvec, BL_R_Qvec, log_BL_R_error)))^2)/Kfactor
+		DSM_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
+		KillWaves/Z log_BL_R_error
+		Duplicate/O R_Qvec, DSM_Qvec
+		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_error 
+		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_error 	//end append data
+		DoWindow RcurvePlotGraph
+		if(V_Flag)
+			checkdisplayed /W=RcurvePlotGraph DSM_Int
+			if(!V_Flag)
+				AppendToGraph/R/W=RcurvePlotGraph DSM_Int vs DSM_Qvec
+				Label right "DSM Intensity"
+				ModifyGraph lsize(DSM_Int)=2
+				ErrorBars DSM_Int Y,wave=(DSM_Error,DSM_Error)
+				ModifyGraph rgb(DSM_Int)=(1,16019,65535)
+				ModifyGraph log=1
+				ModifyGraph gaps=0
+			endif
+		endif
+		USAXSorSBUSAXS="FlyUSAXS"	
+		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
+		if(FlyScanRebinToPoints>0)
+			tempMinStep=DSM_Qvec[1]-DSM_Qvec[0]
+			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_error)
 		endif
 	elseif (stringmatch(IsItSBUSAXS,"sbuascan"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
@@ -473,7 +458,6 @@ Function IN3_RecalcSubtractSaAndBlank()
 		DSM_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
 		KillWaves/Z log_BL_R_error
 		Duplicate/O R_Qvec, DSM_Qvec
-
 		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_error 
 		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_error 	//end append data
 		DoWindow RcurvePlotGraph
