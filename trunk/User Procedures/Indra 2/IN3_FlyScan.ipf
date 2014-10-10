@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.29
+#pragma version=0.30
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.30 added Ê/entry/flyScan/is_2D_USAXS_scan
 //0.29 fixed problem with liberal h5 file names (containing ".") which caused havock in addressing folders.  
 //0.28 fixed I0 gaincalcualtions (and fixed FLyscan program on LAX). 
 //0.27 Attempt to fix vibrations when happen... 
@@ -511,6 +512,12 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		Wave  AR_PulseMode = :entry:flyScan:AR_PulseMode
 		AR_PulseMode = 0
 	endif
+	variable is2DScan		//2D collimated USAXS?
+	is2DScan = 0
+	Wave/Z is_2D_USAXS_scan= :entry:flyScan:is_2D_USAXS_scan
+	if(WaveExists(is_2D_USAXS_scan))
+		is2DScan = is_2D_USAXS_scan[0]
+	endif
 	Wave/Z  AR_PulsePositions = :entry:flyScan:AR_PulsePositions
 	Wave/Z  AR_pulses= :entry:flyScan:AR_pulses
 	Wave/Z  AR_waypoints= :entry:flyScan:AR_waypoints
@@ -620,7 +627,11 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	redimension/S PD_range, I0gain
 	//need to append the wave notes...
 	string WaveNote
-	WaveNote="DATAFILE="+SpecFileNameWv[0]+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+"flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
+	if(is2DScan)
+		WaveNote="DATAFILE="+SpecFileNameWv[0]+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+"sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
+	else
+		WaveNote="DATAFILE="+SpecFileNameWv[0]+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+"flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"		
+	endif
 	WaveNote+=";SpecComment="+SampleNameW[0]+";"
 	note/K MeasTime, WaveNote
 	note/K Monitor, WaveNote
@@ -651,7 +662,11 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	string/g PathToRawData
 	PathToRawData=RawFolderWithData
 	string/g SpecCommand
-	SpecCommand="flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
+	if(is2DScan)
+		SpecCommand="sbflyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
+	else
+		SpecCommand="flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"
+	endif
 	string/g SpecComment
 	string/g SpecSourceFileName
 	SpecSourceFileName=SpecSourceFilenameW[0]
