@@ -423,7 +423,7 @@ static Function IN3_LoadData()
 
 		string IsItSBUSAXS=StringByKey("SPECCOMMAND", note(OrigAR_encoder), "=")[0,7]			//find out if this is SBUSAXS
 		string Calibrate
-		if (cmpstr(IsItSBUSAXS,"sbuascan")==0)				//SBUSAXS, do not let user to select USAXS calibration
+		if (stringmatch(IsItSBUSAXS,"sbuascan")||stringmatch(IsItSBUSAXS,"sbflysca"))				//SBUSAXS, do not let user to select USAXS calibration
 			Calibrate="SBUSAXS;"
 		else																			
 			Calibrate="USAXS;"				//and if it is USAXS data, do not let user select SBUSAXS calibration

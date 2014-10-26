@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.30
+#pragma version=0.31
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.31 added some fixes for flyscan gain issues and DSM support. 
 //0.30 added Ê/entry/flyScan/is_2D_USAXS_scan
 //0.29 fixed problem with liberal h5 file names (containing ".") which caused havock in addressing folders.  
 //0.28 fixed I0 gaincalcualtions (and fixed FLyscan program on LAX). 
@@ -611,12 +612,12 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		endif
 	endif
 	Duplicate/O ArValues, Ar_encoder	
-	//let's figure out, if all worked as expected.
-	Duplicate/O/Free changes_AR_PSOpulse, AR_PSOpulse
-	Duplicate/O/Free changes_AR_angle, AR_angle, DiffARValues
-	variable EndOFData = BinarySearch(AR_angle, 0.1)
-	DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
 	if(OscillationsFound)
+		//let's figure out, if all worked as expected.
+		Duplicate/O/Free changes_AR_PSOpulse, AR_PSOpulse
+		Duplicate/O/Free changes_AR_angle, AR_angle, DiffARValues
+		variable EndOFData = BinarySearch(AR_angle, 0.1)
+		DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
 		//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from. 
 		print "Found that there were likely vibrations during scan, doing fix using PSO channel record" 
 		IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
@@ -982,8 +983,8 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
+	
+	Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
 	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
 	
 	GainWv = ampGain[0]
@@ -992,16 +993,16 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 	if(iiimax<1)		//Fix for scanning when no range changes happen... 
 		GainWv = 4
 	endif
-	StartRc = 0
+	StartRc = NaN
 	EndRc = 0
 	For(iii=0;iii<iiimax;iii+=1)
-		if(mcsChangePnts[iii]>0 || iii<3 )
+		if(mcsChangePnts[iii]>0 || (iii>0 && iii<3) )
 			if(ampGain[iii]!=ampGainReq[iii])
 				StartRc = mcsChangePnts[iii]
 			endif
 			if(ampGain[iii]==ampGainReq[iii])
 				EndRc = mcsChangePnts[iii]
-				if(EndRc<numpnts(GainWv)-1)
+				if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
 					GainWv[StartRc,EndRc] = nan
 					GainWv[EndRc+1,] = ampGain[iii]+1
 					IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
@@ -1009,7 +1010,39 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 			endif
 		endif
 	endfor
-end
+	end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//
+//Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
+//	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
+//	
+//	GainWv = ampGain[0]
+//	variable iii, iiimax=numpnts(mcsChangePnts)-1
+//	variable StartRc, EndRc
+//	if(iiimax<1)		//Fix for scanning when no range changes happen... 
+//		GainWv = 4
+//	endif
+//	ampGainReq[0] = ampGain[0]
+//	StartRc = 0
+//	EndRc = 0
+//	For(iii=0;iii<iiimax;iii+=1)
+//		if(mcsChangePnts[iii]>0 ||  iii<3 )
+//			if(ampGain[iii]!=ampGainReq[iii])
+//				StartRc = mcsChangePnts[iii]
+//			endif
+//			if(ampGain[iii]==ampGainReq[iii])
+//				EndRc = mcsChangePnts[iii]
+//				if((EndRc<numpnts(GainWv)-1))
+//					GainWv[StartRc,EndRc] = nan
+//					GainWv[EndRc+1,] = ampGain[iii]+1
+//					IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+//				endif
+//			endif
+//		endif
+//	endfor
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

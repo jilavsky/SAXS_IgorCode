@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.01
+#pragma version=2.02
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.02 added Qc transition of Surface fractals ito Porod's slope at the end. Change to smooth surface. 
 //2.01 added license for ANL
 
 ///******************************************************************************************
@@ -47,12 +48,14 @@ Function IR1V_InitializeFractals()
 	ListOfVariables+="SurfFr1_SurfaceError;SurfFr1_KsiError;SurfFr1_DSError;"
 	ListOfVariables+="SurfFr1_SurfaceMin;SurfFr1_SurfaceMax;SurfFr1_SurfaceStep;SurfFr1_KsiMin;SurfFr1_KsiMax;SurfFr1_KsiStep;"
 	ListOfVariables+="SurfFr1_DSMin;SurfFr1_DSMax;SurfFr1_DSStep;"
+	ListOfVariables+="SurfFr1_Qc;SurfFr1_QcWidth;SurfFr1_QcStep;"
 		
 	ListOfVariables+="SurfFr2_Surface;SurfFr2_Ksi;SurfFr2_DS;SurfFr2_Contrast;"
 	ListOfVariables+="SurfFr2_FitSurface;SurfFr2_FitKsi;SurfFr2_FitDS;"
 	ListOfVariables+="SurfFr2_SurfaceError;SurfFr2_KsiError;SurfFr2_DSError;"
 	ListOfVariables+="SurfFr2_SurfaceMin;SurfFr2_SurfaceMax;SurfFr2_SurfaceStep;SurfFr2_KsiMin;SurfFr2_KsiMax;SurfFr2_KsiStep;"
 	ListOfVariables+="SurfFr2_DSMin;SurfFr2_DSMax;SurfFr2_DSStep;"
+	ListOfVariables+="SurfFr2_Qc;SurfFr2_QcWidth;SurfFr2_QcStep;"
 		
 	ListOfVariables+="SASBackground;SASBackgroundError;SASBackgroundStep;FitSASBackground;UpdateAutomatically;DisplayLocalFits;ActiveTab;"
 
@@ -241,6 +244,16 @@ Function IR1V_SetInitialValues()
 			testVar=500
 		endif
 	endfor
+	
+	ListOfVariables="SurfFr1_QcWidth;SurfFr2_QcWidth;"
+	//this sets width of Qc transition to 10%, may need to be oiptimized later.
+	For(i=0;i<itemsInList(ListOfVariables);i+=1)
+		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
+		if (testVar==0)
+			testVar=0.1
+		endif
+	endfor
+	
 	IR1V_SetErrorsToZero()
 	setDataFolder oldDF
 end

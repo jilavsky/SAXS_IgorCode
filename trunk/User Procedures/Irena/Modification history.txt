@@ -3,6 +3,10 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.57 xxxxx
+Fractals model - added Qc as transitional Q value when surface fractal changes to Porod’s slope at high Q. Set to 0 if not needed. 
+
+
 2.56 8/20/2014
 ASCII export - fixed bug which prevented Multiple QRS data export.  
 Plotting tool I - made “Zoom and Set limits” marquee item dynamic, so it shows only on the right graph. 
