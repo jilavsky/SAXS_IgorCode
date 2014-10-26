@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.02
+#pragma version=2.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 Added Qc as transition from Surface fractal to Porods termainal (Q^-4) slope. 
 //2.02  Modified all controls not to define font and font size to enable proper control by user 
 //2.01 added license for ANL
 
@@ -27,49 +28,15 @@ Proc IR1V_ControlPanel()
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("FractalsModel","IR1V_ControlPanel","DSM_Int;M_DSM_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 58,28,"Fractals model input panel"
 	TitleBox MainTitle title="Fractals model input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,181,339,181
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 8,49,"Data input"
 	TitleBox Info1 title="Data input",pos={8,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,209,"Fractals model input"
 	TitleBox Info2 title="Fractals model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14, fstyle=3,fColor=(0,0,65535)
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 200,285,"Fit?:"
 	TitleBox Info3 title="Fit?  Low limit:    High Limit:",pos={200,275},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 230,285,"Low limit:    High Limit:"
-	//TitleBox Info4 title="",pos={230,262},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12
-//	DrawText 10,605,"Fit using least square fitting ?"
 	TitleBox Info5 title="Fit using least square fitting ?",pos={2,588},frame=0,fstyle=3, fixedSize=0,size={140,15},fSize=12,fColor=(0,0,52224)
-//	DrawPoly 113,225,1,1,{113,225,113,225}
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,612,339,612
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,612},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
-//	DrawText 16,635,"Results:"
 	TitleBox Info6 title="Results",pos={2,620},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
 
-	//Experimental data input
-//	CheckBox UseIndra2Data,pos={217,26},size={141,14},proc=IR1V_InputPanelCheckboxProc,title="Use Indra 2 data structure"
-//	CheckBox UseIndra2Data,variable= root:packages:FractalsModel:UseIndra2data, help={"Check, if you are using Indra 2 produced data with the orginal names, uncheck if the names of data waves are different"}
-//	CheckBox UseQRSData,pos={217,40},size={141,14},proc=IR1V_InputPanelCheckboxProc,title="Use QRS data structure"
-//	CheckBox UseQRSData,variable= root:packages:FractalsModel:UseQRSdata, help={"Check, if you are using QRS names, uncheck if the names of data waves are different"}
-//	PopupMenu SelectDataFolder,pos={4,56},size={180,21},proc=IR1V_PanelPopupControl,title="Select folder with data:    ", help={"Select folder containing your SAS data"}
-//	PopupMenu SelectDataFolder,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:FractalsModel:UseIndra2Data, root:Packages:FractalsModel:UseQRSData,0,0)"
-//	PopupMenu QvecDataName,pos={5,80},size={179,21},proc=IR1V_PanelPopupControl,title="Wave with Q data           ", help={"Select wave with Q data from the selection"}
-//	PopupMenu QvecDataName,mode=1,popvalue="---",value= #"\"---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"FractalsModel\",0,0)"
-//	PopupMenu IntensityDataName,pos={4,106},size={180,21},proc=IR1V_PanelPopupControl,title="Wave with Intensity data ", help={"Select wave with Intensity data from the selection"}
-//	PopupMenu IntensityDataName,mode=1,popvalue="---",value= #"\"---;\"+IR1_ListOfWaves(\"DSM_Int\",\"FractalsModel\",0,0)"
-//	PopupMenu ErrorDataName,pos={6,133},size={178,21},proc=IR1V_PanelPopupControl,title="Wave with Error data      ", help={"Select wave with error estimate data for your intensity"}
-//	PopupMenu ErrorDataName,mode=1,popvalue="---",value= #"\"---;\"+IR1_ListOfWaves(\"DSM_Error\",\"FractalsModel\",0,0)"
 	Button DrawGraphs,pos={56,158},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}
 	SetVariable SubtractBackground,limits={-inf,Inf,0.1},value= root:Packages:FractalsModel:SubtractBackground
 	SetVariable SubtractBackground,pos={170,162},size={180,16},title="Subtract background",proc=IR1V_PanelSetVarProc, help={"Subtract flat background from input data"}
@@ -227,13 +194,16 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr1_DSMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr1_DSMax, help={"DS high limit"}
 
 	SetVariable SurfFr1_Ksi,pos={14,370},size={160,16},proc=IR1V_PanelSetVarProc,title="Correlation length  ", help={"Correlation length of surface fractal, Ksi in the formula"}
-	SetVariable SurfFr1_Ksi,limits={0,inf,root:Packages:FractalsModel:MassFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr1_Ksi
+	SetVariable SurfFr1_Ksi,limits={0,inf,root:Packages:FractalsModel:SurfFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr1_Ksi
 	CheckBox SurfFr1_FitKsi,pos={200,371},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr1_FitKsi,variable= root:Packages:FractalsModel:SurfFr1_FitKsi, help={"Fit the Correlation legth, select good starting conditions and appropriate limits"}
 	SetVariable SurfFr1_KsiMin,pos={230,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable SurfFr1_KsiMin,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr1_KsiMin, help={"Correlation legth low limit"}
 	SetVariable SurfFr1_KsiMax,pos={300,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable SurfFr1_KsiMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr1_KsiMax, help={"Correlation legth high limit"}
+
+	SetVariable SurfFr1_Qc,pos={14,395},size={160,16},proc=IR1V_PanelSetVarProc,title="Qc (Terminal Q)  ", help={"Q max when scattering changes to Porod's law"}
+	SetVariable SurfFr1_Qc,limits={0,inf,root:Packages:FractalsModel:SurfFr1_QcStep},value= root:Packages:FractalsModel:SurfFr1_Qc
 
 
 	SetVariable SurfFr1_Contrast,pos={14,440},size={220,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]              "
@@ -261,7 +231,7 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr2_DSMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr2_DSMax, help={"DS high limit"}
 
 	SetVariable SurfFr2_Ksi,pos={14,370},size={160,16},proc=IR1V_PanelSetVarProc,title="Correlation length  ", help={"Correlation length of surface fractal, Ksi in the formula"}
-	SetVariable SurfFr2_Ksi,limits={0,inf,root:Packages:FractalsModel:MassFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr2_Ksi
+	SetVariable SurfFr2_Ksi,limits={0,inf,root:Packages:FractalsModel:SurfFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr2_Ksi
 	CheckBox SurfFr2_FitKsi,pos={200,371},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr2_FitKsi,variable= root:Packages:FractalsModel:SurfFr2_FitKsi, help={"Fit the Correlation length, select good starting conditions and appropriate limits"}
 	SetVariable SurfFr2_KsiMin,pos={230,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -269,6 +239,8 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr2_KsiMax,pos={300,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable SurfFr2_KsiMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr2_KsiMax, help={"Correlation length high limit"}
 
+	SetVariable SurfFr2_Qc,pos={14,395},size={160,16},proc=IR1V_PanelSetVarProc,title="Qc (Terminal Q)  ", help={"Q max when scattering changes to Porod's law"}
+	SetVariable SurfFr2_Qc,limits={0,inf,root:Packages:FractalsModel:SurfFr2_QcStep},value= root:Packages:FractalsModel:SurfFr2_Qc
 
 	SetVariable SurfFr2_Contrast,pos={14,440},size={220,16},proc=IR1A_PanelSetVarProc,title="Contrast [x 10^20]              "
 	SetVariable SurfFr2_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr2_Contrast, help={"Scattering contrast"}
@@ -354,6 +326,7 @@ Function IR1V_TabPanelControl(name,tab)
 	SetVariable SurfFr1_KsiMin, disable= (tab!=1 || !UseSurfFract1)
 	SetVariable SurfFr1_KsiMax, disable= (tab!=1 || !UseSurfFract1)
 	SetVariable SurfFr1_Contrast, disable= (tab!=1 || !UseSurfFract1)
+	SetVariable SurfFr1_Qc, disable= (tab!=1 || !UseSurfFract1)
 
 	TitleBox MassFract2_Title, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_Phi, disable= (tab!=2 || !UseMassFract2)
@@ -392,6 +365,7 @@ Function IR1V_TabPanelControl(name,tab)
 	SetVariable SurfFr2_KsiMin, disable= (tab!=3 || !UseSurfFract2)
 	SetVariable SurfFr2_KsiMax, disable= (tab!=3 || !UseSurfFract2)
 	SetVariable SurfFr2_Contrast, disable= (tab!=3 || !UseSurfFract2)
+	SetVariable SurfFr2_Qc, disable= (tab!=3 || !UseSurfFract2)
 	//update the displayed local fits in graph
 	IR1V_DisplayLocalFits(tab)
 	setDataFolder oldDF

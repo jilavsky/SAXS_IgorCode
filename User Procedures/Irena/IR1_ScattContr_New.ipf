@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.17
+#pragma version=2.18
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 fix of GUI - units for roh/gram for neutrons was wrong. 
 //2.17 minor fix to avoid p and x outside the assignement loop Igor error. 
 //2.16  Modified all controls not to define font and font size to enable proper control by user 
 //2.15 minor fix - do not update controls on Main panel, if user closed it when went to ANomalous calculator. 
@@ -116,8 +117,8 @@ Window IR1K_ScatteringContCalc()
 	SetVariable NeutronTotalMolB,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronTotalMolB,noedit= 1, format="%.5e",help={"Neutron sum of Bs for all atoms in the molecule, properly weighted"}
 	SetVariable NeutronsScatlengthDens,pos={14,386},size={270,16},title="Neut. scat length dens (rho) [10^10 cm-2]  ",frame=0,labelBack=(32768,65280,32768)
 	SetVariable NeutronsScatlengthDens,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsScatlengthDens,noedit= 1, format="%.4g",help={"Neutron scattering length density in cm-2, also known as rho"}
-	SetVariable NeutronsScatlengthDensPerGram,pos={14,404},size={270,16},title="Neut. SLD (rho) per gram [10^10 cm-2 g-1]  ",frame=0,labelBack=(32768,65280,32768)
-	SetVariable NeutronsScatlengthDensPerGram,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsScatlengthDensPerGram,noedit= 1, format="%.4g",help={"Neutron scattering length density in cm-2 per gram, also known as rho per gram"}
+	SetVariable NeutronsScatlengthDensPerGram,pos={14,404},size={270,16},title="Neut. SLD (rho) per gram [10^10 cm/g]  ",frame=0,labelBack=(32768,65280,32768)
+	SetVariable NeutronsScatlengthDensPerGram,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsScatlengthDensPerGram,noedit= 1, format="%.4g",help={"Neutron scattering length density in cm per gram, also known as rho per gram"}
 	
 	SetVariable UsedMatrixCompound,pos={330,350},size={250,16},title="Second phase :  ",help={"This is the name of compound set as matrix using button on right"}
 	SetVariable UsedMatrixCompound,value= root:Packages:ScatteringContrast:UsedMatrixCompound, frame=0, noedit=1

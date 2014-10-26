@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.02
-Constant IRVversionNumber=2.02
+#pragma version=2.03
+Constant IRVversionNumber=2.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IRVversionNumber=2.02
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 added Qc (transitional Q when Surface fractal changes to Porod's slope)
 //2.02 added version control and scrolable controls. 
 //2.01 added license for ANL
 //Fractals model using Andrew ALlens theory of combining together mass and surface fractal
@@ -75,9 +76,10 @@ Function IR1V_CalculateSfcFractal(which)
 	NVAR DS=$("SurfFr"+num2str(which)+"_DS")
 	NVAR Ksi=$("SurfFr"+num2str(which)+"_Ksi")
 	NVAR Contrast=$("SurfFr"+num2str(which)+"_Contrast")
-	NVAR Eta=$("MassFr"+num2str(which)+"_Eta")
-	
 
+	NVAR Qc=$("SurfFr"+num2str(which)+"_Qc")
+	NVAR QcW=$("SurfFr"+num2str(which)+"_QcWidth")
+	
 	Wave Qvec=root:Packages:FractalsModel:FractFitQvector
 	Wave FractFitIntensity=root:Packages:FractalsModel:FractFitIntensity
 	Duplicate/O FractFitIntensity, $("Surf"+num2str(which)+"FractFitIntensity")
@@ -87,6 +89,27 @@ Function IR1V_CalculateSfcFractal(which)
 	tempFractFitIntensity=0
 	tempFractFitIntensity = pi * Contrast* 1e20 * Ksi^4 *1e-32* Surface * exp(gammln(5-DS))	
 	tempFractFitIntensity *= sin((3-DS)* atan(Qvec*Ksi))/((1+(Qvec*Ksi)^2)^((5-DS)/2) * Qvec*Ksi)
+	if(Qc>0)
+			//h(Q) = C(xc - x)f(Q) + C(x - xc)g(Q).
+			//The transition from one behavior to another is determined by C. Ê
+			//For an infinitely sharp transition, C would be a Heaviside step function. Ê
+			//Our choice for C is a smoothed step function:
+			//C(x) = 0.5 * (1 + erfc(x/W)).
+			//C(x) = 0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )
+			duplicate/Free tempFractFitIntensity, StepFunction1, StepFunction2, TempFractInt2
+			StepFunction1 = 0.5 * (1 + erf((Qc - Qvec)/SQRT(2*((Qc*QcW/2.3548)^2) ) ))
+			StepFunction2 = 0.5 * (1 + erf((Qvec-Qc)/SQRT(2*((Qc*QcW/2.3548)^2) ) ))
+			//So, the total model, which transitions from f(Q) to Porod law behavior AQ^-4 is:
+			//h(Q) = C(xc - x)f(Q) + C(x -xc)AQ^-4.
+			//The value for A is not a free parameter. It is fixed by a continuity condition:
+			//f(Qc) = g(Qc), or A = Qc^4 * f(Qc).
+			//Intensity = ASF *Ê0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )Ê Ê +
+			//+ ( ÊPf * Q^-4 *Ê0.5 * (1 + ERF( (Q-Qc) /SQRT(2*((Qw/2.3548)^2) ) )Ê
+			variable PorodSurface=Qc^4 * tempFractFitIntensity[BinarySearchInterp(Qvec, Qc )]
+			TempFractInt2 = tempFractFitIntensity * StepFunction1 + PorodSurface * Qvec^-4 * StepFunction2
+			tempFractFitIntensity = TempFractInt2
+	endif
+	
 //	tempFractFitIntensity*=1e-48									//this is conversion for Volume of particles from A to cm
 	FractFitIntensity+=tempFractFitIntensity
 	
