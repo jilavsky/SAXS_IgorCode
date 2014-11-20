@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.38
+#pragma version=2.39
 Constant NI1AversionNumber = 2.38
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.38
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.39 added ADSC_A (wavelength in A) as option
 //2.38 moved Dezinering on tab2. 
 //2.38 Fixed naming of data when more then one "." is present in the name. It is now allowed on USAXS instrument.
 //2.37 Modifications needed for 2D calibrated data input/output, added Append to Nexus file (2D data for now).  
@@ -165,7 +166,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	NewDataFolder/O/S root:Packages:Convert2Dto1D
 
 	//internal loaders
-	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;DND/txt;RIGK/Raxis;ADSC;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
+	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
 	ListOfKnownExtensions+="SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;"//mpa/bin;mpa/asc;mp/bin;mp/asc
 #if(Exists("ccp4unpack"))	
 	ListOfKnownExtensions+="MarIP/xop;"
