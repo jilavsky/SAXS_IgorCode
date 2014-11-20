@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.36
+#pragma version=2.37
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.37 Created ADSC_A file type which has wavelength in A, not in nm as ADSC has. 
 //2.36 modified PilatusHookFunction and asdded ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
 //2.35 adds Pilatus Cbf compressed files (finally solved the problem)... 
 //2.34 adds abiulity to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
@@ -1175,7 +1176,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			endif
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"WinView spe (Princeton)"+";"
-	elseif(cmpstr(FileType,"ADSC")==0)
+	elseif(cmpstr(FileType,"ADSC")==0 || cmpstr(FileType,"ADSC_A")==0)
 	//new version sent by Peter : PReichert@lbl.gov. Modified to read Io and other parameters from hteir ADSC file format. 
 	             FileNameToLoad= FileName
 	               variable dummy_i0
@@ -1241,7 +1242,11 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	                       endif
 				   dummy = NumberByKey("WAVELENGTH",(header0[i]),"=")
 	                       if(dummy)
-	                       Wavelength =  dummy*10
+	                       	if(cmpstr(FileType,"ADSC")==0)			//ADSC_A has wavelength in A and should nto be scaled from nm. 
+	                      		 Wavelength =  dummy*10
+	                      	else
+	                      		 Wavelength =  dummy
+	                      	endif	
 	                       XrayEnergy = 12.398424437/Wavelength
 	                       endif
 	             endfor

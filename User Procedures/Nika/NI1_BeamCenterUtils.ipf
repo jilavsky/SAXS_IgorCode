@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.19
 Constant NI1BCversionNumber = 2.18
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.19 addressed new ADSC_A file type
 //2.18 modified call to hook function
 //2.17 Added right click "Refresh content" to Listbox
 //2.16 fixed /NTHR=0, 1 is simply wrong... 
@@ -1529,7 +1530,7 @@ Function NI1BC_UpdateBmCntrListBox()
 
 		if(cmpstr(DataFileExtension, ".tif")==0)
 			realExtension=DataFileExtension
-		elseif(cmpstr(DataFileExtension, "ADSC")==0)
+		elseif(cmpstr(DataFileExtension, "ADSC")==0 || cmpstr(DataFileExtension, "ADSC_A")==0)	//ADSC_A has wavelength in A
 			realExtension=".img"
 		elseif(cmpstr(DataFileExtension, "DND/txt")==0)
 			realExtension=".txt"

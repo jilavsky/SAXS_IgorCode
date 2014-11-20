@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.35
+#pragma version=2.36
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.36 added ADSC_A
 //2.35 moved Dezinger to tab 2 - some users thought, that dezingenring is available only for empty and dark.  
 //2.34 can read/write canSAS/Nexus files. Can log-bin 2D data and use those. 
 //2.33 fixed display of files for CanSAS/Nexus file type
@@ -1426,7 +1427,7 @@ Function NI1A_UpdateEmptyDarkListBox()
 		string tempstr, realExtension
 		if(cmpstr(DataFileExtension, ".tif")==0)
 			realExtension=DataFileExtension
-		elseif(cmpstr(DataFileExtension, "ADSC")==0)
+		elseif(cmpstr(DataFileExtension, "ADSC")==0 || cmpstr(DataFileExtension, "ADSC_A")==0)
 			realExtension=".img"
 		elseif(cmpstr(DataFileExtension, "DND/txt")==0)
 			realExtension=".txt"
@@ -3032,7 +3033,7 @@ Function NI1A_UpdateDataListBox()
 		
 		if(cmpstr(DataFileExtension, ".tif")==0)
 			realExtension=DataFileExtension
-		elseif(cmpstr(DataFileExtension, "ADSC")==0)
+		elseif(cmpstr(DataFileExtension, "ADSC")==0 || cmpstr(DataFileExtension, "ADSC_A")==0)
 			realExtension=".img"
 		elseif(cmpstr(DataFileExtension, "DND/txt")==0)
 			realExtension=".txt"
