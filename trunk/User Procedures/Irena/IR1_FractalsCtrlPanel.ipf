@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.03
+#pragma version=2.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.04 added controls for Qc width
 //2.03 Added Qc as transition from Surface fractal to Porods termainal (Q^-4) slope. 
 //2.02  Modified all controls not to define font and font size to enable proper control by user 
 //2.01 added license for ANL
@@ -205,8 +206,10 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr1_Qc,pos={14,395},size={160,16},proc=IR1V_PanelSetVarProc,title="Qc (Terminal Q)  ", help={"Q max when scattering changes to Porod's law"}
 	SetVariable SurfFr1_Qc,limits={0,inf,root:Packages:FractalsModel:SurfFr1_QcStep},value= root:Packages:FractalsModel:SurfFr1_Qc
 
+	PopupMenu SurfFr1_QcW,pos={14,415},size={180,16},title="Qc width [% of Qc] ", help={"Transition width at Q max when scattering changes to Porod's law"}
+	PopupMenu SurfFr1_QcW,proc=IR1V_PopMenuProc,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*root:Packages:FractalsModel:SurfFr1_QcWidth), "5;10;15;20;25;")
 
-	SetVariable SurfFr1_Contrast,pos={14,440},size={220,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]              "
+	SetVariable SurfFr1_Contrast,pos={14,450},size={220,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]              "
 	SetVariable SurfFr1_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr1_Contrast, help={"Scattering contrast"}
 
 //SUrface fractal 2
@@ -242,7 +245,10 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr2_Qc,pos={14,395},size={160,16},proc=IR1V_PanelSetVarProc,title="Qc (Terminal Q)  ", help={"Q max when scattering changes to Porod's law"}
 	SetVariable SurfFr2_Qc,limits={0,inf,root:Packages:FractalsModel:SurfFr2_QcStep},value= root:Packages:FractalsModel:SurfFr2_Qc
 
-	SetVariable SurfFr2_Contrast,pos={14,440},size={220,16},proc=IR1A_PanelSetVarProc,title="Contrast [x 10^20]              "
+	PopupMenu SurfFr2_QcW,pos={14,415},size={180,16},title="Qc width [% of Qc] ", help={"Transition width at Q max when scattering changes to Porod's law"}
+	PopupMenu SurfFr2_QcW,proc=IR1V_PopMenuProc,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*root:Packages:FractalsModel:SurfFr2_QcWidth), "5;10;15;20;25;")
+
+	SetVariable SurfFr2_Contrast,pos={14,450},size={220,16},proc=IR1A_PanelSetVarProc,title="Contrast [x 10^20]              "
 	SetVariable SurfFr2_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr2_Contrast, help={"Scattering contrast"}
 
 
@@ -259,6 +265,29 @@ EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR1V_PopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			string tmpStr=pa.ctrlName
+			NVAR Width=$("root:Packages:FractalsModel:"+tmpStr+"idth")
+			Width= 0.01*str2num(popStr)
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
 
 Function IR1V_TabPanelControl(name,tab)
 	String name
@@ -327,6 +356,7 @@ Function IR1V_TabPanelControl(name,tab)
 	SetVariable SurfFr1_KsiMax, disable= (tab!=1 || !UseSurfFract1)
 	SetVariable SurfFr1_Contrast, disable= (tab!=1 || !UseSurfFract1)
 	SetVariable SurfFr1_Qc, disable= (tab!=1 || !UseSurfFract1)
+	PopupMenu SurfFr1_QcW, disable= (tab!=1 || !UseSurfFract1)
 
 	TitleBox MassFract2_Title, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_Phi, disable= (tab!=2 || !UseMassFract2)
@@ -366,6 +396,7 @@ Function IR1V_TabPanelControl(name,tab)
 	SetVariable SurfFr2_KsiMax, disable= (tab!=3 || !UseSurfFract2)
 	SetVariable SurfFr2_Contrast, disable= (tab!=3 || !UseSurfFract2)
 	SetVariable SurfFr2_Qc, disable= (tab!=3 || !UseSurfFract2)
+	PopupMenu SurfFr2_QcW, disable= (tab!=3 || !UseSurfFract2)
 	//update the displayed local fits in graph
 	IR1V_DisplayLocalFits(tab)
 	setDataFolder oldDF
