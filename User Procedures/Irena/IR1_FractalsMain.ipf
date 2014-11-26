@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.03
-Constant IRVversionNumber=2.03
+#pragma version=2.04
+Constant IRVversionNumber=2.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IRVversionNumber=2.03
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.04 added controls for Qc width
 //2.03 added Qc (transitional Q when Surface fractal changes to Porod's slope)
 //2.02 added version control and scrolable controls. 
 //2.01 added license for ANL
