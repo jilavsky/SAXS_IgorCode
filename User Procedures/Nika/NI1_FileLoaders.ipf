@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.37
+#pragma version=2.38
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.38 fixe3d bug in reading calibrated 2D data found by Igor 7 beta. 
 //2.37 Created ADSC_A file type which has wavelength in A, not in nm as ADSC has. 
 //2.36 modified PilatusHookFunction and asdded ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
 //2.35 adds Pilatus Cbf compressed files (finally solved the problem)... 
@@ -3896,13 +3897,13 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				UsedAzimAngle=1
 			endif
 			TempStr = StringByKey("UnbinnedQx", FileContent, ":", ",")
-			if(strlen(TempStr)>2)	//Azimuthal wave exists
-				HDF5LoadData /N=UnbinnedQx  /O  fileID , TempStr 
+			if(strlen(TempStr)>2)	//Original Qx vector exists
+				HDF5LoadData /N=UnbinnedQxW  /O  fileID , TempStr 
 				UnbinnedQx=1
 			endif
 			TempStr = StringByKey("UnbinnedQy", FileContent, ":", ",")
-			if(strlen(TempStr)>2)	//Azimuthal wave exists
-				HDF5LoadData /N=UnbinnedQy  /O  fileID , TempStr 
+			if(strlen(TempStr)>2)	//Original Qy vector exists
+				HDF5LoadData /N=UnbinnedQyW  /O  fileID , TempStr 
 				UnbinnedQy=1
 			endif
 			HDF5CloseFile fileID  
@@ -3940,15 +3941,15 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			if(UnbinnedQx && UnbinnedQy&&ReverseBinnedData)
 				if(HaveMask)
 					if(HaveErrors)
-						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy, Mask=M_ROIMask, Idev2D=CCDImageToConvert_Errs )		//[Mask, Idev2D] 
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQxW, UnbinnedQyW, Mask=M_ROIMask, Idev2D=CCDImageToConvert_Errs )		//[Mask, Idev2D] 
 					else
-						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy, Mask=M_ROIMask)		//[Mask, Idev2D] 		
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQxW, UnbinnedQyW, Mask=M_ROIMask)		//[Mask, Idev2D] 		
 					endif
 				else
 					if(HaveErrors)
-						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy, Idev2D=CCDImageToConvert_Errs )		//[Mask, Idev2D] 
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQxW, UnbinnedQyW, Idev2D=CCDImageToConvert_Errs )		//[Mask, Idev2D] 
 					else
-						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQx, UnbinnedQy)		//[Mask, Idev2D] 
+						NI1_RevertBinnedDataSet(CCDImageToConvert, Q2DWave, AnglesWave, BeamCenterX, BeamCenterY, UnbinnedQxW, UnbinnedQyW)		//[Mask, Idev2D] 
 					endif
 				endif
 			endif

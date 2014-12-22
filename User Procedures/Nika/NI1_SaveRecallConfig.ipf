@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.02
+#pragma version=1.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.03 fixed minor bug found by Igor 7
 //1.02 fixed minor bug in restore code which caused the Image type popup stiop working right. 
 //1.01 added license for ANL
 
@@ -197,7 +198,7 @@ Function NI1A_ShowUserConfigContent()
 		
 		LoadWave/J/Q/O/P=Convert2Dto1DConfigPath/K=2/N=ConfigFileContent/V={"\t"," $",0,0} LoadFile
 		Wave/T ConfigFileContent0=root:Packages:Convert2Dto1D:ConfigFileContent0
-		string NewConfiguration=ConfigFileContent0
+		string NewConfiguration=ConfigFileContent0[0]
 		KillWaves ConfigFileContent0
 		string NewConfigVars=StringByKey("Variables", NewConfiguration , ">" , "<")
 		string NewConfigStrings=StringByKey("Strings", NewConfiguration , ">" , "<")
