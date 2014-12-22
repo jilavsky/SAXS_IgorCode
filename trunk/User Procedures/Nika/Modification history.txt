@@ -3,8 +3,13 @@ Code modification history
 
 -latest stuff first
 ********************************************
+xxxx
+ADSC file format - finish, need dialog, for now added ADSC_A 
+
+
 1.67 9/15/2014
 Mask tool - fix bug which caused the Listbox to be always empty. 
+
 
 1.66 8/20/2014
 Main panel - moved dezinering controls from tab4 to tab2, some users thought that dezinering was available only for Empty/dark and not for sample images… 
