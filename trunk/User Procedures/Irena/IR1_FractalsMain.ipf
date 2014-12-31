@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.04
+#pragma version=2.05
 Constant IRVversionNumber=2.04
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IRVversionNumber=2.04
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.05 fixed BessJ into Besselj, newer function. 
 //2.04 added controls for Qc width
 //2.03 added Qc (transitional Q when Surface fractal changes to Porod's slope)
 //2.02 added version control and scrolable controls. 
@@ -220,7 +221,8 @@ Function IR1V_CalculateFSquared(which,Qval)
 	//now we need the integral
 	Make/O/D/N=(IntgNumPnts) FractF2IntgWave
 	SetScale/I x 0,1,"", FractF2IntgWave
-	FractF2IntgWave = BessJ(3/2,Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2),1)/(Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2))^(3/2)
+	//FractF2IntgWave = BessJ(3/2,Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2),1)/(Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2))^(3/2)
+	FractF2IntgWave = Besselj(3/2,Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2))/(Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2))^(3/2)
 	//fix end points, if they are wrong:
 	if (numtype(FractF2IntgWave[0])!=0)
 		FractF2IntgWave[0]=FractF2IntgWave[1]

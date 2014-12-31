@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.28
+#pragma version=1.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.29 added Fractals as models
 //1.28 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.27	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //1.26 changed in Unicertainity analysis length of paramName to 20 characters. 
@@ -547,6 +548,13 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		IR2L_Model_TabPanelControl("",V_Value)
 	endif
 
+	if (stringmatch(ctrlName,"SurfFrQcWidth"))
+		ControlInfo/W=LSQF2_MainPanel DistTabs
+		NVAR Width = $("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(V_Value+1))
+		Width = 0.01*str2num(popStr)
+		IR2L_Model_TabPanelControl("",V_Value)
+	endif
+
 
 	if (stringmatch(ctrlName,"KFactor"))
 		ControlInfo/W=LSQF2_MainPanel DistTabs
@@ -904,8 +912,12 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		F_sw=1			//we have Particulate system.
 	elseif(stringmatch(Model, "Diffraction Peak"))
 		F_sw=2			//we have Diffraction peak.
+	elseif(stringmatch(Model, "MassFractal"))
+		F_sw=3		//MassFractal.
+	elseif(stringmatch(Model, "SurfaceFractal"))
+		F_sw=4		//SurfaceFractal.
 	else
-		F_sw=3		//unused yet.
+		F_sw=5		//unused yet.
 	endif
 	if(stringmatch(FormFactor, "CoreShell*") || stringmatch(FormFactor, "Janus CoreShell Micelle*"))
 		CS_sw=0
@@ -926,7 +938,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 
 		Execute("CheckBox UseThePop,win=LSQF2_MainPanel ,variable=root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+")")
 		Execute("SetVariable UserName,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UserName_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")") 
-		Execute("PopupMenu PopulationType,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1)+",\"Size dist.;Unified level;Diffraction Peak;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")")
+		Execute("PopupMenu PopulationType,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1)+",\"Size dist.;Unified level;Diffraction Peak;MassFractal;SurfaceFractal;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")")
 		
 		
 		Execute("CheckBox RdistAuto,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistAuto_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
@@ -988,6 +1000,62 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Execute("SetVariable DiffPeakQPos,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakQPos_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
 		Execute("SetVariable DiffPeakQFWHM,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakQFWHM_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
 		Execute("SetVariable DiffPeakIntgInt,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakIntgInt_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
+
+		//MassFractal
+		//Execute("PopupMenu DiffPeakProfile,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1)+",root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes)+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrPhi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrPhi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox MassFrPhiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhiFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrPhiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhiMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrPhiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhiMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable MassFrRadius,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrRadius,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox MassFrRadiusFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadiusFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrRadiusMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadiusMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrRadiusMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadiusMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable MassFrDv,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrDv,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox MassFrDvFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDvFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrDvMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDvMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrDvMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDvMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable MassFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox MassFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsiFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsiMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsiMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable MassFrBeta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrEta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable MassFrIntgNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+
+
+		//SurfaceFractal
+		//Execute("PopupMenu SurfFr1_QcW,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1)+",root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes)+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		Execute("PopupMenu SurfFrQcWidth,win=LSQF2_MainPanel, mode=(whichListItem(num2str(100*root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(tab+1)+"), \"5;10;15;20;25;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		
+		Execute("SetVariable SurfFrSurf,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrSurf,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox SurfFrSurfFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurfFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrSurfMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurfMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrSurfMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurfMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable SurfFrDS,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrDS,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox SurfFrDSFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDSFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrDSMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDSMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrDSMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDSMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable SurfFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(tab+1)+"}")
+		Execute("Checkbox SurfFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsiFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsiMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsiMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+
+		Execute("SetVariable SurfFrQc,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		Execute("SetVariable SurfFrQc,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(tab+1)+"}")
 
 		//size dist controls
 
@@ -1752,7 +1820,7 @@ Function IR2L_Initialize()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S IR2L_NLSQF
 
-	string/g ListOfVariables, ListOfDataVariables, ListOfPopulationVariables, ListOfPopulationVariablesSD, ListOfPopulationVariablesDP, ListOfPopulationVariablesUF
+	string/g ListOfVariables, ListOfDataVariables, ListOfPopulationVariables, ListOfPopulationVariablesSD, ListOfPopulationVariablesDP, ListOfPopulationVariablesUF, ListOfPopulationVariablesFR
 	string/g ListOfStrings, ListOfDataStrings, ListOfPopulationsStrings
 	variable i, j
 	
@@ -1825,8 +1893,19 @@ Function IR2L_Initialize()
 	ListOfPopulationVariablesDP+="DiffPeakPar4;DiffPeakPar4Fit;DiffPeakPar4Min;DiffPeakPar4Max;"	
 	ListOfPopulationVariablesDP+="DiffPeakPar5;DiffPeakPar5Fit;DiffPeakPar5Min;DiffPeakPar5Max;"	
 	
+		//Fractals parameters - Mass
+	ListOfPopulationVariablesFR+="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;MassFrBeta;MassFrEta;MassFrIntgNumPnts;"
+	ListOfPopulationVariablesFR+="MassFrPhiFit;MassFrRadiusFit;MassFrDvFit;MassFrKsiFit;"
+	//ListOfPopulationVariables+="MassFrPhiError;MassFrRadiusError;MassFrDvError;MassFrKsiError;"
+	ListOfPopulationVariablesFR+="MassFrPhiMin;MassFrRadiusMin;MassFrDvMin;MassFrKsiMin;"
+	ListOfPopulationVariablesFR+="MassFrPhiMax;MassFrRadiusMax;MassFrDvMax;MassFrKsiMax;"
 		
-		
+		//Fractals parameters - Surface
+	ListOfPopulationVariablesFR+="SurfFrSurf;SurfFrKsi;SurfFrDS;"
+	ListOfPopulationVariablesFR+="SurfFrSurfFit;SurfFrKsiFit;SurfFrDSFit;"
+	ListOfPopulationVariablesFR+="SurfFrSurfMin;SurfFrKsiMin;SurfFrDSMin;"
+	ListOfPopulationVariablesFR+="SurfFrSurfMax;SurfFrKsiMax;SurfFrDSMax;"
+	ListOfPopulationVariablesFR+="SurfFrQc;SurfFrQcWidth;"
 	
 	
 	
@@ -1859,6 +1938,11 @@ Function IR2L_Initialize()
 	for(j=1;j<=10;j+=1)	
 		for(i=0;i<itemsInList(ListOfPopulationVariablesUF);i+=1)	
 			IN2G_CreateItem("variable",StringFromList(i,ListOfPopulationVariablesUF)+"_pop"+num2str(j))
+		endfor
+	endfor		
+	for(j=1;j<=10;j+=1)	
+		for(i=0;i<itemsInList(ListOfPopulationVariablesFR);i+=1)	
+			IN2G_CreateItem("variable",StringFromList(i,ListOfPopulationVariablesFR)+"_pop"+num2str(j))
 		endfor
 	endfor		
 	//following 10 times as these are data sets
@@ -1948,47 +2032,6 @@ Function IR2L_SetInitialValues(enforce)
 //	abort "finish me - IE2L_SetInitialValues"
 	string ListOfVariables
 	variable i, j
-	//here we set what needs to be 0
-	//Main parameters
-//	ListOfVariables="UseIndra2Data;UseQRSdata;UseSMRData;MultipleInputData;"
-//	ListOfVariables+="SameContrastForDataSets;VaryContrastForDataSets;DisplayInputDataControls;DisplayModelControls;"
-//	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
-//
-//	ListOfVariables+="GraphXMin;GraphXMax;GraphYMin;GraphYMax;"
-//
-//
-//	//Input Data parameters... Will have _setX attached, in this method background needs to be here...
-//	ListOfDataVariables="UseTheData;SlitSmeared;SlitLength;Qmin;Qmax;"
-//	ListOfDataVariables+="Background;BackgroundFit;BackgroundMin;BackgroundMax;BackgErr;BackgStep;"
-//	ListOfDataVariables+="DataScalingFactor;ErrorScalingFactor;UseUserErrors;UseSQRTErrors;UsePercentErrors;"
-//	ListOfDataStrings ="FolderName;IntensityDataName;QvecDataName;ErrorDataName;UserDataSetName;"
-//	
-//	
-//	//Model parameters, these need to have _popX attached at the end of name
-//	ListOfPopulationVariables="UseThePop;"
-//		//R distribution parameters
-//	ListOfPopulationVariables+="RdistAuto;RdistrSemiAuto;RdistMan;RdistManMin;RdistManMax;RdistLog;RdistNumPnts;RdistNeglectTails;"	
-//	ListOfPopulationVariables+="Contrast;Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"	
-//		//Form factor parameters
-//	ListOfPopulationsStrings+="FormFactor;FFUserFFformula;FFUserVolumeFormula;"	
-//	ListOfPopulationVariables+="FormFactor_Param1;FormFactor_Param1Fit;FormFactor_Param1Min;FormFactor_Param1Max;"	
-//	ListOfPopulationVariables+="FormFactor_Param2;FormFactor_Param2Fit;FormFactor_Param2Min;FormFactor_Param2Max;"	
-//	ListOfPopulationVariables+="FormFactor_Param3;FormFactor_Param3Fit;FormFactor_Param3Min;FormFactor_Param3Max;"	
-//	ListOfPopulationVariables+="FormFactor_Param4;FormFactor_Param4Fit;FormFactor_Param4Min;FormFactor_Param4Max;"	
-//	ListOfPopulationVariables+="FormFactor_Param5;FormFactor_Param5Fit;FormFactor_Param5Min;FormFactor_Param5Max;"	
-//		//Distribution parameters
-//	ListOfPopulationVariables+="Volume;VolumeFit;VolumeMin;VolumeMax;"	
-//	ListOfPopulationVariables+="LNMinSize;LNMinSizeFit;LNMinSizeMin;LNMinSizeMax;LNMeanSize;LNMeanSizeFit;LNMeanSizeMin;LNMeanSizeMax;LNSdeviation;LNSdeviationFit;LNSdeviationMin;LNSdeviationMax;"	
-//	ListOfPopulationVariables+="GMeanSize;GMeanSizeFit;GMeanSizeMin;GMeanSizeMax;GWidth;GWidthFit;GWidthMin;GWidthMax;LSWLocation;LSWLocationFit;LSWLocationMin;LSWLocationMax;"	
-//
-//	ListOfPopulationsStrings+="PopSizeDistShape;"	
-
-//not done in any way, seems impossible to match meaningful numbers to various SFs. 
-//	ListOfPopulationVariables+="StructureParam1;StructureParam1Fit;StructureParam1Min;StructureParam1Max;StructureParam2;StructureParam2Fit;StructureParam2Min;StructureParam2Max;"
-//	ListOfPopulationVariables+="StructureParam3;StructureParam3Fit;StructureParam3Min;StructureParam3Max;StructureParam4;StructureParam4Fit;StructureParam4Min;StructureParam4Max;"
-//	ListOfPopulationVariables+="StructureParam5;StructureParam5Fit;StructureParam5Min;StructureParam5Max;StructureParam6;StructureParam6Fit;StructureParam6Min;StructureParam6Max;"
-
-
 //set initial values....
 	//set starting conditions here....
 	//SameContrastForDataSets;VaryContrastForDataSets;DisplayInputDataControls;DisplayModelControls
@@ -2210,9 +2253,69 @@ Function IR2L_SetInitialValues(enforce)
 					testVar=2		
 				endif
 			endfor
-
-
-
+		//FRACTALS
+			ListOfVariables = "MassFrPhi;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=0.1
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=0.01
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=1		
+				endif
+			endfor
+			ListOfVariables = "MassFrRadius;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=500
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=10
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=1e4		
+				endif
+			endfor
+			ListOfVariables = "MassFrDv;MassFrBeta;SurfFrDS;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=2
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=1
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=3		
+				endif
+			endfor
+			ListOfVariables = "MassFrKsi;MassFrIntgNumPnts;SurfFrKsi;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=500
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=10
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=1e4		
+				endif
+			endfor
+			ListOfVariables = "MassFrEta;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=0.5
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=0.01
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=1		
+				endif
+			endfor
+			ListOfVariables = "SurfFrQcWidth;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=15
+				endif
+			endfor
 		endfor
 
 	for(i=1;i<=10;i+=1)	

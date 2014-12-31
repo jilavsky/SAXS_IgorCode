@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.04
+#pragma version = 2.05
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,10 +7,11 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.01 added license for ANL
-//2.02 modified by adding Shultz-Zimm distribution, JIL, 3/17/2011
-//2.03 changed min size to 1A sicne many users are using really high q data. 
+//2.05 added few missing window names which need to be killed when Kill all ..." is invoked. 
 //2.04 added IR2R_InsertRemoveLayers in the KillAllPanels
+//2.03 changed min size to 1A sicne many users are using really high q data. 
+//2.02 modified by adding Shultz-Zimm distribution, JIL, 3/17/2011
+//2.01 added license for ANL
 
 //This macro file is part of Igor macros package called "Irena", 
 //the full package should be available from usaxs.xray.aps.anl.gov/
@@ -624,7 +625,9 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "IR1I_ImportData;IR1V_ControlPanel;IR1V_LogLogPlotV;IR1V_IQ4_Q_PlotV;IR2S_ScriptingToolPnl;IR2Pr_PDFInputGraph;IR2Pr_ControlPanel;"
 	ListOfWindows += "PlotingToolWaterfallGrph;LSQF2_MainPanel;LSQF_MainGraph;GraphSizeDistributions;LSQF_ResidualsGraph;Irena_Gizmo;GizmoControlPanel;"
 	ListOfWindows += "DataMiningTool;ItemsInFolderPanel;ItemsInFolderPanel_DMII;DataManipulationII;IR2R_InsertRemoveLayers;PlotingToolContourGrph;"
-	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;IR2H_ResidualsPlot;"
+	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;IR2H_ResidualsPlot;IR1P_StylesManagementPanel;"
+	ListOfWindows += "ModelingII_Results;"
+	
 	
 	variable i
 	string TempNm

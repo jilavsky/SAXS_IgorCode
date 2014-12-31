@@ -120,6 +120,44 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 				NumDist=0
 				VolumeDist=0
 				Radius=0
+			elseif(stringMatch(Model,"MassFractal"))	//unified level
+				//calculate MassFractal				
+				For(j=1;j<=10;j+=1)	//j is dataset
+					IR2L_CalcMassFIntPopXDataSetY(i,j)
+				endfor		
+				wave/Z Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+				wave/Z NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
+				wave/Z VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
+				if(!skipCreateDistWvs || WaveExists(Radius) || WaveExists(NumDist) || WaveExists(VolumeDist))
+					IR2L_CreateDistributionWaves(i)
+					//print "created dist waves"
+				endif
+				//next we calculate the distributions (Guass, Log-Normal or LSW)
+				wave NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
+				wave VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
+				wave Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+				NumDist=0
+				VolumeDist=0
+				Radius=0
+			elseif(stringMatch(Model,"SurfaceFractal"))	//unified level
+				//calculate SurfaceFractal				
+				For(j=1;j<=10;j+=1)	//j is dataset
+					IR2L_CalcSurfFIntPopXDataSetY(i,j)
+				endfor		
+				wave/Z Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+				wave/Z NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
+				wave/Z VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
+				if(!skipCreateDistWvs || WaveExists(Radius) || WaveExists(NumDist) || WaveExists(VolumeDist))
+					IR2L_CreateDistributionWaves(i)
+					//print "created dist waves"
+				endif
+				//next we calculate the distributions (Guass, Log-Normal or LSW)
+				wave NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
+				wave VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
+				wave Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+				NumDist=0
+				VolumeDist=0
+				Radius=0
 			endif
 		endif
 	endfor
@@ -144,6 +182,224 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 //	SetAxis /W=LSQF_MainGraph /A
 
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR2L_CalcMassFIntPopXDataSetY(pop,dataSet)
+	variable pop,dataSet
+	
+//Calculate Intensity for pop X into data set Y
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:IR2L_NLSQF
+
+	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
+	NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(pop))
+	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+	variable LocalContrast
+	variable UseDatasw=1
+	if(!UseTheData || (!MultipleInputData && DataSet>1))
+		UseDatasw=0
+	endif
+	if(UseThePop && UseDatasw)
+//	//and now we need to calculate the model Intensity
+		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+		if (!WaveExists (Qwave))
+			Abort "Select original data first"
+		endif
+		variable StartPoint, EndPoint
+		StartPoint = BinarySearch(Qwave, QMin)
+		EndPoint = BinarySearch(Qwave, QMax)
+		if(StartPoint<0)
+			StartPoint=0
+		endif
+		if(EndPoint<0)
+			EndPoint = numpnts(Qwave)-1
+		endif
+		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
+		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		ModelInt=0
+
+		//find the form factor parameters and name:
+		NVAR Contrast=$("root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(pop))
+		NVAR SameContrastForDataSets=root:Packages:IR2L_NLSQF:SameContrastForDataSets
+		NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+		NVAR Contrast_set=$("root:Packages:IR2L_NLSQF:Contrast_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		if(!SameContrastForDataSets || !MultipleInputData)		//weird stuff - if 1 it means that there are different contrasts for each data set... 
+			LocalContrast=Contrast
+		else
+			LocalContrast=Contrast_set
+		endif
+
+		NVAR Phi=$("root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(pop))
+		NVAR Radius=$("root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(pop))
+		NVAR Dv=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(pop))
+		NVAR Ksi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(pop))
+		NVAR BetaVar=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(pop))
+		NVAR Eta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(pop))
+		
+		variable CHiS=IR1V_CaculateChiS(BetaVar)
+		variable RC=Radius*sqrt(2)/ChiS * sqrt(1+((2+BetaVar^2)/3)*ChiS^2)
+		//and now calculations
+		//	tempFractFitIntensity = Phi * Contrast* 1e20								//this is phi * deltaRhoSquared
+		//	tempFractFitIntensity *= IR1V_SpheroidVolume(Radius,Beta)* 1e-24		//volume of particle
+		variable Bracket
+		Bracket = ( Eta * RC^3 / (BetaVar * Radius^3)) * ((Ksi/RC)^Dv )
+		if(BetaVar!=1)
+			ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR2L_CalculateFSquared(pop,ModelQ)
+		else
+			ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR2L_CalculateFSquared(pop,ModelQ)
+		endif
+		//	tempFractFitIntensity*=1e-48									//this is conversion for Volume of particles from A to cm	
+	endif
+end
+
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+
+Function IR2L_CalculateFSquared(which,Qval)
+	variable which,Qval
+
+	NVAR Phi=$("root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(which))
+	NVAR Radius=$("root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(which))
+	NVAR Dv=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(which))
+	NVAR Ksi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(which))
+	NVAR BetaVar=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(which))
+	NVAR Eta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(which))
+	NVAR IntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(which))
+	
+	 variable result 
+	 variable TempBessArg
+	//now we need the integral
+	Make/Free/D/N=(IntgNumPnts) FractF2IntgWave
+	SetScale/I x 0,1,"", FractF2IntgWave
+	FractF2IntgWave = Besselj(3/2,Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2))/(Qval*Radius*sqrt(1+(BetaVar^2 - 1)*x^2))^(3/2)
+	//fix end points, if they are wrong:
+	if (numtype(FractF2IntgWave[0])!=0)
+		FractF2IntgWave[0]=FractF2IntgWave[1]
+	endif
+	if (numtype(FractF2IntgWave[IntgNumPnts-1])!=0)
+		FractF2IntgWave[IntgNumPnts-1]=FractF2IntgWave[IntgNumPnts-2]
+	endif
+	
+	result =  9*pi/2 * (area(FractF2IntgWave, 0, 1 ))^2
+	return result 
+end
+
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+
+Function IR2L_CalcSurfFIntPopXDataSetY(pop,dataSet)
+	variable pop,dataSet
+//Calculate Intensity for pop X into data set Y
+
+	
+//Calculate Intensity for pop X into data set Y
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:IR2L_NLSQF
+
+	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
+	NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(pop))
+	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+	variable LocalContrast
+	variable UseDatasw=1
+	if(!UseTheData || (!MultipleInputData && DataSet>1))
+		UseDatasw=0
+	endif
+	if(UseThePop && UseDatasw)
+//	//and now we need to calculate the model Intensity
+		//find the form factor parameters and name:
+		NVAR Contrast=$("root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(pop))
+		NVAR SameContrastForDataSets=root:Packages:IR2L_NLSQF:SameContrastForDataSets
+		NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+		NVAR Contrast_set=$("root:Packages:IR2L_NLSQF:Contrast_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		if(!SameContrastForDataSets || !MultipleInputData)		//weird stuff - if 1 it means that there are different contrasts for each data set... 
+			LocalContrast=Contrast
+		else
+			LocalContrast=Contrast_set
+		endif
+
+		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+		if (!WaveExists (Qwave))
+			Abort "Select original data first"
+		endif
+		variable StartPoint, EndPoint
+		StartPoint = BinarySearch(Qwave, QMin)
+		EndPoint = BinarySearch(Qwave, QMax)
+		if(StartPoint<0)
+			StartPoint=0
+		endif
+		if(EndPoint<0)
+			EndPoint = numpnts(Qwave)-1
+		endif
+		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
+		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		ModelInt=0
+
+		//find the form factor parameters and name:
+		NVAR Contrast=$("root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(pop))
+		NVAR SameContrastForDataSets=root:Packages:IR2L_NLSQF:SameContrastForDataSets
+		NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+		NVAR Contrast_set=$("root:Packages:IR2L_NLSQF:Contrast_set"+num2str(DataSet)+"_pop"+num2str(pop))
+		if(!SameContrastForDataSets || !MultipleInputData)		//weird stuff - if 1 it means that there are different contrasts for each data set... 
+			LocalContrast=Contrast
+		else
+			LocalContrast=Contrast_set
+		endif
+
+		NVAR Surface=$("root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(pop))
+		NVAR DS=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(pop))
+		NVAR Ksi=$("root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(pop))
+		NVAR Qc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(pop))
+		NVAR QcW=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(pop))
+
+
+		//	ListOfVariables+="SurfFrSurf;SurfFrKsi;SurfFrDS;"
+		//	ListOfVariables+="SurfFrQc;SurfFrQcWidth;"
+
+		ModelInt = pi *LocalContrast* 1e20 * Ksi^4 *1e-32* Surface * exp(gammln(5-DS))	
+		ModelInt *= sin((3-DS)* atan(ModelQ*Ksi))/((1+(ModelQ*Ksi)^2)^((5-DS)/2) * ModelQ*Ksi)
+		if(Qc>0)
+			//h(Q) = C(xc - x)f(Q) + C(x - xc)g(Q).
+			//The transition from one behavior to another is determined by C. Ê
+			//For an infinitely sharp transition, C would be a Heaviside step function. Ê
+			//Our choice for C is a smoothed step function:
+			//C(x) = 0.5 * (1 + erfc(x/W)).
+			//C(x) = 0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )
+			duplicate/Free ModelInt, StepFunction1, StepFunction2, TempFractInt2
+			StepFunction1 = 0.5 * (1 + erf((Qc - ModelQ)/SQRT(2*((Qc*QcW/2.3548)^2) ) ))
+			StepFunction2 = 0.5 * (1 + erf((ModelQ - Qc)/SQRT(2*((Qc*QcW/2.3548)^2) ) ))
+			//So, the total model, which transitions from f(Q) to Porod law behavior AQ^-4 is:
+			//h(Q) = C(xc - x)f(Q) + C(x -xc)AQ^-4.
+			//The value for A is not a free parameter. It is fixed by a continuity condition:
+			//f(Qc) = g(Qc), or A = Qc^4 * f(Qc).
+			//Intensity = ASF *Ê0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )Ê Ê +
+			//+ ( ÊPf * Q^-4 *Ê0.5 * (1 + ERF( (Q-Qc) /SQRT(2*((Qw/2.3548)^2) ) )Ê
+			variable PorodSurface=Qc^4 * ModelInt[BinarySearchInterp(ModelQ, Qc )]
+			TempFractInt2 = ModelInt * StepFunction1 + PorodSurface * ModelQ^-4 * StepFunction2
+			ModelInt = TempFractInt2
+		endif
+	endif
+end
+
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

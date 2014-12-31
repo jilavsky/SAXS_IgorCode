@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.15
+#pragma version=1.16
 Constant IR2LversionNumber = 1.15
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 added Fractals as models. 
 //1.15 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.14 added check to chatch for slit smeared data when Qmax is too small, require at least 3* slit length
 //1.13 modified to handle Intensity units and propagated through GUI and data export. 
@@ -208,7 +209,7 @@ Function IR2L_MainPanel()
 		SetVariable UserName,pos={170,241},size={230,10},title="What is this?:", help={"User name for this population. What is this?"} 
 
 		PopupMenu PopulationType title="Model : ",proc=IR2L_PanelPopupControl, pos={5,254}
-		PopupMenu PopulationType mode=1, value="Size dist.;Unified level;Diffraction Peak;"
+		PopupMenu PopulationType mode=1, value="Size dist.;Unified level;Diffraction Peak;MassFractal;SurfaceFractal;"
 		PopupMenu PopulationType help={"Select Model to be used for this population"}
 
 		CheckBox RdistAuto,pos={180,257},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="R dist auto?", mode=1
@@ -291,13 +292,6 @@ Function IR2L_MainPanel()
 
 		SetVariable UF_RGCO,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCO_pop1,proc=IR2L_PopSetVarProc
 		SetVariable UF_RGCO,pos={8,435},size={140,15},title="Rg cut off = ", help={"Rg cut off for higher Unified levels, see reference or manual for meaning"} 
-//		CheckBox UF_RGCOFit,pos={155,435},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
-//		CheckBox UF_RGCOFit,variable= root:Packages:IR2L_NLSQF:UF_RGCOFit_pop1, help={"Fit the P?"}
-//		SetVariable UF_RGCOMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMin_pop1,noproc
-//		SetVariable UF_RGCOMin,pos={200,435},size={80,15},title="Min ", help={"Low limit for P"} 
-//		SetVariable UF_RGCOMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop1, noproc
-//		SetVariable UF_RGCOMax,pos={290,435},size={80,15},title="Max ", help={"High limit for P"} 
-
 		PopupMenu KFactor,pos={220,452},size={170,15},proc=IR2L_PanelPopupControl,title="k factor :"
 		PopupMenu KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
@@ -436,6 +430,92 @@ Function IR2L_MainPanel()
 		SetVariable DiffPeakQFWHM,pos={5,450},size={280,16},title="Peak FWHM [A^-1]:", help={"peak FWHM in Q units"} 
 		SetVariable DiffPeakIntgInt,limits={0,1,0},variable= root:Packages:IR2L_NLSQF:DiffPeakIntgInt_pop1, noproc, disable=2, format="%.4g"
 		SetVariable DiffPeakIntgInt,pos={5,470},size={280,16},title="Peak Integral Intensity:", help={"peak integral inetnsity"} 
+
+		//Mass Fractal
+		SetVariable MassFrPhi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrPhi_pop1,proc=IR2L_PopSetVarProc
+		SetVariable MassFrPhi,pos={8,330},size={140,15},title="Particle Volume = ", help={"Volume of particle (see manual)"} 
+		CheckBox MassFrPhiFit,pos={155,330},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox MassFrPhiFit,variable= root:Packages:IR2L_NLSQF:MassFrPhiFit_pop1, help={"Fit the MassFrPhi?"}
+		SetVariable MassFrPhiMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrPhiMin_pop1,noproc
+		SetVariable MassFrPhiMin,pos={200,330},size={80,15},title="Min ", help={"Low limit for MassFrPhi"} 
+		SetVariable MassFrPhiMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrPhiMax_pop1,noproc
+		SetVariable MassFrPhiMax,pos={290,330},size={80,15},title="Max ", help={"High limit for MassFrPhi"} 
+	
+		SetVariable MassFrRadius,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrRadius_pop1,proc=IR2L_PopSetVarProc
+		SetVariable MassFrRadius,pos={8,350},size={140,15},title="Radius           = ", help={"Q position for this peak"} 
+		CheckBox MassFrRadiusFit,pos={155,350},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox MassFrRadiusFit,variable= root:Packages:IR2L_NLSQF:MassFrRadiusFit_pop1, help={"Fit the Radius position?"}
+		SetVariable MassFrRadiusMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrRadiusMin_pop1,noproc
+		SetVariable MassFrRadiusMin,pos={200,350},size={80,15},title="Min ", help={"Low limit for Radius position"} 
+		SetVariable MassFrRadiusMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrRadiusMax_pop1,noproc
+		SetVariable MassFrRadiusMax,pos={290,350},size={80,15},title="Max ", help={"High limit for Radius position"} 
+
+		SetVariable MassFrDv,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrDv_pop1,proc=IR2L_PopSetVarProc
+		SetVariable MassFrDv,pos={8,370},size={140,15},title="Dv (Fract. dim.)  = ", help={"Dv for this fractal"} 
+		CheckBox MassFrDvFit,pos={155,370},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox MassFrDvFit,variable= root:Packages:IR2L_NLSQF:MassFrDvFit_pop1, help={"Fit the Dv width position?"}
+		SetVariable MassFrDvMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMin_pop1,noproc
+		SetVariable MassFrDvMin,pos={200,370},size={80,15},title="Min ", help={"Low limit for Dv width position"} 
+		SetVariable MassFrDvMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMax_pop1,noproc
+		SetVariable MassFrDvMax,pos={290,370},size={80,15},title="Max ", help={"High limit for Dv width position"} 
+
+		SetVariable MassFrKsi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrKsi_pop1,proc=IR2L_PopSetVarProc
+		SetVariable MassFrKsi,pos={8,390},size={140,15},title="Correl. length = ", help={"Correlation lenght [A]"} 
+		CheckBox MassFrKsiFit,pos={155,390},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox MassFrKsiFit,variable= root:Packages:IR2L_NLSQF:MassFrKsiFit_pop1, help={"Fit the Correlation lenght?"}
+		SetVariable MassFrKsiMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrKsiMin_pop1,noproc
+		SetVariable MassFrKsiMin,pos={200,390},size={80,15},title="Min ", help={"Low limit for Correlation lenght"} 
+		SetVariable MassFrKsiMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrKsiMax_pop1,noproc
+		SetVariable MassFrKsiMax,pos={290,390},size={80,15},title="Max ", help={"High limit for Correlation lenght"} 
+
+		SetVariable MassFrBeta,limits={0,inf,0},variable= root:Packages:IR2L_NLSQF:MassFrBeta_pop1, proc=IR2L_PopSetVarProc
+		SetVariable MassFrBeta,pos={5,410},size={200,16},title="Particle aspect ratio          =    ", help={"Aspect ratio, 1 for sphere"} 
+		SetVariable MassFrEta,limits={0,1,0},variable= root:Packages:IR2L_NLSQF:MassFrEta_pop1, proc=IR2L_PopSetVarProc
+		SetVariable MassFrEta,pos={5,430},size={200,16},title="Volume filling                   =      ", help={"Volume filling, between 0 and 1"} 
+		SetVariable MassFrIntgNumPnts,limits={0,inf,0},variable= root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop1, proc=IR2L_PopSetVarProc
+		SetVariable MassFrIntgNumPnts,pos={5,450},size={200,16},title="Intg. Num. pnts.               =       ", help={"Internal integration pnts, typically 500"} 
+			
+
+
+		//Surface Fractal
+		SetVariable SurfFrSurf,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrSurf_pop1,proc=IR2L_PopSetVarProc
+		SetVariable SurfFrSurf,pos={8,330},size={140,15},title="Smooth surface = ", help={"Smooth surface (see manual)"} 
+		CheckBox SurfFrSurfFit,pos={155,330},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox SurfFrSurfFit,variable= root:Packages:IR2L_NLSQF:SurfFrSurfFit_pop1, help={"Fit the SurfFrSurf?"}
+		SetVariable SurfFrSurfMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrSurfMin_pop1,noproc
+		SetVariable SurfFrSurfMin,pos={200,330},size={80,15},title="Min ", help={"Low limit for SurfFrSurf"} 
+		SetVariable SurfFrSurfMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrSurfMax_pop1,noproc
+		SetVariable SurfFrSurfMax,pos={290,330},size={80,15},title="Max ", help={"High limit for SurfFrSurf"} 
+	
+		SetVariable SurfFrDS,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrDS_pop1,proc=IR2L_PopSetVarProc
+		SetVariable SurfFrDS,pos={8,350},size={140,15},title="Fractal dim.     = ", help={"Fractal dimension, between 2 and 3"} 
+		CheckBox SurfFrDSFit,pos={155,350},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox SurfFrDSFit,variable= root:Packages:IR2L_NLSQF:SurfFrDSFit_pop1, help={"Fit the Fract dim.?"}
+		SetVariable SurfFrDSMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrDSMin_pop1,noproc
+		SetVariable SurfFrDSMin,pos={200,350},size={80,15},title="Min ", help={"Low limit for Fract. dim.  position"} 
+		SetVariable SurfFrDSMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrDSMax_pop1,noproc
+		SetVariable SurfFrDSMax,pos={290,350},size={80,15},title="Max ", help={"High limit for Fract. dim. position"} 
+
+		SetVariable SurfFrKsi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrKsi_pop1,proc=IR2L_PopSetVarProc
+		SetVariable SurfFrKsi,pos={8,370},size={140,15},title="Corr. Length  = ", help={"Corr. Length for this fractal"} 
+		CheckBox SurfFrKsiFit,pos={155,370},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox SurfFrKsiFit,variable= root:Packages:IR2L_NLSQF:SurfFrKsiFit_pop1, help={"Fit the Corr. Length width position?"}
+		SetVariable SurfFrKsiMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrKsiMin_pop1,noproc
+		SetVariable SurfFrKsiMin,pos={200,370},size={80,15},title="Min ", help={"Low limit for Corr. Length width position"} 
+		SetVariable SurfFrKsiMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrKsiMax_pop1,noproc
+		SetVariable SurfFrKsiMax,pos={290,370},size={80,15},title="Max ", help={"High limit for Corr. Length width position"} 
+
+		SetVariable SurfFrQc,limits={0,1,0},variable= root:Packages:IR2L_NLSQF:SurfFrQc_pop1, proc=IR2L_PopSetVarProc
+		SetVariable SurfFrQc,pos={5,410},size={200,16},title="Qc (terminal Q)      =    ", help={"Q when converts to Porod scatterer."} 
+		NVAR SurfFrQcWidth_pop1 = root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop1
+		PopupMenu SurfFrQcWidth,pos={5,435},size={250,16},title="Qc width [% of Qc] ", help={"Transition width at Q max when scattering changes to Porod's law"}
+		PopupMenu SurfFrQcWidth,proc=IR2L_PanelPopupControl,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*SurfFrQcWidth_pop1), "5;10;15;20;25;")
+			
+
+
+
+
+
 		
 		//interferences
 //		CheckBox UseInterference,pos={40,435},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Use Structure factor?"
