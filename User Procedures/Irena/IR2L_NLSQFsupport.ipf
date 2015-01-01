@@ -2269,11 +2269,11 @@ Function IR2L_SetInitialValues(enforce)
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
 				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
 				if(testVar==0)
-					testVar=500
+					testVar=50
 					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
 					testVar=10
 					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
-					testVar=1e4		
+					testVar=500		
 				endif
 			endfor
 			ListOfVariables = "MassFrDv;MassFrBeta;SurfFrDS;"		//other parameter
@@ -2296,6 +2296,17 @@ Function IR2L_SetInitialValues(enforce)
 					testVar=10
 					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
 					testVar=1e4		
+				endif
+			endfor
+			ListOfVariables = "SurfFrSurf;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=2500
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=500
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=10000		
 				endif
 			endfor
 			ListOfVariables = "MassFrEta;"		//other parameter
@@ -2583,6 +2594,46 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 							endif
 							TagText =  RemoveEnding(TagText, "\r" )
 							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
+					elseif(stringmatch(Model,"SurfaceFractal"))			//Surface Fractal results
+						//here appedn tag for Unified level model
+	
+						NVAR SurfFrSurf=$("root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(i))
+						NVAR SurfFrKsi=$("root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(i))
+						NVAR SurfFrDS=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(i))
+						NVAR SurfFrQcWidth=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(i))
+						NVAR SurfFrQc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(i))
+						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
+						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
+							TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Surface Fractal "+num2str(i)+"P\r"
+							TagText+="Smooth Surface = "+num2str(SurfFrSurf)+"  \r"
+							TagText+="Corr. Length = "+num2str(SurfFrKsi)+"  [A]\r"
+							TagText+="Fractal Dim.  = "+num2str(SurfFrDS)+"\r"
+							if(SurfFrQc>0)
+								TagText+="Terminal Qc  = "+num2str(SurfFrQc)+"[1/A]\r"
+								TagText+="assumed width Qc  = "+num2str(100*SurfFrQcWidth)+"%\r"
+							endif
+							TagText =  RemoveEnding(TagText, "\r" )
+							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
+					elseif(stringmatch(Model,"MassFractal"))			//Surface Fractal results
+						//here append tag for Mass Fractal model
+	
+						NVAR MassFrPhi=$("root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(i))
+						NVAR MassFrRadius=$("root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(i))
+						NVAR MassFrDv=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(i))
+						NVAR MassFrKsi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(i))
+						NVAR MassFrBeta=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(i))
+						NVAR MassFrEta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(i))
+						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(i))
+						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
+						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
+							TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Mass Fractal "+num2str(i)+"P\r"
+							TagText+="Particle volume = "+num2str(MassFrPhi)+"  \r"
+							TagText+="Particle radius = "+num2str(MassFrRadius)+"  [A]\r"
+							TagText+="Corr. Length = "+num2str(MassFrKsi)+"  [A]\r"
+							TagText+="Fractal Dim.  = "+num2str(MassFrDv)+"\r"
+							TagText+="Particle AR  = "+num2str(MassFrBeta)+";   Volume filling  = "+num2str(MassFrEta)+"\r"
+							TagText =  RemoveEnding(TagText, "\r" )
+							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
 					elseif(stringmatch(Model,"Diffraction Peak"))
 						//here append tag for Diffraction peak
 						SVAR PeakProfile = $("root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(i))
@@ -2833,7 +2884,70 @@ Function IR2L_SvNbk_ModelInf()
 							IR2L_AppendAnyText(IR1T_IdentifySFParamName(StrFac,6)+"\t"+"StructureParam6"+"\t=\t"+num2str(SFParam6),0)
 						endif
 					endif
-				
+
+				elseif(stringmatch(Model,"MassFractal"))			//Mass Fractal results
+					IR2L_AppendAnyText("Summary results for population "+num2str(i),1)	
+					IR2L_AppendAnyText("     ",0)	
+					IR2L_AppendAnyText("               This population was Mass Fractal ",0)						
+					IR2L_AppendAnyText("  ",0)							
+					NVAR VaryContrast=root:Packages:IR2L_NLSQF:SameContrastForDataSets
+					NVAR UseMultipleData=root:Packages:IR2L_NLSQF:MultipleInputData
+					if(VaryContrast && UseMultipleData	)
+						IR2L_AppendAnyText("Contrasts for different data sets : ",1)	
+						ListOfPopulationVariables="Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"
+						for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
+							NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
+							IR2L_AppendAnyText(StringFromList(k,ListOfPopulationVariables)+"="+num2str(testVar),0)
+						endfor
+						IR2L_AppendAnyText("  ",0)	
+					else 		//same contrast for all sets... 
+						NVAR Contrast = $("root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(i))
+						IR2L_AppendAnyText("Contrast "+"\t=\t"+num2str(Contrast),0)				
+					endif
+						NVAR MassFrPhi=$("root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(i))
+						NVAR MassFrRadius=$("root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(i))
+						NVAR MassFrDv=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(i))
+						NVAR MassFrKsi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(i))
+						NVAR MassFrBeta=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(i))
+						NVAR MassFrEta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(i))
+						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(i))
+					IR2L_AppendAnyText("Mass Fractal Particle volume "+"\t=\t"+num2str(MassFrPhi),0)
+					IR2L_AppendAnyText("Mass Fractal Particle radius [A]"+"\t=\t"+num2str(MassFrRadius),0)
+					IR2L_AppendAnyText("Mass Fractal Fractal dim. "+"\t=\t"+num2str(MassFrDv),0)
+					IR2L_AppendAnyText("Mass Fractal Corr. Length [A]"+"\t=\t"+num2str(MassFrKsi),0)
+					IR2L_AppendAnyText("Mass Fractal Part. Asp. Rat. "+"\t=\t"+num2str(MassFrBeta),0)
+					IR2L_AppendAnyText("Mass Fractal Volume filling "+"\t=\t"+num2str(MassFrEta),0)
+		
+
+				elseif(stringmatch(Model,"SurfaceFractal"))			//Mass Fractal results
+					IR2L_AppendAnyText("Summary results for population "+num2str(i),1)	
+					IR2L_AppendAnyText("     ",0)	
+					IR2L_AppendAnyText("               This population was Surface Fractal ",0)						
+					IR2L_AppendAnyText("  ",0)							
+					NVAR VaryContrast=root:Packages:IR2L_NLSQF:SameContrastForDataSets
+					NVAR UseMultipleData=root:Packages:IR2L_NLSQF:MultipleInputData
+					if(VaryContrast && UseMultipleData	)
+						IR2L_AppendAnyText("Contrasts for different data sets : ",1)	
+						ListOfPopulationVariables="Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"
+						for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
+							NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
+							IR2L_AppendAnyText(StringFromList(k,ListOfPopulationVariables)+"="+num2str(testVar),0)
+						endfor
+						IR2L_AppendAnyText("  ",0)	
+					else 		//same contrast for all sets... 
+						NVAR Contrast = $("root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(i))
+						IR2L_AppendAnyText("Contrast "+"\t=\t"+num2str(Contrast),0)				
+					endif
+						NVAR SurfFrSurf=$("root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(i))
+						NVAR SurfFrKsi=$("root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(i))
+						NVAR SurfFrDS=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(i))
+						NVAR SurfFrQc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(i))
+						NVAR SurfFrQcWidth=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(i))
+					IR2L_AppendAnyText("Surf. Fractal Smooth surface "+"\t=\t"+num2str(SurfFrSurf),0)
+					IR2L_AppendAnyText("Surf. Fractal Fractal dim. "+"\t=\t"+num2str(SurfFrDS),0)
+					IR2L_AppendAnyText("Surf. Fractal Corr. Length [A]"+"\t=\t"+num2str(SurfFrKsi),0)
+					IR2L_AppendAnyText("Surf. Fractal End Q [1/A]"+"\t=\t"+num2str(SurfFrQc),0)
+					IR2L_AppendAnyText("Surf. Fractal End Qw [%]"+"\t=\t"+num2str(100*SurfFrQcWidth),0)				
 				elseif(stringmatch(Model,"Diffraction Peak"))
 					IR2L_AppendAnyText("Summary results for population "+num2str(i),1)	
 					IR2L_AppendAnyText("     ",0)	
@@ -3168,6 +3282,8 @@ Function  IR2L_FixLimits(scale)
 	ListOfPopulationVariables+="UF_G;UF_Rg;UF_B;UF_P;UF_RGCO;"
 		//Diffraction peak parameters
 	ListOfPopulationVariables+="DiffPeakPar1;DiffPeakPar2;DiffPeakPar3;DiffPeakPar4;DiffPeakPar5;"	
+		//Fractals parameters
+	ListOfPopulationVariables+="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;SurfFrSurf;SurfFrKsi;SurfFrDS;"	
 
 	//G, Rg, RgCO, B 0.1 - 10
 	//P 0.2 (min 1) - 2 (max 4)
@@ -3197,6 +3313,12 @@ Function  IR2L_FixLimits(scale)
 					elseif(StringMatch(tempStr, "FormF*"))
 						MinVarVal= 0.8 * VarVal/scale
 						MaxVarVal=scale*1.2 * VarVal
+					elseif(StringMatch(tempStr, "MassFrDv*"))
+						MinVarVal= 1
+						MaxVarVal=3
+					elseif(StringMatch(tempStr, "SurfFrDS*"))
+						MinVarVal= 2
+						MaxVarVal=3
 					else
 						MinVarVal= 0.5 * VarVal/scale
 						MaxVarVal=scale*2 * VarVal

@@ -1000,8 +1000,125 @@ Function IR2L_Fitting(SkipDialogs)
 				endfor
 			endif	
 		endfor
-	
-	
+		//Mass fractal
+		ListOfPopulationVariables="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;"	
+		For(j=1;j<11;j+=1)
+			NVAR UseThePop = $("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(j))		
+			SVAR Model=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(j))
+			if(UseThePop && stringmatch(Model, "MassFractal" ))
+					For(i=0;i<ItemsInList(ListOfPopulationVariables);i+=1)
+					NVAR CurVarTested = $("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j))
+					NVAR FitCurVar=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Fit_pop"+num2str(j))
+					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
+					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
+					if (FitCurVar)		//are we fitting this variable?
+						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
+							if(V_Flag==1)	//fix limits
+								CuVarMin = 0.5* CurVarTested
+								CuVarMax = 2* CurVarTested
+							else
+								Print "Fix limits for : "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
+								Print "Current value is : "+num2str(CurVarTested) 
+								Print "Low limit is : " + num2str(CuVarMin)
+								Print "High limit is : " + num2str(CuVarMax)
+								setDataFolder oldDf
+								abort
+							endif
+						endif
+						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						W_Coef[numpnts(W_Coef)-1]=CurVarTested
+						CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
+						LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
+						HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+						ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
+						Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
+						Gen_Constraints[numpnts(CoefNames)-1][0] = CuVarMin
+						Gen_Constraints[numpnts(CoefNames)-1][1] = CuVarMax
+						//meaningful names...
+						switch(i)	// numeric switch
+							case 0:		// execute if case matches expression
+								tempStrN = "Particle Volume"
+								break						// exit from switch
+							case 1:		// execute if case matches expression
+								tempStrN = "Radius"
+								break
+							case 2:		// execute if case matches expression
+								tempStrN = "Dv (Fractal dim)"
+								break
+							case 3:		// execute if case matches expression
+								tempStrN = "Corr. Length"
+								break
+						endswitch
+						ParamNames[numpnts(CoefNames)-1]={tempStrN}
+					endif
+				endfor
+			endif	
+		endfor
+		//Surface fractal
+		//  ListOfPopulationVariablesFR = "SurfFrSurf;SurfFrKsi;SurfFrDS;SurfFrSurfFit;SurfFrKsiFit;SurfFrDSFit;SurfFrSurfMin;SurfFrKsiMin"
+
+		ListOfPopulationVariables="SurfFrSurf;SurfFrDS;SurfFrKsi;"	
+		For(j=1;j<11;j+=1)
+			NVAR UseThePop = $("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(j))		
+			SVAR Model=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(j))
+			if(UseThePop && stringmatch(Model, "SurfaceFractal" ))
+					For(i=0;i<ItemsInList(ListOfPopulationVariables);i+=1)
+					NVAR CurVarTested = $("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j))
+					NVAR FitCurVar=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Fit_pop"+num2str(j))
+					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
+					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
+					if (FitCurVar)		//are we fitting this variable?
+						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
+							if(V_Flag==1)	//fix limits
+								CuVarMin = 0.5* CurVarTested
+								CuVarMax = 2* CurVarTested
+							else
+								Print "Fix limits for : "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
+								Print "Current value is : "+num2str(CurVarTested) 
+								Print "Low limit is : " + num2str(CuVarMin)
+								Print "High limit is : " + num2str(CuVarMax)
+								setDataFolder oldDf
+								abort
+							endif
+						endif
+						Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames, ParamNamesK
+						Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+						W_Coef[numpnts(W_Coef)-1]=CurVarTested
+						CoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)
+						LowLimCoefName[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j)
+						HighLimCoefNames[numpnts(CoefNames)-1]=stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j)
+						ParamNamesK[numpnts(CoefNames)-1]={"K"+num2str(numpnts(W_coef)-1)}
+						T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(CuVarMin)}
+						T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(CuVarMax)}		
+						Redimension /N=((numpnts(W_coef)),2) Gen_Constraints
+						Gen_Constraints[numpnts(CoefNames)-1][0] = CuVarMin
+						Gen_Constraints[numpnts(CoefNames)-1][1] = CuVarMax
+						//meaningful names...
+						switch(i)	// numeric switch
+							case 0:		// execute if case matches expression
+								tempStrN = "Smooth surface"
+								break						// exit from switch
+							case 1:		// execute if case matches expression
+								tempStrN = "Fractal Dimension"
+								break
+							case 2:		// execute if case matches expression
+								tempStrN = "Corr. Length"
+								break
+							case 3:		// execute if case matches expression
+								tempStrN = "Corr. Length"
+								break
+						endswitch
+						ParamNames[numpnts(CoefNames)-1]={tempStrN}
+					endif
+				endfor
+			endif	
+		endfor
+
 	//Now background... 
 	string ListOfDataVariables="Background;"
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
@@ -1595,6 +1712,25 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 					NVAR testVar = $(StringFromList(i,tempList)+"_pop"+num2str(j))
 					ListOfParameters+=StringFromList(i,tempList)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
 				endfor
+			elseif(stringmatch(Model,"MassFractal"))
+				tempList="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;MassFrBeta;MassFrEta;MassFrIntgNumPnts;"	
+				tempList+="MassFrPhiFit;MassFrRadiusFit;MassFrDvFit;MassFrKsiFit;"	
+				tempList+="MassFrPhiMin;MassFrRadiusMin;MassFrDvMin;MassFrKsiMin;"
+				tempList+="MassFrPhiMax;MassFrRadiusMax;MassFrDvMax;MassFrKsiMax;"
+				for(i=0;i<itemsInList(tempList);i+=1)	
+					NVAR testVar = $(StringFromList(i,tempList)+"_pop"+num2str(j))
+					ListOfParameters+=StringFromList(i,tempList)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
+				endfor
+			elseif(stringmatch(Model,"SurfaceFractal"))
+				tempList="SurfFrSurf;SurfFrKsi;SurfFrDS;"	
+				tempList+="SurfFrSurfFit;SurfFrKsiFit;SurfFrDSFit;"
+				tempList+="SurfFrSurfMin;SurfFrKsiMin;SurfFrDSMin;"
+				tempList+="SurfFrSurfMax;SurfFrKsiMax;SurfFrDSMax;"
+				tempList+="SurfFrQc;SurfFrQcWidth;"
+				for(i=0;i<itemsInList(tempList);i+=1)	
+					NVAR testVar = $(StringFromList(i,tempList)+"_pop"+num2str(j))
+					ListOfParameters+=StringFromList(i,tempList)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
+				endfor
 			elseif(stringmatch(Model,"Diffraction Peak"))
 				tempList="DiffPeakProfile;"
 				for(i=0;i<itemsInList(tempList);i+=1)	
@@ -1613,7 +1749,7 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 				endfor
 			endif
 				
-			if(!stringmatch(Model,"Diffraction Peak"))
+			if(stringmatch(Model,"Unified level") || stringmatch(Model,"Size dist."))
 				tempList="StructureFactor;"
 				for(i=0;i<itemsInList(tempList);i+=1)	
 					SVAR testStr = $(StringFromList(i,tempList)+"_pop"+num2str(j))
@@ -1706,7 +1842,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 		endif
 		DataFolderNameL=possiblyquotename(cleanupname(DataFolderNameL,1))
 		NewDataFolder/O $("root:"+DataFolderNameL)
-		Print "Data will be saved in fodler :  root:"+DataFolderNameL
+		Print "Data will be saved in folder :  root:"+DataFolderNameL
 		DataFOlderName="root:"+DataFolderNameL
 	endif
 
@@ -2100,6 +2236,33 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 						ListOfParameters+="UF_K_pop"+num2str(i)+"="+num2str(Kval)+";"
 
 
+			elseif(stringmatch(model,"SurfaceFractal"))
+						NVAR SurfFrSurf=$("root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(i))
+						NVAR SurfFrKsi=$("root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(i))
+						NVAR SurfFrDS=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(i))
+						NVAR SurfFrQc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(i))
+						NVAR SurfFrQcWidth=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(i))
+						ListOfParameters+="SurfFrSurf_pop"+num2str(i)+"="+num2str(SurfFrSurf)+";"
+						ListOfParameters+="SurfFrKsi_pop"+num2str(i)+"="+num2str(SurfFrKsi)+";"
+						ListOfParameters+="SurfFrDS_pop"+num2str(i)+"="+num2str(SurfFrDS)+";"
+						ListOfParameters+="SurfFrQc_pop"+num2str(i)+"="+num2str(SurfFrQc)+";"
+						ListOfParameters+="SurfFrQcWidth_pop"+num2str(i)+"="+num2str(SurfFrQcWidth)+";"
+
+			elseif(stringmatch(model,"MassFractal"))
+						NVAR MassFrPhi=$("root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(i))
+						NVAR MassFrRadius=$("root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(i))
+						NVAR MassFrDv=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(i))
+						NVAR MassFrKsi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(i))
+						NVAR MassFrBeta=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(i))
+						NVAR MassFrEta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(i))
+						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(i))
+						ListOfParameters+="MassFrPhi_pop"+num2str(i)+"="+num2str(MassFrPhi)+";"
+						ListOfParameters+="MassFrRadius_pop"+num2str(i)+"="+num2str(MassFrRadius)+";"
+						ListOfParameters+="MassFrDv_pop"+num2str(i)+"="+num2str(MassFrDv)+";"
+						ListOfParameters+="MassFrKsi_pop"+num2str(i)+"="+num2str(MassFrKsi)+";"
+						ListOfParameters+="MassFrBeta_pop"+num2str(i)+"="+num2str(MassFrBeta)+";"
+						ListOfParameters+="MassFrEta_pop"+num2str(i)+"="+num2str(MassFrEta)+";"
+						ListOfParameters+="MassFrIntgNumPnts_pop"+num2str(i)+"="+num2str(MassFrIntgNumPnts)+";"
 
 			elseif(stringmatch(Model,"Diffraction peak"))
 				//diffraction peak data
@@ -2146,7 +2309,7 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 				endif
 				
 
-			if(!stringmatch(Model,"Diffraction peak"))		//ad this is needed for Unified and Distribution
+			if(stringmatch(Model,"Unified level") || stringmatch(Model,"Size dist."))		//ad this is needed for Unified and Distribution
 				SVAR StrFac=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(i))
 				ListOfParametersStr+="StructureFactor_pop"+num2str(i)+"="+StrFac+";"
 				if(!stringmatch(StrFac, "*Dilute system*"))
@@ -2174,67 +2337,81 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 			
 			
 		else	//this population does not exist, but we need to set these to 0 to have the line in the waves if needed...
-		
-				ListOfPopulationVariables="Volume;Mean;Mode;Median;FWHM;"	
-				for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
-					NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
-					ListOfParameters+=StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i)+"=0;"
-				endfor
-			
-				ListOfParametersStr+="FormFactor_pop"+num2str(i)+"= none ;"
-				ListOfParametersStr+="FFUserFFformula_pop"+num2str(i)+"= none ;"
-				ListOfParametersStr+="FFUserVolumeFormula_pop"+num2str(i)+"= none ;"
-				ListOfParameters+="FormFactor_Param1_pop"+num2str(i)+"=0;"
-				ListOfParameters+="FormFactor_Param2_pop"+num2str(i)+"=0;"
-				ListOfParameters+="FormFactor_Param3_pop"+num2str(i)+"=0;"
-				ListOfParameters+="FormFactor_Param4_pop"+num2str(i)+"=0;"
-				ListOfParameters+="FormFactor_Param5_pop"+num2str(i)+"=0;"
-				ListOfParameters+="FormFactor_Param6_pop"+num2str(i)+"=0;"
-
-
-				SVAR PopSizeDistShape = $("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(i))		
-				ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=none;"
-				ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
-				ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
-				ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
-				ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
-				ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
-				ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
-				NVAR SameContrastForDataSets=root:Packages:IR2L_NLSQF:SameContrastForDataSets
-				if(SameContrastForDataSets)
-					ListOfParameters+="Contrast_pop"+num2str(i)+"=0;"
-				else
-					ListOfPopulationVariables="Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"
-					for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
-						NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
-						ListOfParameters+=StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i)+"=0;"
-					endfor	
-				endif		
-				ListOfParametersStr+="StructureFactor_pop"+num2str(i)+"="+"Dilute system"+";"
-				ListOfParameters+="StructureParam1_pop"+num2str(i)+"=0;"
-				ListOfParameters+="StructureParam2_pop"+num2str(i)+"=0;"
-				ListOfParameters+="StructureParam3_pop"+num2str(i)+"=0;"
-				ListOfParameters+="StructureParam4_pop"+num2str(i)+"=0;"
-				ListOfParameters+="StructureParam5_pop"+num2str(i)+"=0;"
-				ListOfParameters+="StructureParam6_pop"+num2str(i)+"=0;"
-
-				ListOfParameters+="UF_Rg_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="UF_G_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="UF_B_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="UF_P_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="UF_RGCO_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="UF_K_pop"+num2str(i)+"="+num2str(0)+";"
-
-				ListOfParameters+="DiffPeakProfile_pop"+num2str(i)+"="+"none"+";"
-				ListOfParameters+="DiffPeakDPos_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakQPos_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakQFWHM_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakIntgInt_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakPar1_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakPar2_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakPar3_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakPar4_pop"+num2str(i)+"="+num2str(0)+";"
-				ListOfParameters+="DiffPeakPar5_pop"+num2str(i)+"="+num2str(0)+";"
+//		
+//				ListOfPopulationVariables="Volume;Mean;Mode;Median;FWHM;"	
+//				for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
+//					NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
+//					ListOfParameters+=StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i)+"=0;"
+//				endfor
+//			
+//				ListOfParametersStr+="FormFactor_pop"+num2str(i)+"= none ;"
+//				ListOfParametersStr+="FFUserFFformula_pop"+num2str(i)+"= none ;"
+//				ListOfParametersStr+="FFUserVolumeFormula_pop"+num2str(i)+"= none ;"
+//				ListOfParameters+="FormFactor_Param1_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="FormFactor_Param2_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="FormFactor_Param3_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="FormFactor_Param4_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="FormFactor_Param5_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="FormFactor_Param6_pop"+num2str(i)+"=0;"
+//
+//
+//				SVAR PopSizeDistShape = $("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(i))		
+//				ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=none;"
+//				ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
+//				ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
+//				NVAR SameContrastForDataSets=root:Packages:IR2L_NLSQF:SameContrastForDataSets
+//				if(SameContrastForDataSets)
+//					ListOfParameters+="Contrast_pop"+num2str(i)+"=0;"
+//				else
+//					ListOfPopulationVariables="Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"
+//					for(k=0;k<itemsInList(ListOfPopulationVariables);k+=1)	
+//						NVAR testVar = $(StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i))
+//						ListOfParameters+=StringFromList(k,ListOfPopulationVariables)+"_pop"+num2str(i)+"=0;"
+//					endfor	
+//				endif		
+//				ListOfParametersStr+="StructureFactor_pop"+num2str(i)+"="+"Dilute system"+";"
+//				ListOfParameters+="StructureParam1_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="StructureParam2_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="StructureParam3_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="StructureParam4_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="StructureParam5_pop"+num2str(i)+"=0;"
+//				ListOfParameters+="StructureParam6_pop"+num2str(i)+"=0;"
+//
+//				ListOfParameters+="UF_Rg_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="UF_G_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="UF_B_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="UF_P_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="UF_RGCO_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="UF_K_pop"+num2str(i)+"="+num2str(0)+";"
+//
+//				ListOfParameters+="SurfFrSurf_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="SurfFrKsi_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="SurfFrDS_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="SurfFrQc_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="SurfFrQcWidth_pop"+num2str(i)+"="+num2str(0)+";"
+//
+//				ListOfParameters+="MassFrPhi_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="MassFrRadius_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="MassFrDv_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="MassFrKsi_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="MassFrBeta_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="MassFrEta_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="MassFrIntgNumPnts_pop"+num2str(i)+"="+num2str(0)+";"
+//
+//				ListOfParameters+="DiffPeakProfile_pop"+num2str(i)+"="+"none"+";"
+//				ListOfParameters+="DiffPeakDPos_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakQPos_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakQFWHM_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakIntgInt_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakPar1_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakPar2_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakPar3_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakPar4_pop"+num2str(i)+"="+num2str(0)+";"
+//				ListOfParameters+="DiffPeakPar5_pop"+num2str(i)+"="+num2str(0)+";"
 
 		endif
 	endfor
@@ -2256,19 +2433,25 @@ Function IR2L_SaveResInWavesIndivDtSet2(ListOfParameters,ListOfParametersStr,New
 	string NewFolderNameClean = CleanupName(NewFolderName, 1 )
 	setDatafolder root:
 	NewDataFolder/O/S $(NewFolderNameClean)
-	variable i
+	variable i, FoundPnts
+	Wave/Z FolderName=$(StringFromList(0,StringFromList(i,ListOfParametersStr,";"),"="))
+	if(WaveExists(FolderName))
+		FoundPnts=numpnts(FolderName)
+	else
+		FoundPnts=0
+	endif
 	string NewWvName
 	string NewStrVal
 	variable NewVarVal
 	for(i=0;i<ItemsInList(ListOfParametersStr);i+=1)
 		NewWvName = StringFromList(0,StringFromList(i,ListOfParametersStr,";"),"=")
 		NewStrVal = StringFromList(1,StringFromList(i,ListOfParametersStr,";"),"=")
-		IR2L_SaveResInWavesIndivDtSet3(NewWvName,0,NewStrVal)
+		IR2L_SaveResInWavesIndivDtSet3(NewWvName,0,NewStrVal, FoundPnts+1)
 	endfor
 	for(i=0;i<ItemsInList(ListOfParameters);i+=1)
 		NewWvName = StringFromList(0,StringFromList(i,ListOfParameters,";"),"=")
 		NewVarVal = str2num(StringFromList(1,StringFromList(i,ListOfParameters,";"),"="))
-		IR2L_SaveResInWavesIndivDtSet3(NewWvName,NewVarVal,"")
+		IR2L_SaveResInWavesIndivDtSet3(NewWvName,NewVarVal,"",FoundPnts+1)
 	endfor
 	setDataFolder oldDF
 
@@ -2278,9 +2461,9 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_SaveResInWavesIndivDtSet3(WvName,NewPointVal,NewPointStr)
+Function IR2L_SaveResInWavesIndivDtSet3(WvName,NewPointVal,NewPointStr, NextPointToWrite)
 	string WvName,NewPointStr
-	variable NewPointVal
+	variable NewPointVal, NextPointToWrite
 	
 	if(strlen(NewPointStr)>0)
 		Wave/Z/T WvStr=$(WvName)
@@ -2288,16 +2471,16 @@ Function IR2L_SaveResInWavesIndivDtSet3(WvName,NewPointVal,NewPointStr)
 			make/O/N=0/T $(WvName)
 		endif
 		Wave/T WvStr=$(WvName)
-		redimension/N=(numpnts(WvStr)+1) WvStr
-		WvStr[numpnts(WvStr)] = NewPointStr
+		redimension/N=(NextPointToWrite) WvStr
+		WvStr[NextPointToWrite-1] = NewPointStr
 	else
 		Wave/Z WvNum=$(WvName)
 		if(!WaveExists(WvNum))
 			make/O/N=0 $(WvName)
 		endif
 		Wave WvNum=$(WvName)
-		redimension/N=(numpnts(WvNum)+1) WvNum
-		WvNum[numpnts(WvNum)] = NewPointVal
+		redimension/N=(NextPointToWrite) WvNum
+		WvNum[NextPointToWrite-1] = NewPointVal
 	endif
 
 end
