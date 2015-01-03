@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.39
+#pragma version=2.40
 Constant NI1AversionNumber = 2.38
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.38
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.40 fixed Azimuthal profile ASCII data saving feature. Final sorting was incorrect (bug). 
 //2.39 added ADSC_A (wavelength in A) as option
 //2.38 moved Dezinering on tab2. 
 //2.38 Fixed naming of data when more then one "." is present in the name. It is now allowed on USAXS instrument.
@@ -1214,7 +1215,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					sort  LineProfQ, LineProfQ, LineProfQx, LineProfQy, LineProfQz, LineProfIntensity, LineProfError
 					Save/A/W/J/M="\r\n"/P=Convert2Dto1DOutputPath LineProfQ, LineProfQx, LineProfQy, LineProfQz, LineProfIntensity, LineProfError as (UseName+".dat")			
 				elseif(stringmatch(LineProf_CurveType, "Ellipse"))
-					sort  LineProfileAz, LineProfQ, LineProfQy, LineProfQz, LineProfIntensity, LineProfError
+					sort  LineProfileAz, LineProfileAz, LineProfQ, LineProfQy, LineProfQz, LineProfIntensity, LineProfError
 					Save/A/W/J/M="\r\n"/P=Convert2Dto1DOutputPath LineProfQ, LineProfQy, LineProfQz,LineProfileAz, LineProfIntensity, LineProfError as (UseName+".dat")			
 				else
 					sort  LineProfQ, LineProfQ, LineProfQy, LineProfQz,  LineProfIntensity, LineProfError
