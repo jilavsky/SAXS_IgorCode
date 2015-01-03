@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.08
+#pragma version=1.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
+//1.09 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.08 added to Unified fit ability to calculate B from G/Rg/P based on Guinier/Porod model. 
 //1.07 fix to catch error for peak FWHM when data raneg is not good enough to calculate
 //1.06 added Janus CoreShell Micelle
@@ -166,8 +168,6 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 		IR2L_UpdateModeMedianMean()		
 		//	//now lets calculate the whole distribution together
 		IR2L_CalcSumOfDistribution()
-		//	//create graphs, if needed...
-		IR2L_GraphSizeDistributions()		
 	endif
 		//summ the model intensities
 	IR2L_SummModel()		
@@ -176,8 +176,8 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 		IR2L_AppendModelToGraph()
 		//NOw fix legend...
 		IR2L_FormatLegend()
-		//create graph and data for residual plot.
-		IR2L_AppendResidualsToGraph()
+		// create the other graphs
+		IR2L_CreateOtherGraphs()
 	endif	
 //	SetAxis /W=LSQF_MainGraph /A
 
@@ -724,30 +724,40 @@ Function IR2L_GraphSizeDistributions() : Graph
 
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:IR2L_NLSQF:
+	NVAR DisplaySizeDistPlot=root:Packages:IR2L_NLSQF:DisplaySizeDistPlot
+	variable SizeDistExisted
+	SizeDistExisted = 0
 
 	DoWindow GraphSizeDistributions
-	variable GraphExisted=V_Flag
-	if(V_Flag)
-		DoWindow/F GraphSizeDistributions
+	SizeDistExisted=V_Flag
+	if(DisplaySizeDistPlot)
+		if(V_Flag)
+			DoWindow/F GraphSizeDistributions
+		else
+			Display/K=1 /W=(312.75,392.75,857.25,607.25)  as "Size distributions"
+			DoWindow/C GraphSizeDistributions
+			//Add command bar
+			ControlBar /T/W=GraphSizeDistributions 40
+			Checkbox SizeDistLogX, pos={5,3}, size={20,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogX, help={"X axis (Radius) -log scale?"}, title="Log X axis? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+			Checkbox SizeDistDisplayVolDist, pos={100,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist, help={"Display Volume Distribution?"}, title="Display Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+			Checkbox SizeDistDisplayNumDist, pos={100,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist, help={"Display Number distribution ?"}, title="Display Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+			Checkbox SizeDistLogVolDist, pos={220,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogVolDist, help={"Volume distribution axis log scale?"}, title="Log Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+			Checkbox SizeDistLogNumDist, pos={220,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogNumDist, help={"Number distribution axis log scale?"}, title="Log Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+			SetVariable MeanVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
+			SetVariable MeanVal, pos={320,3}, size={180,25}, variable= root:Packages:IR2L_NLSQF:Mean_pop1, help={"Mean of current population"}, title="Pop 1 Mean = "
+			SetVariable ModeVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
+			SetVariable ModeVal, pos={320,23}, size={180,25}, variable= root:Packages:IR2L_NLSQF:Mode_pop1, help={"Mode of current population"}, title="Pop 1 Mode = "
+	
+			SetVariable MedianVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
+			SetVariable MedianVal, pos={520,3}, size={180,25}, variable= root:Packages:IR2L_NLSQF:Median_pop1, help={"Median of current population"}, title="Pop 1 Median = "
+			SetVariable FWHMVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
+			SetVariable FWHMVal, pos={520,23}, size={180,25}, variable= root:Packages:IR2L_NLSQF:FWHM_pop1, help={"FWHM of current population"}, title="Pop 1 FWHM = "
+		endif
 	else
-		Display/K=1 /W=(312.75,392.75,857.25,607.25)  as "Size distributions"
-		DoWindow/C GraphSizeDistributions
-		//Add command bar
-		ControlBar /T/W=GraphSizeDistributions 40
-		Checkbox SizeDistLogX, pos={5,3}, size={20,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogX, help={"X axis (Radius) -log scale?"}, title="Log X axis? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-		Checkbox SizeDistDisplayVolDist, pos={100,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist, help={"Display Volume Distribution?"}, title="Display Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-		Checkbox SizeDistDisplayNumDist, pos={100,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist, help={"Display Number distribution ?"}, title="Display Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-		Checkbox SizeDistLogVolDist, pos={220,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogVolDist, help={"Volume distribution axis log scale?"}, title="Log Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-		Checkbox SizeDistLogNumDist, pos={220,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogNumDist, help={"Number distribution axis log scale?"}, title="Log Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-		SetVariable MeanVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
-		SetVariable MeanVal, pos={320,3}, size={180,25}, variable= root:Packages:IR2L_NLSQF:Mean_pop1, help={"Mean of current population"}, title="Pop 1 Mean = "
-		SetVariable ModeVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
-		SetVariable ModeVal, pos={320,23}, size={180,25}, variable= root:Packages:IR2L_NLSQF:Mode_pop1, help={"Mode of current population"}, title="Pop 1 Mode = "
-
-		SetVariable MedianVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
-		SetVariable MedianVal, pos={520,3}, size={180,25}, variable= root:Packages:IR2L_NLSQF:Median_pop1, help={"Median of current population"}, title="Pop 1 Median = "
-		SetVariable FWHMVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
-		SetVariable FWHMVal, pos={520,23}, size={180,25}, variable= root:Packages:IR2L_NLSQF:FWHM_pop1, help={"FWHM of current population"}, title="Pop 1 FWHM = "
+		if(V_Flag)
+			KillWIndow GraphSizeDistributions
+		endif
+		return 0
 	endif
 
 	IR2L_GraphSizeDistUpdate()	
@@ -757,15 +767,8 @@ Function IR2L_GraphSizeDistributions() : Graph
 	IR2L_FormatGraphSizeDist()
 
 	IR2M_ColorCurves()
-	if(!GraphExisted)
-		DoWIndow LSQF_MainGraph
-		if(V_Flag)
-			AutoPositionWindow/M=1 /R=LSQF_MainGraph GraphSizeDistributions
-		else
-			AutoPositionWindow/R=LSQF2_MainPanel GraphSizeDistributions	
-		endif
-	endif
 	SetDataFolder fldrSav0	
+	return SizeDistExisted
 End
 
 //*****************************************************************************************************************
@@ -837,9 +840,12 @@ Function IR2L_AppendWvsGraphSizeDist()
 	
 	variable i
 
-	Wave DistRadii=root:Packages:IR2L_NLSQF:DistRadia
-	Wave TotalNumberDist=root:Packages:IR2L_NLSQF:TotalNumberDist
-	Wave TotalVolumeDist=root:Packages:IR2L_NLSQF:TotalVolumeDist	
+	Wave/Z DistRadii=root:Packages:IR2L_NLSQF:DistRadia
+	Wave/Z TotalNumberDist=root:Packages:IR2L_NLSQF:TotalNumberDist
+	Wave/Z TotalVolumeDist=root:Packages:IR2L_NLSQF:TotalVolumeDist	
+	if(!WaveExists(DistRadii))
+		return 0		//data do not exist... 
+	endif
 	if(SizeDistDisplayNumDist)
 		CheckDisplayed /W=GraphSizeDistributions TotalNumberDist
 		if(!V_Flag)
@@ -1187,27 +1193,204 @@ Function IR2L_AppendModelToGraph()
 	setDataFolder OldDf	
 end
 
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR2L_CreateOtherGraphs()
+		//	//create graphs, if needed...
+		variable SizeDistExisted, ResidualsExisted, IQ4Existed
+		SizeDistExisted = IR2L_GraphSizeDistributions()		
+
+		//create graph and data for residual plot.
+		ResidualsExisted = IR2L_GraphResiduals()
+		
+		//create graph and data for IQ4 vs Q plot.
+		IQ4Existed = IR2L_GraphIQ4vsQ()
+		
+		//and now we need to align them for user...
+//		variable GraphSDExists, GraphResExists,GraphIQ4Exists
+//		DoWIndow GraphSizeDistributions
+//		GraphSDExists=V_Flag
+//		if(V_Flag && !SizeDistExisted)
+//			AutoPositionWindow/M=1 /R=LSQF_MainGraph GraphSizeDistributions
+//		endif
+//		
+//		Dowindow LSQF_ResidualsGraph
+//		GraphResExists=V_Flag
+//		if(V_Flag && !ResidualsExisted)
+//			if(GraphSDExists&& !SizeDistExisted)
+//				AutoPositionWindow/M=1 /R=GraphSizeDistributions LSQF_ResidualsGraph
+//			else
+//				AutoPositionWindow/M=1 /R=LSQF_MainGraph LSQF_ResidualsGraph
+//			endif
+//		endif
+//		
+//		Dowindow LSQF_IQ4vsQGraph
+//		GraphIQ4Exists=V_Flag
+//		if(V_Flag && !IQ4Existed)
+//				AutoPositionWindow/M=1 LSQF_IQ4vsQGraph
+////			if(GraphResExists)
+////				AutoPositionWindow/M=1 /R=LSQF_ResidualsGraph LSQF_IQ4vsQGraph
+////			elseif(GraphSDExists)
+////				AutoPositionWindow/M=1 /R=GraphSizeDistributions LSQF_IQ4vsQGraph
+////			else
+////				AutoPositionWindow/M=1 /R=LSQF_MainGraph LSQF_IQ4vsQGraph
+////			endif
+//		endif		
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_AppendResidualsToGraph()
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR2L_GraphIQ4vsQ()
 
 	string OldDf
 	OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
-	variable i, j
+	variable i, j, IQ4Existed
 	//i is 1 - 6 populations
 	//j is 1 - 10 data sets
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+	NVAR DisplayIQ4vsQplot=root:Packages:IR2L_NLSQF:DisplayIQ4vsQplot
 	variable UseDatasw=1
+	variable ModelExists=0
+	IQ4Existed = 0
+
+	if(!DisplayIQ4vsQplot)	
+		//kill the plot and ignore the data
+		DoWindow LSQF_IQ4vsQGraph
+		if(V_Flag)
+			KillWindow LSQF_IQ4vsQGraph
+		endif
+	else
+		//need to create the data and plot them... 
+		DoWindow LSQF_IQ4vsQGraph
+		if(V_Flag)
+			DoWindow/F LSQF_IQ4vsQGraph
+			IQ4Existed = 1
+		else
+			Display /K=1/W=(313.5,424,858,624) as "LSQF2 IQ^4 vs Q graph"
+			Dowindow/C LSQF_IQ4vsQGraph
+		endif
+	
+		For(j=1;j<11;j+=1)
+			NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(j))
+			UseDatasw=1
+			if(!UseTheData || (!MultipleInputData && j>1))
+				UseDatasw=0
+			else	//create data
+				Wave/Z DataQ = $("Q_set"+num2str(j))
+				Wave/Z DataI=$("Intensity_set"+num2str(j))
+				if(WaveExists(DataI) && WaveExists(DataQ))
+					Duplicate/O DataI, $("IntensityQ4_set"+num2str(j))
+					Wave/Z DataIQ4=$("IntensityQ4_set"+num2str(j))
+					DataIQ4 = DataI * DataQ^4
+				else
+					Abort "Data are missing, report bug"
+				endif
+				Wave/Z ModelQ = $("Qmodel_set"+num2str(j))
+				Wave/Z ModelI=$("IntensityModel_set"+num2str(j))
+				if(WaveExists(ModelI) && WaveExists(ModelQ))
+					ModelExists= 1
+					Duplicate/O ModelI, $("IQ4Model_set"+num2str(j))
+					Wave/Z ModelIQ4=$("IQ4Model_set"+num2str(j))
+					ModelIQ4 = ModelI * ModelQ^4
+				else
+					ModelExists=0
+				endif
+			endif
+			DoWIndow LSQF_IQ4vsQGraph
+			if(!V_Flag)
+				return  0 //no widnow open, do not bomb on user...
+			endif
+			//append data if needed
+			CheckDisplayed/W=LSQF_IQ4vsQGraph $("IntensityQ4_set"+num2str(j))
+			if(UseDatasw && V_Flag)
+				//use the data and displayed, nothing to do
+			elseif(UseDatasw && !V_Flag)
+				//use the data and NOT displayed, append
+				if(WaveExists(DataIQ4) && WaveExists(DataQ))
+					AppendToGraph/W=LSQF_IQ4vsQGraph DataIQ4 vs DataQ
+					ModifyGraph mode($("IntensityQ4_set"+num2str(j)))=3
+					ModifyGraph zmrkSize($("IntensityQ4_set"+num2str(j)))={$("root:Packages:IR2L_NLSQF:IntensityMask_set"+num2str(j)),0,5,0.5,3}
+					ModifyGraph marker($("IntensityQ4_set"+num2str(j)))=19
+				endif
+			elseif(!UseDataSw)
+				//do not use these data
+				RemoveFromGraph/Z/W=LSQF_IQ4vsQGraph $("IntensityQ4_set"+num2str(j))
+			endif
+			//append model if needed
+			CheckDisplayed/W=LSQF_IQ4vsQGraph $("IQ4Model_set"+num2str(j))
+			if(UseDatasw && V_Flag)
+				//use the data and displayed, nothing to do
+			elseif(UseDatasw && !V_Flag && ModelExists)
+				//use the data and NOT displayed, append
+				if(WaveExists(ModelIQ4) && WaveExists(ModelQ))
+					AppendToGraph/W=LSQF_IQ4vsQGraph ModelIQ4 vs ModelQ
+					ModifyGraph mode($("IQ4Model_set"+num2str(j)))=0
+					ModifyGraph rgb($("IQ4Model_set"+num2str(j)))=(30583,30583,30583)
+					ModifyGraph lsize($("IQ4Model_set"+num2str(j)))=2
+				endif
+			elseif(!UseDataSw)
+				//do not use these data
+				RemoveFromGraph/Z/W=LSQF_IQ4vsQGraph $("IQ4Model_set"+num2str(j))
+			endif
+		endfor
+		GetAxis /W=LSQF_IQ4vsQGraph /Q bottom
+		if(!V_Flag)
+			//ModifyGraph/Z/W=LSQF_IQ4vsQGraph mode=3,marker=19,rgb=(0,0,0)
+			ModifyGraph/Z/W=LSQF_IQ4vsQGraph log(bottom)=1
+			ModifyGraph/Z/W=LSQF_IQ4vsQGraph grid=1,mirror=1
+			Label/Z/W=LSQF_IQ4vsQGraph left "Intensity * Q^4"
+			Label/Z/W=LSQF_IQ4vsQGraph bottom "Q [A\\S-1\\M]"
+			ModifyGraph log=1
+		endif
+	endif
+	setDataFolder OldDf	
+	return IQ4Existed
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR2L_GraphResiduals()
+
+	string OldDf
+	OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:IR2L_NLSQF
+	variable i, j, ResidualsExisted
+	//i is 1 - 6 populations
+	//j is 1 - 10 data sets
+	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
+	NVAR DisplayResidualsPlot=root:Packages:IR2L_NLSQF:DisplayResidualsPlot
+	variable UseDatasw=1
+	ResidualsExisted = 0
+
+	if(!DisplayResidualsPlot)
+		DoWindow LSQF_ResidualsGraph
+		if(V_Flag)
+			KillWIndow LSQF_ResidualsGraph
+		endif
+		return 0
+	endif
+
 
 	DoWindow LSQF_ResidualsGraph
 	if(V_Flag)
 		DoWindow/F LSQF_ResidualsGraph
+		ResidualsExisted = 1
 	else
-		Display /K=1/W=(313.5,374,858,574) as "LSQF2 residuals"
+		Display /K=1/W=(313.5,304,858,504) as "LSQF2 residuals"
 		Dowindow/C LSQF_ResidualsGraph
-		AutopositionWindow/E /M=1 /R=GraphSizeDistributions LSQF_ResidualsGraph
 	endif
 
 	For(j=1;j<11;j+=1)
@@ -1244,6 +1427,7 @@ Function IR2L_AppendResidualsToGraph()
 		Label/Z/W=LSQF_ResidualsGraph bottom "Q [A\\S-1\\M]"
 	endif
 	setDataFolder OldDf	
+	return ResidualsExisted
 end
 
 //*****************************************************************************************************************
