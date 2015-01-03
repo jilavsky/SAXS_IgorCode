@@ -6,6 +6,7 @@ Code modification history
 2.57 xxxxx
 Fractals model - added Qc as transitional Q value when surface fractal changes to Porod’s slope at high Q. Set to 0 if not needed. 
 Modeling II - added MassFractal and SurfaceFractal - models are copied form Fractals tool, so users need to read manual for that tool 
+Modeling II - added controls which enable to select, which additional graphs are displayed. Choices are SizeDistribution, Residuals, and IQ^4 vs Q. 
 
 
 2.56 8/20/2014

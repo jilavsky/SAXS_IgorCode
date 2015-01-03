@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.16
-Constant IR2LversionNumber = 1.15
+#pragma version=1.17
+Constant IR2LversionNumber = 1.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.16 added Fractals as models. 
 //1.15 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.14 added check to chatch for slit smeared data when Qmax is too small, require at least 3* slit length

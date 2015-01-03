@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
+#pragma version=1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.17 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.16 modified to use rebinning routien from Geneeral procedures
 //1.15 fixed export to waves which was not working for Schulz-Zimm distribution type. 
@@ -289,10 +290,10 @@ Function  IR2L_AppendDataIntoGraph(whichDataSet) //Adds user data into the graph
 	if(V_Flag)
 		DoWindow/F LSQF_MainGraph
 	else
-		Display /K=1/W=(313.5,38.75,900,374) as "LSQF2 main data window"
+		Display /K=1/W=(313.5,38.75,900,400) as "LSQF2 main data window"
 		Dowindow/C LSQF_MainGraph
 		//Add command bar
-		ControlBar /T/W=LSQF_MainGraph 50
+		ControlBar /T/W=LSQF_MainGraph 65
 		SetVariable GraphXMin, pos={20,3}, size={140,25}, variable= root:Packages:IR2L_NLSQF:GraphXMin, help={"Set minimum value for q axis"}, title="Min q = "
 		SetVariable GraphXMin, limits={0,inf,0}, proc=IR2L_DataTabSetVarProc
 		SetVariable GraphXMax, pos={20,25}, size={140,25}, variable= root:Packages:IR2L_NLSQF:GraphXMax, help={"Set maximum value for q axis"}, title="Max q = "
@@ -305,6 +306,11 @@ Function  IR2L_AppendDataIntoGraph(whichDataSet) //Adds user data into the graph
 		Button AutoSetAxis, pos={350,25},size={80,16}, proc=IR2L_InputGraphButtonProc,title="Autoset Axis", help={"Set range on axis to display all data"}
 		Checkbox DisplaySinglePopInt, proc =IR2L_GraphsCheckboxProc, variable = root:Packages:IR2L_NLSQF:DisplaySinglePopInt, pos={450,3},title="Display Ind. Pop. Ints.?", help={"Display in the graph intensitiesfor separate populations?"} 
 		Button SelectQRangeofData, pos={450,25},size={120,16}, proc=IR2L_InputGraphButtonProc,title="Select Fitting Q range", help={"Set Qmin and Qmax for fitting using cursors"}
+
+		Checkbox DisplaySizeDistPlot, proc =IR2L_GraphsCheckboxProc, variable = root:Packages:IR2L_NLSQF:DisplaySizeDistPlot, pos={20,44},title="Display Size Dist. Plot?", help={"Display Size distribution plot?"} 
+		Checkbox DisplayResidualsPlot, proc =IR2L_GraphsCheckboxProc, variable = root:Packages:IR2L_NLSQF:DisplayResidualsPlot, pos={200,44},title="Display Residuals Plot?", help={"Display Residulas plot?"} 
+		Checkbox DisplayIQ4vsQplot, proc =IR2L_GraphsCheckboxProc, variable = root:Packages:IR2L_NLSQF:DisplayIQ4vsQplot, pos={390,44},title="Display IQ4 vs Q Plot?", help={"Display IQ^4 vs Q plot?"} 
+
 	endif
 
 	Wave/Z InputIntensity= $("Intensity_set"+num2str(whichDataSet))
@@ -447,6 +453,12 @@ Function IR2L_GraphsCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR DisplaySinglePopInt = root:Packages:IR2L_NLSQF:DisplaySinglePopInt
 		IR2L_AppendOrRemoveLocalPopInts()
 	endif
+	
+	if (stringMatch(ctrlName,"DisplaySizeDistPlot")||stringMatch(ctrlName,"DisplayResidualsPlot")||stringMatch(ctrlName,"DisplayIQ4vsQplot"))
+		IR2L_CreateOtherGraphs()
+	endif
+	
+	
 	setDataFolder oldDf
 end
 //*****************************************************************************************************************

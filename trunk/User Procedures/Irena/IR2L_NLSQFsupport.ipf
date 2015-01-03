@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.29
+#pragma version=1.30
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.30 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.29 added Fractals as models
 //1.28 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.27	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
@@ -1832,7 +1833,7 @@ Function IR2L_Initialize()
 	//Main parameters
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseSMRData;MultipleInputData;UseNumberDistributions;RecalculateAutomatically;DisplaySinglePopInt;NoFittingLimits;RebinDataTo;"
 	ListOfVariables+="SameContrastForDataSets;VaryContrastForDataSets;DisplayInputDataControls;DisplayModelControls;UseGeneticOptimization;UseLSQF;"
-	ListOfVariables+="SizeDist_DimensionIsDiameter;"
+	ListOfVariables+="SizeDist_DimensionIsDiameter;DisplaySizeDistPlot;DisplayResidualsPlot;DisplayIQ4vsQplot;"
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;ListOfKnownPeakShapes;"
 	ListOfStrings+="DataCalibrationUnits;PanelVolumeDesignation;IntCalibrationUnits;VolDistCalibrationUnits;NumDistCalibrationUnits;"	
 	ListOfStrings+="ConfEvListOfParameters;ConEvSelParameter;ConEvMethod;SizeDist_DimensionType;"
