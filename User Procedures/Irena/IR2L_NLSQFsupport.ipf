@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.30
+#pragma version=1.31
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.31 bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.30 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.29 added Fractals as models
 //1.28 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
@@ -1305,6 +1306,25 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		Execute("SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
 	endif
 
+		//Fractals
+	if(stringmatch(ctrlName,"SurfFrDS"))
+		//set fractal dimension limits... 
+		NVAR SurfFrDSMin=$("root:Packages:IR2L_NLSQF:SurfFrDSMin_pop"+num2str(whichDataSet))
+		NVAR SurfFrDSMax=$("root:Packages:IR2L_NLSQF:SurfFrDSMax_pop"+num2str(whichDataSet))
+		SurfFrDSMin= 2.001
+		SurfFrDSMax=2.999
+		Execute("SetVariable SurfFrDS,win=LSQF2_MainPanel,limits={2.001,2.999,"+num2str(varNum*0.05)+"}")	
+	endif
+	if(stringmatch(ctrlName,"MassFrDv"))
+		//set fractal dimension limits... 
+		NVAR MassFrDvMin=$("root:Packages:IR2L_NLSQF:MassFrDvMin_pop"+num2str(whichDataSet))
+		NVAR MassFrDvMax=$("root:Packages:IR2L_NLSQF:MassFrDvMax_pop"+num2str(whichDataSet))
+		MassFrDvMin= 1
+		MassFrDvMax=2.999
+		Execute("SetVariable MassFrDv,win=LSQF2_MainPanel,limits={1,2.999,"+num2str(varNum*0.05)+"}")	
+	endif
+	
+
 	if(stringmatch(ctrlName,"DiffPeakPar1"))
 		//set volume limits... 
 		NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Min_pop"+num2str(whichDataSet))
@@ -2277,7 +2297,7 @@ Function IR2L_SetInitialValues(enforce)
 					testVar=500		
 				endif
 			endfor
-			ListOfVariables = "MassFrDv;MassFrBeta;SurfFrDS;"		//other parameter
+			ListOfVariables = "MassFrDv;MassFrBeta;"		//other parameter
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
 				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
 				if(testVar==0)
@@ -2286,6 +2306,17 @@ Function IR2L_SetInitialValues(enforce)
 					testVar=1
 					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
 					testVar=3		
+				endif
+			endfor
+			ListOfVariables = "SurfFrDS;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=2.5
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=2
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=2.999		
 				endif
 			endfor
 			ListOfVariables = "MassFrKsi;MassFrIntgNumPnts;SurfFrKsi;"		//other parameter

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.10
+#pragma version=1.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11  bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.10 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.09 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.08 added to Unified fit ability to calculate B from G/Rg/P based on Guinier/Porod model. 
@@ -28,6 +29,11 @@
 //	4. Display, calculate residuals etc.
 //	  
 
+//**********************************************************************************
+//**********************************************************************************
+//**********************************************************************************
+//**********************************************************************************
+//**********************************************************************************
 
 Function IR2L_RecalculateIfSelected()
 
@@ -39,6 +45,11 @@ Function IR2L_RecalculateIfSelected()
 	DoWIndow/F $(topWinNm)
 end
 
+//**********************************************************************************
+//**********************************************************************************
+//**********************************************************************************
+//**********************************************************************************
+//**********************************************************************************
 
 Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distribution waves and distributions for all used population populations and all data sets...
 	variable skipCreateDistWvs, fitting  	//set to 1 if skip changing the Radius/Diameter waves.. Use when using "semiAuto"
@@ -377,7 +388,7 @@ Function IR2L_CalcSurfFIntPopXDataSetY(pop,dataSet)
 
 		ModelInt = pi *LocalContrast* 1e20 * Ksi^4 *1e-32* Surface * exp(gammln(5-DS))	
 		ModelInt *= sin((3-DS)* atan(ModelQ*Ksi))/((1+(ModelQ*Ksi)^2)^((5-DS)/2) * ModelQ*Ksi)
-		if(Qc>0)
+		if(Qc>0&& Qc<ModelQ[numpnts(ModelQ)-1])
 			//h(Q) = C(xc - x)f(Q) + C(x - xc)g(Q).
 			//The transition from one behavior to another is determined by C. Ê
 			//For an infinitely sharp transition, C would be a Heaviside step function. Ê
@@ -1115,7 +1126,11 @@ Function IR2L_SummModel()
 			NVAR slitSmeared =$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(j))
 			NVAR SlitLength = $("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(j))
 			if(slitSmeared)
-				IR2L_SlitSmearLSQFData(ModelIntSumm,ModelQ,SlitLength)
+				if(SlitLength<ModelQ[0]|| SlitLength>(ModelQ[numpnts(ModelQ)-1]*0.8))
+					Abort "The slit length seems incorrect - too small or too large- Modeling II cannot continue. Fix SLit length and then try again."
+				else	
+					IR2L_SlitSmearLSQFData(ModelIntSumm,ModelQ,SlitLength)
+				endif
 			endif
 			//generate residuals for user
 			Duplicate/O ModelIntSumm, $("Residuals_set"+num2str(j))
@@ -1210,6 +1225,9 @@ Function IR2L_CreateOtherGraphs()
 		
 		//create graph and data for IQ4 vs Q plot.
 		IQ4Existed = IR2L_GraphIQ4vsQ()
+			
+		//recolor as needed
+		IR2L_SyncClrsAndSymbInGraphs()
 		
 		//and now we need to align them for user...
 //		variable GraphSDExists, GraphResExists,GraphIQ4Exists
@@ -1246,6 +1264,70 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+Function IR2L_SyncClrsAndSymbInGraphs()
+	//syncs colors in graphs as much as possible
+
+    String tnl = TraceNameList( "LSQF_MainGraph", ";", 1 )
+    String info, tnlIQ4, tnlRes, tempName, tempNameIQ4, cmd, tempNameRes
+    variable  k = ItemsInList(tnl)
+    variable i, kIQ4, kRes
+	DoWindow LSQF_MainGraph
+	if(!V_Flag)		//no main graph, bail out
+		return 0
+	endif
+	DoWIndow 	LSQF_IQ4vsQGraph
+	if(V_Flag)
+		tnlIQ4 = TraceNameList( "LSQF_IQ4vsQGraph", ";", 1 )
+		kIQ4 = ItemsInList(tnlIQ4)
+	endif
+	DoWIndow 	LSQF_ResidualsGraph
+	if(V_Flag)
+		tnlRes = TraceNameList( "LSQF_ResidualsGraph", ";", 1 )
+		kRes = ItemsInList(tnlRes)
+	endif
+
+      tnl = TraceNameList( "LSQF_MainGraph", ";", 1 )
+      k = ItemsInList(tnl)
+	
+    if (k <= 1)
+        return -1
+    endif
+    For(i=0;i<k;i+=1)
+	    	tempName =  StringFromList(i, tnl , ";")
+		info=TraceInfo("LSQF_MainGraph",tempName,0)
+		if(StringMatch(tempName, "Intensity_set*" ))
+			if(kIQ4>0)
+				tempNameIQ4 = ReplaceString("Intensity_set" , tempName, "IntensityQ4_set")
+				if(StringMatch(tnlIQ4, "*"+tempNameIQ4+";*" ))
+					cmd = "ModifyGraph/W=LSQF_IQ4vsQGraph /Z rgb("+tempNameIQ4+")="+StringByKey("rgb(x)", info , "="  , ";")
+					Execute(cmd)
+					cmd = "ModifyGraph/W=LSQF_IQ4vsQGraph /Z marker("+tempNameIQ4+")="+StringByKey("marker(x)", info , "="  , ";")
+					Execute(cmd)
+				endif
+			endif
+			if(kRes>0)
+				tempNameRes = ReplaceString("Intensity_set" , tempName, "Residuals_set")
+				if(StringMatch(tnlRes, "*"+tempNameRes+";*" ))
+					cmd = "ModifyGraph/W=LSQF_ResidualsGraph /Z rgb("+tempNameRes+")="+StringByKey("rgb(x)", info , "="  , ";")
+					Execute(cmd)
+					cmd = "ModifyGraph/W=LSQF_ResidualsGraph /Z marker("+tempNameRes+")="+StringByKey("marker(x)", info , "="  , ";")
+					Execute(cmd)
+				endif
+			endif
+		elseif(StringMatch(tempName, "IntensityModel_set*" ))
+			if(kIQ4>0)
+				tempNameIQ4 = ReplaceString("IntensityModel_set" , tempName, "IQ4Model_set")
+				if(StringMatch(tnlIQ4, "*"+tempNameIQ4+";*" ))
+					cmd = "ModifyGraph/W=LSQF_IQ4vsQGraph /Z rgb("+tempNameIQ4+")="+StringByKey("rgb(x)", info , "="  , ";")
+					Execute(cmd)
+					cmd = "ModifyGraph/W=LSQF_IQ4vsQGraph /Z marker("+tempNameIQ4+")="+StringByKey("marker(x)", info , "="  , ";")
+					Execute(cmd)
+				endif
+			endif
+	 	endif
+    endfor
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
