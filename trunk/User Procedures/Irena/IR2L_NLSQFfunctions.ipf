@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
+#pragma version=1.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19  bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.18 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.17 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
 //1.16 modified to use rebinning routien from Geneeral procedures
@@ -2658,7 +2659,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function Ir2L_WriteOneFitVar(VarName, which)
+Function IR2L_WriteOneFitVar(VarName, which)
 	String VarName
 	variable which
 	

@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.17
-Constant IR2LversionNumber = 1.17
+#pragma version=1.18
+Constant IR2LversionNumber = 1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.17
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+// 1.18 bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.17 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.16 added Fractals as models. 
 //1.15 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
@@ -97,6 +98,7 @@ Function IR2L_MainPanel()
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;"
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
+	CheckBox QLogScale pos={100,131}
 	TitleBox MainTitle title="Modeling II",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},fSize=24,fColor=(0,0,52224)
 
 
@@ -451,13 +453,13 @@ Function IR2L_MainPanel()
 		SetVariable MassFrRadiusMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrRadiusMax_pop1,noproc
 		SetVariable MassFrRadiusMax,pos={290,350},size={80,15},title="Max ", help={"High limit for Radius position"} 
 
-		SetVariable MassFrDv,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrDv_pop1,proc=IR2L_PopSetVarProc
+		SetVariable MassFrDv,limits={1,2.999,0.1},variable= root:Packages:IR2L_NLSQF:MassFrDv_pop1,proc=IR2L_PopSetVarProc
 		SetVariable MassFrDv,pos={8,370},size={140,15},title="Dv (Fract. dim.)  = ", help={"Dv for this fractal"} 
 		CheckBox MassFrDvFit,pos={155,370},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox MassFrDvFit,variable= root:Packages:IR2L_NLSQF:MassFrDvFit_pop1, help={"Fit the Dv width position?"}
-		SetVariable MassFrDvMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMin_pop1,noproc
+		SetVariable MassFrDvMin,limits={1,3,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMin_pop1,noproc
 		SetVariable MassFrDvMin,pos={200,370},size={80,15},title="Min ", help={"Low limit for Dv width position"} 
-		SetVariable MassFrDvMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMax_pop1,noproc
+		SetVariable MassFrDvMax,limits={1,3,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMax_pop1,noproc
 		SetVariable MassFrDvMax,pos={290,370},size={80,15},title="Max ", help={"High limit for Dv width position"} 
 
 		SetVariable MassFrKsi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrKsi_pop1,proc=IR2L_PopSetVarProc
@@ -488,13 +490,13 @@ Function IR2L_MainPanel()
 		SetVariable SurfFrSurfMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrSurfMax_pop1,noproc
 		SetVariable SurfFrSurfMax,pos={290,330},size={80,15},title="Max ", help={"High limit for SurfFrSurf"} 
 	
-		SetVariable SurfFrDS,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrDS_pop1,proc=IR2L_PopSetVarProc
+		SetVariable SurfFrDS,limits={2.001,2.999,0.1},variable= root:Packages:IR2L_NLSQF:SurfFrDS_pop1,proc=IR2L_PopSetVarProc
 		SetVariable SurfFrDS,pos={8,350},size={140,15},title="Fractal dim.     = ", help={"Fractal dimension, between 2 and 3"} 
 		CheckBox SurfFrDSFit,pos={155,350},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox SurfFrDSFit,variable= root:Packages:IR2L_NLSQF:SurfFrDSFit_pop1, help={"Fit the Fract dim.?"}
-		SetVariable SurfFrDSMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrDSMin_pop1,noproc
+		SetVariable SurfFrDSMin,limits={1.999,3,0},variable= root:Packages:IR2L_NLSQF:SurfFrDSMin_pop1,noproc
 		SetVariable SurfFrDSMin,pos={200,350},size={80,15},title="Min ", help={"Low limit for Fract. dim.  position"} 
-		SetVariable SurfFrDSMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrDSMax_pop1,noproc
+		SetVariable SurfFrDSMax,limits={1.999,3,0},variable= root:Packages:IR2L_NLSQF:SurfFrDSMax_pop1,noproc
 		SetVariable SurfFrDSMax,pos={290,350},size={80,15},title="Max ", help={"High limit for Fract. dim. position"} 
 
 		SetVariable SurfFrKsi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SurfFrKsi_pop1,proc=IR2L_PopSetVarProc
@@ -529,28 +531,28 @@ Function IR2L_MainPanel()
 		PopupMenu StructureFactorModel help={"Select Dilute system or Structure factor to be used for this population of scatterers"}
 
 		SetVariable Contrast,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast,pos={8,495},size={150,15},title="Contrast = ", help={"Contrast of this population"} 
+		SetVariable Contrast,pos={8,495},size={150,15},title="Contrast [*10^20] = ", help={"Contrast [*10^20]  of this population"} 
 		SetVariable Contrast_set1,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set1_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set1,pos={8,490},size={150,15},title="Contrast data 1 = ", help={"Contrast of this population for data set 1"} 
+		SetVariable Contrast_set1,pos={8,490},size={150,15},title="Contrast data 1 = ", help={"Contrast [*10^20]  of this population for data set 1"} 
 		SetVariable Contrast_set2,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set2_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set2,pos={8,510},size={150,15},title="Contrast data 2 = ", help={"Contrast of this population for data set 2"} 
+		SetVariable Contrast_set2,pos={8,510},size={150,15},title="Contrast data 2 = ", help={"Contrast [*10^20]  of this population for data set 2"} 
 		SetVariable Contrast_set3,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set3_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set3,pos={8,530},size={150,15},title="Contrast data 3 = ", help={"Contrast of this population for data set 3"} 
+		SetVariable Contrast_set3,pos={8,530},size={150,15},title="Contrast data 3 = ", help={"Contrast [*10^20]  of this population for data set 3"} 
 		SetVariable Contrast_set4,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set4_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set4,pos={8,550},size={150,15},title="Contrast data 4 = ", help={"Contrast of this population for data set 4"} 
+		SetVariable Contrast_set4,pos={8,550},size={150,15},title="Contrast data 4 = ", help={"Contrast [*10^20]  of this population for data set 4"} 
 		SetVariable Contrast_set5,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set5_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set5,pos={8,570},size={150,15},title="Contrast data 5 = ", help={"Contrast of this population for data set 5"} 
+		SetVariable Contrast_set5,pos={8,570},size={150,15},title="Contrast data 5 = ", help={"Contrast [*10^20]  of this population for data set 5"} 
 
 		SetVariable Contrast_set6,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set6_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set6,pos={178,490},size={150,15},title="Contrast data 6 = ", help={"Contrast of this population for data set 1"} 
+		SetVariable Contrast_set6,pos={178,490},size={150,15},title="Contrast data 6 = ", help={"Contrastv of this population for data set 1"} 
 		SetVariable Contrast_set7,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set7_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set7,pos={178,510},size={150,15},title="Contrast data 7 = ", help={"Contrast of this population for data set 2"} 
+		SetVariable Contrast_set7,pos={178,510},size={150,15},title="Contrast data 7 = ", help={"Contrast [*10^20]  of this population for data set 2"} 
 		SetVariable Contrast_set8,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set8_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set8,pos={178,530},size={150,15},title="Contrast data 8 = ", help={"Contrast of this population for data set 3"} 
+		SetVariable Contrast_set8,pos={178,530},size={150,15},title="Contrast data 8 = ", help={"Contrast [*10^20]  of this population for data set 3"} 
 		SetVariable Contrast_set9,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set9_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set9,pos={178,550},size={150,15},title="Contrast data 9 = ", help={"Contrast of this population for data set 4"} 
+		SetVariable Contrast_set9,pos={178,550},size={150,15},title="Contrast data 9 = ", help={"Contrast [*10^20]  of this population for data set 4"} 
 		SetVariable Contrast_set10,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set10_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast_set10,pos={178,570},size={150,15},title="Contrast set 10 = ", help={"Contrast of this population for data set 5"} 
+		SetVariable Contrast_set10,pos={178,570},size={150,15},title="Contrast set 10 = ", help={"Contrast [*10^20]  of this population for data set 5"} 
 
 		//few more buttons
 		CheckBox UseGeneticOptimization,pos={5,610},size={25,90},proc=IR2L_DataTabCheckboxProc,title="Genetic Optimiz.?"
