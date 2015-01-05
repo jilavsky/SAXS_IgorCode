@@ -8,6 +8,7 @@ Fractals model - added Qc as transitional Q value when surface fractal changes t
 Modeling II - added MassFractal and SurfaceFractal - models are copied form Fractals tool, so users need to read manual for that tool 
 Modeling II - added controls which enable to select, which additional graphs are displayed. Choices are SizeDistribution, Residuals, and IQ^4 vs Q. These two graphs are now matching colors to the main Graph colors for easier navigation when multiple data sets are used. 
 Modeling II - minor bug fixes: Catch when slit length is set incorrectly (too small or too large), set properly Dv and Dv limits for Fractals and some other ones. 
+Scripting tool - added hook function after data set is loaded, before it is fitted, for user to do something which needs to be done. Check the code. For now only for Modeling II.   
 
 
 2.56 8/20/2014
