@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 Constant IR2SversionNumber=1.21
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant IR2SversionNumber=1.21
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
 //1.21 added for QRS data wave name match string. 
 //1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Gunier-Porod and Size Dist with uncertainities appering in wrong time. 
 //1.19 fix for Diameters/Radii option in Modeling II - it was failing to add such data in Plotting tool. 
@@ -1105,6 +1106,10 @@ Function IR2S_FItWithModelingII()
 			//this should create the new graph...
 			IR2L_InputPanelButtonProc("AddDataSetSkipRecover")
 			doUpdate
+			//call user hook function if they need it
+			if(exists("AfterDataLoaded_Hook")==6)
+				Execute ("AfterDataLoaded_Hook()")
+			endif
 			//now we need to set back the Qmin and max.
 			CurMinQ = StartQ
 			CurMaxQ = EndQ
