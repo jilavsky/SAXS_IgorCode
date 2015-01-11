@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.10
+#pragma version = 1.11
 Constant IR2DversionNumber=1.09
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 removed most Executes in preparation for Igor 7. 
 //1.10 added check fro slit smeared data if qmax is sufficently high (3* slit length is minimum). 
 //1.09 changed term for storing data back to folder, Previously used  save, which confused users. 
 //1.08 added panel version control and made panel vertically scrollable. 
@@ -712,77 +713,77 @@ Function IR2D_TabPanelControl(name,tab)
 		PopupMenu PopSizeDistShape win=IR2D_ControlPanel,  mode=whichListItem(CurDistType, ListOfKnownPeakShapes)+1
 		NVAR UsePeak = $("root:Packages:Irena_SAD:UsePeak"+num2str(tab))
 		NVAR Fit1 = $("root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par1")
-		Execute("CheckBox UseThePeak win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:UsePeak"+num2str(tab))
-		Execute("SetVariable Peak_Par1 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par1, disable = !"+num2Str(UsePeak))
-		Execute("CheckBox FitPeak_Par1 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par1, disable = !"+num2Str(UsePeak))
-		Execute("SetVariable Peak_Par1LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par1LowLimit, disable = !("+num2Str(UsePeak)+"&&"+num2str(Fit1)+")")
-		Execute("SetVariable Peak_Par1HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par1HighLimit, disable = !("+num2Str(UsePeak)+"&&"+num2str(Fit1)+")")
+		CheckBox UseThePeak win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("UsePeak"+num2str(tab))
+		SetVariable Peak_Par1 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par1"), disable = (!(UsePeak))
+		CheckBox FitPeak_Par1 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("FitPeak"+num2str(tab)+"_Par1"), disable = (!(UsePeak))
+		SetVariable Peak_Par1LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par1LowLimit"), disable = !((UsePeak)&&(Fit1))
+		SetVariable Peak_Par1HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par1HighLimit"), disable = !((UsePeak)&&(Fit1))
 	
 		NVAR Fit2 = $("root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par2")
-		Execute("SetVariable Peak_Par2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par2, disable = !"+num2Str(UsePeak))
+		SetVariable Peak_Par2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par2"), disable = (!(UsePeak))
 		if(PP2)
-			Execute("SetVariable Peak_Par2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par2, disable = 2")		
+			SetVariable Peak_Par2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par2"), disable = 2	
 		endif
-		Execute("CheckBox FitPeak_Par2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par2, disable = !"+num2Str(UsePeak)+" || "+num2str(PP2))
-		Execute("SetVariable Peak_Par2LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par2LowLimit, disable = !("+num2Str(UsePeak)+"&&"+num2str(Fit2)+")"+" || "+num2str(PP2))
-		Execute("SetVariable Peak_Par2HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par2HighLimit, disable = !("+num2Str(UsePeak)+"&&"+num2str(Fit2)+")"+" || "+num2str(PP2))
+		CheckBox FitPeak_Par2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("FitPeak"+num2str(tab)+"_Par2"), disable = (!UsePeak || PP2)
+		SetVariable Peak_Par2LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par2LowLimit"), disable = !((UsePeak && Fit2 )) || PP2
+		SetVariable Peak_Par2HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par2HighLimit"), disable = !((UsePeak && Fit2 )) || PP2
 	
 		NVAR Fit3 = $("root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par3")
-		Execute("SetVariable Peak_Par3  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par3, disable = !"+num2Str(UsePeak))
-		Execute("CheckBox FitPeak_Par3  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par3, disable = !"+num2Str(UsePeak))
-		Execute("SetVariable Peak_Par3LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par3LowLimit, disable = !("+num2Str(UsePeak)+"&&"+num2str(Fit3)+")")
-		Execute("SetVariable Peak_Par3HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par3HighLimit, disable = !("+num2Str(UsePeak)+"&&"+num2str(Fit3)+")")
+		SetVariable Peak_Par3  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par3"), disable = (!(UsePeak))
+		CheckBox FitPeak_Par3  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("FitPeak"+num2str(tab)+"_Par3"), disable = (!(UsePeak))
+		SetVariable Peak_Par3LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par3LowLimit"), disable = !(UsePeak && Fit3)
+		SetVariable Peak_Par3HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par3HighLimit"), disable =  !(UsePeak && Fit3)
 	
 		NVAR Fit4 = $("root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par4")
-		Execute("SetVariable Peak_Par4 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par4, disable = !("+num2Str(UsePeak)+"&& "+num2str(Display4)+")")
-		Execute("CheckBox FitPeak_Par4 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:FitPeak"+num2str(tab)+"_Par4, disable = !("+num2Str(UsePeak)+"&& "+num2str(Display4)+")")
-		Execute("SetVariable Peak_Par4LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par4LowLimit, disable = !("+num2Str(UsePeak)+"&& "+num2str(Display4)+"&&"+num2str(Fit4)+")")
-		Execute("SetVariable Peak_Par4HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par4HighLimit, disable = !("+num2Str(UsePeak)+"&& "+num2str(Display4)+"&&"+num2str(Fit4)+")")
+		SetVariable Peak_Par4 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par4"), disable = !(UsePeak &&  Display4)
+		CheckBox FitPeak_Par4 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("FitPeak"+num2str(tab)+"_Par4"), disable =!(UsePeak &&  Display4)
+		SetVariable Peak_Par4LowLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par4LowLimit"), disable = !(UsePeak && Display4 && Fit4 )
+		SetVariable Peak_Par4HighLimit  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_Par4HighLimit"), disable = !(UsePeak && Display4 && Fit4)
 
-		Execute("SetVariable Peak_Par2 win=IR2D_ControlPanel,title=\"Position       \"")
-		Execute("SetVariable Peak_Par3 win=IR2D_ControlPanel,title=\"Width     \"")
+		SetVariable Peak_Par2 win=IR2D_ControlPanel,title="Position       "
+		SetVariable Peak_Par3 win=IR2D_ControlPanel,title="Width     "
 		SVAR PeakFunction=$("root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Function")
 		NVAR value4=$("root:Packages:Irena_SAD:Peak"+num2str(tab)+"_Par4")
 		if(stringmatch(PeakFunction,"SkewedNormal"))
-			Execute ("SetVariable Peak_Par4,limits={-inf,inf,"+num2str(0.03*value4)+"}")	
-			Execute ("SetVariable Peak_Par4LowLimit,limits={-inf,inf,0}")	
-			Execute ("SetVariable Peak_Par4HighLimit,limits={-inf,inf,0}")	
+			SetVariable Peak_Par4,limits={-inf,inf,(0.03*value4)}
+			SetVariable Peak_Par4LowLimit,limits={-inf,inf,0}
+			SetVariable Peak_Par4HighLimit,limits={-inf,inf,0}
 		else
-			Execute ("SetVariable Peak_Par4,limits={0,inf,"+num2str(0.03*value4)+"}")
-			Execute ("SetVariable Peak_Par4LowLimit,limits={0,inf,0}")	
-			Execute ("SetVariable Peak_Par4HighLimit,limits={0,inf,0}")	
+			SetVariable Peak_Par4,limits={0,inf,(0.03*value4)}
+			SetVariable Peak_Par4LowLimit,limits={0,inf,0}
+			SetVariable Peak_Par4HighLimit,limits={0,inf,0}	
 		endif
 
 
 		if(stringmatch(CurDistType,"Pseudo-Voigt"))
-			Execute("SetVariable Peak_Par4 win=IR2D_ControlPanel,title=\"ETA (Pseudo-Voigt)\"")
+			SetVariable Peak_Par4 win=IR2D_ControlPanel,title="ETA (Pseudo-Voigt)"
 		elseif(stringmatch(CurDistType,"Pearson_VII"))
-			Execute("SetVariable Peak_Par4 win=IR2D_ControlPanel,title=\"Tail Par\"")
+			SetVariable Peak_Par4 win=IR2D_ControlPanel,title="Tail Par"
 		elseif(stringmatch(CurDistType,"Modif_Gauss"))
-			Execute("SetVariable Peak_Par4 win=IR2D_ControlPanel,title=\"Tail Par\"")
+			SetVariable Peak_Par4 win=IR2D_ControlPanel,title="Tail Par"
 		elseif(stringmatch(CurDistType,"SkewedNormal"))
-			Execute("SetVariable Peak_Par4 win=IR2D_ControlPanel,title=\"Skewness\"")
+			SetVariable Peak_Par4 win=IR2D_ControlPanel,title="Skewness"
 		elseif(stringmatch(CurDistType,"Percus-Yevick-Sq")||stringmatch(CurDistType,"Percus-Yevick-SqFq"))
-		//	Execute("SetVariable Peak_Par1 win=IR2D_ControlPanel,title=\"Skewness\"")
-			Execute("SetVariable Peak_Par2 win=IR2D_ControlPanel,title=\"Radius       \"")
-			Execute("SetVariable Peak_Par3 win=IR2D_ControlPanel,title=\"Fraction     \"")
+		//	SetVariable Peak_Par1 win=IR2D_ControlPanel,title=\"Skewness\"")
+			SetVariable Peak_Par2 win=IR2D_ControlPanel,title="Radius       "
+			SetVariable Peak_Par3 win=IR2D_ControlPanel,title="Fraction    "
 		endif
 		
 		
-		Execute("CheckBox Peak_LinkPar2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_LinkPar2, disable = !("+num2Str(UsePeak)+")")
+		CheckBox Peak_LinkPar2 win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_LinkPar2"), disable = !(UsePeak)
 
 		string MenuVal= "---;Peak1;Peak2;Peak3;Peak4;Peak5;Peak6;"
 		MenuVal = ReplaceString("Peak"+num2str(tab)+";", MenuVal, "" )
 		SVAR testStr=$("root:Packages:Irena_SAD:Peak"+num2str(tab)+"_LinkedTo")
-		Execute("PopupMenu Peak_LinkedTo value=\""+MenuVal+"\", mode="+Num2str(whichListItem(testStr, MenuVal)+1))
+		PopupMenu Peak_LinkedTo value=#("\""+MenuVal+"\""), mode=(whichListItem(testStr, MenuVal)+1)
 	
-		Execute("PopupMenu Peak_LinkedTo win=IR2D_ControlPanel, disable = !("+num2Str(UsePeak)+"&&"+num2str(PP2)+")")
-		Execute("SetVariable Peak_LinkMultiplier win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:Peak"+num2str(tab)+"_LinkMultiplier, disable = !("+num2Str(UsePeak)+"&&"+num2str(PP2)+")")
+		PopupMenu Peak_LinkedTo win=IR2D_ControlPanel, disable = !((UsePeak)&&(PP2))
+		SetVariable Peak_LinkMultiplier win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("Peak"+num2str(tab)+"_LinkMultiplier"), disable = !((UsePeak)&&(PP2))
 
-		Execute("SetVariable PeakDPosition  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:PeakDPosition"+num2str(tab)+", disable = 2")
-		Execute("SetVariable PeakPosition  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:PeakPosition"+num2str(tab)+", disable = 2")
-		Execute("SetVariable PeakFWHM  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:PeakFWHM"+num2str(tab)+", disable = 2")
-		Execute("SetVariable PeakIntgInt  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:PeakIntgInt"+num2str(tab)+", disable = 2")
+		SetVariable PeakDPosition  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("PeakDPosition"+num2str(tab)), disable = 2
+		SetVariable PeakPosition  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("PeakPosition"+num2str(tab)), disable = 2
+		SetVariable PeakFWHM  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("PeakFWHM"+num2str(tab)), disable = 2
+		SetVariable PeakIntgInt  win=IR2D_ControlPanel,variable= root:Packages:Irena_SAD:$("PeakIntgInt"+num2str(tab)), disable = 2
 
 	endif
 	setDataFolder OldDf
@@ -1203,8 +1204,8 @@ Function IR2D_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		//here we control the data structure checkbox
 			PopupMenu SelectDataFolder,win=IR2D_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_SAD:UseIndra2Data, root:Packages:Irena_SAD:UseQRSData,root:Packages:Irena_SAD:UseSMRData,0)"
 	elseif(!stringmatch(ctrlName,"DisplayPeaks") && !stringMatch(ctrlname,"AutoRecalculate") && !stringMatch(ctrlname,"Oversample"))
-		Execute("Setvariable "+ctrlName[3,inf]+"LowLimit disable=!"+num2str(checked))
-		Execute("Setvariable "+ctrlName[3,inf]+"HighLimit disable=!"+num2str(checked))
+		Setvariable $(ctrlName[3,inf]+"LowLimit") disable=!(checked)
+		Setvariable $(ctrlName[3,inf]+"HighLimit") disable=!(checked)
 	endif
 	
 	if(stringmatch(ctrlName,"DisplayPeaks") || stringMatch(ctrlname,"AutoRecalculate") || stringMatch(ctrlname,"Oversample")|| stringMatch(ctrlname,"PeakSASScaling") )

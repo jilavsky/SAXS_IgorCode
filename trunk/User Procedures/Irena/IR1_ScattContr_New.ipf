@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.20
 
 
 //*************************************************************************\
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 removed some execute commands
+//2.19 Modified descxription for exp(-Mu*T) as Transmission. Users seem to be missing the point. 
 //2.18 fix of GUI - units for roh/gram for neutrons was wrong. 
 //2.17 minor fix to avoid p and x outside the assignement loop Igor error. 
 //2.16  Modified all controls not to define font and font size to enable proper control by user 
@@ -616,8 +618,9 @@ Function IR1K_DisplayRightElement()
 	DoWIndow IR1K_ScatteringContCalc
 	if(NumberOfAtoms>0)
 		if(V_Flag)
-			Execute("SetVariable ElementType, value= "+ElementTypeString+", win=IR1K_ScatteringContCalc")
-			Execute("SetVariable Elementcontent,value= "+ElementContentVariable+", win=IR1K_ScatteringContCalc")
+			//Execute("SetVariable ElementType, value= "+ElementTypeString+", win=IR1K_ScatteringContCalc")
+			SetVariable ElementType, value= $(ElementTypeString), win=IR1K_ScatteringContCalc
+			SetVariable Elementcontent,value=$(ElementContentVariable), win=IR1K_ScatteringContCalc
 			Execute("PopupMenu ElementIsotope,mode=1,popvalue="+IsotopeTypeString+",value= #\"IR1K_ListTheIsotopes(root:Packages:ScatteringContrast:El"+num2str(SelectedElement)+"_type)\", win=IR1K_ScatteringContCalc")
 			Slider ElementSelection, value=SelectedElement, win=IR1K_ScatteringContCalc
 		endif
@@ -626,8 +629,8 @@ Function IR1K_DisplayRightElement()
 		SVAR BlankString=root:Packages:ScatteringContrast:BlankString
 		BlankString=" "
 		if(V_Flag)
-			Execute("SetVariable ElementType, value= root:Packages:ScatteringContrast:BlankString, win=IR1K_ScatteringContCalc")
-			Execute("SetVariable Elementcontent,value= root:Packages:ScatteringContrast:BlankString, win=IR1K_ScatteringContCalc")
+			SetVariable ElementType, value= root:Packages:ScatteringContrast:BlankString, win=IR1K_ScatteringContCalc
+			SetVariable Elementcontent,value= root:Packages:ScatteringContrast:BlankString, win=IR1K_ScatteringContCalc
 			Execute("PopupMenu ElementIsotope,mode=1,popvalue=root:Packages:ScatteringContrast:BlankString,value= #\"IR1K_ListTheIsotopes(root:Packages:ScatteringContrast:El"+num2str(SelectedElement)+"_type)\", win=IR1K_ScatteringContCalc")
 			//	Slider ElementSelection, disable = 1, win=IR1K_ScatteringContCalc	
 		endif
@@ -2156,13 +2159,13 @@ Function IR1K_AnomScattContCalc()
 	SetVariable Sing_1OverMu_2,help={"1/Mu in [cm]"},labelBack=(49152,65280,32768)
 	SetVariable Sing_1OverMu_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_1OverMu_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_OneOverMu_2
-	SetVariable Sing_eToMinusMuT_1,pos={237,421},size={170,18},title=" exp(-Mu*T)    ", bodywidth=80
-	SetVariable Sing_eToMinusMuT_1,help={"exp(-Mu*T) for thickness given above"}
+	SetVariable Sing_eToMinusMuT_1,pos={237,421},size={170,18},title="Trans = exp(-Mu*T)", bodywidth=80
+	SetVariable Sing_eToMinusMuT_1,help={"Transmission for thickness given above"}
 	SetVariable Sing_eToMinusMuT_1,labelBack=(48896,52992,65280)
 	SetVariable Sing_eToMinusMuT_1 ,frame=0, format="%4.4g"
 	SetVariable Sing_eToMinusMuT_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_eToMInusMuT_1
-	SetVariable Sing_eToMinusMuT_2,pos={424,421},size={170,18},title=" exp(-Mu*T)    ", bodywidth=80
-	SetVariable Sing_eToMinusMuT_2,help={"exp(-Mu*T) for thickness given above"}
+	SetVariable Sing_eToMinusMuT_2,pos={424,421},size={170,18},title=" Trans = exp(-Mu*T)", bodywidth=80
+	SetVariable Sing_eToMinusMuT_2,help={"Transmission for thickness given above"}
 	SetVariable Sing_eToMinusMuT_2,labelBack=(49152,65280,32768)
 	SetVariable Sing_eToMinusMuT_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_eToMinusMuT_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_eToMInusMuT_2

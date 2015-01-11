@@ -2088,7 +2088,7 @@ static Function IR1D_CopyDataLocally()
 		endif
 	endif
 	OutputDataUnits = DataUnits
-	Execute("PopupMenu DataUnits popmatch=\""+OutputDataUnits+"\", win=IR1D_DataManipulationPanel")
+	PopupMenu DataUnits popmatch=OutputDataUnits, win=IR1D_DataManipulationPanel
 	setDataFolder OldDf
 end
 //**********************************************************************************************************

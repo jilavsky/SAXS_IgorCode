@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.31
+#pragma version=1.33
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.33 removed most Executes as fix for Igor 7
+//1.32 modified Tab procedures and removed Execute constructs as these will be very slow in Igor 7. 
 //1.31 bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.30 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.29 added Fractals as models
@@ -837,27 +839,28 @@ Function IR2L_Data_TabPanelControl(name,tab)
 		Button AddDataSet, win=LSQF2_MainPanel, disable=( !DisplayInputDataControls)
 		Button RemovePointWcsrA, win=LSQF2_MainPanel, disable=( !DisplayInputDataControls || !displayControls) 
 		Button ReadCursors, win=LSQF2_MainPanel,disable=( !DisplayInputDataControls || !displayControls) 
-		Execute("CheckBox UseTheData_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(tab+1)+", disable=( !"+num2str(DisplayInputDataControls)+"||!"+num2str(displayUseCheckbox)+")")
-		Execute("CheckBox SlitSmeared_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("SetVariable SlitLength_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"|| !"+num2str(DisplaySlitSmeared)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("SetVariable FolderName_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:FolderName_set"+num2str(tab+1)+", disable=( !"+num2str(DisplayInputDataControls)+"||!"+num2str(displayUseCheckbox)+")")
-		Execute("SetVariable UserDataSetName_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:UserDataSetName_set"+num2str(tab+1)+", disable=( !"+num2str(DisplayInputDataControls)+"||!"+num2str(displayUseCheckbox)+")")
-		Execute("SetVariable Qmin_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:Qmin_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("SetVariable Qmax_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:Qmax_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
+		CheckBox UseTheData_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("UseTheData_set"+num2str(tab+1)), disable=( !DisplayInputDataControls|| !displayUseCheckbox)
+//		Execute("CheckBox UseTheData_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(tab+1)+", disable=( !"+num2str(DisplayInputDataControls)+"||!"+num2str(displayUseCheckbox)+")")
+		CheckBox SlitSmeared_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("SlitSmeared_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+		SetVariable SlitLength_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("SlitLength_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplaySlitSmeared)||!(DisplayInputDataControls))
+		SetVariable FolderName_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("FolderName_set"+num2str(tab+1)), disable=( !(DisplayInputDataControls)||!(displayUseCheckbox))
+		SetVariable UserDataSetName_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("UserDataSetName_set"+num2str(tab+1)), disable=( !(DisplayInputDataControls)||!(displayUseCheckbox))
+		SetVariable Qmin_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("Qmin_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+		SetVariable Qmax_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("Qmax_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
 		
 		NVAR Background = $("root:Packages:IR2L_NLSQF:Background_set"+num2str(tab+1))
 		NVAR BckgStep = $("root:Packages:IR2L_NLSQF:BackgStep_set"+num2str(tab+1))
 		BckgStep = 0.05 * Background 
-		Execute("SetVariable Background ,win=LSQF2_MainPanel ,limits={0,Inf,"+num2str(BckgStep)+"}, variable=root:Packages:IR2L_NLSQF:Background_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-//		Execute("SetVariable BackgStep ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:BackgStep_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("SetVariable BackgroundMin ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:BackgroundMin_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayFitRange)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("SetVariable BackgroundMax ,win=LSQF2_MainPanel ,variable=root:Packages:IR2L_NLSQF:BackgroundMax_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayFitRange)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("CheckBox BackgroundFit_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:BackgroundFit_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")		
-		Execute("SetVariable DataScalingFactor_set,win=LSQF2_MainPanel,value= root:Packages:IR2L_NLSQF:DataScalingFactor_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("CheckBox UseUserErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:UseUserErrors_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("CheckBox UseSQRTErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:UseSQRTErrors_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("CheckBox UsePercentErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:UsePercentErrors_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
-		Execute("SetVariable ErrorScalingFactor_set,win=LSQF2_MainPanel,value= root:Packages:IR2L_NLSQF:ErrorScalingFactor_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
+		SetVariable Background ,win=LSQF2_MainPanel ,limits={0,Inf,BckgStep}, variable=root:Packages:IR2L_NLSQF:$("Background_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+//		Execute("SetVariable Background ,win=LSQF2_MainPanel ,limits={0,Inf,"+num2str(BckgStep)+"}, variable=root:Packages:IR2L_NLSQF:Background_set"+num2str(tab+1)+", disable=( !"+num2str(displayControls)+"||!"+num2str(DisplayInputDataControls)+")")
+		SetVariable BackgroundMin ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("BackgroundMin_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayFitRange)||!(DisplayInputDataControls))
+		SetVariable BackgroundMax ,win=LSQF2_MainPanel ,variable=root:Packages:IR2L_NLSQF:$("BackgroundMax_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayFitRange)||!(DisplayInputDataControls))
+		CheckBox BackgroundFit_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("BackgroundFit_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))		
+		SetVariable DataScalingFactor_set,win=LSQF2_MainPanel,value= root:Packages:IR2L_NLSQF:$("DataScalingFactor_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+		CheckBox UseUserErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:$("UseUserErrors_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+		CheckBox UseSQRTErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:$("UseSQRTErrors_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+		CheckBox UsePercentErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:$("UsePercentErrors_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
+		SetVariable ErrorScalingFactor_set,win=LSQF2_MainPanel,value= root:Packages:IR2L_NLSQF:$("ErrorScalingFactor_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
 	
 	setDataFolder OldDf
 	IR2L_AppendOrRemoveLocalPopInts()
@@ -900,7 +903,8 @@ Function IR2L_Model_TabPanelControl(name,tab)
 	SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(tab+1))
 	SVAR Model=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1))
 	SVAR PeakProfile=$("root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1))
-	variable S_sw, F_sw,CS_sw, Dif_sw
+	variable S_sw, F_sw,CS_sw, Dif_sw, tempVar
+	string tempStr
 	if(stringmatch(PeakProfile, "Pseudo-Voigt")||stringmatch(PeakProfile, "Pearson_VII")||stringmatch(PeakProfile, "Modif_Gauss")||stringmatch(PeakProfile, "SkewedNormal"))
 		Dif_sw=1
 	else
@@ -938,256 +942,291 @@ Function IR2L_Model_TabPanelControl(name,tab)
 	endif
 
 
-		Execute("CheckBox UseThePop,win=LSQF2_MainPanel ,variable=root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+")")
-		Execute("SetVariable UserName,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UserName_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")") 
-		Execute("PopupMenu PopulationType,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1)+",\"Size dist.;Unified level;Diffraction Peak;MassFractal;SurfaceFractal;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(UsePop)+")")
+		CheckBox UseThePop,win=LSQF2_MainPanel ,variable=root:Packages:IR2L_NLSQF:$("UseThePop_pop"+num2str(tab+1)), disable=(!(DisplayModelControls))
+		SetVariable UserName,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UserName_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(UsePop))
+		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1))
+		PopupMenu PopulationType,win=LSQF2_MainPanel, mode=(WhichListItem(tempSVR,"Size dist.;Unified level;Diffraction Peak;MassFractal;SurfaceFractal;")+1), disable=(!(DisplayModelControls)|| !(UsePop))
 		
 		
-		Execute("CheckBox RdistAuto,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistAuto_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("CheckBox RdistrSemiAuto,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistrSemiAuto_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("CheckBox RdistMan,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistMan_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
+		CheckBox RdistAuto,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("RdistAuto_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		CheckBox RdistrSemiAuto,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("RdistrSemiAuto_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		CheckBox RdistMan,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("RdistMan_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 
-		Execute("SetVariable RdistNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:RdistNumPnts_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable RdistManMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:RdistManMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable RdistManMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:RdistManMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| "+num2str(!RdistManual)+")")
+		SetVariable RdistNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistNumPnts_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		SetVariable RdistManMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistManMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		SetVariable RdistManMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistManMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop)|| (!RdistManual))
 
-		Execute("SetVariable RdistNeglectTails,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:RdistNeglectTails_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| "+num2str(RdistManual)+")")
+		SetVariable RdistNeglectTails,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistNeglectTails_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop)|| (RdistManual))
 
-		Execute("CheckBox RdistLog,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:RdistLog_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
+		CheckBox RdistLog,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("RdistLog_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 
-		Execute("PopupMenu FormFactorPop,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(tab+1)+",root:Packages:FormFactorCalc:ListOfFormFactors+\"Unified_Level;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SizeDist_DimensionType,win=LSQF2_MainPanel,  disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("Button GetFFHelp,win=LSQF2_MainPanel, disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
+		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(tab+1))
+		SVAR tempSVR2=root:Packages:FormFactorCalc:ListOfFormFactors
+		PopupMenu FormFactorPop,win=LSQF2_MainPanel, mode=(WhichListItem(tempSVR,tempSVR2+"Unified_Level;")+1), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		SetVariable SizeDist_DimensionType,win=LSQF2_MainPanel,  disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		Button GetFFHelp,win=LSQF2_MainPanel, disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 
-		Execute("PopupMenu PopSizeDistShape,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(tab+1)+",\"LogNormal;Gauss;LSW;Schulz-Zimm;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
+		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(tab+1))
+		PopupMenu PopSizeDistShape,win=LSQF2_MainPanel, mode=(WhichListItem(tempSVR,"LogNormal;Gauss;LSW;Schulz-Zimm;")+1), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 		//diffraction stuff
-		Execute("PopupMenu DiffPeakProfile,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1)+",root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes)+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar1,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar1,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar1_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox DiffPeakPar1Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar1Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar1Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar1Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1))
+		SVAR tempSVR2=root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes
+		PopupMenu DiffPeakProfile,win=LSQF2_MainPanel, mode=(WhichListItem(tempSVR,tempSVR2)+1), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar1,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar1_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:DiffPeakPar1_pop"+num2str(tab+1))
+		SetVariable DiffPeakPar1,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox DiffPeakPar1Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar1Fit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar1Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar1Min_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar1Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar1Max_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==2)|| !(UsePop))
 
-		Execute("SetVariable DiffPeakPar2,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar2,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar2_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox DiffPeakPar2Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar2Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar2Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar2Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		SetVariable DiffPeakPar2,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar2_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:DiffPeakPar2_pop"+num2str(tab+1))
+		SetVariable DiffPeakPar2,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox DiffPeakPar2Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar2Fit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar2Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar2Min_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar2Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar2Max_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==2)|| !(UsePop))
 
-		Execute("SetVariable DiffPeakPar3,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar3,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar3_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox DiffPeakPar3Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar3Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar3Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar3Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		SetVariable DiffPeakPar3,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar3_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:DiffPeakPar3_pop"+num2str(tab+1))
+		SetVariable DiffPeakPar3,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox DiffPeakPar3Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar3Fit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar3Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar3Min_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar3Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar3Max_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==2)|| !(UsePop))
 		
 		if(stringmatch(PeakProfile, "Pseudo-Voigt"))
-			Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title=\"Eta           = \"")	
+			SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title="Eta           = "
 		elseif(stringmatch(PeakProfile, "Pearson_VII")||stringmatch(PeakProfile, "Modif_Gauss"))
-			Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title=\"Tail Param = \"")
+			SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title="Tail Param = "
 		elseif(stringmatch(PeakProfile, "SkewedNormal"))	
-			Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title=\"Skewness = \"")	
+			SetVariable DiffPeakPar4,win=LSQF2_MainPanel, title="Skewness = "
 		endif
-		Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox DiffPeakPar4Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Fit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar4Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Min_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable DiffPeakPar4Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakPar4Max_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(Dif_sw==1)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
+		SetVariable DiffPeakPar4,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar4_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(Dif_sw==1)|| !(F_sw==2)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:DiffPeakPar4_pop"+num2str(tab+1))
+		SetVariable DiffPeakPar4,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox DiffPeakPar4Fit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar4Fit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(Dif_sw==1)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar4Min,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar4Min_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(Dif_sw==1)|| !(F_sw==2)|| !(UsePop))
+		SetVariable DiffPeakPar4Max,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakPar4Max_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(Dif_sw==1)|| !(F_sw==2)|| !(UsePop))
 		variable tempSw
 		if((DisplayModelControls)&&(F_sw==2)&&(UsePop==1))
 			tempSw=2
 		else
 			tempSw=1
 		endif
-		Execute("SetVariable DiffPeakDPos,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakDPos_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
-		Execute("SetVariable DiffPeakQPos,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakQPos_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
-		Execute("SetVariable DiffPeakQFWHM,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakQFWHM_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
-		Execute("SetVariable DiffPeakIntgInt,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:DiffPeakIntgInt_pop"+num2str(tab+1)+", disable=("+num2str(tempSw))
+		SetVariable DiffPeakDPos,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakDPos_pop"+num2str(tab+1)), disable=((tempSw))
+		SetVariable DiffPeakQPos,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakQPos_pop"+num2str(tab+1)), disable=((tempSw))
+		SetVariable DiffPeakQFWHM,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakQFWHM_pop"+num2str(tab+1)), disable=((tempSw))
+		SetVariable DiffPeakIntgInt,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("DiffPeakIntgInt_pop"+num2str(tab+1)), disable=((tempSw))
 
 		//MassFractal
-		//Execute("PopupMenu DiffPeakProfile,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1)+",root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes)+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrPhi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrPhi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox MassFrPhiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhiFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrPhiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhiMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrPhiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrPhiMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		//PopupMenu DiffPeakProfile,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:$("DiffPeakProfile_pop"+num2str(tab+1)),root:Packages:IR2L_NLSQF:$("ListOfKnownPeakShapes)+1), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))")
+		SetVariable MassFrPhi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrPhi_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:MassFrPhi_pop"+num2str(tab+1))
+		SetVariable MassFrPhi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox MassFrPhiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrPhiFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrPhiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrPhiMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrPhiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrPhiMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
 
-		Execute("SetVariable MassFrRadius,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrRadius,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox MassFrRadiusFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadiusFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrRadiusMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadiusMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrRadiusMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrRadiusMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		SetVariable MassFrRadius,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrRadius_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:MassFrRadius_pop"+num2str(tab+1))
+		SetVariable MassFrRadius,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox MassFrRadiusFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrRadiusFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrRadiusMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrRadiusMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrRadiusMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrRadiusMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
 
-		Execute("SetVariable MassFrDv,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrDv,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox MassFrDvFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDvFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrDvMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDvMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrDvMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrDvMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		SetVariable MassFrDv,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrDv_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(tab+1))
+		SetVariable MassFrDv,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox MassFrDvFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrDvFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrDvMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrDvMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrDvMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrDvMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
 
-		Execute("SetVariable MassFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox MassFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsiFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsiMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrKsiMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		SetVariable MassFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsi_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(tab+1))
+		SetVariable MassFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox MassFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsiFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsiMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsiMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
 
-		Execute("SetVariable MassFrBeta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrEta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable MassFrIntgNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==3)+"|| !"+num2str(UsePop)+")")
+		SetVariable MassFrBeta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrBeta_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrEta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrEta_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		SetVariable MassFrIntgNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrIntgNumPnts_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
 
 
 		//SurfaceFractal
-		//Execute("PopupMenu SurfFr1_QcW,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1)+",root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes)+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("PopupMenu SurfFrQcWidth,win=LSQF2_MainPanel, mode=(whichListItem(num2str(100*root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(tab+1)+"), \"5;10;15;20;25;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		//PopupMenu SurfFr1_QcW,win=LSQF2_MainPanel, mode=(WhichListItem(root:Packages:IR2L_NLSQF:$("DiffPeakProfile_pop"+num2str(tab+1)),root:Packages:IR2L_NLSQF:$("ListOfKnownPeakShapes)+1), disable=(!(DisplayModelControls)|| !(F_sw==2)|| !(UsePop))")
+		//		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(tab+1))
+
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SurfFrQcWidth_pop"+num2str(tab+1))
+		PopupMenu SurfFrQcWidth,win=LSQF2_MainPanel, mode=(whichListItem(num2str(100*tempNVR), "5;10;15;20;25;")+1), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
 		
-		Execute("SetVariable SurfFrSurf,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrSurf,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox SurfFrSurfFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurfFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrSurfMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurfMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrSurfMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrSurfMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		SetVariable SurfFrSurf,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrSurf_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SurfFrSurf_pop"+num2str(tab+1))
+		SetVariable SurfFrSurf,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox SurfFrSurfFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrSurfFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		SetVariable SurfFrSurfMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrSurfMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==4)|| !(UsePop))
+		SetVariable SurfFrSurfMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrSurfMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==4)|| !(UsePop))
 
-		Execute("SetVariable SurfFrDS,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrDS,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox SurfFrDSFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDSFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrDSMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDSMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrDSMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrDSMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		SetVariable SurfFrDS,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrDS_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SurfFrDS_pop"+num2str(tab+1))
+		SetVariable SurfFrDS,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox SurfFrDSFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrDSFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		SetVariable SurfFrDSMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrDSMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==4)|| !(UsePop))
+		SetVariable SurfFrDSMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrDSMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==4)|| !(UsePop))
 
-		Execute("SetVariable SurfFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox SurfFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsiFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsiMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrKsiMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
+		SetVariable SurfFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrKsi_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SurfFrKsi_pop"+num2str(tab+1))
+		SetVariable SurfFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox SurfFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrKsiFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		SetVariable SurfFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrKsiMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==4)|| !(UsePop))
+		SetVariable SurfFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrKsiMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==4)|| !(UsePop))
 
-		Execute("SetVariable SurfFrQc,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SurfFrQc,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(tab+1)+"}")
+		SetVariable SurfFrQc,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SurfFrQc_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==4)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(tab+1))
+		SetVariable SurfFrQc,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
 
 		//size dist controls
 
-		Execute("SetVariable Volume,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Volume_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable Volume,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:Volume_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox FitVolume,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable VolumeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DisplayVolumeLims)+")")
-		Execute("SetVariable VolumeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DisplayVolumeLims)+")")
+		SetVariable Volume,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Volume_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:Volume_pop"+num2str(tab+1))
+		SetVariable Volume,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox FitVolume,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("VolumeFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		SetVariable VolumeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("VolumeMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(UsePop)|| !(DisplayVolumeLims))
+		SetVariable VolumeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("VolumeMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(UsePop)|| !(DisplayVolumeLims))
 
 		NVAR DLNM1=$("root:Packages:IR2L_NLSQF:LNMinSizeFit_pop"+num2str(tab+1))
-		Execute("SetVariable LNMinSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNMinSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox LNMinSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNMinSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM1)+")")
-		Execute("SetVariable LNMinSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM1)+")")
+		SetVariable LNMinSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMinSize_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(tab+1))
+		SetVariable LNMinSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox LNMinSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMinSizeFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop))
+		SetVariable LNMinSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMinSizeMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop)|| !(DLNM1))
+		SetVariable LNMinSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMinSizeMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop)|| !(DLNM1))
 
 		NVAR DLNM2=$("root:Packages:IR2L_NLSQF:LNMeanSizeFit_pop"+num2str(tab+1))
-		Execute("SetVariable LNMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox LNMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM2)+")")
-		Execute("SetVariable LNMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM2)+")")
+		SetVariable LNMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMeanSize_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:LNMeanSize_pop"+num2str(tab+1))
+		SetVariable LNMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox LNMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMeanSizeFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop))
+		SetVariable LNMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMeanSizeMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop)|| !(DLNM2))
+		SetVariable LNMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNMeanSizeMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop)|| !(DLNM2))
 
 		NVAR DLNM3=$("root:Packages:IR2L_NLSQF:LNSdeviationFit_pop"+num2str(tab+1))
-		Execute("SetVariable LNSdeviation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNSdeviation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox LNSdeviationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LNSdeviationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM3)+")")
-		Execute("SetVariable LNSdeviationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==1)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLNM3)+")")
+		SetVariable LNSdeviation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNSdeviation_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(tab+1))
+		SetVariable LNSdeviation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox LNSdeviationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNSdeviationFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop))
+		SetVariable LNSdeviationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNSdeviationMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop)|| !(DLNM3))
+		SetVariable LNSdeviationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LNSdeviationMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==1)|| !(UsePop)|| !(DLNM3))
 
 		NVAR DGM1=$("root:Packages:IR2L_NLSQF:GMeanSizeFit_pop"+num2str(tab+1))
-		Execute("SetVariable GMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable GMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox GMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable GMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM1)+")")
-		Execute("SetVariable GMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM1)+")")
+		SetVariable GMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GMeanSize_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:GMeanSize_pop"+num2str(tab+1))
+		SetVariable GMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox GMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GMeanSizeFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop))
+		SetVariable GMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GMeanSizeMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop)|| !(DGM1))
+		SetVariable GMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GMeanSizeMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop)|| !(DGM1))
 
 		NVAR DGM2=$("root:Packages:IR2L_NLSQF:GWidthFit_pop"+num2str(tab+1))
-		Execute("SetVariable GWidth,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable GWidth,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox GWidthFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable GWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM2)+")")
-		Execute("SetVariable GWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==2)+"|| !"+num2str(UsePop)+"|| !"+num2str(DGM2)+")")
+		SetVariable GWidth,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GWidth_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(tab+1))
+		SetVariable GWidth,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox GWidthFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GWidthFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop))
+		SetVariable GWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GWidthMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop)|| !(DGM2))
+		SetVariable GWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("GWidthMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==2)|| !(UsePop)|| !(DGM2))
 
 		NVAR DSZM1=$("root:Packages:IR2L_NLSQF:SZMeanSizeFit_pop"+num2str(tab+1))
-		Execute("SetVariable SZMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SZMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox SZMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SZMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM1)+")")
-		Execute("SetVariable SZMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM1)+")")
+		SetVariable SZMeanSize,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZMeanSize_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(tab+1))
+		SetVariable SZMeanSize,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox SZMeanSizeFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZMeanSizeFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop))
+		SetVariable SZMeanSizeMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZMeanSizeMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop)|| !(DSZM1))
+		SetVariable SZMeanSizeMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZMeanSizeMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop)|| !(DSZM1))
 
 		NVAR DSZM2=$("root:Packages:IR2L_NLSQF:SZWidthFit_pop"+num2str(tab+1))
-		Execute("SetVariable SZWidth,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SZWidth,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox SZWidthFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable SZWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM2)+")")
-		Execute("SetVariable SZWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==4)+"|| !"+num2str(UsePop)+"|| !"+num2str(DSZM2)+")")
+		SetVariable SZWidth,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZWidth_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(tab+1))
+		SetVariable SZWidth,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox SZWidthFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZWidthFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop))
+		SetVariable SZWidthMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZWidthMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop)|| !(DSZM2))
+		SetVariable SZWidthMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("SZWidthMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==4)|| !(UsePop)|| !(DSZM2))
 
 
 		NVAR DLSW1=$("root:Packages:IR2L_NLSQF:LSWLocationFit_pop"+num2str(tab+1))
-		Execute("SetVariable LSWLocation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LSWLocation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox LSWLocationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable LSWLocationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLSW1)+")")
-		Execute("SetVariable LSWLocationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| !"+num2str(F_sw==1)+"|| !"+num2str(S_sw==3)+"|| !"+num2str(UsePop)+"|| !"+num2str(DLSW1)+")")
+		SetVariable LSWLocation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocation_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(tab+1))
+		SetVariable LSWLocation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox LSWLocationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocationFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop))
+		SetVariable LSWLocationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocationMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop)|| !(DLSW1))
+		SetVariable LSWLocationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocationMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop)|| !(DLSW1))
 		//unified fit controls		
-		Execute("Button FitRgAndG,win=LSQF2_MainPanel,"+" disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("Button FitPandB,win=LSQF2_MainPanel,"+" disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
+		Button FitRgAndG,win=LSQF2_MainPanel,disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		Button FitPandB,win=LSQF2_MainPanel,disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
 
 		NVAR UNF1=$("root:Packages:IR2L_NLSQF:UF_GFit_pop"+num2str(tab+1))
-		Execute("SetVariable UF_G,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_G,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox UF_GFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_GMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF1)+")")
-		Execute("SetVariable UF_GMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_GMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF1)+")")
+		SetVariable UF_G,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_G_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(tab+1))
+		SetVariable UF_G,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox UF_GFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_GFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		SetVariable UF_GMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_GMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF1))
+		SetVariable UF_GMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_GMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF1))
 
 		NVAR UNF2=$("root:Packages:IR2L_NLSQF:UF_RgFit_pop"+num2str(tab+1))
-		Execute("SetVariable UF_Rg,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_Rg,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox UF_RgFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_RgMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF2)+")")
-		Execute("SetVariable UF_RgMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RgMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF2)+")")
+		SetVariable UF_Rg,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_Rg_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(tab+1))
+		SetVariable UF_Rg,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox UF_RgFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RgFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		SetVariable UF_RgMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RgMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF2))
+		SetVariable UF_RgMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RgMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF2))
 
 		NVAR UFLB=$("root:Packages:IR2L_NLSQF:UF_LinkB_pop"+num2str(tab+1))
 		NVAR UNF3=$("root:Packages:IR2L_NLSQF:UF_BFit_pop"+num2str(tab+1))
 		variable showB = !DisplayModelControls || F_sw || !UsePop
 		showB = (!showB) && UFLB  ? 2 : showB
-		//Execute("SetVariable UF_B,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_B,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(tab+1)+", disable=("+num2str(showB)+")")
-		Execute("SetVariable UF_B,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox UF_BFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| "+num2str(UFLB)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_BMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(UFLB)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF3)+")")
-		Execute("SetVariable UF_BMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_BMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(UFLB)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF3)+")")
+		//SetVariable UF_B,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_B_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))")
+		SetVariable UF_B,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_B_pop"+num2str(tab+1)), disable=((showB))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:UF_B_pop"+num2str(tab+1))
+		SetVariable UF_B,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox UF_BFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_BFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| (UFLB)|| !(UsePop))
+		SetVariable UF_BMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_BMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (UFLB)|| (F_sw)|| !(UsePop)|| !(UNF3))
+		SetVariable UF_BMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_BMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (UFLB)|| (F_sw)|| !(UsePop)|| !(UNF3))
 
-		Execute("CheckBox UF_LinkB,variable= root:Packages:IR2L_NLSQF:UF_LinkB_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
+		CheckBox UF_LinkB,variable= root:Packages:IR2L_NLSQF:$("UF_LinkB_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
 
 		NVAR UNF4=$("root:Packages:IR2L_NLSQF:UF_PFit_pop"+num2str(tab+1))
-		Execute("SetVariable UF_P,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_P_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_P,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_P_pop"+num2str(tab+1)+"}")
-		Execute("Checkbox UF_PFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_PMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF4)+")")
-		Execute("SetVariable UF_PMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_PMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF4)+")")
+		SetVariable UF_P,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_P_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:UF_P_pop"+num2str(tab+1))
+		SetVariable UF_P,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox UF_PFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_PFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		SetVariable UF_PMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_PMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF4))
+		SetVariable UF_PMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_PMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF4))
 
 		NVAR UNF5=$("root:Packages:IR2L_NLSQF:UF_RGCOFit_pop"+num2str(tab+1))
-		Execute("SetVariable UF_RGCO,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCO_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		Execute("SetVariable UF_RGCO,win=LSQF2_MainPanel, Limits= {0,inf,0.05*root:Packages:IR2L_NLSQF:UF_RGCO_pop"+num2str(tab+1)+"}")
-		//Execute("Checkbox UF_RGCOFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOFit_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
-		//Execute("SetVariable UF_RGCOMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOMin_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF5)+")")
-		//Execute("SetVariable UF_RGCOMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:UF_RGCOMax_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(NoFittingLimits)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(UNF5)+")")
+		SetVariable UF_RGCO,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RGCO_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:UF_RGCO_pop"+num2str(tab+1))
+		SetVariable UF_RGCO,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		//Checkbox UF_RGCOFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RGCOFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))")
+		//SetVariable UF_RGCOMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RGCOMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF5))")
+		//SetVariable UF_RGCOMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("UF_RGCOMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| (F_sw)|| !(UsePop)|| !(UNF5))")
 		
 		NVAR UF_K=$("root:Packages:IR2L_NLSQF:UF_K_pop"+num2str(tab+1))
-		Execute("PopupMenu KFactor,win=LSQF2_MainPanel, mode=(WhichListItem(\""+num2str(UF_K)+"\",\"1;1.06;\")+1), disable=(!"+num2str(DisplayModelControls)+"|| "+num2str(F_sw)+"|| !"+num2str(UsePop)+")")
+		PopupMenu KFactor,win=LSQF2_MainPanel, mode=(WhichListItem(num2str(UF_K),"1;1.06;")+1), disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
 
 		SVAR StrA=$("root:Packages:IR2L_NLSQF:StructureFactor_pop"+num2str(tab+1))
 		SVAR StrB=root:Packages:StructureFactorCalc:ListOfStructureFactors
-		Execute("PopupMenu StructureFactorModel win=LSQF2_MainPanel, mode=WhichListItem(\""+StrA+"\",\""+StrB+"\" )+1, disable=(!"+num2str(DisplayModelControls)+"||! "+num2str(F_sw<=1)+"|| !"+num2str(UsePop)+")")
-		Execute("Button GetSFHelp win=LSQF2_MainPanel, disable=(!"+num2str(DisplayModelControls)+"||! "+num2str(F_sw<=1)+"|| !"+num2str(UsePop)+")")
+		PopupMenu StructureFactorModel win=LSQF2_MainPanel, mode=WhichListItem(StrA,StrB)+1, disable=(!(DisplayModelControls)||! (F_sw<=1)|| !(UsePop))
+		Button GetSFHelp win=LSQF2_MainPanel, disable=(!(DisplayModelControls)||! (F_sw<=1)|| !(UsePop))
 		//contrasts
-		Execute("SetVariable Contrast,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UsePop)+"|| !"+num2str(!SameContr || !MID)+")")
+		SetVariable Contrast,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UsePop)|| !(!SameContr || !MID))
 
-		Execute("SetVariable Contrast_set1,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set1_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD1)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set2,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set2_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD2)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set3,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set3_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD3)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set4,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set4_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD4)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set5,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set5_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD5)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set6,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set6_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD6)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set7,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set7_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD7)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set8,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set8_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD8)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set9,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set9_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD9)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
-		Execute("SetVariable Contrast_set10,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:Contrast_set10_pop"+num2str(tab+1)+", disable=(!"+num2str(DisplayModelControls)+"|| !"+num2str(CS_sw)+"|| !"+num2str(UD10)+"|| !"+num2str(UsePop)+"|| "+num2str(!SameContr || !MID)+")")
+		SetVariable Contrast_set1,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set1_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD1)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set2,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set2_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD2)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set3,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set3_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD3)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set4,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set4_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD4)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set5,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set5_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD5)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set6,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set6_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD6)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set7,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set7_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD7)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set8,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set8_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD8)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set9,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set9_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD9)|| !(UsePop)|| (!SameContr || !MID))
+		SetVariable Contrast_set10,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("Contrast_set10_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(CS_sw)|| !(UD10)|| !(UsePop)|| (!SameContr || !MID))
 		
 	setDataFolder OldDf
 	
@@ -1270,7 +1309,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 			NVAR UF_GMax=$("root:Packages:IR2L_NLSQF:UF_GMax_pop"+num2str(whichDataSet))
 			UF_GMin= varNum*0.1
 			UF_GMax=varNum*10
-			Execute("SetVariable UF_G,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+			SetVariable UF_G,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 		endif
 	endif
 	if(stringmatch(ctrlName,"UF_Rg"))
@@ -1279,7 +1318,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR UF_RgMax=$("root:Packages:IR2L_NLSQF:UF_RgMax_pop"+num2str(whichDataSet))
 		UF_RgMin= varNum*0.1
 		UF_RgMax=varNum*10
-		Execute("SetVariable UF_Rg,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable UF_Rg,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"UF_RgCO"))
 		//set volume limits... 
@@ -1287,7 +1326,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR UF_RgCOMax=$("root:Packages:IR2L_NLSQF:UF_RgCOMax_pop"+num2str(whichDataSet))
 		UF_RgCOMin= varNum*0.1
 		UF_RgCOMax=varNum*10
-		Execute("SetVariable UF_RgCO,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable UF_RgCO,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"UF_B"))
 		//set volume limits... 
@@ -1295,7 +1334,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR UF_BMax=$("root:Packages:IR2L_NLSQF:UF_BMax_pop"+num2str(whichDataSet))
 		UF_BMin= varNum*0.1
 		UF_BMax=varNum*10
-		Execute("SetVariable UF_B,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable UF_B,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"UF_P"))
 		//set volume limits... 
@@ -1303,7 +1342,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR UF_PMax=$("root:Packages:IR2L_NLSQF:UF_PMax_pop"+num2str(whichDataSet))
 		UF_PMin= (varNum*0.2)>1 ? varNum*0.2 : 1
 		UF_PMax=(varNum*2)<4.5 ? (varNum*2) : 4.5
-		Execute("SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 
 		//Fractals
@@ -1313,7 +1352,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR SurfFrDSMax=$("root:Packages:IR2L_NLSQF:SurfFrDSMax_pop"+num2str(whichDataSet))
 		SurfFrDSMin= 2.001
 		SurfFrDSMax=2.999
-		Execute("SetVariable SurfFrDS,win=LSQF2_MainPanel,limits={2.001,2.999,"+num2str(varNum*0.05)+"}")	
+		SetVariable SurfFrDS,win=LSQF2_MainPanel,limits={2.001,2.999,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"MassFrDv"))
 		//set fractal dimension limits... 
@@ -1321,7 +1360,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR MassFrDvMax=$("root:Packages:IR2L_NLSQF:MassFrDvMax_pop"+num2str(whichDataSet))
 		MassFrDvMin= 1
 		MassFrDvMax=2.999
-		Execute("SetVariable MassFrDv,win=LSQF2_MainPanel,limits={1,2.999,"+num2str(varNum*0.05)+"}")	
+		SetVariable MassFrDv,win=LSQF2_MainPanel,limits={1,2.999,(varNum*0.05)}	
 	endif
 	
 
@@ -1331,7 +1370,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Max_pop"+num2str(whichDataSet))
 		VolMin= varNum*0.5
 		VolMax=varNum*2
-		Execute("SetVariable DiffPeakPar1,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable DiffPeakPar1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"DiffPeakPar2"))
 		//set volume limits... 
@@ -1339,7 +1378,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar2Max_pop"+num2str(whichDataSet))
 		VolMin= varNum*0.5
 		VolMax=varNum*2
-		Execute("SetVariable DiffPeakPar2,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable DiffPeakPar2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"DiffPeakPar3"))
 		//set volume limits... 
@@ -1347,7 +1386,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar3Max_pop"+num2str(whichDataSet))
 		VolMin= varNum*0.5
 		VolMax=varNum*2
-		Execute("SetVariable DiffPeakPar3,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable DiffPeakPar3,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 	if(stringmatch(ctrlName,"DiffPeakPar4"))
 		//set volume limits... 
@@ -1355,7 +1394,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar4Max_pop"+num2str(whichDataSet))
 		VolMin= varNum*0.5
 		VolMax=varNum*2
-		Execute("SetVariable DiffPeakPar4,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable DiffPeakPar4,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 
 
@@ -1366,7 +1405,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR VolMax=$("root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(whichDataSet))
 		VolMin= varNum*0.5
 		VolMax=varNum*2
-		Execute("SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 	endif
 		//LN controls...
 	if(stringmatch(ctrlName,"LNMinSize"))
@@ -1375,7 +1414,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR LNMinSizeMax=$("root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(whichDataSet))
 		LNMinSizeMin= varNum*0.5
 		LNMinSizeMax=varNum*2
-		Execute("SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	if(stringmatch(ctrlName,"LNMeanSize"))
 		//set LNMeanSize limits... 
@@ -1383,7 +1422,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR LNMeanSizeMax=$("root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(whichDataSet))
 		LNMeanSizeMin= varNum*0.5
 		LNMeanSizeMax=varNum*2
-		Execute("SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	if(stringmatch(ctrlName,"LNSdeviation"))
 		//set LNSdeviation limits... 
@@ -1391,7 +1430,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR LNSdeviationMax=$("root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(whichDataSet))
 		LNSdeviationMin= varNum*0.5
 		LNSdeviationMax=varNum*2
-		Execute("SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 		//GW controls
 	if(stringmatch(ctrlName,"GMeanSize"))
@@ -1400,7 +1439,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(whichDataSet))
 		GMeanSizeMin= varNum*0.5
 		GMeanSizeMax=varNum*2
-		Execute("SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	if(stringmatch(ctrlName,"GWidth"))
 		//set GWidth limits... 
@@ -1408,7 +1447,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(whichDataSet))
 		GWidthMin= varNum*0.5
 		GWidthMax=varNum*2
-		Execute("SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 		//SZ controls
 	if(stringmatch(ctrlName,"SZMeanSize"))
@@ -1417,7 +1456,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(whichDataSet))
 		GMeanSizeMin= varNum*0.5
 		GMeanSizeMax=varNum*2
-		Execute("SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	if(stringmatch(ctrlName,"SZWidth"))
 		//set GWidth limits... 
@@ -1425,7 +1464,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(whichDataSet))
 		GWidthMin= varNum*0.5
 		GWidthMax=varNum*2
-		Execute("SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 		//LSW params		
 	if(stringmatch(ctrlName,"LSWLocation"))
@@ -1434,7 +1473,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR LSWLocationMax=$("root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(whichDataSet))
 		LSWLocationMin= varNum*0.5
 		LSWLocationMax=varNum*2
-		Execute("SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	if(stringmatch(ctrlName,"StructureParam1"))
 		//set LSWLocation limits... 
@@ -1442,7 +1481,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR StructureParam1Max=$("root:Packages:IR2L_NLSQF:StructureParam1Max_pop"+num2str(whichDataSet))
 		StructureParam1Min= varNum*0.5
 		StructureParam1Max=varNum*2
-		Execute("SetVariable  StructureParam1,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  StructureParam1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	if(stringmatch(ctrlName,"StructureParam2"))
 		//set LSWLocation limits... 
@@ -1450,7 +1489,7 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR StructureParam2Max=$("root:Packages:IR2L_NLSQF:StructureParam2Max_pop"+num2str(whichDataSet))
 		StructureParam2Min= varNum*0.5
 		StructureParam2Max=varNum*2
-		Execute("SetVariable  StructureParam2,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")
+		SetVariable  StructureParam2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
 	endif
 	//contrasts
 	
@@ -1477,7 +1516,8 @@ Function IR2L_DataTabSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCon
 	ControlInfo/W=LSQF2_MainPanel DataTabs
 	whichDataSet= V_Value+1
 	if(stringmatch(ctrlName, "BackgStep_set"))
-		Execute("SetVariable Background_set,limits={0,Inf,root:Packages:IR2L_NLSQF:BackgStep_set"+num2str(whichDataSet)+"},win=LSQF2_MainPanel")
+		NVAR tmpV = $("root:Packages:IR2L_NLSQF:BackgStep_set"+num2str(whichDataSet))
+		SetVariable Background_set,limits={0,Inf,tmpV},win=LSQF2_MainPanel
 	endif
 	if(stringmatch(ctrlName, "Qmin_set"))
 		IR2L_setQMinMax(whichDataSet)
@@ -1493,7 +1533,7 @@ Function IR2L_DataTabSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCon
 		NVAR BackgroundMax_set=$("root:Packages:IR2L_NLSQF:BackgroundMax_set"+num2str(whichDataSet))
 		BackgroundMin_set= varNum*0.01
 		BackgroundMax_set=varNum*10
-		Execute("SetVariable Background,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable Background,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
 		IR2L_RecalculateIfSelected() 
 	endif
 	if(stringmatch(ctrlName, "UserDataSetName_set"))
@@ -1567,18 +1607,18 @@ Function IR2L_SetTabsNames()
 		For(i=1;i<=10;i+=1)
 			NVAR UseTheTab=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 			if(UseTheTab)
-				Execute("TabControl DataTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr125\\\\K(65535,0,0)"+num2str(i)+".\"")
+				TabControl DataTabs, win=LSQF2_MainPanel, tabLabel((i-1))="\\Zr125\\K(65535,0,0)"+num2str(i)+"."
 			else
-				Execute("TabControl DataTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr100\\\\K(0,0,0)"+num2str(i)+".\"")
+				TabControl DataTabs, win=LSQF2_MainPanel, tabLabel((i-1))="\\Zr100\\K(0,0,0)"+num2str(i)+"."
 			endif
 		endfor
 	endif
 	For(i=1;i<=10;i+=1)
 		NVAR UseTheTab=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
 		if(UseTheTab)
-			Execute("tabControl DistTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr125\\\\K(65535,0,0)"+num2str(i)+"P\"")
+			tabControl DistTabs, win=LSQF2_MainPanel, tabLabel(i-1)="\\Zr125\\K(65535,0,0)"+num2str(i)+"P"
 		else
-			Execute("tabControl DistTabs, win=LSQF2_MainPanel, tabLabel("+num2str(i-1)+")=\"\\\\Zr100\\\\K(0,0,0)"+num2str(i)+" P\"")
+			tabControl DistTabs, win=LSQF2_MainPanel, tabLabel(i-1)="\\Zr100\\K(0,0,0)"+num2str(i)+" P"
 		endif
 	endfor
 end
@@ -1620,9 +1660,9 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			RdistrSemiAuto=1
 			RdistMan = 0
 		endif
-		Execute("SetVariable RdistManMin,win=LSQF2_MainPanel,disable=("+num2str(RdistAuto)+")")
-		Execute("SetVariable RdistManMax,win=LSQF2_MainPanel,disable=("+num2str(RdistAuto)+")")
-		Execute("SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!"+num2str(RdistAuto)+")")
+		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=((RdistAuto))
+		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=((RdistAuto))
+		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!(RdistAuto))
 	endif
 	if (stringMatch(ctrlName,"RdistrSemiAuto"))
 		if(checked)
@@ -1634,9 +1674,9 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			RdistrSemiAuto=0
 			RdistMan = 0
 		endif
-		Execute("SetVariable RdistManMin,win=LSQF2_MainPanel,disable=("+num2str(RdistAuto)+")")
-		Execute("SetVariable RdistManMax,win=LSQF2_MainPanel,disable=("+num2str(RdistAuto)+")")
-		Execute("SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!"+num2str(RdistAuto)+")")
+		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=((RdistAuto))
+		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=((RdistAuto))
+		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!(RdistAuto))
 	endif
 	if (stringMatch(ctrlName,"RdistMan"))
 		if(checked)
@@ -1648,9 +1688,9 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			RdistrSemiAuto=0
 			RdistMan = 0
 		endif
-		Execute("SetVariable RdistManMin,win=LSQF2_MainPanel,disable=("+num2str(RdistAuto)+")")
-		Execute("SetVariable RdistManMax,win=LSQF2_MainPanel,disable=("+num2str(RdistAuto)+")")
-		Execute("SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!"+num2str(RdistAuto)+")")
+		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=((RdistAuto))
+		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=((RdistAuto))
+		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!(RdistAuto))
 	endif
 	
 /////////////////////////////
@@ -1666,7 +1706,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR VolMax=$("root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(whichDataSet))
 		VolMin= Vol*0.2
 		VolMax=Vol*5
-		Execute("SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(Vol*0.05)+"}")	
+		SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,(Vol*0.05)}	
 	endif
 		//LN controls...
 	if(stringmatch(ctrlName,"LNMinSizeFit"))
@@ -1676,7 +1716,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR LNMinSizeMax=$("root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(whichDataSet))
 		LNMinSizeMin= LNMinSize*0.1
 		LNMinSizeMax=LNMinSize*10
-		Execute("SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(LNMinSize*0.05)+"}")
+		SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,(LNMinSize*0.05)}
 	endif
 	if(stringmatch(ctrlName,"LNMeanSizeFit"))
 		//set LNMeanSize limits... 
@@ -1685,7 +1725,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR LNMeanSizeMax=$("root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(whichDataSet))
 		LNMeanSizeMin= LNMeanSize*0.1
 		LNMeanSizeMax=LNMeanSize*10
-		Execute("SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(LNMeanSize*0.05)+"}")
+		SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(LNMeanSize*0.05)}
 	endif
 	if(stringmatch(ctrlName,"LNSdeviationFit"))
 		//set LNSdeviation limits... 
@@ -1694,7 +1734,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR LNSdeviationMax=$("root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(whichDataSet))
 		LNSdeviationMin= LNSdeviation*0.1
 		LNSdeviationMax=LNSdeviation*10
-		Execute("SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(LNSdeviation*0.05)+"}")
+		SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,(LNSdeviation*0.05)}
 	endif
 		//GW controls
 	if(stringmatch(ctrlName,"GMeanSizeFit"))
@@ -1704,7 +1744,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(whichDataSet))
 		GMeanSizeMin= GMeanSize*0.1
 		GMeanSizeMax=GMeanSize*10
-		Execute("SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(GMeanSize*0.05)+"}")
+		SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(GMeanSize*0.05)}
 	endif
 	if(stringmatch(ctrlName,"GWidthFit"))
 		//set GWidth limits... 
@@ -1713,7 +1753,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(whichDataSet))
 		GWidthMin= GWidth*0.1
 		GWidthMax=GWidth*10
-		Execute("SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(GWidth*0.05)+"}")
+		SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,(GWidth*0.05)}
 	endif
 		//SZ controls
 	if(stringmatch(ctrlName,"SZMeanSizeFit"))
@@ -1723,7 +1763,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR SZMeanSizeMax=$("root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(whichDataSet))
 		SZMeanSizeMin= SZMeanSize*0.1
 		SZMeanSizeMax=SZMeanSize*10
-		Execute("SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(SZMeanSize*0.05)+"}")
+		SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(SZMeanSize*0.05)}
 	endif
 	if(stringmatch(ctrlName,"SZWidthFit"))
 		//set GWidth limits... 
@@ -1732,7 +1772,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR SZWidthMax=$("root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(whichDataSet))
 		SZWidthMin= SZWidth*0.1
 		SZWidthMax=SZWidth*10
-		Execute("SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(SZWidth*0.05)+"}")
+		SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,(SZWidth*0.05)}
 	endif
 		//LSW params		
 	if(stringmatch(ctrlName,"LSWLocationFit"))
@@ -1742,7 +1782,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		NVAR LSWLocationMax=$("root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(whichDataSet))
 		LSWLocationMin= LSWLocation*0.1
 		LSWLocationMax=LSWLocation*10
-		Execute("SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,"+num2str(LSWLocation*0.05)+"}")
+		SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,(LSWLocation*0.05)}
 	endif
 
 /////////////////////////////
@@ -1756,7 +1796,7 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		if(checked)
 			if(G==0 || RG>9e9)
 				LinkB = 0
-				Execute("CheckBox UF_LinkB, win=LSQF2_MainPanel, value =0")
+				CheckBox UF_LinkB, win=LSQF2_MainPanel, value =0
 				Abort "Cannot use this feature when G/Rg are not real particle."
 			endif
 			FitB=0
@@ -4403,8 +4443,8 @@ Function IR2L_ConEvSetValues(popStr)
 		endif
 		DoWIndow IR2L_ConfEvaluationPanel
 		if(V_Flag)
-			Execute("SetVariable ParameterMin,win=IR2L_ConfEvaluationPanel, limits={0, "+num2str(Curpar)+", "+num2str(0.05*Curpar)+"}")
-			Execute("SetVariable ParameterMax,win=IR2L_ConfEvaluationPanel, limits={"+num2str(Curpar)+", inf, "+num2str(0.05*Curpar)+"}")
+			SetVariable ParameterMin,win=IR2L_ConfEvaluationPanel, limits={0, (Curpar), (0.05*Curpar)}
+			SetVariable ParameterMax,win=IR2L_ConfEvaluationPanel, limits={(Curpar), inf, (0.05*Curpar)}
 		endif
 
 end

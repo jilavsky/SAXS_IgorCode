@@ -982,7 +982,7 @@ Function IR1S_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		if (cmpstr(popStr,"CoreShellShell")==0)
 			DoALert 0,"Core-Shell-Shell FF can be used only in Modeling II, nto in Modeling I, please select another Form Factor to use here."
 			popStr="Spheroid"
-			Execute("PopupMenu Dis1_ShapePopup,mode=1,popvalue=\"Spheroid\" ")
+			PopupMenu Dis1_ShapePopup,mode=1,popvalue="Spheroid"
 		endif
 
 		SetVariable Dis1_Contrast, disable=0 , win=IR1S_ControlPanel
@@ -1162,9 +1162,9 @@ Function IR1S_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		//we have 3 universal shape parameters available for each shape type:
 		//Dist2ScatShapeParam1;Dist2ScatShapeParam2;Dist2ScatShapeParam3
 		if (cmpstr(popStr,"CoreShellShell")==0)
-			DoALert 0,"Core-Shell-Shell FF can be used only in Modeling II, nto in Modeling I, please select another Form Factor to use here."
+			DoALert 0,"Core-Shell-Shell FF can be used only in Modeling II, not in Modeling I, please select another Form Factor to use here."
 			popStr="Spheroid"
-			Execute("PopupMenu Dis2_ShapePopup,mode=1,popvalue=\"Spheroid\" ")
+			PopupMenu Dis2_ShapePopup,mode=1,popvalue="Spheroid"
 		endif
 		
 		IR1S_ResetScatShapeFitParam(2)		//Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3
@@ -1338,7 +1338,7 @@ Function IR1S_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		if (cmpstr(popStr,"CoreShellShell")==0)
 			DoALert 0,"Core-Shell-Shell FF can be used only in Modeling II, nto in Modeling I, please select another Form Factor to use here."
 			popStr="Spheroid"
-			Execute("PopupMenu Dis3_ShapePopup,mode=1,popvalue=\"Spheroid\" ")
+			PopupMenu Dis3_ShapePopup,mode=1,popvalue="Spheroid"
 		endif
 
 		IR1S_ResetScatShapeFitParam(3)		//Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3
@@ -1513,7 +1513,7 @@ Function IR1S_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		if (cmpstr(popStr,"CoreShellShell")==0)
 			DoALert 0,"Core-Shell-Shell FF can be used only in Modeling II, nto in Modeling I, please select another Form Factor to use here."
 			popStr="Spheroid"
-			Execute("PopupMenu Dis4_ShapePopup,mode=1,popvalue=\"Spheroid\" ")
+			PopupMenu Dis4_ShapePopup,mode=1,popvalue="Spheroid"
 		endif
 
 		IR1S_ResetScatShapeFitParam(4)
@@ -1687,7 +1687,7 @@ Function IR1S_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		if (cmpstr(popStr,"CoreShellShell")==0)
 			DoALert 0,"Core-Shell-Shell FF can be used only in Modeling II, nto in Modeling I, please select another Form Factor to use here."
 			popStr="Spheroid"
-			Execute("PopupMenu Dis5_ShapePopup,mode=1,popvalue=\"Spheroid\" ")
+			PopupMenu Dis5_ShapePopup,mode=1,popvalue="Spheroid"
 		endif
 
 		IR1S_ResetScatShapeFitParam(5)

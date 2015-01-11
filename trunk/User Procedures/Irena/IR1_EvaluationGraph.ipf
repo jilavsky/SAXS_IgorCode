@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.05
+#pragma version=2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 removed Executes as preparation for Igor 7
 //2.05 modified IR1G_CreateAveVolSfcWvUsingNote by cleaning up unneeded code. 
 //2.04 some improvements to handle radii and diameters. 
 //2.03  Modified all controls not to define font and font size to enable proper control by user 
@@ -74,7 +75,8 @@ Function IRG1_MainHookFunction(H_Struct)
 				For(i=1;i<=NumOfPops;i+=1)
 					Values+=num2str(i)+": "+StringByKey("Dist"+num2str(i)+"ShapeModel", WvNote, "=" , ";" ) +";"
 				endfor
-				Execute("PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=\""+Values+"\", disable=0")
+				Values+="\""+Values+"\""
+				PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=#Values, disable=0
 		elseif(NumOfPops==6)
 				Values=""
 				WvNote=note(CsrWaveRef(A))
@@ -85,9 +87,10 @@ Function IRG1_MainHookFunction(H_Struct)
 						//Values+=num2str(i)+": "+"The population not used +";"
 					endif
 				endfor
-				Execute("PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=\""+Values+"\", disable=0")
+				Values+="\""+Values+"\""
+				PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=#Values, disable=0
 		else
-				Execute("PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=\""+num2str(abs(NumOfPops))+";\", disable=2")
+				PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=#("\""+num2str(abs(NumOfPops))+"\""), disable=2
 				//PopupMenu EvaluatePopulationNumber value=num2str(abs(NumPops)), disable=2
 		endif
 		NVAR OldACursorPosition=root:Packages:SASDataEvaluation:OldACursorPosition

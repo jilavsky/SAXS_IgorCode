@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.36
+#pragma version=2.37
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.37 renamed tab "Prev" into "PolTran" = Polar transform. This seems better descrition of the conversion. 
 //2.36 added ADSC_A
 //2.35 moved Dezinger to tab 2 - some users thought, that dezingenring is available only for empty and dark.  
 //2.34 can read/write canSAS/Nexus files. Can log-bin 2D data and use those. 
@@ -3293,7 +3294,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	TabControl Convert2Dto1DTab,help={"Select tabs to control various parameters"}
 	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Param"
 	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Emp/Dk"
-	TabControl Convert2Dto1DTab,tabLabel(4)="Sectors",tabLabel(5)="Prev", tabLabel(6)="LineProf", value= 0
+	TabControl Convert2Dto1DTab,tabLabel(4)="Sectors",tabLabel(5)="PolTrans", tabLabel(6)="LineProf", value= 0
 	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
 	SetVariable SampleToDetectorDistance,pos={24,309},size={230,16},Disable=1,proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"

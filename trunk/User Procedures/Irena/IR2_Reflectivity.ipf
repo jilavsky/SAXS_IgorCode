@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 Constant IR2RversionNumber=1.16
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 removed many Executes (improvement for Igor 7) 
 //1.16 fixed annoying bug which caused sliders to be drawn over graph when parameters were recoved.
 //1.15 added fixlimits on start to move al sliders into the middle of their range. Attempted to fix problems with some users fitting data with NaNs by cleaning up data before fit. 
 //1.14 added option to oversample the data, with this choise selected the model will have 5x as many points. 
@@ -197,94 +198,97 @@ Window IR2R_ReflSimpleToolMainPanel()
 	string Selection="1;2;3;4;5;6;7;"
 	string TempSel
 	variable i=1
+		//Execute("SetVariable ThicknessLayer"+num2str(i)+",pos={8,308},size={160,16},proc=IR2R_PanelSetVarProc,title=\"Thickness [A]   \", fstyle=1")
 	Do	
-		TempSel = RemoveFromList(num2str(i), Selection)
-		Execute("TitleBox LayerTitleBox"+num2str(i)+", title=\"   Layer "+num2str(i)+"  \", frame=1, labelBack=("+num2str(4000*i)+","+num2str(6000*(i))+","+num2str(4000*(8-i))+"), pos={14,285}, fstyle=1,size={200,8},fColor=(65535,65535,65535)")
-		Execute("SetVariable ThicknessLayer"+num2str(i)+",pos={8,308},size={160,16},proc=IR2R_PanelSetVarProc,title=\"Thickness [A]   \", fstyle=1")
-		Execute("SetVariable ThicknessLayer"+num2str(i)+",limits={0,inf,root:Packages:Refl_SimpleTool:ThicknessLayerStep"+num2str(i)+"},variable= root:Packages:Refl_SimpleTool:ThicknessLayer"+num2str(i)+", help={\"Layer Thickness in A\"}")
-		Execute("SetVariable ThicknessLayerStep"+num2str(i)+",pos={200,325},size={160,16},proc=IR2R_PanelSetVarProc,title=\"Thickness step   \",bodyWidth=50")
-		Execute("SetVariable ThicknessLayerStep"+num2str(i)+",limits={0,inf,1},variable= root:Packages:Refl_SimpleTool:ThicknessLayerStep"+num2str(i)+", help={\"Layer Thickness step to take above\"}")
-		Execute("CheckBox FitThicknessLayer"+num2str(i)+",pos={190,308},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox FitThicknessLayer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:FitThicknessLayer"+num2str(i)+", help={\"Fit thickness surface?, find god starting conditions and select fitting limits...\"}")
-		Execute("SetVariable ThicknessLayerLL"+num2str(i)+",pos={238,308},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable ThicknessLayerLL"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:ThicknessLayerLL"+num2str(i)+", help={\"Low limit for thickness\"}")
-		Execute("SetVariable ThicknessLayerUL"+num2str(i)+",pos={310,308},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable ThicknessLayerUL"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:ThicknessLayerUL"+num2str(i)+", help={\"High limit for thickness\"}")
-		Execute("Slider ThicknessLayerSl"+num2str(i)+",pos={8,325},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:ThicknessLayer"+num2str(i)+",ticks=0")
-		Execute("Slider ThicknessLayerSl"+num2str(i)+",help={\"Controls Thickness as slider, uses Fit Low, High limits and step\"}")
-		Execute("Slider ThicknessLayerSl"+num2str(i)+",limits={"+num2str($"root:Packages:Refl_SimpleTool:ThicknessLayerLL"+num2str(i))+","+num2str($"root:Packages:Refl_SimpleTool:ThicknessLayerUL"+num2str(i))+",0}")
-		Execute("CheckBox LinkThicknessLayer"+num2str(i)+",pos={215,308},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox LinkThicknessLayer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:LinkThicknessLayer"+num2str(i)+", help={\"Link thickness surface?, find god starting conditions and select fitting limits...\"}")
-		Execute("PopupMenu LinkToThicknessLayer"+num2str(i)+",pos={243,308},size={60,12},proc=IR2R_PanelPopupControl,title=\"\", help={\"Select to which layer you want to link this value. \"}")
-		Execute("PopupMenu LinkToThicknessLayer"+num2str(i)+",mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:LinkToThicknessLayer"+num2str(i)+"),value=\""+TempSel+"\"")	//  value= #\"\\"0;1;2;3;4;\""
-		Execute("SetVariable LinkFThicknessLayer"+num2str(i)+",pos={310,308},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable LinkFThicknessLayer"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:LinkFThicknessLayer"+num2str(i)+", help={\"Ratio to use for linking the thickness\"}")
+		TempSel = "\""+RemoveFromList(num2str(i), Selection)+"\""
+		TitleBox $("LayerTitleBox"+num2str(i)), title="   Layer "+num2str(i)+"  ", frame=1, labelBack=(4000*i,6000*i,4000*(8-i)), pos={14,285}, fstyle=1,size={200,8},fColor=(65535,65535,65535)
+
+		SetVariable $("ThicknessLayer"+num2str(i)),pos={8,308},size={160,16},proc=IR2R_PanelSetVarProc,title="Thickness [A]   ", fstyle=1
+
+		 SetVariable $("ThicknessLayer"+num2str(i)),limits={0,inf,root:Packages:Refl_SimpleTool:$("ThicknessLayerStep"+num2str(i))},variable= root:Packages:Refl_SimpleTool:$("ThicknessLayer"+num2str(i)), help={"Layer Thickness in A"}
+		 SetVariable $("ThicknessLayerStep"+num2str(i)),pos={200,325},size={160,16},proc=IR2R_PanelSetVarProc,title="Thickness step   ",bodyWidth=50
+		 SetVariable $("ThicknessLayerStep"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("ThicknessLayerStep"+num2str(i)), help={"Layer Thickness step to take above"}
+		 CheckBox $("FitThicknessLayer"+num2str(i)),pos={190,308},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("FitThicknessLayer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("FitThicknessLayer"+num2str(i)), help={"Fit thickness surface?, find god starting conditions and select fitting limits..."}
+		 SetVariable $("ThicknessLayerLL"+num2str(i)),pos={238,308},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("ThicknessLayerLL"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("ThicknessLayerLL"+num2str(i)), help={"Low limit for thickness"}
+		 SetVariable $("ThicknessLayerUL"+num2str(i)),pos={310,308},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("ThicknessLayerUL"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("ThicknessLayerUL"+num2str(i)), help={"High limit for thickness"}
+		 Slider $("ThicknessLayerSl"+num2str(i)),pos={8,325},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:$("ThicknessLayer"+num2str(i)),ticks=0
+		 Slider $("ThicknessLayerSl"+num2str(i)),help={"Controls Thickness as Slider, uses Fit Low, High limits and step"}
+		 Slider $("ThicknessLayerSl"+num2str(i)),limits={root:Packages:Refl_SimpleTool:$("ThicknessLayerLL"+num2str(i)),root:Packages:Refl_SimpleTool:$("ThicknessLayerUL"+num2str(i)),0}
+		 CheckBox $("LinkThicknessLayer"+num2str(i)),pos={215,308},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("LinkThicknessLayer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("LinkThicknessLayer"+num2str(i)), help={"Link thickness surface?, find god starting conditions and select fitting limits..."}
+		 PopupMenu $("LinkToThicknessLayer"+num2str(i)),pos={243,308},size={60,12},proc=IR2R_PanelPopupControl,title="", help={"Select to which layer you want to link this value. "}
+		 PopupMenu $("LinkToThicknessLayer"+num2str(i)),mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:$("LinkToThicknessLayer"+num2str(i))),value=#TempSel	//  value= #"\"0;1;2;3;4;""
+		 SetVariable $("LinkFThicknessLayer"+num2str(i)),pos={310,308},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("LinkFThicknessLayer"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("LinkFThicknessLayer"+num2str(i)), help={"Ratio to use for linking the thickness"}
 
 		
 
-		Execute("SetVariable SLD_Real_Layer"+num2str(i)+",pos={8,345},size={160,16},proc=IR2R_PanelSetVarProc,title=\"SLD (real)  \", fstyle=1")
-		Execute("SetVariable SLD_Real_Layer"+num2str(i)+",limits={-inf,inf,root:Packages:Refl_SimpleTool:SLD_Real_LayerStep"+num2str(i)+"},variable= root:Packages:Refl_SimpleTool:SLD_Real_Layer"+num2str(i)+", help={\"Layer SLD (real part)\"}")
-		Execute("SetVariable SLD_Real_LayerStep"+num2str(i)+",pos={200,362},size={160,16},proc=IR2R_PanelSetVarProc,title=\"SLD (real) step   \",bodyWidth=50")
-		Execute("SetVariable SLD_Real_LayerStep"+num2str(i)+",limits={-inf,inf,1},variable= root:Packages:Refl_SimpleTool:SLD_Real_LayerStep"+num2str(i)+", help={\"Layer SLD (real) step to take above\"}")
-		Execute("CheckBox FitSLD_Real_Layer"+num2str(i)+",pos={190,345},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox FitSLD_Real_Layer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:FitSLD_Real_Layer"+num2str(i)+", help={\"Fit SLD?, find good starting conditions and select fitting limits...\"}")
-		Execute("SetVariable SLD_Real_LayerLL"+num2str(i)+",pos={238,345},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable SLD_Real_LayerLL"+num2str(i)+",limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:SLD_Real_LayerLL"+num2str(i)+", help={\"Low limit for SLD\"}")
-		Execute("SetVariable SLD_Real_LayerUL"+num2str(i)+",pos={310,345},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable SLD_Real_LayerUL"+num2str(i)+",limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:SLD_Real_LayerUL"+num2str(i)+", help={\"High limit for SLD\"}")
-		Execute("Slider SLD_Real_LayerSl"+num2str(i)+",pos={8,362},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:SLD_Real_Layer"+num2str(i)+",ticks=0")
-		Execute("Slider SLD_Real_LayerSl"+num2str(i)+",help={\"Controls SLD Real as slider, uses Fit Low, High limits and step\"}")
-		Execute("Slider SLD_Real_LayerSl"+num2str(i)+",limits={"+num2str($"root:Packages:Refl_SimpleTool:SLD_Real_LayerLL"+num2str(i))+","+num2str($"root:Packages:Refl_SimpleTool:SLD_Real_LayerUL"+num2str(i))+",0}")
-		Execute("CheckBox LinkSLD_Real_Layer"+num2str(i)+",pos={215,345},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox LinkSLD_Real_Layer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:LinkSLD_Real_Layer"+num2str(i)+", help={\"Link SLD?, find good starting conditions and select fitting limits...\"}")
+		 SetVariable $("SLD_Real_Layer"+num2str(i)),pos={8,345},size={160,16},proc=IR2R_PanelSetVarProc,title="SLD (real)  ", fstyle=1
+		 SetVariable $("SLD_Real_Layer"+num2str(i)),limits={-inf,inf,root:Packages:Refl_SimpleTool:$("SLD_Real_LayerStep"+num2str(i))},variable= root:Packages:Refl_SimpleTool:$("SLD_Real_Layer"+num2str(i)), help={"Layer SLD (real part)"}
+		 SetVariable $("SLD_Real_LayerStep"+num2str(i)),pos={200,362},size={160,16},proc=IR2R_PanelSetVarProc,title="SLD (real) step   ",bodyWidth=50
+		 SetVariable $("SLD_Real_LayerStep"+num2str(i)),limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:$("SLD_Real_LayerStep"+num2str(i)), help={"Layer SLD (real) step to take above"}
+		 CheckBox $("FitSLD_Real_Layer"+num2str(i)),pos={190,345},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("FitSLD_Real_Layer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("FitSLD_Real_Layer"+num2str(i)), help={"Fit SLD?, find good starting conditions and select fitting limits..."}
+		 SetVariable $("SLD_Real_LayerLL"+num2str(i)),pos={238,345},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("SLD_Real_LayerLL"+num2str(i)),limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:$("SLD_Real_LayerLL"+num2str(i)), help={"Low limit for SLD"}
+		 SetVariable $("SLD_Real_LayerUL"+num2str(i)),pos={310,345},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("SLD_Real_LayerUL"+num2str(i)),limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:$("SLD_Real_LayerUL"+num2str(i)), help={"High limit for SLD"}
+		 Slider $("SLD_Real_LayerSl"+num2str(i)),pos={8,362},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:$("SLD_Real_Layer"+num2str(i)),ticks=0
+		 Slider $("SLD_Real_LayerSl"+num2str(i)),help={"Controls SLD Real as Slider, uses Fit Low, High limits and step"}
+		 Slider $("SLD_Real_LayerSl"+num2str(i)),limits={root:Packages:Refl_SimpleTool:$("SLD_Real_LayerLL"+num2str(i)),root:Packages:Refl_SimpleTool:$("SLD_Real_LayerUL"+num2str(i)),0}
+		 CheckBox $("LinkSLD_Real_Layer"+num2str(i)),pos={215,345},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("LinkSLD_Real_Layer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("LinkSLD_Real_Layer"+num2str(i)), help={"Link SLD?, find good starting conditions and select fitting limits..."}
 
-		Execute("PopupMenu LinkToSLD_Real_Layer"+num2str(i)+",pos={243,345},size={60,12},proc=IR2R_PanelPopupControl,title=\"\", help={\"Select to which layer you want to link this value. \"}")
-		Execute("PopupMenu LinkToSLD_Real_Layer"+num2str(i)+",mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:LinkToSLD_Real_Layer"+num2str(i)+"),value=\""+TempSel+"\"")	//  value= #\"\\"0;1;2;3;4;\""
-		Execute("SetVariable LinkFSLD_Real_Layer"+num2str(i)+",pos={310,345},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable LinkFSLD_Real_Layer"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:LinkFSLD_Real_Layer"+num2str(i)+", help={\"Ratio to use for linking the SLD real value\"}")
+		 PopupMenu $("LinkToSLD_Real_Layer"+num2str(i)),pos={243,345},size={60,12},proc=IR2R_PanelPopupControl,title="", help={"Select to which layer you want to link this value. "}
+		 PopupMenu $("LinkToSLD_Real_Layer"+num2str(i)),mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:$("LinkToSLD_Real_Layer"+num2str(i))),value=#TempSel	//  value= #"\"0;1;2;3;4;""
+		 SetVariable $("LinkFSLD_Real_Layer"+num2str(i)),pos={310,345},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("LinkFSLD_Real_Layer"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("LinkFSLD_Real_Layer"+num2str(i)), help={"Ratio to use for linking the SLD real value"}
 
 
-		Execute("SetVariable SLD_Imag_Layer"+num2str(i)+",pos={8,410},size={160,16},proc=IR2R_PanelSetVarProc,title=\"SLD (imag)  \", fstyle=1")
-		Execute("SetVariable SLD_Imag_Layer"+num2str(i)+",limits={-inf,inf,root:Packages:Refl_SimpleTool:SLD_Imag_LayerStep"+num2str(i)+"},variable= root:Packages:Refl_SimpleTool:SLD_Imag_Layer"+num2str(i)+", help={\"Layer SLD (imag part) in A\"}")
-		Execute("SetVariable SLD_Imag_LayerStep"+num2str(i)+",pos={200,427},size={160,16},proc=IR2R_PanelSetVarProc,title=\"SLD (imag) step   \",bodyWidth=50")
-		Execute("SetVariable SLD_Imag_LayerStep"+num2str(i)+",limits={-inf,inf,1},variable= root:Packages:Refl_SimpleTool:SLD_Imag_LayerStep"+num2str(i)+", help={\"Layer SLD (imag) step to take above\"}")
-		Execute("CheckBox FitSLD_Imag_Layer"+num2str(i)+",pos={190,410},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox FitSLD_Imag_Layer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:FitSLD_Imag_Layer"+num2str(i)+", help={\"Fit SLD?, find good starting conditions and select fitting limits...\"}")
-		Execute("SetVariable SLD_Imag_LayerLL"+num2str(i)+",pos={238,410},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable SLD_Imag_LayerLL"+num2str(i)+",limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:SLD_Imag_LayerLL"+num2str(i)+", help={\"Low limit for SLD\"}")
-		Execute("SetVariable SLD_Imag_LayerUL"+num2str(i)+",pos={310,410},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable SLD_Imag_LayerUL"+num2str(i)+",limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:SLD_Imag_LayerUL"+num2str(i)+", help={\"High limit for SLD\"}")
-		Execute("Slider SLD_Imag_LayerSl"+num2str(i)+",pos={8,427},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:SLD_Imag_Layer"+num2str(i)+",ticks=0")
-		Execute("Slider SLD_Imag_LayerSl"+num2str(i)+",help={\"Controls SLD Imag  as slider, uses Fit Low, High limits and step\"}")
-		Execute("Slider SLD_Imag_LayerSl"+num2str(i)+",limits={"+num2str($"root:Packages:Refl_SimpleTool:SLD_Imag_LayerLL"+num2str(i))+","+num2str($"root:Packages:Refl_SimpleTool:SLD_Imag_LayerUL"+num2str(i))+",0}")
-		Execute("CheckBox LinkSLD_Imag_Layer"+num2str(i)+",pos={215,410},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox LinkSLD_Imag_Layer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:LinkSLD_Imag_Layer"+num2str(i)+", help={\"Fit SLD?, find good starting conditions and select fitting limits...\"}")
+		 SetVariable $("SLD_Imag_Layer"+num2str(i)),pos={8,410},size={160,16},proc=IR2R_PanelSetVarProc,title="SLD (imag)  ", fstyle=1
+		 SetVariable $("SLD_Imag_Layer"+num2str(i)),limits={-inf,inf,root:Packages:Refl_SimpleTool:$("SLD_Imag_LayerStep"+num2str(i))},variable= root:Packages:Refl_SimpleTool:$("SLD_Imag_Layer"+num2str(i)), help={"Layer SLD (imag part) in A"}
+		 SetVariable $("SLD_Imag_LayerStep"+num2str(i)),pos={200,427},size={160,16},proc=IR2R_PanelSetVarProc,title="SLD (imag) step   ",bodyWidth=50
+		 SetVariable $("SLD_Imag_LayerStep"+num2str(i)),limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:$("SLD_Imag_LayerStep"+num2str(i)), help={"Layer SLD (imag) step to take above"}
+		 CheckBox $("FitSLD_Imag_Layer"+num2str(i)),pos={190,410},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("FitSLD_Imag_Layer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("FitSLD_Imag_Layer"+num2str(i)), help={"Fit SLD?, find good starting conditions and select fitting limits..."}
+		 SetVariable $("SLD_Imag_LayerLL"+num2str(i)),pos={238,410},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("SLD_Imag_LayerLL"+num2str(i)),limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:$("SLD_Imag_LayerLL"+num2str(i)), help={"Low limit for SLD"}
+		 SetVariable $("SLD_Imag_LayerUL"+num2str(i)),pos={310,410},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("SLD_Imag_LayerUL"+num2str(i)),limits={-inf,inf,0},variable= root:Packages:Refl_SimpleTool:$("SLD_Imag_LayerUL"+num2str(i)), help={"High limit for SLD"}
+		 Slider $("SLD_Imag_LayerSl"+num2str(i)),pos={8,427},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:$("SLD_Imag_Layer"+num2str(i)),ticks=0
+		 Slider $("SLD_Imag_LayerSl"+num2str(i)),help={"Controls SLD Imag  as Slider, uses Fit Low, High limits and step"}
+		 Slider $("SLD_Imag_LayerSl"+num2str(i)),limits={root:Packages:Refl_SimpleTool:$("SLD_Imag_LayerLL"+num2str(i)),root:Packages:Refl_SimpleTool:$("SLD_Imag_LayerUL"+num2str(i)),0}
+		 CheckBox $("LinkSLD_Imag_Layer"+num2str(i)),pos={215,410},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("LinkSLD_Imag_Layer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("LinkSLD_Imag_Layer"+num2str(i)), help={"Fit SLD?, find good starting conditions and select fitting limits..."}
 
-		Execute("PopupMenu LinkToSLD_Imag_Layer"+num2str(i)+",pos={243,410},size={60,12},proc=IR2R_PanelPopupControl,title=\"\", help={\"Select to which layer you want to link this value. \"}")
-		Execute("PopupMenu LinkToSLD_Imag_Layer"+num2str(i)+",mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:LinkToSLD_Imag_Layer"+num2str(i)+"),value=\""+TempSel+"\"")	//  value= #\"\\"0;1;2;3;4;\""
-		Execute("SetVariable LinkFSLD_Imag_Layer"+num2str(i)+",pos={310,410},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable LinkFSLD_Imag_Layer"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:LinkFSLD_Imag_Layer"+num2str(i)+", help={\"Ratio to use for linking the SLD imag value\"}")
+		 PopupMenu $("LinkToSLD_Imag_Layer"+num2str(i)),pos={243,410},size={60,12},proc=IR2R_PanelPopupControl,title="", help={"Select to which layer you want to link this value. "}
+		 PopupMenu $("LinkToSLD_Imag_Layer"+num2str(i)),mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:$("LinkToSLD_Imag_Layer"+num2str(i))),value=#TempSel	//  value= #"\"0;1;2;3;4;""
+		 SetVariable $("LinkFSLD_Imag_Layer"+num2str(i)),pos={310,410},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("LinkFSLD_Imag_Layer"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("LinkFSLD_Imag_Layer"+num2str(i)), help={"Ratio to use for linking the SLD imag value"}
 
-		Execute("SetVariable RoughnessLayer"+num2str(i)+",pos={8,450},size={160,16},proc=IR2R_PanelSetVarProc,title=\"Roughness  \", fstyle=1")
-		Execute("SetVariable RoughnessLayer"+num2str(i)+",limits={0,inf,root:Packages:Refl_SimpleTool:RoughnessLayerStep"+num2str(i)+"},variable= root:Packages:Refl_SimpleTool:RoughnessLayer"+num2str(i)+", help={\"Layer roughness \"}")
-		Execute("SetVariable RoughnessLayerStep"+num2str(i)+",pos={200,467},size={160,16},proc=IR2R_PanelSetVarProc,title=\"Roughness step   \",bodyWidth=50")
-		Execute("SetVariable RoughnessLayerStep"+num2str(i)+",limits={0,inf,1},variable= root:Packages:Refl_SimpleTool:RoughnessLayerStep"+num2str(i)+", help={\"Layer roughness step to take above\"}")
-		Execute("CheckBox FitRoughnessLayer"+num2str(i)+",pos={190,450},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox FitRoughnessLayer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:FitRoughnessLayer"+num2str(i)+", help={\"Fit roughness?, find good starting conditions and select fitting limits...\"}")
-		Execute("SetVariable RoughnessLayerLL"+num2str(i)+",pos={238,450},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable RoughnessLayerLL"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:RoughnessLayerLL"+num2str(i)+", help={\"Low limit for roughness\"}")
-		Execute("SetVariable RoughnessLayerUL"+num2str(i)+",pos={310,450},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable RoughnessLayerUL"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:RoughnessLayerUL"+num2str(i)+", help={\"High limit for roughness\"}")
-		Execute("Slider RoughnessLayerSl"+num2str(i)+",pos={8,467},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:RoughnessLayer"+num2str(i)+",ticks=0")
-		Execute("Slider RoughnessLayerSl"+num2str(i)+",help={\"Controls Roughness  as slider, uses Fit Low, High limits and step\"}")
-		Execute("Slider RoughnessLayerSl"+num2str(i)+",limits={"+num2str($"root:Packages:Refl_SimpleTool:RoughnessLayerLL"+num2str(i))+","+num2str($"root:Packages:Refl_SimpleTool:RoughnessLayerUL"+num2str(i))+",1}")
-		Execute("CheckBox LinkRoughnessLayer"+num2str(i)+",pos={215,450},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=\" \"")
-		Execute("CheckBox LinkRoughnessLayer"+num2str(i)+",variable= root:Packages:Refl_SimpleTool:LinkRoughnessLayer"+num2str(i)+", help={\"Fit roughness?, find good starting conditions and select fitting limits...\"}")
+		 SetVariable $("RoughnessLayer"+num2str(i)),pos={8,450},size={160,16},proc=IR2R_PanelSetVarProc,title="Roughness  ", fstyle=1
+		 SetVariable $("RoughnessLayer"+num2str(i)),limits={0,inf,root:Packages:Refl_SimpleTool:$("RoughnessLayerStep"+num2str(i))},variable= root:Packages:Refl_SimpleTool:$("RoughnessLayer"+num2str(i)), help={"Layer roughness "}
+		 SetVariable $("RoughnessLayerStep"+num2str(i)),pos={200,467},size={160,16},proc=IR2R_PanelSetVarProc,title="Roughness step   ",bodyWidth=50
+		 SetVariable $("RoughnessLayerStep"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("RoughnessLayerStep"+num2str(i)), help={"Layer roughness step to take above"}
+		 CheckBox $("FitRoughnessLayer"+num2str(i)),pos={190,450},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("FitRoughnessLayer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("FitRoughnessLayer"+num2str(i)), help={"Fit roughness?, find good starting conditions and select fitting limits..."}
+		 SetVariable $("RoughnessLayerLL"+num2str(i)),pos={238,450},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("RoughnessLayerLL"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("RoughnessLayerLL"+num2str(i)), help={"Low limit for roughness"}
+		 SetVariable $("RoughnessLayerUL"+num2str(i)),pos={310,450},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("RoughnessLayerUL"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("RoughnessLayerUL"+num2str(i)), help={"High limit for roughness"}
+		 Slider $("RoughnessLayerSl"+num2str(i)),pos={8,467},size={180,20},vert=0,proc=IR2R_ReflSliderProc,variable=root:Packages:Refl_SimpleTool:$("RoughnessLayer"+num2str(i)),ticks=0
+		 Slider $("RoughnessLayerSl"+num2str(i)),help={"Controls Roughness  as Slider, uses Fit Low, High limits and step"}
+		 Slider $("RoughnessLayerSl"+num2str(i)),limits={root:Packages:Refl_SimpleTool:$("RoughnessLayerLL"+num2str(i)),root:Packages:Refl_SimpleTool:$("RoughnessLayerUL"+num2str(i)),1}
+		 CheckBox $("LinkRoughnessLayer"+num2str(i)),pos={215,450},size={80,16},proc=IR2R_InputPanelCheckboxProc,title=" "
+		 CheckBox $("LinkRoughnessLayer"+num2str(i)),variable= root:Packages:Refl_SimpleTool:$("LinkRoughnessLayer"+num2str(i)), help={"Fit roughness?, find good starting conditions and select fitting limits..."}
 
-		Execute("PopupMenu LinkToRoughnessLayer"+num2str(i)+",pos={243,450},size={60,12},proc=IR2R_PanelPopupControl,title=\"\", help={\"Select to which layer you want to link this value. \"}")
-		Execute("PopupMenu LinkToRoughnessLayer"+num2str(i)+",mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:LinkToRoughnessLayer"+num2str(i)+"),value=\""+TempSel+"\"")	//  value= #\"\\"0;1;2;3;4;\""
-		Execute("SetVariable LinkFRoughnessLayer"+num2str(i)+",pos={310,450},size={60,16},proc=IR2R_PanelSetVarProc, title=\" \"")
-		Execute("SetVariable LinkFRoughnessLayer"+num2str(i)+",limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:LinkFRoughnessLayer"+num2str(i)+", help={\"Ratio to use for linking the roughness value\"}")
+		 PopupMenu $("LinkToRoughnessLayer"+num2str(i)),pos={243,450},size={60,12},proc=IR2R_PanelPopupControl,title="", help={"Select to which layer you want to link this value. "}
+		 PopupMenu $("LinkToRoughnessLayer"+num2str(i)),mode=1,fsize=8,bodyWidth=50,popvalue=num2str(root:Packages:Refl_SimpleTool:$("LinkToRoughnessLayer"+num2str(i))),value=#TempSel	//  value= #"\"0;1;2;3;4;""
+		 SetVariable $("LinkFRoughnessLayer"+num2str(i)),pos={310,450},size={60,16},proc=IR2R_PanelSetVarProc, title=" "
+		 SetVariable $("LinkFRoughnessLayer"+num2str(i)),limits={0,inf,0},variable= root:Packages:Refl_SimpleTool:$("LinkFRoughnessLayer"+num2str(i)), help={"Ratio to use for linking the roughness value"}
 	i+=1
 	while(i<=8)	
 	//endfor
@@ -1316,7 +1320,7 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		NVAR ThicknessLayerUL=$("root:Packages:Refl_SimpleTool:ThicknessLayerUL"+num2str(currentVar))
 		ThicknessLayerLL = ThicknessLayer/2
 		ThicknessLayerUL = ThicknessLayer*2
-		Execute("Slider ThicknessLayerSl"+num2str(currentVar)+" limits={"+num2str(ThicknessLayerLL)+","+num2str(ThicknessLayerUL)+",0}")
+		Slider $("ThicknessLayerSl"+num2str(currentVar)), limits={(ThicknessLayerLL),(ThicknessLayerUL),0}
 		//and impose limit on roughness...
 		NVAR RoughnessLayerUL=$("root:Packages:Refl_SimpleTool:RoughnessLayerUL"+num2str(currentVar))
 		if(RoughnessLayerUL>ThicknessLayer/2.38)
@@ -1327,7 +1331,7 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		currentVar=str2num(ctrlName[16,inf])
 		NVAR ThicknessLayerLL=$("root:Packages:Refl_SimpleTool:ThicknessLayerLL"+num2str(currentVar))
 		NVAR ThicknessLayerUL=$("root:Packages:Refl_SimpleTool:ThicknessLayerUL"+num2str(currentVar))
-		Execute("Slider ThicknessLayerSl"+num2str(currentVar)+" limits={"+num2str(ThicknessLayerLL)+","+num2str(ThicknessLayerUL)+",0}")
+		Slider $("ThicknessLayerSl"+num2str(currentVar)), limits={(ThicknessLayerLL),(ThicknessLayerUL),0}
 	endif
 		
 	if (stringmatch(ctrlName,"SLD_Real_Layer*") && !stringmatch(ctrlName,"*Step*") && !stringmatch(ctrlName,"*LL*") && !stringmatch(ctrlName,"*UL*"))
@@ -1337,13 +1341,13 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		NVAR SLD_Real_LayerUL=$("root:Packages:Refl_SimpleTool:SLD_Real_LayerUL"+num2str(currentVar))
 		SLD_Real_LayerLL = SLD_Real_Layer/2
 		SLD_Real_LayerUL = SLD_Real_Layer*2
-		Execute("Slider SLD_Real_LayerSl"+num2str(currentVar)+" limits={"+num2str(SLD_Real_LayerLL)+","+num2str(SLD_Real_LayerUL)+",0}")
+		Slider $("SLD_Real_LayerSl"+num2str(currentVar)), limits={(SLD_Real_LayerLL),(SLD_Real_LayerUL),0}
 	endif
 	if (stringmatch(ctrlName,"SLD_Real_LayerLL*") || stringmatch(ctrlName,"SLD_Real_LayerUL*"))
 		currentVar=str2num(ctrlName[16,inf])
 		NVAR SLD_Real_LayerLL=$("root:Packages:Refl_SimpleTool:SLD_Real_LayerLL"+num2str(currentVar))
 		NVAR SLD_Real_LayerUL=$("root:Packages:Refl_SimpleTool:SLD_Real_LayerUL"+num2str(currentVar))
-		Execute("Slider SLD_Real_LayerSl"+num2str(currentVar)+" limits={"+num2str(SLD_Real_LayerLL)+","+num2str(SLD_Real_LayerUL)+",0}")
+		Slider $("SLD_Real_LayerSl"+num2str(currentVar)), limits={(SLD_Real_LayerLL),(SLD_Real_LayerUL),0}
 	endif
 
 
@@ -1354,13 +1358,13 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		NVAR SLD_Imag_LayerUL=$("root:Packages:Refl_SimpleTool:SLD_Imag_LayerUL"+num2str(currentVar))
 		SLD_Imag_LayerLL = SLD_Imag_Layer/2
 		SLD_Imag_LayerUL = SLD_Imag_Layer*2
-		Execute("Slider SLD_Imag_LayerSl"+num2str(currentVar)+" limits={"+num2str(SLD_Imag_LayerLL)+","+num2str(SLD_Imag_LayerUL)+",0}")
+		Slider $("SLD_Imag_LayerSl"+num2str(currentVar)), limits={(SLD_Imag_LayerLL),(SLD_Imag_LayerUL),0}
 	endif
 	if (stringmatch(ctrlName,"SLD_Imag_LayerLL*")||stringmatch(ctrlName,"SLD_Imag_LayerUL*"))
 		currentVar=str2num(ctrlName[16,inf])
 		NVAR SLD_Imag_LayerLL=$("root:Packages:Refl_SimpleTool:SLD_Imag_LayerLL"+num2str(currentVar))
 		NVAR SLD_Imag_LayerUL=$("root:Packages:Refl_SimpleTool:SLD_Imag_LayerUL"+num2str(currentVar))
-		Execute("Slider SLD_Imag_LayerSl"+num2str(currentVar)+" limits={"+num2str(SLD_Imag_LayerLL)+","+num2str(SLD_Imag_LayerUL)+",0}")
+		Slider $("SLD_Imag_LayerSl"+num2str(currentVar)), limits={(SLD_Imag_LayerLL),(SLD_Imag_LayerUL),0}
 	endif
 
 	if (stringmatch(ctrlName,"RoughnessLayer*")&& !stringmatch(ctrlName,"*Step*") && !stringmatch(ctrlName,"*LL*") && !stringmatch(ctrlName,"*UL*"))
@@ -1371,13 +1375,13 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		NVAR ThicknessLayer=$("root:Packages:Refl_SimpleTool:ThicknessLayer"+num2str(currentVar))
 		RoughnessLayerLL = RoughnessLayer/2
 		RoughnessLayerUL = RoughnessLayer*2
-		Execute("Slider RoughnessLayerSl"+num2str(currentVar)+" limits={"+num2str(RoughnessLayerLL)+","+num2str(RoughnessLayerUL)+",0}")
+		Slider $("RoughnessLayerSl"+num2str(currentVar)), limits={(RoughnessLayerLL),(RoughnessLayerUL),0}
 	endif
 	if (stringmatch(ctrlName,"RoughnessLayerLL*")||stringmatch(ctrlName,"RoughnessLayerUL*") )
 		currentVar=str2num(ctrlName[16,inf])
 		NVAR RoughnessLayerLL=$("root:Packages:Refl_SimpleTool:RoughnessLayerLL"+num2str(currentVar))
 		NVAR RoughnessLayerUL=$("root:Packages:Refl_SimpleTool:RoughnessLayerUL"+num2str(currentVar))
-		Execute("Slider RoughnessLayerSl"+num2str(currentVar)+" limits={"+num2str(RoughnessLayerLL)+","+num2str(RoughnessLayerUL)+",0}")
+		Slider $("RoughnessLayerSl"+num2str(currentVar)), limits={(RoughnessLayerLL),(RoughnessLayerUL),0}
 	endif
 	if (stringmatch(ctrlName,"Roughness_Bot")&& !stringmatch(ctrlName,"*Step*") && !stringmatch(ctrlName,"*LL*") && !stringmatch(ctrlName,"*UL*"))
 		NVAR Roughness_Bot=root:Packages:Refl_SimpleTool:Roughness_Bot
@@ -1405,30 +1409,30 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 
 	if (stringmatch(ctrlName,"ThicknessLayerStep*"))
 		currentVar=str2num(ctrlName[18,inf])
-		NVAR ThicknessLayerStep=$("root:Packages:Refl_SimpleTool:ThicknessLayerStep"+num2str(currentVar))
-		Execute("SetVariable ThicknessLayer"+num2str(currentVar)+",limits={0,inf,root:Packages:Refl_SimpleTool:ThicknessLayerStep"+num2str(currentVar)+"},win=IR2R_ReflSimpleToolMainPanel")
+		NVAR TmpVar=$("root:Packages:Refl_SimpleTool:ThicknessLayerStep"+num2str(currentVar))
+		SetVariable $("ThicknessLayer"+num2str(currentVar)),limits={0,inf,TmpVar},win=IR2R_ReflSimpleToolMainPanel
 	endif
 	if (stringmatch(ctrlName,"SLD_Real_LayerStep*"))
 		currentVar=str2num(ctrlName[18,inf])
-		NVAR ThicknessLayerStep=$("root:Packages:Refl_SimpleTool:SLD_Real_LayerStep"+num2str(currentVar))
-		Execute("SetVariable SLD_Real_Layer"+num2str(currentVar)+",limits={-inf,inf,root:Packages:Refl_SimpleTool:SLD_Real_LayerStep"+num2str(currentVar)+"},win=IR2R_ReflSimpleToolMainPanel")
+		NVAR TmpVar=$("root:Packages:Refl_SimpleTool:SLD_Real_LayerStep"+num2str(currentVar))
+		SetVariable $("SLD_Real_Layer"+num2str(currentVar)),limits={-inf,inf,TmpVar},win=IR2R_ReflSimpleToolMainPanel
 	endif
 	if (stringmatch(ctrlName,"SLD_Imag_LayerStep*"))
 		currentVar=str2num(ctrlName[18,inf])
-		NVAR ThicknessLayerStep=$("root:Packages:Refl_SimpleTool:SLD_Imag_LayerStep"+num2str(currentVar))
-		Execute("SetVariable SLD_Imag_Layer"+num2str(currentVar)+",limits={-inf,inf,root:Packages:Refl_SimpleTool:SLD_Imag_LayerStep"+num2str(currentVar)+"},win=IR2R_ReflSimpleToolMainPanel")
+		NVAR TmpVar=$("root:Packages:Refl_SimpleTool:SLD_Imag_LayerStep"+num2str(currentVar))
+		SetVariable $("SLD_Imag_Layer"+num2str(currentVar)),limits={-inf,inf,TmpVar},win=IR2R_ReflSimpleToolMainPanel
 	endif
 	
 	if (stringmatch(ctrlName,"RoughnessLayerStep*"))
 		currentVar=str2num(ctrlName[18,inf])
-		NVAR RoughnessLayerStep=$("root:Packages:Refl_SimpleTool:RoughnessLayerStep"+num2str(currentVar))
-		Execute("SetVariable RoughnessLayer"+num2str(currentVar)+",limits={0,inf,root:Packages:Refl_SimpleTool:RoughnessLayerStep"+num2str(currentVar)+"},win=IR2R_ReflSimpleToolMainPanel")
+		NVAR TmpVar=$("root:Packages:Refl_SimpleTool:RoughnessLayerStep"+num2str(currentVar))
+		SetVariable $("RoughnessLayer"+num2str(currentVar)),limits={0,inf,TmpVar},win=IR2R_ReflSimpleToolMainPanel
 	endif
 
 	if (cmpstr(ctrlName,"BackgroundStep")==0)
 	//	currentVar=str2num(ctrlName[18,inf])
 		NVAR BackgroundStep=$("root:Packages:Refl_SimpleTool:BackgroundStep")
-		Execute("SetVariable Background,limits={0,inf,root:Packages:Refl_SimpleTool:BackgroundStep},win=IR2R_ReflSimpleToolMainPanel")
+		SetVariable Background,limits={0,inf,BackgroundStep},win=IR2R_ReflSimpleToolMainPanel
 	endif
 
 	if (!stringmatch(ctrlName,"*Step*") && !stringmatch(ctrlName,"*LL*") && !stringmatch(ctrlName,"*UL*"))
@@ -1550,7 +1554,7 @@ Function IR2R_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		if (NumberOfLayers<ActiveTab)
 			ActiveTab=0
 			//IR2R_TabPanelControl("",ActiveTab)
-			Execute("TabControl DistTabs,value= 0, win=IR2R_ReflSimpleToolMainPanel")
+			TabControl DistTabs,value= 0, win=IR2R_ReflSimpleToolMainPanel
 		endif
 		IR2R_CalculateModelResults()
 		IR2R_CalculateSLDProfile()
@@ -1719,66 +1723,65 @@ Function IR2R_TabPanelControl(name,tab)
 		endif
 
 		//Execute("TitleBox LayerTitleBox"+num2str(i)+",disable = "+num2str(tab!=(i-1) || (tab+1)>NumberOfLayers))
-		Execute("TitleBox LayerTitleBox"+num2str(i)+",disable = "+num2str(test4))
-
-		Execute("SetVariable ThicknessLayer"+num2str(i)+",disable = "+num2str(test3))
-		Execute("Slider ThicknessLayerSL"+num2str(i)+",disable = "+num2str(test3))
-		Execute("SetVariable ThicknessLayerStep"+num2str(i)+",disable = "+num2str(test3))
-		Execute("CheckBox FitThicknessLayer"+num2str(i)+",disable = "+num2str(test4))
-		Execute("SetVariable ThicknessLayerLL"+num2str(i)+",disable = "+num2str(test4 || !FitTh))
-		Execute("SetVariable ThicknessLayerUL"+num2str(i)+",disable = "+num2str(test4 || !FitTh))
-		Execute("CheckBox LinkThicknessLayer"+num2str(i)+",disable = "+num2str(test4))
+		TitleBox 		$("LayerTitleBox"+num2str(i)),disable = (test4)
+		SetVariable 		$("ThicknessLayer"+num2str(i)),disable = (test3)
+		Slider 			$("ThicknessLayerSL"+num2str(i)),disable = (test3)
+		SetVariable 		$("ThicknessLayerStep"+num2str(i)),disable = (test3)
+		CheckBox 		$("FitThicknessLayer"+num2str(i)),disable = (test4)
+		SetVariable 		$("ThicknessLayerLL"+num2str(i)),disable = (test4 || !FitTh)
+		SetVariable 		$("ThicknessLayerUL"+num2str(i)),disable = (test4 || !FitTh)
+		CheckBox 		$("LinkThicknessLayer"+num2str(i)),disable = (test4)
 		NVAR LinkMeTo= $("root:Packages:Refl_SimpleTool:LinkToThicknessLayer"+num2str(i))
-		Execute("PopupMenu LinkToThicknessLayer"+num2str(i)+",disable = "+num2str(test4 || !LinkTh)+", popmatch = \""+num2str(LinkMeTo)+"\"")
-		Execute("SetVariable LinkFThicknessLayer"+num2str(i)+",disable = "+num2str(test4 || !LinkTh))
+		PopupMenu 		$("LinkToThicknessLayer"+num2str(i)),disable = (test4 || !LinkTh), popmatch =num2str(LinkMeTo)
+		SetVariable 		$("LinkFThicknessLayer"+num2str(i)),disable = (test4 || !LinkTh)
 
 		if(!test4 && LinkRSLD)
 			test3 =2
 		else
 			test3 =test4
 		endif
-		Execute("SetVariable SLD_Real_Layer"+num2str(i)+",disable = "+num2str(test3))
-		Execute("Slider SLD_Real_LayerSL"+num2str(i)+",disable = "+num2str(test3))
-		Execute("SetVariable SLD_Real_LayerStep"+num2str(i)+",disable = "+num2str(test3))
-		Execute("CheckBox FitSLD_Real_Layer"+num2str(i)+",disable = "+num2str(test4))
-		Execute("SetVariable SLD_Real_LayerLL"+num2str(i)+",disable = "+num2str(test4 || !FitRSLD))
-		Execute("SetVariable SLD_Real_LayerUL"+num2str(i)+",disable = "+num2str(test4 || !FitRSLD))
-		Execute("CheckBox LinkSLD_Real_Layer"+num2str(i)+",disable = "+num2str(test4))
+		SetVariable 		$("SLD_Real_Layer"+num2str(i)),disable = (test3)
+		Slider 			$("SLD_Real_LayerSL"+num2str(i)),disable = (test3)
+		SetVariable 		$("SLD_Real_LayerStep"+num2str(i)),disable = (test3)
+		CheckBox 		$("FitSLD_Real_Layer"+num2str(i)),disable = (test4)
+		SetVariable 		$("SLD_Real_LayerLL"+num2str(i)),disable = (test4 || !FitRSLD)
+		SetVariable 		$("SLD_Real_LayerUL"+num2str(i)),disable = (test4 || !FitRSLD)
+		CheckBox 		$("LinkSLD_Real_Layer"+num2str(i)),disable = (test4)
 		NVAR LinkMeTo= $("root:Packages:Refl_SimpleTool:LinkToSLD_Real_Layer"+num2str(i))
-		Execute("PopupMenu LinkToSLD_Real_Layer"+num2str(i)+",disable = "+num2str(test4 || !LinkRSLD)+", popmatch = \""+num2str(LinkMeTo)+"\"")
-		Execute("SetVariable LinkFSLD_Real_Layer"+num2str(i)+",disable = "+num2str(test4 || !LinkRSLD))
+		PopupMenu 		$("LinkToSLD_Real_Layer"+num2str(i)),disable = (test4 || !LinkRSLD), popmatch =num2str(LinkMeTo)
+		SetVariable 		$("LinkFSLD_Real_Layer"+num2str(i)),disable = (test4 || !LinkRSLD)
 
 		if(!test4 && LinkISLD)
 			test3 =2
 		else
 			test3 =test4
 		endif
-		Execute("SetVariable SLD_Imag_Layer"+num2str(i)+",disable = "+num2str(test3))
-		Execute("Slider SLD_Imag_LayerSL"+num2str(i)+",disable = "+num2str(test3))
-		Execute("SetVariable SLD_Imag_LayerStep"+num2str(i)+",disable = "+num2str(test3))
-		Execute("CheckBox FitSLD_Imag_Layer"+num2str(i)+",disable = "+num2str(test4))
-		Execute("SetVariable SLD_Imag_LayerLL"+num2str(i)+",disable = "+num2str(test4 || !FitISLD))
-		Execute("SetVariable SLD_Imag_LayerUL"+num2str(i)+",disable = "+num2str(test4 || !FitISLD))
-		Execute("CheckBox LinkSLD_Imag_Layer"+num2str(i)+",disable = "+num2str(test4))
+		SetVariable 		$("SLD_Imag_Layer"+num2str(i)),disable = (test3)
+		Slider 			$("SLD_Imag_LayerSL"+num2str(i)),disable = (test3)
+		SetVariable 		$("SLD_Imag_LayerStep"+num2str(i)),disable = (test3)
+		CheckBox 		$("FitSLD_Imag_Layer"+num2str(i)),disable = (test4)
+		SetVariable 		$("SLD_Imag_LayerLL"+num2str(i)),disable = (test4 || !FitISLD)
+		SetVariable 		$("SLD_Imag_LayerUL"+num2str(i)),disable = (test4 || !FitISLD)
+		CheckBox 		$("LinkSLD_Imag_Layer"+num2str(i)),disable = (test4)
 		NVAR LinkMeTo= $("root:Packages:Refl_SimpleTool:LinkToSLD_Imag_Layer"+num2str(i))
-		Execute("PopupMenu LinkToSLD_Imag_Layer"+num2str(i)+",disable = "+num2str(test4 || !LinkISLD)+", popmatch = \""+num2str(LinkMeTo)+"\"")
-		Execute("SetVariable LinkFSLD_Imag_Layer"+num2str(i)+",disable = "+num2str(test4 || !LinkISLD))
+		PopupMenu 		$("LinkToSLD_Imag_Layer"+num2str(i)),disable = (test4 || !LinkISLD), popmatch =num2str(LinkMeTo)
+		SetVariable 		$("LinkFSLD_Imag_Layer"+num2str(i)),disable = (test4 || !LinkISLD)
 
 		if(!test4 && LinkROUGH)
 			test3 =2
 		else
 			test3 =test4
 		endif
-		Execute("SetVariable RoughnessLayer"+num2str(i)+",disable = "+num2str(test3))
-		Execute("Slider RoughnessLayerSL"+num2str(i)+",disable = "+num2str(test3))
-		Execute("SetVariable RoughnessLayerStep"+num2str(i)+",disable = "+num2str(test3))
-		Execute("CheckBox FitRoughnessLayer"+num2str(i)+",disable = "+num2str(test4))
-		Execute("SetVariable RoughnessLayerLL"+num2str(i)+",disable = "+num2str(test4 || !FitROUGH))
-		Execute("SetVariable RoughnessLayerUL"+num2str(i)+",disable = "+num2str(test4 || !FitROUGH))
-		Execute("CheckBox LinkRoughnessLayer"+num2str(i)+",disable = "+num2str(test4))
+		SetVariable 		$("RoughnessLayer"+num2str(i)),disable = (test3)
+		Slider 			$("RoughnessLayerSL"+num2str(i)),disable = (test3)
+		SetVariable 		$("RoughnessLayerStep"+num2str(i)),disable = (test3)
+		CheckBox 		$("FitRoughnessLayer"+num2str(i)),disable = (test4)
+		SetVariable 		$("RoughnessLayerLL"+num2str(i)),disable = (test4 || !FitROUGH)
+		SetVariable 		$("RoughnessLayerUL"+num2str(i)),disable = (test4 || !FitROUGH)
+		CheckBox 		$("LinkRoughnessLayer"+num2str(i)),disable = (test4)
 		NVAR LinkMeTo= $("root:Packages:Refl_SimpleTool:LinkToRoughnessLayer"+num2str(i))
-		Execute("PopupMenu LinkToRoughnessLayer"+num2str(i)+",disable = "+num2str(test4 || !linkROUGH)+", popmatch = \""+num2str(LinkMeTo)+"\"")
-		Execute("SetVariable LinkFRoughnessLayer"+num2str(i)+",disable = "+num2str(test4 || !linkROUGH))
+		PopupMenu 		$("LinkToRoughnessLayer"+num2str(i)),disable = (test4 || !linkROUGH), popmatch =num2str(LinkMeTo)
+		SetVariable 		$("LinkFRoughnessLayer"+num2str(i)),disable = (test4 || !linkROUGH)
 
 
 	endfor
@@ -1890,7 +1893,7 @@ static Function IR2R_FixLimits()
 			NVAR ValueVarUL=$("root:Packages:Refl_SimpleTool:"+tempVarName+"UL"+num2str(i))
 			ValueVarLL = ValueVar/2
 			ValueVarUL = ValueVar*1.5
-			Execute("Slider "+tempVarName+"SL"+num2str(i)+",win=IR2R_ReflSimpleToolMainPanel, limits={"+num2str(ValueVarLL)+","+num2str(ValueVarUL)+",0}")
+			Slider $(tempVarName+"SL"+num2str(i)),win=IR2R_ReflSimpleToolMainPanel, limits={(ValueVarLL),(ValueVarUL),0}
 		endfor
 	endfor
 	ListOfVariables="Background;Roughness_Bot;ScalingFactor;"
@@ -3210,7 +3213,7 @@ static Function IR2R_RemoveLayer(WhichLayer)
 					//do nothing, this does not change
 				else
 					LinkMeTo = LinkMeTo-1
-					Execute("PopupMenu "+ReplaceString("Link", tempName, "LinkTo") +", win=IR2R_ReflSimpleToolMainPanel, popmatch = \""+num2str(LinkMeTo)+"\"")
+					PopupMenu $(ReplaceString("Link", tempName, "LinkTo")), win=IR2R_ReflSimpleToolMainPanel, popmatch = num2str(LinkMeTo)
 				endif
 			endif
 		endfor
@@ -3232,8 +3235,8 @@ static Function IR2R_RemoveLayer(WhichLayer)
 //	endfor
 	NumberOfLayers=NumberOfLayers-1
 	IR2R_TabPanelControl("",WhichLayer-1)
-	Execute("TabControl DistTabs, win= IR2R_ReflSimpleToolMainPanel, value= "+num2str(WhichLayer-1))
-	Execute("PopupMenu NumberOfLevels, win=IR2R_ReflSimpleToolMainPanel, popmatch = \""+num2str(NumberOfLayers)+"\"")	
+	TabControl DistTabs, win= IR2R_ReflSimpleToolMainPanel, value=(WhichLayer-1)
+	PopupMenu NumberOfLevels, win=IR2R_ReflSimpleToolMainPanel, popmatch = num2str(NumberOfLayers)
 	setDataFolder OldDf	
 	DoAlert 0, "Layer "+num2str(WhichLayer)+" was removed, layers were shifted lower as needed. "
 end
@@ -3280,7 +3283,7 @@ static Function IR2R_InsertLayer(WhichLayer)
 					//do nothing, this does not change
 				else
 					LinkMeTo = LinkMeTo+1
-					Execute("PopupMenu "+ReplaceString("Link", tempName, "LinkTo") +", win=IR2R_ReflSimpleToolMainPanel, popmatch = \""+num2str(LinkMeTo)+"\"")
+					PopupMenu $(ReplaceString("Link", tempName, "LinkTo")), win=IR2R_ReflSimpleToolMainPanel, popmatch = num2str(LinkMeTo)
 				endif
 			endif
 		endfor
@@ -3302,8 +3305,8 @@ static Function IR2R_InsertLayer(WhichLayer)
 	endfor
 	NumberOfLayers=NumberOfLayers+1
 	IR2R_TabPanelControl("",WhichLayer-1)
-	Execute("TabControl DistTabs, win= IR2R_ReflSimpleToolMainPanel, value= "+num2str(WhichLayer-1))
-	Execute("PopupMenu NumberOfLevels, win=IR2R_ReflSimpleToolMainPanel, popmatch = \""+num2str(NumberOfLayers)+"\"")	
+	TabControl DistTabs, win= IR2R_ReflSimpleToolMainPanel, value= (WhichLayer-1)
+	PopupMenu NumberOfLevels, win=IR2R_ReflSimpleToolMainPanel, popmatch = num2str(NumberOfLayers)	
 	setDataFolder OldDf	
 	DoAlert 0, "Layer "+num2str(WhichLayer)+" was inserted, layers were shifted higher as needed. All parameters of inserted layer are set to 0. Fix before continuing"
 end
@@ -3377,7 +3380,7 @@ Function IR2R_ReflSliderProc(sa) : SliderControl
 				endif
 				LLVal = sa.curval * 0.5
 				ULVal = sa.curVal * 1.5
-				Execute("Slider "+CtrlName+",limits={"+num2str(LLVal)+","+num2str(ULVal)+",0}")
+				Slider $(CtrlName), limits={(LLVal),(ULVal),0}
 				NVAR AutoUpdate=root:Packages:Refl_SimpleTool:AutoUpdate
 				if (AutoUpdate)
 					IR2R_UpdateLinkedVariables()

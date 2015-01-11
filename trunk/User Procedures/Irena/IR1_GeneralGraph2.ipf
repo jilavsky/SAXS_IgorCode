@@ -1034,7 +1034,7 @@ Function IR1P_AttachLegend(addOrRemove)
 		endfor
 		Legend/C/N=text0/W=GeneralGraph/A=$(GraphLegendPosition)/J/F=(2*GraphLegendFrame) text0
 	else
-		Execute("Legend/W=GeneralGraph/K/N=text0")
+		Legend/W=GeneralGraph/K/N=text0
 	endif	
 end
 //**********************************************************************************************************
@@ -2672,7 +2672,8 @@ Function IR1P_MovieOpenFile()
 		abort "Error opening movie file" //user canceled or other error
 	endif
 	MovieFileOpened=1
-	Execute("Button CreateMovie win=IR1P_CreateMovie, title=\"Movie file opened\", disable=2,fColor=(16386,65535,16385)")
+	Button CreateMovie win=IR1P_CreateMovie, title="Movie file opened", disable=2,fColor=(16386,65535,16385)
+	//Execute("Button CreateMovie win=IR1P_CreateMovie, title=\"Movie file opened\", disable=2,fColor=(16386,65535,16385)")
 end
 //*****************************************************************************************
 //*****************************************************************************************
@@ -2704,7 +2705,7 @@ Function IR1P_MovieCloseFile()
 		DebuggerOptions debugOnError=1	//turn it back on
 	endif
 	MovieFileOpened=0
-	Execute("Button CreateMovie win=IR1P_CreateMovie, title=\"Create Movie\",fColor=(0,0,0), disable=0")
+	Button CreateMovie win=IR1P_CreateMovie, title="Create Movie",fColor=(0,0,0), disable=0
 end
 //*****************************************************************************************
 //*****************************************************************************************

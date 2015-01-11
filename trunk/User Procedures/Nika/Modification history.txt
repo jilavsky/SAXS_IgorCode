@@ -6,6 +6,7 @@ Code modification history
 xxxx
 ADSC file format - finish, need dialog, for now added ADSC_A 
 Fixed Azimuthal data export ASCII export tool. Bug caused garbage production, data in Igor were correct. 
+Renamed Prev. tab into PolTran = Polra transform. Better term for what the procedure does. 
 
 
 1.67 9/15/2014

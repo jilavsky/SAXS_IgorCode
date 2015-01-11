@@ -534,6 +534,7 @@ Function IR2L_FormatInputGraph()
 		SVAR rgbIntensityLine_set8=root:Packages:IR2L_NLSQF:rgbIntensityLine_set8
 		SVAR rgbIntensityLine_set9=root:Packages:IR2L_NLSQF:rgbIntensityLine_set9
 		SVAR rgbIntensityLine_set10=root:Packages:IR2L_NLSQF:rgbIntensityLine_set10
+
 		Execute("ModifyGraph/Z/W=LSQF_MainGraph rgb(Intensity_set1)="+rgbIntensity_set1)
 		Execute("ModifyGraph/Z /W=LSQF_MainGraph rgb(Intensity_set2)="+rgbIntensity_set2)
 		Execute("ModifyGraph/Z/W=LSQF_MainGraph rgb(Intensity_set3)="+rgbIntensity_set3)

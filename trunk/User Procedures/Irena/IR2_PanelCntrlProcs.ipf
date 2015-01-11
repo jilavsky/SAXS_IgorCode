@@ -519,12 +519,16 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 
 	PopupMenu SelectDataFolder,pos={10,56},size={270,21},proc=IR2C_PanelPopupControl,title="Data fldr:", help={"Select folder with data"}, bodywidth=220
 	execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+TopPanel+"\")")
+	//PopupMenu SelectDataFolder,mode=1,popvalue="---",value= ("---;"+IR2P_GenStringOfFolders(winNm=TopPanel))
 	PopupMenu QvecDataName,pos={15,79},size={265,21},proc=IR2C_PanelPopupControl,title="Wave with X   ", help={"Select wave with data to be used on X axis (Q, diameters, etc)"}, bodywidth=200
 	execute("PopupMenu QvecDataName,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_ListOfWaves(\"Xaxis\",\"*\",\""+TopPanel+"\")")
+	//PopupMenu QvecDataName,mode=1,popvalue="---",value=("---;"+IR2P_ListOfWaves("Xaxis","*",TopPanel))
 	PopupMenu IntensityDataName,pos={15,102},size={265,21},proc=IR2C_PanelPopupControl,title="Wave with Y   ", help={"Select wave with data to be used on Y data (Intensity, distributions)"}, bodywidth=200
 	execute("PopupMenu IntensityDataName,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\")")
+	//PopupMenu IntensityDataName,mode=1,popvalue="---",value=("---;"+IR2P_ListOfWaves("Yaxis","*",TopPanel))
 	PopupMenu ErrorDataName,pos={15,126},size={265,21},proc=IR2C_PanelPopupControl,title="Error Wave   ", help={"Select wave with error data"}, bodywidth=200
 	execute("PopupMenu ErrorDataName,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\")")
+	//PopupMenu ErrorDataName,mode=1,popvalue="---",value= ("---;"+IR2P_ListOfWaves("Error","*",TopPanel))
 
 	SetVariable Qmin, pos={8,60},size={220,20}, proc=IR2C_ModelQSetVarProc,title="Min value for Q [A]   ", help={"Value of Q min "}
 	SetVariable Qmin, variable=$("root:Packages:IrenaControlProcs:"+possiblyQuoteName(PanelWindowName)+":Qmin"), limits={0,10,0}

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.19
+#pragma version=2.20
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 removed most Execute to speed up fro Igor 7. 
 //2.19 catch for slit smeared data if the Qmax is too small. It must be at least 3*slit length
 //2.18 modified to use rebinning routine from General procedures
 //2.17 added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
@@ -809,31 +810,31 @@ Function IR1A_FixLimitsInPanel(VarName)
 		if(testVariableHL>5)
 			testVariableHL = 5	
 		endif
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,5,"+num2str(0.05*testVariable)+"}")		
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,5,0.05*testVariable}		
 	elseif(stringmatch(VarName,"*Pack"))
 		testVariableLL = 0.4*testVariable
 		testVariableHL = 2*testVariable
 		if(testVariableHL>10)
 			testVariableHL =10
 		endif
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,"+num2str(testVariableHL)+","+num2str(0.05*testVariable)+"}")		
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,(testVariableHL),(0.05*testVariable)}		
 	elseif(stringmatch(VarName,"*Rg"))
 		testVariableLL = 0.4*testVariable
 		testVariableHL = testVariable/0.4
 		if(testVariableLL<2)
 			testVariableLL=2
 		endif
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.05*testVariable)+"}")		
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*testVariable)}		
 	elseif(stringmatch(VarName,"*G"))
 		testVariableLL = 0.1*testVariable
 		testVariableHL = testVariable/0.1
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.05*testVariable)+"}")	
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*testVariable)}	
 	elseif(stringmatch(VarName,"*ETA"))//**DWS
 		testVariableLL = 0.5*testVariable
 		testVariableHL = 2*testVariable	
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.01*testVariable)+"}")	
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.01*testVariable)}
 	else	
-		Execute("SetVariable "+VarName+",win=IR1A_ControlPanel,limits={0,inf,"+num2str(0.05*testVariable)+"}")
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*testVariable)}
 		testVariableLL = 0.2*testVariable
 		testVariableHL = 5*testVariable	
 	endif
@@ -1805,97 +1806,97 @@ Function IR1A_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR EDf=root:Packages:Irena_UnifFit:ErrorWaveName
 		SVAR Dtf=root:Packages:Irena_UnifFit:DataFolderName
 
-	if (cmpstr(ctrlName,"SelectDataFolder")==0)
-		//here we do what needs to be done when we select data folder
-		Dtf=popStr
-		PopupMenu IntensityDataName mode=1
-		PopupMenu QvecDataName mode=1
-		PopupMenu ErrorDataName mode=1
-		if (UseIndra2Data)
-			IntDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","Irena_UnifFit",(-1)*UseSMRData,1))
-			QDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","Irena_UnifFit",(-1)*UseSMRData,1))
-			EDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","Irena_UnifFit",(-1)*UseSMRData,1))
-			Execute("PopupMenu IntensityDataName value=IR1_ListIndraWavesForPopups(\"DSM_Int\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
-			Execute("PopupMenu QvecDataName value=IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
-			Execute("PopupMenu ErrorDataName value=IR1_ListIndraWavesForPopups(\"DSM_Error\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
-		else
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-		if(UseQRSdata)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Irena_UnifFit",0,0)
-			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Irena_UnifFit",0,0)
-			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Irena_UnifFit",0,0)
-		endif
-		if(!UseQRSdata && !UseIndra2Data)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Irena_UnifFit",0,0)
-			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Irena_UnifFit",0,0)
-			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Irena_UnifFit",0,0)
-		endif
-		if (cmpstr(popStr,"---")==0)
-			IntDf=""
-			QDf=""
-			EDf=""
-			PopupMenu IntensityDataName  value="---"
-			PopupMenu QvecDataName  value="---"
-			PopupMenu ErrorDataName  value="---"
-		endif
-	endif
-	
-	if (cmpstr(ctrlName,"IntensityDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			IntDf=popStr
-			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-				QDf="q"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Irena_UnifFit:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Irena_UnifFit\",0,0)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Irena_UnifFit:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Irena_UnifFit\",0,0)")
-			endif
-		else
-			IntDf=""
-		endif
-	endif
-
-	if (cmpstr(ctrlName,"QvecDataName")==0)
-		//here goes what needs to be done, when we select this popup...	
-		if (cmpstr(popStr,"---")!=0)
-			QDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-				IntDf="r"+popStr[1,inf]
-				EDf="s"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Irena_UnifFit:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Irena_UnifFit\",0,0)")
-				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Irena_UnifFit:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Irena_UnifFit\",0,0)")
-			endif
-		else
-			QDf=""
-		endif
-	endif
-	
-	if (cmpstr(ctrlName,"ErrorDataName")==0)
-		//here goes what needs to be done, when we select this popup...
-		if (cmpstr(popStr,"---")!=0)
-			EDf=popStr
-			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-				IntDf="r"+popStr[1,inf]
-				QDf="q"+popStr[1,inf]
-				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Irena_UnifFit:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Irena_UnifFit\",0,0)")
-				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Irena_UnifFit:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Irena_UnifFit\",0,0)")
-			endif
-		else
-			EDf=""
-		endif
-	endif
+//	if (cmpstr(ctrlName,"SelectDataFolder")==0)
+//		//here we do what needs to be done when we select data folder
+//		Dtf=popStr
+//		PopupMenu IntensityDataName mode=1
+//		PopupMenu QvecDataName mode=1
+//		PopupMenu ErrorDataName mode=1
+//		if (UseIndra2Data)
+//			IntDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","Irena_UnifFit",(-1)*UseSMRData,1))
+//			QDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","Irena_UnifFit",(-1)*UseSMRData,1))
+//			EDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","Irena_UnifFit",(-1)*UseSMRData,1))
+//			Execute("PopupMenu IntensityDataName value=IR1_ListIndraWavesForPopups(\"DSM_Int\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
+//			Execute("PopupMenu QvecDataName value=IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
+//			Execute("PopupMenu ErrorDataName value=IR1_ListIndraWavesForPopups(\"DSM_Error\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
+//		else
+//			IntDf=""
+//			QDf=""
+//			EDf=""
+//			PopupMenu IntensityDataName value="---"
+//			PopupMenu QvecDataName  value="---"
+//			PopupMenu ErrorDataName  value="---"
+//		endif
+//		if(UseQRSdata)
+//			IntDf=""
+//			QDf=""
+//			EDf=""
+//			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Irena_UnifFit",0,0)
+//			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Irena_UnifFit",0,0)
+//			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Irena_UnifFit",0,0)
+//		endif
+//		if(!UseQRSdata && !UseIndra2Data)
+//			IntDf=""
+//			QDf=""
+//			EDf=""
+//			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Irena_UnifFit",0,0)
+//			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Irena_UnifFit",0,0)
+//			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Irena_UnifFit",0,0)
+//		endif
+//		if (cmpstr(popStr,"---")==0)
+//			IntDf=""
+//			QDf=""
+//			EDf=""
+//			PopupMenu IntensityDataName  value="---"
+//			PopupMenu QvecDataName  value="---"
+//			PopupMenu ErrorDataName  value="---"
+//		endif
+//	endif
+//	
+//	if (cmpstr(ctrlName,"IntensityDataName")==0)
+//		//here goes what needs to be done, when we select this popup...
+//		if (cmpstr(popStr,"---")!=0)
+//			IntDf=popStr
+//			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
+//				QDf="q"+popStr[1,inf]
+//				EDf="s"+popStr[1,inf]
+//				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Irena_UnifFit:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Irena_UnifFit\",0,0)")
+//				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Irena_UnifFit:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Irena_UnifFit\",0,0)")
+//			endif
+//		else
+//			IntDf=""
+//		endif
+//	endif
+//
+//	if (cmpstr(ctrlName,"QvecDataName")==0)
+//		//here goes what needs to be done, when we select this popup...	
+//		if (cmpstr(popStr,"---")!=0)
+//			QDf=popStr
+//			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
+//				IntDf="r"+popStr[1,inf]
+//				EDf="s"+popStr[1,inf]
+//				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Irena_UnifFit:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Irena_UnifFit\",0,0)")
+//				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Irena_UnifFit:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Irena_UnifFit\",0,0)")
+//			endif
+//		else
+//			QDf=""
+//		endif
+//	endif
+//	
+//	if (cmpstr(ctrlName,"ErrorDataName")==0)
+//		//here goes what needs to be done, when we select this popup...
+//		if (cmpstr(popStr,"---")!=0)
+//			EDf=popStr
+//			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
+//				IntDf="r"+popStr[1,inf]
+//				QDf="q"+popStr[1,inf]
+//				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Irena_UnifFit:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Irena_UnifFit\",0,0)")
+//				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Irena_UnifFit:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Irena_UnifFit\",0,0)")
+//			endif
+//		else
+//			EDf=""
+//		endif
+//	endif
 	
 	if (cmpstr(ctrlName,"NumberOfLevels")==0)
 		//here goes what happens when we change number of distributions
@@ -2074,7 +2075,7 @@ Function IR1A_CheckUnifiedFitvalidity(RgVal, GVal, BVal, PVal)
 	variable PowerLawValue = BVal / (Q1^PVal)
 	//print Q1
 	variable  Difference = ((PowerLawValue - GuinierValue )/(GuinierValue))
-	//print "Difference is : "+num2str(Difference)
+	//print "Difference is : (Difference)
 	//variable PredictedBValue=GVal * exp(-Q1^2 * RgVal^2/3)*(Q1^PVal)
 	//print "Q merge point " + num2str(Q1)
 	//print "Guinier value is " + num2str(GuinierValue)
