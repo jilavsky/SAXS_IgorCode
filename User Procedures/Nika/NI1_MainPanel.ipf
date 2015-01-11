@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.40
+#pragma version=2.41
 Constant NI1AversionNumber = 2.38
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.38
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.41 removed Executes in preparation fro igor 7
 //2.40 fixed Azimuthal profile ASCII data saving feature. Final sorting was incorrect (bug). 
 //2.39 added ADSC_A (wavelength in A) as option
 //2.38 moved Dezinering on tab2. 
@@ -1820,9 +1821,9 @@ Function NI1A_MovieCheckProc(cba) : CheckBoxControl
 			endif
 			if(stringmatch(cba.ctrlName,"Movie_AppendAutomatically"))
 					if(checked && Movie_FileOpened)
-						Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Creating Movie Auto\",fColor=(16386,65535,16385)")
+						Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Auto",fColor=(16386,65535,16385)
 					else
-						Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Creating Movie Manual\",fColor=(16386,65535,16385)")
+						Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Manual",fColor=(16386,65535,16385)
 					endif
 			endif
 			
@@ -2144,11 +2145,11 @@ Function NI1A_MovieOpenFile()
 		abort "Error opening movie file" //user canceled or other error
 	endif
 	Movie_FileOpened=1
-	Execute("Button OpenMovieFile win=NI1A_CreateMoviesPanel, title=\"Movie file opened\", disable=2")
+	Button OpenMovieFile win=NI1A_CreateMoviesPanel, title="Movie file opened", disable=2
 	if(Movie_AppendAutomatically)
-		Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Creating Movie Auto\",fColor=(16386,65535,16385)")
+		Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Auto",fColor=(16386,65535,16385)
 	else
-		Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Creating Movie Manual\",fColor=(16386,65535,16385)")
+		Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Manual",fColor=(16386,65535,16385)
 	endif
 end
 //***********************************************************
@@ -2176,8 +2177,8 @@ Function NI1A_MovieCloseFile()
 	if (DebugEnab)
 		DebuggerOptions debugOnError=1	//turn it back on
 	endif
-	Execute("Button OpenMovieFile win=NI1A_CreateMoviesPanel, title=\"Open Movie file for writing\", disable=0")
-	Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Create Movie\",fColor=(0,0,0)")
+	Button OpenMovieFile win=NI1A_CreateMoviesPanel, title="Open Movie file for writing", disable=0
+	Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Create Movie",fColor=(0,0,0)
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	Movie_FileOpened=0
 end

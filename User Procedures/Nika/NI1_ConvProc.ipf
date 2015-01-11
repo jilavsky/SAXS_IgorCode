@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.37
+#pragma version=2.38
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.38 removed Executes as preparation for Igor 7
 //2.37 renamed tab "Prev" into "PolTran" = Polar transform. This seems better descrition of the conversion. 
 //2.36 added ADSC_A
 //2.35 moved Dezinger to tab 2 - some users thought, that dezingenring is available only for empty and dark.  
@@ -3817,9 +3818,9 @@ Function NI1A_FixMovieButton()
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	if(Movie_FileOpened && Movie_AppendAutomatically)
-		Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Creating Movie Auto\",fColor=(16386,65535,16385)")
+		Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Auto",fColor=(16386,65535,16385)
 	elseif(Movie_FileOpened && !Movie_AppendAutomatically)
-		Execute("Button CreateMovie win=NI1A_Convert2Dto1DPanel, title=\"Creating Movie Manual\",fColor=(16386,65535,16385)")
+		Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Manual",fColor=(16386,65535,16385)
 	endif
 
 end
@@ -3998,7 +3999,7 @@ Function NI1A_SetVarProcMainPanel(ctrlName,varNum,varStr,varName) : SetVariableC
 
 	
 	if(cmpstr("GI_Sh1_Param1",ctrlName)==0)
-		Execute("SetVariable GI_Sh1_Param1,limits = {-inf, inf, "+num2str(varNum/20)+"}")
+		SetVariable GI_Sh1_Param1,limits = {-inf, inf, (varNum/20)}
 	endif
 
 	DoWIndow/F NI1A_Convert2Dto1DPanel
