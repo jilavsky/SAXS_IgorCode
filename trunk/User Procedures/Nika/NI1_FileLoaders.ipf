@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.38
+#pragma version=2.39
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.39 removed Executes in preparation for Igor 7
 //2.38 fixe3d bug in reading calibrated 2D data found by Igor 7 beta. 
 //2.37 Created ADSC_A file type which has wavelength in A, not in nm as ADSC has. 
 //2.36 modified PilatusHookFunction and asdded ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
@@ -2669,32 +2670,35 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 						break;
 					case 4:	// "Sort"
 						FIlesSortOrder = 1
-						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
-						NI1A_UpdateDataListBox()	
 						break;
 					case 5:	// "Sort2"
 						FIlesSortOrder = 2
-						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+//						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
 						NI1A_UpdateDataListBox()	
 						break;
 					case 6:	// "_001"
 						FIlesSortOrder = 3
-						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+//						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
 						NI1A_UpdateDataListBox()	
 						break;
 					case 7:	// "Invert _001"
 						FIlesSortOrder = 4
-						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+//						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
 						NI1A_UpdateDataListBox()	
 						break;
 					case 8:	// "Invert Sort"
 						FIlesSortOrder = 5
-						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+//						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
 						NI1A_UpdateDataListBox()	
 						break;
 					case 9:	// "Invert Sort2"
 						FIlesSortOrder = 6
-						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+//						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
+						PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
 						NI1A_UpdateDataListBox()	
 						break;
 					endswitch
