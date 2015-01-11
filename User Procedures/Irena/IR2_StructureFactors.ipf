@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.06
+#pragma version=1.07
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.07 removed most Executes in preparation fro Igor 7
 //1.06 added support for "No fitting limits" option i n GUI
 //1.05 changed back to rtGlobals=2, need to check code much more to make it 3
 //1.04 added User as structure factor. Requested feature. 
@@ -726,7 +727,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P1HighLimVar=$(S_DataFolder+S_value)
 		P1LowLimVar=0.8 *  P1Var
 		P1HighLimVar= 1.2 * P1Var
-		Execute("SetVariable P1Value,win=StructureFactorControlScreen,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable P1Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}
 	endif
 
 	if(stringmatch("P2Value",ctrlName))
@@ -738,7 +739,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P2HighLimVar=$(S_DataFolder+S_value)
 		P2LowLimVar=0.8 *  P2Var
 		P2HighLimVar= 1.2 * P2Var
-		Execute("SetVariable P2Value,win=StructureFactorControlScreen,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable P2Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}	
 	endif
 
 	if(stringmatch("P3Value",ctrlName))
@@ -750,7 +751,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P3HighLimVar=$(S_DataFolder+S_value)
 		P3LowLimVar=0.8 *  P3Var
 		P3HighLimVar= 1.2 * P3Var
-		Execute("SetVariable P3Value,win=StructureFactorControlScreen,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable P3Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}	
 	endif
 
 
@@ -763,7 +764,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P4HighLimVar=$(S_DataFolder+S_value)
 		P4LowLimVar=0.8 *  P4Var
 		P4HighLimVar= 1.2 * P4Var
-		Execute("SetVariable P4Value,win=StructureFactorControlScreen,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable P4Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}
 	endif
 
 
@@ -776,7 +777,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P5HighLimVar=$(S_DataFolder+S_value)
 		P5LowLimVar=0.8 *  P5Var
 		P5HighLimVar= 1.2 * P5Var
-		Execute("SetVariable P5Value,win=StructureFactorControlScreen,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable P5Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}
 	endif
 
 
@@ -789,7 +790,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		NVAR P6HighLimVar=$(S_DataFolder+S_value)
 		P6LowLimVar=0.8 *  P6Var
 		P6HighLimVar= 1.2 * P6Var
-		Execute("SetVariable P6Value,win=StructureFactorControlScreen,limits={0,Inf,"+num2str(varNum*0.05)+"}")	
+		SetVariable P6Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}	
 	endif
 
 end

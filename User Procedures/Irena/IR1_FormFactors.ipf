@@ -283,7 +283,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 			Recalculate=1
 			reason = "Volume power or Particle model"
 		endif
-		if(cmpstr(StringByKey("ParticleModel", OldNote),"user")==0)		//check the model for Particle shape
+		if(cmpstr(StringByKey("ParticleModel", OldNote),"user")==0 || cmpstr(StringByKey("ParticleModel", OldNote),"User")==0)		//check the model for Particle shape
 			if(cmpstr(StringByKey("User_FormFactorFnct", OldNote),User_FormFactorFnct)!=0)
 				Recalculate=1
 				reason = "User form factor"

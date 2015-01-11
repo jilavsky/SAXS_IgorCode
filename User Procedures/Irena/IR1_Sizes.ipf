@@ -1293,8 +1293,9 @@ Function IR1R_RecoverOldParameters()
 		NVAR Bckg=root:Packages:Sizes:Bckg
 		NVAR StartFItQvalue=root:Packages:Sizes:StartFItQvalue
 		NVAR EndFItQvalue=root:Packages:Sizes:EndFItQvalue
-	
-		Execute("PopupMenu ShapeModel,mode=(1+WhichListItem(ShapeType,root:Packages:FormFactorCalc:ListOfFormFactors)),value= root:Packages:FormFactorCalc:ListOfFormFactors, win=IR1R_SizesInputPanel")
+		
+		SVAR tmpSvr1=root:Packages:FormFactorCalc:ListOfFormFactors
+		PopupMenu ShapeModel,mode=(1+WhichListItem(ShapeType,tmpSvr1)),value= #("\""+tmpSvr1+"\""), win=IR1R_SizesInputPanel
 		Dowindow IR1R_SizesInputGraph	//this checks for existence of this window and if it exists, it will put in the cursors as appropriate...
 		if(V_Flag)
 			Cursor /W=IR1R_SizesInputGraph A IntensityOriginal BinarySearch(Q_vecOriginal, StartFItQvalue )

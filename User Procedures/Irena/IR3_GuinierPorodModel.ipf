@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.02		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.03		//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716Ð719, Boualem Hammouda, A new GuinierÐPorod model
 Constant IR3GPversionNumber=1
 
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.03 removed Executes as preparation for Igor 7
 //1.02 added check for qmax when fitting slit smeared data and fixed minor slitlength setvariable bug (it was trying to set limits...)
 //1.01 	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
 //1.00 first release, July 2013
@@ -1054,7 +1055,7 @@ Function IR3GP_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCont
 	String varName
 
 	variable step = varNum>0 ? 0.05*varNum : 1
-	Execute("SetVariable "+ctrlName+",limits={0,inf,"+num2str(step)+"}")
+	SetVariable $(ctrlName),limits={0,inf,(step)}
 	if((stringmatch(ctrlName,"Level_Rg1")))
 		NVAR Level_Rg1=$("root:Packages:Irena:GuinierPorod:Level_Rg1")
 		NVAR Level_Rg1Fit=$("root:Packages:Irena:GuinierPorod:Level_Rg1Fit")

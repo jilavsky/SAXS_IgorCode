@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.10
+#pragma version=4.11
 Constant IR2HversionNumber = 4.10
 
 
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.11 removed Execute for GUI controls for Igor 7. 
 //4.10 addede check for slit smeared data if qmax is high enough (3* slit length). 
 //4.09 added Linking of RgCO to Corr Lenght (DB and TS models, added display of data for given tab. 
 //4.08 added RgCo for Unified level
@@ -1849,24 +1850,24 @@ Function IR2H_SetTabsNames()
 //	TabControl DistTabs,fSize=10,tabLabel(0)="Unified", tabLabel(1)="Debye-Bueche",tabLabel(2)="Teubner-Strey",tabLabel(3)="Ciccar.-Bened."
 
 	if(UseUnif)
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(0)=\"\\\\Zr125\\\\K(65535,0,0) Unified\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(0)="\\Zr125\\K(65535,0,0) Unified"
 	else
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(0)=\"\\\\Zr100\\\\K(0,0,0) Unified\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(0)="\\Zr100\\K(0,0,0) Unified"
 	endif
 	if(UseDB)
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(1)=\"\\\\Zr125\\\\K(65535,0,0) Debye-Bueche\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(1)="\\Zr125\\K(65535,0,0) Debye-Bueche"
 	else
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(1)=\"\\\\Zr100\\\\K(0,0,0) Debye-Bueche\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(1)="\\Zr100\\K(0,0,0) Debye-Bueche"
 	endif
 	if(UseTS)
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(2)=\"\\\\Zr125\\\\K(65535,0,0) Teubner-Strey\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(2)="\\Zr125\\K(65535,0,0) Teubner-Strey"
 	else
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(2)=\"\\\\Zr100\\\\K(0,0,0) Teubner-Strey\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(2)="\\Zr100\\K(0,0,0) Teubner-Strey"
 	endif
 	if(UseCiccBen)
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(3)=\"\\\\Zr125\\\\K(65535,0,0) Ciccar.-Bened.\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(3)="\\Zr125\\K(65535,0,0) Ciccar.-Bened."
 	else
-		Execute("tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(3)=\"\\\\Zr100\\\\K(0,0,0) Ciccar.-Bened.\"")
+		tabControl DistTabs, win=IR2H_Controlpanel, tabLabel(3)="\\Zr100\\K(0,0,0) Ciccar.-Bened."
 	endif
 
 end

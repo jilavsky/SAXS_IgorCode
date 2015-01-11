@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.75
+#pragma version = 1.76
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.76 removed Exectue as prep for Igor 7
 //1.75 removed wave/d, Function/d and variable/d. Obsolete
 //1.74 added IN2G_EstimateFolderSize(FolderName)
 //1.73 added IN2G_CheckForSlitSmearedRange() which checks if the slit smearing Qmax > 3*Slit length
@@ -1590,9 +1591,9 @@ Function IR1G_UpdateSetVarStep(MyControlName,NewStepFraction)
 	variable NewStep=V_Value * NewStepFraction
 	variable startS =strsearch(S_recreation,"{",strsearch(S_recreation,"limits",0))
 	variable endS =strsearch(S_recreation,"}",strsearch(S_recreation,"limits",0))
-	string oldMin=(stringFromList(0,S_recreation[startS+1,endS-1],","))
-	string oldMax=(stringFromList(1,S_recreation[startS+1,endS-1],","))
-	Execute("SetVariable "+MyControlName+",limits={"+oldMin+","+oldMax+","+num2str(NewStep)+"}")
+	variable oldMin=str2num((stringFromList(0,S_recreation[startS+1,endS-1],",")))
+	variable oldMax=str2num((stringFromList(1,S_recreation[startS+1,endS-1],",")))
+	SetVariable $(MyControlName),limits={oldMin,oldMax,(NewStep)}
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************

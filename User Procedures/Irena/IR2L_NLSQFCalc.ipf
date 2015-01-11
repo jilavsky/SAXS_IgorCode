@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
+#pragma version=1.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 removed most Executes in preparation fro Igor 7
 //1.11  bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.10 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.09 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
@@ -792,10 +793,10 @@ Function IR2L_GraphSizeDistUpdate()
 		ControlInfo/W=LSQF2_MainPanel DistTabs
 		DoWindow/F GraphSizeDistributions
 		variable curPopulation=V_Value+1
-		Execute("SetVariable MeanVal, win=GraphSizeDistributions, variable= root:Packages:IR2L_NLSQF:Mean_pop"+num2str(curPopulation)+", title=\"Pop "+num2str(curPopulation)+" Mean = \"")
-		Execute("SetVariable ModeVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:Mode_pop"+num2str(curPopulation)+", title=\"Pop "+num2str(curPopulation)+" Mode = \"")
-		Execute("SetVariable MedianVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:Median_pop"+num2str(curPopulation)+", title=\"Pop "+num2str(curPopulation)+" Median = \"")
-		Execute("SetVariable FWHMVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:FWHM_pop"+num2str(curPopulation)+", title=\"Pop "+num2str(curPopulation)+" FWHM = \"")
+		SetVariable MeanVal, win=GraphSizeDistributions, variable=root:Packages:IR2L_NLSQF:$("Mean_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Mean = "
+		SetVariable ModeVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:$("Mode_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Mode = "
+		SetVariable MedianVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:$("Median_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Median = "
+		SetVariable FWHMVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:$("FWHM_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" FWHM = "
 	else
 		return 1
 	endif
