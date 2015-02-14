@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
+#pragma version=1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 extended Modified guass fitting range, speed up by avoiding display updates of teh top fittings (major speed increase). 
 //1.12 increased Modified Guass fitting range slightly. 
 //1.11 adds Overwrite for UPD dark current range 5
 //1.10 adds FlyScan support
@@ -1046,7 +1047,7 @@ Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 //	if(strlen(CsrInfo(A, "RcurvePlot")) <1  || strlen(CsrInfo(B, "RcurvePlot"))<1)
 //		return 0
 //	endif
-	CurveFit/Q/H="1000" /L=50  gauss PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1	//Gauss
+	CurveFit/Q/N/H="1000" /L=50  gauss PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1	//Gauss
 //	print "Fitted Gaussian between points  "+num2str(PeakCenterFitStartPoint)+"   and    "+num2str(PeakCenterFitEndPoint)+"    reached Chi-squared/numpoints    " +num2str(V_chisq/(PeakCenterFitEndPoint-PeakCenterFitStartPoint))
 //	string ModifyWave
 //	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit
@@ -1163,7 +1164,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	wavestats/Q tempPDInt
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
-	FindLevels /N=5 /P/Q  tempPDInt, V_max/3
+	FindLevels /N=5 /P/Q  tempPDInt, V_max/2.2
 	wave W_FindLevels
 	variable startPointL, endPointL
 	if(Numpnts(W_FindLevels)==2)
@@ -1182,7 +1183,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	Make/O/T/N=1 T_Constraints
 	T_Constraints[0] = {"K3>1.3"}
 	variable V_FitError=0
-	FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	FuncFit/Q/N/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	//FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	if(V_FitError>0)
 		abort "Peak profile fitting function error. Please select wider range of data or change fitting function (Gauss is good choice)"
@@ -1289,7 +1290,7 @@ Function IN3_FitLorenzianTop(ctrlname) : Buttoncontrol			// calls the Lorenzian 
 	endif
 
 	K0=0
-	CurveFit/Q/H="1000" /L=50  lor PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1 //Lorenzian
+	CurveFit/Q/N/H="1000" /L=50  lor PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1 //Lorenzian
 //	print "Fitted Lorenzian between points  "+num2str(PeakCenterFitStartPoint)+"   and    "+num2str(PeakCenterFitEndPoint)+"    reached Chi-squared/numpoints     " +num2str(V_chisq/(PeakCenterFitEndPoint-PeakCenterFitStartPoint))
 //	string ModifyWave
 //	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit

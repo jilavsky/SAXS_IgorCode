@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.32
+#pragma version=0.33
 #include <Peak AutoFind>
 
 
@@ -12,7 +12,8 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//0.32 fixes for 9ID, 02-08-2015, MOdified function creatting gane changes - needs fixing for I0 and I00.
+//0.33 more fixes for 9ID. 
+//0.32 fixes for 9ID, 02-08-2015, Modified function creating gain changes - needs fixing for I0 and I00.
 //0.31 added some fixes for flyscan gain issues and DSM support. 
 //0.30 added Ê/entry/flyScan/is_2D_USAXS_scan
 //0.29 fixed problem with liberal h5 file names (containing ".") which caused havock in addressing folders.  
@@ -1028,29 +1029,30 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 			break
 		endif
 		i-=1
-	while (i>1 && tmpmcsChangePnts[i] <1)
+	while (i>0 && tmpmcsChangePnts[i] <1)
 	
 	IN2G_RemoveNaNsFrom3Waves(tmpmcsChangePnts,tmpampGainReq,tmpampGain)
 	GainWv = tmpampGain[0]
 	variable iii, iiimax=numpnts(tmpmcsChangePnts)-1
 	variable StartRc, EndRc
 	if(iiimax<1)		//Fix for scanning when no range changes happen... 
-		GainWv = 4
+		GainWv = tmpampGain[0]
+	else
+		StartRc = 0
+		EndRc = 0
+		For(iii=0;iii<iiimax+1;iii+=1)
+			if(tmpampGain[iii]!=tmpampGainReq[iii])		//requested gain change
+				StartRc = tmpmcsChangePnts[iii]	
+			elseif(tmpampGain[iii]==tmpampGainReq[iii])	//from here we should have the gains set
+				EndRc = tmpmcsChangePnts[iii]
+					if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
+						GainWv[StartRc,EndRc] = nan
+						GainWv[EndRc+1,] = ampGain[iii]+1
+						IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+					endif			
+			endif
+		endfor
 	endif
-	StartRc = 0
-	EndRc = 0
-	For(iii=0;iii<iiimax+1;iii+=1)
-		if(tmpampGain[iii]!=tmpampGainReq[iii])		//requested gain change
-			StartRc = tmpmcsChangePnts[iii]	
-		elseif(tmpampGain[iii]==tmpampGainReq[iii])	//from here we should have the gains set
-			EndRc = tmpmcsChangePnts[iii]
-				if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
-					GainWv[StartRc,EndRc] = nan
-					GainWv[EndRc+1,] = ampGain[iii]+1
-					IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
-				endif			
-		endif
-	endfor
 
 end
 //**********************************************************************************************************
