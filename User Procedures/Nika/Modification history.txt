@@ -3,10 +3,12 @@ Code modification history
 
 -latest stuff first
 ********************************************
-xxxx
+1.68
+Fixed Ag Behenate line 5 which had typo it the d spacing. 
 ADSC file format - finish, need dialog, for now added ADSC_A 
 Fixed Azimuthal data export ASCII export tool. Bug caused garbage production, data in Igor were correct. 
 Renamed Prev. tab into PolTran = Polra transform. Better term for what the procedure does. 
+Bug fix - Fixed calculation of one of the angles in GISAXS geometry (alpha-f), which was incorrect. Current calculation is correct only for one of the two possible experiment geometries, but the error for the other one should be negligible. See manual for description. 
 
 
 1.67 9/15/2014

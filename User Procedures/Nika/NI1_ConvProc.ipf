@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.38
+#pragma version=2.39
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.39 fixed GISAXS alfa-f calculation. Bug found by one of the users marvin.berlinghof@fau.de
 //2.38 removed Executes as preparation for Igor 7
 //2.37 renamed tab "Prev" into "PolTran" = Polar transform. This seems better descrition of the conversion. 
 //2.36 added ADSC_A
@@ -5528,9 +5529,10 @@ Function NI1GI_CalculateQxyz(DimXpos,DimYpos,WhichOne)
 	NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
 	
 	variable K0val=2*pi/wavelength
-	variable TwoThetaF=atan((xcenter-DimXpos)*PixelSizeX /SampleToCCDDistance)
-	variable alphaF = atan((ycenter - DimYpos)*PixelSizeY /SampleToCCDDistance)
 	variable alphaI = LineProf_GIIncAngle * pi / 180
+	variable TwoThetaF=atan((xcenter-DimXpos)*PixelSizeX /SampleToCCDDistance) 
+	variable alphaF = atan((ycenter - DimYpos)*PixelSizeY /SampleToCCDDistance) - alphaI		//fix 2015-02-14, found by marvin.berlinghof@fau.de
+	//note, this may not be precise calculation, depends on how the detector plane is placed. See Manual. 
 	
 	if(stringmatch(WhichOne,"X"))
 		variable Qx = K0val * (cos(TwoThetaF)*cos(AlphaF) - cos(AlphaI))

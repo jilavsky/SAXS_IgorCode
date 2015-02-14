@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.19
+#pragma version=2.20
 Constant NI1BCversionNumber = 2.18
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 fixed line 5 of Ag Behenate
 //2.19 addressed new ADSC_A file type
 //2.18 modified call to hook function
 //2.17 Added right click "Refresh content" to Listbox
@@ -1373,7 +1374,7 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMCalibrantD2=29.185
 			BMCalibrantD3=19.46
 			BMCalibrantD4=14.595
-			BMCalibrantD5=11.767
+			BMCalibrantD5=11.676	//fixed form 11.767 on 2-12-2015, typo
 			BMUseCalibrantD1=1
 			BMUseCalibrantD2=1
 			BMUseCalibrantD3=1
