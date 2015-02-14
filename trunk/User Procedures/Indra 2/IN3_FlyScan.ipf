@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.31
+#pragma version=0.32
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.32 fixes for 9ID, 02-08-2015, MOdified function creatting gane changes - needs fixing for I0 and I00.
 //0.31 added some fixes for flyscan gain issues and DSM support. 
 //0.30 added Ê/entry/flyScan/is_2D_USAXS_scan
 //0.29 fixed problem with liberal h5 file names (containing ".") which caused havock in addressing folders.  
@@ -644,7 +645,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		MeasTime*=2e-08				//convert to seconds
 		IN3_FSCreateGainWave(PD_range,ampReqGain,ampGain,mcsChangePnts, TimeRangeAfterUPD,MeasTime)
 		I0gain = I0gainW[0]
-	elseif(HdfWriterVersion==1 || HdfWriterVersion==1.1) 
+	elseif(HdfWriterVersion>=1 && HdfWriterVersion<=1.2) 
 		MeasTime/=mcaFrequency[0]		//convert to seconds
 		if(AmplifierUsed[0])		//DDPCA300
 			IN3_FSCreateGainWave(PD_range,DDPCA300_ampReqGain,DDPCA300_ampGain,DDPCA300_mcsChan, TimeRangeAfterUPD,MeasTime)
@@ -984,33 +985,74 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 	
-	Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
+//Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
+//	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
+//	
+//	GainWv = ampGain[0]
+//	variable iii, iiimax=numpnts(mcsChangePnts)-1
+//	variable StartRc, EndRc
+//	if(iiimax<1)		//Fix for scanning when no range changes happen... 
+//		GainWv = 4
+//	endif
+//	StartRc = NaN
+//	EndRc = 0
+//	For(iii=0;iii<iiimax;iii+=1)
+//		if(mcsChangePnts[iii]>0 || (iii>0 && iii<3) )
+//			if(ampGain[iii]!=ampGainReq[iii])
+//				StartRc = mcsChangePnts[iii]
+//			endif
+//			if(ampGain[iii]==ampGainReq[iii])
+//				EndRc = mcsChangePnts[iii]
+//				if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
+//					GainWv[StartRc,EndRc] = nan
+//					GainWv[EndRc+1,] = ampGain[iii]+1
+//					IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+//				endif
+//			endif
+//		endif
+//	endfor
+//end
+
+Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
 	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
+
+	Duplicate/Free mcsChangePnts, tmpmcsChangePnts
+	Duplicate/Free ampGainReq, tmpampGainReq
+	Duplicate/Free ampGain, tmpampGain
+	variable i
+	i = numpnts(tmpmcsChangePnts)-1
+	Do
+		if(tmpmcsChangePnts[i]==0)
+			tmpmcsChangePnts[i]=nan
+		else
+			break
+		endif
+		i-=1
+	while (i>1 && tmpmcsChangePnts[i] <1)
 	
-	GainWv = ampGain[0]
-	variable iii, iiimax=numpnts(mcsChangePnts)-1
+	IN2G_RemoveNaNsFrom3Waves(tmpmcsChangePnts,tmpampGainReq,tmpampGain)
+	GainWv = tmpampGain[0]
+	variable iii, iiimax=numpnts(tmpmcsChangePnts)-1
 	variable StartRc, EndRc
 	if(iiimax<1)		//Fix for scanning when no range changes happen... 
 		GainWv = 4
 	endif
-	StartRc = NaN
+	StartRc = 0
 	EndRc = 0
-	For(iii=0;iii<iiimax;iii+=1)
-		if(mcsChangePnts[iii]>0 || (iii>0 && iii<3) )
-			if(ampGain[iii]!=ampGainReq[iii])
-				StartRc = mcsChangePnts[iii]
-			endif
-			if(ampGain[iii]==ampGainReq[iii])
-				EndRc = mcsChangePnts[iii]
+	For(iii=0;iii<iiimax+1;iii+=1)
+		if(tmpampGain[iii]!=tmpampGainReq[iii])		//requested gain change
+			StartRc = tmpmcsChangePnts[iii]	
+		elseif(tmpampGain[iii]==tmpampGainReq[iii])	//from here we should have the gains set
+			EndRc = tmpmcsChangePnts[iii]
 				if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
 					GainWv[StartRc,EndRc] = nan
 					GainWv[EndRc+1,] = ampGain[iii]+1
 					IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
-				endif
-			endif
+				endif			
 		endif
 	endfor
-	end
+
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
