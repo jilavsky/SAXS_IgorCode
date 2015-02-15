@@ -2,7 +2,7 @@
 #pragma version=2.57
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs=   3491371127  		//this is mod date for Manual version 2.56
+constant CurrentManualDateInSecs=   3506845833  		//this is mod date for Manual version 2.57
 constant CurrentVersionNumber = 2.57
 
 //*************************************************************************\
