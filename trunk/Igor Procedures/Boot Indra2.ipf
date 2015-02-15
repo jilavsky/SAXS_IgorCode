@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.84
+#pragma version=1.85
 
+//1.85 9ID move and fixed to Flyscan support as needed. 
 //1.84 release with Flyscan support for various modes up to August 2014 measurements. Should handle all of the different modes. 
 //1.82 first user release of FLyScan support
 //1.81 developement FLyScan version
