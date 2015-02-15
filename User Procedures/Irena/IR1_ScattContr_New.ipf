@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.21
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 minor GUI fixes (added Transm to show it is transmission). 
 //2.20 removed some execute commands
 //2.19 Modified descxription for exp(-Mu*T) as Transmission. Users seem to be missing the point. 
 //2.18 fix of GUI - units for roh/gram for neutrons was wrong. 
@@ -2224,7 +2225,7 @@ Function IR1K_AnomScattContCalc()
 	Button DisplayMuOverRho,help={"Click to create graph with Mu over Rho"}
 	Button DisplayOneOverMu,pos={248,419},size={150,20},proc=IR1K_AnomButtonProc,title="Display 1/Mu"
 	Button DisplayOneOverMu,help={"Click to create graph with Mu over Rho"}
-	Button DisplayeToMinusMuT,pos={248,448},size={150,20},proc=IR1K_AnomButtonProc,title="Display exp(-Mu*T)"
+	Button DisplayeToMinusMuT,pos={248,448},size={150,20},proc=IR1K_AnomButtonProc,title="Display Transm = exp(-Mu*T)"
 	Button DisplayeToMinusMuT,help={"Click to create graph with exp(-Mu T)"}
 
 	Button Recalculate,pos={474,105},size={100,20},proc=IR1K_AnomButtonProc,title="Recalculate"
