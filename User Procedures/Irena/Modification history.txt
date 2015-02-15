@@ -10,6 +10,7 @@ Modeling II - added controls which enable to select, which additional graphs are
 Modeling II - minor bug fixes: Catch when slit length is set incorrectly (too small or too large), set properly Dv and Dv limits for Fractals and some other ones. 
 Modeling II - Scale data by now actually works. It was never programmed to work (it is cumbersome to make it operational, so it may have some unforeseen consequences). Tread carefully!
 Scripting tool - added hook function after data set is loaded, before it is fitted, for user to do something which needs to be done. Check the code. For now only for Modeling II.   
+Scripting tool - fixed preservation of user choices on errors and intensity scaling for Modeling II and Size Distribution. 
 Scattering contrast calculator -  Modified description for exp(-Mu*T) as Transmission. Users seem to be missing the point… 
 
 

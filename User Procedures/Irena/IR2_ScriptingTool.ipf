@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.22
+#pragma version=1.23
 Constant IR2SversionNumber=1.21
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant IR2SversionNumber=1.21
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
 //1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
 //1.21 added for QRS data wave name match string. 
 //1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Gunier-Porod and Size Dist with uncertainities appering in wrong time. 
@@ -1069,6 +1070,20 @@ Function IR2S_FItWithModelingII()
 	NVAR CurMaxQ=root:Packages:IR2L_NLSQF:Qmax_set1
 	StartQ=CurMinQ
 	EndQ=CurMaxQ
+	//setup error settings for users
+	variable UserErrs, SQRTErrs, PctErrs
+	NVAR UseUserErrors = root:Packages:IR2L_NLSQF:UseUserErrors_set1
+	NVAR UseSQRTErrors = root:Packages:IR2L_NLSQF:UseSQRTErrors_set1
+	NVAR UsePercentErrors = root:Packages:IR2L_NLSQF:UsePercentErrors_set1
+	UserErrs =UseUserErrors
+	SQRTErrs=UseSQRTErrors
+	PctErrs  =UsePercentErrors
+	//setup error and intensity scaling
+	variable ErrScale, IntScale
+	NVAR DataScalingFactor = root:Packages:IR2L_NLSQF:DataScalingFactor_set1
+	NVAR ErrorScalingFactor = root:Packages:IR2L_NLSQF:ErrorScalingFactor_set1
+	IntScale = DataScalingFactor
+	ErrScale = ErrorScalingFactor
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:LSQF2_MainPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:LSQF2_MainPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
@@ -1105,7 +1120,6 @@ Function IR2S_FItWithModelingII()
 			MultipleInputData=0
 			//this should create the new graph...
 			IR2L_InputPanelButtonProc("AddDataSetSkipRecover")
-			doUpdate
 			//call user hook function if they need it
 			if(exists("AfterDataLoaded_Hook")==6)
 				Execute ("AfterDataLoaded_Hook()")
@@ -1113,7 +1127,16 @@ Function IR2S_FItWithModelingII()
 			//now we need to set back the Qmin and max.
 			CurMinQ = StartQ
 			CurMaxQ = EndQ
-		
+			//set the user error settings and int scaling back
+			UseUserErrors = UserErrs 
+			UseSQRTErrors = SQRTErrs
+			UsePercentErrors = PctErrs  
+			DataScalingFactor = IntScale 
+			ErrorScalingFactor = ErrScale 
+			//and recalculate as needed... 
+			IR2L_RecalculateIntAndErrors(1)
+			doUpdate
+
 			variable/g root:Packages:IR2L_NLSQF:FitFailed
 			//do fitting
 			IR2L_InputPanelButtonProc("FitModelSkipDialogs")
@@ -1235,6 +1258,15 @@ Function IR2S_FItWithSizes(Uncert)
 		endif
 		//EndQ = Ywv[pcsr(B  , "IR1_LogLogPlotU" )]
 	endif
+	//preserver user error choices settings and reapply after loading of the data.
+	variable UserErrs, SQRTErrs, PctErrs
+	NVAR UseUserErrors = root:Packages:Sizes:UseUserErrors
+	NVAR UseSQRTErrors = root:Packages:Sizes:UseSQRTErrors
+	NVAR UsePercentErrors = root:Packages:Sizes:UsePercentErrors 
+	UserErrs=UseUserErrors
+	SQRTErrs=UseSQRTErrors
+	PctErrs=UsePercentErrors
+	
 	SVAR FolderMatchStr=root:Packages:IrenaControlProcs:IR1R_SizesInputPanel:FolderMatchStr
 	SVAR WaveMatchStr=root:Packages:IrenaControlProcs:IR1R_SizesInputPanel:WaveMatchStr
 	SVAR ScriptToolFMS=root:Packages:Irena:ScriptingTool:FolderNameMatchString
@@ -1280,7 +1312,12 @@ Function IR2S_FItWithSizes(Uncert)
 					Cursor  /P /W=IR1R_SizesInputGraph B  IntensityOriginal binarysearch(Qwave,EndQ)	
 				endif
 			endif
-			
+			//set back user choices ofr errros
+			UseUserErrors = UserErrs
+			UseSQRTErrors = SQRTErrs
+			UsePercentErrors = PctErrs
+			IR1R_UpdateErrorWave()
+			DoUpdate			
 			variable/g root:Packages:Sizes:FitFailed
 			//do fitting
 			if(uncert)
