@@ -1,16 +1,17 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.57
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3491371127  		//this is mod date for Manual version 2.56
-constant CurrentVersionNumber = 2.56
+constant CurrentVersionNumber = 2.57
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2015, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.57 Many fixes to Modeling II mainly. 
 //2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
 //2.55 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
 //2.55 moved Zoom and set limits to GraphMarquee menu, changed the ZoomAndSetLimits to be dynamic menu item
@@ -1111,7 +1112,7 @@ Function IR1_AboutPanel()
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 23,30,"Irena macros for Igor Pro >=6.34"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2014"
+	DrawText 100,60,"@ ANL, 2015"
 	DrawText 10,80,"release "+num2str(CurrentVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)

@@ -2,7 +2,7 @@
 #pragma version=1.19
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2015, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -98,6 +98,7 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	NVAR UseUserErrors=$("root:Packages:IR2L_NLSQF:UseUserErrors_set"+num2str(whichDataSet))
 	NVAR UseSQRTErrors=$("root:Packages:IR2L_NLSQF:UseSQRTErrors_set"+num2str(whichDataSet))
 	NVAR UsePercentErrors=$("root:Packages:IR2L_NLSQF:UsePercentErrors_set"+num2str(whichDataSet))
+	NVAR DataScalingFactor_set=$("root:Packages:IR2L_NLSQF:DataScalingFactor_set"+num2str(whichDataSet))
 	if(!WaveExists(inputE))
 		UseUserErrors=0
 		if(UseSQRTErrors+UsePercentErrors!=1)
@@ -130,6 +131,7 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	
 	Duplicate/O inputI, $("Intensity_set"+num2str(whichDataSet))
 	Wave IntWv = $("Intensity_set"+num2str(whichDataSet))
+	IntWv = DataScalingFactor_set * IntWv						//scale by user factor, if requested. 
 	Duplicate/O inputQ, $("Q_set"+num2str(whichDataSet))
 	Wave QWv = $("Q_set"+num2str(whichDataSet))
 	if(UseUserErrors)		//handle special cases of errors not loaded in Igor

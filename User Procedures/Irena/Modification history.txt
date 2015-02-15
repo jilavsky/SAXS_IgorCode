@@ -3,11 +3,12 @@ Code modification history
 
 -latest stuff first
 ********************************************
-2.57 xxxxx
+2.57 2/15/2015
 Fractals model - added Qc as transitional Q value when surface fractal changes to Porod’s slope at high Q. Set to 0 if not needed. 
 Modeling II - added MassFractal and SurfaceFractal - models are copied form Fractals tool, so users need to read manual for that tool 
 Modeling II - added controls which enable to select, which additional graphs are displayed. Choices are SizeDistribution, Residuals, and IQ^4 vs Q. These two graphs are now matching colors to the main Graph colors for easier navigation when multiple data sets are used. 
 Modeling II - minor bug fixes: Catch when slit length is set incorrectly (too small or too large), set properly Dv and Dv limits for Fractals and some other ones. 
+Modeling II - Scale data by now actually works. It was never programmed to work (it is cumbersome to make it operational, so it may have some unforeseen consequences). Tread carefully!
 Scripting tool - added hook function after data set is loaded, before it is fitted, for user to do something which needs to be done. Check the code. For now only for Modeling II.   
 Scattering contrast calculator -  Modified description for exp(-Mu*T) as Transmission. Users seem to be missing the point… 
 

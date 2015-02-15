@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.33
+#pragma version=1.34
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.34 fixed non-functioning data scailing feature. Now shoudl scale data first and then, optionally scale Errors or modify as requested. 
 //1.33 removed most Executes as fix for Igor 7
 //1.32 modified Tab procedures and removed Execute constructs as these will be very slow in Igor 7. 
 //1.31 bug fixes and modifications to Other graph outputs - colorization etc. 
@@ -1540,7 +1541,10 @@ Function IR2L_DataTabSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCon
 		IR2L_FormatLegend()
 	endif
 	if(stringmatch(ctrlName, "ErrorScalingFactor_set"))
-		IR2L_RecalculateErrors(WhichDataSet)
+		IR2L_RecalculateIntAndErrors(WhichDataSet)
+	endif
+	if(stringmatch(ctrlName, "DataScalingFactor_set"))
+		IR2L_RecalculateIntAndErrors(WhichDataSet)
 	endif
 
 	if(stringMatch(ctrlName,"GraphXMin") ||stringMatch(ctrlName,"GraphXMax") ||stringMatch(ctrlName,"GraphYMin") ||stringMatch(ctrlName,"GraphYMax"))
@@ -1818,7 +1822,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function IR2L_RecalculateErrors(WhichDataSet)
+Function IR2L_RecalculateIntAndErrors(WhichDataSet)
 	variable WhichDataSet
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
@@ -1833,6 +1837,8 @@ Function IR2L_RecalculateErrors(WhichDataSet)
 		SVAR NewQName=$("root:Packages:IR2L_NLSQF:QvecDataName_set"+num2str(whichDataSet))
 		SVAR NewErrorName=$("root:Packages:IR2L_NLSQF:ErrorDataName_set"+num2str(whichDataSet))
 		NVAR SlitSmeared_set=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(whichDataSet))
+		NVAR DataScalingFactor_set=$("root:Packages:IR2L_NLSQF:DataScalingFactor_set"+num2str(whichDataSet))
+		NVAR RebinDataTo = root:Packages:IR2L_NLSQF:RebinDataTo
 
 	setDataFolder NewFldrName
 	wave/Z inputI=$(NewIntName)
@@ -1846,6 +1852,14 @@ Function IR2L_RecalculateErrors(WhichDataSet)
 		endif
 	endif
 	setDataFolder root:Packages:IR2L_NLSQF
+	//first handle retoring proper user data... 
+	Duplicate/O inputI, $("Intensity_set"+num2str(whichDataSet))
+	Wave IntWv = $("Intensity_set"+num2str(whichDataSet))
+	IntWv = DataScalingFactor_set * IntWv						//scale by user factor, if requested. 
+	Duplicate/O inputQ, $("Q_set"+num2str(whichDataSet))
+	Wave QWv = $("Q_set"+num2str(whichDataSet))
+	
+	
 	if(UseUserErrors)		//handle special cases of errors not loaded in Igor
 		Duplicate/O inputE, $("Error_set"+num2str(whichDataSet))		
 	elseif(UseSQRTErrors)
@@ -1864,6 +1878,14 @@ Function IR2L_RecalculateErrors(WhichDataSet)
 	variable i
 	wavestats/Q ErrorWv
 	ErrorWv = (numtype(ErrorWv[p])==0) ? ErrorWv[p] : V_min
+
+	//need to make sure all waves are double precision due to some users using weird scaling...
+	redimension/D IntWv, QWv, ErrorWv
+	
+	if(RebinDataTo>0)
+		//IR1D_rebinData(IntWv,QWv,ErrorWv,RebinDataTo, 1)
+		IN2G_RebinLogData(QWv,IntWv,RebinDataTo,0,Wsdev=ErrorWv)
+	endif
 
 	setDataFolder OldDf
 
@@ -4873,7 +4895,7 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			UseSQRTErrors_set=1
 			UsePercentErrors_set=0
 		endif	
-		IR2L_RecalculateErrors(WhichDataSet)
+		IR2L_RecalculateIntAndErrors(WhichDataSet)
 	endif
 	if (stringMatch(ctrlName,"UseSQRTErrors_set"))
 		if(UseSQRTErrors_set)
@@ -4883,7 +4905,7 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			UseUserErrors_set=0
 			UsePercentErrors_set=1
 		endif	
-		IR2L_RecalculateErrors(WhichDataSet)
+		IR2L_RecalculateIntAndErrors(WhichDataSet)
 	endif
 	if (stringMatch(ctrlName,"UsePercentErrors_set"))
 		if(UsePercentErrors_set)
@@ -4893,7 +4915,7 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			UseUserErrors_set=0
 			UseSQRTErrors_set=1
 		endif	
-		IR2L_RecalculateErrors(WhichDataSet)
+		IR2L_RecalculateIntAndErrors(WhichDataSet)
 	endif
 	if (stringMatch(ctrlName,"RecalculateAutomatically"))
 		IR2L_RecalculateIfSelected()
