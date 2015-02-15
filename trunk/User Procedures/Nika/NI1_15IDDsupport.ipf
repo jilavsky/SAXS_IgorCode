@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
+#pragma version=1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 fixes for 9ID data after the move. Only partial fix. 
 //1.14 widen the angular range for sector average for pinSAXS - seems to be OK now with vacuum chamber.  
 //1.13 added Mask creation for horizon using vaccum chamber in 2014-08
 //1.12 added WAXS controls for 2013-01
@@ -852,6 +853,46 @@ Function NI1_15IDDWaveNoteValuesNx()
 		print "BeamCenterX = "+num2str(BeamCenterX)
 		print "BeamCenterY = "+num2str(BeamCenterY)
 		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
+	elseif(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
+		//9ID data from2015 onwards... 
+		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
+		NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
+		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+		NVAR HorizontalTilt = root:Packages:Convert2Dto1D:HorizontalTilt
+		NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
+		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
+		
+		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
+		XRayEnergy = 12.3984/Wavelength
+		if(usePinSAXS)
+			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
+			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y=", OldNote), OldNote  , "=" , ";")
+			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
+		elseif(useWAXS)
+			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
+			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
+		endif		
+		print "Set experimental settinsg and geometry from file :"+Current2DFileName
+		print "Wavelength = "+num2str(Wavelength)
+		print "XRayEnergy = "+num2str(12.3984/Wavelength)
+		print "PixelSizeX = "+num2str(PixelSizeX)
+		print "PixelSizeY = "+num2str(PixelSizeY)
+		print "BeamCenterX = "+num2str(BeamCenterX)
+		print "BeamCenterY = "+num2str(BeamCenterY)
+		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
+
 	elseif(stringMatch("15ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("CCD", StringByKey("data:model", OldNOte  , "=" , ";")))	
 		beamline_support_version = NumberByKey(NI1_15IDDFindKeyStr("beamline_support_version=", OldNote), OldNote  , "=" , ";")
 		if(numtype(beamline_support_version)!=0)			//this applies for MarCCD support
@@ -1513,7 +1554,7 @@ Function NI1_15IDDCreateWvNtNbk(SampleName)
 		string Facility = StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")
 		variable i
 		String nb 	
-		if(stringMatch("15ID",Facility ) && (stringMatch("USAXS", Instrument) || stringMatch("15ID SAXS", Instrument)))	
+		if((stringMatch("15ID",Facility )||stringMatch("9ID",Facility )) && (stringMatch("USAXS", Instrument) || stringMatch("15ID SAXS", Instrument)))	
 				 nb = "Sample_Information"
 				DoWindow Sample_Information
 				if(V_Flag)

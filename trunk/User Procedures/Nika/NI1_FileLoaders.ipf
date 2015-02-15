@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.39
+#pragma version=2.40
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.40 update to 9ID pinSAXS Nexus files
 //2.39 removed Executes in preparation for Igor 7
 //2.38 fixe3d bug in reading calibrated 2D data found by Igor 7 beta. 
 //2.37 Created ADSC_A file type which has wavelength in A, not in nm as ADSC has. 
