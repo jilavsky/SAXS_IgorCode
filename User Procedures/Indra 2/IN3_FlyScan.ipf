@@ -1016,13 +1016,13 @@ end
 
 Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime)
 	wave GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRangeAfter, MeasTime 
-
+	//creates amplfier gains for upd or I0/I00 from mcs channel records
 	Duplicate/Free mcsChangePnts, tmpmcsChangePnts
 	Duplicate/Free ampGainReq, tmpampGainReq
 	Duplicate/Free ampGain, tmpampGain
 	variable i
 	i = numpnts(tmpmcsChangePnts)-1
-	Do
+	Do		//this simply removes any tailing change points in teh records, whichscrew up the working code
 		if(tmpmcsChangePnts[i]==0)
 			tmpmcsChangePnts[i]=nan
 		else
@@ -1030,25 +1030,26 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 		endif
 		i-=1
 	while (i>0 && tmpmcsChangePnts[i] <1)
-	
+	//this blasts on these 3 waves any lines, which contain NaN in any of the three waves. 
 	IN2G_RemoveNaNsFrom3Waves(tmpmcsChangePnts,tmpampGainReq,tmpampGain)
+	//set Gains to first point on record
 	GainWv = tmpampGain[0]
 	variable iii, iiimax=numpnts(tmpmcsChangePnts)-1
 	variable StartRc, EndRc
 	if(iiimax<1)		//Fix for scanning when no range changes happen... 
-		GainWv = tmpampGain[0]
+		GainWv = tmpampGain[0]	//this seem unnecessary... hm, it was here before. 
 	else
 		StartRc = 0
 		EndRc = 0
-		For(iii=0;iii<iiimax+1;iii+=1)
+		For(iii=0;iii<iiimax+1;iii+=1)		//find points when we requested ranege change and when we got it, record and deal with it
 			if(tmpampGain[iii]!=tmpampGainReq[iii])		//requested gain change
 				StartRc = tmpmcsChangePnts[iii]	
-			elseif(tmpampGain[iii]==tmpampGainReq[iii])	//from here we should have the gains set
+			elseif(tmpampGain[iii]==tmpampGainReq[iii])	//got the requested range cahnge, from here we should have the gains set
 				EndRc = tmpmcsChangePnts[iii]
 					if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
-						GainWv[StartRc,EndRc] = nan
-						GainWv[EndRc+1,] = ampGain[iii]+1
-						IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])
+						GainWv[StartRc,EndRc] = nan	//while we were changing, set points to NaNs 
+						GainWv[EndRc+1,] = ampGain[iii]+1	//set rest fo teh measured points to the gain we set
+						IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])	//mask for time, if needed. 
 					endif			
 			endif
 		endfor
