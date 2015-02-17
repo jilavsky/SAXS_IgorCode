@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.39
+#pragma version=2.40
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.40 added GISAXS_SOL and GISAXS_LSS geomtries - vary for alfa-f per marvin infor from below. Uses new panel and variable. 
 //2.39 fixed GISAXS alfa-f calculation. Bug found by one of the users marvin.berlinghof@fau.de
 //2.38 removed Executes as preparation for Igor 7
 //2.37 renamed tab "Prev" into "PolTran" = Polar transform. This seems better descrition of the conversion. 
@@ -758,12 +759,6 @@ Function NI1A_CheckGeometryWaves(orientation)		//checks if current geometry wave
 	variable diff3 = abs(str2num(oldWavelength)-Wavelength)>0.001*Wavelength
 	variable diff4 =(cmpstr(OldMaskName,CurrentMaskFileName)!=0 || UseMask!=oldUseMask)
 	if( diff1 || diff2 || diff3 || diff4 || diff5)		//Ok, need to run these
-//		if(!yesno)				//have not yet run the first three above...
-//			NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave does not need to be run always...
-//			NI1A_Create2DAngleWave(DataWave)			//creates 2-D Azimuth Angle wave does not need to be run always...
-//			NI1A_CreateLUT(orientation)					//creates 1D LUT, should not be run always....
-//		endif		//the ones below must be run always...
-	//	NI1A_CreateQvector(orientation)				//creates 2-D Q wave does not need to be run always...
 		wave/Z Qdistribution1D=$("root:Packages:Convert2Dto1D:Qdistribution1D_"+orientation)
 		if(!WaveExists(Qdistribution1D))
 			NI1A_CreateLUT(orientation)					//creates 1D LUT, should not be run always.... Will create Qdistribution 1D vector...
@@ -813,6 +808,8 @@ Function NI1A_CreateHistogram(orientation)
 	NVAR UserQMax=root:Packages:Convert2Dto1D:UserQMax
 	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance	//in mm
 	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+//	NVAR ThetaSameNumPoints=root:Packages:Convert2Dto1D:ThetaSameNumPoints
+	
 	variable UserMin=0
 	variable UserMax=0
 	variable MaxQ
@@ -847,6 +844,7 @@ Function NI1A_CreateHistogram(orientation)
 	wave Qvector=$("root:Packages:Convert2Dto1D:Qvector_"+orientation)
 	wave QvectorWidth=$("root:Packages:Convert2Dto1D:QvectorWidth_"+orientation)
 	variable MinQtemp
+	variable constVal=Wavelength / (4 * pi)
 	
 	if (QbinningLogarithmic)
 		//logarithmic binning of Q
@@ -901,12 +899,25 @@ Function NI1A_CreateHistogram(orientation)
 		if(MinQ>MaxQ )
 			abort "Error in create Histogram, MinQ > MaxQ"
 		endif
-		MinQtemp = MinQ + 0.2*(MaxQ-MinQ)/QvectorNumberPoints
-		Qdistribution1D = (Qdistribution1D[p]>MinQ) ? Qdistribution1D[p] : MinQtemp
-		Histogram /B={MinQ, ((MaxQ-MinQ)/QvectorNumberPoints), QvectorNumberPoints } Qdistribution1D, HistogramWv 
-		Qvector = MinQ + 0.5*(MaxQ-MinQ)/QvectorNumberPoints+ p*(MaxQ-MinQ)/QvectorNumberPoints
+//		if(ThetaSameNumPoints)	//linear stepping in Theta
+//			MinQtemp = MinQ + 0.2*(MaxQ-MinQ)/QvectorNumberPoints
+//			Qdistribution1D = (Qdistribution1D[p]>MinQ) ? Qdistribution1D[p] : MinQtemp
+//			duplicate/O  Qdistribution1D, ThetaDistribution1D
+//			ThetaDistribution1D = 2 * asin ( Qdistribution1D * constVal) * 180 /pi
+//			wavestats/Q ThetaDistribution1D
+//			ThetaDistribution1D = V_min + p*(V_max-V_min)		//this is linear stepping in 2Theta
+//			Qdistribution1D = sin(ThetaDistribution1D*pi/360) / constVal
+//			Histogram /B={MinQ, ((MaxQ-MinQ)/QvectorNumberPoints), QvectorNumberPoints } Qdistribution1D, HistogramWv 
+//			Qvector = MinQ + 0.5*(MaxQ-MinQ)/QvectorNumberPoints+ p*(MaxQ-MinQ)/QvectorNumberPoints		
+//		else		//linear stepping in Q
+			MinQtemp = MinQ + 0.2*(MaxQ-MinQ)/QvectorNumberPoints
+			Qdistribution1D = (Qdistribution1D[p]>MinQ) ? Qdistribution1D[p] : MinQtemp
+			Histogram /B={MinQ, ((MaxQ-MinQ)/QvectorNumberPoints), QvectorNumberPoints } Qdistribution1D, HistogramWv 
+			Qvector = MinQ + 0.5*(MaxQ-MinQ)/QvectorNumberPoints+ p*(MaxQ-MinQ)/QvectorNumberPoints
+//		endif
 		QvectorWidth = Qvector[p+1] - Qvector[p]
 		QvectorWidth[numpnts(Qvector)-1]=QvectorWidth[numpnts(Qvector)-2]
+		
 	endif
 	string NoteStr=note(Qdistribution1D)
 	NoteStr+="QbinningLogarithmic="+num2str(QbinningLogarithmic)+";"
@@ -935,7 +946,6 @@ Function NI1A_CreateHistogram(orientation)
 	//	 Multithread Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2		//theta calculation...
 	// tg(2*theta) = distFromCenter / SDD     This is valid for notiltscase, but here the Q is corrected for the tilts anyway, so this is no tilts case
 	// distance from center =SDD * tg(twoTheta)
-	variable constVal=Wavelength / (4 * pi)
 	TwoTheta =  2 * asin ( Qvector * constVal) * 180 /pi
 	TwoThetaWidth  = TwoTheta[p+1] - TwoTheta [p]
 	TwoThetaWidth[numpnts(TwoThetaWidth)-1]=TwoThetaWidth[numpnts(TwoThetaWidth)-2]
@@ -1319,6 +1329,10 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SetVariable LineProf_EllipseAR,disable=(!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
 		SetVariable LineProf_GIIncAngle,disable=((!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal Line")&&!stringMatch(KnWCT,"GI_Vertical Line"))), win=NI1A_Convert2Dto1DPanel
 		checkbox LineProf_UseBothHalfs,disable=(stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel	
+		DoWIndow/K/Z GISAXSOptionsPanel
+		if(stringMatch(LineProf_CurveType,"GI_*"))
+			NI1_GISAXSOptions() 
+		endif
 		NI1A_LineProf_Update()
 	endif
 
@@ -1355,6 +1369,27 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 
 	setDataFolder OldDf
 End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_GISAXSOptions() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(520,221,965,409) as "GISAXS Options"
+	DoWindow/C GISAXSOptionsPanel
+	SetDrawLayer UserBack
+	SetDrawEnv linefgc= (1,16019,65535),fsize= 18,fstyle= 3,textrgb= (1,16019,65535)
+	DrawText 10,31,"GISAXS options selection"
+	DrawText 10,52,"For GISAXS_SOL (tilted sample) use 0 in this variable"
+	DrawText 10,77,"For GISAXS_LSS (horizontal sample), typically Liquid Surface Scattering"
+	DrawText 10,102,"Set this variable to Vertical center (in pixels) of reflected beam"
+	DrawText 10,127,"For details, see manual !!!!"
+	SetVariable GISAXS_YcenterReflBeam,pos={10,141},size={300,25},title="Vert. center of reflected beam [pixels]"
+	SetVariable GISAXS_YcenterReflBeam,limits={-inf,inf,0},value= root:Packages:Convert2Dto1D:GISAXS_ycenterReflectedbeam
+EndMacro
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -3582,9 +3617,13 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	NVAR QvectorMaxNumPnts = root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 	SetVariable QbinPoints,help={"Number of points in Q you want to create"}, disable = (QvectorMaxNumPnts)
 	SetVariable QbinPoints,limits={0,Inf,10},value= root:Packages:Convert2Dto1D:QvectorNumberPoints
-	CheckBox QvectorMaxNumPnts,pos={172,350},size={130,14},title="Max num points?",proc=NI1A_CheckProc
+	CheckBox QvectorMaxNumPnts,pos={152,350},size={130,14},title="Max num points?",proc=NI1A_CheckProc
 	CheckBox QvectorMaxNumPnts,help={"Use Max possible number of points? Num pnts = num pixels"}
 	CheckBox QvectorMaxNumPnts,variable= root:Packages:Convert2Dto1D:QvectorMaxNumPnts
+	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
+//	CheckBox ThetaSameNumPoints,pos={282,350},size={130,14},title="Equi-spaced 2Theta?",proc=NI1A_CheckProc
+//	CheckBox ThetaSameNumPoints,help={"Generate equidistantly spaced 2Theta points as for diffractometers?"}
+//	CheckBox ThetaSameNumPoints,variable= root:Packages:Convert2Dto1D:ThetaSameNumPoints, disable=!UseTheta
 
 	CheckBox DoCircularAverage,pos={20,370},size={130,14},title="Do circular average?",proc=NI1A_CheckProc
 	CheckBox DoCircularAverage,help={"Create data with circular average?"}
@@ -4269,6 +4308,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable UserThetaMax,disable=(tabNum!=4 || !UseTheta||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	SetVariable UserDMin,disable=(tabNum!=4 || !UseDspacing||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	SetVariable UserDMax,disable=(tabNum!=4 || !UseDspacing||!UseSectors), win=NI1A_Convert2Dto1DPanel
+//	CheckBox ThetaSameNumPoints,disable=(tabNum!=4 || !UseTheta||!UseSectors), win=NI1A_Convert2Dto1DPanel
 
 	CheckBox QbinningLogarithmic,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	SetVariable QbinPoints,disable=(tabNum!=4 || QvectorMaxNumPnts||!UseSectors), win=NI1A_Convert2Dto1DPanel
@@ -4752,6 +4792,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable UserDMin,disable=( !UseDspacing)
 		SetVariable UserDMax,disable=( !UseDspacing)
 		Checkbox SaveGSASdata, disable=(!UseTheta)
+//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
 	endif
 	if(cmpstr("UseDspacing",ctrlName)==0)
 		UseQvector=0
@@ -4765,6 +4806,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable UserDMin,disable=( !UseDspacing)
 		SetVariable UserDMax,disable=( !UseDspacing)
 		Checkbox SaveGSASdata, disable=(!UseTheta)
+//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
 	endif
 	if(cmpstr("UseTheta",ctrlName)==0)
 		UseQvector=0
@@ -4778,6 +4820,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable UserDMin,disable=( !UseDspacing)
 		SetVariable UserDMax,disable=( !UseDspacing)
 		Checkbox SaveGSASdata, disable=(!UseTheta)
+//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
 	endif
 	if(cmpstr("UseDistanceFromCenter",ctrlName)==0)
 		UseQvector=0
@@ -4791,6 +4834,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable UserDMin,disable=( !UseDspacing)
 		SetVariable UserDMax,disable=( !UseDspacing)
 		Checkbox SaveGSASdata, disable=(!UseTheta)
+//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
 	endif
 
 
@@ -5527,12 +5571,19 @@ Function NI1GI_CalculateQxyz(DimXpos,DimYpos,WhichOne)
 	NVAR Wavelength=root:Packages:Convert2Dto1D:Wavelength
 	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
 	NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
+	NVAR GISAXS_ycenterReflectedbeam=root:Packages:Convert2Dto1D:GISAXS_ycenterReflectedbeam
 	
 	variable K0val=2*pi/wavelength
 	variable alphaI = LineProf_GIIncAngle * pi / 180
 	variable TwoThetaF=atan((xcenter-DimXpos)*PixelSizeX /SampleToCCDDistance) 
-	variable alphaF = atan((ycenter - DimYpos)*PixelSizeY /SampleToCCDDistance) - alphaI		//fix 2015-02-14, found by marvin.berlinghof@fau.de
-	//note, this may not be precise calculation, depends on how the detector plane is placed. See Manual. 
+	variable alphaF
+	if(abs(GISAXS_ycenterReflectedbeam)<1)			//this is GISAXS_SOL where user set this value to about 0 and tilted the samples
+		alphaF = atan((ycenter - DimYpos)*PixelSizeY /SampleToCCDDistance) - alphaI		
+	else		//GISAXS_ycenterReflectedbeam !=0, user is using center of reflected beam. This is for GISAXS_LSS geometry.
+		alphaF = atan((ycenter-(ycenter-GISAXS_ycenterReflectedbeam)/2 - DimYpos)*PixelSizeY /SampleToCCDDistance)
+	endif
+	//fix 2015-02-14, found by marvin.berlinghof@fau.de
+	//note. See Manual. 
 	
 	if(stringmatch(WhichOne,"X"))
 		variable Qx = K0val * (cos(TwoThetaF)*cos(AlphaF) - cos(AlphaI))

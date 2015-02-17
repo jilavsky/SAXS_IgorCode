@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.41
-Constant NI1AversionNumber = 2.38
+#pragma version=2.42
+Constant NI1AversionNumber = 2.42
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.38
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.42 added GISAXS geomtry variations which require additional panel. version 1.68 of Nika
 //2.41 removed Executes in preparation fro igor 7
 //2.40 fixed Azimuthal profile ASCII data saving feature. Final sorting was incorrect (bug). 
 //2.39 added ADSC_A (wavelength in A) as option
@@ -239,7 +240,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="OverwriteDataIfExists;SectorsNumSect;SectorsSectWidth;SectorsGraphStartAngle;SectorsGraphEndAngle;SectorsUseRAWData;SectorsUseCorrData;"
 	ListOfVariables+="DisplayBeamCenterIn2DGraph;DisplaySectorsIn2DGraph;"
 	ListOfVariables+="UseQvector;UseTheta;UseDspacing;UseDistanceFromCenter;"
-	ListOfVariables+="UserThetaMin;UserThetaMax;UserDMin;UserDMax;UserQMin;UserQMax;"
+	ListOfVariables+="UserThetaMin;UserThetaMax;UserDMin;UserDMax;UserQMin;UserQMax;ThetaSameNumPoints;"
 	ListOfVariables+="DoGeometryCorrection;DoPolarizationCorrection;Use2DPolarizationCor;Use1DPolarizationCor;StartAngle2DPolCor;InvertImages;SkipBadFiles;MaxIntForBadFile;"
 	ListOfVariables+="DisplayRaw2DData;DisplayProcessed2DData;TwoDPolarizFract;"
 	//and now the function calls variables
@@ -254,7 +255,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="UseLineProfile;UseSectors;"
 	ListOfVariables+="LineProf_UseBothHalfs;LineProf_DistanceFromCenter;LineProf_Width;LineProf_DistanceQ;LineProf_WidthQ;"
 	ListOfVariables+="LineProfileDisplayWithQ;LineProfileDisplayWithQy;LineProfileDisplayWithQz;LineProfileDisplayWithAzA;LineProfileDisplayLogX;LineProfileDisplayLogY;"
-	ListOfVariables+="LineProfileUseRAW;LineProfileUseCorrData;LineProf_EllipseAR;LineProf_LineAzAngle;LineProf_GIIncAngle;"
+	ListOfVariables+="LineProfileUseRAW;LineProfileUseCorrData;LineProf_EllipseAR;LineProf_LineAzAngle;LineProf_GIIncAngle;GISAXS_ycenterReflectedbeam;"
 	ListOfVariables+="DisplayQValsOnImage;DisplayQvalsWIthGridsOnImg;DisplayColorScale;"	
 	//movie creation controls
 	ListOfVariables+="Movie_Use2DRAWdata;Movie_Use2DProcesseddata;Movie_Use1DData;Movie_AppendFileName;Movie_AppendAutomatically;Movie_DisplayLogInt;Movie_FrameRate;Movie_FileOpened;"
@@ -785,11 +786,6 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		Wave AnglesWave=root:Packages:Convert2Dto1D:AnglesWave
 		NVAR UseMask=root:Packages:Convert2Dto1D:UseMask
 		NVAR DoSectorAverages=root:Packages:Convert2Dto1D:DoSectorAverages
-//	NVAR NumberOfSectors=root:Packages:Convert2Dto1D:NumberOfSectors
-//	NVAR SectorsStartAngle=root:Packages:Convert2Dto1D:SectorsStartAngle
-///	NVAR SectorsHalfWidth=root:Packages:Convert2Dto1D:SectorsHalfWidth
-//	NVAR SectorsStepInAngle=root:Packages:Convert2Dto1D:SectorsStepInAngle
-//	SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
 		variable centerAngleRad, WidthAngleRad, startAngleFIxed, endAgleFixed
 		//apply mask, if selected
 		duplicate/O PixRadius2DWave, MaskedRadius2DWave
