@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.40
+#pragma version=2.42
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.42 minor GISAXS panel update (kill it on tab change). 
+//2.41 GISAXS panel now updates lineprofile, when value changes. 
 //2.40 added GISAXS_SOL and GISAXS_LSS geomtries - vary for alfa-f per marvin infor from below. Uses new panel and variable. 
 //2.39 fixed GISAXS alfa-f calculation. Bug found by one of the users marvin.berlinghof@fau.de
 //2.38 removed Executes as preparation for Igor 7
@@ -1389,7 +1391,29 @@ Function NI1_GISAXSOptions() : Panel
 	DrawText 10,127,"For details, see manual !!!!"
 	SetVariable GISAXS_YcenterReflBeam,pos={10,141},size={300,25},title="Vert. center of reflected beam [pixels]"
 	SetVariable GISAXS_YcenterReflBeam,limits={-inf,inf,0},value= root:Packages:Convert2Dto1D:GISAXS_ycenterReflectedbeam
+	SetVariable GISAXS_YcenterReflBeam proc=NI1_GISAXSOptsSetVarProc
 EndMacro
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function NI1_GISAXSOptsSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+			NI1A_LineProf_Update()
+			break
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -4367,7 +4391,9 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable LineProf_LineAzAngle,disable=(tabNum!=6||!UseLineProfile||!stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel
 	SetVariable LineProf_EllipseAR,disable=(tabNum!=6||!UseLineProfile||!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
 	SetVariable LineProf_GIIncAngle,disable=(tabNum!=6||!UseLineProfile||(!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal line")&&!stringMatch(KnWCT,"GI_Vertical line"))), win=NI1A_Convert2Dto1DPanel
-
+	if((tabNum!=6))
+		DoWIndow/Z/K GISAXSOptionsPanel
+	endif
 //tab 7 controls
 	CheckBox ExpCalib2DData,disable=(tabNum!=7), win=NI1A_Convert2Dto1DPanel
 	CheckBox InclMaskCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel

@@ -12,6 +12,7 @@ Modeling II - Scale data by now actually works. It was never programmed to work 
 Scripting tool - added hook function after data set is loaded, before it is fitted, for user to do something which needs to be done. Check the code. For now only for Modeling II.   
 Scripting tool - fixed preservation of user choices on errors and intensity scaling for Modeling II and Size Distribution. 
 Scattering contrast calculator -  Modified description for exp(-Mu*T) as Transmission. Users seem to be missing the point… 
+Size distribution - added colored bar at the top of the graph - “trust indicator” - which indicates, which sizes can be trusted and which are suspect/totally uncertain. Based on 2*pi/Q values used for fitting. 
 
 
 2.56 8/20/2014
