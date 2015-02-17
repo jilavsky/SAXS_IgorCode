@@ -814,18 +814,17 @@ Function NI1_15IDDWaveNoteValuesNx()
 	NVAR useWAXS = root:Packages:Convert2Dto1D:USAXSWAXSselector
 	NVAR usePinSAXS = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
 	NVAR useSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
+	NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
+	NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+	NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+	NVAR HorizontalTilt = root:Packages:Convert2Dto1D:HorizontalTilt
+	NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
+	NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
+	NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
+	NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
 	
 	if(stringMatch("15ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
-		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
-		NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
-		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
-		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
-		NVAR HorizontalTilt = root:Packages:Convert2Dto1D:HorizontalTilt
-		NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
-		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
-		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-		
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
 		if(usePinSAXS)
@@ -855,16 +854,6 @@ Function NI1_15IDDWaveNoteValuesNx()
 		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
 	elseif(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
 		//9ID data from2015 onwards... 
-		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
-		NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
-		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
-		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
-		NVAR HorizontalTilt = root:Packages:Convert2Dto1D:HorizontalTilt
-		NVAR VerticalTilt = root:Packages:Convert2Dto1D:VerticalTilt
-		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
-		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-		
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
 		if(usePinSAXS)
@@ -898,14 +887,6 @@ Function NI1_15IDDWaveNoteValuesNx()
 		if(numtype(beamline_support_version)!=0)			//this applies for MarCCD support
 			beamline_support_version=0
 		endif
-		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
-		NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
-		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
-		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
-		NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
-		NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
-		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-		
 		if(beamline_support_version==0)
 			Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 			XRayEnergy = 12.3984/Wavelength

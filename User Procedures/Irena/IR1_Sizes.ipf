@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.16
+#pragma version = 2.17
 Constant IR1RSversionNumber=2.13
 
 
@@ -9,7 +9,8 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.16 check if for slit smeared dta athe Qmax is at least 3* slit length
+//2.17 added color bar at the top to indicate which sizes one can trust based on Qmin/Qmax and which are suspect or totally unknown. 
+//2.16 check if for slit smeared data that the Qmax is at least 3* slit length
 //2.15 modifed to use rebinnign routine from general prodecures
 //2.14 modified Tag position with results, keeps runnign out of frame. 
 //2.13 added automatic run of "Calculate parameters" after succesful run. Changed all graph fonts to follow the User defined settings.   
@@ -894,7 +895,7 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	ListOfVariables+="NNLS_MaxNumIterations;NNLS_ApproachParameter;"
 	ListOfVariables+="UseRegularization;UseMaxEnt;UseTNNLS;"
 	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
-	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;AutoCalculateParameters;"
+	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;AutoCalculateParameters;RemoveTrustRegionIndicators;"
 	
 //	ListOfStrings="DataFolderName;OriginalIntensityWvName;OriginalQvectorWvName;OriginalErrorWvName;SizesParameters;"
 	ListOfStrings="DataFolderName;SizesParameters;"
@@ -1296,7 +1297,7 @@ Function IR1R_RecoverOldParameters()
 		
 		SVAR tmpSvr1=root:Packages:FormFactorCalc:ListOfFormFactors
 		PopupMenu ShapeModel,mode=(1+WhichListItem(ShapeType,tmpSvr1)),value= #("\""+tmpSvr1+"\""), win=IR1R_SizesInputPanel
-		Dowindow IR1R_SizesInputGraph	//this checks for existence of this window and if it exists, it will put in the cursors as appropriate...
+		Dowindow  IR1R_SizesInputGraph 	//this checks for existence of this window and if it exists, it will put in the cursors as appropriate...
 		if(V_Flag)
 			Cursor /W=IR1R_SizesInputGraph A IntensityOriginal BinarySearch(Q_vecOriginal, StartFItQvalue )
 			Cursor /W=IR1R_SizesInputGraph B IntensityOriginal BinarySearch(Q_vecOriginal, EndFItQvalue )
@@ -3306,6 +3307,11 @@ Proc  IR1R_SizesInputGraph()
 //	Button ApplyStyle size={80,20}, pos={150,5},proc=IR1U_StyleButtonCotrol,title="Apply Style"
 	TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
+
+	Checkbox RemoveTrustRegionIndicators, pos={600,5}, title="Remove Trust Indicator?", proc = IR1R_GraphCheckboxes, help={"Remove the color bar with trust regions"}
+	Checkbox RemoveTrustRegionIndicators, variable=root:Packages:Sizes:RemoveTrustRegionIndicators
+	TitleBox TrustRegExplanation pos={600,28}, title="green=trust, yellow=suspect, red=no trust"
+	TitleBox TrustRegExplanation fstyle=3,fColor=(65535,16385,16385)
 	DoUpdate
 
 EndMacro
@@ -3404,36 +3410,6 @@ End
 //*********************************************************************************************************************************************************
 //*********************************************************************************************************************************************************
 
-Function IR1R_GraphCheckboxes(ctrlName,checked) : CheckBoxControl
-	String ctrlName
-	Variable checked
-	
-	NVAR GraphLogTopAxis		=root:Packages:Sizes:GraphLogTopAxis
-	NVAR GraphLogRightAxis 	=root:Packages:Sizes:GraphLogRightAxis
-	if(cmpstr(ctrlName,"LogParticleAxis")==0)
-		if (stringmatch(AxisList("IR1R_SizesInputGraph"), "*top*"))		//axis used
-			ModifyGraph/W=IR1R_SizesInputGraph log(top)=GraphLogTopAxis
-		endif
-	endif
-	if(cmpstr(ctrlName,"LogDistVolumeAxis")==0)
-		if (stringmatch(AxisList("IR1R_SizesInputGraph"), "*right*"))		//axis used
-			Wave CurrentResultSizeDistribution=root:Packages:Sizes:CurrentResultSizeDistribution
-			WaveStats/Q CurrentResultSizeDistribution
-			if(GraphLogRightAxis)		//log scaling
-					SetAxis/W=IR1R_SizesInputGraph/N=1 right (V_max*1e-6),V_max*1.1
-			else						//lin scailng
-				if (V_min>0)
-					SetAxis/W=IR1R_SizesInputGraph/N=1 right 0,V_max*1.1 
-				else
-					SetAxis/W=IR1R_SizesInputGraph/N=1 right -(V_max*0.1),V_max*1.1
-				endif
-			endif
-			ModifyGraph/W=IR1R_SizesInputGraph log(right)=GraphLogRightAxis
-		endif
-
-	endif
-
-end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -4611,6 +4587,97 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
+
+Function IR1R_GraphCheckboxes(ctrlName,checked) : CheckBoxControl
+	String ctrlName
+	Variable checked
+	
+	NVAR GraphLogTopAxis		=root:Packages:Sizes:GraphLogTopAxis
+	NVAR GraphLogRightAxis 	=root:Packages:Sizes:GraphLogRightAxis
+	if(cmpstr(ctrlName,"LogParticleAxis")==0)
+		if (stringmatch(AxisList("IR1R_SizesInputGraph"), "*top*"))		//axis used
+			ModifyGraph/W=IR1R_SizesInputGraph log(top)=GraphLogTopAxis
+		endif
+	endif
+	if(cmpstr(ctrlName,"RemoveTrustRegionIndicators")==0)
+		IR1R_AddTrustRanges()
+	endif
+
+
+	if(cmpstr(ctrlName,"LogDistVolumeAxis")==0)
+		if (stringmatch(AxisList("IR1R_SizesInputGraph"), "*right*"))		//axis used
+			Wave CurrentResultSizeDistribution=root:Packages:Sizes:CurrentResultSizeDistribution
+			WaveStats/Q CurrentResultSizeDistribution
+			if(GraphLogRightAxis)		//log scaling
+					SetAxis/W=IR1R_SizesInputGraph/N=1 right (V_max*1e-6),V_max*1.1
+			else						//lin scailng
+				if (V_min>0)
+					SetAxis/W=IR1R_SizesInputGraph/N=1 right 0,V_max*1.1 
+				else
+					SetAxis/W=IR1R_SizesInputGraph/N=1 right -(V_max*0.1),V_max*1.1
+				endif
+			endif
+			ModifyGraph/W=IR1R_SizesInputGraph log(right)=GraphLogRightAxis
+		endif
+
+	endif
+
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_AddTrustRanges()
+	
+	string OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Sizes:
+	Wave D_distribution = root:Packages:Sizes:D_distribution
+	Wave Q_vec  = root:Packages:Sizes:Q_vec
+	NVAR RemoveTrustRegionIndicators=root:Packages:Sizes:RemoveTrustRegionIndicators
+	//these are parameters used to generat the color transition
+	variable WideSmallSizes =  0.66
+	variable WideLargeSizes = 1.2
+	variable SmoothFraction = 1/25
+	//and of these parameters. Note: these are more or less arbitrary parameters selected based on experience. No scioence behind them. 
+	Duplicate/O D_distribution TrustValues, TrustValuesColors
+	DoWindow IR1R_SizesInputGraph
+	if(V_Flag)		//graph exists
+		if(RemoveTrustRegionIndicators)
+			RemoveFromGraph /W=IR1R_SizesInputGraph /Z TrustValues 
+		else		//keep them in
+			GetAxis/Q /W=IR1R_SizesInputGraph right
+			TrustValues = V_max*0.999
+			CheckDisplayed /W=IR1R_SizesInputGraph  TrustValues 
+			if(V_flag==0)
+				AppendToGraph/R/T TrustValues vs D_distribution
+			endif
+			ModifyGraph lsize(TrustValues)=5
+			variable TrustStart, TrustEnd, TrustStartWide, TrustEndWide
+			FindLevel/Q  D_distribution, 2*pi/(Q_vec[numpnts(Q_vec)-1]) 
+			TrustStart = V_LevelX
+			TrustStartWide = WideSmallSizes*(TrustStart) > 0 ? WideSmallSizes*(TrustStart) : 0
+			FindLevel/Q  D_distribution, 2*pi/(Q_vec[0]) 
+			TrustEnd = V_LevelX
+			TrustEndWide = WideLargeSizes*(TrustEnd) < numpnts(TrustValuesColors)-1 ? WideLargeSizes*(TrustEnd) : numpnts(TrustValuesColors)-1
+			TrustEndWide = TrustEndWide>0 ? TrustEndWide : numpnts(TrustValuesColors)-1
+			TrustValuesColors = 0
+			TrustValuesColors[TrustStartWide,1*(TrustStart)] = 1
+			TrustValuesColors[TrustStart,TrustEnd] = 2
+			TrustValuesColors[TrustEnd, TrustEndWide] = 1
+			Smooth  (numpnts(TrustValuesColors)*SmoothFraction), TrustValuesColors
+			ModifyGraph zColor(TrustValues)={TrustValuesColors,*,5,Rainbow,0}
+		endif
+	endif
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
 Function IR1R_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
@@ -4640,6 +4707,7 @@ Function IR1R_ButtonProc(ba) : ButtonControl
 						IN2R_CalculateVolume("")
 					endif
 				endif
+				IR1R_AddTrustRanges()
 			break
 		case -1: // control being killed
 			break
