@@ -4639,7 +4639,7 @@ Function IR1R_AddTrustRanges()
 	NVAR RemoveTrustRegionIndicators=root:Packages:Sizes:RemoveTrustRegionIndicators
 	//these are parameters used to generat the color transition
 	variable WideSmallSizes =  0.66
-	variable WideLargeSizes = 1.2
+	variable WideLargeSizes = 1.25
 	variable SmoothFraction = 1/25
 	//and of these parameters. Note: these are more or less arbitrary parameters selected based on experience. No scioence behind them. 
 	Duplicate/O D_distribution TrustValues, TrustValuesColors
@@ -4654,12 +4654,12 @@ Function IR1R_AddTrustRanges()
 			if(V_flag==0)
 				AppendToGraph/R/T TrustValues vs D_distribution
 			endif
-			ModifyGraph lsize(TrustValues)=5
+			ModifyGraph /W=IR1R_SizesInputGraph lsize(TrustValues)=5
 			variable TrustStart, TrustEnd, TrustStartWide, TrustEndWide
 			FindLevel/Q  D_distribution, 2*pi/(Q_vec[numpnts(Q_vec)-1]) 
 			TrustStart = V_LevelX
 			TrustStartWide = WideSmallSizes*(TrustStart) > 0 ? WideSmallSizes*(TrustStart) : 0
-			FindLevel/Q  D_distribution, 2*pi/(Q_vec[0]) 
+			FindLevel/Q  D_distribution, pi/(Q_vec[0]) 
 			TrustEnd = V_LevelX
 			TrustEndWide = WideLargeSizes*(TrustEnd) < numpnts(TrustValuesColors)-1 ? WideLargeSizes*(TrustEnd) : numpnts(TrustValuesColors)-1
 			TrustEndWide = TrustEndWide>0 ? TrustEndWide : numpnts(TrustValuesColors)-1
@@ -4668,7 +4668,7 @@ Function IR1R_AddTrustRanges()
 			TrustValuesColors[TrustStart,TrustEnd] = 2
 			TrustValuesColors[TrustEnd, TrustEndWide] = 1
 			Smooth  (numpnts(TrustValuesColors)*SmoothFraction), TrustValuesColors
-			ModifyGraph zColor(TrustValues)={TrustValuesColors,*,5,Rainbow,0}
+			ModifyGraph /W=IR1R_SizesInputGraph zColor(TrustValues)={TrustValuesColors,*,5,Rainbow,0}
 		endif
 	endif
 end
