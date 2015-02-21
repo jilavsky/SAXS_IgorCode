@@ -3347,7 +3347,10 @@ Function NI2NX_FindThe2DData(Fldrname)
 	string ListOf2DWaves=WaveList("*", ";", "TEXT:0,DIMS:2" )
 	if(strlen(ListOf2DWaves)>0)
 		Wave DataWv=$(stringFromList(0,ListOf2DWaves))
-		MoveWave DataWv, $(Fldrname)
+		Wave/Z test=$(Fldrname+stringFromList(0,ListOf2DWaves))
+		if(!WaveExists(test))
+			MoveWave DataWv, $(Fldrname)
+		endif
 	endif
 end
 //*******************************************************************************************************************************************
