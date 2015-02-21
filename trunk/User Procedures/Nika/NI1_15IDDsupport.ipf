@@ -824,25 +824,29 @@ Function NI1_15IDDWaveNoteValuesNx()
 	NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
 	NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
 	
-	if(stringMatch("15ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
+	if((stringMatch("15ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))||stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
 		if(usePinSAXS)
-			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
-			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote  , "=" , ";")
+			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote  , "=" , ";")
+			if(numtype(PixelSizeX)!=0)		//old data from 15ID
+				PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("x_pixel_size=", OldNote), OldNote  , "=" , ";")
+				PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			endif
+			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
-			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
+			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
 		elseif(useWAXS)
-			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
-			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("x_pixel_size=", OldNote), OldNote  , "=" , ";")
+			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
-			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
+			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
 		endif		
 		print "Set experimental settinsg and geometry from file :"+Current2DFileName
 		print "Wavelength = "+num2str(Wavelength)
@@ -1531,10 +1535,11 @@ Function NI1_15IDDCreateWvNtNbk(SampleName)
 	if(WaveExists(w2d))
 		string OldNOte=note(w2D)
 		
-		string Instrument = StringByKey("instrument:name", OldNOte  , "=" , ";")		//USAXS
-		string Facility = StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")
+		string Instrument = StringByKey(NI1_15IDDFindKeyStr("instrument:name=", OldNote), OldNOte  , "=" , ";")		//USAXS
+		string Facility = StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";")
 		variable i
 		String nb 	
+	//	if((stringMatch("15ID", )||stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
 		if((stringMatch("15ID",Facility )||stringMatch("9ID",Facility )) && (stringMatch("USAXS", Instrument) || stringMatch("15ID SAXS", Instrument)))	
 				 nb = "Sample_Information"
 				DoWindow Sample_Information
