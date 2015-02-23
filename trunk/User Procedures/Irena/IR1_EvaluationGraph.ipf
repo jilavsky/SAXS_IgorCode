@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.06
+#pragma version=2.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.07 minor fix for parameter6 of form factor parameter. 
 //2.06 removed Executes as preparation for Igor 7
 //2.05 modified IR1G_CreateAveVolSfcWvUsingNote by cleaning up unneeded code. 
 //2.04 some improvements to handle radii and diameters. 
@@ -1531,14 +1532,14 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 			Par3 = numberByKey("FormFactor_Param3_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			Par4 = numberByKey("FormFactor_Param4_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			Par5 = numberByKey("FormFactor_Param5_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
-			Par5 = numberByKey("FormFactor_Param6_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
+			Par6 = numberByKey("FormFactor_Param6_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			UserVolFunct = StringByKey("FFUserFFformula_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			UPar1 = numberByKey("FormFactor_Param1_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			UPar2 = numberByKey("FormFactor_Param2_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			UPar3 = numberByKey("FormFactor_Param3_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			UPar4 = numberByKey("FormFactor_Param4_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 			UPar5 = numberByKey("FormFactor_Param5_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
-			UPar5 = numberByKey("FormFactor_Param6_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
+			//UPar6 = numberByKey("FormFactor_Param6_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")
 		
 	else
 	DoAlert 0, "Do not know yet these data, fix IR1G_CreateAveVolSfcWvUsingNote"
