@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.19
+#pragma version=1.20
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 minor bug fix for parameter6 of form factor
 //1.19  bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.18 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.17 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
@@ -2233,7 +2234,7 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 						ListOfParameters+="FormFactor_Param4_pop"+num2str(i)+"="+num2str(FFParam1)+";"
 						NVAR FFParam5= $("root:Packages:IR2L_NLSQF:FormFactor_Param5_pop"+num2str(i))
 						ListOfParameters+="FormFactor_Param5_pop"+num2str(i)+"="+num2str(FFParam1)+";"
-						NVAR FFParam5= $("root:Packages:IR2L_NLSQF:FormFactor_Param6_pop"+num2str(i))
+						NVAR FFParam6= $("root:Packages:IR2L_NLSQF:FormFactor_Param6_pop"+num2str(i))
 						ListOfParameters+="FormFactor_Param6_pop"+num2str(i)+"="+num2str(FFParam1)+";"
 
 
