@@ -1164,7 +1164,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	wavestats/Q tempPDInt
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
-	FindLevels /N=5 /P/Q  tempPDInt, V_max/2.2
+	FindLevels /N=5 /P/Q  tempPDInt, V_max/1.8
 	wave W_FindLevels
 	variable startPointL, endPointL
 	if(Numpnts(W_FindLevels)==2)

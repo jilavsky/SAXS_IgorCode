@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.25 minor fix for data with too many columns of data - Irena can handle only first 6 columns... 
 //2.24 minor change in how calibration units are displayed in the panel. 
 //2.23 added sorting of imported waves as some users seem to have data which are not increasing in q. Weird, but possible... DOne before optional rebinning. 
 //2.22 changed Import rebinning on log scale to match minimum step (defined as the difference between first two original points left after trimming and 0 int removal). 
@@ -583,7 +584,8 @@ Function IR1I_NameImportedWaves(selectedFile)
 	endif	
 	NVAR DataContainErrors=root:Packages:ImportData:DataContainErrors
 	DataContainErrors=0
-	For(i=0;i<FoundNWaves;i+=1)	
+	variable LimitFoundWaves = (FoundNWaves<=6) ? FoundNWaves : 7 
+	For(i=0;i<LimitFoundWaves;i+=1)	
 		NVAR testIntStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"Int")
 		NVAR testQvecStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"Qvec")
 		NVAR testErrStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"Err")
