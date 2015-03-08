@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.15
+#pragma version=1.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 fixes for 9ID
 //1.15 fixes for 9ID data after the move. Only partial fix. 
 //1.14 widen the angular range for sector average for pinSAXS - seems to be OK now with vacuum chamber.  
 //1.13 added Mask creation for horizon using vaccum chamber in 2014-08
@@ -89,10 +90,11 @@ Window NI1_15IDDConfigPanel() : Panel
 	DoWindow/C NI1_15IDDConfigPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
-	DrawText 75,33,"15ID-D Nexus file configuration"
+	DrawText 10,25,"9ID-C (or 15IDD) Nexus file configuration"
 	
-	DrawText 10, 60, "pinSAXS : Pilatus short camera in USAXS (use with USAXS data)"
-	DrawText 10, 75, "SAXS     : large SAXS camera in the back (only SAXS, no USAXS)"
+	DrawText 10, 43, "pinSAXS : Pilatus short camera in USAXS (use with USAXS)"
+	DrawText 10, 60, "WAXS    : Pilatus short WAXS used with USAXS/SAXS/WAXS configuration"
+	DrawText 10, 77, "SAXS     : large SAXS camera in the back (only SAXS, no USAXS)"
 	Checkbox pinSAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSpinSAXSselector, proc=NI1_15IDDCheckProc
 	Checkbox pinSAXSSelection, title ="pinSAXS", help={"Use to configure Nika for pinSAXS"}
 	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_15IDDCheckProc
@@ -100,11 +102,11 @@ Window NI1_15IDDConfigPanel() : Panel
 	Checkbox BigSAXSSelection,pos={290,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSBigSAXSselector, proc=NI1_15IDDCheckProc
 	Checkbox BigSAXSSelection, title ="15ID SAXS", help={"Use to configure Nika for SAXS"}
 
-	Button Open15IDDManual,pos={390,20},size={150,20},proc=NI1_15IDDButtonProc,title="Open 15IDD manual"
-	Button Open15IDDManual,help={"Open 15IDD manual"}
+	Button Open15IDDManual,pos={390,20},size={150,20},proc=NI1_15IDDButtonProc,title="Open manual"
+	Button Open15IDDManual,help={"Open manual"}
 
 	Button ConfigureDefaultMethods,pos={29,115},size={150,20},proc=NI1_15IDDButtonProc,title="Set default methods"
-	Button ConfigureDefaultMethods,help={"Sets default methods for the data reduction at 15IDD"}
+	Button ConfigureDefaultMethods,help={"Sets default methods for the data reduction at 9IDC (or 15IDD)"}
 	Button ConfigureWaveNoteParameters,pos={229,115},size={150,20},proc=NI1_15IDDButtonProc,title="Set Experiment Settings"
 	Button ConfigureWaveNoteParameters,help={"Sets default settings based on image currently loaded in the Nika package"}
 	SetVariable USAXSSlitLength, pos={29,150}, size={150,20}, proc=NI1_15IDDSetVarProc, title="Slit length", variable=root:Packages:Convert2Dto1D:USAXSSlitLength
@@ -616,6 +618,9 @@ Function NI1_15IDDSetDefaultNx()
 					BMUseCalibrantD5=1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
+
+				NVAR SAXSDeleteTempPinData= root:Packages:Convert2Dto1D:SAXSDeleteTempPinData
+				SAXSDeleteTempPinData = 1
 	else		//end of pinSAXS selectetin, bellow starts bigSAXS specifics...
 				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 				UseSectors = 1
@@ -737,6 +742,20 @@ Function NI1_15IDDSetDefaultNx()
 				BCPathInfoStr=S_Path
 				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
 				BmCalibrantName="Ag behenate"
+				//mask settings
+				SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
+				CCDFileExtension = "Nexus"
+				NewPath/O Convert2Dto1DMaskPath, pathInforStrL
+				NI1M_UpdateMaskListBox()
+				NVAR Usemask= root:Packages:Convert2Dto1D:Usemask
+				Usemask =1 
+				SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
+				if(strlen(CurrentMaskFileName)<1)
+					DoAlert 0, "Do NOT forget to create or load Mask"
+				else	
+					Print "  *********  IMPORTANT:  ********* \rFound Mask named :  >>>  "+CurrentMaskFileName+" <<<   Data reduction will use this mask. Make sure thsi is the correct mask to use. "
+				endif
+
 
 	DoWIndow NI1A_Convert2Dto1DPanel
 	if(!V_Flag)
@@ -1478,17 +1497,12 @@ end
 
 Function NI1_15IDDCreateHelpNbk()
 	String nb = "Instructions_15IDD"
-	DoWindow Instructions_15IDD
-	if(V_Flag)
-		DoWindow /F Instructions_15IDD
-		return 1
-	endif
-	NewNotebook/N=$nb/F=1/V=1/K=1/W=(459,208,999,550)
+	NewNotebook/N=$nb/F=1/V=1/K=1/W=(461,433,1223,1103)
 	Notebook $nb defaultTab=36, statusWidth=252
 	Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
 	Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
-	Notebook $nb ruler=Title, text="Instructions for use of 15ID-D special configurations\r"
+	Notebook $nb ruler=Title, text="Instructions for use of 9IDC (15IDD) special configurations\r"
 	Notebook $nb ruler=Normal, text="\r"
 	Notebook $nb text="Decide which data you need to reduce. Instructions are setup specific:\r"
 	Notebook $nb text="\r"
@@ -1505,7 +1519,8 @@ Function NI1_15IDDCreateHelpNbk()
 	Notebook $nb text=" the most likely values for your experiment)\r"
 	Notebook $nb text="4. \tOptiona;l: Verify the parameters (Beam center & calibration) using Ag Behenate measurements collecte"
 	Notebook $nb text="d with your data & your notes (some NX file info could be stale)\r"
-	Notebook $nb text="5. \tCreate mask to mask off the bad points and top few lines on detector using button: \"Create bad pix mask\")\r"
+	Notebook $nb text="5. \tCreate mask to mask off the bad points and top few lines on detector using button: \"Create bad pix m"
+	Notebook $nb text="ask\")\r"
 	Notebook $nb text="6.\tOptional : Either read slit length (button:\"Set Slit Length\") from one of USAXS measurements and sele"
 	Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_usx\") - OR - unselect the \"Create Smeared Data\" (resu"
 	Notebook $nb text="lting data will be \"_270_30\"). Likely choose \"Delete temp Data\" if you are creating slit smeared data.\r"
@@ -1520,6 +1535,30 @@ Function NI1_15IDDCreateHelpNbk()
 	Notebook $nb text="\r"
 	Notebook $nb text="\r"
 	Notebook $nb ruler=Title, text="WAXS\r"
+	Notebook $nb ruler=Normal, text="1.\tSelect \"WAXS\" checkbox.\r"
+	Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all WAX"
+	Notebook $nb text="S experiments.\r"
+	Notebook $nb text="3.\tSelect one of the images from your WAXS measurements in the main 2D panel and double click it (or use"
+	Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
+	Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
+	Notebook $nb text=" the most likely values for your experiment)\r"
+	Notebook $nb text="4. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
+	Notebook $nb text=" for WAXS. There is no need to epmty or other corrections in this case. You may need to modify the \"Sect"
+	Notebook $nb text="ors\" tab settings depending if you want the output in Q or in d (or in Theta).  \r"
+	Notebook $nb text="\r"
+	Notebook $nb ruler=Title, text="SAXS\r"
+	Notebook $nb ruler=Normal, text="1.\tSelect \"15ID SAXS\" checkbox.\r"
+	Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all SAX"
+	Notebook $nb text="S experiments.\r"
+	Notebook $nb text="3.\tSelect one of the images from your SAXS measurements in the main 2D panel and double click it (or use"
+	Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
+	Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
+	Notebook $nb text=" the most likely values for your experiment)\r"
+	Notebook $nb text="4. \tConfigure Empty and Dark images, generate Mask as needed. Likely you will need first to reduce the G"
+	Notebook $nb text="lassy Carbon sample, compare it with the standard data and create calibration constant. There is movie o"
+	Notebook $nb text="n this on the YouTube channel or USAXS web site.   "
+	Notebook $nb selection={startOfFile, startOfFile }, findText={"I",1}
+
 
 end
 

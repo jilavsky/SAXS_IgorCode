@@ -7,7 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
- //1.68 release. 
+ //1.68 release, fixes for 9ID USAXS and other fixes listed 
  //1.67 Release to fix Mask tool broken in 1.66 release. 
  //1.66 fixed ListProRoutine which had troubles with links 
  //1.65 minor changes, timed with Indra 2 release. 
@@ -50,8 +50,8 @@ Menu "SAS 2D"
 	"Configure Nika Preferences",NI1_ConfigMain()
 	help={"Configure method for uncertainity values for GUI behavior and for panels font sizes and font types"}
 	Submenu "Instrument configurations"
-		"15ID SAXS", NI1_15IDDConfigureNika()
-		help={"Support for data from 15IDD (USAXS/SAXS) beamline at APS"}
+		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_15IDDConfigureNika()
+		help={"Support for data from 9ID or15IDD (USAXS/SAXS) beamline at APS"}
 		"DND CAT", NI1_DNDConfigureNika()
 		help={"Support for data from DND CAT (5ID) beamline at APS"}
 		"SSRL Mat SAXS", NI1_SSRLSetup()

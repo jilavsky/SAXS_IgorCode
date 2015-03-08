@@ -8,9 +8,9 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
-1.85 2/15/2015
+1.85 3/8/2015
 Modifications for 2D flyscans. 
-Fixed for 9ID USAXS.
+Fixed for 9ID USAXS and the flyscans there. 
 
 1.84 8/20/2014
 Created on log-rebinning routine and propagated that routine (General Procedures 1.71) through the system, mainly FLyScan, replacing all log-rebinning other routines.

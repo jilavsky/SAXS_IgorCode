@@ -319,7 +319,7 @@ Function IN2_AboutPanel()
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.0"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2015"
-	DrawText 49,103,"release 1.85 from 2/15/2015"
+	DrawText 49,103,"release 1.85 from 3/8/2015"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end

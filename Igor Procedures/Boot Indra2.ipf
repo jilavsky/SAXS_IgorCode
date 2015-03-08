@@ -78,7 +78,7 @@ Function IN2L_GenerateReadMe()
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
 	Notebook $nb newRuler=Header, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",14,0,(0,0,0)}
 	Notebook $nb ruler=Header, text="Quick Manual for Indra 2 version of USAXS macros\r"
-	Notebook $nb ruler=Normal, text="This is version 1.84 of Indra macros, date: 8/20/2014\r"
+	Notebook $nb ruler=Normal, text="This is version 1.85 of Indra macros, date: 3/8/2015\r"
 	Notebook $nb text="\r"
 	Notebook $nb text="Data reduction summary:\r"
 	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import RAW data\", \"Import Desktop..\", \"Import USAXS FlyScan data\".\r"

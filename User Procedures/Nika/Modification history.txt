@@ -8,7 +8,8 @@ Fixed Ag Behenate line 5 which had typo it the d spacing.
 ADSC file format - finish, need dialog, for now added ADSC_A 
 Fixed Azimuthal data export ASCII export tool. Bug caused garbage production, data in Igor were correct. 
 Renamed Prev. tab into PolTran = Polra transform. Better term for what the procedure does. 
-Bug fix - Fixed calculation of one of the angles in GISAXS geometry (alpha-f), which was incorrect. This require adding two options for GISAXS geomtries and adding new panel which provides user selection. It also requires extensive description in the manual. Read the manual for description. 
+Bug fix - Fixed calculation of one of the angles in GISAXS geometry (alpha-f), which was incorrect. This require adding two options for GISAXS geometries and adding new panel which provides user selection. It also requires extensive description in the manual. Read the manual for description. 
+Modified Instrument config for 9IDC USAXS/SAXS/WAXS (should work as well for 15IDD USAXS/SAXS/WAXS) 
 
 
 1.67 9/15/2014
