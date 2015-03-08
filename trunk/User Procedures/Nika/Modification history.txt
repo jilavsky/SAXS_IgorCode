@@ -3,7 +3,7 @@ Code modification history
 
 -latest stuff first
 ********************************************
-1.68
+1.68 3/8/2015
 Fixed Ag Behenate line 5 which had typo it the d spacing. 
 ADSC file format - finish, need dialog, for now added ADSC_A 
 Fixed Azimuthal data export ASCII export tool. Bug caused garbage production, data in Igor were correct. 

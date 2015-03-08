@@ -34,7 +34,7 @@
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.2
 #include ":IN2_GAUSAXS 1", version>=1
-#include ":IN2_GeneralProcedures", version>=1.73
+#include ":IN2_GeneralProcedures", version>=1.76
 #include ":IN2_ImportX23", version>=1.10
 #include ":IN2_Merging Data", version>=1.10
 #include ":IN2_NotebookLogging", version>=1.10
@@ -45,11 +45,11 @@
 #include ":IN2_XtalCalculationsP", version>=1
 
 #include ":IN3_CalcScattering", version>=1.01
-#include ":IN3_Calculations", version>=1.11
-#include ":IN3_FLyScan", version>=0.29
-#include ":IN3_Main", version>=1.84
+#include ":IN3_Calculations", version>=1.13
+#include ":IN3_FLyScan", version>=0.33
+#include ":IN3_Main", version>=1.85
 #include ":IN3_Rwave", version>=1
-#include ":IN3_SupportFnct", version>=1.04
+#include ":IN3_SupportFnct", version>=1.05
 
 
 #include ":Spec", version>=2.2
