@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
-#pragma version=1.84
+#pragma version=1.85
 
 
 //*************************************************************************\
@@ -9,7 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.84 FLyscan support up to August 2014
+//1.85 Flyscan improvements for 9ID March 2015
+//1.84 Flyscan support up to August 2014
 //1.82 first user release of FlyScan support
 //1.80 added FlyScan data reduction
 //1.79 minor changes to use USAXS PD transmission measurements
