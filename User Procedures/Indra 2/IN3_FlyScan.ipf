@@ -1,10 +1,10 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.33
+#pragma version=0.34
 #include <Peak AutoFind>
 
 
 Constant IN3_FlyImportVersionNumber=0.19
-
+Constant IN3_DeleteRawData=1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -12,6 +12,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.34 fixed problem with too long names of flyscan hdf files and delete all raw data - too large, not necessary. 
 //0.33 more fixes for 9ID. 
 //0.32 fixes for 9ID, 02-08-2015, Modified function creating gain changes - needs fixing for I0 and I00.
 //0.31 added some fixes for flyscan gain issues and DSM support. 
@@ -35,7 +36,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 //version 0.1 developement of import functions and GUIs
 
 
-//note, to run somthign just after hdf5 file import use function 
+//note, to run something just after hdf5 file import use function 
 //		AfterFlyImportHook(RawFolderWithData)
 //	parameter is string with hdf file location. 
 
@@ -378,7 +379,7 @@ Function IN3_FlyScanLoadHdf5File()
 				KillWindow $(browserName)
 				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
 				string TempStrName=PossiblyQuoteName(shortFileName)
-				if(DataFolderExists(shortFileName))		//Name exists and folder is fine... 
+				if(DataFolderExists(TempStrName))		//Name exists and folder is fine... 
 					RawFolderWithData = GetDataFOlder(1)+TempStrName
 					RawFolderWithFldr = GetDataFolder(1)
 				else		//something failed. Expect too long name
@@ -397,25 +398,12 @@ Function IN3_FlyScanLoadHdf5File()
 					TargetRawFoldername = "Mythen_data"
 				endif
 				NewDataFolder/O $(TargetRawFoldername)
-//				if(DataFolderExists(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName))
-//					DoAlert /T="Folder name conflict" 1, "Folder : "+shortFileName+" already exists, overwrite (Yes) it or create unique name (No)?"
-//					if(V_Flag==1)
-//						KillDataFolder/Z  $(":"+possiblyquoteName(TargetRawFoldername)+":"+shortFileName)
-//					elseif(V_Flag==2)
-//						tmpDtaFldr = GetDataFolder(1)
-//						setDataFolder (":"+possiblyquoteName(TargetRawFoldername))
-//						shortNameBckp = shortFileName
-//						shortFileName = UniqueName(shortFileName, 11, 0 )
-//					      setDataFolder tmpDtaFldr
-//					      RenameDataFolder $(shortNameBckp), $(shortFileName)
-//					endif
-//				endif
 				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				if(DataFolderExists(targetFldrname))
 					DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
 					if(V_Flag==1)
 						KillDataFolder/Z targetFldrname
-						MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
+						MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 					elseif(V_Flag==2)
 						string OldDf1=getDataFolder(1)
 						SetDataFolder TargetRawFoldername
@@ -427,9 +415,8 @@ Function IN3_FlyScanLoadHdf5File()
 						Abort 
 					endif
 				else
-					MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
+					MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				endif
-				
 				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				print "Imported HDF5 file : "+RawFolderWithData
 #if(exists("AfterFlyImportHook")==6)  
@@ -441,6 +428,10 @@ Function IN3_FlyScanLoadHdf5File()
 				else
 					IN3_FSConvertToUSAXS(RawFolderWithData)	
 					print "Converted : "+RawFolderWithData+" into USAXS data"
+					if(IN3_DeleteRawData)
+						KillDataFOlder RawFolderWithData
+						print "Deleted RAW folder : "+ RawFolderWithData +" - not necessary and takes too much space in files" 
+					endif
 				endif
 			else
 				DoAlert 0, "Could not open "+FileName
