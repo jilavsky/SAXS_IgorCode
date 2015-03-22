@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.36
+#pragma version = 1.37
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.37 added ability to remove points on PD_Intensity for peak center fitting withmarquee. 
 //1.36 added Remove RAW folder to shrink size of Experiments
 //1.35 yet another change in Menu items to make it more obvious
 //1.34 changed RemovePointswith marquee to be dynamic menuitem.
@@ -236,51 +237,74 @@ end
 Function RemovePointsWithMarquee()
 	//this will zoom graph and set limits to the appropriate numbers
 	GetMarquee left, bottom
-	if(!stringmatch(S_MarqueeWin"RcurvePlotGraph"))
+	if(!(stringmatch(S_MarqueeWin"RcurvePlotGraph") || stringmatch(S_MarqueeWin"RcurvePlotGraph#PeakCenter")) )
 		return 0	
 	endif
-	variable isBlank = 1
-	CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:SMR_Int
-	if(V_Flag>0)
-		isBlank = 0
-		Wave IntWv=root:Packages:Indra3:SMR_Int
-		Wave QWv  =root:Packages:Indra3:SMR_Qvec
-	endif
-	CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:DSM_Int
-	if(V_Flag>0)
-		isBlank = 0
-		Wave IntWv=root:Packages:Indra3:DSM_Int
-		Wave QWv  =root:Packages:Indra3:DSM_Qvec
-	endif
-	if(isBlank)
-		Wave IntWv=root:Packages:Indra3:R_Int
-		Wave QWv  =root:Packages:Indra3:R_Qvec
-	endif 
-	if(isBlank) 
-		getmarquee/W=RcurvePlotGraph left, bottom
-	else
-		getmarquee/W=RcurvePlotGraph right, bottom
-	endif
 	variable StartPntX, EndPntX
-	FindLevel/Q QWv, V_left 
-	if(!V_Flag)
-		StartPntX = floor(V_levelX)
-	else
-		StartPntX = 0
-	endif
-	FindLevel/Q QWv, V_right 
-	if(!V_Flag)
-		EndPntX = ceil(V_levelX)
-	else
-		EndPntX = numpnts(QWv)-1
-	endif
+	variable isBlank = 1
 	variable StartPnt, EndPnt
 	variable i
-	For(i=StartPntX;i<=EndPntX;i+=1)
-		if(IntWv[i]<V_top && IntWv[i]>V_bottom)
-			IntWv[i]=NaN
+
+	if(stringmatch(S_MarqueeWin"RcurvePlotGraph"))
+		CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:SMR_Int
+		if(V_Flag>0)
+			isBlank = 0
+			Wave IntWv=root:Packages:Indra3:SMR_Int
+			Wave QWv  =root:Packages:Indra3:SMR_Qvec
 		endif
-	endfor
+		CheckDisplayed /W=RcurvePlotGraph root:Packages:Indra3:DSM_Int
+		if(V_Flag>0)
+			isBlank = 0
+			Wave IntWv=root:Packages:Indra3:DSM_Int
+			Wave QWv  =root:Packages:Indra3:DSM_Qvec
+		endif
+		if(isBlank)
+			Wave IntWv=root:Packages:Indra3:R_Int
+			Wave QWv  =root:Packages:Indra3:R_Qvec
+		endif 
+		if(isBlank) 
+			getmarquee/W=RcurvePlotGraph left, bottom
+		else
+			getmarquee/W=RcurvePlotGraph right, bottom
+		endif
+		FindLevel/Q QWv, V_left 
+		if(!V_Flag)
+			StartPntX = floor(V_levelX)
+		else
+			StartPntX = 0
+		endif
+		FindLevel/Q QWv, V_right 
+		if(!V_Flag)
+			EndPntX = ceil(V_levelX)
+		else
+			EndPntX = numpnts(QWv)-1
+		endif
+		For(i=StartPntX;i<=EndPntX;i+=1)
+			if(IntWv[i]<V_top && IntWv[i]>V_bottom)
+				IntWv[i]=NaN
+			endif
+		endfor
+	elseif(stringmatch(S_MarqueeWin"RcurvePlotGraph#PeakCenter"))
+		CheckDisplayed /W=RcurvePlotGraph#PeakCenter root:Packages:Indra3:PD_Intensity
+		if(V_Flag)
+			Wave USAXS_PD = root:Packages:Indra3:USAXS_PD
+			Wave PD_Intensity = root:Packages:Indra3:PD_Intensity
+			Wave ARencoder = root:Packages:Indra3:AR_encoder
+			getmarquee/W=RcurvePlotGraph#PeakCenter left, bottom
+			FindLevel/Q ARencoder, V_left 
+			StartPntX = floor(V_levelX)
+			FindLevel/Q ARencoder, V_right 
+			EndPntX = ceil(V_levelX)
+			For(i=StartPntX;i<=EndPntX;i+=1)
+				if(PD_Intensity[i]<V_top && PD_Intensity[i]>V_bottom)
+					USAXS_PD[i]=NaN
+				endif
+			endfor
+		endif
+		IN3_RecalculateData(0)
+		IN3_DisplayRightSubwindow()
+	endif
+	
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1079,15 +1103,6 @@ Function IN2A_AutoFitGaussTop(ctrlName) : Buttoncontrol			// calls the Gaussien 
 	variable startAR=Ar_encoder_Loc[endPoint]
 	variable endAR = Ar_encoder_Loc[startPoint]
 	MaximumIntensity = abs(areaXY(Ar_encoder_Loc, PD_Intensity_Loc,startAR, endAR)) /(sqrt(sigma2) * sqrt(2*pi))
-//	GetWindow kwTopWin, wavelist						//creates wavelist
-//	K0=0
-//	CurveFit/Q/H="1000"  gauss $WaveName("",0,1)(xcsr(A),xcsr(B))  /X=$WaveName("",0,2) /D /W=PD_error /I=1	//Gauss
-//	print "Fitted Gaussian between points  "+num2str(pcsr(A))+"   and    "+num2str(pcsr(B))+"    reached Chi-squared/numpoints    " +num2str(V_chisq/(pcsr(B)-pcsr(A)))
-//	string ModifyWave
-//	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit
-//	Variable BeamCenterError, MaximumIntensityError, PeakWidthError
-//	Wave W_coef
-//	Wave W_sigma
 	Wave PeakFitWave
 	Make/O/N=100 fit_PD_intensity
 	SetScale/I x Ar_encoder_Loc[startPoint],Ar_encoder_Loc[EndPoint],"", fit_PD_intensity
@@ -1099,20 +1114,7 @@ Function IN2A_AutoFitGaussTop(ctrlName) : Buttoncontrol			// calls the Gaussien 
 		ModifyGraph rgb(fit_PD_intensity)=(0,15872,65280)
 		ModifyGraph lsize(fit_PD_intensity)=3
 
-	//	Wave FitResiduals
-//	FitResiduals= ((W_coef[0]+W_coef[1]*exp(-((Ar_encoder[p]-W_coef[2])/W_coef[3])^2)) - PD_Intensity[p])/PD_error[p]
-//	FitResiduals[0,xcsr(A)-1]=NaN
-//	FitResiduals[xcsr(B)+1,inf]=NaN
-//	PeakFitWave= (MaximumIntensity/(sigma*sqrt(2*pi))) *exp(-0.5*( (x-BeamCenter) / sigma )^2)
 	PeakFitWave= (MaximumIntensity) *exp(-0.5*( (x-BeamCenter) / sigma )^2)
-//	BeamCenter=W_coef[2]
-//	BeamCenterError=W_sigma[2]
-//	MaximumIntensity=W_coef[1]
-//	MaximumIntensityError=W_sigma[1]
-//	PeakWidth = 2*(sqrt(ln(2)))*abs(W_coef[3])
-//	PeakWidthError=2*(sqrt(ln(2)))*abs(W_sigma[3])
-//	Variable GaussPeakWidth=2*(sqrt(ln(2)))*abs(W_coef[3])			// properly fixed by now. 
-//	Variable GaussPeakWidthError=2*(sqrt(ln(2)))*abs(W_sigma[3])
 	string BmCnterStr
 	Sprintf BmCnterStr, "%8.5f", BeamCenter
 	String Width="\Z12FWHM   "+num2str(3600*PeakWidth)+"  arc-sec"//+" +/- "+num2str(3600*GaussPeakWidthError)
@@ -1125,9 +1127,6 @@ Function IN2A_AutoFitGaussTop(ctrlName) : Buttoncontrol			// calls the Gaussien 
 	IN2G_AppendNoteToAllWaves("BeamCenter",num2str(BeamCenter))
 	IN2G_AppendNoteToAllWaves("MaximumIntensity",num2str(MaximumIntensity))
 	IN2G_AppendNoteToAllWaves("FWHM",num2str(PeakWidth*3600))
-//	IN2G_AppendNoteToAllWaves("BeamCenterError",num2str(BeamCenterError))
-//	IN2G_AppendNoteToAllWaves("MaximumIntensityError",num2str(MaximumIntensityError))
-//	IN2G_AppendNoteToAllWaves("FWHM_Error",num2str(PeakWidthError*3600))
 
 	Killwaves/Z PD_Intensity_Loc, Ar_encoder_Loc
 End

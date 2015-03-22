@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.85
+#pragma version = 1.86
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.86 added save to Load & Process button, renamed 
 //1.85 Flyscan improvements for 9ID March 2015
 //1.84 updated Flyscan for August 2014 and added overwrite for UPD range 5 dark current
 //1.83 updated Flyscan support for April 2014 version, minor improvements
@@ -218,7 +219,7 @@ Function IN3_MainPanel()
 	PopupMenu SelectBlankFolder, disable = IsBlank
 	
 	Button ProcessData,pos={10,110},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Load and process", help={"Load data and process them"}
-	Button SelectNextSampleAndProcess,pos={110,110},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Load & process next", help={"Select next sample in order and Create a graph (log-log) of your experiment data and start process"}
+	Button SelectNextSampleAndProcess,pos={110,110},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Load Process Save next", help={"Select next sample in order - process - and save"}
 	Button SaveResults,pos={240,110},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
 	NVAR UserSavedData=root:Packages:Indra3:UserSavedData
 	if(!UserSavedData)

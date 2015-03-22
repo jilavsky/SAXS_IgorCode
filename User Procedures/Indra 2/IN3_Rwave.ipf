@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.05
+#pragma version 1.07
 
 
 //*************************************************************************\
@@ -8,7 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.05 increased slightly fitting range for teh peak to improve Modified Gauss fitting stability. 
+//1.07 minor GUI change to keep user advised about saving data
+//1.06 small modification for cases when PD_error does nto exist. 
+//1.05 increased slightly fitting range for the peak to improve Modified Gauss fitting stability. 
 //1.04 added FlyScan code and modified fit to peak center to guess top 40% of intensity only. 
 //1.03 added pinDiode tranmission
 //1.02 updated to use 	I0AmpGain			
@@ -25,6 +27,10 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 	NVAR IsBlank = root:Packages:Indra3:IsBlank
+
+	//fix display in the panel to reflect saved data... 
+	NVAR UserSavedData=root:Packages:Indra3:UserSavedData
+
 
 	if(StepFrom==0)			//very beggining, all needs to be calculated
 		IN3_CalculateRWaveIntensity()			//using UPD parameters recalculate the R wave intensity
@@ -62,6 +68,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 			endif
 		endif
 	endif
+	UserSavedData = 0
 	setDataFolder OldDf	
 end
 
@@ -180,7 +187,7 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 		
 	Wave/Z PD_Intensity						//these waves may be new
 	Wave/Z PD_Error
-	if (!WaveExists(PD_Intensity))	
+	if (!WaveExists(PD_Intensity) || !WaveExists(PD_Error))	
 		Duplicate/O PD_range, PD_Intensity, PD_Error
 		IN2G_AppendorReplaceWaveNote("PD_range","Wname","PD_range") 
 		IN2G_AppendorReplaceWaveNote("PD_Intensity","Wname","PD_Intensity") 

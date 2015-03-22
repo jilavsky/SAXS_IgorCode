@@ -4,7 +4,7 @@
 
 
 Constant IN3_FlyImportVersionNumber=0.19
-Constant IN3_DeleteRawData=1
+Constant IN3_DeleteRawData=0
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -547,7 +547,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		Wave updMaskR4 = :entry:metadata:upd_amp_change_mask_time3
 		Wave updMaskR5 = :entry:metadata:upd_amp_change_mask_time4
 		TimeRangeAfterUPD = {updMaskR1[0],updMaskR2[0],updMaskR3[0],updMaskR4[0],updMaskR5[0]}
-		TimeRangeAfterI0 = {0,0,0,0,0}
+		TimeRangeAfterI0 = {0.05,0.05,0.05,0.05,0.05}
+		//we need to mask at least 50ms for each change...
+		TimeRangeAfterUPD = TimeRangeAfterUPD[p]>0.05 ? TimeRangeAfterUPD[p] : 0.05
 		//Ar positions read at 10Hz 
 		Wave changes_AR_PSOpulse = :entry:flyScan:changes_AR_PSOpulse
 		Wave changes_AR_angle = :entry:flyScan:changes_AR_angle
