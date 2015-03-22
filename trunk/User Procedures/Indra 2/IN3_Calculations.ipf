@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
+#pragma version=1.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 minor GUI chaneg to keep users advised abotu saving data
+//1.15 modified fitting of the peak height for Modified gauss
+//1.14 added save data to Load & process next button. Faster and easier. 
 //1.13 extended Modified guass fitting range, speed up by avoiding display updates of teh top fittings (major speed increase). 
 //1.12 increased Modified Guass fitting range slightly. 
 //1.11 adds Overwrite for UPD dark current range 5
@@ -75,6 +78,13 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		TabControl DataTabs , value= 0, win=USAXSDataReduction
 		NI3_TabPanelControl("",0)
 		DoWIndow/F USAXSDataReduction
+		if (cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
+			IN3_SaveData()	
+			NVAR UserSavedData=root:Packages:Indra3:UserSavedData
+			UserSavedData=1
+			IN3_FixSaveData()
+			DoWIndow/F USAXSDataReduction
+		endif
 	endif
 	if (cmpstr(ctrlName,"RemovePointsRange")==0)
 		RemovePointsWithMarquee()
@@ -82,6 +92,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	if (cmpstr(ctrlName,"Recalculate")==0)
 		IN3_RecalculateData(1)	
 		DoWIndow/F USAXSDataReduction
+		IN3_FixSaveData()
 	endif
 
 	if (cmpstr(ctrlName,"SaveResults")==0)
@@ -1164,7 +1175,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	wavestats/Q tempPDInt
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
-	FindLevels /N=5 /P/Q  tempPDInt, V_max/1.8
+	FindLevels /N=5 /P/Q  tempPDInt, V_max/2
 	wave W_FindLevels
 	variable startPointL, endPointL
 	if(Numpnts(W_FindLevels)==2)

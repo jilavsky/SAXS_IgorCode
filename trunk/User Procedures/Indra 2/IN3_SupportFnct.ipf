@@ -391,12 +391,12 @@ Function IN3_RecalcSubtractSaAndBlank()
 			checkdisplayed /W=RcurvePlotGraph SMR_Int
 			if(!V_Flag)
 				AppendToGraph/R/W=RcurvePlotGraph SMR_Int vs SMR_Qvec
-				Label right "SMR Intensity"
-				ModifyGraph lsize(SMR_Int)=2
-				ErrorBars SMR_Int Y,wave=(SMR_Error,SMR_Error)
-				ModifyGraph rgb(SMR_Int)=(1,16019,65535)
-				ModifyGraph log=1
-				ModifyGraph gaps=0
+				Label/W=RcurvePlotGraph right "SMR Intensity"
+				ModifyGraph/W=RcurvePlotGraph lsize(SMR_Int)=2
+				ErrorBars/W=RcurvePlotGraph SMR_Int Y,wave=(SMR_Error,SMR_Error)
+				ModifyGraph/W=RcurvePlotGraph rgb(SMR_Int)=(1,16019,65535)
+				ModifyGraph/W=RcurvePlotGraph log=1
+				ModifyGraph/W=RcurvePlotGraph gaps=0
 			endif
 		endif
 		USAXSorSBUSAXS="FlyUSAXS"	
