@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.21
+#pragma version =1.23
 
 
 //*************************************************************************\
@@ -8,7 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.21 fixed update MaskListobox, fixed bug preventing listbox update. 
+//1.23 fix problems when saving of mask file to drive failed due to soemthing (like write privileges). 
+//1.22 yet another update for MaskListbox - it was not looking for h5 and hdf5 fiels when Nexus was seletced
+//1.21 fixed update MaskListbox, fixed bug preventing listbox update. 
 //1.20 modified call to hook function
 //1.19 Added right click "Refresh content" to Listbox
 //1.18 fixed /NTHR=1 to /NTHR=0
@@ -348,10 +350,13 @@ Function NI1M_SaveHDFNikaMaskFile(fileNameString, PathNameString,ImageToSaveName
 	setDataFOlder root:Packages:Convert2Dto1D
 	
 	variable fileID, groupID, NXentryID
-	HDF5CreateFile  /O /P=$(PathNameString)  /Z fileID  as fileNameString
-	HDF5SaveData /IGOR=16   ImageToSaveName , fileID  	//16 sets the bit 4 so we save only wave note...
-	//now create positioners...
-	HDF5CloseFile  fileID 	
+	HDF5CreateFile  /O/Z /P=$(PathNameString)  /Z fileID  as fileNameString
+	if(V_Flag==0)	//no error, .
+		HDF5SaveData /IGOR=16   ImageToSaveName , fileID  	//16 sets the bit 4 so we save only wave note...
+		HDF5CloseFile  fileID 	
+	else
+		DoAlert 0, "Could not save the Mask file to drive, may be cannot write in location? Mask in current experiment is OK"
+	endif
 #else
 		DoALert 0, "Hdf5 xop not installed, please, run installed version 1.10 and higher and install xops"
 #endif 
@@ -609,7 +614,7 @@ Function NI1M_UpdateMaskListBox()
 			abort
 		endif
 		
-		if(stringmatch(RealExtension,"hdf"))
+		if(stringmatch(RealExtension,".hdf"))
 			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".h5")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf5")

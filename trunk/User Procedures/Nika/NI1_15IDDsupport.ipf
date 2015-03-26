@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 fixes for mask use in WAXS settings
 //1.16 fixes for 9ID
 //1.15 fixes for 9ID data after the move. Only partial fix. 
 //1.14 widen the angular range for sector average for pinSAXS - seems to be OK now with vacuum chamber.  
@@ -746,16 +747,20 @@ Function NI1_15IDDSetDefaultNx()
 				SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
 				CCDFileExtension = "Nexus"
 				NewPath/O Convert2Dto1DMaskPath, pathInforStrL
-				NI1M_UpdateMaskListBox()
-				NVAR Usemask= root:Packages:Convert2Dto1D:Usemask
-				Usemask =1 
-				SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
-				if(strlen(CurrentMaskFileName)<1)
-					DoAlert 0, "Do NOT forget to create or load Mask"
-				else	
-					Print "  *********  IMPORTANT:  ********* \rFound Mask named :  >>>  "+CurrentMaskFileName+" <<<   Data reduction will use this mask. Make sure thsi is the correct mask to use. "
+				if(!WAXSSelected)
+					NI1M_UpdateMaskListBox()
+					NVAR Usemask= root:Packages:Convert2Dto1D:Usemask
+					Usemask =1 
+					SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
+					if(strlen(CurrentMaskFileName)<1)
+						DoAlert 0, "Do NOT forget to create or load Mask"
+					else	
+						Print "  *********  IMPORTANT:  ********* \rFound Mask named :  >>>  "+CurrentMaskFileName+" <<<   Data reduction will use this mask. Make sure thsi is the correct mask to use. "
+					endif
+				else
+					NVAR Usemask= root:Packages:Convert2Dto1D:Usemask
+					Usemask =0 
 				endif
-
 
 	DoWIndow NI1A_Convert2Dto1DPanel
 	if(!V_Flag)
