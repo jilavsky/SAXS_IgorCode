@@ -350,7 +350,7 @@ Function NI1M_SaveHDFNikaMaskFile(fileNameString, PathNameString,ImageToSaveName
 	setDataFOlder root:Packages:Convert2Dto1D
 	
 	variable fileID, groupID, NXentryID
-	HDF5CreateFile  /O/Z /P=$(PathNameString)  /Z fileID  as fileNameString
+	HDF5CreateFile  /O/Z /P=$(PathNameString)  fileID  as fileNameString
 	if(V_Flag==0)	//no error, .
 		HDF5SaveData /IGOR=16   ImageToSaveName , fileID  	//16 sets the bit 4 so we save only wave note...
 		HDF5CloseFile  fileID 	
