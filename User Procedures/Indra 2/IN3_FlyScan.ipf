@@ -4,7 +4,7 @@
 
 
 Constant IN3_FlyImportVersionNumber=0.19
-Constant IN3_DeleteRawData=0
+Constant IN3_DeleteRawData=1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
