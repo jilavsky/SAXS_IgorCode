@@ -843,7 +843,7 @@ Function IR2L_Data_TabPanelControl(name,tab)
 		CheckBox UseTheData_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("UseTheData_set"+num2str(tab+1)), disable=( !DisplayInputDataControls|| !displayUseCheckbox)
 //		Execute("CheckBox UseTheData_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(tab+1)+", disable=( !"+num2str(DisplayInputDataControls)+"||!"+num2str(displayUseCheckbox)+")")
 		CheckBox SlitSmeared_set ,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("SlitSmeared_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
-		SetVariable SlitLength_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("SlitLength_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplaySlitSmeared)||!(DisplayInputDataControls))
+//		SetVariable SlitLength_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("SlitLength_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplaySlitSmeared)||!(DisplayInputDataControls))
 		SetVariable FolderName_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("FolderName_set"+num2str(tab+1)), disable=( !(DisplayInputDataControls)||!(displayUseCheckbox))
 		SetVariable UserDataSetName_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("UserDataSetName_set"+num2str(tab+1)), disable=( !(DisplayInputDataControls)||!(displayUseCheckbox))
 		SetVariable Qmin_set ,win=LSQF2_MainPanel ,value= root:Packages:IR2L_NLSQF:$("Qmin_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
@@ -1927,12 +1927,12 @@ Function IR2L_Initialize()
 	ListOfVariables+="ConfEvTargetChiSqRange;ConfEvAutoCalcTarget;"
 
 	//Input Data parameters... Will have _setX attached, in this method background needs to be here...
-	ListOfDataVariables="UseTheData;SlitSmeared;SlitLength;Qmin;Qmax;"
+	ListOfDataVariables="UseTheData;SlitSmeared;SlitLength;SmearingFWHM;SmearingMaxNumPnts;Qmin;Qmax;"
 	ListOfDataVariables+="Background;BackgroundFit;BackgroundMin;BackgroundMax;BackgErr;BackgStep;"
 	ListOfDataVariables+="DataScalingFactor;ErrorScalingFactor;UseUserErrors;UseSQRTErrors;UsePercentErrors;"
 
 
-	ListOfDataStrings ="FolderName;IntensityDataName;QvecDataName;ErrorDataName;UserDataSetName;"
+	ListOfDataStrings ="FolderName;IntensityDataName;QvecDataName;ErrorDataName;UserDataSetName;SmearingType;SmearingWaveName;"
 	
 	
 	//Common Size distribution Model parameters, these need to have _popX attached at the end of name
@@ -2113,7 +2113,7 @@ Function IR2L_SetInitialValues(enforce)
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 //	abort "finish me - IE2L_SetInitialValues"
-	string ListOfVariables
+	string ListOfVariables, ListOfStrings
 	variable i, j
 //set initial values....
 	//set starting conditions here....
@@ -2161,6 +2161,36 @@ Function IR2L_SetInitialValues(enforce)
 			UsePercentErrors=0
 		endif
 	endfor
+
+		for(j=1;j<=10;j+=1)	//Smearing max Points
+			ListOfVariables = "SmearingMaxNumPnts;"
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_set"+num2str(j))
+				if(testVar==0)
+					testVar=5
+				endif
+			endfor
+		endfor
+		for(j=1;j<=10;j+=1)	//Slit type
+			ListOfStrings = "SmearingType;"
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				SVAR/Z testStr=$(StringFromList(i,ListOfStrings)+"_set"+num2str(j))
+				if(strlen(testStr)==0)
+					testStr="Slit"
+				endif
+			endfor
+		endfor
+		for(j=1;j<=10;j+=1)	//SmearingWaveName
+			ListOfStrings = "SmearingWaveName;"
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				SVAR/Z testStr=$(StringFromList(i,ListOfStrings)+"_set"+num2str(j))
+				if(strlen(testStr)==0)
+					testStr="---"
+				endif
+			endfor
+		endfor
+
+
 
 	for(i=1;i<=10;i+=1)	
 		SVAR Model=$("Model_pop"+num2str(i))
@@ -4960,6 +4990,19 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 		UseGeneticOptimization=!UseLSQF
 	endif
 
+	if (stringMatch(ctrlName,"SlitSmeared_set*"))
+		if(checked)
+			ControlInfo/W=LSQF2_MainPanel DataTabs
+			IR2L_ResolutionSmearing(V_Value)
+		else
+			DoWIndow IR2L_ResSmearingPanel
+			if(V_Flag)
+				DoWIndow/K IR2L_ResSmearingPanel
+			endif
+		endif
+	endif
+
+
 
 	ControlInfo/W=LSQF2_MainPanel DataTabs
 	IR2L_Data_TabPanelControl("",V_Value)
@@ -4970,3 +5013,92 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 	endif
 	setDataFolder OldDf
 end
+
+//**************************************************************************************************************************************************************************************
+//**************************************************************************************************************************************************************************************
+//**************************************************************************************************************************************************************************************
+
+Function IR2L_ResolutionSmearing(WhichSet) : Panel
+	variable WhichSet
+	DoWIndow IR2L_ResSmearingPanel
+	if(V_Flag)
+		DoWIndow/K IR2L_ResSmearingPanel
+	endif
+	variable CurDataTab = WhichSet+1
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(456,270,878,517) as "Resolution Smearing"
+	DoWindow/C IR2L_ResSmearingPanel
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)
+	DrawText 20,32,"Q-resolution smearing for Data set "+num2str(WhichSet+1)
+	DrawText 13,165,"Select smearing method - Slit for USAXS, Gauss for pinhole data"
+	DrawText 13,180,"Select source - Fixed for same value for each Q"
+	DrawText 74,196,".... or wave in current data folder (varies per point)"
+	DrawText 13,212,"Oversample points - max number of points (per measured Q) added"
+	//DrawText 13,228,"Recalculates on panel close - or do it manually. "
+	SVAR SMType=$("root:Packages:IR2L_NLSQF:SmearingType_set"+num2str(CurDataTab))
+	SVAR SMSrc=$("root:Packages:IR2L_NLSQF:SmearingWaveName_set"+num2str(CurDataTab))
+	if(stringmatch(SMType,"Slit"))
+		SMSrc = "Fixed value"
+	endif
+	SVAR df = $("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(CurDataTab))
+	string ListOfFlders=  "Fixed value;"+IN2G_CreateListOfItemsInFolder(df,2)
+	variable DisplaySlitLength=stringmatch(SMSrc, "Fixed value") ? 0 : 1
+	PopupMenu SmearingType,pos={12,42},size={117,20},title="Smearing Type:"
+	PopupMenu SmearingType,help={"Smearing method - SLit for USAXS, Gauss for pixel smearing"}
+	PopupMenu SmearingType,value= #"\"Slit;Gauss;\"", mode=(1+WhichListItem(SMType, "Slit;Gauss;") )
+	PopupMenu SmearingType proc=IRL2_SmearingPopMenuProc
+	PopupMenu SmearingSource,pos={12,68},size={171,20},title="Smearing Source"
+	PopupMenu SmearingSource,help={"Either single value or wave in current folder"}
+	PopupMenu SmearingSource,value=#("\""+ListOfFlders+"\"")
+	PopupMenu SmearingSource, mode=(1+WhichListItem(SMSrc,ListOfFlders) )
+	PopupMenu SmearingSource proc=IRL2_SmearingPopMenuProc
+	SetVariable SlitLength,pos={12,97},size={250,15},title="Fixed slit length/Gauss FWHM"
+	SetVariable SlitLength,help={"Either slit length for USAXS of FWHM for Guass smearing"}, disable = DisplaySlitLength
+	SetVariable SlitLength,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(CurDataTab))
+	SetVariable SmearingMaxNumPnts,pos={12,124},size={250,15},title="Max num of oversample pnts"
+	SetVariable SmearingMaxNumPnts,help={"Max numbe rof additiona points where needed for smearing - per measured point"}
+	SetVariable SmearingMaxNumPnts,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingMaxNumPnts_set"+num2str(CurDataTab))
+EndMacro
+
+//**************************************************************************************************************************************************************************************
+//**************************************************************************************************************************************************************************************
+//**************************************************************************************************************************************************************************************
+Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	ControlInfo/W=LSQF2_MainPanel DataTabs
+	variable CurDataTab = V_Value+1
+	if(V_Value<0)
+	endif
+	SVAR SMType=$("root:Packages:IR2L_NLSQF:SmearingType_set"+num2str(CurDataTab))
+	SVAR SMSrc=$("root:Packages:IR2L_NLSQF:SmearingWaveName_set"+num2str(CurDataTab))
+	variable DisplaySlitLength
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			if(stringmatch(pa.ctrlName,"SmearingType"))
+				SMType = popStr
+				if(stringmatch(SMType,"Slit"))
+					SMSrc = "Fixed value"
+					PopupMenu SmearingSource, win=IR2L_ResSmearingPanel, mode=1
+					DisplaySlitLength=stringmatch(SMSrc, "Fixed value") ? 0 : 1
+					SetVariable SlitLength, win=IR2L_ResSmearingPanel, disable = DisplaySlitLength
+				endif
+			endif
+			if(stringmatch(pa.ctrlName,"SmearingSource"))
+				SMSrc = popStr
+				 DisplaySlitLength=stringmatch(SMSrc, "Fixed value") ? 0 : 1
+				SetVariable SlitLength, win=IR2L_ResSmearingPanel, disable = DisplaySlitLength
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************************************************************************************************************************************
+//**************************************************************************************************************************************************************************************
+//**************************************************************************************************************************************************************************************

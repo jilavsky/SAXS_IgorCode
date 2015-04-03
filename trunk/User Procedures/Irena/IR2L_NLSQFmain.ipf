@@ -60,6 +60,10 @@ Function IR2L_Main()
 		UpdatePanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber)
 	endif
 	IR2L_RecalculateIfSelected()
+	DoWindow IR2L_ResSmearingPanel
+	if(V_Flag)
+		DoWindow/F IR2L_ResSmearingPanel
+	endif	
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -150,10 +154,10 @@ Function IR2L_MainPanel()
 
 		CheckBox UseTheData_set,pos={95,245},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Use?"
 		CheckBox UseTheData_set,variable= root:Packages:IR2L_NLSQF:UseTheData_set1, help={"Use the data in the tool?"}
-		CheckBox SlitSmeared_set,pos={155,245},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Slit Smeared?"
-		CheckBox SlitSmeared_set,variable= root:Packages:IR2L_NLSQF:SlitSmeared_set1, help={"Slit smeared data?"}
-		SetVariable SlitLength_set,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SlitLength_set1, proc=IR2L_DataTabSetVarProc
-		SetVariable SlitLength_set,pos={260,245},size={140,15},title="Slit length [1/A]:", help={"This is slit length of the set currently loaded."}
+		CheckBox SlitSmeared_set,pos={155,245},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Slit/Q resolution Smeared?"
+		CheckBox SlitSmeared_set,variable= root:Packages:IR2L_NLSQF:SlitSmeared_set1, help={"Data smeared by Q resolution (slit/pixel)?"}
+//		SetVariable SlitLength_set,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SlitLength_set1, proc=IR2L_DataTabSetVarProc
+//		SetVariable SlitLength_set,pos={260,245},size={140,15},title="Slit length [1/A]:", help={"This is slit length of the set currently loaded."}
  
  		SetVariable FolderName_set,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:FolderName_set1, noedit=1,noproc,frame=0,labelBack=(0,52224,0)
 		SetVariable FolderName_set,pos={5,265},size={395,15},title="Data:", help={"This is data set currently loaded in this data set."}

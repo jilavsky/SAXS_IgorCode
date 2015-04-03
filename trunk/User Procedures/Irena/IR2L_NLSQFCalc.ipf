@@ -59,7 +59,7 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 	variable pop, dataSet, i, j 
 	//here we calculate intensity for all used populations and used datasets
 	For(j=1;j<=10;j+=1)	//j is dataset
-			//check if the slit smeared data are nto fitted to too small Qmax
+			//check if the slit smeared data are not fitted to too small Qmax
 			NVAR UseMe=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(j))
 			NVAR Qmax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(j))
 			NVAR SlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(j))
