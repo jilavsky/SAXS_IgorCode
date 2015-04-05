@@ -154,8 +154,8 @@ Function IR2L_MainPanel()
 
 		CheckBox UseTheData_set,pos={95,245},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Use?"
 		CheckBox UseTheData_set,variable= root:Packages:IR2L_NLSQF:UseTheData_set1, help={"Use the data in the tool?"}
-		CheckBox SlitSmeared_set,pos={155,245},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Slit/Q resolution Smeared?"
-		CheckBox SlitSmeared_set,variable= root:Packages:IR2L_NLSQF:SlitSmeared_set1, help={"Data smeared by Q resolution (slit/pixel)?"}
+		CheckBox UseSmearing_set,pos={175,245},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Slit/Q resolution smeared?"
+		CheckBox UseSmearing_set,variable= root:Packages:IR2L_NLSQF:UseSmearing_set1, help={"Data smeared by Q resolution (slit/pixel)?"}
 //		SetVariable SlitLength_set,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SlitLength_set1, proc=IR2L_DataTabSetVarProc
 //		SetVariable SlitLength_set,pos={260,245},size={140,15},title="Slit length [1/A]:", help={"This is slit length of the set currently loaded."}
  

@@ -50,6 +50,7 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 		SVAR NewQName=$("root:Packages:IR2L_NLSQF:QvecDataName_set"+num2str(whichDataSet))
 		SVAR NewErrorName=$("root:Packages:IR2L_NLSQF:ErrorDataName_set"+num2str(whichDataSet))
 		NVAR SlitSmeared_set=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(whichDataSet))
+		NVAR UseSmearing_set= $("root:Packages:IR2L_NLSQF:UseSmearing_set"+num2str(whichDataSet))
 		NVAR SlitLength_set=$("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(whichDataSet))
 		NVAR UseIndra2Data=root:Packages:IR2L_NLSQF:UseIndra2Data
 		NVAR GraphXMin = root:Packages:IR2L_NLSQF:GraphXMin
@@ -74,11 +75,13 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	if(UseIndra2Data)
 		if(stringmatch(InputIntName, "*SMR*" ) && stringmatch(InputQName,"*SMR*") &&stringmatch(InputErrorName,"*SMR*")  )
 			SlitSmeared_set=1
+			UseSmearing_set = 1
 			WvNote=note(inputI)
 			SlitLength_set=NumberByKey("SlitLength", WvNote , "=" , ";")
 		else
 			SlitSmeared_set=0
 			SlitLength_set=0
+			UseSmearing_set=0
 		endif
 	endif
 	if(whichDataSet==1)
