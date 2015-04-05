@@ -58,16 +58,8 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 	//find which pops and data sets are used
 	variable pop, dataSet, i, j 
 	//here we calculate intensity for all used populations and used datasets
-	For(j=1;j<=10;j+=1)	//j is dataset
-			//check if the slit smeared data are not fitted to too small Qmax
-			NVAR UseMe=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(j))
-			NVAR Qmax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(j))
-			NVAR SlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(j))
-			NVAR SlitLength=$("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(j))
-			if(UseMe)
-				IN2G_CheckForSlitSmearedRange(SlitSmeared,Qmax, SlitLength,userMessage="Insufficient data range found for data set "+num2str(j))
-			endif
-	endfor			
+	IR2L_PrepareSetsQvectors()		//this will handle all needed changes to Q vector to manage smearing...
+	//now we have Q vector which is used to calculate 
 	for(i=1;i<11;i+=1)
 		NVAR Use=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
 		SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(i))
@@ -183,7 +175,11 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 	endif
 		//summ the model intensities
 	IR2L_SummModel()		
+		//fix smearing issues, fi needed...
+	IR2L_FinishSmearingOfData()
 	if(!fitting)
+		//create residuals
+		IR2L_CreateResidulas()
 		//append to graph...
 		IR2L_AppendModelToGraph()
 		//NOw fix legend...
@@ -216,23 +212,27 @@ Function IR2L_CalcMassFIntPopXDataSetY(pop,dataSet)
 	endif
 	if(UseThePop && UseDatasw)
 //	//and now we need to calculate the model Intensity
-		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
-		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
-		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
-		if (!WaveExists (Qwave))
+//		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+//		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+//		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+//		if (!WaveExists (Qwave))
+//			Abort "Select original data first"
+//		endif
+//		variable StartPoint, EndPoint
+//		StartPoint = BinarySearch(Qwave, QMin)
+//		EndPoint = BinarySearch(Qwave, QMax)
+//		if(StartPoint<0)
+//			StartPoint=0
+//		endif
+//		if(EndPoint<0)
+//			EndPoint = numpnts(Qwave)-1
+//		endif
+//		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+//		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
+		Wave/Z ModelQ = $("Qmodel_set"+num2str(DataSet))
+		if (!WaveExists (ModelQ))
 			Abort "Select original data first"
 		endif
-		variable StartPoint, EndPoint
-		StartPoint = BinarySearch(Qwave, QMin)
-		EndPoint = BinarySearch(Qwave, QMax)
-		if(StartPoint<0)
-			StartPoint=0
-		endif
-		if(EndPoint<0)
-			EndPoint = numpnts(Qwave)-1
-		endif
-		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
-		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		ModelInt=0
@@ -345,23 +345,27 @@ Function IR2L_CalcSurfFIntPopXDataSetY(pop,dataSet)
 			LocalContrast=Contrast_set
 		endif
 
-		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
-		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
-		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
-		if (!WaveExists (Qwave))
+//		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+//		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+//		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+//		if (!WaveExists (Qwave))
+//			Abort "Select original data first"
+//		endif
+//		variable StartPoint, EndPoint
+//		StartPoint = BinarySearch(Qwave, QMin)
+//		EndPoint = BinarySearch(Qwave, QMax)
+//		if(StartPoint<0)
+//			StartPoint=0
+//		endif
+//		if(EndPoint<0)
+//			EndPoint = numpnts(Qwave)-1
+//		endif
+//		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+//		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
+		Wave/Z ModelQ = $("Qmodel_set"+num2str(DataSet))
+		if (!WaveExists (ModelQ))
 			Abort "Select original data first"
 		endif
-		variable StartPoint, EndPoint
-		StartPoint = BinarySearch(Qwave, QMin)
-		EndPoint = BinarySearch(Qwave, QMax)
-		if(StartPoint<0)
-			StartPoint=0
-		endif
-		if(EndPoint<0)
-			EndPoint = numpnts(Qwave)-1
-		endif
-		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
-		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		ModelInt=0
@@ -436,23 +440,26 @@ Function IR2L_CalcDiffIntPopXDataSetY(pop,dataSet)
 	endif
 	if(UseThePop && UseDatasw)
 //	//and now we need to calculate the model Intensity
-		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
-		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
-		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
-		if (!WaveExists (Qwave))
+//		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+//		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+//		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+//		if (!WaveExists (Qwave))
+//			Abort "Select original data first"
+//		endif
+//		variable StartPoint, EndPoint
+//		StartPoint = BinarySearch(Qwave, QMin)
+//		EndPoint = BinarySearch(Qwave, QMax)
+//		if(StartPoint<0)
+//			StartPoint=0
+//		endif
+//		if(EndPoint<0)
+//			EndPoint = numpnts(Qwave)-1
+//		endif
+//		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+		Wave/Z ModelQ = $("Qmodel_set"+num2str(DataSet))
+		if (!WaveExists (ModelQ))
 			Abort "Select original data first"
 		endif
-		variable StartPoint, EndPoint
-		StartPoint = BinarySearch(Qwave, QMin)
-		EndPoint = BinarySearch(Qwave, QMax)
-		if(StartPoint<0)
-			StartPoint=0
-		endif
-		if(EndPoint<0)
-			EndPoint = numpnts(Qwave)-1
-		endif
-		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
-		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		ModelInt=0
@@ -577,23 +584,28 @@ Function IR2L_CalcUnifiedIntPopXDataSetY(pop,dataSet)
 	endif
 	if(UseThePop && UseDatasw)
 //	//and now we need to calculate the model Intensity
-		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
-		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
-		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
-		if (!WaveExists (Qwave))
+//		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+//		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+//		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+//		if (!WaveExists (Qwave))
+//			Abort "Select original data first"
+//		endif
+//		variable StartPoint, EndPoint
+//		StartPoint = BinarySearch(Qwave, QMin)
+//		EndPoint = BinarySearch(Qwave, QMax)
+//		if(StartPoint<0)
+//			StartPoint=0
+//		endif
+//		if(EndPoint<0)
+//			EndPoint = numpnts(Qwave)-1
+//		endif
+//		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+//		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
+		Wave/Z ModelQ = $("Qmodel_set"+num2str(DataSet))
+		if (!WaveExists (ModelQ))
 			Abort "Select original data first"
 		endif
-		variable StartPoint, EndPoint
-		StartPoint = BinarySearch(Qwave, QMin)
-		EndPoint = BinarySearch(Qwave, QMax)
-		if(StartPoint<0)
-			StartPoint=0
-		endif
-		if(EndPoint<0)
-			EndPoint = numpnts(Qwave)-1
-		endif
-		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
-		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
+
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		ModelInt=0
@@ -983,23 +995,26 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 //	here we need to get the G matrix for each population and DataSet separately... 	
 // 	then calculate 
 //	IR1_CalculateModelIntensity()		<<< old example...
-		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
-		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
-		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
-		if (!WaveExists (Qwave))
+//		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
+//		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
+//		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
+//		if (!WaveExists (Qwave))
+//			Abort "Select original data first"
+//		endif
+//		variable StartPoint, EndPoint
+//		StartPoint = BinarySearch(Qwave, QMin)
+//		EndPoint = BinarySearch(Qwave, QMax)
+//		if(StartPoint<0)
+//			StartPoint=0
+//		endif
+//		if(EndPoint<0)
+//			EndPoint = numpnts(Qwave)-1
+//		endif
+//		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
+		Wave/Z ModelQ = $("Qmodel_set"+num2str(DataSet))
+		if (!WaveExists (ModelQ))
 			Abort "Select original data first"
 		endif
-		variable StartPoint, EndPoint
-		StartPoint = BinarySearch(Qwave, QMin)
-		EndPoint = BinarySearch(Qwave, QMax)
-		if(StartPoint<0)
-			StartPoint=0
-		endif
-		if(EndPoint<0)
-			EndPoint = numpnts(Qwave)-1
-		endif
-		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
-		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Duplicate/O ModelQ, $("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		Wave ModelInt=$("IntensityModel_set"+num2str(DataSet)+"_pop"+num2str(pop))
 		ModelInt=0
@@ -1122,21 +1137,6 @@ Function IR2L_SummModel()
 				endif
 			endfor
 			ModelIntSumm+=Background			//add background... Only once for each data set...
-
-			//and here slit smear, if appropriate... 
-			NVAR slitSmeared =$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(j))
-			NVAR SlitLength = $("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(j))
-			if(slitSmeared)
-				if(SlitLength<ModelQ[0]|| SlitLength>(ModelQ[numpnts(ModelQ)-1]*0.8))
-					Abort "The slit length seems incorrect - too small or too large- Modeling II cannot continue. Fix SLit length and then try again."
-				else	
-					IR2L_SlitSmearLSQFData(ModelIntSumm,ModelQ,SlitLength)
-				endif
-			endif
-			//generate residuals for user
-			Duplicate/O ModelIntSumm, $("Residuals_set"+num2str(j))
-			Wave residuals=$("Residuals_set"+num2str(j))
-			residuals = (Intensity - ModelIntSumm) / Error
 		endif
 		
 	endfor
@@ -1156,13 +1156,9 @@ Function IR2L_SlitSmearLSQFData(IntWave,Qwave,SlitLength)
 	
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
-	Duplicate/O IntWave, SmearedIntWave
-
+	Duplicate/Free IntWave, SmearedIntWave
 	IR1B_SmearData(IntWave,Qwave, slitLength, SmearedIntWave)
-
 	IntWave=SmearedIntWave
-	KillWaves/Z SmearedIntWave
-	
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1482,7 +1478,8 @@ Function IR2L_GraphResiduals()
 		if(!UseTheData || (!MultipleInputData && j>1))
 			UseDatasw=0
 		endif
-		Wave/Z ModelQ = $("Qmodel_set"+num2str(j))
+		//Wave/Z ModelQ = $("Qmodel_set"+num2str(j))
+		Wave/Z ModelQ = $("Q_set"+num2str(j))
 		Wave/Z Residuals=$("Residuals_set"+num2str(j))
 		DoWIndow LSQF_ResidualsGraph
 		if(!V_Flag)
