@@ -5112,7 +5112,7 @@ Function IRL2_SmearingHookFunction(s)
 			else
 				UseSmearing_set=0
 			endif
-			DOUpdate/W=LSQF2_MainPanel
+			Checkbox UseSmearing_set win=LSQF2_MainPanel, value=UseSmearing_set
 		endif
 end
 
@@ -5200,13 +5200,17 @@ Function IR2L_FinishSmearingOfData()
 			Wave Intensity=$("Intensity_set"+num2str(i))
 			Wave ModelIntensity=$("IntensityModel_set"+num2str(i))
 			Wave Error=$("Error_set"+num2str(i))
+			variable j, Qval, dQval, StartX, EndX
 			if(UseSmearing)		//OK< need to fix the smearing issues... 
 				//first we will have to fix the Gauss smearing, if used...
 				//ModelIntSumm is model for larger q range - ModelQ - containing points for q smearing and slit smearing
 				//OrigModelQ is the original points we actually need... 
 				// to do later - fix the Pixel smearing
-			   Duplicate/O/Free ModelIntensity, ModelIntPixelSmeared
-			   Duplicate/O/Free ModelQ, ModelQPixelSmeared
+				if(!StringMatch(SmearingType, "None" )&&stringmatch(SmearingWaveName,"Fixed value"))		//fixed value for each point, have just one input number from user
+					Duplicate/Free OrigModelQ, ResolutionsWave
+					ResolutionsWave = SmearingFWHM			//for this settings, this is in Q units
+				endif
+				
 				//done Gauss pixel smearing. 
 				//By now we should fix somehow that the Intensity and 
 				//and here slit we smear, if appropriate... 
@@ -5215,8 +5219,30 @@ Function IR2L_FinishSmearingOfData()
 				if(StringMatch(SmearingType, "None" ))
 					//nothing happens here...
 					print "No pixel smearing necessary"
+				   Duplicate/O/Free ModelIntensity, ModelIntPixelSmeared
+				   Duplicate/O/Free ModelQ, ModelQPixelSmeared
 				elseif(StringMatch(SmearingType, "Bin Width (Nika) [1/A]" ))
 					print "finish smearing using Bin Width (Nika) [1/A]"
+					//we will need to get the resolutions - for now handle fixed one
+				   Duplicate/O/Free OrigModelQ, ModelIntPixelSmeared
+				   Duplicate/O/Free OrigModelQ, ModelQPixelSmeared
+					For(j=0;j<numpnts(ModelQPixelSmeared);j+=1)
+							Qval = ModelQPixelSmeared[j]
+							dQval = ResolutionsWave[j]
+							FindLevel /Q ModelQ, (Qval-dQval)
+							if(V_Flag==0)
+								StartX = (V_LevelX)
+							else
+								StartX = 0
+							endif
+							FindLevel /Q ModelQ, (Qval+dQval)
+							if(V_Flag==0)
+								EndX = (V_LevelX)
+							else
+								EndX = numpnts(OrigModelQ)-1
+							endif
+						ModelIntPixelSmeared[j] = area(ModelIntensity,StartX,EndX)/(EndX-StartX) //this should be avergae of the values here. Just flat average.  
+					endfor
 				elseif(StringMatch(SmearingType, "Gauss FWHM [1/A]" ))
 					print "finish smearing using Gauss FWHM [1/A]"
 				elseif(StringMatch(SmearingType, "Gauss FWHM [%]" ))
@@ -5325,8 +5351,70 @@ Function IR2L_PrepareSetsQvectors()
 			NVAR SlitLength=$("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(i))
 			NVAR isSlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(i))
 			variable OldNumPnts, QdistanceNeeded, LastQstep, NumNewQPoints
-			variable ExtensionQstep, ij
+			variable ExtensionQstep, ij, ik, newIDX, j
+			variable Qval, dQval, ExistQs, StartP, EndP, Qstep, curQ
 			if(UseSmearing)
+				//now here we need to make q scale which will be also usable for pixel smearing, if needed...
+				//again, at the end we will have just the two q vectors - short and user selected Qmodel_Orig_set
+				//and extended as needed Qmodel_set
+				if(!StringMatch(SmearingType, "None" ))	//these are pixel smeared data			
+					//we will need to get the resolutions - for now handle fixed one
+					if(stringmatch(SmearingWaveName,"Fixed value"))		//fixed value for each point, have just one input number from user
+						Duplicate/Free OrigModelQ, ResolutionsWave
+						ResolutionsWave = SmearingFWHM			//for this settings, this is in Q units
+					endif
+					
+					//at the end, we should have wave called ResolutionsWave with q resolutions in Q units. The ResolutionsWave has same number of points as OrigModelQ
+					//Now need to generate new Q scale. 
+					// we will ignore Qwidth values smaller then 2% of the Q value for now. 
+					if(StringMatch(SmearingType, "Bin Width (Nika) [1/A]" ))
+						//need to add user selected number of points through the width only.
+						Make/O/N=(1.5*SmearingMaxNumPnts*numpnts(OrigModelQ)) tempQwv		//note: make free later
+						tempQwv= nan
+						newIDX = 0
+						for(ik=0;ik<numpnts(OrigModelQ);ik+=1)
+							Qval = OrigModelQ[ik]
+							dQval = ResolutionsWave[ik]
+							FindLevel /P/Q OrigModelQ, (Qval-dQval)
+							if(V_Flag==0)
+								StartP = floor(V_LevelX)
+							else
+								StartP = 0
+							endif
+							FindLevel /P/Q OrigModelQ, (Qval+dQval)
+							if(V_Flag==0)
+								EndP = ceil(V_LevelX)
+							else
+								EndP = numpnts(OrigModelQ)-1
+							endif
+							ExistQs = EndP - StartP
+							if((ExistQs < SmearingMaxNumPnts)&&((dQval/Qval)>0.02))		//found in the dQ less points then user wanted, so we need to rebin this
+								//and at the same time the dQ/Q is more than 2%. 
+								Qstep = 2*dQval/SmearingMaxNumPnts
+								For(j=0;j<SmearingMaxNumPnts;j+=1)
+									curQ = Qval-dQval+(j*Qstep)
+									findlevel/Q tempQwv, curQ			//check if we already added points in this are, if yes, do not add new points. 
+									if(V_Flag)
+										tempQwv[newIDX] = curQ
+										newIDX+=1
+									endif
+								endfor
+							else		//no rebining needed, to next point now...
+								tempQwv[newIDX] = Qval
+								newIDX +=1
+							endif
+						endfor
+						
+					endif
+					DeletePoints newIDX, (numpnts(tempQwv)-newIDX), tempQwv 
+					Sort tempQwv, tempQwv
+					Duplicate/O tempQwv, $("Qmodel_set"+num2str(i))	
+					//OK, Qmodel_setX is now Q set which has been hopefully corrently densified to provide enough Q points for sensible smearing. 
+					//next is handling slit smearing. 
+				else
+					Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))						
+				endif
+				
 				if(isSlitSmeared)	//need to make sure the Qvector is long enough, if not, we will add more points to calculation
 					//compare Qmax with slit length and see, what to do. 
 					if(ModelQ[numpnts(ModelQ)-1]<2*SlitLength)
@@ -5349,12 +5437,6 @@ Function IR2L_PrepareSetsQvectors()
 						//OK, now the ModelQ should be at least 2* slit length longer with some logic... 
 					endif
 				endif
-				//now here we need to make q scale which will be also usable for pixel smearing, if needed...
-				//again, at the end we will have just the two q vectors - short and user selected Qmodel_Orig_set
-				//and extended as needed Qmodel_set
-				
-				//this is TBA for now...
-			
 			else	//OK, this is not smeared at all, so just copy and keep as is... 
 					//now both of these Q vectors are the same. 
 				Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))			
