@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.22
 Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 fixed Guinier style definition... Weird, cannot find bug but it was setting legend parameters to NaNs. Copied same stuff from other style and it works??? 
 //2.21 chaged units for common system cm-1sr-1
 //2.20 added Int*Q^3 as plotting option. 
 //2.19 minor fix for Change Graph details panel visibility
@@ -1785,10 +1786,16 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	string/g Guinier
 	SVAR Guinier
 	Guinier="log(bottom)=0;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q\S2\M [A\S-2\M];Label left=Intensity [cm\S-1\M];DataY=Y;DataX=X^2;DataE=Y;Axis left auto=1;"
-	Guinier+="Axis bottom auto=1;Axis left min=5.41957359517844;Axis left max=1.78135123888276e+15;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;Graph use Lines=1;"
-  	Guinier+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
-	Guinier+="Graph vary Lines=1;"
-  	Guinier+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+	Guinier+="Axis bottom auto=1;Axis left min=5.41957359517844;Axis left max=1.78135123888276e+15;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;"
+//  	Guinier+="Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+//	Guinier+="Graph vary Lines=1;"
+//  	Guinier+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+//	Guinier+="Graph Use Rainbow=0;Graph Use BW=0;"	
+//	Guinier+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
+//	Guinier+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
+  	Guinier+= "Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+  	Guinier+= "Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+  	Guinier+= "Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Guinier+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Guinier+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Guinier+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
