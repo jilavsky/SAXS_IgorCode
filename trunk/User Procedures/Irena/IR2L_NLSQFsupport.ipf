@@ -1936,6 +1936,7 @@ Function IR2L_Initialize()
 
 	//Input Data parameters... Will have _setX attached, in this method background needs to be here...
 	ListOfDataVariables="UseTheData;SlitSmeared;UseSmearing;SlitLength;SmearingFWHM;SmearingGaussWidth;SmearingMaxNumPnts;Qmin;Qmax;"
+	ListOfDataVariables+="SmearingIgnoreSmalldQ;"
 	ListOfDataVariables+="Background;BackgroundFit;BackgroundMin;BackgroundMax;BackgErr;BackgStep;"
 	ListOfDataVariables+="DataScalingFactor;ErrorScalingFactor;UseUserErrors;UseSQRTErrors;UsePercentErrors;"
 
@@ -2175,10 +2176,21 @@ Function IR2L_SetInitialValues(enforce)
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
 				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_set"+num2str(j))
 				if(testVar==0)
+					testVar=7
+				endif
+			endfor
+		endfor
+		for(j=1;j<=10;j+=1)	//Smearing max Points
+			ListOfVariables = "SmearingIgnoreSmalldQ;"
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_set"+num2str(j))
+				if(testVar==0)
 					testVar=5
 				endif
 			endfor
 		endfor
+
+
 		for(j=1;j<=10;j+=1)	//Slit type
 			ListOfStrings = "SmearingType;"
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
@@ -2193,7 +2205,7 @@ Function IR2L_SetInitialValues(enforce)
 			For(i=0;i<itemsInList(ListOfVariables);i+=1)
 				SVAR/Z testStr=$(StringFromList(i,ListOfStrings)+"_set"+num2str(j))
 				if(strlen(testStr)==0)
-					testStr="---"
+					testStr="Fixed dQ [1/A]"
 				endif
 			endfor
 		endfor
@@ -5047,16 +5059,17 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	endif
 	variable CurDataTab = WhichSet+1
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(456,270,878,537) as "Resolution Smearing"
+	NewPanel /K=1/W=(456,270,878,560) as "Resolution Smearing"
 	DoWindow/C IR2L_ResSmearingPanel
 	SetDrawLayer UserBack
-	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)
-	DrawText 20,32,"Q-resolution smearing for Data set "+num2str(WhichSet+1)
+	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65535)
+	DrawText 20,25,"Q-resolution smearing for Data set "+num2str(WhichSet+1)
 	DrawText 13,200,"Select if slit smeared - only for Bose-Hart USAXS/USANS!"
 	DrawText 13,215,"Select if Q resolution smeared - typical for pinhole SAXS/SANS"
 	DrawText 13,230,"Select source : Fixed = same value for each Q"
 	DrawText 74,245,".... or wave in current data folder (varies per point)"
 	DrawText 13,260,"Oversample points - max number of points (per measured Q) added"
+	DrawText 13,275,"Ignore dQ/Q... save cpu by not smearing for small dQ/Q"
 	//DrawText 13,228,"Recalculates on panel close - or do it manually. "
 	SVAR SMType=$("root:Packages:IR2L_NLSQF:SmearingType_set"+num2str(CurDataTab))
 	SVAR SMSrc=$("root:Packages:IR2L_NLSQF:SmearingWaveName_set"+num2str(CurDataTab))
@@ -5064,35 +5077,41 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 		SMSrc = "Fixed value"
 	endif
 	SVAR df = $("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(CurDataTab))
-	string ListOfFlders=  "Fixed value;"+IN2G_CreateListOfItemsInFolder(df,2)
+	string ListOfFlders=  "Fixed dQ [1/A];Fixed dQ/Q [%];"+IN2G_CreateListOfItemsInFolder(df,2)
 	NVAR SlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(CurDataTab))
 	variable PixelSmearing= StringMatch(SMType, "None" )
-	variable FixedSmearing= StringMatch(SMSrc, "Fixed Value")
+	variable FixedSmearing= StringMatch(SMSrc, "Fixed *")
 
-	CheckBox SlitSmeared_set,pos={15,42},size={25,16},proc=IR2L_SmearingCheckProc,title="Slit Smeared?"
+	CheckBox SlitSmeared_set,pos={15,35},size={25,16},proc=IR2L_SmearingCheckProc,title="Slit Smeared?"
 	CheckBox SlitSmeared_set,variable= $("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(CurDataTab)), help={"Data slit smeared - Bonse-Hart system?"}
-	SetVariable SlitLength,pos={140,44},size={250,15},title="Slit length"
+	SetVariable SlitLength,pos={140,37},size={250,15},title="Slit length [1/A]  "
 	SetVariable SlitLength,help={"Either slit length for USAXS Bonse-Hart systems"}, disable = !SlitSmeared
 	SetVariable SlitLength,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(CurDataTab))
 	
-	PopupMenu SmearingType,pos={12,80},size={117,20},title="Pixel Smearing ?  "
-	PopupMenu SmearingType,help={"Smearing method - Slit for USAXS, Gauss for pixel smearing"}
-	PopupMenu SmearingType,value= #"\"None;Bin Width (Nika) [1/A];Gauss FWHM [1/A];Gauss FWHM [%];\"", mode=(1+WhichListItem(SMType, "None;Bin Width (Nika) [1/A];Gauss FWHM [1/A];Gauss FWHM [%];") )
+	PopupMenu SmearingType,pos={12,60},size={117,20},title="Pixel Smearing ?  "
+	PopupMenu SmearingType,help={"Smearing method - Bin width, Gauss for pixel smearing"}
+	PopupMenu SmearingType,value= #"\"None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];\"", mode=(1+WhichListItem(SMType, "None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];") )
 	PopupMenu SmearingType proc=IRL2_SmearingPopMenuProc
 
-	PopupMenu SmearingSource,pos={12,110},size={171,20},title="Smearing Source"
+	PopupMenu SmearingSource,pos={12,85},size={171,20},title="Smearing Source"
 	PopupMenu SmearingSource,help={"Either single value or wave in current folder"}
 	PopupMenu SmearingSource,value=#("\""+ListOfFlders+"\"")
 	PopupMenu SmearingSource, mode=(1+WhichListItem(SMSrc,ListOfFlders) )
 	PopupMenu SmearingSource proc=IRL2_SmearingPopMenuProc, disable = PixelSmearing
 	
-	SetVariable SmearingGaussWidth,pos={12,140},size={250,15},title="Fixed dQ - Bin width or Gauss FWHM", disable = (PixelSmearing||!FixedSmearing)
-	SetVariable SmearingGaussWidth,help={"Pixel smearing - Gauss FWHM if fixed"} //, disable = DisplaySlitLength
+	SetVariable SmearingGaussWidth,pos={12,110},size={250,15},title="Fixed dQ [1/A] or dQ/Q [%]", disable = (PixelSmearing||!FixedSmearing)
+	SetVariable SmearingGaussWidth,help={"Pixel smearing value - Bin width or Gauss FWHM if fixed"} //, disable = DisplaySlitLength
 	SetVariable SmearingGaussWidth,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingFWHM_set"+num2str(CurDataTab))
 	
-	SetVariable SmearingMaxNumPnts,pos={12,165},size={250,15},title="Max num of oversample pnts", disable = PixelSmearing
-	SetVariable SmearingMaxNumPnts,help={"Max number of additional points where needed for smearing - per measured point"}
-	SetVariable SmearingMaxNumPnts,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingMaxNumPnts_set"+num2str(CurDataTab))
+
+	SetVariable SmearingIgnoreSmalldQ,pos={12,135},size={250,15},title="Ignore dQ/Q smaller then [%]", disable = PixelSmearing
+	SetVariable SmearingIgnoreSmalldQ,help={"Ignores samller dQ/Q than specific fraction to save cpu"}
+	SetVariable SmearingIgnoreSmalldQ,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingIgnoreSmalldQ_set"+num2str(CurDataTab))
+	
+	NVAR SmPnts= $("root:Packages:IR2L_NLSQF:SmearingMaxNumPnts_set"+num2str(CurDataTab))
+	PopupMenu SmearingMaxNumPnts,pos={12,160},size={250,15},title="Max num of oversample pnts", proc=IRL2_SmearingPopMenuProc, disable = PixelSmearing
+	PopupMenu SmearingMaxNumPnts,help={"Max number of additional points where needed for smearing - per measured point"}
+	PopupMenu SmearingMaxNumPnts,value=#"\"5;7;9;11;15;19;\"", mode=(1+WhichListItem(num2str(SmPnts), "5;7;9;11;15;19;"))
 	
 EndMacro
 
@@ -5127,6 +5146,9 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 	endif
 	SVAR SMType=$("root:Packages:IR2L_NLSQF:SmearingType_set"+num2str(CurDataTab))
 	SVAR SMSrc=$("root:Packages:IR2L_NLSQF:SmearingWaveName_set"+num2str(CurDataTab))
+	NVAR SmPnts= $("root:Packages:IR2L_NLSQF:SmearingMaxNumPnts_set"+num2str(CurDataTab))
+	NVAR SLitSmeared= $("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(CurDataTab))
+	NVAR UseSmearing_set=$("root:Packages:IR2L_NLSQF:UseSmearing_set"+num2str(CurDataTab))
 	variable PixelSmearing= StringMatch(SMType, "None" )
 	variable FixedSmearing= StringMatch(SMSrc, "Fixed Value")
 	switch( pa.eventCode )
@@ -5136,17 +5158,28 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 			if(stringmatch(pa.ctrlName,"SmearingType"))
 				SMType = popStr
 				PixelSmearing= StringMatch(SMType, "None" )
-				FixedSmearing= StringMatch(SMSrc, "Fixed Value")
+				FixedSmearing= StringMatch(SMSrc, "Fixed *")
 				PopupMenu SmearingSource, disable = PixelSmearing
+				PopupMenu SmearingMaxNumPnts, disable = PixelSmearing
 				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing)
-				SetVariable SmearingMaxNumPnts,disable = PixelSmearing
+				SetVariable SmearingIgnoreSmalldQ,disable = (PixelSmearing||!FixedSmearing)
+				PopupMenu SmearingMaxNumPnts,disable = (PixelSmearing||!FixedSmearing)
+				if(!PixelSmearing || SLitSmeared)
+					UseSmearing_set = 1
+				else
+					UseSmearing_set = 0
+				endif
 			endif
 			if(stringmatch(pa.ctrlName,"SmearingSource"))
 				SMSrc = popStr
 				PixelSmearing= StringMatch(SMType, "None" )
-				FixedSmearing= StringMatch(SMSrc, "Fixed Value")
+				FixedSmearing= StringMatch(SMSrc, "Fixed *")
 				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing)
 			endif
+			if(stringmatch(pa.ctrlName,"SmearingMaxNumPnts"))
+				SmPnts = str2num(popStr)
+			endif
+			 
 			break
 		case -1: // control being killed
 			break
@@ -5162,11 +5195,21 @@ End
 Function IR2L_SmearingCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
+	ControlInfo/W=LSQF2_MainPanel DataTabs
+	variable CurDataTab = V_Value+1
+	SVAR SMType=$("root:Packages:IR2L_NLSQF:SmearingType_set"+num2str(CurDataTab))
+	NVAR UseSmearing_set=$("root:Packages:IR2L_NLSQF:UseSmearing_set"+num2str(CurDataTab))
+	variable PixelSmearing= !StringMatch(SMType, "None" )
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
 			if(StringMatch(cba.ctrlName, "SlitSmeared_set*" ))
 			SetVariable SlitLength, disable = !checked
+			endif
+			if(PixelSmearing || checked)
+					UseSmearing_set = 1
+			else
+					UseSmearing_set = 0
 			endif
 			break
 		case -1: // control being killed
@@ -5184,7 +5227,7 @@ Function IR2L_FinishSmearingOfData()
 	//also, we need to fix the residuals...
 	variable i
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
-	For(i=1;i<11;i++)
+	For(i=1;i<11;i+=1)
 		NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 		if(UseTheData&&(MultipleInputData||(i==1)))	//these data are used, need to fix the data
 			NVAR UseSmearing=$("root:Packages:IR2L_NLSQF:UseSmearing_set"+num2str(i))
@@ -5200,54 +5243,54 @@ Function IR2L_FinishSmearingOfData()
 			Wave Intensity=$("Intensity_set"+num2str(i))
 			Wave ModelIntensity=$("IntensityModel_set"+num2str(i))
 			Wave Error=$("Error_set"+num2str(i))
-			variable j, Qval, dQval, StartX, EndX
+			NVAR SmearingIgnoreSmalldQ= $("root:Packages:IR2L_NLSQF:SmearingIgnoreSmalldQ_set"+num2str(i))
+			variable j, Qval, dQval, StartX, EndX, FWHMStartx, FWHMEndx, GaussSdev, GaussCenterX
 			if(UseSmearing)		//OK< need to fix the smearing issues... 
 				//first we will have to fix the Gauss smearing, if used...
 				//ModelIntSumm is model for larger q range - ModelQ - containing points for q smearing and slit smearing
 				//OrigModelQ is the original points we actually need... 
 				// to do later - fix the Pixel smearing
-				if(!StringMatch(SmearingType, "None" )&&stringmatch(SmearingWaveName,"Fixed value"))		//fixed value for each point, have just one input number from user
-					Duplicate/Free OrigModelQ, ResolutionsWave
-					ResolutionsWave = SmearingFWHM			//for this settings, this is in Q units
-				endif
-				
-				//done Gauss pixel smearing. 
-				//By now we should fix somehow that the Intensity and 
-				//and here slit we smear, if appropriate... 
-				//need tohandle these types:
-				//Bin Width (Nika) [1/A];Gauss FWHM [1/A];Gauss FWHM [%]
 				if(StringMatch(SmearingType, "None" ))
-					//nothing happens here...
+					//nothing happens here... but how did we get here anyway??? 
 					print "No pixel smearing necessary"
 				   Duplicate/O/Free ModelIntensity, ModelIntPixelSmeared
 				   Duplicate/O/Free ModelQ, ModelQPixelSmeared
-				elseif(StringMatch(SmearingType, "Bin Width (Nika) [1/A]" ))
-					print "finish smearing using Bin Width (Nika) [1/A]"
+				else		//need to smear these... 
+					Wave ResolutionsWave=$("ResolutionsWave_set"+num2str(i))
+					// With Width we are using rectangular "slit" - 
+					//print "finish smearing using Bin Width [1/A]"
 					//we will need to get the resolutions - for now handle fixed one
 				   Duplicate/O/Free OrigModelQ, ModelIntPixelSmeared
 				   Duplicate/O/Free OrigModelQ, ModelQPixelSmeared
-					For(j=0;j<numpnts(ModelQPixelSmeared);j+=1)
-							Qval = ModelQPixelSmeared[j]
+					make/Free/N=20 tmpModelInt, tmpSmFnct
+					For(j=0;j<numpnts(OrigModelQ);j+=1)
+							Qval = OrigModelQ[j]
 							dQval = ResolutionsWave[j]
-							FindLevel /Q ModelQ, (Qval-dQval)
-							if(V_Flag==0)
-								StartX = (V_LevelX)
+							if(dQval/Qval > (0.01 * SmearingIgnoreSmalldQ))
+								if(StringMatch(SmearingType, "Bin Width *" ))
+									//bin width is average of -dQ/2 to +dQ/2 around Q
+									SetScale /I x, Qval-(dQval/2), Qval+(dQval/2), tmpModelInt, tmpSmFnct
+									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+									tmpSmFnct = 1
+									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
+									//print j, area(tmpModelInt), area(tmpSmFnct)
+								elseif(StringMatch(SmearingType, "Gauss FWHM *" ))
+									//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
+									SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
+									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+									GaussSdev = dQval/2.355
+									tmpSmFnct = Gauss(x,Qval,GaussSdev)
+									tmpModelInt = tmpModelInt * tmpSmFnct
+									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
+									//print j, area(tmpModelInt), area(tmpSmFnct)
+								endif
 							else
-								StartX = 0
+								ModelIntPixelSmeared[j] = ModelIntensity[BinarySearchInterp(ModelQ,Qval)]
+								//print "Skipped smearing for point number : "+num2str(j)
 							endif
-							FindLevel /Q ModelQ, (Qval+dQval)
-							if(V_Flag==0)
-								EndX = (V_LevelX)
-							else
-								EndX = numpnts(OrigModelQ)-1
-							endif
-						ModelIntPixelSmeared[j] = area(ModelIntensity,StartX,EndX)/(EndX-StartX) //this should be avergae of the values here. Just flat average.  
 					endfor
-				elseif(StringMatch(SmearingType, "Gauss FWHM [1/A]" ))
-					print "finish smearing using Gauss FWHM [1/A]"
-				elseif(StringMatch(SmearingType, "Gauss FWHM [%]" ))
-					print "finish smearing using Gauss FWHM [%]"
 				endif
+		
 				//note, we need to end with Int vs Q using original Q points - except may be extended for slit smearing...
 				
 				if(isSlitSmeared)
@@ -5257,7 +5300,7 @@ Function IR2L_FinishSmearingOfData()
 				//Assume that we have only original q points by now and the extension to higher then slit length...  
 				//Ideally, all we need is just delete all points beyond the needed range 
 				ModelIntensity = ModelIntPixelSmeared
-				DeletePoints (numpnts(OrigModelQ)), (numpnts(ModelIntPixelSmeared) - numpnts(OrigModelQ)), ModelIntensity 
+				DeletePoints (numpnts(OrigModelQ)), (numpnts(ModelIntensity) - numpnts(OrigModelQ)), ModelIntensity 
 				Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i)) 
 				KillWaves OrigModelQ
 			else	//just cleanup not to confuse anyone :-)
@@ -5276,7 +5319,7 @@ Function IR2L_CreateResidulas()
 	//create residuals
 	variable i
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
-	For(i=1;i<11;i++)
+	For(i=1;i<11;i+=1)
 		NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 		if(UseTheData&&(MultipleInputData||(i==1)))	//these data are used, need to fix the data
 			Wave ModelQ=	$("Qmodel_set"+num2str(i))	
@@ -5316,7 +5359,7 @@ Function IR2L_PrepareSetsQvectors()
 	//this prepares Q vectors for sets, if used and modifies them for smearing, if needed
 	variable i
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
-	For(i=1;i<11;i++)
+	For(i=1;i<11;i+=1)
 		NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 		if(UseTheData&&(MultipleInputData||(i==1)))	//these data are used, need to prepare teh Q vector
 		
@@ -5343,6 +5386,9 @@ Function IR2L_PrepareSetsQvectors()
 			//next we need to prepare temperary one, which we will call for historical reasons Qmodel_set
 			//so we do not have to change rest of the code... This will have to be fixed at the end of the
 			//calculations...  
+			//	ListOfDataVariables="SlitSmeared;UseSmearing;SlitLength;SmearingFWHM;SmearingGaussWidth;SmearingMaxNumPnts;Qmin;Qmax;"
+			// ListOfDataVariables+="SmearingIgnoreSmalldQ;"
+
 			NVAR UseSmearing=$("root:Packages:IR2L_NLSQF:UseSmearing_set"+num2str(i))
 			SVAR SmearingType=$("root:Packages:IR2L_NLSQF:SmearingType_set"+num2str(i))						//SmearingType = None;Gauss;
 			SVAR SmearingWaveName=$("root:Packages:IR2L_NLSQF:SmearingWaveName_set"+num2str(i))  
@@ -5350,69 +5396,104 @@ Function IR2L_PrepareSetsQvectors()
 			NVAR SmearingMaxNumPnts=$("root:Packages:IR2L_NLSQF:SmearingMaxNumPnts_set"+num2str(i)) 
 			NVAR SlitLength=$("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(i))
 			NVAR isSlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(i))
+			NVAR SmearingIgnoreSmalldQ= $("root:Packages:IR2L_NLSQF:SmearingIgnoreSmalldQ_set"+num2str(i))
+			SVAR DataFolder= $("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(i))
 			variable OldNumPnts, QdistanceNeeded, LastQstep, NumNewQPoints
 			variable ExtensionQstep, ij, ik, newIDX, j
-			variable Qval, dQval, ExistQs, StartP, EndP, Qstep, curQ
+			variable Qval, dQval, ExistQs, StartP, EndP, Qstep, curQ, QOffset
 			if(UseSmearing)
 				//now here we need to make q scale which will be also usable for pixel smearing, if needed...
 				//again, at the end we will have just the two q vectors - short and user selected Qmodel_Orig_set
 				//and extended as needed Qmodel_set
 				if(!StringMatch(SmearingType, "None" ))	//these are pixel smeared data			
 					//we will need to get the resolutions - for now handle fixed one
-					if(stringmatch(SmearingWaveName,"Fixed value"))		//fixed value for each point, have just one input number from user
-						Duplicate/Free OrigModelQ, ResolutionsWave
+					if(stringmatch(SmearingWaveName,"Fixed dQ [1/A]"))		//fixed value for each point, have just one input number from user
+						Duplicate/O OrigModelQ, $("ResolutionsWave_set"+num2str(i))
+						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
 						ResolutionsWave = SmearingFWHM			//for this settings, this is in Q units
+					elseif(stringmatch(SmearingWaveName,"Fixed dQ/Q [%]"))
+						Duplicate/O OrigModelQ, $("ResolutionsWave_set"+num2str(i))
+						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
+						ResolutionsWave = OrigModelQ[p]*0.01*SmearingFWHM			//for this settings, this is in % of Q, need to convert to Q units
+					else		//this is wave. Need to find it and create it here...
+						Wave/Z UserSelResWv=$(DataFolder+SmearingWaveName)
+						if(!WaveExists(UserSelResWv) || (numpnts(Qwave)!=numpnts(UserSelResWv)))
+							Abort "Wrong Resolution wave selected, either does not exist or has wrong number of points"
+						endif
+						Duplicate/O/R=[StartPoint,EndPoint] UserSelResWv, $("ResolutionsWave_set"+num2str(i))
+						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
+						if(StringMatch(SmearingType, "* [1/A]" ))
+							//resolutions wave is allready in Q units, nothign to do here... 
+						else	// these are in %
+							ResolutionsWave = OrigModelQ[p]*0.01*ResolutionsWave[p]
+						endif
 					endif
-					
-					//at the end, we should have wave called ResolutionsWave with q resolutions in Q units. The ResolutionsWave has same number of points as OrigModelQ
-					//Now need to generate new Q scale. 
-					// we will ignore Qwidth values smaller then 2% of the Q value for now. 
-					if(StringMatch(SmearingType, "Bin Width (Nika) [1/A]" ))
-						//need to add user selected number of points through the width only.
-						Make/O/N=(1.5*SmearingMaxNumPnts*numpnts(OrigModelQ)) tempQwv		//note: make free later
-						tempQwv= nan
-						newIDX = 0
-						for(ik=0;ik<numpnts(OrigModelQ);ik+=1)
+				endif
+				//at the end, we should have wave called ResolutionsWave with q resolutions in Q units. The ResolutionsWave has same number of points as OrigModelQ
+				//Now need to generate new Q scale. ,we will ignore Qwidth values smaller then SmearingIgnoreSmalldQ% of the Q value. 
+				variable isStart, isEnd
+				isStart = 0
+				isEnd = 0
+				if(!StringMatch(SmearingType, "None" ))
+					//need to add user selected number of points through the width only.
+					Make/Free/N=(1.5*SmearingMaxNumPnts*numpnts(OrigModelQ)) tempQwv		
+					tempQwv= nan
+					newIDX = 0
+					for(ik=0;ik<numpnts(OrigModelQ);ik+=1)
 							Qval = OrigModelQ[ik]
 							dQval = ResolutionsWave[ik]
 							FindLevel /P/Q OrigModelQ, (Qval-dQval)
 							if(V_Flag==0)
 								StartP = floor(V_LevelX)
+								isStart = 0
 							else
 								StartP = 0
+								isStart = 1
 							endif
 							FindLevel /P/Q OrigModelQ, (Qval+dQval)
 							if(V_Flag==0)
 								EndP = ceil(V_LevelX)
+								isEnd = 0
 							else
 								EndP = numpnts(OrigModelQ)-1
+								isEnd = 1
 							endif
-							ExistQs = EndP - StartP
-							if((ExistQs < SmearingMaxNumPnts)&&((dQval/Qval)>0.02))		//found in the dQ less points then user wanted, so we need to rebin this
-								//and at the same time the dQ/Q is more than 2%. 
-								Qstep = 2*dQval/SmearingMaxNumPnts
-								For(j=0;j<SmearingMaxNumPnts;j+=1)
-									curQ = Qval-dQval+(j*Qstep)
-									findlevel/Q tempQwv, curQ			//check if we already added points in this are, if yes, do not add new points. 
-									if(V_Flag)
+							if(isStart || isEnd)
+								ExistQs = 0
+							else
+								ExistQs = EndP - StartP
+							endif
+							if((ExistQs<SmearingMaxNumPnts)&&((dQval/Qval)>(0.01*SmearingIgnoreSmalldQ)))		//found in the dQ less points then user wanted, so we need to rebin this
+								if(StringMatch(SmearingType, "* Width *" ))
+									Qstep = dQval/(SmearingMaxNumPnts-1)					//this is +/- width/2 assumtpiton with rectangular shape
+									QOffset = dQval/2
+								else	//FWHM
+									Qstep = 2*dQval/(SmearingMaxNumPnts-1)				//this is Gauss with FWHM defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
+									QOffset = dQval
+								endif
+								For(j=0;j<=SmearingMaxNumPnts;j+=1)
+									curQ = Qval-QOffset+(j*Qstep)
+									findlevel/Q tempQwv, curQ							//check if we already added points in this area, if yes, do not add new points. 
+									if(V_Flag && curQ>0)									//
 										tempQwv[newIDX] = curQ
 										newIDX+=1
 									endif
 								endfor
-							else		//no rebining needed, to next point now...
-								tempQwv[newIDX] = Qval
-								newIDX +=1
-							endif
-						endfor
-						
-					endif
+				 			 else		//no rebining needed, to next point now...
+							 	 tempQwv[newIDX] = Qval
+								 newIDX +=1
+							 endif
+						 endfor	
+					//endif
 					DeletePoints newIDX, (numpnts(tempQwv)-newIDX), tempQwv 
 					Sort tempQwv, tempQwv
-					Duplicate/O tempQwv, $("Qmodel_set"+num2str(i))	
+					Duplicate/O tempQwv, $("Qmodel_set"+num2str(i))				
+					Wave ModelQ=	$("Qmodel_set"+num2str(i))	
 					//OK, Qmodel_setX is now Q set which has been hopefully corrently densified to provide enough Q points for sensible smearing. 
 					//next is handling slit smearing. 
 				else
 					Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))						
+					Wave ModelQ=	$("Qmodel_set"+num2str(i))	
 				endif
 				
 				if(isSlitSmeared)	//need to make sure the Qvector is long enough, if not, we will add more points to calculation
@@ -5431,12 +5512,13 @@ Function IR2L_PrepareSetsQvectors()
 						endif
 						ExtensionQstep = QdistanceNeeded/NumNewQPoints
 						Redimension/N=(OldNumPnts+NumNewQPoints) ModelQ
-						For(ij=OldNumPnts;ij<(OldNumPnts+NumNewQPoints);ij++)
+						For(ij=OldNumPnts;ij<(OldNumPnts+NumNewQPoints);ij+=1)
 							ModelQ[ij] = ModelQ[OldNumPnts-1]+ExtensionQstep*(ij-OldNumPnts+1)
 						endfor
 						//OK, now the ModelQ should be at least 2* slit length longer with some logic... 
-					endif
-				endif
+					 endif
+				 endif
+
 			else	//OK, this is not smeared at all, so just copy and keep as is... 
 					//now both of these Q vectors are the same. 
 				Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))			
