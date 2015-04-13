@@ -1,6 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.34
 
+
+constant ChangeFromGaussToSlit=2
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -5081,6 +5083,7 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	NVAR SlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(CurDataTab))
 	variable PixelSmearing= StringMatch(SMType, "None" )
 	variable FixedSmearing= StringMatch(SMSrc, "Fixed *")
+	variable UsingLogQBinning= stringmatch(SMType,"Log-Q binning (Nika, USAXS)")
 
 	CheckBox SlitSmeared_set,pos={15,35},size={25,16},proc=IR2L_SmearingCheckProc,title="Slit Smeared?"
 	CheckBox SlitSmeared_set,variable= $("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(CurDataTab)), help={"Data slit smeared - Bonse-Hart system?"}
@@ -5090,7 +5093,7 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	
 	PopupMenu SmearingType,pos={12,60},size={117,20},title="Pixel Smearing ?  "
 	PopupMenu SmearingType,help={"Smearing method - Bin width, Gauss for pixel smearing"}
-	PopupMenu SmearingType,value= #"\"None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];\"", mode=(1+WhichListItem(SMType, "None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];") )
+	PopupMenu SmearingType,value= #"\"None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];Log-Q binning (Nika, USAXS);\"", mode=(1+WhichListItem(SMType, "None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];Log-Q binning (Nika, USAXS);") )
 	PopupMenu SmearingType proc=IRL2_SmearingPopMenuProc
 
 	PopupMenu SmearingSource,pos={12,85},size={171,20},title="Smearing Source"
@@ -5099,7 +5102,7 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	PopupMenu SmearingSource, mode=(1+WhichListItem(SMSrc,ListOfFlders) )
 	PopupMenu SmearingSource proc=IRL2_SmearingPopMenuProc, disable = PixelSmearing
 	
-	SetVariable SmearingGaussWidth,pos={12,110},size={250,15},title="Fixed dQ [1/A] or dQ/Q [%]", disable = (PixelSmearing||!FixedSmearing)
+	SetVariable SmearingGaussWidth,pos={12,110},size={250,15},title="Fixed dQ [1/A] or dQ/Q [%]", disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
 	SetVariable SmearingGaussWidth,help={"Pixel smearing value - Bin width or Gauss FWHM if fixed"} //, disable = DisplaySlitLength
 	SetVariable SmearingGaussWidth,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingFWHM_set"+num2str(CurDataTab))
 	
@@ -5131,7 +5134,10 @@ Function IRL2_SmearingHookFunction(s)
 			else
 				UseSmearing_set=0
 			endif
-			Checkbox UseSmearing_set win=LSQF2_MainPanel, value=UseSmearing_set
+			DoWIndow LSQF2_MainPanel
+			if(V_Flag)
+				Checkbox UseSmearing_set win=LSQF2_MainPanel, value=UseSmearing_set
+			endif
 		endif
 end
 
@@ -5151,6 +5157,7 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 	NVAR UseSmearing_set=$("root:Packages:IR2L_NLSQF:UseSmearing_set"+num2str(CurDataTab))
 	variable PixelSmearing= StringMatch(SMType, "None" )
 	variable FixedSmearing= StringMatch(SMSrc, "Fixed Value")
+	variable UsingLogQBinning= stringmatch(SMType,"Log-Q binning (Nika, USAXS)")
 	switch( pa.eventCode )
 		case 2: // mouse up
 			Variable popNum = pa.popNum
@@ -5159,9 +5166,10 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 				SMType = popStr
 				PixelSmearing= StringMatch(SMType, "None" )
 				FixedSmearing= StringMatch(SMSrc, "Fixed *")
+				UsingLogQBinning= stringmatch(SMType,"Log-Q binning (Nika, USAXS)")
 				PopupMenu SmearingSource, disable = PixelSmearing
 				PopupMenu SmearingMaxNumPnts, disable = PixelSmearing
-				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing)
+				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
 				SetVariable SmearingIgnoreSmalldQ,disable = (PixelSmearing||!FixedSmearing)
 				PopupMenu SmearingMaxNumPnts,disable = (PixelSmearing||!FixedSmearing)
 				if(!PixelSmearing || SLitSmeared)
@@ -5174,7 +5182,8 @@ Function IRL2_SmearingPopMenuProc(pa) : PopupMenuControl
 				SMSrc = popStr
 				PixelSmearing= StringMatch(SMType, "None" )
 				FixedSmearing= StringMatch(SMSrc, "Fixed *")
-				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing)
+				UsingLogQBinning= stringmatch(SMType,"Log-Q binning (Nika, USAXS)")
+				SetVariable SmearingGaussWidth,disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
 			endif
 			if(stringmatch(pa.ctrlName,"SmearingMaxNumPnts"))
 				SmPnts = str2num(popStr)
@@ -5283,6 +5292,22 @@ Function IR2L_FinishSmearingOfData()
 									tmpModelInt = tmpModelInt * tmpSmFnct
 									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
 									//print j, area(tmpModelInt), area(tmpSmFnct)
+								elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is NIka log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
+									if(dQval<(ResolutionsWave[0]*ChangeFromGaussToSlit))		//low-q range, dQ is similar to the first one, assume Gauss dist. 
+										//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
+										SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
+										tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+										GaussSdev = dQval/2.355
+										tmpSmFnct = Gauss(x,Qval,GaussSdev)
+										tmpModelInt = tmpModelInt * tmpSmFnct
+										ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
+									else															//dQ > ChangeFromGaussToSlit * dQ[0], which means we are more in range where rectangular smearing is appropriate. 
+										//bin width is average of -dQ/2 to +dQ/2 around Q
+										SetScale /I x, Qval-(dQval/2), Qval+(dQval/2), tmpModelInt, tmpSmFnct
+										tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+										tmpSmFnct = 1
+										ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
+									endif
 								endif
 							else
 								ModelIntPixelSmeared[j] = ModelIntensity[BinarySearchInterp(ModelQ,Qval)]
@@ -5467,8 +5492,16 @@ Function IR2L_PrepareSetsQvectors()
 								if(StringMatch(SmearingType, "* Width *" ))
 									Qstep = dQval/(SmearingMaxNumPnts-1)					//this is +/- width/2 assumtpiton with rectangular shape
 									QOffset = dQval/2
-								else	//FWHM
-									Qstep = 2*dQval/(SmearingMaxNumPnts-1)				//this is Gauss with FWHM defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
+								elseif(StringMatch(SmearingType, "Log-Q binning *" ))		//this is NIka log-Q binning of USAXS flyscan log-q binning. Need to transition from Gauss at low q to rectangle at high q
+									if(dQval<(ResolutionsWave[0]*ChangeFromGaussToSlit))		//low-q range, dQ is similar to the first one, assume Gauss dist. 
+										Qstep = 2*dQval/(SmearingMaxNumPnts-1)				//this is Gauss with FWHM defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
+										QOffset = dQval
+									else															//dQ > ChangeFromGaussToSlit * dQ[0], which means we are more in range where rectangular smearing is appropriate. 
+										Qstep = dQval/(SmearingMaxNumPnts-1)					//this is +/- width/2 assumtpiton with rectangular shape
+										QOffset = dQval/2
+									endif
+								else																//Gauss FWHM, we need data to larger range of points - assume that +/- FWHM around Q shoudl be enough
+									Qstep = 2*dQval/(SmearingMaxNumPnts-1)					//this is Gauss with FWHM defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
 									QOffset = dQval
 								endif
 								For(j=0;j<=SmearingMaxNumPnts;j+=1)
@@ -5491,6 +5524,7 @@ Function IR2L_PrepareSetsQvectors()
 					Wave ModelQ=	$("Qmodel_set"+num2str(i))	
 					//OK, Qmodel_setX is now Q set which has been hopefully corrently densified to provide enough Q points for sensible smearing. 
 					//next is handling slit smearing. 
+					print "Original Q vector had : "+num2str(numpnts(OrigModelQ))+", oversampled Q vector now has : "+num2str(numpnts(ModelQ))
 				else
 					Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))						
 					Wave ModelQ=	$("Qmodel_set"+num2str(i))	

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.05
+#pragma version =1.06
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.06 added SMR_dQ types waves  
 //1.05 modfied IN3_RecalcSubtractSaAndBlank to handle 2dFlyscans... 
 //1.04 modified to use rebinning routine from General procedures (requires General procedures version 1.71 and higher
 //1.03 fixed error calculations to include transmission, needed for highly scattering but highly absorbing samples, for which errors were unrealistically large. 
@@ -287,6 +288,9 @@ Function IN3_RecalcSubtractSaAndBlank()
 
 	NVAR SampleTransmission = root:Packages:Indra3:SampleTransmission
 	SVAR ASBparameters=ListOfASBParameters
+	NVAR BlankWidth = root:Packages:Indra3:BlankWidth			//blank width in arc seconds
+	NVAR Wavelength = root:Packages:Indra3:Wavelength
+	variable InstrumentQresolution = 2*pi*sin(BlankWidth/3600*pi/180)/Wavelength
 	Wave R_Int
 	Wave R_error
 	Wave R_Qvec
@@ -352,6 +356,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		//remove points which are surely not useful
 		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_error 
 		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_error 
+		Duplicate/O SMR_Qvec, SMR_dQ		
+		SMR_dQ = InstrumentQresolution			//this same q resolution, given by instrument reosltuion, abotu 0.00008 for Si220. 
 		//end append data
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
@@ -401,10 +407,17 @@ Function IN3_RecalcSubtractSaAndBlank()
 		endif
 		USAXSorSBUSAXS="FlyUSAXS"	
 		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
+		//create width for each bin pixel...
+		Duplicate/O SMR_Qvec, SMR_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
-			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_error)
+			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_error,Wxwidth=SMR_dQ)
+		else
+			SMR_dQ[1,numpnts(SMR_dQ)-2] = SMR_dQ[p+1]-SMR_dQ[p-1]
+			SMR_dQ[0]=2*(SMR_dQ[1]-SMR_dQ[0])
+			SMR_dQ[numpnts(SMR_dQ)-1] = 2*(SMR_dQ[numpnts(SMR_dQ)-1]-SMR_dQ[numpnts(SMR_dQ)-2])
 		endif
+		SMR_dQ = sqrt((SMR_dQ[p])^2 + InstrumentQresolution^2)		//convolute with SI220 InstrumentQresolution
 	elseif (stringmatch(IsItSBUSAXS,"sbflySca"))			//if this is sbflyscan, creade DSM data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
@@ -438,10 +451,16 @@ Function IN3_RecalcSubtractSaAndBlank()
 		endif
 		USAXSorSBUSAXS="FlyUSAXS"	
 		NVAR FlyScanRebinToPoints=root:Packages:Indra3:FlyScanRebinToPoints
+		Duplicate/O DSM_Qvec, DSM_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=DSM_Qvec[1]-DSM_Qvec[0]
-			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_error)
+			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_error,Wxwidth=SMR_dQ)
+		else
+			DSM_dQ[1,numpnts(DSM_dQ)-2] = DSM_dQ[p+1]-DSM_dQ[p-1]
+			DSM_dQ[0]=2*(DSM_dQ[1]-DSM_dQ[0])
+			DSM_dQ[numpnts(DSM_dQ)-1] = 2*(DSM_dQ[numpnts(DSM_dQ)-1]-DSM_dQ[numpnts(DSM_dQ)-2])
 		endif
+		DSM_dQ = sqrt((DSM_dQ[p])^2 + InstrumentQresolution^2)			//convolute with SI220 InstrumentQresolution
 	elseif (stringmatch(IsItSBUSAXS,"sbuascan"))			//if this is sbuascan, go to other part, otherwise create SMR data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
 		Duplicate/O BL_R_Int, logBlankR
@@ -460,6 +479,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O R_Qvec, DSM_Qvec
 		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_error 
 		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_error 	//end append data
+		Duplicate/O DSM_Qvec, DSM_dQ		
+		DSM_dQ = InstrumentQresolution			//set to FWHM of the AR stage rocking curve... 
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
 			checkdisplayed /W=RcurvePlotGraph DSM_Int
@@ -546,10 +567,12 @@ Function IN3_SaveData()
 	Wave/Z SMR_Int=root:Packages:Indra3:SMR_Int
 	Wave/Z SMR_Error=root:Packages:Indra3:SMR_Error
 	Wave/Z SMR_Qvec = root:Packages:Indra3:SMR_Qvec
+	Wave/Z SMR_dQ = root:Packages:Indra3:SMR_dQ
 
 	Wave/Z DSM_Int=root:Packages:Indra3:DSM_Int
 	Wave/Z DSM_Error=root:Packages:Indra3:DSM_Error
 	Wave/Z DSM_Qvec = root:Packages:Indra3:DSM_Qvec
+	Wave/Z DSM_dQ = root:Packages:Indra3:DSM_dQ
 	
 	NVAR UseMSAXSCorrection= root:Packages:Indra3:UseMSAXSCorrection
 	
@@ -604,7 +627,6 @@ Function IN3_SaveData()
 		Duplicate/O R_Int, $(DataFolderName+"R_Int")
 		Duplicate/O R_Error, $(DataFolderName+"R_error")
 		Duplicate/O R_Qvec, $(DataFolderName+"R_Qvec")
-
 
 		Duplicate/O BL_R_Int, $(DataFolderName+"BL_R_Int")
 		Duplicate/O BL_R_Error, $(DataFolderName+"BL_R_error")
@@ -671,10 +693,13 @@ Function IN3_SaveData()
 				Duplicate/O SMR_Int, $(DataFolderName+"M_SMR_Int")
 				Duplicate/O SMR_Error, $(DataFolderName+"M_SMR_error")
 				Duplicate/O SMR_Qvec, $(DataFolderName+"M_SMR_Qvec")
+				Duplicate/O SMR_dQ, $(DataFolderName+"M_SMR_dQ")
 				IN2G_AppendorReplaceWaveNote("M_SMR_Int","Wname","M_SMR_Int") 
 				IN2G_AppendorReplaceWaveNote("M_SMR_error","Wname","M_SMR_error") 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","Wname","M_SMR_Qvec") 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","Units","A-1")
+				IN2G_AppendorReplaceWaveNote("M_SMR_dQ","Wname","M_SMR_dQ") 
+				IN2G_AppendorReplaceWaveNote("M_SMR_dQ","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("M_SMR_Int","Units","cm2/g")
 				elseif(CalibrateArbitrary)
@@ -695,10 +720,13 @@ Function IN3_SaveData()
 				Duplicate/O SMR_Int, $(DataFolderName+"SMR_Int")
 				Duplicate/O SMR_Error, $(DataFolderName+"SMR_error")
 				Duplicate/O SMR_Qvec, $(DataFolderName+"SMR_Qvec")
+				Duplicate/O SMR_dQ, $(DataFolderName+"SMR_dQ")
 				IN2G_AppendorReplaceWaveNote("SMR_Int","Wname","SMR_Int") 
 				IN2G_AppendorReplaceWaveNote("SMR_error","Wname","SMR_error") 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","Wname","SMR_Qvec") 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","Units","A-1")
+				IN2G_AppendorReplaceWaveNote("SMR_dQ","Wname","SMR_dQ") 
+				IN2G_AppendorReplaceWaveNote("SMR_dQ","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("SMR_Int","Units","cm2/g")
 				elseif(CalibrateArbitrary)
@@ -722,10 +750,13 @@ Function IN3_SaveData()
 				Duplicate/O DSM_Int, $(DataFolderName+"M_DSM_Int")
 				Duplicate/O DSM_Error, $(DataFolderName+"M_DSM_error")
 				Duplicate/O DSM_Qvec, $(DataFolderName+"M_DSM_Qvec")
+				Duplicate/O DSM_dQ, $(DataFolderName+"M_DSM_dQ")
 				IN2G_AppendorReplaceWaveNote("M_DSM_Int","Wname","M_DSM_Int") 
 				IN2G_AppendorReplaceWaveNote("M_DSM_error","Wname","M_DSM_error") 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","Wname","M_DSM_Qvec") 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","Units","A-1")
+				IN2G_AppendorReplaceWaveNote("M_DSM_dQ","Wname","M_DSM_dQ") 
+				IN2G_AppendorReplaceWaveNote("M_DSM_dQ","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("M_DSM_Int","Units","cm2/g")
 				elseif(CalibrateArbitrary)
@@ -746,10 +777,13 @@ Function IN3_SaveData()
 				Duplicate/O DSM_Int, $(DataFolderName+"DSM_Int")
 				Duplicate/O DSM_Error, $(DataFolderName+"DSM_error")
 				Duplicate/O DSM_Qvec, $(DataFolderName+"DSM_Qvec")
+				Duplicate/O DSM_dQ, $(DataFolderName+"DSM_dQ")
 				IN2G_AppendorReplaceWaveNote("DSM_Int","Wname","DSM_Int") 
 				IN2G_AppendorReplaceWaveNote("DSM_error","Wname","DSM_error") 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","Wname","DSM_Qvec") 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","Units","A-1")
+				IN2G_AppendorReplaceWaveNote("DSM_dQ","Wname","DSM_dQ") 
+				IN2G_AppendorReplaceWaveNote("DSM_dQ","Units","A-1")
 				if(CalibrateToWeight)
 					IN2G_AppendorReplaceWaveNote("DSM_Int","Units","cm2/g")
 				elseif(CalibrateArbitrary)
