@@ -3,6 +3,11 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.58
+Modeling II - added ability to handle per pixel smearing of the model. Quite complicated for users, read the manual!. 
+Modeling II - removed the need to model data to high enough Qs for slit smeared data. The slit smeared data will be extended to 2*Slit length when user selects too small Qmax.
+ 
+
 2.57 3/8/2015
 Fractals model - added Qc as transitional Q value when surface fractal changes to Porod’s slope at high Q. Set to 0 if not needed. 
 Modeling II - added MassFractal and SurfaceFractal - models are copied form Fractals tool, so users need to read manual for that tool 
