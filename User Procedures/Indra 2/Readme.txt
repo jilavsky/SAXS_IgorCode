@@ -8,6 +8,10 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+1.86 
+Added new wave to data - SMR_dQ (and DSM etc), which contains per pixel smearing value. It is combination of racking curve width (Gauss profile) smearing given by USAXS resolution and, for flyscans, bin width over which the bin in q is created (rectangular profile).  
+
+
 1.85 3/8/2015
 Modifications for 2D flyscans. 
 Fixed for 9ID USAXS and the flyscans there. 

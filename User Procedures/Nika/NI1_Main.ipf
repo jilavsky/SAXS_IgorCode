@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.68
+#pragma version=1.69
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.69 added some warnings about uncertainty method changes when read from preferences. 
  //1.68 release, fixes for 9ID USAXS and other fixes listed 
  //1.67 Release to fix Mask tool broken in 1.66 release. 
  //1.66 fixed ListProRoutine which had troubles with links 
@@ -375,10 +376,12 @@ Function NI1_ReadIrenaGUIPackagePrefs()
 //	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
 //	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 	LoadPackagePreferences /MIS=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
+	variable DoWarning=0, pOld, pStdDev, pSEM
 	if(V_Flag==0)		
 		//print Defs
 		print "Read Nika Panels preferences from local machine and applied them. "
 		print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+		print "IMPORTANT : this may have changed uncertainty calculation mehtod originally saved with the existing experiment."
 		print "To change them please use \"Configure default fonts and names\""
 		if(Defs.Version==1)		//Lets declare the one we know as 1
 			DefaultFontType		=	Defs.PanelFontType
@@ -414,6 +417,10 @@ Function NI1_ReadIrenaGUIPackagePrefs()
 				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
 				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
 			endif
+			DoWarning=0
+			pOld = ErrorCalculationsUseOld
+			pStdDev = ErrorCalculationsUseStdDev
+			pSEM = ErrorCalculationsUseSEM
 			if(SelectedUncertainity==0)
 				ErrorCalculationsUseOld=1
 				ErrorCalculationsUseStdDev=0
@@ -427,7 +434,16 @@ Function NI1_ReadIrenaGUIPackagePrefs()
 				ErrorCalculationsUseStdDev=0
 				ErrorCalculationsUseSEM=1
 			endif
-
+			if(ErrorCalculationsUseOld)
+				print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+			elseif(ErrorCalculationsUseStdDev)
+				print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+			else
+				print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+			endif
+			if((pOld != ErrorCalculationsUseOld)||(pStdDev != ErrorCalculationsUseStdDev)||(pSEM != ErrorCalculationsUseSEM))
+				DoAlert /T="Uncertainity method calculation has changed" 0, "Uncertainty calculation method has changed. Please, check the history area and if needed, change the method to the one you want to use."
+			endif
 		else
 			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
 			if(V_Flag==1)

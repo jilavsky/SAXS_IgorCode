@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
+#pragma version=1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 added use of SEM as error estimate for WAXS and pinSAXS (and old method for big SAXS) . SEM seems best for Pilatus detectors? 
 //1.17 fixes for mask use in WAXS settings
 //1.16 fixes for 9ID
 //1.15 fixes for 9ID data after the move. Only partial fix. 
@@ -471,6 +472,21 @@ Function NI1_15IDDSetDefaultNx()
 				UseSampleMonitorFnct = 0
 				UseEmptyMonitorFnct = 0
 				
+
+				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+				ErrorCalculationsUseOld=0
+				ErrorCalculationsUseStdDev=0
+				ErrorCalculationsUseSEM=1
+				if(ErrorCalculationsUseOld)
+					print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+				elseif(ErrorCalculationsUseStdDev)
+					print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+				else
+					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+				endif
+
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
@@ -544,6 +560,20 @@ Function NI1_15IDDSetDefaultNx()
 				OverwriteDataIfExists = 1
 				Use2Ddataname = 1
 			
+				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+				ErrorCalculationsUseOld=0
+				ErrorCalculationsUseStdDev=0
+				ErrorCalculationsUseSEM=1
+				if(ErrorCalculationsUseOld)
+					print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+				elseif(ErrorCalculationsUseStdDev)
+					print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+				else
+					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+				endif
+		
 				NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile
 				NVAR LineProfileUseRAW = root:Packages:Convert2Dto1D:LineProfileUseRAW
 				NVAR LineProfileUseCorrData = root:Packages:Convert2Dto1D:LineProfileUseCorrData
@@ -676,6 +706,19 @@ Function NI1_15IDDSetDefaultNx()
 				UseEmptyMonitorFnct = 1
 				UseSampleThicknFnct = 1
 				
+				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+				ErrorCalculationsUseOld=1
+				ErrorCalculationsUseStdDev=0
+				ErrorCalculationsUseSEM=0			//which one is correct here???
+				if(ErrorCalculationsUseOld)
+					print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+				elseif(ErrorCalculationsUseStdDev)
+					print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+				else
+					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+				endif
 				
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct

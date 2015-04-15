@@ -504,6 +504,15 @@ Function NI1A_Initialize2Dto1DConversion()
 		ErrorCalculationsUseOld=0
 		ErrorCalculationsUseStdDev=1
 		ErrorCalculationsUseSEM=0
+		print "Uncertainty calculation method is set to \"Standard deviation\""
+	else
+		if(ErrorCalculationsUseOld)
+			print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+		elseif(ErrorCalculationsUseStdDev)
+			print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+		else
+			print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+		endif
 	endif
 
 	NVAR LineProfileDisplayWithQ
