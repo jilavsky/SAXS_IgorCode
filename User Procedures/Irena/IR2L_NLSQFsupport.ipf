@@ -5093,7 +5093,7 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	
 	PopupMenu SmearingType,pos={12,60},size={117,20},title="Pixel Smearing ?  "
 	PopupMenu SmearingType,help={"Smearing method - Bin width, Gauss for pixel smearing"}
-	PopupMenu SmearingType,value= #"\"None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];Log-Q binning (Nika, USAXS);\"", mode=(1+WhichListItem(SMType, "None;Bin Width [1/A];Gauss FWHM [1/A];Bin Width [%];Gauss FWHM [%];Log-Q binning (Nika, USAXS);") )
+	PopupMenu SmearingType,value= #"\"None;Bin Width [1/A];Gauss FWHM [1/A];Gauss Sigma [1/A];Bin Width [%];Gauss FWHM [%];Log-Q binning (Nika, USAXS);\"", mode=(1+WhichListItem(SMType, "None;Bin Width [1/A];Gauss FWHM [1/A];Gauss Sigma [1/A];Bin Width [%];Gauss FWHM [%];Log-Q binning (Nika, USAXS);") )
 	PopupMenu SmearingType proc=IRL2_SmearingPopMenuProc
 
 	PopupMenu SmearingSource,pos={12,85},size={171,20},title="Smearing Source"
@@ -5287,7 +5287,16 @@ Function IR2L_FinishSmearingOfData()
 									//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
 									SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
 									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
-									GaussSdev = dQval/2.355
+									GaussSdev = dQval/2.355	//convert Gauss FWHM to sigma 
+									tmpSmFnct = Gauss(x,Qval,GaussSdev)
+									tmpModelInt = tmpModelInt * tmpSmFnct
+									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
+									//print j, area(tmpModelInt), area(tmpSmFnct)
+								elseif(StringMatch(SmearingType, "Gauss Sigma *" ))
+									//Gaus is average over -FWHM to +FWHM around Q avfetr weighing by Gauss distribution with FWHM
+									SetScale /I x, Qval-dQval, Qval+dQval, tmpModelInt, tmpSmFnct
+									tmpModelInt = ModelIntensity[BinarySearchInterp(ModelQ,x)]
+									GaussSdev = dQval		//this is directly the Gauss sigma needed... 
 									tmpSmFnct = Gauss(x,Qval,GaussSdev)
 									tmpModelInt = tmpModelInt * tmpSmFnct
 									ModelIntPixelSmeared[j] = area(tmpModelInt)/area(tmpSmFnct)
@@ -5435,12 +5444,12 @@ Function IR2L_PrepareSetsQvectors()
 					if(stringmatch(SmearingWaveName,"Fixed dQ [1/A]"))		//fixed value for each point, have just one input number from user
 						Duplicate/O OrigModelQ, $("ResolutionsWave_set"+num2str(i))
 						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
-						ResolutionsWave = SmearingFWHM			//for this settings, this is in Q units
+						ResolutionsWave = SmearingFWHM											//for this settings, this is in Q units
 					elseif(stringmatch(SmearingWaveName,"Fixed dQ/Q [%]"))
 						Duplicate/O OrigModelQ, $("ResolutionsWave_set"+num2str(i))
 						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
-						ResolutionsWave = OrigModelQ[p]*0.01*SmearingFWHM			//for this settings, this is in % of Q, need to convert to Q units
-					else		//this is wave. Need to find it and create it here...
+						ResolutionsWave = OrigModelQ[p]*0.01*SmearingFWHM				//for this settings, this is in % of Q, need to convert to Q units
+					else																				//this is wave. Need to find it and create it here...
 						Wave/Z UserSelResWv=$(DataFolder+SmearingWaveName)
 						if(!WaveExists(UserSelResWv) || (numpnts(Qwave)!=numpnts(UserSelResWv)))
 							Abort "Wrong Resolution wave selected, either does not exist or has wrong number of points"
@@ -5500,9 +5509,14 @@ Function IR2L_PrepareSetsQvectors()
 										Qstep = dQval/(SmearingMaxNumPnts-1)					//this is +/- width/2 assumtpiton with rectangular shape
 										QOffset = dQval/2
 									endif
-								else																//Gauss FWHM, we need data to larger range of points - assume that +/- FWHM around Q shoudl be enough
+								elseif(StringMatch(SmearingType, "* FWHM *" ))			//Gauss FWHM, we need data to larger range of points - assume that +/- FWHM around Q shoudl be enough
 									Qstep = 2*dQval/(SmearingMaxNumPnts-1)					//this is Gauss with FWHM defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
 									QOffset = dQval
+								elseif(StringMatch(SmearingType, "* Sigma *" ))			//Gauss FWHM, we need data to larger range of points - assume that +/- FWHM around Q shoudl be enough
+									Qstep = 2*2.355*dQval/(SmearingMaxNumPnts-1)					//this is Gauss with sigma defined, so step could be +/- 0.5*FHWM, but to get the edge ones we will widen the step to twice...  
+									QOffset = 2.355*dQval
+								else
+									Abort "Unknown smearing type" 
 								endif
 								For(j=0;j<=SmearingMaxNumPnts;j+=1)
 									curQ = Qval-QOffset+(j*Qstep)
