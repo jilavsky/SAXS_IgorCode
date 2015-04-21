@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.22
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 minor fix of nits on the Scatt Contrast Calculator main panel. 
 //2.21 minor GUI fixes (added Transm to show it is transmission). 
 //2.20 removed some execute commands
 //2.19 Modified descxription for exp(-Mu*T) as Transmission. Users seem to be missing the point. 
@@ -91,11 +92,11 @@ Window IR1K_ScatteringContCalc()
 	SetVariable ElNumOfElectrons,limits={-Inf,Inf,0},noedit= 1,frame=0, value=root:Packages:ScatteringContrast:El_NumOfElectrons
 	SetVariable ElAtomWeight,pos={370,145},size={125,16},title="Atom wt:",help={"Atomic weight of this element, not editable"}
 	SetVariable ElAtomWeight,limits={-Inf,Inf,0},noedit= 1,frame=0, value=root:Packages:ScatteringContrast:El_AtomWeight
-	SetVariable ElNeutronCohB,pos={530,120},size={125,16},title="Neu b [e-14 m]:  ",help={"Neutron coherent b of this atom"}
+	SetVariable ElNeutronCohB,pos={530,120},size={135,16},title="Neu b [e-14 m]      :  ",help={"Neutron coherent b of this atom"}
 	SetVariable ElNeutronCohB,limits={-Inf,Inf,0},noedit= 1,frame=0, value=root:Packages:ScatteringContrast:El_NeutronCohB
-	SetVariable ElNeutronIncohB,pos={530,135},size={125,16},title="Incoh b [e-14 m]:  ",help={"Neutron incoherent b of this atom"}
+	SetVariable ElNeutronIncohB,pos={530,135},size={135,16},title="Incoh b [e-14 m]     :  ",help={"Neutron incoherent b of this atom"}
 	SetVariable ElNeutronIncohB,limits={-Inf,Inf,0},noedit= 1,frame=0, value=root:Packages:ScatteringContrast:El_NeutronIncohB
-	SetVariable ElNeutronAbsCross,pos={530,150},size={125,16},title="Abs Xsec [e-24 b]:",help={"Neutron absorption cross section (barn) of this atom"}
+	SetVariable ElNeutronAbsCross,pos={530,150},size={135,16},title="Abs Xsec [e-24 cm^2]:",help={"Neutron absorption cross section (barn) of this atom"}
 	SetVariable ElNeutronAbsCross,limits={-Inf,Inf,0},noedit= 1,frame=0, value=root:Packages:ScatteringContrast:El_NeutronAbsCross
 
 	SetVariable MolWeight,pos={14,216},size={260,16},title="Molecular weight                             ",frame=0, help={"Molecular weight"}
