@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.42
+#pragma version=2.43
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
 //2.42 minor GISAXS panel update (kill it on tab change). 
 //2.41 GISAXS panel now updates lineprofile, when value changes. 
 //2.40 added GISAXS_SOL and GISAXS_LSS geomtries - vary for alfa-f per marvin infor from below. Uses new panel and variable. 
@@ -3762,9 +3763,9 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable LineProf_DistanceFromCenter,help={"Distacne from center in pixels?"}, limits={-inf, inf,1}
 	SetVariable LineProf_DistanceFromCenter,variable= root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter, proc=NI1A_SetVarProcMainPanel
 	SetVariable LineProf_DistanceQ,pos={280,405},size={100,16},title="Q =  ",format="%.4f"
-	SetVariable LineProf_DistanceQ,help={"Distacne from center in q units"}, limits={-inf, inf,0}
-	SetVariable LineProf_DistanceQ,variable= root:Packages:Convert2Dto1D:LineProf_DistanceQ//, proc=NI1A_SetVarProcMainPanel
-	SetVariable LineProf_Width,pos={20,425},size={220,17},proc=NI1A_SetVarProcMainPanel,title="Width [in pixles]                      "
+	SetVariable LineProf_DistanceQ,help={"Distance from center in q units"}, limits={-inf, inf,0}
+	SetVariable LineProf_DistanceQ,variable= root:Packages:Convert2Dto1D:LineProf_DistanceQ, proc=NI1A_SetVarProcMainPanel
+	SetVariable LineProf_Width,pos={20,425},size={220,17},proc=NI1A_SetVarProcMainPanel,title="Width [in pixels]                      "
 	SetVariable LineProf_Width,help={"WIdth of the line in pixels?"}
 	SetVariable LineProf_Width,variable= root:Packages:Convert2Dto1D:LineProf_Width
 	SetVariable LineProf_WidthQ,pos={280,425},size={100,17},title="Q =  "
@@ -3891,12 +3892,16 @@ end
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_SetVarProcMainPanel(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
-	
+Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	String ctrlName=sva.ctrlName
+	Variable varNum=sva.dval
+	String varStr=sva.sval
+
+	if(!(sva.eventCode==1 || sva.EventCode==2))
+		return 0
+	endif
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -3904,9 +3909,21 @@ Function NI1A_SetVarProcMainPanel(ctrlName,varNum,varStr,varName) : SetVariableC
 	NVAR SectorsGraphEndAngle= root:Packages:Convert2Dto1D:SectorsGraphEndAngle
 	NVAR SectorsSectWidth= root:Packages:Convert2Dto1D:SectorsSectWidth
 	NVAR SectorsGraphStartAngle= root:Packages:Convert2Dto1D:SectorsGraphStartAngle
+	Wave CCDImage=root:Packages:Convert2Dto1D:CCDImageToConvert
 	variable temp
+	variable highBracket = sqrt(DimSize(CCDImage, 0 )^2+DimSize(CCDImage, 1)^2)
+	variable lowBracket = -sqrt(DimSize(CCDImage, 0 )^2+DimSize(CCDImage, 1)^2)
+	NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
+	NVAR LineProf_DistanceFromCenter=root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
 	
-	if(stringMatch("LineProf_DistanceFromCenter",ctrlName)||stringMatch("LineProf_Width",ctrlName)||stringMatch("LineProf_LineAzAngle",ctrlName)||stringMatch("LineProf_GIIncAngle",ctrlName)||stringMatch("LineProf_EllipseAR",ctrlName))
+	if(stringMatch("LineProf_DistanceQ",ctrlName))
+			make/Free/N=1 pWave
+			pWave = LineProf_DistanceQ
+			Optimize /H=(highBracket) /L=(lowBracket)/Q /I=50/T=0.1 NI1A_CalcQValForSearch, pWave 
+			LineProf_DistanceFromCenter = round(V_minloc)
+	endif
+	
+	if(stringMatch("LineProf_DistanceQ",ctrlName)||stringMatch("LineProf_DistanceFromCenter",ctrlName)||stringMatch("LineProf_Width",ctrlName)||stringMatch("LineProf_LineAzAngle",ctrlName)||stringMatch("LineProf_GIIncAngle",ctrlName)||stringMatch("LineProf_EllipseAR",ctrlName))
 		NI1A_LineProfUpdateQ()
 		NI1A_AllDrawingsFrom2DGraph()
 		NI1A_DrawCenterIn2DGraph()
@@ -4611,6 +4628,47 @@ Function NI1A_LineProfUpdateQ()
 		
 		LineProf_DistanceQ=Qval
 		LineProf_WidthQ=abs(Qvalw1-Qvalw2)
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function NI1A_CalcQValForSearch(w, LineProf_DistanceFromCenter)
+		Wave w
+		variable LineProf_DistanceFromCenter
+
+		variable QValueTarget = w[0]
+		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
+		NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
+		NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+		NVAR BeamCenterY=root:Packages:Convert2Dto1D:BeamCenterY
+		NVAR BeamCenterX=root:Packages:Convert2Dto1D:BeamCenterX
+		NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
+		NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
+		NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt
+		NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt
+		NVAR LineProf_UseBothHalfs=root:Packages:Convert2Dto1D:LineProf_UseBothHalfs
+		NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
+		NVAR LineProf_EllipseAR=root:Packages:Convert2Dto1D:LineProf_EllipseAR
+		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
+		variable distance
+		if(stringMatch(LineProf_CurveType,"Horizontal Line") || stringMatch(LineProf_CurveType,"GI_Horizontal line"))
+			distance=NI1T_TiltedToCorrectedR( LineProf_DistanceFromCenter*PixelSizeY ,SampleToCCDDistance,VerticalTilt)		//in mm 
+		endif
+		if(stringMatch(LineProf_CurveType,"Vertical Line")|| stringMatch(LineProf_CurveType,"Ellipse")|| stringMatch(LineProf_CurveType,"Angle Line"))
+			distance=NI1T_TiltedToCorrectedR( LineProf_DistanceFromCenter*PixelSizeX ,SampleToCCDDistance,HorizontalTilt)		//in mm 
+		endif
+		variable theta=atan(distance/SampleToCCDDistance)/2
+		variable Qval= ((4*pi)/Wavelength)*sin(theta)
+
+		if( stringMatch(LineProf_CurveType,"GI_Vertical line"))
+			Qval = NI1GI_CalculateQxyz(LineProf_DistanceFromCenter+BeamCenterX,BeamCenterY,"Y")
+		endif
+		if( stringMatch(LineProf_CurveType,"GI_Horizontal line"))
+			Qval = NI1GI_CalculateQxyz(BeamCenterX,BeamCenterY-LineProf_DistanceFromCenter,"Z")
+		endif
+		
+		return abs(QValueTarget-Qval)
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

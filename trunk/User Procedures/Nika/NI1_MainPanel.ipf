@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.42
-Constant NI1AversionNumber = 2.42
+#pragma version=2.43
+Constant NI1AversionNumber = 2.43
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.42
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
 //2.42 added GISAXS geomtry variations which require additional panel. version 1.68 of Nika
 //2.41 removed Executes in preparation fro igor 7
 //2.40 fixed Azimuthal profile ASCII data saving feature. Final sorting was incorrect (bug). 
