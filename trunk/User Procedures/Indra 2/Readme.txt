@@ -10,6 +10,7 @@ Revision history:
 ______________________________________________________________________________________
 1.86 
 Added new wave to data - SMR_dQ (and DSM etc), which contains per pixel smearing value. It is combination of racking curve width (Gauss profile) smearing given by USAXS resolution and, for flyscans, bin width over which the bin in q is created (rectangular profile).  
+Fixed case when spec file name was too long and Igor erred since the folder name was too long. Trim to 30 characters when needed. 
 
 
 1.85 3/8/2015

@@ -6,6 +6,7 @@ Code modification history
 2.58
 Modeling II - added ability to handle per pixel smearing of the model. Quite complicated for users, read the manual!. 
 Modeling II - removed the need to model data to high enough Qs for slit smeared data. The slit smeared data will be extended to 2*Slit length when user selects too small Qmax.
+Modeling II - catch Log-Normal Min Size if smaller than 3A and reset for user to 3A. Cannot have SAS from particles smaller than 3A - that is atom and not particle for SAXS. 
  
 
 2.57 3/8/2015

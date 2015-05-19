@@ -357,7 +357,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_error 
 		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_error 
 		Duplicate/O SMR_Qvec, SMR_dQ		
-		SMR_dQ = InstrumentQresolution			//this same q resolution, given by instrument reosltuion, abotu 0.00008 for Si220. 
+		SMR_dQ = InstrumentQresolution			//this same q resolution, given by instrument resolution, about 0.00008 for Si220. 
 		//end append data
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
