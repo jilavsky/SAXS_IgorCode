@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.34
+#pragma version=1.35
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.35 catch Log-Normal min size when it is too small. 
 //1.34 fixed non-functioning data scailing feature. Now shoudl scale data first and then, optionally scale Errors or modify as requested. 
 //1.33 removed most Executes as fix for Igor 7
 //1.32 modified Tab procedures and removed Execute constructs as these will be very slow in Igor 7. 
@@ -1421,8 +1422,14 @@ Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		//LN controls...
 	if(stringmatch(ctrlName,"LNMinSize"))
 		//set LNMinSize limits... 
+		NVAR LNMinSize=$("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(whichDataSet))
 		NVAR LNMinSizeMin=$("root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(whichDataSet))
 		NVAR LNMinSizeMax=$("root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(whichDataSet))
+		if(varNum<3)
+			varNum=3
+			LNMinSize = 3
+			print "Cannot have Log-Normal min size smaller than ~3A, Small-angle scattering theory fails. Reset the value for user."
+		endif
 		LNMinSizeMin= varNum*0.5
 		LNMinSizeMax=varNum*2
 		SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}

@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.57
+#pragma version=2.58
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3506845833  		//this is mod date for Manual version 2.57
-constant CurrentVersionNumber = 2.57
+constant CurrentVersionNumber = 2.58
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -11,6 +11,7 @@ constant CurrentVersionNumber = 2.57
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.58 Added YouTube movies page. 
 //2.57 Many fixes to Modeling II mainly. 
 //2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
 //2.55 changed FIt Power law with cursors - follows now the user font size and does not have units (would depend on calibration). Linear fit now also sues User fonts. 
@@ -140,6 +141,8 @@ Menu "SAS"
 			"---"
 			"Irena Mailing list signup and options", IR2_SignUpForMailingList()
 			help={"Opens web page in the browser where you can sing up or control options for Irena_users mailing list."}
+			"Open Youtube page with help movies", IR2_OpenYouTubeMoviePage()
+			help={"Opens YouTube page in the browser where different movies showing use of Irena are available"}
 			"Open Web page with help movies", IR2_OpenHelpMoviePage()
 			help={"Opens web page in the browser where different movies showing use of Irena can be downloaded"}
 			"Open Irena Web page ", IR2_OpenIrenaPage()
@@ -1077,6 +1080,15 @@ Function IR2_OpenHelpMoviePage()
 		BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaHelpMovies.html"
 	endif
 End
+
+Function IR2_OpenYouTubeMoviePage()
+	DoAlert 1,"Your web browser will open Youtube page with help movies. OK?"
+	if(V_flag==1)
+		BrowseURL "https://www.youtube.com/channel/UCDTzjGr3mAbRi3O4DJG7xHA/feed"
+	endif
+End
+
+
 
 Function IR2_OpenIrenaPage()
 	DoAlert 1,"Your web browser will Irena home page. OK?"

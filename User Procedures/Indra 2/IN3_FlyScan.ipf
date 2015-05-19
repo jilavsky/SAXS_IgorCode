@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.34
+#pragma version=0.35
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_DeleteRawData=1
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.35 fixed problem with too long name of spec file and therefore flyscan folder. 
 //0.34 fixed problem with too long names of flyscan hdf files and delete all raw data - too large, not necessary. 
 //0.33 more fixes for 9ID. 
 //0.32 fixes for 9ID, 02-08-2015, Modified function creating gain changes - needs fixing for I0 and I00.
@@ -396,6 +397,13 @@ Function IN3_FlyScanLoadHdf5File()
 					TargetRawFoldername = SpecFileName+"_Fly"
 				else
 					TargetRawFoldername = "Mythen_data"
+				endif
+				if(strlen(TargetRawFoldername)>30)
+					//DoAlert /T="Too long folder name warning" 0, "The folder name is too long for Igor Pro, it will be cut to 30 characters"
+					print "*****    ERROR MESSAGE  ***** "
+					print "The folder name was too long for Igor Pro, it will be cut to 30 characters, it is now:   " +TargetRawFoldername[0,30] 
+					print "^^^^^^    ERROR MESSAGE  ^^^^^^"		
+					TargetRawFoldername = TargetRawFoldername[0,30]  
 				endif
 				NewDataFolder/O $(TargetRawFoldername)
 				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrName

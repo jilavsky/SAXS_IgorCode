@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
+#pragma version=1.20
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 more modifications for 15ID SAXS
+//1.19 modifications for 15ID SAXS done April 2015
 //1.18 added use of SEM as error estimate for WAXS and pinSAXS (and old method for big SAXS) . SEM seems best for Pilatus detectors? 
 //1.17 fixes for mask use in WAXS settings
 //1.16 fixes for 9ID
@@ -1170,8 +1172,12 @@ Function NI1_15IDDSFIndTransmission(SampleName)
 	
 	 EmptyDarknameMatchString = tempStrlSavematch
 	variable ExistingTransmissionInFile=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transmission"))
+	variable IsTransValid=0
+	if((ExistingTransmissionInFile>0)&&(ExistingTransmissionInFile<=1))
+		IsTransValid = 1
+	endif
 
-	if(stringmatch(LoadedEmptyName, NoteEmptyName+"*" ) && !USAXSForceTransRecalculation)
+	if(stringmatch(LoadedEmptyName, NoteEmptyName+"*" ) && !USAXSForceTransRecalculation && IsTransValid)
 		transmissionUser=ExistingTransmissionInFile
 		print "Empty name matches name in NX file, using transmission written in the NX file"
 		print "Found and  using transmission = "+num2str(transmissionUser)
@@ -1191,24 +1197,34 @@ Function NI1_15IDDSFIndTransmission(SampleName)
 			 DarkI0=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transI0_Dark"))
 			 DarkPD=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transNosePD_Value_Dark"))
 		else
-			 SampleI0=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
-			 SampleI0+=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
-			 SampleI0+=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
-			 SampleI0+=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
-
+			 SampleI0=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transI0_Sample"))
+			 if(SampleI0<1000)	//something wrong, old system???
+				 SampleI0=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
+				 SampleI0+=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
+				 SampleI0+=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
+				 SampleI0+=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
+			 endif
 			 SamplePD=str2num(NI1_15IDDFindWaveNoteValue("EPICS_PV_metadata:transPD_Sample"))
+//
 
-			 EmptyI0=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
-			 EmptyI0+=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
-			 EmptyI0+=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
-			 EmptyI0+=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
-
-			 EmptyPD=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transPD_Sample"))
-			 DarkI0=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
-			 DarkI0+=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
-			 DarkI0+=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
-			 DarkI0+=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
-			 DarkPD=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transPD_Sample"))
+			 EmptyI0=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transI0_Empty"))
+			 if(EmptyI0<1000)	//something wrong, old system???
+				 EmptyI0=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_B_Empty"))
+				 EmptyI0+=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_L_Empty"))
+				 EmptyI0+=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_T_Empty"))
+				 EmptyI0+=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transBPM_R_Empty"))
+			 endif
+			 EmptyPD=str2num(NI1_15IDDFindEmptyNoteValue("EPICS_PV_metadata:transPD_Empty"))
+			 DarkI0=0
+			 DarkPD = 0
+//			 DarkI0=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transI0_Sample"))
+//			 if(DarkI0<10)	//something wrong, old system???
+//				 DarkI0=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
+//				 DarkI0+=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
+//				 DarkI0+=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
+//				 DarkI0+=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
+//			endif
+//			 DarkPD=str2num(NI1_15IDDFindDarkNoteValue("EPICS_PV_metadata:transPD_Sample"))
 		endif
 		transmissionUser = ((SamplePD - DarkPD)/(SampleI0-DarkI0))/((EmptyPD-DarkPD)/(EmptyI0-DarkI0))
 		print "The NX file lists transmission = "+num2str(ExistingTransmissionInFile)
@@ -1381,8 +1397,6 @@ Function NI1_15IDDSFindI0(SampleName)
 		I000 += NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:BPM_L_Sample=", OldNote), OldNote  , "=" , ";")
 		I000 += NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:BPM_R_Sample=", OldNote), OldNote  , "=" , ";")
 	endif
-//	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
-//	I000 = I000 * I0gain
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
 		I000=1 
@@ -1425,7 +1439,7 @@ Function NI1_15IDDSFindEfI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:I0_Empty=", OldNote), OldNote  , "=" , ";")
+	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:I0_Sample=", OldNote), OldNote  , "=" , ";")
 	if(numtype(I000)!=0 || I000<1)
 		I000 = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:BPM_B_Sample=", OldNote), OldNote  , "=" , ";")
 		I000 += NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:BPM_T_Sample=", OldNote), OldNote  , "=" , ";")

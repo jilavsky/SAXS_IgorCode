@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.43
+#pragma version=2.44
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.44 fixed bug when 2DQwave had note appended, not repalced and if beam center changed, it will get recaculated always since a wrong center values were read first. 
 //2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
 //2.42 minor GISAXS panel update (kill it on tab change). 
 //2.41 GISAXS panel now updates lineprofile, when value changes. 
@@ -1140,7 +1141,7 @@ Function NI1A_Create2DQWave(DataWave)
 	NoteStr+="VerticalTilt="+num2str(VerticalTilt)+";"
 	NoteStr+="SampleToCCDDistance="+num2str(SampleToCCDDistance)+";"
 	NoteStr+="Wavelength="+num2str(Wavelength)+";"	
-	note Q2DWave, NoteStr
+	note/K Q2DWave, NoteStr
 	setDataFolder OldDf
 end
 //*******************************************************************************************************************************************
@@ -1159,7 +1160,6 @@ Function NI1A_Create2DAngleWave(DataWave)
 	Wave/Z AnglesWave
 	if(!UseCalib2DData)
 		print "Creating Angle wave"
-
 		NVAR beamCenterX=root:Packages:Convert2Dto1D:beamCenterX
 		NVAR beamCenterY=root:Packages:Convert2Dto1D:beamCenterY
 		//Now angle from 0 degrees, so we can do sectors if necessary
