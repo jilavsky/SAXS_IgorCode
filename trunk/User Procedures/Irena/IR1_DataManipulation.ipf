@@ -3390,8 +3390,8 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 				CheckBox AverageWaves win=DataManipulationII,disable=0
 				CheckBox GenerateStatisticsForAveWvs , win=DataManipulationII,disable=!(AverageWaves||AverageNWaves)
 				CheckBox ErrorUseStdDev, win=DataManipulationII, disable=!(GenerateStatisticsForAveWvs&&(AverageWaves||AverageNWaves))
-				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=!(GenerateStatisticsForAveWvs&&(AverageWaves||AverageNWaves)
-				CheckBox GenerateMinMax win=DataManipulationII,disable=!(GenerateStatisticsForAveWvs&&(AverageWaves||AverageNWaves)
+				CheckBox ErrorUseStdErOfMean win=DataManipulationII,disable=!(GenerateStatisticsForAveWvs&&(AverageWaves||AverageNWaves))
+				CheckBox GenerateMinMax win=DataManipulationII,disable=!(GenerateStatisticsForAveWvs&&(AverageWaves||AverageNWaves))
 				Button SaveDataBtn win=DataManipulationII,disable=(0), title="Save data"
 				Button ProcessData win=DataManipulationII,title="Process data"
 				SetVariable ResultsDataFolderName,win=DataManipulationII, disable=2*(SubtractDataFromAll||AverageNWaves)
