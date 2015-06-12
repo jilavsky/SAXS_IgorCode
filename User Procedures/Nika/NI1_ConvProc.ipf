@@ -154,7 +154,11 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Duplicate/O DistacneInmmWidthA, DistacneInmmWidth
 	Duplicate/O DspacingA, Dspacing
 	Duplicate/O DspacingWidthA, DspacingWidth
-	Qsmearing = QvectorWidth
+	//create proper Q smearing data
+	Qsmearing = QvectorWidth			//this is geometrical Q smearing, simply caused by Nika's pixel size/step binning. Includes any log-binning effects.
+	
+	
+	
 	Intensity=0
 	Error=0
 	variable i, j, counter, numbins, start1, end1
@@ -3352,76 +3356,80 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable RemoveStringFromName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:RemoveStringFromName
 
 //tab controls here
-	TabControl Convert2Dto1DTab,pos={4,284},size={430,300},proc=NI1A_TabProc
+	TabControl Convert2Dto1DTab,pos={4,280},size={430,304},proc=NI1A_TabProc
 	TabControl Convert2Dto1DTab,help={"Select tabs to control various parameters"}
-	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Param"
-	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Emp/Dk"
-	TabControl Convert2Dto1DTab,tabLabel(4)="Sectors",tabLabel(5)="PolTrans", tabLabel(6)="LineProf", value= 0
+	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Par"
+	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Em/Dk"
+	TabControl Convert2Dto1DTab,tabLabel(4)="Sect.",tabLabel(5)="PolTran", tabLabel(6)="LineProf", value= 0
 	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
-	SetVariable SampleToDetectorDistance,pos={24,309},size={230,16},Disable=1,proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
+	SetVariable SampleToDetectorDistance,pos={54,302},size={230,16},proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
 	SetVariable SampleToDetectorDistance,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleToCCDDistance
-	SetVariable Wavelength,pos={21,331},size={162,16},proc=NI1A_PanelSetVarProc,title="Wavelength [A]  "
-	SetVariable Wavelength,help={"\"Input wavelegth of X-rays in Angstroems\" "}
+	SetVariable Wavelength,pos={20,322},size={162,16},proc=NI1A_PanelSetVarProc,title="Wavelength [A]  "
+	SetVariable Wavelength,help={"\"Input wavelegth of X-rays in Angstroems\" "}, bodyWidth=80
 	SetVariable Wavelength,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:Wavelength
-	TitleBox GeometryDesc,pos={67,356},size={276,16},title="Direction     X (horizontal)                       Y (vertical)"
+	SetVariable XrayEnergy,pos={220,322},size={162,16},proc=NI1A_PanelSetVarProc,title="X-ray energy [keV]"
+	SetVariable XrayEnergy,help={"Input energy of X-rays in keV (linked with wavelength)"}, bodyWidth=80
+	SetVariable XrayEnergy,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:XrayEnergy
+	TitleBox GeometryDesc,pos={45,342},size={276,16},title="Direction     X (horizontal)                                Y (vertical)"
 	TitleBox GeometryDesc,labelBack=(56576,56576,56576),fSize=12,frame=0
 	TitleBox GeometryDesc,fColor=(0,0,65280)
-	SetVariable PixleSizeX,pos={34,377},size={160,16},proc=NI1A_PanelSetVarProc,title="CCD pixel size [mm]"
-	SetVariable PixleSizeX,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:PixelSizeX
-	SetVariable PixleSizeY,pos={222,377},size={160,16},proc=NI1A_PanelSetVarProc,title="CCD pixel size [mm]"
-	SetVariable PixleSizeY,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:PixelSizeY
-	SetVariable BeamCenterX,pos={34,400},size={160,16},proc=NI1A_PanelSetVarProc,title="Beam center"
-	SetVariable BeamCenterX,limits={-inf,Inf,1},value= root:Packages:Convert2Dto1D:BeamCenterX
-	SetVariable BeamCenterY,pos={222,400},size={160,16},proc=NI1A_PanelSetVarProc,title="Beam center"
-	SetVariable BeamCenterY,limits={-inf,Inf,1},value= root:Packages:Convert2Dto1D:BeamCenterY
-	SetVariable HorizontalTilt,pos={34,420},size={160,16},proc=NI1A_PanelSetVarProc,title="Horizontal Tilt"
+	SetVariable PixleSizeX,pos={34,362},size={160,16},proc=NI1A_PanelSetVarProc,title="CCD pixel size [mm]"
+	SetVariable PixleSizeX,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:PixelSizeX, bodyWidth=80
+	SetVariable PixleSizeY,pos={250,362},size={160,16},proc=NI1A_PanelSetVarProc,title="CCD pixel size [mm]"
+	SetVariable PixleSizeY,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:PixelSizeY, bodyWidth=80
+	SetVariable BeamCenterX,pos={34,382},size={160,16},proc=NI1A_PanelSetVarProc,title="Beam center [pix]"
+	SetVariable BeamCenterX,limits={-inf,Inf,1},value= root:Packages:Convert2Dto1D:BeamCenterX, bodyWidth=80
+	SetVariable BeamCenterY,pos={250,382},size={160,16},proc=NI1A_PanelSetVarProc,title="Beam center [pix]"
+	SetVariable BeamCenterY,limits={-inf,Inf,1},value= root:Packages:Convert2Dto1D:BeamCenterY, bodyWidth=80
+	SetVariable HorizontalTilt,pos={34,402},size={160,16},proc=NI1A_PanelSetVarProc,title="Horizontal Tilt [deg]", bodyWidth=80
 	SetVariable HorizontalTilt,limits={-90,90,0},value= root:Packages:Convert2Dto1D:HorizontalTilt,help={"Tilt of the image in horizontal plane (around 0 degrees)"}
-	SetVariable VerticalTilt,pos={222,420},size={160,16},proc=NI1A_PanelSetVarProc,title="Vertical Tilt"
+	SetVariable VerticalTilt,pos={250,402},size={160,16},proc=NI1A_PanelSetVarProc,title="Vertical Tilt [deg]", bodyWidth=80
 	SetVariable VerticalTilt,limits={-90,90,0},value= root:Packages:Convert2Dto1D:VerticalTilt,help={"Tilt of the image in vertical plane (around 90 degrees)"}
-	SetVariable XrayEnergy,pos={205,331},size={162,16},proc=NI1A_PanelSetVarProc,title="X-ray energy [keV]"
-	SetVariable XrayEnergy,help={"Input energy of X-rays in keV (linked with wavelength)"}
-	SetVariable XrayEnergy,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:XrayEnergy
-	CheckBox UseSampleThickness,pos={10,440},size={146,14},proc=NI1A_CheckProc,title="Use sample thickness (St)?"
+	SetVariable BeamSizeX,pos={34,422},size={160,16},proc=NI1A_PanelSetVarProc,title="Beam Size [mm]", bodyWidth=80
+	SetVariable BeamSizeX,limits={0,25,0},value= root:Packages:Convert2Dto1D:BeamSizeX,help={"Beam size on detector in X direction in mm"}
+	SetVariable BeamSizeY,pos={250,422},size={160,16},proc=NI1A_PanelSetVarProc,title="Beam Size [mm]", bodyWidth=80
+	SetVariable BeamSizeY,limits={0,25,0},value= root:Packages:Convert2Dto1D:BeamSizeY,help={"Beam Size on detector in Y direction in mm"}
+	CheckBox UseSampleThickness,pos={10,441},size={146,14},proc=NI1A_CheckProc,title="Use sample thickness (St)?"
 	CheckBox UseSampleThickness,help={"Check if you will use sample thickness to scale data for calibration purposes"}
 	CheckBox UseSampleThickness,variable= root:Packages:Convert2Dto1D:UseSampleThickness
-	CheckBox UseSampleTransmission,pos={10,456},size={155,14},proc=NI1A_CheckProc,title="Use sample transmission (T)?"
+	CheckBox UseSampleTransmission,pos={10,457},size={155,14},proc=NI1A_CheckProc,title="Use sample transmission (T)?"
 	CheckBox UseSampleTransmission,help={"Check if you wil use sample transmission"}
 	CheckBox UseSampleTransmission,variable= root:Packages:Convert2Dto1D:UseSampleTransmission
-	CheckBox UseSampleCorrectionFactor,pos={10,472},size={173,14},proc=NI1A_CheckProc,title="Use sample Corection factor (C)?"
+	CheckBox UseSampleCorrectionFactor,pos={10,473},size={173,14},proc=NI1A_CheckProc,title="Use sample Corection factor (C)?"
 	CheckBox UseSampleCorrectionFactor,help={"Check if you will use correction factor to scale data to absolute scale"}
 	CheckBox UseSampleCorrectionFactor,variable= root:Packages:Convert2Dto1D:UseCorrectionFactor
-	CheckBox UseSolidAngle,pos={10,488},size={173,14},proc=NI1A_CheckProc,title="Use Solid Angle Corection (O)?"
+	CheckBox UseSolidAngle,pos={10,489},size={173,14},proc=NI1A_CheckProc,title="Use Solid Angle Corection (O)?"
 	CheckBox UseSolidAngle,help={"Check if you will use correction factor to scale data to absolute scale"}
 	CheckBox UseSolidAngle,variable= root:Packages:Convert2Dto1D:UseSolidAngle
-	CheckBox UseI0ToCalibrate,pos={10,504},size={99,14},proc=NI1A_CheckProc,title="Use Monitor (I0)?"
+	CheckBox UseI0ToCalibrate,pos={10,505},size={99,14},proc=NI1A_CheckProc,title="Use Monitor (I0)?"
 	CheckBox UseI0ToCalibrate,help={"Check if you want to scale data by monitor counts"}
 	CheckBox UseI0ToCalibrate,variable= root:Packages:Convert2Dto1D:UseI0ToCalibrate
-	CheckBox UseDarkField,pos={10,520},size={128,14},proc=NI1A_CheckProc,title="Use Dark field (DF2D)?"
+	CheckBox UseDarkField,pos={10,521},size={128,14},proc=NI1A_CheckProc,title="Use Dark field (DF2D)?"
 	CheckBox UseDarkField,help={"Check if you will use dark field"}
 	CheckBox UseDarkField,variable= root:Packages:Convert2Dto1D:UseDarkField
-	CheckBox UseEmptyField,pos={10,536},size={133,14},proc=NI1A_CheckProc,title="Use Empty field (EF2D)?"
+	CheckBox UseEmptyField,pos={10,537},size={133,14},proc=NI1A_CheckProc,title="Use Empty field (EF2D)?"
 	CheckBox UseEmptyField,help={"Check if you will use empty field"}
 	CheckBox UseEmptyField,variable= root:Packages:Convert2Dto1D:UseEmptyField
-	CheckBox UseSubtractFixedOffset,pos={209,461},size={183,14},proc=NI1A_CheckProc,title="Subtract constant from data (Ofst)?"
+	CheckBox UseSubtractFixedOffset,pos={209,462},size={183,14},proc=NI1A_CheckProc,title="Subtract constant from data (Ofst)?"
 	CheckBox UseSubtractFixedOffset,help={"Check if you want to subtract constant from CCD data (replace dark field)"}
 	CheckBox UseSubtractFixedOffset,variable= root:Packages:Convert2Dto1D:UseSubtractFixedOffset
-	CheckBox UseSampleMeasTime,pos={209,500},size={184,14},proc=NI1A_CheckProc,title="Use sample measurement time (ts)?"
+	CheckBox UseSampleMeasTime,pos={209,501},size={184,14},proc=NI1A_CheckProc,title="Use sample measurement time (ts)?"
 	CheckBox UseSampleMeasTime,help={"Check if you want to scale data by measurement time"}
 	CheckBox UseSampleMeasTime,variable= root:Packages:Convert2Dto1D:UseSampleMeasTime
-	CheckBox UseEmptyMeasTime,pos={209,518},size={180,14},proc=NI1A_CheckProc,title="Use empty measurement time (te)?"
+	CheckBox UseEmptyMeasTime,pos={209,519},size={180,14},proc=NI1A_CheckProc,title="Use empty measurement time (te)?"
 	CheckBox UseEmptyMeasTime,help={"Check if you want to scale empty field data by measurement time"}
 	CheckBox UseEmptyMeasTime,variable= root:Packages:Convert2Dto1D:UseEmptyMeasTime
-	CheckBox UseDarkMeasTime,pos={209,536},size={195,14},proc=NI1A_CheckProc,title="Use dark field measurement time (td)?"
+	CheckBox UseDarkMeasTime,pos={209,537},size={195,14},proc=NI1A_CheckProc,title="Use dark field measurement time (td)?"
 	CheckBox UseDarkMeasTime,help={"Check if you want to scale dark field data by measurement time"}
 	CheckBox UseDarkMeasTime,variable= root:Packages:Convert2Dto1D:UseDarkMeasTime
-	CheckBox UsePixelSensitivity,pos={209,442},size={159,14},proc=NI1A_CheckProc,title="Use pixel sensitivity (Pix2D)?"
+	CheckBox UsePixelSensitivity,pos={209,443},size={159,14},proc=NI1A_CheckProc,title="Use pixel sensitivity (Pix2D)?"
 	CheckBox UsePixelSensitivity,help={"Check if you want to use pixel sensitivity map"}
 	CheckBox UsePixelSensitivity,variable= root:Packages:Convert2Dto1D:UsePixelSensitivity
-	CheckBox UseMOnitorForEF,pos={209,480},size={146,14},proc=NI1A_CheckProc,title="Use I0/I0ef for empty field?"
+	CheckBox UseMOnitorForEF,pos={209,481},size={146,14},proc=NI1A_CheckProc,title="Use I0/I0ef for empty field?"
 	CheckBox UseMOnitorForEF,help={"Check if you want to scale empty by ratio of monitor values"}
 	CheckBox UseMOnitorForEF,variable= root:Packages:Convert2Dto1D:UseMonitorForEF
-	SetVariable CalibrationFormula,pos={12,558},size={390,16},title=" "
+	SetVariable CalibrationFormula,pos={12,560},size={390,16},title=" "
 	SetVariable CalibrationFormula,help={"This is calibration method which will be applied to your data"}
 	SetVariable CalibrationFormula,labelBack=(32768,40704,65280),fSize=10,frame=0
 	SetVariable CalibrationFormula,limits={-Inf,Inf,0},value= root:Packages:Convert2Dto1D:CalibrationFormula
@@ -4236,6 +4244,8 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable BeamCenterY,disable=(tabNum!=0), win=NI1A_Convert2Dto1DPanel
 	SetVariable HorizontalTilt,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable VerticalTilt,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable BeamSizeX,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	SetVariable BeamSizeY,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	TitleBox GeometryDesc,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable Wavelength,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable XrayEnergy,disable=(tabNum!=0||UseCalib2DData), win=NI1A_Convert2Dto1DPanel

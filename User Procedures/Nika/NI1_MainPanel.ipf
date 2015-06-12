@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.43
-Constant NI1AversionNumber = 2.43
+#pragma version=2.44
+Constant NI1AversionNumber = 2.44
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.43
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.44 added Q smearing controls 
 //2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
 //2.42 added GISAXS geomtry variations which require additional panel. version 1.68 of Nika
 //2.41 removed Executes in preparation fro igor 7
@@ -226,6 +227,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	
 	ListOfVariables="BeamCenterX;BeamCenterY;QvectorNumberPoints;QvectorMaxNumPnts;QbinningLogarithmic;SampleToCCDDistance;Wavelength;"
 	ListOfVariables+="PixelSizeX;PixelSizeY;StartDataRangeNumber;EndDataRangeNumber;XrayEnergy;HorizontalTilt;VerticalTilt;AzimuthalTilt;"
+	ListOfVariables+="BeamSizeX;BeamSizeY;"
 	ListOfVariables+="SampleThickness;SampleTransmission;UseI0ToCalibrate;SampleI0;EmptyI0;"
 	ListOfVariables+="UseSampleThickness;UseSampleTransmission;UseI0ToCalibrate;UseSampleI0;UseEmptyI0;"
 	ListOfVariables+="UseCorrectionFactor;UseMask;UseDarkField;UseEmptyField;UseSubtractFixedOffset;SubtractFixedOffset;UseSolidAngle;"

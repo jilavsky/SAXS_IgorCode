@@ -697,10 +697,10 @@ Function IR2D_TabPanelControl(name,tab)
 	PopupMenu Peak_LinkedTo, disable=(tab==0)
 	SetVariable Peak_LinkMultiplier, disable=(tab==0)
 
-	SetVariable PeakDPosition, disable=(tab==0
-	SetVariable PeakPosition, disable=(tab==0
-	SetVariable PeakFWHM, disable=(tab==0
-	SetVariable PeakIntgInt, disable=(tab==0
+	SetVariable PeakDPosition, disable=(tab==0)
+	SetVariable PeakPosition, disable=(tab==0)
+	SetVariable PeakFWHM, disable=(tab==0)
+	SetVariable PeakIntgInt, disable=(tab==0)
 	
 	if(tab>0)
 		SVAR ListOfKnownPeakShapes=root:packages:Irena_SAD:ListOfKnownPeakShapes

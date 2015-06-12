@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.35
+#pragma version=1.36
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.36 minor (R_min setVariable) GUI fix. 
 //1.35 catch Log-Normal min size when it is too small. 
 //1.34 fixed non-functioning data scailing feature. Now shoudl scale data first and then, optionally scale Errors or modify as requested. 
 //1.33 removed most Executes as fix for Igor 7
@@ -965,7 +966,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		CheckBox RdistMan,win=LSQF2_MainPanel ,variable= root:Packages:IR2L_NLSQF:$("RdistMan_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 
 		SetVariable RdistNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistNumPnts_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
-		SetVariable RdistManMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistManMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		SetVariable RdistManMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistManMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop)|| (!RdistManual))
 		SetVariable RdistManMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistManMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop)|| (!RdistManual))
 
 		SetVariable RdistNeglectTails,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("RdistNeglectTails_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop)|| (RdistManual))
@@ -1695,9 +1696,9 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			RdistrSemiAuto=0
 			RdistMan = 0
 		endif
-		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=((RdistAuto))
-		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=((RdistAuto))
-		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!(RdistAuto))
+		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=((RdistrSemiAuto))
+		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=((RdistrSemiAuto))
+		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!(RdistrSemiAuto))
 	endif
 	if (stringMatch(ctrlName,"RdistMan"))
 		if(checked)
@@ -1709,9 +1710,9 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			RdistrSemiAuto=0
 			RdistMan = 0
 		endif
-		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=((RdistAuto))
-		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=((RdistAuto))
-		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=(!(RdistAuto))
+		SetVariable RdistManMin,win=LSQF2_MainPanel,disable=(!(RdistMan))
+		SetVariable RdistManMax,win=LSQF2_MainPanel,disable=(!(RdistMan))
+		SetVariable RdistNeglectTails,win=LSQF2_MainPanel, disable=((RdistMan))
 	endif
 	
 /////////////////////////////

@@ -142,7 +142,7 @@ Function IR2L_MainPanel()
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
 
 	//Data Tabs definition
-	TabControl DataTabs,pos={2,220},size={400,320},proc=IR2L_Data_TabPanelControl
+	TabControl DataTabs,pos={1,220},size={405,320},proc=IR2L_Data_TabPanelControl
 	TabControl DataTabs,tabLabel(0)="1.",tabLabel(1)="2."
 	TabControl DataTabs,tabLabel(2)="3.",tabLabel(3)="4."
 	TabControl DataTabs,tabLabel(4)="5.",tabLabel(5)="6."
@@ -202,14 +202,14 @@ Function IR2L_MainPanel()
 
 	SVAR PanelVolumeDesignation=root:Packages:IR2L_NLSQF:PanelVolumeDesignation
 	//Dist Tabs definition
-	TabControl DistTabs,pos={2,220},size={400,380},proc=IR2L_Model_TabPanelControl
+	TabControl DistTabs,pos={1,220},size={405,380},proc=IR2L_Model_TabPanelControl
 	TabControl DistTabs,tabLabel(0)="1 P",tabLabel(1)="2 P"
 	TabControl DistTabs,tabLabel(2)="3 P",tabLabel(3)="4 P"
 	TabControl DistTabs,tabLabel(4)="5 P",tabLabel(5)="6 P"
 	TabControl DistTabs,tabLabel(6)="7 P",tabLabel(7)="8 P"
 	TabControl DistTabs,tabLabel(8)="9 P",tabLabel(9)="10 P", value= 0, disable=!DisplayModelControls
 
-		CheckBox UseThePop,pos={2,241},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Use?",  fstyle=1
+		CheckBox UseThePop,pos={4,241},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Use?",  fstyle=1
 		CheckBox UseThePop,variable= root:Packages:IR2L_NLSQF:UseThePop_pop1, help={"Use the population in calculations?"}
 
 		SetVariable UserName,variable= root:Packages:IR2L_NLSQF:UserName_pop1, proc=IR2L_PopSetVarProc

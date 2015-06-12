@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.20
+#pragma version=1.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 added PE detector Nexus file for WAXS and for all detector read of Beam Size
 //1.20 more modifications for 15ID SAXS
 //1.19 modifications for 15ID SAXS done April 2015
 //1.18 added use of SEM as error estimate for WAXS and pinSAXS (and old method for big SAXS) . SEM seems best for Pilatus detectors? 
@@ -892,7 +893,9 @@ Function NI1_15IDDWaveNoteValuesNx()
 	NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
 	NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
-	
+	NVAR BeamSizeX = root:Packages:Convert2Dto1D:BeamSizeX
+	NVAR BeamSizeY = root:Packages:Convert2Dto1D:BeamSizeY
+		
 	if((stringMatch("15ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))||stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
@@ -908,6 +911,8 @@ Function NI1_15IDDWaveNoteValuesNx()
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("aperture:hsize=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("aperture:vsize=", OldNote), OldNote  , "=" , ";")
 		elseif(useWAXS)
 			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("x_pixel_size=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("y_pixel_size=", OldNote), OldNote  , "=" , ";")
@@ -916,6 +921,8 @@ Function NI1_15IDDWaveNoteValuesNx()
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("aperture:hsize=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("aperture:vsize=", OldNote), OldNote  , "=" , ";")
 		endif		
 		print "Set experimental settinsg and geometry from file :"+Current2DFileName
 		print "Wavelength = "+num2str(Wavelength)
@@ -924,6 +931,46 @@ Function NI1_15IDDWaveNoteValuesNx()
 		print "PixelSizeY = "+num2str(PixelSizeY)
 		print "BeamCenterX = "+num2str(BeamCenterX)
 		print "BeamCenterY = "+num2str(BeamCenterY)
+		print "BeamSizeX = "+num2str(BeamSizeX)
+		print "BeamSizeY = "+num2str(BeamSizeY)
+		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
+	elseif((stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("XRD0820", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
+		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
+		XRayEnergy = 12.3984/Wavelength
+		if(usePinSAXS)
+			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote  , "=" , ";")
+			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote  , "=" , ";")
+			if(numtype(PixelSizeX)!=0)		//old data from 15ID
+				PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("x_pixel_size=", OldNote), OldNote  , "=" , ";")
+				PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			endif
+			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("aperture:hsize=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("aperture:vsize=", OldNote), OldNote  , "=" , ";")
+		elseif(useWAXS)
+			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("x_pixel_size=", OldNote), OldNote  , "=" , ";")
+			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("y_pixel_size=", OldNote), OldNote  , "=" , ";")
+			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
+			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("aperture:hsize=", OldNote), OldNote  , "=" , ";")
+	 		BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("aperture:vsize=", OldNote), OldNote  , "=" , ";")
+		endif		
+		print "Set experimental settinsg and geometry from file :"+Current2DFileName
+		print "Wavelength = "+num2str(Wavelength)
+		print "XRayEnergy = "+num2str(12.3984/Wavelength)
+		print "PixelSizeX = "+num2str(PixelSizeX)
+		print "PixelSizeY = "+num2str(PixelSizeY)
+		print "BeamCenterX = "+num2str(BeamCenterX)
+		print "BeamCenterY = "+num2str(BeamCenterY)
+		print "BeamSizeX = "+num2str(BeamSizeX)
+		print "BeamSizeY = "+num2str(BeamSizeY)
 		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
 	elseif(stringMatch("9ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("Pilatus", StringByKey("data:model", OldNOte  , "=" , ";")))	
 		//9ID data from2015 onwards... 
