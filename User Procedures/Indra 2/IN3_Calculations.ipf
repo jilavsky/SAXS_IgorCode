@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.16
+#pragma version=1.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 minor change in MOdified Gauss fit function which fixes sometime observed misfits. Coef wave MUST be double precision. 
 //1.16 minor GUI chaneg to keep users advised abotu saving data
 //1.15 modified fitting of the peak height for Modified gauss
 //1.14 added save data to Load & process next button. Faster and easier. 
@@ -1167,12 +1168,12 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 		SetScale/I x Ar_encoder[start], Ar_encoder[end1],"", PeakFitWave
 	endif
 //	K0=0
-	MAKE/O/N=4 W_coef
+	MAKE/O/D/N=4 W_coef		//fix 2015-06 Coefficient wave MUST be double precision or weird things happen with fits. 
 	wavestats/Q PD_Intensity
 	//workaround problems 2012/01, one large point appears ...
 	Duplicate/Free PD_Intensity, tempPDInt
-	tempPDInt[V_maxloc]=Nan
 	wavestats/Q tempPDInt
+	tempPDInt[V_maxloc]=Nan
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
 	FindLevels /N=5 /P/Q  tempPDInt, V_max/2
@@ -1194,7 +1195,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	Make/O/T/N=1 T_Constraints
 	T_Constraints[0] = {"K3>1.3"}
 	variable V_FitError=0
-	FuncFit/Q/N/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
+	FuncFit/NTHR=0/Q/N  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	//FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	if(V_FitError>0)
 		abort "Peak profile fitting function error. Please select wider range of data or change fitting function (Gauss is good choice)"
@@ -1264,7 +1265,7 @@ Function IN3_ModifiedGauss(w,xvar) : FitFunc
 	//CurveFitDialog/ w[1] = center
 	//CurveFitDialog/ w[2] = cparameter
 	//CurveFitDialog/ w[3] = dparameter
-
+	
 	return w[0]*exp(-0.5*(abs(xvar-w[1])/w[2])^w[3])
 End
 
