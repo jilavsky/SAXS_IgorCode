@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.03		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.04		//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716Ð719, Boualem Hammouda, A new GuinierÐPorod model
 Constant IR3GPversionNumber=1
 
@@ -578,7 +578,7 @@ Function IR3DP_MainPanelFunction()
 
 	Button DoFitting,pos={175,584},size={70,20},proc=IR3GP_PanelButtonProc,title="Fit", help={"Do least sqaures fitting of the whole model, find good starting conditions and proper limits before fitting"}
 	Button RevertFitting,pos={255,584},size={100,20},proc=IR3GP_PanelButtonProc,title="Revert back",help={"Return back befoire last fitting attempt"}
-	Button FixLimits,pos={93,605},size={80,15},proc=IR3GP_PanelButtonProc,title="Fix limits?", help={"Reset variables to default values?"}
+	Button FixLimits,pos={93,605},size={80,16},proc=IR3GP_PanelButtonProc,title="Fix limits?", help={"Reset variables to default values?"}
 	Button CopyToFolder,pos={55,623},size={120,20},proc=IR3GP_PanelButtonProc,title="Results -> Data Folder", help={"Copy results of the modeling into original data folder"}
 	Button MarkGraphs,pos={277,623},size={110,20},proc=IR3GP_PanelButtonProc,title="Results -> graphs", help={"Insert text boxes with results into the graphs for printing"}
 	Button CleanupGraph,pos={277,645},size={110,20},proc=IR3GP_PanelButtonProc,title="Clean graph", help={"Remove text boxes with results into the graphs for printing"}
@@ -589,11 +589,11 @@ Function IR3DP_MainPanelFunction()
 	SetVariable SASBackground,limits={-inf,Inf,0.05*SASBackground},value= root:Packages:Irena:GuinierPorod:SASBackground
 	CheckBox FitBackground,pos={195,566},size={63,14},proc=IR3GP_PanelCheckboxProc,title="Fit Bckg?"
 	CheckBox FitBackground,variable= root:Packages:Irena:GuinierPorod:FitSASBackground, help={"Check if you want the background to be fitting parameter"}
-	Button LevelXFitRg1AndG,pos={240,410},size={120,12}, proc=IR3GP_PanelButtonProc,title="1. \\JL     Fit Rg1/G w/csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
-	Button LevelXFitPAndB,pos={240,427},size={120,12}, proc=IR3GP_PanelButtonProc,title="2. \\JL     Fit P w/csrs", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
-	Button LevelXFitS1,pos={240,444},size={120,12}, proc=IR3GP_PanelButtonProc,title="3. \\JL     Fit S1 w/csrs", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
-	Button LevelXFitRg2,pos={240,461},size={120,12}, proc=IR3GP_PanelButtonProc,title="4. \\JL     Fit Rg2 w/csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
-	Button LevelXFitS2,pos={240,478},size={120,12}, proc=IR3GP_PanelButtonProc,title="5. \\JL     Fit S2 w/csrs", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
+	Button LevelXFitRg1AndG,pos={240,420},size={120,18}, proc=IR3GP_PanelButtonProc,title="1. \\JL     Fit Rg1/G w/csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	Button LevelXFitPAndB,pos={240,439},size={120,18}, proc=IR3GP_PanelButtonProc,title="2. \\JL     Fit P w/csrs", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
+	Button LevelXFitS1,pos={240,458},size={120,18}, proc=IR3GP_PanelButtonProc,title="3. \\JL     Fit S1 w/csrs", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
+	Button LevelXFitRg2,pos={240,477},size={120,18}, proc=IR3GP_PanelButtonProc,title="4. \\JL     Fit Rg2 w/csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	Button LevelXFitS2,pos={240,496},size={120,18}, proc=IR3GP_PanelButtonProc,title="5. \\JL     Fit S2 w/csrs", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
 
 
 	//Modeling input, common for all distributions
@@ -687,23 +687,23 @@ Function IR3DP_MainPanelFunction()
 	NVAR Level_ETA=root:Packages:Irena:GuinierPorod:Level_ETA
 	NVAR Level_PACK=root:Packages:Irena:GuinierPorod:Level_PACK
 	step = Level_ETA>0 ? 0.05*Level_ETA : 1
-	SetVariable Level_ETA,pos={14,500},size={180,16},proc=IR3GP_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
+	SetVariable Level_ETA,pos={14,520},size={180,16},proc=IR3GP_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
 	SetVariable Level_ETA,limits={0,inf,step},value= root:Packages:Irena:GuinierPorod:Level_ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
-	CheckBox Level_ETAFit,pos={200,500},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
+	CheckBox Level_ETAFit,pos={200,520},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
 	CheckBox Level_ETAFit,variable= root:Packages:Irena:GuinierPorod:LevelETAFit, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
-	SetVariable Level_ETALowLimit,pos={230,500},size={60,16},noproc, title=" ", format="%0.3g"
+	SetVariable Level_ETALowLimit,pos={230,520},size={60,16},noproc, title=" ", format="%0.3g"
 	SetVariable Level_ETALowLimit,limits={0,inf,0},value= root:Packages:Irena:GuinierPorod:Level_ETALowLimit, help={"Correlation distance low limit"}
-	SetVariable Level_ETAHighLimit,pos={300,500},size={60,16},noproc,  title=" ", format="%0.3g"
+	SetVariable Level_ETAHighLimit,pos={300,520},size={60,16},noproc,  title=" ", format="%0.3g"
 	SetVariable Level_ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena:GuinierPorod:Level_ETAHighLimit, help={"Correlation distance high limit"}
 
 	step = Level_PACK>0 ? 0.05*Level_PACK : 1
-	SetVariable Level_PACK,pos={14,520},size={180,16},proc=IR3GP_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
+	SetVariable Level_PACK,pos={14,538},size={180,16},proc=IR3GP_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
 	SetVariable Level_PACK,limits={0,8,step},value= root:Packages:Irena:GuinierPorod:Level_PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
-	CheckBox Level_PACKFit,pos={200,520},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
+	CheckBox Level_PACKFit,pos={200,538},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
 	CheckBox Level_PACKFit,variable= root:Packages:Irena:GuinierPorod:LevelPACKFit, help={"Fit packing factor? Select properly starting condions and limits"}
-	SetVariable Level_PACKLowLimit,pos={230,520},size={60,16},noproc, title=" ", format="%0.3g"
+	SetVariable Level_PACKLowLimit,pos={230,538},size={60,16},noproc, title=" ", format="%0.3g"
 	SetVariable Level_PACKLowLimit,limits={0,8,0},value= root:Packages:Irena:GuinierPorod:Level_PACKLowLimit, help={"Low limit for packing factor"}
-	SetVariable Level_PACKHighLimit,pos={300,520},size={60,16},noproc,  title=" ", format="%0.3g"
+	SetVariable Level_PACKHighLimit,pos={300,538},size={60,16},noproc,  title=" ", format="%0.3g"
 	SetVariable Level_PACKHighLimit,limits={0,8,0},value= root:Packages:Irena:GuinierPorod:Level_PACKHighLimit, help={"High limit for packing factor"}
 
 	IR3GP_PanelTabControl("",0)
