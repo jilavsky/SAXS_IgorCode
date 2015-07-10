@@ -801,7 +801,7 @@ Function NI1_15IDDSetDefaultNx()
 					if(strlen(CurrentMaskFileName)<1)
 						DoAlert 0, "Do NOT forget to create or load Mask"
 					else	
-						Print "  *********  IMPORTANT:  ********* \rFound Mask named :  >>>  "+CurrentMaskFileName+" <<<   Data reduction will use this mask. Make sure thsi is the correct mask to use. "
+						Print "  *********  IMPORTANT:  ********* \rFound Mask named :  >>>  "+CurrentMaskFileName+" <<<   Data reduction will use this mask. Make sure this is the correct mask to use. "
 					endif
 				else
 					NVAR Usemask= root:Packages:Convert2Dto1D:Usemask
