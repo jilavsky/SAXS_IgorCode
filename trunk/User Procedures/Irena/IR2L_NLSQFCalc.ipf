@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
+#pragma version=1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.12 removed most Executes in preparation fro Igor 7
+//1.13 minor fixes for existence of Size distribution graphs so we do tno get errors. 
+//1.12 removed most Executes in preparation for Igor 7
 //1.11  bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.10 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.09 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
@@ -870,56 +871,65 @@ Function IR2L_AppendWvsGraphSizeDist()
 	if(!WaveExists(DistRadii))
 		return 0		//data do not exist... 
 	endif
-	if(SizeDistDisplayNumDist)
-		CheckDisplayed /W=GraphSizeDistributions TotalNumberDist
-		if(!V_Flag)
-			AppendToGraph /R/W=GraphSizeDistributions TotalNumberDist vs DistRadii
+	DoWIndow GraphSizeDistributions
+	if(V_FLag)
+		if(SizeDistDisplayNumDist)
+			CheckDisplayed /W=GraphSizeDistributions TotalNumberDist
+			if(!V_Flag)
+				AppendToGraph /R/W=GraphSizeDistributions TotalNumberDist vs DistRadii
+			endif
+		else
+			RemoveFromGraph/Z/W=GraphSizeDistributions TotalNumberDist
 		endif
-	else
-		RemoveFromGraph/Z/W=GraphSizeDistributions TotalNumberDist
-	endif
-	if(SizeDistDisplayVolDist)
-		CheckDisplayed /W=GraphSizeDistributions TotalVolumeDist
-		if(!V_Flag)
-			AppendToGraph /W=GraphSizeDistributions TotalVolumeDist vs DistRadii
+		if(SizeDistDisplayVolDist)
+			CheckDisplayed /W=GraphSizeDistributions TotalVolumeDist
+			if(!V_Flag)
+				AppendToGraph /W=GraphSizeDistributions TotalVolumeDist vs DistRadii
+			endif
+		else
+			RemoveFromGraph/Z/W=GraphSizeDistributions TotalVolumeDist
 		endif
-	else
-		RemoveFromGraph/Z/W=GraphSizeDistributions TotalVolumeDist
 	endif
-	
+		
 	For(i=1;i<11;i+=1)
 		NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
 		Wave/Z NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
 		Wave/Z RDist=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
 		Wave/Z VolDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
-		CheckDisplayed /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
+		DOWindow GraphSizeDistributions
+		if(V_Flag)
+			CheckDisplayed /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
 		
-		if(SizeDistDisplayNumDist && !V_Flag && UseThePop)
-			AppendToGraph/R/W=GraphSizeDistributions NumDist vs RDist
-		elseif(!SizeDistDisplayNumDist || !UseThePop)
-			RemoveFromGraph/Z /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
-		endif
+			if(SizeDistDisplayNumDist && !V_Flag && UseThePop)
+				AppendToGraph/R/W=GraphSizeDistributions NumDist vs RDist
+			elseif(!SizeDistDisplayNumDist || !UseThePop)
+				RemoveFromGraph/Z /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
+			endif
 
-		CheckDisplayed /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
-		if(SizeDistDisplayVolDist && !V_Flag && UseThePop)
-			AppendToGraph/W=GraphSizeDistributions VolDist vs RDist
-		elseif(!SizeDistDisplayVolDist || !UseThePop)
-			RemoveFromGraph/Z /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
+			CheckDisplayed /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
+			if(SizeDistDisplayVolDist && !V_Flag && UseThePop)
+				AppendToGraph/W=GraphSizeDistributions VolDist vs RDist
+			elseif(!SizeDistDisplayVolDist || !UseThePop)
+				RemoveFromGraph/Z /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
+			endif
 		endif
 	endfor
 
-	Label/Z /W=GraphSizeDistributions bottom SizeDist_DimensionType+" [A]"
-	if(SizeDistDisplayNumDist)
-		Label /Z/W=GraphSizeDistributions right "Number distribution [1/(A*cm\\S3\\M)]"
+	DOWindow GraphSizeDistributions
+	if(V_Flag)
+		Label/Z /W=GraphSizeDistributions bottom SizeDist_DimensionType+" [A]"
+		if(SizeDistDisplayNumDist)
+			Label /Z/W=GraphSizeDistributions right "Number distribution [1/(A*cm\\S3\\M)]"
+		endif
+		if(!SizeDistDisplayNumDist)
+			ModifyGraph /Z/W=GraphSizeDistributions mirror(left)=1
+		endif
+		if(SizeDistDisplayVolDist)
+			Label/Z /W=GraphSizeDistributions left "Volume distribution f(R) [1/A]"
+		endif	
+		if(!SizeDistDisplayVolDist)
+			ModifyGraph/Z /W=GraphSizeDistributions mirror(right)=1
 	endif
-	if(!SizeDistDisplayNumDist)
-		ModifyGraph /Z/W=GraphSizeDistributions mirror(left)=1
-	endif
-	if(SizeDistDisplayVolDist)
-		Label/Z /W=GraphSizeDistributions left "Volume distribution f(R) [1/A]"
-	endif	
-	if(!SizeDistDisplayVolDist)
-		ModifyGraph/Z /W=GraphSizeDistributions mirror(right)=1
 	endif
 	SetDataFolder fldrSav0	
 End
