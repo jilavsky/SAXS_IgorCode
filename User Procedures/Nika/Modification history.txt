@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 1.69 
+Major addition - created new calculation of the Q resolution using integration width of pixel (that used to be there), beam size and pixel size. Added beam size controls. If set to 0, ignored. 
 Added some warning and better handling when preferences change uncertainty calculation method
 9ID/15ID configuration - force SEM as uncertainty method for WAXS and pinSAXS (Pilatus) while Std. Dev for big SAXS (MarCCD). 
 Added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 

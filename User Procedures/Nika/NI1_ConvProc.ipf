@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.44
+#pragma version=2.45
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.45 added Qresolution accounting which takes care of bin width + pixel size + beam size
 //2.44 fixed bug when 2DQwave had note appended, not repalced and if beam center changed, it will get recaculated always since a wrong center values were read first. 
 //2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
 //2.42 minor GISAXS panel update (kill it on tab change). 
@@ -147,18 +148,14 @@ Function NI1A_AverageDataPerUserReq(orientation)
 		OldNote+="PolarizationCorrection=None;"
 	endif
 	
-	Duplicate/O QvectorA, Qvector, Intensity, Error, Qsmearing
+	Duplicate/O QvectorA, Qvector, Intensity, Error
+	Duplicate/O QvectorWidth, Qsmearing
 	Duplicate/O TwoThetaA, TwoTheta
 	Duplicate/O TwoThetaWidthA, TwoThetaWidth
 	Duplicate/O DistanceInmmA, DistanceInmm
 	Duplicate/O DistacneInmmWidthA, DistacneInmmWidth
 	Duplicate/O DspacingA, Dspacing
 	Duplicate/O DspacingWidthA, DspacingWidth
-	//create proper Q smearing data
-	Qsmearing = QvectorWidth			//this is geometrical Q smearing, simply caused by Nika's pixel size/step binning. Includes any log-binning effects.
-	
-	
-	
 	Intensity=0
 	Error=0
 	variable i, j, counter, numbins, start1, end1
@@ -217,6 +214,58 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+
+Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneInmmWidth, DspacingWidth, PixX,PixY,BeamX,BeamY,Wavelength,SampleToCCDdistance)
+	wave Qvector, QvectorWidth, TwoThetaWidth, DistacneInmmWidth, DspacingWidth
+	variable PixX,PixY,BeamX,BeamY, Wavelength,SampleToCCDdistance
+	//note the Qresolution already has accounted for bin width for integration.
+	///////
+	//this function will caculate Q resolution for each q point given by pixel size and beam size
+	//for simplicity this is done in perpendicular detector approximation (no tilts)
+	//assume we can calculae width of the pixes/beam in 45 degrees (max dimension) and the 2/3 of that as FWHM
+	//this is midlessly approximate, but seems acceptable
+	//then we will convolute this with Qresolution going in and these two values 
+	//this thing is called in NI1A_AverageDataPerUserReq
+	variable PixDim, BeamDim
+	 PixDim=  sqrt(PixX^2 + PixY^2)					//this is width in mm of the pixel along diagonal direction
+	PixDim = PixDim * 2/3							//assume this is FWHM of the pixel sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow.
+	 BeamDim = sqrt(BeamX^2 + BeamY^2)			//width of beam size in mm along diagonal direction
+	BeamDim = BeamDim * 2 /3						//assume this is estimated FWHM of the beam sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow. 
+	variable constVal=Wavelength / (4 * pi)
+	Duplicate/Free Qvector, TwoTheta, DistacneInmm, DistInmmLow, DistInmmHigh, TempPixQres,  TempBeamQres, TmpQlow, TmpQhigh
+	Duplicate/Free Qvector, TempDBeam, TempDPix, tempTTBeam, tempTTPix, tempDistBeam, tempDistPix
+	TwoTheta =  2 * asin ( Qvector * constVal) 
+	DistacneInmm = SampleToCCDDistance*tan(TwoTheta)			//this is distance in mm for each pixel. 
+	//calculate the effect of pixel Size here...
+	DistInmmLow = DistacneInmm - (PixDim/2)						//this is low edge of distance, in mm of the pixel start
+	DistInmmHigh = DistacneInmm + (PixDim/2)						//this is high edge of distance, in mm of the pixel start
+	tempDistPix = PixDim											//this is DistanceInmm FWHM due to pixel size
+	// atan(DistInmmLow/SampleToCCDDistance)/2 is theta (bragg angle)
+	tempTTPix = (atan(DistInmmHigh/SampleToCCDDistance)/2 - atan(DistInmmLow/SampleToCCDDistance)/2)*180/pi		//this is TwoTheta FWHM due to pixel size
+	TmpQlow = sin(atan(DistInmmLow/SampleToCCDDistance)/2)/constVal			//and this should be qmin of the FWHM of the pixel
+	TmpQhigh = sin(atan(DistInmmHigh/SampleToCCDDistance)/2)/constVal			//and this qmax of the FWHM of the pixel
+	TempDPix = (constVal/TmpQlow) - (constVal/TmpQhigh)							//this is FWHM of d distribution due to pixel size
+	TempPixQres = TmpQhigh - TmpQlow
+	//calculate the effect of beam Size here...
+	DistInmmLow = DistacneInmm - (BeamDim/2)					//this is low edge of distance, in mm of the BeamDim start
+	DistInmmHigh = DistacneInmm + (BeamDim/2)				 //this is high edge of distance, in mm of the BeamDim start
+	tempDistBeam = BeamDim									//this is DistanceInmm FWHM due to BeamDim size
+	// atan(DistInmmLow/SampleToCCDDistance)/2 is theta (bragg angle)
+	tempTTBeam = (atan(DistInmmHigh/SampleToCCDDistance)/2 - atan(DistInmmLow/SampleToCCDDistance)/2)*180/pi		//this is TwoTheta FWHM due to BeamDim size
+	TmpQlow = sin(atan(DistInmmLow/SampleToCCDDistance)/2)/constVal			//and this should be qmin of the FWHM ofthe BeamDim
+	TmpQhigh = sin(atan(DistInmmHigh/SampleToCCDDistance)/2)/constVal			//and this qmax of the FWHM ofthe BeamDim
+	TempDBeam = (constVal/TmpQlow) - (constVal/TmpQhigh)						//this is FWHM of d distribution due to BeamDim size
+	TempBeamQres = TmpQhigh - TmpQlow
+	//now convolute this... 
+	QvectorWidth = sqrt(QvectorWidth[p]^2 + TempPixQres[p]^2 + TempBeamQres[p]^2)
+	TwoThetaWidth = sqrt(TwoThetaWidth[p]^2 + tempTTPix[p]^2 + tempTTBeam[p]^2)
+	DistacneInmmWidth = sqrt(DistacneInmmWidth[p]^2 + tempDistPix[p]^2 + tempDistBeam[p]^2)
+	DspacingWidth = sqrt(DspacingWidth[p]^2 + TempDPix[p]^2 + TempDBeam[p]^2)	
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
 //
 //Function NI1A_SolidangleCorrection(qwave,rwave,pixelsize,SDD, lambda,DoGeometryCorrection, DoPolarizationCorrection) //from Dale Schaefer, needs to be checked what is it doing... 
 //    		wave qwave,rwave
@@ -856,7 +905,7 @@ Function NI1A_CreateHistogram(orientation)
 	
 	if (QbinningLogarithmic)
 		//logarithmic binning of Q
-		duplicate/O  Qdistribution1D, logQdistribution1D
+		duplicate/Free  Qdistribution1D, logQdistribution1D
 		logQdistribution1D = log(Qdistribution1D) 
 		wavestats/Q logQdistribution1D
 		if(!UserMax)
@@ -959,12 +1008,23 @@ Function NI1A_CreateHistogram(orientation)
 	TwoThetaWidth[numpnts(TwoThetaWidth)-1]=TwoThetaWidth[numpnts(TwoThetaWidth)-2]
 	constVal = 2*pi
 	Dspacing = constVal / Qvector
-	DSpacingWidth  = Dspacing[p+1] - Dspacing [p]
+	DSpacingWidth  = Dspacing [p] - Dspacing[p+1]
 	DSpacingWidth[numpnts(DSpacingWidth)-1]=DSpacingWidth[numpnts(DSpacingWidth)-2]
 	
 	DistanceInmm =  SampleToCCDDistance*tan(TwoTheta*pi/180)
 	DistacneInmmWidth  = DistanceInmm[p+1] - DistanceInmm[p]
 	DistacneInmmWidth[numpnts(DistacneInmmWidth)-1]=DistacneInmmWidth[numpnts(DistacneInmmWidth)-2]
+
+	//create proper Q smearing data accounting for all other parts of gemoetry - beam size and pixels size
+	//now this needs to be convoluted with other effects. 
+	NVAR BeamSizeX = root:Packages:Convert2Dto1D:BeamSizeX
+	NVAR BeamSizeY = root:Packages:Convert2Dto1D:BeamSizeY
+	NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+	NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+	NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
+	NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
+	NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneInmmWidth, DspacingWidth, PixelSizeX,PixelSizeY,BeamSizeX,BeamSizeY,Wavelength,SampleToCCDdistance)
+	//that above creates the resolution due to pixel size, beam size and convolute them to existing binning q resolution. 
 	
 	setDataFOlder OldDF
 end
