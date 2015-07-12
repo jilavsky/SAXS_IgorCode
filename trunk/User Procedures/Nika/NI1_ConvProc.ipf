@@ -229,13 +229,21 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	variable PixDim, BeamDim
 	 PixDim=  sqrt(PixX^2 + PixY^2)					//this is width in mm of the pixel along diagonal direction
 	PixDim = PixDim * 2/3							//assume this is FWHM of the pixel sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow.
-	 BeamDim = sqrt(BeamX^2 + BeamY^2)			//width of beam size in mm along diagonal direction
+	//However, the pixel size and integration width are quite similar in logic. So let's try to make some corrections here. If there was no integration width, we should see FWHM ~ 2/3 of the 
+	//total width of the bin to represent teh FWHM. I tested this with case example, and either one can have square bin width (and then it is rectangle) or use FWHM, tehn the bin width s 2/3 of teh square, approximately. 
+      // If we are going to convolute these together later, we should correct the QvectorWidth coming from binning to smaller numbers , BUT only for bins approximately wide as the pixel width
+      // this requires transition from 2/3 correction to use of full bin width as the bin width increases. This is bit cumbersome. 
+      //assume that if the bin width is less than 3*pixDim, we should use FWHM, at higher bin widths lets assume bin width and keep this. 
+     QvectorWidth = (QvectorWidth[p] < 3 * pixDim) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
+	//	
+	BeamDim = sqrt(BeamX^2 + BeamY^2)			//width of beam size in mm along diagonal direction
 	BeamDim = BeamDim * 2 /3						//assume this is estimated FWHM of the beam sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow. 
 	variable constVal=Wavelength / (4 * pi)
 	Duplicate/Free Qvector, TwoTheta, DistacneInmm, DistInmmLow, DistInmmHigh, TempPixQres,  TempBeamQres, TmpQlow, TmpQhigh
 	Duplicate/Free Qvector, TempDBeam, TempDPix, tempTTBeam, tempTTPix, tempDistBeam, tempDistPix
 	TwoTheta =  2 * asin ( Qvector * constVal) 
 	DistacneInmm = SampleToCCDDistance*tan(TwoTheta)			//this is distance in mm for each pixel. 
+	
 	//calculate the effect of pixel Size here...
 	DistInmmLow = DistacneInmm - (PixDim/2)						//this is low edge of distance, in mm of the pixel start
 	DistInmmHigh = DistacneInmm + (PixDim/2)						//this is high edge of distance, in mm of the pixel start
@@ -246,6 +254,8 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	TmpQhigh = sin(atan(DistInmmHigh/SampleToCCDDistance)/2)/constVal			//and this qmax of the FWHM of the pixel
 	TempDPix = (constVal/TmpQlow) - (constVal/TmpQhigh)							//this is FWHM of d distribution due to pixel size
 	TempPixQres = TmpQhigh - TmpQlow
+	//end of pixel size effect... 
+	
 	//calculate the effect of beam Size here...
 	DistInmmLow = DistacneInmm - (BeamDim/2)					//this is low edge of distance, in mm of the BeamDim start
 	DistInmmHigh = DistacneInmm + (BeamDim/2)				 //this is high edge of distance, in mm of the BeamDim start
