@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 added more transferred parameters for pixel smearing. 
 //1.21 added PE detector Nexus file for WAXS and for all detector read of Beam Size
 //1.20 more modifications for 15ID SAXS
 //1.19 modifications for 15ID SAXS done April 2015

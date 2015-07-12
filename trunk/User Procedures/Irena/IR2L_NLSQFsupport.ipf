@@ -5112,12 +5112,12 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	
 	SetVariable SmearingGaussWidth,pos={12,110},size={250,15},title="Fixed dQ [1/A] or dQ/Q [%]", disable = (PixelSmearing||!FixedSmearing||UsingLogQBinning)
 	SetVariable SmearingGaussWidth,help={"Pixel smearing value - Bin width or Gauss FWHM if fixed"} //, disable = DisplaySlitLength
-	SetVariable SmearingGaussWidth,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingFWHM_set"+num2str(CurDataTab))
+	SetVariable SmearingGaussWidth,limits={0,inf,0},value= $("root:Packages:IR2L_NLSQF:SmearingFWHM_set"+num2str(CurDataTab))
 	
 
 	SetVariable SmearingIgnoreSmalldQ,pos={12,135},size={250,15},title="Ignore dQ/Q smaller then [%]", disable = PixelSmearing
 	SetVariable SmearingIgnoreSmalldQ,help={"Ignores samller dQ/Q than specific fraction to save cpu"}
-	SetVariable SmearingIgnoreSmalldQ,limits={0,inf,1},value= $("root:Packages:IR2L_NLSQF:SmearingIgnoreSmalldQ_set"+num2str(CurDataTab))
+	SetVariable SmearingIgnoreSmalldQ,limits={0,inf,0},value= $("root:Packages:IR2L_NLSQF:SmearingIgnoreSmalldQ_set"+num2str(CurDataTab))
 	
 	NVAR SmPnts= $("root:Packages:IR2L_NLSQF:SmearingMaxNumPnts_set"+num2str(CurDataTab))
 	PopupMenu SmearingMaxNumPnts,pos={12,160},size={250,15},title="Max num of oversample pnts", proc=IRL2_SmearingPopMenuProc, disable = PixelSmearing
