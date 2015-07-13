@@ -2533,7 +2533,7 @@ Function IR2L_SetInitialValues(enforce)
 		For(i=0;i<itemsInList(ListOfVariables);i+=1)
 			NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
 			if(testVar==0)
-				testVar=4
+				testVar=3
 			endif
 		endfor
 
