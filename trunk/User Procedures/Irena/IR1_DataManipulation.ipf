@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.54
+#pragma version=2.55
 constant IR3MversionNumber = 2.54			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.53			//Data manipulation I panel version number
+constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.53			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.55 Data Manipulation I - enabled Q shifts and added MergeData2, which optimizes scaling Data2, backgroundData1, and Qshift of Data2. This makes sense when SAXS alignment is not perfect. 
 //2.54 Data Manipulation II - added ability to divide multiple data by another data set (same as subtract, but divide). 
 //2.53 Data Manipulation I - added convert to D and Two-Theta for Data 1
 //2.52 fixed bug where Data manipulation tool II could fail when wave names were liberal. 
@@ -177,13 +178,14 @@ Proc IR1D_DataManipulationPanel()
 	Button CopyGraphData,pos={5,310},size={120,17}, proc=IR1D_InputPanelButtonProc,title="Add Data and Graph", help={"Create graph"}
 	Button ResetModify,pos={130,310},size={60,17}, proc=IR1D_InputPanelButtonProc,title="Reset", help={"Reset the modify data parameters and return all removed points"}
 	Button AutoScale,pos={200,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}
-	Button MergeData,pos={310,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="MergeData", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. "}
+	Button MergeData,pos={310,300},size={100,17}, proc=IR1D_InputPanelButtonProc,title="MergeData", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. "}
+	Button MergeData2,pos={310,319},size={100,17}, proc=IR1D_InputPanelButtonProc,title="MergeData2", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging.  "}
 
 	SetVariable Data1_IntMultiplier, pos={5,344}, size={150,15},title="Multiply Int by", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_IntMultiplier)}
 	SetVariable Data1_IntMultiplier, value= root:Packages:SASDataModification:Data1_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
 	SetVariable Data1_Background, pos={5,360}, size={150,15},title="Sbtrct bckg   ", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data1_Background)}
 	SetVariable Data1_Background, value= root:Packages:SASDataModification:Data1_Background,help={"Subtract bacground from intensity"}
-	SetVariable Data1_Qshift, pos={5,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=2
+	SetVariable Data1_Qshift, pos={5,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=0
 	SetVariable Data1_Qshift, value= root:Packages:SASDataModification:Data1_Qshift,help={"Offset in Q by"}
 	SetVariable Data1_ErrMulitplier, pos={5,392}, size={150,15},title="Error multiplier", proc=IR1D_setvarProc
 	SetVariable Data1_ErrMulitplier, value= root:Packages:SASDataModification:Data1_ErrMultiplier,help={"Multiply intesnity by"}
@@ -192,7 +194,7 @@ Proc IR1D_DataManipulationPanel()
 	SetVariable Data2_IntMultiplier, value= root:Packages:SASDataModification:Data2_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
 	SetVariable Data2_Background, pos={185,360}, size={150,15},title="Sbtrct bckg   ", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_Background)}
 	SetVariable Data2_Background, value= root:Packages:SASDataModification:Data2_Background,help={"Subtract bacground from intensity"}
-	SetVariable Data2_Qshift, pos={185,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=2
+	SetVariable Data2_Qshift, pos={185,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=0
 	SetVariable Data2_Qshift, value= root:Packages:SASDataModification:Data2_Qshift,help={"Offset in Q by"}
 	SetVariable Data2_ErrMulitplier, pos={185,392}, size={150,15},title="Error multiplier", proc=IR1D_setvarProc
 	SetVariable Data2_ErrMulitplier, value= root:Packages:SASDataModification:Data2_ErrMultiplier,help={"Multiply intesnity by"}
@@ -454,7 +456,33 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		DoUpdate
 		Cursor/P A,  $OldAcsrWvName,  OldAcsrPnt
 		Cursor/P B,  $OldBcsrWvName,  OldBcsrPnt
-		IR1D_MergeData()
+		IR1D_MergeData(0)
+		NVAR CombineData=root:Packages:SASDataModification:CombineData
+		CombineData =1 
+		IR1D_InputPanelCheckboxProc2("CombineData",1)
+		IR1D_RemoveSmallQpnt()
+		IR1D_RemoveLargeQpnt()
+		IR1D_RecalculateData()
+		IR1D_ConvertData()
+		IR1D_SmoothData()
+		IR1D_AppendResultToGraph()
+	endif
+	if(cmpstr(ctrlName,"MergeData2")==0)
+		//store where cursors are
+		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
+		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
+		if(strlen(OldAcsrWvName)<1||strlen(OldBcsrWvName)<1||stringmatch(OldBcsrWvName,"ResultsInt")||stringmatch(OldAcsrWvName,"ResultsInt"))
+			abort "Cursors not set correctly. Place A cursor on start of Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+		endif
+		OldAcsrPnt = pcsr(A,"IR1D_DataManipulationGraph")
+		OldBcsrPnt = pcsr(B,"IR1D_DataManipulationGraph")
+		IR1D_ResetModifyData()
+		IR1D_CopyDataAndGraph()
+		IR1D_PresetOutputStrings()
+		DoUpdate
+		Cursor/P A,  $OldAcsrWvName,  OldAcsrPnt
+		Cursor/P B,  $OldBcsrWvName,  OldBcsrPnt
+		IR1D_MergeData(1)
 		NVAR CombineData=root:Packages:SASDataModification:CombineData
 		CombineData =1 
 		IR1D_InputPanelCheckboxProc2("CombineData",1)
@@ -481,7 +509,8 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR1D_MergeData()
+Function IR1D_MergeData(VaryQshift)
+	variable VaryQshift
 
 	string OldDf
 	OldDf= GetDataFOlder(1)
@@ -495,10 +524,12 @@ Function IR1D_MergeData()
 	NVAR Data2_IntMultiplier=root:Packages:SASDataModification:Data2_IntMultiplier
 	NVAR Data1_Background=root:Packages:SASDataModification:Data1_Background
 	NVAR Data2_Background=root:Packages:SASDataModification:Data2_Background
+	NVAR Data2_Qshift=root:Packages:SASDataModification:Data2_Qshift
 	Data1_IntMultiplier=1
 	Data2_IntMultiplier = 1
 	Data1_Background = 0
 	Data2_Background=0
+	Data2_Qshift = 0
 	
 	IR1D_RecalculateData()
 	
@@ -542,25 +573,36 @@ Function IR1D_MergeData()
 	Duplicate/O/Free/R=[StartQp, EndQp] TempQ1, TempQ1Part
 	Duplicate/O/Free/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
 	
-	TempInt2Part = TempInt2[BinarySearch(Qvector2, TempQ1Part[p])]
-	TempErr2Part = TempErr2[BinarySearch(Qvector2, TempQ1Part[p])]
-	variable integral1, integral2, scalingFactor, highQDifference	
+	TempInt2Part = TempInt2[BinarySearchInterp(Qvector2, TempQ1Part[p])]
+	TempErr2Part = TempErr2[BinarySearchInterp(Qvector2, TempQ1Part[p])]
+	variable integral1, integral2, scalingFactor, highQDifference, Q2shift
 	integral1=areaXY(TempQ1, TempInt1, startQ, endQ )
 	integral2=areaXY(TempQ2, TempInt2, startQ, endQ )
 	scalingFactor = integral1/integral2
 	highQDifference = TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1]
+	Q2shift = 0.0
+	Data2_Qshift = 0
 	
 	Concatenate /O {TempQ1Part, TempInt1Part, TempInt2Part, TempErr1Part, TempErr2Part}, TempIntCombined
-	
-	variable ValueEst= 0.1* IR1D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference)
+
+	variable ValueEst= 0.1* IR1D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference, Q2shift)
 	//print ValueEst
-	Optimize/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst)/Q IR1D_FindMergeValues,TempIntCombined
+	if(VaryQshift>0)
+		Optimize/X={scalingFactor,highQDifference, Q2shift}/R={scalingFactor,highQDifference, (TempQ1Part[0]/2)}/Y =(ValueEst) IR1D_FindMergeValues,TempIntCombined
+	else	//keep Qshift=0
+		Optimize/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst) IR1D_FindMergeValues1,TempIntCombined
+	endif
 	Wave W_Extremum	
 	KillWaves TempIntCombined
 	Data1_IntMultiplier=1
 	Data2_IntMultiplier = W_Extremum[0]
 	Data1_Background = W_Extremum[1]
 	Data2_Background=0
+	if(VaryQshift>0)
+		Data2_Qshift =W_Extremum[2] 
+	else
+		Data2_Qshift = 0 
+	endif
 	SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*Data2_IntMultiplier}
 	SetVariable Data1_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*abs(Data1_Background)}
 	IR1D_RecalculateData()
@@ -572,19 +614,47 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-Function IR1D_FindMergeValues(w, scalingFactor, highQDifference)
+Function IR1D_FindMergeValues(w, scalingFactor, highQDifference, Q2shift)
 	Wave w
-	Variable scalingFactor,highQDifference
+	Variable scalingFactor,highQDifference, Q2shift
 	variable PowerLaw=0
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights
-	tempDifference = ((w[p][1]-highQDifference) - (scalingFactor * w[p][2]))	//difference between the two values
+	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
+	tmpQ = w[p][0]
+	Int2tmp = w[p][2]
+	InsertPoints 0,1, tmpQ, Int2tmp
+	Int2tmp[0]=Int2tmp[1]
+	tmpQ[0]=tmpQ[1]/2
+	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
+	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
+	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]*2
+	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift) )]
+	//print Int2shifted - Int2shifted2
+	tempDifference = ((w[p][1]-highQDifference) - (abs(scalingFactor) * Int2shifted[p]))	//difference between the two values
 	tempDifference = tempDifference^2										//distance squared... 
 	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
 	tempDifference/=tempWeights											//normalize the difference by uncertainity
 	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
 	return sum(tempDifference)												//total distance as defined above. 
 End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR1D_FindMergeValues1(w, scalingFactor, highQDifference)
+	Wave w
+	Variable scalingFactor,highQDifference
+	variable PowerLaw=0
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights
+	tempDifference = ((w[p][1]-highQDifference) - (abs(scalingFactor) * w[p][2]))	//difference between the two values
+	tempDifference = tempDifference^2										//distance squared... 
+	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
+	tempDifference/=tempWeights											//normalize the difference by uncertainity
+	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
+	return sum(tempDifference)												//total distance as defined above. 
+End
+
 
 //**********************************************************************************************************
 //**********************************************************************************************************

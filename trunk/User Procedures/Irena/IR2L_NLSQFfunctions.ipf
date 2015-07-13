@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.20
+#pragma version=1.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 added catch for change of LNmin which will be chaned to 3A diameter (1.5A radius) with user warning, when restoring old number (0). 
 //1.20 minor bug fix for parameter6 of form factor
 //1.19  bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.18 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
@@ -231,19 +232,27 @@ Function IR2L_RecoverOldParameters()
 		Wave/Z OldDistribution=$(GetDataFolder(1)+ReturnSolution)
 
 		string OldNote=note(OldDistribution)
-		string TempStr
+		string TempStr, ErrorMessage
+		ErrorMessage = ""
 		variable j
 			for(j=0;j<ItemsInList(OldNote);j+=1)
 				TempStr = StringFromList(j,OldNote,";")
 				NVAR/Z TestVar=$("root:Packages:IR2L_NLSQF:"+StringFromList(0,StringFromList(j,OldNote,";"),"="))
 				if (NVAR_Exists(testVar))
 					TestVar = str2num(StringFromList(1,TempStr,"="))
+					if(StringMatch(TempStr, "*LNMinSizeMin_pop*" )&&TestVar<1.5)
+						TestVar=3
+						ErrorMessage +=TempStr+";"
+					endif
 				endif
 				SVAR/Z TestStr=$("root:Packages:IR2L_NLSQF:"+StringFromList(0,StringFromList(j,OldNote,";"),"="))
 				if (SVAR_Exists(testStr))
 					TestStr = StringFromList(1,TempStr,"=")
 				endif
 			endfor
+			if(strlen(ErrorMessage)>0)
+				DoAlert /T="Some parameters have changed due to change in code"  0, "Warning! Restore changed following parameters from the stored ones: "+ErrorMessage
+			endif
 		return 1
 		DoAlert 1, "unfinished, need to set the Panel controls - popups are likely stale" 
 	else
