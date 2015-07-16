@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
+#pragma version=1.14
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 fixed bug where the change in Diametrer vs Radius was not reflected in Size distribution graph and calculated properly. 
 //1.13 minor fixes for existence of Size distribution graphs so we do tno get errors. 
 //1.12 removed most Executes in preparation for Igor 7
 //1.11  bug fixes and modifications to Other graph outputs - colorization etc. 
@@ -863,31 +864,34 @@ Function IR2L_AppendWvsGraphSizeDist()
 	NVAR SizeDistLogNumDist = root:Packages:IR2L_NLSQF:SizeDistLogNumDist
 	SVAR SizeDist_DimensionType=root:Packages:IR2L_NLSQF:SizeDist_DimensionType
 	
+	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+	
 	variable i
 
 	Wave/Z DistRadii=root:Packages:IR2L_NLSQF:DistRadia
+	Wave/Z DistDiameters = root:Packages:IR2L_NLSQF:DistDiameters
 	Wave/Z TotalNumberDist=root:Packages:IR2L_NLSQF:TotalNumberDist
 	Wave/Z TotalVolumeDist=root:Packages:IR2L_NLSQF:TotalVolumeDist	
-	if(!WaveExists(DistRadii))
+	if(!WaveExists(DistRadii)||!(WaveExists(DistDiameters)))
 		return 0		//data do not exist... 
 	endif
 	DoWIndow GraphSizeDistributions
 	if(V_FLag)
+		RemoveFromGraph/Z/W=GraphSizeDistributions TotalNumberDist
+		RemoveFromGraph/Z/W=GraphSizeDistributions TotalVolumeDist
 		if(SizeDistDisplayNumDist)
-			CheckDisplayed /W=GraphSizeDistributions TotalNumberDist
-			if(!V_Flag)
+			if(DimensionIsDiameter)
+				AppendToGraph /R/W=GraphSizeDistributions TotalNumberDist vs DistDiameters
+			else
 				AppendToGraph /R/W=GraphSizeDistributions TotalNumberDist vs DistRadii
 			endif
-		else
-			RemoveFromGraph/Z/W=GraphSizeDistributions TotalNumberDist
 		endif
 		if(SizeDistDisplayVolDist)
-			CheckDisplayed /W=GraphSizeDistributions TotalVolumeDist
-			if(!V_Flag)
+			if(DimensionIsDiameter)
+				AppendToGraph /W=GraphSizeDistributions TotalVolumeDist vs DistDiameters
+			else
 				AppendToGraph /W=GraphSizeDistributions TotalVolumeDist vs DistRadii
 			endif
-		else
-			RemoveFromGraph/Z/W=GraphSizeDistributions TotalVolumeDist
 		endif
 	endif
 		
@@ -895,22 +899,27 @@ Function IR2L_AppendWvsGraphSizeDist()
 		NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(i))
 		Wave/Z NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
 		Wave/Z RDist=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+		Wave/Z DDist=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(i))
 		Wave/Z VolDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
 		DOWindow GraphSizeDistributions
 		if(V_Flag)
-			CheckDisplayed /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
-		
-			if(SizeDistDisplayNumDist && !V_Flag && UseThePop)
-				AppendToGraph/R/W=GraphSizeDistributions NumDist vs RDist
-			elseif(!SizeDistDisplayNumDist || !UseThePop)
-				RemoveFromGraph/Z /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
+			RemoveFromGraph/Z /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
+			RemoveFromGraph/Z /W=GraphSizeDistributions $("NumberDist_Pop"+num2str(i))
+			if(SizeDistDisplayNumDist && UseThePop)
+				if(DimensionIsDiameter)
+					AppendToGraph/R/W=GraphSizeDistributions NumDist vs DDist
+				else
+					AppendToGraph/R/W=GraphSizeDistributions NumDist vs RDist
+				endif
 			endif
 
-			CheckDisplayed /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
-			if(SizeDistDisplayVolDist && !V_Flag && UseThePop)
-				AppendToGraph/W=GraphSizeDistributions VolDist vs RDist
-			elseif(!SizeDistDisplayVolDist || !UseThePop)
-				RemoveFromGraph/Z /W=GraphSizeDistributions $("VolumeDist_Pop"+num2str(i))
+			if(SizeDistDisplayVolDist && UseThePop)
+				if(DimensionIsDiameter)
+					AppendToGraph/W=GraphSizeDistributions VolDist vs DDist
+				else
+					AppendToGraph/W=GraphSizeDistributions VolDist vs RDist
+				endif
+				
 			endif
 		endif
 	endfor
@@ -925,7 +934,11 @@ Function IR2L_AppendWvsGraphSizeDist()
 			ModifyGraph /Z/W=GraphSizeDistributions mirror(left)=1
 		endif
 		if(SizeDistDisplayVolDist)
-			Label/Z /W=GraphSizeDistributions left "Volume distribution f(R) [1/A]"
+			if(DimensionIsDiameter)
+				Label/Z /W=GraphSizeDistributions left "Volume distribution f(D) [1/A]"
+			else
+				Label/Z /W=GraphSizeDistributions left "Volume distribution f(R) [1/A]"
+			endif
 		endif	
 		if(!SizeDistDisplayVolDist)
 			ModifyGraph/Z /W=GraphSizeDistributions mirror(right)=1
@@ -1992,38 +2005,45 @@ Function IR2L_UpdtSeparateMMM(distNum)
 	NVAR DistFWHM=$("root:Packages:IR2L_NLSQF:FWHM_pop"+num2str(distNum))
 	NVAR DistInputNumberDist=root:Packages:IR2L_NLSQF:UseNumberDistributions
 
+	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
+
 	Wave DistRadius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(distNum))
+	Wave DistDiameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(distNum))
 	Wave DistVolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(distNum))
 	Wave DistNumberDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(distNum))
 	
+	if(DimensionIsDiameter)
+		Duplicate/Free DistDiameter, DistDimension
+	else
+		Duplicate/Free DistRadius, DistDimension
+	endif
 	if(stringMatch(FormFactor,"Unified_Level"))
 		DistMean=NaN
 		DistMedian=NaN
 		DistMode=NaN
 		DistFWHM=NaN
 	else
-		//root:Packages:IR2L_NLSQF:NumberDist_Dist1,root:Packages:IR2L_NLSQF:VolumeDist_Dist1,root:Packages:IR2L_NLSQF:Radius_Dist1	
 		if (DistInputNumberDist)		//use number distribution...
-			Duplicate/O DistNumberDist, Temp_Probability, Another_temp, Temp_Cumulative
+			Duplicate/Free DistNumberDist, Temp_Probability, Another_temp, Temp_Cumulative
 			Redimension/D  Temp_Probability, Another_temp, Temp_Cumulative
-			Temp_Cumulative=areaXY(DistRadius, Temp_Probability, DistRadius[0], DistRadius[p] )
+			Temp_Cumulative=areaXY(DistDimension, Temp_Probability, DistDimension[0], DistDimension[p] )
 		else							//use volume distribution
-			Duplicate/O DistVolumeDist, Temp_Probability, Another_temp, Temp_Cumulative
+			Duplicate/Free DistVolumeDist, Temp_Probability, Another_temp, Temp_Cumulative
 			Redimension/D  Temp_Probability, Another_temp, Temp_Cumulative
-			Temp_Cumulative=areaXY(DistRadius, Temp_Probability, DistRadius[0], DistRadius[p] )
+			Temp_Cumulative=areaXY(DistDimension, Temp_Probability, DistDimension[0], DistDimension[p] )
 		endif	
 	
 		
-			Another_temp=DistRadius*Temp_Probability
-			DistMean=areaXY(DistRadius, Another_temp,0,inf)	/ areaXY(DistRadius, Temp_Probability,0,inf)				//Sum P(D)*D*deltaD/P(D)*deltaD
-			DistMedian=DistRadius[BinarySearchInterp(Temp_Cumulative, 0.5*Temp_Cumulative[numpnts(Temp_Cumulative)-1] )]		//R for which cumulative probability=0.5
+			Another_temp=DistDimension*Temp_Probability
+			DistMean=areaXY(DistDimension, Another_temp,0,inf)	/ areaXY(DistDimension, Temp_Probability,0,inf)				//Sum P(D)*D*deltaD/P(D)*deltaD
+			DistMedian=DistDimension[BinarySearchInterp(Temp_Cumulative, 0.5*Temp_Cumulative[numpnts(Temp_Cumulative)-1] )]		//R for which cumulative probability=0.5
 			FindPeak/P/Q Temp_Probability
-			DistMode=DistRadius[V_PeakLoc]								//location of maximum on the P(R)
+			DistMode=DistDimension[V_PeakLoc]								//location of maximum on the P(R)
 			
-			DistFWHM=IR1_FindFWHM(Temp_Probability,DistRadius)				//Ok, this is monkey approach
+			DistFWHM=IR1_FindFWHM(Temp_Probability,DistDimension)				//Ok, this is monkey approach
 	endif	
 	
-	KillWaves/Z Temp_Probability, Temp_Cumulative, Another_Temp
+//	KillWaves/Z Temp_Probability, Temp_Cumulative, Another_Temp
 
 	setDataFolder OldDf
 end
