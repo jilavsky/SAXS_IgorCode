@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.06
+#pragma version = 2.07
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.07 fixed Next sample button where there was weird bug when one was goign between use of manual selection and next sample buttons. 
 //2.06 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.05 fixed index running out again. 
 //2.04 converted to rtGlobals=3
@@ -44,7 +45,7 @@ Function IR1B_DesmearingMain()
 		DoWIndow/K DesmearingProcess
 	endif
 	IR1B_Initialize()					//this may be OK now... 
-	Execute ("IR1B_DesmearingControlPanel()")
+	IR1B_DesmearingControlPanelFnct()
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -52,7 +53,7 @@ end
 //***********************************************************************************************************************************
 
 
-Proc IR1B_DesmearingControlPanel() 
+Function IR1B_DesmearingControlPanelFnct() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Desmearing"
 	DoWindow/C IR1B_DesmearingControlPanel
@@ -72,9 +73,10 @@ Proc IR1B_DesmearingControlPanel()
 	DrawText 20,209,"Desmearing controls"
 
 	//Experimental data input
+	NVAR UseIndra2data = root:Packages:Irena_desmearing:UseIndra2data
 	Button DrawGraphs,pos={100,158},size={90,20}, proc=IR1B_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data and start process"}
 	Button NextSampleAndDrawGraphs,pos={200,158},size={90,20}, proc=IR1B_InputPanelButtonProc,title="Next sample", help={"Select next sample in order and Create a graph (log-log) of your experiment data and start process"}
-	Button NextSampleAndDrawGraphs,disable=!(root:Packages:Irena_desmearing:UseIndra2data)
+	Button NextSampleAndDrawGraphs,disable=!(UseIndra2data)
 	SetVariable SlitLength,pos={10,216},size={140,16},noproc,title="Slit length", help={"Input slit length in Q units (you should be using A-1 in this package)"}
 	SetVariable SlitLength,limits={0,Inf,0},variable= root:Packages:Irena_desmearing:SlitLength
 	SetVariable SlitLengthL,pos={180,216},size={140,16},noproc,title="Slit length L", help={"Slit length L parameters for trapeziodal slit in Q units (you should be using A-1 in this package)"}
@@ -118,8 +120,9 @@ Proc IR1B_DesmearingControlPanel()
 	//Extension controls
 	SetVariable BackgroundStart,pos={50,330},size={300,18},proc=IR1B_RecalcBackgroundExt,title="Start Bckg extrapolation at Q:   "
 	SetVariable BackgroundStart,limits={0,100,0},noedit=1,value= root:Packages:Irena_desmearing:BckgStartQ
+	SVAR BackgroundFunction=root:Packages:Irena_desmearing:BackgroundFunction
 	PopupMenu BackgroundFnct,pos={50,380},size={178,21},proc=IR1B_ChangeBkgFunction,title="background function :   "
-	PopupMenu BackgroundFnct,mode=1,value= "flat;linear;PowerLaw w flat;power law;Porod;polynom2;polynom3",popvalue=root:Packages:Irena_desmearing:BackgroundFunction
+	PopupMenu BackgroundFnct,mode=1,value= "flat;linear;PowerLaw w flat;power law;Porod;polynom2;polynom3",popvalue=BackgroundFunction
 
 //	CheckBox DesmearMaskNegatives pos={100,410}, size={200,15},title="Mask Negative values", proc=IR1B_InputPanelCheckboxProc
 //	CheckBox DesmearMaskNegatives variable=root:Packages:Irena_desmearing:DesmearMaskNegatives,mode=1
@@ -2239,12 +2242,19 @@ Function IR1B_InputPanelButtonProc(ctrlName) : ButtonControl
 		SVAR LastSample=root:Packages:Irena_desmearing:LastSample
 		NVAR UseIndra2Data=root:Packages:Irena_desmearing:UseIndra2Data
 		NVAR UseQRSData=root:Packages:Irena_desmearing:UseQRSData
-		String AllFolders=IR1B_GenStringOfFolders(UseIndra2Data, UseQRSData)
-		variable CurrentFolder=WhichListItem(LastSample,AllFolders)
+		//String ShortListOfFolders=IR1B_GenStringOfFolders(UseIndra2Data, UseQRSData)
+		String ShortListOfFolders=IR2P_GenStringOfFolders(winNm="IR1B_DesmearingControlPanel")
+		SVAR RealLongListOfFolder = root:Packages:Irena_desmearing:RealLongListOfFolder
+		SVAR ShortListOfFoldersWP = root:Packages:Irena_desmearing:ShortListOfFolders
+		String AllFolders=RealLongListOfFolder
+		variable CurrentFolder=WhichListItem(LastSample,ShortListOfFoldersWP)
 		SVAR DFloc=root:Packages:Irena_desmearing:DataFolderName
+		string Dflocshort
 		if(CurrentFolder>=0)
-			DFloc = StringFromList(CurrentFolder+1, AllFolders) 
-			PopupMenu SelectDataFolder,mode=1,win=IR1B_DesmearingControlPanel, popvalue=DFloc,value= #"\"---;\"+IR1B_GenStringOfFolders(root:Packages:Irena_desmearing:UseIndra2Data, root:Packages:Irena_desmearing:UseQRSData)"
+			DFloc = StringFromList(CurrentFolder+1, ShortListOfFoldersWP)
+			Dflocshort = StringFromList(CurrentFolder+1, ShortListOfFolders)
+			//PopupMenu SelectDataFolder,mode=1,win=IR1B_DesmearingControlPanel, popvalue=DFloc,value= #"\"---;\"+IR1B_GenStringOfFolders(root:Packages:Irena_desmearing:UseIndra2Data, root:Packages:Irena_desmearing:UseQRSData)"
+			execute("PopupMenu SelectDataFolder,mode=1,win=IR1B_DesmearingControlPanel,  popvalue=\""+Dflocshort+"\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\"IR1B_DesmearingControlPanel\")")
 		endif
 		//this fails for Indra 2 data and combination of SMR/M_SMR waves... Patch it up here.
 		SVAR DFInt=root:Packages:Irena_desmearing:IntensityWaveName

@@ -5269,7 +5269,7 @@ Function IR2L_FinishSmearingOfData()
 				// to do later - fix the Pixel smearing
 				if(StringMatch(SmearingType, "None" ))
 					//nothing happens here... but how did we get here anyway??? 
-					print "No pixel smearing necessary"
+					//print "No pixel smearing necessary"
 				   Duplicate/O/Free ModelIntensity, ModelIntPixelSmeared
 				   Duplicate/O/Free ModelQ, ModelQPixelSmeared
 				else		//need to smear these... 
