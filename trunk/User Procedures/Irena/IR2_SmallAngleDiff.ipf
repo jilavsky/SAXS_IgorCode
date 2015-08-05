@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.11
+#pragma version = 1.12
 Constant IR2DversionNumber=1.09
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 fixed bug in useSMR data which called old code and screwed up control procedures. 
 //1.11 removed most Executes in preparation for Igor 7. 
 //1.10 added check fro slit smeared data if qmax is sufficently high (3* slit length is minimum). 
 //1.09 changed term for storing data back to folder, Previously used  save, which confused users. 
@@ -1202,7 +1203,9 @@ Function IR2D_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			PopupMenu QvecDataName, mode=1,win=IR2D_ControlPanel, value="---"
 			PopupMenu ErrorDataName, mode=1,win=IR2D_ControlPanel, value="---"
 		//here we control the data structure checkbox
-			PopupMenu SelectDataFolder,win=IR2D_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_SAD:UseIndra2Data, root:Packages:Irena_SAD:UseQRSData,root:Packages:Irena_SAD:UseSMRData,0)"
+			//PopupMenu SelectDataFolder,win=IR2D_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_SAD:UseIndra2Data, root:Packages:Irena_SAD:UseQRSData,root:Packages:Irena_SAD:UseSMRData,0)"
+			execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+"IR2D_ControlPanel"+"\")")
+
 	elseif(!stringmatch(ctrlName,"DisplayPeaks") && !stringMatch(ctrlname,"AutoRecalculate") && !stringMatch(ctrlname,"Oversample"))
 		Setvariable $(ctrlName[3,inf]+"LowLimit") disable=!(checked)
 		Setvariable $(ctrlName[3,inf]+"HighLimit") disable=!(checked)

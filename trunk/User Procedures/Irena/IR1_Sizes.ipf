@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.17
+#pragma version = 2.18
 Constant IR1RSversionNumber=2.13
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 fixed bug when the top color indicator woudl show red on cases where it should be green but there were no "bad" ends. 
 //2.17 added color bar at the top to indicate which sizes one can trust based on Qmin/Qmax and which are suspect or totally unknown. 
 //2.16 check if for slit smeared data that the Qmax is at least 3* slit length
 //2.15 modifed to use rebinnign routine from general prodecures
@@ -4657,9 +4658,15 @@ Function IR1R_AddTrustRanges()
 			ModifyGraph /W=IR1R_SizesInputGraph lsize(TrustValues)=5
 			variable TrustStart, TrustEnd, TrustStartWide, TrustEndWide
 			FindLevel/Q  D_distribution, 2*pi/(Q_vec[numpnts(Q_vec)-1]) 
+			if(numtype(V_LevelX))
+				V_LevelX = 1
+			endif
 			TrustStart = V_LevelX
 			TrustStartWide = WideSmallSizes*(TrustStart) > 0 ? WideSmallSizes*(TrustStart) : 0
 			FindLevel/Q  D_distribution, pi/(Q_vec[0]) 
+			if(numtype(V_LevelX))
+				V_LevelX = numpnts(D_distribution)-2
+			endif
 			TrustEnd = V_LevelX
 			TrustEndWide = WideLargeSizes*(TrustEnd) < numpnts(TrustValuesColors)-1 ? WideLargeSizes*(TrustEnd) : numpnts(TrustValuesColors)-1
 			TrustEndWide = TrustEndWide>0 ? TrustEndWide : numpnts(TrustValuesColors)-1
@@ -4668,7 +4675,7 @@ Function IR1R_AddTrustRanges()
 			TrustValuesColors[TrustStart,TrustEnd] = 2
 			TrustValuesColors[TrustEnd, TrustEndWide] = 1
 			Smooth  (numpnts(TrustValuesColors)*SmoothFraction), TrustValuesColors
-			ModifyGraph /W=IR1R_SizesInputGraph zColor(TrustValues)={TrustValuesColors,*,5,Rainbow,0}
+			ModifyGraph /W=IR1R_SizesInputGraph zColor(TrustValues)={TrustValuesColors,0,5,Rainbow,0}
 		endif
 	endif
 end

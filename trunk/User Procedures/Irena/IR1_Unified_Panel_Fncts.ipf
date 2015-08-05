@@ -871,7 +871,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			PopupMenu QvecDataName, mode=1,win=IR1A_ControlPanel, value="---"
 			PopupMenu ErrorDataName, mode=1,win=IR1A_ControlPanel, value="---"
 		//here we control the data structure checkbox
-			PopupMenu SelectDataFolder,win=IR1A_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_UnifFit:UseIndra2Data, root:Packages:Irena_UnifFit:UseQRSData,root:Packages:Irena_UnifFit:UseSMRData,0)"
+			execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+"IR1A_ControlPanel"+"\")")
 	endif
 
 	if (cmpstr(ctrlName,"UseIndra2Data")==0)

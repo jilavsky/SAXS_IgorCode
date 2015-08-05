@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 constant IR3MversionNumber = 2.54			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.56 Data manipulation 1 - added color to Save data and added save data into Merge data buttons. 
 //2.55 Data Manipulation I - enabled Q shifts and added MergeData2, which optimizes scaling Data2, backgroundData1, and Qshift of Data2. This makes sense when SAXS alignment is not perfect. 
 //2.54 Data Manipulation II - added ability to divide multiple data by another data set (same as subtract, but divide). 
 //2.53 Data Manipulation I - added convert to D and Two-Theta for Data 1
@@ -178,8 +179,8 @@ Proc IR1D_DataManipulationPanel()
 	Button CopyGraphData,pos={5,310},size={120,17}, proc=IR1D_InputPanelButtonProc,title="Add Data and Graph", help={"Create graph"}
 	Button ResetModify,pos={130,310},size={60,17}, proc=IR1D_InputPanelButtonProc,title="Reset", help={"Reset the modify data parameters and return all removed points"}
 	Button AutoScale,pos={200,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}
-	Button MergeData,pos={310,300},size={100,17}, proc=IR1D_InputPanelButtonProc,title="MergeData", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. "}
-	Button MergeData2,pos={310,319},size={100,17}, proc=IR1D_InputPanelButtonProc,title="MergeData2", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging.  "}
+	Button MergeData,pos={310,300},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Merge+Save", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}
+	Button MergeData2,pos={310,319},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Merge 2+Save", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging. Saves data also"}
 
 	SetVariable Data1_IntMultiplier, pos={5,344}, size={150,15},title="Multiply Int by", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_IntMultiplier)}
 	SetVariable Data1_IntMultiplier, value= root:Packages:SASDataModification:Data1_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
@@ -193,7 +194,7 @@ Proc IR1D_DataManipulationPanel()
 	SetVariable Data2_IntMultiplier, pos={185,344}, size={150,15},title="Multiply Int by", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_IntMultiplier)}
 	SetVariable Data2_IntMultiplier, value= root:Packages:SASDataModification:Data2_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
 	SetVariable Data2_Background, pos={185,360}, size={150,15},title="Sbtrct bckg   ", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_Background)}
-	SetVariable Data2_Background, value= root:Packages:SASDataModification:Data2_Background,help={"Subtract bacground from intensity"}
+	SetVariable Data2_Background, value= root:Packages:SASDataModification:Data2_Background,help={"Subtract background from intensity"}
 	SetVariable Data2_Qshift, pos={185,376}, size={150,15},title="Q shift           ", proc=IR1D_setvarProc, disable=0
 	SetVariable Data2_Qshift, value= root:Packages:SASDataModification:Data2_Qshift,help={"Offset in Q by"}
 	SetVariable Data2_ErrMulitplier, pos={185,392}, size={150,15},title="Error multiplier", proc=IR1D_setvarProc
@@ -413,6 +414,7 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1D_ResetModifyData()
 		IR1D_CopyDataAndGraph()
 		IR1D_PresetOutputStrings()
+		Button SaveData, win=IR1D_DataManipulationPanel, fColor=(65535,16385,16385)
 		DoUpdate
 		if(numtype(OldAcsrPnt)==0 && !StringMatch(OldAcsrWvName, "ResultsInt" ))
 			Cursor/P A,  $OldAcsrWvName,  OldAcsrPnt
@@ -466,6 +468,9 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1D_ConvertData()
 		IR1D_SmoothData()
 		IR1D_AppendResultToGraph()
+		IR1D_SaveData()
+		IR1D_RecordResults()
+		Button SaveData, win=IR1D_DataManipulationPanel, fColor=(0,0,0)
 	endif
 	if(cmpstr(ctrlName,"MergeData2")==0)
 		//store where cursors are
@@ -492,6 +497,9 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1D_ConvertData()
 		IR1D_SmoothData()
 		IR1D_AppendResultToGraph()
+		IR1D_SaveData()
+		IR1D_RecordResults()
+		Button SaveData, win=IR1D_DataManipulationPanel, fColor=(0,0,0)
 	endif
 	if(cmpstr(ctrlName,"ConvertData")==0)
 		IR1D_ConvertData()
@@ -504,6 +512,7 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1D_AppendResultToGraph()
 		IR1D_SaveData()
 		IR1D_RecordResults()
+		Button SaveData, win=IR1D_DataManipulationPanel, fColor=(0,0,0)
 	endif
 end
 //**********************************************************************************************************
@@ -588,9 +597,9 @@ Function IR1D_MergeData(VaryQshift)
 	variable ValueEst= 0.1* IR1D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference, Q2shift)
 	//print ValueEst
 	if(VaryQshift>0)
-		Optimize/X={scalingFactor,highQDifference, Q2shift}/R={scalingFactor,highQDifference, (TempQ1Part[0]/2)}/Y =(ValueEst) IR1D_FindMergeValues,TempIntCombined
+		Optimize/Q/X={scalingFactor,highQDifference, Q2shift}/R={scalingFactor,highQDifference, (TempQ1Part[0]/2)}/Y =(ValueEst) IR1D_FindMergeValues,TempIntCombined
 	else	//keep Qshift=0
-		Optimize/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst) IR1D_FindMergeValues1,TempIntCombined
+		Optimize/Q/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst) IR1D_FindMergeValues1,TempIntCombined
 	endif
 	Wave W_Extremum	
 	KillWaves TempIntCombined

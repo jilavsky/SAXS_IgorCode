@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.23
+#pragma version=1.24
 Constant IR2SversionNumber=1.21
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant IR2SversionNumber=1.21
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.24 fixed bug in Scripting tool which caused qrs start folder return only ones with qrs, but not qds, and other "semi" qrs data 
 //1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
 //1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
 //1.21 added for QRS data wave name match string. 
@@ -464,8 +465,11 @@ Function/T IR2S_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSme
 			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
 		endif
 	elseif (UseQRSStructure)
-		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "q*", 1)
-		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
+//		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "q*", 1)
+//		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
+		make/N=0/FREE/T ResultingWave
+		IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, ResultingWave)
+		result=IR2S_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
 	else
 		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
 	endif
@@ -1065,7 +1069,7 @@ Function IR2S_FItWithModelingII()
 	
 	variable i
 	string CurrentFolderName
-	variable StartQ, EndQ		//need to store these sothe tool does not reset them... 
+	variable StartQ, EndQ		//need to store these so the tool does not reset them... 
 	NVAR CurMinQ=root:Packages:IR2L_NLSQF:Qmin_set1
 	NVAR CurMaxQ=root:Packages:IR2L_NLSQF:Qmax_set1
 	StartQ=CurMinQ
@@ -1127,6 +1131,7 @@ Function IR2S_FItWithModelingII()
 			//now we need to set back the Qmin and max.
 			CurMinQ = StartQ
 			CurMaxQ = EndQ
+			IR2L_setQMinMax(1)
 			//set the user error settings and int scaling back
 			UseUserErrors = UserErrs 
 			UseSQRTErrors = SQRTErrs

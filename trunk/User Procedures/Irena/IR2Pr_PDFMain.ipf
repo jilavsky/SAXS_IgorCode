@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.07
+#pragma version=1.08
 Constant IR2PrversionNumber=1.05
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.05
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 fixed bug of useSMR data which screwed up Control Procedures
 //1.07 removed wave/d, Function/d and variable/d. Obsolete
 //1.06 minor cahnge for notebook call function. 
 //1.05 added panel version control and made panel vertically scrollable
@@ -492,7 +493,8 @@ Function IR2Pr_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			PopupMenu QvecDataName, mode=1,win=IR2Pr_ControlPanel, value="---"
 			PopupMenu ErrorDataName, mode=1,win=IR2Pr_ControlPanel, value="---"
 		//here we control the data structure checkbox
-			PopupMenu SelectDataFolder,win=IR2Pr_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_PDDF:UseIndra2Data, root:Packages:Irena_PDDF:UseQRSData,root:Packages:Irena_PDDF:UseSMRData,0)"
+		//	PopupMenu SelectDataFolder,win=IR2Pr_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_PDDF:UseIndra2Data, root:Packages:Irena_PDDF:UseQRSData,root:Packages:Irena_PDDF:UseSMRData,0)"
+			execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+"IR2Pr_ControlPanel"+"\")")
 	endif
 
 	SetVariable ErrorMultiplier,disable=!(UseUserErrors||UseSQRTErrors)

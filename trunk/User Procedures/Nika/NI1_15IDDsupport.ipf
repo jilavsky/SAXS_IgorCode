@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.22
+#pragma version=1.23
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.23 added normalization for WAXS and modified GUI + pinSAXS default mask. Fixed bug error when run second time and help fiel alrerady existed.
 //1.22 added more transferred parameters for pixel smearing. 
 //1.21 added PE detector Nexus file for WAXS and for all detector read of Beam Size
 //1.20 more modifications for 15ID SAXS
@@ -68,7 +69,12 @@ Function NI1_15IDDConfigureNika()
 	SAXSGenSmearedPinData=1
 	NVAR USAXSpinSAXSselector = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
 	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
-	USAXSpinSAXSselector = !USAXSBigSAXSselector
+	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
+	if((USAXSWAXSselector+USAXSpinSAXSselector+USAXSBigSAXSselector)!=1)
+		USAXSpinSAXSselector = 1
+		USAXSBigSAXSselector = 0
+		USAXSWAXSselector = 0
+	endif
 
 	//update main panel... 
 	DoWIndow NI1A_Convert2Dto1DPanel
@@ -119,7 +125,7 @@ Window NI1_15IDDConfigPanel() : Panel
 	SetVariable USAXSSlitLength,help={"Sets USAXS slit length"}
 	Button SetUSAXSSlitLength,pos={229,150},size={150,20},proc=NI1_15IDDButtonProc,title="Set Slit Legnth"
 	Button SetUSAXSSlitLength,help={"Sets Slit length from USAXS data"}
-	Button CreateBadPIXMASK,pos={229,185},size={150,20},proc=NI1_15IDDButtonProc,title="Create bad pix mask"
+	Button CreateBadPIXMASK,pos={229,185},size={150,20},proc=NI1_15IDDButtonProc,title="Create default pinSAXS mask"
 	Button CreateBadPIXMASK,help={"Create mask covering bad pixles on 15IDD Pilatus"}
 	Checkbox SAXSGenSmearedPinData,pos={29,220},size={150,20}, variable=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData, proc=NI1_15IDDCheckProc
 	Checkbox SAXSGenSmearedPinData, title ="Create Smeared Data", help={"Set to create smeared data for merging with USAXS"}
@@ -307,7 +313,7 @@ Function NI1_15IDDButtonProc(ba) : ButtonControl
 				NI1_15IDDWaveNoteValuesNx()				
 			endif
 			if (stringmatch("CreateBadPIXMASK",ba.CtrlName))
-				NI1_15IDDCreateBadPixMask()				
+				NI1_15IDDCreateSAXSPixMask()				
 			endif
 			if (stringmatch("SetUSAXSSlitLength",ba.CtrlName))
 				NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
@@ -323,13 +329,13 @@ Function NI1_15IDDButtonProc(ba) : ButtonControl
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_15IDDCreateBadPixMask()			
+Function NI1_15IDDCreateSAXSPixMask()			
 
 	string OldDF=GetDataFolder(1)
 	SetDataFolder root:Packages:Convert2Dto1D
 	Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
-	M_ROIMask[][0,6]=0
+	M_ROIMask[][0,7]=0
 	M_ROIMask[86][17] = 0
 	M_ROIMask[58][112] = 0
 	
@@ -357,7 +363,7 @@ Function NI1_15IDDCreateBadPixMask()
 	note M_ROIMask, notestr
 	
 	SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
-	CurrentMaskFileName="15IDD bad pix mask"
+	CurrentMaskFileName="9IDC default SAXS mask"
 	NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
 	UseMask=1
 	setDataFOlder OldDf
@@ -469,12 +475,12 @@ Function NI1_15IDDSetDefaultNx()
 				
 				UseSampleTransmission = 0
 				UseEmptyField = 0
-				UseI0ToCalibrate = 0
+				UseI0ToCalibrate = 1
 				DoGeometryCorrection = 0
 				UseMonitorForEf = 0
 				UseSampleTransmFnct = 0
-				UseSampleMonitorFnct = 0
-				UseEmptyMonitorFnct = 0
+				UseSampleMonitorFnct = 1
+				UseEmptyMonitorFnct = 1
 				
 
 				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
@@ -494,12 +500,10 @@ Function NI1_15IDDSetDefaultNx()
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
-			//	SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
-				
-				SampleTransmFnct = "NI1_15IDDFIndTransmission"
-				SampleMonitorFnct = "NI1_15IDDFindI0"
-				EmptyMonitorFnct = "NI1_15IDDFindEfI0"
-			//	SampleNameMatchStr="*.hdf5"
+			
+				SampleTransmFnct = ""
+				SampleMonitorFnct = "NI1_15IDWFindI0"
+				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
 			
 				NI1A_SetCalibrationFormula()			
 				
@@ -1411,6 +1415,44 @@ Function/S NI1_15IDDFindLikelyUSAXSName(SampleName)
 end
 //************************************************************************************************************
 //************************************************************************************************************
+Function NI1_15IDWFindI0(SampleName)
+	string sampleName
+
+	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(w2D))
+		Abort "Image file not found "  
+	endif
+	string OldNOte=note(w2D)
+	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
+	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
+	I000 = I000 / I0gain
+	if(numtype(I000)!=0)
+		Print "I0 value not found in the wave note of the sample file, setting to 1"
+		I000=1 
+	endif
+	return I000
+end
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_15IDWFindEFI0(SampleName)
+	string sampleName
+
+	Wave/Z w2D = root:Packages:Convert2Dto1D:EmptyData
+	if(!WaveExists(w2D))
+		Abort "Image file not found "  
+	endif
+	string OldNOte=note(w2D)
+	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
+	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
+	I000 = I000 / I0gain
+	if(numtype(I000)!=0)
+		Print "I0 value not found in the wave note of the sample file, setting to 1"
+		I000=1 
+	endif
+	return I000
+end
+//************************************************************************************************************
+//************************************************************************************************************
 Function NI1_15IDDFindI0(SampleName)
 	string sampleName
 
@@ -1607,68 +1649,72 @@ end
 
 Function NI1_15IDDCreateHelpNbk()
 	String nb = "Instructions_15IDD"
-	NewNotebook/N=$nb/F=1/V=1/K=1/W=(461,433,1223,1103)
-	Notebook $nb defaultTab=36, statusWidth=252
-	Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
-	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
-	Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
-	Notebook $nb ruler=Title, text="Instructions for use of 9IDC (15IDD) special configurations\r"
-	Notebook $nb ruler=Normal, text="\r"
-	Notebook $nb text="Decide which data you need to reduce. Instructions are setup specific:\r"
-	Notebook $nb text="\r"
-	Notebook $nb ruler=Title, text="pinSAXS \r"
-	Notebook $nb ruler=Normal
-	Notebook $nb text="You may be heloped by first reducing your USAXS data and process them to SMR waves, but it is not necess"
-	Notebook $nb text="ary.\r"
-	Notebook $nb text="1.\tSelect \"pinSAXS\" checkbox.\r"
-	Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all pin"
-	Notebook $nb text="SAXS experiments.\r"
-	Notebook $nb text="3.\tSelect one of the images from your pinSAXS measurements in the main 2D panel and double click it (or "
-	Notebook $nb text="use button \"Ave & Display sel. file(s)\") to load \r"
-	Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
-	Notebook $nb text=" the most likely values for your experiment)\r"
-	Notebook $nb text="4. \tOptiona;l: Verify the parameters (Beam center & calibration) using Ag Behenate measurements collecte"
-	Notebook $nb text="d with your data & your notes (some NX file info could be stale)\r"
-	Notebook $nb text="5. \tCreate mask to mask off the bad points and top few lines on detector using button: \"Create bad pix m"
-	Notebook $nb text="ask\")\r"
-	Notebook $nb text="6.\tOptional : Either read slit length (button:\"Set Slit Length\") from one of USAXS measurements and sele"
-	Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_usx\") - OR - unselect the \"Create Smeared Data\" (resu"
-	Notebook $nb text="lting data will be \"_270_30\"). Likely choose \"Delete temp Data\" if you are creating slit smeared data.\r"
-	Notebook $nb text="7. \tFind \"Empty\" (aka: Blank) file you want to use and load it in Nika (\"Emp/Dk\" tab). \r"
-	Notebook $nb text="To process pinSAXS select the 2D data in the main panel and push button \"Convert sel. files 1 at time\"\r"
-	Notebook $nb text="8. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
-	Notebook $nb text=" for pinSAXS if you have small-angle scattering. If you have diffraction peaks, select in \"Sectors\" tab "
-	Notebook $nb text="checkbox \"Max num points\" and if you need it, select \"d?\" checkbox etc. \r"
-	Notebook $nb text="   \r"
-	Notebook $nb text="Merge \"_usx\" data using \"Data manipulation I\" tool from Irena package with USAXS slit smeared data or \"_"
-	Notebook $nb text="270_30\" data with USAXS desmeared data. \r"
-	Notebook $nb text="\r"
-	Notebook $nb text="\r"
-	Notebook $nb ruler=Title, text="WAXS\r"
-	Notebook $nb ruler=Normal, text="1.\tSelect \"WAXS\" checkbox.\r"
-	Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all WAX"
-	Notebook $nb text="S experiments.\r"
-	Notebook $nb text="3.\tSelect one of the images from your WAXS measurements in the main 2D panel and double click it (or use"
-	Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
-	Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
-	Notebook $nb text=" the most likely values for your experiment)\r"
-	Notebook $nb text="4. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
-	Notebook $nb text=" for WAXS. There is no need to epmty or other corrections in this case. You may need to modify the \"Sect"
-	Notebook $nb text="ors\" tab settings depending if you want the output in Q or in d (or in Theta).  \r"
-	Notebook $nb text="\r"
-	Notebook $nb ruler=Title, text="SAXS\r"
-	Notebook $nb ruler=Normal, text="1.\tSelect \"15ID SAXS\" checkbox.\r"
-	Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all SAX"
-	Notebook $nb text="S experiments.\r"
-	Notebook $nb text="3.\tSelect one of the images from your SAXS measurements in the main 2D panel and double click it (or use"
-	Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
-	Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
-	Notebook $nb text=" the most likely values for your experiment)\r"
-	Notebook $nb text="4. \tConfigure Empty and Dark images, generate Mask as needed. Likely you will need first to reduce the G"
-	Notebook $nb text="lassy Carbon sample, compare it with the standard data and create calibration constant. There is movie o"
-	Notebook $nb text="n this on the YouTube channel or USAXS web site.   "
-	Notebook $nb selection={startOfFile, startOfFile }, findText={"I",1}
-
+	DoWIndow Instructions_15IDD
+	if(V_Flag)
+		DoWindow/F Instructions_15IDD
+	else
+		NewNotebook/N=$nb/F=1/V=1/K=1/W=(461,433,1223,1103)
+		Notebook $nb defaultTab=36, statusWidth=252
+		Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
+		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
+		Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
+		Notebook $nb ruler=Title, text="Instructions for use of 9IDC (15IDD) special configurations\r"
+		Notebook $nb ruler=Normal, text="\r"
+		Notebook $nb text="Decide which data you need to reduce. Instructions are setup specific:\r"
+		Notebook $nb text="\r"
+		Notebook $nb ruler=Title, text="pinSAXS \r"
+		Notebook $nb ruler=Normal
+		Notebook $nb text="You may be heloped by first reducing your USAXS data and process them to SMR waves, but it is not necess"
+		Notebook $nb text="ary.\r"
+		Notebook $nb text="1.\tSelect \"pinSAXS\" checkbox.\r"
+		Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all pin"
+		Notebook $nb text="SAXS experiments.\r"
+		Notebook $nb text="3.\tSelect one of the images from your pinSAXS measurements in the main 2D panel and double click it (or "
+		Notebook $nb text="use button \"Ave & Display sel. file(s)\") to load \r"
+		Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
+		Notebook $nb text=" the most likely values for your experiment)\r"
+		Notebook $nb text="4. \tOptiona;l: Verify the parameters (Beam center & calibration) using Ag Behenate measurements collecte"
+		Notebook $nb text="d with your data & your notes (some NX file info could be stale)\r"
+		Notebook $nb text="5. \tCreate mask to mask off the bad points and top few lines on detector using button: \"Create bad pix m"
+		Notebook $nb text="ask\")\r"
+		Notebook $nb text="6.\tOptional : Either read slit length (button:\"Set Slit Length\") from one of USAXS measurements and sele"
+		Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_usx\") - OR - unselect the \"Create Smeared Data\" (resu"
+		Notebook $nb text="lting data will be \"_270_30\"). Likely choose \"Delete temp Data\" if you are creating slit smeared data.\r"
+		Notebook $nb text="7. \tFind \"Empty\" (aka: Blank) file you want to use and load it in Nika (\"Emp/Dk\" tab). \r"
+		Notebook $nb text="To process pinSAXS select the 2D data in the main panel and push button \"Convert sel. files 1 at time\"\r"
+		Notebook $nb text="8. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
+		Notebook $nb text=" for pinSAXS if you have small-angle scattering. If you have diffraction peaks, select in \"Sectors\" tab "
+		Notebook $nb text="checkbox \"Max num points\" and if you need it, select \"d?\" checkbox etc. \r"
+		Notebook $nb text="   \r"
+		Notebook $nb text="Merge \"_usx\" data using \"Data manipulation I\" tool from Irena package with USAXS slit smeared data or \"_"
+		Notebook $nb text="270_30\" data with USAXS desmeared data. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="\r"
+		Notebook $nb ruler=Title, text="WAXS\r"
+		Notebook $nb ruler=Normal, text="1.\tSelect \"WAXS\" checkbox.\r"
+		Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all WAX"
+		Notebook $nb text="S experiments.\r"
+		Notebook $nb text="3.\tSelect one of the images from your WAXS measurements in the main 2D panel and double click it (or use"
+		Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
+		Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
+		Notebook $nb text=" the most likely values for your experiment)\r"
+		Notebook $nb text="4. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
+		Notebook $nb text=" for WAXS. There is no need to epmty or other corrections in this case. You may need to modify the \"Sect"
+		Notebook $nb text="ors\" tab settings depending if you want the output in Q or in d (or in Theta).  \r"
+		Notebook $nb text="\r"
+		Notebook $nb ruler=Title, text="SAXS\r"
+		Notebook $nb ruler=Normal, text="1.\tSelect \"15ID SAXS\" checkbox.\r"
+		Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all SAX"
+		Notebook $nb text="S experiments.\r"
+		Notebook $nb text="3.\tSelect one of the images from your SAXS measurements in the main 2D panel and double click it (or use"
+		Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
+		Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
+		Notebook $nb text=" the most likely values for your experiment)\r"
+		Notebook $nb text="4. \tConfigure Empty and Dark images, generate Mask as needed. Likely you will need first to reduce the G"
+		Notebook $nb text="lassy Carbon sample, compare it with the standard data and create calibration constant. There is movie o"
+		Notebook $nb text="n this on the YouTube channel or USAXS web site.   "
+		Notebook $nb selection={startOfFile, startOfFile }, findText={"I",1}
+	endif
 
 end
 

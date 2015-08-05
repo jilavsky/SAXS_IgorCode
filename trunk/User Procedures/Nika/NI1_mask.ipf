@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.23 fix problems when saving of mask file to drive failed due to soemthing (like write privileges). 
+//1.23 fix problems when saving of mask file to drive failed due to something (like write privileges). 
 //1.22 yet another update for MaskListbox - it was not looking for h5 and hdf5 fiels when Nexus was seletced
 //1.21 fixed update MaskListbox, fixed bug preventing listbox update. 
 //1.20 modified call to hook function
