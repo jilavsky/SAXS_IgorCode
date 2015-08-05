@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.40
+#pragma version = 1.41
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.41 fixed problem when checkbox Use SMR data screwed up the control procedures and put them in non-working condition. Accidentally called old code. 
 //1.40 added to IR2P_CleanUpPackagesFolder to remove als any data in root:raw: folder. Not sure if this is OK, but they are there annoying. 
 //1.39 fixed qis data selection bug. Further fixes to Irena results handling. 
 //1.38 fixed bug which added require errors to qrs data when changed form USAXS data and fixed RegularExpression bug which increased qrs folder search time. 
@@ -2178,6 +2179,11 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
 			IntDf=stringFromList(0,IR2P_ListOfWaves("Yaxis",QDf,TopPanel)+";")		
 			EDf=stringFromList(0,IR2P_ListOfWaves("Error",QDf,TopPanel)+";")
+			//workaround, when nothing is found for X axis but somehtign is found for one of the other axis...
+			if(stringmatch(QDf,"---"))
+				TempYlist = "---"
+				tempEList="---"
+			endif
 			Execute ("PopupMenu IntensityDataName mode="+num2str(WhichListItem(IntDf, TempYlist, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode="+num2str(WhichListItem(EDf, tempEList, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 //			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)

@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma version=2.24
-Constant IR1IversionNumber = 2.24
+Constant IR1IversionNumber = 2.25
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26 added check for Error import - will abort import if Errors contain negative values, 0, INFs or NANs. Check import works with csv files. 
 //2.25 minor fix for data with too many columns of data - Irena can handle only first 6 columns... 
 //2.24 minor change in how calibration units are displayed in the panel. 
 //2.23 added sorting of imported waves as some users seem to have data which are not increasing in q. Weird, but possible... DOne before optional rebinning. 
@@ -697,7 +698,7 @@ Function IR1I_NameImportedWaves(selectedFile)
 		TempError = TempIntensity * (PercentErrorsToUse/100)
 		note TempError, "Error data created for user as percentage of intensity;Amount of error as percentage="+num2str(PercentErrorsToUse/100)+";"
 	endif
-	//let's celan up the data from negative Qs, if there are any...
+	//let's clean up the data from negative Qs, if there are any...
 	//data are in  		TempQvector, TempIntensity, TempError
 	//w = w[p]==0 ? NaN : w[p]
 	TempQvector = TempQvector[p]<=0 ?  NaN :  TempQvector[p]
@@ -764,14 +765,17 @@ Function IR1I_NameImportedWaves(selectedFile)
 			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep,Wsdev=TempError,Wxwidth=TempQError)
 			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
 		else	//only 2 waves 
-			Duplicate/O TempIntensity, TempQError
-			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep, Wxwidth=TempQError)
+			Duplicate/O TempIntensity, TempError, TempQError
+			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep, Wsdev=TempError, Wxwidth=TempQError)
 			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
 			//KillWaves TempError, TempQError
 		endif
 	endif
-	
-	
+	//check on TempError if it contains meaningful number and stop user if not...
+	wavestats/Q TempError
+	if((V_min<=0)||(V_numNANs>0)||(V_numINFs>0))
+		abort "The Errors (Uncertainities) contain negative values, 0, NANs, or INFs. This is not acceptable. Import aborted. Please, check the input data or use % or SQRT errors"
+	endif
 
 	SVAR NewIntensityWaveName= root:packages:ImportData:NewIntensityWaveName
 	SVAR NewQwaveName= root:packages:ImportData:NewQWaveName

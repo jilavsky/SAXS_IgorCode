@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.22
+#pragma version=2.23
 Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.23 changed offset limits to enable negative offsets. Useful. 
 //2.22 fixed Guinier style definition... Weird, cannot find bug but it was setting legend parameters to NaNs. Copied same stuff from other style and it works??? 
 //2.21 chaged units for common system cm-1sr-1
 //2.20 added Int*Q^3 as plotting option. 
@@ -156,9 +157,9 @@ Window IR1P_ControlPanel()
 	SetVariable GraphYAxisName pos={20,435},size={340,20},proc=IR1P_SetVarProc,title="Y axis title"
 	SetVariable GraphYAxisName variable= root:Packages:GeneralplottingTool:GraphYAxisName, help={"Input vertical axis title. Use Igor formating characters for special symbols."}		
 
-	SetVariable Xoffset pos={20,460},size={100,20},limits={0,inf,1},proc=IR1P_SetVarProc,title="X offset"
+	SetVariable Xoffset pos={20,460},size={100,20},limits={-inf,inf,1},proc=IR1P_SetVarProc,title="X offset"
 	SetVariable Xoffset variable= root:Packages:GeneralplottingTool:Xoffset, help={"Offset data in graph? For log axis multiplier, for lin axis addition"}	
-	SetVariable Yoffset pos={220,460},size={100,20},limits={0,inf,1},proc=IR1P_SetVarProc,title="Y offset"
+	SetVariable Yoffset pos={220,460},size={100,20},limits={-inf,inf,1},proc=IR1P_SetVarProc,title="Y offset"
 	SetVariable Yoffset variable= root:Packages:GeneralplottingTool:Yoffset, help={"Offset data in graph? For log axis multiplier, for lin axis addition"}	
 
 	CheckBox GraphLegend pos={20,485},title="Append Legend?", variable=root:Packages:GeneralplottingTool:GraphLegend

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 catch if user is loading negative, 0 , Nan, or inf value uncertainities and force use of % errors in that case. 
 //1.21 added catch for change of LNmin which will be chaned to 3A diameter (1.5A radius) with user warning, when restoring old number (0). 
 //1.20 minor bug fix for parameter6 of form factor
 //1.19  bug fixes and modifications to Other graph outputs - colorization etc. 
@@ -139,6 +140,14 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	IntWv = DataScalingFactor_set * IntWv						//scale by user factor, if requested. 
 	Duplicate/O inputQ, $("Q_set"+num2str(whichDataSet))
 	Wave QWv = $("Q_set"+num2str(whichDataSet))
+	//check the InputE if it contains meaningful numbers, they need to be larger than 0 - all of them.  And no Infs or Nans
+	wavestats/Q inputE
+	if(((V_min<=0)||(V_numINFs>0)||(V_numNANs>0))&&UseUserErrors)
+		DoALert 0, "Uncertainiites data contain either zeroes, negative values, NANs, or infinite numbers. This is not acceptabel so tool. Switching to use of % errors. "
+		UsePercentErrors = 1
+		UseUserErrors = 0
+		UseSQRTErrors = 0
+	endif
 	if(UseUserErrors)		//handle special cases of errors not loaded in Igor
 		Duplicate/O inputE, $("Error_set"+num2str(whichDataSet))	
 		Wave ErrorWv=	$("Error_set"+num2str(whichDataSet))

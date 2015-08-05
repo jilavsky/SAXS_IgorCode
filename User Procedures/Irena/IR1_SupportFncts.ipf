@@ -68,6 +68,7 @@ Function/T IR1_GenStringOfFolders(UseIndra2Structure, UseQRSStructure, SlitSmear
 		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
 	endif
 	
+Print "This code should be already deprecated. Called from "+GetRTStackInfo(0)+". remprt to Jan, please"	
 	return result
 end
 
