@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.57
 constant IR3MversionNumber = 2.54			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.57 Data manipulation 1 - dangerous change - fixed some obvious bugs in Intitialization, why did it work before and did I screw up something? 
 //2.56 Data manipulation 1 - added color to Save data and added save data into Merge data buttons. 
 //2.55 Data Manipulation I - enabled Q shifts and added MergeData2, which optimizes scaling Data2, backgroundData1, and Qshift of Data2. This makes sense when SAXS alignment is not perfect. 
 //2.54 Data Manipulation II - added ability to divide multiple data by another data set (same as subtract, but divide). 
@@ -2606,22 +2607,8 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;DataUnits;OutputDataUnits;"
+	ListOfStrings+="DataFolderName1;IntensityWaveName1;QWavename1;ErrorWaveName1;"
 	ListOfStrings+="DataFolderName2;IntensityWaveName2;QWavename2;ErrorWaveName2;DataUnits2;"
-	ListOfVariables="UseIndra2Data;UseQRSdata;"
-	ListOfVariables+="UseIndra2Data2;UseQRSdata2;"
-
-	//and here we create them
-	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
-	endfor		
-								
-	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-	endfor	
-
-	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfStrings="DataFolderName1;IntensityWaveName1;QWavename1;ErrorWaveName1;"
-	ListOfStrings+="DataFolderName2;IntensityWaveName2;QWavename2;ErrorWaveName2;"
 	ListOfStrings+="NewDataFolderName;NewIntensityWaveName;NewQWavename;NewErrorWaveName;"
 	ListOfStrings+="Data1RemoveListofPnts;Data2RemoveListofPnts;"
 
@@ -2633,11 +2620,17 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 	ListOfVariables+="Data2_IntMultiplier;Data2_ErrMultiplier;Data2_Qshift;Data2_Background;"
 	ListOfVariables+="PassData1Through;PassData2Through;SubtractData2;DivideData1byData2;SubtractData2AndDivideByThem;"
 	ListOfVariables+="SmoothSplines;SmoothSplinesParam;"
+	ListOfVariables+="UseIndra2Data;UseQRSdata;"
+	ListOfVariables+="UseIndra2Data2;UseQRSdata2;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
 	endfor		
+								
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
 	
 	NVAR ReducePointNumberBy
 	if(ReducePointNumberBy<1)
@@ -2652,10 +2645,6 @@ Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 		LogReduceParam=1
 	endif
 
-	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-	endfor	
-	
 	ListOfVariables="Data1_IntMultiplier;Data1_ErrMultiplier;"
 	ListOfVariables+="Data2_IntMultiplier;Data2_ErrMultiplier;"
 		//Set numbers to 1

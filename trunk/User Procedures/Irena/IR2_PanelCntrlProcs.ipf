@@ -112,31 +112,36 @@
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-Function IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves,AllowModelData)
+Function IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves,AllowModelData,[DoNotAddControls])
 	string PckgDataFolder,PanelWindowName, AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup
-	variable RequireErrorWaves, AllowModelData
+	variable RequireErrorWaves, AllowModelData, DoNotAddControls
 	
-	if(stringmatch(PanelWindowName, "*#*" ))	//# so expect subwindow... Limit only to first child here, else is not allowed for now...
-		//first check for the main window existance...
-		string MainPnlWinName=StringFromList(0, PanelWindowName , "#")
-		string ChildPnlWinName=StringFromList(1, PanelWindowName , "#")
-				//check on existence here...
-			DoWindow $(MainPnlWinName)
+	variable DontAdd =0 
+	if(!ParamIsDefault(DoNotAddControls))
+		DontAdd = DoNotAddControls
+	endif
+	if(!DontAdd)
+		if(stringmatch(PanelWindowName, "*#*" ))	//# so expect subwindow... Limit only to first child here, else is not allowed for now...
+			//first check for the main window existance...
+			string MainPnlWinName=StringFromList(0, PanelWindowName , "#")
+			string ChildPnlWinName=StringFromList(1, PanelWindowName , "#")
+					//check on existence here...
+				DoWindow $(MainPnlWinName)
+				if(!V_Flag)
+					abort //widnow does not exist, nothing to do...
+				endif
+				//OK, window exists, now check if it has the other in the childlist
+				if(!stringmatch(ChildWindowList(MainPnlWinName), "*"+ChildPnlWinName+"*" ))
+					abort //that child does nto exist!
+				endif
+				
+		else		//no # no subvwindow. Use old code...
+			DoWindow $(PanelWindowName)
 			if(!V_Flag)
 				abort //widnow does not exist, nothing to do...
 			endif
-			//OK, window exists, now check if it has the other in the childlist
-			if(!stringmatch(ChildWindowList(MainPnlWinName), "*"+ChildPnlWinName+"*" ))
-				abort //that child does nto exist!
-			endif
-			
-	else		//no # no subvwindow. Use old code...
-		DoWindow $(PanelWindowName)
-		if(!V_Flag)
-			abort //widnow does not exist, nothing to do...
 		endif
 	endif
-
 	IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves,AllowModelData)
 	
 	//This is fix to simplify coding all results
@@ -145,8 +150,9 @@ Function IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, 
 		AllowedResultsTypes=AllCurrentlyAllowedTypes
 	endif
 
-	IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves,AllowModelData)
-	
+	if(!DontAdd)
+		IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup, RequireErrorWaves,AllowModelData)
+	endif
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
