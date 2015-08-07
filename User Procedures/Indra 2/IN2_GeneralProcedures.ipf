@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.76
+#pragma version = 1.77
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.77 minor change in CheckScreenSize function
 //1.76 removed Exectue as prep for Igor 7
 //1.75 removed wave/d, Function/d and variable/d. Obsolete
 //1.74 added IN2G_EstimateFolderSize(FolderName)
@@ -3687,9 +3688,9 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	
 	if (currentSizeInPixles<MinVal)
 		if (cmpstr(which,"height")==0)
-			Abort "Height of your screen is too small to run this code, please set your screen to larger number of pixles in height. On windows with 1024 x 768 screens autohide the task bar. Helps..."
+			Abort "Height of your screen is too small to run this code, please set your screen to more than "+num2str(MinVal)+" number of pixles in height."
 		else
-			Abort "Width of your screen is too small to run this code, please set your screen to larger number of pixles in width"
+			Abort "Width of your screen is too small to run this code, please set your screen to more than "+num2str(MinVal)+" number of pixles in width"
 		endif
 	endif
 	

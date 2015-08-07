@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.24
-Constant IR2SversionNumber=1.21
+#pragma version=1.25
+Constant IR2SversionNumber=1.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 added ability to sort data by minutes (_xyzmin) and  temperature (_xyzC). 
 //1.24 fixed bug in Scripting tool which caused qrs start folder return only ones with qrs, but not qds, and other "semi" qrs data 
 //1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
 //1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
@@ -376,6 +377,8 @@ Window IR2S_ScriptingToolPnl()
 	//SVAR FolderNameMatchString=root:Packages:Irena:ScriptingTool:FolderNameMatchString
 	SetVariable FolderNameMatchString,pos={10,325},size={170,15}, proc=IR2S_ScriptToolSetVarProc,title="Match (RegEx)"
 	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:ScriptingTool:FolderNameMatchString
+	DrawText 200,340,"Not contain: ^((?!string).)*$"
+
 	SetVariable WaveNameMatchString,pos={200,325},size={170,15}, proc=IR2S_ScriptToolSetVarProc,title="Wave Match (RegEx)"
 	Setvariable WaveNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:ScriptingTool:WaveNameMatchString, disable =!root:Packages:Irena:ScriptingTool:UseQRSdata
 
@@ -385,7 +388,7 @@ Window IR2S_ScriptingToolPnl()
 	Button NoData,fSize=10,fStyle=2
 
 	PopupMenu SortFolders,pos={10,348},size={130,20},fStyle=2,proc=IR2S_PopMenuProc,title="Sort Folders"
-	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:ScriptingTool:FolderSortString,value= #"\"---;Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;_xyz_000;Reverse _xyz_000;\""
+	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:ScriptingTool:FolderSortString,value= #"\"---;Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyz_000;Reverse _xyz_000;\""
 
 	Button FitWithUnified,pos={90,375},size={200,15},proc=IR2S_ButtonProc,title="Run Unified Fit on selected data"
 	Button FitWithUnified,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
@@ -561,7 +564,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //**********************************************************************************************************
-static Function/T IR2S_CheckForRightQRSTripletWvs(ResultingWave, AllowQROnly)
+Function/T IR2S_CheckForRightQRSTripletWvs(ResultingWave, AllowQROnly)
 	wave/T ResultingWave
 	variable AllowQROnly	
 
@@ -629,15 +632,59 @@ Function IR2S_SortListOfAvailableFldrs()
 	Wave/T ListOfAvailableData=root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 	Duplicate/Free SelectionOfAvailableData, TempWv
-	variable i
+	variable i, j
+	j=0
 	string tempstr 
 	SelectionOfAvailableData=0
+	variable InfoLoc
 	if(stringMatch(FolderSortString,"---"))
 		//nothing to do
 	elseif(stringMatch(FolderSortString,"Alphabetical"))
 		Sort /A ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Sxyz_"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse Sxyz_"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort/R TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyzmin"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
+					InfoLoc = i
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				Abort "Cannot find location of _xyzmin information" 
+			endif
+		while (InfoLoc<1) 
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyzC"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
+					InfoLoc = i
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				Abort "Cannot find location of _xyzC information" 
+			endif
+		while (InfoLoc<1) 
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
