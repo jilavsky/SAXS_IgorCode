@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
-#pragma version=2.10
+#pragma version=2.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.11 added Data Merging
 //2.10 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.09 converted to rtGlobals=3
 //2.08 added GuinierPorod fit package
@@ -85,6 +86,7 @@
 #include ":IR2_DWSGraphControls", version>=1
 #include ":IR2_DWSgraph", version>=1
 #include ":IR3_GuinierPorodModel", version>=1.03
+#include ":IR3_MergingData", version>=1
 
 //these are in different folders...
 #include "::CanSAS:canSASXML_GUI", version>=1.03
