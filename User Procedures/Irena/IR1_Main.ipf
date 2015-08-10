@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.59
+#pragma version=2.58
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs=   3506845833  		//this is mod date for Manual version 2.57
-constant CurrentVersionNumber = 2.59
+constant CurrentVersionNumber = 2.58
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -11,7 +11,7 @@ constant CurrentVersionNumber = 2.59
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.59 Added MergeData tool. 
+//2.58 Added MergeData tool. 
 //2.58 Added YouTube movies page. 
 //2.57 Many fixes to Modeling II mainly. 
 //2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
