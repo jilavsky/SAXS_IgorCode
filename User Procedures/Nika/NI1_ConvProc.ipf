@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.45
+#pragma version=2.46
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.46 added Q width (Q resolution, dQ) to line profiles. Works only for Q for now, fix for bug in Qresolution callcualtions in version 2.45
 //2.45 added Qresolution accounting which takes care of bin width + pixel size + beam size
 //2.44 fixed bug when 2DQwave had note appended, not repalced and if beam center changed, it will get recaculated always since a wrong center values were read first. 
 //2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
@@ -227,14 +228,14 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	//then we will convolute this with Qresolution going in and these two values 
 	//this thing is called in NI1A_AverageDataPerUserReq
 	variable PixDim, BeamDim
-	 PixDim=  sqrt(PixX^2 + PixY^2)					//this is width in mm of the pixel along diagonal direction
+	PixDim=  sqrt(PixX^2 + PixY^2)					//this is width in mm of the pixel along diagonal direction
 	PixDim = PixDim * 2/3							//assume this is FWHM of the pixel sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow.
 	//However, the pixel size and integration width are quite similar in logic. So let's try to make some corrections here. If there was no integration width, we should see FWHM ~ 2/3 of the 
 	//total width of the bin to represent teh FWHM. I tested this with case example, and either one can have square bin width (and then it is rectangle) or use FWHM, tehn the bin width s 2/3 of teh square, approximately. 
       // If we are going to convolute these together later, we should correct the QvectorWidth coming from binning to smaller numbers , BUT only for bins approximately wide as the pixel width
       // this requires transition from 2/3 correction to use of full bin width as the bin width increases. This is bit cumbersome. 
       //assume that if the bin width is less than 3*pixDim, we should use FWHM, at higher bin widths lets assume bin width and keep this. 
-     QvectorWidth = (QvectorWidth[p] < 3 * pixDim) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
+      // this all made no sense to me later, so let's skip this for now... QvectorWidth = (QvectorWidth[p] < 3 * pixDim) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
 	//	
 	BeamDim = sqrt(BeamX^2 + BeamY^2)			//width of beam size in mm along diagonal direction
 	BeamDim = BeamDim * 2 /3						//assume this is estimated FWHM of the beam sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow. 

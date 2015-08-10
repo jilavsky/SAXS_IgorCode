@@ -1053,6 +1053,10 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		Wave/Z LineProfileYValsPix=root:Packages:Convert2Dto1D:LineProfileYValsPix
 		Wave/Z LineProfileQz=root:Packages:Convert2Dto1D:LineProfileQz
 		Wave/Z LineProfileZValsPix=root:Packages:Convert2Dto1D:LineProfileZValsPix
+		WAVE/Z LineProfileDspacingWidth=root:Packages:Convert2Dto1D:LineProfileDspacingWidth
+		WAVE/Z LineProfileDistacneInmmWidth=root:Packages:Convert2Dto1D:LineProfileDistacneInmmWidth
+		WAVE/Z LineProfileTwoThetaWidth=root:Packages:Convert2Dto1D:LineProfileTwoThetaWidth
+		WAVE/Z LineProfiledQvalues=root:Packages:Convert2Dto1D:LineProfiledQvalues
 		if(!WaveExists(LineProfileQx)||numpnts(LineProfileQx)!=numpnts(LineProfileQy))
 			Duplicate/O LineProfileQy, LineProfileQx
 		endif
@@ -1155,7 +1159,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		//we need to "fix" that by not removing points with error of NaN, just replacing it with error 0.
 		LineProfileError = (numtype(LineProfileError[p])==0) ? LineProfileError[p] : 0
 		//OK, now if the error was NaN, it is 0. 	
-		NI1A_RemoveInfNaNsFrom10Waves(LineProfileIntensity,LineProfileError,LineProfileQ,LineProfileQy,LineProfileYValsPix,LineProfileQz,LineProfileQx,tempWv1234,tempWv1235,tempWv1236 )	
+		NI1A_RemoveInfNaNsFrom10Waves(LineProfileIntensity,LineProfileError,LineProfileQ,LineProfileQy,LineProfileYValsPix,LineProfileQz,LineProfileQx,LineProfiledQvalues,tempWv1235,tempWv1236 )	
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType	
 		if(StoreDataInIgor)
 				NewDataFolder/O/S $(DataFolderNameL)
@@ -1169,6 +1173,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					Duplicate/O LineProfileIntensity, $("r_"+UseName)
 					Duplicate/O LineProfileQ, $("q_"+UseName)
 					Duplicate/O LineProfileError, $("s_"+UseName)
+					Duplicate/O LineProfiledQvalues, $("w_"+UseName)
 					Duplicate/O LineProfileQy, $("qy_"+UseName)
 					Duplicate/O LineProfileQz, $("qz_"+UseName)	
 					Duplicate/O  LineProfileAzAvalues , $("az_"+UseName)

@@ -219,7 +219,7 @@ Function IR3D_InitDataMerging()
 		endif
 	endfor		
 	SVAR FolderSortStringAll
-	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyz_000;Reverse _xyz_000;"
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
 	
 	NVAR ProcessMerge
 	NVAR ProcessMerge2
@@ -1016,6 +1016,22 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
 				Abort "Cannot find location of _xyzmin information" 
+			endif
+		while (InfoLoc<1) 
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyzpct"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
+					InfoLoc = i
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				Abort "Cannot find location of _xyzpctn information" 
 			endif
 		while (InfoLoc<1) 
 		For(i=0;i<numpnts(TempWv);i+=1)

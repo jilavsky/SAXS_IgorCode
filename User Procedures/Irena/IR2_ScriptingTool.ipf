@@ -7,7 +7,7 @@ Constant IR2SversionNumber=1.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.25 added ability to sort data by minutes (_xyzmin) and  temperature (_xyzC). 
+//1.25 added ability to sort data by minutes (_xyzmin), pct (_xyzpct), and  temperature (_xyzC). 
 //1.24 fixed bug in Scripting tool which caused qrs start folder return only ones with qrs, but not qds, and other "semi" qrs data 
 //1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
 //1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
@@ -388,7 +388,7 @@ Window IR2S_ScriptingToolPnl()
 	Button NoData,fSize=10,fStyle=2
 
 	PopupMenu SortFolders,pos={10,348},size={130,20},fStyle=2,proc=IR2S_PopMenuProc,title="Sort Folders"
-	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:ScriptingTool:FolderSortString,value= #"\"---;Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyz_000;Reverse _xyz_000;\""
+	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:ScriptingTool:FolderSortString,value= #"\"---;Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzpct;_xyzC;_xyz_000;Reverse _xyz_000;\""
 
 	Button FitWithUnified,pos={90,375},size={200,15},proc=IR2S_ButtonProc,title="Run Unified Fit on selected data"
 	Button FitWithUnified,fSize=10,fStyle=2, disable=(root:Packages:Irena:ScriptingTool:UseResults)
@@ -663,6 +663,22 @@ Function IR2S_SortListOfAvailableFldrs()
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
 				Abort "Cannot find location of _xyzmin information" 
+			endif
+		while (InfoLoc<1) 
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyzpct"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
+					InfoLoc = i
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				Abort "Cannot find location of _xyzpct information" 
 			endif
 		while (InfoLoc<1) 
 		For(i=0;i<numpnts(TempWv);i+=1)
