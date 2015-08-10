@@ -4,12 +4,13 @@ Code modification history
 -latest stuff first
 ********************************************
 2.58
+Removed Modeling I from the code and manual. This tool has been deprecated for few years now and it was removed to reduce code clutter. 
+Added Data Merging - new dedicated tool to merge two segments of data (q-segments). version 1.0, so this may be bit buggy.
 Modeling II - added ability to handle per pixel smearing of the model. Quite complicated for users, read the manual!. 
 Modeling II - removed the need to model data to high enough Qs for slit smeared data. The slit smeared data will be extended to 2*Slit length when user selects too small Qmax.
 Modeling II - catch Log-Normal Min Size if smaller than 3A and reset for user to 3A. Cannot have SAS from particles smaller than 3A - that is atom and not particle for SAXS. 
 Modeling II - fixed bug where the Size distribution plot in Modeling II was showing information vs Radius always, even when user used Diameters as particle dimension. And it was not obvious to users that is happening. Now uses dimension based on what is selected as the particle dimension (Radius or Diameter). 
 Data Manipulation I - enabled Q shifts and added MergeData2, which optimizes scaling Data2, backgroundData1, and Qshift of Data2. This makes sense when SAXS alignment is not perfect.
-Data Merging - dedicated tool to merge two segments of data (q-segments). version 1.0, so this may be bit buggy. 
  
 
 2.57 3/8/2015
