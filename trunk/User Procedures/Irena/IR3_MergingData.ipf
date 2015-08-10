@@ -26,6 +26,7 @@ Function IR3D_DataMerging()
 		DoWindow/F IR3D_DataMergePanel
 	else
 		Execute("IR3D_DataMergePanel()")
+		setWIndow IR3D_DataMergePanel, hook(CursorMoved)=IR3D_PanelHookFunction
 	endif
 	UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber)
 	IR3D_UpdateListOfAvailFiles(1)
@@ -81,7 +82,7 @@ Proc IR3D_DataMergePanel()
 	checkbox UseQRSData1, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
 	PopupMenu StartFolderSelection1,pos={10,50},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data1StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
-	SetVariable FolderNameMatchString1,pos={10,75},size={210,15}, proc=IR3D_ScriptToolSetVarProc,title="Folder Match (RegEx)"
+	SetVariable FolderNameMatchString1,pos={10,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString1,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data1MatchString
 	PopupMenu SortFolders1,pos={10,100},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders1"
 	PopupMenu SortFolders1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString1,value= root:Packages:Irena:SASDataMerging:FolderSortStringAll
@@ -91,25 +92,25 @@ Proc IR3D_DataMergePanel()
 	checkbox UseQRSData2, pos={370,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
 	PopupMenu StartFolderSelection2,pos={260,50},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data2StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
-	SetVariable FolderNameMatchString2,pos={260,75},size={210,15}, proc=IR3D_ScriptToolSetVarProc,title="Folder Match (RegEx)"
+	SetVariable FolderNameMatchString2,pos={260,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString2,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data2MatchString
 	PopupMenu SortFolders2,pos={260,100},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders2"
 	PopupMenu SortFolders2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString2,value=root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
-	Checkbox IsUSAXSSAXSdata, pos={170,118},size={76,14},title="is USAXS/SAXS/WAXS data ", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:IsUSAXSSAXSdata
+	Button IsUSAXSSAXSdata, pos={140,119}, size={200,14}, title="Sort USAXS/SAXS/WAXS data", proc=IR3D_MergeButtonProc, help={"Sorts USAXS/SAXS?WAXS data to order proper pairs together. "}
 
-	SetVariable Data1_Background,pos={990,30},size={200,15}, proc=IR3D_ScriptToolSetVarProc,title="Data 1 Background",bodyWidth=150
-	Setvariable Data1_Background, variable=root:Packages:Irena:SASDataMerging:Data1_Background, limits={-inf,inf,0}
-	SetVariable Data2_IntMultiplier,pos={990,50},size={200,15}, proc=IR3D_ScriptToolSetVarProc,title="Data 2 Scaling      ",bodyWidth=150
-	Setvariable Data2_IntMultiplier, variable=root:Packages:Irena:SASDataMerging:Data2_IntMultiplier, limits={-inf,inf,0}
-	SetVariable Data2Qshift,pos={990,70},size={200,15}, proc=IR3D_ScriptToolSetVarProc,title="Data 2 Q shift      ",bodyWidth=150
+	SetVariable Data1Background,pos={990,30},size={200,15}, noproc,title="Data 1 Background",bodyWidth=150, disable=2
+	Setvariable Data1Background, variable=root:Packages:Irena:SASDataMerging:Data1Background, limits={-inf,inf,0}
+	SetVariable Data2IntMultiplier,pos={990,50},size={200,15}, noproc,title="Data 2 Scaling      ",bodyWidth=150, disable=2
+	Setvariable Data2IntMultiplier, variable=root:Packages:Irena:SASDataMerging:Data2IntMultiplier, limits={-inf,inf,0}
+	SetVariable Data2Qshift,pos={990,70},size={200,15}, noproc,title="Data 2 Q shift      ",bodyWidth=150, disable=2
 	Setvariable Data2Qshift, variable=root:Packages:Irena:SASDataMerging:Data2Qshift, limits={-inf,inf,0}
-	SetVariable Data1QEnd,pos={990,90},size={200,15}, proc=IR3D_ScriptToolSetVarProc,title="Data 1 Q max      ",bodyWidth=150
-	Setvariable Data1QEnd, variable=root:Packages:Irena:SASDataMerging:Data1QEnd, limits={-inf,inf,0.05}
-	SetVariable Data2Qstart,pos={990,110},size={200,15}, proc=IR3D_ScriptToolSetVarProc,title="Data 2 Q start      ",bodyWidth=150
-	Setvariable Data2Qstart, variable=root:Packages:Irena:SASDataMerging:Data2Qstart, limits={-inf,inf,0.05}
+	SetVariable Data1QEnd,pos={990,90},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Data 1 Q max      ",bodyWidth=150
+	Setvariable Data1QEnd, variable=root:Packages:Irena:SASDataMerging:Data1QEnd, limits={-inf,inf,0}
+	SetVariable Data2Qstart,pos={990,110},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Data 2 Q start      ",bodyWidth=150
+	Setvariable Data2Qstart, variable=root:Packages:Irena:SASDataMerging:Data2Qstart, limits={-inf,inf,0}
 
-	ListBox DataFolderSelection,pos={4,135},size={480,500}, mode=8
+	ListBox DataFolderSelection,pos={4,135},size={480,500}, mode=10
 	ListBox DataFolderSelection,listWave=root:Packages:Irena:SASDataMerging:ListOfAvailableData
 	ListBox DataFolderSelection,selWave=root:Packages:Irena:SASDataMerging:SelectionOfAvailableData
 	ListBox DataFolderSelection,proc=IR3D_DataMergeListBoxProc
@@ -128,7 +129,7 @@ Proc IR3D_DataMergePanel()
 	TitleBox SavedDataMessage title="",fixedSize=1,size={100,17}, pos={780,70}, variable= root:Packages:Irena:SASDataMerging:SavedDataMessage
 	TitleBox SavedDataMessage help={"Are the data saved?"}, fColor=(65535,16385,16385), frame=0, fSize=12,fstyle=1
 
-	TitleBox UserMessage title="",fixedSize=1,size={400,20}, pos={520,90}, variable= root:Packages:Irena:SASDataMerging:UserMessageString
+	TitleBox UserMessage title="",fixedSize=1,size={470,20}, pos={480,90}, variable= root:Packages:Irena:SASDataMerging:UserMessageString
 	TitleBox UserMessage help={"This is what will happen"}
 
 		
@@ -181,7 +182,7 @@ Function IR3D_InitDataMerging()
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
 	ListOfVariables+="UseIndra2Data2;UseQRSdata2;"
-	ListOfVariables+="Data1_Background;Data2_IntMultiplier;Data2_Qshift;"
+	ListOfVariables+="Data1Background;Data2IntMultiplier;Data2Qshift;"
 	ListOfVariables+="IsUSAXSSAXSdata;ProcessMerge;ProcessMerge2;ProcessTest;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="Data1QEnd;Data2Qstart;"
@@ -197,7 +198,7 @@ Function IR3D_InitDataMerging()
 
 	ListOfStrings="DataFolderName1;IntensityWaveName1;QWavename1;ErrorWaveName1;dQWavename1;"
 	ListOfStrings+="DataFolderName2;IntensityWaveName2;QWavename2;ErrorWaveName2;dQWavename2;"
-	ListOfStrings+="NewDataFolderName;NewIntensityWaveName;NewQWavename;NewErrorWaveName;NewdQWavename1;"
+	ListOfStrings+="NewDataFolderName;NewIntensityWaveName;NewQWavename;NewErrorWaveName;"
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		SVAR teststr=$(StringFromList(i,ListOfStrings))
 		teststr =""
@@ -229,6 +230,10 @@ Function IR3D_InitDataMerging()
 		ProcessTest = 1
 		UserMessageString = "In test mode - no saving - select Q range and method."
 	endif
+	NVAR OverwriteExistingData
+	NVAR AutosaveAfterProcessing
+	OverwriteExistingData=1
+	AutosaveAfterProcessing=1
 
 	Make/O/T/N=(0,2) ListOfAvailableData
 	Make/O/N=(0,2) SelectionOfAvailableData
@@ -383,6 +388,16 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 			NVAR UseIndra2Data2 =  root:Packages:Irena:SASDataMerging:UseIndra2Data2
 			NVAR UseQRSData2 =  root:Packages:Irena:SASDataMerging:UseQRSData2
 			SVAR Data2StartFolder = root:Packages:Irena:SASDataMerging:Data2StartFolder
+		  	NVAR ProcessTest = root:Packages:Irena:SASDataMerging:ProcessTest
+		  	NVAR ProcessMerge=root:Packages:Irena:SASDataMerging:ProcessMerge
+		  	NVAR ProcessMerge2=root:Packages:Irena:SASDataMerging:ProcessMerge2
+		  	SVAR UserMessageString=root:Packages:Irena:SASDataMerging:UserMessageString
+			NVAR ProcessManually =root:Packages:Irena:SASDataMerging:ProcessManually
+			NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
+			NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
+			NVAR AutosaveAfterProcessing=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing
+			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
+			Checkbox ProcessSequentially, win=IR3D_DataMergePanel, disable=0
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data1"))
 		  		if(checked)
 		  			UseQRSData1 = 0
@@ -415,14 +430,6 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 				IR3D_UpdateListOfAvailFiles(2)
 		  		IR3D_RebuildListboxTables()
 		  	endif
-		  	NVAR ProcessTest = root:Packages:Irena:SASDataMerging:ProcessTest
-		  	NVAR ProcessMerge=root:Packages:Irena:SASDataMerging:ProcessMerge
-		  	NVAR ProcessMerge2=root:Packages:Irena:SASDataMerging:ProcessMerge2
-		  	SVAR UserMessageString=root:Packages:Irena:SASDataMerging:UserMessageString
-			NVAR ProcessManually =root:Packages:Irena:SASDataMerging:ProcessManually
-			NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
-			NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
-			NVAR AutosaveAfterProcessing=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing
 			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
 			UserMessageString = ""
 		  	if(stringmatch(cba.ctrlName,"ProcessManually"))
@@ -433,6 +440,12 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  	if(stringmatch(cba.ctrlName,"ProcessSequentially"))
 	  			if(checked)
 	  				ProcessManually = 0
+	  				ProcessTest = 0
+	  				AutosaveAfterProcessing = 1
+	  				if(ProcessTest+ProcessMerge+ProcessMerge2!=1)
+	  					ProcessMerge2=1
+	  					ProcessMerge =0
+	  				endif
 					//Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=1
 	  			endif
 	  		endif
@@ -440,7 +453,9 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 	  			if(checked)
 	  				ProcessMerge = 0
 	  				ProcessMerge2 = 0
-					//Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=1
+	  				AutosaveAfterProcessing = 0
+	  				ProcessManually = 1
+	  				ProcessSequentially = 0
 	  			endif
 	  		endif
 		  	if(stringmatch(cba.ctrlName,"ProcessMerge"))
@@ -457,12 +472,9 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 					UserMessageString += "Using Merge2. "
 	  			endif
 	  		endif
-		  	if(stringmatch(cba.ctrlName,"ProcessMerge2")||stringmatch(cba.ctrlName,"ProcessMerge")||stringmatch(cba.ctrlName,"ProcessTest"))
-				Button AutoScale,win=IR3D_DataMergePanel, disable=!ProcessTest
-				Button MergeData,win=IR3D_DataMergePanel, disable=!ProcessTest
-				Button MergeData2,win=IR3D_DataMergePanel, disable=!ProcessTest
-			endif
-			IR3D_SetProcessSetDataButton()
+	//	  	if(stringmatch(cba.ctrlName,"ProcessMerge2")||stringmatch(cba.ctrlName,"ProcessMerge")||stringmatch(cba.ctrlName,"ProcessTest"))
+//			endif
+			IR3D_SetGUIControls()
 	  		
 			break
 		case -1: // control being killed
@@ -474,41 +486,55 @@ End
 //**************************************************************************************
 //**************************************************************************************
 
-Function IR3D_SetProcessSetDataButton()
+Function IR3D_SetGUIControls()
 			NVAR ProcessTest=root:Packages:Irena:SASDataMerging:ProcessTest
 			SVAR UserMessageString=root:Packages:Irena:SASDataMerging:UserMessageString
 			NVAR ProcessMerge=root:Packages:Irena:SASDataMerging:ProcessMerge
 			NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
 			NVAR ProcessManually=root:Packages:Irena:SASDataMerging:ProcessManually
 			NVAR AutosaveAfterProcessing = root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing
+			NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
 			
+
+			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=ProcessTest
+			Checkbox ProcessSequentially, win=IR3D_DataMergePanel, disable=ProcessTest
+			Button AutoScale,win=IR3D_DataMergePanel, disable=!ProcessTest
+			Button MergeData,win=IR3D_DataMergePanel, disable=!ProcessTest
+			Button MergeData2,win=IR3D_DataMergePanel, disable=!ProcessTest
+
 			if(ProcessTest)
 				//Button ProcessSaveData,win=IR3D_DataMergePanel, disable=1
 				UserMessageString = "In test mode - manual save - select Q range and method."
+				Button ProcessSaveData,win=IR3D_DataMergePanel, title="S\rA\rV\rE\r\r\rD\rA\rT\rA", disable=0
 			else
 				if(ProcessManually)
 					Button ProcessSaveData,win=IR3D_DataMergePanel, title="S\rA\rV\rE\r\r\rD\rA\rT\rA", disable=0
 					if(ProcessMerge)
 						if(AutosaveAfterProcessing)
-							UserMessageString = "Select data1& data2 - will be saved immediately. Using merge."
+							UserMessageString = "Select Data1& Data2 - will be saved immediately. Using Merge."
 						else
-							UserMessageString = "Select data1& data2 and use SAVE DATA. Using merge."
+							UserMessageString = "Select Data1& Data2 and use SAVE Data. Using Merge."
 						endif
 					else
 						if(AutosaveAfterProcessing)
-							UserMessageString = "Select data1& data2 - will be saved immediately. Using merge2."
+							UserMessageString = "Select Data1& Data2 - will be saved immediately. Using Merge2."
 						else
-							UserMessageString = "Select data1& data2 and use SAVE DATA. Using merge2."
+							UserMessageString = "Select Data1& Data2 and use SAVE Data. Using Merge2."
 						endif
 					endif
 				elseif(ProcessSequentially)
-					Button ProcessSaveData,win=IR3D_DataMergePanel, title="P\rR\rO\rC\rE\rS\rS\r\r\rD\rA\rT\rA", disable=0
+					Button ProcessSaveData,win=IR3D_DataMergePanel, title="P\rR\rO\rC\rE\rS\rS\r\r\ra\rn\rd\r\r\rS\rA\rV\rE\r\r\rD\rA\rT\rA", disable=0
 					if(ProcessMerge)
-						UserMessageString = "Select ranges of data1 & 2 and use PROCESS DATA. Using merge."
+						UserMessageString = "Select ranges of Data1 & 2 and use PROCESS Data. Using Merge. Will save."
 					else
-						UserMessageString = "Select ranges of data1 & 2 and use PROCESS DATA. Using merge2."
+						UserMessageString = "Select ranges of Data1 & 2 and use PROCESS Data. Using Merge2. Will save."
 					endif
 				endif			
+			endif
+			if(OverwriteExistingData)
+				UserMessageString+=" Overwrite existing data."
+			else
+				UserMessageString+=" Will create unique folder."
 			endif
 
 end
@@ -542,9 +568,10 @@ end
 //**************************************************************************************
 //**************************************************************************************
 
-Function IR3D_ScriptToolSetVarProc(sva) : SetVariableControl
+Function IR3D_MergeDataSetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
 
+	variable tempP
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
@@ -558,10 +585,31 @@ Function IR3D_ScriptToolSetVarProc(sva) : SetVariableControl
 				IR3D_RebuildListboxTables()
 //				IR2S_SortListOfAvailableFldrs()
 			endif
-//			if(stringmatch(sva.ctrlName,"WaveNameMatchString"))
-//				IR3D_UpdateListOfAvailFiles()
-//				IR2S_SortListOfAvailableFldrs()
-//			endif
+			NVAR Data2Qstart=root:Packages:Irena:SASDataMerging:Data2Qstart
+			NVAR Data1QEnd=root:Packages:Irena:SASDataMerging:Data1QEnd
+			
+			if(stringmatch(sva.ctrlName,"Data1QEnd"))
+				NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
+				WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
+				tempP = BinarySearch(OriginalData1QWave, Data1QEnd )
+				if(tempP<1)
+					print "Wrong Q value set, Data 1 Q max must be at most 1 point before the end of Data 1"
+					tempP = numpnts(OriginalData1QWave)-2
+					Data1QEnd = OriginalData1QWave[tempP]
+				endif
+				cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, tempP
+			endif
+			if(stringmatch(sva.ctrlName,"Data2Qstart"))
+				NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
+				WAVE OriginalData2QWave = root:Packages:Irena:SASDataMerging:OriginalData2QWave
+				tempP = BinarySearch(OriginalData2QWave, Data2Qstart )
+				if(tempP<1)
+					print "Wrong Q value set, Data 2 Q min must be at least 1 point from the start of Data 2"
+					tempP = 1
+					Data2Qstart = OriginalData2QWave[tempP]
+				endif
+				cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, tempP
+			endif
 //		case 3: // Live update
 //			Variable dval = sva.dval
 //			String sval = sva.sval
@@ -583,14 +631,30 @@ Function IR3D_DataMergeListBoxProc(lba) : ListBoxControl
 	Variable col = lba.col
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
-
+	string FoldernameStr
+	Variable isData1or2
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
 			break
 		case 3: // double click
-			IR3D_CopyAndAppendData(lba)
+			NVAR ProcessTest=root:Packages:Irena:SASDataMerging:ProcessTest
+			NVAR ProcessManually=root:Packages:Irena:SASDataMerging:ProcessManually
+			NVAR AutosaveAfterProcessing = root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing
+			if(col==0)
+				isData1or2=1
+			else
+				isData1or2=2
+			endif
+			FoldernameStr=listWave[row][col]
+			IR3D_CopyAndAppendData(isData1or2, FoldernameStr)
+			if(col==1&&!ProcessTest)		//this is second column of data
+				IR3D_MergeProcessData()
+			endif
+			if(AutosaveAfterProcessing&&ProcessManually)
+				IR3D_SaveData()
+			endif
 			break
 		case 4: // cell selection
 		case 5: // cell selection plus shift key
@@ -607,35 +671,23 @@ Function IR3D_DataMergeListBoxProc(lba) : ListBoxControl
 End
 //**************************************************************************************
 //**************************************************************************************
-Function IR3D_SetSavedNotSavedMessage(Saved)
-	variable Saved
-	
-	SVAR SavedDataMessage = root:Packages:Irena:SASDataMerging:SavedDataMessage
-	if(!Saved)
-		SavedDataMessage = "Data not saved"
-		TitleBox SavedDataMessage win=IR3D_DataMergePanel,fColor=(65535,16385,16385)
-		Button ProcessSaveData,win=IR3D_DataMergePanel, fColor=(65535,21845,0)
-	else
-		SavedDataMessage = "Data saved"
-		TitleBox SavedDataMessage win=IR3D_DataMergePanel, fColor=(3,52428,1)	
-		Button ProcessSaveData,win=IR3D_DataMergePanel, fColor=(0,0,0)
-	endif
-	
-end
-//**************************************************************************************
-//**************************************************************************************
-Function IR3D_CopyAndAppendData(lba)
-	STRUCT WMListboxAction &lba
+//Function IR3D_CopyAndAppendData(lba)
+//	STRUCT WMListboxAction &lba
+//	Variable row = lba.row
+//	Variable col = lba.col
+//	WAVE/T/Z listWave = lba.listWave
+//	WAVE/Z selWave = lba.selWave
+//
+
+Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
+	variable Data1or2			//set to 1 for Data1, 2 for Data2
+	string FolderNameStr
 	
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:Irena:SASDataMerging					//go into the folder
 	IR3D_SetSavedNotSavedMessage(0)
 
-	Variable row = lba.row
-	Variable col = lba.col
-	WAVE/T/Z listWave = lba.listWave
-	WAVE/Z selWave = lba.selWave
-	if(col==0)		//these are data 1
+	if(Data1or2==1)		//these are data 1
 		SVAR Data1StartFolder=root:Packages:Irena:SASDataMerging:Data1StartFolder
 		SVAR DataFolderName1=root:Packages:Irena:SASDataMerging:DataFolderName1
 		SVAR IntensityWaveName1=root:Packages:Irena:SASDataMerging:IntensityWaveName1
@@ -659,8 +711,8 @@ Function IR3D_CopyAndAppendData(lba)
 		UseResults = 0
 		UseUserDefinedData = 0
 		UseModelData = 0
-		//get the names of waves, assume this tool actually works. May not under some conditions. In thtat case this tool will not work. 
-		DataFolderName1 = Data1StartFolder+listWave[row][col]
+		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
+		DataFolderName1 = Data1StartFolder+FolderNameStr
 		DataFolderName = DataFolderName1
 		QWavename1 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
 		IntensityWaveName1 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
@@ -693,8 +745,9 @@ Function IR3D_CopyAndAppendData(lba)
 		if(WaveExists(ResultIntensity))
 			ResultIntensity= NaN
 		endif
+		print "Added Data 1 from folder : "+DataFolderName1
 	endif
-	if(col==1)		//these are data 2
+	if(Data1or2==2)		//these are data 2
 		SVAR Data2StartFolder=root:Packages:Irena:SASDataMerging:Data2StartFolder
 		SVAR DataFolderName2=root:Packages:Irena:SASDataMerging:DataFolderName2
 		SVAR IntensityWaveName2=root:Packages:Irena:SASDataMerging:IntensityWaveName2
@@ -719,7 +772,7 @@ Function IR3D_CopyAndAppendData(lba)
 		UseUserDefinedData = 0
 		UseModelData = 0
 		//get the names of waves, assume this tool actually works. May not under some conditions. In thtat case this tool will not work. 
-		DataFolderName2 = Data2StartFolder+listWave[row][col]
+		DataFolderName2 = Data2StartFolder+FolderNameStr
 		DataFolderName = DataFolderName2
 		QWavename2 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
 		IntensityWaveName2 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
@@ -751,7 +804,7 @@ Function IR3D_CopyAndAppendData(lba)
 		if(WaveExists(ResultIntensity))
 			ResultIntensity= NaN
 		endif
-		IR3D_MergeProcessData()
+		print "Added Data 2 from folder : "+DataFolderName2
 	endif
 
 	SetDataFolder oldDf
@@ -764,7 +817,8 @@ Function IR3D_MergeProcessData()
 	NVAR  ProcessMerge = root:Packages:Irena:SASDataMerging:ProcessMerge 
 	NVAR  ProcessMerge2 = root:Packages:Irena:SASDataMerging:ProcessMerge2 
 	NVAR ProcessManually = root:Packages:Irena:SASDataMerging:ProcessManually
-	if(ProcessManually)
+	NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
+	if(ProcessManually || ProcessSequentially)
 		IR3D_MergeData(ProcessMerge2)
 		IR3D_AppendDataToGraph("Merged")
 	endif
@@ -1032,6 +1086,8 @@ Function IR3D_PresetOutputStrings()
 	SVAR NewQWavename=root:Packages:Irena:SASDataMerging:NewQWavename
 	SVAR NewErrorWaveName=root:Packages:Irena:SASDataMerging:NewErrorWaveName
 	SVAR NewdQWavename = root:Packages:Irena:SASDataMerging:NewdQWavename
+	
+	NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
 
 	
 	NewDataFolderName = DataFolderName1
@@ -1050,7 +1106,7 @@ Function IR3D_PresetOutputStrings()
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
 		LastPartOfPath = LastPartOfPath[0,26]
-		LastPartOfPath += "_com" 
+		LastPartOfPath += "_mrg" 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
 	endif
@@ -1058,9 +1114,12 @@ Function IR3D_PresetOutputStrings()
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
 		LastPartOfPath = LastPartOfPath[0,26]
-		LastPartOfPath += "_com" 
+		LastPartOfPath += "_mrg" 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
+	endif
+	if(!OverwriteExistingData)		//check for uniquness
+		NewDataFolderName = IN2G_CreateUniqueFolderName(NewDataFolderName)
 	endif
 	string tempNIN, tempNQN, tempNEN
 	tempNIN = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
@@ -1071,19 +1130,23 @@ Function IR3D_PresetOutputStrings()
 		//intensity
 		NewIntensityWaveName = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
 		NewIntensityWaveName = NewIntensityWaveName[0,26]
-		NewIntensityWaveName = NewIntensityWaveName+"_com"
+		NewIntensityWaveName = NewIntensityWaveName+"_mrg"
 		//Q vector
 		NewQWavename = IN2G_RemoveExtraQuote(NewQWavename,1,1)
 		NewQWavename = NewQWavename[0,26]
-		NewQWavename = NewQWavename+"_com"
+		NewQWavename = NewQWavename+"_mrg"
 		//error
 		NewErrorWaveName = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
 		NewErrorWaveName = NewErrorWaveName[0,26]
-		NewErrorWaveName = NewErrorWaveName+"_com"
+		NewErrorWaveName = NewErrorWaveName+"_mrg"
 		//DQ
 		NewdQWavename = IN2G_RemoveExtraQuote(NewdQWavename,1,1)
 		NewdQWavename = NewdQWavename[0,26]
-		NewdQWavename = NewdQWavename+"_com"
+		NewdQWavename = NewdQWavename+"_mrg"
+		if(!OverwriteExistingData)		//check for uniquness
+			DoAlert /T="Save data warning" 1, "If Data 1 type is qrs, the Overwrite existing data must be checked"
+			 OverwriteExistingData=1
+		endif
 	endif
 	
 		
@@ -1119,8 +1182,14 @@ Function IR3D_MergeButtonProc(ba) : ButtonControl
 				IR3D_SetSavedNotSavedMessage(0)
 			endif
 			if(stringmatch(ba.ctrlname,"ProcessSaveData"))
-				IR3D_SaveData()
+				IR3D_ProcessDataAsAppropriate()
 			endif			
+			if(stringmatch(ba.ctrlname,"IsUSAXSSAXSdata"))
+				IR3D_SortIsUSAXSSAXSdata()
+				//IR3D_ProcessDataAsAppropriate()
+			endif			
+
+
 			break
 		case -1: // control being killed
 			break
@@ -1128,7 +1197,159 @@ Function IR3D_MergeButtonProc(ba) : ButtonControl
 
 	return 0
 End
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_SortIsUSAXSSAXSdata()
+	//sort the USAXS/SAXS/WAXS data to match as well as possible... 
+	//here are the lists which we need to process:
+	WAVE/T ListOfAvailableData  = root:Packages:Irena:SASDataMerging:ListOfAvailableData
+	WAVE SelectionOfAvailableData= root:Packages:Irena:SASDataMerging:SelectionOfAvailableData
+	//First, create lists of data
+	Duplicate/T/Free/R=[][0] ListOfAvailableData, ListOfAvailableData1
+	Duplicate/T/Free/R=[][1] ListOfAvailableData, ListOfAvailableData2
+	Redimension /N=(-1,0,0,0) ListOfAvailableData1, ListOfAvailableData2
+	Make/Free/T/N=0 OutPutData1, NotFoundData1, OutPutData2, NotFoundData2
+	//check that we do nto have more folders than the last one
+	if(ItemsInList(ListOfAvailableData1[0]  ,":")>1 || ItemsInList(ListOfAvailableData2[0]  ,":")>1)
+		Abort "Plese select as high folder in Start fldr popup as possible, only last folder can be used for this to work"
+	endif
+	//set all selections to 0
+	SelectionOfAvailableData=0
+	OutPutData1 = ""
+	OutPutData2 = ""
+	NotFoundData1 = ""
+	NotFoundData2 = ""
+	variable i, j, numpairs, maxlength
+	string TmpData1, TmpData2, AllData2
+	AllData2=""
+	For(i=0;i<numpnts(ListOfAvailableData2);i+=1)
+		AllData2+=ListOfAvailableData2[i]+";"
+	endfor
+	if(strlen(ListOfAvailableData1[0])<5)
+		Abort "These names do not seem to be USAXS names"
+	endif
+	For(i=0;i<numpnts(ListOfAvailableData1);i+=1)
+		if(strlen(ListOfAvailableData1[i])>5)		//this contains something which has chance to be name
+			TmpData1 = ListOfAvailableData1[i]			//this is Sxyz_SampleName:
+			TmpData1 = ReplaceString(":", TmpData1,"")
+		 	TmpData1 = RemoveFromList(StringFromList(0, TmpData1 , "_"), TmpData1  , "_")
+			//this is now without the USAXS Scan number
+			TmpData2 = GrepList(AllData2, TmpData1 ,0, ";")
+			TmpData2 = ReplaceString(";", TmpData2, "")
+			if(ItemsInList(TmpData2 , ";")<1)		//did not find match
+				redimension/N=(numpnts(NotFoundData1)+1) NotFoundData1
+				NotFoundData1[numpnts(NotFoundData1)-1] = ListOfAvailableData1[i]		
+				print "Did not Find proper match for   "+ListOfAvailableData1[i]
+			elseif(ItemsInList(TmpData2 , ";")<2)	//found one match
+				redimension/N=(numpnts(OutPutData1)+1) OutPutData1, OutPutData2
+				OutPutData1[numpnts(OutPutData1)-1] = ListOfAvailableData1[i]	
+				OutPutData2[numpnts(OutPutData1)-1] = TmpData2	
+				AllData2 = RemoveFromList(TmpData2, AllData2 , ";")
+				print "Found proper match     "+ListOfAvailableData1[i]+"    :      "+TmpData2
+			else		//found more matches, same as above, but use the fiirst one and print note in history area... 
+				redimension/N=(numpnts(OutPutData1)+1) OutPutData1, OutPutData2
+				OutPutData1[numpnts(OutPutData1)-1] = ListOfAvailableData1[i]	
+				OutPutData2[numpnts(OutPutData1)-1] = StringFromList(0,TmpData2,";")	
+				AllData2 = RemoveFromList(StringFromList(0,TmpData2,";"), AllData2 , ";")
+				print "Found multiple matches for "+ListOfAvailableData1[i]+", using the first one from : "+TmpData2
+			endif
+		endif
+	endfor
+	//now we have found pairs in OutPutData1 - OutPutData2 and not found data in NotFoundData1 and AllData2
+	if(ItemsInList(AllData2)>0)
+		Redimension/N	=(ItemsInList(AllData2)) NotFoundData2
+	endif
+	For(i=0;i<numpnts(NotFoundData2);i+=1)
+		NotFoundData2[i] = stringFromList(i, AllData2)
+	endfor
+	//OK, now all is in waves again. 
+	//We need to build the waves and set the 1 and 0 as needed. 
+	numpairs = numpnts(OutPutData1)
+	maxlength = max((numpnts(OutPutData1)+numpnts(NotFoundData1)), (numpnts(OutPutData2)+numpnts(NotFoundData2)) )
+	Redimension/N=(maxlength,2) ListOfAvailableData, SelectionOfAvailableData
+	SelectionOfAvailableData = 0
+	SelectionOfAvailableData[0,numpnts(OutPutData1)-1][0] =1
+	SelectionOfAvailableData[0,numpnts(OutPutData1)-1][1] =1
+	ListOfAvailableData[0,numpnts(OutPutData1)-1][0] = OutPutData1[p]
+	ListOfAvailableData[0,numpnts(OutPutData1)-1][1] = OutPutData2[p]
+	ListOfAvailableData[numpnts(OutPutData1), maxlength-1][0] = NotFoundData1[p-numpnts(OutPutData1)]
+	ListOfAvailableData[numpnts(OutPutData1), maxlength-1][1] = NotFoundData2[p-numpnts(OutPutData1)]
+	print "USAXS/SAXS/WAXS data sorted using standard name logic for common samples."
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_ProcessSequenceOfDataSets()
+	
+	//here are the lists which we need to process:
+	WAVE/T ListOfAvailableData  = root:Packages:Irena:SASDataMerging:ListOfAvailableData
+	WAVE SelectionOfAvailableData= root:Packages:Irena:SASDataMerging:SelectionOfAvailableData
+	//In here we have column 0 contains Folder Names and Selections for Data 1
+	//In here we have column 1 contains Folder Names and Selections for Data 2
+	//In this case we need to load first data set selected to process from Data 1 and first from Data 2, process
+	//save and iterate through second, third, etc... 
+	//First, create lists of data
+	Duplicate/Free/R=[][0] SelectionOfAvailableData, SelectionOfAvailableData1
+	Duplicate/Free/R=[][1] SelectionOfAvailableData, SelectionOfAvailableData2
+	Redimension /N=(-1,0,0,0) SelectionOfAvailableData1, SelectionOfAvailableData2
+	SelectionOfAvailableData1 = (SelectionOfAvailableData1[p]<1) ? 0  : 1
+	SelectionOfAvailableData2 = (SelectionOfAvailableData2[p]<1) ? 0  : 1
+	variable NumDataSetsToProcess1, NumDataSetsToProcess2, i, j
+	NumDataSetsToProcess1 = sum(SelectionOfAvailableData1)
+	NumDataSetsToProcess2 = sum(SelectionOfAvailableData2)
+	if(NumDataSetsToProcess1!=NumDataSetsToProcess2)
+		Abort "Number of selected Data 1 and Data 2 is not same, cannot proceed. Please, select same number of cells for Data 1 and Data 2. "
+	endif
+	//Ok, create Text lists for Data1 and Data 2 with ONLY data to process in the right order...
+	Make/Free/T/N=(NumDataSetsToProcess1) ListofData1, ListOfData2
+	j=0
+	For(i=0;i<numpnts(SelectionOfAvailableData1);i+=1)
+		if(SelectionOfAvailableData1[i])
+			ListofData1[j] = ListOfAvailableData[i][0]
+			j+=1
+		endif
+	endfor
+	j=0
+	For(i=0;i<numpnts(SelectionOfAvailableData2);i+=1)
+		if(SelectionOfAvailableData2[i])
+			ListofData2[j] = ListOfAvailableData[i][1]
+			j+=1
+		endif
+	endfor
+	//Ok, we have two lists of data folders to process... 
+	For(i=0;i<NumDataSetsToProcess1;i+=1)				//iterate through the lists and process...
+		IR3D_CopyAndAppendData(1, ListofData1[i])
+		IR3D_CopyAndAppendData(2, ListofData2[i])
+		IR3D_MergeProcessData()
+		DoUpdate
+		IR3D_SaveData()
+		sleep/S 1
+	endfor
+end 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_ProcessDataAsAppropriate()
 
+
+	string OldDf
+	OldDf= GetDataFOlder(1)
+	setDataFolder root:Packages:Irena:SASDataMerging
+	NVAR ProcessTest=root:Packages:Irena:SASDataMerging:ProcessTest
+	NVAR ProcessManually=root:Packages:Irena:SASDataMerging:ProcessManually
+	NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
+	if(ProcessTest)			//test mode but user decided to save manually, should be allowed. In this case this is simply save button
+		IR3D_SaveData()
+	endif
+	if(ProcessManually)			//manual mode, probably with NOT Save Immediately selected. In this case this is simply save button
+		IR3D_SaveData()
+	endif
+	if(ProcessSequentially)			//here we will need to loop through the samples and process and save them. 
+		IR3D_ProcessSequenceOfDataSets()
+	endif
+	
+	setDataFolder OldDf
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1168,12 +1389,12 @@ Function IR3D_AutoScale()
 	endif
 	Data1QEnd = endQ
 	
-	NVAR Data1_Background=root:Packages:Irena:SASDataMerging:Data1_Background
-	NVAR Data2_IntMultiplier=root:Packages:Irena:SASDataMerging:Data2_IntMultiplier
+	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
 	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift
 
 	Data2Qshift = 0
-	Data1_Background = 0
+	Data1Background = 0
 	
 	Duplicate/O/Free Intensity1, TempInt1
 	Duplicate/O/Free Intensity2, TempInt2
@@ -1188,13 +1409,13 @@ Function IR3D_AutoScale()
 	integral1=areaXY(TempQ1, TempInt1, startQ, endQ )
 	integral2=areaXY(TempQ2, TempInt2, startQ, endQ )
 	
-	Data2_IntMultiplier = integral1/integral2
+	Data2IntMultiplier = integral1/integral2
 	
 	Duplicate/O TempInt2, ResultIntensity	
 	Duplicate/O TempQ2, ResultQ	
 	Duplicate/O TempE2, ResultError	
-	ResultIntensity = ResultIntensity*Data2_IntMultiplier
-	ResultError = ResultError*Data2_IntMultiplier
+	ResultIntensity = ResultIntensity*Data2IntMultiplier
+	ResultError = ResultError*Data2IntMultiplier
 
 	setDataFolder OldDf
 end
@@ -1247,9 +1468,9 @@ Function IR3D_MergeData(VaryQshift)
 	endif
 	Data1QEnd = endQ
 	
-	NVAR Data1_Background=root:Packages:Irena:SASDataMerging:Data1_Background
-	NVAR Data2_IntMultiplier=root:Packages:Irena:SASDataMerging:Data2_IntMultiplier
-	NVAR Data2_Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift	
+	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift	
 	
 	if (!WaveExists(Intensity1) || !WaveExists(Intensity2) || !WaveExists(Qvector1) || !WaveExists(Qvector2))
 		Abort "Bad call to IR3D_MergeData routine"
@@ -1299,7 +1520,7 @@ Function IR3D_MergeData(VaryQshift)
 	scalingFactor = integral1/integral2
 	highQDifference = TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1]
 	Q2shift = 0.0
-	Data2_Qshift = 0
+	Data2Qshift = 0
 	
 	Concatenate /O {TempQ1Part, TempInt1Part, TempInt2Part, TempErr1Part, TempErr2Part}, TempIntCombined
 
@@ -1312,15 +1533,15 @@ Function IR3D_MergeData(VaryQshift)
 	endif
 	Wave W_Extremum	
 	KillWaves TempIntCombined
-	Data2_IntMultiplier = W_Extremum[0]
-	Data1_Background = W_Extremum[1]
+	Data2IntMultiplier = W_Extremum[0]
+	Data1Background = W_Extremum[1]
 	if(VaryQshift>0)
-		Data2_Qshift =W_Extremum[2] 
+		Data2Qshift =W_Extremum[2] 
 	else
-		Data2_Qshift = 0 
+		Data2Qshift = 0 
 	endif
-//	SetVariable Data2_IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*Data2_IntMultiplier}
-//	SetVariable Data1_Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*abs(Data1_Background)}
+//	SetVariable Data2IntMultiplier, win=IR1D_DataManipulationPanel, limits={-inf,inf,0.01*Data2IntMultiplier}
+//	SetVariable Data1Background,  win=IR1D_DataManipulationPanel, limits={-inf,inf,0.02*abs(Data1Background)}
 	StartQp = BinarySearch(Qvector2, startQ )
 
 	Duplicate/Free/R=[0,EndQp] TempInt1, ResultIntensity1	
@@ -1332,10 +1553,10 @@ Function IR3D_MergeData(VaryQshift)
 	Duplicate/Free/R=[StartQp,numpnts(TempInt1)-1] TempErr2, ResultErr2	
 	Duplicate/Free/R=[StartQp,numpnts(TempInt1)-1] TempdQ2, ResultdQ2	
 
-	ResultIntensity2*=Data2_IntMultiplier
-	ResultErr2 *=Data2_IntMultiplier
-	ResultIntensity1-=Data1_Background
-	ResultQ2-=Data2_Qshift
+	ResultIntensity2*=Data2IntMultiplier
+	ResultErr2 *=Data2IntMultiplier
+	ResultIntensity1-=Data1Background
+	ResultQ2-=Data2Qshift
 	
 	Concatenate/NP/O {ResultIntensity1, ResultIntensity2}, ResultIntensity
 	Concatenate/NP/O {ResultQ1, ResultQ2}, ResultQ
@@ -1343,7 +1564,7 @@ Function IR3D_MergeData(VaryQshift)
 	Concatenate/NP/O {ResultdQ1, ResultdQ2}, ResultdQ
 	
 	Sort  ResultQ, ResultQ, ResultIntensity, ResultError, ResultdQ
-	//print "Merged data with following parameters: ScalingFct = "+num2str(Data2_IntMultiplier)+" , and bckg = "+num2str(Data1_Background)
+	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , and Data 2 Q shift = "+num2str(Data2Qshift)
 	//EvaluatePar()
 	setDataFolder OldDf
 end
@@ -1500,8 +1721,121 @@ Function  IR3D_SaveData()
 		
 					
 		IR3D_SetSavedNotSavedMessage(1)
+		print "Saved data to folder : "+GetDataFolder(1)
 	endif
 	setDataFolder OldDf
+end
+//**************************************************************************************
+//**************************************************************************************
+Function IR3D_SetSavedNotSavedMessage(Saved)
+	variable Saved
+	
+	SVAR SavedDataMessage = root:Packages:Irena:SASDataMerging:SavedDataMessage
+	if(!Saved)
+		SavedDataMessage = "Data not saved"
+		TitleBox SavedDataMessage win=IR3D_DataMergePanel,fColor=(65535,16385,16385)
+		Button ProcessSaveData,win=IR3D_DataMergePanel, fColor=(65535,21845,0)
+	else
+		SavedDataMessage = "Data saved"
+		TitleBox SavedDataMessage win=IR3D_DataMergePanel, fColor=(3,52428,1)	
+		Button ProcessSaveData,win=IR3D_DataMergePanel, fColor=(0,0,0)
+	endif
+	
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_PanelHookFunction(H_Struct)
+	STRUCT WMWinHookStruct &H_Struct
+	Variable statusCode= 0	// 0 if nothing done, else 1
+
+	Variable keyCode 		= H_Struct.keyCode
+	Variable eventCode	= H_Struct.eventCode
+	Variable Modifier 		= H_Struct.eventMod
+	
+	String subWinName 	= H_Struct.winName
+	String cursorName 		= H_Struct.cursorName
+	// *!*! The only way to determine which subWindow is active
+	//GetWindow $"" activeSW
+	//print S_value
+//	String panelName 		= ParseFilePath(0, S_value, "#", 0, 0)
+//	String plotName 		= ParseFilePath(0, S_value, "#", 1, 0)
+//	print H_Struct
+//	STRUCT WMWinHookStruct
+//	 winName[200]: IR3D_DataMergePanel#DataDisplay
+//	 winRect: STRUCT Rect
+//	  top: 135
+//	  left: 521
+//	  bottom: 620
+//	  right: 1183
+//	 mouseLoc: STRUCT Point
+//	  v: 174
+//	  h: 894
+//	 ticks: 7739140
+//	 eventCode: 7
+//	 eventName[32]: cursormoved
+//	 eventMod: 1
+//	 menuName[256]: 
+//	 menuItem[256]: 
+//	 traceName[34]: OriginalData2IntWave
+//	 cursorName[2]: A
+//	 pointNumber: 2
+//	 yPointNumber: nan
+//	 isFree: 0
+//	 keycode: 0
+//	 oldWinName[32]: 
+//	 doSetCursor: 0
+//	 cursorCode: 0
+//	 wheelDx: 0
+//	 wheelDy: 0
+//	if(stringmatch(S_value,"IR3D_DataMergePanel#DataDisplay"))
+	if(stringmatch(subWinName,"IR3D_DataMergePanel#DataDisplay"))
+		NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
+		NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
+		if(stringmatch(cursorName,"A")&&stringmatch(H_Struct.eventName,"cursormoved"))
+			WAVE OriginalData2QWave = root:Packages:Irena:SASDataMerging:OriginalData2QWave
+			if(!stringmatch(H_Struct.traceName,"OriginalData2IntWave"))
+				cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
+				Data2Qstart = OriginalData2QWave[1]
+				Print "A cursor must be on OriginalData2IntWave and at least on second point from start"
+			else		//on correct wave...
+				if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
+					cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
+					Data2Qstart = OriginalData2QWave[1]
+					Print "A cursor must be on OriginalData2IntWave and at least on second point from the start"
+				else
+					Data2Qstart = OriginalData2QWave[H_Struct.pointNumber]
+					if(Data2Qstart>=Data1QEnd)
+						cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
+						Data2Qstart = OriginalData2QWave[1]
+						Abort "Must have overlap of the data set. You are trying to set Data 2 start Q value higher than your current end value for Data 1. Reset Data 2 start to default position. "
+					endif
+				endif
+			endif
+		endif
+		if(stringmatch(cursorName,"B")&&stringmatch(H_Struct.eventName,"cursormoved"))
+			WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
+			if(!stringmatch(H_Struct.traceName,"OriginalData1IntWave"))
+				cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
+				Data1QEnd = OriginalData2QWave[numpnts(OriginalData1QWave)-2]
+				Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
+			else		//on correct wave...
+				if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
+					cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
+					Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
+					Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
+				else
+					Data1QEnd = OriginalData1QWave[H_Struct.pointNumber]
+					if(Data2Qstart>=Data1QEnd)
+						cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
+						Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
+						Abort "Must have overlap of the data set. You are trying to set end value for Data 1 lower than your current Data 2 start Q value. Reset Data 1 end to default position."
+					endif
+				endif
+			endif
+		endif
+	endif
+	return statusCode		// 0 if nothing done, else 1
 end
 //**********************************************************************************************************
 //**********************************************************************************************************

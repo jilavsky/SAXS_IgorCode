@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.77
+#pragma version = 1.78
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.78 added Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 //1.77 minor change in CheckScreenSize function
 //1.76 removed Exectue as prep for Igor 7
 //1.75 removed wave/d, Function/d and variable/d. Obsolete
@@ -39,6 +40,8 @@
 // e-mail me: ilavsky@aps.anl.gov.
 
 //This is list of procedures with short description. 
+//Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
+//	string InFolderName										//this will take root:Packages:SomethingHere and will make SomethingHere unique if necessary. 
 //Function IN2G_CheckForSlitSmearedRange(slitSmearedData,Qmax, SlitLength)
 //   aborts execution with errro message if qmax < 3* slit length for slit smerared data
 //
@@ -3113,8 +3116,32 @@ Function/T ZapNonLetterNumStart(strIN)
 	while(strlen(strIN)>0)
 	return strIN
 end
+//***********************************************************************************************
+//************************************************************************************************
 
-
+Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
+	string InFolderName			//thsi is root:Packages:SomethingHere, will make SomethingHere unique. 
+	
+	string OutFoldername, tmpFldr
+	OutFoldername =InFolderName 
+	if(DataFolderExists(InFolderName))
+		string OldDf
+		OldDf=GetDataFolder(1)
+		variable NumParts, i
+		NumParts = ItemsInList(InFolderName  , ":")
+		setDataFolder root:
+		for(i=1;i<NumParts-1;i+=1)
+			tmpFldr = IN2G_RemoveExtraQuote(StringFromList(i, InFolderName,":"),1,1)
+			SetDataFolder tmpFldr
+		endfor
+		OutFoldername = GetDataFolder(1)
+		OutFoldername+=UniqueName(StringFromList(NumParts-1, InFolderName,":"), 11, 0)
+		setDataFolder OldDf
+	endif
+	return OutFoldername
+end
+//***********************************************************************************************
+//************************************************************************************************
 
 Function/S IN2G_GetUniqueFileName(filename)
 	string filename
