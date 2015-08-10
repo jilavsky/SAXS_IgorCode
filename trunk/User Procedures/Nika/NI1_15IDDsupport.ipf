@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.23
+#pragma version=1.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.24 added fix for Q resolution in line profile conversion. Related to adding the Line profile Q resolution ot main code.  
 //1.23 added normalization for WAXS and modified GUI + pinSAXS default mask. Fixed bug error when run second time and help fiel alrerady existed.
 //1.22 added more transferred parameters for pixel smearing. 
 //1.21 added PE detector Nexus file for WAXS and for all detector read of Beam Size
@@ -1891,10 +1892,12 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	Wave LineProfQ= $(LineProfFolder+":"+possiblyQuoteName("q_"+LineProfWaveNames))
 	Wave LineProfr= $(LineProfFolder+":"+possiblyQuoteName("r_"+LineProfWaveNames))
 	Wave LineProfs= $(LineProfFolder+":"+possiblyQuoteName("s_"+LineProfWaveNames))
-	Duplicate/Free LineProfQ, LineProfw
-	LineProfw[p]=(LineProfQ[p+1]-LineProfQ[p-1])/2
-	LineProfw[0]=LineProfQ[1]-LineProfQ[0]
-	
+	Wave/Z LineProfw= $(LineProfFolder+":"+possiblyQuoteName("w_"+LineProfWaveNames))
+	if(!WaveExists(LineProfw))
+		Duplicate/Free LineProfQ, LineProfw
+		LineProfw[p]=(LineProfQ[p+1]-LineProfQ[p-1])/2
+		LineProfw[0]=LineProfQ[1]-LineProfQ[0]
+	endif
 
 	Wave PinProfq= $(PinFolder+":"+possiblyQuoteName("q_"+PinWaveNames))
 	Wave PinProfr= $(PinFolder+":"+possiblyQuoteName("r_"+PinWaveNames))
@@ -1933,13 +1936,13 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	Wave NewQ=$("q_"+SmWaveNames)
 	Wave NewR=$("r_"+SmWaveNames)
 	Wave NewS=$("s_"+SmWaveNames)
-	Wave NewS=$("w_"+SmWaveNames)
+	Wave NewW=$("w_"+SmWaveNames)
 
 	DoWIndow LineuotDisplayPlot_Q
 	if(V_Flag)
 		AppendToGraph /W=LineuotDisplayPlot_Q NewR vs NewQ
 	endif	
-	//now delete teh data which user did not want...
+	//now delete the data which user did not want...
 	
 	if(SAXSDeleteTempPinData)
 		CheckDisplayed /W=LineuotDisplayPlot_Q  LineProfr

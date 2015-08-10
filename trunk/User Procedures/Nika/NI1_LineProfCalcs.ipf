@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.10
+#pragma version=2.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.11 added Q width (Q resolution, dQ) to line profile. Works only for Q for now. 
 //2.10 fixed /NTHR=1 to /NTHR=0
 //2.09 fixed note/NOCR which was embedding new line in wrong place
 //2.08 tried to fix az direction and display. Seems to work now but what a mess with direction definitions.
@@ -281,6 +282,33 @@ Function NI1A_LineProf_CreateLP()
 			LineProfileQz=abs(LineProfileQz)
 		endif
 		
+		variable constVal=Wavelength / (4 * pi)
+		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistacneInmmWidth, LineProfileDspacingWidth
+		Duplicate/Free LineProfileQvalues, LineProfileTwoTheta, LineProfileDistacneInmm, LineProfileDspacing
+		LineProfiledQvalues = LineProfileQvalues[p+1] - LineProfileQvalues[p]
+		LineProfiledQvalues[numpnts(LineProfileQvalues)-1]=LineProfiledQvalues[numpnts(LineProfileQvalues)-2]
+		LineProfileTwoTheta =  2 * asin ( LineProfileQvalues * constVal) * 180 /pi
+		LineProfileTwoThetaWidth  = LineProfileTwoTheta[p+1] - LineProfileTwoTheta [p]
+		LineProfileTwoThetaWidth[numpnts(LineProfileTwoThetaWidth)-1]=LineProfileTwoThetaWidth[numpnts(LineProfileTwoThetaWidth)-2]
+		constVal = 2*pi
+		LineProfileDspacing = constVal / LineProfileQvalues
+		LineProfileDspacingWidth  = LineProfileDspacing [p] - LineProfileDspacing[p+1]
+		LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-1]=LineProfileDspacingWidth[numpnts(DSpacingWidth)-2]
+	
+		LineProfileDistacneInmm =  SampleToCCDDistance*tan(LineProfileTwoTheta*pi/180)
+		LineProfileDistacneInmmWidth  = LineProfileDistacneInmm[p+1] - LineProfileDistacneInmm[p]
+		LineProfileDistacneInmmWidth[numpnts(LineProfileDistacneInmmWidth)-1]=LineProfileDistacneInmmWidth[numpnts(LineProfileDistacneInmmWidth)-2]
+
+		//create proper Q smearing data accounting for all other parts of gemoetry - beam size and pixels size
+		//now this needs to be convoluted with other effects. 
+		NVAR BeamSizeX = root:Packages:Convert2Dto1D:BeamSizeX
+		NVAR BeamSizeY = root:Packages:Convert2Dto1D:BeamSizeY
+		NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+		NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+		NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
+		NVAR SampleToCCDdistance = root:Packages:Convert2Dto1D:SampleToCCDdistance
+		NI1A_CalculateQresolution(LineProfileQvalues,LineProfiledQvalues,LineProfileTwoThetaWidth, LineProfileDspacingWidth, LineProfileDistacneInmmWidth, PixelSizeX,PixelSizeY,BeamSizeX,BeamSizeY,Wavelength,SampleToCCDdistance)
+		//that above creates the resolution due to pixel size, beam size and convolute them to existing binning q resolution. 
 
 	setDataFolder OldDf
 	return 1

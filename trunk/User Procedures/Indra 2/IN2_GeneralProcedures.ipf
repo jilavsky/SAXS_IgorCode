@@ -9,6 +9,7 @@
 //*************************************************************************/
 
 //1.78 added Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
+//       added IN2G_RemoveNaNsFrom7Waves
 //1.77 minor change in CheckScreenSize function
 //1.76 removed Exectue as prep for Igor 7
 //1.75 removed wave/d, Function/d and variable/d. Obsolete
@@ -146,6 +147,7 @@
 //
 //IN2G_RemoveNaNsFrom5Waves(Wv1,wv2,wv3,wv4,wv5)
 //	Removes NaNs from 5 waves, used to clean NaNs from waves before desmearing etc.
+// available also for 6, and 7 waves with similar names. IN2G_RemoveNaNsFrom7Waves
 //
 //IN2G_RemNaNsFromAWave(Wv1)	//removes NaNs from 1 wave
 //assume same number of points in the waves
@@ -2764,6 +2766,18 @@ Function IN2G_RemoveNaNsFrom6Waves(Wv1,wv2,wv3,wv4,wv5,wv6)		//removes NaNs from
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2)
 			Deletepoints i, 1, Wv1, Wv2, Wv3,wv4,wv5, wv6
+		endif
+	endfor
+end
+//**********************************************************************************************
+//**********************************************************************************************
+Function IN2G_RemoveNaNsFrom7Waves(Wv1,wv2,wv3,wv4,wv5,wv6, wv7)		//removes NaNs from 6 waves
+	Wave Wv1, Wv2, Wv3, wv4,wv5, wv6	, wv7				//assume same number of points in the waves
+	
+	variable i=0, imax=numpnts(Wv1)-1
+	for (i=imax;i>=0;i-=1)
+		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2 || numtype(Wv7[i])==2)
+			Deletepoints i, 1, Wv1, Wv2, Wv3,wv4,wv5, wv6, wv7
 		endif
 	endfor
 end
