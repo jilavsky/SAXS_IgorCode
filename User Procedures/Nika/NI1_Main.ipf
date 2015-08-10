@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.69
+#pragma version=1.70
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.70 added multiple geometries manager. 
  //1.69 added some warnings about uncertainty method changes when read from preferences. 
  //1.68 release, fixes for 9ID USAXS and other fixes listed 
  //1.67 Release to fix Mask tool broken in 1.66 release. 
@@ -50,6 +51,8 @@ Menu "SAS 2D"
 	"---"
 	"Configure Nika Preferences",NI1_ConfigMain()
 	help={"Configure method for uncertainity values for GUI behavior and for panels font sizes and font types"}
+	"Multiple geometries manager", NI1_GeometriesManager()
+	help={"This enables switching among multiple Nika geometries"}
 	Submenu "Instrument configurations"
 		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_15IDDConfigureNika()
 		help={"Support for data from 9ID or15IDD (USAXS/SAXS) beamline at APS"}
@@ -1267,4 +1270,252 @@ EndMacro
 //**************************************************************** 
 //**************************************************************** 
 //***********************************
-//***********************************
+
+//**************************************************************************
+Function NI1_GeometriesManager()
+	//initialize first...
+	string OldDF=GetDataFolder(1)
+	setDataFolder root:
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:NikaGeometries
+	String/G CurrentGeomName, ListOfGeomsSaved
+	variable/g CleanupTheFolderPriorSave
+	if(strlen(CurrentGeomName)<1)
+		CurrentGeomName = "Not saved"
+	endif
+	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1))
+	if(strlen(ListOfGeomsSaved)<1)
+		ListOfGeomsSaved = "None saved"
+	endif
+	
+	
+	DoWIndow NI1_GeometriesManagerPanel
+	if(V_Flag)
+		DoWindow/F NI1_GeometriesManagerPanel
+	else
+		Execute ("NI1_GeometriesManagerPanel()")
+	endif
+	setDataFolder oldDf
+end
+
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+Function NI1_GMLoadGeometries(LoadThisGeom)
+	STRING LoadThisGeom
+	string OldDF=GetDataFolder(1)
+	SetDataFolder root:Packages:NikaGeometries
+	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
+	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
+
+	DoAlert /T="What do we do with current Geometries?" 2, "Current Geometries : "+CurrentGeomName+". Do you want to save it?"
+		if(V_Flag==3)
+			abort
+		elseif(V_Flag==2)
+			
+		elseif(V_Flag==1)
+			NI1_GMSaveGeometries()
+		endif		
+	KillDataFolder root:Packages:Convert2Dto1D
+	DuplicateDataFolder $(LoadThisGeom), root:Packages:Convert2Dto1D
+	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
+	CurrentGeomName = LoadThisGeom
+	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
+	setDataFolder oldDf
+	NI1A_Convert2Dto1DMainPanel()
+end
+
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+Function NI1_GMDeleteGeom()
+	string OldDF=GetDataFolder(1)
+	SetDataFolder root:Packages:NikaGeometries
+	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
+	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
+	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
+	STRING DeleteThisGeom=stringFromList(0,ListOfGeomsSaved)
+	Prompt DeleteThisGeom, "Select Geometries to delete", popup, ListOfGeomsSaved
+	DoPrompt "Deleting saved Geometries. This cannot be undone!", DeleteThisGeom
+	if (V_Flag)
+		abort								// User canceled
+	endif
+
+	DoAlert /T="Are you sure?" 2, "You are about to delete Geometries : "+DeleteThisGeom+". Are you sure?"
+		if(V_Flag==3)
+			abort
+		elseif(V_Flag==2)
+			abort
+		elseif(V_Flag==1)
+			KillDataFolder $(DeleteThisGeom)
+		endif		
+	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
+	setDataFolder oldDf
+end
+
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+Function NI1_GMCreateNewGeom()
+	STRING LoadThisGeom
+	string OldDF=GetDataFolder(1)
+	SetDataFolder root:Packages:NikaGeometries
+	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
+	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
+
+	DoAlert /T="What do we do with current Geometries?" 2, "Current Geometries : "+CurrentGeomName+". Do you want to save it?"
+		if(V_Flag==3)
+			abort
+		elseif(V_Flag==2)
+			
+		elseif(V_Flag==1)
+			NI1_GMSaveGeometries()
+		endif		
+	NI1_GMCloseAllNikaW() 	
+	KillDataFolder root:Packages:Convert2Dto1D
+	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
+	CurrentGeomName = "Not saved"
+	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
+	setDataFolder oldDf
+	NI1A_Convert2Dto1DMainPanel()
+end
+
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+Function NI1_GMSaveGeometries()
+	string OldDF=GetDataFolder(1)
+	SetDataFolder root:Packages:NikaGeometries
+	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
+	String NewSaveName
+	if(stringmatch(CurrentGeomName,"Not saved"))
+		NewSaveName = "SavedGeom_"+Secs2Date(DateTime,-2)
+	else
+		NewSaveName = CurrentGeomName
+	endif
+	Prompt NewSaveName, "Enter short name, will be made in Igor folder name"
+	DoPrompt "Input name for the current Geometries", NewSaveName
+	if (V_Flag)
+		abort								// User canceled
+	endif
+	NewSaveName = CleanupName(NewSaveName, 1 )
+	if(DataFolderExists(NewSaveName ))
+		DoAlert /T="New fodler name conflict"  2, "The Geometries "+NewSaveName+" already exists, do you want to overwrite (Yes), create unique name (No), or cancel?"
+		if(V_Flag==3)
+			abort
+		elseif(V_Flag==2)
+			NewSaveName = UniqueName(NewSaveName, 11, 0 )
+		elseif(V_Flag==1)
+			KillDataFolder NewSaveName
+		endif		
+	endif
+	NVAR CleanupTheFolderPriorSave = root:Packages:NikaGeometries:CleanupTheFolderPriorSave
+	if(CleanupTheFolderPriorSave)
+		NI1_Cleanup2Dto1DFolder()				//lets clean up the folder to make it smaller.... 
+	endif
+	DuplicateDataFolder root:Packages:Convert2Dto1D, $(NewSaveName)
+	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
+	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
+	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
+	CurrentGeomName = NewSaveName
+	
+	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value=#"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
+
+	
+	setDataFolder oldDf
+end
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+
+Function NI1_GMCloseAllNikaW() 		//close all open panels and windows
+	string ListOfNikaWindows="NI1A_Convert2Dto1DPanel;CCDImageToConvertFig;LineuotDisplayPlot_Q;LineuotDisplayPlot_D;LineuotDisplayPlot_T;"
+	ListOfNikaWindows+="Sample_Information;SquareMapIntvsPixels;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;NI1M_ImageROIPanel;CCDImageForMask;"
+	ListOfNikaWindows+="EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_15IDDConfigPanel;Instructions_15IDD;"
+	variable i
+	string TempNm
+	For(i=0;i<ItemsInList(ListOfNikaWindows);i+=1)
+		TempNm = stringFromList(i,ListOfNikaWindows)
+		DoWindow $TempNm
+		if (V_Flag)
+			DoWindow/K $TempNm	
+		endif
+	endfor
+	//
+end
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+
+Function NI1_GMButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringmatch(ba.ctrlName,"SaveGeometries"))
+				NI1_GMSaveGeometries()
+			endif
+			if(stringmatch(ba.ctrlName,"NewGeometries"))
+				NI1_GMCreateNewGeom()
+			endif
+			if(stringmatch(ba.ctrlName,"DeleteGeometries"))
+				NI1_GMDeleteGeom()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+
+Function NI1_GMPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			if(stringmatch(pa.ctrlName,"RestoreGeometries"))
+				NI1_GMLoadGeometries(popStr)
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
+
+Window NI1_GeometriesManagerPanel() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel/K=1 /W=(600,45,1000,337) as "NIka Geometries manager"
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 16,textrgb= (16385,16388,65535)
+	DrawText 86,17,"ika Geometries manager"
+	SetDrawEnv fsize= 16,textrgb= (16385,16388,65535)
+	DrawText 113,25,"Nika Geometries manager"
+	DrawText 15,45,"Save and restore Nika Geometries + switch between them"
+	DrawText 15,60,"as needed. Please note, that this is very memory intensive "
+	DrawText 15,75,"and creates huge Igor files. Delete Geoms when no more needed."
+	DrawText 15,90,"When changing Geometries, all Nika windows are closed."
+	DrawText 15,105,"You need to reopen them. "
+	Button NewGeometries,pos={99,123},size={200,20},proc=NI1_GMButtonProc,title="Create New Geometries"
+	Button SaveGeometries,pos={99,150},size={200,20},proc=NI1_GMButtonProc,title="Save Current Geometries"
+	Setvariable CurrentGeomName, pos={20,200}, size={300,25}, title="Current Geometries", variable=root:Packages:NikaGeometries:CurrentGeomName, disable=2
+	checkbox CleanupTheFolderPriorSave, pos={80,175}, size={200,15}, variable=root:Packages:NikaGeometries:CleanupTheFolderPriorSave, noproc, title="Clean up folder before saving? (Housekeeping)"
+//	String/G CurrentGeomName, ListOfGeomsSaved
+	PopupMenu RestoreGeometries,pos={73,228},size={152,20},proc=NI1_GMPopMenuProc,title="Load Stored Geometries :"
+	PopupMenu RestoreGeometries,mode=1,mode=1,value= root:Packages:NikaGeometries:ListOfGeomsSaved
+	Button DeleteGeometries,pos={99,263},size={200,20},proc=NI1_GMButtonProc,title="Delete Saved Geometries"
+EndMacro
+//**************************************************************************
+//**************************************************************************
+//**************************************************************************
