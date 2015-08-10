@@ -141,15 +141,16 @@ Proc IR3D_DataMergePanel()
 
 	SetActiveSubwindow ##
 
-	SetVariable DataFolderName1,pos={550,625},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName1, title="Data 1:     "
-	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:     "
+	SetVariable DataFolderName1,pos={550,625},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName1, title="Data 1:       ", disable=2
+	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:       ", disable=2
 	SetVariable NewDataFolderName,pos={550,659},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:NewDataFolderName, title="Merged Data: "
 
 	DrawText 4,650,"Double click to add data to graph."
 	DrawText 4,663,"Shift-click to select range of data."
 	DrawText 4,676,"Ctrl/Cmd-click to select one data set."
 	DrawText 254,650,"Regex for not contain: ^((?!string).)*$"
-	
+	DrawText 254,663,"Regex for contain:  string"
+	DrawText 254,676,"Regex for case independent contain:  (?i)string"
 end
 
 
@@ -234,6 +235,9 @@ Function IR3D_InitDataMerging()
 	NVAR AutosaveAfterProcessing
 	OverwriteExistingData=1
 	AutosaveAfterProcessing=1
+	if(ProcessTest)
+		AutosaveAfterProcessing=0
+	endif
 
 	Make/O/T/N=(0,2) ListOfAvailableData
 	Make/O/N=(0,2) SelectionOfAvailableData
@@ -511,23 +515,23 @@ Function IR3D_SetGUIControls()
 					Button ProcessSaveData,win=IR3D_DataMergePanel, title="S\rA\rV\rE\r\r\rD\rA\rT\rA", disable=0
 					if(ProcessMerge)
 						if(AutosaveAfterProcessing)
-							UserMessageString = "Select Data1& Data2 - will be saved immediately. Using Merge."
+							UserMessageString = "Select Data1& Data2, processing using Merge, will be saved immediately."
 						else
-							UserMessageString = "Select Data1& Data2 and use SAVE Data. Using Merge."
+							UserMessageString = "Select Data1& Data2, processing using Merge. User needs to SAVE."
 						endif
 					else
 						if(AutosaveAfterProcessing)
-							UserMessageString = "Select Data1& Data2 - will be saved immediately. Using Merge2."
+							UserMessageString = "Select Data1& Data2, processing using Merge2, will be saved immediately. "
 						else
-							UserMessageString = "Select Data1& Data2 and use SAVE Data. Using Merge2."
+							UserMessageString = "Select Data1& Data2, processing using Merge2. User needs to SAVE."
 						endif
 					endif
 				elseif(ProcessSequentially)
 					Button ProcessSaveData,win=IR3D_DataMergePanel, title="P\rR\rO\rC\rE\rS\rS\r\r\ra\rn\rd\r\r\rS\rA\rV\rE\r\r\rD\rA\rT\rA", disable=0
 					if(ProcessMerge)
-						UserMessageString = "Select ranges of Data1 & 2 and use PROCESS Data. Using Merge. Will save."
+						UserMessageString = "Select ranges of Data1 & 2 and push PROCESS Data button. Using Merge & save."
 					else
-						UserMessageString = "Select ranges of Data1 & 2 and use PROCESS Data. Using Merge2. Will save."
+						UserMessageString = "Select ranges of Data1 & 2 and push PROCESS Data button. Using Merge2 & save."
 					endif
 				endif			
 			endif
@@ -1701,12 +1705,36 @@ Function  IR3D_SaveData()
 		Duplicate/O ResultsQ, $NewQWaveName
 		Wave TmpIntNote=$NewIntensityWaveName
 		Wave TmpQnote=$NewQWaveName
-		string OldNote
+		string OldNote, PriormergeInfo
+		SVAR DataFolderName1 = root:Packages:Irena:SASDataMerging:DataFolderName1
+		SVAR DataFolderName2 = root:Packages:Irena:SASDataMerging:DataFolderName2
 		OldNOte=note(TmpIntNote)
-//		OldNOte=ReplaceStringByKey("Units", OldNOte, OutputDataUnits, "=" , ";")
+		PriormergeInfo = StringByKey("Data from merged", OldNOte, "=",";")
+		if(strlen(PriormergeInfo)>0)
+			PriormergeInfo+=","
+		endif
+		PriormergeInfo+=DataFolderName1
+		OldNOte=ReplaceStringByKey("Data from merged", OldNOte, PriormergeInfo  , "=" ,";")
+		PriormergeInfo = StringByKey("Data merged with", OldNOte, "=",";")
+		if(strlen(PriormergeInfo)>0)
+			PriormergeInfo+=","
+		endif
+		PriormergeInfo+=DataFolderName2
+		OldNOte=ReplaceStringByKey("Data merged with", OldNOte, PriormergeInfo  , "=" ,";")
 		note/K TmpIntNote, OldNOte
 		OldNOte=note(TmpQnote)
-//		OldNOte=ReplaceStringByKey("Units", OldNOte, "A-1", "=" , ";")
+		PriormergeInfo = StringByKey("Data from merged", OldNOte, "=",";")
+		if(strlen(PriormergeInfo)>0)
+			PriormergeInfo+=","
+		endif
+		PriormergeInfo+=DataFolderName1
+		OldNOte=ReplaceStringByKey("Data from merged", OldNOte, PriormergeInfo  , "=" ,";")
+		PriormergeInfo = StringByKey("Data merged with", OldNOte, "=",";")
+		if(strlen(PriormergeInfo)>0)
+			PriormergeInfo+=","
+		endif
+		PriormergeInfo+=DataFolderName2
+		OldNOte=ReplaceStringByKey("Data merged with", OldNOte, PriormergeInfo  , "=" ,";")
 		note/K TmpQnote, OldNOte
 		
 		if (WaveExists(ResultsE) && (strlen(NewErrorWaveName)>0))

@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.11 added Data Merging
+//2.11 added Data Merging, removed LSQF1 versions
 //2.10 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.09 converted to rtGlobals=3
 //2.08 added GuinierPorod fit package
@@ -52,10 +52,10 @@
 #include ":IR1_ImportData", version>=2.24
 #include ":IR1_IntCalculations", version>=2.01
 #include ":IR1_InterferenceLQSF", version>=2.01
-#include ":IR1_LSQF_UserFit", version>=2.01
-#include ":IR1_LSQF_UserFncts", version>=2.01
-#include ":IR1_LSQF_UserModelMain", version>=2.01
-#include ":IR1_LSQF_UserPanel", version>=2.02
+//#include ":IR1_LSQF_UserFit", version>=2.01
+//#include ":IR1_LSQF_UserFncts", version>=2.01
+//#include ":IR1_LSQF_UserModelMain", version>=2.01
+//#include ":IR1_LSQF_UserPanel", version>=2.02
 #include ":IR1_Main", version>=2.57
 #include ":IR1_Panel", version>=2.03
 //#include ":IR1_PlotStylesMngr", version>=2.01

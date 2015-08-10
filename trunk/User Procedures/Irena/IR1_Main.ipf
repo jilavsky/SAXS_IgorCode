@@ -64,9 +64,9 @@ Menu "SAS"
 		help={"Merge data sets, rebin for same Q, etc..."}
 		"Data manipulation II [many data sets]", IR3M_DataManipulationII()
 		help={"Manipulate - for now only average - many data sets"}
-		"Data Merging of two data sets", IR3D_DataMerging()
+		"Merge two data sets", IR3D_DataMerging()
 		help={"Merge two data sets - two segments at different q ranges"}
-		"Data mining", IR2M_GetDataMiner()
+		"Data mining [extract information]", IR2M_GetDataMiner()
 		help={"Data miner to find various data and plot various waves"}
 	end
 	"---"
@@ -108,17 +108,21 @@ Menu "SAS"
 	help={"Calculator for scattering contrast. Both X rays and neutrons. Anomalous effects available."}
 	"Configure default fonts and names",IR2C_ConfigMain()
 	help={"Configure default values for GUI Panels and Graph common items, such as font sizes and font types"}
-		SubMenu "Support and Older tools"
+	//	SubMenu "Support "
+		//	"Evaluate Size Distributions", IR1G_EvaluateONESample()
+		//	help = {"Not fully finished GUI to evaluate results from methods producing size distributions"}
+		//	"Scripting tool",  IR2S_ScriptingTool()
+		//	help = {"Scripting tool enabes to run some tools on multiple data sets."}
+		//	"Modeling I", IR1S_LSQF_StandardModelsMain()
+		//	help = {"Modeling of SAS by modeling distributions (Gauss, LogNormal) of scatterers (spheroids, spheres,cylinders,tubes' core-shell). Uses Least Squuare fitting or Genetic optimization."}
+		//	"Modeling I, user models", IR1U_LSQF_UserModelsMain()
+		//	help = {"Modeling of SAS with user provided distributions (probability/diameter) for scatterers (spheroids, spheres,cylinders, tubes, core-shell). Uses Least square fitting. "}
+	//	end
+		SubMenu "Support tools"
 			"Evaluate Size Distributions", IR1G_EvaluateONESample()
 			help = {"Not fully finished GUI to evaluate results from methods producing size distributions"}
 			"Scripting tool",  IR2S_ScriptingTool()
 			help = {"Scripting tool enabes to run some tools on multiple data sets."}
-			"Modeling I", IR1S_LSQF_StandardModelsMain()
-			help = {"Modeling of SAS by modeling distributions (Gauss, LogNormal) of scatterers (spheroids, spheres,cylinders,tubes' core-shell). Uses Least Squuare fitting or Genetic optimization."}
-			"Modeling I, user models", IR1U_LSQF_UserModelsMain()
-			help = {"Modeling of SAS with user provided distributions (probability/diameter) for scatterers (spheroids, spheres,cylinders, tubes, core-shell). Uses Least square fitting. "}
-		end
-		SubMenu "Other tools"
 			"Desmearing", IR1B_DesmearingMain()
 			help={"Remove slit smearing using Lake method"}
 			"Show Results notebook", IR1_CreateResultsNbk()
