@@ -1022,6 +1022,7 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
 				DIDNotFindInfo=1
+				break
 			endif
 		while (InfoLoc<1) 
 		if(DIDNotFindInfo)
@@ -1029,7 +1030,11 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			Sort /A ListOfAvailableData, ListOfAvailableData
 		else
 			For(i=0;i<numpnts(TempWv);i+=1)
-				TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*min*" ))
+					TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
 			endfor
 			Sort TempWv, ListOfAvailableData
 		endif
@@ -1044,6 +1049,7 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
 				DIDNotFindInfo=1
+				break
 			endif
 		while (InfoLoc<1) 
 		if(DIDNotFindInfo)
@@ -1051,7 +1057,11 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			Sort /A ListOfAvailableData, ListOfAvailableData
 		else
 			For(i=0;i<numpnts(TempWv);i+=1)
-				TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*pct*" ))
+					TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
 			endfor
 			Sort TempWv, ListOfAvailableData
 		endif
@@ -1066,6 +1076,7 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
 				DIDNotFindInfo=1
+				break
 			endif
 		while (InfoLoc<1) 
 		if(DIDNotFindInfo)
@@ -1073,7 +1084,11 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			Sort /A ListOfAvailableData, ListOfAvailableData
 		else
 			For(i=0;i<numpnts(TempWv);i+=1)
-				TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*C*" ))
+					TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
 			endfor
 			Sort TempWv, ListOfAvailableData
 		endif
