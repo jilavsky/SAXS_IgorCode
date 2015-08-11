@@ -49,9 +49,9 @@ Menu "SAS 2D"
 	"Image line profile", NI1_CreateImageLineProfileGraph()
 	help={"Calls Image line profile (Wavemetrics provided) function"}
 	"---"
-	"Configure Nika Preferences",NI1_ConfigMain()
+	"GUI & uncertainty config",NI1_ConfigMain()
 	help={"Configure method for uncertainity values for GUI behavior and for panels font sizes and font types"}
-	"Multiple geometries manager", NI1_GeometriesManager()
+	"Configuration manager", NI1_GeometriesManager()
 	help={"This enables switching among multiple Nika geometries"}
 	Submenu "Instrument configurations"
 		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_15IDDConfigureNika()
@@ -1318,6 +1318,7 @@ Function NI1_GMLoadGeometries(LoadThisGeom)
 		elseif(V_Flag==1)
 			NI1_GMSaveGeometries()
 		endif		
+	NI1_GMCloseAllNikaW() 	
 	KillDataFolder root:Packages:Convert2Dto1D
 	DuplicateDataFolder $(LoadThisGeom), root:Packages:Convert2Dto1D
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
@@ -1365,7 +1366,7 @@ Function NI1_GMCreateNewGeom()
 	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
 	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
 
-	DoAlert /T="What do we do with current Geometries?" 2, "Current Geometries : "+CurrentGeomName+". Do you want to save it?"
+	DoAlert /T="What do we do with current Configuration?" 2, "Last name for this Configuration was : "+CurrentGeomName+". Do you want to save it?"
 		if(V_Flag==3)
 			abort
 		elseif(V_Flag==2)
@@ -1402,7 +1403,7 @@ Function NI1_GMSaveGeometries()
 	endif
 	NewSaveName = CleanupName(NewSaveName, 1 )
 	if(DataFolderExists(NewSaveName ))
-		DoAlert /T="New fodler name conflict"  2, "The Geometries "+NewSaveName+" already exists, do you want to overwrite (Yes), create unique name (No), or cancel?"
+		DoAlert /T="New fodler name conflict"  2, "The Configuration "+NewSaveName+" already exists, do you want to overwrite (Yes), create unique name (No), or cancel?"
 		if(V_Flag==3)
 			abort
 		elseif(V_Flag==2)
@@ -1498,25 +1499,25 @@ End
 
 Window NI1_GeometriesManagerPanel() : Panel
 	PauseUpdate; Silent 1		// building window...
-	NewPanel/K=1 /W=(600,45,1000,337) as "NIka Geometries manager"
+	NewPanel/K=1 /W=(600,45,1000,337) as "NIka Configuration manager"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,textrgb= (16385,16388,65535)
-	DrawText 86,17,"ika Geometries manager"
+	DrawText 76,17,"ika Configuration manager"
 	SetDrawEnv fsize= 16,textrgb= (16385,16388,65535)
-	DrawText 113,25,"Nika Geometries manager"
-	DrawText 15,45,"Save and restore Nika Geometries + switch between them"
+	DrawText 113,25,"Nika Configuration manager"
+	DrawText 15,45,"Save and restore Nika Configurations + switch between them"
 	DrawText 15,60,"as needed. Please note, that this is very memory intensive "
-	DrawText 15,75,"and creates huge Igor files. Delete Geoms when no more needed."
-	DrawText 15,90,"When changing Geometries, all Nika windows are closed."
+	DrawText 15,75,"and creates huge Igor files. Delete Configs when no more needed."
+	DrawText 15,90,"When changing Configruations, all Nika windows are closed."
 	DrawText 15,105,"You need to reopen them. "
-	Button NewGeometries,pos={99,123},size={200,20},proc=NI1_GMButtonProc,title="Create New Geometry"
-	Button SaveGeometries,pos={99,150},size={200,20},proc=NI1_GMButtonProc,title="Save Current Geometry"
-	Setvariable CurrentGeomName, pos={20,200}, size={300,25}, title="Current Geometries", variable=root:Packages:NikaGeometries:CurrentGeomName, disable=2
+	Button NewGeometries,pos={99,123},size={200,20},proc=NI1_GMButtonProc,title="Create New Configuration"
+	Button SaveGeometries,pos={99,150},size={200,20},proc=NI1_GMButtonProc,title="Save Current Configuration"
+	Setvariable CurrentGeomName, pos={5,200}, size={300,25}, title="Last Saved/loaded Config name: ", variable=root:Packages:NikaGeometries:CurrentGeomName, disable=2
 	checkbox CleanupTheFolderPriorSave, pos={80,175}, size={200,15}, variable=root:Packages:NikaGeometries:CleanupTheFolderPriorSave, noproc, title="Clean up folder before saving? (Housekeeping)"
 //	String/G CurrentGeomName, ListOfGeomsSaved
-	PopupMenu RestoreGeometries,pos={73,228},size={152,20},proc=NI1_GMPopMenuProc,title="Load Stored Geometries :"
+	PopupMenu RestoreGeometries,pos={73,228},size={152,20},proc=NI1_GMPopMenuProc,title="Load Stored Configurations :"
 	PopupMenu RestoreGeometries,mode=1,mode=1,value= root:Packages:NikaGeometries:ListOfGeomsSaved
-	Button DeleteGeometries,pos={99,263},size={200,20},proc=NI1_GMButtonProc,title="Delete Saved Geometry"
+	Button DeleteGeometries,pos={99,263},size={200,20},proc=NI1_GMButtonProc,title="Delete Saved Configuration"
 EndMacro
 //**************************************************************************
 //**************************************************************************

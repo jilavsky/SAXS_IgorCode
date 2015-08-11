@@ -3,6 +3,9 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.70 
+Added Configuration manager - allows users to have multiple fully configured “versions” of Nika inside one experiment and switch between them for convenience. Great if you have two different sample-to-detector distances etc. 
+
 1.69 
 Major addition - created new calculation of the Q resolution using integration width of pixel (that used to be there), beam size and pixel size. Added beam size controls. If set to 0, ignored. 
 Added some warning and better handling when preferences change uncertainty calculation method
