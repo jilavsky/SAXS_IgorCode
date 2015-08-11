@@ -76,6 +76,8 @@ Menu "SAS 2D"
 	help={"Opens web page in the browser where you can sing up or control options for nika_users mailing list."}
 	"Check for updates", NI1_CheckNikaUpdate(1)
 	help={"Run Check for update and present citations to use in publications"}	
+	"Close all Nika Panels and Windows", NI1_GMCloseAllNikaW()
+	help={"Closes all Panels and windows from Nika. "}	
 	"About", NI1_AboutPanel()
 	help={"Get Panel with info about this release of Nika macros"}
 //	"---"
@@ -1376,8 +1378,8 @@ Function NI1_GMCreateNewGeom()
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = "Not saved"
 	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
-	setDataFolder oldDf
 	NI1A_Convert2Dto1DMainPanel()
+	setDataFolder oldDf
 end
 
 //**************************************************************************
@@ -1507,14 +1509,14 @@ Window NI1_GeometriesManagerPanel() : Panel
 	DrawText 15,75,"and creates huge Igor files. Delete Geoms when no more needed."
 	DrawText 15,90,"When changing Geometries, all Nika windows are closed."
 	DrawText 15,105,"You need to reopen them. "
-	Button NewGeometries,pos={99,123},size={200,20},proc=NI1_GMButtonProc,title="Create New Geometries"
-	Button SaveGeometries,pos={99,150},size={200,20},proc=NI1_GMButtonProc,title="Save Current Geometries"
+	Button NewGeometries,pos={99,123},size={200,20},proc=NI1_GMButtonProc,title="Create New Geometry"
+	Button SaveGeometries,pos={99,150},size={200,20},proc=NI1_GMButtonProc,title="Save Current Geometry"
 	Setvariable CurrentGeomName, pos={20,200}, size={300,25}, title="Current Geometries", variable=root:Packages:NikaGeometries:CurrentGeomName, disable=2
 	checkbox CleanupTheFolderPriorSave, pos={80,175}, size={200,15}, variable=root:Packages:NikaGeometries:CleanupTheFolderPriorSave, noproc, title="Clean up folder before saving? (Housekeeping)"
 //	String/G CurrentGeomName, ListOfGeomsSaved
 	PopupMenu RestoreGeometries,pos={73,228},size={152,20},proc=NI1_GMPopMenuProc,title="Load Stored Geometries :"
 	PopupMenu RestoreGeometries,mode=1,mode=1,value= root:Packages:NikaGeometries:ListOfGeomsSaved
-	Button DeleteGeometries,pos={99,263},size={200,20},proc=NI1_GMButtonProc,title="Delete Saved Geometries"
+	Button DeleteGeometries,pos={99,263},size={200,20},proc=NI1_GMButtonProc,title="Delete Saved Geometry"
 EndMacro
 //**************************************************************************
 //**************************************************************************
