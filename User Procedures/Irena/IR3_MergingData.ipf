@@ -282,7 +282,7 @@ Function IR3D_UpdateListOfAvailFiles(WhichOne)
 	variable WhichOne
 
 	string OldDF=GetDataFolder(1)
-	setDataFolder root:Packages:Irena:ScriptingTool
+	setDataFolder root:Packages:Irena:SASDataMerging
 	
 	NVAR UseIndra2Data=$("root:Packages:Irena:SASDataMerging:UseIndra2Data"+num2str(WhichOne))
 	NVAR UseQRSdata=$("root:Packages:Irena:SASDataMerging:UseQRSData"+num2str(WhichOne))
@@ -981,8 +981,13 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 	SVAR FolderSortString=$("root:Packages:Irena:SASDataMerging:FolderSortString"+num2str(WhichOne))
 	Wave/T ListOfAvailableData=$("root:Packages:Irena:SASDataMerging:ListOfAvailableData"+num2str(WhichOne))
 	Wave SelectionOfAvailableData=$("root:Packages:Irena:SASDataMerging:SelectionOfAvailableData"+num2str(WhichOne))
+	if(numpnts(ListOfAvailableData)<2)
+		return 0
+	endif
 	Duplicate/Free SelectionOfAvailableData, TempWv
 	variable i, InfoLoc, j=0
+	variable DIDNotFindInfo
+	DIDNotFindInfo =0
 	string tempstr 
 	SelectionOfAvailableData=0
 	if(stringMatch(FolderSortString,"---"))
@@ -1011,49 +1016,67 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
 				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
 					InfoLoc = i
+					break
 				endif
 			endfor
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
-				Abort "Cannot find location of _xyzmin information" 
+				DIDNotFindInfo=1
 			endif
 		while (InfoLoc<1) 
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
+		if(DIDNotFindInfo)
+			DoALert /T="Information not found" 0, "Cannot find location of _xyzmin information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"_xyzpct"))
 		Do
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
 				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
 					InfoLoc = i
+					break
 				endif
 			endfor
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
-				Abort "Cannot find location of _xyzpctn information" 
+				DIDNotFindInfo=1
 			endif
 		while (InfoLoc<1) 
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
+		if(DIDNotFindInfo)
+			DoAlert/T="Information not found" 0, "Cannot find location of _xyzpct information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"_xyzC"))
 		Do
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
 				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
 					InfoLoc = i
+					break
 				endif
 			endfor
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
-				Abort "Cannot find location of _xyzC information" 
+				DIDNotFindInfo=1
 			endif
 		while (InfoLoc<1) 
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
+		if(DIDNotFindInfo)
+			DoAlert /T="Information not found" 0, "Cannot find location of _xyzC information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
@@ -1390,20 +1413,20 @@ Function IR3D_AutoScale()
 	NVAR Data2QStart = root:Packages:Irena:SASDataMerging:Data2QStart
 	variable startQ, endQ
 	//select the Q range... 
-	if ((strlen(CsrWave(A,"IR3D_DataMergePanel#DataDisplay"))>0))		//user set cursor A
-		startQ = CsrXWaveRef(A,"IR3D_DataMergePanel#DataDisplay")[pcsr(A,"IR3D_DataMergePanel#DataDisplay")]
-	elseif(Data2QStart>0)
+	if(Data2QStart>0)
 		startQ = Data2QStart
+	elseif ((strlen(CsrWave(A,"IR3D_DataMergePanel#DataDisplay"))>0))		//user set cursor A
+		startQ = CsrXWaveRef(A,"IR3D_DataMergePanel#DataDisplay")[pcsr(A,"IR3D_DataMergePanel#DataDisplay")]
 	else
 		startQ = Qvector2[0]
 	endif
 	Data2QStart = startQ
 	
 	
-	if ((strlen(CsrWave(B,"IR3D_DataMergePanel#DataDisplay"))==0))
-		endQ = CsrXWaveRef(B,"IR3D_DataMergePanel#DataDisplay")[pcsr(B,"IR3D_DataMergePanel#DataDisplay")]
-	elseif(Data1QEnd>0)
+	if(Data1QEnd>0)
 		endQ = Data1QEnd
+	elseif ((strlen(CsrWave(B,"IR3D_DataMergePanel#DataDisplay"))==0))
+		endQ = CsrXWaveRef(B,"IR3D_DataMergePanel#DataDisplay")[pcsr(B,"IR3D_DataMergePanel#DataDisplay")]
 	else
 		endQ = Qvector1[numpnts(Qvector1)-1]
 	endif

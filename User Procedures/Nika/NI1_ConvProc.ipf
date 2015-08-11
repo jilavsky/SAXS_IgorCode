@@ -3543,7 +3543,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable SampleTransmFnct,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleTransmFnct
 	SetVariable SampleTransmission,pos={193,380},size={180,16},title="Sample transmission"
 	SetVariable SampleTransmission,help={"Input sample transmission"}
-	SetVariable SampleTransmission,limits={0,Inf,0.1},value= root:Packages:Convert2Dto1D:SampleTransmission
+	SetVariable SampleTransmission,limits={0,Inf,0.01},value= root:Packages:Convert2Dto1D:SampleTransmission
 
 
 	CheckBox UseSampleCorrectFnct,pos={15,405},size={50,14},title="Use fnct?",proc=NI1A_CheckProc

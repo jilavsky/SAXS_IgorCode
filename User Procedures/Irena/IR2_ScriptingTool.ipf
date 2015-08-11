@@ -377,7 +377,6 @@ Window IR2S_ScriptingToolPnl()
 	//SVAR FolderNameMatchString=root:Packages:Irena:ScriptingTool:FolderNameMatchString
 	SetVariable FolderNameMatchString,pos={10,325},size={170,15}, proc=IR2S_ScriptToolSetVarProc,title="Match (RegEx)"
 	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:ScriptingTool:FolderNameMatchString
-	DrawText 200,340,"Not contain: ^((?!string).)*$"
 
 	SetVariable WaveNameMatchString,pos={200,325},size={170,15}, proc=IR2S_ScriptToolSetVarProc,title="Wave Match (RegEx)"
 	Setvariable WaveNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:ScriptingTool:WaveNameMatchString, disable =!root:Packages:Irena:ScriptingTool:UseQRSdata
@@ -407,14 +406,16 @@ Window IR2S_ScriptingToolPnl()
 	Button CallPlottingToolIIA,pos={210,455},size={160,15},proc=IR2S_ButtonProc,title="Append to Plotting tool"
 	Button CallPlottingToolIIA,fSize=10,fStyle=2
 
-	CheckBox SaveResultsInNotebook,pos={30,490},size={64,14},proc=IR2S_CheckProc,title="Save results in notebook?"
+	CheckBox SaveResultsInNotebook,pos={10,490},size={64,14},proc=IR2S_CheckProc,title="Save results in notebook?"
 	CheckBox SaveResultsInNotebook,variable= root:Packages:Irena:ScriptingTool:SaveResultsInNotebook
-	CheckBox ResetBeforeNextFit,pos={30,510},size={64,14},proc=IR2S_CheckProc,title="Reset before next fit? (Unified/Modeling II)"
+	CheckBox ResetBeforeNextFit,pos={10,510},size={64,14},proc=IR2S_CheckProc,title="Reset before next fit? (Unified/Modeling II)"
 	CheckBox ResetBeforeNextFit,variable= root:Packages:Irena:ScriptingTool:ResetBeforeNextFit
-	CheckBox SaveResultsInFldrs,pos={30,530},size={64,14},proc=IR2S_CheckProc,title="Save results in folders?"
+	CheckBox SaveResultsInFldrs,pos={10,530},size={64,14},proc=IR2S_CheckProc,title="Save results in folders?"
 	CheckBox SaveResultsInFldrs,variable= root:Packages:Irena:ScriptingTool:SaveResultsInFldrs
-	CheckBox SaveResultsInWaves,pos={30,550},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling II)?"
+	CheckBox SaveResultsInWaves,pos={10,550},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling II)?"
 	CheckBox SaveResultsInWaves,variable= root:Packages:Irena:ScriptingTool:SaveResultsInWaves
+
+	DrawText 100,580,"RegEx - Not contain: ^((?!string).)*$"
 
 	IR2S_UpdateListOfAvailFiles()
 	IR2S_SortListOfAvailableFldrs()
@@ -631,12 +632,16 @@ Function IR2S_SortListOfAvailableFldrs()
 	SVAR FolderSortString=root:Packages:Irena:ScriptingTool:FolderSortString
 	Wave/T ListOfAvailableData=root:Packages:Irena:ScriptingTool:ListOfAvailableData
 	Wave SelectionOfAvailableData=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
+	if(numpnts(ListOfAvailableData)<2)
+		return 0
+	endif
 	Duplicate/Free SelectionOfAvailableData, TempWv
 	variable i, j
 	j=0
 	string tempstr 
 	SelectionOfAvailableData=0
-	variable InfoLoc
+	variable InfoLoc, DIDNotFindInfo
+	DIDNotFindInfo =0
 	if(stringMatch(FolderSortString,"---"))
 		//nothing to do
 	elseif(stringMatch(FolderSortString,"Alphabetical"))
@@ -658,49 +663,67 @@ Function IR2S_SortListOfAvailableFldrs()
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
 				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
 					InfoLoc = i
+					break
 				endif
 			endfor
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
-				Abort "Cannot find location of _xyzmin information" 
+				DIDNotFindInfo=1
 			endif
 		while (InfoLoc<1) 
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
+		if(DIDNotFindInfo)
+			DoAlert/T="Information not found" 0, "Cannot find location of _xyzmin information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"_xyzpct"))
 		Do
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
 				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
 					InfoLoc = i
+					break
 				endif
 			endfor
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
-				Abort "Cannot find location of _xyzpct information" 
+				DIDNotFindInfo=1
 			endif
 		while (InfoLoc<1) 
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
+		if(DIDNotFindInfo)
+			DoAlert/T="Information not found" 0, "Cannot find location of _xyzpct information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"_xyzC"))
 		Do
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
 				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
 					InfoLoc = i
+					break
 				endif
 			endfor
 			j+=1
 			if(j>(numpnts(ListOfAvailableData)-1))
-				Abort "Cannot find location of _xyzC information" 
+				DIDNotFindInfo=1
 			endif
 		while (InfoLoc<1) 
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
+		if(DIDNotFindInfo)
+			DoAlert/T="Information not found" 0, "Cannot find location of _xyzC information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"_xyz"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
