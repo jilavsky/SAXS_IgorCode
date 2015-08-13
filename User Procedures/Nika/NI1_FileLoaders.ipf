@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.40
+#pragma version=2.41
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//2.41 Updated Pilatus img file to handle header (example contained 4096 bytes header) - added code which will find header length and skip it. 
 //2.40 update to 9ID pinSAXS Nexus files
 //2.39 removed Executes in preparation for Igor 7
 //2.38 fixe3d bug in reading calibrated 2D data found by Igor 7 beta. 
@@ -636,7 +638,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		//see: http://www.esrf.eu/Instrumentation/software/data-analysis/OurSoftware/SAXS/SaxsHeader
 		variable PilskipBytes
 		variable headerLength1
-		if(stringmatch(FileNameToLoad, "*.edf" ))
+		if(stringmatch(FileNameToLoad, "*.edf" )||(stringmatch(PilatusFileType,"edf")))
 			open /R/P=$(PathName) RefNum as FileNameToLoad
 			testLine=""
 			testLine=PadString (testLine, 16800, 0x20)
@@ -646,7 +648,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			headerLength1 = ceil(headerLength1/512 ) * 512
 			//PilskipBytes=1024
 			PilskipBytes=headerLength1
-		elseif(stringmatch(FileNameToLoad, "*.cbf" ))
+		elseif(stringmatch(FileNameToLoad, "*.cbf" )||(stringmatch(PilatusFileType,"cbf")))
 			open /R/P=$(PathName) RefNum as FileNameToLoad
 			testLine=""
 			testLine=PadString (testLine, 16800, 0x20)
@@ -662,6 +664,15 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = testLine[0, PilskipBytes]
 		elseif(stringmatch(FileNameToLoad, "*.tif" )||stringmatch(FileNameToLoad, "*.tiff" ))
 			PilskipBytes=4096
+		elseif(stringmatch(FileNameToLoad, "*.img" ))//seems to have header also? , some edf files do haave extension img anyway :-?
+			open /R/P=$(PathName) RefNum as FileNameToLoad
+			testLine=""
+			testLine=PadString (testLine, 16800, 0x20)
+			FBinRead RefNum, testLine
+			close RefNum
+			//headerLength1=(strsearch(testLine, "}", 0))
+			PilskipBytes=NumberByKey("HEADER_BYTES", testLine[2,100]  , "="  , ";")
+			PilskipBytes = numtype(PilskipBytes)==0 ? PilskipBytes : 0
 		else
 			PilskipBytes=0
 		endif
@@ -690,13 +701,26 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = NI1_ZapControlCodes(testLine)	
 			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 			testLine = "Start of Cbf header>>>;"+testLine+"<<<<End of Cbf header;"
+		elseif(stringmatch(FileNameToLoad, "*.img" )&&(PilskipBytes>0))
+			testLine=ReplaceString("\r\n\r\n", testLine, ";")
+			testLine=ReplaceString("\r\n", testLine, ";")
+			testLine=ReplaceString("#", testLine, "")
+			testLine=ReplaceString("{", testLine, "")
+			testLine=ReplaceString("}", testLine, "")
+			testLine=ReplaceString(";;;;", testLine, ";")
+			testLine=ReplaceString(";;;", testLine, ";")
+			testLine=ReplaceString(";;", testLine, ";")
+			testLine = ReplaceString(":", testLine, "=")
+			testLine = ReplaceString(" = ", testLine, "=")
+			testLine = ReplaceString("= ", testLine, "=")
+			testLine = NI1_ZapControlCodes(testLine)	
+			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
+			testLine = "Start of img header>>>;"+testLine+"<<<<End of img header;"
 		else
 			testLine = ReplaceString("\n", testLine, "")
 			testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
 			testLine = ReplaceString("}", testLine, "<<<<End of ESRF header;")
-			For(iii=0;iii<15;iii+=1)
-				testLine = ReplaceString("  ", testLine, " ")
-			endfor
+			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 			testLine = ReplaceString(" = ", testLine, "=")
 			testLine = ReplaceString(" ;", testLine, ";")
 		endif
@@ -721,7 +745,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
        	 elseif(stringMatch(PilatusFileType,"float-tiff"))
        	       GBLoadWave/B=(1)/T={4,4}/S=4096/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
        	 elseif(stringMatch(PilatusFileType,"img"))
-       	       GBLoadWave/B=(1)/T={PilatusColorDepthVar,PilatusColorDepthVar}/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
+       	       GBLoadWave/B=(1)/T={PilatusColorDepthVar,PilatusColorDepthVar}/S=(PilskipBytes)/W=1 /P=$(PathName)/N=Loadedwave FileNameToLoad
 	      	 endif
 			if(V_flag==0)		//check if we loaded at least some data...
 				return 0

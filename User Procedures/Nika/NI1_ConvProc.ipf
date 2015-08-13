@@ -227,19 +227,21 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 	//this is midlessly approximate, but seems acceptable
 	//then we will convolute this with Qresolution going in and these two values 
 	//this thing is called in NI1A_AverageDataPerUserReq
+	variable constVal=Wavelength / (4 * pi)
 	variable PixDim, BeamDim
 	PixDim=  sqrt(PixX^2 + PixY^2)					//this is width in mm of the pixel along diagonal direction
 	PixDim = PixDim * 2/3							//assume this is FWHM of the pixel sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow.
 	//However, the pixel size and integration width are quite similar in logic. So let's try to make some corrections here. If there was no integration width, we should see FWHM ~ 2/3 of the 
-	//total width of the bin to represent teh FWHM. I tested this with case example, and either one can have square bin width (and then it is rectangle) or use FWHM, tehn the bin width s 2/3 of teh square, approximately. 
+	//total width of the bin to represent the FWHM. I tested this with case example, and either one can have square bin width (and then it is rectangle) or use FWHM, then the bin width s 2/3 of the square, approximately. 
       // If we are going to convolute these together later, we should correct the QvectorWidth coming from binning to smaller numbers , BUT only for bins approximately wide as the pixel width
       // this requires transition from 2/3 correction to use of full bin width as the bin width increases. This is bit cumbersome. 
       //assume that if the bin width is less than 3*pixDim, we should use FWHM, at higher bin widths lets assume bin width and keep this. 
-      // this all made no sense to me later, so let's skip this for now... QvectorWidth = (QvectorWidth[p] < 3 * pixDim) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
+      variable pixDiminQ
+      pixDiminQ = sin(atan(PixDim/SampleToCCDDistance)/2)/constVal
+      QvectorWidth = (QvectorWidth[p] < 1.5 * pixDiminQ) ? (2*QvectorWidth[p]/3) : QvectorWidth[p]
 	//	
 	BeamDim = sqrt(BeamX^2 + BeamY^2)			//width of beam size in mm along diagonal direction
 	BeamDim = BeamDim * 2 /3						//assume this is estimated FWHM of the beam sensitivity, in mm - the 2/3 is there to convert this into FWHM somehow. 
-	variable constVal=Wavelength / (4 * pi)
 	Duplicate/Free Qvector, TwoTheta, DistacneInmm, DistInmmLow, DistInmmHigh, TempPixQres,  TempBeamQres, TmpQlow, TmpQhigh
 	Duplicate/Free Qvector, TempDBeam, TempDPix, tempTTBeam, tempTTPix, tempDistBeam, tempDistPix
 	TwoTheta =  2 * asin ( Qvector * constVal) 
