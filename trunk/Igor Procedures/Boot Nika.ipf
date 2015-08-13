@@ -16,7 +16,7 @@ Function LoadNi12DSAS()
 		SVAR Nika12DSASItem1Str=root:Packages:Nika12DSASItem1Str
 		Nika12DSASItem1Str= "---"
 		BuildMenu "SAS 2D"
-		Execute/P "NI1_ReadIrenaGUIPackagePrefs()"
+		Execute/P "NI1_ReadNikaGUIPackagePrefs()"
 	else
 		DoAlert 0, "Your version of Igor is lower than 6.30, these macros need version 6.30 or higher. Please, update..."  
 	endif

@@ -331,7 +331,7 @@ Function NI1_ConfigMain()		//call configuration routine
 
 	//this is main configuration utility... 
 	NI1_InitConfigMain()
-	NI1_ReadIrenaGUIPackagePrefs()	
+	NI1_ReadNikaGUIPackagePrefs()	
 	DoWindow NI1_MainConfigPanel
 	if(!V_Flag)
 		Execute ("NI1_MainConfigPanel()")
@@ -367,7 +367,7 @@ endstructure
 //***********************************************************
 //***********************************************************
 
-Function NI1_ReadIrenaGUIPackagePrefs()
+Function NI1_ReadNikaGUIPackagePrefs()
 	struct  NikaPanelDefaults Defs
 	NI1_InitConfigMain()
 	SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
@@ -448,6 +448,7 @@ Function NI1_ReadIrenaGUIPackagePrefs()
 			endif
 			if((pOld != ErrorCalculationsUseOld)||(pStdDev != ErrorCalculationsUseStdDev)||(pSEM != ErrorCalculationsUseSEM))
 				DoAlert /T="Uncertainity method calculation has changed" 0, "Uncertainty calculation method has changed. Please, check the history area and if needed, change the method to the one you want to use."
+				NI1_SaveNikaGUIPackagePrefs(0)
 			endif
 		else
 			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
@@ -469,7 +470,7 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-Function NI1_SaveIrenaGUIPackagePrefs(KillThem)
+Function NI1_SaveNikaGUIPackagePrefs(KillThem)
 	variable KillThem
 	
 	struct  NikaPanelDefaults Defs
@@ -498,8 +499,8 @@ Function NI1_SaveIrenaGUIPackagePrefs(KillThem)
 
 	
 	if(KillThem)
-	//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does nto work below 6.10
-	//	IR2C_ReadIrenaGUIPackagePrefs()
+		SavePackagePreferences /Kill   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs		//does nto work below 6.10
+		NI1_ReadNikaGUIPackagePrefs()
 	else
 		SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
 	endif
@@ -574,7 +575,7 @@ Function NI1_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		DefaultFontSize = str2num(popStr)
 		NI1_ChangePanelCOntrolsStyle()
 	endif
-	NI1_SaveIrenaGUIPackagePrefs(0)
+	NI1_SaveNikaGUIPackagePrefs(0)
 End
 //***********************************************************
 //***********************************************************
@@ -588,7 +589,7 @@ Function NI1_KillPrefsButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 			if(stringmatch(ba.ctrlName,"OKBUtton"))
-				NI1_SaveIrenaGUIPackagePrefs(0)
+				NI1_SaveNikaGUIPackagePrefs(0)
 				DoWIndow/K NI1_MainConfigPanel
 			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
 				string defFnt
@@ -606,7 +607,7 @@ Function NI1_KillPrefsButtonProc(ba) : ButtonControl
 				NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
 				DefaultFontSize = defFntSize
 				NI1_ChangePanelCOntrolsStyle()
-				NI1_SaveIrenaGUIPackagePrefs(0)
+				NI1_SaveNikaGUIPackagePrefs(0)
 				PopupMenu DefaultFontType,win=NI1_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
 				PopupMenu DefaultFontSize,win=NI1_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
 			endif

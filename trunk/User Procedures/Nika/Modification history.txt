@@ -5,6 +5,7 @@ Code modification history
 ********************************************
 1.70 
 Added Configuration manager - allows users to have multiple fully configured “versions” of Nika inside one experiment and switch between them for convenience. Great if you have two different sample-to-detector distances etc. 
+File import - modified Pilatus img file loader - sample which contained 4096 bytes header was provided by user, so I added code which checks for the header and if present, skips the header and stores the header in the wave note. Some minor changes to logic of all Pilatus file types, hopefully I did not break anything. 
 
 1.69 
 Major addition - created new calculation of the Q resolution using integration width of pixel (that used to be there), beam size and pixel size. Added beam size controls. If set to 0, ignored. 
