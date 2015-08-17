@@ -614,10 +614,10 @@ Function IR3D_MergeDataSetVarProc(sva) : SetVariableControl
 				endif
 				cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, tempP
 			endif
-//		case 3: // Live update
-//			Variable dval = sva.dval
-//			String sval = sva.sval
-//			break
+			break
+
+		case 3: // live update
+			break
 		case -1: // control being killed
 			break
 	endswitch
@@ -656,7 +656,7 @@ Function IR3D_DataMergeListBoxProc(lba) : ListBoxControl
 			if(col==1&&!ProcessTest)		//this is second column of data
 				IR3D_MergeProcessData()
 			endif
-			if(AutosaveAfterProcessing&&ProcessManually)
+			if(col==1&&AutosaveAfterProcessing&&ProcessManually)
 				IR3D_SaveData()
 			endif
 			break
@@ -862,6 +862,7 @@ Function IR3D_AppendDataToGraph(WhichData)
 			endQp = numpnts(OriginalData1QWave)-2
 		endif
 		cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, endQp
+		DoUpdate
 	endif
 	if(StringMatch(WhichData, "Data2" ))
 		Wave OriginalData2IntWave=root:Packages:Irena:SASDataMerging:OriginalData2IntWave
@@ -883,6 +884,7 @@ Function IR3D_AppendDataToGraph(WhichData)
 			startQp = 1
 		endif
 		cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, startQp
+		DoUpdate
 	endif
 	if(StringMatch(WhichData, "Merged" ))
 		Wave ResultIntensity=root:Packages:Irena:SASDataMerging:ResultIntensity
@@ -895,6 +897,7 @@ Function IR3D_AppendDataToGraph(WhichData)
 			ModifyGraph /W=IR3D_DataMergePanel#DataDisplay rgb(ResultIntensity)=(1,16019,65535)
 			ErrorBars /W=IR3D_DataMergePanel#DataDisplay ResultIntensity Y,wave=(ResultError,ResultError)		
 		endif
+		DoUpdate
 	endif
 
 	Wave/Z OriginalData1IntWave=root:Packages:Irena:SASDataMerging:OriginalData1IntWave
@@ -1293,7 +1296,6 @@ Function IR3D_SortIsUSAXSSAXSdata()
 		 	TmpData1 = RemoveFromList(StringFromList(0, TmpData1 , "_"), TmpData1  , "_")
 			//this is now without the USAXS Scan number
 			TmpData2 = GrepList(AllData2, TmpData1 ,0, ";")
-			TmpData2 = ReplaceString(";", TmpData2, "")
 			if(ItemsInList(TmpData2 , ";")<1)		//did not find match
 				redimension/N=(numpnts(NotFoundData1)+1) NotFoundData1
 				NotFoundData1[numpnts(NotFoundData1)-1] = ListOfAvailableData1[i]		
@@ -1301,13 +1303,13 @@ Function IR3D_SortIsUSAXSSAXSdata()
 			elseif(ItemsInList(TmpData2 , ";")<2)	//found one match
 				redimension/N=(numpnts(OutPutData1)+1) OutPutData1, OutPutData2
 				OutPutData1[numpnts(OutPutData1)-1] = ListOfAvailableData1[i]	
-				OutPutData2[numpnts(OutPutData1)-1] = TmpData2	
+				OutPutData2[numpnts(OutPutData1)-1] = ReplaceString(";", TmpData2, "")	
 				AllData2 = RemoveFromList(TmpData2, AllData2 , ";")
 				print "Found proper match     "+ListOfAvailableData1[i]+"    :      "+TmpData2
 			else		//found more matches, same as above, but use the fiirst one and print note in history area... 
 				redimension/N=(numpnts(OutPutData1)+1) OutPutData1, OutPutData2
 				OutPutData1[numpnts(OutPutData1)-1] = ListOfAvailableData1[i]	
-				OutPutData2[numpnts(OutPutData1)-1] = StringFromList(0,TmpData2,";")	
+				OutPutData2[numpnts(OutPutData1)-1] = ReplaceString(";", StringFromList(0,TmpData2,";"), "")	
 				AllData2 = RemoveFromList(StringFromList(0,TmpData2,";"), AllData2 , ";")
 				print "Found multiple matches for "+ListOfAvailableData1[i]+", using the first one from : "+TmpData2
 			endif
@@ -1330,6 +1332,9 @@ Function IR3D_SortIsUSAXSSAXSdata()
 	SelectionOfAvailableData[0,numpnts(OutPutData1)-1][1] =1
 	ListOfAvailableData[0,numpnts(OutPutData1)-1][0] = OutPutData1[p]
 	ListOfAvailableData[0,numpnts(OutPutData1)-1][1] = OutPutData2[p]
+	//fix the problem that NotFoundData may nto have same legth
+	variable tmpNumPnts=max(numpnts(NotFoundData1),numpnts(NotFoundData2))
+	redimension/N=(tmpNumPnts) NotFoundData1, NotFoundData2
 	ListOfAvailableData[numpnts(OutPutData1), maxlength-1][0] = NotFoundData1[p-numpnts(OutPutData1)]
 	ListOfAvailableData[numpnts(OutPutData1), maxlength-1][1] = NotFoundData2[p-numpnts(OutPutData1)]
 	print "USAXS/SAXS/WAXS data sorted using standard name logic for common samples."
@@ -1432,20 +1437,22 @@ Function IR3D_AutoScale()
 		startQ = Data2QStart
 	elseif ((strlen(CsrWave(A,"IR3D_DataMergePanel#DataDisplay"))>0))		//user set cursor A
 		startQ = CsrXWaveRef(A,"IR3D_DataMergePanel#DataDisplay")[pcsr(A,"IR3D_DataMergePanel#DataDisplay")]
+		Data2QStart = startQ
 	else
 		startQ = Qvector2[0]
+		Data2QStart = startQ
 	endif
-	Data2QStart = startQ
 	
 	
 	if(Data1QEnd>0)
 		endQ = Data1QEnd
 	elseif ((strlen(CsrWave(B,"IR3D_DataMergePanel#DataDisplay"))==0))
 		endQ = CsrXWaveRef(B,"IR3D_DataMergePanel#DataDisplay")[pcsr(B,"IR3D_DataMergePanel#DataDisplay")]
+		Data1QEnd = endQ
 	else
 		endQ = Qvector1[numpnts(Qvector1)-1]
+		Data1QEnd = endQ
 	endif
-	Data1QEnd = endQ
 	
 	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
 	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
@@ -1503,28 +1510,30 @@ Function IR3D_MergeData(VaryQshift)
 	NVAR Data2QStart = root:Packages:Irena:SASDataMerging:Data2QStart
 	variable startQ, endQ, tmpStQ, tmpEQ
 	//select the Q range... 
-	if ((strlen(CsrWave(A,"IR3D_DataMergePanel#DataDisplay"))>0))		//user set cursor A
+	if(Data2QStart>0)
+		startQ = Data2QStart
+	elseif ((strlen(CsrWave(A,"IR3D_DataMergePanel#DataDisplay"))>0))		//user set cursor A
 		tmpStQ = pcsr(A,"IR3D_DataMergePanel#DataDisplay")
 		tmpStQ = (tmpStQ>0) ? tmpStQ : 1
 		cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, tmpStQ
 		startQ = CsrXWaveRef(A,"IR3D_DataMergePanel#DataDisplay")[tmpStQ]
-	elseif(Data2QStart>0)
-		startQ = Data2QStart
+		Data2QStart = startQ	
 	else
 		startQ = Qvector2[0]
+		Data2QStart = startQ	
 	endif
-	Data2QStart = startQ	
-	if ((strlen(CsrWave(B,"IR3D_DataMergePanel#DataDisplay"))>0))
+	if(Data1QEnd>0)
+		endQ = Data1QEnd
+	elseif ((strlen(CsrWave(B,"IR3D_DataMergePanel#DataDisplay"))>0))
 		tmpEQ = pcsr(B,"IR3D_DataMergePanel#DataDisplay")
 		tmpEQ = (tmpEQ<numpnts(Intensity1)-2) ? tmpEQ : numpnts(Intensity1)-2
 		cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, tmpEQ
 		endQ = CsrXWaveRef(B,"IR3D_DataMergePanel#DataDisplay")[tmpEQ]
-	elseif(Data1QEnd>0)
-		endQ = Data1QEnd
+		//Data1QEnd = endQ
 	else
 		endQ = Qvector1[numpnts(Qvector1)-1]
+	//	Data1QEnd = endQ
 	endif
-	Data1QEnd = endQ
 	
 	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
 	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
@@ -1872,46 +1881,50 @@ Function IR3D_PanelHookFunction(H_Struct)
 //	 wheelDy: 0
 //	if(stringmatch(S_value,"IR3D_DataMergePanel#DataDisplay"))
 	if(stringmatch(subWinName,"IR3D_DataMergePanel#DataDisplay"))
-		NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
-		NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
-		if(stringmatch(cursorName,"A")&&stringmatch(H_Struct.eventName,"cursormoved"))
-			WAVE OriginalData2QWave = root:Packages:Irena:SASDataMerging:OriginalData2QWave
-			if(!stringmatch(H_Struct.traceName,"OriginalData2IntWave"))
-				cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
-				Data2Qstart = OriginalData2QWave[1]
-				Print "A cursor must be on OriginalData2IntWave and at least on second point from start"
-			else		//on correct wave...
-				if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
+		if(stringmatch(GetRTStackInfo(3),"*IR3D_CopyAndAppendData*"))
+			return 0
+		else
+			NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
+			NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
+			if(stringmatch(cursorName,"A")&&stringmatch(H_Struct.eventName,"cursormoved"))
+				WAVE OriginalData2QWave = root:Packages:Irena:SASDataMerging:OriginalData2QWave
+				if(!stringmatch(H_Struct.traceName,"OriginalData2IntWave"))
 					cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
 					Data2Qstart = OriginalData2QWave[1]
-					Print "A cursor must be on OriginalData2IntWave and at least on second point from the start"
-				else
-					Data2Qstart = OriginalData2QWave[H_Struct.pointNumber]
-					if(Data2Qstart>=Data1QEnd)
+					Print "A cursor must be on OriginalData2IntWave and at least on second point from start"
+				else		//on correct wave...
+					if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
 						cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
 						Data2Qstart = OriginalData2QWave[1]
-						Abort "Must have overlap of the data set. You are trying to set Data 2 start Q value higher than your current end value for Data 1. Reset Data 2 start to default position. "
+						Print "A cursor must be on OriginalData2IntWave and at least on second point from the start"
+					else
+						Data2Qstart = OriginalData2QWave[H_Struct.pointNumber]
+						if(Data2Qstart>=Data1QEnd)
+							cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
+							Data2Qstart = OriginalData2QWave[1]
+							Abort "Must have overlap of the data set. You are trying to set Data 2 start Q value higher than your current end value for Data 1. Reset Data 2 start to default position. "
+						endif
 					endif
 				endif
 			endif
-		endif
-		if(stringmatch(cursorName,"B")&&stringmatch(H_Struct.eventName,"cursormoved"))
-			WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
-			if(!stringmatch(H_Struct.traceName,"OriginalData1IntWave"))
-				cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
-				Data1QEnd = OriginalData2QWave[numpnts(OriginalData1QWave)-2]
-				Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
-			else		//on correct wave...
-				if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
+			if(stringmatch(cursorName,"B")&&stringmatch(H_Struct.eventName,"cursormoved"))
+				WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
+				if(!stringmatch(H_Struct.traceName,"OriginalData1IntWave"))
 					cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
-					Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
+					Data1QEnd = OriginalData2QWave[numpnts(OriginalData1QWave)-2]
 					Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
-				else
-					Data1QEnd = OriginalData1QWave[H_Struct.pointNumber]
-					if(Data2Qstart>=Data1QEnd)
+				else		//on correct wave...
+					if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
 						cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
 						Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
-						Abort "Must have overlap of the data set. You are trying to set end value for Data 1 lower than your current Data 2 start Q value. Reset Data 1 end to default position."
+						Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
+					else
+						Data1QEnd = OriginalData1QWave[H_Struct.pointNumber]		
+						if(Data2Qstart>=Data1QEnd)
+							cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
+							Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
+							Abort "Must have overlap of the data set. You are trying to set end value for Data 1 lower than your current Data 2 start Q value. Reset Data 1 end to default position."
+						endif
 					endif
 				endif
 			endif
