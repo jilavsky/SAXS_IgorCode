@@ -3,7 +3,7 @@
 constant IR3DversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2015, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

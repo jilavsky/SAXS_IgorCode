@@ -11,7 +11,7 @@ constant CurrentVersionNumber = 2.58
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.58 Added MergeData tool. 
+//2.58 Added MergeData tool. Added development version of Simple fits - new well structured tool for simplistic fits on SAS data. 
 //2.58 Added YouTube movies page. 
 //2.57 Many fixes to Modeling II mainly. 
 //2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
@@ -99,6 +99,8 @@ Menu "SAS"
 	help={"Debye-Bueche, Teubner-Strey model"}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
+	"Simple Fits - under developement", IR3L_SimpleFits()
+	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
 	"Reflectivity", IR2R_ReflectivitySimpleToolMain()
