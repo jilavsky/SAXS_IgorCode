@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.16
+#pragma version=2.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 added 	if(exists("AfterUpdateGenGraphHookFunction")==6)
 //2.16 added Int*Q^3 as plotting option. 
 //2.15 minor fix for Change Graph details panel visibility
 //2.14 added infinite number of colors and symbols to Vary COlors/symbols. (repeating set of 10). 
@@ -982,6 +983,11 @@ Function IR1P_UpdateGenGraph()
 				Execute("ModifyGraph/W=GeneralGraph offset("+stringFromList(j,ListOfWaves)+")={"+num2str(tempXLin)+","+num2str(tempYLin)+"},muloffset("+stringFromList(j,ListOfWaves)+")={"+num2str(tempXLog)+","+num2str(tempYLog)+"}")
 		endfor
 	endif
+	//let us give users chance to update the graph with hook function
+	if(exists("AfterUpdateGenGraphHookFunction")==6)
+		Execute("AfterUpdateGenGraphHookFunction()")
+	endif
+	//done updating the main graph	
 	//and if 3d graph exists, let's update it also...
 	IR1P_UpdateColorAndFormat3DPlot(1)
 	//print "update now"

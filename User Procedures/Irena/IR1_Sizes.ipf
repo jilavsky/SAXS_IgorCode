@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.18
+#pragma version = 2.19
 Constant IR1RSversionNumber=2.13
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.19 removed the mode from teh tag. Peak position in this case may not be found correctly and hence it is misleading. 
 //2.18 fixed bug when the top color indicator woudl show red on cases where it should be green but there were no "bad" ends. 
 //2.17 added color bar at the top to indicate which sizes one can trust based on Qmin/Qmax and which are suspect or totally unknown. 
 //2.16 check if for slit smeared data that the Qmax is at least 3* slit length
@@ -3385,7 +3386,7 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 		tagText =  "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"  +/- "+num2str((volumeMax-VolumeMin)/2)+"\r"
 	endif
 	tagText += "Mean diameter = "+num2str(meanDia)+"\r"
-	tagText += "Mode diameter = "+num2str(modeDia)+"\r"
+	//tagText += "Mode diameter = "+num2str(modeDia)+"\r"
 	tagText += "Median diameter = "+num2str(medianDia)+"\r"
 	tagText += "Range of diameters from "+num2str(MyXWave[pcsr(A)])+"  to " +num2str(MyXWave[pcsr(B)])+"  [A]"
 	
