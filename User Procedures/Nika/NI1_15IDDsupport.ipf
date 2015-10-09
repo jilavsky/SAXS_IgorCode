@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.24
+#pragma version=1.25
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 fix WAXS normalization I0 lookup. 
 //1.24 added fix for Q resolution in line profile conversion. Related to adding the Line profile Q resolution ot main code.  
 //1.23 added normalization for WAXS and modified GUI + pinSAXS default mask. Fixed bug error when run second time and help fiel alrerady existed.
 //1.22 added more transferred parameters for pixel smearing. 
@@ -1443,7 +1444,7 @@ Function NI1_15IDWFindEFI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
+	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
@@ -1462,7 +1463,7 @@ Function NI1_15IDDFindI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
+	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
