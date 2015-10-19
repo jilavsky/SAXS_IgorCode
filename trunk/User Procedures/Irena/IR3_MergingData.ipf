@@ -1615,10 +1615,10 @@ Function IR3D_MergeData(VaryQshift)
 	Duplicate/Free/R=[0,EndQp] TempQ1, ResultQ1	
 	Duplicate/Free/R=[0,EndQp] TempErr1, ResultErr1	
 	Duplicate/Free/R=[0,EndQp] TempdQ1, ResultdQ1	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt1)-1] TempInt2, ResultIntensity2
-	Duplicate/Free/R=[StartQp,numpnts(TempInt1)-1] TempQ2, ResultQ2	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt1)-1] TempErr2, ResultErr2	
-	Duplicate/Free/R=[StartQp,numpnts(TempInt1)-1] TempdQ2, ResultdQ2	
+	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempInt2, ResultIntensity2
+	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempQ2, ResultQ2	
+	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempErr2, ResultErr2	
+	Duplicate/Free/R=[StartQp,numpnts(TempInt2)-1] TempdQ2, ResultdQ2	
 
 	ResultIntensity2*=Data2IntMultiplier
 	ResultErr2 *=Data2IntMultiplier
