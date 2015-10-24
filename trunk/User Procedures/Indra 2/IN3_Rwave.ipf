@@ -300,7 +300,7 @@ Function NI3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 		if(WaveExists(W_FindLevels))
 			For(i=0;i<numpnts(W_FindLevels);i+=1)
 				DropoutIndex = W_FindLevels[i]
-				print "Found dropout at point number "+num2str(DropoutIndex)
+			//	print "Found dropout at point number "+num2str(DropoutIndex)
 				tmpTime=RemoveDropoutsTime/2
 				j=DropoutIndex
 				totPnts=0
@@ -318,7 +318,7 @@ Function NI3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 					j+=1
 					totPnts+=1
 				while(tmpTime>0)
-				print "Removed "+Num2str(totPnts)+" around the found point at "+num2str(DropoutIndex)
+			//	print "Removed "+Num2str(totPnts)+" around the found point at "+num2str(DropoutIndex)
 			endfor
 		endif
 	endif
