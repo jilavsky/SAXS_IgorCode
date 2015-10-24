@@ -1130,15 +1130,15 @@ Function IR2_HayterPenfoldMSA(w,x) : FitFunc
 //			 Ionic strength IonSt (in C^2/m^3)  
 // 			Kappa (Debye-Huckel screening length in m)
 //	and		gamma Exp(-k)
-	IonSt=0.5 * Elcharge^2*(zz*VolFrac/Vp+2*cs)
+	IonSt=0.5 * Elcharge^2*(zz*VolFrac/Vp+2*cs)  
 	Kappa=sqrt(2*BetaVar*IonSt/Perm)     //Kappa calc from Ionic strength
 //	Kappa=2/SIdiam					// Use to compare with HP paper
 	gMSAWave[5]=BetaVar*charge^2/(pi*Perm*SIdiam*(2+Kappa*SIdiam)^2)
 
 //         Finally set up dimensionless parameters 
 	Qdiam=QQ*diam
-      gMSAWave[6] = Kappa*SIdiam
-      gMSAWave[4] = VolFrac
+   gMSAWave[6] = Kappa*SIdiam
+   gMSAWave[4] = VolFrac
 
 
       
