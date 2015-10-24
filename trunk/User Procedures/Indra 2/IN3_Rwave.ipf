@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.07
+#pragma version 1.08
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 Remove Dropout function
 //1.07 minor GUI change to keep user advised about saving data
 //1.06 small modification for cases when PD_error does nto exist. 
 //1.05 increased slightly fitting range for the peak to improve Modified Gauss fitting stability. 
@@ -264,8 +265,64 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	if(SampleTransmissionPeakToPeak<=0)
 		SampleTransmissionPeakToPeak=1
 	endif
+	NI3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, PD_Intensity,PD_error)
 	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	R_error = PD_error * SampleTransmissionPeakToPeak
+	//now remove dropouts if needed...
+	setDataFolder OldDf	
+end
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
+///*********************************************************************************
+Function NI3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int,R_error)
+	WAVE Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error
+	
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Indra3
+
+	NVAR RemoveDropouts =root:Packages:Indra3:RemoveDropouts
+	NVAR RemoveDropoutsTime =root:Packages:Indra3:RemoveDropoutsTime
+	NVAR RemoveDropoutsFraction =root:Packages:Indra3:RemoveDropoutsFraction
+	NVAR RemoveDropoutsAvePnts =root:Packages:Indra3:RemoveDropoutsAvePnts
+	variable i, DropoutIndex, j, tmpTime, totPnts
+	NVAR Wavelength = root:Packages:Indra3:Wavelength
+	if(RemoveDropouts>0)
+		//this method will work only above Q~0.0002, q = 4pi sin(theta)/Wavelength, AR=(q*Wavelength/4*pi)/2
+		wavestats/Q R_Int
+		variable Ar_Start=	 BinarySearch(Ar_encoder, Ar_encoder[V_maxloc]-2*asin(0.008*Wavelength/(4*pi)))
+		Duplicate/Free 	R_Int, tmpR_Int, R_Int_smth, R_Int_div
+		Smooth/M=0 RemoveDropoutsAvePnts, R_Int_smth
+		R_Int_div = tmpR_Int/ R_Int_smth
+		KillWaves/Z W_FindLevels
+		FindLevels /B=1 /EDGE=2 /M=0 /P/Q/R=[Ar_Start,numpnts(R_Int_div)-1] R_Int_div, RemoveDropoutsFraction
+		Wave/Z W_FindLevels 
+		if(WaveExists(W_FindLevels))
+			For(i=0;i<numpnts(W_FindLevels);i+=1)
+				DropoutIndex = W_FindLevels[i]
+				print "Found dropout at point number "+num2str(DropoutIndex)
+				tmpTime=RemoveDropoutsTime/2
+				j=DropoutIndex
+				totPnts=0
+				do
+					R_Int[j]=nan
+					tmpTime-=MeasTime[j]
+					j-=1
+					totPnts+=1
+				while(tmpTime>0)
+				tmpTime=RemoveDropoutsTime/2
+				j=DropoutIndex
+				do
+					R_Int[j]=nan
+					tmpTime-=MeasTime[j]
+					j+=1
+					totPnts+=1
+				while(tmpTime>0)
+				print "Removed "+Num2str(totPnts)+" around the found point at "+num2str(DropoutIndex)
+			endfor
+		endif
+	endif
+	setDataFolder OldDf		
 end
 
 //***********************************************************************************************************************************

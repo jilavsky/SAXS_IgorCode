@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.86
+#pragma version = 1.87
 
 
 //*************************************************************************\
@@ -8,17 +8,18 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.87 remove dropout option
 //1.86 added save to Load & Process button, renamed 
 //1.85 Flyscan improvements for 9ID March 2015
 //1.84 updated Flyscan for August 2014 and added overwrite for UPD range 5 dark current
 //1.83 updated Flyscan support for April 2014 version, minor improvements
-//1.82 FLyScan support, preliminary version
+//1.82 FlyScan support, preliminary version
 //1.81 adds panel check for version and FlyScan data reduction, added check version control on Main panel and Fly Import panel. 
 //1.80 Added few more items on Tab0 
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=1.85
+Constant IN3_ReduceDataMainVersionNumber=1.87
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -100,6 +101,7 @@ Function IN3_Initialize()
 	ListOfVariables+="PeakCenterFitStartPoint;PeakCenterFitEndPoint;"
 	ListOfVariables+="BeamCenter;MaximumIntensity;PeakWidth;PeakWidthArcSec;"
 	ListOfVariables+="SampleQOffset;DisplayPeakCenter;DisplayAlignSaAndBlank;SampleAngleOffset;"
+	ListOfVariables+="RemoveDropouts;RemoveDropoutsTime;RemoveDropoutsFraction;RemoveDropoutsAvePnts;"
 
 	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
 
@@ -163,6 +165,19 @@ Function IN3_Initialize()
 		 CalibrateToVolume=1
 		 CalibrateArbitrary=0
 	endif
+	NVAR RemoveDropoutsTime
+	NVAR RemoveDropoutsFraction
+	if(RemoveDropoutsTime<0.01)
+		RemoveDropoutsTime=0.1
+	endif
+	if(RemoveDropoutsFraction<0.01)
+		RemoveDropoutsFraction=0.5
+	endif
+	NVAR RemoveDropoutsAvePnts
+	if(RemoveDropoutsAvePnts<10)
+		RemoveDropoutsAvePnts=50
+	endif
+	
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
@@ -432,15 +447,25 @@ Function IN3_MainPanel()
 	SetVariable MSAXSEndPoint,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSEndPoint
 
 
-	DrawText 5,540,"To limit range of data being used for subtraction, set cursor A"
-	DrawText 5,555," on first point and B on last point of either sample of blank data"
+	DrawText 5,580,"To limit range of data being used for subtraction, set cursor A"
+	DrawText 5,600," on first point and B on last point of either sample of blank data"
 
 	setDataFolder OldDf
 	NI3_TabPanelControl("",0)
 
+	CheckBox RemoveDropouts,pos={8,525},size={150,14},title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox
+	CheckBox RemoveDropouts,variable= root:Packages:Indra3:RemoveDropouts, help={"Check, if you want to remove flyscan dropouts"}
+	SetVariable RemoveDropoutsAvePnts,pos={8,545},size={150,22},title="Intg. pnts (~50) =", frame=1
+	SetVariable RemoveDropoutsAvePnts,limits={10,100,10},variable= root:Packages:Indra3:RemoveDropoutsAvePnts, proc=IN3_ParametersChanged
+
+	SetVariable RemoveDropoutsTime,pos={200,525},size={180,22},title="Drpt. Time [s] =", frame=1
+	SetVariable RemoveDropoutsTime,limits={0.01,5,0.1},variable= root:Packages:Indra3:RemoveDropoutsTime, proc=IN3_ParametersChanged
+	SetVariable RemoveDropoutsFraction,pos={200,545},size={180,22},title="Drp Int. fract. (0.1-0.7) =", frame=1
+	SetVariable RemoveDropoutsFraction,limits={0,1,0.1},variable= root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
+
 	
-	Button Recalculate,pos={50,575},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
-	Button RemovePoint,pos={250,575},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Remove point with csr A", help={"Remove point with cursor A"}
+	Button Recalculate,pos={50,615},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
+	Button RemovePoint,pos={250,615},size={120,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Remove point with csr A", help={"Remove point with cursor A"}
 end
 
 

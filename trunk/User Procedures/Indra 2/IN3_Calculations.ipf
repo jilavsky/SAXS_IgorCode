@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
+#pragma version=1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 Remove Dropout function
 //1.17 minor change in MOdified Gauss fit function which fixes sometime observed misfits. Coef wave MUST be double precision. 
 //1.16 minor GUI chaneg to keep users advised abotu saving data
 //1.15 modified fitting of the peak height for Modified gauss
@@ -666,8 +667,9 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 		//IN3_CalculateSampleThickness()
 		IN3_RecalculateData(3)
 	endif
-	
-
+	if (cmpstr("RemoveDropouts",ctrlName)==0)
+		IN3_RecalculateData(1)
+	endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1383,9 +1385,15 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 		SetVariable SubtractFlatBackground,win=USAXSDataReduction,limits={0,Inf,0.05*SubtractFlatBackground}
 	endif
 
-	
+	NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
 	//recalculate what needs to be done...
-	IN3_RecalculateData(2)
+	if((stringmatch(ctrlName,"RemoveDropoutsTime")) || (stringmatch(ctrlName,"RemoveDropoutsFraction")) || (stringmatch(ctrlName,"RemoveDropoutsAvePnts")))
+		if(RemoveDropouts)
+			IN3_RecalculateData(1)
+		endif
+	else
+		IN3_RecalculateData(2)
+	endif
 
 	setDataFolder OldDf
 End
