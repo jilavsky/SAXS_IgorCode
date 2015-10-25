@@ -880,10 +880,16 @@ Function IR3D_AppendDataToGraph(WhichData)
 			startQp = BinarySearch(OriginalData2QWave, Data2QStart)
 		endif
 		if(startQp<1)	//Qmin not set or not found. Set to last point-1 on that wave. 
-			startQp = OriginalData2QWave[1]
+			Data2QStart = OriginalData2QWave[1]
 			startQp = 1
 		endif
 		cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, startQp
+		DoUpdate
+		//scaling...
+		SetAxis/W=IR3D_DataMergePanel#DataDisplay/A  right
+		DoUpdate
+		GetAxis/W=IR3D_DataMergePanel#DataDisplay/Q right
+		SetAxis/W=IR3D_DataMergePanel#DataDisplay right 10^(floor(log(V_min))),10^(ceil(log(V_max)))
 		DoUpdate
 	endif
 	if(StringMatch(WhichData, "Merged" ))
@@ -1522,6 +1528,9 @@ Function IR3D_MergeData(VaryQshift)
 		startQ = Qvector2[0]
 		Data2QStart = startQ	
 	endif
+	if(startQ<=Qvector2[0])
+		startQ=Qvector2[1]
+	endif
 	if(Data1QEnd>0)
 		endQ = Data1QEnd
 	elseif ((strlen(CsrWave(B,"IR3D_DataMergePanel#DataDisplay"))>0))
@@ -1534,7 +1543,9 @@ Function IR3D_MergeData(VaryQshift)
 		endQ = Qvector1[numpnts(Qvector1)-1]
 	//	Data1QEnd = endQ
 	endif
-	
+	if(endQ >= Qvector1[numpnts(Qvector1)-1])
+		endQ = Qvector1[numpnts(Qvector1)-2]
+	endif
 	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
 	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
 	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift	
@@ -1578,7 +1589,7 @@ Function IR3D_MergeData(VaryQshift)
 	Duplicate/O/Free/R=[StartQp, EndQp] TempQ1, TempQ1Part
 	Duplicate/O/Free/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
 	Duplicate/O/Free/R=[StartQp, EndQp] TempdQ1, TempdQ1Part, TempdQ2Part
-	
+
 	TempInt2Part = TempInt2[BinarySearchInterp(Qvector2, TempQ1Part[p])]
 	TempErr2Part = TempErr2[BinarySearchInterp(Qvector2, TempQ1Part[p])]
 	variable integral1, integral2, scalingFactor, highQDifference, Q2shift

@@ -9,6 +9,8 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 Revision history:
 ______________________________________________________________________________________
 1.86 
+Revised manual - it was really obsolete. Added Flyscan import, updated Data reduction and removed some obsolete stuff from the manual altogether. Added chapter on dQ. 
+Added FLyscan dropouts removal code to remove weird dropouts in intensity which seem to happen sometimes. 
 Added new wave to data - SMR_dQ (and DSM etc), which contains per pixel smearing value. It is combination of racking curve width (Gauss profile) smearing given by USAXS resolution and, for flyscans, bin width over which the bin in q is created (rectangular profile).  
 Fixed case when spec file name was too long and Igor erred since the folder name was too long. Trim to 30 characters when needed. 
 
