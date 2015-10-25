@@ -1322,6 +1322,20 @@ Function NI1_GMLoadGeometries(LoadThisGeom)
 	NI1_GMCloseAllNikaW() 	
 	KillDataFolder root:Packages:Convert2Dto1D
 	DuplicateDataFolder $(LoadThisGeom), root:Packages:Convert2Dto1D
+	//restore paths . Use strings in the root:Packages:Convert2Dto1D folder
+	SVAR/Z Convert2Dto1DDataPathS=root:Packages:Convert2Dto1D:Convert2Dto1DDataPathS
+	SVAR/Z Convert2Dto1DEmptyDarkPathS=root:Packages:Convert2Dto1D:Convert2Dto1DEmptyDarkPathS
+	SVAR/Z Convert2Dto1DBmCntrPathS=root:Packages:Convert2Dto1D:Convert2Dto1DBmCntrPathS
+	SVAR/Z Convert2Dto1DMaskPathS=root:Packages:Convert2Dto1D:Convert2Dto1DMaskPathS
+	if(SVAR_Exists(Convert2Dto1DDataPathS))
+		NewPath/O/Q Convert2Dto1DDataPath, Convert2Dto1DDataPathS
+		NewPath/O/Q Convert2Dto1DEmptyDarkPath, Convert2Dto1DEmptyDarkPathS
+		NewPath/O/Q Convert2Dto1DBmCntrPath, Convert2Dto1DBmCntrPathS
+		NewPath/O/Q Convert2Dto1DMaskPath, Convert2Dto1DMaskPathS
+		print "Restored original paths to data"
+	endif
+	//Ok, paths are stored... 
+
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = LoadThisGeom
 	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
@@ -1404,7 +1418,7 @@ Function NI1_GMSaveGeometries()
 	endif
 	NewSaveName = CleanupName(NewSaveName, 1 )
 	if(DataFolderExists(NewSaveName ))
-		DoAlert /T="New fodler name conflict"  2, "The Configuration "+NewSaveName+" already exists, do you want to overwrite (Yes), create unique name (No), or cancel?"
+		DoAlert /T="New folder name conflict"  2, "The Configuration "+NewSaveName+" already exists, do you want to overwrite (Yes), create unique name (No), or cancel?"
 		if(V_Flag==3)
 			abort
 		elseif(V_Flag==2)
@@ -1417,6 +1431,24 @@ Function NI1_GMSaveGeometries()
 	if(CleanupTheFolderPriorSave)
 		NI1_Cleanup2Dto1DFolder()				//lets clean up the folder to make it smaller.... 
 	endif
+	//save paths so we can restore them later. Use strings in the root:Packages:Convert2Dto1D folder
+	string/g root:Packages:Convert2Dto1D:Convert2Dto1DDataPathS
+	string/g root:Packages:Convert2Dto1D:Convert2Dto1DEmptyDarkPathS
+	string/g root:Packages:Convert2Dto1D:Convert2Dto1DBmCntrPathS
+	string/g root:Packages:Convert2Dto1D:Convert2Dto1DMaskPathS
+	SVAR Convert2Dto1DDataPathS=root:Packages:Convert2Dto1D:Convert2Dto1DDataPathS
+	SVAR Convert2Dto1DEmptyDarkPathS=root:Packages:Convert2Dto1D:Convert2Dto1DEmptyDarkPathS
+	SVAR Convert2Dto1DBmCntrPathS=root:Packages:Convert2Dto1D:Convert2Dto1DBmCntrPathS
+	SVAR Convert2Dto1DMaskPathS=root:Packages:Convert2Dto1D:Convert2Dto1DMaskPathS
+	PathInfo Convert2Dto1DDataPath
+	Convert2Dto1DDataPathS = S_path
+	PathInfo Convert2Dto1DEmptyDarkPath
+	Convert2Dto1DEmptyDarkPathS = S_path
+	PathInfo Convert2Dto1DBmCntrPath
+	Convert2Dto1DBmCntrPathS = S_path
+	PathInfo Convert2Dto1DMaskPath
+	Convert2Dto1DMaskPathS = S_path
+	//Ok, paths are stored... 
 	DuplicateDataFolder root:Packages:Convert2Dto1D, $(NewSaveName)
 	SVAR ListOfGeomsSaved = root:Packages:NikaGeometries:ListOfGeomsSaved
 	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
