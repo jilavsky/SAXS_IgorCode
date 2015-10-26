@@ -3,7 +3,8 @@ Code modification history
 
 -latest stuff first
 ********************************************
-2.58
+2.58 10/30/2015
+Verified to work on Igor 7 beta 1
 Removed Modeling I from the code and manual. This tool has been deprecated for few years now and it was removed to reduce code clutter. 
 Added Data Merging - new dedicated tool to merge two segments of data (q-segments). version 1.0, so this may be bit buggy.
 Modeling II - added ability to handle per pixel smearing of the model. Quite complicated for users, read the manual!. 

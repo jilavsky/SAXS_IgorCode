@@ -2,7 +2,7 @@
 #pragma version=2.58
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs=   3506845833  		//this is mod date for Manual version 2.57
+constant CurrentManualDateInSecs= 3528649732 			//this is mod date for Manual version 2.58
 constant CurrentVersionNumber = 2.58
 
 //*************************************************************************\
@@ -11,7 +11,8 @@ constant CurrentVersionNumber = 2.58
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.58 Added MergeData tool. Added development version of Simple fits - new well structured tool for simplistic fits on SAS data. 
+//2.59 to be done... Added development version of Simple fits - new well structured tool for simplistic fits on SAS data.
+//2.58 Added MergeData tool.  
 //2.58 Added YouTube movies page. 
 //2.57 Many fixes to Modeling II mainly. 
 //2.56 fixed ListProRoutine which had troubles with links, 2.55 never released. 
@@ -99,8 +100,8 @@ Menu "SAS"
 	help={"Debye-Bueche, Teubner-Strey model"}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
-	"Simple Fits - under developement", IR3L_SimpleFits()
-	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
+//	"Simple Fits - under developement", IR3L_SimpleFits()
+//	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
 	"Reflectivity", IR2R_ReflectivitySimpleToolMain()
@@ -2222,8 +2223,8 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
 	endif
 
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.32)
-			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (7/2013) to version 6.32A. Please, update your Igor to latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.34)
+			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (2015) to version 6.34. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	

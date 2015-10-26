@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.37
+#pragma version = 1.38
 
 
 //*************************************************************************\
@@ -9,7 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.37 added ability to remove points on PD_Intensity for peak center fitting withmarquee. 
+//1.38 relase 1.86, added dropouts removal for Flyscan data. 
+//1.37 added ability to remove points on PD_Intensity for peak center fitting with marquee. 
 //1.36 added Remove RAW folder to shrink size of Experiments
 //1.35 yet another change in Menu items to make it more obvious
 //1.34 changed RemovePointswith marquee to be dynamic menuitem.
@@ -343,7 +344,7 @@ Function IN2_AboutPanel()
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.0"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2015"
-	DrawText 49,103,"release 1.85 from 3/8/2015"
+	DrawText 49,103,"release 1.86 from 10/30/2015"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end
