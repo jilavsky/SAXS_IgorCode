@@ -7,7 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
- //1.70 added multiple geometries manager. 
+ //1.70 added multiple geometries manager, removed the warning about the uncertainty method, drive me crazy and no one seems to care enough. 
  //1.69 added some warnings about uncertainty method changes when read from preferences. 
  //1.68 release, fixes for 9ID USAXS and other fixes listed 
  //1.67 Release to fix Mask tool broken in 1.66 release. 
@@ -52,7 +52,7 @@ Menu "SAS 2D"
 	"GUI & uncertainty config",NI1_ConfigMain()
 	help={"Configure method for uncertainity values for GUI behavior and for panels font sizes and font types"}
 	"Configuration manager", NI1_GeometriesManager()
-	help={"This enables switching among multiple Nika geometries"}
+	help={"This enables switching among multiple Nika geometries, such as distances or wavelengths"}
 	Submenu "Instrument configurations"
 		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_15IDDConfigureNika()
 		help={"Support for data from 9ID or15IDD (USAXS/SAXS) beamline at APS"}
@@ -193,7 +193,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2015"
-	DrawText 49,103,"Release 1.68 from 2/15/2015"
+	DrawText 49,103,"Release 1.70 from 10/30/2015"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 
@@ -446,10 +446,10 @@ Function NI1_ReadNikaGUIPackagePrefs()
 			else
 				print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
 			endif
-			if((pOld != ErrorCalculationsUseOld)||(pStdDev != ErrorCalculationsUseStdDev)||(pSEM != ErrorCalculationsUseSEM))
-				DoAlert /T="Uncertainity method calculation has changed" 0, "Uncertainty calculation method has changed. Please, check the history area and if needed, change the method to the one you want to use."
+//			if((pOld != ErrorCalculationsUseOld)||(pStdDev != ErrorCalculationsUseStdDev)||(pSEM != ErrorCalculationsUseSEM))
+//				DoAlert /T="Uncertainity method calculation has changed" 0, "Uncertainty calculation method has changed. Please, check the history area and if needed, change the method to the one you want to use."
 				NI1_SaveNikaGUIPackagePrefs(0)
-			endif
+//			endif
 		else
 			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
 			if(V_Flag==1)

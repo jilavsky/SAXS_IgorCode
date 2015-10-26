@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.85
+#pragma version=1.86
 
+//1.86 Improvements to Flyscan handling
 //1.85 9ID move and fixed to Flyscan support as needed. 
 //1.84 release with Flyscan support for various modes up to August 2014 measurements. Should handle all of the different modes. 
 //1.82 first user release of FLyScan support
@@ -78,7 +79,7 @@ Function IN2L_GenerateReadMe()
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
 	Notebook $nb newRuler=Header, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",14,0,(0,0,0)}
 	Notebook $nb ruler=Header, text="Quick Manual for Indra 2 version of USAXS macros\r"
-	Notebook $nb ruler=Normal, text="This is version 1.85 of Indra macros, date: 3/8/2015\r"
+	Notebook $nb ruler=Normal, text="This is version 1.86 of Indra macros, date: 10/30/2015\r"
 	Notebook $nb text="\r"
 	Notebook $nb text="Data reduction summary:\r"
 	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import RAW data\", \"Import Desktop..\", \"Import USAXS FlyScan data\".\r"
