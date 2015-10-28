@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.25
+#pragma version=1.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.27 trimmed teh name used for line profiles to 17 characters only, did tno work with Line Profiles. 
+//1.26 fixed error in I0 lookup for Sample exposure which used ungated signal instead of gated one. Not sure when did this happen... 
 //1.25 fix WAXS normalization I0 lookup. fixed I0_blank
 //1.24 added fix for Q resolution in line profile conversion. Related to adding the Line profile Q resolution ot main code.  
 //1.23 added normalization for WAXS and modified GUI + pinSAXS default mask. Fixed bug error when run second time and help fiel alrerady existed.
@@ -1463,7 +1465,7 @@ Function NI1_15IDDFindI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
+	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
