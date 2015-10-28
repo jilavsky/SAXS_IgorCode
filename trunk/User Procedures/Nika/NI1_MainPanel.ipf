@@ -1170,6 +1170,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					endif
 				endif
 				NewDataFolder/S/O $(LongUseName)
+print possiblyquotename("r_"+UseName)
 					Duplicate/O LineProfileIntensity, $("r_"+UseName)
 					Duplicate/O LineProfileQ, $("q_"+UseName)
 					Duplicate/O LineProfileError, $("s_"+UseName)
@@ -1425,9 +1426,9 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	endif	
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	if(TrimEndOfName)
-		NewName= NewName[0,20]
+		NewName= NewName[0,17]
 	else
-		NewName= NewName[strlen(NewName)-20,inf]
+		NewName= NewName[strlen(NewName)-17,inf]
 	endif
 	return NewName
 end
