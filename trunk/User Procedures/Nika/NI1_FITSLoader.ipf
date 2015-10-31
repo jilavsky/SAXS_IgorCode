@@ -3,7 +3,7 @@
 #include <Autosize Images>
 
 
-// version 2.16 JIL - modified for Nikaa needs
+// version 2.16 JIL - modified for Nika needs
 // FITS Loader Version 2.15; For use with Igor Pro 4.0 or later
 //	Larry Hutchinson, WaveMetrics inc., 1-19-02
 // Version 2.15  151029
@@ -40,63 +40,113 @@
 //	This code is intended to be a starting point for a user supported astro package.
 //	Documentation is provided in an example experiment named 'FITS Loader Demo'
 
+
+Function/S NI1_ReadFITSFIleFormat3(PathName, FileName)
+	string PathName, FileName
+	//using modified and fixe Wavemetrics load
+	//extended by community to be able to read primary data and multiple HUD, 
+	//some of the instrument store data in HUD 'IMAGE' so we need to find the right data... 
+	String OldDf=getDataFOlder(1)	
+	KillDataFolder/Z root:Packages:Nika_FITS_Import
+	NewDataFolder/O/S root:Packages:Nika_FITS_Import
+	variable i, RefNum
+	open /R/P=$(PathName) RefNum as FileName
+	FStatus refnum
+	//print "FITS Load from",S_fileName
+	NI1_LoadOneFITS(refnum,S_fileName,1,1,1,0,0,1e12)
+	close RefNum
+	SVAR LatestImportedData			//contains string with name of recently imported FITS data.
+	//next deal with the header information and convert it to more useful Igor form
+	SVAR AllHeaderInfoAsString = $("root:Packages:Nika_FITS_Import:"+possiblyquotename(LatestImportedData)+":AllHeaderInfoAsString")
+	AllHeaderInfoAsString = ReplaceString("  ", AllHeaderInfoAsString, "")
+	//done - this is next wave note... 
+	//print AllHeaderInfoAsString
+	//Next find the data. Data should be in Primary location, but in some cases may be in Extension location. 
+	//assume we are looking for sufficiently lareg image, so let's check what we have
+	setDataFolder $(LatestImportedData)
+	string ListOfFolders = DataFolderDir(1)
+	ListOfFolders = IN2G_ConvertDataDirToList(ListOfFolders)
+	string DataFoundPath=""
+	string CurrentFldr=GetDataFolder(1)
+	variable DataFound=0
+	For(i=0;i<ItemsInList(ListOfFolders);i+=1)
+		//print CurrentFldr+stringFromList(i,ListOfFolders)+":data"
+		Wave/Z data = $(CurrentFldr+stringFromList(i, ListOfFolders)+":data")
+		if(WaveExists(data))
+			if(dimsize(data,0)>20 && dimsize(data,1)>20 && dimsize(data,2)<1 && dimsize(data,3)<1 )
+				print "Found 2D data ("+num2str(dimsize(data,0))+","+num2str(dimsize(data,1))+") in file "+LatestImportedData+" in location "+stringFromList(i, ListOfFolders)+":data"
+				DataFound = 1
+				DataFoundPath = CurrentFldr+stringFromList(i, ListOfFolders)+":data"
+			endif
+		endif
+	endfor
+	if(!DataFound)
+		DoAlert /T="Data not located" 0, "2D data were not located on this FITS file, please send example to ilavsky@aps.anl.gov so I can fit the loader"
+		abort 
+	endif
+	Wave DataWv = $(DataFoundPath)
+	Note /NOCR DataWv ,AllHeaderInfoAsString 
+	setDataFolder OldDf
+	return DataFoundPath
+end
+
 //Menu "Macros"
 //	"FITS Loader Panel",CreateFITSLoader()
 //End
 
 
-Function NI1_CreateFITSLoader()
-	DoWindow/F NI1_FITSPanel
-	if( V_Flag != 0 )
-		return 0
-	endif
-	
+//Function NI1_CreateFITSLoader()
+//	DoWindow/F NI1_FITSPanel
+//	if( V_Flag != 0 )
+//		return 0
+//	endif
+//	
+//
+//	NI1_DoFITSPanel()
+//end
+//	
 
-	NI1_DoFITSPanel()
-end
-	
 
-
-Static Function NI1_LoadFITS()
-	Variable doHeader= NumVarOrDefault("root:Packages:Nika_FITS:wantHeader",1)			// set true to put header(s) in a notebook
-	Variable doHistory= NumVarOrDefault("root:Packages:Nika_FITS:wantHistory",0)			// set true to put HISTORY in the notebook
-	Variable doComment= NumVarOrDefault("root:Packages:Nika_FITS:wantComments",0)		// ditto for COMMENT
-	Variable doAutoDisp= NumVarOrDefault("root:Packages:Nika_FITS:wantAutoDisplay",0)	// true to display data
-	Variable doInt2Float= NumVarOrDefault("root:Packages:Nika_FITS:promoteInts",1)		// true convert ints to floats
-	Variable bigBytes= NumVarOrDefault("root:Packages:Nika_FITS:askifSize",0)				// if data exceeds this size, ask permission to load  
-	
-	Variable refnum
-	String path= StrVarOrDefault("root:Packages:Nika_FITS:thePath","")
-	if( CmpStr(path,"_current_")==0 )
-		Open/R/T="????" refnum
-	else
-		Open/R/P=$path/T="????" refnum
-	endif
-	if( refnum==0 )
-		return 0
-	endif
-	
-	FStatus refnum
-	print "FITS Load from",S_fileName
-	NI1_LoadOneFITS(refnum,S_fileName,doHeader,doHistory,doComment,doAutoDisp,doInt2Float,bigBytes)
-	Close refnum
-end
+//Static Function NI1_LoadFITS()
+//	Variable doHeader= NumVarOrDefault("root:Packages:Nika_FITS:wantHeader",1)			// set true to put header(s) in a notebook
+//	Variable doHistory= NumVarOrDefault("root:Packages:Nika_FITS:wantHistory",0)			// set true to put HISTORY in the notebook
+//	Variable doComment= NumVarOrDefault("root:Packages:Nika_FITS:wantComments",0)		// ditto for COMMENT
+//	Variable doAutoDisp= NumVarOrDefault("root:Packages:Nika_FITS:wantAutoDisplay",0)	// true to display data
+//	Variable doInt2Float= NumVarOrDefault("root:Packages:Nika_FITS:promoteInts",1)		// true convert ints to floats
+//	Variable bigBytes= NumVarOrDefault("root:Packages:Nika_FITS:askifSize",0)				// if data exceeds this size, ask permission to load  
+//	
+//	Variable refnum
+//	String path= StrVarOrDefault("root:Packages:Nika_FITS:thePath","")
+//	if( CmpStr(path,"_current_")==0 )
+//		Open/R/T="????" refnum
+//	else
+//		Open/R/P=$path/T="????" refnum
+//	endif
+//	if( refnum==0 )
+//		return 0
+//	endif
+//	
+//	FStatus refnum
+//	print "FITS Load from",S_fileName
+//	NI1_LoadOneFITS(refnum,S_fileName,doHeader,doHistory,doComment,doAutoDisp,doInt2Float,bigBytes)
+//	Close refnum
+//end
 
 // LH100316: added this to fix file names that are too large to be used as a datafolder name.
 // You can create your own algorithm (perhaps putting up a dialog for the user) by creating an Override function
 // in your main procedure window. Execute DisplayHelpTopic "Function Overrides" for more info.
-Static Function/S NI1_MyCleanupFitsFolderName(nameIn)
-	String nameIn
-	
-	return CleanupName(nameIn,1)
-End
-
+//Static Function/S NI1_MyCleanupFitsFolderName(nameIn)
+//	String nameIn
+//	
+//	return CleanupName(nameIn,1)
+//End
+//
 
 
 // LH991101: rewrote to make this routine independent of the panel so it can be called as a
 // subroutine from a user written procedure.
 //
-Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAutoDisp,doInt2Float,bigBytes)
+static Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAutoDisp,doInt2Float,bigBytes)
 	Variable refnum
 	String dfName				// data folder name for results -- may be file name if desired
 	Variable doHeader			// set true to put header(s) in a notebook
@@ -139,17 +189,18 @@ Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAutoDisp,d
 	endif
 	
 	String nb = ""
-	if( doLogNotebook )
-		nb = CleanupName(dfName,0)
-		NewNotebook/N=$nb/F=1/V=1/W=(5,40,623,337) 
-		Notebook $nb defaultTab=36, statusWidth=238, pageMargins={72,72,72,72}
-		Notebook $nb showRuler=0, rulerUnits=1, updating={1, 60}
-		Notebook $nb newRuler=Normal, justification=0, margins={0,0,576}, spacing={0,0,0}, tabs={}, rulerDefaults={"Monaco",10,0,(0,0,0)}
-		Notebook $nb ruler=Normal
-	endif
+//	if( doLogNotebook )
+//		nb = CleanupName(dfName,0)
+//		NewNotebook/N=$nb/F=1/V=1/W=(5,40,623,337) 
+//		Notebook $nb defaultTab=36, statusWidth=238, pageMargins={72,72,72,72}
+//		Notebook $nb showRuler=0, rulerUnits=1, updating={1, 60}
+//		Notebook $nb newRuler=Normal, justification=0, margins={0,0,576}, spacing={0,0,0}, tabs={}, rulerDefaults={"Monaco",10,0,(0,0,0)}
+//		Notebook $nb ruler=Normal
+//	endif
 	
 	String dfSav= GetDataFolder(1)	
-	dfName= NI1_MyCleanupFitsFolderName(dfName)
+	dfName= CleanupName(dfName,1)
+	string/G LatestImportedData = dfName
 	NewDataFolder/O/S $dfName
 	
 	String/G AllHeaderInfoAsString=""
@@ -189,11 +240,19 @@ Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAutoDisp,d
 			else
 				FBinRead/B=2 refnum,data
 				WAVE data
-				NI1_SetDataProperties(data,doInt2Float)
-				if( doAutoDisp )
-					NI1_AutoDisplayData(data)
-					GraphName= WinName(0, 1)		// for later kill
+				if(doInt2Float)
+					NI1_SetDataProperties(data,doInt2Float)
+				else
+					NVAR/Z BZERO
+					NVAR/Z BSCALE
+					if(NVAR_Exists(BZERO)&&NVAR_EXISTS(BSCALE))
+						data = BZERO + BSCALE*data[p][q]
+					endif
 				endif
+//				if( doAutoDisp )
+//					NI1_AutoDisplayData(data)
+//					GraphName= WinName(0, 1)		// for later kill
+//				endif
 			endif
 			NI1_SetFPosToNextRecord(refnum)		// ignore error
 		endif
@@ -302,35 +361,22 @@ Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAutoDisp,d
 					FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
 				else
 					Wave data
-					NVAR BITPIX
-					variable dataTypeToLoad
-					if(BITPIX==8)
-						dataTypeToLoad=1
-					elseif(BITPIX==16)
-						dataTypeToLoad=2
-					elseif(BITPIX==32)
-						dataTypeToLoad=3
-					elseif(BITPIX==-32)
-						dataTypeToLoad=4
-					elseif(BITPIX==-64)
-						dataTypeToLoad=5
-					else
-						Abort "Unknown data typo"
-					endif
-					FBinRead/B=2/F=(dataTypeToLoad) refnum,data
+					FBinRead/B=2 refnum,data
 					//fix the data per standard
-					NVAR/Z BZERO
-					NVAR/Z BSCALE
-					if(NVAR_Exists(BZERO)&&NVAR_EXISTS(BSCALE))
-						data = BZERO + BSCALE*data[p][q]
-						//data = dataTmp
+					if(doInt2Float)
+						NI1_SetDataProperties(data,doInt2Float)
+					else
+						NVAR/Z BZERO
+						NVAR/Z BSCALE
+						if(NVAR_Exists(BZERO)&&NVAR_EXISTS(BSCALE))
+							data = BZERO + BSCALE*data[p][q]
+						endif
 					endif
 					//
-					NI1_SetDataProperties(data,doInt2Float)
-					if( doAutoDisp )
-						NI1_AutoDisplayData(data)
-						GraphName= WinName(0, 1)		// for later kill
-					endif
+//					if( doAutoDisp )
+//						NI1_AutoDisplayData(data)
+//						GraphName= WinName(0, 1)		// for later kill
+//					endif
 				endif
 				NI1_SetFPosToNextRecord(refnum)		// ignore error
 			endif
@@ -421,25 +467,25 @@ Static Function NI1_SetDataProperties(data,doInt2Float)
 			
 end
 
-Static Function NI1_AutoDisplayData(data)
-	Wave data
-	
-	Variable ndims= WaveDims(data)
-	if( ndims > 1 )
-		Display;AppendImage data
-		if( DimSize(data, 2) > 3 )
-			Variable/G curPlane
-			ControlBar 22
-			SetVariable setvarPlane,pos={9,2},size={90,17},proc=NI1_FITSSetVarProcPlane,title="plane"
-			SetVariable setvarPlane,format="%d"
-			SetVariable setvarPlane,limits={0,DimSize(data, 2)-1,1},value= curPlane
-		endif
-		DoAutoSizeImage(0,1)
-	else
-		Display data
-	endif
-end
-
+//Static Function NI1_AutoDisplayData(data)
+//	Wave data
+//	
+//	Variable ndims= WaveDims(data)
+//	if( ndims > 1 )
+//		Display;AppendImage data
+//		if( DimSize(data, 2) > 3 )
+//			Variable/G curPlane
+//			ControlBar 22
+//			SetVariable setvarPlane,pos={9,2},size={90,17},proc=NI1_FITSSetVarProcPlane,title="plane"
+//			SetVariable setvarPlane,format="%d"
+//			SetVariable setvarPlane,limits={0,DimSize(data, 2)-1,1},value= curPlane
+//		endif
+//		DoAutoSizeImage(0,1)
+//	else
+//		Display data
+//	endif
+//end
+//
 
 
 Static Function NI1_SetFPosToNextRecord(refnum)
@@ -462,7 +508,7 @@ Function NI1_FITSAppendNB(nb,s)
 	String s
 	
 	if( strlen(nb) != 0 )
-		Notebook $nb,text=s+"\r"
+	//	Notebook $nb,text=s+"\r"
 		SVAR/Z AllHeaderInfoAsString= ::AllHeaderInfoAsString
 		if(SVAR_Exists(AllHeaderInfoAsString))
 			AllHeaderInfoAsString+=s+";"
@@ -703,9 +749,9 @@ Static Function NI1_GetOptional(refnum,nb, doHeader,doHistory, doComment)
 		endif
 	while(1)
 
-	if( (strlen(nb)!=0)  && (strlen(nbText)!=0) )
-		Notebook $nb,text=nbText
-	endif
+//	if( (strlen(nb)!=0)  && (strlen(nbText)!=0) )
+//		Notebook $nb,text=nbText
+//	endif
 		
 	return 0
 end
@@ -1018,139 +1064,139 @@ end
 
 
 
-Function NI1_CheckProcFitsGeneric(ctrlName,checked) // : CheckBoxControl
-	String ctrlName
-	Variable checked
-
-	if( CmpStr(ctrlName,"checkHead") == 0 )
-		Variable/G root:Packages:Nika_FITS:wantHeader= checked
-	elseif( CmpStr(ctrlName,"checkHist") == 0 )
-		Variable/G root:Packages:Nika_FITS:wantHistory= checked
-	elseif( CmpStr(ctrlName,"checkCom") == 0 )
-		Variable/G root:Packages:Nika_FITS:wantComments= checked
-	elseif( CmpStr(ctrlName,"checkAutoDisp") == 0 )
-		Variable/G root:Packages:Nika_FITS:wantAutoDisplay= checked
-	elseif( CmpStr(ctrlName,"checkPromoteInts") == 0 )
-		Variable/G root:Packages:Nika_FITS:promoteInts= checked
-	endif
-End
-
-Function NI1_ButtonProcLoadFits(ctrlName)//  : ButtonControl
-	String ctrlName
-
-	NI1_LoadFITS()
-End
-
-Function NI1_DoFITSPanel()
-	if( NumVarOrDefault("root:Packages:Nika_FITS:wantHeader",-1) == -1 )
-		String dfSav= GetDataFolder(1)
-		NewDataFolder/O/S root:Packages
-		NewDataFolder/O/S Nika_FITS
-		
-		Variable/G wantHeader=1
-		Variable/G wantHistory=0
-		Variable/G wantComments=0
-		Variable/G wantAutoDisplay= 1
-		Variable/G promoteInts=0			// if true, then ints are converted floats
-		Variable/G askifSize= 1e6			// ask if ok to load if data size is bigger than this
-		
-		String/G thePath= "_current_"
-		SetDataFolder dfSav
-	endif
-
-	NewPanel/K=1 /W=(71,89,371,289)
-	DoWindow/C NI1_FITSPanel
-	CheckBox checkHead,pos={47,42},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Include Header",value=1
-	CheckBox checkHist,pos={47,59},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Include History",value=0
-	CheckBox checkCom,pos={47,75},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Include Comments",value=0
-	CheckBox checkAutoDisp,pos={47,107},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Auto Display",value=1
-	CheckBox checkPromoteInts,pos={47,91},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Promote Ints",value=0
-	SetVariable setvarAskSize,pos={47,127},size={216,17},title="Max autoload size"
-	SetVariable setvarAskSize,format="%d"
-	SetVariable setvarAskSize,limits={0,INF,100000},value= root:Packages:Nika_FITS:askifSize
-	Button buttonLoad,pos={24,14},size={99,20},proc=NI1_ButtonProcLoadFits,title="Load FITS..."
-	PopupMenu popupPath,pos={133,14},size={126,19},proc=NI1_FITS_PathPopMenuProc,title="path"
-	PopupMenu popupPath,mode=2,popvalue="_current_",value= #"\"_new_;_current_;\"+PathList(\"*\", \";\", \"\")"
-	PopupMenu killpop,pos={24,163},size={98,20},proc=NI1_FITS_KillMenuProc,title="Unload FITS"
-	PopupMenu killpop,mode=0,value= #"NI1_FITS_GetLoadedList()"
-EndMacro
-
-
-Function NI1_FITSSetVarProcPlane(ctrlName,varNum,varStr,varName) // : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
-
-	ModifyImage data,plane=varNum
-End
-
-
-Function NI1_FITS_PathPopMenuProc(ctrlName,popNum,popStr) // : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-	
-	if( CmpStr(popStr,"_new_") == 0 )
-		popStr= ""
-		Prompt popStr,"name for new path"
-		DoPrompt "Get Path Name",popStr
-		if( strlen(popStr)!=0 )
-			NewPath /M="folder containing FITS files"/Q $popStr
-			PopupMenu popupPath,mode=1,popvalue=popStr
-		else
-			SVAR cp= root:Packages:Nika_FITS:thePath
-			PopupMenu popupPath,mode=1,popvalue=cp
-			return 0								// exit if cancel
-		endif
-	endif
-
-	String/G root:Packages:Nika_FITS:thePath= popStr
-End
-
-
-Function NI1_FITS_KillMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-	
-	SVAR/Z nbName= root:$(popStr):NotebookName
-	SVAR/Z gName= root:$(popStr):GraphName
-	
-	if( !SVAR_Exists(nbName) || !SVAR_Exists(gName) )
-		return 0		// should never happen
-	endif
-	
-	if( strlen(nbName) != 0 )
-		DoWindow/K $nbName
-	endif
-	if( strlen(gName) != 0 )
-		DoWindow/K $gName
-	endif
-	KillDataFolder root:$(popStr)
-End
-
-// returns list of data folders in root from loaded fits files
-Function/S NI1_FITS_GetLoadedList()	
-	Variable i
-	String dfList="",dfName
-	for(i=0;;i+=1)
-		dfName= GetIndexedObjName("root:",4,i )
-		if( strlen(dfName) == 0 )
-			break
-		endif
-		SVAR/Z nbName= root:$(dfName):NotebookName
-		if( SVAR_Exists(nbName) )			// we take the existance of this string var as an indication that this df is from a fits load
-			dfList += dfName+";"
-		endif
-	endfor
-	if( strlen(dfList)==0 )
-		return "_none found_"
-	else
-		return dfList
-	endif
-End
-
+//Function NI1_CheckProcFitsGeneric(ctrlName,checked) // : CheckBoxControl
+//	String ctrlName
+//	Variable checked
+//
+//	if( CmpStr(ctrlName,"checkHead") == 0 )
+//		Variable/G root:Packages:Nika_FITS:wantHeader= checked
+//	elseif( CmpStr(ctrlName,"checkHist") == 0 )
+//		Variable/G root:Packages:Nika_FITS:wantHistory= checked
+//	elseif( CmpStr(ctrlName,"checkCom") == 0 )
+//		Variable/G root:Packages:Nika_FITS:wantComments= checked
+//	elseif( CmpStr(ctrlName,"checkAutoDisp") == 0 )
+//		Variable/G root:Packages:Nika_FITS:wantAutoDisplay= checked
+//	elseif( CmpStr(ctrlName,"checkPromoteInts") == 0 )
+//		Variable/G root:Packages:Nika_FITS:promoteInts= checked
+//	endif
+//End
+//
+//Function NI1_ButtonProcLoadFits(ctrlName)//  : ButtonControl
+//	String ctrlName
+//
+//	NI1_LoadFITS()
+//End
+//
+//Function NI1_DoFITSPanel()
+//	if( NumVarOrDefault("root:Packages:Nika_FITS:wantHeader",-1) == -1 )
+//		String dfSav= GetDataFolder(1)
+//		NewDataFolder/O/S root:Packages
+//		NewDataFolder/O/S Nika_FITS
+//		
+//		Variable/G wantHeader=1
+//		Variable/G wantHistory=0
+//		Variable/G wantComments=0
+//		Variable/G wantAutoDisplay= 1
+//		Variable/G promoteInts=0			// if true, then ints are converted floats
+//		Variable/G askifSize= 1e6			// ask if ok to load if data size is bigger than this
+//		
+//		String/G thePath= "_current_"
+//		SetDataFolder dfSav
+//	endif
+//
+//	NewPanel/K=1 /W=(71,89,371,289)
+//	DoWindow/C NI1_FITSPanel
+//	CheckBox checkHead,pos={47,42},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Include Header",value=1
+//	CheckBox checkHist,pos={47,59},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Include History",value=0
+//	CheckBox checkCom,pos={47,75},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Include Comments",value=0
+//	CheckBox checkAutoDisp,pos={47,107},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Auto Display",value=1
+//	CheckBox checkPromoteInts,pos={47,91},size={139,20},proc=NI1_CheckProcFitsGeneric,title="Promote Ints",value=0
+//	SetVariable setvarAskSize,pos={47,127},size={216,17},title="Max autoload size"
+//	SetVariable setvarAskSize,format="%d"
+//	SetVariable setvarAskSize,limits={0,INF,100000},value= root:Packages:Nika_FITS:askifSize
+//	Button buttonLoad,pos={24,14},size={99,20},proc=NI1_ButtonProcLoadFits,title="Load FITS..."
+//	PopupMenu popupPath,pos={133,14},size={126,19},proc=NI1_FITS_PathPopMenuProc,title="path"
+//	PopupMenu popupPath,mode=2,popvalue="_current_",value= #"\"_new_;_current_;\"+PathList(\"*\", \";\", \"\")"
+//	PopupMenu killpop,pos={24,163},size={98,20},proc=NI1_FITS_KillMenuProc,title="Unload FITS"
+//	PopupMenu killpop,mode=0,value= #"NI1_FITS_GetLoadedList()"
+//EndMacro
+//
+//
+//Function NI1_FITSSetVarProcPlane(ctrlName,varNum,varStr,varName) // : SetVariableControl
+//	String ctrlName
+//	Variable varNum
+//	String varStr
+//	String varName
+//
+//	ModifyImage data,plane=varNum
+//End
+//
+//
+//Function NI1_FITS_PathPopMenuProc(ctrlName,popNum,popStr) // : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//	
+//	if( CmpStr(popStr,"_new_") == 0 )
+//		popStr= ""
+//		Prompt popStr,"name for new path"
+//		DoPrompt "Get Path Name",popStr
+//		if( strlen(popStr)!=0 )
+//			NewPath /M="folder containing FITS files"/Q $popStr
+//			PopupMenu popupPath,mode=1,popvalue=popStr
+//		else
+//			SVAR cp= root:Packages:Nika_FITS:thePath
+//			PopupMenu popupPath,mode=1,popvalue=cp
+//			return 0								// exit if cancel
+//		endif
+//	endif
+//
+//	String/G root:Packages:Nika_FITS:thePath= popStr
+//End
+//
+//
+//Function NI1_FITS_KillMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//	
+//	SVAR/Z nbName= root:$(popStr):NotebookName
+//	SVAR/Z gName= root:$(popStr):GraphName
+//	
+//	if( !SVAR_Exists(nbName) || !SVAR_Exists(gName) )
+//		return 0		// should never happen
+//	endif
+//	
+//	if( strlen(nbName) != 0 )
+//		DoWindow/K $nbName
+//	endif
+//	if( strlen(gName) != 0 )
+//		DoWindow/K $gName
+//	endif
+//	KillDataFolder root:$(popStr)
+//End
+//
+//// returns list of data folders in root from loaded fits files
+//Function/S NI1_FITS_GetLoadedList()	
+//	Variable i
+//	String dfList="",dfName
+//	for(i=0;;i+=1)
+//		dfName= GetIndexedObjName("root:",4,i )
+//		if( strlen(dfName) == 0 )
+//			break
+//		endif
+//		SVAR/Z nbName= root:$(dfName):NotebookName
+//		if( SVAR_Exists(nbName) )			// we take the existance of this string var as an indication that this df is from a fits load
+//			dfList += dfName+";"
+//		endif
+//	endfor
+//	if( strlen(dfList)==0 )
+//		return "_none found_"
+//	else
+//		return dfList
+//	endif
+//End
+//
 
 Static Function NI1_Convert2Text(w,useRow)
 	WAVE w
