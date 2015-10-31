@@ -18,6 +18,7 @@
 #include ":NI1_DNDCATsupport",version>=1.11
 #include ":NI1_FileLoaders",version>=2.4
 #include ":NI1_HDF5Browser",version>=1.01
+#include ":NI1_FITSLoader",version>=2.16
 #include ":NI1_InstrumentSupport",version>=1.00
 #include ":NI1_LineProfCalcs",version>=2.10
 #include ":NI1_LineProfile", version>=2.02

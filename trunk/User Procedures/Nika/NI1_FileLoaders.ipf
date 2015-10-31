@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.41
+#pragma version=2.42
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,7 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//2.42 Added more or less universal FITS fiel loader (checked against data in Extension1 and 2), removed printing of wave note in history area. 
 //2.41 Updated Pilatus img file to handle header (example contained 4096 bytes header) - added code which will find header length and skip it. 
 //2.40 update to 9ID pinSAXS Nexus files
 //2.39 removed Executes in preparation for Igor 7
@@ -467,28 +467,37 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		KillWaves Loadedwave0
 	elseif(cmpstr(FileType,"FITS")==0)
 		FileNameToLoad= FileName
-		open /R/P=$(PathName) RefNum as FileNameToLoad
-		testLine=""
-		testLine=PadString (testLine, 8640, 0x20)
-		FBinRead RefNum, testLine
-		close RefNum
-		variable bitpix =str2num(NI1_FITSFindKey(testLine, "BITPIX"))
-		variable NAXIS1= str2num(NI1_FITSFindKey(testLine, "NAXIS1"))
-		variable NAXIS2 = str2num(NI1_FITSFindKey(testLine, "NAXIS2"))
-		variable BZERO = str2num(NI1_FITSFindKey(testLine, "BZERO"))
-		GBLoadWave/Q/B=(0)/T={bitpix,4}/S=(8640)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
-			if(V_flag==0)		//check if we loaded at least some data...
-				return 0
-			endif
-		wave Loadedwave0
-		Redimension/N=(NAXIS1,NAXIS2) Loadedwave0
-		Loadedwave0+=BZERO 	//fix offset
+		string FITSWaveLocationString =""
+		string FITSWaveNoteString = ""
+		FITSWaveLocationString = NI1_ReadFITSFIleFormat3(PathName, FileNameToLoad)
+		if(strlen(FITSWaveLocationString)<5)
+			abort "Cannot load FITS file"
+		endif
+		Wave LoadedWave0=$(FITSWaveLocationString)
+		FITSWaveNoteString = note(LoadedWave0)
+		note /K LoadedWave0
+//		open /R/P=$(PathName) RefNum as FileNameToLoad
+//		testLine=""
+//		testLine=PadString (testLine, 8640, 0x20)
+//		FBinRead RefNum, testLine
+//		close RefNum
+//		variable bitpix =str2num(NI1_FITSFindKey(testLine, "BITPIX"))
+//		variable NAXIS1= str2num(NI1_FITSFindKey(testLine, "NAXIS1"))
+//		variable NAXIS2 = str2num(NI1_FITSFindKey(testLine, "NAXIS2"))
+//		variable BZERO = str2num(NI1_FITSFindKey(testLine, "BZERO"))
+//		GBLoadWave/Q/B=(0)/T={bitpix,4}/S=(8640)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
+//			if(V_flag==0)		//check if we loaded at least some data...
+//				return 0
+//			endif
+//		wave Loadedwave0
+//		Redimension/N=(NAXIS1,NAXIS2) Loadedwave0
+//		Loadedwave0+=BZERO 	//fix offset
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"FITS"+";"
-		NewNote+=testLine
-			
+		NewNote+=FITSWaveNoteString
+		KillDataFolder/Z root:Packages:Nika_FITS_Import	
 	elseif(cmpstr(FileType,"GeneralBinary")==0)
 		NVAR NIGBSkipHeaderBytes=root:Packages:Convert2Dto1D:NIGBSkipHeaderBytes
 		NVAR NIGBSkipAfterEndTerm=root:Packages:Convert2Dto1D:NIGBSkipAfterEndTerm
@@ -1316,7 +1325,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	wave loadedwv=$(NewWaveName)
 	NewNote+=";"+"DataFilePath="+S_path+";"+note(loadedwv)+";"
 	print "Loaded file   " +FileNameToLoad
-	print "Created wave note: "+NewNote
+//	print "Created wave note: "+NewNote
 	wave NewWv=$(NewWaveName)
 	note/K NewWv
 	note NewWv, newnote
