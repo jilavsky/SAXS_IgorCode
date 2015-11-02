@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.35
+#pragma version=0.36
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_DeleteRawData=1
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.36 fixed the need for using the HDF5 Browser, it was easy. Much quicker...  
 //0.35 fixed problem with too long name of spec file and therefore flyscan folder. 
 //0.34 fixed problem with too long names of flyscan hdf files and delete all raw data - too large, not necessary. 
 //0.33 more fixes for 9ID. 
@@ -357,15 +358,15 @@ Function IN3_FlyScanLoadHdf5File()
 //					return 0
 //				endif	
 //			endif
-			CreateNewHDF5Browser()
-		 	browserName = WinName(0, 64)
-		 	DoWindow/Hide=1 browserName
+		//	CreateNewHDF5Browser()
+		// 	browserName = WinName(0, 64)
+		// 	DoWindow/Hide=1 browserName
 			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?
-				HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)
+	//			HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)			
+	//			HDf5Browser#LoadGroupButtonProc("LoadGroup")
+				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"
 			
-				HDf5Browser#LoadGroupButtonProc("LoadGroup")
-				
 				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
 					KillWaves/Z Config_Version
 					HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
@@ -375,9 +376,9 @@ Function IN3_FlyScanLoadHdf5File()
 					endif
 					Wave/T Config_Version
 				endif
-				HDf5Browser#CloseFileButtonProc("CloseFIle")
+		//		HDf5Browser#CloseFileButtonProc("CloseFIle")
 	
-				KillWindow $(browserName)
+		//		KillWindow $(browserName)
 				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
 				string TempStrName=PossiblyQuoteName(shortFileName)
 				if(DataFolderExists(TempStrName))		//Name exists and folder is fine... 

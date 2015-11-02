@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1
+#pragma version=1.02
 constant IR3DversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,8 @@ constant IR3DversionNumber = 1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.02 FIxed bug when no pairs were found which threw error instead of message. 
+//1.01 Fixed bug in cursor handling and problems when data contained negative intensities.  
 //1.0 Data Merging tool first release version 
 
 
@@ -1301,6 +1303,7 @@ Function IR3D_SortIsUSAXSSAXSdata()
 			TmpData1 = ReplaceString(":", TmpData1,"")
 		 	TmpData1 = RemoveFromList(StringFromList(0, TmpData1 , "_"), TmpData1  , "_")
 			//this is now without the USAXS Scan number
+			TmpData1 = TmpData1[0,17]		//this is how much there is likely left if needed to trunkate... 
 			TmpData2 = GrepList(AllData2, TmpData1 ,0, ";")
 			if(ItemsInList(TmpData2 , ";")<1)		//did not find match
 				redimension/N=(numpnts(NotFoundData1)+1) NotFoundData1
@@ -1322,28 +1325,32 @@ Function IR3D_SortIsUSAXSSAXSdata()
 		endif
 	endfor
 	//now we have found pairs in OutPutData1 - OutPutData2 and not found data in NotFoundData1 and AllData2
-	if(ItemsInList(AllData2)>0)
-		Redimension/N	=(ItemsInList(AllData2)) NotFoundData2
-	endif
-	For(i=0;i<numpnts(NotFoundData2);i+=1)
-		NotFoundData2[i] = stringFromList(i, AllData2)
-	endfor
-	//OK, now all is in waves again. 
-	//We need to build the waves and set the 1 and 0 as needed. 
 	numpairs = numpnts(OutPutData1)
-	maxlength = max((numpnts(OutPutData1)+numpnts(NotFoundData1)), (numpnts(OutPutData2)+numpnts(NotFoundData2)) )
-	Redimension/N=(maxlength,2) ListOfAvailableData, SelectionOfAvailableData
-	SelectionOfAvailableData = 0
-	SelectionOfAvailableData[0,numpnts(OutPutData1)-1][0] =1
-	SelectionOfAvailableData[0,numpnts(OutPutData1)-1][1] =1
-	ListOfAvailableData[0,numpnts(OutPutData1)-1][0] = OutPutData1[p]
-	ListOfAvailableData[0,numpnts(OutPutData1)-1][1] = OutPutData2[p]
-	//fix the problem that NotFoundData may nto have same legth
-	variable tmpNumPnts=max(numpnts(NotFoundData1),numpnts(NotFoundData2))
-	redimension/N=(tmpNumPnts) NotFoundData1, NotFoundData2
-	ListOfAvailableData[numpnts(OutPutData1), maxlength-1][0] = NotFoundData1[p-numpnts(OutPutData1)]
-	ListOfAvailableData[numpnts(OutPutData1), maxlength-1][1] = NotFoundData2[p-numpnts(OutPutData1)]
-	print "USAXS/SAXS/WAXS data sorted using standard name logic for common samples."
+	if(numpairs>0)		//found something...
+		if(ItemsInList(AllData2)>0)
+			Redimension/N	=(ItemsInList(AllData2)) NotFoundData2
+		endif
+		For(i=0;i<numpnts(NotFoundData2);i+=1)
+			NotFoundData2[i] = stringFromList(i, AllData2)
+		endfor
+		//OK, now all is in waves again. 
+		//We need to build the waves and set the 1 and 0 as needed. 
+		maxlength = max((numpnts(OutPutData1)+numpnts(NotFoundData1)), (numpnts(OutPutData2)+numpnts(NotFoundData2)) )
+		Redimension/N=(maxlength,2) ListOfAvailableData, SelectionOfAvailableData
+		SelectionOfAvailableData = 0
+		SelectionOfAvailableData[0,numpnts(OutPutData1)-1][0] =1
+		SelectionOfAvailableData[0,numpnts(OutPutData1)-1][1] =1
+		ListOfAvailableData[0,numpnts(OutPutData1)-1][0] = OutPutData1[p]
+		ListOfAvailableData[0,numpnts(OutPutData1)-1][1] = OutPutData2[p]
+		//fix the problem that NotFoundData may nto have same legth
+		variable tmpNumPnts=max(numpnts(NotFoundData1),numpnts(NotFoundData2))
+		redimension/N=(tmpNumPnts) NotFoundData1, NotFoundData2
+		ListOfAvailableData[numpnts(OutPutData1), maxlength-1][0] = NotFoundData1[p-numpnts(OutPutData1)]
+		ListOfAvailableData[numpnts(OutPutData1), maxlength-1][1] = NotFoundData2[p-numpnts(OutPutData1)]
+		print "USAXS/SAXS/WAXS data sorted using standard name logic for common samples."
+	else	//unable to match anything
+		print "Unable to match any USAX/SAXS/WAXS pairs..."
+	endif
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1574,17 +1581,17 @@ Function IR3D_MergeData(VaryQshift)
 		Duplicate/Free Intensity2, TempdQ2
 	endif
 	
-	
-	variable StartQp, EndQp
-	StartQp = BinarySearch(Qvector1, startQ )
-	EndQp = BinarySearch(Qvector1, endQ )
-
 	Duplicate/O/Free Intensity1, TempInt1
 	Duplicate/O/Free Intensity2, TempInt2
 	Duplicate/O/Free Qvector1, TempQ1
 	Duplicate/O/Free Qvector2, TempQ2
 	IN2G_RemoveNaNsFrom4Waves(TempInt1,TempQ1,TempErr1,TempdQ1)
 	IN2G_RemoveNaNsFrom4Waves(TempInt2,TempQ2,TempErr2,TempdQ2)
+	
+	variable StartQp, EndQp
+	StartQp = BinarySearch(TempQ1, startQ )
+	EndQp = BinarySearch(TempQ1, endQ )
+
 	Duplicate/O/Free/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
 	Duplicate/O/Free/R=[StartQp, EndQp] TempQ1, TempQ1Part
 	Duplicate/O/Free/R=[StartQp, EndQp] TempErr1, TempErr1Part, TempErr2Part
@@ -1922,7 +1929,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 				WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
 				if(!stringmatch(H_Struct.traceName,"OriginalData1IntWave"))
 					cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
-					Data1QEnd = OriginalData2QWave[numpnts(OriginalData1QWave)-2]
+					Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
 					Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
 				else		//on correct wave...
 					if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1

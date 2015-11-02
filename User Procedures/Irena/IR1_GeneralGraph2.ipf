@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
+#pragma version=2.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 limt number of contours in controur plot to 100, Igor cannot do more. 
 //2.17 added 	if(exists("AfterUpdateGenGraphHookFunction")==6)
 //2.16 added Int*Q^3 as plotting option. 
 //2.15 minor fix for Change Graph details panel visibility
@@ -1804,7 +1805,7 @@ Function IR1P_CreateCountourGraph()
 	ControlBar /T/W=PlotingToolContourGrph 52
 	SetVariable ContNumCountours,pos={10,2},size={170,15},title="Number of contours",bodyWidth=70
 	SetVariable ContNumCountours, proc=IR1P_ContSetVarProc, help={"Number of contours to use"}
-	SetVariable ContNumCountours,limits={11,inf,5},value= root:Packages:GeneralplottingTool:ContNumCountours
+	SetVariable ContNumCountours,limits={11,100,5},value= root:Packages:GeneralplottingTool:ContNumCountours
 	SetVariable ContMinValue,pos={10,18},size={170,15},title="Min Contour val ",bodyWidth=70
 	SetVariable ContMinValue, proc=IR1P_ContSetVarProc, help={"Value of minimum Contour"}
 	SetVariable ContMinValue,limits={0,inf,0},value= root:Packages:GeneralplottingTool:ContMinValue
@@ -1914,6 +1915,10 @@ Function IR1P_ContSetVarProc(sva) : SetVariableControl
 				NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
 				NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
 				NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+				if(ContNumCountours>100)
+					ContNumCountours=100
+					print "Cannot set more than 100 contours in Igor Pro"
+				endif
 				ModifyContour PlottingTool_Int_Contour autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
 			endif
 			break
@@ -1923,6 +1928,10 @@ Function IR1P_ContSetVarProc(sva) : SetVariableControl
 				NVAR ContNumCountours = root:Packages:GeneralplottingTool:ContNumCountours
 				NVAR ContMinValue = root:Packages:GeneralplottingTool:ContMinValue
 				NVAR ContMaxValue = root:Packages:GeneralplottingTool:ContMaxValue
+				if(ContNumCountours>100)
+					ContNumCountours=100
+					print "Cannot set more than 100 contours in Igor Pro"
+				endif
 				ModifyContour PlottingTool_Int_Contour autoLevels={ContMinValue,ContMaxValue,ContNumCountours}
 			endif
 			break
