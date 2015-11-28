@@ -100,8 +100,10 @@ Menu "SAS"
 	help={"Debye-Bueche, Teubner-Strey model"}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
-//	"Simple Fits - under developement", IR3L_SimpleFits()
-//	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
+	"Simple Fits - under developement", IR3L_SimpleFits()
+	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
+	"Pwdr. Diffraction - WAXS - under developement", IR3W_WAXS()
+	help={"Simple tool for analysis of WAXS/Powder diffraction data. Developemnt for now. Do not use. "}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
 	"Reflectivity", IR2R_ReflectivitySimpleToolMain()
