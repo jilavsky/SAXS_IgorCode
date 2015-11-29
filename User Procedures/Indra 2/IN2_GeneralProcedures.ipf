@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.78
+#pragma version = 1.79
 
 
 //*************************************************************************\
@@ -7,7 +7,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//1.79 added IN2G_LegendTopGrphFldr(FontSize)
 //1.78 added Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 //       added IN2G_RemoveNaNsFrom7Waves
 //1.77 minor change in CheckScreenSize function
@@ -161,6 +161,9 @@
 //
 //IN2G_ColorTopGrphRainbow()
 //    Colors top graph with rainbow colors
+//
+//IN2G_LegendTopGrphFldr(FontSize)
+//		Appedn legend containing the last folder name and wave name 
 //
 //IN2G_CleanupFolderOfGenWaves(fldrname)		
 //cleans waves from waves created by generic plot
@@ -1231,28 +1234,28 @@ Function IN2G_ColorTopGrphRainbow()
 		endif
 		//AutoPositionWindow/M=0/R=$topGraph KBColorizePanel
 	endif
-
-// 	       Variable i, NumTraces, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
-// 	       GetWindow /Z kwTopWin, 
-//              w = NumberOfWaves/2
-//	        For(i=0;i<NumberOfWaves;i+=1)
-//                      io = 0
-//	                iRed = exp(-(i-io)^2/w)
-//	                io = NumberOfWaves/2
-//	                iBlue = exp(-(i-io)^2/w)
-//	                io = NumberOfWaves
-//	                iGreen = exp(-(i-io)^2/w)
-//     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
-//	                Red = 65535 * (iRed/ColorNorm)
-//	                Blue = 65535 * (iBlue/ColorNorm)
-//	                Green = 65535 * (iGreen/ColorNorm)
-//	               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
-//			    ListOfGraphFormating=ReplaceStringByKey("rgb["+num2str(i)+"]",ListOfGraphFormating, "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")","=")
-//		    endfor
-// 
-//		else
-
 end
+///******************************************************************************************
+///******************************************************************************************
+Function IN2G_LegendTopGrphFldr(FontSize)
+	variable FontSize
+
+	String topGraph=WinName(0,1)
+	string Traces=TraceNameList(topGraph, ";", 1 )
+	variable i
+	string legendStr=""
+	if(Fontsize<10)
+		legendStr="\Z0"+num2str(floor(FontSize))	
+	else
+		legendStr="\Z"+num2str(floor(FontSize))	
+	endif
+	For(i=0;i<ItemsInList(Traces);i+=1)
+		legendStr+="\\s("+StringFromList(i,traces)+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, StringFromList(i,traces)),0)+":"+StringFromList(i,traces)+"\r"
+	endfor
+	
+	Legend/C/N=text0/A=LB legendStr
+end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
