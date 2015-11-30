@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.70
+#pragma version=1.71
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
  //1.70 added multiple geometries manager, removed the warning about the uncertainty method, drive me crazy and no one seems to care enough. 
  //1.69 added some warnings about uncertainty method changes when read from preferences. 
  //1.68 release, fixes for 9ID USAXS and other fixes listed 
@@ -62,6 +63,10 @@ Menu "SAS 2D"
 		help={"Support for data from SSRL Materials Scienc e SAXS beamline"}
 		"TPA", NI1_TPASetup()
 		help={"Support for data TPA  XML (SANS)"}
+	end
+	Submenu "Helpful tools"
+		"Set all paths to the same place", NI1_SetAllPathsInNIka()
+		help={"Sets the paths for Sample, Empty, Mask, Calibrant to the same place."}
 	end
 	"HouseKeeping", NI1_Cleanup2Dto1DFolder()
 	help={"Removes large waves from this experiment, makes file much smaller. Resets junk... "}
@@ -131,7 +136,36 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//
+
+Function NI1_SetAllPathsInNIka()
+		DoWindow NI1A_Convert2Dto1DPanel
+		if(!V_Flag)		//does nto exists, quit
+			Abort "Main Nika windows does not exist, open it first"
+		else
+			DoWIndow/F NI1A_Convert2Dto1DPanel
+		endif
+		PathInfo/S Convert2Dto1DEmptyDarkPath
+		NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
+		PathInfo Convert2Dto1DDataPath
+		string pathInforStrL = S_Path
+		NewPath/O/Q Convert2Dto1DEmptyDarkPath, pathInforStrL		
+		SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
+		MainPathInfoStr = pathInforStrL
+		SVAR/Z BCPathInfoStr=root:Packages:Convert2Dto1D:BCPathInfoStr
+		if(!SVAR_Exists(BCPathInfoStr))
+			NI1BC_InitCreateBmCntrFile()
+			SVAR BCPathInfoStr=root:Packages:Convert2Dto1D:BCPathInfoStr
+		endif
+		NewPath/O/Q Convert2Dto1DBmCntrPath, pathInforStrL
+		//PathInfo Convert2Dto1DBmCntrPath
+		BCPathInfoStr=S_Path
+		NewPath/O/Q Convert2Dto1DMaskPath, pathInforStrL
+		//and refresh the listboxes for new paths...
+		NI1BC_UpdateBmCntrListBox()	
+		NI1A_UpdateDataListBox()	
+		NI1A_UpdateEmptyDarkListBox()	
+end
+
 //****************************************************************************************
 //****************************************************************************************
 //****************************************************************************************
