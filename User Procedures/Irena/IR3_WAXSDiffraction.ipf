@@ -89,7 +89,7 @@ Proc IR3W_WAXSPanel()
 	Button MultiPeakPlotTool, pos={300,220}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
 	
 
-	Button PDF4AddManually, pos={300,280}, size={200,20}, title="Add JCPDS/PDF entry", proc=IR3W_WAXSButtonProc, help={"Add manually card from JDCPS PDF tables"}
+	Button PDF4AddManually, pos={300,270}, size={200,20}, title="Add JCPDS/PDF entry", proc=IR3W_WAXSButtonProc, help={"Add manually card from JDCPS PDF tables"}
 
 	ListBox PDF4CardsSelection,pos={290,300},size={200,200}, mode=10
 	ListBox PDF4CardsSelection,listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
@@ -1064,6 +1064,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlname,"PDF4AddManually"))
 				IR3W_PDF4AddManually()
+				IR3W_UpdatePDF4OfAvailFiles()
 			endif
 
 
@@ -1717,13 +1718,14 @@ Function IR3W_PDF4AddManually()
 	DoPrompt "Enter description of new new card", NewCardNumber, NewCardName, NewCardNote
 	if(V_Flag)
 		setDataFolder OldDf
-		Abort
+		return 0
 	endif
 	string NewCardFullName=((NewCardNumber+"_"+NewCardName)[0,30])
-//	if(CheckName(NewCardFullName,1)!=0)
-//		setDataFolder OldDf
-//		Abort "Not unique name"	
-//	endif
+	if(CheckName(NewCardFullName,1)!=0)
+		setDataFolder OldDf
+		DoAlert 0, "Not unique name"	
+		return 0
+	endif
 	make/O/N=(50,5) $(NewCardFullName)
 	Wave NewCard= $(NewCardFullName)
 	SetDimLabel 1,0,d_A,NewCard
