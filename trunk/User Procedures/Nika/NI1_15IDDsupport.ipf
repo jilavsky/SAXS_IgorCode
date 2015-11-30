@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.27
+#pragma version=1.28
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.27 trimmed teh name used for line profiles to 17 characters only, did tno work with Line Profiles. 
+//1.28 Minor fix to configuration
+//1.27 trimmed the name used for line profiles to 17 characters only, did tno work with Line Profiles. 
 //1.26 fixed error in I0 lookup for Sample exposure which used ungated signal instead of gated one. Not sure when did this happen... 
 //1.25 fix WAXS normalization I0 lookup. fixed I0_blank
 //1.24 added fix for Q resolution in line profile conversion. Related to adding the Line profile Q resolution ot main code.  
@@ -789,6 +790,8 @@ Function NI1_15IDDSetDefaultNx()
 				string pathInforStrL = S_Path
 				NewPath/O Convert2Dto1DEmptyDarkPath, pathInforStrL		
 				PathInfo Convert2Dto1DEmptyDarkPath
+				SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
+				MainPathInfoStr = pathInforStrL
 
 				SVAR BmCntrFileType=root:Packages:Convert2Dto1D:BmCntrFileType
 				BmCntrFileType = "Nexus"
