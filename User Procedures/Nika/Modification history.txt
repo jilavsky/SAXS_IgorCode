@@ -5,6 +5,7 @@ Code modification history
 ********************************************
 xxxxxx
 Modified FITS loader to handle data from different sources, as long as we are looking for sufficiently large 2D image (either in primary or any extension). 
+Added small function in Menu which enables to set all paths for Nika to the same place (sample, empty, Calibration, mask…). Can be changed later, but helps to setup easily. 
 
 
 1.70 10/30/2015
