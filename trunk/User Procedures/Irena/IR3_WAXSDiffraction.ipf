@@ -46,11 +46,7 @@ Proc IR3W_WAXSPanel()
 	DoWIndow/C IR3W_WAXSPanel
 	TitleBox MainTitle title="Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={200,3},pos={290,130},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine2 title=" ",fixedSize=1,size={200,3},pos={290,255},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
-//	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine2 title=" ",fixedSize=1,size={200,3},pos={290,365},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -82,16 +78,24 @@ Proc IR3W_WAXSPanel()
 	Checkbox DisplayUncertainties, pos={280,80},size={76,14},title="Display Uncertainties", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayUncertainties
 
 
-	Button MultiPeakFittingStart, pos={300,140}, size={200,20}, title="MultiPeak Fitting 2.0", proc=IR3W_WAXSButtonProc, help={"Open and configure MultiPeak 2.0 fitting."}
-	Button MultiPeakFitRange, pos={300,165}, size={200,20}, title="Fit+Record One/Range", proc=IR3W_WAXSButtonProc, help={"Fit Range fo data with Multipeak 2.0."}
-	SetVariable MultiFitResultsFolder,pos={270,190},size={270,15}, noproc,title="Store Results in  root:WAXSFitResults:",bodyWidth=110
+	TitleBox Info1 title="MultiPeak Fit",pos={350,145},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	PopupMenu MPFInitializeFromSetMenu,pos={310,170},size={200,20},bodyWidth=190,title="Initialization:"
+	PopupMenu MPFInitializeFromSetMenu,mode=1,value= #"IR3W_InitMPF2FromMenuString()", popvalue=root:Packages:Irena:WAXS:MPF2InitFolder, proc=IR3W_PopMenuProc
+	Button MultiPeakFittingStart, pos={300,200}, size={200,20}, title="MultiPeak Fitting 2.0", proc=IR3W_WAXSButtonProc, help={"Open and configure MultiPeak 2.0 fitting."}
+
+	TitleBox Info2 title="Store results in :",pos={320,225},frame=0,fstyle=0, fixedSize=1,size={350,20},fSize=12
+	SetVariable MultiFitResultsFolder,pos={270,245},size={250,15}, noproc,title=" root:WAXSFitResults:"
 	Setvariable MultiFitResultsFolder, variable=root:Packages:Irena:WAXS:MultiFitResultsFolder
-	Button MultiPeakPlotTool, pos={300,220}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
+
+	Button MultiPeakRecordFit, pos={270,275}, size={250,20}, title="Record MPF2 Fit Results", proc=IR3W_WAXSButtonProc, help={"Record current MPF2 resultsc for data with Multipeak 2.0."}
+	Button MultiPeakFitRange, pos={270,300}, size={250,20}, title="Fit+Record Range of data", proc=IR3W_WAXSButtonProc, help={"Fit Range fo data with Multipeak 2.0."}
+
+	Button MultiPeakPlotTool, pos={300,335}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
 	
 
-	Button PDF4AddManually, pos={300,270}, size={200,20}, title="Add JCPDS/PDF entry", proc=IR3W_WAXSButtonProc, help={"Add manually card from JDCPS PDF tables"}
+	Button PDF4AddManually, pos={300,375}, size={200,20}, title="Add JCPDS/PDF entry", proc=IR3W_WAXSButtonProc, help={"Add manually card from JDCPS PDF tables"}
 
-	ListBox PDF4CardsSelection,pos={290,300},size={200,200}, mode=10
+	ListBox PDF4CardsSelection,pos={290,400},size={220,200}, mode=10
 	ListBox PDF4CardsSelection,listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	ListBox PDF4CardsSelection,selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	ListBox PDF4CardsSelection,proc=IR3W_PDF4ListBoxProc
@@ -164,12 +168,12 @@ Function IR3W_InitWAXS()
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;DataUnits;"
 	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
-	ListOfStrings+="UserMessageString;SavedDataMessage;"
+	ListOfStrings+="UserMessageString;SavedDataMessage;MPF2InitFolder;"
 	ListOfStrings+="MultiFitResultsFolder;MPF2PlotFolderStart;MPF2PlotPeakProfile;MPF2PlotPeakParameter;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
 	ListOfVariables+="DataBackground;"
-	ListOfVariables+="DisplayUncertainties;DataTTHEnd;DataTTHstart;"
+	ListOfVariables+="DisplayUncertainties;DataTTHEnd;DataTTHstart;MPF2CurrentFolderNumber;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="Energy;Wavelength;"
 
@@ -209,6 +213,10 @@ Function IR3W_InitWAXS()
 			teststr ="FitResults1:"
 		endif
 	endfor		
+	SVAR MPF2InitFolder
+	if(strlen(MPF2InitFolder)<5)
+		MPF2InitFolder = "Start Fresh"
+	endif
 	
 //	SVAR ListOfSimpleModels
 //	ListOfSimpleModels="Guinier;"
@@ -579,14 +587,45 @@ Function IR3W_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	if(stringmatch(ctrlName,"MPF2PlotFolderStart"))
 		//do something here
 		SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
+		SVAR MPF2PlotPeakProfile = root:Packages:Irena:WAXS:MPF2PlotPeakProfile
 		MPF2PlotFolderStart = popStr
+		MPF2PlotPeakProfile = stringFromList(0,IR3W_PlotUpdateListsOfResults("Peak Profiles"))
+		PopupMenu MPF2PlotPeakProfile,win=IR3W_WAXS_MPFPlots ,mode=1,value= #"IR3W_PlotUpdateListsOfResults(\"Peak Profiles\")"
+		//PopupMenu MPF2PlotPeakProfile,win=IR3W_WAXS_MPFPlots ,popvalue=MPF2PlotPeakProfile,value= #"IR3W_PlotUpdateListsOfResults(\"Peak Profiles\")"
 	endif
 	if(stringmatch(ctrlName,"MPF2PlotPeakProfile"))
 		//do something here
 		SVAR MPF2PlotPeakProfile = root:Packages:Irena:WAXS:MPF2PlotPeakProfile
 		MPF2PlotPeakProfile = popStr
 	endif
+	if(stringmatch(ctrlName,"MPFInitializeFromSetMenu"))
+		//do something here
+		SVAR MPF2InitFolder = root:Packages:Irena:WAXS:MPF2InitFolder
+		MPF2InitFolder = popStr
+	endif
 	
+	
+end
+
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function/S IR3W_InitMPF2FromMenuString()
+
+	String theList = "Start Fresh;"
+	theList += "\\M1(---;"
+	
+	String SetList = ListExistingSets()
+	Variable i
+	Variable nSets = ItemsInList(SetList)
+	for (i = 0; i < nSets; i += 1)
+		theList += "Set Number "+StringFromList(i, SetList)+";"
+	endfor
+
+	return theList
 end
 
 //**************************************************************************************
@@ -1010,15 +1049,22 @@ Function IR3W_StartMultiPeakGUIForWAXS()
 
 	Variable Panelposition = 0
 	String theGraph = "IR3W_WAXSMainGraph"
-	
-	Variable initializeFrom = 1
-	Variable menuSetNumber
-	menuSetnumber=98
+	SVAR MPF2InitFolder = root:Packages:Irena:WAXS:MPF2InitFolder	
 	NVAR currentSetNumber = root:Packages:MultiPeakFit2:currentSetNumber	
-	currentSetNumber=99
+	NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
+	Variable menuSetNumber
+	Variable initializeFrom = 1
+	if(!StringMatch(MPF2InitFolder, "Start Fresh" ))
+		initializeFrom = 3
+		sscanf MPF2InitFolder, "Set Number %d", menuSetnumber	
+	else
+		initializeFrom = 1
+		menuSetnumber=0
+	endif
 	
 	MPF2_StartNewMPFit(Panelposition, theGraph, yWName, xWName, initializeFrom, menuSetNumber)
-	SVAR MPF2WeightWaveName = root:Packages:MultiPeakFit2:MPF_SetFolder_100:MPF2WeightWaveName
+	MPF2CurrentFolderNumber = currentSetNumber
+	SVAR MPF2WeightWaveName = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(currentSetNumber)+":MPF2WeightWaveName")
 	MPF2WeightWaveName = "root:Packages:Irena:WAXS:OriginalDataErrorWave"
 	CheckBox MPF2_UserCursorsCheckbox value=1
 //	NVAR negativePeaks = root:Packages:MultiPeakFit2:MPF_SetFolder_100:negativePeaks
@@ -1047,6 +1093,9 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlname,"MultiPeakFitRange"))
 				IR3W_FitMultiPeakFit2ForWAXS()
+			endif
+			if(stringmatch(ba.ctrlname,"MultiPeakRecordFit"))
+				IR3W_SaveMultiPeakResults()
 			endif
 			if(stringmatch(ba.ctrlname,"MultiPeakPlotTool"))
 				DoWIndow IR3W_WAXS_MPFPlots
@@ -1103,7 +1152,8 @@ end
 //**********************************************************************************************************
 
 static Function IR3W_DoMultiPeak2Fits()
-		setDataFolder root:Packages:MultiPeakFit2:MPF_SetFolder_100
+		NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
+		setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber))
 		STRUCT WMButtonAction s
 		s.ctrlName="MPF2_DoFitButton"
 		s.win="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
@@ -1124,27 +1174,30 @@ end
 		//this generates the new panel with results (keep up for few seconds and close... and followign waves with the results
 		//tshi cretaes and saves int ehnotebook...
 		s.ctrlName="MPF2_ResultsDoNotebookButton"
-		s.win="MPF2_ResultsPanel_100"
+		NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
+		s.win="MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)
 		s.eventCode=2		
 		MPF2_ResultsDoNotebookButtnProc(s)
-		controlInfo/W=MPF2_ResultsPanel_100 MPFTResults_BackgroundCheck
+		controlInfo/W=$("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)) MPFTResults_BackgroundCheck
 		if(V_Value!=1)
+			checkbox MPFTResults_BackgroundCheck win=$("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)), value=1
 			STRUCT WMCheckboxAction ss
-			ss.win="MPF2_ResultsPanel_100"
+			ss.win="MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)
 			ss.eventCode=2		
 			MPF2_reportBackground(ss)
 		endif
-		Killwaves/Z root:Packages:MultiPeakFit2:MPF_SetFolder_100:MPFit2Model_BSub
-		SetVariable MPF2_BLSubtractedWaveName, win=MPF2_ResultsPanel_100, value=_STR:"MPFit2Model_BSub"
-		s.win="MPF2_ResultsPanel_100"
+		Killwaves/Z $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":MPFit2Model_BSub")
+		SetVariable MPF2_BLSubtractedWaveName, win=$("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)), value=_STR:"MPFit2Model_BSub"
+		s.win="MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)
 		s.eventCode=2		
 		MPF2_BLSubtractedDataButtonProc(s)		
 		IR3W_TabDelimitedResultsBtnProc(s)
 		//Parameters are here
-		Wave/T MPF2_ResultsListWave = root:Packages:MultiPeakFit2:MPF_SetFolder_100:MPF2_ResultsListWave
-		Wave/T MPF2_ResultsListTitles = root:Packages:MultiPeakFit2:MPF_SetFolder_100:MPF2_ResultsListTitles
+		Wave/T MPF2_ResultsListWave = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":MPF2_ResultsListWave")
+		Wave/T MPF2_ResultsListTitles = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":MPF2_ResultsListTitles")
 		//Peaks without background are here:
-		Wave MultipeakFit2Model_BSub = root:Packages:MultiPeakFit2:MPF_SetFolder_100:MPFit2Model_BSub
+		Wave MMPF2_BSubData = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":MPFit2Model_BSub")
+		Wave MMPF2_FitToData = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":fit_OriginalDataIntWave")
 		SVAR MultiFitResultsFolder = root:Packages:Irena:WAXS:MultiFitResultsFolder
 		SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
 		string OldDf=GetDataFOlder(1)
@@ -1171,13 +1224,14 @@ end
 		NewDataFolder/O/S $(DataFldrNameStr)
 		Duplicate/O MPF2_ResultsListWave, WAXS_ResultsListWave
 		Duplicate/O MPF2_ResultsListTitles, WAXS_ResultsListTitles
-		Duplicate/O MultipeakFit2Model_BSub, WAXS_FittedData
-		For(i=0;i<dimsize(MPF2_ResultsListWave,0);i+=1)
-			Wave/Z PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_100:'Peak "+num2str(i)+"'")
+		Duplicate/O MMPF2_BSubData, WAXS_BckgSubtractedData
+		Duplicate/O MMPF2_FitToData, WAXS_FitToData
+			For(i=0;i<dimsize(MPF2_ResultsListWave,0);i+=1)
+			Wave/Z PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
 			if(WaveExists(PeakData))
-				Wave PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_100:'Peak "+num2str(i)+"'")
-				Wave PeakDataCoefs=$("root:Packages:MultiPeakFit2:MPF_SetFolder_100:'Peak "+num2str(i)+" Coefs'")
-				Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_100:'Peak "+num2str(i)+" Coefseps'")
+				Wave PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
+				Wave PeakDataCoefs=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefs'")
+				Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefseps'")
 				Duplicate/O  PeakData, $("Peak "+num2str(i))
 				Duplicate/O  PeakDataCoefs, $("Peak "+num2str(i)+" Coefs")
 				Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")
@@ -1185,9 +1239,9 @@ end
 		endfor
 		setDataFolder OldDf
 		DoUpdate
-		DoWindow MPF2_ResultsPanel_100
+		DoWindow $("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber))
 		if(V_Flag)
-			DoWIndow/K MPF2_ResultsPanel_100
+			DoWIndow/K $("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber))
 		endif
 	
 end
@@ -1567,6 +1621,10 @@ Function IR3W_MPF2PlotPeakGraph()
 	Display /K=1/W=(386,292,1042,715) as "MPF2 "+MPF2PlotPeakProfile+" Profile Plot"
 	string NewGraphName=WinName(0, 1)	
 	IN2G_UniversalFolderScan(StartFolder, 2, "IR3W_MPF2AppendDataToGraph(\""+NewGraphName+"\",\""+ MPF2PlotPeakProfile+"\")")
+	DoUpdate
+	if(strlen(AxisInfo(NewGraphName, "left" ))<1)
+		return 0
+	endif
 	Label/W=$(NewGraphName) left "Intensity"
 	Label/W=$(NewGraphName) bottom "Two Theta Angle [deg]"
 	DoWindow/F $(NewGraphName)
