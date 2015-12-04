@@ -145,6 +145,22 @@ Proc IR3W_WAXSPanel()
 	DrawText 4,719,"Regex for not contain: ^((?!string).)*$"
 	DrawText 4,732,"Regex for contain:  string"
 	DrawText 4,745,"Regex for case independent contain:  (?i)string"
+	
+	Execute ("IR3W_ModifyPanelControls()")
+end
+
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3W_ModifyPanelControls()
+
+	if(DataFolderExists("root:Packages:MultiPeakFit2"))
+		PopupMenu MPFInitializeFromSetMenu, win=IR3W_WAXSPanel, disable=0
+	else
+		PopupMenu MPFInitializeFromSetMenu, win=IR3W_WAXSPanel, disable=2
+	endif
+
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -977,6 +993,7 @@ Function IR3W_GraphWAXSData()
 		Label /W=IR3W_WAXSMainGraph left "Intensity"
 		Label /W=IR3W_WAXSMainGraph bottom "2Theta [deg]"
 		ErrorBars /W=IR3W_WAXSMainGraph OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
+		showinfo
 	endif
 	AutopositionWindow /R=IR3W_WAXSPanel IR3W_WAXSMainGraph
 	if(DisplayUncertainties)
@@ -1090,6 +1107,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 					fStartMultipeakFit2()
 				endif
 				IR3W_StartMultiPeakGUIForWAXS()
+				IR3W_ModifyPanelControls()
 			endif
 			if(stringmatch(ba.ctrlname,"MultiPeakFitRange"))
 				IR3W_FitMultiPeakFit2ForWAXS()
@@ -1166,6 +1184,11 @@ end
 //**********************************************************************************************************
 
  function IR3W_SaveMultiPeakResults()
+ 
+	NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
+ 	string Oldf=GetDataFolder(1)
+ 	setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber))
+ 
 		STRUCT WMButtonAction s
 		s.ctrlName="MPF2_PeakResultsButton"
 		s.win="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
@@ -1174,7 +1197,6 @@ end
 		//this generates the new panel with results (keep up for few seconds and close... and followign waves with the results
 		//tshi cretaes and saves int ehnotebook...
 		s.ctrlName="MPF2_ResultsDoNotebookButton"
-		NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
 		s.win="MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)
 		s.eventCode=2		
 		MPF2_ResultsDoNotebookButtnProc(s)
@@ -1243,7 +1265,7 @@ end
 		if(V_Flag)
 			DoWIndow/K $("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber))
 		endif
-	
+	SetDataFolder Oldf
 end
 
 //**********************************************************************************************************
@@ -1804,9 +1826,11 @@ end
 
 Function IR3W_UpdatePDF4OfAvailFiles()
 	string OldDF=GetDataFolder(1)
-	setDataFolder root:JCPDS_PDF4
-	
-	string AvailableCards=ReplaceString(";\r", stringfromList(1,DataFolderDir(2 ),":"), "") +","
+	string AvailableCards=""
+	if(DataFolderExists("root:JCPDS_PDF4" ))
+		setDataFolder root:JCPDS_PDF4
+		AvailableCards=ReplaceString(";\r", stringfromList(1,DataFolderDir(2 ),":"), "") +","
+	endif
 	string TempStr
 
 	Wave/T ListOfAvailableData=root:Packages:Irena:WAXS:ListOfPDF4Data
