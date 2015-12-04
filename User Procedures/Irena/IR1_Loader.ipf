@@ -90,6 +90,7 @@
 #include ":IR3_MergingData", version>=1
 #include ":IR3_SimpleFits", version>=1
 #include ":IR3_SimpleFitsModels", version>=1
+#include ":IR3_WAXSDiffraction", version>=1
 
 //these are in different folders...
 #include "::CanSAS:canSASXML_GUI", version>=1.03
