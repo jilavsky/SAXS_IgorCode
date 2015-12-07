@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.87
+#pragma version = 1.88
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.88 removed Wavename string from selection tool. Unnecessary and confusing users. 
 //1.87 remove dropout option
 //1.86 added save to Load & Process button, renamed 
 //1.85 Flyscan improvements for 9ID March 2015
@@ -218,6 +219,7 @@ Function IN3_MainPanel()
 	PopupMenu ErrorDataName disable=1
 	CheckBox UseQRSData disable=1
 	CheckBox UseUserDefinedData disable=1
+	SetVariable WaveMatchStr, disable=1
 	NVAR useUserDefinedData=root:Packages:Indra3:UseUserDefinedData
 	UseUserDefinedData=1
 	//more local controls.
