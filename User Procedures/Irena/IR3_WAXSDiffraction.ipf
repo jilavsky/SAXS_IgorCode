@@ -93,13 +93,13 @@ Proc IR3W_WAXSPanel()
 	Button MultiPeakPlotTool, pos={300,335}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
 	
 
-	Button PDF4AddManually, pos={300,375}, size={200,20}, title="Add JCPDS/PDF entry", proc=IR3W_WAXSButtonProc, help={"Add manually card from JDCPS PDF tables"}
+	Button PDF4AddManually, pos={300,375}, size={200,20}, title="Add/Edit/Delete JCPDS/PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit/Remove manually card from JDCPS PDF tables"}
 
 	ListBox PDF4CardsSelection,pos={290,400},size={220,200}, mode=10
 	ListBox PDF4CardsSelection,listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	ListBox PDF4CardsSelection,selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	ListBox PDF4CardsSelection,proc=IR3W_PDF4ListBoxProc
-
+	ListBox PDF4CardsSelection colorWave=root:Packages:Irena:WAXS:ListOfPDF4DataColors
 
 //	PopupMenu SimpleModel,pos={280,175},size={180,20},fStyle=2,proc=IR3W_PopMenuProc,title="Model to fit : "
 //	PopupMenu SimpleModel,mode=1,popvalue=root:Packages:Irena:WAXS:ListOfSimpleModels,value= root:Packages:Irena:Irena:WAXSeModel
@@ -258,8 +258,10 @@ Function IR3W_InitWAXS()
 
 	Make/O/T/N=(0) ListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData
-	Make/O/T/N=(0) ListOfPDF4Data
-	Make/O/N=(0) SelectionOfPDF4Data
+	Make/O/T/N=(0,1) ListOfPDF4Data
+	Make/O/N=(0,1,2) SelectionOfPDF4Data
+	Make/O/N=(0,3) ListOfPDF4DataColors
+	SetDimLabel 2,1,foreColors,SelectionOfPDF4Data
 	SetDataFolder oldDf
 
 end
@@ -872,6 +874,20 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+
+Function IR3W_ConvertTTHdataTod(TTH,wavelength)
+	variable TTH,wavelength
+	//q = 4pi sin(theta)/lambda
+	//theta = (q * lamda / 4pi) * 180/pi [deg]
+	//asin(q * lambda /4pi) = theta
+	//d ~ 2*pi/Q
+
+	return  wavelength  / (2*sin(pi*TTH/360))	
+end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 Function IR3W_CreateLinearizedData()
 
 	string oldDf=GetDataFolder(1)
@@ -1222,6 +1238,7 @@ end
 		Wave MMPF2_FitToData = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":fit_OriginalDataIntWave")
 		SVAR MultiFitResultsFolder = root:Packages:Irena:WAXS:MultiFitResultsFolder
 		SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
+		NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
 		string OldDf=GetDataFOlder(1)
 		if (cmpstr(MultiFitResultsFolder[strlen(MultiFitResultsFolder)-1],":")!=0)
 			MultiFitResultsFolder+=":"
@@ -1247,7 +1264,11 @@ end
 		Duplicate/O MPF2_ResultsListWave, WAXS_ResultsListWave
 		Duplicate/O MPF2_ResultsListTitles, WAXS_ResultsListTitles
 		Duplicate/O MMPF2_BSubData, WAXS_BckgSubtractedData
-		Duplicate/O MMPF2_FitToData, WAXS_FitToData
+		Duplicate/O MMPF2_FitToData, WAXS_FitToData		
+		Duplicate/O  MMPF2_FitToData, WAXS_FitToData_d
+		Wave WAXS_FitToData_d=WAXS_FitToData_d
+		WAXS_FitToData_d[] = IR3W_ConvertTTHdataTod(pnt2x(MMPF2_FitToData, p ),Wavelength)
+
 			For(i=0;i<dimsize(MPF2_ResultsListWave,0);i+=1)
 			Wave/Z PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
 			if(WaveExists(PeakData))
@@ -1255,6 +1276,9 @@ end
 				Wave PeakDataCoefs=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefs'")
 				Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefseps'")
 				Duplicate/O  PeakData, $("Peak "+num2str(i))
+				Duplicate/O  PeakData, $("Peak "+num2str(i)+"_d")
+				Wave NewDwave=$("Peak "+num2str(i)+"_d")
+				NewDwave[] = IR3W_ConvertTTHdataTod(pnt2x(PeakData, p ),Wavelength)
 				Duplicate/O  PeakDataCoefs, $("Peak "+num2str(i)+" Coefs")
 				Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")
 			endif
@@ -1648,7 +1672,7 @@ Function IR3W_MPF2PlotPeakGraph()
 		return 0
 	endif
 	Label/W=$(NewGraphName) left "Intensity"
-	Label/W=$(NewGraphName) bottom "Two Theta Angle [deg]"
+	Label/W=$(NewGraphName) bottom "d [A]"
 	DoWindow/F $(NewGraphName)
 	IN2G_ColorTopGrphRainbow()
 	IN2G_LegendTopGrphFldr(10)
@@ -1657,10 +1681,11 @@ end
 Function IR3W_MPF2AppendDataToGraph(GraphName, DataWvName)
 	string GraphName, DataWvName
 	Wave/Z WaveToAppend=$(DataWvName)
-	if(WaveExists(WaveToAppend))
+	Wave/Z WaveToAppendD=$(DataWvName+"_d")
+	if(WaveExists(WaveToAppend) & WaveExists(WaveToAppendD))
 		DoWindow $(GraphName)
 		if(V_Flag)
-			AppendToGraph WaveToAppend
+			AppendToGraph WaveToAppend vs WaveToAppendD
 		endif
 	endif
 	
@@ -1783,36 +1808,57 @@ end
 
 Function IR3W_PDF4AddManually()
 	string OldDf=GetDataFolder(1)
+	string NewCardFullName
 	DoWIndow JCPDS_Input
 	if(V_Flag)
 		DoWIndow/K JCPDS_Input
 	endif
 	NewDataFolder/O/S root:JCPDS_PDF4
-	string NewCardNumber, NewCardName, NewCardNote
+	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
+	DeleteCardName="---"
+	OldCardName = "---"
 	NewCardNumber = "11-1111"
 	NewCardName="Unknown"
 	NewCardNote =""
+	Prompt DeleteCardName, "Delete card?", popup "---;"+IN2G_CreateListOfItemsInFolder("root:JCPDS_PDF4:", 2)
+	Prompt OldCardName, "Select existing card to edit", popup "---;"+IN2G_CreateListOfItemsInFolder("root:JCPDS_PDF4:", 2)
 	Prompt NewCardNumber, "Enter new card number, e.g. 46-1212"
 	Prompt NewCardName, "Enter new card name, e.g. Corundum"
 	Prompt NewCardNote, "Enter new card note, whatever you may need later"
-	DoPrompt "Enter description of new new card", NewCardNumber, NewCardName, NewCardNote
+	DoPrompt "What to do: 1. Delete, 2. Modify, or 3. Create new Card? ", DeleteCardName, OldCardName, NewCardNumber, NewCardName, NewCardNote
 	if(V_Flag)
 		setDataFolder OldDf
 		return 0
 	endif
-	string NewCardFullName=((NewCardNumber+"_"+NewCardName)[0,30])
-	if(CheckName(NewCardFullName,1)!=0)
-		setDataFolder OldDf
-		DoAlert 0, "Not unique name"	
-		return 0
+	if(stringmatch(OldCardName,"---")&&stringmatch(DeleteCardName,"---"))
+		NewCardFullName=((NewCardNumber+"_"+NewCardName)[0,30])
+		if(CheckName(NewCardFullName,1)!=0)
+			setDataFolder OldDf
+			DoAlert 0, "Not unique name"	
+			return 0
+		endif
+		make/O/N=(50,5) $(NewCardFullName)
+		Wave NewCard= $(NewCardFullName)
+		SetDimLabel 1,0,d_A,NewCard
+		SetDimLabel 1,1,Intensity,NewCard
+		SetDimLabel 1,2,h,NewCard
+		SetDimLabel 1,3,k,NewCard
+		SetDimLabel 1,4,l,NewCard
+	elseif(!stringmatch(OldCardName,"---")&&stringmatch(DeleteCardName,"---"))
+		NewCardFullName=OldCardName
+		Wave NewCard= $(NewCardFullName)
+	elseif(stringmatch(OldCardName,"---")&&!stringmatch(DeleteCardName,"---"))
+		NewCardFullName=DeleteCardName
+		Wave NewCard= $(NewCardFullName)
+		DoALert/T="Check deleting card" 1, "Really delete "+DeleteCardName+" card?" 
+		if(V_Flag)
+			KillWaves NewCard
+			setDataFolder OldDf
+			return 0
+		endif
+	else
+		Print "Could not figure out what to do..."
 	endif
-	make/O/N=(50,5) $(NewCardFullName)
-	Wave NewCard= $(NewCardFullName)
-	SetDimLabel 1,0,d_A,NewCard
-	SetDimLabel 1,1,Intensity,NewCard
-	SetDimLabel 1,2,h,NewCard
-	SetDimLabel 1,3,k,NewCard
-	SetDimLabel 1,4,l,NewCard
 	Edit/K=1/W=(351,213,873,819) NewCard
 	DoWindow/C/R JCPDS_Input
 	ModifyTable format(Point)=1
@@ -1835,15 +1881,22 @@ Function IR3W_UpdatePDF4OfAvailFiles()
 
 	Wave/T ListOfAvailableData=root:Packages:Irena:WAXS:ListOfPDF4Data
 	Wave SelectionOfAvailableData=root:Packages:Irena:WAXS:SelectionOfPDF4Data
+	Wave/Z ListOfPDF4DataColors = root:Packages:Irena:WAXS:ListOfPDF4DataColors
+	if(!WaveExists(ListOfPDF4DataColors))
+		make/O/N=(0,3) ListOfPDF4DataColors
+	endif
 	variable i, j, match
-	Redimension/N=(ItemsInList(AvailableCards , ",")) ListOfAvailableData, SelectionOfAvailableData
+	Redimension/N=(ItemsInList(AvailableCards , ","),1) ListOfAvailableData
+	Redimension/N=(ItemsInList(AvailableCards , ","),1,2) SelectionOfAvailableData
+	Redimension/N=(ItemsInList(AvailableCards , ","),3) ListOfPDF4DataColors
 	For(i=0;i<ItemsInList(AvailableCards , ",");i+=1)
 		TempStr =  StringFromList(i, AvailableCards , ",")
 		if(strlen(TempStr)>0)
 			ListOfAvailableData[i] = tempStr
 		endif
 	endfor
-	SelectionOfAvailableData = 0x20
+	SelectionOfAvailableData[][][0] = 0x20
+	SelectionOfAvailableData[][][1] = p
 	setDataFolder OldDF
 end
 
@@ -1853,15 +1906,29 @@ end
 Function IR3W_PDF4ListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	Variable row = lba.row
+	Variable/g row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
+	Wave/Z ListOfPDF4DataColors = root:Packages:Irena:WAXS:ListOfPDF4DataColors
 	string FoldernameStr
 	Variable isData1or2
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
+			if (lba.eventMod & 0x10)			// Right-click?
+				row = lba.row
+				PopupContextualMenu/N "IR3W_ColorWaveEditorMenu"
+				if( V_flag < 0 )
+					Print "User did not select anything"
+				else
+					ListOfPDF4DataColors[row][0]=V_Red
+					ListOfPDF4DataColors[row][1]=V_Green
+					ListOfPDF4DataColors[row][2]=V_Blue
+					//ListOfPDF4DataColors[row][3]=V_Alpha
+					IR3W_PDF4AddLines()
+				endif
+			endif
 			break
 		case 3: // double click
 		//	FoldernameStr=listWave[row]
@@ -1881,6 +1948,14 @@ Function IR3W_PDF4ListBoxProc(lba) : ListBoxControl
 
 	return 0
 End
+//***
+Menu "IR3W_ColorWaveEditorMenu",contextualmenu
+	"*COLORPOP*(65535,0,0)", ;	// initially red, no execution command
+	//"Edit Card", IR3W_EditJCPDSCard()
+end
+
+//**************************************************************************************
+//**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
 
@@ -1888,19 +1963,34 @@ Function IR3W_PDF4AddLines()
 
 	Wave/T listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	Wave selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
-	variable i
+	Wave ListOfPDF4DataColors = root:Packages:Irena:WAXS:ListOfPDF4DataColors
+	string WvName
+	variable i, minX, maxX
+	DoWIndow IR3W_WAXSMainGraph
+	if(!V_Flag)
+		abort
+	endif
+	GetAxis /W=IR3W_WAXSMainGraph/Q bottom
+	minX=V_min
+	maxX=V_max
 	For(i=0;i<numpnts(listWave);i+=1)
-		if(selWave[i]>40)		//unselected is 32, selected is 48
-			IR3W_PDF4AppendLinesToGraph(listWave[i])
+		if(selWave[i][0][0]>40)		//unselected is 32, selected is 48
+			WvName = listWave[i]
+			RemoveFromGraph /W=IR3W_WAXSMainGraph /Z $(WvName)
+			IR3W_PDF4AppendLinesToGraph(listWave[i][0],ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
+		else 		//remove if needed...
+			WvName = listWave[i][0]
+			RemoveFromGraph /W=IR3W_WAXSMainGraph /Z $(WvName)
 		endif
 	endfor
-
+	SetAxis /W=IR3W_WAXSMainGraph  bottom , minX, maxX
 end
 //**************************************************************************************
 //**************************************************************************************
 
-Function IR3W_PDF4AppendLinesToGraph(CardName)
+Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	string cardname
+	variable V_Red, V_Green, V_Blue
 	
 	string OldDf=GetDataFolder(1)
 	NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
@@ -1911,11 +2001,13 @@ Function IR3W_PDF4AppendLinesToGraph(CardName)
 	TheCardNew[][0] =   114.592 * asin((2 * pi / TheCard[p][0])* wavelength / (4*pi))
 	SetDimLabel 1,0,TTh,TheCardNew
 	Wave OriginalDataIntWave = root:Packages:Irena:WAXS:OriginalDataIntWave
-	wavestats/Q OriginalDataIntWave
-	TheCardNew[][1] = TheCardNew[p][1] * V_Max/100
+	//wavestats/Q OriginalDataIntWave
+	GetAxis /W=IR3W_WAXSMainGraph /Q left
+	TheCardNew[][1] = V_min + TheCardNew[p][1] * (V_Max-V_min)/100
 	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][1] vs TheCardNew[][0]
-	ModifyGraph mode[1]=1,usePlusRGB[1]=1
-	ModifyGraph plusRGB[1]=(0,0,65535)	
+	string WvName=possiblyquotename(NameOfWave(TheCardNew ))
+	ModifyGraph mode($(WvName))=1,usePlusRGB($(WvName))=1, lsize($(WvName))=3
+	ModifyGraph plusRGB($(WvName))=(V_Red, V_Green, V_Blue)	
 	setDataFolder oldDf
 end
 
