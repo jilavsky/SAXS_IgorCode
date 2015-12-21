@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.12
+#pragma version = 1.13
 Constant IR2DversionNumber=1.09
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 fixed bug in linking which showed on Igor 7 and caused error messages. 
 //1.12 fixed bug in useSMR data which called old code and screwed up control procedures. 
 //1.11 removed most Executes in preparation for Igor 7. 
 //1.10 added check fro slit smeared data if qmax is sufficently high (3* slit length is minimum). 
@@ -1662,17 +1663,17 @@ Function  IR2D_CalcOnePeakInt(i, tempInt, qwv)
 	NVAR Peak_LinkMultiplier=$("root:Packages:Irena_SAD:Peak"+num2str(i)+"_LinkMultiplier")	
 	SVAR Peak_LinkedTo=$("root:Packages:Irena_SAD:Peak"+num2str(i)+"_LinkedTo")	
 	
-	if(Peak_LinkPar2)
-		variable PeakLinkedTo=str2num(Peak_LinkedTo[4,inf])
-		if(numtype(PeakLinkedTo)>0)
-			abort  "Bad Peak number linked to peak "+num2str(i)
-		endif
-		NVAR Par2Linked=$("root:Packages:Irena_SAD:Peak"+num2str(PeakLinkedTo)+"_Par2")	
-		Par2 = Par2Linked * Peak_LinkMultiplier
-	endif
-
 	tempInt = 0
 	if(usePeak)
+		if(Peak_LinkPar2)
+			variable PeakLinkedTo=str2num(Peak_LinkedTo[4,inf])
+			if(numtype(PeakLinkedTo)>0)
+				abort  "Bad Peak number linked to peak "+num2str(i)
+			endif
+			NVAR Par2Linked=$("root:Packages:Irena_SAD:Peak"+num2str(PeakLinkedTo)+"_Par2")	
+			Par2 = Par2Linked * Peak_LinkMultiplier
+		endif
+
 		if(stringmatch(FunctionName, "Gauss" ))
 //			tempInt =Par1*exp(-((qwv-Par2)^2/Par3))
 			tempInt = IR2D_Gauss(qwv,Par1,Par2,Par3) 

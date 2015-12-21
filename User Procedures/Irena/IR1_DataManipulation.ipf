@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.57
+#pragma version=2.58
 constant IR3MversionNumber = 2.54			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.58 minor fix for cursor position in Merge in Data Manipualtion I. 
 //2.57 Data manipulation 1 - dangerous change - fixed some obvious bugs in Intitialization, why did it work before and did I screw up something? 
 //2.56 Data manipulation 1 - added color to Save data and added save data into Merge data buttons. 
 //2.55 Data Manipulation I - enabled Q shifts and added MergeData2, which optimizes scaling Data2, backgroundData1, and Qshift of Data2. This makes sense when SAXS alignment is not perfect. 
@@ -449,7 +450,10 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
 		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
 		if(strlen(OldAcsrWvName)<1||strlen(OldBcsrWvName)<1||stringmatch(OldBcsrWvName,"ResultsInt")||stringmatch(OldAcsrWvName,"ResultsInt"))
-			abort "Cursors not set correctly. Place A cursor on start of Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+			abort "Cursors not set correctly. Place A cursor on start of overlapping Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+		endif
+		if((!stringmatch(OldBcsrWvName,"Intensity1"))||(!stringmatch(OldAcsrWvName,"Intensity2")))
+			abort "Cursors not set correctly. Place A cursor on start of overlapping Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
 		endif
 		OldAcsrPnt = pcsr(A,"IR1D_DataManipulationGraph")
 		OldBcsrPnt = pcsr(B,"IR1D_DataManipulationGraph")
@@ -478,7 +482,10 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
 		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
 		if(strlen(OldAcsrWvName)<1||strlen(OldBcsrWvName)<1||stringmatch(OldBcsrWvName,"ResultsInt")||stringmatch(OldAcsrWvName,"ResultsInt"))
-			abort "Cursors not set correctly. Place A cursor on start of Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+			abort "Cursors not set correctly. Place A cursor on start of overlapping Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
+		endif
+		if((!stringmatch(OldBcsrWvName,"Intensity1"))||(!stringmatch(OldAcsrWvName,"Intensity2")))
+			abort "Cursors not set correctly. Place A cursor on start of overlapping Q range (Intensity2) and B on end of Q range (Intensity1) and run again"
 		endif
 		OldAcsrPnt = pcsr(A,"IR1D_DataManipulationGraph")
 		OldBcsrPnt = pcsr(B,"IR1D_DataManipulationGraph")
