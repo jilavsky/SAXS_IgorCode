@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 fixed IR1A_AutoUpdateIfSelected which called local display code twice. 
 //2.21 fixed display of warning messages from teh tab when tab was not used. 
 //2.20 removed most Execute to speed up fro Igor 7. 
 //2.19 catch for slit smeared data if the Qmax is too small. It must be at least 3*slit length
@@ -157,51 +158,6 @@ Function IR1A_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	if (cmpstr(ctrlName,"Level1RGCOHighLimit")==0)
 
 	endif
-
-//	if (cmpstr(ctrlName,"Level1RgStep")==0)
-//		//here goes what happens when user changes the step for shape
-//		NVAR Level1RgStep=root:Packages:Irena_UnifFit:Level1RgStep
-//		Level1RGStep=VarNum
-//		SetVariable Level1RgStep,limits={0,inf,(0.1*Level1RgStep)}
-//		SetVariable Level1RG,limits={0,inf,Level1RgStep}
-//	endif
-//	if (cmpstr(ctrlName,"Level1GStep")==0)
-//		//here goes what happens when user changes the step for shape
-//		NVAR Level1GStep=root:Packages:Irena_UnifFit:Level1GStep
-//		Level1GStep=VarNum
-//		SetVariable Level1GStep,limits={0,inf,(0.1*Level1GStep)}
-//		SetVariable Level1G,limits={0,inf,Level1GStep}
-//	endif
-//	if (cmpstr(ctrlName,"Level1PStep")==0)
-//		//here goes what happens when user changes the step for shape
-//		NVAR Level1PStep=root:Packages:Irena_UnifFit:Level1PStep
-//		Level1PStep=VarNum
-//		SetVariable Level1PStep,limits={0,inf,(0.1*Level1PStep)}
-//		SetVariable Level1P,limits={0,inf,Level1PStep}
-//	endif
-//	if (cmpstr(ctrlName,"Level1BStep")==0)
-//		//here goes what happens when user changes the step for shape
-//		NVAR Level1BStep=root:Packages:Irena_UnifFit:Level1BStep
-//		Level1BStep=VarNum
-//		SetVariable Level1BStep,limits={0,inf,(0.1*Level1BStep)}
-//		SetVariable Level1B,limits={0,inf,Level1BStep}
-//	endif
-//	if (cmpstr(ctrlName,"Level1EtaStep")==0)
-//		//here goes what happens when user changes the step for shape
-//		NVAR Level1EtaStep=root:Packages:Irena_UnifFit:Level1EtaStep
-//		Level1EtaStep=VarNum
-//		SetVariable Level1EtaStep,limits={0,inf,(0.1*Level1EtaStep)}
-//		SetVariable Level1Eta,limits={0,inf,Level1EtaStep}
-//	endif
-//	if (cmpstr(ctrlName,"Level1PackStep")==0)
-//		//here goes what happens when user changes the step for shape
-//		NVAR Level1PackStep=root:Packages:Irena_UnifFit:Level1PackStep
-//		Level1PackStep=VarNum
-//		SetVariable Level1PackStep,limits={0,inf,(0.1*Level1PackStep)}
-//		SetVariable Level1Pack,limits={0,inf,Level1PackStep}
-//	endif
-//
-
 
 //Level2
 
@@ -1858,8 +1814,8 @@ Function IR1A_AutoUpdateIfSelected()
 	NVAR UpdateAutomatically=root:Packages:Irena_UnifFit:UpdateAutomatically
 	if (UpdateAutomatically)
 		IR1A_GraphModelData()
-		NVAR ActTab=root:Packages:Irena_UnifFit:ActiveTab
-		IR1A_DisplayLocalFits(ActTab, 0)
+//		NVAR ActTab=root:Packages:Irena_UnifFit:ActiveTab
+//		IR1A_DisplayLocalFits(ActTab, 0)
 	endif
 end
 

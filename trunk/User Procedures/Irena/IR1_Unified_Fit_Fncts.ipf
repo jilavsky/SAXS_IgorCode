@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.14
+#pragma version=2.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 fixes to Graph display of local levels. 
 //2.14 corrected Invariant analysis to do correctly phi*(1-phi) calculation to get phi. 
 //2.13 more DWS changes, Uncerttainity analysis - modfied to change the tab to currently analyzed level tab. 
 //2.12 many changes by Dale, corrections etc. Accepted all assumed working. 
@@ -577,8 +578,13 @@ Function IR1A_UpdatePorodFit(level, overwride)
 	
 	setDataFolder root:Packages:Irena_UnifFit
 
-	RemoveFromGraph /W=IR1_LogLogPlotU /Z FitLevel1Porod,FitLevel2Porod,FitLevel3Porod,FitLevel4Porod,FitLevel5Porod
-	RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z FitLevel1PorodIQ4,FitLevel2PorodIQ4,FitLevel3PorodIQ4,FitLevel4PorodIQ4,FitLevel5PorodIQ4
+	string WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
+	WvList = GrepList(WvList, "FitLevel.Porod" , 0, ","  )
+	Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
+
+	 WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
+	WvList = GrepList(WvList, "FitLevel.PorodIQ4" , 0, ","  )
+	Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
 
 	NVAR DisplayLocalFits
 	
@@ -639,9 +645,13 @@ Function IR1A_UpdateGuinierFit(level, overwride)
 	variable level, overwride
 	
 	setDataFolder root:Packages:Irena_UnifFit
+	string WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
+	WvList = GrepList(WvList, "FitLevel.Guinier" , 0, ","  )
+	Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
 
-	RemoveFromGraph /W=IR1_LogLogPlotU /Z FitLevel1Guinier,FitLevel2Guinier,FitLevel3Guinier,FitLevel4Guinier,FitLevel5Guinier
-	RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z FitLevel1GuinierIQ4,FitLevel2GuinierIQ4,FitLevel3GuinierIQ4,FitLevel4GuinierIQ4,FitLevel5GuinierIQ4
+	 WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
+	WvList = GrepList(WvList, "FitLevel.GuinierIQ4" , 0, ","  )
+	Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
 
 	NVAR DisplayLocalFits
 	
@@ -701,8 +711,13 @@ Function IR1A_UpdateUnifiedLevels(level, overwride)
 	
 	setDataFolder root:Packages:Irena_UnifFit
 
-	RemoveFromGraph /W=IR1_LogLogPlotU /Z Level1Unified,Level2Unified,Level3Unified,Level4Unified,Level5Unified
-	RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z Level1UnifiedIQ4,Level2UnifiedIQ4,Level3UnifiedIQ4,Level4UnifiedIQ4,Level5UnifiedIQ4
+	string WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
+	WvList = GrepList(WvList, "Level.Unified" , 0, ","  )
+	Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
+
+	 WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
+	WvList = GrepList(WvList, "Level.UnifiedIQ4" , 0, ","  )
+	Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
 
 	NVAR DisplayLocalFits
 	
