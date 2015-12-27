@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 fixed display of warning messages from teh tab when tab was not used. 
 //2.20 removed most Execute to speed up fro Igor 7. 
 //2.19 catch for slit smeared data if the Qmax is too small. It must be at least 3*slit length
 //2.18 modified to use rebinning routine from General procedures
@@ -1805,98 +1806,6 @@ Function IR1A_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR QDf=root:Packages:Irena_UnifFit:QWaveName
 		SVAR EDf=root:Packages:Irena_UnifFit:ErrorWaveName
 		SVAR Dtf=root:Packages:Irena_UnifFit:DataFolderName
-
-//	if (cmpstr(ctrlName,"SelectDataFolder")==0)
-//		//here we do what needs to be done when we select data folder
-//		Dtf=popStr
-//		PopupMenu IntensityDataName mode=1
-//		PopupMenu QvecDataName mode=1
-//		PopupMenu ErrorDataName mode=1
-//		if (UseIndra2Data)
-//			IntDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Int","Irena_UnifFit",(-1)*UseSMRData,1))
-//			QDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Qvec","Irena_UnifFit",(-1)*UseSMRData,1))
-//			EDf=stringFromList(0,IR1_ListIndraWavesForPopups("DSM_Error","Irena_UnifFit",(-1)*UseSMRData,1))
-//			Execute("PopupMenu IntensityDataName value=IR1_ListIndraWavesForPopups(\"DSM_Int\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
-//			Execute("PopupMenu QvecDataName value=IR1_ListIndraWavesForPopups(\"DSM_Qvec\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
-//			Execute("PopupMenu ErrorDataName value=IR1_ListIndraWavesForPopups(\"DSM_Error\",\"Irena_UnifFit\",(-1)*root:Packages:Irena_UnifFit:UseSMRData,1)")
-//		else
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName value="---"
-//			PopupMenu QvecDataName  value="---"
-//			PopupMenu ErrorDataName  value="---"
-//		endif
-//		if(UseQRSdata)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Irena_UnifFit",0,0)
-//			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Irena_UnifFit",0,0)
-//			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Irena_UnifFit",0,0)
-//		endif
-//		if(!UseQRSdata && !UseIndra2Data)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName  value="---;"+IR1_ListOfWaves("DSM_Int","Irena_UnifFit",0,0)
-//			PopupMenu QvecDataName  value="---;"+IR1_ListOfWaves("DSM_Qvec","Irena_UnifFit",0,0)
-//			PopupMenu ErrorDataName  value="---;"+IR1_ListOfWaves("DSM_Error","Irena_UnifFit",0,0)
-//		endif
-//		if (cmpstr(popStr,"---")==0)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu IntensityDataName  value="---"
-//			PopupMenu QvecDataName  value="---"
-//			PopupMenu ErrorDataName  value="---"
-//		endif
-//	endif
-//	
-//	if (cmpstr(ctrlName,"IntensityDataName")==0)
-//		//here goes what needs to be done, when we select this popup...
-//		if (cmpstr(popStr,"---")!=0)
-//			IntDf=popStr
-//			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-//				QDf="q"+popStr[1,inf]
-//				EDf="s"+popStr[1,inf]
-//				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Irena_UnifFit:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Irena_UnifFit\",0,0)")
-//				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Irena_UnifFit:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Irena_UnifFit\",0,0)")
-//			endif
-//		else
-//			IntDf=""
-//		endif
-//	endif
-//
-//	if (cmpstr(ctrlName,"QvecDataName")==0)
-//		//here goes what needs to be done, when we select this popup...	
-//		if (cmpstr(popStr,"---")!=0)
-//			QDf=popStr
-//			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-//				IntDf="r"+popStr[1,inf]
-//				EDf="s"+popStr[1,inf]
-//				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Irena_UnifFit:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Irena_UnifFit\",0,0)")
-//				Execute ("PopupMenu ErrorDataName mode=1, value=root:Packages:Irena_UnifFit:ErrorWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Error\",\"Irena_UnifFit\",0,0)")
-//			endif
-//		else
-//			QDf=""
-//		endif
-//	endif
-//	
-//	if (cmpstr(ctrlName,"ErrorDataName")==0)
-//		//here goes what needs to be done, when we select this popup...
-//		if (cmpstr(popStr,"---")!=0)
-//			EDf=popStr
-//			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-//				IntDf="r"+popStr[1,inf]
-//				QDf="q"+popStr[1,inf]
-//				Execute ("PopupMenu IntensityDataName mode=1, value=root:Packages:Irena_UnifFit:IntensityWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Int\",\"Irena_UnifFit\",0,0)")
-//				Execute ("PopupMenu QvecDataName mode=1, value=root:Packages:Irena_UnifFit:QWaveName+\";---;\"+IR1_ListOfWaves(\"DSM_Qvec\",\"Irena_UnifFit\",0,0)")
-//			endif
-//		else
-//			EDf=""
-//		endif
-//	endif
 	
 	if (cmpstr(ctrlName,"NumberOfLevels")==0)
 		//here goes what happens when we change number of distributions
@@ -2006,10 +1915,15 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 Function IR1A_CheckTabUnifiedLevel()
+		NVAR Nmbdist=root:Packages:Irena_UnifFit:NumberOfLevels
 		ControlInfo/W=IR1A_ControlPanel DistTabs
-		variable selectedTab = (V_Value+1)
-		//variable DisplayMe=(1-IR1A_CheckOneUnifiedLevel(selectedTab,0))
-		TitleBox PhysValidityWarning, win=IR1A_ControlPanel, disable=(IR1A_CheckOneUnifiedLevel(selectedTab,0)!=0)
+		if(V_Value<Nmbdist)		//tab with active level)
+			variable selectedTab = (V_Value+1)
+			//variable DisplayMe=(1-IR1A_CheckOneUnifiedLevel(selectedTab,0))
+			TitleBox PhysValidityWarning, win=IR1A_ControlPanel, disable=(IR1A_CheckOneUnifiedLevel(selectedTab,0)!=0)
+		else
+			TitleBox PhysValidityWarning, win=IR1A_ControlPanel, disable=1		//just hide this, no info needed. 
+		endif
 end
 
 ///******************************************************************************************

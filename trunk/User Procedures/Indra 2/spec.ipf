@@ -1728,7 +1728,7 @@ End
 
 
 
-Function/T TrimLeadingWhiteSpace(str)	// remove any leading white space from str
+threadsafe override  Function/T TrimLeadingWhiteSpace(str)	// remove any leading white space from str
 	String str
 	Variable i
 	i = -1

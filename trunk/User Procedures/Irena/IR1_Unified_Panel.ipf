@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.19
 Constant IR1AversionNumber=2.18
 
 
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.19 fixed Tab display of B which got confused under some circumstances... 
 //2.18 changed Surf/Volume ratio per Dale Schaefer's description.  
 //2.17 fixed Link B to G/Rg/P for Level 2, typo in the code. 
 //2.16 changed ETA step to be 1% of the value, Dale said 5% is too much, changed surf/VOl ratio to fi*(1-fi)*Surf/Vol ratio as correct per DWS. 
@@ -1031,7 +1032,7 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level1PHighLimit,disable= (tab!=0 || Nmbdist<1 || Level1FitP!=1|| UseNoLimits)
 	
 		variable DisplayMe= (tab!=0 || Nmbdist<1 || Level1MassFractal || Level1LinkB)
-		DisplayMe = (Level1LinkB>0 && tab==0) ? 2*DisplayMe : DisplayMe
+		DisplayMe = (Level1LinkB>0 && tab==0 && (Nmbdist>0)) ? 2*DisplayMe : DisplayMe
 		SetVariable Level1B,disable= (DisplayMe)
 		CheckBox Level1LinkB,disable= (tab!=0 || Nmbdist<1)
 		CheckBox Level1FitB,disable= (tab!=0 || Nmbdist<1 ||Level1MassFractal || Level1LinkB)
@@ -1098,7 +1099,7 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level2PHighLimit,disable= (tab!=1 || Nmbdist<2 || Level2FitP!=1 || UseNoLimits)
 	
 		DisplayMe= (tab!=1 || Nmbdist<2 || Level2MassFractal || Level2LinkB)
-		DisplayMe = (Level2LinkB>0 && tab==1) ? 2*DisplayMe : DisplayMe
+		DisplayMe = (Level2LinkB>0 && tab==1 && (Nmbdist>1)) ? 2*DisplayMe : DisplayMe
 		SetVariable Level2B,disable= (DisplayMe)
 		CheckBox Level2LinkB,disable= (tab!=1 || Nmbdist<2)
 		CheckBox Level2FitB,disable= (tab!=1 || Nmbdist<2 ||Level2MassFractal || Level2LinkB)
@@ -1174,7 +1175,7 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level3PHighLimit,disable= (tab!=2 || Nmbdist<3 || Level3FitP!=1 || UseNoLimits)
 	
 		DisplayMe= (tab!=2 || Nmbdist<3 || Level3MassFractal || Level3LinkB)
-		DisplayMe = (Level3LinkB>0 && tab==2) ? 2*DisplayMe : DisplayMe
+		DisplayMe = (Level3LinkB>0 && tab==2 && (Nmbdist>2)) ? 2*DisplayMe : DisplayMe
 		SetVariable Level3B,disable= (DisplayMe)
 		CheckBox Level3LinkB,disable= (tab!=2 || Nmbdist<3)
 		CheckBox Level3FitB,disable= (tab!=2 || Nmbdist<3 ||Level3MassFractal || Level3LinkB)
@@ -1250,7 +1251,7 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level4PHighLimit,disable= (tab!=3 || Nmbdist<4 || Level4FitP!=1 || UseNoLimits)
 	
 		DisplayMe= (tab!=3 || Nmbdist<4 || Level4MassFractal || Level4LinkB)
-		DisplayMe = (Level4LinkB>0 && tab==3) ? 2*DisplayMe : DisplayMe
+		DisplayMe = (Level4LinkB>0 && tab==3 && (Nmbdist>3)) ? 2*DisplayMe : DisplayMe
 		SetVariable Level4B,disable= (DisplayMe)
 		CheckBox Level4LinkB,disable= (tab!=3 || Nmbdist<4)
 		CheckBox Level4FitB,disable= (tab!=3 || Nmbdist<4 ||Level4MassFractal || Level4LinkB)
@@ -1325,7 +1326,7 @@ Function IR1A_TabPanelControl(name,tab)
 		SetVariable Level5PHighLimit,disable= (tab!=4 || Nmbdist<5 || Level5FitP!=1 || UseNoLimits)
 		
 		DisplayMe= (tab!=4 || Nmbdist<5 || Level5MassFractal || Level5LinkB)
-		DisplayMe = (Level5LinkB>0 && tab==4) ? 2*DisplayMe : DisplayMe
+		DisplayMe = (Level5LinkB>0 && tab==4 && (Nmbdist>4)) ? 2*DisplayMe : DisplayMe
 		SetVariable Level5B,disable= (DisplayMe)
 		CheckBox Level5LinkB,disable= (tab!=4 || Nmbdist<5)
 		CheckBox Level5FitB,disable= (tab!=4 || Nmbdist<5 ||Level5MassFractal || Level5LinkB)
