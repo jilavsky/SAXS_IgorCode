@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.02
+#pragma version=1.03
 constant IR3DversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.03 bug in merging routine where lookup of start of overlap of Int2 data was before Int2 started
 //1.02 FIxed bug when no pairs were found which threw error instead of message. 
 //1.01 Fixed bug in cursor handling and problems when data contained negative intensities.  
 //1.0 Data Merging tool first release version 
@@ -1589,7 +1590,7 @@ Function IR3D_MergeData(VaryQshift)
 	IN2G_RemoveNaNsFrom4Waves(TempInt2,TempQ2,TempErr2,TempdQ2)
 	
 	variable StartQp, EndQp
-	StartQp = BinarySearch(TempQ1, startQ )
+	StartQp = BinarySearch(TempQ1, startQ )+1
 	EndQp = BinarySearch(TempQ1, endQ )
 
 	Duplicate/O/Free/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
