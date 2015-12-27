@@ -3,6 +3,11 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.59
+Unified fit - GUI behavior improvements and minor bug fixes. 
+
+
+
 2.58 10/30/2015
 Verified to work on Igor 7 beta 1
 Removed Modeling I from the code and manual. This tool has been deprecated for few years now and it was removed to reduce code clutter. 
