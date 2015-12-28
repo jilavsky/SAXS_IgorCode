@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.02
+#pragma version=2.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,8 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 minor fix to avoid name collision with LaueGo
 //2.02 added license for ANL
-
 //2.01 update for Igor 6.20
 //2.0 updated for Nika 1.42
 
@@ -242,7 +242,7 @@ Function NI1_CalculateQdTTHwaves()
 	setDataFolder root:Packages:NI1_ImProcess:LineProfile:
 	
 		wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
-		make/O/N=(numpnts(profile)) qvector, TwoTheta, Dspacing
+		make/O/N=(numpnts(profile)) qvector, TwoTheta, DspacingWv
 		NVAR Wavelength=root:Packages:Convert2Dto1D:Wavelength
 		NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
 		NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
@@ -251,8 +251,8 @@ Function NI1_CalculateQdTTHwaves()
 		//	Qdistribution1D = ((4*pi)/Wavelength)*sin(0.5*Rdistribution1D/SampleToCCDDistance)
 		TwoTheta = 180/pi * asin(p*((PixelSizeX+PixelSizeY)/2) / SampleToCCDDistance)
 		// d = 0.5 * Lambda / sin(theta) = 2 * pi / Q    Q = 2pi/d
-		Dspacing = 0.5 * Wavelength /sin(TwoTheta * pi/360)
-		qvector = 2 *pi / Dspacing
+		DspacingWv = 0.5 * Wavelength /sin(TwoTheta * pi/360)
+		qvector = 2 *pi / DspacingWv
 	setDataFolder OldDf
 
 end
@@ -815,7 +815,7 @@ Function NI1_ImageLineProfileWindowProc(infoStr)
 			wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
 			wave qvector=root:Packages:NI1_ImProcess:LineProfile:qvector
 			wave TwoTheta=root:Packages:NI1_ImProcess:LineProfile:TwoTheta
-			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:Dspacing
+			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:DspacingWv
 
 	SVAR imageGraphName=root:Packages:NI1_ImProcess:LineProfile:imageGraphName
 	if( StrSearch(infoStr,"EVENT:activate",0) >= 0 )
@@ -908,7 +908,7 @@ Function NI1_UpdateLineProfileGraph()
 			wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
 			wave qvector=root:Packages:NI1_ImProcess:LineProfile:qvector
 			wave TwoTheta=root:Packages:NI1_ImProcess:LineProfile:TwoTheta
-			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:Dspacing
+			wave Dspacing=root:Packages:NI1_ImProcess:LineProfile:DspacingWv
 		if(cmpstr(imageGraphName,"SquareMapIntvsPixels")==0)
 			Button SaveCurrentLineout, disable=0, win=NI1_ImageLineProfileGraph
 			CheckBox DisplayPixles, disable=0, win=NI1_ImageLineProfileGraph

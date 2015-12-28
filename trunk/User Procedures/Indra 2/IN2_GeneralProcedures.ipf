@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.79
+#pragma version = 1.80
 
 
 //*************************************************************************\
@@ -7,6 +7,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
 //1.79 added IN2G_LegendTopGrphFldr(FontSize)
 //1.78 added Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 //       added IN2G_RemoveNaNsFrom7Waves
@@ -352,6 +353,33 @@
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IN2G_ConvertQtoD(Qval,wavelength)	//D is in A, Q in A^-1
+	variable Qval,wavelength
+	return 2*pi/Qval
+end
+Function IN2G_ConvertDtoQ(Dval,wavelength)		//D is in A, Q in A^-1
+	variable Dval,wavelength
+	return 2*pi/Dval
+end
+Function IN2G_ConvertTTHtoQ(TTH,wavelength)		//TTH is in degrees, Q in A^-1	
+	variable TTH,wavelength
+	//q = 4pi sin(theta)/lambda
+	return 4*pi*sin(TTH*pi/360)/wavelength
+end
+Function IN2G_ConvertQtoTTH(Qval,wavelength)		//TTH is in degrees, Q in A^-1
+	variable Qval,wavelength
+	return 114.592 * asin(Qval* wavelength / (4*pi))
+end
+Function IN2G_ConvertDtoTTH(Dval,wavelength)		//D is in A, TTH is degrees
+	variable Dval,wavelength
+	return 114.592 * asin((2 * pi / Dval)* wavelength / (4*pi))
+end
+Function IN2G_ConvertTTHtoD(TTH,wavelength)		//TTH is in degrees, D in A
+	variable TTH,wavelength
+	//q = 4pi sin(theta)/lambda
+	return wavelength/(2*sin(TTH*pi/360))
+end
+
 //*****************************************************************************************************************
 //*************************************************************************************************************************************
 // Calculates the experiment size and returns it in bytes
