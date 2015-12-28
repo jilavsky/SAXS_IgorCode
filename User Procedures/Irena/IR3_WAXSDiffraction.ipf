@@ -45,14 +45,12 @@ Proc IR3W_WAXSPanel()
 	NewPanel /K=1 /W=(2.25,43.25,550,800) as "Powder Diffraction/WAXS Fits"
 	DoWIndow/C IR3W_WAXSPanel
 	TitleBox MainTitle title="Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
-	TitleBox FakeLine1 title=" ",fixedSize=1,size={200,3},pos={290,130},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine2 title=" ",fixedSize=1,size={200,3},pos={290,365},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	DrawText 60,45,"Data selection"
+	TitleBox DataSelection title="Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
 	Checkbox UseIndra2Data, pos={10,50},size={76,14},title="USAXS", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseIndra2Data
 	checkbox UseQRSData, pos={120,50}, title="QRS(QIS)", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseQRSdata
 	PopupMenu StartFolderSelection,pos={10,70},size={180,15},proc=IR3W_PopMenuProc,title="Start fldr"
@@ -78,66 +76,34 @@ Proc IR3W_WAXSPanel()
 	Checkbox DisplayUncertainties, pos={280,80},size={76,14},title="Display Uncertainties", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayUncertainties
 
 
-	TitleBox Info1 title="MultiPeak Fit",pos={350,145},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
-	PopupMenu MPFInitializeFromSetMenu,pos={310,170},size={200,20},bodyWidth=190,title="Initialization:"
-	PopupMenu MPFInitializeFromSetMenu,mode=1,value= #"IR3W_InitMPF2FromMenuString()", popvalue=root:Packages:Irena:WAXS:MPF2InitFolder, proc=IR3W_PopMenuProc
-	Button MultiPeakFittingStart, pos={300,200}, size={200,20}, title="MultiPeak Fitting 2.0", proc=IR3W_WAXSButtonProc, help={"Open and configure MultiPeak 2.0 fitting."}
 
+	//TitleBox FakeLine1 title=" ",fixedSize=1,size={200,3},pos={290,130},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	//Data Tabs definition
+	TabControl AnalysisTabs,pos={265,135},size={280,400}
+	TabControl AnalysisTabs,tabLabel(0)="Peak Fit",tabLabel(1)="Diff. Lines"
+	TabControl AnalysisTabs proc=IR3W_PDF4TabProc
+//tab0
+	TitleBox Info1 title="MultiPeak Fit",pos={350,160},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	PopupMenu MPFInitializeFromSetMenu,pos={320,180},size={200,20},bodyWidth=190,title="Initialize:"
+	PopupMenu MPFInitializeFromSetMenu,mode=1,value= #"IR3W_InitMPF2FromMenuString()", popvalue=root:Packages:Irena:WAXS:MPF2InitFolder, proc=IR3W_PopMenuProc
+	Button MultiPeakFittingStart, pos={300,210}, size={200,20}, title="MultiPeak Fitting 2.0", proc=IR3W_WAXSButtonProc, help={"Open and configure MultiPeak 2.0 fitting."}
 	TitleBox Info2 title="Store results in :",pos={320,225},frame=0,fstyle=0, fixedSize=1,size={350,20},fSize=12
 	SetVariable MultiFitResultsFolder,pos={270,245},size={250,15}, noproc,title=" root:WAXSFitResults:"
 	Setvariable MultiFitResultsFolder, variable=root:Packages:Irena:WAXS:MultiFitResultsFolder
-
-	Button MultiPeakRecordFit, pos={270,275}, size={250,20}, title="Record MPF2 Fit Results", proc=IR3W_WAXSButtonProc, help={"Record current MPF2 resultsc for data with Multipeak 2.0."}
-	Button MultiPeakFitRange, pos={270,300}, size={250,20}, title="Fit+Record Range of data", proc=IR3W_WAXSButtonProc, help={"Fit Range fo data with Multipeak 2.0."}
-
+	Button MultiPeakRecordFit, pos={280,275}, size={250,20}, title="Record MPF2 Fit Results", proc=IR3W_WAXSButtonProc, help={"Record current MPF2 resultsc for data with Multipeak 2.0."}
+	Button MultiPeakFitRange, pos={280,300}, size={250,20}, title="Fit+Record Range of data", proc=IR3W_WAXSButtonProc, help={"Fit Range fo data with Multipeak 2.0."}
 	Button MultiPeakPlotTool, pos={300,335}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
-	
-
-	Button PDF4AddManually, pos={300,375}, size={200,20}, title="Add/Edit/Delete JCPDS/PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit/Remove manually card from JDCPS PDF tables"}
-
-	ListBox PDF4CardsSelection,pos={290,400},size={220,200}, mode=10
+//tab1	
+	TitleBox FakeLine2 title=" ",fixedSize=1,size={200,3},pos={290,365},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox Info2 title="Diffraction lines",pos={350,160},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	ListBox PDF4CardsSelection,pos={290,180},size={240,220}, mode=10
 	ListBox PDF4CardsSelection,listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	ListBox PDF4CardsSelection,selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	ListBox PDF4CardsSelection,proc=IR3W_PDF4ListBoxProc
 	ListBox PDF4CardsSelection colorWave=root:Packages:Irena:WAXS:ListOfPDF4DataColors
-
-//	PopupMenu SimpleModel,pos={280,175},size={180,20},fStyle=2,proc=IR3W_PopMenuProc,title="Model to fit : "
-//	PopupMenu SimpleModel,mode=1,popvalue=root:Packages:Irena:WAXS:ListOfSimpleModels,value= root:Packages:Irena:Irena:WAXSeModel
-
-//
-//
-
-//	//TextBox/C/N=text1/O=90/A=MC "Save Data", TextBox/C/N=text1/A=MC "S\rA\rV\rE\r\rD\rA\rT\rA"
-//
-//	Checkbox ProcessMerge, pos={520,50},size={76,14},title="Merge mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessMerge
-//	Checkbox ProcessMerge2, pos={520,70},size={76,14},title="Merge 2 mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessMerge2
-//
-//	Checkbox ProcessManually, pos={650,30},size={76,14},title="Process individually", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessManually
-//	Checkbox ProcessSequentially, pos={650,50},size={76,14},title="Process as sequence", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessSequentially
-//
-//	Checkbox AutosaveAfterProcessing, pos={780,30},size={76,14},title="Save Immediately", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing, disable=!root:Packages:Irena:SASDataMerging:ProcessManually
-//	Checkbox OverwriteExistingData, pos={780,50},size={76,14},title="Overwrite existing data", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:OverwriteExistingData
-//	TitleBox SavedDataMessage title="",fixedSize=1,size={100,17}, pos={780,70}, variable= root:Packages:Irena:SASDataMerging:SavedDataMessage
-//	TitleBox SavedDataMessage help={"Are the data saved?"}, fColor=(65535,16385,16385), frame=0, fSize=12,fstyle=1
-//
-//	TitleBox UserMessage title="",fixedSize=1,size={470,20}, pos={480,90}, variable= root:Packages:Irena:SASDataMerging:UserMessageString
-//	TitleBox UserMessage help={"This is what will happen"}
-//
-//		
-//	Button AutoScale,pos={520,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-//	Button MergeData,pos={640,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-//	Button MergeData2,pos={760,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge 2", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-
-//	Display /W=(521,10,1183,340) /HOST=# /N=LogLogDataDisplay
-//	SetActiveSubwindow ##
-//	Display /W=(521,350,1183,410) /HOST=# /N=ResidualDataDisplay
-//	SetActiveSubwindow ##
-//	Display /W=(521,420,1183,750) /HOST=# /N=LinearizedDataDisplay
-//	SetActiveSubwindow ##
-
-//	SetVariable DataFolderName1,pos={550,625},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName1, title="Data 1:       ", disable=2
-//	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:       ", disable=2
-//	SetVariable NewDataFolderName,pos={550,659},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:NewDataFolderName, title="Merged Data: "
+	Button PDF4AddManually, pos={300,425}, size={200,20}, title="Add/Edit/Delete JCPDS/PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit/Remove manually card, e.g. type from JCPDS PDF2 or 4 cards"}
+	Button PDF4AddFromLaueGo, pos={300,450}, size={200,20}, title="Calculate PDF card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
+	Button PDF4UpdateList, pos={300,475}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
 
 	DrawText 4,680,"Double click to add data to graph."
 	DrawText 4,693,"Shift-click to select range of data."
@@ -148,7 +114,39 @@ Proc IR3W_WAXSPanel()
 	
 	Execute ("IR3W_ModifyPanelControls()")
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 
+Function IR3W_PDF4TabProc(tca) : TabControl
+	STRUCT WMTabControlAction &tca
+
+	switch( tca.eventCode )
+		case 2: // mouse up
+			Variable tab = tca.tab
+			//tab0
+				TitleBox Info1 title="MultiPeak Fit",disable=(tab!=0)
+				PopupMenu MPFInitializeFromSetMenu,disable=(tab!=0)
+				Button MultiPeakFittingStart,disable=(tab!=0)
+				TitleBox Info2 title="Store results in :",disable=(tab!=0)
+				SetVariable MultiFitResultsFolder,disable=(tab!=0)
+				Button MultiPeakRecordFit,disable=(tab!=0)
+				Button MultiPeakFitRange,disable=(tab!=0)
+				Button MultiPeakPlotTool,disable=(tab!=0)
+			//tab1	
+				TitleBox FakeLine2 ,disable=(tab!=1)
+				TitleBox Info2, disable=(tab!=1)
+				ListBox PDF4CardsSelection, disable=(tab!=1)
+				Button PDF4AddManually, disable=(tab!=1)
+				Button PDF4AddFromLaueGo, disable=(tab!=1)
+				Button PDF4UpdateList, disable=(tab!=1)
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -160,6 +158,11 @@ Function IR3W_ModifyPanelControls()
 	else
 		PopupMenu MPFInitializeFromSetMenu, win=IR3W_WAXSPanel, disable=2
 	endif
+	ControlInfo/W=IR3W_WAXSPanel AnalysisTabs
+	STRUCT WMTabControlAction tca
+	tca.eventCode = 2
+	tca.tab = V_Value
+	IR3W_PDF4TabProc(tca)
 
 end
 //**********************************************************************************************************
@@ -875,15 +878,6 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-Function IR3W_ConvertTTHdataTod(TTH,wavelength)
-	variable TTH,wavelength
-	//q = 4pi sin(theta)/lambda
-	//theta = (q * lamda / 4pi) * 180/pi [deg]
-	//asin(q * lambda /4pi) = theta
-	//d ~ 2*pi/Q
-
-	return  wavelength  / (2*sin(pi*TTH/360))	
-end
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1149,6 +1143,13 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				IR3W_PDF4AddManually()
 				IR3W_UpdatePDF4OfAvailFiles()
 			endif
+			if(stringmatch(ba.ctrlname,"PDF4AddFromLaueGo"))
+				IR3W_PDF4AddFromLaueGo()
+			endif
+			if(stringmatch(ba.ctrlname,"PDF4UpdateList"))
+				IR3W_UpdatePDF4OfAvailFiles()
+			endif
+
 
 
 			break
@@ -1199,7 +1200,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
- function IR3W_SaveMultiPeakResults()
+static function IR3W_SaveMultiPeakResults()
  
 	NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
  	string Oldf=GetDataFolder(1)
@@ -1261,15 +1262,43 @@ end
 		DataFldrNameStr = StringFromList(ItemsInList(DataFolderName,":")-1, DataFolderName,  ":")
 		DataFldrNameStr = ReplaceString("'", DataFldrNameStr, "")
 		NewDataFolder/O/S $(DataFldrNameStr)
-		Duplicate/O MPF2_ResultsListWave, WAXS_ResultsListWave
+		Duplicate/O/T MPF2_ResultsListWave, WAXS_ResultsListWave
 		Duplicate/O MPF2_ResultsListTitles, WAXS_ResultsListTitles
 		Duplicate/O MMPF2_BSubData, WAXS_BckgSubtractedData
 		Duplicate/O MMPF2_FitToData, WAXS_FitToData		
 		Duplicate/O  MMPF2_FitToData, WAXS_FitToData_d
 		Wave WAXS_FitToData_d=WAXS_FitToData_d
-		WAXS_FitToData_d[] = IR3W_ConvertTTHdataTod(pnt2x(MMPF2_FitToData, p ),Wavelength)
+		WAXS_FitToData_d[] = IN2G_ConvertTTHtoD(pnt2x(MMPF2_FitToData, p ),Wavelength)
+		//add indexes for users to figure this out...
+		Wave/T WAXS_ResultsListWave
+		SetDimLabel 1,0,Index,WAXS_ResultsListWave
+		SetDimLabel 1,1,PeakType,WAXS_ResultsListWave
+		SetDimLabel 1,2,Pos_d,WAXS_ResultsListWave
+		SetDimLabel 1,3,Pos_d_Uncert,WAXS_ResultsListWave
+		SetDimLabel 1,4,Amplitude,WAXS_ResultsListWave
+		SetDimLabel 1,5,Ampl_uncert,WAXS_ResultsListWave
+		SetDimLabel 1,6,Area,WAXS_ResultsListWave
+		SetDimLabel 1,7,Area_uncert,WAXS_ResultsListWave
+		SetDimLabel 1,8,FWHM_TTH,WAXS_ResultsListWave
+		SetDimLabel 1,9,FWHM_Uncert,WAXS_ResultsListWave
+		SetDimLabel 1,10,Pos_TTH,WAXS_ResultsListWave
+		SetDimLabel 1,11,PosTTH_Uncert,WAXS_ResultsListWave
+		SetDimLabel 1,12,Widh_TTH,WAXS_ResultsListWave
+		SetDimLabel 1,13,WidthTTH_Uncert,WAXS_ResultsListWave
+		SetDimLabel 1,14,Height,WAXS_ResultsListWave
+		SetDimLabel 1,15,Height_Uncert,WAXS_ResultsListWave
+		WAXS_ResultsListWave[][2] = num2str(IN2G_ConvertTTHtoD(str2num(WAXS_ResultsListWave[p][10]),wavelength)	)
+		variable tmpVal, tmpWidth, Val1, val2
+		For(i=0;i<(DimSize(WAXS_ResultsListWave,0));i+=1)
+				tmpVal = str2num(WAXS_ResultsListWave[i][10])
+				tmpWidth= str2num((WAXS_ResultsListWave[i][11])[4,inf])
+				Val1 = IN2G_ConvertTTHtoD((tmpVal-tmpWidth),wavelength)
+				Val2 = IN2G_ConvertTTHtoD((tmpVal+tmpWidth),wavelength)
+				WAXS_ResultsListWave[i][4] = "+/- "+num2str((Val1-Val2)/2)
+		endfor
 
-			For(i=0;i<dimsize(MPF2_ResultsListWave,0);i+=1)
+		//separate peaks... 
+		For(i=0;i<dimsize(MPF2_ResultsListWave,0);i+=1)
 			Wave/Z PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
 			if(WaveExists(PeakData))
 				Wave PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
@@ -1278,7 +1307,7 @@ end
 				Duplicate/O  PeakData, $("Peak "+num2str(i))
 				Duplicate/O  PeakData, $("Peak "+num2str(i)+"_d")
 				Wave NewDwave=$("Peak "+num2str(i)+"_d")
-				NewDwave[] = IR3W_ConvertTTHdataTod(pnt2x(PeakData, p ),Wavelength)
+				NewDwave[] = IN2G_ConvertTTHtoD(pnt2x(PeakData, p ),Wavelength)
 				Duplicate/O  PeakDataCoefs, $("Peak "+num2str(i)+" Coefs")
 				Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")
 			endif
@@ -1813,15 +1842,15 @@ Function IR3W_PDF4AddManually()
 	if(V_Flag)
 		DoWIndow/K JCPDS_Input
 	endif
-	NewDataFolder/O/S root:JCPDS_PDF4
+	NewDataFolder/O/S root:WAXS_PDF
 	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
 	DeleteCardName="---"
 	OldCardName = "---"
 	NewCardNumber = "11-1111"
 	NewCardName="Unknown"
 	NewCardNote =""
-	Prompt DeleteCardName, "Delete card?", popup "---;"+IN2G_CreateListOfItemsInFolder("root:JCPDS_PDF4:", 2)
-	Prompt OldCardName, "Select existing card to edit", popup "---;"+IN2G_CreateListOfItemsInFolder("root:JCPDS_PDF4:", 2)
+	Prompt DeleteCardName, "Delete card?", popup "---;"+IN2G_CreateListOfItemsInFolder("root:WAXS_PDF:", 2)
+	Prompt OldCardName, "Select existing card to edit", popup "---;"+IN2G_CreateListOfItemsInFolder("root:WAXS_PDF:", 2)
 	Prompt NewCardNumber, "Enter new card number, e.g. 46-1212"
 	Prompt NewCardName, "Enter new card name, e.g. Corundum"
 	Prompt NewCardNote, "Enter new card note, whatever you may need later"
@@ -1837,22 +1866,28 @@ Function IR3W_PDF4AddManually()
 			DoAlert 0, "Not unique name"	
 			return 0
 		endif
-		make/O/N=(50,5) $(NewCardFullName)
+		make/O/N=(50,8) $(NewCardFullName)
+		make/O/T/N=(50) $(NewCardFullName+"_hklStr")
 		Wave NewCard= $(NewCardFullName)
 		SetDimLabel 1,0,d_A,NewCard
-		SetDimLabel 1,1,Intensity,NewCard
-		SetDimLabel 1,2,h,NewCard
-		SetDimLabel 1,3,k,NewCard
-		SetDimLabel 1,4,l,NewCard
+		SetDimLabel 1,1,h,NewCard
+		SetDimLabel 1,2,k,NewCard
+		SetDimLabel 1,3,l,NewCard
+		SetDimLabel 1,4,theta,NewCard
+		SetDimLabel 1,5,F2,NewCard
+		SetDimLabel 1,6,Intensity,NewCard
+		SetDimLabel 1,7,mult,NewCard
 	elseif(!stringmatch(OldCardName,"---")&&stringmatch(DeleteCardName,"---"))
 		NewCardFullName=OldCardName
 		Wave NewCard= $(NewCardFullName)
 	elseif(stringmatch(OldCardName,"---")&&!stringmatch(DeleteCardName,"---"))
 		NewCardFullName=DeleteCardName
 		Wave NewCard= $(NewCardFullName)
+		Wave NewCardhkl= $(NewCardFullName+"_hklStr")
 		DoALert/T="Check deleting card" 1, "Really delete "+DeleteCardName+" card?" 
 		if(V_Flag)
 			KillWaves NewCard
+			KillWaves NewCardhkl
 			setDataFolder OldDf
 			return 0
 		endif
@@ -1873,9 +1908,14 @@ end
 Function IR3W_UpdatePDF4OfAvailFiles()
 	string OldDF=GetDataFolder(1)
 	string AvailableCards=""
-	if(DataFolderExists("root:JCPDS_PDF4" ))
-		setDataFolder root:JCPDS_PDF4
-		AvailableCards=ReplaceString(";\r", stringfromList(1,DataFolderDir(2 ),":"), "") +","
+	string AvailableCardsHKL=""
+	if(DataFolderExists("root:WAXS_PDF" ))
+		setDataFolder root:WAXS_PDF
+		//AvailableCards=ReplaceString("\n", stringfromList(1,DataFolderDir(2),":"), "")
+		AvailableCards=ReplaceString("\r", stringfromList(1,DataFolderDir(2),":"), "")
+		AvailableCards=ReplaceString(";", stringfromList(1,DataFolderDir(2),":"), "")
+		AvailableCardsHKL = GrepList(AvailableCards, "_hklStr",0,",")
+		AvailableCards = GrepList(AvailableCards, "^((?!hklStr).)*$",0,",")
 	endif
 	string TempStr
 
@@ -1897,6 +1937,22 @@ Function IR3W_UpdatePDF4OfAvailFiles()
 	endfor
 	SelectionOfAvailableData[][][0] = 0x20
 	SelectionOfAvailableData[][][1] = p
+
+	For(i=0;i<ItemsInList(AvailableCards , ",");i+=1)
+		TempStr =  StringFromList(i, AvailableCards , ",")
+		//let's also check that hklStr waves are correct...
+		Wave DtaWv=$("root:WAXS_PDF:"+possiblyquotename(TempStr))
+		Wave/T/Z DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+		if(!WaveExists(DtaWvHklDStr))
+			make/O/T/N=(DimSize(DtaWv, 0 )) $("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+			Wave/T DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+		endif
+		if(strlen(DtaWvHklDStr[0])<1)	//empty wave, not filled...
+			For(j=0;j<numpnts(DtaWvHklDStr);j+=1)
+				DtaWvHklDStr[j] = "("+num2str(DtaWv[j][1])+num2str(DtaWv[j][2])+num2str(DtaWv[j][3])+")"
+			endfor	
+		endif
+	endfor
 	setDataFolder OldDF
 end
 
@@ -1991,20 +2047,30 @@ end
 Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	string cardname
 	variable V_Red, V_Green, V_Blue
-	
 	string OldDf=GetDataFolder(1)
 	NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
-	wave TheCard=$("root:JCPDS_PDF4:"+possiblyquotename(CardName))
+	wave TheCard=$("root:WAXS_PDF:"+possiblyquotename(CardName))
+	wave/T TheCardHKL=$("root:WAXS_PDF:"+possiblyquotename(CardName[0,23]+"_hklStr"))
 	NewDataFolder/O/S root:Packages:Irena:WAXSTemp
 	Duplicate/O TheCard, $(CardName)
+	Duplicate/O/T TheCardHKL, $(CardName[0,23]+"_hklStr")
 	Wave TheCardNew = $((CardName))
-	TheCardNew[][0] =   114.592 * asin((2 * pi / TheCard[p][0])* wavelength / (4*pi))
-	SetDimLabel 1,0,TTh,TheCardNew
+	string DimensionUnit=GetDimLabel(TheCardNew, 1, 0 )
+	if(stringmatch(DimensionUnit,"d_A"))		//manually inserted, dimension is in d and A
+		TheCardNew[][4] =   114.592 * asin((2 * pi / TheCard[p][0])* wavelength / (4*pi))
+	else		//other choice is "Q_nm" from LaueGo
+		TheCardNew[][4] =  114.592 * asin((TheCard[p][0]*wavelength/125.664 ))		//this is conversion to A and from Q
+		//10*4*pi = 
+	endif
+	SetDimLabel 1,4,TwoTheta,TheCardNew
 	Wave OriginalDataIntWave = root:Packages:Irena:WAXS:OriginalDataIntWave
+	make/Free/N=(DimSize(TheCard, 0)) TmpWv
+	TmpWv = TheCard[p][6]
 	//wavestats/Q OriginalDataIntWave
+	variable MaxInt=WaveMax(TmpWv)
 	GetAxis /W=IR3W_WAXSMainGraph /Q left
-	TheCardNew[][1] = V_min + TheCardNew[p][1] * (V_Max-V_min)/100
-	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][1] vs TheCardNew[][0]
+	TheCardNew[][6] = V_min + TheCard[p][6] * (V_Max-V_min)/MaxInt
+	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][6] vs TheCardNew[][4]
 	string WvName=possiblyquotename(NameOfWave(TheCardNew ))
 	ModifyGraph mode($(WvName))=1,usePlusRGB($(WvName))=1, lsize($(WvName))=3
 	ModifyGraph plusRGB($(WvName))=(V_Red, V_Green, V_Blue)	
@@ -2015,3 +2081,279 @@ end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
+
+Function IR3W_PDF4AddFromLaueGo()
+	String OldDf=GetDataFolder(1)
+	NewDataFolder/O/S root:WAXS_PDF 
+	
+	DoWindow LatticeSet
+	if(V_Flag)		//already opened...
+		DoWIndow/F LatticeSet
+	else				//no window, let/s open it.
+		variable isLaueGoLoaded = IR3W_CheckOrLoadForLaueGo()
+		if(isLaueGoLoaded<1)
+			setDataFolder OldDf
+			return 0
+		endif
+	endif
+end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+static Function IR3W_CheckOrLoadForLaueGo()
+	if(exists("MakeLatticeParametersPanel"))		//aleready loaded...	
+		Execute "MakeLatticeParametersPanel(\"\")"
+		return 1
+	elseif(exists("microMenuShowN")==6)			//one of LaueGoFirst.ipf package functions exists, so LaueGoFirst.ipf is loaded, should be easy to do...
+			Execute/P "INSERTINCLUDE  \"LatticeSym\", version>=3.77";Execute/P "COMPILEPROCEDURES ";Execute/P "InitLatticeSymPackage(showPanel=1)"
+			return 1
+	else		//not included yet, need to find, if it exists or give instructions...
+		IR3W_LaueGoProgressPanelF() 
+		IR3W_ListIgorProcFiles()
+		IR3W_ListUserProcFiles()
+		Wave/T FileNames = root:Packages:UseProcedureFiles:FileNames
+		make/FREE/T/N=0 TestedNames
+		//string MatchedList 
+		Grep/E="LaueGoFirst" FileNames as TestedNames
+		KillDataFolder root:Packages:UseProcedureFiles:
+		DoWIndow/K IR3W_LaueGoProgressPanel
+		
+		if(numpnts(TestedNames)>0)
+			//found the package, assume LaueGo can be loaded. This may still fail, but I have not better way to check here. 
+			Execute/P "INSERTINCLUDE  \"LatticeSym\", version>=3.77";Execute/P "COMPILEPROCEDURES ";Execute/P "InitLatticeSymPackage(showPanel=1)"
+			return 1
+		else
+			DoAlert 0, "LaueGo not available. Go to http://sector34.xray.aps.anl.gov/~tischler/ and download LaueGo_install.ipf. Install LaueGo using this file and come back to this exeriment. "
+			saveExperiment
+			return 0
+		endif
+	endif
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//********
+Function IR3W_LaueGoProgressPanelF() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(593,358,1039,435) as "Checking for LaueGo Presence"
+	DoWindow/C IR3W_LaueGoProgressPanel
+	SetDrawLayer UserBack
+	SetDrawEnv fstyle= 3,textrgb= (0,0,65535)
+	DrawText 21,28,"\\Z18Checking for presence of LayeGo Package"
+	DrawText 30,57,"\\Z18 . . .     working   ..."
+EndMacro
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//********
+static Function IR3W_ListIgorProcFiles()
+	GetFileFolderInfo/Q/Z/P=Igor "Igor Procedures"	
+	if(V_Flag==0)
+		IR3W_ListProcFiles(S_Path,1 )
+	endif
+	GetFileFolderInfo/Q/Z IR3W_GetIgorUserFilesPath()+"Igor Procedures:"
+	if(V_Flag==0)
+		IR3W_ListProcFiles(IR3W_GetIgorUserFilesPath()+"Igor Procedures:",0)
+	endif
+	KillPath/Z tempPath
+end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//********
+static Function IR3W_ListUserProcFiles()
+	GetFileFolderInfo/Q/Z/P=Igor "User Procedures"	
+	if(V_Flag==0)
+		IR3W_ListProcFiles(S_Path,1)
+	endif
+	String path
+	//HR Create path variable for easier debugging
+	path = IR3W_GetIgorUserFilesPath()				//HR This is needed because of a bug in SpecialDirPath prior to 6.20B03.
+	path += "User Procedures:"	
+	GetFileFolderInfo/Q/Z (path)	
+	if(V_Flag==0)
+		IR3W_ListProcFiles(path,0)	//HR Reuse path variable
+	endif
+
+	KillPath/Z tempPath
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//********
+static Function/S IR3W_GetIgorUserFilesPath()
+	// This should be a Macintosh path but, because of a bug prior to Igor Pro 6.20B03
+	// it may be a Windows path.
+	String path = SpecialDirPath("Igor Pro User Files", 0, 0, 0)
+	path = ParseFilePath(5, path, ":", 0, 0)
+	return path
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+static Function IR3W_ListProcFiles(PathStr, resetWaves)
+	string PathStr
+	variable resetWaves
+	
+	String abortMessage	//HR Used if we have to abort because of an unexpected error
+	
+	string OldDf=GetDataFolder(1)
+	//create location for the results waves...
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:UseProcedureFiles
+	//if this is top call to the routine we need to wipe out the waves so we remove old junk
+	string CurFncName=GetRTStackInfo(1)
+	string CallingFncName=GetRTStackInfo(2)
+	variable runningTopLevel=0
+	if(!stringmatch(CurFncName,CallingFncName))
+		runningTopLevel=1
+	endif
+	if(resetWaves)
+			Make/O/N=0/T FileNames		
+			Make/O/N=0/T PathToFiles
+			Make/O/N=0 FileVersions
+	endif
+	
+	
+	//if this was first call, now the waves are gone.
+	//and now we need to create the output waves
+	Wave/Z/T FileNames
+	Wave/Z/T PathToFiles
+	Wave/Z FIleVersions
+	If(!WaveExists(FileNames) || !WaveExists(PathToFiles) || !WaveExists(FIleVersions))
+		Make/O/T/N=0 FileNames, PathToFIles
+		Make/O/N=0 FileVersions
+		Wave/T FileNames
+		Wave/T PathToFiles
+		Wave FileVersions
+		//I am not sure if we really need all of those declarations, but, well, it should not hurt...
+	endif 
+	
+	//this is temporary path to the place we are looking into now...  
+	NewPath/Q/O tempPath, PathStr
+	if (V_flag != 0)		//HR Add error checking to prevent infinite loop
+		sprintf abortMessage, "Unexpected error creating a symbolic path pointing to \"%s\"", PathStr
+		Print abortMessage	// To make debugging easier
+		Abort abortMessage
+	endif
+
+	//list al items in this path
+	string ItemsInTheFolder= IndexedFile(tempPath,-1,"????")+IndexedDir(tempPath, -1, 0 )
+	
+	//HR If there is a shortcut in "Igor Procedures", ItemsInTheFolder will include something like "HDF5 Browser.ipf.lnk". Windows shortcuts are .lnk files.	
+	
+	//remove all . files. 
+	ItemsInTheFolder = GrepList(ItemsInTheFolder, "^\." ,1)
+	//Now we removed all junk files on Macs (starting with .)
+	//now lets check what each of these files are and add to the right lists or follow...
+	variable i, imax=ItemsInList(ItemsInTheFolder)
+	string tempFileName, tempScraptext, tempPathStr
+	variable IamOnMac, isItXOP
+	if(stringmatch(IgorInfo(2),"Windows"))
+		IamOnMac=0
+	else
+		IamOnMac=1
+	endif
+	For(i=0;i<imax;i+=1)
+		tempFileName = stringfromlist(i,ItemsInTheFolder)
+		GetFileFolderInfo/Z/Q/P=tempPath tempFileName
+		isItXOP = IamOnMac * stringmatch(tempFileName, "*xop*" )
+		
+		if(V_isAliasShortcut)
+			//HR If tempFileName is "HDF5 Browser.ipf.lnk", or any other shortcut to a file, S_aliasPath is a path to a file, not a folder.
+			//HR Thus the "NewPath tempPath" command will fail.
+			//HR Thus tempPath will retain its old value, causing you to recurse the same folder as before, resulting in an infinite loop.
+			
+			//is alias, need to follow and look further. Use recursion...
+			if(strlen(S_aliasPath)>3)		//in case user has stale alias, S_aliasPath has 0 length. Need to skip this pathological case. 
+				//HR Recurse only if S_aliasPath points to a folder. I don't really know what I'm doing here but this seems like it will prevent the infinite loop.
+				GetFileFolderInfo/Z/Q/P=tempPath S_aliasPath	
+				isItXOP = IamOnMac * stringmatch(S_aliasPath, "*xop*" )
+				if (V_flag==0 && V_isFolder&&!isItXOP)		//this is folder, so all items in the folder are included... Except XOP is folder too... 
+					IR3W_ListProcFiles(S_aliasPath, 0)
+				elseif(V_flag==0 && (!V_isFolder || isItXOP))	//this is link to file. Need to include the info on the file...
+					//*************
+					Redimension/N=(numpnts(FileNames)+1) FileNames, PathToFiles,FileVersions
+					tempFileName =stringFromList(ItemsInList(S_aliasPath,":")-1, S_aliasPath,":")
+					tempPathStr = RemoveFromList(tempFileName, S_aliasPath,":")
+					FileNames[numpnts(FileNames)-1] = tempFileName
+					PathToFiles[numpnts(FileNames)-1] = tempPathStr
+					//try to get version from #pragma version = ... This seems to be the most robust way I found...
+					NewPath/Q/O tempPath, tempPathStr
+					if(stringmatch(tempFileName, "*.ipf"))
+						Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+						sleep/s (0.02)
+						tempScraptext = GetScrapText()
+						if(strlen(tempScraptext)>10)		//found line with #pragma version"
+							tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
+							tempScraptext = replaceString("version",tempScraptext,"")		//remove version
+							tempScraptext = replaceString("=",tempScraptext,"")			//remove =
+							tempScraptext = replaceString("\t",tempScraptext,"  ")			//remove optional tabulators, some actually use them. 
+							tempScraptext = removeending(tempScraptext," \r")			//remove optional tabulators, some actually use them. 
+							//forget about the comments behind the text. 
+		                                       //str2num is actually quite clever in this and converts start of the string which makes sense. 
+							FileVersions[numpnts(FileNames)-1]=str2num(tempScraptext)
+						else             //no version found, set to NaN
+							FileVersions[numpnts(FileNames)-1]=NaN
+						endif
+					else                    //no version for non-ipf files
+						FileVersions[numpnts(FileNames)-1]=NaN
+					endif
+				//************
+
+
+				endif
+			endif
+			//and now when we got back, fix the path definition to previous or all will crash...
+			NewPath/Q/O tempPath, PathStr
+			if (V_flag != 0)		//HR Add error checking to prevent infinite loop
+				sprintf abortMessage, "Unexpected error creating a symbolic path pointing to \"%s\"", PathStr
+				Print abortMessage	// To make debugging easier
+				Abort abortMessage
+			endif
+		elseif(V_isFolder&&!isItXOP)	
+			//is folder, need to follow into it. Use recursion.
+			IR3W_ListProcFiles(PathStr+tempFileName+":", 0)
+			//and fix the path back or all will fail...
+			NewPath/Q/O tempPath, PathStr
+			if (V_flag != 0)		//HR Add error checking to prevent infinite loop
+				sprintf abortMessage, "Unexpected error creating a symbolic path pointing to \"%s\"", PathStr
+				Print abortMessage	// To make debugging easier
+				Abort abortMessage
+			endif
+		elseif(V_isFile||isItXOP)
+			//this is real file. Store information as needed. 
+			Redimension/N=(numpnts(FileNames)+1) FileNames, PathToFiles,FileVersions
+			FileNames[numpnts(FileNames)-1] = tempFileName
+			PathToFiles[numpnts(FileNames)-1] = PathStr
+			//try to get version from #pragma version = ... This seems to be the most robust way I found...
+			if(stringmatch(tempFileName, "*.ipf"))
+				Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+				sleep/s(0.02)
+				tempScraptext = GetScrapText()
+				if(strlen(tempScraptext)>10)		//found line with #pragma version"
+					tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
+					tempScraptext = replaceString("version",tempScraptext,"")		//remove version
+					tempScraptext = replaceString("=",tempScraptext,"")			//remove =
+					tempScraptext = replaceString("\t",tempScraptext,"  ")			//remove optional tabulators, some actually use them. 
+					//forget about the comments behind the text. 
+                                       //str2num is actually quite clever in this and converts start of the string which makes sense. 
+					FileVersions[numpnts(FileNames)-1]=str2num(tempScraptext)
+				else             //no version found, set to NaN
+					FileVersions[numpnts(FileNames)-1]=NaN
+				endif
+			else                    //no version for non-ipf files
+				FileVersions[numpnts(FileNames)-1]=NaN
+			endif
+		endif
+	endfor 
+	setDataFolder OldDf
+end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
