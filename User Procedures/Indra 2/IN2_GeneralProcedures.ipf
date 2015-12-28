@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
+//     also added InsertSUbwindow to GraphMarquee and Color Traces to Graph menu 
 //1.79 added IN2G_LegendTopGrphFldr(FontSize)
 //1.78 added Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 //       added IN2G_RemoveNaNsFrom7Waves
@@ -351,6 +352,92 @@
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Menu "Macros"
+	"Color waves.../1", IN2G_ColorTraces() //Ctrl+1 
+End
+
+Menu "GraphMarquee"
+       "Insert subwindow", IN2G_CreateSubwindowAtMarqee()
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+ 
+//Macro IN2G_ColorWaves()
+//	Variable rev = 1
+//	String colorTable = "RainbowCycle"
+//	IN2G_ColorTraces(rev, colorTable)
+//End
+// 
+Function IN2G_ColorTraces( )
+//% V1.5
+	Variable rev = 1
+	String colorTable = "RainbowCycle"
+ 
+	String list = TraceNameList( "", ";", 1 )
+	Variable numItems = ItemsInList( list )
+	if ( numItems == 0 )
+		return 0
+	endif
+ 
+	ColorTab2Wave $colorTable
+	Wave M_colors	
+ 
+	Variable index, traceindex
+	for( index = 0; index < numItems; index += 1 )			
+		Variable row = ( index/numItems )*DimSize( M_Colors, 0 )
+		traceindex = ( rev == 0 ? index : numItems - index )
+		Variable red = M_Colors[ row ][ 0 ], green = M_Colors[ row ][ 1 ], blue = M_Colors[ row ][ 2 ]
+		ModifyGraph/Z rgb[ traceindex ] = ( red, green, blue )
+	endfor
+ 
+	KillWaves/Z M_colors
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IN2G_CreateSubwindowAtMarqee()
+       GetMarquee/K
+       Variable left= V_left, right= V_right, top= V_top, bottom= V_bottom
+
+       GetWindow kwTopWin, gsize
+       String slashw
+       sprintf slashw,"/W=(%g,%g,%g,%g)",left/V_right,top/V_bottom,right/V_right,bottom/V_bottom
+
+       String wName
+       Prompt wName,"Graph or table to insert",popup, WinList("*", ";","WIN:3")
+       DoPrompt "pick a window",wName
+       if( V_Flag )
+               return 0
+       endif
+
+       String rm= WinRecreation(wName,0)
+       Variable swpos= StrSearch(rm,"/W",0)
+       Variable swend= StrSearch(rm,")",swpos)
+
+       rm[swpos,swend]="/HOST=#"+slashw
+
+       // here we try to insert a return before stuff that doesn't apply to the inset gets executed
+       Variable i,quitpos= -1
+       String quitstrs= "ShowInfo;ShowTools;ControlBar;NewPanel"
+       for(i=0;;i+=1)
+               String quitstr= StringFromList(i,quitstrs)
+               if( strlen(quitstr) == 0 )
+                       break
+               endif
+               quitpos=  StrSearch(rm,quitstr,0)
+               if( quitpos != -1 )
+                       break;
+               endif
+       endfor
+       if( quitpos != -1 )
+               rm[quitpos]= "return;"
+       endif
+       Execute rm
+end
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IN2G_ConvertQtoD(Qval,wavelength)	//D is in A, Q in A^-1
