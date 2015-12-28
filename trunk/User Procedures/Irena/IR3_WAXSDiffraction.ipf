@@ -86,13 +86,13 @@ Proc IR3W_WAXSPanel()
 	TitleBox Info1 title="MultiPeak Fit",pos={350,160},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
 	PopupMenu MPFInitializeFromSetMenu,pos={320,180},size={200,20},bodyWidth=190,title="Initialize:"
 	PopupMenu MPFInitializeFromSetMenu,mode=1,value= #"IR3W_InitMPF2FromMenuString()", popvalue=root:Packages:Irena:WAXS:MPF2InitFolder, proc=IR3W_PopMenuProc
-	Button MultiPeakFittingStart, pos={300,210}, size={200,20}, title="MultiPeak Fitting 2.0", proc=IR3W_WAXSButtonProc, help={"Open and configure MultiPeak 2.0 fitting."}
+	Button MultiPeakFittingStart, pos={300,210}, size={200,20}, title="Start MultiPeak Fitting 2.0", proc=IR3W_WAXSButtonProc, help={"Open and configure MultiPeak 2.0 fitting."}
 	TitleBox Info2 title="Store results in :",pos={320,225},frame=0,fstyle=0, fixedSize=1,size={350,20},fSize=12
 	SetVariable MultiFitResultsFolder,pos={270,245},size={250,15}, noproc,title=" root:WAXSFitResults:"
 	Setvariable MultiFitResultsFolder, variable=root:Packages:Irena:WAXS:MultiFitResultsFolder
-	Button MultiPeakRecordFit, pos={280,275}, size={250,20}, title="Record MPF2 Fit Results", proc=IR3W_WAXSButtonProc, help={"Record current MPF2 resultsc for data with Multipeak 2.0."}
-	Button MultiPeakFitRange, pos={280,300}, size={250,20}, title="Fit+Record Range of data", proc=IR3W_WAXSButtonProc, help={"Fit Range fo data with Multipeak 2.0."}
-	Button MultiPeakPlotTool, pos={300,335}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
+	Button MultiPeakRecordFit, pos={280,275}, size={250,20}, title="Record Current MPF2 Fit Results", proc=IR3W_WAXSButtonProc, help={"Record current MPF2 resultsc for data with Multipeak 2.0."}
+	Button MultiPeakFitRange, pos={280,300}, size={250,20}, title="Fit + Record Range of data", proc=IR3W_WAXSButtonProc, help={"Fit Range fo data with Multipeak 2.0."}
+	Button MultiPeakPlotTool, pos={300,365}, size={200,20}, title="Plot/Evaluate results", proc=IR3W_WAXSButtonProc, help={"Evaluate results from Multipeak 2.0."}
 //tab1	
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={200,3},pos={290,365},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info2 title="Diffraction lines",pos={350,160},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
@@ -101,6 +101,8 @@ Proc IR3W_WAXSPanel()
 	ListBox PDF4CardsSelection,selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	ListBox PDF4CardsSelection,proc=IR3W_PDF4ListBoxProc
 	ListBox PDF4CardsSelection colorWave=root:Packages:Irena:WAXS:ListOfPDF4DataColors
+	
+	Checkbox PDF4_DisplayHKLTags, pos={340,405},size={76,14},title="Display HKL tags", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
 	Button PDF4AddManually, pos={300,425}, size={200,20}, title="Add/Edit/Delete JCPDS/PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit/Remove manually card, e.g. type from JCPDS PDF2 or 4 cards"}
 	Button PDF4AddFromLaueGo, pos={300,450}, size={200,20}, title="Calculate PDF card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
 	Button PDF4UpdateList, pos={300,475}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
@@ -128,7 +130,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				TitleBox Info1 title="MultiPeak Fit",disable=(tab!=0)
 				PopupMenu MPFInitializeFromSetMenu,disable=(tab!=0)
 				Button MultiPeakFittingStart,disable=(tab!=0)
-				TitleBox Info2 title="Store results in :",disable=(tab!=0)
+				TitleBox Info2, disable=(tab!=0)
 				SetVariable MultiFitResultsFolder,disable=(tab!=0)
 				Button MultiPeakRecordFit,disable=(tab!=0)
 				Button MultiPeakFitRange,disable=(tab!=0)
@@ -140,6 +142,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				Button PDF4AddManually, disable=(tab!=1)
 				Button PDF4AddFromLaueGo, disable=(tab!=1)
 				Button PDF4UpdateList, disable=(tab!=1)
+				Checkbox PDF4_DisplayHKLTags, disable=(tab!=1)
 			break
 		case -1: // control being killed
 			break
@@ -195,6 +198,7 @@ Function IR3W_InitWAXS()
 	ListOfVariables+="DisplayUncertainties;DataTTHEnd;DataTTHstart;MPF2CurrentFolderNumber;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="Energy;Wavelength;"
+	ListOfVariables+="PDF4_DisplayHKLTags;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -240,7 +244,7 @@ Function IR3W_InitWAXS()
 //	SVAR ListOfSimpleModels
 //	ListOfSimpleModels="Guinier;"
 	SVAR FolderSortStringAll
-	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;Reverse_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
 //	SVAR SimpleModel
 //	if(strlen(SimpleModel)<1)
 //		SimpleModel="Guinier"
@@ -323,17 +327,15 @@ Function IR3W_WAXSCheckProc(cba) : CheckBoxControl
 				endif
 		  	endif
 
+		  	if(stringmatch(cba.ctrlName,"PDF4_DisplayHKLTags"))
+				IR3W_PDF4AddLines()
+	  		endif
 
 
 
 
 //			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
 //			UserMessageString = ""
-//		  	if(stringmatch(cba.ctrlName,"ProcessManually"))
-//	  			if(checked)
-//	  				ProcessSequentially = 0
-//	  			endif
-//	  		endif
 //		  	if(stringmatch(cba.ctrlName,"ProcessSequentially"))
 //	  			if(checked)
 //	  				ProcessManually = 0
@@ -498,6 +500,33 @@ Function IR3W_SortListOfAvailableFldrs()
 			endfor
 			Sort TempWv, ListOfAvailableData
 		endif
+	elseif(stringMatch(FolderSortString,"Reverse_xyzmin"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoALert /T="Information not found" 0, "Cannot find location of _xyzmin information, sorting alphabetically" 
+			Sort /A/R ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*min*" ))
+					TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort/R TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"_xyzpct"))
 		Do
 			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
@@ -637,15 +666,15 @@ end
 Function/S IR3W_InitMPF2FromMenuString()
 
 	String theList = "Start Fresh;"
-	theList += "\\M1(---;"
-	
-	String SetList = ListExistingSets()
-	Variable i
-	Variable nSets = ItemsInList(SetList)
-	for (i = 0; i < nSets; i += 1)
-		theList += "Set Number "+StringFromList(i, SetList)+";"
-	endfor
-
+	if(DataFolderExists("root:Packages:MultiPeakFit2:")) 
+		theList += "\\M1(---;"
+		String SetList = ListExistingSets()
+		Variable i
+		Variable nSets = ItemsInList(SetList)
+		for (i = 0; i < nSets; i += 1)
+				theList += "Set Number "+StringFromList(i, SetList)+";"
+		endfor
+	endif
 	return theList
 end
 
@@ -993,6 +1022,7 @@ Function IR3W_GraphWAXSData()
 	Wave OriginalData2ThetaWave=root:Packages:Irena:WAXS:OriginalData2ThetaWave
 	Wave OriginalDataErrorWave=root:Packages:Irena:WAXS:OriginalDataErrorWave
 	NVAR DisplayUncertainties = root:Packages:Irena:WAXS:DisplayUncertainties
+	SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
 
 
 	DoWindow IR3W_WAXSMainGraph 
@@ -1011,6 +1041,8 @@ Function IR3W_GraphWAXSData()
 	else
 		ErrorBars /W=IR3W_WAXSMainGraph OriginalDataIntWave OFF
 	endif
+	string LastFldername=StringFromList(ItemsInList(DataFolderName , ":")-1, DataFolderName  , ":")
+	TextBox/C/N=SampleName/F=0/S=3/A=RT "\\Z18\\F'Geneva'\\K(0,0,65535)"+LastFldername
 
 	NVAR DataTTHstart = root:Packages:Irena:WAXS:DataTTHstart
 	NVAR DataTTHEnd = root:Packages:Irena:WAXS:DataTTHEnd
@@ -1177,7 +1209,9 @@ Function IR3W_FitMultiPeakFit2ForWAXS()
 			IR3W_CopyAndAppendData(FoldernameStr)
 			IR3W_DoMultiPeak2Fits()
 			IR3W_SaveMultiPeakResults()
+			print "Fitted Peak positions and saved data for sample ; "+FoldernameStr
 			DoWIndow/F IR3W_WAXSMainGraph
+			DoWIndow/F IR3W_WAXSPanel
 			sleep/S (1)
 		endif
 	endfor
@@ -1194,7 +1228,6 @@ static Function IR3W_DoMultiPeak2Fits()
 		s.win="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
 		s.eventCode=2
 		MPF2_DoFitButtonProc(s)
-
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1211,8 +1244,18 @@ static function IR3W_SaveMultiPeakResults()
 		s.win="IR3W_WAXSMainGraph#MultiPeak2Panel#P2"
 		s.eventCode=2
 		MPF2_PeakResultsButtonProc(s)
-		//this generates the new panel with results (keep up for few seconds and close... and followign waves with the results
-		//tshi cretaes and saves int ehnotebook...
+		//this generates the new panel with results (keep up for few seconds and close... and following waves with the results
+		//this creates and saves in the notebook...
+		//if fitting failed, the panel does not come up, so check i=on its presence and if nto present, abort here. 
+		//panel has name something like... MPF2_ResultsPanel_4
+		NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
+		string PanelWIthResultsName = 	"MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)	
+		DoWIndow $(PanelWIthResultsName)
+		if(!V_Flag)
+			Print "Fitting has likely failed, check parameters and try again"
+			Abort
+		endif
+		//No error, can continue
 		s.ctrlName="MPF2_ResultsDoNotebookButton"
 		s.win="MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber)
 		s.eventCode=2		
@@ -1797,6 +1840,9 @@ Function IR3W_MPF2PlotPeakParameters()
 	ModifyTable horizontalIndex=2
 	setDataFolder OldDF
 end
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
 Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	string StartFolder, DataWvName
 
@@ -2004,7 +2050,9 @@ Function IR3W_PDF4ListBoxProc(lba) : ListBoxControl
 
 	return 0
 End
-//***
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
 Menu "IR3W_ColorWaveEditorMenu",contextualmenu
 	"*COLORPOP*(65535,0,0)", ;	// initially red, no execution command
 	//"Edit Card", IR3W_EditJCPDSCard()
@@ -2020,6 +2068,8 @@ Function IR3W_PDF4AddLines()
 	Wave/T listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	Wave selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	Wave ListOfPDF4DataColors = root:Packages:Irena:WAXS:ListOfPDF4DataColors
+	NVAR PDF4_DisplayHKLTags = root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
+	
 	string WvName
 	variable i, minX, maxX
 	DoWIndow IR3W_WAXSMainGraph
@@ -2034,6 +2084,10 @@ Function IR3W_PDF4AddLines()
 			WvName = listWave[i]
 			RemoveFromGraph /W=IR3W_WAXSMainGraph /Z $(WvName)
 			IR3W_PDF4AppendLinesToGraph(listWave[i][0],ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
+			if(PDF4_DisplayHKLTags)
+				Wave LabelWave=$("root:WAXS_PDF:"+(listWave[i][0])[0,23]+"_hklStr")
+				IR3W_PDF4AddTagsFromWave("IR3W_WAXSMainGraph", listWave[i][0], labelWave, ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
+			endif
 		else 		//remove if needed...
 			WvName = listWave[i][0]
 			RemoveFromGraph /W=IR3W_WAXSMainGraph /Z $(WvName)
@@ -2041,6 +2095,24 @@ Function IR3W_PDF4AddLines()
 	endfor
 	SetAxis /W=IR3W_WAXSMainGraph  bottom , minX, maxX
 end
+
+//**************************************************************************************
+//**************************************************************************************
+Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
+	String graphName
+	String traceName
+	Wave/T labelWave
+	variable Cr, Cg, Cb
+ 
+	Wave w = TraceNameToWaveRef(graphName, traceName)
+ 
+	Variable index
+	for(index = 0; index < dimsize(w,0); index+=1)
+		String tagName = "Lab" +traceName[0,12]+num2str(index)
+		Tag/C/N=$tagName/F=0/TL=0/G=(Cr,Cg,Cb) $traceName, index, labelWave[index]
+	endfor
+End
+
 //**************************************************************************************
 //**************************************************************************************
 
@@ -2067,11 +2139,13 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	make/Free/N=(DimSize(TheCard, 0)) TmpWv
 	TmpWv = TheCard[p][6]
 	//wavestats/Q OriginalDataIntWave
-	variable MaxInt=WaveMax(TmpWv)
+	GetAxis /W=IR3W_WAXSMainGraph /Q bottom
+	variable MaxInt=WaveMax(TmpWv, V_min, V_max)
 	GetAxis /W=IR3W_WAXSMainGraph /Q left
 	TheCardNew[][6] = V_min + TheCard[p][6] * (V_Max-V_min)/MaxInt
 	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][6] vs TheCardNew[][4]
-	string WvName=possiblyquotename(NameOfWave(TheCardNew ))
+	DoUpdate  /W=IR3W_WAXSMainGraph 
+	string WvName=possiblyquotename(NameOfWave(TheCardNew))
 	ModifyGraph mode($(WvName))=1,usePlusRGB($(WvName))=1, lsize($(WvName))=3
 	ModifyGraph plusRGB($(WvName))=(V_Red, V_Green, V_Blue)	
 	setDataFolder oldDf
