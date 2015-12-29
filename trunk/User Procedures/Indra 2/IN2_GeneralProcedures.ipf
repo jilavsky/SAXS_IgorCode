@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
-//     also added InsertSUbwindow to GraphMarquee and Color Traces to Graph menu 
+//     also added InsertSUbwindow to GraphMarquee and Color Traces to Graph menu. Added some xml functions I needed.  
 //1.79 added IN2G_LegendTopGrphFldr(FontSize)
 //1.78 added Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 //       added IN2G_RemoveNaNsFrom7Waves
@@ -47,6 +47,10 @@
 //	string InFolderName										//this will take root:Packages:SomethingHere and will make SomethingHere unique if necessary. 
 //Function IN2G_CheckForSlitSmearedRange(slitSmearedData,Qmax, SlitLength)
 //   aborts execution with errro message if qmax < 3* slit length for slit smerared data
+//
+//Functions IN2G_startOfxmltag and IN2G_XMLtagContents are for reading xml files as text. From Jon Tischler. 
+//
+//Function IN2G_num2StrFull creates string with many more digits than built in function. From Jon Tischler. 
 //
 //Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
 //  Rebins data (x,y.etc) on log scale oiptionally with enforcing minimum step size. 
@@ -466,6 +470,84 @@ Function IN2G_ConvertTTHtoD(TTH,wavelength)		//TTH is in degrees, D in A
 	//q = 4pi sin(theta)/lambda
 	return wavelength/(2*sin(TTH*pi/360))
 end
+//*****************************************************************************************************************
+//*************************************************************************************************************************************
+
+ThreadSafe Function/T IN2G_num2StrFull(val)
+	Variable val
+	Variable i = placesOfPrecision(val)
+	Variable absVal = abs(val)
+	i = (absVal>=10 && absVal<1e6) ? max(i,1+floor(log(absVal))) : i
+	String str, fmt
+	sprintf fmt, "%%.%dg",i
+	sprintf str,fmt,val
+	return str
+End
+//*****************************************************************************************************************
+//*************************************************************************************************************************************
+
+ThreadSafe Function/T IN2G_XMLtagContents(xmltag,buf,[occurance,start])
+	String xmltag
+	String buf
+	Variable occurance									// use 0 for first occurance, 1 for second, ...
+	Variable &start										// offset in buf, start searching at buf[start], new start is returned
+																// both occurance and start may be used together, but usually you only want to use one of them
+	occurance = ParamIsDefault(occurance) ? 0 : occurance
+	Variable startLocal = ParamIsDefault(start) ? 0 : start
+	startLocal = numtype(startLocal) || startLocal<1 ? 0 : round(startLocal)
+
+	Variable i0,i1
+	if (startLocal>0)
+		i0 = IN2G_startOfxmltag(xmltag,buf[startLocal,Inf],occurance) + startLocal
+	else
+		i0 = IN2G_startOfxmltag(xmltag,buf,occurance)
+	endif
+	if (i0<0)
+		return ""
+	endif
+	i0 = strsearch(buf,">",i0)						// character after '>' in intro
+	if (i0<0)												// this is an ERROR
+		return ""
+	endif
+	i0 += 1													// start of contents
+
+	i1 = strsearch(buf,"</"+xmltag+">",i0)-1	// character just before closing '<tag>'
+	startLocal = strsearch(buf,">",i1)+1			// character just after closing '<tag>'
+
+	if (i1<i0 || i1<0)
+		if (!ParamIsDefault(start))
+			start = -1
+		endif
+		return ""
+	endif
+
+	if (!ParamIsDefault(start))
+		start = startLocal
+	endif
+
+	return buf[i0,i1]
+End
+
+//*****************************************************************************************************************
+//*************************************************************************************************************************************
+
+ThreadSafe Function IN2G_startOfxmltag(xmltag,buf,occurance)	// returns the index into buf pointing to the start of xmltag
+	String xmltag, buf
+	Variable occurance									// use 0 for first occurance, 1 for second, ...
+
+	Variable i0,i1, i, start
+	for (i=0,i0=0;i<=occurance;i+=1)
+		start = i0
+		i0 = strsearch(buf,"<"+xmltag+" ",start)	// find start of a tag with attributes
+		i1 = strsearch(buf,"<"+xmltag+">",start)	// find start of a tag without attributes
+		i0 = i0<0 ? Inf : i0
+		i1 = i1<0 ? Inf : i1
+		i0 = min(i0,i1)
+		i0 += (i<occurance) ? strlen(xmltag)+2 : 0	// for more, move starting point forward
+	endfor
+	i0 = numtype(i0) || i0<0 ? -1 : i0
+	return i0
+End
 
 //*****************************************************************************************************************
 //*************************************************************************************************************************************
@@ -1129,6 +1211,59 @@ Function/S IN2G_ExtractFldrNmFromPntr(FullPointerToWaveVarStr)
 	endif
 end
 
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
+Function IN2G_ColorTopGrphRainbow()
+
+	String topGraph=WinName(0,1)
+	Variable traceIndex, numTraces
+	Variable i, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
+	if( strlen(topGraph) )
+		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
+		if (numTraces > 0)
+			w=numTraces/2
+		        For(i=0;i<numTraces;i+=1)
+	                      io = 0
+		                iRed = exp(-(i-io)^2/w)
+		                io = numTraces/2
+		                iBlue = exp(-(i-io)^2/w)
+		                io = numTraces
+		                iGreen = exp(-(i-io)^2/w)
+	     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
+		                Red = 65535 * (iRed/ColorNorm)
+		                Blue = 65535 * (iBlue/ColorNorm)
+		                Green = 65535 * (iGreen/ColorNorm)
+		               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
+					ModifyGraph/w=$(topGraph) rgb[i]=(Red,Blue,Green)
+			    endfor
+		endif
+		//AutoPositionWindow/M=0/R=$topGraph KBColorizePanel
+	endif
+end
+///******************************************************************************************
+///******************************************************************************************
+Function IN2G_LegendTopGrphFldr(FontSize)
+	variable FontSize
+
+	String topGraph=WinName(0,1)
+	string Traces=TraceNameList(topGraph, ";", 1 )
+	variable i
+	string legendStr=""
+	if(Fontsize<10)
+		legendStr="\Z0"+num2str(floor(FontSize))	
+	else
+		legendStr="\Z"+num2str(floor(FontSize))	
+	endif
+	For(i=0;i<ItemsInList(Traces);i+=1)
+		legendStr+="\\s("+StringFromList(i,traces)+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, StringFromList(i,traces)),0)+":"+StringFromList(i,traces)+"\r"
+	endfor
+	
+	Legend/C/N=text0/A=LB legendStr
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1320,59 +1455,6 @@ Function IN2G_FolderSelectCheckProc(ctrlName,checked) : CheckBoxControl
 	IN2G_FolderSelectRefFldrCont()
 End
 
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-Function IN2G_ColorTopGrphRainbow()
-
-	String topGraph=WinName(0,1)
-	Variable traceIndex, numTraces
-	Variable i, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
-	if( strlen(topGraph) )
-		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
-		if (numTraces > 0)
-			w=numTraces/2
-		        For(i=0;i<numTraces;i+=1)
-	                      io = 0
-		                iRed = exp(-(i-io)^2/w)
-		                io = numTraces/2
-		                iBlue = exp(-(i-io)^2/w)
-		                io = numTraces
-		                iGreen = exp(-(i-io)^2/w)
-	     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
-		                Red = 65535 * (iRed/ColorNorm)
-		                Blue = 65535 * (iBlue/ColorNorm)
-		                Green = 65535 * (iGreen/ColorNorm)
-		               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
-					ModifyGraph/w=$(topGraph) rgb[i]=(Red,Blue,Green)
-			    endfor
-		endif
-		//AutoPositionWindow/M=0/R=$topGraph KBColorizePanel
-	endif
-end
-///******************************************************************************************
-///******************************************************************************************
-Function IN2G_LegendTopGrphFldr(FontSize)
-	variable FontSize
-
-	String topGraph=WinName(0,1)
-	string Traces=TraceNameList(topGraph, ";", 1 )
-	variable i
-	string legendStr=""
-	if(Fontsize<10)
-		legendStr="\Z0"+num2str(floor(FontSize))	
-	else
-		legendStr="\Z"+num2str(floor(FontSize))	
-	endif
-	For(i=0;i<ItemsInList(Traces);i+=1)
-		legendStr+="\\s("+StringFromList(i,traces)+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, StringFromList(i,traces)),0)+":"+StringFromList(i,traces)+"\r"
-	endfor
-	
-	Legend/C/N=text0/A=LB legendStr
-end
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
 
 Function IN2G_FolderSelectListBoxProc(ctrlName,row,col,event)
 	String ctrlName

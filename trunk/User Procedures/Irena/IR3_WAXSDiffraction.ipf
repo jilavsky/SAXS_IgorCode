@@ -2,7 +2,7 @@
 #pragma version=1
 #include <Multi-peak fitting 2.0>
 
-constant IR3WversionNumber = 0.1		//Diffraction panel version number
+constant IR3WversionNumber = 0.3		//Diffraction panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -10,9 +10,12 @@ constant IR3WversionNumber = 0.1		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.3 Christmas 2015 developements. many changes. 
 //0.1 Diffraction tool development version 
 
 
+//local configurations
+Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
 
 ///******************************************************************************************
 ///******************************************************************************************
@@ -103,9 +106,11 @@ Proc IR3W_WAXSPanel()
 	ListBox PDF4CardsSelection colorWave=root:Packages:Irena:WAXS:ListOfPDF4DataColors
 	
 	Checkbox PDF4_DisplayHKLTags, pos={340,405},size={76,14},title="Display HKL tags", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
-	Button PDF4AddManually, pos={300,425}, size={200,20}, title="Add/Edit/Delete JCPDS/PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit/Remove manually card, e.g. type from JCPDS PDF2 or 4 cards"}
-	Button PDF4AddFromLaueGo, pos={300,450}, size={200,20}, title="Calculate PDF card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
-	Button PDF4UpdateList, pos={300,475}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
+	Button PDF4UpdateList, pos={300,425}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
+
+	Button PDF4ExportImport, pos={300,450}, size={200,20}, title="Export/Impot PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
+	Button PDF4AddFromLaueGo, pos={300,475}, size={200,20}, title="Calculate PDF card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
+	Button PDF4AddManually, pos={300,500}, size={200,20}, title="Add/Edit/Delete JCPDS/PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit/Remove manually card, e.g. type from JCPDS PDF2 or 4 cards"}
 
 	DrawText 4,680,"Double click to add data to graph."
 	DrawText 4,693,"Shift-click to select range of data."
@@ -142,6 +147,8 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				Button PDF4AddManually, disable=(tab!=1)
 				Button PDF4AddFromLaueGo, disable=(tab!=1)
 				Button PDF4UpdateList, disable=(tab!=1)
+				Button PDF4ExportImport, disable=(tab!=1)
+				
 				Checkbox PDF4_DisplayHKLTags, disable=(tab!=1)
 			break
 		case -1: // control being killed
@@ -1181,9 +1188,9 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 			if(stringmatch(ba.ctrlname,"PDF4UpdateList"))
 				IR3W_UpdatePDF4OfAvailFiles()
 			endif
-
-
-
+			if(stringmatch(ba.ctrlname,"PDF4ExportImport"))
+				IR3W_PDF4SaveLoadDifPtnPnl()
+			endif
 			break
 		case -1: // control being killed
 			break
@@ -1955,13 +1962,14 @@ Function IR3W_UpdatePDF4OfAvailFiles()
 	string OldDF=GetDataFolder(1)
 	string AvailableCards=""
 	string AvailableCardsHKL=""
+	setDataFolder root:WAXS_PDF
 	if(DataFolderExists("root:WAXS_PDF" ))
-		setDataFolder root:WAXS_PDF
 		//AvailableCards=ReplaceString("\n", stringfromList(1,DataFolderDir(2),":"), "")
-		AvailableCards=ReplaceString("\r", stringfromList(1,DataFolderDir(2),":"), "")
-		AvailableCards=ReplaceString(";", stringfromList(1,DataFolderDir(2),":"), "")
-		AvailableCardsHKL = GrepList(AvailableCards, "_hklStr",0,",")
-		AvailableCards = GrepList(AvailableCards, "^((?!hklStr).)*$",0,",")
+		AvailableCards=IN2G_CreateListOfItemsInFolder("root:WAXS_PDF",2)
+		//AvailableCards=ReplaceString("\r", stringfromList(1,DataFolderDir(2),":"), "")
+		//AvailableCards=ReplaceString(";", stringfromList(1,DataFolderDir(2),":"), "")
+		AvailableCardsHKL = GrepList(AvailableCards, "_hklStr",0,";")
+		AvailableCards = GrepList(AvailableCards, "^((?!hklStr).)*$",0,";")
 	endif
 	string TempStr
 
@@ -1972,11 +1980,11 @@ Function IR3W_UpdatePDF4OfAvailFiles()
 		make/O/N=(0,3) ListOfPDF4DataColors
 	endif
 	variable i, j, match
-	Redimension/N=(ItemsInList(AvailableCards , ","),1) ListOfAvailableData
-	Redimension/N=(ItemsInList(AvailableCards , ","),1,2) SelectionOfAvailableData
-	Redimension/N=(ItemsInList(AvailableCards , ","),3) ListOfPDF4DataColors
-	For(i=0;i<ItemsInList(AvailableCards , ",");i+=1)
-		TempStr =  StringFromList(i, AvailableCards , ",")
+	Redimension/N=(ItemsInList(AvailableCards , ";"),1) ListOfAvailableData
+	Redimension/N=(ItemsInList(AvailableCards , ";"),1,2) SelectionOfAvailableData
+	Redimension/N=(ItemsInList(AvailableCards , ";"),3) ListOfPDF4DataColors
+	For(i=0;i<ItemsInList(AvailableCards , ";");i+=1)
+		TempStr =  StringFromList(i, AvailableCards , ";")
 		if(strlen(TempStr)>0)
 			ListOfAvailableData[i] = tempStr
 		endif
@@ -1984,8 +1992,8 @@ Function IR3W_UpdatePDF4OfAvailFiles()
 	SelectionOfAvailableData[][][0] = 0x20
 	SelectionOfAvailableData[][][1] = p
 
-	For(i=0;i<ItemsInList(AvailableCards , ",");i+=1)
-		TempStr =  StringFromList(i, AvailableCards , ",")
+	For(i=0;i<ItemsInList(AvailableCards , ";");i+=1)
+		TempStr =  StringFromList(i, AvailableCards , ";")
 		//let's also check that hklStr waves are correct...
 		Wave DtaWv=$("root:WAXS_PDF:"+possiblyquotename(TempStr))
 		Wave/T/Z DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
@@ -2109,7 +2117,7 @@ Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
 	Variable index
 	for(index = 0; index < dimsize(w,0); index+=1)
 		String tagName = "Lab" +traceName[0,12]+num2str(index)
-		Tag/C/N=$tagName/F=0/TL=0/G=(Cr,Cg,Cb) $traceName, index, labelWave[index]
+		Tag/C/N=$tagName/F=0/TL=0/G=(Cr,Cg,Cb)/I=1 $traceName, index, labelWave[index]
 	endfor
 End
 
@@ -2136,23 +2144,426 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	endif
 	SetDimLabel 1,4,TwoTheta,TheCardNew
 	Wave OriginalDataIntWave = root:Packages:Irena:WAXS:OriginalDataIntWave
-	make/Free/N=(DimSize(TheCard, 0)) TmpWv
+	//Wave OriginalData2ThetaWave = root:Packages:Irena:WAXS:OriginalData2ThetaWave
+	make/Free/N=(DimSize(TheCard, 0)) TmpWv, TmpWvTTH
 	TmpWv = TheCard[p][6]
+	TmpWvTTH = TheCardNew[p][4]
 	//wavestats/Q OriginalDataIntWave
 	GetAxis /W=IR3W_WAXSMainGraph /Q bottom
-	variable MaxInt=WaveMax(TmpWv, V_min, V_max)
+	variable oldMin, OldMax
+	OldMin = V_min
+	OldMax=V_max
+	V_min=binarysearch(TmpWvTTH, V_min)
+	V_min  = (V_min > 0) ? V_min : 0
+	V_max= binarysearch(TmpWvTTH,V_max)
+	V_max = (V_max>V_min) ? V_Max : numpnts(TmpWv)-1
+	variable MaxInt=WaveMax(TmpWv, pnt2x(TmpWv,V_min ),pnt2x(TmpWv,V_max))
 	GetAxis /W=IR3W_WAXSMainGraph /Q left
 	TheCardNew[][6] = V_min + TheCard[p][6] * (V_Max-V_min)/MaxInt
 	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][6] vs TheCardNew[][4]
-	DoUpdate  /W=IR3W_WAXSMainGraph 
+	//DoUpdate  /W=IR3W_WAXSMainGraph 
 	string WvName=possiblyquotename(NameOfWave(TheCardNew))
 	ModifyGraph mode($(WvName))=1,usePlusRGB($(WvName))=1, lsize($(WvName))=3
 	ModifyGraph plusRGB($(WvName))=(V_Red, V_Green, V_Blue)	
+	SetAxis bottom oldMin, OldMax
 	setDataFolder oldDf
 end
 
 //**************************************************************************************
 //**************************************************************************************
+//			PDF4 - Export/Import parts. 
+//**************************************************************************************
+//**************************************************************************************
+Function IR3W_PDF4SaveLoadDifPtnPnl()
+	string OldDf=GetDataFolder(1)
+	SetDataFolder root:Packages:Irena:WAXS:
+	string PathToFiles=FunctionPath("")
+	PathToFiles = ReplaceString("IR3_WAXSDiffraction.ipf", PathToFiles , WAXSPDF4Location)
+	NewPath /C/O/Q WAXSPDF4Path, PathToFiles
+	PathInfo WAXSPDF4Path
+	if(V_flag==0)
+		//something went wrong - the folder does not exist and cannot be created.
+		Abort "WAXS PDF cards folder does not exist and annot be even created. Aborting." 
+	endif
+	//mini initialization for this panel
+	DoWindow IR3W_PDF4SaveLoadPanel
+	if(!V_Flag)
+		Wave/Z/T SaveLoadPDFInside, SaveLoadPDFOutside
+		if(!WaveExists(SaveLoadPDFInside))
+			make/O/N=0/T SaveLoadPDFInside, SaveLoadPDFOutside	
+			make/O/N=0 SaveLoadPDFInsideSel, SaveLoadPDFOutsideSel	
+		endif
+		Execute("IR3W_PDF4SaveLoadPanel()")
+	else
+		DoWindow/F IR3W_PDF4SaveLoadPanel
+	endif
+	IR3W_PDF4UpdateOutsideListBox()
+	IR3W_PDF4UpdateInsideListBox()
+	setDataFolder OldDf
+end
+//**************************************************************************************
+//**************************************************************************************
+Proc IR3W_PDF4SaveLoadPanel()
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(236,50,600,550) as "Save and Recall PDF data"
+	DoWindow/C IR3W_PDF4SaveLoadPanel
+	TitleBox TitleStuff title="Save and Load PDF files",pos={40,15},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=16, fColor=(1,4,52428)
+	TitleBox Warning1 title="PDF included with Irena are not guarranteed. ",pos={5,425},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	TitleBox Warning2 title="Verify usign proper sources (JCPDS/PDF4)! ",pos={5,445},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	TitleBox Warning3 title="They are calculated using LaueGo for model structures.",pos={5,465},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	//Button SelectSaveLoadPath,pos={84,31},size={150,20},proc=NI1A_SaveLoadButtonProc,title="Select data path"
+	//Button SelectSaveLoadPath,help={"Select path to your configuration files. You can create new folders by typing them in."}
+	TitleBox OutsideData title="Outside",pos={55,45},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	ListBox OutsidePDFDataList,pos={5,65},size={170,220}//,proc=NI1A_SaveLoadListBoxProc
+	ListBox OutsidePDFDataList,listWave=root:Packages:Irena:WAXS:SaveLoadPDFOutside
+	ListBox OutsidePDFDataList,selWave=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
+	ListBox OutsidePDFDataList, mode= 9
+
+	TitleBox InsideData title="Inside",pos={230,45},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	ListBox InsidePDFDataList,pos={180,65},size={170,220}//,proc=NI1A_SaveLoadListBoxProc
+	ListBox InsidePDFDataList,listWave=root:Packages:Irena:WAXS:SaveLoadPDFInside
+	ListBox InsidePDFDataList,selWave=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
+	ListBox InsidePDFDataList, mode= 9
+
+	Button UpdateListbox,pos={65,290},size={230,20},proc=IR3W_PDF4ButtonProc,title="Update listboxes"
+	Button UpdateListbox,help={"Read selected PDF4 from the file"}
+	Button CopyPDF4In,pos={65,315},size={230,20},proc=IR3W_PDF4ButtonProc,title=">>> Copy IN >>>"
+	Button CopyPDF4In,help={"Read selected PDF4 from the file"}
+	Button CopyPDF4Out,pos={65,340},size={230,20},proc=IR3W_PDF4ButtonProc,title="<<< Copy OUT <<<"
+	Button CopyPDF4Out,help={"Store selected PDF4 into the file"}
+	Button DeteteCardIn,pos={185,375},size={170,15},proc=IR3W_PDF4ButtonProc,title="Delete selected Cards Inside"
+	Button DeteteCardIn,help={"Deletes selected cards Inside"}
+	Button DeteteCardOut,pos={5,375},size={170,15},proc=IR3W_PDF4ButtonProc,title="Delete selected Cards Outside"
+	Button DeteteCardOut,help={"Deletes selected cards Outside"}
+EndMacro
+
+
+//**************************************************************************************
+//**************************************************************************************
+Function IR3W_PDF4ButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	string OldDf=GetDataFolder(1)
+	string ctrlName=ba.ctrlName
+	variable i
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringmatch(ctrlName,"UpdateListbox"))
+				IR3W_PDF4UpdateOutsideListBox()
+				IR3W_PDF4UpdateInsideListBox()
+				IR3W_UpdatePDF4OfAvailFiles()
+			endif
+			if(stringmatch(ctrlName,"DeteteCardIn"))
+				wave/T SaveLoadPDFInside=root:Packages:Irena:WAXS:SaveLoadPDFInside
+				wave SaveLoadPDFInsideSel=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
+				DoAlert /T="Are you sure?" 1, "You are about to delete PDF number of cards in this Igor experiment, are you sure?" 
+				if(V_Flag==1)
+					for(I=0;i<numpnts(SaveLoadPDFInside);i+=1)
+						if(SaveLoadPDFInsideSel[i]&0x09)
+							setDataFolder root:WAXS_PDF
+							KillWaves/Z $(SaveLoadPDFInside[i])
+						endif
+					endfor
+				endif
+				IR3W_PDF4UpdateInsideListBox()
+				IR3W_UpdatePDF4OfAvailFiles()
+				SaveLoadPDFInsideSel=0
+			endif
+			if(stringmatch(ctrlName,"DeteteCardOut"))
+				wave/T SaveLoadPDFOutside=root:Packages:Irena:WAXS:SaveLoadPDFOutside
+				wave SaveLoadPDFOutsideSel=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
+				DoAlert /T="Are you sure?" 1, "You are about to delete PDF number of cards from this computer, are you sure?" 
+				if(V_Flag==1)
+					for(I=0;i<numpnts(SaveLoadPDFOutside);i+=1)
+						if(SaveLoadPDFOutsideSel[i]&0x09)
+							DeleteFile /P=WAXSPDF4Path  /Z   SaveLoadPDFOutside[i]+".xml"
+						endif
+					endfor
+				endif
+				IR3W_PDF4UpdateOutsideListBox()
+				SaveLoadPDFOutsideSel=0
+			endif
+			if(stringmatch(ctrlName,"CopyPDF4Out"))
+				wave/T SaveLoadPDFInside=root:Packages:Irena:WAXS:SaveLoadPDFInside
+				wave SaveLoadPDFInsideSel=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
+				for(I=0;i<numpnts(SaveLoadPDFInside);i+=1)
+					if(SaveLoadPDFInsideSel[i]&0x09)
+						IR3W_PDF4WriteDataOutXML(SaveLoadPDFInside[i])
+					endif
+				endfor
+				IR3W_PDF4UpdateOutsideListBox()
+				SaveLoadPDFInsideSel=0
+			endif
+			if(stringmatch(ctrlName,"CopyPDF4In"))
+				wave/T SaveLoadPDFOutside=root:Packages:Irena:WAXS:SaveLoadPDFOutside
+				wave SaveLoadPDFOutsideSel=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
+				for(I=0;i<numpnts(SaveLoadPDFOutside);i+=1)
+					if(SaveLoadPDFOutsideSel[i]&0x09)
+						IR3W_PDF4readPDFfromXML(SaveLoadPDFOutside[i])
+					endif
+				endfor
+				IR3W_PDF4UpdateInsideListBox()
+				IR3W_UpdatePDF4OfAvailFiles()
+				SaveLoadPDFOutsideSel=0
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+//**************************************************************************************
+//**************************************************************************************
+Function IR3W_PDF4UpdateOutsideListBox()
+		Wave/T  ww=root:Packages:Irena:WAXS:SaveLoadPDFOutside
+		Wave  ww2=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
+		string ListOfAvailablePDF2s
+		PathInfo WAXSPDF4Path
+		if(V_Flag==0)
+			abort
+		endif
+		ListOfAvailablePDF2s=IndexedFile(WAXSPDF4Path,-1,".xml")
+		redimension/N=(ItemsInList(ListOfAvailablePDF2s)) ww, ww2
+		variable i
+		For(i=0;i<ItemsInList(ListOfAvailablePDF2s);i+=1)
+			ww[i]=StringFromList(0,StringFromList(i, ListOfAvailablePDF2s),".")
+		endfor
+		sort ww, ww, ww2
+end	
+Function IR3W_PDF4UpdateInsideListBox()
+		Wave/T  ww=root:Packages:Irena:WAXS:SaveLoadPDFInside
+		Wave  ww2=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
+		
+		string ListOfAvailablePDF2s
+		if(!DataFolderExists("root:WAXS_PDF"))
+			abort
+		endif
+		ListOfAvailablePDF2s=IN2G_CreateListOfItemsInFolder("root:WAXS_PDF",2) 
+		ListOfAvailablePDF2s = GrepList(ListOfAvailablePDF2s, "^((?!hklStr).)*$",0,";")
+		redimension/N=(ItemsInList(ListOfAvailablePDF2s)) ww, ww2
+		variable i
+		For(i=0;i<ItemsInList(ListOfAvailablePDF2s);i+=1)
+			ww[i]=StringFromList(i, ListOfAvailablePDF2s)
+		endfor
+		sort ww, ww, ww2
+end	
+
+
+//**************************************************************************************
+//**************************************************************************************
+Function IR3W_PDF4WriteDataOutXML(NewFileName)
+		string NewFileName
+		PathInfo WAXSPDF4Path
+		if(V_Flag==0)
+			abort
+		endif
+		string cif
+		cif = IR3W_PDF4writePDFtoXMLstr(NewFileName)
+		string NL="\r"
+		Variable f
+		//Open/C="R*ch"/F="XML Files (*.xml):.xml;"/P=WAXSPDF4Path/Z=2 f as NewFileName+".xml"
+		Open/C="R*ch"/P=WAXSPDF4Path/Z=2 f as NewFileName+".xml"
+		if (V_flag==0)
+			fprintf f,  "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+NL+NL
+			FBinWrite f, cif
+			Close f
+		else
+			DoAlert /T="Canot write file" 0, "File "+NewFileName+".xml could not be written. ßomething wnet wrong here."
+		endif
+		return V_flag
+end
+//**************************************************************************************
+//**************************************************************************************
+
+Function/T IR3W_PDF4writePDFtoXMLstr(DataName)
+	string DataName
+	
+	wave ww=$("root:WAXS_PDF:"+DataName)
+	string NL="\r"
+
+	String xmlStr="<IrenaPDF>"+NL
+	String str, unit=" unit=\"A\""
+	variable i, imax=dimsize(ww,0)
+	variable tempd, tempvals
+	xmlStr += "\t<user_name_common>"+nameofwave(ww)+"</user_name_common>"+NL
+	xmlStr += "\t<!-- This card was generated by Irena WAXS tool. To edit this card manually, copy card under new name"+NL
+	xmlStr += "\tThen edit the content. Make sure you rename the material name into unique name type (less than 23 characters!)"+NL
+	xmlStr += "\tRequired content is : 1. either d [A] or Two Theta (TTH) [degrees for Cu wavelength] and Intensity [arbitrary units]."+NL
+	xmlStr += "\tNote, that d is primary inforamtion, but if d is 0 it is calculated from TTH assuming wavelength of 1.54184A."+NL
+	xmlStr += "\tNote, that h k l are very useful. F2 and mult are not useful at this time and can be empty or 0."+NL
+	xmlStr += "\tData distributed with Irena are NOT GUARATEED and are calculated from theoretical models. If you find "+NL
+	xmlStr += "\twrong values or want to add some cards to Irena distribution, please send the data to ilavsky@aps.anl.gov. "+NL
+	xmlStr += "\tKeep the structure of this file unchanged or it may not be interpretted correctly by the reader."+NL
+	xmlStr += "\tSource of data: LaueGo calculation.   -->"+NL
+	xmlStr += "\t<data>"+NL
+		For(i=0;i<imax;i+=1)
+			//convert Q if neede to d and A and append to the string. 
+			tempd = ww[i][0]
+			if(stringmatch(GetDimLabel(ww, 1, 0),"Q_nm"))		//calculated from LaueGo, Q in nm-1
+				tempd = IN2G_ConvertQtoD(tempd/10,1)				//d in A
+			endif
+			unit=" unit=\"A\""
+			xmlStr += "\t\t<d"+unit+">"+num2str(tempd)+"</d>"
+			tempvals = ww[i][1]
+			xmlStr += "<h>"+num2str(tempvals)+"</h>"
+			tempvals = ww[i][2]
+			xmlStr += "<k>"+num2str(tempvals)+"</k>"
+			tempvals = ww[i][3]
+			xmlStr += "<l>"+num2str(tempvals)+"</l>"
+			tempd = IN2G_ConvertDtoTTH(tempd,1.54184)		//convert to TWoTheta Cu wavelength
+			unit=" unit=\"deg_for_Cu\""
+			xmlStr += "<TTH"+unit+">"+num2str(tempd)+"</TTH>"
+			tempvals = ww[i][5]
+			xmlStr += "<F2>"+num2str(tempvals)+"</F2>"
+			tempvals = ww[i][6]
+			xmlStr += "<Intensity>"+num2str(tempvals)+"</Intensity>"
+			tempvals = ww[i][7]
+			xmlStr += "<mult>"+num2str(tempvals)+"</mult>"+NL
+		endfor
+	xmlStr += "\t</data>"+NL
+	xmlStr += "</IrenaPDF>"+NL
+	return xmlStr
+end
+
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3W_PDF4readPDFfromXML(NewFileName)
+	string NewFileName
+		
+		if(!DataFolderExists("root:WAXS_PDF"))
+			abort
+		endif
+		string OldDf=GetDataFolder(1)
+		setDataFolder root:WAXS_PDF
+		PathInfo WAXSPDF4Path
+		if(V_Flag==0)
+			abort
+		endif
+		Variable f
+		Open/R/P=WAXSPDF4Path/Z=2 f as NewFileName+".xml"
+		Variable lineNumber, len, isIrenaPDF, isData
+		String buffer, UserSampleName
+		lineNumber = 0
+		isIrenaPDF=0
+		isData=0
+		UserSampleName = ""
+		do
+			FReadLine f, buffer
+			len = strlen(buffer)
+			if (len == 0)
+				break						// No more lines to be read
+			endif
+			if(grepString(buffer,"IrenaPDF"))
+				isIrenaPDF = 1
+			endif
+			if(isIrenaPDF)
+				if(grepString(buffer,"user_name_common"))
+					UserSampleName = buffer
+					UserSampleName = ReplaceString("\t<user_name_common>", buffer, "")
+					UserSampleName = ReplaceString("</user_name_common>\r", UserSampleName, "")
+					//check if the file exists, and ask user what to do...
+					UserSampleName  = cleanupname(UserSampleName,0)
+					wave/Z ww=$(UserSampleName)
+					if(WaveExists(ww))
+						DoAlert /T="Card with this name exists" 2, "Choose what to do: Overwrite = OK, Create new unique name = NO, Cancel"
+						if(V_Flag==1)
+							KillWaves ww
+						elseif(V_Flag==2)
+							UserSampleName=UniqueName(UserSampleName, 1, 0)
+						else  //cancel
+							close f
+							setDataFOlder OldDf
+							abort
+						endif
+					endif
+				endif
+				if(grepString(buffer,"<data>"))
+					isData = 1
+				endif
+				if(grepString(buffer,"</data>"))
+					isData = 0
+				endif
+				if(isData&&!(grepString(buffer,"<data>")))
+					IR3W_PDF4parseXMLFileLine(buffer,UserSampleName)
+				endif
+			endif
+			lineNumber += 1
+		while (1)	
+		close f
+		//add the dimensions to this new data and cretae the hklStr wave also... 
+		wave/Z ww=$(UserSampleName)
+		if(WaveExists(ww))
+			make/O/T/N=(dimsize(ww,0)) $(UserSampleName[0,23]+"_hklStr")
+			wave/T wwT = $(UserSampleName[0,23]+"_hklStr") 
+			SetDimLabel 1,0,d_A,ww
+			SetDimLabel 1,1,h,ww
+			SetDimLabel 1,2,k,ww
+			SetDimLabel 1,3,l,ww
+			SetDimLabel 1,4,theta,ww
+			SetDimLabel 1,5,F2,ww
+			SetDimLabel 1,6,Intensity,ww
+			SetDimLabel 1,7,mult,ww
+			wwT = "("+num2str(ww[p][1])+num2str(ww[p][2])+num2str(ww[p][3])+")"
+		endif
+		setDataFOlder OldDf
+end
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3W_PDF4parseXMLFileLine(line,InternalName)
+	string line,InternalName
+	
+	if(!DataFolderExists("root:WAXS_PDF"))
+		abort
+	endif
+	string OldDf=GetDataFolder(1)
+	setDataFolder root:WAXS_PDF
+	InternalName  = cleanupname(InternalName,0)
+	wave/Z ww=$(InternalName)
+	if(!WaveExists(ww))
+		make/O/N=(0,8) $(InternalName)
+		wave ww=$(InternalName)
+	endif
+	variable i=dimsize(ww,0)
+	variable tempd, tempTTH
+	redimension/N=(dimsize(ww,0)+1,dimsize(ww,1)) ww
+	//<d unit="A">2.338</d><h>1</h><k>1</l><l>1</l><TTH unit="deg_for_Cu">38.506</TTH><F2>1313.5</F2><Intensity>25023</Intensity><mult>8</mult>
+	tempd= str2num(IN2G_XMLtagContents("d",line))
+	tempTTH= str2num(IN2G_XMLtagContents("TTH",line))
+	if(tempd<0.0001)		//no d spacing data, calculate from TTH
+		tempd = IN2G_ConvertTTHtoD(tempd,1.54184)
+	endif
+	ww[i][0] = tempd
+	ww[i][1] = str2num(IN2G_XMLtagContents("h",line))
+	ww[i][2] = str2num(IN2G_XMLtagContents("k",line))
+	ww[i][3] = str2num(IN2G_XMLtagContents("l",line))
+	ww[i][4] = tempTTH/2											//this card saves TH, not TTH to macth LaueGo format. 
+	ww[i][5] = str2num(IN2G_XMLtagContents("F2",line))
+	ww[i][6] = str2num(IN2G_XMLtagContents("Intensity",line))
+	ww[i][7] = str2num(IN2G_XMLtagContents("mult",line))
+	setDataFOlder OldDf
+end
+
+
+
+//**************************************************************************************
+//**************************************************************************************
+
+
+//**************************************************************************************
+//**************************************************************************************
+
+
+//**************************************************************************************
+//**************************************************************************************
+
+//**************************************************************************************
+//**************************************************************************************
+//				LAUEGO part
 //**************************************************************************************
 //**************************************************************************************
 
