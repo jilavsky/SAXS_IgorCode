@@ -2628,8 +2628,8 @@ Function IR3W_PDF4parseXMLFileLine(line,InternalName)
 	//<d unit="A">2.338</d><h>1</h><k>1</l><l>1</l><TTH unit="deg_for_Cu">38.506</TTH><F2>1313.5</F2><Intensity>25023</Intensity><mult>8</mult>
 	tempd= str2num(IN2G_XMLtagContents("d",line))
 	tempTTH= str2num(IN2G_XMLtagContents("TTH",line))
-	if(tempd<0.0001)		//no d spacing data, calculate from TTH
-		tempd = IN2G_ConvertTTHtoD(tempd,1.54184)
+	if(numtype(tempd)!=0 || tempd<0.0001)		//no d spacing data, calculate from TTH
+		tempd = IN2G_ConvertTTHtoD(tempTTH,1.54184)
 	endif
 	ww[i][0] = tempd
 	ww[i][1] = str2num(IN2G_XMLtagContents("h",line))
