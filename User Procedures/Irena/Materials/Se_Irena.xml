@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<cif>
+	<chemical_name_common>Se_mono</chemical_name_common>
+	<space_group_IT_number>14</space_group_IT_number>
+	<cell>
+		<a unit="nm">0.9054</a>
+		<b unit="nm">0.9083</b>
+		<c unit="nm">1.1601</c>
+		<alpha>90</alpha>
+		<beta>90.81</beta>
+		<gamma>90</gamma>
+		<volume>0.95394169359324</volume>
+		<temperature unit="C">22.5</temperature>
+	</cell>
+	<atom_site>
+		<label>W1</label>
+		<symbol>W</symbol>
+		<fract_xyz>0 0 0</fract_xyz>
+		<WyckoffSymbol>a</WyckoffSymb>
+		<DebyeTemperature unit="K">400</DebyeTemperature>
+	</atom_site>
+</cif>
