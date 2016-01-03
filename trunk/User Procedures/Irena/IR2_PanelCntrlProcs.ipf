@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.41
+#pragma version = 1.42
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.42 removed PreparematchString - as fighting with regular expressions used by Regex. Added IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 //1.41 fixed problem when checkbox Use SMR data screwed up the control procedures and put them in non-working condition. Accidentally called old code. 
 //1.40 added to IR2P_CleanUpPackagesFolder to remove als any data in root:raw: folder. Not sure if this is OK, but they are there annoying. 
 //1.39 fixed qis data selection bug. Further fixes to Irena results handling. 
@@ -116,6 +117,7 @@ Function IR2C_AddDataControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, 
 	string PckgDataFolder,PanelWindowName, AllowedIrenaTypes, AllowedResultsTypes, AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup
 	variable RequireErrorWaves, AllowModelData, DoNotAddControls
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	variable DontAdd =0 
 	if(!ParamIsDefault(DoNotAddControls))
 		DontAdd = DoNotAddControls
@@ -162,6 +164,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	string PckgDataFolder,PanelWindowName, AllowedIrenaTypes, AllowedResultsTypes,AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup
 	variable RequireErrorWaves,AllowModelData
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
@@ -489,6 +492,7 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 	string PckgDataFolder,PanelWindowName, AllowedIrenaTypes,AllowedResultsTypes,AllowedUserTypes, UserNameString, XUserTypeLookup,EUserTypeLookup
 	variable RequireErrorWaves,AllowModelData
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
@@ -567,6 +571,7 @@ Function IR2C_NamesSetVarProc(SV_Struct) : SetVariableControl
 	STRUCT WMSetVariableAction &SV_Struct
 
 	if(SV_Struct.eventcode==1 || SV_Struct.eventcode==2)
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		string TopPanel
 		TopPanel = SV_Struct.win
 		SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
@@ -604,6 +609,7 @@ Function IR2C_ModelQSetVarProc(SV_Struct) : SetVariableControl
 	if(SV_Struct.eventcode<1 || SV_Struct.eventcode>5)
 		return 0
 	endif
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String ctrlName=SV_Struct.ctrlName
 	Variable varNum=SV_Struct.dval
 	String varStr=SV_Struct.sVal
@@ -659,6 +665,7 @@ End
 Function IR2C_FixDisplayedControls(WnName) 
 	string WnName
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	string TopPanel=WnName
 	//GetWindow $(TopPanel), activeSW		//fix for subwindow controls... This will add teh subwidnow which is selected, I hope that means in which we operate!
@@ -719,6 +726,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 		return 0
 	endif
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String ctrlName=CB_Struct.ctrlName
 	Variable checked=CB_Struct.checked
 	string oldDf=GetDataFolder(1)
@@ -840,6 +848,7 @@ end
 Function/T IR2P_CleanUpPackagesFolder(FolderList)
 		string FolderList
 		
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		variable i
 		string tempstr
 		string newList=""
@@ -861,6 +870,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 
 	//variable startTicks=ticks
 	//part to copy everywhere...	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	string TopPanel
 	if( ParamIsDefault(winNm))
@@ -917,8 +927,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			tempResult=IN2G_FindFolderWithWvTpsList("root:USAXS:", 10,LocallyAllowedIndra2Data, 1) //contains list of all folders which contain any of the tested Intensity waves...
 			//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
-				//really does not like *
-				tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
+				//tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
+				tempResult=GrepList(tempResult, FolderMatchStr)
 			endif
 			//done, now rest...
 			//now prune the folders off the ones which do not contain full triplet of waves...
@@ -958,7 +968,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
 				IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, TempResultingWave)
 				if(strlen(FolderMatchStr)>0)
-				      FixedMatchString = IR2C_PreparematchString(FolderMatchStr)
+				     // FixedMatchString = IR2C_PreparematchString(FolderMatchStr)
+				      FixedMatchString = (FolderMatchStr)
 					variable ii
 					for(ii=numpnts(TempResultingWave)-1;ii>=0;ii-=1)
 						if(!GrepString(TempResultingWave[ii],FixedMatchString))
@@ -990,7 +1001,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			tempResult=IN2G_FindFolderWithWvTpsList("root:", 10,temp3, 1) //contains list of all folders which contain any of the tested Y waves... But may not contain the whole duplex of waves...
 					//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
-				tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
+				//tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
+				tempResult=GrepList(tempResult, (FolderMatchStr) )
 			endif
 			//done, now rest...
 			tempResult=IR2P_CleanUpPackagesFolder(tempResult)
@@ -1014,7 +1026,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			tempResult=IN2G_FindFolderWithWvTpsList("root:", 10,LocallyAllowedUserData, 1) //contains list of all folders which contain any of the tested Intensity waves...
 			//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
-				tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
+				//tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
+				tempResult=GrepList(tempResult, (FolderMatchStr) )
 			endif
 			//done, now rest...
 			tempResult=IR2P_CleanUpPackagesFolder(tempResult)
@@ -1041,7 +1054,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 		
             //match to user mask using greplist
             if(strlen(FolderMatchStr)>0)
-                  result=GrepList(result, IR2C_PreparematchString(FolderMatchStr) )
+                  //result=GrepList(result, IR2C_PreparematchString(FolderMatchStr) )
+                  result=GrepList(result, (FolderMatchStr) )
             endif
            result= IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
 	endif
@@ -1082,6 +1096,7 @@ static Function/T IR2P_RemoveDuplicateStrfLst(StrList)
 	string StrList
 
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	variable i
 	string result=""///stringFromList(0,StrList,";")+";"
 	string tempStr
@@ -1122,6 +1137,7 @@ static Function/T IR2P_ReturnListQRSFolders(ListOfQFolders, AllowQROnly)
 	string ListOfQFolders
 	variable AllowQROnly
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(cmpstr(ListOfQFolders,"---")==0)
 		return "---"
 	endif
@@ -1169,6 +1185,7 @@ end
 static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames,WNMStr)
 	string TopPanel, FullFldrNames, WNMStr
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1242,6 +1259,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 	string WNMStr			//waveName match string used by user...
 	//FullFldrNames
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1330,6 +1348,7 @@ Function/T IR2P_ListOfWavesOfType(type,ListOfWaves)
 		//optimized for speed 12/10/2010
 		//wave types: r* should work
 		//wave types : *i  
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		string tempresult=""
 	//start of old method
 //		variable i
@@ -1367,6 +1386,7 @@ end
 static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTypeSearchedFor,WNMStr)
 	string TopPanel, FullFldrNames,DataTypeSearchedFor, WNMStr
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1455,6 +1475,7 @@ end
 static Function/T IR2P_CheckForRightIN2TripletWvs(TopPanel, FullFldrNames,DataTypeSearchedFor)
 	string TopPanel, FullFldrNames,DataTypeSearchedFor
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -1508,6 +1529,7 @@ end
 Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 	string DataType, MatchMeTo, winNm			//data type   : Xaxis, Yaxis, Error
 										//Match me to is string to match the type to... Use "*" to get all... Applicable ONLY to Y and error data
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	string TopPanel=winNm
 
@@ -1967,6 +1989,7 @@ end
 Function/S IR2C_ReverseLookup(StrToSearch,Keywrd)
 	string StrToSearch,Keywrd
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string result, tempstr
 	result=""
 	variable i
@@ -1992,6 +2015,7 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 	if(Pa.eventCode!=2)
 		return 0
 	endif
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String ctrlName=Pa.ctrlName
 	Variable popNum=Pa.popNum
 	String popStr=Pa.popStr
@@ -2243,6 +2267,7 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
         Variable levels, LongShortType		//set 1 for long type and 0 for short type return
         wave/T ResultingWave
         			 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
         String dfSave
         String list = "", templist, tempWvName
         variable i, skipRest
@@ -2251,7 +2276,7 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
      	 DFREF startDFRef = $(startDF)
       templist = IN2G_ConvertDataDirToList(DataFolderDir(2,startDFRef))
       //templist = IN2G_ConvertDataDirToList(DataFolderDir(2))
- 	if (strlen(GrepList(templist,WaveTypes))>0)
+ 		if (strlen(GrepList(templist,WaveTypes))>0)
 			if (LongShortType)
 		      			Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
 		      			ResultingWave[numpnts(ResultingWave)-1]=startDF
@@ -2294,6 +2319,7 @@ End
 Function/S IR2C_ReturnKnownToolResults(ToolName)
 	string ToolName
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string KnownToolResults=""
 
 	SVAR KnownTools= root:Packages:IrenaControlProcs:AllKnownToolsResults
@@ -2335,6 +2361,7 @@ end
 
 Function/S IR2C_PrepareMatchString(StrIn)
 	string StrIn
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string StrOut = ""
 	variable ic
 	for (ic=0;ic<strlen(StrIn);ic+=1)
@@ -2347,6 +2374,7 @@ end
 
 Function/S IR2C_EscapeCharTable(cstr)
 	string cstr
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string estr = ""
 	strswitch(cstr)
 		case "(":

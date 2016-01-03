@@ -2,6 +2,8 @@
 #pragma version=1
 #include <Multi-peak fitting 2.0>
 
+//local configurations
+Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
 constant IR3WversionNumber = 0.3		//Diffraction panel version number
 
 //*************************************************************************\
@@ -14,29 +16,43 @@ constant IR3WversionNumber = 0.3		//Diffraction panel version number
 //0.1 Diffraction tool development version 
 
 
-//local configurations
-Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
 
 ///******************************************************************************************
 ///******************************************************************************************
+Function IR3W_MainCheckVersion()	
+	DoWindow IR3W_WAXSPanel
+	if(V_Flag)
+		if(!CheckPanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber))
+			DoAlert /T="The WAXS panel was created by old version of Irena " 1, "WAXS tool may need to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				DoWIndow IR3W_WAXSPanel
+				if(V_Flag)
+					DoWindow/K IR3W_WAXSPanel
+				endif
+				Execute/P("IR3W_WAXS()")
+			else		//at least reinitialize the variables so we avoid major crashes...
+				Execute/P("IR3W_WAXS()")
+			endif
+		endif
+	endif
+end
 ///******************************************************************************************
 ///******************************************************************************************
 Function IR3W_WAXS()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Starting WAXS tool")
 	IN2G_CheckScreenSize("width",1200)
 	IR3W_InitWAXS()
 	DoWIndow IR3W_WAXSPanel
 	if(V_Flag)
 		DoWindow/F IR3W_WAXSPanel
-		DoWindow/K IR3W_WAXSPanel
-		Execute("IR3W_WAXSPanel()")
 	else
 		Execute("IR3W_WAXSPanel()")
+		UpdatePanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber)
 	endif
-//	UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber)
-		IR3W_UpdateListOfAvailFiles()
-		IR3W_UpdatePDF4OfAvailFiles()
-//	IR3D_RebuildListboxTables()
+	IR3W_UpdateListOfAvailFiles()
+	IR3W_UpdatePDF4OfAvailFiles()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Finished WAXS tool")
 end
 
 //************************************************************************************************************
@@ -56,6 +72,13 @@ Proc IR3W_WAXSPanel()
 	TitleBox DataSelection title="Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
 	Checkbox UseIndra2Data, pos={10,50},size={76,14},title="USAXS", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseIndra2Data
 	checkbox UseQRSData, pos={120,50}, title="QRS(QIS)", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseQRSdata
+	//fix case when neither is selected and default to qrs
+	//NVAR UseIndra2Data = root:Packages:Irena:WAXS:UseIndra2Data
+	//NVAR UseQRSdata = root:Packages:Irena:WAXS:UseQRSdata
+	if(root:Packages:Irena:WAXS:UseQRSdata+root:Packages:Irena:WAXS:UseIndra2Data!=1)
+		root:Packages:Irena:WAXS:UseIndra2Data=0
+		root:Packages:Irena:WAXS:UseQRSdata = 1
+	endif
 	PopupMenu StartFolderSelection,pos={10,70},size={180,15},proc=IR3W_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:WAXS:DataStartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:WAXS:UseIndra2Data, root:Packages:Irena:WAXS:UseQRSdata, 2,1)"
 	SetVariable FolderNameMatchString,pos={10,95},size={210,15}, proc=IR3W_SetVarProc,title="Folder Match (RegEx)"
@@ -78,7 +101,32 @@ Proc IR3W_WAXSPanel()
 	Setvariable DataTTHEnd, variable=root:Packages:Irena:WAXS:DataTTHEnd, limits={0,inf,0}
 	Checkbox DisplayUncertainties, pos={280,80},size={76,14},title="Display Uncertainties", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayUncertainties
 
-
+//root:Packages:Irena:WAXSBackground
+//	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+	//Experimental data input
+	NewPanel /W=(255,690,545,770) /HOST=# /N=Background
+	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
+	IR2C_AddDataControls("Irena:WAXSBackground","IR3W_WAXSPanel#Background","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=0)
+	SetDrawLayer UserBack
+	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
+	SetDrawEnv fsize= 12,fstyle= 1
+	DrawText 10,20,"Background if needed for fitting"
+	//fix case when neither is selected and default to qrs
+	root:Packages:Irena:WAXSBackground:DataFolderName=""
+	//note, this sets up the dependence for same type of data for background and fit data, seems logical. 
+	root:Packages:Irena:WAXSBackground:UseIndra2Data := root:Packages:Irena:WAXS:UseIndra2Data
+	root:Packages:Irena:WAXSBackground:UseQRSdata := root:Packages:Irena:WAXS:UseQRSdata
+	// done... 
+	Checkbox UseIndra2Data, pos={100,5}, disable=1
+	Checkbox UseResults, pos={250,5}, disable=1
+	Checkbox UseModelData, pos={330,5}, disable=1
+	checkbox UseQRSData, pos={180,5}, disable=1
+	popupMenu SelectDataFolder, pos={10,20}, proc=IR3W_BackgroundPopMenuProc
+	setVariable FolderMatchStr, pos={10,40}
+	checkbox DisplayDataBackground, pos={140,40}, title="Display in Graph?", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayDataBackground
+	
+	//setVariable WaveMatchStr, pos={150,120}	
+	SetActiveSubwindow ##
 
 	//TitleBox FakeLine1 title=" ",fixedSize=1,size={200,3},pos={290,130},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	//Data Tabs definition
@@ -135,7 +183,7 @@ Proc IR3W_WAXSPanel()
 	DrawText 4,706,"Ctrl/Cmd-click to select one data set."
 	DrawText 4,719,"Regex for not contain: ^((?!string).)*$"
 	DrawText 4,732,"Regex for contain:  string"
-	DrawText 4,745,"Regex for case independent contain:  (?i)string"
+	DrawText 4,745,"Case indep. contain:  (?i)string"
 	
 	Execute ("IR3W_ModifyPanelControls()")
 end
@@ -156,6 +204,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 	//DoWIndow/F IR3W_WAXSPanel 
 	switch( tca.eventCode )
 		case 2: // mouse up
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 3,"Calling Tabcontrol procedure")
 			Variable tab = tca.tab
 			//tab0
 				TitleBox Info1 title="MultiPeak Fit",win=IR3W_WAXSPanel, disable=(tab!=0)
@@ -193,6 +242,7 @@ End
 //**********************************************************************************************************
 Function IR3W_ModifyPanelControls()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(DataFolderExists("root:Packages:MultiPeakFit2"))
 		PopupMenu MPFInitializeFromSetMenu, win=IR3W_WAXSPanel, disable=0
 	else
@@ -205,6 +255,32 @@ Function IR3W_ModifyPanelControls()
 	IR3W_PDF4TabProc(tca)
 
 end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3W_BackgroundPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			IN2G_PrintDebugStatement(IrenaDebugLevel,5,GetRTStackInfo(1))
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			NVAR  DisplayBackg = root:Packages:Irena:WAXS:DisplayDataBackground		
+			if(StringMatch(popStr, "---" ))
+				DisplayBackg = 0
+				CheckBox DisplayDataBackground win=IR3W_WAXSPanel#Background, value=0
+			endif
+			IR2C_PanelPopupControl(Pa)
+			IR3W_AddbackgroundToGraph()
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -212,15 +288,20 @@ end
 Function IR3W_InitWAXS()	
 
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	string ListOfVariables
 	string ListOfStrings
 	variable i
 		
+	if (!DataFolderExists("root:Packages:Irena:WAXSBackground"))		//create folder
+		NewDataFolder/O root:Packages:Irena:WAXSBackground
+	endif
 	if (!DataFolderExists("root:Packages:Irena:WAXS"))		//create folder
 		NewDataFolder/O root:Packages
 		NewDataFolder/O root:Packages:Irena
 		NewDataFolder/O root:Packages:Irena:WAXS
+		NewDataFolder/O root:Packages:Irena:WAXSBackground
 	endif
 	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
 
@@ -231,7 +312,7 @@ Function IR3W_InitWAXS()
 	ListOfStrings+="MultiFitResultsFolder;MPF2PlotFolderStart;MPF2PlotPeakProfile;MPF2PlotPeakParameter;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
-	ListOfVariables+="DataBackground;"
+	ListOfVariables+="DisplayDataBackground;"
 	ListOfVariables+="DisplayUncertainties;DataTTHEnd;DataTTHstart;MPF2CurrentFolderNumber;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="Energy;Wavelength;"
@@ -281,7 +362,7 @@ Function IR3W_InitWAXS()
 //	SVAR ListOfSimpleModels
 //	ListOfSimpleModels="Guinier;"
 	SVAR FolderSortStringAll
-	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;Reverse_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;Reverse_xyzmin;_xyzC;Reverse_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
 //	SVAR SimpleModel
 //	if(strlen(SimpleModel)<1)
 //		SimpleModel="Guinier"
@@ -323,6 +404,7 @@ Function IR3W_WAXSCheckProc(cba) : CheckBoxControl
 
 	switch( cba.eventCode )
 		case 2: // mouse up
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 			Variable checked = cba.checked
 			NVAR UseIndra2Data =  root:Packages:Irena:WAXS:UseIndra2Data
 			NVAR UseQRSData =  root:Packages:Irena:WAXS:UseQRSData
@@ -356,10 +438,10 @@ Function IR3W_WAXSCheckProc(cba) : CheckBoxControl
 				DoWindow IR3W_WAXSMainGraph 
 				if(V_Flag)
 					if(DisplayUncertainties)
-							WAVE OriginalDataErrorWave= root:Packages:Irena:WAXS:OriginalDataErrorWave
-							ErrorBars /W=IR3W_WAXSMainGraph OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
+							WAVE DataErrorWave= root:Packages:Irena:WAXS:DataErrorWave
+							ErrorBars /W=IR3W_WAXSMainGraph DataIntWave Y,wave=(DataErrorWave,DataErrorWave)		
 					else
-						ErrorBars /W=IR3W_WAXSMainGraph OriginalDataIntWave OFF
+						ErrorBars /W=IR3W_WAXSMainGraph DataIntWave OFF
 					endif
 				endif
 		  	endif
@@ -367,51 +449,9 @@ Function IR3W_WAXSCheckProc(cba) : CheckBoxControl
 		  	if(stringmatch(cba.ctrlName,"PDF4_DisplayHKLTags"))
 				IR3W_PDF4AddLines()
 	  		endif
-
-
-
-
-//			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
-//			UserMessageString = ""
-//		  	if(stringmatch(cba.ctrlName,"ProcessSequentially"))
-//	  			if(checked)
-//	  				ProcessManually = 0
-//	  				ProcessTest = 0
-//	  				AutosaveAfterProcessing = 1
-//	  				if(ProcessTest+ProcessMerge+ProcessMerge2!=1)
-//	  					ProcessMerge2=1
-//	  					ProcessMerge =0
-//	  				endif
-//					//Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=1
-//	  			endif
-//	  		endif
-//		  	if(stringmatch(cba.ctrlName,"ProcessTest"))
-//	  			if(checked)
-//	  				ProcessMerge = 0
-//	  				ProcessMerge2 = 0
-//	  				AutosaveAfterProcessing = 0
-//	  				ProcessManually = 1
-//	  				ProcessSequentially = 0
-//	  			endif
-//	  		endif
-//		  	if(stringmatch(cba.ctrlName,"ProcessMerge"))
-//	  			if(checked)
-//	  				ProcessTest = 0
-//	  				ProcessMerge2 = 0
-//					UserMessageString += "Using Merge. "
-//	  			endif
-//	  		endif
-//		  	if(stringmatch(cba.ctrlName,"ProcessMerge2"))
-//	  			if(checked)
-//	  				ProcessMerge = 0
-//	  				ProcessTest = 0
-//					UserMessageString += "Using Merge2. "
-//	  			endif
-//	  		endif
-//	//	  	if(stringmatch(cba.ctrlName,"ProcessMerge2")||stringmatch(cba.ctrlName,"ProcessMerge")||stringmatch(cba.ctrlName,"ProcessTest"))
-////			endif
-//			IR3D_SetGUIControls()
-	  		
+		  	if(stringmatch(cba.ctrlName,"DisplayDataBackground"))
+				IR3W_AddBackgroundToGraph()
+	  		endif
 			break
 		case -1: // control being killed
 			break
@@ -427,6 +467,7 @@ End
 Function IR3W_UpdateListOfAvailFiles()
 
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDF=GetDataFolder(1)
 	setDataFolder root:Packages:Irena:WAXS
 	
@@ -477,6 +518,7 @@ end
 //**************************************************************************************
 Function IR3W_SortListOfAvailableFldrs()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	SVAR FolderSortString=root:Packages:Irena:WAXS:FolderSortString
 	Wave/T ListOfAvailableData=root:Packages:Irena:WAXS:ListOfAvailableData
 	Wave SelectionOfAvailableData=root:Packages:Irena:WAXS:SelectionOfAvailableData
@@ -618,6 +660,33 @@ Function IR3W_SortListOfAvailableFldrs()
 			endfor
 			Sort TempWv, ListOfAvailableData
 		endif
+	elseif(stringMatch(FolderSortString,"Reverse_xyzC"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoAlert /T="Information not found" 0, "Cannot find location of _xyzC information, sorting alphabetically" 
+			Sort /A/R ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*C*" ))
+					TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort/R TempWv, ListOfAvailableData
+		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
@@ -659,6 +728,7 @@ Function IR3W_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(stringmatch(ctrlName,"StartFolderSelection"))
 		//Update the listbox using start folde popStr
 		SVAR StartFolderName=root:Packages:Irena:WAXS:DataStartFolder
@@ -701,7 +771,9 @@ end
 //**************************************************************************************
 
 Function/S IR3W_InitMPF2FromMenuString()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	string OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:MultiPeakFit2
 	String theList = "Start Fresh;"
 	if(DataFolderExists("root:Packages:MultiPeakFit2:")) 
 		theList += "\\M1(---;"
@@ -709,9 +781,16 @@ Function/S IR3W_InitMPF2FromMenuString()
 		Variable i
 		Variable nSets = ItemsInList(SetList)
 		for (i = 0; i < nSets; i += 1)
-				theList += "Set Number "+StringFromList(i, SetList)+";"
+				theList += "Set "+StringFromList(i, SetList)
+				setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+StringFromList(i, SetList))
+				SVAR/Z IrenaUserComment
+				if(SVAR_Exists(IrenaUserComment))
+						theList += " : "+IrenaUserComment
+				endif
+				theList += ";"
 		endfor
 	endif
+	setDataFolder oldDf
 	return theList
 end
 
@@ -727,6 +806,7 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 			if(stringmatch(sva.ctrlName,"FolderNameMatchString1"))
 				IR3D_UpdateListOfAvailFiles(1)
 				IR3D_RebuildListboxTables()
@@ -737,24 +817,24 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 			NVAR DataTTHEnd = root:Packages:Irena:WAXS:DataTTHEnd
 	
 			if(stringmatch(sva.ctrlName,"DataTTHEnd"))
-				WAVE OriginalData2ThetaWave = root:Packages:Irena:WAXS:OriginalData2ThetaWave
-				tempP = BinarySearch(OriginalData2ThetaWave, DataTTHEnd )
+				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
+				tempP = BinarySearch(Data2ThetaWave, DataTTHEnd )
 				if(tempP<0)
 					print "Wrong 2Theta value set, 2 Theta max must be at most 1 point before the end of Data"
-					tempP = numpnts(OriginalData2ThetaWave)-1
-					DataTTHEnd = OriginalData2ThetaWave[tempP]
+					tempP = numpnts(Data2ThetaWave)-1
+					DataTTHEnd = Data2ThetaWave[tempP]
 				endif
-				cursor /W=IR3W_WAXSMainGraph B, OriginalDataIntWave, tempP
+				cursor /W=IR3W_WAXSMainGraph B, DataIntWave, tempP
 			endif
 			if(stringmatch(sva.ctrlName,"DataTTHstart"))
-				WAVE OriginalData2ThetaWave = root:Packages:Irena:WAXS:OriginalData2ThetaWave
-				tempP = BinarySearch(OriginalData2ThetaWave, DataTTHstart )
+				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
+				tempP = BinarySearch(Data2ThetaWave, DataTTHstart )
 				if(tempP<1)
 					print "Wrong 2 Theta value set, 2 Theta start  must be at least 1 point from the start of Data"
 					tempP = 1
-					DataTTHstart = OriginalData2ThetaWave[tempP]
+					DataTTHstart = Data2ThetaWave[tempP]
 				endif
-				cursor /W=IR3W_WAXSMainGraph A, OriginalDataIntWave, tempP
+				cursor /W=IR3W_WAXSMainGraph A, DataIntWave, tempP
 			endif
 			NVAR Energy = root:Packages:Irena:WAXS:Energy
 			NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
@@ -795,6 +875,7 @@ Function IR3W_WAXSListBoxProc(lba) : ListBoxControl
 		case 1: // mouse down
 			break
 		case 3: // double click
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 			FoldernameStr=listWave[row]
 			IR3W_CopyAndAppendData(FoldernameStr)
 			break
@@ -819,6 +900,7 @@ End
 Function IR3W_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
 	//IR3D_SetSavedNotSavedMessage(0)
@@ -862,14 +944,14 @@ Function IR3W_CopyAndAppendData(FolderNameStr)
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed"
 		endif
-		Duplicate/O SourceIntWv, OriginalDataIntWave
-		Duplicate/O SourceQWv, OriginalData2ThetaWave
-		Duplicate/O SourceErrorWv, OriginalDataErrorWave
+		Duplicate/O SourceIntWv, DataIntWave
+		Duplicate/O SourceQWv, Data2ThetaWave
+		Duplicate/O SourceErrorWv, DataErrorWave
 		if(WaveExists(SourcedQWv))
-			Duplicate/O SourcedQWv, OriginalDatad2ThetaWave
+			Duplicate/O SourcedQWv, DataD2ThetaWave
 		else
-			Duplicate/O SourceQWv, OriginalDatad2ThetaWave
-			OriginalDatad2ThetaWave=0
+			Duplicate/O SourceQWv, DataD2ThetaWave
+			DataD2ThetaWave=0
 		endif
 		//figrue out what data you have... 
 		variable XaxisType=0
@@ -903,38 +985,35 @@ Function IR3W_CopyAndAppendData(FolderNameStr)
 		else
 			//found nothing, use the existing ones... 
 		endif
-		IR3W_ConvertXdataToTTH(OriginalData2ThetaWave,OriginalDatad2ThetaWave,XaxisType,wavelength)
+		IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
 		IR3W_GraphWAXSData()
-	//	IR3W_CreateLinearizedData()
-	//	IR3W_AppendDataToGraphModel()
-//		IR3D_PresetOutputStrings()
-//		Wave/Z ResultIntensity = root:Packages:Irena:SASDataMerging:ResultIntensity
-//		if(WaveExists(ResultIntensity))
-//			ResultIntensity= NaN
-//		endif
 		print "Added Data from folder : "+DataFolderName
+		IR3W_AddBackgroundToGraph()
 	SetDataFolder oldDf
 end
+
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-Function IR3W_ConvertXdataToTTH(OriginalData2ThetaWave,OriginalDatad2ThetaWave,XaxisType,wavelength)
-	wave OriginalData2ThetaWave,OriginalDatad2ThetaWave
+Function IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+	wave Data2ThetaWave,DataD2ThetaWave
 	variable XaxisType,wavelength
 	//q = 4pi sin(theta)/lambda
 	//theta = (q * lamda / 4pi) * 180/pi [deg]
 	//asin(q * lambda /4pi) = theta
 	//d ~ 2*pi/Q
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	if(XaxisType==0)
 		Abort "Unknown X axis type"
 	elseif(XaxisType==1)		//Q
-		OriginalData2ThetaWave =   114.592 * asin(OriginalData2ThetaWave[p]* wavelength / (4*pi))
-		OriginalDatad2ThetaWave =  114.592 * asin(OriginalDatad2ThetaWave[p] * wavelength / (4*pi))
+		Data2ThetaWave =   114.592 * asin(Data2ThetaWave[p]* wavelength / (4*pi))
+		DataD2ThetaWave =  114.592 * asin(DataD2ThetaWave[p] * wavelength / (4*pi))
 	elseif(XaxisType==2)		//d
-		OriginalData2ThetaWave =   114.592 * asin((2 * pi / OriginalData2ThetaWave[p])* wavelength / (4*pi))
-		OriginalDatad2ThetaWave =  114.592 * asin((2 * pi / OriginalDatad2ThetaWave[p])* wavelength / (4*pi))
+		Data2ThetaWave =   114.592 * asin((2 * pi / Data2ThetaWave[p])* wavelength / (4*pi))
+		DataD2ThetaWave =  114.592 * asin((2 * pi / DataD2ThetaWave[p])* wavelength / (4*pi))
 	elseif(XaxisType==3)		//TwoTheta
 		//nothing to do
 	endif
@@ -950,15 +1029,16 @@ end
 //**********************************************************************************************************
 Function IR3W_CreateLinearizedData()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
-	Wave OriginalDataIntWave=root:Packages:Irena:WAXS:OriginalDataIntWave
-	Wave OriginalDataQWave=root:Packages:Irena:WAXS:OriginalDataQWave
-	Wave OriginalDataErrorWave=root:Packages:Irena:WAXS:OriginalDataErrorWave
+	Wave DataIntWave=root:Packages:Irena:WAXS:DataIntWave
+	Wave DataQWave=root:Packages:Irena:WAXS:DataQWave
+	Wave DataErrorWave=root:Packages:Irena:WAXS:DataErrorWave
 //	SVAR SimpleModel=root:Packages:Irena:WAXS:SimpleModel
-	Duplicate/O OriginalDataIntWave, LinModelDataIntWave, ModelNormalizedResidual
-	Duplicate/O OriginalDataQWave, LinModelDataQWave, ModelNormResXWave
-	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
+	Duplicate/O DataIntWave, LinModelDataIntWave, ModelNormalizedResidual
+	Duplicate/O DataQWave, LinModelDataQWave, ModelNormResXWave
+	Duplicate/O DataErrorWave, LinModelDataEWave
 	ModelNormalizedResidual = 0	
 	SetDataFolder oldDf
 end
@@ -971,80 +1051,6 @@ end
 
 Function IR3W_AppendDataToGraphModel()
 	
-//	DoWindow IR3W_WAXSPanel
-//	if(!V_Flag)
-//		return 0
-//	endif
-//	variable WhichLegend=0
-//	variable startQp, endQp, tmpStQ
-//
-////	Duplicate/O OriginalDataIntWave, LinModelDataIntWave, ModelNormalizedResidual
-////	Duplicate/O OriginalDataQWave, LinModelDataQWave, ModelNormResXWave
-////	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
-//
-//	Wave LinModelDataIntWave=root:Packages:Irena:WAXS:LinModelDataIntWave
-//	Wave LinModelDataQWave=root:Packages:Irena:WAXS:LinModelDataQWave
-//	Wave LinModelDataEWave=root:Packages:Irena:WAXS:LinModelDataEWave
-//	CheckDisplayed /W=IR3W_WAXSPanel#LogLogDataDisplay LinModelDataIntWave
-//	if(!V_flag)
-//		AppendToGraph /W=IR3W_WAXSPanel#LinearizedDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
-//		ModifyGraph /W=IR3W_WAXSPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
-//		Label /W=IR3W_WAXSPanel#LinearizedDataDisplay left "Intensity"
-//		Label /W=IR3W_WAXSPanel#LinearizedDataDisplay bottom "Q [A\\S-1\\M]"
-//		ErrorBars /W=IR3W_WAXSPanel#LinearizedDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
-//	endif
-////	NVAR DataQEnd = root:Packages:Irena:WAXS:DataQEnd
-////	if(DataQEnd>0)	 		//old Q max already set.
-////		endQp = BinarySearch(OriginalDataQWave, DataQEnd)
-////	endif
-////	if(endQp<1)	//Qmax not set or not found. Set to last point-1 on that wave. 
-////		DataQEnd = OriginalDataQWave[numpnts(OriginalDataQWave)-2]
-////		endQp = numpnts(OriginalDataQWave)-2
-////	endif
-////	cursor /W=IR3W_WAXSPanel#LogLogDataDisplay B, OriginalDataIntWave, endQp
-//	DoUpdate
-//
-//	Wave/Z ModelNormalizedResidual=root:Packages:Irena:WAXS:ModelNormalizedResidual
-//	Wave/Z ModelNormResXWave=root:Packages:Irena:WAXS:ModelNormResXWave
-//	CheckDisplayed /W=IR3W_WAXSPanel#ResidualDataDisplay ModelNormalizedResidual  //, ResultIntensity
-//	if(!V_flag)
-//		AppendToGraph /W=IR3W_WAXSPanel#ResidualDataDisplay  ModelNormalizedResidual  vs ModelNormResXWave
-//		ModifyGraph /W=IR3W_WAXSPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
-//		Label /W=IR3W_WAXSPanel#LinearizedDataDisplay left "Normalized res."
-//		Label /W=IR3W_WAXSPanel#LinearizedDataDisplay bottom "Q [A\\S-1\\M]"
-//	endif
-//
-//
-//
-//	string Shortname1, ShortName2
-//	
-//	switch(V_Flag)	// numeric switch
-//		case 0:		// execute if case matches expression
-//			Legend/W=IR3W_WAXSPanel#LogLogDataDisplay /N=text0/K
-//			break						// exit from switch
-////		case 1:		// execute if case matches expression
-////			SVAR DataFolderName=root:Packages:Irena:WAXS:DataFolderName
-////			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-////			Legend/W=IR3W_WAXSPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
-////			break
-////		case 2:
-////			SVAR DataFolderName=root:Packages:Irena:WAXS:DataFolderName
-////			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-////			Legend/W=IR3W_WAXSPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
-////			break
-////		case 3:
-////			SVAR DataFolderName=root:Packages:Irena:WAXS:DataFolderName
-////			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-////			Legend/W=IR3W_WAXSPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
-////			break
-////		case 7:
-////			SVAR DataFolderName=root:Packages:Irena:WAXS:DataFolderName
-////			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-////			Legend/W=IR3W_WAXSPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
-//			break
-//	endswitch
-//
-	
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1053,30 +1059,31 @@ end
 
 Function IR3W_GraphWAXSData()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	variable WhichLegend=0
 	variable startTTHp, endTTHp, tmpStQ
-	Wave OriginalDataIntWave=root:Packages:Irena:WAXS:OriginalDataIntWave
-	Wave OriginalData2ThetaWave=root:Packages:Irena:WAXS:OriginalData2ThetaWave
-	Wave OriginalDataErrorWave=root:Packages:Irena:WAXS:OriginalDataErrorWave
+	Wave DataIntWave=root:Packages:Irena:WAXS:DataIntWave
+	Wave Data2ThetaWave=root:Packages:Irena:WAXS:Data2ThetaWave
+	Wave DataErrorWave=root:Packages:Irena:WAXS:DataErrorWave
 	NVAR DisplayUncertainties = root:Packages:Irena:WAXS:DisplayUncertainties
 	SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
 
 
 	DoWindow IR3W_WAXSMainGraph 
 	if(!V_Flag)
-		Display/K=1/W=(630,45,1531,570) OriginalDataIntWave  vs OriginalData2ThetaWave as "Powder Diffraction / WAXS Main Graph"
+		Display/K=1/W=(630,45,1531,570) DataIntWave  vs Data2ThetaWave as "Powder Diffraction / WAXS Main Graph"
 		DoWindow/C IR3W_WAXSMainGraph
 		setWIndow IR3W_WAXSMainGraph, hook(CursorMoved)=IR3W_GraphHookFunction
 		Label /W=IR3W_WAXSMainGraph left "Intensity"
 		Label /W=IR3W_WAXSMainGraph bottom "2Theta [deg]"
-		ErrorBars /W=IR3W_WAXSMainGraph OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
+		ErrorBars /W=IR3W_WAXSMainGraph DataIntWave Y,wave=(DataErrorWave,DataErrorWave)		
 		showinfo
 	endif
 	AutopositionWindow /R=IR3W_WAXSPanel IR3W_WAXSMainGraph
 	if(DisplayUncertainties)
-		//ErrorBars OriginalDataIntWave OFF 
+		//ErrorBars DataIntWave OFF 
 	else
-		ErrorBars /W=IR3W_WAXSMainGraph OriginalDataIntWave OFF
+		ErrorBars /W=IR3W_WAXSMainGraph DataIntWave OFF
 	endif
 	string LastFldername=StringFromList(ItemsInList(DataFolderName , ":")-1, DataFolderName  , ":")
 	TextBox/C/N=SampleName/F=0/S=3/A=RT "\\Z18\\F'Geneva'\\K(0,0,65535)"+LastFldername
@@ -1085,37 +1092,121 @@ Function IR3W_GraphWAXSData()
 	NVAR DataTTHEnd = root:Packages:Irena:WAXS:DataTTHEnd
 	
 	if(DataTTHEnd>0)	 		//old 2Theta max already set.
-		endTTHp = BinarySearch(OriginalData2ThetaWave, DataTTHEnd)
+		endTTHp = BinarySearch(Data2ThetaWave, DataTTHEnd)
 		if(endTTHp<0)
-			endTTHp = numpnts(OriginalData2ThetaWave)-1
-			DataTTHEnd = OriginalData2ThetaWave[endTTHp]
+			endTTHp = numpnts(Data2ThetaWave)-1
+			DataTTHEnd = Data2ThetaWave[endTTHp]
 		endif
 	else
-		endTTHp = numpnts(OriginalData2ThetaWave)-1
-		DataTTHEnd = OriginalData2ThetaWave[endTTHp]
+		endTTHp = numpnts(Data2ThetaWave)-1
+		DataTTHEnd = Data2ThetaWave[endTTHp]
 	endif
 	if(DataTTHstart>0)	 		//old 2Theta min already set.
-		startTTHp = BinarySearch(OriginalData2ThetaWave, DataTTHstart)
+		startTTHp = BinarySearch(Data2ThetaWave, DataTTHstart)
 		if(startTTHp<0)
 			startTTHp = 1
-			DataTTHstart = OriginalData2ThetaWave[1]
+			DataTTHstart = Data2ThetaWave[1]
 		endif
 	else
 		startTTHp = 1
-		DataTTHstart = OriginalData2ThetaWave[1]
+		DataTTHstart = Data2ThetaWave[1]
 	endif
-	cursor /W=IR3W_WAXSMainGraph B, OriginalDataIntWave, endTTHp
-	cursor /W=IR3W_WAXSMainGraph A, OriginalDataIntWave, startTTHp
-	
+	cursor /W=IR3W_WAXSMainGraph B, DataIntWave, endTTHp
+	cursor /W=IR3W_WAXSMainGraph A, DataIntWave, startTTHp
 end
 //**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3W_AddBackgroundToGraph()
+
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		string OldDf=GetDataFOlder(1)
+		setDataFOlder root:Packages:Irena:WAXS:
+		NVAR  DisplayBackg = root:Packages:Irena:WAXS:DisplayDataBackground
+		NVAR  Energy = root:Packages:Irena:WAXS:Energy
+		NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
+		//these are variables used by the control procedure
+		NVAR  UseIndra2Data = root:Packages:Irena:WAXSBackground:UseIndra2Data
+		NVAR  UseQRSdata = root:Packages:Irena:WAXSBackground:UseQRSdata
+		//now background, if it exists
+		SVAR DataFolderNameB  = root:Packages:Irena:WAXSBackground:DataFolderName 
+		SVAR IntensityWaveNameB = root:Packages:Irena:WAXSBackground:IntensityWaveName
+		SVAR QWavenameB = root:Packages:Irena:WAXSBackground:QWavename
+		SVAR ErrorWaveNameB = root:Packages:Irena:WAXSBackground:ErrorWaveName
+
+		if(strlen(DataFolderNameB)<4)
+			//to do: remove from graph!
+			RemoveFromGraph/Z BackgroundIntWave#0, BackgroundIntWave#1, BackgroundIntWave#2, BackgroundIntWave#3, BackgroundIntWave#4
+			Wave/Z BackgroundIntWave=root:Packages:Irena:WAXS:BackgroundIntWave
+			Wave/Z Background2ThetaWave=root:Packages:Irena:WAXS:Background2ThetaWave
+			Wave/Z BackgroundErrorWave=root:Packages:Irena:WAXS:BackgroundErrorWave
+			KillWaves/Z BackgroundIntWave, Background2ThetaWave, BackgroundErrorWave, BackgroundD2ThetaWave
+		else
+			Wave/Z SourceBIntWv=$(DataFolderNameB+IntensityWaveNameB)
+			Wave/Z SourceBQWv=$(DataFolderNameB+QWavenameB)
+			Wave/Z SourceBErrorWv=$(DataFolderNameB+ErrorWaveNameB)
+			if(!WaveExists(SourceBIntWv)||	!WaveExists(SourceBQWv)||!WaveExists(SourceBErrorWv))
+				Abort "Data selection failed"
+			endif
+			Duplicate/O SourceBIntWv, BackgroundIntWave
+			Duplicate/O SourceBQWv, Background2ThetaWave
+			Duplicate/O SourceBErrorWv, BackgroundErrorWave
+			Duplicate/O SourceBQWv, BackgroundD2ThetaWave
+			//figure out what data you have... 
+			Wave BackgroundIntWave=root:Packages:Irena:WAXS:BackgroundIntWave
+			Wave Background2ThetaWave=root:Packages:Irena:WAXS:Background2ThetaWave
+			Wave Background2ThetaWave=root:Packages:Irena:WAXS:Background2ThetaWave
+			Wave BackgroundD2ThetaWave=root:Packages:Irena:WAXS:BackgroundD2ThetaWave
+			variable XaxisType=0
+			if(UseIndra2Data)
+				XaxisType = 1 //Q data
+			elseif(UseQRSdata)
+				if(StringMatch(QWavenameB, "q*")||StringMatch(QWavenameB, "'q*"))
+					XaxisType = 1 //Q data
+				elseif(StringMatch(QWavenameB, "d*")||StringMatch(QWavenameB, "'d*"))
+					XaxisType = 2 //d data
+				elseif(StringMatch(QWavenameB, "t*")||StringMatch(QWavenameB, "'t*"))
+					XaxisType = 3 //2Theta data
+				else	//unknown or mm, do not use
+					XaxisType=0
+				endif
+			else
+				XaxisType=0
+			endif
+			if(XaxisType>0)
+				IR3W_ConvertXdataToTTH(Background2ThetaWave,BackgroundD2ThetaWave,XaxisType,wavelength)		
+			else	//somethign went wrong
+				IN2G_PrintDebugStatement(IrenaDebugLevel, 0,"Incorrect background data found.")
+				KillWaves/Z BackgroundIntWave, Background2ThetaWave, BackgroundErrorWav, BackgroundD2ThetaWave
+				DisplayBackg=0
+			endif
+		endif
+	if(DisplayBackg)	
+		if(WaveExists(BackgroundIntWave)&&WaveExists(Background2ThetaWave))
+		 	CheckDisplayed /W=IR3W_WAXSMainGraph BackgroundIntWave
+		 	if(!V_Flag)
+				AppendToGraph/W=IR3W_WAXSMainGraph BackgroundIntWave vs Background2ThetaWave
+				ModifyGraph lstyle(BackgroundIntWave)=7,rgb(BackgroundIntWave)=(0,0,0)
+			endif
+		endif
+	else		//do not display
+		Wave/Z BackgroundIntWave=root:Packages:Irena:WAXS:BackgroundIntWave
+		Wave/Z Background2ThetaWave=root:Packages:Irena:WAXS:Background2ThetaWave
+		Wave/Z BackgroundErrorWave=root:Packages:Irena:WAXS:BackgroundErrorWave
+		RemoveFromGraph/Z BackgroundIntWave#0, BackgroundIntWave#1, BackgroundIntWave#2, BackgroundIntWave#3, BackgroundIntWave#4
+		//KillWaves/Z BackgroundIntWave, Background2ThetaWave, BackgroundErrorWave
+	endif
+	setDataFOlder OldDf
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //Start Peak Fitting GUI for WAXS
 
 Function IR3W_StartMultiPeakGUIForWAXS()
-	String yWName = "root:Packages:Irena:WAXS:OriginalDataIntWave"	
-	String xWName = "root:Packages:Irena:WAXS:OriginalData2ThetaWave"
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	String yWName = "root:Packages:Irena:WAXS:DataIntWave"	
+	String xWName = "root:Packages:Irena:WAXS:Data2ThetaWave"
 	Wave/Z yw = $yWName
 	Wave/Z xw = $xWName
 	
@@ -1137,10 +1228,10 @@ Function IR3W_StartMultiPeakGUIForWAXS()
 		Abort "Create the graph widnow and add data in it"
 	endif
 	if(strlen(csrInfo(A,"IR3W_WAXSMainGraph"))<5)		//not set
-		Cursor/P A  OriginalDataIntWave  0 
+		Cursor/P A  DataIntWave  0 
 	endif
 	if(strlen(csrInfo(B,"IR3W_WAXSMainGraph"))<5)		//not set
-		Cursor/P B  OriginalDataIntWave  numpnts(yw)-1
+		Cursor/P B  DataIntWave  numpnts(yw)-1
 	endif	
 
 	Variable Panelposition = 0
@@ -1152,7 +1243,7 @@ Function IR3W_StartMultiPeakGUIForWAXS()
 	Variable initializeFrom = 1
 	if(!StringMatch(MPF2InitFolder, "Start Fresh" ))
 		initializeFrom = 3
-		sscanf MPF2InitFolder, "Set Number %d", menuSetnumber	
+		sscanf MPF2InitFolder, "Set %d", menuSetnumber	
 	else
 		initializeFrom = 1
 		menuSetnumber=0
@@ -1161,7 +1252,7 @@ Function IR3W_StartMultiPeakGUIForWAXS()
 	MPF2_StartNewMPFit(Panelposition, theGraph, yWName, xWName, initializeFrom, menuSetNumber)
 	MPF2CurrentFolderNumber = currentSetNumber
 	SVAR MPF2WeightWaveName = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(currentSetNumber)+":MPF2WeightWaveName")
-	MPF2WeightWaveName = "root:Packages:Irena:WAXS:OriginalDataErrorWave"
+	MPF2WeightWaveName = "root:Packages:Irena:WAXS:DataErrorWave"
 	CheckBox MPF2_UserCursorsCheckbox value=1
 //	NVAR negativePeaks = root:Packages:MultiPeakFit2:MPF_SetFolder_100:negativePeaks
 //	negativePeaks=0
@@ -1180,6 +1271,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 	string WinNmWChild
 	switch( ba.eventCode )
 		case 2: // mouse up
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 			// click code here
 			if(stringmatch(ba.ctrlname,"MultiPeakFittingStart"))
 				if(!DataFolderExists("root:Packages:MultiPeakFit2"))
@@ -1248,7 +1340,8 @@ Function IR3W_MPF2PanelHookFunction(s)
 	Variable hookResult = 0	// 0 if we do not handle event, 1 if we handle it.
 	switch(s.eventCode)
 		case 2:					// Keyboard event
-			ControlInfo/W=IR3W_WAXSPanel AnalysisTabs
+				IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+				ControlInfo/W=IR3W_WAXSPanel AnalysisTabs
 	
 				variable tab
 				tab = V_Value
@@ -1261,6 +1354,29 @@ Function IR3W_MPF2PanelHookFunction(s)
 				TitleBox Info4,fSize=12,win=IR3W_WAXSPanel, disable=(1)
 				TitleBox Info5,fSize=12,win=IR3W_WAXSPanel, disable=(1)
 				TitleBox Info6,fSize=12,win=IR3W_WAXSPanel, disable=(tab!=0)
+				//Get User comment and store it in IrenaUserComment
+				NVAR CurrentSetNumber=root:Packages:MultiPeakFit2:currentSetNumber
+				string OldDf=GetDataFolder(1)
+				if(DataFolderExists("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(CurrentSetNumber)))
+					setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(CurrentSetNumber))
+					string UserComment
+					SVAR/Z IrenaUserComment
+					if(SVAR_Exists(IrenaUserComment))
+						UserComment = IrenaUserComment
+					else
+						string/g IrenaUserComment
+						SVAR IrenaUserComment
+						IrenaUserComment=""
+					endif
+					Prompt UserComment, "Comment for dialogs?"
+					DoPrompt /Help="This comment will be useful in the future" "Add notes to the MPF2 folder?", UserComment
+					if(V_Flag)			
+					endif
+					IrenaUserComment = UserComment
+				else
+					//using existing folder for initialization, no new input needed. This looks like bug in MPF2 that it is needed. 
+				endif
+			setDataFolder OldDf
 			hookResult = 1
 			break
 	endswitch
@@ -1272,6 +1388,7 @@ end
 //**********************************************************************************************************
 
 Function IR3W_FitMultiPeakFit2ForWAXS()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	WAVE/T/Z listWave = root:Packages:Irena:WAXS:ListOfAvailableData
 	WAVE/Z selWave = root:Packages:Irena:WAXS:SelectionOfAvailableData
@@ -1295,6 +1412,7 @@ end
 //**********************************************************************************************************
 
 static Function IR3W_DoMultiPeak2Fits()
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
 		setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber))
 		STRUCT WMButtonAction s
@@ -1309,6 +1427,7 @@ end
 
 static function IR3W_SaveMultiPeakResults()
  
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR MPF2CurrentFolderNumber = root:Packages:Irena:WAXS:MPF2CurrentFolderNumber	
  	string Oldf=GetDataFolder(1)
  	setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber))
@@ -1353,7 +1472,7 @@ static function IR3W_SaveMultiPeakResults()
 		Wave/T MPF2_ResultsListTitles = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":MPF2_ResultsListTitles")
 		//Peaks without background are here:
 		Wave MMPF2_BSubData = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":MPFit2Model_BSub")
-		Wave MMPF2_FitToData = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":fit_OriginalDataIntWave")
+		Wave MMPF2_FitToData = $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":fit_DataIntWave")
 		SVAR MultiFitResultsFolder = root:Packages:Irena:WAXS:MultiFitResultsFolder
 		SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
 		NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
@@ -1459,6 +1578,7 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 	if (s.eventCode != 2)		// mouse-up in the control
 		return 0
 	endif
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	
 //	NVAR currentSetNumber = root:Packages:MultiPeakFit2:currentSetNumber
 //	String gname = WinName(0,1)
@@ -1602,6 +1722,7 @@ End
 
 Static Function IR3W_GetSetNumberFromWinName(windowName)
 	String windowName
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	
 	String windowWithData
 	
@@ -1625,40 +1746,71 @@ end
 
 static Function/S IR3W_FolderPathFromSetNumber(setnumber)
 	Variable setnumber
-	
-	return "root:Packages:MultiPeakFit2:"+IR3W_FolderNameFromSetNumber(setnumber)
-end
-static Function/S IR3W_FolderNameFromSetNumber(setnumber)
-	Variable setnumber
-	
-	return "MPF_SetFolder_"+num2str(setnumber)
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))	
+	return "root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(setnumber)
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
 // ********* Jans Polynomial BASELINE *********
-Function/S WAXSPoly10_BLFuncInfo(InfoDesired)
+Function/S IR3W_WAXSBckDATA_BLFuncInfo(InfoDesired)
 	Variable InfoDesired
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	String info=""
-
 	switch(InfoDesired)
 		case BLFuncInfo_ParamNames:
-			info = "Const;Lin;Sqr;Cub;4th;5th;6th;7th;8th;9th;"
+			info = "Const;ScaleBckg;"
 			break;
 		case BLFuncInfo_BaselineFName:
-			info = "WAXSPoly10_BLFunc"
+			info = "IR3W_WAXSBackSubtrDTA"
 			break;
 	endswitch
 
 	return info
 end
-Function WAXSPoly10_BLFunc(s)
+//**********************************************************************************************************
+Function IR3W_WAXSBackSubtrDTA(s)
+	STRUCT MPF2_BLFitStruct &s	
+	Wave/Z TTHWv = root:Packages:Irena:WAXS:BackgroundD2ThetaWave
+	Wave/Z BckgIntwv = root:Packages:Irena:WAXS:BackgroundIntWave
+	//s.cWave[0] = Constant
+	//s.cWave[1] = scaling of background wave
+	// if TTH or Int do not exist, it is simply fixed constant...
+	variable result
+	if(WaveExists(TTHWv)&&WaveExists(BckgIntwv))
+		result = s.cWave[0] + s.cWave[1]*BckgIntwv[BinarySearchInterp(TTHWv, s.x )]
+	else
+		result = s.cWave[0]
+	endif
+	return result
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function/S IR3W_WAXSPoly10_BLFuncInfo(InfoDesired)
+	Variable InfoDesired
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	String info=""
+	switch(InfoDesired)
+		case BLFuncInfo_ParamNames:
+			info = "Const;Lin;Sqr;Cub;4th;5th;6th;7th;8th;9th;"
+			break;
+		case BLFuncInfo_BaselineFName:
+			info = "IR3W_WAXSPoly10_BLFunc"
+			break;
+	endswitch
+	return info
+end
+//**********************************************************************************************************
+Function IR3W_WAXSPoly10_BLFunc(s)
 	STRUCT MPF2_BLFitStruct &s
 	Variable xr = s.xEnd - s.xStart
 	Variable x = (2*s.x - (s.xStart + s.xEnd))/xr
 	return poly(s.cWave, x)
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 static Function IR3W_isMonotonic(wx)
 	Wave wx	
 	Variable smallestXIncrement
@@ -1723,35 +1875,37 @@ Function IR3W_GraphHookFunction(H_Struct)
 			NVAR DataTTHstart = root:Packages:Irena:WAXS:DataTTHstart
 			NVAR DataTTHEnd = root:Packages:Irena:WAXS:DataTTHEnd
 			if(stringmatch(cursorName,"A")&&stringmatch(H_Struct.eventName,"cursormoved"))
-				WAVE OriginalData2ThetaWave = root:Packages:Irena:WAXS:OriginalData2ThetaWave
-				if(!stringmatch(H_Struct.traceName,"OriginalDataIntWave"))
-					cursor /W=IR3W_WAXSMainGraph A, OriginalDataIntWave, 1
-					DataTTHstart = OriginalData2ThetaWave[1]
-					Print "A cursor must be on OriginalDataIntWave and at least on second point from start"
+				IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
+				if(!stringmatch(H_Struct.traceName,"DataIntWave"))
+					cursor /W=IR3W_WAXSMainGraph A, DataIntWave, 1
+					DataTTHstart = Data2ThetaWave[1]
+					Print "A cursor must be on DataIntWave and at least on second point from start"
 				else		//on correct wave...
 					if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
-						cursor /W=IR3W_WAXSMainGraph A, OriginalDataIntWave, 1
-						DataTTHstart = OriginalData2ThetaWave[1]
-						Print "A cursor must be on OriginalDataIntWave and at least on second point from the start"
+						cursor /W=IR3W_WAXSMainGraph A, DataIntWave, 1
+						DataTTHstart = Data2ThetaWave[1]
+						Print "A cursor must be on DataIntWave and at least on second point from the start"
 					else
-						DataTTHstart = OriginalData2ThetaWave[H_Struct.pointNumber]
+						DataTTHstart = Data2ThetaWave[H_Struct.pointNumber]
 					endif
 				endif
 			endif
 			if(stringmatch(cursorName,"B")&&stringmatch(H_Struct.eventName,"cursormoved"))
-				WAVE OriginalData2ThetaWave = root:Packages:Irena:WAXS:OriginalData2ThetaWave
-				WAVE OriginalDataIntWave = root:Packages:Irena:WAXS:OriginalDataIntWave
-				if(!stringmatch(H_Struct.traceName,"OriginalDataIntWave"))
-					cursor /W=IR3W_WAXSMainGraph B, OriginalData1IntWave, numpnts(OriginalDataIntWave)-2
-					DataTTHEnd = OriginalData2ThetaWave[numpnts(OriginalDataIntWave)-2]
-					Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
+				IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
+				WAVE DataIntWave = root:Packages:Irena:WAXS:DataIntWave
+				if(!stringmatch(H_Struct.traceName,"DataIntWave"))
+					cursor /W=IR3W_WAXSMainGraph B,DataIntWave, numpnts(DataIntWave)-2
+					DataTTHEnd = Data2ThetaWave[numpnts(DataIntWave)-2]
+					Print "B cursor must be on DataIntWave and at least on second point from the end"
 				else		//on correct wave...
 					if(H_Struct.pointNumber==0)			//bad point, needs to be at least 1
-						cursor /W=IR3W_WAXSMainGraph B, OriginalDataIntWave, numpnts(OriginalDataIntWave)-2
-						DataTTHEnd = OriginalData2ThetaWave[numpnts(OriginalDataIntWave)-2]
-						Print "B cursor must be on OriginalData1IntWave and at least on second point from the end"
+						cursor /W=IR3W_WAXSMainGraph B, DataIntWave, numpnts(DataIntWave)-2
+						DataTTHEnd = Data2ThetaWave[numpnts(DataIntWave)-2]
+						Print "B cursor must be on DataIntWave and at least on second point from the end"
 					else
-						DataTTHEnd = OriginalData2ThetaWave[H_Struct.pointNumber]		
+						DataTTHEnd = Data2ThetaWave[H_Struct.pointNumber]		
 					endif
 				endif
 			endif
@@ -1789,6 +1943,7 @@ EndMacro
 Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 	string ReturnWhat
 
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDF=GetDataFolder(1)
 	if(!DataFolderExists("root:WAXSFitResults"))
 		return ""
@@ -1820,6 +1975,7 @@ end
 
 
 Function IR3W_MPF2PlotPeakGraph()
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDF=GetDataFolder(1)
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
 	SVAR MPF2PlotPeakProfile = root:Packages:Irena:WAXS:MPF2PlotPeakProfile
@@ -1840,6 +1996,7 @@ Function IR3W_MPF2PlotPeakGraph()
 end
 Function IR3W_MPF2AppendDataToGraph(GraphName, DataWvName)
 	string GraphName, DataWvName
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Wave/Z WaveToAppend=$(DataWvName)
 	Wave/Z WaveToAppendD=$(DataWvName+"_d")
 	if(WaveExists(WaveToAppend) & WaveExists(WaveToAppendD))
@@ -1854,6 +2011,7 @@ end
 //**************************************************************************************
 
 Function IR3W_MPF2PlotPeakParameters()
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDF=GetDataFolder(1)
 	string NewGraphName
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
@@ -1933,6 +2091,7 @@ end
 //**************************************************************************************
 Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	string StartFolder, DataWvName
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	variable NumGraphs, i
 
@@ -1970,6 +2129,7 @@ end
 //**************************************************************************************
 
 Function IR3W_PDF4AddManually()
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	string NewCardFullName
 	DoWIndow JCPDS_Input
@@ -2039,6 +2199,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 Function/T IR3W_PDF4CreateListOfCards()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string ListOfCards = IN2G_CreateListOfItemsInFolder("root:WAXS_PDF:", 2)
 	ListOfCards = GrepList(ListOfCards, "^((?!hklStr).)*$",0,";")
 	return ListOfCards
@@ -2048,6 +2209,7 @@ end
 //**************************************************************************************
 
 Function IR3W_UpdatePDF4OfAvailFiles()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDF=GetDataFolder(1)
 	string AvailableCards=""
 	string AvailableCardsHKL=""
@@ -2107,6 +2269,7 @@ end
 Function IR3W_PDF4ListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Variable/g row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
@@ -2164,6 +2327,7 @@ end
 
 Function IR3W_PDF4AddLines()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Wave/T listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	Wave selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
 	Wave ListOfPDF4DataColors = root:Packages:Irena:WAXS:ListOfPDF4DataColors
@@ -2202,6 +2366,7 @@ Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
 	String traceName
 	Wave/T labelWave
 	variable Cr, Cg, Cb
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
  
 	Wave w = TraceNameToWaveRef(graphName, traceName)
  
@@ -2218,6 +2383,7 @@ End
 Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	string cardname
 	variable V_Red, V_Green, V_Blue
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
 	wave TheCard=$("root:WAXS_PDF:"+possiblyquotename(CardName))
@@ -2234,12 +2400,12 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 		//10*4*pi = 
 	endif
 	SetDimLabel 1,4,TwoTheta,TheCardNew
-	Wave OriginalDataIntWave = root:Packages:Irena:WAXS:OriginalDataIntWave
-	//Wave OriginalData2ThetaWave = root:Packages:Irena:WAXS:OriginalData2ThetaWave
+	Wave DataIntWave = root:Packages:Irena:WAXS:DataIntWave
+	//Wave Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
 	make/Free/N=(DimSize(TheCard, 0)) TmpWv, TmpWvTTH
 	TmpWv = TheCard[p][6]
 	TmpWvTTH = TheCardNew[p][4]
-	//wavestats/Q OriginalDataIntWave
+	//wavestats/Q DataIntWave
 	GetAxis /W=IR3W_WAXSMainGraph /Q bottom
 	variable oldMin, OldMax, OldMinInt, OldIntMax
 	OldMin = V_min
@@ -2270,6 +2436,7 @@ end
 //**************************************************************************************
 Function IR3W_PDF4SaveLoadDifPtnPnl()
 	string OldDf=GetDataFolder(1)
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	SetDataFolder root:Packages:Irena:WAXS:
 	string PathToFiles=FunctionPath("")
 	PathToFiles = ReplaceString("IR3_WAXSDiffraction.ipf", PathToFiles , WAXSPDF4Location)
@@ -2299,12 +2466,13 @@ end
 //**************************************************************************************
 Proc IR3W_PDF4SaveLoadPanel()
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(236,50,600,550) as "Save and Recall PDF data"
+	NewPanel /K=1/W=(236,50,600,555) as "Save and Recall PDF data"
 	DoWindow/C IR3W_PDF4SaveLoadPanel
 	TitleBox TitleStuff title="Save and Load PDF files",pos={40,15},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=16, fColor=(1,4,52428)
-	TitleBox Warning1 title="PDF included with Irena are not guarranteed. ",pos={5,425},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
-	TitleBox Warning2 title="Verify usign proper sources (JCPDS/PDF4)! ",pos={5,445},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
-	TitleBox Warning3 title="They are calculated using LaueGo for model structures.",pos={5,465},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	TitleBox Warning1 title="PDF downloaded from Irena www are not guarranteed. ",pos={5,425},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	TitleBox Warning2 title="They are calculated using LaueGo for model structures.",pos={5,445},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	TitleBox Warning3 title="Verify using proper source (JCPDS/PDF4)! ",pos={5,465},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
+	TitleBox Warning4 title="Simply ... get/calculate your own reliable cards. ",pos={5,485},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=12, fColor=(52428,1,1)
 	//Button SelectSaveLoadPath,pos={84,31},size={150,20},proc=NI1A_SaveLoadButtonProc,title="Select data path"
 	//Button SelectSaveLoadPath,help={"Select path to your configuration files. You can create new folders by typing them in."}
 	TitleBox OutsideData title="Outside",pos={55,45},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
@@ -2329,6 +2497,8 @@ Proc IR3W_PDF4SaveLoadPanel()
 	Button DeteteCardIn,help={"Deletes selected cards Inside"}
 	Button DeteteCardOut,pos={5,375},size={170,15},proc=IR3W_PDF4ButtonProc,title="Delete selected Cards Outside"
 	Button DeteteCardOut,help={"Deletes selected cards Outside"}
+	Button DownloadPDFCards,pos={65,400},size={230,20},proc=IR3W_PDF4ButtonProc,title="Download Irena Cards"
+	Button DownloadPDFCards,help={"Download PDf cards from Irena web site"}
 EndMacro
 
 
@@ -2336,6 +2506,7 @@ EndMacro
 //**************************************************************************************
 Function IR3W_PDF4ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	string OldDf=GetDataFolder(1)
 	string ctrlName=ba.ctrlName
@@ -2401,6 +2572,16 @@ Function IR3W_PDF4ButtonProc(ba) : ButtonControl
 				IR3W_UpdatePDF4OfAvailFiles()
 				SaveLoadPDFOutsideSel=0
 			endif
+			if(stringmatch(ctrlName,"DownloadPDFCards"))
+				DoAlert /T="This feature is not finished yet" 0, "Here we help user to download cards from Irena web site"
+				//to be done before release... Download zip file with existing PDF cards from APS web site
+				//put it on the dekstop
+				//open for users the folder where cards belong
+				//provide instructions on what to do. 
+				//should be easy. Make sure bailout is possible for users where Igor is not allowed to do http... 
+			endif
+
+
 			break
 		case -1: // control being killed
 			break
@@ -2412,6 +2593,7 @@ End
 //**************************************************************************************
 //**************************************************************************************
 Function IR3W_PDF4UpdateOutsideListBox()
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		Wave/T  ww=root:Packages:Irena:WAXS:SaveLoadPDFOutside
 		Wave  ww2=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
 		string ListOfAvailablePDF2s
@@ -2427,7 +2609,10 @@ Function IR3W_PDF4UpdateOutsideListBox()
 		endfor
 		sort ww, ww, ww2
 end	
+//**************************************************************************************
+//**************************************************************************************
 Function IR3W_PDF4UpdateInsideListBox()
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		Wave/T  ww=root:Packages:Irena:WAXS:SaveLoadPDFInside
 		Wave  ww2=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
 		
@@ -2450,6 +2635,7 @@ end
 //**************************************************************************************
 Function IR3W_PDF4WriteDataOutXML(NewFileName)
 		string NewFileName
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		PathInfo WAXSPDF4Path
 		if(V_Flag==0)
 			abort
@@ -2474,6 +2660,7 @@ end
 
 Function/T IR3W_PDF4writePDFtoXMLstr(DataName)
 	string DataName
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	
 	wave ww=$("root:WAXS_PDF:"+DataName)
 	string NL="\r"
@@ -2527,6 +2714,7 @@ end
 
 Function IR3W_PDF4readPDFfromXML(NewFileName)
 	string NewFileName
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		
 		if(!DataFolderExists("root:WAXS_PDF"))
 			abort
@@ -2610,6 +2798,7 @@ end
 
 Function IR3W_PDF4parseXMLFileLine(line,InternalName)
 	string line,InternalName
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	
 	if(!DataFolderExists("root:WAXS_PDF"))
 		abort
@@ -2662,6 +2851,7 @@ end
 //**************************************************************************************
 
 Function IR3W_PDF4AddFromLaueGo()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String OldDf=GetDataFolder(1)
 	NewDataFolder/O/S root:WAXS_PDF 
 	
@@ -2682,6 +2872,7 @@ end
 //**********************************************************************************************************
 
 static Function IR3W_CheckOrLoadForLaueGo()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(exists("MakeLatticeParametersPanel"))		//aleready loaded...	
 		Execute "MakeLatticeParametersPanel(\"\")"
 		return 1
@@ -2715,6 +2906,7 @@ end
 //**********************************************************************************************************
 //********
 Function IR3W_LaueGoProgressPanelF() : Panel
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(593,358,1039,435) as "Checking for LaueGo Presence"
 	DoWindow/C IR3W_LaueGoProgressPanel
@@ -2729,6 +2921,7 @@ EndMacro
 //**********************************************************************************************************
 //********
 static Function IR3W_ListIgorProcFiles()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	GetFileFolderInfo/Q/Z/P=Igor "Igor Procedures"	
 	if(V_Flag==0)
 		IR3W_ListProcFiles(S_Path,1 )
@@ -2745,6 +2938,7 @@ end
 //**********************************************************************************************************
 //********
 static Function IR3W_ListUserProcFiles()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	GetFileFolderInfo/Q/Z/P=Igor "User Procedures"	
 	if(V_Flag==0)
 		IR3W_ListProcFiles(S_Path,1)
@@ -2767,6 +2961,7 @@ end
 static Function/S IR3W_GetIgorUserFilesPath()
 	// This should be a Macintosh path but, because of a bug prior to Igor Pro 6.20B03
 	// it may be a Windows path.
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String path = SpecialDirPath("Igor Pro User Files", 0, 0, 0)
 	path = ParseFilePath(5, path, ":", 0, 0)
 	return path
@@ -2777,6 +2972,7 @@ End
 static Function IR3W_ListProcFiles(PathStr, resetWaves)
 	string PathStr
 	variable resetWaves
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	
 	String abortMessage	//HR Used if we have to abort because of an unexpected error
 	

@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.80
+#pragma version = 1.81
 
 
 //*************************************************************************\
@@ -7,6 +7,8 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.81 added IN2G_PrintDebugStatement
+//
 //1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
 //     also added InsertSUbwindow to GraphMarquee and Color Traces to Graph menu. Added some xml functions I needed.  
 //1.79 added IN2G_LegendTopGrphFldr(FontSize)
@@ -364,6 +366,18 @@ Menu "GraphMarquee"
        "Insert subwindow", IN2G_CreateSubwindowAtMarqee()
 End
 
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IN2G_PrintDebugStatement(CurrentDebugLevel, DebugLevel,DebugStatement)
+	variable CurrentDebugLevel, DebugLevel
+	string DebugStatement
+	
+	if(CurrentDebugLevel>=DebugLevel)
+		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  "+DebugStatement
+	endif
+
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
  

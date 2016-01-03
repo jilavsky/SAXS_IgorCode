@@ -1,9 +1,10 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.58
+#pragma version=2.60
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3528649732 			//this is mod date for Manual version 2.58
-constant CurrentVersionNumber = 2.58
+constant CurrentVersionNumber = 2.60
+constant IrenaDebugLevel = 1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -11,6 +12,7 @@ constant CurrentVersionNumber = 2.58
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.60 aadded WAXS tool - first releae to users. Simple fits are not made visible to users yet. 
 //2.59 to be done... Added development version of Simple fits - new well structured tool for simplistic fits on SAS data.
 //2.58 Added MergeData tool.  
 //2.58 Added YouTube movies page. 
@@ -42,6 +44,8 @@ constant CurrentVersionNumber = 2.58
 
 //report any problems to: ilavsky@aps.anl.gov
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
+//comment - add these: 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//and these 						IN2G_PrintDebugStatement(IrenaDebugLevel, 0..5 ,"Error message")
 
 
 Menu "GraphMarquee", dynamic
@@ -102,8 +106,8 @@ Menu "SAS"
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
 	"Simple Fits - under developement", IR3L_SimpleFits()
 	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
-	"Pwdr. Diffraction - WAXS - under developement", IR3W_WAXS()
-	help={"Simple tool for analysis of WAXS/Powder diffraction data. Developemnt for now. Do not use. "}
+	"Pwdr. Diffraction - WAXS", IR3W_WAXS()
+	help={"Simple tool for analysis of WAXS/Powder diffraction data. Developement version for public."}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
 	"Reflectivity", IR2R_ReflectivitySimpleToolMain()
@@ -194,7 +198,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
 	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
 	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
-	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;"
+	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
