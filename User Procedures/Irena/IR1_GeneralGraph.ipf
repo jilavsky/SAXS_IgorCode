@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 fixed legend for VOlume fraction
 //2.23 changed offset limits to enable negative offsets. Useful. 
 //2.22 fixed Guinier style definition... Weird, cannot find bug but it was setting legend parameters to NaNs. Copied same stuff from other style and it works??? 
 //2.21 chaged units for common system cm-1sr-1
@@ -1740,7 +1741,7 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	
 	string/g VolumeDistribution
 	SVAR VolumeDistribution
-	VolumeDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Diameter [A];Label left=Volume distribution (f(D));DataY=Y;"
+	VolumeDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Dimension [A];Label left=Volume fraction [arb units];DataY=Y;"
 	VolumeDistribution+="DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=1.37359350144832e-06;Axis left max=0.0110271775364775;Axis bottom min=10;"
 	VolumeDistribution+="Axis bottom max=5000;standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
 	VolumeDistribution+="Graph use Colors=1;"
