@@ -100,6 +100,8 @@ Proc IR3W_WAXSPanel()
 	SetVariable DataTTHEnd,pos={280,50},size={200,15}, proc=IR3W_SetVarProc,title="Fit 2Theta max      ",bodyWidth=150
 	Setvariable DataTTHEnd, variable=root:Packages:Irena:WAXS:DataTTHEnd, limits={0,inf,0}
 	Checkbox DisplayUncertainties, pos={280,80},size={76,14},title="Display Uncertainties", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayUncertainties
+	Button DisplayHelp,pos={420,5.00},size={90.00,15},proc=IR3W_WAXSButtonProc,title="Display Help"
+	Button DisplayHelp,help={"Open WAXS help"}
 
 //root:Packages:Irena:WAXSBackground
 //	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
@@ -294,13 +296,13 @@ Function IR3W_InitWAXS()
 	string ListOfStrings
 	variable i
 		
-	if (!DataFolderExists("root:Packages:Irena:WAXSBackground"))		//create folder
-		NewDataFolder/O root:Packages:Irena:WAXSBackground
-	endif
 	if (!DataFolderExists("root:Packages:Irena:WAXS"))		//create folder
 		NewDataFolder/O root:Packages
 		NewDataFolder/O root:Packages:Irena
 		NewDataFolder/O root:Packages:Irena:WAXS
+		NewDataFolder/O root:Packages:Irena:WAXSBackground
+	endif
+	if (!DataFolderExists("root:Packages:Irena:WAXSBackground"))		//create folder
 		NewDataFolder/O root:Packages:Irena:WAXSBackground
 	endif
 	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
@@ -1314,6 +1316,9 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 			if(stringmatch(ba.ctrlname,"MPF2PlotPeakParams"))
 				IR3W_MPF2PlotPeakParameters()
 			endif
+			if(stringmatch(ba.ctrlname,"DisplayHelp"))
+				DisplayHelpTopic "Irena WAXS tool"
+			endif
 			if(stringmatch(ba.ctrlname,"PDF4AddManually"))
 				IR3W_PDF4AddManually()
 				IR3W_UpdatePDF4OfAvailFiles()
@@ -1359,7 +1364,7 @@ Function IR3W_MPF2PanelHookFunction(s)
 				string OldDf=GetDataFolder(1)
 				if(DataFolderExists("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(CurrentSetNumber)))
 					setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(CurrentSetNumber))
-					string UserComment
+					string UserComment=""
 					SVAR/Z IrenaUserComment
 					if(SVAR_Exists(IrenaUserComment))
 						UserComment = IrenaUserComment

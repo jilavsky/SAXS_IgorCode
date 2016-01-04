@@ -4,7 +4,6 @@
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3528649732 			//this is mod date for Manual version 2.58
 constant CurrentVersionNumber = 2.60
-constant IrenaDebugLevel = 1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
