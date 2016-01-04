@@ -5,6 +5,7 @@ Code modification history
 ********************************************
 2.59
 Unified fit - GUI behavior improvements and minor bug fixes. 
+WAXS-Powder diffraction tool - version 1 of Powder diffraction tool for users. Still work in progress, but usable for testing by users. 
 
 
 
