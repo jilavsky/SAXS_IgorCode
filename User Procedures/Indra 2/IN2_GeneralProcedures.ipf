@@ -2,6 +2,9 @@
 #pragma version = 1.81
 
 
+//control constants
+constant IrenaDebugLevel=1
+
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
