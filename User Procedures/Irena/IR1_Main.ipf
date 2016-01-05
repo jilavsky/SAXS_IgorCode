@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.60
+#pragma version=2.61
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3528649732 			//this is mod date for Manual version 2.58
@@ -11,7 +11,8 @@ constant CurrentVersionNumber = 2.60
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.60 aadded WAXS tool - first releae to users. Simple fits are not made visible to users yet. 
+//2.61 changed check for update procedure to check http first, tehn ftp, and the fail. 
+//2.60 added WAXS tool - first releae to users. Simple fits are not made visible to users yet. 
 //2.59 to be done... Added development version of Simple fits - new well structured tool for simplistic fits on SAS data.
 //2.58 Added MergeData tool.  
 //2.58 Added YouTube movies page. 
@@ -2555,47 +2556,36 @@ static Function IR2C_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
 		CopyFile /O/P=$(LocalPath)/Z S_Path+ReplaceString("/", tempFldrNm, ":")  as LocalName 
 		// Remove ReadOnly property from the file. This is important on WIndows when copying from CD or DVD
 		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName
-	elseif(!InstallUsinghttp)
+	else
 		string httpurl="http://ftp.xray.aps.anl.gov/usaxs/"
-		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
 		String httpPath = httpurl+StringWithPathAndname	//HR Use local variable for easier debugging.
-		//HR Print ftpPath	//HR For debugging
-			//// Get a binary image file from a web server and then
-			//// save the image to a file on the desktop.
 		httpPath =  ReplaceString(" ", httpPath, "%20")		//handle just spaces here... 
 		String fileBytes, tempPathStr
 		Variable error = GetRTError(1)
-		i=0
-		Do
-			 fileBytes = FetchURL(httpPath)
-			 error = GetRTError(1)
-			 sleep/S 0.2
-			 if(error!=0)
-				 print "file: "+httpPath+" download FAILED, this was http download attempt No: "+num2str(i)
-				// print "file: "+httpPath+" downloaded "+num2str(i+1)+" times"
-				 print "Trying to download same file using ftp"
-				 tempPathStr = ReplaceString("http://ftp.xray.aps.anl.gov/usaxs/", httpPath, "ftp://ftp.xray.aps.anl.gov/pub/usaxs/")
-				 fileBytes = FetchURL(tempPathStr)
-				 error = GetRTError(1)
-				 sleep/S 0.2
-				 if(error!=0)
-					 print "file: "+tempPathStr+" download FAILED, this was ftp download attempt No: "+num2str(i+1)
-				 else
-					 print "file: "+tempPathStr+" downloaded succesfully by ftp, this was ftp download attempt No: "+num2str(i+1)
-				 endif
+		fileBytes = FetchURL(httpPath)
+		error = GetRTError(1)
+		sleep/S 0.2
+		if(error!=0)
+			print "file: "+httpPath+" download FAILED using http "
+			print "Trying to download same file using ftp"
+			tempPathStr = ReplaceString("http://ftp.xray.aps.anl.gov/usaxs/", httpPath, "ftp://ftp.xray.aps.anl.gov/pub/usaxs/")
+			fileBytes = FetchURL(tempPathStr)
+			error = GetRTError(1)
+			sleep/S 0.2
+			if(error!=0)
+				print "file: "+tempPathStr+" download FAILED, this was ftp download attempt No: "+num2str(i+1)
+			else
+				print "file: "+tempPathStr+" downloaded succesfully by ftp, this was ftp download attempt No: "+num2str(i+1)
 			endif
-			i+=1
-		while((error!=0 || GrepString(fileBytes, "ERROR: Proxy" ))&& i<5)
-		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy" ) || i>=5)
+		endif
+		if ( error != 0 || GrepString(fileBytes, "ERROR: Proxy" ))
 			if(GrepString(fileBytes, "ERROR: Proxy" ) )
 				Print "********************     APS Proxy error           *******************"
-				Print "**** Please, try installing later again or try using ftp protocol or local copy method."
 				Print "**** Also, report problem to ilavsky@aps.anl.gov  the following, so we can get this fixed:"
-				Print "APS proxy error has consistently produced error while trying to download following file:"+StringWithPathAndname
 				Print Date() +"   "+time()
 				print "Igor version :"+IgorInfo(3)
 				APSError+=1
-			elseif(error != 0 || i>=5)
+			else
 				Print "*************         S E R V E R      E R R O R                 ****************"
 				Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
 				Print "Failed to get from http/ftp server following file.....   " + StringWithPathAndname
@@ -2610,26 +2600,6 @@ static Function IR2C_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
 			FBinWrite refNum, fileBytes
 			Close refNum
 			SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
-		endif
-		//FTPDownload /O/V=0/P=$(LocalPath)/Z ftpPath, LocalName	
-	else
-		string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/"
-		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
-		String ftpPath = url+StringWithPathAndname	//HR Use local variable for easier debugging.
-		//HR Print ftpPath	//HR For debugging
-		//ftpPath = ReplaceString("GenCurvefit", ftpPath, "GenCurveFit", 1)	//HR Quick and Dirty fix - change spelling so we find the file on the FTP server.
-		FTPDownload /O/V=0/P=$(LocalPath)/Z ftpPath, LocalName	
-	
-		if(V_flag!=0)	//ftp failed...
-			Print "*************                  E R R O R                       ****************"
-			Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
-			Print "Failed to load from ftp server following file.....   " + StringWithPathAndname
-			Print Date() +"   "+time()
-			print "Igor version :"+IgorInfo(3)
-			print "********************  end of error message  ********************"
-		else //ftyp success, change the read only flag here...
-		// Remove ReadOnly property from the file:
-		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
 		endif
 	endif
 	variable nosuccess
