@@ -6,6 +6,8 @@ Code modification history
 2.59
 Unified fit - GUI behavior improvements and minor bug fixes. 
 WAXS-Powder diffraction tool - version 1 of Powder diffraction tool for users. Still work in progress, but usable for testing by users. 
+Modified check for updates macro to use http once, if it fails use ftp, if that fails also then bail out and give error. Should be much easier for users who are on systems without net connectivity. 
+
 
 
 
