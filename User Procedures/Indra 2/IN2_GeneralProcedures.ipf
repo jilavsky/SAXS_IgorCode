@@ -10,8 +10,7 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-//1.81 added IN2G_PrintDebugStatement
-//
+//1.81 added IN2G_PrintDebugStatement, fixed some unresolved dependencies. 
 //1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
 //     also added InsertSUbwindow to GraphMarquee and Color Traces to Graph menu. Added some xml functions I needed.  
 //1.79 added IN2G_LegendTopGrphFldr(FontSize)
@@ -490,9 +489,9 @@ end
 //*****************************************************************************************************************
 //*************************************************************************************************************************************
 
-ThreadSafe Function/T IN2G_num2StrFull(val)
+Function/T IN2G_num2StrFull(val)
 	Variable val
-	Variable i = placesOfPrecision(val)
+	Variable i = IN2G_placesOfPrecision(val)
 	Variable absVal = abs(val)
 	i = (absVal>=10 && absVal<1e6) ? max(i,1+floor(log(absVal))) : i
 	String str, fmt
@@ -500,6 +499,21 @@ ThreadSafe Function/T IN2G_num2StrFull(val)
 	sprintf str,fmt,val
 	return str
 End
+
+//*****************************************************************************************************************
+//*************************************************************************************************************************************
+static Function IN2G_placesOfPrecision(a)	// number of significant figures in a number (at most 16)
+	Variable a
+	a = roundSignificant(abs(a),17)
+	Variable i
+	for (i=1;i<18;i+=1)
+		if (abs(a-IN2G_roundSignificant(a,i))/a<1e-15)
+			break
+		endif
+	endfor
+	return i
+End
+
 //*****************************************************************************************************************
 //*************************************************************************************************************************************
 
@@ -1158,7 +1172,6 @@ end
 Function IN2G_roundSignificant(val,N)        // round val to N significant figures
         Variable val                    // input value to round
         Variable N                      // number of significant figures
-
 
         if (val==0 || numtype(val))
                 return val
