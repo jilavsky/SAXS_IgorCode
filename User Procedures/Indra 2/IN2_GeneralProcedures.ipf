@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.81
+#pragma version = 1.82
 
 
 //control constants
@@ -10,6 +10,7 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.82 added IN2G_CloneWindow function
 //1.81 added IN2G_PrintDebugStatement, fixed some unresolved dependencies. 
 //1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
 //     also added InsertSUbwindow to GraphMarquee and Color Traces to Graph menu. Added some xml functions I needed.  
@@ -55,6 +56,9 @@ constant IrenaDebugLevel=1
 //Functions IN2G_startOfxmltag and IN2G_XMLtagContents are for reading xml files as text. From Jon Tischler. 
 //
 //Function IN2G_num2StrFull creates string with many more digits than built in function. From Jon Tischler. 
+//
+//IN2G_CloneWindow will clone current window (Graph or Table) and save separately the data and create a new graph. 
+//   	Can be used when user wants to preserve existing Graph or Table for future use and is worried that Irena/Nika will destroy the data at some point. 
 //
 //Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
 //  Rebins data (x,y.etc) on log scale oiptionally with enforcing minimum step size. 
@@ -366,6 +370,7 @@ End
 
 Menu "GraphMarquee"
        "Insert subwindow", IN2G_CreateSubwindowAtMarqee()
+       "Clone this window with data", IN2G_CloneWindow()
 End
 
 
@@ -380,6 +385,90 @@ Function IN2G_PrintDebugStatement(CurrentDebugLevel, DebugLevel,DebugStatement)
 	endif
 
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IN2G_CloneWindow()
+	string NewWindowName
+	string topWindow=WinName(0,1)
+	IN2G_CloneWindow2()
+		
+end
+//this is from IgorExchange: http://www.igorexchange.com/node/1469
+static Function IN2G_CloneWindow2([win,name,times])
+	String win
+	String name // The new name for the window and data folder. 
+	Variable times // The number of clones to make.  Clones beyond the first will have _2, _3, etc. appended to their names.   
+	String curr_folder=GetDataFolder(1)
+	setDataFolder root:
+	if(ParamIsDefault(win))
+		win=WinName(0,1)
+	endif
+	if(ParamIsDefault(name))
+		name=UniqueName(win,6,0)
+		name=UniqueName(name,7,0)
+		name=UniqueName(name,11,0)
+	else
+		name=CleanupName(name,0)
+		name=UniqueName(name,6,0)
+		name=UniqueName(name,7,0)
+		name=UniqueName(name,11,0)
+	endif
+	times=ParamIsDefault(times) ? 1 : times
+	NewDataFolder /O/S root:$name
+	String win_rec=WinRecreation(win,0)
+	String traces=TraceNameList(win,";",3)
+	string tempName, trace, AddOn
+	Variable i,j
+	for(i=0;i<ItemsInList(traces);i+=1)
+		trace=StringFromList(i,traces)
+		tempName = trace
+		if(StringMatch(trace, "#"))			//we have wave with multiplier
+			tempName = ReplaceString("'", trace, "")		//removes ' from liberal names
+			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
+			tempName = PossiblyQuoteName(tempName )
+		endif
+		Wave TraceWave=TraceNameToWaveRef(win,trace)
+		Duplicate /o TraceWave $(tempName)
+		win_rec = ReplaceString(trace, win_rec, tempName)
+		//main wave dealt with
+		Wave /Z TraceXWave=XWaveRefFromTrace(win,trace)
+		tempName = NameOfWave(TraceXWave)
+		if(waveexists(TraceXWave))
+			tempName = ReplaceString("'", trace, "")		//remvoes ' from liberal names
+			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
+			tempName = PossiblyQuoteName(tempName )		
+			Duplicate /o TraceXWave $NameOfWave(TraceXWave)
+		endif
+	endfor
+ 
+	// Copy error bars if they exist.  Won't work with subrange display syntax.  
+	for(i=0;i<ItemsInList(win_rec,"\r");i+=1)
+		String line=StringFromList(i,win_rec,"\r")
+		if(StringMatch(line,"*ErrorBars*"))
+			String errorbar_names
+			sscanf line,"%*[^=]=(%[^)])",errorbar_names
+			for(j=0;j<2;j+=1)
+				String errorbar_path=StringFromList(j,errorbar_names,",")
+				sscanf errorbar_path,"%[^[])",errorbar_path
+				String errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")
+				Duplicate /o $("root:"+errorbar_path) $errorbar_name
+			endfor
+		endif
+	endfor
+ 
+	for(i=1;i<=times;i+=1)
+		Execute /Q win_rec
+		if(i==1)
+			DoWindow /C $name
+		else
+			DoWindow /C $(name+"_"+num2str(i))
+		endif
+		ReplaceWave allInCDF
+	endfor
+	SetDataFolder $curr_folder
+End
+
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
  

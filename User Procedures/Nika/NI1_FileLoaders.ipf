@@ -1213,107 +1213,103 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"WinView spe (Princeton)"+";"
 	elseif(cmpstr(FileType,"ADSC")==0 || cmpstr(FileType,"ADSC_A")==0)
-	//new version sent by Peter : PReichert@lbl.gov. Modified to read Io and other parameters from hteir ADSC file format. 
-	             FileNameToLoad= FileName
-	               variable dummy_i0
-	               wave/Z IonChamber_1, IonChamber_0, I1_I0
-	               variable dummy_i1_1,dummy_i1,dummy_i1_2, dummy_time,Ring
-	               LDataType=16+64
-	               LByteOrder=1
-	               LFloatType=1
-	               NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
-	               NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
-	               NVAR NIGBNumberOfXPoints=root:Packages:Convert2Dto1D:NIGBNumberOfXPoints
-	               NVAR NIGBNumberOfYPoints=root:Packages:Convert2Dto1D:NIGBNumberOfYPoints
-	               NVAR Wavelength=root:Packages:Convert2Dto1D:Wavelength
-	               NVAR XrayEnergy=root:Packages:Convert2Dto1D:XrayEnergy
-			  NVAR SampleI0 = root:Packages:Convert2Dto1D:SampleI0
-	
-	               Make/T /O textWave
-	               Make/T /O header0
-	               LoadWave/J /P=$(PathName) /N=header /L={0,0,39,0,0}/B="F=-2;" ,FileNameToLoad
+	//new version sent by Peter : PReichert@lbl.gov. Modified to read Io and other parameters from their ADSC file format. 
+         FileNameToLoad= FileName
+           variable dummy_i0
+           wave/Z IonChamber_1, IonChamber_0, I1_I0
+           variable dummy_i1_1,dummy_i1,dummy_i1_2, dummy_time,Ring
+           LDataType=16+64
+           LByteOrder=1
+           LFloatType=1
+           NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
+           NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
+           NVAR NIGBNumberOfXPoints=root:Packages:Convert2Dto1D:NIGBNumberOfXPoints
+           NVAR NIGBNumberOfYPoints=root:Packages:Convert2Dto1D:NIGBNumberOfYPoints
+           NVAR Wavelength=root:Packages:Convert2Dto1D:Wavelength
+           NVAR XrayEnergy=root:Packages:Convert2Dto1D:XrayEnergy
+	  		  NVAR SampleI0 = root:Packages:Convert2Dto1D:SampleI0
+
+           Make/T /O textWave
+           Make/T /O header0
+           LoadWave/J /P=$(PathName) /N=header /L={0,0,39,0,0}/B="F=-2;" ,FileNameToLoad
 			if(V_Flag==0)		//check if we loaded at least some data...
 				return 0
 			endif
-	               skipBytes = NumberByKey("HEADER_BYTES",(header0[1]),"=")
-	               variable dummy
-	                for(i = 0; i <= 45;i=i+1)
-	                       dummy = NumberByKey("SIZE2",(header0[i]),"=")
-	                       if(dummy)
-	                       NIGBNumberOfXPoints = dummy
-	                       NIGBNumberOfYPoints = dummy
-	                       endif
-	                       dummy = NumberByKey("PIXEL_SIZE",(header0[i]),"=")
-	                       if(dummy)
-	                       PixelSizeX =  dummy
-	                       PixelSizeY =  dummy
-	                       endif
-	                       dummy = NumberByKey("HEADER_BYTES",(header0[i]),"=")
-	                       if(dummy)
-	                       skipBytes = dummy
-	                       endif
-	                        dummy = NumberByKey("RING_CURRENT",(header0[i]),"=")
-	                       if(dummy)
-	                       Ring = dummy
-	                       endif
-	                       dummy = NumberByKey("I1",(header0[i]),"=")
-	                       if(dummy)
-	                       dummy_i1  = dummy
-	                       endif
-	                       dummy = NumberByKey("I0",(header0[i]),"=")
-	                       if(dummy)
-	                       dummy_i0  = dummy
-	                       endif
-	                        dummy = NumberByKey("I1_1",(header0[i]),"=")
-	                       if(dummy)
-	                       dummy_i1_1  = dummy
-	                       endif
-	                        dummy = NumberByKey("I1_2",(header0[i]),"=")
-	                       if(dummy)
-	                       dummy_i1_2  = dummy
-	                       endif
-	                       dummy = NumberByKey("I0_1",(header0[i]),"=")
-	                       if(dummy)
-	                       dummy_i0  = dummy
-	                       endif
-				   dummy = NumberByKey("WAVELENGTH",(header0[i]),"=")
-	                       if(dummy)
-	                       	if(cmpstr(FileType,"ADSC")==0)			//ADSC_A has wavelength in A and should nto be scaled from nm. 
-	                      		 Wavelength =  dummy*10
-	                      	else
-	                      		 Wavelength =  dummy
-	                      	endif	
-	                       XrayEnergy = 12.398424437/Wavelength
-	                       endif
-	             endfor
-	               // NIGBNumberOfXPoints = 2304
-	               // NIGBNumberOfYPoints = 2304
-	             if (dummy_i1_1 > 1)
-	              	if(dummy_i1_2 >1)
-	              		dummy_i1 = (dummy_i1_1+dummy_i1_2)/2.0
+	       skipBytes = NumberByKey("HEADER_BYTES",(header0[1]),"=")
+	       variable dummy
+	        for(i = 0; i <= 45;i=i+1)
+	               dummy = NumberByKey("SIZE2",(header0[i]),"=")
+	               if(dummy)
+	               NIGBNumberOfXPoints = dummy
+	               NIGBNumberOfYPoints = dummy
+	               endif
+	               dummy = NumberByKey("PIXEL_SIZE",(header0[i]),"=")
+	               if(dummy)
+	               PixelSizeX =  dummy
+	               PixelSizeY =  dummy
+	               endif
+	               dummy = NumberByKey("HEADER_BYTES",(header0[i]),"=")
+	               if(dummy)
+	               skipBytes = dummy
+	               endif
+	                dummy = NumberByKey("RING_CURRENT",(header0[i]),"=")
+	               if(dummy)
+	               Ring = dummy
+	               endif
+	               dummy = NumberByKey("I1",(header0[i]),"=")
+	               if(dummy)
+	               dummy_i1  = dummy
+	               endif
+	               dummy = NumberByKey("I0",(header0[i]),"=")
+	               if(dummy)
+	               dummy_i0  = dummy
+	               endif
+	                dummy = NumberByKey("I1_1",(header0[i]),"=")
+	               if(dummy)
+	               dummy_i1_1  = dummy
+	               endif
+	                dummy = NumberByKey("I1_2",(header0[i]),"=")
+	               if(dummy)
+	               dummy_i1_2  = dummy
+	               endif
+	               dummy = NumberByKey("I0_1",(header0[i]),"=")
+	               if(dummy)
+	               dummy_i0  = dummy
+	               endif
+		   			dummy = NumberByKey("WAVELENGTH",(header0[i]),"=")
+	               if(dummy)
+	               	if(cmpstr(FileType,"ADSC")==0)			//ADSC_A has wavelength in A and should nto be scaled from nm. 
+	              		 Wavelength =  dummy*10
 	              	else
-	              		dummy_i1 = dummy_i1_1
-	              	endif
-	              elseif (dummy_i1 >1)
-	              else 
-	              	dummy_i1 = 1
-	              endif
-	              //Print dummy_i1
-	              SampleI0 = dummy_i1
-	                SampleI0 = dummy_i1;
-	               //Print NIGBNumberOfYPoints
-	               killwaves/Z Loadedwave0,Loadedwave1
-	               GBLoadWave/Q/B=(LByteOrder)/T={LDataType,4}/S=(skipBytes)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
- 				if(V_Flag==0)		//check if we loaded at least some data...
+	              		 Wavelength =  dummy
+	              	endif	
+	               XrayEnergy = 12.398424437/Wavelength
+	               endif
+	          endfor
+          if (dummy_i1_1 > 1)
+              	if(dummy_i1_2 >1)
+              		dummy_i1 = (dummy_i1_1+dummy_i1_2)/2.0
+              	else
+              		dummy_i1 = dummy_i1_1
+              	endif
+          elseif (dummy_i1 >1)
+          else 
+              	dummy_i1 = 1
+          endif
+          SampleI0 = dummy_i1
+               //Print NIGBNumberOfYPoints
+          killwaves/Z Loadedwave0,Loadedwave1
+          GBLoadWave/Q/B=(LByteOrder)/T={LDataType,4}/S=(skipBytes)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
+			if(V_Flag==0)		//check if we loaded at least some data...
 					return 0
-				endif
-	               Wave LoadedWave0
-	               Redimension/N=(NIGBNumberOfXPoints,NIGBNumberOfYPoints) Loadedwave0
-	               duplicate/O Loadedwave0, $(NewWaveName)
-	               //slicing (Loadedwave0)
-	               killwaves Loadedwave0
-	               NewNote+="DataFileName="+FileNameToLoad+";"
-	               NewNote+="DataFileType="+"ADSC"+";"
+			endif
+         Wave LoadedWave0
+         Redimension/N=(NIGBNumberOfXPoints,NIGBNumberOfYPoints) Loadedwave0
+         duplicate/O Loadedwave0, $(NewWaveName)
+           //slicing (Loadedwave0)
+         killwaves Loadedwave0
+         NewNote+="DataFileName="+FileNameToLoad+";"
+         NewNote+="DataFileType="+"ADSC"+";"
 	 	 
 	else
 		Abort "Uknown CCD image to load..."

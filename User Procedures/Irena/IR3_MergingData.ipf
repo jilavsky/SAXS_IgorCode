@@ -1346,8 +1346,10 @@ Function IR3D_SortIsUSAXSSAXSdata()
 		//fix the problem that NotFoundData may nto have same legth
 		variable tmpNumPnts=max(numpnts(NotFoundData1),numpnts(NotFoundData2))
 		redimension/N=(tmpNumPnts) NotFoundData1, NotFoundData2
-		ListOfAvailableData[numpnts(OutPutData1), maxlength-1][0] = NotFoundData1[p-numpnts(OutPutData1)]
-		ListOfAvailableData[numpnts(OutPutData1), maxlength-1][1] = NotFoundData2[p-numpnts(OutPutData1)]
+		if(tmpNumPnts>0)
+			ListOfAvailableData[numpnts(OutPutData1), maxlength-1][0] = NotFoundData1[p-numpnts(OutPutData1)]
+			ListOfAvailableData[numpnts(OutPutData1), maxlength-1][1] = NotFoundData2[p-numpnts(OutPutData1)]
+		endif
 		print "USAXS/SAXS/WAXS data sorted using standard name logic for common samples."
 	else	//unable to match anything
 		print "Unable to match any USAX/SAXS/WAXS pairs..."
