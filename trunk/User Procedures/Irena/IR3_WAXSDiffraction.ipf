@@ -12,6 +12,7 @@ constant IR3WversionNumber = 0.3		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.31 removed eps data for now, they were incorrect. Proper errors estimates are in the text waves and mining of data from teh results needs to be worked out in the future. 
 //0.3 Christmas 2015 developements. many changes. 
 //0.1 Diffraction tool development version 
 
@@ -1137,7 +1138,7 @@ Function IR3W_AddBackgroundToGraph()
 		SVAR QWavenameB = root:Packages:Irena:WAXSBackground:QWavename
 		SVAR ErrorWaveNameB = root:Packages:Irena:WAXSBackground:ErrorWaveName
 
-		if(strlen(DataFolderNameB)<4)
+		if(stringmatch(DataFolderNameB,"*---*"))
 			//to do: remove from graph!
 			RemoveFromGraph/Z BackgroundIntWave#0, BackgroundIntWave#1, BackgroundIntWave#2, BackgroundIntWave#3, BackgroundIntWave#4
 			Wave/Z BackgroundIntWave=root:Packages:Irena:WAXS:BackgroundIntWave
@@ -1535,7 +1536,7 @@ static function IR3W_SaveMultiPeakResults()
 				tmpWidth= str2num((WAXS_ResultsListWave[i][11])[4,inf])
 				Val1 = IN2G_ConvertTTHtoD((tmpVal-tmpWidth),wavelength)
 				Val2 = IN2G_ConvertTTHtoD((tmpVal+tmpWidth),wavelength)
-				WAXS_ResultsListWave[i][4] = "+/- "+num2str((Val1-Val2)/2)
+				WAXS_ResultsListWave[i][3] = "+/- "+num2str((Val1-Val2)/2)
 		endfor
 
 		//separate peaks... 
@@ -1544,13 +1545,13 @@ static function IR3W_SaveMultiPeakResults()
 			if(WaveExists(PeakData))
 				Wave PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
 				Wave PeakDataCoefs=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefs'")
-				Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefseps'")
+				//Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefseps'")
 				Duplicate/O  PeakData, $("Peak "+num2str(i))
 				Duplicate/O  PeakData, $("Peak "+num2str(i)+"_d")
 				Wave NewDwave=$("Peak "+num2str(i)+"_d")
 				NewDwave[] = IN2G_ConvertTTHtoD(pnt2x(PeakData, p ),Wavelength)
 				Duplicate/O  PeakDataCoefs, $("Peak "+num2str(i)+" Coefs")
-				Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")
+				//Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")		//these are starting parameter estimates, not errors..., always set to 1e-6
 			endif
 		endfor
 
@@ -1966,8 +1967,8 @@ Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 		result = GrepList(AllResultsWaxs, "Peak [0-9]$" )
 	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients"))
 		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefs)$" )
-	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
-		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
+	//elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
+		//result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
 //	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
 //		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
 	endif
@@ -2104,7 +2105,7 @@ Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	if(!WaveExists(WaveToAppend))
 		return 0
 	endif	
-	Wave/Z WvErsToAppend=$((DataWvName+" Coefseps"))
+	//Wave/Z WvErsToAppend=$((DataWvName+" Coefseps"))
 	NumGraphs = numpnts(WaveToAppend)
 	variable curLength=0
 	
@@ -2120,11 +2121,11 @@ Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	redimension/N=(curLength+1,6) wv0
 	redimension/N=(curLength+1)  wvT
 	wv0[curLength][0] =WaveToAppend[0]
-	wv0[curLength][1] =WvErsToAppend[0]
+	wv0[curLength][1] =NaN	//WvErsToAppend[0]
 	wv0[curLength][2] =WaveToAppend[1]
-	wv0[curLength][3] =WvErsToAppend[1]
+	wv0[curLength][3] =NaN	//WvErsToAppend[1]
 	wv0[curLength][4] =WaveToAppend[2]
-	wv0[curLength][5] =WvErsToAppend[2]
+	wv0[curLength][5] =NaN	//WvErsToAppend[2]
 	wvT[curLength] = GetDataFOlder(0)
 end
 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.0
+#pragma version=1.1
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+// 1.1	added high energy Mstage2
 //***********************************************************************************
 //***********************************************************************************
 //***********************************************************************************
@@ -127,7 +128,7 @@ Window IN2Y_ChannelCutPosCalculations() : Panel
 	PopupMenu HKLSelection,mode=WhichListItem(root:Packages:XtalCalc:XtalHKL,"111;220;311;331;333;440;")+1,value= #"\"111;220;311;331;333;440;\""
 	PopupMenu StageSelection,pos={288,284},size={174,21},proc=IN2Y_PopProcedure,title="Xtal Stage  : "
 	PopupMenu StageSelection,fSize=16
-	PopupMenu StageSelection,mode=WhichListItem(root:Packages:XtalCalc:XtalStage,"Astage;Mstage;")+1,value= #"\"Astage;Mstage;\""
+	PopupMenu StageSelection,mode=WhichListItem(root:Packages:XtalCalc:XtalStage,"Astage;Mstage;Mstage2;")+1,value= #"\"Astage;Mstage;Mstage2;\""
 	SetVariable Energy,pos={582,337},size={200,22},proc=IN2Y_XtalCalculations,title="Energy  [keV] :"
 	SetVariable Energy,fSize=14
 	SetVariable Energy,limits={6,60,0.05},value= root:Packages:XtalCalc:Energy
@@ -301,10 +302,20 @@ Function IN2Y_CalculatePositions()
 			y_2=100								//maximum length of first crystal after 	first impact of the beam 	
 			y_3=15									//minimum length of first crystal after first impact of the beam
 			M = (y_3 - y_2)/(x_2 - x_1)				//slope of the crystal
+		elseif ((cmpstr(XtalStage,"Mstage2")==0))	// We are using M stage
+			TopXtalOffset=10						//top crystal starts offset from first crystal impact position
+			TopXTalLength=85						//top crystal total length
+			x_1=5									//position where the fixed long length ends from long edge in mm
+			x_2=25									//end of linearly length changing part of crystal 
+			x_3=34									//total x dimension of the A first crystal
+
+			y_2=100								//maximum length of first crystal after 	first impact of the beam 	
+			y_3=15									//minimum length of first crystal after first impact of the beam
+			M = (y_3 - y_2)/(x_2 - x_1)				//slope of the crystal
 		endif
 		
 		step=(x_3/numpnts(xval))
-		for(i=0;i<numpnts(xval);i+=1)					// Cfreate Reale whicih contains available Firsdt crystal length after first beam impact...  
+		for(i=0;i<numpnts(xval);i+=1)					// Cfreate Real whicih contains available Firsdt crystal length after first beam impact...  
 				if (i*step <x_1)							//xval is position in mm starting from the longest edge of the frist crystal
 					xval[i] = i* step  					//x position on the crystal from longest edge
 					Reale[i] = y_2						//first few mm the crystal is fixed length
@@ -365,7 +376,7 @@ Function IN2Y_CalculatePositions()
 				Pos4refStart=NaN
 				Pos2refStart=NaN
 			endif
-		elseif ((cmpstr(XtalStage,"Mstage")==0))	
+		elseif ((cmpstr(XtalStage,"Mstage")==0)||(cmpstr(XtalStage,"Mstage2")==0))	
 			Pos2refStart=11
 			Pos4refStart=x_3-Pos4refStart 
 			Pos6refStart=x_3-Pos6refStart 

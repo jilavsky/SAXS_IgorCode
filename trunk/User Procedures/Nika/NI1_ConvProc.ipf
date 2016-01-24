@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.46
+#pragma version=2.48
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.48 added main data reduction parameters in teh wave note. For unknown reason were missing. 
+//2.47 added time stamps to background task print statements so user has any idea when was the task run last time. 
 //2.46 added Q width (Q resolution, dQ) to line profiles. Works only for Q for now, fix for bug in Qresolution callcualtions in version 2.45
 //2.45 added Qresolution accounting which takes care of bin width + pixel size + beam size
 //2.44 fixed bug when 2DQwave had note appended, not repalced and if beam center changed, it will get recaculated always since a wrong center values were read first. 
@@ -496,7 +498,30 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 			MatrixOp/O/NTHR=0 Calibrated2DDataSet = Calibrated2DDataSet / polar2DWave 		//changed to "/" on October 12 2009 since due to use MatrixOp in new formula the calculate values are less than 1 and this is now correct. 
 		endif
 		
-	
+		//Add to note:
+		//need to add also geometry parameters
+		NVAR BeamCenterX=root:Packages:Convert2Dto1D:BeamCenterX
+		NVAR BeamCenterY=root:Packages:Convert2Dto1D:BeamCenterY
+		NVAR BeamSizeX=root:Packages:Convert2Dto1D:BeamSizeX
+		NVAR BeamSizeY=root:Packages:Convert2Dto1D:BeamSizeY
+		NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt
+		NVAR XrayEnergy=root:Packages:Convert2Dto1D:XrayEnergy
+		NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt
+		NVAR PixelSizeX=	root:Packages:Convert2Dto1D:PixelSizeX
+		NVAR PixelSizeY=	root:Packages:Convert2Dto1D:PixelSizeY
+		NVAR SampleToCCDDistance=	root:Packages:Convert2Dto1D:SampleToCCDDistance
+		NVAR Wavelength=	root:Packages:Convert2Dto1D:Wavelength
+		OldNote+= "Nika_SampleToDetectorDistacne="+num2str(SampleToCCDDistance)+";"
+		OldNote+= "Nika_Wavelength="+num2str(Wavelength)+";"
+		OldNote+= "Nika_XrayEnergy="+num2str(XrayEnergy)+";"
+		OldNote+= "Nika_PixelSizeX="+num2str(PixelSizeX)+";"
+		OldNote+= "Nika_PixelSizeY="+num2str(PixelSizeY)+";"
+		OldNote+= "Nika_HorizontalTilt="+num2str(HorizontalTilt)+";"
+		OldNote+= "Nika_VerticalTilt="+num2str(VerticalTilt)+";"
+		OldNote+= "Nika_BeamCenterX="+num2str(BeamCenterX)+";"
+		OldNote+= "Nika_BeamCenterY="+num2str(BeamCenterY)+";"
+		OldNote+= "Nika_BeamSizeX="+num2str(BeamSizeX)+";"
+		OldNote+= "Nika_BeamCenterY="+num2str(BeamCenterY)+";"
 		OldNote+= "CalibrationFormula="+CalibrationFormula+";"
 		if(UseSampleThickness)
 			OldNote+= "SampleThickness="+num2str(SampleThickness)+";"
@@ -545,6 +570,11 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 	if(UseMask)
 		OldNote+= "CurrentMaskFileName="+(CurrentMaskFileName)+";"
 	endif
+	NVAR UseSolidAngle=root:Packages:Convert2Dto1D:UseSolidAngle
+	if(UseSolidAngle)
+		OldNote+= "SolidAngleCorrection=Done"+";"
+	endif
+	
 	note /K Calibrated2DDataSet
 	note Calibrated2DDataSet, OldNote
 	KillWaves/Z tempEmptyField, tempDataWv
@@ -6985,17 +7015,17 @@ Function NI2_MonitorFldrBackground(s) // This is the function that will be calle
 	NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
 	variable NumberOfNewImages
 
-	Printf "Task %s called, found %d data images in current folder\r", s.name, numpnts(ListOf2DSampleData)
+	Printf "%s : task %s called, found %d data images in current folder\r", time(), s.name, numpnts(ListOf2DSampleData)
 
 	if(numpnts(ListOf2DSampleData)>numpnts(ListOf2DSampleDataOld))	//new data set appeared
 		NumberOfNewImages=numpnts(ListOf2DSampleData)-numpnts(ListOf2DSampleDataOld)
 		if(FilesSortOrder==0)
 			//here we need to select the new file. Only when files are not ordered, or it should be clear. 
-			Printf "Found %g new data image(s), since using unsorted as sort order, will pick one to process \r", NumberOfNewImages
+			Printf "%s : found %g new data image(s), since using unsorted as sort order, will pick one to process \r", time(), NumberOfNewImages
 			Make/Free/T ResWave
 			IN2G_FindNewTextElements(ListOf2DSampleData,ListOf2DSampleDataOld,reswave)
 			//assume reswave[0] contains the last image added (impossible to say, actually)
-			Printf "Selected %s, calling user routine using this file name \r", reswave[0]
+			Printf "%s : Selected %s, calling user routine using this file name \r", time(), reswave[0]
 			//need to find it in the original wave and select it in the control 
 			variable i
 			For(i=0;i<numpnts(ListOf2DSampleData);i+=1)
@@ -7006,7 +7036,7 @@ Function NI2_MonitorFldrBackground(s) // This is the function that will be calle
 			endfor 
 			//print "New data set found, but do not know which one it is"
 		else
-			Printf "Found %g new data image(s), since sorting is selected, using the last one \r", NumberOfNewImages
+			Printf "%s : found %g new data image(s), since sorting is selected, using the last one \r", time(), NumberOfNewImages
 		endif
 		if(BckgConvertData)
 			Print "Calling \"Convert sel. files 1 at time\" routine \r"

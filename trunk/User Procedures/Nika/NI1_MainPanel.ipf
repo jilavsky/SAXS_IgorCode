@@ -1170,7 +1170,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					endif
 				endif
 				NewDataFolder/S/O $(LongUseName)
-print possiblyquotename("r_"+UseName)
+					//print possiblyquotename("r_"+UseName)
 					Duplicate/O LineProfileIntensity, $("r_"+UseName)
 					Duplicate/O LineProfileQ, $("q_"+UseName)
 					Duplicate/O LineProfileError, $("s_"+UseName)

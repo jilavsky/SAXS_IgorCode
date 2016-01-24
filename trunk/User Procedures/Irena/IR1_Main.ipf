@@ -79,7 +79,7 @@ Menu "SAS"
 	help = {"Plotting tool with wide functionality, hopefully"}
 	"Plotting II", IR2D_DWSPlotToolMain()
 	help = {"Plotting tool which controls any top graph"}
-		SubMenu "Support Tools for plots"
+		SubMenu "Support Tools for plots aand tables"
 		"Draw Line Of Any Slope", IR2P_DrawLineOfAnySlope()
 		"Draw Line Of -4 Slope",  IR2P_DrawLineOf4Slope()
 		"Draw Line Of -3 Slope",  IR2P_DrawLineOf3Slope()
@@ -88,6 +88,8 @@ Menu "SAS"
 		"--"
 		"Fit Line With Cursors", IR2P_FitLineWithCursors()
 		"Fit Power Law with Cursors", IR2P_FitPowerLawWithCursors()
+		"--"
+	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
 	"Unified Fit", IR1A_UnifiedModel()
