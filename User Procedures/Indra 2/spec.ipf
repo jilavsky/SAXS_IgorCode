@@ -2,7 +2,7 @@
 #pragma IgorVersion = 4.0
 #pragma version = 2.2
 #pragma ModuleName=specProc
-#include "Utility_JZT"
+//#include "Utility_JZT"
 
 Constant Epoch_spec_Igor = 2082844800			// add this number of spec EPOCH to get Igor EPOCH, i.e. print Secs2Date(EPOCH+Epoch_spec_Igor,1)
                                                                              //Secs2time(EPOCH+Epoch_spec_Igor-3600*5,1)  Will give time using Central US Time

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.70
+#pragma version=1.72
 
 
 Menu "Macros"

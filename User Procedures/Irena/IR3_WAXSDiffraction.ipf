@@ -944,7 +944,7 @@ Function IR3W_CopyAndAppendData(FolderNameStr)
 		Wave/Z SourceQWv=$(DataFolderName+QWavename)
 		Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
 		Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
-		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
+		if(!WaveExists(SourceIntWv)||!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed"
 		endif
 		Duplicate/O SourceIntWv, DataIntWave
@@ -1138,7 +1138,7 @@ Function IR3W_AddBackgroundToGraph()
 		SVAR QWavenameB = root:Packages:Irena:WAXSBackground:QWavename
 		SVAR ErrorWaveNameB = root:Packages:Irena:WAXSBackground:ErrorWaveName
 
-		if(stringmatch(DataFolderNameB,"*---*"))
+		if(stringmatch(DataFolderNameB,"*---*")||(DisplayBackg==0))
 			//to do: remove from graph!
 			RemoveFromGraph/Z BackgroundIntWave#0, BackgroundIntWave#1, BackgroundIntWave#2, BackgroundIntWave#3, BackgroundIntWave#4
 			Wave/Z BackgroundIntWave=root:Packages:Irena:WAXS:BackgroundIntWave

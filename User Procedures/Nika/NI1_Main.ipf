@@ -1,5 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.72
+//DO NOT renumber Main files every time, these are main release numbers...
+
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -227,8 +229,8 @@ Function NI1_AboutPanel()
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ ANL, 2015"
-	DrawText 49,103,"Release 1.70 from 10/30/2015"
+	DrawText 52,64,"@ ANL, 2016"
+	DrawText 49,103,"Release 1.72 from 2/1/2016"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 
@@ -236,7 +238,7 @@ Function NI1_AboutPanel()
 	DrawText 11,210,"into 1 D data"
 	DrawText 11,230,"     "
 	DrawText 11,250," "
-	DrawText 11,265,"Igor 6.3x compatible"
+	DrawText 11,265,"Igor 6.3x & 7 compatible"
 end
 
 //*****************************************************************************************************************
