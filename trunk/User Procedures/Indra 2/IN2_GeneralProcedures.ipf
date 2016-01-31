@@ -593,7 +593,7 @@ End
 //*************************************************************************************************************************************
 static Function IN2G_placesOfPrecision(a)	// number of significant figures in a number (at most 16)
 	Variable a
-	a = roundSignificant(abs(a),17)
+	a = IN2G_roundSignificant(abs(a),17)
 	Variable i
 	for (i=1;i<18;i+=1)
 		if (abs(a-IN2G_roundSignificant(a,i))/a<1e-15)

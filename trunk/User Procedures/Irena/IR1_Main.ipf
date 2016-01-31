@@ -1,9 +1,11 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.61
+#pragma version=2.59
+//DO NOT renumber Main files every time, these are main release numbers...
+
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs= 3528649732 			//this is mod date for Manual version 2.58
-constant CurrentVersionNumber = 2.60
+constant CurrentManualDateInSecs= 3537094463 			//this is mod date for Manual version 2.58
+constant CurrentVersionNumber = 2.59
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -11,8 +13,8 @@ constant CurrentVersionNumber = 2.60
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.61 changed check for update procedure to check http first, tehn ftp, and the fail. 
-//2.60 added WAXS tool - first releae to users. Simple fits are not made visible to users yet. 
+//2.59 changed check for update procedure to check http first, tehn ftp, and the fail. 
+//2.59 added WAXS tool - first releae to users. Simple fits are not made visible to users yet. 
 //2.59 to be done... Added development version of Simple fits - new well structured tool for simplistic fits on SAS data.
 //2.58 Added MergeData tool.  
 //2.58 Added YouTube movies page. 
@@ -106,9 +108,9 @@ Menu "SAS"
 	help={"Debye-Bueche, Teubner-Strey model"}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
-	"Simple Fits - under developement", IR3L_SimpleFits()
-	help={"Simple fitting of SAS data. Developemnt for now. Do not use. "}
-	"Pwdr. Diffraction - WAXS", IR3W_WAXS()
+	//"Simple Fits - under developement", IR3L_SimpleFits()
+	//help={"Simple fitting of SAS data. Developement for now. Do not use. "}
+	"Powder Diffraction fitting = WAXS", IR3W_WAXS()
 	help={"Simple tool for analysis of WAXS/Powder diffraction data. Developement version for public."}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
@@ -1136,13 +1138,13 @@ Function IR1_AboutPanel()
 	endif
 
 //	PauseUpdate; Silent 1		// building window...
-	NewPanel/K=1 /W=(173.25,50,580,460) as "About_Irena_1_Macros"
+	NewPanel/K=1 /W=(173.25,50,580,460) as "About Irena Macros"
 	DoWindow/C About_Irena_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro >=6.34"
+	DrawText 23,30,"Irena macros for Igor Pro >=6.34 & 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2015"
+	DrawText 100,60,"@ ANL, 2016"
 	DrawText 10,80,"release "+num2str(CurrentVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)

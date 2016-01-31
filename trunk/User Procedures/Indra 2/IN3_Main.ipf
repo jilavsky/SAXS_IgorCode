@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.88
-
+#pragma version = 1.87
+//DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.88 removed Wavename string from selection tool. Unnecessary and confusing users. 
+//1.87 removed Wavename string from selection tool. Unnecessary and confusing users. 
 //1.87 remove dropout option
 //1.86 added save to Load & Process button, renamed 
 //1.85 Flyscan improvements for 9ID March 2015

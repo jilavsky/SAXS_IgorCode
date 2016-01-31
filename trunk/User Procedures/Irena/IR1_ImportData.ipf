@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.27
 Constant IR1IversionNumber = 2.25
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 fixes for naming of USAXS weave which seemed to have typo in naming system. 
 //2.26 added check for Error import - will abort import if Errors contain negative values, 0, INFs or NANs. Check import works with csv files. 
 //2.25 minor fix for data with too many columns of data - Irena can handle only first 6 columns... 
 //2.24 minor change in how calibration units are displayed in the panel. 
@@ -786,8 +787,8 @@ Function IR1I_NameImportedWaves(selectedFile)
 	string NewIntName, NewQName, NewEName, NewQEName, tempFirstPart, tempLastPart
 	
 	if(stringMatch(NewIntensityWaveName,"*<fileName>*")==0)
-		NewIntName = IR1I_RemoveBadCharacters(NewIntName)
-		NewIntName = CleanupName(NewIntensityWaveName, 1 )
+		NewIntName = IR1I_RemoveBadCharacters(NewIntensityWaveName)
+		NewIntName = CleanupName(NewIntName, 1 )
 		NewIntName=IR1I_TrunkateName(NewIntName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewIntensityWaveName[0,strsearch(NewIntensityWaveName, "<fileName>", 0 )-1]
@@ -801,8 +802,8 @@ Function IR1I_NameImportedWaves(selectedFile)
 		NewIntName = CleanupName(NewIntName, 1 )
 	endif
 	if(stringMatch(NewQwaveName,"*<fileName>*")==0)
-		NewQName =IR1I_RemoveBadCharacters(NewQName)
-		NewQName = CleanupName(NewQwaveName, 1 )
+		NewQName =IR1I_RemoveBadCharacters(NewQwaveName)
+		NewQName = CleanupName(NewQName, 1 )
 		NewQName=IR1I_TrunkateName(NewQName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewQwaveName[0,strsearch(NewQwaveName, "<fileName>", 0 )-1]
@@ -816,8 +817,8 @@ Function IR1I_NameImportedWaves(selectedFile)
 		NewQName = CleanupName(NewQName, 1 )
 	endif
 	if(stringMatch(NewErrorWaveName,"*<fileName>*")==0)
-		NewEName =IR1I_RemoveBadCharacters(NewEName)
-		NewEName = CleanupName(NewErrorWaveName, 1 )
+		NewEName =IR1I_RemoveBadCharacters(NewErrorWaveName)
+		NewEName = CleanupName(NewEName, 1 )
 		NewEName=IR1I_TrunkateName(NewEName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewErrorWaveName[0,strsearch(NewErrorWaveName, "<fileName>", 0 )-1]

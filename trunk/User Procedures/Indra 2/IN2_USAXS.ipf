@@ -337,14 +337,14 @@ end
 
 Function IN2_AboutPanel()
 	PauseUpdate; Silent 1		// building window...
-	NewPanel/K=1 /W=(173.25,101.75,473.25,302) as "About_Indra_2_Macros"
+	NewPanel/K=1 /W=(173.25,101.75,500,302) as "About_Indra_2_Macros"
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
-	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Indra 2 macros for Igor Pro 6.0"
+	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
+	DrawText 10,37,"Indra 2 macros for Igor Pro 6.3+ & 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ Jan Ilavsky, 2015"
-	DrawText 49,103,"release 1.86 from 10/30/2015"
+	DrawText 52,64,"@ Jan Ilavsky, 2016"
+	DrawText 49,103,"release 1.87 from 2/1/2016"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end

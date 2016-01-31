@@ -8,6 +8,9 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+1.87 2/1/2016
+Igor 7 beta update
+
 1.86 10/30/2015
 Verified to work on Igor 7 beta 1
 Revised manual - it was really obsolete. Added Flyscan import, updated Data reduction and removed some obsolete stuff from the manual altogether. Added chapter on dQ. 
