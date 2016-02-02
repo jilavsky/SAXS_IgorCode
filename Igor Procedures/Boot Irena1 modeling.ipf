@@ -1,8 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.59
+#pragma version=2.60
 
 Menu "Macros"
-//	"Load Irena SAS Modeling Macros", LoadIR1Modeling()
 	StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIR1Modeling()
 end
 
@@ -32,10 +31,11 @@ Proc LoadIR1Modeling()
 		Execute/P "COMPILEPROCEDURES "
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:SASItem1Str
-//		root:Packages:SASItem1Str= "(Load Irena SAS Modeling Macros"
+		//root:Packages:SASItem1Str= "(Load Irena SAS Modeling Macros"
 		root:Packages:SASItem1Str= "---"
 		BuildMenu "SAS"
-		Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
+		//Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
+		//not needed, done automatically as part of after compile hook function
 	else
 		DoAlert 0, "Your version of Igor is lower than 6.30, these macros need version 6.30 or higher, please update your Igor 6 to the latest release "  
 	endif
