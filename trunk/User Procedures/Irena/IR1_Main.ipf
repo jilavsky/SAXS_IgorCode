@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.59
+#pragma version=2.60
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
@@ -13,6 +13,8 @@ constant CurrentVersionNumber = 2.59
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.60 modified GUI preferences handling. Was reseting, wrong logic. 
+//
 //2.59 changed check for update procedure to check http first, tehn ftp, and the fail. 
 //2.59 added WAXS tool - first releae to users. Simple fits are not made visible to users yet. 
 //2.59 to be done... Added development version of Simple fits - new well structured tool for simplistic fits on SAS data.
@@ -220,22 +222,26 @@ static Function IR2C_CheckPlatformGUIFonts()
 	endif
 	string oldPlatform = Platform
 	string CurPlatform = IgorInfo(2)
-	if(!stringMatch(Platform, CurPlatform))
-		IR2C_ConfigMain()  
-		STRUCT WMButtonAction   ba
-		ba.eventCode = 2
-		ba.ctrlName="DefaultValues"
-		IR2C_KillPrefsButtonProc(ba)
-		Platform = CurPlatform  
-		ba.eventCode = 2
-		ba.ctrlName="OKBUtton" 
-		IR2C_KillPrefsButtonProc(ba) 
-		if(STRLEN(oldPlatform)>0)
-			print "****   Detected that this experiment moved from : "+oldPlatform+"; to current platform : "+CurPlatform
-			print "therefore I have reset the GUI fonts on the current plaform" 
-		else
-			print "****   Could not detect prior plaform for this experiment, or it is new experiment. Set default GUI fonts for current platform : "+CurPlatform
-		endif
+	string CurExpName=IgorInfo(1)
+	if(!stringMatch(Platform, CurPlatform) || stringMatch(CurExpName,"Untitled"))			//different platform or new experiment. 
+		IR2C_ReadIrenaGUIPackagePrefs()
+//			IR2C_ConfigMain()  
+//			STRUCT WMButtonAction   ba
+//			ba.eventCode = 2
+//			ba.ctrlName="DefaultValues"
+//			IR2C_KillPrefsButtonProc(ba)
+//			Platform = CurPlatform  
+//			ba.eventCode = 2
+//			ba.ctrlName="OKBUtton" 
+//			IR2C_KillPrefsButtonProc(ba) 
+//			if(STRLEN(oldPlatform)>0)
+//				print "****   Detected that this experiment moved from : "+oldPlatform+"; to current platform : "+CurPlatform
+//				print "therefore I have reset the GUI fonts on the current plaform" 
+//			else
+//				print "****   Could not detect prior plaform for this experiment, or it is new experiment. Set default GUI fonts for current platform : "+CurPlatform
+//			endif
+//		else
+//				print "****   This is new experiment. Restored GUI choices stored on cuyrrent computer ****** "
 	endif
 end
 
@@ -505,7 +511,7 @@ Function IR2C_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.LastUpdateCheck	=		LastUpdateCheck
 	
 	if(KillThem)
-	//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
+		SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
 	//	IR2C_ReadIrenaGUIPackagePrefs()
 	else
 		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
