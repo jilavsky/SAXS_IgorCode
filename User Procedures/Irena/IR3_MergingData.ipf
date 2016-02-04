@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.03
+#pragma version=1.04
 constant IR3DversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.04 fix for liberal names. 
 //1.03 bug in merging routine where lookup of start of overlap of Int2 data was before Int2 started
 //1.02 FIxed bug when no pairs were found which threw error instead of message. 
 //1.01 Fixed bug in cursor handling and problems when data contained negative intensities.  
@@ -731,10 +732,10 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		else
 			dQWavename1 = ""
 		endif
-		Wave/Z SourceIntWv=$(DataFolderName1+IntensityWaveName1)
-		Wave/Z SourceQWv=$(DataFolderName1+QWavename1)
-		Wave/Z SourceErrorWv=$(DataFolderName1+ErrorWaveName1)
-		Wave/Z SourcedQWv=$(DataFolderName1+dQWavename1)
+		Wave/Z SourceIntWv=$(DataFolderName1+possiblyquoteName(IntensityWaveName1))
+		Wave/Z SourceQWv=$(DataFolderName1+possiblyquoteName(QWavename1))
+		Wave/Z SourceErrorWv=$(DataFolderName1+possiblyquoteName(ErrorWaveName1))
+		Wave/Z SourcedQWv=$(DataFolderName1+possiblyquoteName(dQWavename1))
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed for Data 1"
 		endif
@@ -791,10 +792,10 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		else
 			dQWavename2 = ""
 		endif
-		Wave/Z SourceIntWv=$(DataFolderName2+IntensityWaveName2)
-		Wave/Z SourceQWv=$(DataFolderName2+QWavename2)
-		Wave/Z SourceErrorWv=$(DataFolderName2+ErrorWaveName2)
-		Wave/Z SourcedQWv=$(DataFolderName2+dQWavename2)
+		Wave/Z SourceIntWv=$(DataFolderName2+possiblyquoteName(IntensityWaveName2))
+		Wave/Z SourceQWv=$(DataFolderName2+possiblyquoteName(QWavename2))
+		Wave/Z SourceErrorWv=$(DataFolderName2+possiblyquoteName(ErrorWaveName2))
+		Wave/Z SourcedQWv=$(DataFolderName2+possiblyquoteName(dQWavename2))
 		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
 			Abort "Data selection failed for Data 2"
 		endif
