@@ -442,7 +442,7 @@ Function IR1_CalcIntFromOneDist(DistNum,OriginalQvector)
 	//now handle the contarst by copying data into the G_matrix
 	Duplicate/O G_matrixFF, $("G_matrix_"+num2str(DistNum))				//G_matrixFF (root:Packages:Sizes:G_matrixFF)  contains form factor without contrast, except for Tube and Core shell...  
 	Wave G_matrix=$("G_matrix_"+num2str(DistNum))
-	if(stringmatch(ShapeType,"CoreShell") || stringmatch(ShapeType,"CoreShellCylinder") || stringmatch(ShapeType,"Janus CoreShell Micelle*"))
+	if(stringmatch(ShapeType,"*CoreShell*"))
 		G_matrix=G_matrixFF * 1e20			//this shape contains contrast already in...
 	else
 		G_matrix=G_matrixFF * DistContrast*1e20		//this multiplies by scattering contrast

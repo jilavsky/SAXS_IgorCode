@@ -3,6 +3,10 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.73É.
+Modified USAXS/SAXS/WAXS configurator for Pilatus 200kw and use of empty background subtraction (with the transmission diode measurement).  
+
+
 1.72 2/1/2016
 Igor 7 compatibility release
 Modified FITS loader to handle data from different sources, as long as we are looking for sufficiently large 2D image (either in primary or any extension). 
