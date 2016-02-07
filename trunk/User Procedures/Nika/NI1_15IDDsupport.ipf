@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.28
+#pragma version=1.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.29 WAXS transmission correction and add Mask for Pilatus 200kw
 //1.28 Minor fix to configuration
 //1.27 trimmed the name used for line profiles to 17 characters only, did tno work with Line Profiles. 
 //1.26 fixed error in I0 lookup for Sample exposure which used ungated signal instead of gated one. Not sure when did this happen... 
@@ -109,9 +110,9 @@ Window NI1_15IDDConfigPanel() : Panel
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
 	DrawText 10,25,"9ID-C (or 15IDD) Nexus file configuration"
 	
-	DrawText 10, 43, "pinSAXS : Pilatus short camera in USAXS (use with USAXS)"
-	DrawText 10, 60, "WAXS    : Pilatus short WAXS used with USAXS/SAXS/WAXS configuration"
-	DrawText 10, 77, "SAXS     : large SAXS camera in the back (only SAXS, no USAXS)"
+	DrawText 10, 43, "pinSAXS : Pilatus 100k camera in USAXS (use with USAXS)"
+	DrawText 10, 60, "WAXS    : Pilatus 100k or 200kw WAXS used in USAXS/SAXS/WAXS configuration"
+	DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
 	Checkbox pinSAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSpinSAXSselector, proc=NI1_15IDDCheckProc
 	Checkbox pinSAXSSelection, title ="pinSAXS", help={"Use to configure Nika for pinSAXS"}
 	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_15IDDCheckProc
@@ -130,8 +131,10 @@ Window NI1_15IDDConfigPanel() : Panel
 	SetVariable USAXSSlitLength,help={"Sets USAXS slit length"}
 	Button SetUSAXSSlitLength,pos={229,150},size={150,20},proc=NI1_15IDDButtonProc,title="Set Slit Legnth"
 	Button SetUSAXSSlitLength,help={"Sets Slit length from USAXS data"}
-	Button CreateBadPIXMASK,pos={229,185},size={150,20},proc=NI1_15IDDButtonProc,title="Create default pinSAXS mask"
-	Button CreateBadPIXMASK,help={"Create mask covering bad pixles on 15IDD Pilatus"}
+	Button WAXSUseBlank,pos={229,150},size={150,20},proc=NI1_15IDDButtonProc,title="WAXS use Blank"
+	Button WAXSUseBlank,help={"Set for use blank with 200kw WAXS"}
+	Button CreateBadPIXMASK,pos={229,185},size={150,20},proc=NI1_15IDDButtonProc,title="Create SAXS/WAXS mask"
+	Button CreateBadPIXMASK,help={"Create mask for Pilatus 100 SAXS and 200kw WAXS"}
 	Checkbox SAXSGenSmearedPinData,pos={29,220},size={150,20}, variable=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData, proc=NI1_15IDDCheckProc
 	Checkbox SAXSGenSmearedPinData, title ="Create Smeared Data", help={"Set to create smeared data for merging with USAXS"}
 	Checkbox SAXSDeleteTempPinData,pos={229,220},size={150,20}, variable=root:Packages:Convert2Dto1D:SAXSDeleteTempPinData, noproc
@@ -165,14 +168,16 @@ Function NI1_15IDDDisplayAndHideControls()
 
 	Checkbox SAXSGenSmearedPinData, win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
 	Checkbox SAXSDeleteTempPinData,  win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
-	Button CreateBadPIXMASK,win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
+
+	Button WAXSUseBlank,win= NI1_15IDDConfigPanel, disable = !USAXSWAXSselector
+	Button CreateBadPIXMASK,win= NI1_15IDDConfigPanel, disable = USAXSBigSAXSselector
 	Button SetUSAXSSlitLength, win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
 	SetVariable USAXSSlitLength, win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
 	Checkbox USAXSForceUSAXSTransmission, win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
 
 	Checkbox USAXSCheckForRIghtEmpty, win= NI1_15IDDConfigPanel, disable = DisplayWAXSCntrls
 	Checkbox USAXSCheckForRIghtDark, win= NI1_15IDDConfigPanel, disable = DisplayWAXSCntrls
-	Checkbox USAXSForceTransRecalculation	, win= NI1_15IDDConfigPanel, disable = DisplayWAXSCntrls
+	Checkbox USAXSForceTransRecalculation, win= NI1_15IDDConfigPanel, disable = DisplayWAXSCntrls
 	Checkbox USAXSLoadListedEmpDark, win= NI1_15IDDConfigPanel, disable = DisplayWAXSCntrls
 	Checkbox ForceTransmissionDialog, win= NI1_15IDDConfigPanel, disable = USAXSWAXSselector
 end
@@ -307,6 +312,9 @@ Function NI1_15IDDButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 
+			if (stringmatch("WAXSUseBlank",ba.CtrlName))
+				NI1_15IDDWAXSBlankSUbtraction()				
+			endif
 			if (stringmatch("Open15IDDManual",ba.CtrlName))
 				NI1_Open15IDDManual()
 			endif
@@ -318,7 +326,13 @@ Function NI1_15IDDButtonProc(ba) : ButtonControl
 				NI1_15IDDWaveNoteValuesNx()				
 			endif
 			if (stringmatch("CreateBadPIXMASK",ba.CtrlName))
-				NI1_15IDDCreateSAXSPixMask()				
+				NVAR isPinSAXS=root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+				NVAR isWAXS=root:Packages:Convert2Dto1D:USAXSWAXSselector
+				if(isPinSAXS)
+					NI1_15IDDCreateSAXSPixMask()		
+				elseif(isWAXS)	
+					NI1_15IDDCreateWAXSPixMask()	
+				endif	
 			endif
 			if (stringmatch("SetUSAXSSlitLength",ba.CtrlName))
 				NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
@@ -373,6 +387,41 @@ Function NI1_15IDDCreateSAXSPixMask()
 	UseMask=1
 	setDataFOlder OldDf
 end	
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_15IDDCreateWAXSPixMask()			
+
+	string OldDF=GetDataFolder(1)
+	SetDataFolder root:Packages:Convert2Dto1D
+	Wave/Z OriginalCCD = root:Packages:Convert2Dto1D:OriginalCCD
+	if(!WaveExists(OriginalCCD))
+		Abort "Load WAXS image first, then create mask again" 
+	endif
+	Duplicate/O OriginalCCD, M_ROIMask
+	Redimension /B/U M_ROIMask 
+	//Make/O/B/U/N=(195,487) M_ROIMask
+	M_ROIMask =1
+	if(DimSize(M_ROIMask, 1)>500)	//Pilatus 200kW
+		M_ROIMask[0,194][486,494]=0
+	
+		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
+		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
+		notestr+="// ;ITEMNO:1;\r"
+		notestr+="SetDrawEnv linefgc= (3,52428,1)\r"
+		notestr+="// ;ITEMNO:2;\r"
+		notestr+="SetDrawEnv fillpat= 5,fillfgc= (0,0,0)\r"
+		notestr+="// ;ITEMNO:3;\r"
+		notestr+="SetDrawEnv save\r"
+		notestr+="// ;ITEMNO:4;\r"
+		notestr+="DrawRect 0,486,195,495\r"	
+		note M_ROIMask, notestr
+	endif		
+	SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
+	CurrentMaskFileName="9IDC default WAXS mask"
+	NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
+	UseMask=1
+	setDataFOlder OldDf
+end	
 
 
 //************************************************************************************************************
@@ -420,6 +469,38 @@ Function NI1_15IDDSetLineWIdth()
 	
 end
 
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_15IDDWAXSBlankSUbtraction()	
+				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
+				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
+				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
+				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
+				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
+				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
+				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+				
+				UseSampleTransmission = 1
+				UseEmptyField = 1
+				UseI0ToCalibrate = 1
+				DoGeometryCorrection = 1
+				UseMonitorForEf = 1
+				UseSampleTransmFnct = 1
+				UseSampleMonitorFnct = 1
+				UseEmptyMonitorFnct = 1
+
+				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
+				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
+			
+				SampleTransmFnct = "NI1_15IDWFindTRANS"
+				SampleMonitorFnct = "NI1_15IDWFindI0"
+				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
+
+				NI1A_SetCalibrationFormula()			
+
+end
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1430,7 +1511,11 @@ Function NI1_15IDWFindI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
+	variable I000
+	I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")		//try gated signal first...
+	if(numtype(I000)!=0)
+		I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
+	endif
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
@@ -1439,6 +1524,72 @@ Function NI1_15IDWFindI0(SampleName)
 	endif
 	return I000
 end
+
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_15IDWFindTRANS(SampleName)
+	string sampleName
+
+	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(w2D))
+		Abort "Image file not found "  
+	endif
+	Wave/Z w2DE = root:Packages:Convert2Dto1D:EmptyData
+	if(!WaveExists(w2DE))
+		Abort "Empty Image file not found "  
+	endif
+	string OldNOteSample=note(w2D)
+	string OldNOteEmpty=note(w2DE)
+	variable I000S
+	I000S = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNOteSample), OldNOteSample  , "=" , ";")		//try gated signal first...
+	if(numtype(I000S)!=0)
+		I000S = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNOteSample), OldNOteSample  , "=" , ";")
+	endif
+	variable I0gainS = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNOteSample), OldNOteSample  , "=" , ";")
+	I000S = I000S / I0gainS
+	if(numtype(I000S)!=0)
+		Print "I0 value not found in the wave note of the sample file, setting to 1"
+		I000S=1 
+	endif
+	variable I000E
+	I000E = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")		//try gated signal first...
+	if(numtype(I000E)!=0)
+		I000E = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
+	endif
+	variable I0gainE = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
+	I000E = I000E / I0gainE
+	if(numtype(I000E)!=0)
+		Print "I0 value not found in the wave note of the sample file, setting to 1"
+		I000E=1 
+	endif
+
+	variable TRDS
+	TRDS = NumberByKey(NI1_15IDDFindKeyStr("TR_cts_gated=", OldNOteSample), OldNOteSample  , "=" , ";")		//try gated signal first...
+	if(numtype(TRDS)!=0)
+		TRDS = NumberByKey(NI1_15IDDFindKeyStr("TR_cts=", OldNOteSample), OldNOteSample  , "=" , ";")
+	endif
+	variable TRDgainS = NumberByKey(NI1_15IDDFindKeyStr("TR_gain=", OldNOteSample), OldNOteSample  , "=" , ";")
+	TRDS = TRDS / TRDgainS
+	if(numtype(TRDS)!=0)
+		Print "TR diode value not found in the wave note of the sample file, setting to 1"
+		TRDS=1 
+	endif
+	variable TRDE
+	TRDE = NumberByKey(NI1_15IDDFindKeyStr("TR_cts_gated=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")		//try gated signal first...
+	if(numtype(TRDE)!=0)
+		TRDE = NumberByKey(NI1_15IDDFindKeyStr("TR_cts=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
+	endif
+	variable TRDgainE = NumberByKey(NI1_15IDDFindKeyStr("TR_gain=", OldNOteEmpty), OldNOteEmpty  , "=" , ";")
+	TRDE = TRDE / TRDgainE
+	if(numtype(TRDE)!=0)
+		Print "I0 value not found in the wave note of the sample file, setting to 1"
+		TRDE=1 
+	endif
+
+
+	return (TRDS/I000S)/(TRDE/I000E)
+end
+
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_15IDWFindEFI0(SampleName)
@@ -1449,7 +1600,11 @@ Function NI1_15IDWFindEFI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
+	variable I000
+	I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")		//try gated signal first...
+	if(numtype(I000)!=0)
+		I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts=", OldNote), OldNote  , "=" , ";")
+	endif
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
@@ -1682,8 +1837,8 @@ Function NI1_15IDDCreateHelpNbk()
 		Notebook $nb text=" the most likely values for your experiment)\r"
 		Notebook $nb text="4. \tOptiona;l: Verify the parameters (Beam center & calibration) using Ag Behenate measurements collecte"
 		Notebook $nb text="d with your data & your notes (some NX file info could be stale)\r"
-		Notebook $nb text="5. \tCreate mask to mask off the bad points and top few lines on detector using button: \"Create bad pix m"
-		Notebook $nb text="ask\")\r"
+		Notebook $nb text="5. \tCreate mask to mask off the top few lines on detector using button: \"Create SAXS/WAXS m"
+		Notebook $nb text="ask\"\r"
 		Notebook $nb text="6.\tOptional : Either read slit length (button:\"Set Slit Length\") from one of USAXS measurements and sele"
 		Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_usx\") - OR - unselect the \"Create Smeared Data\" (resu"
 		Notebook $nb text="lting data will be \"_270_30\"). Likely choose \"Delete temp Data\" if you are creating slit smeared data.\r"
@@ -1705,8 +1860,12 @@ Function NI1_15IDDCreateHelpNbk()
 		Notebook $nb text=" button \"Ave & Display sel. file(s)\") to load \r"
 		Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
 		Notebook $nb text=" the most likely values for your experiment)\r"
-		Notebook $nb text="4. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
-		Notebook $nb text=" for WAXS. There is no need to epmty or other corrections in this case. You may need to modify the \"Sect"
+		Notebook $nb text="4. \tIf you have Empty (blank measurement) and are using Pilatus 200kw push \"WAXS use Blank\". "
+		Notebook $nb text="Load Blank in the \"Empty/Dk\" tab and air scattering will be subtracted with proper normalization.\r"
+		Notebook $nb text="5. \tCreate mask to mask off the joint lines on detector using button: \"Create SAXS/WAXS m"
+		Notebook $nb text="ask\" This is useful only for Pilatus 200kw detector. \r"
+		Notebook $nb text="6. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
+		Notebook $nb text=" for WAXS. It is not critical to correct for empty, but it will reduce air scattering background. You may need to modify the \"Sect"
 		Notebook $nb text="ors\" tab settings depending if you want the output in Q or in d (or in Theta).  \r"
 		Notebook $nb text="\r"
 		Notebook $nb ruler=Title, text="SAXS\r"
