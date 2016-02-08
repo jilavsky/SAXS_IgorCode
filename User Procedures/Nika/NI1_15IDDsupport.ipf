@@ -393,7 +393,7 @@ Function NI1_15IDDCreateWAXSPixMask()
 
 	string OldDF=GetDataFolder(1)
 	SetDataFolder root:Packages:Convert2Dto1D
-	Wave/Z OriginalCCD = root:Packages:Convert2Dto1D:OriginalCCD
+	Wave/Z OriginalCCD = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(OriginalCCD))
 		Abort "Load WAXS image first, then create mask again" 
 	endif
