@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.36
+#pragma version=1.37
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.37 fixed bug in IR2L_CreateResidulas which failed when was called with wrong working folder. 
 //1.36 minor (R_min setVariable) GUI fix. 
 //1.35 catch Log-Normal min size when it is too small. 
 //1.34 fixed non-functioning data scailing feature. Now shoudl scale data first and then, optionally scale Errors or modify as requested. 
@@ -5364,10 +5365,10 @@ Function IR2L_CreateResidulas()
 	For(i=1;i<11;i+=1)
 		NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 		if(UseTheData&&(MultipleInputData||(i==1)))	//these data are used, need to fix the data
-			Wave ModelQ=	$("Qmodel_set"+num2str(i))	
-			Wave Intensity=$("Intensity_set"+num2str(i))
-			Wave ModelIntensity=$("IntensityModel_set"+num2str(i))
-			Wave Error=$("Error_set"+num2str(i))
+			Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
+			Wave Intensity=$("root:Packages:IR2L_NLSQF:Intensity_set"+num2str(i))
+			Wave ModelIntensity=$("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(i))
+			Wave Error=$("root:Packages:IR2L_NLSQF:Error_set"+num2str(i))
 			NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(i))
 			NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(i))
 			Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(i))
@@ -5382,8 +5383,8 @@ Function IR2L_CreateResidulas()
 			endif
 			//Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_Orig_set"+num2str(i))
 			//create residuals wave and set it to proper values, Nans where not used...
-			Duplicate/O Intensity, $("Residuals_set"+num2str(i))
-			Wave residuals=$("Residuals_set"+num2str(i))
+			Duplicate/O Intensity, $("root:Packages:IR2L_NLSQF:Residuals_set"+num2str(i))
+			Wave residuals=$("root:Packages:IR2L_NLSQF:Residuals_set"+num2str(i))
 			residuals = NaN
 			//this is weird, the Intensity and Error have too many points - these are not the ones with mask - these are all points in the ssystem.
 			//someone forgot to trim these off!
