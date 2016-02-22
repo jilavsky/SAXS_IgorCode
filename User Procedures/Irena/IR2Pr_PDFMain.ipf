@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.08
-Constant IR2PrversionNumber=1.05
+#pragma version=1.09
+Constant IR2PrversionNumber=1.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.05
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 changes for panel scaling
 //1.08 fixed bug of useSMR data which screwed up Control Procedures
 //1.07 removed wave/d, Function/d and variable/d. Obsolete
 //1.06 minor cahnge for notebook call function. 
@@ -47,7 +48,7 @@ Function IR2Pr_MainPDDF()
 	endif
 	Execute("IR2Pr_ControlPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber)
+	IR1_UpdatePanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber)
 
 
 end
@@ -62,7 +63,7 @@ end
 Function IR2Pr_MainCheckVersion()	
 	DoWindow IR2Pr_ControlPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber))
 			DoAlert /T="The Pair distance dist. panel was created by old version of Irena " 1, "Pair distance dist. may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR2Pr_MainPDDF()")
@@ -177,23 +178,11 @@ Window IR2Pr_ControlPanel()
 	root:Packages:Irena_PDDF:QWaveName = "---"
 	root:Packages:Irena_PDDF:ErrorWaveName = "---"
 
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 15,23,"Pair Distance Dist Fnct input panel"
-	TitleBox MainTitle title="Pair Distance Dist Fnct input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,181,339,181
+	TitleBox MainTitle title="\Zr200Pair Distance Dist Fnct input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Data input"
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,209,"Model input"
-	TitleBox Info2 title="Model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
-//	DrawText 15,345,"Errors handling:"
-	TitleBox Info6 title="Errors handling:",pos={15,335},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr180Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr180Model input",pos={10,188},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info6 title="\Zr160Errors handling:",pos={15,335},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
 	
 	CheckBox UseSMRData,pos={170,40},size={141,14},proc=IR2Pr_InputPanelCheckboxProc,title="SMR data"
 	CheckBox UseSMRData,variable= root:packages:Irena_PDDF:UseSMRData, help={"Check, if you are using slit smeared data"}

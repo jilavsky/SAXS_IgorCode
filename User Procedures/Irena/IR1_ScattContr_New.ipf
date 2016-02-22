@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.22
+#pragma version=2.23
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.23 changes fro panel scaling. 
 //2.22 minor fix of nits on the Scatt Contrast Calculator main panel. 
 //2.21 minor GUI fixes (added Transm to show it is transmission). 
 //2.20 removed some execute commands
@@ -37,6 +38,7 @@ Function IR1K_ScattCont2()
 	endif	
 	
 	Execute("IR1K_ScatteringContCalc()")
+	IR1_UpdatePanelVersionNumber("IR1K_ScatteringContCalc", 1)
 
 	IR1K_FixDisplayedVariables()
 	IR1K_DisplayRightElement()
@@ -57,10 +59,13 @@ Window IR1K_ScatteringContCalc()
 	DoWindow/T IR1K_ScatteringContCalc,"Scattering contrast calculator main"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65280)
-	DrawText 100,32,"Substance editor and scattering contrast calculator"
-	DrawText 13,91,"Modify element:"
-	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65280)
-	DrawText 300,220,"Saved substances:"
+	TitleBox MainTitle title="\Zr220Substance editor and scattering contrast calculator",pos={100,10},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={560,24},anchor=MC,fColor=(0,0,52224)
+//	DrawText 100,32,"Substance editor and scattering contrast calculator"
+	TitleBox Info1 title="\Zr160Modify element:",pos={13,91},frame=0,fstyle=1, fixedSize=1,size={120,20},fColor=(0,0,52224)
+	//DrawText 13,91,"Modify element:"
+	//SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65280)
+	TitleBox Info21 title="\Zr160Saved substances:",pos={300,200},frame=0,fstyle=2, fixedSize=1,size={150,20}, fColor= (0,0,65280)
+	//DrawText 300,220,"Saved substances:"
 	TitleBox CompoundFormula,pos={10,170},size={75,15},title="  "
 	TitleBox CompoundFormula,frame=0
 	TitleBox CompoundFormula,variable= root:Packages:ScatteringContrast:Formula
@@ -218,13 +223,15 @@ Function IR1K_ButtonProc(ctrlName) : ButtonControl
 		endif
 		NVAR SelectedElement=root:Packages:ScatteringContrast:SelectedElement
 		SVAR SelectedElementName=root:Packages:ScatteringContrast:SelectedElementName
-		IN2G_InputPeriodicTable("IR1K_PerTblButtonProc", "IN2G_PeriodicTableInput", "Select element", 140,180)
+		IN2G_InputPeriodicTable("IR1K_PerTblButtonProc", "IN2G_PeriodicTableInput", "Select element", 180,220)
+		IR1_UpdatePanelVersionNumber("IN2G_PeriodicTableInput", 1)	
 		PauseForUser IN2G_PeriodicTableInput
 		SVAR ELType=$("root:Packages:ScatteringContrast:El"+num2str(SelectedElement)+"_type")
 		ELType=SelectedElementName
 		SVAR IsotopeTypeString=$("root:Packages:ScatteringContrast:El"+num2str(SelectedElement)+"_Isotope")
 		IsotopeTypeString = "natural"
 		IR1K_DisplayRightElement()
+		IR1K_FixCompoundFormula()
 	endif
 //
 	if(cmpstr(ctrlName,"DeleteData")==0)
@@ -243,7 +250,7 @@ End
 Function IR1K_PerTblButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	print ctrlName
+	//print ctrlName
 	SVAR SelectedElementName=root:Packages:ScatteringContrast:SelectedElementName
 	SelectedElementName=ctrlName
 	DoWindow/k IN2G_PeriodicTableInput
@@ -2281,6 +2288,7 @@ Function IR1K_AnomScattContCalc()
 	Anom_UseSingleEnergy=!Anom_UseEnergyRange
 	IR1K_AnomCheckProc("Anom_UseSingleEnergy",Anom_UseSingleEnergy)
 	IR1K_AnomCheckProc("Anom_UseEnergyRange",Anom_UseEnergyRange)
+	IR1_UpdatePanelVersionNumber("IR1K_AnomCalcPnl", 1)
 EndMacro
 
 //**********************************************************************************************************

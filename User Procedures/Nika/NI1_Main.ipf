@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.72
+#pragma version=1.73
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.73 added functions to scale panels to larger sizes.
  //1.72 changed check for update procedure to check http first, tehn ftp, and the fail. 
  //1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
  //1.70 added multiple geometries manager, removed the warning about the uncertainty method, drive me crazy and no one seems to care enough. 
@@ -98,6 +99,17 @@ Menu "GraphMarquee"
         "Image Contract", NI1_MarExpandContractImage(0)
 End
 
+Menu "Macros", dynamic
+	NI1_MacrosMenuItem()
+end
+
+Function/S NI1_MacrosMenuItem()
+	if((Exists("ShowResizeControlsPanel")==6)&& (!Exists("IR1_AboutPanel")))
+		return "ShowResizeControlsPanel"
+	else
+		return ""
+	endif
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -265,7 +277,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//*****************************************************************************************************************
+//***************************************************************************************************************** 
 //*****************************************************************************************************************
 Function NI1_Cleanup2Dto1DFolder()
 
@@ -357,6 +369,104 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
+//Function NI1_PanelAppendSizeRecordNote()
+//	string PanelRecord=""
+//	//find size of the panel
+//	GetWindow kwTopWin wsize 
+//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+//	GetWindow kwTopWin, note
+//	string ExistingNote=S_Value
+//	string controlslist = ControlNameList("", ";")
+//	variable i
+//	string ControlsRecords=""
+//	string TmpNm=""
+//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//		TmpNm = StringFromList(i, controlslist, ";")
+//		ControlInfo $(TmpNm)
+//		//V_Height, V_Width, V_top, V_left
+//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
+//		//special cases...
+//		if(abs(V_Flag)==5 || abs(V_Flag)==3)		//SetVariable
+//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+//		endif
+//	endfor
+//	SetWindow kwTopWin, note=ExistingNote+";"+PanelRecord+ControlsRecords
+//	//print ExistingNote+";"+PanelRecord+ControlsRecords
+//end
+////***********************************************************
+////***********************************************************
+//
+//Function NI1_PanelScalePanelCntrls(s)
+//	STRUCT WMWinHookStruct &s
+//		//add to the end of panel forming macro these two lines:
+//		//	IR1_PanelAppendSizeRecordNote()
+//		//	SetWindow kwTopWin,hook(ResizeFontControls)=NI1_PanelScalePanelCntrls
+//		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
+//	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
+//		GetWindow $(s.winName), note
+//		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
+//		string OrigInfo=S_Value
+//		GetWindow $s.winName wsize
+//		Variable left = V_left
+//		Variable right = V_right
+//		Variable top = V_top
+//		Variable bottom = V_bottom
+//		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
+//		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
+//		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
+//		CurWidth=(right-left) 
+//		CurHeight = (bottom-top)
+//		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
+//			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
+//			horScale = 1
+//			verScale = 1
+//		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
+//			MoveWindow left, top, left+OriginalWidth, bottom
+//			horScale = 1
+//			verScale = CurHeight / (OriginalHeight)	
+//		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
+//			MoveWindow left, top, right, top+OriginalHeight
+//			verScale = 1
+//			horScale = curWidth/OriginalWidth
+//		else
+//			verScale = CurHeight /OriginalHeight
+//			horScale = curWidth/OriginalWidth
+//		endif
+//		variable scale= min(horScale, verScale )
+//		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+//		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+//		string controlslist = ControlNameList(s.winName, ";")
+//		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
+//		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
+//		string ControlsRecords=""
+//		string TmpNm=""
+//		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//			TmpNm = StringFromList(i, controlslist, ";")			
+//			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
+//			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
+//			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
+//			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
+//			NewCntrolV_left=OrigCntrlV_left* horScale 
+//			NewCntrlV_top = OrigCntrlV_top * verScale
+//			NewWidth = OrigWidth * horScale
+//			NewHeight = OrigHeight * verScale
+//			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+//			//special cases...
+//			ControlInfo $(TmpNm)
+//			if(abs(V_Flag)==5 || abs(V_Flag)==3)		//SetVariable
+//				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
+//				if(numtype(OrigBodyWidth)==0)
+//					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+//				endif
+//			endif
+//		endfor
+//
+//	endif
+//end
 
 //***********************************************************
 //***********************************************************
@@ -681,11 +791,13 @@ Proc NI1_MainConfigPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(282,48,707,270) as "Configure Nika Preferecnes"
 	DoWindow /C NI1_MainConfigPanel
-	SetDrawLayer UserBack
-	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,52224)
-	DrawText 10,25,"Nika panels default fonts and names"
-	SetDrawEnv fsize= 14,fstyle= 3, textrgb= (0,0,52224)
-	DrawText 10,130,"Error type selection and GUI behavior"
+	//SetDrawLayer UserBack
+	//SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,52224)
+	//DrawText 10,25,"Nika panels default fonts and names"
+	TitleBox Info1 title="\Zr150Nika panels default fonts and names",pos={10,10},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(1,4,52428)
+	//SetDrawEnv fsize= 14,fstyle= 3, textrgb= (0,0,52224)
+	//DrawText 10,130,"Error type selection and GUI behavior"
+	TitleBox Info2 title="\Zr150Error type selection and GUI behavior",pos={10,110},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(1,4,52428)
 //	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
 //	DrawText 30,150,"Graph text elements"
 //	SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
@@ -714,8 +826,6 @@ Proc NI1_MainConfigPanel()
 
 	Button OKButton title="OK",pos={290,190},size={120,20}
 	Button OKButton proc=NI1_KillPrefsButtonProc
-
-
 EndMacro
 //***********************************************************
 //***********************************************************
@@ -756,7 +866,6 @@ Function NI1_ConfigErrorsCheckProc(cba) : CheckBoxControl
 
 	return 0
 End
-//***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************

@@ -513,14 +513,23 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 	if(strlen(AllowedResultsTypes)>0)
 		CheckBox UseResults,pos={200,25},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="Irena results"
 		CheckBox UseResults,variable= $(CntrlLocation+":UseResults"), help={"Check, if you want to use results of Irena macros"}
+//		CheckBox UseResults,userdata(ResizeControlsInfo)= A"!!,F-!!#>:!!#?9!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//		CheckBox UseResults,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//		CheckBox UseResults,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
 	endif
 	if(strlen(AllowedUserTypes)>0)
 		CheckBox UseUserDefinedData,pos={200,40},size={90,14},proc=IR2C_InputPanelCheckboxProc,title=UserNameString
 		CheckBox UseUserDefinedData,variable= $(CntrlLocation+":UseUserDefinedData"), help={"Check, if you want to use "+UserNameString+" data"}
+//		CheckBox UseUserDefinedData,userdata(ResizeControlsInfo)= A"!!,F-!!#>:!!#?9!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//		CheckBox UseUserDefinedData,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//		CheckBox UseUserDefinedData,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
 	endif
 	if(AllowModelData>0)
 		CheckBox UseModelData,pos={300,25},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="Model"
 		CheckBox UseModelData,variable= $(CntrlLocation+":UseModelData"), help={"Check, if you want to generate Q data for modeling"}
+//		CheckBox UseModelData,userdata(ResizeControlsInfo)= A"!!,HQ!!#=;!!#>B!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//		CheckBox UseModelData,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//		CheckBox UseModelData,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
 	endif
 
 	SetVariable FolderMatchStr, pos={280,56},size={100,15},bodyWidth=60, proc=IR2C_NamesSetVarProc,title="Fldr :", help={"Regular Expression to match folder names"}
@@ -549,6 +558,45 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 	SetVariable QNumPoints, variable=$("root:Packages:IrenaControlProcs:"+possiblyQuoteName(PanelWindowName)+":QNumPoints"),limits={0,1e6,0}
 	CheckBox QLogScale,pos={100,135},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="Log-Q stepping?"
 	CheckBox QLogScale,variable= $("root:Packages:IrenaControlProcs:"+possiblyQuoteName(PanelWindowName)+":QLogScale"), help={"Check, if you want to generate Q in log scale"}
+//	//scaling info code
+//	CheckBox UseIndra2Data,userdata(ResizeControlsInfo)= A"!!,F-!!#=;!!#>R!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseIndra2Data,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseIndra2Data,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox UseQRSData,userdata(ResizeControlsInfo)= A"!!,F-!!#>:!!#?9!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseQRSData,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseQRSData,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable FolderMatchStr,userdata(ResizeControlsInfo)= A"!!,HM!!#?)!!#?i!!#<8z!!#r+D.OhkBk2=!zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable FolderMatchStr,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable FolderMatchStr,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable WaveMatchStr,userdata(ResizeControlsInfo)= A"!!,HNJ,hp7!!#?c!!#<8z!!#r+D.OhkBk2=!zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable WaveMatchStr,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable WaveMatchStr,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	PopupMenu SelectDataFolder,userdata(ResizeControlsInfo)= A"!!,AN!!#?)!!#B@!!#<pz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!#r+D.OhkBk2=!z"
+//	PopupMenu SelectDataFolder,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu SelectDataFolder,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO5fF8u:@zzzzzzzzzzzz!!!"
+//	PopupMenu QvecDataName,userdata(ResizeControlsInfo)= A"!!,@C!!#?c!!#BBJ,hmFz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!#r+D.OhkBk2=!z"
+//	PopupMenu QvecDataName,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu QvecDataName,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	PopupMenu IntensityDataName,userdata(ResizeControlsInfo)= A"!!,@C!!#@@!!#BBJ,hmFz!!\";f=(u2eBE3-fzzzzzzzzzzzzz!!#r+D.OhkBk2=!z"
+//	PopupMenu IntensityDataName,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu IntensityDataName,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO5fF8u:@zzzzzzzzzzzz!!!"
+//	PopupMenu ErrorDataName,userdata(ResizeControlsInfo)= A"!!,An!!#@l!!#B?!!#<pz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!#r+D.OhkBk2=!z"
+//	PopupMenu ErrorDataName,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu ErrorDataName,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Qmin,userdata(ResizeControlsInfo)= A"!!,@c!!#?9!!#Ak!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Qmin,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Qmin,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Qmax,userdata(ResizeControlsInfo)= A"!!,@c!!#?o!!#Ak!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Qmax,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Qmax,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable QNumPoints,userdata(ResizeControlsInfo)= A"!!,@c!!#@R!!#Ak!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable QNumPoints,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable QNumPoints,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox QLogScale,userdata(ResizeControlsInfo)= A"!!,F-!!#A!!!#?m!!#;mz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox QLogScale,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox QLogScale,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+
+
 	
 	IR2C_FixDisplayedControls(TopPanel) 
 

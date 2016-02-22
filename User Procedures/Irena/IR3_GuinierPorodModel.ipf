@@ -1,7 +1,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.04		//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.05  	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716Ð719, Boualem Hammouda, A new GuinierÐPorod model
-Constant IR3GPversionNumber=1
+Constant IR3GPversionNumber=1.05
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -15,6 +15,8 @@ Constant IR3GPversionNumber=1
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.05 changes for panel scaling. 
+//1.04 Igor 7 changes
 //1.03 removed Executes as preparation for Igor 7
 //1.02 added check for qmax when fitting slit smeared data and fixed minor slitlength setvariable bug (it was trying to set limits...)
 //1.01 	added check that Scripting tool does not have "UseResults" selected. This caused bug with two different types of data selected in ST.
@@ -493,7 +495,7 @@ Function IR3GP_Main()
 	else
 		IR3DP_MainPanelFunction()
 		ING2_AddScrollControl()
-		UpdatePanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber)
+		IR1_UpdatePanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber)
 	endif
 	//IR2L_RecalculateIfSelected()
 end
@@ -505,7 +507,7 @@ end
 Function IR3GP_MainCheckVersion()	
 	DoWindow IR3DP_MainPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber))
 			DoAlert /T="The Gunier-Porod panel was created by old version of Irena " 1, "Guinier Porod tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWindow IR3DP_MainPanel
@@ -539,17 +541,17 @@ Function IR3DP_MainPanelFunction()
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Irena:GuinierPorod","IR3DP_MainPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,1)
-	TitleBox MainTitle title="Gunier Porod",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={260,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr240Gunier Porod",pos={100,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,176},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Gunier-Porod model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info3 title="Fit?  Low limit:    High Limit:",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12,fstyle=3,fColor=(0,0,65535)
-	TitleBox Info4 title="Fit using least square fitting ?",pos={3,584},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12,fstyle=3,fColor=(0,0,65535)
+	TitleBox Info1 title="\Zr160Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr160Gunier-Porod model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={200,20}
+	TitleBox Info3 title="\Zr120Fit?  Low limit:    High Limit:",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fstyle=3,fColor=(0,0,65535)
+	TitleBox Info4 title="\Zr120Fit using least square fitting ?",pos={3,584},frame=0,fstyle=2, fixedSize=0,size={120,15},fstyle=3,fColor=(0,0,65535)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={20,3},pos={330,610},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info5 title="Results:",pos={3,625},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12,fstyle=3,fColor=(0,0,65535)
+	TitleBox Info5 title="\Zr140Results:",pos={3,625},frame=0,fstyle=2, fixedSize=0,size={120,15},fstyle=3,fColor=(0,0,65535)
 //	TitleBox Info6 title="For local fits, set S2=0, Rg2=1e10, S1=0",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
 //	TitleBox Info7 title="And follow order of the buttons --->",pos={10,459},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
-	TitleBox Info6 title="For local fits follow order of the buttons --->",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
+	TitleBox Info6 title="\Zr120For local fits follow order of the buttons --->",pos={10,443},frame=0,fstyle=2, fixedSize=0,size={120,15}
 //	TitleBox Info7 title="And follow order of the buttons --->",pos={10,459},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=10
 	NVAR Level_G = root:Packages:Irena:GuinierPorod:Level_G
 	NVAR Level_S2 = root:Packages:Irena:GuinierPorod:Level_S2

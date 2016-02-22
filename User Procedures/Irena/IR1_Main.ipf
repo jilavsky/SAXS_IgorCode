@@ -13,6 +13,7 @@ constant CurrentVersionNumber = 2.59
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.61 added ShowResizeControlsPanel and started to modify for panel sizing 
 //2.60 modified GUI preferences handling. Was reseting, wrong logic. 
 //
 //2.59 changed check for update procedure to check http first, tehn ftp, and the fail. 
@@ -178,8 +179,17 @@ Menu "SAS"
 			help={"Removes Irena macros from current Igor experiment"}
 		end
 end
+Menu "Macros", dynamic
+	IR2_MacrosMenuItem()
+end
 
-
+Function/S IR2_MacrosMenuItem()
+	if((Exists("ShowResizeControlsPanel")==6))
+		return "ShowResizeControlsPanel"
+	else
+		return ""
+	endif
+end
 
 //****************************************************************************************
 //****************************************************************************************
@@ -332,24 +342,27 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-Function UpdatePanelVersionNumber(panelName, CurentProcVersion)
+//***********************************************************
+Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
 	DoWIndow $panelName
 	if(V_Flag)
-		SetWindow $(panelName), note="IrenaProcVersion:"+num2str(CurentProcVersion)+";"
-//		print "Saved To panel note ;    "+"IrenaProcVersion:"+num2str(CurentProcVersion)+";"
+		GetWindow $(panelName), note
+		SetWindow $(panelName), note=S_value+";"+"IrenaProcVersion:"+num2str(CurentProcVersion)+";"
+		IR1_PanelAppendSizeRecordNote(panelName)
+		SetWindow $panelName,hook(ResizePanelControls)=IR1_PanelResizePanelSize
 	endif
 end
-
-Function CheckPanelVersionNumber(panelName, CurentProcVersion)
+//***********************************************************
+//***********************************************************
+Function IR1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
 
 	DoWIndow $panelName
 	if(V_Flag)	
 		GetWindow $(panelName), note
-//		print "Found :     "+S_Value
 		if(stringmatch(stringbyKey("IrenaProcVersion",S_value),num2str(CurentProcVersion))) //matches
 			return 1
 		else
@@ -359,7 +372,108 @@ Function CheckPanelVersionNumber(panelName, CurentProcVersion)
 		return 1
 	endif
 end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IR1_PanelAppendSizeRecordNote(panelName)
+	string panelName
+	string PanelRecord=""
+	//find size of the panel
+	GetWindow $panelName wsize 
+	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	GetWindow $panelName, note
+	string ExistingNote=S_Value
+	string controlslist = ControlNameList("", ";")
+	variable i
+	string ControlsRecords=""
+	string TmpNm=""
+	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+		TmpNm = StringFromList(i, controlslist, ";")
+		ControlInfo $(TmpNm)
+		//V_Height, V_Width, V_top, V_left
+		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
+		//special cases...
+		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+		endif
+	endfor
+	SetWindow $panelName, note=ExistingNote+";"+PanelRecord+ControlsRecords
+	//print ExistingNote+";"+PanelRecord+ControlsRecords
+end
+//***********************************************************
+//***********************************************************
 
+Function IR1_PanelResizePanelSize(s)
+	STRUCT WMWinHookStruct &s
+		//add to the end of panel forming macro these two lines:
+		//	IR1_PanelAppendSizeRecordNote()
+		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
+		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
+	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
+		GetWindow $(s.winName), note
+		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
+		string OrigInfo=S_Value
+		GetWindow $s.winName wsize
+		Variable left = V_left
+		Variable right = V_right
+		Variable top = V_top
+		Variable bottom = V_bottom
+		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
+		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
+		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
+		CurWidth=(right-left) 
+		CurHeight = (bottom-top)
+		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
+			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
+			horScale = 1
+			verScale = 1
+		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
+			MoveWindow left, top, left+OriginalWidth, bottom
+			horScale = 1
+			verScale = CurHeight / (OriginalHeight)	
+		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
+			MoveWindow left, top, right, top+OriginalHeight
+			verScale = 1
+			horScale = curWidth/OriginalWidth
+		else
+			verScale = CurHeight /OriginalHeight
+			horScale = curWidth/OriginalWidth
+		endif
+		variable scale= min(horScale, verScale )
+		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		string controlslist = ControlNameList(s.winName, ";")
+		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
+		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
+		string ControlsRecords=""
+		string TmpNm=""
+		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+			TmpNm = StringFromList(i, controlslist, ";")			
+			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
+			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
+			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
+			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
+			NewCntrolV_left=OrigCntrlV_left* horScale 
+			NewCntrlV_top = OrigCntrlV_top * verScale
+			NewWidth = OrigWidth * horScale
+			NewHeight = OrigHeight * verScale
+			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+			//special cases...
+			ControlInfo $(TmpNm)
+			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
+				if(numtype(OrigBodyWidth)==0)
+					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+				endif
+			endif
+		endfor
+
+	endif
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

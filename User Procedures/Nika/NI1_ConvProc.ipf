@@ -3385,9 +3385,9 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	//DrawText 11,249,"Select contiguous range:"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
-	TitleBox MainTitle title="2D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3, fixedSize=1,size={300,24},fSize=18,fColor=(1,4,52428)
-	TitleBox Info1 title="Select input data here",pos={5,72},frame=0,fstyle=1, fixedSize=1,size={130,20},fSize=12,fColor=(1,4,52428)
-	TitleBox Info2 title="Select contiguous range:",pos={5,232},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
+	TitleBox MainTitle title="\Zr2002D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox Info1 title="\Zr140Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
+	TitleBox Info2 title="\Zr140Select contiguous range:",pos={5,235},frame=0,fstyle=2, fixedSize=1,size={150,20}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
@@ -3987,6 +3987,8 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	if(Exists("Nika_Hook_ModifyMainPanel")==6)
 		Execute("Nika_Hook_ModifyMainPanel()")
 	endif
+	ING2_AddScrollControl()
+	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", 1)
 EndMacro
 
 

@@ -892,7 +892,7 @@ Function NI1_15IDDSetDefaultNx()
 					Usemask =1 
 					SVAR CurrentMaskFileName=root:Packages:Convert2Dto1D:CurrentMaskFileName
 					if(strlen(CurrentMaskFileName)<1)
-						DoAlert 0, "Do NOT forget to create or load Mask"
+						print "Do NOT forget to create or load Mask"
 					else	
 						Print "  *********  IMPORTANT:  ********* \rFound Mask named :  >>>  "+CurrentMaskFileName+" <<<   Data reduction will use this mask. Make sure this is the correct mask to use. "
 					endif

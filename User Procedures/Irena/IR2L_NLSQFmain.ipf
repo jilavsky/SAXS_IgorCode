@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.18
-Constant IR2LversionNumber = 1.18
+#pragma version=1.19
+Constant IR2LversionNumber = 1.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,7 +8,8 @@ Constant IR2LversionNumber = 1.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-// 1.18 bug fixes and modifications to Other graph outputs - colorization etc. 
+//1.19 chanegs for panel scaling. 
+//1.18 bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.17 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
 //1.16 added Fractals as models. 
 //1.15 added User Name for each population - when displayed Indiv. Pops. - to dispay in the graph, so user can make it easier to read. 
@@ -57,7 +58,7 @@ Function IR2L_Main()
 	else
 		IR2L_MainPanel()
 		ING2_AddScrollControl()
-		UpdatePanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber)
+		IR1_UpdatePanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber)
 	endif
 	IR2L_RecalculateIfSelected()
 	DoWindow IR2L_ResSmearingPanel
@@ -74,7 +75,7 @@ end
 Function IR2L_MainCheckVersion()	
 	DoWindow LSQF2_MainPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber))
+		if(!IR1_CheckPanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber))
 			DoAlert /T="The Modeling II panel was created by old version of Irena " 1, "Modeling II may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("DoWindow/K LSQF2_MainPanel")
@@ -103,14 +104,14 @@ Function IR2L_MainPanel()
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;"
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
 	CheckBox QLogScale pos={100,131}
-	TitleBox MainTitle title="Modeling II",pos={120,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},fSize=24,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr260Modeling II",pos={100,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},anchor=MC,fColor=(0,0,52224)
 
 
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:IR2L_NLSQF:RebinDataTo, noproc
 	SetVariable RebinDataTo,pos={290,130},size={110,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={270,3},pos={16,184},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr120Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
 
 	Button RemoveAllDataSets, pos={5,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Remove all", help={"Remove all data from tool"}
 	Button UnuseAllDataSets, pos={100,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="unUse all", help={"Set all data set to not Use"}

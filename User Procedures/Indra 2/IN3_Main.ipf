@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.87
+#pragma version = 1.88
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
@@ -7,7 +7,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//1.88 panel scaling. need to be fixed. 
 //1.87 removed Wavename string from selection tool. Unnecessary and confusing users. 
 //1.87 remove dropout option
 //1.86 added save to Load & Process button, renamed 
@@ -40,8 +40,8 @@ Function IN3_Main()
 		DoWindow/F USAXSDataReduction
 	else
 		IN3_MainPanel()
+	   ING2_AddScrollControl()
 		IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
-	     	ING2_AddScrollControl()
 	endif
 
 	setDataFolder OldDf

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.23
+#pragma version =1.24
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.24 added panel scaling
 //1.23 fix problems when saving of mask file to drive failed due to something (like write privileges). 
 //1.22 yet another update for MaskListbox - it was not looking for h5 and hdf5 fiels when Nexus was seletced
 //1.21 fixed update MaskListbox, fixed bug preventing listbox update. 
@@ -64,10 +65,12 @@ Function NI1M_CreateImageROIPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(22,58,450,560) as "Create MASK panel"
 	Dowindow/C NI1M_ImageROIPanel
-	SetDrawLayer UserBack
-	SetDrawEnv fsize= 19,fstyle= 1,textrgb= (0,0,65280)
-	DrawText 62,30,"Prepare mask file"
-	DrawText 18,92,"Select data set to use:"
+	//SetDrawLayer UserBack
+	//SetDrawEnv fsize= 19,fstyle= 1,textrgb= (0,0,65280)
+	//DrawText 62,30,"Prepare mask file"
+	//DrawText 18,92,"Select data set to use:"
+	TitleBox Info1 title="Prepare mask file",pos={22,15},frame=0,fstyle=1, fixedSize=1,size={160,20},fSize=16,fColor=(1,4,52428)
+	TitleBox Info2 title="Select data set to use:",pos={18,72},frame=0,fstyle=1, fixedSize=1,size={200,20},fSize=16,fColor=(1,4,52428)
 
 	Button SelectPathToData,pos={7,44},size={150,20},proc=NI1M_RoiDrawButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Adds drawing tools to top image graph. Use rectangle, circle or polygon."}
@@ -137,8 +140,8 @@ Function NI1M_CreateImageROIPanel()
 	SetVariable LowIntToMaskOff,help={"Intensity <= this thereshold"}, disable=!(MaskOffLowIntPoints)
 	SetVariable LowIntToMaskOff,value= root:Packages:Convert2Dto1D:LowIntToMaskOff
 	
-	
-
+	ING2_AddScrollControl()
+	NI1_UpdatePanelVersionNumber("NI1M_ImageROIPanel", 1)
 	setDataFolder OldDf
 end
 //*******************************************************************************************************************************************

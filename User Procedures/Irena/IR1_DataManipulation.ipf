@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.58
+#pragma version=2.59
 constant IR3MversionNumber = 2.54			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.59 modifications for panel scaling, Data Manipulation I is nto working right... Subwindows are problem. 
 //2.58 minor fix for cursor position in Merge in Data Manipualtion I. 
 //2.57 Data manipulation 1 - dangerous change - fixed some obvious bugs in Intitialization, why did it work before and did I screw up something? 
 //2.56 Data manipulation 1 - added color to Save data and added save data into Merge data buttons. 
@@ -83,7 +84,7 @@ Function IR1D_DataManipulation()
 	
 	Execute("IR1D_DataManipulationPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber)
 	
 	
 end
@@ -95,7 +96,7 @@ end
 Function IR1D_MainCheckVersion()	
 	DoWindow IR1D_DataManipulationPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber))
 			DoAlert /T="The Data manipualtion panel was created by old version of Irena " 1, "Data manipualtion may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR1D_DataManipulation()")
@@ -116,12 +117,12 @@ Proc IR1D_DataManipulationPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,415,720) as "Data Manipulation"
 	DoWIndow/C IR1D_DataManipulationPanel
-	TitleBox MainTitle title="Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={355,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	TitleBox Info1 title="\Zr130Modify data 1                            Modify Data 2",pos={30,325},frame=0,fstyle=1,anchor=MC, fixedSize=1,size={320,20}
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	//Experimental data input
@@ -2739,10 +2740,11 @@ Function IR3M_DataManipulationII()
 	
 	IR3M_DataManipulationIIPanel()
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("DataManipulationII", IR3MversionNumber) 
+	IR1_UpdatePanelVersionNumber("DataManipulationII", IR3MversionNumber) 
 	
 //	IR3M_SyncSearchListAndListBox()	//sync the list box... 
 	IR3M_MakePanelWithListBox()	//and create the other panel... 
+	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel_DMII", IR3MversionNumber) 
 
 end
 //**********************************************************************************************
@@ -2754,7 +2756,7 @@ end
 Function IR3M_MainCheckVersion()	
 	DoWindow DataManipulationII
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("DataManipulationII", IR3MversionNumber))
+		if(!IR1_CheckPanelVersionNumber("DataManipulationII", IR3MversionNumber))
 			DoAlert /T="The Data Manipulation II panel was created by old version of Irena " 1, "Data Manipulation II may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR3M_DataManipulationII()")
@@ -2816,11 +2818,11 @@ Function IR3M_DataManipulationIIPanel()
 		popupmenu ErrorDataName, pos={500,500}, disable=1
 
 	Button DisplayTestFolder, pos={150,79},size={100,13}, proc=IR3M_DataManIIPanelButtonProc,title="Graph Test data", help={"Show selected folder data in graph"}
-	TitleBox MainTitle title="Data manipulation II panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Data manipulation II panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,100},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Test folder",pos={10,33},frame=0,fstyle=3, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Which data:",pos={10,110},frame=0,fstyle=3, fixedSize=1,size={150,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info6 title="Output Options:",pos={2,452},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr120Test folder",pos={10,33},frame=0,fstyle=3, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr120Which data:",pos={10,110},frame=0,fstyle=3, fixedSize=1,size={150,20},fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr120Output Options:",pos={2,452},frame=0,fstyle=3, fixedSize=0,size={40,15},fColor=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,450},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 //Waves_Xtemplate;Waves_Ytemplate;Waves_Etemplate

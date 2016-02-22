@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.10
-Constant IR2MversionNumber = 1.07
+#pragma version=1.11
+Constant IR2MversionNumber = 1.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2MversionNumber = 1.07
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 fixes for panel scaling
 //1.10 removed wave/d, Function/d and variable/d. Obsolete
 //1.09 bug fixes, bug found by igor 7. 
 //1.08 fixed IR2M_CreateWaveName(WaveNameStr,ItemNameStr) for Modeling II waves
@@ -71,10 +72,11 @@ Function IR2M_GetDataMiner()
 	
 	IR2M_DataMinerPanel()
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("DataMiningTool", IR2MversionNumber)
+	IR1_UpdatePanelVersionNumber("DataMiningTool", IR2MversionNumber)
 	
 	IR2M_SyncSearchListAndListBox()	//sync the list box... 
 	IR2M_MakePanelWithListBox(0)	//and create the other panel... 
+	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber)
 	popupmenu QvecDataName, win=DataMiningTool, disable=1
 	popupmenu IntensityDataName, win=DataMiningTool, disable=1
 	popupmenu ErrorDataName, win=DataMiningTool, disable=1
@@ -91,7 +93,7 @@ end
 Function IR2M_MainCheckVersion()	
 	DoWindow DataMiningTool
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("DataMiningTool", IR2MversionNumber))
+		if(!IR1_CheckPanelVersionNumber("DataMiningTool", IR2MversionNumber))
 			DoAlert /T="The Data mining panel was created by old version of Irena " 1, "Data mining needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR2M_GetDataMiner()")
@@ -135,25 +137,11 @@ Function IR2M_DataMinerPanel()
 		popupmenu ErrorDataName, pos={500,500}, disable=1
 		popupmenu SelectDataFolder, title="Test data folder"
 
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 50,23,"Data mining tool panel"
-	TitleBox MainTitle title="Data mining tool panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,165,339,165
+	TitleBox MainTitle title="\Zr200Data mining tool panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,160},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Test folder"
-	TitleBox Info1 title="Test folder",pos={10,30},frame=0,fstyle=3, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,190,"Which data:"
-	TitleBox Info2 title="Which data:",pos={10,170},frame=0,fstyle=3, fixedSize=1,size={150,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,450,"Output Options:"
-	TitleBox Info6 title="Output Options:",pos={10,440},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,425,339,425
+	TitleBox Info1 title="\Zr140Test folder",pos={10,30},frame=0,fstyle=3, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr140Which data:",pos={10,170},frame=0,fstyle=3, fixedSize=1,size={150,20},fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr140Output Options:",pos={10,440},frame=0,fstyle=3, fixedSize=0,size={40,15},fColor=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,420},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	SVAR StartFolder

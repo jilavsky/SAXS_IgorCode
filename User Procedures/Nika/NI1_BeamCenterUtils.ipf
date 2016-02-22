@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.21
 Constant NI1BCversionNumber = 2.18
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 added panel scaling
 //2.20 fixed line 5 of Ag Behenate
 //2.19 addressed new ADSC_A file type
 //2.18 modified call to hook function
@@ -308,6 +309,7 @@ Function NI1BC_CreateBmCntrField()
 	PopupMenu BMImageColor,proc=NI1BC_PopMenuProc, mode=(1+WhichListItem(BMColorTableName, "Grays;Rainbow;YellowHot;BlueHot;BlueRedGreen;RedWhiteBlue;PlanetEarth;Terrain;" ))
 
 	setDataFolder OldDf
+	NI1_UpdatePanelVersionNumber("NI1_CreateBmCntrFieldPanel", 1)
 end
  //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

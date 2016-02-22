@@ -56,8 +56,7 @@ Function IR2D_MainSmallAngleDiff()
 	endif
 	Execute("IR2D_ControlPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber)
-
+	IR1_UpdatePanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber)
 
 end
 ///******************************************************************************************
@@ -70,7 +69,7 @@ end
 Function IR2D_MainCheckVersion()	
 	DoWindow IR2D_ControlPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber))
 			DoAlert /T="The Diffraction tool panel was created by old version of Irena " 1, "Diffraction tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR2D_MainSmallAngleDiff()")
@@ -247,31 +246,11 @@ Window IR2D_ControlPanel()
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Irena_SAD","IR2D_ControlPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
 
-//	SetDrawLayer UserBack
-//	SetDrawEnv fname= "Times New Roman", save
-//	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-//	DrawText 50,23,"Small angle diffraction input panel"
-	TitleBox MainTitle title="Small angle diffraction input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 16,181,339,181
+	TitleBox MainTitle title="\Zr210Small angle diffraction input panel",pos={20,0},anchor= MC, frame=0,fstyle=3,font= "Times New Roman", size={350,24},fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 18,49,"Data input"
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-//	SetDrawEnv fsize= 16,fstyle= 1
-//	DrawText 20,209,"Model input"
-	TitleBox Info2 title="Model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14,fColor=(0,0,52224)	
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 200,275,"Fit?:"
-	TitleBox Info3 title="Fit?   Low limit:    High Limit:",pos={200,260},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1, fsize= 12
-//	DrawText 230,275,"Low limit:    High Limit:"
-//	DrawText 10,600,"Fit using least square fitting ?"
-//	DrawPoly 113,225,1,1,{113,225,113,225}
-//	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-//	DrawLine 330,612,350,612
-//	SetDrawEnv textrgb= (0,0,65280),fstyle= 1
-//	DrawText 4,640,"Results:"
+	TitleBox Info1 title="\Zr160Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr160Model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fColor=(0,0,52224)	
+	TitleBox Info3 title="Fit?   Low limit:    High Limit:",pos={200,260},frame=0,fstyle=2, fixedSize=0,size={20,15}
 
 	CheckBox UseSMRData,pos={170,40},size={141,14},proc=IR2D_InputPanelCheckboxProc,title="SMR data"
 	CheckBox UseSMRData,variable= root:packages:Irena_SAD:UseSMRData, help={"Check, if you are using slit smeared data"}
@@ -435,9 +414,236 @@ Window IR2D_ControlPanel()
 	CheckBox AppendNormalizedResiduals,variable= root:packages:Irena_SAD:AppendNormalizedResiduals, help={"Check, if you want to display normalized residuals in the graph"}
 	CheckBox UseGeneticOptimization,pos={270,620},size={80,16},noproc,title="Use genetic opt?",  fstyle=1
 	CheckBox UseGeneticOptimization,variable= root:Packages:Irena_SAD:UseGeneticOptimization, help={"Usze genetic optimization (uncheck to use LSQF)?"}
-
+	//scaling info code
 	
+//	TitleBox MainTitle,userdata(ResizeControlsInfo)= A"!!,BYz!!#Bn!!#=#z!!#`-A7TLfzzzzzzzzzzzzzz!!#`-A7TLfzz"
+//	TitleBox MainTitle,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	TitleBox MainTitle,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	TitleBox FakeLine1,userdata(ResizeControlsInfo)= A"!!,B9!!#AR!!#B_!!#8Lz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	TitleBox FakeLine1,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	TitleBox FakeLine1,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	TitleBox Info1,userdata(ResizeControlsInfo)= A"!!,A.!!#=c!!#?Y!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	TitleBox Info1,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	TitleBox Info1,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	TitleBox Info2,userdata(ResizeControlsInfo)= A"!!,A.!!#AW!!#A%!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	TitleBox Info2,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	TitleBox Info2,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	TitleBox Info3,userdata(ResizeControlsInfo)= A"!!,GX!!#BFJ,hqP!!#;mz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	TitleBox Info3,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	TitleBox Info3,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox UseSMRData,userdata(ResizeControlsInfo)= A"!!,G:!!#>:!!#?1!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseSMRData,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseSMRData,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable SlitLength,userdata(ResizeControlsInfo)= A"!!,H=!!#>:!!#@,!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable SlitLength,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable SlitLength,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	Button DrawGraphs,userdata(ResizeControlsInfo)= A"!!,Do!!#A9!!#@,!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button DrawGraphs,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button DrawGraphs,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	CheckBox UseLogX,userdata(ResizeControlsInfo)= A"!!,H5!!#A1!!#?I!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseLogX,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseLogX,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	CheckBox UseLogY,userdata(ResizeControlsInfo)= A"!!,H5!!#AA!!#?I!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseLogY,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseLogY,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	CheckBox AutoRecalculate,userdata(ResizeControlsInfo)= A"!!,G&!!#AW!!#@$!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox AutoRecalculate,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox AutoRecalculate,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox PeakSASScaling,userdata(ResizeControlsInfo)= A"!!,G&!!#Ah!!#?Y!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox PeakSASScaling,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox PeakSASScaling,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	CheckBox DisplayPeaks,userdata(ResizeControlsInfo)= A"!!,H5!!#AW!!#?]!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox DisplayPeaks,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox DisplayPeaks,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox Oversample,userdata(ResizeControlsInfo)= A"!!,H5!!#Ah!!#@6!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox Oversample,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox Oversample,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	TabControl DataTabs,userdata(ResizeControlsInfo)= A"!!,=b!!#B(!!#C#!!#Bgz!!#](Aon#pBE/#4zzzzzzzzzzzzz!!#o2B4uAeBE/#4z"
+//	TabControl DataTabs,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	TabControl DataTabs,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable RgPrefactor,userdata(ResizeControlsInfo)= A"!!,An!!#BQ!!#AC!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable RgPrefactor,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable RgPrefactor,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitRgPrefactor,userdata(ResizeControlsInfo)= A"!!,GX!!#BR!!#<X!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitRgPrefactor,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitRgPrefactor,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable RgPrefactorLowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#BQ!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable RgPrefactorLowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable RgPrefactorLowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable RgPrefactorHighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#BQ!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable RgPrefactorHighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable RgPrefactorHighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Rg,userdata(ResizeControlsInfo)= A"!!,An!!#B\\!!#AC!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Rg,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Rg,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitRg,userdata(ResizeControlsInfo)= A"!!,GX!!#B\\J,hm.!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitRg,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitRg,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable RgLowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#B\\!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable RgLowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable RgLowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable RgHighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#B\\!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable RgHighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable RgHighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable PwrLawPref,userdata(ResizeControlsInfo)= A"!!,An!!#Bg!!#AC!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PwrLawPref,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PwrLawPref,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitPwrLawPref,userdata(ResizeControlsInfo)= A"!!,GX!!#BgJ,hm.!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitPwrLawPref,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitPwrLawPref,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable PwrLawPrefLowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#Bg!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PwrLawPrefLowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PwrLawPrefLowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable PwrLawPrefHighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#Bg!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PwrLawPrefHighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PwrLawPrefHighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable PwrLawSlope,userdata(ResizeControlsInfo)= A"!!,An!!#BqJ,hqn!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PwrLawSlope,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PwrLawSlope,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitPwrLawSlope,userdata(ResizeControlsInfo)= A"!!,GX!!#Br!!#<X!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitPwrLawSlope,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitPwrLawSlope,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable PwrLawSlopeLowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#BqJ,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PwrLawSlopeLowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PwrLawSlopeLowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable PwrLawSlopeHighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#BqJ,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PwrLawSlopeHighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PwrLawSlopeHighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Background,userdata(ResizeControlsInfo)= A"!!,An!!#C'J,hqn!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Background,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Background,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO5fF8u:@zzzzzzzzzzzz!!!"
+//	CheckBox FitBackground,userdata(ResizeControlsInfo)= A"!!,GX!!#C(!!#<X!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitBackground,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitBackground,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable BackgroundLowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#C'J,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable BackgroundLowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable BackgroundLowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable BackgroundHighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#C'J,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable BackgroundHighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable BackgroundHighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox UseThePeak,userdata(ResizeControlsInfo)= A"!!,A.!!#B>J,hn]!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseThePeak,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseThePeak,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	PopupMenu PopSizeDistShape,userdata(ResizeControlsInfo)= A"!!,A.!!#BQ!!#@h!!#<pz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	PopupMenu PopSizeDistShape,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu PopSizeDistShape,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par1,userdata(ResizeControlsInfo)= A"!!,?X!!#Bg!!#AC!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par1,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par1,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitPeak_Par1,userdata(ResizeControlsInfo)= A"!!,GX!!#Bg!!#<X!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitPeak_Par1,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitPeak_Par1,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par1LowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#Bg!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par1LowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par1LowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par1HighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#Bg!!#?)!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par1HighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par1HighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par2,userdata(ResizeControlsInfo)= A"!!,?X!!#BqJ,hqn!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par2,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par2,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitPeak_Par2,userdata(ResizeControlsInfo)= A"!!,GX!!#BqJ,hm.!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitPeak_Par2,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitPeak_Par2,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par2LowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#BqJ,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par2LowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par2LowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par2HighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#BqJ,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par2HighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par2HighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par3,userdata(ResizeControlsInfo)= A"!!,?X!!#C'J,hqn!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!#r+D.OhkBk2=!z"
+//	SetVariable Peak_Par3,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par3,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitPeak_Par3,userdata(ResizeControlsInfo)= A"!!,GX!!#C'J,hm.!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitPeak_Par3,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitPeak_Par3,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par3LowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#C'J,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par3LowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par3LowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par3HighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#C'J,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par3HighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par3HighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par4,userdata(ResizeControlsInfo)= A"!!,?X!!#C2J,hqn!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par4,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par4,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox FitPeak_Par4,userdata(ResizeControlsInfo)= A"!!,GX!!#C2J,hp/!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox FitPeak_Par4,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox FitPeak_Par4,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par4LowLimit,userdata(ResizeControlsInfo)= A"!!,H!!!#C2J,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par4LowLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par4LowLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_Par4HighLimit,userdata(ResizeControlsInfo)= A"!!,HQ!!#C2J,hoT!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_Par4HighLimit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_Par4HighLimit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox Peak_LinkPar2,userdata(ResizeControlsInfo)= A"!!,A.!!#CBJ,hqQ!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox Peak_LinkPar2,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox Peak_LinkPar2,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	PopupMenu Peak_LinkedTo,userdata(ResizeControlsInfo)= A"!!,A.!!#CMJ,hpI!!#<pz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	PopupMenu Peak_LinkedTo,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu Peak_LinkedTo,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable Peak_LinkMultiplier,userdata(ResizeControlsInfo)= A"!!,GX!!#CO!!#@f!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable Peak_LinkMultiplier,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable Peak_LinkMultiplier,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	SetVariable PeakDPosition,userdata(ResizeControlsInfo)= A"!!,?X!!#C]J,hrq!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PeakDPosition,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PeakDPosition,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable PeakPosition,userdata(ResizeControlsInfo)= A"!!,?X!!#Cf^]6`\\!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PeakPosition,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PeakPosition,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable PeakFWHM,userdata(ResizeControlsInfo)= A"!!,?X!!#Cl!!#BF!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PeakFWHM,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PeakFWHM,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	SetVariable PeakIntgInt,userdata(ResizeControlsInfo)= A"!!,?X!!#CqJ,hrq!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	SetVariable PeakIntgInt,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	SetVariable PeakIntgInt,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	Button Recalculate,userdata(ResizeControlsInfo)= A"!!,B9!!#D#5QF-l!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button Recalculate,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button Recalculate,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	Button CopyToNbk,userdata(ResizeControlsInfo)= A"!!,B9!!#D*!!#@,!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button CopyToNbk,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button CopyToNbk,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	PopupMenu EnforceGeometry,userdata(ResizeControlsInfo)= A"!!,Fg!!#D#5QF-n!!#<pz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	PopupMenu EnforceGeometry,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	PopupMenu EnforceGeometry,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	Button AppendResultsToGraph,userdata(ResizeControlsInfo)= A"!!,Fg!!#D*!!#@,!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE3-fz"
+//	Button AppendResultsToGraph,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button AppendResultsToGraph,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	Button RemoveResultsFromGraph,userdata(ResizeControlsInfo)= A"!!,Fg!!#D0^]6^B!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button RemoveResultsFromGraph,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button RemoveResultsFromGraph,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO5fF8u:@zzzzzzzzzzzz!!!"
+//	Button Fit,userdata(ResizeControlsInfo)= A"!!,H5!!#D*!!#@,!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button Fit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button Fit,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
+//	Button ResetFit,userdata(ResizeControlsInfo)= A"!!,H5!!#D0^]6^B!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button ResetFit,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button ResetFit,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	Button SaveDataInFoldr,userdata(ResizeControlsInfo)= A"!!,B9!!#D0^]6^B!!#<Xz!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button SaveDataInFoldr,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button SaveDataInFoldr,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox AppendResiduals,userdata(ResizeControlsInfo)= A"!!,A.!!#D7J,hp_!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox AppendResiduals,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox AppendResiduals,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox AppendNormalizedResiduals,userdata(ResizeControlsInfo)= A"!!,FU!!#D7J,hqB!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox AppendNormalizedResiduals,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox AppendNormalizedResiduals,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	CheckBox UseGeneticOptimization,userdata(ResizeControlsInfo)= A"!!,HB!!#D7J,hpQ!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	CheckBox UseGeneticOptimization,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	CheckBox UseGeneticOptimization,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	Button ScrollButtonUp,userdata(ResizeControlsInfo)= A"!!,HtJ,hh7!!#<(!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button ScrollButtonUp,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button ScrollButtonUp,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//	Button ScrollButtonDown,userdata(ResizeControlsInfo)= A"!!,HtJ,hls!!#<(!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
+//	Button ScrollButtonDown,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
+//	Button ScrollButtonDown,userdata(ResizeControlsInfo) += A"zzz!!\";f87cLJBQO4Szzzzzzzzzzzzz!!!"
+//
+//	SetWindow kwTopWin,hook(ResizeControls)=ResizeControls#ResizeControlsHook
+//	SetWindow kwTopWin,userdata(ResizeControlsInfo)= A"!!*'\"z!!#C'!!#D?zzzzzzzzzzzzzzzzzzzzz"
+//	SetWindow kwTopWin,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzzzzzzzzzzzzzzz"
+//	SetWindow kwTopWin,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzzzzzzzzz!!!"
 	IR2D_TabPanelControl("",0)
+//	IR1_PanelAppendSizeRecordNote()
+//	SetWindow kwTopWin,hook(ResizeFontControls)=IR1_PanelResizeFontSize
+
 end
 
 //*****************************************************************************************************************
