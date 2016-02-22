@@ -54,7 +54,7 @@ Function IR1I_ImportDataMain()
 	IR1I_InitializeImportData()
 	Execute("IR1I_ImportData()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber,1)
 	//fix checboxes
 	IR1I_FIxCheckboxesForWaveTypes()
 end

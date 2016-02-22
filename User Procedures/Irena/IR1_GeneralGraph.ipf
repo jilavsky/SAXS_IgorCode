@@ -65,7 +65,7 @@ Function IR1P_GeneralPlotTool()
 	//IR1_KillGraphsAndPanels()
 	Execute ("IR1P_ControlPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber,1)
 
 end
 

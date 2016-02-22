@@ -33,7 +33,7 @@ Function IR3D_DataMerging()
 		Execute("IR3D_DataMergePanel()")
 		setWIndow IR3D_DataMergePanel, hook(CursorMoved)=IR3D_PanelHookFunction
 	endif
-	IR1_UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber)
+	IR1_UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber,1)
 	IR3D_UpdateListOfAvailFiles(1)
 	IR3D_UpdateListOfAvailFiles(2)
 	IR3D_RebuildListboxTables()

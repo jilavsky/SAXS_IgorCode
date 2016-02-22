@@ -72,11 +72,11 @@ Function IR2M_GetDataMiner()
 	
 	IR2M_DataMinerPanel()
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("DataMiningTool", IR2MversionNumber)
+	IR1_UpdatePanelVersionNumber("DataMiningTool", IR2MversionNumber,1)
 	
 	IR2M_SyncSearchListAndListBox()	//sync the list box... 
 	IR2M_MakePanelWithListBox(0)	//and create the other panel... 
-	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber)
+	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
 	popupmenu QvecDataName, win=DataMiningTool, disable=1
 	popupmenu IntensityDataName, win=DataMiningTool, disable=1
 	popupmenu ErrorDataName, win=DataMiningTool, disable=1

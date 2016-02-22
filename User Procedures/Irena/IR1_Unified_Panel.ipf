@@ -80,7 +80,7 @@ Function IR1A_UnifiedModel()
 
 	Execute ("IR1A_ControlPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber,1)
 
 end
 //************************************************************************************************************

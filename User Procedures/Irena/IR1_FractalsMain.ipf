@@ -36,7 +36,7 @@ Function IR1V_FractalsModel()
 	endif
 	Execute("IR1V_ControlPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1V_ControlPanel", IRVversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1V_ControlPanel", IRVversionNumber,1)
 
 end
 

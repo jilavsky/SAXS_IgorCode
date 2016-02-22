@@ -160,7 +160,7 @@ Function IR1R_Sizes()
 	Execute("IR1R_SizesInputPanel()")				//this panel
 	ING2_AddScrollControl()
 	IR1R_FixSetVarsInPanel()
-	IR1_UpdatePanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber,1)
 end
 
 

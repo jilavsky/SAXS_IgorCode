@@ -38,7 +38,7 @@ Function IR2E_UniversalDataExport()
 		ExportMultipleDataSets=0		//do nto start in multiple data export, it does not set parameters well...  
 		IR2E_UnivDataExportPanel()
 		ING2_AddScrollControl()
-		IR1_UpdatePanelVersionNumber("UnivDataExportPanel", IR2EversionNumber)
+		IR1_UpdatePanelVersionNumber("UnivDataExportPanel", IR2EversionNumber,1)
 	endif
 
 end
