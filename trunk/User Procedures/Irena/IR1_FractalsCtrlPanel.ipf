@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.04
+#pragma version=2.05
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.05 fixes for panel scaling
 //2.04 added controls for Qc width
 //2.03 Added Qc as transition from Surface fractal to Porods termainal (Q^-4) slope. 
 //2.02  Modified all controls not to define font and font size to enable proper control by user 
@@ -29,14 +30,14 @@ Proc IR1V_ControlPanel()
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("FractalsModel","IR1V_ControlPanel","DSM_Int;M_DSM_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
-	TitleBox MainTitle title="Fractals model input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Fractals model input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={8,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Fractals model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14, fstyle=3,fColor=(0,0,65535)
-	TitleBox Info3 title="Fit?  Low limit:    High Limit:",pos={200,275},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12
-	TitleBox Info5 title="Fit using least square fitting ?",pos={2,588},frame=0,fstyle=3, fixedSize=0,size={140,15},fSize=12,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr140Data input",pos={8,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr140Fractals model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fstyle=3,fColor=(0,0,65535)
+	TitleBox Info3 title="\Zr140Fit?  Low limit:    High Limit:",pos={200,275},frame=0,fstyle=2, fixedSize=0,size={20,15}
+	TitleBox Info5 title="\Zr130Fit using least square fitting ?",pos={2,588},frame=0,fstyle=3, fixedSize=0,size={140,15},fColor=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,612},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info6 title="Results",pos={2,620},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr140Results",pos={2,620},frame=0,fstyle=3, fixedSize=0,size={40,15},fColor=(0,0,52224)
 
 	Button DrawGraphs,pos={56,158},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}
 	SetVariable SubtractBackground,limits={-inf,Inf,0.1},value= root:Packages:FractalsModel:SubtractBackground
@@ -77,7 +78,7 @@ Proc IR1V_ControlPanel()
 
 	//Mass fractal 1 controls
 	
-	TitleBox MassFract1_Title, title="   Mass fractal 1 controls    ", frame=1, labelBack=(64000,0,0), pos={14,268}, size={200,8}
+	TitleBox MassFract1_Title, title="   Mass fractal 1 controls    ", frame=1, labelBack=(64000,0,0), pos={16,272},size={128,17}, fixedSize=1
 
 	SetVariable MassFr1_Phi,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Particle volume   "
 	SetVariable MassFr1_Phi,limits={0,inf,root:Packages:FractalsModel:MassFr1_PhiStep},value= root:Packages:FractalsModel:MassFr1_Phi, help={"Fractional volume of particles in the system"}
@@ -125,7 +126,7 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr1_IntgNumPnts,pos={14,480},size={220,16},proc=IR1V_PanelSetVarProc,title="Internal Integration Num pnts     "
 	SetVariable MassFr1_IntgNumPnts,limits={50,500,50},value= root:Packages:FractalsModel:MassFr1_IntgNumPnts, help={"Number of points for internal integration. About 500 is usual, increase if there are artefacts. "}
 
-	TitleBox MassFract2_Title, title="   Mass fractal 2 controls    ", frame=1, labelBack=(0,0,64000), pos={14,268}, size={200,8}
+	TitleBox MassFract2_Title, title="   Mass fractal 2 controls    ", frame=1, labelBack=(0,0,64000), pos={16,272},size={128,17}, fixedSize=1
 
 	SetVariable MassFr2_Phi,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Particle volume   "
 	SetVariable MassFr2_Phi,limits={0,inf,root:Packages:FractalsModel:MassFr2_PhiStep},value= root:Packages:FractalsModel:MassFr2_Phi, help={"Volme of particles in the system"}
@@ -174,7 +175,7 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr2_IntgNumPnts,limits={50,500,50},value= root:Packages:FractalsModel:MassFr2_IntgNumPnts, help={"Number of points for internal integration. About 500 is usual, increase if there are artefacts. "}
 
 //SUrface fractal 1 controls
-	TitleBox SurfFract1_Title, title="   Surface fractal 1 controls    ", frame=1, labelBack=(0,64000,0), pos={14,268}, size={200,8}
+	TitleBox SurfFract1_Title, title="   Surface fractal 1 controls    ", frame=1, labelBack=(0,64000,0), pos={16,272},size={128,17},fixedSize=1
 
 	SetVariable SurfFr1_Surface,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Smooth surface   "
 	SetVariable SurfFr1_Surface,limits={0,inf,root:Packages:FractalsModel:SurfFr1_SurfaceStep},value= root:Packages:FractalsModel:SurfFr1_Surface, help={"Smooth surface in this surface fractal"}
@@ -213,7 +214,7 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr1_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr1_Contrast, help={"Scattering contrast"}
 
 //SUrface fractal 2
-	TitleBox SurfFract2_Title, title="   Surface fractal 2 controls    ", frame=1, labelBack=(52000,52000,0), pos={14,268}, size={200,8}
+	TitleBox SurfFract2_Title, title="   Surface fractal 2 controls    ", frame=1, labelBack=(52000,52000,0), pos={16,272},size={128,17}, fixedSize=1
 
 	SetVariable SurfFr2_Surface,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Smooth surface   "
 	SetVariable SurfFr2_Surface,limits={0,inf,root:Packages:FractalsModel:SurfFr2_SurfaceStep},value= root:Packages:FractalsModel:SurfFr2_Surface, help={"Smooth surface in this surface fractal"}

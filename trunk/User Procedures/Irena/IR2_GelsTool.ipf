@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.11
-Constant IR2HversionNumber = 4.10
+#pragma version=4.12
+Constant IR2HversionNumber = 4.12
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.12 changes for panel scaling
 //4.11 removed Execute for GUI controls for Igor 7. 
 //4.10 addede check for slit smeared data if qmax is high enough (3* slit length). 
 //4.09 added Linking of RgCO to Corr Lenght (DB and TS models, added display of data for given tab. 
@@ -68,7 +69,7 @@ Function IR2H_GelsMainFnct()
 	IR2H_Initialize()
 	Execute ("IR2H_ControlPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber)
+	IR1_UpdatePanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber)
 	
 end
 
@@ -81,7 +82,7 @@ end
 Function IR2H_MainCheckVersion()	
 	DoWindow IR2H_ControlPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber))
 			DoAlert /T="The Analytical models panel was created by old version of Irena " 1, "Analytical models may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
  				Execute/P("IR2H_GelsMainFnct()")
@@ -344,15 +345,15 @@ Proc IR2H_ControlPanel()
 	string EUserLookup="r*:s*;"
 	IR2C_AddDataControls("Gels_Modeling","IR2H_ControlPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
 
-	TitleBox MainTitle title="Analytical models input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Analytical models input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Modeling input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
-	TitleBox Info3 title="Limits for fitting",pos={69,425},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr160Data input",pos={10,26},frame=0,fstyle=1, fixedSize=1,size={80,18},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr180Modeling input",pos={10,188},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info3 title="\Zr150Limits for fitting",pos={69,425},frame=0,fstyle=2, fixedSize=0,size={20,15},fColor=(0,0,52224)
 	DrawLine 24,420,344,420
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={24,420},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,585},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info6 title="Results",pos={2,605},frame=0,fstyle=3, fixedSize=0,size={40,15},fSize=14,fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr160Results",pos={2,605},frame=0,fstyle=3, fixedSize=0,size={40,15},fColor=(0,0,52224)
 
 	//Experimental data input
 	CheckBox UseSlitSmearedData,pos={10,160},size={90,14},proc=IR2H_InputPanelCheckboxProc,title="Slit smeared? "

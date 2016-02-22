@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 Constant IR1IversionNumber = 2.25
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.28 changes for panel scaling
 //2.27 fixes for naming of USAXS weave which seemed to have typo in naming system. 
 //2.26 added check for Error import - will abort import if Errors contain negative values, 0, INFs or NANs. Check import works with csv files. 
 //2.25 minor fix for data with too many columns of data - Irena can handle only first 6 columns... 
@@ -53,7 +54,7 @@ Function IR1I_ImportDataMain()
 	IR1I_InitializeImportData()
 	Execute("IR1I_ImportData()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber)
 	//fix checboxes
 	IR1I_FIxCheckboxesForWaveTypes()
 end
@@ -66,7 +67,7 @@ end
 Function IR1I_MainCheckVersion()	
 	DoWindow IR1I_ImportData
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
 			DoAlert /T="The ASCII Import panel was created by old version of Irena " 1, "Import ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR1I_ImportDataMain()")
@@ -86,16 +87,16 @@ Proc IR1I_ImportData()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,40,430,740) as "Import data"
 	DoWindow/C IR1I_ImportData
-	TitleBox MainTitle title="Import Data in Igor",pos={40,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Import Data in Igor",pos={40,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="List of available files",pos={30,107},frame=0,fstyle=1, fixedSize=1,size={120,20},fSize=12,fColor=(0,0,52224)
-	TitleBox Info21 title="Column 1",pos={216,215},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info22 title="Column 2",pos={216,232},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info23 title="Column 3",pos={216,249},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info24 title="Column 4",pos={216,266},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info25 title="Column 5",pos={216,283},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info26 title="Column 6",pos={216,300},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=12
-	TitleBox Info6 title="Qvec  Int      Err   QErr",pos={285,195},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=12
+	TitleBox Info1 title="\Zr140List of available files",pos={30,107},frame=0,fstyle=1, fixedSize=1,size={120,20},fColor=(0,0,52224)
+	TitleBox Info21 title="\Zr140Column 1",pos={216,215},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info22 title="\Zr140Column 2",pos={216,232},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info23 title="\Zr140Column 3",pos={216,249},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info24 title="\Zr140Column 4",pos={216,266},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info25 title="\Zr140Column 5",pos={216,283},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info26 title="\Zr140Column 6",pos={216,300},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info6 title="\Zr150Qvec  Int      Err   QErr",pos={285,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
 	Button SelectDataPath,pos={99,53},size={130,20}, proc=IR1I_ButtonProc,title="Select data path"
 	Button SelectDataPath,help={"Select data path to the data"}
 	SetVariable DataPathString,pos={2,85},size={415,19},title="Data path :", noedit=1

@@ -23,7 +23,7 @@ constant IR3WversionNumber = 0.3		//Diffraction panel version number
 Function IR3W_MainCheckVersion()	
 	DoWindow IR3W_WAXSPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber))
 			DoAlert /T="The WAXS panel was created by old version of Irena " 1, "WAXS tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWIndow IR3W_WAXSPanel
@@ -49,7 +49,7 @@ Function IR3W_WAXS()
 		DoWindow/F IR3W_WAXSPanel
 	else
 		Execute("IR3W_WAXSPanel()")
-		UpdatePanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber)
+		IR1_UpdatePanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber)
 	endif
 	IR3W_UpdateListOfAvailFiles()
 	IR3W_UpdatePDF4OfAvailFiles()
@@ -64,13 +64,13 @@ Proc IR3W_WAXSPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,550,800) as "Powder Diffraction/WAXS Fits"
 	DoWIndow/C IR3W_WAXSPanel
-	TitleBox MainTitle title="Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr220Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},anchor=MC,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	TitleBox DataSelection title="Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
+	TitleBox DataSelection title="\Zr140Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	Checkbox UseIndra2Data, pos={10,50},size={76,14},title="USAXS", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseIndra2Data
 	checkbox UseQRSData, pos={120,50}, title="QRS(QIS)", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseQRSdata
 	//fix case when neither is selected and default to qrs

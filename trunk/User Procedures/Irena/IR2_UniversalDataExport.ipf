@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.07
-Constant IR2EversionNumber = 1.06
+#pragma version=1.08
+Constant IR2EversionNumber = 1.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.06
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 changes for panel scaling
 //1.07 fixed multiple data erxport with QRS
 //1.06 modified GUI to disable Export Data & notes on main panel, when Multiple data selection panel is opened. Confused users. Changeds call to pull up without initialization, if exists. 
 //		changed mode for Listbox to enable shift-click selection of range of data, use ctrl/cmd for one-by-one data selection
@@ -37,7 +38,7 @@ Function IR2E_UniversalDataExport()
 		ExportMultipleDataSets=0		//do nto start in multiple data export, it does not set parameters well...  
 		IR2E_UnivDataExportPanel()
 		ING2_AddScrollControl()
-		UpdatePanelVersionNumber("UnivDataExportPanel", IR2EversionNumber)
+		IR1_UpdatePanelVersionNumber("UnivDataExportPanel", IR2EversionNumber)
 	endif
 
 end
@@ -49,7 +50,7 @@ end
 Function IR2E_MainCheckVersion()	
 	DoWindow UnivDataExportPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("UnivDataExportPanel", IR2EversionNumber))
+		if(!IR1_CheckPanelVersionNumber("UnivDataExportPanel", IR2EversionNumber))
 			DoAlert /T="The ASCII Export panel was created by old version of Irena " 1, "Export ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR2E_UniversalDataExport()")
@@ -71,11 +72,11 @@ Function IR2E_UnivDataExportPanel()
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;R_Int;"
 	IR2C_AddDataControls("IR2_UniversalDataExport","UnivDataExportPanel",AllowedIrenaTypes,"AllCurrentlyAllowedTypes","","","","", 0,0)
-	TitleBox MainTitle title="Universal data export panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr220Universal data export panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,27},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=16,fColor=(0,0,52224)
-	TitleBox Info2 title="Preview Options:",pos={20,190},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=16,fColor=(0,0,52224)
-	TitleBox Info3 title="Output Options:",pos={20,320},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=16,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr160Data input",pos={10,27},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr160Preview Options:",pos={20,190},frame=0,fstyle=2, fixedSize=1,size={150,20},fColor=(0,0,52224)
+	TitleBox Info3 title="\Zr160Output Options:",pos={20,320},frame=0,fstyle=2, fixedSize=0,size={20,15},fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,307},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	CheckBox ExportMultipleDataSets,pos={100,160},size={225,14},proc=IR2E_UnivExpCheckboxProc,title="Export multiple data sets?"

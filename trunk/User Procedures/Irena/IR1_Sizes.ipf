@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.19
-Constant IR1RSversionNumber=2.13
+#pragma version = 2.20
+Constant IR1RSversionNumber=2.20
 
 
 //*************************************************************************\
@@ -9,7 +9,8 @@ Constant IR1RSversionNumber=2.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.19 removed the mode from teh tag. Peak position in this case may not be found correctly and hence it is misleading. 
+//2.20 fixes for panel scaling. 
+//2.19 removed the mode from the tag. Peak position in this case may not be found correctly and hence it is misleading. 
 //2.18 fixed bug when the top color indicator woudl show red on cases where it should be green but there were no "bad" ends. 
 //2.17 added color bar at the top to indicate which sizes one can trust based on Qmin/Qmax and which are suspect or totally unknown. 
 //2.16 check if for slit smeared data that the Qmax is at least 3* slit length
@@ -159,7 +160,7 @@ Function IR1R_Sizes()
 	Execute("IR1R_SizesInputPanel()")				//this panel
 	ING2_AddScrollControl()
 	IR1R_FixSetVarsInPanel()
-	UpdatePanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber)
 end
 
 
@@ -172,7 +173,7 @@ end
 Function IR1R_MainCheckVersion()	
 	DoWindow IR1R_SizesInputPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber))
 			DoAlert /T="The Size distribution panel was created by old version of Irena " 1, "Size distribution may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR1R_Sizes()")
@@ -2489,21 +2490,21 @@ end
 Window IR1R_SizesInputPanel() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(6,10,406,670) as "Size distribution"
-	TitleBox MainTitle title="Sizes input panel",pos={90,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={250,24},fSize=20,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr230Sizes input panel",pos={50,0},frame=0,fstyle=3,font= "Times New Roman", size={300,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={72,3},pos={8,26},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={340,3},pos={8,209},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine3 title=" ",fixedSize=1,size={210,3},pos={140,407},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine3 title=" ",fixedSize=1,size={190,3},pos={160,407},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={340,3},pos={8,487},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={148,3},pos={200,583},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine6 title=" ",fixedSize=1,size={340,3},pos={8,285},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
-	TitleBox Info1 title="Data : ",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=16,fColor=(0,0,52224)
-	TitleBox Info2 title="Fitting parameters",pos={5,290},frame=0,fstyle=1, fixedSize=1,size={150,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info3 title="Particle model",pos={5,402},frame=0,fstyle=1, fixedSize=1,size={100,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info4 title="Method",pos={5,492},frame=0,fstyle=1, fixedSize=1,size={90,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info5 title="Distribution parameters",pos={5,213},frame=0,fstyle=1, fixedSize=1,size={190,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info6 title="Set range of data to fit with cursors!!",pos={5,579},frame=0,fstyle=1, fixedSize=1,size={190,20},fSize=10,fColor=(0,0,52224)
-	TitleBox Info7 title="You need to store the results or they are lost!!",pos={5,643},frame=0,fstyle=1, fixedSize=1,size={250,20},fSize=10,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr130Data : ",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr110Fitting parameters",pos={5,290},frame=0,fstyle=1, fixedSize=1,size={150,20},fColor=(0,0,52224)
+	TitleBox Info3 title="\Zr110Particle model",pos={5,402},frame=0,fstyle=1, size={130,20},fSize=14,fColor=(0,0,52224)
+	TitleBox Info4 title="\Zr110Method",pos={5,492},frame=0,fstyle=1, size={90,20},fSize=14,fColor=(0,0,52224)
+	TitleBox Info5 title="\Zr110Distribution parameters",pos={5,213},frame=0,fstyle=1, size={190,20},fSize=14,fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr100Set range of data to fit with cursors!!",pos={5,579},frame=0,fstyle=1, size={190,20},fColor=(0,0,52224)
+	TitleBox Info7 title="\Zr100You need to store the results or they are lost!!",pos={5,643},frame=0,fstyle=1, size={250,20},fColor=(0,0,52224)
 
 	string UserDataTypes=""
 	string UserNameString="Test me"

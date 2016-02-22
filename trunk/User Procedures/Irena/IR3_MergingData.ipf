@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.04
+#pragma version=1.05
 constant IR3DversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.05 chanegs for panel scaling - need to convert for WM procedure, subwindow does tno work rigth
 //1.04 fix for liberal names. 
 //1.03 bug in merging routine where lookup of start of overlap of Int2 data was before Int2 started
 //1.02 FIxed bug when no pairs were found which threw error instead of message. 
@@ -32,7 +33,7 @@ Function IR3D_DataMerging()
 		Execute("IR3D_DataMergePanel()")
 		setWIndow IR3D_DataMergePanel, hook(CursorMoved)=IR3D_PanelHookFunction
 	endif
-	UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber)
+	IR1_UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber)
 	IR3D_UpdateListOfAvailFiles(1)
 	IR3D_UpdateListOfAvailFiles(2)
 	IR3D_RebuildListboxTables()
@@ -46,7 +47,7 @@ end
 Function IR3D_MainCheckVersion()	
 	DoWindow IR3D_DataMergePanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber))
 			DoAlert /T="The Data Merging panel was created by old version of Irena " 1, "Data Merging may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR3D_DataMerging()")
@@ -67,7 +68,7 @@ Proc IR3D_DataMergePanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,720) as "Data Merging"
 	DoWIndow/C IR3D_DataMergePanel
-	TitleBox MainTitle title="Data merging  panel",pos={480,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr260Data merging  panel",pos={480,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},anchor=MC,fColor=(0,0,52224)
 //	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 //	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 //	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -81,7 +82,8 @@ Proc IR3D_DataMergePanel()
 	IR2C_AddDataControls("Irena:SASDataMerging","IR3D_DataMergePanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 
 
-	DrawText 60,25,"First data set"
+	TitleBox Info1 title="\Zr160First data set",pos={60,12},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	//DrawText 60,25,"First data set"
 	Checkbox UseIndra2Data1, pos={10,30},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data1
 	checkbox UseQRSData1, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
 	PopupMenu StartFolderSelection1,pos={10,50},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
@@ -91,7 +93,8 @@ Proc IR3D_DataMergePanel()
 	PopupMenu SortFolders1,pos={10,100},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders1"
 	PopupMenu SortFolders1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString1,value= root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
-	DrawText 290,25,"Second data set"
+	//DrawText 290,25,"Second data set"
+	TitleBox Info2 title="\Zr160Second data set",pos={290,12},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	Checkbox UseIndra2Data2, pos={260,30},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data2
 	checkbox UseQRSData2, pos={370,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
 	PopupMenu StartFolderSelection2,pos={260,50},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
@@ -149,12 +152,19 @@ Proc IR3D_DataMergePanel()
 	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:       ", disable=2
 	SetVariable NewDataFolderName,pos={550,659},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:NewDataFolderName, title="Merged Data: "
 
-	DrawText 4,650,"Double click to add data to graph."
-	DrawText 4,663,"Shift-click to select range of data."
-	DrawText 4,676,"Ctrl/Cmd-click to select one data set."
-	DrawText 254,650,"Regex for not contain: ^((?!string).)*$"
-	DrawText 254,663,"Regex for contain:  string"
-	DrawText 254,676,"Regex for case independent contain:  (?i)string"
+	TitleBox Info3 title="Double click to add data to graph.",pos={4,635},frame=0,fstyle=1, fixedSize=1,size={350,13}
+	TitleBox Info4 title="Shift-click to select range of data.",pos={4,648},frame=0,fstyle=1, fixedSize=1,size={350,13}
+	TitleBox Info5 title="Ctrl/Cmd-click to select one data set.",pos={4,661},frame=0,fstyle=1, fixedSize=1,size={350,13}
+	TitleBox Info7 title="Regex for not contain: ^((?!string).)*$",pos={254,635},frame=0,fstyle=1, fixedSize=1,size={350,13}
+	TitleBox Info8 title="Regex for contain:  string",pos={254,648},frame=0,fstyle=1, fixedSize=1,size={350,13}
+	TitleBox Info9 title="Regex for case independent contain:  (?i)string",pos={254,661},frame=0,fstyle=1, fixedSize=1,size={350,13}
+
+//	DrawText 4,650,"Double click to add data to graph."
+//	DrawText 4,663,"Shift-click to select range of data."
+//	DrawText 4,676,"Ctrl/Cmd-click to select one data set."
+//	DrawText 254,650,"Regex for not contain: ^((?!string).)*$"
+//	DrawText 254,663,"Regex for contain:  string"
+//	DrawText 254,676,"Regex for case independent contain:  (?i)string"
 end
 
 

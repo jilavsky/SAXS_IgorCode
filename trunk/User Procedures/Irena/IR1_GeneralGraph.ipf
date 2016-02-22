@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.26
 Constant IR1PversionNumber=2.16
 
 //*************************************************************************\
@@ -8,6 +8,8 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26 fixes for panel scaling
+//2.25 fixed export option for graphics which changed in Igor 7
 //2.24 fixed legend for VOlume fraction
 //2.23 changed offset limits to enable negative offsets. Useful. 
 //2.22 fixed Guinier style definition... Weird, cannot find bug but it was setting legend parameters to NaNs. Copied same stuff from other style and it works??? 
@@ -63,7 +65,7 @@ Function IR1P_GeneralPlotTool()
 	//IR1_KillGraphsAndPanels()
 	Execute ("IR1P_ControlPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber)
 
 end
 
@@ -78,7 +80,7 @@ end
 Function IR1P_MainCheckVersion()	
 	DoWindow IR1P_ControlPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber))
 			DoAlert /T="The Ploting tool I panel was created by old version of Irena " 1, "Ploting tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR1P_GeneralPlotTool()")
@@ -99,9 +101,9 @@ end
 Window IR1P_ControlPanel() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,402,690) as "General Plotting tool"
-	TitleBox MainTitle title="Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,200},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr140Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
 	string UserDataTypes="Isas;"
 	string UserNameString="CanSAS"
 	string XUserLookup="Isas:Qsas;"
@@ -2033,11 +2035,11 @@ Function IR1P_StoreGraphsButtonProc(ctrlName) : ButtonControl
 	
 	if(cmpstr(ctrlName,"SaveTiffFile")==0)
 		DoWindow/F GeneralGraph
-		SavePICT/T="TIFF"/B=288
+		SavePICT/E=-7/B=288
 	endif
 	if(cmpstr(ctrlName,"SaveJPGFile")==0)
 		DoWindow/F GeneralGraph
-		SavePICT/T="JPEG"/B=288
+		SavePICT/E=-6/B=288
 	endif
 	if(cmpstr(ctrlName,"SaveIgorRecMacro")==0)
 		//here we need to create tiff file of the current generalGraph and save it

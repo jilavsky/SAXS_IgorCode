@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.17
-Constant IR2RversionNumber=1.16
+#pragma version=1.18
+Constant IR2RversionNumber=1.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 changes for panel scaling. 
 //1.17 removed many Executes (improvement for Igor 7) 
 //1.16 fixed annoying bug which caused sliders to be drawn over graph when parameters were recoved.
 //1.15 added fixlimits on start to move al sliders into the middle of their range. Attempted to fix problems with some users fitting data with NaNs by cleaning up data before fit. 
@@ -37,7 +38,7 @@ Function IR2R_ReflectivitySimpleToolMain()
 	endif
 	Execute("IR2R_ReflSimpleToolMainPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber) 
+	IR1_UpdatePanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber) 
 	print "***** Important information *****"
 	print "The reflectometry analysis in IRENA is based on functionality from the Motofit package (written by Andrew Nelson, www.sourceforge.net/projects/motofit)."
 	print "If you use this functionality please cite the Motofit paper [J. Appl. Cryst. 39, 273-276]"
@@ -54,7 +55,7 @@ end
 Function IR2R_MainCheckVersion()	
 	DoWindow IR2R_ReflSimpleToolMainPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber))
 			DoAlert /T="The Reflectivity panel was created by old version of Irena " 1, "Reflectivity may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR2R_ReflectivitySimpleToolMain()")
@@ -84,16 +85,16 @@ Window IR2R_ReflSimpleToolMainPanel()
 
 
 	SetDrawLayer UserBack
-	TitleBox MainTitle title="Simple reflectivity tool",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr240Simple reflectivity tool",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,191},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,28},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Model input:",pos={10,196},frame=0,fstyle=3, fixedSize=1,size={150,20},fSize=14
-	TitleBox Info3 title="Fit? Link?  Low L/LinkTo  High L/Ratio",pos={190,286},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=10
-	TitleBox Info5 title="Top environment",pos={2,237},frame=0,fstyle=3,fSize=14,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr160Data input",pos={10,28},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr160Model input:",pos={10,198},frame=0,fstyle=3, fixedSize=1,size={150,20}
+	TitleBox Info3 title="\Zr130Fit? Link?  Low L/LinkTo  High L/Ratio",pos={190,288},frame=0,fstyle=2, fixedSize=0,size={20,15}
+	TitleBox Info5 title="\Zr160Top environment",pos={2,237},frame=0,fstyle=3,fColor=(0,0,52224)
 	TitleBox Info5 fixedSize=1,size={384,27},anchor=LC,labelBack=(16385,65535,65535)
-	TitleBox Info6 title="Substrate",frame=0,fstyle=3, fixedSize=1,fSize=14,fColor=(0,0,52224), pos={2,500},size={385,70}, labelBack=(32768,65280,32768)
-	TitleBox Info8 title=" ",frame=0,fstyle=3, fixedSize=1,fSize=14,fColor=(0,0,52224), pos={2,570},size={385,43}, labelBack=(65280,65280,32768)
-	TitleBox Info7 title="SLD units - either * 10^-6 [1/A^2] or * 10^10  [1/cm^2]",pos={10,386},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=10
+	TitleBox Info6 title="\Zr160Substrate",frame=0,fstyle=3, fixedSize=1,fColor=(0,0,52224), pos={2,500},size={385,70}, labelBack=(32768,65280,32768)
+	TitleBox Info8 title=" ",frame=0,fstyle=3, fixedSize=1,fColor=(0,0,52224), pos={2,570},size={385,43}, labelBack=(65280,65280,32768)
+	TitleBox Info7 title="\Zr140SLD units - either * 10^-6 [1/A^2] or * 10^10  [1/cm^2]",pos={10,386},frame=0,fstyle=2, fixedSize=0,size={40,15}
 
 
 	//************************

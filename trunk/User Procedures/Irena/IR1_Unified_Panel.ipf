@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.19
-Constant IR1AversionNumber=2.18
+#pragma version=2.20
+Constant IR1AversionNumber=2.20
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 added scaling panel content
 //2.19 fixed Tab display of B which got confused under some circumstances... 
 //2.18 changed Surf/Volume ratio per Dale Schaefer's description.  
 //2.17 fixed Link B to G/Rg/P for Level 2, typo in the code. 
@@ -79,7 +80,8 @@ Function IR1A_UnifiedModel()
 
 	Execute ("IR1A_ControlPanel()")
 	ING2_AddScrollControl()
-	UpdatePanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber)
+	IR1_UpdatePanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber)
+
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -101,7 +103,7 @@ end
 Function IR1A_MainCheckVersion()	
 	DoWindow IR1A_ControlPanel
 	if(V_Flag)
-		if(!CheckPanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber))
+		if(!IR1_CheckPanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber))
 			DoAlert /T="The Unified fit panel was created by old version of Irena " 1, "Unified fit may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR1A_UnifiedModel()")
@@ -429,14 +431,14 @@ Window IR1A_ControlPanel()
 
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:Irena_UnifFit:RebinDataTo, noproc
 	SetVariable RebinDataTo,pos={290,130},size={100,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
-	TitleBox MainTitle title="Unified modeling input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,24},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Unified modeling input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info2 title="Unified model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fSize=14
-	TitleBox Info3 title="Fit?",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15},fSize=12
-	TitleBox Info4 title="Low limit:    High Limit:",pos={230,262},frame=0,fstyle=2, fixedSize=0,size={120,15},fSize=12
-	TitleBox Info5 title="Fit using least square fitting ?",pos={2,583},frame=0,fstyle=2, fixedSize=0,size={140,15},fSize=10,fColor=(0,0,52224)
-	TitleBox Info6 title="Results",pos={2,624},frame=0,fstyle=2, fixedSize=0,size={40,15},fSize=12,fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr150Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr150Unified model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info3 title="\Zr120Fit?",pos={200,262},frame=0,fstyle=2, fixedSize=0,size={20,15}
+	TitleBox Info4 title="Low limit:    High Limit:",pos={230,262},frame=0,fstyle=2, fixedSize=0,size={120,15}
+	TitleBox Info5 title="\Zr130Fit using least square fitting ?",pos={2,583},frame=0,fstyle=2, fixedSize=0,size={140,15},fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr130Results",pos={2,624},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
 	//Experimental data input
 	CheckBox UseSMRData,pos={170,40},size={141,14},proc=IR1A_InputPanelCheckboxProc,title="SMR data"
 	CheckBox UseSMRData,variable= root:packages:Irena_UnifFit:UseSMRData, help={"Check, if you are using slit smeared data"}

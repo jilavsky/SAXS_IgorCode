@@ -1,6 +1,12 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
 #pragma version=1.72
+//Panel size controls package, need version for Igor 6.38 and higher
+#if(Igorversion()>=6.38)
+#include <Resize Controls> version>=6.38
+#include <Resize Controls Panel> version>=6.38
+#include <Rewrite Control Positions>
+#endif
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
