@@ -38,7 +38,7 @@ Function IR1K_ScattCont2()
 	endif	
 	
 	Execute("IR1K_ScatteringContCalc()")
-	IR1_UpdatePanelVersionNumber("IR1K_ScatteringContCalc", 1)
+	IR1_UpdatePanelVersionNumber("IR1K_ScatteringContCalc", 1,1)
 
 	IR1K_FixDisplayedVariables()
 	IR1K_DisplayRightElement()
@@ -224,7 +224,7 @@ Function IR1K_ButtonProc(ctrlName) : ButtonControl
 		NVAR SelectedElement=root:Packages:ScatteringContrast:SelectedElement
 		SVAR SelectedElementName=root:Packages:ScatteringContrast:SelectedElementName
 		IN2G_InputPeriodicTable("IR1K_PerTblButtonProc", "IN2G_PeriodicTableInput", "Select element", 180,220)
-		IR1_UpdatePanelVersionNumber("IN2G_PeriodicTableInput", 1)	
+		IR1_UpdatePanelVersionNumber("IN2G_PeriodicTableInput", 1,1)	
 		PauseForUser IN2G_PeriodicTableInput
 		SVAR ELType=$("root:Packages:ScatteringContrast:El"+num2str(SelectedElement)+"_type")
 		ELType=SelectedElementName
@@ -2288,7 +2288,7 @@ Function IR1K_AnomScattContCalc()
 	Anom_UseSingleEnergy=!Anom_UseEnergyRange
 	IR1K_AnomCheckProc("Anom_UseSingleEnergy",Anom_UseSingleEnergy)
 	IR1K_AnomCheckProc("Anom_UseEnergyRange",Anom_UseEnergyRange)
-	IR1_UpdatePanelVersionNumber("IR1K_AnomCalcPnl", 1)
+	IR1_UpdatePanelVersionNumber("IR1K_AnomCalcPnl", 1,1)
 EndMacro
 
 //**********************************************************************************************************

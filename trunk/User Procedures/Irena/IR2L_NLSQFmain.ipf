@@ -58,7 +58,7 @@ Function IR2L_Main()
 	else
 		IR2L_MainPanel()
 		ING2_AddScrollControl()
-		IR1_UpdatePanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber)
+		IR1_UpdatePanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber,1)
 	endif
 	IR2L_RecalculateIfSelected()
 	DoWindow IR2L_ResSmearingPanel

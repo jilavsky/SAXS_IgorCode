@@ -13,7 +13,7 @@ constant CurrentVersionNumber = 2.59
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.61 added ShowResizeControlsPanel and started to modify for panel sizing 
+//2.61 added ShowResizeControlsPanel.  
 //2.60 modified GUI preferences handling. Was reseting, wrong logic. 
 //
 //2.59 changed check for update procedure to check http first, tehn ftp, and the fail. 
@@ -215,6 +215,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
 	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
+	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;"
 	
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
@@ -343,15 +344,18 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
+Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHookFunction)
 	string panelName
 	variable CurentProcVersion
+	variable AddResizeHookFunction  		//set to 0 for no, 1 for simple Irena one and 2 for Wavemetrics one
 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow $(panelName), note
 		SetWindow $(panelName), note=S_value+";"+"IrenaProcVersion:"+num2str(CurentProcVersion)+";"
-		IR1_PanelAppendSizeRecordNote(panelName)
-		SetWindow $panelName,hook(ResizePanelControls)=IR1_PanelResizePanelSize
+		if(AddResizeHookFunction==1)
+			IR1_PanelAppendSizeRecordNote(panelName)
+			SetWindow $panelName,hook(ResizePanelControls)=IR1_PanelResizePanelSize
+		endif
 	endif
 end
 //***********************************************************
@@ -379,14 +383,26 @@ Function IR1_PanelAppendSizeRecordNote(panelName)
 	string panelName
 	string PanelRecord=""
 	//find size of the panel
+	DoWIndow $panelName
+	if(V_Flag==0)
+		return 0
+	endif
+	//store main window size
 	GetWindow $panelName wsize 
 	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-	GetWindow $panelName, note
+	GetWindow $panelName, note				//store existing note. 
 	string ExistingNote=S_Value
-	string controlslist = ControlNameList("", ";")
-	variable i
+	variable i, j
 	string ControlsRecords=""
+	string ListOfPanels=panelName+";"
 	string TmpNm=""
+	string controlslist=""
+	string tmpPanelName, tmpName1
+	string SubwindowList=ChildWindowList(panelName )		//do we have subwindows? 
+	if(Strlen(SubwindowList)>0)
+		ListOfPanels+=SubwindowList
+	endif
+	controlslist = ControlNameList("", ";")		
 	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
 		TmpNm = StringFromList(i, controlslist, ";")
 		ControlInfo $(TmpNm)
@@ -397,8 +413,24 @@ Function IR1_PanelAppendSizeRecordNote(panelName)
 			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
 		endif
 	endfor
+	For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
+			tmpPanelName = StringFromList(j, ListOfPanels,";")
+			tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
+			setActiveSubwindow $tmpName1
+			controlslist = ControlNameList(tmpName1, ";")		
+			For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+				TmpNm = StringFromList(i, controlslist, ";")
+				ControlInfo $(TmpNm)
+				ControlsRecords+=tmpPanelName+TmpNm+"Left:"+num2str(V_left)+";"+tmpPanelName+TmpNm+"Width:"+num2str(V_width)+";"+tmpPanelName+TmpNm+"Top:"+num2str(V_top)+";"+tmpPanelName+TmpNm+"Height:"+num2str(V_Height)+";"
+				//special cases...
+				if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+					ControlsRecords+=tmpPanelName+TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+				endif
+			endfor
+			SetActiveSubwindow ##
+	endfor
 	SetWindow $panelName, note=ExistingNote+";"+PanelRecord+ControlsRecords
-	//print ExistingNote+";"+PanelRecord+ControlsRecords
+//	print ExistingNote+";"+PanelRecord+ControlsRecords
 end
 //***********************************************************
 //***********************************************************
@@ -452,11 +484,19 @@ Function IR1_PanelResizePanelSize(s)
 		//DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		//DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		string controlslist = ControlNameList(s.winName, ";")
-		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
+		variable i, j
+		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
 		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
 		string ControlsRecords=""
-		string TmpNm=""
+		string ListOfPanels=s.winName+";"
+		string TmpNm="", tmpName1
+		string controlslist=""
+		string tmpPanelName
+		string SubwindowList=ChildWindowList(s.winName)		//do we have subwindows? 
+		if(Strlen(SubwindowList)>0)
+			ListOfPanels+=SubwindowList
+		endif
+		controlslist = ControlNameList("", ";")
 		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
 			TmpNm = StringFromList(i, controlslist, ";")			
 			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
@@ -467,7 +507,7 @@ Function IR1_PanelResizePanelSize(s)
 			NewCntrlV_top = OrigCntrlV_top * verScale
 			NewWidth = OrigWidth * horScale
 			NewHeight = OrigHeight * verScale
-			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+			ModifyControl $(TmpNm) pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
 			//special cases...
 			ControlInfo $(TmpNm)
 			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
@@ -477,7 +517,33 @@ Function IR1_PanelResizePanelSize(s)
 				endif
 			endif
 		endfor
-
+		For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
+				tmpPanelName = StringFromList(j, ListOfPanels,";")
+				tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
+				setActiveSubwindow $tmpName1
+				controlslist = ControlNameList(tmpName1, ";")		
+				For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+					TmpNm = StringFromList(i, controlslist, ";")			
+					OrigCntrlV_left=NumberByKey(tmpPanelName+TmpNm+"Left", OrigInfo, ":", ";")
+					OrigCntrlV_top=NumberByKey(tmpPanelName+TmpNm+"Top", OrigInfo, ":", ";")
+					OrigWidth=NumberByKey(tmpPanelName+TmpNm+"Width", OrigInfo, ":", ";")
+					OrigHeight=NumberByKey(tmpPanelName+TmpNm+"Height", OrigInfo, ":", ";")
+					NewCntrolV_left=OrigCntrlV_left* horScale 
+					NewCntrlV_top = OrigCntrlV_top * verScale
+					NewWidth = OrigWidth * horScale
+					NewHeight = OrigHeight * verScale
+					ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+					//special cases...
+					ControlInfo $(TmpNm)
+					if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+						OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
+						if(numtype(OrigBodyWidth)==0)
+							ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+						endif
+					endif
+				endfor
+				SetActiveSubwindow ##
+		endfor
 	endif
 end
 //**********************************************************************************************************

@@ -48,7 +48,7 @@ Function IR2Pr_MainPDDF()
 	endif
 	Execute("IR2Pr_ControlPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber)
+	IR1_UpdatePanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber,1)
 
 
 end

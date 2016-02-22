@@ -84,9 +84,7 @@ Function IR1D_DataManipulation()
 	
 	Execute("IR1D_DataManipulationPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber)
-	
-	
+	IR1_UpdatePanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber,1)
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -126,7 +124,8 @@ Proc IR1D_DataManipulationPanel()
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	//Experimental data input
-	NewPanel /W=(0,25,398,157) /HOST=# /N=Top
+	NewPanel /W=(0.01,0.035,0.97,0.225) /HOST=# /N=Top
+	//NewPanel /W=(0,25,398,157) /HOST=# /N=Top
 	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
 	string UserDataTypes=""
 	string UserNameString=""
@@ -155,7 +154,8 @@ Proc IR1D_DataManipulationPanel()
 	
 	SetActiveSubwindow ##
 	
-	NewPanel /W=(0,160,398,295) /HOST=# /N=Bot
+	NewPanel /W=(0.01,0.227,0.97,0.45) /HOST=# /N=Bot
+	//NewPanel /W=(0,160,398,295) /HOST=# /N=Bot
 	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
 	IR2C_AddDataControls("SASDataModificationBot","IR1D_DataManipulationPanel#Bot","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
 	SetDrawLayer UserBack
@@ -2740,11 +2740,11 @@ Function IR3M_DataManipulationII()
 	
 	IR3M_DataManipulationIIPanel()
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("DataManipulationII", IR3MversionNumber) 
+	IR1_UpdatePanelVersionNumber("DataManipulationII", IR3MversionNumber,1) 
 	
 //	IR3M_SyncSearchListAndListBox()	//sync the list box... 
 	IR3M_MakePanelWithListBox()	//and create the other panel... 
-	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel_DMII", IR3MversionNumber) 
+	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel_DMII", IR3MversionNumber,1) 
 
 end
 //**********************************************************************************************

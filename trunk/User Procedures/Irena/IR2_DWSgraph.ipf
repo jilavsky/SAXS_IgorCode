@@ -1,26 +1,65 @@
 #pragma rtGlobals=1		// Use modern global access method.
+#pragma version=1.00
 
+constant IR1D_DWSversionNumber = 1.00			//Data plotting II version 
 
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
+//1.00 modified to have ponel scaling
+
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+
+///////		***************        Plotting tool II    ******************
+
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
 
 Function IR2D_DWSPlotToolMain()
 	IN2G_CheckScreenSize("height",670)
 	IR2D_DWSPlotToolInit()	
 	IR2D_DWSPlotTool()
+	ING2_AddScrollControl()
+	IR1_UpdatePanelVersionNumber("IR2D_DWSGraphPanel", IR1D_DWSversionNumber,1)
+	
 end
+
+
+Function IR2D_DWSMainCheckVersion()	
+	DoWindow IR2D_DWSGraphPanel
+	if(V_Flag)
+		if(!IR1_CheckPanelVersionNumber("IR2D_DWSGraphPanel", IR1D_DWSversionNumber))
+			DoAlert /T="The Plotting tool II panel was created by old version of Irena " 1, "Plotting tool II may need to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				Execute/P("IR2D_DWSPlotToolMain()")
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IR2D_DWSPlotToolInit()
+			endif
+		endif
+	endif
+end
+
+
+
 
 Function IR2D_DWSPlotTool()
 	dowindow/K IR2D_DWSGraphPanel
 	NewPanel /K=1/N=IR2D_DWSGraphPanel /W=(50,43.25,430.75,570) as "General Plotting tool"
-	SetDrawLayer UserBack
-	SetDrawEnv fname= "Times New Roman",fsize= 18,fstyle= 3,textrgb= (0,0,52224)
-	DrawText 57,22,"Plotting tool input panel"
-	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	DrawLine 16,199,339,199
-	SetDrawEnv fsize= 16,fstyle= 1
-	DrawText 8,49,"Data input"
-	
-//	CheckBox UseAniso,pos={230,39},size={141,14},proc=DWSInputPanelCheckboxProc,title="Use Aniso results"
-//	CheckBox UseAniso,variable= root:packages:Irena:DWSplottingTool:UseAniso, help={"Check, if you want to use results of Anisotropic results"}
+	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={10,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={340,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox FakeLine1 title=" ",fixedSize=1,size={300,3},pos={16,199},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine2 title=" ",fixedSize=1,size={300,3},pos={16,280},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine3 title=" ",fixedSize=1,size={300,3},pos={16,330},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine4 title=" ",fixedSize=1,size={300,3},pos={16,380},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine5 title=" ",fixedSize=1,size={300,3},pos={16,430},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox Info1 title="\Zr150Data input",pos={5,25},frame=0,fstyle=1,anchor=LC, fixedSize=1,size={120,20}
+	TitleBox Info2 title="\Zr150Legends",pos={5,285},frame=0,fstyle=1,anchor=LC, fixedSize=1,size={80,20}
 	
 	string UserDataTypes=""
 	string UserNameString=""
@@ -47,11 +86,8 @@ Function IR2D_DWSPlotTool()
 	SetVariable GraphYAxisName pos={60,255},size={300,20},proc=IR2D_DWSSetVarProc,title="Y axis title"
 	SetVariable GraphYAxisName value= root:Packages:Irena:DWSplottingTool:GraphYAxisName, help={"Input vertical axis title. Use Igor formating characters for special symbols."}		
 
-	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	DrawLine 16,280,339,280
 //legends
 	NVAR GraphLegendSize=root:Packages:Irena:DWSplottingTool:GraphlegendSize
-	DrawText 10,298,"Legends:"
 	CheckBox GraphLegendUseFolderNms pos={80,285},title="Folder Names", variable=root:Packages:Irena:DWSplottingTool:GraphLegendUseFolderNms
 	CheckBox GraphLegendUseFolderNms proc=IR2D_DWSGenPlotCheckBox, help={"Use folder names in Legend?"}	
 	CheckBox GraphLegendUseWaveNote pos={180,285},title="Wave Names", variable=root:Packages:Irena:DWSplottingTool:GraphLegendUseWaveNote
@@ -62,8 +98,6 @@ Function IR2D_DWSPlotTool()
 //	Button KillLegends,pos={140,305},size={70,20}, proc=IR2D_DWSInputPanelButtonProc,title="Kill Legend"
 
 	
-	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	DrawLine 16,330,339,330
 	
 	
 	//Graph Line & symbols
@@ -78,8 +112,6 @@ Function IR2D_DWSPlotTool()
 	CheckBox GraphUseColors pos={270,340},title="Black&White", variable=root:Packages:Irena:DWSplottingTool:GraphUseColors
 	CheckBox GraphUseColors proc=IR2D_DWSGenPlotCheckBox, help={"colors"}	
 //	Button Format,pos={270,355},size={70,20}, proc=IR2D_DWSInputPanelButtonProc,title="Change Mode"
-	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	DrawLine 16,380,339,380
 	
 	//Bottom Axis format
 	CheckBox GraphXMajorGrid pos={60,390},title="X Major Grid", variable=root:Packages:Irena:DWSplottingTool:GraphXMajorGrid
@@ -99,8 +131,6 @@ Function IR2D_DWSPlotTool()
 	SetVariable TicRotation pos={250,410},size={100,20},proc=IR2D_DWSSetVarProc,title="Tic Rotation:", limits={0,90,90}
 	SetVariable TicRotation, value= root:Packages:Irena:DWSplottingTool:TicRotation
 	
-	SetDrawEnv linethick= 3,linefgc= (0,0,52224)
-	DrawLine 16,430,339,430
 	
 	//Axis ranges	
 	CheckBox GraphLeftAxisAuto pos={80,435},title="Y axis autoscale?", variable=root:Packages:Irena:DWSplottingTool:GraphLeftAxisAuto

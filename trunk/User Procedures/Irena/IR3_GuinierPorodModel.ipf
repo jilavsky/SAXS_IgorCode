@@ -495,7 +495,7 @@ Function IR3GP_Main()
 	else
 		IR3DP_MainPanelFunction()
 		ING2_AddScrollControl()
-		IR1_UpdatePanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber)
+		IR1_UpdatePanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber,1)
 	endif
 	//IR2L_RecalculateIfSelected()
 end

@@ -56,7 +56,7 @@ Function IR2D_MainSmallAngleDiff()
 	endif
 	Execute("IR2D_ControlPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber)
+	IR1_UpdatePanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber,1)
 
 end
 ///******************************************************************************************

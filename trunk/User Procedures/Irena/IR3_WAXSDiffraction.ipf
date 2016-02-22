@@ -49,7 +49,7 @@ Function IR3W_WAXS()
 		DoWindow/F IR3W_WAXSPanel
 	else
 		Execute("IR3W_WAXSPanel()")
-		IR1_UpdatePanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber)
+		IR1_UpdatePanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber,1)
 	endif
 	IR3W_UpdateListOfAvailFiles()
 	IR3W_UpdatePDF4OfAvailFiles()

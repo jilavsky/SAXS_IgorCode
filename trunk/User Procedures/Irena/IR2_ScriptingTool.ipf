@@ -55,7 +55,7 @@ Function IR2S_ScriptingTool()
 		DoWindow/F IR2S_ScriptingToolPnl
 	else
 		Execute("IR2S_ScriptingToolPnl()")
-		IR1_UpdatePanelVersionNumber("IR2S_ScriptingToolPnl", IR2SversionNumber)
+		IR1_UpdatePanelVersionNumber("IR2S_ScriptingToolPnl", IR2SversionNumber,1)
 	endif
 
 end

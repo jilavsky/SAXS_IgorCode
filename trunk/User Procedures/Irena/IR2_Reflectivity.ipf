@@ -38,7 +38,7 @@ Function IR2R_ReflectivitySimpleToolMain()
 	endif
 	Execute("IR2R_ReflSimpleToolMainPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber) 
+	IR1_UpdatePanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber,1) 
 	print "***** Important information *****"
 	print "The reflectometry analysis in IRENA is based on functionality from the Motofit package (written by Andrew Nelson, www.sourceforge.net/projects/motofit)."
 	print "If you use this functionality please cite the Motofit paper [J. Appl. Cryst. 39, 273-276]"

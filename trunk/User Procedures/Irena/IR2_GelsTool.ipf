@@ -69,7 +69,7 @@ Function IR2H_GelsMainFnct()
 	IR2H_Initialize()
 	Execute ("IR2H_ControlPanel()")
 	ING2_AddScrollControl()
-	IR1_UpdatePanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber)
+	IR1_UpdatePanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber,1)
 	
 end
 
