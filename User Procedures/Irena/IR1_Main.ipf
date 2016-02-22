@@ -440,11 +440,17 @@ Function IR1_PanelResizePanelSize(s)
 			horScale = curWidth/OriginalWidth
 		endif
 		variable scale= min(horScale, verScale )
-		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		string FontName = IR2C_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
+		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
+		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
+		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
+			FontName="_IgorSmall"
+		endif
+		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		//DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		//DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		//DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		//DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		string controlslist = ControlNameList(s.winName, ";")
 		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
@@ -846,14 +852,14 @@ EndMacro
 Function/S IR2C_CreateUsefulFontList()
 
 	string SystemFontList=FontList(";")
-	string PreferredFontList="Tahoma;Times;Arial;Geneva;Palatino;Times New Roman;TImes Roman;Book Antiqua;"
-	PreferredFontList+="Courier;Lucida;Vardana;Monaco;Courier CE;System;Verdana;"
+	string PreferredFontList="Tahoma;Times;Arial$;Geneva;Palatino;Book Antiqua;"
+	PreferredFontList+="Courier;Vardana;Monaco;Courier CE;System;Verdana;"
 	
 	variable i
 	string UsefulList="", tempList=""
 	For(i=0;i<ItemsInList(PreferredFontList);i+=1)
-		tempList=stringFromList(i,PreferredFontList)
-		if(stringmatch(SystemFOntList, "*"+tempList+";*" ))
+		tempList=GrepList(SystemFontList, stringFromList(i,PreferredFontList)) 
+		if(strlen(tempList)>0)
 			UsefulList+=tempList+";"
 		endif
 	endfor
