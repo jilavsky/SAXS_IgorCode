@@ -3988,7 +3988,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 		Execute("Nika_Hook_ModifyMainPanel()")
 	endif
 	ING2_AddScrollControl()
-	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", 1)
+	//NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", 1)
 EndMacro
 
 

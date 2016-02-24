@@ -107,12 +107,14 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow  $(panelName) note
-		SetWindow $(panelName), note=S_Value+"NIkaProcVersion:"+num2str(CurentProcVersion)+";"
+		SetWindow $(panelName), note=S_Value+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
 		NI1_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=NI1_PanelResizePanelSize
 	endif
 end 
 
+//***********************************************************
+//*********************************************************** 
 Function NI1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
@@ -120,7 +122,6 @@ Function NI1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	DoWIndow $panelName
 	if(V_Flag)	
 		GetWindow $(panelName), note
-//		print "Found :     "+S_Value
 		if(stringmatch(stringbyKey("NikaProcVersion",S_value),num2str(CurentProcVersion))) //matches
 			return 1
 		else
@@ -130,7 +131,7 @@ Function NI1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 		return 1
 	endif
 end
-
+ 
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -255,7 +256,6 @@ Function NI1A_Convert2Dto1DMainPanel()
 		DoWindow/K NI1A_Convert2Dto1DPanel
 	endif
 	NI1A_Convert2Dto1DPanelFnct()
-	//SetWindow NI1A_Convert2Dto1DPanel hook(scroll)=IN2G_ScrollHook
 	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber)
 	NI1A_TabProc("nothing",0)
 end

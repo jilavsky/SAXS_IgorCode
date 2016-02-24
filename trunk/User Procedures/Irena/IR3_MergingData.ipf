@@ -68,7 +68,7 @@ Proc IR3D_DataMergePanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,720) as "Data Merging"
 	DoWIndow/C IR3D_DataMergePanel
-	TitleBox MainTitle title="\Zr260Data merging  panel",pos={480,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr220Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)
 //	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 //	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 //	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -82,7 +82,7 @@ Proc IR3D_DataMergePanel()
 	IR2C_AddDataControls("Irena:SASDataMerging","IR3D_DataMergePanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 
 
-	TitleBox Info1 title="\Zr160First data set",pos={60,12},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	TitleBox Info1 title="\Zr160First data set",pos={60,8},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	//DrawText 60,25,"First data set"
 	Checkbox UseIndra2Data1, pos={10,30},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data1
 	checkbox UseQRSData1, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
@@ -94,7 +94,7 @@ Proc IR3D_DataMergePanel()
 	PopupMenu SortFolders1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString1,value= root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
 	//DrawText 290,25,"Second data set"
-	TitleBox Info2 title="\Zr160Second data set",pos={290,12},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	TitleBox Info2 title="\Zr160Second data set",pos={290,8},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	Checkbox UseIndra2Data2, pos={260,30},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data2
 	checkbox UseQRSData2, pos={370,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
 	PopupMenu StartFolderSelection2,pos={260,50},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
