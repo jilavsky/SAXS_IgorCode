@@ -1,12 +1,48 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.60
 
-Menu "Macros"
-	StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIR1Modeling()
+Menu "Macros", dynamic
+	//StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIrenaSASMacros()
+	IrenaMacrosMenuItem(1)
+	IrenaMacrosMenuItem(2)
+end
+
+Function/S IrenaMacrosMenuItem(itemNumber)
+	Variable itemNumber
+
+	if (itemNumber == 1)
+			SVAR/Z SASItem1Str =  root:Packages:SASItem1Str
+			if(SVAR_Exists(SASItem1Str))
+				return SASItem1Str
+			else
+				return "Load Irena SAS Macros"	
+			endif
+	endif
+
+	if (itemNumber == 2)
+	  if(Exists("LoadNika2DSASMacros")==6)
+			SVAR/Z SASItem1Str =  root:Packages:SASItem1Str
+			if(SVAR_Exists(SASItem1Str))
+				if(StringMatch(SASItem1Str, "---" ))
+					return "---"
+				else
+					return "Load Nika And Irena"
+				endif
+			else
+				return "Load Nika And Irena"	
+			endif
+		 // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
+ 	 	endif
+	endif
+end
+
+Proc LoadNikaAndIrena()
+	LoadIrenaSASMacros()
+	Execute/P("LoadNika2DSASMacros()")
 end
 
 
-Proc LoadIR1Modeling()
+Function LoadIrenaSASMacros()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.30)
 		//check for old version of Irena
 		pathInfo Igor
@@ -31,8 +67,9 @@ Proc LoadIR1Modeling()
 		Execute/P "COMPILEPROCEDURES "
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:SASItem1Str
+		SVAR SASItem1Str = root:Packages:SASItem1Str
 		//root:Packages:SASItem1Str= "(Load Irena SAS Modeling Macros"
-		root:Packages:SASItem1Str= "---"
+		SASItem1Str= "---"
 		BuildMenu "SAS"
 		//Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
 		//not needed, done automatically as part of after compile hook function
