@@ -210,7 +210,7 @@ end
 Function NI1_RemoveNika1Mac()
 		Execute/P "DELETEINCLUDE \"NI1_Loader\""
 		SVAR strChagne=root:Packages:Nika12DSASItem1Str
-		strChagne= "Load Nika 1 2D SAS Macros"
+		strChagne= "Load Nika 2D SAS Macros"
 		BuildMenu "Macros"
 		Execute/P "COMPILEPROCEDURES "
 end

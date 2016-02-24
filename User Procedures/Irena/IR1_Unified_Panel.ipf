@@ -490,7 +490,7 @@ Window IR1A_ControlPanel()
 
 	//Dist Tabs definition
 	TabControl DistTabs,pos={5,240},size={370,320},proc=IR1A_TabPanelControl
-	TabControl DistTabs,fSize=10,tabLabel(0)="1. Level ",tabLabel(1)="2. Level "
+	TabControl DistTabs,tabLabel(0)="1. Level ",tabLabel(1)="2. Level "
 	TabControl DistTabs,tabLabel(2)="3. Level ",tabLabel(3)="4. Level "
 	TabControl DistTabs,tabLabel(4)="5. Level ",value= 0
 	

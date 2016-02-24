@@ -144,7 +144,8 @@ Proc IR3D_DataMergePanel()
 	Button MergeData,pos={640,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
 	Button MergeData2,pos={760,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge 2", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
 
-	Display /W=(521,135,1183,620) /HOST=# /N=DataDisplay
+	//Display /W=(521,135,1183,620) /HOST=# /N=DataDisplay
+	Display /W=(0.44,0.20,0.99,0.916) /HOST=# /N=DataDisplay
 
 	SetActiveSubwindow ##
 

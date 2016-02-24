@@ -219,6 +219,8 @@ Function IN3_PanelAppendSizeRecordNote(panelName)
 	//find size of the panel
 	GetWindow $panelName wsize 
 	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	//GetDefaultFont($panelName )
+	//PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
 	GetWindow $panelName, note
 	string ExistingNote=S_Value
 	string controlslist = ControlNameList("", ";")

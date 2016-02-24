@@ -445,6 +445,7 @@ Function IR1_PanelResizePanelSize(s)
 		GetWindow $(s.winName), note
 		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
 		string OrigInfo=S_Value
+		//print s
 		GetWindow $s.winName wsize
 		Variable left = V_left
 		Variable right = V_right
@@ -453,18 +454,18 @@ Function IR1_PanelResizePanelSize(s)
 		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
 		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
-		CurWidth=(right-left) 
-		CurHeight = (bottom-top)
+		CurWidth = abs(right-left) 
+		CurHeight = abs(bottom-top)
 		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
 			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
 			horScale = 1
 			verScale = 1
 		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
-			MoveWindow left, top, left+OriginalWidth, bottom
+			MoveWindow left, top, left+OriginalWidth, top+CurHeight
 			horScale = 1
 			verScale = CurHeight / (OriginalHeight)	
 		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, right, top+OriginalHeight
+			MoveWindow left, top, left+CurWidth, top+OriginalHeight
 			verScale = 1
 			horScale = curWidth/OriginalWidth
 		else
@@ -1372,7 +1373,7 @@ Function IR1_RemoveSASMac()
 		Execute/P "IR1_KillGraphsAndPanels()"
 		Execute/P "DELETEINCLUDE \"IR1_Loader\""
 		SVAR strChagne=root:Packages:SASItem1Str
-		strChagne= "Load Irena SAS Modeling Macros"
+		strChagne= "Load Irena SAS Macros"
 		BuildMenu "SAS"
 		Execute/P "COMPILEPROCEDURES "
 end
