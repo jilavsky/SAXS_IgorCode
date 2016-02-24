@@ -116,12 +116,13 @@ Proc IR1D_DataManipulationPanel()
 	NewPanel /K=1 /W=(2.25,43.25,415,720) as "Data Manipulation"
 	DoWIndow/C IR1D_DataManipulationPanel
 	TitleBox MainTitle title="\Zr200Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={355,24},anchor=MC,fColor=(0,0,52224)
-	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	//TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,143},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="\Zr130Modify data 1                            Modify Data 2",pos={30,325},frame=0,fstyle=1,anchor=MC, fixedSize=1,size={320,20}
-	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox Info11 title="\Zr130Modify data 1",pos={50,325},frame=0,fstyle=1,anchor=MC, fixedSize=1,size={120,20}
+	TitleBox Info12 title="\Zr130Modify Data 2",pos={230,325},frame=0,fstyle=1,anchor=MC, fixedSize=1,size={120,20}
+	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,288},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	//Experimental data input
 	NewPanel /W=(0.01,0.035,0.97,0.225) /HOST=# /N=Top
@@ -132,10 +133,11 @@ Proc IR1D_DataManipulationPanel()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("SASDataModificationTop","IR1D_DataManipulationPanel#Top","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
-	SetDrawLayer UserBack
-	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-	SetDrawEnv fsize= 12,fstyle= 1
-	DrawText 10,25,"First data set"
+	//SetDrawLayer UserBack
+	//SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
+	//SetDrawEnv fsize= 12,fstyle= 1
+	//DrawText 10,25,"First data set"
+	TitleBox Info2 title="\Zr130First data set",pos={10,7},frame=0,fstyle=1,anchor=LC, fixedSize=1,size={100,20}
 	Checkbox UseIndra2Data, pos={100,10}
 	Checkbox UseResults, pos={250,10}
 	Checkbox UseModelData, pos={330,10}
@@ -154,14 +156,15 @@ Proc IR1D_DataManipulationPanel()
 	
 	SetActiveSubwindow ##
 	
-	NewPanel /W=(0.01,0.227,0.97,0.45) /HOST=# /N=Bot
+	NewPanel /W=(0.01,0.227,0.97,0.42) /HOST=# /N=Bot
 	//NewPanel /W=(0,160,398,295) /HOST=# /N=Bot
 	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
 	IR2C_AddDataControls("SASDataModificationBot","IR1D_DataManipulationPanel#Bot","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1)
-	SetDrawLayer UserBack
-	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
-	SetDrawEnv fsize= 12,fstyle= 1
-	DrawText 10,25,"Second data set"
+	//SetDrawLayer UserBack
+	//SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
+	//SetDrawEnv fsize= 12,fstyle= 1
+	//DrawText 10,25,"Second data set"
+	TitleBox Info3 title="\Zr130Second data set",pos={10,7},frame=0,fstyle=1,anchor=LC, fixedSize=1,size={100,20}
 	Checkbox UseIndra2Data, pos={100,10}
 	Checkbox UseResults, pos={250,10}
 	Checkbox UseModelData, pos={330,10}
@@ -179,11 +182,11 @@ Proc IR1D_DataManipulationPanel()
 
 	SetActiveSubwindow ##
 
-	Button CopyGraphData,pos={5,310},size={120,17}, proc=IR1D_InputPanelButtonProc,title="Add Data and Graph", help={"Create graph"}
-	Button ResetModify,pos={130,310},size={60,17}, proc=IR1D_InputPanelButtonProc,title="Reset", help={"Reset the modify data parameters and return all removed points"}
-	Button AutoScale,pos={200,310},size={100,17}, proc=IR1D_InputPanelButtonProc,title="AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}
-	Button MergeData,pos={310,300},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Merge+Save", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}
-	Button MergeData2,pos={310,319},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Merge 2+Save", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging. Saves data also"}
+	Button CopyGraphData,pos={5,297},size={120,17}, proc=IR1D_InputPanelButtonProc,title="Add Data and Graph", help={"Create graph"}
+	Button ResetModify,pos={130,297},size={60,17}, proc=IR1D_InputPanelButtonProc,title="Reset", help={"Reset the modify data parameters and return all removed points"}
+	Button AutoScale,pos={200,297},size={100,17}, proc=IR1D_InputPanelButtonProc,title="AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}
+	Button MergeData,pos={310,295},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Merge+Save", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}
+	Button MergeData2,pos={310,313},size={100,17}, proc=IR1D_InputPanelButtonProc,title="Merge 2+Save", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging. Saves data also"}
 
 	SetVariable Data1_IntMultiplier, pos={5,344}, size={150,15},title="Multiply Int by", proc=IR1D_setvarProc, limits={-inf,inf,0.1+abs(0.1*root:Packages:SASDataModification:Data2_IntMultiplier)}
 	SetVariable Data1_IntMultiplier, value= root:Packages:SASDataModification:Data1_IntMultiplier,help={"Intensity scaling factor for intensity 1"}
@@ -2929,7 +2932,8 @@ Function IR3M_DataManipulationIIPanel()
 
 	
 	//Experimental data input
-	NewPanel /W=(0,325,398,448) /HOST=# /N=SubDta
+//	NewPanel /W=(0.01,325,398,448) /HOST=# /N=SubDta
+	NewPanel /W=(0.01,0.50,0.99,0.69) /HOST=# /N=SubDta
 	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
 	string UserDataTypes=""
 	string UserNameString=""
