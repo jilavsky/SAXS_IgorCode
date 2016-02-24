@@ -629,9 +629,9 @@ Function IR2C_ReadIrenaGUIPackagePrefs()
 	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
 	if(V_Flag==0)		
 		//print Defs
-		print "Read Irena Penals and graphs preferences from local machine and applied them. "
-		print "Note that this may have changed font size and type selection originally saved with the existing experiment."
-		print "To change them please use \"Configure default fonts and names\""
+		//print "Read Irena Panels and graphs preferences from local machine and applied them. "
+		//print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+		//print "To change them please use \"Configure default fonts and names\""
 		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
 			DefaultFontType=Defs.PanelFontType
 			DefaultFontSize = Defs.defaultFontSize

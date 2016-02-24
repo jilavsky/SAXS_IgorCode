@@ -273,20 +273,28 @@ Function IN3_PanelResizePanelSize(s)
 			verScale = CurHeight / (OriginalHeight)	
 		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
 			MoveWindow left, top, right, top+OriginalHeight
-			verScale = 1
+			verScale = 1 
 			horScale = curWidth/OriginalWidth
 		else
 			verScale = CurHeight /OriginalHeight
 			horScale = curWidth/OriginalWidth
 		endif
 		variable scale= min(horScale, verScale )
+#if(exists("IR2C_LkUpDfltVar")==6)		//Irena loaded
 		//this needs to be fixed and will be more difficult. 
-//		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+#else
+		DefaultGUIFont /W=$(s.winName) button= {"", ceil(scale*12), 0 } 
+		DefaultGUIFont /W=$(s.winName) checkbox= {"", ceil(scale*12), 0 } 
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {"", ceil(scale*12), 0 } 
+		DefaultGUIFont /W=$(s.winName) popup= {"", ceil(scale*12), 0 } 
+		DefaultGUIFont /W=$(s.winName) all= {"", ceil(scale*12), 0 } 
+#endif
 		string controlslist = ControlNameList(s.winName, ";")
 		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
 		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
