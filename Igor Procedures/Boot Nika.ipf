@@ -3,11 +3,11 @@
 
 
 Menu "Macros"
-	StrVarOrDefault("root:Packages:Nika12DSASItem1Str","Load Nika 2D SAS Macros"), LoadNi12DSAS()
+	StrVarOrDefault("root:Packages:Nika12DSASItem1Str","Load Nika 2D SAS Macros"), LoadNika2DSASMacros()
 end
 
 
-Function LoadNi12DSAS()
+Function LoadNika2DSASMacros()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.30)
 		Execute/P "INSERTINCLUDE \"NI1_Loader\""
 		Execute/P "COMPILEPROCEDURES "

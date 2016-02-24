@@ -38,13 +38,79 @@
 //	Good luck....
 
 
-Menu "Macros"
-	StrVarOrDefault("root:Packages:USAXSItem1Str","Load USAXS Macros"), LoadIndra2()
+Menu "Macros", dynamic
+	IndraMacrosMenuItem(1)
+	IndraMacrosMenuItem(2)
+	IndraMacrosMenuItem(3)
+
+//	StrVarOrDefault("root:Packages:USAXSItem1Str","Load USAXS Macros"), LoadIndra2()
+//   if(Exists("LoadIR1Modeling")==6)
+//	  StrVarOrDefault("root:Packages:USAXSItem1Str","Load USAXS+Irena"), LoadIndraAndIrena()
+//   endif
+//   if(Exists("LoadIR1Modeling")==6 && Exists("LoadNi12DSAS")==6)
+//	 StrVarOrDefault("root:Packages:USAXSItem1Str","Load USAXS+Irena+Nika"), LoadIndraAndIrena()
+//   endif
 end
 
 
 
-Proc LoadIndra2()
+Function/S IndraMacrosMenuItem(itemNumber)
+	Variable itemNumber
+
+	if (itemNumber == 1)
+			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
+			if(SVAR_Exists(USAXSItem1Str))
+				return USAXSItem1Str
+			else
+				return "Load USAXS Macros"	
+			endif
+	endif
+
+	if (itemNumber == 2)
+	  if(Exists("LoadIrenaSASMacros")==6)
+			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
+			if(SVAR_Exists(USAXSItem1Str))
+				if(StringMatch(USAXSItem1Str, "---" ))
+					return "---"
+				else
+					return "Load USAXS And Irena"
+				endif
+			else
+				return "Load USAXS And Irena"	
+			endif
+		 // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
+ 	 endif
+	endif
+	if (itemNumber == 3)
+	  if(Exists("LoadIrenaSASMacros")==6 && Exists("LoadNika2DSASMacros")==6)
+			SVAR/Z USAXSItem1Str =  root:Packages:USAXSItem1Str
+			if(SVAR_Exists(USAXSItem1Str))
+				if(StringMatch(USAXSItem1Str, "---" ))
+					return "---"
+				else
+					return "Load USAXS And Irena And Nika"
+				endif
+			else
+				return "Load USAXS And Irena And Nika"	
+			endif
+		   // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
+   	 endif
+	endif
+End
+
+
+
+Proc LoadUSAXSAndIrena()
+	LoadUSAXSMacros()
+	Execute/P("LoadIrenaSASMacros()")
+end
+Proc LoadUSAXSAndIrenaAndNika()
+	LoadUSAXSMacros()
+	Execute/P("LoadIrenaSASMacros()")
+	Execute/P("LoadNika2DSASMacros()")
+end
+
+Function LoadUSAXSMacros()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>6.30)
 		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
@@ -52,7 +118,8 @@ Proc LoadIndra2()
 		Execute/P "ionChamberInitPackage()"
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:USAXSItem1Str
-		root:Packages:USAXSItem1Str= "---"
+		SVAR USAXSItem1Str = root:Packages:USAXSItem1Str
+		USAXSItem1Str= "---"
 		BuildMenu "USAXS"
 		IN2L_GenerateReadMe()
 	else
