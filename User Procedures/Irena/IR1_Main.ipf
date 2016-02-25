@@ -236,23 +236,6 @@ static Function IR2C_CheckPlatformGUIFonts()
 	string CurExpName=IgorInfo(1)
 	if(!stringMatch(Platform, CurPlatform) || stringMatch(CurExpName,"Untitled"))			//different platform or new experiment. 
 		IR2C_ReadIrenaGUIPackagePrefs()
-//			IR2C_ConfigMain()  
-//			STRUCT WMButtonAction   ba
-//			ba.eventCode = 2
-//			ba.ctrlName="DefaultValues"
-//			IR2C_KillPrefsButtonProc(ba)
-//			Platform = CurPlatform  
-//			ba.eventCode = 2
-//			ba.ctrlName="OKBUtton" 
-//			IR2C_KillPrefsButtonProc(ba) 
-//			if(STRLEN(oldPlatform)>0)
-//				print "****   Detected that this experiment moved from : "+oldPlatform+"; to current platform : "+CurPlatform
-//				print "therefore I have reset the GUI fonts on the current plaform" 
-//			else
-//				print "****   Could not detect prior plaform for this experiment, or it is new experiment. Set default GUI fonts for current platform : "+CurPlatform
-//			endif
-//		else
-//				print "****   This is new experiment. Restored GUI choices stored on cuyrrent computer ****** "
 	endif
 end
 
@@ -480,11 +463,11 @@ Function IR1_PanelResizePanelSize(s)
 			FontName="_IgorSmall"
 		endif
 		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		//DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		//DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		//DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		//DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		variable i, j
 		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
 		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
@@ -590,23 +573,23 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-//***********************************************************
-//***********************************************************
-structure IrenaPanelDefaults
-	uint32 version					// Preferences structure version number. 100 means 1.00.
-	uchar LegendFontType[50]		//50 characters for legend font name
-	uchar PanelFontType[50]		//50 characters for panel font name
-	uint32 defaultFontSize			//font size as integer
-	uint32 LegendSize				//font size as integer
-	uint32 TagSize					//font size as integer
-	uint32 AxisLabelSize			//font size as integer
-	int16 LegendUseFolderName		//font size as integer
-	int16 LegendUseWaveName		//font size as integer
-	variable LastUpdateCheck
-	uint32 reserved[100]			// Reserved for future use
-	
-endstructure
-
+////***********************************************************
+////***********************************************************
+//structure IrenaPanelDefaults
+//	uint32 version					// Preferences structure version number. 100 means 1.00.
+//	uchar LegendFontType[50]		//50 characters for legend font name
+//	uchar PanelFontType[50]		//50 characters for panel font name
+//	uint32 defaultFontSize			//font size as integer
+//	uint32 LegendSize				//font size as integer
+//	uint32 TagSize					//font size as integer
+//	uint32 AxisLabelSize			//font size as integer
+//	int16 LegendUseFolderName		//font size as integer
+//	int16 LegendUseWaveName		//font size as integer
+//	variable LastUpdateCheck
+//	uint32 reserved[100]			// Reserved for future use
+//	
+//endstructure
+//
 //***********************************************************
 //***********************************************************
 //***********************************************************

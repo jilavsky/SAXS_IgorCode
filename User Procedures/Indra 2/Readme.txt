@@ -8,6 +8,9 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+1.88 
+Added panel scaling on most large panels
+
 1.87 2/1/2016
 Igor 7 beta update
 

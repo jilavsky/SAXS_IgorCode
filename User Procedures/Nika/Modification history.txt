@@ -3,7 +3,8 @@ Code modification history
 
 -latest stuff first
 ********************************************
-1.73É.
+1.73
+Added Panel scaling to most large panels
 Modified USAXS/SAXS/WAXS configurator for Pilatus 200kw and use of empty background subtraction (with the transmission diode measurement).  
 
 

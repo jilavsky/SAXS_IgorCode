@@ -75,6 +75,9 @@ Menu "USAXS"
 	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
 
 	"Xtal position calc", IN2Y_GapCalculations()
+	help={"Crystal position callculator for beamline staff."}
+	"Configure GUI fonts", IN3_ConfigureGUIfonts()
+	help={"Crystal position callculator for beamline staff."}
 	
 //	"Import X23 Data", IN2I_ImportX23Data()		//code commented out since no one was using it... 
 //	"---"
@@ -155,7 +158,26 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 //	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
 	
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
+	IN3_CheckPlatformGUIFonts()
 end
+//****************************************************************************************
+//**************************************************************************************
+static Function IN3_CheckPlatformGUIFonts()
+
+	SVAR/Z Platform = root:Packages:Irena_Platform
+	if(!SVAR_Exists(Platform))
+		string/g root:Packages:Irena_Platform
+		SVAR Platform = root:Packages:Irena_Platform
+		Platform = ""
+	endif
+	string oldPlatform = Platform
+	string CurPlatform = IgorInfo(2)
+	string CurExpName=IgorInfo(1)
+	if(!stringMatch(Platform, CurPlatform) || stringMatch(CurExpName,"Untitled"))			//different platform or new experiment. 
+		IN3_ReadIrenaGUIPackagePrefs()
+	endif
+end
+
 //****************************************************************************************
 //****************************************************************************************
 //****************************************************************************************
@@ -280,21 +302,18 @@ Function IN3_PanelResizePanelSize(s)
 			horScale = curWidth/OriginalWidth
 		endif
 		variable scale= min(horScale, verScale )
-#if(exists("IR2C_LkUpDfltVar")==6)		//Irena loaded
+		string FontName = IN3_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
+		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
+		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
+		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
+			FontName="_IgorSmall"
+		endif
 		//this needs to be fixed and will be more difficult. 
-		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-#else
-		DefaultGUIFont /W=$(s.winName) button= {"", ceil(scale*12), 0 } 
-		DefaultGUIFont /W=$(s.winName) checkbox= {"", ceil(scale*12), 0 } 
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {"", ceil(scale*12), 0 } 
-		DefaultGUIFont /W=$(s.winName) popup= {"", ceil(scale*12), 0 } 
-		DefaultGUIFont /W=$(s.winName) all= {"", ceil(scale*12), 0 } 
-#endif
+		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
 		string controlslist = ControlNameList(s.winName, ";")
 		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
 		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
@@ -322,7 +341,8 @@ Function IN3_PanelResizePanelSize(s)
 		endfor
 
 	endif
-end//***********************************************************
+end
+//***********************************************************
 //***********************************************************
 //***********************************************************
 
