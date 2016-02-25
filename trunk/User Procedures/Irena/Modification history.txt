@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 2.60 
+Added Panel scaling to most large panels
 Modified GUI package preferences handling. It was reseting the GUI choices, wrong logic. 
 Data merging tool - fix problem with liberal names.
 

@@ -68,6 +68,314 @@ Function IN3_USAXSDataRedCheckVersion()
 end
 //************************************************************************************************************
 //************************************************************************************************************
+///////////////////////////////////////////
+//****************************************************************************************
+//		Default variables and strings
+//
+//	these are known at this time:
+//		Variables=LegendSize;TagSize;AxisLabelSize;
+//		Strings=FontType;
+//
+//	how to use:
+// 	When needed insert font size through lookup function - e.g., IR2C_LkUpDfltVar("LegendSize")
+//	or for font type IR2C_LkUpDfltStr("FontType")
+//	NOTE: Both return string values, because that is what is generally needed!!!!
+// further variables and strings can be added, but need to be added to control panel too...
+//	see example in : IR1_LogLogPlotU()  in this procedure file... 
+//***********************************************************
+//***********************************************************
+Function IN3_ConfigureGUIfonts()
+#if(Exists("IR2C_ConfigMain")==6)
+	IR2C_ConfigMain()
+#else
+	DoAlert /T="How to configreu GUI fonts" 1, "This needs to load Irena package where thee function  is, do you have it install and want to continue?"
+	if(V_Flag==2)		//cancel
+		abort
+	endif 
+	Execute/P("LoadIrenaSASMacros()")
+	Execute/P("IR2C_ConfigMain()")
+#endif
+end
+
+Function/S IN3_LkUpDfltStr(StrName)
+	string StrName
+
+	string result
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:
+	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
+		IN3_InitConfigMain()
+	endif
+	SetDataFolder root:Packages
+	setDataFolder root:Packages:IrenaConfigFolder
+	SVAR /Z curString = $(StrName)
+	if(!SVAR_exists(curString))
+		IN3_InitConfigMain()
+		SVAR curString = $(StrName)
+	endif	
+	result = 	"'"+curString+"'"
+	setDataFolder OldDf
+	return result
+end
+//***********************************************************
+//***********************************************************
+
+Function/S IN3_LkUpDfltVar(VarName)
+	string VarName
+
+	string result
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:
+	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
+		IN3_InitConfigMain()
+	endif
+	SetDataFolder root:Packages
+	setDataFolder root:Packages:IrenaConfigFolder
+	NVAR /Z curVariable = $(VarName)
+	if(!NVAR_exists(curVariable))
+		IN3_InitConfigMain()
+		NVAR curVariable = $(VarName)
+	endif	
+	if(curVariable>=10)
+		result = num2str(curVariable)
+	else
+		result = "0"+num2str(curVariable)
+	endif
+	setDataFolder OldDf
+	return result
+end
+//***********************************************************
+//***********************************************************
+
+Function IN3_InitConfigMain()
+
+	//initialize lookup parameters for user selected items.
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:IrenaConfigFolder
+	
+	string ListOfVariables
+	string ListOfStrings
+	//here define the lists of variables and strings needed, separate names by ;...
+	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
+	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
+	variable i
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+										
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+	//Now set default values
+	String VariablesDefaultValues
+	String StringsDefaultValues
+	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+		VariablesDefaultValues="LegendSize:8;TagSize:8;AxisLabelSize:8;LegendUseFolderName:0;LegendUseWaveName:0;"
+	else
+		VariablesDefaultValues="LegendSize:10;TagSize:10;AxisLabelSize:10;LegendUseFolderName:0;LegendUseWaveName:0;"
+	endif
+	StringsDefaultValues="FontType:"+StringFromList(0, IN3_CreateUsefulFontList() ) +";"
+
+	variable CurVarVal
+	string CurVar, CurStr, CurStrVal
+	For(i=0;i<ItemsInList(VariablesDefaultValues);i+=1)
+		CurVar = StringFromList(0,StringFromList(i, VariablesDefaultValues),":")
+		CurVarVal = numberByKey(CurVar, VariablesDefaultValues)
+		NVAR temp=$(CurVar)
+		if(temp==0)
+			temp = CurVarVal
+		endif
+	endfor
+	For(i=0;i<ItemsInList(StringsDefaultValues);i+=1)
+		CurStr = StringFromList(0,StringFromList(i, StringsDefaultValues),":")
+		CurStrVal = stringByKey(CurStr, StringsDefaultValues)
+		SVAR tempS=$(CurStr)
+		if(strlen(tempS)<1)
+			tempS = CurStrVal
+		endif
+	endfor
+	
+	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
+	ListOfKnownFontTypes=IN3_CreateUsefulFontList()
+	setDataFolder OldDf
+end
+//***********************************************************
+//***********************************************************
+
+Function IN3_ReadIrenaGUIPackagePrefs()
+
+	struct  IrenaPanelDefaults Defs
+	IN3_InitConfigMain()
+	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+	if(V_Flag==0)		
+		//print Defs
+		//print "Read Irena Panels and graphs preferences from local machine and applied them. "
+		//print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+		//print "To change them please use \"Configure default fonts and names\""
+		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
+			DefaultFontType=Defs.PanelFontType
+			DefaultFontSize = Defs.defaultFontSize
+			LastUpdateCheck = Defs.LastUpdateCheck
+			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+			else
+				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+			endif
+			//and now recover the stored other parameters, no action on these...
+			 LegendSize=Defs.LegendSize
+			 TagSize=Defs.TagSize
+			 AxisLabelSize=Defs.AxisLabelSize
+			 LegendUseFolderName=Defs.LegendUseFolderName
+			 LegendUseWaveName=Defs.LegendUseWaveName
+			 FontType=Defs.LegendFontType
+		else
+			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
+			if(V_Flag==1)
+				Execute("IN3_MainConfigPanel() ")
+			else
+			//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
+			endif
+		endif
+	else 		//problem loading package defaults
+		Struct WMButtonAction ba
+		ba.ctrlName="DefaultValues"
+		IN3_KillPrefsButtonProc(ba)
+		DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
+		if(V_Flag==1)
+			Execute("IN3_MainConfigPanel() ")
+		endif	
+	endif
+end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN3_KillPrefsButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringmatch(ba.ctrlName,"OKBUtton"))
+				DoWIndow/K IR2C_MainConfigPanel
+			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
+				string defFnt
+				variable defFntSize
+				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+					defFnt=stringFromList(0,IN3_CreateUsefulFontList())
+					defFntSize=12
+				else
+					defFnt="Geneva"
+					defFntSize=9
+				endif
+				SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
+				SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+				DefaultFontType = defFnt
+				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+				DefaultFontSize = defFntSize
+				IN3_ChangePanelControlsStyle()
+				IN3_SaveIrenaGUIPackagePrefs(0)
+				PopupMenu DefaultFontType,win=IR2C_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
+				PopupMenu DefaultFontSize,win=IR2C_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+			endif
+			break
+	endswitch
+	return 0
+End
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN3_SaveIrenaGUIPackagePrefs(KillThem)
+	variable KillThem
+	
+	struct  IrenaPanelDefaults Defs
+	IN3_InitConfigMain()
+	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+
+	Defs.Version			=		2
+	Defs.PanelFontType	 	= 		DefaultFontType
+	Defs.defaultFontSize 	= 		DefaultFontSize 
+	Defs.LegendSize 		= 		LegendSize
+	Defs.TagSize 			= 		TagSize
+	Defs.AxisLabelSize 		= 		AxisLabelSize
+	Defs.LegendUseFolderName = 	LegendUseFolderName
+	Defs.LegendUseWaveName = 	LegendUseWaveName
+	Defs.LegendFontType	= 		FontType
+	Defs.LastUpdateCheck	=		LastUpdateCheck
+	
+	if(KillThem)
+		SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
+	//	IR2C_ReadIrenaGUIPackagePrefs()
+	else
+		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+	endif
+end
+//***********************************************************
+//***********************************************************
+
+Function IN3_ChangePanelControlsStyle()
+
+	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+
+	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+		DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+	else
+		DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+	endif
+
+end
+
+//***********************************************************
+//***********************************************************
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+Function/S IN3_CreateUsefulFontList()
+
+	string SystemFontList=FontList(";")
+	string PreferredFontList="Tahoma;Times;Arial$;Geneva;Palatino;Book Antiqua;"
+	PreferredFontList+="Courier;Vardana;Monaco;Courier CE;System;Verdana;"
+	
+	variable i
+	string UsefulList="", tempList=""
+	For(i=0;i<ItemsInList(PreferredFontList);i+=1)
+		tempList=GrepList(SystemFontList, stringFromList(i,PreferredFontList)) 
+		if(strlen(tempList)>0)
+			UsefulList+=tempList+";"
+		endif
+	endfor
+	return UsefulList
+end
+
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //*****************************************************************************************************************
@@ -243,9 +551,9 @@ Function IN3_MainPanel()
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
 	PopupMenu SelectBlankFolder, disable = IsBlank
 	
-	Button ProcessData,pos={10,110},size={90,20},font="Times New Roman",proc=IN3_InputPanelButtonProc,title="Load and process", help={"Load data and process them"}
-	Button SelectNextSampleAndProcess,pos={110,110},size={120,20},font="Times New Roman",proc=IN3_InputPanelButtonProc,title="Load Process Save next", help={"Select next sample in order - process - and save"}
-	Button SaveResults,pos={240,110},size={120,20},font="Times New Roman",proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
+	Button ProcessData,pos={10,110},size={90,20},proc=IN3_InputPanelButtonProc,title="Load and process", help={"Load data and process them"}
+	Button SelectNextSampleAndProcess,pos={110,110},size={120,20},proc=IN3_InputPanelButtonProc,title="Load Process Save next", help={"Select next sample in order - process - and save"}
+	Button SaveResults,pos={240,110},size={120,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
 	NVAR UserSavedData=root:Packages:Indra3:UserSavedData
 	if(!UserSavedData)
 		Button SaveResults fColor=(65280,0,0)
@@ -288,92 +596,92 @@ Function IN3_MainPanel()
 	CheckBox CalculateWeight,pos={220,252},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Weight", disable=CalibrateToVolume
 	CheckBox CalculateWeight,variable= root:Packages:Indra3:CalculateWeight, help={"Check, if you want to calculate sample weight from transmission"}
 
-	SetVariable SampleThickness,pos={5,285},size={280,22},title="Sample Thickness [mm] =", bodyWidth=100
-	SetVariable SampleThickness,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable SampleThickness,pos={5,285},size={280,22},title="\Zr120Sample Thickness [mm] =", bodyWidth=100
+	SetVariable SampleThickness ,proc=IN3_ParametersChanged
 	SetVariable SampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness||CalculateWeight)//, frame=!(CalculateThickness&&CalculateWeight)
 
-	Button RecoverDefault,pos={290,283},size={80,20},font="Times New Roman",proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
+	Button RecoverDefault,pos={290,283},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
 
-	SetVariable SampleTransmission,pos={5,335},size={280,22},title="Sample Transmission ="
-	SetVariable SampleTransmission,font="Times New Roman",bodyWidth=100, proc=IN3_ParametersChanged
+	SetVariable SampleTransmission,pos={5,335},size={280,22},title="\Zr120Sample Transmission ="
+	SetVariable SampleTransmission ,bodyWidth=100, proc=IN3_ParametersChanged
 	SetVariable SampleTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmission, noedit=0, frame=0
 
-	SetVariable SampleLinAbsorption,pos={5,360},size={280,22},title="Sample absorp. coef [1/cm] ="
-	SetVariable SampleLinAbsorption,font="Times New Roman",proc=IN3_ParametersChanged, bodyWidth=100
+	SetVariable SampleLinAbsorption,pos={5,360},size={280,22},title="\Zr120Sample absorp. coef [1/cm] ="
+	SetVariable SampleLinAbsorption ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleLinAbsorption,limits={0,Inf,0},variable= root:Packages:Indra3:SampleLinAbsorption, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable SampleDensity,pos={5,385},size={280,22},title="Sample density [g/cm3] ="
-	SetVariable SampleDensity,font="Times New Roman",proc=IN3_ParametersChanged, bodyWidth=100
+	SetVariable SampleDensity,pos={5,385},size={280,22},title="\Zr120Sample density [g/cm3] ="
+	SetVariable SampleDensity ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleDensity,limits={0,Inf,0},variable= root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
 
-	SetVariable SampleWeightInBeam,pos={5,410},size={300,22},title="Sample weight [g/cm2 bm area] ="
-	SetVariable SampleWeightInBeam,font="Times New Roman",proc=IN3_ParametersChanged, bodyWidth=100
+	SetVariable SampleWeightInBeam,pos={5,410},size={300,22},title="\Zr120Sample weight [g/cm2 bm area] ="
+	SetVariable SampleWeightInBeam ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleWeightInBeam,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
 
-	SetVariable SampleFilledFraction,pos={5,410},size={280,22},title="Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
-	SetVariable SampleFilledFraction,font="Times New Roman",proc=IN3_ParametersChanged, bodyWidth=100
+	SetVariable SampleFilledFraction,pos={5,410},size={280,22},title="\Zr120Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
+	SetVariable SampleFilledFraction ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleFilledFraction,limits={0,Inf,0},variable= root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable USAXSPinTvalue,pos={5,435},size={280,22},title="pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
-	SetVariable USAXSPinTvalue,font="Times New Roman", bodyWidth=100
+	SetVariable USAXSPinTvalue,pos={5,435},size={280,22},title="\Zr120pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
+	SetVariable USAXSPinTvalue , bodyWidth=100
 	SetVariable USAXSPinTvalue,limits={0,1,0},variable= root:Packages:Indra3:USAXSPinTvalue, noedit=1, frame=CalculateWeight
 
 	CheckBox UsePinTransmission,pos={290,437},size={90,14},proc=IN3_MainPanelCheckBox,title="Use?"//, disable=CalibrateToVolume
 	CheckBox UsePinTransmission,variable= root:Packages:Indra3:UsePinTransmission, help={"Use pin diode trnamission (if exists)"}
 
-	SetVariable PeakToPeakTransmission,pos={5,455},size={300,22},title="Peak-to-Peak T =", frame=0, noedit=1
-	SetVariable PeakToPeakTransmission,font="Times New Roman", bodyWidth=100
+	SetVariable PeakToPeakTransmission,pos={5,455},size={300,22},title="\Zr120Peak-to-Peak T =", frame=0, noedit=1
+	SetVariable PeakToPeakTransmission, bodyWidth=100
 	SetVariable PeakToPeakTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmissionPeakToPeak
 	SetVariable MSAXSCorrectionT0,pos={5,475},size={300,22},title="MSAXS/pinSAXS Cor =", frame=0, noedit=1
-	SetVariable MSAXSCorrectionT0,font="Times New Roman", bodyWidth=100
+	SetVariable MSAXSCorrectionT0 , bodyWidth=100
 	SetVariable MSAXSCorrectionT0,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
 
-	SetVariable FlyScanRebinToPoints,pos={5,495},size={300,22},title="FlyScan rebin to ="
-	SetVariable FlyScanRebinToPoints,font="Times New Roman",bodyWidth=100, proc=IN3_ParametersChanged
+	SetVariable FlyScanRebinToPoints,pos={5,495},size={300,22},title="\Zr120FlyScan rebin to ="
+	SetVariable FlyScanRebinToPoints ,bodyWidth=100, proc=IN3_ParametersChanged
 	SetVariable FlyScanRebinToPoints,limits={0,Inf,0},variable= root:Packages:Indra3:FlyScanRebinToPoints
 
 	//tab 2 - geometry controls
 
 	SetVariable SpecCommand,pos={8,230},size={370,22},disable=2,title="Command:"
-	SetVariable SpecCommand,font="Times New Roman", frame=0,fstyle=1
+	SetVariable SpecCommand , frame=0,fstyle=1
 	SetVariable SpecCommand,limits={0,Inf,0},variable= root:Packages:Indra3:SpecCommand
 
 	SetVariable PhotoDiodeSize,pos={8,250},size={250,22},title="PD size [mm] ="
-	SetVariable PhotoDiodeSize,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable PhotoDiodeSize ,proc=IN3_ParametersChanged
 	SetVariable PhotoDiodeSize,limits={0,Inf,0},variable= root:Packages:Indra3:PhotoDiodeSize
 	SetVariable Wavelength,pos={8,275},size={250,22},title="Wavelength [A] ="
-	SetVariable Wavelength,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable Wavelength ,proc=IN3_ParametersChanged
 	SetVariable Wavelength,limits={0,Inf,0},variable= root:Packages:Indra3:Wavelength
 	SetVariable SDDistance,pos={8,300},size={250,22},title="SD distance [mm] ="
-	SetVariable SDDistance,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable SDDistance ,proc=IN3_ParametersChanged
 	SetVariable SDDistance,limits={0,Inf,0},variable= root:Packages:Indra3:SDDistance
 
 	SetVariable SlitLength,pos={8,325},size={250,22},title="Slit Length [A^-1] =", frame=0, disable=2
-	SetVariable SlitLength,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable SlitLength ,proc=IN3_ParametersChanged
 	SetVariable SlitLength,limits={0,Inf,0},variable= root:Packages:Indra3:SlitLength
 	SetVariable NumberOfSteps,pos={8,350},size={250,22},title="Number of steps =", disable=2, frame=0
-	SetVariable NumberOfSteps,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable NumberOfSteps ,proc=IN3_ParametersChanged
 	SetVariable NumberOfSteps,limits={0,Inf,0},variable= root:Packages:Indra3:NumberOfSteps
 
 
 	//tab 1 Diode controls
 	SetVariable VtoF,pos={29,230},size={200,22},proc=IN3_UPDParametersChanged,title="UPD V to f factor :"
-	SetVariable VtoF,font="Times New Roman",format="%3.1e"
+	SetVariable VtoF ,format="%3.1e"
 	SetVariable VtoF,limits={0,Inf,0},value= root:Packages:Indra3:UPD_Vfc
 	SetVariable Gain1,pos={29,255},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 1 :"
-	SetVariable Gain1,font="Times New Roman",format="%3.1e",labelBack=(65280,0,0) 
+	SetVariable Gain1 ,format="%3.1e",labelBack=(65280,0,0) 
 	SetVariable Gain1,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G1
 	SetVariable Gain2,pos={29,280},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
-	SetVariable Gain2,font="Times New Roman",format="%3.1e",labelBack=(0,52224,0)
+	SetVariable Gain2 ,format="%3.1e",labelBack=(0,52224,0)
 	SetVariable Gain2,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G2
 	SetVariable Gain3,pos={29,305},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
-	SetVariable Gain3,font="Times New Roman",format="%3.1e",labelBack=(0,0,65280)
+	SetVariable Gain3 ,format="%3.1e",labelBack=(0,0,65280)
 	SetVariable Gain3,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G3
 	SetVariable Gain4,pos={29,330},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
-	SetVariable Gain4,font="Times New Roman",format="%3.1e",labelBack=(65280,35512,15384)
+	SetVariable Gain4 ,format="%3.1e",labelBack=(65280,35512,15384)
 	SetVariable Gain4,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G4
 	SetVariable Gain5,pos={29,355},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
-	SetVariable Gain5,font="Times New Roman",format="%3.1e",labelBack=(29696,4096,44800)
+	SetVariable Gain5 ,format="%3.1e",labelBack=(29696,4096,44800)
 	SetVariable Gain5,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G5
 	NVAR UPD_DK1Err=root:packages:Indra3:UPD_DK1Err
 	NVAR UPD_DK2Err=root:packages:Indra3:UPD_DK2Err
@@ -381,64 +689,61 @@ Function IN3_MainPanel()
 	NVAR UPD_DK4Err=root:packages:Indra3:UPD_DK4Err
 	NVAR UPD_DK5Err=root:packages:Indra3:UPD_DK5Err
 	SetVariable Bkg1,pos={20,380},size={200,18},proc=IN3_UPDParametersChanged,title="Background 1"
-	SetVariable Bkg1,font="Times New Roman",format="%g", labelBack=(65280,0,0)
+	SetVariable Bkg1 ,format="%g", labelBack=(65280,0,0)
 	SetVariable Bkg1,limits={0,Inf,UPD_DK1Err},value= root:Packages:Indra3:UPD_DK1
 	SetVariable Bkg2,pos={20,405},size={200,18},proc=IN3_UPDParametersChanged,title="Background 2"
-	SetVariable Bkg2,font="Times New Roman",format="%g",labelBack=(0,52224,0)
+	SetVariable Bkg2 ,format="%g",labelBack=(0,52224,0)
 	SetVariable Bkg2,limits={0,Inf,UPD_DK2Err},value= root:Packages:Indra3:UPD_DK2
 	SetVariable Bkg3,pos={20, 430},size={200,18},proc=IN3_UPDParametersChanged,title="Background 3"
-	SetVariable Bkg3,font="Times New Roman",format="%g",labelBack=(0,0,65280)
+	SetVariable Bkg3 ,format="%g",labelBack=(0,0,65280)
 	SetVariable Bkg3,limits={0,Inf,UPD_DK3Err},value= root:Packages:Indra3:UPD_DK3
 	SetVariable Bkg4,pos={20,455},size={200,18},proc=IN3_UPDParametersChanged,title="Background 4"
-	SetVariable Bkg4,font="Times New Roman",format="%g",labelBack=(65280,35512,15384)
+	SetVariable Bkg4 ,format="%g",labelBack=(65280,35512,15384)
 	SetVariable Bkg4,limits={0,Inf,UPD_DK4Err},value= root:Packages:Indra3:UPD_DK4
 	SetVariable Bkg5,pos={20,480},size={200,18},proc=IN3_UPDParametersChanged,title="Background 5"
-	SetVariable Bkg5,font="Times New Roman",format="%g",labelBack=(29696,4096,44800)
+	SetVariable Bkg5 ,format="%g",labelBack=(29696,4096,44800)
 	SetVariable Bkg5,limits={0,Inf,UPD_DK5Err},value= root:Packages:Indra3:UPD_DK5
 	SetVariable Bkg1Err,pos={225,380},size={90,18},title="Err"
-	SetVariable Bkg1Err,font="Times New Roman",format="%2.2g", labelBack=(65280,0,0)
+	SetVariable Bkg1Err ,format="%2.2g", labelBack=(65280,0,0)
 	SetVariable Bkg1Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK1Err,noedit=1
 	SetVariable Bkg2Err,pos={225,405},size={90,18},title="Err"
-	SetVariable Bkg2Err,font="Times New Roman",format="%2.2g", labelBack=(0,52224,0)
+	SetVariable Bkg2Err ,format="%2.2g", labelBack=(0,52224,0)
 	SetVariable Bkg2Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK2Err,noedit=1
 	SetVariable Bkg3Err,pos={225,430},size={90,18},title="Err"
-	SetVariable Bkg3Err,font="Times New Roman",format="%2.2g", labelBack=(0,0,65280)
+	SetVariable Bkg3Err ,format="%2.2g", labelBack=(0,0,65280)
 	SetVariable Bkg3Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK3Err,noedit=1
 	SetVariable Bkg4Err,pos={225,455},size={90,18},title="Err"
-	SetVariable Bkg4Err,font="Times New Roman",format="%2.2g", labelBack=(65280,35512,15384)
+	SetVariable Bkg4Err ,format="%2.2g", labelBack=(65280,35512,15384)
 	SetVariable Bkg4Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK4Err,noedit=1
 	SetVariable Bkg5Err,pos={225,480},size={90,18},title="Err"
-	SetVariable Bkg5Err,font="Times New Roman",format="%2.2g", labelBack=(29696,4096,44800)
+	SetVariable Bkg5Err ,format="%2.2g", labelBack=(29696,4096,44800)
 	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK5Err,noedit=1
 	SetVariable Bkg5Overwrite,pos={20,500},size={300,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
-	SetVariable Bkg5Overwrite,font="Times New Roman",format="%g"
+	SetVariable Bkg5Overwrite ,format="%g"
 	SetVariable Bkg5Overwrite,limits={0,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
 
 //calibration stuff...
 	SetVariable MaximumIntensity,pos={8,230},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2
-	SetVariable MaximumIntensity,font="Times New Roman"
 	SetVariable MaximumIntensity,limits={0,Inf,0},variable= root:Packages:Indra3:MaximumIntensity
 	SetVariable PeakWidth,pos={8,250},size={300,22},title="Sample Peak Width [deg]=", frame=0, disable=2
-	SetVariable PeakWidth,font="Times New Roman"
 	SetVariable PeakWidth,limits={0,Inf,0},variable= root:Packages:Indra3:PeakWidth
 	SetVariable PeakWidthArcSec,pos={8,270},size={300,22},title="Sample Peak Width [arc sec]=", frame=0, disable=2
-	SetVariable PeakWidthArcSec,font="Times New Roman"
 	SetVariable PeakWidthArcSec,limits={0,Inf,0},variable= root:Packages:Indra3:PeakWidthArcSec
 
 	SetVariable BlankMaximum,pos={8,300},size={300,22},title="Blank Maximum Intensity =  ", frame=1
-	SetVariable BlankMaximum,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable BlankMaximum ,proc=IN3_ParametersChanged
 	SetVariable BlankMaximum,limits={0,Inf,0},variable= root:Packages:Indra3:BlankMaximum
 	SetVariable BlankWidth,pos={8,320},size={300,22},title="Blank Peak Width [deg] =    ", frame=1
-	SetVariable BlankWidth,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable BlankWidth ,proc=IN3_ParametersChanged
 	SetVariable BlankWidth,limits={0,Inf,0},variable= root:Packages:Indra3:BlankFWHM
 	SetVariable BlankWidthArcSec,pos={8,340},size={300,22},title="Blank Peak Width [arc sec]=", frame=1
-	SetVariable BlankWidthArcSec,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable BlankWidthArcSec ,proc=IN3_ParametersChanged
 	SetVariable BlankWidthArcSec,limits={0,Inf,0},variable= root:Packages:Indra3:BlankWidth
 
-	Button RecoverDefaultBlnkVals,pos={200,370},size={80,20},font="Times New Roman",proc=IN3_InputPanelButtonProc,title="Spec values", help={"Reload original value from spec record"}
+	Button RecoverDefaultBlnkVals,pos={200,370},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec values", help={"Reload original value from spec record"}
 
 	SetVariable SubtractFlatBackground,pos={8,420},size={300,22},title="Subtract Flat background=", frame=1
-	SetVariable SubtractFlatBackground,font="Times New Roman",proc=IN3_ParametersChanged
+	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
 	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
 	
 
@@ -467,7 +772,7 @@ Function IN3_MainPanel()
 
 	
 	Button Recalculate,pos={50,615},size={120,20},proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
-	Button RemovePoint,pos={250,615},size={120,20},proc=IN3_InputPanelButtonProc,title="Remove point with csr A", help={"Remove point with cursor A"}
+	Button RemovePoint,pos={200,615},size={170,20},proc=IN3_InputPanelButtonProc,title="Remove point with csr A", help={"Remove point with cursor A"}
 end
 
 

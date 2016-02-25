@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.82
+#pragma version = 1.83
 
 
 //control constants
@@ -10,6 +10,7 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.83 moved structure IrenaPanelDefaults from Irena since it is shared...GUI controls. 
 //1.82 added IN2G_CloneWindow function
 //1.81 added IN2G_PrintDebugStatement, fixed some unresolved dependencies. 
 //1.80 added conversions between TTH, Q, and D in form of following functions: IN2G_COnvertQtoD etc. All take Thing to convert (e.g. Q) and wavelength (for uniformity, not used for Q-D). 
@@ -373,6 +374,24 @@ Menu "GraphMarquee"
        "Clone this window with data", IN2G_CloneWindow()
 End
 
+
+
+//***********************************************************
+//***********************************************************
+structure IrenaPanelDefaults
+	uint32 version					// Preferences structure version number. 100 means 1.00.
+	uchar LegendFontType[50]		//50 characters for legend font name
+	uchar PanelFontType[50]		//50 characters for panel font name
+	uint32 defaultFontSize			//font size as integer
+	uint32 LegendSize				//font size as integer
+	uint32 TagSize					//font size as integer
+	uint32 AxisLabelSize			//font size as integer
+	int16 LegendUseFolderName		//font size as integer
+	int16 LegendUseWaveName		//font size as integer
+	variable LastUpdateCheck
+	uint32 reserved[100]			// Reserved for future use
+	
+endstructure
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
