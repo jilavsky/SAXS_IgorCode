@@ -463,11 +463,11 @@ Function IR1_PanelResizePanelSize(s)
 			FontName="_IgorSmall"
 		endif
 		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
 		variable i, j
 		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
 		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
