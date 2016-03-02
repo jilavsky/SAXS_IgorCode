@@ -381,7 +381,8 @@ Function IN3_FlyScanLoadHdf5File()
 		//		KillWindow $(browserName)
 				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
 				string TempStrName=PossiblyQuoteName(shortFileName)
-				if(DataFolderExists(TempStrName))		//Name exists and folder is fine... 
+				string UnquotedTempStrName=shortFileName
+				if(DataFolderExists(UnquotedTempStrName))		//Name exists and folder is fine... 
 					RawFolderWithData = GetDataFOlder(1)+TempStrName
 					RawFolderWithFldr = GetDataFolder(1)
 				else		//something failed. Expect too long name
@@ -424,7 +425,7 @@ Function IN3_FlyScanLoadHdf5File()
 						Abort 
 					endif
 				else
-					MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+					MoveDataFolder $(UnquotedTempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
 				endif
 				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
 				print "Imported HDF5 file : "+RawFolderWithData
@@ -439,7 +440,7 @@ Function IN3_FlyScanLoadHdf5File()
 					print "Converted : "+RawFolderWithData+" into USAXS data"
 					if(IN3_DeleteRawData)
 						KillDataFOlder RawFolderWithData
-						print "Deleted RAW folder : "+ RawFolderWithData +" - not necessary and takes too much space in files" 
+						//print "Deleted RAW folder : "+ RawFolderWithData +" - not necessary and takes too much space in files" 
 					endif
 				endif
 			else
