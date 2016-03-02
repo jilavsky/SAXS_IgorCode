@@ -10,6 +10,8 @@ Revision history:
 ______________________________________________________________________________________
 1.88 
 Added panel scaling on most large panels
+Fixed bug for names which were liberal - e.g. with decimal point in name. Was failing to load them
+
 
 1.87 2/1/2016
 Igor 7 beta update
