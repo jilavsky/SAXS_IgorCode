@@ -141,7 +141,8 @@ Function NI1_PanelAppendSizeRecordNote(panelName)
 	string PanelRecord=""
 	//find size of the panel
 	GetWindow $panelName wsize 
-	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"
+	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
 	GetWindow $panelName, note
 	string ExistingNote=S_Value
 	string controlslist = ControlNameList("", ";")
@@ -170,7 +171,8 @@ Function NI1_PanelResizePanelSize(s)
 		//	IR1_PanelAppendSizeRecordNote()
 		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
 		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
-	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
+		//print s.eventCode
+	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel
 		GetWindow $(s.winName), note
 		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
 		string OrigInfo=S_Value
