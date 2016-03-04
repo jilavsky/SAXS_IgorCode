@@ -15,7 +15,7 @@ Function/S IrenaMacrosMenuItem(itemNumber)
 			if(SVAR_Exists(SASItem1Str))
 				return SASItem1Str
 			else
-				return "Load Irena SAS Macros"	
+				return "Load Irena SAS macros"	
 			endif
 	endif
 
@@ -26,17 +26,17 @@ Function/S IrenaMacrosMenuItem(itemNumber)
 				if(StringMatch(SASItem1Str, "---" ))
 					return "---"
 				else
-					return "Load Nika And Irena"
+					return "Load Irena and Nika"
 				endif
 			else
-				return "Load Nika And Irena"	
+				return "Load Irena and Nika"	
 			endif
 		 // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
  	 	endif
 	endif
 end
 
-Proc LoadNikaAndIrena()
+Proc LoadIrenaandNika()
 	LoadIrenaSASMacros()
 	Execute/P("LoadNika2DSASMacros()")
 end

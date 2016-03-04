@@ -10,7 +10,7 @@
 //*************************************************************************/
  
  //1.73 added functions to scale panels to larger sizes.
- //1.72 changed check for update procedure to check http first, tehn ftp, and the fail. 
+ //1.72 changed check for update procedure to check http first, then ftp, and the fail. 
  //1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
  //1.70 added multiple geometries manager, removed the warning about the uncertainty method, drive me crazy and no one seems to care enough. 
  //1.69 added some warnings about uncertainty method changes when read from preferences. 
@@ -242,7 +242,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2016"
-	DrawText 49,103,"Release 1.72 from 2/1/2016"
+	DrawText 49,103,"Release 1.73 from 3/5/2016"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 

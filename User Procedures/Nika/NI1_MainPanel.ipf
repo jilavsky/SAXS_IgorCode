@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.45
-Constant NI1AversionNumber = 2.45
+#pragma version=2.46
+Constant NI1AversionNumber = 2.46
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.45
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.46 added Function for creating user custom data names
 //2.45 added Scaling of panels when zoomed. 
 //2.44 added Q smearing controls 
 //2.43 added ability to type in Q distance from center for line profile. Is rounded to nearest full pixel. 
@@ -355,7 +356,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="DoGeometryCorrection;DoPolarizationCorrection;Use2DPolarizationCor;Use1DPolarizationCor;StartAngle2DPolCor;InvertImages;SkipBadFiles;MaxIntForBadFile;"
 	ListOfVariables+="DisplayRaw2DData;DisplayProcessed2DData;TwoDPolarizFract;"
 	//and now the function calls variables
-	ListOfVariables+="UseSampleThicknFnct;UseSampleTransmFnct;UseSampleMonitorFnct;UseSampleCorrectFnct;UseSampleMeasTimeFnct;"
+	ListOfVariables+="UseSampleThicknFnct;UseSampleTransmFnct;UseSampleMonitorFnct;UseSampleCorrectFnct;UseSampleMeasTimeFnct;UseSampleNameFnct;"
 	ListOfVariables+="UseEmptyTimeFnct;UseBackgTimeFnct;UseEmptyMonitorFnct;"
 	ListOfVariables+="ProcessNImagesAtTime;SaveGSASdata;FIlesSortOrder;"
 	//errors control
@@ -380,7 +381,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfStrings+="ConfigurationDataPath;LastLoadedConfigFile;ConfFileUserComment;ConfFileUserName;"
 	ListOfStrings+="TempOutputDataname;TempOutputDatanameUserFor;"
 	ListOfStrings+="Fit2Dlocation;MainPathInfoStr;"
-	ListOfStrings+="SampleThicknFnct;SampleTransmFnct;SampleMonitorFnct;SampleCorrectFnct;SampleMeasTimeFnct;"
+	ListOfStrings+="SampleThicknFnct;SampleTransmFnct;SampleMonitorFnct;SampleCorrectFnct;SampleMeasTimeFnct;SampleNameFnct;"
 	ListOfStrings+="EmptyTimeFnct;BackgTimeFnct;EmptyMonitorFnct;"
 	ListOfStrings+="LineProf_CurveType;LineProf_KnownCurveTypes;RemoveStringFromName;"
 	ListOfStrings+="SampleNameMatchStr;EmptyDarkNameMatchStr;Movie_FileName;Movie_Last1DdataSet;"
@@ -1146,6 +1147,11 @@ Function NI1A_RemoveInfNaNsFrom10Waves(Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8, wv9, wv1
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+Function/S NI1A_UserNameStrProto(my2DWave,FileNameString)
+	wave my2DWave
+	string FileNameString
+	return FileNameString[0,17]
+end
 //*******************************************************************************************************************************************
 Function NI1A_SaveDataPerUserReq(CurOrient)
 	string CurOrient
@@ -1181,7 +1187,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		wave/Z Error=root:Packages:Convert2Dto1D:Error
 		wave/Z Qsmearing=root:Packages:Convert2Dto1D:Qsmearing
 	endif
-	
+	Wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 	SVAR LoadedFile=root:Packages:Convert2Dto1D:FileNameToLoad
 	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
 	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
@@ -1195,6 +1201,9 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	NVAR UseTheta=root:Packages:Convert2Dto1D:UseTheta
 	NVAR UseDspacing=root:Packages:Convert2Dto1D:UseDspacing
 	NVAR UseDistanceFromCenter=root:Packages:Convert2Dto1D:UseDistanceFromCenter
+	NVAR UseSampleNameFnct=root:Packages:Convert2Dto1D:UseSampleNameFnct
+	SVAR functionName = root:Packages:Convert2Dto1D:SampleNameFnct
+	
 	
 	variable ItemsInLst, i
 	string OldNote
@@ -1223,21 +1232,41 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			UseName=NI1A_TrimCleanDataName(LoadedFile)+"_"+CurOrient
 		endif
 	else
-		if(strlen(UserFileName)<1)	//user did not set the file name
-			if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
-				LocalUserFileName = TempOutputDataname
-			else
-				Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
-				DoPrompt /HELP="Input name for the data to be stored, max 20 characters" "Input name for the 1D data", LocalUserFileName
-				if(V_Flag)
-					abort
+		if(UseSampleNameFnct)			//user provided function
+			if(exists(functionName)==6)
+				//	string oldDf1=GetDataFOlder(1)
+				//	setDataFolder root:Packages:Convert2Dto1D
+				//	string/g tempStrName
+				//	Execute("root:Packages:Convert2Dto1D:tempStrName ="+functionName+"(root:Packages:Convert2Dto1D:CCImageToConvert,\""+LoadedFile+"\")")
+				string tempStrName
+				FUNCREF NI1A_UserNameStrProto UserStrNameFnct=$(functionName)
+				tempStrName = UserStrNameFnct(CCDImageToConvert, LoadedFile)
+				if(strlen(tempStrName)<1)		// nothing came back?
+					Abort "Name function returned nothing"
 				endif
-				TempOutputDataname = LocalUserFileName
-				TempOutputDatanameUserFor = LoadedFile
+				UserFileName = tempStrName
+				UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient		
+				//setDataFolder OldDF1
+			else
+				Abort "No valid function returning string for data name was specified. Check the Function name" 
 			endif
-			UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
 		else
-			UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
+			if(strlen(UserFileName)<1)	//user did not set the file name
+				if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
+					LocalUserFileName = TempOutputDataname
+				else
+					Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
+					DoPrompt /HELP="Input name for the data to be stored, max 17 characters" "Input name for the 1D data", LocalUserFileName
+					if(V_Flag)
+						abort
+					endif
+					TempOutputDataname = LocalUserFileName
+					TempOutputDatanameUserFor = LoadedFile
+				endif
+				UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
+			else
+				UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
+			endif
 		endif
 	endif
 	UseName=cleanupName(UseName, 1 )

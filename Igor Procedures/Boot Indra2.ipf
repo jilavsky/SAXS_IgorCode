@@ -62,7 +62,7 @@ Function/S IndraMacrosMenuItem(itemNumber)
 			if(SVAR_Exists(USAXSItem1Str))
 				return USAXSItem1Str
 			else
-				return "Load USAXS Macros"	
+				return "Load USAXS macros"	
 			endif
 	endif
 
@@ -73,10 +73,10 @@ Function/S IndraMacrosMenuItem(itemNumber)
 				if(StringMatch(USAXSItem1Str, "---" ))
 					return "---"
 				else
-					return "Load USAXS And Irena"
+					return "Load USAXS and Irena"
 				endif
 			else
-				return "Load USAXS And Irena"	
+				return "Load USAXS and Irena"	
 			endif
 		 // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
  	 endif
@@ -88,10 +88,10 @@ Function/S IndraMacrosMenuItem(itemNumber)
 				if(StringMatch(USAXSItem1Str, "---" ))
 					return "---"
 				else
-					return "Load USAXS And Irena And Nika"
+					return "Load USAXS, Irena and Nika"
 				endif
 			else
-				return "Load USAXS And Irena And Nika"	
+				return "Load USAXS, Irena and Nika"	
 			endif
 		   // return "StrVarOrDefault(\"root:Packages:USAXSItem1Str\",\"Load USAXS+Irena\"), LoadIndraAndIrena()"
    	 endif
@@ -104,7 +104,7 @@ Proc LoadUSAXSAndIrena()
 	LoadUSAXSMacros()
 	Execute/P("LoadIrenaSASMacros()")
 end
-Proc LoadUSAXSAndIrenaAndNika()
+Proc LoadUSAXSIrenaandNika()
 	LoadUSAXSMacros()
 	Execute/P("LoadIrenaSASMacros()")
 	Execute/P("LoadNika2DSASMacros()")

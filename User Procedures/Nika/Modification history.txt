@@ -3,8 +3,9 @@ Code modification history
 
 -latest stuff first
 ********************************************
-1.73
+1.73 3/5/3016
 Added Panel scaling to most large panels
+Added option to provide string function which will create name for the data to enable fancy renaming of input data. Has help which pops up with example. 
 Modified USAXS/SAXS/WAXS configurator for Pilatus 200kw and use of empty background subtraction (with the transmission diode measurement).  
 
 

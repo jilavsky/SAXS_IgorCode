@@ -2050,9 +2050,9 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	String SmWaveNames=(UseName)
 
 
-	print PinFolder+":"+possiblyQuoteName("q_"+PinWaveNames)
-	print LineProfFolder+":"+possiblyQuoteName("q_"+LineProfWaveNames)
-	print SmearedFolder+":"+possiblyQuoteName("q_"+SmWaveNames)
+	//print PinFolder+":"+possiblyQuoteName("q_"+PinWaveNames)
+	//print LineProfFolder+":"+possiblyQuoteName("q_"+LineProfWaveNames)
+	//print SmearedFolder+":"+possiblyQuoteName("q_"+SmWaveNames)
 	//link to existing waves now...
 	Wave LineProfQ= $(LineProfFolder+":"+possiblyQuoteName("q_"+LineProfWaveNames))
 	Wave LineProfr= $(LineProfFolder+":"+possiblyQuoteName("r_"+LineProfWaveNames))
