@@ -3388,7 +3388,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 	TitleBox MainTitle title="\Zr2002D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox Info1 title="\Zr140Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
-	TitleBox Info2 title="\Zr140Select contiguous range:",pos={5,235},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info2 title="\Zr140Select contiguous range  :",pos={25,235},frame=0,fstyle=2, fixedSize=1,size={150,20}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
@@ -3442,22 +3442,16 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	ListBox Select2DInputWave,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	ListBox Select2DInputWave,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 	ListBox Select2DInputWave,mode= 4, proc=NI1_MainListBoxProc
-	PopupMenu SelectStartOfRange,pos={155,217},size={214,21},proc=NI1A_PopMenuProc,title="Start"
+	PopupMenu SelectStartOfRange,pos={175,220},size={300,20},proc=NI1A_PopMenuProc,title="Start"
 	PopupMenu SelectStartOfRange,help={"Select first 2D data to process"}
 	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
-	PopupMenu SelectEndOfRange,pos={158,240},size={211,21},proc=NI1A_PopMenuProc,title="End"
+	PopupMenu SelectEndOfRange,pos={181,245},size={300,20},proc=NI1A_PopMenuProc,title="End"
 	PopupMenu SelectEndOfRange,help={"Select last 2D data to process"}
 	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
-	PopupMenu DataCalibrationString,pos={275,235},size={211,21},proc=NI1A_PopMenuProc,title="Int. Calibration:"
+	PopupMenu DataCalibrationString,pos={10,255},size={211,18},proc=NI1A_PopMenuProc,title="Int. Calibration:"
 	PopupMenu DataCalibrationString,help={"Select data calibration string"}
 	SVAR DataCalibrationString = root:Packages:Convert2Dto1D:DataCalibrationString
 	PopupMenu DataCalibrationString,mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
-	CheckBox TrimFrontOfName,pos={10,260},size={100,18},proc=NI1A_CheckProc,title="Trim Front of Name"
-	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
-	CheckBox TrimEndOfName,pos={130,260},size={100,18},proc=NI1A_CheckProc,title="Trim End of Name"
-	CheckBox TrimEndOfName,help={"Check to trim END of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimEndOfName
-	SetVariable RemoveStringFromName,pos={250,260},size={180,18},noproc,title="Remove from name:"
-	SetVariable RemoveStringFromName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:RemoveStringFromName
 
 //tab controls here
 	TabControl Convert2Dto1DTab,pos={4,280},size={430,304},proc=NI1A_TabProc
@@ -3786,41 +3780,49 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DisplayDataAfterProcessing,help={"Create graph of 1D data after processing"},proc=NI1A_CheckProc
 	CheckBox DisplayDataAfterProcessing,variable= root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
 
-	CheckBox StoreDataInIgor,pos={20,470},size={159,14},title="Store data in Igor experiment?"
+	CheckBox StoreDataInIgor,pos={20,468},size={159,14},title="Store data in Igor experiment?"
 	CheckBox StoreDataInIgor,help={"Save data in current Igor experiment"},proc=NI1A_CheckProc
 	CheckBox StoreDataInIgor,variable= root:Packages:Convert2Dto1D:StoreDataInIgor
-	CheckBox OverwriteDataIfExists,pos={200,470},size={159,14},title="Overwrite existing data if exist?"
+	CheckBox OverwriteDataIfExists,pos={200,468},size={159,14},title="Overwrite existing data if exist?"
 	CheckBox OverwriteDataIfExists,help={"Overwrite data in current Igor experiment if they already exist"}
 	CheckBox OverwriteDataIfExists,variable= root:Packages:Convert2Dto1D:OverwriteDataIfExists
 	
-	CheckBox AppendToNexusFile,pos={20,490},size={170,14},title="Append to original image (Nexus ONLY)?"
+	CheckBox AppendToNexusFile,pos={20,486},size={170,14},title="Append to original image (Nexus ONLY)?"
 	CheckBox AppendToNexusFile,help={"Append to Nexus file, useable ONLy if sourceis Nexus"}
 	CheckBox AppendToNexusFile,variable= root:Packages:Convert2Dto1D:AppendToNexusFile,proc=NI1A_CheckProc
 
-	CheckBox ExportDataOutOfIgor,pos={20,510},size={122,14},title="Export data as ASCII?"
+	CheckBox ExportDataOutOfIgor,pos={20,504},size={122,14},title="Export data as ASCII?"
 	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
 	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
 	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
-	CheckBox SaveGSASdata,pos={150,510},size={122,14},title="GSAS?", disable=!(UseTheta)
+	CheckBox SaveGSASdata,pos={150,504},size={122,14},title="GSAS?", disable=!(UseTheta)
 	CheckBox SaveGSASdata,help={"Check to export data out of Igoras GSAS data"}
 	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
 
-	CheckBox Use2DdataName,pos={20,531},size={170,14},title="Use input data name for output?",proc=NI1A_CheckProc
+	CheckBox Use2DdataName,pos={20,522},size={170,14},title="Use input data name for output?",proc=NI1A_CheckProc
 	CheckBox Use2DdataName,help={"Check to have output data named after input data name"}
 	CheckBox Use2DdataName,variable= root:Packages:Convert2Dto1D:Use2DdataName
-	CheckBox UseSampleNameFnct,pos={200,531},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
+	CheckBox UseSampleNameFnct,pos={200,522},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
 	CheckBox UseSampleNameFnct,help={"Check to use String function to provide output data name"}
 	CheckBox UseSampleNameFnct,variable= root:Packages:Convert2Dto1D:UseSampleNameFnct
-	Button CreateOutputPath,pos={250,505},size={160,20},title="Select output path"
+	Button CreateOutputPath,pos={250,500},size={160,20},title="Select output path"
 	Button CreateOutputPath,help={"Select path to export data into"},proc=NI1A_ButtonProc
 	NVAR Use2DdataName = root:Packages:Convert2Dto1D:Use2DdataName
-	SetVariable OutputFileName,pos={20,554},size={360,16},title="ASCII data name"
+	SetVariable OutputFileName,pos={20,540},size={360,16},title="ASCII data name"
 	SetVariable OutputFileName,help={"Input string for 1D data"}
 	SetVariable OutputFileName,value= root:Packages:Convert2Dto1D:OutputDataName, disable=Use2DdataName
 	NVAR UseSampleNameFnct = root:Packages:Convert2Dto1D:UseSampleNameFnct
-	SetVariable SampleNameFnct,pos={20,554},size={360,16},title="Function name"
+	SetVariable SampleNameFnct,pos={20,540},size={360,16},title="Function name"
 	SetVariable SampleNameFnct,help={"String Name function "}
 	SetVariable SampleNameFnct,value= root:Packages:Convert2Dto1D:SampleNameFnct, disable=UseSampleNameFnct
+
+	CheckBox TrimFrontOfName,pos={12,560},size={100,18},proc=NI1A_CheckProc,title="Trim Front of Name"
+	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
+	CheckBox TrimEndOfName,pos={125,560},size={100,18},proc=NI1A_CheckProc,title="Trim End of Name"
+	CheckBox TrimEndOfName,help={"Check to trim END of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimEndOfName
+	SetVariable RemoveStringFromName,pos={240,560},size={180,18},noproc,title="Remove from name:"
+	SetVariable RemoveStringFromName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:RemoveStringFromName
+
 	//tab 6 - sectors for namual processing...
 	Button CreateSectorGraph,pos={20,530},size={160,20},title="Create sector graph"
 	Button CreateSectorGraph,help={"Create graph in of angle vs pixel for manual processing"},proc=NI1A_ButtonProc
@@ -4499,6 +4501,11 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable OutputFileName,disable=(disableStr), win=NI1A_Convert2Dto1DPanel
 	SetVariable SampleNameFnct,disable=(disableFnct), win=NI1A_Convert2Dto1DPanel
 
+	CheckBox TrimFrontOfName,disable=!(Use2DdataName &&((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile))), win=NI1A_Convert2Dto1DPanel
+	CheckBox TrimEndOfName,disable=!(Use2DdataName &&( (tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile))), win=NI1A_Convert2Dto1DPanel
+	SetVariable RemoveStringFromName,disable=!(Use2DdataName &&( (tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile))), win=NI1A_Convert2Dto1DPanel
+
+
 	CheckBox DisplayDataAfterProcessing,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel	
 	//end of common block for line profiel and secotrs
 	CheckBox DoSectorAverages,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
@@ -4902,6 +4909,9 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif
 		Setvariable OutputFileName, disable=(Use2DdataName ||UseSampleNameFnct), win=NI1A_Convert2Dto1DPanel
 		Setvariable SampleNameFnct, disable=!UseSampleNameFnct, win=NI1A_Convert2Dto1DPanel
+		CheckBox TrimFrontOfName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
+		CheckBox TrimEndOfName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
+		SetVariable RemoveStringFromName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
 	endif
 	if(StringMatch("Use2DdataName",ctrlName))
 		if(checked)
@@ -4913,6 +4923,9 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif
 		Setvariable OutputFileName, disable=(Use2DdataName ||UseSampleNameFnct), win=NI1A_Convert2Dto1DPanel
 		Setvariable SampleNameFnct, disable=!UseSampleNameFnct, win=NI1A_Convert2Dto1DPanel
+		CheckBox TrimFrontOfName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
+		CheckBox TrimEndOfName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
+		SetVariable RemoveStringFromName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
 	endif
 
 	if(StringMatch(ctrlName,"RebinCalib2DData"))

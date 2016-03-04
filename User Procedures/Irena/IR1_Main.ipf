@@ -373,6 +373,7 @@ Function IR1_PanelAppendSizeRecordNote(panelName)
 	//store main window size
 	GetWindow $panelName wsize 
 	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
 	GetWindow $panelName, note				//store existing note. 
 	string ExistingNote=S_Value
 	variable i, j
