@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.48
+#pragma version=2.49
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.48 added main data reduction parameters in teh wave note. For unknown reason were missing. 
+//2.49 added Function for creating user custom data names. 
+//2.48 added main data reduction parameters in the wave note. For unknown reason were missing. 
 //2.47 added time stamps to background task print statements so user has any idea when was the task run last time. 
 //2.46 added Q width (Q resolution, dQ) to line profiles. Works only for Q for now, fix for bug in Qresolution callcualtions in version 2.45
 //2.45 added Qresolution accounting which takes care of bin width + pixel size + beam size
@@ -3804,14 +3805,22 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox SaveGSASdata,help={"Check to export data out of Igoras GSAS data"}
 	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
 
-	CheckBox Use2DdataName,pos={20,531},size={170,14},title="Use input data name for output?"
+	CheckBox Use2DdataName,pos={20,531},size={170,14},title="Use input data name for output?",proc=NI1A_CheckProc
 	CheckBox Use2DdataName,help={"Check to have output data named after input data name"}
 	CheckBox Use2DdataName,variable= root:Packages:Convert2Dto1D:Use2DdataName
+	CheckBox UseSampleNameFnct,pos={200,531},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
+	CheckBox UseSampleNameFnct,help={"Check to use String function to provide output data name"}
+	CheckBox UseSampleNameFnct,variable= root:Packages:Convert2Dto1D:UseSampleNameFnct
 	Button CreateOutputPath,pos={250,505},size={160,20},title="Select output path"
 	Button CreateOutputPath,help={"Select path to export data into"},proc=NI1A_ButtonProc
+	NVAR Use2DdataName = root:Packages:Convert2Dto1D:Use2DdataName
 	SetVariable OutputFileName,pos={20,554},size={360,16},title="ASCII data name"
 	SetVariable OutputFileName,help={"Input string for 1D data"}
-	SetVariable OutputFileName,value= root:Packages:Convert2Dto1D:OutputDataName
+	SetVariable OutputFileName,value= root:Packages:Convert2Dto1D:OutputDataName, disable=Use2DdataName
+	NVAR UseSampleNameFnct = root:Packages:Convert2Dto1D:UseSampleNameFnct
+	SetVariable SampleNameFnct,pos={20,554},size={360,16},title="Function name"
+	SetVariable SampleNameFnct,help={"String Name function "}
+	SetVariable SampleNameFnct,value= root:Packages:Convert2Dto1D:SampleNameFnct, disable=UseSampleNameFnct
 	//tab 6 - sectors for namual processing...
 	Button CreateSectorGraph,pos={20,530},size={160,20},title="Create sector graph"
 	Button CreateSectorGraph,help={"Create graph in of angle vs pixel for manual processing"},proc=NI1A_ButtonProc
@@ -4451,6 +4460,9 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	NVAR QvectorMaxNumPnts=root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 	NVAR UseSectors=root:Packages:Convert2Dto1D:UseSectors
 	NVAR UseLineProfile=root:Packages:Convert2Dto1D:UseLineProfile
+	NVAR UseSampleNameFnct=root:Packages:Convert2Dto1D:UseSampleNameFnct
+	NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
+	
 
 	CheckBox UseSectors,disable=(tabNum!=4), win=NI1A_Convert2Dto1DPanel
 	CheckBox UseQvector,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
@@ -4477,9 +4489,15 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	CheckBox SaveGSASdata,disable=(tabNum!=4 || !UseTheta||!UseSectors), win=NI1A_Convert2Dto1DPanel
 
 	CheckBox AppendToNexusFile,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
-	CheckBox Use2DdataName,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
 	Button CreateOutputPath,disable=(!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
-	SetVariable OutputFileName,disable=(!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
+
+	CheckBox UseSampleNameFnct,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
+	CheckBox Use2DdataName,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
+	variable disableFnct, disableStr
+	disableFnct = !UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))
+	disableStr = Use2DdataName || UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))
+	SetVariable OutputFileName,disable=(disableStr), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleNameFnct,disable=(disableFnct), win=NI1A_Convert2Dto1DPanel
 
 	CheckBox DisplayDataAfterProcessing,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel	
 	//end of common block for line profiel and secotrs
@@ -4787,6 +4805,41 @@ Function NI1A_CalcQValForSearch(w, LineProf_DistanceFromCenter)
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+Function/S NI1A_CreateHelpForNameFunction()
+	DOwindow	NI1A_UseFnctToCreateName
+	if(V_Flag)
+		DoWIndow/F NI1A_UseFnctToCreateName
+	else
+		String nb = "NI1A_UseFnctToCreateName"
+		NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={2,1}/W=(655,103,1195,471)
+		Notebook $nb defaultTab=36
+		Notebook $nb showRuler=0, rulerUnits=2, updating={1, 1}
+		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",11,0,(0,0,0)}
+		Notebook $nb newRuler=Header, justification=1, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",13,1,(0,0,65535)}
+		Notebook $nb ruler=Header, text="Use function to create data name\r"
+		Notebook $nb ruler=Normal
+		Notebook $nb text="You can create Igor function to return the name for the data. This needs to be string function which wi"
+		Notebook $nb text="ll take as parameter current 2DDataWave (image) and the file name. It has to return valid Igor name, wh"
+		Notebook $nb text="ich must be string shorter than about 17 characters (to enable Nika to add sector information to it). Th"
+		Notebook $nb text="e name will be checked for validity and uniquness.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="here is example\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Function/S ReturnSampleName(My2DImage, OriginalDataFileName)\r"
+		Notebook $nb text="\twave My2DImage\r"
+		Notebook $nb text="\tstring OriginalDataFileName\r"
+		Notebook $nb text="\t//do something to create a new name, here I will trunkate the name to 15 characters\r"
+		Notebook $nb text="\tstring tempName=OriginalDataFileName[0,14]\r"
+		Notebook $nb text="\t//or here look up \"SampleTitle\" in wave note\r"
+		Notebook $nb text="\t//string Wvnote = note(My2DImage)\r"
+		Notebook $nb text="\t//tempName = stringByKey(\"SampleTitle\", Wvnote)\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="\treturn tempName\r"
+		Notebook $nb text="end"
+	endif
+	AutoPositionWindow/M=0 /R=NI1A_Convert2Dto1DPanel NI1A_UseFnctToCreateName
+end
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
@@ -4815,6 +4868,8 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
 	NVAR UseDistanceFromCenter = root:Packages:Convert2Dto1D:UseDistanceFromCenter
 	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
+	NVAR UseSampleNameFnct = root:Packages:Convert2Dto1D:UseSampleNameFnct
+	NVAR Use2DdataName = root:Packages:Convert2Dto1D:Use2DdataName
 	
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
 
@@ -4834,6 +4889,31 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 
 	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
 
+
+	if(StringMatch("UseSampleNameFnct",ctrlName))
+		if(checked)
+			Use2DdataName=0
+			NI1A_CreateHelpForNameFunction()
+		else
+			DoWIndow NI1A_UseFnctToCreateName
+			if(V_Flag)
+				DoWIndow/K NI1A_UseFnctToCreateName
+			endif
+		endif
+		Setvariable OutputFileName, disable=(Use2DdataName ||UseSampleNameFnct), win=NI1A_Convert2Dto1DPanel
+		Setvariable SampleNameFnct, disable=!UseSampleNameFnct, win=NI1A_Convert2Dto1DPanel
+	endif
+	if(StringMatch("Use2DdataName",ctrlName))
+		if(checked)
+			UseSampleNameFnct=0
+			DoWIndow NI1A_UseFnctToCreateName
+			if(V_Flag)
+				DoWIndow/K NI1A_UseFnctToCreateName
+			endif
+		endif
+		Setvariable OutputFileName, disable=(Use2DdataName ||UseSampleNameFnct), win=NI1A_Convert2Dto1DPanel
+		Setvariable SampleNameFnct, disable=!UseSampleNameFnct, win=NI1A_Convert2Dto1DPanel
+	endif
 
 	if(StringMatch(ctrlName,"RebinCalib2DData"))
 		PopupMenu RebinCalib2DDataToPnts,disable=(!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel

@@ -3,7 +3,7 @@
 
 
 Menu "Macros"
-	StrVarOrDefault("root:Packages:Nika12DSASItem1Str","Load Nika 2D SAS Macros"), LoadNika2DSASMacros()
+	StrVarOrDefault("root:Packages:Nika12DSASItem1Str","Load Nika 2D SAS macros"), LoadNika2DSASMacros()
 end
 
 

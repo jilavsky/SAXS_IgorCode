@@ -5,7 +5,7 @@
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3537094463 			//this is mod date for Manual version 2.58
-constant CurrentVersionNumber = 2.59
+constant CurrentVersionNumber = 2.60
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -13,7 +13,7 @@ constant CurrentVersionNumber = 2.59
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.61 added ShowResizeControlsPanel.  
+//2.60 added ShowResizeControlsPanel.  
 //2.60 modified GUI preferences handling. Was reseting, wrong logic. 
 //
 //2.59 changed check for update procedure to check http first, tehn ftp, and the fail. 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.36
+#pragma version=0.37
 #include <Peak AutoFind>
 
 
@@ -12,6 +12,7 @@ Constant IN3_DeleteRawData=1
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.37 scaling of panels and added Remove from name string
 //0.36 fixed the need for using the HDF5 Browser, it was easy. Much quicker...  
 //0.35 fixed problem with too long name of spec file and therefore flyscan folder. 
 //0.34 fixed problem with too long names of flyscan hdf files and delete all raw data - too large, not necessary. 
@@ -113,7 +114,7 @@ end
 
 Function IN3_FlyScanImportPanelFnct() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(49,49,412,535) as "USAXS FlyScan Import data"
+	NewPanel /K=1 /W=(49,49,412,545) as "USAXS FlyScan Import data"
 	DoWindow/C IN3_FlyScanImportPanel
 	TitleBox MainTitle,pos={40,5},size={360,24},title="Import USAXS Data "
 	TitleBox MainTitle,font="Times New Roman",fSize=22,frame=0,fStyle=3
@@ -137,21 +138,24 @@ Function IN3_FlyScanImportPanelFnct()
 	ListBox ListOfAvailableData,listWave=root:Packages:USAXS_FlyScanImport:WaveOfFiles
 	ListBox ListOfAvailableData,selWave=root:Packages:USAXS_FlyScanImport:WaveOfSelections
 	ListBox ListOfAvailableData,mode= 9
-	SetVariable NameMatchString,pos={10,370},size={180,15},proc=IN3_FlyScanSetVarProc,title="Match name (string):"
+	SetVariable NameMatchString,pos={10,370},size={230,15},proc=IN3_FlyScanSetVarProc,title="Match name (string):"
 	SetVariable NameMatchString,help={"Insert name match string to display only some data"}
 	SetVariable NameMatchString,value= root:Packages:USAXS_FlyScanImport:NameMatchString
-	CheckBox LatestOnTopInPanel,pos={240,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
-	CheckBox ReduceXPCSdata,pos={240,390},size={16,14},proc=IN3_FlyCheckProc,title="Reduce XPCS data?",variable= root:Packages:USAXS_FlyScanImport:ReduceXPCSdata, help={"Check to redeuce XPCS not USAXS data"}
+	SetVariable RemoveFromNameString,pos={10,395},size={230,15},proc=IN3_FlyScanSetVarProc,title="Remove From name (str):"
+	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
+	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
+	CheckBox LatestOnTopInPanel,pos={244,370},size={16,14},proc=IN3_FlyCheckProc,title="Latest on top?",variable= root:Packages:USAXS_FlyScanImport:LatestOnTopInPanel, help={"Check to display latest files at the top"}
+	CheckBox ReduceXPCSdata,pos={244,390},size={16,14},proc=IN3_FlyCheckProc,title="Reduce XPCS data?",variable= root:Packages:USAXS_FlyScanImport:ReduceXPCSdata, help={"Check to redeuce XPCS not USAXS data"}
 
-	Button SelectAll,pos={7,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Select All"
+	Button SelectAll,pos={7,420},size={100,20},proc=IN3_FlyScanButtonProc,title="Select All"
 	Button SelectAll,help={"Select all waves in the list"}
-	Button DeSelectAll,pos={120,395},size={100,20},proc=IN3_FlyScanButtonProc,title="Deselect All"
+	Button DeSelectAll,pos={120,420},size={100,20},proc=IN3_FlyScanButtonProc,title="Deselect All"
 	Button DeSelectAll,help={"Deselect all waves in the list"}
-	Button OpenFileInBrowser,pos={7,440},size={100,30},proc=IN3_FlyScanButtonProc,title="Open in Browser"
+	Button OpenFileInBrowser,pos={7,450},size={100,30},proc=IN3_FlyScanButtonProc,title="Open in Browser"
 	Button OpenFileInBrowser,help={"Check file in HDF5 Browser"}
-	Button ImportData,pos={120,440},size={100,30},proc=IN3_FlyScanButtonProc,title="Import"
+	Button ImportData,pos={120,450},size={100,30},proc=IN3_FlyScanButtonProc,title="Import"
 	Button ImportData,help={"Import the selected data files."}
-	Button ConfigureBehavior,pos={240,440},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
+	Button ConfigureBehavior,pos={240,450},size={100,20},proc=IN3_FlyScanButtonProc,title="Configure"
 	Button ConfigureBehavior,help={"Import the selected data files."}
 
 EndMacro
@@ -335,6 +339,7 @@ Function IN3_FlyScanLoadHdf5File()
 	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
 	SVAR DataExtension = root:Packages:USAXS_FlyScanImport:DataExtension
+	SVAR RemoveFromNameString = root:Packages:USAXS_FlyScanImport:RemoveFromNameString	
 	NVAR ReduceXPCSdata = root:Packages:USAXS_FlyScanImport:ReduceXPCSdata
 	
 	variable NumSelFiles=sum(WaveOfSelections)	
@@ -345,28 +350,19 @@ Function IN3_FlyScanLoadHdf5File()
 	variable i, Overwrite
 	string FileName, ListOfExistingFolders, tmpDtaFldr, shortNameBckp, TargetRawFoldername
 	String browserName, shortFileName, RawFolderWithData, SpecFileName, RawFolderWithFldr
+	String newShortName
 	Variable locFileID
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i])
 			FileName= WaveOfFiles[i]
 			shortFileName = ReplaceString("."+DataExtension, FileName, "")
+			newShortName = ReplaceString(RemoveFromNameString,shortFileName,"")[0,30]
+			shortFileName = shortFileName[0,30]
 			//check if such data exist already...
 			ListOfExistingFolders = DataFolderDir(1)
-//			if(StringMatch(ListOfExistingFolders, "*"+shortFileName+"*" ))
-//				DoAlert /T="Non unique name alert..." 1, "Raw folder with "+shortFileName+" name already found, Overwrite?" 
-//				if(V_Flag==3)
-//					return 0
-//				endif	
-//			endif
-		//	CreateNewHDF5Browser()
-		// 	browserName = WinName(0, 64)
-		// 	DoWindow/Hide=1 browserName
 			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
 			if (V_flag == 0)					// Open OK?
-	//			HDf5Browser#UpdateAfterFileCreateOrOpen(0, browserName, locFileID, S_path, S_fileName)			
-	//			HDf5Browser#LoadGroupButtonProc("LoadGroup")
-				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"
-			
+				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"			
 				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
 					KillWaves/Z Config_Version
 					HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
@@ -376,13 +372,10 @@ Function IN3_FlyScanLoadHdf5File()
 					endif
 					Wave/T Config_Version
 				endif
-		//		HDf5Browser#CloseFileButtonProc("CloseFIle")
-	
-		//		KillWindow $(browserName)
 				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
 				string TempStrName=PossiblyQuoteName(shortFileName)
-				string UnquotedTempStrName=shortFileName
-				if(DataFolderExists(UnquotedTempStrName))		//Name exists and folder is fine... 
+				string TempStrNameShort=PossiblyQuoteName(newShortName)
+				if(DataFolderExists(shortFileName))		//Name exists and folder is fine... 
 					RawFolderWithData = GetDataFOlder(1)+TempStrName
 					RawFolderWithFldr = GetDataFolder(1)
 				else		//something failed. Expect too long name
@@ -408,26 +401,31 @@ Function IN3_FlyScanLoadHdf5File()
 					TargetRawFoldername = TargetRawFoldername[0,30]  
 				endif
 				NewDataFolder/O $(TargetRawFoldername)
-				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
+				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
 				if(DataFolderExists(targetFldrname))
 					DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
 					if(V_Flag==1)
 						KillDataFolder/Z targetFldrname
-						MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+						//MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
+						KillDataFolder $(TempStrName)
 					elseif(V_Flag==2)
 						string OldDf1=getDataFolder(1)
 						SetDataFolder TargetRawFoldername
-						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrName,1,1), 11, 0 ))
+						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrNameShort,1,1), 11, 0 ))
 						SetDataFolder OldDf1		
 						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
-						TempStrName = TempStrNameNew		
+						TempStrNameShort = TempStrNameNew		
+						KillDataFolder $(TempStrName)
 					else
 						Abort 
 					endif
 				else
-					MoveDataFolder $(UnquotedTempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+					//MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
+					DuplicateDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
+					KillDataFolder $(shortFileName)
 				endif
-				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrName
+				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
 				print "Imported HDF5 file : "+RawFolderWithData
 #if(exists("AfterFlyImportHook")==6)  
 			AfterFlyImportHook(RawFolderWithData)
@@ -1435,7 +1433,7 @@ Function IN3_FlyScanInitializeImport()
 	string ListOfVariables
 	variable i
 	
-	ListOfStrings = "DataPathString;DataExtension;SelectedFileName;NewDataFolderName;NameMatchString;"
+	ListOfStrings = "DataPathString;DataExtension;SelectedFileName;NewDataFolderName;NameMatchString;RemoveFromNameString;"
 
 	ListOfVariables = "NumberOfOutputPoints;DoubleClickImports;DoubleClickOpensInBrowser;NumberOfTempPoints;"
 	ListOfVariables += "LatestOnTopInPanel;ReduceXPCSdata;"

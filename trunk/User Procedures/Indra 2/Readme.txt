@@ -8,9 +8,11 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
-1.88 
+1.88 3/5/3016
 Added panel scaling on most large panels
-Fixed bug for names which were liberal - e.g. with decimal point in name. Was failing to load them
+Fixed bug for names which were liberal - e.g. with decimal point in name. Was failing to load them.
+Added ability to remove string from data set name similar to Nika to shorten sensibly the names to 32 characters Igor is using. 
+Added multi-package loaders (Indra+Irena+Nika, Indra+Irena, etc.)
 
 
 1.87 2/1/2016

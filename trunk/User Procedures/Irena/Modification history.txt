@@ -3,10 +3,11 @@ Code modification history
 
 -latest stuff first
 ********************************************
-2.60 
+2.60 3/5/3016 
 Added Panel scaling to most large panels
 Modified GUI package preferences handling. It was reseting the GUI choices, wrong logic. 
 Data merging tool - fix problem with liberal names.
+Added multi-package loader (Irena+Nika)
 
 2.59 2/1/2016
 Igor 7 compatibility release
