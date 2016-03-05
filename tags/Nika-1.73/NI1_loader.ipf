@@ -1,0 +1,40 @@
+#pragma rtGlobals=1		// Use modern global access method.
+#pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
+#pragma version=1.73
+//Panel size controls package, need version for Igor 6.38 and higher
+#if(Igorversion()>=6.38)
+#include <Resize Controls> version>=6.38
+#include <Resize Controls Panel> version>=6.38
+#include <Rewrite Control Positions>
+#endif
+
+//*************************************************************************\
+//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* This file is distributed subject to a Software License Agreement found
+//* in the file LICENSE that is included with this distribution. 
+//*************************************************************************/
+
+//This macro loads the Nika 1 set of Igor Pro macros for evaluation of 2D images in small angle scattering
+
+
+
+#include ":NI1_15IDDsupport",version>=1.29
+#include ":NI1_BeamCenterUtils",version>=2.21
+#include ":NI1_ConvProc", version>=2.49
+#include ":NI1_DNDCATsupport",version>=1.11
+#include ":NI1_FileLoaders",version>=2.42
+#include ":NI1_HDF5Browser",version>=1.01
+#include ":NI1_FITSLoader",version>=2.16
+#include ":NI1_InstrumentSupport",version>=1.00
+#include ":NI1_LineProfCalcs",version>=2.11
+#include ":NI1_LineProfile", version>=2.03
+#include ":NI1_main", version>=1.73
+#include ":NI1_MainPanel", version>=2.46
+#include ":NI1_mar345", version>=1.03
+#include ":NI1_mask", version>=1.24
+#include ":NI1_pix2Dsensitivity",version>=1.03
+#include ":NI1_SaveRecallConfig", version>=1.03
+#include ":NI1_SquareMatrix", version>=1.04
+#include ":NI1_WinView",version>=1.87
+
+#include "::Indra 2:IN2_GeneralProcedures", version>=1.83
