@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.87
+#pragma version=1.88
 
+//1.88 Panel scaling and other fixes. 
 //1.87 Igor 7 updates
 //1.86 Improvements to Flyscan handling
 //1.85 9ID move and fixed to Flyscan support as needed. 
