@@ -730,23 +730,24 @@ Function NI1A_Convert2DTo1D()
 	NVAR UseSectors=root:Packages:Convert2Dto1D:UseSectors		//this is for Sector analysis. Only if set ot 1, sector analysis is reuired by user...
 	NVAR UseLineProfile=root:Packages:Convert2Dto1D:UseLineProfile		//this is for Sector analysis. Only if set ot 1, sector analysis is reuired by user...
 	
-		string ListOfOrientations=""
-		string CurOrient
-		variable i
-		NVAR DoCircularAverage=root:Packages:Convert2Dto1D:DoCircularAverage
-		NVAR DoSectorAverages=root:Packages:Convert2Dto1D:DoSectorAverages
-		NVAR NumberOfSectors=root:Packages:Convert2Dto1D:NumberOfSectors
-		NVAR SectorsStartAngle=root:Packages:Convert2Dto1D:SectorsStartAngle
-		NVAR SectorsHalfWidth=root:Packages:Convert2Dto1D:SectorsHalfWidth
-		NVAR SectorsStepInAngle=root:Packages:Convert2Dto1D:SectorsStepInAngle
-		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
-		NVAR LineProf_WidthQ=root:Packages:Convert2Dto1D:LineProf_WidthQ
-		
-		SVAR Movie_Last1DdataSet=root:Packages:Convert2Dto1D:Movie_Last1DdataSet
-
+	string ListOfOrientations=""
+	string CurOrient
+	variable i
+	NVAR DoCircularAverage=root:Packages:Convert2Dto1D:DoCircularAverage
+	NVAR DoSectorAverages=root:Packages:Convert2Dto1D:DoSectorAverages
+	NVAR NumberOfSectors=root:Packages:Convert2Dto1D:NumberOfSectors
+	NVAR SectorsStartAngle=root:Packages:Convert2Dto1D:SectorsStartAngle
+	NVAR SectorsHalfWidth=root:Packages:Convert2Dto1D:SectorsHalfWidth
+	NVAR SectorsStepInAngle=root:Packages:Convert2Dto1D:SectorsStepInAngle
+	NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
+	NVAR LineProf_WidthQ=root:Packages:Convert2Dto1D:LineProf_WidthQ
+	SVAR Movie_Last1DdataSet=root:Packages:Convert2Dto1D:Movie_Last1DdataSet
 	string tempListOfProcessedSectors=""
-
-	//parameters are set, now process the data as needed..
+	//let user run some hook function to modify parameters, if needed here. 
+#if(exists("NI1_BeforeConvertDataHook")==6)
+	NI1_BeforeConvertDataHook()
+#endif 
+		//parameters are set, now process the data as needed..
 	
 	NI1A_Check2DConversionData()		//this should check if input data are OK, stuff any necessary consistency checks here...
 	
