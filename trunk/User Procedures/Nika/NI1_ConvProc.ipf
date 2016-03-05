@@ -4818,7 +4818,7 @@ Function/S NI1A_CreateHelpForNameFunction()
 		DoWIndow/F NI1A_UseFnctToCreateName
 	else
 		String nb = "NI1A_UseFnctToCreateName"
-		NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={2,1}/W=(655,103,1195,471)
+		NewNotebook/N=$nb/F=1/V=1/K=1/W=(655,103,1195,471)
 		Notebook $nb defaultTab=36
 		Notebook $nb showRuler=0, rulerUnits=2, updating={1, 1}
 		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",11,0,(0,0,0)}
