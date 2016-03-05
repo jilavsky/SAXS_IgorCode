@@ -522,7 +522,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		OldNote+= "Nika_BeamCenterX="+num2str(BeamCenterX)+";"
 		OldNote+= "Nika_BeamCenterY="+num2str(BeamCenterY)+";"
 		OldNote+= "Nika_BeamSizeX="+num2str(BeamSizeX)+";"
-		OldNote+= "Nika_BeamCenterY="+num2str(BeamCenterY)+";"
+		OldNote+= "Nika_BeamSizeY="+num2str(BeamSizeY)+";"
 		OldNote+= "CalibrationFormula="+CalibrationFormula+";"
 		if(UseSampleThickness)
 			OldNote+= "SampleThickness="+num2str(SampleThickness)+";"
