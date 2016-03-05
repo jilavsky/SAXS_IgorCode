@@ -240,7 +240,7 @@ Function IN3_PanelAppendSizeRecordNote(panelName)
 	string panelName
 	string PanelRecord=""
 	//find size of the panel
-	GetWindow $panelName wsize 
+	GetWindow $panelName wsizeDC 
 	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
 	//GetDefaultFont($panelName )
 	//PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
@@ -277,7 +277,7 @@ Function IN3_PanelResizePanelSize(s)
 		GetWindow $(s.winName), note
 		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
 		string OrigInfo=S_Value
-		GetWindow $s.winName wsize
+		GetWindow $s.winName wsizeDC
 		Variable left = V_left
 		Variable right = V_right
 		Variable top = V_top
