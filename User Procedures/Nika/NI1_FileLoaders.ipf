@@ -1315,9 +1315,9 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Abort "Uknown CCD image to load..."
 	endif
 	pathInfo $(PathName)
-      if(exists("ImportedImageHookFunction")==6)
-              	Execute("ImportedImageHookFunction("+NewWaveName+")")
-      endif
+   if(exists("ImportedImageHookFunction")==6)
+       Execute("ImportedImageHookFunction("+NewWaveName+")")
+   endif
 	wave loadedwv=$(NewWaveName)
 	NewNote+=";"+"DataFilePath="+S_path+";"+note(loadedwv)+";"
 	print "Loaded file   " +FileNameToLoad

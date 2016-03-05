@@ -244,6 +244,7 @@ Function IN3_PanelAppendSizeRecordNote(panelName)
 	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
 	//GetDefaultFont($panelName )
 	//PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
 	GetWindow $panelName, note
 	string ExistingNote=S_Value
 	string controlslist = ControlNameList("", ";")

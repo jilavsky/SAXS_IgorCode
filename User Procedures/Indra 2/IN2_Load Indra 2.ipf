@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
-#pragma version=1.87
+#pragma version=1.88
 
 
 //*************************************************************************\
@@ -36,20 +36,20 @@
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.2
 #include ":IN2_GAUSAXS 1", version>=1
-#include ":IN2_GeneralProcedures", version>=1.82
+#include ":IN2_GeneralProcedures", version>=1.83
 #include ":IN2_ImportX23", version>=1.10
 #include ":IN2_Merging Data", version>=1.10
 #include ":IN2_NotebookLogging", version>=1.10
 #include ":IN2_PlottingTools", version>=1.13
 #include ":IN2_SpecInput", version>=1.20
 #include ":IN2_Standard Plots", version>=1.13
-#include ":IN2_USAXS", version>=1.34
+#include ":IN2_USAXS", version>=1.38
 #include ":IN2_XtalCalculationsP", version>=1.1
 
 #include ":IN3_CalcScattering", version>=1.01
 #include ":IN3_Calculations", version>=1.18
-#include ":IN3_FLyScan", version>=0.36
-#include ":IN3_Main", version>=1.87
+#include ":IN3_FLyScan", version>=0.37
+#include ":IN3_Main", version>=1.88
 #include ":IN3_Rwave", version>=1
 #include ":IN3_SupportFnct", version>=1.06
 

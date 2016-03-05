@@ -7,7 +7,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-//1.88 panel scaling. need to be fixed. 
+//1.88 panel scaling.  
 //1.87 removed Wavename string from selection tool. Unnecessary and confusing users. 
 //1.87 remove dropout option
 //1.86 added save to Load & Process button, renamed 
