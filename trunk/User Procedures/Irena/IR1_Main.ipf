@@ -442,17 +442,21 @@ Function IR1_PanelResizePanelSize(s)
 		CurHeight = abs(bottom-top)
 		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
 			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
+			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+OriginalWidth) +", "+num2str(top+OriginalHeight)
 			horScale = 1
 			verScale = 1
 		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
 			MoveWindow left, top, left+OriginalWidth, top+CurHeight
+			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+OriginalWidth) +", "+num2str(top+CurHeight)
 			horScale = 1
 			verScale = CurHeight / (OriginalHeight)	
 		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
 			MoveWindow left, top, left+CurWidth, top+OriginalHeight
+			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+CurWidth) +", "+num2str(top+OriginalHeight)
 			verScale = 1
 			horScale = curWidth/OriginalWidth
 		else
+			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+CurWidth) +", "+num2str(top+CurHeight)
 			verScale = CurHeight /OriginalHeight
 			horScale = curWidth/OriginalWidth
 		endif
