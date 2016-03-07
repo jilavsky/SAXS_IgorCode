@@ -3,6 +3,10 @@ Code modification history
 
 -latest stuff first
 ********************************************
+1.74
+Added more lines to calibrants. Up to 10 diffraction lines re allowed and used if user selects. 
+Added control which sets default scaling for images when loaded, so user can set preferred scaling. Note: Igor does enforce maximum size of image and will not scale above screen size.  
+
 1.73 3/5/3016
 Added Panel scaling to most large panels
 Added option to provide string function which will create name for the data to enable fancy renaming of input data. Has help which pops up with example. 
