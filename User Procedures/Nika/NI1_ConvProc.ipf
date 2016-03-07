@@ -2187,8 +2187,14 @@ Function NI1A_DisplayLoadedFile()
 	endif
 	ShowInfo
 	DoWindow/C CCDImageToConvertFig
+	//user requested scaling of the graph...
+	NVAR ScaleImageBy=root:Packages:Convert2Dto1D:ScaleImageBy
+	GetWindow CCDImageToConvertFig wsize
+	string NewRecord="GraphLeft:"+num2str(V_left)+";GraphWidth:"+num2str(V_right-V_left)+";GraphTop:"+num2str(V_top)+";GraphHeight:"+num2str(V_bottom-V_top)+";"
+	SetWindow CCDImageToConvertFig, note=NewRecord+";"	
+	MoveWindow V_left, V_top, V_left+ScaleImageBy*(V_right-V_left), V_top+ScaleImageBy*(V_bottom-V_top)
 	AutoPositionWindow/E/M=0/R=NI1A_Convert2Dto1DPanel CCDImageToConvertFig
-	//append naem of the file loaded in...
+	//append name of the file loaded in...
 	string LegendImg=""
 	variable NumImages=NumberByKey("NumberOfAveragedFiles", note(waveToDisplayDis) , "=", ";")
 	variable i
@@ -3956,6 +3962,11 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 	PopupMenu ColorTablePopup,pos={170,658},size={107,21},proc=NI1A_PopMenuProc,title="Colors"
 	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"\"Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;\""
+
+	SetVariable ScaleImageBy,pos={310,610},size={120,16},title="Scale Img x", proc=NI1A_SetVarProcMainPanel
+	SetVariable ScaleImageBy,help={"Select minimum intensity to display?"}, limits={0.05,inf,0.5}
+	SetVariable ScaleImageBy,variable= root:Packages:Convert2Dto1D:ScaleImageBy
+
 	CheckBox ImageDisplayBeamCenter,variable= root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph, help={"Display beam center on teh image?"}
 	CheckBox ImageDisplayBeamCenter proc=NI1A_CheckProc, pos={310,630},size={120,16},title="Display beam center?"
 	CheckBox ImageDisplaySectors,variable= root:Packages:Convert2Dto1D:DisplaySectorsIn2DGraph, help={"Display sectors(if selected) in the image?"}
@@ -4069,6 +4080,26 @@ Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 	if(cmpstr("SectorsSectWidth",ctrlName)==0)
 	
 	endif
+	if(cmpstr("ScaleImageBy",ctrlName)==0)
+		//user requested scaling of the graph...
+		string OldRecord 	//="GraphLeft:"+num2str(V_left)+";GraphWidth:"+num2str(V_right-V_left)+";GraphTop:"+num2str(V_top)+";GraphHeight:"+num2str(V_bottom-V_top)+";"
+		DoWIndow CCDImageToConvertFig
+		if(V_Flag)
+			GetWindow CCDImageToConvertFig, note
+			OldRecord = S_value
+			//MoveWindow V_left, V_top, V_left+ScaleImageBy*(V_right-V_left), V_top+ScaleImageBy*(V_bottom-V_top)
+			variable oldWidth, oldHeight
+			oldWidth=NumberByKey("GraphWidth", OldRecord)
+			oldHeight=NumberByKey("GraphHeight", OldRecord)
+			NVAR ScaleImageBy=root:Packages:Convert2Dto1D:ScaleImageBy
+			DoWIndow /F CCDImageToConvertFig
+			GetWindow CCDImageToConvertFig wsize
+			MoveWindow/W=CCDImageToConvertFig  V_left, V_top, V_left+ScaleImageBy*oldWidth, V_top+ScaleImageBy*oldHeight
+			AutoPositionWindow/E/M=0/R=NI1A_Convert2Dto1DPanel CCDImageToConvertFig
+		endif
+	endif
+	
+
 	if(cmpstr("UserImageRangeMin",ctrlName)==0||cmpstr("UserImageRangeMax",ctrlName)==0)
 		NI1A_TopCCDImageUpdateColors(0)
 	endif

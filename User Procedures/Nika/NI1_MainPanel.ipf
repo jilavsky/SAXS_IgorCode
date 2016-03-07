@@ -375,7 +375,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="Movie_Use2DRAWdata;Movie_Use2DProcesseddata;Movie_Use1DData;Movie_AppendFileName;Movie_AppendAutomatically;Movie_DisplayLogInt;Movie_FrameRate;Movie_FileOpened;"
 	ListOfVariables+="Movie_UseMain2DImage;Movie_UseUserHookFnct;"
 	//Behavior controls
-	ListOfVariables+="DoubleClickConverts;TrimFrontOfName;TrimEndOfName;"
+	ListOfVariables+="DoubleClickConverts;TrimFrontOfName;TrimEndOfName;ScaleImageBy;"
 
 	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;DataCalibrationString;"
 	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;"
@@ -498,6 +498,11 @@ Function NI1A_Initialize2Dto1DConversion()
 	if ((NIGBNumberOfYPoints)<1)
 		NIGBNumberOfYPoints = 1024
 	endif
+	NVAR ScaleImageBy
+	if ((ScaleImageBy)<0.05)
+		ScaleImageBy = 1
+	endif
+
 
 	SVAR DataCalibrationString
 	if(strlen(DataCalibrationString)<3)

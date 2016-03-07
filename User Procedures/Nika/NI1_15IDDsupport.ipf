@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.29
+#pragma version=1.30
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.30 added more calibratnt lines (10 for SAXS/WAXS)
 //1.29 WAXS transmission correction and add Mask for Pilatus 200kw
 //1.28 Minor fix to configuration
 //1.27 trimmed the name used for line profiles to 17 characters only, did tno work with Line Profiles. 
@@ -598,34 +599,63 @@ Function NI1_15IDDSetDefaultNx()
 				NVAR BMCalibrantD3LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
 				NVAR BMCalibrantD4LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD4LineWidth
 				NVAR BMCalibrantD5LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
+				NVAR BMCalibrantD6LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD6LineWidth
+				NVAR BMCalibrantD7LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD7LineWidth
+				NVAR BMCalibrantD8LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD8LineWidth
+				NVAR BMCalibrantD9LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD9LineWidth
+				NVAR BMCalibrantD10LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD10LineWidth
 				BMCalibrantD1LineWidth = 7
 				BMCalibrantD2LineWidth = 7
 				BMCalibrantD3LineWidth = 7
 				BMCalibrantD4LineWidth = 7
 				BMCalibrantD5LineWidth = 7
+				BMCalibrantD6LineWidth = 7
+				BMCalibrantD7LineWidth = 7
+				BMCalibrantD8LineWidth = 7
+				BMCalibrantD9LineWidth = 7
+				BMCalibrantD10LineWidth = 7
 			
 				NVAR BMCalibrantD1=root:Packages:Convert2Dto1D:BMCalibrantD1
 				NVAR BMCalibrantD2=root:Packages:Convert2Dto1D:BMCalibrantD2
 				NVAR BMCalibrantD3=root:Packages:Convert2Dto1D:BMCalibrantD3
 				NVAR BMCalibrantD4=root:Packages:Convert2Dto1D:BMCalibrantD4
 				NVAR BMCalibrantD5=root:Packages:Convert2Dto1D:BMCalibrantD5
+				NVAR BMCalibrantD6=root:Packages:Convert2Dto1D:BMCalibrantD6
+				NVAR BMCalibrantD7=root:Packages:Convert2Dto1D:BMCalibrantD7
+				NVAR BMCalibrantD8=root:Packages:Convert2Dto1D:BMCalibrantD8
+				NVAR BMCalibrantD9=root:Packages:Convert2Dto1D:BMCalibrantD9
+				NVAR BMCalibrantD10=root:Packages:Convert2Dto1D:BMCalibrantD10
 				NVAR BMUseCalibrantD1=root:Packages:Convert2Dto1D:BMUseCalibrantD1
 				NVAR BMUseCalibrantD2=root:Packages:Convert2Dto1D:BMUseCalibrantD2
 				NVAR BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 				NVAR BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 				NVAR BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
+				NVAR BMUseCalibrantD6=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+				NVAR BMUseCalibrantD7=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+				NVAR BMUseCalibrantD8=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+				NVAR BMUseCalibrantD9=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+				NVAR BMUseCalibrantD10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
 				//this is Lab6
-					//Numbers from Peter Lee
 					BMCalibrantD1=4.15690	//[100]/rel int 60
 					BMCalibrantD2=2.93937	//110 /100
 					BMCalibrantD3=2.39999	//111/45
 					BMCalibrantD4=2.07845	//200/23.6
 					BMCalibrantD5=1.85902	//210/55
+					BMCalibrantD6=1.6970539	
+					BMCalibrantD7=1.4696918	
+					BMCalibrantD8=1.3856387	
+					BMCalibrantD9=1.3145323	
+					BMCalibrantD10=1.2533574	
 					BMUseCalibrantD1=1
 					BMUseCalibrantD2=1
 					BMUseCalibrantD3=1
 					BMUseCalibrantD4=1
 					BMUseCalibrantD5=1
+					BMUseCalibrantD6=1
+					BMUseCalibrantD7=1
+					BMUseCalibrantD8=1
+					BMUseCalibrantD9=1
+					BMUseCalibrantD10=1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
 	elseif(pinSAXSSelected)
@@ -713,34 +743,64 @@ Function NI1_15IDDSetDefaultNx()
 				NVAR BMCalibrantD3LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
 				NVAR BMCalibrantD4LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD4LineWidth
 				NVAR BMCalibrantD5LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
+				NVAR BMCalibrantD6LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD6LineWidth
+				NVAR BMCalibrantD7LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD7LineWidth
+				NVAR BMCalibrantD8LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD8LineWidth
+				NVAR BMCalibrantD9LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD9LineWidth
+				NVAR BMCalibrantD10LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD10LineWidth
 				BMCalibrantD1LineWidth = 7
 				BMCalibrantD2LineWidth = 7
 				BMCalibrantD3LineWidth = 7
 				BMCalibrantD4LineWidth = 7
 				BMCalibrantD5LineWidth = 7
+				BMCalibrantD6LineWidth = 7
+				BMCalibrantD7LineWidth = 7
+				BMCalibrantD8LineWidth = 7
+				BMCalibrantD9LineWidth = 7
+				BMCalibrantD10LineWidth = 7
 			
 				NVAR BMCalibrantD1=root:Packages:Convert2Dto1D:BMCalibrantD1
 				NVAR BMCalibrantD2=root:Packages:Convert2Dto1D:BMCalibrantD2
 				NVAR BMCalibrantD3=root:Packages:Convert2Dto1D:BMCalibrantD3
 				NVAR BMCalibrantD4=root:Packages:Convert2Dto1D:BMCalibrantD4
 				NVAR BMCalibrantD5=root:Packages:Convert2Dto1D:BMCalibrantD5
+				NVAR BMCalibrantD6=root:Packages:Convert2Dto1D:BMCalibrantD6
+				NVAR BMCalibrantD7=root:Packages:Convert2Dto1D:BMCalibrantD7
+				NVAR BMCalibrantD8=root:Packages:Convert2Dto1D:BMCalibrantD8
+				NVAR BMCalibrantD9=root:Packages:Convert2Dto1D:BMCalibrantD9
+				NVAR BMCalibrantD10=root:Packages:Convert2Dto1D:BMCalibrantD10
 				NVAR BMUseCalibrantD1=root:Packages:Convert2Dto1D:BMUseCalibrantD1
 				NVAR BMUseCalibrantD2=root:Packages:Convert2Dto1D:BMUseCalibrantD2
 				NVAR BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 				NVAR BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 				NVAR BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
+				NVAR BMUseCalibrantD6=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+				NVAR BMUseCalibrantD7=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+				NVAR BMUseCalibrantD8=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+				NVAR BMUseCalibrantD9=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+				NVAR BMUseCalibrantD10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
 					//The number I use is q = 0.1076 (1/Angstrom), d = 58.380 Angstroms.  The
 					//reference is T.C. Huang et al, J. Appl. Cryst. (1993), 26, 180-184.
 					BMCalibrantD1=58.380
 					BMCalibrantD2=29.185
 					BMCalibrantD3=19.46
 					BMCalibrantD4=14.595
-					BMCalibrantD5=11.767
+					BMCalibrantD5=11.676	//fixed form 11.767 on 2-12-2015, typo
+					BMCalibrantD6=9.73
+					BMCalibrantD7=8.34
+					BMCalibrantD8=7.2975
+					BMCalibrantD9=6.48667
+					BMCalibrantD10=5.838
 					BMUseCalibrantD1=1
 					BMUseCalibrantD2=1
 					BMUseCalibrantD3=1
 					BMUseCalibrantD4=1
 					BMUseCalibrantD5=1
+					BMUseCalibrantD6=1
+					BMUseCalibrantD7=1
+					BMUseCalibrantD8=1
+					BMUseCalibrantD9=1
+					BMUseCalibrantD10=1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
 

@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //		added scaling of images on large displays
  //1.73 added functions to scale panels to larger sizes.
  //1.72 changed check for update procedure to check http first, then ftp, and the fail. 
  //1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
@@ -364,112 +365,6 @@ Function NI1_MarExpandContractImage(isExpand)
                 SetAxis $ya,y0,y1
         endif
 end
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//Function NI1_PanelAppendSizeRecordNote()
-//	string PanelRecord=""
-//	//find size of the panel
-//	GetWindow kwTopWin wsize 
-//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-//	GetWindow kwTopWin, note
-//	string ExistingNote=S_Value
-//	string controlslist = ControlNameList("", ";")
-//	variable i
-//	string ControlsRecords=""
-//	string TmpNm=""
-//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-//		TmpNm = StringFromList(i, controlslist, ";")
-//		ControlInfo $(TmpNm)
-//		//V_Height, V_Width, V_top, V_left
-//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
-//		//special cases...
-//		if(abs(V_Flag)==5 || abs(V_Flag)==3)		//SetVariable
-//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-//		endif
-//	endfor
-//	SetWindow kwTopWin, note=ExistingNote+";"+PanelRecord+ControlsRecords
-//	//print ExistingNote+";"+PanelRecord+ControlsRecords
-//end
-////***********************************************************
-////***********************************************************
-//
-//Function NI1_PanelScalePanelCntrls(s)
-//	STRUCT WMWinHookStruct &s
-//		//add to the end of panel forming macro these two lines:
-//		//	IR1_PanelAppendSizeRecordNote()
-//		//	SetWindow kwTopWin,hook(ResizeFontControls)=NI1_PanelScalePanelCntrls
-//		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
-//	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
-//		GetWindow $(s.winName), note
-//		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
-//		string OrigInfo=S_Value
-//		GetWindow $s.winName wsize
-//		Variable left = V_left
-//		Variable right = V_right
-//		Variable top = V_top
-//		Variable bottom = V_bottom
-//		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
-//		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
-//		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
-//		CurWidth=(right-left) 
-//		CurHeight = (bottom-top)
-//		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-//			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
-//			horScale = 1
-//			verScale = 1
-//		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
-//			MoveWindow left, top, left+OriginalWidth, bottom
-//			horScale = 1
-//			verScale = CurHeight / (OriginalHeight)	
-//		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
-//			MoveWindow left, top, right, top+OriginalHeight
-//			verScale = 1
-//			horScale = curWidth/OriginalWidth
-//		else
-//			verScale = CurHeight /OriginalHeight
-//			horScale = curWidth/OriginalWidth
-//		endif
-//		variable scale= min(horScale, verScale )
-//		DefaultGUIFont /W=$(s.winName) all= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) button= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) checkbox= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) tabcontrol= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		DefaultGUIFont /W=$(s.winName) popup= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		//DefaultGUIFont /W=$(s.winName) panel= {IR2C_LkUpDfltStr("DefaultFontType"), ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-//		string controlslist = ControlNameList(s.winName, ";")
-//		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
-//		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
-//		string ControlsRecords=""
-//		string TmpNm=""
-//		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-//			TmpNm = StringFromList(i, controlslist, ";")			
-//			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
-//			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
-//			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
-//			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
-//			NewCntrolV_left=OrigCntrlV_left* horScale 
-//			NewCntrlV_top = OrigCntrlV_top * verScale
-//			NewWidth = OrigWidth * horScale
-//			NewHeight = OrigHeight * verScale
-//			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-//			//special cases...
-//			ControlInfo $(TmpNm)
-//			if(abs(V_Flag)==5 || abs(V_Flag)==3)		//SetVariable
-//				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
-//				if(numtype(OrigBodyWidth)==0)
-//					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
-//				endif
-//			endif
-//		endfor
-//
-//	endif
-//end
-
-//***********************************************************
-//***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************

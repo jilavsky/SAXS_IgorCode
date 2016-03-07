@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.21
-Constant NI1BCversionNumber = 2.18
+Constant NI1BCversionNumber = 2.22
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+ 
+//2.22 added more lines to the calibrants
 //2.21 added panel scaling
 //2.20 fixed line 5 of Ag Behenate
 //2.19 addressed new ADSC_A file type
@@ -96,7 +97,7 @@ Function NI1BC_CreateBmCntrField()
 //	NVAR =root:Packages:Convert2Dto1D:
 	
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(22,58,450,630) as "Beam center and calibration panel"
+	NewPanel /K=1 /W=(22,58,450,730) as "Beam center and calibration panel"
 	Dowindow/C NI1_CreateBmCntrFieldPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 19,fstyle= 1,textrgb= (0,0,65280)
@@ -122,13 +123,13 @@ Function NI1BC_CreateBmCntrField()
 	Button CreateROIWorkImage,pos={325,225},size={100,20},proc=NI1BC_BmCntrButtonProc,title="Make Image"
 
 
-	CheckBox BMUseGeometryCorr title="Use Geom. corrs?",pos={300,260}
+	CheckBox BMUseGeometryCorr title="Use Geom. corrs?",pos={300,250}
 	CheckBox BMUseGeometryCorr proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseGeometryCorr
 	CheckBox BMUseGeometryCorr help={"Use geometry corrections?"}
 
-	CheckBox BMUseMask title="Use Mask?",pos={300,280}
+	CheckBox BMUseMask title="Use Mask?",pos={300,266}
 	CheckBox BMUseMask proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseMask
-	CheckBox BMUseMask help={"Use mask for data evaluation?"}
+	CheckBox BMUseMask help={"Use mask for data evaluation?"} 
 
 //AddFlat;FlatValToAdd;MaximumValueBmCntr
 	CheckBox DisplayLogImage title="Log image?",pos={10,260}
@@ -151,7 +152,7 @@ Function NI1BC_CreateBmCntrField()
 	SetVariable BMStandardTransmission,help={"Transmission of the Standard?"}, proc=NI1BC_SetVarProc
 	SetVariable BMStandardTransmission,limits={0,Inf,1},variable= root:Packages:Convert2Dto1D:BMStandardTransmission
 
-	TabControl BmCntrTab,pos={8,284},size={412,200},proc=NI1BC_TabProc
+	TabControl BmCntrTab,pos={8,284},size={412,300},proc=NI1BC_TabProc
 	TabControl BmCntrTab,help={"Select tabs to control various methods"}
 	TabControl BmCntrTab,tabLabel(0)="BeamCntr",tabLabel(1)="Calibrant"
 	TabControl BmCntrTab,tabLabel(2)="Refinement"//,tabLabel(3)="4"
@@ -188,7 +189,7 @@ Function NI1BC_CreateBmCntrField()
 //Tab 1
 	PopupMenu BmCalibrantName,pos={13,340},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="Calibrant:"
 	PopupMenu BmCalibrantName,help={"Select type of calibrant to be used"}
-	PopupMenu BmCalibrantName,mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ceria_2;Ceria_3;Ag behenate;LaB6;LaB6_2;LaB6_3;LaB6_4;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);SRM 640d (Si)_2;SRM 640d (Si)_3;\""
+	PopupMenu BmCalibrantName,mode=1,popvalue=BmCalibrantName,value= #"\"User;Ceria;Ag behenate;LaB6;LaB6_2;SRM 674b (CeO2);SRM 660b (LaB6);SRM 640d (Si);\""
 	CheckBox BMCalibrantDisplayCircles title="Display?",pos={320,310}
 	CheckBox BMCalibrantDisplayCircles proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMCalibrantDisplayCircles
 	CheckBox BMCalibrantDisplayCircles help={"Display circles in image?"}
@@ -200,7 +201,7 @@ Function NI1BC_CreateBmCntrField()
 	CheckBox BMUseCalibrantD1 title="Use d1?",pos={20,370}
 	CheckBox BMUseCalibrantD1 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD1
 	CheckBox BMUseCalibrantD1 help={"Use d1 for calibrant?"}
-	SetVariable BMCalibrantD1,pos={90,370},size={100,16},title="d1 ="
+	SetVariable BMCalibrantD1,pos={90,370},size={100,16},title="d1 = "
 	SetVariable BMCalibrantD1,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
 	SetVariable BMCalibrantD1,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD1
 	SetVariable BMCalibrantD1LineWidth,pos={210,370},size={100,16},title="width ="
@@ -210,7 +211,7 @@ Function NI1BC_CreateBmCntrField()
 	CheckBox BMUseCalibrantD2 title="Use d2?",pos={20,390}
 	CheckBox BMUseCalibrantD2 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD2
 	CheckBox BMUseCalibrantD2 help={"Use d2 for calibrant?"}
-	SetVariable BMCalibrantD2,pos={90,390},size={100,16},title="d2 ="
+	SetVariable BMCalibrantD2,pos={90,390},size={100,16},title="d2 = "
 	SetVariable BMCalibrantD2,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
 	SetVariable BMCalibrantD2,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD2
 	SetVariable BMCalibrantD2LineWidth,pos={210,390},size={100,16},title="width ="
@@ -220,7 +221,7 @@ Function NI1BC_CreateBmCntrField()
 	CheckBox BMUseCalibrantD3 title="Use d3?",pos={20,410}
 	CheckBox BMUseCalibrantD3 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 	CheckBox BMUseCalibrantD3 help={"Use d3 for calibrant?"}
-	SetVariable BMCalibrantD3,pos={90,410},size={100,16},title="d3 ="
+	SetVariable BMCalibrantD3,pos={90,410},size={100,16},title="d3 = "
 	SetVariable BMCalibrantD3,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
 	SetVariable BMCalibrantD3,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD3
 	SetVariable BMCalibrantD3LineWidth,pos={210,410},size={100,16},title="width ="
@@ -230,7 +231,7 @@ Function NI1BC_CreateBmCntrField()
 	CheckBox BMUseCalibrantD4 title="Use d4?",pos={20,430}
 	CheckBox BMUseCalibrantD4 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 	CheckBox BMUseCalibrantD4 help={"Use d4 for calibrant?"}
-	SetVariable BMCalibrantD4,pos={90,430},size={100,16},title="d4 ="
+	SetVariable BMCalibrantD4,pos={90,430},size={100,16},title="d4 = "
 	SetVariable BMCalibrantD4,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
 	SetVariable BMCalibrantD4,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD4
 	SetVariable BMCalibrantD4LineWidth,pos={210,430},size={100,16},title="width ="
@@ -240,12 +241,63 @@ Function NI1BC_CreateBmCntrField()
 	CheckBox BMUseCalibrantD5 title="Use d5?",pos={20,450}
 	CheckBox BMUseCalibrantD5 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD5
 	CheckBox BMUseCalibrantD5 help={"Use d5 for calibrant?"}
-	SetVariable BMCalibrantD5,pos={90,450},size={100,16},title="d5 ="
+	SetVariable BMCalibrantD5,pos={90,450},size={100,16},title="d5 = "
 	SetVariable BMCalibrantD5,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
 	SetVariable BMCalibrantD5,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD5
 	SetVariable BMCalibrantD5LineWidth,pos={210,450},size={100,16},title="width ="
 	SetVariable BMCalibrantD5LineWidth,help={"Width of the line for evaluation"}, proc=NI1BC_SetVarProc
 	SetVariable BMCalibrantD5LineWidth,limits={1,Inf,5},variable= root:Packages:Convert2Dto1D:BMCalibrantD5LineWidth
+
+	CheckBox BMUseCalibrantD6 title="Use d6?",pos={20,470}
+	CheckBox BMUseCalibrantD6 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+	CheckBox BMUseCalibrantD6 help={"Use d6 for calibrant?"}
+	SetVariable BMCalibrantD6,pos={90,470},size={100,16},title="d6 = "
+	SetVariable BMCalibrantD6,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD6,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD6
+	SetVariable BMCalibrantD6LineWidth,pos={210,470},size={100,16},title="width ="
+	SetVariable BMCalibrantD6LineWidth,help={"Width of the line for evaluation"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD6LineWidth,limits={1,Inf,5},variable= root:Packages:Convert2Dto1D:BMCalibrantD6LineWidth
+
+	CheckBox BMUseCalibrantD7 title="Use d7?",pos={20,490}
+	CheckBox BMUseCalibrantD7 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+	CheckBox BMUseCalibrantD7 help={"Use d7 for calibrant?"}
+	SetVariable BMCalibrantD7,pos={90,490},size={100,16},title="d7 = "
+	SetVariable BMCalibrantD7,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD7,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD7
+	SetVariable BMCalibrantD7LineWidth,pos={210,490},size={100,16},title="width ="
+	SetVariable BMCalibrantD7LineWidth,help={"Width of the line for evaluation"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD7LineWidth,limits={1,Inf,5},variable= root:Packages:Convert2Dto1D:BMCalibrantD7LineWidth
+
+	CheckBox BMUseCalibrantD8 title="Use d8?",pos={20,510}
+	CheckBox BMUseCalibrantD8 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+	CheckBox BMUseCalibrantD8 help={"Use d8 for calibrant?"}
+	SetVariable BMCalibrantD8,pos={90,510},size={100,16},title="d8 = "
+	SetVariable BMCalibrantD8,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD8,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD8
+	SetVariable BMCalibrantD8LineWidth,pos={210,510},size={100,16},title="width ="
+	SetVariable BMCalibrantD8LineWidth,help={"Width of the line for evaluation"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD8LineWidth,limits={1,Inf,5},variable= root:Packages:Convert2Dto1D:BMCalibrantD8LineWidth
+
+	CheckBox BMUseCalibrantD9 title="Use d9?",pos={20,530}
+	CheckBox BMUseCalibrantD9 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+	CheckBox BMUseCalibrantD9 help={"Use d9 for calibrant?"}
+	SetVariable BMCalibrantD9,pos={90,530},size={100,16},title="d9 = "
+	SetVariable BMCalibrantD9,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD9,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD9
+	SetVariable BMCalibrantD9LineWidth,pos={210,530},size={100,16},title="width ="
+	SetVariable BMCalibrantD9LineWidth,help={"Width of the line for evaluation"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD9LineWidth,limits={1,Inf,5},variable= root:Packages:Convert2Dto1D:BMCalibrantD9LineWidth
+
+	CheckBox BMUseCalibrantD10 title="Use d10?",pos={20,550}
+	CheckBox BMUseCalibrantD10 proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMUseCalibrantD10
+	CheckBox BMUseCalibrantD10 help={"Use d10 for calibrant?"}
+	SetVariable BMCalibrantD10,pos={90,550},size={100,16},title="d10 ="
+	SetVariable BMCalibrantD10,help={"Largest d spacing of calibrant"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD10,limits={0,Inf,0},variable= root:Packages:Convert2Dto1D:BMCalibrantD10
+	SetVariable BMCalibrantD10LineWidth,pos={210,550},size={100,16},title="width ="
+	SetVariable BMCalibrantD10LineWidth,help={"Width of the line for evaluation"}, proc=NI1BC_SetVarProc
+	SetVariable BMCalibrantD10LineWidth,limits={1,Inf,5},variable= root:Packages:Convert2Dto1D:BMCalibrantD10LineWidth
+
 //Tab 2
 
 //	ListOfVariables+="BMFitBeamCenter;BMFitSDD;BMFitWavelength;"
@@ -265,10 +317,16 @@ Function NI1BC_CreateBmCntrField()
 	CheckBox BMFitTilts title="Refine tilts?",pos={20,400}
 	CheckBox BMFitTilts proc=NI1BC_BmCntrCheckProc,variable=root:Packages:Convert2Dto1D:BMFitTilts
 	CheckBox BMFitTilts help={"Refine tilts?"}
-	SetVariable BMRefNumberOfSectors,pos={20,440},size={200,16},title="Num sectors   =   "
+
+	TitleBox ExplainNumSect,pos={20,490}, title="Num. of directions per 360 deg in which we will look for peak positions"
+
+	SetVariable BMRefNumberOfSectors,pos={20,520},size={200,16},title="Num sectors   =   "
 	SetVariable BMRefNumberOfSectors,help={"Number of sectors to use per 360 degrees"}, proc=NI1BC_SetVarProc
 	SetVariable BMRefNumberOfSectors,limits={0,Inf,1},variable= root:Packages:Convert2Dto1D:BMRefNumberOfSectors
-	CheckBox BMDisplayInImage title="Display in image?",pos={250,440}
+	SetVariable BMRefStepInAngle,pos={20,540},size={200,16},title="Step in [deg]   =   "
+	SetVariable BMRefStepInAngle,help={"Search Step in degrees"}, disable=2,noedit=1,limits={0,inf,0}
+	SetVariable BMRefStepInAngle,limits={0,Inf,1},variable= root:Packages:Convert2Dto1D:BMRefStepInAngle
+	CheckBox BMDisplayInImage title="Display in image?",pos={250,520}
 	CheckBox BMDisplayInImage variable=root:Packages:Convert2Dto1D:BMDisplayInImage
 	CheckBox BMDisplayInImage help={"Display in image where sectors are evaluated?"}
 	
@@ -293,23 +351,22 @@ Function NI1BC_CreateBmCntrField()
 	SetVariable VerticalTilt,pos={290,400},size={120,16},proc=NI1BC_SetVarProc,title="Vertical", format="%.3f"
 	SetVariable VerticalTilt,limits={-90,90,1},value= root:Packages:Convert2Dto1D:VerticalTilt,help={"Tilt of the image in vertical plane (around 90 degrees)"}
 
-	Button RefineParameters,pos={30,460},size={150,20},proc=NI1BC_BmCntrButtonProc,title="Run refinement"
+	Button RefineParameters,pos={30,560},size={150,20},proc=NI1BC_BmCntrButtonProc,title="Run refinement"
 	Button RefineParameters,help={"Refine above selected parameters"}
-	Button RecoverParameters,pos={200,460},size={150,20},proc=NI1BC_BmCntrButtonProc,title="Return back"
+	Button RecoverParameters,pos={200,560},size={150,20},proc=NI1BC_BmCntrButtonProc,title="Return back"
 	Button RecoverParameters,help={"If refinement fails, this is going to return parameters where they were before..."}
 
 
 //bottom
-	Slider ImageRangeMin,pos={15,500},size={150,16},proc=NI1BC_MainSliderProc,variable= root:Packages:Convert2Dto1D:BMImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
+	Slider ImageRangeMin,pos={15,600},size={150,16},proc=NI1BC_MainSliderProc,variable= root:Packages:Convert2Dto1D:BMImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
 	Slider ImageRangeMin,limits={BMImageRangeMinLimit,BMImageRangeMaxLimit,0}
-	Slider ImageRangeMax,pos={15,530},size={150,16},proc=NI1BC_MainSliderProc,variable= root:Packages:Convert2Dto1D:BMImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
+	Slider ImageRangeMax,pos={15,630},size={150,16},proc=NI1BC_MainSliderProc,variable= root:Packages:Convert2Dto1D:BMImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
 	Slider ImageRangeMax,limits={BMImageRangeMinLimit,BMImageRangeMaxLimit,0}
 	SVAR BMColorTableName=root:Packages:Convert2Dto1D:BMColorTableName
-	PopupMenu BMImageColor,pos={200,500},size={200,16}, value= #"\"Grays;Rainbow;YellowHot;BlueHot;BlueRedGreen;RedWhiteBlue;PlanetEarth;Terrain;\""
+	PopupMenu BMImageColor,pos={200,600},size={200,16}, value= #"\"Grays;Rainbow;YellowHot;BlueHot;BlueRedGreen;RedWhiteBlue;PlanetEarth;Terrain;\""
 	PopupMenu BMImageColor,proc=NI1BC_PopMenuProc, mode=(1+WhichListItem(BMColorTableName, "Grays;Rainbow;YellowHot;BlueHot;BlueRedGreen;RedWhiteBlue;PlanetEarth;Terrain;" ))
 
 	setDataFolder OldDf
-	NI1_UpdatePanelVersionNumber("NI1_CreateBmCntrFieldPanel", 1)
 end
  //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -402,6 +459,11 @@ Function NI1BC_TabProc(ctrlName,tabNum)
 	NVAR  BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 	NVAR  BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 	NVAR  BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
+	NVAR  BMUseCalibrantD6=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+	NVAR  BMUseCalibrantD7=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+	NVAR  BMUseCalibrantD8=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+	NVAR  BMUseCalibrantD9=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+	NVAR  BMUseCalibrantD10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
 	
 	SetVariable BMPathWidth, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
 	PopupMenu BmCalibrantName, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
@@ -422,6 +484,21 @@ Function NI1BC_TabProc(ctrlName,tabNum)
 	SetVariable BMCalibrantD5,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
 	SetVariable BMCalibrantD5LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
 
+	CheckBox BMUseCalibrantD6 win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
+	SetVariable BMCalibrantD6,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD6==0)
+	SetVariable BMCalibrantD6LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
+	CheckBox BMUseCalibrantD7 win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
+	SetVariable BMCalibrantD7,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD7==0)
+	SetVariable BMCalibrantD7LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
+	CheckBox BMUseCalibrantD8 win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
+	SetVariable BMCalibrantD8,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD8==0)
+	SetVariable BMCalibrantD8LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
+	CheckBox BMUseCalibrantD9 win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
+	SetVariable BMCalibrantD9,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD9==0)
+	SetVariable BMCalibrantD9LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
+	CheckBox BMUseCalibrantD10 win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1)
+	SetVariable BMCalibrantD10,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD10==0)
+	SetVariable BMCalibrantD10LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=1 || BMUseCalibrantD5==0)
 
 
 	PopupMenu BMFunctionName, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=2)
@@ -440,6 +517,8 @@ Function NI1BC_TabProc(ctrlName,tabNum)
 	SetVariable BeamCenterX2, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=2)
 	SetVariable BeamCenterY2, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=2)
 	CheckBox BMFitTilts, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=2)
+	TitleBox ExplainNumSect, win=NI1_CreateBmCntrFieldPanel, disable=(tabNum!=2)
+	SetVariable BMRefStepInAngle, win=NI1_CreateBmCntrFieldPanel, disable=2-(tabNum!=2)
 
 	if(tabNum==0)
 		NI1BC_DisplayHelpCircle()	
@@ -482,7 +561,7 @@ Function NI1BC_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	endif
 
 	variable i
-	For(i=1;i<=5;i+=1)
+	For(i=1;i<=10;i+=1)
 		if(cmpstr(ctrlName,"BMCalibrantD"+num2str(i))==0 || cmpstr(ctrlName,"BMCalibrantD"+num2str(i)+"LineWidth")==0)
 			NI1BC_DisplayCalibrantCircles()	
 		endif
@@ -515,6 +594,12 @@ Function NI1BC_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	if(cmpstr("BeamCenterY2",ctrlName)==0)
 		NI1BC_DisplayCalibrantCircles()	
 	endif	
+	if(cmpstr("BMRefNumberOfSectors",ctrlName)==0)
+		NVAR BMRefStepInAngle=root:Packages:Convert2Dto1D:BMRefStepInAngle
+		NVAR BMRefNumberOfSectors=root:Packages:Convert2Dto1D:BMRefNumberOfSectors
+		BMRefStepInAngle=360/BMRefNumberOfSectors
+	endif	
+
 
 	setDataFolder OldDf
 End
@@ -590,7 +675,7 @@ Function NI1BC_DisplayCalibrantCircles()
 		//this calculates the right radius NI1_GetPixelFromDSpacing(dspacing, direction)
 		variable i, radX, radY
 		if(BMCalibrantDisplayCircles)
-			For(i=1;i<=5;i+=1)
+			For(i=1;i<=10;i+=1)
 				NVAR  BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))
 				NVAR BMCalibrantD=$("root:Packages:Convert2Dto1D:BMCalibrantD"+num2str(i))
 				NVAR BMCalibrantDLineWidth=$("root:Packages:Convert2Dto1D:BMCalibrantD"+num2str(i)+"LineWidth")
@@ -1266,12 +1351,17 @@ Function NI1BC_BmCntrCheckProc(ctrlName,checked) : CheckBoxControl
 			BMStandardTransmission = 1
 		endif
 	endif
-	if(cmpstr(ctrlName,"BMUseCalibrantD1")==0 || cmpstr(ctrlName,"BMUseCalibrantD2")==0 ||cmpstr(ctrlName,"BMUseCalibrantD3")==0 ||cmpstr(ctrlName,"BMUseCalibrantD4")==0 ||cmpstr(ctrlName,"BMUseCalibrantD5")==0 )
+	if(stringmatch(ctrlName,"BMUseCalibrantD*"))
 		NVAR  BMUseCalibrantD1=root:Packages:Convert2Dto1D:BMUseCalibrantD1
 		NVAR  BMUseCalibrantD2=root:Packages:Convert2Dto1D:BMUseCalibrantD2
 		NVAR  BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 		NVAR  BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 		NVAR  BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
+		NVAR  BMUseCalibrantD6=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+		NVAR  BMUseCalibrantD7=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+		NVAR  BMUseCalibrantD8=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+		NVAR  BMUseCalibrantD9=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+		NVAR  BMUseCalibrantD10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
 		
 		SetVariable BMCalibrantD1,win=NI1_CreateBmCntrFieldPanel, disable=(BMUseCalibrantD1==0)
 		SetVariable BMCalibrantD1LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(BMUseCalibrantD1==0)
@@ -1283,6 +1373,16 @@ Function NI1BC_BmCntrCheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable BMCalibrantD4LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD4==0)
 		SetVariable BMCalibrantD5,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
 		SetVariable BMCalibrantD5LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD6,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD6LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD6==0)
+		SetVariable BMCalibrantD7,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD7LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD7==0)
+		SetVariable BMCalibrantD8,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD8LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD8==0)
+		SetVariable BMCalibrantD9,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD9LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD9==0)
+		SetVariable BMCalibrantD10,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD10LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD10==0)
 		NI1BC_DisplayCalibrantCircles()
 	endif
 	
@@ -1325,17 +1425,32 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		NVAR BMCalibrantD3=root:Packages:Convert2Dto1D:BMCalibrantD3
 		NVAR BMCalibrantD4=root:Packages:Convert2Dto1D:BMCalibrantD4
 		NVAR BMCalibrantD5=root:Packages:Convert2Dto1D:BMCalibrantD5
+		NVAR BMCalibrantD6=root:Packages:Convert2Dto1D:BMCalibrantD6
+		NVAR BMCalibrantD7=root:Packages:Convert2Dto1D:BMCalibrantD7
+		NVAR BMCalibrantD8=root:Packages:Convert2Dto1D:BMCalibrantD8
+		NVAR BMCalibrantD9=root:Packages:Convert2Dto1D:BMCalibrantD9
+		NVAR BMCalibrantD10=root:Packages:Convert2Dto1D:BMCalibrantD10
 		NVAR BMUseCalibrantD1=root:Packages:Convert2Dto1D:BMUseCalibrantD1
 		NVAR BMUseCalibrantD2=root:Packages:Convert2Dto1D:BMUseCalibrantD2
 		NVAR BMUseCalibrantD3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 		NVAR BMUseCalibrantD4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 		NVAR BMUseCalibrantD5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
+		NVAR BMUseCalibrantD6=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+		NVAR BMUseCalibrantD7=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+		NVAR BMUseCalibrantD8=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+		NVAR BMUseCalibrantD9=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+		NVAR BMUseCalibrantD10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
 		if(cmpstr(popStr,"Ceria")==0)
 			BMCalibrantD1=3.1241
 			BMCalibrantD2=2.70555
 			BMCalibrantD3=1.91311
 			BMCalibrantD4=1.63151
 			BMCalibrantD5=1.56205
+			BMCalibrantD6=1.3529128
+			BMCalibrantD7=1.2415179
+			BMCalibrantD8=1.2100820
+			BMCalibrantD9=1.1046486
+			BMCalibrantD10=1.0414727
 			//these data are from : http://www.sci.himeji-tech.ac.jp/material/cryst_struct/LTVcam/sokutei/ceo2.htm
 			//and further d spacings: 1.35278, 1.24139, 1.20996, 1.10454...
 			BMUseCalibrantD1=1
@@ -1343,32 +1458,11 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"Ceria_2")==0)
-			BMCalibrantD1=1.6316742
-			BMCalibrantD2=1.5622091
-			BMCalibrantD3=1.3529128
-			BMCalibrantD4=1.2415179
-			BMCalibrantD5=1.2100820
-			//these data are from : http://www.sci.himeji-tech.ac.jp/material/cryst_struct/LTVcam/sokutei/ceo2.htm
-			//and further d spacings: 1.35278, 1.24139, 1.20996, 1.10454...
-			BMUseCalibrantD1=1
-			BMUseCalibrantD2=1
-			BMUseCalibrantD3=1
-			BMUseCalibrantD4=1
-			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"Ceria_3")==0)
-			BMCalibrantD1=1.3529128
-			BMCalibrantD2=1.2415179
-			BMCalibrantD3=1.2100820
-			BMCalibrantD4=1.1046486
-			BMCalibrantD5=1.0414727
-			//these data are from : http://www.sci.himeji-tech.ac.jp/material/cryst_struct/LTVcam/sokutei/ceo2.htm
-			//and further d spacings: 1.35278, 1.24139, 1.20996, 1.10454...
-			BMUseCalibrantD1=1
-			BMUseCalibrantD2=1
-			BMUseCalibrantD3=1
-			BMUseCalibrantD4=1
-			BMUseCalibrantD5=1
+			BMUseCalibrantD6=1
+			BMUseCalibrantD7=1
+			BMUseCalibrantD8=1
+			BMUseCalibrantD9=1
+			BMUseCalibrantD10=1
 		elseif(cmpstr(popStr,"Ag behenate")==0)
 			//The number I use is q = 0.1076 (1/Angstrom), d = 58.380 Angstroms.  The
 			//reference is T.C. Huang et al, J. Appl. Cryst. (1993), 26, 180-184.
@@ -1377,11 +1471,21 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMCalibrantD3=19.46
 			BMCalibrantD4=14.595
 			BMCalibrantD5=11.676	//fixed form 11.767 on 2-12-2015, typo
+			BMCalibrantD6=9.73
+			BMCalibrantD7=8.34
+			BMCalibrantD8=7.2975
+			BMCalibrantD9=6.48667
+			BMCalibrantD10=5.838
 			BMUseCalibrantD1=1
 			BMUseCalibrantD2=1
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
+			BMUseCalibrantD6=1
+			BMUseCalibrantD7=1
+			BMUseCalibrantD8=1
+			BMUseCalibrantD9=1
+			BMUseCalibrantD10=1
 		elseif(cmpstr(popStr,"LaB6")==0)
 			//Numbers from Peter Lee
 			BMCalibrantD1=4.15690	//[100]/rel int 60
@@ -1389,44 +1493,42 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMCalibrantD3=2.39999	//111/45
 			BMCalibrantD4=2.07845	//200/23.6
 			BMCalibrantD5=1.85902	//210/55
+			BMCalibrantD6=1.6970539	
+			BMCalibrantD7=1.4696918	
+			BMCalibrantD8=1.3856387	
+			BMCalibrantD9=1.3145323	
+			BMCalibrantD10=1.2533574	
 			BMUseCalibrantD1=1
 			BMUseCalibrantD2=1
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
+			BMUseCalibrantD6=1
+			BMUseCalibrantD7=1
+			BMUseCalibrantD8=1
+			BMUseCalibrantD9=1
+			BMUseCalibrantD10=1
 		elseif(cmpstr(popStr,"LaB6_2")==0)
-			BMCalibrantD1=2.0784581	
-			BMCalibrantD2=1.8590294	
-			BMCalibrantD3=1.6970539	
-			BMCalibrantD4=1.4696918	
-			BMCalibrantD5=1.3856387	
+			BMCalibrantD1=1.6970539	
+			BMCalibrantD2=1.4696918	
+			BMCalibrantD3=1.4696918	
+			BMCalibrantD4=1.3856387	
+			BMCalibrantD5=1.3145323	
+			BMCalibrantD6=1.2533574	
+			BMCalibrantD7=1.1999983	
+			BMCalibrantD8=1.1529211	
+			BMCalibrantD9=1.1109826	
+			BMCalibrantD10=1.0392291	
 			BMUseCalibrantD1=1
 			BMUseCalibrantD2=1
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"LaB6_3")==0)
-			BMCalibrantD1=1.4696918	
-			BMCalibrantD2=1.3856387	
-			BMCalibrantD3=1.3145323	
-			BMCalibrantD4=1.2533574	
-			BMCalibrantD5=1.1999983	
-			BMUseCalibrantD1=1
-			BMUseCalibrantD2=1
-			BMUseCalibrantD3=1
-			BMUseCalibrantD4=1
-			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"LaB6_4")==0)
-			BMCalibrantD1=1.2533574	
-			BMCalibrantD2=1.1999983	
-			BMCalibrantD3=1.1529211	
-			BMCalibrantD4=1.1109826	
-			BMCalibrantD5=1.0392291	
-			BMUseCalibrantD1=1
-			BMUseCalibrantD2=1
-			BMUseCalibrantD3=1
-			BMUseCalibrantD4=1
-			BMUseCalibrantD5=1
+			BMUseCalibrantD6=1
+			BMUseCalibrantD7=1
+			BMUseCalibrantD8=1
+			BMUseCalibrantD9=1
+			BMUseCalibrantD10=1
 		elseif(cmpstr(popStr,"SRM 674b (CeO2)")==0)
 			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
 			BMCalibrantD1=3.1244182
@@ -1439,6 +1541,11 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
+			BMUseCalibrantD6=0
+			BMUseCalibrantD7=0
+			BMUseCalibrantD8=0
+			BMUseCalibrantD9=0
+			BMUseCalibrantD10=0
 		elseif(cmpstr(popStr,"SRM 660b (LaB6)")==0 || cmpstr(popStr,"SRM 660a (LaB6)")==0)
 			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
 			BMCalibrantD1=4.1569162	
@@ -1451,6 +1558,11 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
+			BMUseCalibrantD6=0
+			BMUseCalibrantD7=0
+			BMUseCalibrantD8=0
+			BMUseCalibrantD9=0
+			BMUseCalibrantD10=0
 		elseif(cmpstr(popStr,"SRM 640d (Si)")==0)
 			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
 			BMCalibrantD1=3.1357221
@@ -1458,35 +1570,21 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			BMCalibrantD3=1.6375775
 			BMCalibrantD4=1.3578075
 			BMCalibrantD5=1.2460096
+			BMCalibrantD6=1.1086452
+			BMCalibrantD7=1.0452407
+			BMCalibrantD8=0.9601149
+			BMCalibrantD9=0.9180454
+			BMCalibrantD10=0.858729
 			BMUseCalibrantD1=1
 			BMUseCalibrantD2=1
 			BMUseCalibrantD3=1
 			BMUseCalibrantD4=1
 			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"SRM 640d (Si)_2")==0)
-			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
-			BMCalibrantD1=1.3578075
-			BMCalibrantD2=1.2460096
-			BMCalibrantD3=1.1086452
-			BMCalibrantD4=1.0452407
-			BMCalibrantD5=0.9601149
-			BMUseCalibrantD1=1
-			BMUseCalibrantD2=1
-			BMUseCalibrantD3=1
-			BMUseCalibrantD4=1
-			BMUseCalibrantD5=1
-		elseif(cmpstr(popStr,"SRM 640d (Si)_3")==0)
-			//Numbers from Christina.Reinhard@diamond.ac.uk, NIST standard values
-			BMCalibrantD1=1.1086452
-			BMCalibrantD2=1.0452407
-			BMCalibrantD3=0.9601149
-			BMCalibrantD4=0.9180454
-			BMCalibrantD5=0.858729
-			BMUseCalibrantD1=1
-			BMUseCalibrantD2=1
-			BMUseCalibrantD3=1
-			BMUseCalibrantD4=1
-			BMUseCalibrantD5=1
+			BMUseCalibrantD6=1
+			BMUseCalibrantD7=1
+			BMUseCalibrantD8=1
+			BMUseCalibrantD9=1
+			BMUseCalibrantD10=1
 		endif
 		SetVariable BMCalibrantD1,win=NI1_CreateBmCntrFieldPanel, disable=(BMUseCalibrantD1==0)
 		SetVariable BMCalibrantD1LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=(BMUseCalibrantD1==0)
@@ -1498,6 +1596,16 @@ Function NI1BC_BmCntrPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SetVariable BMCalibrantD4LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD4==0)
 		SetVariable BMCalibrantD5,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
 		SetVariable BMCalibrantD5LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD6,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD6==0)
+		SetVariable BMCalibrantD6LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD7,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD7==0)
+		SetVariable BMCalibrantD7LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD8,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD8==0)
+		SetVariable BMCalibrantD8LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD9,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD9==0)
+		SetVariable BMCalibrantD9LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD10,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD10==0)
+		SetVariable BMCalibrantD10LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
 		NI1BC_DisplayCalibrantCircles()
 	endif
 	
@@ -1749,8 +1857,10 @@ Function NI1BC_InitCreateBmCntrFile()
 	ListOfVariablesBC+="BMBeamCenterXStep;BMBeamCenterYStep;BMDisplayHelpCircle;BMHelpCircleRadius;BMMaxCircleRadius;BMFitTilts;"
 	ListOfVariablesBC+="BMCalibrantD1;BMUseCalibrantD1;BMCalibrantD2;BMUseCalibrantD2;BMCalibrantD3;BMUseCalibrantD3;BMCalibrantD4;BMUseCalibrantD4;BMCalibrantD5;BMUseCalibrantD5;"
 	ListOfVariablesBC+="BMCalibrantD1LineWidth;BMCalibrantD2LineWidth;BMCalibrantD3LineWidth;BMCalibrantD4LineWidth;BMCalibrantD5LineWidth;BMCalibrantDisplayCircles;"
+	ListOfVariablesBC+="BMCalibrantD6;BMUseCalibrantD6;BMCalibrantD7;BMUseCalibrantD7;BMCalibrantD8;BMUseCalibrantD8;BMCalibrantD9;BMUseCalibrantD9;BMCalibrantD10;BMUseCalibrantD10;"
+	ListOfVariablesBC+="BMCalibrantD6LineWidth;BMCalibrantD7LineWidth;BMCalibrantD8LineWidth;BMCalibrantD9LineWidth;BMCalibrantD10LineWidth;"
 	ListOfVariablesBC+="BMFitBeamCenter;BMFitSDD;BMFitWavelength;BMRefNumberOfSectors;BMDezinger;BMDezinerTimes;BMPathWidth;BMUseMask;BMDisplayInImage;"
-	ListOfVariablesBC+="BMSubtractBlank;BMStandardTransmission;"
+	ListOfVariablesBC+="BMSubtractBlank;BMStandardTransmission;BMRefStepInAngle;"
 	
 	ListOfStringsBC="BmCntrFileName;BmCntrFileType;ExportBmCntrFileName;BMColorTableName;FileNameToLoad;"
 	ListOfStringsBC+="BmCalibrantName;BMFunctionName;BCPathInfoStr;BCMatchNameString;"
@@ -1786,6 +1896,7 @@ Function NI1BC_InitCreateBmCntrFile()
 	endfor		
 	
 	ListOfVariablesL="BMCalibrantD1LineWidth;BMCalibrantD2LineWidth;BMCalibrantD3LineWidth;BMCalibrantD4LineWidth;BMCalibrantD5LineWidth;"
+	ListOfVariablesL+="BMCalibrantD6LineWidth;BMCalibrantD7LineWidth;BMCalibrantD8LineWidth;BMCalibrantD9LineWidth;BMCalibrantD10LineWidth;"
 	for(i=0;i<itemsInList(ListOfVariablesL);i+=1)	
 		NVAR testMe=$stringFromList(i,ListOfVariablesL)
 		if(testMe==0)
@@ -1799,6 +1910,9 @@ Function NI1BC_InitCreateBmCntrFile()
 			testMe=60
 		endif
 	endfor		
+	NVAR BMRefStepInAngle
+	NVAR BMRefNumberOfSectors
+	BMRefStepInAngle=360/BMRefNumberOfSectors
 	ListOfVariablesL="BMPathWidth;"
 	for(i=0;i<itemsInList(ListOfVariablesL);i+=1)	
 		NVAR testMe=$stringFromList(i,ListOfVariablesL)
@@ -1885,12 +1999,17 @@ Function NI1BC_RunRefinement()
 		NVAR Use3=root:Packages:Convert2Dto1D:BMUseCalibrantD3
 		NVAR Use4=root:Packages:Convert2Dto1D:BMUseCalibrantD4
 		NVAR Use5=root:Packages:Convert2Dto1D:BMUseCalibrantD5
-		if(Use1+Use2+Use3+Use4+Use5<1.5)
+		NVAR Use6=root:Packages:Convert2Dto1D:BMUseCalibrantD6
+		NVAR Use7=root:Packages:Convert2Dto1D:BMUseCalibrantD7
+		NVAR Use8=root:Packages:Convert2Dto1D:BMUseCalibrantD8
+		NVAR Use9=root:Packages:Convert2Dto1D:BMUseCalibrantD9
+		NVAR Use10=root:Packages:Convert2Dto1D:BMUseCalibrantD10
+		if(Use1+Use2+Use3+Use4+Use5+Use6+Use7+Use8+Use9+Use10<1.5)
 			abort "Not enough lines to fit both Sample to detector distance and wavelength, you need at least  2 lines"
 		endif
 	endif
 	variable i
-	For(i=1;i<=5;i+=1)
+	For(i=1;i<=10;i+=1)
 		NVAR BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))
 		if(BMUseCalibrantD)
 			NI1BC_GetEvaluationPaths(i,BMRefNumberOfSectors)
@@ -1937,7 +2056,7 @@ Function NI1BC_FitParameters()
 	endif
 	make/O/N=0 CalibrantDspacings, CalibrantFitXpnts, calibrantFitYpnts
 	variable tempStart
-	For(i=1;i<=5;i+=1)
+	For(i=1;i<=10;i+=1)
 		NVAR BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))
 		if(BMUseCalibrantD)
 			Wave BMOptimizeAngles = $("root:Packages:Convert2Dto1D:BMOptimizeAngles"+num2str(i))
@@ -2153,26 +2272,6 @@ Function NI1BC_RefinementFunction(pw, yw, xw) : FitFunc
 	Wave calibrantFitYpnts
 	
 	yw = NI1BC_CalculateDSpacing(CalibrantFitXpnts[p], calibrantFitYpnts[p])
-	
-	
-//	CalibrantDspacings, CalibrantFitXpnts, calibrantFitYpnts
-//	For(i=1;i<=5;i+=1)
-//		NVAR BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))
-//		if(BMUseCalibrantD)
-//			NVAR dspacing=$("root:Packages:Convert2Dto1D:BMCalibrantD"+num2str(i))
-//			Wave BMOptimizeAngles = $("BMOptimizeAngles"+num2str(i))
-//			LocalNumPnts=numpnts(BMOptimizeAngles)
-//			Make/O/D/N=(LocalNumPnts) tempXCalc, tempYCalc
-//				tempXCalc = NI1BC_CalcXYForAngleAndParam("X", BMOptimizeAngles[p], BeamCenterX, BeamCenterY,dspacing,Wavelength,SampleToCCDDistance)
-//				tempYCalc = NI1BC_CalcXYForAngleAndParam("Y", BMOptimizeAngles[p], BeamCenterX, BeamCenterY,dspacing,Wavelength,SampleToCCDDistance)
-//			yw[OldLength,(OldLength+LocalNumPnts)-1] 					=	tempXCalc[p-OldLength]
-//			yw[(OldLength+LocalNumPnts),(OldLength+2*LocalNumPnts)-1]	=	tempYCalc[p-(OldLength+LocalNumPnts)]
-//			OldLength += 2*LocalNumPnts
-//		endif
-//	endfor
-//	KillWaves/Z tempXCalc, tempYCalc
-//print pw
-//print yw
 	setDataFolder OldDf
 End
 //*******************************************************************************************************************************************
