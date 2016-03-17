@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ 
+<PackageContent>
+		<File>Igor Procedures/Boot Nika.ipf</File>
+		<File>User Procedures/Indra 2/ANL copyright.txt</File>
+		<File>User Procedures/Indra 2/IN2_GeneralProcedures.ipf</File>
+		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
+		<File>User Procedures/Nika/Modification history.txt</File>
+		<File>User Procedures/Nika/NI1_BeamCenterUtils.ipf</File>
+		<File>User Procedures/Nika/NI1_ConvProc.ipf</File>
+		<File>User Procedures/Nika/NI1_FileLoaders.ipf</File>
+		<File>User Procedures/Nika/NI1_LineProfile.ipf</File>
+		<File>User Procedures/Nika/NI1_loader.ipf</File>
+		<File>User Procedures/Nika/NI1_Main.ipf</File>
+		<File>User Procedures/Nika/NI1_MainPanel.ipf</File>
+		<File>User Procedures/Nika/NI1_mar345.ipf</File>
+		<File>User Procedures/Nika/NI1_mask.ipf</File>
+		<File>User Procedures/Nika/NI1_pix2Dsensitivity.ipf</File>
+		<File>User Procedures/Nika/NI1_SaveRecallConfig.ipf</File>
+		<File>User Procedures/Nika/NI1_SquareMatrix.ipf</File>
+		<File>User Procedures/Nika/NI1_WinView.ipf</File>
+		<File>User Procedures/Nika/NI1_FITSLoader.ipf</File>
+		<File>User Procedures/Nika/NI1_DNDCATsupport.ipf</File>
+		<File>User Procedures/Nika/NI1_15IDDsupport.ipf</File>
+		<File>User Procedures/Nika/NI1_LineProfCalcs.ipf</File>
+		<File>User Procedures/Nika/NI1_HDF5Browser.ipf</File>
+		<File>User Procedures/Nika/NI1_InstrumentSupport.ipf</File>
+		<File>User Procedures/Nika/Nika manual.pdf</File>
+		<File>User Procedures/Nika/license.txt</File>
+		<File>User Procedures/Nika/15IDDpinSAXSAnalysis.pdf</File>
+</PackageContent>

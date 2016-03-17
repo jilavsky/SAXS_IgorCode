@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ 
+<IgorInstaller>
+	<VersionCheck>
+		<KnownPackages>
+			<Package>Irena</Package>
+			<Package>Nika</Package>
+			<Package>Indra</Package>
+			<Package>xop</Package>
+		</KnownPackages>
+		<current_release>March2016</current_release>
+		<current_beta_release>March2016_2</current_beta_release>
+	</VersionCheck>
+
+	<InstallerConfig>
+		<release name="March2016">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/TestVersion.zip</SourceFileAddress>
+			<!--
+				alternative package might be described thus:
+				
+				<Package name="Indra" version="1.88" />
+				
+				BUT, since you have other information that might go into "package,
+				it might be easier to establish a pattern that only uses tags, not attributes.
+				-->
+			<Package>
+				<name>Irena</name>
+				<version>2.62</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.5</version>
+				<PackageList>NikaPckg.xml</PackageList>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.88</version>
+				<PackageList>IndraPckg.xml</PackageList>
+			</Package>
+			<Package>
+				<name>xop</name>
+				<version></version>
+				<PackageList>xopPckg.xml</PackageList>
+			</Package>
+			<VersionComment>Added Panel Scaling</VersionComment>
+		</release>
+		<release name="March2016_2" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/TestVersion.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.62</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<PackageList>NikaPckg.xml</PackageList>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.5</version>
+				<PackageList>IndraPckg.xml</PackageList>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.88</version>
+				<PackageList>IndraPckg.xml</PackageList>
+			</Package>
+			<Package>
+				<name>xop</name>
+				<version></version>
+				<PackageList>xopPckg.xml</PackageList>
+			</Package>
+			<VersionComment>Added Panel Scaling</VersionComment>
+		</release>
+	</InstallerConfig>
+</IgorInstaller>
