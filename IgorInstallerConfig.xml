@@ -27,21 +27,25 @@
 				<name>Irena</name>
 				<version>2.62</version>
 				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>/Igor Procedures/Boot Irena 1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
 				<version>1.5</version>
 				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>/Igor Procedures/Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
 				<version>1.88</version>
 				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>/Igor Procedures/Boot Indra2.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop</name>
 				<version></version>
 				<PackageList>xopPckg.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
 			</Package>
 			<VersionComment>Added Panel Scaling</VersionComment>
 		</release>
@@ -51,22 +55,25 @@
 				<name>Irena</name>
 				<version>2.62</version>
 				<PackageList>IrenaPckg.xml</PackageList>
-				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>/Igor Procedures/Boot Irena 1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
 				<version>1.5</version>
-				<PackageList>IndraPckg.xml</PackageList>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>/Igor Procedures/Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
 				<version>1.88</version>
 				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>/Igor Procedures/Boot Indra2.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop</name>
 				<version></version>
 				<PackageList>xopPckg.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
 			</Package>
 			<VersionComment>Added Panel Scaling</VersionComment>
 		</release>
