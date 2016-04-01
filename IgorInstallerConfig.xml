@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  
 <IgorInstaller>
+			<!--
+				The structure of this file "IgorInstallerConfig.xml" is used to define Installer functionality.
+				Its name is fixed in the code. Its location is something similar to this:
+				"http://raw.githubusercontent.com/jilavsky/SAXS_IgorCode/master/"		
+				VersionCheck defines what the known packages are and what the current releases are
+				InstallerConfig lists for each release for all packages : version, PackageList (contains list of paths and files to be copied
+				and version check file (file in which code will look for #pragma version =)
+				-->
 	<VersionCheck>
 		<KnownPackages>
 			<Package>Irena</Package>
@@ -15,19 +23,11 @@
 	<InstallerConfig>
 		<release name="March2016">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/TestVersion.zip</SourceFileAddress>
-			<!--
-				alternative package might be described thus:
-				
-				<Package name="Indra" version="1.88" />
-				
-				BUT, since you have other information that might go into "package,
-				it might be easier to establish a pattern that only uses tags, not attributes.
-				-->
 			<Package>
 				<name>Irena</name>
 				<version>2.62</version>
 				<PackageList>IrenaPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Irena 1 modeling.ipf</VersionCheckFile>
+				<VersionCheckFile>/Igor Procedures/Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
@@ -55,7 +55,7 @@
 				<name>Irena</name>
 				<version>2.62</version>
 				<PackageList>IrenaPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Irena 1 modeling.ipf</VersionCheckFile>
+				<VersionCheckFile>/Igor Procedures/Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
