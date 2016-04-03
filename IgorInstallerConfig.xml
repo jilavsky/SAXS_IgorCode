@@ -27,19 +27,19 @@
 				<name>Irena</name>
 				<version>2.62</version>
 				<PackageList>IrenaPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Irena1 modeling.ipf</VersionCheckFile>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
 				<version>1.5</version>
 				<PackageList>NikaPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Nika.ipf</VersionCheckFile>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
 				<version>1.88</version>
 				<PackageList>IndraPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Indra2.ipf</VersionCheckFile>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop</name>
@@ -55,19 +55,19 @@
 				<name>Irena</name>
 				<version>2.62</version>
 				<PackageList>IrenaPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Irena1 modeling.ipf</VersionCheckFile>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
 				<version>1.5</version>
 				<PackageList>NikaPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Nika.ipf</VersionCheckFile>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
 				<version>1.88</version>
 				<PackageList>IndraPckg.xml</PackageList>
-				<VersionCheckFile>/Igor Procedures/Boot Indra2.ipf</VersionCheckFile>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop</name>
