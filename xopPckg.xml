@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  
 <PackageContent>
-Abeles Help.ihf
-Abeles.xop
-GenCurveFit Help.ihf
-GenCurvefit.xop
-XMLutils Help.ihf
-XMLutils.xop
-pthreadVC2.dll
+		<File>Igor Extensions/Abeles Help.ihf</File>
+		<File>Igor ExtensionsAbeles.xop</File>
+		<File>Igor ExtensionsGenCurveFit Help.ihf</File>
+		<File>Igor ExtensionsGenCurvefit.xop</File>
+		<File>Igor ExtensionsXMLutils Help.ihf</File>
+		<File>Igor ExtensionsXMLutils.xop</File>
+		<File>Igor ExtensionspthreadVC2.dll</File>
 </PackageContent>
