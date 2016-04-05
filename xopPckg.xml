@@ -2,10 +2,10 @@
  
 <PackageContent>
 		<File>Igor Extensions/Abeles Help.ihf</File>
-		<File>Igor ExtensionsAbeles.xop</File>
-		<File>Igor ExtensionsGenCurveFit Help.ihf</File>
-		<File>Igor ExtensionsGenCurvefit.xop</File>
-		<File>Igor ExtensionsXMLutils Help.ihf</File>
-		<File>Igor ExtensionsXMLutils.xop</File>
-		<File>Igor ExtensionspthreadVC2.dll</File>
+		<File>Igor Extensions/Abeles.xop</File>
+		<File>Igor Extensions/GenCurveFit Help.ihf</File>
+		<File>Igor Extensions/GenCurvefit.xop</File>
+		<File>Igor Extensions/XMLutils Help.ihf</File>
+		<File>Igor Extensions/XMLutils.xop</File>
+		<File>Igor Extensions/pthreadVC2.dll</File>
 </PackageContent>
