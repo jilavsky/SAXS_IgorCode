@@ -159,26 +159,8 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 //	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
 	
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
-	IN3_CheckPlatformGUIFonts()
+	IN2G_CheckPlatformGUIFonts()
 end
-//****************************************************************************************
-//**************************************************************************************
-static Function IN3_CheckPlatformGUIFonts()
-
-	SVAR/Z Platform = root:Packages:Irena_Platform
-	if(!SVAR_Exists(Platform))
-		string/g root:Packages:Irena_Platform
-		SVAR Platform = root:Packages:Irena_Platform
-		Platform = ""
-	endif
-	string oldPlatform = Platform
-	string CurPlatform = IgorInfo(2)
-	string CurExpName=IgorInfo(1)
-	if(!stringMatch(Platform, CurPlatform) || stringMatch(CurExpName,"Untitled"))			//different platform or new experiment. 
-		IN3_ReadIrenaGUIPackagePrefs()
-	endif
-end
-
 //****************************************************************************************
 //****************************************************************************************
 //****************************************************************************************
@@ -197,7 +179,7 @@ Function IN3_CheckWIndowsProcVersions(WindowProcNames)
 			Execute (ProcedureName+"()") 
 		endif
 	endfor
-	
+	 
 end
 
 //***********************************************************
@@ -230,120 +212,120 @@ Function IN3_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	if(V_Flag)
 		GetWindow $(panelName), note
 		SetWindow $(panelName), note=S_value+";"+"IndraProcVersion:"+num2str(CurentProcVersion)+";"
-		IN3_PanelAppendSizeRecordNote(panelName)
-		SetWindow $panelName,hook(ResizePanelControls)=IN3_PanelResizePanelSize
+		IN2G_PanelAppendSizeRecordNote(panelName)
+		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
 	endif
 end
 //***********************************************************
-//***********************************************************
-Function IN3_PanelAppendSizeRecordNote(panelName)
-	string panelName
-	string PanelRecord=""
-	//find size of the panel
-	GetWindow $panelName wsizeDC 
-	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-	//GetDefaultFont($panelName )
-	//PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
-	GetWindow $panelName, note
-	string ExistingNote=S_Value
-	string controlslist = ControlNameList("", ";")
-	variable i
-	string ControlsRecords=""
-	string TmpNm=""
-	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-		TmpNm = StringFromList(i, controlslist, ";")
-		ControlInfo $(TmpNm)
-		//V_Height, V_Width, V_top, V_left
-		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
-		//special cases...
-		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-		endif
-	endfor
-	SetWindow $panelName, note=ExistingNote+";"+PanelRecord+ControlsRecords
-	//print ExistingNote+";"+PanelRecord+ControlsRecords
-end
-//***********************************************************
+////***********************************************************
+//Function IN3_PanelAppendSizeRecordNote(panelName)
+//	string panelName
+//	string PanelRecord=""
+//	//find size of the panel
+//	GetWindow $panelName wsizeDC 
+//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+//	//GetDefaultFont($panelName )
+//	//PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+//	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
+//	GetWindow $panelName, note
+//	string ExistingNote=S_Value
+//	string controlslist = ControlNameList("", ";")
+//	variable i
+//	string ControlsRecords=""
+//	string TmpNm=""
+//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//		TmpNm = StringFromList(i, controlslist, ";")
+//		ControlInfo $(TmpNm)
+//		//V_Height, V_Width, V_top, V_left
+//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
+//		//special cases...
+//		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+//		endif
+//	endfor
+//	SetWindow $panelName, note=ExistingNote+";"+PanelRecord+ControlsRecords
+//	//print ExistingNote+";"+PanelRecord+ControlsRecords
+//end
+////***********************************************************
 //***********************************************************
 
-Function IN3_PanelResizePanelSize(s)
-	STRUCT WMWinHookStruct &s
-		//add to the end of panel forming macro these two lines:
-		//	IR1_PanelAppendSizeRecordNote()
-		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
-		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
-	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
-		GetWindow $(s.winName), note
-		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
-		string OrigInfo=S_Value
-		GetWindow $s.winName wsizeDC
-		Variable left = V_left
-		Variable right = V_right
-		Variable top = V_top
-		Variable bottom = V_bottom
-		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
-		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
-		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
-		CurWidth=(right-left) 
-		CurHeight = (bottom-top)
-		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
-			horScale = 1
-			verScale = 1
-		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
-			MoveWindow left, top, left+OriginalWidth, bottom
-			horScale = 1
-			verScale = CurHeight / (OriginalHeight)	
-		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, right, top+OriginalHeight
-			verScale = 1 
-			horScale = curWidth/OriginalWidth
-		else
-			verScale = CurHeight /OriginalHeight
-			horScale = curWidth/OriginalWidth
-		endif
-		variable scale= min(horScale, verScale )
-		string FontName = IN3_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
-		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
-		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
-		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
-			FontName="_IgorSmall"
-		endif
-		//this needs to be fixed and will be more difficult. 
-		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IN3_LkUpDfltVar("defaultFontSize"))), 0 }
-		string controlslist = ControlNameList(s.winName, ";")
-		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
-		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
-		string ControlsRecords=""
-		string TmpNm=""
-		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-			TmpNm = StringFromList(i, controlslist, ";")			
-			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
-			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
-			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
-			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
-			NewCntrolV_left=OrigCntrlV_left* horScale 
-			NewCntrlV_top = OrigCntrlV_top * verScale
-			NewWidth = OrigWidth * horScale
-			NewHeight = OrigHeight * verScale
-			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-			//special cases...
-			ControlInfo $(TmpNm)
-			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
-				if(numtype(OrigBodyWidth)==0)
-					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
-				endif
-			endif
-		endfor
-
-	endif
-end
+//Function IN3_PanelResizePanelSize(s)
+//	STRUCT WMWinHookStruct &s
+//		//add to the end of panel forming macro these two lines:
+//		//	IR1_PanelAppendSizeRecordNote()
+//		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
+//		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
+//	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
+//		GetWindow $(s.winName), note
+//		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
+//		string OrigInfo=S_Value
+//		GetWindow $s.winName wsizeDC
+//		Variable left = V_left
+//		Variable right = V_right
+//		Variable top = V_top
+//		Variable bottom = V_bottom
+//		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
+//		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
+//		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
+//		CurWidth=(right-left) 
+//		CurHeight = (bottom-top)
+//		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
+//			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
+//			horScale = 1
+//			verScale = 1
+//		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
+//			MoveWindow left, top, left+OriginalWidth, bottom
+//			horScale = 1
+//			verScale = CurHeight / (OriginalHeight)	
+//		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
+//			MoveWindow left, top, right, top+OriginalHeight
+//			verScale = 1 
+//			horScale = curWidth/OriginalWidth
+//		else
+//			verScale = CurHeight /OriginalHeight
+//			horScale = curWidth/OriginalWidth
+//		endif
+//		variable scale= min(horScale, verScale )
+//		string FontName = IN2G_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
+//		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
+//		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
+//		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
+//			FontName="_IgorSmall"
+//		endif
+//		//this needs to be fixed and will be more difficult. 
+//		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+//		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+//		string controlslist = ControlNameList(s.winName, ";")
+//		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
+//		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
+//		string ControlsRecords=""
+//		string TmpNm=""
+//		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//			TmpNm = StringFromList(i, controlslist, ";")			
+//			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
+//			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
+//			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
+//			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
+//			NewCntrolV_left=OrigCntrlV_left* horScale 
+//			NewCntrlV_top = OrigCntrlV_top * verScale
+//			NewWidth = OrigWidth * horScale
+//			NewHeight = OrigHeight * verScale
+//			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+//			//special cases...
+//			ControlInfo $(TmpNm)
+//			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+//				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
+//				if(numtype(OrigBodyWidth)==0)
+//					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+//				endif
+//			endif
+//		endfor
+//
+//	endif
+//end
 //***********************************************************
 //***********************************************************
 //***********************************************************

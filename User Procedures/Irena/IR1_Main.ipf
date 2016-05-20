@@ -13,6 +13,7 @@ constant CurrentVersionNumber = 2.60
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  
 //2.60 modified GUI preferences handling. Was reseting, wrong logic. 
 //
@@ -61,8 +62,10 @@ End
 Menu "SAS"
 	help = {"Irena SAS modeling macros, version 2.54 released 1/5/2014 by Jan Ilavsky"}
 	Submenu "Data import & export"
-		"Import ASCII data", IR1I_ImportDataMain()
-		help={"Import data from ASCII file into Igor for use with macros"}
+		"Import ASCII SAS data", IR1I_ImportSASASCIIDataMain()
+		help={"Import Small-angle scattering data from ASCII file into Igor for use with macros"}
+		"Import ASCII WAXS or other data", IR1I_ImportOtherASCIIMain()
+		help={"Import Other type data from ASCII file into Igor for use with macros"}
 		"Import XML data", CS_XMLGUIImportDataMain(defaultType="QRS",defaultQUnits="1/A")
 		help={"Import data from CanSAS 1.0 conforming data sets"}
 		"Export ASCII data", IR2E_UniversalDataExport()
@@ -84,7 +87,7 @@ Menu "SAS"
 	help = {"Plotting tool with wide functionality, hopefully"}
 	"Plotting II", IR2D_DWSPlotToolMain()
 	help = {"Plotting tool which controls any top graph"}
-		SubMenu "Support Tools for plots aand tables"
+		SubMenu "Support Tools for plots and tables"
 		"Draw Line Of Any Slope", IR2P_DrawLineOfAnySlope()
 		"Draw Line Of -4 Slope",  IR2P_DrawLineOf4Slope()
 		"Draw Line Of -3 Slope",  IR2P_DrawLineOf3Slope()
@@ -219,29 +222,12 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
-	IR2C_CheckPlatformGUIFonts()
+	IN2G_CheckPlatformGUIFonts()
 end
 //****************************************************************************************
 //****************************************************************************************
-static Function IR2C_CheckPlatformGUIFonts()
-
-	SVAR/Z Platform = root:Packages:Irena_Platform
-	if(!SVAR_Exists(Platform))
-		string/g root:Packages:Irena_Platform
-		SVAR Platform = root:Packages:Irena_Platform
-		Platform = ""
-	endif
-	string oldPlatform = Platform
-	string CurPlatform = IgorInfo(2)
-	string CurExpName=IgorInfo(1)
-	if(!stringMatch(Platform, CurPlatform) || stringMatch(CurExpName,"Untitled"))			//different platform or new experiment. 
-		IR2C_ReadIrenaGUIPackagePrefs()
-	endif
-end
-
 //****************************************************************************************
-//****************************************************************************************
-
+ 
 Function IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	string WindowProcNames
 	
@@ -267,62 +253,13 @@ end
 //		Strings=FontType;
 //
 //	how to use:
-// 	When needed insert font size through lookup function - e.g., IR2C_LkUpDfltVar("LegendSize")
-//	or for font type IR2C_LkUpDfltStr("FontType")
+// 	When needed insert font size through lookup function - e.g., IN2G_LkUpDfltVar("LegendSize")
+//	or for font type IN2G_LkUpDfltStr("FontType")
 //	NOTE: Both return string values, because that is what is generally needed!!!!
 // further variables and strings can be added, but need to be added to control panel too...
 //	see example in : IR1_LogLogPlotU()  in this procedure file... 
 
 
-Function/S IR2C_LkUpDfltStr(StrName)
-	string StrName
-
-	string result
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
-		IR2C_InitConfigMain()
-	endif
-	SetDataFolder root:Packages
-	setDataFolder root:Packages:IrenaConfigFolder
-	SVAR /Z curString = $(StrName)
-	if(!SVAR_exists(curString))
-		IR2C_InitConfigMain()
-		SVAR curString = $(StrName)
-	endif	
-	result = 	"'"+curString+"'"
-	setDataFolder OldDf
-	return result
-end
-//***********************************************************
-//***********************************************************
-
-Function/S IR2C_LkUpDfltVar(VarName)
-	string VarName
-
-	string result
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
-		IR2C_InitConfigMain()
-	endif
-	SetDataFolder root:Packages
-	setDataFolder root:Packages:IrenaConfigFolder
-	NVAR /Z curVariable = $(VarName)
-	if(!NVAR_exists(curVariable))
-		IR2C_InitConfigMain()
-		NVAR curVariable = $(VarName)
-	endif	
-	if(curVariable>=10)
-		result = num2str(curVariable)
-	else
-		result = "0"+num2str(curVariable)
-	endif
-	setDataFolder OldDf
-	return result
-end
-//***********************************************************
-//***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -336,8 +273,8 @@ Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHoo
 		GetWindow $(panelName), note
 		SetWindow $(panelName), note=S_value+";"+"IrenaProcVersion:"+num2str(CurentProcVersion)+";"
 		if(AddResizeHookFunction==1)
-			IR1_PanelAppendSizeRecordNote(panelName)
-			SetWindow $panelName,hook(ResizePanelControls)=IR1_PanelResizePanelSize
+			IN2G_PanelAppendSizeRecordNote(panelName)
+			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
 		endif
 	endif
 end
@@ -361,181 +298,64 @@ Function IR1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 end
 //***********************************************************
 //***********************************************************
-//***********************************************************
-Function IR1_PanelAppendSizeRecordNote(panelName)
-	string panelName
-	string PanelRecord=""
-	//find size of the panel
-	DoWIndow $panelName
-	if(V_Flag==0)
-		return 0
-	endif
-	//store main window size
-	GetWindow $panelName wsizeDC 
-	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
-	GetWindow $panelName, note				//store existing note. 
-	string ExistingNote=S_Value
-	variable i, j
-	string ControlsRecords=""
-	string ListOfPanels=panelName+";"
-	string TmpNm=""
-	string controlslist=""
-	string tmpPanelName, tmpName1
-	string SubwindowList=ChildWindowList(panelName )		//do we have subwindows? 
-	if(Strlen(SubwindowList)>0)
-		ListOfPanels+=SubwindowList
-	endif
-	controlslist = ControlNameList("", ";")		
-	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-		TmpNm = StringFromList(i, controlslist, ";")
-		ControlInfo $(TmpNm)
-		//V_Height, V_Width, V_top, V_left
-		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
-		//special cases...
-		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-		endif
-	endfor
-	For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
-			tmpPanelName = StringFromList(j, ListOfPanels,";")
-			tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
-			setActiveSubwindow $tmpName1
-			controlslist = ControlNameList(tmpName1, ";")		
-			For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-				TmpNm = StringFromList(i, controlslist, ";")
-				ControlInfo $(TmpNm)
-				ControlsRecords+=tmpPanelName+TmpNm+"Left:"+num2str(V_left)+";"+tmpPanelName+TmpNm+"Width:"+num2str(V_width)+";"+tmpPanelName+TmpNm+"Top:"+num2str(V_top)+";"+tmpPanelName+TmpNm+"Height:"+num2str(V_Height)+";"
-				//special cases...
-				if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-					ControlsRecords+=tmpPanelName+TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-				endif
-			endfor
-			SetActiveSubwindow ##
-	endfor
-	SetWindow $panelName, note=ExistingNote+";"+PanelRecord+ControlsRecords
-//	print ExistingNote+";"+PanelRecord+ControlsRecords
-end
-//***********************************************************
-//***********************************************************
-
-Function IR1_PanelResizePanelSize(s)
-	STRUCT WMWinHookStruct &s
-		//add to the end of panel forming macro these two lines:
-		//	IR1_PanelAppendSizeRecordNote()
-		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
-		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
-	if ( s.eventCode == 6 && !(WinType(s.winName)==5))	// resized
-		GetWindow $(s.winName), note
-		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
-		string OrigInfo=S_Value
-		//print s
-		GetWindow $s.winName wsizeDC
-		Variable left = V_left
-		Variable right = V_right
-		Variable top = V_top
-		Variable bottom = V_bottom
-		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
-		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
-		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
-		CurWidth = abs(right-left) 
-		CurHeight = abs(bottom-top)
-		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
-			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+OriginalWidth) +", "+num2str(top+OriginalHeight)
-			horScale = 1
-			verScale = 1
-		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
-			MoveWindow left, top, left+OriginalWidth, top+CurHeight
-			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+OriginalWidth) +", "+num2str(top+CurHeight)
-			horScale = 1
-			verScale = CurHeight / (OriginalHeight)	
-		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, left+CurWidth, top+OriginalHeight
-			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+CurWidth) +", "+num2str(top+OriginalHeight)
-			verScale = 1
-			horScale = curWidth/OriginalWidth
-		else
-			//print "Moved to "+num2str(left) +", "+num2str(top) +", "+num2str(left+CurWidth) +", "+num2str(top+CurHeight)
-			verScale = CurHeight /OriginalHeight
-			horScale = curWidth/OriginalWidth
-		endif
-		variable scale= min(horScale, verScale )
-		string FontName = IR2C_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
-		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
-		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
-		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
-			FontName="_IgorSmall"
-		endif
-		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*str2num(IR2C_LkUpDfltVar("defaultFontSize"))), 0 }
-		variable i, j
-		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
-		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
-		string ControlsRecords=""
-		string ListOfPanels=s.winName+";"
-		string TmpNm="", tmpName1
-		string controlslist=""
-		string tmpPanelName
-		string SubwindowList=ChildWindowList(s.winName)		//do we have subwindows? 
-		if(Strlen(SubwindowList)>0)
-			ListOfPanels+=SubwindowList
-		endif
-		controlslist = ControlNameList("", ";")
-		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-			TmpNm = StringFromList(i, controlslist, ";")			
-			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
-			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
-			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
-			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
-			NewCntrolV_left=OrigCntrlV_left* horScale 
-			NewCntrlV_top = OrigCntrlV_top * verScale
-			NewWidth = OrigWidth * horScale
-			NewHeight = OrigHeight * verScale
-			ModifyControl $(TmpNm) pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-			//special cases...
-			ControlInfo $(TmpNm)
-			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
-				if(numtype(OrigBodyWidth)==0)
-					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
-				endif
-			endif
-		endfor
-		For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
-				tmpPanelName = StringFromList(j, ListOfPanels,";")
-				tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
-				setActiveSubwindow $tmpName1
-				controlslist = ControlNameList(tmpName1, ";")		
-				For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-					TmpNm = StringFromList(i, controlslist, ";")			
-					OrigCntrlV_left=NumberByKey(tmpPanelName+TmpNm+"Left", OrigInfo, ":", ";")
-					OrigCntrlV_top=NumberByKey(tmpPanelName+TmpNm+"Top", OrigInfo, ":", ";")
-					OrigWidth=NumberByKey(tmpPanelName+TmpNm+"Width", OrigInfo, ":", ";")
-					OrigHeight=NumberByKey(tmpPanelName+TmpNm+"Height", OrigInfo, ":", ";")
-					NewCntrolV_left=OrigCntrlV_left* horScale 
-					NewCntrlV_top = OrigCntrlV_top * verScale
-					NewWidth = OrigWidth * horScale
-					NewHeight = OrigHeight * verScale
-					ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-					//special cases...
-					ControlInfo $(TmpNm)
-					if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-						OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
-						if(numtype(OrigBodyWidth)==0)
-							ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
-						endif
-					endif
-				endfor
-				SetActiveSubwindow ##
-		endfor
-	endif
-end
-//**********************************************************************************************************
+////***********************************************************
+//Function IR1_PanelAppendSizeRecordNote(panelName)
+//	string panelName
+//	string PanelRecord=""
+//	//find size of the panel
+//	DoWIndow $panelName
+//	if(V_Flag==0)
+//		return 0
+//	endif
+//	//store main window size
+//	GetWindow $panelName wsizeDC 		//this value is in pixels
+//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+//	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
+//	GetWindow $panelName, note				//store existing note. 
+//	string ExistingNote=S_Value
+//	variable i, j
+//	string ControlsRecords=""
+//	string ListOfPanels=panelName+";"
+//	string TmpNm=""
+//	string controlslist=""
+//	string tmpPanelName, tmpName1
+//	string SubwindowList=ChildWindowList(panelName )		//do we have subwindows? 
+//	if(Strlen(SubwindowList)>0)
+//		ListOfPanels+=SubwindowList
+//	endif
+//	controlslist = ControlNameList("", ";")		
+//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//		TmpNm = StringFromList(i, controlslist, ";")
+//		ControlInfo $(TmpNm)				//Dimensions and position of the named control in pixels
+//		//V_Height, V_Width, V_top, V_left
+//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
+//		//special cases...
+//		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+//		endif
+//	endfor
+//	For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
+//			tmpPanelName = StringFromList(j, ListOfPanels,";")
+//			tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
+//			setActiveSubwindow $tmpName1
+//			controlslist = ControlNameList(tmpName1, ";")		
+//			For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//				TmpNm = StringFromList(i, controlslist, ";")
+//				ControlInfo $(TmpNm)
+//				ControlsRecords+=tmpPanelName+TmpNm+"Left:"+num2str(V_left)+";"+tmpPanelName+TmpNm+"Width:"+num2str(V_width)+";"+tmpPanelName+TmpNm+"Top:"+num2str(V_top)+";"+tmpPanelName+TmpNm+"Height:"+num2str(V_Height)+";"
+//				//special cases...
+//				if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+//					ControlsRecords+=tmpPanelName+TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+//				endif
+//			endfor
+//			SetActiveSubwindow ##
+//	endfor
+//	if(!StringMatch(ExistingNote, "*;"))
+//		ExistingNote+=";"
+//	endif
+//	SetWindow $panelName, note=ExistingNote+PanelRecord+ControlsRecords
+////	print ExistingNote+";"+PanelRecord+ControlsRecords
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //this is added into selection in Marquee.
@@ -563,367 +383,84 @@ end
 //***********************************************************
 
 Function IR2C_ConfigMain()		//call configuration routine
-
-	//this is main configuration utility... 
-	IR2C_InitConfigMain()
-	DoWindow IR2C_MainConfigPanel
-	if(!V_Flag)
-		Execute ("IR2C_MainConfigPanel()")
-	else
-		DoWindow/F IR2C_MainConfigPanel
-	endif
-	IR2C_ReadIrenaGUIPackagePrefs()
+	IN2G_ConfigMain()
 end
 
+
 //***********************************************************
 //***********************************************************
 //***********************************************************
-////***********************************************************
-////***********************************************************
-//structure IrenaPanelDefaults
-//	uint32 version					// Preferences structure version number. 100 means 1.00.
-//	uchar LegendFontType[50]		//50 characters for legend font name
-//	uchar PanelFontType[50]		//50 characters for panel font name
-//	uint32 defaultFontSize			//font size as integer
-//	uint32 LegendSize				//font size as integer
-//	uint32 TagSize					//font size as integer
-//	uint32 AxisLabelSize			//font size as integer
-//	int16 LegendUseFolderName		//font size as integer
-//	int16 LegendUseWaveName		//font size as integer
-//	variable LastUpdateCheck
-//	uint32 reserved[100]			// Reserved for future use
+//Function IR2C_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
 //	
-//endstructure
+//	if (cmpstr(ctrlName,"LegendSize")==0)
+//		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+//		LegendSize = str2num(popStr)
+//	endif
+//	if (cmpstr(ctrlName,"TagSize")==0)
+//		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+//		TagSize = str2num(popStr)
+//	endif
+//	if (cmpstr(ctrlName,"AxisLabelSize")==0)
+//		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+//		AxisLabelSize = str2num(popStr)
+//	endif
+//	if (cmpstr(ctrlName,"FontType")==0)
+//		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+//		FontType = popStr
+//	endif
+//	if (cmpstr(ctrlName,"DefaultFontType")==0)
+//		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//		DefaultFontType = popStr
+//		IN2G_ChangePanelControlsStyle()
+//	endif
+//	if (cmpstr(ctrlName,"DefaultFontSize")==0)
+//		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//		DefaultFontSize = str2num(popStr)
+//		IN2G_ChangePanelControlsStyle()
+//	endif
+//	IN2G_SaveIrenaGUIPackagePrefs(0)
+//End
+////***********************************************************
+////***********************************************************
+////***********************************************************
+////***********************************************************
+//Function IR2C_KillPrefsButtonProc(ba) : ButtonControl
+//	STRUCT WMButtonAction &ba
 //
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-
-Function IR2C_ReadIrenaGUIPackagePrefs()
-
-	struct  IrenaPanelDefaults Defs
-	IR2C_InitConfigMain()
-	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
-	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
-	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
-	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-	if(V_Flag==0)		
-		//print Defs
-		//print "Read Irena Panels and graphs preferences from local machine and applied them. "
-		//print "Note that this may have changed font size and type selection originally saved with the existing experiment."
-		//print "To change them please use \"Configure default fonts and names\""
-		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
-			DefaultFontType=Defs.PanelFontType
-			DefaultFontSize = Defs.defaultFontSize
-			LastUpdateCheck = Defs.LastUpdateCheck
-			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
-			else
-				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
-			endif
-			//and now recover the stored other parameters, no action on these...
-			 LegendSize=Defs.LegendSize
-			 TagSize=Defs.TagSize
-			 AxisLabelSize=Defs.AxisLabelSize
-			 LegendUseFolderName=Defs.LegendUseFolderName
-			 LegendUseWaveName=Defs.LegendUseWaveName
-			 FontType=Defs.LegendFontType
-		else
-			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
-			if(V_Flag==1)
-				Execute("IR2C_MainConfigPanel() ")
-			else
-			//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
-			endif
-		endif
-	else 		//problem loading package defaults
-		Struct WMButtonAction ba
-		ba.ctrlName="DefaultValues"
-		IR2C_KillPrefsButtonProc(ba)
-		DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
-		if(V_Flag==1)
-			Execute("IR2C_MainConfigPanel() ")
-		endif	
-	endif
-end
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-Function IR2C_SaveIrenaGUIPackagePrefs(KillThem)
-	variable KillThem
-	
-	struct  IrenaPanelDefaults Defs
-	IR2C_InitConfigMain()
-	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
-	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
-	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
-	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-
-	Defs.Version			=		2
-	Defs.PanelFontType	 	= 		DefaultFontType
-	Defs.defaultFontSize 	= 		DefaultFontSize 
-	Defs.LegendSize 		= 		LegendSize
-	Defs.TagSize 			= 		TagSize
-	Defs.AxisLabelSize 		= 		AxisLabelSize
-	Defs.LegendUseFolderName = 	LegendUseFolderName
-	Defs.LegendUseWaveName = 	LegendUseWaveName
-	Defs.LegendFontType	= 		FontType
-	Defs.LastUpdateCheck	=		LastUpdateCheck
-	
-	if(KillThem)
-		SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
-	//	IR2C_ReadIrenaGUIPackagePrefs()
-	else
-		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-	endif
-end
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-
-Function IR2C_InitConfigMain()
-
-	//initialize lookup parameters for user selected items.
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	NewDataFolder/O/S root:Packages
-	NewDataFolder/O/S root:Packages:IrenaConfigFolder
-	
-	string ListOfVariables
-	string ListOfStrings
-	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
-	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
-	variable i
-	//and here we create them
-	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
-	endfor		
-										
-	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-	endfor	
-	//Now set default values
-	String VariablesDefaultValues
-	String StringsDefaultValues
-	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-		VariablesDefaultValues="LegendSize:8;TagSize:8;AxisLabelSize:8;LegendUseFolderName:0;LegendUseWaveName:0;"
-	else
-		VariablesDefaultValues="LegendSize:10;TagSize:10;AxisLabelSize:10;LegendUseFolderName:0;LegendUseWaveName:0;"
-	endif
-	StringsDefaultValues="FontType:"+StringFromList(0, IR2C_CreateUsefulFontList() ) +";"
-
-	variable CurVarVal
-	string CurVar, CurStr, CurStrVal
-	For(i=0;i<ItemsInList(VariablesDefaultValues);i+=1)
-		CurVar = StringFromList(0,StringFromList(i, VariablesDefaultValues),":")
-		CurVarVal = numberByKey(CurVar, VariablesDefaultValues)
-		NVAR temp=$(CurVar)
-		if(temp==0)
-			temp = CurVarVal
-		endif
-	endfor
-	For(i=0;i<ItemsInList(StringsDefaultValues);i+=1)
-		CurStr = StringFromList(0,StringFromList(i, StringsDefaultValues),":")
-		CurStrVal = stringByKey(CurStr, StringsDefaultValues)
-		SVAR tempS=$(CurStr)
-		if(strlen(tempS)<1)
-			tempS = CurStrVal
-		endif
-	endfor
-	
-	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
-	ListOfKnownFontTypes=IR2C_CreateUsefulFontList()
-	setDataFolder OldDf
-end
-
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-Function IR2C_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-	
-	if (cmpstr(ctrlName,"LegendSize")==0)
-		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-		LegendSize = str2num(popStr)
-	endif
-	if (cmpstr(ctrlName,"TagSize")==0)
-		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-		TagSize = str2num(popStr)
-	endif
-	if (cmpstr(ctrlName,"AxisLabelSize")==0)
-		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-		AxisLabelSize = str2num(popStr)
-	endif
-	if (cmpstr(ctrlName,"FontType")==0)
-		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-		FontType = popStr
-	endif
-	if (cmpstr(ctrlName,"DefaultFontType")==0)
-		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-		DefaultFontType = popStr
-		IR2C_ChangePanelCOntrolsStyle()
-	endif
-	if (cmpstr(ctrlName,"DefaultFontSize")==0)
-		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-		DefaultFontSize = str2num(popStr)
-		IR2C_ChangePanelCOntrolsStyle()
-	endif
-	IR2C_SaveIrenaGUIPackagePrefs(0)
-End
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-Function IR2C_KillPrefsButtonProc(ba) : ButtonControl
-	STRUCT WMButtonAction &ba
-
-	switch( ba.eventCode )
-		case 2: // mouse up
-			// click code here
-			if(stringmatch(ba.ctrlName,"OKBUtton"))
-				DoWIndow/K IR2C_MainConfigPanel
-			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
-				string defFnt
-				variable defFntSize
-				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-					defFnt=stringFromList(0,IR2C_CreateUsefulFontList())
-					defFntSize=12
-				else
-					defFnt="Geneva"
-					defFntSize=9
-				endif
-				SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
-				SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-				DefaultFontType = defFnt
-				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-				DefaultFontSize = defFntSize
-				IR2C_ChangePanelCOntrolsStyle()
-				IR2C_SaveIrenaGUIPackagePrefs(0)
-				PopupMenu DefaultFontType,win=IR2C_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
-				PopupMenu DefaultFontSize,win=IR2C_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-			endif
-			break
-	endswitch
-	return 0
-End
-
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-
-Function IR2C_ChangePanelControlsStyle()
-
-	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-
-	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-		DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
-	else
-		DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
-	endif
-
-end
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-
-Proc IR2C_MainConfigPanel() 
-	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(282,48,707,356) as "Configure default fonts and names"
-	DoWindow /C IR2C_MainConfigPanel
-	SetDrawLayer UserBack
-	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,52224)
-	DrawText 10,25,"Irena panels and graphs default fonts and names"
-	SetDrawEnv fsize= 14,fstyle= 3, textrgb= (63500,4369,4369)
-	DrawText 30,53,"Panel and controls font type & size (preference)"
-	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
-	DrawText 30,150,"Graph text elements"
-//	SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
-
-	PopupMenu DefaultFontType,pos={35,65},size={113,21},proc=IR2C_PopMenuProc,title="Panel Controls Font"
-	PopupMenu DefaultFontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:DefaultFontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
-	PopupMenu DefaultFontType, popvalue=root:Packages:IrenaConfigFolder:DefaultFontType,value= #"IR2C_CreateUsefulFontList()"
-	PopupMenu DefaultFontSize,pos={35,95},size={113,21},proc=IR2C_PopMenuProc,title="Panel Controls Font Size"
-	PopupMenu DefaultFontSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:DefaultFontSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-	PopupMenu DefaultFontSize popvalue=num2str(root:Packages:IrenaConfigFolder:DefaultFontSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
-	Button DefaultValues title="Default",pos={290,70},size={120,20}
-	Button DefaultValues proc=IR2C_KillPrefsButtonProc
-
-	PopupMenu LegendSize,pos={35,165},size={113,21},proc=IR2C_PopMenuProc,title="Legend Size"
-	PopupMenu LegendSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:LegendSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-	PopupMenu LegendSize, popvalue=num2str(root:Packages:IrenaConfigFolder:LegendSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
-//LegendUseFolderName:1;LegendUseWaveName
-	CheckBox LegendUseFolderName,pos={195,165},size={25,16},noproc,title="Legend use Folder Names?"
-	CheckBox LegendUseFolderName,variable= root:Packages:IrenaConfigFolder:LegendUseFolderName, help={"Check to use folder names in legends?"}
-	CheckBox LegendUseWaveName,pos={195,205},size={25,16},noproc,title="Legend use Wave Names?"
-	CheckBox LegendUseWaveName,variable= root:Packages:IrenaConfigFolder:LegendUseWaveName, help={"Check to use wave names in legends?"}
-	PopupMenu TagSize,pos={49,195},size={96,21},proc=IR2C_PopMenuProc,title="Tag Size"
-	PopupMenu TagSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:TagSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-	PopupMenu TagSize,popvalue=num2str(root:Packages:IrenaConfigFolder:TagSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
-	PopupMenu AxisLabelSize,pos={46,225},size={103,21},proc=IR2C_PopMenuProc,title="Label Size"
-	PopupMenu AxisLabelSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:AxisLabelSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-	PopupMenu AxisLabelSize,popvalue=num2str(root:Packages:IrenaConfigFolder:AxisLabelSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
-	PopupMenu FontType,pos={48,255},size={114,21},proc=IR2C_PopMenuProc,title="Font type"
-	PopupMenu FontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:FontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
-	PopupMenu FontType,popvalue=root:Packages:IrenaConfigFolder:FontType,value= #"root:Packages:IrenaConfigFolder:ListOfKnownFontTypes"
-	Button OKButton title="OK",pos={290,270},size={120,20}
-	Button OKButton proc=IR2C_KillPrefsButtonProc
-
-
-EndMacro
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-
-Function/S IR2C_CreateUsefulFontList()
-
-	string SystemFontList=FontList(";")
-	string PreferredFontList="Tahoma;Times;Arial$;Geneva;Palatino;Book Antiqua;"
-	PreferredFontList+="Courier;Vardana;Monaco;Courier CE;System;Verdana;"
-	
-	variable i
-	string UsefulList="", tempList=""
-	For(i=0;i<ItemsInList(PreferredFontList);i+=1)
-		tempList=GrepList(SystemFontList, stringFromList(i,PreferredFontList)) 
-		if(strlen(tempList)>0)
-			UsefulList+=tempList+";"
-		endif
-	endfor
-	return UsefulList
-end
-
-//***********************************************************
-//***********************************************************
-//***********************************************************
+//	switch( ba.eventCode )
+//		case 2: // mouse up
+//			// click code here
+//			if(stringmatch(ba.ctrlName,"OKBUtton"))
+//				DoWIndow/K IR2C_MainConfigPanel
+//			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
+//				string defFnt
+//				variable defFntSize
+//				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//					defFnt=stringFromList(0,IN2G_CreateUsefulFontList())
+//					defFntSize=12
+//				else
+//					defFnt="Geneva"
+//					defFntSize=9
+//				endif
+//				SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
+//				SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//				DefaultFontType = defFnt
+//				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//				DefaultFontSize = defFntSize
+//				IN2G_ChangePanelCOntrolsStyle()
+//				IN2G_SaveIrenaGUIPackagePrefs(0)
+//				PopupMenu DefaultFontType,win=IN2G_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
+//				PopupMenu DefaultFontSize,win=IN2G_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+//			endif
+//			break
+//	endswitch
+//	return 0
+//End
+//
+////***********************************************************
 //***********************************************************
 //***********************************************************
 
@@ -954,7 +491,7 @@ Proc IR2P_FitLineWithCursors()
 
 	string destwavename="fit_"+CsrWave(A)
 	CurveFit line CsrWaveRef(A)(xcsr(A),xcsr(B)) /X=CsrXWaveRef(A) /D
-	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, 0.5*numpnts($destwavename), "\Z"+IR2C_LkUpDfltVar("LegendSize")+"Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
+	Tag/C/N=Curvefitres/F=0/A=MC $destwavename, 0.5*numpnts($destwavename), "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Linear fit parameters are: \ry="+num2str(W_coef[0])+"+ x *"+num2str(W_coef[1])
 end
 //*****************************************
 //*****************************************
@@ -991,7 +528,7 @@ Proc IR2P_FitPowerLawWithCursors()
 	endif
 	Modify lsize($name)=2
 	String pw=num2str(K1),pr=num2str(10^K0),DIN=num2str((V_siga*10^K0)/2.3026),ca=num2str(pcsr(A)),cb=num2str(pcsr(B)),gf=num2str(V_Pr),DP=num2str(V_sigb)
-	string LSs=IR2C_LkUpDfltVar("LegendSize")
+	string LSs=IN2G_LkUpDfltVar("LegendSize")
 	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z"+LSs+"Power Law Slope= "+pw+"\Z"+LSs+" ± "+DP+"\Z"+LSs+"\rPrefactor= "+pr+"\Z"+LSs+" ± "+DIN+"\Z"+LSs+"\rx Cursor A::B= "+ca+"\Z"+LSs+" :: "+cb+"\Z"+LSs+"\rGoodness of fit= "+gf
 
 	KillWaves/Z LogYFitData, LogXFitData
@@ -2389,31 +1926,41 @@ end
 
 Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 	variable CalledFromMenu
-	//CalledFromMenu=1 run always...
-	struct  IrenaPanelDefaults Defs
-	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-	if(V_Flag==0 && CalledFromMenu==0)		
-		//print Defs
-		if(Defs.Version==2)		//Lets declare the one we know as 1
-			if(datetime - Defs.LastUpdateCheck >30 * 24 * 60 * 60 || CalledFromMenu)
-				//call check version procedure and advise user on citations
-				IR2C_CheckVersions()
-				Defs.LastUpdateCheck = datetime
-				SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-			endif
-		else
-			Defs.Version			=		2
-			Defs.LastUpdateCheck = datetime
+
+	IN2G_ReadIrenaGUIPackagePrefs(0)
+	NVAR LastUpdateCheckIrena=root:Packages:IrenaConfigFolder:LastUpdateCheckIrena	
+	if(datetime - LastUpdateCheckIrena >30 * 24 * 60 * 60 || CalledFromMenu)
+			//call check version procedure and advise user on citations
 			IR2C_CheckVersions()
-			SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-		endif
-	else		//either preferences do not exist or user asked for the check
-		Defs.Version			=		2
-		Defs.LastUpdateCheck = datetime
-		IR2C_CheckVersions()
-		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+			LastUpdateCheckIrena = datetime
+			IN2G_SaveIrenaGUIPackagePrefs(1)
 	endif
 
+//	//CalledFromMenu=1 run always...
+//	struct  IrenaPanelDefaults Defs
+//	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+//	if(V_Flag==0 && CalledFromMenu==0)		
+//		//print Defs
+//		if(Defs.Version==2)		//Lets declare the one we know as 1
+//			if(datetime - Defs.LastUpdateCheckIrena >30 * 24 * 60 * 60 || CalledFromMenu)
+//				//call check version procedure and advise user on citations
+//				IR2C_CheckVersions()
+//				Defs.LastUpdateCheckIrena = datetime
+//				SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+//			endif
+//		else
+//			Defs.Version			=		2
+//			Defs.LastUpdateCheckIrena = datetime
+//			IR2C_CheckVersions()
+//			SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+//		endif
+//	else		//either preferences do not exist or user asked for the check
+//		Defs.Version			=		2
+//		Defs.LastUpdateCheckIrena = datetime
+//		IR2C_CheckVersions()
+//		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+//	endif
+//
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.34)
 			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (2015) to version 6.34. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"

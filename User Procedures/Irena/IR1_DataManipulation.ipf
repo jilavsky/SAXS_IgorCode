@@ -1955,7 +1955,7 @@ static Function IR1D_RegraphData()
 		endif
 	endif
 
-	string LegendStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"\\s(Intensity1) Data1\r\\s(Intensity2) Data2"
+	string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(Intensity1) Data1\r\\s(Intensity2) Data2"
 //	Legend/W=IR1_LogLogPlotU/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
 
 	Legend/C/N=text0/A=LB/W=IR1D_DataManipulationGraph LegendStr
@@ -1969,9 +1969,9 @@ static Function IR1D_RegraphData()
 	ModifyGraph/W=IR1D_DataManipulationGraph log=1
 	ModifyGraph/W=IR1D_DataManipulationGraph mirror=1
 
-	String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label/Z/W=IR1D_DataManipulationGraph left LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label/Z/W=IR1D_DataManipulationGraph bottom LabelStr
 //	Label/Z/W=IR1D_DataManipulationGraph left "Intensity [cm\\S-1\\M]"
 //	Label/Z/W=IR1D_DataManipulationGraph bottom "Q [A\\S-1\\M]"

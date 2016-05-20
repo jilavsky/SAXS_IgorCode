@@ -45,7 +45,7 @@ Function IR2H_GelsMainFnct()
 
 	IN2G_CheckScreenSize("height",670)
 
-	IR2C_InitConfigMain()
+	IN2G_InitConfigMain()
 	DoWindow IR2H_SI_Q2_PlotGels
 	if (V_Flag)
 		DoWindow/K IR2H_SI_Q2_PlotGels	
@@ -970,14 +970,14 @@ static Function IR2H_AttachTags()
 	if(UseDB)
 		findlevel /Q /P OriginalQvector, (pi/ DBcorrL)^2
 		attachPoint=V_levelX
-		DBText = "\Z"+IR2C_LkUpDfltVar("LegendSize")+"Debye-Bueche model results\r"
+		DBText = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Debye-Bueche model results\r"
 		DBText += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
 		DBText += "Eta = "+num2str(DBEta)+" +/- "+num2str(DBEtaError)+"\r"
 		DBText += "Correlation length = "+num2str(DBcorrL)+" A"+" +/- "+num2str(DBcorrLError)
 		Tag/W=IR2H_LogLogPlotGels /C/N=DBTag OriginalIntensity, attachPoint,DBText
 	elseif(UseCiccBen)
 		attachPoint=(pcsr(A,"IR2H_LogLogPlotGels") +pcsr(B,"IR2H_LogLogPlotGels"))/2
-		CiccBenTxt = "\Z"+IR2C_LkUpDfltVar("LegendSize")+"Ciccariello & Benedetti model results\r"
+		CiccBenTxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Ciccariello & Benedetti model results\r"
 		CiccBenTxt += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
 		CiccBenTxt += "Porod specific surface area [cm2/cm3] = "+num2str(BC_PorodsSpecSurfArea)+" +/- "+num2str(BC_PorodsSpecSurfAreaError)+"\r"
 		CiccBenTxt += "Layer thickness = "+num2str(BC_CoatingsThickness)+" A"+" +/- "+num2str(BC_CoatingsThicknessError)+"\r"
@@ -995,7 +995,7 @@ static Function IR2H_AttachTags()
 	elseif(UseTS)
 		findlevel /Q /P OriginalQvector, (pi/ TSCorrelationLength)
 		attachPoint=V_levelX
-		TStxt = "\Z"+IR2C_LkUpDfltVar("LegendSize")+"Teubner-Strey model results\r"
+		TStxt = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Teubner-Strey model results\r"
 		TStxt += "Sample name: "+DataFolderName+IntensityWaveName+"\r"
 		TStxt += "Correlation length = "+num2str(TSCorrelationLength)+"A"+" +/- "+num2str(TSCorrLengthError)+"\r"
 		TStxt += "Repeat distance = "+num2str(TSRepeatDistance)+" A"+" +/- "+num2str(TSRepDistError)
@@ -1008,7 +1008,7 @@ static Function IR2H_AttachTags()
 		else
 			attachPoint = numpnts(OriginalQvector)/2
 		endif
-		LowQText = "\Z"+IR2C_LkUpDfltVar("LegendSize")+"Low Q Unified model"+"\r"
+		LowQText = "\Z"+IN2G_LkUpDfltVar("LegendSize")+"Low Q Unified model"+"\r"
 		if(LowQRg<1e10)
 			 LowQText +="Rg = "+num2str(LowQRg)+" +/- "+num2str(LowQRgError)+"\r"
 			 LowQText +="Rg prefactor (G) = "+num2str(LowQRgPrefactor)+" +/- "+num2str(LowQRgPrefactorError)+"\r"

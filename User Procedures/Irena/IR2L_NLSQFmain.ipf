@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.19
+#pragma version=1.20
 Constant IR2LversionNumber = 1.19
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 GUI controls move change
 //1.19 chanegs for panel scaling. 
 //1.18 bug fixes and modifications to Other graph outputs - colorization etc. 
 //1.17 added checkboxes for displaying Size distributions, Residuals and IQ4 vs Q graphs and code shupporting it. 
@@ -49,7 +50,7 @@ Function IR2L_Main()
 	IR2S_InitStructureFactors()
 	IR2L_SetInitialValues(1)
 	//we need the following also inited
-	IR2C_InitConfigMain()
+	IN2G_InitConfigMain()
 	IR1T_InitFormFactors()
 	//check for panel if exists - pull up, if not create
 	DoWindow LSQF2_MainPanel

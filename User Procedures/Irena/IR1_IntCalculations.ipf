@@ -1298,21 +1298,21 @@ Function IR1_AppendModelData()
 	AppendText " Bars -  number distributions"
 
 	String LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Scatterer diameters [A]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Scatterer diameters [A]"
 	Label bottom LabelStr
 
 	ModifyGraph log(bottom)=1
 	ModifyGraph mirror(bottom)=1
 //	Label bottom "Scatterer diameters [A]"
 	
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Number distribution N(d) [cm\\S-3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Number distribution N(d) [cm\\S-3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	if (numOfNDWavesInGraph!=0)
 		ModifyGraph lblMargin(left)=8
 		ModifyGraph lblLatPos(left)=9
 //		Label left "\\Z07Number distribution N(D) 1/cm\\S3"
 		Label left LabelStr
 	endif
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Volume distribution V(d) [cm\\S3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"/cm\\S3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution V(d) [cm\\S3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"/cm\\S3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	if (numOfVDWavesInGraph!=0)
 		ModifyGraph lblMargin(right)=12
 		ModifyGraph lblLatPos(right)=3
@@ -1837,13 +1837,13 @@ Proc  IR1_Model_Distributions()
 	SetDataFolder fldrSav
 	ModifyGraph mode(Dist1NumberDist)=1
 	ModifyGraph rgb(Dist1VolumeDist)=(0,0,0)
-	String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Number distribution N(d) [cm\\S-3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Number distribution N(d) [cm\\S-3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Scatterer diameters [A]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Scatterer diameters [A]"
 	Label bottom LabelStr
 //	Label left "Number distribution N(d) 1/cm\\S3"
 //	Label bottom "Scatterer diameters [A]"
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Volume distribution V(d) [cm\\S3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"/cm\\S3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution V(d) [cm\\S3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"/cm\\S3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label right LabelStr
 //	Label right "Volume distribution V(d) [cm\\S3\\M/cm\\S3\\M]"
 EndMacro

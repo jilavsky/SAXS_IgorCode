@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1
+#pragma version=1.01
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,7 +12,9 @@ constant IR3WversionNumber = 0.3		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//0.31 removed eps data for now, they were incorrect. Proper errors estimates are in the text waves and mining of data from teh results needs to be worked out in the future. 
+//1.01 fixes for energy/wavelength handling when lookup in the wave note fails
+//0.31 removed eps data for now, they were incorrect. 
+//		Proper errors estimates are in the text waves and mining of data from the results needs to be worked out in the future. 
 //0.3 Christmas 2015 developements. many changes. 
 //0.1 Diffraction tool development version 
 
@@ -818,9 +820,10 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 
 			NVAR DataTTHstart = root:Packages:Irena:WAXS:DataTTHstart
 			NVAR DataTTHEnd = root:Packages:Irena:WAXS:DataTTHEnd
+			WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
+			WAVE DataD2ThetaWave = root:Packages:Irena:WAXS:DataD2ThetaWave
 	
 			if(stringmatch(sva.ctrlName,"DataTTHEnd"))
-				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
 				tempP = BinarySearch(Data2ThetaWave, DataTTHEnd )
 				if(tempP<0)
 					print "Wrong 2Theta value set, 2 Theta max must be at most 1 point before the end of Data"
@@ -830,7 +833,6 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 				cursor /W=IR3W_WAXSMainGraph B, DataIntWave, tempP
 			endif
 			if(stringmatch(sva.ctrlName,"DataTTHstart"))
-				WAVE Data2ThetaWave = root:Packages:Irena:WAXS:Data2ThetaWave
 				tempP = BinarySearch(Data2ThetaWave, DataTTHstart )
 				if(tempP<1)
 					print "Wrong 2 Theta value set, 2 Theta start  must be at least 1 point from the start of Data"
@@ -841,11 +843,52 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 			endif
 			NVAR Energy = root:Packages:Irena:WAXS:Energy
 			NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
+			//figure out what data you have... 
+			variable XaxisType=0
+			NVAR UseIndra2Data = root:Packages:Irena:WAXS:UseIndra2Data
+			NVAR UseQRSdata = root:Packages:Irena:WAXS:UseQRSdata
+			SVAR QWavename = root:Packages:Irena:WAXS:QWavename
+			SVAR dQWavename = root:Packages:Irena:WAXS:dQWavename
+			SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
+			if(UseIndra2Data)
+				XaxisType = 1 //Q data
+			elseif(UseQRSdata)
+				if(StringMatch(QWavename, "q*")||StringMatch(QWavename, "'q*"))
+					XaxisType = 1 //Q data
+				elseif(StringMatch(QWavename, "d*")||StringMatch(QWavename, "'d*"))
+					XaxisType = 2 //d data
+				elseif(StringMatch(QWavename, "t*")||StringMatch(QWavename, "'t*"))
+					XaxisType = 3 //2Theta data
+				else	//unknown or mm, do not use
+					XaxisType=0
+				endif
+			else
+				XaxisType=0
+			endif
 			if(stringmatch(sva.ctrlName,"Wavelength"))
+				Wave/Z SourceQWv=$(DataFolderName+QWavename)
+				Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
+				Duplicate/O SourceQWv, Data2ThetaWave
+				if(WaveExists(SourcedQWv))
+					Duplicate/O SourcedQWv, DataD2ThetaWave
+				else
+					Duplicate/O SourceQWv, DataD2ThetaWave
+					DataD2ThetaWave=0
+				endif
 				Energy = 12.39842 / wavelength
+				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
 			endif
 			if(stringmatch(sva.ctrlName,"Energy"))
 				wavelength = 12.39842 / Energy
+				Wave/Z SourceQWv=$(DataFolderName+QWavename)
+				Duplicate/O SourceQWv, Data2ThetaWave
+				if(WaveExists(SourcedQWv))
+					Duplicate/O SourcedQWv, DataD2ThetaWave
+				else
+					Duplicate/O SourceQWv, DataD2ThetaWave
+					DataD2ThetaWave=0
+				endif
+				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
 			endif
 
 			break
@@ -977,16 +1020,34 @@ Function IR3W_CopyAndAppendData(FolderNameStr)
 		string DataNote=Note(SourceIntWv)
 		NVAR  Energy = root:Packages:Irena:WAXS:Energy
 		NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
+		variable NoteVal
 		if(GrepString(DataNote, "(?i)energy"))		//found energy, primary info
-			Energy =  str2num(StringFromList(1,GrepList(DataNote, "(?i)energy"),"="))
-			print "Found X-ray energy in the  wave note : "+num2str(Energy)
-			Wavelength  = 12.39842 / Energy 
+			NoteVal =  str2num(StringFromList(1,GrepList(DataNote, "(?i)energy"),"="))
+			if(numtype(NoteVal)==0)
+				Energy = NoteVal
+				print "Found X-ray energy in the  wave note : "+num2str(Energy)
+				Wavelength  = 12.39842 / Energy 
+			else
+				print "Not meaningful energy found, keeping energy already there..."
+			endif
 		elseif(GrepString(DataNote, "(?i)wavelength"))	//found wavelength
-			wavelength =  str2num(StringFromList(1,GrepList(DataNote, "(?i)wavelength"),"="))
-			print "Found X-ray wavelength in the  wave note : "+num2str(wavelength)
-			Energy  = 12.39842 / wavelength 
+			NoteVal =  str2num(StringFromList(1,GrepList(DataNote, "(?i)wavelength"),"="))
+			if(numtype(NoteVal)==0)
+				wavelength = NoteVal
+				print "Found X-ray wavelength in the  wave note : "+num2str(wavelength)
+				Energy  = 12.39842 / wavelength 
+			else
+				print "Not meaningful wavelength found, keeping energy already there..."
+			endif
 		else
 			//found nothing, use the existing ones... 
+		endif
+		//check on meaningful energy/wavelength and if wrong, ask user for input. 
+		if(numtype(wavelength)!=0 || (wavelength<0.01) || (wavelength>30))
+			//this looks like error
+			print "Not meaningful wavelength found, setting usable default, Cu wavelength"
+			wavelength = 1.54056
+			energy = 12.39842 / wavelength
 		endif
 		IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
 		IR3W_GraphWAXSData()

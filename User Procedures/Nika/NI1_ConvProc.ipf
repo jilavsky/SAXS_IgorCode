@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.49
+#pragma version=2.50
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//added handling of ...tiff file names
 //2.49 added Function for creating user custom data names. 
 //2.48 added main data reduction parameters in the wave note. For unknown reason were missing. 
 //2.47 added time stamps to background task print statements so user has any idea when was the task run last time. 
@@ -2403,24 +2404,23 @@ Function NI1A_LoadManyDataSetsForConv()
 				duplicate/o BSLframelistsequence, $("root:SAS:BSLframelistsequence")
 				currentframe=1
 			else
-			SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
-			NI1A_ImportThisOneFile(SelectedFileToLoad)	
-			NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	
-//					string Oldnote=""
-					Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
-					Oldnote=note(CCDImageToConvert)
-					OldNote+=NI1A_CalibrationNote()
-					note/K CCDImageToConvert
-					note CCDImageToConvert, OldNote
-			NI1A_DezingerDataSetIfAskedFor(DataWaveName)
-			NI1A_Convert2DTo1D()
-			NI1A_DisplayLoadedFile()
-			NI1A_DisplayTheRight2DWave()
-			NI1A_DoDrawingsInto2DGraph()
-			NI1A_CallImageHookFunction()
-			NI1A_Export2DData()
-			DoUpdate
-		endif
+				SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+				NI1A_ImportThisOneFile(SelectedFileToLoad)	
+				NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	
+				Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
+				Oldnote=note(CCDImageToConvert)
+				OldNote+=NI1A_CalibrationNote()
+				note/K CCDImageToConvert
+				note CCDImageToConvert, OldNote
+				NI1A_DezingerDataSetIfAskedFor(DataWaveName)
+				NI1A_Convert2DTo1D()
+				NI1A_DisplayLoadedFile()
+				NI1A_DisplayTheRight2DWave()
+				NI1A_DoDrawingsInto2DGraph()
+				NI1A_CallImageHookFunction()
+				NI1A_Export2DData()
+				DoUpdate
+			endif
 		endif
 	endfor
 	setDataFolder OldDf
@@ -3092,7 +3092,7 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 
 	NI1A_UniversalLoader("Convert2Dto1DEmptyDarkPath",FileNameToLoad,FileExtLocal,NewWaveName)
 
-	NI1A_DezingerDataSetIfAskedFor(NewWaveName)
+//	NI1A_DezingerDataSetIfAskedFor(NewWaveName)
 
 	wave NewCCDData = $(NewWaveName)
 
@@ -3100,11 +3100,6 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 #if Exists("ModifyImportedImageHook")
 	ModifyImportedImageHook(NewCCDData)
 #endif
-//		String infostr = FunctionInfo("ModifyImportedImageHook")
-//		if (strlen(infostr) >0)
-//			Execute("ModifyImportedImageHook("+NewWaveName+")")
-//		endif
-	//end of allow user modification of imported image through hook function
 
 	duplicate/O NewCCDData, $(NewWaveName+"_dis")
 	wave NewCCDDataDis=$(NewWaveName+"_dis")
@@ -3232,6 +3227,9 @@ Function NI1A_UpdateDataListBox()
 				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DDataPath,-1,".hdf")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".h5")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".hdf5")
+			elseif(cmpstr(realExtension, ".tif")==0)//there are many options for hdf...
+				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DDataPath,-1,".tif")
+				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".tiff")
 			else
 				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DDataPath,-1,realExtension)
 			endif	

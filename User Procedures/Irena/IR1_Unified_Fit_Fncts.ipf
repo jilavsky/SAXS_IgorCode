@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.15
+#pragma version=2.16
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.16 minor fix pre Dale's request. 
 //2.15 fixes to Graph display of local levels. 
 //2.14 corrected Invariant analysis to do correctly phi*(1-phi) calculation to get phi. 
 //2.13 more DWS changes, Uncerttainity analysis - modfied to change the tab to currently analyzed level tab. 
@@ -2109,15 +2110,15 @@ Function IR2U_CalcLogNormalDistribution()
 		//
 		ModifyGraph rgb(SizeNumDistribution)=(24576,24576,65535)
 		ModifyGraph mirror(bottom)=1
-		String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Number distribution [1/cm\\S3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"A\\S1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+		String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Number distribution [1/cm\\S3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"A\\S1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		Label left LabelStr
 		//Label left "Number distribution [1/cm\\S3\\M A\\S1\\M]"
-		LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Radius [A]"
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Radius [A]"
 		Label bottom LabelStr
-		LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Volume distribution [cm\\S3\\M/cm\\S3\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"A\\S1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution [cm\\S3\\M/cm\\S3\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"A\\S1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		Label right LabelStr
 		//Label right "Volume distribution [cm\\S3\\M/cm\\S3\\M A\\S1\\M]"
-		Legend/C/N=text0/J/A=MC/X=32.48/Y=45.38 "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"\\s(SizeNumDistribution) Number Distribution\r\\s(SizeVolDistribution) Volume Distribution"
+		Legend/C/N=text0/J/A=MC/X=32.48/Y=45.38 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(SizeNumDistribution) Number Distribution\r\\s(SizeVolDistribution) Volume Distribution"
 	endif
 				
 	setDataFolder OldDf
@@ -2679,7 +2680,8 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
 	variable majchord=4*majorityphi/Sv
 	variable minchord=4* (1-majorityphi)/Sv
-	string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1-4"
+	//string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1-4"
+	string outtext="Qv = "+num2str(invariant)+" cm^-1 ^-3\rB = "+num2str(B)+ " cm-1-4"
 	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" \rlmaj = "+num2str(majchord*1e4)+" "		
 	dowindow/R/k InvariantGraph
 	display/K=2  rq2 vs qwave as "q2 I(q) vs q"
@@ -2923,7 +2925,7 @@ Function IR2U_SavePorodsLawResults(where)
 		else
 			GraphName=WinName(0,1)
 		endif
-		string NewTextBoxStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")
+		string NewTextBoxStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")
 		NewTextBoxStr+= "Porods law analysis using Unified fit results\r"
 		if(strlen(UserName)>0)
 			NewTextBoxStr+= "User Data Name : "+UserName+" \r"
@@ -3063,7 +3065,7 @@ Function IR2U_SaveSizeDistResults(where)
 		else
 			GraphName=WinName(0,1)
 		endif
-		string NewTextBoxStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")
+		string NewTextBoxStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")
 		NewTextBoxStr+= "Size distribution analysis using Unified fit results\r"
 		if(strlen(UserName)>0)
 			NewTextBoxStr+= "User Data Name : "+UserName+" \r"
@@ -3180,7 +3182,7 @@ Function IR2U_SaveInvariantResults(where)
 		else
 			GraphName=WinName(0,1)
 		endif
-		string NewTextBoxStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")
+		string NewTextBoxStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")
 		NewTextBoxStr+= "Invariant analysis using Unified fit results\r"
 		if(strlen(UserName)>0)
 			NewTextBoxStr+= "User Data Name : "+UserName+" \r"
@@ -3329,7 +3331,7 @@ Function IR2U_SaveMassFractalResults(where)
 		else
 			GraphName=WinName(0,1)
 		endif
-		string NewTextBoxStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")
+		string NewTextBoxStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")
 		NewTextBoxStr+= "Branched Mass Fractal analysis using Unified fit results\r"
 		if(strlen(UserName)>0)
 			NewTextBoxStr+= "User Data Name : "+UserName+" \r"
@@ -3777,17 +3779,17 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 		else
 			GraphName=WinName(0,1)
 		endif
-		string NewTextBoxStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")
-		string m2percm3=" [m\S2\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"/cm\S3\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string gpercm3=" [g/cm\S3\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string Amin1cmmin1=" [A\S-1\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"cm\S-1\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string cmmin4= " [cm\S-4\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string TentoTen= " 10\S10\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")
-		string Amin3cmmin1= " [A\S-3\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+" cm\S-1\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string Amin4= " [A\S-4\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string Amin4cmmin1= " [A\S-4\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+" cm\S-1\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string Onepercm3=" [cm\S-3\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
-		string cm3=" [cm\S3\M\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"]"
+		string NewTextBoxStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")
+		string m2percm3=" [m\S2\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"/cm\S3\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string gpercm3=" [g/cm\S3\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string Amin1cmmin1=" [A\S-1\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"cm\S-1\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string cmmin4= " [cm\S-4\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string TentoTen= " 10\S10\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")
+		string Amin3cmmin1= " [A\S-3\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+" cm\S-1\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string Amin4= " [A\S-4\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string Amin4cmmin1= " [A\S-4\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+" cm\S-1\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string Onepercm3=" [cm\S-3\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
+		string cm3=" [cm\S3\M\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"]"
 
 		NewTextBoxStr+= "Unified fit analysis using Two Phase assumptions\r"
 		if(strlen(UserName)>0)

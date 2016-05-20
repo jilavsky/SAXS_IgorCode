@@ -1,15 +1,21 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.83
+#pragma version = 1.86
 
 
 //control constants
 constant IrenaDebugLevel=1
+//1 for little debug
+//5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.86 fixes for Package preferences
+//1,85 added IN2G_PanelAppendSizeRecordNote, moved whole package preferences to this package and removd use of Nika preferneces. MOved panel scaling here. 
+//1.84 added IN2G_ConvertPointToPix and IN2G_ConvertPixToPoint
 //1.83 moved structure IrenaPanelDefaults from Irena since it is shared...GUI controls. 
 //1.82 added IN2G_CloneWindow function
 //1.81 added IN2G_PrintDebugStatement, fixed some unresolved dependencies. 
@@ -362,6 +368,9 @@ constant IrenaDebugLevel=1
 //
 // IN2G_FindNewTextElements(w1,w2,reswave)   finds different elements between the two text waves, returns reswave with the elements which are NOT 
 //    common to the two waves w1 and w2. Takes TEXT waves, reswave is redimensioned 
+//IN2G_ConvertPointToPix and IN2G_ConvertPixToPoint
+//		convert points to pixels on current platform so scaling panels can be done platform independent. 
+//
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -371,10 +380,32 @@ End
 
 Menu "GraphMarquee"
        "Insert subwindow", IN2G_CreateSubwindowAtMarqee()
-       "Clone this window with data", IN2G_CloneWindow()
+ //      "Clone this window with data", IN2G_CloneWindow()
 End
 
 
+
+
+
+//****************************************************************************************
+//**************************************************************************************
+Function IN2G_CheckPlatformGUIFonts()
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	SVAR/Z Platform = root:Packages:Irena_Platform
+	if(!SVAR_Exists(Platform))
+		string/g root:Packages:Irena_Platform
+		SVAR Platform = root:Packages:Irena_Platform
+		Platform = ""
+	endif
+	string oldPlatform = Platform
+	string CurPlatform = IgorInfo(2)
+	string CurExpName=IgorInfo(1)
+	if(!stringMatch(Platform, CurPlatform) || stringMatch(CurExpName,"Untitled"))			//different platform or new experiment. 
+		IN2G_ReadIrenaGUIPackagePrefs(0)
+	endif
+	Platform = CurPlatform
+end
 
 //***********************************************************
 //***********************************************************
@@ -382,16 +413,825 @@ structure IrenaPanelDefaults
 	uint32 version					// Preferences structure version number. 100 means 1.00.
 	uchar LegendFontType[50]		//50 characters for legend font name
 	uchar PanelFontType[50]		//50 characters for panel font name
-	uint32 defaultFontSize			//font size as integer
+	uint32 defaultFontSize		//font size as integer
 	uint32 LegendSize				//font size as integer
 	uint32 TagSize					//font size as integer
 	uint32 AxisLabelSize			//font size as integer
-	int16 LegendUseFolderName		//font size as integer
+	int16 LegendUseFolderName	//font size as integer
 	int16 LegendUseWaveName		//font size as integer
 	variable LastUpdateCheck
+	uint32 Uncertainity			//Nika specific - Uncertainity choice - 0 is Old, 1 is Std dev, and 2 is SEM
+	variable LastUpdateCheckIrena
+	variable LastUpdateCheckNika
 	uint32 reserved[100]			// Reserved for future use
 	
 endstructure
+//***********************************************************
+//***********************************************************
+
+Function IN2G_ConfigMain()		//call configuration routine
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	//this is main configuration utility... 
+	IN2G_InitConfigMain()
+	DoWindow IR2C_MainConfigPanel
+	if(!V_Flag)
+		Execute ("IN2G_MainConfigPanelProc()")
+	else
+		DoWindow/F IN2G_MainConfigPanelProc
+	endif
+	IN2G_ReadIrenaGUIPackagePrefs(1)
+end
+
+//***********************************************************
+//***********************************************************
+
+
+Function IN2G_InitConfigMain()
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	//initialize lookup parameters for user selected items.
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:IrenaConfigFolder
+	
+	string ListOfVariables
+	string ListOfStrings
+	//here define the lists of variables and strings needed, separate names by ;...
+	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
+	ListOfVariables+="SelectedUncertainity;LastUpdateCheckNika;LastUpdateCheckIrena;"
+	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
+	variable i
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+										
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+	//Now set default values
+	String VariablesDefaultValues
+	String StringsDefaultValues
+	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+		VariablesDefaultValues="LegendSize:8;TagSize:8;AxisLabelSize:8;LegendUseFolderName:0;LegendUseWaveName:0;"
+	else
+		VariablesDefaultValues="LegendSize:10;TagSize:10;AxisLabelSize:10;LegendUseFolderName:0;LegendUseWaveName:0;"
+	endif
+	StringsDefaultValues="FontType:"+StringFromList(0, IN2G_CreateUsefulFontList() ) +";"
+
+	variable CurVarVal
+	string CurVar, CurStr, CurStrVal
+	For(i=0;i<ItemsInList(VariablesDefaultValues);i+=1)
+		CurVar = StringFromList(0,StringFromList(i, VariablesDefaultValues),":")
+		CurVarVal = numberByKey(CurVar, VariablesDefaultValues)
+		NVAR temp=$(CurVar)
+		if(temp==0)
+			temp = CurVarVal
+		endif
+	endfor
+	For(i=0;i<ItemsInList(StringsDefaultValues);i+=1)
+		CurStr = StringFromList(0,StringFromList(i, StringsDefaultValues),":")
+		CurStrVal = stringByKey(CurStr, StringsDefaultValues)
+		SVAR tempS=$(CurStr)
+		if(strlen(tempS)<1)
+			tempS = CurStrVal
+		endif
+	endfor
+	
+	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
+	ListOfKnownFontTypes=IN2G_CreateUsefulFontList()
+	setDataFolder OldDf
+end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+Function/S IN2G_CreateUsefulFontList()
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	string SystemFontList=FontList(";")
+	string PreferredFontList="Tahoma;Times;Arial$;Geneva;Palatino;Book Antiqua;"
+	PreferredFontList+="Courier;Vardana;Monaco;Courier CE;System;Verdana;"
+	
+	variable i
+	string UsefulList="", tempList=""
+	For(i=0;i<ItemsInList(PreferredFontList);i+=1)
+		tempList=GrepList(SystemFontList, stringFromList(i,PreferredFontList)) 
+		if(strlen(tempList)>0)
+			UsefulList+=tempList
+		endif
+	endfor
+	return UsefulList
+end
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
+	variable KillThem
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	struct  IrenaPanelDefaults Defs
+	IN2G_InitConfigMain()
+	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+	NVAR LastUpdateCheckIrena=root:Packages:IrenaConfigFolder:LastUpdateCheckIrena
+	NVAR LastUpdateCheckNika=root:Packages:IrenaConfigFolder:LastUpdateCheckNika
+	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+	NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
+	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+
+	Defs.Version					=		3
+	Defs.PanelFontType	 		= 		DefaultFontType
+	Defs.defaultFontSize 		= 		DefaultFontSize 
+	Defs.LegendSize 			= 		LegendSize
+	Defs.TagSize 				= 		TagSize
+	Defs.AxisLabelSize 		= 		AxisLabelSize
+	Defs.LegendUseFolderName = 		LegendUseFolderName
+	Defs.LegendUseWaveName 	= 		LegendUseWaveName
+	Defs.LegendFontType		= 		FontType
+	Defs.LastUpdateCheck		=		LastUpdateCheck
+	Defs.LastUpdateCheckIrena	=	LastUpdateCheckIrena
+	Defs.LastUpdateCheckNika	=		LastUpdateCheckNika
+	Defs.Uncertainity  		= 		SelectedUncertainity
+	
+	if(KillThem)
+		SavePackagePreferences /Kill   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
+	else
+		SavePackagePreferences /FLSH=1   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs
+	endif
+end
+//***********************************************************
+//***********************************************************
+
+Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
+	variable ForceRead
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	struct  IrenaPanelDefaults Defs 
+	IN2G_InitConfigMain()
+	//keep checking only rarely. 
+	NVAR/Z LastDefaultsCheck=root:Packages:IrenaConfigFolder:LastDefaultsCheck
+	if(!NVAR_Exists	(LastDefaultsCheck))
+		variable/g root:Packages:IrenaConfigFolder:LastDefaultsCheck
+		NVAR LastDefaultsCheck=root:Packages:IrenaConfigFolder:LastDefaultsCheck
+		LastDefaultsCheck = 0
+	endif
+	if((DateTime - LastDefaultsCheck)>(60*60)||ForceRead)
+		LastDefaultsCheck = DateTime
+		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+		NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+		NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+		NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+		NVAR LastUpdateCheckIrena=root:Packages:IrenaConfigFolder:LastUpdateCheckIrena
+		NVAR LastUpdateCheckNika=root:Packages:IrenaConfigFolder:LastUpdateCheckNika
+		NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
+		variable PanelUp=0
+		DOWindow IN2G_MainConfigPanel  
+		if(V_Flag)
+			PanelUp=1
+		endif
+		variable DoWarning=0, pOld, pStdDev, pSEM
+		LoadPackagePreferences /MIS=1   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs
+		if(V_Flag==0)		
+			//print Defs
+			//print "Read Irena Panels and graphs preferences from local machine and applied them. "
+			//print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+			//print "To change them please use \"Configure default fonts and names\""
+			if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
+				//NI1_ReadNikaGUIPackagePrefs()				//read the old Nika preferences, if exist.... 
+				DefaultFontType=Defs.PanelFontType
+				DefaultFontSize = Defs.defaultFontSize
+				LastUpdateCheck = Defs.LastUpdateCheck
+				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+					DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+				else
+					DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+				endif
+				//and now recover the stored other parameters, no action on these...
+				 LegendSize=Defs.LegendSize
+				 TagSize=Defs.TagSize
+				 AxisLabelSize=Defs.AxisLabelSize
+				 LegendUseFolderName=Defs.LegendUseFolderName
+				 LegendUseWaveName=Defs.LegendUseWaveName
+				 FontType=Defs.LegendFontType
+		 		 SelectedUncertainity = 0
+				 LastUpdateCheckIrena = LastUpdateCheck
+				 LastUpdateCheckNika  = LastUpdateCheck
+			elseif(Defs.Version==3)
+				DefaultFontType=Defs.PanelFontType
+				if(strlen(DefaultFontType)<4)
+					DefaultFontType="_IgorSmall"
+				endif
+				DefaultFontSize = Defs.defaultFontSize
+				if(DefaultFontSize<6)
+					DefaultFontSize=10
+				endif
+				LastUpdateCheck = Defs.LastUpdateCheckIrena
+				LastUpdateCheckIrena = Defs.LastUpdateCheckIrena
+				LastUpdateCheckNika = Defs.LastUpdateCheckNika
+		 		SelectedUncertainity = Defs.Uncertainity 
+				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+					DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+				else
+					DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+				endif
+				//and now recover the stored other parameters, no action on these...
+				 LegendSize=Defs.LegendSize
+				 TagSize=Defs.TagSize
+				 AxisLabelSize=Defs.AxisLabelSize
+				 LegendUseFolderName=Defs.LegendUseFolderName
+				 LegendUseWaveName=Defs.LegendUseWaveName
+				 FontType=Defs.LegendFontType
+				//Nika uncertainity
+				NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+				NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+				NVAR/z ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+				if(!NVAR_Exists(ErrorCalculationsUseOld))
+					string OldDf=GetDataFolder(1)
+					setDataFolder root:
+					NewDataFolder/S/O Packages
+					NewDataFolder/S/O Convert2Dto1D
+					variable/g ErrorCalculationsUseOld, ErrorCalculationsUseStdDev, ErrorCalculationsUseSEM
+					NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+					NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+					NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+					setDataFolder OldDf
+				endif
+				pOld = ErrorCalculationsUseOld
+				pStdDev = ErrorCalculationsUseStdDev
+				pSEM = ErrorCalculationsUseSEM
+				if(SelectedUncertainity==0)
+					ErrorCalculationsUseOld=1
+					ErrorCalculationsUseStdDev=0
+					ErrorCalculationsUseSEM=0
+				elseif(SelectedUncertainity==1)
+					ErrorCalculationsUseOld=0
+					ErrorCalculationsUseStdDev=1
+					ErrorCalculationsUseSEM=0
+				elseif(SelectedUncertainity==2)
+					ErrorCalculationsUseOld=0
+					ErrorCalculationsUseStdDev=0
+					ErrorCalculationsUseSEM=1
+				endif
+				if(ErrorCalculationsUseOld)
+					print "Nika users : Uncertainty calculation method is set to \"Old method (see manual for description)\""
+				elseif(ErrorCalculationsUseStdDev)
+					print "Nika users : Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+				else
+					print "Nika users : Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+				endif
+	 
+			else
+				if(PanelUp==0)
+					DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
+					if(V_Flag==1)
+						Execute("IN2G_MainConfigPanelProc() ")
+					else
+					//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
+					endif
+				endif
+			endif
+		else 		//problem loading package defaults
+			string defFnt
+			variable defFntSize
+			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+				defFnt=stringFromList(0,IN2G_CreateUsefulFontList())
+				defFntSize=12
+			else
+				defFnt="Geneva"
+				defFntSize=9
+			endif
+			SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
+			SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+			DefaultFontType = defFnt
+			NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+			DefaultFontSize = defFntSize
+			IN2G_ChangePanelCOntrolsStyle()
+			IN2G_SaveIrenaGUIPackagePrefs(0)
+			DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
+			if(V_Flag==1)
+				Execute("IN2G_MainConfigPanelProc() ")
+			endif	
+		endif
+	else
+			//we read the parameters in the last hour. That shoudl be enough... 
+	endif
+end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+Proc IN2G_MainConfigPanelProc() 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	DoWIndow IN2G_MainConfigPanel
+	if(V_Flag)
+		DoWIndow/F IN2G_MainConfigPanel
+	else
+		PauseUpdate; Silent 1		// building window...
+		NewPanel /K=1/W=(282,48,707,500) as "Configure Irena/Nika default fonts and names"
+		DoWindow /C IN2G_MainConfigPanel
+		SetDrawLayer UserBack
+		SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,52224)
+		DrawText 10,25,"Panels and graphs default fonts and names"
+		SetDrawEnv fsize= 14,fstyle= 3, textrgb= (63500,4369,4369)
+		DrawText 30,53,"Panel and controls font type & size (preference)"
+		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
+		DrawText 30,150,"Graph text elements"
+		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
+		DrawText 30,310,"Nika specific controls (if you need them)"
+	//	SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
+	
+		PopupMenu DefaultFontType,pos={35,65},size={113,21},proc=IN2G_PopMenuProc,title="Panel Controls Font"
+		PopupMenu DefaultFontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:DefaultFontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
+		PopupMenu DefaultFontType, popvalue=root:Packages:IrenaConfigFolder:DefaultFontType,value= #"IN2G_CreateUsefulFontList()"
+		PopupMenu DefaultFontSize,pos={35,95},size={113,21},proc=IN2G_PopMenuProc,title="Panel Controls Font Size"
+		PopupMenu DefaultFontSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:DefaultFontSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+		PopupMenu DefaultFontSize popvalue=num2str(root:Packages:IrenaConfigFolder:DefaultFontSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
+		Button DefaultValues title="Default",pos={290,70},size={120,20}
+		Button DefaultValues proc=IN2G_KillPrefsButtonProc
+	
+		PopupMenu LegendSize,pos={35,165},size={113,21},proc=IN2G_PopMenuProc,title="Legend Size"
+		PopupMenu LegendSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:LegendSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+		PopupMenu LegendSize, popvalue=num2str(root:Packages:IrenaConfigFolder:LegendSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
+	//LegendUseFolderName:1;LegendUseWaveName
+		CheckBox LegendUseFolderName,pos={195,165},size={25,16},noproc,title="Legend use Folder Names?"
+		CheckBox LegendUseFolderName,variable= root:Packages:IrenaConfigFolder:LegendUseFolderName, help={"Check to use folder names in legends?"}
+		CheckBox LegendUseWaveName,pos={195,205},size={25,16},noproc,title="Legend use Wave Names?"
+		CheckBox LegendUseWaveName,variable= root:Packages:IrenaConfigFolder:LegendUseWaveName, help={"Check to use wave names in legends?"}
+		PopupMenu TagSize,pos={49,195},size={96,21},proc=IN2G_PopMenuProc,title="Tag Size"
+		PopupMenu TagSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:TagSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+		PopupMenu TagSize,popvalue=num2str(root:Packages:IrenaConfigFolder:TagSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
+		PopupMenu AxisLabelSize,pos={46,225},size={103,21},proc=IN2G_PopMenuProc,title="Label Size"
+		PopupMenu AxisLabelSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:AxisLabelSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+		PopupMenu AxisLabelSize,popvalue=num2str(root:Packages:IrenaConfigFolder:AxisLabelSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
+		PopupMenu FontType,pos={48,255},size={114,21},proc=IN2G_PopMenuProc,title="Font type"
+		PopupMenu FontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:FontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
+		PopupMenu FontType,popvalue=root:Packages:IrenaConfigFolder:FontType,value= #"root:Packages:IrenaConfigFolder:ListOfKnownFontTypes"
+		//Nika
+		CheckBox DoubleClickConverts,pos={250,340},size={80,16},noproc,title="Double click converts ?", mode=0
+		CheckBox DoubleClickConverts,variable= root:Packages:Convert2Dto1D:DoubleClickConverts, help={"Check to convert files on double click in Files selection"}
+		CheckBox ErrorCalculationsUseOld,pos={10,340},size={80,16},proc=IN2G_ConfigErrorsCheckProc,title="Use Old Uncertainity ?", mode=1
+		CheckBox ErrorCalculationsUseOld,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseOld, help={"Check to use Error estimates for before version 1.42?"}
+		CheckBox ErrorCalculationsUseStdDev,pos={10,370},size={80,16},proc=IN2G_ConfigErrorsCheckProc,title="Use Std Devfor Uncertainity?", mode=1
+		CheckBox ErrorCalculationsUseStdDev,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev, help={"Check to use Standard deviation for Error estimates "}
+		CheckBox ErrorCalculationsUseSEM,pos={10,400},size={80,16},proc=IN2G_ConfigErrorsCheckProc,title="Use SEM for Uncertainity?", mode=1
+		CheckBox ErrorCalculationsUseSEM,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM, help={"Check to use Standard error of mean for Error estimates"}
+		Button OKButton title="OK",pos={290,420},size={120,20}
+		Button OKButton proc=IN2G_KillPrefsButtonProc
+	endif
+
+EndMacro
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN2G_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+	String ctrlName
+	Variable popNum
+	String popStr
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	if (cmpstr(ctrlName,"LegendSize")==0)
+		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+		LegendSize = str2num(popStr)
+	endif
+	if (cmpstr(ctrlName,"TagSize")==0)
+		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+		TagSize = str2num(popStr)
+	endif
+	if (cmpstr(ctrlName,"AxisLabelSize")==0)
+		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+		AxisLabelSize = str2num(popStr)
+	endif
+	if (cmpstr(ctrlName,"FontType")==0)
+		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+		FontType = popStr
+	endif
+	if (cmpstr(ctrlName,"DefaultFontType")==0)
+		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+		DefaultFontType = popStr
+		IN2G_ChangePanelControlsStyle()
+	endif
+	if (cmpstr(ctrlName,"DefaultFontSize")==0)
+		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+		DefaultFontSize = str2num(popStr)
+		IN2G_ChangePanelControlsStyle()
+	endif
+	IN2G_SaveIrenaGUIPackagePrefs(0)
+End
+
+//***********************************************************
+//***********************************************************
+Function IN2G_ConfigErrorsCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+	NVAR SelectedUncertainity=root:Packages:IrenaConfigFolder:SelectedUncertainity
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			Variable checked = cba.checked
+			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseOld"))
+				ErrorCalculationsUseOld = checked
+				ErrorCalculationsUseStdDev=!checked
+				ErrorCalculationsUseSEM=!checked
+				SelectedUncertainity=0
+			endif
+			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseStdDev"))
+				ErrorCalculationsUseOld = !checked
+				ErrorCalculationsUseStdDev=checked
+				ErrorCalculationsUseSEM=!checked
+				SelectedUncertainity=1
+			endif
+			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseSEM"))
+				ErrorCalculationsUseOld = !checked
+				ErrorCalculationsUseStdDev=!checked
+				ErrorCalculationsUseSEM=checked
+				SelectedUncertainity=2
+			endif
+			break
+	endswitch
+
+	return 0
+End
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+Function IN2G_KillPrefsButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			// click code here
+			if(stringmatch(ba.ctrlName,"OKBUtton"))
+				IN2G_SaveIrenaGUIPackagePrefs(0)
+ 				DoWIndow/K IN2G_MainConfigPanel
+			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
+				string defFnt
+				variable defFntSize
+				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+					defFnt=stringFromList(0,IN2G_CreateUsefulFontList())
+					defFntSize=12
+				else
+					defFnt="Geneva"
+					defFntSize=9
+				endif
+				SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
+				SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+				DefaultFontType = defFnt
+				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+				DefaultFontSize = defFntSize
+				IN2G_ChangePanelCOntrolsStyle()
+				IN2G_SaveIrenaGUIPackagePrefs(0)
+				PopupMenu DefaultFontType,win=IN2G_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
+				PopupMenu DefaultFontSize,win=IN2G_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+			endif
+			break
+	endswitch
+	return 0
+End
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+//***********************************************************
+//***********************************************************
+Function/S IN2G_LkUpDfltStr(StrName)
+	string StrName
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	string result
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:
+	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
+		IN2G_InitConfigMain()
+	endif
+	SetDataFolder root:Packages
+	setDataFolder root:Packages:IrenaConfigFolder
+	SVAR /Z curString = $(StrName)
+	if(!SVAR_exists(curString))
+		IN2G_InitConfigMain()
+		SVAR curString = $(StrName)
+	endif	
+	result = 	"'"+curString+"'"
+	setDataFolder OldDf
+	return result
+end
+//***********************************************************
+//***********************************************************
+
+Function/S IN2G_LkUpDfltVar(VarName)
+	string VarName
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	string result
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:
+	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
+		IN2G_InitConfigMain()
+	endif
+	SetDataFolder root:Packages
+	setDataFolder root:Packages:IrenaConfigFolder
+	NVAR /Z curVariable = $(VarName)
+	if(!NVAR_exists(curVariable))
+		IN2G_InitConfigMain()
+		NVAR curVariable = $(VarName)
+	endif	
+	if(curVariable>=10)
+		result = num2str(curVariable)
+	else
+		result = "0"+num2str(curVariable)
+	endif
+	setDataFolder OldDf
+	return result
+end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+Function IN2G_ChangePanelControlsStyle()
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+
+	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+		DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+	else
+		DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+	endif
+
+end
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+////***********************************************************
+//***********************************************************
+
+Function IN2G_PanelResizePanelSize(s)
+	STRUCT WMWinHookStruct &s
+		//add to the end of panel forming macro these two lines:
+		//	IR1_PanelAppendSizeRecordNote()
+		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
+		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
+	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
+		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+		GetWindow $(s.winName), note
+		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
+		string OrigInfo=S_Value
+		if(strlen(OrigInfo)<20)				//too short for anything meaningful
+			return 0
+		endif
+		//print s
+		GetWindow $s.winName wsizeDC		//wsizeRM?, wsizeDC returns pixels, wsize is in points. 
+													//MoveWindow is in points <<<<<< !!!!!!!   
+													//ModifyControl pos is in pixels, size is in pixels
+													//convert using: WidthPoints= WidthPixels * PanelResolution(panelName)/ScreenResolution
+		Variable left = V_left
+		Variable right = V_right
+		Variable top = V_top
+		Variable bottom = V_bottom
+		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
+		variable moveLeft, MoveRight, MoveTop, moveBottom 			//these need to be in points!! What a mess...
+		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
+		variable moveConvFac=72/ScreenResolution
+		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//pixels
+		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
+		CurWidth = abs(right-left) 													//with DC is pixels
+		CurHeight = abs(bottom-top)													//with DC is pixels
+		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
+			moveLeft = left*moveConvFac
+			MoveTop  = top*moveConvFac
+			MoveRight = (left+OriginalWidth)*moveConvFac
+			moveBottom = (top+OriginalHeight)*moveConvFac
+			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			horScale = 1
+			verScale = 1
+		elseif(CurWidth<OriginalWidth && CurHeight>=OriginalHeight)		
+			//MoveWindow left, top, left+OriginalWidth, top+CurHeight
+			moveLeft = left*moveConvFac
+			MoveTop  = top*moveConvFac
+			MoveRight = (left+OriginalWidth)*moveConvFac
+			moveBottom = (top+CurHeight)*moveConvFac
+			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			horScale = 1
+			verScale = CurHeight / (OriginalHeight)	
+		elseif(CurWidth>=OriginalWidth && CurHeight<OriginalHeight)
+			//MoveWindow left, top, left+CurWidth, top+OriginalHeight
+			moveLeft = left*moveConvFac
+			MoveTop = top*moveConvFac
+			MoveRight = (left+CurWidth)*moveConvFac
+			moveBottom = (top+OriginalHeight)*moveConvFac
+			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			verScale = 1
+			horScale = curWidth/OriginalWidth
+		else
+			moveLeft = left*moveConvFac
+			MoveTop = top*moveConvFac
+			MoveRight = (right)*moveConvFac
+			moveBottom = (bottom)*moveConvFac
+		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			verScale = CurHeight /OriginalHeight
+			horScale = curWidth/OriginalWidth
+		endif
+		variable scale= min(horScale, verScale )
+		string FontName = IN2G_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
+		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
+		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
+		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
+			FontName="_IgorSmall"
+		endif
+		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
+		variable i, j
+		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
+		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
+		string ControlsRecords=""
+		string ListOfPanels=s.winName+";"
+		string TmpNm="", tmpName1
+		string controlslist=""
+		string tmpPanelName
+		string SubwindowList=ChildWindowList(s.winName)		//do we have subwindows? 
+		if(Strlen(SubwindowList)>0)
+			ListOfPanels+=SubwindowList
+		endif
+		controlslist = ControlNameList("", ";")
+		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+			TmpNm = StringFromList(i, controlslist, ";")			
+			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
+			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
+			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
+			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
+			NewCntrolV_left=OrigCntrlV_left* horScale 
+			NewCntrlV_top = OrigCntrlV_top * verScale
+			NewWidth = OrigWidth * horScale
+			NewHeight = OrigHeight * verScale
+			ModifyControl $(TmpNm) pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+			//special cases...
+			ControlInfo $(TmpNm)
+			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
+				if(numtype(OrigBodyWidth)==0)
+					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+				endif
+			endif
+		endfor
+		For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
+				tmpPanelName = StringFromList(j, ListOfPanels,";")
+				tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
+				setActiveSubwindow $tmpName1
+				controlslist = ControlNameList(tmpName1, ";")		
+				For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+					TmpNm = StringFromList(i, controlslist, ";")			
+					OrigCntrlV_left=NumberByKey(tmpPanelName+TmpNm+"Left", OrigInfo, ":", ";")
+					OrigCntrlV_top=NumberByKey(tmpPanelName+TmpNm+"Top", OrigInfo, ":", ";")
+					OrigWidth=NumberByKey(tmpPanelName+TmpNm+"Width", OrigInfo, ":", ";")
+					OrigHeight=NumberByKey(tmpPanelName+TmpNm+"Height", OrigInfo, ":", ";")
+					NewCntrolV_left=OrigCntrlV_left* horScale 
+					NewCntrlV_top = OrigCntrlV_top * verScale
+					NewWidth = OrigWidth * horScale
+					NewHeight = OrigHeight * verScale
+					ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+					//special cases...
+					ControlInfo $(TmpNm)
+					if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+						OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
+						if(numtype(OrigBodyWidth)==0)
+							ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+						endif
+					endif
+				endfor
+				SetActiveSubwindow ##
+		endfor
+	endif
+end
+
+//***********************************************************
+//***********************************************************//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IN2G_PanelAppendSizeRecordNote(panelName)
+	string panelName
+	string PanelRecord=""
+	//find size of the panel
+	DoWIndow $panelName
+	if(V_Flag==0)
+		return 0
+	endif
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	//store main window size
+	GetWindow $panelName wsize 		//this value is in pixels
+	//John Weeks, WM
+	//1) Use GetWindow wsize to get window coordinates, not wsizeDC
+	//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
+	//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
+	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={IN2G_ConvertPointToPix(panelName, V_right-V_left-18),IN2G_ConvertPointToPix(panelName, V_bottom-V_top-18)}, disable=2
+	GetWindow $panelName, note				//store existing note. 
+	string ExistingNote=S_Value
+	variable i, j
+	string ControlsRecords=""
+	string ListOfPanels=panelName+";"
+	string TmpNm=""
+	string controlslist=""
+	string tmpPanelName, tmpName1
+	string SubwindowList=ChildWindowList(panelName )		//do we have subwindows? 
+	if(Strlen(SubwindowList)>0)
+		ListOfPanels+=SubwindowList
+	endif
+	controlslist = ControlNameList("", ";")		
+	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+		TmpNm = StringFromList(i, controlslist, ";")
+		ControlInfo $(TmpNm)				//Dimensions and position of the named control in pixels
+		//V_Height, V_Width, V_top, V_left
+		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
+		//special cases...
+		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+		endif
+	endfor
+	For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
+			tmpPanelName = StringFromList(j, ListOfPanels,";")
+			tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
+			setActiveSubwindow $tmpName1
+			controlslist = ControlNameList(tmpName1, ";")		
+			For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+				TmpNm = StringFromList(i, controlslist, ";")
+				ControlInfo $(TmpNm)
+				ControlsRecords+=tmpPanelName+TmpNm+"Left:"+num2str(V_left)+";"+tmpPanelName+TmpNm+"Width:"+num2str(V_width)+";"+tmpPanelName+TmpNm+"Top:"+num2str(V_top)+";"+tmpPanelName+TmpNm+"Height:"+num2str(V_Height)+";"
+				//special cases...
+				if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+					ControlsRecords+=tmpPanelName+TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+				endif
+			endfor
+			SetActiveSubwindow ##
+	endfor
+	if(!StringMatch(ExistingNote, "*;"))
+		ExistingNote+=";"
+	endif
+	SetWindow $panelName, note=ExistingNote+PanelRecord+ControlsRecords
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IN2G_ConvertPointToPix(PanelName, PointsIn)
+	string PanelName
+	variable PointsIn
+	variable PixsOut
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	PixsOut = PointsIn* ScreenResolution/PanelResolution(PanelName)
+	return PixsOut
+end
+Function IN2G_ConvertPixToPoint(PanelName, PixsIn)
+	string PanelName
+	variable PixsIn
+	variable PointsOut
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	PointsOut = PixsIn/(ScreenResolution/PanelResolution(PanelName))
+	return PointsOut
+end
+#if Exists("PanelResolution") != 3
+Static Function PanelResolution(wName)	// For compatibility with Igor 7
+	String wName
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	return 72
+End
+#endif
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -406,17 +1246,30 @@ Function IN2G_PrintDebugStatement(CurrentDebugLevel, DebugLevel,DebugStatement)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IN2G_PrintDebugWhichProCalled(FunctionName)
+	string FunctionName
+	if(IrenaDebugLevel==5)
+		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  now in "+FunctionName	
+	endif
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 Function IN2G_CloneWindow()
 	string NewWindowName
 	string topWindow=WinName(0,1)
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	IN2G_CloneWindow2()
 		
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 //this is from IgorExchange: http://www.igorexchange.com/node/1469
 static Function IN2G_CloneWindow2([win,name,times])
 	String win
 	String name // The new name for the window and data folder. 
 	Variable times // The number of clones to make.  Clones beyond the first will have _2, _3, etc. appended to their names.   
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String curr_folder=GetDataFolder(1)
 	setDataFolder root:
 	if(ParamIsDefault(win))
@@ -502,6 +1355,7 @@ Function IN2G_ColorTraces( )
 	Variable rev = 1
 	String colorTable = "RainbowCycle"
  
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String list = TraceNameList( "", ";", 1 )
 	Variable numItems = ItemsInList( list )
 	if ( numItems == 0 )
@@ -530,6 +1384,7 @@ Function IN2G_CreateSubwindowAtMarqee()
        GetMarquee/K
        Variable left= V_left, right= V_right, top= V_top, bottom= V_bottom
 
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
        GetWindow kwTopWin, gsize
        String slashw
        sprintf slashw,"/W=(%g,%g,%g,%g)",left/V_right,top/V_bottom,right/V_right,bottom/V_bottom
@@ -570,28 +1425,34 @@ end
 //*****************************************************************************************************************
 Function IN2G_ConvertQtoD(Qval,wavelength)	//D is in A, Q in A^-1
 	variable Qval,wavelength
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	return 2*pi/Qval
 end
 Function IN2G_ConvertDtoQ(Dval,wavelength)		//D is in A, Q in A^-1
 	variable Dval,wavelength
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	return 2*pi/Dval
 end
 Function IN2G_ConvertTTHtoQ(TTH,wavelength)		//TTH is in degrees, Q in A^-1	
 	variable TTH,wavelength
 	//q = 4pi sin(theta)/lambda
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	return 4*pi*sin(TTH*pi/360)/wavelength
 end
 Function IN2G_ConvertQtoTTH(Qval,wavelength)		//TTH is in degrees, Q in A^-1
 	variable Qval,wavelength
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	return 114.592 * asin(Qval* wavelength / (4*pi))
 end
 Function IN2G_ConvertDtoTTH(Dval,wavelength)		//D is in A, TTH is degrees
 	variable Dval,wavelength
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	return 114.592 * asin((2 * pi / Dval)* wavelength / (4*pi))
 end
 Function IN2G_ConvertTTHtoD(TTH,wavelength)		//TTH is in degrees, D in A
 	variable TTH,wavelength
 	//q = 4pi sin(theta)/lambda
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	return wavelength/(2*sin(TTH*pi/360))
 end
 //*****************************************************************************************************************
@@ -599,6 +1460,7 @@ end
 
 Function/T IN2G_num2StrFull(val)
 	Variable val
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable i = IN2G_placesOfPrecision(val)
 	Variable absVal = abs(val)
 	i = (absVal>=10 && absVal<1e6) ? max(i,1+floor(log(absVal))) : i
@@ -612,6 +1474,7 @@ End
 //*************************************************************************************************************************************
 static Function IN2G_placesOfPrecision(a)	// number of significant figures in a number (at most 16)
 	Variable a
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	a = IN2G_roundSignificant(abs(a),17)
 	Variable i
 	for (i=1;i<18;i+=1)
@@ -695,6 +1558,7 @@ End
 Function IN2G_EstimateFolderSize (dataFolder)
 	string dataFolder
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable expSize
 	// this folder
 	variable iObj, nObjs = CountObjects(dataFolder, 1), aWaveType
@@ -725,6 +1589,7 @@ Function IN2G_CheckForSlitSmearedRange(slitSmearedData,Qmax, SlitLength,[userMes
 	variable slitSmearedData,Qmax, SlitLength
 	string userMessage
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable isUM= ParamIsDefault(userMessage)
 	
 	if(slitSmearedData)
@@ -757,6 +1622,7 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 		Wave Wsdev,Wxsdev
 		Wave Wxwidth
 		Wave W1, W2, W3, W4, W5
+		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 		variable CalcSdev, CalcWidth, CalcW1, CalcW2, CalcW3, CalcW4, CalcW5, CalcXSdev
 		CalcSdev = ParamIsDefault(Wsdev) ?  0 : 1
 		CalcXSdev = ParamIsDefault(Wxsdev) ?  0 : 1
@@ -939,6 +1805,7 @@ end
 //**********************************************************************************************************
 Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
 	variable StartValue,EndValue,NumPoints,MinStep
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Make/Free/N=3 w
 	w={EndValue-StartValue, NumPoints,MinStep}
 	Optimize /H=100/L=1e-5/I=100/T=(MinStep/50)/Q myFindStartValueFunc, w
@@ -952,6 +1819,7 @@ end
 Function myFindStartValueFunc(w,x1)
 	Wave w		//this is {totalRange, NumSteps,MinStep}
 	Variable x1	//this is startValue where we need to start with log stepping...
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable LastMinStep = 10^(log(X1) + (log(X1+w[0])-log(X1))/w[1]) - 10^(log(X1))
 	return abs(LastMinStep-w[2])
 End
@@ -1039,6 +1907,7 @@ Function ING2_AddScrollControl()
 	//string WindowName
 	getWindow kwTopWin, wsizeDC
 	//CheckBox ScrollWidown title="\\W614",proc=IN2G_ScrollWindowCheckProc, pos={V_right-75,2}
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Button ScrollButtonUp title="\\W617",pos={(V_right-V_left)-17,2},size={15,15}, proc=IN2G_ScrollButtonProc
 	Button ScrollButtonDown title="\\W623",pos={(V_right-V_left)-17,17},size={15,15}, proc=IN2G_ScrollButtonProc
 end
@@ -1050,6 +1919,7 @@ end
 static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
 	variable HowMuch
 	string WIndowName			
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String controls = ControlNameList(WIndowName)
 	controls = RemoveFromList("ScrollButtonDown", controls )
 	controls = RemoveFromList("ScrollButtonUp", controls )
@@ -1078,6 +1948,7 @@ end
 
 Function IN2G_FindNewTextElements(w1,w2,reswave)
 	Wave/t w1,w2,reswave
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	//comment, up to 1e4 points seems reasonably fast (0.2sec), then gets really slow, 1e5 is 14 seconds. 
 	make/n=(numpnts(w1) + numpnts(w2))/free/t total
 	total[] = w1[p]
@@ -1104,6 +1975,7 @@ End
 //*****************************************************************************************************************
 Function/T IN2G_ReturnExistingWaveName(FolderNm,WaveMatchStr)
 	string FolderNm,WaveMatchStr
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
@@ -1126,6 +1998,7 @@ end
 //*****************************************************************************************************************
 Function/T IN2G_ReturnExistingWaveNameGrep(FolderNm,WaveMatchStr)
 	string FolderNm,WaveMatchStr
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
@@ -1150,6 +2023,7 @@ Function IN2G_CreateAndSetArbFolder(folderPathStr)
 	string folderPathStr
 	//takes folder path string, if it starts with root: cretaes all folders as necessary, if not then creates folder from current location.
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i, istart=0
 	if(stringmatch(stringFromList(0,folderPathStr,":"),"root"))
 		setDataFolder root:
@@ -1165,6 +2039,7 @@ end
 
 Function IN2G_printvec(w)		// print a vector to screen
 	Wave w
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String name=NameOfWave(w)
 	Wave/T tw=$GetWavesDataFolder(w,2)
 	Wave/C cw=$GetWavesDataFolder(w,2)
@@ -1207,6 +2082,7 @@ Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntM
 	// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
 	// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
 	// min number of poitns is 3
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (Pts_avg<3)
 		Pts_avg=3
 	endif
@@ -1236,6 +2112,7 @@ end
 Function/S IN2G_roundToUncertainity(val, uncert,N)		//returns properlly formated "Val +/- Uncert" string
 	variable val, uncert,N
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	uncert = IN2G_roundSignificant(uncert,N)  		//this rounds uncert to N sig. digits
 	variable decPlaces, allPlaces
 	string tempStr, tmpExpStr
@@ -1281,6 +2158,7 @@ Function IN2G_roundSignificant(val,N)        // round val to N significant figur
         Variable val                    // input value to round
         Variable N                      // number of significant figures
 
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         if (val==0 || numtype(val))
                 return val
         endif
@@ -1298,6 +2176,7 @@ Function IN2G_roundDecimalPlaces(val,N)        // round val to N decimal places,
         Variable N                      // number of significant figures
 
 
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         if (val==0 || numtype(val))
                 return val
         endif
@@ -1316,6 +2195,7 @@ Function/T IN2G_FixWindowsPathAsNeed(PathString,DoubleSingleQuotes, EndingQuotes
 	string PathString
 	variable DoubleSingleQuotes, EndingQuotes	//1 for single, 2 for double
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string Separator
 	if(DoubleSingleQuotes==1)
 		Separator="\\"
@@ -1339,6 +2219,7 @@ end
 Function/S IN2G_ExtractFldrNmFromPntr(FullPointerToWaveVarStr)
 	string FullPointerToWaveVarStr
 	//returns only the folder part of full pointer to wave/string/variable returned by IN2G_FolderSelectPanel
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable numItems=ItemsInList(FullPointerToWaveVarStr,":")
 	
 	string tempStr=RemoveFromList(StringFromList(numItems-1,FullPointerToWaveVarStr,":"), FullPointerToWaveVarStr , ":")
@@ -1354,11 +2235,13 @@ end
 
 Function IN2G_ColorTopGrphRainbow()
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String topGraph=WinName(0,1)
 	Variable traceIndex, numTraces
 	Variable i, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
 	if( strlen(topGraph) )
 		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
+		//print TraceNameList(topGraph,";",3)
 		if (numTraces > 0)
 			w=numTraces/2
 		        For(i=0;i<numTraces;i+=1)
@@ -1384,6 +2267,7 @@ end
 Function IN2G_LegendTopGrphFldr(FontSize)
 	variable FontSize
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String topGraph=WinName(0,1)
 	string Traces=TraceNameList(topGraph, ";", 1 )
 	variable i
@@ -1409,6 +2293,7 @@ end
 Function IN2G_FolderSelectPanel(SVARString, TitleString,StartingFolder,FolderOrFile,AllowNew,AllowDelete,AllowRename,AllowLiberal,ExecuteMyFunction)		
 	string SVARString, TitleString, StartingFolder, ExecuteMyFunction	
 	variable FolderOrFile, AllowNew,AllowDelete,AllowRename	,AllowLiberal		
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	//		Jan Ilavsky, 12/13/2003 version 1
 	// 	This is universal widget for programmers to call when user needs to select folder and possibly string/wave/variable name 
 	//	User is allowed to manipulate folders and see their content, with functionality close to standard OS widgets
@@ -1463,6 +2348,7 @@ static Function IN2G_FolderSelectInitialize(OldDf,SVARStringL,StartingFolder,Fol
 	string OldDf,SVARStringL,StartingFolder,ExecuteMyFunctionL
 	variable FolderOrFileL,AllowLiberalL
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i, imax=ItemsInList(SVARStringL,":")
 	For(i=0;i<imax-1;i+=1)
 		if (cmpstr(StringFromList(i,SVARStringL,":"),"root")==0)
@@ -1500,6 +2386,7 @@ end
 
 static Function IN2G_FolderSelectRefreshList()
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	Wave/T ListOfSubfolders=root:Packages:FolderSelectPanel:ListOfSubfolders
@@ -1538,6 +2425,7 @@ end
 
 static Function IN2G_FolderSelectRefFldrCont()
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
@@ -1587,6 +2475,7 @@ Function IN2G_FolderSelectCheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if(cmpstr(ctrlName,"DisplayWaves"))
 	
 	endif
@@ -1600,6 +2489,7 @@ Function IN2G_FolderSelectListBoxProc(ctrlName,row,col,event)
 	Variable col
 	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 					//5=cell select with shift key, 6=begin edit, 7=end
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
 	SVAR NewName=root:Packages:FolderSelectPanel:NewName
@@ -1690,6 +2580,7 @@ End
 Function IN2G_FolderSelectButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 		string OldDf=GetDataFolder(1)
 		SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 		SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
@@ -1818,6 +2709,7 @@ Function IN2G_FolderSelectSetVarProc(ctrlName,varNum,varStr,varName) : SetVariab
 	String varStr
 	String varName
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	NVAR AllowLiberal=root:Packages:FolderSelectPanel:AllowLiberal
 
 	if(cmpstr("NewName",ctrlName)==0)
@@ -1860,6 +2752,7 @@ End
 static Function IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowDelete,AllowRename)
 	string TitleString
 	variable FolderOrFile,AllowNew,AllowDelete,AllowRename
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	DoWIndow IN2G_FolderSelectPanelPanel
 	if(V_Flag)
 		DoWIndow/K IN2G_FolderSelectPanelPanel
@@ -1931,6 +2824,7 @@ Function IR1G_UpdateSetVarStep(MyControlName,NewStepFraction)
 	string MyControlName
 	variable NewStepFraction
 	//updates setVar step. Needs setVarName, and fraction of current value to be new step
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	ControlInfo $MyControlName
 	variable NewStep=V_Value * NewStepFraction
 	variable startS =strsearch(S_recreation,"{",strsearch(S_recreation,"limits",0))
@@ -1951,6 +2845,7 @@ Function/T IN2G_RemoveExtraQuote(str,starting,Ending)
 	String str
 	variable starting,Ending
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (starting)
 		if(cmpstr(str[0],"'")==0)
 			str = str[1,inf]
@@ -1974,6 +2869,7 @@ Function/T IN2G_ChangePartsOfString(str,oldpart,newpart)
 	String oldpart
 	String newpart
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable id=strlen(oldpart)
 	Variable i
 	do
@@ -1982,7 +2878,7 @@ Function/T IN2G_ChangePartsOfString(str,oldpart,newpart)
 			str[i,i+id-1] = newpart
 		endif
 	while(i>=0)
-
+	//replaceString would be better????
 	return str
 End
 
@@ -2042,6 +2938,7 @@ End
 Function IN2G_IntegrateXY(xWave, yWave)
 	Wave xWave, yWave						// input/output X, Y waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable yp,ypm1,sum=0
 	Variable pt=1,n=numpnts(yWave)
 	ypm1=yWave[0]
@@ -2060,6 +2957,7 @@ End
 Function IN2G_CreateItem(TheSwitch,NewName)
 	string TheSwitch, NewName
 //this function creates strings or variables with the name passed
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (cmpstr(TheSwitch,"string")==0)
 		SVAR/Z test=$NewName
 		if (!SVAR_Exists(test))
@@ -2082,6 +2980,7 @@ end
 Function IN2G_ErrorsForDivision(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function divides A1 by A2 with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Error=(sqrt((A1^2*S2^4)+(S1^2*A2^4)+((A1^2+S1^2)*A2^2*S2^2))) / (A2*(A2^2-S2^2))
 	
 	return Error
@@ -2090,6 +2989,7 @@ end
 Function IN2G_ErrorsForMultiplication(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function multiplies two numbers with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Error=sqrt((A1*S2)^2+(A2*S1)^2+(S1*S2)^2)
 	
 	return Error
@@ -2098,6 +2998,7 @@ end
 Function IN2G_ErrorsForSubAndAdd(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function subtracts A2 from A1 with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Error=sqrt(S1^2+S2^2)
 	
 	return Error
@@ -2107,6 +3008,7 @@ end
 Function/T IN2G_DivideWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function divides A1 by A2 with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Result=A1/A2
 	variable Error=(sqrt((A1^2*S2^4)+(S1^2*A2^4)+((A1^2+S1^2)*A2^2*S2^2))) / (A2*(A2^2-S2^2))
 	
@@ -2117,6 +3019,7 @@ end
 Function/T IN2G_MulitplyWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function multiplies two numbers with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Result=A1*A2
 	variable Error=sqrt((A1*S2)^2+(A2*S1)^2+(S1*S2)^2)
 	
@@ -2127,6 +3030,7 @@ end
 Function/T IN2G_SubtractWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function subtracts A2 from A1 with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Result=A1-A2
 	variable Error=sqrt(S1^2+S2^2)
 	
@@ -2136,6 +3040,7 @@ end
 Function/T IN2G_SumWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function sums two numbers with errors
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable Result=A1+A2
 	variable Error=sqrt(S1^2+S2^2)
 	
@@ -2152,6 +3057,7 @@ Function IN2G_AppendSizeTopWave(GraphName,BotWave, LeftWave,AxisPos,LabelX,Label
 	String GraphName
 	Variable AxisPos,LabelX,LabelY
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string CurrentListOfrWaves=TraceNameList(GraphName,";",1)
 	//here we store what traces are in the graph before	
 	duplicate/O BotWave, root:Packages:USAXS:MyTopWave
@@ -2182,6 +3088,7 @@ Function IN2G_AppendGuinierTopWave(GraphName,BotWave, LeftWave,AxisPos,LabelX,La
 	String GraphName
 	Variable AxisPos,LabelX,LabelY
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string CurrentListOfrWaves=TraceNameList(GraphName,";",1)
 	//here we store what traces are in the graph before	
 	duplicate/O BotWave, root:Packages:USAXS:MyTopWave
@@ -2214,6 +3121,7 @@ Function IN2G_KillPanel(ctrlName) : ButtonControl
 	//this procedure kills panel which it is called from, so I can continue in
 	//paused for user procedure
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string PanelName=WinName(0,64)
 	DoWindow /K $PanelName
 End
@@ -2224,6 +3132,7 @@ End
 Function IN2G_AutoscaleAxisFromZero(WindowName,which,where)		//this function autoscales axis from 0
 	string WindowName, which, where
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (cmpstr(where,"up")==0)
 		SetAxis/W=$(WindowName) /A/E=0 $which
 		DoUpdate
@@ -2242,6 +3151,7 @@ Function/S IN2G_CheckFldrNmSemicolon(FldrName,Include)	//this function returns s
 	string FldrName		//with ending semicolon included or not, depending on Include being 1 (include) 
 	variable Include		//and 0 (do not include)
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (Include==0)	//do not include :
 		if (cmpstr(":", FldrName[StrLen(FldrName)-1])==0)
 			return FldrName[0, StrLen(FldrName)-2]		// : is there, remove
@@ -2260,6 +3170,7 @@ end
 
 Function IN2G_CleanupFolderOfGenWaves(fldrname)		//cleans waves from waves created by generic plot
 	string fldrname
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string dfold=GetDataFolder(1)
 	setDataFolder fldrname
 	string ListOfWaves=WaveList("Generic*",";","")+WaveList("MyFitWave*",";",""), temp
@@ -2278,6 +3189,7 @@ end
 Function IN2G_AppendAnyText(TextToBeInserted)	//this function checks for existance of notebook
 	string TextToBeInserted						//and appends text to the end of the notebook
 	Silent 1
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:USAXS:NotebookName
 	if(SVAR_exists(nbl))
@@ -2295,6 +3207,7 @@ Function/S IN2G_WindowTitle(WindowName)		//this function returns the title of th
              String WindowName						//wwith WindowName
       
 	Silent 1
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
              String RecMacro
              Variable AsPosition, TitleEnd
              String TitleString
@@ -2327,6 +3240,7 @@ Function/S IN2G_WindowTitle(WindowName)		//this function returns the title of th
 Function/T IN2G_ConvertDataDirToList(Str)		//converts   FOLDERS:spec1,spec2,spec3,spec4; type fo strring into list
 	string str
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	str=RemoveListItem(0, Str , ":")					//remove the "FOLDERS"
 	variable i=0, imax=itemsInList(str,",")			//working parameters
 	string strList="", tmpstr						//working parameters
@@ -2386,6 +3300,7 @@ Function/T IN2G_CreateListOfItemsInFolder(df,item)			//Generates list of items i
 	
 	//String dfSave
 	//dfSave=GetDataFolder(1)
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string MyList=""
 	DFREF TestDFR=$(df)
 	if (DataFolderRefStatus(TestDFR))
@@ -2430,6 +3345,7 @@ Function/T IN2G_GetMeListOfEPICSKeys()		//returns list of useful keywords for UP
 	String dfSave, result="", tempstring="", KeyWordResult=""
 	dfSave=GetDataFolder(1)
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	SVAR SpecFile=root:Packages:USAXS:PanelSpecScanSelected
 	SetDataFolder $SpecFile
 	SVAR EPICS_PVs=EPICS_PVs
@@ -2452,6 +3368,7 @@ end
 Function/T IN2G_GetMeMostLikelyEPICSKey(str)		//this returns the most likely EPICS key - closest to str
 	string str
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	str="*"+str+"*"
 	String result="", tempstring=""
 	Variable pos=0, i=0
@@ -2485,6 +3402,7 @@ end
 Function IN2G_AppendListToAllWavesNotes(notetext)	//this function appends or replaces note (key/note) 
 	string notetext							//to all waves in the folder
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string ListOfWaves=WaveList("*",";",""), temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -2496,6 +3414,7 @@ end
 Function IN2G_AppendListToWaveNote(WaveNm,NewValue)		//this will replace or append new Keyword-list note to wave
 	string WaveNm, NewValue
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Wave Wv=$WaveNm
 	string Wnote=note(Wv)
 	Wnote=NewValue				
@@ -2507,6 +3426,7 @@ end
 Function IN2G_AddListToWaveNote(WaveNm,NewValue)		//this will replace or append new Keyword-list note to wave
 	string WaveNm, NewValue
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Wave Wv=$WaveNm
 	string Wnote=note(Wv)
 	Wnote+=NewValue				//fix 2008/08 changed to add new note, not kill it... 
@@ -2520,6 +3440,7 @@ end
 Function IN2G_AppendNoteToListOfWaves(ListOfWaveNames, Key,notetext)	//this function appends or replaces note (key/note) 
 	string ListOfWaveNames, Key, notetext							//to ListOfWaveNames waves in the folder
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string ListOfWaves=ListOfWaveNames, temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -2534,6 +3455,7 @@ end
 Function IN2G_AppendNoteToAllWaves(Key,notetext)	//this function appends or replaces note (key/note) 
 	string Key, notetext							//to all waves in the folder
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string ListOfWaves=WaveList("*",";",""), temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -2548,6 +3470,7 @@ end
 Function IN2G_AppendorReplaceWaveNote(WaveNm,KeyWrd,NewValue)		//this will replace or append new Keyword-list note to wave
 	string WaveNm, KeyWrd, NewValue
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Wave/Z Wv=$WaveNm
 	if(WaveExists(Wv))
 		string Wnote=note(Wv)
@@ -2563,6 +3486,7 @@ end
 Function IN2G_AppendStringToWaveNote(WaveNm,Str)		//this will append new string with Keyword-list note to wave
 	string WaveNm, Str
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Wave Wv=$WaveNm
 	string Wnote=note(Wv)
 	string tempCombo
@@ -2583,6 +3507,7 @@ end
 //**********************************************************************************************
 
 Function IN2G_AutoAlignGraphAndPanel()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string GraphName=Winname(0,1)
 	string PanelName=WinName(0,64)
 	AutopositionWindow/M=0 /R=$GraphName $PanelName
@@ -2592,6 +3517,7 @@ end
 //**********************************************************************************************
 
 Function IN2G_AutoAlignPanelAndGraph()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string GraphName=Winname(0,1)
 	string PanelName=WinName(0,64)
 	AutopositionWindow/M=0 /R=$PanelName $GraphName 
@@ -2603,6 +3529,7 @@ end
 
 Function IN2G_CleanupFolderOfWaves()		//cleans waves from fit_ and W_ waves
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string ListOfWaves=WaveList("W_*",";","")+WaveList("fit_*",";",""), temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -2616,6 +3543,7 @@ end
 //**********************************************************************************************
 
 Function/S IN2G_FixTheFileName()		//this will not work so simple, we need to remove symbols not allowed in operating systems
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string filename=GetDataFolder(1)
 	SVAR SourceSPECDataFile=SpecSourceFileName
 	SVAR specDefaultFile=root:specDefaultFile
@@ -2641,6 +3569,7 @@ Function IN2G_KillAllGraphsAndTables(ctrlname) :Buttoncontrol
 //      or just,
 //              KillGraphsAndTables()
 	string ctrlname
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         	
 	if (strlen(WinList("UPD control",";","WIN:64"))>0)		//Kills the controls when not needed anymore
 			DoWindow/K PDcontrols
@@ -2665,6 +3594,7 @@ End
 Function IN2G_KillGraphsAndTables(ctrlname) :Buttoncontrol
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
       String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
                 dowindow /K $wName
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)	//Kills the controls when not needed anymore
@@ -2676,6 +3606,7 @@ End
 Function IN2G_KillGraphsTablesEnd(ctrlname) :Buttoncontrol
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
       String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
                 dowindow /K $wName
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)	//Kills the controls when not needed anymore
@@ -2691,6 +3622,7 @@ Function IN2G_KillTopGraph(ctrlname) :Buttoncontrol
 	string ctrlname
        String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
 
+		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
        dowindow /K $wName
 End
 
@@ -2700,6 +3632,7 @@ End
 Function IN2G_KillWavesFromList(WvList)
 	string WvList
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable items=ItemsInList(WvList), i
 	For (i=0;i<items;i+=1)
 		KillWaves/Z $(StringFromList(i, WvList))
@@ -2710,6 +3643,7 @@ end
 
 Proc IN2G_BasicGraphStyle()
 	PauseUpdate; Silent 1		// modifying window...
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	ModifyGraph/Z margin(top)=100
 	ModifyGraph/Z mode=4, gaps=0
 	ModifyGraph/Z zColor[0]={PD_range,0,10,Rainbow}
@@ -2736,6 +3670,7 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	string what
 	string temp
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable ScreenRes = 72/ScreenResolution		//fixes Mac & PC small & larg fonts selection
 	if (cmpstr(what,"width")==0)					//gets width of the screen
 		temp= StringByKey("SCREEN1", IgorInfo(0))
@@ -2755,6 +3690,7 @@ end
 Function IN2G_SetPointWithCsrAToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable pointNumberToBeRemoved=xcsr(A)				//this part should be done always
 		Wave FixMe=CsrWaveRef(A)
 		FixMe[pointNumberToBeRemoved]=NaN
@@ -2765,6 +3701,7 @@ End
 Function IN2G_SetPointsBetweenCsrsToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable pointNumberStart=xcsr(A)				//this part should be done always
 	variable pointNumberEnd=xcsr(B)	
 		Wave FixMe=CsrWaveRef(A)
@@ -2780,6 +3717,7 @@ End
 Function IN2G_SetPointsSmallerCsrAToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable pointNumberToBeRemoved=xcsr(A)				//this part should be done always
 		Wave FixMe=CsrWaveRef(A)
 		FixMe[0, pointNumberToBeRemoved]=NaN
@@ -2790,6 +3728,7 @@ End
 Function IN2G_SetPointsLargerCsrBToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable pointNumberToBeRemoved=xcsr(B)				//this part should be done always
 		Wave FixMe=CsrWaveRef(B)
 		FixMe[pointNumberToBeRemoved, numpnts(FixMe)-1]=NaN
@@ -2801,6 +3740,7 @@ End
 Function IN2G_RemovePointWithCursorA(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (strlen(CsrWave(A))==0)
 		Abort "cursor A is not in the graph...nothing to do..."
 	endif
@@ -2842,6 +3782,7 @@ End
 
 Function IN2G_ResetGraph(ctrlname) : Buttoncontrol
 	string ctrlname
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 		SetAxis/A										//rescales graph to automatic scaling
 End
 
@@ -2850,6 +3791,7 @@ End
 
 Function IN2G_ReversXAxis(ctrlname) : Buttoncontrol
 	string ctrlname
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	SetAxis/A/R bottom									//reverse X axis
 End
 
@@ -2877,7 +3819,8 @@ Function/S IN2G_FindFolderWithWvTpsList(startDF, levels, WaveTypes, LongShortTyp
         String dfSave
         String list = "", templist, tempWvName, tempWaveType
         variable i, skipRest, j
-        
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	        
         dfSave = GetDataFolder(1)
   	
   	if (!DataFolderExists(startDF))
@@ -2940,6 +3883,7 @@ Function/S IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortTyp
         //12/18/2010, JIL, trying to speed this up and fix this... 
         //Empty folders shoudl be skipped. If mask string is "*", then any non-empty folder should be included... 
         			 
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         String dfSave
         String list = "", templist, tempWvName, TempWvList
         variable i, skipRest
@@ -3017,6 +3961,7 @@ Function/S IN2G_NewFindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShort
         String list = "", templist, tempWvName
         variable i, skipRest
         
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         dfSave = GetDataFolder(1)
   	if (!DataFolderExists(startDF))
   		return ""
@@ -3064,6 +4009,7 @@ End
 Function IN2G_RemoveNaNsFrom3Waves(Wv1,wv2,wv3)							//removes NaNs from 3 waves
 	Wave Wv1, Wv2, Wv3					//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2)
@@ -3076,6 +4022,7 @@ end
 Function IN2G_RemoveNaNsFrom2Waves(Wv1,wv2)							//removes NaNs from 3 waves
 	Wave Wv1, Wv2					//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2)
@@ -3088,6 +4035,7 @@ end
 Function IN2G_RemoveNaNsFrom5Waves(Wv1,wv2,wv3,wv4,wv5)		//removes NaNs from 5 waves
 	Wave Wv1, Wv2, Wv3, wv4,wv5					//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2)
@@ -3100,6 +4048,7 @@ end
 Function IN2G_RemoveNaNsFrom6Waves(Wv1,wv2,wv3,wv4,wv5,wv6)		//removes NaNs from 6 waves
 	Wave Wv1, Wv2, Wv3, wv4,wv5, wv6					//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2)
@@ -3112,6 +4061,7 @@ end
 Function IN2G_RemoveNaNsFrom7Waves(Wv1,wv2,wv3,wv4,wv5,wv6, wv7)		//removes NaNs from 6 waves
 	Wave Wv1, Wv2, Wv3, wv4,wv5, wv6	, wv7				//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2 || numtype(Wv7[i])==2)
@@ -3124,6 +4074,7 @@ end
 Function IN2G_RemoveNaNsFrom4Waves(Wv1,wv2,wv3,wv4)		//removes NaNs from 4 waves
 	Wave Wv1, Wv2, Wv3, wv4				//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2)
@@ -3136,6 +4087,7 @@ end
 Function IN2G_RemNaNsFromAWave(Wv1)	//removes NaNs from 1 wave
 	Wave Wv1			//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2)
@@ -3150,6 +4102,7 @@ end
 Function IN2G_ReplaceNegValsByNaNWaves(Wv1,wv2,wv3)			//replaces Negative values in 3 waves by NaNs 
 	Wave Wv1, Wv2, Wv3					//assume same number of points in the waves
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (Wv1[i]<0 || Wv2[i]<0 || Wv3[i]<0)
@@ -3165,6 +4118,7 @@ Function IN2G_GenerateLegendForGraph(fntsize,WNoteName,RemoveRepeated)  //genera
 	variable fntsize, WNoteName, RemoveRepeated							//WNoteName=1 use name from Wname  key in Wave Note
 			//finds name of the old legend and generates new one with the same name, if the legend does not exists
 			//it cretaes new one with name legend1
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	variable NumberOfWaves=ItemsInList(TraceNameList("",";",1))
 	if (NumberOfWaves==0)
 		return 0
@@ -3185,8 +4139,8 @@ Function IN2G_GenerateLegendForGraph(fntsize,WNoteName,RemoveRepeated)  //genera
 	endif
 	variable repeated=0
 	string NewLegend=""
-#if Exists("IR2C_LkUpDfltStr")
-	NewLegend ="\\F"+IR2C_LkUpDfltStr("FontType")
+#if Exists("IN2G_LkUpDfltStr")
+	NewLegend ="\\F"+IN2G_LkUpDfltStr("FontType")
 #endif	
 	NewLegend +="\\Z"+fntsizeStr
 	
@@ -3228,6 +4182,7 @@ end
 Function IN2G_WriteSetOfData(which)		//this procedure saves selected data from current folder
 	string which
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	PathInfo ExportDatapath
 	NewPath/C/O/M="Select folder for exported data..." ExportDatapath
 		if (V_flag!=0)
@@ -3421,6 +4376,7 @@ end
 
 Function/S IN2G_FixTheFileName2()
 	WAVE USAXS_PD
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (WaveExists(USAXS_PD))
 		string SourceSPECDataFile=stringByKey("DATAFILE",Note(USAXS_PD),"=")
 		string intermediatename=StringFromList (0, SourceSPECDataFile, ".")+"_"+GetDataFolder(0)
@@ -3433,6 +4389,7 @@ end
 Function/T IN2G_ZapControlCodes(str)
 	String str
 	Variable i = 0
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	do
 		if (char2num(str[i,i])<32)
 			str[i,i+1] = str[i+1,i+1]
@@ -3452,6 +4409,7 @@ End
 Function/T ZapNonLetterNumStart(strIN)
 	string strIN
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable i = 0
 	//a = 97, A=65
 	//z =122, Z=90
@@ -3474,6 +4432,7 @@ end
 Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 	string InFolderName			//thsi is root:Packages:SomethingHere, will make SomethingHere unique. 
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string OutFoldername, tmpFldr
 	OutFoldername =InFolderName 
 	if(DataFolderExists(InFolderName))
@@ -3497,6 +4456,7 @@ end
 
 Function/S IN2G_GetUniqueFileName(filename)
 	string filename
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string FileList= IndexedFile(ExportDatapath,-1,"????" )
 	variable i
 	string filename1=filename
@@ -3518,6 +4478,7 @@ Function IN2G_TrimExportWaves(Q,I,E)	//this function trims export I, Q, E waves 
 	Wave I
 	Wave E
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	//here we trim for small Qs
 	
 	variable ic=0, imax=numpnts(Q)
@@ -3541,6 +4502,7 @@ Function IN2G_PasteWnoteToWave(waveNm, textWv,separator)
 	Wave/T TextWv
 	//this function pastes the content of Wave note from waveNm to textWv
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Wave WvwithNote=$waveNm
 	string ListOfNotes=note(WvwithNote)
 	
@@ -3560,6 +4522,7 @@ Function IN2G_UniversalFolderScan(startDF, levels, FunctionName)
         String startDF, FunctionName                  	// startDF requires trailing colon.
         Variable levels							//set 1 for long type and 0 for short type return
         			 
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         //fix if the startDF does not have trailing colon
         if (strlen(startDF)>1)
         	if (stringmatch(":", startDF[strlen(StartDF)-1,strlen(StartDF)-1] )!=1)
@@ -3607,6 +4570,7 @@ End
 
 Function IN2G_CheckTheFolderName()
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	SVAR/Z FolderName
 	if (!SVAR_Exists(FolderName))	
 		string/g FolderName=GetDataFolder(0)+";"+GetDataFolder(1)
@@ -3637,6 +4601,7 @@ Function/T IN2G_CreateListOfScans(df)			//Generates list of items in given folde
 	String df
 //	String Type
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String dfSave
 	dfSave=GetDataFolder(1)
 	string/G root:Packages:USAXS:MyList=""
@@ -3655,6 +4620,7 @@ end
 //***********************************************************************************************
 Function IN2G_AppendScanNumAndComment()
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	SVAR List=root:Packages:USAXS:MyList
 	SVAR/Z SpecComment
 	if (SVAR_Exists(SpecComment))
@@ -3672,6 +4638,7 @@ Function IN2G_VolumeFraction(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -3725,6 +4692,7 @@ Function IN2G_NumberDensity(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -3779,6 +4747,7 @@ Function IN2G_SpecificSurface(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -3833,6 +4802,7 @@ Function IN2G_VWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -3888,6 +4858,7 @@ Function IN2G_NWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -3943,6 +4914,7 @@ Function IN2G_VWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -4001,6 +4973,7 @@ Function IN2G_NWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -4060,6 +5033,7 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	// which = height, width, 
 	//MinVal is in pixles
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	if (cmpstr(which,"width")!=0 && cmpstr(which,"height")!=0)
 		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
 	endif
@@ -4084,6 +5058,7 @@ Function IN2G_InputPeriodicTable(ButonFunctionName, NewWindowName, NewWindowTitl
 	string ButonFunctionName, NewWindowName, NewWindowTitleStr
 	variable PositionLeft,PositionTop
 	//PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	Variable pleft=PositionLeft,ptop=PositionTop,pright=PositionLeft+380,pbottom=PositionTop+145			// these change panel size
 	NewPanel/K=1 /W=(pleft,ptop,pright,pbottom)
 	DoWindow/C/T $(NewWindowName),NewWindowTitleStr
@@ -4253,6 +5228,7 @@ End
 Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 	variable n1,n2,S
 	Wave/Z xWv,yWv,dyWv,AWv,CWv
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 		// CWv is optional parameter, if not needed use $"" as input and the function will not complain
 		// Input data
 		//	n1, n2 range of data (point numbers) between which to smooth data. Order independent.
@@ -4397,6 +5373,7 @@ end
 Function IN2G_ScrollButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here

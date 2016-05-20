@@ -431,7 +431,7 @@ Window IR1A_ControlPanel()
 
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:Irena_UnifFit:RebinDataTo, noproc
 	SetVariable RebinDataTo,pos={290,130},size={100,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
-	TitleBox MainTitle title="\Zr200Unified modeling input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Unified fit input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr150Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
 	TitleBox Info2 title="\Zr150Unified model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20}

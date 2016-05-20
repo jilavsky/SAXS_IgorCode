@@ -2176,24 +2176,24 @@ end
 	ModifyGraph/W=IR1R_SizesInputGraph log(bottom)=1
 	ModifyGraph/W=IR1R_SizesInputGraph log(top)=GraphLogTopAxis
 	ModifyGraph/W=IR1R_SizesInputGraph log(right)=GraphLogRightAxis
-	Label/W=IR1R_SizesInputGraph top "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Particle diameter [A]"
+	Label/W=IR1R_SizesInputGraph top "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Particle diameter [A]"
 	ModifyGraph/W=IR1R_SizesInputGraph lblMargin(top)=30,lblLatPos(top)=100
-	Label/W=IR1R_SizesInputGraph right "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Particle vol. distribution f(D)"
-	Label/W=IR1R_SizesInputGraph left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label/W=IR1R_SizesInputGraph right "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Particle vol. distribution f(D)"
+	Label/W=IR1R_SizesInputGraph left "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph/W=IR1R_SizesInputGraph lblPos(left)=50
 	ModifyGraph/W=IR1R_SizesInputGraph lblMargin(right)=20
-	Label/W=IR1R_SizesInputGraph bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"	
+	Label/W=IR1R_SizesInputGraph bottom "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"	
 	ModifyGraph/W=IR1R_SizesInputGraph axisEnab(left)={0.15,1}
 	ModifyGraph/W=IR1R_SizesInputGraph axisEnab(right)={0.15,1}
 	ModifyGraph/W=IR1R_SizesInputGraph lblMargin(top)=30
 	ModifyGraph/W=IR1R_SizesInputGraph axisEnab(ChisquaredAxis)={0,0.15}
 	ModifyGraph/W=IR1R_SizesInputGraph freePos(ChisquaredAxis)=0
-	Label/W=IR1R_SizesInputGraph ChisquaredAxis "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Residuals"
+	Label/W=IR1R_SizesInputGraph ChisquaredAxis "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Residuals"
 	ModifyGraph/W=IR1R_SizesInputGraph lblPos(ChisquaredAxis)=50,lblLatPos=0
 	ModifyGraph/W=IR1R_SizesInputGraph mirror(ChisquaredAxis)=1
 	SetAxis/W=IR1R_SizesInputGraph /A/E=2 ChisquaredAxis
 	ModifyGraph/W=IR1R_SizesInputGraph nticks(ChisquaredAxis)=3
-	ModifyGraph/W=IR1R_SizesInputGraph fSize=str2num(IR2C_LkUpDfltVar("AxisLabelSize"))
+	ModifyGraph/W=IR1R_SizesInputGraph fSize=str2num(IN2G_LkUpDfltVar("AxisLabelSize"))
 
 	ModifyGraph/W=IR1R_SizesInputGraph mode(Intensity)=3,marker(Intensity)=5,msize(Intensity)=3
 	
@@ -2238,7 +2238,7 @@ end
 
 	IN2G_GenerateLegendForGraph(7,0,1)
 	Legend/J/C/N=Legend1/J/A=LB/X=-8/Y=-8/W=IR1R_SizesInputGraph
-	string LegendText2="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Method used: "+MethodRun+"\r"
+	string LegendText2="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Method used: "+MethodRun+"\r"
 	if(numtype(NumberIterations)!=0)
 		LegendText2+="No success, change parameters and run again"
 	elseif(NumberIterations==0)
@@ -3288,18 +3288,18 @@ Proc  IR1R_SizesInputGraph()
 	Checkbox LogDistVolumeAxis, pos={250,20}, title="Log Particle Volume axis?", proc = IR1R_GraphCheckboxes, help={"Check to have logarithmic particle voilume distribution (right) axis"}
 	Checkbox LogDistVolumeAxis, variable=root:Packages:Sizes:GraphLogRightAxis
 	ModifyGraph log=1
-	Label left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label left "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph lblPos(left)=50
-	Label bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
-	ModifyGraph fSize=str2num(IR2C_LkUpDfltVar("AxisLabelSize"))
+	Label bottom "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
+	ModifyGraph fSize=str2num(IN2G_LkUpDfltVar("AxisLabelSize"))
 	ShowInfo
 	variable testQRS
 	testQRS = root:Packages:Sizes:UseQRSdata
 	if(strlen(StringByKey("UserSampleName", note(IntensityOriginal), "="))>1)
-		Textbox/N=text0/S=3/A=RT  "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+StringByKey("UserSampleName", note(IntensityOriginal), "=")
+		Textbox/N=text0/S=3/A=RT  "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+StringByKey("UserSampleName", note(IntensityOriginal), "=")
 	else
 		if(testQRS==1)
-			Textbox/N=text0/S=3/A=RT "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+root:Packages:Sizes:IntensityWaveName
+			Textbox/N=text0/S=3/A=RT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+root:Packages:Sizes:IntensityWaveName
 		else
 			Textbox/K/N=text0
 		endif	
@@ -3381,10 +3381,10 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 	print "Mean diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(meanDia)
 	print "Mode diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(modeDia)
 	print "Median diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(medianDia)
-	string tagText = "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"\r"
+	string tagText = "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"\r"
 	CheckDisplayed /W=IR1R_SizesInputGraph MyEWave
  	if(WaveExists(MyEWave)&&V_Flag)
-		tagText =  "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"  +/- "+num2str((volumeMax-VolumeMin)/2)+"\r"
+		tagText =  "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"  +/- "+num2str((volumeMax-VolumeMin)/2)+"\r"
 	endif
 	tagText += "Mean diameter = "+num2str(meanDia)+"\r"
 	//tagText += "Mode diameter = "+num2str(modeDia)+"\r"
@@ -3448,9 +3448,9 @@ Function IR1R_AppendIntOriginal()		//appends (and removes) and configures in gra
 	RemoveFromGraph/Z IntensityOriginal
 	AppendToGraph IntensityOriginal vs Q_vecOriginal
 	
-	Label left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label left "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph lblPos(left)=50
-	Label bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
+	Label bottom "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 
 	ModifyGraph mode(IntensityOriginal)=3
 	ModifyGraph msize(IntensityOriginal)=2
@@ -3459,7 +3459,7 @@ Function IR1R_AppendIntOriginal()		//appends (and removes) and configures in gra
 	ErrorBars IntensityOriginal Y,wave=(DeletePointsMaskErrorWave,DeletePointsMaskErrorWave)
 	Cursor/P A IntensityOriginal, csrApos
 	Cursor/P B IntensityOriginal, csrBpos
-	ModifyGraph fSize=str2num(IR2C_LkUpDfltVar("AxisLabelSize"))
+	ModifyGraph fSize=str2num(IN2G_LkUpDfltVar("AxisLabelSize"))
 	
 	setDataFolder OldDf
 end
@@ -3890,10 +3890,10 @@ Proc  IR1S_RegDiagnosticsWindow()
 	AppendToGraph /R CurrentChiSqW //vs DiagLogAVal
 	AppendToGraph/L=ChiMinAlphaS CurChiSqMinusAlphaEntropyW
 	SetDataFolder fldrSav
-	Label left "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Entropy or Smoothness"
-	Label bottom "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Iteration"
-	Label right "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Current ChiSquared"
-	Label ChiMinAlphaS "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Current ChiSq - alpha*S"
+	Label left "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Entropy or Smoothness"
+	Label bottom "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Iteration"
+	Label right "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Current ChiSquared"
+	Label ChiMinAlphaS "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Current ChiSq - alpha*S"
 	ModifyGraph mirror(bottom)=1, log(right)=1
 	ModifyGraph mode=4,marker(CurrentEntropyW)=19
 	ModifyGraph marker(CurrentChiSqW)=5,rgb(CurrentChiSqW)=(0,0,65280)
@@ -4572,7 +4572,7 @@ static Function IR1R_TNNLS(G_matrix,ModelDistribution,Intensity, Qvector, errors
 		NumberIterations=numIter
 		if(mod(NumberIterations,10)==0)
 			IR1R_NNLSUpdateDataForGrph()
-			LegendText2="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Method used: NNLS \r"
+			LegendText2="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Method used: NNLS \r"
 			LegendText2+="working....  Number of iterations ="+num2str(NumberIterations)
 			TextBox/C/F=0/N=Legend2/X=0.00/Y=-9.00 LegendText2
 		endif

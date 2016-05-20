@@ -77,187 +77,178 @@ end
 //		Strings=FontType;
 //
 //	how to use:
-// 	When needed insert font size through lookup function - e.g., IR2C_LkUpDfltVar("LegendSize")
-//	or for font type IR2C_LkUpDfltStr("FontType")
+// 	When needed insert font size through lookup function - e.g., IN2G_LkUpDfltVar("LegendSize")
+//	or for font type IN2G_LkUpDfltStr("FontType")
 //	NOTE: Both return string values, because that is what is generally needed!!!!
 // further variables and strings can be added, but need to be added to control panel too...
 //	see example in : IR1_LogLogPlotU()  in this procedure file... 
 //***********************************************************
 //***********************************************************
 Function IN3_ConfigureGUIfonts()
-#if(Exists("IR2C_ConfigMain")==6)
-	IR2C_ConfigMain()
-#else
-	DoAlert /T="How to configreu GUI fonts" 1, "This needs to load Irena package where thee function  is, do you have it install and want to continue?"
-	if(V_Flag==2)		//cancel
-		abort
-	endif 
-	Execute/P("LoadIrenaSASMacros()")
-	Execute/P("IR2C_ConfigMain()")
-#endif
+	IN2G_ConfigMain()
 end
 
-Function/S IN3_LkUpDfltStr(StrName)
-	string StrName
-
-	string result
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
-		IN3_InitConfigMain()
-	endif
-	SetDataFolder root:Packages
-	setDataFolder root:Packages:IrenaConfigFolder
-	SVAR /Z curString = $(StrName)
-	if(!SVAR_exists(curString))
-		IN3_InitConfigMain()
-		SVAR curString = $(StrName)
-	endif	
-	result = 	"'"+curString+"'"
-	setDataFolder OldDf
-	return result
-end
+//Function/S IN2G_LkUpDfltStr(StrName)
+//	string StrName
+//
+//	string result
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder root:
+//	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
+//		IN2G_InitConfigMain()
+//	endif
+//	SetDataFolder root:Packages
+//	setDataFolder root:Packages:IrenaConfigFolder
+//	SVAR /Z curString = $(StrName)
+//	if(!SVAR_exists(curString))
+//		IN2G_InitConfigMain()
+//		SVAR curString = $(StrName)
+//	endif	
+//	result = 	"'"+curString+"'"
+//	setDataFolder OldDf
+//	return result
+//end
+////***********************************************************
+////***********************************************************
+//
+//Function/S IN2G_LkUpDfltVar(VarName)
+//	string VarName
+//
+//	string result
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder root:
+//	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
+//		IN2G_InitConfigMain()
+//	endif
+//	SetDataFolder root:Packages
+//	setDataFolder root:Packages:IrenaConfigFolder
+//	NVAR /Z curVariable = $(VarName)
+//	if(!NVAR_exists(curVariable))
+//		IN2G_InitConfigMain()
+//		NVAR curVariable = $(VarName)
+//	endif	
+//	if(curVariable>=10)
+//		result = num2str(curVariable)
+//	else
+//		result = "0"+num2str(curVariable)
+//	endif
+//	setDataFolder OldDf
+//	return result
+//end
 //***********************************************************
 //***********************************************************
 
-Function/S IN3_LkUpDfltVar(VarName)
-	string VarName
-
-	string result
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
-		IN3_InitConfigMain()
-	endif
-	SetDataFolder root:Packages
-	setDataFolder root:Packages:IrenaConfigFolder
-	NVAR /Z curVariable = $(VarName)
-	if(!NVAR_exists(curVariable))
-		IN3_InitConfigMain()
-		NVAR curVariable = $(VarName)
-	endif	
-	if(curVariable>=10)
-		result = num2str(curVariable)
-	else
-		result = "0"+num2str(curVariable)
-	endif
-	setDataFolder OldDf
-	return result
-end
-//***********************************************************
-//***********************************************************
-
-Function IN3_InitConfigMain()
-
-	//initialize lookup parameters for user selected items.
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	NewDataFolder/O/S root:Packages
-	NewDataFolder/O/S root:Packages:IrenaConfigFolder
-	
-	string ListOfVariables
-	string ListOfStrings
-	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
-	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
-	variable i
-	//and here we create them
-	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
-	endfor		
-										
-	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-	endfor	
-	//Now set default values
-	String VariablesDefaultValues
-	String StringsDefaultValues
-	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-		VariablesDefaultValues="LegendSize:8;TagSize:8;AxisLabelSize:8;LegendUseFolderName:0;LegendUseWaveName:0;"
-	else
-		VariablesDefaultValues="LegendSize:10;TagSize:10;AxisLabelSize:10;LegendUseFolderName:0;LegendUseWaveName:0;"
-	endif
-	StringsDefaultValues="FontType:"+StringFromList(0, IN3_CreateUsefulFontList() ) +";"
-
-	variable CurVarVal
-	string CurVar, CurStr, CurStrVal
-	For(i=0;i<ItemsInList(VariablesDefaultValues);i+=1)
-		CurVar = StringFromList(0,StringFromList(i, VariablesDefaultValues),":")
-		CurVarVal = numberByKey(CurVar, VariablesDefaultValues)
-		NVAR temp=$(CurVar)
-		if(temp==0)
-			temp = CurVarVal
-		endif
-	endfor
-	For(i=0;i<ItemsInList(StringsDefaultValues);i+=1)
-		CurStr = StringFromList(0,StringFromList(i, StringsDefaultValues),":")
-		CurStrVal = stringByKey(CurStr, StringsDefaultValues)
-		SVAR tempS=$(CurStr)
-		if(strlen(tempS)<1)
-			tempS = CurStrVal
-		endif
-	endfor
-	
-	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
-	ListOfKnownFontTypes=IN3_CreateUsefulFontList()
-	setDataFolder OldDf
-end
-//***********************************************************
-//***********************************************************
-
-Function IN3_ReadIrenaGUIPackagePrefs()
-
-	struct  IrenaPanelDefaults Defs
-	IN3_InitConfigMain()
-	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
-	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
-	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
-	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-	if(V_Flag==0)		
-		//print Defs
-		//print "Read Irena Panels and graphs preferences from local machine and applied them. "
-		//print "Note that this may have changed font size and type selection originally saved with the existing experiment."
-		//print "To change them please use \"Configure default fonts and names\""
-		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
-			DefaultFontType=Defs.PanelFontType
-			DefaultFontSize = Defs.defaultFontSize
-			LastUpdateCheck = Defs.LastUpdateCheck
-			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
-			else
-				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
-			endif
-			//and now recover the stored other parameters, no action on these...
-			 LegendSize=Defs.LegendSize
-			 TagSize=Defs.TagSize
-			 AxisLabelSize=Defs.AxisLabelSize
-			 LegendUseFolderName=Defs.LegendUseFolderName
-			 LegendUseWaveName=Defs.LegendUseWaveName
-			 FontType=Defs.LegendFontType
-		else
-			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
-			if(V_Flag==1)
-				Execute("IN3_MainConfigPanel() ")
-			else
-			//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
-			endif
-		endif
-	else 		//problem loading package defaults
-		Struct WMButtonAction ba
-		ba.ctrlName="DefaultValues"
-		IN3_KillPrefsButtonProc(ba)
-		DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
-		if(V_Flag==1)
-			Execute("IN3_MainConfigPanel() ")
-		endif	
-	endif
-end
+//Function IN3_InitConfigMain()
+//
+//	//initialize lookup parameters for user selected items.
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder root:
+//	NewDataFolder/O/S root:Packages
+//	NewDataFolder/O/S root:Packages:IrenaConfigFolder
+//	
+//	string ListOfVariables
+//	string ListOfStrings
+//	//here define the lists of variables and strings needed, separate names by ;...
+//	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
+//	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
+//	variable i
+//	//and here we create them
+//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+//		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+//	endfor		
+//										
+//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+//		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+//	endfor	
+//	//Now set default values
+//	String VariablesDefaultValues
+//	String StringsDefaultValues
+//	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//		VariablesDefaultValues="LegendSize:8;TagSize:8;AxisLabelSize:8;LegendUseFolderName:0;LegendUseWaveName:0;"
+//	else
+//		VariablesDefaultValues="LegendSize:10;TagSize:10;AxisLabelSize:10;LegendUseFolderName:0;LegendUseWaveName:0;"
+//	endif
+//	StringsDefaultValues="FontType:"+StringFromList(0, IN3_CreateUsefulFontList() ) +";"
+//
+//	variable CurVarVal
+//	string CurVar, CurStr, CurStrVal
+//	For(i=0;i<ItemsInList(VariablesDefaultValues);i+=1)
+//		CurVar = StringFromList(0,StringFromList(i, VariablesDefaultValues),":")
+//		CurVarVal = numberByKey(CurVar, VariablesDefaultValues)
+//		NVAR temp=$(CurVar)
+//		if(temp==0)
+//			temp = CurVarVal
+//		endif
+//	endfor
+//	For(i=0;i<ItemsInList(StringsDefaultValues);i+=1)
+//		CurStr = StringFromList(0,StringFromList(i, StringsDefaultValues),":")
+//		CurStrVal = stringByKey(CurStr, StringsDefaultValues)
+//		SVAR tempS=$(CurStr)
+//		if(strlen(tempS)<1)
+//			tempS = CurStrVal
+//		endif
+//	endfor
+//	
+//	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
+//	ListOfKnownFontTypes=IN3_CreateUsefulFontList()
+//	setDataFolder OldDf
+//end
+////***********************************************************
+////***********************************************************
+//
+//Function IN3_ReadIrenaGUIPackagePrefs()
+//
+//	struct  IrenaPanelDefaults Defs
+//	IN3_InitConfigMain()
+//	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+//	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+//	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+//	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+//	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+//	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+//	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+//	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+//	if(V_Flag==0)		
+//		//print Defs
+//		//print "Read Irena Panels and graphs preferences from local machine and applied them. "
+//		//print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+//		//print "To change them please use \"Configure default fonts and names\""
+//		if(Defs.Version==1 || Defs.Version==2)		//Lets declare the one we know as 1
+//			DefaultFontType=Defs.PanelFontType
+//			DefaultFontSize = Defs.defaultFontSize
+//			LastUpdateCheck = Defs.LastUpdateCheck
+//			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+//			else
+//				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+//			endif
+//			//and now recover the stored other parameters, no action on these...
+//			 LegendSize=Defs.LegendSize
+//			 TagSize=Defs.TagSize
+//			 AxisLabelSize=Defs.AxisLabelSize
+//			 LegendUseFolderName=Defs.LegendUseFolderName
+//			 LegendUseWaveName=Defs.LegendUseWaveName
+//			 FontType=Defs.LegendFontType
+//		else
+//			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
+//			if(V_Flag==1)
+//				Execute("IN3_MainConfigPanel() ")
+//			else
+//			//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
+//			endif
+//		endif
+//	else 		//problem loading package defaults
+//		Struct WMButtonAction ba
+//		ba.ctrlName="DefaultValues"
+//		IN3_KillPrefsButtonProc(ba)
+//		DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
+//		if(V_Flag==1)
+//			Execute("IN3_MainConfigPanel() ")
+//		endif	
+//	endif
+//end
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -285,8 +276,8 @@ Function IN3_KillPrefsButtonProc(ba) : ButtonControl
 				DefaultFontType = defFnt
 				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
 				DefaultFontSize = defFntSize
-				IN3_ChangePanelControlsStyle()
-				IN3_SaveIrenaGUIPackagePrefs(0)
+				IN2G_ChangePanelControlsStyle()
+				IN2G_SaveIrenaGUIPackagePrefs(0)
 				PopupMenu DefaultFontType,win=IR2C_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
 				PopupMenu DefaultFontSize,win=IR2C_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
 			endif
@@ -296,41 +287,41 @@ Function IN3_KillPrefsButtonProc(ba) : ButtonControl
 End
 //***********************************************************
 //***********************************************************
-//***********************************************************
-Function IN3_SaveIrenaGUIPackagePrefs(KillThem)
-	variable KillThem
-	
-	struct  IrenaPanelDefaults Defs
-	IN3_InitConfigMain()
-	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
-	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
-	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
-	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-
-	Defs.Version			=		2
-	Defs.PanelFontType	 	= 		DefaultFontType
-	Defs.defaultFontSize 	= 		DefaultFontSize 
-	Defs.LegendSize 		= 		LegendSize
-	Defs.TagSize 			= 		TagSize
-	Defs.AxisLabelSize 		= 		AxisLabelSize
-	Defs.LegendUseFolderName = 	LegendUseFolderName
-	Defs.LegendUseWaveName = 	LegendUseWaveName
-	Defs.LegendFontType	= 		FontType
-	Defs.LastUpdateCheck	=		LastUpdateCheck
-	
-	if(KillThem)
-		SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
-	//	IR2C_ReadIrenaGUIPackagePrefs()
-	else
-		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-	endif
-end
-//***********************************************************
+////***********************************************************
+//Function IN3_SaveIrenaGUIPackagePrefs(KillThem)
+//	variable KillThem
+//	
+//	struct  IrenaPanelDefaults Defs
+//	IN2G_InitConfigMain()
+//	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+//	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+//	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+//	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+//	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+//	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+//	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+//
+//	Defs.Version			=		2
+//	Defs.PanelFontType	 	= 		DefaultFontType
+//	Defs.defaultFontSize 	= 		DefaultFontSize 
+//	Defs.LegendSize 		= 		LegendSize
+//	Defs.TagSize 			= 		TagSize
+//	Defs.AxisLabelSize 		= 		AxisLabelSize
+//	Defs.LegendUseFolderName = 	LegendUseFolderName
+//	Defs.LegendUseWaveName = 	LegendUseWaveName
+//	Defs.LegendFontType	= 		FontType
+//	Defs.LastUpdateCheck	=		LastUpdateCheck
+//	
+//	if(KillThem)
+//		SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
+//	//	IR2C_ReadIrenaGUIPackagePrefs()
+//	else
+//		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
+//	endif
+//end
+////***********************************************************
 //***********************************************************
 
 Function IN3_ChangePanelControlsStyle()

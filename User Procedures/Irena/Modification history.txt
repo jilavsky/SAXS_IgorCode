@@ -3,6 +3,10 @@ Code modification history
 
 -latest stuff first
 ********************************************
+2.61 whenever
+ASCII import - added ability to slit smear the data on import. Redistributed controls on the Import panel. 
+
+
 2.60 3/5/3016 
 Added Panel scaling to most large panels
 Modified GUI package preferences handling. It was reseting the GUI choices, wrong logic. 

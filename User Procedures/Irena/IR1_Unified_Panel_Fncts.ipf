@@ -1502,11 +1502,11 @@ Proc  IR1_LogLogPlotU()
 	ModifyGraph log=1
 	ModifyGraph mirror=1
 	ShowInfo
-	String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr
-	string LegendStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
+	string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	Legend/W=IR1_LogLogPlotU/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
 	//
 	ErrorBars/Y=1 OriginalIntensity Y,wave=(OriginalError,OriginalError)
@@ -2056,7 +2056,7 @@ Function IR1A_AppendModelToMeasuredData()
 	Label/W=IR1_LogLogPlotU bottom "Q [A\\S-1\\M]"
 	ErrorBars/Y=1/W=IR1_LogLogPlotU OriginalIntensity Y,wave=(root:Packages:Irena_UnifFit:OriginalError,root:Packages:Irena_UnifFit:OriginalError)
 	Legend/W=IR1_LogLogPlotU/N=text0/K
-	Legend/W=IR1_LogLogPlotU/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+Folder+WvName+"\r"+"\\s(OriginalIntensity) Experimental intensity"
+	Legend/W=IR1_LogLogPlotU/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+Folder+WvName+"\r"+"\\s(OriginalIntensity) Experimental intensity"
 	AppendText/W=IR1_LogLogPlotU "\\s(UnifiedFitIntensity) Unified calculated Intensity"
 	if (WaveExists(NormalizedError))
 		AppendText/W=IR1_LogLogPlotU "\\s(NormalizedError) Standardized residual"
@@ -2077,7 +2077,7 @@ Function IR1A_AppendModelToMeasuredData()
 	Label/W=IR1_IQ4_Q_PlotU bottom "Q [A\\S-1\\M]"
 	ErrorBars/Y=1/W=IR1_IQ4_Q_PlotU OriginalIntQ4 Y,wave=(root:Packages:Irena_UnifFit:OriginalErrQ4,root:Packages:Irena_UnifFit:OriginalErrQ4)
 	Legend/W=IR1_IQ4_Q_PlotU/N=text0/K
-	Legend/W=IR1_IQ4_Q_PlotU/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+Folder+WvName+"\r"+"\\s(OriginalIntQ4) Experimental intensity * Q^4"
+	Legend/W=IR1_IQ4_Q_PlotU/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+Folder+WvName+"\r"+"\\s(OriginalIntQ4) Experimental intensity * Q^4"
 	AppendText/W=IR1_IQ4_Q_PlotU "\\s(UnifiedIQ4) Unified Calculated intensity * Q^4"
 	ModifyGraph/W=IR1_IQ4_Q_PlotU rgb(OriginalIntq4)=(0,0,0)
 	setDataFolder oldDF
@@ -2188,7 +2188,7 @@ Function IR1A_InsertOneLevelResInGrph(Lnmb)
 	variable QtoAttach=2/Rg
 	variable AttachPointNum=binarysearch(OriginalQvector,QtoAttach)
 	
-	LogLogTag="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"Unified Fit for level "+num2str(Lnmb)+"\r"
+	LogLogTag="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"Unified Fit for level "+num2str(Lnmb)+"\r"
 	if (GError>0)
 		LogLogTag+="G = "+num2str(G)+"  \t"+num2str(GError)+"\r"
 	else

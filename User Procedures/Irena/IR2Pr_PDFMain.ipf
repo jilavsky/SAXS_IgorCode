@@ -340,7 +340,7 @@ static Function IR2Pr_EstimateDmax()
 		SetAxis/W=IR2Pr_PDFInputGraph left, V_min, V_max
 		ModifyGraph /W=IR2Pr_PDFInputGraph lstyle(GuessFitScattProfile)=8,lsize(GuessFitScattProfile)=3
 		ModifyGraph /W=IR2Pr_PDFInputGraph rgb(GuessFitScattProfile)=(1,3,39321)
-		Tag/C/N=GuessRg/L=0/TL=0 GuessFitScattProfile, numpnts(GuessFitScattProfile)/10,"\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Estimated Rg = "+num2str(W_Coef[1])
+		Tag/C/N=GuessRg/L=0/TL=0 GuessFitScattProfile, numpnts(GuessFitScattProfile)/10,"\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Estimated Rg = "+num2str(W_Coef[1])
 	endif
 	NVAR dmax=root:Packages:Irena_PDDF:MaximumR
 	dmax=2.5*abs(W_coef[1])
@@ -684,7 +684,7 @@ Proc  IR2Pr_PdfInputGraph()
 		Textbox/N=text0/S=3/A=RT "The sample evaluated is:  "+StringByKey("UserSampleName", note(IntensityOriginal), "=")
 	else
 		if(testQRS==1)
-			Textbox/N=text0/S=3/A=RT "\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+root:Packages:Irena_PDDF:IntensityWaveName
+			Textbox/N=text0/S=3/A=RT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+root:Packages:Irena_PDDF:IntensityWaveName
 		else
 			Textbox/K/N=text0
 		endif	
@@ -1129,7 +1129,7 @@ static Function IR2Pr_FitMooreAutocorrelation()
 	MooreParametersS[Moore_NumOfFncts+4]=sqrt((IR2Pr_MooreRg(tempwv,0))^2+(MooreParametersS[Moore_NumOfFncts+3]*MooreParametersV[Moore_NumOfFncts+4]/MooreParametersV[Moore_NumOfFncts+3])^2)
 	MooreParametersS[Moore_NumOfFncts+4]=MooreParametersS[Moore_NumOfFncts+4]/(2*MooreParametersV[Moore_NumOfFncts+4])
 	maximumR=MooreParametersV[Moore_NumOfFncts+2]
-	string FitNote="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Fit using Moore's indirect Fourier transform"
+	string FitNote="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fit using Moore's indirect Fourier transform"
 	Fitnote+="\rMaximum extent "+num2str(maximumR)+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" Å"
 	Fitnote+="\r"+num2str(Moore_NumOfFncts)+" basis functions used"
 	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
@@ -1848,10 +1848,10 @@ end
 	SetVariable NumFittedPoints size={180,15}, pos={400,25}, title="Number of fitted points", win=IR2Pr_PDFInputGraph
 	SetVariable NumFittedPoints limits={-Inf,Inf,0},value= root:Packages:Irena_PDDF:FittedNumberOfpoints, win=IR2Pr_PDFInputGraph
 
-	variable legendSize=str2num(IR2C_LkUpDfltVar("LegendSize"))
+	variable legendSize=str2num(IN2G_LkUpDfltVar("LegendSize"))
 	IN2G_GenerateLegendForGraph(legendSize,0,1)
 	Legend/J/C/N=Legend1/J/A=LB/X=-8/Y=-8/W=IR2Pr_PDFInputGraph
-	string LegendText2="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"\K(0,0,65280)Method used: "+MethodRun+"\r"
+	string LegendText2="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"\K(0,0,65280)Method used: "+MethodRun+"\r"
 	if(numtype(NumberIterations)!=0)
 		LegendText2+="No success, change parameters and run again"
 	elseif(NumberIterations==0)

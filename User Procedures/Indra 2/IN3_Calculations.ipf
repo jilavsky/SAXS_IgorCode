@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
+#pragma version=1.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 minor fixes for panel scaling
 //1.18 Remove Dropout function
 //1.17 minor change in MOdified Gauss fit function which fixes sometime observed misfits. Coef wave MUST be double precision. 
 //1.16 minor GUI chaneg to keep users advised abotu saving data
@@ -235,10 +236,10 @@ static Function IN3_FixSaveData()
 		NVAR UserSavedData=root:Packages:Indra3:UserSavedData
 		if(!UserSavedData)
 			Button SaveResults fColor=(65280,0,0), win=USAXSDataReduction
-			TitleBox SavedData pos={200,135}, title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0), win=USAXSDataReduction
+			TitleBox SavedData  title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0), win=USAXSDataReduction
 		else
 			Button SaveResults , win=USAXSDataReduction, fColor=(47872,47872,47872)
-			TitleBox SavedData pos={200,135}, title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2, win=USAXSDataReduction
+			TitleBox SavedData  title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2, win=USAXSDataReduction
 		endif
 end
 //***********************************************************************************************************************************

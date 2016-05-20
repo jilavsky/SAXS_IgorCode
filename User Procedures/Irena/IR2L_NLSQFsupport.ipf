@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.37
+#pragma version=1.38
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,8 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.38 added lookup of SlitLength from data when checkbox is selected. Looks inside wave note of Intensity to see, if there is Slitlength there. Even wehn using qrs or other naming ssytem. 
+//			note: this is done when checkbox is selected, not when data are imported (unless USAXS data). 
 //1.37 fixed bug in IR2L_CreateResidulas which failed when was called with wrong working folder. 
 //1.36 minor (R_min setVariable) GUI fix. 
 //1.35 catch Log-Normal min size when it is too small. 
@@ -2648,7 +2650,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
 						LocationPnt = BinarySearch(Qvec, 1.7/ModeVal )
-						TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Size distribution "+num2str(i)+"P\r"
+						TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Size distribution "+num2str(i)+"P\r"
 						TagText+="Distribution : "+PopSizeDistShape+"  \r"
 						TagText+="Mean / Mode / Median / FWHM  \r"
 						TagText+=num2str(MeanVal)+" / "+num2str(ModeVal)+" / "+num2str(MedianVal)+" / "+num2str(FWHMVal)+"  \r"
@@ -2732,7 +2734,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR SFParam6= $("root:Packages:IR2L_NLSQF:StructureParam6_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
 						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
-							TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Unified level "+num2str(i)+"P\r"
+							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Unified level "+num2str(i)+"P\r"
 							TagText+="G = "+num2str(G)+"  \r"
 							TagText+="Rg = "+num2str(Rg)+"  [A]\r"
 							TagText+="B = "+num2str(B)+"\r"
@@ -2770,7 +2772,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR SurfFrQc=$("root:Packages:IR2L_NLSQF:SurfFrQc_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
 						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
-							TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Surface Fractal "+num2str(i)+"P\r"
+							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Surface Fractal "+num2str(i)+"P\r"
 							TagText+="Smooth Surface = "+num2str(SurfFrSurf)+"  \r"
 							TagText+="Corr. Length = "+num2str(SurfFrKsi)+"  [A]\r"
 							TagText+="Fractal Dim.  = "+num2str(SurfFrDS)+"\r"
@@ -2792,7 +2794,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR MassFrIntgNumPnts=$("root:Packages:IR2L_NLSQF:MassFrDv_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
 						LocationPnt = BinarySearch(Qvec, 1.8/Rg )
-							TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Mass Fractal "+num2str(i)+"P\r"
+							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Mass Fractal "+num2str(i)+"P\r"
 							TagText+="Particle volume = "+num2str(MassFrPhi)+"  \r"
 							TagText+="Particle radius = "+num2str(MassFrRadius)+"  [A]\r"
 							TagText+="Corr. Length = "+num2str(MassFrKsi)+"  [A]\r"
@@ -2814,7 +2816,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR DiffPeakPar5=$("root:Packages:IR2L_NLSQF:DiffPeakPar5_pop"+num2str(i))
 						TagName  = "ModelingIITag"+num2str(i)+"set"+num2str(k)
 						LocationPnt = BinarySearch(Qvec, DiffPeakPar2 )
-							TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Diffraction Peak "+num2str(i)+"P\r"
+							TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Diffraction Peak "+num2str(i)+"P\r"
 							TagText+="Shape  :   "+PeakProfile+"\r"
 							TagText+="Position (d) = "+num2str(DiffPeakDPos)+"  [A]\r"
 							TagText+="Position (Q) = "+num2str(DiffPeakQPos)+"  [A^-1]\r"
@@ -4565,23 +4567,11 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	endif
 
 	if(cmpstr(ctrlName,"RemovePointWcsrA")==0)
-		//here we load the data and create default values
 		ControlInfo/W=LSQF2_MainPanel DataTabs
-		//IR2L_LoadDataIntoSet(V_Value+1,0)
-		//NVAR UseTheData_set=$("UseTheData_set"+num2str(V_Value+1))
-		//UseTheData_set=1
 		IR2L_Data_TabPanelControl("",V_Value)
 		if(IR2L_RemovePntCsrA(V_Value))
 			IR2L_RecalculateIfSelected()
 		endif
-		//IR2L_AppendDataIntoGraph(V_Value+1)
-		//IR2L_AppendOrRemoveLocalPopInts()
-		//IR2L_FormatInputGraph()
-		//IR2L_FormatLegend()
-		//DoWIndow LSQF_MainGraph
-		//if(V_Flag)
-			//AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
-		//endif
 	endif
 
 	if(cmpstr(ctrlName,"AddDataSet")==0)
@@ -4599,7 +4589,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		if(V_Flag)
 			AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
 		endif
-		//next needs to be done to set teh controls correctly... 
+		//next needs to be done to set the controls correctly... 
 		NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
 		NVAR DisplayModelControls=root:Packages:IR2L_NLSQF:DisplayModelControls
 		DisplayModelControls = 0
@@ -5222,7 +5212,19 @@ Function IR2L_SmearingCheckProc(cba) : CheckBoxControl
 		case 2: // mouse up
 			Variable checked = cba.checked
 			if(StringMatch(cba.ctrlName, "SlitSmeared_set*" ))
-			SetVariable SlitLength, disable = !checked
+				SetVariable SlitLength, disable = !checked
+				if(checked)
+					//lets try to read the slit length from the wave note, if it is there...
+					Wave/Z IntWv=$("root:Packages:IR2L_NLSQF:Intensity_set"+num2str(CurDataTab))
+					if(WaveExists(IntWv))
+						NVAR SlitLength= $("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(CurDataTab))
+						string wnNote=note(IntWv)
+						variable NoteSL=NumberByKey("SlitLength", wnNote, "=", ";")
+						if(NoteSL>0)
+							SlitLength = NoteSL
+						endif
+					endif
+				endif
 			endif
 			if(PixelSmearing || checked)
 					UseSmearing_set = 1

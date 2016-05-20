@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.42
+#pragma version=2.43
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.43 fixes for Pilatus Tiff file header 
 //2.42 Added more or less universal FITS fiel loader (checked against data in Extension1 and 2), removed printing of wave note in history area. 
 //2.41 Updated Pilatus img file to handle header (example contained 4096 bytes header) - added code which will find header length and skip it. 
 //2.40 update to 9ID pinSAXS Nexus files
@@ -87,7 +88,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 
 	if(cmpstr(FileType,".tif")==0 || cmpstr(FileType,"tiff")==0)
 		FileNameToLoad= FileName
-		if(cmpstr(FileName[strlen(FileName)-4,inf],".tif")!=0)
+		if(cmpstr(FileName[strlen(FileName)-4,inf],".tif")!=0&&cmpstr(FileName[strlen(FileName)-5,inf],".tiff")!=0)
 			FileNameToLoad= FileName+ ".tif"
 		endif
 		ImageLoad/P=$(PathName)/T=tiff/O/N=$(NewWaveName) FileNameToLoad
@@ -725,13 +726,22 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = NI1_ZapControlCodes(testLine)	
 			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 			testLine = "Start of img header>>>;"+testLine+"<<<<End of img header;"
+		elseif(stringmatch(FileNameToLoad, "*.tiff" )&&(PilskipBytes>0))
+			testLine = ReplaceString("\n", testLine, "")
+			testLine = ReplaceString("#", testLine, ";")
+			testLine = ReplaceString(":", testLine, "=")
+			testLine = NI1_RemoveNonASCII(testLine)
+			testLine = NI1_ZapControlCodes(testLine)	
+			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
+			testLine = ReplaceString(" = ", testLine, "=")
+			testLine = ReplaceString(" ;", testLine, ";")
 		else
 			testLine = ReplaceString("\n", testLine, "")
 			testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
 			testLine = ReplaceString("}", testLine, "<<<<End of ESRF header;")
-			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 			testLine = ReplaceString(" = ", testLine, "=")
 			testLine = ReplaceString(" ;", testLine, ";")
+			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 		endif
 		//read the Pilatus file itself
 		variable PilatusColorDepthVar=str2num(PilatusColorDepth)
@@ -1574,7 +1584,7 @@ Function NI1_Pilatus_ButtonProc(ba) : ButtonControl
 			NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
 			PixelSizeX = 0.172
 			PixelSizeY=0.172
-			NVAR SelectedUncertainity = root:Packages:NikaConfigFolder:SelectedUncertainity
+			NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
 			NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 			NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
 			NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
@@ -3316,13 +3326,14 @@ static Function NI2NX_NexusReader(FilePathName,Filename)
 		    KillDataFolder/Z $(FileName[0,30])
 		    NewDataFolder/O/S $(FileName[0,30])
 		    string LoadedWvStr=getDataFolder(1)
-		    string GroupsAvailable
-			HDF5ListGroup /F  /Type=1 fileID, "/"
-			GroupsAvailable= S_HDF5ListGroup
-			variable i
-			For(i=0;i<ItemsInList(GroupsAvailable,";");i+=1)
-				HDF5LoadGroup /CONT=1 /L=7 /O /R /T : , fileID, StringFromList(i,GroupsAvailable,";")
-			endfor
+		    HDF5LoadGroup /O /R /T /IMAG=1 :, fileID, "/"			
+//			    string GroupsAvailable
+//				HDF5ListGroup /F  /Type=1 fileID, "/"
+//				GroupsAvailable= S_HDF5ListGroup
+//				variable i
+//				For(i=0;i<ItemsInList(GroupsAvailable,";");i+=1)
+//					HDF5LoadGroup /CONT=1 /L=7 /O /R /T : , fileID, StringFromList(i,GroupsAvailable,";")
+//				endfor
 			HDF5CloseFile fileID
 			string CurrFolder=getDataFolder(1)
 			string LoadedDataWvNm = NI2NX_CleanUpHDF5Structure(CurrFolder)
@@ -3842,13 +3853,27 @@ Function/T NI1_ZapControlCodes(str)			// remove parts of string with ASCII code 
 	String str
 	Variable i = 0
 	do
-		if (char2num(str[i,i])<32)
+		if (char2num(str[i,i])<32 || char2num(str[i,i])>127)
 			str[i,i+1] = str[i+1,i+1]
 		endif
 		i += 1
 	while(i<strlen(str))
 	return str
 End
+Function/S NI1_RemoveNonASCII(strIn)
+	string StrIn
+	string StrOut=""
+	variable i
+	for(i=0;i<strlen(StrIn);i+=1)
+		//print StrIn[i]+"  =  "+num2str(char2num(StrIn[i]))
+		if(char2num(StrIn[i])<=127)
+			StrOut[i]=StrIn[i]
+		else
+			StrOut[i]=" "		
+		endif
+	endfor
+	return StrOut
+end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************

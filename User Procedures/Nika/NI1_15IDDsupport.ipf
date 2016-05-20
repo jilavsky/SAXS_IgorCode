@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.30
+#pragma version=1.31
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.31 fix colorization of the LineuotDisplayPlot_Q graph. 
 //1.30 added more calibratnt lines (10 for SAXS/WAXS)
 //1.29 WAXS transmission correction and add Mask for Pilatus 200kw
 //1.28 Minor fix to configuration
@@ -2165,6 +2166,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 
 	DoWIndow LineuotDisplayPlot_Q
 	if(V_Flag)
+		DoWindow/F LineuotDisplayPlot_Q
 		AppendToGraph /W=LineuotDisplayPlot_Q NewR vs NewQ
 	endif	
 	//now delete the data which user did not want...
@@ -2178,6 +2180,11 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		if(V_Flag)
 			removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(PinProfr)
 		endif
+		DoWIndow LineuotDisplayPlot_Q
+		if(V_Flag)
+			DoWindow/F LineuotDisplayPlot_Q
+			IN2G_ColorTopGrphRainbow()
+		endif	
 		//removed, now delete folders...
 		KillDataFolder/Z $PinFolder
 		KillDataFolder/Z $LIneProfFolder

@@ -1627,15 +1627,15 @@ Proc  IR1V_LogLogPlotV()
 	ModifyGraph log=1
 	ModifyGraph mirror=1
 	ShowInfo
-	String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr
 //	Label left "Intensity [cm\\S-1\\M]"
 //	Label bottom "Q [A\\S-1\\M]"
 	TextBox/W=IR1V_LogLogPlotV/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR1V_LogLogPlotV/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
-	string LegendStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
+	string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	Legend/W=IR1V_LogLogPlotV/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
 	SetDataFolder fldrSav
 	ErrorBars/Y=1 OriginalIntensity Y,wave=(root:Packages:FractalsModel:OriginalError,root:Packages:FractalsModel:OriginalError)
@@ -1651,9 +1651,9 @@ Proc  IR1V_IQ4_Q_PlotV()
 	ModifyGraph msize(OriginalIntQ4)=1
 	ModifyGraph log=1
 	ModifyGraph mirror=1
-	String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity * Q\\S4\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"[cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+" A\\S-4\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q\\S4\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+" A\\S-4\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr
 
 //	Label left "Intensity * Q^4"

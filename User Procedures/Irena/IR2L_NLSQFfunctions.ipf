@@ -81,6 +81,10 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 			UseSmearing_set = 1
 			WvNote=note(inputI)
 			SlitLength_set=NumberByKey("SlitLength", WvNote , "=" , ";")
+			DoWindow IR2L_ResSmearingPanel
+			if(V_Flag)
+				SetVariable SlitLength, win=IR2L_ResSmearingPanel, disable=0
+			endif
 		else
 			SlitSmeared_set=0
 			SlitLength_set=0

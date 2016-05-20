@@ -150,7 +150,7 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 
 	variable/g CurrentRg=IR2Pr_regRg(CurrentResultPdf,R_distribution)
 	variable/g CurrentRgError=NaN
-	string FitNote="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("TagSize")+"Fit using Regularization "
+	string FitNote="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fit using Regularization "
 	Fitnote+="\rMaximum extent "+num2str(maximumR)+"  A"//+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" Å"
 //	Fitnote+="\r"+num2str(Moore_NumOfFncts)+" basis functions used"
 //	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+3])

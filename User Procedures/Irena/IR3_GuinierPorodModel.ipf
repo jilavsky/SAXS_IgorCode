@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.05  	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.06  	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716Ð719, Boualem Hammouda, A new GuinierÐPorod model
 Constant IR3GPversionNumber=1.05
 
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1.05
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.06 GUI controls move change
 //1.05 changes for panel scaling. 
 //1.04 Igor 7 changes
 //1.03 removed Executes as preparation for Igor 7
@@ -487,7 +488,7 @@ Function IR3GP_Main()
 	IR1_CreateLoggbook()
 	//IR2L_SetInitialValues(1)
 	//we need the following also inited
-	IR2C_InitConfigMain()
+	IN2G_InitConfigMain()
 	//check for panel if exists - pull up, if not create
 	DoWindow IR3DP_MainPanel
 	if(V_Flag)
@@ -1337,11 +1338,11 @@ Function  IR3GP_LogLogPlotU()
 		ModifyGraph log=1
 		ModifyGraph mirror=1
 		ShowInfo
-		String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+		String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		Label left LabelStr
-		LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		Label bottom LabelStr
-		string LegendStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
+		string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 		Legend/W=GunierPorod_LogLogPlot/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
 		//
 		ErrorBars/Y=1 OriginalIntensity Y,wave=(OriginalError,OriginalError)
@@ -1895,7 +1896,7 @@ Function IR3GP_InsertOneLevelTagInGrph(Lnmb)
 	variable QtoAttach=2/Par.Rg1
 	variable AttachPointNum=binarysearch(OriginalQvector,QtoAttach)
 	
-	LogLogTag="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"Gunier-Porod Fit for level "+num2str(Lnmb)+"\r"
+	LogLogTag="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"Gunier-Porod Fit for level "+num2str(Lnmb)+"\r"
 	if (Par.GError>0)
 		LogLogTag+="G \t= "+num2str(Par.G)+"  \t +/-"+num2str(Par.GError)+"\r"
 	else

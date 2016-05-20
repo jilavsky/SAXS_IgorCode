@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.23
 Constant NI1BCversionNumber = 2.22
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.22
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+//2.23 GUI fix on new calibrants lines 
 //2.22 added more lines to the calibrants
 //2.21 added panel scaling
 //2.20 fixed line 5 of Ag Behenate
@@ -1373,15 +1374,15 @@ Function NI1BC_BmCntrCheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable BMCalibrantD4LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD4==0)
 		SetVariable BMCalibrantD5,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
 		SetVariable BMCalibrantD5LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
-		SetVariable BMCalibrantD6,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD6,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD6==0)
 		SetVariable BMCalibrantD6LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD6==0)
-		SetVariable BMCalibrantD7,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD7,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD7==0)
 		SetVariable BMCalibrantD7LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD7==0)
-		SetVariable BMCalibrantD8,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD8,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD8==0)
 		SetVariable BMCalibrantD8LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD8==0)
-		SetVariable BMCalibrantD9,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD9,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD9==0)
 		SetVariable BMCalibrantD9LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD9==0)
-		SetVariable BMCalibrantD10,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD5==0)
+		SetVariable BMCalibrantD10,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD10==0)
 		SetVariable BMCalibrantD10LineWidth,win=NI1_CreateBmCntrFieldPanel, disable=( BMUseCalibrantD10==0)
 		NI1BC_DisplayCalibrantCircles()
 	endif

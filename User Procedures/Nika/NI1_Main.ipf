@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.74	
  //		added scaling of images on large displays
  //1.73 added functions to scale panels to larger sizes.
  //1.72 changed check for update procedure to check http first, then ftp, and the fail. 
@@ -370,16 +371,17 @@ end
 //***********************************************************
 
 Function NI1_ConfigMain()		//call configuration routine
-
+	IN2G_ConfigMain()	
+	
 	//this is main configuration utility... 
-	NI1_InitConfigMain()
-	NI1_ReadNikaGUIPackagePrefs()	
-	DoWindow NI1_MainConfigPanel
-	if(!V_Flag)
-		Execute ("NI1_MainConfigPanel()")
-	else
-		DoWindow/F NI1_MainConfigPanel
-	endif
+//	IN2G_InitConfigMain()
+//	IN2G_ReadIrenaGUIPackagePrefs()	
+//	DoWindow NI1_MainConfigPanel
+//	if(!V_Flag)
+//		Execute ("NI1_MainConfigPanel()")
+//	else
+//		DoWindow/F NI1_MainConfigPanel
+//	endif
 
 end
 
@@ -387,278 +389,353 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-//***********************************************************
-structure NikaPanelDefaults
-	uint32 version					// Preferences structure version number. 100 means 1.00.
-//	uchar LegendFontType[50]		//50 characters for legend font name
-	uchar PanelFontType[50]		//50 characters for panel font name
-	uint32 defaultFontSize			//font size as integer
-	uint32 Uncertainity				//Uncertainity choice - 0 is Old, 1 is Std dev, and 2 is SEM
-//	uint32 TagSize					//font size as integer
-//	uint32 AxisLabelSize			//font size as integer
-//	int16 LegendUseFolderName		//font size as integer
-//	int16 LegendUseWaveName		//font size as integer
-	variable LastUpdateCheck
-	uint32 reserved[99]			// Reserved for future use
-	
-endstructure
-
-//***********************************************************
-//***********************************************************
+////***********************************************************
+//structure NikaPanelDefaults
+//	uint32 version					// Preferences structure version number. 100 means 1.00.
+////	uchar LegendFontType[50]		//50 characters for legend font name
+//	uchar PanelFontType[50]		//50 characters for panel font name
+//	uint32 defaultFontSize			//font size as integer
+//	uint32 Uncertainity				//Uncertainity choice - 0 is Old, 1 is Std dev, and 2 is SEM
+////	uint32 TagSize					//font size as integer
+////	uint32 AxisLabelSize			//font size as integer
+////	int16 LegendUseFolderName		//font size as integer
+////	int16 LegendUseWaveName		//font size as integer
+//	variable LastUpdateCheck
+//	uint32 reserved[99]			// Reserved for future use
+//	
+//endstructure
+//
+////***********************************************************
+////***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
 
 Function NI1_ReadNikaGUIPackagePrefs()
-	struct  NikaPanelDefaults Defs
-	NI1_InitConfigMain()
-	SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
-	NVAR SelectedUncertainity=root:Packages:NikaConfigFolder:SelectedUncertainity
-	NVAR LastUpdateCheck=root:Packages:NikaConfigFolder:LastUpdateCheck
-//	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-//	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-//	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-//	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
-//	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
-//	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-	LoadPackagePreferences /MIS=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
-	variable DoWarning=0, pOld, pStdDev, pSEM
-	if(V_Flag==0)		
-		//print Defs
-		print "Read Nika Panels preferences from local machine and applied them. "
-		print "Note that this may have changed font size and type selection originally saved with the existing experiment."
-		print "IMPORTANT : this may have changed uncertainty calculation mehtod originally saved with the existing experiment."
-		print "To change them please use \"Configure default fonts and names\""
-		if(Defs.Version==1)		//Lets declare the one we know as 1
-			DefaultFontType		=	Defs.PanelFontType
-			DefaultFontSize 		= 	Defs.defaultFontSize
-			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
-			else
-				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
-			endif
-			//and now recover the stored other parameters, no action on these...
-		elseif(Defs.Version==2)		//Lets declare the one we know as 1
-			DefaultFontType		=	Defs.PanelFontType
-			DefaultFontSize 		= 	Defs.defaultFontSize
-			SelectedUncertainity	= 	Defs.Uncertainity
-			LastUpdateCheck 		=	Defs.LastUpdateCheck 
-			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
-			else
-				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
-			endif
-			//and now recover the stored other parameters, no action on these...
-
-			NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
-			NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
-			NVAR/z ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
-			if(!NVAR_Exists(ErrorCalculationsUseOld))
-				string OldDf=GetDataFolder(1)
-				setDataFolder root:
-				NewDataFolder/S/O Packages
-				NewDataFolder/S/O Convert2Dto1D
-				variable/g ErrorCalculationsUseOld, ErrorCalculationsUseStdDev, ErrorCalculationsUseSEM
-				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
-				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
-				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
-			endif
-			DoWarning=0
-			pOld = ErrorCalculationsUseOld
-			pStdDev = ErrorCalculationsUseStdDev
-			pSEM = ErrorCalculationsUseSEM
-			if(SelectedUncertainity==0)
-				ErrorCalculationsUseOld=1
-				ErrorCalculationsUseStdDev=0
-				ErrorCalculationsUseSEM=0
-			elseif(SelectedUncertainity==1)
-				ErrorCalculationsUseOld=0
-				ErrorCalculationsUseStdDev=1
-				ErrorCalculationsUseSEM=0
-			elseif(SelectedUncertainity==2)
-				ErrorCalculationsUseOld=0
-				ErrorCalculationsUseStdDev=0
-				ErrorCalculationsUseSEM=1
-			endif
-			if(ErrorCalculationsUseOld)
-				print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
-			elseif(ErrorCalculationsUseStdDev)
-				print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
-			else
-				print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
-			endif
-//			if((pOld != ErrorCalculationsUseOld)||(pStdDev != ErrorCalculationsUseStdDev)||(pSEM != ErrorCalculationsUseSEM))
-//				DoAlert /T="Uncertainity method calculation has changed" 0, "Uncertainty calculation method has changed. Please, check the history area and if needed, change the method to the one you want to use."
-				NI1_SaveNikaGUIPackagePrefs(0)
+	IN2G_ReadIrenaGUIPackagePrefs(0)
+end
+//	//this reads old Nika preferences are recovers themmm
+//	struct  NikaPanelDefaults Defs
+//	struct  IrenaPanelDefaults DefsIrena
+//	IN2G_InitConfigMain()
+//	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//	NVAR SelectedUncertainity=root:Packages:IrenaConfigFolder:SelectedUncertainity
+//	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
+////	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+////	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+////	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+////	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
+////	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
+////	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+//	variable DoWarning=0, pOld, pStdDev, pSEM
+//	variable WhatToUse=0		//1 for new Irena, 2 for old Nika, 0 nothing found
+//	string OldDf
+//	//and new ones from version 1.74 use irena preferecnes
+//	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , DefsIrena
+//	if(V_Flag==0)
+//		if(Defs.Version<3)		//old Irena preferences, need to use old Nika preferences
+//			LoadPackagePreferences /MIS=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
+//			if(V_flag==0)
+//				WhatToUse=2
 //			endif
-		else
-			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
-			if(V_Flag==1)
-				Execute("NI1_MainConfigPanel() ")
-			else
-			//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
-			endif
-		endif
-	else 		//problem loading package defaults
-		DoAlert 1, "GUI and Graph defaults (font size and type preferences) are not set. Do you want to set them now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
-		if(V_Flag==1)
-			Execute("NI1_MainConfigPanel() ")
-		endif	
-	endif
-end
+//		else
+//			WhatToUse = 1
+//		endif
+//	else
+//		WhatToUse=0
+//	endif
+//	if(WhatToUse==2)			//Nika preferences... 
+//		//print Defs
+//		print "Read Nika Panels preferences from local machine and applied them. "
+//		print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+//		print "IMPORTANT : this may have changed uncertainty calculation mehtod originally saved with the existing experiment."
+//		print "To change them please use \"Configure default fonts and names\""
+//		if(Defs.Version==1)		//Lets declare the one we know as 1
+//			DefaultFontType		=	Defs.PanelFontType
+//			DefaultFontSize 		= 	Defs.defaultFontSize
+//			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+//			else
+//				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+//			endif
+//			//and now recover the stored other parameters, no action on these...
+//		elseif(Defs.Version==2)		//Lets declare the one we know as 1
+//			DefaultFontType		=	Defs.PanelFontType
+//			DefaultFontSize 		= 	Defs.defaultFontSize
+//			SelectedUncertainity	= 	Defs.Uncertainity
+//			LastUpdateCheck 		=	Defs.LastUpdateCheck 
+//			if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//				DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+//			else
+//				DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+//			endif
+//			//and now recover the stored other parameters, no action on these...
+//
+//			NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+//			NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+//			NVAR/z ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+//			if(!NVAR_Exists(ErrorCalculationsUseOld))
+//				OldDf=GetDataFolder(1)
+//				setDataFolder root:
+//				NewDataFolder/S/O Packages
+//				NewDataFolder/S/O Convert2Dto1D
+//				variable/g ErrorCalculationsUseOld, ErrorCalculationsUseStdDev, ErrorCalculationsUseSEM
+//				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+//				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+//				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+//			endif
+//			DoWarning=0
+//			pOld = ErrorCalculationsUseOld
+//			pStdDev = ErrorCalculationsUseStdDev
+//			pSEM = ErrorCalculationsUseSEM
+//			if(SelectedUncertainity==0)
+//				ErrorCalculationsUseOld=1
+//				ErrorCalculationsUseStdDev=0
+//				ErrorCalculationsUseSEM=0
+//			elseif(SelectedUncertainity==1)
+//				ErrorCalculationsUseOld=0
+//				ErrorCalculationsUseStdDev=1
+//				ErrorCalculationsUseSEM=0
+//			elseif(SelectedUncertainity==2)
+//				ErrorCalculationsUseOld=0
+//				ErrorCalculationsUseStdDev=0
+//				ErrorCalculationsUseSEM=1
+//			endif
+//			if(ErrorCalculationsUseOld)
+//				print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+//			elseif(ErrorCalculationsUseStdDev)
+//				print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+//			else
+//				print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+//			endif
+//			NI1_SaveNikaGUIPackagePrefs(0)
+//		elseif(WhatToUse==1)		//New irena preferences...
+//			//print Defs
+//			if(Defs.Version==3)		//Lets declare the one we know as 3
+//				print "Read Irena/Nika Panels preferences from local machine and applied them. "
+//				print "Note that this may have changed font size and type selection originally saved with the existing experiment."
+//				print "IMPORTANT : this may have changed uncertainty calculation mehtod originally saved with the existing experiment."
+//				print "To change them please use \"Configure default fonts and names\""
+//				DefaultFontType			=	DefsIrena.PanelFontType
+//				DefaultFontSize 		= 	DefsIrena.defaultFontSize
+//				SelectedUncertainity	= 	DefsIrena.Uncertainity
+//				LastUpdateCheck 		=	DefsIrena.LastUpdateCheckNika 
+//				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//					DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+//				else
+//					DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+//				endif
+//				//and now recover the stored other parameters, no action on these...
+//	
+//				NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+//				NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+//				NVAR/z ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+//				if(!NVAR_Exists(ErrorCalculationsUseOld))
+//					OldDf=GetDataFolder(1)
+//					setDataFolder root:
+//					NewDataFolder/S/O Packages
+//					NewDataFolder/S/O Convert2Dto1D
+//					variable/g ErrorCalculationsUseOld, ErrorCalculationsUseStdDev, ErrorCalculationsUseSEM
+//					NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+//					NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+//					NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+//				endif
+//				DoWarning=0
+//				pOld = ErrorCalculationsUseOld
+//				pStdDev = ErrorCalculationsUseStdDev
+//				pSEM = ErrorCalculationsUseSEM
+//				if(SelectedUncertainity==0)
+//					ErrorCalculationsUseOld=1
+//					ErrorCalculationsUseStdDev=0
+//					ErrorCalculationsUseSEM=0
+//				elseif(SelectedUncertainity==1)
+//					ErrorCalculationsUseOld=0
+//					ErrorCalculationsUseStdDev=1
+//					ErrorCalculationsUseSEM=0
+//				elseif(SelectedUncertainity==2)
+//					ErrorCalculationsUseOld=0
+//					ErrorCalculationsUseStdDev=0
+//					ErrorCalculationsUseSEM=1
+//				endif
+//				if(ErrorCalculationsUseOld)
+//					print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+//				elseif(ErrorCalculationsUseStdDev)
+//					print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+//				else
+//					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+//				endif
+//				NI1_SaveNikaGUIPackagePrefs(0)
+//			else
+//				Print "unknown GUI controls"
+//			endif
+//		else
+//			DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 
+//			if(V_Flag==1)
+//				Execute("NI1_MainConfigPanel() ")
+//			else
+//			//	SavePackagePreferences /Kill   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs	//does not work below 6.10
+//			endif
+//		endif
+//	else 		//problem loading package defaults
+//		DoAlert 1, "GUI and Graph defaults (font size and type preferences) are not set. Do you want to set them now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
+//		if(V_Flag==1)
+//			Execute("NI1_MainConfigPanel() ")
+//		endif	
+//	endif
+//end
+////***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
-//***********************************************************
-//***********************************************************
-Function NI1_SaveNikaGUIPackagePrefs(KillThem)
-	variable KillThem
-	
-	struct  NikaPanelDefaults Defs
-	NI1_InitConfigMain()
-	SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
-	NVAR SelectedUncertainity=root:Packages:NikaConfigFolder:SelectedUncertainity
-	NVAR LastUpdateCheck = root:Packages:NikaConfigFolder:LastUpdateCheck
+////***********************************************************
+//Function NI1_SaveNikaGUIPackagePrefs(KillThem)
+//	variable KillThem
+//	
+//	struct  IrenaPanelDefaults Defs
+//	IN2G_InitConfigMain()
+//	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//	NVAR SelectedUncertainity=root:Packages:IrenaConfigFolder:SelectedUncertainity
+//	NVAR LastUpdateCheck = root:Packages:IrenaConfigFolder:LastUpdateCheck
 //	NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
 //	NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
 //	NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
 //	NVAR LegendUseFolderName=root:Packages:IrenaConfigFolder:LegendUseFolderName
 //	NVAR LegendUseWaveName=root:Packages:IrenaConfigFolder:LegendUseWaveName
 //	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-
-	Defs.Version			=		2
-	Defs.PanelFontType	 	= 		DefaultFontType
-	Defs.defaultFontSize 	= 		DefaultFontSize 
-	Defs.Uncertainity		= 		SelectedUncertainity
-	Defs.LastUpdateCheck	= 		LastUpdateCheck
+//
+//	Defs.Version					=		3
+//	Defs.PanelFontType	 		= 		DefaultFontType
+//	Defs.defaultFontSize 		= 		DefaultFontSize 
+//	Defs.Uncertainity			= 		SelectedUncertainity
+//	Defs.LastUpdateCheckNika	= 		LastUpdateCheck
 //	Defs.AxisLabelSize 		= 		AxisLabelSize
-//	Defs.LegendUseFolderName = 	LegendUseFolderName
+//	Defs.LegendUseFolderName = 		LegendUseFolderName
 //	Defs.LegendUseWaveName = 		LegendUseWaveName
-//	Defs.LegendFontType	= 		FontType
-
-
-	
-	if(KillThem)
-		SavePackagePreferences /Kill   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs		//does nto work below 6.10
-		NI1_ReadNikaGUIPackagePrefs()
-	else
-		SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
-	endif
-end
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-
-Function NI1_InitConfigMain()
-
-	//initialize lookup parameters for user selected items.
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:
-	NewDataFolder/O/S root:Packages
-	NewDataFolder/O/S root:Packages:NikaConfigFolder
-	
-	string ListOfVariables
-	string ListOfStrings
-	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="DefaultFontSize;SelectedUncertainity;LastUpdateCheck;"
-	ListOfStrings="ListOfKnownFontTypes;DefaultFontType;"
-	variable i
-	//and here we create them
-	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
-	endfor		
-										
-	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-	endfor	
-		
-	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
-	ListOfKnownFontTypes=NI1_CreateUsefulFontList()
-	setDataFolder OldDf
-end
-
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-Function NI1_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-	
-//	if (cmpstr(ctrlName,"LegendSize")==0)
-//		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-//		LegendSize = str2num(popStr)
+//	Defs.LegendFontType	= 			FontType
+//		
+//
+//	
+//	if(KillThem)
+//		SavePackagePreferences /Kill   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs		//does nto work below 6.10
+//		IN2G_ReadIrenaGUIPackagePrefs()
+//	else
+//		SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
 //	endif
-//	if (cmpstr(ctrlName,"TagSize")==0)
-//		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-//		TagSize = str2num(popStr)
+//end
+////***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//
+//Function NI1_InitConfigMain()
+//
+//	//initialize lookup parameters for user selected items.
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder root:
+//	NewDataFolder/O/S root:Packages
+//	NewDataFolder/O/S root:Packages:IrenaConfigFolder
+//	
+//	string ListOfVariables
+//	string ListOfStrings
+//	//here define the lists of variables and strings needed, separate names by ;...
+//	ListOfVariables="DefaultFontSize;SelectedUncertainity;LastUpdateCheck;"
+//	ListOfStrings="ListOfKnownFontTypes;DefaultFontType;"
+//	variable i
+//	//and here we create them
+//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+//		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+//	endfor		
+//										
+//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+//		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+//	endfor	
+//		
+//	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
+//	ListOfKnownFontTypes=NI1_CreateUsefulFontList()
+//	setDataFolder OldDf
+//end
+//
+////***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//***********************************************************
+//Function NI1_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//	
+////	if (cmpstr(ctrlName,"LegendSize")==0)
+////		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
+////		LegendSize = str2num(popStr)
+////	endif
+////	if (cmpstr(ctrlName,"TagSize")==0)
+////		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
+////		TagSize = str2num(popStr)
+////	endif
+////	if (cmpstr(ctrlName,"AxisLabelSize")==0)
+////		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
+////		AxisLabelSize = str2num(popStr)
+////	endif
+////	if (cmpstr(ctrlName,"FontType")==0)
+////		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+////		FontType = popStr
+////	endif
+//	if (cmpstr(ctrlName,"DefaultFontType")==0)
+//		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//		DefaultFontType = popStr
+//		NI1_ChangePanelCOntrolsStyle()
 //	endif
-//	if (cmpstr(ctrlName,"AxisLabelSize")==0)
-//		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-//		AxisLabelSize = str2num(popStr)
+//	if (cmpstr(ctrlName,"DefaultFontSize")==0)
+//		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//		DefaultFontSize = str2num(popStr)
+//		NI1_ChangePanelCOntrolsStyle()
 //	endif
-//	if (cmpstr(ctrlName,"FontType")==0)
-//		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-//		FontType = popStr
-//	endif
-	if (cmpstr(ctrlName,"DefaultFontType")==0)
-		SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
-		DefaultFontType = popStr
-		NI1_ChangePanelCOntrolsStyle()
-	endif
-	if (cmpstr(ctrlName,"DefaultFontSize")==0)
-		NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
-		DefaultFontSize = str2num(popStr)
-		NI1_ChangePanelCOntrolsStyle()
-	endif
-	NI1_SaveNikaGUIPackagePrefs(0)
-End
+//	IN2G_SaveIrenaGUIPackagePrefs(0)
+//End
+////***********************************************************
+////***********************************************************
 //***********************************************************
 //***********************************************************
-//***********************************************************
-//***********************************************************
-//***********************************************************
-Function NI1_KillPrefsButtonProc(ba) : ButtonControl
-	STRUCT WMButtonAction &ba
-
-	switch( ba.eventCode )
-		case 2: // mouse up
-			// click code here
-			if(stringmatch(ba.ctrlName,"OKBUtton"))
-				NI1_SaveNikaGUIPackagePrefs(0)
-				DoWIndow/K NI1_MainConfigPanel
-			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
-				string defFnt
-				variable defFntSize
-				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-					defFnt="Tahoma"
-					defFntSize=12
-				else
-					defFnt="Geneva"
-					defFntSize=9
-				endif
-				SVAR ListOfKnownFontTypes=root:Packages:NikaConfigFolder:ListOfKnownFontTypes
-				SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
-				DefaultFontType = defFnt
-				NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
-				DefaultFontSize = defFntSize
-				NI1_ChangePanelCOntrolsStyle()
-				NI1_SaveNikaGUIPackagePrefs(0)
-				PopupMenu DefaultFontType,win=NI1_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
-				PopupMenu DefaultFontSize,win=NI1_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-			endif
-			break
-	endswitch
-	return 0
-End
-
-//***********************************************************
+////***********************************************************
+//Function NI1_KillPrefsButtonProc(ba) : ButtonControl
+//	STRUCT WMButtonAction &ba
+//
+//	switch( ba.eventCode )
+//		case 2: // mouse up
+//			// click code here
+//			if(stringmatch(ba.ctrlName,"OKBUtton"))
+//				IN2G_SaveIrenaGUIPackagePrefs(0)
+//				DoWIndow/K NI1_MainConfigPanel
+//			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
+//				string defFnt
+//				variable defFntSize
+//				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//					defFnt="Tahoma"
+//					defFntSize=12
+//				else
+//					defFnt="Geneva"
+//					defFntSize=9
+//				endif
+//				SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
+//				SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//				DefaultFontType = defFnt
+//				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//				DefaultFontSize = defFntSize
+//				NI1_ChangePanelCOntrolsStyle()
+//				IN2G_SaveIrenaGUIPackagePrefs(0)
+//				PopupMenu DefaultFontType,win=NI1_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
+//				PopupMenu DefaultFontSize,win=NI1_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+//			endif
+//			break
+//	endswitch
+//	return 0
+//End
+//
+////***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -666,8 +743,8 @@ End
 
 Function NI1_ChangePanelControlsStyle()
 
-	SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
+	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
 
 	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
 		DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
@@ -682,107 +759,94 @@ end
 //***********************************************************
 //***********************************************************
 
-Proc NI1_MainConfigPanel() 
-	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(282,48,707,270) as "Configure Nika Preferecnes"
-	DoWindow /C NI1_MainConfigPanel
-	//SetDrawLayer UserBack
-	//SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,52224)
-	//DrawText 10,25,"Nika panels default fonts and names"
-	TitleBox Info1 title="\Zr150Nika panels default fonts and names",pos={10,10},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(1,4,52428)
-	//SetDrawEnv fsize= 14,fstyle= 3, textrgb= (0,0,52224)
-	//DrawText 10,130,"Error type selection and GUI behavior"
-	TitleBox Info2 title="\Zr150Error type selection and GUI behavior",pos={10,110},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(1,4,52428)
-//	SetDrawEnv fsize= 14,fstyle= 3,textrgb= (63500,4369,4369)
-//	DrawText 30,150,"Graph text elements"
-//	SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
-
-	NI1A_Initialize2Dto1DConversion()
-
-	PopupMenu DefaultFontType,pos={15,40},size={113,21},proc=NI1_PopMenuProc,title="Panel Controls Font"
-	PopupMenu DefaultFontType,mode=(1+WhichListItem(root:Packages:NikaConfigFolder:DefaultFontType, root:Packages:NikaConfigFolder:ListOfKnownFontTypes))
-	PopupMenu DefaultFontType, popvalue=root:Packages:NikaConfigFolder:DefaultFontType,value= #"NI1_CreateUsefulFontList()"
-	PopupMenu DefaultFontSize,pos={15,70},size={113,21},proc=NI1_PopMenuProc,title="Panel Controls Font Size"
-	PopupMenu DefaultFontSize,mode=(1+WhichListItem(num2str(root:Packages:NikaConfigFolder:DefaultFontSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-	PopupMenu DefaultFontSize popvalue=num2str(root:Packages:NikaConfigFolder:DefaultFontSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
-	Button DefaultValues title="Default",pos={290,40},size={120,20}
-	Button DefaultValues proc=NI1_KillPrefsButtonProc
-
-	CheckBox DoubleClickConverts,pos={230,140},size={80,16},noproc,title="Double click converts ?", mode=0
-	CheckBox DoubleClickConverts,variable= root:Packages:Convert2Dto1D:DoubleClickConverts, help={"Check to convert files on double click in Files selection"}
-	
-
-	CheckBox ErrorCalculationsUseOld,pos={10,140},size={80,16},proc=NI1_ConfigErrorsCheckProc,title="Use Old Uncertainity ?", mode=1
-	CheckBox ErrorCalculationsUseOld,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseOld, help={"Check to use Error estimates for before version 1.42?"}
-	CheckBox ErrorCalculationsUseStdDev,pos={10,160},size={80,16},proc=NI1_ConfigErrorsCheckProc,title="Use Std Devfor Uncertainity?", mode=1
-	CheckBox ErrorCalculationsUseStdDev,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev, help={"Check to use Standard deviation for Error estimates "}
-	CheckBox ErrorCalculationsUseSEM,pos={10,180},size={80,16},proc=NI1_ConfigErrorsCheckProc,title="Use SEM for Uncertainity?", mode=1
-	CheckBox ErrorCalculationsUseSEM,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM, help={"Check to use Standard error of mean for Error estimates"}
-
-	Button OKButton title="OK",pos={290,190},size={120,20}
-	Button OKButton proc=NI1_KillPrefsButtonProc
-EndMacro
+//Proc NI1_MainConfigPanel() 
+//	PauseUpdate; Silent 1		// building window...
+//	NewPanel /K=1/W=(282,48,707,270) as "Configure Nika Preferecnes"
+//	DoWindow /C NI1_MainConfigPanel
+//	TitleBox Info1 title="\Zr150Nika panels default fonts and names",pos={10,10},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(1,4,52428)
+//	TitleBox Info2 title="\Zr150Error type selection and GUI behavior",pos={10,110},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(1,4,52428)
+//	NI1A_Initialize2Dto1DConversion()
+//	PopupMenu DefaultFontType,pos={15,40},size={113,21},proc=NI1_PopMenuProc,title="Panel Controls Font"
+//	PopupMenu DefaultFontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:DefaultFontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
+//	PopupMenu DefaultFontType, popvalue=root:Packages:IrenaConfigFolder:DefaultFontType,value= #"IN2G_CreateUsefulFontList()"
+//	PopupMenu DefaultFontSize,pos={15,70},size={113,21},proc=NI1_PopMenuProc,title="Panel Controls Font Size"
+//	PopupMenu DefaultFontSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:DefaultFontSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
+//	PopupMenu DefaultFontSize popvalue=num2str(root:Packages:IrenaConfigFolder:DefaultFontSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
+//	Button DefaultValues title="Default",pos={290,40},size={120,20}
+//	Button DefaultValues proc=NI1_KillPrefsButtonProc
+//	CheckBox DoubleClickConverts,pos={230,140},size={80,16},noproc,title="Double click converts ?", mode=0
+//	CheckBox DoubleClickConverts,variable= root:Packages:Convert2Dto1D:DoubleClickConverts, help={"Check to convert files on double click in Files selection"}
+//	CheckBox ErrorCalculationsUseOld,pos={10,140},size={80,16},proc=NI1_ConfigErrorsCheckProc,title="Use Old Uncertainity ?", mode=1
+//	CheckBox ErrorCalculationsUseOld,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseOld, help={"Check to use Error estimates for before version 1.42?"}
+//	CheckBox ErrorCalculationsUseStdDev,pos={10,160},size={80,16},proc=NI1_ConfigErrorsCheckProc,title="Use Std Devfor Uncertainity?", mode=1
+//	CheckBox ErrorCalculationsUseStdDev,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev, help={"Check to use Standard deviation for Error estimates "}
+//	CheckBox ErrorCalculationsUseSEM,pos={10,180},size={80,16},proc=NI1_ConfigErrorsCheckProc,title="Use SEM for Uncertainity?", mode=1
+//	CheckBox ErrorCalculationsUseSEM,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM, help={"Check to use Standard error of mean for Error estimates"}
+//
+//	Button OKButton title="OK",pos={290,190},size={120,20}
+//	Button OKButton proc=NI1_KillPrefsButtonProc
+//EndMacro
 //***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
-Function NI1_ConfigErrorsCheckProc(cba) : CheckBoxControl
-	STRUCT WMCheckboxAction &cba
-
-	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
-	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
-	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
-	NVAR SelectedUncertainity=root:Packages:NikaConfigFolder:SelectedUncertainity
-
-	switch( cba.eventCode )
-		case 2: // mouse up
-			Variable checked = cba.checked
-			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseOld"))
-				ErrorCalculationsUseOld = checked
-				ErrorCalculationsUseStdDev=!checked
-				ErrorCalculationsUseSEM=!checked
-				SelectedUncertainity=0
-			endif
-			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseStdDev"))
-				ErrorCalculationsUseOld = !checked
-				ErrorCalculationsUseStdDev=checked
-				ErrorCalculationsUseSEM=!checked
-				SelectedUncertainity=1
-			endif
-			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseSEM"))
-				ErrorCalculationsUseOld = !checked
-				ErrorCalculationsUseStdDev=!checked
-				ErrorCalculationsUseSEM=checked
-				SelectedUncertainity=2
-			endif
-			break
-	endswitch
-
-	return 0
-End
+//Function NI1_ConfigErrorsCheckProc(cba) : CheckBoxControl
+//	STRUCT WMCheckboxAction &cba
+//
+//	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+//	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+//	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+//	NVAR SelectedUncertainity=root:Packages:IrenaConfigFolder:SelectedUncertainity
+//
+//	switch( cba.eventCode )
+//		case 2: // mouse up
+//			Variable checked = cba.checked
+//			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseOld"))
+//				ErrorCalculationsUseOld = checked
+//				ErrorCalculationsUseStdDev=!checked
+//				ErrorCalculationsUseSEM=!checked
+//				SelectedUncertainity=0
+//			endif
+//			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseStdDev"))
+//				ErrorCalculationsUseOld = !checked
+//				ErrorCalculationsUseStdDev=checked
+//				ErrorCalculationsUseSEM=!checked
+//				SelectedUncertainity=1
+//			endif
+//			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseSEM"))
+//				ErrorCalculationsUseOld = !checked
+//				ErrorCalculationsUseStdDev=!checked
+//				ErrorCalculationsUseSEM=checked
+//				SelectedUncertainity=2
+//			endif
+//			break
+//	endswitch
+//
+//	return 0
+//End
 //***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
-
-Function/S NI1_CreateUsefulFontList()
-
-	string SystemFontList=FontList(";")
-	string PreferredFontList="Times;Arial;Geneva;Palatino;Times New Roman;TImes Roman;Book Antiqua;"
-	PreferredFontList+="Courier;Lucida;Vardana;Monaco;Courier CE;Courier;"
-	
-	variable i
-	string UsefulList="", tempList=""
-	For(i=0;i<ItemsInList(PreferredFontList);i+=1)
-		tempList=stringFromList(i,PreferredFontList)
-		if(stringmatch(SystemFOntList, "*"+tempList+";*" ))
-			UsefulList+=tempList+";"
-		endif
-	endfor
-	return UsefulList
-end
-
+//
+//Function/S NI1_CreateUsefulFontList()
+//
+//	string SystemFontList=FontList(";")
+//	string PreferredFontList="Times;Arial;Geneva;Palatino;Times New Roman;TImes Roman;Book Antiqua;"
+//	PreferredFontList+="Courier;Lucida;Vardana;Monaco;Courier CE;Courier;"
+//	
+//	variable i
+//	string UsefulList="", tempList=""
+//	For(i=0;i<ItemsInList(PreferredFontList);i+=1)
+//		tempList=stringFromList(i,PreferredFontList)
+//		if(stringmatch(SystemFOntList, "*"+tempList+";*" ))
+//			UsefulList+=tempList+";"
+//		endif
+//	endfor
+//	return UsefulList
+//end
+//
 //***********************************************************
 //***********************************************************
 //***********************************************************
@@ -796,29 +860,14 @@ end
 Function NI1_CheckNikaUpdate(CalledFromMenu)
 	variable CalledFromMenu
 	//CalledFromMenu=1 run always...
-	struct  NikaPanelDefaults Defs
-	LoadPackagePreferences /MIS=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
-	if(V_Flag==0 && CalledFromMenu==0)		
-		//print Defs
-		if(Defs.Version==2)		//Lets declare the one we know as 1
-			if(datetime - Defs.LastUpdateCheck >30 * 24 * 60 * 60 || CalledFromMenu)
-				//call check version procedure and advise user on citations
-				NI1_CheckVersions()
-				Defs.LastUpdateCheck = datetime
-				SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
-			endif
-		else
-			Defs.Version			=		2
-			Defs.LastUpdateCheck = datetime
+	IN2G_ReadIrenaGUIPackagePrefs(0)
+	NVAR LastUpdateCheckNika=root:Packages:IrenaConfigFolder:LastUpdateCheckNika	
+	if(datetime - LastUpdateCheckNika >30 * 24 * 60 * 60 || CalledFromMenu)
+			//call check version procedure and advise user on citations
 			NI1_CheckVersions()
-			SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
-		endif
-	else		//either preferences do not exist or user asked for the check
-		Defs.Version			=		2
-		Defs.LastUpdateCheck = datetime
-		NI1_CheckVersions()
-		SavePackagePreferences /FLSH=1   "Nika" , "NikaDefaultPanelControls.bin", 0 , Defs
-	endif
+			LastUpdateCheckNika = datetime
+			IN2G_SaveIrenaGUIPackagePrefs(1)
+	endif 
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.32)
 			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (7/2013) to version 6.32A. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"

@@ -1,8 +1,8 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=2.16
+#pragma version=2.17
 #include <Autosize Images>
 
-
+//2.17 fixed bug when data in Extension 2 of some FITS files with long and complicated bintable (Extension 1) were not read. 
 // version 2.16 JIL - modified for Nika needs
 // FITS Loader Version 2.15; For use with Igor Pro 4.0 or later
 //	Larry Hutchinson, WaveMetrics inc., 1-19-02
@@ -358,7 +358,10 @@ static Function NI1_LoadOneFITS(refnum,dfName,doHeader,doHistory,doComment,doAut
 			if( gDataBytes != 0 )
 				if( gSkipData )
 					FStatus refnum
-					FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
+					//FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
+					if(!isBinTable)				//seems like if we read binatble, we can already moved in the file reading and do not need to skip the gbytes
+						FSetPos refnum,min(V_filePos+gDataBytes,V_logEOF)
+					endif
 				else
 					Wave data
 					FBinRead/B=2 refnum,data
@@ -500,6 +503,7 @@ Static Function NI1_SetFPosToNextRecord(refnum)
 		endif
 		FSetPos refnum,nextRec
 	endif
+	//print nextRec
 	return 0
 end	
 

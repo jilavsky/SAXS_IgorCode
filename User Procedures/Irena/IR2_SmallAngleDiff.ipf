@@ -1650,17 +1650,17 @@ Proc  IR2D_LogLogPlotSAD()
 	endif
 	ModifyGraph mirror=1
 	ShowInfo
-	String LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
-	LabelStr= "\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IR2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr
-	string LegendStr="\\F"+IR2C_LkUpDfltStr("FontType")+"\\Z"+IR2C_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
+	string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	Legend/W=IR2D_LogLogPlotSAD/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
 	//
 	ErrorBars/Y=1 OriginalIntensity Y,wave=(OriginalError,OriginalError)
 	//and now some controls
-	TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z"+IR2C_LkUpDfltVar("TagSize")+date()+", "+time()	
-	TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z"+IR2C_LkUpDfltVar("TagSize")+DataFolderName+IntensityWaveName	
+	TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z"+IN2G_LkUpDfltVar("TagSize")+date()+", "+time()	
+	TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z"+IN2G_LkUpDfltVar("TagSize")+DataFolderName+IntensityWaveName	
 //	ControlBar 30
 //	Button SaveStyle size={80,20}, pos={50,5},proc=IR1U_StyleButtonCotrol,title="Save Style"
 //	Button ApplyStyle size={80,20}, pos={150,5},proc=IR1U_StyleButtonCotrol,title="Apply Style"
@@ -2732,7 +2732,7 @@ Function IR2D_AppendTagsToGraph()
 			NVAR PeakIntgInt=$("PeakIntgInt"+num2str(i))
 			TagName  = "peakTag"+num2str(i)
 			LocationPnt = BinarySearch(Qvec, PeakPosition )
-			TagText="\\Z"+IR2C_LkUpDfltVar("TagSize")+"Peak number "+num2str(i)+"\r"
+			TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Peak number "+num2str(i)+"\r"
 			TagText+="Peak Position (d) = "+num2str(PeakDPosition)+"  [A]\r"
 			TagText+="Peak Position (Q) = "+num2str(PeakPosition)+"  [A^-1]\r"
 			TagText+="Peak Integral intensity = "+num2str(PeakIntgInt)+"\r"

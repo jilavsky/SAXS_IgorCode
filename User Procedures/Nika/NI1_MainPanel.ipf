@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.46
+#pragma version=2.47
 Constant NI1AversionNumber = 2.46
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.46
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.47 fixes for WIndows panel resizing. 
 //2.46 added Function for creating user custom data names
 //2.45 added Scaling of panels when zoomed. 
 //2.44 added Q smearing controls 
@@ -109,8 +110,8 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	if(V_Flag)
 		GetWindow  $(panelName) note
 		SetWindow $(panelName), note=S_Value+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
-		NI1_PanelAppendSizeRecordNote(panelName)
-		SetWindow $panelName,hook(ResizePanelControls)=NI1_PanelResizePanelSize
+		IN2G_PanelAppendSizeRecordNote(panelName)
+		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
 	endif
 end 
 
@@ -136,112 +137,166 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-Function NI1_PanelAppendSizeRecordNote(panelName)
-	string panelName
-	string PanelRecord=""
-	//find size of the panel
-	GetWindow $panelName wsizeDC 
-	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"
-	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
-	GetWindow $panelName, note
-	string ExistingNote=S_Value
-	string controlslist = ControlNameList("", ";")
-	variable i
-	string ControlsRecords=""
-	string TmpNm=""
-	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-		TmpNm = StringFromList(i, controlslist, ";")
-		ControlInfo $(TmpNm)
-		//V_Height, V_Width, V_top, V_left
-		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
-		//special cases...
-		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-		endif
-	endfor
-	SetWindow $panelName, note=ExistingNote+";"+PanelRecord+ControlsRecords
-	//print ExistingNote+";"+PanelRecord+ControlsRecords
-end
+//Function NI1_PanelAppendSizeRecordNote(panelName)
+//	string panelName
+//	string PanelRecord=""
+//	//find size of the panel
+//	GetWindow $panelName wsize 		//wsize is in device independent points, wsizeDC would be in device dependent pixels. Use wsize per instructions fro WM
+//		//John Weeks, WM
+//		//1) Use GetWindow wsize to get window coordinates, not wsizeDC
+//		//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
+//		//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
+//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"
+//	variable PanelScaling = screenResolution/PanelResolution($panelName)
+//	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18)*PanelScaling,(V_bottom-V_top-18)*PanelScaling}, disable=2
+//	GetWindow $panelName, note
+//	string ExistingNote=S_Value
+//	string controlslist = ControlNameList("", ";")
+//	variable i
+//	string ControlsRecords=""
+//	string TmpNm=""
+//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//		TmpNm = StringFromList(i, controlslist, ";")
+//		ControlInfo $(TmpNm)								//these positions are now in pixels
+//		//V_Height, V_Width, V_top, V_left
+//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
+//		//special cases...
+//		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
+//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
+//		endif
+//	endfor
+//	if(!StringMatch(ExistingNote, "*;"))
+//		ExistingNote+=";"
+//	endif
+//	SetWindow $panelName, note=ExistingNote+PanelRecord+ControlsRecords
+//	//print ExistingNote+PanelRecord+ControlsRecords
+//end
+////***********************************************************
 //***********************************************************
-//***********************************************************
-
-Function NI1_PanelResizePanelSize(s)
-	STRUCT WMWinHookStruct &s
-		//add to the end of panel forming macro these two lines:
-		//	IR1_PanelAppendSizeRecordNote()
-		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
-		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
-		//print s.eventCode
-	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel
-		GetWindow $(s.winName), note
-		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
-		string OrigInfo=S_Value
-		GetWindow $s.winName wsizeDC
-		Variable left = V_left
-		Variable right = V_right
-		Variable top = V_top
-		Variable bottom = V_bottom
-		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
-		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")
-		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
-		CurWidth=(right-left) 
-		CurHeight = (bottom-top)
-		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, left+OriginalWidth, top+OriginalHeight
-			horScale = 1
-			verScale = 1
-		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
-			MoveWindow left, top, left+OriginalWidth, bottom
-			horScale = 1
-			verScale = CurHeight / (OriginalHeight)	
-		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
-			MoveWindow left, top, right, top+OriginalHeight
-			verScale = 1
-			horScale = curWidth/OriginalWidth
-		else
-			verScale = CurHeight /OriginalHeight
-			horScale = curWidth/OriginalWidth
-		endif
-		variable scale= min(horScale, verScale )
-		NVAR DefaultFontSize=root:Packages:NikaConfigFolder:DefaultFontSize
-		SVAR DefaultFontType=root:Packages:NikaConfigFolder:DefaultFontType
-		if(strlen(DefaultFontType)<5)		//nto set...
-			NI1_ReadNikaGUIPackagePrefs()
-		endif
-		DefaultGUIFont /W=$(s.winName) all= {DefaultFontType, ceil(scale*DefaultFontSize), 0 }
-		DefaultGUIFont /W=$(s.winName) button= {DefaultFontType, ceil(scale*DefaultFontSize), 0 }
-		DefaultGUIFont /W=$(s.winName) checkbox= {DefaultFontType, ceil(scale*DefaultFontSize), 0 }
-		DefaultGUIFont /W=$(s.winName) tabcontrol= {DefaultFontType, ceil(scale*DefaultFontSize), 0 }
-		DefaultGUIFont /W=$(s.winName) popup= {DefaultFontType, ceil(scale*DefaultFontSize), 0 }
-		DefaultGUIFont /W=$(s.winName) panel= {DefaultFontType, ceil(scale*DefaultFontSize), 0 }
-		string controlslist = ControlNameList(s.winName, ";")
-		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
-		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
-		string ControlsRecords=""
-		string TmpNm=""
-		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-			TmpNm = StringFromList(i, controlslist, ";")			
-			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
-			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
-			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
-			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
-			NewCntrolV_left=OrigCntrlV_left* horScale 
-			NewCntrlV_top = OrigCntrlV_top * verScale
-			NewWidth = OrigWidth * horScale
-			NewHeight = OrigHeight * verScale
-			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-			//special cases...
-			ControlInfo $(TmpNm)
-			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
-				if(numtype(OrigBodyWidth)==0)
-					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
-				endif
-			endif
-		endfor
-
-	endif
-end//***********************************************************
+//
+//Function NI1_PanelResizePanelSize(s)
+//	STRUCT WMWinHookStruct &s
+//		//add to the end of panel forming macro these two lines:
+//		//	IR1_PanelAppendSizeRecordNote()
+//		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
+//		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do not use fixed font then. 
+//		//print s.eventCode
+//	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel
+//		GetWindow $(s.winName), note
+//		//The note contains size in points, but control positions in pixels
+//		string OrigInfo=S_Value
+//		if(strlen(OrigInfo)<20)				//too short for anything meaningful
+//			return 0
+//		endif
+//		variable PanelScaling = screenResolution/PanelResolution(s.winName)
+//		//John Weeks, WM
+//		//1) Use GetWindow wsize to get window coordinates, not wsizeDC
+//		//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
+//		//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
+//
+//		GetWindow $s.winName wsize			//wsize is in device independent points, wsizeDC would be in device dependent pixels.
+//													//wsizeDC returns pixels, wsize is in points. 
+//													//MoveWindow is in points <<<<<< !!!!!!!   
+//													//ModifyControl pos is in pixels, size is in pixels
+//													//convert using: WidthPoints= WidthPixels * PanelResolution(panelName)/ScreenResolution
+//		Variable left = V_left				//wsize ... in points. No conversion necessary
+//		Variable right = V_right
+//		Variable top = V_top
+//		Variable bottom = V_bottom
+//		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
+//		variable moveLeft, MoveRight, MoveTop, moveBottom 			//these need to be in points!! What a mess...
+//		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
+//		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//points, no conversion necessary
+//		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
+//		CurWidth=(right-left) 
+//		CurHeight = (bottom-top)
+//		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
+//			moveLeft = left
+//			moveTop  = top
+//			MoveRight = (left+OriginalWidth)
+//			moveBottom = (top+OriginalHeight)
+//			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom			//coordinates are points
+//			horScale = 1
+//			verScale = 1
+//		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
+//			moveLeft = left
+//			MoveTop  = top
+//			MoveRight = (left+OriginalWidth)
+//			moveBottom = (top+CurHeight)
+//			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+//			horScale = 1
+//			verScale = CurHeight / (OriginalHeight)	
+//		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
+//			moveLeft = left
+//			MoveTop = top
+//			MoveRight = (left+CurWidth)
+//			moveBottom = (top+OriginalHeight)
+//			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+//			verScale = 1
+//			horScale = curWidth/OriginalWidth
+//		else
+//			moveLeft = left
+//			MoveTop = top
+//			MoveRight = (right)
+//			moveBottom = (bottom)
+//			verScale = CurHeight /OriginalHeight
+//			horScale = curWidth/OriginalWidth
+//		endif
+//		variable scale= min(horScale, verScale )
+//		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//		if(strlen(DefaultFontType)<5)		//not set...
+//			IN2G_ReadIrenaGUIPackagePrefs()
+//		endif
+//		string FontName
+//		FontName = DefaultFontType
+//		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
+//		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
+//		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
+//			FontName="_IgorSmall"
+//		endif
+//		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*DefaultFontSize), 0 }
+//		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*DefaultFontSize), 0 }
+//		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*DefaultFontSize), 0 }
+//		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*DefaultFontSize), 0 }
+//		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*DefaultFontSize), 0 }
+//		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*DefaultFontSize), 0 }
+//		string controlslist = ControlNameList(s.winName, ";")
+//		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
+//		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
+//		string ControlsRecords=""
+//		string TmpNm=""
+//		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+//			TmpNm = StringFromList(i, controlslist, ";")			
+//			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
+//			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
+//			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
+//			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
+//			NewCntrolV_left=OrigCntrlV_left* horScale 
+//			NewCntrlV_top = OrigCntrlV_top * verScale
+//			NewWidth = OrigWidth * horScale
+//			NewHeight = OrigHeight * verScale
+//			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+//			//special cases...
+//			ControlInfo $(TmpNm)
+//			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+//				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
+//				if(numtype(OrigBodyWidth)==0)
+//					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+//				endif
+//			endif
+//		endfor
+//
+//	endif
+//end
+//
+//#if Exists("PanelResolution") != 3
+//Static Function PanelResolution(wName)	// For compatibility with Igor 7
+//	String wName
+//	return 72
+//End
+//#endif
+////***********************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1671,7 +1726,6 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	Legend/C/N=text0/A=RT
 	ModifyGraph mirror=1
 	IN2G_ColorTopGrphRainbow()
-
 #if Exists("Nika_Hook_AfterDisplayLineout")
 	Nika_Hook_AfterDisplayLineout(int,Qvec,Err)
 #endif

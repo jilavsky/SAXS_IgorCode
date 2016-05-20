@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.28
-Constant IR1IversionNumber = 2.25
+#pragma version=2.29
+Constant IR1IversionNumber = 2.29
 Constant IR1TrimNameLength = 28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,8 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.30 fixes for labels presentation, added cleanup for imported names removing bad characters. 
+//2.29 added slit smearing and dq wave name
 //2.28 changes for panel scaling
 //2.27 fixes for naming of USAXS weave which seemed to have typo in naming system. 
 //2.26 added check for Error import - will abort import if Errors contain negative values, 0, INFs or NANs. Check import works with csv files. 
@@ -44,15 +46,25 @@ Constant IR1TrimNameLength = 28
 //this should allow user to import data to Igor - let's deal with 3 column data in ASCII for now
 
 
-Function IR1I_ImportDataMain()
-	//IR1_KillGraphsAndPanels()
+Function IR1I_ImportSASASCIIDataMain()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+		//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height",740)
+	DoWindow IR1I_ImportOtherASCIIData
+	if(V_Flag)
+		DoALert/T="Window conflict notice" 1, "Import Other ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
+		if(V_flag==1)
+			DoWIndow/K IR1I_ImportOtherASCIIData
+		else
+			abort
+		endif
+	endif
 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		DoWIndow/K IR1I_ImportData
 	endif
 	IR1I_InitializeImportData()
-	Execute("IR1I_ImportData()")
+	Execute("IR1I_ImportSASASCIIData()")
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR1I_ImportData", IR1IversionNumber,1)
 	//fix checboxes
@@ -65,6 +77,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersion()	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
@@ -83,11 +96,12 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Proc IR1I_ImportData() 
+Proc IR1I_ImportSASASCIIData() 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(3,40,430,740) as "Import data"
-	DoWindow/C IR1I_ImportData
-	TitleBox MainTitle title="\Zr200Import Data in Igor",pos={40,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
+	NewPanel /K=1 /W=(3,40,430,760) as "Import SAXS/SANS data"
+	DoWindow/C IR1I_ImportSASASCIIData
+	TitleBox MainTitle title="\Zr200Import SAS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140List of available files",pos={30,107},frame=0,fstyle=1, fixedSize=1,size={120,20},fColor=(0,0,52224)
 	TitleBox Info21 title="\Zr140Column 1",pos={216,215},frame=0,fstyle=2, fixedSize=1,size={150,20}
@@ -96,7 +110,10 @@ Proc IR1I_ImportData()
 	TitleBox Info24 title="\Zr140Column 4",pos={216,266},frame=0,fstyle=2, fixedSize=1,size={150,20}
 	TitleBox Info25 title="\Zr140Column 5",pos={216,283},frame=0,fstyle=2, fixedSize=1,size={150,20}
 	TitleBox Info26 title="\Zr140Column 6",pos={216,300},frame=0,fstyle=2, fixedSize=1,size={150,20}
-	TitleBox Info6 title="\Zr150Qvec  Int      Err   QErr",pos={285,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
+	TitleBox Info6 title="\Zr150Q",pos={287,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
+	TitleBox Info7 title="\Zr150Int",pos={318,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
+	TitleBox Info8 title="\Zr150Err",pos={351,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
+	TitleBox Info9 title="\Zr150dQ",pos={382,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
 	Button SelectDataPath,pos={99,53},size={130,20}, proc=IR1I_ButtonProc,title="Select data path"
 	Button SelectDataPath,help={"Select data path to the data"}
 	SetVariable DataPathString,pos={2,85},size={415,19},title="Data path :", noedit=1
@@ -130,11 +147,6 @@ Proc IR1I_ImportData()
 
 	TitleBox TooManyPointsWarning variable=root:Packages:ImportData:TooManyPointsWarning,fColor=(0,0,0)
 	TitleBox TooManyPointsWarning pos={220,170},size={150,19}, disable=1
-	
-///	SetVariable NumOfPointsFound,pos={220,170},size={150,19},title="Found points :",proc=IR1I_SetVarProc
-//	SetVariable NumOfPointsFound,help={"This is how many points are in the file. If more than 300 consider reducing"}, disable=2
-//	SetVariable NumOfPointsFound,limits={0,Inf,0},value= root:Packages:ImportData:NumOfPointsFound
-
 	CheckBox Col1Qvec,pos={289,216},size={16,14},proc=IR1I_CheckProc,title="",variable= root:Packages:ImportData:Col1Qvec, help={"What does this column contain?"}
 	CheckBox Col1Int,pos={321,216},size={16,14},proc=IR1I_CheckProc,title="", variable= root:Packages:ImportData:Col1Int, help={"What does this column contain?"}
 	CheckBox Col1Error,pos={354,216},size={16,14},proc=IR1I_CheckProc,title="",variable= root:Packages:ImportData:Col1Err, help={"What does this column contain?"}
@@ -184,54 +196,58 @@ Proc IR1I_ImportData()
 	Button DeSelectAll,pos={120,396},size={100,20}, proc=IR1I_ButtonProc,title="Deselect All"
 	Button DeSelectAll,help={"Deselect all waves in the list"}
 
-	CheckBox UseFileNameAsFolder,pos={10,420},size={16,14},proc=IR1I_CheckProc,title="Use File Nms As Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
-	CheckBox IncludeExtensionInName,pos={240,420},size={16,14},proc=IR1I_CheckProc,title="Include Extension in fldr nm?",variable= root:Packages:ImportData:IncludeExtensionInName, help={"Include file extension in imported data foldername?"}, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
+	CheckBox UseFileNameAsFolder,pos={10,420},size={16,14},proc=IR1I_CheckProc,title="Use File Nms as Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
+	CheckBox IncludeExtensionInName,pos={240,420},size={16,14},proc=IR1I_CheckProc,title="Include Extn?",variable= root:Packages:ImportData:IncludeExtensionInName, help={"Include file extension in imported data foldername?"}, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
 	CheckBox UseIndra2Names,pos={10,436},size={16,14},proc=IR1I_CheckProc,title="Use USAXS names?",variable= root:Packages:ImportData:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
 	CheckBox ImportSMRdata,pos={150,436},size={16,14},proc=IR1I_CheckProc,title="Slit smeared?",variable= root:Packages:ImportData:ImportSMRdata, help={"Check if the data are slit smeared, changes suggested Indra data names to SMR_Qvec, SMR_Int, SMR_error"}
 	CheckBox ImportSMRdata, disable= !root:Packages:ImportData:UseIndra2Names
 	CheckBox UseQRSNames,pos={10,452},size={16,14},proc=IR1I_CheckProc,title="Use QRS wave names?",variable= root:Packages:ImportData:UseQRSNames, help={"Use QRS name structure? (Q_filename, R_filename, S_filename)"}
 	CheckBox UseQISNames,pos={150,452},size={16,14},proc=IR1I_CheckProc,title="Use QIS (NIST) wv nms?",variable= root:Packages:ImportData:UseQISNames, help={"Use QIS name structure? (filename_q, filename_i, filename_s)"}
-	CheckBox RemoveNegativeIntensities,pos={10,468},size={16,14},proc=IR1I_CheckProc,title="Remove Int<=0?",variable= root:Packages:ImportData:RemoveNegativeIntensities, help={"Remove Intensities smaller than 0?"}
 
+	CheckBox AutomaticallyOverwrite,pos={300,452},size={16,14},proc=IR1I_CheckProc,title="Auto overwrite?",variable= root:Packages:ImportData:AutomaticallyOverwrite, help={"Automatically overwrite imported data if same data exist?"}, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
 
-	CheckBox ScaleImportedDataCheckbox,pos={240,436},size={16,14},proc=IR1I_CheckProc,title="Scale Imported data?",variable= root:Packages:ImportData:ScaleImportedData, help={"Check to scale (multiply by) factor imported data. Both Intensity and error will be scaled by same number. Insert appriate number below."}
-	SetVariable ScaleImportedDataBy, pos={280,452}, size={140,20},title="Scaling factor?:", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ScaleImportedData)
+	CheckBox ScaleImportedDataCheckbox,pos={10,472},size={16,14},proc=IR1I_CheckProc,title="Scale Imported data?",variable= root:Packages:ImportData:ScaleImportedData, help={"Check to scale (multiply by) factor imported data. Both Intensity and error will be scaled by same number. Insert appriate number right."}
+	SetVariable ScaleImportedDataBy, pos={200,472}, size={140,20},title="Scaling factor?:", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ScaleImportedData)
 	SetVariable ScaleImportedDataBy limits={1e-32,inf,1},value= root:packages:ImportData:ScaleImportedDataBy,help={"Input number by which you want to multiply the imported intensity and errors."}
-	CheckBox AutomaticallyOverwrite,pos={240,468},size={16,14},proc=IR1I_CheckProc,title="Auto overwrite?",variable= root:Packages:ImportData:AutomaticallyOverwrite, help={"Automatically overwrite imported data if same data exist?"}, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
+	CheckBox SlitSmearDataCheckbox,pos={10,490},size={16,14},proc=IR1I_CheckProc,title="Slit Smear Imp. data?",variable= root:Packages:ImportData:SlitSmearData, help={"Check to slit smear imported data. Both Intensity and error will be smeared. Insert appriate number right."}
+	SetVariable SlitLength, pos={200,490}, size={140,20},title="Slit length?:", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:SlitSmearData)
+	SetVariable SlitLength limits={1e-32,inf,0},value= root:packages:ImportData:SlitLength,help={"Input slit length in Q units."}
 
-	CheckBox TrimData,pos={10,487},size={16,14},proc=IR1I_CheckProc,title="Trim data?",variable= root:Packages:ImportData:TrimData, help={"Check to trim Q range of the imported data."}
-	SetVariable TrimDataQMin, pos={110,485}, size={110,20},title="Qmin=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:TrimData)
+	CheckBox RemoveNegativeIntensities,pos={10,507},size={16,14},proc=IR1I_CheckProc,title="Remove Int<=0?",variable= root:Packages:ImportData:RemoveNegativeIntensities, help={"Remove Intensities smaller than 0?"}
+
+	CheckBox TrimData,pos={10,526},size={16,14},proc=IR1I_CheckProc,title="Trim data?",variable= root:Packages:ImportData:TrimData, help={"Check to trim Q range of the imported data."}
+	SetVariable TrimDataQMin, pos={110,524}, size={110,20},title="Qmin=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:TrimData)
 	SetVariable TrimDataQMin limits={1e-32,inf,0},value= root:packages:ImportData:TrimDataQMin,help={"Qmin for trimming data. Leave 0 if not trimming at low q is needed."}
-	SetVariable TrimDataQMax, pos={240,485}, size={110,20},title="Qmax=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:TrimData)
+	SetVariable TrimDataQMax, pos={240,524}, size={110,20},title="Qmax=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:TrimData)
 	SetVariable TrimDataQMax limits={1e-32,inf,0},value= root:packages:ImportData:TrimDataQMax,help={"Qmax for trimming data. Leave 0 if not trimming at low q is needed."}
 
-	CheckBox ReduceNumPnts,pos={10,507},size={16,14},proc=IR1I_CheckProc,title="Reduce points?",variable= root:Packages:ImportData:ReduceNumPnts, help={"Check to log-reduce number of points"}
-	SetVariable TargetNumberOfPoints, pos={110,505}, size={110,20},title="Num points=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
+	CheckBox ReduceNumPnts,pos={10,543},size={16,14},proc=IR1I_CheckProc,title="Reduce points?",variable= root:Packages:ImportData:ReduceNumPnts, help={"Check to log-reduce number of points"}
+	SetVariable TargetNumberOfPoints, pos={110,541}, size={110,20},title="Num points=", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:ReduceNumPnts)
 	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:ImportData:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipualtion I"}
 
-	CheckBox TrunkateStart,pos={10,527},size={16,14},proc=IR1I_CheckProc,title="Truncate start of long names?",variable= root:Packages:ImportData:TrunkateStart, help={"Truncate names longer than 24 characters in front"}
-	CheckBox TrunkateEnd,pos={240,527},size={16,14},proc=IR1I_CheckProc,title="Truncate end of long names?",variable= root:Packages:ImportData:TrunkateEnd, help={"Truncate names longer than 24 characters at the end"}
+	CheckBox TrunkateStart,pos={10,560},size={16,14},proc=IR1I_CheckProc,title="Truncate start of long names?",variable= root:Packages:ImportData:TrunkateStart, help={"Truncate names longer than 24 characters in front"}
+	CheckBox TrunkateEnd,pos={240,560},size={16,14},proc=IR1I_CheckProc,title="Truncate end of long names?",variable= root:Packages:ImportData:TrunkateEnd, help={"Truncate names longer than 24 characters at the end"}
 //	PopupMenu SelectFolderNewData,pos={1,525},size={250,21},proc=IR1I_PopMenuProc,title="Select data folder", help={"Select folder with data"}
 //	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
-	SetVariable RemoveStringFromName, pos={5,547}, size={250,20},title="Remove Str From Name=", noproc
+	SetVariable RemoveStringFromName, pos={5,578}, size={320,20},title="Remove Str From Name=", noproc
 	SetVariable RemoveStringFromName value= root:packages:ImportData:RemoveStringFromName,help={"Input string to be removed from name, leve empty if none"}
 
-	CheckBox DataCalibratedArbitrary,pos={10,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary\S \M",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
-	CheckBox DataCalibratedVolume,pos={150,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
-	CheckBox DataCalibratedWeight,pos={290,567},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S2\Mg\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
+	CheckBox DataCalibratedArbitrary,pos={10,597},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary\S \M",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
+	CheckBox DataCalibratedVolume,pos={150,597},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
+	CheckBox DataCalibratedWeight,pos={290,597},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S2\Mg\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
 
-	SetVariable NewDataFolderName, pos={5,590}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
+	SetVariable NewDataFolderName, pos={5,620}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
 	SetVariable NewDataFolderName value= root:packages:ImportData:NewDataFolderName,help={"Folder for the new data. Will be created, if does not exist. Use popup above to preselect."}
-	SetVariable NewQwaveName, pos={5,610}, size={320,20},title="Q wave names ", proc=IR1I_setvarProc
+	SetVariable NewQwaveName, pos={5,640}, size={320,20},title="Q wave names ", proc=IR1I_setvarProc
 	SetVariable NewQwaveName, value= root:packages:ImportData:NewQWaveName,help={"Input name for the new Q wave"}
-	SetVariable NewIntensityWaveName, pos={5,630}, size={320,20},title="Intensity names", proc=IR1I_setvarProc
+	SetVariable NewIntensityWaveName, pos={5,660}, size={320,20},title="Intensity names", proc=IR1I_setvarProc
 	SetVariable NewIntensityWaveName, value= root:packages:ImportData:NewIntensityWaveName,help={"Input name for the new intensity wave"}
-	SetVariable NewErrorWaveName, pos={5,650}, size={320,20},title="Error wv names", proc=IR1I_setvarProc
+	SetVariable NewErrorWaveName, pos={5,680}, size={320,20},title="Error wv names", proc=IR1I_setvarProc
 	SetVariable NewErrorWaveName, value= root:packages:ImportData:NewErrorWaveName,help={"Input name for the new Error wave"}
-	SetVariable NewQErrorWaveName, pos={5,670}, size={320,20},title="Q Error wv names", proc=IR1I_setvarProc
+	SetVariable NewQErrorWaveName, pos={5,700}, size={320,20},title="dQ wv names  ", proc=IR1I_setvarProc
 	SetVariable NewQErrorWaveName, value= root:packages:ImportData:NewQErrorWaveName,help={"Input name for the new Q data Error wave"}
 
-	Button ImportData,pos={330,630},size={80,30}, proc=IR1I_ButtonProc,title="Import"
+	Button ImportData,pos={330,660},size={80,30}, proc=IR1I_ButtonProc,title="Import"
 	Button ImportData,help={"Import the selected data files."}
 
 	IR1I_CheckProc("UseQRSNames",1)
@@ -242,6 +258,7 @@ EndMacro
 //************************************************************************************************************
 Function IR1_ImportListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	Variable row = lba.row
 	Variable col = lba.col
@@ -273,6 +290,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnct()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	string OldDf = getDataFolder(1)
 	
@@ -290,7 +308,7 @@ Function IR1I_ImportDataFnct()
 			IR1I_CreateImportDataFolder(selectedFile)
 			KillWaves/Z TempIntensity, TempQvector, TempError
 			IR1I_ImportOneFile(selectedFile)
-			IR1I_NameImportedWaves(selectedFile)		//this thing also creates new error waves, removes negative qs and intesities
+					IR1I_ProcessImpWaves(selectedFile)		//this thing also creates new error waves, removes negative qs and intesities and does everything else
 			IR1I_RecordResults(selectedFile)
 			icount+=1
 		endif
@@ -390,6 +408,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_CheckForProperNewFolder()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	if (strlen(NewDataFolderName)>0 && cmpstr(":",NewDataFolderName[strlen(NewDataFolderName)-1])!=0)
@@ -402,6 +421,7 @@ end
 //************************************************************************************************************
 Function IR1I_RecordResults(selectedFile)
 	string selectedFile	//before or after - that means fit...
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	string OldDF=GetDataFolder(1)
 	setdataFolder root:Packages:ImportData
@@ -539,6 +559,7 @@ end
 Function/S IR1I_TrunkateName(InputName,TrunkateStart,TrunkateEnd, RemoveStringFromName)
 	string InputName, RemoveStringFromName
 	variable TrunkateStart,TrunkateEnd
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	
 	string ModName=ReplaceString(RemoveStringFromName, InputName, "")
 	variable inpuLength=strlen(ModName)
@@ -558,8 +579,9 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IR1I_NameImportedWaves(selectedFile)
+Function IR1I_ProcessImpWaves(selectedFile)
 	string selectedFile
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	variable i, numOfInts, numOfQs, numOfErrs, numOfQErrs, refNum
 	numOfInts  = 0
@@ -597,25 +619,25 @@ Function IR1I_NameImportedWaves(selectedFile)
 		SVAR DataPathName=root:Packages:ImportData:DataPathName
 		if (testIntStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempIntensity
-			//print "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData
-			note/NOCR TempIntensity, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData
+			//print "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
+			note/NOCR TempIntensity, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
 			//print note(TempIntensity)
 			numOfInts+=1
 		endif
 		if (testQvecStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempQvector
-			note/NOCR TempQvector, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData
+			note/NOCR TempQvector, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
 			numOfQs+=1
 		endif
 		if (testErrStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempError
-			note/NOCR TempError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData
+			note/NOCR TempError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
 			numOfErrs+=1
 			DataContainErrors=1
 		endif
 		if (testQErrStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempQError
-			note TempQError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData
+			note TempQError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
 			numOfQErrs+=1
 		endif
 		if(!WaveExists(CurrentWave))
@@ -654,20 +676,17 @@ Function IR1I_NameImportedWaves(selectedFile)
 		if(WaveExists(TempQError))
 			TempQError = TempQError/10
 			note/NOCR TempQError, "Q error converted from nm to A-1;"
-			//note/NOCR TempIntensity, "Q error converted from nm to A-1;"
-			//note/NOCR TempError, "Q error converted from nm to A-1;"
 		endif
 	endif
 	if (ScaleImportedData)
 		TempIntensity=TempIntensity*ScaleImportedDataBy		//scales imported data for user
 		note/NOCR TempIntensity, "Data scaled by="+num2str(ScaleImportedDataBy)+";"
-		//note/NOCR TempQError, "Data scaled by="+num2str(ScaleImportedDataBy)+";"
 		if (WaveExists(TempError))
 			TempError=TempError*ScaleImportedDataBy		//scales imported data for user
 			note/NOCR TempError, "Data scaled by="+num2str(ScaleImportedDataBy)+";"
 		endif
 	endif
-	//lets insert here thre Units intot he wave notes...
+	//lets insert here the Units into the wave notes...
 	NVAR DataCalibratedArbitrary=root:Packages:ImportData:DataCalibratedArbitrary
 	NVAR DataCalibratedVolume=root:Packages:ImportData:DataCalibratedVolume
 	NVAR DataCalibratedWeight=root:Packages:ImportData:DataCalibratedWeight
@@ -704,15 +723,45 @@ Function IR1I_NameImportedWaves(selectedFile)
 	//data are in  		TempQvector, TempIntensity, TempError
 	//w = w[p]==0 ? NaN : w[p]
 	TempQvector = TempQvector[p]<=0 ?  NaN :  TempQvector[p]
-	NVAR RemoveNegativeIntensities = root:packages:ImportData:RemoveNegativeIntensities
-	if(RemoveNegativeIntensities)
-		TempIntensity = TempIntensity[p]<=0 ?  NaN :  TempIntensity[p]	
-	endif
-
 	if(WaveExists(TempError)&&WaveExists(TempQError))	//have 4 waves
 		IN2G_RemoveNaNsFrom4Waves(TempQvector, TempIntensity, TempError,TempQError)
 	elseif(WaveExists(TempError)&&!WaveExists(TempQError))	//have 3 waves
 		IN2G_RemoveNaNsFrom3Waves(TempQvector, TempIntensity, TempError)
+	else	//only 2 waves 
+		IN2G_RemoveNaNsFrom2Waves(TempQvector, TempIntensity)
+	endif
+	//smear the data, 	this may remove some negative intensities, so do it first
+	NVAR SlitSmearData = root:Packages:ImportData:SlitSmearData
+	NVAR SlitLength = root:Packages:ImportData:SlitLength	
+	if(SlitSmearData && (SlitLength>0))			//slit smear the data here...
+		Duplicate/Free TempIntensity, TempIntToSmear
+		IR1B_SmearData(TempIntToSmear, TempQvector, SlitLength, TempIntensity)	
+		note/NOCR TempIntensity, "Slitlength="+num2str(SlitLength)+";"	
+		//next smear errors. Assume we can smear them same as intensities for now. Probably incorrect assumption, need to check somehow. 
+		if(WaveExists(TempError))		
+			Duplicate/Free TempError, TempErrorToSmear
+			IR1B_SmearData(TempErrorToSmear, TempQvector, SlitLength, TempError)	
+			note/NOCR TempError, "Slitlength="+num2str(SlitLength)+";"				
+		endif
+		//now we need to sort out the resolution. Two choices - user provided a resolution, needs to be convoluted with slit length here
+		//of user did not provide resolution, need to create here and set = slit length...
+		if(!WaveExists(TempQError))
+			Duplicate/O TempQvector, TempQError
+			TempQError = 0
+		endif
+		TempQError = sqrt(TempQError[p]^2+SlitLength^2)
+	endif
+	//now remove negative intensities. If there are still some left and asked for. 
+	NVAR RemoveNegativeIntensities = root:packages:ImportData:RemoveNegativeIntensities
+	if(RemoveNegativeIntensities)
+		TempIntensity = TempIntensity[p]<=0 ?  NaN :  TempIntensity[p]	
+	endif
+	if(WaveExists(TempError)&&WaveExists(TempQError))	//have 4 waves
+		IN2G_RemoveNaNsFrom4Waves(TempQvector, TempIntensity, TempError,TempQError)
+	elseif(WaveExists(TempError)&&!WaveExists(TempQError))	//have 3 waves
+		IN2G_RemoveNaNsFrom3Waves(TempQvector, TempIntensity, TempError)
+	elseif(!WaveExists(TempError)&&WaveExists(TempQError))	//have 3 waves
+		IN2G_RemoveNaNsFrom3Waves(TempQvector, TempIntensity, TempQError)
 	else	//only 2 waves 
 		IN2G_RemoveNaNsFrom2Waves(TempQvector, TempIntensity)
 	endif
@@ -740,6 +789,8 @@ Function IR1I_NameImportedWaves(selectedFile)
 			IN2G_RemoveNaNsFrom4Waves(TempQvector, TempIntensity, TempError,TempQError)
 		elseif(WaveExists(TempError)&&!WaveExists(TempQError))	//have 3 waves
 			IN2G_RemoveNaNsFrom3Waves(TempQvector, TempIntensity, TempError)
+		elseif(!WaveExists(TempError)&&WaveExists(TempQError))	//have 3 waves
+			IN2G_RemoveNaNsFrom3Waves(TempQvector, TempIntensity, TempQError)
 		else	//only 2 waves 
 			IN2G_RemoveNaNsFrom2Waves(TempQvector, TempIntensity)
 		endif
@@ -761,16 +812,15 @@ Function IR1I_NameImportedWaves(selectedFile)
 		variable tempMinStep=TempQvector[1]-TempQvector[0]
 		if(WaveExists(TempError)&&WaveExists(TempQError))	//have 4 waves
 			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep,Wsdev=TempError,Wxsdev=TempQError)
-			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
 		elseif(WaveExists(TempError)&&!WaveExists(TempQError))	//have 3 waves
 			Duplicate/O TempError, TempQError
 			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep,Wsdev=TempError,Wxwidth=TempQError)
-			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
+		elseif(!WaveExists(TempError)&&WaveExists(TempQError))	//have 3 waves
+			Duplicate/O TempQError, TempError
+			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep,Wsdev=TempError,Wxwidth=TempQError)
 		else	//only 2 waves 
 			Duplicate/O TempIntensity, TempError, TempQError
 			IN2G_RebinLogData(TempQvector,TempIntensity,TargetNumberOfPoints,tempMinStep, Wsdev=TempError, Wxwidth=TempQError)
-			//IR1I_ImportRebinData(TempIntensity,TempQvector,TempError,TempQError,TargetNumberOfPoints, 3)
-			//KillWaves TempError, TempQError
 		endif
 	endif
 	//check on TempError if it contains meaningful number and stop user if not...
@@ -871,16 +921,6 @@ Function IR1I_NameImportedWaves(selectedFile)
 		Duplicate/O TempQError, $NewQEName
 	endif	
 	KillWaves/Z tempError, tempQvector, TempIntensity, TempQError
-
-//	NVAR UseFileNameAsFolder = root:Packages:ImportData:UseFileNameAsFolder
-//	NVAR UseIndra2Names = root:Packages:ImportData:UseIndra2Names
-//	NVAR UseQRSNames = root:Packages:ImportData:UseQRSNames
-//
-//	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
-//	SVAR NewIntensityWaveName= root:packages:ImportData:NewIntensityWaveName
-//	SVAR NewQwaveName= root:packages:ImportData:NewQWaveName
-//	SVAR NewErrorWaveName= root:packages:ImportData:NewErrorWaveName
-
 	IR1I_KillAutoWaves()
 end
 //************************************************************************************************************
@@ -889,14 +929,15 @@ end
 //************************************************************************************************************
 Function/S IR1I_RemoveBadCharacters(StringName)
 	string StringName
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	
 	//here we can clean up what Igor allows but would be major problem with my code, such as ( or ) from names
-//	make/Free/T/N=0 ListOfBadChars
-//	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@"}
-//	variable i
-//	For (i=0;i<numpnts(ListOfBadChars);i+=1)
-//		StringName = ReplaceString(ListOfBadChars[i], StringName, "_" )
-//	endfor
+	make/Free/T/N=0 ListOfBadChars
+	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@","*"}
+	variable i
+	For (i=0;i<numpnts(ListOfBadChars);i+=1)
+		StringName = ReplaceString(ListOfBadChars[i], StringName, "_" )
+	endfor
 	return StringName
 end
 //************************************************************************************************************
@@ -906,6 +947,7 @@ end
 
 Function IR1I_ImportOneFile(selectedFile)
 	string selectedFile
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 		
 	NVAR SkipNumberOfLines=root:Packages:ImportData:SkipNumberOfLines
 	NVAR SkipLines=root:Packages:ImportData:SkipLines	
@@ -928,6 +970,7 @@ Function IR1I_CountHeaderLines(pathName, fileName)
         String pathName         // Symbolic path name
         String fileName                 // File name or full path
         String FirstPoint		//string containing first point number.... 
+			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
         
         Variable refNum = 0
         
@@ -965,6 +1008,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_KillAutoWaves()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	variable i
 	for(i=0;i<=100;i+=1)
@@ -979,6 +1023,7 @@ end
 
 Function IR1I_CreateImportDataFolder(selectedFile)
 	string selectedFile
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	NVAR IncludeExtensionInName = root:packages:ImportData:IncludeExtensionInName
@@ -1017,6 +1062,7 @@ Function IR1I_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	String ctrlName
 	Variable popNum
 	String popStr
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	if (Cmpstr(ctrlName,"SelectFolderNewData")==0)
 		SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
@@ -1037,6 +1083,7 @@ Function IR1I_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	Variable varNum
 	String varStr
 	String varName
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	if (cmpstr(ctrlName,"DataExtensionString")==0)
 		IR1I_UpdateListOfFilesInWvs()
@@ -1056,6 +1103,7 @@ End
 //************************************************************************************************************
 Function IR1I_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	
 	if(cmpstr(ctrlName,"SelectDataPath")==0)
 		IR1I_SelectDataPath()	
@@ -1084,6 +1132,7 @@ End
 
 Function IR1I_SelectDeselectAll(SetNumber)
 		variable setNumber
+		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 		
 		Wave WaveOfSelections=root:Packages:ImportData:WaveOfSelections
 
@@ -1094,6 +1143,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestImport()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:ImportData:WaveOfSelections
@@ -1134,10 +1184,10 @@ Function IR1I_TestImport()
 	NumOfPointsFound=numpnts(wave0)
 	if(NumOfPointsFound<300)
 		sprintf TooManyPointsWarning, "Found %g data points",NumOfPointsFound
-		TitleBox TooManyPointsWarning win=IR1I_ImportData ,fColor=(0,0,0), disable=0
+		TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(0,0,0), disable=0
 	else
 		sprintf TooManyPointsWarning, "%g data points, consider reduction ",NumOfPointsFound
-		TitleBox TooManyPointsWarning win=IR1I_ImportData ,fColor=(65200,0,0), disable=0
+		TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(65200,0,0), disable=0
 	endif
 	//now fix the checkboxes as needed
 	IR1I_FIxCheckboxesForWaveTypes()
@@ -1147,6 +1197,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestImportNotebook()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:ImportData:WaveOfSelections
@@ -1182,6 +1233,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_FIxCheckboxesForWaveTypes()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	NVAR FoundNWaves = root:Packages:ImportData:FoundNWaves
 	variable maxWaves, i
@@ -1191,16 +1243,16 @@ Function IR1I_FIxCheckboxesForWaveTypes()
 	endif
 
 	For (i=1;i<=MaxWaves;i+=1)
-		CheckBox $("Col"+num2str(i)+"Int") disable=0, win=IR1I_ImportData
-		CheckBox $("Col"+num2str(i)+"Qvec") disable=0, win=IR1I_ImportData
-		CheckBox $("Col"+num2str(i)+"Error") disable=0, win=IR1I_ImportData
-		CheckBox $("Col"+num2str(i)+"QError") disable=0, win=IR1I_ImportData
+		CheckBox $("Col"+num2str(i)+"Int") disable=0, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"Qvec") disable=0, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"Error") disable=0, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"QError") disable=0, win=IR1I_ImportSASASCIIData 
 	endfor
 	For (i=FoundNWaves+1;i<=6;i+=1)
-		CheckBox $("Col"+num2str(i)+"Int") disable=1, win=IR1I_ImportData
-		CheckBox $("Col"+num2str(i)+"Qvec") disable=1, win=IR1I_ImportData
-		CheckBox $("Col"+num2str(i)+"Error") disable=1, win=IR1I_ImportData
-		CheckBox $("Col"+num2str(i)+"QError") disable=1, win=IR1I_ImportData
+		CheckBox $("Col"+num2str(i)+"Int") disable=1, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"Qvec") disable=1, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"Error") disable=1, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"QError") disable=1, win=IR1I_ImportSASASCIIData 
 		NVAR ColInt=$("root:Packages:ImportData:Col"+num2str(i)+"Int")
 		NVAR ColQvec=$("root:Packages:ImportData:Col"+num2str(i)+"Qvec")
 		NVAR ColErr=$("root:Packages:ImportData:Col"+num2str(i)+"Err")
@@ -1232,6 +1284,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_SelectDataPath()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
 	NewPath /M="Select path to data to be imported" /O ImportDataPath
 	if (V_Flag!=0)
@@ -1249,6 +1302,7 @@ end
 Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	
 	NVAR Col1Int=root:Packages:ImportData:Col1Int
 	NVAR Col1Qvec=root:Packages:ImportData:Col1Qvec
@@ -1296,6 +1350,10 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 
 	NVAR TrunkateStart = root:Packages:ImportData:TrunkateStart
 	NVAR TrunkateEnd = root:Packages:ImportData:TrunkateEnd
+
+	NVAR SlitSmearData = root:Packages:ImportData:SlitSmearData
+	NVAR SlitLength = root:Packages:ImportData:SlitLength
+	NVAR ImportSMRdata=root:Packages:ImportData:ImportSMRdata
 	
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	SVAR NewIntensityWaveName= root:packages:ImportData:NewIntensityWaveName
@@ -1321,6 +1379,22 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 		DataCalibratedVolume = 0
 		//DataCalibratedWeight = 0
 	endif
+
+	if(cmpstr(ctrlName,"SlitSmearDataCheckbox")==0)
+		if(checked)
+			SetVariable SlitLength, disable=0
+			if(UseIndra2Names)
+				ImportSMRdata=1
+			endif
+		else
+			SetVariable SlitLength, disable=1
+			if(UseIndra2Names)
+				ImportSMRdata=0
+			endif
+		endif
+		IR1I_CheckProc("UseIndra2Names",UseIndra2Names)
+	endif
+
 
 	if(cmpstr(ctrlName,"UseFileNameAsFolder")==0)	
 		CheckBox IncludeExtensionInName, disable=!(checked)
@@ -1353,7 +1427,6 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 	if(cmpstr(ctrlName,"UseIndra2Names")==0)
 		CheckBox ImportSMRdata, disable= !checked
-		NVAR ImportSMRdata=root:Packages:ImportData:ImportSMRdata
 		if(checked)
 			UseFileNameAsFolder = 1
 			UseQRSNames = 0
@@ -1364,11 +1437,13 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 				NewIntensityWaveName= "SMR_Int"
 				NewQwaveName= "SMR_Qvec"
 				NewErrorWaveName= "SMR_Error"
+				NewQErrorWavename = "SMR_dQ"
 			else
 				NewDataFolderName = "root:USAXS:ImportedData:<fileName>:"	
 				NewIntensityWaveName= "DSM_Int"
 				NewQwaveName= "DSM_Qvec"
 				NewErrorWaveName= "DSM_Error"
+				NewQErrorWavename = "DSM_dQ"
 			endif
 		endif
 	endif
@@ -1385,6 +1460,7 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 				NewIntensityWaveName= "SMR_Int"
 				NewQwaveName= "SMR_Qvec"
 				NewErrorWaveName= "SMR_Error"
+				NewQErrorWavename = "SMR_dQ"
 			endif
 		else
 			if (UseIndra2Names)
@@ -1392,6 +1468,7 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 				NewIntensityWaveName= "DSM_Int"
 				NewQwaveName= "DSM_Qvec"
 				NewErrorWaveName= "DSM_Error"
+				NewQErrorWavename = "DSM_dQ"
 			endif
 		endif
 	endif
@@ -1454,8 +1531,8 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	if(cmpstr(ctrlName,"TrimData")==0)
-				SetVariable TrimDataQMin, win=IR1I_ImportData, disable=!(checked)
-				SetVariable TrimDataQMax, win=IR1I_ImportData, disable=!(checked)
+				SetVariable TrimDataQMin, win=IR1I_ImportSASASCIIData , disable=!(checked)
+				SetVariable TrimDataQMax, win=IR1I_ImportSASASCIIData , disable=!(checked)
 	endif
 	if(cmpstr(ctrlName,"TrunkateStart")==0)
 			if(checked)
@@ -1758,14 +1835,14 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	if (Col1Err || Col2Err || Col3Err || Col4Err || Col5Err || Col6Err)
-		CheckBox CreateSQRTErrors, disable=1, win=IR1I_ImportData
-		CheckBox CreatePercentErrors, disable=1, win=IR1I_ImportData
+		CheckBox CreateSQRTErrors, disable=1, win=IR1I_ImportSASASCIIData 
+		CheckBox CreatePercentErrors, disable=1, win=IR1I_ImportSASASCIIData 
 		CreateSQRTErrors=0
 		CreatePercentErrors=0
 		SetVariable PercentErrorsToUse, disable=1
 	else
-		CheckBox CreateSQRTErrors, disable=0, win=IR1I_ImportData
-		CheckBox CreatePercentErrors, disable=0, win=IR1I_ImportData
+		CheckBox CreateSQRTErrors, disable=0, win=IR1I_ImportSASASCIIData 
+		CheckBox CreatePercentErrors, disable=0, win=IR1I_ImportSASASCIIData 
 		SetVariable PercentErrorsToUse, disable=!(CreatePercentErrors)
 	endif
 	
@@ -1807,6 +1884,8 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif
 	endif
 
+
+
 	if(cmpstr(ctrlName,"SkipLines")==0)
 		if(checked)
 			SetVariable SkipNumberOfLines, disable=0
@@ -1822,6 +1901,7 @@ End
 //************************************************************************************************************
 Function IR1I_UpdateListOfFilesInWvs()
 
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	SVAR DataPathName = root:Packages:ImportData:DataPathName
 	SVAR DataExtension  = root:Packages:ImportData:DataExtension
 	SVAR NameMatchString = root:Packages:ImportData:NameMatchString
@@ -1867,6 +1947,7 @@ end
 
 Function IR1I_InitializeImportData()
 	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string OldDf = GetDataFolder(1)
 	
 	NewDataFolder/O/S root:Packages
@@ -1879,6 +1960,7 @@ Function IR1I_InitializeImportData()
 	ListOfStrings = "DataPathName;DataExtension;IntName;QvecName;ErrorName;NewDataFolderName;NewIntensityWaveName;"
 	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;NameMatchString;TooManyPointsWarning;RemoveStringFromName;"
 	ListOfVariables = "UseFileNameAsFolder;UseIndra2Names;UseQRSNames;DataContainErrors;UseQISNames;"
+	ListOfVariables += "SlitSmearData;SlitLength;"	
 	ListOfVariables += "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;FoundNWaves;"	
 	ListOfVariables += "Col2Int;Col2Qvec;Col2Err;Col2QErr;Col3Int;Col3Qvec;Col3Err;Col3QErr;Col4Int;Col4Qvec;Col4Err;Col4QErr;"	
 	ListOfVariables += "Col5Int;Col5Qvec;Col5Err;Col5QErr;Col6Int;Col6Qvec;Col6Err;Col6QErr;Col7Int;Col7Qvec;Col7Err;Col7QErr;"	
