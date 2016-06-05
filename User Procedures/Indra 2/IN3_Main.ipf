@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.88
+#pragma version = 1.89
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
@@ -7,6 +7,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.89 fixes for 2016-02
 //1.88 panel scaling.  
 //1.87 removed Wavename string from selection tool. Unnecessary and confusing users. 
 //1.87 remove dropout option
@@ -40,7 +41,7 @@ Function IN3_Main()
 		DoWindow/F USAXSDataReduction
 	else
 		IN3_MainPanel()
-	   ING2_AddScrollControl()
+	  	 ING2_AddScrollControl()
 		IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
 	endif
 
@@ -382,6 +383,7 @@ Function IN3_Initialize()
 	string OldDf=GetDataFolder(1)
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
+	NewDataFolder/O USAXS
 	NewDataFolder/O/S Indra3
 
 
@@ -417,7 +419,7 @@ Function IN3_Initialize()
 	ListOfVariables+="FlyScanRebinToPoints;"
 
 	// these are created automatically... "DataFoldername;IntensityWavename;QWavename;ErrorWaveName;"
-	ListOfStrings="SampleName;BlankName;userFriendlySamplename;userFriendlyBlankName;"
+	ListOfStrings="SampleName;BlankName;userFriendlySamplename;userFriendlyBlankName;userFriendlySampleDFName;"
 	ListOfStrings+="ListOfASBParameters;LastSample;"
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -500,15 +502,15 @@ Function IN3_MainPanel()
 //	SetDrawEnv fname= "Times New Roman", save
 //	SetDrawEnv fname= "Times New Roman",fsize= 22,fstyle= 3,textrgb= (0,0,52224)
 //	DrawText 50,23,"USAXS data reduction panel"
-	TitleBox Title title="\Zr210USAXS data reduction panel",pos={40,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox Title title="\Zr210USAXS data reduction panel",pos={5,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 
 	//SetDrawEnv linethick= 3,linefgc= (0,0,52224)
 	//TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	//DrawText 5,580,"To limit range of data being used for subtraction, set cursor A"
 	//DrawText 5,600," on first point and B on last point of either sample of blank data"
 
-	TitleBox Info1 title="\Zr120To limit range of data being used for subtraction, set cursor A",pos={5,565},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
-	TitleBox Info2 title="\Zr120 on first point and B on last point of either sample of blank data",pos={5,580},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
+	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={5,565},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
+	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={5,580},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 	//some local controls
 	CheckBox IsBlank,pos={20,35},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
@@ -542,9 +544,9 @@ Function IN3_MainPanel()
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
 	PopupMenu SelectBlankFolder, disable = IsBlank
 	
-	Button ProcessData,pos={10,110},size={90,20},proc=IN3_InputPanelButtonProc,title="Load and process", help={"Load data and process them"}
-	Button SelectNextSampleAndProcess,pos={110,110},size={120,20},proc=IN3_InputPanelButtonProc,title="Load Process Save next", help={"Select next sample in order - process - and save"}
-	Button SaveResults,pos={240,110},size={120,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
+	Button ProcessData,pos={5,110},size={110,20},proc=IN3_InputPanelButtonProc,title="Load and process", help={"Load data and process them"}
+	Button SelectNextSampleAndProcess,pos={120,110},size={145,20},proc=IN3_InputPanelButtonProc,title="Load Process Save next", help={"Select next sample in order - process - and save"}
+	Button SaveResults,pos={270,110},size={110,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
 	NVAR UserSavedData=root:Packages:Indra3:UserSavedData
 	if(!UserSavedData)
 		Button SaveResults fColor=(65280,0,0)
@@ -558,7 +560,7 @@ Function IN3_MainPanel()
 	SetVariable userFriendlySamplename frame=0,fstyle=1,help={"Name of current data set loaded"}
 
 	SetVariable OriginalDataFolder title="Folder name:",pos={5,180},size={380,20},disable=2, labelBack=(65535,65535,65535)
-	SetVariable OriginalDataFolder variable=root:Packages:Indra3:DataFolderName,format="",limits={-1,1,1}
+	SetVariable OriginalDataFolder variable=root:Packages:Indra3:userFriendlySampleDFName,format="",limits={-1,1,1}
 	SetVariable OriginalDataFolder frame=0,fstyle=1,help={"Folder from which current data set was loaded"}
 
 

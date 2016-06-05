@@ -931,7 +931,7 @@ Function IN2U_ConvCurrentlyLoadedDataSet(DataFolderName)
 	
 	string/g PathToRawData
 	PathToRawData=("root:raw:"+DataFolderName)
-	NVAR/Z PhotoDiodeSize = root:Packages:USAXS:PhotoDiodeSize
+	NVAR/Z PhotoDiodeSize = root:Packages:Indra3:PhotoDiodeSize
 	if(!NVAR_Exists(PhotoDiodeSize))
 		setDataFolder root:
 		NewDataFolder/O/S Packages

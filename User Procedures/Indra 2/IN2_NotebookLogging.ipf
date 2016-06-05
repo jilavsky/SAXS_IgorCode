@@ -16,12 +16,12 @@
 Function IN2N_CreateShowNtbkForLogging(show)
 	variable show		//show can be 1 to show notebook if necessary...
 
-	SVAR/Z nbl=root:Packages:USAXS:NotebookName
+	SVAR/Z nbl=root:Packages:Indra3:NotebookName
 	if(!SVAR_Exists(nbl))
 		NewDataFolder/O root:Packages
-		NewDataFolder/O root:Packages:USAXS 
-		String/G root:Packages:USAXS:NotebookName=""
-		SVAR nbl=root:Packages:USAXS:NotebookName
+		NewDataFolder/O root:Packages:Indra3 
+		String/G root:Packages:Indra3:NotebookName=""
+		SVAR nbl=root:Packages:Indra3:NotebookName
 		nbL="LogBook"
 	endif
 	
@@ -204,7 +204,7 @@ Function IN2N_CopyGraphInNotebook(color)
 	variable color
 	Silent 1
 	string bucket11=WinName(0, 1)
-	SVAR nbl=root:Packages:USAXS:NotebookName
+	SVAR nbl=root:Packages:Indra3:NotebookName
 	Notebook $nbl selection={endOfFile, endOfFile}
 	Notebook $nbl scaling={50,50}, frame=1, picture={$bucket11,1,color}
 	Notebook $nbl text="\r"
@@ -219,7 +219,7 @@ Function IN2N_InsertDateAndTime()
 	string bucket11
 	Variable/D now=datetime
 	bucket11=Secs2Date(now,0)+",  "+Secs2Time(now,0) +"\r"
-	SVAR nbl=root:Packages:USAXS:NotebookName
+	SVAR nbl=root:Packages:Indra3:NotebookName
 	Notebook $nbl selection={endOfFile, endOfFile}
 	Notebook $nbl text=bucket11
 end

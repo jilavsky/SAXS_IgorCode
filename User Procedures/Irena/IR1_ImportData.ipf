@@ -227,8 +227,6 @@ Proc IR1I_ImportSASASCIIData()
 
 	CheckBox TrunkateStart,pos={10,560},size={16,14},proc=IR1I_CheckProc,title="Truncate start of long names?",variable= root:Packages:ImportData:TrunkateStart, help={"Truncate names longer than 24 characters in front"}
 	CheckBox TrunkateEnd,pos={240,560},size={16,14},proc=IR1I_CheckProc,title="Truncate end of long names?",variable= root:Packages:ImportData:TrunkateEnd, help={"Truncate names longer than 24 characters at the end"}
-//	PopupMenu SelectFolderNewData,pos={1,525},size={250,21},proc=IR1I_PopMenuProc,title="Select data folder", help={"Select folder with data"}
-//	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
 	SetVariable RemoveStringFromName, pos={5,578}, size={320,20},title="Remove Str From Name=", noproc
 	SetVariable RemoveStringFromName value= root:packages:ImportData:RemoveStringFromName,help={"Input string to be removed from name, leve empty if none"}
 
@@ -292,6 +290,7 @@ End
 Function IR1I_ImportDataFnct()
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
+	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)
 	
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
@@ -1115,6 +1114,9 @@ Function IR1I_ButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName,"Preview")==0)
 		IR1I_TestImportNotebook()
 	endif
+	if(cmpstr(ctrlName,"Plot")==0)
+		IR1I_TestPlotData()
+	endif
 	if(cmpstr(ctrlName,"SelectAll")==0)
 		IR1I_SelectDeselectAll(1)
 	endif
@@ -1144,6 +1146,8 @@ end
 //************************************************************************************************************
 Function IR1I_TestImport()
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+
+	string TopPanel=WinName(0, 64)
 	
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:ImportData:WaveOfSelections
@@ -1182,12 +1186,14 @@ Function IR1I_TestImport()
 	endif
 	wave wave0
 	NumOfPointsFound=numpnts(wave0)
-	if(NumOfPointsFound<300)
-		sprintf TooManyPointsWarning, "Found %g data points",NumOfPointsFound
-		TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(0,0,0), disable=0
-	else
-		sprintf TooManyPointsWarning, "%g data points, consider reduction ",NumOfPointsFound
-		TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(65200,0,0), disable=0
+	if(stringmatch(TopPanel,"IR1I_ImportSASASCIIData"))
+		if(NumOfPointsFound<300)
+			sprintf TooManyPointsWarning, "Found %g data points",NumOfPointsFound
+			TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(0,0,0), disable=0
+		else
+			sprintf TooManyPointsWarning, "%g data points, consider reduction ",NumOfPointsFound
+			TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(65200,0,0), disable=0
+		endif
 	endif
 	//now fix the checkboxes as needed
 	IR1I_FIxCheckboxesForWaveTypes()
@@ -1199,6 +1205,7 @@ end
 Function IR1I_TestImportNotebook()
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
+	string TopPanel=WinName(0, 64)
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
 	Wave WaveOfSelections = root:Packages:ImportData:WaveOfSelections
 	variable i, imax, firstSelectedPoint, maxWaves
@@ -1224,7 +1231,84 @@ Function IR1I_TestImportNotebook()
 	endif
 	OpenNotebook /K=1 /N=FilePreview /P=ImportDataPath /R /V=1 selectedfile
 	MoveWindow /W=FilePreview 450, 5, 1000, 400	
-	AutoPositionWindow/M=0 /R=IR1I_ImportData FilePreview
+	AutoPositionWindow/M=0 /R=$(TopPanel) FilePreview
+end
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function IR1I_TestPlotData()
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+
+	string TopPanel=WinName(0, 64)
+	string OldDf = getDataFolder(1)
+	
+	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
+	Wave WaveOfSelections 	= root:Packages:ImportData:WaveOfSelections
+	NVAR FoundNWaves 			= root:Packages:ImportData:FoundNWaves
+	variable i, imax, firstSelectedPoint, maxWaves
+	string SelectedFile
+	imax = numpnts(WaveOfSelections)
+	firstSelectedPoint = NaN
+	For(i=0;i<numpnts(WaveOfSelections);i+=1)
+		if(WaveOfSelections[i]==1)
+			firstSelectedPoint = i
+			break
+		endif
+	endfor
+	if (numtype(firstSelectedPoint)==2)
+		abort
+	endif
+	selectedfile = WaveOfFiles[firstSelectedPoint]
+
+	NewDataFOlder/O/S root:Packages:IrenaImportTemp
+	KillWaves/Z TempIntensity, TempQvector, TempError, tempdQ
+	IR1I_KillAutoWaves()
+	//LoadWave/Q/A/G/P=ImportDataPath  selectedfile
+	IR1I_ImportOneFile(selectedFile)
+	variable LimitFoundWaves = (FoundNWaves<=6) ? FoundNWaves : 7 
+	For(i=0;i<LimitFoundWaves;i+=1)	
+		NVAR testIntStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"Int")
+		NVAR testQvecStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"Qvec")
+		NVAR testErrStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"Err")
+		NVAR testQErrStr = $("root:Packages:ImportData:Col"+num2str(i+1)+"QErr")
+		Wave/Z CurrentWave = $("wave"+num2str(i))
+		SVAR DataPathName=root:Packages:ImportData:DataPathName
+		if (testIntStr&&WaveExists(CurrentWave))
+			duplicate/O CurrentWave, TempIntensity
+		endif
+		if (testQvecStr&&WaveExists(CurrentWave))
+			duplicate/O CurrentWave, TempQvector
+		endif
+		if (testErrStr&&WaveExists(CurrentWave))
+			duplicate/O CurrentWave, TempError
+		endif
+		if (testQErrStr&&WaveExists(CurrentWave))
+			duplicate/O CurrentWave, TempQError
+		endif
+	endfor
+	Wave/Z TempIntensity
+	Wave/Z TempQvector
+	Wave/Z TempError
+	Wave/Z TempQError
+	DOwindow FilePlotPreview
+	if (V_Flag)
+		DoWindow/K FilePlotPreview
+	endif
+	if(WaveExists(TempIntensity) && WaveExists(TempQvector))
+		Display /K=1/N=FilePlotPreview TempIntensity vs TempQvector as "Preview of the data"
+		MoveWindow /W=FilePlotPreview 450, 5, 1000, 400	
+		AutoPositionWindow/M=0 /R=$(TopPanel) FilePlotPreview
+		TextBox/C/N=text0/A=MC selectedfile
+		if(WaveExists(TempError))
+			if(!WaveExists(TempQError))
+				ErrorBars TempIntensity Y,wave=(TempError,TempError)
+			else
+				ErrorBars TempIntensity XY,wave=(TempError,TempError),wave=(TempError,TempError)
+			endif
+		endif
+	endif
 end
 
 //************************************************************************************************************
@@ -1235,6 +1319,7 @@ end
 Function IR1I_FIxCheckboxesForWaveTypes()
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 
+	string TopPanel=WinName(0, 64)
 	NVAR FoundNWaves = root:Packages:ImportData:FoundNWaves
 	variable maxWaves, i
 	maxWaves = FoundNWaves
@@ -1243,16 +1328,16 @@ Function IR1I_FIxCheckboxesForWaveTypes()
 	endif
 
 	For (i=1;i<=MaxWaves;i+=1)
-		CheckBox $("Col"+num2str(i)+"Int") disable=0, win=IR1I_ImportSASASCIIData 
-		CheckBox $("Col"+num2str(i)+"Qvec") disable=0, win=IR1I_ImportSASASCIIData 
-		CheckBox $("Col"+num2str(i)+"Error") disable=0, win=IR1I_ImportSASASCIIData 
-		CheckBox $("Col"+num2str(i)+"QError") disable=0, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"Int") disable=0, win=$(TopPanel) 
+		CheckBox $("Col"+num2str(i)+"Qvec") disable=0, win=$(TopPanel)  
+		CheckBox $("Col"+num2str(i)+"Error") disable=0, win=$(TopPanel)  
+		CheckBox $("Col"+num2str(i)+"QError") disable=0, win=$(TopPanel)  
 	endfor
 	For (i=FoundNWaves+1;i<=6;i+=1)
-		CheckBox $("Col"+num2str(i)+"Int") disable=1, win=IR1I_ImportSASASCIIData 
-		CheckBox $("Col"+num2str(i)+"Qvec") disable=1, win=IR1I_ImportSASASCIIData 
-		CheckBox $("Col"+num2str(i)+"Error") disable=1, win=IR1I_ImportSASASCIIData 
-		CheckBox $("Col"+num2str(i)+"QError") disable=1, win=IR1I_ImportSASASCIIData 
+		CheckBox $("Col"+num2str(i)+"Int") disable=1, win=$(TopPanel)  
+		CheckBox $("Col"+num2str(i)+"Qvec") disable=1, win=$(TopPanel)  
+		CheckBox $("Col"+num2str(i)+"Error") disable=1, win=$(TopPanel)  
+		CheckBox $("Col"+num2str(i)+"QError") disable=1, win=$(TopPanel)  
 		NVAR ColInt=$("root:Packages:ImportData:Col"+num2str(i)+"Int")
 		NVAR ColQvec=$("root:Packages:ImportData:Col"+num2str(i)+"Qvec")
 		NVAR ColErr=$("root:Packages:ImportData:Col"+num2str(i)+"Err")
@@ -1303,6 +1388,7 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	string TopPanel=WinName(0, 64)
 	
 	NVAR Col1Int=root:Packages:ImportData:Col1Int
 	NVAR Col1Qvec=root:Packages:ImportData:Col1Qvec
@@ -1531,8 +1617,8 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	if(cmpstr(ctrlName,"TrimData")==0)
-				SetVariable TrimDataQMin, win=IR1I_ImportSASASCIIData , disable=!(checked)
-				SetVariable TrimDataQMax, win=IR1I_ImportSASASCIIData , disable=!(checked)
+				SetVariable TrimDataQMin, win=$(TopPanel) , disable=!(checked)
+				SetVariable TrimDataQMax, win=$(TopPanel) , disable=!(checked)
 	endif
 	if(cmpstr(ctrlName,"TrunkateStart")==0)
 			if(checked)
@@ -1835,14 +1921,14 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	if (Col1Err || Col2Err || Col3Err || Col4Err || Col5Err || Col6Err)
-		CheckBox CreateSQRTErrors, disable=1, win=IR1I_ImportSASASCIIData 
-		CheckBox CreatePercentErrors, disable=1, win=IR1I_ImportSASASCIIData 
+		CheckBox CreateSQRTErrors, disable=1, win=$(TopPanel) 
+		CheckBox CreatePercentErrors, disable=1, win=$(TopPanel) 
 		CreateSQRTErrors=0
 		CreatePercentErrors=0
 		SetVariable PercentErrorsToUse, disable=1
 	else
-		CheckBox CreateSQRTErrors, disable=0, win=IR1I_ImportSASASCIIData 
-		CheckBox CreatePercentErrors, disable=0, win=IR1I_ImportSASASCIIData 
+		CheckBox CreateSQRTErrors, disable=0, win=$(TopPanel) 
+		CheckBox CreatePercentErrors, disable=0, win=$(TopPanel) 
 		SetVariable PercentErrorsToUse, disable=!(CreatePercentErrors)
 	endif
 	

@@ -23,7 +23,7 @@ Function IN2Z_ConvertAllScans()
 	string dfStartShort=dfstart[0,strlen(dfStart)-2]
 
 	IN2_USAXSInitPackage()		//initialize USAXS package
-	string/g root:Packages:USAXS:USAXSRawDataFolder
+	string/g root:Packages:Indra3:USAXSRawDataFolder
 
 	IN2Z_ConvertScans(dfStartShort, 10)
 
@@ -376,24 +376,24 @@ Function IN2Z_FinishConversion(FldrSampleRaw)
 		string RawFldr=StringFromList(1,FldrSampleRaw)
 		string USAXSFldr=StringFromList(0,FldrSampleRaw)
 
-	SVAR RawToUSAXS=root:Packages:USAXS:RawToUSAXS				//table for raw to USAXS conv.
+	SVAR RawToUSAXS=root:Packages:Indra3:RawToUSAXS				//table for raw to USAXS conv.
 
-	SVAR/Z RawFolder=root:Packages:USAXS:PanelSpecScanSelected			//which data we want to convert?
+	SVAR/Z RawFolder=root:Packages:Indra3:PanelSpecScanSelected			//which data we want to convert?
 	if (!SVAR_Exists(RawFolder))
-		string/G root:Packages:USAXS:PanelSpecScanSelected
-		SVAR RawFolder=root:Packages:USAXS:PanelSpecScanSelected
+		string/G root:Packages:Indra3:PanelSpecScanSelected
+		SVAR RawFolder=root:Packages:Indra3:PanelSpecScanSelected
 	endif
 	RawFolder=RawFldr
-	SVAR/Z USAXSFolder=root:Packages:USAXS:LiberalUSAXSFolderName		//Liberal name for new USAXS folder
+	SVAR/Z USAXSFolder=root:Packages:Indra3:LiberalUSAXSFolderName		//Liberal name for new USAXS folder
 	if (!SVAR_Exists(USAXSFolder))
-		string/G root:Packages:USAXS:LiberalUSAXSFolderName
-		SVAR USAXSFolder=root:Packages:USAXS:LiberalUSAXSFolderName
+		string/G root:Packages:Indra3:LiberalUSAXSFolderName
+		SVAR USAXSFolder=root:Packages:Indra3:LiberalUSAXSFolderName
 	endif
 	USAXSFolder=stringFromList((ItemsInList(USAXSFldr,":")-1),USAXSFldr,":")
-	SVAR/Z USAXSSubFolder=root:Packages:USAXS:USAXSSubfolder			//USAXS SUBFOLDER
+	SVAR/Z USAXSSubFolder=root:Packages:Indra3:USAXSSubfolder			//USAXS SUBFOLDER
 	if (!SVAR_Exists(USAXSSubFolder))
-		string/G root:Packages:USAXS:USAXSSubfolder
-		SVAR USAXSSubFolder=root:Packages:USAXS:USAXSSubfolder
+		string/G root:Packages:Indra3:USAXSSubfolder
+		SVAR USAXSSubFolder=root:Packages:Indra3:USAXSSubfolder
 	endif
 	USAXSSubFolder=stringFromList((ItemsInList(USAXSFldr,":")-2),USAXSFldr,":")
 
@@ -445,11 +445,11 @@ end
 Function IN2Z_DoRawToUSAXSConversion(ctrlName) : ButtonControl			//this function converts data to USAXS
 	String ctrlName
 	//here we do raw to USAXS conversion
-	SVAR RawToUSAXS=root:Packages:USAXS:RawToUSAXS				//table for raw to USAXS conv.
-	SVAR RawFolder=root:Packages:USAXS:PanelSpecScanSelected			//which data we want to convert?
-	SVAR/Z ListOfDeleteWaves=root:Packages:USAXS:ListOfWavesToDeleteFromRaw 	//want to delete something
-	SVAR USAXSFolder=root:Packages:USAXS:LiberalUSAXSFolderName		//Liberal name for new USAXS folder
-	SVAR USAXSSubFolder=root:Packages:USAXS:USAXSSubfolder			//USAxs SUBFOLDER
+	SVAR RawToUSAXS=root:Packages:Indra3:RawToUSAXS				//table for raw to USAXS conv.
+	SVAR RawFolder=root:Packages:Indra3:PanelSpecScanSelected			//which data we want to convert?
+	SVAR/Z ListOfDeleteWaves=root:Packages:Indra3:ListOfWavesToDeleteFromRaw 	//want to delete something
+	SVAR USAXSFolder=root:Packages:Indra3:LiberalUSAXSFolderName		//Liberal name for new USAXS folder
+	SVAR USAXSSubFolder=root:Packages:Indra3:USAXSSubfolder			//USAxs SUBFOLDER
 
 	string df=GetDataFolder(1)												//save where we are
 	SetDataFolder $RawFolder												//go where we want to be

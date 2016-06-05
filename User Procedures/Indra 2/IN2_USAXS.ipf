@@ -572,10 +572,10 @@ Function/T IN2A_SelectDtaForRWave()					//selects the USAXS data folder in which
 	IN2G_AppendAnyText("\r*********************************************************************\r")
 	IN2G_AppendAnyText("R wave evaluation procedure started for :"+FldrName)
 
-	SVAR/Z WhereIam=root:Packages:USAXS:CurrentRFolder	//global string for current folder info
+	SVAR/Z WhereIam=root:Packages:Indra3:CurrentRFolder	//global string for current folder info
 	if (!SVAR_Exists(WhereIam))
-		string/g root:packages:USAXS:CurrentRFolder		//create if nexessary
-		SVAR WhereIam=root:Packages:USAXS:CurrentRFolder
+		string/g root:Packages:Indra3:CurrentRFolder		//create if nexessary
+		SVAR WhereIam=root:Packages:Indra3:CurrentRFolder
 	endif
 
 	WhereIam=GetDataFolder(1)							//put the ino there
@@ -585,12 +585,12 @@ end
 Function/T IN2A_NextRDataToEvaluate()					//this returns next USAXS sample in order to evaluate 
 
 	string ListOfData=IN2_FindFolderWithScanTypes("root:USAXS:", 5, "*uascan", 1)
-	SVAR/Z LastR=root:Packages:USAXS:CurrentRFolder	//global string for current folder info
+	SVAR/Z LastR=root:Packages:Indra3:CurrentRFolder	//global string for current folder info
 	if (!SVAR_Exists(LastR))
 		NewDataFolder/O root:Packages
 		NewDataFolder/O root:Packages:USAXS
-		string/g root:packages:USAXS:CurrentRFolder		//create if nexessary
-		SVAR LastR=root:Packages:USAXS:CurrentRFolder
+		string/g root:Packages:Indra3:CurrentRFolder		//create if nexessary
+		SVAR LastR=root:Packages:Indra3:CurrentRFolder
 		LastR=""
 	endif
 	variable start=FindListItem(lastR, ListOfData)
@@ -608,22 +608,22 @@ Function IN2A_SetPDParameters(FldrName)	 			//setup PD parameters and get contro
 	setDataFolder $FldrName							//just make sure we are where we should be
 	
 	SVAR UPD=UPDParameters						//define the global holding places
-	NVAR UPD_DK1=root:Packages:USAXS:UPD_DK1
-	NVAR UPD_DK2=root:Packages:USAXS:UPD_DK2
-	NVAR UPD_DK3=root:Packages:USAXS:UPD_DK3
-	NVAR UPD_DK4=root:Packages:USAXS:UPD_DK4
-	NVAR UPD_DK5=root:Packages:USAXS:UPD_DK5
-	NVAR UPD_G1=root:Packages:USAXS:UPD_G1
-	NVAR UPD_G2=root:Packages:USAXS:UPD_G2
-	NVAR UPD_G3=root:Packages:USAXS:UPD_G3
-	NVAR UPD_G4=root:Packages:USAXS:UPD_G4
-	NVAR UPD_G5=root:Packages:USAXS:UPD_G5
-	NVAR UPD_Vfc=root:Packages:USAXS:UPD_Vfc
-	NVAR UPD_DK1Err=root:packages:USAXS:UPD_DK1Err
-	NVAR UPD_DK2Err=root:packages:USAXS:UPD_DK2Err
-	NVAR UPD_DK3Err=root:packages:USAXS:UPD_DK3Err
-	NVAR UPD_DK4Err=root:packages:USAXS:UPD_DK4Err
-	NVAR UPD_DK5Err=root:packages:USAXS:UPD_DK5Err
+	NVAR UPD_DK1=root:Packages:Indra3:UPD_DK1
+	NVAR UPD_DK2=root:Packages:Indra3:UPD_DK2
+	NVAR UPD_DK3=root:Packages:Indra3:UPD_DK3
+	NVAR UPD_DK4=root:Packages:Indra3:UPD_DK4
+	NVAR UPD_DK5=root:Packages:Indra3:UPD_DK5
+	NVAR UPD_G1=root:Packages:Indra3:UPD_G1
+	NVAR UPD_G2=root:Packages:Indra3:UPD_G2
+	NVAR UPD_G3=root:Packages:Indra3:UPD_G3
+	NVAR UPD_G4=root:Packages:Indra3:UPD_G4
+	NVAR UPD_G5=root:Packages:Indra3:UPD_G5
+	NVAR UPD_Vfc=root:Packages:Indra3:UPD_Vfc
+	NVAR UPD_DK1Err=root:Packages:Indra3:UPD_DK1Err
+	NVAR UPD_DK2Err=root:Packages:Indra3:UPD_DK2Err
+	NVAR UPD_DK3Err=root:Packages:Indra3:UPD_DK3Err
+	NVAR UPD_DK4Err=root:Packages:Indra3:UPD_DK4Err
+	NVAR UPD_DK5Err=root:Packages:Indra3:UPD_DK5Err
 
 	UPD_Vfc =  NumberByKey("Vfc", UPD,"=")						//put the numbers in there
 	UPD_DK1=NumberByKey("Bkg1", UPD,"=")
@@ -665,71 +665,71 @@ Function IN2A_initializePDParameters(FldrName)	 			//setup PD parameters and get
 	setDataFolder $FldrName							//just make sure we are where we should be
 	
 	SVAR UPD=UPDParameters						//define the global holding places
-	NVAR/Z UPD_DK1=root:Packages:USAXS:UPD_DK1
+	NVAR/Z UPD_DK1=root:Packages:Indra3:UPD_DK1
 	if (!NVAR_Exists(UPD_DK1))
-		variable/g root:packages:USAXS:UPD_DK1
+		variable/g root:Packages:Indra3:UPD_DK1
 	endif
-	NVAR/Z UPD_DK2=root:Packages:USAXS:UPD_DK2
+	NVAR/Z UPD_DK2=root:Packages:Indra3:UPD_DK2
 	if (!NVAR_Exists(UPD_DK2))
-		variable/g root:packages:USAXS:UPD_DK2
+		variable/g root:Packages:Indra3:UPD_DK2
 	endif
-	NVAR/Z UPD_DK3=root:Packages:USAXS:UPD_DK3
+	NVAR/Z UPD_DK3=root:Packages:Indra3:UPD_DK3
 	if (!NVAR_Exists(UPD_DK3))
-		variable/g root:packages:USAXS:UPD_DK3
+		variable/g root:Packages:Indra3:UPD_DK3
 	endif
-	NVAR/Z UPD_DK4=root:Packages:USAXS:UPD_DK4
+	NVAR/Z UPD_DK4=root:Packages:Indra3:UPD_DK4
 	if (!NVAR_Exists(UPD_DK4))
-		variable/g root:packages:USAXS:UPD_DK4
+		variable/g root:Packages:Indra3:UPD_DK4
 	endif
-	NVAR/Z UPD_DK5=root:Packages:USAXS:UPD_DK5
+	NVAR/Z UPD_DK5=root:Packages:Indra3:UPD_DK5
 	if (!NVAR_Exists(UPD_DK5))
-		variable/g root:packages:USAXS:UPD_DK5
+		variable/g root:Packages:Indra3:UPD_DK5
 	endif
-	NVAR/Z UPD_DK1Err=root:Packages:USAXS:UPD_DK1Err
+	NVAR/Z UPD_DK1Err=root:Packages:Indra3:UPD_DK1Err
 	if (!NVAR_Exists(UPD_DK1Err))
-		variable/g root:packages:USAXS:UPD_DK1Err
+		variable/g root:Packages:Indra3:UPD_DK1Err
 	endif
-	NVAR/Z UPD_DK2Err=root:Packages:USAXS:UPD_DK2Err
+	NVAR/Z UPD_DK2Err=root:Packages:Indra3:UPD_DK2Err
 	if (!NVAR_Exists(UPD_DK2Err))
-		variable/g root:packages:USAXS:UPD_DK2Err
+		variable/g root:Packages:Indra3:UPD_DK2Err
 	endif
-	NVAR/Z UPD_DK3Err=root:Packages:USAXS:UPD_DK3Err
+	NVAR/Z UPD_DK3Err=root:Packages:Indra3:UPD_DK3Err
 	if (!NVAR_Exists(UPD_DK3Err))
-		variable/g root:packages:USAXS:UPD_DK3Err
+		variable/g root:Packages:Indra3:UPD_DK3Err
 	endif
-	NVAR/Z UPD_DK4Err=root:Packages:USAXS:UPD_DK4Err
+	NVAR/Z UPD_DK4Err=root:Packages:Indra3:UPD_DK4Err
 	if (!NVAR_Exists(UPD_DK4Err))
-		variable/g root:packages:USAXS:UPD_DK4Err
+		variable/g root:Packages:Indra3:UPD_DK4Err
 	endif
-	NVAR/Z UPD_DK5Err=root:Packages:USAXS:UPD_DK5Err
+	NVAR/Z UPD_DK5Err=root:Packages:Indra3:UPD_DK5Err
 	if (!NVAR_Exists(UPD_DK5Err))
-		variable/g root:packages:USAXS:UPD_DK5Err
+		variable/g root:Packages:Indra3:UPD_DK5Err
 	endif
 	
-	NVAR/Z UPD_G1=root:Packages:USAXS:UPD_G1
+	NVAR/Z UPD_G1=root:Packages:Indra3:UPD_G1
 	if (!NVAR_Exists(UPD_G1))
-		variable/g root:packages:USAXS:UPD_G1
+		variable/g root:Packages:Indra3:UPD_G1
 	endif
-	NVAR/Z UPD_G2=root:Packages:USAXS:UPD_G2
+	NVAR/Z UPD_G2=root:Packages:Indra3:UPD_G2
 	if (!NVAR_Exists(UPD_G2))
-		variable/g root:packages:USAXS:UPD_G2
+		variable/g root:Packages:Indra3:UPD_G2
 	endif
-	NVAR/Z UPD_G3=root:Packages:USAXS:UPD_G3
+	NVAR/Z UPD_G3=root:Packages:Indra3:UPD_G3
 	if (!NVAR_Exists(UPD_G3))
-		variable/g root:packages:USAXS:UPD_G3
+		variable/g root:Packages:Indra3:UPD_G3
 	endif
-	NVAR/Z UPD_G4=root:Packages:USAXS:UPD_G4
+	NVAR/Z UPD_G4=root:Packages:Indra3:UPD_G4
 	if (!NVAR_Exists(UPD_G4))
-		variable/g root:packages:USAXS:UPD_G4
+		variable/g root:Packages:Indra3:UPD_G4
 	endif
-	NVAR/Z UPD_G5=root:Packages:USAXS:UPD_G5
+	NVAR/Z UPD_G5=root:Packages:Indra3:UPD_G5
 	if (!NVAR_Exists(UPD_G5))
-		variable/g root:packages:USAXS:UPD_G5
+		variable/g root:Packages:Indra3:UPD_G5
 	endif
 
-	NVAR/Z UPD_Vfc=root:Packages:USAXS:UPD_Vfc
+	NVAR/Z UPD_Vfc=root:Packages:Indra3:UPD_Vfc
 	if (!NVAR_Exists(UPD_Vfc))
-		variable/g root:packages:USAXS:UPD_Vfc
+		variable/g root:Packages:Indra3:UPD_Vfc
 	endif
 end
 
@@ -742,54 +742,54 @@ Window IN2A_UPDControlPanel() : Panel						//UPD control panel
 	DrawText 41,20,"UPD control panel for:"
 	SetVariable VtoF,pos={29,59},size={200,22},proc=IN2A_PopupUPDFnct,title="UPD V to f factor :"
 	SetVariable VtoF,font="Times New Roman",fSize=14,format="%3.1e"
-	SetVariable VtoF,limits={0,Inf,0},value= root:Packages:USAXS:UPD_Vfc
+	SetVariable VtoF,limits={0,Inf,0},value= root:Packages:Indra3:UPD_Vfc
 	SetVariable Gain1,pos={29,85},size={200,22},proc=IN2A_PopupUPDFnct,title="Gain 1 :"
 	SetVariable Gain1,font="Times New Roman",fSize=14,format="%3.1e",labelBack=(65280,0,0) 
-	SetVariable Gain1,limits={0,Inf,0},value= root:Packages:USAXS:UPD_G1
+	SetVariable Gain1,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G1
 	SetVariable Gain2,pos={29,113},size={200,22},proc=IN2A_PopupUPDFnct,title="Gain 2 :"
 	SetVariable Gain2,font="Times New Roman",fSize=14,format="%3.1e",labelBack=(0,52224,0)
-	SetVariable Gain2,limits={0,Inf,0},value= root:Packages:USAXS:UPD_G2
+	SetVariable Gain2,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G2
 	SetVariable Gain3,pos={29,140},size={200,22},proc=IN2A_PopupUPDFnct,title="Gain 3 :"
 	SetVariable Gain3,font="Times New Roman",fSize=14,format="%3.1e",labelBack=(0,0,65280)
-	SetVariable Gain3,limits={0,Inf,0},value= root:Packages:USAXS:UPD_G3
+	SetVariable Gain3,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G3
 	SetVariable Gain4,pos={29,164},size={200,22},proc=IN2A_PopupUPDFnct,title="Gain 4 :"
 	SetVariable Gain4,font="Times New Roman",fSize=14,format="%3.1e",labelBack=(65280,35512,15384)
-	SetVariable Gain4,limits={0,Inf,0},value= root:Packages:USAXS:UPD_G4
+	SetVariable Gain4,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G4
 	SetVariable Gain5,pos={29,190},size={200,22},proc=IN2A_PopupUPDFnct,title="Gain 5 :"
 	SetVariable Gain5,font="Times New Roman",fSize=14,format="%3.1e",labelBack=(29696,4096,44800)
-	SetVariable Gain5,limits={0,Inf,0},value= root:Packages:USAXS:UPD_G5
+	SetVariable Gain5,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G5
 	SetVariable Bkg1,pos={20,230},size={200,22},proc=IN2A_PopupUPDFnct,title="Background 1"
 	SetVariable Bkg1,font="Times New Roman",fSize=14,format="%g", labelBack=(65280,0,0)
-	SetVariable Bkg1,limits={0,Inf,root:packages:USAXS:UPD_DK1Err},value= root:Packages:USAXS:UPD_DK1
+	SetVariable Bkg1,limits={0,Inf,root:Packages:Indra3:UPD_DK1Err},value= root:Packages:Indra3:UPD_DK1
 	SetVariable Bkg2,pos={20,259},size={200,22},proc=IN2A_PopupUPDFnct,title="Background 2"
 	SetVariable Bkg2,font="Times New Roman",fSize=14,format="%g",labelBack=(0,52224,0)
-	SetVariable Bkg2,limits={0,Inf,root:packages:USAXS:UPD_DK2Err},value= root:Packages:USAXS:UPD_DK2
+	SetVariable Bkg2,limits={0,Inf,root:Packages:Indra3:UPD_DK2Err},value= root:Packages:Indra3:UPD_DK2
 	SetVariable Bkg3,pos={20,288},size={200,22},proc=IN2A_PopupUPDFnct,title="Background 3"
 	SetVariable Bkg3,font="Times New Roman",fSize=14,format="%g",labelBack=(0,0,65280)
-	SetVariable Bkg3,limits={0,Inf,root:packages:USAXS:UPD_DK3Err},value= root:Packages:USAXS:UPD_DK3
+	SetVariable Bkg3,limits={0,Inf,root:Packages:Indra3:UPD_DK3Err},value= root:Packages:Indra3:UPD_DK3
 	SetVariable Bkg4,pos={20,316},size={200,22},proc=IN2A_PopupUPDFnct,title="Background 4"
 	SetVariable Bkg4,font="Times New Roman",fSize=14,format="%g",labelBack=(65280,35512,15384)
-	SetVariable Bkg4,limits={0,Inf,root:packages:USAXS:UPD_DK4Err},value= root:Packages:USAXS:UPD_DK4
+	SetVariable Bkg4,limits={0,Inf,root:Packages:Indra3:UPD_DK4Err},value= root:Packages:Indra3:UPD_DK4
 	SetVariable Bkg5,pos={20,344},size={200,22},proc=IN2A_PopupUPDFnct,title="Background 5"
 	SetVariable Bkg5,font="Times New Roman",fSize=14,format="%g",labelBack=(29696,4096,44800)
-	SetVariable Bkg5,limits={0,Inf,root:packages:USAXS:UPD_DK5Err},value= root:Packages:USAXS:UPD_DK5
+	SetVariable Bkg5,limits={0,Inf,root:Packages:Indra3:UPD_DK5Err},value= root:Packages:Indra3:UPD_DK5
 	SetVariable RFolder,pos={12,27},size={250,18},title=" ",font="Times New Roman"
-	SetVariable RFolder,limits={-Inf,Inf,0},value= root:Packages:USAXS:CurrentRFolder,noedit=1
+	SetVariable RFolder,limits={-Inf,Inf,0},value= root:Packages:Indra3:CurrentRFolder,noedit=1
 	SetVariable Bkg1Err,pos={225,230},size={90,22},title="Err"
 	SetVariable Bkg1Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(65280,0,0)
-	SetVariable Bkg1Err,limits={-inf,Inf,0},value= root:Packages:USAXS:UPD_DK1Err,noedit=1
+	SetVariable Bkg1Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK1Err,noedit=1
 	SetVariable Bkg2Err,pos={225,259},size={90,22},title="Err"
 	SetVariable Bkg2Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(0,52224,0)
-	SetVariable Bkg2Err,limits={-inf,Inf,0},value= root:Packages:USAXS:UPD_DK2Err,noedit=1
+	SetVariable Bkg2Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK2Err,noedit=1
 	SetVariable Bkg3Err,pos={225,288},size={90,22},title="Err"
 	SetVariable Bkg3Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(0,0,65280)
-	SetVariable Bkg3Err,limits={-inf,Inf,0},value= root:Packages:USAXS:UPD_DK3Err,noedit=1
+	SetVariable Bkg3Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK3Err,noedit=1
 	SetVariable Bkg4Err,pos={225,316},size={90,22},title="Err"
 	SetVariable Bkg4Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(65280,35512,15384)
-	SetVariable Bkg4Err,limits={-inf,Inf,0},value= root:Packages:USAXS:UPD_DK4Err,noedit=1
+	SetVariable Bkg4Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK4Err,noedit=1
 	SetVariable Bkg5Err,pos={225,344},size={90,22},title="Err"
 	SetVariable Bkg5Err,font="Times New Roman",fSize=14,format="%2.2g", labelBack=(29696,4096,44800)
-	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:USAXS:UPD_DK5Err,noedit=1
+	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK5Err,noedit=1
 
 EndMacro
 
@@ -800,7 +800,7 @@ Function IN2A_PopupUPDFnct(ctrlName,varNum,varStr,varName) : SetVariableControl
 	String varStr
 	String varName
 
-	SVAR PathToSample=root:Packages:USAXS:CurrentRFolder
+	SVAR PathToSample=root:Packages:Indra3:CurrentRFolder
 	string PathToUPDPar=PathToSample+"UPDParameters"
 	SVAR UPDList=$PathToUPDPar
 	
@@ -951,10 +951,10 @@ Function IN2A_CalculateRWave(df, askForFactor)				//Recalculate the R wave in fo
 //		//may be the right number is 1.056^2 = 1.115 ???
 //		//this is mystery. 
 //		if(DataCollectedEpoch > 1154542500 && DataCollectedEpoch < (1154542500 + 24*60*60*35))   //set for data with EPOCH between 
-//			NVAR/Z PowerLawCorrectionFactor=root:Packages:USAXS:PowerLawCorrectionFactor
+//			NVAR/Z PowerLawCorrectionFactor=root:Packages:Indra3:PowerLawCorrectionFactor
 //			if(!NVAR_Exists(PowerLawCorrectionFactor))
-//				variable/g root:Packages:USAXS:PowerLawCorrectionFactor=1.13
-//				NVAR PowerLawCorrectionFactor=root:Packages:USAXS:PowerLawCorrectionFactor
+//				variable/g root:Packages:Indra3:PowerLawCorrectionFactor=1.13
+//				NVAR PowerLawCorrectionFactor=root:Packages:Indra3:PowerLawCorrectionFactor
 //			endif
 //			variable PowerLawCorrectionFactorL=PowerLawCorrectionFactor
 //			if(askForFactor)
@@ -1473,19 +1473,6 @@ Function IN2A_GetMeasParam()		//sets various spray parameters
 	endif
 	Variable ScanSteps=str2num(StringFromList(ItemsInList(SpecCommandSeparated)-2,SpecCommandSeparated))
 	
-	NVAR/Z PhotoDiodeSize=root:Packages:USAXS:PhotoDiodeSize
-	if (!NVAR_Exists(PhotoDiodeSize))								//avoid next lines if already exists....
-		Variable/G root:Packages:USAXS:PhotoDiodeSize=5.5
-		NVAR PhotoDiodeSize=root:Packages:USAXS:PhotoDiodeSize
-		Variable PhotoDiodeSizeL=PhotoDiodeSize
-		Prompt PhotoDiodeSizeL, "Check PD size:"
-		DoPrompt "Check PD size", PhotoDiodeSizeL
-			if (V_Flag)
-				Abort 
-			endif	
-		PhotoDiodeSize=PhotoDiodeSizeL
-	endif
-	
 	Prompt SDDistance, "This looks like messup with Sample to Detector distance - overide:"
 	
 	if (SDDistance<50)
@@ -1513,6 +1500,21 @@ Function IN2A_GetMeasParam()		//sets various spray parameters
 	endif
 	
 	SVAR MeasurementParameters
+	SVAR UPDParameters
+	
+	NVAR/Z PhotoDiodeSize=root:Packages:Indra3:PhotoDiodeSize
+	if (!NVAR_Exists(PhotoDiodeSize))								//avoid next lines if already exists....
+		Variable/G root:Packages:Indra3:PhotoDiodeSize=5.5
+		NVAR PhotoDiodeSize=root:Packages:Indra3:PhotoDiodeSize
+		Variable PhotoDiodeSizeL=PhotoDiodeSize
+		Prompt PhotoDiodeSizeL, "Check PD size:"
+		DoPrompt "Check PD size", PhotoDiodeSizeL
+			if (V_Flag)
+				Abort 
+			endif	
+		PhotoDiodeSize=PhotoDiodeSizeL
+	endif
+
 	variable wavelength=12.398424437/NumberByKey("DCM_energy",MeasurementParameters,"=")
 	variable SlitLength=0.5*((4*pi)/wavelength)*sin(PhotoDiodeSize/(2*SDDistance))
 
@@ -1594,10 +1596,10 @@ end
 Function/T IN2B_SelectSampleForASB()			//here we select sample folder and calibrate value and write it into list in Pacakges/Usaxs folder
 	string FldrName, Calibrate						//and set working folder there
 
-	SVAR/Z Parameters=root:Packages:USAXS:ListOfASBParameters			//global string for ASB parameters
+	SVAR/Z Parameters=root:Packages:Indra3:ListOfASBParameters			//global string for ASB parameters
 	if (!SVAR_Exists(Parameters))
-		string/g root:packages:USAXS:ListOfASBParameters = " "			//create if necessary
-		SVAR Parameters=root:Packages:USAXS:ListOfASBParameters
+		string/g root:Packages:Indra3:ListOfASBParameters = " "			//create if necessary
+		SVAR Parameters=root:Packages:Indra3:ListOfASBParameters
 	endif
 	
 	Prompt FldrName, "Select Folder with SAMPLE data", popup, IN2B_NextASBDataToEvaluate()+";"+IN2G_FindFolderWithWaveTypes("root:USAXS:", 5, "R_Int", 1)	
@@ -1622,7 +1624,7 @@ Function/T IN2B_SelectBlankForASB()								//this selects the blank folder
 	string FldrBlank, Calibrate
 
 	SVAR/Z ListOfASBParameters
-	SVAR/Z Parameters=root:Packages:USAXS:ListOfASBParameters				//global string for current folder info
+	SVAR/Z Parameters=root:Packages:Indra3:ListOfASBParameters				//global string for current folder info
 	if (!SVAR_Exists(Parameters))
 		Abort "Problem, ListOfASBParameters does not exist, this should never happen!!!"
 	endif
@@ -1673,7 +1675,7 @@ end
 Function/T IN2B_NextASBDataToEvaluate()					//this returns next USAXS sample in order to evaluate 
 
 	string ListOfData=IN2G_FindFolderWithWaveTypes("root:USAXS:", 5, "R_Int", 1)
-	SVAR LastASB=root:packages:USAXS:ListOfASBParameters		//global string for current folder info
+	SVAR LastASB=root:Packages:Indra3:ListOfASBParameters		//global string for current folder info
 	variable start=FindListItem(StringByKey("Sample",lastASB,"=",";"), ListOfData)
 	ListOfdata=ListOfData[start,inf]
 	return StringFromList(1,ListOfdata)
@@ -1682,10 +1684,16 @@ end
 Function/T IN2B_CalculateASBCalibration()		//get user input and calculate calibration factors depending on calibration type
 
 	SVAR ASBParameters=ListOfASBParameters					//this is KWlist of parameters, both calibration parameters will be appended 
+	SVAR UPDParameters=UPDParameters					//this is KWlist of parameters, both calibration parameters will be appended 
 	NVAR BLPeakWidth=$(StringByKey("Blank", ASBParameters,"=",";")+"PeakWidth")
 	NVAR BLPeakMax=$(StringByKey("Blank", ASBParameters,"=",";")+"MaximumIntensity")
 	string Calibrated=StringByKey("Calibrate", ASBParameters,"=",";")
-	variable PhotoDiodeSize=5.5																//Default PD size to 5.5mm at this time....
+	
+	variable PhotoDiodeSize=NumberByKey("UPDsize", UPDParameters,"=")																//Default PD size to 5.5mm at this time....
+	if(numtype(PhotoDiodeSize)!=0|| PhotoDiodeSize<=1)
+		PhotoDiodeSize = 5.5
+	endif
+	
 	SVAR MeasurementParameters
 	variable SampleToDetectorDistance=numberByKey("SDDistance",MeasurementParameters,"=")		//need to get it
 	if (numtype(SampleToDetectorDistance)==2)														//this is fix for trouble when Raw-to_USAXS is run out of sequence

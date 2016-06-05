@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.19
+#pragma version=1.20
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 added read UPD size to handle flyscanned data. Need finish for step scanning!
 //1.19 minor fixes for panel scaling
 //1.18 Remove Dropout function
 //1.17 minor change in MOdified Gauss fit function which fixes sometime observed misfits. Coef wave MUST be double precision. 
@@ -362,6 +363,12 @@ static Function IN3_SetPDParameters()	 			//setup PD parameters
 	if (UPD_DK5Err<=0)
 		UPD_DK5Err=1
 	endif
+	//read current size of UPD
+	NVAR PhotoDiodeSize=root:packages:Indra3:PhotoDiodeSize
+	PhotoDiodeSize=NumberByKey("UPDsize", UPD,"=")																//Default PD size to 5.5mm at this time....
+	if(numtype(PhotoDiodeSize)!=0|| PhotoDiodeSize<=1)
+		PhotoDiodeSize = 5.5
+	endif
 
 	setDataFolder OldDf
 
@@ -425,7 +432,9 @@ static Function IN3_LoadData()
 		string/g UPDParameters = OrigUPDParameters
 		string/g PathToRawData = OrigPathToRawData
 		SVAR userFriendlySamplename = root:Packages:Indra3:userFriendlySamplename
+		SVAR userFriendlySampleDFName = root:Packages:Indra3:userFriendlySampleDFName
 		userFriendlySamplename = OrigSpecComment
+		userFriendlySampleDFName = RemoveListItem(ItemsInList(DFloc, ":")-1, DFloc,":")
 		//fix BK5 is user specified its change...
 		NVAR OverwriteUPD_DK5 = root:Packages:Indra3:OverwriteUPD_DK5
 		if(OverwriteUPD_DK5>0)
@@ -484,6 +493,8 @@ static Function IN3_LoadBlank()
 
 	if(!IsBlank)
 		SVAR BlankName = root:Packages:Indra3:BlankName
+		SVAR userFriendlyBlankName= root:Packages:Indra3:userFriendlyBlankName
+		userFriendlyBlankName = StringFromList(ItemsInList(BlankName,":")-1, BlankName, ":")
 		if(strlen(BlankName)<4)
 			abort "Error, select first the Blank name - if none available, create one first"
 		endif
@@ -767,7 +778,10 @@ static Function IN3_RcurvePlot()
 	CheckBox DisplayPeakCenter variable=root:Packages:Indra3:DisplayPeakCenter,mode=1,pos={5,5}
 	CheckBox DisplayAlignSaAndBlank title="Display Align Sa and Blank",proc=IN3_RplotCheckProc, disable=IsBlank
 	CheckBox DisplayAlignSaAndBlank variable=root:Packages:Indra3:DisplayAlignSaAndBlank,mode=1,pos={5,25}
-//DisplayPeakCenter;DisplayAlignSaAndBlank
+	//append sample and blank names...
+	SVAR userFriendlySamplename = root:Packages:Indra3:userFriendlySamplename
+	SVAR userFriendlyBlankName = root:Packages:Indra3:userFriendlyBlankName
+	string LegendString="\\Zr130\\K(52224,0,0)Sample : "+userFriendlySamplename
 	SetDrawLayer UserFront
 	IN3_COlorizeButton()
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
@@ -785,7 +799,9 @@ static Function IN3_RcurvePlot()
 		if(TrimDataEnd>0)
 			Cursor/P/W=RcurvePlotGraph B R_Int TrimDataEnd	
 		endif
+		LegendString+="\r\\K(0,0,0)Blank : "+userFriendlyBlankName
 	endif
+	TextBox/C/N=SampleAndBLank/A=LC/F=0/B=1/X=0.00/Y=-25.00 LegendString
 	
 
 	SetDataFolder fldrSav0

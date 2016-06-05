@@ -707,25 +707,25 @@ Function IN2P_GenericUSAXSPlots()
 			Abort
 		endif
 	
-	string/G root:Packages:USAXS:GenericPlotType=PlotType
-	string/G root:Packages:USAXS:GenericPlotDataY=DataY
-	string/G root:Packages:USAXS:GenericPlotDataX=DataX
-	string/G root:Packages:USAXS:GenericPlotDataError=DataError
+	string/G root:Packages:Indra3:GenericPlotType=PlotType
+	string/G root:Packages:Indra3:GenericPlotDataY=DataY
+	string/G root:Packages:Indra3:GenericPlotDataX=DataX
+	string/G root:Packages:Indra3:GenericPlotDataError=DataError
 	
 	//********************generate new data if necessary
 	Wave WaveY=$DataY
 	Wave WaveX=$DataX
 	
-	Duplicate/O WaveY, root:Packages:USAXS:GenericPlotY
-	Duplicate/O WaveX, root:Packages:USAXS:GenericPlotX
+	Duplicate/O WaveY, root:Packages:Indra3:GenericPlotY
+	Duplicate/O WaveX, root:Packages:Indra3:GenericPlotX
 	
-	Wave WaveYInPckgs= root:Packages:USAXS:GenericPlotY
-	Wave WaveXInPckgs= root:Packages:USAXS:GenericPlotX
+	Wave WaveYInPckgs= root:Packages:Indra3:GenericPlotY
+	Wave WaveXInPckgs= root:Packages:Indra3:GenericPlotX
 	
 	if (cmpstr("none", DataError)!=0)
 		Wave WaveError=$DataError
-		Duplicate/O WaveError, root:Packages:USAXS:GenericPlotError
-		Wave WaveErrorInPckgs=root:Packages:USAXS:GenericPlotError
+		Duplicate/O WaveError, root:Packages:Indra3:GenericPlotError
+		Wave WaveErrorInPckgs=root:Packages:Indra3:GenericPlotError
 	endif
 	
 	String GraphTitleString= "Plot of any wave to any wave"
@@ -837,11 +837,11 @@ End
 Function IN2P_AddAnotherWaveGeneric(ctrlname) : Buttoncontrol			
 	string ctrlname
 
-	SVAR PlotType=root:Packages:USAXS:GenericPlotType
-	SVAR DataY=root:Packages:USAXS:GenericPlotDataY
-	SVAR DataX=root:Packages:USAXS:GenericPlotDataX
-	SVAR DataError=root:Packages:USAXS:GenericPlotDataError
-	SVAR PlotName=root:Packages:USAXS:GenericPlotName
+	SVAR PlotType=root:Packages:Indra3:GenericPlotType
+	SVAR DataY=root:Packages:Indra3:GenericPlotDataY
+	SVAR DataX=root:Packages:Indra3:GenericPlotDataX
+	SVAR DataError=root:Packages:Indra3:GenericPlotDataError
+	SVAR PlotName=root:Packages:Indra3:GenericPlotName
 
 	string ListOfFolders=IN2G_FindFolderWithWaveTypes("root:USAXS:", 5, DataY+"*", 1)
 	string NewDataFldr

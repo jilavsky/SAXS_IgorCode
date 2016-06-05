@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.86
+#pragma version = 1.88
 
 
 //control constants
@@ -13,6 +13,8 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.88 fixes for panel scaling. 
+//1.87 added log intensity interpolation function
 //1.86 fixes for Package preferences
 //1,85 added IN2G_PanelAppendSizeRecordNote, moved whole package preferences to this package and removd use of Nika preferneces. MOved panel scaling here. 
 //1.84 added IN2G_ConvertPointToPix and IN2G_ConvertPixToPoint
@@ -172,6 +174,9 @@ constant IrenaDebugLevel=1
 //
 //IN2G_RemNaNsFromAWave(Wv1)	//removes NaNs from 1 wave
 //assume same number of points in the waves
+//
+//IN2G_LogInterpolateIntensity(NewQ,OldQ,Intensity)		
+//	Log interpolate Inteity to new Q points while fixing negative values. 
 //
 //IN2G_ReplaceNegValsByNaNWaves(Wv1,wv2,wv3)		
 //	Replaces Negative values in 3 waves by NaNs , assume same number of points
@@ -502,6 +507,15 @@ Function IN2G_InitConfigMain()
 	
 	SVAR ListOfKnownFontTypes=ListOfKnownFontTypes
 	ListOfKnownFontTypes=IN2G_CreateUsefulFontList()
+	//Nika needs to be handled here also...
+	SetDataFolder root:
+	SetDataFolder root:Packages
+	NewDataFolder/O/S root:Packages:Convert2Dto1D
+	ListOfVariables="DoubleClickConverts;ErrorCalculationsUseOld;ErrorCalculationsUseStdDev;ErrorCalculationsUseSEM"
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+
 	setDataFolder OldDf
 end
 //***********************************************************
@@ -1012,10 +1026,16 @@ Function IN2G_PanelResizePanelSize(s)
 			return 0
 		endif
 		//print s
-		GetWindow $s.winName wsizeDC		//wsizeRM?, wsizeDC returns pixels, wsize is in points. 
-													//MoveWindow is in points <<<<<< !!!!!!!   
-													//ModifyControl pos is in pixels, size is in pixels
-													//convert using: WidthPoints= WidthPixels * PanelResolution(panelName)/ScreenResolution
+		GetWindow $s.winName wsize					 
+		//tested on Igor 6 on regular resolution Windows, Igor 7 Macbook Pro (with retina). 
+		//wsizeRM?, wsizeDC returns pixels, wsize is in points.
+		//MoveWindow is in points <<<<<< !!!!!!!   
+		//ModifyControl pos is in pixels, size is in pixels
+		//convert using: WidthPoints= WidthPixels * PanelResolution(panelName)/ScreenResolution
+		//John Weeks, WM
+		//1) Use GetWindow wsize to get window coordinates, not wsizeDC
+		//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
+		//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
 		Variable left = V_left
 		Variable right = V_right
 		Variable top = V_top
@@ -1023,45 +1043,45 @@ Function IN2G_PanelResizePanelSize(s)
 		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
 		variable moveLeft, MoveRight, MoveTop, moveBottom 			//these need to be in points!! What a mess...
 		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
-		variable moveConvFac=72/ScreenResolution
+		//variable moveConvFac=screenResolution/PanelResolution("winname")
 		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//pixels
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
 		CurHeight = abs(bottom-top)													//with DC is pixels
 		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-			moveLeft = left*moveConvFac
-			MoveTop  = top*moveConvFac
-			MoveRight = (left+OriginalWidth)*moveConvFac
-			moveBottom = (top+OriginalHeight)*moveConvFac
+			moveLeft = left//*moveConvFac
+			MoveTop  = top//*moveConvFac
+			MoveRight = (left+OriginalWidth)//*moveConvFac
+			moveBottom = (top+OriginalHeight)//*moveConvFac
 			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1
 			verScale = 1
 		elseif(CurWidth<OriginalWidth && CurHeight>=OriginalHeight)		
 			//MoveWindow left, top, left+OriginalWidth, top+CurHeight
-			moveLeft = left*moveConvFac
-			MoveTop  = top*moveConvFac
-			MoveRight = (left+OriginalWidth)*moveConvFac
-			moveBottom = (top+CurHeight)*moveConvFac
+			moveLeft = left//*moveConvFac
+			MoveTop  = top//*moveConvFac
+			MoveRight = (left+OriginalWidth)//*moveConvFac
+			moveBottom = (top+CurHeight)//*moveConvFac
 			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1
 			verScale = CurHeight / (OriginalHeight)	
 		elseif(CurWidth>=OriginalWidth && CurHeight<OriginalHeight)
 			//MoveWindow left, top, left+CurWidth, top+OriginalHeight
-			moveLeft = left*moveConvFac
-			MoveTop = top*moveConvFac
-			MoveRight = (left+CurWidth)*moveConvFac
-			moveBottom = (top+OriginalHeight)*moveConvFac
+			moveLeft = left//*moveConvFac
+			MoveTop = top//*moveConvFac
+			MoveRight = (left+CurWidth)//*moveConvFac
+			moveBottom = (top+OriginalHeight)//*moveConvFac
 			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = 1
 			horScale = curWidth/OriginalWidth
 		else
-			moveLeft = left*moveConvFac
-			MoveTop = top*moveConvFac
-			MoveRight = (right)*moveConvFac
-			moveBottom = (bottom)*moveConvFac
+			moveLeft = left//*moveConvFac
+			MoveTop = top//*moveConvFac
+			MoveRight = (right)//*moveConvFac
+			moveBottom = (bottom)//*moveConvFac
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = CurHeight /OriginalHeight
 			horScale = curWidth/OriginalWidth
@@ -1156,12 +1176,20 @@ Function IN2G_PanelAppendSizeRecordNote(panelName)
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	//store main window size
 	GetWindow $panelName wsize 		//this value is in pixels
+	variable PLatform=0		//0 Mac, 1 Windows
+	if(StringMatch(IgorInfo(2), "Windows"))
+		PLatform = 1
+	endif
 	//John Weeks, WM
 	//1) Use GetWindow wsize to get window coordinates, not wsizeDC
 	//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
 	//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
 	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={IN2G_ConvertPointToPix(panelName, V_right-V_left-18),IN2G_ConvertPointToPix(panelName, V_bottom-V_top-18)}, disable=2
+	if(PLatform)	//WIndows
+		Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={IN2G_ConvertPointToPix(panelName, V_right-V_left-10),IN2G_ConvertPointToPix(panelName, V_bottom-V_top-10)}, disable=2
+	else
+		Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={IN2G_ConvertPointToPix(panelName, V_right-V_left-18),IN2G_ConvertPointToPix(panelName, V_bottom-V_top-18)}, disable=2
+	endif
 	GetWindow $panelName, note				//store existing note. 
 	string ExistingNote=S_Value
 	variable i, j
@@ -3060,9 +3088,9 @@ Function IN2G_AppendSizeTopWave(GraphName,BotWave, LeftWave,AxisPos,LabelX,Label
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string CurrentListOfrWaves=TraceNameList(GraphName,";",1)
 	//here we store what traces are in the graph before	
-	duplicate/O BotWave, root:Packages:USAXS:MyTopWave
+	duplicate/O BotWave, root:Packages:Indra3:MyTopWave
 	
-	Wave NewTopWave=root:Packages:USAXS:MyTopWave
+	Wave NewTopWave=root:Packages:Indra3:MyTopWave
 	
 	NewTopWave=2*pi/NewTopWave
 	
@@ -3091,9 +3119,9 @@ Function IN2G_AppendGuinierTopWave(GraphName,BotWave, LeftWave,AxisPos,LabelX,La
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	string CurrentListOfrWaves=TraceNameList(GraphName,";",1)
 	//here we store what traces are in the graph before	
-	duplicate/O BotWave, root:Packages:USAXS:MyTopWave
+	duplicate/O BotWave, root:Packages:Indra3:MyTopWave
 	
-	Wave NewTopWave=root:Packages:USAXS:MyTopWave
+	Wave NewTopWave=root:Packages:Indra3:MyTopWave
 	
 	NewTopWave=(2*pi)^2/NewTopWave
 	
@@ -3191,7 +3219,7 @@ Function IN2G_AppendAnyText(TextToBeInserted)	//this function checks for existan
 	Silent 1
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	TextToBeInserted=TextToBeInserted+"\r"
-    SVAR/Z nbl=root:Packages:USAXS:NotebookName
+    SVAR/Z nbl=root:Packages:Indra3:NotebookName
 	if(SVAR_exists(nbl))
 		if (strsearch(WinList("*",";","WIN:16"),nbl,0)!=-1)				//Logs data in Logbook
 			Notebook $nbl selection={endOfFile, endOfFile}
@@ -3346,7 +3374,7 @@ Function/T IN2G_GetMeListOfEPICSKeys()		//returns list of useful keywords for UP
 	dfSave=GetDataFolder(1)
 	
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
-	SVAR SpecFile=root:Packages:USAXS:PanelSpecScanSelected
+	SVAR SpecFile=root:Packages:Indra3:PanelSpecScanSelected
 	SetDataFolder $SpecFile
 	SVAR EPICS_PVs=EPICS_PVs
 	result="DCM_energy:"+StringByKey("DCM_energy",EPICS_PVs)+";"
@@ -3653,9 +3681,9 @@ Proc IN2G_BasicGraphStyle()
 	ModifyGraph/Z fSize=12
 	Label/Z left "Intensity"
 	Label/Z bottom "Ar encoder"
-	Duplicate/O PD_range, root:Packages:USAXS:MyColorWave							//creates new color wave
-	IN2A_MakeMyColors(PD_range,root:Packages:USAXS:MyColorWave)						//creates colors in it
- 	ModifyGraph mode=4, zColor={root:Packages:USAXS:MyColorWave,0,10,Rainbow}, margin(top)=100, mirror=1, minor=1
+	Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
+	IN2A_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
+ 	ModifyGraph mode=4, zColor={root:Packages:Indra3:MyColorWave,0,10,Rainbow}, margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
 	ShowTools/A											//show tools
 	Button KillThisWindow pos={10,10}, size={100,25}, title="Kill window", proc=IN2G_KillGraphsTablesEnd
@@ -4095,7 +4123,27 @@ Function IN2G_RemNaNsFromAWave(Wv1)	//removes NaNs from 1 wave
 		endif
 	endfor
 end
-
+//**********************************************************************************************
+//**********************************************************************************************
+Function IN2G_LogInterpolateIntensity(NewQ,NewIntensity, OldQ,Intensity)		//Interrpolate Intensity on log scale
+	Wave NewQ,NewIntensity,OldQ,Intensity			//assume same number of points in the waves
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	Duplicate/Free Intensity,TmpInt
+	wavestats/Q TmpInt
+	variable Offset
+	if(V_min<1e-30)
+		Offset=3*abs(V_min)
+	else
+		Offset = 0
+	endif
+	TmpInt = TmpInt[p]+Offset
+	TmpInt = log(TmpInt)
+	NewIntensity = interp(NewQ,OldQ, TmpInt)
+	NewIntensity = 10^NewIntensity
+	NewIntensity = NewIntensity[p]-Offset
+end
+	
 //**********************************************************************************************
 //**********************************************************************************************
 
@@ -4604,8 +4652,8 @@ Function/T IN2G_CreateListOfScans(df)			//Generates list of items in given folde
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	String dfSave
 	dfSave=GetDataFolder(1)
-	string/G root:Packages:USAXS:MyList=""
-	SVAR MyList=root:Packages:USAXS:MyList
+	string/G root:Packages:Indra3:MyList=""
+	SVAR MyList=root:Packages:Indra3:MyList
 	
 	if (DataFolderExists(df))
 		SetDataFolder $df
@@ -4621,7 +4669,7 @@ end
 Function IN2G_AppendScanNumAndComment()
 
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
-	SVAR List=root:Packages:USAXS:MyList
+	SVAR List=root:Packages:Indra3:MyList
 	SVAR/Z SpecComment
 	if (SVAR_Exists(SpecComment))
 		List+=GetDataFolder(0)+"     "+SpecComment+";"

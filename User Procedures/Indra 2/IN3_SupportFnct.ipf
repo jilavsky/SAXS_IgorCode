@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.06
+#pragma version =1.07
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.07 fixed problems with blank interpolation when intensities are really low and get negative. 
 //1.06 added SMR_dQ types waves  
 //1.05 modfied IN3_RecalcSubtractSaAndBlank to handle 2dFlyscans... 
 //1.04 modified to use rebinning routine from General procedures (requires General procedures version 1.71 and higher
@@ -76,9 +77,9 @@ Function IN3_ColorMainGraph(PdRanges)
 	DoWIndow RcurvePlotGraph
 	if(WaveExists(PD_range)&&V_Flag)
 		if(PdRanges)
-			Duplicate/O PD_range, root:Packages:USAXS:MyColorWave							//creates new color wave
-			IN3_MakeMyColors(PD_range,root:Packages:USAXS:MyColorWave)						//creates colors in it
-	 		ModifyGraph /W=RcurvePlotGraph/Z mode=4, zColor(R_Int)={root:Packages:USAXS:MyColorWave,0,10,Rainbow}
+			Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
+			IN3_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
+	 		ModifyGraph /W=RcurvePlotGraph/Z mode=4, zColor(R_Int)={root:Packages:Indra3:MyColorWave,0,10,Rainbow}
 		else
 	 		ModifyGraph /W=RcurvePlotGraph/Z  mode=4, zColor(R_Int)=0
 		endif
@@ -203,7 +204,10 @@ Function IN3_CalculateRdata()
 	endif
 	R_Int = PD_Intensity /SampleTransmissionPeakToPeak
 	R_Error = PD_Error /SampleTransmissionPeakToPeak
+	//remove negative intensities
+	R_Int = log(R_Int)
 	IN2G_RemoveNaNsFrom3Waves(R_Int,R_Qvec,R_Error)
+	R_int= 10^R_int
 	setDataFolder OldDf	
 end
 //***********************************************************************************************************************************
@@ -219,6 +223,7 @@ Function IN3_CalculateCalibration()
 	setDataFolder root:Packages:Indra3
 
 	SVAR ASBParameters=ListOfASBParameters
+	SVAR UPDParameters=UPDParameters
 
 	NVAR CalibrateToWeight 	=	root:Packages:Indra3:CalibrateToWeight
 	NVAR CalibrateToVolume 	=	root:Packages:Indra3:CalibrateToVolume
@@ -240,6 +245,11 @@ Function IN3_CalculateCalibration()
 	Variable OmegaFactor,ASStageWidthAtHalfMax
 	NVAR Kfactor
 	variable BLPeakWidthL
+	
+	PhotoDiodeSize=NumberByKey("UPDsize", UPDParameters,"=")																//Default PD size to 5.5mm at this time....
+	if(numtype(PhotoDiodeSize)!=0|| PhotoDiodeSize<=1)
+		PhotoDiodeSize = 5.5
+	endif
 
 	if (cmpstr(StringByKey("Calibrate", ASBParameters,"=",";"),"USAXS")==0)		//USAXS callibration, width given by SDD and PD size
 		BLPeakWidthL=BLPeakWidth*3600													//W_coef[3]*3600*2
@@ -376,10 +386,11 @@ Function IN3_RecalcSubtractSaAndBlank()
 	elseif (stringmatch(IsItSBUSAXS,"flyScan*"))			//if this is slit smeared flyscan create SMR data
 		Duplicate /O R_Int, SMR_Int
 		Duplicate /Free R_Int, logBlankInterp, BlankInterp
-		Duplicate/Free BL_R_Int, logBlankR
-		logBlankR=log(BL_R_Int)
-		LogBlankInterp=interp(R_Qvec, BL_R_Qvec, logBlankR)
-		BlankInterp=10^LogBlankInterp
+		//Duplicate/Free BL_R_Int, logBlankR
+		IN2G_LogInterpolateIntensity(R_Qvec, BlankInterp, BL_R_Qvec,BL_R_Int)	
+		//logBlankR=log(BL_R_Int)
+		//LogBlankInterp=interp(R_Qvec, BL_R_Qvec, logBlankR)
+		//BlankInterp=10^LogBlankInterp
 		SMR_Int= (R_Int - BlankInterp)/(Kfactor*MSAXSCorLocal)
 		SMR_Int -= SubtractFlatBackground
 		Duplicate/O R_error, SMR_Error
@@ -420,10 +431,11 @@ Function IN3_RecalcSubtractSaAndBlank()
 		SMR_dQ = sqrt((SMR_dQ[p])^2 + InstrumentQresolution^2)		//convolute with SI220 InstrumentQresolution
 	elseif (stringmatch(IsItSBUSAXS,"sbflySca"))			//if this is sbflyscan, creade DSM data
 		Duplicate /O R_Int, DSM_Int, logBlankInterp, BlankInterp
-		Duplicate/O BL_R_Int, logBlankR
-		logBlankR=log(BL_R_Int)
-		LogBlankInterp=interp(R_Qvec, BL_R_Qvec, logBlankR)
-		BlankInterp=10^LogBlankInterp
+		//Duplicate/O BL_R_Int, logBlankR
+		IN2G_LogInterpolateIntensity(R_Qvec, BlankInterp, BL_R_Qvec,BL_R_Int)	
+		//logBlankR=log(BL_R_Int)
+		//LogBlankInterp=interp(R_Qvec, BL_R_Qvec, logBlankR)
+		//BlankInterp=10^LogBlankInterp
 		DSM_Int=  (R_Int - BlankInterp)/(MSAXSCorLocal*Kfactor)
 		DSM_Int -=SubtractFlatBackground
 		KillWaves/Z logBlankInterp, BlankInterp, logBlankR

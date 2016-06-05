@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.42
+#pragma version = 1.43
 
 
 //*************************************************************************\
@@ -8,6 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.43 Added Listbox for external files programmed similarly to allow easy addition of input directluy from files. Need for multipel tools in the future.
+//			Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString)
 //1.42 removed PreparematchString - as fighting with regular expressions used by Regex. Added IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 //1.41 fixed problem when checkbox Use SMR data screwed up the control procedures and put them in non-working condition. Accidentally called old code. 
 //1.40 added to IR2P_CleanUpPackagesFolder to remove als any data in root:raw: folder. Not sure if this is OK, but they are there annoying. 
@@ -95,9 +98,7 @@
 //end
 
 //modifications:
-//	1.01		if Indra 2 data type is empty, controls will not show...
-//	1.03      Modifed PanelControlProcedures to enable user to write "hook" functions which can be run after the selection is made... 
-//	Important: There are 4 hook functions, run after folder, Q, intensity, and error data are selected, names must be exactly: 
+///	Important: There are 4 hook functions, run after folder, Q, intensity, and error data are selected, names must be exactly: 
 //	IR2_ContrProc_F_Hook_Proc(), IR2_ContrProc_Q_Hook_Proc(), IR2_ContrProc_R_Hook_Proc(), and IR2_ContrProc_E_Hook_Proc(). 
 //	User needs to make sure these can be called with no parameters and that they will not fail if called by different panel!!! 
 //	This is important, as they will be called from any panel whic is using this package, so they have to be prrof to that. 
@@ -105,6 +106,16 @@
 //Function IR2_ContrProc_Q_Hook_Proc()
 //	print getDataFolder(0)
 //end
+
+//Input listbox for external file selection, added in version 1.44
+//Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString, DoubleCLickFnctName)
+//			Call this with :
+//			PckgPathName - name of Igor Path which will be created (or used) to point to these files
+//			PckgDataFolder - name of package folder name (inside root:Packages:) should be possible to have this in subfolder
+//			PanelWindowName  - name of panel to attach these controls to
+//			DefaultExtensionStr, DefaultMatchStr,DefaultSortString  - 	default values. Can be left empty if needed. Default Sort if alphabetical. 
+//			DoubleCLickFnctName -  string name of function which shoudl be called on double click. Thsi function cannot have any parameters. If "" nothign will happen on double click. 
+
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2475,3 +2486,476 @@ Function/S IR2C_EscapeCharTable(cstr)
 end
 //**********************************************************************************************
 //**********************************************************************************************
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+//Select path, populate Listbox with files with input extension and allow one or more files selection. 
+//Include Match name string and make this universally usable as data selection tool so we do nto have to this again.
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString, DoubleCLickFnctName)
+	string PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	variable DontAdd =0 
+	if(stringmatch(PanelWindowName, "*#*" ))	//# so expect subwindow... Limit only to first child here, else is not allowed for now...
+			//first check for the main window existance...
+		string MainPnlWinName=StringFromList(0, PanelWindowName , "#")
+		string ChildPnlWinName=StringFromList(1, PanelWindowName , "#")
+					//check on existence here...
+		DoWindow $(MainPnlWinName)
+		if(!V_Flag)
+			abort //widnow does not exist, nothing to do...
+		endif
+		//OK, window exists, now check if it has the other in the childlist
+		if(!stringmatch(ChildWindowList(MainPnlWinName), "*"+ChildPnlWinName+"*" ))
+			abort //that child does nto exist!
+		endif	
+	else		//no # no subvwindow. Use old code...
+		DoWindow $(PanelWindowName)
+		if(!V_Flag)
+			abort //widnow does not exist, nothing to do...
+		endif
+	endif
+	IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString, DoubleCLickFnctName)
+	IR3C_AddControlsToWndw(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString, DoubleCLickFnctName)
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3C_AddControlsToWndw(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName)
+	string PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
+	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
+	SVAR SortOptionsString=root:Packages:IrenaListboxProcs:SortOptionsString
+//	SVAR ControlMatchString=root:Packages:IrenaListboxProcs:ControlMatchString
+
+	string CntrlLocation="root:Packages:"+PckgDataFolder
+	setDataFolder $(CntrlLocation)
+	SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
+	string CurSortString = DataSelSortString
+	string TopPanel=PanelWindowName
+	
+	Button SelectDataPath,pos={99,50},size={130,20}, proc=IR3C_ButtonProc,title="Select data path"
+	Button SelectDataPath,help={"Select data path to the data"}
+	SetVariable DataPathString,pos={2,72},size={415,19},title="Data path :", noedit=1
+	SetVariable DataPathString,help={"This is currently selected data path where Igor looks for the data"}
+	SetVariable DataPathString,limits={-Inf,Inf,0},value= $(CntrlLocation+":DataSelPathString")
+	SetVariable DataPathString disable=2,frame=0
+	SetVariable NameMatchString,pos={5,91},size={240,19},proc=IR3C_SetVarProc,title="Match name (string):"
+	SetVariable NameMatchString,help={"Insert RegEx select only data with matching name (uses grep)"}
+	SetVariable NameMatchString,value= $(CntrlLocation+":DataSelListBoxMatchString")
+	SetVariable DataExtensionString,pos={260,91},size={150,19},proc=IR3C_SetVarProc,title="Data extension:"
+	SetVariable DataExtensionString,help={"Insert extension string to mask data of only some type (dat, txt, ...)"}
+	SetVariable DataExtensionString,value= $(CntrlLocation+":DataSelListBoxExtString")
+	Button SelectAll,pos={5,112},size={110,15}, proc=IR3C_ButtonProc,title="Select all"
+	Button SelectAll,help={"Select all data in the listbox"}
+	Button DeSelectAll,pos={145,112},size={110,15}, proc=IR3C_ButtonProc,title="Deselect all"
+	Button DeSelectAll,help={"DeSelect all data in the listbox"}
+	PopupMenu SortOptionString,pos={280,112},size={160,21},proc=IR3C_PopMenuProc,title="Sort:", help={"Select how to sort the data"}
+	PopupMenu SortOptionString,mode=1,popvalue=CurSortString, value=#"root:Packages:IrenaListboxProcs:SortOptionsString"
+	TitleBox Info1PanelProc title="\Zr140List of available files",pos={10,128},frame=0,fstyle=1, fixedSize=1,size={220,20},fColor=(0,0,52224)
+	ListBox ListOfAvailableData,pos={5,147},size={230,280}
+	ListBox ListOfAvailableData,help={"Select files from this location you want to import"}
+	ListBox ListOfAvailableData,listWave=$(CntrlLocation+":WaveOfFiles")
+	ListBox ListOfAvailableData,selWave=$(CntrlLocation+":WaveOfSelections")
+	ListBox ListOfAvailableData,mode= 9, proc=IR3C_ListBoxProc
+	//and update content, if possible... 
+	IR3C_UpdateListOfFilesInWvs(PanelWindowName)
+	IR3C_SortListOfFilesInWvs(PanelWindowName)	
+end	
+//**********************************************************************************************************
+//**********************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function IR3C_ListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+
+	string TopPanel=WinName(0, 64)
+
+	Variable row = lba.row
+	Variable col = lba.col
+	WAVE/T/Z listWave = lba.listWave
+	WAVE/Z selWave = lba.selWave
+	Variable i
+	string items=""
+	SVAR 	SortOptionsString = root:Packages:IrenaListboxProcs:SortOptionsString
+	//="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
+	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
+	SVAR ControlDoubleCLickFnctName=root:Packages:IrenaListboxProcs:ControlDoubleCLickFnctName
+	
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
+	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
+	string DoubleCLickFnctName=StringByKey(TopPanel, ControlDoubleCLickFnctName,"=",";")
+
+	Wave/T WaveOfFiles      	= $(CntrlLocation+":WaveOfFiles")
+	Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
+	SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
+
+
+	switch( lba.eventCode )
+		case -1: // control being killed
+			break
+		case 1: // mouse down
+			if (lba.eventMod & 0x10)	// rightclick
+				// list of items for PopupContextualMenu
+				items = "Refresh Content;Select All;Deselect All;"+SortOptionsString	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				switch (V_flag)
+					case 1:	// "Refresh Content"
+						//refresh content, but here it will depend where we call it from.
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						variable oldSets=V_startRow
+						IR3C_UpdateListOfFilesInWvs(TopPanel)
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
+						break;
+					case 2:	// "Select All;"
+					      selWave = 1
+						break;
+					case 3:	// "Deselect All"
+					      selWave = 0
+						break;
+					default :	// "Sort"
+						DataSelSortString = StringFromList(V_flag-1, items)
+						PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						break;
+//					case 5:	// "Sort2"
+//					//	FIlesSortOrder = 2
+//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
+//					//	NI1A_UpdateDataListBox()	
+//						break;
+//					case 6:	// "_001"
+//					//	FIlesSortOrder = 3
+//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
+//						NI1A_UpdateDataListBox()	
+//						break;
+//					case 7:	// "Invert _001"
+//					//	FIlesSortOrder = 4
+//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
+//					//	NI1A_UpdateDataListBox()	
+//						break;
+//					case 8:	// "Invert Sort"
+//					//	FIlesSortOrder = 5
+//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
+//					//	NI1A_UpdateDataListBox()	
+//						break;
+//					case 9:	// "Invert Sort2"
+//					//	FIlesSortOrder = 6
+//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
+//					//	NI1A_UpdateDataListBox()	
+//						break;
+					endswitch
+				endif
+			break
+		case 3: // double click
+			if(strlen(DoubleCLickFnctName)>0)
+				Execute(DoubleCLickFnctName+"()")
+			endif
+			break
+		case 4: // cell selection
+		case 5: // cell selection plus shift key
+			break
+		case 6: // begin edit
+			break
+		case 7: // finish edit
+			break
+		case 13: // checkbox clicked (Igor 6.2 or later)
+			break
+	endswitch
+
+	return 0
+End
+//************************************************************************************************************
+//************************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3C_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+	String ctrlName
+	Variable popNum
+	String popStr
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	string TopPanel=WinName(0, 64)
+
+	if (Cmpstr(ctrlName,"SortOptionString")==0)
+		SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+		string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
+		SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
+		DataSelSortString = popStr
+		IR3C_SortListOfFilesInWvs(TopPanel)
+	endif
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//************************************************************************************************************
+Function IR3C_SortListOfFilesInWvs(TopPanel)
+	string TopPanel
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
+	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
+
+	Wave/T WaveOfFiles      	= $(CntrlLocation+":WaveOfFiles")
+	Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
+	SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
+	variable i
+//	string/g SortOptionsString="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
+	Duplicate/Free WaveOfFiles, TempWv
+	if(StringMatch(DataSelSortString, "Sort" ))
+		Sort WaveOfFiles, WaveOfFiles, WaveOfSelections
+	elseif(StringMatch(DataSelSortString, "Inv_Sort" ))
+		Sort/R WaveOfFiles, WaveOfFiles, WaveOfSelections
+	elseif(StringMatch(DataSelSortString, "Sort _XYZ" ))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
+		endfor
+		Sort TempWv, WaveOfFiles, WaveOfSelections
+	elseif(StringMatch(DataSelSortString, "Inv Sort _XYZ" ))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
+		endfor
+		Sort/R TempWv, WaveOfFiles, WaveOfSelections
+	endif
+	
+end
+//************************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3C_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
+	String ctrlName
+	Variable varNum
+	String varStr
+	String varName
+
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	string TopPanel=WinName(0, 64)
+	if (cmpstr(ctrlName,"NameMatchString")==0)
+		IR3C_UpdateListOfFilesInWvs(TopPanel)
+		IR3C_SortListOfFilesInWvs(TopPanel)
+	endif
+	if (cmpstr(ctrlName,"DataExtensionString")==0)
+		IR3C_UpdateListOfFilesInWvs(TopPanel)
+		IR3C_SortListOfFilesInWvs(TopPanel)
+	endif
+	return 0
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+
+Function IR3C_ButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			string TopPanel=ba.win
+			// click code here
+			if(stringMatch(ba.ctrlName,"SelectDataPath"))
+				IR3C_SelectDataPath(TopPanel)	
+				IR3C_UpdateListOfFilesInWvs(TopPanel)
+			endif
+			if(stringMatch(ba.ctrlName,"SelectAll"))
+				IR3C_SelectDeselectAll(TopPanel,1)	
+			endif
+			if(stringMatch(ba.ctrlName,"DeSelectAll"))
+				IR3C_SelectDeselectAll(TopPanel,0)	
+			endif
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function IR3C_SelectDataPath(TopPanel)
+	string TopPanel
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
+	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
+	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
+	
+	NewPath /M="Select path to data" /O $(CntrlPathName)
+	if (V_Flag!=0)
+		abort
+	endif 
+	PathInfo $(CntrlPathName)
+	SVAR DataSelPathString=$(CntrlLocation+":DataSelPathString")
+	DataSelPathString = S_Path
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function IR3C_UpdateListOfFilesInWvs(TopPanel)
+	string TopPanel
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
+	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
+	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
+
+	SVAR NameMatchString 		= $(CntrlLocation+":DataSelListBoxMatchString")
+	SVAR DataExtension  		= $(CntrlLocation+":DataSelListBoxExtString")
+	Wave/T WaveOfFiles      	= $(CntrlLocation+":WaveOfFiles")
+	Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
+	string ListOfAllFiles
+	string LocalDataExtension
+	variable i, imax
+	LocalDataExtension = DataExtension
+	if (cmpstr(LocalDataExtension[0],".")!=0)
+		LocalDataExtension = "."+LocalDataExtension
+	endif
+	PathInfo $(CntrlPathName)
+	if(V_Flag)
+		if (strlen(LocalDataExtension)<=1)
+			ListOfAllFiles = IndexedFile($(CntrlPathName),-1,"????")
+		else		
+			ListOfAllFiles = IndexedFile($(CntrlPathName),-1,LocalDataExtension)
+		endif
+		if(strlen(NameMatchString)>0)
+			ListOfAllFiles = GrepList(ListOfAllFiles, NameMatchString )
+		endif
+		//remove Invisible Mac files, .DS_Store and .plist
+		ListOfAllFiles = RemoveFromList(".DS_Store", ListOfAllFiles)
+		ListOfAllFiles = RemoveFromList("EagleFiler Metadata.plist", ListOfAllFiles)
+	
+		imax = ItemsInList(ListOfAllFiles,";")
+		Redimension/N=(imax) WaveOfSelections
+		Redimension/N=(imax) WaveOfFiles
+		for (i=0;i<imax;i+=1)
+			WaveOfFiles[i] = stringFromList(i, ListOfAllFiles,";")
+		endfor
+	else
+		Redimension/N=0 WaveOfSelections
+		Redimension/N=0 WaveOfFiles
+	endif 
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function IR3C_SelectDeselectAll(TopPanel, Select)
+	string TopPanel
+	variable Select
+	
+	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
+	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
+	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
+	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
+
+	Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
+	if(select)
+		WaveOfSelections=1
+	else
+		WaveOfSelections=0
+	endif
+end
+//************************************************************************************************************
+//************************************************************************************************************
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName )
+	string PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	string OldDf=GetDataFolder(1)
+	setdatafolder root:
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S IrenaListboxProcs
+
+	variable i
+	
+	SVAR/Z ControlProcsLocations
+	if(!SVAR_Exists(ControlProcsLocations))
+		string/g ControlProcsLocations
+	endif
+	ControlProcsLocations=ReplaceStringByKey(PanelWindowName, ControlProcsLocations, PckgDataFolder,"=",";" )
+
+	SVAR/Z ControlPckgPathName
+	if(!SVAR_Exists(ControlPckgPathName))
+		string/g ControlPckgPathName
+	endif
+	ControlPckgPathName=ReplaceStringByKey(PanelWindowName, ControlPckgPathName, PckgPathName, "=",";" )
+
+	SVAR/Z ControlPanelWindowName
+	if(!SVAR_Exists(ControlPanelWindowName))
+		string/g ControlPanelWindowName
+	endif
+	ControlPanelWindowName=ReplaceStringByKey(PanelWindowName, ControlPanelWindowName, PanelWindowName, "=",";" )
+	
+	SVAR/Z ControlDoubleCLickFnctName
+	if(!SVAR_Exists(ControlDoubleCLickFnctName))
+		string/g ControlDoubleCLickFnctName
+	endif
+	ControlDoubleCLickFnctName=ReplaceStringByKey(PanelWindowName, ControlDoubleCLickFnctName, DoubleCLickFnctName, "=",";" )
+
+	string/g SortOptionsString="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
+	SVAR SortOptionsString
+
+	//check for presence of the folder where this is suppose to work.
+	setDataFolder root:Packages
+	string TmpStr=PckgDataFolder
+	TmpStr = ReplaceString("root:Packages:", TmpStr, "")
+	if(!DataFolderExists(TmpStr))
+		For(i=0;i<itemsInList(TmpStr,":");i+=1)
+ 				NewDataFOlder/O/S $(StringFromList(i,TmpStr,":"))
+		endfor
+	else
+		setDataFolder PckgDataFolder
+	endif
+	//Make the waves & strings needed. 
+	Make/O/N=0/T	 WaveOfFiles
+	Make/O/N=0 WaveOfSelections
+	string/g DataSelListBoxMatchString
+	DataSelListBoxMatchString = DefaultMatchStr
+	string/g DataSelListBoxExtString = DefaultExtensionStr
+	PathInfo  $PckgPathName
+	string/g DataSelPathString = S_path
+	string/g DataSelSortString
+	SVAR DataSelSortString
+	if(strlen(DefaultSortString)>0 && StringMatch(SortOptionsString, "*"+DefaultSortString+"*" ))
+		DataSelSortString = DefaultSortString
+	else
+		DataSelSortString = StringFromList(0,SortOptionsString)
+	endif
+	
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+

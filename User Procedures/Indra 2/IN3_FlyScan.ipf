@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.37
+#pragma version=0.39
 #include <Peak AutoFind>
 
 
@@ -11,7 +11,8 @@ Constant IN3_DeleteRawData=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//1.39 modified IN3_FlyScanSelectDataPath to handle presence on USAXS computers with usaxscontrol samba drive
+//0.38 fixes for 2016-02, sorting for new naming system
 //0.37 scaling of panels and added Remove from name string
 //0.36 fixed the need for using the HDF5 Browser, it was easy. Much quicker...  
 //0.35 fixed problem with too long name of spec file and therefore flyscan folder. 
@@ -116,8 +117,8 @@ Function IN3_FlyScanImportPanelFnct()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(49,49,412,545) as "USAXS FlyScan Import data"
 	DoWindow/C IN3_FlyScanImportPanel
-	TitleBox MainTitle,pos={40,5},size={360,24},title="Import USAXS Data "
-	TitleBox MainTitle,font="Times New Roman",fSize=22,frame=0,fStyle=3
+	TitleBox MainTitle,pos={13,5},size={330,24},title="\Zr210Import USAXS Data "
+	TitleBox MainTitle,font="Times New Roman",frame=0,fStyle=3,anchor=MC
 	TitleBox MainTitle,fColor=(0,0,52224),fixedSize=1
 	TitleBox FakeLine1,pos={16,40},size={330,3},title=" ",labelBack=(0,0,52224)
 	TitleBox FakeLine1,frame=0,fColor=(0,0,52224),fixedSize=1
@@ -182,7 +183,17 @@ End
 //************************************************************************************************************
 
 Function IN3_FlyScanSelectDataPath()
-
+	
+	//check if we are running on USAXS computers
+	GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+	if(V_isFolder)
+		//OK, this computer has Z:USAXS_data 
+		PathInfo USAXSHDFPath
+		if(V_flag==0)
+			NewPath/Q  USAXSHDFPath, "Z:USAXS_data:"
+			pathinfo/S USAXSHDFPath
+		endif
+	endif
 	NewPath /M="Select path to data to be imported" /O USAXSHDFPath
 	if (V_Flag!=0)
 		abort
@@ -233,7 +244,12 @@ Function IN3_FSUpdateListOfFilesInWvs()
 			WaveOfFiles[i] = stringFromList(i, ListOfAllFiles,";")
 		endfor
 		For(i=0;i<numpnts(TmpSortWv);i+=1)
-			TmpSortWv[i] = str2num(StringFromList(0, WaveOfFiles[i] , "_")[1,inf])
+			//decide if using old or new naming system
+			if(grepstring(WaveOfFiles[i],"^S[0-9]+"))//OLD METHOD
+				TmpSortWv[i] = str2num(StringFromList(0, WaveOfFiles[i] , "_")[1,inf])
+			else	//number at the end... 
+				TmpSortWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i] , "_")-1, WaveOfFiles[i] , "_")[1,inf])
+			endif
 		endfor
 		if(LatestOnTopInPanel)
 			Sort/R TmpSortWv, WaveOfFiles
@@ -488,6 +504,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave updBkgErr3=:entry:metadata:upd_bkgErr2
 	Wave updBkgErr4=:entry:metadata:upd_bkgErr3
 	Wave updBkgErr5=:entry:metadata:upd_bkgErr4	
+	Wave UPDsize=:entry:metadata:UPDsize	
 	Wave/T SampleNameW=:entry:sample:name
 	Wave SampleThicknessW = :entry:sample:thickness
 	Wave/Z DCM_energyW=:entry:instrument:monochromator:energy
@@ -679,7 +696,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	UPDParameters="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
 	UPDParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
 	UPDParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
-	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"
+	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";UPDsize="+num2str(UPDsize[0])+";"
 	string/g MeasurementParameters
 	MeasurementParameters="DCM_energy="+num2str(DCM_energyW[0])+";SAD="+num2str(SADW[0])+";SDD="+num2str(SDDW[0])+";thickness="+num2str(SampleThicknessW[0])+";"
 	MeasurementParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"
