@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.31
+#pragma version=1.32
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.32 checked fit checkboxes and added check if we are runnign on USAXS computer to set path the USAXS_data
 //1.31 fix colorization of the LineuotDisplayPlot_Q graph. 
 //1.30 added more calibratnt lines (10 for SAXS/WAXS)
 //1.29 WAXS transmission correction and add Mask for Pilatus 200kw
@@ -657,6 +658,16 @@ Function NI1_15IDDSetDefaultNx()
 					BMUseCalibrantD8=1
 					BMUseCalibrantD9=1
 					BMUseCalibrantD10=1
+				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
+				BmCalibrantName="LaB6"
+				NVAR BMFitBeamCenter = root:Packages:Convert2Dto1D:BMFitBeamCenter
+				NVAR BMFitSDD = root:Packages:Convert2Dto1D:BMFitSDD
+				NVAR BMFitTilts = root:Packages:Convert2Dto1D:BMFitTilts
+				NVAR BMCntrDisplayLogImage = root:Packages:Convert2Dto1D:BMCntrDisplayLogImage
+				BMCntrDisplayLogImage = 1
+				BMFitTilts=1
+				BMFitSDD = 1
+				BMFitBeamCenter = 1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
 	elseif(pinSAXSSelected)
@@ -804,7 +815,16 @@ Function NI1_15IDDSetDefaultNx()
 					BMUseCalibrantD10=1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
-
+				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
+				BmCalibrantName="Ag behenate"
+				NVAR BMFitBeamCenter = root:Packages:Convert2Dto1D:BMFitBeamCenter
+				NVAR BMFitSDD = root:Packages:Convert2Dto1D:BMFitSDD
+				NVAR BMFitTilts = root:Packages:Convert2Dto1D:BMFitTilts
+				NVAR BMCntrDisplayLogImage = root:Packages:Convert2Dto1D:BMCntrDisplayLogImage
+				BMFitTilts=1
+				BMFitSDD = 1
+				BMFitBeamCenter = 1
+				BMCntrDisplayLogImage = 1
 				NVAR SAXSDeleteTempPinData= root:Packages:Convert2Dto1D:SAXSDeleteTempPinData
 				SAXSDeleteTempPinData = 1
 	else		//end of pinSAXS selectetin, bellow starts bigSAXS specifics...
@@ -922,11 +942,24 @@ Function NI1_15IDDSetDefaultNx()
 					BMUseCalibrantD5=0
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 120
+				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
+				BmCalibrantName="Ag behenate"
 	endif
 	//common
 				SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
 				BlankFileExtension = "Nexus"
-				PathInfo/S Convert2Dto1DEmptyDarkPath
+				//check if we are running on USAXS computers
+				GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+				if(V_isFolder)
+					//OK, this computer has Z:USAXS_data 
+					PathInfo Convert2Dto1DDataPath
+					if(V_flag==0)
+						NewPath/Q  Convert2Dto1DDataPath, "Z:USAXS_data:"
+						pathinfo/S Convert2Dto1DDataPath
+					endif
+				endif
+				//PathInfo/S Convert2Dto1DDataPath
+				//PathInfo/S Convert2Dto1DEmptyDarkPath
 				NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
 				PathInfo Convert2Dto1DDataPath
 				string pathInforStrL = S_Path
@@ -941,8 +974,6 @@ Function NI1_15IDDSetDefaultNx()
 				SVAR BCPathInfoStr=root:Packages:Convert2Dto1D:BCPathInfoStr
 				PathInfo Convert2Dto1DBmCntrPath
 				BCPathInfoStr=S_Path
-				SVAR BmCalibrantName = root:Packages:Convert2Dto1D:BmCalibrantName
-				BmCalibrantName="Ag behenate"
 				//mask settings
 				SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
 				CCDFileExtension = "Nexus"

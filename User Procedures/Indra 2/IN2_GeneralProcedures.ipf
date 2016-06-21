@@ -590,6 +590,7 @@ end
 
 Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 	variable ForceRead
+	//debugger
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	struct  IrenaPanelDefaults Defs 
 	IN2G_InitConfigMain()
@@ -737,7 +738,7 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 			DefaultFontSize = defFntSize
 			IN2G_ChangePanelCOntrolsStyle()
 			IN2G_SaveIrenaGUIPackagePrefs(0)
-			DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They wewre set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
+			DoAlert 1, "GUI and Graph defaults (font size and type preferences) not found. They were set to defaults. Do you want to set check now? These are set once on a computer and can be changed in \"Configure default fonts and names\" dialog" 
 			if(V_Flag==1)
 				Execute("IN2G_MainConfigPanelProc() ")
 			endif	

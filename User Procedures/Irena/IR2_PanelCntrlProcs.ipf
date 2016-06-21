@@ -2552,7 +2552,7 @@ Function IR3C_AddControlsToWndw(PckgPathName, PckgDataFolder, PanelWindowName,De
 	SetVariable DataPathString,pos={2,72},size={415,19},title="Data path :", noedit=1
 	SetVariable DataPathString,help={"This is currently selected data path where Igor looks for the data"}
 	SetVariable DataPathString,limits={-Inf,Inf,0},value= $(CntrlLocation+":DataSelPathString")
-	SetVariable DataPathString disable=2,frame=0
+	SetVariable DataPathString disable=0,frame=0, styledText=1, valueColor=(1,4,52428)
 	SetVariable NameMatchString,pos={5,91},size={240,19},proc=IR3C_SetVarProc,title="Match name (string):"
 	SetVariable NameMatchString,help={"Insert RegEx select only data with matching name (uses grep)"}
 	SetVariable NameMatchString,value= $(CntrlLocation+":DataSelListBoxMatchString")
@@ -2718,7 +2718,7 @@ Function IR3C_SortListOfFilesInWvs(TopPanel)
 	SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
 	variable i
 //	string/g SortOptionsString="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
-	Duplicate/Free WaveOfFiles, TempWv
+	Duplicate/Free WaveOfSelections, TempWv
 	if(StringMatch(DataSelSortString, "Sort" ))
 		Sort WaveOfFiles, WaveOfFiles, WaveOfSelections
 	elseif(StringMatch(DataSelSortString, "Inv_Sort" ))
@@ -2772,6 +2772,7 @@ Function IR3C_ButtonProc(ba) : ButtonControl
 			if(stringMatch(ba.ctrlName,"SelectDataPath"))
 				IR3C_SelectDataPath(TopPanel)	
 				IR3C_UpdateListOfFilesInWvs(TopPanel)
+				IR3C_SortListOfFilesInWvs(TopPanel)
 			endif
 			if(stringMatch(ba.ctrlName,"SelectAll"))
 				IR3C_SelectDeselectAll(TopPanel,1)	
@@ -2799,14 +2800,48 @@ Function IR3C_SelectDataPath(TopPanel)
 	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
 	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
 	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
+	//check if we are running on USAXS computers
+	GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+	if(V_isFolder)
+		//OK, this computer has Z:USAXS_data 
+		PathInfo $(CntrlPathName)
+		if(V_flag==0)
+			NewPath/Q  $(CntrlPathName), "Z:USAXS_data:"
+			pathinfo/S $(CntrlPathName)
+		endif
+	endif
 	
 	NewPath /M="Select path to data" /O $(CntrlPathName)
 	if (V_Flag!=0)
 		abort
 	endif 
 	PathInfo $(CntrlPathName)
+	string tmpStr= S_Path
 	SVAR DataSelPathString=$(CntrlLocation+":DataSelPathString")
-	DataSelPathString = S_Path
+	
+	//figure out the size of the string we can use...
+	variable Width = FontSizeStringWidth(ReplaceString("'",IN2G_LkUpDfltStr("DefaultFontType"),""), str2num(IN2G_LkUpDfltVar("DefaultFontSize")),0,S_Path)
+	variable ratio = (415 - FontSizeStringWidth(ReplaceString("'",IN2G_LkUpDfltStr("DefaultFontType"),""), str2num(IN2G_LkUpDfltVar("DefaultFontSize")),0,"Data Path :"))/width
+	if(ratio<0.8)
+		DataSelPathString = "\Zr080"+S_Path
+	elseif(ratio>0.8 && ratio<0.9)
+		DataSelPathString = "\Zr080"+S_Path
+	elseif(ratio>0.9 && ratio<1)
+		DataSelPathString = "\Zr090"+S_Path
+	elseif(ratio>1 && ratio<1.1)
+		DataSelPathString = S_Path
+	elseif(ratio>1.1 && ratio<1.2)
+		DataSelPathString = "\Zr110"+S_Path
+	elseif(ratio>1.2 && ratio<1.3)
+		DataSelPathString = "\Zr120"+S_Path
+	elseif(ratio>1.3 && ratio<1.4)
+		DataSelPathString = "\Zr130"+S_Path
+	elseif(ratio>1.4 && ratio<1.5)
+		DataSelPathString = "\Zr140"+S_Path
+	elseif(ratio>1.5)
+		DataSelPathString = "\Zr150"+S_Path
+	endif
+	
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -2944,7 +2979,7 @@ Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,Default
 	DataSelListBoxMatchString = DefaultMatchStr
 	string/g DataSelListBoxExtString = DefaultExtensionStr
 	PathInfo  $PckgPathName
-	string/g DataSelPathString = S_path
+	string/g DataSelPathString = "\Zr140"+S_path
 	string/g DataSelSortString
 	SVAR DataSelSortString
 	if(strlen(DefaultSortString)>0 && StringMatch(SortOptionsString, "*"+DefaultSortString+"*" ))

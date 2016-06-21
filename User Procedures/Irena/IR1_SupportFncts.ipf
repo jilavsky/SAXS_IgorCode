@@ -35,42 +35,42 @@
 //*****************************************************************************************************************
 
 
-Function/T IR1_GenStringOfFolders(UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly)
-	variable UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly
-		//SlitSmearedData =0 for DSM data, 
-		//                          =1 for SMR data 
-		//                    and =2 for both
-		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
-	
-	string ListOfQFolders
-	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
-	string result
-	if (UseIndra2Structure)
-		if(SlitSmearedData==1)
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-		elseif(SlitSmearedData==2)
-			string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
-			variable i
-			for(i=0;i<ItemsInList(tempStr);i+=1)
-			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
-				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
-					result+=StringFromList(i, tempStr,";")+";"
-				endif
-			endfor
-		else
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
-		endif
-	elseif (UseQRSStructure)
-		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "q*", 1)
-		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
-	else
-		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
-	endif
-	
-Print "This code should be already deprecated. Called from "+GetRTStackInfo(0)+". remprt to Jan, please"	
-	return result
-end
+//Function/T IR1_GenStringOfFolders(UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly)
+//	variable UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly
+//		//SlitSmearedData =0 for DSM data, 
+//		//                          =1 for SMR data 
+//		//                    and =2 for both
+//		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
+//	
+//	string ListOfQFolders
+//	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
+//	string result
+//	if (UseIndra2Structure)
+//		if(SlitSmearedData==1)
+//			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
+//		elseif(SlitSmearedData==2)
+//			string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
+//			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
+//			variable i
+//			for(i=0;i<ItemsInList(tempStr);i+=1)
+//			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
+//				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
+//					result+=StringFromList(i, tempStr,";")+";"
+//				endif
+//			endfor
+//		else
+//			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
+//		endif
+//	elseif (UseQRSStructure)
+//		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "q*", 1)
+//		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
+//	else
+//		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
+//	endif
+//	
+//Print "This code should be already deprecated. Called from "+GetRTStackInfo(0)+". remprt to Jan, please"	
+//	return result
+//end
 
 
 //*****************************************************************************************************************

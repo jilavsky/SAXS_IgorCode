@@ -1933,7 +1933,7 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 			//call check version procedure and advise user on citations
 			IR2C_CheckVersions()
 			LastUpdateCheckIrena = datetime
-			IN2G_SaveIrenaGUIPackagePrefs(1)
+			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif
 
 //	//CalledFromMenu=1 run always...

@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.88 added Import & process Flyscan GUI
 //1.87 Igor 7 beta updates, 
 //1.86 Igor 7 beta updates, dQ wave added, Flyscan improvements
 //1.85 Flyscan improvements for 9ID March 2015
@@ -32,13 +33,13 @@
 //	Good luck....
 
 
-#include ":IN2_BckgSubtr", version>=1.01
+//#include ":IN2_BckgSubtr", version>=1.01
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.2
-#include ":IN2_GAUSAXS 1", version>=1
+//#include ":IN2_GAUSAXS 1", version>=1
 #include ":IN2_GeneralProcedures", version>=1.83
-#include ":IN2_ImportX23", version>=1.10
-#include ":IN2_Merging Data", version>=1.10
+//#include ":IN2_ImportX23", version>=1.10
+//#include ":IN2_Merging Data", version>=1.10
 #include ":IN2_NotebookLogging", version>=1.10
 #include ":IN2_PlottingTools", version>=1.13
 #include ":IN2_SpecInput", version>=1.20

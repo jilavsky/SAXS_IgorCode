@@ -4,6 +4,7 @@ Code modification history
 -latest stuff first
 ********************************************
 1.74
+Due to some new features used, requires Igor 6.34 or higher
 Added more lines to calibrants. Up to 10 diffraction lines re allowed and used if user selects. 
 Added control which sets default scaling for images when loaded, so user can set preferred scaling. Note: Igor does enforce maximum size of image and will not scale above screen size.  
 

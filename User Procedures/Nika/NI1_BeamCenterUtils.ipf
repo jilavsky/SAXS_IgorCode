@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 Constant NI1BCversionNumber = 2.22
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
- 
+
+//2.24 Modified to point to USAXS_data on USAXS computers 
 //2.23 GUI fix on new calibrants lines 
 //2.22 added more lines to the calibrants
 //2.21 added panel scaling
@@ -1724,6 +1725,17 @@ Function NI1BC_BmCntrButtonProc(ctrlName) : ButtonControl
 	endif
 	
 	if( CmpStr(ctrlName,"SelectPathToData") == 0 )
+		//check if we are running on USAXS computers
+		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+		if(V_isFolder)
+			//OK, this computer has Z:USAXS_data 
+			PathInfo Convert2Dto1DBmCntrPath
+			if(V_flag==0)
+				NewPath/Q  Convert2Dto1DBmCntrPath, "Z:USAXS_data:"
+				pathinfo/S Convert2Dto1DBmCntrPath
+			endif
+		endif
+		//PathInfo/S Convert2Dto1DMaskPath
 		NewPath/C/O/M="Select path to your data" Convert2Dto1DBmCntrPath
 		SVAR BCPathInfoStr=root:Packages:Convert2Dto1D:BCPathInfoStr
 		PathInfo Convert2Dto1DBmCntrPath

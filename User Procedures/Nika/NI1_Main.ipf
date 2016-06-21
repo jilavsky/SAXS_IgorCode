@@ -866,7 +866,7 @@ Function NI1_CheckNikaUpdate(CalledFromMenu)
 			//call check version procedure and advise user on citations
 			NI1_CheckVersions()
 			LastUpdateCheckNika = datetime
-			IN2G_SaveIrenaGUIPackagePrefs(1)
+			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif 
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.32)
 			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (7/2013) to version 6.32A. Please, update your Igor to the latest version."  

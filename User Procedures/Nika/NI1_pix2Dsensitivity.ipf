@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.03
+#pragma version=1.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.04 modified to point to USAXS_data on USAXS computers
 //1.03 modified call to hook function
 //1.02 adds ability to use mask for calculation of Flood field. 
 //1.01 added license for ANL
@@ -372,6 +373,17 @@ Function NI1_FloodButtonProc(ctrlName) : ButtonControl
 		NI1_FloodCreateAppendImage(1)
 	endif
 	if( CmpStr(ctrlName,"SelectPathToData") == 0 )
+		//check if we are running on USAXS computers
+		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+		if(V_isFolder)
+			//OK, this computer has Z:USAXS_data 
+			PathInfo Convert2Dto1DFloodPath
+			if(V_flag==0)
+				NewPath/Q  Convert2Dto1DFloodPath, "Z:USAXS_data:"
+				pathinfo/S Convert2Dto1DFloodPath
+			endif
+		endif
+		//PathInfo/S Convert2Dto1DMaskPath
 		NewPath/C/O/M="Select path to your data, FLOOD will be saved there too" Convert2Dto1DFloodPath
 		NI1_UpdateFloodListBox()
 	endif

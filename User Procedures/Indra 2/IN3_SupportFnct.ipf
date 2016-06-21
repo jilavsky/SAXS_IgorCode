@@ -71,20 +71,22 @@ Function IN3_MakeMyColors(PDrange,NewColors)		//makes color wave for
 Function IN3_ColorMainGraph(PdRanges)
 	variable PdRanges
 
-	SVAR DataFolderName=root:Packages:Indra3:DataFolderName
-	Wave/Z PD_range=$(DataFolderName+"PD_Range")
-	//set PdRanges to 1 to have colored main data in correct colors., 0 to uncolor
 	DoWIndow RcurvePlotGraph
-	if(WaveExists(PD_range)&&V_Flag)
-		if(PdRanges)
-			Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
-			IN3_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
-	 		ModifyGraph /W=RcurvePlotGraph/Z mode=4, zColor(R_Int)={root:Packages:Indra3:MyColorWave,0,10,Rainbow}
-		else
-	 		ModifyGraph /W=RcurvePlotGraph/Z  mode=4, zColor(R_Int)=0
+	if(V_Flag)		//exists, other studff shoudl exist also...
+		SVAR DataFolderName=root:Packages:Indra3:DataFolderName
+		Wave/Z PD_range=$(DataFolderName+"PD_Range")
+		//set PdRanges to 1 to have colored main data in correct colors., 0 to uncolor
+		if(WaveExists(PD_range)&&V_Flag)
+			if(PdRanges)
+				Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
+				IN3_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
+		 		ModifyGraph /W=RcurvePlotGraph/Z mode=4, zColor(R_Int)={root:Packages:Indra3:MyColorWave,0,10,Rainbow}
+			else
+		 		ModifyGraph /W=RcurvePlotGraph/Z  mode=4, zColor(R_Int)=0
+			endif
 		endif
 	endif
-end
+end 
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************

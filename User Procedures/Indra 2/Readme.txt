@@ -8,6 +8,12 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
+xxxx
+Due to some new features used, requires Igor 6.34 or higher
+Modification fro Flyscans in 2016-02
+Recasted internally use of folders, this is likely incompatible change backwards, so you need to reopen the Data reduction in old experiments. 
+
+
 1.88 3/5/3016
 Added panel scaling on most large panels
 Fixed bug for names which were liberal - e.g. with decimal point in name. Was failing to load them.

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.24
+#pragma version =1.25
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 MOdified to point to USAXS_data on USAXS computers
 //1.24 added panel scaling
 //1.23 fix problems when saving of mask file to drive failed due to something (like write privileges). 
 //1.22 yet another update for MaskListbox - it was not looking for h5 and hdf5 fiels when Nexus was seletced
@@ -388,6 +389,17 @@ Function NI1M_RoiDrawButtonProc(ctrlName) : ButtonControl
 
 
 	if( CmpStr(ctrlName,"SelectPathToData") == 0 )
+		//check if we are running on USAXS computers
+		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+		if(V_isFolder)
+			//OK, this computer has Z:USAXS_data 
+			PathInfo Convert2Dto1DMaskPath
+			if(V_flag==0)
+				NewPath/Q  Convert2Dto1DMaskPath, "Z:USAXS_data:"
+				pathinfo/S Convert2Dto1DMaskPath
+			endif
+		endif
+		//PathInfo/S Convert2Dto1DMaskPath
 		NewPath/C/O/M="Select path to your data, MASK will be saved there too" Convert2Dto1DMaskPath
 		NI1M_UpdateMaskListBox()
 	endif

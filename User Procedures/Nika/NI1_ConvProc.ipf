@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//added handling of ...tiff file names
+//2.50 Modified to point to USXS_data on USAXS computers, added handling of ...tiff file names
 //2.49 added Function for creating user custom data names. 
 //2.48 added main data reduction parameters in the wave note. For unknown reason were missing. 
 //2.47 added time stamps to background task print statements so user has any idea when was the task run last time. 
@@ -1788,7 +1788,17 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	endif
 
 	if(cmpstr(ctrlName,"Select2DDataPath")==0)
-		PathInfo/S Convert2Dto1DDataPath
+		//check if we are running on USAXS computers
+		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+		if(V_isFolder)
+			//OK, this computer has Z:USAXS_data 
+			PathInfo Convert2Dto1DDataPath
+			if(V_flag==0)
+				NewPath/Q  Convert2Dto1DDataPath, "Z:USAXS_data:"
+				pathinfo/S Convert2Dto1DDataPath
+			endif
+		endif
+		//PathInfo/S Convert2Dto1DDataPath
 		NewPath/C/O/M="Select path to your data" Convert2Dto1DDataPath
 		PathInfo Convert2Dto1DDataPath
 		SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
@@ -1797,7 +1807,17 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		NI1A_UpdateDataListBox()		
 	endif
 	if(cmpstr(ctrlName,"MaskSelectPath")==0)
-		PathInfo/S Convert2Dto1DMaskPath
+		//check if we are running on USAXS computers
+		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
+		if(V_isFolder)
+			//OK, this computer has Z:USAXS_data 
+			PathInfo Convert2Dto1DMaskPath
+			if(V_flag==0)
+				NewPath/Q  Convert2Dto1DMaskPath, "Z:USAXS_data:"
+				pathinfo/S Convert2Dto1DMaskPath
+			endif
+		endif
+		//PathInfo/S Convert2Dto1DMaskPath
 		NewPath/C/O/M="Select path to your data" Convert2Dto1DMaskPath	
 		NI1A_UpdateMainMaskListBox()	
 		NI1M_UpdateMaskListBox()		

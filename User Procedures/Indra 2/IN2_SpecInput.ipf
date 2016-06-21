@@ -54,7 +54,7 @@ end
 Function IN2_USAXSInitPackage()									//initialization of USAXS folderin Packages
 	Silent 1
 	NewDataFolder /O root:Packages								//create Packages folder
-	NewDataFolder /O root:Packages:USAXS						//create USAXS folder there
+	NewDataFolder /O root:Packages:Indra3						//create USAXS folder there
 	if (exists("root:Packages:Indra3:RawToUSAXS")!=2)				//create RawToUSAXS conversion if needed		
 		// Conversiotn of waves from Raw data to USAXS data
 		String /G root:Packages:Indra3:RawToUSAXS="AR_enc=XX;PD_range=XX;USAXS_PD=XX;Time=XX;Monitor=XX;"
@@ -1094,6 +1094,7 @@ Function IN2_DoRawToUSAXSConversion(ctrlName) : ButtonControl			//this function 
 		UPDParam+="I0AmpDark="+StringByKey(StringByKey("I0AmpDark",RawToUSAXS,"="),EPICS_PVs)+";"
 		UPDParam+="I0AmpGain="+StringByKey("I0AmpGain",EPICS_PVs)+";"
 		UPDParam+="I00AmpGain="+StringByKey("I00AmpGain",EPICS_PVs)+";"
+		UPDParam+="UPDsize="+StringByKey("UPDsize",EPICS_PVs)+";"
 		//after 4/2012 we satrted to create I0_gain column of data. This cannot become stale as the value in header can, so let's use that if it is available...
 		Wave/Z I0_gain
 		if(WaveExists(I0_gain))
@@ -1702,7 +1703,7 @@ Function IN2_DoRawToOthersConversion(ctrlName) : ButtonControl			//this function
 	//here we do raw to USAXS conversion
 
 	string df=GetDataFolder(1)
-	setDataFolder root:Packages:USAXS
+	setDataFolder root:Packages:Indra3
 	SVAR RawToUSAXS=root:Packages:Indra3:RawToUSAXS
 	SVAR RawFolder=root:Packages:Indra3:PanelSpecScanSelected			//which data we want to convert?
 	SVAR/Z ListOfDeleteWaves=root:Packages:Indra3:ListOfWavesToDeleteFromRaw 	//want to delete something
@@ -1802,6 +1803,7 @@ Function IN2_DoRawToOthersConversion(ctrlName) : ButtonControl			//this function
 	UPDParam+="Bkg4="+StringByKey(StringByKey("Bkg4",RawToUSAXS),EPICS_PVs)+";"
 	UPDParam+="Bkg5="+StringByKey(StringByKey("Bkg5",RawToUSAXS),EPICS_PVs)+";"
 	UPDParam+="I0AmpDark="+StringByKey(StringByKey("I0AmpDark",RawToUSAXS),EPICS_PVs)+";"
+	UPDParam+="UPDsize="+StringByKey(StringByKey("UPDsize",RawToUSAXS),EPICS_PVs)+";"
 	NewStringName=tempname+":UPDParameters"
 	string/g $NewStringName=UPDParam
 	//here we make pointer to original data:
@@ -2022,7 +2024,7 @@ Function IN2_GetInputAndCreateListPanel()			//this does dialog for user input wh
 											//and then retunrs the list of positison from which the scans are to be loaded
 															//first create the list for input dialog
 	string OldDf=GetDataFOlder(1)
-	setDataFOlder root:Packages:USAXS
+	setDataFOlder root:Packages:Indra3
 	//initialize, should be in general initialization, but have to put it here for now
 	variable ii
 	string ListOFVariables="LoadSpec_All;LoadSpec_Selected;LoadSpec_Range;"
@@ -2077,7 +2079,7 @@ end
 
 Function IN2_CreateDialogForRangeSel()
 
-	setDataFOlder root:Packages:USAXS
+	setDataFOlder root:Packages:Indra3
 	variable i
 	NVAR LoadSpec_OnlyUSAXS=root:Packages:Indra3:LoadSpec_OnlyUSAXS
 	SVAR commentList = root:Packages:Indra3:CommentsList	//contains list of comments for thesxe scans

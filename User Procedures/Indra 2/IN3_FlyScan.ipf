@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=0.39
+#pragma version=1.00
 #include <Peak AutoFind>
 
 
@@ -11,7 +11,8 @@ Constant IN3_DeleteRawData=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-//1.39 modified IN3_FlyScanSelectDataPath to handle presence on USAXS computers with usaxscontrol samba drive
+//1.00 added support for Import & process GUI. 
+//0.39 modified IN3_FlyScanSelectDataPath to handle presence on USAXS computers with usaxscontrol samba drive
 //0.38 fixes for 2016-02, sorting for new naming system
 //0.37 scaling of panels and added Remove from name string
 //0.36 fixed the need for using the HDF5 Browser, it was easy. Much quicker...  
@@ -80,10 +81,16 @@ Constant AmplifierRange5BlockTime=0.4
 //************************************************************************************************************
 //************************************************************************************************************
 Function IN3_FlyScanMain()
-	DoWindow IN3_FlyScanImportPanel
+	DoWIndow IN3_FlyScanImportPanel
 	if(V_Flag)
 		DoWIndow/K IN3_FlyScanImportPanel
 	endif
+	//KillWIndow/Z IN3_FlyScanImportPanel
+	DoWIndow USAXSDataReduction
+	if(V_Flag)
+		DoWIndow/K USAXSDataReduction
+	endif
+	//KillWIndow/Z USAXSDataReduction
 	IN3_FlyScanInitializeImport()
 	IN3_FlyScanImportPanelFnct()
 	ING2_AddScrollControl()
@@ -709,8 +716,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		MeasurementParameters+="USAXSPinT_pinGain="+num2str(USAXSPinT_pinGain[0])+";USAXSPinT_I0Counts="+num2str(USAXSPinT_I0Counts[0])+";USAXSPinT_I0Gain="+num2str(USAXSPinT_I0Gain[0])+";"
 		endif
 	endif
+	string DataFolderName=GetDataFOlder(1)
 	setDataFolder OldDf
-	return SpecFileName
+	return DataFolderName
 end
 
 //**********************************************************************************************************

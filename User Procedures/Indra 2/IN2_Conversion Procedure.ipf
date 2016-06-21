@@ -412,7 +412,7 @@ Function IN2Z_CheckUPDParameters(USAXSFolder,RawFolder)
 		USAXSFolder=IN2G_CheckFldrNmSemicolon(USAXSFolder,1)
 		RawFolder=IN2G_CheckFldrNmSemicolon(RawFolder,1)
 		string dfOld=getdataFolder(1)
-		setDataFolder root:Packages:USAXS
+		setDataFolder root:Packages:Indra3
 		
 		SVAR UPDParameters=$USAXSFolder+"UPDParameters"
 		SVAR EPICS_PVs=$RawFolder+"EPICS_PVs"
@@ -424,7 +424,7 @@ Function IN2Z_CheckUPDParameters(USAXSFolder,RawFolder)
 	endif 
 
 		
-	if (strlen(UPDParameters)<10)
+	if (strlen(UPDParameters)<11)
 		UPDParameters="Vfc="+StringByKey(StringByKey("Vfc",RawToUSAXS,"="),EPICS_PVs)+";"
 		UPDParameters+="Gain1="+StringByKey(StringByKey("Gain1",RawToUSAXS,"="),EPICS_PVs)+";"
 		UPDParameters+="Gain2="+StringByKey(StringByKey("Gain2",RawToUSAXS,"="),EPICS_PVs)+";"
@@ -436,6 +436,7 @@ Function IN2Z_CheckUPDParameters(USAXSFolder,RawFolder)
 		UPDParameters+="Bkg3="+StringByKey(StringByKey("Bkg3",RawToUSAXS,"="),EPICS_PVs)+";"
 		UPDParameters+="Bkg4="+StringByKey(StringByKey("Bkg4",RawToUSAXS,"="),EPICS_PVs)+";"
 		UPDParameters+="Bkg5="+StringByKey(StringByKey("Bkg5",RawToUSAXS,"="),EPICS_PVs)+";"
+		UPDParameters+="UPDsize="+StringByKey(StringByKey("UPDsize",RawToUSAXS,"="),EPICS_PVs)+";"
 	endif
 	
 	setDataFolder dfOld

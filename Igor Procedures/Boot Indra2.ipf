@@ -112,7 +112,7 @@ Proc LoadUSAXSIrenaandNika()
 end
 
 Function LoadUSAXSMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>6.30)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>6.34)
 		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
 		Execute/P "IN2N_CreateShowNtbkForLogging(0)"
@@ -124,7 +124,7 @@ Function LoadUSAXSMacros()
 		BuildMenu "USAXS"
 		IN2L_GenerateReadMe()
 	else
-		DoAlert 0, "Your version of Igor is lower than 6.30, these macros need version 6.3x or higher"  
+		DoAlert 0, "Your version of Igor is lower than 6.34, these macros need version 6.34 or higher"  
 	endif
 	
 end

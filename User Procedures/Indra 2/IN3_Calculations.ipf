@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.20
+#pragma version=1.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 Added support for Import & process new FLyscan processing GUI. 
+//1.21 added PUD size to step scan data and some otehr changes. 
 //1.20 added read UPD size to handle flyscanned data. Need finish for step scanning!
 //1.19 minor fixes for panel scaling
 //1.18 Remove Dropout function
@@ -45,6 +47,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	endif
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
+	NVAR ListProcDisplayDelay = root:Packages:Indra3:ListProcDisplayDelay
 
 	if (cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
 		SVAR DataFolderName=root:Packages:Indra3:DataFolderName
@@ -59,6 +62,59 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		endif
 		DoWIndow/F USAXSDataReduction
 	endif
+
+	if (cmpstr(ctrlName,"ProcessData2")==0 || cmpstr(ctrlName,"SelectNextSampleAndProcess2")==0)
+		//import the data
+		variable howMany
+		if(cmpstr(ctrlName,"ProcessData2")==0)
+			howMany=0
+		else
+			howMany=1
+		endif
+		string LoadedDataList = IN3_FlyScanLoadHdf5File2(howMany)		//0 is for load 1, 1 is for load all selected. 
+		variable Items, i
+		if(cmpstr(ctrlName,"ProcessData2")==0)
+			Items=1
+		else
+			Items=ItemsInList(LoadedDataList)
+		endif
+		For(i=0;i<Items;i+=1)
+			SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
+			DataFolderName = stringFromList(i,LoadedDataList)
+			if(stringMatch(DataFolderName,"---"))
+				setDataFolder oldDf
+				abort
+			endif
+			IN3_LoadData()		//load data in the tool. 
+			IN3_LoadBlank()
+			IN3_SetPDParameters()
+				//	hopefully not needed any more IN2A_CleanWavesForSPECtroubles()				//clean the waves with USAXS data for Spec timing troubles, if needed
+			IN3_GetMeasParam()	
+			IN3_RecalculateData(0)
+			IN3_GraphData()		//create graphs
+			IN3_ReturnCursorBack()
+			IN3_FitDefaultTop()
+			IN3_RecalculateData(4)
+			IN3_FitDefaultTop()
+			IN3_GetDiodeTransmission(0)
+			IN3_RecalculateData(1)
+			TabControl DataTabs , value= 0, win=USAXSDataReduction
+			NI3_TabPanelControl("",0)
+			DoWIndow/F USAXSDataReduction
+			if(howMany)
+				IN3_SaveData()	
+				NVAR UserSavedData=root:Packages:Indra3:UserSavedData
+				UserSavedData=2
+				IN3_FixSaveData()
+				DoWIndow/F USAXSDataReduction
+				sleep/S ListProcDisplayDelay
+				UserSavedData=1
+				IN3_FixSaveData()
+			endif
+		endfor
+	endif
+
+
 
 	if (cmpstr(ctrlName,"ProcessData")==0 || cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
 		SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
@@ -235,12 +291,18 @@ static Function IN3_FixSaveData()
 
 		//fix display in the panel to reflect saved data... 
 		NVAR UserSavedData=root:Packages:Indra3:UserSavedData
-		if(!UserSavedData)
+		if(UserSavedData==0)
 			Button SaveResults fColor=(65280,0,0), win=USAXSDataReduction
 			TitleBox SavedData  title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0), win=USAXSDataReduction
-		else
+		elseif(UserSavedData==1)
 			Button SaveResults , win=USAXSDataReduction, fColor=(47872,47872,47872)
 			TitleBox SavedData  title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2, win=USAXSDataReduction
+		elseif(UserSavedData==2)
+			Button SaveResults , win=USAXSDataReduction, fColor=(47872,47872,47872)
+			TitleBox SavedData  title="Disp. results, will continue", fColor=(0,0,0),labelBack=(3,52428,1),  frame=2, win=USAXSDataReduction
+		else
+			Button SaveResults , win=USAXSDataReduction, fColor=(47872,47872,47872)
+			TitleBox SavedData  title="               ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2, win=USAXSDataReduction		
 		endif
 end
 //***********************************************************************************************************************************
@@ -382,12 +444,15 @@ static Function IN3_LoadData()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 	
-	//First Kill all ecistsing waves
+	//First Kill waves which may cause conflict. 
 	DoWindow RcurvePlotGraph
 	if(V_Flag)
 		DoWindow/K RcurvePlotGraph
 	endif
 	String ListOfWaves  = DataFolderDir (2)[6,inf]
+	ListOfWaves = RemoveFromList("ListBoxDataSelWv", ListOfWaves,",")
+	ListOfWaves = RemoveFromList("ListBoxDataPositions", ListOfWaves,",")
+	ListOfWaves = RemoveFromList("ListBoxData", ListOfWaves,",")
 	variable i
 	For(i=0;i<ItemsInList(ListOfWaves,",");i+=1)
 		Wave/Z tempWv=$(StringFromList(i, ListOfWaves,","))

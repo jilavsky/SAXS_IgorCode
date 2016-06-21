@@ -40,6 +40,8 @@ Menu "USAXS"
 	"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
 	help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
 	"---"
+	"Import and Reduce data",IN3_NewMain()
+	help={"Open main panel for Indra 3 package and initialize"}
 	"Reduce data",IN3_Main()
 	help={"Open main panel for Indra 3 package and initialize"}
 	"--"
@@ -588,7 +590,7 @@ Function/T IN2A_NextRDataToEvaluate()					//this returns next USAXS sample in or
 	SVAR/Z LastR=root:Packages:Indra3:CurrentRFolder	//global string for current folder info
 	if (!SVAR_Exists(LastR))
 		NewDataFolder/O root:Packages
-		NewDataFolder/O root:Packages:USAXS
+		NewDataFolder/O root:Packages:Indra3
 		string/g root:Packages:Indra3:CurrentRFolder		//create if nexessary
 		SVAR LastR=root:Packages:Indra3:CurrentRFolder
 		LastR=""

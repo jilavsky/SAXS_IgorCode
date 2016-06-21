@@ -469,7 +469,7 @@ Function AutoSaveXLSResults()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Irena_UnifFit
 	nvar UseIndra2Data
-	string FolderNames=IR1_GenStringOfFolders(1,0,0,0)
+	string FolderNames=IN2G_NewFindFolderWithWaveTypes("root:", 10, "*", 1)
 	//Here you do the save to a notebook
 	variable counter=0
 	SVAR DataFolderName

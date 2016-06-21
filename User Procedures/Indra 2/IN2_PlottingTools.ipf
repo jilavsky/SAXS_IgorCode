@@ -825,7 +825,7 @@ Function IN2P_KillTopGraph(ctrlname) :Buttoncontrol
 	string ctrlname
        String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
        dowindow /K $wName
-	IN2G_CleanupFolderOfGenWaves("root:Packages:USAXS")				//lets cleanup the folder first
+	IN2G_CleanupFolderOfGenWaves("root:Packages:Indra3")				//lets cleanup the folder first
 End
 Function IN2P_FitLineWithCursorsBtn(ctrlname) :Buttoncontrol
 	string ctrlname
@@ -860,9 +860,9 @@ Function IN2P_AddAnotherWaveGeneric(ctrlname) : Buttoncontrol
 	endif
 	
 	string dfold=GetDataFolder(1)
-	setDataFolder root:Packages:USAXS
+	setDataFolder root:Packages:Indra3
 	
-	IN2G_CleanupFolderOfGenWaves("root:Packages:USAXS")				//lets cleanup the folder first
+	IN2G_CleanupFolderOfGenWaves("root:Packages:Indra3")				//lets cleanup the folder first
 	
 	string NewYWaveName=UniqueName("GenericYwave",1,0)
 	string NewXWaveName=UniqueName("GenericXwave",1,0)

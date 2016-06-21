@@ -43,7 +43,7 @@ end
 
 
 Function LoadIrenaSASMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.30)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.34)
 		//check for old version of Irena
 		pathInfo Igor
 		NewPath/Q/O/Z UserProcPath , S_path+"User procedures"
@@ -74,6 +74,6 @@ Function LoadIrenaSASMacros()
 		//Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
 		//not needed, done automatically as part of after compile hook function
 	else
-		DoAlert 0, "Your version of Igor is lower than 6.30, these macros need version 6.30 or higher, please update your Igor 6 to the latest release "  
+		DoAlert 0, "Your version of Igor is lower than 6.34, these macros need version 6.34 or higher, please update your Igor to the latest release "  
 	endif
 end
