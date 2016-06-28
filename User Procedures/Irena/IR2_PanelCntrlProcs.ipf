@@ -2565,7 +2565,7 @@ Function IR3C_AddControlsToWndw(PckgPathName, PckgDataFolder, PanelWindowName,De
 	Button DeSelectAll,help={"DeSelect all data in the listbox"}
 	PopupMenu SortOptionString,pos={280,112},size={160,21},proc=IR3C_PopMenuProc,title="Sort:", help={"Select how to sort the data"}
 	PopupMenu SortOptionString,mode=1,popvalue=CurSortString, value=#"root:Packages:IrenaListboxProcs:SortOptionsString"
-	TitleBox Info1PanelProc title="\Zr140List of available files",pos={10,128},frame=0,fstyle=1, fixedSize=1,size={220,20},fColor=(0,0,52224)
+	TitleBox Info1PanelProc title="\Zr110List of available files",pos={10,128},frame=0,fstyle=1, fixedSize=1,size={220,20},fColor=(0,0,52224)
 	ListBox ListOfAvailableData,pos={5,147},size={230,280}
 	ListBox ListOfAvailableData,help={"Select files from this location you want to import"}
 	ListBox ListOfAvailableData,listWave=$(CntrlLocation+":WaveOfFiles")

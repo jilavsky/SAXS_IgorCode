@@ -1044,7 +1044,15 @@ Function IN2G_PanelResizePanelSize(s)
 		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
 		variable moveLeft, MoveRight, MoveTop, moveBottom 			//these need to be in points!! What a mess...
 		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
-		//variable moveConvFac=screenResolution/PanelResolution("winname")
+		variable OriginalResolution=NumberByKey("Resolution", OrigInfo, ":", ";")
+		if(numtype(OriginalResolution)!=0)
+			if(StringMatch(IgorInfo(2), "Windows" ))
+				OriginalResolution = 96
+			else	//Windows 
+				OriginalResolution = 72
+			endif
+		endif
+		variable moveConvFac=screenResolution/OriginalResolution
 		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//pixels
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
@@ -1056,8 +1064,8 @@ Function IN2G_PanelResizePanelSize(s)
 			moveBottom = (top+OriginalHeight)//*moveConvFac
 			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
-			horScale = 1
-			verScale = 1
+			horScale = 1*moveConvFac
+			verScale = 1*moveConvFac
 		elseif(CurWidth<OriginalWidth && CurHeight>=OriginalHeight)		
 			//MoveWindow left, top, left+OriginalWidth, top+CurHeight
 			moveLeft = left//*moveConvFac
@@ -1066,8 +1074,8 @@ Function IN2G_PanelResizePanelSize(s)
 			moveBottom = (top+CurHeight)//*moveConvFac
 			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
-			horScale = 1
-			verScale = CurHeight / (OriginalHeight)	
+			horScale = 1*moveConvFac
+			verScale = CurHeight / (OriginalHeight)	*moveConvFac
 		elseif(CurWidth>=OriginalWidth && CurHeight<OriginalHeight)
 			//MoveWindow left, top, left+CurWidth, top+OriginalHeight
 			moveLeft = left//*moveConvFac
@@ -1076,16 +1084,16 @@ Function IN2G_PanelResizePanelSize(s)
 			moveBottom = (top+OriginalHeight)//*moveConvFac
 			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
-			verScale = 1
-			horScale = curWidth/OriginalWidth
+			verScale = 1 *moveConvFac
+			horScale = curWidth/OriginalWidth*moveConvFac
 		else
 			moveLeft = left//*moveConvFac
 			MoveTop = top//*moveConvFac
 			MoveRight = (right)//*moveConvFac
 			moveBottom = (bottom)//*moveConvFac
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
-			verScale = CurHeight /OriginalHeight
-			horScale = curWidth/OriginalWidth
+			verScale = CurHeight /OriginalHeight *moveConvFac
+			horScale = curWidth/OriginalWidth *moveConvFac
 		endif
 		variable scale= min(horScale, verScale )
 		string FontName = IN2G_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
@@ -1185,7 +1193,7 @@ Function IN2G_PanelAppendSizeRecordNote(panelName)
 	//1) Use GetWindow wsize to get window coordinates, not wsizeDC
 	//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
 	//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
-	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
+	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";Resolution:"+num2str(ScreenResolution)+";"	
 	if(PLatform)	//WIndows
 		Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={IN2G_ConvertPointToPix(panelName, V_right-V_left-10),IN2G_ConvertPointToPix(panelName, V_bottom-V_top-10)}, disable=2
 	else

@@ -7,7 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.14 fixed bug where the change in Diametrer vs Radius was not reflected in Size distribution graph and calculated properly. 
+//1.14 fixed bug where the change in Diametrer vs Radius was not reflected in Size distribution graph and calculated properly. Fixed FWHM for diff peaks calcualtion. 
 //1.13 minor fixes for existence of Size distribution graphs so we do tno get errors. 
 //1.12 removed most Executes in preparation for Igor 7
 //1.11  bug fixes and modifications to Other graph outputs - colorization etc. 
@@ -548,7 +548,7 @@ Function IR2L_CalcDiffIntPopXDataSetY(pop,dataSet)
 			wavestats/Q tempInt
 			PeakQPosition = ModelQ[V_maxloc]
 			DiffPeakDPos = 2*pi/PeakQPosition
-			FindLevels/Q  tempInt, V_max/2 
+			FindLevels/Q/N=2  tempInt, V_max/2 
 			if(V_flag==0)
 				Wave W_FindLevels
 				PeakFWHM = abs(ModelQ[W_FindLevels[1]] - ModelQ[W_FindLevels[0]])

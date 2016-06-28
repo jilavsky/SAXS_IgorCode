@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
-#pragma version=2.14
+#pragma version=2.15
 //Panel size controls package, need version for Igor 6.38 and higher
 #if(Igorversion()>=6.38)
 #include <Resize Controls> version>=6.38
@@ -16,6 +16,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.15 release 2.61 with new Import non-SAS ASCII tool and better panel scaling & preferences management. 
 //2.14 added panel scaling.
 //2.13 added WAXS tool
 //2.12 added Simple fits, developement version
@@ -60,21 +61,21 @@
 #include ":IR1_GeneralGraph", version >=2.26
 #include ":IR1_GeneralGraph2", version >=2.18
 #include ":IR1_GraphStyling", version>=2.01
-#include ":IR1_ImportData", version>=2.28
+#include ":IR1_ImportData", version>=2.31
 #include ":IR1_IntCalculations", version>=2.01
 #include ":IR1_InterferenceLQSF", version>=2.01
 //#include ":IR1_LSQF_UserFit", version>=2.01
 //#include ":IR1_LSQF_UserFncts", version>=2.01
 //#include ":IR1_LSQF_UserModelMain", version>=2.01
 //#include ":IR1_LSQF_UserPanel", version>=2.02
-#include ":IR1_Main", version>=2.60
+#include ":IR1_Main", version>=2.61
 #include ":IR1_Panel", version>=2.03
 //#include ":IR1_PlotStylesMngr", version>=2.01
 #include ":IR1_Recording", version>=2.03
 #include ":IR1_ScattContr_New", version>=2.23
 #include ":IR1_Sizes", version>=2.20
 #include ":IR1_SupportFncts", version>=2.03
-#include ":IR1_Unified_Fit_Fncts", version>=2.15
+#include ":IR1_Unified_Fit_Fncts", version>=2.16
 #include ":IR1_Unified_Fit_Fncts2", version>=2.05
 #include ":IR1_Unified_Panel", version>=2.20
 #include ":IR1_Unified_Panel_Fncts", version>=2.22
@@ -82,7 +83,7 @@
 #include ":IR1_UnifiedSaveToXLS", version>=2.01
 #include ":IR2_dataMiner", version >=1.11
 #include ":IR2_GelsTool", version>=4.12
-#include ":IR2_PanelCntrlProcs", version>=1.42
+#include ":IR2_PanelCntrlProcs", version>=1.43
 #include ":IR2_Reflectivity", version >=1.18
 #include ":IR2_ScriptingTool", version>=1.25
 #include ":IR2_SmallAngleDiff", version>=1.13
@@ -90,8 +91,8 @@
 #include ":IR2_UniversalDataExport", version>=1.08
 #include ":IR2L_NLSQFCalc", version>=1.14
 #include ":IR2L_NLSQFfunctions", version>=1.23
-#include ":IR2L_NLSQFmain", version>=1.19
-#include ":IR2L_NLSQFsupport", version>=1.37
+#include ":IR2L_NLSQFmain", version>=1.20
+#include ":IR2L_NLSQFsupport", version>=1.38
 #include ":IR2Pr_PDFMain", version>=1.09
 #include ":IR2Pr_Regularization", version>=1.02
 #include ":IR2_DWSGraphControls", version>=1
@@ -106,5 +107,5 @@
 #include "::CanSAS:canSASXML_GUI", version>=1.03
 #include "::CanSAS:canSASXML", version>=1.12
 
-#include "::Indra 2:IN2_GeneralProcedures", version>=1.83
+#include "::Indra 2:IN2_GeneralProcedures", version>=1.88
 

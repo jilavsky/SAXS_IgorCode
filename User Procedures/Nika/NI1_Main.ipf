@@ -244,7 +244,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2016"
-	DrawText 49,103,"Release 1.73 from 3/5/2016"
+	DrawText 49,103,"Release 1.74 from 6/29/2016"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 

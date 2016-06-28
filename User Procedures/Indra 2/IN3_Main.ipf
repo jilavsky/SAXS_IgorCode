@@ -120,7 +120,7 @@ Function IN3_MainPanelNew()
 	Button DeSelectAll, pos={145,91}
 	PopupMenu SortOptionString, pos={280,91}
 	TitleBox Info1PanelProc, pos={5,108}
-	ListBox ListOfAvailableData,pos={5,127}, size={240,140}
+	ListBox ListOfAvailableData,pos={5,123}, size={240,148}
 
 
 //	//use general controls package, modify asnecessary
@@ -157,11 +157,11 @@ Function IN3_MainPanelNew()
 	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
 	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
 
-	SetVariable userFriendlySamplename title="Sample name:",pos={5,270},size={380,20},disable=2, labelBack=(65535,65535,65535)
+	SetVariable userFriendlySamplename title="Sample name:",pos={5,274},size={380,20},noedit=1, labelBack=0
 	SetVariable userFriendlySamplename variable=root:Packages:Indra3:userFriendlySamplename,format="",limits={-1,1,1}
 	SetVariable userFriendlySamplename frame=0,fstyle=1,help={"Name of current data set loaded"}
 
-	SetVariable OriginalDataFolder title="Folder name:",pos={5,290},size={380,20},disable=2, labelBack=(65535,65535,65535)
+	SetVariable OriginalDataFolder title="Folder name:",pos={5,292},size={380,20},noedit=1, labelBack=0
 	SetVariable OriginalDataFolder variable=root:Packages:Indra3:userFriendlySampleDFName,format="",limits={-1,1,1}
 	SetVariable OriginalDataFolder frame=0,fstyle=1,help={"Folder from which current data set was loaded"}
 
@@ -173,8 +173,8 @@ Function IN3_MainPanelNew()
 	else
 		temppopStr = "---"
 	endif
-	PopupMenu SelectBlankFolder,pos={8,310},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
-	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)"
+	PopupMenu SelectBlankFolder,pos={8,315},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
+	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)",fColor=(1,16019,65535)
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
 	PopupMenu SelectBlankFolder, disable = IsBlank
 

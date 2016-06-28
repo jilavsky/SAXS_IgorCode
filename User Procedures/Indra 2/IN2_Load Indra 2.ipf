@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma IgorVersion=6.3	//requires Igor version 6.3 or higher
-#pragma version=1.88
+#pragma version=1.89
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.89, added Import & COnvert tool, foldes cleanup and some modifications and fixes to panel scaling. 
 //1.88 added Import & process Flyscan GUI
 //1.87 Igor 7 beta updates, 
 //1.86 Igor 7 beta updates, dQ wave added, Flyscan improvements
@@ -37,29 +38,27 @@
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.2
 //#include ":IN2_GAUSAXS 1", version>=1
-#include ":IN2_GeneralProcedures", version>=1.83
+#include ":IN2_GeneralProcedures", version>=1.88
 //#include ":IN2_ImportX23", version>=1.10
 //#include ":IN2_Merging Data", version>=1.10
 #include ":IN2_NotebookLogging", version>=1.10
 #include ":IN2_PlottingTools", version>=1.13
 #include ":IN2_SpecInput", version>=1.20
 #include ":IN2_Standard Plots", version>=1.13
-#include ":IN2_USAXS", version>=1.38
+#include ":IN2_USAXS", version>=1.39
 #include ":IN2_XtalCalculationsP", version>=1.1
 
 #include ":IN3_CalcScattering", version>=1.01
-#include ":IN3_Calculations", version>=1.18
-#include ":IN3_FLyScan", version>=0.37
-#include ":IN3_Main", version>=1.88
+#include ":IN3_Calculations", version>=1.22
+#include ":IN3_FLyScan", version>=1.00
+#include ":IN3_Main", version>=1.90
 #include ":IN3_Rwave", version>=1
-#include ":IN3_SupportFnct", version>=1.06
-
-
+#include ":IN3_SupportFnct", version>=1.07
 #include ":Spec", version>=2.2
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
-#include "::Irena:IR2_PanelCntrlProcs", version>=1.42
+#include "::Irena:IR2_PanelCntrlProcs", version>=1.43
 
 #include <HDF5 Browser>
 

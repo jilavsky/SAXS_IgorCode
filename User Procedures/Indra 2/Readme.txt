@@ -8,11 +8,12 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 ______________________________________________________________________________________
-xxxx
+1.89 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher
-Modification fro Flyscans in 2016-02
-Recasted internally use of folders, this is likely incompatible change backwards, so you need to reopen the Data reduction in old experiments. 
-
+New - can load and process FLyscan data directly, single step process now. No manual yet. Use Import & reduce data. 
+Modification for Flyscans in 2016-02
+Re-casted internally use of folders, this is likely incompatible change backwards, so you need to reopen the Data reduction in old experiments. 
+Remvoed some obsolete code (like X23A3 support, no data were collected since 1998). 
 
 1.88 3/5/3016
 Added panel scaling on most large panels

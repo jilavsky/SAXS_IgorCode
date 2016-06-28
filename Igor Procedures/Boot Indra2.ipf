@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.88
+#pragma version=1.89
 
+//1.89 FIxes for panel scaling and added new FlysScan  load & process tool 
 //1.88 Panel scaling and other fixes. 
 //1.87 Igor 7 updates
 //1.86 Improvements to Flyscan handling

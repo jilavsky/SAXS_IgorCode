@@ -3,10 +3,11 @@ Code modification history
 
 -latest stuff first
 ********************************************
-2.61 whenever
+2.61 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher
 ASCII import - added ability to slit smear the data on import. Redistributed controls on the Import panel. 
-ASCII import non SAS data - working on it… 
+ASCII import non SAS data - first version of Import non-SAS data tool. No manual yet. 
+Fixed panel scaling and added better package preferences management.  
 Added package for handling files outside Igor to make it easier to write tools working with external files directly. Should not be visible to users. 
 
 
