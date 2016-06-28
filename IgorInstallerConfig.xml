@@ -16,11 +16,39 @@
 			<Package>Indra</Package>
 			<Package>xop</Package>
 		</KnownPackages>
-		<current_release>March2016</current_release>
+		<current_release>June2016</current_release>
 		<current_beta_release>March2016_2</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
+		<release name="June2016">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/June2016.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.61</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.74</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.89</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop</name>
+				<version></version>
+				<PackageList>xopPckg.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
+			</Package>
+			<VersionComment>Fixes to Panel Scaling, new ASCII non SAS import tool, and GUI font handling</VersionComment>
+		</release>
 		<release name="March2016">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/TestVersion.zip</SourceFileAddress>
 			<Package>
