@@ -109,3 +109,4 @@
 
 #include "::Indra 2:IN2_GeneralProcedures", version>=1.88
 
+#include "::CanSAS:IRNI_NexusSupport", version>=1.00

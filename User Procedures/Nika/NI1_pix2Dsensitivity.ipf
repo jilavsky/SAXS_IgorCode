@@ -418,6 +418,11 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 	SVAR FloodFileType=root:Packages:Convert2Dto1D:FloodFileType
 	variable ImgExisted
 	String infostr
+	//need to communicate to Nexus reader what we are loading and this seems the only way to do so
+	string/g ImageBeingLoaded
+	ImageBeingLoaded = ""
+	//awful workaround end
+	
 	if(AppendImg)
 		Wave/Z FloodFieldImgOriginal
 		if(!WaveExists(FloodFieldImgOriginal))

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.00
+#pragma version=1.02
 #include <Peak AutoFind>
 
 
@@ -11,6 +11,8 @@ Constant IN3_DeleteRawData=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.02 fixed reading old data without UPDsize in the metadata
+//1.01 fixed BKG5overwrite which was not read correctly into the system. 
 //1.00 added support for Import & process GUI. 
 //0.39 modified IN3_FlyScanSelectDataPath to handle presence on USAXS computers with usaxscontrol samba drive
 //0.38 fixes for 2016-02, sorting for new naming system
@@ -511,7 +513,12 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	Wave updBkgErr3=:entry:metadata:upd_bkgErr2
 	Wave updBkgErr4=:entry:metadata:upd_bkgErr3
 	Wave updBkgErr5=:entry:metadata:upd_bkgErr4	
-	Wave UPDsize=:entry:metadata:UPDsize	
+	Wave/Z UPDsize=:entry:metadata:UPDsize	
+	if(!WaveExists(UPDsize))
+		make/O/N=1 :entry:metadata:UPDsize
+		Wave UPDsize=:entry:metadata:UPDsize	
+		UPDsize[0] = 5.5
+	endif
 	Wave/T SampleNameW=:entry:sample:name
 	Wave SampleThicknessW = :entry:sample:thickness
 	Wave/Z DCM_energyW=:entry:instrument:monochromator:energy
@@ -714,6 +721,20 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 		if(USAXSPinT_pinCounts[0]>100)
 		MeasurementParameters+=";USAXSPinT_Measure=1;USAXSPinT_AyPosition="+num2str(USAXSPinT_AyPosition[0])+";USAXSPinT_Time="+num2str(USAXSPinT_Time[0])+";USAXSPinT_pinCounts="+num2str(USAXSPinT_pinCounts[0])+";"
 		MeasurementParameters+="USAXSPinT_pinGain="+num2str(USAXSPinT_pinGain[0])+";USAXSPinT_I0Counts="+num2str(USAXSPinT_I0Counts[0])+";USAXSPinT_I0Gain="+num2str(USAXSPinT_I0Gain[0])+";"
+		endif
+	endif
+	//overwrite the UPD5Bkg if user chose to do so. 
+	DoWIndow USAXSDataReduction 
+	if(V_FLag)
+		ControlInfo /W=USAXSDataReduction Bkg5Overwrite
+		NVAR UPD_DK5=root:Packages:Indra3:UPD_DK5
+		if(V_Value!=0)
+				UPD_DK5 = V_Value
+				UPDParameters=ReplaceNumberByKey("Bkg5",UPDParameters, UPD_DK5,"=")
+		else
+				SVAR MeasurementParameters = MeasurementParameters
+				UPD_DK5 = NumberByKey("Bkg5", MeasurementParameters, "=", ";")
+				UPDParameters=ReplaceNumberByKey("Bkg5",UPDParameters, UPD_DK5,"=")
 		endif
 	endif
 	string DataFolderName=GetDataFOlder(1)

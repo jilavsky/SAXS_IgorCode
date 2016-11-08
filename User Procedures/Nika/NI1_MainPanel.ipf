@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.47
-Constant NI1AversionNumber = 2.46
+Constant NI1AversionNumber = 2.47
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.46
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.47 changed length of name to 23 characters from 17
 //2.47 fixes for WIndows panel resizing. 
 //2.46 added Function for creating user custom data names
 //2.45 added Scaling of panels when zoomed. 
@@ -307,8 +308,6 @@ Function NI1A_Convert2Dto1DMainPanel()
 	
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
-
-
 	DoWindow NI1A_Convert2Dto1DPanel
 	if(V_Flag)
 		DoWindow/K NI1A_Convert2Dto1DPanel
@@ -1626,9 +1625,9 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	endif	
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	if(TrimEndOfName)
-		NewName= NewName[0,17]
+		NewName= NewName[0,21]
 	else
-		NewName= NewName[strlen(NewName)-17,inf]
+		NewName= NewName[strlen(NewName)-21,inf]
 	endif
 	return NewName
 end

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.22
+#pragma version=1.25
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 added finding Qmin from FWHM of the sample peak
+//1.24 enable override of UPDsize, whichdid nto work up to now... 
+//1.23 fixed Bkg5 Overwrite which was not correctly read intot he system. 
 //1.22 Added support for Import & process new FLyscan processing GUI. 
 //1.21 added PUD size to step scan data and some otehr changes. 
 //1.20 added read UPD size to handle flyscanned data. Need finish for step scanning!
@@ -273,10 +276,29 @@ static Function IN3_ReturnCursorBack()
 	setDataFolder root:Packages:Indra3
 	Wave R_Int
 	Wave R_Qvec
-	
+	//lets try to set Qmin for user based on FWHM
+	NVAR PeakWidth = root:Packages:Indra3:PeakWidthArcSec
+	NVAR BlankWidth = root:Packages:Indra3:BlankWidth
+	NVAR Wavelength = root:Packages:Indra3:Wavelength
+	variable Qmin = 4 * pi * sin(PeakWidth*4.848e-6 /2) / Wavelength
+	variable QminBl = 1.05 * 4 * pi * sin(BlankWidth*4.848e-6 /2) / Wavelength		//scaled up a bit to make sure this makes sense... 
+	if( QminBl > Qmin)
+		Qmin = QminBl
+	endif
+	TextBox/C/W=RcurvePlotGraph/A=LB/X=0.2/Y=0.20/E=2/N=QminInformation/F=0 "\\Z10\\K(0,12800,52224)Theoretical Qmin of these data is = "+num2str(Qmin)
+	//print "Qmin is = "+num2str(Qmin)
 	NVAR/Z OldStartQValueForEvaluation
 	if(NVAR_Exists(OldStartQValueForEvaluation))
+		if(Qmin>OldStartQValueForEvaluation)
+			OldStartQValueForEvaluation = Qmin
+			print "Warning - too small Qmin detected. Reset to calculated Qmin = "+num2str(Qmin)
+			print "This can be due to multiple scattering in the sample. Note, you may need to return the Qmin back for other samples" 
+			TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "Warning - too small Qmin detected. Reset to calculated Qmin = "+num2str(Qmin)
+		endif
 		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, OldStartQValueForEvaluation ))
+		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
+	else
+		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, Qmin ))
 		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
 	endif
 
@@ -1466,6 +1488,11 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 		NVAR SubtractFlatBackground= root:Packages:Indra3:SubtractFlatBackground
 		SetVariable SubtractFlatBackground,win=USAXSDataReduction,limits={0,Inf,0.05*SubtractFlatBackground}
 	endif
+	if(stringmatch(ctrlName,"PhotoDiodeSize"))
+		SVAR UPDParameters= root:Packages:Indra3:UPDParameters
+		UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
+	endif
+
 
 	NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
 	//recalculate what needs to be done...
@@ -1530,12 +1557,13 @@ Function IN3_UPDParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableC
 	endif
 	if (!cmpstr(ctrlName,"Bkg5Overwrite"))						//Changing Bkg 5
 		NVAR UPD_DK5=root:Packages:Indra3:UPD_DK5
-		UPDList=ReplaceNumberByKey("Bkg5",UPDList, varNum,"=")
-		if(varNum>0)
+		if(varNum!=0)
 			UPD_DK5 = varNum
+			UPDList=ReplaceNumberByKey("Bkg5",UPDList, UPD_DK5,"=")
 		else
 			SVAR MeasurementParameters = root:Packages:Indra3:MeasurementParameters
 			UPD_DK5 = NumberByKey("Bkg5", MeasurementParameters, "=", ";")
+			UPDList=ReplaceNumberByKey("Bkg5",UPDList, UPD_DK5,"=")
 		endif
 	endif
 

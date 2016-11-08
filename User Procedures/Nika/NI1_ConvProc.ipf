@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.50
+#pragma version=2.51
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.51 New nexus support fixes. Pops up now the panel as needed and sets the input choice. 
 //2.50 Modified to point to USXS_data on USAXS computers, added handling of ...tiff file names
 //2.49 added Function for creating user custom data names. 
 //2.48 added main data reduction parameters in the wave note. For unknown reason were missing. 
@@ -1368,119 +1369,6 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-
-	string oldDf=GetDataFOlder(1)
-	setDataFolder root:Packages:Convert2Dto1D
-	
-	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-	SVAR Calib2DDataOutputFormat =root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
-
-	if(StringMatch(ctrlName,"Calib2DDataOutputFormat"))
-		Calib2DDataOutputFormat = popStr
-	endif
-	if(StringMatch(ctrlName,"RebinCalib2DData"))
-		RebinCalib2DDataToPnts = popStr
-	endif
-
-	if(cmpstr(ctrlName,"Select2DDataType")==0)
-		//set appropriate extension
-		SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
-		NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
-		DataFileExtension = popStr
-		NI1A_UpdateDataListBox()
-		if(cmpstr(popStr,"GeneralBinary")==0)
-			NI1_GBLoaderPanelFnct()
-		endif
-		if(cmpstr(popStr,"Pilatus")==0)
-			NI1_PilatusLoaderPanelFnct()
-		endif
-		if(cmpstr(popStr,"ESRFedf")==0)
-			NI1_ESRFEdfLoaderPanelFnct()
-		endif	
-		CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData && StringMatch(DataFileExtension, "canSAS/Nexus"))
-	endif
-	if(cmpstr(ctrlName,"SelectBlank2DDataType")==0)
-		//set appropriate extension
-		SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
-		BlankFileExtension = popStr
-		NI1A_UpdateEmptyDarkListBox()
-		if(cmpstr(popStr,"GeneralBinary")==0)
-			NI1_GBLoaderPanelFnct()
-		endif
-		if(cmpstr(popStr,"Pilatus")==0)
-			NI1_PilatusLoaderPanelFnct()
-		endif
-	endif
-	if(cmpstr(ctrlName,"DataCalibrationString")==0)
-		//set appropriate extension
-		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
-		DataCalibrationString = popStr
-	endif
-	if(cmpstr(ctrlName,"RebinCalib2DDataToPnts")==0)
-		//set appropriate extension
-		SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-		RebinCalib2DDataToPnts = popStr
-	endif
-
-	if(cmpstr(ctrlName,"FIlesSortOrder")==0)
-		NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
-		FIlesSortOrder = popNum-1
-		NI1A_UpdateDataListBox()
-	endif
-	
-	if(cmpstr(ctrlName,"LineProf_CurveType")==0)
-		//here we select start of the range...
-		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
-		LineProf_CurveType=popStr		
-		SVAR KnWCT=root:Packages:Convert2Dto1D:LineProf_CurveType
-		SetVariable LineProf_LineAzAngle,disable=(!stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel
-		SetVariable LineProf_EllipseAR,disable=(!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
-		SetVariable LineProf_GIIncAngle,disable=((!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal Line")&&!stringMatch(KnWCT,"GI_Vertical Line"))), win=NI1A_Convert2Dto1DPanel
-		checkbox LineProf_UseBothHalfs,disable=(stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel	
-		DoWIndow/K/Z GISAXSOptionsPanel
-		if(stringMatch(LineProf_CurveType,"GI_*"))
-			NI1_GISAXSOptions() 
-		endif
-		NI1A_LineProf_Update()
-	endif
-
-
-	if(cmpstr(ctrlName,"SelectStartOfRange")==0)
-		//here we select start of the range...
-		NVAR StartDataRangeNumber=root:Packages:Convert2Dto1D:StartDataRangeNumber
-		StartDataRangeNumber=popNum
-		NI1A_MakeContiguousSelection()
-	endif
-	if(cmpstr(ctrlName,"SelectEndOfRange")==0)
-		//here we select end of the range...
-		NVAR EndDataRangeNumber=root:Packages:Convert2Dto1D:EndDataRangeNumber
-		EndDataRangeNumber=popNum
-		NI1A_MakeContiguousSelection()
-	endif
-	if(cmpstr(ctrlName,"ColorTablePopup")==0)
-		SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
-		ColorTableName = popStr
-		NI1A_TopCCDImageUpdateColors(1)
-	endif
-	if(cmpstr(ctrlName,"MaskImageColor")==0)
-		NI1M_ChangeMaskColor(popStr) 
-	endif
-	if(cmpstr(ctrlName,"GI_Shape1")==0)
-		SVAR GI_Shape1=root:Packages:Convert2Dto1D:GI_Shape1
-		GI_Shape1=popStr 
-		NI1A_TabProc("",6)
-	endif
-
-	DoWIndow/F NI1A_Convert2Dto1DPanel
-	DoWIndow/F NI_GBLoaderPanel
-	DoWIndow/F NI_PilatusLoaderPanel
-
-	setDataFolder OldDf
-End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1991,6 +1879,10 @@ Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	FileNameToLoad = SelectedFileToLoad
 	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
 	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
+	//need to communicate to Nexus reader what we are loading and this seems the only way to do so
+	string/g ImageBeingLoaded
+	ImageBeingLoaded = "sample"
+	//awful workaround end
 	
 	variable loadedOK=NI1A_UniversalLoader("Convert2Dto1DDataPath",SelectedFileToLoad,DataFileExtension,"CCDImageToConvert")
 	if(LoadedOK==0)
@@ -3095,7 +2987,7 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	SVAR CurrentPixSensFile
 	string FileNameToLoad=ListOf2DEmptyData[selection]
 	string NewWaveName
-		if(numtype(strlen(FileNameToLoad))!=0)		//abort if user did nto select anything in the box
+		if(numtype(strlen(FileNameToLoad))!=0)		//abort if user did not select anything in the box
 			abort
 		endif
 	if(cmpstr(EmptyOrDark,"Empty")==0)
@@ -3109,7 +3001,11 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 		CurrentDarkFieldName= FileNameToLoad
 		NewWaveName = "DarkFieldData"
 	endif
-
+	//need to communicate to Nexus reader what we are loading and this seems the only way to do so
+	string/g ImageBeingLoaded
+	ImageBeingLoaded = EmptyOrDark
+	//awful workaround end
+	
 	NI1A_UniversalLoader("Convert2Dto1DEmptyDarkPath",FileNameToLoad,FileExtLocal,NewWaveName)
 
 //	NI1A_DezingerDataSetIfAskedFor(NewWaveName)
@@ -3247,6 +3143,7 @@ Function NI1A_UpdateDataListBox()
 				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DDataPath,-1,".hdf")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".h5")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".hdf5")
+				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".nxs")		//rhis is Diamond decision, hdf5 for data files, nxs for metadata. May need to hide the hdf5? 
 			elseif(cmpstr(realExtension, ".tif")==0)//there are many options for hdf...
 				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DDataPath,-1,".tif")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DDataPath,-1,".tiff")
@@ -3402,12 +3299,6 @@ end
 Function NI1A_Convert2Dto1DPanelFnct()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
-	//DoWindow/C NI1A_Convert2Dto1DPanel
-	//SetDrawLayer UserBack
-	//SetDrawEnv fsize= 18,fstyle= 1,textrgb= (0,12800,52224)
-	//DrawText 48,20,"2D to 1D data conversion panel"
-	//DrawText 10,89,"Select input data here"
-	//DrawText 11,249,"Select contiguous range:"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
 	TitleBox MainTitle title="\Zr2002D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
@@ -7472,3 +7363,123 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
+
+Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+	String ctrlName
+	Variable popNum
+	String popStr
+
+	string oldDf=GetDataFOlder(1)
+	setDataFolder root:Packages:Convert2Dto1D
+	
+	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+	SVAR Calib2DDataOutputFormat =root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
+
+	if(StringMatch(ctrlName,"Calib2DDataOutputFormat"))
+		Calib2DDataOutputFormat = popStr
+	endif
+	if(StringMatch(ctrlName,"RebinCalib2DData"))
+		RebinCalib2DDataToPnts = popStr
+	endif
+
+	if(cmpstr(ctrlName,"Select2DDataType")==0)
+		//set appropriate extension
+		SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+		NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
+		DataFileExtension = popStr
+		NI1A_UpdateDataListBox()
+		if(cmpstr(popStr,"GeneralBinary")==0)
+			NI1_GBLoaderPanelFnct()
+		endif
+		if(cmpstr(popStr,"Pilatus")==0)
+			NI1_PilatusLoaderPanelFnct()
+		endif
+		if(cmpstr(popStr,"ESRFedf")==0)
+			NI1_ESRFEdfLoaderPanelFnct()
+		endif	
+		if(cmpstr(popStr,"Nexus")==0)
+			NEXUS_Initialize(0)
+			NVAR NX_InputFileIsNexus=root:Packages:Irena_Nexus:NX_InputFileIsNexus
+			NX_InputFileIsNexus = 1
+			NEXUS_ConfigurationPanelFnct()
+		endif	
+		CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData && StringMatch(DataFileExtension, "canSAS/Nexus"))
+	endif
+	if(cmpstr(ctrlName,"SelectBlank2DDataType")==0)
+		//set appropriate extension
+		SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
+		BlankFileExtension = popStr
+		NI1A_UpdateEmptyDarkListBox()
+		if(cmpstr(popStr,"GeneralBinary")==0)
+			NI1_GBLoaderPanelFnct()
+		endif
+		if(cmpstr(popStr,"Pilatus")==0)
+			NI1_PilatusLoaderPanelFnct()
+		endif
+	endif
+	if(cmpstr(ctrlName,"DataCalibrationString")==0)
+		//set appropriate extension
+		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
+		DataCalibrationString = popStr
+	endif
+	if(cmpstr(ctrlName,"RebinCalib2DDataToPnts")==0)
+		//set appropriate extension
+		SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+		RebinCalib2DDataToPnts = popStr
+	endif
+
+	if(cmpstr(ctrlName,"FIlesSortOrder")==0)
+		NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
+		FIlesSortOrder = popNum-1
+		NI1A_UpdateDataListBox()
+	endif
+	
+	if(cmpstr(ctrlName,"LineProf_CurveType")==0)
+		//here we select start of the range...
+		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
+		LineProf_CurveType=popStr		
+		SVAR KnWCT=root:Packages:Convert2Dto1D:LineProf_CurveType
+		SetVariable LineProf_LineAzAngle,disable=(!stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel
+		SetVariable LineProf_EllipseAR,disable=(!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
+		SetVariable LineProf_GIIncAngle,disable=((!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal Line")&&!stringMatch(KnWCT,"GI_Vertical Line"))), win=NI1A_Convert2Dto1DPanel
+		checkbox LineProf_UseBothHalfs,disable=(stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel	
+		DoWIndow/K/Z GISAXSOptionsPanel
+		if(stringMatch(LineProf_CurveType,"GI_*"))
+			NI1_GISAXSOptions() 
+		endif
+		NI1A_LineProf_Update()
+	endif
+
+
+	if(cmpstr(ctrlName,"SelectStartOfRange")==0)
+		//here we select start of the range...
+		NVAR StartDataRangeNumber=root:Packages:Convert2Dto1D:StartDataRangeNumber
+		StartDataRangeNumber=popNum
+		NI1A_MakeContiguousSelection()
+	endif
+	if(cmpstr(ctrlName,"SelectEndOfRange")==0)
+		//here we select end of the range...
+		NVAR EndDataRangeNumber=root:Packages:Convert2Dto1D:EndDataRangeNumber
+		EndDataRangeNumber=popNum
+		NI1A_MakeContiguousSelection()
+	endif
+	if(cmpstr(ctrlName,"ColorTablePopup")==0)
+		SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
+		ColorTableName = popStr
+		NI1A_TopCCDImageUpdateColors(1)
+	endif
+	if(cmpstr(ctrlName,"MaskImageColor")==0)
+		NI1M_ChangeMaskColor(popStr) 
+	endif
+	if(cmpstr(ctrlName,"GI_Shape1")==0)
+		SVAR GI_Shape1=root:Packages:Convert2Dto1D:GI_Shape1
+		GI_Shape1=popStr 
+		NI1A_TabProc("",6)
+	endif
+
+	DoWIndow/F NI1A_Convert2Dto1DPanel
+	DoWIndow/F NI_GBLoaderPanel
+	DoWIndow/F NI_PilatusLoaderPanel
+
+	setDataFolder OldDf
+End

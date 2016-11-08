@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.90
+#pragma version = 1.92
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.92 fixes to annoying behaviors (needless user questions)
+//1.91 enable negative override for Bkg5 
 //1.90 Added first version of Import & Process panel. For now cannot handel step scanning. 
 //1.89 fixes for 2016-02
 //1.88 panel scaling.  
@@ -327,7 +329,7 @@ Function IN3_MainPanelNew()
 	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK5Err,noedit=1
 	SetVariable Bkg5Overwrite,pos={20,640},size={300,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
 	SetVariable Bkg5Overwrite ,format="%g"
-	SetVariable Bkg5Overwrite,limits={0,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
+	SetVariable Bkg5Overwrite,limits={-inf,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
 
 //calibration stuff...
 	SetVariable MaximumIntensity,pos={8,370},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2
@@ -395,6 +397,22 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IN3_FailedLoadMessage(Filename) : Panel
+      string FileName
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /W=(348,238,695,363)/K=1 as "File Failed to Load Message"
+	DoWindow/C FailedLoadmessage
+	ModifyPanel cbRGB=(65535,0,0)
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 20,fstyle= 3
+	DrawText 24,30,"\\JC"+ FileName
+	SetDrawEnv fsize=14, fstyle=3
+	Drawtext 15, 60, "\\JCFile failed to load. Are you still collecting data?"
+	SetDrawEnv fsize=14, fstyle=3
+	Drawtext 15, 80, "Or the file may corrupted?"
+	DrawText 10,100, "This message should disapper in 3 seconds on its own"
+	DoUpdate
+EndMacro
 //************************************************************************************************************
 //************************************************************************************************************
 Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
@@ -432,8 +450,19 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 			shortFileName = shortFileName[0,30]
 			//check if such data exist already...
 			ListOfExistingFolders = DataFolderDir(1)
-			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
-			if (V_flag == 0)					// Open OK?
+			HDF5OpenFile/R/Z /P=USAXSHDFPath locFileID as FileName
+			if(V_flag!=0)	//failed
+				IN3_FailedLoadMessage(FileName)
+				sleep/s 3
+				DoWindow FailedLoadmessage
+				if(V_Flag)		//this is for Igor 6 compatibility, KillWIndow /Z is only Igor 7
+					KillWindow FailedLoadmessage
+				endif
+				print "Could not open "+FileName
+				abort
+				return ""
+			else
+				// Open OK?
 				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"			
 				KillWaves/Z Config_Version
 				HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
@@ -474,22 +503,23 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
 						KillDataFolder $(TempStrName)
 					else
-						DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
-						if(V_Flag==1)
-							KillDataFolder/Z targetFldrname
-							DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
-							KillDataFolder $(TempStrName)
-						elseif(V_Flag==2)
-							string OldDf1=getDataFolder(1)
-							SetDataFolder TargetRawFoldername
-							string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrNameShort,1,1), 11, 0 ))
-							SetDataFolder OldDf1		
-							DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
-							TempStrNameShort = TempStrNameNew		
-							KillDataFolder $(TempStrName)
-						else
-							Abort 
-						endif
+						//DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
+						print "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwriting"
+						//if(V_Flag==1)
+						KillDataFolder/Z targetFldrname
+						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
+						KillDataFolder $(TempStrName)
+//						elseif(V_Flag==2)
+//							string OldDf1=getDataFolder(1)
+//							SetDataFolder TargetRawFoldername
+//							string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrNameShort,1,1), 11, 0 ))
+//							SetDataFolder OldDf1		
+//							DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
+//							TempStrNameShort = TempStrNameNew		
+//							KillDataFolder $(TempStrName)
+//						else
+//							Abort 
+//						endif
 					endif
 				else
 					DuplicateDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
@@ -498,13 +528,11 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
 				print "Imported HDF5 file : "+RawFolderWithData
 #if(exists("AfterFlyImportHook")==6)  
-			AfterFlyImportHook(RawFolderWithData)
+				AfterFlyImportHook(RawFolderWithData)
 #endif	
 				ListOfLoadedDataSets += IN3_FSConvertToUSAXS(RawFolderWithData)	+";"
 				print "Converted : "+RawFolderWithData+" into USAXS data"
 				KillDataFOlder RawFolderWithData
-			else
-				DoAlert 0, "Could not open "+FileName
 			endif
 
 		endif

@@ -2582,7 +2582,8 @@ end
 Function IR3C_ListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
-
+      //Prevent Igor from invoking this before we are done with instance 1
+      lba.blockReentry = 1
 	string TopPanel=WinName(0, 64)
 
 	Variable row = lba.row

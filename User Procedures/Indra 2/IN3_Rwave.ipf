@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.08
+#pragma version 1.10
 
 
 //*************************************************************************\
@@ -8,6 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 added finding Qmin from FWHM of the sample peak, modified handling cases when only 1 crossing for peak fitting found. 
+//1.09 removed border points to reange changes in IN3_CalculateRWaveIntensity() to try to fix problems with stickying poitns at low-q values. 
 //1.08 Remove Dropout function
 //1.07 minor GUI change to keep user advised about saving data
 //1.06 small modification for cases when PD_error does nto exist. 
@@ -65,7 +67,11 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 			if(strlen(CsrInfo(A  ,  "RcurvePlotGraph"))>0)
 				variable/g OldStartQValueForEvaluation=R_Qvec[pcsr(A  , "RcurvePlotGraph")]
 			else
-				variable/g OldStartQValueForEvaluation=1e-4
+				//lets try to set Qmin for user based on FWHM
+				NVAR PeakWidth = root:Packages:Indra3:PeakWidthArcSec
+				NVAR Wavelength = root:Packages:Indra3:Wavelength
+				variable Qmin = 4 * pi * sin(PeakWidth*4.848e-6 /2) / Wavelength
+				variable/g OldStartQValueForEvaluation=Qmin
 			endif
 		endif
 	endif
@@ -102,6 +108,10 @@ Function IN3_FitPeakCenterEstimate()
 		endif
 		PeakCenterFitStartPoint = floor(W_FindLevels[0])
 		PeakCenterFitEndPoint =  ceil(W_FindLevels[1])
+	elseif(V_LevelsFound==1)		//found just one level. 
+		Wave W_FindLevels
+		PeakCenterFitStartPoint = 1
+		PeakCenterFitEndPoint =  ceil(W_FindLevels[0])
 	else
 		Wavestats /Q PD_Intensity
 		PeakCenterFitStartPoint = max(0, V_maxloc - 15)
@@ -185,7 +195,8 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	Wave USAXS_PD
 	Wave Monitor
 	Wave MeasTime
-		
+	Wave Ar_encoder
+	
 	Wave/Z PD_Intensity						//these waves may be new
 	Wave/Z PD_Error
 	if (!WaveExists(PD_Intensity) || !WaveExists(PD_Error))	
@@ -238,7 +249,10 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	else
 		PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0_gain)
 	endif
-	
+	//need to remove bad points caused by range changes at low qs here... 
+	PD_Intensity [1,numpnts(pd_range)-2] = ((pd_range[p+1]-pd_range[p])<-0.5 || (pd_range[p]-pd_range[p-1])<-0.5) ? nan : PD_Intensity
+	//this will simply set border points to range changes nan and they should get later removed. 
+	//this is not set to remove points ONLY if we cahnge from higher gain to lower gain, not in the other direction
 	//OK, another incarnation of the error calculations...
 	Duplicate/O PD_Error,  A
 	Duplicate/O/Free PD_Error, SigmaUSAXSPD, SigmaPDwDC, SigmaRwave, SigmaMonitor, ScaledMonitor
@@ -265,7 +279,7 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	if(SampleTransmissionPeakToPeak<=0)
 		SampleTransmissionPeakToPeak=1
 	endif
-	NI3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, PD_Intensity,PD_error)
+	IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, PD_Intensity,PD_error)
 	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	R_error = PD_error * SampleTransmissionPeakToPeak
 	//now remove dropouts if needed...
@@ -275,7 +289,7 @@ end
 ///*********************************************************************************
 ///*********************************************************************************
 ///*********************************************************************************
-Function NI3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int,R_error)
+Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int,R_error)
 	WAVE Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error
 	
 	string oldDf=GetDataFolder(1)

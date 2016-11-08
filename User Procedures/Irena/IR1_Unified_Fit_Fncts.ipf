@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.16
+#pragma version=2.17
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.17 Dale fixed function IR2U_CalculateInvariantbutton() to Warn the user that one can’t use "invariant btwn csrs" on SMR data and Automatically use the level-1 for B value when “All” is picked as the level in the two phase calculator (Analyze Results button on unified panel).
 //2.16 minor fix pre Dale's request. 
 //2.15 fixes to Graph display of local levels. 
 //2.14 corrected Invariant analysis to do correctly phi*(1-phi) calculation to get phi. 
@@ -2603,7 +2604,7 @@ End
 //***********************************************************
 //***********************************************************
 
-Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 02
+Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 02 and minor fix 10/1/2016
 	string OldDf=GetDataFolder(1)
 	
 	variable extrapts=600 //number of points in extrapolation waves
@@ -2617,7 +2618,10 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	NVAR majorityphi=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi//phi is picked up from unified fit data evaluation panel
 	NVAR dens=root:Packages:Irena_AnalUnifFit:SampleBulkDensity
 	NVAR inv=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors//***DWS
-	
+	If (StringMatch(rwavename, "*SMR_Int" ))
+		Doalert 0, "Invariant Using Cursors\rdoes not work on slit-smeared data"//***DWS 2016 09 29
+		Abort
+	endif
 	setdatafolder datafoldername
 	rwavename = ReplaceString("'", rwavename, "")
 	qwavename = ReplaceString("'", qwavename, "")
@@ -2644,37 +2648,43 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	duplicate/o rwave,rq2
 	rq2=rwave*qwave^2	
 	NVAR SelectedLevel=root:Packages:Irena_AnalUnifFit:SelectedLevel//level number selected for analysis.  can be NaN for "all"
-	NVAR LNumOfLevels =root:Packages:Irena_UnifFit:NumberOfLevels//number of levels in unified fit
+	Variable SelectedLevelForB=SelectedLevel
+	variable InitialselectedLevel=SelectedLevel//used to reset the panel at the end
+	NVAR LNumOfLevels =root:Packages:Irena_UnifFit:NumberOfLevels//number of levels in the full unified fit
 	NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevel)+"B")
-	If (numtype(selectedLevel)==2)//  SelectedLevel = "all",  If you pick all levels it will take B for level 1---gets tricky here
-		if (!(exists ("B")==2))//that is, B is NaN because user picked all levels
-			Doalert 0, "You must pick a specific level when \rusing cursor to calculate the invariant.\r\rHigest-level Rg is used to extend invariant to q = 0."
-			Abort
-		endif
-	else//selected level in not "All"
-		//NVAR RgselectedLevel=$("root:Packages:irena_UnifFit:Level"+num2istr(LNumOfLevels)+"Rg")//Rg is only used for caculating the invariant.
-		//NVAR G=$("root:Packages:irena_UnifFit:Level"+num2istr(LNumOfLevels)+"G")
-		//variable QvFrontPart=(G*qwave[pcsr(a)]^3/3)+(qwave[pcsr(a)]^5*RgSelectedLevel^2/15)//analytical	extension.  Better to use unified fit to extend to low Q
+	If (numtype(selectedLevel)==2)//  SelectedLevel = "all",  If you pick all levels igor will take B for level 1---gets tricky here
+				//Doalert 0, "using level-1 B"
+				SelectedLevel=LNumOfLevels // use the top level when "all" is selected
+				NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(1)+"B")//uses level 1 for B when "all" is picked. DWS 2016 09 20 
+				SelectedLevelForB=1
 	endif
-	frontqq2=(P+1)*qwave[pcsr(a)]/(extrapts)//first element can't be zero	 Sets limit of low q
-
-	IR2U_UnifiedCalcLowq_DWS(frontqq2,frontrwave, LNumOfLevels)
+	NVAR PorodSlope=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevelForB)+"P")
+	If (PorodSlope!=4)
+		Doalert 0, "Porod Slope is not equal to -4"
+	endif
+	
+	NVAR RgselectedLevel=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevel)+"Rg")//Rg is only used for caculating the invariant.
+	NVAR G=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevel)+"G")
+	frontqq2=(P+1)*qwave[pcsr(a)]/(extrapts)//first element can't be zero	 Sets limit of lowest q as qwave[pcsr(a)]/extrapts up to about qwave[pcsr(a)]
+	IR2U_UnifiedCalcLowq_DWS(frontqq2,frontrwave, SelectedLevel)//calculates unified   IR2U_UnifiedCalcLowq_DWS(qwave,rwave, uptolevel)
 	frontrq2=frontrwave*frontqq2^2
 	variable maxqback=10*hcsr(B)//max q for porod extrapolation
-
 	backqq2=qwave[pcsr(b)-overlap]+P*(maxqback-qwave[pcsr(b)-overlap])/extrapts	
 	backrq2=B/backqq2^2
 	 variable invariant=areaXY(qwave, rq2,hcsr(a), hcsr(b))+areaxy(frontqq2,frontrq2)+abs((B*hcsr(B)^-1))//extends with -4 exponent
+	 variable QvFrontPart=(G*qwave[pcsr(a)]^3/3)+(qwave[pcsr(a)]^5*RgSelectedLevel^2/15)//analytical extension to low q  NOT USED
 	inv=invariant//***DWS  Store the result so it can be used by   IR2U_TwoPhaseModelCalc()
-	//Print B*hcsr(B)
-	//print "Qlowq using area = "+ num2str(areaxy(frontqq2,frontrq2))
-	//print "Qlowq  analytical = "+num2str( QvFrontPart)
-	//print  "Qdata part = "+ num2str(areaXY(qwave, rq2,hcsr(a), hcsr(b)))
-	//Print  "Qtail analytical = "+num2str(abs((B*hcsr(B)^-1)))
-	//print "Qtail using area = "+num2str (areaXY(backqq2, backrq2))
-	//Print "Qtotal = "+num2str (invariant)
-	//Print "B = "+num2str (B)
-	Print "___________"
+	If(1)
+		//Print B*hcsr(B)
+		print "Qlowq using area = "+ num2str(areaxy(frontqq2,frontrq2))
+		print "Qlowq  analytical (not used) = "+num2str( QvFrontPart)
+		print  "Qdata part = "+ num2str(areaXY(qwave, rq2,hcsr(a), hcsr(b)))
+		Print  "Qtail analytical = "+num2str(abs((B*hcsr(B)^-1)))
+		print "Qtail using area (not used) = "+num2str (areaXY(backqq2, backrq2))
+		Print "Qtotal = "+num2str (invariant)
+		Print "B = "+num2str (B)
+		Print "___________"
+	endif
 	NVAR TwoPhaseInvariantBetweenCursors=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors
 	TwoPhaseInvariantBetweenCursors=invariant*1e24
 	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
@@ -2701,6 +2711,7 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
 	HideTools/A
 	dowindow/c InvariantGraph
+	SelectedLevel=InitialselectedLevel
 	setDataFolder OldDf
 	
 	If ((numtype(invariant)==2))

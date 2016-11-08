@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.13
+#pragma version = 1.14
 Constant IR2DversionNumber=1.09
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 added oversampling to calculation of peak parameters. When user selects "oversample", peaks are calculated at 5x higher resolution. This provides parameters 5x more precise than what measured Q points are. 
 //1.13 fixed bug in linking which showed on Igor 7 and caused error messages. 
 //1.12 fixed bug in useSMR data which called old code and screwed up control procedures. 
 //1.11 removed most Executes in preparation for Igor 7. 
@@ -1652,7 +1653,7 @@ Proc  IR2D_LogLogPlotSAD()
 	ShowInfo
 	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
-	LabelStr= "\\Z"+IR2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr
 	string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	Legend/W=IR2D_LogLogPlotSAD/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
@@ -1790,6 +1791,9 @@ Function IR2D_CalculateIntensity(force)
 		DeletePoints  (OriginalNumPnts), inf, SMModelIntensity, ModelQvector, ModelIntensity
 		ModelIntensity = SMModelIntensity 
 	endif
+	//fix low resolution of peak results, make special dense Q vector copy for local fits. 
+	Duplicate/O ModelQvector, PeakModelQvector		//thi sis now either sparse or dense, depending on the user checkbox.
+	//
 	if(Oversample)
 		Duplicate/O ModelIntensity, CutMeModelIntensity
 		Redimension /N=(OriginalNumPnts2) ModelIntensity
@@ -1802,19 +1806,17 @@ Function IR2D_CalculateIntensity(force)
 	Residuals = ResInt - ModelIntensity
 	NormalizedResiduals = Residuals/TempErrors
 	
-////test Lorenz correction
-//ModelIntensity = ModelIntensity * ModelQvector^2
-//
-////end test Lorenz correction	
 	//now the local fits
 	RemoveFromGraph /W=IR2D_LogLogPlotSAD /Z Peak1Intensity,Peak2Intensity,Peak3Intensity,Peak4Intensity,Peak5Intensity,Peak6Intensity
 	KillWaves/Z Peak1Intensity,Peak2Intensity,Peak3Intensity,Peak4Intensity,Peak5Intensity,Peak6Intensity, ResInt, TempErrors, tempInt2
+	//
+	Duplicate/Free PeakModelQvector, TempPeakInt 
 		For(i=1;i<=6;i+=1)
 			NVAR usePk = $("root:Packages:Irena_SAD:UsePeak"+num2str(i))
 			if(usePk)
-				IR2D_CalcOnePeakInt(i, tempInt, ModelQvector)
-				Duplicate/O tempInt, $("Peak"+num2str(i)+"Intensity") 
-				SetScale/P x 0,1,"", tempInt
+				IR2D_CalcOnePeakInt(i, TempPeakInt, PeakModelQvector)
+				Duplicate/O TempPeakInt, $("Peak"+num2str(i)+"Intensity") 
+				SetScale/P x 0,1,"", TempPeakInt
 			endif
 		endfor
 		
@@ -2181,7 +2183,8 @@ Function IR2D_AppendDataToGraph()
 	NVAR DisplayPeaks=root:Packages:Irena_SAD:DisplayPeaks
 	Wave/Z ModelIntensity=root:Packages:Irena_SAD:ModelIntensity
 	Wave/Z ModelQvector=root:Packages:Irena_SAD:ModelQvector
-	if(!WaveExists(ModelIntensity)||!WaveExists(ModelQvector))
+	Wave/Z PeakModelQvector=root:Packages:Irena_SAD:PeakModelQvector
+	if(!WaveExists(ModelIntensity)||!WaveExists(ModelQvector)||!WaveExists(PeakModelQvector))
 		abort
 	endif
 	Checkdisplayed/W=IR2D_LogLogPlotSAD ModelIntensity
@@ -2199,7 +2202,7 @@ Function IR2D_AppendDataToGraph()
 		Wave/Z PeakInt=$("Peak"+num2str(i)+"Intensity")
 		if(WaveExists(PeakInt)&&DisplayPeaks)
 			Checkdisplayed/W=IR2D_LogLogPlotSAD $("Peak"+num2str(i)+"Intensity")
-			AppendToGraph /W=IR2D_LogLogPlotSAD  PeakInt vs ModelQvector
+			AppendToGraph /W=IR2D_LogLogPlotSAD  PeakInt vs PeakModelQvector
 			ModifyGraph/W=IR2D_LogLogPlotSAD   lsize($("Peak"+num2str(i)+"Intensity"))=2,rgb($("Peak"+num2str(i)+"Intensity"))=(0,0,0)
 		endif
 	
@@ -2678,7 +2681,7 @@ Function IR2D_UpdatePeakParams()
 	For(i=1;i<=6;i+=1)
 		NVAR usePk = $("root:Packages:Irena_SAD:UsePeak"+num2str(i))
 		Wave/Z Intensity=$("Peak"+num2str(i)+"Intensity") 
-		Wave/Z Qvec=ModelQvector 
+		Wave/Z Qvec=PeakModelQvector 
 		if(usePk && WaveExists(Intensity))
 			NVAR PeakDPosition=$("PeakDPosition"+num2str(i))
 			NVAR PeakPosition=$("PeakPosition"+num2str(i))

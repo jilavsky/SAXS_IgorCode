@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.01
+#pragma version=1.02
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 0.3		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.02 fix error when IR3W_WAXSMainGraph is not top graph window and user tries to add/replace the data in it. 
 //1.01 fixes for energy/wavelength handling when lookup in the wave note fails
 //0.31 removed eps data for now, they were incorrect. 
 //		Proper errors estimates are in the text waves and mining of data from the results needs to be worked out in the future. 
@@ -921,6 +922,10 @@ Function IR3W_WAXSListBoxProc(lba) : ListBoxControl
 		case 1: // mouse down
 			break
 		case 3: // double click
+			DoWindow IR3W_WAXSMainGraph
+			if(V_Flag==1)
+				DoWIndow/F IR3W_WAXSMainGraph
+			endif
 			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 			FoldernameStr=listWave[row]
 			IR3W_CopyAndAppendData(FoldernameStr)

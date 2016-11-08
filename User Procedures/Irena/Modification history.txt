@@ -3,6 +3,15 @@ Code modification history
 
 -latest stuff first
 ********************************************
+
+Modified Nexus support, added new library to use it. 
+Moved some common functions to IN2G_GeneralProcedures
+Fix to QRS names which failed on names containing string “spec” in the name. 
+Added checkbox for slit smeared/desmeared USAXS data in Merge 2 data sets tool. 
+Small-angle diffraction - when user selects “oversample” the parameters for peaks (d, q, width) are now calculated at 5x higher resolution than measured Q points. 
+Desmearing - propagate dQ and if does not exist, create dQ based on points distance. 
+
+
 2.61 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher
 ASCII import - added ability to slit smear the data on import. Redistributed controls on the Import panel. 

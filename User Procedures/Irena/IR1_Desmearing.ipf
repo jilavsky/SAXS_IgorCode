@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.07
+#pragma version = 2.08
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.08 propagate dQ if exists in slit smeared data, if does not exist, fake one from distance between points. 
 //2.07 fixed Next sample button where there was weird bug when one was goign between use of manual selection and next sample buttons. 
 //2.06 changed back to rtGlobals=2, need to check code much more to make it 3
 //2.05 fixed index running out again. 
@@ -189,16 +190,17 @@ Function IR1B_Trim(ctrlName) : ButtonControl
 	Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 	Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 	Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
+	Wave OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
 	
-	KillWaves/Z SmoothIntwave, SmoothQwave, SmoothEwave
+	KillWaves/Z SmoothIntwave, SmoothQwave, SmoothEwave, SmoothdQwave
 	if (strlen(CsrWave(B))==0 || strlen(CsrWave(A))==0)
 		DoAlert 0, "One of the cursors is not in the graph. Position both cursors and select the area which you want to desmear in the graph first before triming."
 	else
 		variable AP=pcsr (A)
 		variable BP=pcsr (B)
-		deletePoints 0, AP, OrgIntwave, OrgQwave, OrgEwave
+		deletePoints 0, AP, OrgIntwave, OrgQwave, OrgEwave, OrgdQwave
 		variable newLength=numpnts(OrgIntwave)
-		deletePoints (BP-AP+1), (newLength), OrgIntwave, OrgQwave, OrgEwave
+		deletePoints (BP-AP+1), (newLength), OrgIntwave, OrgQwave, OrgEwave, OrgdQwave
 		cursor/P A, OrgIntwave, 0
 		cursor/P B, OrgIntwave, (numpnts(OrgIntwave)-1)
 	endif
@@ -296,7 +298,7 @@ Function IR1B_Initialize()
 	ListOfVariables+="DesmearDampen;DesmearAutomaticaly;DesmearAutoTargChisq;DesmearNIterationsTarget;"
 
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;BackgroundFunction;LastSample;"
-	ListOfStrings+="ExportDataFolderName;ExportIntensityWaveName;ExportQWavename;ExportErrorWaveName;BackgroundFunction;"
+	ListOfStrings+="ExportDataFolderName;ExportIntensityWaveName;ExportQWavename;ExportErrorWaveName;BackgroundFunction;ExportdQWaveName;"
 	
 	variable i
 	for(i=0;i<itemsInList(ListOfWavesToKill);i+=1)	
@@ -505,8 +507,8 @@ Function IR1B_OneDesmearIteration()
 	
 	NVAR BckgStartQ                 = root:Packages:Irena_desmearing:BckgStartQ
 	NVAR numOfPoints               = root:Packages:Irena_desmearing:numOfPoints
-	WAVE DesmearedIntWave     = root:Packages:Irena_desmearing:DesmearedIntWave
-	WAVE DesmearedQWave      = root:Packages:Irena_desmearing:DesmearedQWave
+	WAVE DesmearedIntWave     		= root:Packages:Irena_desmearing:DesmearedIntWave
+	WAVE DesmearedQWave     			 = root:Packages:Irena_desmearing:DesmearedQWave
 	WAVE OrgIntwave                 = root:Packages:Irena_desmearing:SmoothIntwave
 	//Wave ExtrapErrWave                  = root:Packages:Irena_desmearing:ExtrapErrWave
 	Wave ExtrapErrWave                  = root:Packages:Irena_desmearing:SmoothEwave
@@ -691,29 +693,33 @@ Function IR1B_DoDesmearing()
 	Wave/Z OrgIntwave=root:Packages:Irena_desmearing:SmoothIntwave
 	Wave/Z OrgQwave=root:Packages:Irena_desmearing:SmoothQwave
 	Wave/Z OrgEwave=root:Packages:Irena_desmearing:SmoothEwave
+	Wave/Z OrgdQwave=root:Packages:Irena_desmearing:SmoothdQwave
 	if(!WaveExists(OrgIntWave) || !WaveExists(OrgQwave) || !WaveExists(OrgEWave))
 		NVAR SmoothSMRData=root:Packages:Irena_desmearing:SmoothSMRData
 		NVAR SmoothingParameterSMR=root:Packages:Irena_desmearing:SmoothingParameterSMR
 		Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 		Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 		Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
-		IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-		IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+		Wave/Z OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
+		IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)			//here we remove negative values by setting them to NaNs
+		IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 		if(SmoothSMRData)
 			IR1B_SliderSmoothSMRData(SmoothingParameterSMR)
 		else
 			Duplicate/O OrgIntwave, SmoothIntwave
 			Duplicate/O OrgQwave, SmoothQwave
 			Duplicate/O OrgEwave, SmoothEwave
+			Duplicate/O OrgdQwave, SmoothdQwave
 		endif
 	endif
 	Wave/Z OrgIntwave=root:Packages:Irena_desmearing:SmoothIntwave
 	Wave/Z OrgQwave=root:Packages:Irena_desmearing:SmoothQwave
 	Wave/Z OrgEwave=root:Packages:Irena_desmearing:SmoothEwave
+	Wave/Z OrgdQwave=root:Packages:Irena_desmearing:SmoothdQwave
 	Wave/Z fit_ExtrapIntWave=root:Packages:Irena_desmearing:fit_ExtrapIntWave
 	Wave/Z ColorWave=root:Packages:Irena_desmearing:ColorWave
 	IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-	IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+	IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 	numOfPoints = numpnts(OrgIntwave)
 	
 	NVAR SlitLength=root:Packages:Irena_desmearing:SlitLength
@@ -723,6 +729,7 @@ Function IR1B_DoDesmearing()
 	
 	Duplicate/O OrgIntwave, DesmearedIntWave, FitIntensity, SmFitIntensity, NormalizedError, UpErr, DownErr		//creates new waves to work on
 	Duplicate/O OrgQwave, DesmearedQWave
+	Duplicate/O OrgdQwave, DesmeareddQWave
 	Duplicate/O OrgEwave, SmErrors, DesmearedEWave	
 
 	UpErr=1
@@ -799,6 +806,7 @@ Function IR1B_CheckTheBackgroundExtns()
 	Wave/Z OrgIntwave=root:Packages:Irena_desmearing:SmoothIntwave
 	Wave/Z OrgQwave=root:Packages:Irena_desmearing:SmoothQwave
 	Wave/Z OrgEwave=root:Packages:Irena_desmearing:SmoothEwave
+	Wave/Z OrgdQwave=root:Packages:Irena_desmearing:SmoothdQwave
 
 	if(!WaveExists(OrgIntwave) || !WaveExists(OrgQwave) || !WaveExists(OrgEwave))
 		NVAR SmoothSMRData=root:Packages:Irena_desmearing:SmoothSMRData
@@ -806,22 +814,25 @@ Function IR1B_CheckTheBackgroundExtns()
 		Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 		Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 		Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
+		Wave OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
 		IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-		IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+		IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 		if(SmoothSMRData)
 			IR1B_SliderSmoothSMRData(SmoothingParameterSMR)
 		else
 			Duplicate/O OrgIntwave, SmoothIntwave
 			Duplicate/O OrgQwave, SmoothQwave
 			Duplicate/O OrgEwave, SmoothEwave
+			Duplicate/O OrgdQwave, SmoothdQwave
 		endif
 	endif
 	Wave/Z OrgIntwave=root:Packages:Irena_desmearing:SmoothIntwave
 	Wave/Z OrgQwave=root:Packages:Irena_desmearing:SmoothQwave
 	Wave/Z OrgEwave=root:Packages:Irena_desmearing:SmoothEwave
+	Wave/Z OrgdQwave=root:Packages:Irena_desmearing:SmoothdQwave
 	
 	IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-	IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+	IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 	numOfPoints = numpnts(OrgIntWave)
 	
 	NVAR SlitLength=root:Packages:Irena_desmearing:SlitLength
@@ -829,6 +840,7 @@ Function IR1B_CheckTheBackgroundExtns()
 	Duplicate/O OrgIntwave, ExtrapIntwave, ColorWave
 	Duplicate/O OrgQwave, ExtrapQwave
 	Duplicate/O OrgEwave, ExtrapErrWave
+	Duplicate/O OrgdQwave, ExtrapdQWave
 	ColorWave=0				//make the colors to be one, this will change later...
 //	numOfPoints=numpnts(OrgQwave)
 	
@@ -1311,8 +1323,16 @@ Function IR1B_CopyDataLocally()
 	SVAR IntensityWaveName   =  root:Packages:Irena_desmearing:IntensityWaveName
 	SVAR QwaveName             =  root:Packages:Irena_desmearing:QWavename
 	SVAR ErrorWaveName      =   root:Packages:Irena_desmearing:ErrorWaveName
+	SVAR ExportdQWaveName      =   root:Packages:Irena_desmearing:ExportdQWaveName
 	SVAR LastSample		=	root:Packages:Irena_desmearing:LastSample
 	NVAR UseIndra2Data=root:Packages:Irena_desmearing:UseIndra2Data
+	
+	string dQname
+	if(UseIndra2Data)
+		dQname = "SMR_dQ"
+	else	//QRS names
+		dQname = "w"+QWavename[1,inf]
+	endif
 
 	LastSample	=	DataFolderName
 
@@ -1322,7 +1342,8 @@ Function IR1B_CopyDataLocally()
 
 	Wave/Z Intensity  = $(DataFolderName+IntensityWaveName)
 	Wave/Z Qvector   = $(DataFolderName+QwaveName)
-	Wave/Z Error       = $(DataFolderName+ErrorWaveName)
+	Wave/Z Error     = $(DataFolderName+ErrorWaveName)
+	Wave/Z dQ       = $(DataFolderName+dQname)			 
 	
 	if (!WaveExists(Intensity) || !WaveExists(Qvector) || !WaveExists(Error))
 		setDataFolder OldDf
@@ -1331,6 +1352,15 @@ Function IR1B_CopyDataLocally()
 	Duplicate/O Intensity, OrgIntwave
 	Duplicate/O Qvector, OrgQwave
 	Duplicate/O Error, OrgEwave
+	if(WaveExists(dQ))
+		Duplicate/O dQ, OrgdQwave
+	else
+		Duplicate/O Qvector, OrgdQwave
+		//Duplicate/O Qvector, dQ
+		OrgdQwave[1,numpnts(dQ)-2] = (OrgQwave[p+1] - OrgQwave[p-1])/2
+		OrgdQwave[0]= OrgdQwave[1]
+		OrgdQwave[numpnts(dQ)-1] = OrgdQwave[-2]
+	endif
 	
 	Redimension/D OrgIntWave, OrgQwave, OrgEwave
 	if(strlen(note(OrgIntwave))>0)
@@ -1344,7 +1374,7 @@ Function IR1B_CopyDataLocally()
 		endif
 	endif
 	IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-	IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+	IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 
 	SVAR ExportDataFolderName=root:Packages:Irena_desmearing:ExportDataFolderName
 	SVAR ExportIntensityWaveName=root:Packages:Irena_desmearing:ExportIntensityWaveName
@@ -1357,10 +1387,12 @@ Function IR1B_CopyDataLocally()
 			ExportIntensityWaveName = "DSM_Int"
 			ExportQWavename = "DSM_Qvec"
 			ExportErrorWaveName = "DSM_Error"
+			ExportdQWaveName = "DSM_dQ"
 		elseif (cmpstr(IntensityWaveName,"M_SMR_Int")==0)
 			ExportIntensityWaveName = "M_DSM_Int"
 			ExportQWavename = "M_DSM_Qvec"
 			ExportErrorWaveName = "M_DSM_Error"
+			ExportdQWaveName = "M_DSM_dQ"
 		else
 			setDataFolder OldDf
 			abort
@@ -1370,6 +1402,7 @@ Function IR1B_CopyDataLocally()
 		ExportIntensityWaveName = IntensityWaveName[0,25]+"_dsm"
 		ExportQWavename = QwaveName+"_dsm"
 		ExportErrorWaveName = ErrorWaveName+"_dsm"
+		ExportdQWaveName = dQname+"_dsm"
 	endif
 	
 	setDataFolder oldDf
@@ -1391,8 +1424,9 @@ Function IR1B_TrimTheData()							//this function trims the data before desmeari
 	Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 	Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 	Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
+	Wave OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
 	IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-	IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+	IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 	
 	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntwave vs OrgQwave as "Trim the data"
 	DoWindow/C TrimGraph 
@@ -1437,6 +1471,7 @@ Function IR1B_SmoothDSMData()							//this smooths the data before desmearing.
 	Wave/Z DesmearedIntWave=root:Packages:Irena_desmearing:DesmearedIntWave
 	Wave/Z DesmearedQWave=root:Packages:Irena_desmearing:DesmearedQWave
 	Wave/Z DesmearedEWave=root:Packages:Irena_desmearing:DesmearedEWave
+	Wave/Z DesmeareddQWave=root:Packages:Irena_desmearing:DesmeareddQWave
 	NVAR NumberOfIterations=root:Packages:Irena_desmearing:NumberOfIterations
 	if(!WaveExists(DesmearedIntWave) || !WaveExists(DesmearedQWave) ||!WaveExists(DesmearedEWave) || NumberOfIterations<1)
 		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave
@@ -1444,10 +1479,11 @@ Function IR1B_SmoothDSMData()							//this smooths the data before desmearing.
 		return 0
 	endif
 	IN2G_ReplaceNegValsByNaNWaves(DesmearedIntWave,DesmearedQWave,DesmearedEWave)		//here we remove negative values by setting them to NaNs
-	IN2G_RemoveNaNsFrom3Waves(DesmearedIntWave,DesmearedQWave,DesmearedEWave)			//and here we remove NaNs all together
+	IN2G_RemoveNaNsFrom4Waves(DesmearedIntWave,DesmearedQWave,DesmearedEWave,DesmeareddQWave)			//and here we remove NaNs all together
 	Duplicate/O DesmearedIntWave, SmoothDsmIntWave
 	Duplicate/O DesmearedQWave, SmoothDsmQWave
 	Duplicate/O DesmearedEWave, SmoothDsmEWave
+	Duplicate/O DesmeareddQWave, SmoothDsmdQWave
 	
 	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) DesmearedIntWave vs DesmearedQWave as "Smooth the desmeared data"
 	AppendToGraph SmoothDsmIntWave vs SmoothDsmQWave
@@ -1501,11 +1537,13 @@ Function IR1B_SmoothSMRData()							//this smooths the data before desmearing.
 	Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 	Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 	Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
+	Wave OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
 	IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-	IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+	IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 	Duplicate/O OrgIntwave, SmoothIntwave
 	Duplicate/O OrgQwave, SmoothQwave
 	Duplicate/O OrgEwave, SmoothEwave
+	Duplicate/O OrgdQwave, SmoothdQwave
 	
 //	PauseUpdate; Silent 1		// building window...
 	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntwave vs OrgQwave as "Smooth the data"
@@ -1610,22 +1648,27 @@ Function IR1B_TabPanelControl(name,tab)
 	Wave/Z OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 	Wave/Z OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 	Wave/Z OrgEwave=root:Packages:Irena_desmearing:OrgEwave
+	Wave/Z OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
 
 	Wave/Z SmoothIntwave=root:Packages:Irena_desmearing:SmoothIntwave
 	Wave/Z SmoothQwave=root:Packages:Irena_desmearing:SmoothQwave
 	Wave/Z SmoothEwave=root:Packages:Irena_desmearing:SmoothEwave
+	Wave/Z SmoothdQwave=root:Packages:Irena_desmearing:SmoothdQwave
 
 	Wave/Z ExtrapIntwave=root:Packages:Irena_desmearing:ExtrapIntwave
 	Wave/Z ExtrapQwave=root:Packages:Irena_desmearing:ExtrapQwave
 	Wave/Z ExtrapErrWave=root:Packages:Irena_desmearing:ExtrapErrWave
+	Wave/Z ExtrapdQWave=root:Packages:Irena_desmearing:ExtrapdQWave
 
 	Wave/Z DesmearedIntWave=root:Packages:Irena_desmearing:DesmearedIntWave
 	Wave/Z DesmearedQWave=root:Packages:Irena_desmearing:DesmearedQWave
 	Wave/Z DesmearedEWave=root:Packages:Irena_desmearing:DesmearedEWave
+	Wave/Z DesmeareddQWave=root:Packages:Irena_desmearing:DesmeareddQWave
 
 	Wave/Z SmoothDsmIntWave=root:Packages:Irena_desmearing:SmoothDsmIntWave
 	Wave/Z SmoothDsmQWave=root:Packages:Irena_desmearing:SmoothDsmQWave
 	Wave/Z SmoothDsmEWave=root:Packages:Irena_desmearing:SmoothDsmEWave
+	Wave/Z SmoothDsmdQWave=root:Packages:Irena_desmearing:SmoothDsmdQWave
 
 	if (!WaveExists(OrgIntwave) || !WaveExists(OrgQwave) || !WaveExists(OrgEwave))
 		setDataFolder OldDf
@@ -1636,10 +1679,10 @@ Function IR1B_TabPanelControl(name,tab)
 	Button TrimDataBtn,disable= (tab!=0), win=IR1B_DesmearingControlPanel
 	Button RemovePoint,disable= (tab!=0), win=IR1B_DesmearingControlPanel
 	if (tab==0)
-		KillWaves/Z SmoothIntwave, SmoothQwave, SmoothEwave
-		KillWaves/Z ExtrapIntwave, ExtrapQwave, ExtrapErrWave
-		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave
-		KillWaves/Z SmoothDsmIntWave, SmoothDsmQWave, SmoothDsmEWave
+		KillWaves/Z SmoothIntwave, SmoothQwave, SmoothEwave, SmoothdQwave
+		KillWaves/Z ExtrapIntwave, ExtrapQwave, ExtrapErrWave, ExtrapdQWave
+		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave, DesmeareddQWave
+		KillWaves/Z SmoothDsmIntWave, SmoothDsmQWave, SmoothDsmEWave, SmoothDsmdQWave
 		DoWindow TrimGraph		//create this
 		if(!V_Flag)
 			IR1B_TrimTheData()
@@ -1658,9 +1701,9 @@ Function IR1B_TabPanelControl(name,tab)
 	Slider SmoothSMRDataSlider,disable= (tab!=1 || SmoothSMRData!=1), win=IR1B_DesmearingControlPanel
 	SetVariable SmoothSMRChiSq,disable= (tab!=1 || SmoothSMRData!=1), win=IR1B_DesmearingControlPanel
 	if (tab==1)
-		KillWaves/Z ExtrapIntwave, ExtrapQwave, ExtrapErrWave
-		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave
-		KillWaves/Z SmoothDsmIntWave, SmoothDsmQWave, SmoothDsmEWave
+		KillWaves/Z ExtrapIntwave, ExtrapQwave, ExtrapErrWave, ExtrapdQWave
+		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave, DesmeareddQWave
+		KillWaves/Z SmoothDsmIntWave, SmoothDsmQWave, SmoothDsmEWave, SmoothDsmdQWave
 		DoWindow SmoothGraph		//create this
 		if(!V_Flag)
 			IR1B_SmoothSMRData()
@@ -1681,8 +1724,8 @@ Function IR1B_TabPanelControl(name,tab)
 //	CheckBox DesmearMaskNegatives,disable= (tab!=2), win=IR1B_DesmearingControlPanel
 //	CheckBox DesmearRemoveNegatives,disable= (tab!=2), win=IR1B_DesmearingControlPanel
 	if (tab==2)
-		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave
-		KillWaves/Z SmoothDsmIntWave, SmoothDsmQWave, SmoothDsmEWave
+		KillWaves/Z DesmearedIntWave, DesmearedQWave, DesmearedEWave, DesmeareddQWave
+		KillWaves/Z SmoothDsmIntWave, SmoothDsmQWave, SmoothDsmEWave, SmoothDsmdQWave
 		DoWindow CheckTheBackgroundExtns
 		if(!V_Flag)
 			IR1B_CheckTheBackgroundExtns()
@@ -1789,6 +1832,7 @@ Function  IR1B_SliderSmoothDSMData(sliderValue)
 	Wave Int=root:Packages:Irena_desmearing:DesmearedIntWave
 	Wave Qvec=root:Packages:Irena_desmearing:DesmearedQWave
 	Wave Error=root:Packages:Irena_desmearing:DesmearedEWave
+	Wave dQ=root:Packages:Irena_desmearing:DesmeareddQWave
 	Wave SmoothInt=root:Packages:Irena_desmearing:SmoothDsmIntWave
 	Wave SmoothQvec=root:Packages:Irena_desmearing:SmoothDsmQWave
 	Wave SmoothError=root:Packages:Irena_desmearing:SmoothDsmEWave
@@ -1846,16 +1890,20 @@ Function  IR1B_SliderSmoothSMRData(sliderValue)
 	Wave Int=root:Packages:Irena_desmearing:OrgIntwave
 	Wave Qvec=root:Packages:Irena_desmearing:OrgQwave
 	Wave Error=root:Packages:Irena_desmearing:OrgEwave
+	Wave dQ=root:Packages:Irena_desmearing:OrgdQwave
 	Wave/Z SmoothInt=root:Packages:Irena_desmearing:SmoothIntwave
 	Wave/Z SmoothQvec=root:Packages:Irena_desmearing:SmoothQwave
 	Wave/Z SmoothError=root:Packages:Irena_desmearing:SmoothEwave
+	Wave/Z SmoothdQrror=root:Packages:Irena_desmearing:SmoothdQwave
 	if(!WaveExists(SmoothInt)||!WaveExists(SmoothQvec)||!WaveExists(SmoothError))
 		Duplicate/O Int, SmoothIntWave
 		Duplicate/O Qvec, SmoothQwave
 		Duplicate/O Error, SmoothEwave
+		Duplicate/O dQ, SmoothdQwave
 		Wave SmoothInt=root:Packages:Irena_desmearing:SmoothIntwave
 		Wave SmoothQvec=root:Packages:Irena_desmearing:SmoothQwave
 		Wave SmoothError=root:Packages:Irena_desmearing:SmoothEwave
+		Wave SmoothdQ=root:Packages:Irena_desmearing:SmoothdQwave
 	endif
 	NVAR NormalizedChiSquareSMR=root:Packages:Irena_desmearing:NormalizedChiSquareSMR
 	
@@ -1966,11 +2014,13 @@ Function IR1B_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 		Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 		Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
+		Wave OrgdQwave=root:Packages:Irena_desmearing:OrgdQwave
 		IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
-		IN2G_RemoveNaNsFrom3Waves(OrgIntWave,OrgQwave,OrgEwave)			//and here we remove NaNs all together
+		IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 		Duplicate/O OrgIntwave, SmoothIntwave
 		Duplicate/O OrgQwave, SmoothQwave
 		Duplicate/O OrgEwave, SmoothEwave
+		Duplicate/O OrgdQwave, SmoothdQwave
 		if(SmoothSMRData)
 			 IR1B_SliderSmoothSMRData(SmoothingParameterSMR)	
 		else
@@ -1984,12 +2034,14 @@ Function IR1B_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		Wave/Z DesmearedIntWave=root:Packages:Irena_desmearing:DesmearedIntWave
 		Wave/Z DesmearedQWave=root:Packages:Irena_desmearing:DesmearedQWave
 		Wave/Z DesmearedEWave=root:Packages:Irena_desmearing:DesmearedEWave
+		Wave/Z DesmeareddQWave=root:Packages:Irena_desmearing:DesmeareddQWave
 		if(WaveExists(DesmearedIntWave) ||WaveExists(DesmearedQWave) ||WaveExists(DesmearedEWave))
 			IN2G_ReplaceNegValsByNaNWaves(DesmearedIntWave,DesmearedQWave,DesmearedEWave)		//here we remove negative values by setting them to NaNs
-			IN2G_RemoveNaNsFrom3Waves(DesmearedIntWave,DesmearedQWave,DesmearedEWave)			//and here we remove NaNs all together
+			IN2G_RemoveNaNsFrom4Waves(DesmearedIntWave,DesmearedQWave,DesmearedEWave,DesmeareddQWave)			//and here we remove NaNs all together
 			Duplicate/O DesmearedIntWave, SmoothDsmIntWave
 			Duplicate/O DesmearedQWave, SmoothDsmQWave
 			Duplicate/O DesmearedEWave, SmoothDsmEWave
+			Duplicate/O DesmeareddQWave, SmoothDsmdQWave
 			if(SmoothDSMData)
 				 IR1B_SliderSmoothDSMData(SmoothingParameterDSM)	
 			else
@@ -2386,6 +2438,7 @@ Function IR1B_SaveData()
 	SVAR ExportDataFolderName=root:Packages:Irena_desmearing:ExportDataFolderName
 	SVAR ExportIntensityWaveName=root:Packages:Irena_desmearing:ExportIntensityWaveName
 	SVAR ExportQWavename=root:Packages:Irena_desmearing:ExportQWavename
+	SVAR ExportdQWavename=root:Packages:Irena_desmearing:ExportdQWavename
 	SVAR ExportErrorWaveName=root:Packages:Irena_desmearing:ExportErrorWaveName
 
 	if((strlen(ExportDataFolderName)==0) ||(strlen(ExportIntensityWaveName)==0) ||(strlen(ExportQWavename)==0) ||(strlen(ExportErrorWaveName)==0))
@@ -2398,11 +2451,13 @@ Function IR1B_SaveData()
 	Wave/Z DesmearedIntWave=root:Packages:Irena_desmearing:DesmearedIntWave
 	Wave/Z DesmearedEWave=root:Packages:Irena_desmearing:DesmearedEWave
 	Wave/Z DesmearedQWave=root:Packages:Irena_desmearing:DesmearedQWave
+	Wave/Z DesmeareddQWave=root:Packages:Irena_desmearing:DesmeareddQWave
 	NVAR NumberOfIterations=root:Packages:Irena_desmearing:NumberOfIterations
 
 	Wave/Z SmoothDsmIntWave=root:Packages:Irena_desmearing:SmoothDsmIntWave
 	Wave/Z SmoothDsmQWave=root:Packages:Irena_desmearing:SmoothDsmQWave
 	Wave/Z SmoothDsmEWave=root:Packages:Irena_desmearing:SmoothDsmEWave
+	Wave/Z SmoothDsmdQWave=root:Packages:Irena_desmearing:SmoothDsmdQWave
 	
 	if(!WaveExists(SMErrors) || !WaveExists(OrgIntWave) || !WaveExists(SmoothDsmIntWave) || !WaveExists(SmoothDsmQWave) ||!WaveExists(SmoothDsmEWave))
 		if(!WaveExists(SMErrors) || !WaveExists(OrgIntWave) ||!WaveExists(DesmearedIntWave) ||!WaveExists(DesmearedEWave) ||!WaveExists(DesmearedQWave))
@@ -2412,6 +2467,7 @@ Function IR1B_SaveData()
 			Duplicate DesmearedIntWave, SmoothDsmIntWave
 			Duplicate DesmearedQWave, SmoothDsmQWave
 			Duplicate DesmearedEWave, SmoothDsmEWave			
+			Duplicate/O DesmeareddQWave, SmoothDsmdQWave			
 		endif
 	endif
 	
@@ -2433,6 +2489,7 @@ Function IR1B_SaveData()
 	string Outwave=ExportDataFolderName+ExportIntensityWaveName
 	string OutQwave=ExportDataFolderName+ExportQWavename
 	string OutError=ExportDataFolderName+ExportErrorWaveName
+	string OutdQ=ExportDataFolderName+ExportdQWaveName
 	
 	Wave/Z TestInt=$Outwave	
 	Wave/Z TestQ=$OutQwave	
@@ -2444,6 +2501,7 @@ Function IR1B_SaveData()
 			Duplicate/O SmoothDsmIntWave, $Outwave	
 			Duplicate/O SmoothDsmQWave, $OutQwave
 			Duplicate/O SmoothDsmEWave, $OutError
+			Duplicate/O SmoothDsmdQWave, $OutdQ
 		else
 			setDataFolder OldDf
 			Abort
@@ -2452,11 +2510,13 @@ Function IR1B_SaveData()
 		Duplicate SmoothDsmIntWave, $Outwave	
 		Duplicate SmoothDsmQWave, $OutQwave
 		Duplicate SmoothDsmEWave, $OutError
+		Duplicate SmoothDsmdQWave, $OutdQ
 	endif
 	
 	Wave FitIntensity = $Outwave	
 	Wave Qvector = $OutQwave
 	Wave DsmError = $OutError
+	Wave DsmdQ = $OutdQ
 	
 	SVAR DataFolderName = root:Packages:Irena_desmearing:DataFolderName
 	SVAR IntensityWaveName = root:Packages:Irena_desmearing:IntensityWaveName

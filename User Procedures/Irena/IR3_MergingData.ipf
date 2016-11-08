@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.05
-constant IR3DversionNumber = 1			//Data merging panel version number
+#pragma version=1.06
+constant IR3DversionNumber = 1.06			//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.06 added switch for slit smeared/desmeared USAXS data. 
 //1.05 chanegs for panel scaling - need to convert for WM procedure, subwindow does tno work rigth
 //1.04 fix for liberal names. 
 //1.03 bug in merging routine where lookup of start of overlap of Int2 data was before Int2 started
@@ -69,12 +70,6 @@ Proc IR3D_DataMergePanel()
 	NewPanel /K=1 /W=(2.25,43.25,1195,720) as "Data Merging"
 	DoWIndow/C IR3D_DataMergePanel
 	TitleBox MainTitle title="\Zr220Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)
-//	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
-//	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -82,29 +77,31 @@ Proc IR3D_DataMergePanel()
 	IR2C_AddDataControls("Irena:SASDataMerging","IR3D_DataMergePanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 
 
-	TitleBox Info1 title="\Zr160First data set",pos={60,8},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	TitleBox Info1 title="\Zr160First data set",pos={60,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	//DrawText 60,25,"First data set"
-	Checkbox UseIndra2Data1, pos={10,30},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data1
-	checkbox UseQRSData1, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
-	PopupMenu StartFolderSelection1,pos={10,50},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
+	Checkbox UseIndra2Data1, pos={10,20},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data1
+	Checkbox Indra2Data1SlitSmeared, pos={10,33},size={76,14},title="Desmeared/2D colim?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
+	checkbox UseQRSData1, pos={120,20}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
+	PopupMenu StartFolderSelection1,pos={10,52},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data1StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
 	SetVariable FolderNameMatchString1,pos={10,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString1,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data1MatchString
-	PopupMenu SortFolders1,pos={10,100},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders1"
+	PopupMenu SortFolders1,pos={10,95},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders1"
 	PopupMenu SortFolders1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString1,value= root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
 	//DrawText 290,25,"Second data set"
-	TitleBox Info2 title="\Zr160Second data set",pos={290,8},frame=0,fstyle=1, fixedSize=1,size={350,20}
-	Checkbox UseIndra2Data2, pos={260,30},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data2
-	checkbox UseQRSData2, pos={370,30}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
-	PopupMenu StartFolderSelection2,pos={260,50},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
+	TitleBox Info2 title="\Zr160Second data set",pos={290,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	Checkbox UseIndra2Data2, pos={260,20},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data2
+	checkbox UseQRSData2, pos={370,20}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
+	Checkbox Indra2Data2SlitSmeared, pos={260,33},size={76,14},title="Desmeared/2D colim?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
+	PopupMenu StartFolderSelection2,pos={260,52},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data2StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
 	SetVariable FolderNameMatchString2,pos={260,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString2,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data2MatchString
-	PopupMenu SortFolders2,pos={260,100},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders2"
+	PopupMenu SortFolders2,pos={260,95},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders2"
 	PopupMenu SortFolders2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString2,value=root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
-	Button IsUSAXSSAXSdata, pos={140,119}, size={200,14}, title="Sort USAXS/SAXS/WAXS data", proc=IR3D_MergeButtonProc, help={"Sorts USAXS/SAXS?WAXS data to order proper pairs together. "}
+	Button IsUSAXSSAXSdata, pos={140,117}, size={200,14}, title="Sort USAXS/SAXS/WAXS data", proc=IR3D_MergeButtonProc, help={"Sorts USAXS/SAXS?WAXS data to order proper pairs together. "}
 
 	SetVariable Data1Background,pos={990,30},size={200,15}, noproc,title="Data 1 Background",bodyWidth=150, disable=2
 	Setvariable Data1Background, variable=root:Packages:Irena:SASDataMerging:Data1Background, limits={-inf,inf,0}
@@ -196,8 +193,8 @@ Function IR3D_InitDataMerging()
 	ListOfStrings+="Data1StartFolder;Data1MatchString;Data2StartFolder;Data2MatchString;FolderSortString1;FolderSortString2;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;"
 
-	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
-	ListOfVariables+="UseIndra2Data2;UseQRSdata2;"
+	ListOfVariables="UseIndra2Data1;UseQRSdata1;Indra2Data1SlitSmeared;"
+	ListOfVariables+="UseIndra2Data2;UseQRSdata2;Indra2Data2SlitSmeared;"
 	ListOfVariables+="Data1Background;Data2IntMultiplier;Data2Qshift;"
 	ListOfVariables+="IsUSAXSSAXSdata;ProcessMerge;ProcessMerge2;ProcessTest;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
@@ -300,6 +297,7 @@ Function IR3D_UpdateListOfAvailFiles(WhichOne)
 	setDataFolder root:Packages:Irena:SASDataMerging
 	
 	NVAR UseIndra2Data=$("root:Packages:Irena:SASDataMerging:UseIndra2Data"+num2str(WhichOne))
+	NVAR Indra2DataSlitSmeared = $("root:Packages:Irena:SASDataMerging:Indra2Data"+num2str(WhichOne)+"SlitSmeared")
 	NVAR UseQRSdata=$("root:Packages:Irena:SASDataMerging:UseQRSData"+num2str(WhichOne))
 	SVAR StartFolderName=$("root:Packages:Irena:SASDataMerging:Data"+num2str(WhichOne)+"StartFolder")
 	SVAR DataMatchString= $("root:Packages:Irena:SASDataMerging:Data"+num2str(WhichOne)+"MatchString")
@@ -309,7 +307,7 @@ Function IR3D_UpdateListOfAvailFiles(WhichOne)
 	else
 		LStartFolder = StartFolderName
 	endif
-	string CurrentFolders=IR3D_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData, 2,0,DataMatchString)
+	string CurrentFolders=IR3D_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData,!(Indra2DataSlitSmeared),0,DataMatchString)
 
 	Wave/T ListOfAvailableData=$("root:Packages:Irena:SASDataMerging:ListOfAvailableData"+num2str(WhichOne))
 	Wave SelectionOfAvailableData=$("root:Packages:Irena:SASDataMerging:SelectionOfAvailableData"+num2str(WhichOne))
@@ -403,8 +401,10 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 			Variable checked = cba.checked
 			NVAR UseIndra2Data1 =  root:Packages:Irena:SASDataMerging:UseIndra2Data1
 			NVAR UseQRSData1 =  root:Packages:Irena:SASDataMerging:UseQRSData1
+			NVAR Indra2Data1SlitSmeared = root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
 			SVAR Data1StartFolder = root:Packages:Irena:SASDataMerging:Data1StartFolder
 			NVAR UseIndra2Data2 =  root:Packages:Irena:SASDataMerging:UseIndra2Data2
+			NVAR Indra2Data2SlitSmeared = root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 			NVAR UseQRSData2 =  root:Packages:Irena:SASDataMerging:UseQRSData2
 			SVAR Data2StartFolder = root:Packages:Irena:SASDataMerging:Data2StartFolder
 		  	NVAR ProcessTest = root:Packages:Irena:SASDataMerging:ProcessTest
@@ -427,7 +427,8 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  			UseIndra2Data1 = 0
 		  		endif
 		  	endif
-		  	if(stringmatch(cba.ctrlName,"UseQRSData1")||stringmatch(cba.ctrlName,"UseIndra2Data1"))
+		  	
+		  	if(stringmatch(cba.ctrlName,"UseQRSData1")||stringmatch(cba.ctrlName,"UseIndra2Data1")||stringmatch(cba.ctrlName,"Indra2Data1SlitSmeared"))
 		  		Data1StartFolder = "root:"
 		  		PopupMenu StartFolderSelection1,win=IR3D_DataMergePanel, mode=1,popvalue="root:"
 				IR3D_UpdateListOfAvailFiles(1)
@@ -443,7 +444,7 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  			UseIndra2Data2 = 0
 		  		endif
 		  	endif
-		  	if(stringmatch(cba.ctrlName,"UseQRSData2")||stringmatch(cba.ctrlName,"UseIndra2Data2"))
+		  	if(stringmatch(cba.ctrlName,"UseQRSData2")||stringmatch(cba.ctrlName,"UseIndra2Data2")||stringmatch(cba.ctrlName,"Indra2Data2SlitSmeared"))
 		  		Data2StartFolder = "root:"
 		  		PopupMenu StartFolderSelection2,win=IR3D_DataMergePanel, mode=1,popvalue="root:"
 				IR3D_UpdateListOfAvailFiles(2)
@@ -1606,6 +1607,9 @@ Function IR3D_MergeData(VaryQshift)
 	variable StartQp, EndQp
 	StartQp = BinarySearch(TempQ1, startQ )+1
 	EndQp = BinarySearch(TempQ1, endQ )
+	if((EndQp-StartQp)<3)
+		abort "Not enough overlap"
+	endif
 
 	Duplicate/O/Free/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
 	Duplicate/O/Free/R=[StartQp, EndQp] TempQ1, TempQ1Part

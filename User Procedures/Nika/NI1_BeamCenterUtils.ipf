@@ -1776,6 +1776,10 @@ Function NI1BC_BmCntrCreateImage()
 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
 	FileNameToLoad=ListOfCCDDataInBmCntrPath[selection]
 	SVAR BmCntrFileType=root:Packages:Convert2Dto1D:BmCntrFileType
+	//need to communicate to Nexus reader what we are loading and this seems the only way to do so
+	string/g ImageBeingLoaded
+	ImageBeingLoaded = ""
+	//awful workaround end
 	variable LoadedOK=NI1A_UniversalLoader("Convert2Dto1DBmCntrPath",FileNameToLoad,BmCntrFileType,"BmCntrCCDImg")
 	if(!LoadedOK)
 		abort "Loading the image file failed"

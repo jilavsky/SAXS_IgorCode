@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.32
+#pragma version=1.33
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.33 MINOR FIX FOR BUG IN READING PILATUS SAXS PIX_Y BEAM CENTER POSITION AND SETUP FOR UES WITH THE NEW NEXUST SUPPORT. 
 //1.32 checked fit checkboxes and added check if we are runnign on USAXS computer to set path the USAXS_data
 //1.31 fix colorization of the LineuotDisplayPlot_Q graph. 
 //1.30 added more calibratnt lines (10 for SAXS/WAXS)
@@ -50,7 +51,9 @@ Function NI1_15IDDConfigureNika()
 
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
-	
+	NEXUS_Initialize(0)
+	NVAR NX_InputFileIsNexus = root:Packages:Irena_Nexus:NX_InputFileIsNexus
+	NX_InputFileIsNexus = 1
 	NI1_15IDDCreateHelpNbk()
 	//set some parameters here:
 	
@@ -1132,7 +1135,7 @@ Function NI1_15IDDWaveNoteValuesNx()
 			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
 			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
-			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
+			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote),  OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("distance=", OldNote), OldNote  , "=" , ";")
 	 		BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("aperture:hsize=", OldNote), OldNote  , "=" , ";")
 	 		BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("aperture:vsize=", OldNote), OldNote  , "=" , ";")
@@ -1167,7 +1170,7 @@ Function NI1_15IDDWaveNoteValuesNx()
 			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
 			VerticalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
-			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y=", OldNote), OldNote  , "=" , ";")
+			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
 		elseif(useWAXS)
 			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
@@ -1979,59 +1982,59 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function NI1_15IDDCreateWvNtNbk(SampleName)
-	String SampleName
-	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
-	if(!WaveExists(w2D))		//hm, are we laoding the empty?
-		Wave/Z w2D = root:Packages:Convert2Dto1D:EmptyData
-	endif
-	if(WaveExists(w2d))
-		string OldNOte=note(w2D)
-		
-		string Instrument = StringByKey(NI1_15IDDFindKeyStr("instrument:name=", OldNote), OldNOte  , "=" , ";")		//USAXS
-		string Facility = StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";")
-		variable i
-		String nb 	
-	//	if((stringMatch("15ID", )||stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
-		if((stringMatch("15ID",Facility )||stringMatch("9ID",Facility )) && (stringMatch("USAXS", Instrument) || stringMatch("15ID SAXS", Instrument)))	
-				 nb = "Sample_Information"
-				DoWindow Sample_Information
-				if(V_Flag)
-					DoWindow /K Sample_Information
-				endif
-				NewNotebook/N=$nb/F=1/V=1/K=1/W=(700,10,1100,700)
-				Notebook $nb defaultTab=36, statusWidth=252
-				Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
-				Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
-				Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
-				Notebook $nb ruler=Title, text="Header information for "+SampleName+"\r"
-				Notebook $nb ruler=Normal, text="\r"
-				For(i=0;i<ItemsInList(OldNOte,";");i+=1)
-						Notebook $nb text=stringFromList(i,OldNOte,";")+ " \r"
-				endfor
-				Notebook $nb selection={startOfFile,startOfFile}
-				Notebook $nb text=""
-		endif
-	else
-				 nb = "Sample_Information"
-				DoWindow Sample_Information
-				if(V_Flag)
-					DoWindow /K Sample_Information
-				endif
-				NewNotebook/N=$nb/F=1/V=1/K=1/W=(700,10,1100,700)
-				Notebook $nb defaultTab=36, statusWidth=252
-				Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
-				Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
-				Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
-				Notebook $nb ruler=Title, text="No information found for this file \r"	
-	endif	
-	
-//	AutopositionWindow/M=0/R=CCDImageToConvertFig Sample_Information
-//	print ReplaceString(";", OldNote, "\r") 
-
-
-end
-
+//Function NI1_15IDDCreateWvNtNbk(SampleName)
+//	String SampleName
+//	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+//	if(!WaveExists(w2D))		//hm, are we laoding the empty?
+//		Wave/Z w2D = root:Packages:Convert2Dto1D:EmptyData
+//	endif
+//	if(WaveExists(w2d))
+//		string OldNOte=note(w2D)
+//		
+//		string Instrument = StringByKey(NI1_15IDDFindKeyStr("instrument:name=", OldNote), OldNOte  , "=" , ";")		//USAXS
+//		string Facility = StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";")
+//		variable i
+//		String nb 	
+//	//	if((stringMatch("15ID", )||stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
+//		if((stringMatch("15ID",Facility )||stringMatch("9ID",Facility )) && (stringMatch("USAXS", Instrument) || stringMatch("15ID SAXS", Instrument)))	
+//				 nb = "Sample_Information"
+//				DoWindow Sample_Information
+//				if(V_Flag)
+//					DoWindow /K Sample_Information
+//				endif
+//				NewNotebook/N=$nb/F=1/V=1/K=1/W=(700,10,1100,700)
+//				Notebook $nb defaultTab=36, statusWidth=252
+//				Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
+//				Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
+//				Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
+//				Notebook $nb ruler=Title, text="Header information for "+SampleName+"\r"
+//				Notebook $nb ruler=Normal, text="\r"
+//				For(i=0;i<ItemsInList(OldNOte,";");i+=1)
+//						Notebook $nb text=stringFromList(i,OldNOte,";")+ " \r"
+//				endfor
+//				Notebook $nb selection={startOfFile,startOfFile}
+//				Notebook $nb text=""
+//		endif
+//	else
+//				 nb = "Sample_Information"
+//				DoWindow Sample_Information
+//				if(V_Flag)
+//					DoWindow /K Sample_Information
+//				endif
+//				NewNotebook/N=$nb/F=1/V=1/K=1/W=(700,10,1100,700)
+//				Notebook $nb defaultTab=36, statusWidth=252
+//				Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
+//				Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
+//				Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
+//				Notebook $nb ruler=Title, text="No information found for this file \r"	
+//	endif	
+//	
+////	AutopositionWindow/M=0/R=CCDImageToConvertFig Sample_Information
+////	print ReplaceString(";", OldNote, "\r") 
+//
+//
+//end
+//
 
 //************************************************************************************************************
 //************************************************************************************************************

@@ -545,11 +545,10 @@ Function NI1M_MaskCreateImage()
 	SVAR FileNameToLoad
 	FileNameToLoad=ListOfCCDDataInCCDPath[selection]
 	SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
-//	if(cmpstr(CCDFileExtension,".tif")==0)
-//		ImageLoad/P=Convert2Dto1DMaskPath/T=tiff/O/N=OriginalCCD FileNameToLoad+CCDFileExtension
-//	else
-//		Abort "Can load only tiff images at this time"
-//	endif
+	//need to communicate to Nexus reader what we are loading and this seems the only way to do so
+	string/g ImageBeingLoaded
+	ImageBeingLoaded = ""
+	//awful workaround end
 	NI1A_UniversalLoader("Convert2Dto1DMaskPath",FileNameToLoad,CCDFileExtension,"OriginalCCD")
 	NVAR MaskDisplayLogImage=root:Packages:Convert2Dto1D:MaskDisplayLogImage
 	wave OriginalCCD

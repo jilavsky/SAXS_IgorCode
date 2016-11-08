@@ -3,6 +3,11 @@ Code modification history
 
 -latest stuff first
 ********************************************
+
+Modified Nexus support, added new library to use it. 
+Moved some common functions to IN2G_GeneralProcedures
+Removed Utility_JZT from distribtuion, not needed and causing conflict with JZT package. `
+
 1.74 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher
 Added more lines to calibrants. Up to 10 diffraction lines re allowed and used if user selects. 

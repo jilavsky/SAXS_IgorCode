@@ -59,6 +59,7 @@
 #include ":IonChamber3.1", version>=3.1
 
 #include "::Irena:IR2_PanelCntrlProcs", version>=1.43
+#include "::CanSAS:IRNI_NexusSupport", version>=1.00
 
 #include <HDF5 Browser>
 

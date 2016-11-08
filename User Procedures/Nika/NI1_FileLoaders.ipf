@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.43
+#pragma version=2.44
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.44 moved to new Nexus suport provided by HDF5Gateway and IRNI_NexusSupport
 //2.43 fixes for Pilatus Tiff file header 
 //2.42 Added more or less universal FITS fiel loader (checked against data in Extension1 and 2), removed printing of wave note in history area. 
 //2.41 Updated Pilatus img file to handle header (example contained 4096 bytes header) - added code which will find header length and skip it. 
@@ -909,16 +910,17 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		
 	elseif(cmpstr(FileType,"Nexus")==0)
 		FileNameToLoad = FileName
-		NI2NX_NexusReader(PathName, FileNameToLoad)
+		//NI2NX_NexusReader(PathName, FileNameToLoad)
+		NEXUS_Nexus2DDataReader(PathName, FileNameToLoad)
 		Wave/Z Loadedwave0
 		if(!WaveExists(Loadedwave0))
 			return 0
 		endif	
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
-#if(Exists("NI1_15IDDCreateWvNtNbk")==6)		
-		NI1_15IDDCreateWvNtNbk(FileNameToLoad)
-#endif		
+//#if(Exists("NI1_15IDDCreateWvNtNbk")==6)		
+//		NI1_15IDDCreateWvNtNbk(FileNameToLoad)
+//#endif		
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"Nexus"+";"
 	elseif(cmpstr(FileType,"Fuji/img")==0)
@@ -3302,143 +3304,143 @@ EndMacro
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
-static Function NI2NX_NexusReader(FilePathName,Filename)
-		string FilePathName,Filename
-		
-		string OldDf=getDataFolder(1)
-		Variable fileID
-#if(exists("HDF5OpenFile")==4)
-		HDF5OpenFile /P=$(FilePathName)/R /Z fileID as Filename	// Displays a dialog
-		if (V_flag == 0)	// User selected a file?
-		    string PathString
-		    PathString=S_Path
-		 //   print "Opened file :" +PathString+fileName
-		    setDataFolder root:
-		    newDataFolder/O/S root:Packages
-		    //clean this folder of prior loaded data
-		    if(DataFolderExists("root:Packages:NexusImport"))
-		    	KillDataFolder/Z root:Packages:NexusImport
-		    endif
-		    newDataFolder/O/S root:Packages:NexusImport
-		    string/g StartFolderStr
-		    SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
-		    KillDataFolder/Z $(FileName[0,30])
-		    NewDataFolder/O/S $(FileName[0,30])
-		    string LoadedWvStr=getDataFolder(1)
-		    HDF5LoadGroup /O /R /T /IMAG=1 :, fileID, "/"			
-//			    string GroupsAvailable
-//				HDF5ListGroup /F  /Type=1 fileID, "/"
-//				GroupsAvailable= S_HDF5ListGroup
-//				variable i
-//				For(i=0;i<ItemsInList(GroupsAvailable,";");i+=1)
-//					HDF5LoadGroup /CONT=1 /L=7 /O /R /T : , fileID, StringFromList(i,GroupsAvailable,";")
-//				endfor
-			HDF5CloseFile fileID
-			string CurrFolder=getDataFolder(1)
-			string LoadedDataWvNm = NI2NX_CleanUpHDF5Structure(CurrFolder)
-			//print "Loaded following wave: "+GetDataFOlder(1)+LoadedDataWvNm
-			wave LoadedWave = $(LoadedWvStr+LoadedDataWvNm)
-			Duplicate/O LoadedWave, $("root:Packages:Convert2Dto1D:"+"Loadedwave0")
-		endif
-#else
-		DoALert 0, "Hdf5 xop not installed, please, run installed version 1.10 and higher and install xops"
-#endif 
-		SetDataFolder OldDF
-//		KillDataFolder /Z CurrFolder 
-End
-
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-
-static Function/S NI2NX_CleanUpHDF5Structure(Fldrname)
-	string FldrName
-	string StartDf=GetDataFolder(1)
-	SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
-	StartFolderStr = Fldrname+"entry:"
-	IN2G_UniversalFolderScan(startDF, 50, "NI2NX_ConvertTxTwvToStringList(\""+Fldrname+"\")")
-	IN2G_UniversalFolderScan(startDF, 50, "NI2NX_ConvertNumWvToStringList(\""+Fldrname+"\")")
-	IN2G_UniversalFolderScan(startDF, 50, "NI2NX_FindThe2DData(\""+Fldrname+"\")")
-	//now we have moved the data to stringgs and main folder of the Nexus file name 
-	string ListOf2DWaves=WaveList("*", ";", "TEXT:0,DIMS:2" )
-	string a2DdataWave=stringFromList(0,ListOf2DWaves)
-	SVAR/Z StringVals=$(FldrName+"ListOfStrValues")
-	SVAR/Z NumVals=$(FldrName+"ListOfNumValues")
-	Wave DataWv=$(FldrName+a2DdataWave)
-	if(SVAR_Exists(StringVals))
-		note/NOCR DataWv, "NEXUS_StringDataStartHere;"+StringVals+"NEXUS_StringDataEndHere;"
-	endif
-	if(SVAR_Exists(NumVals))
-		note/NOCR DataWv, "NEXUS_VariablesDataStartHere;"+NumVals+"NEXUS_VariablesDataEndHere;"
-	endif
-	//here we moved the data to wavenotes of the data 	
-	//print the nexus note, so user know what they loaded...
-	//print ReplaceString(";", StringVals, "\r")  
-	//print ReplaceString(";", NumVals, "\r")
-	return a2DdataWave
-end
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-
-
-Function NI2NX_FindThe2DData(Fldrname)
-	string Fldrname
-	
-	string ListOf2DWaves=WaveList("*", ";", "TEXT:0,DIMS:2" )
-	if(strlen(ListOf2DWaves)>0)
-		Wave DataWv=$(stringFromList(0,ListOf2DWaves))
-		Wave/Z test=$(Fldrname+stringFromList(0,ListOf2DWaves))
-		if(!WaveExists(test))
-			MoveWave DataWv, $(Fldrname)
-		endif
-	endif
-end
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-
-Function NI2NX_ConvertTxTwvToStringList(Fldrname)
-	string Fldrname
-
-	SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
-	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
-	string ListOfTXTWaves=WaveList("*", ";", "TEXT:1" )
-      SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
-	if(!SVAR_Exists(ListOfStrValues))
-		string/g $(Fldrname+"ListOfStrValues")
-		SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
-	endif
-		variable i
-		for(i=0;i<ItemsInList(ListOfTXTWaves,";");i+=1)
-			ListOfStrValues+=Newkey+StringFromList(i, ListOfTXTWaves  , ";")+"="
-			Wave/T tempWv=$(StringFromList(i, ListOfTXTWaves  , ";"))
-			ListOfStrValues+=tempWv[0]+";"
-			KillWaves/Z tempWv
-		endfor
-end
-//*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-
-Function NI2NX_ConvertNumWvToStringList(Fldrname)
-	string  Fldrname
-	
-	SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
-	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
-	string ListOfNumWaves=WaveList("*", ";", "TEXT:0,DIMS:1" )
-      SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
-	if(!SVAR_Exists(ListOfNumValues))
-		string/g $(Fldrname+"ListOfNumValues")
-		SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
-	endif
-		variable i
-		for(i=0;i<ItemsInList(ListOfNumWaves,";");i+=1)
-			ListOfNumValues+=Newkey+StringFromList(i, ListOfNumWaves  , ";")+"="
-			Wave tempWv=$(StringFromList(i, ListOfNumWaves  , ";"))
-			ListOfNumValues+=num2str(tempWv[0])+";"
-			KillWaves/Z tempWv
-		endfor
-end
-
-
+//
+//static Function NI2NX_NexusReader(FilePathName,Filename)
+//		string FilePathName,Filename
+//		
+//		string OldDf=getDataFolder(1)
+//		Variable fileID
+//#if(exists("HDF5OpenFile")==4)
+//		HDF5OpenFile /P=$(FilePathName)/R /Z fileID as Filename	// Displays a dialog
+//		if (V_flag == 0)	// User selected a file?
+//		    string PathString
+//		    PathString=S_Path
+//		 //   print "Opened file :" +PathString+fileName
+//		    setDataFolder root:
+//		    newDataFolder/O/S root:Packages
+//		    //clean this folder of prior loaded data
+//		    if(DataFolderExists("root:Packages:NexusImport"))
+//		    	KillDataFolder/Z root:Packages:NexusImport
+//		    endif
+//		    newDataFolder/O/S root:Packages:NexusImport
+//		    string/g StartFolderStr
+//		    SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
+//		    KillDataFolder/Z $(FileName[0,30])
+//		    NewDataFolder/O/S $(FileName[0,30])
+//		    string LoadedWvStr=getDataFolder(1)
+//		    HDF5LoadGroup /O /R /T /IMAG=1 :, fileID, "/"			
+////			    string GroupsAvailable
+////				HDF5ListGroup /F  /Type=1 fileID, "/"
+////				GroupsAvailable= S_HDF5ListGroup
+////				variable i
+////				For(i=0;i<ItemsInList(GroupsAvailable,";");i+=1)
+////					HDF5LoadGroup /CONT=1 /L=7 /O /R /T : , fileID, StringFromList(i,GroupsAvailable,";")
+////				endfor
+//			HDF5CloseFile fileID
+//			string CurrFolder=getDataFolder(1)
+//			string LoadedDataWvNm = NI2NX_CleanUpHDF5Structure(CurrFolder)
+//			//print "Loaded following wave: "+GetDataFOlder(1)+LoadedDataWvNm
+//			wave LoadedWave = $(LoadedWvStr+LoadedDataWvNm)
+//			Duplicate/O LoadedWave, $("root:Packages:Convert2Dto1D:"+"Loadedwave0")
+//		endif
+//#else
+//		DoALert 0, "Hdf5 xop not installed, please, run installed version 1.10 and higher and install xops"
+//#endif 
+//		SetDataFolder OldDF
+////		KillDataFolder /Z CurrFolder 
+//End
+//
+////*******************************************************************************************************************************************
+////*******************************************************************************************************************************************
+//
+//static Function/S NI2NX_CleanUpHDF5Structure(Fldrname)
+//	string FldrName
+//	string StartDf=GetDataFolder(1)
+//	SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
+//	StartFolderStr = Fldrname+"entry:"
+//	IN2G_UniversalFolderScan(startDF, 50, "NI2NX_ConvertTxTwvToStringList(\""+Fldrname+"\")")
+//	IN2G_UniversalFolderScan(startDF, 50, "NI2NX_ConvertNumWvToStringList(\""+Fldrname+"\")")
+//	IN2G_UniversalFolderScan(startDF, 50, "NI2NX_FindThe2DData(\""+Fldrname+"\")")
+//	//now we have moved the data to stringgs and main folder of the Nexus file name 
+//	string ListOf2DWaves=WaveList("*", ";", "TEXT:0,DIMS:2" )
+//	string a2DdataWave=stringFromList(0,ListOf2DWaves)
+//	SVAR/Z StringVals=$(FldrName+"ListOfStrValues")
+//	SVAR/Z NumVals=$(FldrName+"ListOfNumValues")
+//	Wave DataWv=$(FldrName+a2DdataWave)
+//	if(SVAR_Exists(StringVals))
+//		note/NOCR DataWv, "NEXUS_StringDataStartHere;"+StringVals+"NEXUS_StringDataEndHere;"
+//	endif
+//	if(SVAR_Exists(NumVals))
+//		note/NOCR DataWv, "NEXUS_VariablesDataStartHere;"+NumVals+"NEXUS_VariablesDataEndHere;"
+//	endif
+//	//here we moved the data to wavenotes of the data 	
+//	//print the nexus note, so user know what they loaded...
+//	//print ReplaceString(";", StringVals, "\r")  
+//	//print ReplaceString(";", NumVals, "\r")
+//	return a2DdataWave
+//end
+////*******************************************************************************************************************************************
+////*******************************************************************************************************************************************
+//
+//
+//Function NI2NX_FindThe2DData(Fldrname)
+//	string Fldrname
+//	
+//	string ListOf2DWaves=WaveList("*", ";", "TEXT:0,DIMS:2" )
+//	if(strlen(ListOf2DWaves)>0)
+//		Wave DataWv=$(stringFromList(0,ListOf2DWaves))
+//		Wave/Z test=$(Fldrname+stringFromList(0,ListOf2DWaves))
+//		if(!WaveExists(test))
+//			MoveWave DataWv, $(Fldrname)
+//		endif
+//	endif
+//end
+////*******************************************************************************************************************************************
+////*******************************************************************************************************************************************
+//
+//Function NI2NX_ConvertTxTwvToStringList(Fldrname)
+//	string Fldrname
+//
+//	SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
+//	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
+//	string ListOfTXTWaves=WaveList("*", ";", "TEXT:1" )
+//      SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
+//	if(!SVAR_Exists(ListOfStrValues))
+//		string/g $(Fldrname+"ListOfStrValues")
+//		SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
+//	endif
+//		variable i
+//		for(i=0;i<ItemsInList(ListOfTXTWaves,";");i+=1)
+//			ListOfStrValues+=Newkey+StringFromList(i, ListOfTXTWaves  , ";")+"="
+//			Wave/T tempWv=$(StringFromList(i, ListOfTXTWaves  , ";"))
+//			ListOfStrValues+=tempWv[0]+";"
+//			KillWaves/Z tempWv
+//		endfor
+//end
+////*******************************************************************************************************************************************
+////*******************************************************************************************************************************************
+//
+//Function NI2NX_ConvertNumWvToStringList(Fldrname)
+//	string  Fldrname
+//	
+//	SVAR StartFolderStr=root:Packages:NexusImport:StartFolderStr
+//	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
+//	string ListOfNumWaves=WaveList("*", ";", "TEXT:0,DIMS:1" )
+//      SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
+//	if(!SVAR_Exists(ListOfNumValues))
+//		string/g $(Fldrname+"ListOfNumValues")
+//		SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
+//	endif
+//		variable i
+//		for(i=0;i<ItemsInList(ListOfNumWaves,";");i+=1)
+//			ListOfNumValues+=Newkey+StringFromList(i, ListOfNumWaves  , ";")+"="
+//			Wave tempWv=$(StringFromList(i, ListOfNumWaves  , ";"))
+//			ListOfNumValues+=num2str(tempWv[0])+";"
+//			KillWaves/Z tempWv
+//		endfor
+//end
+//
+//
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

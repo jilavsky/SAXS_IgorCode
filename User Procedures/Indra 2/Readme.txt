@@ -7,7 +7,13 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 
 Revision history:
-______________________________________________________________________________________
+_____________________________________________________________________________________
+
+
+Modified Nexus support, added new library to use it. 
+Removed Utility_JZT from distribution, not needed and causing conflict with JZT package. `
+
+
 1.89 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher
 New - can load and process FLyscan data directly, single step process now. No manual yet. Use Import & reduce data. 
