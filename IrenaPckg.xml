@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  
 <PackageContent>
+			<!--
+				The  file "IrenaPckg.xml" contains listing of Irena files files for distribution.
+				-->
 		<File>Igor Procedures/Boot Irena1 modeling.ipf</File>
 		<File>User Procedures/CanSAS/cansasXML.ipf</File>
 		<File>User Procedures/CanSAS/cansasXML_GUI.ipf</File>

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  
 <PackageContent>
+			<!--
+				The  file "IndraPckg.xml" contains listing of Indra files files for distribution.
+				-->
 		<File>Igor Procedures/Boot Indra2.ipf</File>
 		<File>User Procedures/Indra 2/ANL copyright.txt
 		<File>User Procedures/Indra 2/IN2_ASAXS.ipf</File>
