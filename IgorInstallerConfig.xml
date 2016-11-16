@@ -77,8 +77,8 @@
 			</Package>
 			<VersionComment>Added Panel Scaling</VersionComment>
 		</release>
-		<release name="March2016_2" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/TestVersion.zip</SourceFileAddress>
+		<release name="November2016" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.61</version>
@@ -103,7 +103,7 @@
 				<PackageList>xopPckg.xml</PackageList>
 				<VersionCheckFile></VersionCheckFile>
 			</Package>
-			<VersionComment>Added Panel Scaling</VersionComment>
+			<VersionComment>For development purposes</VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
