@@ -17,7 +17,7 @@
 			<Package>xop</Package>
 		</KnownPackages>
 		<current_release>June2016</current_release>
-		<current_beta_release>March2016_2</current_beta_release>
+		<current_beta_release>November2016</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
