@@ -6,7 +6,11 @@
 		OSX the xop are folders, distributed as zip files, will be automatically unzipped.
 		We distribute only 64 bit versions of packages, 32bit versions may be available
 		on Github but need to be installed manually.  
+		known keywords: xopLinks for xop from Wavemetrics (link to Igor Extensions (64-bit)
+		FileLinks for ipf files from Wavemetrics  (link to User Procedures
+		and for ipf/ihf FolderFileLocation & File 
 	-->
+	<xopLinks>More Extensions (64-bit)/File Loaders/HDF5-64.xop</xopLinks>
 	<FolderFileLocation os="Windows">Igor Extensions PC</FolderFileLocation>
 	<FolderFileLocation os="Macintosh">Igor Extensions OSX</FolderFileLocation>
 	<File os="all">Igor Extensions (64-bit)/Abeles Help.ihf</File>
@@ -14,12 +18,8 @@
 	<File os="all">Igor Extensions (64-bit)/XMLutils Help.ihf</File>
 	<File os="Windows">Igor Extensions (64-bit)/pthreadVC2_x64.dll</File>
 	<File os="Windows">Igor Extensions (64-bit)/libxml2.dll</File>
-	<File os="Windows">Igor Extensions (64-bit)/Abeles64.xop</File>
-	<File os="Macintosh">Igor Extensions (64-bit)/Abeles64.zip</File>
-	<File os="Windows">Igor Extensions (64-bit)/GenCurvefit64.xop</File>
-	<File os="Macintosh">Igor Extensions (64-bit)/GenCurvefit64.zip</File>
-	<File os="Windows">Igor Extensions (64-bit)/SANSAnalysis-64.xop</File>
-	<File os="Macintosh">Igor Extensions (64-bit)/SANSAnalysis-64.zip</File>
-	<File os="Windows">Igor Extensions (64-bit)/XMLutils64.xop</File>
-	<File os="Macintosh">Igor Extensions (64-bit)/XMLutils64.zip</File>
+	<File os="all">Igor Extensions (64-bit)/Abeles64.xop</File>
+	<File os="all">Igor Extensions (64-bit)/GenCurvefit64.xop</File>
+	<File os="all">Igor Extensions (64-bit)/SANSAnalysis-64.xop</File>
+	<File os="all">Igor Extensions (64-bit)/XMLutils64.xop</File>
 </PackageContent>
