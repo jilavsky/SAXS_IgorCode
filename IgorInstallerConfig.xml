@@ -49,6 +49,18 @@
 				<PackageList>xopPckg.xml</PackageList>
 				<VersionCheckFile></VersionCheckFile>
 			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version></version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version></version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
+			</Package>
 			<VersionComment>Fixes to Panel Scaling, new ASCII non SAS import tool, and GUI font handling</VersionComment>
 		</release>
 		<release name="March2016">
@@ -75,6 +87,18 @@
 				<name>xop</name>
 				<version></version>
 				<PackageList>xopPckg.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version></version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version></version>
+				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile></VersionCheckFile>
 			</Package>
 			<VersionComment>Added Panel Scaling</VersionComment>
