@@ -98,9 +98,15 @@
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
 			<Package>
-				<name>xop</name>
+				<name>xop32bit</name>
 				<version></version>
-				<PackageList>xopPckg.xml</PackageList>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile></VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version></version>
+				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile></VersionCheckFile>
 			</Package>
 			<VersionComment>For development purposes</VersionComment>

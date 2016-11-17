@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ 
+<PackageContent>
+	<!--
+		The  file "xopPckg.xml" contains listing of xop files for distribution.
+		OSX the xop are folders, distributed as zip files, will be automatically unzipped.
+		We distribute only 64 bit versions of packages, 32bit versions may be available
+		on Github but need to be installed manually.  
+		known keywords: xopLinks for xop from Wavemetrics (link to Igor Extensions (64-bit)
+		FileLinks for ipf files from Wavemetrics  (link to User Procedures
+		and for ipf/ihf FolderFileLocation & File 
+	-->
+	<xopLinks>More Extensions/File Loaders/HDF5.xop</xopLinks>
+	<FolderFileLocation os="Windows">Igor Extensions PC</FolderFileLocation>
+	<FolderFileLocation os="Macintosh">Igor Extensions OSX</FolderFileLocation>
+	<File os="all">Igor Extensions/Abeles Help.ihf</File>
+	<File os="all">Igor Extensions/GenCurveFit Help.ihf</File>
+	<File os="all">Igor Extensions/XMLutils Help.ihf</File>
+	<File os="Windows">Igor Extensions/pthreadVC2.dll</File>
+	<File os="all">Igor Extensions/Abeles.xop</File>
+	<File os="all">Igor Extensions/GenCurvefit.xop</File>
+	<File os="all">Igor Extensions/SANSAnalysisxop</File>
+	<File os="all">Igor Extensions/XMLutils.xop</File>
+</PackageContent>
