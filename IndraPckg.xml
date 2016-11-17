@@ -5,7 +5,9 @@
 				The  file "IndraPckg.xml" contains listing of Indra files files for distribution.
 				-->
 		<File>Igor Procedures/Boot Indra2.ipf</File>
-		<File>User Procedures/Indra 2/ANL copyright.txt
+		<File>User Procedures/CanSAS/IRNI_NexusSupport.ipf</File>
+		<File>User Procedures/CanSAS/HDF5gateway.ipf</File>
+		<File>User Procedures/Indra 2/ANL copyright.txt</File>
 		<File>User Procedures/Indra 2/IN2_ASAXS.ipf</File>
 		<File>User Procedures/Indra 2/IN2_BckgSubtr.ipf</File>
 		<File>User Procedures/Indra 2/IN2_Conversion Procedure.ipf</File>
@@ -36,6 +38,6 @@
 		<File>User Procedures/Indra 2/Manual Indra 2.pdf</File>
 		<File>User Procedures/Indra 2/Readme.txt</File>
 		<File>User Procedures/Indra 2/spec.ipf</File>
-		<File>User Procedures/Indra 2/USAXS math.doc</File>
+		<!--File>User Procedures/Indra 2/USAXS math.doc</File-->
 		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
 </PackageContent>

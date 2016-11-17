@@ -5,6 +5,8 @@
 				The  file "NikaPckg.xml" contains listing of Nika files files for distribution.
 				-->
 		<File>Igor Procedures/Boot Nika.ipf</File>
+		<File>User Procedures/CanSAS/IRNI_NexusSupport.ipf</File>
+		<File>User Procedures/CanSAS/HDF5gateway.ipf</File>
 		<File>User Procedures/Indra 2/ANL copyright.txt</File>
 		<File>User Procedures/Indra 2/IN2_GeneralProcedures.ipf</File>
 		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
