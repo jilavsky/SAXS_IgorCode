@@ -19,4 +19,5 @@
 	<File os="all">Igor Extensions/GenCurvefit.xop</File>
 	<File os="all">Igor Extensions/SANSAnalysis.xop</File>
 	<File os="all">Igor Extensions/XMLutils.xop</File>
+	<File os="all">Igor Extensions/IrenaNikaXop32Ver.ipf</File>
 </PackageContent>
