@@ -20,7 +20,7 @@
 	<File os="Windows">Igor Extensions (64-bit)/libxml2.dll</File>
 	<File os="all">Igor Extensions (64-bit)/Abeles64.xop</File>
 	<File os="all">Igor Extensions (64-bit)/GenCurvefit64.xop</File>
-	<File os="all">Igor Extensions (64-bit)/SANSAnalysis-64.xop</File>
+	<File os="all">Igor Extensions (64-bit)/SANSAnalysis64.xop</File>
 	<File os="all">Igor Extensions (64-bit)/XMLutils64.xop</File>
 	<File os="all">Igor Extensions (64-bit)/IrenaNikaXop64Ver.ipf</File>
 </PackageContent>
