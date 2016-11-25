@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.59
-constant IR3MversionNumber = 2.54			//Data manipulation II panel version number
+#pragma version=2.60
+constant IR3MversionNumber = 2.55			//Data manipulation II panel version number
 constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.60 fixes for DMII - Secondary panel was loosing scaling controls and some controls need to be moved around. 
 //2.59 modifications for panel scaling, Data Manipulation I is nto working right... Subwindows are problem. 
 //2.58 minor fix for cursor position in Merge in Data Manipualtion I. 
 //2.57 Data manipulation 1 - dangerous change - fixed some obvious bugs in Intitialization, why did it work before and did I screw up something? 
@@ -2880,8 +2881,8 @@ Function IR3M_DataManipulationIIPanel()
 	CheckBox AverageNWaves,pos={15,370},size={80,14},title="Average every N Waves?",proc= IR3M_CheckProc
 	CheckBox AverageNWaves,variable= root:Packages:DataManipulationII:AverageNWaves, help={"Average every N selected waves using Q values of the first selected wave"}
 	SetVariable NforAveraging,variable= root:Packages:DataManipulationII:NforAveraging,noProc, frame=1, disable=!(AverageNWaves)
-	SetVariable NforAveraging,pos={150,370},size={120,25},title="N =", help={"N for averaging N waves"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
-	CheckBox GenerateStatisticsForAveWvs,pos={150,355},size={80,14},title="Generate Statistics For AveWvs?", proc= IR3M_CheckProc, disable=!(AverageWaves||AverageNWaves)
+	SetVariable NforAveraging,pos={190,370},size={120,25},title="N =", help={"N for averaging N waves"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+	CheckBox GenerateStatisticsForAveWvs,pos={170,355},size={80,14},title="Generate Statistics For AveWvs?", proc= IR3M_CheckProc, disable=!(AverageWaves||AverageNWaves)
 	CheckBox GenerateStatisticsForAveWvs,variable= root:Packages:DataManipulationII:GenerateStatisticsForAveWvs, help={"Generate Sdev of each point"}
 
 	CheckBox PassTroughProcessing,pos={15,385},size={80,14},title="Pass through",proc= IR3M_CheckProc
@@ -2890,11 +2891,11 @@ Function IR3M_DataManipulationIIPanel()
 //error decisions, ErrorUseStdDev;ErrorUseStdErOfMean
 
 	
-	CheckBox GenerateMinMax,pos={10,390},size={80,14},title="Min/Max?", noproc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox GenerateMinMax,pos={10,405},size={80,14},title="Min/Max?", noproc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
 	CheckBox GenerateMinMax,variable= root:Packages:DataManipulationII:GenerateMinMax, help={"Generate Sdev of each point?"}, mode=0
-	CheckBox ErrorUseStdDev,pos={120,390},size={80,14},title="Std Deviation?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox ErrorUseStdDev,pos={120,405},size={80,14},title="Std Deviation?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
 	CheckBox ErrorUseStdDev,variable= root:Packages:DataManipulationII:ErrorUseStdDev, help={"Generate Sdev of each point?"}, mode=1
-	CheckBox ErrorUseStdErOfMean,pos={250,390},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox ErrorUseStdErOfMean,pos={250,405},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
 	CheckBox ErrorUseStdErOfMean,variable= root:Packages:DataManipulationII:ErrorUseStdErOfMean, help={"Generate Standard error of mean of each point?"}, mode=1
 	
 	CheckBox NormalizeDataToData,pos={15,405},size={80,14},title="Normalize to Data?",proc= IR3M_CheckProc, disable=!(NormalizeData)
@@ -3196,6 +3197,7 @@ Function  IR3M_DataMinerCheckProc(CB_Struct) : CheckBoxControl
 	DoWIndow ItemsInFolderPanel_DMII
 	if(!V_Flag)
 		IR3M_MakePanelWithListBox()	
+		IR1_UpdatePanelVersionNumber("ItemsInFolderPanel_DMII", IR3MversionNumber,1)
 	endif
 
 	if(CB_Struct.eventCode ==2)
@@ -5031,6 +5033,7 @@ Function IR3M_DataFolderPopMenuProc(Pa) : PopupMenuControl
 		Waves_Etemplate=ErrorWaveName
 	endif
 	IR3M_MakePanelWithListBox()
+	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel_DMII", IR3MversionNumber,1)
 End
 ///******************************************************************************************
 ///******************************************************************************************

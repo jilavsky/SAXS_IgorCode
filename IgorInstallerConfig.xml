@@ -14,17 +14,16 @@
 			<Package>Irena</Package>
 			<Package>Nika</Package>
 			<Package>Indra</Package>
-			<Package>xop</Package>
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>June2016</current_release>
+		<current_release>November2016</current_release>
 		<current_beta_release>November2016</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="June2016">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/June2016.zip</SourceFileAddress>
+		<release name="November2016">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.61</version>
@@ -33,7 +32,7 @@
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.74</version>
+				<version>1.75</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
@@ -51,57 +50,17 @@
 			</Package>
 			<Package>
 				<name>xop32bit</name>
-				<version></version>
+				<version>1</version>
 				<PackageList>xopPckg32.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop64bit</name>
-				<version></version>
+				<version>1</version>
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
 			<VersionComment>Fixes to Panel Scaling, new ASCII non SAS import tool, and GUI font handling</VersionComment>
-		</release>
-		<release name="March2016">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/TestVersion.zip</SourceFileAddress>
-			<Package>
-				<name>Irena</name>
-				<version>2.60</version>
-				<PackageList>IrenaPckg.xml</PackageList>
-				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>Nika</name>
-				<version>1.74</version>
-				<PackageList>NikaPckg.xml</PackageList>
-				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>Indra</name>
-				<version>1.88</version>
-				<PackageList>IndraPckg.xml</PackageList>
-				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop</name>
-				<version></version>
-				<PackageList>xopPckg.xml</PackageList>
-				<VersionCheckFile></VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop32bit</name>
-				<version></version>
-				<PackageList>xopPckg32.xml</PackageList>
-				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop64bit</name>
-				<version></version>
-				<PackageList>xopPckg64.xml</PackageList>
-				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
-			</Package>
-			<VersionComment>Added Panel Scaling</VersionComment>
 		</release>
 		<release name="November2016" beta="true">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016.zip</SourceFileAddress>
@@ -125,13 +84,13 @@
 			</Package>
 			<Package>
 				<name>xop32bit</name>
-				<version></version>
+				<version>1</version>
 				<PackageList>xopPckg32.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop64bit</name>
-				<version></version>
+				<version>1</version>
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
