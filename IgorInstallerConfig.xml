@@ -32,7 +32,7 @@
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.75</version>
+				<version>1.74</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
@@ -41,12 +41,6 @@
 				<version>1.89</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop</name>
-				<version></version>
-				<PackageList>xopPckg.xml</PackageList>
-				<VersionCheckFile></VersionCheckFile>
 			</Package>
 			<Package>
 				<name>xop32bit</name>
@@ -60,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Fixes to Panel Scaling, new ASCII non SAS import tool, and GUI font handling</VersionComment>
+			<VersionComment>Igor 7 only release, minor changes to Igor 6 versions. </VersionComment>
 		</release>
 		<release name="November2016" beta="true">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016.zip</SourceFileAddress>
@@ -72,7 +66,7 @@
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.75</version>
+				<version>1.74</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
