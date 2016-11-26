@@ -17,13 +17,13 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>November2016</current_release>
-		<current_beta_release>November2016</current_beta_release>
+		<current_release>November2016-2</current_release>
+		<current_beta_release>November2016-2</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="November2016">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016.zip</SourceFileAddress>
+		<release name="November2016-2">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016-2.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.61</version>
@@ -54,10 +54,10 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Igor 7 only release, minor changes to Igor 6 versions. </VersionComment>
+			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes. . </VersionComment>
 		</release>
-		<release name="November2016" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016.zip</SourceFileAddress>
+		<release name="November2016-2" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016-2.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.61</version>
@@ -88,7 +88,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>For development purposes</VersionComment>
+			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes. </VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
