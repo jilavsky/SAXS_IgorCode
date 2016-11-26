@@ -1,18 +1,22 @@
 # SAXS_IgorCode
 Irena, NIka, and Indra SAXS Igor code by Jan Ilavsky for Igor 7 ONLY!
 
-The only usable code version is November2016-2 release, prior releases were testing
- version for installer development. 
+The only usable code version is November2016-2 release or newer, prior releases were testing versions for installer development. 
 
 This code can be installed manually or using Igor installer from : 
 https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub
-If you want to install one or more packages from here, download latest version of 
+
+If you want to install one or more packages from here, download the latest version of 
 "GHInstaller_IrenaNika_vxxx.pxp" and use that to install. 
 
 For more information on releases of distributions, please visit:
+
 http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html
+
 http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html
+
 http://usaxs.xray.aps.anl.gov/staff/ilavsky/indra_2.html
+
 
 and for instructions how to use them :
 
