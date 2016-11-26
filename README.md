@@ -1,5 +1,5 @@
 # SAXS_IgorCode
-Irena, NIka, and Indra SAXS Igor code by Jan Ilavsky for Igor 7 ONLY!
+Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7 ONLY!
 
 The only usable code version is November2016-2 release or newer, prior releases were testing versions for installer development. 
 
