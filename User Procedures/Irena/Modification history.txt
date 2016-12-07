@@ -10,6 +10,7 @@ Fix to QRS names which failed on names containing string “spec” in the name.
 Added checkbox for slit smeared/desmeared USAXS data in Merge 2 data sets tool. 
 Small-angle diffraction - when user selects “oversample” the parameters for peaks (d, q, width) are now calculated at 5x higher resolution than measured Q points. 
 Desmearing - propagate dQ and if does not exist, create dQ based on points distance. 
+Pair Distance Distribution - changed Matrix solving method since the one used was deprecated by Igor 7. 
 
 
 2.61 6/29/2016

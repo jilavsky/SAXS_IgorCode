@@ -1,12 +1,14 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.0
+#pragma version = 1.01
 #include "HDF5Gateway"
 
 
 
 // support of Nexus files
-//1.0 initial version, supports replacement of Nexus import in Nika with minor changes. 
+
+//1.01 fix for case when file does nto contain any V2 or V3 indicateors what data are and also has 3d data with dimsize(0)=1
+//1.0  initial version, supports replacement of Nexus import in Nika with minor changes. 
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -313,6 +315,12 @@ Function NEXUS_Nexus2DDataReader(FilePathName,Filename)
 		Wave DataWave = $(stringfromlist(0,NX2Ddata))			//just to make sure, pick the first one here (removes ending ;)
 		Duplicate/O DataWave, $("root:Packages:Convert2Dto1D:Loadedwave0")
 		Wave DataWv=$("root:Packages:Convert2Dto1D:Loadedwave0")
+		//If it is actually 3D wave but with first dimension of dimsize=1, reduce rank from [1][p][q] to only [p][q]
+		if(WaveDims(DataWave) == 3)
+			Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
+		else
+
+		endif
 		NEXUS_CleanUpHDF5Structure(DataWv, PathToNewData)
 		NEXUS_CreateWvNtNbk(DataWv, Filename)
 		NEXUS_ReadNXparameters(PathToNewData)
@@ -527,20 +535,30 @@ Function/T NEXUS_IdentifyData(PathToData, dimensions)
 			if(strlen(tmpSigName)<1)		//OK, Version 3 failed, may be it is Version 2? In that case signal =  1 is in the note of the Signal wave itself
 				tmpSigName = NEXUS_FindSignalV2Data()
 			endif
-			//fix if this is missing (WAXS)
+			//fix if this is missing (WAXS) and try to pick the "data" wave
 			if(strlen(tmpSigName)<2)
 				Wave/Z Data
 				if(WaveExists(Data))
 					tmpSigName="Data"
 				endif
 			endif
+			//OK, even this seems to fail on some data, so let's see if there is at least one 2D wave here and use that. Pick the first one, bad choice but what else can we do? 
+			if(strlen(tmpSigName)<1)		//
+				tmpSigName = NEXUS_FindAnySignalData()
+			endif
+			
 			tmpIndices = StringByKey("Q_indices", tmpnote, "=" , "\r" )
 			if(strlen(tmpIndices)>0)
 				tmpSigName+=tmpIndices
 			endif
 			Wave/Z Signal=$(tmpSigName)
+			variable tempDims
 			if(WaveExists(Signal))
-				if(dimensions == WaveDims(Signal))
+				tempDims = WaveDims(Signal)
+				if(DimSize(Signal,0)==1)
+					tempDims-=1
+				endif
+				if(dimensions == tempDims)
 					result = PathToData+tmpSigName
 				endif
 			endif
@@ -568,6 +586,28 @@ static Function/S NEXUS_FindSignalV2Data()
 		endif
 		Wave TestWv = $(objName)
 		if(NumberByKey("signal", note(TestWv), "=", "\r"))
+			WavenameStr = objName
+			break
+		endif
+		index += 1
+	while(1)
+	return WavenameStr
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function/S NEXUS_FindAnySignalData()
+	//check each wave in current folder and selects the first one which has 2D data in it
+	string WavenameStr=""
+	string objName
+	variable index
+	do
+		objName = GetIndexedObjName(":", 1, index)
+		if (strlen(objName) == 0)
+			WavenameStr=""
+			break
+		endif
+		Wave TestWv = $(objName)
+		if(WaveDims(TestWv) == 2 || (WaveDims(TestWv) == 3 && DimSize(TestWv, 0)==1))
 			WavenameStr = objName
 			break
 		endif
