@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.43
+#pragma version = 1.44
 
 
 //*************************************************************************\
@@ -8,7 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.44 Added right alignemnet of data path string to show end of the string if it is too long. 
 //1.43 Added Listbox for external files programmed similarly to allow easy addition of input directluy from files. Need for multipel tools in the future.
 //			Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString)
 //1.42 removed PreparematchString - as fighting with regular expressions used by Regex. Added IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
@@ -2824,23 +2824,23 @@ Function IR3C_SelectDataPath(TopPanel)
 	variable Width = FontSizeStringWidth(ReplaceString("'",IN2G_LkUpDfltStr("DefaultFontType"),""), str2num(IN2G_LkUpDfltVar("DefaultFontSize")),0,S_Path)
 	variable ratio = (415 - FontSizeStringWidth(ReplaceString("'",IN2G_LkUpDfltStr("DefaultFontType"),""), str2num(IN2G_LkUpDfltVar("DefaultFontSize")),0,"Data Path :"))/width
 	if(ratio<0.8)
-		DataSelPathString = "\Zr080"+S_Path
+		DataSelPathString = "\JR\Zr080"+S_Path
 	elseif(ratio>0.8 && ratio<0.9)
-		DataSelPathString = "\Zr080"+S_Path
+		DataSelPathString = "\JR\Zr080"+S_Path
 	elseif(ratio>0.9 && ratio<1)
-		DataSelPathString = "\Zr090"+S_Path
+		DataSelPathString = "\JR\Zr090"+S_Path
 	elseif(ratio>1 && ratio<1.1)
-		DataSelPathString = S_Path
+		DataSelPathString = "\JR"+S_Path
 	elseif(ratio>1.1 && ratio<1.2)
-		DataSelPathString = "\Zr110"+S_Path
+		DataSelPathString = "\JR\Zr110"+S_Path
 	elseif(ratio>1.2 && ratio<1.3)
-		DataSelPathString = "\Zr120"+S_Path
+		DataSelPathString = "\JR\Zr120"+S_Path
 	elseif(ratio>1.3 && ratio<1.4)
-		DataSelPathString = "\Zr130"+S_Path
+		DataSelPathString = "\JR\Zr130"+S_Path
 	elseif(ratio>1.4 && ratio<1.5)
-		DataSelPathString = "\Zr140"+S_Path
+		DataSelPathString = "\JR\Zr130"+S_Path
 	elseif(ratio>1.5)
-		DataSelPathString = "\Zr150"+S_Path
+		DataSelPathString = "\JR\Zr130"+S_Path
 	endif
 	
 end
@@ -2981,6 +2981,29 @@ Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,Default
 	string/g DataSelListBoxExtString = DefaultExtensionStr
 	PathInfo  $PckgPathName
 	string/g DataSelPathString = "\Zr140"+S_path
+	//figure out the size of the string we can use...
+	variable Width = FontSizeStringWidth(ReplaceString("'",IN2G_LkUpDfltStr("DefaultFontType"),""), str2num(IN2G_LkUpDfltVar("DefaultFontSize")),0,S_Path)
+	variable ratio = (415 - FontSizeStringWidth(ReplaceString("'",IN2G_LkUpDfltStr("DefaultFontType"),""), str2num(IN2G_LkUpDfltVar("DefaultFontSize")),0,"Data Path :"))/width
+	if(ratio<0.8)
+		DataSelPathString = "\JR\Zr080"+S_Path
+	elseif(ratio>0.8 && ratio<0.9)
+		DataSelPathString = "\JR\Zr080"+S_Path
+	elseif(ratio>0.9 && ratio<1)
+		DataSelPathString = "\JR\Zr090"+S_Path
+	elseif(ratio>1 && ratio<1.1)
+		DataSelPathString = "\JR"+S_Path
+	elseif(ratio>1.1 && ratio<1.2)
+		DataSelPathString = "\JR\Zr110"+S_Path
+	elseif(ratio>1.2 && ratio<1.3)
+		DataSelPathString = "\JR\Zr120"+S_Path
+	elseif(ratio>1.3 && ratio<1.4)
+		DataSelPathString = "\JR\Zr130"+S_Path
+	elseif(ratio>1.4 && ratio<1.5)
+		DataSelPathString = "\JR\Zr130"+S_Path
+	elseif(ratio>1.5)
+		DataSelPathString = "\JR\Zr130"+S_Path
+	endif
+		
 	string/g DataSelSortString
 	SVAR DataSelSortString
 	if(strlen(DefaultSortString)>0 && StringMatch(SortOptionsString, "*"+DefaultSortString+"*" ))

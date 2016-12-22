@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.47
-Constant NI1AversionNumber = 2.47
+Constant NI1AversionNumber = 2.48
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.47
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.48 changed pinSAXS to SAXS
 //2.47 changed length of name to 23 characters from 17
 //2.47 fixes for WIndows panel resizing. 
 //2.46 added Function for creating user custom data names
@@ -1333,7 +1334,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	endif
 	UseName=cleanupName(UseName, 1 )
 	NVAR/Z USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	NVAR/Z USAXSpinSAXSselector = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+	NVAR/Z USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR/Z USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
 	String DataFolderNameL
 	if(NVAR_Exists(USAXSWAXSselector))
@@ -1343,9 +1344,9 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		elseif(USAXSBigSAXSselector)
 			DataFolderNameL = "root:SAXS"
 			LongUseName="root:SAXS:"+possiblyQuoteName(UseName)
-		else  //USAXSpinSAXSselector
-			DataFolderNameL = "root:pinSAXS"
-			LongUseName="root:pinSAXS:"+possiblyQuoteName(UseName)		
+		else  //USAXSSAXSselector
+			DataFolderNameL = "root:SAXS"
+			LongUseName="root:SAXS:"+possiblyQuoteName(UseName)		
 		endif
 	else
 		DataFolderNameL = "root:SAS"

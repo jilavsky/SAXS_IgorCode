@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.25
+#pragma version=1.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.27 Fixes to Mod Gauss fitting to avoid problems when NaNs from range changes are present. 
+//1.26 GUI fixes for USAXS graphs and panels
 //1.25 added finding Qmin from FWHM of the sample peak
 //1.24 enable override of UPDsize, whichdid nto work up to now... 
 //1.23 fixed Bkg5 Overwrite which was not correctly read intot he system. 
@@ -23,7 +25,7 @@
 //1.12 increased Modified Guass fitting range slightly. 
 //1.11 adds Overwrite for UPD dark current range 5
 //1.10 adds FlyScan support
-//1.09 controls for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/pinSAXS correction
+//1.09 controls for few more items displayed on Tab0 with pek-to-peak transmission and MSAXS/SAXS correction
 //1.08 added pin diode transmission
 //1.07 added (beta version now) measurement of transmission by using diode on front of the A stage
 //1.06 modified for weight calibration
@@ -836,30 +838,30 @@ static Function IN3_RcurvePlot()
 	SetAxis bottom 1e-05, R_Qvec[numpnts(R_Qvec)-1]
 	ShowInfo
 	ControlBar 50
-	SetVariable SampleTransmission,pos={180,5},size={300,22},title="Sample transmission (peak max)"
-	SetVariable SampleTransmission,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged
+	SetVariable SampleTransmission,pos={200,5},size={300,22},title="Sample transmission (peak max)"
+	SetVariable SampleTransmission,proc=IN3_ParametersChanged
 	SetVariable SampleTransmission,limits={0,inf,0.005},variable= root:Packages:Indra3:SampleTransmissionPeakToPeak
 
-	SetVariable SampleAngleOffset,pos={180,25},size={300,22},title="Q offset           "
-	SetVariable SampleAngleOffset,font="Times New Roman",fSize=14,proc=IN3_ParametersChanged
+	SetVariable SampleAngleOffset,pos={200,25},size={300,22},title="Q offset              "
+	SetVariable SampleAngleOffset,proc=IN3_ParametersChanged
 	SetVariable SampleAngleOffset,limits={-inf,inf,0.5e-6},variable= root:Packages:Indra3:SampleQOffset
 
-	Button Recalculate,pos={150,25},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
+	Button Recalculate,pos={170,25},size={100,20},proc=IN3_InputPanelButtonProc,title="\Zr090Recalculate", help={"Recalculate the data"}
 	Button Recalculate fColor=(40969,65535,16385)
-	Button RemovePointsRange,pos={250,3},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Rem pnts w/Marquee", help={"Remove point by selecting Range with Marquee"}
-	Button RemovePoint,pos={250,25},size={90,20},font="Times New Roman",fSize=10,proc=IN3_InputPanelButtonProc,title="Remove pnt w/csr A", help={"Remove point with cursor A"}
-	Button FixGain,pos={150,6},size={90,15},font="Times New Roman",fSize=10, proc=IN3_GraphButtonProc,title="Fix Gain w/c A"
+	Button RemovePointsRange,pos={280,3},size={100,20},proc=IN3_InputPanelButtonProc,title="\Zr090Rem pnts w/Marquee", help={"Remove point by selecting Range with Marquee"}
+	Button RemovePoint,pos={280,25},size={100,20},proc=IN3_InputPanelButtonProc,title="\Zr090Remove pnt w/csr A", help={"Remove point with cursor A"}
+	Button FixGain,pos={170,3},size={100,20}, proc=IN3_GraphButtonProc,title="\Zr090Fix Gain w/c A"
 
-	CheckBox UseModifiedGauss title="Mod. Gauss",proc=IN3_RplotCheckProc
-	CheckBox UseModifiedGauss variable=root:Packages:Indra3:UseModifiedGauss,mode=1,pos={345,1}
-	CheckBox UseGauss title="Gauss",proc=IN3_RplotCheckProc
-	CheckBox UseGauss variable=root:Packages:Indra3:UseGauss,mode=1,pos={345,17}
-	CheckBox UseLorenz title="Lorenz",proc=IN3_RplotCheckProc
-	CheckBox UseLorenz variable=root:Packages:Indra3:UseLorenz,mode=1,pos={345,34}
+	CheckBox UseModifiedGauss title="\Zr090Mod. Gauss",proc=IN3_RplotCheckProc
+	CheckBox UseModifiedGauss variable=root:Packages:Indra3:UseModifiedGauss,mode=1,pos={385,1}
+	CheckBox UseGauss title="\Zr090Gauss",proc=IN3_RplotCheckProc
+	CheckBox UseGauss variable=root:Packages:Indra3:UseGauss,mode=1,pos={385,17}
+	CheckBox UseLorenz title="\Zr090Lorenz",proc=IN3_RplotCheckProc
+	CheckBox UseLorenz variable=root:Packages:Indra3:UseLorenz,mode=1,pos={385,34}
 
-	Button FitModGauss,pos={425,3},size={80,18},font="Times New Roman",fSize=10, proc=IN3_GraphButtonProc,title="Fit Mod. Gauss"
-	Button FitGauss,pos={515,3},size={80,18},font="Times New Roman",fSize=10, proc=IN3_GraphButtonProc,title="Fit Gauss"
-	Button FitLorenz,pos={515,25},size={80,18},font="Times New Roman",fSize=10, proc=IN3_GraphButtonProc,title="Fit Lorenz"
+	Button FitModGauss,pos={465,3},size={80,18}, proc=IN3_GraphButtonProc,title="\Zr090Fit Mod. Gauss"
+	Button FitGauss,pos={555,3},size={80,18}, proc=IN3_GraphButtonProc,title="\Zr090Fit Gauss"
+	Button FitLorenz,pos={555,25},size={80,18}, proc=IN3_GraphButtonProc,title="\Zr090Fit Lorenz"
 
 	CheckBox DisplayPeakCenter title="Display Peak Fit",proc=IN3_RplotCheckProc
 	CheckBox DisplayPeakCenter variable=root:Packages:Indra3:DisplayPeakCenter,mode=1,pos={5,5}
@@ -1278,11 +1280,12 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	wavestats/Q PD_Intensity
 	//workaround problems 2012/01, one large point appears ...
 	Duplicate/Free PD_Intensity, tempPDInt
+	//this tempPDInt needs nan's removed. need to interpolate values?
 	wavestats/Q tempPDInt
 	tempPDInt[V_maxloc]=Nan
 	W_Coef[0]=V_max
 	W_coef[1]=Ar_encoder[V_maxloc]
-	FindLevels /N=5 /P/Q  tempPDInt, V_max/2
+	FindLevels /N=5/P/Q  tempPDInt, V_max/2
 	wave W_FindLevels
 	variable startPointL, endPointL
 	if(Numpnts(W_FindLevels)==2)
@@ -1292,6 +1295,9 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 		FindLevel /P/Q W_FindLevels, V_maxloc
 		startPointL = W_FindLevels[floor(V_LevelX)]
 		endPointL = W_FindLevels[ceil(V_LevelX)]
+	elseif(Numpnts(W_FindLevels)<2)		//only one or no crossing found? this happens when NaNs are in the waves
+	 	startPointL =  IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 0)
+	 	endPointL = IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 1)
 	endif
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter A  PD_Intensity  startPointL 
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter B  PD_Intensity  endPointL 
@@ -1351,6 +1357,31 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 
 End
 
+//******************** name **************************************
+STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
+	wave waveIn
+	variable LevelSearched, MaxLocation, LeftRight
+	//set LeftRight to 0 for left and 1 for right of the MaxLocation
+	variable LevelPoint = 0
+	variable counter = MaxLocation
+	variable Done=0
+	Do
+		if(LeftRight)
+			counter+=1
+		else
+			counter-=1
+		endif
+		if(numtype(waveIn[counter])==0)
+			if(waveIn[counter]>LevelSearched)
+				LevelPoint = counter
+			else
+				Done=1
+			endif
+		endif	
+	while (Done<1)	
+	return LevelPoint	
+end
+	
 //******************** name **************************************
 ///**********************************************************************************************************
 //******************** FitLorenzianOnTopMacro **************************************

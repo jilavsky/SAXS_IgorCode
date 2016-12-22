@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.06
+#pragma version=1.07
 constant IR3DversionNumber = 1.06			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.06			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.07 minor GUI fixes for Windows
 //1.06 added switch for slit smeared/desmeared USAXS data. 
 //1.05 chanegs for panel scaling - need to convert for WM procedure, subwindow does tno work rigth
 //1.04 fix for liberal names. 
@@ -69,7 +70,7 @@ Proc IR3D_DataMergePanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,720) as "Data Merging"
 	DoWIndow/C IR3D_DataMergePanel
-	TitleBox MainTitle title="\Zr220Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -77,7 +78,7 @@ Proc IR3D_DataMergePanel()
 	IR2C_AddDataControls("Irena:SASDataMerging","IR3D_DataMergePanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 
 
-	TitleBox Info1 title="\Zr160First data set",pos={60,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	TitleBox Info1 title="\Zr120First data set",pos={60,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	//DrawText 60,25,"First data set"
 	Checkbox UseIndra2Data1, pos={10,20},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data1
 	Checkbox Indra2Data1SlitSmeared, pos={10,33},size={76,14},title="Desmeared/2D colim?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
@@ -90,7 +91,7 @@ Proc IR3D_DataMergePanel()
 	PopupMenu SortFolders1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString1,value= root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
 	//DrawText 290,25,"Second data set"
-	TitleBox Info2 title="\Zr160Second data set",pos={290,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	TitleBox Info2 title="\Zr120Second data set",pos={290,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	Checkbox UseIndra2Data2, pos={260,20},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data2
 	checkbox UseQRSData2, pos={370,20}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
 	Checkbox Indra2Data2SlitSmeared, pos={260,33},size={76,14},title="Desmeared/2D colim?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared

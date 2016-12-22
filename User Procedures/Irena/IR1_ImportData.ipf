@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.31
+#pragma version=2.32
 Constant IR1IversionNumber = 2.29
 Constant IR1IversionNumber2 = 2.31
 Constant IR1TrimNameLength = 28
@@ -9,6 +9,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.32 fixed window naming issue which prevented scaling from work. 
 //2.31 Added non SAS import tool, needs debugging and testing for all of teh known types. Not finished yet. 
 //2.30 fixes for labels presentation, added cleanup for imported names removing bad characters. 
 //2.29 added slit smearing and dq wave name
@@ -102,7 +103,7 @@ Proc IR1I_ImportSASASCIIData()
 	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,40,430,760) as "Import SAXS/SANS data"
-	DoWindow/C IR1I_ImportSASASCIIData
+	DoWindow/C IR1I_ImportData
 	TitleBox MainTitle title="\Zr200Import SAS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140List of available files",pos={30,107},frame=0,fstyle=1, fixedSize=1,size={120,20},fColor=(0,0,52224)

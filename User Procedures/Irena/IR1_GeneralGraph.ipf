@@ -127,9 +127,10 @@ Window IR1P_ControlPanel()
 	Button ManageStyles,pos={30,265},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Manage Graph styles", help={"Manage graph styles (styles)."}
 
 	Button ModifyData,pos={210,205},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Modify data", help={"Click to open dialog to modify the data. USE CAUTION - THIS CAN HAVE BAD SIDE EFFECTS for your data!!!!"}
-	Button SetGraphDetails,pos={210,225},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Change graph details", help={"Click to open dialog to modify graph minor details."}
-	Button GraphFitting,pos={210,245},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Fitting", help={"Click to pull out panel with fitting tools."}
-	Button StoreGraphs,pos={210,265},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Store and recall graphs", help={"Store and restore graphs for future use."}
+	Button SetGraphDetails,pos={210,223},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Change graph details", help={"Click to open dialog to modify graph minor details."}
+	Button GraphFitting,pos={210,241},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Fitting", help={"Click to pull out panel with fitting tools."}
+	Button StoreGraphs,pos={210,258},size={150,17}, proc=IR1P_InputPanelButtonProc,title="Store and recall graphs", help={"Store and restore graphs for future use."}
+	Button MoreTools,pos={210,276},size={150,17}, proc=IR1P_InputPanelButtonProc,title="More ...", help={"More handy tools."}
 
 	PopupMenu XAxisDataType,pos={10,300},size={178,21},proc=IR1P_PanelPopupControl,title="X axis data", help={"Select data to be displayed on X axis, needed data types will be created if necessary"}
 	PopupMenu XAxisDataType,mode=1,popvalue="X",value= "X;X^2;X^3;X^4;"
@@ -526,6 +527,11 @@ Function IR1P_InputPanelButtonProc(ctrlName) : ButtonControl
 		//here goes what is done, when user pushes Graph button
 			IR1P_ChangeGraphDetailsFn()
 	endif
+	if (cmpstr(ctrlName,"MoreTools")==0)
+		//here goes what is done, when user pushes Graph button
+			IR1P_MoreToolsFn()
+	endif
+
 
 	if (cmpstr(ctrlName,"ScriptingTool")==0)
 			IR2S_ScriptingTool()
@@ -1167,6 +1173,84 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+Function IR1P_MoreToolsFn()
+	//here we create new panel with some more controls...
+	
+	DoWindow IR1P_MoreToolsPanel
+	if(V_Flag)
+		DoWindow/K IR1P_MoreToolsPanel
+	endif
+	Execute ("IR1P_MoreToolsPanel()")
+	
+end
+//and macro for this job...
+//**********************************************************************************************************
+//**********************************************************************************************************
+Window IR1P_MoreToolsPanel() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1 /W=(473,73,785,400) as "IR1P_MoreToolsPanel"
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
+	DrawText 5,22,"More handy tools are here..."
+	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
+	DrawText 5,43,"These settings are NOT saved in user styles"
+	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
+	DrawText 5,64,"and will not be recreated by the tool"
+	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
+	DrawText 6,85,"1.   "
+	Button AddDspacingTransAxis,pos={36.00,67.00},size={177.00,20.00},proc=IR1P_MoreToolsButtonProc,title="Add d-spacing top axis"
+	Button AddDspacingTransAxis,help={"Add to existing graqh transform axis which will display d spacing"}
+	SetDrawEnv fsize= 12,textrgb= (0,0,65280)
+	DrawText 5,105,"Change from Graph > Transform Axis > Modify ..."
+EndMacro
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR1P_MoreToolsButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(StringMatch(ba.ctrlName, "AddDspacingTransAxis"))
+				IR1P_AddTransAxisQtoD()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR1P_TransAxisdfromQ(w, x)
+	Wave/Z w
+	Variable x
+	return 2*pi/x
+end
+
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR1P_AddTransAxisQtoD()
+	
+	DoWIndow/Z GeneralGraph
+	if(V_Flag)
+		GetAxis /W=GeneralGraph /Q MT_bottom 
+		if(V_Flag)		//why in the world this is set to 1 when teh axcis DOES NOT exist??? 
+			SetupTransformMirrorAxis("GeneralGraph", "bottom", "IR1P_TransAxisdfromQ", $"", 5, 1, 5, 1)
+		endif
+		TicksForTransformAxis("GeneralGraph", "bottom", 5, 1, 1, "MT_bottom", 1,0)
+		ModifyGraph mirror(bottom)=0,mirror(MT_bottom)=0
+		Label MT_bottom "Dimension (2pi/q) [A]"
+		ModifyGraph lblPosMode(MT_bottom)=2,lblMargin(MT_bottom)=5
+	endif
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 //this creates panel for nit-picking users, dissatisfied with everything...
 
 Function IR1P_ChangeGraphDetailsFn()
@@ -1239,6 +1323,7 @@ Function IR1P_ResetTool()
 
 	DoWindow GeneralGraph
 	if(V_Flag)
+		CloseTransformAxisGraph("GeneralGraph", 0)
 		Dowindow/K GeneralGraph
 	endif
 	DoWindow PlotingToolWaterfallGrph

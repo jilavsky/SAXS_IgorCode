@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.51
+#pragma version=2.52
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.52 changed selection options for data
 //2.51 New nexus support fixes. Pops up now the panel as needed and sets the input choice. 
 //2.50 Modified to point to USXS_data on USAXS computers, added handling of ...tiff file names
 //2.49 added Function for creating user custom data names. 
@@ -39,10 +40,10 @@
 //2.23 Refresh now sets top data set as selected. Added first version of background task monitoring folder...
 //2.22 added user defined Image range and display color scale... 
 //2.21 added export in distacne from center, minor fix in search for match files
-//2.20 changed behavior to enable calculation of smeared data in 15IDD pinSAXS instrument
+//2.20 changed behavior to enable calculation of smeared data in 15IDD SAXS instrument
 //2.19 fixed NI1A_UpdateEmptyDarkListBox() for bug (was looking in wrong path...)
 //2.18 fixed UpdateEmptyDark File list 
-//2.17 Support for pinSAXS and Nexus file reader, fixed loadEMpty/dark bug which used wrong extension for file 
+//2.17 Support for SAXS and Nexus file reader, fixed loadEMpty/dark bug which used wrong extension for file 
 //2.16 found another bug in PixSensitivity correction, it was done twice under some conditions... , Chenged fixed offset to allow for negative values. 
 //2.15 added ability to check and skip for bad loaded files... Reflects changes to UniversalFileLoader
 //2.14 Added Movie creating option, some code modification necessary. NOte: Main thing is that I had to move the order of 2Dto1Dconversion after displaying 2D images, not before. 
@@ -3301,9 +3302,9 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
-	TitleBox MainTitle title="\Zr2002D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
-	TitleBox Info1 title="\Zr140Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
-	TitleBox Info2 title="\Zr140Select contiguous range  :",pos={25,235},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox Info1 title="\Zr120Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
+	TitleBox Info2 title="\Zr120Select contiguous range  :",pos={10,235},frame=0,fstyle=2, fixedSize=1,size={150,20}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
@@ -3356,7 +3357,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	ListBox Select2DInputWave,help={"Select data file to be converted, you can select multiple data sets"}
 	ListBox Select2DInputWave,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	ListBox Select2DInputWave,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
-	ListBox Select2DInputWave,mode= 4, proc=NI1_MainListBoxProc
+	ListBox Select2DInputWave,mode= 9, proc=NI1_MainListBoxProc
 	PopupMenu SelectStartOfRange,pos={175,220},size={300,20},proc=NI1A_PopMenuProc,title="Start"
 	PopupMenu SelectStartOfRange,help={"Select first 2D data to process"}
 	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"

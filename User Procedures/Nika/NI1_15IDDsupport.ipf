@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.33
+#pragma version=1.35
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.35 fix for bigSAXS failure
+//1.34 changed pinSAXS to SAXS
 //1.33 MINOR FIX FOR BUG IN READING PILATUS SAXS PIX_Y BEAM CENTER POSITION AND SETUP FOR UES WITH THE NEW NEXUST SUPPORT. 
 //1.32 checked fit checkboxes and added check if we are runnign on USAXS computer to set path the USAXS_data
 //1.31 fix colorization of the LineuotDisplayPlot_Q graph. 
@@ -17,23 +19,23 @@
 //1.26 fixed error in I0 lookup for Sample exposure which used ungated signal instead of gated one. Not sure when did this happen... 
 //1.25 fix WAXS normalization I0 lookup. fixed I0_blank
 //1.24 added fix for Q resolution in line profile conversion. Related to adding the Line profile Q resolution ot main code.  
-//1.23 added normalization for WAXS and modified GUI + pinSAXS default mask. Fixed bug error when run second time and help fiel alrerady existed.
+//1.23 added normalization for WAXS and modified GUI + SAXS default mask. Fixed bug error when run second time and help fiel alrerady existed.
 //1.22 added more transferred parameters for pixel smearing. 
 //1.21 added PE detector Nexus file for WAXS and for all detector read of Beam Size
 //1.20 more modifications for 15ID SAXS
 //1.19 modifications for 15ID SAXS done April 2015
-//1.18 added use of SEM as error estimate for WAXS and pinSAXS (and old method for big SAXS) . SEM seems best for Pilatus detectors? 
+//1.18 added use of SEM as error estimate for WAXS and SAXS (and old method for big SAXS) . SEM seems best for Pilatus detectors? 
 //1.17 fixes for mask use in WAXS settings
 //1.16 fixes for 9ID
 //1.15 fixes for 9ID data after the move. Only partial fix. 
-//1.14 widen the angular range for sector average for pinSAXS - seems to be OK now with vacuum chamber.  
+//1.14 widen the angular range for sector average for SAXS - seems to be OK now with vacuum chamber.  
 //1.13 added Mask creation for horizon using vaccum chamber in 2014-08
 //1.12 added WAXS controls for 2013-01
-//1.11 fixed minor bug related to USAXS blank checking for pinSAXS caused by version 1.10
+//1.11 fixed minor bug related to USAXS blank checking for SAXS caused by version 1.10
 //1.10 modified function searching for thickenss of the sample, added use of pin diode for tranmsission measurements
 //1.09 modified for beamline_support_version=1.0, May 2012 (for 2012-02). Fixed prior problems.
 //1.08 bigSAXS support updated. Bad data in the header are found from 2012-01. Need to get it fixed. 
-//1.07 minor fix which was causing problems when PinSAXS setup was not run but nexus files were used.  
+//1.07 minor fix which was causing problems when SAXS setup was not run but nexus files were used.  
 //1.06 updated folder setting, which seemed to fail sicne the ConfigureNika initiates parameters. 
 //1.05 added lookup for I0 gain as now we have autoranging I0 gain and therefore the gains may change between measurements. 
 //1.04 fixed the issue with sliut length definition. Prior version had slit length of only 0.5 of the needed value due to the length definition we define it in USAXS.
@@ -42,7 +44,7 @@
 //1.01 fixed to make work with M_SMR_waves also
 //1.0 initial release
 
-//this is package for support of 15ID-D SAXS and pinSAXS instruments. 
+//this is package for support of 15ID-D SAXS and SAXS instruments. 
 
 
 Function NI1_15IDDConfigureNika()
@@ -60,7 +62,7 @@ Function NI1_15IDDConfigureNika()
 	setDataFOlder root:Packages:Convert2Dto1D:
 	
 	string ListOfVariables="USAXSSlitLength;SAXSGenSmearedPinData;SAXSDeleteTempPinData;USAXSForceTransmissionDialog;"
-	ListOfVariables +="USAXSpinSAXSselector;USAXSWAXSselector;USAXSBigSAXSselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
+	ListOfVariables +="USAXSSAXSselector;USAXSWAXSselector;USAXSBigSAXSselector;USAXSCheckForRIghtEmpty;USAXSCheckForRIghtDark;USAXSForceTransRecalculation;"
 	ListOfVariables +="USAXSLoadListedEmpDark;USAXSForceUSAXSTransmission;"
 	string ListOfStrings="USAXSSampleName;"
 
@@ -79,11 +81,11 @@ Function NI1_15IDDConfigureNika()
 
 	NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 	SAXSGenSmearedPinData=1
-	NVAR USAXSpinSAXSselector = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+	NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
 	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	if((USAXSWAXSselector+USAXSpinSAXSselector+USAXSBigSAXSselector)!=1)
-		USAXSpinSAXSselector = 1
+	if((USAXSWAXSselector+USAXSSAXSselector+USAXSBigSAXSselector)!=1)
+		USAXSSAXSselector = 1
 		USAXSBigSAXSselector = 0
 		USAXSWAXSselector = 0
 	endif
@@ -116,11 +118,11 @@ Window NI1_15IDDConfigPanel() : Panel
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
 	DrawText 10,25,"9ID-C (or 15IDD) Nexus file configuration"
 	
-	DrawText 10, 43, "pinSAXS : Pilatus 100k camera in USAXS (use with USAXS)"
+	DrawText 10, 43, "SAXS : Pilatus 100k camera in USAXS (use with USAXS)"
 	DrawText 10, 60, "WAXS    : Pilatus 100k or 200kw WAXS used in USAXS/SAXS/WAXS configuration"
 	DrawText 10, 77, "SAXS     : large SAXS camera in the 15ID-D (only SAXS, no USAXS)"
-	Checkbox pinSAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSpinSAXSselector, proc=NI1_15IDDCheckProc
-	Checkbox pinSAXSSelection, title ="pinSAXS", help={"Use to configure Nika for pinSAXS"}
+	Checkbox SAXSSelection,pos={10,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSSAXSselector, proc=NI1_15IDDCheckProc
+	Checkbox SAXSSelection, title ="SAXS", help={"Use to configure Nika for SAXS"}
 	Checkbox USAXSWAXSselector,pos={150,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSWAXSselector, proc=NI1_15IDDCheckProc
 	Checkbox USAXSWAXSselector, title ="WAXS", help={"Use to configure Nika for WAXS"}
 	Checkbox BigSAXSSelection,pos={290,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSBigSAXSselector, proc=NI1_15IDDCheckProc
@@ -166,11 +168,11 @@ EndMacro
 //************************************************************************************************************
 Function NI1_15IDDDisplayAndHideControls()
 
-	NVAR USAXSpinSAXSselector = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+	NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
 	NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
 	variable DisplayPinCntrls=USAXSBigSAXSselector || USAXSWAXSselector
-	variable DisplayWAXSCntrls=USAXSpinSAXSselector || USAXSWAXSselector
+	variable DisplayWAXSCntrls=USAXSSAXSselector || USAXSWAXSselector
 
 	Checkbox SAXSGenSmearedPinData, win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
 	Checkbox SAXSDeleteTempPinData,  win= NI1_15IDDConfigPanel, disable = DisplayPinCntrls
@@ -197,12 +199,12 @@ Function NI1_15IDDCheckProc(cba) : CheckBoxControl
 		case 2: // mouse up
 			Variable checked = cba.checked
 			NVAR USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
-			NVAR USAXSpinSAXSselector = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+			NVAR USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 			NVAR USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
-			if(stringmatch(cba.ctrlName,"pinSAXSSelection"))
+			if(stringmatch(cba.ctrlName,"SAXSSelection"))
 				if(checked)
 					USAXSBigSAXSselector =0
-					// USAXSpinSAXSselector=0
+					// USAXSSAXSselector=0
 					USAXSWAXSselector=0
 				endif
 				NI1_15IDDDisplayAndHideControls()
@@ -210,7 +212,7 @@ Function NI1_15IDDCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName,"USAXSWAXSselector"))
 				if(checked)
 					USAXSBigSAXSselector =0
-					USAXSpinSAXSselector=0
+					USAXSSAXSselector=0
 					//USAXSWAXSselector=0
 				endif
 				NI1_15IDDDisplayAndHideControls()
@@ -218,15 +220,15 @@ Function NI1_15IDDCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
 				if(checked)
 					//USAXSBigSAXSselector =0
-					USAXSpinSAXSselector=0
+					USAXSSAXSselector=0
 					USAXSWAXSselector=0
 				endif
 				NI1_15IDDDisplayAndHideControls()
 			endif
 	
-			if(USAXSBigSAXSselector+USAXSpinSAXSselector+USAXSWAXSselector!=1)
+			if(USAXSBigSAXSselector+USAXSSAXSselector+USAXSWAXSselector!=1)
 				USAXSBigSAXSselector =0
-				USAXSpinSAXSselector=1
+				USAXSSAXSselector=1
 				USAXSWAXSselector=0
 			endif
 
@@ -282,7 +284,7 @@ Function NI1_Open15IDDManual()
 	//check where we run...
 		string WhereIsManual
 		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"NI1_15IDDsupport.ipf")
-		String manualPath = ParseFilePath(5,"15IDDpinSAXSAnalysis.pdf","*",0,0)
+		String manualPath = ParseFilePath(5,"15IDDSAXSAnalysis.pdf","*",0,0)
        	String cmd 
 	
 	if (stringmatch(IgorInfo(3), "*Macintosh*"))
@@ -332,9 +334,9 @@ Function NI1_15IDDButtonProc(ba) : ButtonControl
 				NI1_15IDDWaveNoteValuesNx()				
 			endif
 			if (stringmatch("CreateBadPIXMASK",ba.CtrlName))
-				NVAR isPinSAXS=root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+				NVAR isSAXS=root:Packages:Convert2Dto1D:USAXSSAXSselector
 				NVAR isWAXS=root:Packages:Convert2Dto1D:USAXSWAXSselector
-				if(isPinSAXS)
+				if(isSAXS)
 					NI1_15IDDCreateSAXSPixMask()		
 				elseif(isWAXS)	
 					NI1_15IDDCreateWAXSPixMask()	
@@ -515,7 +517,7 @@ Function NI1_15IDDSetDefaultNx()
 	NI1A_Initialize2Dto1DConversion()
 	NI1BC_InitCreateBmCntrFile()
 
-	NVAR pinSAXSSelected=root:Packages:Convert2Dto1D:USAXSpinSAXSselector
+	NVAR SAXSSelected=root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR bigSAXSSelected=root:Packages:Convert2Dto1D:USAXSBigSAXSselector
 	NVAR WAXSSelected = root:Packages:Convert2Dto1D:USAXSWAXSselector
 		if(WAXSSelected)
@@ -673,7 +675,7 @@ Function NI1_15IDDSetDefaultNx()
 				BMFitBeamCenter = 1
 				NVAR BMRefNumberOfSectors = root:Packages:Convert2Dto1D:BMRefNumberOfSectors
 				BMRefNumberOfSectors = 360
-	elseif(pinSAXSSelected)
+	elseif(SAXSSelected)
 				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 				UseSectors = 1
 				NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
@@ -830,7 +832,7 @@ Function NI1_15IDDSetDefaultNx()
 				BMCntrDisplayLogImage = 1
 				NVAR SAXSDeleteTempPinData= root:Packages:Convert2Dto1D:SAXSDeleteTempPinData
 				SAXSDeleteTempPinData = 1
-	else		//end of pinSAXS selectetin, bellow starts bigSAXS specifics...
+	else		//end of SAXS selectetin, bellow starts bigSAXS specifics...
 				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 				UseSectors = 1
 				NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
@@ -1070,8 +1072,8 @@ Function NI1_15IDDWaveNoteValuesNx()
 	SVAR Current2DFileName = root:Packages:Convert2Dto1D:FileNameToLoad
 	variable beamline_support_version
 	NVAR useWAXS = root:Packages:Convert2Dto1D:USAXSWAXSselector
-	NVAR usePinSAXS = root:Packages:Convert2Dto1D:USAXSpinSAXSselector
-	NVAR useSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	NVAR useSAXS = root:Packages:Convert2Dto1D:USAXSSAXSselector
+	NVAR useBigSAXS = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
 	NVAR Wavelength= root:Packages:Convert2Dto1D:Wavelength
 	NVAR XRayEnergy= root:Packages:Convert2Dto1D:XRayEnergy
 	NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
@@ -1087,7 +1089,7 @@ Function NI1_15IDDWaveNoteValuesNx()
 	if((stringMatch("15ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))||stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("Pilatus", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
-		if(usePinSAXS)
+		if(useSAXS)
 			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote  , "=" , ";")
 			if(numtype(PixelSizeX)!=0)		//old data from 15ID
@@ -1125,7 +1127,7 @@ Function NI1_15IDDWaveNoteValuesNx()
 	elseif((stringMatch("9ID", StringByKey(NI1_15IDDFindKeyStr("facility_beamline=", OldNote), OldNOte  , "=" , ";"))) && stringMatch("XRD0820", StringByKey(NI1_15IDDFindKeyStr("model=", OldNote), OldNOte  , "=" , ";")))	
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
-		if(usePinSAXS)
+		if(useSAXS)
 			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_x=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_pixel_size_y=", OldNote), OldNote  , "=" , ";")
 			if(numtype(PixelSizeX)!=0)		//old data from 15ID
@@ -1164,7 +1166,7 @@ Function NI1_15IDDWaveNoteValuesNx()
 		//9ID data from2015 onwards... 
 		Wavelength = NumberByKey(NI1_15IDDFindKeyStr("monochromator:wavelength=", OldNote), OldNote  , "=" , ";")
 		XRayEnergy = 12.3984/Wavelength
-		if(usePinSAXS)
+		if(useSAXS)
 			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
 			HorizontalTilt = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
@@ -1191,6 +1193,7 @@ Function NI1_15IDDWaveNoteValuesNx()
 		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
 
 	elseif(stringMatch("15ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("CCD", StringByKey("data:model", OldNOte  , "=" , ";")))	
+		//should be for useBigSAXS=1
 		beamline_support_version = NumberByKey(NI1_15IDDFindKeyStr("beamline_support_version=", OldNote), OldNote  , "=" , ";")
 		if(numtype(beamline_support_version)!=0)			//this applies for MarCCD support
 			beamline_support_version=0
@@ -1919,14 +1922,14 @@ Function NI1_15IDDCreateHelpNbk()
 		Notebook $nb ruler=Normal, text="\r"
 		Notebook $nb text="Decide which data you need to reduce. Instructions are setup specific:\r"
 		Notebook $nb text="\r"
-		Notebook $nb ruler=Title, text="pinSAXS \r"
+		Notebook $nb ruler=Title, text="SAXS \r"
 		Notebook $nb ruler=Normal
 		Notebook $nb text="You may be heloped by first reducing your USAXS data and process them to SMR waves, but it is not necess"
 		Notebook $nb text="ary.\r"
-		Notebook $nb text="1.\tSelect \"pinSAXS\" checkbox.\r"
+		Notebook $nb text="1.\tSelect \"SAXS\" checkbox.\r"
 		Notebook $nb text="2.\tPush \"Set default methods\" button to locate data folder and configure Nika settings common to all pin"
 		Notebook $nb text="SAXS experiments.\r"
-		Notebook $nb text="3.\tSelect one of the images from your pinSAXS measurements in the main 2D panel and double click it (or "
+		Notebook $nb text="3.\tSelect one of the images from your SAXS measurements in the main 2D panel and double click it (or "
 		Notebook $nb text="use button \"Ave & Display sel. file(s)\") to load \r"
 		Notebook $nb text="3. \tUse \"Set Experiment Settings\"  button to read & set values from the wavenote of this file (These are"
 		Notebook $nb text=" the most likely values for your experiment)\r"
@@ -1938,9 +1941,9 @@ Function NI1_15IDDCreateHelpNbk()
 		Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_usx\") - OR - unselect the \"Create Smeared Data\" (resu"
 		Notebook $nb text="lting data will be \"_270_30\"). Likely choose \"Delete temp Data\" if you are creating slit smeared data.\r"
 		Notebook $nb text="7. \tFind \"Empty\" (aka: Blank) file you want to use and load it in Nika (\"Emp/Dk\" tab). \r"
-		Notebook $nb text="To process pinSAXS select the 2D data in the main panel and push button \"Convert sel. files 1 at time\"\r"
+		Notebook $nb text="To process SAXS select the 2D data in the main panel and push button \"Convert sel. files 1 at time\"\r"
 		Notebook $nb text="8. \tSelect data sets and reduce using \"Convert sel. files 1 at time\". This should create reasonable data"
-		Notebook $nb text=" for pinSAXS if you have small-angle scattering. If you have diffraction peaks, select in \"Sectors\" tab "
+		Notebook $nb text=" for SAXS if you have small-angle scattering. If you have diffraction peaks, select in \"Sectors\" tab "
 		Notebook $nb text="checkbox \"Max num points\" and if you need it, select \"d?\" checkbox etc. \r"
 		Notebook $nb text="   \r"
 		Notebook $nb text="Merge \"_usx\" data using \"Data manipulation I\" tool from Irena package with USAXS slit smeared data or \"_"
@@ -2048,8 +2051,8 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		 //270_10;VLp_0;
 		string OldDf=getDataFOlder(1)
 		//see what these do: NI1A_SaveDataPerUserReq(tempStr1+tempStr)
-		NVAR/Z pinSAXSSelected=root:Packages:Convert2Dto1D:USAXSpinSAXSselector
-		if(!NVAR_Exists(pinSAXSSelected) || !pinSAXSSelected)
+		NVAR/Z SAXSSelected=root:Packages:Convert2Dto1D:USAXSSAXSselector
+		if(!NVAR_Exists(SAXSSelected) || !SAXSSelected)
 			return 0
 		endif
 		
@@ -2063,7 +2066,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 			return 0
 		endif
 		if(SAXSGenSmearedPinData && (!(GrepString(listOfOrientations,"270_30")||GrepString(listOfOrientations,"270_10"))||!GrepString(listOfOrientations,"VLp_0")))
-			Print "Could not create requested slit smeared pinSAXS data since the right sector and line profiles are not available"
+			Print "Could not create requested slit smeared SAXS data since the right sector and line profiles are not available"
 			return 0
 		endif 
 		if(USAXSSlitLength<0.001)	//slit length not set, force user to find it...
@@ -2099,7 +2102,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
 	endif
 	//UseName=cleanupName(UseName, 1 )
-	String PinFolder="root:pinSAXS:"+possiblyQuoteName(UseName)
+	String PinFolder="root:SAXS:"+possiblyQuoteName(UseName)
 	String PinWaveNames=(UseName)
 
 	CurOrient="VLp_0"
@@ -2120,7 +2123,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
 	endif
 	//UseName=cleanupName(UseName, 1 )
-	String LIneProfFolder="root:pinSAXS:"+possiblyQuoteName(UseName)
+	String LIneProfFolder="root:SAXS:"+possiblyQuoteName(UseName)
 	String LineProfWaveNames=(UseName)
 
 	CurOrient="usx"
@@ -2141,7 +2144,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
 	endif
 	UseName=cleanupName(UseName, 1 )
-	String SmearedFolder="root:pinSAXS:"+possiblyQuoteName(UseName)
+	String SmearedFolder="root:SAXS:"+possiblyQuoteName(UseName)
 	String SmWaveNames=(UseName)
 
 

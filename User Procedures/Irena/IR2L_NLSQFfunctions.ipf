@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.23
+#pragma version=1.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.24 fix save single Contrast even when user left SameContrastForDataSets=1 but is using just one data set
 //1.23 fix error message when using model as data 
 //1.22 catch if user is loading negative, 0 , Nan, or inf value uncertainities and force use of % errors in that case. 
 //1.21 added catch for change of LNmin which will be chaned to 3A diameter (1.5A radius) with user warning, when restoring old number (0). 
@@ -1631,6 +1632,7 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 	SVAR VolDistCalibrationUnits=root:Packages:IR2L_NLSQF:VolDistCalibrationUnits
 	SVAR NumDistCalibrationUnits=root:Packages:IR2L_NLSQF:NumDistCalibrationUnits
 	NVAR UseNumberDistributions = root:Packages:IR2L_NLSQF:UseNumberDistributions
+	NVAR MultipleInputData = root:Packages:IR2L_NLSQF:MultipleInputData
 
 	if(!SVAR_Exists(ListOfVariables) || !SVAR_Exists(ListOfDataVariables) || !SVAR_Exists(ListOfPopulationVariables) || !SVAR_Exists(ListOfStrings) || !SVAR_Exists(ListOfDataStrings) || !SVAR_Exists(ListOfPopulationsStrings))
 		abort "Error in parameters in SaveResultsInDdataFolder routine. Send the file to author for bug fix, please"
@@ -1684,8 +1686,8 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 			ListOfParameters+=StringFromList(i,tempList)+"_pop"+num2str(j)+"="+num2str(testVar)+";"
 		endfor	
 		if(UseThePop)
-			if(!SameContrastForDataSets)
-				tempList="Contrast;"
+			if(!SameContrastForDataSets || !MultipleInputData)			//note, illogically the SameContrast=1 when we vary contrast. Weird... 
+				tempList="Contrast;"												//fix 2016-12-7 to save single Contrast even when user left SameContrastForDataSets=1 but is using just one data set
 			else
 				tempList="Contrast_set1;Contrast_set2;Contrast_set3;Contrast_set4;Contrast_set5;Contrast_set6;Contrast_set7;Contrast_set8;Contrast_set9;Contrast_set10;"
 			endif

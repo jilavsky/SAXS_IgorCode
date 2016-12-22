@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.18
+#pragma version=2.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.18 limt number of contours in controur plot to 100, Igor cannot do more. 
+//2.19 fix applying Graph styles which did not handle custom axes titles. 
+//2.18 limit number of contours in controur plot to 100, Igor cannot do more. 
 //2.17 added 	if(exists("AfterUpdateGenGraphHookFunction")==6)
 //2.16 added Int*Q^3 as plotting option. 
 //2.15 minor fix for Change Graph details panel visibility
@@ -92,6 +93,7 @@ end
 Proc  IR1P_makeGraphWindow() 
 	DoWindow GeneralGraph
 	if (V_Flag)
+		CloseTransformAxisGraph("GeneralGraph", 0)
 		DoWindow/K generalGraph
 	endif
 	PauseUpdate; Silent 1		// building window...
@@ -955,6 +957,11 @@ Function IR1P_UpdateGenGraph()
 				Execute ("ModifyGraph /Z "+StringFromList(i,ListOfGraphFormating))
 			endif
 		endfor
+		//modification for Transform Axis, added 2016-12-21
+		GetAxis /W=GeneralGraph /Q MT_bottom				//transform axis to 2p[i/Q
+		if(V_Flag==0)	//this means it exists... 
+			ModifyGraph mirror(bottom)=0,mirror(MT_bottom)=0
+		endif
 		SVAR ListOfWavesNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
 		variable tempXLin, tempXlog, tempYLin, tempYlog
 		For(j=0;j<ItemsInList(ListOfWaves);j+=1)
@@ -1184,8 +1191,6 @@ Function IR1P_SynchronizeListAndVars()
 	GraphBottomAxisMin=NumberByKey("Axis bottom min", FormatingStr, "=")
 	GraphBottomAxisMax=NumberByKey("Axis bottom max", FormatingStr, "=")
 	
-	GraphXAxisName=StringByKey("Label bottom", FormatingStr, "=")
-	GraphYAxisName=StringByKey("Label left", FormatingStr, "=")
 	GraphLogX=NumberByKey("log(bottom)", FormatingStr, "=")
 	GraphLogY=NumberByKey("log(left)", FormatingStr, "=")
 	GraphXMirrorAxis=NumberByKey("mirror(bottom)", FormatingStr, "=")
@@ -1224,8 +1229,11 @@ Function IR1P_SynchronizeListAndVars()
 	endif
 	PopupMenu XAxisDataType, win=IR1P_ControlPanel,mode=1,popvalue=StringByKey("DataX", FormatingStr, "=") //,value= "Q;Q^2;Q^3;Q^4;"
 	PopupMenu YAxisDataType,win=IR1P_ControlPanel, mode=1,popvalue=StringByKey("DataY", FormatingStr, "=")//,value= "I;I^2;I^3;I^4;I*Q^4;1/I;ln(Q^2*I);"
-	IR1P_UpdateAxisName("Y",StringByKey("DataY", FormatingStr, "="))
-	IR1P_UpdateAxisName("X",StringByKey("DataX", FormatingStr, "="))
+	//IR1P_UpdateAxisName("Y",StringByKey("DataY", FormatingStr, "="))
+	//IR1P_UpdateAxisName("X",StringByKey("DataX", FormatingStr, "="))
+	GraphXAxisName=StringByKey("Label bottom", FormatingStr, "=")
+	GraphYAxisName=StringByKey("Label left", FormatingStr, "=")
+	// this should set axes names to what user had there so any his/her choice shoudl always work. 
 	NVAR GraphUseBW = root:Packages:GeneralplottingTool:GraphUseBW
 	if(GraphUseBW+GraphUseColors+GraphUseRainbow!=1)
 		GraphUseBW=0

@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.09
-Constant IR2PrversionNumber=1.09
+#pragma version=1.10
+Constant IR2PrversionNumber=1.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 fixes for WIndows GUI
 //1.09 changes for panel scaling
 //1.08 fixed bug of useSMR data which screwed up Control Procedures
 //1.07 removed wave/d, Function/d and variable/d. Obsolete
@@ -178,11 +179,11 @@ Window IR2Pr_ControlPanel()
 	root:Packages:Irena_PDDF:QWaveName = "---"
 	root:Packages:Irena_PDDF:ErrorWaveName = "---"
 
-	TitleBox MainTitle title="\Zr200Pair Distance Dist Fnct input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr170Pair Distance Dist Fnct input panel",pos={20,0},frame=0,fstyle=3, size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info1 title="\Zr180Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
-	TitleBox Info2 title="\Zr180Model input",pos={10,188},frame=0,fstyle=2, fixedSize=1,size={150,20}
-	TitleBox Info6 title="\Zr160Errors handling:",pos={15,335},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
+	TitleBox Info1 title="\Zr140Data input",pos={10,30},frame=0,fstyle=1, fixedSize=0,size={80,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr140Model input",pos={10,188},frame=0,fstyle=1, fixedSize=0,size={150,20}
+	TitleBox Info6 title="\Zr140Errors handling:",pos={15,335},frame=0,fstyle=1, fixedSize=0,size={40,15},fColor=(0,0,52224)
 	
 	CheckBox UseSMRData,pos={170,40},size={141,14},proc=IR2Pr_InputPanelCheckboxProc,title="SMR data"
 	CheckBox UseSMRData,variable= root:packages:Irena_PDDF:UseSMRData, help={"Check, if you are using slit smeared data"}
@@ -197,20 +198,15 @@ Window IR2Pr_ControlPanel()
 //	CheckBox useMoore,variable= root:packages:Irena_PDDF:UseMoore, help={"Check, if you want to use Morre method"}
 
 	TabControl ModelControlsTab,pos={2,220},size={380,320},proc=IR2Pr_TabPanelControl
-	TabControl ModelControlsTab,fSize=9,tabLabel(0)="Regularization",tabLabel(1)="Moore"
-//	TabControl ModelControlsTab,tabLabel(2)="Pk 2",tabLabel(3)="Pk 3"
+	TabControl ModelControlsTab,tabLabel(0)="\Zr120Regularization",tabLabel(1)="\Zr120Moore"
 
-//	SetVariable RminInput,pos={13,250},size={150,16},title="Minimum r [A]", help={"Input minimum diameter of the particles being modeled"}
-//	SetVariable RminInput,limits={0,Inf,1},value= root:Packages:Irena_PDDF:MinimumR
-	SetVariable RmaxInput,pos={25,250},size={200,16},title="Maximum r [A]", help={"Input maximum diamter of particles being modeled"}
+	SetVariable RmaxInput,pos={20,250},size={200,16},bodyWidth=90, title="Maximum r [A]", help={"Input maximum diamter of particles being modeled"}
 	SetVariable RmaxInput,limits={1,Inf,1},value= root:Packages:Irena_PDDF:MaximumR
-	Button GuessMaximum,pos={250,245},size={100,18}, proc=IR2Pr_ButtonProc,title="Guess maximum", help={"Push to save data to neotebook"}
-//	PopupMenu Binning,pos={188,270},size={161,21},proc=IR2Pr_PopMenuProc,title="Logaritmic binning ?"
-//	PopupMenu Binning,mode=1,popvalue=root:Packages:Irena_PDDF:LogBinning,value= #"\"Yes;No\"", help={"If selected Yes, bins diameter are equidistantly spaced in their logarithm, if No selected the bins are all same width"}
-	SetVariable RadiaSteps,pos={25,270},size={250,16},title="Bins in radii"
+	Button GuessMaximum,pos={230,255},size={140,18}, proc=IR2Pr_ButtonProc,title="Guess maximum", help={"Push to save data to neotebook"}
+	SetVariable RadiaSteps,pos={20,275},size={200,16},title="Bins in radii", bodyWidth=60
 	SetVariable RadiaSteps,limits={1,Inf,1},value= root:Packages:Irena_PDDF:NumberOfBins, help={"Number of bins modeled."}
 
-	SetVariable Background,pos={13, 300},size={280,16},proc=IR2Pr_BackgroundInput,title="Subtract Background   :   "
+	SetVariable Background,pos={20, 300},size={300,16}, bodyWidth=70,proc=IR2Pr_BackgroundInput,title="Subtract Background   :   "
 	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Irena_PDDF:Background, help={"Value for flat backgound"}
 
 
@@ -223,26 +219,26 @@ Window IR2Pr_ControlPanel()
 //	CheckBox UseNoErrors,pos={290,360},size={100,14},proc=IR2Pr_InputPanelCheckboxProc,title="No errors?", mode=1
 //	CheckBox UseNoErrors,variable= root:packages:Irena_PDDF:UseConstantErrors, help={"Check, if you do not want to use errors"}
 
-	SetVariable ErrorMultiplier,pos={13,380},size={220,16},title="Multiply Errors by :                        ", proc=IR2Pr_SetVarProc, disable=!(root:packages:Irena_PDDF:UseUserErrors || root:packages:Irena_PDDF:UseSQRTErrors)
+	SetVariable ErrorMultiplier,pos={20,380},size={200,16},bodyWidth=60, title="Multiply Errors by : ", proc=IR2Pr_SetVarProc, disable=!(root:packages:Irena_PDDF:UseUserErrors || root:packages:Irena_PDDF:UseSQRTErrors)
 	SetVariable ErrorMultiplier,limits={0,Inf,root:Packages:Irena_PDDF:ErrorMultiplier/10},value= root:Packages:Irena_PDDF:ErrorMultiplier, help={"Errors scaling factor"}
-	SetVariable PercentErrorsValue,pos={13,380},size={220,16},title="% errors to use :                        ", proc=IR2Pr_SetVarProc, disable=!(root:packages:Irena_PDDF:UsePercentErrors)
+	SetVariable PercentErrorsValue,pos={20,380},size={200,16},bodyWidth=60, title="% errors to use : ", proc=IR2Pr_SetVarProc, disable=!(root:packages:Irena_PDDF:UsePercentErrors)
 	SetVariable PercentErrorsValue,limits={0,Inf,root:Packages:Irena_PDDF:PercentErrorsValue/10},value= root:Packages:Irena_PDDF:PercentErrorsValue, help={"% errors wehn using this setting"}
 
-	SetVariable Moore_NumOfFncts,pos={13,430},size={320,16},title="Moore number of functions :      ", disable=!(root:packages:Irena_PDDF:UseMoore)
+	SetVariable Moore_NumOfFncts,pos={13,430},size={320,16},bodyWidth=70,title="Moore number of functions :      ", disable=!(root:packages:Irena_PDDF:UseMoore)
 	SetVariable Moore_NumOfFncts,limits={0,Inf,5},value= root:Packages:Irena_PDDF:Moore_NumOfFncts, help={"Numberof functions used to fit with Moore method"}
-	CheckBox Moore_DetNumFncts,pos={10,450},size={150,14},title="Determine number of functions?", proc=IR2Pr_InputPanelCheckboxProc
+	CheckBox Moore_DetNumFncts,pos={10,455},size={150,14},title="Determine number of functions?", proc=IR2Pr_InputPanelCheckboxProc
 	CheckBox Moore_DetNumFncts,variable= root:packages:Irena_PDDF:Moore_DetNumFncts, help={"Check, if you want to use determine the right number of functions automatically"}
-	CheckBox Moore_FitBckg,pos={10,470},size={150,14},title="Fit background?"
+	CheckBox Moore_FitBckg,pos={10,480},size={150,14},title="Fit background?"
 	CheckBox Moore_FitBckg,variable= root:packages:Irena_PDDF:Moore_FitBckg, help={"Check, if you want to use fit background also"}
-	CheckBox Moore_HoldMaxSize,pos={10,490},size={150,14},title="Fit maximum size?"
+	CheckBox Moore_HoldMaxSize,pos={10,505},size={150,14},title="Fit maximum size?"
 	CheckBox Moore_HoldMaxSize,variable= root:packages:Irena_PDDF:Moore_HoldMaxSize, help={"Check, if you want to use hold maximum size"}
 
 	Button RunFittings,pos={150,550},size={200,20}, proc=IR2Pr_PdfFitting,title="Run Fitting", help={"Push to run fitting using method selected above"}
 	Button SaveDataToFldr,pos={5,580},size={120,20}, proc=IR2Pr_ButtonProc,title="Save Results", help={"Push to save data back to folder"}
 
 	Button SaveResultsToNotebook,pos={5,610},size={120,20}, proc=IR2Pr_ButtonProc,title="Paste to Notebook", help={"Push to save data to notebook"}
-	Button SetExportPath,pos={140,613},size={90,15}, proc=IR2Pr_ButtonProc,title="Set Export path", help={"Export GNOM out data file for use with other tools"}
-	Button ExportGNOMFile,pos={240,610},size={130,20}, proc=IR2Pr_ButtonProc,title="Export GNOM out data", help={"Export GNOM out data file for use with other tools"}
+	Button SetExportPath,pos={130,613},size={110,15}, proc=IR2Pr_ButtonProc,title="Set Export path", help={"Export GNOM out data file for use with other tools"}
+	Button ExportGNOMFile,pos={250,610},size={140,20}, proc=IR2Pr_ButtonProc,title="Export GNOM out data", help={"Export GNOM out data file for use with other tools"}
 
 
 	IR2Pr_TabPanelControl("",0)

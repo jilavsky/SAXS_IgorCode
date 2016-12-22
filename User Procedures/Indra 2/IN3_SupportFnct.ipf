@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.07
+#pragma version =1.08
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 fixed typo with DSM data dq. 
 //1.07 fixed problems with blank interpolation when intensities are really low and get negative. 
 //1.06 added SMR_dQ types waves  
 //1.05 modfied IN3_RecalcSubtractSaAndBlank to handle 2dFlyscans... 
@@ -468,7 +469,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O DSM_Qvec, DSM_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=DSM_Qvec[1]-DSM_Qvec[0]
-			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_error,Wxwidth=SMR_dQ)
+			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_error,Wxwidth=DSM_dQ)
 		else
 			DSM_dQ[1,numpnts(DSM_dQ)-2] = DSM_dQ[p+1]-DSM_dQ[p-1]
 			DSM_dQ[0]=2*(DSM_dQ[1]-DSM_dQ[0])

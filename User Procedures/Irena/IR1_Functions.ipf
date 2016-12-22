@@ -626,7 +626,7 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "PlotingToolWaterfallGrph;LSQF2_MainPanel;LSQF_MainGraph;GraphSizeDistributions;LSQF_ResidualsGraph;Irena_Gizmo;GizmoControlPanel;"
 	ListOfWindows += "DataMiningTool;ItemsInFolderPanel;ItemsInFolderPanel_DMII;DataManipulationII;IR2R_InsertRemoveLayers;PlotingToolContourGrph;"
 	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;IR2H_ResidualsPlot;IR1P_StylesManagementPanel;"
-	ListOfWindows += "ModelingII_Results;LSQF_IQ4vsQGraph;IR2L_ResSmearingPanel;"
+	ListOfWindows += "ModelingII_Results;LSQF_IQ4vsQGraph;IR2L_ResSmearingPanel;IR1P_MoreToolsPanel;"
 	
 	
 	variable i

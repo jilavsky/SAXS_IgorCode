@@ -106,64 +106,48 @@ Function IN3_MainPanelNew()
 	setDataFolder root:Packages:Indra3
 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,410,830) as "USAXS data reduction"
+	NewPanel /K=1 /W=(2.25,43.25,425,830) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
-	TitleBox Title title="\Zr210USAXS data reduction panel",pos={40,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
-	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={5,705},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
-	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={5,720},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
+	TitleBox Title title="\Zr210USAXS data reduction panel",pos={45,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
+	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={10,705},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
+	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={10,720},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 	//some local controls
 
 	IR3C_AddDataControls("USAXSHDFPath", "USAXS_FlyScanImport", "USAXSDataReduction","h5", "","Sort _XYZ","IN3_DoubleClickFUnction")
-	Button SelectDataPath, pos={99,28}
-	SetVariable DataPathString, pos={1,48}
-	SetVariable NameMatchString, pos={1,69}
-	SetVariable DataExtensionString, pos={250,69}
-	Button SelectAll, pos={5,91}
-	Button DeSelectAll, pos={145,91}
-	PopupMenu SortOptionString, pos={280,91}
-	TitleBox Info1PanelProc, pos={5,108}
-	ListBox ListOfAvailableData,pos={5,123}, size={240,148}
-
-
-//	//use general controls package, modify asnecessary
-//	string AllowedUserTypes="USAXS_PD;"
-//	string XUserTypeLookup="USAXS_PD:AR_Encoder;"
-//	IR2C_AddDataControls("Indra3","USAXSDataReduction","","",AllowedUserTypes,"USAXS raw data",XUserTypeLookup,"", 0,0)
-//	SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
-//	DataFolderName="---"
-//	PopupMenu QvecDataName disable=1
-//	PopupMenu IntensityDataName disable=1
-//	PopupMenu ErrorDataName disable=1
-//	CheckBox UseQRSData disable=1
-//	CheckBox UseUserDefinedData disable=1
-//	SetVariable WaveMatchStr, disable=1
-//	NVAR useUserDefinedData=root:Packages:Indra3:UseUserDefinedData
-//	UseUserDefinedData=1
-	
-	CheckBox IsBlank,pos={260,115},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
+	Button SelectDataPath, pos={85,28},size={160,15}
+	SetVariable DataPathString, pos={6,48},size={410,18}
+	SetVariable NameMatchString, pos={6,69}
+	SetVariable DataExtensionString, pos={255,69}
+	Button SelectAll, pos={10,91}
+	Button DeSelectAll, pos={150,91}
+	PopupMenu SortOptionString, pos={285,91}
+	TitleBox Info1PanelProc, pos={10,108}
+	ListBox ListOfAvailableData,pos={3,123}, size={252,148}
+		
+	CheckBox IsBlank,pos={265,115},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
 
-	Button ProcessData2,pos={260,132},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/process one", help={"Load data and process them"}
-	Button SelectNextSampleAndProcess2,pos={260,157},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/Process Many", help={"Select next sample in order - process - and save"}
-	Button SaveResults,pos={260,182},size={130,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
+	Button ProcessData2,pos={265,132},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/process one", help={"Load data and process them"}
+	Button SelectNextSampleAndProcess2,pos={265,157},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/Process Many", help={"Select next sample in order - process - and save"}
+	Button SaveResults,pos={265,182},size={130,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
 	NVAR UserSavedData=root:Packages:Indra3:UserSavedData
 	if(!UserSavedData)
 		Button SaveResults fColor=(65280,0,0)
-		TitleBox SavedData pos={260,207}, title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0)
+		TitleBox SavedData pos={265,207}, title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0)
 	else
 		Button SaveResults 
-		TitleBox SavedData pos={260,207}, title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2
+		TitleBox SavedData pos={265,207}, title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2
 	endif
-	TitleBox RemoveFromNameTbx pos={255,230}, title="Remove From name (str):",size={150,15}
-	SetVariable RemoveFromNameString,pos={255,250},size={150,15},noproc,title=" "
+	TitleBox RemoveFromNameTbx pos={260,230}, title="Remove From name (str):",size={150,15}
+	SetVariable RemoveFromNameString,pos={260,250},size={157,15},noproc,title=" "
 	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
 	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
 
-	SetVariable userFriendlySamplename title="Sample name:",pos={5,274},size={380,20},noedit=1, labelBack=0
+	SetVariable userFriendlySamplename title="Sample name:",pos={10,274},size={380,20},noedit=1, labelBack=0
 	SetVariable userFriendlySamplename variable=root:Packages:Indra3:userFriendlySamplename,format="",limits={-1,1,1}
 	SetVariable userFriendlySamplename frame=0,fstyle=1,help={"Name of current data set loaded"}
 
-	SetVariable OriginalDataFolder title="Folder name:",pos={5,292},size={380,20},noedit=1, labelBack=0
+	SetVariable OriginalDataFolder title="Folder name:",pos={10,292},size={380,20},noedit=1, labelBack=0
 	SetVariable OriginalDataFolder variable=root:Packages:Indra3:userFriendlySampleDFName,format="",limits={-1,1,1}
 	SetVariable OriginalDataFolder frame=0,fstyle=1,help={"Folder from which current data set was loaded"}
 
@@ -175,14 +159,14 @@ Function IN3_MainPanelNew()
 	else
 		temppopStr = "---"
 	endif
-	PopupMenu SelectBlankFolder,pos={8,315},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
+	PopupMenu SelectBlankFolder,pos={15,315},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
 	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)",fColor=(1,16019,65535)
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
 	PopupMenu SelectBlankFolder, disable = IsBlank
 
 
 	//Data Tabs definition
-	TabControl DataTabs,pos={2,340},size={390,320},proc=NI3_TabPanelControl
+	TabControl DataTabs,pos={4,340},size={410,320},proc=NI3_TabPanelControl
 	TabControl DataTabs,tabLabel(0)="Sample",tabLabel(1)="Diode"
 	TabControl DataTabs,tabLabel(2)="Geometry",tabLabel(3)="Calibration",tabLabel(4)="MSAXS", value= 0
 	//tab 0 Sample controls
@@ -199,97 +183,97 @@ Function IN3_MainPanelNew()
 	CheckBox CalibrateToWeight,pos={20,395},size={90,14},proc=IN3_MainPanelCheckBox,title="Calibrate [cm2/g]"
 	CheckBox CalibrateToWeight,variable= root:Packages:Indra3:CalibrateToWeight, help={"Check, if you want to calibrate data to sample weight"}
 
-	CheckBox CalculateThickness,pos={220,370},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Thickness"
+	CheckBox CalculateThickness,pos={230,370},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Thickness"
 	CheckBox CalculateThickness,variable= root:Packages:Indra3:CalculateThickness, help={"Check, if you want to calculate sample thickness from transmission"}
 
-	CheckBox CalculateWeight,pos={220,392},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Weight", disable=CalibrateToVolume
+	CheckBox CalculateWeight,pos={230,392},size={90,14},proc=IN3_MainPanelCheckBox,title="Calculate Weight", disable=CalibrateToVolume
 	CheckBox CalculateWeight,variable= root:Packages:Indra3:CalculateWeight, help={"Check, if you want to calculate sample weight from transmission"}
 
-	SetVariable SampleThickness,pos={5,425},size={280,22},title="\Zr120Sample Thickness [mm] =", bodyWidth=100
+	SetVariable SampleThickness,pos={20,425},size={300,22},title="\Zr120Sample Thickness [mm] =", bodyWidth= 80
 	SetVariable SampleThickness ,proc=IN3_ParametersChanged
 	SetVariable SampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness||CalculateWeight)//, frame=!(CalculateThickness&&CalculateWeight)
 
-	Button RecoverDefault,pos={290,423},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
+	Button RecoverDefault,pos={330,423},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
 
-	SetVariable SampleTransmission,pos={5,485},size={280,22},title="\Zr120Sample Transmission ="
+	SetVariable SampleTransmission,pos={20,485},size={300,22},title="\Zr120Sample Transmission ="
 	SetVariable SampleTransmission ,bodyWidth=100, proc=IN3_ParametersChanged
 	SetVariable SampleTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmission, noedit=0, frame=0
 
-	SetVariable SampleLinAbsorption,pos={5,508},size={280,22},title="\Zr120Sample absorp. coef [1/cm] ="
+	SetVariable SampleLinAbsorption,pos={20,508},size={300,22},title="\Zr120Sample absorp. coef [1/cm] ="
 	SetVariable SampleLinAbsorption ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleLinAbsorption,limits={0,Inf,0},variable= root:Packages:Indra3:SampleLinAbsorption, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable SampleDensity,pos={5,528},size={280,22},title="\Zr120Sample density [g/cm3] ="
+	SetVariable SampleDensity,pos={20,528},size={300,22},title="\Zr120Sample density [g/cm3] ="
 	SetVariable SampleDensity ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleDensity,limits={0,Inf,0},variable= root:Packages:Indra3:SampleDensity, noedit=!CalculateWeight, frame=CalculateWeight
 
-	SetVariable SampleWeightInBeam,pos={5,550},size={300,22},title="\Zr120Sample weight [g/cm2 bm area] ="
+	SetVariable SampleWeightInBeam,pos={20,550},size={300,22},title="\Zr120Sample weight [g/cm2 bm area] ="
 	SetVariable SampleWeightInBeam ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleWeightInBeam,limits={0,Inf,0},variable= root:Packages:Indra3:SampleWeightInBeam, noedit=CalculateWeight, frame=!CalculateWeight
 
-	SetVariable SampleFilledFraction,pos={5,550},size={280,22},title="\Zr120Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
+	SetVariable SampleFilledFraction,pos={20,550},size={300,22},title="\Zr120Sample filled fraction =", help={"amount of sample filled by material, 1 - porosity as fraction"}
 	SetVariable SampleFilledFraction ,proc=IN3_ParametersChanged, bodyWidth=100
 	SetVariable SampleFilledFraction,limits={0,Inf,0},variable= root:Packages:Indra3:SampleFilledFraction, noedit=!CalculateThickness, frame=CalculateThickness
 
-	SetVariable USAXSPinTvalue,pos={5,575},size={280,22},title="\Zr120pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
+	SetVariable USAXSPinTvalue,pos={20,575},size={300,22},title="\Zr120pinDiode Transmission  =", help={"If exists, measured transmission by pin diode"}
 	SetVariable USAXSPinTvalue , bodyWidth=100
 	SetVariable USAXSPinTvalue,limits={0,1,0},variable= root:Packages:Indra3:USAXSPinTvalue, noedit=1, frame=CalculateWeight
 
-	CheckBox UsePinTransmission,pos={290,577},size={90,14},proc=IN3_MainPanelCheckBox,title="Use?"//, disable=CalibrateToVolume
+	CheckBox UsePinTransmission,pos={320,577},size={90,14},proc=IN3_MainPanelCheckBox,title="Use?"//, disable=CalibrateToVolume
 	CheckBox UsePinTransmission,variable= root:Packages:Indra3:UsePinTransmission, help={"Use pin diode trnamission (if exists)"}
 
-	SetVariable PeakToPeakTransmission,pos={5,595},size={300,22},title="\Zr120Peak-to-Peak T =", frame=0, noedit=1
+	SetVariable PeakToPeakTransmission,pos={20,595},size={300,22},title="\Zr120Peak-to-Peak T =", frame=0, noedit=1
 	SetVariable PeakToPeakTransmission, bodyWidth=100
 	SetVariable PeakToPeakTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmissionPeakToPeak
-	SetVariable MSAXSCorrectionT0,pos={5,615},size={300,22},title="MSAXS/pinSAXS Cor =", frame=0, noedit=1
-	SetVariable MSAXSCorrectionT0 , bodyWidth=100
+	SetVariable MSAXSCorrectionT0, pos={20,615},size={300,22},title="\Zr120MSAXS/SAXS Cor =", frame=0, noedit=1
+	SetVariable MSAXSCorrectionT0, bodyWidth=100
 	SetVariable MSAXSCorrectionT0,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
 
-	SetVariable FlyScanRebinToPoints,pos={5,635},size={300,22},title="\Zr120FlyScan rebin to ="
+	SetVariable FlyScanRebinToPoints,pos={20,635},size={300,22},title="\Zr120FlyScan rebin to ="
 	SetVariable FlyScanRebinToPoints ,bodyWidth=100, proc=IN3_ParametersChanged
 	SetVariable FlyScanRebinToPoints,limits={0,Inf,0},variable= root:Packages:Indra3:FlyScanRebinToPoints
 
 	//tab 2 - geometry controls
 
-	SetVariable SpecCommand,pos={8,370},size={370,22},disable=2,title="Command:"
+	SetVariable SpecCommand,pos={20,370},size={370,22},disable=2,title="Command:"
 	SetVariable SpecCommand , frame=0,fstyle=1
 	SetVariable SpecCommand,limits={0,Inf,0},variable= root:Packages:Indra3:SpecCommand
 
-	SetVariable PhotoDiodeSize,pos={8,390},size={250,22},title="PD size [mm] ="
+	SetVariable PhotoDiodeSize,pos={20,390},size={250,22},title="PD size [mm] ="
 	SetVariable PhotoDiodeSize ,proc=IN3_ParametersChanged
 	SetVariable PhotoDiodeSize,limits={0,Inf,0},variable= root:Packages:Indra3:PhotoDiodeSize
-	SetVariable Wavelength,pos={8,415},size={250,22},title="Wavelength [A] ="
+	SetVariable Wavelength,pos={20,415},size={250,22},title="Wavelength [A] ="
 	SetVariable Wavelength ,proc=IN3_ParametersChanged
 	SetVariable Wavelength,limits={0,Inf,0},variable= root:Packages:Indra3:Wavelength
-	SetVariable SDDistance,pos={8,440},size={250,22},title="SD distance [mm] ="
+	SetVariable SDDistance,pos={20,440},size={250,22},title="SD distance [mm] ="
 	SetVariable SDDistance ,proc=IN3_ParametersChanged
 	SetVariable SDDistance,limits={0,Inf,0},variable= root:Packages:Indra3:SDDistance
 
-	SetVariable SlitLength,pos={8,465},size={250,22},title="Slit Length [A^-1] =", frame=0, disable=2
+	SetVariable SlitLength,pos={20,465},size={250,22},title="Slit Length [A^-1] =", frame=0, disable=2
 	SetVariable SlitLength ,proc=IN3_ParametersChanged
 	SetVariable SlitLength,limits={0,Inf,0},variable= root:Packages:Indra3:SlitLength
-	SetVariable NumberOfSteps,pos={8,490},size={250,22},title="Number of steps =", disable=2, frame=0
+	SetVariable NumberOfSteps,pos={20,490},size={250,22},title="Number of steps =", disable=2, frame=0
 	SetVariable NumberOfSteps ,proc=IN3_ParametersChanged
 	SetVariable NumberOfSteps,limits={0,Inf,0},variable= root:Packages:Indra3:NumberOfSteps
 
 
 	//tab 1 Diode controls
-	SetVariable VtoF,pos={29,370},size={200,22},proc=IN3_UPDParametersChanged,title="UPD V to f factor :"
+	SetVariable VtoF,pos={20,370},size={200,22},proc=IN3_UPDParametersChanged,title="UPD V to f factor :"
 	SetVariable VtoF ,format="%3.1e"
 	SetVariable VtoF,limits={0,Inf,0},value= root:Packages:Indra3:UPD_Vfc
-	SetVariable Gain1,pos={29,395},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 1 :"
+	SetVariable Gain1,pos={20,395},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 1 :"
 	SetVariable Gain1 ,format="%3.1e",labelBack=(65280,0,0) 
 	SetVariable Gain1,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G1
-	SetVariable Gain2,pos={29,420},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
+	SetVariable Gain2,pos={20,420},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
 	SetVariable Gain2 ,format="%3.1e",labelBack=(0,52224,0)
 	SetVariable Gain2,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G2
-	SetVariable Gain3,pos={29,445},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
+	SetVariable Gain3,pos={20,445},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
 	SetVariable Gain3 ,format="%3.1e",labelBack=(0,0,65280)
 	SetVariable Gain3,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G3
-	SetVariable Gain4,pos={29,470},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
+	SetVariable Gain4,pos={20,470},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
 	SetVariable Gain4 ,format="%3.1e",labelBack=(65280,35512,15384)
 	SetVariable Gain4,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G4
-	SetVariable Gain5,pos={29,495},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
+	SetVariable Gain5,pos={20,495},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
 	SetVariable Gain5 ,format="%3.1e",labelBack=(29696,4096,44800)
 	SetVariable Gain5,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G5
 	NVAR UPD_DK1Err=root:packages:Indra3:UPD_DK1Err
@@ -332,58 +316,58 @@ Function IN3_MainPanelNew()
 	SetVariable Bkg5Overwrite,limits={-inf,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
 
 //calibration stuff...
-	SetVariable MaximumIntensity,pos={8,370},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2
+	SetVariable MaximumIntensity,pos={20,370},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2
 	SetVariable MaximumIntensity,limits={0,Inf,0},variable= root:Packages:Indra3:MaximumIntensity
-	SetVariable PeakWidth,pos={8,390},size={300,22},title="Sample Peak Width [deg]=", frame=0, disable=2
+	SetVariable PeakWidth,pos={20,390},size={300,22},title="Sample Peak Width [deg]=", frame=0, disable=2
 	SetVariable PeakWidth,limits={0,Inf,0},variable= root:Packages:Indra3:PeakWidth
-	SetVariable PeakWidthArcSec,pos={8,410},size={300,22},title="Sample Peak Width [arc sec]=", frame=0, disable=2
+	SetVariable PeakWidthArcSec,pos={20,410},size={300,22},title="Sample Peak Width [arc sec]=", frame=0, disable=2
 	SetVariable PeakWidthArcSec,limits={0,Inf,0},variable= root:Packages:Indra3:PeakWidthArcSec
 
-	SetVariable BlankMaximum,pos={8,440},size={300,22},title="Blank Maximum Intensity =  ", frame=1
+	SetVariable BlankMaximum,pos={20,440},size={300,22},title="Blank Maximum Intensity =  ", frame=1
 	SetVariable BlankMaximum ,proc=IN3_ParametersChanged
 	SetVariable BlankMaximum,limits={0,Inf,0},variable= root:Packages:Indra3:BlankMaximum
-	SetVariable BlankWidth,pos={8,460},size={300,22},title="Blank Peak Width [deg] =    ", frame=1
+	SetVariable BlankWidth,pos={20,460},size={300,22},title="Blank Peak Width [deg] =    ", frame=1
 	SetVariable BlankWidth ,proc=IN3_ParametersChanged
 	SetVariable BlankWidth,limits={0,Inf,0},variable= root:Packages:Indra3:BlankFWHM
-	SetVariable BlankWidthArcSec,pos={8,480},size={300,22},title="Blank Peak Width [arc sec]=", frame=1
+	SetVariable BlankWidthArcSec,pos={20,480},size={300,22},title="Blank Peak Width [arc sec]=", frame=1
 	SetVariable BlankWidthArcSec ,proc=IN3_ParametersChanged
 	SetVariable BlankWidthArcSec,limits={0,Inf,0},variable= root:Packages:Indra3:BlankWidth
 
-	Button RecoverDefaultBlnkVals,pos={200,510},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec values", help={"Reload original value from spec record"}
+	Button RecoverDefaultBlnkVals,pos={240,510},size={100,20} ,proc=IN3_InputPanelButtonProc,title="Spec values", help={"Reload original value from spec record"}
 
-	SetVariable SubtractFlatBackground,pos={8,560},size={300,22},title="Subtract Flat background=", frame=1
+	SetVariable SubtractFlatBackground,pos={20,560},size={300,22},title="Subtract Flat background=", frame=1
 	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
 	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
 	
 
 //MSAXS stuff
-	CheckBox UseMSAXSCorrection,pos={8,370},size={300,14},proc=IN3_MainPanelCheckBox,title="MSAXS correctin on absolute intensity?"
+	CheckBox UseMSAXSCorrection,pos={20,370},size={300,14},proc=IN3_MainPanelCheckBox,title="MSAXS correctin on absolute intensity?"
 	CheckBox UseMSAXSCorrection,variable= root:Packages:Indra3:UseMSAXSCorrection, help={"Check, if you want to use MSAXS correction"}
 
-	SetVariable MSAXSCorrection,pos={8,390},size={300,22},title="MSAXS Correction =", frame=0, disable=2
+	SetVariable MSAXSCorrection,pos={20,390},size={300,22},title="MSAXS Correction =", frame=0, disable=2
 	SetVariable MSAXSCorrection,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
-	SetVariable MSAXSStartPoint,pos={8,410},size={300,22},title="MSAXS start point =", frame=0, disable=2
+	SetVariable MSAXSStartPoint,pos={20,410},size={300,22},title="MSAXS start point =", frame=0, disable=2
 	SetVariable MSAXSStartPoint,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSStartPoint
-	SetVariable MSAXSEndPoint,pos={8,430},size={300,22},title="MSAXS end point =", frame=0, disable=2
+	SetVariable MSAXSEndPoint,pos={20,430},size={300,22},title="MSAXS end point =", frame=0, disable=2
 	SetVariable MSAXSEndPoint,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSEndPoint
 	setDataFolder OldDf
 	NI3_TabPanelControl("",0)
 
-	CheckBox RemoveDropouts,pos={8,665},size={150,14},title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox
+	CheckBox RemoveDropouts,pos={20,665},size={150,14},title="Remove Flyscan dropouts?", proc=IN3_MainPanelCheckBox
 	CheckBox RemoveDropouts,variable= root:Packages:Indra3:RemoveDropouts, help={"Check, if you want to remove flyscan dropouts"}
-	SetVariable RemoveDropoutsAvePnts,pos={8,685},size={150,22},title="Intg. pnts (~50) =", frame=1
+	SetVariable RemoveDropoutsAvePnts,pos={20,685},size={150,22},title="Intg. pnts (~50) =", frame=1
 	SetVariable RemoveDropoutsAvePnts,limits={10,100,10},variable= root:Packages:Indra3:RemoveDropoutsAvePnts, proc=IN3_ParametersChanged
 
-	SetVariable RemoveDropoutsTime,pos={200,665},size={180,22},title="Drpt. Time [s] =", frame=1
+	SetVariable RemoveDropoutsTime,pos={220,665},size={180,22},title="Drpt. Time [s] =", frame=1
 	SetVariable RemoveDropoutsTime,limits={0.01,5,0.1},variable= root:Packages:Indra3:RemoveDropoutsTime, proc=IN3_ParametersChanged
-	SetVariable RemoveDropoutsFraction,pos={200,685},size={180,22},title="Drp Int. fract. (0.1-0.7) =", frame=1
+	SetVariable RemoveDropoutsFraction,pos={220,685},size={180,22},title="Drp Int. fract. (0.1-0.7) =", frame=1
 	SetVariable RemoveDropoutsFraction,limits={0,1,0.1},variable= root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
 
 
-	SetVariable ListProcDisplayDelay,pos={10,745},size={180,22},title="Display delay ", frame=1
+	SetVariable ListProcDisplayDelay,pos={20,743},size={180,22},title="Display delay ", frame=1
 	SetVariable ListProcDisplayDelay,limits={0.1,100,1},variable= root:Packages:Indra3:ListProcDisplayDelay
 
-	CheckBox OverWriteExistingData,pos={10,765},size={150,14},title="Overwrite existing data?", noproc
+	CheckBox OverWriteExistingData,pos={20,765},size={150,14},title="Overwrite existing data?", noproc
 	CheckBox OverWriteExistingData,variable= root:Packages:Indra3:OverWriteExistingData, help={"Check, if you want to overwrite data which already exist"}
 
 	
@@ -1113,7 +1097,7 @@ Function IN3_MainPanel()
 	SetVariable PeakToPeakTransmission,pos={5,455},size={300,22},title="\Zr120Peak-to-Peak T =", frame=0, noedit=1
 	SetVariable PeakToPeakTransmission, bodyWidth=100
 	SetVariable PeakToPeakTransmission,limits={0,Inf,0},variable= root:Packages:Indra3:SampleTransmissionPeakToPeak
-	SetVariable MSAXSCorrectionT0,pos={5,475},size={300,22},title="MSAXS/pinSAXS Cor =", frame=0, noedit=1
+	SetVariable MSAXSCorrectionT0,pos={5,475},size={300,22},title="MSAXS/SAXS Cor =", frame=0, noedit=1
 	SetVariable MSAXSCorrectionT0 , bodyWidth=100
 	SetVariable MSAXSCorrectionT0,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSCorrection
 

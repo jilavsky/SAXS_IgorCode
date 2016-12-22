@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.02
+#pragma version=1.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.03 Igor 7 required change - remobed use of MatrixLUBkSub and changed to MatrixLinearSolve, MatrixLUBkSub is deprecated. 
 //1.02 added license for ANL
 
 
@@ -87,13 +88,17 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 		MidPoint=(LogAmax+LogAmin)/2
 		Avalue=10^MidPoint								//calculate A
 		IR2Pr_CalculateAmatrix(Avalue)
-		MatrixLUD A_matrix								//decompose A_matrix 
-		Wave M_Lower									//results in these matrices for next step:
-		Wave M_Upper
-		Wave W_LUPermutation
+		Wave A_matrix
+//		MatrixLUD A_matrix								//decompose A_matrix 
+//		Wave M_Lower									//results in these matrices for next step:
+//		Wave M_Upper
+//		Wave W_LUPermutation
 		Wave B_vector
-		MatrixLUBkSub M_Lower, M_Upper, W_LUPermutation, B_vector				//Backsubstitute B to get x[]=inverse(A[][]) B[]	
-		Wave M_x										//this is created by MatrixMultiply
+//		MatrixLUBkSub M_Lower, M_Upper, W_LUPermutation, B_vector				//Backsubstitute B to get x[]=inverse(A[][]) B[]	
+ 		MatrixLinearSolve/M=1 A_matrix  B_vector
+		Wave M_B
+		Duplicate/O M_B, M_x
+		//Wave M_x=M_B										//this is created by MatrixMultiply
 
 		Redimension/D/N=(-1,0) M_x							//create from M_x[..][0] only M_x[..] so it is simple wave
 		Duplicate/O M_x CurrentResultPdf					//put the data into the wave 
@@ -177,9 +182,10 @@ Function IR2Pr_PDDFCalculatePrVariation()
 	Wave R_distribution=root:Packages:Irena_PDDF:R_distribution
 	NVAR Evalue=root:Packages:Irena_PDDF:Evalue
 
-	Wave M_Lower									//results in these matrices for next step:
-	Wave M_Upper
-	Wave W_LUPermutation
+	//Wave M_Lower									//results in these matrices for next step:
+	//Wave M_Upper
+	//Wave W_LUPermutation
+	Wave A_matrix
 	Wave G_matrix	=root:Packages:Irena_PDDF:G_matrix
 	Duplicate/O R_distribution, BinWidth, PDDFErrors
 	BinWidth = IR2Pr_BinWidthInRadia(p)
@@ -191,10 +197,11 @@ Function IR2Pr_PDDFCalculatePrVariation()
 		MontIntensity = Intensity+gNoise(1)*Errors	//this will create new intensity - original + Gaussian e-noise * Error, practically ideal, if this is proper Sdev error... 
 		MatrixOp/O B_vector = G_matrix^t x (MontIntensity /(Errors*Errors))	
 		Wave B_vector
-		MatrixLUBkSub M_Lower, M_Upper, W_LUPermutation, B_vector				//Backsubstitute B to get x[]=inverse(A[][]) B[]	
-		Wave M_x																		//this is created by MatrixLUBkSub
-		Redimension/D/N=(-1,0) M_x													//create from M_x[..][0] only M_x[..] so it is simple wave
-		MatrixOp/O CurrentResultMontCarlo = M_x / BinWidth
+		//MatrixLUBkSub M_Lower, M_Upper, W_LUPermutation, B_vector				//Backsubstitute B to get x[]=inverse(A[][]) B[]	
+		MatrixLinearSolve/M=1 A_matrix, B_vector
+		Wave M_B																		//this is created by MatrixLUBkSub
+		Redimension/D/N=(-1,0) M_B													//create from M_x[..][0] only M_x[..] so it is simple wave
+		MatrixOp/O CurrentResultMontCarlo = M_B / BinWidth
 		MontStatWave[][i]=CurrentResultMontCarlo[p]
 	endfor
 	

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.10
+#pragma version 1.11
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 Modifed way the range for fitting is found to handle NaNs in PD_Intensity
 //1.10 added finding Qmin from FWHM of the sample peak, modified handling cases when only 1 crossing for peak fitting found. 
 //1.09 removed border points to reange changes in IN3_CalculateRWaveIntensity() to try to fix problems with stickying poitns at low-q values. 
 //1.08 Remove Dropout function
@@ -108,14 +109,17 @@ Function IN3_FitPeakCenterEstimate()
 		endif
 		PeakCenterFitStartPoint = floor(W_FindLevels[0])
 		PeakCenterFitEndPoint =  ceil(W_FindLevels[1])
-	elseif(V_LevelsFound==1)		//found just one level. 
-		Wave W_FindLevels
-		PeakCenterFitStartPoint = 1
-		PeakCenterFitEndPoint =  ceil(W_FindLevels[0])
-	else
-		Wavestats /Q PD_Intensity
-		PeakCenterFitStartPoint = max(0, V_maxloc - 15)
-		PeakCenterFitEndPoint =  V_maxloc + 15
+//	elseif(V_LevelsFound==1)		//found just one level. 
+//		Wave W_FindLevels
+//		PeakCenterFitStartPoint = 1
+//		PeakCenterFitEndPoint =  ceil(W_FindLevels[0])
+//	else
+//		Wavestats /Q PD_Intensity
+//		PeakCenterFitStartPoint = max(0, V_maxloc - 15)
+//		PeakCenterFitEndPoint =  V_maxloc + 15
+	elseif(V_LevelsFound<2)		//found just one or no level. 
+	 	PeakCenterFitStartPoint =  IN3_FindlevelsWithNaNs(PD_Intensity, 0.53*V_max, V_maxloc, 0)
+	 	PeakCenterFitEndPoint = IN3_FindlevelsWithNaNs(PD_Intensity, 0.53*V_max, V_maxloc, 1)
 	endif
 	KillWaves/Z W_FindLevels
 	DoWindow RcurvePlotGraph
@@ -141,6 +145,30 @@ Function IN3_FitPeakCenterEstimate()
 	endif
 
 	setDataFolder OldDf	
+end
+//******************** name **************************************
+STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
+	wave waveIn
+	variable LevelSearched, MaxLocation, LeftRight
+	//set LeftRight to 0 for left and 1 for right of the MaxLocation
+	variable LevelPoint = 0
+	variable counter = MaxLocation
+	variable Done=0
+	Do
+		if(LeftRight)
+			counter+=1
+		else
+			counter-=1
+		endif
+		if(numtype(waveIn[counter])==0)
+			if(waveIn[counter]>LevelSearched)
+				LevelPoint = counter
+			else
+				Done=1
+			endif
+		endif	
+	while (Done<1)	
+	return LevelPoint	
 end
 
 //***********************************************************************************************************************************

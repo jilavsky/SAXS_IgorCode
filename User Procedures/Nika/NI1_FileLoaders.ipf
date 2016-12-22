@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.44
+#pragma version=2.45
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.45 more fixes for Pilatus TVX ver 1.3 tiff header. Still mess... 
 //2.44 moved to new Nexus suport provided by HDF5Gateway and IRNI_NexusSupport
 //2.43 fixes for Pilatus Tiff file header 
 //2.42 Added more or less universal FITS fiel loader (checked against data in Extension1 and 2), removed printing of wave note in history area. 
@@ -17,7 +18,7 @@
 //2.37 Created ADSC_A file type which has wavelength in A, not in nm as ADSC has. 
 //2.36 modified PilatusHookFunction and asdded ImportedImageHookFunction function called after any image is loaded so users can modify the images after load. 
 //2.35 adds Pilatus Cbf compressed files (finally solved the problem)... 
-//2.34 adds abiulity to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
+//2.34 adds ability to read 2D calibrated data format from NIST - NIST-DAT-128x128 pixels. For now there is also Qz, not sure what to do about it. 
 //2.33 can read and write calibrated canSAS/nexus files. Can write new files or append to existing one (2D data for now). 
 //   can revert log-q binning of 2D data. 
 //2.32 Added right click "Refresh content" to Listboxes inmain panel as well as some othe rfunctionality
@@ -729,6 +730,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = "Start of img header>>>;"+testLine+"<<<<End of img header;"
 		elseif(stringmatch(FileNameToLoad, "*.tiff" )&&(PilskipBytes>0))
 			testLine = ReplaceString("\n", testLine, "")
+	print testline		
 			testLine = ReplaceString("#", testLine, ";")
 			testLine = ReplaceString(":", testLine, "=")
 			testLine = NI1_RemoveNonASCII(testLine)
@@ -736,6 +738,10 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = NI1_ReduceSpaceRunsInString(testLine,1)
 			testLine = ReplaceString(" = ", testLine, "=")
 			testLine = ReplaceString(" ;", testLine, ";")
+			testLine = "Start of tif header>>>;"+testLine+"<<<<End of tif header;"
+			testLine=ReplaceString(";;;;", testLine, ";")
+			testLine=ReplaceString(";;;", testLine, ";")
+			testLine=ReplaceString(";;", testLine, ";")
 		else
 			testLine = ReplaceString("\n", testLine, "")
 			testLine = ReplaceString("{", testLine, "Start of ESRF header>>>;")
@@ -3856,7 +3862,9 @@ Function/T NI1_ZapControlCodes(str)			// remove parts of string with ASCII code 
 	Variable i = 0
 	do
 		if (char2num(str[i,i])<32 || char2num(str[i,i])>127)
-			str[i,i+1] = str[i+1,i+1]
+			//print str[i,i], num2str(char2num(str[i,i]))
+			str[i,i] = " "
+			//str[i,i+1] = str[i+1,i+1]
 		endif
 		i += 1
 	while(i<strlen(str))
@@ -3867,7 +3875,7 @@ Function/S NI1_RemoveNonASCII(strIn)
 	string StrOut=""
 	variable i
 	for(i=0;i<strlen(StrIn);i+=1)
-		//print StrIn[i]+"  =  "+num2str(char2num(StrIn[i]))
+		print StrIn[i]+"  =  "+num2str(char2num(StrIn[i]))
 		if(char2num(StrIn[i])<=127)
 			StrOut[i]=StrIn[i]
 		else
