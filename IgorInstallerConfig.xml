@@ -54,25 +54,25 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes. . </VersionComment>
+			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes.</VersionComment>
 		</release>
-		<release name="November2016-2" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2016-2.zip</SourceFileAddress>
+		<release name="January2017" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/January2017.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.61</version>
+				<version>2.62beta</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.74</version>
+				<version>1.75beta</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.89</version>
+				<version>1.90beta</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -88,7 +88,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes. </VersionComment>
+			<VersionComment>Beta versions of Irena 2.62, Nika 1.75 and Indra 1.90. </VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
