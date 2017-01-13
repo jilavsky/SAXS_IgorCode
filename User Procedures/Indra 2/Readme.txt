@@ -8,8 +8,7 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 _____________________________________________________________________________________
-
-
+1.90 
 Modified Nexus support, added new library to use it. 
 Removed Utility_JZT from distribution, not needed and causing conflict with JZT package. `
 
@@ -19,7 +18,7 @@ Due to some new features used, requires Igor 6.34 or higher
 New - can load and process FLyscan data directly, single step process now. No manual yet. Use Import & reduce data. 
 Modification for Flyscans in 2016-02
 Re-casted internally use of folders, this is likely incompatible change backwards, so you need to reopen the Data reduction in old experiments. 
-Remvoed some obsolete code (like X23A3 support, no data were collected since 1998). 
+Removed some obsolete code (like X23A3 support, no data were collected since 1998). 
 
 1.88 3/5/3016
 Added panel scaling on most large panels

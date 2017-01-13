@@ -1567,6 +1567,7 @@ Function NI1_15IDDFIndTransmission(SampleName)
 			return transmissionUser
 		endif
 	else
+					//Print "For sample :   "+sampleName+" transmission = "+num2str(CalcTrans)
 		return CalcTrans
 	endif
 end
@@ -1723,6 +1724,7 @@ Function NI1_15IDDFindI0(SampleName)
 	string OldNOte=note(w2D)
 	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
+	//print SampleName+"   normalized I0 = "+num2str(I000 / I0gain)
 	I000 = I000 / I0gain
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -1896,6 +1898,7 @@ Function NI1_15IDDFindEfI0(SampleName)
 	variable I000 = NumberByKey(NI1_15IDDFindKeyStr("I0_cts_gated=", OldNote), OldNote  , "=" , ";")
 	variable I0gain = NumberByKey(NI1_15IDDFindKeyStr("I0_gain=", OldNote), OldNote  , "=" , ";")
 	I000 = I000 / I0gain
+	//print SampleName+" EMPTY  normalized I0 = "+num2str(I000)
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the empty file, setting to 1"
 		I000=1 
@@ -2078,6 +2081,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
 	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
 	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	string useName, LocalUserFileName
 	string CurOrient
 	//our secotr...
@@ -2089,10 +2093,10 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//variable tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(LoadedFile)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
 		
 	elseif(strlen(UserFileName)<1)	//user did not set the file name
-		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
+		if(cmpstr(TempOutputDatanameUserFor,UserSampleName)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
 		else
 				abort "could not figure out the names"	

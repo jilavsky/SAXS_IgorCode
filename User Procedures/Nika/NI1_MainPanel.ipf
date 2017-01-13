@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.47
-Constant NI1AversionNumber = 2.48
+#pragma version=2.51
+Constant NI1AversionNumber = 2.51
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -8,6 +8,10 @@ Constant NI1AversionNumber = 2.48
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.51 Fixed old bug where sampel thickness was not converted to cm before use and used as mm. This causes old experiments with old calibration constants to be wrong.
+//			old calibration constatnts need to be also scaled by 10 to fix the calibration. 
+//			added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//2.49 Nexus input output fixes. 
 //2.48 changed pinSAXS to SAXS
 //2.47 changed length of name to 23 characters from 17
 //2.47 fixes for WIndows panel resizing. 
@@ -61,9 +65,10 @@ Constant NI1AversionNumber = 2.48
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//these are tools which have been upgraded to this functionality
 	//Modeling II = LSQF2_MainPanel
-	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;"
+	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
 	
 	NI1A_CheckWIndowsProcVersions(WindowProcNames)
 
@@ -74,6 +79,7 @@ end
 Function NI1A_CheckWIndowsProcVersions(WindowProcNames)
 	string WindowProcNames
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	variable i 
 	string PanelName
 	String ProcedureName
@@ -90,8 +96,22 @@ end
 //*****************************************************************************************************************
 
 Function NI1A_MainCheckVersion()	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DoWindow NI1A_Convert2Dto1DPanel
+	variable OldNikaVersion
 	if(V_Flag)
+		//calibration warning...
+		GetWindow NI1A_Convert2Dto1DPanel, note
+		OldNikaVersion = NumberbyKey("NikaProcVersion",S_value)
+		if(OldNikaVersion<2.51)
+			DoAlert/T="Important warning if you use absolutely calibrated data" 0, "Nika Version 1.75 corrected bug where Sample thickness for earlier versions was not converted to cm before use. You are using Nika setup created on old experiment, your calibration constant may need to be changed, see history for details. "
+			string tempStr="*****    Important warning if you use absolutely calibrated data.   *******\r"
+			tempStr +="Nika Version 1.75 corrected bug where Sample thickness for earlier versions was not converted to cm before use.\r"
+			tempStr +="This typically canceled out during calibration standard data reduction as standard thickness was similary used as mm and the bug cancelled out.\r"
+			tempStr +="But, you are using old experiment created on old Nika version, existing calibration constant may now need to be changed by factor of 10 to correct for this.\r"
+			tempStr +="*****   Please, revise and double-check your calibration carefully!!!   ******\r"
+			print tempStr
+		endif
 		if(!NI1_CheckPanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber))
 			DoAlert /T="The Nika main panel was created by old version of Nika " 1, "Nika needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
@@ -108,6 +128,7 @@ end
 Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow  $(panelName) note
@@ -123,6 +144,7 @@ Function NI1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DoWIndow $panelName
 	if(V_Flag)	
 		GetWindow $(panelName), note
@@ -139,166 +161,7 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-//Function NI1_PanelAppendSizeRecordNote(panelName)
-//	string panelName
-//	string PanelRecord=""
-//	//find size of the panel
-//	GetWindow $panelName wsize 		//wsize is in device independent points, wsizeDC would be in device dependent pixels. Use wsize per instructions fro WM
-//		//John Weeks, WM
-//		//1) Use GetWindow wsize to get window coordinates, not wsizeDC
-//		//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
-//		//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
-//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"
-//	variable PanelScaling = screenResolution/PanelResolution($panelName)
-//	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18)*PanelScaling,(V_bottom-V_top-18)*PanelScaling}, disable=2
-//	GetWindow $panelName, note
-//	string ExistingNote=S_Value
-//	string controlslist = ControlNameList("", ";")
-//	variable i
-//	string ControlsRecords=""
-//	string TmpNm=""
-//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-//		TmpNm = StringFromList(i, controlslist, ";")
-//		ControlInfo $(TmpNm)								//these positions are now in pixels
-//		//V_Height, V_Width, V_top, V_left
-//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
-//		//special cases...
-//		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-//		endif
-//	endfor
-//	if(!StringMatch(ExistingNote, "*;"))
-//		ExistingNote+=";"
-//	endif
-//	SetWindow $panelName, note=ExistingNote+PanelRecord+ControlsRecords
-//	//print ExistingNote+PanelRecord+ControlsRecords
-//end
-////***********************************************************
-//***********************************************************
-//
-//Function NI1_PanelResizePanelSize(s)
-//	STRUCT WMWinHookStruct &s
-//		//add to the end of panel forming macro these two lines:
-//		//	IR1_PanelAppendSizeRecordNote()
-//		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
-//		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do not use fixed font then. 
-//		//print s.eventCode
-//	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel
-//		GetWindow $(s.winName), note
-//		//The note contains size in points, but control positions in pixels
-//		string OrigInfo=S_Value
-//		if(strlen(OrigInfo)<20)				//too short for anything meaningful
-//			return 0
-//		endif
-//		variable PanelScaling = screenResolution/PanelResolution(s.winName)
-//		//John Weeks, WM
-//		//1) Use GetWindow wsize to get window coordinates, not wsizeDC
-//		//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
-//		//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
-//
-//		GetWindow $s.winName wsize			//wsize is in device independent points, wsizeDC would be in device dependent pixels.
-//													//wsizeDC returns pixels, wsize is in points. 
-//													//MoveWindow is in points <<<<<< !!!!!!!   
-//													//ModifyControl pos is in pixels, size is in pixels
-//													//convert using: WidthPoints= WidthPixels * PanelResolution(panelName)/ScreenResolution
-//		Variable left = V_left				//wsize ... in points. No conversion necessary
-//		Variable right = V_right
-//		Variable top = V_top
-//		Variable bottom = V_bottom
-//		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
-//		variable moveLeft, MoveRight, MoveTop, moveBottom 			//these need to be in points!! What a mess...
-//		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
-//		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//points, no conversion necessary
-//		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")
-//		CurWidth=(right-left) 
-//		CurHeight = (bottom-top)
-//		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
-//			moveLeft = left
-//			moveTop  = top
-//			MoveRight = (left+OriginalWidth)
-//			moveBottom = (top+OriginalHeight)
-//			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom			//coordinates are points
-//			horScale = 1
-//			verScale = 1
-//		elseif(CurWidth<OriginalWidth && CurHeight>OriginalHeight)		
-//			moveLeft = left
-//			MoveTop  = top
-//			MoveRight = (left+OriginalWidth)
-//			moveBottom = (top+CurHeight)
-//			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
-//			horScale = 1
-//			verScale = CurHeight / (OriginalHeight)	
-//		elseif(CurWidth>OriginalWidth && CurHeight<OriginalHeight)
-//			moveLeft = left
-//			MoveTop = top
-//			MoveRight = (left+CurWidth)
-//			moveBottom = (top+OriginalHeight)
-//			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
-//			verScale = 1
-//			horScale = curWidth/OriginalWidth
-//		else
-//			moveLeft = left
-//			MoveTop = top
-//			MoveRight = (right)
-//			moveBottom = (bottom)
-//			verScale = CurHeight /OriginalHeight
-//			horScale = curWidth/OriginalWidth
-//		endif
-//		variable scale= min(horScale, verScale )
-//		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-//		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-//		if(strlen(DefaultFontType)<5)		//not set...
-//			IN2G_ReadIrenaGUIPackagePrefs()
-//		endif
-//		string FontName
-//		FontName = DefaultFontType
-//		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
-//		FontName = StringFromList(0,GrepList(FontList(";"), FontName))		//check that similar font exists, if more found use the first one. 
-//		if(strlen(FontName)<3)											//if we did tno find the font, use default. 
-//			FontName="_IgorSmall"
-//		endif
-//		DefaultGUIFont /W=$(s.winName) all= {FontName, ceil(scale*DefaultFontSize), 0 }
-//		DefaultGUIFont /W=$(s.winName) button= {FontName, ceil(scale*DefaultFontSize), 0 }
-//		DefaultGUIFont /W=$(s.winName) checkbox= {FontName, ceil(scale*DefaultFontSize), 0 }
-//		DefaultGUIFont /W=$(s.winName) tabcontrol= {FontName, ceil(scale*DefaultFontSize), 0 }
-//		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*DefaultFontSize), 0 }
-//		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*DefaultFontSize), 0 }
-//		string controlslist = ControlNameList(s.winName, ";")
-//		variable i, OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
-//		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
-//		string ControlsRecords=""
-//		string TmpNm=""
-//		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-//			TmpNm = StringFromList(i, controlslist, ";")			
-//			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
-//			OrigCntrlV_top=NumberByKey(TmpNm+"Top", OrigInfo, ":", ";")
-//			OrigWidth=NumberByKey(TmpNm+"Width", OrigInfo, ":", ";")
-//			OrigHeight=NumberByKey(TmpNm+"Height", OrigInfo, ":", ";")
-//			NewCntrolV_left=OrigCntrlV_left* horScale 
-//			NewCntrlV_top = OrigCntrlV_top * verScale
-//			NewWidth = OrigWidth * horScale
-//			NewHeight = OrigHeight * verScale
-//			ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-//			//special cases...
-//			ControlInfo $(TmpNm)
-//			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-//				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
-//				if(numtype(OrigBodyWidth)==0)
-//					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
-//				endif
-//			endif
-//		endfor
-//
-//	endif
-//end
-//
-//#if Exists("PanelResolution") != 3
-//Static Function PanelResolution(wName)	// For compatibility with Igor 7
-//	String wName
-//	return 72
-//End
-//#endif
-////***********************************************************
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -307,6 +170,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_Convert2Dto1DMainPanel()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
 	DoWindow NI1A_Convert2Dto1DPanel
@@ -327,6 +191,7 @@ end
 
 Function NI1A_Initialize2Dto1DConversion()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	variable FirstRun
 	if(!DataFolderExists("root:Packages:Convert2Dto1D"))
@@ -433,7 +298,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="DoubleClickConverts;TrimFrontOfName;TrimEndOfName;ScaleImageBy;"
 
 	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;DataCalibrationString;"
-	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;"
+	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;UserSampleName;"
 	ListOfStrings+="CCDDataPath;CCDfileName;CCDFileExtension;FileNameToLoad;ColorTableName;CurrentMaskFileName;ExportMaskFileName;"
 	ListOfStrings+="ConfigurationDataPath;LastLoadedConfigFile;ConfFileUserComment;ConfFileUserName;"
 	ListOfStrings+="TempOutputDataname;TempOutputDatanameUserFor;"
@@ -670,6 +535,12 @@ Function NI1A_Initialize2Dto1DConversion()
 		TrimEndOfName = 1
 		TrimFrontOfName=0
 	endif
+	NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
+	NVAR UseSampleNameFnct=root:Packages:Convert2Dto1D:UseSampleNameFnct
+	if((Use2DdataName+UseSampleNameFnct)!=1)
+		Use2DdataName = 1
+		UseSampleNameFnct=0
+	endif
 
 	NVAR ErrorCalculationsUseOld
 	NVAR ErrorCalculationsUseStdDev
@@ -771,6 +642,7 @@ Function NI1A_Initialize2Dto1DConversion()
 		setdimlabel 1,4,$("Utility"),BSLframelistsequence
 
 	setDataFOlder oldDf
+	NEXUS_Initialize(0)
 end
 
 
@@ -784,6 +656,7 @@ end
 
 Function NI1A_Convert2DTo1D()
 		
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -884,6 +757,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_FixNumPntsIfNeeded(CurOrient)
 	string CurOrient
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//here we fix the num pnts to max number if requested by user
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -1021,9 +895,7 @@ end
 
 Function NI1A_Create2DPixRadiusWave(DataWave)
 	wave DataWave
-
-	
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -1074,28 +946,11 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-//Function NI1A_CalcTiltedDetDistance(DistOnDetector, TiltAngle, SaDetDistInPix)
-//	variable DistOnDetector, TiltAngle, SaDetDistInPix
-//	
-//	variable Alpha = TiltAngle * pi /180
-//	variable Pi2MinusAplha= pi/2 - alpha
-//	//here we correct for tilt the distance - done in each X/Y direction separately
-//	//Calucalte two parts. 
-//	//Project impact pixel on detector to plane perpendicular to beam direction first
-//	variable PerpProj = DistOnDetector * cos(Alpha)
-//	//Next add to this the effect of cutting the cone earlier or later
-//	//need theta first 
-//	variable SampleToDetImpactPoint = sqrt(DistOnDetector^2 + SaDetDistInPix^2 - 2 * SaDetDistInPix * DistOnDetector * cos(Pi2MinusAplha) )
-//	variable theta = asin((DistOnDetector/SampleToDetImpactPoint) * sin(Pi2MinusAplha))
-//	variable ConeAdition = SaDetDistInPix + sin(Alpha) * tan(theta)
-//	
-//	return PerpProj+ConeAdition
-//end
-
 //following code added 6 22 2005 to finish the tilts...
 
 Function NI1T_TiltedToCorrectedR(TiltedR,SaDetDistance,alpha)			
 	variable TiltedR,SaDetDistance,alpha
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//this function returns distance from beam center corrected for the effect of tilt
 	//Definitions:
 	//TiltedR is measured distance on detector (in same units as SaDetDistance) in either x or y directions. 
@@ -1109,7 +964,7 @@ end
 
 Function NI1T_CalcThetaForTiltToTheor(radius,Distance,alphaRad)
 		variable radius,Distance,alphaRad
-		
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))	
 		variable temp =radius * abs(cos(alphaRad))
 		temp=temp/sqrt(distance^2 + radius^2 - 2*Distance*radius*sin(alphaRad))
 		return asin(temp)
@@ -1117,6 +972,7 @@ end
 
 Function NI1T_TheoreticalToTilted(TheoreticalR,SaDetDistance,alpha)
 		variable TheoreticalR,SaDetDistance,alpha
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		//this function returns distance on tilted detector compared to theoretical distacne in perpendicular plane
 		//for either x or y directions
 		//definitions
@@ -1138,6 +994,7 @@ end
 Function NI1BC_CalculatePathWvs(dspacing, wvX,wvY)
 	wave wvX, wvY
 	variable dspacing
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -1174,6 +1031,7 @@ end
 Function NI1A_RemoveInfNaNsFrom10Waves(Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8, wv9, wv10)							//removes NaNs from 3 waves
 	Wave Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8,wv9, wv10					//assume same number of points in the waves
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	variable i=0, imax=numpnts(Wv1)
 	For(i=imax;i>=0;i-=1)
 			if (numtype(Wv1[i])!=0)
@@ -1219,6 +1077,7 @@ end
 Function NI1A_SaveDataPerUserReq(CurOrient)
 	string CurOrient
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=getDataFOlder(1)
 	if(stringmatch(CurOrient, "*Lp*"))
 		Wave/Z LineProfileIntensity=root:Packages:Convert2Dto1D:LineProfileIntensity
@@ -1252,6 +1111,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	endif
 	Wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 	SVAR LoadedFile=root:Packages:Convert2Dto1D:FileNameToLoad
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
 	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
 	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
@@ -1266,6 +1126,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	NVAR UseDistanceFromCenter=root:Packages:Convert2Dto1D:UseDistanceFromCenter
 	NVAR UseSampleNameFnct=root:Packages:Convert2Dto1D:UseSampleNameFnct
 	SVAR functionName = root:Packages:Convert2Dto1D:SampleNameFnct
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	
 	
 	variable ItemsInLst, i
@@ -1284,15 +1145,15 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			NVAR BSLsumseq=$("root:Packages:NI1_BSLFiles:BSLsumseq")
 
 			if(BSLaverage)
-				UseName=LoadedFile[0,9]+"_Average_"+CurOrient
+				UseName=UserSampleName[0,9]+"_Average_"+CurOrient
 			elseif(BSLsumframes||BSLsumseq)
-				UseName=LoadedFile[0,9]+"_"+num2str(BSLfromframe)+"-"+num2str(BSLtoframe)+"_"+CurOrient
+				UseName=UserSampleName[0,9]+"_"+num2str(BSLfromframe)+"-"+num2str(BSLtoframe)+"_"+CurOrient
 			else
-				UseName=LoadedFile[0,9]+"_"+num2str(BSLcurrentframe)+"_"+CurOrient
+				UseName=UserSampleName[0,9]+"_"+num2str(BSLcurrentframe)+"_"+CurOrient
 			endif
 		else
 			//variable tempEnd=26-strlen(CurOrient)
-			UseName=NI1A_TrimCleanDataName(LoadedFile)+"_"+CurOrient
+			UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
 		endif
 	else
 		if(UseSampleNameFnct)			//user provided function
@@ -1303,7 +1164,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				//	Execute("root:Packages:Convert2Dto1D:tempStrName ="+functionName+"(root:Packages:Convert2Dto1D:CCImageToConvert,\""+LoadedFile+"\")")
 				string tempStrName
 				FUNCREF NI1A_UserNameStrProto UserStrNameFnct=$(functionName)
-				tempStrName = UserStrNameFnct(CCDImageToConvert, LoadedFile)
+				tempStrName = UserStrNameFnct(CCDImageToConvert, UserSampleName)
 				if(strlen(tempStrName)<1)		// nothing came back?
 					Abort "Name function returned nothing"
 				endif
@@ -1324,7 +1185,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 						abort
 					endif
 					TempOutputDataname = LocalUserFileName
-					TempOutputDatanameUserFor = LoadedFile
+					TempOutputDatanameUserFor = UserSampleName
 				endif
 				UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
 			else
@@ -1439,32 +1300,45 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				KillWaves/Z TextWv, LineProfQ, LineProfQy,LineProfQx, LineProfQz,LineProfileAz, LineProfIntensity, LineProfError
 			endif
 
-		if(DisplayDataAfterProcessing)
-			SVAR LineProf_CurveType = root:Packages:Convert2Dto1D:LineProf_CurveType
-			
-			if(stringmatch(LineProf_CurveType,"Horizontal Line")||stringmatch(LineProf_CurveType,"GI_Horizontal Line"))
-				Wave Int=$("r_"+UseName)
-				Wave Qvec=$("qy_"+UseName)
-				Wave err=$("s_"+UseName)
-				NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
-			elseif(stringmatch(LineProf_CurveType,"Vertical Line")||stringmatch(LineProf_CurveType,"GI_Vertical Line"))
-				Wave Int=$("r_"+UseName)
-				Wave Qvec=$("qz_"+UseName)
-				Wave err=$("s_"+UseName)
-				NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
-			elseif(stringmatch(LineProf_CurveType,"Ellipse"))
-				Wave Int=$("r_"+UseName)
-				Wave Qvec=$("az_"+UseName)
-				Wave err=$("s_"+UseName)
-				NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,4)
-			else
-				Wave Int=$("r_"+UseName)
-				Wave Qvec=$("qy_"+UseName)
-				Wave err=$("s_"+UseName)
-				NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
-			endif
-		endif
-		KillWaves/Z tempWv1234
+				SVAR LineProf_CurveType = root:Packages:Convert2Dto1D:LineProf_CurveType			
+				if(stringmatch(LineProf_CurveType,"Horizontal Line")||stringmatch(LineProf_CurveType,"GI_Horizontal Line"))
+					Wave Int=$("r_"+UseName)
+					Wave Qvec=$("qy_"+UseName)
+					Wave err=$("s_"+UseName)
+					if(DisplayDataAfterProcessing)
+						NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
+					endif
+				elseif(stringmatch(LineProf_CurveType,"Vertical Line")||stringmatch(LineProf_CurveType,"GI_Vertical Line"))
+					Wave Int=$("r_"+UseName)
+					Wave Qvec=$("qz_"+UseName)
+					Wave err=$("s_"+UseName)
+					if(DisplayDataAfterProcessing)
+						NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
+					endif
+				elseif(stringmatch(LineProf_CurveType,"Ellipse"))
+					Wave Int=$("r_"+UseName)
+					Wave Qvec=$("az_"+UseName)
+					Wave err=$("s_"+UseName)
+					if(DisplayDataAfterProcessing)
+						NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,4)
+					endif
+				else
+					Wave Int=$("r_"+UseName)
+					Wave Qvec=$("qy_"+UseName)
+					Wave err=$("s_"+UseName)
+					if(DisplayDataAfterProcessing)
+						NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
+						endif
+				endif
+				OldNote=note(Int)
+				//DataType = "qrs", "trs", "drs", "distrs"
+				Duplicate/Free Qvec, dQvec
+				dQvec[1,numpnts(Qvec)-2] = Qvec[p+1]-Qvec[p-1]
+				dQvec[0]=dQvec[1]
+				dQvec[numpnts(Qvec)-1] = dQvec[numpnts(Qvec)-2] 
+				NEXUS_WriteNx1DCanSASData(UserSampleName, "qrs", Int, Err, Qvec, dQvec, CurOrient, OldNote)
+
+			KillWaves/Z tempWv1234
 	else		//sectors profiles goes here. *****************
 		NI1A_RemoveInfNaNsFrom10Waves(Intensity,Qvector,Error,Qsmearing,TwoTheta,TwoThetaWidth,Dspacing,DspacingWidth,DistanceInmm, DistacneInmmWidth )	
 		if(StoreDataInIgor)
@@ -1556,19 +1430,16 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			KillWaves TextWv
 		endif
 
-		NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile
-		if(AppendToNexusFile)
-			OldNote=note(Intensity)
-			//DataType = "qrs", "trs", "drs", "distrs"
-			if (UseQvector)
-				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "qrs", Intensity, Error, Qvector, Qsmearing, CurOrient, OldNote)
-			elseif(UseTheta)
-				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "trs", Intensity, Error, TwoTheta, TwoThetaWidth, CurOrient, OldNote)
-			elseif(UseDspacing)
-				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "drs", Intensity, Error, Dspacing, DspacingWidth, CurOrient, OldNote)
-			elseif(UseDistanceFromCenter)
-				NI1A_WriteHdf51DCanSASData(AppendToNexusFile, LoadedFile, "trs", Intensity, Error, DistanceInmm, DistacneInmmWidth, CurOrient, OldNote)
-			endif
+		OldNote=note(Intensity)
+		//DataType = "qrs", "trs", "drs", "distrs"
+		if (UseQvector)
+			NEXUS_WriteNx1DCanSASData(UserSampleName, "qrs", Intensity, Error, Qvector, Qsmearing, CurOrient, OldNote)
+		elseif(UseTheta)
+			NEXUS_WriteNx1DCanSASData(UserSampleName, "trs", Intensity, Error, TwoTheta, TwoThetaWidth, CurOrient, OldNote)
+		elseif(UseDspacing)
+			NEXUS_WriteNx1DCanSASData(UserSampleName, "drs", Intensity, Error, Dspacing, DspacingWidth, CurOrient, OldNote)
+		elseif(UseDistanceFromCenter)
+			NEXUS_WriteNx1DCanSASData(UserSampleName, "trs", Intensity, Error, DistanceInmm, DistacneInmmWidth, CurOrient, OldNote)
 		endif
 		if(DisplayDataAfterProcessing)
 			if (UseQvector)
@@ -1611,6 +1482,7 @@ end
 Function/T NI1A_TrimCleanDataName(InputName)
 	string InputName
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	SVAR RemoveStringFromName = root:Packages:Convert2Dto1D:RemoveStringFromName
@@ -1640,6 +1512,7 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	variable NumOfWavesToKeep
 	variable typeGraph	//1 for q, 2 for d, and 3 for twoTheta, 4 for azimuthal angle
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(typeGraph==1)
 		DoWindow LineuotDisplayPlot_Q
 		if(V_Flag)
@@ -1732,40 +1605,6 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 
 End
 
-//end
-//Function NI1A_DoCircularAveraging(DataWave,QvectorWave,MaskWave,imin, imax, jmin, jmax)
-//	wave DataWave, QvectorWave, MaskWave
-//	variable imin, imax, jmin, jmax
-//	
-//	string OldDf=GetDataFolder(1)
-//	setDataFolder root:Packages:Convert2Dto1D
-//	Wave Intensity, SqIntensity, NumberOfPoints, Error, QvectorLimits
-//	Intensity=0
-//	SqIntensity=0
-//	NumberOfPoints=0
-//	Error=0
-//	variable Qpoint, i, j
-// //variable StartT=ticks
-//// variable calculations=0
-//	For(i=0;i<imax;i+=1)
-//		For(j=0;j<jmax;j+=1)
-//                       // calculations+=1
-//			if (MaskWave[i][j])						//Mask wave contains 1s for points to be counted
-//				Qpoint = BinarySearch(QvectorLimits, QvectorWave[i][j])
-//				Intensity[Qpoint]+=DataWave[i][j]
-//				SqIntensity[Qpoint]+=DataWave[i][j] * DataWave[i][j]
-//				NumberOfPoints[Qpoint]+=1
-//			endif
-//		endfor
-//	endfor
-////print (ticks - startT)/60
-////print calculations
-//	Intensity = Intensity/NumberOfPoints
-//	Error = sqrt(SqIntensity[p] - NumberOfPoints[p] * Intensity[p] * Intensity[p]) / (NumberOfPoints[p] -1)
-//	//Swave=sqrt((Rsquaredwave - Nwave*Rwave*Rwave)/(Nwave-1))
-//	setDataFolder OldDf
-//end
-
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1794,6 +1633,7 @@ End
 Function NI1A_setupData(updateLUT)
 		variable updateLUT
 
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		wave QVectorWave=root:Packages:Convert2Dto1D:QVectorWave
 		wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
@@ -1811,9 +1651,10 @@ end
 
 
 Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert,M_ROIMask )
-		variable updateLUT
-		wave QVectorWave, CCDImageToConvert,M_ROIMask
+	variable updateLUT
+	wave QVectorWave, CCDImageToConvert,M_ROIMask
 		
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1858,6 +1699,7 @@ end
 Function NI1A_CreateMovie()	
 	//here we setup user to create movies while reducting data
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR Movie_Use2DRAWdata=root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData
@@ -1887,6 +1729,7 @@ end
 //***********************************************************
 
 Window NI1A_CreateMoviesPanel() : Panel
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(455,63,762,443) as "Nika Create Movies panel"
 	SetDrawLayer UserBack
@@ -1953,6 +1796,7 @@ EndMacro
 Function NI1A_MovieCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR Movie_Use2DRAWdata=root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData
@@ -2055,6 +1899,7 @@ End
 //***********************************************************
 Function NI1A_MovieRecordFrameIfReq(OneDPlace)
 	variable OneDPlace
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR FIleOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	if(!FIleOpened)
 		return 0
@@ -2084,12 +1929,14 @@ end
 //***********************************************************
 Function NI1A_MovieCreateUpdate1DGraphF()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData
 	SVAR Movie_Last1DdataSet=root:Packages:Convert2Dto1D:Movie_Last1DdataSet
 	SVAR FileNameToLoad = root:Packages:Convert2Dto1D:FileNameToLoad
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	SVAR Movie_FileName=root:Packages:Convert2Dto1D:Movie_FileName
 	NVAR Movie_AppendFileName=root:Packages:Convert2Dto1D:Movie_AppendFileName
 	NVAR Movie_DisplayLogInt=root:Packages:Convert2Dto1D:Movie_DisplayLogInt
@@ -2217,6 +2064,7 @@ Function NI1A_MovieCreateUpdateImageFnct()
 		DoWIndow/F NI1A_MovieCreateImage
 	endif
 	SVAR FileNameToLoad = root:Packages:Convert2Dto1D:FileNameToLoad
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	SVAR Movie_FileName=root:Packages:Convert2Dto1D:Movie_FileName
 	Movie_FileName = FileNameToLoad
 	NVAR Movie_AppendFileName=root:Packages:Convert2Dto1D:Movie_AppendFileName
@@ -2240,6 +2088,7 @@ end
 //***********************************************************
 Function NI1A_MovieUpdateMain2DImage()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseMain2DImage=root:Packages:Convert2Dto1D:Movie_UseMain2DImage
@@ -2269,6 +2118,7 @@ end
 //***********************************************************
 Function NI1A_MovieCallUserHookFunction()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseUserHookFnct=root:Packages:Convert2Dto1D:Movie_UseUserHookFnct
@@ -2314,6 +2164,7 @@ end
 Function NI1A_MovieButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
@@ -2347,6 +2198,7 @@ End
 //***********************************************************
 Function NI1A_MovieOpenFile()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR Movie_FrameRate=root:Packages:Convert2Dto1D:Movie_FrameRate
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
@@ -2372,6 +2224,7 @@ end
 //***********************************************************
 Function NI1A_MovieCloseFile()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Variable DebugEnab
 	DebuggerOptions
 	DebugEnab = V_debugOnError 	//check for debug on error
@@ -2403,6 +2256,7 @@ end
 Function NI1A_MovieAppendTopImage(Manually)
 	variable manually
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR Movie_Use2DRAWdata=root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData

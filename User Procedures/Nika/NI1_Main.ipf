@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.73
+#pragma version=1.75
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
@@ -9,8 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
- //1.74	
- //		added scaling of images on large displays
+ //1.75 rewrote Nexus support
+ //1.74		added scaling of images on large displays	
  //1.73 added functions to scale panels to larger sizes.
  //1.72 changed check for update procedure to check http first, then ftp, and the fail. 
  //1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
@@ -244,7 +244,7 @@ Function NI1_AboutPanel()
 	DrawText 10,37,"Nika 1 macros Igor Pro (>=6.34)"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ ANL, 2016"
-	DrawText 49,103,"Release 1.74 from 6/29/2016"
+	DrawText 49,103,"Release 1.75beta from 1/12/2017"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
 

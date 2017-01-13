@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.38
+#pragma version=1.40
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,8 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.40 added modifiers to stepping by clicking on step arrows fro setVariables. With modifier step is 10x smaller now. 
+//1.39 fixed code which did nto have full paths to waves and was failing when called in some cases. 
 //1.38 added lookup of SlitLength from data when checkbox is selected. Looks inside wave note of Intensity to see, if there is Slitlength there. Even wehn using qrs or other naming ssytem. 
 //			note: this is done when checkbox is selected, not when data are imported (unless USAXS data). 
 //1.37 fixed bug in IR2L_CreateResidulas which failed when was called with wrong working folder. 
@@ -1297,226 +1299,326 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
-	
-	string OldDf=GetDataFolder(1)
-	setDataFolder root:Packages:IR2L_NLSQF
-	variable whichDataSet
-	//BackgStep_set
-	ControlInfo/W=LSQF2_MainPanel DistTabs
-	whichDataSet= V_Value+1
-	if(stringmatch(ctrlName,"UF_G"))
-		//set volume limits... 
-		NVAR UF_G=$("root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(whichDataSet))
-		NVAR UF_Rg=$("root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(whichDataSet))
-		NVAR UF_GFit=$("root:Packages:IR2L_NLSQF:UF_GFit_pop"+num2str(whichDataSet))
-		NVAR UF_RgFit=$("root:Packages:IR2L_NLSQF:UF_RgFit_pop"+num2str(whichDataSet))
-		if(UF_G<=0)
-			UF_Rg=1e10
-			UF_GFit=0
-			UF_RgFit=0
-			IR2L_Model_TabPanelControl("",V_Value)
-		else
-			NVAR UF_GMin=$("root:Packages:IR2L_NLSQF:UF_GMin_pop"+num2str(whichDataSet))
-			NVAR UF_GMax=$("root:Packages:IR2L_NLSQF:UF_GMax_pop"+num2str(whichDataSet))
-			UF_GMin= varNum*0.1
-			UF_GMax=varNum*10
-			SetVariable UF_G,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-		endif
+Function IR2L_PopSetVarProc(SV_Struct) : SetVariableControl
+	STRUCT WMSetVariableAction &SV_Struct
+//Function IR2L_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
+	String ctrlName = SV_Struct.ctrlName
+	Variable varNum = SV_Struct.dVal
+	//String varStr	= SV_Struct.varStr
+	String varName = SV_Struct.Vname
+	Variable eventMod=SV_Struct.eventMod		
+		//Int32 eventMod	Bit 0:	A mouse button is down.
+		//	Bit 1:	Shift key is down.
+		//	Bit 2:	Option (Macintosh ) or Alt (Windows ) is down.
+		//	Bit 3:	Command (Macintosh ) or Ctrl (Windows ) is down.
+		//	Bit 4:	Contextual menu click occurred.
+	if(SV_struct.eventcode==1 || SV_struct.eventcode==2)
+			string OldDf=GetDataFolder(1)
+			setDataFolder root:Packages:IR2L_NLSQF
+			variable whichDataSet
+			//BackgStep_set
+			ControlInfo/W=LSQF2_MainPanel DistTabs
+			whichDataSet= V_Value+1
+			if(stringmatch(ctrlName,"UF_G"))
+				//set volume limits... 
+				NVAR UF_G=$("root:Packages:IR2L_NLSQF:UF_G_pop"+num2str(whichDataSet))
+				NVAR UF_Rg=$("root:Packages:IR2L_NLSQF:UF_Rg_pop"+num2str(whichDataSet))
+				NVAR UF_GFit=$("root:Packages:IR2L_NLSQF:UF_GFit_pop"+num2str(whichDataSet))
+				NVAR UF_RgFit=$("root:Packages:IR2L_NLSQF:UF_RgFit_pop"+num2str(whichDataSet))
+				if(UF_G<=0)
+					UF_Rg=1e10
+					UF_GFit=0
+					UF_RgFit=0
+					IR2L_Model_TabPanelControl("",V_Value)
+				else
+					NVAR UF_GMin=$("root:Packages:IR2L_NLSQF:UF_GMin_pop"+num2str(whichDataSet))
+					NVAR UF_GMax=$("root:Packages:IR2L_NLSQF:UF_GMax_pop"+num2str(whichDataSet))
+					UF_GMin= varNum*0.1
+					UF_GMax=varNum*10
+					if(eventMod>3)		//any key is down, make small step
+						SetVariable UF_G,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+					else
+						SetVariable UF_G,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+					endif
+				endif
+			endif
+			if(stringmatch(ctrlName,"UF_Rg"))
+				//set volume limits... 
+				NVAR UF_RgMin=$("root:Packages:IR2L_NLSQF:UF_RgMin_pop"+num2str(whichDataSet))
+				NVAR UF_RgMax=$("root:Packages:IR2L_NLSQF:UF_RgMax_pop"+num2str(whichDataSet))
+				UF_RgMin= varNum*0.1
+				UF_RgMax=varNum*10
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable UF_Rg,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable UF_Rg,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif			
+			endif
+			if(stringmatch(ctrlName,"UF_RgCO"))
+				//set volume limits... 
+				NVAR UF_RgCOMin=$("root:Packages:IR2L_NLSQF:UF_RgCOMin_pop"+num2str(whichDataSet))
+				NVAR UF_RgCOMax=$("root:Packages:IR2L_NLSQF:UF_RgCOMax_pop"+num2str(whichDataSet))
+				UF_RgCOMin= varNum*0.1
+				UF_RgCOMax=varNum*10
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable UF_RgCO,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable UF_RgCO,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"UF_B"))
+				//set volume limits... 
+				NVAR UF_BMin=$("root:Packages:IR2L_NLSQF:UF_BMin_pop"+num2str(whichDataSet))
+				NVAR UF_BMax=$("root:Packages:IR2L_NLSQF:UF_BMax_pop"+num2str(whichDataSet))
+				UF_BMin= varNum*0.1
+				UF_BMax=varNum*10
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable UF_B,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable UF_B,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"UF_P"))
+				//set volume limits... 
+				NVAR UF_PMin=$("root:Packages:IR2L_NLSQF:UF_PMin_pop"+num2str(whichDataSet))
+				NVAR UF_PMax=$("root:Packages:IR2L_NLSQF:UF_PMax_pop"+num2str(whichDataSet))
+				UF_PMin= (varNum*0.2)>1 ? varNum*0.2 : 1
+				UF_PMax=(varNum*2)<4.5 ? (varNum*2) : 4.5
+				//SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+		
+				//Fractals
+			if(stringmatch(ctrlName,"SurfFrDS"))
+				//set fractal dimension limits... 
+				NVAR SurfFrDSMin=$("root:Packages:IR2L_NLSQF:SurfFrDSMin_pop"+num2str(whichDataSet))
+				NVAR SurfFrDSMax=$("root:Packages:IR2L_NLSQF:SurfFrDSMax_pop"+num2str(whichDataSet))
+				SurfFrDSMin= 2.001
+				SurfFrDSMax=2.999
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable SurfFrDS,win=LSQF2_MainPanel,limits={2.001,2.999,(varNum*0.005)}		
+				else
+					SetVariable SurfFrDS,win=LSQF2_MainPanel,limits={2.001,2.999,(varNum*0.05)}		
+				endif
+			endif
+			if(stringmatch(ctrlName,"MassFrDv"))
+				//set fractal dimension limits... 
+				NVAR MassFrDvMin=$("root:Packages:IR2L_NLSQF:MassFrDvMin_pop"+num2str(whichDataSet))
+				NVAR MassFrDvMax=$("root:Packages:IR2L_NLSQF:MassFrDvMax_pop"+num2str(whichDataSet))
+				MassFrDvMin= 1
+				MassFrDvMax=2.999					
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable MassFrDv,win=LSQF2_MainPanel,limits={1,2.999,(varNum*0.005)}	
+				else
+					SetVariable MassFrDv,win=LSQF2_MainPanel,limits={1,2.999,(varNum*0.05)}	
+				endif
+			endif
+			
+		
+			if(stringmatch(ctrlName,"DiffPeakPar1"))
+				//set volume limits... 
+				NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Min_pop"+num2str(whichDataSet))
+				NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Max_pop"+num2str(whichDataSet))
+				VolMin= varNum*0.5
+				VolMax=varNum*2
+					
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable DiffPeakPar1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable DiffPeakPar1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"DiffPeakPar2"))
+				//set volume limits... 
+				NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar2Min_pop"+num2str(whichDataSet))
+				NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar2Max_pop"+num2str(whichDataSet))
+				VolMin= varNum*0.5
+				VolMax=varNum*2					
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable DiffPeakPar2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable DiffPeakPar2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"DiffPeakPar3"))
+				//set volume limits... 
+				NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar3Min_pop"+num2str(whichDataSet))
+				NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar3Max_pop"+num2str(whichDataSet))
+				VolMin= varNum*0.5
+				VolMax=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable DiffPeakPar3,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable DiffPeakPar3,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"DiffPeakPar4"))
+				//set volume limits... 
+				NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar4Min_pop"+num2str(whichDataSet))
+				NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar4Max_pop"+num2str(whichDataSet))
+				VolMin= varNum*0.5
+				VolMax=varNum*2					
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable DiffPeakPar4,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable DiffPeakPar4,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+		
+		
+		
+			if(stringmatch(ctrlName,"Volume"))
+				//set volume limits... 
+				NVAR VolMin=$("root:Packages:IR2L_NLSQF:VolumeMin_pop"+num2str(whichDataSet))
+				NVAR VolMax=$("root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(whichDataSet))
+				VolMin= varNum*0.5
+				VolMax=varNum*2
+					
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+				//LN controls...
+			if(stringmatch(ctrlName,"LNMinSize"))
+				//set LNMinSize limits... 
+				NVAR LNMinSize=$("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(whichDataSet))
+				NVAR LNMinSizeMin=$("root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(whichDataSet))
+				NVAR LNMinSizeMax=$("root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(whichDataSet))
+				if(varNum<3)
+					varNum=3
+					LNMinSize = 3
+					print "Cannot have Log-Normal min size smaller than ~3A, Small-angle scattering theory fails. Reset the value for user."
+				endif
+				LNMinSizeMin= varNum*0.5
+				LNMinSizeMax=varNum*2			
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"LNMeanSize"))
+				//set LNMeanSize limits... 
+				NVAR LNMeanSizeMin=$("root:Packages:IR2L_NLSQF:LNMeanSizeMin_pop"+num2str(whichDataSet))
+				NVAR LNMeanSizeMax=$("root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(whichDataSet))
+				LNMeanSizeMin= varNum*0.5
+				LNMeanSizeMax=varNum*2			
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+			if(stringmatch(ctrlName,"LNSdeviation"))
+				//set LNSdeviation limits... 
+				NVAR LNSdeviationMin=$("root:Packages:IR2L_NLSQF:LNSdeviationMin_pop"+num2str(whichDataSet))
+				NVAR LNSdeviationMax=$("root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(whichDataSet))
+				LNSdeviationMin= varNum*0.5
+				LNSdeviationMax=varNum*2			
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+						SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+				//GW controls
+			if(stringmatch(ctrlName,"GMeanSize"))
+				//set GMeanSize limits... 
+				NVAR GMeanSizeMin=$("root:Packages:IR2L_NLSQF:GMeanSizeMin_pop"+num2str(whichDataSet))
+				NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(whichDataSet))
+				GMeanSizeMin= varNum*0.5
+				GMeanSizeMax=varNum*2
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+					SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+			if(stringmatch(ctrlName,"GWidth"))
+				//set GWidth limits... 
+				NVAR GWidthMin=$("root:Packages:IR2L_NLSQF:GWidthMin_pop"+num2str(whichDataSet))
+				NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(whichDataSet))
+				GWidthMin= varNum*0.5
+				GWidthMax=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+						SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+				//SZ controls
+			if(stringmatch(ctrlName,"SZMeanSize"))
+				//set GMeanSize limits... 
+				NVAR GMeanSizeMin=$("root:Packages:IR2L_NLSQF:SZMeanSizeMin_pop"+num2str(whichDataSet))
+				NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(whichDataSet))
+				GMeanSizeMin= varNum*0.5
+				GMeanSizeMax=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+						SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+			if(stringmatch(ctrlName,"SZWidth"))
+				//set GWidth limits... 
+				NVAR GWidthMin=$("root:Packages:IR2L_NLSQF:SZWidthMin_pop"+num2str(whichDataSet))
+				NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(whichDataSet))
+				GWidthMin= varNum*0.5
+				GWidthMax=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.5)}
+				else
+						SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+				//LSW params		
+			if(stringmatch(ctrlName,"LSWLocation"))
+				//set LSWLocation limits... 
+				NVAR LSWLocationMin=$("root:Packages:IR2L_NLSQF:LSWLocationMin_pop"+num2str(whichDataSet))
+				NVAR LSWLocationMax=$("root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(whichDataSet))
+				LSWLocationMin= varNum*0.5
+				LSWLocationMax=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+						SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+			if(stringmatch(ctrlName,"StructureParam1"))
+				//set LSWLocation limits... 
+				NVAR StructureParam1Min=$("root:Packages:IR2L_NLSQF:StructureParam1Min_pop"+num2str(whichDataSet))
+				NVAR StructureParam1Max=$("root:Packages:IR2L_NLSQF:StructureParam1Max_pop"+num2str(whichDataSet))
+				StructureParam1Min= varNum*0.5
+				StructureParam1Max=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable  StructureParam1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+						SetVariable  StructureParam1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+			if(stringmatch(ctrlName,"StructureParam2"))
+				//set LSWLocation limits... 
+				NVAR StructureParam2Min=$("root:Packages:IR2L_NLSQF:StructureParam2Min_pop"+num2str(whichDataSet))
+				NVAR StructureParam2Max=$("root:Packages:IR2L_NLSQF:StructureParam2Max_pop"+num2str(whichDataSet))
+				StructureParam2Min= varNum*0.5
+				StructureParam2Max=varNum*2				
+				if(eventMod>3)		//any key is down, make small step
+						SetVariable  StructureParam2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}
+				else
+						SetVariable  StructureParam2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
+				endif
+			endif
+			//contrasts
+			
+			setDataFolder OldDf
+			IR2L_RecalculateIfSelected() 
 	endif
-	if(stringmatch(ctrlName,"UF_Rg"))
-		//set volume limits... 
-		NVAR UF_RgMin=$("root:Packages:IR2L_NLSQF:UF_RgMin_pop"+num2str(whichDataSet))
-		NVAR UF_RgMax=$("root:Packages:IR2L_NLSQF:UF_RgMax_pop"+num2str(whichDataSet))
-		UF_RgMin= varNum*0.1
-		UF_RgMax=varNum*10
-		SetVariable UF_Rg,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"UF_RgCO"))
-		//set volume limits... 
-		NVAR UF_RgCOMin=$("root:Packages:IR2L_NLSQF:UF_RgCOMin_pop"+num2str(whichDataSet))
-		NVAR UF_RgCOMax=$("root:Packages:IR2L_NLSQF:UF_RgCOMax_pop"+num2str(whichDataSet))
-		UF_RgCOMin= varNum*0.1
-		UF_RgCOMax=varNum*10
-		SetVariable UF_RgCO,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"UF_B"))
-		//set volume limits... 
-		NVAR UF_BMin=$("root:Packages:IR2L_NLSQF:UF_BMin_pop"+num2str(whichDataSet))
-		NVAR UF_BMax=$("root:Packages:IR2L_NLSQF:UF_BMax_pop"+num2str(whichDataSet))
-		UF_BMin= varNum*0.1
-		UF_BMax=varNum*10
-		SetVariable UF_B,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"UF_P"))
-		//set volume limits... 
-		NVAR UF_PMin=$("root:Packages:IR2L_NLSQF:UF_PMin_pop"+num2str(whichDataSet))
-		NVAR UF_PMax=$("root:Packages:IR2L_NLSQF:UF_PMax_pop"+num2str(whichDataSet))
-		UF_PMin= (varNum*0.2)>1 ? varNum*0.2 : 1
-		UF_PMax=(varNum*2)<4.5 ? (varNum*2) : 4.5
-		SetVariable UF_P,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-
-		//Fractals
-	if(stringmatch(ctrlName,"SurfFrDS"))
-		//set fractal dimension limits... 
-		NVAR SurfFrDSMin=$("root:Packages:IR2L_NLSQF:SurfFrDSMin_pop"+num2str(whichDataSet))
-		NVAR SurfFrDSMax=$("root:Packages:IR2L_NLSQF:SurfFrDSMax_pop"+num2str(whichDataSet))
-		SurfFrDSMin= 2.001
-		SurfFrDSMax=2.999
-		SetVariable SurfFrDS,win=LSQF2_MainPanel,limits={2.001,2.999,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"MassFrDv"))
-		//set fractal dimension limits... 
-		NVAR MassFrDvMin=$("root:Packages:IR2L_NLSQF:MassFrDvMin_pop"+num2str(whichDataSet))
-		NVAR MassFrDvMax=$("root:Packages:IR2L_NLSQF:MassFrDvMax_pop"+num2str(whichDataSet))
-		MassFrDvMin= 1
-		MassFrDvMax=2.999
-		SetVariable MassFrDv,win=LSQF2_MainPanel,limits={1,2.999,(varNum*0.05)}	
-	endif
-	
-
-	if(stringmatch(ctrlName,"DiffPeakPar1"))
-		//set volume limits... 
-		NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Min_pop"+num2str(whichDataSet))
-		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar1Max_pop"+num2str(whichDataSet))
-		VolMin= varNum*0.5
-		VolMax=varNum*2
-		SetVariable DiffPeakPar1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"DiffPeakPar2"))
-		//set volume limits... 
-		NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar2Min_pop"+num2str(whichDataSet))
-		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar2Max_pop"+num2str(whichDataSet))
-		VolMin= varNum*0.5
-		VolMax=varNum*2
-		SetVariable DiffPeakPar2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"DiffPeakPar3"))
-		//set volume limits... 
-		NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar3Min_pop"+num2str(whichDataSet))
-		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar3Max_pop"+num2str(whichDataSet))
-		VolMin= varNum*0.5
-		VolMax=varNum*2
-		SetVariable DiffPeakPar3,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-	if(stringmatch(ctrlName,"DiffPeakPar4"))
-		//set volume limits... 
-		NVAR VolMin=$("root:Packages:IR2L_NLSQF:DiffPeakPar4Min_pop"+num2str(whichDataSet))
-		NVAR VolMax=$("root:Packages:IR2L_NLSQF:DiffPeakPar4Max_pop"+num2str(whichDataSet))
-		VolMin= varNum*0.5
-		VolMax=varNum*2
-		SetVariable DiffPeakPar4,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-
-
-
-	if(stringmatch(ctrlName,"Volume"))
-		//set volume limits... 
-		NVAR VolMin=$("root:Packages:IR2L_NLSQF:VolumeMin_pop"+num2str(whichDataSet))
-		NVAR VolMax=$("root:Packages:IR2L_NLSQF:VolumeMax_pop"+num2str(whichDataSet))
-		VolMin= varNum*0.5
-		VolMax=varNum*2
-		SetVariable Volume,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
-	endif
-		//LN controls...
-	if(stringmatch(ctrlName,"LNMinSize"))
-		//set LNMinSize limits... 
-		NVAR LNMinSize=$("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(whichDataSet))
-		NVAR LNMinSizeMin=$("root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(whichDataSet))
-		NVAR LNMinSizeMax=$("root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(whichDataSet))
-		if(varNum<3)
-			varNum=3
-			LNMinSize = 3
-			print "Cannot have Log-Normal min size smaller than ~3A, Small-angle scattering theory fails. Reset the value for user."
-		endif
-		LNMinSizeMin= varNum*0.5
-		LNMinSizeMax=varNum*2
-		SetVariable LNMinSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	if(stringmatch(ctrlName,"LNMeanSize"))
-		//set LNMeanSize limits... 
-		NVAR LNMeanSizeMin=$("root:Packages:IR2L_NLSQF:LNMeanSizeMin_pop"+num2str(whichDataSet))
-		NVAR LNMeanSizeMax=$("root:Packages:IR2L_NLSQF:LNMeanSizeMax_pop"+num2str(whichDataSet))
-		LNMeanSizeMin= varNum*0.5
-		LNMeanSizeMax=varNum*2
-		SetVariable LNMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	if(stringmatch(ctrlName,"LNSdeviation"))
-		//set LNSdeviation limits... 
-		NVAR LNSdeviationMin=$("root:Packages:IR2L_NLSQF:LNSdeviationMin_pop"+num2str(whichDataSet))
-		NVAR LNSdeviationMax=$("root:Packages:IR2L_NLSQF:LNSdeviationMax_pop"+num2str(whichDataSet))
-		LNSdeviationMin= varNum*0.5
-		LNSdeviationMax=varNum*2
-		SetVariable LNSdeviation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-		//GW controls
-	if(stringmatch(ctrlName,"GMeanSize"))
-		//set GMeanSize limits... 
-		NVAR GMeanSizeMin=$("root:Packages:IR2L_NLSQF:GMeanSizeMin_pop"+num2str(whichDataSet))
-		NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:GMeanSizeMax_pop"+num2str(whichDataSet))
-		GMeanSizeMin= varNum*0.5
-		GMeanSizeMax=varNum*2
-		SetVariable  GMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	if(stringmatch(ctrlName,"GWidth"))
-		//set GWidth limits... 
-		NVAR GWidthMin=$("root:Packages:IR2L_NLSQF:GWidthMin_pop"+num2str(whichDataSet))
-		NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:GWidthMax_pop"+num2str(whichDataSet))
-		GWidthMin= varNum*0.5
-		GWidthMax=varNum*2
-		SetVariable  GWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-		//SZ controls
-	if(stringmatch(ctrlName,"SZMeanSize"))
-		//set GMeanSize limits... 
-		NVAR GMeanSizeMin=$("root:Packages:IR2L_NLSQF:SZMeanSizeMin_pop"+num2str(whichDataSet))
-		NVAR GMeanSizeMax=$("root:Packages:IR2L_NLSQF:SZMeanSizeMax_pop"+num2str(whichDataSet))
-		GMeanSizeMin= varNum*0.5
-		GMeanSizeMax=varNum*2
-		SetVariable  SZMeanSize,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	if(stringmatch(ctrlName,"SZWidth"))
-		//set GWidth limits... 
-		NVAR GWidthMin=$("root:Packages:IR2L_NLSQF:SZWidthMin_pop"+num2str(whichDataSet))
-		NVAR GWidthMax=$("root:Packages:IR2L_NLSQF:SZWidthMax_pop"+num2str(whichDataSet))
-		GWidthMin= varNum*0.5
-		GWidthMax=varNum*2
-		SetVariable  SZWidth,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-		//LSW params		
-	if(stringmatch(ctrlName,"LSWLocation"))
-		//set LSWLocation limits... 
-		NVAR LSWLocationMin=$("root:Packages:IR2L_NLSQF:LSWLocationMin_pop"+num2str(whichDataSet))
-		NVAR LSWLocationMax=$("root:Packages:IR2L_NLSQF:LSWLocationMax_pop"+num2str(whichDataSet))
-		LSWLocationMin= varNum*0.5
-		LSWLocationMax=varNum*2
-		SetVariable  LSWLocation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	if(stringmatch(ctrlName,"StructureParam1"))
-		//set LSWLocation limits... 
-		NVAR StructureParam1Min=$("root:Packages:IR2L_NLSQF:StructureParam1Min_pop"+num2str(whichDataSet))
-		NVAR StructureParam1Max=$("root:Packages:IR2L_NLSQF:StructureParam1Max_pop"+num2str(whichDataSet))
-		StructureParam1Min= varNum*0.5
-		StructureParam1Max=varNum*2
-		SetVariable  StructureParam1,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	if(stringmatch(ctrlName,"StructureParam2"))
-		//set LSWLocation limits... 
-		NVAR StructureParam2Min=$("root:Packages:IR2L_NLSQF:StructureParam2Min_pop"+num2str(whichDataSet))
-		NVAR StructureParam2Max=$("root:Packages:IR2L_NLSQF:StructureParam2Max_pop"+num2str(whichDataSet))
-		StructureParam2Min= varNum*0.5
-		StructureParam2Max=varNum*2
-		SetVariable  StructureParam2,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}
-	endif
-	//contrasts
-	
-	setDataFolder OldDf
-	IR2L_RecalculateIfSelected() 
 End
 
 //*****************************************************************************************************************
@@ -5258,11 +5360,11 @@ Function IR2L_FinishSmearingOfData()
 			NVAR SlitLength=$("root:Packages:IR2L_NLSQF:SlitLength_set"+num2str(i))
 			NVAR isSlitSmeared=$("root:Packages:IR2L_NLSQF:SlitSmeared_set"+num2str(i))
 			//here are the waves...
-			Wave OrigModelQ = $("Qmodel_Orig_set"+num2str(i))
-			Wave ModelQ=	$("Qmodel_set"+num2str(i))	
-			Wave Intensity=$("Intensity_set"+num2str(i))
-			Wave ModelIntensity=$("IntensityModel_set"+num2str(i))
-			Wave Error=$("Error_set"+num2str(i))
+			Wave OrigModelQ = $("root:Packages:IR2L_NLSQF:Qmodel_Orig_set"+num2str(i))
+			Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
+			Wave Intensity=$("root:Packages:IR2L_NLSQF:Intensity_set"+num2str(i))
+			Wave ModelIntensity=$("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(i))
+			Wave Error=$("root:Packages:IR2L_NLSQF:Error_set"+num2str(i))
 			NVAR SmearingIgnoreSmalldQ= $("root:Packages:IR2L_NLSQF:SmearingIgnoreSmalldQ_set"+num2str(i))
 			variable j, Qval, dQval, StartX, EndX, FWHMStartx, FWHMEndx, GaussSdev, GaussCenterX
 			if(UseSmearing)		//OK< need to fix the smearing issues... 
@@ -5276,7 +5378,7 @@ Function IR2L_FinishSmearingOfData()
 				   Duplicate/O/Free ModelIntensity, ModelIntPixelSmeared
 				   Duplicate/O/Free ModelQ, ModelQPixelSmeared
 				else		//need to smear these... 
-					Wave ResolutionsWave=$("ResolutionsWave_set"+num2str(i))
+					Wave ResolutionsWave=$("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
 					// With Width we are using rectangular "slit" - 
 					//print "finish smearing using Bin Width [1/A]"
 					//we will need to get the resolutions - for now handle fixed one
@@ -5346,7 +5448,7 @@ Function IR2L_FinishSmearingOfData()
 				//Ideally, all we need is just delete all points beyond the needed range 
 				ModelIntensity = ModelIntPixelSmeared
 				DeletePoints (numpnts(OrigModelQ)), (numpnts(ModelIntensity) - numpnts(OrigModelQ)), ModelIntensity 
-				Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i)) 
+				Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i)) 
 				KillWaves OrigModelQ
 			else	//just cleanup not to confuse anyone :-)
 				KillWaves OrigModelQ		//this one is not needed as it is the same thing as the Qmodel_set 
@@ -5423,10 +5525,10 @@ Function IR2L_PrepareSetsQvectors()
 			if(EndPoint<0)
 				EndPoint = numpnts(Qwave)-1
 			endif
-			Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_Orig_set"+num2str(i))
-			Wave OrigModelQ = $("Qmodel_Orig_set"+num2str(i))
-			Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))	
-			Wave ModelQ=	$("Qmodel_set"+num2str(i))	
+			Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("root:Packages:IR2L_NLSQF:Qmodel_Orig_set"+num2str(i))
+			Wave OrigModelQ = $("root:Packages:IR2L_NLSQF:Qmodel_Orig_set"+num2str(i))
+			Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
+			Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
 			//this is now correct Original Q points Q vector... 
 			//next we need to prepare temperary one, which we will call for historical reasons Qmodel_set
 			//so we do not have to change rest of the code... This will have to be fixed at the end of the
@@ -5453,12 +5555,12 @@ Function IR2L_PrepareSetsQvectors()
 				if(!StringMatch(SmearingType, "None" ))	//these are pixel smeared data			
 					//we will need to get the resolutions - for now handle fixed one
 					if(stringmatch(SmearingWaveName,"Fixed dQ [1/A]"))		//fixed value for each point, have just one input number from user
-						Duplicate/O OrigModelQ, $("ResolutionsWave_set"+num2str(i))
-						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
+						Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
+						Wave ResolutionsWave = $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
 						ResolutionsWave = SmearingFWHM											//for this settings, this is in Q units
 					elseif(stringmatch(SmearingWaveName,"Fixed dQ/Q [%]"))
-						Duplicate/O OrigModelQ, $("ResolutionsWave_set"+num2str(i))
-						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
+						Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
+						Wave ResolutionsWave = $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
 						ResolutionsWave = OrigModelQ[p]*0.01*SmearingFWHM				//for this settings, this is in % of Q, need to convert to Q units
 					else																				//this is wave. Need to find it and create it here...
 						Wave/Z UserSelResWv=$(DataFolder+SmearingWaveName)
@@ -5466,7 +5568,7 @@ Function IR2L_PrepareSetsQvectors()
 							Abort "Wrong Resolution wave selected, either does not exist or has wrong number of points"
 						endif
 						Duplicate/O/R=[StartPoint,EndPoint] UserSelResWv, $("ResolutionsWave_set"+num2str(i))
-						Wave ResolutionsWave = $("ResolutionsWave_set"+num2str(i))
+						Wave ResolutionsWave = $("root:Packages:IR2L_NLSQF:ResolutionsWave_set"+num2str(i))
 						if(StringMatch(SmearingType, "* [1/A]" ))
 							//resolutions wave is allready in Q units, nothign to do here... 
 						else	// these are in %
@@ -5545,14 +5647,14 @@ Function IR2L_PrepareSetsQvectors()
 					//endif
 					DeletePoints newIDX, (numpnts(tempQwv)-newIDX), tempQwv 
 					Sort tempQwv, tempQwv
-					Duplicate/O tempQwv, $("Qmodel_set"+num2str(i))				
-					Wave ModelQ=	$("Qmodel_set"+num2str(i))	
+					Duplicate/O tempQwv, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))				
+					Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
 					//OK, Qmodel_setX is now Q set which has been hopefully corrently densified to provide enough Q points for sensible smearing. 
 					//next is handling slit smearing. 
 					print "Original Q vector had : "+num2str(numpnts(OrigModelQ))+", oversampled Q vector now has : "+num2str(numpnts(ModelQ))
 				else
-					Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))						
-					Wave ModelQ=	$("Qmodel_set"+num2str(i))	
+					Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))						
+					Wave ModelQ=	$("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))	
 				endif
 				
 				if(isSlitSmeared)	//need to make sure the Qvector is long enough, if not, we will add more points to calculation
@@ -5580,7 +5682,7 @@ Function IR2L_PrepareSetsQvectors()
 
 			else	//OK, this is not smeared at all, so just copy and keep as is... 
 					//now both of these Q vectors are the same. 
-				Duplicate/O OrigModelQ, $("Qmodel_set"+num2str(i))			
+				Duplicate/O OrigModelQ, $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(i))			
 			endif
 		
 		endif

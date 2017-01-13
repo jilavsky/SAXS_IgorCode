@@ -3,10 +3,12 @@ Code modification history
 
 -latest stuff first
 ********************************************
-
-Modified Nexus support, added new library to use it. 
+1.75
+Fixed old bug where Sample Thickness was not converted to cm before use. This means that prior experiments with calibration constants need to have calibration constant also scaled by factor of 10 to compensate. Added warning to Panel version check. 
+Modified Nexus support, added new library to use it. Major revision of Nexus import and export of data. 
 Moved some common functions to IN2G_GeneralProcedures
-Removed Utility_JZT from distribtuion, not needed and causing conflict with JZT package. `
+Removed Utility_JZT from distribution, not needed and causing conflict with JZT package.
+Updated manual. 
 
 1.74 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher

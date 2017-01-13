@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.52
+#pragma version=2.55
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.55 fixed missing forced naming to data. Now will force use of File name fopr naming the data if nothign else is selected.
+//2.54 added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1)) in the code here. 
+//2.53 important correction - prior versions did NOT have samplethickness converted to cm, so this may break prior exerimets calibrations. 
 //2.52 changed selection options for data
 //2.51 New nexus support fixes. Pops up now the panel as needed and sets the input choice. 
 //2.50 Modified to point to USXS_data on USAXS computers, added handling of ...tiff file names
@@ -105,6 +108,7 @@
 Function NI1A_AverageDataPerUserReq(orientation)
 	STRING ORIENTATION	
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -225,6 +229,7 @@ end
 Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneInmmWidth, DspacingWidth, PixX,PixY,BeamX,BeamY,Wavelength,SampleToCCDdistance)
 	wave Qvector, QvectorWidth, TwoThetaWidth, DistacneInmmWidth, DspacingWidth
 	variable PixX,PixY,BeamX,BeamY, Wavelength,SampleToCCDdistance
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//note the Qresolution already has accounted for bin width for integration.
 	///////
 	//this function will caculate Q resolution for each q point given by pixel size and beam size
@@ -283,53 +288,12 @@ Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneI
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-//*******************************************************************************************************************************************
-
-//
-//Function NI1A_SolidangleCorrection(qwave,rwave,pixelsize,SDD, lambda,DoGeometryCorrection, DoPolarizationCorrection) //from Dale Schaefer, needs to be checked what is it doing... 
-//    		wave qwave,rwave
-//        	variable pixelsize,SDD, lambda ,DoGeometryCorrection, DoPolarizationCorrection
-//         
-//	string oldDf=GetDataFOlder(1)
-//	setDataFolder root:Packages:Convert2Dto1D
-//
-//    duplicate/o qwave, omega, SAP, HYP, theta 
-//    theta=2*asin(qwave * Lambda /( 4 * pi) )		//theta here is really 2Theta, since it is angle between beam in and out... 
-//    
-////    if(DoGeometryCorrection)
-//// 	   SAP=PixelSize*cos(theta)		//this is projection of pixel into the direction perpendicular to the center line from sample 
-////					   // HYP=((PixelSize*(qwave))^2+SDD^2)^(1/2)//qout is still in pixels 
-////	    HYP=SDD/cos(theta)			//this is distance from the sample
-////					 //       qwave=(4*pi/wavelength)*(sin(theta/2)) 
-////	    omega=(SAP/HYP) 			//this is angle under which we see the pixel from the sample
-//// 	   variable startOmega=omega[0]
-////	    omega /= startOmega				//and this is to scale it, so the correction for center pixel is 1
-////	else
-//		omega=1
-////	endif
-//    	duplicate/o theta, PF 
-//    	if(DoPolarizationCorrection)			//comment 6/24/2006 - I think this is wrong... I need to find the right formula... 
-//	    PF= (1+cos((theta))^2)/2			// polarization factor, see above, theta is really 2theta
-//    	else
-//		pf=1 
-//      endif
-////    rwave=rwave/(omega^2*PF)     		//Squared because it is solid angle and the above is done for lin angle 
-////    rwave=rwave/(omega^1.5*PF)     		//Correction JI 5 26 2006
-//    rwave=rwave/(PF)     		//Correction JI 5 26 2006
-//    //why is it 1.5???? To match geometrical corrections by Fit2D
-//    // Correct correction is Int/cos(theta)^3 - that is from NIST macros and agrees with Fit2D - the omega here is already ^2, thats why 1.5...
-//    //I believe the right should be ^1, because, only 1 dimensions is actually distorted. ase example pixel on vertical axis. Only
-//    //vertical dimension is shrunk, horizontal direction has not changed... But to match Fit2D exactly I need factor of 1.5...
-//        
-//    killwaves/z  SAP, HYP, omega, PF,theta 
-//	setDataFolder OldDf
-//end 
-//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************//*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_CorrectDataPerUserReq(orientation)
 	string orientation
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -419,7 +383,8 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 			CalibrationPrefactor/=SampleI0
 		endif
 		if(UseSampleThickness)
-			CalibrationPrefactor/=SampleThickness
+			CalibrationPrefactor/=(SampleThickness/10)		//NOTE: changed in ver 1.75 (1/2017), previously was not converted to cm.
+			//this is potentially breaking calibration of prior experiments. Need User warning! 
 		endif
 	
 		Duplicate/O DataWave, tempDataWv, tempEmptyField
@@ -591,7 +556,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_Generate2DPolCorrWv()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//create Polarization correction
@@ -687,7 +652,7 @@ end
 //*******************************************************************************************************************************************
 
 Function  NI1A_GenerateGeometryCorr2DWave()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -745,7 +710,7 @@ end
 
 Function NI1A_CheckGeometryWaves(orientation)		//checks if current geometry waves are OK for the input geometry
 	string orientation
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -887,7 +852,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_CreateHistogram(orientation)
 	string orientation
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	print "Creating histogram"
 	
 	string OldDf=GetDataFolder(1)
@@ -1085,32 +1050,32 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_CreateQvector(orientation)
-	string orientation
-
-//	print "Creating Q vector"
-//	
-//	string OldDf=GetDataFolder(1)
-//	setDataFolder root:Packages:Convert2Dto1D
-//	wave Rdistribution1D=$("root:Packages:Convert2Dto1D:Rdistribution1D_"+orientation)
-//	wave LUT=$("root:Packages:Convert2Dto1D:LUT_"+orientation)
-//	NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
-//	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
-//	//wavelength=12.398424437/EnergyInKeV
-//	
-//	//Create wave for q distribution
-//	Duplicate/O Rdistribution1D, $("Qdistribution1D_"+orientation)
-//	wave Qdistribution1D=$("Qdistribution1D_"+orientation)
-//	Redimension/S Qdistribution1D
-//	//Qdistribution1D = ((4*pi)/Wavelength)*sin(0.5*Rdistribution1D/SampleToCCDDistance)
-//	Qdistribution1D = ((4*pi)/Wavelength)*sin(0.5*atan(Rdistribution1D/SampleToCCDDistance))
-//	string NoteStr=note(Rdistribution1D)
-//	NoteStr+="SampleToCCDDistance="+num2str(SampleToCCDDistance)+";"
-//	NoteStr+="Wavelength="+num2str(Wavelength)+";"	
-//	note Qdistribution1D, NoteStr
+//Function NI1A_CreateQvector(orientation)
+//	string orientation
 //
-//	setDataFolder OldDf
-end
+////	print "Creating Q vector"
+////	
+////	string OldDf=GetDataFolder(1)
+////	setDataFolder root:Packages:Convert2Dto1D
+////	wave Rdistribution1D=$("root:Packages:Convert2Dto1D:Rdistribution1D_"+orientation)
+////	wave LUT=$("root:Packages:Convert2Dto1D:LUT_"+orientation)
+////	NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance		//in millimeters
+////	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength							//in A
+////	//wavelength=12.398424437/EnergyInKeV
+////	
+////	//Create wave for q distribution
+////	Duplicate/O Rdistribution1D, $("Qdistribution1D_"+orientation)
+////	wave Qdistribution1D=$("Qdistribution1D_"+orientation)
+////	Redimension/S Qdistribution1D
+////	//Qdistribution1D = ((4*pi)/Wavelength)*sin(0.5*Rdistribution1D/SampleToCCDDistance)
+////	Qdistribution1D = ((4*pi)/Wavelength)*sin(0.5*atan(Rdistribution1D/SampleToCCDDistance))
+////	string NoteStr=note(Rdistribution1D)
+////	NoteStr+="SampleToCCDDistance="+num2str(SampleToCCDDistance)+";"
+////	NoteStr+="Wavelength="+num2str(Wavelength)+";"	
+////	note Qdistribution1D, NoteStr
+////
+////	setDataFolder OldDf
+//end
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1121,7 +1086,7 @@ end
 
 Function NI1A_CreateLUT(orientation)
 	string orientation
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	print "Creating LUT for "+orientation+"  orientation"
 
 	string OldDf=GetDataFOlder(1)
@@ -1193,7 +1158,7 @@ end
 
 Function NI1A_Create2DQWave(DataWave)
 	wave DataWave
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -1263,7 +1228,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_Create2DAngleWave(DataWave)
 	wave DataWave
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	string NoteStr
@@ -1299,7 +1264,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_Check2DConversionData()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1378,6 +1343,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1_GISAXSOptions() : Panel
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(520,221,965,409) as "GISAXS Options"
 	DoWindow/C GISAXSOptionsPanel
@@ -1397,7 +1363,7 @@ EndMacro
 //*******************************************************************************************************************************************
 Function NI1_GISAXSOptsSetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
@@ -1424,6 +1390,7 @@ End
 
 Function NI1A_UpdateMainMaskListBox()		
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 //	NI1M_UpdateMaskListBox()
@@ -1478,7 +1445,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_UpdateEmptyDarkListBox()		
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 		Wave/T  ListOf2DEmptyData=root:Packages:Convert2Dto1D:ListOf2DEmptyData
@@ -1536,7 +1503,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_MakeContiguousSelection()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1564,7 +1531,7 @@ end
 //*******************************************************************************************************************************************
 
 Function/T NI1A_Create2DSelectionPopup()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Wave/T  ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	variable i, imax=numpnts(ListOf2DSampleData)	
 	string MenuStr=""
@@ -1582,9 +1549,7 @@ end
 
 Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
-
-
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(cmpstr(ctrlName,"CreateOutputPath")==0)
 		PathInfo/S Convert2Dto1DOutputPath
 		NewPath/C/O/M="Select path to save your data" Convert2Dto1DOutputPath	
@@ -1751,7 +1716,7 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1M_DisplayMaskOnImage()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	DoWindow CCDImageToConvertFig
@@ -1773,7 +1738,7 @@ end
 
 Function NI1M_ChangeMaskColor(ColorToUse) //red, blue, green
 	string ColorToUse
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	DoWindow CCDImageToConvertFig
@@ -1805,6 +1770,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1M_RemoveMaskFromImage()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DoWindow CCDImageToConvertFig
 	if(V_Flag)
 		CheckDisplayed /W=CCDImageToConvertFig root:Packages:Convert2Dto1D:M_ROIMask
@@ -1821,6 +1787,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_CheckParametersForConv()
 	//check the parameters for conversion
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1873,7 +1840,7 @@ end
 
 Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	string SelectedFileToLoad
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
@@ -1919,7 +1886,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_DisplayTheRight2DWave()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -1974,7 +1941,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_DisplayOneDataSet()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//Kill top graph with Imge if it exists..
@@ -2006,6 +1973,7 @@ Function NI1A_DisplayOneDataSet()
 	string Oldnote=""
 	string TempNote=""
 	variable loadedOK
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	Wave/Z tempWave=root:Packages:Convert2Dto1D:CCDImageToConvertTemp
 	if(WaveExists(tempWave))
 		KillWaves tempWave
@@ -2013,6 +1981,7 @@ Function NI1A_DisplayOneDataSet()
 	For(i=0;i<imax;i+=1)
 		if (ListOf2DSampleDataNumbers[i])
 			SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+			UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
 			loadedOK = NI1A_ImportThisOneFile(SelectedFileToLoad)
 			if(!loadedOK)
 				return 0
@@ -2058,7 +2027,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_DisplayStatsLoadedFile(WaveNameStr)
 	string WaveNameStr
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -2075,7 +2044,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_DisplayLoadedFile()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -2136,7 +2105,7 @@ end
 
 Function NI1A_DezingerDataSetIfAskedFor(whichFile)
 	string whichFile
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR DezingerHowManyTimes=root:Packages:Convert2Dto1D:DezingerHowManyTimes
@@ -2202,7 +2171,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_LoadManyDataSetsForConv()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
@@ -2238,6 +2207,7 @@ Function NI1A_LoadManyDataSetsForConv()
 	NVAR CorrectionFactor=root:Packages:Convert2Dto1D:CorrectionFactor
 	NVAR SampleMeasurementTime=root:Packages:Convert2Dto1D:SampleMeasurementTime
 	NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	string extension
 	variable LoadedOK
 	Controlinfo/W=NI1A_Convert2Dto1DPanel   Select2Ddatatype
@@ -2257,6 +2227,7 @@ Function NI1A_LoadManyDataSetsForConv()
 				for(u=currentframe;u<saxsframe+1;u+=1)
 					currentframe=u
 					SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+					UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
 					loadedOK = NI1A_ImportThisOneFile(SelectedFileToLoad)
 					if(!loadedOK)
 						return 0
@@ -2274,12 +2245,12 @@ Function NI1A_LoadManyDataSetsForConv()
 					NI1A_TopCCDImageUpdateColors(1)
 					NI1A_DoDrawingsInto2DGraph()
 					NI1A_CallImageHookFunction()
-					NI1A_Export2DData()
+					NEXUS_NikaSave2DData()
 					DoUpdate
 				endfor
 				currentframe=1
 			//josh: Time Resolved Summation
-			elseif(cmpstr(extension,"BSL/SAXS")==0&&sumframes==0&&average==0&&sumseq==1)	
+			elseif(cmpstr(extension,"BSL/SAXS")==0 && sumframes==0 && average==0 && sumseq==1)	
 				variable sumsaxsframe
 				sumsaxsframe=1
 					NI1_BSLgettimesequence()
@@ -2293,6 +2264,7 @@ Function NI1A_LoadManyDataSetsForConv()
 						sumsaxsframe=BSLframelistsequence[u-1][2]
 						BSLtoframe=min(saxsframe,currentframe+sumsaxsframe-1)
 						SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+						UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
 						loadedOK = NI1A_ImportThisOneFile(SelectedFileToLoad)
 						if(!loadedOK)
 							return 0
@@ -2311,13 +2283,14 @@ Function NI1A_LoadManyDataSetsForConv()
 						NI1A_TopCCDImageUpdateColors(1)
 						NI1A_DoDrawingsInto2DGraph()
 						NI1A_CallImageHookFunction()
-						NI1A_Export2DData()
+						NEXUS_NikaSave2DData()
 						DoUpdate
 					endfor
 				duplicate/o BSLframelistsequence, $("root:SAS:BSLframelistsequence")
 				currentframe=1
 			else
 				SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+				UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
 				NI1A_ImportThisOneFile(SelectedFileToLoad)	
 				NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	
 				Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2331,7 +2304,7 @@ Function NI1A_LoadManyDataSetsForConv()
 				NI1A_DisplayTheRight2DWave()
 				NI1A_DoDrawingsInto2DGraph()
 				NI1A_CallImageHookFunction()
-				NI1A_Export2DData()
+				NEXUS_NikaSave2DData()
 				DoUpdate
 			endif
 		endif
@@ -2343,6 +2316,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_CallImageHookFunction()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(exists("AfterDisplayImageHook")==6)
 		Execute("AfterDisplayImageHook()")
 	endif
@@ -2355,7 +2329,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_AveLoadNDataSetsForConv()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
@@ -2411,6 +2385,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 	variable j=0, Loaded=0, LoadedOK
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
 	NVAR MaxIntForBadFile=root:Packages:Convert2Dto1D:MaxIntForBadFile
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	//need to averaged 5 parameters above...
 	For(i=0;i<imax;i+=1)
 		Loaded=0
@@ -2425,6 +2400,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 			For(j=0;j<ProcessNImagesAtTime;j+=1)
 				if (ListOf2DSampleDataNumbers[i+j])
 					SelectedFileToLoad=ListOf2DSampleData[i+j]		//this is the file selected to be processed
+					UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
 					loadedOK = NI1A_ImportThisOneFile(SelectedFileToLoad)
 					if(!loadedOK)
 						return 0
@@ -2479,7 +2455,7 @@ Function NI1A_AveLoadNDataSetsForConv()
 				NI1A_DisplayTheRight2DWave()
 				NI1A_DoDrawingsInto2DGraph()
 				NI1A_CallImageHookFunction()
-				NI1A_Export2DData()
+				NEXUS_NikaSave2DData()
 				DoUpdate
 			endif
 		endif
@@ -2496,7 +2472,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_AveLoadManyDataSetsForConv()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
@@ -2551,10 +2527,12 @@ Function NI1A_AveLoadManyDataSetsForConv()
 	variable LoadedOK
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
 	NVAR MaxIntForBadFile=root:Packages:Convert2Dto1D:MaxIntForBadFile
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	//need to averaged 5 parameters above...
 	For(i=0;i<imax;i+=1)
 		if (ListOf2DSampleDataNumbers[i])
 			SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+			UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
 			loadedOK = NI1A_ImportThisOneFile(SelectedFileToLoad)
 			if(!loadedOK)
 				return 0
@@ -2606,7 +2584,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 	NI1A_DisplayTheRight2DWave()
 	NI1A_DoDrawingsInto2DGraph()
 	NI1A_CallImageHookFunction()
-	NI1A_Export2DData()
+	NEXUS_NikaSave2DData()
 	DoUpdate
 	setDataFolder OldDf
 end
@@ -2618,7 +2596,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function/S NI1A_CalibrationNote()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string newNote=""
 		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
 		newNote+="Units="+DataCalibrationString+";"
@@ -2705,6 +2683,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_LoadParamsUsingFncts(SelectedFileToLoad)
 	string SelectedFileToLoad
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -2815,7 +2794,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_ExportDisplayedImage()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/Z ww=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
@@ -2863,7 +2842,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_SaveDisplayedImage()
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/Z ww=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
@@ -2935,7 +2914,7 @@ end
 
 Function NI1A_PrepareLogDataIfWanted(DataWaveName)
 	string DataWaveName
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	wave waveToDisplay = $("root:Packages:Convert2Dto1D:"+DataWaveName)
@@ -2960,7 +2939,7 @@ end
 Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	string EmptyOrDark
 	//check the parameters for conversion
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
@@ -3050,7 +3029,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_DisplayOneDataSets()
 	//check the parameters for conversion
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -3075,7 +3054,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_LoadMask()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	Wave/T  ListOf2DMaskData=root:Packages:Convert2Dto1D:ListOf2DMaskData
@@ -3213,7 +3192,7 @@ end
 
 Function NI1A_FindeOrderNumber(stringWithName)	
 	string stringWithName
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string FoundON
 	FoundON = stringWithName[strsearch(stringWithName, "_", inf ,1)+1, strsearch(stringWithName, ".", inf ,1)-1]
 	return str2num(FoundON)
@@ -3224,7 +3203,7 @@ end
 
 Function/T NI1A_CleanListOfFilesForTypes(ListOfAvailableCompounds,DataFileType, MatchString)
 	string ListOfAvailableCompounds,DataFileType, MatchString
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	variable i, imax, numberOfFile
 	if(strlen(ListOfAvailableCompounds)<2)
 		return ""
@@ -3274,7 +3253,7 @@ end
 Function NI1A_CreateListOfFiles(ListOf2DSampleData,ListOfFiles,Extension, NameMatchString)
 	wave/T ListOf2DSampleData
 	string ListOfFiles,Extension, NameMatchString
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 //	ListOfFiles =  grepList(ListOfFiles,NameMatchString)
 	
 	variable i, imax, numberOfParts
@@ -3298,13 +3277,14 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_Convert2Dto1DPanelFnct()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
 	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox Info1 title="\Zr120Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
-	TitleBox Info2 title="\Zr120Select contiguous range  :",pos={10,235},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info2 title="\Zr120Select contiguous range  :",pos={30,237},frame=0,fstyle=2, fixedSize=1,size={150,20}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
@@ -3350,24 +3330,27 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	Button CreateMovie,help={"Create movie from the data during reduction"}
 	Button OnLineDataProcessing,pos={330,197},size={100,18},proc=NI1A_ButtonProc,title="Live processing"
 	Button OnLineDataProcessing,help={"Switch on and off live data visualization and processing"}
-	SetVariable SampleNameMatchStr,pos={10,214},size={135,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
+	SetVariable SampleNameMatchStr,pos={10,214},size={145,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
 	SetVariable SampleNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleNameMatchStr
+	SetVariable UserSampleName,pos={170,214},size={250,18},proc=NI1A_PanelSetVarProc,title="Sample name"
+	SetVariable UserSampleName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:UserSampleName
 
 	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0, clickEventModifiers=4
 	ListBox Select2DInputWave,help={"Select data file to be converted, you can select multiple data sets"}
 	ListBox Select2DInputWave,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	ListBox Select2DInputWave,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 	ListBox Select2DInputWave,mode= 9, proc=NI1_MainListBoxProc
-	PopupMenu SelectStartOfRange,pos={175,220},size={300,20},proc=NI1A_PopMenuProc,title="Start"
+	PopupMenu SelectStartOfRange,pos={195,235},size={300,20},proc=NI1A_PopMenuProc,title="Start"
 	PopupMenu SelectStartOfRange,help={"Select first 2D data to process"}
 	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
-	PopupMenu SelectEndOfRange,pos={181,245},size={300,20},proc=NI1A_PopMenuProc,title="End"
+	PopupMenu SelectEndOfRange,pos={203,258},size={300,20},proc=NI1A_PopMenuProc,title="End"
 	PopupMenu SelectEndOfRange,help={"Select last 2D data to process"}
 	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
-	PopupMenu DataCalibrationString,pos={10,255},size={211,18},proc=NI1A_PopMenuProc,title="Int. Calibration:"
+	PopupMenu DataCalibrationString,pos={10,258},size={211,18},proc=NI1A_PopMenuProc,title="Int. Calibration:"
 	PopupMenu DataCalibrationString,help={"Select data calibration string"}
 	SVAR DataCalibrationString = root:Packages:Convert2Dto1D:DataCalibrationString
 	PopupMenu DataCalibrationString,mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
+
 
 //tab controls here
 	TabControl Convert2Dto1DTab,pos={4,280},size={430,304},proc=NI1A_TabProc
@@ -3375,7 +3358,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Par"
 	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Em/Dk"
 	TabControl Convert2Dto1DTab,tabLabel(4)="Sect.",tabLabel(5)="PolTran", tabLabel(6)="LineProf", value= 0
-	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
+//	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
 	SetVariable SampleToDetectorDistance,pos={54,302},size={230,16},proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
 	SetVariable SampleToDetectorDistance,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleToCCDDistance
@@ -3624,16 +3607,16 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox UseSectors,pos={15,310},size={90,14},title="Use?", mode=0, proc=NI1A_CheckProc
 	CheckBox UseSectors,help={"Use any of the settings in this tab?"}
 	CheckBox UseSectors,variable= root:Packages:Convert2Dto1D:UseSectors
-	CheckBox UseQvector,pos={100,310},size={90,14},title="Q space?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseQvector,pos={100,308},size={90,14},title="Q space?", mode=1, proc=NI1A_CheckProc
 	CheckBox UseQvector,help={"Select to have output as function of q [inverse nm]"}
 	CheckBox UseQvector,variable= root:Packages:Convert2Dto1D:UseQvector
-	CheckBox UseDspacing,pos={170,310},size={90,14},title="d ?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseDspacing,pos={180,308},size={90,14},title="d ?", mode=1, proc=NI1A_CheckProc
 	CheckBox UseDspacing,help={"Select to have output as function of d spacing"}
 	CheckBox UseDspacing,variable= root:Packages:Convert2Dto1D:UseDspacing
-	CheckBox UseTheta,pos={220,310},size={90,14},title="2 Theta ?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseTheta,pos={232,308},size={90,14},title="2 Theta ?", mode=1, proc=NI1A_CheckProc
 	CheckBox UseTheta,help={"Select to have output as function of 2 theta"}
 	CheckBox UseTheta,variable= root:Packages:Convert2Dto1D:UseTheta
-	CheckBox UseDistanceFromCenter,pos={300,310},size={90,14},title="Distance [mm]?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseDistanceFromCenter,pos={320,308},size={90,14},title="Distance [mm]?", mode=1, proc=NI1A_CheckProc
 	CheckBox UseDistanceFromCenter,help={"Select to have output as function of distacne fromcenter in mm"}
 	CheckBox UseDistanceFromCenter,variable= root:Packages:Convert2Dto1D:UseDistanceFromCenter
 
@@ -3660,7 +3643,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox QbinningLogarithmic,pos={20,350},size={90,14},title="Log binning?",proc=NI1A_CheckProc
 	CheckBox QbinningLogarithmic,help={"Check to have binning in q (d or theta) logarithmic"}
 	CheckBox QbinningLogarithmic,variable= root:Packages:Convert2Dto1D:QbinningLogarithmic
-	SetVariable QbinPoints,pos={172,370},size={160,16},title="Number of points"
+	SetVariable QbinPoints,pos={220,370},size={200,16},title="Number of points   "
 	NVAR QvectorMaxNumPnts = root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 	SetVariable QbinPoints,help={"Number of points in Q you want to create"}, disable = (QvectorMaxNumPnts)
 	SetVariable QbinPoints,limits={0,Inf,10},value= root:Packages:Convert2Dto1D:QvectorNumberPoints
@@ -3678,36 +3661,38 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DoSectorAverages,pos={20,390},size={130,14},title="Make sector averages?",proc=NI1A_CheckProc
 	CheckBox DoSectorAverages,help={"Create data with sector average?"}, proc=NI1A_checkProc
 	CheckBox DoSectorAverages,variable= root:Packages:Convert2Dto1D:DoSectorAverages
-	SetVariable NumberOfSectors,pos={20,410},size={160,16},title="Number of sectors",proc=NI1A_PanelSetVarProc
+	SetVariable NumberOfSectors,pos={20,410},size={190,16},title="Number of sectors",proc=NI1A_PanelSetVarProc
 	SetVariable NumberOfSectors,help={"Number of sectors you want to create"}
 	SetVariable NumberOfSectors,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:NumberOfSectors
 	
-	SetVariable SectorsStartAngle,pos={200,410},size={160,16},title="Start angle of sectors",proc=NI1A_PanelSetVarProc
+	SetVariable SectorsStartAngle,pos={220,410},size={200,16},title="Start angle of sectors",proc=NI1A_PanelSetVarProc
 	SetVariable SectorsStartAngle,help={"Angle around which first sectors is centered"}
 	SetVariable SectorsStartAngle,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SectorsStartAngle
-	SetVariable SectorsHalfWidth,pos={20,430},size={160,16},title="Width of sector +/- ",proc=NI1A_PanelSetVarProc
+	SetVariable SectorsHalfWidth,pos={20,430},size={190,16},title="Width of sector +/- ",proc=NI1A_PanelSetVarProc
 	SetVariable SectorsHalfWidth,help={"Half width of sectors in degrees"}
 	SetVariable SectorsHalfWidth,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SectorsHalfWidth
-	SetVariable SectorsStepInAngle,pos={200,430},size={160,16},title="Angle between sectors",proc=NI1A_PanelSetVarProc
+	SetVariable SectorsStepInAngle,pos={220,430},size={200,16},title="Angle between sectors",proc=NI1A_PanelSetVarProc
 	SetVariable SectorsStepInAngle,help={"Angle between center directions of sectors"}
 	SetVariable SectorsStepInAngle,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SectorsStepInAngle
 
-	CheckBox DisplayDataAfterProcessing,pos={20,450},size={159,14},title="Create 1D graph?"
+	CheckBox DisplayDataAfterProcessing,pos={20,455},size={159,14},title="Create 1D graph?"
 	CheckBox DisplayDataAfterProcessing,help={"Create graph of 1D data after processing"},proc=NI1A_CheckProc
 	CheckBox DisplayDataAfterProcessing,variable= root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
 
-	CheckBox StoreDataInIgor,pos={20,468},size={159,14},title="Store data in Igor experiment?"
+
+	CheckBox AppendToNexusFile,pos={20,478},size={170,14},title="Export to Nexus?"
+	CheckBox AppendToNexusFile,help={"Append to Nexus file- more controls on separate screen."}
+	CheckBox AppendToNexusFile,variable= root:Packages:Convert2Dto1D:AppendToNexusFile,proc=NI1A_CheckProc
+
+	CheckBox StoreDataInIgor,pos={225,455},size={159,14},title="Store data in Igor experiment?"
 	CheckBox StoreDataInIgor,help={"Save data in current Igor experiment"},proc=NI1A_CheckProc
 	CheckBox StoreDataInIgor,variable= root:Packages:Convert2Dto1D:StoreDataInIgor
-	CheckBox OverwriteDataIfExists,pos={200,468},size={159,14},title="Overwrite existing data if exist?"
+	CheckBox OverwriteDataIfExists,pos={225,478},size={159,14},title="Overwrite existing data if exist?"
 	CheckBox OverwriteDataIfExists,help={"Overwrite data in current Igor experiment if they already exist"}
 	CheckBox OverwriteDataIfExists,variable= root:Packages:Convert2Dto1D:OverwriteDataIfExists
 	
-	CheckBox AppendToNexusFile,pos={20,486},size={170,14},title="Append to original image (Nexus ONLY)?"
-	CheckBox AppendToNexusFile,help={"Append to Nexus file, useable ONLy if sourceis Nexus"}
-	CheckBox AppendToNexusFile,variable= root:Packages:Convert2Dto1D:AppendToNexusFile,proc=NI1A_CheckProc
 
-	CheckBox ExportDataOutOfIgor,pos={20,504},size={122,14},title="Export data as ASCII?"
+	CheckBox ExportDataOutOfIgor,pos={20,500},size={122,14},title="Export data as ASCII?"
 	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
 	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
 	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
@@ -3718,7 +3703,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox Use2DdataName,pos={20,522},size={170,14},title="Use input data name for output?",proc=NI1A_CheckProc
 	CheckBox Use2DdataName,help={"Check to have output data named after input data name"}
 	CheckBox Use2DdataName,variable= root:Packages:Convert2Dto1D:Use2DdataName
-	CheckBox UseSampleNameFnct,pos={200,522},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
+	CheckBox UseSampleNameFnct,pos={230,522},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
 	CheckBox UseSampleNameFnct,help={"Check to use String function to provide output data name"}
 	CheckBox UseSampleNameFnct,variable= root:Packages:Convert2Dto1D:UseSampleNameFnct
 	Button CreateOutputPath,pos={250,500},size={160,20},title="Select output path"
@@ -3732,9 +3717,9 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable SampleNameFnct,help={"String Name function "}
 	SetVariable SampleNameFnct,value= root:Packages:Convert2Dto1D:SampleNameFnct, disable=UseSampleNameFnct
 
-	CheckBox TrimFrontOfName,pos={12,560},size={100,18},proc=NI1A_CheckProc,title="Trim Front of Name"
+	CheckBox TrimFrontOfName,pos={12,560},size={100,18},proc=NI1A_CheckProc,title="Trim Front"
 	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
-	CheckBox TrimEndOfName,pos={125,560},size={100,18},proc=NI1A_CheckProc,title="Trim End of Name"
+	CheckBox TrimEndOfName,pos={125,560},size={100,18},proc=NI1A_CheckProc,title="Trim End"
 	CheckBox TrimEndOfName,help={"Check to trim END of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimEndOfName
 	SetVariable RemoveStringFromName,pos={240,560},size={180,18},noproc,title="Remove from name:"
 	SetVariable RemoveStringFromName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:RemoveStringFromName
@@ -3816,24 +3801,24 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	Button ConvertSelectedFiles,help={"Convert selected files (1 by 1) using parameters selected in the tabs"}
 	Button AveConvertSelectedFiles,pos={15,627},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert sel. files"
 	Button AveConvertSelectedFiles,help={"Average and convert files selected above using parameters set here"}
-	//Tab 7 - export 2D calibrated data
-	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
-	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
-	CheckBox InclMaskCalib2DData,pos={15,330},size={90,14},title="Include Mask?", mode=0, proc=NI1A_CheckProc
-	CheckBox InclMaskCalib2DData,help={"Include Mask with 2D calibrated data?"}, variable=root:Packages:Convert2Dto1D:InclMaskCalib2DData
-	CheckBox UseQxyCalib2DData,pos={15,350},size={90,14},title="Use Qx/Qy (not |Q|)?", mode=0, proc=NI1A_CheckProc
-	CheckBox UseQxyCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:UseQxyCalib2DData
-	CheckBox RebinCalib2DData,pos={15,370},size={90,14},title="Rebin Data?", mode=0, proc=NI1A_CheckProc
-	CheckBox RebinCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:RebinCalib2DData
-	PopupMenu RebinCalib2DDataToPnts,pos={150,370},size={214,21},proc=NI1A_PopMenuProc,title="Rebin to:"
-	PopupMenu RebinCalib2DDataToPnts,help={"Select Line profile method to use"}
-	SVAR RebinCalib2DDataToPnts = root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
-
-	PopupMenu Calib2DDataOutputFormat,pos={220,530},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
-	PopupMenu Calib2DDataOutputFormat,help={"Select type of 2D images being loaded"}
-	SVAR Calib2DDataOutputFormat = root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
-	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
+//	//Tab 7 - export 2D calibrated data
+//	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
+//	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
+//	CheckBox InclMaskCalib2DData,pos={15,330},size={90,14},title="Include Mask?", mode=0, proc=NI1A_CheckProc
+//	CheckBox InclMaskCalib2DData,help={"Include Mask with 2D calibrated data?"}, variable=root:Packages:Convert2Dto1D:InclMaskCalib2DData
+//	CheckBox UseQxyCalib2DData,pos={15,350},size={90,14},title="Use Qx/Qy (not |Q|)?", mode=0, proc=NI1A_CheckProc
+//	CheckBox UseQxyCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:UseQxyCalib2DData
+//	CheckBox RebinCalib2DData,pos={15,370},size={90,14},title="Rebin Data?", mode=0, proc=NI1A_CheckProc
+//	CheckBox RebinCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:RebinCalib2DData
+//	PopupMenu RebinCalib2DDataToPnts,pos={150,370},size={214,21},proc=NI1A_PopMenuProc,title="Rebin to:"
+//	PopupMenu RebinCalib2DDataToPnts,help={"Select Line profile method to use"}
+//	SVAR RebinCalib2DDataToPnts = root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+//	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
+//
+//	PopupMenu Calib2DDataOutputFormat,pos={220,530},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
+//	PopupMenu Calib2DDataOutputFormat,help={"Select type of 2D images being loaded"}
+//	SVAR Calib2DDataOutputFormat = root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
+//	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
 
 	//bottom controls
 	NVAR ImageRangeMinLimit = root:Packages:Convert2Dto1D:ImageRangeMinLimit
@@ -3925,6 +3910,7 @@ EndMacro
 
 
 Function NI1A_FixMovieButton()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	if(Movie_FileOpened && Movie_AppendAutomatically)
@@ -3939,7 +3925,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String ctrlName=sva.ctrlName
 	Variable varNum=sva.dval
 	String varStr=sva.sval
@@ -4191,7 +4177,7 @@ End
 
 Function NI1A_TopCCDImageUpdateColors(updateRanges)
 	variable updateRanges
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//user defined values...
@@ -4254,7 +4240,7 @@ end
 Function NI1A_TabProc(ctrlName,tabNum)
 	String ctrlName
 	Variable tabNum
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR UseSampleThickness= root:Packages:Convert2Dto1D:UseSampleThickness
 	NVAR UseSampleTransmission= root:Packages:Convert2Dto1D:UseSampleTransmission
 	NVAR UseCorrectionFactor= root:Packages:Convert2Dto1D:UseCorrectionFactor
@@ -4492,13 +4478,13 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	if((tabNum!=6))
 		DoWIndow/Z/K GISAXSOptionsPanel
 	endif
-//tab 7 controls
-	CheckBox ExpCalib2DData,disable=(tabNum!=7), win=NI1A_Convert2Dto1DPanel
-	CheckBox InclMaskCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox UseQxyCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
-	CheckBox RebinCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
-	PopupMenu RebinCalib2DDataToPnts,disable=(tabNum!=7||!ExpCalib2DData||!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
-	PopupMenu Calib2DDataOutputFormat,disable=(tabNum!=7||!ExpCalib2DData || AppendToNexusFile), win=NI1A_Convert2Dto1DPanel
+////tab 7 controls
+//	CheckBox ExpCalib2DData,disable=(tabNum!=7), win=NI1A_Convert2Dto1DPanel
+//	CheckBox InclMaskCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+//	CheckBox UseQxyCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+//	CheckBox RebinCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
+//	PopupMenu RebinCalib2DDataToPnts,disable=(tabNum!=7||!ExpCalib2DData||!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
+//	PopupMenu Calib2DDataOutputFormat,disable=(tabNum!=7||!ExpCalib2DData || AppendToNexusFile), win=NI1A_Convert2Dto1DPanel
 
 	
 	return 0
@@ -4516,7 +4502,7 @@ Function NI1A_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	Variable varNum
 	String varStr
 	String varName
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	if(cmpstr("BeamCenterX",ctrlName)==0)
 		NI1A_DoDrawingsInto2DGraph()
@@ -4588,7 +4574,7 @@ Function NI1A_ListBoxProc(ctrlName,row,col,event)
 	Variable col
 	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 					//5=cell select with shift key, 6=begin edit, 7=end
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	if(cmpstr("MaskListBoxSelection",ctrlName)==0)
 	
 	endif
@@ -4602,7 +4588,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1A_PolarCorCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
@@ -4657,8 +4643,7 @@ EndMacro
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_LineProfUpdateQ()
-
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		NVAR LineProf_DistanceFromCenter=root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
 		NVAR LineProf_Width=root:Packages:Convert2Dto1D:LineProf_Width
 		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
@@ -4716,6 +4701,7 @@ end
 Function NI1A_CalcQValForSearch(w, LineProf_DistanceFromCenter)
 		Wave w
 		variable LineProf_DistanceFromCenter
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 		variable QValueTarget = w[0]
 		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
@@ -4754,6 +4740,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function/S NI1A_CreateHelpForNameFunction()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DOwindow	NI1A_UseFnctToCreateName
 	if(V_Flag)
 		DoWIndow/F NI1A_UseFnctToCreateName
@@ -4794,7 +4781,7 @@ end
 Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -4869,9 +4856,9 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable RemoveStringFromName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
 	endif
 
-	if(StringMatch(ctrlName,"RebinCalib2DData"))
-		PopupMenu RebinCalib2DDataToPnts,disable=(!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
-	endif
+//	if(StringMatch(ctrlName,"RebinCalib2DData"))
+//		PopupMenu RebinCalib2DDataToPnts,disable=(!RebinCalib2DData), win=NI1A_Convert2Dto1DPanel
+//	endif
 	if(StringMatch(ctrlName,"InclMaskCalib2DData"))
 		if(!UseMask)
 			InclMaskCalib2DData =0
@@ -4893,9 +4880,31 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		endif
 	endif
 	if(stringmatch("AppendToNexusFile",ctrlName))
-		if(!StringMatch(DataFileExtension, "Nexus"))
-			DoALert /T="Cannot use this", 0, "Appending to original file can be done ONLY for Nexus file"
-			AppendToNexusFile = 0
+		if(checked)
+			NEXUS_NikaCall(1)
+			NVAR NX_SaveToProcNexusFile = root:Packages:Irena_Nexus:NX_SaveToProcNexusFile
+			NX_SaveToProcNexusFile = 1
+			NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
+			NVAR UseSampleNameFnct=root:Packages:Convert2Dto1D:UseSampleNameFnct
+			if((Use2DdataName+UseSampleNameFnct)!=1)
+				Use2DdataName = 1
+				UseSampleNameFnct=0
+			endif
+			NVAR NX_Append2DDataToProcNexus = root:Packages:Irena_Nexus:NX_Append2DDataToProcNexus
+			NVAR NX_Append1DDataToProcNexus = root:Packages:Irena_Nexus:NX_Append1DDataToProcNexus
+			if(NX_SaveToProcNexusFile)
+				if((NX_Append2DDataToProcNexus + NX_Append1DDataToProcNexus)<1)
+					NX_Append1DDataToProcNexus = 1
+				endif
+			endif
+			NEXUS_NikaCall(0)
+		else
+			NVAR NX_SaveToProcNexusFile = root:Packages:Irena_Nexus:NX_SaveToProcNexusFile
+			NX_SaveToProcNexusFile = 0
+			DoWIndow NEXUS_ConfigurationPanel
+			if(V_flag)
+					NEXUS_NikaCall(0)
+			endif
 		endif
 		COntrolInfo/W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
 		NI1A_TabProc("",V_Value)
@@ -5316,6 +5325,7 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_LineProf_Update()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 		NI1A_LineProfUpdateQ()
@@ -5332,7 +5342,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_DoDrawingsInto2DGraph()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR DisplayBeamCenterIn2DGraph=root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph
@@ -5374,7 +5384,8 @@ Function NI1A_AddColorScaleTo2DGraph()
 		if(!stringmatch(WinName(0,1,1),"CCDImageToConvertFig"))
 			return 0
 		endif
-		
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	
 		ColorScale/K/N=Colorscale2D/W=CCDImageToConvertFig	///W=CCDImageToConvertFig
 		NVAR DisplayColorScale = root:Packages:Convert2Dto1D:DisplayColorScale
 		IF(DisplayColorScale)
@@ -5431,6 +5442,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_DrawSectorsIn2DGraph()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -5515,6 +5527,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1A_DrawLinesIn2DGraph()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -5706,6 +5719,7 @@ End
 Function NI1A_GenerAngleLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	variable DetDimX,DetDimY,BCx,BCy,Angle,Offset
 	Wave WaveX,WaveY
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5747,6 +5761,7 @@ end
 Function NI1A_GenerEllipseLine(BCx,BCy,Excentricity,Offset,WaveX,WaveY)
 	variable Excentricity,BCx,BCy,Offset
 	Wave WaveX,WaveY
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5769,6 +5784,7 @@ end
 Function NI1A_GenerGISAXSQyLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	variable DetDimX,DetDimY,BCx,BCy,Angle,Offset
 	Wave WaveX,WaveY
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5796,7 +5812,7 @@ end
 Function NI1GI_CalculateQxyz(DimXpos,DimYpos,WhichOne)
 	variable DimXpos,DimYpos
 	String WhichOne
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR ycenter=root:Packages:Convert2Dto1D:BeamCenterY
 	NVAR xcenter=root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
@@ -5842,6 +5858,7 @@ end
 Function NIGI_CalcYdimForFixQz(DimYPos,Qy)
 	variable DimYPos	//this defines really Qz in pixel value
 	variable Qy			//for which value of Qy we want to calcualte this?
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
 	NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance
@@ -5911,6 +5928,7 @@ EndMacro
 //*******************************************************************************************************************************************
 
 Function NI1A_AllDrawingsFrom2DGraph()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DoWindow CCDImageToConvertFig
 	if(V_Flag)
 	      setDrawLayer/W=CCDImageToConvertFig/K ProgFront
@@ -5930,7 +5948,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_SetCalibrationFormula()
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	SVAR CalibrationFormula=root:Packages:Convert2Dto1D:CalibrationFormula
@@ -6054,7 +6072,8 @@ end
 
 Function NI1A_DezingerImage(image)
         Wave image
-        string OldDf=GetDataFOlder(1)
+ 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+       string OldDf=GetDataFOlder(1)
         setDataFolder root:Packages:Convert2Dto1D
  	 NVAR DezingerRatio =root:Packages:Convert2Dto1D:DezingerRatio
  	 string OldNote=note(image)
@@ -6084,7 +6103,8 @@ End
 
 Function NI1G_AddQAxisToImage(UseGrids)
 	variable UseGrids
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+
 		string OldDf = GetDataFolder(1)
 		setDataFolder root:Packages:Convert2Dto1D
 		
@@ -6160,7 +6180,7 @@ end
 
 Function NI1G_RemoveQAxisToImage(Recreate)
 	variable Recreate
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 		string OldDf = GetDataFolder(1)
 		setDataFolder root:Packages:Convert2Dto1D
 		
@@ -6192,6 +6212,7 @@ end
 //************************************************************************
 //************************************************************************
 Function NI1U_UpdateQAxisInImage()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	DoWIndow CCDImageToConvertFig
 	if(!V_flag)
 		abort
@@ -6224,7 +6245,7 @@ end
 
 Function NI1U_KillWindowHookF(s)
 	STRUCT WMWinHookStruct &s
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Variable hookResult = 0	// 0 if we do not handle event, 1 if we handle it.
 
 	switch(s.eventCode)
@@ -6245,6 +6266,7 @@ End
 Function TransAx_CalculateVerticalQaxis(w, x)
 	Wave/Z w
 	Variable x		//in pixels
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
@@ -6288,7 +6310,7 @@ end
 Function TransAx_CalculateHorizQaxis(w, x)
 	Wave/Z w
 	Variable x		//in pixels
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
 		NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt
@@ -6328,6 +6350,7 @@ end
 
 Function NI2T_testThetaWithTilts()		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	STRUCT NikadetectorGeometry d
 	wave testImg
 		NI2T_ReadOrientationFromGlobals(d)
@@ -6345,6 +6368,7 @@ end
 Function NI2T_Calculate2DThetaWithTilts(Theta2DWave)		// calculate theta for pixel px, py
 	wave Theta2DWave
 	STRUCT NikadetectorGeometry d
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 
 		NI2T_ReadOrientationFromGlobals(d)
 		NI2T_SaveStructure(d)
@@ -6355,9 +6379,9 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
-
-  Function/C NI2T_CalculatePxPyWithTilts(theta, direction)  
+Function/C NI2T_CalculatePxPyWithTilts(theta, direction)  
 	variable theta, direction
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//theta is bragg angle in question
 	//direction is azimuthal angle in radians
 	variable TwoTheta= 2*theta		//theta of this px, py with tilts
@@ -6389,7 +6413,7 @@ end
 
 Function NI2T_CalculateGammaWithTilts(px,py)		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	variable  px, py
-	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	STRUCT NikadetectorGeometry d
 	
 		NI2T_ReadOrientationFromGlobals(d)
@@ -6404,7 +6428,7 @@ end
 Function NI2T_pixelGamma(d,px,py)				// returns 2-theta (rad)
 	STRUCT NikadetectorGeometry &d
 	Variable px,py									// pixel position, 0 based, first pixel is (0,0), NOT (1,1)
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	make/FREE/N=3 ki
 	make/FREE/N=3 kout
 	ki = {0,0,1}									//	ki =   ki[p],  incident beam direction
@@ -6429,7 +6453,7 @@ Function NI2T_pixel3XYZ(d,px,py,xyz)					// convert pixel position to the beamli
 	STRUCT NikadetectorGeometry, &d
 	Variable px,py									// pixel position on detector (full chip & zero based)
 	Wave xyz											// 3-vector to receive the result, position in beam line coords (micron)
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Variable xp,yp, zp									// x' and y' (requiring z'=0), detector starts centered on origin and perpendicular to z-axis
 	//d.P[0] is Beam center x position in pixels
 	//d.P[1] is Beam center y position in pixels
@@ -6457,6 +6481,7 @@ End
 Function NI2T_CalculateThetaWithTilts2(px,py)		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	variable  px, py
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	STRUCT NikadetectorGeometry d
 //	NI2T_LoadStructure(d)
 	NI2T_ReadOrientationFromGlobals(d)
@@ -6471,6 +6496,7 @@ end
 Function NI2T_CalculateThetaWithTilts(px,py,resetParameters)		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	variable  px, py, resetParameters
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	STRUCT NikadetectorGeometry d
 	
 	if(resetParameters&&px==0&&py==0)					//read default parameters from defaults 
@@ -6559,6 +6585,7 @@ EndStructure
 
 Function NI2T_InitTiltCorrection()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:
 	NewDataFolder/O root:Packages							// ensure Packages exists
@@ -6646,6 +6673,7 @@ End
 Function NI2T_ReadOrientationFromGlobals(d)						// sets d to the reference orientation based on user values
 	STRUCT NikadetectorGeometry &d
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Wave/Z CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	Wave/Z BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	variable NumPixX, NumPixY
@@ -6698,6 +6726,7 @@ end
 Function NI2T_SaveOrientationToGlobals(d)						// sets d to the reference orientation based on user values
 	STRUCT NikadetectorGeometry &d
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Wave/Z CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	Wave/Z BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	variable NumPixX, NumPixY
@@ -6743,6 +6772,7 @@ Function NI2T_DetectorUpdateCalc(d)						// update all internally calculated thi
 		return 1
 	endif
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	Variable Rx, Ry, Rz								// used to make the rotation matrix rho from vector R
 	Variable theta, c, s, c1
 	Variable i
@@ -6774,6 +6804,7 @@ End
 Function NI2T_SaveStructure(d)						//save structure back into string and create it if necessary. 
 	STRUCT NikadetectorGeometry &d	
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	SVAR/Z  strStruct = root:Packages:NikaTiltCorrections:NikaDetectorGeometryStr
 	if(!SVAR_Exists(strStruct))
 		string OldDf=getDataFolder(1)
@@ -6793,6 +6824,7 @@ end
 Function NI2T_LoadStructure(d)					//here we load structure from saved structure in the string... 
 	STRUCT NikadetectorGeometry &d	
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	SVAR/Z strStruct = root:Packages:NikaTiltCorrections:NikaDetectorGeometryStr
 	if(!SVAR_Exists(strStruct))
 		ABort "Structure does not exist. Create it first with Beam center & Calibration tool"
@@ -6812,6 +6844,7 @@ end
 Function NI2t_printDetectorStructure(d)							// print the details for passed detector geometry to the history window
 	STRUCT NikadetectorGeometry &d
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	printf "	Nx=%d, Ny=%d			// number of un-binned pixels in detector\r",d.Nx,d.Ny
 	printf "	sizeX=%g, sizeY=%g		// size of detector (mm)\r",(d.sizeX/1000), (d.sizeY/1000)
 	printf "	R = {%.7g, %.7g, %.7g}, a rotation of %.7g¡	// rotation vector\r",d.R[0],d.R[1],d.R[2],sqrt(d.R[0]*d.R[0] + d.R[1]*d.R[1] + d.R[2]*d.R[2])*180/PI
@@ -6843,6 +6876,7 @@ End
 
 Function NI1A_OnLineDataProcessing()	
 	//create global variables 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	String OldDf=GetDataFolder(1)
 	SetDataFOlder root:Packages:Convert2Dto1D
 	NewDataFolder/O/S BckgMonitorParams
@@ -6921,6 +6955,7 @@ end
 Function NI2_BakcgroundCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
@@ -6955,6 +6990,7 @@ End
 Function NI2_BacgroundUpdatesPopMenuProc(pa) : PopupMenuControl
 	STRUCT WMPopupAction &pa
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	switch( pa.eventCode )
 		case 2: // mouse up
 			Variable popNum = pa.popNum
@@ -6985,6 +7021,7 @@ End
 Function NI2_BackgrTaskButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
@@ -7008,6 +7045,7 @@ End
 
 Function StartFolderWatchTask()
 	//Variable numTicks = 5 * 60 // Run every two seconds (120 ticks) 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	NVAR BckgUpdateInterval= root:Packages:Convert2Dto1D:BckgMonitorParams:BckgUpdateInterval
 		CtrlNamedBackground MonitorDataFolder, period=BckgUpdateInterval*60, proc=NI2_MonitorFldrBackground 
 		CtrlNamedBackground MonitorDataFolder, start
@@ -7022,6 +7060,7 @@ End
 //*************************************************************************************************
 
 Function StopFolderWatchTask()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
    CtrlNamedBackground MonitorDataFolder, stop
 	Printf "FolderWatch background task stopped\r"
 		SVAR BckgStatus = root:Packages:Convert2Dto1D:BckgMonitorParams:BckgStatus
@@ -7038,6 +7077,7 @@ End
 Function NI2_MonitorFldrBackground(s) // This is the function that will be called periodically 
 	STRUCT WMBackgroundStruct &s
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	//this should monitor result of Refresh on the folder and grab the new data set and process it.
 	Wave/T ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	Wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
@@ -7093,274 +7133,171 @@ End
 //*************************************************************************************************
 //*************************************************************************************************
 
-Function NI1A_Export2DData()
+//Function NI1A_Export2DData()
 	//exports 2D calibrated data if user requests it
+//	NEXUS_NikaSave2DCalData()
+//ABort "This belongs to NEXUS package"
+//	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
+//	if(!ExpCalib2DData)
+//		return 0
+//	endif
+//	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
+//	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
+//	NVAR UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
+//	NVAR BeamCenterX=root:Packages:Convert2Dto1D:BeamCenterX
+//	NVAR BeamCenterY=root:Packages:Convert2Dto1D:BeamCenterY
+//	variable XDimension, YDimension
+//	SVAR/Z RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:NX_RebinCal2DDtToPnts
+//	if(!SVAR_Exists(RebinCalib2DDataToPnts))
+//		NEXUS_NikaCall(1)
+//		SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:NX_RebinCal2DDtToPnts		
+//	endif
+//	strswitch(RebinCalib2DDataToPnts)	// string switch
+//		case "100x100":		// execute if case matches expression
+//			XDimension=100
+//			YDimension=100
+//			break					// exit from switch
+//		case "200x200":		// execute if case matches expression
+//			XDimension=200
+//			YDimension=200
+//			break					// exit from switch
+//		case "300x300":		// execute if case matches expression
+//			XDimension=300
+//			YDimension=300
+//			break					// exit from switch
+//		case "400x400":		// execute if case matches expression
+//			XDimension=400
+//			YDimension=400
+//			break					// exit from switch
+//		case "600x600":		// execute if case matches expression
+//			XDimension=600
+//			YDimension=600
+//			break					// exit from switch
+//		default:							// optional default expression executed
+//			XDimension=800
+//			YDimension=800
+//		endswitch
+//	//here we get only if user wants to export 2D calibrated data...
+//	//check the wave of interest exist...
+//	wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
+//	if(!WaveExists(Calibrated2DDataSet))
+//			Abort "Error in NI1A_Export2DData. Calibrated data do not exist..."
+//			return 0
+//	endif
+//	wave/Z Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
+//	if(!WaveExists(Q2DWave))
+//			Abort "Error in NI1A_Export2DData. Q2DWave data do not exist..."
+//			return 0
+//	endif
+//	//check for Mask presence...
+//	if(InclMaskCalib2DData)
+//		Wave/Z Mask = root:Packages:Convert2Dto1D:M_ROIMask
+//		if(!WaveExists(Mask))
+//				Abort "Error in NI1A_Export2DData. Mask data do not exist..."
+//				return 0
+//		endif
+//	endif
+//	Duplicate/Free Calibrated2DDataSet, IntExp2DData
+//	Duplicate/Free Q2DWave, QExp2DData
+//	if(InclMaskCalib2DData)
+//		Duplicate/O Mask, MaskExp2DData
+//		//Igor Mask has 0 where masked, 1 where used. This is opposite (of course) to what Nexus/CanSAS uses:
+//		//Pete:   mask is 1 when the point is removed, 0 when is used. 
+//		//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
+//		MaskExp2DData = !MaskExp2DData
+//	else
+//		Duplicate/Free Q2DWave, MaskExp2DData		//fake for possible rebinning...
+//	endif
+//	Wave AnglesWave= root:Packages:Convert2Dto1D:AnglesWave
+//	Duplicate/Free AnglesWave, AnglesWaveExp
+//
+//	if(RebinCalib2DData)
+//		//here we need to create proper rebinned data
+//		//first need to create UnbinnedQx, and UnbinnedQy
+//		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
+//		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
+//		make/Free/N=(DimSize(QxExp2DData, 0)) UnbinnedQx
+//		make/Free/N=(DimSize(QyExp2DData, 1)) UnbinnedQy
+//		UnbinnedQx = QxExp2DData[BeamCenterX][p]
+//		UnbinnedQy = QyExp2DData[p][BeamCenterY]
+//		NI1A_RebinOnLogScale2DData(IntExp2DData,QExp2DData, AnglesWaveExp, MaskExp2DData, XDimension, YDimension,BeamCenterX, BeamCenterY)
+//		MatrixOp/O MaskExp2DData = ceil(MaskExp2DData)	//any point which had mask in it will be masked, I need to revisit this later, if this works. 
+//	else
+//		//exporting data in their original size. This may be large for SAXS data sets!
+//	endif
+//	//create Qx and Qy if needed, using rebinned data, if these were created.
+//	if(UseQxyCalib2DData)
+//		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
+//		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
+//	endif
+//
+//	//get the file name right...
+//	string LocalUserFileName
+//	string UseName
+//	string LongUseName
+//	SVAR LoadedFile=root:Packages:Convert2Dto1D:FileNameToLoad
+//	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
+//	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
+//	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
+//	NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
+//	NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile	
+//
+//	if(AppendToNexusFile)
+//			UseName=LoadedFile		//this is file we imported, now we need to append to it. 
+//	else
+//		if (Use2DdataName)
+//			UseName=NI1A_TrimCleanDataName(LoadedFile)+".h5"
+//		else
+//			if(strlen(UserFileName)<1)	//user did not set the file name
+//				if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
+//					LocalUserFileName = TempOutputDataname
+//				else
+//					Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
+//					DoPrompt /HELP="Input name for the data to be stored, max 20 characters" "Input name for the 1D data", LocalUserFileName
+//					if(V_Flag)
+//						abort
+//					endif
+//					TempOutputDataname = LocalUserFileName
+//					TempOutputDatanameUserFor = LoadedFile
+//				endif
+//				UseName=NI1A_TrimCleanDataName(LocalUserFileName)+".h5"
+//			else
+//				UseName=NI1A_TrimCleanDataName(UserFileName)+".h5"
+//			endif
+//		endif
+//	endif
+//	if(InclMaskCalib2DData)
+//		if(UseQxyCalib2DData)
+//			if(RebinCalib2DData)
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+//			else
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp)
+//			endif
+//		else
+//			if(RebinCalib2DData)
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+//			else
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
+//			endif
+//		endif
+//	else
+//		if(UseQxyCalib2DData)
+//			if(RebinCalib2DData)
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+//			else
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp)
+//			endif
+//		else
+//			if(RebinCalib2DData)
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
+//			else
+//				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
+//			endif
+//		endif	
+//	endif
+//end
 
-	NVAR ExpCalib2DData=root:Packages:Convert2Dto1D:ExpCalib2DData
-	if(!ExpCalib2DData)
-		return 0
-	endif
-	NVAR RebinCalib2DData=root:Packages:Convert2Dto1D:RebinCalib2DData
-	NVAR InclMaskCalib2DData=root:Packages:Convert2Dto1D:InclMaskCalib2DData
-	NVAR UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
-	NVAR BeamCenterX=root:Packages:Convert2Dto1D:BeamCenterX
-	NVAR BeamCenterY=root:Packages:Convert2Dto1D:BeamCenterY
-	variable XDimension, YDimension
-	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-	strswitch(RebinCalib2DDataToPnts)	// string switch
-		case "100x100":		// execute if case matches expression
-			XDimension=100
-			YDimension=100
-			break					// exit from switch
-		case "200x200":		// execute if case matches expression
-			XDimension=200
-			YDimension=200
-			break					// exit from switch
-		case "300x300":		// execute if case matches expression
-			XDimension=300
-			YDimension=300
-			break					// exit from switch
-		case "400x400":		// execute if case matches expression
-			XDimension=400
-			YDimension=400
-			break					// exit from switch
-		case "600x600":		// execute if case matches expression
-			XDimension=600
-			YDimension=600
-			break					// exit from switch
-		default:							// optional default expression executed
-			XDimension=800
-			YDimension=800
-		endswitch
-	//here we get only if user wants to export 2D calibrated data...
-	//check the wave of interest exist...
-	wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
-	if(!WaveExists(Calibrated2DDataSet))
-			Abort "Error in NI1A_Export2DData. Calibrated data do not exist..."
-			return 0
-	endif
-	wave/Z Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
-	if(!WaveExists(Q2DWave))
-			Abort "Error in NI1A_Export2DData. Q2DWave data do not exist..."
-			return 0
-	endif
-	//check for Mask presence...
-	if(InclMaskCalib2DData)
-		Wave/Z Mask = root:Packages:Convert2Dto1D:M_ROIMask
-		if(!WaveExists(Mask))
-				Abort "Error in NI1A_Export2DData. Mask data do not exist..."
-				return 0
-		endif
-	endif
-	Duplicate/Free Calibrated2DDataSet, IntExp2DData
-	Duplicate/Free Q2DWave, QExp2DData
-	if(InclMaskCalib2DData)
-		Duplicate/O Mask, MaskExp2DData
-		//Igor Mask has 0 where masked, 1 where used. This is opposite (of course) to what Nexus/CanSAS uses:
-		//Pete:   mask is 1 when the point is removed, 0 when is used. 
-		//MatrixOp/O/NTHR=0 MaskExp2DData = abs(MaskExp2DData-1)
-		MaskExp2DData = !MaskExp2DData
-	else
-		Duplicate/Free Q2DWave, MaskExp2DData		//fake for possible rebinning...
-	endif
-	Wave AnglesWave= root:Packages:Convert2Dto1D:AnglesWave
-	Duplicate/Free AnglesWave, AnglesWaveExp
 
-	if(RebinCalib2DData)
-		//here we need to create proper rebinned data
-		//first need to create UnbinnedQx, and UnbinnedQy
-		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
-		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
-		make/Free/N=(DimSize(QxExp2DData, 0)) UnbinnedQx
-		make/Free/N=(DimSize(QyExp2DData, 1)) UnbinnedQy
-		UnbinnedQx = QxExp2DData[BeamCenterX][p]
-		UnbinnedQy = QyExp2DData[p][BeamCenterY]
-		NI1A_RebinOnLogScale2DData(IntExp2DData,QExp2DData, AnglesWaveExp, MaskExp2DData, XDimension, YDimension,BeamCenterX, BeamCenterY)
-		MatrixOp/O MaskExp2DData = ceil(MaskExp2DData)	//any point which had mask in it will be masked, I need to revisit this later, if this works. 
-	else
-		//exporting data in their original size. This may be large for SAXS data sets!
-	endif
-	//create Qx and Qy if needed, using rebinned data, if these were created.
-	if(UseQxyCalib2DData)
-		MatrixOp/Free QxExp2DData = QExp2DData * sin(AnglesWaveExp)
-		MatrixOp/Free QyExp2DData = QExp2DData * cos(AnglesWaveExp)
-	endif
-
-	//get the file name right...
-	string LocalUserFileName
-	string UseName
-	string LongUseName
-	SVAR LoadedFile=root:Packages:Convert2Dto1D:FileNameToLoad
-	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
-	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
-	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
-	NVAR Use2DdataName=root:Packages:Convert2Dto1D:Use2DdataName
-	NVAR AppendToNexusFile=root:Packages:Convert2Dto1D:AppendToNexusFile	
-
-	if(AppendToNexusFile)
-			UseName=LoadedFile		//this is file we imported, now we need to append to it. 
-	else
-		if (Use2DdataName)
-			UseName=NI1A_TrimCleanDataName(LoadedFile)+".h5"
-		else
-			if(strlen(UserFileName)<1)	//user did not set the file name
-				if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
-					LocalUserFileName = TempOutputDataname
-				else
-					Prompt LocalUserFileName, "No name for this sample selected, data name is "+ LoadedFile
-					DoPrompt /HELP="Input name for the data to be stored, max 20 characters" "Input name for the 1D data", LocalUserFileName
-					if(V_Flag)
-						abort
-					endif
-					TempOutputDataname = LocalUserFileName
-					TempOutputDatanameUserFor = LoadedFile
-				endif
-				UseName=NI1A_TrimCleanDataName(LocalUserFileName)+".h5"
-			else
-				UseName=NI1A_TrimCleanDataName(UserFileName)+".h5"
-			endif
-		endif
-	endif
-	if(InclMaskCalib2DData)
-		if(UseQxyCalib2DData)
-			if(RebinCalib2DData)
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
-			else
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, Mask=MaskExp2DData, AzimAngles=AnglesWaveExp)
-			endif
-		else
-			if(RebinCalib2DData)
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
-			else
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Mask=MaskExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
-			endif
-		endif
-	else
-		if(UseQxyCalib2DData)
-			if(RebinCalib2DData)
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
-			else
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData, Qx=QxExp2DData, Qy=QyExp2DData, AzimAngles=AnglesWaveExp)
-			endif
-		else
-			if(RebinCalib2DData)
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp,UnbinnedQx=UnbinnedQx,UnbinnedQy=UnbinnedQy)
-			else
-				NI1A_WriteHdf52DCanSASData(AppendToNexusFile, UseName, IntExp2DData,Qwv=QExp2DData, AzimAngles=AnglesWaveExp)
-			endif
-		endif	
-	endif
-end
-
-
-//*************************************************************************************************
-//*************************************************************************************************
-//*************************************************************************************************
-
-
-Function NI1A_RebinOnLogScale2DData(Calibrated2DData,Qmatrix, AnglesWave, Mask, XDimension, YDimension,BeamCenterX, BeamCenterY)
-	wave Calibrated2DData,Qmatrix, AnglesWave, Mask
-	variable XDimension, YDimension, BeamCenterX, BeamCenterY
-	//here we rebin the data using fake log binning and return really weird data
-	//how to rebin the data.
-	variable Dim1=DimSize(Calibrated2DData, 0 )		//this is hwo many points we have here. 
-	variable Dim2=DimSize(Calibrated2DData, 1)		//this is hwo many points we have here. 
-	//assume this is X, so here is how much user wants: XDimension, beam center is BeamCenterX
-	variable distance1, distance2
-	distance1 = (Dim1 - BeamCenterX)
-	distance2 = BeamCenterX
-	//this way distance1+distance2 = Dim1
-	variable Rebin1, Rebin2
-	Rebin1 = ceil(XDimension * distance1/Dim1)
-	Rebin2 = ceil(XDimension * distance2/Dim1)
-	//now we need to spread around points correctly... N is original number of points, M is output number of points. 
-	//average in each M point is N/M, so M array starts from 1 and goes to 2*N/M - 1, use Round to have the values integers.
-	Make/Free/N=(ceil(Rebin1)) Rebin1Wv, Rebin2Wv
-	Rebin1Wv = round(1+p/(Rebin1-1) * ((2*distance1/Rebin1)-2))
-	Rebin2Wv = round(1+p/(Rebin2-1) * ((2*distance2/Rebin2)-2))
-	//now rebinning...
-	make/Free/N=(XDimension,Dim2) CalDataRebin1, QmatrixRebin1, MaskRebin1,AnglesRebin1
-	variable i, j, ii, jj, iii
-	ii = -1
-	jj = BeamCenterX
-	For(i=ceil(BeamCenterX*XDimension/Dim1);i<XDimension;i+=1)
-		ii+=1
-		FOr(j=0;j<Rebin1Wv[ii];j+=1)
-			CalDataRebin1[i][] += Calibrated2DData[j+jj][q]
-			QmatrixRebin1[i][] += Qmatrix[j+jj][q]
-			AnglesRebin1[i][] += AnglesWave[j+jj][q]
-			MaskRebin1[i][] 	+= Mask[j+jj][q]
-		endfor
-		CalDataRebin1[i][]/=Rebin1Wv[ii]
-		QmatrixRebin1[i][]/=Rebin1Wv[ii]
-		AnglesRebin1[i][]/=Rebin1Wv[ii]
-		MaskRebin1[i][]/=Rebin1Wv[ii]
-		jj += Rebin1Wv[ii]
-	endfor
-	//now the other side
-	ii = -1
-	jj = BeamCenterX
-	For(i=floor(BeamCenterX*XDimension/Dim1);i>=0;i-=1)
-		ii+=1
-		FOr(j=0;j<Rebin2Wv[ii];j+=1)
-			CalDataRebin1[i][] += Calibrated2DData[jj-j][q]
-			QmatrixRebin1[i][] += Qmatrix[jj-j][q]
-			AnglesRebin1[i][] += AnglesWave[jj-j][q]
-			MaskRebin1[i][] += Mask[jj-j][q]
-		endfor
-		CalDataRebin1[i][]/=Rebin2Wv[ii]
-		QmatrixRebin1[i][]/=Rebin2Wv[ii]
-		AnglesRebin1[i][]/=Rebin2Wv[ii]
-		MaskRebin1[i][]/=Rebin2Wv[ii]
-		jj -= Rebin2Wv[ii]
-	endfor
-	//now the other dimension
-	distance1 = (Dim2 - BeamCenterY)
-	distance2 = BeamCenterY
-	Rebin1 = ceil(YDimension * distance1/Dim2)
-	Rebin2 = ceil(YDimension * distance2/Dim2)
-	Make/Free/N=(ceil(Rebin2)) Rebin1Wv2, Rebin2Wv2
-	Rebin1Wv2 = round(1+p/(Rebin1-1) * ((2*distance1/Rebin1)-2))
-	Rebin2Wv2 = round(1+p/(Rebin2-1) * ((2*distance2/Rebin2)-2))
-	make/Free/N=(XDimension,YDimension) CalDataRebin2, QmatrixRebin2, MaskRebin2, AnglesRebin2
-	ii = -1
-	jj = BeamCenterY
-	For(i=ceil(BeamCenterY*YDimension/Dim2);i<YDimension;i+=1)
-		ii+=1
-		FOr(j=0;j<Rebin1Wv2[ii];j+=1)
-			CalDataRebin2[][i] += CalDataRebin1[p][j+jj]
-			QmatrixRebin2[][i] += QmatrixRebin1[p][j+jj]
-			AnglesRebin2[][i] += AnglesRebin1[p][j+jj]
-			MaskRebin2[][i] 	+= MaskRebin1[p][j+jj]
-		endfor
-		CalDataRebin2[][i]/=Rebin1Wv2[ii]
-		QmatrixRebin2[][i]/=Rebin1Wv2[ii]
-		AnglesRebin2[][i]/=Rebin1Wv2[ii]
-		MaskRebin2[][i]/=Rebin1Wv2[ii]
-		jj += Rebin1Wv2[ii]
-	endfor
-	//now the other side
-	ii = -1
-	jj = BeamCenterY
-	For(i=floor(BeamCenterY*YDimension/Dim1);i>=0;i-=1)
-		ii+=1
-		FOr(j=0;j<Rebin2Wv2[ii];j+=1)
-			CalDataRebin2[][i] += CalDataRebin1[p][jj-j]
-			QmatrixRebin2[][i] += QmatrixRebin1[p][jj-j]
-			AnglesRebin2[][i] += AnglesRebin1[p][jj-j]
-			MaskRebin2[][i] += MaskRebin1[p][jj-j]
-		endfor
-		CalDataRebin2[][i]/=Rebin2Wv2[ii]
-		QmatrixRebin2[][i]/=Rebin2Wv2[ii]
-		AnglesRebin2[][i]/=Rebin2Wv2[ii]
-		MaskRebin2[][i]/=Rebin2Wv2[ii]
-		jj -= Rebin2Wv2[ii]
-	endfor	
-	Duplicate/O CalDataRebin2,Calibrated2DData
-	Duplicate/O QmatrixRebin2,Qmatrix
-	Duplicate/O AnglesRebin2,AnglesWave
-	Duplicate/O MaskRebin2,Mask
-end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
@@ -7370,18 +7307,19 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
-	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-	SVAR Calib2DDataOutputFormat =root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
+//	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+//	SVAR Calib2DDataOutputFormat =root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
 
-	if(StringMatch(ctrlName,"Calib2DDataOutputFormat"))
-		Calib2DDataOutputFormat = popStr
-	endif
-	if(StringMatch(ctrlName,"RebinCalib2DData"))
-		RebinCalib2DDataToPnts = popStr
-	endif
+//	if(StringMatch(ctrlName,"Calib2DDataOutputFormat"))
+//		Calib2DDataOutputFormat = popStr
+//	endif
+//	if(StringMatch(ctrlName,"RebinCalib2DData"))
+//		RebinCalib2DDataToPnts = popStr
+//	endif
 
 	if(cmpstr(ctrlName,"Select2DDataType")==0)
 		//set appropriate extension
@@ -7399,11 +7337,16 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			NI1_ESRFEdfLoaderPanelFnct()
 		endif	
 		if(cmpstr(popStr,"Nexus")==0)
-			NEXUS_Initialize(0)
+			NEXUS_NikaCall(1)
 			NVAR NX_InputFileIsNexus=root:Packages:Irena_Nexus:NX_InputFileIsNexus
 			NX_InputFileIsNexus = 1
-			NEXUS_ConfigurationPanelFnct()
+		else
+			NVAR/Z NX_InputFileIsNexus=root:Packages:Irena_Nexus:NX_InputFileIsNexus
+			if(NVAR_Exists(NX_InputFileIsNexus))
+				NX_InputFileIsNexus = 0
+			endif
 		endif	
+		NEXUS_NikaCall(0)
 		CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData && StringMatch(DataFileExtension, "canSAS/Nexus"))
 	endif
 	if(cmpstr(ctrlName,"SelectBlank2DDataType")==0)
@@ -7423,11 +7366,11 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
 		DataCalibrationString = popStr
 	endif
-	if(cmpstr(ctrlName,"RebinCalib2DDataToPnts")==0)
-		//set appropriate extension
-		SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-		RebinCalib2DDataToPnts = popStr
-	endif
+//	if(cmpstr(ctrlName,"RebinCalib2DDataToPnts")==0)
+//		//set appropriate extension
+//		SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
+//		RebinCalib2DDataToPnts = popStr
+//	endif
 
 	if(cmpstr(ctrlName,"FIlesSortOrder")==0)
 		NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
@@ -7478,6 +7421,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		NI1A_TabProc("",6)
 	endif
 
+	DoWIndow/F NEXUS_ConfigurationPanel
 	DoWIndow/F NI1A_Convert2Dto1DPanel
 	DoWIndow/F NI_GBLoaderPanel
 	DoWIndow/F NI_PilatusLoaderPanel

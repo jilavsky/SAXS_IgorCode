@@ -591,7 +591,7 @@ end
 
 Function IR3D_MergeDataSetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
-
+	
 	variable tempP
 	switch( sva.eventCode )
 		case 1: // mouse up

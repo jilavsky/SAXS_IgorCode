@@ -1,10 +1,10 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.02
+#pragma version=1.03
 #include <Multi-peak fitting 2.0>
 
 //local configurations
 Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
-constant IR3WversionNumber = 0.3		//Diffraction panel version number
+constant IR3WversionNumber = 0.4		//Diffraction panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 0.3		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.04 change LauGo calculate method to import of xml PDF-4+ cards. 
 //1.02 fix error when IR3W_WAXSMainGraph is not top graph window and user tries to add/replace the data in it. 
 //1.01 fixes for energy/wavelength handling when lookup in the wave note fails
 //0.31 removed eps data for now, they were incorrect. 
@@ -181,7 +182,7 @@ Proc IR3W_WAXSPanel()
 	Button PDF4UpdateList, pos={300,425}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
 
 	Button PDF4ExportImport, pos={300,450}, size={200,20}, title="Export/Import/Delete PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
-	Button PDF4AddFromLaueGo, pos={300,475}, size={200,20}, title="Calculate PDF card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
+	Button PDF4ImportPDF4xml, pos={300,475}, size={200,20}, title="Import PDF-4+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
 	Button PDF4AddManually, pos={300,500}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
 
 	DrawText 4,680,"Double click to add data to graph."
@@ -231,7 +232,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				TitleBox Info2, win=IR3W_WAXSPanel, disable=(tab!=1)
 				ListBox PDF4CardsSelection, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4AddManually, win=IR3W_WAXSPanel, disable=(tab!=1)
-				Button PDF4AddFromLaueGo, win=IR3W_WAXSPanel, disable=(tab!=1)
+				Button PDF4ImportPDF4xml, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4UpdateList, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4ExportImport, win=IR3W_WAXSPanel, disable=(tab!=1)			
 				Checkbox PDF4_DisplayHKLTags, win=IR3W_WAXSPanel, disable=(tab!=1)
@@ -1390,8 +1391,10 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				IR3W_PDF4AddManually()
 				IR3W_UpdatePDF4OfAvailFiles()
 			endif
-			if(stringmatch(ba.ctrlname,"PDF4AddFromLaueGo"))
-				IR3W_PDF4AddFromLaueGo()
+			if(stringmatch(ba.ctrlname,"PDF4ImportPDF4xml"))
+				IR3W_ImportPDF4xmlFile()
+				//IR3W_PDF4AddFromLaueGo()
+				IR3W_UpdatePDF4OfAvailFiles()
 			endif
 			if(stringmatch(ba.ctrlname,"PDF4UpdateList"))
 				IR3W_UpdatePDF4OfAvailFiles()
@@ -2201,7 +2204,7 @@ end
 //**************************************************************************************
 
 Function IR3W_PDF4AddManually()
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
 	string OldDf=GetDataFolder(1)
 	string NewCardFullName
 	DoWIndow JCPDS_Input
@@ -2267,6 +2270,203 @@ Function IR3W_PDF4AddManually()
 	ModifyTable showParts=0xFD
 	
 	setDataFolder OldDf
+end
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3W_ImportPDF4xmlFile()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	string OldDf=GetDataFolder(1)
+	string NewCardFullName
+	DoWIndow JCPDS_Input
+	if(V_Flag)
+		DoWIndow/K JCPDS_Input
+	endif
+	NewDataFolder/O/S root:WAXS_PDF
+	//Get the file to read:
+	variable fileID
+	Open/D/A/T=".xml"/M="Find xml file exported from PDF-4+ databse" fileID
+	String PathToFile = S_fileName
+	string pdfNumber
+	pdfNumber = IR3W_ReadXMLJCPDSCard(PathToFile)
+	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
+	DeleteCardName="---"
+	OldCardName = "---"
+	NewCardNumber = pdfNumber
+	NewCardName=StringFromList(0,StringFromList(ItemsInList(PathToFile,":")-1, PathToFile, ":"),".")+" "+pdfNumber
+	NewCardNote =""
+	Prompt OldCardName, "Select existing card to overwrite", popup "---;"+IR3W_PDF4CreateListOfCards()
+	Prompt NewCardName, "Enter new card name, e.g. Corundum"
+	DoPrompt "Overwrite existing card or Create new card? " OldCardName, NewCardName//, NewCardNote
+	if(V_Flag)
+		DoWIndow JCPDS_Input
+		if(V_Flag)
+			DoWIndow/K JCPDS_Input
+		endif
+		KillDataFolder root:Packages:Irena_JCPDSImport:
+		setDataFolder OldDf
+		return 0
+	endif
+	if(stringmatch(OldCardName,"---"))
+		NewCardFullName=((NewCardName)[0,23])
+		if(CheckName(NewCardFullName,1)!=0)
+			DoWIndow JCPDS_Input
+			if(V_Flag)
+				DoWIndow/K JCPDS_Input
+			endif
+			KillDataFolder root:Packages:Irena_JCPDSImport:
+			setDataFolder OldDf
+			DoAlert 0, "Not unique name"	
+			return 0
+		endif
+		wave NewCard  = root:Packages:Irena_JCPDSImport:NewCard
+		wave/T NewCard_hkl  = root:Packages:Irena_JCPDSImport:NewCard_hklStr
+		Duplicate NewCard, $(NewCardFullName)
+		Duplicate NewCard_hkl, $(NewCardFullName+"_hklStr")
+		Wave NewCard= $(NewCardFullName)
+		SetDimLabel 1,0,d_A,NewCard
+		SetDimLabel 1,1,h,NewCard
+		SetDimLabel 1,2,k,NewCard
+		SetDimLabel 1,3,l,NewCard
+		SetDimLabel 1,4,theta,NewCard
+		SetDimLabel 1,5,F2,NewCard
+		SetDimLabel 1,6,Intensity,NewCard
+		SetDimLabel 1,7,mult,NewCard
+	elseif(!stringmatch(OldCardName,"---"))
+		NewCardFullName=OldCardName
+		wave NewCard  = root:Packages:Irena_JCPDSImport:NewCard
+		WAVE/T NewCard_hkl  = root:Packages:Irena_JCPDSImport:NewCard_hklStr
+		Duplicate/O NewCard, $(NewCardFullName)
+		Duplicate/O NewCard_hkl, $(NewCardFullName+"_hklStr")
+		Wave NewCard= $(NewCardFullName)
+	else
+		Print "Could not figure out what to do..."
+	endif
+	KillDataFOlder/Z root:Packages:Irena_JCPDSImport
+	Edit/K=1/W=(351,213,873,819) NewCard
+	DoWindow/C/R JCPDS_Input
+	ModifyTable format(Point)=1
+	ModifyTable horizontalIndex=2
+	ModifyTable showParts=0xFD
+	
+	setDataFolder OldDf
+end
+//**************************************************************************************
+//**************************************************************************************
+
+static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
+	string PathToDataFull
+
+	DFREF saveDFR = GetDataFolderDFR()		// Save
+	variable fileID, tempV1
+	string pdfNumber
+	string ContentTemp, CurNSnode, tempStr
+	Open/R/T=".xml"/Z fileID as PathToDataFull
+	if(V_Flag!=0)
+		Abort "Path or the file was not found"
+	endif
+	close fileID
+	//OK, now the file should exist... 
+	//check for xop presence and throw error if not present. 
+#if Exists("xmlopenfile")
+	//create 
+	NewDataFolder/O/S root:Packages
+	KillDataFolder/Z root:Packages:Irena_JCPDSImport
+	NewDataFolder/O/S root:Packages:Irena_JCPDSImport	
+	fileID = xmlopenfile(PathToDataFull)
+	//XMLdocDump(fileID)
+	XMLelemlist(fileID)
+	Wave/T W_ElementList
+	//XMLlistAttr(fileID,"/pdfcard/graphs/stick_series","")
+	//string COntent = XMLstrfmXPath(fileID,"/pdfcard/graphs/stick_series","","")
+	//XMLlistXpath(fileID,"/pdfcard/graphs/stick_series","")
+	//XMLwaveFmXpath(fileID,"/pdfcard/graphs/stick_series",""," \n\r\t")
+	//first need to check that this is xml file we can read, let's assume the /pdfcard/pdf_data must exist
+	//and "Applicationname" should be matching PDF-4+
+	CUrNSnode = "/pdfcard/pdf_data"
+	if(IR3W_ReadXMLJCPDSFindNode(W_ElementList,CUrNSnode) >=0)
+		//the path eexists, so we need to get theattributes wave...
+		XMLlistAttr(fileID,CUrNSnode,"")
+		Wave/T M_listAttr
+		tempV1=IR3W_ReadXMLJCPDSFindNode(M_listAttr,"/pdfcard/pdf_data")
+		if(tempV1>=0)		//those node found
+			tempStr = M_listAttr[tempV1][2]
+			if(!stringmatch(tempStr,"*PDF-4+*"))
+				Abort "Unknown pdf data card format, send example to Jan for update to code to be able to read it."
+			endif
+		endif	
+	else
+		Abort "Unknown pdf data card format, send example to Jan for update to code to be able to read it."
+	endif
+	//now that looks like ths is correct PDF-4+ card we had example of, let's read it. 
+		make/O/N=(50,8) NewCard
+		make/O/T/N=(50) NewCard_hklStr
+		Wave NewCard
+		SetDimLabel 1,0,d_A,NewCard
+		SetDimLabel 1,1,h,NewCard
+		SetDimLabel 1,2,k,NewCard
+		SetDimLabel 1,3,l,NewCard
+		SetDimLabel 1,4,theta,NewCard
+		SetDimLabel 1,5,F2,NewCard
+		SetDimLabel 1,6,Intensity,NewCard
+		SetDimLabel 1,7,mult,NewCard
+	//this is now target where ot store various numbers from JCPDS card.
+	variable i, continueLoop
+	i=0
+	continueLoop = 1
+	pdfNumber = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/pdf_number","","")
+	DO
+		i+=1
+		tempStr = "/pdfcard/graphs/stick_series/intensity["+num2str(i)+"]"
+		if(IR3W_ReadXMLJCPDSFindNode(W_ElementList,tempStr)>0)
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/da","","")
+			NewCard[i-1][0] = str2num(ContentTemp)
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/intensity","","")
+			NewCard[i-1][6] = str2num(ContentTemp)
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/h","","")
+			NewCard[i-1][1] = str2num(ContentTemp)
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/k","","")
+			NewCard[i-1][2] = str2num(ContentTemp)
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/l","","")
+			NewCard[i-1][3] = str2num(ContentTemp)
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/F","","")
+			NewCard[i-1][5] = (str2num(ContentTemp))^2
+			ContentTemp = XMLstrFmXpath(fileID,tempStr+"/theta","","")
+			NewCard[i-1][4] = str2num(ContentTemp)
+			//ContentTemp = XMLstrFmXpath(fileID,tempStr+"/t","","")
+			NewCard[i-1][7] = NaN
+		else
+			continueLoop=0
+		endif	
+	
+	while(i<500 && continueLoop)
+	Redimension/N=(i-1,-1) NewCard, NewCard_hklStr
+	NewCard_hklStr[p] = "("+num2str(NewCard[p][1])+num2str(NewCard[p][2])+num2str(NewCard[p][3])+")"
+	xmlclosefile(fileID,0)	
+#else
+	DoAlert 0, "Needed XMLUtils.xop or XMLutils-64.xop is not present"
+#endif
+	SetDataFolder saveDFR		// and restore
+	return pdfNumber
+end
+//**************************************************************************************
+//**************************************************************************************
+
+static Function IR3W_ReadXMLJCPDSFindNode(ElemListWave,NodeStr)
+	wave/T ElemListWave
+	string NodeStr
+	variable ReturnMe = -1
+	variable i
+	For(i=0;i<dimsize(ElemListWave,0);i+=1)
+		if(stringmatch(ElemListWave[i][0], NodeStr))
+			return i
+		endif
+	endfor	
+	return ReturnMe
 end
 //**************************************************************************************
 //**************************************************************************************
@@ -2919,78 +3119,78 @@ end
 //**************************************************************************************
 //**************************************************************************************
 //				LAUEGO part
-//**************************************************************************************
-//**************************************************************************************
-
-Function IR3W_PDF4AddFromLaueGo()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
-	String OldDf=GetDataFolder(1)
-	NewDataFolder/O/S root:WAXS_PDF 
-	
-	DoWindow LatticeSet
-	if(V_Flag)		//already opened...
-		DoWIndow/F LatticeSet
-	else				//no window, let/s open it.
-		variable isLaueGoLoaded = IR3W_CheckOrLoadForLaueGo()
-		if(isLaueGoLoaded<1)
-			setDataFolder OldDf
-			return 0
-		endif
-	endif
-end
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-
-static Function IR3W_CheckOrLoadForLaueGo()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
-	if(exists("MakeLatticeParametersPanel"))		//aleready loaded...	
-		Execute "MakeLatticeParametersPanel(\"\")"
-		return 1
-	elseif(exists("microMenuShowN")==6)			//one of LaueGoFirst.ipf package functions exists, so LaueGoFirst.ipf is loaded, should be easy to do...
-			Execute/P "INSERTINCLUDE  \"LatticeSym\", version>=3.77";Execute/P "COMPILEPROCEDURES ";Execute/P "InitLatticeSymPackage(showPanel=1)"
-			return 1
-	else		//not included yet, need to find, if it exists or give instructions...
-		IR3W_LaueGoProgressPanelF() 
-		IR3W_ListIgorProcFiles()
-		IR3W_ListUserProcFiles()
-		Wave/T FileNames = root:Packages:UseProcedureFiles:FileNames
-		make/FREE/T/N=0 TestedNames
-		//string MatchedList 
-		Grep/E="LaueGoFirst" FileNames as TestedNames
-		KillDataFolder root:Packages:UseProcedureFiles:
-		DoWIndow/K IR3W_LaueGoProgressPanel
-		
-		if(numpnts(TestedNames)>0)
-			//found the package, assume LaueGo can be loaded. This may still fail, but I have not better way to check here. 
-			Execute/P "INSERTINCLUDE  \"LatticeSym\", version>=3.77";Execute/P "COMPILEPROCEDURES ";Execute/P "InitLatticeSymPackage(showPanel=1)"
-			return 1
-		else
-			DoAlert 0, "LaueGo not available. Go to http://sector34.xray.aps.anl.gov/~tischler/ and download LaueGo_install.ipf. Install LaueGo using this file and come back to this exeriment. "
-			saveExperiment
-			return 0
-		endif
-	endif
-end
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//********
-Function IR3W_LaueGoProgressPanelF() : Panel
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
-	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(593,358,1039,435) as "Checking for LaueGo Presence"
-	DoWindow/C IR3W_LaueGoProgressPanel
-	SetDrawLayer UserBack
-	SetDrawEnv fstyle= 3,textrgb= (0,0,65535)
-	DrawText 21,28,"\\Z18Checking for presence of LayeGo Package"
-	DrawText 30,57,"\\Z18 . . .     working   ..."
-EndMacro
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
+////**************************************************************************************
+////**************************************************************************************
+//
+//Function IR3W_PDF4AddFromLaueGo()
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//	String OldDf=GetDataFolder(1)
+//	NewDataFolder/O/S root:WAXS_PDF 
+//	
+//	DoWindow LatticeSet
+//	if(V_Flag)		//already opened...
+//		DoWIndow/F LatticeSet
+//	else				//no window, let/s open it.
+//		variable isLaueGoLoaded = IR3W_CheckOrLoadForLaueGo()
+//		if(isLaueGoLoaded<1)
+//			setDataFolder OldDf
+//			return 0
+//		endif
+//	endif
+//end
+//
+////**********************************************************************************************************
+////**********************************************************************************************************
+////**********************************************************************************************************
+//
+//static Function IR3W_CheckOrLoadForLaueGo()
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//	if(exists("MakeLatticeParametersPanel"))		//aleready loaded...	
+//		Execute "MakeLatticeParametersPanel(\"\")"
+//		return 1
+//	elseif(exists("microMenuShowN")==6)			//one of LaueGoFirst.ipf package functions exists, so LaueGoFirst.ipf is loaded, should be easy to do...
+//			Execute/P "INSERTINCLUDE  \"LatticeSym\", version>=3.77";Execute/P "COMPILEPROCEDURES ";Execute/P "InitLatticeSymPackage(showPanel=1)"
+//			return 1
+//	else		//not included yet, need to find, if it exists or give instructions...
+//		IR3W_LaueGoProgressPanelF() 
+//		IR3W_ListIgorProcFiles()
+//		IR3W_ListUserProcFiles()
+//		Wave/T FileNames = root:Packages:UseProcedureFiles:FileNames
+//		make/FREE/T/N=0 TestedNames
+//		//string MatchedList 
+//		Grep/E="LaueGoFirst" FileNames as TestedNames
+//		KillDataFolder root:Packages:UseProcedureFiles:
+//		DoWIndow/K IR3W_LaueGoProgressPanel
+//		
+//		if(numpnts(TestedNames)>0)
+//			//found the package, assume LaueGo can be loaded. This may still fail, but I have not better way to check here. 
+//			Execute/P "INSERTINCLUDE  \"LatticeSym\", version>=3.77";Execute/P "COMPILEPROCEDURES ";Execute/P "InitLatticeSymPackage(showPanel=1)"
+//			return 1
+//		else
+//			DoAlert 0, "LaueGo not available. Go to http://sector34.xray.aps.anl.gov/~tischler/ and download LaueGo_install.ipf. Install LaueGo using this file and come back to this exeriment. "
+//			saveExperiment
+//			return 0
+//		endif
+//	endif
+//end
+////**********************************************************************************************************
+////**********************************************************************************************************
+////**********************************************************************************************************
+////********
+//Function IR3W_LaueGoProgressPanelF() : Panel
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//	PauseUpdate; Silent 1		// building window...
+//	NewPanel /K=1/W=(593,358,1039,435) as "Checking for LaueGo Presence"
+//	DoWindow/C IR3W_LaueGoProgressPanel
+//	SetDrawLayer UserBack
+//	SetDrawEnv fstyle= 3,textrgb= (0,0,65535)
+//	DrawText 21,28,"\\Z18Checking for presence of LayeGo Package"
+//	DrawText 30,57,"\\Z18 . . .     working   ..."
+//EndMacro
+//
+////**********************************************************************************************************
+////**********************************************************************************************************
+////**********************************************************************************************************
 //********
 static Function IR3W_ListIgorProcFiles()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))

@@ -463,8 +463,8 @@ Function IN2_AboutPanel()
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.3+ & 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ Jan Ilavsky, 2016"
-	DrawText 49,103,"release 1.89 from 6/29/2016"
+	DrawText 52,64,"@ Jan Ilavsky, 2017"
+	DrawText 49,103,"release 1.90beta from 1/12/2017"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end

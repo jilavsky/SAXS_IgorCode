@@ -840,7 +840,7 @@ static Function/T H5GW__addPathXref(parentFolder, base_name, hdf5Path, igorPath,
 	String hdf5 = "", path = ""
 	for (ii = 0; ii < length; ii = ii + 1)
 		hdf5 = H5GW__appendPathDelimiter(hdf5, "/") + StringFromList(ii, hdf5Path, "/")
-		path = H5GW__appendPathDelimiter(path, ":") + StringFromList(ii, igorPath, ":")
+		path = H5GW__appendPathDelimiter(path, ":") + PossiblyQuoteName(StringFromList(ii, igorPath, ":"))
 		if ( strlen(StringByKey(hdf5, result, keySep, listSep)) == 0 )
 			result = H5GW__addXref(hdf5, path, result, keySep, listSep)
 		endif
@@ -989,13 +989,15 @@ Static Function H5GW__HDF5ReadAttributes(fileID, hdf5Path, baseName)
 	String group_name
 	String attr_name_list, attr_name, attribute_str
 	
-	String old_dir = GetDataFolder(1), subdir, group_attr_name
+	String old_dir = GetDataFolder(1), subdir, group_attr_name, tmpStr
 	for (index = 0; index < length; index = index+1)
 		group_name = StringFromList(index, group_name_list)
 		attribute_str = H5GW__HDF5AttributesToString(fileID, group_name, group_attributes_type)
 		if ( strlen(attribute_str) > 0 )
 			// store these attributes in the wavenote of a unique wave in the group
-			subdir = ":" + baseName + ReplaceString("/", group_name, ":")
+			tmpStr = (ReplaceString("/", group_name, ":"))			//should be something like :_Test...etc...
+			tmpStr = H5GW_PossiblyQuoteNXPathinIgor(tmpStr)
+			subdir = ":" + baseName + tmpStr
 			SetDataFolder $subdir
 			group_attr_name = StringFromList((itemsInList(group_name, "/")-1), group_name, "/")
 			group_attr_name = H5GW__SetStringDefault(group_attr_name, "root") + "_attributes"
@@ -1038,6 +1040,25 @@ Static Function H5GW__HDF5ReadAttributes(fileID, hdf5Path, baseName)
 	endfor
 
 End
+//*************************************************************************************************
+//*************************************************************************************************
+static Function/T H5GW_PossiblyQuoteNXPathinIgor(PathIn)
+	string PathIn
+	//possiblyqoutes parts of path if needed.
+	//assume in comes in as :test1:test2:test3
+	
+	string result, tmpStr
+	variable i
+	if(stringmatch(PathIn,":"))
+		return ":"
+	endif
+	result = ""
+	PathIn = PathIn[1,inf]+":"		//remove ":" from front and add it to end, so it is proper Igor list... 
+	For(i=0;i<ItemsInList(PathIn,":");i+=1)
+		result+=":"+PossiblyQuoteName(stringFromList(i,PathIn,":"))
+	endfor
+	return result
+end
 
 // ======================================
 //@+

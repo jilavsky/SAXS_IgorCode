@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 #include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.16
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 added more styles and changed few defaults for them. 
 //2.26 fixes for panel scaling
 //2.25 fixed export option for graphics which changed in Igor 7
 //2.24 fixed legend for VOlume fraction
@@ -346,40 +347,6 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-//Function/T IR1P_GenStringOfFolders()
-//		
-//	NVAR UseIndra2Structure=root:packages:GeneralplottingTool:UseIndra2Data
-//	NVAR UseQRSStructure=root:packages:GeneralplottingTool:UseQRSData
-//	NVAR UseResults=root:packages:GeneralplottingTool:UseResults
-//	string ListOfQFolders
-//	string result
-//	if (UseIndra2Structure)
-//		//result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
-//		string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-//		result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
-//		variable i
-//		for(i=0;i<ItemsInList(tempStr);i+=1)
-//		//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
-//			if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
-//				result+=StringFromList(i, tempStr,";")+";"
-//			endif
-//		endfor
-//	elseif (UseQRSStructure)
-//		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "q*", 1)
-//		result=IR1_ReturnListQRSFolders(ListOfQFolders,1)
-//	elseif (UseResults)
-//		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "UnifiedFitIntensity*", 1)
-//		ListOfQFolders+=IN2G_FindFolderWithWaveTypes("root:", 10, "SizesVolumeDistribution*", 1)
-//		ListOfQFolders+=IN2G_FindFolderWithWaveTypes("root:", 10, "ModelingVolumeDistribution*", 1)
-//		ListOfQFolders+=IN2G_FindFolderWithWaveTypes("root:", 10, "FractFitIntensity*", 1)
-//		result=ReturnListResultsFolders(ListOfQFolders)
-//	else
-//		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
-//	endif
-//	
-//	return result
-//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1821,21 +1788,53 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	LogLog="log(bottom)=1;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity [cm\S-1\M];"
 	LogLog+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
 	LogLog+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"//Graph Window Width=450;Graph Window Height=400
-	LogLog+="Graph Use Rainbow=0;Graph Use BW=0;Graph use Colors=1;Graph vary Lines=1;"	
+	LogLog+="Graph Use Rainbow=1;Graph Use BW=0;Graph use Colors=0;Graph vary Lines=1;"	
 	LogLog+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
 	LogLog+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	LogLog+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	LogLog+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
+
+	String/g d_Intensity
+	SVAR d_Intensity
+	d_Intensity="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=d [A];Label left=Intensity [arbitrary];"
+	d_Intensity+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
+	d_Intensity+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"//Graph Window Width=450;Graph Window Height=400
+	d_Intensity+="Graph Use Rainbow=1;Graph Use BW=0;Graph use Colors=0;Graph vary Lines=1;"	
+	d_Intensity+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+	d_Intensity+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+	d_Intensity+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
+	d_Intensity+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
+
+	String/g q_Intensity
+	SVAR q_Intensity
+	q_Intensity="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity [arbitrary];"
+	q_Intensity+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
+	q_Intensity+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"//Graph Window Width=450;Graph Window Height=400
+	q_Intensity+="Graph Use Rainbow=1;Graph Use BW=0;Graph use Colors=0;Graph vary Lines=1;"	
+	q_Intensity+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+	q_Intensity+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+	q_Intensity+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
+	q_Intensity+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
+
+	String/g tth_Intesity
+	SVAR tth_Intesity
+	tth_Intesity="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Theta [degrees];Label left=Intensity [arbitrary];"
+	tth_Intesity+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
+	tth_Intesity+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"//Graph Window Width=450;Graph Window Height=400
+	tth_Intesity+="Graph Use Rainbow=1;Graph Use BW=0;Graph use Colors=0;Graph vary Lines=1;"	
+	tth_Intesity+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+	tth_Intesity+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+	tth_Intesity+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
+	tth_Intesity+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
 	
 	string/g VolumeDistribution
 	SVAR VolumeDistribution
 	VolumeDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Dimension [A];Label left=Volume fraction [arb units];DataY=Y;"
 	VolumeDistribution+="DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=1.37359350144832e-06;Axis left max=0.0110271775364775;Axis bottom min=10;"
 	VolumeDistribution+="Axis bottom max=5000;standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
-	VolumeDistribution+="Graph use Colors=1;"
+	VolumeDistribution+="Graph use Colors=0;Graph Use Rainbow=1;Graph Use BW=0;"
 	VolumeDistribution+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
 	VolumeDistribution+="Legend=2;GraphLegendShortNms=0;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
-	VolumeDistribution+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	VolumeDistribution+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	VolumeDistribution+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
 
@@ -1877,12 +1876,6 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Guinier
 	Guinier="log(bottom)=0;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q\S2\M [A\S-2\M];Label left=Intensity [cm\S-1\M];DataY=Y;DataX=X^2;DataE=Y;Axis left auto=1;"
 	Guinier+="Axis bottom auto=1;Axis left min=5.41957359517844;Axis left max=1.78135123888276e+15;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;"
-//  	Guinier+="Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
-//	Guinier+="Graph vary Lines=1;"
-//  	Guinier+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
-//	Guinier+="Graph Use Rainbow=0;Graph Use BW=0;"	
-//	Guinier+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
-//	Guinier+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
   	Guinier+= "Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
   	Guinier+= "Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
   	Guinier+= "Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
@@ -1894,9 +1887,9 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	SVAR Kratky
  	Kratky="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity * q\S2\M [cm\S-1\M * A\S-2\M];DataY=Y*X^2;DataX=X;DataE=Y*X^2;"
  	Kratky+="Axis left auto=1;Axis bottom auto=1;Axis left min=0.260499250084115;Axis left max=5.25105256354487;Axis bottom min=0.000109441353003394;Axis bottom max=0.400051428609657;standoff=0;Graph use Lines=1;"
-   	Kratky+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
+   Kratky+="Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";Graph use Colors=1;"
  	Kratky+="Graph vary Lines=1;Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
-   	Kratky+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+   Kratky+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	Kratky+="Graph Use Rainbow=0;Graph Use BW=0;"	
 	Kratky+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	Kratky+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
@@ -1917,10 +1910,10 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	ListOfGraphFormating="log(bottom)=1;log(left)=1;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=q [A\S-1\M];Label left=Intensity [cm\S-1\M];"
 	ListOfGraphFormating+="DataY=Y;DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=0;Axis left max=0;Axis bottom min=0;Axis bottom max=0;"
 	ListOfGraphFormating+="standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
-	ListOfGraphFormating+="Graph use Colors=1;Graph vary Lines=1;"
+	ListOfGraphFormating+="Graph use Colors=0;Graph vary Lines=1;"
 	ListOfGraphFormating+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
 	ListOfGraphFormating+="Legend=2;GraphLegendShortNms=1;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
-	ListOfGraphFormating+="Graph Use Rainbow=0;Graph Use BW=0;"	
+	ListOfGraphFormating+="Graph Use Rainbow=1;Graph Use BW=0;"	
 	ListOfGraphFormating+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	ListOfGraphFormating+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
 

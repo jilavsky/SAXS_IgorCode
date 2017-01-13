@@ -3,7 +3,8 @@ Code modification history
 
 -latest stuff first
 ********************************************
-
+2.62	
+Updated manual
 Modified Nexus support, added new library to use it. 
 Moved some common functions to IN2G_GeneralProcedures
 Fix to QRS names which failed on names containing string “spec” in the name. 
@@ -11,7 +12,9 @@ Added checkbox for slit smeared/desmeared USAXS data in Merge 2 data sets tool.
 Small-angle diffraction - when user selects “oversample” the parameters for peaks (d, q, width) are now calculated at 5x higher resolution than measured Q points. 
 Desmearing - propagate dQ and if does not exist, create dQ based on points distance. 
 Pair Distance Distribution - changed Matrix solving method since the one used was deprecated by Igor 7. 
-Plotting tool - added ability to add top 2pi/Q linked axis. Using Transform axis package from Igor Pro. 
+Plotting tool - added ability to add top 2pi/Q linked axis. Using Transform axis package from Igor Pro. Added few new styles and modified existing settings. 
+WAXS - removed LaueGo capability and added import of PDF-4+ xml files. Fixed help file. 
+Modeling II - if you hold any modifier key (shift/ctrl/opt/alt…) while clicking on parameters change arrows, the step for next step is set 10x smaller. This enables making small changes to the values. Just keep holding the modifier key, first step is still large, subsequent are small. 
 
 
 2.61 6/29/2016

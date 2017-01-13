@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
+#pragma version=1.12
 Constant IR2MversionNumber = 1.11
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2MversionNumber = 1.11
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 more fixes for panel scaling. 
 //1.11 fixes for panel scaling
 //1.10 removed wave/d, Function/d and variable/d. Obsolete
 //1.09 bug fixes, bug found by igor 7. 
@@ -76,7 +77,7 @@ Function IR2M_GetDataMiner()
 	
 	IR2M_SyncSearchListAndListBox()	//sync the list box... 
 	IR2M_MakePanelWithListBox(0)	//and create the other panel... 
-	IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
+	//IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
 	popupmenu QvecDataName, win=DataMiningTool, disable=1
 	popupmenu IntensityDataName, win=DataMiningTool, disable=1
 	popupmenu ErrorDataName, win=DataMiningTool, disable=1
@@ -101,6 +102,7 @@ Function IR2M_MainCheckVersion()
 				IR2M_InitDataMiner()
 				IR2M_SyncSearchListAndListBox()	//sync the list box... 
 				IR2M_MakePanelWithListBox(0)	//and create the other panel... 
+				//IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
 				popupmenu QvecDataName, win=DataMiningTool, disable=1
 				popupmenu IntensityDataName, win=DataMiningTool, disable=1
 				popupmenu ErrorDataName, win=DataMiningTool, disable=1
@@ -248,6 +250,7 @@ Function IR2M_DataFolderPopMenuProc(Pa) : PopupMenuControl
 	IR2C_PanelPopupControl(Pa) 
 	
 	IR2M_MakePanelWithListBox(0)
+	//IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
 End
 ///******************************************************************************************
 ///******************************************************************************************
@@ -1762,6 +1765,7 @@ Function IR2M_MakePanelWithListBox(skipCreatePanel)
 		setVariable WaveNoteMatchString, help={"Input Regular expressiong to match names of items to "}, variable= root:Packages:DataMiner:WaveNoteMatchString
 		
 		AutoPositionWindow/M=0 /R=DataMiningTool ItemsInFolderPanel
+		IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
 	endif
 
 	if(MineWaves)

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.25
+#pragma version=1.26
 Constant IR2SversionNumber=1.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant IR2SversionNumber=1.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.26 added in popup grandparent folder to the parent folder to reduce scope. 
 //1.25 added ability to sort data by minutes (_xyzmin), pct (_xyzpct), and  temperature (_xyzC). 
 //1.24 fixed bug in Scripting tool which caused qrs start folder return only ones with qrs, but not qds, and other "semi" qrs data 
 //1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
@@ -469,8 +470,6 @@ Function/T IR2S_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSme
 			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
 		endif
 	elseif (UseQRSStructure)
-//		ListOfQFolders=IN2G_FindFolderWithWaveTypes("root:", 10, "q*", 1)
-//		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
 		make/N=0/FREE/T ResultingWave
 		IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, ResultingWave)
 		result=IR2S_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
@@ -478,16 +477,21 @@ Function/T IR2S_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSme
 		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
 	endif
 	
-	//now the result contains folder, we want list of parents here. create new list...
+	//now the result contains folder, we want list of parents and grandparents here. create new list...
 	string newresult=""
 	string tempstr2
 	for(i=0;i<ItemsInList(result , ";");i+=1)
 		tempstr2=stringFromList(i,result,";")
 		tempstr2=RemoveListItem(ItemsInList(tempstr2,":")-1, tempstr2  , ":")
-		if(!stringmatch(newresult, "*"+tempstr2+"*" ))
+		if(!stringmatch(newresult, "*"+tempstr2+";*" ))
 			newresult+=tempstr2+";"
 		endif
-		
+		if(ItemsInList(tempstr2,":")>1)
+			tempstr2=RemoveListItem(ItemsInList(tempstr2,":")-1, tempstr2  , ":")
+			if(!stringmatch(newresult, "*"+tempstr2+";*" ))
+				newresult+=tempstr2+";"
+			endif
+		endif
 	endfor
 	
 	newresult=GrepList(newresult, "^((?!Packages).)*$" )

@@ -1,11 +1,11 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.61
+#pragma version=2.62
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3537094463 			//this is mod date for Manual version 2.58
-constant CurrentVersionNumber = 2.61
+constant CurrentVersionNumber = 2.62
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2015, Argonne National Laboratory
@@ -13,6 +13,7 @@ constant CurrentVersionNumber = 2.61
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.62 Nexus support and other fixes
 //2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  
 //2.60 modified GUI preferences handling. Was reseting, wrong logic. 
@@ -66,8 +67,11 @@ Menu "SAS"
 		help={"Import Small-angle scattering data from ASCII file into Igor for use with macros"}
 		"Import ASCII WAXS or other data", IR1I_ImportOtherASCIIMain()
 		help={"Import Other type data from ASCII file into Igor for use with macros"}
-		"Import XML data", CS_XMLGUIImportDataMain(defaultType="QRS",defaultQUnits="1/A")
-		help={"Import data from CanSAS 1.0 conforming data sets"}
+		"Import Nexus canSAS data", IR1I_ImportNexusCanSASMain()
+		help={"Import data from Nexus CanSAS conforming data sets"}
+		"Import canSAS XML data", CS_XMLGUIImportDataMain(defaultType="QRS",defaultQUnits="1/A")
+		help={"Import data from XML CanSAS conforming data sets"}
+		"---"
 		"Export ASCII data", IR2E_UniversalDataExport()
 		help = {"This is tool for export of any 2-3 column data sets as ASCII."}
 	End
@@ -218,7 +222,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
 	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
-	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;"
+	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
 	
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
@@ -296,66 +300,7 @@ Function IR1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 		return 1
 	endif
 end
-//***********************************************************
-//***********************************************************
-////***********************************************************
-//Function IR1_PanelAppendSizeRecordNote(panelName)
-//	string panelName
-//	string PanelRecord=""
-//	//find size of the panel
-//	DoWIndow $panelName
-//	if(V_Flag==0)
-//		return 0
-//	endif
-//	//store main window size
-//	GetWindow $panelName wsizeDC 		//this value is in pixels
-//	PanelRecord+="PanelLeft:"+num2str(V_left)+";PanelWidth:"+num2str(V_right-V_left)+";PanelTop:"+num2str(V_top)+";PanelHeight:"+num2str(V_bottom-V_top)+";"	
-//	Button ResizeButton title=" \\W532",size={18,18}, win=$panelName, pos={(V_right-V_left-18),(V_bottom-V_top-18)}, disable=2
-//	GetWindow $panelName, note				//store existing note. 
-//	string ExistingNote=S_Value
-//	variable i, j
-//	string ControlsRecords=""
-//	string ListOfPanels=panelName+";"
-//	string TmpNm=""
-//	string controlslist=""
-//	string tmpPanelName, tmpName1
-//	string SubwindowList=ChildWindowList(panelName )		//do we have subwindows? 
-//	if(Strlen(SubwindowList)>0)
-//		ListOfPanels+=SubwindowList
-//	endif
-//	controlslist = ControlNameList("", ";")		
-//	For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-//		TmpNm = StringFromList(i, controlslist, ";")
-//		ControlInfo $(TmpNm)				//Dimensions and position of the named control in pixels
-//		//V_Height, V_Width, V_top, V_left
-//		ControlsRecords+=TmpNm+"Left:"+num2str(V_left)+";"+TmpNm+"Width:"+num2str(V_width)+";"+TmpNm+"Top:"+num2str(V_top)+";"+TmpNm+"Height:"+num2str(V_Height)+";"
-//		//special cases...
-//		if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-//			ControlsRecords+=TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-//		endif
-//	endfor
-//	For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
-//			tmpPanelName = StringFromList(j, ListOfPanels,";")
-//			tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
-//			setActiveSubwindow $tmpName1
-//			controlslist = ControlNameList(tmpName1, ";")		
-//			For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-//				TmpNm = StringFromList(i, controlslist, ";")
-//				ControlInfo $(TmpNm)
-//				ControlsRecords+=tmpPanelName+TmpNm+"Left:"+num2str(V_left)+";"+tmpPanelName+TmpNm+"Width:"+num2str(V_width)+";"+tmpPanelName+TmpNm+"Top:"+num2str(V_top)+";"+tmpPanelName+TmpNm+"Height:"+num2str(V_Height)+";"
-//				//special cases...
-//				if(abs(V_Flag)==5||abs(V_Flag)==3)		//SetVariable
-//					ControlsRecords+=tmpPanelName+TmpNm+"bodyWidth:"+StringByKey("bodyWidth", S_recreation, "=",",")+";"
-//				endif
-//			endfor
-//			SetActiveSubwindow ##
-//	endfor
-//	if(!StringMatch(ExistingNote, "*;"))
-//		ExistingNote+=";"
-//	endif
-//	SetWindow $panelName, note=ExistingNote+PanelRecord+ControlsRecords
-////	print ExistingNote+";"+PanelRecord+ControlsRecords
-//end
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 //this is added into selection in Marquee.
@@ -390,76 +335,7 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-//Function IR2C_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-//	String ctrlName
-//	Variable popNum
-//	String popStr
-//	
-//	if (cmpstr(ctrlName,"LegendSize")==0)
-//		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
-//		LegendSize = str2num(popStr)
-//	endif
-//	if (cmpstr(ctrlName,"TagSize")==0)
-//		NVAR TagSize=root:Packages:IrenaConfigFolder:TagSize
-//		TagSize = str2num(popStr)
-//	endif
-//	if (cmpstr(ctrlName,"AxisLabelSize")==0)
-//		NVAR AxisLabelSize=root:Packages:IrenaConfigFolder:AxisLabelSize
-//		AxisLabelSize = str2num(popStr)
-//	endif
-//	if (cmpstr(ctrlName,"FontType")==0)
-//		SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-//		FontType = popStr
-//	endif
-//	if (cmpstr(ctrlName,"DefaultFontType")==0)
-//		SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-//		DefaultFontType = popStr
-//		IN2G_ChangePanelControlsStyle()
-//	endif
-//	if (cmpstr(ctrlName,"DefaultFontSize")==0)
-//		NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-//		DefaultFontSize = str2num(popStr)
-//		IN2G_ChangePanelControlsStyle()
-//	endif
-//	IN2G_SaveIrenaGUIPackagePrefs(0)
-//End
-////***********************************************************
-////***********************************************************
-////***********************************************************
-////***********************************************************
-//Function IR2C_KillPrefsButtonProc(ba) : ButtonControl
-//	STRUCT WMButtonAction &ba
-//
-//	switch( ba.eventCode )
-//		case 2: // mouse up
-//			// click code here
-//			if(stringmatch(ba.ctrlName,"OKBUtton"))
-//				DoWIndow/K IR2C_MainConfigPanel
-//			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
-//				string defFnt
-//				variable defFntSize
-//				if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-//					defFnt=stringFromList(0,IN2G_CreateUsefulFontList())
-//					defFntSize=12
-//				else
-//					defFnt="Geneva"
-//					defFntSize=9
-//				endif
-//				SVAR ListOfKnownFontTypes=root:Packages:IrenaConfigFolder:ListOfKnownFontTypes
-//				SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-//				DefaultFontType = defFnt
-//				NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-//				DefaultFontSize = defFntSize
-//				IN2G_ChangePanelCOntrolsStyle()
-//				IN2G_SaveIrenaGUIPackagePrefs(0)
-//				PopupMenu DefaultFontType,win=IN2G_MainConfigPanel, mode=(1+WhichListItem(defFnt, ListOfKnownFontTypes))
-//				PopupMenu DefaultFontSize,win=IN2G_MainConfigPanel, mode=(1+WhichListItem(num2str(defFntSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
-//			endif
-//			break
-//	endswitch
-//	return 0
-//End
-//
+
 ////***********************************************************
 //***********************************************************
 //***********************************************************
@@ -860,9 +736,9 @@ Function IR1_AboutPanel()
 	DoWindow/C About_Irena_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro >=6.34 & 7"
+	DrawText 23,30,"Irena macros for Igor Pro >=6.37 & 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2016"
+	DrawText 100,60,"@ ANL, 2017"
 	DrawText 10,80,"release "+num2str(CurrentVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
