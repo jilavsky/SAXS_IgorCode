@@ -1,13 +1,14 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.03
+#pragma version = 1.04
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.0
 
 // support of Nexus files
 
-//1.03 minor fxi to forcing naming of output data. 
+//1.04 fixes for Nexus standard development and suggested units
+//1.03 minor fix to forcing naming of output data. 
 //1.02 Many modifications for Nexus Import - and EXPORT of data, import to Irena, export from and to Nika. 
 //		Irena - import NXcanSAS, Nika - import NXsas, export NXcanSAS or NXsas.  
 //1.01 fix for case when file does nto contain any V2 or V3 indicateors what data are and also has 3d data with dimsize(0)=1
@@ -1177,6 +1178,32 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 		//	Qx: float[M,N]   <-- Qx at each pixel
 		//	Qy: float[M,N]   <-- Qy at each pixel
 		//	Qz: float[M,N]   <-- Qz at each pixel (might be all zero)
+		
+		////		Q :
+		////  @units: (required) NX_CHAR
+		////    Engineering units to use when expressing Q and related terms.
+		////            
+		////    Data expressed in other units might be ignored by some software packages.
+		////
+		////    choices:
+		////       1/m
+		////       1/nm  (preferred)
+		////       1/angstrom
+		////
+		////I:
+		////  @units: (required) NX_CHAR
+		////    Engineering units to use when expressing intensity and related terms.
+		////            
+		////    Data expressed in other units will be treated as "arbitrary" by some software packages.
+		////
+		////    choices:
+		////       1/m  (includes m2/m3 and 1/m/sr)
+		////       1/cm  (includes cm2/cm3 and 1/cm/sr)
+		////       m2/g
+		////       cm2/g
+		////       arbitrary (includes "counts" and any unrecognized units)
+
+		
 	//to do - change where the data go and how they go there. Find way to indicate what type of sector it is etc. 
 //note: SampleName now has no orientation, add curOrient to make sensible... 
 	variable GroupID
@@ -1239,8 +1266,11 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 	NEXUS_WriteWaveNote(fileID,NewGroupName,Inote)
 	//Now deal with Q axes...
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/I", fileID)
-	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwv , fileID, NewGroupName+"/Q"
-	NEXUS_HdfSaveAttrib("units","1/A",NewGroupName+"/Q", fileID)
+	//convert to 1/nm and use that, Nexus preferred units
+	Duplicate/Free Qwv, Qwvnm
+	Qwvnm = Qwvnm*10
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwvnm , fileID, NewGroupName+"/Q"
+	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Q", fileID)
 	NEXUS_HdfSaveAttrib("resolutions","Qdev",NewGroupName+"/Q", fileID)
 	//Now deal with Uncertainty
 	//NEXUS_HdfSaveAttrib("uncertainty","Idev",NewGroupName+"/sasdata01/I", fileID)
@@ -1248,10 +1278,12 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/Idev", fileID)
 	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/Idev", fileID)
 	//Now Qres.   dQwv
-	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwv, fileID, NewGroupName+"/Qdev"
-	NEXUS_HdfSaveAttrib("units","1/A",NewGroupName+"/Qdev", fileID)
+	Duplicate/Free dQwv, dQwvnm
+	dQwvnm = dQwvnm*10
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/Qdev"
+	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Qdev", fileID)
 	
-	//add instruemnt data...
+	//add instrument data...
 	string InstrumentPathStr=RootGroupName+"/"+"instrument"
 	string tmpPath
 	HDF5CreateGroup fileID , InstrumentPathStr , groupID		//this is NXentry group containinng instrument description
@@ -1413,6 +1445,7 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	if(useMask)
 		//this is if we use Mask 
 		NEXUS_HdfSaveAttrib("Mask_indices","0,1",NewGroupName, fileID)
+		NEXUS_HdfSaveAttrib("mask","Mask",NewGroupName, fileID)
 	endif
 	// Save wave as dataset
 	string Inote=note(Iwv)
@@ -2033,13 +2066,31 @@ static Function NEXUS_HdfSaveData(DataName,DataValueStr,DataLoc, fileID)
 	string DataName,DataValueStr,DataLoc
 	Variable fileID
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
-	make/T/Free/N=1 dataWv
-	dataWv = DataValueStr									
-	HDF5SaveData /O/IGOR=0  dataWv, fileID, DataLoc+DataName
+	if(NEXUS_isaNumber(DataValueStr))
+		make/Free/N=1 dataWvN
+		dataWvN = str2num(DataValueStr)			
+		HDF5SaveData /O/IGOR=0  dataWvN, fileID, DataLoc+DataName
+	else
+		make/T/Free/N=1 dataWv
+		dataWv = DataValueStr			
+		HDF5SaveData /O/IGOR=0  dataWv, fileID, DataLoc+DataName
+	endif						
 	if (V_flag != 0)
 		Print "HDF5SaveData failed when saving data "+DataName+" with value of "+DataValueStr+" at location of "+DataLoc
 	endif	
 end
+
+static Function NEXUS_isaNumber(in)                // checks if the input string  is ONLY a number
+    String in
+    String str
+    Variable v
+    if(strlen(in)==0)
+    	return 1
+    endif
+    sscanf in, "%g%s", v,str
+    return (V_flag==1)
+End
+
 
 //*************************************************************************************************
 //*************************************************************************************************
@@ -2050,6 +2101,7 @@ static Function NEXUS_WriteWaveNote(fileID,Location,NoteStr)
 	//Create NXnote group 
 	variable GroupID, i
 	string Key, Value, tempStr
+	NoteStr= ReplaceString("\r", NoteStr, ";")
 	HDF5CreateGroup fileID , Location+"/IGORWaveNote" , groupID		
 	NEXUS_HdfSaveAttrib("NX_class","NXnote",Location+"/IGORWaveNote", fileID)
 	For(i=0;i<ItemsInList(NoteStr,";");i+=1)
@@ -2307,10 +2359,28 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	
 	DUplicate/O Qwv, $(NewFolderFullPath+PossiblyQuoteName(CleanupName("q_"+NewDataName[0,28],1)))
 	Wave NewQwv=$(NewFolderFullPath+PossiblyQuoteName(CleanupName("q_"+NewDataName[0,28],1)))
-	//fix units, if needed... 
+	//fix units, if needed... Following loosely what SASView is using... https://groups.google.com/forum/#!topic/cansas-dfwg/pItbRKXeFfE
+	//https://www.google.com/url?q=https%3A%2F%2Fgithub.com%2FSasView%2Fsasview%2Fblob%2Fmaster%2Fsrc%2Fsas%2Fsascalc%2Fdata_util%2Fnxsunit.py&sa=D&sntz=1&usg=AFQjCNFYvjzNK4FalmyIKxi-lswwvv0QWQ
 	string Qunits =  StringByKey("units", note(Qwv), "=", "\r")
-	if(stringmatch(Qunits,"nm*")&&stringmatch(Qunits,"1/nm"))		//assume Q in nm^-1, need to scale by 10x
-		NewQwv*=10
+	string ConversionFactorQ="no scaling done, assumed 1/Angstrom"
+	if(stringmatch(Qunits,"nm*")||stringmatch(Qunits,"1/nm")||stringmatch(Qunits,"n_m^-1"))		//assume Q in nm^-1, need to scale by 10x
+		NewQwv/=10
+		ConversionFactorQ = "10"
+	elseif(stringmatch(Qunits,"cm*")||stringmatch(Qunits,"1/cm"))		//assume Q in cm^-1, need to scale by 10^8x
+		NewQwv/=10^8
+		ConversionFactorQ = "10^8"
+	elseif(stringmatch(Qunits,"10^-3 Angstrom^-1"))		//assume Q in 10^-3 A^-1, need to scale by 10^3x
+		NewQwv/=10^3
+		ConversionFactorQ = "10^3"
+	elseif(stringmatch(Qunits,"m*")||stringmatch(Qunits,"1/m"))		//assume Q in m^-1, need to scale by 10^10x
+		NewQwv/=10^10
+		ConversionFactorQ = "10^10"
+	elseif(stringmatch(Qunits,"invA*")||stringmatch(Qunits,"1/A*"))		// Q in 1/A
+		//NewQwv*=10^10
+		ConversionFactorQ = "1"
+	else		//not matched to anything above? What is the damn unit? 
+		//assume input is 1/A and do not change, e.g.: 'invA', 'invAng', 'invAngstroms', '1/A'
+		ConversionFactorQ="units not identified, assume it is already 1/Angstrom"
 	endif
 	//int units
 	string Intunits =  StringByKey("units", note(Iwv), "=", "\r")
@@ -2323,8 +2393,8 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	endif
 	print "Imported data from  : "+ sourceFileName
 	print "Created new I and Q data  : "+ PossiblyQuoteName(CleanupName("r_"+NewDataName[0,28],1)) +"   "+PossiblyQuoteName(CleanupName("q_"+NewDataName[0,28],1))
-	print "New Intensity units  : "+ StringByKey("units", note(Iwv), "=", "\r")
-	print "New Q units  : "+ Qunits
+	print "Found Intensity units  : "+ StringByKey("units", note(Iwv), "=", "\r")+"   converted to : "+Intunits
+	print "Found Q units  : "+ Qunits+ "   converted to [1/A] by scaling using conversion factor of : "+ConversionFactorQ
 
 
 	if(WaveExists(IdevWv))

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.27
+#pragma version=1.28
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.28 added OverRideSampleTransmission
 //1.27 Fixes to Mod Gauss fitting to avoid problems when NaNs from range changes are present. 
 //1.26 GUI fixes for USAXS graphs and panels
 //1.25 added finding Qmin from FWHM of the sample peak
@@ -551,6 +552,12 @@ static Function IN3_LoadData()
 		endif
 		NVAR SampleThicknessBckp
 		SampleThicknessBckp = SampleThickness
+		//2017-01-18 add override Sample thickness
+		NVAR OverRideTh=root:Packages:Indra3:OverideSampleThickness
+		if(OverRideTh>0)
+			SampleThickness = OverRideTh
+		endif
+		
 		//rezero some old stuff here...
 		NVAR SampleQOffset= root:Packages:Indra3:SampleQOffset
 		SampleQOffset=0
@@ -1523,6 +1530,21 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 		SVAR UPDParameters= root:Packages:Indra3:UPDParameters
 		UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
 	endif
+	if(stringmatch(ctrlName,"OverideSampleThickness"))
+		NVAR OverideSampleThickness=root:Packages:Indra3:OverideSampleThickness
+		NVAR SampleThickness=root:Packages:Indra3:SampleThickness
+		NVAR SampleThicknessBckp=root:Packages:Indra3:SampleThicknessBckp
+		if(OverideSampleThickness>0)
+			SampleThickness = OverideSampleThickness
+		else
+			SampleThickness = SampleThicknessBckp
+		endif
+		IN3_RecalculateData(2)
+		DoWIndow/F USAXSDataReduction
+		//SVAR UPDParameters= root:Packages:Indra3:UPDParameters
+		//UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
+	endif
+
 
 
 	NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
@@ -1639,6 +1661,7 @@ Function NI3_TabPanelControl(name,tab)
 	CheckBox CalculateThickness,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalculateWeight,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToWeight )
 	SetVariable SampleThickness,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=(CalculateThickness), frame=!CalculateThickness
+	SetVariable OverideSampleThickness,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=(CalculateThickness), frame=!CalculateThickness
 	SetVariable SampleWeightInBeam,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || !CalibrateToWeight || CalibrateArbitrary), noedit=CalculateWeight, frame=!CalculateWeight
 	SetVariable SampleTransmission,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	SetVariable SampleLinAbsorption,win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!CalculateThickness, frame=CalculateThickness

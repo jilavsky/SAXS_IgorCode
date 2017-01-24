@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.92
+#pragma version = 1.93
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.94 added OverRideSampleTransmission
 //1.92 fixes to annoying behaviors (needless user questions)
 //1.91 enable negative override for Bkg5 
 //1.90 Added first version of Import & Process panel. For now cannot handel step scanning. 
@@ -192,6 +193,11 @@ Function IN3_MainPanelNew()
 	SetVariable SampleThickness,pos={20,425},size={300,22},title="\Zr120Sample Thickness [mm] =", bodyWidth= 80
 	SetVariable SampleThickness ,proc=IN3_ParametersChanged
 	SetVariable SampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness||CalculateWeight)//, frame=!(CalculateThickness&&CalculateWeight)
+
+	SetVariable OverideSampleThickness,pos={20,450},size={300,22},title="\Zr120Overide Sample Thickness [mm] =", bodyWidth= 80
+	SetVariable OverideSampleThickness ,proc=IN3_ParametersChanged
+	SetVariable OverideSampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:OverideSampleThickness, noedit=(CalculateThickness||CalculateWeight)//, frame=!(CalculateThickness&&CalculateWeight)
+
 
 	Button RecoverDefault,pos={330,423},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
 
@@ -872,7 +878,7 @@ Function IN3_Initialize()
 	
 	//Main parameters
 	ListOfVariables="IsBlank;CalculateThickness;Wavelength;RecalculateAutomatically;SampleFilledFraction;Kfactor;"
-	ListOfVariables+="SampleThickness;SampleTransmission;SampleLinAbsorption;SampleTransmissionPeakToPeak;"
+	ListOfVariables+="SampleThickness;OverideSampleThickness;SampleTransmission;SampleLinAbsorption;SampleTransmissionPeakToPeak;"
 	ListOfVariables+="SampleThicknessBckp;BlankWidthBckp;BlankFWHMBckp;BlankMaximumBckp;"
 	ListOfVariables+="UPD_G1;UPD_G2;UPD_G3;UPD_G4;UPD_G5;UPD_Vfc;"
 	ListOfVariables+="UPD_DK1;UPD_DK2;UPD_DK3;UPD_DK4;UPD_DK5;"

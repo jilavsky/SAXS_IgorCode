@@ -236,6 +236,7 @@ Function IR1K_ButtonProc(ctrlName) : ButtonControl
 //
 	if(cmpstr(ctrlName,"DeleteData")==0)
 		IR1K_DeleteDataCompound()
+		IR1K_UpdateCalcExportDta()
 	endif
 
 	if(cmpstr(ctrlName,"SetAsMatrix")==0)

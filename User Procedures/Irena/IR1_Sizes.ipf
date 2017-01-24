@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.20
+#pragma version = 2.21
 Constant IR1RSversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 fixed Regularization for Igor 7. 
 //2.20 fixes for panel scaling. 
 //2.19 removed the mode from the tag. Peak position in this case may not be found correctly and hence it is misleading. 
 //2.18 fixed bug when the top color indicator woudl show red on cases where it should be green but there were no "bad" ends. 
@@ -1942,13 +1943,17 @@ static Function IR1R_FindOptimumAvalue(Evalue)						//does the fitting itself, c
 		MidPoint=(LogAmax+LogAmin)/2
 		Avalue=10^MidPoint								//calculate A
 		IR1R_CalculateAmatrix(Avalue)
-		MatrixLUD A_matrix								//decompose A_matrix 
-		Wave M_Lower									//results in these matrices for next step:
-		Wave M_Upper
-		Wave W_LUPermutation
-		Wave B_vector
-		MatrixLUBkSub M_Lower, M_Upper, W_LUPermutation, B_vector				//Backsubstitute B to get x[]=inverse(A[][]) B[]	
-		Wave M_x										//this is created by MatrixMultiply
+		//this needs to change for Igor 7, MatrixLUD/MatrixLUDBkSub is retired. 
+		//MatrixLUD A_matrix								//decompose A_matrix 
+		//Wave M_Lower									//results in these matrices for next step:
+		//Wave M_Upper
+		//Wave W_LUPermutation
+		//Wave B_vector
+		//MatrixLUBkSub M_Lower, M_Upper, W_LUPermutation, B_vector				//Backsubstitute B to get x[]=inverse(A[][]) B[]	
+ 		MatrixLinearSolve/M=1 A_matrix  B_vector
+		Wave M_B
+		Duplicate/O M_B, M_x
+		//Wave M_x										//this is created by MatrixMultiply
 
 		Redimension/D/N=(-1,0) M_x							//create from M_x[..][0] only M_x[..] so it is simple wave
 		Duplicate/O M_x CurrentResultSizeDistribution		//put the data into the wave 

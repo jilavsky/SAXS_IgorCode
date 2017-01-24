@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.07
+#pragma version=1.08
 constant IR3DversionNumber = 1.06			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.06			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 fixed USAXS/SAXS ordering
 //1.07 minor GUI fixes for Windows
 //1.06 added switch for slit smeared/desmeared USAXS data. 
 //1.05 chanegs for panel scaling - need to convert for WM procedure, subwindow does tno work rigth
@@ -1315,10 +1316,16 @@ Function IR3D_SortIsUSAXSSAXSdata()
 	For(i=0;i<numpnts(ListOfAvailableData1);i+=1)
 		if(strlen(ListOfAvailableData1[i])>5)		//this contains something which has chance to be name
 			TmpData1 = ListOfAvailableData1[i]			//this is Sxyz_SampleName:
-			TmpData1 = ReplaceString(":", TmpData1,"")
-		 	TmpData1 = RemoveFromList(StringFromList(0, TmpData1 , "_"), TmpData1  , "_")
-			//this is now without the USAXS Scan number
-			TmpData1 = TmpData1[0,17]		//this is how much there is likely left if needed to trunkate... 
+			if(StringMatch(TmpData1, "S*"))		//old, Sxyz style system
+				TmpData1 = ReplaceString(":", TmpData1,"")
+		 		TmpData1 = RemoveFromList(StringFromList(0, TmpData1 , "_"), TmpData1  , "_")
+				//this is now without the USAXS Scan number
+				TmpData1 = TmpData1[0,17]		//this is how much there is likely left if needed to trunkate... 
+			else		//assume new system sampleName_something_xyz
+				TmpData1 = ReplaceString(":", TmpData1, "") //strip :
+				TmpData1 = ReplaceString("'", TmpData1, "") //strip ' from liberal names
+				TmpData1 = StringFromList(ItemsInList(TmpData1+"_", "_")-1, TmpData1+"_", "_")
+			endif
 			TmpData2 = GrepList(AllData2, TmpData1 ,0, ";")
 			if(ItemsInList(TmpData2 , ";")<1)		//did not find match
 				redimension/N=(numpnts(NotFoundData1)+1) NotFoundData1

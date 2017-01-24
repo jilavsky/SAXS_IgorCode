@@ -11,6 +11,7 @@ ________________________________________________________________________________
 1.90 
 Modified Nexus support, added new library to use it. 
 Removed Utility_JZT from distribution, not needed and causing conflict with JZT package. `
+Added OverRideSampleThickness where user can set new sample thickness for range of samples. Set to 0 to ignore. 
 
 
 1.89 6/29/2016

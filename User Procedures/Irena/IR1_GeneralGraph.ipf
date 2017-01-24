@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 #include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.16
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.28 fixed Gizmo for Igor 7, this should be improved later, but at this time this needs to work for both Igor 6 and 7
 //2.27 added more styles and changed few defaults for them. 
 //2.26 fixes for panel scaling
 //2.25 fixed export option for graphics which changed in Igor 7
@@ -1829,7 +1830,7 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	
 	string/g VolumeDistribution
 	SVAR VolumeDistribution
-	VolumeDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Dimension [A];Label left=Volume fraction [arb units];DataY=Y;"
+	VolumeDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Dimension [A];Label left=Volume fraction [1/A];DataY=Y;"
 	VolumeDistribution+="DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=1.37359350144832e-06;Axis left max=0.0110271775364775;Axis bottom min=10;"
 	VolumeDistribution+="Axis bottom max=5000;standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
 	VolumeDistribution+="Graph use Colors=0;Graph Use Rainbow=1;Graph Use BW=0;"
@@ -1837,6 +1838,17 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	VolumeDistribution+="Legend=2;GraphLegendShortNms=0;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
 	VolumeDistribution+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
 	VolumeDistribution+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
+
+	string/g NumberDistribution
+	SVAR NumberDistribution
+	NumberDistribution="log(bottom)=0;log(left)=0;grid(left)=2;grid(bottom)=2;mirror(bottom)=1;mirror(left)=1;Label bottom=Dimension [A];Label left=Number of particles [1/(cm3*A)];DataY=Y;"
+	NumberDistribution+="DataX=X;DataE=Y;Axis left auto=1;Axis bottom auto=1;Axis left min=1.37359350144832e-06;Axis left max=0.0110271775364775;Axis bottom min=10;"
+	NumberDistribution+="Axis bottom max=5000;standoff=0;Graph use Lines=1;Graph use Symbols=1;msize=1;lsize=1;axThick=2;Graph Window Width="+Num2str(GraphWindowWidth)+";Graph Window Height="+num2str(GraphWindowHeight)+";"
+	NumberDistribution+="Graph use Colors=0;Graph Use Rainbow=1;Graph Use BW=0;"
+	NumberDistribution+="Graph Legend Size=10;Graph Legend Position=LB;Graph Legend Frame=1;Graph Vary Symbols=1;"
+	NumberDistribution+="Legend=2;GraphLegendShortNms=0;tick=0;GraphUseSymbolSet1=1;GraphUseSymbolSet2=0;DisplayTimeAndDate=1;Xoffset=0;Yoffset=0;"
+	NumberDistribution+="Graph3D Clr Min=0;Graph3D Clr Max=1;Graph3D Angle=30;Graph3D Ax Length=0.3;Graph3D Log Colors=0;Graph3D Colors Reverse=0;"
+	NumberDistribution+="Graph3D Color Scale=Rainbow;Graph3D Visibility=True;"
 
 	string/g PDDF
 	SVAR PDDF
@@ -2309,7 +2321,11 @@ Function IR1P_GizmoFunctionality()
 	if(V_Flag)
 		DoWindow/K testGizmo
 	endif
+#if(IgorVersion()<6.99)		//Igor 6
 	Execute("NewGizmo/i/Z/N=testGizmo")
+#else
+	NewGizmo /I /N=testGizmo /K=1
+#endif
 	DoWIndow testGizmo
 	if(V_Flag)
 		DoWIndow/K testGizmo
@@ -2434,7 +2450,7 @@ Function IR1P_GizmoCheckProc(cba) : CheckBoxControl
 
 	DoWIndow Irena_Gizmo
 	if(!V_Flag)
-		return 0	//no Gizmo plto to fix at this time
+		return 0	//no Gizmo plot to fix at this time
 	endif
 	switch( cba.eventCode )
 		case 2: // mouse up

@@ -50,11 +50,11 @@
 
 #include ":IN3_CalcScattering", version>=1.01
 #include ":IN3_Calculations", version>=1.22
-#include ":IN3_FLyScan", version>=1.00
+#include ":IN3_FlyScan", version>=1.00
 #include ":IN3_Main", version>=1.90
 #include ":IN3_Rwave", version>=1
 #include ":IN3_SupportFnct", version>=1.07
-#include ":Spec", version>=2.2
+#include ":spec", version>=2.2
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 

@@ -822,7 +822,7 @@ Function IR2M_isWaveNumbers(ws)
 End
 
 
-Function IR2M_isaNumber(in)                // checks if the input string  is ONLY a number
+static Function IR2M_isaNumber(in)                // checks if the input string  is ONLY a number
     String in
     String str
     Variable v

@@ -1686,6 +1686,11 @@ End
 //************************************************************************************************************************
 Function IR1P_SetSymbolsAndLines()
 
+	DoWIndow GeneralGraph
+	if(V_flag==0)
+		return 0
+	endif
+
 	SVAR 	ListOfGraphFormating=root:Packages:GeneralplottingTool:ListOfGraphFormating
 	variable VaryLines=NumberByKey("Graph vary Lines",ListOfGraphFormating,"=",";")
 	variable UseLinesAlso=NumberByKey("Graph use Lines",ListOfGraphFormating,"=",";")

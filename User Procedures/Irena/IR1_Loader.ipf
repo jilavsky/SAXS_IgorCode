@@ -80,7 +80,7 @@
 #include ":IR1_Unified_Panel", version>=2.20
 #include ":IR1_Unified_Panel_Fncts", version>=2.22
 #include ":IR1_Unified_SaveExport", version>=2.02
-#include ":IR1_UnifiedSaveToXLS", version>=2.01
+#include ":IR1_UnifiedSavetoXLS", version>=2.01
 #include ":IR2_dataMiner", version >=1.11
 #include ":IR2_GelsTool", version>=4.12
 #include ":IR2_PanelCntrlProcs", version>=1.43
@@ -104,8 +104,8 @@
 #include ":IR3_WAXSDiffraction", version>=1
 
 //these are in different folders...
-#include "::CanSAS:canSASXML_GUI", version>=1.03
-#include "::CanSAS:canSASXML", version>=1.12
+#include "::CanSAS:cansasXML_GUI", version>=1.03
+#include "::CanSAS:cansasXML", version>=1.12
 
 #include "::Indra 2:IN2_GeneralProcedures", version>=1.88
 

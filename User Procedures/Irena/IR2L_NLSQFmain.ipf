@@ -105,7 +105,7 @@ Function IR2L_MainPanel()
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;"
 	IR2C_AddDataControls("IR2L_NLSQF","LSQF2_MainPanel",AllowedIrenaTypes,"","","","","", 0,1)
 	CheckBox QLogScale pos={100,131}
-	TitleBox MainTitle title="\Zr260Modeling II",pos={100,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr190Modeling II",pos={100,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={200,24},anchor=MC,fColor=(0,0,52224)
 
 
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:IR2L_NLSQF:RebinDataTo, noproc
