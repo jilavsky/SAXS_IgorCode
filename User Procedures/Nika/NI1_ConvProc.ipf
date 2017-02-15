@@ -9,7 +9,7 @@
 //*************************************************************************/
 
 //2.55 fixed missing forced naming to data. Now will force use of File name fopr naming the data if nothign else is selected.
-//2.54 added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1)) in the code here. 
+//2.54 added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"") in the code here. 
 //2.53 important correction - prior versions did NOT have samplethickness converted to cm, so this may break prior exerimets calibrations. 
 //2.52 changed selection options for data
 //2.51 New nexus support fixes. Pops up now the panel as needed and sets the input choice. 
@@ -108,7 +108,7 @@
 Function NI1A_AverageDataPerUserReq(orientation)
 	STRING ORIENTATION	
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -229,7 +229,7 @@ end
 Function NI1A_CalculateQresolution(Qvector,QvectorWidth,TwoThetaWidth, DistacneInmmWidth, DspacingWidth, PixX,PixY,BeamX,BeamY,Wavelength,SampleToCCDdistance)
 	wave Qvector, QvectorWidth, TwoThetaWidth, DistacneInmmWidth, DspacingWidth
 	variable PixX,PixY,BeamX,BeamY, Wavelength,SampleToCCDdistance
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//note the Qresolution already has accounted for bin width for integration.
 	///////
 	//this function will caculate Q resolution for each q point given by pixel size and beam size
@@ -293,7 +293,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_CorrectDataPerUserReq(orientation)
 	string orientation
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -556,7 +556,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_Generate2DPolCorrWv()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//create Polarization correction
@@ -652,7 +652,7 @@ end
 //*******************************************************************************************************************************************
 
 Function  NI1A_GenerateGeometryCorr2DWave()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -710,7 +710,7 @@ end
 
 Function NI1A_CheckGeometryWaves(orientation)		//checks if current geometry waves are OK for the input geometry
 	string orientation
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -852,7 +852,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_CreateHistogram(orientation)
 	string orientation
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	print "Creating histogram"
 	
 	string OldDf=GetDataFolder(1)
@@ -1086,7 +1086,7 @@ end
 
 Function NI1A_CreateLUT(orientation)
 	string orientation
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	print "Creating LUT for "+orientation+"  orientation"
 
 	string OldDf=GetDataFOlder(1)
@@ -1158,7 +1158,7 @@ end
 
 Function NI1A_Create2DQWave(DataWave)
 	wave DataWave
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -1228,7 +1228,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_Create2DAngleWave(DataWave)
 	wave DataWave
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	string NoteStr
@@ -1264,7 +1264,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_Check2DConversionData()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1343,7 +1343,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1_GISAXSOptions() : Panel
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(520,221,965,409) as "GISAXS Options"
 	DoWindow/C GISAXSOptionsPanel
@@ -1363,7 +1363,7 @@ EndMacro
 //*******************************************************************************************************************************************
 Function NI1_GISAXSOptsSetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
@@ -1390,7 +1390,7 @@ End
 
 Function NI1A_UpdateMainMaskListBox()		
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 //	NI1M_UpdateMaskListBox()
@@ -1445,7 +1445,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_UpdateEmptyDarkListBox()		
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 		Wave/T  ListOf2DEmptyData=root:Packages:Convert2Dto1D:ListOf2DEmptyData
@@ -1483,6 +1483,7 @@ Function NI1A_UpdateEmptyDarkListBox()
 			if(strlen(ListOfAvailableDataSets)<2)	//none found
 				ListOfAvailableDataSets="--none--;"
 			endif
+			ListOfAvailableDataSets = IN2G_RemoveInvisibleFiles(ListOfAvailableDataSets)
 			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!_mask.hdf).)*$" ) //remove _mask files... 
 			ListOfAvailableDataSets=NI1A_CleanListOfFilesForTypes(ListOfAvailableDataSets,DataFileExtension,EmptyDarkNameMatchStr)
 			redimension/N=(ItemsInList(ListOfAvailableDataSets)) ListOf2DEmptyData
@@ -1503,7 +1504,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_MakeContiguousSelection()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1531,7 +1532,7 @@ end
 //*******************************************************************************************************************************************
 
 Function/T NI1A_Create2DSelectionPopup()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/T  ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	variable i, imax=numpnts(ListOf2DSampleData)	
 	string MenuStr=""
@@ -1549,7 +1550,7 @@ end
 
 Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(cmpstr(ctrlName,"CreateOutputPath")==0)
 		PathInfo/S Convert2Dto1DOutputPath
 		NewPath/C/O/M="Select path to save your data" Convert2Dto1DOutputPath	
@@ -1716,7 +1717,7 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1M_DisplayMaskOnImage()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	DoWindow CCDImageToConvertFig
@@ -1738,7 +1739,7 @@ end
 
 Function NI1M_ChangeMaskColor(ColorToUse) //red, blue, green
 	string ColorToUse
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	DoWindow CCDImageToConvertFig
@@ -1770,7 +1771,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1M_RemoveMaskFromImage()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWindow CCDImageToConvertFig
 	if(V_Flag)
 		CheckDisplayed /W=CCDImageToConvertFig root:Packages:Convert2Dto1D:M_ROIMask
@@ -1787,7 +1788,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_CheckParametersForConv()
 	//check the parameters for conversion
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1840,7 +1841,7 @@ end
 
 Function NI1A_ImportThisOneFile(SelectedFileToLoad)
 	string SelectedFileToLoad
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
@@ -1886,7 +1887,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_DisplayTheRight2DWave()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -1941,7 +1942,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_DisplayOneDataSet()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//Kill top graph with Imge if it exists..
@@ -2027,7 +2028,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_DisplayStatsLoadedFile(WaveNameStr)
 	string WaveNameStr
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -2044,7 +2045,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_DisplayLoadedFile()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
@@ -2105,7 +2106,7 @@ end
 
 Function NI1A_DezingerDataSetIfAskedFor(whichFile)
 	string whichFile
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR DezingerHowManyTimes=root:Packages:Convert2Dto1D:DezingerHowManyTimes
@@ -2171,7 +2172,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_LoadManyDataSetsForConv()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
@@ -2316,7 +2317,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_CallImageHookFunction()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(exists("AfterDisplayImageHook")==6)
 		Execute("AfterDisplayImageHook()")
 	endif
@@ -2329,7 +2330,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_AveLoadNDataSetsForConv()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
@@ -2472,7 +2473,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_AveLoadManyDataSetsForConv()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
@@ -2596,7 +2597,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function/S NI1A_CalibrationNote()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string newNote=""
 		SVAR DataCalibrationString=root:Packages:Convert2Dto1D:DataCalibrationString
 		newNote+="Units="+DataCalibrationString+";"
@@ -2683,7 +2684,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_LoadParamsUsingFncts(SelectedFileToLoad)
 	string SelectedFileToLoad
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -2794,7 +2795,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_ExportDisplayedImage()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/Z ww=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
@@ -2842,7 +2843,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_SaveDisplayedImage()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	WAVE/Z ww=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
@@ -2914,7 +2915,7 @@ end
 
 Function NI1A_PrepareLogDataIfWanted(DataWaveName)
 	string DataWaveName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	wave waveToDisplay = $("root:Packages:Convert2Dto1D:"+DataWaveName)
@@ -2939,7 +2940,7 @@ end
 Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	string EmptyOrDark
 	//check the parameters for conversion
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
@@ -3029,7 +3030,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_DisplayOneDataSets()
 	//check the parameters for conversion
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -3054,7 +3055,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_LoadMask()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 	Wave/T  ListOf2DMaskData=root:Packages:Convert2Dto1D:ListOf2DMaskData
@@ -3134,9 +3135,7 @@ Function NI1A_UpdateDataListBox()
 				ListOfAvailableDataSets="--none--;"
 			endif
 			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!_mask.hdf).)*$" ) //remove _mask files... 
-			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!.plist).)*$" ) //.plist files on Mac files... 
-			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!.DS_Store).)*$" ) //.DS_Store files on Mac files... 
-			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!^\._).)*$" ) //this should remove on PCs the files starting with ._ (OSX system files). 
+			ListOfAvailableDataSets =  IN2G_RemoveInvisibleFiles(ListOfAvailableDataSets)
 			ListOfAvailableDataSets=NI1A_CleanListOfFilesForTypes(ListOfAvailableDataSets,DataFileExtension,SampleNameMatchStr)
 			redimension/N=(ItemsInList(ListOfAvailableDataSets)) ListOf2DSampleData
 			redimension/N=(ItemsInList(ListOfAvailableDataSets)) ListOf2DSampleDataNumbers
@@ -3192,7 +3191,7 @@ end
 
 Function NI1A_FindeOrderNumber(stringWithName)	
 	string stringWithName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string FoundON
 	FoundON = stringWithName[strsearch(stringWithName, "_", inf ,1)+1, strsearch(stringWithName, ".", inf ,1)-1]
 	return str2num(FoundON)
@@ -3203,7 +3202,7 @@ end
 
 Function/T NI1A_CleanListOfFilesForTypes(ListOfAvailableCompounds,DataFileType, MatchString)
 	string ListOfAvailableCompounds,DataFileType, MatchString
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i, imax, numberOfFile
 	if(strlen(ListOfAvailableCompounds)<2)
 		return ""
@@ -3253,7 +3252,7 @@ end
 Function NI1A_CreateListOfFiles(ListOf2DSampleData,ListOfFiles,Extension, NameMatchString)
 	wave/T ListOf2DSampleData
 	string ListOfFiles,Extension, NameMatchString
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //	ListOfFiles =  grepList(ListOfFiles,NameMatchString)
 	
 	variable i, imax, numberOfParts
@@ -3277,7 +3276,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_Convert2Dto1DPanelFnct()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
@@ -3910,7 +3909,7 @@ EndMacro
 
 
 Function NI1A_FixMovieButton()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	if(Movie_FileOpened && Movie_AppendAutomatically)
@@ -3925,7 +3924,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String ctrlName=sva.ctrlName
 	Variable varNum=sva.dval
 	String varStr=sva.sval
@@ -4177,7 +4176,7 @@ End
 
 Function NI1A_TopCCDImageUpdateColors(updateRanges)
 	variable updateRanges
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//user defined values...
@@ -4240,7 +4239,7 @@ end
 Function NI1A_TabProc(ctrlName,tabNum)
 	String ctrlName
 	Variable tabNum
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR UseSampleThickness= root:Packages:Convert2Dto1D:UseSampleThickness
 	NVAR UseSampleTransmission= root:Packages:Convert2Dto1D:UseSampleTransmission
 	NVAR UseCorrectionFactor= root:Packages:Convert2Dto1D:UseCorrectionFactor
@@ -4502,7 +4501,7 @@ Function NI1A_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	Variable varNum
 	String varStr
 	String varName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	if(cmpstr("BeamCenterX",ctrlName)==0)
 		NI1A_DoDrawingsInto2DGraph()
@@ -4574,7 +4573,7 @@ Function NI1A_ListBoxProc(ctrlName,row,col,event)
 	Variable col
 	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 					//5=cell select with shift key, 6=begin edit, 7=end
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(cmpstr("MaskListBoxSelection",ctrlName)==0)
 	
 	endif
@@ -4588,7 +4587,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1A_PolarCorCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
@@ -4643,7 +4642,7 @@ EndMacro
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_LineProfUpdateQ()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		NVAR LineProf_DistanceFromCenter=root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
 		NVAR LineProf_Width=root:Packages:Convert2Dto1D:LineProf_Width
 		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
@@ -4701,7 +4700,7 @@ end
 Function NI1A_CalcQValForSearch(w, LineProf_DistanceFromCenter)
 		Wave w
 		variable LineProf_DistanceFromCenter
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 		variable QValueTarget = w[0]
 		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
@@ -4740,7 +4739,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function/S NI1A_CreateHelpForNameFunction()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DOwindow	NI1A_UseFnctToCreateName
 	if(V_Flag)
 		DoWIndow/F NI1A_UseFnctToCreateName
@@ -4781,7 +4780,7 @@ end
 Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -5325,7 +5324,7 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_LineProf_Update()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 		NI1A_LineProfUpdateQ()
@@ -5342,7 +5341,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_DoDrawingsInto2DGraph()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR DisplayBeamCenterIn2DGraph=root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph
@@ -5384,7 +5383,7 @@ Function NI1A_AddColorScaleTo2DGraph()
 		if(!stringmatch(WinName(0,1,1),"CCDImageToConvertFig"))
 			return 0
 		endif
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 		ColorScale/K/N=Colorscale2D/W=CCDImageToConvertFig	///W=CCDImageToConvertFig
 		NVAR DisplayColorScale = root:Packages:Convert2Dto1D:DisplayColorScale
@@ -5442,7 +5441,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_DrawSectorsIn2DGraph()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -5527,7 +5526,7 @@ End
 //*******************************************************************************************************************************************
 Function NI1A_DrawLinesIn2DGraph()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -5719,7 +5718,7 @@ End
 Function NI1A_GenerAngleLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	variable DetDimX,DetDimY,BCx,BCy,Angle,Offset
 	Wave WaveX,WaveY
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5761,7 +5760,7 @@ end
 Function NI1A_GenerEllipseLine(BCx,BCy,Excentricity,Offset,WaveX,WaveY)
 	variable Excentricity,BCx,BCy,Offset
 	Wave WaveX,WaveY
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5784,7 +5783,7 @@ end
 Function NI1A_GenerGISAXSQyLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	variable DetDimX,DetDimY,BCx,BCy,Angle,Offset
 	Wave WaveX,WaveY
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -5812,7 +5811,7 @@ end
 Function NI1GI_CalculateQxyz(DimXpos,DimYpos,WhichOne)
 	variable DimXpos,DimYpos
 	String WhichOne
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR ycenter=root:Packages:Convert2Dto1D:BeamCenterY
 	NVAR xcenter=root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
@@ -5858,7 +5857,7 @@ end
 Function NIGI_CalcYdimForFixQz(DimYPos,Qy)
 	variable DimYPos	//this defines really Qz in pixel value
 	variable Qy			//for which value of Qy we want to calcualte this?
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
 	NVAR SampleToCCDDistance=root:Packages:Convert2Dto1D:SampleToCCDDistance
@@ -5928,7 +5927,7 @@ EndMacro
 //*******************************************************************************************************************************************
 
 Function NI1A_AllDrawingsFrom2DGraph()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWindow CCDImageToConvertFig
 	if(V_Flag)
 	      setDrawLayer/W=CCDImageToConvertFig/K ProgFront
@@ -5948,7 +5947,7 @@ end
 //*******************************************************************************************************************************************
 
 Function NI1A_SetCalibrationFormula()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	SVAR CalibrationFormula=root:Packages:Convert2Dto1D:CalibrationFormula
@@ -6072,7 +6071,7 @@ end
 
 Function NI1A_DezingerImage(image)
         Wave image
- 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+ 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
        string OldDf=GetDataFOlder(1)
         setDataFolder root:Packages:Convert2Dto1D
  	 NVAR DezingerRatio =root:Packages:Convert2Dto1D:DezingerRatio
@@ -6103,7 +6102,7 @@ End
 
 Function NI1G_AddQAxisToImage(UseGrids)
 	variable UseGrids
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 		string OldDf = GetDataFolder(1)
 		setDataFolder root:Packages:Convert2Dto1D
@@ -6180,7 +6179,7 @@ end
 
 Function NI1G_RemoveQAxisToImage(Recreate)
 	variable Recreate
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		string OldDf = GetDataFolder(1)
 		setDataFolder root:Packages:Convert2Dto1D
 		
@@ -6212,7 +6211,7 @@ end
 //************************************************************************
 //************************************************************************
 Function NI1U_UpdateQAxisInImage()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow CCDImageToConvertFig
 	if(!V_flag)
 		abort
@@ -6245,7 +6244,7 @@ end
 
 Function NI1U_KillWindowHookF(s)
 	STRUCT WMWinHookStruct &s
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable hookResult = 0	// 0 if we do not handle event, 1 if we handle it.
 
 	switch(s.eventCode)
@@ -6266,7 +6265,7 @@ End
 Function TransAx_CalculateVerticalQaxis(w, x)
 	Wave/Z w
 	Variable x		//in pixels
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
@@ -6310,7 +6309,7 @@ end
 Function TransAx_CalculateHorizQaxis(w, x)
 	Wave/Z w
 	Variable x		//in pixels
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
 		NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt
@@ -6350,7 +6349,7 @@ end
 
 Function NI2T_testThetaWithTilts()		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	STRUCT NikadetectorGeometry d
 	wave testImg
 		NI2T_ReadOrientationFromGlobals(d)
@@ -6368,7 +6367,7 @@ end
 Function NI2T_Calculate2DThetaWithTilts(Theta2DWave)		// calculate theta for pixel px, py
 	wave Theta2DWave
 	STRUCT NikadetectorGeometry d
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 		NI2T_ReadOrientationFromGlobals(d)
 		NI2T_SaveStructure(d)
@@ -6381,7 +6380,7 @@ end
 //*************************************************************************************************
 Function/C NI2T_CalculatePxPyWithTilts(theta, direction)  
 	variable theta, direction
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//theta is bragg angle in question
 	//direction is azimuthal angle in radians
 	variable TwoTheta= 2*theta		//theta of this px, py with tilts
@@ -6413,7 +6412,7 @@ end
 
 Function NI2T_CalculateGammaWithTilts(px,py)		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	variable  px, py
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	STRUCT NikadetectorGeometry d
 	
 		NI2T_ReadOrientationFromGlobals(d)
@@ -6428,7 +6427,7 @@ end
 Function NI2T_pixelGamma(d,px,py)				// returns 2-theta (rad)
 	STRUCT NikadetectorGeometry &d
 	Variable px,py									// pixel position, 0 based, first pixel is (0,0), NOT (1,1)
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	make/FREE/N=3 ki
 	make/FREE/N=3 kout
 	ki = {0,0,1}									//	ki =   ki[p],  incident beam direction
@@ -6453,7 +6452,7 @@ Function NI2T_pixel3XYZ(d,px,py,xyz)					// convert pixel position to the beamli
 	STRUCT NikadetectorGeometry, &d
 	Variable px,py									// pixel position on detector (full chip & zero based)
 	Wave xyz											// 3-vector to receive the result, position in beam line coords (micron)
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable xp,yp, zp									// x' and y' (requiring z'=0), detector starts centered on origin and perpendicular to z-axis
 	//d.P[0] is Beam center x position in pixels
 	//d.P[1] is Beam center y position in pixels
@@ -6481,7 +6480,7 @@ End
 Function NI2T_CalculateThetaWithTilts2(px,py)		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	variable  px, py
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	STRUCT NikadetectorGeometry d
 //	NI2T_LoadStructure(d)
 	NI2T_ReadOrientationFromGlobals(d)
@@ -6496,7 +6495,7 @@ end
 Function NI2T_CalculateThetaWithTilts(px,py,resetParameters)		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
 	variable  px, py, resetParameters
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	STRUCT NikadetectorGeometry d
 	
 	if(resetParameters&&px==0&&py==0)					//read default parameters from defaults 
@@ -6585,7 +6584,7 @@ EndStructure
 
 Function NI2T_InitTiltCorrection()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:
 	NewDataFolder/O root:Packages							// ensure Packages exists
@@ -6673,7 +6672,7 @@ End
 Function NI2T_ReadOrientationFromGlobals(d)						// sets d to the reference orientation based on user values
 	STRUCT NikadetectorGeometry &d
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	Wave/Z BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	variable NumPixX, NumPixY
@@ -6726,7 +6725,7 @@ end
 Function NI2T_SaveOrientationToGlobals(d)						// sets d to the reference orientation based on user values
 	STRUCT NikadetectorGeometry &d
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
 	Wave/Z BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	variable NumPixX, NumPixY
@@ -6772,7 +6771,7 @@ Function NI2T_DetectorUpdateCalc(d)						// update all internally calculated thi
 		return 1
 	endif
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable Rx, Ry, Rz								// used to make the rotation matrix rho from vector R
 	Variable theta, c, s, c1
 	Variable i
@@ -6804,7 +6803,7 @@ End
 Function NI2T_SaveStructure(d)						//save structure back into string and create it if necessary. 
 	STRUCT NikadetectorGeometry &d	
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR/Z  strStruct = root:Packages:NikaTiltCorrections:NikaDetectorGeometryStr
 	if(!SVAR_Exists(strStruct))
 		string OldDf=getDataFolder(1)
@@ -6824,7 +6823,7 @@ end
 Function NI2T_LoadStructure(d)					//here we load structure from saved structure in the string... 
 	STRUCT NikadetectorGeometry &d	
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR/Z strStruct = root:Packages:NikaTiltCorrections:NikaDetectorGeometryStr
 	if(!SVAR_Exists(strStruct))
 		ABort "Structure does not exist. Create it first with Beam center & Calibration tool"
@@ -6844,7 +6843,7 @@ end
 Function NI2t_printDetectorStructure(d)							// print the details for passed detector geometry to the history window
 	STRUCT NikadetectorGeometry &d
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	printf "	Nx=%d, Ny=%d			// number of un-binned pixels in detector\r",d.Nx,d.Ny
 	printf "	sizeX=%g, sizeY=%g		// size of detector (mm)\r",(d.sizeX/1000), (d.sizeY/1000)
 	printf "	R = {%.7g, %.7g, %.7g}, a rotation of %.7g¡	// rotation vector\r",d.R[0],d.R[1],d.R[2],sqrt(d.R[0]*d.R[0] + d.R[1]*d.R[1] + d.R[2]*d.R[2])*180/PI
@@ -6876,7 +6875,7 @@ End
 
 Function NI1A_OnLineDataProcessing()	
 	//create global variables 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String OldDf=GetDataFolder(1)
 	SetDataFOlder root:Packages:Convert2Dto1D
 	NewDataFolder/O/S BckgMonitorParams
@@ -6905,11 +6904,11 @@ Function NI1A_OnLineDataProcessing()
 	setDataFolder OldDf
 	DoWindow NI_LiveDataProcessing
 	if(V_Flag==0)
-		NewPanel /FLT/K=1/W=(573,44,1000,210) as "Background processing"
+		NewPanel /FLT/K=1/W=(573,44,1000,210) as "Nika Background processing"
 		DoWindow/C NI_LiveDataProcessing
 		SetDrawLayer UserBack
 		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65535)
-		DrawText 6,25,"\"Live\" data processing"
+		DrawText 6,25,"Nika \"Live\" data proc."
 		SetDrawEnv fsize= 10
 		DrawText 178,18,"This tool controls background process which"
 		SetDrawEnv fsize= 10
@@ -6937,7 +6936,7 @@ Function NI1A_OnLineDataProcessing()
 		CheckBox BackgroundConvert variable=root:Packages:Convert2Dto1D:BckgMonitorParams:BckgConvertData
 		SetActiveSubwindow _endfloat_
 	endif
-	CtrlNamedBackground MonitorDataFolder, status
+	CtrlNamedBackground NI2_MonitorDataFolder, status
 	if(NumberByKey("RUN", S_Info))		//running, restart witrh new parameters
 		BckgStatus = "   Running background job   "
 		TitleBox Status win=NI_LiveDataProcessing,fColor=(65535,0,0),labelBack=(32792,65535,1)
@@ -6955,7 +6954,7 @@ end
 Function NI2_BakcgroundCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
@@ -6990,7 +6989,7 @@ End
 Function NI2_BacgroundUpdatesPopMenuProc(pa) : PopupMenuControl
 	STRUCT WMPopupAction &pa
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( pa.eventCode )
 		case 2: // mouse up
 			Variable popNum = pa.popNum
@@ -6998,10 +6997,10 @@ Function NI2_BacgroundUpdatesPopMenuProc(pa) : PopupMenuControl
 			if(stringMatch("UpdateTimeSelection",pa.ctrlName))
 				NVAR BckgUpdateInterval= root:Packages:Convert2Dto1D:BckgMonitorParams:BckgUpdateInterval
 				BckgUpdateInterval = str2num(pa.popStr)
-				CtrlNamedBackground MonitorDataFolder, status
+				CtrlNamedBackground NI2_MonitorDataFolder, status
 				if(NumberByKey("RUN", S_Info))		//running, restart with new parameters
-					StopFolderWatchTask()
-					StartFolderWatchTask()
+					NI2_StopFolderWatchTask()
+					NI2_StartFolderWatchTask()
 				endif
 			endif
 			break
@@ -7021,15 +7020,15 @@ End
 Function NI2_BackgrTaskButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
 			if(stringmatch("StartBackgrTask",ba.ctrlName))
-				StartFolderWatchTask()
+				NI2_StartFolderWatchTask()
 			endif
 			if(stringmatch("StopBackgrTask",ba.ctrlName))
-				StopFolderWatchTask()
+				NI2_StopFolderWatchTask()
 			endif
 			break
 		case -1: // control being killed
@@ -7043,13 +7042,13 @@ End
 //*************************************************************************************************
 
 
-Function StartFolderWatchTask()
+Function NI2_StartFolderWatchTask()
 	//Variable numTicks = 5 * 60 // Run every two seconds (120 ticks) 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR BckgUpdateInterval= root:Packages:Convert2Dto1D:BckgMonitorParams:BckgUpdateInterval
-		CtrlNamedBackground MonitorDataFolder, period=BckgUpdateInterval*60, proc=NI2_MonitorFldrBackground 
-		CtrlNamedBackground MonitorDataFolder, start
-		Printf "FolderWatch background task started with %d [s] update interval\r", BckgUpdateInterval
+		CtrlNamedBackground NI2_MonitorDataFolder, period=BckgUpdateInterval*60, proc=NI2_MonitorFldrBackground 
+		CtrlNamedBackground NI2_MonitorDataFolder, start
+		Printf "Nika FolderWatch background task (\"NI2_MonitorDataFolder\") started with %d [s] update interval\r", BckgUpdateInterval
 		SVAR BckgStatus = root:Packages:Convert2Dto1D:BckgMonitorParams:BckgStatus
 		BckgStatus = "   Running background job   "
 		TitleBox Status win=NI_LiveDataProcessing,fColor=(65535,0,0),labelBack=(32792,65535,1)
@@ -7059,10 +7058,10 @@ End
 //*************************************************************************************************
 //*************************************************************************************************
 
-Function StopFolderWatchTask()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
-   CtrlNamedBackground MonitorDataFolder, stop
-	Printf "FolderWatch background task stopped\r"
+Function NI2_StopFolderWatchTask()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+   CtrlNamedBackground NI2_MonitorDataFolder, stop
+	Printf "Nika FolderWatch background task (\"NI2_MonitorDataFolder\") stopped\r"
 		SVAR BckgStatus = root:Packages:Convert2Dto1D:BckgMonitorParams:BckgStatus
 		BckgStatus = "   Background job not running   "
 		TitleBox Status win=NI_LiveDataProcessing,fColor=(0,0,0),labelBack=(65535,65535,65535)
@@ -7077,7 +7076,7 @@ End
 Function NI2_MonitorFldrBackground(s) // This is the function that will be called periodically 
 	STRUCT WMBackgroundStruct &s
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//this should monitor result of Refresh on the folder and grab the new data set and process it.
 	Wave/T ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	Wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
@@ -7307,7 +7306,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	

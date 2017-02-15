@@ -128,19 +128,21 @@ Function IN3_MainPanelNew()
 	CheckBox IsBlank,pos={265,115},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
 
-	Button ProcessData2,pos={265,132},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/process one", help={"Load data and process them"}
-	Button SelectNextSampleAndProcess2,pos={265,157},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/Process Many", help={"Select next sample in order - process - and save"}
-	Button SaveResults,pos={265,182},size={130,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
+	Button ProcessData2,pos={265,130},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/process one", help={"Load data and process them"}
+	Button SelectNextSampleAndProcess2,pos={265,152},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/Process Many", help={"Select next sample in order - process - and save"}
+	Button SaveResults,pos={265,174},size={130,20},proc=IN3_InputPanelButtonProc,title="Save Data", help={"Save results into original folder"}
+	Button LiveProcessing,pos={265,196},size={130,16},proc=IN3_InputPanelButtonProc,title="Live processing", help={"Switch on and off live data visualization and processing"}
+
 	NVAR UserSavedData=root:Packages:Indra3:UserSavedData
 	if(!UserSavedData)
 		Button SaveResults fColor=(65280,0,0)
-		TitleBox SavedData pos={265,207}, title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0)
+		TitleBox SavedData pos={261,217}, title="  Data   NOT   saved  ", fColor=(0,0,0), frame=1,labelBack=(65280,0,0), fixedSize=1,size={160,18}
 	else
 		Button SaveResults 
-		TitleBox SavedData pos={265,207}, title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2
+		TitleBox SavedData pos={261,217}, title="  Data   are   saved  ", fColor=(0,0,0),labelBack=(47872,47872,47872),  frame=2,fixedSize=1,size={160,18}
 	endif
-	TitleBox RemoveFromNameTbx pos={260,230}, title="Remove From name (str):",size={150,15}
-	SetVariable RemoveFromNameString,pos={260,250},size={157,15},noproc,title=" "
+	TitleBox RemoveFromNameTbx pos={260,240}, title="Remove From name (str):",size={150,15}
+	SetVariable RemoveFromNameString,pos={260,260},size={157,15},noproc,title=" "
 	SetVariable RemoveFromNameString,help={"String which will be removed from data name"}
 	SetVariable RemoveFromNameString,value= root:Packages:USAXS_FlyScanImport:RemoveFromNameString
 

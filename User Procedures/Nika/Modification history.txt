@@ -1,6 +1,10 @@
 Nika package
 Code modification history 
 
+Jan Ilavsky, ilavsky@aps.anl.gov
+************************************
+
+
 -latest stuff first
 ********************************************
 1.75
@@ -9,6 +13,7 @@ Modified Nexus support, added new library to use it. Major revision of Nexus imp
 Moved some common functions to IN2G_GeneralProcedures
 Removed Utility_JZT from distribution, not needed and causing conflict with JZT package.
 Updated manual. 
+Fixed slow down caused by debugging messages function
 
 1.74 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher

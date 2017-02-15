@@ -154,7 +154,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function NEXUS_NikaConfigPanelFnct() : Panel
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow NEXUS_ConfigurationPanel
 	if(V_Flag)
 		DoWIndow/F NEXUS_ConfigurationPanel
@@ -275,7 +275,7 @@ Function NEXUS_InputTabProc(name,tab) : TabControl
 	String name
 	Variable tab
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	TabControl ImportTabs value=tab, win=NEXUS_ConfigurationPanel
 	//set here to Tab tab or things go out of whack... 
 	NVAR NX_ReadParametersOnLoad = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
@@ -308,7 +308,7 @@ End
 Function NEXUS_ConfigPanelCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR NX_Append2DDataToProcNexus = root:Packages:Irena_Nexus:NX_Append2DDataToProcNexus
 	NVAR NX_Append1DDataToProcNexus = root:Packages:Irena_Nexus:NX_Append1DDataToProcNexus
 	NVAR NX_InputFileIsNexus = root:Packages:Irena_Nexus:NX_InputFileIsNexus
@@ -361,7 +361,7 @@ End
 //**************************************************************************************
 
 static Function NEXUS_SetOutputControls()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	NVAR SaveToNexus=root:Packages:Irena_Nexus:NX_SaveToProcNexusFile
 	NVAR NX_Append2DDataToProcNexus=root:Packages:Irena_Nexus:NX_Append2DDataToProcNexus
@@ -389,7 +389,7 @@ end
 Function NEXUS_ConfigListBox(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable/g row = lba.row
 	WAVE/T/Z listWave = lba.listWave
 	WAVE/Z selWave = lba.selWave
@@ -433,7 +433,7 @@ End
 //**************************************************************************************
 static Function/T NEXUS_NXParamSelection(row)
 	variable row
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR DataFolderName = root:Packages:Irena_Nexus:DataFolderName
 	SVAR GrepStringMask = root:Packages:Irena_Nexus:GrepStringMask
 	Wave HDF5___xref = $(DataFolderName+"HDF5___xref")					//list of parameters in the Nexus file
@@ -459,7 +459,7 @@ end
 //**************************************************************************************
 Function NEXUS_InputPanelButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	switch( ba.eventCode )
 		case 2: // mouse up
@@ -500,7 +500,7 @@ End
 //************************************************************************************************************
 Function Nexus_NexusOpenHdf5File()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/T WaveOfFiles      = root:Packages:Convert2Dto1D:ListOf2DSampleData
 	Wave WaveOfSelections = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 
@@ -555,7 +555,7 @@ end
 
 Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 		string FilePathName,Filename
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
 		string OldDf=getDataFolder(1)
 		string PathToNewData= NEXUS_ImportAFile(FilePathName,Filename)		//this will import data file. "" if failed
@@ -598,7 +598,7 @@ End
 //*****************************************************************************************************************
 static Function NEXUS_ReadNXparameters(PathToNewData)
 		string PathToNewData
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//print GetRTStackInfo(0 )
 		string OldDf=getDataFolder(1)
 		NVAR ReadParams = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
@@ -666,7 +666,7 @@ end
 static Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus (HDF5) file and returns path to it. 
 		string FilePathName,Filename
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NEXUS_Initialize(0)
 	KilLDatafolder/Z root:Packages:NexusImportTMP
 	NewDataFolder/O root:Packages:NexusImportTMP
@@ -686,7 +686,7 @@ end
 static Function NEXUS_CreateWvNtNbk(WaveWithWaveNote, SampleName)
 	wave WaveWithWaveNote
 	string SampleName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(!WaveExists(WaveWithWaveNote))		//hm, are we laoding the empty?
 		return 0
 	else
@@ -724,7 +724,7 @@ end
 static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 	Wave DataWv
 	string FldrName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string StartDf
 	StartDf = Fldrname+"entry:"
 	string PathToStrVarValues = "root:Packages:NexusImportTMP:"
@@ -745,7 +745,7 @@ end
 Function NEXUS_ConvertTxTwvToStringList(StartFolderStr, Fldrname)
 	string StartFolderStr, Fldrname
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
 	string ListOfTXTWaves=WaveList("*", ";", "TEXT:1" )
       SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
@@ -766,7 +766,7 @@ end
 Function NEXUS_ConvertNumWvToStringList(StartFolderStr, Fldrname)
 	string  StartFolderStr, Fldrname
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//SVAR StartFolderStr=root:Packages:NexusImportTMP:StartFolderStr
 	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
 	string ListOfNumWaves=WaveList("*", ";", "TEXT:0,DIMS:1" )
@@ -789,7 +789,7 @@ end
 static Function/T NEXUS_FindNXdataClassData(DataPathStr, NXClassStr)
 	string DataPathStr, NXClassStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	SetdataFolder root:Packages:Irena_Nexus
 	string/g FoundClassDataLocation
@@ -804,7 +804,7 @@ end
 static Function/T NEXUS_IdentifyNxData(PathToData, dimensions)
 	string PathToData
 	variable dimensions
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	SetDataFolder $(PathToData)
 	Wave/Z Igor___folder_attributes
@@ -858,7 +858,7 @@ end
 //*****************************************************************************************************************
 static Function/S NEXUS_FindSignalV2Data()
 	//check each wave in curren tfolder if it has signal= 1 in the wavenote
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string WavenameStr=""
 	string objName
 	variable index
@@ -880,7 +880,7 @@ end
 //*****************************************************************************************************************
 static Function/S NEXUS_FindAnySignalData()
 	//check each wave in current folder and selects the first one which has 2D data in it
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string WavenameStr=""
 	string objName
 	variable index
@@ -904,7 +904,7 @@ end
 Function NEXUS_SearchForType(WhichNXClass)
 	string WhichNXClass
 	//e.g., 	WhichNXClass = "NX_class=NXdata;canSAS_class=SASdata;"	- must match the Nexus spelling/format
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR FoundClassDataLocation = root:Packages:Irena_Nexus:FoundClassDataLocation
 	Wave/Z Igor___folder_attributes
 	string tmpnote, tmpClass
@@ -930,7 +930,7 @@ Function NEXUS_Initialize(enforceReset)
 	variable enforceReset
 	//function, which creates the folder and creates the strings and variables
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Irena_Nexus	
@@ -1048,7 +1048,7 @@ end
 static Function NEXUS_ResetParamXRef(enforce)
 	variable enforce
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:Irena_Nexus
 	SVAR ParamsNames=root:Packages:Irena_Nexus:NikaParamsNames
@@ -1088,7 +1088,7 @@ end
 
 static Function NEXUS_GuessParamXRef()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:Irena_Nexus
 	SVAR ParamsNames=root:Packages:Irena_Nexus:NikaParamsNames
@@ -1143,7 +1143,7 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 		String SampleName, CurOrient, NoteData, DataType
 		wave Iwv, dIwv, Qwv, dQwv
 		
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		NVAR NX_SaveToProcNexusFile=root:Packages:Irena_Nexus:NX_SaveToProcNexusFile
 		if(NX_SaveToProcNexusFile!=1)
 			return 0
@@ -1352,7 +1352,7 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 		useQx= !ParamIsDefault(Qx) 
 		useQy= !ParamIsDefault(Qy) 
 		useUnbinnedQxy =  !ParamIsDefault(UnbinnedQx) 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		use3Q = useQx*useQy
 		if(use3Q + useQwv != 1)
 			abort "Wrong Q data passed to WriteHdf5CanSASData"
@@ -1561,7 +1561,7 @@ static Function NEXUS_WriteNikaNexus2DRawFile(FileName)
 	//creates new Nexus file with RAW data using Nika values.  
 	//this file should follow NXsas structure and be understandable to Nexus file readers which expect to get NX type data as raw input. 
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable GroupID
 	Variable fileID, result
 	//following Pete's python code here...
@@ -1778,7 +1778,7 @@ end
 //**************************************************************************************************************************************************************************************
 Function NEXUS_NikaSave2DData()
 	//appends 2D data if user requests it
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR NX_SaveToProcNexusFile 		= root:Packages:Irena_Nexus:NX_SaveToProcNexusFile
 	NVAR NX_Append2DDataToProcNexus = root:Packages:Irena_Nexus:NX_Append2DDataToProcNexus		//2D calibrated data
 	NVAR NX_Rebin2DData = root:Packages:Irena_Nexus:NX_Rebin2DData							//rebin 2D data
@@ -1933,7 +1933,7 @@ end
 static Function NEXUS_RebinOnLogScale2DData(Calibrated2DData,Qmatrix, AnglesWave, Mask, XDimension, YDimension,BeamCenterX, BeamCenterY)
 	wave Calibrated2DData,Qmatrix, AnglesWave, Mask
 	variable XDimension, YDimension, BeamCenterX, BeamCenterY
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//here we rebin the data using fake log binning and return really weird data
 	//how to rebin the data.
 	variable Dim1=DimSize(Calibrated2DData, 0 )		//this is hwo many points we have here. 
@@ -2040,7 +2040,7 @@ end
 static FUnction/T Nexus_FixNxGroupName(basename)
 	string BaseName
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(GrepString(BaseName, "^[0-9]"))
 		BaseName="_"+BaseName
 	endif
@@ -2051,7 +2051,7 @@ end
 static Function NEXUS_HdfSaveDataVar(DataName,DataValueVar,DataLoc, fileID)
 	string DataName,DataLoc
 	Variable fileID, DataValueVar
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	make/Free/N=1 dataWv
 	dataWv = DataValueVar									
 	HDF5SaveData /O  dataWv, fileID, DataLoc+DataName
@@ -2065,7 +2065,7 @@ end
 static Function NEXUS_HdfSaveData(DataName,DataValueStr,DataLoc, fileID)
 	string DataName,DataValueStr,DataLoc
 	Variable fileID
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(NEXUS_isaNumber(DataValueStr))
 		make/Free/N=1 dataWvN
 		dataWvN = str2num(DataValueStr)			
@@ -2097,7 +2097,7 @@ End
 static Function NEXUS_WriteWaveNote(fileID,Location,NoteStr)
 	variable fileID
 	String Location,NoteStr
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//Create NXnote group 
 	variable GroupID, i
 	string Key, Value, tempStr
@@ -2123,7 +2123,7 @@ static Function NEXUS_HdfSaveAttrib(AttribName,AttribValue,AttribLoc, fileID,[Do
 	string AttribName,AttribValue,AttribLoc
 	Variable fileID,DoNotOverwrite
 	variable DoNotOverwriteL= !ParamIsDefault(DoNotOverwrite)
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	make/T/Free/N=1 groupAttribute
 	groupAttribute = AttribValue		
 	if(DoNotOverwriteL)	
@@ -2143,7 +2143,7 @@ end
 static Function NEXUS_HdfSaveAttribIntg(AttribName,AttribValue,AttribLoc, fileID)
 	string AttribName,AttribLoc
 	Variable fileID, AttribValue
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	make/U/W/Free/N=1 groupAttribute
 	groupAttribute = AttribValue									
 	HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
@@ -2160,7 +2160,7 @@ static Function/T NEXUS_NikaCreateOrLocNexusFile(RawOrProcessedFile)
 	//this function will create path to Nexus file based on users wishes and input file name...
 	//=1 for Raw file (same name as input file).hdf and 2 for Processed data file - name _Nika.hdf
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//get the file name right...
 	string LocalUserFileName
 	string UseName
@@ -2235,7 +2235,7 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 			//		@I_uncertainties (if available). From the data I and Q identify also uncertainties and resolution, if available. 
 			//		convert to QRS system data in Igor. Read Instrument group if availabel and stick in wave note, add title 
 			//3.	2D is TBD as Irena cannot use it for now. Nika can, but I may not be able to finish this now. 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 		string OldDf=getDataFolder(1)
 		string NewFileDataLocation = NEXUS_ImportAFile(FilePathName,Filename)			//import file as HFD5 in Igor 
@@ -2293,7 +2293,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string PathToDataSet, DataTitleStr, sourceFileName
 	variable InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, FoundSasEntries
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFREF saveDFR = GetDataFolderDFR()		// Save
 	SetDataFolder root:
 	//now we are in the temp data place, we need to locate and copy these waves...
@@ -2467,7 +2467,7 @@ end
 static Function/T  NEXUS_CreateNoteFromFolder(PathToFolder)
 	string PathToFolder
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string/g root:Packages:Irena_Nexus:TmpStringForNote
 	SVAR TmpStringForNote = root:Packages:Irena_Nexus:TmpStringForNote
 	TmpStringForNote = ""
@@ -2476,7 +2476,7 @@ static Function/T  NEXUS_CreateNoteFromFolder(PathToFolder)
 end
 //*****************************************************************************************************************
 Function NEXUS_CopyAllDataTOStringNote()
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR TmpStringForNote = root:Packages:Irena_Nexus:TmpStringForNote
 	string ALlItems=IN2G_CreateListOfItemsInFolder(GetDataFolder(1),2)
 	variable i, WaveTypeNum
@@ -2511,7 +2511,7 @@ end
 static Function/T NEXUS_GetNXAttributeInIgor(PathToFolder, AttributeStr)
 	string PathToFolder, AttributeStr
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFREF saveDFR = GetDataFolderDFR()		// Save
 	SetDataFolder $(PathToFolder)
 	Wave/Z Igor___folder_attributes
@@ -2535,7 +2535,7 @@ end
 static Function/T NEXUS_FindNXClassData(DataPathStr, NXClassStr)
 	string DataPathStr, NXClassStr
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	SetdataFolder root:Packages:Irena_Nexus
 	string/g FoundClassDataLocation
@@ -2552,7 +2552,7 @@ static Function/T NEXUS_IdentifyNxclassFolder(PathToData, ClassList)	//find loca
 	string PathToData, ClassList
 	
 	//e.g., 	ClassList = "NX_class=NXdata;canSAS_class=SASdata;"	- must match the Nexus spelling/format
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)
 	SetDataFolder $(PathToData)
 	Wave/Z Igor___folder_attributes

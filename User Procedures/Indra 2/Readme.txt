@@ -1,4 +1,4 @@
-Readme for Indra2 macros set.
+Read me for Indra2 - USAXS - data reduction macros.
 
 Jan Ilavsky, ilavsky@aps.anl.gov
 ************************************
@@ -12,6 +12,11 @@ ________________________________________________________________________________
 Modified Nexus support, added new library to use it. 
 Removed Utility_JZT from distribution, not needed and causing conflict with JZT package. `
 Added OverRideSampleThickness where user can set new sample thickness for range of samples. Set to 0 to ignore. 
+Added Live processing of data same as Nika has.
+Fixed internal bug which caused problems when dark current on UPD was measured too high. 
+Added overwrite for Dark current 5 
+Added overwrite for sample thickness
+Fixed slow down caused by debugging messages function
 
 
 1.89 6/29/2016

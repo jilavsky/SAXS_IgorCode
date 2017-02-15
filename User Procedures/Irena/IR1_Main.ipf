@@ -13,7 +13,7 @@ constant CurrentVersionNumber = 2.62
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.62 Nexus support and other fixes
+//2.62 Nexus support and other fixes, added check for desktop resolution
 //2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  
 //2.60 modified GUI preferences handling. Was reseting, wrong logic. 
@@ -51,7 +51,7 @@ constant CurrentVersionNumber = 2.62
 
 //report any problems to: ilavsky@aps.anl.gov
 //Comment for me: Limit yourself to less than 30 items in the menu, Windows are limited to 30 items. Note: "---" counts as one item!
-//comment - add these: 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//comment - add these: 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //and these 						IN2G_PrintDebugStatement(IrenaDebugLevel, 0..5 ,"Error message")
 
 
@@ -215,7 +215,7 @@ End
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
-	//these are tools which have been upgraded to this functionality
+	//these are tools which have been upgraded to this functionality 
 	//Modeling II = LSQF2_MainPanel
 	string WindowProcNames="LSQF2_MainPanel=IR2L_MainCheckVersion;IR2H_ControlPanel=IR2H_MainCheckVersion;DataMiningTool=IR2M_MainCheckVersion;DataManipulationII=IR3M_MainCheckVersion;"
 	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
@@ -227,6 +227,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
 	IN2G_CheckPlatformGUIFonts()
+	IN2G_CheckForGraphicsSetting()
 end
 //****************************************************************************************
 //****************************************************************************************

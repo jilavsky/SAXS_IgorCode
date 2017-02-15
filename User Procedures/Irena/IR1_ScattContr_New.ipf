@@ -1192,6 +1192,7 @@ Function IR1K_UpdateCalcExportDta()
 	else
 		ListOfAvailableCompounds=IndexedFile(CalcSavedCompounds,-1,".dat")
 	endif
+	ListOfAvailableCompounds = IN2G_RemoveInvisibleFiles(ListOfAvailableCompounds)
 	Make/O/T/N=(ItemsInList(ListOfAvailableCompounds)) WaveOfCompoundsOutsideIgor
 	Make/O/N=(ItemsInList(ListOfAvailableCompounds)) NumbersOfCompoundsOutsideIgor
 	variable i

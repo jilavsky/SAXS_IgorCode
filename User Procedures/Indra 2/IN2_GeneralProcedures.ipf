@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.90
+#pragma version = 1.92
 
 
 //control constants
@@ -13,6 +13,8 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.92 added IN2G_CheckForGraphicsSetting() for AfterCompiledHook( ) functions. 
+//1.91 add Function/T IN2G_RemoveInvisibleFiles(ListIn)
 //1.90 fixed IN2G_ConvertDataDirToList not to fail on qrs data sets which contain "spec" as string in the names. 
 //1.89 added IN2G_ListIgorProcFiles(), IN2G_FindVersionOfSingleFile, IN2G_DownloadFile
 //1.88 fixes for panel scaling. 
@@ -396,9 +398,35 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+//**************************************************************** 
+//**************************************************************** 
+Function IN2G_CheckForGraphicsSetting()
+	//checks for resolution and if needed on Windows prints help to users
+	if(stringMatch(IgorInfo(2),"Windows"))
+		if(screenresolution<120)
+			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their sizes and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
+			print "If you see this, Igor considers your screen high-resolution screen. If your panels do NOT look right - wrong size and/or incorrectly placed controls on the panels, "
+			print "you may need to change your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
+			print "to 100% (= 96 DPI). You may need to change also pixel resolution to have content still readable. There is extensive documentation in Igor which you can locate by "
+			print "running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. This help explains the complexity of high resolution displays and how to manage it. "
+		endif
+	endif
+end
 
-
-
+//**************************************************************** 
+//**************************************************************** 
+Function/T IN2G_RemoveInvisibleFiles(ListIn)
+		string ListIn
+		string ListOut
+		//remove various invisible files and any other useless stuff... 
+		//ListOut = GrepList(ListIn, "^[^.].*$" )
+		ListOut = GrepList(ListIn, "^\." ,1 )
+		ListOut = GrepList(ListOut, ".plist" ,1 )
+		ListOut = GrepList(ListOut, ".DS_Store" ,1 )
+		ListOut = RemoveFromList("EagleFiler Metadata.plist", ListOut)
+		
+		return ListOut
+end
 //**************************************************************** 
 //**************************************************************** 
 
@@ -1613,7 +1641,8 @@ Function IN2G_PrintDebugStatement(CurrentDebugLevel, DebugLevel,DebugStatement)
 	string DebugStatement
 	
 	if(CurrentDebugLevel>=DebugLevel)
-		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  "+DebugStatement
+		string Location=GetRTStackInfo(1)
+		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  "+Location +" : "+ DebugStatement
 	endif
 
 end
@@ -1622,7 +1651,8 @@ end
 Function IN2G_PrintDebugWhichProCalled(FunctionName)
 	string FunctionName
 	if(IrenaDebugLevel==5)
-		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  now in "+FunctionName	
+		
+		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  now in "+GetRTStackInfo(1)	
 	endif
 end
 
@@ -2348,7 +2378,7 @@ End
 //*****************************************************************************************************************
 Function/T IN2G_ReturnExistingWaveName(FolderNm,WaveMatchStr)
 	string FolderNm,WaveMatchStr
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugWhichProCalled("")
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
@@ -2616,20 +2646,28 @@ Function IN2G_ColorTopGrphRainbow()
 		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
 		//print TraceNameList(topGraph,";",3)
 		if (numTraces > 0)
-			w=numTraces/2
-		        For(i=0;i<numTraces;i+=1)
-	                      io = 0
-		                iRed = exp(-(i-io)^2/w)
-		                io = numTraces/2
-		                iBlue = exp(-(i-io)^2/w)
-		                io = numTraces
-		                iGreen = exp(-(i-io)^2/w)
-	     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
-		                Red = 65535 * (iRed/ColorNorm)
-		                Blue = 65535 * (iBlue/ColorNorm)
-		                Green = 65535 * (iGreen/ColorNorm)
-		               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
-					ModifyGraph/w=$(topGraph) rgb[i]=(Red,Blue,Green)
+			//w=numTraces/2
+		    variable r,g,b,scale
+		    colortab2wave Rainbow
+		    wave M_colors
+			 For(i=0;i<numTraces;i+=1)
+//	                      io = 0
+//		                iRed = exp(-(i-io)^2/w)
+//		                io = numTraces/2
+//		                iBlue = exp(-(i-io)^2/w)
+//		                io = numTraces
+//		                iGreen = exp(-(i-io)^2/w)
+//	     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
+//		                Red = 65535 * (iRed/ColorNorm)
+//		                Blue = 65535 * (iBlue/ColorNorm)
+//		                Green = 65535 * (iGreen/ColorNorm)
+//		               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
+//					ModifyGraph/w=$(topGraph) rgb[i]=(Red,Blue,Green)
+			        scale =  (numTraces-i)  / (numTraces-1) * dimsize(M_colors,0)
+			        r = M_colors[scale][0]
+			        g = M_colors[scale][1]
+			        b = M_colors[scale][2]
+			       ModifyGraph/Z/W=$(topGraph) rgb[i]=( r, g, b )
 			    endfor
 		endif
 		//AutoPositionWindow/M=0/R=$topGraph KBColorizePanel

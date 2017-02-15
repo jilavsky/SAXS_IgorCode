@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
- //1.75 rewrote Nexus support
+ //1.75 rewrote Nexus support, added check for desktop resolution
  //1.74		added scaling of images on large displays	
  //1.73 added functions to scale panels to larger sizes.
  //1.72 changed check for update procedure to check http first, then ftp, and the fail. 
@@ -200,6 +200,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 //	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 
 	NI1_CheckNikaUpdate(0)
+	IN2G_CheckForGraphicsSetting()
 end
 
 

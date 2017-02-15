@@ -487,7 +487,7 @@ Proc IR2H_ControlPanel()
 	SetVariable TSC1Value,pos={30,350},size={180,16},title="C1 param      ",proc=IR2H_PanelSetVarProc, disable=!(root:Packages:Gels_Modeling:UseTS)
 	SetVariable TSC1Value,limits={-inf,inf,1},value= root:Packages:Gels_Modeling:TSC1Value, help={"Parameter C1 for the theory"}
 	SetVariable TSC2Value,pos={30,370},size={180,16},title="C2 param      ",proc=IR2H_PanelSetVarProc, disable=!(root:Packages:Gels_Modeling:UseTS)
-	SetVariable TSC2Value,limits={0,5,1},value= root:Packages:Gels_Modeling:TSC2Value, help={"Parameter C2 for the theory"}
+	SetVariable TSC2Value,limits={-inf,inf,1},value= root:Packages:Gels_Modeling:TSC2Value, help={"Parameter C2 for the theory"}
 
 	SetVariable TSCorrelationLength,pos={10,395},size={150,16},title="Corr. length [A]", noedit=1
 	SetVariable TSCorrelationLength,value= root:Packages:Gels_Modeling:TSCorrelationLength, help={"Correlation length from parameters A, C1 and C2"}, limits={-inf,inf,0}

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.08
+#pragma version =1.09
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 change in code, do nto remove negative values for R_Int, causes problems in some cases. 
 //1.08 fixed typo with DSM data dq. 
 //1.07 fixed problems with blank interpolation when intensities are really low and get negative. 
 //1.06 added SMR_dQ types waves  
@@ -208,9 +209,9 @@ Function IN3_CalculateRdata()
 	R_Int = PD_Intensity /SampleTransmissionPeakToPeak
 	R_Error = PD_Error /SampleTransmissionPeakToPeak
 	//remove negative intensities
-	R_Int = log(R_Int)
-	IN2G_RemoveNaNsFrom3Waves(R_Int,R_Qvec,R_Error)
-	R_int= 10^R_int
+	//R_Int = log(R_Int)											//changed 2017-02-02 was causing problems when background was incorrectly set. 
+	//IN2G_RemoveNaNsFrom3Waves(R_Int,R_Qvec,R_Error)
+	//R_int= 10^R_int
 	setDataFolder OldDf	
 end
 //***********************************************************************************************************************************
@@ -859,6 +860,9 @@ Function IN3_SaveData()
 			endif
 		endif
 	endif		
+	
+	IN3_PlotProcessedData()
+	
 	setDataFolder OldDf	
 end
 //***********************************************************************************************************************************

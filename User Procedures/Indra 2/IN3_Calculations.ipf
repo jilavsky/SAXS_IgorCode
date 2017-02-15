@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.28
+#pragma version=1.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2014, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.29 added live processing
 //1.28 added OverRideSampleTransmission
 //1.27 Fixes to Mod Gauss fitting to avoid problems when NaNs from range changes are present. 
 //1.26 GUI fixes for USAXS graphs and panels
@@ -68,7 +69,9 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		endif
 		DoWIndow/F USAXSDataReduction
 	endif
-
+	if (cmpstr(ctrlName,"LiveProcessing")==0)
+		IN3_OnLineDataProcessing()	
+	endif
 	if (cmpstr(ctrlName,"ProcessData2")==0 || cmpstr(ctrlName,"SelectNextSampleAndProcess2")==0)
 		//import the data
 		variable howMany
@@ -877,7 +880,9 @@ static Function IN3_RcurvePlot()
 	//append sample and blank names...
 	SVAR userFriendlySamplename = root:Packages:Indra3:userFriendlySamplename
 	SVAR userFriendlyBlankName = root:Packages:Indra3:userFriendlyBlankName
+	SVAR LastSample = root:Packages:Indra3:LastSample
 	string LegendString="\\Zr130\\K(52224,0,0)Sample : "+userFriendlySamplename
+	LegendString+="\r\\Zr090\\K(0,0,0)File : "+stringFromList(ItemsInList(LastSample,":")-1, LastSample, ":")
 	SetDrawLayer UserFront
 	IN3_COlorizeButton()
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
@@ -1764,3 +1769,331 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+//*********     Live data collection part
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function IN3_OnLineDataProcessing()	
+	//create global variables 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String OldDf=GetDataFolder(1)
+	SetDataFOlder root:Packages:Indra3
+	NewDataFolder/O/S BckgMonitorParams
+	String ListOfVariables, ListOfStrings
+	ListOfVariables = "BckgUpdateInterval;BckgDisplayOnly;BckgConvertData;"
+	ListOfStrings = "BckgStatus;"
+	variable i
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor		
+	NVAR BckgUpdateInterval
+	if(BckgUpdateInterval<5)
+		BckgUpdateInterval=30
+	endif
+
+	NVAR BckgDisplayOnly
+	NVAR BckgConvertData
+	if(BckgConvertData+BckgDisplayOnly!=1)
+		BckgDisplayOnly=1
+		BckgConvertData=0
+	endif
+	SVAR BckgStatus
+	setDataFolder OldDf
+	DoWindow IN3_LiveDataProcessing
+	if(V_Flag==0)
+		NewPanel /FLT/K=1/W=(573,44,1000,210) as "USAXS Background processing"
+		DoWindow/C IN3_LiveDataProcessing
+		SetDrawLayer UserBack
+		SetDrawEnv fsize= 14,fstyle= 3,textrgb= (0,0,65535)
+		DrawText 6,25,"USAXS \"Live\" data proc."
+		SetDrawEnv fsize= 10
+		DrawText 178,18,"This tool controls background process which"
+		SetDrawEnv fsize= 10
+		DrawText 178,33,"watches current data folder and when new files(s)"
+		SetDrawEnv fsize= 10
+		DrawText 178,48,"is found, Converts the data set"
+		SetDrawEnv fsize= 10
+		DrawText 178,63,"Use sort and Match options to control behavior"
+		SetDrawEnv fsize= 10
+		DrawText 178,78,"When multiple files are found, arbitrary is selected "
+		TitleBox Status pos={5,35},variable=root:Packages:Indra3:BckgMonitorParams:BckgStatus,fColor=(65535,0,0),labelBack=(32792,65535,1)
+		TitleBox Status fColor=(0,0,0),labelBack=(65535,65535,65535)
+		Button StartBackgrTask,pos={200,100},size={140,23},proc=IN3_BackgrTaskButtonProc,title="Start folder watch"
+		Button StartBackgrTask,help={"Start Background task here"}
+		Button StopBackgrTask,pos={200,130},size={140,23},proc=IN3_BackgrTaskButtonProc,title="Stop folder watch"
+		Button StopBackgrTask,help={"Start Background task here"}
+		PopupMenu UpdateTimeSelection pos={10, 74}, title="Update Time [sec] :"
+		PopupMenu UpdateTimeSelection proc=IN3_BacgroundUpdatesPopMenuProc
+		PopupMenu UpdateTimeSelection value="5;10;15;30;45;60;120;360;600;", mode=WhichListItem(num2str(BckgUpdateInterval),"5;10;15;30;45;60;120;360;600;")+1
+		CheckBox BackgroundDisplayOnly pos={10,110},title="Convert and Display only"
+		CheckBox BackgroundDisplayOnly proc=IN3_BakcgroundCheckProc
+		CheckBox BackgroundDisplayOnly variable=root:Packages:Indra3:BckgMonitorParams:BckgDisplayOnly
+		CheckBox BackgroundConvert pos={10,130},title="Convert and Save"
+		CheckBox BackgroundConvert proc=IN3_BakcgroundCheckProc
+		CheckBox BackgroundConvert variable=root:Packages:Indra3:BckgMonitorParams:BckgConvertData
+		SetActiveSubwindow _endfloat_
+	endif
+	CtrlNamedBackground IN3_MonitorDataFolder, status
+	if(NumberByKey("RUN", S_Info))		//running, restart witrh new parameters
+		BckgStatus = "   Running background job   "
+		TitleBox Status win=IN3_LiveDataProcessing,fColor=(65535,0,0),labelBack=(32792,65535,1)
+	else
+		BckgStatus = "   Background job not running   "
+		TitleBox Status win=IN3_LiveDataProcessing,fColor=(0,0,0),labelBack=(65535,65535,65535)
+	endif
+
+end
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+
+
+Function IN3_BackgrTaskButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+			// click code here
+			if(stringmatch("StartBackgrTask",ba.ctrlName))
+				IN3_StartFolderWatchTask()
+			endif
+			if(stringmatch("StopBackgrTask",ba.ctrlName))
+				IN3_StopFolderWatchTask()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+
+Function IN3_StartFolderWatchTask()
+	//Variable numTicks = 5 * 60 // Run every two seconds (120 ticks) 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR BckgUpdateInterval= root:Packages:Indra3:BckgMonitorParams:BckgUpdateInterval
+		CtrlNamedBackground IN3_MonitorDataFolder, period=BckgUpdateInterval*60, proc=IN3_MonitorFldrBackground 
+		CtrlNamedBackground IN3_MonitorDataFolder, start
+		Printf "USAXS FolderWatch background task (\"IN3_MonitorDataFolder\") started with %d [s] update interval\r", BckgUpdateInterval
+		SVAR BckgStatus = root:Packages:Indra3:BckgMonitorParams:BckgStatus
+		BckgStatus = "   Running background job   "
+		TitleBox Status win=IN3_LiveDataProcessing,fColor=(65535,0,0),labelBack=(32792,65535,1)
+		Button LiveProcessing win=USAXSDataReduction, fColor=(65535,0,0)
+End
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function IN3_StopFolderWatchTask()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+   CtrlNamedBackground IN3_MonitorDataFolder, stop
+	Printf "FolderWatch background task (\"IN3_MonitorDataFolder\") stopped\r"
+		SVAR BckgStatus = root:Packages:Indra3:BckgMonitorParams:BckgStatus
+		BckgStatus = "   Background job not running   "
+		TitleBox Status win=IN3_LiveDataProcessing,fColor=(0,0,0),labelBack=(65535,65535,65535)
+		Button LiveProcessing win=USAXSDataReduction, fColor=(65535,65535,65535)
+End
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+
+Function IN3_BacgroundUpdatesPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			if(stringMatch("UpdateTimeSelection",pa.ctrlName))
+				NVAR BckgUpdateInterval= root:Packages:Indra3:BckgMonitorParams:BckgUpdateInterval
+				BckgUpdateInterval = str2num(pa.popStr)
+				CtrlNamedBackground IN3_MonitorDataFolder, status
+				if(NumberByKey("RUN", S_Info))		//running, restart with new parameters
+					IN3_StopFolderWatchTask()
+					IN3_StartFolderWatchTask()
+				endif
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+Function IN3_BakcgroundCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			NVAR BckgConvertData=root:Packages:Indra3:BckgMonitorParams:BckgConvertData
+			NVAR BckgDisplayOnly=root:Packages:Indra3:BckgMonitorParams:BckgDisplayOnly
+			if(stringMatch(cba.CtrlName,"BackgroundDisplayOnly"))
+				if(cba.checked)
+					BckgDisplayOnly=1
+					BckgConvertData=0
+				endif
+			endif
+			if(stringMatch(cba.CtrlName,"BackgroundConvert"))
+				if(cba.checked)
+					BckgDisplayOnly=0
+					BckgConvertData=1
+				endif
+			endif
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function IN3_MonitorFldrBackground(s) // This is the function that will be called periodically 
+	STRUCT WMBackgroundStruct &s
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//this should monitor result of Refresh on the folder and grab the new data set and process it.
+	Wave/T ListOf2DSampleData=root:Packages:USAXS_FlyScanImport:WaveOfFiles
+	Wave ListOf2DSampleDataNumbers=root:Packages:USAXS_FlyScanImport:WaveOfSelections
+	NVAR BckgConvertData=root:Packages:Indra3:BckgMonitorParams:BckgConvertData
+	NVAR BckgDisplayOnly=root:Packages:Indra3:BckgMonitorParams:BckgDisplayOnly
+	//problem, USAXS writes part of the file before end of scan, sop we actually need to display file before last.
+	SVAR/Z LiveProcPriorSampleName=root:Packages:Indra3:BckgMonitorParams:LiveProcPriorSampleName
+	if(!Svar_Exists(LiveProcPriorSampleName))
+		string/g root:Packages:Indra3:BckgMonitorParams:LiveProcPriorSampleName
+		SVAR LiveProcPriorSampleName=root:Packages:Indra3:BckgMonitorParams:LiveProcPriorSampleName
+		LiveProcPriorSampleName=""
+	endif
+	string LiveProcPriorSampleNameLoc=LiveProcPriorSampleName
+	Duplicate/Free/T ListOf2DSampleData, ListOf2DSampleDataOld 
+	//update the lists
+	IR3C_UpdateListOfFilesInWvs("USAXSDataReduction")
+	IR3C_SortListOfFilesInWvs("USAXSDataReduction")	
+	variable NumberOfNewImages
+
+	Printf "%s : task %s called, found %d data images in current folder\r", time(), s.name, numpnts(ListOf2DSampleData)
+
+	if(numpnts(ListOf2DSampleData)>numpnts(ListOf2DSampleDataOld))	//new data set appeared
+		NumberOfNewImages=numpnts(ListOf2DSampleData)-numpnts(ListOf2DSampleDataOld)
+		//here we need to select the new file. Only when files are not ordered, or it should be clear. 
+		Printf "%s : found %g new data image(s), will pick one to display \r", time(), NumberOfNewImages
+		Make/Free/T ResWave
+		IN2G_FindNewTextElements(ListOf2DSampleData,ListOf2DSampleDataOld,reswave)
+		Printf "%s : Found new file %s, but this is likely now being collected \r", time(), reswave[0]
+		LiveProcPriorSampleName = reswave[0]
+		if(strlen(LiveProcPriorSampleNameLoc)>1)
+			Printf "%s : Selected prior existing file %s, calling user routine using this file name \r", time(), LiveProcPriorSampleNameLoc
+			//need to find it in the original wave and select it in the control 
+			variable i
+			For(i=0;i<numpnts(ListOf2DSampleData);i+=1)
+				if(stringmatch(ListOf2DSampleData[i],LiveProcPriorSampleNameLoc))
+					ListOf2DSampleDataNumbers[i]=1
+					break
+				endif
+			endfor 
+			//Printf "%s : found %g new data image(s), since sorting is selected, using the last one \r", time(), NumberOfNewImages
+				STRUCT WMButtonAction B_Struct
+				B_Struct.ctrlName = "ProcessData2"
+				B_Struct.win = "USAXSDataReduction"
+				B_Struct.eventcode=2
+			if(BckgDisplayOnly || BckgConvertData)
+				Print "Calling \"Load/process one\" routine \r"
+				IN3_InputPanelButtonProc(B_Struct)
+			endif
+			if(BckgConvertData)
+				Print "Calling \"Save data\" routine \r"
+				B_Struct.ctrlName = "SaveResults"
+				B_Struct.win = "USAXSDataReduction"
+				B_Struct.eventcode=2
+				IN3_InputPanelButtonProc(B_Struct)
+			endif
+			//IN3_PlotProcessedData()		//this is now done automatically by saving the data. 
+		endif
+	endif
+	
+   return 0             // Continue background task
+End
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function IN3_PlotProcessedData()
+
+	//last data name
+	SVAR LastSample = root:Packages:Indra3:LastSample
+	NVAR IsBlank = root:Packages:Indra3:IsBlank
+	
+	//new data should be here:
+	if(IsBlank)			//look for 
+			Wave/Z Ywave=$(LastSample+"Blank_R_Int")
+			Wave/Z Xwave=$(LastSample+"Blank_R_Qvec")
+			Wave/Z Ewave=$(LastSample+"Blank_R_error")
+	else
+			Wave/Z Ywave=$(LastSample+"SMR_Int")
+			Wave/Z Xwave=$(LastSample+"SMR_Qvec")
+			Wave/Z Ewave=$(LastSample+"SMR_Error")
+			if(!WaveExists(Ywave))
+				Wave/Z Ywave=$(LastSample+"DSM_Int")
+				Wave/Z Xwave=$(LastSample+"DSM_Qvec")
+				Wave/Z Ewave=$(LastSample+"DSM_Error")			
+			endif
+	endif
+	if(WaveExists(Ywave)&&WaveExists(Xwave)&&(!IsBlank))
+		DoWIndow/Z USAXSProcessedDataGraph
+		if(V_Flag==0)
+			Display /K=1/W=(526,376,1116,802) Ywave vs Xwave as "USAXS Processed data"
+			DoWindow/C USAXSProcessedDataGraph
+			ModifyGraph mode=3
+			ModifyGraph log=1
+			ModifyGraph mirror=1
+			Label left "Intensity"
+			Label bottom "Q [A\\S-1\\M]"
+			SetAxis bottom 1e-05,*
+		elseif(V_Flag>0)
+			DoWIndow/F USAXSProcessedDataGraph
+			AppendToGraph Ywave vs Xwave
+			ModifyGraph mode=3
+		endif
+		IN2G_ColorTopGrphRainbow()
+		//IN2G_ColorTraces( )
+		IN2G_LegendTopGrphFldr(10)
+	//	IN2G_GenerateLegendForGraph(10,0,1)
+	endif
+	
+end
+
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************

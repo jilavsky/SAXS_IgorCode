@@ -1,6 +1,10 @@
 Irena package 
 Code modification history 
 
+Jan Ilavsky, ilavsky@aps.anl.gov
+************************************
+
+
 -latest stuff first
 ********************************************
 2.62	
@@ -12,10 +16,11 @@ Added checkbox for slit smeared/desmeared USAXS data in Merge 2 data sets tool.
 Small-angle diffraction - when user selects “oversample” the parameters for peaks (d, q, width) are now calculated at 5x higher resolution than measured Q points. 
 Desmearing - propagate dQ and if does not exist, create dQ based on points distance. 
 Pair Distance Distribution - changed Matrix solving method since the one used was deprecated by Igor 7. 
-Plotting tool - added ability to add top 2pi/Q linked axis. Using Transform axis package from Igor Pro. Added few new styles and modified existing settings. 
+Plotting tool - added ability to add top 2pi/Q linked axis. Using Transform axis package from Igor Pro. Added few new styles and modified existing settings. Fixed Gizmo for Igor 7 which stopped working due to Gizmo function syntax changes. 
 WAXS - removed LaueGo capability and added import of PDF-4+ xml files. Fixed help file. 
 Modeling II - if you hold any modifier key (shift/ctrl/opt/alt…) while clicking on parameters change arrows, the step for next step is set 10x smaller. This enables making small changes to the values. Just keep holding the modifier key, first step is still large, subsequent are small. 
-
+Size distribution - fixed Regularization for Igor 7, modified trust ranges which were using wrong logic. Now large size is estimated 2pi/Q while small size pi/Q.  
+Fixed slow down caused by debugging messages function
 
 2.61 6/29/2016
 Due to some new features used, requires Igor 6.34 or higher

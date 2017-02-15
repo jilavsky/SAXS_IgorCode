@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.34
+#pragma version=2.35
 #include <HDF5 Browser>
 Constant IR1IversionNumber = 2.29
 Constant IR1IversionNumber2 = 2.31
@@ -13,6 +13,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.35 fixed lack of too many points message and remvoed hidden tfiles from dialogs. 
 //2.34 fixed problems with negative intensities which screwed up errors. Added abs(Int) for error generation and avoided error message when error was not used. 
 //2.33 added Nexus file importer. 
 //2.32 fixed window naming issue which prevented scaling from work. 
@@ -1267,13 +1268,13 @@ Function IR1I_TestImport()
 	endif
 	wave wave0
 	NumOfPointsFound=numpnts(wave0)
-	if(stringmatch(TopPanel,"IR1I_ImportSASASCIIData"))
+	if(stringmatch(TopPanel,"IR1I_ImportData"))
 		if(NumOfPointsFound<300)
 			sprintf TooManyPointsWarning, "Found %g data points",NumOfPointsFound
-			TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(0,0,0), disable=0
+			TitleBox TooManyPointsWarning win=IR1I_ImportData  ,fColor=(0,0,0), disable=0
 		else
 			sprintf TooManyPointsWarning, "%g data points, consider reduction ",NumOfPointsFound
-			TitleBox TooManyPointsWarning win=IR1I_ImportSASASCIIData  ,fColor=(65200,0,0), disable=0
+			TitleBox TooManyPointsWarning win=IR1I_ImportData  ,fColor=(65200,0,0), disable=0
 		endif
 	endif
 	//now fix the checkboxes as needed
@@ -2132,8 +2133,7 @@ Function IR1I_UpdateListOfFilesInWvs()
 			ListOfAllFiles = GrepList(ListOfAllFiles, NameMatchString )
 		endif
 		//remove Invisible Mac files, .DS_Store and .plist
-		ListOfAllFiles = RemoveFromList(".DS_Store", ListOfAllFiles)
-		ListOfAllFiles = RemoveFromList("EagleFiler Metadata.plist", ListOfAllFiles)
+		ListOfAllFiles = IN2G_RemoveInvisibleFiles(ListOfAllFiles)
 	
 		imax = ItemsInList(ListOfAllFiles,";")
 		Redimension/N=(imax) WaveOfSelections

@@ -10,7 +10,7 @@ Constant NI1AversionNumber = 2.51
 
 //2.51 Fixed old bug where sampel thickness was not converted to cm before use and used as mm. This causes old experiments with old calibration constants to be wrong.
 //			old calibration constatnts need to be also scaled by 10 to fix the calibration. 
-//			added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+//			added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //2.49 Nexus input output fixes. 
 //2.48 changed pinSAXS to SAXS
 //2.47 changed length of name to 23 characters from 17
@@ -65,7 +65,7 @@ Constant NI1AversionNumber = 2.51
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//these are tools which have been upgraded to this functionality
 	//Modeling II = LSQF2_MainPanel
 	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
@@ -79,7 +79,7 @@ end
 Function NI1A_CheckWIndowsProcVersions(WindowProcNames)
 	string WindowProcNames
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i 
 	string PanelName
 	String ProcedureName
@@ -96,7 +96,7 @@ end
 //*****************************************************************************************************************
 
 Function NI1A_MainCheckVersion()	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWindow NI1A_Convert2Dto1DPanel
 	variable OldNikaVersion
 	if(V_Flag)
@@ -128,7 +128,7 @@ end
 Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow $panelName
 	if(V_Flag)
 		GetWindow  $(panelName) note
@@ -144,7 +144,7 @@ Function NI1_CheckPanelVersionNumber(panelName, CurentProcVersion)
 	string panelName
 	variable CurentProcVersion
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow $panelName
 	if(V_Flag)	
 		GetWindow $(panelName), note
@@ -170,7 +170,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_Convert2Dto1DMainPanel()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
 	DoWindow NI1A_Convert2Dto1DPanel
@@ -191,7 +191,7 @@ end
 
 Function NI1A_Initialize2Dto1DConversion()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	variable FirstRun
 	if(!DataFolderExists("root:Packages:Convert2Dto1D"))
@@ -656,7 +656,7 @@ end
 
 Function NI1A_Convert2DTo1D()
 		
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -757,7 +757,7 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_FixNumPntsIfNeeded(CurOrient)
 	string CurOrient
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//here we fix the num pnts to max number if requested by user
 	string OldDf = GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -895,7 +895,7 @@ end
 
 Function NI1A_Create2DPixRadiusWave(DataWave)
 	wave DataWave
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
@@ -950,7 +950,7 @@ end
 
 Function NI1T_TiltedToCorrectedR(TiltedR,SaDetDistance,alpha)			
 	variable TiltedR,SaDetDistance,alpha
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//this function returns distance from beam center corrected for the effect of tilt
 	//Definitions:
 	//TiltedR is measured distance on detector (in same units as SaDetDistance) in either x or y directions. 
@@ -964,7 +964,7 @@ end
 
 Function NI1T_CalcThetaForTiltToTheor(radius,Distance,alphaRad)
 		variable radius,Distance,alphaRad
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))	
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
 		variable temp =radius * abs(cos(alphaRad))
 		temp=temp/sqrt(distance^2 + radius^2 - 2*Distance*radius*sin(alphaRad))
 		return asin(temp)
@@ -972,7 +972,7 @@ end
 
 Function NI1T_TheoreticalToTilted(TheoreticalR,SaDetDistance,alpha)
 		variable TheoreticalR,SaDetDistance,alpha
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//this function returns distance on tilted detector compared to theoretical distacne in perpendicular plane
 		//for either x or y directions
 		//definitions
@@ -994,7 +994,7 @@ end
 Function NI1BC_CalculatePathWvs(dspacing, wvX,wvY)
 	wave wvX, wvY
 	variable dspacing
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -1031,7 +1031,7 @@ end
 Function NI1A_RemoveInfNaNsFrom10Waves(Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8, wv9, wv10)							//removes NaNs from 3 waves
 	Wave Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8,wv9, wv10					//assume same number of points in the waves
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)
 	For(i=imax;i>=0;i-=1)
 			if (numtype(Wv1[i])!=0)
@@ -1077,7 +1077,7 @@ end
 Function NI1A_SaveDataPerUserReq(CurOrient)
 	string CurOrient
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=getDataFOlder(1)
 	if(stringmatch(CurOrient, "*Lp*"))
 		Wave/Z LineProfileIntensity=root:Packages:Convert2Dto1D:LineProfileIntensity
@@ -1482,7 +1482,7 @@ end
 Function/T NI1A_TrimCleanDataName(InputName)
 	string InputName
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	SVAR RemoveStringFromName = root:Packages:Convert2Dto1D:RemoveStringFromName
@@ -1512,7 +1512,7 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	variable NumOfWavesToKeep
 	variable typeGraph	//1 for q, 2 for d, and 3 for twoTheta, 4 for azimuthal angle
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(typeGraph==1)
 		DoWindow LineuotDisplayPlot_Q
 		if(V_Flag)
@@ -1633,7 +1633,7 @@ End
 Function NI1A_setupData(updateLUT)
 		variable updateLUT
 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		wave QVectorWave=root:Packages:Convert2Dto1D:QVectorWave
 		wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
@@ -1654,7 +1654,7 @@ Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert,M_RO
 	variable updateLUT
 	wave QVectorWave, CCDImageToConvert,M_ROIMask
 		
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -1699,7 +1699,7 @@ end
 Function NI1A_CreateMovie()	
 	//here we setup user to create movies while reducting data
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR Movie_Use2DRAWdata=root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData
@@ -1729,7 +1729,7 @@ end
 //***********************************************************
 
 Window NI1A_CreateMoviesPanel() : Panel
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(455,63,762,443) as "Nika Create Movies panel"
 	SetDrawLayer UserBack
@@ -1796,7 +1796,7 @@ EndMacro
 Function NI1A_MovieCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR Movie_Use2DRAWdata=root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData
@@ -1899,7 +1899,7 @@ End
 //***********************************************************
 Function NI1A_MovieRecordFrameIfReq(OneDPlace)
 	variable OneDPlace
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR FIleOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	if(!FIleOpened)
 		return 0
@@ -1929,7 +1929,7 @@ end
 //***********************************************************
 Function NI1A_MovieCreateUpdate1DGraphF()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 
@@ -2088,7 +2088,7 @@ end
 //***********************************************************
 Function NI1A_MovieUpdateMain2DImage()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseMain2DImage=root:Packages:Convert2Dto1D:Movie_UseMain2DImage
@@ -2118,7 +2118,7 @@ end
 //***********************************************************
 Function NI1A_MovieCallUserHookFunction()
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=getDataFolder(1)
 	setDataFolder root:Packages:Convert2Dto1D:
 	NVAR Movie_UseUserHookFnct=root:Packages:Convert2Dto1D:Movie_UseUserHookFnct
@@ -2164,7 +2164,7 @@ end
 Function NI1A_MovieButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
@@ -2198,7 +2198,7 @@ End
 //***********************************************************
 Function NI1A_MovieOpenFile()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR Movie_FrameRate=root:Packages:Convert2Dto1D:Movie_FrameRate
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
@@ -2224,7 +2224,7 @@ end
 //***********************************************************
 Function NI1A_MovieCloseFile()
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable DebugEnab
 	DebuggerOptions
 	DebugEnab = V_debugOnError 	//check for debug on error
@@ -2256,7 +2256,7 @@ end
 Function NI1A_MovieAppendTopImage(Manually)
 	variable manually
 	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR Movie_Use2DRAWdata=root:Packages:Convert2Dto1D:Movie_Use2DRAWdata
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 	NVAR Movie_Use1DData=root:Packages:Convert2Dto1D:Movie_Use1DData

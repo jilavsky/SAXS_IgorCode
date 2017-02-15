@@ -122,12 +122,14 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 					//print "created dist waves"
 				endif
 				//next we calculate the distributions (Guass, Log-Normal or LSW)
-				wave NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
-				wave VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
-				wave Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
-				NumDist=0
-				VolumeDist=0
-				Radius=0
+				wave/Z NumDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(i))
+				wave/Z VolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(i))
+				wave/Z Radius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(i))
+				if(WaveExists(NumDist))
+					NumDist=0
+					VolumeDist=0
+					Radius=0
+				endif
 			elseif(stringMatch(Model,"MassFractal"))	//unified level
 				//calculate MassFractal				
 				For(j=1;j<=10;j+=1)	//j is dataset
@@ -1998,6 +2000,7 @@ Function IR2L_UpdtSeparateMMM(distNum)
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:IR2L_NLSQF
 	SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(distNum))
+	SVAR Model=	$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(distNum))
 
 	NVAR DistMean=$("root:Packages:IR2L_NLSQF:Mean_pop"+num2str(distNum))
 	NVAR DistMedian=$("root:Packages:IR2L_NLSQF:Median_pop"+num2str(distNum))
@@ -2007,22 +2010,22 @@ Function IR2L_UpdtSeparateMMM(distNum)
 
 	NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
 
-	Wave DistRadius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(distNum))
-	Wave DistDiameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(distNum))
-	Wave DistVolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(distNum))
-	Wave DistNumberDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(distNum))
-	
-	if(DimensionIsDiameter)
-		Duplicate/Free DistDiameter, DistDimension
-	else
-		Duplicate/Free DistRadius, DistDimension
-	endif
-	if(stringMatch(FormFactor,"Unified_Level"))
+	if(stringMatch(Model,"Unified Level"))
 		DistMean=NaN
 		DistMedian=NaN
 		DistMode=NaN
 		DistFWHM=NaN
 	else
+		Wave DistRadius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(distNum))
+		Wave DistDiameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(distNum))
+		Wave DistVolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(distNum))
+		Wave DistNumberDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(distNum))
+		
+		if(DimensionIsDiameter)
+			Duplicate/Free DistDiameter, DistDimension
+		else
+			Duplicate/Free DistRadius, DistDimension
+		endif
 		if (DistInputNumberDist)		//use number distribution...
 			Duplicate/Free DistNumberDist, Temp_Probability, Another_temp, Temp_Cumulative
 			Redimension/D  Temp_Probability, Another_temp, Temp_Cumulative

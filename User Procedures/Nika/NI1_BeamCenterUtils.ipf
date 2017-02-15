@@ -1672,6 +1672,7 @@ Function NI1BC_UpdateBmCntrListBox()
 		if(strlen(ListOfAvailableCompounds)<2)	//none found
 			ListOfAvailableCompounds="--none--;"
 		endif
+		ListOfAvailableCompounds = IN2G_RemoveInvisibleFiles(ListOfAvailableCompounds)
 		ListOfAvailableCompounds=NI1A_CleanListOfFilesForTypes(ListOfAvailableCompounds,DataFileExtension,"")
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) ListOfCCDDataInBmCntrPath
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) SelofCCDDataInBmCntrDPath

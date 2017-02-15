@@ -4724,6 +4724,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		if(V_Flag)
 			DisplayHelpTopic /Z "Form Factors & Structure factors"
 		endif
+		DoIgorMenu "Control", "Retrieve Window"
 	endif
 	if(stringmatch(ctrlName,"GetSFHelp"))
 		ControlInfo /W=LSQF2_MainPanel StructureFactorModel 
@@ -4736,6 +4737,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 				DisplayHelpTopic /Z "Form Factors & Structure factors"
 			endif
 		endif
+		DoIgorMenu "Control", "Retrieve Window"
 	endif
 
 

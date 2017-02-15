@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.21
+#pragma version = 2.22
 Constant IR1RSversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 modified trust ranges for Sizes - now correctly uses 2*pi/Q for large size and pi/Q for small size of trusted range. 
 //2.21 fixed Regularization for Igor 7. 
 //2.20 fixes for panel scaling. 
 //2.19 removed the mode from the tag. Peak position in this case may not be found correctly and hence it is misleading. 
@@ -677,6 +678,7 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 		if(V_Flag)
 			DisplayHelpTopic /Z "Form Factors & Structure factors"
 		endif
+		DoIgorMenu "Control", "Retrieve Window"		// let's make sure it is visible
 	endif
 	setDataFolder OldDf
 end	
@@ -4645,11 +4647,11 @@ Function IR1R_AddTrustRanges()
 	Wave D_distribution = root:Packages:Sizes:D_distribution
 	Wave Q_vec  = root:Packages:Sizes:Q_vec
 	NVAR RemoveTrustRegionIndicators=root:Packages:Sizes:RemoveTrustRegionIndicators
-	//these are parameters used to generat the color transition
+	//these are parameters used to generate the color transition
 	variable WideSmallSizes =  0.66
-	variable WideLargeSizes = 1.25
+	variable WideLargeSizes = 1.1
 	variable SmoothFraction = 1/25
-	//and of these parameters. Note: these are more or less arbitrary parameters selected based on experience. No scioence behind them. 
+	//and of these parameters. Note: these are more or less arbitrary parameters selected based on experience. No science behind them. 
 	Duplicate/O D_distribution TrustValues, TrustValuesColors
 	DoWindow IR1R_SizesInputGraph
 	if(V_Flag)		//graph exists
@@ -4664,13 +4666,13 @@ Function IR1R_AddTrustRanges()
 			endif
 			ModifyGraph /W=IR1R_SizesInputGraph lsize(TrustValues)=5
 			variable TrustStart, TrustEnd, TrustStartWide, TrustEndWide
-			FindLevel/Q  D_distribution, 2*pi/(Q_vec[numpnts(Q_vec)-1]) 
+			FindLevel/Q  D_distribution, 1.8*pi/(Q_vec[numpnts(Q_vec)-1]) 		//small sizes, assume something 2 x pi/Q (with smoothing) limit for DIAMETERS - checked and modeled 2017/01/27
 			if(numtype(V_LevelX))
 				V_LevelX = 1
 			endif
 			TrustStart = V_LevelX
 			TrustStartWide = WideSmallSizes*(TrustStart) > 0 ? WideSmallSizes*(TrustStart) : 0
-			FindLevel/Q  D_distribution, pi/(Q_vec[0]) 
+			FindLevel/Q  D_distribution, 0.95 * pi/(Q_vec[0]) 							//large sizes, assume ~ pi/Q (with smoothing) limit for DIAMETERS - checked and modeled 2017/01/27, best guess... 
 			if(numtype(V_LevelX))
 				V_LevelX = numpnts(D_distribution)-2
 			endif

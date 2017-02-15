@@ -122,7 +122,7 @@ end
 
 Function IR2T_LoadFFDescription()
 
-	//try to open Igor help file frist and only if that fails call pdf file...
+	//try to open Igor help file first and only if that fails call pdf file...
 	DisplayHelpTopic /Z "Form Factors & Structure factors"
 	if(V_Flag)
 
@@ -136,8 +136,7 @@ Function IR2T_LoadFFDescription()
 	               ExecuteScriptText cmd
 	      		if (strlen(S_value)>2)
 	//			DoAlert 0, S_value
-			endif
-	
+			endif	
 		else 
 			//manualPath = "User Procedures\Irena\Irena manual.pdf"
 			//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
@@ -149,6 +148,9 @@ Function IR2T_LoadFFDescription()
 			DoWindow/K NewBatchFile
 			ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat\""
 		endif
+	else
+		//help file found, but let's make sure it is visible
+		DoIgorMenu "Control", "Retrieve Window"
 	endif
 end
 
