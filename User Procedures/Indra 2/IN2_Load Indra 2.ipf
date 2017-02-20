@@ -4,7 +4,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -38,7 +38,7 @@
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.2
 //#include ":IN2_GAUSAXS 1", version>=1
-#include ":IN2_GeneralProcedures", version>=1.88
+#include ":IN2_GeneralProcedures", version>=1.92
 //#include ":IN2_ImportX23", version>=1.10
 //#include ":IN2_Merging Data", version>=1.10
 #include ":IN2_NotebookLogging", version>=1.10
@@ -49,17 +49,17 @@
 #include ":IN2_XtalCalculationsP", version>=1.1
 
 #include ":IN3_CalcScattering", version>=1.01
-#include ":IN3_Calculations", version>=1.22
-#include ":IN3_FlyScan", version>=1.00
+#include ":IN3_Calculations", version>=1.29
+#include ":IN3_FlyScan", version>=1.02
 #include ":IN3_Main", version>=1.90
 #include ":IN3_Rwave", version>=1
-#include ":IN3_SupportFnct", version>=1.07
+#include ":IN3_SupportFnct", version>=1.09
 #include ":spec", version>=2.2
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
-#include "::Irena:IR2_PanelCntrlProcs", version>=1.43
-#include "::CanSAS:IRNI_NexusSupport", version>=1.00
+#include "::Irena:IR2_PanelCntrlProcs", version>=1.44
+#include "::CanSAS:IRNI_NexusSupport", version>=1.04
 
 #include <HDF5 Browser>
 

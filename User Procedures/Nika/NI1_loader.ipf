@@ -9,7 +9,7 @@
 #endif
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -18,18 +18,18 @@
 
 
 
-#include ":NI1_15IDDsupport",version>=1.32
+#include ":NI1_15IDDsupport",version>=1.35
 #include ":NI1_BeamCenterUtils",version>=2.24
-#include ":NI1_ConvProc", version>=2.50
+#include ":NI1_ConvProc", version>=2.55
 #include ":NI1_DNDCATsupport",version>=1.11
-#include ":NI1_FileLoaders",version>=2.43
+#include ":NI1_FileLoaders",version>=2.45
 #include ":NI1_HDF5Browser",version>=1.01
 #include ":NI1_FITSLoader",version>=2.17
 #include ":NI1_InstrumentSupport",version>=1.00
 #include ":NI1_LineProfCalcs",version>=2.11
 #include ":NI1_LineProfile", version>=2.03
-#include ":NI1_Main", version>=1.73
-#include ":NI1_MainPanel", version>=2.47
+#include ":NI1_Main", version>=1.74
+#include ":NI1_MainPanel", version>=2.51
 #include ":NI1_mar345", version>=1.03
 #include ":NI1_mask", version>=1.25
 #include ":NI1_pix2Dsensitivity",version>=1.04
@@ -37,7 +37,7 @@
 #include ":NI1_SquareMatrix", version>=1.04
 #include ":NI1_WinView",version>=1.87
 
-#include "::Indra 2:IN2_GeneralProcedures", version>=1.88
+#include "::Indra 2:IN2_GeneralProcedures", version>=1.92
 
-#include "::CanSAS:IRNI_NexusSupport", version>=1.00
+#include "::CanSAS:IRNI_NexusSupport", version>=1.04
 

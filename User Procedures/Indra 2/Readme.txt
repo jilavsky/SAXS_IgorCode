@@ -16,7 +16,8 @@ Added Live processing of data same as Nika has.
 Fixed internal bug which caused problems when dark current on UPD was measured too high. 
 Added overwrite for Dark current 5 
 Added overwrite for sample thickness
-Fixed slow down caused by debugging messages function
+Fixed slow down caused by debugging messages function.
+Fixed up readme and reorganized menu to make it easier to find important items.  
 
 
 1.89 6/29/2016

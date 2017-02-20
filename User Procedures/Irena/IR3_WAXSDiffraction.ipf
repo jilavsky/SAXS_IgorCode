@@ -7,7 +7,7 @@ Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
 constant IR3WversionNumber = 0.4		//Diffraction panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2015, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

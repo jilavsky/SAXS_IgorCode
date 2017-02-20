@@ -7,7 +7,7 @@ Constant IN3_FlyImportVersionNumber=0.19
 Constant IN3_DeleteRawData=1
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

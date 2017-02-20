@@ -4,11 +4,11 @@
 
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs= 3537094463 			//this is mod date for Manual version 2.58
+constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
 constant CurrentVersionNumber = 2.62
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2015, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

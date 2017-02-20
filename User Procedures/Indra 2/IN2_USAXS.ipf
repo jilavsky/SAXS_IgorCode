@@ -4,7 +4,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -33,20 +33,37 @@ End
 
 
 Menu "USAXS"
-	"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
-	help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
-	"Import USAXS Stepscan Data [SPEC]", In2_ImportData()
-	help={"Import USAXS data from APS USAXS instrument - from Spec file"}
-	"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
-	help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
-	"---"
-	"Import and Reduce data",IN3_NewMain()
+	"Import and Reduce USAXS data",IN3_NewMain()
 	help={"Open main panel for Indra 3 package and initialize"}
-	"Reduce data",IN3_Main()
-	help={"Open main panel for Indra 3 package and initialize"}
-	"--"
+	Submenu "Other input methods"
+		"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
+		help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
+		"Import USAXS Stepscan Data [SPEC]", In2_ImportData()
+		help={"Import USAXS data from APS USAXS instrument - from Spec file"}
+		"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
+		help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
+		"Reduce data",IN3_Main()
+		help={"Open main panel for Indra 3 package and initialize"}
+	end
 	"Calculate Scattering from model", IN3M_CalculateDataFromModel()
 	help={"Use model and sample parameters to calculate scattering"}
+
+//	"Desmear Fast", IN2D_DesmearFastMain()  //removed since no one used it, but code stays...
+	"--"
+	"Shrink Igor experiment size",IN3_ShrinkIgorFileSize() 
+	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
+	"Export data",IN2B_ExportAllData() 
+	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
+
+	"Xtal position calc", IN2Y_GapCalculations()
+	help={"Crystal position callculator for beamline staff."}
+	"Configure GUI fonts", IN3_ConfigureGUIfonts()
+	help={"Crystal position callculator for beamline staff."}
+	
+//	"Import X23 Data", IN2I_ImportX23Data()		//code commented out since no one was using it... 
+//	"---"
+//	"GA USAXS correction", Correct_GA_USAXS()		//also not needed as far as I can find out
+	"--"
 	Submenu "Old stuff"
 		"Create R wave", IN2A_CreateRWave()
 		help={"Correct measured data for dark currents and find beam center"}
@@ -69,23 +86,6 @@ Menu "USAXS"
 		"Subtract background", IN2Q_SubtractBackground()
 		help={"Tool to subtract background from DSM data before export. Not necessary for Irena 1 package."}
 	end
-
-//	"Desmear Fast", IN2D_DesmearFastMain()  //removed since no one used it, but code stays...
-	"--"
-	"Shrink Igor experiment size",IN3_ShrinkIgorFileSize() 
-	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
-	"Export data",IN2B_ExportAllData() 
-	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
-
-	"Xtal position calc", IN2Y_GapCalculations()
-	help={"Crystal position callculator for beamline staff."}
-	"Configure GUI fonts", IN3_ConfigureGUIfonts()
-	help={"Crystal position callculator for beamline staff."}
-	
-//	"Import X23 Data", IN2I_ImportX23Data()		//code commented out since no one was using it... 
-//	"---"
-//	"GA USAXS correction", Correct_GA_USAXS()		//also not needed as far as I can find out
-	"--"
 	SubMenu "Spec"
 		"Read Comments from SPEC file", IN2_ExtractComments()
 		"---"
@@ -464,7 +464,7 @@ Function IN2_AboutPanel()
 	DrawText 10,37,"Indra 2 macros for Igor Pro 6.3+ & 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2017"
-	DrawText 49,103,"release 1.90beta from 1/12/2017"
+	DrawText 49,103,"release 1.90 from 2/20/2017"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end

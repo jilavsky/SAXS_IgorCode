@@ -2,7 +2,7 @@
 #pragma version=1.29
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -2079,7 +2079,7 @@ Function IN3_PlotProcessedData()
 			ModifyGraph mirror=1
 			Label left "Intensity"
 			Label bottom "Q [A\\S-1\\M]"
-			SetAxis bottom 1e-05,*
+			SetAxis bottom 1e-4,*
 		elseif(V_Flag>0)
 			DoWIndow/F USAXSProcessedDataGraph
 			AppendToGraph Ywave vs Xwave

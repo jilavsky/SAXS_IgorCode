@@ -22,7 +22,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -144,37 +144,49 @@ Function IN2L_GenerateReadMe()
 		abort
 	endif
 	String nb = "USAXSQuickManual"
-	NewNotebook/N=$nb/F=1/V=1/K=3/W=(266,68,1002,696) as "Read Me"
-	Notebook $nb defaultTab=36, statusWidth=238, magnification=150
+	NewNotebook/N=$nb/F=1/V=1/K=3/ENCG={2,1}/W=(464,45,1152,768) as "Read Me"
+	Notebook $nb defaultTab=36, magnification=150
 	Notebook $nb showRuler=1, rulerUnits=2, updating={1, 3600}
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
 	Notebook $nb newRuler=Header, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",14,0,(0,0,0)}
 	Notebook $nb ruler=Header, text="Quick Manual for Indra 2 version of USAXS macros\r"
-	Notebook $nb ruler=Normal, text="This is version 1.86 of Indra macros, date: 10/30/2015\r"
+	Notebook $nb ruler=Normal, text="This is version 1.90 of Indra macros, date: 2/20/2017\r"
 	Notebook $nb text="\r"
 	Notebook $nb text="Data reduction summary:\r"
-	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import RAW data\", \"Import Desktop..\", \"Import USAXS FlyScan data\".\r"
-	Notebook $nb text="2.\tmenu \"USAXS\" - \"Reduce data main\"\tThis will open main panel which is used to reduce data.\r"
+	Notebook $nb ruler=Normal; Notebook $nb  margins={0,35,468}
+	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import and Reduce USAXS data\". ", fStyle=1
+	Notebook $nb text="ONLY if you have Flyscan Nexus files as input", fStyle=-1, text=". ", fStyle=4, text="Most common"
+	Notebook $nb fStyle=-1
+	Notebook $nb text=". Opens GUI which can import data and process them at the same time. Follow procedure in step 3. \r"
+	Notebook $nb text="2.\tAlternative: \r"
+	Notebook $nb text="\ta.\tmenu \"USAXS\" - \"Other input methods\" - \"Import USAXS .... data\" - imports either Flyscan Nexus data,"
+	Notebook $nb text=" Step scan data from spec file or Osmic-Rigaku data. Opens separate GUI to import appropriate data type."
+	Notebook $nb text=" \r"
+	Notebook $nb text="\tb. \tmenu \"USAXS\" - \"Other input methods\" - \"Reduce data \"    This will open GUI panel which is used to "
+	Notebook $nb text="reduce data imported in step 2a. Follow procedure in step 3. \r"
+	Notebook $nb text="3.\tProcess data - FIRST you need instrumental curve  (\"Process as Blank\"). Save processed instrumental c"
+	Notebook $nb text="urve (Blank). With ", fStyle=1, text="correct", fStyle=-1, text=" Blank you can process samples. \r"
 	Notebook $nb text="\tIf you want absolute intensities, you will need to know the sample thickness at this time.  If you don'"
 	Notebook $nb text="t have that \tnow, you will need to repeat this procedure from this step. [NOTE: not exactly true, you ca"
 	Notebook $nb text="n calculate it, if you \tknow linear absorption coefficient]\r"
-	Notebook $nb text="\tIf we measured USAXS transmission (most likely) using pinDiode, it will be used automatically (MSAXS correction is not\r"
-	Notebook $nb text="\tneeded) If we did not measure pinDIode, may be you need to MSAXS correction - but only if data are contaminated"
-	Notebook $nb text="\r"
-	Notebook $nb text="\tby mulitple scattering in the main tool.\r"
-	Notebook $nb text="\tMain menu also allows user to subtract background and export the data for use in external programs.\r"
-	Notebook $nb text="\tThis is not needed and should not be used if data evaluation tools in Irena are going to be used.\r"
-	Notebook $nb text="2a.\tIf you use FlyScan, you may need to select FlyScan rebin to number of points...\r"
+	Notebook $nb text="\tIf we measured USAXS transmission (most likely) using pinDiode, it will be used automatically ("
+	Notebook $nb fStyle=4, text="MSAXS correction is not needed", fStyle=-1
+	Notebook $nb text=") If we did not measure pinDIode, may be you need to use MSAXS correction - but only if data are contami"
+	Notebook $nb text="nated by mulitple scattering in the main tool. Check with staff. \r"
+	Notebook $nb text="\tIf you use FlyScan, you may need to select FlyScan rebin to number of points...\r"
 	Notebook $nb text="\tFor regular samples - 200 - 300 points\r"
-	Notebook $nb text="\tFor Samples with monodispersed systems/.diff peaks: 1000-2000 may be necessary\r"
-	Notebook $nb text="\tDo NOT produce unnecessary many points - data will take much more time to analyze.  \r"
-	Notebook $nb text="3.\tOther possible useful tools:\r"
+	Notebook $nb text="\tFor Samples with monodispersed systems/diff peaks: more (up to 1000-2000) may be necessary\r"
+	Notebook $nb text="\tDo NOT produce needlesly too many points - data will take much more time to analyze.  \r"
+	Notebook $nb ruler=Normal, text="4.\tOther possible useful tools:\r"
 	Notebook $nb text="\tTo Desmear data you will need Irena package which contains the desmearing routine in \"Other tools\"\r"
 	Notebook $nb text="\t\"USAXS->USAXS Plotting tools\" - preferably use Irena \"Plotting tool I\"\r"
 	Notebook $nb text="\t\t\"Standard ....\"\t standard USAXS type plots (Int-Q, Porod plot, Guinier plot)\r"
 	Notebook $nb text="\t\t\"Basic ....\"\toffers wave variables most likely to be used in USAXS plots\r"
 	Notebook $nb text="\t\t\"Generic ....\"\tallows user to plot any available wave variables (only one for non-USAXS data)\r"
-	Notebook $nb text="\t\r"
+	Notebook $nb ruler=Normal; Notebook $nb  margins={0,34,468}
+	Notebook $nb text="5.\tTo export data use Irena, data export tool. But if you need to export ASCII data, they should be desm"
+	Notebook $nb text="eared first, very likely... Keep that in mind. \r"
+	Notebook $nb ruler=Normal, text="\t\r"
 	Notebook $nb text="Suggestions: \r"
 	Notebook $nb text="a.\tSave Igor experiment once in a while.\r"
 	Notebook $nb text="b.\tDo not work with Igor files over an NFS network connection, first copy those files to a local disk.\r"

@@ -1,16 +1,16 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.93
+#pragma version = 1.90
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2014, Argonne National Laboratory
+//* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.94 added OverRideSampleTransmission
-//1.92 fixes to annoying behaviors (needless user questions)
-//1.91 enable negative override for Bkg5 
+//1.90 added OverRideSampleTransmission, added live processing and added graph with saved subtracted data. 
+//1.90 fixes to annoying behaviors (needless user questions), reorganized menu
+//1.90 enable negative override for Bkg5 
 //1.90 Added first version of Import & Process panel. For now cannot handel step scanning. 
 //1.89 fixes for 2016-02
 //1.88 panel scaling.  
@@ -107,7 +107,7 @@ Function IN3_MainPanelNew()
 	setDataFolder root:Packages:Indra3
 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,425,830) as "USAXS data reduction"
+	NewPanel /K=1 /W=(22.25,43.25,445,830) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
 	TitleBox Title title="\Zr210USAXS data reduction panel",pos={45,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={10,705},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
