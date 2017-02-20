@@ -144,7 +144,7 @@ Function IN2L_GenerateReadMe()
 		abort
 	endif
 	String nb = "USAXSQuickManual"
-	NewNotebook/N=$nb/F=1/V=1/K=3/ENCG={2,1}/W=(464,45,1152,768) as "Read Me"
+	NewNotebook/N=$nb/F=1/V=1/K=3/W=(464,45,1152,768) as "Read Me"
 	Notebook $nb defaultTab=36, magnification=150
 	Notebook $nb showRuler=1, rulerUnits=2, updating={1, 3600}
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
