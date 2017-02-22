@@ -17,13 +17,13 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>January2017</current_release>
+		<current_release>February2017</current_release>
 		<current_beta_release>January2017</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="January2017">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/January2017.zip</SourceFileAddress>
+		<release name="February2017">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2017.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.62</version>
