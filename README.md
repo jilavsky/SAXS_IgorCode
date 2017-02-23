@@ -1,9 +1,7 @@
 # SAXS_IgorCode
 Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7 ONLY!
 
-The release version is November2016-2 release or newer, prior releases were testing versions for installer development. 
-
-Latest release is January2017 beta release which contains BETA versions of all packages for testing.
+The current release version is February2017 release. 
 
 This code can be installed manually or using Igor installer from : 
 https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub
