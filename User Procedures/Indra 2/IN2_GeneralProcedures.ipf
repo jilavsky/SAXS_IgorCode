@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.92
+#pragma version = 1.93
 
 
 //control constants
@@ -13,6 +13,7 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.93 fix screenresolution check for high res displays
 //1.92 added IN2G_CheckForGraphicsSetting() for AfterCompiledHook( ) functions. 
 //1.91 add Function/T IN2G_RemoveInvisibleFiles(ListIn)
 //1.90 fixed IN2G_ConvertDataDirToList not to fail on qrs data sets which contain "spec" as string in the names. 
@@ -403,7 +404,7 @@ End
 Function IN2G_CheckForGraphicsSetting()
 	//checks for resolution and if needed on Windows prints help to users
 	if(stringMatch(IgorInfo(2),"Windows"))
-		if(screenresolution<120)
+		if(screenresolution>120)
 			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their sizes and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
 			print "If you see this, Igor considers your screen high-resolution screen. If your panels do NOT look right - wrong size and/or incorrectly placed controls on the panels, "
 			print "you may need to change your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
