@@ -7,7 +7,15 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-2.62	
+2.63
+Smearing/Desmearing data support - increased smearing speed about 3x
+Unified Fit - Modified to handle Slit smeared data which do not extend beyond slit length. Same logic as in Modeling II - extend temporary data to 3*slit length and then truncate. 
+Data merging - added name modifier string and defaulted to new folder name even for QRS name systems. 
+
+2.62a 3/3/2017
+Silently fixed bug in ScreenResolution check for Windows computers, which printed high-=res screens warning at wrong time. 
+
+2.62 2/22/2017
 Updated manual
 Modified Nexus support, added new library to use it. 
 Moved some common functions to IN2G_GeneralProcedures

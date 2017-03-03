@@ -7,7 +7,10 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-1.75
+1.75a 3/3/2017
+Silently fixed bug in ScreenResolution check for Windows computers, which printed high-=res screens warning at wrong time. 
+
+1.75 2/22/2017
 Fixed old bug where Sample Thickness was not converted to cm before use. This means that prior experiments with calibration constants need to have calibration constant also scaled by factor of 10 to compensate. Added warning to Panel version check. 
 Modified Nexus support, added new library to use it. Major revision of Nexus import and export of data. 
 Moved some common functions to IN2G_GeneralProcedures

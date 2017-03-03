@@ -5510,7 +5510,7 @@ Function IR2L_PrepareSetsQvectors()
 	NVAR MultipleInputData=root:Packages:IR2L_NLSQF:MultipleInputData
 	For(i=1;i<11;i+=1)
 		NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
-		if(UseTheData&&(MultipleInputData||(i==1)))	//these data are used, need to prepare teh Q vector
+		if(UseTheData&&(MultipleInputData||(i==1)))	//these data are used, need to prepare the Q vector
 		
 			NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(i))
 			NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(i))

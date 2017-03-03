@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.05
+#pragma version=2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 modified IR1A_UnifiedFitCalculateInt to handle data which are fitted to less than 3*slitlength
 //2.05 added optional fitting constraints throught string and user input
 //2.04 changes to provide user with fit parameters review panel before fitting
 //2.03 added NoLimits option
@@ -1620,6 +1621,22 @@ Function IR1A_UnifiedFitCalculateInt(QvectorWave)
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
 	NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 	NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
+
+	//for slit smeared data may need to extend the Q range... 
+	variable OriginalPointLength
+	variable ExtendedTheData=0
+	OriginalPointLength = numpnts(QvectorWave)
+	if(UseSMRData )
+		if(QvectorWave[numpnts(QvectorWave)-1]<(3*SlitLengthUnif))
+			ExtendedTheData = 1
+			variable QlengthNeeded = 3*SlitLengthUnif - QvectorWave[numpnts(QvectorWave)-1]
+			variable LastQstep = 2*(QvectorWave[numpnts(QvectorWave)-1] - QvectorWave[numpnts(QvectorWave)-2])
+			variable NumNewPoints = ceil(QlengthNeeded / LastQstep)
+			redimension/N=(OriginalPointLength+NumNewPoints) QvectorWave
+			QvectorWave[OriginalPointLength, numpnts(QvectorWave)-1] = QvectorWave[OriginalPointLength-1] + LastQstep * (p-OriginalPointLength+1)
+		endif
+	endif
+	//now the new model waves are longer... 
 	Duplicate/O QvectorWave, UnifiedFitIntensity
 	
 	UnifiedFitIntensity=0
@@ -1639,6 +1656,11 @@ Function IR1A_UnifiedFitCalculateInt(QvectorWave)
 		UnifiedFitIntensity=UnifiedFitIntensitySM
 		KillWaves/Z UnifiedFitIntensitySM
 	endif
+
+	if(ExtendedTheData)
+		//need to undo the extending of data
+		redimension/N=(OriginalPointLength) QvectorWave, UnifiedFitIntensity
+	endif	
 
 end
 
@@ -2078,7 +2100,6 @@ end
 //*****************************************************************************************************************
 
 Function IR1A_CheckFittingParamsFnct() 
-	//PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(400,140,970,620) as "Check fitting parameters"
 	Dowindow/C IR1A_CheckFittingParams
 	SetDrawLayer UserBack

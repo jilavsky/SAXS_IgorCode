@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.08
-constant IR3DversionNumber = 1.06			//Data merging panel version number
+#pragma version=1.09
+constant IR3DversionNumber = 1.09			//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.06			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 added control fro modifier for folder name and defaulted to new, modified name, QRS folder also. User issues. 
 //1.08 fixed USAXS/SAXS ordering
 //1.07 minor GUI fixes for Windows
 //1.06 added switch for slit smeared/desmeared USAXS data. 
@@ -152,6 +153,10 @@ Proc IR3D_DataMergePanel()
 	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:       ", disable=2
 	SetVariable NewDataFolderName,pos={550,659},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:NewDataFolderName, title="Merged Data: "
 
+	SetVariable NewDataExtension,pos={1080,659},size={90,15}, proc=IR3D_MergeDataSetVarProc,variable=root:Packages:Irena:SASDataMerging:NewDataExtension, title="Modif:", help={"text to modify the name of Folder 1"}
+
+//	SVAR NewDataExtension=root:Packages:Irena:SASDataMerging:NewDataExtension
+
 	TitleBox Info3 title="Double click to add data to graph.",pos={4,635},frame=0,fstyle=1, fixedSize=1,size={350,13}
 	TitleBox Info4 title="Shift-click to select range of data.",pos={4,648},frame=0,fstyle=1, fixedSize=1,size={350,13}
 	TitleBox Info5 title="Ctrl/Cmd-click to select one data set.",pos={4,661},frame=0,fstyle=1, fixedSize=1,size={350,13}
@@ -193,7 +198,7 @@ Function IR3D_InitDataMerging()
 	ListOfStrings+="DataFolderName2;IntensityWaveName2;QWavename2;ErrorWaveName2;dQWavename2;DataUnits2;"
 	ListOfStrings+="NewDataFolderName;NewIntensityWaveName;NewQWavename;NewErrorWaveName;NewdQWavename;OutputDataUnits;"
 	ListOfStrings+="Data1StartFolder;Data1MatchString;Data2StartFolder;Data2MatchString;FolderSortString1;FolderSortString2;FolderSortStringAll;"
-	ListOfStrings+="UserMessageString;SavedDataMessage;"
+	ListOfStrings+="UserMessageString;SavedDataMessage;NewDataExtension;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;Indra2Data1SlitSmeared;"
 	ListOfVariables+="UseIndra2Data2;UseQRSdata2;Indra2Data2SlitSmeared;"
@@ -234,6 +239,10 @@ Function IR3D_InitDataMerging()
 	endfor		
 	SVAR FolderSortStringAll
 	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
+	SVAR NewDataExtension
+	if(strlen(NewDataExtension)<1)
+		NewDataExtension="mrg"
+	endif
 	
 	NVAR ProcessMerge
 	NVAR ProcessMerge2
@@ -607,6 +616,13 @@ Function IR3D_MergeDataSetVarProc(sva) : SetVariableControl
 				IR3D_RebuildListboxTables()
 //				IR2S_SortListOfAvailableFldrs()
 			endif
+			
+			if(stringmatch(sva.ctrlName,"NewDataExtension"))
+				IR3D_PresetOutputStrings()
+			endif
+			
+		
+			
 			NVAR Data2Qstart=root:Packages:Irena:SASDataMerging:Data2Qstart
 			NVAR Data1QEnd=root:Packages:Irena:SASDataMerging:Data1QEnd
 			
@@ -1172,9 +1188,17 @@ Function IR3D_PresetOutputStrings()
 	SVAR NewErrorWaveName=root:Packages:Irena:SASDataMerging:NewErrorWaveName
 	SVAR NewdQWavename = root:Packages:Irena:SASDataMerging:NewdQWavename
 	
+	SVAR NewDataExtension=root:Packages:Irena:SASDataMerging:NewDataExtension
+	string NewExtLoc=""
+	if(strlen(NewDataExtension)>0)
+	 	NewExtLoc=	"_"+NewDataExtension
+	endif
+	
 	NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
 
-	
+	if(strlen(DataFolderName1)<3 || strlen(IntensityWaveName1)<1)
+		return 0
+	endif
 	NewDataFolderName = DataFolderName1
 	NewIntensityWaveName = IntensityWaveName1
 	NewQWavename = QWavename1
@@ -1191,7 +1215,7 @@ Function IR3D_PresetOutputStrings()
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
 		LastPartOfPath = LastPartOfPath[0,26]
-		LastPartOfPath += "_mrg" 
+		LastPartOfPath += NewExtLoc 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
 	endif
@@ -1199,7 +1223,7 @@ Function IR3D_PresetOutputStrings()
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
 		LastPartOfPath = LastPartOfPath[0,26]
-		LastPartOfPath += "_mrg" 
+		LastPartOfPath += NewExtLoc 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
 	endif
@@ -1211,23 +1235,29 @@ Function IR3D_PresetOutputStrings()
 	tempNQN = IN2G_RemoveExtraQuote(NewQWavename,1,1)
 	tempNEN = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
 	if ((cmpstr(tempNIN[0],"r")==0) &&(cmpstr(tempNQN[0],"q")==0) &&(cmpstr(tempNEN[0],"s")==0))
+		//here is alternative, create new folder for the waves... 
+		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
+		LastPartOfPath = LastPartOfPath[0,26]
+		LastPartOfPath += NewExtLoc 
+		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
+		NewDataFolderName = MostOfThePath+LastPartOfPath+":"		
 		//using qrs data structure, rename the waves names
 		//intensity
 		NewIntensityWaveName = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
 		NewIntensityWaveName = NewIntensityWaveName[0,26]
-		NewIntensityWaveName = NewIntensityWaveName+"_mrg"
+		NewIntensityWaveName = NewIntensityWaveName+NewExtLoc
 		//Q vector
 		NewQWavename = IN2G_RemoveExtraQuote(NewQWavename,1,1)
 		NewQWavename = NewQWavename[0,26]
-		NewQWavename = NewQWavename+"_mrg"
+		NewQWavename = NewQWavename+"_"+NewDataExtension
 		//error
 		NewErrorWaveName = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
 		NewErrorWaveName = NewErrorWaveName[0,26]
-		NewErrorWaveName = NewErrorWaveName+"_mrg"
+		NewErrorWaveName = NewErrorWaveName+NewExtLoc
 		//DQ
 		NewdQWavename = IN2G_RemoveExtraQuote(NewdQWavename,1,1)
 		NewdQWavename = NewdQWavename[0,26]
-		NewdQWavename = NewdQWavename+"_mrg"
+		NewdQWavename = NewdQWavename+NewExtLoc
 		if(!OverwriteExistingData)		//check for uniquness
 			DoAlert /T="Save data warning" 1, "If Data 1 type is qrs, the Overwrite existing data must be checked"
 			 OverwriteExistingData=1

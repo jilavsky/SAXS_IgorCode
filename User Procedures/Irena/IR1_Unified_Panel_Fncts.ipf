@@ -1581,7 +1581,7 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
 		Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
-		IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
+		//IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
 		IR1A_ConstructTheFittingCommand(skipreset)
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
@@ -1625,10 +1625,10 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 
 	if(cmpstr(ctrlName,"GraphDistribution")==0)
 		//here we graph the distribution
-		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
-		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
-		Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
-		IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
+		//NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
+		//NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
+		//Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
+		//IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
 		IR1A_GraphModelData()
 	endif
 	if(cmpstr(ctrlName,"FixLimits")==0)
@@ -2000,16 +2000,16 @@ Function IR1A_AppendModelToMeasuredData()
 	Wave/Z NormalizedError=root:Packages:Irena_UnifFit:NormalizedError
 	Wave/Z NormErrorQvec=root:Packages:Irena_UnifFit:NormErrorQvec
 	
-	DoWindow/F IR1_LogLogPlotU
+//	DoWindow/F IR1_LogLogPlotU
 	variable CsrAPos
-	if (strlen(CsrWave(A))!=0)
-		CsrAPos=pcsr(A)
+	if (strlen(CsrWave(A,"IR1_LogLogPlotU"))!=0)
+		CsrAPos=pcsr(A,"IR1_LogLogPlotU")
 	else
 		CsrAPos=0
 	endif
 	variable CsrBPos
-	if (strlen(CsrWave(B))!=0)
-		CsrBPos=pcsr(B)
+	if (strlen(CsrWave(B,"IR1_LogLogPlotU"))!=0)
+		CsrBPos=pcsr(B,"IR1_LogLogPlotU")
 	else
 		CsrBPos=numpnts(Intensity)-1
 	endif

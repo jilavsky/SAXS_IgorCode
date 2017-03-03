@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.17
+#pragma version=2.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.19 modified to speed up, removed DoUpdate. Fixed error when plot widnow did not exist. 
+//2.18 modified IR1A_UnifiedCalculateIntensity() to handle data which have Qmax less than 3*slit length
 //2.17 Dale fixed function IR2U_CalculateInvariantbutton() to Warn the user that one can’t use "invariant btwn csrs" on SMR data and Automatically use the level-1 for B value when “All” is picked as the level in the two phase calculator (Analyze Results button on unified panel).
 //2.16 minor fix pre Dale's request. 
 //2.15 fixes to Graph display of local levels. 
@@ -164,7 +166,28 @@ Function IR1A_UnifiedCalculateIntensity()
 	Duplicate/O OriginalIntensity, UnifiedFitIntensity, UnifiedIQ4
 	Redimension/D UnifiedFitIntensity, UnifiedIQ4
 	Wave OriginalQvector
-	Duplicate/O OriginalQvector, UnifiedFitQvector, UnifiedQ4
+	//for slit smeared data may need to extend the Q range... 
+	variable OriginalPointLength
+	variable ExtendedTheData=0
+	OriginalPointLength = numpnts(OriginalQvector)
+	if(UseSMRData )
+		if(OriginalQvector[numpnts(OriginalQvector)-1]<(3*SlitLengthUnif))
+			ExtendedTheData = 1
+			variable QlengthNeeded = 3*SlitLengthUnif - OriginalQvector[numpnts(OriginalQvector)-1]
+			variable LastQstep = 2*(OriginalQvector[numpnts(OriginalQvector)-1] - OriginalQvector[numpnts(OriginalQvector)-2])
+			variable NumNewPoints = ceil(QlengthNeeded / LastQstep)
+			Duplicate/Free OriginalQvector, tmpQvec
+			redimension/N=(OriginalPointLength+NumNewPoints) tmpQvec
+			redimension/N=(OriginalPointLength+NumNewPoints) UnifiedFitIntensity, UnifiedIQ4
+			tmpQvec[OriginalPointLength, numpnts(tmpQvec)-1] = OriginalQvector[OriginalPointLength-1] + LastQstep * (p-OriginalPointLength+1)
+			Duplicate/O tmpQvec, UnifiedFitQvector, UnifiedQ4
+		else
+			Duplicate/O OriginalQvector, UnifiedFitQvector, UnifiedQ4	
+		endif
+	else
+		Duplicate/O OriginalQvector, UnifiedFitQvector, UnifiedQ4
+	endif
+	//now the new model wabves are longer... 
 	Redimension/D UnifiedFitQvector, UnifiedQ4
 	UnifiedQ4=UnifiedFitQvector^4
 	
@@ -187,7 +210,10 @@ Function IR1A_UnifiedCalculateIntensity()
 		UnifiedFitIntensity=UnifiedFitIntensitySM
 		KillWaves/Z UnifiedFitIntensitySM
 	endif
-	
+	if(ExtendedTheData)
+		//need to undo the extending of data
+		redimension/N=(OriginalPointLength) UnifiedFitIntensity, UnifiedIQ4, UnifiedFitQvector, UnifiedQ4
+	endif	
 	UnifiedIQ4=UnifiedFitIntensity*UnifiedQ4
 end
 
@@ -579,15 +605,19 @@ Function IR1A_UpdatePorodFit(level, overwride)
 	variable level, overwride
 	
 	setDataFolder root:Packages:Irena_UnifFit
-
-	string WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
-	WvList = GrepList(WvList, "FitLevel.Porod" , 0, ","  )
-	Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
-
-	 WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
-	WvList = GrepList(WvList, "FitLevel.PorodIQ4" , 0, ","  )
-	Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
-
+	string WvList
+	DoWIndow IR1_LogLogPlotU
+	if(V_Flag)
+		WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
+		WvList = GrepList(WvList, "FitLevel.Porod" , 0, ","  )
+		Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
+	endif
+	DoWIndow IR1_IQ4_Q_PlotU
+	if(V_Flag)
+	 	WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
+		WvList = GrepList(WvList, "FitLevel.PorodIQ4" , 0, ","  )
+		Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
+	endif
 	NVAR DisplayLocalFits
 	
 	if (DisplayLocalFits || overwride)	
@@ -625,15 +655,20 @@ Function IR1A_UpdatePorodFit(level, overwride)
 		endif
 		FitIntIQ4=FitInt*OriginalQvector^4
 			
-		GetAxis /W=IR1_LogLogPlotU /Q left
-		AppendToGraph /W=IR1_LogLogPlotU FitInt vs OriginalQvector
-		ModifyGraph /W=IR1_LogLogPlotU lsize($(FitIntName))=1,rgb($(FitIntName))=(0,65280,0)
-		SetAxis /W=IR1_LogLogPlotU left V_min, V_max
-
-		GetAxis /W=IR1_IQ4_Q_PlotU /Q left
-		AppendToGraph /W=IR1_IQ4_Q_PlotU FitIntIQ4 vs OriginalQvector
-		ModifyGraph /W=IR1_IQ4_Q_PlotU lsize($(FitIntNameIQ4))=1,rgb($(FitIntNameIQ4))=(0,65280,0)
-		SetAxis /W=IR1_IQ4_Q_PlotU left V_min, V_max
+		DoWIndow IR1_LogLogPlotU
+		if(V_Flag)
+			GetAxis /W=IR1_LogLogPlotU /Q left
+			AppendToGraph /W=IR1_LogLogPlotU FitInt vs OriginalQvector
+			ModifyGraph /W=IR1_LogLogPlotU lsize($(FitIntName))=1,rgb($(FitIntName))=(0,65280,0)
+			SetAxis /W=IR1_LogLogPlotU left V_min, V_max
+		endif
+		DoWIndow IR1_IQ4_Q_PlotU
+		if(V_Flag)
+			GetAxis /W=IR1_IQ4_Q_PlotU /Q left
+			AppendToGraph /W=IR1_IQ4_Q_PlotU FitIntIQ4 vs OriginalQvector
+			ModifyGraph /W=IR1_IQ4_Q_PlotU lsize($(FitIntNameIQ4))=1,rgb($(FitIntNameIQ4))=(0,65280,0)
+			SetAxis /W=IR1_IQ4_Q_PlotU left V_min, V_max
+		endif
 	endif	
 end
 
@@ -647,14 +682,20 @@ Function IR1A_UpdateGuinierFit(level, overwride)
 	variable level, overwride
 	
 	setDataFolder root:Packages:Irena_UnifFit
-	string WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
-	WvList = GrepList(WvList, "FitLevel.Guinier" , 0, ","  )
-	Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
-
-	 WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
-	WvList = GrepList(WvList, "FitLevel.GuinierIQ4" , 0, ","  )
-	Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
-
+	string WvList
+	DoWindow IR1_LogLogPlotU
+	if(V_Flag)
+		WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
+		WvList = GrepList(WvList, "FitLevel.Guinier" , 0, ","  )
+		Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
+	endif
+	
+	DoWindow IR1_IQ4_Q_PlotU
+	if(V_Flag)
+		WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
+		WvList = GrepList(WvList, "FitLevel.GuinierIQ4" , 0, ","  )
+		Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
+	endif
 	NVAR DisplayLocalFits
 	
 	if (DisplayLocalFits || overwride)	
@@ -686,16 +727,22 @@ Function IR1A_UpdateGuinierFit(level, overwride)
 
 		FitIntIQ4=FitInt*OriginalQvector^4
 			
-		DoUpdate
-		GetAxis /W=IR1_LogLogPlotU /Q left
-		AppendToGraph /W=IR1_LogLogPlotU FitInt vs OriginalQvector
-		ModifyGraph /W=IR1_LogLogPlotU lsize($(FitIntName))=1,rgb($(FitIntName))=(0,0,65280),lstyle($(FitIntName))=3
-		SetAxis /W=IR1_LogLogPlotU left V_min, V_max
-
-		GetAxis /W=IR1_IQ4_Q_PlotU /Q left
-		AppendToGraph /W=IR1_IQ4_Q_PlotU FitIntIQ4 vs OriginalQvector
-		ModifyGraph /W=IR1_IQ4_Q_PlotU lsize($(FitIntNameIQ4))=1,rgb($(FitIntNameIQ4))=(0,0,65280),lstyle($(FitIntNameIQ4))=3
-		SetAxis /W=IR1_IQ4_Q_PlotU left V_min, V_max
+		//DoUpdate
+		DoWIndow IR1_LogLogPlotU
+		if(V_Flag)
+			GetAxis /W=IR1_LogLogPlotU /Q left
+			AppendToGraph /W=IR1_LogLogPlotU FitInt vs OriginalQvector
+			ModifyGraph /W=IR1_LogLogPlotU lsize($(FitIntName))=1,rgb($(FitIntName))=(0,0,65280),lstyle($(FitIntName))=3
+			SetAxis /W=IR1_LogLogPlotU left V_min, V_max
+		endif
+		
+		DoWIndow IR1_IQ4_Q_PlotU
+		if(V_Flag)
+			GetAxis /W=IR1_IQ4_Q_PlotU /Q left
+			AppendToGraph /W=IR1_IQ4_Q_PlotU FitIntIQ4 vs OriginalQvector
+			ModifyGraph /W=IR1_IQ4_Q_PlotU lsize($(FitIntNameIQ4))=1,rgb($(FitIntNameIQ4))=(0,0,65280),lstyle($(FitIntNameIQ4))=3
+			SetAxis /W=IR1_IQ4_Q_PlotU left V_min, V_max
+		endif
 	endif	
 end
 
@@ -712,15 +759,20 @@ Function IR1A_UpdateUnifiedLevels(level, overwride)
 	variable level, overwride
 	
 	setDataFolder root:Packages:Irena_UnifFit
-
-	string WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
-	WvList = GrepList(WvList, "Level.Unified" , 0, ","  )
-	Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
-
-	 WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
-	WvList = GrepList(WvList, "Level.UnifiedIQ4" , 0, ","  )
-	Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
-
+	string WvList
+	DoWIndow IR1_LogLogPlotU
+	if(V_Flag)
+		WvList=TraceNameList("IR1_LogLogPlotU", ",", 1 )
+		WvList = GrepList(WvList, "Level.Unified" , 0, ","  )
+		Execute("RemoveFromGraph /W=IR1_LogLogPlotU /Z "+ WvList[0,strlen(WvList)-2])
+	endif
+	
+	DoWIndow IR1_IQ4_Q_PlotU
+	if(V_Flag)
+	 	WvList=TraceNameList("IR1_IQ4_Q_PlotU", ",", 1 )
+		WvList = GrepList(WvList, "Level.UnifiedIQ4" , 0, ","  )
+		Execute("RemoveFromGraph /W=IR1_IQ4_Q_PlotU /Z "+ WvList[0,strlen(WvList)-2])
+	endif
 	NVAR DisplayLocalFits
 	
 	if (DisplayLocalFits || overwride)	
@@ -734,38 +786,38 @@ Function IR1A_UpdateUnifiedLevels(level, overwride)
 		string FitIntName="Level"+num2str(Level)+"Unified"
 		Wave FitIntIQ4=$("Level"+num2str(Level)+"UnifiedIQ4")
 		string FitIntNameIQ4="Level"+num2str(Level)+"UnifiedIQ4"
-		
-		//NVAR G=$("Level"+num2str(level)+"G")
-		//NVAR Rg=$("Level"+num2str(level)+"Rg")
-	
-		
-		//FitInt=G*exp(-OriginalQvector^2*Rg^2/3)
-		//FitIntIQ4=FitInt*OriginalQvector^4
 		IR1A_UnifiedCalcIntOne(level)
 		Wave TempUnifiedIntensity=root:Packages:Irena_UnifFit:TempUnifiedIntensity
 		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
 		if(UseSMRData)
-			duplicate/O  TempUnifiedIntensity, UnifiedFitIntensitySM
+			duplicate/free  TempUnifiedIntensity, UnifiedFitIntensitySM
 			IR1B_SmearData(TempUnifiedIntensity, OriginalQvector, SlitLengthUnif, UnifiedFitIntensitySM)
 			TempUnifiedIntensity=UnifiedFitIntensitySM
-			KillWaves/Z UnifiedFitIntensitySM
+			//KillWaves/Z UnifiedFitIntensitySM
 		endif
 		FitInt=TempUnifiedIntensity
 		FitIntIQ4=FitInt*OriginalQvector^4
 		
-		DoUpdate
-		GetAxis /W=IR1_LogLogPlotU /Q left        
-		AppendToGraph /W=IR1_LogLogPlotU FitInt vs OriginalQvector  
-		ModifyGraph /W=IR1_LogLogPlotU lsize($(FitIntName))=1,rgb($(FitIntName))=(52224,0,41728),lstyle($(FitIntName))=13
-		ModifyGraph /W=IR1_LogLogPlotU mode($(FitIntName))=4,marker($(FitIntName))=23,msize($(FitIntName))=1
-		SetAxis /W=IR1_LogLogPlotU left V_min, V_max
-
-		GetAxis /W=IR1_IQ4_Q_PlotU /Q left
-		AppendToGraph /W=IR1_IQ4_Q_PlotU FitIntIQ4 vs OriginalQvector
-		ModifyGraph /W=IR1_IQ4_Q_PlotU lsize($(FitIntNameIQ4))=1,rgb($(FitIntNameIQ4))=(52224,0,41728),lstyle($(FitIntNameIQ4))=13
-		ModifyGraph /W=IR1_IQ4_Q_PlotU mode($(FitIntNameIQ4))=4,marker($(FitIntNameIQ4))=23,msize($(FitIntNameIQ4))=1
-		SetAxis /W=IR1_IQ4_Q_PlotU left V_min, V_max
+		DoWIndow IR1_LogLogPlotU
+		if(V_Flag)
+			GetAxis /W=IR1_LogLogPlotU /Q left        
+			AppendToGraph /W=IR1_LogLogPlotU FitInt vs OriginalQvector  
+			ModifyGraph /W=IR1_LogLogPlotU lsize($(FitIntName))=1,rgb($(FitIntName))=(52224,0,41728),lstyle($(FitIntName))=13
+			ModifyGraph /W=IR1_LogLogPlotU mode($(FitIntName))=4,marker($(FitIntName))=23,msize($(FitIntName))=1
+			SetAxis /W=IR1_LogLogPlotU left V_min, V_max
+			//DoUpdate /W=IR1_LogLogPlotU
+		endif
+		
+		DoWIndow IR1_IQ4_Q_PlotU
+		if(V_Flag)
+			GetAxis /W=IR1_IQ4_Q_PlotU /Q left
+			AppendToGraph /W=IR1_IQ4_Q_PlotU FitIntIQ4 vs OriginalQvector
+			ModifyGraph /W=IR1_IQ4_Q_PlotU lsize($(FitIntNameIQ4))=1,rgb($(FitIntNameIQ4))=(52224,0,41728),lstyle($(FitIntNameIQ4))=13
+			ModifyGraph /W=IR1_IQ4_Q_PlotU mode($(FitIntNameIQ4))=4,marker($(FitIntNameIQ4))=23,msize($(FitIntNameIQ4))=1
+			SetAxis /W=IR1_IQ4_Q_PlotU left V_min, V_max
+			//DoUpdate /W=IR1_IQ4_Q_PlotU
+		endif
 	endif	
 end
 

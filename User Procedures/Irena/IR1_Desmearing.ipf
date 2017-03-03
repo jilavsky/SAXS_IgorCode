@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.08
+#pragma version = 2.09
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.09 sped up about 6x the smearing routine in IR1B_SmearData. May need to be checked, seems to work in Unified, Modeling II and Desmearing.
 //2.08 propagate dQ if exists in slit smeared data, if does not exist, fake one from distance between points. 
 //2.07 fixed Next sample button where there was weird bug when one was goign between use of manual selection and next sample buttons. 
 //2.06 changed back to rtGlobals=2, need to check code much more to make it 3
@@ -600,36 +601,59 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	//modified 5/14/2010 to manage cases when slit length is higher than last Q point. Basically, we need to manage extending the data automatically for use with other tools then desmearing. 
 	//fixes for interpolate function behavior when asking for data outside the range of x values...
 	variable oldNumPnts=numpnts(Q_vec_sm)
+	//modified 2/28/2017 - with Fly scans and merged data having lot more points, this is getting to be slow. Keep max number of new points to 300
+	variable newNumPoints
+	if(oldNumPnts<300)
+		newNumPoints = 2*oldNumPnts
+	else
+		newNumPoints = oldNumPnts+300
+	endif
 	Duplicate/O/Free Int_to_smear, tempInt_to_smear
-	Redimension /N=(2*oldNumPnts) tempInt_to_smear		//double the points here.
+	Redimension /N=(newNumPoints) tempInt_to_smear		//increase the points here.
 	Duplicate/O/Free Q_vec_sm, tempQ_vec_sm
-	Redimension/N=(2*oldNumPnts) tempQ_vec_sm
+	Redimension/N=(newNumPoints) tempQ_vec_sm
 	tempQ_vec_sm[oldNumPnts, ] =tempQ_vec_sm[oldNumPnts-1] +20* tempQ_vec_sm[p-oldNumPnts]			//creates extension of number of points up to 20*original length
 	tempInt_to_smear[oldNumPnts, ]  = tempInt_to_smear[oldNumPnts-1] * (1-(tempQ_vec_sm[p]  - tempQ_vec_sm[oldNumPnts])/(20*tempQ_vec_sm[oldNumPnts-1]))//extend the data by simple fixed value... 
 	
-	Make/D/O/N=(2*numpnts(Q_vec_sm)) Smear_Q, Smear_Int							
+	Make/D/Free/N=(oldNumPnts) Smear_Q, Smear_Int							
 	//Q's in L spacing and intensitites in the l's will go to Smear_Int (intensity distribution in the slit, changes for each point)
 
 	variable DataLengths=numpnts(Q_vec_sm)
 
-	Smear_Q=2*slitLength*(Q_vec_sm[p/2]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the original distribution of points
+	Smear_Q=2*slitLength*(Q_vec_sm[p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the original distribution of points
 	//the 2* added later, because without it I did not  cover the whole slit length range... 
 	variable i=0
 	DataLengths=numpnts(Smeared_int)
 	
-		For(i=0;i<DataLengths;i+=1) 
-			multithread Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
-			Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
-		endfor
-
+	//		For(i=0;i<DataLengths;i+=1) 
+	//			multithread Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
+	//			Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
+	//		endfor
+	//this is about 4x faster
+	MatrixOp/FREE Q_vec_sm2=powR(Q_vec_sm,2)
+	MatrixOp/FREE Smear_Q2=powR(Smear_Q,2)
+	MultiThread Smeared_int = IR1B_SmearDataFastFunc(Q_vec_sm2[p], Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
 
 	Smeared_int*= 1 / slitLength															//normalize
 	
-	KillWaves/Z Smear_Int, Smear_Q,tempQ_vec_sm, tempInt_to_smear							//cleanup temp waves
+	//KillWaves/Z Smear_Int, Smear_Q,tempQ_vec_sm, tempInt_to_smear							//cleanup temp waves
 	setDataFolder OldDf
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
+Threadsafe function IR1B_SmearDataFastFunc(Q_vec_sm2, Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
+			variable Q_vec_sm2, SlitLength
+			wave Smear_Q, Smear_Q2, tempQ_vec_sm, tempInt_to_smear	
+			Duplicate/Free Smear_Q, Smear_Int
+			//Smear_Int=interp(sqrt( Q_vec_sm2 +(Smear_Q2[p])), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
+			//this is using Interpolate2, seems slightly faster than above line alone... 
+			Duplicate/Free Smear_Q, InterSmear_Q
+			InterSmear_Q = sqrt( Q_vec_sm2 +(Smear_Q2[p]))
+			//surprisingly, below code is tiny bit slower that the two lines above... 
+			//MatrixOp/FREE InterSmear_Q=sqrt(Smear_Q2 + Q_vec_sm2)	
+			Interpolate2/I=3/T=1/X=InterSmear_Q /Y=Smear_Int tempQ_vec_sm, tempInt_to_smear
+			return areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
+end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //*****************************This function smears data***********************
