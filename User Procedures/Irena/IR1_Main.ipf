@@ -13,6 +13,7 @@ constant CurrentVersionNumber = 2.62
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.63 Updated CheckForUpdate to check on Github for latest release version
 //2.62 Nexus support and other fixes, added check for desktop resolution
 //2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  
@@ -1812,34 +1813,8 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 			LastUpdateCheckIrena = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif
-
-//	//CalledFromMenu=1 run always...
-//	struct  IrenaPanelDefaults Defs
-//	LoadPackagePreferences /MIS=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-//	if(V_Flag==0 && CalledFromMenu==0)		
-//		//print Defs
-//		if(Defs.Version==2)		//Lets declare the one we know as 1
-//			if(datetime - Defs.LastUpdateCheckIrena >30 * 24 * 60 * 60 || CalledFromMenu)
-//				//call check version procedure and advise user on citations
-//				IR2C_CheckVersions()
-//				Defs.LastUpdateCheckIrena = datetime
-//				SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-//			endif
-//		else
-//			Defs.Version			=		2
-//			Defs.LastUpdateCheckIrena = datetime
-//			IR2C_CheckVersions()
-//			SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-//		endif
-//	else		//either preferences do not exist or user asked for the check
-//		Defs.Version			=		2
-//		Defs.LastUpdateCheckIrena = datetime
-//		IR2C_CheckVersions()
-//		SavePackagePreferences /FLSH=1   "Irena" , "IrenaDefaultPanelControls.bin", 0 , Defs
-//	endif
-//
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.34)
-			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (2015) to version 6.34. Please, update your Igor to the latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.02)
+			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.02 or higher. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	
@@ -1866,16 +1841,17 @@ static Function IR2C_CheckVersions()
 	variable/g WebIrenaVersion		
 	InstalledIrenaVersion = IN2G_FindFileVersion("Boot Irena1 modeling.ipf")	
 	//now get the web based version.
-	NewPath  /O/Q TempPath  (SpecialDirPath("temporary", 0, 0, 0 ))
+	//NewPath /O/Q TempPath  (SpecialDirPath("temporary", 0, 0, 0 ))
 	//download the file
-	variable InstallHadFatalError
-	InstallHadFatalError = IN2G_DownloadFile("IgorCode/Igor Procedures/Boot Irena1 modeling.ipf","TempPath", "Boot Irena1 modeling.ipf")
-	sleep/s 1
-	WebIrenaVersion = IN2G_FindVersionOfSingleFile("Boot Irena1 modeling.ipf","TempPath")
-	if(InstallHadFatalError || numtype(WebIrenaVersion)!=0)
-		DoAlert 0, "Check for latest Irena version failed. Check you Internet connection. Try later again..."
+	//variable InstallHadFatalError
+	//InstallHadFatalError = IN2G_DownloadFile("IgorCode/Igor Procedures/Boot Irena1 modeling.ipf","TempPath", "Boot Irena1 modeling.ipf")
+	//sleep/s 1
+	//Igor 7 version, using Github. 
+	WebIrenaVersion = IN2G_CheckForNewVersion("Irena")
+	if(numtype(WebIrenaVersion)!=0)
+		Print "Check for latest Irena version failed. Check your Internet connection. Try later again..."
 	endif
-	DeleteFile /Z /P=tempPath "Boot Irena1 modeling.ipf"	
+	//DeleteFile /Z /P=tempPath "Boot Irena1 modeling.ipf"	
 	SetDataFOlder OldDf
 end	
 ////**************************************************************** 

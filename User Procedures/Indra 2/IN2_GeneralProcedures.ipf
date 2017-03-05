@@ -1,11 +1,11 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.93
+#pragma version = 1.95
 
 
 //control constants
 constant IrenaDebugLevel=1
 //1 for little debug
-//5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+//5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 
 //*************************************************************************\
@@ -13,6 +13,8 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.95 added CheckForNewVersion(WhichPackage) which returns - from GitHub - current version of Irena, Nika, Indra (selected by WHichPackage)
+//1.94 removed IN2G_PrintDebugWhichProCalled, sped up all code using it. 
 //1.93 fix screenresolution check for high res displays
 //1.92 added IN2G_CheckForGraphicsSetting() for AfterCompiledHook( ) functions. 
 //1.91 add Function/T IN2G_RemoveInvisibleFiles(ListIn)
@@ -430,86 +432,86 @@ Function/T IN2G_RemoveInvisibleFiles(ListIn)
 end
 //**************************************************************** 
 //**************************************************************** 
-
-Function IN2G_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
-	string StringWithPathAndname, LocalPath, LocalName
-
-	variable InstallUsingLocalCopy = 0
-	variable InstallUsinghttp = 1
-	variable i
-	variable APSError=0
-	variable OtherError=0
-	Variable error
-	if(InstallUsingLocalCopy)		 
-		string tempFldrNm
-		tempFldrNm = removeFromList("IgorCode",StringWithPathAndname,"/")
-		PathInfo LocalCopyForInstallation
-		if(V_Flag==0)		//local copy path was not found.
-			//let's try to find in where Igor experiment started from, that path is known as "home"
-			string ItemsInTheFolder= IndexedDir(home, -1, 0 )
-			if(stringmatch(ItemsInTheFolder, "*IgorCode;*" ))
-				PathInfo/S home
-				NewPath /C/O/Q  LocalCopyForInstallation, S_Path+"IgorCode:"
-				Print "Found IgorCode folder in location where this experiment started, using that folder as file source"
-			else		
-				NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
-				if(V_Flag!=0)
-					abort "Local copy of Installation files not found and user cancelled. Visit: http://usaxs.xray.aps.anl.gov/staff/ilavsky/Nika.html if you want to download it" 
-				endif
-			endif
-		endif
-		PathInfo LocalCopyForInstallation
-		GetFileFolderInfo  /P=$(LocalPath) /Q /Z S_Path+ReplaceString("/", tempFldrNm, ":")
-		if(V_Flag!=0)
-			NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
-		endif
-		PathInfo LocalCopyForInstallation
-		CopyFile /O/P=$(LocalPath)/Z S_Path+ReplaceString("/", tempFldrNm, ":")  as LocalName 
-		// Remove ReadOnly property from the file. This is important on WIndows when copying from CD or DVD
-		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName
-	else
-		string httpurl="http://ftp.xray.aps.anl.gov/usaxs/"
-		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
-		String httpPath = httpurl+StringWithPathAndname	//HR Use local variable for easier debugging.
-		httpPath =  ReplaceString(" ", httpPath, "%20")		//handle just spaces here... 
-		String fileBytes, tempPathStr
-		fileBytes = FetchURL(httpPath)
-		error = GetRTError(1)
-		if(error!=0)
-			 print "file: "+httpPath+" download FAILED, this was http download attempt No: "+num2str(i)
-			 print "Trying to download same file using ftp"
-			 tempPathStr = ReplaceString("http://ftp.xray.aps.anl.gov/usaxs/", httpPath, "ftp://ftp.xray.aps.anl.gov/pub/usaxs/")
-			 fileBytes = FetchURL(tempPathStr)
-			 error = GetRTError(1)
-			 if(error!=0)
-					print "file: "+tempPathStr+" download FAILED also using ftp "
-					Print "*************         S E R V E R      E R R O R                 ****************"
-					Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
-					Print "Failed to get from http/ftp server following file.....   " + StringWithPathAndname
-					Print Date() +"   "+time()
-					print "Igor version :"+IgorInfo(3)
-					print "********************  end of error message  ********************"
-					OtherError=1
-			 else
-				 print "file: "+tempPathStr+" downloaded succesfully by ftp"
-			 endif
-		  endif
-			if(error==0)
-				Variable refNum
-				Open/P=$(LocalPath)  refNum as LocalName
-				FBinWrite refNum, fileBytes
-				Close refNum
-				SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
-			endif
-	endif
-	variable nosuccess
-	if(V_Flag!=0)
-		nosuccess=1
-	endif
-	return OtherError
-	
-end
-//**************************************************************** 
+//
+//Function IN2G_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
+//	string StringWithPathAndname, LocalPath, LocalName
+//
+//	variable InstallUsingLocalCopy = 0
+//	variable InstallUsinghttp = 1
+//	variable i
+//	variable APSError=0
+//	variable OtherError=0
+//	Variable error
+//	if(InstallUsingLocalCopy)		 
+//		string tempFldrNm
+//		tempFldrNm = removeFromList("IgorCode",StringWithPathAndname,"/")
+//		PathInfo LocalCopyForInstallation
+//		if(V_Flag==0)		//local copy path was not found.
+//			//let's try to find in where Igor experiment started from, that path is known as "home"
+//			string ItemsInTheFolder= IndexedDir(home, -1, 0 )
+//			if(stringmatch(ItemsInTheFolder, "*IgorCode;*" ))
+//				PathInfo/S home
+//				NewPath /C/O/Q  LocalCopyForInstallation, S_Path+"IgorCode:"
+//				Print "Found IgorCode folder in location where this experiment started, using that folder as file source"
+//			else		
+//				NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
+//				if(V_Flag!=0)
+//					abort "Local copy of Installation files not found and user cancelled. Visit: http://usaxs.xray.aps.anl.gov/staff/ilavsky/Nika.html if you want to download it" 
+//				endif
+//			endif
+//		endif
+//		PathInfo LocalCopyForInstallation
+//		GetFileFolderInfo  /P=$(LocalPath) /Q /Z S_Path+ReplaceString("/", tempFldrNm, ":")
+//		if(V_Flag!=0)
+//			NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
+//		endif
+//		PathInfo LocalCopyForInstallation
+//		CopyFile /O/P=$(LocalPath)/Z S_Path+ReplaceString("/", tempFldrNm, ":")  as LocalName 
+//		// Remove ReadOnly property from the file. This is important on WIndows when copying from CD or DVD
+//		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName
+//	else
+//		string httpurl="http://ftp.xray.aps.anl.gov/usaxs/"
+//		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
+//		String httpPath = httpurl+StringWithPathAndname	//HR Use local variable for easier debugging.
+//		httpPath =  ReplaceString(" ", httpPath, "%20")		//handle just spaces here... 
+//		String fileBytes, tempPathStr
+//		fileBytes = FetchURL(httpPath)
+//		error = GetRTError(1)
+//		if(error!=0)
+//			 print "file: "+httpPath+" download FAILED, this was http download attempt No: "+num2str(i)
+//			 print "Trying to download same file using ftp"
+//			 tempPathStr = ReplaceString("http://ftp.xray.aps.anl.gov/usaxs/", httpPath, "ftp://ftp.xray.aps.anl.gov/pub/usaxs/")
+//			 fileBytes = FetchURL(tempPathStr)
+//			 error = GetRTError(1)
+//			 if(error!=0)
+//					print "file: "+tempPathStr+" download FAILED also using ftp "
+//					Print "*************         S E R V E R      E R R O R                 ****************"
+//					Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
+//					Print "Failed to get from http/ftp server following file.....   " + StringWithPathAndname
+//					Print Date() +"   "+time()
+//					print "Igor version :"+IgorInfo(3)
+//					print "********************  end of error message  ********************"
+//					OtherError=1
+//			 else
+//				 print "file: "+tempPathStr+" downloaded succesfully by ftp"
+//			 endif
+//		  endif
+//			if(error==0)
+//				Variable refNum
+//				Open/P=$(LocalPath)  refNum as LocalName
+//				FBinWrite refNum, fileBytes
+//				Close refNum
+//				SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
+//			endif
+//	endif
+//	variable nosuccess
+//	if(V_Flag!=0)
+//		nosuccess=1
+//	endif
+//	return OtherError
+//	
+//end
+////**************************************************************** 
 //**************************************************************** 
 Function IN2G_FindFileVersion(FilenameStr)
 	string FilenameStr
@@ -761,7 +763,7 @@ end
 //**************************************************************************************
 Function IN2G_CheckPlatformGUIFonts()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR/Z Platform = root:Packages:Irena_Platform
 	if(!SVAR_Exists(Platform))
 		string/g root:Packages:Irena_Platform
@@ -801,7 +803,7 @@ endstructure
 
 Function IN2G_ConfigMain()		//call configuration routine
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//this is main configuration utility... 
 	IN2G_InitConfigMain()
 	DoWindow IR2C_MainConfigPanel
@@ -819,7 +821,7 @@ end
 
 Function IN2G_InitConfigMain()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//initialize lookup parameters for user selected items.
 	string OldDf=getDataFolder(1)
 	SetDataFolder root:
@@ -890,7 +892,7 @@ end
 
 Function/S IN2G_CreateUsefulFontList()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string SystemFontList=FontList(";")
 	string PreferredFontList="Tahoma;Times;Arial$;Geneva;Palatino;Book Antiqua;"
 	PreferredFontList+="Courier;Vardana;Monaco;Courier CE;System;Verdana;"
@@ -914,7 +916,7 @@ end
 Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	variable KillThem
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	struct  IrenaPanelDefaults Defs
 	IN2G_InitConfigMain()
 	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
@@ -956,7 +958,7 @@ end
 Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 	variable ForceRead
 	//debugger
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	struct  IrenaPanelDefaults Defs 
 	IN2G_InitConfigMain()
 	//keep checking only rarely. 
@@ -1118,7 +1120,7 @@ end
 //***********************************************************
 
 Proc IN2G_MainConfigPanelProc() 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IN2G_MainConfigPanel
 	if(V_Flag)
 		DoWIndow/F IN2G_MainConfigPanel
@@ -1185,7 +1187,7 @@ Function IN2G_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (cmpstr(ctrlName,"LegendSize")==0)
 		NVAR LegendSize=root:Packages:IrenaConfigFolder:LegendSize
 		LegendSize = str2num(popStr)
@@ -1227,7 +1229,7 @@ Function IN2G_ConfigErrorsCheckProc(cba) : CheckBoxControl
 
 	switch( cba.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 			Variable checked = cba.checked
 			if(stringmatch(cba.ctrlName,"ErrorCalculationsUseOld"))
 				ErrorCalculationsUseOld = checked
@@ -1265,7 +1267,7 @@ Function IN2G_KillPrefsButtonProc(ba) : ButtonControl
 
 	switch( ba.eventCode )
 		case 2: // mouse up
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 			// click code here
 			if(stringmatch(ba.ctrlName,"OKBUtton"))
 				IN2G_SaveIrenaGUIPackagePrefs(0)
@@ -1304,7 +1306,7 @@ End
 Function/S IN2G_LkUpDfltStr(StrName)
 	string StrName
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string result
 	string OldDf=getDataFolder(1)
 	SetDataFolder root:
@@ -1328,7 +1330,7 @@ end
 Function/S IN2G_LkUpDfltVar(VarName)
 	string VarName
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string result
 	string OldDf=getDataFolder(1)
 	SetDataFolder root:
@@ -1358,7 +1360,7 @@ end
 
 Function IN2G_ChangePanelControlsStyle()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
 	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
 
@@ -1384,7 +1386,7 @@ Function IN2G_PanelResizePanelSize(s)
 		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
 		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
 	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
-		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		GetWindow $(s.winName), note
 		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
 		string OrigInfo=S_Value
@@ -1547,7 +1549,7 @@ Function IN2G_PanelAppendSizeRecordNote(panelName)
 	if(V_Flag==0)
 		return 0
 	endif
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//store main window size
 	GetWindow $panelName wsize 		//this value is in pixels
 	variable PLatform=0		//0 Mac, 1 Windows
@@ -1615,7 +1617,7 @@ Function IN2G_ConvertPointToPix(PanelName, PointsIn)
 	string PanelName
 	variable PointsIn
 	variable PixsOut
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PixsOut = PointsIn* ScreenResolution/PanelResolution(PanelName)
 	return PixsOut
 end
@@ -1623,14 +1625,14 @@ Function IN2G_ConvertPixToPoint(PanelName, PixsIn)
 	string PanelName
 	variable PixsIn
 	variable PointsOut
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PointsOut = PixsIn/(ScreenResolution/PanelResolution(PanelName))
 	return PointsOut
 end
 #if Exists("PanelResolution") != 3
 Static Function PanelResolution(wName)	// For compatibility with Igor 7
 	String wName
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return 72
 End
 #endif
@@ -1648,21 +1650,21 @@ Function IN2G_PrintDebugStatement(CurrentDebugLevel, DebugLevel,DebugStatement)
 
 end
 //*****************************************************************************************************************
-//*****************************************************************************************************************
-Function IN2G_PrintDebugWhichProCalled(FunctionName)
-	string FunctionName
-	if(IrenaDebugLevel==5)
-		
-		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  now in "+GetRTStackInfo(1)	
-	endif
-end
-
+////*****************************************************************************************************************
+//Function IN2G_PrintDebugWhichProCalled(FunctionName)
+//	string FunctionName
+//	if(IrenaDebugLevel==5)
+//		
+//		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  now in "+GetRTStackInfo(1)	
+//	endif
+//end
+//
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IN2G_CloneWindow()
 	string NewWindowName
 	string topWindow=WinName(0,1)
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CloneWindow2()
 		
 end
@@ -1673,7 +1675,7 @@ static Function IN2G_CloneWindow2([win,name,times])
 	String win
 	String name // The new name for the window and data folder. 
 	Variable times // The number of clones to make.  Clones beyond the first will have _2, _3, etc. appended to their names.   
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String curr_folder=GetDataFolder(1)
 	setDataFolder root:
 	if(ParamIsDefault(win))
@@ -1759,7 +1761,7 @@ Function IN2G_ColorTraces( )
 	Variable rev = 1
 	String colorTable = "RainbowCycle"
  
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String list = TraceNameList( "", ";", 1 )
 	Variable numItems = ItemsInList( list )
 	if ( numItems == 0 )
@@ -1788,7 +1790,7 @@ Function IN2G_CreateSubwindowAtMarqee()
        GetMarquee/K
        Variable left= V_left, right= V_right, top= V_top, bottom= V_bottom
 
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
        GetWindow kwTopWin, gsize
        String slashw
        sprintf slashw,"/W=(%g,%g,%g,%g)",left/V_right,top/V_bottom,right/V_right,bottom/V_bottom
@@ -1829,34 +1831,34 @@ end
 //*****************************************************************************************************************
 Function IN2G_ConvertQtoD(Qval,wavelength)	//D is in A, Q in A^-1
 	variable Qval,wavelength
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return 2*pi/Qval
 end
 Function IN2G_ConvertDtoQ(Dval,wavelength)		//D is in A, Q in A^-1
 	variable Dval,wavelength
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return 2*pi/Dval
 end
 Function IN2G_ConvertTTHtoQ(TTH,wavelength)		//TTH is in degrees, Q in A^-1	
 	variable TTH,wavelength
 	//q = 4pi sin(theta)/lambda
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return 4*pi*sin(TTH*pi/360)/wavelength
 end
 Function IN2G_ConvertQtoTTH(Qval,wavelength)		//TTH is in degrees, Q in A^-1
 	variable Qval,wavelength
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return 114.592 * asin(Qval* wavelength / (4*pi))
 end
 Function IN2G_ConvertDtoTTH(Dval,wavelength)		//D is in A, TTH is degrees
 	variable Dval,wavelength
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return 114.592 * asin((2 * pi / Dval)* wavelength / (4*pi))
 end
 Function IN2G_ConvertTTHtoD(TTH,wavelength)		//TTH is in degrees, D in A
 	variable TTH,wavelength
 	//q = 4pi sin(theta)/lambda
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	return wavelength/(2*sin(TTH*pi/360))
 end
 //*****************************************************************************************************************
@@ -1864,7 +1866,7 @@ end
 
 Function/T IN2G_num2StrFull(val)
 	Variable val
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable i = IN2G_placesOfPrecision(val)
 	Variable absVal = abs(val)
 	i = (absVal>=10 && absVal<1e6) ? max(i,1+floor(log(absVal))) : i
@@ -1878,7 +1880,7 @@ End
 //*************************************************************************************************************************************
 static Function IN2G_placesOfPrecision(a)	// number of significant figures in a number (at most 16)
 	Variable a
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	a = IN2G_roundSignificant(abs(a),17)
 	Variable i
 	for (i=1;i<18;i+=1)
@@ -1936,6 +1938,122 @@ End
 
 //*****************************************************************************************************************
 //*************************************************************************************************************************************
+Strconstant ListOfPackageNames ="Irena;Nika;Indra;"
+Strconstant WebAddressForConfFile ="https://raw.githubusercontent.com/jilavsky/SAXS_IgorCode/master/"
+Strconstant NameOfConfFile ="IgorInstallerConfig.xml"
+
+
+Function IN2G_CheckForNewVersion(WhichPackage)
+	string WhichPackage
+	
+	variable NewVerNumber 
+	string FileContent, CurrentReleaseName
+	Make/T/Free/N=0 ListOfReleases
+	
+	string ConfigFileURL=WebAddressForConfFile+NameOfConfFile
+	URLRequest/Z/TIME=5 url=ConfigFileURL
+	if (V_Flag != 0)
+		print "Could not get configuration file from server."
+		NewVerNumber = NaN
+		return NewVerNumber
+	endif
+	FileContent =  S_serverResponse
+	FileContent=IN2G_XMLremoveComments(FileContent)		//get rid of comments, confuse rest of the code... 
+	string InstallerText=IN2G_XMLtagContents("IgorInstaller",FileContent)	//if nothing, wrong format
+	if(strlen(InstallerText)<10)	//no real content
+		print "Bad content of file with configuration."
+		NewVerNumber = NaN
+		return NewVerNumber
+	endif
+	CurrentReleaseName = IN2G_GetCurrentRelease(InstallerText)
+	IN2G_ListReleases(FileContent, ListOfReleases)
+	variable i, indx
+	For(i=0;i<DimSize(ListOfReleases,0);i+=1)
+		if(StringMatch(ListOfReleases[i][0],CurrentReleaseName))
+			indx=i
+			break
+		endif
+	endfor
+	//print ListOfReleases[indx][2]
+	NewVerNumber = NumberByKey(WhichPackage, ListOfReleases[indx][2], "=", ";")
+	return NewVerNumber
+end
+
+//  ======================================================================================  //
+Function/T IN2G_ListReleases(str, Releasetw)
+	string str
+	wave/T Releasetw
+	
+	Redimension/N=(0,3) Releasetw
+	variable rel_i, beta_i
+	rel_i = 0
+	string InstallerConfigStr, ListOfReleases
+	InstallerConfigStr = IN2G_XMLtagContents("InstallerConfig",str)
+	ListOfReleases = IN2G_XMLNodeList(InstallerConfigStr)		//all nodes on this level
+	ListOfReleases = GrepList(ListOfReleases, "release")		//just the ones called release
+	string ReleaseAttribs, ReleaseStr, ListOfTags, TagList, Curtag
+	variable i, j
+	for(i=0;i<ItemsInList(ListOfReleases);i+=1)
+		ReleaseAttribs = IN2G_XMLattibutes2KeyList("release",InstallerConfigStr,occurance=i)
+		ReleaseStr = IN2G_XMLtagContents("release",InstallerConfigStr,occurance=i)
+		ListOfTags = IN2G_XMLNodeList(ReleaseStr)
+		TagList=IN2G_ReadReleaseContent(ReleaseStr)
+		rel_i+=1
+		redimension/N=(rel_i,3) Releasetw
+		Releasetw[rel_i-1][0]=StringByKey("name", ReleaseAttribs,"=")
+		if(Stringmatch(StringByKey("beta", ReleaseAttribs,"="),"true"))
+			Releasetw[rel_i-1][1]= "beta"
+		else
+			Releasetw[rel_i-1][1]= "normal"
+		endif 
+		Releasetw[rel_i-1][2]=TagList
+	endfor
+end
+//**************************************************************** 
+Function/T IN2G_ReadReleaseContent(Str)
+	string Str
+		
+	string Content=""
+	variable i, j
+	string tempStr, tmpList
+	string ListOfTags=IN2G_XMLNodeList(Str)
+	string ListOfPackages, ListOfOtherStuff
+	ListOfOtherStuff = GrepList(ListOfTags, "Package",1)
+	ListOfPackages = GrepList(ListOfTags,"Package")
+	For(i=0;i<ItemsInList(ListOfPackages);i+=1)
+		tempStr=IN2G_XMLtagContents(stringFromList(i,ListOfPackages),Str, occurance=i)
+		Content+=IN2G_ReadPackageContent(tempStr)
+	endfor	
+
+	For(i=0;i<ItemsInList(ListOfOtherStuff);i+=1)
+		tempStr=IN2G_XMLtagContents(stringFromList(i,ListOfOtherStuff),Str)
+		Content+=StringFromList(i,ListOfOtherStuff)+"="+tempStr+";"
+	endfor	
+	return Content
+end
+//**************************************************************** 
+Function/T IN2G_ReadPackageContent(Str)
+	string Str
+		
+	string Content=""
+	variable i, j
+	string tempStr, tmpList, PackageName
+	string ListOfTags=IN2G_XMLNodeList(Str)
+	string ListOfOtherStuff=RemoveFromList("name", ListOfTags)
+	ListOfOtherStuff=RemoveFromList("version", ListOfOtherStuff)
+	PackageName=IN2G_XMLtagContents("name",Str)
+	Content+=PackageName+"="+IN2G_XMLtagContents("version",Str)+";"
+
+	For(i=0;i<ItemsInList(ListOfOtherStuff);i+=1)
+		tempStr=IN2G_XMLtagContents(stringFromList(i,ListOfOtherStuff),Str)
+		Content+=PackageName+"_"+StringFromList(i,ListOfOtherStuff)+"="+tempStr+";"
+	endfor	
+	return Content
+end
+
+
+//*****************************************************************************************************************
+//*************************************************************************************************************************************
 
 ThreadSafe Function IN2G_startOfxmltag(xmltag,buf,occurance)	// returns the index into buf pointing to the start of xmltag
 	String xmltag, buf
@@ -1954,6 +2072,134 @@ ThreadSafe Function IN2G_startOfxmltag(xmltag,buf,occurance)	// returns the inde
 	i0 = numtype(i0) || i0<0 ? -1 : i0
 	return i0
 End
+//  ======================================================================================  //
+Function/T IN2G_XMLattibutes2KeyList(xmltag,buf,[occurance,start])// return a list with all of the attribute value pairs for xmltag
+	String xmltag											// name of tag to find
+	String buf												// buf containing xml
+	Variable occurance									// use 0 for first occurance, 1 for second, ...
+	Variable &start										// offset in buf, start searching at buf[start], new start is returned
+																// both occurance and start may be used together, but usually you only want to use one of them
+	occurance = ParamIsDefault(occurance) ? 0 : occurance
+	Variable startLocal = ParamIsDefault(start) ? 0 : start
+	startLocal = numtype(startLocal) || startLocal<1 ? 0 : round(startLocal)
+
+	Variable i0,i1
+	if (startLocal>0)
+		i0 = IN2G_startOfxmltag(xmltag,buf[startLocal,Inf],occurance) + startLocal
+	else
+		i0 = IN2G_startOfxmltag(xmltag,buf,occurance)
+	endif
+	if (i0<0)
+		return ""
+	endif
+	i0 += strlen(xmltag)+2								// start of attributes
+	i1 = strsearch(buf,">",i0)-1						// end of attributes
+	String key, value, keyVals=""
+
+	if (i1 < i0)											// this is an ERROR
+		startLocal = -1
+	else
+		startLocal = i1 + 2								// character just after closing '>'
+		// parse buf into key=value pairs
+		buf = buf[i0,i1]
+		buf = ReplaceString("\t",buf," ")
+		buf = ReplaceString("\r",buf," ")
+		buf = ReplaceString("\n",buf," ")
+		buf = IN2G_TrimFrontBackWhiteSpace(buf)
+		i0 = 0
+		do
+			i1 = strsearch(buf,"=",i0,0)
+			key = IN2G_TrimFrontBackWhiteSpace(buf[i0,i1-1])
+			i0 = strsearch(buf,"\"",i1,0)+1				// character after the first double quote around value
+			i1 = strsearch(buf,"\"",i0,0)-1				// character before the second double quote around value
+			value = buf[i0,i1]
+			if (strlen(key)>0)
+				keyVals = ReplaceStringByKey(key,keyVals,value,"=")
+			endif
+			i0 = strsearch(buf," ",i1,0)					// find space separator, set up for next key="val" pair
+		while(i0>0 && strlen(key))
+	endif
+
+	if (!ParamIsDefault(start))							// set start if it was passed
+		start = startLocal
+	endif
+	return keyVals
+End
+//**************************************************************** 
+ThreadSafe Function/T IN2G_TrimFrontBackWhiteSpace(str)
+	String str
+	str = IN2G_TrimLeadingWhiteSpace(str)
+	str = IN2G_TrimTrailingWhiteSpace(str)
+	return str
+End
+ThreadSafe Function/T IN2G_TrimLeadingWhiteSpace(str)
+	String str
+	Variable i, N=strlen(str)
+	for (i=0;char2num(str[i])<=32 && i<N;i+=1)	// find first non-white space
+	endfor
+	return str[i,Inf]
+End
+ThreadSafe Function/T IN2G_TrimTrailingWhiteSpace(str)
+	String str
+	Variable i
+	for (i=strlen(str)-1; char2num(str[i])<=32 && i>=0; i-=1)	// find last non-white space
+	endfor
+	return str[0,i]
+End
+
+//**************************************************************** 
+ThreadSafe Function/T IN2G_XMLNodeList(buf)			// returns a list of node names at top most level in buf
+	String buf
+	String name,nodes=""
+	Variable i0=0, i1,i2
+	do
+		i0 = strsearch(buf,"<",i0)					// find start of a tag
+		if (i0<0)
+			break
+		endif
+		i1 = strsearch(buf," ",i0)					// find end of tag name using i1 or i2, end will be in i1
+		i1 = i1<0 ? Inf : i1
+		i2 = strsearch(buf,">",i0)
+		i2 = i2<0 ? Inf : i2
+		i1 = min(i1,i2)
+		if (numtype(i1) || (i1-i0-1)<1)
+			break
+		endif
+		name = ReplaceString(";",buf[i0+1,i1-1],"_")// name cannot contain semi-colons
+		nodes += name+";"
+
+		i2 = strsearch(buf,"</"+name+">",i0)		// find the closer for this tag, check for '</name>'
+		if (i2<0)
+			i0 = strsearch(buf,">",i1+1)				// no '</name>', just a simple node
+		else
+			i0 = i2 + strlen(name) + 3				// first character after '</name>'
+		endif
+	while(i0>0)
+	return nodes
+End
+//**************************************************************** 
+Function/T IN2G_GetCurrentRelease(str)
+	string str
+	string VersionCheckStr
+	VersionCheckStr = IN2G_XMLtagContents("VersionCheck",str)
+	return IN2G_XMLtagContents("current_release",VersionCheckStr)
+end
+
+//**************************************************************** 
+ThreadSafe Function/T IN2G_XMLremoveComments(str)	// remove all xml comments from str
+	String str
+	Variable i0,i1
+	do
+		i0 = strsearch(str,"<!--",0)					// start of a comment
+		i1 = strsearch(str,"-->",0)					// end of a comment
+		if (i0<0 || i1<=i0)
+			break
+		endif
+		str[i0,i1+2] = ""									// snip out comment
+	while(1)
+	return str
+End
+//
 
 //*****************************************************************************************************************
 //*************************************************************************************************************************************
@@ -1962,7 +2208,7 @@ End
 Function IN2G_EstimateFolderSize (dataFolder)
 	string dataFolder
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable expSize
 	// this folder
 	variable iObj, nObjs = CountObjects(dataFolder, 1), aWaveType
@@ -1993,7 +2239,7 @@ Function IN2G_CheckForSlitSmearedRange(slitSmearedData,Qmax, SlitLength,[userMes
 	variable slitSmearedData,Qmax, SlitLength
 	string userMessage
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable isUM= ParamIsDefault(userMessage)
 	
 	if(slitSmearedData)
@@ -2026,7 +2272,7 @@ Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxsdev, Wxwidth,W
 		Wave Wsdev,Wxsdev
 		Wave Wxwidth
 		Wave W1, W2, W3, W4, W5
-		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		variable CalcSdev, CalcWidth, CalcW1, CalcW2, CalcW3, CalcW4, CalcW5, CalcXSdev
 		CalcSdev = ParamIsDefault(Wsdev) ?  0 : 1
 		CalcXSdev = ParamIsDefault(Wxsdev) ?  0 : 1
@@ -2209,7 +2455,7 @@ end
 //**********************************************************************************************************
 Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
 	variable StartValue,EndValue,NumPoints,MinStep
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Make/Free/N=3 w
 	w={EndValue-StartValue, NumPoints,MinStep}
 	Optimize /H=100/L=1e-5/I=100/T=(MinStep/50)/Q myFindStartValueFunc, w
@@ -2223,7 +2469,7 @@ end
 Function myFindStartValueFunc(w,x1)
 	Wave w		//this is {totalRange, NumSteps,MinStep}
 	Variable x1	//this is startValue where we need to start with log stepping...
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable LastMinStep = 10^(log(X1) + (log(X1+w[0])-log(X1))/w[1]) - 10^(log(X1))
 	return abs(LastMinStep-w[2])
 End
@@ -2311,7 +2557,7 @@ Function ING2_AddScrollControl()
 	//string WindowName
 	getWindow kwTopWin, wsizeDC
 	//CheckBox ScrollWidown title="\\W614",proc=IN2G_ScrollWindowCheckProc, pos={V_right-75,2}
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Button ScrollButtonUp title="\\W617",pos={(V_right-V_left)-17,2},size={15,15}, proc=IN2G_ScrollButtonProc
 	Button ScrollButtonDown title="\\W623",pos={(V_right-V_left)-17,17},size={15,15}, proc=IN2G_ScrollButtonProc
 end
@@ -2323,7 +2569,7 @@ end
 static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
 	variable HowMuch
 	string WIndowName			
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String controls = ControlNameList(WIndowName)
 	controls = RemoveFromList("ScrollButtonDown", controls )
 	controls = RemoveFromList("ScrollButtonUp", controls )
@@ -2352,7 +2598,7 @@ end
 
 Function IN2G_FindNewTextElements(w1,w2,reswave)
 	Wave/t w1,w2,reswave
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//comment, up to 1e4 points seems reasonably fast (0.2sec), then gets really slow, 1e5 is 14 seconds. 
 	make/n=(numpnts(w1) + numpnts(w2))/free/t total
 	total[] = w1[p]
@@ -2379,7 +2625,7 @@ End
 //*****************************************************************************************************************
 Function/T IN2G_ReturnExistingWaveName(FolderNm,WaveMatchStr)
 	string FolderNm,WaveMatchStr
-	IN2G_PrintDebugWhichProCalled("")
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
@@ -2402,7 +2648,7 @@ end
 //*****************************************************************************************************************
 Function/T IN2G_ReturnExistingWaveNameGrep(FolderNm,WaveMatchStr)
 	string FolderNm,WaveMatchStr
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
@@ -2427,7 +2673,7 @@ Function IN2G_CreateAndSetArbFolder(folderPathStr)
 	string folderPathStr
 	//takes folder path string, if it starts with root: cretaes all folders as necessary, if not then creates folder from current location.
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i, istart=0
 	if(stringmatch(stringFromList(0,folderPathStr,":"),"root"))
 		setDataFolder root:
@@ -2443,7 +2689,7 @@ end
 
 Function IN2G_printvec(w)		// print a vector to screen
 	Wave w
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String name=NameOfWave(w)
 	Wave/T tw=$GetWavesDataFolder(w,2)
 	Wave/C cw=$GetWavesDataFolder(w,2)
@@ -2486,7 +2732,7 @@ Function IN2G_GenerateSASErrors(IntWave,ErrWave,Pts_avg,Pts_avg_multiplier, IntM
 	// formula E = IntMultiplier * R + MultiplySqrt * sqrt(R)
 	// E += Pts_avg_multiplier * abs(smooth(R over Pts_avg) - R)
 	// min number of poitns is 3
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (Pts_avg<3)
 		Pts_avg=3
 	endif
@@ -2516,7 +2762,7 @@ end
 Function/S IN2G_roundToUncertainity(val, uncert,N)		//returns properlly formated "Val +/- Uncert" string
 	variable val, uncert,N
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	uncert = IN2G_roundSignificant(uncert,N)  		//this rounds uncert to N sig. digits
 	variable decPlaces, allPlaces
 	string tempStr, tmpExpStr
@@ -2562,7 +2808,7 @@ Function IN2G_roundSignificant(val,N)        // round val to N significant figur
         Variable val                    // input value to round
         Variable N                      // number of significant figures
 
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         if (val==0 || numtype(val))
                 return val
         endif
@@ -2580,7 +2826,7 @@ Function IN2G_roundDecimalPlaces(val,N)        // round val to N decimal places,
         Variable N                      // number of significant figures
 
 
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         if (val==0 || numtype(val))
                 return val
         endif
@@ -2599,7 +2845,7 @@ Function/T IN2G_FixWindowsPathAsNeed(PathString,DoubleSingleQuotes, EndingQuotes
 	string PathString
 	variable DoubleSingleQuotes, EndingQuotes	//1 for single, 2 for double
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string Separator
 	if(DoubleSingleQuotes==1)
 		Separator="\\"
@@ -2623,7 +2869,7 @@ end
 Function/S IN2G_ExtractFldrNmFromPntr(FullPointerToWaveVarStr)
 	string FullPointerToWaveVarStr
 	//returns only the folder part of full pointer to wave/string/variable returned by IN2G_FolderSelectPanel
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable numItems=ItemsInList(FullPointerToWaveVarStr,":")
 	
 	string tempStr=RemoveFromList(StringFromList(numItems-1,FullPointerToWaveVarStr,":"), FullPointerToWaveVarStr , ":")
@@ -2639,7 +2885,7 @@ end
 
 Function IN2G_ColorTopGrphRainbow()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String topGraph=WinName(0,1)
 	Variable traceIndex, numTraces
 	Variable i, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
@@ -2679,7 +2925,7 @@ end
 Function IN2G_LegendTopGrphFldr(FontSize)
 	variable FontSize
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String topGraph=WinName(0,1)
 	string Traces=TraceNameList(topGraph, ";", 1 )
 	variable i
@@ -2705,7 +2951,7 @@ end
 Function IN2G_FolderSelectPanel(SVARString, TitleString,StartingFolder,FolderOrFile,AllowNew,AllowDelete,AllowRename,AllowLiberal,ExecuteMyFunction)		
 	string SVARString, TitleString, StartingFolder, ExecuteMyFunction	
 	variable FolderOrFile, AllowNew,AllowDelete,AllowRename	,AllowLiberal		
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//		Jan Ilavsky, 12/13/2003 version 1
 	// 	This is universal widget for programmers to call when user needs to select folder and possibly string/wave/variable name 
 	//	User is allowed to manipulate folders and see their content, with functionality close to standard OS widgets
@@ -2760,7 +3006,7 @@ static Function IN2G_FolderSelectInitialize(OldDf,SVARStringL,StartingFolder,Fol
 	string OldDf,SVARStringL,StartingFolder,ExecuteMyFunctionL
 	variable FolderOrFileL,AllowLiberalL
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i, imax=ItemsInList(SVARStringL,":")
 	For(i=0;i<imax-1;i+=1)
 		if (cmpstr(StringFromList(i,SVARStringL,":"),"root")==0)
@@ -2798,7 +3044,7 @@ end
 
 static Function IN2G_FolderSelectRefreshList()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	Wave/T ListOfSubfolders=root:Packages:FolderSelectPanel:ListOfSubfolders
@@ -2837,7 +3083,7 @@ end
 
 static Function IN2G_FolderSelectRefFldrCont()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
@@ -2887,7 +3133,7 @@ Function IN2G_FolderSelectCheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(cmpstr(ctrlName,"DisplayWaves"))
 	
 	endif
@@ -2901,7 +3147,7 @@ Function IN2G_FolderSelectListBoxProc(ctrlName,row,col,event)
 	Variable col
 	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
 					//5=cell select with shift key, 6=begin edit, 7=end
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
 	SVAR NewName=root:Packages:FolderSelectPanel:NewName
@@ -2992,7 +3238,7 @@ End
 Function IN2G_FolderSelectButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		string OldDf=GetDataFolder(1)
 		SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 		SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
@@ -3121,7 +3367,7 @@ Function IN2G_FolderSelectSetVarProc(ctrlName,varNum,varStr,varName) : SetVariab
 	String varStr
 	String varName
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR AllowLiberal=root:Packages:FolderSelectPanel:AllowLiberal
 
 	if(cmpstr("NewName",ctrlName)==0)
@@ -3164,7 +3410,7 @@ End
 static Function IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowDelete,AllowRename)
 	string TitleString
 	variable FolderOrFile,AllowNew,AllowDelete,AllowRename
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWIndow IN2G_FolderSelectPanelPanel
 	if(V_Flag)
 		DoWIndow/K IN2G_FolderSelectPanelPanel
@@ -3236,7 +3482,7 @@ Function IR1G_UpdateSetVarStep(MyControlName,NewStepFraction)
 	string MyControlName
 	variable NewStepFraction
 	//updates setVar step. Needs setVarName, and fraction of current value to be new step
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	ControlInfo $MyControlName
 	variable NewStep=V_Value * NewStepFraction
 	variable startS =strsearch(S_recreation,"{",strsearch(S_recreation,"limits",0))
@@ -3257,7 +3503,7 @@ Function/T IN2G_RemoveExtraQuote(str,starting,Ending)
 	String str
 	variable starting,Ending
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (starting)
 		if(cmpstr(str[0],"'")==0)
 			str = str[1,inf]
@@ -3281,7 +3527,7 @@ Function/T IN2G_ChangePartsOfString(str,oldpart,newpart)
 	String oldpart
 	String newpart
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable id=strlen(oldpart)
 	Variable i
 	do
@@ -3350,7 +3596,7 @@ End
 Function IN2G_IntegrateXY(xWave, yWave)
 	Wave xWave, yWave						// input/output X, Y waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable yp,ypm1,sum=0
 	Variable pt=1,n=numpnts(yWave)
 	ypm1=yWave[0]
@@ -3369,7 +3615,7 @@ End
 Function IN2G_CreateItem(TheSwitch,NewName)
 	string TheSwitch, NewName
 //this function creates strings or variables with the name passed
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (cmpstr(TheSwitch,"string")==0)
 		SVAR/Z test=$NewName
 		if (!SVAR_Exists(test))
@@ -3392,7 +3638,7 @@ end
 Function IN2G_ErrorsForDivision(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function divides A1 by A2 with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Error=(sqrt((A1^2*S2^4)+(S1^2*A2^4)+((A1^2+S1^2)*A2^2*S2^2))) / (A2*(A2^2-S2^2))
 	
 	return Error
@@ -3401,7 +3647,7 @@ end
 Function IN2G_ErrorsForMultiplication(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function multiplies two numbers with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Error=sqrt((A1*S2)^2+(A2*S1)^2+(S1*S2)^2)
 	
 	return Error
@@ -3410,7 +3656,7 @@ end
 Function IN2G_ErrorsForSubAndAdd(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function subtracts A2 from A1 with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Error=sqrt(S1^2+S2^2)
 	
 	return Error
@@ -3420,7 +3666,7 @@ end
 Function/T IN2G_DivideWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function divides A1 by A2 with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Result=A1/A2
 	variable Error=(sqrt((A1^2*S2^4)+(S1^2*A2^4)+((A1^2+S1^2)*A2^2*S2^2))) / (A2*(A2^2-S2^2))
 	
@@ -3431,7 +3677,7 @@ end
 Function/T IN2G_MulitplyWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function multiplies two numbers with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Result=A1*A2
 	variable Error=sqrt((A1*S2)^2+(A2*S1)^2+(S1*S2)^2)
 	
@@ -3442,7 +3688,7 @@ end
 Function/T IN2G_SubtractWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function subtracts A2 from A1 with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Result=A1-A2
 	variable Error=sqrt(S1^2+S2^2)
 	
@@ -3452,7 +3698,7 @@ end
 Function/T IN2G_SumWithErrors(A1,S1,A2,S2)
 	variable A1, S1, A2, S2	//this function sums two numbers with errors
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable Result=A1+A2
 	variable Error=sqrt(S1^2+S2^2)
 	
@@ -3469,7 +3715,7 @@ Function IN2G_AppendSizeTopWave(GraphName,BotWave, LeftWave,AxisPos,LabelX,Label
 	String GraphName
 	Variable AxisPos,LabelX,LabelY
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string CurrentListOfrWaves=TraceNameList(GraphName,";",1)
 	//here we store what traces are in the graph before	
 	duplicate/O BotWave, root:Packages:Indra3:MyTopWave
@@ -3500,7 +3746,7 @@ Function IN2G_AppendGuinierTopWave(GraphName,BotWave, LeftWave,AxisPos,LabelX,La
 	String GraphName
 	Variable AxisPos,LabelX,LabelY
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string CurrentListOfrWaves=TraceNameList(GraphName,";",1)
 	//here we store what traces are in the graph before	
 	duplicate/O BotWave, root:Packages:Indra3:MyTopWave
@@ -3533,7 +3779,7 @@ Function IN2G_KillPanel(ctrlName) : ButtonControl
 	//this procedure kills panel which it is called from, so I can continue in
 	//paused for user procedure
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string PanelName=WinName(0,64)
 	DoWindow /K $PanelName
 End
@@ -3544,7 +3790,7 @@ End
 Function IN2G_AutoscaleAxisFromZero(WindowName,which,where)		//this function autoscales axis from 0
 	string WindowName, which, where
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (cmpstr(where,"up")==0)
 		SetAxis/W=$(WindowName) /A/E=0 $which
 		DoUpdate
@@ -3563,7 +3809,7 @@ Function/S IN2G_CheckFldrNmSemicolon(FldrName,Include)	//this function returns s
 	string FldrName		//with ending semicolon included or not, depending on Include being 1 (include) 
 	variable Include		//and 0 (do not include)
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (Include==0)	//do not include :
 		if (cmpstr(":", FldrName[StrLen(FldrName)-1])==0)
 			return FldrName[0, StrLen(FldrName)-2]		// : is there, remove
@@ -3582,7 +3828,7 @@ end
 
 Function IN2G_CleanupFolderOfGenWaves(fldrname)		//cleans waves from waves created by generic plot
 	string fldrname
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string dfold=GetDataFolder(1)
 	setDataFolder fldrname
 	string ListOfWaves=WaveList("Generic*",";","")+WaveList("MyFitWave*",";",""), temp
@@ -3601,7 +3847,7 @@ end
 Function IN2G_AppendAnyText(TextToBeInserted)	//this function checks for existance of notebook
 	string TextToBeInserted						//and appends text to the end of the notebook
 	Silent 1
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:Indra3:NotebookName
 	if(SVAR_exists(nbl))
@@ -3619,7 +3865,7 @@ Function/S IN2G_WindowTitle(WindowName)		//this function returns the title of th
              String WindowName						//wwith WindowName
       
 	Silent 1
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
              String RecMacro
              Variable AsPosition, TitleEnd
              String TitleString
@@ -3652,7 +3898,7 @@ Function/S IN2G_WindowTitle(WindowName)		//this function returns the title of th
 Function/T IN2G_ConvertDataDirToList(Str)		//converts   FOLDERS:spec1,spec2,spec3,spec4; type fo strring into list
 	string str
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	str=RemoveListItem(0, Str , ":")					//remove the "FOLDERS"
 	variable i=0, imax=itemsInList(str,",")			//working parameters
 	string strList="", tmpstr						//working parameters
@@ -3708,7 +3954,7 @@ Function/T IN2G_CreateListOfItemsInFolder(df,item)			//Generates list of items i
 	
 	//String dfSave
 	//dfSave=GetDataFolder(1)
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string MyList=""
 	DFREF TestDFR=$(df)
 	if (DataFolderRefStatus(TestDFR))
@@ -3753,7 +3999,7 @@ Function/T IN2G_GetMeListOfEPICSKeys()		//returns list of useful keywords for UP
 	String dfSave, result="", tempstring="", KeyWordResult=""
 	dfSave=GetDataFolder(1)
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SpecFile=root:Packages:Indra3:PanelSpecScanSelected
 	SetDataFolder $SpecFile
 	SVAR EPICS_PVs=EPICS_PVs
@@ -3776,7 +4022,7 @@ end
 Function/T IN2G_GetMeMostLikelyEPICSKey(str)		//this returns the most likely EPICS key - closest to str
 	string str
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	str="*"+str+"*"
 	String result="", tempstring=""
 	Variable pos=0, i=0
@@ -3810,7 +4056,7 @@ end
 Function IN2G_AppendListToAllWavesNotes(notetext)	//this function appends or replaces note (key/note) 
 	string notetext							//to all waves in the folder
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string ListOfWaves=WaveList("*",";",""), temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -3822,7 +4068,7 @@ end
 Function IN2G_AppendListToWaveNote(WaveNm,NewValue)		//this will replace or append new Keyword-list note to wave
 	string WaveNm, NewValue
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave Wv=$WaveNm
 	string Wnote=note(Wv)
 	Wnote=NewValue				
@@ -3834,7 +4080,7 @@ end
 Function IN2G_AddListToWaveNote(WaveNm,NewValue)		//this will replace or append new Keyword-list note to wave
 	string WaveNm, NewValue
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave Wv=$WaveNm
 	string Wnote=note(Wv)
 	Wnote+=NewValue				//fix 2008/08 changed to add new note, not kill it... 
@@ -3848,7 +4094,7 @@ end
 Function IN2G_AppendNoteToListOfWaves(ListOfWaveNames, Key,notetext)	//this function appends or replaces note (key/note) 
 	string ListOfWaveNames, Key, notetext							//to ListOfWaveNames waves in the folder
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string ListOfWaves=ListOfWaveNames, temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -3863,7 +4109,7 @@ end
 Function IN2G_AppendNoteToAllWaves(Key,notetext)	//this function appends or replaces note (key/note) 
 	string Key, notetext							//to all waves in the folder
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string ListOfWaves=WaveList("*",";",""), temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -3878,7 +4124,7 @@ end
 Function IN2G_AppendorReplaceWaveNote(WaveNm,KeyWrd,NewValue)		//this will replace or append new Keyword-list note to wave
 	string WaveNm, KeyWrd, NewValue
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave/Z Wv=$WaveNm
 	if(WaveExists(Wv))
 		string Wnote=note(Wv)
@@ -3894,7 +4140,7 @@ end
 Function IN2G_AppendStringToWaveNote(WaveNm,Str)		//this will append new string with Keyword-list note to wave
 	string WaveNm, Str
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave Wv=$WaveNm
 	string Wnote=note(Wv)
 	string tempCombo
@@ -3915,7 +4161,7 @@ end
 //**********************************************************************************************
 
 Function IN2G_AutoAlignGraphAndPanel()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string GraphName=Winname(0,1)
 	string PanelName=WinName(0,64)
 	AutopositionWindow/M=0 /R=$GraphName $PanelName
@@ -3925,7 +4171,7 @@ end
 //**********************************************************************************************
 
 Function IN2G_AutoAlignPanelAndGraph()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string GraphName=Winname(0,1)
 	string PanelName=WinName(0,64)
 	AutopositionWindow/M=0 /R=$PanelName $GraphName 
@@ -3937,7 +4183,7 @@ end
 
 Function IN2G_CleanupFolderOfWaves()		//cleans waves from fit_ and W_ waves
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string ListOfWaves=WaveList("W_*",";","")+WaveList("fit_*",";",""), temp
 	variable i=0, imax=ItemsInList(ListOfWaves)
 	For(i=0;i<imax;i+=1)
@@ -3951,7 +4197,7 @@ end
 //**********************************************************************************************
 
 Function/S IN2G_FixTheFileName()		//this will not work so simple, we need to remove symbols not allowed in operating systems
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string filename=GetDataFolder(1)
 	SVAR SourceSPECDataFile=SpecSourceFileName
 	SVAR specDefaultFile=root:specDefaultFile
@@ -3977,7 +4223,7 @@ Function IN2G_KillAllGraphsAndTables(ctrlname) :Buttoncontrol
 //      or just,
 //              KillGraphsAndTables()
 	string ctrlname
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         	
 	if (strlen(WinList("UPD control",";","WIN:64"))>0)		//Kills the controls when not needed anymore
 			DoWindow/K PDcontrols
@@ -4002,7 +4248,7 @@ End
 Function IN2G_KillGraphsAndTables(ctrlname) :Buttoncontrol
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
       String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
                 dowindow /K $wName
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)	//Kills the controls when not needed anymore
@@ -4014,7 +4260,7 @@ End
 Function IN2G_KillGraphsTablesEnd(ctrlname) :Buttoncontrol
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
       String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
                 dowindow /K $wName
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)	//Kills the controls when not needed anymore
@@ -4030,7 +4276,7 @@ Function IN2G_KillTopGraph(ctrlname) :Buttoncontrol
 	string ctrlname
        String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
 
-		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
        dowindow /K $wName
 End
 
@@ -4040,7 +4286,7 @@ End
 Function IN2G_KillWavesFromList(WvList)
 	string WvList
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable items=ItemsInList(WvList), i
 	For (i=0;i<items;i+=1)
 		KillWaves/Z $(StringFromList(i, WvList))
@@ -4051,7 +4297,7 @@ end
 
 Proc IN2G_BasicGraphStyle()
 	PauseUpdate; Silent 1		// modifying window...
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	ModifyGraph/Z margin(top)=100
 	ModifyGraph/Z mode=4, gaps=0
 	ModifyGraph/Z zColor[0]={PD_range,0,10,Rainbow}
@@ -4078,7 +4324,7 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	string what
 	string temp
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable ScreenRes = 72/ScreenResolution		//fixes Mac & PC small & larg fonts selection
 	if (cmpstr(what,"width")==0)					//gets width of the screen
 		temp= StringByKey("SCREEN1", IgorInfo(0))
@@ -4098,7 +4344,7 @@ end
 Function IN2G_SetPointWithCsrAToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable pointNumberToBeRemoved=xcsr(A)				//this part should be done always
 		Wave FixMe=CsrWaveRef(A)
 		FixMe[pointNumberToBeRemoved]=NaN
@@ -4109,7 +4355,7 @@ End
 Function IN2G_SetPointsBetweenCsrsToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable pointNumberStart=xcsr(A)				//this part should be done always
 	variable pointNumberEnd=xcsr(B)	
 		Wave FixMe=CsrWaveRef(A)
@@ -4125,7 +4371,7 @@ End
 Function IN2G_SetPointsSmallerCsrAToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable pointNumberToBeRemoved=xcsr(A)				//this part should be done always
 		Wave FixMe=CsrWaveRef(A)
 		FixMe[0, pointNumberToBeRemoved]=NaN
@@ -4136,7 +4382,7 @@ End
 Function IN2G_SetPointsLargerCsrBToNaN(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable pointNumberToBeRemoved=xcsr(B)				//this part should be done always
 		Wave FixMe=CsrWaveRef(B)
 		FixMe[pointNumberToBeRemoved, numpnts(FixMe)-1]=NaN
@@ -4148,7 +4394,7 @@ End
 Function IN2G_RemovePointWithCursorA(ctrlname) : Buttoncontrol			// Removes point in wave
 	string ctrlname
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (strlen(CsrWave(A))==0)
 		Abort "cursor A is not in the graph...nothing to do..."
 	endif
@@ -4190,7 +4436,7 @@ End
 
 Function IN2G_ResetGraph(ctrlname) : Buttoncontrol
 	string ctrlname
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		SetAxis/A										//rescales graph to automatic scaling
 End
 
@@ -4199,7 +4445,7 @@ End
 
 Function IN2G_ReversXAxis(ctrlname) : Buttoncontrol
 	string ctrlname
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SetAxis/A/R bottom									//reverse X axis
 End
 
@@ -4227,7 +4473,7 @@ Function/S IN2G_FindFolderWithWvTpsList(startDF, levels, WaveTypes, LongShortTyp
         String dfSave
         String list = "", templist, tempWvName, tempWaveType
         variable i, skipRest, j
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	        
         dfSave = GetDataFolder(1)
   	
@@ -4291,7 +4537,7 @@ Function/S IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortTyp
         //12/18/2010, JIL, trying to speed this up and fix this... 
         //Empty folders shoudl be skipped. If mask string is "*", then any non-empty folder should be included... 
         			 
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         String dfSave
         String list = "", templist, tempWvName, TempWvList
         variable i, skipRest
@@ -4369,7 +4615,7 @@ Function/S IN2G_NewFindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShort
         String list = "", templist, tempWvName
         variable i, skipRest
         
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         dfSave = GetDataFolder(1)
   	if (!DataFolderExists(startDF))
   		return ""
@@ -4417,7 +4663,7 @@ End
 Function IN2G_RemoveNaNsFrom3Waves(Wv1,wv2,wv3)							//removes NaNs from 3 waves
 	Wave Wv1, Wv2, Wv3					//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2)
@@ -4430,7 +4676,7 @@ end
 Function IN2G_RemoveNaNsFrom2Waves(Wv1,wv2)							//removes NaNs from 3 waves
 	Wave Wv1, Wv2					//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2)
@@ -4443,7 +4689,7 @@ end
 Function IN2G_RemoveNaNsFrom5Waves(Wv1,wv2,wv3,wv4,wv5)		//removes NaNs from 5 waves
 	Wave Wv1, Wv2, Wv3, wv4,wv5					//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2)
@@ -4456,7 +4702,7 @@ end
 Function IN2G_RemoveNaNsFrom6Waves(Wv1,wv2,wv3,wv4,wv5,wv6)		//removes NaNs from 6 waves
 	Wave Wv1, Wv2, Wv3, wv4,wv5, wv6					//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2)
@@ -4469,7 +4715,7 @@ end
 Function IN2G_RemoveNaNsFrom7Waves(Wv1,wv2,wv3,wv4,wv5,wv6, wv7)		//removes NaNs from 6 waves
 	Wave Wv1, Wv2, Wv3, wv4,wv5, wv6	, wv7				//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2 || numtype(Wv7[i])==2)
@@ -4482,7 +4728,7 @@ end
 Function IN2G_RemoveNaNsFrom4Waves(Wv1,wv2,wv3,wv4)		//removes NaNs from 4 waves
 	Wave Wv1, Wv2, Wv3, wv4				//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2)
@@ -4495,7 +4741,7 @@ end
 Function IN2G_RemNaNsFromAWave(Wv1)	//removes NaNs from 1 wave
 	Wave Wv1			//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2)
@@ -4508,7 +4754,7 @@ end
 Function IN2G_LogInterpolateIntensity(NewQ,NewIntensity, OldQ,Intensity)		//Interrpolate Intensity on log scale
 	Wave NewQ,NewIntensity,OldQ,Intensity			//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Duplicate/Free Intensity,TmpInt
 	wavestats/Q TmpInt
 	variable Offset
@@ -4530,7 +4776,7 @@ end
 Function IN2G_ReplaceNegValsByNaNWaves(Wv1,wv2,wv3)			//replaces Negative values in 3 waves by NaNs 
 	Wave Wv1, Wv2, Wv3					//assume same number of points in the waves
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i=0, imax=numpnts(Wv1)-1
 	for (i=imax;i>=0;i-=1)
 		if (Wv1[i]<0 || Wv2[i]<0 || Wv3[i]<0)
@@ -4546,7 +4792,7 @@ Function IN2G_GenerateLegendForGraph(fntsize,WNoteName,RemoveRepeated)  //genera
 	variable fntsize, WNoteName, RemoveRepeated							//WNoteName=1 use name from Wname  key in Wave Note
 			//finds name of the old legend and generates new one with the same name, if the legend does not exists
 			//it cretaes new one with name legend1
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable NumberOfWaves=ItemsInList(TraceNameList("",";",1))
 	if (NumberOfWaves==0)
 		return 0
@@ -4610,7 +4856,7 @@ end
 Function IN2G_WriteSetOfData(which)		//this procedure saves selected data from current folder
 	string which
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PathInfo ExportDatapath
 	NewPath/C/O/M="Select folder for exported data..." ExportDatapath
 		if (V_flag!=0)
@@ -4804,7 +5050,7 @@ end
 
 Function/S IN2G_FixTheFileName2()
 	WAVE USAXS_PD
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (WaveExists(USAXS_PD))
 		string SourceSPECDataFile=stringByKey("DATAFILE",Note(USAXS_PD),"=")
 		string intermediatename=StringFromList (0, SourceSPECDataFile, ".")+"_"+GetDataFolder(0)
@@ -4817,7 +5063,7 @@ end
 Function/T IN2G_ZapControlCodes(str)
 	String str
 	Variable i = 0
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	do
 		if (char2num(str[i,i])<32)
 			str[i,i+1] = str[i+1,i+1]
@@ -4837,7 +5083,7 @@ End
 Function/T ZapNonLetterNumStart(strIN)
 	string strIN
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable i = 0
 	//a = 97, A=65
 	//z =122, Z=90
@@ -4860,7 +5106,7 @@ end
 Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 	string InFolderName			//thsi is root:Packages:SomethingHere, will make SomethingHere unique. 
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OutFoldername, tmpFldr
 	OutFoldername =InFolderName 
 	if(DataFolderExists(InFolderName))
@@ -4884,7 +5130,7 @@ end
 
 Function/S IN2G_GetUniqueFileName(filename)
 	string filename
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string FileList= IndexedFile(ExportDatapath,-1,"????" )
 	variable i
 	string filename1=filename
@@ -4906,7 +5152,7 @@ Function IN2G_TrimExportWaves(Q,I,E)	//this function trims export I, Q, E waves 
 	Wave I
 	Wave E
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//here we trim for small Qs
 	
 	variable ic=0, imax=numpnts(Q)
@@ -4930,7 +5176,7 @@ Function IN2G_PasteWnoteToWave(waveNm, textWv,separator)
 	Wave/T TextWv
 	//this function pastes the content of Wave note from waveNm to textWv
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave WvwithNote=$waveNm
 	string ListOfNotes=note(WvwithNote)
 	
@@ -4950,7 +5196,7 @@ Function IN2G_UniversalFolderScan(startDF, levels, FunctionName)
         String startDF, FunctionName                  	// startDF requires trailing colon.
         Variable levels							//set 1 for long type and 0 for short type return
         			 
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         //fix if the startDF does not have trailing colon
         if (strlen(startDF)>1)
         	if (stringmatch(":", startDF[strlen(StartDF)-1,strlen(StartDF)-1] )!=1)
@@ -4998,7 +5244,7 @@ End
 
 Function IN2G_CheckTheFolderName()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR/Z FolderName
 	if (!SVAR_Exists(FolderName))	
 		string/g FolderName=GetDataFolder(0)+";"+GetDataFolder(1)
@@ -5029,7 +5275,7 @@ Function/T IN2G_CreateListOfScans(df)			//Generates list of items in given folde
 	String df
 //	String Type
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String dfSave
 	dfSave=GetDataFolder(1)
 	string/G root:Packages:Indra3:MyList=""
@@ -5048,7 +5294,7 @@ end
 //***********************************************************************************************
 Function IN2G_AppendScanNumAndComment()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR List=root:Packages:Indra3:MyList
 	SVAR/Z SpecComment
 	if (SVAR_Exists(SpecComment))
@@ -5066,7 +5312,7 @@ Function IN2G_VolumeFraction(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5120,7 +5366,7 @@ Function IN2G_NumberDensity(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5175,7 +5421,7 @@ Function IN2G_SpecificSurface(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5230,7 +5476,7 @@ Function IN2G_VWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5286,7 +5532,7 @@ Function IN2G_NWMeanDiameter(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5342,7 +5588,7 @@ Function IN2G_VWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5401,7 +5647,7 @@ Function IN2G_NWStandardDeviation(FD,Ddist,MinPoint,MaxPoint, removeNegs)
 	Wave FD, Ddist
 	Variable MinPoint, MaxPoint, removeNegs
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable temp
 	if (MaxPoint<MinPoint)	//lets make sure the min is min and max is max
 		temp=MaxPoint
@@ -5461,7 +5707,7 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	// which = height, width, 
 	//MinVal is in pixles
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if (cmpstr(which,"width")!=0 && cmpstr(which,"height")!=0)
 		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
 	endif
@@ -5486,7 +5732,7 @@ Function IN2G_InputPeriodicTable(ButonFunctionName, NewWindowName, NewWindowTitl
 	string ButonFunctionName, NewWindowName, NewWindowTitleStr
 	variable PositionLeft,PositionTop
 	//PauseUpdate; Silent 1		// building window...
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable pleft=PositionLeft,ptop=PositionTop,pright=PositionLeft+380,pbottom=PositionTop+145			// these change panel size
 	NewPanel/K=1 /W=(pleft,ptop,pright,pbottom)
 	DoWindow/C/T $(NewWindowName),NewWindowTitleStr
@@ -5656,7 +5902,7 @@ End
 Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 	variable n1,n2,S
 	Wave/Z xWv,yWv,dyWv,AWv,CWv
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		// CWv is optional parameter, if not needed use $"" as input and the function will not complain
 		// Input data
 		//	n1, n2 range of data (point numbers) between which to smooth data. Order independent.
@@ -5801,7 +6047,7 @@ end
 Function IN2G_ScrollButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here

@@ -2581,7 +2581,7 @@ end
 //************************************************************************************************************
 Function IR3C_ListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
       //Prevent Igor from invoking this before we are done with instance 1
       lba.blockReentry = 1
 	string TopPanel=WinName(0, 64)
@@ -2691,7 +2691,7 @@ Function IR3C_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	String ctrlName
 	Variable popNum
 	String popStr
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string TopPanel=WinName(0, 64)
 
 	if (Cmpstr(ctrlName,"SortOptionString")==0)
@@ -2708,7 +2708,7 @@ End
 Function IR3C_SortListOfFilesInWvs(TopPanel)
 	string TopPanel
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
 	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,"=",";")
@@ -2746,7 +2746,7 @@ Function IR3C_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	String varStr
 	String varName
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string TopPanel=WinName(0, 64)
 	if (cmpstr(ctrlName,"NameMatchString")==0)
 		IR3C_UpdateListOfFilesInWvs(TopPanel)
@@ -2764,7 +2764,7 @@ End
 
 Function IR3C_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	switch( ba.eventCode )
 		case 2: // mouse up
@@ -2795,7 +2795,7 @@ End
 Function IR3C_SelectDataPath(TopPanel)
 	string TopPanel
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
@@ -2850,7 +2850,7 @@ end
 Function IR3C_UpdateListOfFilesInWvs(TopPanel)
 	string TopPanel
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName
@@ -2902,7 +2902,7 @@ Function IR3C_SelectDeselectAll(TopPanel, Select)
 	string TopPanel
 	variable Select
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR ControlPanelWindowName=root:Packages:IrenaListboxProcs:ControlPanelWindowName

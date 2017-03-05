@@ -57,7 +57,7 @@ Constant IR1TrimNameLength = 28
 
 
 Function IR1I_ImportSASASCIIDataMain()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height",740)
 	DoWindow IR1I_ImportOtherASCIIData
@@ -96,7 +96,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersion()	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
@@ -113,7 +113,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersion2()	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWindow IR1I_ImportOtherASCIIData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2))
@@ -130,7 +130,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_MainCheckVersionNexus()	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DoWindow IR1I_ImportNexusCanSASData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus))
@@ -150,7 +150,7 @@ end
 //************************************************************************************************************
 
 Proc IR1I_ImportSASASCIIData() 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,40,430,760) as "Import SAXS/SANS data"
 	DoWindow/C IR1I_ImportData
@@ -309,7 +309,7 @@ EndMacro
 //************************************************************************************************************
 Function IR1_ImportListBoxProc(lba) : ListBoxControl
 	STRUCT WMListboxAction &lba
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	Variable row = lba.row
 	Variable col = lba.col
@@ -341,7 +341,7 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnct()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)
@@ -460,7 +460,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_CheckForProperNewFolder()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	if (strlen(NewDataFolderName)>0 && cmpstr(":",NewDataFolderName[strlen(NewDataFolderName)-1])!=0)
@@ -473,7 +473,7 @@ end
 //************************************************************************************************************
 Function IR1I_RecordResults(selectedFile)
 	string selectedFile	//before or after - that means fit...
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string OldDF=GetDataFolder(1)
 	setdataFolder root:Packages:ImportData
@@ -611,7 +611,7 @@ end
 Function/S IR1I_TrunkateName(InputName,TrunkateStart,TrunkateEnd, RemoveStringFromName)
 	string InputName, RemoveStringFromName
 	variable TrunkateStart,TrunkateEnd
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 	string ModName=ReplaceString(RemoveStringFromName, InputName, "")
 	variable inpuLength=strlen(ModName)
@@ -633,7 +633,7 @@ end
 
 Function IR1I_ProcessImpWaves(selectedFile)
 	string selectedFile
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	variable i, numOfInts, numOfQs, numOfErrs, numOfQErrs, refNum
 	numOfInts  = 0
@@ -982,7 +982,7 @@ end
 //************************************************************************************************************
 Function/S IR1I_RemoveBadCharacters(StringName)
 	string StringName
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 	//here we can clean up what Igor allows but would be major problem with my code, such as ( or ) from names
 	make/Free/T/N=0 ListOfBadChars
@@ -1000,7 +1000,7 @@ end
 
 Function IR1I_ImportOneFile(selectedFile)
 	string selectedFile
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
 	NVAR SkipNumberOfLines=root:Packages:ImportData:SkipNumberOfLines
 	NVAR SkipLines=root:Packages:ImportData:SkipLines	
@@ -1023,7 +1023,7 @@ Function IR1I_CountHeaderLines(pathName, fileName)
         String pathName         // Symbolic path name
         String fileName                 // File name or full path
         String FirstPoint		//string containing first point number.... 
-			IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         
         Variable refNum = 0
         
@@ -1061,7 +1061,7 @@ End
 //************************************************************************************************************
 
 Function IR1I_KillAutoWaves()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	variable i
 	for(i=0;i<=100;i+=1)
@@ -1076,7 +1076,7 @@ end
 
 Function IR1I_CreateImportDataFolder(selectedFile)
 	string selectedFile
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
 	NVAR IncludeExtensionInName = root:packages:ImportData:IncludeExtensionInName
@@ -1115,7 +1115,7 @@ Function IR1I_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	String ctrlName
 	Variable popNum
 	String popStr
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	if (Cmpstr(ctrlName,"SelectFolderNewData")==0)
 		SVAR NewDataFolderName = root:packages:ImportData:NewDataFolderName
@@ -1154,7 +1154,7 @@ Function IR1I_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	Variable varNum
 	String varStr
 	String varName
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	if (cmpstr(ctrlName,"DataExtensionString")==0)
 		IR1I_UpdateListOfFilesInWvs()
@@ -1174,7 +1174,7 @@ End
 //************************************************************************************************************
 Function IR1I_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
 	if(cmpstr(ctrlName,"SelectDataPath")==0)
 		IR1I_SelectDataPath()	
@@ -1216,7 +1216,7 @@ End
 
 Function IR1I_SelectDeselectAll(SetNumber)
 		variable setNumber
-		IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
 		Wave WaveOfSelections=root:Packages:ImportData:WaveOfSelections
 
@@ -1227,7 +1227,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestImport()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	
@@ -1285,7 +1285,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestImportNotebook()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	Wave/T WaveOfFiles      = root:Packages:ImportData:WaveOfFiles
@@ -1321,7 +1321,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_TestPlotData()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)
@@ -1399,7 +1399,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_FIxCheckboxesForWaveTypes()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	NVAR FoundNWaves = root:Packages:ImportData:FoundNWaves
@@ -1451,7 +1451,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_SelectDataPath()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	NewPath /M="Select path to data to be imported" /O ImportDataPath
 	if (V_Flag!=0)
@@ -1469,7 +1469,7 @@ end
 Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string TopPanel=WinName(0, 64)
 	
 	NVAR Col1Int=root:Packages:ImportData:Col1Int
@@ -2109,7 +2109,7 @@ End
 //************************************************************************************************************
 Function IR1I_UpdateListOfFilesInWvs()
 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR DataPathName = root:Packages:ImportData:DataPathName
 	SVAR DataExtension  = root:Packages:ImportData:DataExtension
 	SVAR NameMatchString = root:Packages:ImportData:NameMatchString
@@ -2154,7 +2154,7 @@ end
 
 Function IR1I_InitializeImportData()
 	
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf = GetDataFolder(1)
 	
 	NewDataFolder/O/S root:Packages
@@ -2261,7 +2261,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_ImportOtherASCIIMain()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height",740)
 	DoWindow IR1I_ImportData
@@ -2300,7 +2300,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_ImportOtherASCIIDataFnct() 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,40,430,760) as "Import non-SAS data"
 	DoWindow/C IR1I_ImportOtherASCIIData
@@ -2457,7 +2457,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnct2()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)
@@ -2592,7 +2592,7 @@ end
 
 Function IR1I_ProcessImpWaves2(selectedFile)
 	string selectedFile
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	variable i, numOfInts, numOfQs, numOfErrs, numOfQErrs, refNum
 	numOfInts  = 0
@@ -2897,7 +2897,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_ImportNexusCanSASMain()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height",740)
 	DoWindow IR1I_ImportData
@@ -2946,7 +2946,7 @@ end
 //************************************************************************************************************
 
 Function IR1I_ImportNexusDataFnct() 
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(3,40,430,620) as "Import Nexus canSAS data"
 	DoWindow/C IR1I_ImportNexusCanSASData
@@ -3059,7 +3059,7 @@ end
  //************************************************************************************************************
 //************************************************************************************************************
 Function IR1I_ImportDataFnctNexus()
-	IN2G_PrintDebugWhichProCalled(GetRTStackInfo(1))
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
 	string TopPanel=WinName(0, 64)
 	string OldDf = getDataFolder(1)

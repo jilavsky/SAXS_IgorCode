@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.22
+#pragma version = 2.23
 Constant IR1RSversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.23 changed to use of IR1B_SmearData and remvoed limitation for slit smeared data, that Qmax must be > than 3*slit length. Optimized speed, about 2x speed improvement on slit smeared data. 
 //2.22 modified trust ranges for Sizes - now correctly uses 2*pi/Q for large size and pi/Q for small size of trusted range. 
 //2.21 fixed Regularization for Igor 7. 
 //2.20 fixes for panel scaling. 
@@ -621,7 +622,7 @@ static Function IR1R_MaxEntUpdateDataForGrph()
 	NVAR Chisquare=root:Packages:Sizes:Chisquare
 	
 	IR1R_FinishGraph()
-	DoUpdate
+	//DoUpdate
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
@@ -2258,7 +2259,7 @@ end
 
 	TextBox/C/F=0/N=Legend2/X=0.00/Y=-9.00 LegendText2
 
-	DoUpdate						//and here we again record what we have done
+	///DoUpdate						//and here we again record what we have done
 	IN2G_AppendStringToWaveNote("CurrentResultSizeDistribution",SizesParameters)	
 	IN2G_AppendStringToWaveNote("D_distribution",SizesParameters)	
 	IN2G_AppendStringToWaveNote("SizesFitIntensity",SizesParameters)	
@@ -3694,7 +3695,8 @@ static  Function IR1R_SmearGMatrix()			//this function smears the colums in the 
 	for (i=0;i<N;i+=1)					//for each column (radius point)
 		tempOrg=G_matrix[p][i]			//column -> temp
 		
-		IR1R_SmearData(tempOrg, Q_vec, slitLength, tempSmeared)			//temp is smeared (Q_vec, SlitLength) ->  tempSmeared
+		//IR1R_SmearData(tempOrg, Q_vec, slitLength, tempSmeared)			//temp is smeared (Q_vec, SlitLength) ->  tempSmeared
+		IR1B_SmearData(tempOrg, Q_vec, slitLength, tempSmeared)	//USE MORE OPTIMIZED FUNCTION here. 
 	
 		G_matrix[][i]=tempSmeared[p]		//column in G is set to smeared value
 	endfor
@@ -3710,37 +3712,37 @@ end
 //*****************************************************************************************************************
 
 
-//*****************************This function smears data***********************
-static  Function IR1R_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
-	wave Int_to_smear, Q_vec_sm, Smeared_int
-	variable slitLength
-
-	string OldDf
-	OldDf=GetDataFolder(1)
-	setDataFolder root:Packages:Sizes
-	
-	Make/D/O/N=(0.5*numpnts(Q_vec_sm)) Smear_Q, Smear_Int							
-		//Q's in L spacing and intensitites in the l's will go to Smear_Int (intensity distribution in the slit, changes for each point)
-
-	variable DataLengths=numpnts(Q_vec_sm)
-	
-	Smear_Q=1.1*slitLength*(Q_vec_sm[2*p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the aroginal distribution of pointsd
-	//the 1.1* added later, because without it I di dno  cover the whole slit length range... 
-	variable i=0
-	
-	For(i=0;i<DataLengths;i+=1) 
-		Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), Q_vec_sm, Int_to_smear)		//put the distribution of intensities in the slit for each point 
-		Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
-	endfor
-
-	Smeared_int*= 1 / slitLength															//normalize
-	
-	KillWaves/Z Smear_Int, Smear_Q														//cleanup temp waves
-	setDataFolder OldDf
-
-	setDataFolder OldDf
-end
-//**************End common******************************
+////*****************************This function smears data***********************
+//static  Function IR1R_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
+//	wave Int_to_smear, Q_vec_sm, Smeared_int
+//	variable slitLength
+//
+//	string OldDf
+//	OldDf=GetDataFolder(1)
+//	setDataFolder root:Packages:Sizes
+//	
+//	Make/D/O/N=(0.5*numpnts(Q_vec_sm)) Smear_Q, Smear_Int							
+//		//Q's in L spacing and intensitites in the l's will go to Smear_Int (intensity distribution in the slit, changes for each point)
+//
+//	variable DataLengths=numpnts(Q_vec_sm)
+//	
+//	Smear_Q=1.1*slitLength*(Q_vec_sm[2*p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the aroginal distribution of pointsd
+//	//the 1.1* added later, because without it I di dno  cover the whole slit length range... 
+//	variable i=0
+//	
+//	For(i=0;i<DataLengths;i+=1) 
+//		Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), Q_vec_sm, Int_to_smear)		//put the distribution of intensities in the slit for each point 
+//		Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
+//	endfor
+//
+//	Smeared_int*= 1 / slitLength															//normalize
+//	
+//	KillWaves/Z Smear_Int, Smear_Q														//cleanup temp waves
+//	setDataFolder OldDf
+//
+//	setDataFolder OldDf
+//end
+////**************End common******************************
 
 
 //*****************************************************************************************************************
@@ -3761,23 +3763,27 @@ static  Function IR1R_ExtendQVecForSmearing()		//this is function extends the Q 
 	variable OldPnts=numpnts(Q_vec)
 	variable qmax=Q_vec[OldPnts-1]
 	variable newNumPnts=0
+	variable LastQdiff = Q_vec[OldPnts-1] - Q_vec[OldPnts-2] 
 	
 	Duplicate/O Q_vec, TempWv	
 	Redimension/D TempWv
 	TempWv=log(Q_vec)
 
-	if (qmax<SlitLength)
-		NewNumPnts=numpnts(Q_vec)
+	if (qmax<3*SlitLength)
+		NewNumPnts=ceil((3*SlitLength - qmax)/LastQdiff)
 	else
-		NewNumPnts=numpnts(Q_vec)-BinarySearch(Q_vec, (Q_vec[OldPnts-1]-SlitLength) )
+		NewNumPnts=OldPnts - BinarySearch(Q_vec, (Q_vec[OldPnts-1]-SlitLength) )
 	endif
 	
 	if (NewNumPnts<10)
 		NewNumPnts=10
 	endif
-	
+	if (NewNumPnts>200)
+		NewNumPnts=200
+	endif
+	//print "Extended data by "+num2str(NewNumPnts)
 	Make/O/D/N=(NewNumPnts) Extension
-	Extension=Q_vec[OldPnts-1]+p*(SlitLength/NewNumPnts)
+	Extension=Q_vec[OldPnts-1]+p*(3*SlitLength/NewNumPnts)
 	Redimension /N=(OldPnts+NewNumPnts) Q_vec
 	Q_vec[OldPnts, OldPnts+NewNumPnts-1]=Extension[p-OldPnts]
 	
@@ -3957,12 +3963,12 @@ static  Function IR1R_MaximumEntropy(MeasuredData,Errors,InitialModelBckg,MaxIte
 	chizer = npnts		//setup some starting conditions
 	chtarg = chizer 
 	variable iter=0, snorm=0, cnorm=0,tnorm=0, a=0, b=0 , test=0, i=0, j=0, l=0, fchange=0, df=0, sEntropy=0, k=0
-	duplicate/O MeasuredData, ox, ascratch, bscratch, etaScratch	, zscratch, zscratch2		//create work waves with measured Points length
-	duplicate/O Model, cgrad,sgrad, ModelScratch, ModelScratch2, xiScratch		//create work waves with bins length
-	make/O/D/N=(numpnts(Model),3) xi
-	make/O/D/N=(numpnts(MeasuredData),3) eta
-	Make/O/D/N=3  c1,s1, betaMX
-	Make/O/D/N=(3,3) c2, s2
+	duplicate/FREE MeasuredData, ox, ascratch, bscratch, etaScratch	, zscratch, zscratch2		//create work waves with measured Points length
+	duplicate/FREE Model, cgrad,sgrad, ModelScratch, ModelScratch2, xiScratch		//create work waves with bins length
+	make/D/O/N=(numpnts(Model),3) xi
+	make/D/O/N=(numpnts(MeasuredData),3) eta
+	Make/D/O/N=3  c1,s1, betaMX
+	Make/D/O/N=(3,3) c2, s2
 	
 	
 	For(iter=0;iter<MaxIterations;iter+=1)		//this is the main loop which does the searching for solution
@@ -4705,10 +4711,11 @@ Function IR1R_ButtonProc(ba) : ButtonControl
 	endif
 	switch( ba.eventCode )
 		case 2: // mouse up
-			NVAR UseSMRData=root:Packages:Sizes:UseSlitSmearedData
-			NVAR SlitLengthUnif=root:Packages:Sizes:SlitLength
-			Wave OriginalQvector=root:Packages:Sizes:Q_vecOriginal
-			IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1R_SizesInputGraph")], SlitLengthUnif)
+			//removed 3-3-2017 and enabled handling of q ranges ending below 3*Slit length. 
+			//NVAR UseSMRData=root:Packages:Sizes:UseSlitSmearedData
+			//NVAR SlitLengthUnif=root:Packages:Sizes:SlitLength
+			//Wave OriginalQvector=root:Packages:Sizes:Q_vecOriginal
+			//IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1R_SizesInputGraph")], SlitLengthUnif)
 
 			// click code here
 				if(stringmatch(ba.ctrlName,"EstimateUncertainities"))

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.10
+#pragma version=1.11
 Constant IR2PrversionNumber=1.10
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 changed to IR1B_SmearData which is more optimized slit smearing function. 
 //1.10 fixes for WIndows GUI
 //1.09 changes for panel scaling
 //1.08 fixed bug of useSMR data which screwed up Control Procedures
@@ -1931,7 +1932,8 @@ static  Function IR2Pr_SmearGMatrix()			//this function smears the colums in the
 	for (i=0;i<N;i+=1)					//for each column (radius point)
 		tempOrg=G_matrix[p][i]			//column -> temp
 		
-		IR2Pr_SmearData(tempOrg, Q_vec, slitLength, tempSmeared)			//temp is smeared (Q_vec, SlitLength) ->  tempSmeared
+		//IR2Pr_SmearData(tempOrg, Q_vec, slitLength, tempSmeared)			//temp is smeared (Q_vec, SlitLength) ->  tempSmeared
+		IR1B_SmearData(tempOrg, Q_vec, slitLength, tempSmeared)			//this is more optimized version
 	
 		G_matrix[][i]=tempSmeared[p]		//column in G is set to smeared value
 	endfor
@@ -1945,35 +1947,35 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-//*****************************This function smears data***********************
-static  Function IR2Pr_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
-	wave Int_to_smear, Q_vec_sm, Smeared_int
-	variable slitLength
-
-	string OldDf
-	OldDf=GetDataFolder(1)
-	setDataFolder root:Packages:Irena_PDDF
-	
-	Make/D/O/N=(0.5*numpnts(Q_vec_sm)) Smear_Q, Smear_Int							
-		//Q's in L spacing and intensitites in the l's will go to Smear_Int (intensity distribution in the slit, changes for each point)
-
-	variable DataLengths=numpnts(Q_vec_sm)
-	
-	Smear_Q=1.1*slitLength*(Q_vec_sm[2*p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the aroginal distribution of pointsd
-	//the 1.1* added later, because without it I di dno  cover the whole slit length range... 
-	variable i=0
-	
-	For(i=0;i<DataLengths;i+=1) 
-		Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), Q_vec_sm, Int_to_smear)		//put the distribution of intensities in the slit for each point 
-		Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
-	endfor
-
-	Smeared_int*= 1 / slitLength															//normalize
-	
-	KillWaves/Z Smear_Int, Smear_Q														//cleanup temp waves
-	setDataFolder OldDf
-end
-//**************End common******************************
+////*****************************This function smears data***********************
+//static  Function IR2Pr_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
+//	wave Int_to_smear, Q_vec_sm, Smeared_int
+//	variable slitLength
+//
+//	string OldDf
+//	OldDf=GetDataFolder(1)
+//	setDataFolder root:Packages:Irena_PDDF
+//	
+//	Make/D/O/N=(0.5*numpnts(Q_vec_sm)) Smear_Q, Smear_Int							
+//		//Q's in L spacing and intensitites in the l's will go to Smear_Int (intensity distribution in the slit, changes for each point)
+//
+//	variable DataLengths=numpnts(Q_vec_sm)
+//	
+//	Smear_Q=1.1*slitLength*(Q_vec_sm[2*p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the aroginal distribution of pointsd
+//	//the 1.1* added later, because without it I di dno  cover the whole slit length range... 
+//	variable i=0
+//	
+//	For(i=0;i<DataLengths;i+=1) 
+//		Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), Q_vec_sm, Int_to_smear)		//put the distribution of intensities in the slit for each point 
+//		Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
+//	endfor
+//
+//	Smeared_int*= 1 / slitLength															//normalize
+//	
+//	KillWaves/Z Smear_Int, Smear_Q														//cleanup temp waves
+//	setDataFolder OldDf
+//end
+////**************End common******************************
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

@@ -241,7 +241,8 @@ Function IN3M_CalculateScattering()
 	NVAR SmearModelData
 	if(SmearModelData)
 		Duplicate/O tempWv, tempWv1
-		IN3M_SmearData(tempWv1, CalculatedScatteredQ, slitLength, tempWv)
+		IN3M_SmearData(tempWv1, CalculatedScatteredQ, slitLength, tempWv) 
+		//IR1B_SmearData(tempWv1, CalculatedScatteredQ, slitLength, tempWv) //this is faster, but part of Irena
 	endif
 	 CalculatedScatteredIntensity =  (tempWv * KfactorLocal)/Transmission+BlankR+FlatInstrBckg/Transmission 
 
@@ -272,15 +273,10 @@ Function IN3M_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	Smear_Q=1.1*slitLength*(Q_vec_sm[2*p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the original distribution of points
 	//the 1.1* added later, because without it I did not  cover the whole slit length range... 
 	variable i=0
-//Display Int_to_smear
-//Display Q_vec_sm
-	
 	DataLengths=numpnts(Smeared_int)
 	
 	For(i=0;i<DataLengths;i+=1) 
 		Smear_Int=interp(sqrt((Q_vec_sm[i])^2+(Smear_Q[p])^2), Q_vec_sm, Int_to_smear)		//put the distribution of intensities in the slit for each point 
-//Display Smear_Int
-///abort		
 		Smeared_int[i]=areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
 	endfor
 

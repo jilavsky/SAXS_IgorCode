@@ -9,6 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //1.76 Updated CHeckForUpdate to check on Github for latest release version
+ //
  //1.75 rewrote Nexus support, added check for desktop resolution
  //1.74		added scaling of images on large displays	
  //1.73 added functions to scale panels to larger sizes.
@@ -869,8 +871,8 @@ Function NI1_CheckNikaUpdate(CalledFromMenu)
 			LastUpdateCheckNika = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif 
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<6.32)
-			DoAlert /T="Igor update message :"  0, "Igor 6 has been updated (7/2013) to version 6.32A. Please, update your Igor to the latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.02)
+			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.02 or higher. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	 
@@ -897,16 +899,16 @@ static Function NI1_CheckVersions()
 	variable/g WebNikaVersion		
 	InstalledNikaVersion = IN2G_FindFileVersion("Boot Nika.ipf")	
 	//now get the web based version.
-	NewPath  /O/Q TempPath  (SpecialDirPath("temporary", 0, 0, 0 ))
+	//NewPath  /O/Q TempPath  (SpecialDirPath("temporary", 0, 0, 0 ))
 	//download the file
-	variable InstallHadFatalError
-	InstallHadFatalError = IN2G_DownloadFile("IgorCode/Igor Procedures/Boot Nika.ipf","TempPath", "Boot Nika.ipf")
-	sleep/s 1
-	WebNikaVersion = IN2G_FindVersionOfSingleFile("Boot Nika.ipf","TempPath")
-	if(InstallHadFatalError || numtype(WebNikaVersion)!=0)
-		DoAlert 0, "Check for latest Nika version failed. Check you Internet connection. Try later again..."
+	//variable InstallHadFatalError
+	//InstallHadFatalError = IN2G_DownloadFile("IgorCode/Igor Procedures/Boot Nika.ipf","TempPath", "Boot Nika.ipf")
+	//sleep/s 1
+	WebNikaVersion = IN2G_CheckForNewVersion("Nika")
+	if(numtype(WebNikaVersion)!=0)
+		Print "Check for latest Nika version failed. Check you Internet connection. Try later again..."
 	endif
-	DeleteFile /Z /P=tempPath "Boot Nika.ipf"	
+	//DeleteFile /Z /P=tempPath "Boot Nika.ipf"	
 	SetDataFOlder OldDf
 end	
 
