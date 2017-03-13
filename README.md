@@ -3,8 +3,8 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7 ONLY!
 
 The current release version is February2017 release. For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
-Web based manuals pages (work in progress)...
-http://saxs-igorcodedocs.readthedocs.io/en/latest/
+Web based manuals pages
+http://saxs-igorcodedocs.readthedocs.io/
 
 This code can be installed manually or using Igor installer from : 
 https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub
