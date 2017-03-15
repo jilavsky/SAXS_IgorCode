@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.04
+#pragma version=1.05
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.05 added getHelp button calling to www manual
 //1.04 modified to point to USAXS_data on USAXS computers
 //1.03 modified call to hook function
 //1.02 adds ability to use mask for calculation of Flood field. 
@@ -61,6 +62,7 @@ Function NI1_CreateFloodField()
 	PopupMenu FloodFileType,pos={207,44},size={101,21},proc=NI1M_FloodPopMenuProc,title="File type:"
 	PopupMenu FloodFileType,help={"Select image type of data to be used"}
 	PopupMenu FloodFileType,mode=1,popvalue=FloodFileType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+	Button GetHelp,pos={335,105},size={80,15},fColor=(65535,32768,32768), proc=NI1_FloodButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1M_ListBoxProc
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
@@ -364,6 +366,10 @@ Function NI1_FloodButtonProc(ctrlName) : ButtonControl
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Nika/FloodField.html")
+	endif
 	if( CmpStr(ctrlName,"CreateROIWorkImage") == 0 )
 		//create image for working here...
 		NI1_FloodCreateAppendImage(0)

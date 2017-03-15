@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.05
-Constant IRVversionNumber=2.04
+#pragma version=2.06
+Constant IRVversionNumber=2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IRVversionNumber=2.04
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 added getHelp button calling to www manual 
 //2.05 fixed BessJ into Besselj, newer function. 
 //2.04 added controls for Qc width
 //2.03 added Qc (transitional Q when Surface fractal changes to Porod's slope)

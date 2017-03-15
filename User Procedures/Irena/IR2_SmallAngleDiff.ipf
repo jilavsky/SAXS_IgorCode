@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.14
-Constant IR2DversionNumber=1.09
+#pragma version = 1.15
+Constant IR2DversionNumber=1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 added getHelp button calling to www manual
 //1.14 added oversampling to calculation of peak parameters. When user selects "oversample", peaks are calculated at 5x higher resolution. This provides parameters 5x more precise than what measured Q points are. 
 //1.13 fixed bug in linking which showed on Igor 7 and caused error messages. 
 //1.12 fixed bug in useSMR data which called old code and screwed up control procedures. 
@@ -259,6 +260,7 @@ Window IR2D_ControlPanel()
 	SetVariable SlitLength,pos={260,40},size={100,16},title="SL=",noproc, help={"slit length"}
 
 	Button DrawGraphs,pos={56,158},size={100,20}, proc=IR2D_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2D_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	CheckBox UseLogX,pos={250,150},size={141,14},proc=IR2D_InputPanelCheckboxProc2,title="Log X axis?"
 	CheckBox UseLogX,variable= root:packages:Irena_SAD:UseLogX, help={"Check, if you want to display X axis on log scale"}
@@ -1013,6 +1015,10 @@ Function IR2D_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:Irena_SAD
 	
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/SmallAngleDiffraction.html")
+	endif
 	if (cmpstr(ctrlName,"DrawGraphs")==0 || cmpstr(ctrlName,"DrawGraphsSkipDialogs")==0)
 		//here goes what is done, when user pushes Graph button
 		SVAR DFloc=root:Packages:Irena_SAD:DataFolderName

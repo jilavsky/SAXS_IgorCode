@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.18
-Constant IR2RversionNumber=1.18
+#pragma version=1.19
+Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.18
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 added getHelp button calling to www manual
 //1.18 changes for panel scaling. 
 //1.17 removed many Executes (improvement for Igor 7) 
 //1.16 fixed annoying bug which caused sliders to be drawn over graph when parameters were recoved.
@@ -99,6 +100,7 @@ Window IR2R_ReflSimpleToolMainPanel()
 
 	//************************
 	Button DrawGraphs,pos={270,39},size={100,18}, proc=IR2R_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}, fColor=(65280,65280,48896)
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2R_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	CheckBox OversampleModel,pos={10,148},size={63,14},proc=IR2R_InputPanelCheckboxProc,title="Oversample model?"
 	CheckBox OversampleModel,variable= root:Packages:Refl_SimpleTool:OversampleModel, help={"Check if you want to calculate model for 5x as many points"}
@@ -1799,6 +1801,10 @@ Function IR2R_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:Refl_SimpleTool
 	
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/Reflectivity.html")
+	endif
 	if (cmpstr(ctrlName,"DrawGraphs")==0)
 		//here goes what is done, when user pushes Graph button
 		SVAR DFloc=root:Packages:Refl_SimpleTool:DataFolderName

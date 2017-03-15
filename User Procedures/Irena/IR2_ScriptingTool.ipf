@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.26
-Constant IR2SversionNumber=1.25
+#pragma version=1.27
+Constant IR2SversionNumber=1.27
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.27 added getHelp button calling to www manual
 //1.26 added in popup grandparent folder to the parent folder to reduce scope. 
 //1.25 added ability to sort data by minutes (_xyzmin), pct (_xyzpct), and  temperature (_xyzC). 
 //1.24 fixed bug in Scripting tool which caused qrs start folder return only ones with qrs, but not qds, and other "semi" qrs data 
@@ -240,9 +241,10 @@ End
 Function IR2S_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-		wave SelectionOfAvailableData=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
+	wave SelectionOfAvailableData=root:Packages:Irena:ScriptingTool:SelectionOfAvailableData
 	if(stringmatch(ctrlName,"GetHelp"))
-		IR2S_HelpPanel()
+		//IR2S_HelpPanel()
+		IN2G_OpenWebManual("Irena/ScriptingTool.html")
 	endif
 	if(stringmatch(ctrlName,"GetLogbook"))
 		//generate help in notebook.
@@ -348,9 +350,10 @@ Window IR2S_ScriptingToolPnl()
 	DrawText 29,29,"Scripting tool"
 
 	Button GetHelp,pos={280,4},size={90,15},proc=IR2S_ButtonProc,title="Get help"
-	Button GetHelp,fSize=10,fStyle=2
+	Button GetHelp,fSize=10,fStyle=2, fColor=(65535,32768,32768)
 	Button GetLogbook,pos={280,21},size={90,15},proc=IR2S_ButtonProc,title="Open logbook"
 	Button GetLogbook,fSize=10,fStyle=2
+//	Button GetHelp,pos={280,105},size={80,15},fColor=(65535,32768,32768), proc=IR2S_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	PopupMenu StartFolderSelection,pos={10,40},size={130,15},proc=IR2S_PopMenuProc,title="Select start folder"
 	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:ScriptingTool:StartFolderName,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:ScriptingTool:UseIndra2Data, root:Packages:Irena:ScriptingTool:UseQRSdata,2,1)"

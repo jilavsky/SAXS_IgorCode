@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.09
+#pragma version = 2.10
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 added getHelp button calling to www manual
 //2.09 sped up about 6x the smearing routine in IR1B_SmearData. May need to be checked, seems to work in Unified, Modeling II and Desmearing.
 //2.08 propagate dQ if exists in slit smeared data, if does not exist, fake one from distance between points. 
 //2.07 fixed Next sample button where there was weird bug when one was goign between use of manual selection and next sample buttons. 
@@ -88,6 +89,7 @@ Function IR1B_DesmearingControlPanelFnct()
 	SetVariable SlitWidthL,pos={180,230},size={140,16},noproc,title="Slit width L ", help={"Slit width L parameters for trapeziodal slit in Q units (you should be using A-1 in this package)"}
 	SetVariable SlitWidthL,limits={0,Inf,0},variable= root:Packages:Irena_desmearing:SlitWidthL
 	Button ExplainSlitGeom,pos={230,190},size={120,15}, proc=IR1B_InputPanelButtonProc,title="Explain Slit geom", help={"Get explanation of slit geometry"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1B_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	//Dist Tabs definition
 	TabControl DesmearTabs,pos={10,260},size={370,200},proc=IR1B_TabPanelControl
@@ -2279,6 +2281,10 @@ Function IR1B_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:Irena_desmearing
 	variable IsAllAllRight
 	
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/Desmearing.html")
+	endif
 	if (cmpstr(ctrlName,"DrawGraphs")==0)
 		//here goes what is done, when user pushes Graph button
 		SVAR DFloc=root:Packages:Irena_desmearing:DataFolderName

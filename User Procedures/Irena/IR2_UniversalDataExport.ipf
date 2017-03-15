@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.08
-Constant IR2EversionNumber = 1.08
+#pragma version=1.09
+Constant IR2EversionNumber = 1.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.08
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 added getHelp button calling to www manual
 //1.08 changes for panel scaling
 //1.07 fixed multiple data erxport with QRS
 //1.06 modified GUI to disable Export Data & notes on main panel, when Multiple data selection panel is opened. Confused users. Changeds call to pull up without initialization, if exists. 
@@ -82,6 +83,7 @@ Function IR2E_UnivDataExportPanel()
 	CheckBox ExportMultipleDataSets,pos={100,160},size={225,14},proc=IR2E_UnivExpCheckboxProc,title="Export multiple data sets?"
 	CheckBox ExportMultipleDataSets,variable= root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets, help={"When checked the multiple data sets with same data can be exported"}
 
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2E_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	CheckBox GraphDataCheckbox,pos={15,220},size={225,14},noproc,title="Display graph with data?"
 	CheckBox GraphDataCheckbox,variable= root:Packages:IR2_UniversalDataExport:GraphData, help={"When checked the graph displaying data will be displayed"}
 	CheckBox DisplayWaveNote,pos={15,250},size={225,14},noproc,title="Display notes about data?"
@@ -446,6 +448,10 @@ Function IR2E_InputPanelButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName,"ExportData")==0)
 		//here we do whatever is appropriate...
 		IR2E_ExportTheData()
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/ExportData.html")
 	endif
 	
 	setDataFolder oldDF

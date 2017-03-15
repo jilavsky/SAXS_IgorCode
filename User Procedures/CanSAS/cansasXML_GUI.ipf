@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.03
+#pragma version=1.04
 //#include "cansasXML", version>=1.09
 
 // file :     cansasXML_GUI.ipf
@@ -7,6 +7,7 @@
 // purpose: provide GUI for Ior Pro reader to read canSAS 1 - D reduced SAS data in XML files
 // URL:    http://www.smallangles.net/wgwiki/index.php/cansas1d_documentation
 
+//1.04 added getHelp button calling to www manual, calls IN2G_GeneralProcedures.ipf. 
 //1.03  6/27/2013 Fixed bnug which failed load for XML files containing only one data set. 
 //1.02  Modified all controls not to define font and font size to enable proper control by user 
 //ver 1.01, 9/3/09, JIL.... Fixed CS_XMLGUICopyOneFldrWithDta to simplify final folder structure when only one SASdata (the most common case) is present
@@ -126,6 +127,7 @@ Proc CS_XMLGUIImportDataPanel() 			//main panel
 	Button DeSelectAll,help={"Deselect all waves in the list"}
 	Button Preview,pos={300,350},size={80,20}, proc=CS_XMLGUIButtonProc,title="Preview"
 	Button Preview,help={"Preview selected file."}
+	Button GetHelp,pos={335,60},size={80,15},fColor=(65535,32768,32768), proc=CS_XMLGUIButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	CheckBox UseFileNameAsFolder,pos={10,380},size={16,14},proc=CS_XMLGUICheckProc,title="Use File Nms As Fldr Nms?",variable= root:Packages:CS_XMLreader_GUI:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
 	CheckBox UseIndra2Names,pos={10,395},size={16,14},proc=CS_XMLGUICheckProc,title="Use USAXS names?",variable= root:Packages:CS_XMLreader_GUI:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
@@ -386,6 +388,10 @@ Function CS_XMLGUIButtonProc(ctrlName) : ButtonControl
 	endif
 	if(cmpstr(ctrlName,"ImportData")==0)
 		CS_XMLGUIImportDataFnct()
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/ImportData.html")
 	endif
 End
 

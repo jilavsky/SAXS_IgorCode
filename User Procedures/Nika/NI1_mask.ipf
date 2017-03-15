@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.25
+#pragma version =1.26
 
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.25 MOdified to point to USAXS_data on USAXS computers
+//1.26 added getHelp button calling to www manual
+//1.25 Modified to point to USAXS_data on USAXS computers
 //1.24 added panel scaling
 //1.23 fix problems when saving of mask file to drive failed due to something (like write privileges). 
 //1.22 yet another update for MaskListbox - it was not looking for h5 and hdf5 fiels when Nexus was seletced
@@ -75,6 +76,7 @@ Function NI1M_CreateImageROIPanel()
 
 	Button SelectPathToData,pos={7,44},size={150,20},proc=NI1M_RoiDrawButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Adds drawing tools to top image graph. Use rectangle, circle or polygon."}
+	Button GetHelp,pos={335,105},size={80,15},fColor=(65535,32768,32768), proc=NI1M_RoiDrawButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	CheckBox UseCalib2DData title="Calibrated 2D data?",pos={237,30}
 	CheckBox UseCalib2DData proc=NI1M_MaskCheckProc,variable=root:Packages:Convert2Dto1D:UseCalib2DData
@@ -384,6 +386,10 @@ Function NI1M_RoiDrawButtonProc(ctrlName) : ButtonControl
 	if( CmpStr(ctrlName,"LoadExistingMask") == 0 )
 		//Add existing mask so it can be eddited further....
 		NI1M_LoadOldHdfImage()
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Nika/Mask.html")
 	endif
 
 

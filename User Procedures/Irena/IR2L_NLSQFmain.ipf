@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.20
-Constant IR2LversionNumber = 1.19
+#pragma version=1.21
+Constant IR2LversionNumber = 1.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 added getHelp button calling to www manual
 //1.20 GUI controls move change
 //1.19 chanegs for panel scaling. 
 //1.18 bug fixes and modifications to Other graph outputs - colorization etc. 
@@ -120,6 +121,7 @@ Function IR2L_MainPanel()
 	Button ReGraph, pos={290,148},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Graph (ReGraph)", help={"Create or Recreate graph"}
 	Button ScriptingTool, pos={290,168},size={90,18}, proc=IR2L_InputPanelButtonProc,title="Scripting tool", help={"Open Scripting tool to analyze multipel data sets subsequently"}
 	Button MoreSDParameters, pos={5,167},size={140,18}, proc=IR2L_InputPanelButtonProc,title="More parameters", help={"Get panel with more parameters parameters"},valueColor=(65535,0,0)
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2L_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	CheckBox DisplayInputDataControls,pos={10,188},size={25,16},proc=IR2L_DataTabCheckboxProc,title="Data cntrls", mode=1
 	CheckBox DisplayInputDataControls,variable= root:Packages:IR2L_NLSQF:DisplayInputDataControls, help={"Select to get data controls"}

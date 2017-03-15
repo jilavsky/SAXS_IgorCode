@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 added getHelp button calling to www manual
 //2.23 changes fro panel scaling. 
 //2.22 minor fix of nits on the Scatt Contrast Calculator main panel. 
 //2.21 minor GUI fixes (added Transm to show it is transmission). 
@@ -77,6 +78,7 @@ Window IR1K_ScatteringContCalc()
 	CheckBox WeightPercent, variable=root:Packages:ScatteringContrast:UseWeightPercent	, help={"Use weight fraction (if you want to use balance) or weight percent or weight ratio"}
 	CheckBox BalanceElement,pos={140,128},size={144,14},proc=IR1K_CheckProc,title="balance"
 	CheckBox BalanceElement,help={"Check to have this element to be balance"}, disable=!(root:Packages:ScatteringContrast:UseWeightPercent)
+	Button GetHelp,pos={670,45},size={80,15},fColor=(65535,32768,32768), proc=IR1K_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	Slider ElementSelection size={500,20},pos={115,75},vert=0, proc=IR1K_ScatCont2SliderProc, limits= {1,root:Packages:ScatteringContrast:NumberOfAtoms,1 }
 	Slider ElementSelection help={"Select element to edit (maximum of elements changes as set above)"}
@@ -202,6 +204,10 @@ Function IR1K_ButtonProc(ctrlName) : ButtonControl
 			IR1K_AnomScattContCalc()
 		endif
 		//IR1K_LoadCromerLiberman()
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/ScatteringContrastCalculator.html")
 	endif
 
 //		Button SaveData size={120,20},pos={610,410},proc=IR1Y_ButtonProc

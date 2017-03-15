@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.95
+#pragma version = 1.96
 
 
 //control constants
@@ -13,6 +13,7 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.96 added IN2G_OpenNikaWebManual(WhichSpecificPage)
 //1.95 added CheckForNewVersion(WhichPackage) which returns - from GitHub - current version of Irena, Nika, Indra (selected by WHichPackage)
 //1.94 removed IN2G_PrintDebugWhichProCalled, sped up all code using it. 
 //1.93 fix screenresolution check for high res displays
@@ -432,6 +433,14 @@ Function/T IN2G_RemoveInvisibleFiles(ListIn)
 end
 //**************************************************************** 
 //**************************************************************** 
+Function IN2G_OpenWebManual(WhichSpecificPage)
+		String WhichSpecificPage
+		BrowseURL "http://saxs-igorcodedocs.readthedocs.io/en/stable/"+WhichSpecificPage
+end
+
+
+
+
 //
 //Function IN2G_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
 //	string StringWithPathAndname, LocalPath, LocalName

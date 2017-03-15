@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.22
+#pragma version=2.23
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.23 added getHelp button function. 
 //2.22 fixed IR1A_AutoUpdateIfSelected which called local display code twice. 
 //2.21 fixed display of warning messages from teh tab when tab was not used. 
 //2.20 removed most Execute to speed up fro Igor 7. 
@@ -1593,6 +1594,10 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR1A_UpdateMassFractCalc()
 		IR1A_UpdatePorodSfcandInvariant()
 		IR1A_GraphModelData()
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/UnifiedFit.html")
 	endif
 
 	if(cmpstr(ctrlName,"ScriptingTool")==0)

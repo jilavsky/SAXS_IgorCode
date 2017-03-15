@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.21
 Constant IR1AversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 added  Help button calling www manual page
 //2.20 added scaling panel content
 //2.19 fixed Tab display of B which got confused under some circumstances... 
 //2.18 changed Surf/Volume ratio per Dale Schaefer's description.  
@@ -448,6 +449,8 @@ Window IR1A_ControlPanel()
 	Button ScriptingTool,pos={280,160},size={100,15},proc=IR1A_InputPanelButtonProc,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
 	SetVariable SubtractBackground,limits={0,Inf,0.1},value= root:Packages:Irena_UnifFit:SubtractBackground
 	SetVariable SubtractBackground,pos={110,162},size={150,16},title="Subtract backg.",proc=IR1A_PanelSetVarProc, help={"Subtract flat background from data"}
+
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1A_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	//Modeling input, common for all distributions
 	PopupMenu NumberOfLevels,pos={200,190},size={170,21},proc=IR1A_PanelPopupControl,title="Number of levels :", help={"Select number of levels to use, NOTE that the level 1 has to have the smallest Rg"}

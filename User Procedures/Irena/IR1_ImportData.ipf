@@ -1,9 +1,9 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.35
+#pragma version=2.36
 #include <HDF5 Browser>
-Constant IR1IversionNumber = 2.29
-Constant IR1IversionNumber2 = 2.31
-Constant IR1IversionNumberNexus = 2.32
+Constant IR1IversionNumber = 2.36
+Constant IR1IversionNumber2 = 2.36
+Constant IR1IversionNumberNexus = 2.36
 Constant IR1TrimNameLength = 28
 
 
@@ -13,6 +13,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.36 added GetHelp button
 //2.35 fixed lack of too many points message and remvoed hidden tfiles from dialogs. 
 //2.34 fixed problems with negative intensities which screwed up errors. Added abs(Int) for error generation and avoided error message when error was not used. 
 //2.33 added Nexus file importer. 
@@ -169,6 +170,7 @@ Proc IR1I_ImportSASASCIIData()
 	TitleBox Info9 title="\Zr150dQ",pos={382,195},frame=0,fstyle=2, fixedSize=0,size={40,15}
 	Button SelectDataPath,pos={99,53},size={130,20}, proc=IR1I_ButtonProc,title="Select data path"
 	Button SelectDataPath,help={"Select data path to the data"}
+	Button GetHelp,pos={335,60},size={80,15},fColor=(65535,32768,32768), proc=IR1I_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	SetVariable DataPathString,pos={2,85},size={415,19},title="Data path :", noedit=1
 	SetVariable DataPathString,help={"This is currently selected data path where Igor looks for the data"}
 	SetVariable DataPathString,limits={-Inf,Inf,0},value= root:Packages:ImportData:DataPathName
@@ -1182,6 +1184,10 @@ Function IR1I_ButtonProc(ctrlName) : ButtonControl
 	endif
 	if(cmpstr(ctrlName,"TestImport")==0)
 		IR1I_testImport()
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/ImportData.html")
 	endif
 	if(cmpstr(ctrlName,"Preview")==0)
 		IR1I_TestImportNotebook()
@@ -2330,6 +2336,7 @@ Function IR1I_ImportOtherASCIIDataFnct()
 	Button TestImport,help={"Test how if import can be succesful and how many waves are found"}
 	Button Preview,pos={330,152},size={80,15}, proc=IR1I_ButtonProc,title="Preview"
 	Button Preview,help={"Preview selected file."}
+	Button GetHelp,pos={335,60},size={80,15},fColor=(65535,32768,32768), proc=IR1I_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 //
 ////	TitleBox TooManyPointsWarning variable=root:Packages:ImportData:TooManyPointsWarning,fColor=(0,0,0)
 //	TitleBox TooManyPointsWarning pos={220,170},size={150,19}, disable=1
@@ -2958,13 +2965,6 @@ Function IR1I_ImportNexusDataFnct()
 	SetVariable DataPathString pos={2,62}
 	SetVariable NameMatchString pos={5,85}
 	SetVariable DataExtensionString pos={260,85}
-//	Button TestImport,pos={230,152},size={80,15}, proc=IR1I_ButtonProc,title="Test"
-//	Button TestImport,help={"Test how if import can be succesful and how many waves are found"}
-//	Button Preview,pos={330,152},size={80,15}, proc=IR1I_ButtonProc,title="Preview"
-//	Button Preview,help={"Preview selected file."}
-//	Button Plot,pos={330,317},size={80,15}, proc=IR1I_ButtonProc,title="Plot"
-//	Button Plot,help={"Preview selected file."}
-
 	//CheckBox QvectorInA,pos={240,405},size={16,14},proc=IR1I_CheckProc,title="Q in [A^-1]",variable= root:Packages:ImportData:QvectInA, help={"What units is Q in? Select if in Angstroems ^-1"}
 	//CheckBox QvectorInNM,pos={240,422},size={16,14},proc=IR1I_CheckProc,title="Q in [nm^-1]",variable= root:Packages:ImportData:QvectInNM, help={"What units is Q in? Select if in nanometers ^-1. WIll be converted to inverse Angstroems"}
 	CheckBox UseFileNameAsFolderNX,pos={10,400},size={16,14},proc=IR1I_CheckProc,title="Use File Nms as Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
@@ -2973,6 +2973,7 @@ Function IR1I_ImportNexusDataFnct()
 
 	Button OpenFileInBrowser,pos={250,400},size={150,20},proc=IR1I_ButtonProc,title="Open File in Browser"
 	Button OpenFileInBrowser,help={"Check file in HDF5 Browser"}
+	Button GetHelp,pos={335,60},size={80,15},fColor=(65535,32768,32768), proc=IR1I_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	CheckBox NX_InclsasInstrument,pos={230,420},size={16,14},noproc,title="Incl sasInstrument in WVnote?",variable= root:Packages:ImportData:NX_InclsasInstrument, help={"Include values from sasInstrument group in wave note?"}
 	CheckBox NX_Incl_sasSample,pos={230,435},size={16,14},noproc,title="Incl sasSample in WVnote?",variable= root:Packages:ImportData:NX_Incl_sasSample, help={"Include values from sasSample group in wave note?"}

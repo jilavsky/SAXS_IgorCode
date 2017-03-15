@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.12
-Constant IR2HversionNumber = 4.12
+#pragma version=4.13
+Constant IR2HversionNumber = 4.13
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.12
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.13 added getHelp button calling to www manual
 //4.12 changes for panel scaling
 //4.11 removed Execute for GUI controls for Igor 7. 
 //4.10 addede check for slit smeared data if qmax is high enough (3* slit length). 
@@ -362,6 +363,7 @@ Proc IR2H_ControlPanel()
 	SetVariable SlitLength,limits={0,Inf,0.01},variable= root:Packages:Gels_Modeling:SlitLength, disable=!(root:Packages:Gels_Modeling:UseSlitSmearedData)
 
 	Button DrawGraphs,pos={260,158},size={80,20}, proc=IR2H_InputPanelButtonProc,title="Graph", help={"Click to generate data graphs, necessary step for further evaluation"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2H_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	//Modeling input, common for all distributions
 	Button GraphDistribution,pos={32,217},size={50,20}, proc=IR2H_InputPanelButtonProc,title="Graph", help={"Graph manually. Used if UpdateAutomatically is not selected."}
@@ -706,6 +708,11 @@ Function IR2H_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:Gels_Modeling
 	
 
+
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/AnalyticalModels.html")
+	endif
 	if (cmpstr(ctrlName,"DrawGraphs")==0)
 		//here goes what is done, when user pushes Graph button
 		SVAR DFloc=root:Packages:Gels_Modeling:DataFolderName

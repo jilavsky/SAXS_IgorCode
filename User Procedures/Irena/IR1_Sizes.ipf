@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.23
+#pragma version = 2.24
 Constant IR1RSversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 added getHelp button calling to www manual
 //2.23 changed to use of IR1B_SmearData and remvoed limitation for slit smeared data, that Qmax must be > than 3*slit length. Optimized speed, about 2x speed improvement on slit smeared data. 
 //2.22 modified trust ranges for Sizes - now correctly uses 2*pi/Q for large size and pi/Q for small size of trusted range. 
 //2.21 fixed Regularization for Igor 7. 
@@ -641,6 +642,10 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 	if(stringmatch(ctrlName,"GraphIfAllowed"))
 		IR1R_GraphIfAllowed(ctrlName)			
 		DoWIndow/F IR1R_SizesInputPanel
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/SizeDistribution.html")
 	endif
 	if(stringMatch(ctrlName,"ScriptingTool"))
 		IR2S_ScriptingTool() 
@@ -2526,6 +2531,9 @@ Window IR1R_SizesInputPanel()
 	CheckBox ShowDiagnostics,variable= root:Packages:Sizes:ShowDiagnostics
 	Button GraphIfAllowed,pos={10,183},size={100,20},proc=IR1R_GraphDataButton,title="Graph", help={"Push to graph data"}
 	Button ScriptingTool,pos={280,185},size={90,15},proc=IR1R_GraphDataButton,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1R_GraphDataButton,title="Get Help", help={"Open www manual page for this tool"}
+
+
 	CheckBox SlitSmearedData,pos={160,164},size={150,21},proc=IR1R_InputPanelCheckboxProc,title="Slit smeared data?"
 	CheckBox SlitSmearedData,variable=root:Packages:Sizes:UseSlitSmearedData, help={"Are these slit smeared data?"}
 	SetVariable SlitLength,pos={125,186},size={140,16},title="Slit Length   ", help={"If slit smeared data, input slit length (automatically inserted for Indra 2 data"}

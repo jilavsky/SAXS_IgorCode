@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
-Constant IR2PrversionNumber=1.10
+#pragma version=1.12
+Constant IR2PrversionNumber=1.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 added getHelp button calling to www manual
 //1.11 changed to IR1B_SmearData which is more optimized slit smearing function. 
 //1.10 fixes for WIndows GUI
 //1.09 changes for panel scaling
@@ -192,6 +193,7 @@ Window IR2Pr_ControlPanel()
 	SetVariable SlitLength,pos={260,40},size={100,16},title="SL=",noproc, help={"slit length"}
 
 	Button DrawGraphs,pos={56,158},size={100,20}, proc=IR2Pr_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2Pr_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 //	CheckBox UseRegularization,pos={250,185},size={141,14},noproc,title="Regularization", disable=2, mode=1
 //	CheckBox UseRegularization,variable= root:packages:Irena_PDDF:UseRegularization, help={"Check, if you want to use Regularization as modeling method"}
@@ -603,6 +605,10 @@ Function IR2Pr_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:Irena_PDDF
 	
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/PairDistanceDist.html")
+	endif
 	if (cmpstr(ctrlName,"DrawGraphs")==0 || cmpstr(ctrlName,"DrawGraphsSkipDialogs")==0)
 		//here goes what is done, when user pushes Graph button
 		SVAR DFloc=root:Packages:Irena_PDDF:DataFolderName

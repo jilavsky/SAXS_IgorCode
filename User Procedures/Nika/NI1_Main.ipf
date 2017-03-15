@@ -10,7 +10,7 @@
 //*************************************************************************/
  
  //1.76 Updated CHeckForUpdate to check on Github for latest release version
- //
+ //		Add call to ReadTheDocs manuals
  //1.75 rewrote Nexus support, added check for desktop resolution
  //1.74		added scaling of images on large displays	
  //1.73 added functions to scale panels to larger sizes.
@@ -81,6 +81,8 @@ Menu "SAS 2D"
 	"Remove stored images", NI1_RemoveSavedImages()
 	help={"Removes stored images - does not remove USED images, makes file much smaller. "}
 	"---"
+	"Open Nika web manual", IN2G_OpenWebManual("")
+	help={"Opens Nika web manual in default web bropwser."}
 	"Open Nika pdf manual", NI1_OpenNikaManual()
 	help={"Opens Nika pdf manual in Acrobat or other system associated pdf reader."}
 	"Remove Nika 1 macros", NI1_RemoveNika1Mac()

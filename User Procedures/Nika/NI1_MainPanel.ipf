@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.51
-Constant NI1AversionNumber = 2.51
+#pragma version=2.52
+Constant NI1AversionNumber = 2.52
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,7 +8,8 @@ Constant NI1AversionNumber = 2.51
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.51 Fixed old bug where sampel thickness was not converted to cm before use and used as mm. This causes old experiments with old calibration constants to be wrong.
+//	2.52	added getHelp button calling to www manual
+//2.51 Fixed old bug where sample thickness was not converted to cm before use and used as mm. This causes old experiments with old calibration constants to be wrong.
 //			old calibration constatnts need to be also scaled by 10 to fix the calibration. 
 //			added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 //2.49 Nexus input output fixes. 

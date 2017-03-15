@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.60
-constant IR3MversionNumber = 2.55			//Data manipulation II panel version number
-constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
+#pragma version=2.61
+constant IR3MversionNumber = 2.61		//Data manipulation II panel version number
+constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.55			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.61 added getHelp button calling to www manual
 //2.60 fixes for DMII - Secondary panel was loosing scaling controls and some controls need to be moved around. 
 //2.59 modifications for panel scaling, Data Manipulation I is nto working right... Subwindows are problem. 
 //2.58 minor fix for cursor position in Merge in Data Manipualtion I. 
@@ -153,6 +154,7 @@ Proc IR1D_DataManipulationPanel()
 	Checkbox QlogScale, pos={10,103}
 	SetVariable DataUnits, pos={300,109}, size={90,15},title="Units:", noproc, variable=root:Packages:SASDataModification:DataUnits, disable=2
 	SetVariable DataUnits ,help={"Intensity units for data set 1"}
+	Button GetHelp,pos={305,30},size={80,15},fColor=(65535,32768,32768), proc=IR1D_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	
 	
 	SetActiveSubwindow ##
@@ -405,6 +407,10 @@ Function IR1D_InputPanelButtonProc(ctrlName) : ButtonControl
 		string OldAcsrWvName, OldBcsrWvName
 		variable OldAcsrPnt, OldBcsrPnt
 	
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/DataManipulation.html")
+	endif
 	if(cmpstr(ctrlName,"CopyGraphData")==0)
 		OldAcsrWvName = CsrWave(A , "IR1D_DataManipulationGraph", 1)	
 		OldBcsrWvName = CsrWave(B , "IR1D_DataManipulationGraph", 1)	
@@ -2821,6 +2827,7 @@ Function IR3M_DataManipulationIIPanel()
 		popupmenu IntensityDataName, pos={500,500}, disable=1
 		popupmenu ErrorDataName, pos={500,500}, disable=1
 
+	Button GetHelp,pos={305,35},size={80,15},fColor=(65535,32768,32768), proc=IR3M_DataManIIPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	Button DisplayTestFolder, pos={150,79},size={100,13}, proc=IR3M_DataManIIPanelButtonProc,title="Graph Test data", help={"Show selected folder data in graph"}
 	TitleBox MainTitle title="\Zr200Data manipulation II panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,100},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -3653,6 +3660,10 @@ Function IR3M_DataManIIPanelButtonProc(ctrlName) : ButtonControl
 		IR3M_GraphTestFolderData()
 	endif
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/DataManipulation.html")
+	endif
 
 	if(cmpstr(ctrlName,"ProcessData")==0)
 		IR3M_ProcessTheDataFunction()

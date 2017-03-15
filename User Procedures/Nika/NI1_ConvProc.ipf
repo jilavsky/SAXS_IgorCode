@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.56 added getHelp button calling to www manual
 //2.55 fixed missing forced naming to data. Now will force use of File name fopr naming the data if nothign else is selected.
 //2.54 added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"") in the code here. 
 //2.53 important correction - prior versions did NOT have samplethickness converted to cm, so this may break prior exerimets calibrations. 
@@ -1554,6 +1555,10 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	if(cmpstr(ctrlName,"CreateOutputPath")==0)
 		PathInfo/S Convert2Dto1DOutputPath
 		NewPath/C/O/M="Select path to save your data" Convert2Dto1DOutputPath	
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Nika/Main.html")
 	endif
 	if(cmpstr(ctrlName,"SelectMaskDarkPath")==0)
 		PathInfo/S Convert2Dto1DEmptyDarkPath
@@ -3284,6 +3289,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox Info1 title="\Zr120Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
 	TitleBox Info2 title="\Zr120Select contiguous range  :",pos={30,237},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	Button GetHelp,pos={335,5},size={80,15},fColor=(65535,32768,32768), proc=NI1A_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}

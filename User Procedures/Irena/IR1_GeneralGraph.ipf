@@ -1,7 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.28
+#pragma version=2.29
 #include  <TransformAxis1.2>
-Constant IR1PversionNumber=2.16
+Constant IR1PversionNumber=2.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.16
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.29 added getHelp button calling to www manual
 //2.28 fixed Gizmo for Igor 7, this should be improved later, but at this time this needs to work for both Igor 6 and 7
 //2.27 added more styles and changed few defaults for them. 
 //2.26 fixes for panel scaling
@@ -122,6 +123,7 @@ Window IR1P_ControlPanel()
 	Button CreateMovie,pos={2,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Create Movie", help={"Click to create movie from 2D or 3D graph"}
 	Button CreateGizmoGraph,pos={102,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Gizmo (3D)", help={"Click to create 3D graph using Gizmo"}
 	Button CreateContourPlot,pos={302,178},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Contour plot", help={"Create contour plot"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1P_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 //graph controls
 	PopupMenu GraphType,pos={1,210},size={178,21},proc=IR1P_PanelPopupControl,title="Graph style", help={"Select graph type to create, needed data types will be created if necessary"}
@@ -379,6 +381,10 @@ Function IR1P_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:GeneralplottingTool
 	
 	variable IsAllAllRight
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/Plotting.html")
+	endif
 
 	if (cmpstr(ctrlName,"AddDataToGraph")==0)
 		//here goes what is done, when user pushes Graph button

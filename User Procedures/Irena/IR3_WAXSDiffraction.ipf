@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.03
+#pragma version=1.05
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 0.4		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.05 added call to web manual also. 
 //1.04 change LauGo calculate method to import of xml PDF-4+ cards. 
 //1.02 fix error when IR3W_WAXSMainGraph is not top graph window and user tries to add/replace the data in it. 
 //1.01 fixes for energy/wavelength handling when lookup in the wave note fails
@@ -1387,6 +1388,8 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 			if(stringmatch(ba.ctrlname,"DisplayHelp"))
 				DisplayHelpTopic "Irena WAXS tool"
 				DoIgorMenu "Control", "Retrieve Window"		// let's make sure it is visible
+				//and open the web page also...
+				IN2G_OpenWebManual("Irena/WAXS.html")
 			endif
 			if(stringmatch(ba.ctrlname,"PDF4AddManually"))
 				IR3W_PDF4AddManually()

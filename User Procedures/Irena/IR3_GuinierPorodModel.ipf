@@ -1,7 +1,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.06  	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.07  	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
-Constant IR3GPversionNumber=1.05
+Constant IR3GPversionNumber=1.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1.05
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.07 added getHelp button calling to www manual
 //1.06 GUI controls move change
 //1.05 changes for panel scaling. 
 //1.04 Igor 7 changes
@@ -572,6 +573,7 @@ Function IR3DP_MainPanelFunction()
 	Button DrawGraphs,pos={5,150},size={100,20},proc=IR3GP_PanelButtonProc,title="Graph data", help={"Create a graph (log-log) of your experiment data"}
 	Button GraphDistribution,pos={5,210},size={90,20},proc=IR3GP_PanelButtonProc,title="Graph Model", help={"Add results of your model in the graph with data"}
 	Button ScriptingTool,pos={280,155},size={100,15},proc=IR3GP_PanelButtonProc,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR3GP_PanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	CheckBox UpdateAutomatically,pos={110,205},size={225,14},proc=IR3GP_PanelCheckboxProc,title="Update automatically?"
 	CheckBox UpdateAutomatically,variable= root:Packages:Irena:GuinierPorod:UpdateAutomatically, help={"When checked the graph updates automatically anytime you make change in model parameters"}
 	CheckBox UseNoLimits,pos={275,205},size={63,14},proc=IR3GP_PanelCheckboxProc,title="No limits?"
@@ -835,6 +837,10 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 		//if(V_Flag)
 			//AutoPositionWindow/R=LSQF2_MainPanel LSQF_MainGraph
 		//endif
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/GuinierPorod.html")
 	endif
 	if(cmpstr(ctrlName,"ScriptingTool")==0)
 		IR2S_ScriptingTool() 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.05
+#pragma version=2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 added getHelp button calling to www manual
 //2.05 fixes for panel scaling
 //2.04 added controls for Qc width
 //2.03 Added Qc as transition from Surface fractal to Porods termainal (Q^-4) slope. 
@@ -42,6 +43,7 @@ Proc IR1V_ControlPanel()
 	Button DrawGraphs,pos={56,158},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Graph", help={"Create a graph (log-log) of your experiment data"}
 	SetVariable SubtractBackground,limits={-inf,Inf,0.1},value= root:Packages:FractalsModel:SubtractBackground
 	SetVariable SubtractBackground,pos={170,162},size={180,16},title="Subtract background",proc=IR1V_PanelSetVarProc, help={"Subtract flat background from input data"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1V_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	//Modeling input, common for all distributions
 	Button GraphDistribution,pos={12,215},size={90,20}, proc=IR1V_InputPanelButtonProc,title="Update model", help={"Add results of your model in the graph with data"}
@@ -728,6 +730,10 @@ Function IR1V_InputPanelButtonProc(ctrlName) : ButtonControl
 	setDataFolder root:Packages:FractalsModel
 	
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/Fractals.html")
+	endif
 	if (cmpstr(ctrlName,"DrawGraphs")==0)
 		//here goes what is done, when user pushes Graph button
 		SVAR DFloc=root:Packages:FractalsModel:DataFolderName

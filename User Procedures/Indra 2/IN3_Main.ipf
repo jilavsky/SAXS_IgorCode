@@ -9,9 +9,9 @@
 //*************************************************************************/
 
 //1.90 added OverRideSampleTransmission, added live processing and added graph with saved subtracted data. 
-//1.90 fixes to annoying behaviors (needless user questions), reorganized menu
-//1.90 enable negative override for Bkg5 
-//1.90 Added first version of Import & Process panel. For now cannot handel step scanning. 
+//		fixes to annoying behaviors (needless user questions), reorganized menu
+//		enable negative override for Bkg5 
+// 	Added first version of Import & Process panel. For now cannot handel step scanning. 
 //1.89 fixes for 2016-02
 //1.88 panel scaling.  
 //1.87 removed Wavename string from selection tool. Unnecessary and confusing users. 

@@ -163,6 +163,8 @@ Menu "SAS"
 			help={"Get Panel with info about this release of Irena macros"}
 			"Check for updates", IR2C_CheckIrenaUpdate(1)
 			help={"Run Check for update and present citations to use in publications"}	
+			"Open Irena web manual", IN2G_OpenWebManual("")
+			help={"Opens Irena web manual in default web bropwser."}
 			"Open Irena pdf manual", IR2_OpenIrenaManual()
 			help={"Opens your pdf reader (Acrobat) with Irena manual in it"}
 			"Open Form and Structure Factor description", IR2T_LoadFFDescription()

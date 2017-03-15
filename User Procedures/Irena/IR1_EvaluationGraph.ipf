@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.07
+#pragma version=2.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.08 added getHelp button calling to www manual
 //2.07 minor fix for parameter6 of form factor parameter. 
 //2.06 removed Executes as preparation for Igor 7
 //2.05 modified IR1G_CreateAveVolSfcWvUsingNote by cleaning up unneeded code. 
@@ -986,6 +987,10 @@ Function IR1G_ButtonProc(ctrlName) : ButtonControl
 		//here goes what happens when we want to calculate results...
 		IR1G_CalculateStatistics()
 	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/EvaluateSizeDistributions.html")
+	endif
 
 //AddDataToGraph
 	if (cmpstr(ctrlName,"AddData")==0)
@@ -1433,6 +1438,8 @@ Proc  IR1G_OneSampleEvaluationGraph()
 
 	CheckBox AutoUpdate,pos={372,16},size={111,14},proc=IR1G_CheckProc,title="Auto-update"
 	CheckBox AutoUpdate,variable= root:Packages:SASDataEvaluation:GR1_AutoUpdate, help={"Check to have results updated after every change of cursor position"}
+
+	Button GetHelp,pos={305,1},size={80,15},fColor=(65535,32768,32768), proc=IR1G_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	Button AddData,pos={368,34},size={100,18},proc=IR1G_ButtonProc,title="Add data "
 	Button AddData,  help={"Select data on the left and push to add data in the graph"}

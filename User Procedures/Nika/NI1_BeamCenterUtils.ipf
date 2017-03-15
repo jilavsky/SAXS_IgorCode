@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.24
-Constant NI1BCversionNumber = 2.22
+#pragma version=2.25
+Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.25 added getHelp button calling to www manual
 //2.24 Modified to point to USAXS_data on USAXS computers 
 //2.23 GUI fix on new calibrants lines 
 //2.22 added more lines to the calibrants
@@ -108,6 +109,7 @@ Function NI1BC_CreateBmCntrField()
 
 	Button SelectPathToData,pos={27,35},size={130,20},proc=NI1BC_BmCntrButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Sets path to data where BmCntr image is"}
+	Button GetHelp,pos={335,105},size={80,15},fColor=(65535,32768,32768), proc=NI1BC_BmCntrButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	PopupMenu BmCntrFileType,pos={247,35},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="File type:"
 	PopupMenu BmCntrFileType,help={"Select image type of data to be used"}
@@ -1723,6 +1725,10 @@ Function NI1BC_BmCntrButtonProc(ctrlName) : ButtonControl
 		TabControl BmCntrTab, value=0, win=NI1_CreateBmCntrFieldPanel
 		NI1BC_TabProc("",0)
 		ShowInfo /W=CCDImageForBmCntr
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Nika/BCandGeometry.html")
 	endif
 	
 	if( CmpStr(ctrlName,"SelectPathToData") == 0 )

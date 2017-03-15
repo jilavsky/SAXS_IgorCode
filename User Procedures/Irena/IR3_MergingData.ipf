@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.09
-constant IR3DversionNumber = 1.09			//Data merging panel version number
+#pragma version=1.10
+constant IR3DversionNumber = 1.10		//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.09			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 added getHelp button calling to www manual
 //1.09 added control fro modifier for folder name and defaulted to new, modified name, QRS folder also. User issues. 
 //1.08 fixed USAXS/SAXS ordering
 //1.07 minor GUI fixes for Windows
@@ -105,6 +106,7 @@ Proc IR3D_DataMergePanel()
 	PopupMenu SortFolders2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString2,value=root:Packages:Irena:SASDataMerging:FolderSortStringAll
 
 	Button IsUSAXSSAXSdata, pos={140,117}, size={200,14}, title="Sort USAXS/SAXS/WAXS data", proc=IR3D_MergeButtonProc, help={"Sorts USAXS/SAXS?WAXS data to order proper pairs together. "}
+	Button GetHelp,pos={1105,5},size={80,15},fColor=(65535,32768,32768), proc=IR3D_MergeButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	SetVariable Data1Background,pos={990,30},size={200,15}, noproc,title="Data 1 Background",bodyWidth=150, disable=2
 	Setvariable Data1Background, variable=root:Packages:Irena:SASDataMerging:Data1Background, limits={-inf,inf,0}
@@ -1289,6 +1291,10 @@ Function IR3D_MergeButtonProc(ba) : ButtonControl
 				IR3D_MergeData(0)
 				IR3D_AppendDataToGraph("Merged")
 				IR3D_SetSavedNotSavedMessage(0)
+			endif
+			if(stringmatch(ba.ctrlname,"GetHelp"))
+				//Open www manual with the right page
+				IN2G_OpenWebManual("Irena/DataManipulation.html")
 			endif
 			if(stringmatch(ba.ctrlname,"MergeData2"))
 				//Merge with Q shift data only

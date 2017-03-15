@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.40
+#pragma version=1.41
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.41 added getHelp button calling to www manual
 //1.40 added modifiers to stepping by clicking on step arrows fro setVariables. With modifier step is 10x smaller now. 
 //1.39 fixed code which did nto have full paths to waves and was failing when called in some cases. 
 //1.38 added lookup of SlitLength from data when checkbox is selected. Looks inside wave note of Intensity to see, if there is Slitlength there. Even wehn using qrs or other naming ssytem. 
@@ -4666,6 +4667,10 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 
 	if(stringmatch(ctrlName,"Continue_SDDetails"))
 		DoWindow/K LSQF2_ModelingII_MoreDetails
+	endif
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Irena/Modeling.html")
 	endif
 
 	if(cmpstr(ctrlName,"RemovePointWcsrA")==0)
