@@ -6,6 +6,9 @@ The current release version is February2017 release. For details on releases and
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
 
+Gitter discussion forum (test mode for now):
+https://gitter.im/SAXS_IgorCode/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link
+
 This code can be installed manually or using Igor installer from : 
 https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub
 
