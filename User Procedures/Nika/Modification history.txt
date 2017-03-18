@@ -9,7 +9,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 ********************************************
 1.76 master, not released yet.
 Version check - using Github now. 
-
+Added buttons with links to web based manual pages to each tool.
 
 
 1.75a 3/3/2017

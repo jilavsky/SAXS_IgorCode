@@ -8,6 +8,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 -latest stuff first
 ********************************************
 2.63 master, not released yet.
+Added buttons with links to web based manual pages to each tool.
 Version check - using Github now. 
 Smearing/Desmearing data support - increased smearing speed about 3x
 Unified Fit - Modified to handle Slit smeared data which do not extend beyond slit length. Same logic as in Modeling II - extend temporary data to 3*slit length and then truncate. 
