@@ -1,11 +1,11 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.62
+#pragma version=2.63
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
-constant CurrentVersionNumber = 2.62
+constant CurrentVersionNumber = 2.63
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -740,7 +740,7 @@ Function IR1_AboutPanel()
 	DoWindow/C About_Irena_1_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro >=6.37 & 7"
+	DrawText 23,30,"Irena macros for Igor Pro 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 100,60,"@ ANL, 2017"
 	DrawText 10,80,"release "+num2str(CurrentVersionNumber)

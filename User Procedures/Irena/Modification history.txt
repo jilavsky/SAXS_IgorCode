@@ -7,7 +7,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-2.63 master, not released yet.
+2.63beta, 3/18/2017
 Added buttons with links to web based manual pages to each tool.
 Version check - using Github now. 
 Smearing/Desmearing data support - increased smearing speed about 3x
