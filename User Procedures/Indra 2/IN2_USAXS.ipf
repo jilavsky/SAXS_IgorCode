@@ -1049,7 +1049,7 @@ Function IN2A_PlotToGetBeamCenter()		//here we get the plot to get beam center
 	
 	Silent 1
 	PauseUpdate //*************************Graph section**********************************
-	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs ar_encoder as "Lin-lin plot of Int vs Ar encoder"
+	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs ar_encoder as "Lin-lin plot of Int vs Ar encoder"
 	DoWindow/C LinLinBeamCenterPlot
 		SetAxis bottom, ar_encoder[DisplayStartPoint], ar_encoder[DisplayEndPoint]
 		ErrorBars PD_Intensity Y,wave=(PD_Error,PD_Error)
@@ -1357,7 +1357,7 @@ Function IN2A_CreateLogLogPlot()	//this creates log log plot for check of dark c
 
 	Silent 1
 	PauseUpdate    //*************************Graph section**********************************
-		Display /k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs Qvec as "Log-log R for sample/blank"		//plots selected data, axis lin-lin
+		Display /k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs Qvec as "Log-log R for sample/blank"		//plots selected data, axis lin-lin
 		DoWindow/C LogLogRPlot
 		Execute ("IN2G_BasicGraphStyle()")		
 		ModifyGraph log=1, mirror=1
@@ -1830,7 +1830,7 @@ Function IN2B_AlignSampleAndBlankLinLin()					//This creates the graph for align
 		R_Qvec_shifted=R_Qvec-Qshift
 
 
-		Display /K=1/W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) BL_R_Int vs BL_R_Qvec as "Lin-lin plots of R for Sample and Blank"								//I like graphs
+		Display /K=1/W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) BL_R_Int vs BL_R_Qvec as "Lin-lin plots of R for Sample and Blank"								//I like graphs
 		Execute ("IN2G_BasicGraphStyle()")
  		AppendToGraph/C=(0,0,0) R_Int_corr vs R_Qvec_shifted 
  		DoWindow/C ASBLinLinPlot
@@ -1884,7 +1884,7 @@ Function IN2B_AlignSampleAndBlankLogLog()
 		NVAR Qshift
 
 	  PauseUpdate    //*************************Graph section**********************************
- 		Display /K=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) BL_R_Int vs BL_R_Qvec as "Log-log plots of R for Sample and Blank"	//I like graphs
+ 		Display /K=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) BL_R_Int vs BL_R_Qvec as "Log-log plots of R for Sample and Blank"	//I like graphs
 		Execute ("IN2G_BasicGraphStyle()")
  		AppendToGraph/C=(0,0,0) R_Int_corr vs R_Qvec_shifted 
   		ModifyGraph zColor=0, mirror=1
@@ -2239,7 +2239,7 @@ Function IN2A_MSAXScorrection()
 	
 	Silent 1
 
-	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) R_Int vs R_Qvec as "Sample PD Intensity vs Q vector"						//plots intensity vs ar encoder
+	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) R_Int vs R_Qvec as "Sample PD Intensity vs Q vector"						//plots intensity vs ar encoder
 	SetAxis bottom, R_Qvec[StartPlot]*1.2, R_Qvec[EndPlot]*3
 	DoWindow/C MSAXSCorrection
 	AppendToGraph/R BL_R_Int vs BL_R_Qvec

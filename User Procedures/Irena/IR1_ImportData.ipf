@@ -1,7 +1,7 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.36
+#pragma version=2.37
 #include <HDF5 Browser>
-Constant IR1IversionNumber = 2.36
+Constant IR1IversionNumber = 2.37
 Constant IR1IversionNumber2 = 2.36
 Constant IR1IversionNumberNexus = 2.36
 Constant IR1TrimNameLength = 28
@@ -13,6 +13,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//.237 added Plot button to SAXS importer also. 
 //2.36 added GetHelp button
 //2.35 fixed lack of too many points message and remvoed hidden tfiles from dialogs. 
 //2.34 fixed problems with negative intensities which screwed up errors. Added abs(Int) for error generation and avoided error message when error was not used. 
@@ -195,10 +196,13 @@ Proc IR1I_ImportSASASCIIData()
 	SetVariable SkipNumberOfLines,help={"Insert number of lines to skip"}
 	SetVariable SkipNumberOfLines,variable= root:Packages:ImportData:SkipNumberOfLines, disable=(!root:Packages:ImportData:SkipLines)
 
-	Button TestImport,pos={210,152},size={80,15}, proc=IR1I_ButtonProc,title="Test"
+	Button TestImport,pos={205,152},size={70,15}, proc=IR1I_ButtonProc,title="Test"
 	Button TestImport,help={"Test how if import can be succesful and how many waves are found"}
-	Button Preview,pos={300,152},size={80,15}, proc=IR1I_ButtonProc,title="Preview"
+	Button Preview,pos={278,152},size={70,15}, proc=IR1I_ButtonProc,title="Preview"
 	Button Preview,help={"Preview selected file."}
+	Button Plot,pos={350,152},size={70,15}, proc=IR1I_ButtonProc,title="Plot"
+	Button Plot,help={"Preview selected file."}
+
 
 	TitleBox TooManyPointsWarning variable=root:Packages:ImportData:TooManyPointsWarning,fColor=(0,0,0)
 	TitleBox TooManyPointsWarning pos={220,170},size={150,19}, disable=1
@@ -1395,6 +1399,10 @@ Function IR1I_TestPlotData()
 			else
 				ErrorBars TempIntensity XY,wave=(TempError,TempError),wave=(TempError,TempError)
 			endif
+		endif
+		DoWindow IR1I_ImportData
+		if(V_Flag)
+			ModifyGraph log=1
 		endif
 	endif
 end

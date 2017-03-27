@@ -64,7 +64,7 @@ end
 Function IN3_NewMain()
 
 	string OldDf=GetDataFolder(1)
-
+	IN2G_CheckScreenSize("height",790)
 	IN3_Initialize()
 	IN3_FlyScanInitializeImport()
 	DoWIndow RcurvePlotGraph

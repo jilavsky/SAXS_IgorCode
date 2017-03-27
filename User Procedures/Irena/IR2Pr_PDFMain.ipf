@@ -657,7 +657,7 @@ end
 Proc  IR2Pr_PdfInputGraph() 
 	PauseUpdate; Silent 1		// building window...
 	SetDataFolder root:Packages:Irena_PDDF:
-	Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
+	Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
 	DoWindow/C IR2Pr_PDFInputGraph
 	DoWindow/T IR2Pr_PDFInputGraph,"Pair distribution function"
 	IR2Pr_AppendIntOriginal()	//appends original Intensity 

@@ -3284,7 +3284,7 @@ end
 Proc  IR1R_SizesInputGraph() 
 	PauseUpdate; Silent 1		// building window...
 	SetDataFolder root:Packages:Sizes:
-	Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
+	Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
 	DoWindow/C IR1R_SizesInputGraph
 	IR1R_AppendIntOriginal()	//appends original Intensity 
 //	IN2G_AppendSizeTopWave("IR1R_SizesInputGraph",Q_vecOriginal, IntensityOriginal,-25,0,40)		//appends the size wave

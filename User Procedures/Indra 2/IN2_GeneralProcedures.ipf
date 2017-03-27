@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.96
+#pragma version = 1.97
 
 
 //control constants
@@ -13,6 +13,7 @@ constant IrenaDebugLevel=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.97 trying to fix checking for small displays on WIndows.
 //1.96 added IN2G_OpenNikaWebManual(WhichSpecificPage)
 //1.95 added CheckForNewVersion(WhichPackage) which returns - from GitHub - current version of Irena, Nika, Indra (selected by WHichPackage)
 //1.94 removed IN2G_PrintDebugWhichProCalled, sped up all code using it. 
@@ -407,12 +408,16 @@ End
 Function IN2G_CheckForGraphicsSetting()
 	//checks for resolution and if needed on Windows prints help to users
 	if(stringMatch(IgorInfo(2),"Windows"))
-		if(screenresolution>120)
-			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their sizes and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
+		if(screenresolution>115)
+			print "********************************************************************************************************************************************************************"
+			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their size and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
 			print "If you see this, Igor considers your screen high-resolution screen. If your panels do NOT look right - wrong size and/or incorrectly placed controls on the panels, "
-			print "you may need to change your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
+			print "you may need to adjust your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
 			print "to 100% (= 96 DPI). You may need to change also pixel resolution to have content still readable. There is extensive documentation in Igor which you can locate by "
 			print "running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. This help explains the complexity of high resolution displays and how to manage it. "
+			print "Alternatively you can also type this in the command line below:     SetIgorOption PanelResolution = 72   "
+			print "and reopen the panels. They may be small (you can scale them up by dragging the low-right corner). But this needs to be typed every time you start Igor Pro. Not very convenient..." 
+			print "********************************************************************************************************************************************************************"
 		endif
 	endif
 end
@@ -4334,16 +4339,30 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	string temp
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable ScreenRes = 72/ScreenResolution		//fixes Mac & PC small & larg fonts selection
-	if (cmpstr(what,"width")==0)					//gets width of the screen
-		temp= StringByKey("SCREEN1", IgorInfo(0))
-		temp=stringFromList(3,  temp,",")
-		return ScreenRes*str2num(temp)/100
-	endif
-	if (cmpstr(what,"height")==0)					//gets height of screen
-		temp= StringByKey("SCREEN1", IgorInfo(0))
-		temp=stringFromList(4,  temp,",")
-		return ScreenRes*str2num(temp)/100
+	variable height
+	variable width
+	variable ScreenRes = screenresolution/panelresolution("")
+	if(stringmatch(IgorInfo(2),"Windows"))
+		GetWindow kwFrameInner  wsize 
+		 height = ((V_bottom - V_top)-30)* ScreenRes
+		 width = (V_right - V_left)*ScreenRes
+		if (cmpstr(what,"width")==0)					//gets width of the screen
+			return width/100						// /100 needed by graphs which use that value
+		endif
+		if (cmpstr(what,"height")==0)					//gets height of screen
+			return height/100						// /100 needed by graphs which use that value
+		endif
+	else
+		if (cmpstr(what,"width")==0)					//gets width of the screen
+			temp= StringByKey("SCREEN1", IgorInfo(0))
+			temp=stringFromList(3,  temp,",")
+			return str2num(temp)/100						// /100 needed by graphs which use that value
+		endif
+		if (cmpstr(what,"height")==0)					//gets height of screen
+			temp= StringByKey("SCREEN1", IgorInfo(0))
+			temp=stringFromList(4,  temp,",")
+			return str2num(temp)/100						// /100 needed by graphs which use that value
+		endif
 	endif
 	return NaN
 end
@@ -5720,13 +5739,13 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	if (cmpstr(which,"width")!=0 && cmpstr(which,"height")!=0)
 		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
 	endif
-	variable currentSizeInPixles=IN2G_ScreenWidthHeight(which)*100*ScreenResolution/72
+	variable currentSizeInPixles=IN2G_ScreenWidthHeight(which)*100			//needs to be corrected 
 	
 	if (currentSizeInPixles<MinVal)
 		if (cmpstr(which,"height")==0)
-			Abort "Height of your screen is too small to run this code, please set your screen to more than "+num2str(MinVal)+" number of pixles in height."
+			Abort "Height of your screen is too small - increase the number of pixels in height. On Windows you may : maximize the widnow, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
 		else
-			Abort "Width of your screen is too small to run this code, please set your screen to more than "+num2str(MinVal)+" number of pixles in width"
+			Abort "Width of your screen is too small - increase the number of pixels in width. On Windows you may : maximize the window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
 		endif
 	endif
 	

@@ -281,7 +281,7 @@ Function IN2P_CommonUSAXSPlots()			//this function generates graph of standard U
 	endif
 
  	PauseUpdate    //*************************Graph section**********************************
-	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height"))  WaveY vs WaveX  as "Plot of any wave to any wave"
+	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height"))  WaveY vs WaveX  as "Plot of any wave to any wave"
 	DoWindow/C StandardPlot
 	ModifyGraph mode=4,	margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
@@ -788,7 +788,7 @@ Function IN2P_GenericUSAXSPlots()
 	endif
 	
  	PauseUpdate    //*************************Graph section**********************************
-	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("heigth"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) WaveYInPckgs vs WaveXInPckgs	as GraphTitleString								//I like graphs
+	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) WaveYInPckgs vs WaveXInPckgs	as GraphTitleString								//I like graphs
 	DoWindow/C GenericPlot
 	ModifyGraph mode=4,	margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
