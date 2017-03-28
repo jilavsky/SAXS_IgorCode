@@ -4341,10 +4341,20 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable height
 	variable width
+	variable TopHeight = 20 //height of top bar and frame, best guess...
 	variable ScreenRes = screenresolution/panelresolution("")
+	TopHeight = TopHeight *screenresolution/96
 	if(stringmatch(IgorInfo(2),"Windows"))
+		//For Igor above 7.03 we can get the TopHeight from measureement...
+		if(NumberByKey("IGORVERS", IgorInfo(0))>7.02)		//this would crash anything before 7.03
+			GetWindow kwCmdHist wsize
+			variable SmallHeight = V_bottom-V_top
+			GetWindow kwCmdHist wsizeOuter
+			variable LargeHeight = V_bottom-V_top
+			TopHeight = LargeHeight - SmallHeight 
+		endif
 		GetWindow kwFrameInner  wsize 
-		 height = ((V_bottom - V_top)-30)* ScreenRes
+		 height = ((V_bottom - V_top)-TopHeight)* ScreenRes
 		 width = (V_right - V_left)*ScreenRes
 		if (cmpstr(what,"width")==0)					//gets width of the screen
 			return width/100						// /100 needed by graphs which use that value
@@ -5743,9 +5753,9 @@ Function IN2G_CheckScreenSize(which,MinVal)
 	
 	if (currentSizeInPixles<MinVal)
 		if (cmpstr(which,"height")==0)
-			Abort "Height of your screen is too small - increase the number of pixels in height. On Windows you may : maximize the widnow, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
+			Abort "Height of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor widnow, reduce dpi setting (% scaling in Display settings), or increase display resolution. On Mac increase display resolution."
 		else
-			Abort "Width of your screen is too small - increase the number of pixels in width. On Windows you may : maximize the window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
+			Abort "Width of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
 		endif
 	endif
 	
