@@ -8,6 +8,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 -latest stuff first
 ********************************************
 2.63beta, 3/18/2017
+Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
 Added buttons with links to web based manual pages to each tool.
 Version check - using Github now. 
 Smearing/Desmearing data support - increased smearing speed about 3x

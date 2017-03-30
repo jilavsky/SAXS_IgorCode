@@ -1,5 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.63
+#pragma IgorVersion=7.00
+
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
@@ -14,6 +16,7 @@ constant CurrentVersionNumber = 2.63
 //*************************************************************************/
 
 //2.63 Updated CheckForUpdate to check on Github for latest release version
+//			#pragma IgorVersion=7.00
 //2.62 Nexus support and other fixes, added check for desktop resolution
 //2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  

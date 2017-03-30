@@ -8,6 +8,9 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 _____________________________________________________________________________________
+1.91 
+Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
+
 1.90 2/22/2017
 Modified Nexus support, added new library to use it. 
 Removed Utility_JZT from distribution, not needed and causing conflict with JZT package. `

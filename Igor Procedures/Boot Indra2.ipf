@@ -1,8 +1,10 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.90
+#pragma version=1.91
+#pragma IgorVersion=7.00
 
-//1.90 fixes for Nexus support and some otehr changes. 
-//1.89 FIxes for panel scaling and added new FlysScan  load & process tool 
+//1.91 Igor 7 compatible ONLY now. 
+//1.90 fixes for Nexus support and some other changes. 
+//1.89 FIxes for panel scaling and added new FlysScan load & process tool 
 //1.88 Panel scaling and other fixes. 
 //1.87 Igor 7 updates
 //1.86 Improvements to Flyscan handling

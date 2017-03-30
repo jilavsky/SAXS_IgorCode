@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma version = 1.98
-
+#pragma IgorVersion = 7.00
 
 //control constants
 constant IrenaDebugLevel=1

@@ -1,5 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.76
+#pragma IgorVersion=7.00
+
 //DO NOT renumber Main files every time, these are main release numbers...
 
 constant CurrentNikaVersionNumber = 1.76
@@ -11,7 +13,8 @@ constant CurrentNikaVersionNumber = 1.76
 //*************************************************************************/
  
  //1.76 Updated CHeckForUpdate to check on Github for latest release version
- //		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for availabel screen size. 
+ //		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for available screen size. 
+ //		#pragma IgorVersion=7.00
  //1.75 rewrote Nexus support, added check for desktop resolution
  //1.74		added scaling of images on large displays	
  //1.73 added functions to scale panels to larger sizes.

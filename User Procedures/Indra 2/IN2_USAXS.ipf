@@ -1,6 +1,6 @@
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma IgorVersion=6.2	//requires Igor version 4 or higher
-#pragma version = 1.39
+#pragma rtGlobals=1		   // Use modern global access method.
+#pragma IgorVersion=7.00	  //requires Igor version 4 or higher
+#pragma version = 1.91
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.90 use IIndra rlease numbers here, #pragma IgorVersion=7.00
 //1.39 release 1.88, added panel scaling to some panels and remove from name string to flyscans. 
 //1.38 relase 1.86, added dropouts removal for Flyscan data. 
 //1.37 added ability to remove points on PD_Intensity for peak center fitting with marquee. 

@@ -1,5 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.62
+#pragma version=2.63
+#pragma IgorVersion=7.00
 
 Menu "Macros", dynamic
 	//StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIrenaSASMacros()

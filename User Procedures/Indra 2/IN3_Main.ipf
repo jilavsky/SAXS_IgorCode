@@ -1,5 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.90
+#pragma version = 1.91
+#pragma IgorVersion=7.00
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
@@ -8,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.91 #pragma IgorVersion=7.00
 //1.90 added OverRideSampleTransmission, added live processing and added graph with saved subtracted data. 
 //		fixes to annoying behaviors (needless user questions), reorganized menu
 //		enable negative override for Bkg5 
