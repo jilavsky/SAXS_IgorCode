@@ -171,6 +171,8 @@ Menu "SAS"
 			help={"Opens Description of included form factors and structure factors"}
 			"Open Irena manuscript", IR2_GetIrenaManuscript()
 			help={"Open or download using ftp and open Irena J. Appl. Cryst manuscript"}
+			"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
+			help={"Check if current display area is suitable for the code"}
 			"---"
 			"Irena Mailing list signup and options", IR2_SignUpForMailingList()
 			help={"Opens web page in the browser where you can sing up or control options for Irena_users mailing list."}
@@ -230,7 +232,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
 	IN2G_CheckPlatformGUIFonts()
-	IN2G_CheckForGraphicsSetting()
+	IN2G_CheckForGraphicsSetting(0)
 end
 //****************************************************************************************
 //****************************************************************************************

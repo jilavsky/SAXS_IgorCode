@@ -11,7 +11,7 @@ constant CurrentNikaVersionNumber = 1.76
 //*************************************************************************/
  
  //1.76 Updated CHeckForUpdate to check on Github for latest release version
- //		Add call to ReadTheDocs manuals
+ //		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for availabel screen size. 
  //1.75 rewrote Nexus support, added check for desktop resolution
  //1.74		added scaling of images on large displays	
  //1.73 added functions to scale panels to larger sizes.
@@ -94,6 +94,8 @@ Menu "SAS 2D"
 	help={"Run Check for update and present citations to use in publications"}	
 	"Close all Nika Panels and Windows", NI1_GMCloseAllNikaW()
 	help={"Closes all Panels and windows from Nika. "}	
+	"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
+	help={"Check if current display area is suitable for the code"}
 	"About", NI1_AboutPanel()
 	help={"Get Panel with info about this release of Nika macros"}
 //	"---"
@@ -205,7 +207,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 //	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 
 	NI1_CheckNikaUpdate(0)
-	IN2G_CheckForGraphicsSetting()
+	IN2G_CheckForGraphicsSetting(0)
 end
 
 

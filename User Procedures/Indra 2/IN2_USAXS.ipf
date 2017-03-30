@@ -59,6 +59,8 @@ Menu "USAXS"
 	help={"Crystal position callculator for beamline staff."}
 	"Configure GUI fonts", IN3_ConfigureGUIfonts()
 	help={"Crystal position callculator for beamline staff."}
+	"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
+	help={"Check if current display area is suitable for the code"}
 	
 //	"Import X23 Data", IN2I_ImportX23Data()		//code commented out since no one was using it... 
 //	"---"

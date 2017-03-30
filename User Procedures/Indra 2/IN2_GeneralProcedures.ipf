@@ -1,18 +1,20 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.97
+#pragma version = 1.98
 
 
 //control constants
 constant IrenaDebugLevel=1
 //1 for little debug
 //5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
+constant RequiredMinScreenHeight=900
+constant  RequiredMinScreenWidth = 1100 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.98 more changes to screen check, modified the function called by AfterCompileHook functions to provide proper user input for small screens
 //1.97 trying to fix checking for small displays on WIndows.
 //1.96 added IN2G_OpenNikaWebManual(WhichSpecificPage)
 //1.95 added CheckForNewVersion(WhichPackage) which returns - from GitHub - current version of Irena, Nika, Indra (selected by WHichPackage)
@@ -405,21 +407,55 @@ End
 
 //**************************************************************** 
 //**************************************************************** 
-Function IN2G_CheckForGraphicsSetting()
+Function IN2G_CheckForGraphicsSetting(DisplayResult)
+	variable DisplayResult
 	//checks for resolution and if needed on Windows prints help to users
-	if(stringMatch(IgorInfo(2),"Windows"))
-		if(screenresolution>115)
-			print "********************************************************************************************************************************************************************"
-			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their size and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
-			print "If you see this, Igor considers your screen high-resolution screen. If your panels do NOT look right - wrong size and/or incorrectly placed controls on the panels, "
-			print "you may need to adjust your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
-			print "to 100% (= 96 DPI). You may need to change also pixel resolution to have content still readable. There is extensive documentation in Igor which you can locate by "
-			print "running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. This help explains the complexity of high resolution displays and how to manage it. "
-			print "Alternatively you can also type this in the command line below:     SetIgorOption PanelResolution = 72   "
-			print "and reopen the panels. They may be small (you can scale them up by dragging the low-right corner). But this needs to be typed every time you start Igor Pro. Not very convenient..." 
-			print "********************************************************************************************************************************************************************"
-		endif
+	variable CurHeight=	 IN2G_ScreenWidthHeight("height")*100			//needs to be corrected 
+	variable Curwidth =	 IN2G_ScreenWidthHeight("width")*100			//needs to be corrected 
+	NVAR/Z LastCheck = root:Packages:IrenaNikaLastCompile
+	string Message
+
+	//constant RequiredMinScreenHeight=900
+	//constant  RequiredMinScreenWidth = 1200 
+	if(!NVAR_Exists(LastCheck))
+		NewDataFolder/O root:Packages
+		variable/g root:Packages:IrenaNikaLastCompile
+		NVAR LastCheck = root:Packages:IrenaNikaLastCompile 
 	endif
+	if((datetime - LastCheck > 20) || DisplayResult)		//more than 20 seconds from last compile
+		if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth) 
+				print "********************************************************************************************************************************************************************"
+				print "If you see this, Igor has too small screen size available. On Macs you need to increase display resolution or you need to get hgher resolution display."
+				print "On Windows it is more complicated. First maximize the Igor window. You can also increase the screen resolution (screen number of pixels). But that may not be enough... "
+				print "You may need to adjust your display settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
+				print "to smaller number, possibly down to 100% (= 96 DPI). You may need to find usable display settings (dpi setting) and pixel resolution to have content still readable. "
+				print "There is extensive documentation in Igor which you can locate by running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. "
+				print "This help explains the complexity of high resolution displays and how to manage it. "
+				print "To check the available display area, use command \"Check Igor display size\", in USAXS, SAS2D, or SAS>\"Help, About, Manuals, Remove Irena\" menu."
+				print "********************************************************************************************************************************************************************"
+			Message = "Screen size available to Igor is too small, some Irena/Nika panels require up to "+num2str(RequiredMinScreenWidth)+"x"+num2str( RequiredMinScreenHeight)+" (w x h). "
+			Message +="Your screen is "+num2str(Curwidth)+"x"+num2str( CurHeight)+". Please see history area for instructions how to fix this. If you do not fix this, some tools will not work. "
+			DoAlert /T="Insufficient screen size found" 0, Message
+		elseif(DisplayResult)
+			Message ="Your display size is "+num2str(Curwidth)+"x"+num2str( CurHeight)+". "
+			DoAlert /T="Screen size available to Igor" 0, Message
+		endif  
+	endif
+	LastCheck =  datetime
+	
+//	if(stringMatch(IgorInfo(2),"Windows"))
+//		if(screenresolution>115)
+//			print "********************************************************************************************************************************************************************"
+//			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their size and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
+//			print "If you see this, Igor considers your screen high-resolution screen. If your panels do NOT look right - wrong size and/or incorrectly placed controls on the panels, "
+//			print "you may need to adjust your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
+//			print "to 100% (= 96 DPI). You may need to change also pixel resolution to have content still readable. There is extensive documentation in Igor which you can locate by "
+//			print "running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. This help explains the complexity of high resolution displays and how to manage it. "
+//			print "Alternatively you can also type this in the command line below:     SetIgorOption PanelResolution = 72   "
+//			print "and reopen the panels. They may be small (you can scale them up by dragging the low-right corner). But this needs to be typed every time you start Igor Pro. Not very convenient..." 
+//			print "********************************************************************************************************************************************************************"
+//		endif
+//	endif
 end
 
 //**************************************************************** 
