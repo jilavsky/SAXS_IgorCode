@@ -23,7 +23,7 @@
 
 	<InstallerConfig>
 		<release name="March2017" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/March2017beta.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/March2017-1.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.63</version>
