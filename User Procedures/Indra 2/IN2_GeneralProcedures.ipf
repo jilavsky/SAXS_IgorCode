@@ -6,8 +6,8 @@
 constant IrenaDebugLevel=1
 //1 for little debug
 //5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-constant RequiredMinScreenHeight=900
-constant  RequiredMinScreenWidth = 1100 
+constant RequiredMinScreenHeight=790
+constant RequiredMinScreenWidth = 1200 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -415,7 +415,7 @@ Function IN2G_CheckForGraphicsSetting(DisplayResult)
 	NVAR/Z LastCheck = root:Packages:IrenaNikaLastCompile
 	string Message   
 
-	//constant RequiredMinScreenHeight=900
+	//constant RequiredMinScreenHeight=790
 	//constant  RequiredMinScreenWidth = 1200  
 	if(!NVAR_Exists(LastCheck))
 		NewDataFolder/O root:Packages
@@ -425,13 +425,17 @@ Function IN2G_CheckForGraphicsSetting(DisplayResult)
 	if((datetime - LastCheck > 20) || DisplayResult)		//more than 20 seconds from last compile
 		if(stringMatch(IgorInfo(2),"Windows"))
 			if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth) 
-					//screen area too small, need to maximize Igor first, may be at max resolution this will work...
-					print "Igor Pro screen area in window was too small, we needed to maximize it for test purpose. That's why it flashed..."
-					movewindow /F 2, 2, 2, 2
-					DoUpdate 
-					CurHeight=	 floor(IN2G_ScreenWidthHeight("height")*100)			//needs to be corrected 
-					Curwidth =	 floor(IN2G_ScreenWidthHeight("width")*100	)		//needs to be corrected 
-					MoveWindow/F 1, 1, 1, 1
+					//screen area too small, need to maximize Igor, may be at full screen this will work...
+					//check if this is maximized already, if not, maximize and check again...
+					GetWindow  kwFrameOuter  wsizeDC 
+					if(V_left!=2 || V_right!=2 || V_top!=2 || V_bottom!=2)		//NOT maximized...
+						print "Igor Pro screen area in window was too small, we needed to maximize it for test purpose. That's why Igor flashed on screen..."
+						movewindow /F 2, 2, 2, 2
+						DoUpdate 
+						CurHeight=	 floor(IN2G_ScreenWidthHeight("height")*100)			//needs to be corrected 
+						Curwidth =	 floor(IN2G_ScreenWidthHeight("width")*100	)		//needs to be corrected 
+						MoveWindow/F 1, 1, 1, 1
+					endif
 			endif
 			if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth)  
 						//still too small, error message for user...
@@ -484,20 +488,6 @@ Function IN2G_CheckForGraphicsSetting(DisplayResult)
 		endif 
 	endif
 	LastCheck =  datetime
-	
-//	if(stringMatch(IgorInfo(2),"Windows"))
-//		if(screenresolution>115)
-//			print "********************************************************************************************************************************************************************"
-//			Print "WARNING : High resolution screens MAY pose problems with Irena and Nika panels - their size and location of the content. Depends on combination of pixel resolution and scale factor use by system. "
-//			print "If you see this, Igor considers your screen high-resolution screen. If your panels do NOT look right - wrong size and/or incorrectly placed controls on the panels, "
-//			print "you may need to adjust your settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
-//			print "to 100% (= 96 DPI). You may need to change also pixel resolution to have content still readable. There is extensive documentation in Igor which you can locate by "
-//			print "running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. This help explains the complexity of high resolution displays and how to manage it. "
-//			print "Alternatively you can also type this in the command line below:     SetIgorOption PanelResolution = 72   "
-//			print "and reopen the panels. They may be small (you can scale them up by dragging the low-right corner). But this needs to be typed every time you start Igor Pro. Not very convenient..." 
-//			print "********************************************************************************************************************************************************************"
-//		endif
-//	endif
 end
 
 //**************************************************************** 
