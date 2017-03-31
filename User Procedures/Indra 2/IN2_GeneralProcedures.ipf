@@ -397,7 +397,7 @@ constant  RequiredMinScreenWidth = 1100
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Menu "Macros"
-	"Color waves.../1", IN2G_ColorTraces() //Ctrl+1 
+	"Color waves.../1", IN2G_ColorTraces() //Ctrl+1  
 End
 
 Menu "GraphMarquee"
@@ -407,39 +407,81 @@ End
 
 //**************************************************************** 
 //**************************************************************** 
-Function IN2G_CheckForGraphicsSetting(DisplayResult)
+Function IN2G_CheckForGraphicsSetting(DisplayResult) 
 	variable DisplayResult
 	//checks for resolution and if needed on Windows prints help to users
-	variable CurHeight=	 IN2G_ScreenWidthHeight("height")*100			//needs to be corrected 
-	variable Curwidth =	 IN2G_ScreenWidthHeight("width")*100			//needs to be corrected 
+	variable CurHeight=	 floor(IN2G_ScreenWidthHeight("height")*100)			//needs to be corrected 
+	variable Curwidth =	 floor(IN2G_ScreenWidthHeight("width")*100	)		//needs to be corrected 
 	NVAR/Z LastCheck = root:Packages:IrenaNikaLastCompile
-	string Message
+	string Message   
 
 	//constant RequiredMinScreenHeight=900
-	//constant  RequiredMinScreenWidth = 1200 
+	//constant  RequiredMinScreenWidth = 1200  
 	if(!NVAR_Exists(LastCheck))
 		NewDataFolder/O root:Packages
 		variable/g root:Packages:IrenaNikaLastCompile
 		NVAR LastCheck = root:Packages:IrenaNikaLastCompile 
 	endif
 	if((datetime - LastCheck > 20) || DisplayResult)		//more than 20 seconds from last compile
-		if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth) 
-				print "********************************************************************************************************************************************************************"
-				print "If you see this, Igor has too small screen size available. On Macs you need to increase display resolution or you need to get hgher resolution display."
-				print "On Windows it is more complicated. First maximize the Igor window. You can also increase the screen resolution (screen number of pixels). But that may not be enough... "
-				print "You may need to adjust your display settings. Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" " 
-				print "to smaller number, possibly down to 100% (= 96 DPI). You may need to find usable display settings (dpi setting) and pixel resolution to have content still readable. "
-				print "There is extensive documentation in Igor which you can locate by running following command : \"DisplayHelpTopic \"High-Resolution Displays\", in the command line below. "
-				print "This help explains the complexity of high resolution displays and how to manage it. "
-				print "To check the available display area, use command \"Check Igor display size\", in USAXS, SAS2D, or SAS>\"Help, About, Manuals, Remove Irena\" menu."
-				print "********************************************************************************************************************************************************************"
-			Message = "Screen size available to Igor is too small, some Irena/Nika panels require up to "+num2str(RequiredMinScreenWidth)+"x"+num2str( RequiredMinScreenHeight)+" (w x h). "
-			Message +="Your screen is "+num2str(Curwidth)+"x"+num2str( CurHeight)+". Please see history area for instructions how to fix this. If you do not fix this, some tools will not work. "
-			DoAlert /T="Insufficient screen size found" 0, Message
-		elseif(DisplayResult)
-			Message ="Your display size is "+num2str(Curwidth)+"x"+num2str( CurHeight)+". "
-			DoAlert /T="Screen size available to Igor" 0, Message
-		endif  
+		if(stringMatch(IgorInfo(2),"Windows"))
+			if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth) 
+					//screen area too small, need to maximize Igor first, may be at max resolution this will work...
+					print "Igor Pro screen area in window was too small, we needed to maximize it for test purpose. That's why it flashed..."
+					movewindow /F 2, 2, 2, 2
+					DoUpdate 
+					CurHeight=	 floor(IN2G_ScreenWidthHeight("height")*100)			//needs to be corrected 
+					Curwidth =	 floor(IN2G_ScreenWidthHeight("width")*100	)		//needs to be corrected 
+					MoveWindow/F 1, 1, 1, 1
+			endif
+			if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth)  
+						//still too small, error message for user...
+						print "********************************************************************************************************************************************************************"
+						print "If you see this, Igor has too small screen area available for Irena/Nika/Indra panels and graphs. Following are instructions how to fix this, please, read :"
+						print "Igor 7 \"pixels\" are scaled by screen resolution (DPI setting) set in system settings for displayed graphics (fonts, icons, etc.)."
+						print "Therefore even seemingly displays with large number of physical pixels (high resolution displays) may not be large enough for Irena/Nika/Indra panels. "   
+						print "Keep in minda, that it is the COMBINATION of display resolution (number of pixels) and screen resolution (DPI) which is important here."
+						print "     You need to adjust your display settings to provide more area for the panels and graphs :" 
+						print "*** Windows 10 :  Right click on Windows Desktop, select \"Display Settings\" and set slider in \"Change the size of text, apps, and other items\" (this changes DPI) "
+						print "to smaller number, possibly down to 100% (= 96 DPI). Alternatively, you can also increase the display resolution (increase the number of pixels displayed). POSSIBLY BOTH! "
+						print "You probably do NOT need to reboot. Note, it is the COMBINATION of display and screen resolutions (number of pixels and DPI settings) which matters."
+						print "*** Windows 7  :  Right click on Windows Desktop, select \"Screen resolution\". You MAY be able to increase the display resolution (number of pixels system is using)."
+						print "You may also need to click \"Make text and other items larger or smaller\" and in the next dialog you may need to select Smaller font size (DPI), possibly even 100% (96DPI)."
+						print "This changes screen resolution (DPI settings). >>>>> And yes, it is confusing and terminology varies between Windows 7 and 10, I know... <<< " 
+						print "You probably DO NEED to reboot. Note, it is the COMBINATION of display and screen resolutions (number of pixels and DPI settings) which matters."
+						print " ----   You may need to test various display settings (DPI) and screen resolutions to have everything usable. ---- "
+						print "There is extensive documentation in Igor which you can locate by running following command : DisplayHelpTopic \"High-Resolution Displays\", in the command line below. "
+						print "*****************************************************************************************************************************************************************"
+						print "To re-check the available area after making changes, use command \"Check Igor display size\", in USAXS, SAS2D, or SAS>\"Help, About, Manuals, Remove Irena\" menu."
+						print "  ! ! ! !  If you do not fix this, some tools will NOT work.   ! ! ! ! "
+						print "********************************************************************************************************************************************************************"
+						Message = "Screen size available to Igor is too small, some Irena/Nika panels require up to "+num2str(RequiredMinScreenWidth)+"x"+num2str( RequiredMinScreenHeight)+" (w x h). "
+						Message +="Your screen is "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". Please see history area for instructions how to fix this. If you do not fix this, some tools will not work. "
+						DoAlert /T="Insufficient screen size found" 0, Message
+			elseif(DisplayResult)
+				Message ="Your display size is "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". "
+				DoAlert /T="Screen size available to Igor" 0, Message
+			else
+				print "Found display area "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". This should be sufficient for Irena/Nika/Indra package use. "
+			endif   
+		else					//Mac
+			if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth) 
+					print "********************************************************************************************************************************************************************"
+					print "If you see this, Igor has too small screen area available for Irena/Nika/Indra panels and graphs. Following are instructions how to fis this, please, read : "
+					print "On Macs you need to increase display resolution (increase number of pixels). If this is the highest resolution your monitor can do, you may need to get higher resolution monitor."
+					print "*****************************************************************************************************************************************************************"
+					print "To check the available area without restarting Igor Pro, use command \"Check Igor display size\", in USAXS, SAS2D, or SAS>\"Help, About, Manuals, Remove Irena\" menu."
+					print "  ! ! ! !  If you do not fix this, some tools will NOT work.   ! ! ! ! "
+					print "********************************************************************************************************************************************************************"
+				Message = "Screen size available to Igor is too small, some Irena/Nika panels require up to "+num2str(RequiredMinScreenWidth)+"x"+num2str( RequiredMinScreenHeight)+" (w x h). "
+				Message +="Your screen is "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". Please see history area for instructions how to fix this. If you do not fix this, some tools will not work. "
+				DoAlert /T="Insufficient screen size found" 0, Message
+			elseif(DisplayResult)
+				Message ="Your display size is "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". "
+				DoAlert /T="Screen size available to Igor" 0, Message
+			else
+				print "Found display area "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". This should be sufficient for Irena/Nika/Indra package use. "
+			endif  
+		endif 
 	endif
 	LastCheck =  datetime
 	
