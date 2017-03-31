@@ -38,7 +38,7 @@
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.90</version>
+				<version>1.91</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
