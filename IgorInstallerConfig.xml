@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta for Irena 2.63, Nika 1.76 and Indra 1.90 from 3/18/2017. New web based manual integration.</VersionComment>
+			<VersionComment>Beta for Irena 2.63, Nika 1.76 and Indra 1.90 from 3/31/2017. New web based manual integration.</VersionComment>
 		</release>
 		<release name="February2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2017-1.zip</SourceFileAddress>
