@@ -17,6 +17,7 @@ constant CurrentVersionNumber = 2.63
 
 //2.63 Updated CheckForUpdate to check on Github for latest release version
 //			#pragma IgorVersion=7.00
+//			removed Modeling I cocde (IR1S_ functions). Moved stuff around. 
 //2.62 Nexus support and other fixes, added check for desktop resolution
 //2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  
@@ -135,17 +136,7 @@ Menu "SAS"
 	help={"Calculator for scattering contrast. Both X rays and neutrons. Anomalous effects available."}
 	"Configure default fonts and names",IR2C_ConfigMain()
 	help={"Configure default values for GUI Panels and Graph common items, such as font sizes and font types"}
-	//	SubMenu "Support "
-		//	"Evaluate Size Distributions", IR1G_EvaluateONESample()
-		//	help = {"Not fully finished GUI to evaluate results from methods producing size distributions"}
-		//	"Scripting tool",  IR2S_ScriptingTool()
-		//	help = {"Scripting tool enabes to run some tools on multiple data sets."}
-		//	"Modeling I", IR1S_LSQF_StandardModelsMain()
-		//	help = {"Modeling of SAS by modeling distributions (Gauss, LogNormal) of scatterers (spheroids, spheres,cylinders,tubes' core-shell). Uses Least Squuare fitting or Genetic optimization."}
-		//	"Modeling I, user models", IR1U_LSQF_UserModelsMain()
-		//	help = {"Modeling of SAS with user provided distributions (probability/diameter) for scatterers (spheroids, spheres,cylinders, tubes, core-shell). Uses Least square fitting. "}
-	//	end
-		SubMenu "Support tools"
+	SubMenu "Support tools"
 			"Evaluate Size Distributions", IR1G_EvaluateONESample()
 			help = {"Not fully finished GUI to evaluate results from methods producing size distributions"}
 			"Scripting tool",  IR2S_ScriptingTool()
@@ -659,16 +650,6 @@ Function IR2_OpenIrenaManual()
 				Close refNum
 				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
 			endif
-
-				//		if(V_Flag==1)
-				//			string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"
-				//			FTPDownload /O/V=7/P=tempPath/Z url, "Irena Manual.pdf"	
-				//			if(V_flag!=0)	//ftp failed...
-				//				Abort "ftp of manual failed, please download the manual from web site and place into ..\Irena folder with the macros."
-				//			endif
-				//		else
-				//			abort
-				//		endif
 		else
 			abort
 		endif
@@ -795,389 +776,389 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-Function IR1S_LSQF_StandardModelsMain()
-
-	IN2G_CheckScreenSize("height",670)
-
-	DoWindow IR1S_ControlPanel
-	if (V_Flag)
-		DoWindow/K IR1S_ControlPanel	
-	endif
-	DoWindow IR1_LogLogPlotLSQF
-	if (V_Flag)
-		DoWindow/K IR1_LogLogPlotLSQF	
-	endif
-	DoWindow IR1_IQ4_Q_PlotLSQF
-	if (V_Flag)
-		DoWindow/K IR1_IQ4_Q_PlotLSQF	
-	endif
-	DoWindow IR1_Model_Distributions
-	if (V_Flag)
-		DoWindow/K IR1_Model_Distributions	
-	endif
-	DoWindow IR1S_InterferencePanel
-	if (V_Flag)
-		DoWindow/K IR1S_InterferencePanel
-	endif
-	IR1T_InitFormFactors()
-	IR1S_Initialize()
-	IR1_CreateLoggbook()
-	//IR1_KillGraphsAndPanels()	
-	Execute ("IR1S_ControlPanel()")
-end
-
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-Function IR1S_Initialize()
-	//function, which creates the folder for SAS modeling and creates the strings and variables
-	
-	string oldDf=GetDataFolder(1)
-	
-	NewDataFolder/O/S root:Packages
-	NewdataFolder/O/S root:Packages:SAS_Modeling
-	
-	string ListOfVariables
-	string ListOfStrings
-	
-	//here define the lists of variables and strings needed, separate names by ;...
-	
-	ListOfVariables="UseIndra2Data;UseQRSdata;NumberOfDistributions;DisplayVD;DisplayND;CurrentTab;UseInterference;UseLSQF;UseGenOpt;"
-	ListOfVariables+="Dist1NumberOfPoints;Dist1Contrast;Dist1Location;Dist1Scale;Dist1Shape;Dist1Mean;Dist1Median;Dist1Mode;Dist1LocHighLimit;Dist1LocLowLimit;Dist1ScaleHighLimit;Dist1ScaleLowLimit;"
-	ListOfVariables+="Dist1ShapeHighLimit;Dist1ShapeLowLimit;Dist1LocStep;Dist1ShapeStep;Dist1ScaleStep;Dist1FitShape;Dist1FitLocation;Dist1FitScale;Dist1VolFraction;"
-	ListOfVariables+="Dist1VolHighLimit;Dist1VolLowLimit;Dist1FitVol;Dist1NegligibleFraction;Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3;Dist1FWHM;"
-	ListOfVariables+="Dist2NumberOfPoints;Dist2Contrast;Dist2Location;Dist2Scale;Dist2Shape;Dist2Mean;Dist2Median;Dist2Mode;Dist2LocHighLimit;Dist2LocLowLimit;Dist2ScaleHighLimit;Dist2ScaleLowLimit;"
-	ListOfVariables+="Dist2ShapeHighLimit;Dist2ShapeLowLimit;Dist2LocStep;Dist2ShapeStep;Dist2ScaleStep;Dist2FitShape;Dist2FitLocation;Dist2FitScale;Dist2VolFraction;"
-	ListOfVariables+="Dist2VolHighLimit;Dist2VolLowLimit;Dist2FitVol;Dist2NegligibleFraction;Dist2ScatShapeParam1;Dist2ScatShapeParam2;Dist2ScatShapeParam3;Dist2FWHM;"
-	ListOfVariables+="Dist3NumberOfPoints;Dist3Contrast;Dist3Location;Dist3Scale;Dist3Shape;Dist3Mean;Dist3Median;Dist3Mode;Dist3LocHighLimit;Dist3LocLowLimit;Dist3ScaleHighLimit;Dist3ScaleLowLimit;"
-	ListOfVariables+="Dist3ShapeHighLimit;Dist3ShapeLowLimit;Dist3LocStep;Dist3ShapeStep;Dist3ScaleStep;Dist3FitShape;Dist3FitLocation;Dist3FitScale;Dist3VolFraction;"
-	ListOfVariables+="Dist3VolHighLimit;Dist3VolLowLimit;Dist3FitVol;Dist3NegligibleFraction;Dist3ScatShapeParam1;Dist3ScatShapeParam2;Dist3ScatShapeParam3;Dist3FWHM;"
-	ListOfVariables+="Dist4NumberOfPoints;Dist4Contrast;Dist4Location;Dist4Scale;Dist4Shape;Dist4Mean;Dist4Median;Dist4Mode;Dist4LocHighLimit;Dist4LocLowLimit;Dist4ScaleHighLimit;Dist4ScaleLowLimit;"
-	ListOfVariables+="Dist4ShapeHighLimit;Dist4ShapeLowLimit;Dist4LocStep;Dist4ShapeStep;Dist4ScaleStep;Dist4FitShape;Dist4FitLocation;Dist4FitScale;Dist4VolFraction;"
-	ListOfVariables+="Dist4VolHighLimit;Dist4VolLowLimit;Dist4FitVol;Dist4NegligibleFraction;Dist4ScatShapeParam1;Dist4ScatShapeParam2;Dist4ScatShapeParam3;Dist4FWHM;"
-	ListOfVariables+="Dist5NumberOfPoints;Dist5Contrast;Dist5Location;Dist5Scale;Dist5Shape;Dist5Mean;Dist5Median;Dist5Mode;Dist5LocHighLimit;Dist5LocLowLimit;Dist5ScaleHighLimit;Dist5ScaleLowLimit;"
-	ListOfVariables+="Dist5ShapeHighLimit;Dist5ShapeLowLimit;Dist5LocStep;Dist5ShapeStep;Dist5ScaleStep;Dist5FitShape;Dist5FitLocation;Dist5FitScale;Dist5VolFraction;"
-	ListOfVariables+="Dist5VolHighLimit;Dist5VolLowLimit;Dist5FitVol;Dist5NegligibleFraction;Dist5ScatShapeParam1;Dist5ScatShapeParam2;Dist5ScatShapeParam3;Dist5FWHM;"
-	ListOfVariables+="SASBackground;SASBackgroundStep;FitSASBackground;UseNumberDistribution;UseVolumeDistribution;UpdateAutomatically;"
-	ListOfVariables+="SASBackgroundError;Dist1LocationError;Dist1ScaleError;Dist1ShapeError;Dist1VolFractionError;"
-	ListOfVariables+="Dist1LocationError;Dist1ScaleError;Dist1ShapeError;Dist1VolFractionError;"
-	ListOfVariables+="Dist2LocationError;Dist2ScaleError;Dist2ShapeError;Dist2VolFractionError;"
-	ListOfVariables+="Dist3LocationError;Dist3ScaleError;Dist3ShapeError;Dist3VolFractionError;"
-	ListOfVariables+="Dist4LocationError;Dist4ScaleError;Dist4ShapeError;Dist4VolFractionError;"
-	ListOfVariables+="Dist5LocationError;Dist5ScaleError;Dist5ShapeError;Dist5VolFractionError;"
-	ListOfVariables+="Dist1UseInterference;Dist1InterferencePhi;Dist1InterferenceEta;Dist1InterferencePhiLL;Dist1InterferencePhiHL;Dist1InterferenceEtaLL;Dist1InterferenceEtaHL;"
-	ListOfVariables+="Dist2UseInterference;Dist2InterferencePhi;Dist2InterferenceEta;Dist2InterferencePhiLL;Dist2InterferencePhiHL;Dist2InterferenceEtaLL;Dist2InterferenceEtaHL;"
-	ListOfVariables+="Dist3UseInterference;Dist3InterferencePhi;Dist3InterferenceEta;Dist3InterferencePhiLL;Dist3InterferencePhiHL;Dist3InterferenceEtaLL;Dist3InterferenceEtaHL;"
-	ListOfVariables+="Dist4UseInterference;Dist4InterferencePhi;Dist4InterferenceEta;Dist4InterferencePhiLL;Dist4InterferencePhiHL;Dist4InterferenceEtaLL;Dist4InterferenceEtaHL;"
-	ListOfVariables+="Dist5UseInterference;Dist5InterferencePhi;Dist5InterferenceEta;Dist5InterferencePhiLL;Dist5InterferencePhiHL;Dist5InterferenceEtaLL;Dist5InterferenceEtaHL;"
-	ListOfVariables+="Dist1FitInterferencePhi;Dist2FitInterferencePhi;Dist3FitInterferencePhi;Dist4FitInterferencePhi;Dist5FitInterferencePhi;"
-	ListOfVariables+="Dist1FitInterferenceETA;Dist2FitInterferenceETA;Dist3FitInterferenceETA;Dist4FitInterferenceETA;Dist5FitInterferenceETA;"
-	ListOfVariables+="Dist1InterferencePhiError;Dist1InterferenceEtaError;Dist2InterferencePhiError;Dist2InterferenceEtaError;"
-	ListOfVariables+="Dist3InterferencePhiError;Dist3InterferenceEtaError;Dist4InterferencePhiError;Dist4InterferenceEtaError;"
-	ListOfVariables+="Dist5InterferencePhiError;Dist5InterferenceEtaError;"	
-	ListOfVariables+="UseSlitSmearedData;SlitLength;"	
-	//Ok add chance to fit the shape parameters
-	ListOfVariables+="Dist1FitScatShapeParam1;Dist1ScatShapeParam1LowLimit;Dist1ScatShapeParam1HighLimit;Dist1FitScatShapeParam2;Dist1ScatShapeParam2LowLimit;Dist1ScatShapeParam2HighLimit;Dist1FitScatShapeParam3;Dist1ScatShapeParam3LowLimit;Dist1ScatShapeParam3HighLimit;"
-	ListOfVariables+="Dist2FitScatShapeParam1;Dist2ScatShapeParam1LowLimit;Dist2ScatShapeParam1HighLimit;Dist2FitScatShapeParam2;Dist2ScatShapeParam2LowLimit;Dist2ScatShapeParam2HighLimit;Dist2FitScatShapeParam3;Dist2ScatShapeParam3LowLimit;Dist2ScatShapeParam3HighLimit;"
-	ListOfVariables+="Dist3FitScatShapeParam1;Dist3ScatShapeParam1LowLimit;Dist3ScatShapeParam1HighLimit;Dist3FitScatShapeParam2;Dist3ScatShapeParam2LowLimit;Dist3ScatShapeParam2HighLimit;Dist3FitScatShapeParam3;Dist3ScatShapeParam3LowLimit;Dist3ScatShapeParam3HighLimit;"
-	ListOfVariables+="Dist4FitScatShapeParam1;Dist4ScatShapeParam1LowLimit;Dist4ScatShapeParam1HighLimit;Dist4FitScatShapeParam2;Dist4ScatShapeParam2LowLimit;Dist4ScatShapeParam2HighLimit;Dist4FitScatShapeParam3;Dist4ScatShapeParam3LowLimit;Dist4ScatShapeParam3HighLimit;"
-	ListOfVariables+="Dist5FitScatShapeParam1;Dist5ScatShapeParam1LowLimit;Dist5ScatShapeParam1HighLimit;Dist5FitScatShapeParam2;Dist5ScatShapeParam2LowLimit;Dist5ScatShapeParam2HighLimit;Dist5FitScatShapeParam3;Dist5ScatShapeParam3LowLimit;Dist5ScatShapeParam3HighLimit;"
-	ListOfVariables+="Dist1ScatShapeParam4;Dist1ScatShapeParam5;"
-	ListOfVariables+="Dist2ScatShapeParam4;Dist2ScatShapeParam5;"
-	ListOfVariables+="Dist3ScatShapeParam4;Dist3ScatShapeParam5;"
-	ListOfVariables+="Dist4ScatShapeParam4;Dist4ScatShapeParam5;"
-	ListOfVariables+="Dist5ScatShapeParam4;Dist5ScatShapeParam5;"
-	ListOfVariables+="Dist1ScatShapeParam1Error;Dist1ScatShapeParam2Error;Dist1ScatShapeParam3Error;"
-	ListOfVariables+="Dist2ScatShapeParam1Error;Dist2ScatShapeParam2Error;Dist2ScatShapeParam3Error;"
-	ListOfVariables+="Dist3ScatShapeParam1Error;Dist3ScatShapeParam2Error;Dist3ScatShapeParam3Error;"
-	ListOfVariables+="Dist4ScatShapeParam1Error;Dist4ScatShapeParam2Error;Dist4ScatShapeParam3Error;"
-	ListOfVariables+="Dist5ScatShapeParam1Error;Dist5ScatShapeParam2Error;Dist5ScatShapeParam3Error;WallThicknessSpreadInFract;"
-	ListOfVariables+="Dist1UserFFParam1;Dist1UserFFParam2;Dist1UserFFParam3;Dist1UserFFParam4;Dist1UserFFParam5;"
-	ListOfVariables+="Dist2UserFFParam1;Dist2UserFFParam2;Dist2UserFFParam3;Dist2UserFFParam4;Dist2UserFFParam5;"
-	ListOfVariables+="Dist3UserFFParam1;Dist3UserFFParam2;Dist3UserFFParam3;Dist3UserFFParam4;Dist3UserFFParam5;"
-	ListOfVariables+="Dist4UserFFParam1;Dist4UserFFParam2;Dist4UserFFParam3;Dist4UserFFParam4;Dist4UserFFParam5;"
-	ListOfVariables+="Dist5UserFFParam1;Dist5UserFFParam2;Dist5UserFFParam3;Dist5UserFFParam4;Dist5UserFFParam5;"
-
-	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
-	ListOfStrings+="Dist1ShapeModel;Dist1DistributionType;Dist1UserFormFactorFnct;Dist1UserVolumeFnct;"
-	ListOfStrings+="Dist2ShapeModel;Dist2DistributionType;Dist2UserFormFactorFnct;Dist2UserVolumeFnct;"
-	ListOfStrings+="Dist3ShapeModel;Dist3DistributionType;Dist3UserFormFactorFnct;Dist3UserVolumeFnct;"
-	ListOfStrings+="Dist4ShapeModel;Dist4DistributionType;Dist4UserFormFactorFnct;Dist4UserVolumeFnct;"
-	ListOfStrings+="Dist5ShapeModel;Dist5DistributionType;Dist5UserFormFactorFnct;Dist5UserVolumeFnct;"
-	
-	String/g GaussEquation="P(x)=(1/(Width*sqrt(2*pi)) * exp(-(x-Mean)^2/(2*Width^2))"
-	String/g LogNormalEquation="P(x)=(1/((x-Min)*Mean*sqrt(2*pi)) * exp(-ln((x-Mean)/sdev)^2/(2*sdev^2))"
-	String/g LSWEquation="P(x)=A*(loc^2*exp(-loc/(1.5-loc)))/((1.5-loc)^(11/3)*(3+loc)^(7/3))"
-	String/g PowerLawEquation="P(x)= x ^ -(1+(6-slope))"
-	
-	variable i
-	//and here we create them
-	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
-		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
-	endfor		
-				
-	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
-		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
-	endfor	
-	//cleanup after possible previous fitting stages...
-	Wave/Z CoefNames=root:Packages:SAS_Modeling:CoefNames
-	Wave/Z CoefficientInput=root:Packages:SAS_Modeling:CoefficientInput
-	KillWaves/Z CoefNames, CoefficientInput
-	
-	IR1S_SetInitialValues()
-end
-
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-Function IR1S_SetInitialValues()
-	//and here set default values...
-
-	string OldDf=getDataFolder(1)
-	setDataFolder root:Packages:SAS_Modeling
-	NVAR UseQRSData=root:Packages:SAS_Modeling:UseQRSData
-	NVAR UseIndra2data=root:Packages:SAS_Modeling:UseIndra2data
-	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
-	NVAR DisplayND=root:Packages:SAS_Modeling:DisplayND
-	NVAR DisplayVD=root:Packages:SAS_Modeling:DisplayVD
-	NVAR FitSASBackground=root:Packages:SAS_Modeling:FitSASBackground
-	NVAR UseNumberDistribution=root:Packages:SAS_Modeling:UseNumberDistribution
-	NVAR UseVolumeDistribution=root:Packages:SAS_Modeling:UseVolumeDistribution						
-	NVAR UpdateAutomatically=root:Packages:SAS_Modeling:UpdateAutomatically
-	
-	if (UseQRSData)
-		UseIndra2data=0
-	endif
-	NumberOfDistributions=0
-	DisplayND=0
-	DisplayVD=1
-	
-	if (FitSASBackground==0)
-		FitSASBackground=1
-	endif
-	
-	if (UseNumberDistribution==0 && UseVolumeDistribution==0)
-		 UseVolumeDistribution=1
-		 UseNumberDistribution=0
-	endif
-		
-	NVAR UseLSQF
-	NVAR UseGenOpt
-	if(UseLSQF+UseGenOpt!=1)
-		UseLSQF=1
-		UseGenOpt=0
-	endif
-	
-	UpdateAutomatically=0
-
-	//and here we set distribution specific parameters....
-	
-	IR1S_SetInitialValuesForAdist(1)	//dist 1
-	IR1S_SetInitialValuesForAdist(2)	//dist 2
-	IR1S_SetInitialValuesForAdist(3)	//dist 3
-	IR1S_SetInitialValuesForAdist(4)	//dist 4
-	IR1S_SetInitialValuesForAdist(5)	//dist 5
-
-	setDataFolder oldDF
-	
-end	
-
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-Function IR1S_SetInitialValuesForAdist(distNum)
-	variable distNum
-	//default values for distribution 1
-	string OldDf=GetDataFolder(1)
-	
-	setDataFOlder root:Packages:SAS_Modeling
-	
-	SVAR testStr =$("Dist"+num2str(distNum)+"UserFormFactorFnct")
-	if(strlen(testStr)<1)
-		testStr = "IR1T_ExampleSphereFFPoints"
-	endif
-	SVAR testStr =$("Dist"+num2str(distNum)+"UserVolumeFnct")
-	if(strlen(testStr)<1)
-		testStr = "IR1T_ExampleSphereVolume"
-	endif
-	
-	NVAR testVar=$("Dist"+num2str(distNum)+"NumberOfPoints")
-	if (testVar==0)
-		 testVar=50
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam1")
-	if(testVar==0)
-		 testVar=1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam2")
-	if (testVar==0)
-		 testVar=1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam3")
-	if (testVar==0)
-		 testVar=1
-	endif
-	
-	NVAR testVar=$("Dist"+num2str(distNum)+"NegligibleFraction")
-	if (testVar==0)
-		 testVar=0.01
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"VolHighLimit")
-	if (testVar==0)
-		 testVar=0.99
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"VolLowLimit")
-	if (testVar==0)
-		 testVar=0.00001
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"VolFraction")
-	if (testVar==0)
-		 testVar=0.05
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitVol")
-	if (testVar==0)
-		 testVar=1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitShape")
-	if (testVar==0)
-		 testVar=1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitLocation")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitScale")
-	if (testVar==0)
-		 testVar=1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"Contrast")
-	if (testVar==0)
-		 testVar=100
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"Scale")
-	if (testVar==0)
-		if (distNum==1)
-				 testVar=100
-		endif
-		if (distNum==2)
-				 testVar=400
-		endif
-		if (distNum==3)
-				 testVar=800
-		endif
-		if (distNum==4)
-				 testVar=1600
-		endif
-		if (distNum==5)
-				 testVar=3200
-		endif
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"Location")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"Shape")
-	if (testVar==0)
-		 testVar=0.5
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"LocHighLimit")
-	if (testVar==0)
-		 testVar=1000000
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"LocLowLimit")
-	if (testVar==0)
-		 testVar=10
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleHighLimit")
-	if (testVar==0)
-		 testVar=100000
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleLowLimit")
-	if (testVar==0)
-		 testVar=5
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeHighLimit")
-	if (testVar==0)
-		 testVar=0.9
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeLowLimit")
-	if (testVar==0)
-		 testVar=0.1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"LocStep")
-	if (testVar==0)
-		 testVar=50
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeStep")
-	if (testVar==0)
-		 testVar=0.1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleStep")
-	if (testVar==0)
-		 testVar=10
-	endif
-	SVAR testStr=$("Dist"+num2str(distNum)+"ShapeModel")
-	if(strlen(testStr)==0)
-		testStr="spheroid"
-	endif
-	SVAR testStr=$("Dist"+num2str(distNum)+"DistributionType")
-	if(strlen(testStr)==0)
-		testStr="LogNormal"
-	endif
-	
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam1")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam2")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam3")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"UseInterference")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"InterferencePhi")
-	if (testVar==0)
-		 testVar=1
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"InterferencePhiHL")
-	if (testVar==0)
-		 testVar=8
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEta")
-	if (testVar==0)
-		 testVar=200
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEtaLL")
-	if (testVar==0)
-		 testVar=0
-	endif
-	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEtaHL")
-	if (testVar==0)
-		 testVar=10000
-	endif
-
-	setDataFolder oldDf
-end
-
+//
+//Function IR1S_LSQF_StandardModelsMain()
+//
+//	IN2G_CheckScreenSize("height",670)
+//
+//	DoWindow IR1S_ControlPanel
+//	if (V_Flag)
+//		DoWindow/K IR1S_ControlPanel	
+//	endif
+//	DoWindow IR1_LogLogPlotLSQF
+//	if (V_Flag)
+//		DoWindow/K IR1_LogLogPlotLSQF	
+//	endif
+//	DoWindow IR1_IQ4_Q_PlotLSQF
+//	if (V_Flag)
+//		DoWindow/K IR1_IQ4_Q_PlotLSQF	
+//	endif
+//	DoWindow IR1_Model_Distributions
+//	if (V_Flag)
+//		DoWindow/K IR1_Model_Distributions	
+//	endif
+//	DoWindow IR1S_InterferencePanel
+//	if (V_Flag)
+//		DoWindow/K IR1S_InterferencePanel
+//	endif
+//	IR1T_InitFormFactors()
+//	IR1S_Initialize()
+//	IR1_CreateLoggbook()
+//	//IR1_KillGraphsAndPanels()	
+//	Execute ("IR1S_ControlPanel()")
+//end
+//
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+//Function IR1S_Initialize()
+//	//function, which creates the folder for SAS modeling and creates the strings and variables
+//	
+//	string oldDf=GetDataFolder(1)
+//	
+//	NewDataFolder/O/S root:Packages
+//	NewdataFolder/O/S root:Packages:SAS_Modeling
+//	
+//	string ListOfVariables
+//	string ListOfStrings
+//	
+//	//here define the lists of variables and strings needed, separate names by ;...
+//	
+//	ListOfVariables="UseIndra2Data;UseQRSdata;NumberOfDistributions;DisplayVD;DisplayND;CurrentTab;UseInterference;UseLSQF;UseGenOpt;"
+//	ListOfVariables+="Dist1NumberOfPoints;Dist1Contrast;Dist1Location;Dist1Scale;Dist1Shape;Dist1Mean;Dist1Median;Dist1Mode;Dist1LocHighLimit;Dist1LocLowLimit;Dist1ScaleHighLimit;Dist1ScaleLowLimit;"
+//	ListOfVariables+="Dist1ShapeHighLimit;Dist1ShapeLowLimit;Dist1LocStep;Dist1ShapeStep;Dist1ScaleStep;Dist1FitShape;Dist1FitLocation;Dist1FitScale;Dist1VolFraction;"
+//	ListOfVariables+="Dist1VolHighLimit;Dist1VolLowLimit;Dist1FitVol;Dist1NegligibleFraction;Dist1ScatShapeParam1;Dist1ScatShapeParam2;Dist1ScatShapeParam3;Dist1FWHM;"
+//	ListOfVariables+="Dist2NumberOfPoints;Dist2Contrast;Dist2Location;Dist2Scale;Dist2Shape;Dist2Mean;Dist2Median;Dist2Mode;Dist2LocHighLimit;Dist2LocLowLimit;Dist2ScaleHighLimit;Dist2ScaleLowLimit;"
+//	ListOfVariables+="Dist2ShapeHighLimit;Dist2ShapeLowLimit;Dist2LocStep;Dist2ShapeStep;Dist2ScaleStep;Dist2FitShape;Dist2FitLocation;Dist2FitScale;Dist2VolFraction;"
+//	ListOfVariables+="Dist2VolHighLimit;Dist2VolLowLimit;Dist2FitVol;Dist2NegligibleFraction;Dist2ScatShapeParam1;Dist2ScatShapeParam2;Dist2ScatShapeParam3;Dist2FWHM;"
+//	ListOfVariables+="Dist3NumberOfPoints;Dist3Contrast;Dist3Location;Dist3Scale;Dist3Shape;Dist3Mean;Dist3Median;Dist3Mode;Dist3LocHighLimit;Dist3LocLowLimit;Dist3ScaleHighLimit;Dist3ScaleLowLimit;"
+//	ListOfVariables+="Dist3ShapeHighLimit;Dist3ShapeLowLimit;Dist3LocStep;Dist3ShapeStep;Dist3ScaleStep;Dist3FitShape;Dist3FitLocation;Dist3FitScale;Dist3VolFraction;"
+//	ListOfVariables+="Dist3VolHighLimit;Dist3VolLowLimit;Dist3FitVol;Dist3NegligibleFraction;Dist3ScatShapeParam1;Dist3ScatShapeParam2;Dist3ScatShapeParam3;Dist3FWHM;"
+//	ListOfVariables+="Dist4NumberOfPoints;Dist4Contrast;Dist4Location;Dist4Scale;Dist4Shape;Dist4Mean;Dist4Median;Dist4Mode;Dist4LocHighLimit;Dist4LocLowLimit;Dist4ScaleHighLimit;Dist4ScaleLowLimit;"
+//	ListOfVariables+="Dist4ShapeHighLimit;Dist4ShapeLowLimit;Dist4LocStep;Dist4ShapeStep;Dist4ScaleStep;Dist4FitShape;Dist4FitLocation;Dist4FitScale;Dist4VolFraction;"
+//	ListOfVariables+="Dist4VolHighLimit;Dist4VolLowLimit;Dist4FitVol;Dist4NegligibleFraction;Dist4ScatShapeParam1;Dist4ScatShapeParam2;Dist4ScatShapeParam3;Dist4FWHM;"
+//	ListOfVariables+="Dist5NumberOfPoints;Dist5Contrast;Dist5Location;Dist5Scale;Dist5Shape;Dist5Mean;Dist5Median;Dist5Mode;Dist5LocHighLimit;Dist5LocLowLimit;Dist5ScaleHighLimit;Dist5ScaleLowLimit;"
+//	ListOfVariables+="Dist5ShapeHighLimit;Dist5ShapeLowLimit;Dist5LocStep;Dist5ShapeStep;Dist5ScaleStep;Dist5FitShape;Dist5FitLocation;Dist5FitScale;Dist5VolFraction;"
+//	ListOfVariables+="Dist5VolHighLimit;Dist5VolLowLimit;Dist5FitVol;Dist5NegligibleFraction;Dist5ScatShapeParam1;Dist5ScatShapeParam2;Dist5ScatShapeParam3;Dist5FWHM;"
+//	ListOfVariables+="SASBackground;SASBackgroundStep;FitSASBackground;UseNumberDistribution;UseVolumeDistribution;UpdateAutomatically;"
+//	ListOfVariables+="SASBackgroundError;Dist1LocationError;Dist1ScaleError;Dist1ShapeError;Dist1VolFractionError;"
+//	ListOfVariables+="Dist1LocationError;Dist1ScaleError;Dist1ShapeError;Dist1VolFractionError;"
+//	ListOfVariables+="Dist2LocationError;Dist2ScaleError;Dist2ShapeError;Dist2VolFractionError;"
+//	ListOfVariables+="Dist3LocationError;Dist3ScaleError;Dist3ShapeError;Dist3VolFractionError;"
+//	ListOfVariables+="Dist4LocationError;Dist4ScaleError;Dist4ShapeError;Dist4VolFractionError;"
+//	ListOfVariables+="Dist5LocationError;Dist5ScaleError;Dist5ShapeError;Dist5VolFractionError;"
+//	ListOfVariables+="Dist1UseInterference;Dist1InterferencePhi;Dist1InterferenceEta;Dist1InterferencePhiLL;Dist1InterferencePhiHL;Dist1InterferenceEtaLL;Dist1InterferenceEtaHL;"
+//	ListOfVariables+="Dist2UseInterference;Dist2InterferencePhi;Dist2InterferenceEta;Dist2InterferencePhiLL;Dist2InterferencePhiHL;Dist2InterferenceEtaLL;Dist2InterferenceEtaHL;"
+//	ListOfVariables+="Dist3UseInterference;Dist3InterferencePhi;Dist3InterferenceEta;Dist3InterferencePhiLL;Dist3InterferencePhiHL;Dist3InterferenceEtaLL;Dist3InterferenceEtaHL;"
+//	ListOfVariables+="Dist4UseInterference;Dist4InterferencePhi;Dist4InterferenceEta;Dist4InterferencePhiLL;Dist4InterferencePhiHL;Dist4InterferenceEtaLL;Dist4InterferenceEtaHL;"
+//	ListOfVariables+="Dist5UseInterference;Dist5InterferencePhi;Dist5InterferenceEta;Dist5InterferencePhiLL;Dist5InterferencePhiHL;Dist5InterferenceEtaLL;Dist5InterferenceEtaHL;"
+//	ListOfVariables+="Dist1FitInterferencePhi;Dist2FitInterferencePhi;Dist3FitInterferencePhi;Dist4FitInterferencePhi;Dist5FitInterferencePhi;"
+//	ListOfVariables+="Dist1FitInterferenceETA;Dist2FitInterferenceETA;Dist3FitInterferenceETA;Dist4FitInterferenceETA;Dist5FitInterferenceETA;"
+//	ListOfVariables+="Dist1InterferencePhiError;Dist1InterferenceEtaError;Dist2InterferencePhiError;Dist2InterferenceEtaError;"
+//	ListOfVariables+="Dist3InterferencePhiError;Dist3InterferenceEtaError;Dist4InterferencePhiError;Dist4InterferenceEtaError;"
+//	ListOfVariables+="Dist5InterferencePhiError;Dist5InterferenceEtaError;"	
+//	ListOfVariables+="UseSlitSmearedData;SlitLength;"	
+//	//Ok add chance to fit the shape parameters
+//	ListOfVariables+="Dist1FitScatShapeParam1;Dist1ScatShapeParam1LowLimit;Dist1ScatShapeParam1HighLimit;Dist1FitScatShapeParam2;Dist1ScatShapeParam2LowLimit;Dist1ScatShapeParam2HighLimit;Dist1FitScatShapeParam3;Dist1ScatShapeParam3LowLimit;Dist1ScatShapeParam3HighLimit;"
+//	ListOfVariables+="Dist2FitScatShapeParam1;Dist2ScatShapeParam1LowLimit;Dist2ScatShapeParam1HighLimit;Dist2FitScatShapeParam2;Dist2ScatShapeParam2LowLimit;Dist2ScatShapeParam2HighLimit;Dist2FitScatShapeParam3;Dist2ScatShapeParam3LowLimit;Dist2ScatShapeParam3HighLimit;"
+//	ListOfVariables+="Dist3FitScatShapeParam1;Dist3ScatShapeParam1LowLimit;Dist3ScatShapeParam1HighLimit;Dist3FitScatShapeParam2;Dist3ScatShapeParam2LowLimit;Dist3ScatShapeParam2HighLimit;Dist3FitScatShapeParam3;Dist3ScatShapeParam3LowLimit;Dist3ScatShapeParam3HighLimit;"
+//	ListOfVariables+="Dist4FitScatShapeParam1;Dist4ScatShapeParam1LowLimit;Dist4ScatShapeParam1HighLimit;Dist4FitScatShapeParam2;Dist4ScatShapeParam2LowLimit;Dist4ScatShapeParam2HighLimit;Dist4FitScatShapeParam3;Dist4ScatShapeParam3LowLimit;Dist4ScatShapeParam3HighLimit;"
+//	ListOfVariables+="Dist5FitScatShapeParam1;Dist5ScatShapeParam1LowLimit;Dist5ScatShapeParam1HighLimit;Dist5FitScatShapeParam2;Dist5ScatShapeParam2LowLimit;Dist5ScatShapeParam2HighLimit;Dist5FitScatShapeParam3;Dist5ScatShapeParam3LowLimit;Dist5ScatShapeParam3HighLimit;"
+//	ListOfVariables+="Dist1ScatShapeParam4;Dist1ScatShapeParam5;"
+//	ListOfVariables+="Dist2ScatShapeParam4;Dist2ScatShapeParam5;"
+//	ListOfVariables+="Dist3ScatShapeParam4;Dist3ScatShapeParam5;"
+//	ListOfVariables+="Dist4ScatShapeParam4;Dist4ScatShapeParam5;"
+//	ListOfVariables+="Dist5ScatShapeParam4;Dist5ScatShapeParam5;"
+//	ListOfVariables+="Dist1ScatShapeParam1Error;Dist1ScatShapeParam2Error;Dist1ScatShapeParam3Error;"
+//	ListOfVariables+="Dist2ScatShapeParam1Error;Dist2ScatShapeParam2Error;Dist2ScatShapeParam3Error;"
+//	ListOfVariables+="Dist3ScatShapeParam1Error;Dist3ScatShapeParam2Error;Dist3ScatShapeParam3Error;"
+//	ListOfVariables+="Dist4ScatShapeParam1Error;Dist4ScatShapeParam2Error;Dist4ScatShapeParam3Error;"
+//	ListOfVariables+="Dist5ScatShapeParam1Error;Dist5ScatShapeParam2Error;Dist5ScatShapeParam3Error;WallThicknessSpreadInFract;"
+//	ListOfVariables+="Dist1UserFFParam1;Dist1UserFFParam2;Dist1UserFFParam3;Dist1UserFFParam4;Dist1UserFFParam5;"
+//	ListOfVariables+="Dist2UserFFParam1;Dist2UserFFParam2;Dist2UserFFParam3;Dist2UserFFParam4;Dist2UserFFParam5;"
+//	ListOfVariables+="Dist3UserFFParam1;Dist3UserFFParam2;Dist3UserFFParam3;Dist3UserFFParam4;Dist3UserFFParam5;"
+//	ListOfVariables+="Dist4UserFFParam1;Dist4UserFFParam2;Dist4UserFFParam3;Dist4UserFFParam4;Dist4UserFFParam5;"
+//	ListOfVariables+="Dist5UserFFParam1;Dist5UserFFParam2;Dist5UserFFParam3;Dist5UserFFParam4;Dist5UserFFParam5;"
+//
+//	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
+//	ListOfStrings+="Dist1ShapeModel;Dist1DistributionType;Dist1UserFormFactorFnct;Dist1UserVolumeFnct;"
+//	ListOfStrings+="Dist2ShapeModel;Dist2DistributionType;Dist2UserFormFactorFnct;Dist2UserVolumeFnct;"
+//	ListOfStrings+="Dist3ShapeModel;Dist3DistributionType;Dist3UserFormFactorFnct;Dist3UserVolumeFnct;"
+//	ListOfStrings+="Dist4ShapeModel;Dist4DistributionType;Dist4UserFormFactorFnct;Dist4UserVolumeFnct;"
+//	ListOfStrings+="Dist5ShapeModel;Dist5DistributionType;Dist5UserFormFactorFnct;Dist5UserVolumeFnct;"
+//	
+//	String/g GaussEquation="P(x)=(1/(Width*sqrt(2*pi)) * exp(-(x-Mean)^2/(2*Width^2))"
+//	String/g LogNormalEquation="P(x)=(1/((x-Min)*Mean*sqrt(2*pi)) * exp(-ln((x-Mean)/sdev)^2/(2*sdev^2))"
+//	String/g LSWEquation="P(x)=A*(loc^2*exp(-loc/(1.5-loc)))/((1.5-loc)^(11/3)*(3+loc)^(7/3))"
+//	String/g PowerLawEquation="P(x)= x ^ -(1+(6-slope))"
+//	
+//	variable i
+//	//and here we create them
+//	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+//		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+//	endfor		
+//				
+//	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+//		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+//	endfor	
+//	//cleanup after possible previous fitting stages...
+//	Wave/Z CoefNames=root:Packages:SAS_Modeling:CoefNames
+//	Wave/Z CoefficientInput=root:Packages:SAS_Modeling:CoefficientInput
+//	KillWaves/Z CoefNames, CoefficientInput
+//	
+//	IR1S_SetInitialValues()
+//end
+//
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+//Function IR1S_SetInitialValues()
+//	//and here set default values...
+//
+//	string OldDf=getDataFolder(1)
+//	setDataFolder root:Packages:SAS_Modeling
+//	NVAR UseQRSData=root:Packages:SAS_Modeling:UseQRSData
+//	NVAR UseIndra2data=root:Packages:SAS_Modeling:UseIndra2data
+//	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
+//	NVAR DisplayND=root:Packages:SAS_Modeling:DisplayND
+//	NVAR DisplayVD=root:Packages:SAS_Modeling:DisplayVD
+//	NVAR FitSASBackground=root:Packages:SAS_Modeling:FitSASBackground
+//	NVAR UseNumberDistribution=root:Packages:SAS_Modeling:UseNumberDistribution
+//	NVAR UseVolumeDistribution=root:Packages:SAS_Modeling:UseVolumeDistribution						
+//	NVAR UpdateAutomatically=root:Packages:SAS_Modeling:UpdateAutomatically
+//	
+//	if (UseQRSData)
+//		UseIndra2data=0
+//	endif
+//	NumberOfDistributions=0
+//	DisplayND=0
+//	DisplayVD=1
+//	
+//	if (FitSASBackground==0)
+//		FitSASBackground=1
+//	endif
+//	
+//	if (UseNumberDistribution==0 && UseVolumeDistribution==0)
+//		 UseVolumeDistribution=1
+//		 UseNumberDistribution=0
+//	endif
+//		
+//	NVAR UseLSQF
+//	NVAR UseGenOpt
+//	if(UseLSQF+UseGenOpt!=1)
+//		UseLSQF=1
+//		UseGenOpt=0
+//	endif
+//	
+//	UpdateAutomatically=0
+//
+//	//and here we set distribution specific parameters....
+//	
+//	IR1S_SetInitialValuesForAdist(1)	//dist 1
+//	IR1S_SetInitialValuesForAdist(2)	//dist 2
+//	IR1S_SetInitialValuesForAdist(3)	//dist 3
+//	IR1S_SetInitialValuesForAdist(4)	//dist 4
+//	IR1S_SetInitialValuesForAdist(5)	//dist 5
+//
+//	setDataFolder oldDF
+//	
+//end	
+//
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+//Function IR1S_SetInitialValuesForAdist(distNum)
+//	variable distNum
+//	//default values for distribution 1
+//	string OldDf=GetDataFolder(1)
+//	
+//	setDataFOlder root:Packages:SAS_Modeling
+//	
+//	SVAR testStr =$("Dist"+num2str(distNum)+"UserFormFactorFnct")
+//	if(strlen(testStr)<1)
+//		testStr = "IR1T_ExampleSphereFFPoints"
+//	endif
+//	SVAR testStr =$("Dist"+num2str(distNum)+"UserVolumeFnct")
+//	if(strlen(testStr)<1)
+//		testStr = "IR1T_ExampleSphereVolume"
+//	endif
+//	
+//	NVAR testVar=$("Dist"+num2str(distNum)+"NumberOfPoints")
+//	if (testVar==0)
+//		 testVar=50
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam1")
+//	if(testVar==0)
+//		 testVar=1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam2")
+//	if (testVar==0)
+//		 testVar=1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ScatShapeParam3")
+//	if (testVar==0)
+//		 testVar=1
+//	endif
+//	
+//	NVAR testVar=$("Dist"+num2str(distNum)+"NegligibleFraction")
+//	if (testVar==0)
+//		 testVar=0.01
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"VolHighLimit")
+//	if (testVar==0)
+//		 testVar=0.99
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"VolLowLimit")
+//	if (testVar==0)
+//		 testVar=0.00001
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"VolFraction")
+//	if (testVar==0)
+//		 testVar=0.05
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitVol")
+//	if (testVar==0)
+//		 testVar=1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitShape")
+//	if (testVar==0)
+//		 testVar=1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitLocation")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScale")
+//	if (testVar==0)
+//		 testVar=1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"Contrast")
+//	if (testVar==0)
+//		 testVar=100
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"Scale")
+//	if (testVar==0)
+//		if (distNum==1)
+//				 testVar=100
+//		endif
+//		if (distNum==2)
+//				 testVar=400
+//		endif
+//		if (distNum==3)
+//				 testVar=800
+//		endif
+//		if (distNum==4)
+//				 testVar=1600
+//		endif
+//		if (distNum==5)
+//				 testVar=3200
+//		endif
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"Location")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"Shape")
+//	if (testVar==0)
+//		 testVar=0.5
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"LocHighLimit")
+//	if (testVar==0)
+//		 testVar=1000000
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"LocLowLimit")
+//	if (testVar==0)
+//		 testVar=10
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleHighLimit")
+//	if (testVar==0)
+//		 testVar=100000
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleLowLimit")
+//	if (testVar==0)
+//		 testVar=5
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeHighLimit")
+//	if (testVar==0)
+//		 testVar=0.9
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeLowLimit")
+//	if (testVar==0)
+//		 testVar=0.1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"LocStep")
+//	if (testVar==0)
+//		 testVar=50
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ShapeStep")
+//	if (testVar==0)
+//		 testVar=0.1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"ScaleStep")
+//	if (testVar==0)
+//		 testVar=10
+//	endif
+//	SVAR testStr=$("Dist"+num2str(distNum)+"ShapeModel")
+//	if(strlen(testStr)==0)
+//		testStr="spheroid"
+//	endif
+//	SVAR testStr=$("Dist"+num2str(distNum)+"DistributionType")
+//	if(strlen(testStr)==0)
+//		testStr="LogNormal"
+//	endif
+//	
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam1")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam2")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"FitScatShapeParam3")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"UseInterference")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferencePhi")
+//	if (testVar==0)
+//		 testVar=1
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferencePhiHL")
+//	if (testVar==0)
+//		 testVar=8
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEta")
+//	if (testVar==0)
+//		 testVar=200
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEtaLL")
+//	if (testVar==0)
+//		 testVar=0
+//	endif
+//	NVAR testVar=$("Dist"+num2str(distNum)+"InterferenceEtaHL")
+//	if (testVar==0)
+//		 testVar=10000
+//	endif
+//
+//	setDataFolder oldDf
+//end
+//
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1390,7 +1371,7 @@ Proc  IR1_LogLogPlotLSQF()
 //	Button SaveStyle size={80,20}, pos={50,5},proc=IR1U_StyleButtonCotrol,title="Save Style"
 //	Button ApplyStyle size={80,20}, pos={150,5},proc=IR1U_StyleButtonCotrol,title="Apply Style"
 	SetDataFolder fldrSav
-	Execute /P("AutoPositionWindow/M=0 /R=IR1S_ControlPanel IR1_LogLogPlotLSQF")
+	Execute /P("AutoPositionWindow/M=0 /R=IR1R_ControlPanel IR1_LogLogPlotLSQF")
 EndMacro
 
 

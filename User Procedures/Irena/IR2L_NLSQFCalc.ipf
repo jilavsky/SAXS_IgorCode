@@ -1124,6 +1124,68 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR1_StartOfBinInDiameters(D_distribution,i)			//calculates the start of the bin in radii by taking half distance to point before and after
+	variable i								//returns number in A
+	Wave D_distribution
+	
+	variable start
+	variable Imax=numpnts(D_Distribution)
+	
+	if (i==0)
+		start=D_Distribution[0]-(D_Distribution[1]-D_Distribution[0])/2
+		if (start<0)
+			start=1		//we will enforce minimum size of the scatterer as 1 A
+		endif
+	elseif (i==Imax-1)
+		start=D_Distribution[i]-(D_Distribution[i]-D_Distribution[i-1])/2
+	else
+		start=D_Distribution[i]-((D_Distribution[i]-D_Distribution[i-1])/2)
+	endif
+	return start
+end
+
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR1_BinWidthInDiameters(D_distribution,i)			//calculates the width in diameters by taking half distance to point before and after
+	variable i								//returns number in A
+	Wave D_distribution
+	
+	variable width
+	variable Imax=numpnts(D_distribution)
+	
+	if (i==0)
+		width=D_distribution[1]-D_distribution[0]
+		if ((D_distribution[0]-(D_distribution[1]-D_distribution[0])/2)<0)
+			width=D_distribution[0]+(D_distribution[1]-D_distribution[0])/2
+		endif
+	elseif (i==Imax-1)
+		width=D_distribution[i]-D_distribution[i-1]
+	else
+		width=((D_distribution[i]-D_distribution[i-1])/2)+((D_distribution[i+1]-D_distribution[i])/2)
+	endif
+	return abs(width)		//9/17/2010, fix for user models when bins are sorted from large to small
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1_EndOfBinInDiameters(D_distribution,i)			//calculates the start of the bin in radii by taking half distance to point before and after
+	variable i								//returns number in A
+	Wave D_distribution
+	
+	variable endL
+	variable Imax=numpnts(D_distribution)
+	
+	if (i==0)
+		endL=D_distribution[0]+(D_distribution[1]-D_distribution[0])/2
+	elseif (i==Imax-1)
+		endL=D_distribution[i]+((D_distribution[i]-D_distribution[i-1])/2)//fix 2011-9-25
+	else
+		endL=D_distribution[i]+((D_distribution[i+1]-D_distribution[i])/2)
+	endif
+	return endL
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR2L_SummModel()

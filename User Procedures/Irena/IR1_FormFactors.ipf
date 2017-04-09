@@ -408,7 +408,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				if ((aspectRatio<=1.01)&&(aspectRatio>=0.99))				//actually, this is sphere...
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 						multithread TempWave=IR1T_CalculateIntgSphereFFPnts(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2)		//here we calculate one column of data
 						//TempWave*=IR1T_SphereVolume(currentR)		//----------	Volume included in the above procedure due to integration
@@ -417,7 +417,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				else														//OK, spheroid...
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 						multithread TempWave=IR1T_CalcIntgIntgSpheroidFFPnts(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2,aspectRatio)	//here we calculate one column of data
 						//TempWave*=IR1T_SpheroidVolume(currentR,aspectRatio)	//----------	Volume included in the above procedure due to integration
@@ -428,7 +428,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				length=ParticlePar1
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 #if (Exists("CylinderFormX")&&defined(UseXOPforFFCalcs))
 					//The input variables are (and output)
@@ -465,7 +465,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
 						length=2*ParticlePar1*currentR						//and this is length - aspect ratio * currrentR * 2
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 #if (Exists("CylinderFormX")&&defined(UseXOPforFFCalcs))
 					//The input variables are (and output)
@@ -585,7 +585,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				CoreShellSolvntRho=ParticlePar4			//rho of solvent
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 						SVAR/Z CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
 						if(SVAR_Exists(CoreShellVolumeDefinition))
@@ -610,7 +610,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						if(ParticlePar1<0)
 							Abort "Negative shell thickness calculated in CoreShell;Precipitate Form factor. Aborting"
 						endif
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 						VolDefL="Core"
 						multithread TempWave=IR1T_CalculateCoreShellFFPoints(Q_vec[p],currentR,VolumePower,tempVal1,tempVal2, CoreShellThickness, CoreShellCoreRho, CoreShellShellRho, CoreShellSolvntRho,VolDefL)								//and here we multiply by N(r)
@@ -628,7 +628,7 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 						Shell2Rho=particlePar6			// rho for shell 2 material
 					For (i=0;i<N;i+=1)										//calculate the G matrix in columns!!!
 						currentR=R_dist[i]								//this is current radius
-						tempVal1=IR1_StartOfBinInDiameters(R_dist,i)
+						tempVal1=IR1T_StartOfBinInDiameters(R_dist,i)
 						tempVal2=IR1T_EndOfBinInDiameters(R_dist,i)
 						SVAR/Z CoreShellVolumeDefinition = root:Packages:FormFactorCalc:CoreShellVolumeDefinition
 						if(SVAR_Exists(CoreShellVolumeDefinition))
@@ -1671,7 +1671,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Static Function IR1_StartOfBinInDiameters(D_distribution,i)			//calculates the start of the bin in radii by taking half distance to point before and after
+Static Function IR1T_StartOfBinInDiameters(D_distribution,i)			//calculates the start of the bin in radii by taking half distance to point before and after
 	variable i								//returns number in A
 	Wave D_distribution
 	
@@ -2790,8 +2790,8 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 	endif	
 	
 	For (i=0;i<numpnts(Distdiameters);i+=1)
-		StartValue=IR1_StartOfBinInDiameters(Distdiameters,i)
-		EndValue=IR1_EndOfBinInDiameters(Distdiameters,i)
+		StartValue=IR1T_StartOfBinInDiameters(Distdiameters,i)
+		EndValue=IR1T_EndOfBinInDiameters(Distdiameters,i)
 		tempVolume=0
 		tempVolCalc=0
 
@@ -2888,8 +2888,8 @@ Function IR1T_CreateAveSurfaceAreaWave(AveSurfaceAreaWave,Distdiameters,DistShap
 	endif	
 
 	For (i=0;i<numpnts(Distdiameters);i+=1)
-		StartValue=IR1_StartOfBinInDiameters(Distdiameters,i)
-		EndValue=IR1_EndOfBinInDiameters(Distdiameters,i)
+		StartValue=IR1T_StartOfBinInDiameters(Distdiameters,i)
+		EndValue=IR1T_EndOfBinInDiameters(Distdiameters,i)
 		tempSurface=0
 		tempVolCalc=0
 

@@ -16,6 +16,7 @@ Unified Fit - Modified to handle Slit smeared data which do not extend beyond sl
 Data merging - added name modifier string and defaulted to new folder name even for QRS name systems. 
 Size distribution - removed limitation that Qmax > 3*slit length for slit smeared data. Optimized speed (2x improvement)
 Fixed more slow debugging calls, few more packages see improvement in speed now. 
+Completely removed Modeling I - about 2k lines of code. Moved code where needed and removed about 3 ipf files from loading. 
 
 2.62a 3/3/2017
 Silently fixed bug in ScreenResolution check for Windows computers, which printed high-res screens warning at wrong time. 

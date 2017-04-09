@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.10
+#pragma version = 2.11
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.11 Modified Screen Size check to match the needs
 //2.10 added getHelp button calling to www manual
 //2.09 sped up about 6x the smearing routine in IR1B_SmearData. May need to be checked, seems to work in Unified, Modeling II and Desmearing.
 //2.08 propagate dQ if exists in slit smeared data, if does not exist, fake one from distance between points. 
@@ -29,7 +30,7 @@
 
 Function IR1B_DesmearingMain()
 	
-	IN2G_CheckScreenSize("height",670)
+	IN2G_CheckScreenSize("height",650)
 
 	DoWindow IR1B_DesmearingControlPanel
 	if (V_Flag)

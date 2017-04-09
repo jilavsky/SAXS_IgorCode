@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.26
+#pragma version =1.27
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.27 Modified Screen Size check to match the needs
 //1.26 added getHelp button calling to www manual
 //1.25 Modified to point to USAXS_data on USAXS computers
 //1.24 added panel scaling
@@ -31,6 +32,7 @@ Function NI1M_CreateMask()
 	//this function helps user to create mask
 	
 	NI1A_Initialize2Dto1DConversion()
+	IN2G_CheckScreenSize("height",520)
 	
 	NI1M_CreateImageROIPanel()
 

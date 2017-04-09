@@ -2748,6 +2748,7 @@ Function IR3M_DataManipulationII()
 		DoWindow/K ItemsInFolderPanel_DMII
 	endif
 	
+	IN2G_CheckScreenSize("height",650)
 	IR3M_DataManipulationIIPanel()
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("DataManipulationII", IR3MversionNumber,1) 

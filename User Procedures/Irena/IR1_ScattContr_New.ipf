@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.25
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.25  Modified Screen Size check to match the needs
 //2.24 added getHelp button calling to www manual
 //2.23 changes fro panel scaling. 
 //2.22 minor fix of nits on the Scatt Contrast Calculator main panel. 
@@ -32,6 +33,9 @@ Function IR1K_ScattCont2()
 
 	IR1K_InitializeScattContrast()
 	IR1K_InitCalculatorExportDta()
+
+	IN2G_CheckScreenSize("height",500)
+	IN2G_CheckScreenSize("width",800)
 	
 	DoWindow IR1K_ScatteringContCalc
 	if (V_Flag)

@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 Constant IR2LversionNumber = 1.21
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.21
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.22 Modified Screen Size check to match the needs
 //1.21 added getHelp button calling to www manual
 //1.20 GUI controls move change
 //1.19 chanegs for panel scaling. 
@@ -58,6 +59,7 @@ Function IR2L_Main()
 	if(V_Flag)
 		DoWindow/F LSQF2_MainPanel
 	else
+		IN2G_CheckScreenSize("height",690)
 		IR2L_MainPanel()
 		ING2_AddScrollControl()
 		IR1_UpdatePanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber,1)

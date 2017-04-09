@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.25
+#pragma version=2.26
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26 Modified Screen Size check to match the needs
 //2.25 added getHelp button calling to www manual
 //2.24 Modified to point to USAXS_data on USAXS computers 
 //2.23 GUI fix on new calibrants lines 
@@ -42,6 +43,7 @@ Function NI1_CreateBmCntrFile()
 		Abort "This tool cannot be used when Calibrated 2D data are used. It makes no sense. Uncheck the checkbox on the main panel and the try again." 
 	endif
 	NI1BC_InitCreateBmCntrFile()
+	IN2G_CheckScreenSize("height",680)
 	NI1BC_CreateBmCntrField()
 	NI1_UpdatePanelVersionNumber("NI1_CreateBmCntrFieldPanel",NI1BCversionNumber)
 	NI1BC_TabProc("",0)

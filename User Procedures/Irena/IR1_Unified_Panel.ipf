@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.22
 Constant IR1AversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 Modified Screen Size check to match the needs
 //2.21 added  Help button calling www manual page
 //2.20 added scaling panel content
 //2.19 fixed Tab display of B which got confused under some circumstances... 
@@ -62,7 +63,7 @@ Constant IR1AversionNumber=2.20
 
 Function IR1A_UnifiedModel()
 
-	IN2G_CheckScreenSize("height",670)
+	IN2G_CheckScreenSize("height",680)
 	
 	DoWindow IR1A_ControlPanel
 	if (V_Flag)

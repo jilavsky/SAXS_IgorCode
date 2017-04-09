@@ -93,7 +93,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".tif")!=0&&cmpstr(FileName[strlen(FileName)-5,inf],".tiff")!=0)
 			FileNameToLoad= FileName+ ".tif"
 		endif
-		ImageLoad/P=$(PathName)/T=tiff/O/N=$(NewWaveName) FileNameToLoad
+		ImageLoad/P=$(PathName)/T=tiff/Q/O/N=$(NewWaveName) FileNameToLoad
 		if(V_flag==0)		//return 0 if not succesuful.
 			return 0
 		endif

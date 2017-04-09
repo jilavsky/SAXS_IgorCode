@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.37
+#pragma version=2.38
 #include <HDF5 Browser>
 Constant IR1IversionNumber = 2.37
 Constant IR1IversionNumber2 = 2.36
@@ -13,7 +13,8 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//.237 added Plot button to SAXS importer also. 
+//2.38 Modified Screen Size check to match the needs
+//2.37 added Plot button to SAXS importer also. 
 //2.36 added GetHelp button
 //2.35 fixed lack of too many points message and remvoed hidden tfiles from dialogs. 
 //2.34 fixed problems with negative intensities which screwed up errors. Added abs(Int) for error generation and avoided error message when error was not used. 
@@ -61,7 +62,7 @@ Constant IR1TrimNameLength = 28
 Function IR1I_ImportSASASCIIDataMain()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//IR1_KillGraphsAndPanels()
-	IN2G_CheckScreenSize("height",740)
+	IN2G_CheckScreenSize("height",720)
 	DoWindow IR1I_ImportOtherASCIIData
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import Other ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
@@ -2277,7 +2278,7 @@ end
 Function IR1I_ImportOtherASCIIMain()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//IR1_KillGraphsAndPanels()
-	IN2G_CheckScreenSize("height",740)
+	IN2G_CheckScreenSize("height",720)
 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
@@ -2914,7 +2915,7 @@ end
 Function IR1I_ImportNexusCanSASMain()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		//IR1_KillGraphsAndPanels()
-	IN2G_CheckScreenSize("height",740)
+	IN2G_CheckScreenSize("height",720)
 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.10
+#pragma version=1.11
 constant IR3DversionNumber = 1.10		//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.10		//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 Modified Screen Size check to match the needs
 //1.10 added getHelp button calling to www manual
 //1.09 added control fro modifier for folder name and defaulted to new, modified name, QRS folder also. User issues. 
 //1.08 fixed USAXS/SAXS ordering
@@ -30,6 +31,7 @@ constant IR3DversionNumber = 1.10		//Data merging panel version number
 Function IR3D_DataMerging()
 
 	IN2G_CheckScreenSize("width",1200)
+	IN2G_CheckScreenSize("height",680)
 	IR3D_InitDataMerging()
 	DoWIndow IR3D_DataMergePanel
 	if(V_Flag)

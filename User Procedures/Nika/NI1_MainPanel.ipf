@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.52
+#pragma version=2.54
 Constant NI1AversionNumber = 2.52
 
 //*************************************************************************\
@@ -8,7 +8,9 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//	2.52	added getHelp button calling to www manual
+//2.54 Fixed bug where Fit2D loadable types were listed on incompatible versions of MacOS. 
+//2.53 Modified Screen Size check to match the needs
+//2.52	added getHelp button calling to www manual
 //2.51 Fixed old bug where sample thickness was not converted to cm before use and used as mm. This causes old experiments with old calibration constants to be wrong.
 //			old calibration constatnts need to be also scaled by 10 to fix the calibration. 
 //			added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -174,6 +176,7 @@ Function NI1A_Convert2Dto1DMainPanel()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
+	IN2G_CheckScreenSize("height",720)
 	DoWindow NI1A_Convert2Dto1DPanel
 	if(V_Flag)
 		DoWindow/K NI1A_Convert2Dto1DPanel
@@ -222,7 +225,8 @@ Function NI1A_Initialize2Dto1DConversion()
 	//BSRC/Gold			BESSERC 1536x1536 Gold detector binary format. It has header and 16 bit binary data
 	//ASCII 				ASCII data matrix...
 	//      note, if the ASCII data matrix has extension mtx, then will try to find same file with extension prn and read header info from there...
- 	if(cmpstr(IgorInfo(2),"Windows")==0 || str2num(StringFromList(0, StringByKey("OSVERSION",IgorInfo(3),":",";"),".")+"."+StringFromList(1, StringByKey("OSVERSION",IgorInfo(3),":",";"),"."))<10.5)
+	variable OSXVersion = str2num(StringFromList(0, StringByKey("OSVERSION",IgorInfo(3),":",";"),".")+"."+StringFromList(1, StringByKey("OSVERSION",IgorInfo(3),":",";"),"."))
+ 	if(cmpstr(IgorInfo(2),"Windows")==0 || (OSXVersion>10.2 && OSXVersion<10.5))
 		ListOfKnownExtensions+="MarIP/Fit2d;ADSC/Fit2D;Bruker/Fit2D;BSL/Fit2D;Diffract/Fit2D;DIP2000/Fit2D;"		
 		ListOfKnownExtensions+="ESRF/Fit2d;Fit2D/Fi2tD;BAS/Fit2D;GAS/Fit2D;HAMA/Fit2D;IMGQ/Fit2D;"		
 		ListOfKnownExtensions+="KLORA/Fit2d;MarPck/Fi2tD;PDS/Fit2D;PHOTOM/Fit2D;PMC/Fit2D;PRINC/Fit2D;RIGK/Fit2D;"		
@@ -1490,13 +1494,15 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	string NewName, tempStr
 	tempStr = ReplaceString(".", InputName, "")
 	variable NumDots= strlen(InputName) - strlen(tempStr)
-	if(NumDots==0)
-		NewName = InputName
-	elseif(NumDots==1)	
-		NewName = StringFromList(0, InputName, ".")
-	else		// more then one "." in the name, remove extension, assume last "." separates extension. 
-		NewName = InputName[0, strsearch( InputName,".", inf, 1)-1]
-	endif	
+	NewName = InputName
+//	if(NumDots==0)
+//		NewName = InputName
+//	elseif(NumDots==1)	
+//		NewName = StringFromList(0, InputName, ".")
+//		NewName = InputName
+//	else		// more then one "." in the name, remove extension, assume last "." separates extension. 
+//		NewName = InputName[0, strsearch( InputName,".", inf, 1)-1]
+//	endif	
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	if(TrimEndOfName)
 		NewName= NewName[0,21]

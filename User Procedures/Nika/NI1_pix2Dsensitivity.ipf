@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.05
+#pragma version=1.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.06 Modified Screen Size check to match the needs
 //1.05 added getHelp button calling to www manual
 //1.04 modified to point to USAXS_data on USAXS computers
 //1.03 modified call to hook function
@@ -19,6 +21,7 @@ Function NI1_Create2DSensitivityFile()
 	
 	NI1A_Initialize2Dto1DConversion()
 	NI1A_InitializeCreate2DSensFile()
+	IN2G_CheckScreenSize("height",530)
 	NI1_CreateFloodField()
 
 end

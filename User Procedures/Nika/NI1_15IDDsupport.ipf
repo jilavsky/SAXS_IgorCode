@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.35
+#pragma version=1.36
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.36 fixed issues with use of userSampleName
 //1.35 fix for bigSAXS failure
 //1.34 changed pinSAXS to SAXS
 //1.33 MINOR FIX FOR BUG IN READING PILATUS SAXS PIX_Y BEAM CENTER POSITION AND SETUP FOR UES WITH THE NEW NEXUST SUPPORT. 
@@ -2113,7 +2114,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(LoadedFile)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
 	elseif(strlen(UserFileName)<1)	//user did not set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
@@ -2134,7 +2135,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(LoadedFile)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
 	elseif(strlen(UserFileName)<1)	//user did nto set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname

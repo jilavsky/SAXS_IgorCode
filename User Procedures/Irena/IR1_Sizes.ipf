@@ -3842,16 +3842,16 @@ static  Function IR1R_SetupDiagnostics()
 
 	NVAR Diagnostics=root:Packages:Sizes:ShowDiagnostics
 	
-	DoWindow IR1S_RegDiagnosticsWindow
+	DoWindow IR1R_RegDiagnosticsWindow
 	if (V_Flag)
-		DoWindow/K IR1S_RegDiagnosticsWindow
+		DoWindow/K IR1R_RegDiagnosticsWindow
 	endif	
 	
 	if (Diagnostics)
 		//here we need to setup the waves and graphs as needed
 	//	Make/O/N=0 DiagLogAVal, DiagLogChisquareDivN, DiagSmoothness
 		
-		execute ("IR1S_RegDiagnosticsWindow()")
+		execute ("IR1R_RegDiagnosticsWindow()")
 		
 	endif
 	setDataFolder OldDf
@@ -3902,12 +3902,12 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Proc  IR1S_RegDiagnosticsWindow() 
+Proc  IR1R_RegDiagnosticsWindow() 
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Sizes:
 	Display /K=1/W=(10,250,350,450) CurrentEntropyW as "Diagnostic of the Sizes"
-	DoWIndow/C IR1S_RegDiagnosticsWindow
+	DoWIndow/C IR1R_RegDiagnosticsWindow
 	AppendToGraph /R CurrentChiSqW //vs DiagLogAVal
 	AppendToGraph/L=ChiMinAlphaS CurChiSqMinusAlphaEntropyW
 	SetDataFolder fldrSav

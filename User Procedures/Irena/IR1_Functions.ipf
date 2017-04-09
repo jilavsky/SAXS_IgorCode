@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.05
+#pragma version = 2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 moved in this file some functions from retired Modeling I support - these are needed by other tools. 
 //2.05 added few missing window names which need to be killed when Kill all ..." is invoked. 
 //2.04 added IR2R_InsertRemoveLayers in the KillAllPanels
 //2.03 changed min size to 1A sicne many users are using really high q data. 
@@ -285,100 +286,242 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+//
+Function IR1L_AppendAnyText(TextToBeInserted)		//this function checks for existance of notebook
+	string TextToBeInserted						//and appends text to the end of the notebook
+	Silent 1
+	TextToBeInserted=TextToBeInserted+"\r"
+    SVAR/Z nbl=root:Packages:SAS_Modeling:NotebookName
+	if(SVAR_exists(nbl))
+		if (strsearch(WinList("*",";","WIN:16"),nbl,0)!=-1)				//Logs data in Logbook
+			Notebook $nbl selection={endOfFile, endOfFile}
+			Notebook $nbl text=TextToBeInserted
+		endif
+	endif
+end
 
-Function IR1S_UpdateModeMedianMean()
+Function IR1L_AppendAnyPorodText(TextToBeInserted)		//**DWS
+	string TextToBeInserted						//and appends text to the end of the notebook
+	Silent 1
+	TextToBeInserted=TextToBeInserted+"\r"
+    SVAR/Z nbl=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+	if(SVAR_exists(nbl))
+		if (strsearch(WinList("*",";","WIN:16"),nbl,0)==-1)				//Create PorodAnalysisResults notebook if necessary
+			IR1_CreatePorodLogbook()		
+		endif
+		Notebook $nbl selection={endOfFile, endOfFile}
+		Notebook $nbl text=TextToBeInserted		
+	endif
+end
+//
+//
+//
+//
+Function IR1_PullUpLoggbook()
 
-	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
+	if(!DataFolderExists("root:Packages:SAS_Modeling"))
+		abort "Notebook does not exist, folder does not exist,nothing exists... Did not initialize properly"
+	endif
+
+	SVAR/Z nbl=root:Packages:SAS_Modeling:NotebookName
+	if(!Svar_Exists(nbL))
+		abort "Notebook does not exist, folder does not exist,nothing exists... Did not initialize properly"
+	endif
+	string nbLL=nbl
+//	string nbLL="SAS_FitLog"
+	Silent 1
+	if (strsearch(WinList("*",";","WIN:16"),nbLL,0)!=-1) 		///Logbook exists
+		DoWindow/F $nbLL
+	endif
+
+end
+//
+Function IR1_CreatePorodLogbook()//***DWS
+
+	SVAR/Z nb=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+	if(!SVAR_Exists(nb))
+		NewDataFolder/O root:Packages
+		NewDataFolder/O root:Packages:Irena_AnalUnifFit
+		String/G root:Packages:Irena_AnalUnifFit:PorodNotebookName=""
+		SVAR nb=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+		nb="PorodAnalysisResults"
+	endif
+	Silent 1
+	if (strsearch(WinList("*",";","WIN:16"),nb,0)!=-1) 		///Logbook exists
+		DoWindow/B $nb
+	else
+
+
+	NewNotebook/N=$nb/F=1/V=1/K=3/W=(83,131,1766,800) as "PorodAnalysisResults"
+	Notebook $nb defaultTab=144, statusWidth=238
+	Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
+	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={180,252+1*8192,360+3*8192}, rulerDefaults={"Arial",10,0,(0,0,0)}
+	Notebook $nb newRuler=logbookRuler, justification=0, margins={0,0,1578}, spacing={0,0,0}, tabs={204+1*8192,258+1*8192,319+1*8192,388+1*8192,432+1*8192,503+1*8192,580+1*8192,665+1*8192,746+1*8192,839+1*8192,912+1*8192,980+1*8192,1035+1*8192,1097+1*8192,1167+1*8192,1268+1*8192,1377+1*8192,1476+1*8192}, rulerDefaults={"Arial",14,1,(0,0,0)}
+	Notebook $nb ruler=logbookRuler, fSize=10
+	Notebook $nb text="rWave\tMethod\tLvl\tIrenaLvls\tUseCsrs\tB[cm-1A-4]\tQv[Cm-1A-3 ]\tpiB/Q[m2/cm3]\tMinDens[g/cm3]\tMajDens[g/cm3]\tS"
+	Notebook $nb text="amDens[g/cm3]\tphimin\tSv[m2/cm3]\tSm[m2/g]\tMinChord[A]\tMajChord[A]\t10^-10xSLmin[cm/g]\t10^-10xSLmaj[cm/g]\r"
+	Notebook $nb fSize=-1
+	Notebook $nb text="rWv\tMeth\tLvl\tLvls\tCsrs\tB\tQv\tpiBoQ\tMinDen\tMajDen\tSamDen\tphimin\tSv\tSm\tMinCh\tMajCh\tSLmin \tSLmaj\r"
+	Notebook $nb text="\r"
+
 	
-	variable i
-	For (i=1;i<=NumberOfDistributions;i+=1)
-		IR1S_UpdtSeparateMMM(i)
-	endfor
+	endif
+end
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+
+Function IR1_InsertDateAndTime(nbl)
+	string nbl
+	
+	Silent 1
+	string bucket11
+	Variable now=datetime
+	bucket11=Secs2Date(now,0)+",  "+Secs2Time(now,0) +"\r"
+	//SVAR nbl=root:Packages:SAS_Modeling:NotebookName
+	Notebook $nbl selection={endOfFile, endOfFile}
+	Notebook $nbl text=bucket11
+end
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//
+//Function IR1S_UpdateModeMedianMean()
+//
+//	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
+//	
+//	variable i
+//	For (i=1;i<=NumberOfDistributions;i+=1)
+//		IR1S_UpdtSeparateMMM(i)
+//	endfor
+//end
+//
+//
+Function IR1_CreateLoggbook()
+
+	SVAR/Z nbl=root:Packages:SAS_Modeling:NotebookName
+	if(!SVAR_Exists(nbl))
+		NewDataFolder/O root:Packages
+		NewDataFolder/O root:Packages:SAS_Modeling 
+		String/G root:Packages:SAS_Modeling:NotebookName=""
+		SVAR nbl=root:Packages:SAS_Modeling:NotebookName
+		nbL="SAS_FitLog"
+	endif
+	
+	string nbLL=nbl
+	
+	Silent 1
+	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
+		DoWindow/B $nbl
+	else
+		NewNotebook/K=3/V=0/N=$nbl/F=1/V=1/W=(235.5,44.75,817.5,592.25) as nbl+": Irena Log"
+		Notebook $nbl defaultTab=144, statusWidth=238, pageMargins={72,72,72,72}
+		Notebook $nbl showRuler=1, rulerUnits=1, updating={1, 60}
+		Notebook $nbl newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={2.5*72, 3.5*72 + 8192, 5*72 + 3*8192}, rulerDefaults={"Arial",10,0,(0,0,0)}
+		Notebook $nbl ruler=Normal; Notebook $nbl  justification=1, rulerDefaults={"Arial",14,1,(0,0,0)}
+		Notebook $nbl text="This is log results of processing SAS data with Irena package.\r"
+		Notebook $nbl text="\r"
+		Notebook $nbl ruler=Normal
+		IR1_InsertDateAndTime(nbl)
+	endif
+
 end
 
 
-
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-Function IR1S_UpdtSeparateMMM(distNum)
-	Variable distNum
-
-	string OldDf=GetDataFolder(1)
-	SetDataFolder root:Packages:SAS_Modeling
-
-	NVAR DistMean=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean")
-	NVAR DistMedian=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median")
-	NVAR DistMode=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode")
-	NVAR DistLocation=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Location")
-	NVAR DistScale=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Scale")
-	NVAR DistShape=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Shape")
-	NVAR DistFWHM=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM")
-	SVAR DistDistributionType=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"DistributionType")
-	NVAR UseNumberDistribution=root:Packages:SAS_Modeling:UseNumberDistribution
-
-	Wave Distdiameters=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"diameters")
-	
-	Duplicate/O Distdiameters, Temp_Probability, Temp_Cumulative, Another_temp
-	Redimension/D Temp_Probability, Temp_Cumulative, Another_temp
-		if (cmpstr(DistDistributionType,"LogNormal")==0)
-			Temp_Probability=IR1_LogNormProbability(Distdiameters,DistLocation,DistScale, DistShape)
-			Temp_Cumulative=IR1_LogNormCumulative(Distdiameters,DistLocation,DistScale, DistShape)
-		endif
-		if (cmpstr(DistDistributionType,"Gauss")==0)
-			Temp_Probability=IR1_GaussProbability(Distdiameters,DistLocation,DistScale, DistShape)
-			Temp_Cumulative=IR1_GaussCumulative(Distdiameters,DistLocation,DistScale, DistShape)
-		endif
-		if (cmpstr(DistDistributionType,"LSW")==0)
-			Temp_Probability=IR1_LSWProbability(Distdiameters,DistLocation,DistScale, DistShape)
-			Temp_Cumulative=IR1_LSWCumulative(Distdiameters,DistLocation,DistScale, DistShape)
-		endif
-		if (cmpstr(DistDistributionType,"PowerLaw")==0)
-			Temp_Probability=NaN
-			Temp_Cumulative=NaN
-		endif
-
-	
-		Another_temp=Distdiameters*Temp_Probability
-		DistMean=areaXY(Distdiameters, Another_temp,0,inf)					//Sum P(R)*R*deltaR
-		DistMedian=Distdiameters[BinarySearchInterp(Temp_Cumulative, 0.5 )]		//R for which cumulative probability=0.5
-		FindPeak/P/Q Temp_Probability
-		DistMode=Distdiameters[V_PeakLoc]								//location of maximum on the P(R)
-		
-		DistFWHM=IR1_FindFWHM(Temp_Probability,Distdiameters)				//Ok, this is monkey approach
-
-		if (cmpstr(DistDistributionType,"PowerLaw")==0)
-			DistFWHM=NaN
-			DistMode=NaN
-			DistMedian=NaN
-			DistMean=NaN
-		endif
-	DoWindow IR1S_ControlPanel
-	if (V_Flag)
-		SetVariable $("DIS"+num2str(distNum)+"_Mode"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode"), format="%.1f", win=IR1S_ControlPanel 
-		SetVariable $("DIS"+num2str(distNum)+"_Median"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median"), format="%.1f", win=IR1S_ControlPanel 
-		SetVariable $("DIS"+num2str(distNum)+"_Mean"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean"), format="%.1f", win=IR1S_ControlPanel 
-		SetVariable $("DIS"+num2str(distNum)+"_FWHM"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM"), format="%.1f", win=IR1S_ControlPanel 
-	endif
-	DoWindow IR1U_ControlPanel
-	if (V_Flag)
-		SetVariable $("DIS"+num2str(distNum)+"_Mode"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode"), format="%.1f", win=IR1U_ControlPanel 
-		SetVariable $("DIS"+num2str(distNum)+"_Median"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median"), format="%.1f", win=IR1U_ControlPanel 
-		SetVariable $("DIS"+num2str(distNum)+"_Mean"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean"), format="%.1f", win=IR1U_ControlPanel 
-		SetVariable $("DIS"+num2str(distNum)+"_FWHM"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM"), format="%.1f", win=IR1U_ControlPanel 
-	endif
-	
-	
-	KillWaves/Z Temp_Probability, Temp_Cumulative, Another_Temp
-
-	setDataFolder OldDf
-end
+//
+//Function IR1S_UpdtSeparateMMM(distNum)
+//	Variable distNum
+//
+//	string OldDf=GetDataFolder(1)
+//	SetDataFolder root:Packages:SAS_Modeling
+//
+//	NVAR DistMean=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean")
+//	NVAR DistMedian=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median")
+//	NVAR DistMode=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode")
+//	NVAR DistLocation=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Location")
+//	NVAR DistScale=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Scale")
+//	NVAR DistShape=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Shape")
+//	NVAR DistFWHM=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM")
+//	SVAR DistDistributionType=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"DistributionType")
+//	NVAR UseNumberDistribution=root:Packages:SAS_Modeling:UseNumberDistribution
+//
+//	Wave Distdiameters=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"diameters")
+//	
+//	Duplicate/O Distdiameters, Temp_Probability, Temp_Cumulative, Another_temp
+//	Redimension/D Temp_Probability, Temp_Cumulative, Another_temp
+//		if (cmpstr(DistDistributionType,"LogNormal")==0)
+//			Temp_Probability=IR1_LogNormProbability(Distdiameters,DistLocation,DistScale, DistShape)
+//			Temp_Cumulative=IR1_LogNormCumulative(Distdiameters,DistLocation,DistScale, DistShape)
+//		endif
+//		if (cmpstr(DistDistributionType,"Gauss")==0)
+//			Temp_Probability=IR1_GaussProbability(Distdiameters,DistLocation,DistScale, DistShape)
+//			Temp_Cumulative=IR1_GaussCumulative(Distdiameters,DistLocation,DistScale, DistShape)
+//		endif
+//		if (cmpstr(DistDistributionType,"LSW")==0)
+//			Temp_Probability=IR1_LSWProbability(Distdiameters,DistLocation,DistScale, DistShape)
+//			Temp_Cumulative=IR1_LSWCumulative(Distdiameters,DistLocation,DistScale, DistShape)
+//		endif
+//		if (cmpstr(DistDistributionType,"PowerLaw")==0)
+//			Temp_Probability=NaN
+//			Temp_Cumulative=NaN
+//		endif
+//
+//	
+//		Another_temp=Distdiameters*Temp_Probability
+//		DistMean=areaXY(Distdiameters, Another_temp,0,inf)					//Sum P(R)*R*deltaR
+//		DistMedian=Distdiameters[BinarySearchInterp(Temp_Cumulative, 0.5 )]		//R for which cumulative probability=0.5
+//		FindPeak/P/Q Temp_Probability
+//		DistMode=Distdiameters[V_PeakLoc]								//location of maximum on the P(R)
+//		
+//		DistFWHM=IR1_FindFWHM(Temp_Probability,Distdiameters)				//Ok, this is monkey approach
+//
+//		if (cmpstr(DistDistributionType,"PowerLaw")==0)
+//			DistFWHM=NaN
+//			DistMode=NaN
+//			DistMedian=NaN
+//			DistMean=NaN
+//		endif
+//	DoWindow IR1S_ControlPanel
+//	if (V_Flag)
+//		SetVariable $("DIS"+num2str(distNum)+"_Mode"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode"), format="%.1f", win=IR1S_ControlPanel 
+//		SetVariable $("DIS"+num2str(distNum)+"_Median"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median"), format="%.1f", win=IR1S_ControlPanel 
+//		SetVariable $("DIS"+num2str(distNum)+"_Mean"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean"), format="%.1f", win=IR1S_ControlPanel 
+//		SetVariable $("DIS"+num2str(distNum)+"_FWHM"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM"), format="%.1f", win=IR1S_ControlPanel 
+//	endif
+//	DoWindow IR1U_ControlPanel
+//	if (V_Flag)
+//		SetVariable $("DIS"+num2str(distNum)+"_Mode"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mode"), format="%.1f", win=IR1U_ControlPanel 
+//		SetVariable $("DIS"+num2str(distNum)+"_Median"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Median"), format="%.1f", win=IR1U_ControlPanel 
+//		SetVariable $("DIS"+num2str(distNum)+"_Mean"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean"), format="%.1f", win=IR1U_ControlPanel 
+//		SetVariable $("DIS"+num2str(distNum)+"_FWHM"),value= $("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"FWHM"), format="%.1f", win=IR1U_ControlPanel 
+//	endif
+//	
+//	
+//	KillWaves/Z Temp_Probability, Temp_Cumulative, Another_Temp
+//
+//	setDataFolder OldDf
+//end
 
 
 //*****************************************************************************************************************
@@ -639,3 +782,377 @@ Function IR1_KillGraphsAndPanels()
 		endif
 	endfor
 end
+
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+Function/T IR1_ReturnListQRSFolders(ListOfQFolders, AllowQROnly)
+	string ListOfQFolders
+	variable AllowQROnly
+	
+	string result, tempStringQ, tempStringR, tempStringS, nowFolder,oldDf
+	oldDf=GetDataFolder(1)
+	variable i, j
+	string tempStr
+	result=""
+	For(i=0;i<ItemsInList(ListOfQFolders);i+=1)
+		NowFolder= stringFromList(i,ListOfQFolders)
+		setDataFolder NowFolder
+		tempStr=IN2G_ConvertDataDirToList(DataFolderDir(2))
+		tempStringQ=IR2P_ListOfWavesOfType("q*",tempStr)+IR2P_ListOfWavesOfType("d*",tempStr)+IR2P_ListOfWavesOfType("t*",tempStr)+IR2P_ListOfWavesOfType("m*",tempStr)
+		tempStringR=IR2P_ListOfWavesOfType("r*",tempStr)
+		tempStringS=IR2P_ListOfWavesOfType("s*",tempStr)
+		For (j=0;j<ItemsInList(tempStringQ);j+=1)
+			if(AllowQROnly)
+				if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringQ)[1,inf]+";*"))
+					result+=NowFolder+";"
+					break
+				endif
+			else
+				if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringQ)[1,inf]+";*") && stringMatch(tempStringS,"*s"+StringFromList(j,tempStringQ)[1,inf]+";*"))
+					result+=NowFolder+";"
+					break
+				endif
+			endif
+		endfor
+				
+	endfor
+	setDataFOlder oldDf
+	return result
+
+end
+
+
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////
+////Function/T IR1_ListOfWavesOfType(type,ListOfWaves)
+////		string type, ListOfWaves
+////		
+////		variable i
+////		string tempresult=""
+////		for (i=0;i<ItemsInList(ListOfWaves);i+=1)
+////			if (stringMatch(StringFromList(i,ListOfWaves),type+"*"))
+////				tempresult+=StringFromList(i,ListOfWaves)+";"
+////			endif
+////		endfor
+////
+////	return tempresult
+////end
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
+Function/T IR1_ListIndraWavesForPopups(WhichWave,WhereAreControls,IncludeSMR,OneOrTwo)
+	string WhichWave,WhereAreControls
+	variable IncludeSMR, OneOrtwo		//if IncludeSMR=-1 then ONLY SMR data!
+
+	string AllWavesInt
+	string AllWavesQ 	
+	string AllWavesE 	
+	if(OneOrTwo==1)
+		 AllWavesInt = IR1_ListOfWaves("DSM_Int",WhereAreControls,abs(IncludeSMR),0)	
+		 AllWavesQ = IR1_ListOfWaves("DSM_Qvec",WhereAreControls,abs(IncludeSMR),0)	
+		 AllWavesE = IR1_ListOfWaves("DSM_Error",WhereAreControls,abs(IncludeSMR),0)	
+	else
+		 AllWavesInt = IR1_ListOfWaves2("DSM_Int",WhereAreControls,abs(IncludeSMR),0)	
+		 AllWavesQ = IR1_ListOfWaves2("DSM_Qvec",WhereAreControls,abs(IncludeSMR),0)	
+		 AllWavesE = IR1_ListOfWaves2("DSM_Error",WhereAreControls,abs(IncludeSMR),0)	
+	endif
+	
+	string SelectedInt=""
+	string SelectedQ=""
+	string SelectedE=""
+	string result
+	//M_BKG_Int
+	if(stringmatch(AllWavesInt, "*M_BKG_Int*") && stringmatch(AllWavesQ, "*M_BKG_Qvec*")  && stringmatch(AllWavesE, "*M_BKG_Error*") )		
+		SelectedInt+="M_BKG_Int;"
+		SelectedQ+="M_BKG_Qvec;"
+		SelectedE+="M_BKG_Error;"
+	endif
+	if(stringmatch(AllWavesInt, "*BKG_Int*") && stringmatch(AllWavesQ, "*BKG_Qvec*")  && stringmatch(AllWavesE, "*BKG_Error*") )		
+		SelectedInt+="BKG_Int;"
+		SelectedQ+="BKG_Qvec;"
+		SelectedE+="BKG_Error;"	
+	endif
+	if(stringmatch(AllWavesInt, "*M_DSM_Int*") && stringmatch(AllWavesQ, "*M_DSM_Qvec*")  && stringmatch(AllWavesE, "*M_DSM_Error*") )		
+		SelectedInt+="M_DSM_Int;"
+		SelectedQ+="M_DSM_Qvec;"
+		SelectedE+="M_DSM_Error;"	
+	endif
+	if(stringmatch(AllWavesInt, "*DSM_Int*") &&stringmatch( AllWavesQ, "*DSM_Qvec*")  && stringmatch(AllWavesE, "*DSM_Error*") )		
+		SelectedInt+="DSM_Int;"
+		SelectedQ+="DSM_Qvec;"
+		SelectedE+="DSM_Error;"	
+	endif
+	if(IncludeSMR && stringmatch(AllWavesInt, "*M_SMR_Int*") &&stringmatch( AllWavesQ, "*M_SMR_Qvec*")  &&stringmatch( AllWavesE, "*M_SMR_Error*") )		
+		SelectedInt+="M_SMR_Int;"
+		SelectedQ+="M_SMR_Qvec;"
+		SelectedE+="M_SMR_Error;"	
+	endif
+	if(IncludeSMR && stringmatch(AllWavesInt, "*SMR_Int*") && stringmatch(AllWavesQ, "*SMR_Qvec*")  && stringmatch(AllWavesE, "*SMR_Error*") )		
+		SelectedInt+="SMR_Int;"
+		SelectedQ+="SMR_Qvec;"
+		SelectedE+="SMR_Error;"	
+	endif	
+	if((IncludeSMR==-1))
+		SelectedInt=""
+		SelectedQ=""
+		SelectedE=""	
+	endif
+	if((IncludeSMR==-1) && stringmatch(AllWavesInt, "*SMR_Int*") && stringmatch(AllWavesQ, "*SMR_Qvec*")  && stringmatch(AllWavesE, "*SMR_Error*") )		
+		SelectedInt+="SMR_Int;"
+		SelectedQ+="SMR_Qvec;"
+		SelectedE+="SMR_Error;"	
+	endif	
+	if((IncludeSMR==-1) && stringmatch(AllWavesInt, "*M_SMR_Int*") &&stringmatch( AllWavesQ, "*M_SMR_Qvec*")  &&stringmatch( AllWavesE, "*M_SMR_Error*") )		
+		SelectedInt+="M_SMR_Int;"
+		SelectedQ+="M_SMR_Qvec;"
+		SelectedE+="M_SMR_Error;"	
+	endif
+
+	SelectedE+="---;"
+	if(cmpstr(whichWave,"DSM_Int")==0)
+		result = SelectedInt
+	elseif(cmpstr(whichWave,"DSM_Qvec")==0)
+		result = SelectedQ
+	else
+		result = SelectedE	
+	endif
+	if (strlen(result)<1)
+		result="---;"
+	endif
+	return result
+end
+
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+Function/T IR1_ListOfWaves(WaveTp,WhereAreControls, IncludeSMRData, AllowQRDataOnly)
+	string WaveTp, WhereAreControls
+	variable  IncludeSMRData, AllowQRDataOnly
+	
+	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all waves 
+	
+	string result="", tempresult="", dataType="", tempStringQ="", tempStringR="", tempStringS=""
+	SVAR FldrNm=$("root:Packages:"+WhereAreControls+":DataFolderName")
+	NVAR Indra2Dta=$("root:Packages:"+WhereAreControls+":UseIndra2Data")
+	NVAR QRSdata=$("root:Packages:"+WhereAreControls+":UseQRSData")
+	variable i,j
+		
+	if (Indra2Dta)
+		result=IN2G_CreateListOfItemsInFolder(FldrNm,2)
+		if(stringMatch(result,"*"+WaveTp+"*"))
+			tempresult=""
+			for (i=0;i<ItemsInList(result);i+=1)
+				if (stringMatch(StringFromList(i,result),"*"+WaveTp+"*"))
+					tempresult+=StringFromList(i,result)+";"
+				endif
+			endfor
+		endif
+		if (cmpstr(WaveTp,"DSM_Int")==0)
+			For (j=0;j<ItemsInList(result);j+=1)
+				if (stringMatch(StringFromList(j,result),"*BKG_Int*"))
+					tempresult+=StringFromList(j,result)+";"
+				endif
+				if(IncludeSMRData)
+					if (stringMatch(StringFromList(j,result),"*SMR_Int*"))
+						tempresult+=StringFromList(j,result)+";"
+					endif				
+				endif
+			endfor
+		elseif(cmpstr(WaveTp,"DSM_Qvec")==0)
+			For (j=0;j<ItemsInList(result);j+=1)
+				if (stringMatch(StringFromList(j,result),"*BKG_Qvec*"))
+					tempresult+=StringFromList(j,result)+";"
+				endif
+				if(IncludeSMRData)
+					if (stringMatch(StringFromList(j,result),"*SMR_Qvec*"))
+						tempresult+=StringFromList(j,result)+";"
+					endif				
+				endif
+			endfor
+		else
+			For (j=0;j<ItemsInList(result);j+=1)
+				if (stringMatch(StringFromList(j,result),"*BKG_Error*"))
+					tempresult+=StringFromList(j,result)+";"
+				endif
+				if(IncludeSMRData)
+					if (stringMatch(StringFromList(j,result),"*SMR_Error*"))
+						tempresult+=StringFromList(j,result)+";"
+					endif				
+				endif
+			endfor
+	endif
+			result=tempresult
+	elseif(QRSData) 
+		result=""			//IN2G_CreateListOfItemsInFolder(FldrNm,2)
+		tempStringQ=IR2P_ListOfWavesOfType("q",IN2G_CreateListOfItemsInFolder(FldrNm,2))
+		tempStringR=IR2P_ListOfWavesOfType("r",IN2G_CreateListOfItemsInFolder(FldrNm,2))
+		tempStringS=IR2P_ListOfWavesOfType("s",IN2G_CreateListOfItemsInFolder(FldrNm,2))
+		
+		if (cmpstr(WaveTp,"DSM_Int")==0)
+//			dataType="r"
+			For (j=0;j<ItemsInList(tempStringR);j+=1)
+				if(AllowQRDataOnly)
+					if (stringMatch(tempStringQ,"*q"+StringFromList(j,tempStringR)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringR)+";"
+					endif
+				else
+					if (stringMatch(tempStringQ,"*q"+StringFromList(j,tempStringR)[1,inf]+";*") && stringMatch(tempStringS,"*s"+StringFromList(j,tempStringR)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringR)+";"
+					endif
+				endif
+			endfor
+		elseif(cmpstr(WaveTp,"DSM_Qvec")==0)
+//			dataType="q"
+			For (j=0;j<ItemsInList(tempStringQ);j+=1)
+				if(AllowQRDataOnly)
+					if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringQ)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringQ)+";"
+					endif
+				else
+					if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringQ)[1,inf]+";*") && stringMatch(tempStringS,"*s"+StringFromList(j,tempStringQ)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringQ)+";"
+					endif
+				endif	
+			endfor
+		else
+//			dataType="s"			
+			For (j=0;j<ItemsInList(tempStringS);j+=1)
+				if(AllowQRDataOnly)
+					//nonsense...
+				else
+					if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringS)[1,inf]+";*") && stringMatch(tempStringQ,"*q"+StringFromList(j,tempStringS)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringS)+";"
+					endif
+				endif
+			endfor
+		endif
+	else
+		result=IN2G_CreateListOfItemsInFolder(FldrNm,2)
+	endif
+	
+	return result
+end
+
+Function/T IR1_ListOfWaves2(WaveTp,WhereAreControls, IncludeSMRData,AllowQRDataOnly)
+	string WaveTp, WhereAreControls
+	variable IncludeSMRData, AllowQRDataOnly
+	
+	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all waves 
+	
+	string result, tempresult, dataType, tempStringQ, tempStringR, tempStringS
+	SVAR FldrNm=$("root:Packages:"+WhereAreControls+":DataFolderName2")
+	NVAR Indra2Dta=$("root:Packages:"+WhereAreControls+":UseIndra2Data2")
+	NVAR QRSdata=$("root:Packages:"+WhereAreControls+":UseQRSData2")
+	variable i,j
+	tempresult=""
+		
+	if (Indra2Dta)
+		result=IN2G_CreateListOfItemsInFolder(FldrNm,2)
+		if(stringMatch(result,"*"+WaveTp+"*"))
+			for (i=0;i<ItemsInList(result);i+=1)
+				if (stringMatch(StringFromList(i,result),"*"+WaveTp+"*"))
+					tempresult+=StringFromList(i,result)+";"
+				endif
+			endfor
+		endif
+		if (cmpstr(WaveTp,"DSM_Int")==0)
+			For (j=0;j<ItemsInList(result);j+=1)
+				if (stringMatch(StringFromList(j,result),"*BKG_Int*"))
+					tempresult+=StringFromList(j,result)+";"
+				endif
+				if(IncludeSMRData)
+					if (stringMatch(StringFromList(j,result),"*SMR_Int*"))
+						tempresult+=StringFromList(j,result)+";"
+					endif				
+				endif
+			endfor
+		elseif(cmpstr(WaveTp,"DSM_Qvec")==0)
+			For (j=0;j<ItemsInList(result);j+=1)
+				if (stringMatch(StringFromList(j,result),"*BKG_Qvec*"))
+					tempresult+=StringFromList(j,result)+";"
+				endif
+				if(IncludeSMRData)
+					if (stringMatch(StringFromList(j,result),"*SMR_Qvec*"))
+						tempresult+=StringFromList(j,result)+";"
+					endif				
+				endif
+			endfor
+		else
+			For (j=0;j<ItemsInList(result);j+=1)
+				if (stringMatch(StringFromList(j,result),"*BKG_Error*"))
+					tempresult+=StringFromList(j,result)+";"
+				endif
+				if(IncludeSMRData)
+					if (stringMatch(StringFromList(j,result),"*SMR_Error*"))
+						tempresult+=StringFromList(j,result)+";"
+					endif				
+				endif
+			endfor
+			result=tempresult
+		endif
+	elseif(QRSData) 
+		result=""			//IN2G_CreateListOfItemsInFolder(FldrNm,2)
+		tempStringQ=IR2P_ListOfWavesOfType("q",IN2G_CreateListOfItemsInFolder(FldrNm,2))
+		tempStringR=IR2P_ListOfWavesOfType("r",IN2G_CreateListOfItemsInFolder(FldrNm,2))
+		tempStringS=IR2P_ListOfWavesOfType("s",IN2G_CreateListOfItemsInFolder(FldrNm,2))
+		
+		if (cmpstr(WaveTp,"DSM_Int")==0)
+//			dataType="r"
+			For (j=0;j<ItemsInList(tempStringR);j+=1)
+				if(AllowQRDataOnly)
+					if (stringMatch(tempStringQ,"*q"+StringFromList(j,tempStringR)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringR)+";"
+					endif
+				else
+					if (stringMatch(tempStringQ,"*q"+StringFromList(j,tempStringR)[1,inf]+";*") && stringMatch(tempStringS,"*s"+StringFromList(j,tempStringR)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringR)+";"
+					endif
+				endif
+			endfor
+		elseif(cmpstr(WaveTp,"DSM_Qvec")==0)
+//			dataType="q"
+			For (j=0;j<ItemsInList(tempStringQ);j+=1)
+				if(AllowQRDataOnly)
+					if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringQ)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringQ)+";"
+					endif
+				else
+					if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringQ)[1,inf]+";*") && stringMatch(tempStringS,"*s"+StringFromList(j,tempStringQ)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringQ)+";"
+					endif
+				endif	
+			endfor
+		else
+//			dataType="s"			
+			For (j=0;j<ItemsInList(tempStringS);j+=1)
+				if(AllowQRDataOnly)
+					//nonsense...
+				else
+					if (stringMatch(tempStringR,"*r"+StringFromList(j,tempStringS)[1,inf]+";*") && stringMatch(tempStringQ,"*q"+StringFromList(j,tempStringS)[1,inf]+";*"))
+						result+=StringFromList(j,tempStringS)+";"
+					endif
+				endif
+			endfor
+		endif
+	else
+		result=IN2G_CreateListOfItemsInFolder(FldrNm,2)
+	endif
+	
+	return result
+end
+

@@ -161,7 +161,7 @@ STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftR
 			counter-=1
 		endif
 		if(numtype(waveIn[counter])==0)
-			if(waveIn[counter]>LevelSearched)
+			if(waveIn[counter]>LevelSearched && counter>0 && Counter<numpnts(WaveIn)) //fix when cannot reach 50% or less value... 
 				LevelPoint = counter
 			else
 				Done=1
