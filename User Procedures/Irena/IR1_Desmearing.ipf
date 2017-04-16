@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.11
+#pragma version = 2.12
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12  removed unused functions
 //2.11 Modified Screen Size check to match the needs
 //2.10 added getHelp button calling to www manual
 //2.09 sped up about 6x the smearing routine in IR1B_SmearData. May need to be checked, seems to work in Unified, Modeling II and Desmearing.
@@ -368,23 +369,23 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
-Function IR1B_PowerLaw(w,x) : FitFunc
-	Wave w
-	Variable x
-
-	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
-	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
-	//CurveFitDialog/ Equation:
-	//CurveFitDialog/ f(x) = w_0*x^w_1
-	//CurveFitDialog/ End of Equation
-	//CurveFitDialog/ Independent Variables 1
-	//CurveFitDialog/ x
-	//CurveFitDialog/ Coefficients 2
-	//CurveFitDialog/ w[0] = w_0
-	//CurveFitDialog/ w[1] = w_1
-
-	return w[0]*x^w[1]
-End
+//Function IR1B_PowerLaw(w,x) : FitFunc
+//	Wave w
+//	Variable x
+//
+//	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+//	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+//	//CurveFitDialog/ Equation:
+//	//CurveFitDialog/ f(x) = w_0*x^w_1
+//	//CurveFitDialog/ End of Equation
+//	//CurveFitDialog/ Independent Variables 1
+//	//CurveFitDialog/ x
+//	//CurveFitDialog/ Coefficients 2
+//	//CurveFitDialog/ w[0] = w_0
+//	//CurveFitDialog/ w[1] = w_1
+//
+//	return w[0]*x^w[1]
+//End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -422,27 +423,27 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
-
-
-Function IR1B_FreePorod(w,x) : FitFunc
-	Wave w
-	Variable x
-
-	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
-	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
-	//CurveFitDialog/ Equation:
-	//CurveFitDialog/ f(x) = c1+c2*(x^pwr)
-	//CurveFitDialog/ End of Equation
-	//CurveFitDialog/ Independent Variables 1
-	//CurveFitDialog/ x
-	//CurveFitDialog/ Coefficients 3
-	//CurveFitDialog/ w[0] = c1
-	//CurveFitDialog/ w[1] = c2
-	//CurveFitDialog/ w[2] = pwr
-
-	return w[0]+w[1]/(x^w[2])
-End
-
+//
+//
+//Function IR1B_FreePorod(w,x) : FitFunc
+//	Wave w
+//	Variable x
+//
+//	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+//	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+//	//CurveFitDialog/ Equation:
+//	//CurveFitDialog/ f(x) = c1+c2*(x^pwr)
+//	//CurveFitDialog/ End of Equation
+//	//CurveFitDialog/ Independent Variables 1
+//	//CurveFitDialog/ x
+//	//CurveFitDialog/ Coefficients 3
+//	//CurveFitDialog/ w[0] = c1
+//	//CurveFitDialog/ w[1] = c2
+//	//CurveFitDialog/ w[2] = pwr
+//
+//	return w[0]+w[1]/(x^w[2])
+//End
+//
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************

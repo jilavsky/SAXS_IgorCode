@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.09
+#pragma version =1.10
 
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.09 change in code, do nto remove negative values for R_Int, causes problems in some cases. 
+//1.10  removed unused functions
+//1.09 change in code, do not remove negative values for R_Int, causes problems in some cases. 
 //1.08 fixed typo with DSM data dq. 
 //1.07 fixed problems with blank interpolation when intensities are really low and get negative. 
 //1.06 added SMR_dQ types waves  
@@ -24,12 +25,12 @@
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
-Function IN3_Template()
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:Indra3
-
-	setDataFolder OldDf	
-end
+//Function IN3_Template()
+//	string oldDf=GetDataFolder(1)
+//	setDataFolder root:Packages:Indra3
+//
+//	setDataFolder OldDf	
+//end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -163,27 +164,27 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
-
-Function IN3_ReCalculateTransmission()
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:Indra3
-
-	NVAR SampleTransmissionPeakToPeak = root:Packages:Indra3:SampleTransmissionPeakToPeak
-	NVAR BlankMaximum=root:Packages:Indra3:BlankMaximum
-	NVAR MaximumIntensity=root:Packages:Indra3:MaximumIntensity
-	NVAR SampleTransmission=root:Packages:Indra3:SampleTransmission
-	NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
-	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
-	//SampleTransmissionPeakToPeak = MaximumIntensity/BlankMaximum
-	SampleTransmission = SampleTransmissionPeakToPeak
-	if(UseMSAXSCorrection)
-		SampleTransmission*=MSAXSCorrection
-	endif
-	
-	setDataFolder OldDf	
-end
-
-
+//
+//Function IN3_ReCalculateTransmission()
+//	string oldDf=GetDataFolder(1)
+//	setDataFolder root:Packages:Indra3
+//
+//	NVAR SampleTransmissionPeakToPeak = root:Packages:Indra3:SampleTransmissionPeakToPeak
+//	NVAR BlankMaximum=root:Packages:Indra3:BlankMaximum
+//	NVAR MaximumIntensity=root:Packages:Indra3:MaximumIntensity
+//	NVAR SampleTransmission=root:Packages:Indra3:SampleTransmission
+//	NVAR MSAXSCorrection=root:Packages:Indra3:MSAXSCorrection
+//	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
+//	//SampleTransmissionPeakToPeak = MaximumIntensity/BlankMaximum
+//	SampleTransmission = SampleTransmissionPeakToPeak
+//	if(UseMSAXSCorrection)
+//		SampleTransmission*=MSAXSCorrection
+//	endif
+//	
+//	setDataFolder OldDf	
+//end
+//
+//
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************

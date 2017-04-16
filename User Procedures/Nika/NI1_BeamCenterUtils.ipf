@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27  removed unused functions
 //2.26 Modified Screen Size check to match the needs
 //2.25 added getHelp button calling to www manual
 //2.24 Modified to point to USAXS_data on USAXS computers 
@@ -926,28 +927,28 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
-   
- Function NI2T_CalculateGammaFixedDist(px,py)  
-	variable px,py
-
-//that is knowing ASA:
-//function ASA(&$firstangle, &$secondangle, &$intside) {
-  //     $otherangle=(180-$firstangle-$secondangle);
-   //    $firstside=($intside*(sin(deg2rad($firstangle)))/(sin(deg2rad($otherangle))));
-    //   $secondside=($intside*(sin(deg2rad($secondangle)))/(sin(deg2rad($otherangle))));
-	variable TwoTheta= 2*NI2T_CalculateThetaWithTilts(px,py,1)		//theta of this px, py with tilts
-	variable GammaAngle=NI2T_CalculateGammaWithTilts(px,py)		//gamma angle
-	variable SDD
-	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance	//in mm
-	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
-	NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
-	SDD=2*SampleToCCDDistance/(PixelSizeX+PixelSizeY)
-	variable OtherAngle = pi - TwoTheta - GammaAngle
-	variable result = SDD*sin(TwoTheta)/sin(OtherAngle)
-	print result
-end
-
-
+//   
+// Function NI2T_CalculateGammaFixedDist(px,py)  
+//	variable px,py
+//
+////that is knowing ASA:
+////function ASA(&$firstangle, &$secondangle, &$intside) {
+//  //     $otherangle=(180-$firstangle-$secondangle);
+//   //    $firstside=($intside*(sin(deg2rad($firstangle)))/(sin(deg2rad($otherangle))));
+//    //   $secondside=($intside*(sin(deg2rad($secondangle)))/(sin(deg2rad($otherangle))));
+//	variable TwoTheta= 2*NI2T_CalculateThetaWithTilts(px,py,1)		//theta of this px, py with tilts
+//	variable GammaAngle=NI2T_CalculateGammaWithTilts(px,py)		//gamma angle
+//	variable SDD
+//	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance	//in mm
+//	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
+//	NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
+//	SDD=2*SampleToCCDDistance/(PixelSizeX+PixelSizeY)
+//	variable OtherAngle = pi - TwoTheta - GammaAngle
+//	variable result = SDD*sin(TwoTheta)/sin(OtherAngle)
+//	print result
+//end
+//
+//
 
 
  //*******************************************************************************************************************************************
@@ -2554,52 +2555,52 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
-
-Function NI1BC_CalcXYForAngleAndParam(Type, Angle, BeamCenterX, BeamCenterY, dspacing,Wavelength,SampleToCCDDistance)
-	variable Angle, BeamCenterX, BeamCenterY, dspacing,Wavelength,SampleToCCDDistance		//d in A, angle in degrees, centers in pixles etc...
-	string Type		//X (horizontal) or Y (vertical)
-	
-	string oldDf=GetDataFOlder(1)
-	setDataFolder root:Packages:Convert2Dto1D
-	NVAR PixelSizeX
-	NVAR PixelSizeY
-	NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt							//tilt in degrees
-	NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt								//tilt in degrees
-	variable TheoreticalDistance, pixelDistX, pixelDistY 			//distance from center of the line
-	variable pixelPosXAngle, pixelPosYAngle
-	//Ok, this should just return simple Bragg law with little trigonometry
-	//		
-	//wrong at high angles...pixelDist = 2 * SampleToCCDDistance * asin( Wavelength /(2* dspacing) )  
-	variable SDDLoc=SampleToCCDDistance              
-	TheoreticalDistance =  SDDLoc * tan(2* asin( Wavelength /(2* dspacing) ) )	//this is theoretical distance on detector in perfect alignment
-	pixelDistX = TheoreticalDistance* cos(Angle * (pi/180))  / PixelSizeX 		//this is in pixels how much that theoretical distance is...  in X direction corrected for azimuthal angle... 
-	pixelDistY = TheoreticalDistance *(-1)* sin(Angle * (pi/180))  / PixelSizeY		//this is in pixels
-	variable  SampleToCCDDistanceX = SampleToCCDDistance/PixelSizeX		//this is now in pixles aslo
-	variable  SampleToCCDDistanceY = SampleToCCDDistance/PixelSizeY
-	setDataFolder OldDf
-	variable/C CmplxPxPy
-	if(abs(HorizontalTilt)<1e-12&&abs(VerticalTilt)<1e-12)		//no tilts, old code...
-		if(cmpstr(Type,"X")==0)
-	//		return BeamCenterX + NI1T_TheoreticalToTilted(pixelDistX, SampleToCCDDistanceX, HorizontalTilt)
-			return BeamCenterX + pixelDistX
-		elseif(cmpstr(Type,"Y")==0)
-	//		return BeamCenterY + NI1T_TheoreticalToTilted(pixelDistY, SampleToCCDDistanceY, VerticalTilt)
-			return BeamCenterY + pixelDistY
-		else
-			return 0
-		endif 
-	else		//tilts used, need to find it with tilts... 
-		CmplxPxPy = NI1BC_FindTiltedPxPyValues(dspacing,(Angle*pi/180))
-		if(cmpstr(Type,"X")==0)
-			return real(CmplxPxPy)
-		elseif(cmpstr(Type,"Y")==0)
-			return imag(CmplxPxPy)
-		else
-			return 0
-		endif
-	endif
-end
+//
+//
+//Function NI1BC_CalcXYForAngleAndParam(Type, Angle, BeamCenterX, BeamCenterY, dspacing,Wavelength,SampleToCCDDistance)
+//	variable Angle, BeamCenterX, BeamCenterY, dspacing,Wavelength,SampleToCCDDistance		//d in A, angle in degrees, centers in pixles etc...
+//	string Type		//X (horizontal) or Y (vertical)
+//	
+//	string oldDf=GetDataFOlder(1)
+//	setDataFolder root:Packages:Convert2Dto1D
+//	NVAR PixelSizeX
+//	NVAR PixelSizeY
+//	NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt							//tilt in degrees
+//	NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt								//tilt in degrees
+//	variable TheoreticalDistance, pixelDistX, pixelDistY 			//distance from center of the line
+//	variable pixelPosXAngle, pixelPosYAngle
+//	//Ok, this should just return simple Bragg law with little trigonometry
+//	//		
+//	//wrong at high angles...pixelDist = 2 * SampleToCCDDistance * asin( Wavelength /(2* dspacing) )  
+//	variable SDDLoc=SampleToCCDDistance              
+//	TheoreticalDistance =  SDDLoc * tan(2* asin( Wavelength /(2* dspacing) ) )	//this is theoretical distance on detector in perfect alignment
+//	pixelDistX = TheoreticalDistance* cos(Angle * (pi/180))  / PixelSizeX 		//this is in pixels how much that theoretical distance is...  in X direction corrected for azimuthal angle... 
+//	pixelDistY = TheoreticalDistance *(-1)* sin(Angle * (pi/180))  / PixelSizeY		//this is in pixels
+//	variable  SampleToCCDDistanceX = SampleToCCDDistance/PixelSizeX		//this is now in pixles aslo
+//	variable  SampleToCCDDistanceY = SampleToCCDDistance/PixelSizeY
+//	setDataFolder OldDf
+//	variable/C CmplxPxPy
+//	if(abs(HorizontalTilt)<1e-12&&abs(VerticalTilt)<1e-12)		//no tilts, old code...
+//		if(cmpstr(Type,"X")==0)
+//	//		return BeamCenterX + NI1T_TheoreticalToTilted(pixelDistX, SampleToCCDDistanceX, HorizontalTilt)
+//			return BeamCenterX + pixelDistX
+//		elseif(cmpstr(Type,"Y")==0)
+//	//		return BeamCenterY + NI1T_TheoreticalToTilted(pixelDistY, SampleToCCDDistanceY, VerticalTilt)
+//			return BeamCenterY + pixelDistY
+//		else
+//			return 0
+//		endif 
+//	else		//tilts used, need to find it with tilts... 
+//		CmplxPxPy = NI1BC_FindTiltedPxPyValues(dspacing,(Angle*pi/180))
+//		if(cmpstr(Type,"X")==0)
+//			return real(CmplxPxPy)
+//		elseif(cmpstr(Type,"Y")==0)
+//			return imag(CmplxPxPy)
+//		else
+//			return 0
+//		endif
+//	endif
+//end
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

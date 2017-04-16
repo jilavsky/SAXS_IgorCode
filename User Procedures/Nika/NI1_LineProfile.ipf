@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.03
+#pragma version=2.04
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.04  removed unused functions
 //2.03 minor fix to avoid name collision with LaueGo
 //2.02 added license for ANL
 //2.01 update for Igor 6.20
@@ -1262,12 +1263,12 @@ Function NI1_ImLineProfWidthSetVarProc(ctrlName,varNum,varStr,varName) : SetVari
 	NI1_UpdatePositionAndWidth(0)		// 2
 End
 //*******************************************************************************************************
-
-Function NI1_ImLineProfileCPButtonProc(ctrlName) : ButtonControl
-	String ctrlName
-
-	NI1_ImageLineProfileCheckpoint()
-End
+//
+//Function NI1_ImLineProfileCPButtonProc(ctrlName) : ButtonControl
+//	String ctrlName
+//
+//	NI1_ImageLineProfileCheckpoint()
+//End
 //*******************************************************************************************************
 
 Function NI1_ImLineProfRemoveButtonProc(ctrlName) : ButtonControl
@@ -1536,37 +1537,37 @@ Function NI1_ClearFHTraces()
 	imageGraphName= ""						// vip to get initializations right
 End
 //*******************************************************************************************************
-Function NI1_minWave(w,d)
-	Wave w
-	Variable d
-	
-	if(DimDelta(w,d)>0)
-		return DimOffset(w,d)
-	endif
-	
-	return DimOffset(w,d)+DimSize(w,d)*DimDelta(w,d)
-End
-
-//*******************************************************************************************************
-Function NI1_maxWave(w,d)
-	Wave w
-	Variable d
-	
-	if(DimDelta(w,d)<0)
-		return DimOffset(w,d)
-	endif
-	
-	return DimOffset(w,d)+DimSize(w,d)*DimDelta(w,d)
-End
-
-Function NI1_printwaves(wa,wb)
-	Wave wa,wb
-	
-	Variable i
-	for(i=0;i<Dimsize(wa,0);i+=1)
-		print wa[i],wb[i]
-	endfor
-End
+//Function NI1_minWave(w,d)
+//	Wave w
+//	Variable d
+//	
+//	if(DimDelta(w,d)>0)
+//		return DimOffset(w,d)
+//	endif
+//	
+//	return DimOffset(w,d)+DimSize(w,d)*DimDelta(w,d)
+//End
+//
+////*******************************************************************************************************
+//Function NI1_maxWave(w,d)
+//	Wave w
+//	Variable d
+//	
+//	if(DimDelta(w,d)<0)
+//		return DimOffset(w,d)
+//	endif
+//	
+//	return DimOffset(w,d)+DimSize(w,d)*DimDelta(w,d)
+//End
+//
+//Function NI1_printwaves(wa,wb)
+//	Wave wa,wb
+//	
+//	Variable i
+//	for(i=0;i<Dimsize(wa,0);i+=1)
+//		print wa[i],wb[i]
+//	endfor
+//End
 //*******************************************************************************************************
 // 09JAN03
 // Given a name of an image e.g., "graph0", the following function returns the plane displayed in the

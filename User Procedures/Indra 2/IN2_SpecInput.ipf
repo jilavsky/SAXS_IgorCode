@@ -730,14 +730,14 @@ Window IN2_ConvertRAW_To_USAXS() : Panel			//the panel to convert Raw to USAXS o
 	SetVariable ShowTransferredTo,limits={-Inf,Inf,1},value= root:Packages:Indra3:ListOfTransfers,noedit= 1
 EndMacro
 
-Function IN2_RefreshUSAXSLibName(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName			//variable control to refresh Liberal name in the panel on change of some parameters
-	Variable varNum
-	String varStr
-	String varName
-
-	 IN2_GenerateLibUSAXSFolderName()
-End
+//Function IN2_RefreshUSAXSLibName(ctrlName,varNum,varStr,varName) : SetVariableControl
+//	String ctrlName			//variable control to refresh Liberal name in the panel on change of some parameters
+//	Variable varNum
+//	String varStr
+//	String varName
+//
+//	 IN2_GenerateLibUSAXSFolderName()
+//End
 
 Function/S IN2_FindFolderWithScanTypes(startDF, levels, ScanType, LongShortType)	//finds folders with scan types, scan type depends on SpecCommand
         String startDF, ScanType                  // startDF requires trailing colon.
@@ -2172,16 +2172,16 @@ Function IN2_LoadSpecPanelCheckProc(ctrlName,checked) : CheckBoxControl
 
 End
 
-Function IN2_SpecLoad_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-	
-	if(cmpstr(ctrlName,"ConvertDataImmediately")==0)
-	
-	endif
-
-End
+//Function IN2_SpecLoad_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//	
+//	if(cmpstr(ctrlName,"ConvertDataImmediately")==0)
+//	
+//	endif
+//
+//End
 
 Function  IN2_ConvertSpecScans()
 	PauseUpdate; Silent 1		// building window...

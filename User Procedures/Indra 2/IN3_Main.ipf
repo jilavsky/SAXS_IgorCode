@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.91
+#pragma version = 1.92
 #pragma IgorVersion=7.00
 //DO NOT renumber Main files every time, these are main release numbers...
 
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.92  removed unused functions
 //1.91 #pragma IgorVersion=7.00
 //1.90 added OverRideSampleTransmission, added live processing and added graph with saved subtracted data. 
 //		fixes to annoying behaviors (needless user questions), reorganized menu
@@ -813,19 +814,19 @@ End
 ////***********************************************************
 //***********************************************************
 
-Function IN3_ChangePanelControlsStyle()
-
-	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
-	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
-
-	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
-		DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
-	else
-		DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
-	endif
-
-end
-
+//Function IN3_ChangePanelControlsStyle()
+//
+//	SVAR DefaultFontType=root:Packages:IrenaConfigFolder:DefaultFontType
+//	NVAR DefaultFontSize=root:Packages:IrenaConfigFolder:DefaultFontSize
+//
+//	if (stringMatch(IgorInfo(2),"*Windows*"))		//Windows
+//		DefaultGUIFont /Win   all= {DefaultFontType, DefaultFontSize, 0 }
+//	else
+//		DefaultGUIFont /Mac   all= {DefaultFontType, DefaultFontSize, 0 }
+//	endif
+//
+//end
+//
 //***********************************************************
 //***********************************************************
 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.25
+#pragma version=2.26
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26  removed unused functions
 //2.25  Modified Screen Size check to match the needs
 //2.24 added getHelp button calling to www manual
 //2.23 changes fro panel scaling. 
@@ -2306,17 +2307,17 @@ EndMacro
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-
-Function IR1K_AnomalousCalc()
-	DoWIndow IR1K_AnomCalcPnl
-	if(V_Flag)
-		DoWIndow/F IR1K_AnomCalcPnl
-	else
-		IR1K_AnomScattContCalc()
-	endif
-//	IR1K_LoadCromerLiberman()
-
-end
+//
+//Function IR1K_AnomalousCalc()
+//	DoWIndow IR1K_AnomCalcPnl
+//	if(V_Flag)
+//		DoWIndow/F IR1K_AnomCalcPnl
+//	else
+//		IR1K_AnomScattContCalc()
+//	endif
+////	IR1K_LoadCromerLiberman()
+//
+//end
 
 //**********************************************************************************************************
 //**********************************************************************************************************

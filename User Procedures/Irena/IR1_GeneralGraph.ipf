@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.29
+#pragma version=2.30
 #include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.29
 
@@ -9,6 +9,7 @@ Constant IR1PversionNumber=2.29
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.30  removed unused functions
 //2.29 added getHelp button calling to www manual
 //2.28 fixed Gizmo for Igor 7, this should be improved later, but at this time this needs to work for both Igor 6 and 7
 //2.27 added more styles and changed few defaults for them. 
@@ -1320,89 +1321,89 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //Checkbox procedure
-Function IR1P_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
-	String ctrlName
-	Variable checked
-
-	string oldDf=GetDataFolder(1)
-	setDataFolder root:Packages:GeneralplottingTool
-
-	if (cmpstr(ctrlName,"UseIndra2Data")==0)
-		//here we control the data structure checkbox
-		NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
-		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSData
-		NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
-//		UseIndra2Data=checked
-		if (checked)
-			UseQRSData=0
-			UseResults=0
-		endif
-//		Checkbox UseIndra2Data, value=UseIndra2Data
-//		Checkbox UseQRSData, value=UseQRSData
-		SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
-		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
-		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
-		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
-			PopupMenu SelectDataFolder mode=1
-			PopupMenu IntensityDataName   mode=1, value="---"
-			PopupMenu QvecDataName    mode=1, value="---"
-			PopupMenu ErrorDataName    mode=1, value="---"
-	endif
-	if (cmpstr(ctrlName,"UseQRSData")==0)
-		//here we control the data structure checkbox
-		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSData
-		NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
-		NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
-//		UseQRSData=checked
-		if (checked)
-			UseIndra2Data=0
-			UseResults=0
-		endif
-//		Checkbox UseIndra2Data, value=UseIndra2Data
-//		Checkbox UseQRSData, value=UseQRSData
-		SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
-		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
-		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
-		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
-			PopupMenu SelectDataFolder mode=1
-			PopupMenu IntensityDataName   mode=1, value="---"
-			PopupMenu QvecDataName    mode=1, value="---"
-			PopupMenu ErrorDataName    mode=1, value="---"
-	endif
-	if (cmpstr(ctrlName,"UseResults")==0)
-		//here we control the data structure checkbox
-		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSData
-		NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
-		NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
-//		UseQRSData=checked
-		if (checked)
-			UseIndra2Data=0
-			UseQRSData=0
-		endif
-//		Checkbox UseIndra2Data, value=UseIndra2Data
-//		Checkbox UseQRSData, value=UseQRSData
-		SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
-		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
-		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
-		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
-			PopupMenu SelectDataFolder mode=1
-			PopupMenu IntensityDataName   mode=1, value="---"
-			PopupMenu QvecDataName    mode=1, value="---"
-			PopupMenu ErrorDataName    mode=1, value="---"
-	endif
-end
+//Function IR1P_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
+//	String ctrlName
+//	Variable checked
+//
+//	string oldDf=GetDataFolder(1)
+//	setDataFolder root:Packages:GeneralplottingTool
+//
+//	if (cmpstr(ctrlName,"UseIndra2Data")==0)
+//		//here we control the data structure checkbox
+//		NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
+//		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSData
+//		NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
+////		UseIndra2Data=checked
+//		if (checked)
+//			UseQRSData=0
+//			UseResults=0
+//		endif
+////		Checkbox UseIndra2Data, value=UseIndra2Data
+////		Checkbox UseQRSData, value=UseQRSData
+//		SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
+//		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
+//		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
+//		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
+//			Dtf=" "
+//			IntDf=" "
+//			QDf=" "
+//			EDf=" "
+//			PopupMenu SelectDataFolder mode=1
+//			PopupMenu IntensityDataName   mode=1, value="---"
+//			PopupMenu QvecDataName    mode=1, value="---"
+//			PopupMenu ErrorDataName    mode=1, value="---"
+//	endif
+//	if (cmpstr(ctrlName,"UseQRSData")==0)
+//		//here we control the data structure checkbox
+//		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSData
+//		NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
+//		NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
+////		UseQRSData=checked
+//		if (checked)
+//			UseIndra2Data=0
+//			UseResults=0
+//		endif
+////		Checkbox UseIndra2Data, value=UseIndra2Data
+////		Checkbox UseQRSData, value=UseQRSData
+//		SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
+//		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
+//		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
+//		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
+//			Dtf=" "
+//			IntDf=" "
+//			QDf=" "
+//			EDf=" "
+//			PopupMenu SelectDataFolder mode=1
+//			PopupMenu IntensityDataName   mode=1, value="---"
+//			PopupMenu QvecDataName    mode=1, value="---"
+//			PopupMenu ErrorDataName    mode=1, value="---"
+//	endif
+//	if (cmpstr(ctrlName,"UseResults")==0)
+//		//here we control the data structure checkbox
+//		NVAR UseQRSData=root:Packages:GeneralplottingTool:UseQRSData
+//		NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
+//		NVAR UseResults=root:Packages:GeneralplottingTool:UseResults
+////		UseQRSData=checked
+//		if (checked)
+//			UseIndra2Data=0
+//			UseQRSData=0
+//		endif
+////		Checkbox UseIndra2Data, value=UseIndra2Data
+////		Checkbox UseQRSData, value=UseQRSData
+//		SVAR Dtf=root:Packages:GeneralplottingTool:DataFolderName
+//		SVAR IntDf=root:Packages:GeneralplottingTool:IntensityWaveName
+//		SVAR QDf=root:Packages:GeneralplottingTool:QWaveName
+//		SVAR EDf=root:Packages:GeneralplottingTool:ErrorWaveName
+//			Dtf=" "
+//			IntDf=" "
+//			QDf=" "
+//			EDf=" "
+//			PopupMenu SelectDataFolder mode=1
+//			PopupMenu IntensityDataName   mode=1, value="---"
+//			PopupMenu QvecDataName    mode=1, value="---"
+//			PopupMenu ErrorDataName    mode=1, value="---"
+//	endif
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

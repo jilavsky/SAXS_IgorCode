@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.05
+#pragma version=1.06
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 0.4		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.06  removed unused functions
 //1.05 added call to web manual also. 
 //1.04 change LauGo calculate method to import of xml PDF-4+ cards. 
 //1.02 fix error when IR3W_WAXSMainGraph is not top graph window and user tries to add/replace the data in it. 
@@ -1098,31 +1099,31 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR3W_CreateLinearizedData()
-
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
-	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
-	Wave DataIntWave=root:Packages:Irena:WAXS:DataIntWave
-	Wave DataQWave=root:Packages:Irena:WAXS:DataQWave
-	Wave DataErrorWave=root:Packages:Irena:WAXS:DataErrorWave
-//	SVAR SimpleModel=root:Packages:Irena:WAXS:SimpleModel
-	Duplicate/O DataIntWave, LinModelDataIntWave, ModelNormalizedResidual
-	Duplicate/O DataQWave, LinModelDataQWave, ModelNormResXWave
-	Duplicate/O DataErrorWave, LinModelDataEWave
-	ModelNormalizedResidual = 0	
-	SetDataFolder oldDf
-end
-
+//Function IR3W_CreateLinearizedData()
+//
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	string oldDf=GetDataFolder(1)
+//	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
+//	Wave DataIntWave=root:Packages:Irena:WAXS:DataIntWave
+//	Wave DataQWave=root:Packages:Irena:WAXS:DataQWave
+//	Wave DataErrorWave=root:Packages:Irena:WAXS:DataErrorWave
+////	SVAR SimpleModel=root:Packages:Irena:WAXS:SimpleModel
+//	Duplicate/O DataIntWave, LinModelDataIntWave, ModelNormalizedResidual
+//	Duplicate/O DataQWave, LinModelDataQWave, ModelNormResXWave
+//	Duplicate/O DataErrorWave, LinModelDataEWave
+//	ModelNormalizedResidual = 0	
+//	SetDataFolder oldDf
+//end
+//
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-
-
-Function IR3W_AppendDataToGraphModel()
-	
-end
+//
+//
+//Function IR3W_AppendDataToGraphModel()
+//	
+//end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************

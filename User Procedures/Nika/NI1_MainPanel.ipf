@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.54
+#pragma version=2.55
 Constant NI1AversionNumber = 2.52
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.55 removed unused functions
 //2.54 Fixed bug where Fit2D loadable types were listed on incompatible versions of MacOS. 
 //2.53 Modified Screen Size check to match the needs
 //2.52	added getHelp button calling to www manual
@@ -996,40 +997,40 @@ Function NI1T_TheoreticalToTilted(TheoreticalR,SaDetDistance,alpha)
 		variable res = sin(pi/2-alphaRad) * TheoreticalR*(sin(betaAngle)/(sin(pi - alphaRad - betaAngle)))
 		return res
 end
-Function NI1BC_CalculatePathWvs(dspacing, wvX,wvY)
-	wave wvX, wvY
-	variable dspacing
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-
-	string oldDf=GetDataFOlder(1)
-	setDataFolder root:Packages:Convert2Dto1D
-
-	variable pixelDist
-	variable pixelDistXleft, pixelDistXright, pixelDistYtop, pixelDistYbot
-	NVAR Wavelength
-	NVAR SampleToCCDDistance
-	NVAR PixelSizeX
-	NVAR PixelSizeY
-	NVAR XrayEnergy
-	NVAR HorizontalTilt
-	NVAR VerticalTilt
-	NVAR ycenter=root:Packages:Convert2Dto1D:BeamCenterY
-	NVAR xcenter=root:Packages:Convert2Dto1D:BeamCenterX
-	//Ok, this should just return simple Bragg law with little trigonometry, NO tilts yet
-	variable radX = NI1BC_GetPixelFromDSpacing(dspacing, "X")
-	variable radY = NI1BC_GetPixelFromDSpacing(dspacing, "Y")
- 	pixelDist = SampleToCCDDistance *tan(2* asin( Wavelength /(2* dspacing) )  )
-//			pixelDist = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,HorizontalTilt) / PixelSizeX 
-	pixelDistXleft = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,HorizontalTilt) / PixelSizeX
-	pixelDistXright = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,-1*HorizontalTilt) / PixelSizeX
-	pixelDistYtop = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,VerticalTilt) / PixelSizeY
-	pixelDistYbot = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,-1*VerticalTilt) / PixelSizeY
-	redimension/N=360 wvX, wvY
-	SetScale/I x 0,(2*pi),"", wvX, wvY
-	wvX = ((x>=pi/2)&&(x<3*pi/2))? (xcenter+pixelDistXright*cos(x)) : (xcenter+pixelDistXleft*cos(x))
-	wvY = ((x>=0)&&(x<pi))? (ycenter+pixelDistYtop*sin(x)) : (ycenter+pixelDistYbot*sin(x))
-  	setDataFolder OldDf	
-end
+//Function NI1BC_CalculatePathWvs(dspacing, wvX,wvY)
+//	wave wvX, wvY
+//	variable dspacing
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//
+//	string oldDf=GetDataFOlder(1)
+//	setDataFolder root:Packages:Convert2Dto1D
+//
+//	variable pixelDist
+//	variable pixelDistXleft, pixelDistXright, pixelDistYtop, pixelDistYbot
+//	NVAR Wavelength
+//	NVAR SampleToCCDDistance
+//	NVAR PixelSizeX
+//	NVAR PixelSizeY
+//	NVAR XrayEnergy
+//	NVAR HorizontalTilt
+//	NVAR VerticalTilt
+//	NVAR ycenter=root:Packages:Convert2Dto1D:BeamCenterY
+//	NVAR xcenter=root:Packages:Convert2Dto1D:BeamCenterX
+//	//Ok, this should just return simple Bragg law with little trigonometry, NO tilts yet
+//	variable radX = NI1BC_GetPixelFromDSpacing(dspacing, "X")
+//	variable radY = NI1BC_GetPixelFromDSpacing(dspacing, "Y")
+// 	pixelDist = SampleToCCDDistance *tan(2* asin( Wavelength /(2* dspacing) )  )
+////			pixelDist = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,HorizontalTilt) / PixelSizeX 
+//	pixelDistXleft = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,HorizontalTilt) / PixelSizeX
+//	pixelDistXright = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,-1*HorizontalTilt) / PixelSizeX
+//	pixelDistYtop = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,VerticalTilt) / PixelSizeY
+//	pixelDistYbot = NI1T_TheoreticalToTilted(pixelDist,SampleToCCDDistance,-1*VerticalTilt) / PixelSizeY
+//	redimension/N=360 wvX, wvY
+//	SetScale/I x 0,(2*pi),"", wvX, wvY
+//	wvX = ((x>=pi/2)&&(x<3*pi/2))? (xcenter+pixelDistXright*cos(x)) : (xcenter+pixelDistXleft*cos(x))
+//	wvY = ((x>=0)&&(x<pi))? (ycenter+pixelDistYtop*sin(x)) : (ycenter+pixelDistYbot*sin(x))
+//  	setDataFolder OldDf	
+//end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1618,44 +1619,44 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
-Function NI1A_CCD21D_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
-
-		if(cmpstr(ctrlName,"SampleToCCDdistance")==0)
-				//here goes what happens
-		endif
-
-
-End
+//
+//Function NI1A_CCD21D_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
+//	String ctrlName
+//	Variable varNum
+//	String varStr
+//	String varName
+//
+//		if(cmpstr(ctrlName,"SampleToCCDdistance")==0)
+//				//here goes what happens
+//		endif
+//
+//
+//End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_setupData(updateLUT)
-		variable updateLUT
-
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		wave QVectorWave=root:Packages:Convert2Dto1D:QVectorWave
-		wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
-		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
-		wave EmptyData=root:Packages:Convert2Dto1D:EmptyData
-		wave DarkCurrentWave=root:Packages:Convert2Dto1D:DarkField
-
-		Duplicate/O CCDImageToConvert, CorrectedDataWave
-		Redimension/S CorrectedDataWave
-		variable transmission=0.991
-		CorrectedDataWave=(1/transmission)*(CCDImageToConvert-DarkCurrentWave) - (EmptyData-DarkCurrentWave)
-
-		NI1A_CreateConversionLUT(updateLUT, QVectorWave, CorrectedDataWave,M_ROIMask )
-		killwaves/Z temp2D, CorrectedDataWave
-end
-
+//Function NI1A_setupData(updateLUT)
+//		variable updateLUT
+//
+//		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//		wave QVectorWave=root:Packages:Convert2Dto1D:QVectorWave
+//		wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
+//		wave M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
+//		wave EmptyData=root:Packages:Convert2Dto1D:EmptyData
+//		wave DarkCurrentWave=root:Packages:Convert2Dto1D:DarkField
+//
+//		Duplicate/O CCDImageToConvert, CorrectedDataWave
+//		Redimension/S CorrectedDataWave
+//		variable transmission=0.991
+//		CorrectedDataWave=(1/transmission)*(CCDImageToConvert-DarkCurrentWave) - (EmptyData-DarkCurrentWave)
+//
+//		NI1A_CreateConversionLUT(updateLUT, QVectorWave, CorrectedDataWave,M_ROIMask )
+//		killwaves/Z temp2D, CorrectedDataWave
+//end
+//
 
 Function NI1A_CreateConversionLUT(updateLUT, QVectorWave, CCDImageToConvert,M_ROIMask )
 	variable updateLUT

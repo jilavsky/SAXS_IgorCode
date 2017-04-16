@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.08
+#pragma version=2.09
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.09  removed unused functions
 //2.08 added getHelp button calling to www manual
 //2.07 minor fix for parameter6 of form factor parameter. 
 //2.06 removed Executes as preparation for Igor 7
@@ -864,64 +865,64 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-
-Function IR1G_CheckDisplayedND()
-		
-	string OldDf=getDataFolder(1)
-	SetDataFolder  root:Packages:SASDataEvaluation
-
-		//check that NR is as requested
-		NVAR NDdisplay=root:Packages:SASDataEvaluation:GR1_DisplayND
-		CheckDisplayed/W=IR1G_OneSampleEvaluationGraph  TotalNumberDist
-		variable IsDisplayed=V_Flag
-		
-		if (NDDisplay)		//display the NR
-			if(!IsDisplayed)
-				//append the NR display
-				AppendToGraph/W=IR1G_OneSampleEvaluationGraph TotalNumberDist vs Distdiameters
-			endif
-		else					//do not display NR
-			if (IsDisplayed)
-				RemoveFromGraph/W=IR1G_OneSampleEvaluationGraph TotalNumberDist
-				ModifyGraph mirror(right)=1
-			endif		
-		endif		
-	setDataFolder OldDf
-end
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-
-
-Function IR1G_CheckDisplayedVD()
-		
-	string OldDf=getDataFolder(1)
-	SetDataFolder  root:Packages:SASDataEvaluation
-
-		//check that VD is as requested
-		NVAR VDdisplay=root:Packages:SASDataEvaluation:GR1_DisplayND
-		CheckDisplayed/W=IR1G_OneSampleEvaluationGraph  TotalVolumeDist
-		variable IsDisplayed=V_Flag
-		
-		if (VDDisplay)		//display the NR
-			if(!IsDisplayed)
-				//append the NR display
-				AppendToGraph/W=IR1G_OneSampleEvaluationGraph /R TotalVolumeDist vs Distdiameters
-			endif
-		else					//do not display NR
-			if (IsDisplayed)
-				RemoveFromGraph/W=IR1G_OneSampleEvaluationGraph TotalVolumeDist
-				ModifyGraph mirror(left)=1
-			endif		
-		endif		
-	setDataFolder OldDf
-end
-
-
+//
+//
+//Function IR1G_CheckDisplayedND()
+//		
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder  root:Packages:SASDataEvaluation
+//
+//		//check that NR is as requested
+//		NVAR NDdisplay=root:Packages:SASDataEvaluation:GR1_DisplayND
+//		CheckDisplayed/W=IR1G_OneSampleEvaluationGraph  TotalNumberDist
+//		variable IsDisplayed=V_Flag
+//		
+//		if (NDDisplay)		//display the NR
+//			if(!IsDisplayed)
+//				//append the NR display
+//				AppendToGraph/W=IR1G_OneSampleEvaluationGraph TotalNumberDist vs Distdiameters
+//			endif
+//		else					//do not display NR
+//			if (IsDisplayed)
+//				RemoveFromGraph/W=IR1G_OneSampleEvaluationGraph TotalNumberDist
+//				ModifyGraph mirror(right)=1
+//			endif		
+//		endif		
+//	setDataFolder OldDf
+//end
+//
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//
+//
+//Function IR1G_CheckDisplayedVD()
+//		
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder  root:Packages:SASDataEvaluation
+//
+//		//check that VD is as requested
+//		NVAR VDdisplay=root:Packages:SASDataEvaluation:GR1_DisplayND
+//		CheckDisplayed/W=IR1G_OneSampleEvaluationGraph  TotalVolumeDist
+//		variable IsDisplayed=V_Flag
+//		
+//		if (VDDisplay)		//display the NR
+//			if(!IsDisplayed)
+//				//append the NR display
+//				AppendToGraph/W=IR1G_OneSampleEvaluationGraph /R TotalVolumeDist vs Distdiameters
+//			endif
+//		else					//do not display NR
+//			if (IsDisplayed)
+//				RemoveFromGraph/W=IR1G_OneSampleEvaluationGraph TotalVolumeDist
+//				ModifyGraph mirror(left)=1
+//			endif		
+//		endif		
+//	setDataFolder OldDf
+//end
+//
+//
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

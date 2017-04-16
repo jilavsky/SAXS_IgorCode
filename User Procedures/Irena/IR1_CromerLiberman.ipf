@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.03
+#pragma version=2.04
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.04  removed unused functions
 //2.03 tried converting to rtGlobals=3, but on run there is runtime error on Cromer_Get_fp. Index out od bounds. 
 //2.02 Fixed comments on how to use sicne they were from independenrt CremoerLiberman.ipf while this is part of Irena and all non-static function start with IR1_
 //2.01 added license for ANL

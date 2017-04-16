@@ -572,7 +572,6 @@ end
 //*****************************************************************************************************************
 
 static Function IR1R_MaxEntUpdateDataForGrph()
-
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Sizes
 	//copy data to update graph
@@ -3971,7 +3970,8 @@ static  Function IR1R_MaximumEntropy(MeasuredData,Errors,InitialModelBckg,MaxIte
 	chizer = npnts		//setup some starting conditions
 	chtarg = chizer 
 	variable iter=0, snorm=0, cnorm=0,tnorm=0, a=0, b=0 , test=0, i=0, j=0, l=0, fchange=0, df=0, sEntropy=0, k=0
-	duplicate/FREE MeasuredData, ox, ascratch, bscratch, etaScratch	, zscratch, zscratch2		//create work waves with measured Points length
+	duplicate/FREE MeasuredData,  ascratch, bscratch, etaScratch			//create work waves with measured Points length
+	duplicate/O MeasuredData, ox, zscratch, zscratch2
 	duplicate/FREE Model, cgrad,sgrad, ModelScratch, ModelScratch2, xiScratch		//create work waves with bins length
 	make/D/O/N=(numpnts(Model),3) xi
 	make/D/O/N=(numpnts(MeasuredData),3) eta

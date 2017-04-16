@@ -1,12 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.27
-Constant IR2SversionNumber=1.27
+#pragma version=1.28
+Constant IR2SversionNumber=1.28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.28 added better regular expression cheat sheet on the panel. 
 //1.27 added getHelp button calling to www manual
 //1.26 added in popup grandparent folder to the parent folder to reduce scope. 
 //1.25 added ability to sort data by minutes (_xyzmin), pct (_xyzpct), and  temperature (_xyzC). 
@@ -419,8 +420,13 @@ Window IR2S_ScriptingToolPnl()
 	CheckBox SaveResultsInWaves,pos={10,550},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling II)?"
 	CheckBox SaveResultsInWaves,variable= root:Packages:Irena:ScriptingTool:SaveResultsInWaves
 
-	DrawText 100,580,"RegEx - Not contain: ^((?!string).)*$"
-
+	//DrawText 170,505,"RegEx - Not contain: ^((?!string).)*$"
+	TitleBox Regex1 title="\Zr150Regex cheat sheet",pos={240,490},frame=0,fstyle=2, size={184,15}, fColor=(1,16019,65535)
+	TitleBox Regex2 title="\Zr130Contain str: 		  str",pos={220,510},frame=0,fstyle=2,size={144,15}
+	TitleBox Regex3 title="\Zr130str1 AND str2: 	str1.*str2",pos={220,525},frame=0,fstyle=2,size={144,15}
+	TitleBox Regex4 title="\Zr130Not contain:     ^((?!str).)*$",pos={220,540},frame=0,fstyle=2,size={184,15}
+	TitleBox Regex5 title="\Zr130str1 OR str2: 	 str1|str2",pos={220,555},frame=0,fstyle=2,size={184,15}
+	
 	IR2S_UpdateListOfAvailFiles()
 	IR2S_SortListOfAvailableFldrs()
 EndMacro

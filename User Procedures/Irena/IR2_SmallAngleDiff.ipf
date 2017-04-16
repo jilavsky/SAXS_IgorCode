@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.15
+#pragma version = 1.16
 Constant IR2DversionNumber=1.15
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16  removed unused functions
 //1.15 added getHelp button calling to www manual
 //1.14 added oversampling to calculation of peak parameters. When user selects "oversample", peaks are calculated at 5x higher resolution. This provides parameters 5x more precise than what measured Q points are. 
 //1.13 fixed bug in linking which showed on Igor 7 and caused error messages. 
@@ -653,23 +654,23 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2D_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
-	
-	string OldDf=GetDataFolder(1)
-	setDataFolder root:Packages:Irena_SAD
-	variable whichDataSet
-	//BackgStep_set
-	ControlInfo/W=IR2D_ControlPanel DataTabs
-	whichDataSet= V_Value+1
-	
-	IR2D_CalculateIntensity(0)
-
-	setDataFolder OldDf
-end
+//Function IR2D_PopSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
+//	String ctrlName
+//	Variable varNum
+//	String varStr
+//	String varName
+//	
+//	string OldDf=GetDataFolder(1)
+//	setDataFolder root:Packages:Irena_SAD
+//	variable whichDataSet
+//	//BackgStep_set
+//	ControlInfo/W=IR2D_ControlPanel DataTabs
+//	whichDataSet= V_Value+1
+//	
+//	IR2D_CalculateIntensity(0)
+//
+//	setDataFolder OldDf
+//end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

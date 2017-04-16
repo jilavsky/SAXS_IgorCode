@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=0.2
+#pragma version=0.3
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//0.3 remove unused functions
 
 // This is  version 1 of Igor Pro macros for reduction of desktop USAXS (Osmotic/Rigaku) data to pass them into Indra 2 package.
 // Note, this is BETA version 2
@@ -304,22 +305,22 @@ end
 
 
 
-Function IN2U_CreateDesktopuSAXSPath()
+//Function IN2U_CreateDesktopuSAXSPath()
+//
+//	NewPath /C/M="Find path with Desktop USAXS data" /O DesktopUSAXSDataPath  
+//end
 
-	NewPath /C/M="Find path with Desktop USAXS data" /O DesktopUSAXSDataPath  
-end
-
-Function/S IN2U_RemoveCR(stringWithCR)
-	string StringWithCR
-	
-	variable strlength=strlen(StringWithCR)
-		if(cmpstr(StringWithCR[strlength-1,inf],"\r")==0)
-			return stringWithCR[0,strlength-2]
-		else
-			return stringWithCR
-		endif
-end
-
+//Function/S IN2U_RemoveCR(stringWithCR)
+//	string StringWithCR
+//	
+//	variable strlength=strlen(StringWithCR)
+//		if(cmpstr(StringWithCR[strlength-1,inf],"\r")==0)
+//			return stringWithCR[0,strlength-2]
+//		else
+//			return stringWithCR
+//		endif
+//end
+//
 
 //***********************************************************************************************************
 //***********************************************************************************************************

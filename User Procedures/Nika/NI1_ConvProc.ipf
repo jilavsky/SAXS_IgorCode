@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.57
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.57  removed unused functions
 //2.56 added getHelp button calling to www manual
 //2.55 fixed missing forced naming to data. Now will force use of File name fopr naming the data if nothign else is selected.
 //2.54 added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"") in the code here. 
@@ -3033,26 +3034,26 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function NI1A_DisplayOneDataSets()
-	//check the parameters for conversion
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFOlder(1)
-	setDataFolder root:Packages:Convert2Dto1D
-	
-	Wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
-	Wave/T ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
-	string SelectedFileToLoad
-	variable i, imax = numpnts(ListOf2DSampleDataNumbers)
-	For(i=0;i<imax;i+=1)
-		if (ListOf2DSampleDataNumbers[i])
-			SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
-			NI1A_ImportThisOneFile(SelectedFileToLoad)
-			abort
-		endif
-	endfor
-	setDataFolder OldDf
-end
-//*******************************************************************************************************************************************
+//Function NI1A_DisplayOneDataSets()
+//	//check the parameters for conversion
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	string oldDf=GetDataFOlder(1)
+//	setDataFolder root:Packages:Convert2Dto1D
+//	
+//	Wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
+//	Wave/T ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
+//	string SelectedFileToLoad
+//	variable i, imax = numpnts(ListOf2DSampleDataNumbers)
+//	For(i=0;i<imax;i+=1)
+//		if (ListOf2DSampleDataNumbers[i])
+//			SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+//			NI1A_ImportThisOneFile(SelectedFileToLoad)
+//			abort
+//		endif
+//	endfor
+//	setDataFolder OldDf
+//end
+////*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -3945,7 +3946,10 @@ Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 	NVAR SectorsGraphEndAngle= root:Packages:Convert2Dto1D:SectorsGraphEndAngle
 	NVAR SectorsSectWidth= root:Packages:Convert2Dto1D:SectorsSectWidth
 	NVAR SectorsGraphStartAngle= root:Packages:Convert2Dto1D:SectorsGraphStartAngle
-	Wave CCDImage=root:Packages:Convert2Dto1D:CCDImageToConvert
+	Wave/Z CCDImage=root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(CCDImage))
+		return 0
+	endif
 	variable temp
 	variable highBracket = sqrt(DimSize(CCDImage, 0 )^2+DimSize(CCDImage, 1)^2)
 	variable lowBracket = -sqrt(DimSize(CCDImage, 0 )^2+DimSize(CCDImage, 1)^2)
@@ -4572,20 +4576,20 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
-Function NI1A_ListBoxProc(ctrlName,row,col,event)
-	String ctrlName
-	Variable row
-	Variable col
-	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
-					//5=cell select with shift key, 6=begin edit, 7=end
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(cmpstr("MaskListBoxSelection",ctrlName)==0)
-	
-	endif
-	return 0
-End
-//*******************************************************************************************************************************************
+//
+//Function NI1A_ListBoxProc(ctrlName,row,col,event)
+//	String ctrlName
+//	Variable row
+//	Variable col
+//	Variable event	//1=mouse down, 2=up, 3=dbl click, 4=cell select with mouse or keys
+//					//5=cell select with shift key, 6=begin edit, 7=end
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	if(cmpstr("MaskListBoxSelection",ctrlName)==0)
+//	
+//	endif
+//	return 0
+//End
+////*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -5785,28 +5789,28 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
-Function NI1A_GenerGISAXSQyLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
-	variable DetDimX,DetDimY,BCx,BCy,Angle,Offset
-	Wave WaveX,WaveY
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//generate X-Y path for angle line on the detector
-	string oldDf=GetDataFOlder(1)
-	setDataFolder root:Packages:Convert2Dto1D
-	
-	make/O/N=(DetDimX) tempWvX
-	make/O/N=(DetDimY) tempWvY
-
-
-
-	WaveX=tempWvX
-	WaveY=tempWvY
-	killWaves tempWvY, tempWvX
-	
-	setDataFolder OldDf
-end
-
-
+//
+//Function NI1A_GenerGISAXSQyLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
+//	variable DetDimX,DetDimY,BCx,BCy,Angle,Offset
+//	Wave WaveX,WaveY
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//generate X-Y path for angle line on the detector
+//	string oldDf=GetDataFOlder(1)
+//	setDataFolder root:Packages:Convert2Dto1D
+//	
+//	make/O/N=(DetDimX) tempWvX
+//	make/O/N=(DetDimY) tempWvY
+//
+//
+//
+//	WaveX=tempWvX
+//	WaveY=tempWvY
+//	killWaves tempWvY, tempWvX
+//	
+//	setDataFolder OldDf
+//end
+//
+//
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -6352,20 +6356,20 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
-
-Function NI2T_testThetaWithTilts()		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
-	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	STRUCT NikadetectorGeometry d
-	wave testImg
-		NI2T_ReadOrientationFromGlobals(d)
-		NI2T_SaveStructure(d)
-		NI2t_printDetectorStructure(d)
-//variable startTicks=ticks	
-//	multithread testImg =  NI2T_pixel2Theta(d,p,q)
-//print (ticks-startTicks)/60
-end
-
+//
+//Function NI2T_testThetaWithTilts()		// calculate theta for pixel px, py - optionally reset parameters from defaluts, else read stored structure
+//	
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	STRUCT NikadetectorGeometry d
+//	wave testImg
+//		NI2T_ReadOrientationFromGlobals(d)
+//		NI2T_SaveStructure(d)
+//		NI2t_printDetectorStructure(d)
+////variable startTicks=ticks	
+////	multithread testImg =  NI2T_pixel2Theta(d,p,q)
+////print (ticks-startTicks)/60
+//end
+//
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
@@ -6586,20 +6590,20 @@ EndStructure
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
-
-
-Function NI2T_InitTiltCorrection()
-
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
-	setDataFolder root:
-	NewDataFolder/O root:Packages							// ensure Packages exists
-	NewDataFolder/O root:Packages:NikaTiltCorrections		// ensure NikaTiltCorrections exists
-
-	Make/N=3/O/D root:Packages:NikaTiltCorrections:pixel2q_ki, root:Packages:NikaTiltCorrections:pixel2q_kout
-
-	setDataFolder OldDf
-end 
+//
+//
+//Function NI2T_InitTiltCorrection()
+//
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	string OldDf=GetDataFolder(1)
+//	setDataFolder root:
+//	NewDataFolder/O root:Packages							// ensure Packages exists
+//	NewDataFolder/O root:Packages:NikaTiltCorrections		// ensure NikaTiltCorrections exists
+//
+//	Make/N=3/O/D root:Packages:NikaTiltCorrections:pixel2q_ki, root:Packages:NikaTiltCorrections:pixel2q_kout
+//
+//	setDataFolder OldDf
+//end 
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************

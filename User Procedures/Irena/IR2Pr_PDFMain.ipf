@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
+#pragma version=1.13
 Constant IR2PrversionNumber=1.12
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.12
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13  removed unused functions
 //1.12 added getHelp button calling to www manual
 //1.11 changed to IR1B_SmearData which is more optimized slit smearing function. 
 //1.10 fixes for WIndows GUI
@@ -1589,28 +1590,28 @@ End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-Function IR2Pr_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-
-//	SVAR SizesParameters=root:Packages:Sizes:SizesParameters
-
-	if(cmpstr(ctrlName,"Binning")==0)
-		SVAR LogDist=root:Packages:Irena_PDDF:LogBinning	
-		LogDist=popStr
-//		SizesParameters=ReplaceStringByKey("RegLogRBinning",SizesParameters,popStr,"=")
-		NVAR GraphLogTopAxis=root:Packages:Irena_PDDF:GraphLogTopAxis
-		if(stringmatch(popStr,"Yes"))
-			GraphLogTopAxis=1
-		else
-			GraphLogTopAxis=0
-		endif
-		IR2Pr_GraphCheckboxes("LogParticleAxis",GraphLogTopAxis)
-	endif
-end
-//*****************************************************************************************************************
+//
+//Function IR2Pr_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+//	String ctrlName
+//	Variable popNum
+//	String popStr
+//
+////	SVAR SizesParameters=root:Packages:Sizes:SizesParameters
+//
+//	if(cmpstr(ctrlName,"Binning")==0)
+//		SVAR LogDist=root:Packages:Irena_PDDF:LogBinning	
+//		LogDist=popStr
+////		SizesParameters=ReplaceStringByKey("RegLogRBinning",SizesParameters,popStr,"=")
+//		NVAR GraphLogTopAxis=root:Packages:Irena_PDDF:GraphLogTopAxis
+//		if(stringmatch(popStr,"Yes"))
+//			GraphLogTopAxis=1
+//		else
+//			GraphLogTopAxis=0
+//		endif
+//		IR2Pr_GraphCheckboxes("LogParticleAxis",GraphLogTopAxis)
+//	endif
+//end
+////*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.36
+#pragma version=1.37
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.37 added to SAXS use of thickness, why not - provides even better normalized data. 
 //1.36 fixed issues with use of userSampleName
 //1.35 fix for bigSAXS failure
 //1.34 changed pinSAXS to SAXS
@@ -690,6 +692,7 @@ Function NI1_15IDDSetDefaultNx()
 				NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
 				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
+				
 				QvectorNumberPoints=120
 				QBinningLogarithmic=1
 				QvectormaxNumPnts = 0
@@ -734,7 +737,11 @@ Function NI1_15IDDSetDefaultNx()
 				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
 				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+				NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
+				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
 				
+	
+				UseSampleThickness = 1			
 				UseSampleTransmission = 1
 				UseEmptyField = 1
 				UseI0ToCalibrate = 1
@@ -743,16 +750,17 @@ Function NI1_15IDDSetDefaultNx()
 				UseSampleTransmFnct = 1
 				UseSampleMonitorFnct = 1
 				UseEmptyMonitorFnct = 1
+				UseSampleThicknFnct = 1 
 				
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
-			//	SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
+				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
 				
 				SampleTransmFnct = "NI1_15IDDFIndTransmission"
 				SampleMonitorFnct = "NI1_15IDDFindI0"
 				EmptyMonitorFnct = "NI1_15IDDFindEfI0"
-			//	SampleNameMatchStr="*.hdf5"
+				SampleThicknFnct = "NI1_15IDDFIndThickness"
 			
 				NI1A_SetCalibrationFormula()			
 				
@@ -1516,10 +1524,37 @@ Function NI1_15IDDNXTransmission()
 	endif
 	return Trans
 end
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_15IDDFindThickness(SampleName)
+	string sampleName
+
+	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(w2D))
+		Abort "Image file not found "  
+	endif
+	string OldNOte=note(w2D)
+	variable thickness1 = NumberByKey(NI1_15IDDFindKeyStr("sample:thickness=", OldNote), OldNote  , "=" , ";")
+	variable thickness2 = NumberByKey(NI1_15IDDFindKeyStr("EPICS_PV_metadata:sample_thickness=", OldNote), OldNote  , "=" , ";")
+	if(numtype(thickness1)==0)
+		Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
+		return thickness1
+	else
+		if(numtype(thickness2)==0)
+			Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness2)
+			return thickness2
+		else
+			Print "Thickness value not found in the wave note of the sample file, setting to 1 [mm]"
+			return 1
+		endif
+	endif
+	return 0
+end
+//************************************************************************************************************
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function NI1_15IDDFIndTransmission(SampleName)
+Function NI1_15IDDFindTransmission(SampleName)
 	string sampleName
 	
 	string TransmissionIsHere=NI1_15IDDFindLikelyUSAXSName(SampleName)

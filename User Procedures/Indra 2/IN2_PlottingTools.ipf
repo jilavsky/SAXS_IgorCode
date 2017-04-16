@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.13
+#pragma version = 1.14
 
 
 
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14  removed unused functions
 
 //*********************************************
 Function IN2P_MakeLogLogGraphDecLim()
@@ -25,86 +26,86 @@ Function IN2P_MakeLogLogGraphDecLim()
 
 End
 
-//**********************************************
-Function IN2P_ChangePlotSymbolType(modetype,qcolors)
-	variable modetype,qcolors
-	Prompt modetype, "Type of display", popup,"line and marker;markers;line"
-	Prompt qcolors,"Mixed Colors?",popup,"Colors;Grays;No"
-
-	Silent 1;pauseupdate
-	string markertypes="19;17;16;23;18;8;5;6;22;7;0;1;2;25;26;28;29;15;14;4;3"
-	string rcolortypes="65535;0;0;65535;52428;0;39321;52428;1;26214"
-	string gcolortypes="0;0;65535;43690;1;0;13101;52425;24548;26214"
-	string bcolortypes="0;65535;0;0;41942;0;1;1;52428;26214"
-	do
-		if(modetype==1)
-			modetype=4
-			break
-		endif
-		if(modetype==2)
-			modetype=3
-			break
-		endif
-		if(modetype==3)
-			modetype=0
-			break
-		endif
-		break
-	while(1)
-	string ListofWaves=TraceNameList("",";",1),Awavename
-	variable position1=strsearch(ListofWaves,";",0),position2=position1
-	variable markpos1=strsearch(markertypes,";",0), markpos2=markpos1
-	Awavename=ListofWaves[0,(position1-1)]
-	variable marktp=str2num(markertypes[0,(markpos1-1)])
-	variable red=Str2num(StringFromList(0,rcolortypes,";"))
-	variable green=Str2num(StringFromList(0,gcolortypes,";"))
-	variable blue=Str2num(StringFromList(0,bcolortypes,";"))
-	variable grey=0
-	//First
-	if(qcolors!=3)
-		if(qcolors==1)
-			ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(red,green,blue)
-		else
-			ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(grey,grey,grey)
-		endif
-	else
-		ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp
-	endif
-	//
-	variable length=strlen(ListofWaves)
-	variable counter=1
-	do
-		position1=position2
-		markpos1=markpos2
-		position2=strsearch(ListofWaves,";",(position1+1))
-		if(position2==-1)
-			break
-		endif
-		markpos2=strsearch(markertypes,";",(markpos1+1))
-		marktp=str2num(markertypes[(markpos1+1),(markpos2-1)])
-		if(counter<10)
-			red=Str2num(StringFromList(counter,rcolortypes,";"))
-			green=Str2num(StringFromList(counter,gcolortypes,";"))
-			blue=Str2num(StringFromList(counter,bcolortypes,";"))
-		else
-			red=(counter-9)*10000
-			green=(counter-9)*10000
-			blue=(counter-9)*10000
-		endif
-		grey=counter*10000
-		Awavename=ListofWaves[(position1+1),(position2-1)]
-		if(qcolors!=3)
-			if(qcolors==1)
-				ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(red,green,blue)
-			else
-				ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(grey,grey,grey)
-			endif
-		else
-			ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp
-		endif
-		counter+=1
-	while(position2!=(length-1))
-End
+////**********************************************
+//Function IN2P_ChangePlotSymbolType(modetype,qcolors)
+//	variable modetype,qcolors
+//	Prompt modetype, "Type of display", popup,"line and marker;markers;line"
+//	Prompt qcolors,"Mixed Colors?",popup,"Colors;Grays;No"
+//
+//	Silent 1;pauseupdate
+//	string markertypes="19;17;16;23;18;8;5;6;22;7;0;1;2;25;26;28;29;15;14;4;3"
+//	string rcolortypes="65535;0;0;65535;52428;0;39321;52428;1;26214"
+//	string gcolortypes="0;0;65535;43690;1;0;13101;52425;24548;26214"
+//	string bcolortypes="0;65535;0;0;41942;0;1;1;52428;26214"
+//	do
+//		if(modetype==1)
+//			modetype=4
+//			break
+//		endif
+//		if(modetype==2)
+//			modetype=3
+//			break
+//		endif
+//		if(modetype==3)
+//			modetype=0
+//			break
+//		endif
+//		break
+//	while(1)
+//	string ListofWaves=TraceNameList("",";",1),Awavename
+//	variable position1=strsearch(ListofWaves,";",0),position2=position1
+//	variable markpos1=strsearch(markertypes,";",0), markpos2=markpos1
+//	Awavename=ListofWaves[0,(position1-1)]
+//	variable marktp=str2num(markertypes[0,(markpos1-1)])
+//	variable red=Str2num(StringFromList(0,rcolortypes,";"))
+//	variable green=Str2num(StringFromList(0,gcolortypes,";"))
+//	variable blue=Str2num(StringFromList(0,bcolortypes,";"))
+//	variable grey=0
+//	//First
+//	if(qcolors!=3)
+//		if(qcolors==1)
+//			ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(red,green,blue)
+//		else
+//			ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(grey,grey,grey)
+//		endif
+//	else
+//		ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp
+//	endif
+//	//
+//	variable length=strlen(ListofWaves)
+//	variable counter=1
+//	do
+//		position1=position2
+//		markpos1=markpos2
+//		position2=strsearch(ListofWaves,";",(position1+1))
+//		if(position2==-1)
+//			break
+//		endif
+//		markpos2=strsearch(markertypes,";",(markpos1+1))
+//		marktp=str2num(markertypes[(markpos1+1),(markpos2-1)])
+//		if(counter<10)
+//			red=Str2num(StringFromList(counter,rcolortypes,";"))
+//			green=Str2num(StringFromList(counter,gcolortypes,";"))
+//			blue=Str2num(StringFromList(counter,bcolortypes,";"))
+//		else
+//			red=(counter-9)*10000
+//			green=(counter-9)*10000
+//			blue=(counter-9)*10000
+//		endif
+//		grey=counter*10000
+//		Awavename=ListofWaves[(position1+1),(position2-1)]
+//		if(qcolors!=3)
+//			if(qcolors==1)
+//				ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(red,green,blue)
+//			else
+//				ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp,rgb($Awavename)=(grey,grey,grey)
+//			endif
+//		else
+//			ModifyGraph mode=modetype,msize=2,marker($Awavename)=marktp
+//		endif
+//		counter+=1
+//	while(position2!=(length-1))
+//End
 //*****************************************
 
 Function IN2P_DrawLineOf3Slope()
