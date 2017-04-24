@@ -3498,8 +3498,8 @@ static Function IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowD
 		DoWIndow/K IN2G_FolderSelectPanelPanel
 	endif
 	//PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(100,60,630,340) as TitleString
-	DoWindow/C IN2G_FolderSelectPanelPanel
+	NewPanel /K=1/W=(100,60,630,340)/N=IN2G_FolderSelectPanelPanel as TitleString
+	//DoWindow/C IN2G_FolderSelectPanelPanel
 	TitleBox Title title="   "+TitleString+"   ",disable=2,frame=0,pos={1,3}
 	TitleBox Title font="Arial Black",fSize=11,fColor=(0,0,0), labelBack=(56576,56576,56576)
 	SetVariable CurrentFolder,pos={3,25},size={500,19},disable=2, title="Current Folder: "

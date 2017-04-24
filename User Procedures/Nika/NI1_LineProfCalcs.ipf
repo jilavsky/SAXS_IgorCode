@@ -390,8 +390,8 @@ Function NI1A_LineProf_DisplayLP()
 	if(V_Flag)
 		DoWIndow/F LineProfile_Preview
 	else
-		Display/W=(400,600,1100,850)/K=1 as "Line Profile Preview"
-		DoWindow/C LineProfile_Preview
+		Display/W=(400,600,1100,850)/K=1/N=LineProfile_Preview as "Line Profile Preview"
+		//DoWindow/C LineProfile_Preview
 		ControlBar /T/W=LineProfile_Preview 25
 		CheckBox DisplayQ,pos={5,5},size={10,14},proc=NI1_LineProf_CheckProc,title="Use Q?"
 		CheckBox DisplayQ,help={"Use Q as x axis for the graph?"}, mode=1
@@ -416,7 +416,10 @@ Function NI1A_LineProf_DisplayLP()
 		CheckBox LineProfileDisplayLogY,variable= root:Packages:Convert2Dto1D:LineProfileDisplayLogY
 		
 		Button SaveDataNow, pos={540,5}, size={100,15}, title="Save Data",proc=NI1_LineProf_ButtonProc
-		AutoPositionWindow/E/M=1/R=CCDImageToConvertFig
+		DoWindow CCDImageToConvertFig
+		if(V_Flag)
+			AutoPositionWindow/E/M=1/R=CCDImageToConvertFig
+		endif
 	endif
 	CheckDisplayed /W=LineProfile_Preview  LineProfileIntensity 
 	if(V_Flag)

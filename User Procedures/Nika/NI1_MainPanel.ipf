@@ -1496,19 +1496,11 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	tempStr = ReplaceString(".", InputName, "")
 	variable NumDots= strlen(InputName) - strlen(tempStr)
 	NewName = InputName
-//	if(NumDots==0)
-//		NewName = InputName
-//	elseif(NumDots==1)	
-//		NewName = StringFromList(0, InputName, ".")
-//		NewName = InputName
-//	else		// more then one "." in the name, remove extension, assume last "." separates extension. 
-//		NewName = InputName[0, strsearch( InputName,".", inf, 1)-1]
-//	endif	
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	if(TrimEndOfName)
-		NewName= NewName[0,21]
+		NewName= NewName[0,17]
 	else
-		NewName= NewName[strlen(NewName)-21,inf]
+		NewName= NewName[strlen(NewName)-17,inf]
 	endif
 	return NewName
 end

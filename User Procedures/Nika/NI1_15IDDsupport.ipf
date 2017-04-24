@@ -115,8 +115,8 @@ end
 //************************************************************************************************************
 Window NI1_15IDDConfigPanel() : Panel
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(470,87,1016,439)
-	DoWindow/C NI1_15IDDConfigPanel
+	NewPanel /K=1/W=(470,87,1016,439)/N=NI1_15IDDConfigPanel
+	//DoWindow/C NI1_15IDDConfigPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
 	DrawText 10,25,"9ID-C (or 15IDD) Nexus file configuration"

@@ -103,8 +103,8 @@ Function NI1BC_CreateBmCntrField()
 //	NVAR =root:Packages:Convert2Dto1D:
 	
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(22,58,450,730) as "Beam center and calibration panel"
-	Dowindow/C NI1_CreateBmCntrFieldPanel
+	NewPanel /K=1 /W=(22,58,450,730)/N=NI1_CreateBmCntrFieldPanel as "Beam center and calibration panel"
+	//Dowindow/C NI1_CreateBmCntrFieldPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 19,fstyle= 1,textrgb= (0,0,65280)
 	DrawText 10,25,"Refinement of Beam Center & Calibration"

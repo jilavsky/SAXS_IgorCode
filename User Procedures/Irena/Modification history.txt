@@ -7,7 +7,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-2.63beta, 3/18/2017
+2.63, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
 Added buttons with links to web based manual pages to each tool.
 Version check - using Github now. 
@@ -15,6 +15,7 @@ Smearing/Desmearing data support - increased smearing speed about 3x
 Unified Fit - Modified to handle Slit smeared data which do not extend beyond slit length. Same logic as in Modeling II - extend temporary data to 3*slit length and then truncate. 
 Data merging - added name modifier string and defaulted to new folder name even for QRS name systems. 
 Size distribution - removed limitation that Qmax > 3*slit length for slit smeared data. Optimized speed (2x improvement)
+Size distribution - fixed bug introduced in MaximumEntropy
 Fixed more slow debugging calls, few more packages see improvement in speed now. 
 Completely removed Modeling I - about 2k lines of code. Moved code where needed and removed about 3 ipf files from loading. 
 

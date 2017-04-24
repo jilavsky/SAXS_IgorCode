@@ -5567,6 +5567,9 @@ Function NI1A_DrawLinesIn2DGraph()
 		NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
 		NVAR LineProf_EllipseAR=root:Packages:Convert2Dto1D:LineProf_EllipseAR
 
+		if(stringMatch(LineProf_CurveType,"---"))
+			return 0
+		endif
 		variable isStraightLine
 		if(UseLineProfile)
 				//calculate coordinates for lines...

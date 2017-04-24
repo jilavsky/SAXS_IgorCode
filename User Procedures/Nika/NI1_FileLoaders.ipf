@@ -1495,8 +1495,8 @@ Function NI1_GBLoaderPanelFnct() : Panel
 		SVAR NIGBByteOrder=root:Packages:Convert2Dto1D:NIGBByteOrder
 		SVAR NIGBFloatDataType=root:Packages:Convert2Dto1D:NIGBFloatDataType
 		PauseUpdate; Silent 1		// building window...
-		NewPanel/K=1 /W=(240,98,644,414) as "General Binary loader config panel"
-		DoWindow/C NI_GBLoaderPanel
+		NewPanel/K=1 /W=(240,98,644,414)/N=NI_GBLoaderPanel as "General Binary loader config panel"
+		//DoWindow/C NI_GBLoaderPanel
 		SetDrawLayer UserBack
 		SetDrawEnv fsize= 18,fstyle= 3,textrgb= (0,0,65280)
 		DrawText 28,36,"Nika General Binary Loader Config"

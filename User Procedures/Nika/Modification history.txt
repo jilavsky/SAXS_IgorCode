@@ -7,10 +7,11 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-1.76beta, 3/18/2017
+1.76, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
 Version check - using Github now. 
 Added buttons with links to web based manual pages to each tool.
+Reduced number of characters allowed in name to 18, Ellipse was adding too many characters and was creating errors… 
 
 
 
