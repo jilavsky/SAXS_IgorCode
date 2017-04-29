@@ -7,7 +7,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-2.63, 5/1/2017
+2.64, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
 Added buttons with links to web based manual pages to each tool.
 Version check - using Github now. 
@@ -18,6 +18,9 @@ Size distribution - removed limitation that Qmax > 3*slit length for slit smeare
 Size distribution - fixed bug introduced in MaximumEntropy
 Fixed more slow debugging calls, few more packages see improvement in speed now. 
 Completely removed Modeling I - about 2k lines of code. Moved code where needed and removed about 3 ipf files from loading. 
+
+2/63, 5/1/2071
+version 2.62 updated with on line manuals, for Igor 6 only. 
 
 2.62a 3/3/2017
 Silently fixed bug in ScreenResolution check for Windows computers, which printed high-res screens warning at wrong time. 

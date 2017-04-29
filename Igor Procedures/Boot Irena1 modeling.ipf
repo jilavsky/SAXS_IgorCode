@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.63
+#pragma version=2.64
 #pragma IgorVersion=7.00
 
 Menu "Macros", dynamic

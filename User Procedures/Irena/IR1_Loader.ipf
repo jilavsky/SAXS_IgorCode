@@ -48,62 +48,62 @@
 
 //these should be all in /User Procedures/Irena folder
 #include ":IR1_CreateFldrStrctr", version>=2.06
-#include ":IR1_CromerLiberman", version>=2.03					//cannot be rtG=1, runtime error in Cromer_Get_fp
-#include ":IR1_DataManipulation", version>=2.60
-#include ":IR1_Desmearing", version>=2.08
-#include ":IR1_EvaluationGraph", version>=2.07
+#include ":IR1_CromerLiberman", version>=2.04						//cannot be rtG=1, runtime error in Cromer_Get_fp
+#include ":IR1_DataManipulation", version>=2.61
+#include ":IR1_Desmearing", version>=2.12
+#include ":IR1_EvaluationGraph", version>=2.09
 //#include ":IR1_FittingProc", version>=2.02
 #include ":IR1_FormFactors", version>=2.28
-#include ":IR1_FractalsCtrlPanel", version>=2.05
+#include ":IR1_FractalsCtrlPanel", version>=2.07
 #include ":IR1_FractalsFiting", version>=2.01
 #include ":IR1_FractalsInit", version>=2.02
-#include ":IR1_FractalsMain", version>=2.05
-#include ":IR1_Functions", version>=2.05
-#include ":IR1_GeneralGraph", version >=2.28
+#include ":IR1_FractalsMain", version>=2.06
+#include ":IR1_Functions", version>=2.06
+#include ":IR1_GeneralGraph", version >=2.30
 #include ":IR1_GeneralGraph2", version >=2.19
 #include ":IR1_GraphStyling", version>=2.01
-#include ":IR1_ImportData", version>=2.35
+#include ":IR1_ImportData", version>=2.38
 //#include ":IR1_IntCalculations", version>=2.01
 //#include ":IR1_InterferenceLQSF", version>=2.01
-#include ":IR1_Main", version>=2.62
+#include ":IR1_Main", version>=2.64
 //#include ":IR1_Panel", version>=2.03
 //#include ":IR1_Recording", version>=2.03
-#include ":IR1_ScattContr_New", version>=2.23
-#include ":IR1_Sizes", version>=2.22
+#include ":IR1_ScattContr_New", version>=2.26
+#include ":IR1_Sizes", version>=2.24
 //#include ":IR1_SupportFncts", version>=2.03
-#include ":IR1_Unified_Fit_Fncts", version>=2.17
-#include ":IR1_Unified_Fit_Fncts2", version>=2.05
-#include ":IR1_Unified_Panel", version>=2.20
-#include ":IR1_Unified_Panel_Fncts", version>=2.22
+#include ":IR1_Unified_Fit_Fncts", version>=2.19
+#include ":IR1_Unified_Fit_Fncts2", version>=2.06
+#include ":IR1_Unified_Panel", version>=2.22
+#include ":IR1_Unified_Panel_Fncts", version>=2.23
 #include ":IR1_Unified_SaveExport", version>=2.02
 #include ":IR1_UnifiedSavetoXLS", version>=2.01
 #include ":IR2_dataMiner", version >=1.12
 #include ":IR2_GelsTool", version>=4.12
 #include ":IR2_PanelCntrlProcs", version>=1.44
-#include ":IR2_Reflectivity", version >=1.18
-#include ":IR2_ScriptingTool", version>=1.26
-#include ":IR2_SmallAngleDiff", version>=1.14
+#include ":IR2_Reflectivity", version >=1.19
+#include ":IR2_ScriptingTool", version>=1.28
+#include ":IR2_SmallAngleDiff", version>=1.16
 #include ":IR2_StructureFactors", version>=1.07
-#include ":IR2_UniversalDataExport", version>=1.08
+#include ":IR2_UniversalDataExport", version>=1.09
 #include ":IR2L_NLSQFCalc", version>=1.14
 #include ":IR2L_NLSQFfunctions", version>=1.24
-#include ":IR2L_NLSQFmain", version>=1.20
-#include ":IR2L_NLSQFsupport", version>=1.4
-#include ":IR2Pr_PDFMain", version>=1.1
+#include ":IR2L_NLSQFmain", version>=1.22
+#include ":IR2L_NLSQFsupport", version>=1.41
+#include ":IR2Pr_PDFMain", version>=1.13
 #include ":IR2Pr_Regularization", version>=1.03
 #include ":IR2_DWSGraphControls", version>=1
 #include ":IR2_DWSgraph", version>=1
-#include ":IR3_GuinierPorodModel", version>=1.06
-#include ":IR3_MergingData", version>=1.08
+#include ":IR3_GuinierPorodModel", version>=1.07
+#include ":IR3_MergingData", version>=1.11
 #include ":IR3_SimpleFits", version>=1
 #include ":IR3_SimpleFitsModels", version>=1
-#include ":IR3_WAXSDiffraction", version>=1.03
+#include ":IR3_WAXSDiffraction", version>=1.06
 
 //these are in different folders...
 #include "::CanSAS:cansasXML_GUI", version>=1.03
 #include "::CanSAS:cansasXML", version>=1.12
 
-#include "::Indra 2:IN2_GeneralProcedures", version>=1.92
+#include "::Indra 2:IN2_GeneralProcedures", version>=1.98
 
 #include "::CanSAS:IRNI_NexusSupport", version>=1.04
 

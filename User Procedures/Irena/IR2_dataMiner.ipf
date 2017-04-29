@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.12
-Constant IR2MversionNumber = 1.11
+#pragma version=1.13
+Constant IR2MversionNumber = 1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2MversionNumber = 1.11
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 GetHelp button
 //1.12 more fixes for panel scaling. 
 //1.11 fixes for panel scaling
 //1.10 removed wave/d, Function/d and variable/d. Obsolete
@@ -151,6 +152,7 @@ Function IR2M_DataMinerPanel()
 	PopupMenu StartFolder,mode=(WhichListItem(StartFolder, IR2M_ListFoldersWithSubfolders("root:", 25))+1),value=  #"IR2M_ListFoldersWithSubfolders(\"root:\", 25)"
 	SetVariable FolderMatchString,value= root:Packages:DataMiner:FolderMatchString,noProc, frame=1
 	SetVariable FolderMatchString,pos={10,130},size={350,25},title="Folder Match String (RegEx):", help={"Optional Regular expression to match folder name to."}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR2M_DataMinerPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 
 //	ListOfVariables+="MineVariables;MineStrings;MineWaves;MineWavenotes;"
@@ -490,6 +492,9 @@ Function IR2M_DataMinerPanelButtonProc(ctrlName) : ButtonControl
 	endif
 	if(cmpstr(ctrlName,"Waves_ReadE")==0)
 		IR2M_ReadWavesFromListBox("Waves_E")
+	endif
+	if(stringmatch(ctrlName,"GetHelp"))
+		IN2G_OpenWebManual("Irena/DataMining.html")
 	endif
 
 	if(cmpstr(ctrlName,"SearchAndMineData")==0)

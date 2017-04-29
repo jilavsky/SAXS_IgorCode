@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.63
+#pragma version=2.64
 #pragma IgorVersion=7.00
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -7,7 +7,7 @@
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
-constant CurrentVersionNumber = 2.63
+constant CurrentVersionNumber = 2.64
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -15,9 +15,10 @@ constant CurrentVersionNumber = 2.63
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.63 Updated CheckForUpdate to check on Github for latest release version
+//2.64 Updated CheckForUpdate to check on Github for latest release version
 //			#pragma IgorVersion=7.00
 //			removed Modeling I cocde (IR1S_ functions). Moved stuff around. 
+//2.63 update to 2.62 with on lin ehelp and Igor 6 only. 
 //2.62 Nexus support and other fixes, added check for desktop resolution
 //2.61 fox for WIndows resolution in resizing panels
 //2.60 added ShowResizeControlsPanel.  

@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		   // Use modern global access method.
 #pragma IgorVersion=7.00	  //requires Igor version 4 or higher
-#pragma version = 1.91
+#pragma version = 1.92
 
 
 //*************************************************************************\
@@ -9,7 +9,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.90 use IIndra rlease numbers here, #pragma IgorVersion=7.00
+//1.92 is Igor 7 only release 5/1/2017
+//1.91 is minor patch for Igor 6 on May 2017
+//1.90 use Indra release numbers here, #pragma IgorVersion=7.00
 //1.39 release 1.88, added panel scaling to some panels and remove from name string to flyscans. 
 //1.38 relase 1.86, added dropouts removal for Flyscan data. 
 //1.37 added ability to remove points on PD_Intensity for peak center fitting with marquee. 
@@ -464,10 +466,10 @@ Function IN2_AboutPanel()
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Indra 2 macros for Igor Pro 6.3+ & 7"
+	DrawText 10,37,"Indra 2 macros for Igor Pro 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2017"
-	DrawText 49,103,"release 1.90 from 2/20/2017"
+	DrawText 49,103,"release 1.92 from 5/1/2017"
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end
