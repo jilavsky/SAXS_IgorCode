@@ -22,23 +22,23 @@
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="March2017" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/March2017-1.zip</SourceFileAddress>
+		<release name="May2017">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.63</version>
+				<version>2.64</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.76</version>
+				<version>1.77</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.91</version>
+				<version>1.92</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta for Irena 2.63, Nika 1.76 and Indra 1.90 from 3/31/2017. New web based manual integration.</VersionComment>
+			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.920 from 5/12/2017. Fixed few bugs, Irena improvements.</VersionComment>
 		</release>
 		<release name="February2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2017-1.zip</SourceFileAddress>
@@ -123,6 +123,40 @@
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
 			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes.</VersionComment>
+		</release>
+		<release name="March2017" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/March2017-1.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.63</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.76</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.91</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version>1</version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version>1</version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
+			</Package>
+			<VersionComment>Beta for Irena 2.63, Nika 1.76 and Indra 1.90 from 3/31/2017. New web based manual integration.</VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
