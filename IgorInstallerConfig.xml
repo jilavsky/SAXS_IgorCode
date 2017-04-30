@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.920 from 5/12/2017. Fixed few bugs, Irena improvements.</VersionComment>
+			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.92 from 5/1/2017. Fixed few bugs, Irena improvements.</VersionComment>
 		</release>
 		<release name="February2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2017-1.zip</SourceFileAddress>
