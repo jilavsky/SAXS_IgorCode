@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.98
+#pragma version = 1.99
 #pragma IgorVersion = 7.00
 
 //control constants
@@ -14,6 +14,7 @@ constant RequiredMinScreenWidth = 1200
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.99 added IN2G_ResetPanelSize(PanelName) to rescale panels back to "user size" selected in current Igor experiment. 
 //1.98 more changes to screen check, modified the function called by AfterCompileHook functions to provide proper user input for small screens
 //1.97 trying to fix checking for small displays on WIndows.
 //1.96 added IN2G_OpenNikaWebManual(WhichSpecificPage)
@@ -1466,7 +1467,7 @@ Function IN2G_PanelResizePanelSize(s)
 		//add to the end of panel forming macro these two lines:
 		//	IR1_PanelAppendSizeRecordNote()
 		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
-		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do nto use fixed font then. 
+		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do not use fixed font then. 
 	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		GetWindow $(s.winName), note
@@ -1617,10 +1618,49 @@ Function IN2G_PanelResizePanelSize(s)
 				endfor
 				SetActiveSubwindow ##
 		endfor
+		//and now record the latest size of this panel for future use...
+		NewDataFolder/O root:Packages
+		NewDataFolder/O root:Packages:IrenaNikaPanelSizes
+		SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
+		if(!SVAR_Exists(PanelSizeList))
+			string/g $("root:Packages:IrenaNikaPanelSizes:"+s.winName)
+			SVAR PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
+		endif
+//			moveLeft = left//*moveConvFac
+//			MoveTop = top//*moveConvFac
+//			MoveRight = (right)//*moveConvFac
+//			moveBottom = (bottom)//*moveConvFac
+		PanelSizeList = "Width="+num2str(	MoveRight-moveLeft)+";Height="+num2str(moveBottom-MoveTop)+";"
+		PanelSizeList += "Left="+num2str(	moveLeft)+";Top="+num2str(MoveTop)+";"
+		PanelSizeList += "Right="+num2str(	MoveRight)+";Bottom="+num2str(moveBottom)+";"
+		//and this should be possible to use to recover size of panel AFTER user closes it and re-starts the tool again... 
 	endif
 end
 
 //***********************************************************
+//***********************************************************
+
+Function IN2G_ResetPanelSize(PanelName)
+	string PanelName
+	//find if record exists
+	SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+PanelName)
+	if(SVAR_Exists(PanelSizeList))
+		variable Width, Height
+		Width = NumberByKey("Width", PanelSizeList , "=", ";")
+		Height = NumberByKey("Height", PanelSizeList , "=", ";")
+		GetWindow $PanelName wsize				
+		if(Width>(IN2G_ScreenWidthHeight("Width")*100)/2)
+			Width = IN2G_ScreenWidthHeight("Width")*50
+		endif
+		if(Height>(IN2G_ScreenWidthHeight("Height")*100)*0.9)
+			Height = IN2G_ScreenWidthHeight("Height")*90
+		endif
+		 
+		MoveWindow V_left, V_top, V_left+Width, V_top+Height
+		
+	endif
+	
+end
 //***********************************************************//*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IN2G_PanelAppendSizeRecordNote(panelName)

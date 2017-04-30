@@ -15,6 +15,7 @@ constant CurrentVersionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//			added resizing back to prior size of panel after user closes and opens the panel. 
 //2.64 Updated CheckForUpdate to check on Github for latest release version
 //			#pragma IgorVersion=7.00
 //			removed Modeling I cocde (IR1S_ functions). Moved stuff around. 
@@ -280,6 +281,7 @@ Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHoo
 		if(AddResizeHookFunction==1)
 			IN2G_PanelAppendSizeRecordNote(panelName)
 			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+			IN2G_ResetPanelSize(panelName)
 		endif
 	endif
 end

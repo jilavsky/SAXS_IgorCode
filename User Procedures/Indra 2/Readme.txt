@@ -8,6 +8,10 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 _____________________________________________________________________________________
+
+Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height.
+
+
 1.92 5/1/2017 
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 
 

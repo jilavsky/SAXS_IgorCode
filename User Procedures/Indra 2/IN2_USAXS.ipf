@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+// 	added resize after recreating of the panels to prior user size. 
 //1.92 is Igor 7 only release 5/1/2017
 //1.91 is minor patch for Igor 6 on May 2017
 //1.90 use Indra release numbers here, #pragma IgorVersion=7.00
@@ -221,6 +222,7 @@ Function IN3_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		SetWindow $(panelName), note=S_value+";"+"IndraProcVersion:"+num2str(CurentProcVersion)+";"
 		IN2G_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+		IN2G_ResetPanelSize(panelName)		
 	endif
 end
 //***********************************************************

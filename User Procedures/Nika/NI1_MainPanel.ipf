@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.55
+#pragma version=2.56
 Constant NI1AversionNumber = 2.52
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.56 added resize after recreating of the panels to prior user size. 
 //2.55 removed unused functions
 //2.54 Fixed bug where Fit2D loadable types were listed on incompatible versions of MacOS. 
 //2.53 Modified Screen Size check to match the needs
@@ -139,6 +140,7 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		SetWindow $(panelName), note=S_Value+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
 		IN2G_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+		IN2G_ResetPanelSize(panelName)
 	endif
 end 
 
