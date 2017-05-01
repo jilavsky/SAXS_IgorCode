@@ -1655,9 +1655,13 @@ Function IN2G_ResetPanelSize(PanelName)
 		if(Height>(IN2G_ScreenWidthHeight("Height")*100)*0.9)
 			Height = IN2G_ScreenWidthHeight("Height")*90
 		endif
-		 
-		MoveWindow V_left, V_top, V_left+Width, V_top+Height
-		
+		variable keys= GetKeyState(0)
+		if(keys>0)		//ANY modifier key was pressed, reset the size
+			GetWindow $PanelName wsize
+			MoveWindow V_left, V_top, V_right, V_bottom
+		else
+			MoveWindow V_left, V_top, V_left+Width, V_top+Height
+		endif
 	endif
 	
 end

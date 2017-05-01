@@ -9,7 +9,7 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 Revision history:
 _____________________________________________________________________________________
 
-Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height.
+Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 
 
 
 1.92 5/1/2017 
