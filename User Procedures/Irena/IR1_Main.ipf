@@ -229,6 +229,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IR2C_CheckIrenaUpdate(0)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_CheckForGraphicsSetting(0)
+	IN2G_ResetSizesForALlPanels(WindowProcNames)
 end
 //****************************************************************************************
 //****************************************************************************************
@@ -281,7 +282,7 @@ Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHoo
 		if(AddResizeHookFunction==1)
 			IN2G_PanelAppendSizeRecordNote(panelName)
 			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
-			IN2G_ResetPanelSize(panelName)
+			IN2G_ResetPanelSize(panelName,1)
 		endif
 	endif
 end

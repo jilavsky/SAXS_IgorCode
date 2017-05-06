@@ -878,7 +878,8 @@ structure IrenaPanelDefaults
 	uint32 Uncertainity			//Nika specific - Uncertainity choice - 0 is Old, 1 is Std dev, and 2 is SEM
 	variable LastUpdateCheckIrena
 	variable LastUpdateCheckNika
-	uint32 reserved[100]			// Reserved for future use
+	int16 DoNotRestorePanelSizes //do not restore paenl sizes
+	uint32 reserved[99]			// Reserved for future use
 	
 endstructure
 //***********************************************************
@@ -915,7 +916,7 @@ Function IN2G_InitConfigMain()
 	string ListOfStrings
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
-	ListOfVariables+="SelectedUncertainity;LastUpdateCheckNika;LastUpdateCheckIrena;"
+	ListOfVariables+="SelectedUncertainity;LastUpdateCheckNika;LastUpdateCheckIrena;DoNotRestorePanelSizes;"
 	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
 	variable i
 	//and here we create them
@@ -1013,6 +1014,7 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR LastUpdateCheckNika=root:Packages:IrenaConfigFolder:LastUpdateCheckNika
 	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
 	NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
+	NVAR DoNotRestorePanelSizes = root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 
 	Defs.Version					=		3
@@ -1028,6 +1030,7 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.LastUpdateCheckIrena	=	LastUpdateCheckIrena
 	Defs.LastUpdateCheckNika	=		LastUpdateCheckNika
 	Defs.Uncertainity  		= 		SelectedUncertainity
+	Defs.DoNotRestorePanelSizes = DoNotRestorePanelSizes
 	
 	if(KillThem)
 		SavePackagePreferences /Kill   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
@@ -1065,6 +1068,7 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 		NVAR LastUpdateCheckIrena=root:Packages:IrenaConfigFolder:LastUpdateCheckIrena
 		NVAR LastUpdateCheckNika=root:Packages:IrenaConfigFolder:LastUpdateCheckNika
 		NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
+		NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 		variable PanelUp=0
 		DOWindow IN2G_MainConfigPanel  
 		if(V_Flag)
@@ -1122,6 +1126,7 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				 LegendUseFolderName=Defs.LegendUseFolderName
 				 LegendUseWaveName=Defs.LegendUseWaveName
 				 FontType=Defs.LegendFontType
+				 DoNotRestorePanelSizes = Defs.DoNotRestorePanelSizes
 				//Nika uncertainity
 				NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 				NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
@@ -1230,6 +1235,10 @@ Proc IN2G_MainConfigPanelProc()
 		PopupMenu DefaultFontSize popvalue=num2str(root:Packages:IrenaConfigFolder:DefaultFontSize),value= #"\"8;9;10;11;12;14;16;18;20;24;26;30;\""
 		Button DefaultValues title="Default",pos={290,70},size={120,20}
 		Button DefaultValues proc=IN2G_KillPrefsButtonProc
+
+		CheckBox DoNotRestorePanelSizes,pos={220,100},size={80,16},noproc,title="DO NOT restore Panel Sizes ?"
+		CheckBox DoNotRestorePanelSizes,variable= root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes, help={"Check to avoid having Panel sizes restored"}
+
 	
 		PopupMenu LegendSize,pos={35,165},size={113,21},proc=IN2G_PopMenuProc,title="Legend Size"
 		PopupMenu LegendSize,mode=(1+WhichListItem(num2str(root:Packages:IrenaConfigFolder:LegendSize), "8;9;10;11;12;14;16;18;20;24;26;30;"))
@@ -1618,51 +1627,127 @@ Function IN2G_PanelResizePanelSize(s)
 				endfor
 				SetActiveSubwindow ##
 		endfor
-		//and now record the latest size of this panel for future use...
-		NewDataFolder/O root:Packages
-		NewDataFolder/O root:Packages:IrenaNikaPanelSizes
-		SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
-		if(!SVAR_Exists(PanelSizeList))
-			string/g $("root:Packages:IrenaNikaPanelSizes:"+s.winName)
-			SVAR PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
-		endif
-//			moveLeft = left//*moveConvFac
-//			MoveTop = top//*moveConvFac
-//			MoveRight = (right)//*moveConvFac
-//			moveBottom = (bottom)//*moveConvFac
-		PanelSizeList = "Width="+num2str(	MoveRight-moveLeft)+";Height="+num2str(moveBottom-MoveTop)+";"
-		PanelSizeList += "Left="+num2str(	moveLeft)+";Top="+num2str(MoveTop)+";"
-		PanelSizeList += "Right="+num2str(	MoveRight)+";Bottom="+num2str(moveBottom)+";"
-		//and this should be possible to use to recover size of panel AFTER user closes it and re-starts the tool again... 
+									//and now record the latest size of this panel for future use...
+									//NewDataFolder/O root:Packages
+									//NewDataFolder/O root:Packages:IrenaNikaPanelSizes
+									//SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
+									//if(!SVAR_Exists(PanelSizeList))
+									//	string/g $("root:Packages:IrenaNikaPanelSizes:"+s.winName)
+									//	SVAR PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
+									//endif
+							//			moveLeft = left//*moveConvFac
+							//			MoveTop = top//*moveConvFac
+							//			MoveRight = (right)//*moveConvFac
+							//			moveBottom = (bottom)//*moveConvFac
+									//PanelSizeList = "Width="+num2str(	MoveRight-moveLeft)+";Height="+num2str(moveBottom-MoveTop)+";"
+									//PanelSizeList += "Left="+num2str(	moveLeft)+";Top="+num2str(MoveTop)+";"
+									//PanelSizeList += "Right="+num2str(	MoveRight)+";Bottom="+num2str(moveBottom)+";"
+									//and this should be possible to use to recover size of panel AFTER user closes it and re-starts the tool again... 
+		//Better way, let's lets store it in preferences...
+		STRUCT IrenaNikaPanelSizePos PrefsPos
+		PrefsPos.version = kPrefsVersion
+		PrefsPos.panelCoords[0] = MoveRight-moveLeft		//width
+		PrefsPos.panelCoords[1] = moveBottom-MoveTop		//height
+		PrefsPos.panelCoords[2] = moveLeft					//left
+		PrefsPos.panelCoords[3] = MoveTop						//top
+		PrefsPos.panelCoords[4] = MoveRight					//right
+		PrefsPos.panelCoords[5] = moveBottom					//bottom
+		string Prefname=s.winName+".bin"
+		SavePackagePreferences/FLSH=1 kPackageName, Prefname, kPrefsRecordID, PrefsPos
+		
 	endif
 end
 
+
+//***********************************************************
+//***********************************************************
+// Structure definition for panel position and size restore... 
+	static Constant kPrefsVersion = 100
+	static StrConstant kPackageName = "Irena Nika SAS packages"
+	static Constant kPrefsRecordID = 0
+
+Structure IrenaNikaPanelSizePos
+	uint32	version		// Preferences structure version number. 100 means 1.00.
+	double panelCoords[6]	// width, height, left, top, right, bottom
+	uint32 reserved[100]	// Reserved for future use
+EndStructure
+
+//***********************************************************
+//***********************************************************
+Function IN2G_ResetSizesForALlPanels(WindowProcNames)
+	string WindowProcNames			//contains list of panels of this package
+	//this function is used after compile and will resent all panels to proper size...
+	variable i
+	string PanelName
+	For(i=0;i<ItemsInList(WindowProcNames);i+=1)
+		PanelName = StringFromList(0,(StringFromList(i, WindowProcNames, ";")+"="),"=")
+		DoWindow $PanelName 
+		if(V_Flag)
+			Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
+			//print "Restored size"  
+		endif 
+	endfor
+end
 //***********************************************************
 //***********************************************************
 
-Function IN2G_ResetPanelSize(PanelName)
-	string PanelName
-	//find if record exists
-	SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+PanelName)
-	if(SVAR_Exists(PanelSizeList))
-		variable Width, Height
-		Width = NumberByKey("Width", PanelSizeList , "=", ";")
-		Height = NumberByKey("Height", PanelSizeList , "=", ";")
-		GetWindow $PanelName wsize				
-		if(Width>(IN2G_ScreenWidthHeight("Width")*100)/2)
-			Width = IN2G_ScreenWidthHeight("Width")*50
-		endif
-		if(Height>(IN2G_ScreenWidthHeight("Height")*100)*0.9)
-			Height = IN2G_ScreenWidthHeight("Height")*90
-		endif
-		variable keys= GetKeyState(0)
-		if(keys>0)		//ANY modifier key was pressed, reset the size
-			GetWindow $PanelName wsize
-			MoveWindow V_left, V_top, V_right, V_bottom
-		else
-			MoveWindow V_left, V_top, V_left+Width, V_top+Height
-		endif
+Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
+	string PanelNameLocal
+	variable setSizeIfNeeded
+			//find if record exists
+			//NewDataFolder/O root:Packages
+			//newDataFolder/O root:Packages:IrenaNikaPanelSizes
+	NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+
+	string packageFileName = PanelNameLocal+".bin"
+	STRUCT IrenaNikaPanelSizePos PrefsPos
+	LoadPackagePreferences kPackageName, packageFileName, kPrefsRecordID, PrefsPos
+	variable Left, Top, right, bottom, width, height
+	string PanelNameOld
+			//SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+PanelName)
+			//if(SVAR_Exists(PanelSizeList))
+			//	variable Width, Height
+			//	Width = NumberByKey("Width", PanelSizeList , "=", ";")
+			//	Height = NumberByKey("Height", PanelSizeList , "=", ";")
+	if(PrefsPos.version!=kPrefsVersion)
+		print "Preferences for panel not found or wrogn version found..."
 	endif
+		//PanelNameOld = PrefsPos.panelName
+	width 	= 	PrefsPos.panelCoords[0]
+	height	=	PrefsPos.panelCoords[1]
+	Left		=	PrefsPos.panelCoords[2]
+	Top		=	PrefsPos.panelCoords[3]
+	right		=	PrefsPos.panelCoords[4]
+	bottom	=	PrefsPos.panelCoords[5]
+	variable FoundValidPrefs=0
+	if(width>100 && height>100 && Left < right && top < bottom && PrefsPos.version==kPrefsVersion)
+		FoundValidPrefs = 1
+	endif
+	GetWindow $PanelNameLocal wsize				
+	if(Width> IN2G_ScreenWidthHeight("Width")*50)
+		Width = IN2G_ScreenWidthHeight("Width")*50
+	endif
+	if(Height> IN2G_ScreenWidthHeight("Height")*70)
+		Height = IN2G_ScreenWidthHeight("Height")*70
+	endif
+	variable keys= GetKeyState(0)
+	if(keys>0 || !FoundValidPrefs || DoNotRestorePanelSizes)		//ANY modifier key was pressed or no/incorrect pref file was found, reset the size
+			GetWindow $PanelNameLocal wsize
+			MoveWindow/W=$PanelNameLocal V_left, V_top, V_right, V_bottom
+			PrefsPos.version = kPrefsVersion
+			PrefsPos.panelCoords[0] = V_right-V_left		//width
+			PrefsPos.panelCoords[1] = V_bottom-V_top		//height
+			PrefsPos.panelCoords[2] = V_left					//left
+			PrefsPos.panelCoords[3] = V_top					//top
+			PrefsPos.panelCoords[4] = V_right					//right
+			PrefsPos.panelCoords[5] = V_bottom				//bottom
+			if(setSizeIfNeeded)
+				SavePackagePreferences/FLSH=1 kPackageName, packageFileName, kPrefsRecordID, PrefsPos
+			endif
+	else
+			MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
+	endif
+	
 	
 end
 //***********************************************************//*****************************************************************************************************************

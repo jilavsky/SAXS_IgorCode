@@ -76,6 +76,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
 	
 	NI1A_CheckWIndowsProcVersions(WindowProcNames)
+	IN2G_ResetSizesForALlPanels(WindowProcNames)
 
 end
 //****************************************************************************************
@@ -140,7 +141,7 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		SetWindow $(panelName), note=S_Value+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
 		IN2G_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
-		IN2G_ResetPanelSize(panelName)
+		IN2G_ResetPanelSize(panelName,1)
 	endif
 end 
 

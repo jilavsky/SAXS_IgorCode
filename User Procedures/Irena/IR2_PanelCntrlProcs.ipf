@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.44
+#pragma version = 1.45
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.45 try to catch bug which pops debugger when panel is being killed. 
 //1.44 Added right alignemnet of data path string to show end of the string if it is too long. 
 //1.43 Added Listbox for external files programmed similarly to allow easy addition of input directluy from files. Need for multipel tools in the future.
 //			Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString)
@@ -2585,7 +2586,6 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
       //Prevent Igor from invoking this before we are done with instance 1
       lba.blockReentry = 1
 	string TopPanel=WinName(0, 64)
-
 	Variable row = lba.row
 	Variable col = lba.col
 	WAVE/T/Z listWave = lba.listWave
@@ -2593,7 +2593,7 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 	Variable i
 	string items=""
 	SVAR 	SortOptionsString = root:Packages:IrenaListboxProcs:SortOptionsString
-	//="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
+												//="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
 	SVAR ControlProcsLocations=root:Packages:IrenaListboxProcs:ControlProcsLocations
 	SVAR ControlPckgPathName=root:Packages:IrenaListboxProcs:ControlPckgPathName
 	SVAR ControlDoubleCLickFnctName=root:Packages:IrenaListboxProcs:ControlDoubleCLickFnctName
@@ -2602,15 +2602,13 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 	string CntrlPathName=StringByKey(TopPanel, ControlPckgPathName,"=",";")
 	string DoubleCLickFnctName=StringByKey(TopPanel, ControlDoubleCLickFnctName,"=",";")
 
-	Wave/T WaveOfFiles      	= $(CntrlLocation+":WaveOfFiles")
-	Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
-	SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
-
-
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
+			Wave/T WaveOfFiles      	= $(CntrlLocation+":WaveOfFiles")
+			Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
+			SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
 			if (lba.eventMod & 0x10)	// rightclick
 				// list of items for PopupContextualMenu
 				items = "Refresh Content;Select All;Deselect All;"+SortOptionsString	
@@ -2636,31 +2634,6 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 						PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString
 						IR3C_SortListOfFilesInWvs(TopPanel)	
 						break;
-//					case 5:	// "Sort2"
-//					//	FIlesSortOrder = 2
-//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
-//					//	NI1A_UpdateDataListBox()	
-//						break;
-//					case 6:	// "_001"
-//					//	FIlesSortOrder = 3
-//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
-//						NI1A_UpdateDataListBox()	
-//						break;
-//					case 7:	// "Invert _001"
-//					//	FIlesSortOrder = 4
-//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
-//					//	NI1A_UpdateDataListBox()	
-//						break;
-//					case 8:	// "Invert Sort"
-//					//	FIlesSortOrder = 5
-//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
-//					//	NI1A_UpdateDataListBox()	
-//						break;
-//					case 9:	// "Invert Sort2"
-//					//	FIlesSortOrder = 6
-//					//	PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
-//					//	NI1A_UpdateDataListBox()	
-//						break;
 					endswitch
 				endif
 			break

@@ -168,6 +168,8 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
+	IN2G_ResetSizesForALlPanels(WindowProcNames)
+
 end
 //****************************************************************************************
 //****************************************************************************************
@@ -222,7 +224,7 @@ Function IN3_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		SetWindow $(panelName), note=S_value+";"+"IndraProcVersion:"+num2str(CurentProcVersion)+";"
 		IN2G_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
-		IN2G_ResetPanelSize(panelName)		
+		IN2G_ResetPanelSize(panelName,1)		
 	endif
 end
 //***********************************************************
