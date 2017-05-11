@@ -308,7 +308,7 @@ Function NI1A_Initialize2Dto1DConversion()
 
 	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;DataCalibrationString;"
 	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;UserSampleName;"
-	ListOfStrings+="CCDDataPath;CCDfileName;CCDFileExtension;FileNameToLoad;ColorTableName;CurrentMaskFileName;ExportMaskFileName;"
+	ListOfStrings+="CCDDataPath;CCDfileName;CCDFileExtension;FileNameToLoad;ColorTableName;CurrentMaskFileName;ExportMaskFileName;ColorTableList;"
 	ListOfStrings+="ConfigurationDataPath;LastLoadedConfigFile;ConfFileUserComment;ConfFileUserName;"
 	ListOfStrings+="TempOutputDataname;TempOutputDatanameUserFor;"
 	ListOfStrings+="Fit2Dlocation;MainPathInfoStr;"
@@ -373,6 +373,11 @@ Function NI1A_Initialize2Dto1DConversion()
 		make/N=0/T ListOf2DEmptyData
 	endif
 	//set starting values
+	SVAR ColorTableList
+	if(strlen(ColorTableList)<1)
+		ColorTableList="Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;"
+	endif
+	
 
 	SVAR RebinCalib2DDataToPnts
 	if(strlen(RebinCalib2DDataToPnts)<1)

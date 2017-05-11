@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 1.99
+#pragma version = 2.00
 #pragma IgorVersion = 7.00
 
 //control constants
@@ -14,6 +14,7 @@ constant RequiredMinScreenWidth = 1200
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//2.00 added saving of color table for Nika, requested feature. 
 //1.99 added IN2G_ResetPanelSize(PanelName) to rescale panels back to "user size" selected in current Igor experiment. 
 //1.98 more changes to screen check, modified the function called by AfterCompileHook functions to provide proper user input for small screens
 //1.97 trying to fix checking for small displays on WIndows.
@@ -878,8 +879,9 @@ structure IrenaPanelDefaults
 	uint32 Uncertainity			//Nika specific - Uncertainity choice - 0 is Old, 1 is Std dev, and 2 is SEM
 	variable LastUpdateCheckIrena
 	variable LastUpdateCheckNika
-	int16 DoNotRestorePanelSizes //do not restore paenl sizes
-	uint32 reserved[99]			// Reserved for future use
+	int16 DoNotRestorePanelSizes //do not restore panel sizes
+	uchar NikaColorTable[20]		//20 characters for legend font name
+	uint32 reserved[79]			// Reserved for future use
 	
 endstructure
 //***********************************************************
@@ -1016,6 +1018,7 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
 	NVAR DoNotRestorePanelSizes = root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
+	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 
 	Defs.Version					=		3
 	Defs.PanelFontType	 		= 		DefaultFontType
@@ -1031,6 +1034,7 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.LastUpdateCheckNika	=		LastUpdateCheckNika
 	Defs.Uncertainity  		= 		SelectedUncertainity
 	Defs.DoNotRestorePanelSizes = DoNotRestorePanelSizes
+	Defs.NikaColorTable	 = 		ColorTableName
 	
 	if(KillThem)
 		SavePackagePreferences /Kill   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
@@ -1131,8 +1135,8 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 				NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
 				NVAR/z ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+				string OldDf=GetDataFolder(1)
 				if(!NVAR_Exists(ErrorCalculationsUseOld))
-					string OldDf=GetDataFolder(1)
 					setDataFolder root:
 					NewDataFolder/S/O Packages
 					NewDataFolder/S/O Convert2Dto1D
@@ -1165,7 +1169,23 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				else
 					print "Nika users : Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
 				endif
-	 
+				SVAR/Z ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
+				if(!SVAR_Exists(ColorTableName))
+					setDataFolder root:
+					NewDataFolder/S/O Packages
+					NewDataFolder/S/O Convert2Dto1D
+					string/g ColorTableName
+					SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
+					setDataFolder OldDf
+				endif
+				ColorTableName	= Defs.NikaColorTable	
+				DoWIndow NI1A_Convert2Dto1DPanel
+				if(V_Flag)
+					PopupMenu ColorTablePopup,win=NI1A_Convert2Dto1DPanel,popvalue=ColorTableName
+#if(Exists("NI1A_TopCCDImageUpdateColors")==6)					
+					NI1A_TopCCDImageUpdateColors(1)
+#endif
+				endif
 			else
 				if(PanelUp==0)
 					DoAlert 1, "Old version of GUI and Graph Fonts (font size and type preference) found. Do you want to update them now? These are set once on a computer and can be changed in \"Configure default fonts and names\"" 

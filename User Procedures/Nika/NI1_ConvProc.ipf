@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.57
+#pragma version=2.58
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.57  removed unused functions
+//2.58 added saving color table in preferences. 
+//2.57 removed unused functions
 //2.56 added getHelp button calling to www manual
 //2.55 fixed missing forced naming to data. Now will force use of File name fopr naming the data if nothign else is selected.
 //2.54 added a lot of 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"") in the code here. 
@@ -3860,10 +3861,12 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DisplayProcessed2DData proc=NI1A_CheckProc
 
 	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
+	SVAR ColorTableList = root:Packages:Convert2Dto1D:ColorTableList
 
 	PopupMenu ColorTablePopup,pos={170,658},size={107,21},proc=NI1A_PopMenuProc,title="Colors"
-	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"\"Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;\""
-
+//	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"\"Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;\""
+	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"root:Packages:Convert2Dto1D:ColorTableList"
+	
 	SetVariable ScaleImageBy,pos={310,610},size={120,16},title="Scale Img x", proc=NI1A_SetVarProcMainPanel
 	SetVariable ScaleImageBy,help={"Select minimum intensity to display?"}, limits={0.05,inf,0.5}
 	SetVariable ScaleImageBy,variable= root:Packages:Convert2Dto1D:ScaleImageBy
@@ -7423,6 +7426,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
 		ColorTableName = popStr
 		NI1A_TopCCDImageUpdateColors(1)
+		 IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif
 	if(cmpstr(ctrlName,"MaskImageColor")==0)
 		NI1M_ChangeMaskColor(popStr) 
