@@ -571,11 +571,18 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
 		string OldDf=getDataFolder(1)
-		string PathToNewData= NEXUS_ImportAFile(FilePathName,Filename)		//this will import data file. "" if failed
-		if(strlen(PathToNewData)<1)
-			Abort "Import of the data failed"
+		//check if the file was recently imported...
+		string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(stringFromList(0,Filename,"."))
+		string PathToNewData
+		if(!DataFolderExists(PathToOldData))
+		 	PathToNewData= NEXUS_ImportAFile(FilePathName,Filename)		//this will import data file. "" if failed
+			if(strlen(PathToNewData)<1)
+				Abort "Import of the data failed"
+			else
+				PathToNewData+=":"						//needs ending ":" and it is not there...
+			endif
 		else
-			PathToNewData+=":"						//needs ending ":" and it is not there...
+			PathToNewData = PathToOldData+":"
 		endif
 		SVAR DataFolderName = root:Packages:Irena_Nexus:DataFolderName
 		DataFolderName = PathToNewData
