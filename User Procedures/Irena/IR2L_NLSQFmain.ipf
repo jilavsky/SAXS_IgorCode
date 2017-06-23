@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.22
-Constant IR2LversionNumber = 1.21
+#pragma version=1.23
+Constant IR2LversionNumber = 1.23
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.21
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.23 added Ardell distributions support
 //1.22 Modified Screen Size check to match the needs
 //1.21 added getHelp button calling to www manual
 //1.20 GUI controls move change
@@ -254,7 +255,7 @@ Function IR2L_MainPanel()
 		SetVariable SizeDist_DimensionType fstyle=3,fColor=(52428,1,1)
 		
 		PopupMenu PopSizeDistShape title="Distribution type : ",proc=IR2L_PanelPopupControl, pos={190,295}
-		PopupMenu PopSizeDistShape mode=1, value="LogNormal;Gauss;LSW;Schulz-Zimm;"
+		PopupMenu PopSizeDistShape mode=1, value="LogNormal;Gauss;LSW;Schulz-Zimm;Ardell;"		 
 		PopupMenu PopSizeDistShape help={"Select Distribution type for this population"}
 
 		Button GetFFHelp,pos={320,320},size={80,15}, proc=IR2L_InputPanelButtonProc,title="F.F. Help", help={"Get help for Form factors"}
@@ -383,6 +384,24 @@ Function IR2L_MainPanel()
 		SetVariable SZWidthMin,pos={200,395},size={80,15},title="Min ", help={"Low limit for width for Schulz-Zimm distribution"} 
 		SetVariable SZWidthMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:SZWidthMax_pop1, noproc
 		SetVariable SZWidthMax,pos={290,395},size={80,15},title="Max ", help={"High limit for width for Schulz-Zimm distribution"} 
+		//Ardell parameters...
+		SetVariable ArdLocation,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:ArdLocation_pop1,proc=IR2L_PopSetVarProc
+		SetVariable ArdLocation,pos={8,375},size={140,15},title="Mean size [A]= ", help={"Ardell max value size [A]"} 
+		CheckBox ArdLocationFit,pos={155,375},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox ArdLocationFit,variable= root:Packages:IR2L_NLSQF:ArdLocationFit_pop1, help={"Fit the mean size for Ardell distribution?"}
+		SetVariable ArdLocationMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:ArdLocationMin_pop1, noproc
+		SetVariable ArdLocationMin,pos={200,375},size={80,15},title="Min ", help={"Low limit for mean size for Ardell distribution"} 
+		SetVariable ArdLocationMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:ArdLocationMax_pop1, noproc
+		SetVariable ArdLocationMax,pos={290,375},size={80,15},title="Max ", help={"High limit for mean size for Ardelldistribution"} 
+
+		SetVariable ArdParameter,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:ArdParameterh_pop1,proc=IR2L_PopSetVarProc
+		SetVariable ArdParameter,pos={8,395},size={140,15},title="Width parameter  = ", help={"Ardell width parameter [A]"} 
+		CheckBox ArdParameterFit,pos={155,395},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
+		CheckBox ArdParameterFit,variable= root:Packages:IR2L_NLSQF:ArdParameterFit_pop1, help={"Fit the width for Ardell distribution?"}
+		SetVariable ArdParameterMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:ArdParameterMin_pop1, noproc
+		SetVariable ArdParameterMin,pos={200,395},size={80,15},title="Min ", help={"Low limit for width for Ardell distribution"} 
+		SetVariable ArdParameterMax,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:ArdParameterMax_pop1, noproc
+		SetVariable ArdParameterMax,pos={290,395},size={80,15},title="Max ", help={"High limit for width for Ardell distribution"} 
 		//LSW parameters
 		SetVariable LSWLocation,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:LSWLocation_pop1,proc=IR2L_PopSetVarProc
 		SetVariable LSWLocation,pos={8,375},size={140,15},title="Position [A]= ", help={"LSW size [A]"} 

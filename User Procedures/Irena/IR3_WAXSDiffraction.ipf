@@ -2408,8 +2408,8 @@ static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
 		Abort "Unknown pdf data card format, send example to Jan for update to code to be able to read it."
 	endif
 	//now that looks like ths is correct PDF-4+ card we had example of, let's read it. 
-		make/O/N=(50,8) NewCard
-		make/O/T/N=(50) NewCard_hklStr
+		make/O/N=(100,8) NewCard
+		make/O/T/N=(100) NewCard_hklStr
 		Wave NewCard
 		SetDimLabel 1,0,d_A,NewCard
 		SetDimLabel 1,1,h,NewCard
@@ -2939,7 +2939,7 @@ Function/T IR3W_PDF4writePDFtoXMLstr(DataName)
 	string DataName
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
-	wave ww=$("root:WAXS_PDF:"+DataName)
+	wave ww=$("root:WAXS_PDF:"+possiblyquotename(DataName))
 	string NL="\r"
 
 	String xmlStr="<IrenaPDF>"+NL

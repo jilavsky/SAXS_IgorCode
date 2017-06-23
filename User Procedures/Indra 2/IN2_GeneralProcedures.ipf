@@ -1018,7 +1018,12 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
 	NVAR DoNotRestorePanelSizes = root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
-	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
+	SVAR/Z ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
+	if(!SVAR_Exists(ColorTableName))
+		NewDataFOlder/O root:Packages:Convert2Dto1D
+		string/g root:Packages:Convert2Dto1D:ColorTableName
+		SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
+	endif
 
 	Defs.Version					=		3
 	Defs.PanelFontType	 		= 		DefaultFontType
@@ -1635,7 +1640,7 @@ Function IN2G_PanelResizePanelSize(s)
 					NewCntrlV_top = OrigCntrlV_top * verScale
 					NewWidth = OrigWidth * horScale
 					NewHeight = OrigHeight * verScale
-					ModifyControl $(TmpNm)  pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+					ModifyControl $(TmpNm) win=$(tmpName1),pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
 					//special cases...
 					ControlInfo $(TmpNm)
 					if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
@@ -1645,7 +1650,7 @@ Function IN2G_PanelResizePanelSize(s)
 						endif
 					endif
 				endfor
-				SetActiveSubwindow ##
+				SetActiveSubwindow $(StringFromList(0, ListOfPanels,";"))
 		endfor
 									//and now record the latest size of this panel for future use...
 									//NewDataFolder/O root:Packages

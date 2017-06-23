@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.29
+#pragma version=1.30
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.30 some fixes in Modified Gauss fitting. Modifed to remeber better Qmin for processign in batch. 
 //1.29 added live processing
 //1.28 added OverRideSampleTransmission
 //1.27 Fixes to Mod Gauss fitting to avoid problems when NaNs from range changes are present. 
@@ -87,6 +88,17 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		else
 			Items=ItemsInList(LoadedDataList)
 		endif
+		//remember where the cursor of Qmin is...  
+		variable/g QminDefaultForProcessing
+		NVAR QminDefaultForProcessing
+		Wave/Z R_qvec
+		DoWIndow RcurvePlotGraph
+		if(WaveExists(R_qvec) && V_Flag)
+			QminDefaultForProcessing = R_Qvec[pcsr(A, "RcurvePlotGraph")]
+		else
+			QminDefaultForProcessing = 0
+		endif
+		//it shoudl eb recoded now. 
 		For(i=0;i<Items;i+=1)
 			SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
 			DataFolderName = stringFromList(i,LoadedDataList)
@@ -101,7 +113,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 			IN3_GetMeasParam()	
 			IN3_RecalculateData(0)
 			IN3_GraphData()		//create graphs
-			IN3_ReturnCursorBack()
+			IN3_ReturnCursorBack(QminDefaultForProcessing)
 			IN3_FitDefaultTop()
 			IN3_RecalculateData(4)
 			IN3_FitDefaultTop()
@@ -138,7 +150,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		IN3_GetMeasParam()	
 		IN3_RecalculateData(0)
 		IN3_GraphData()		//create graphs
-		IN3_ReturnCursorBack()
+		IN3_ReturnCursorBack(0)
 		IN3_FitDefaultTop()
 		IN3_RecalculateData(4)
 		IN3_FitDefaultTop()
@@ -276,8 +288,9 @@ end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 
-static Function IN3_ReturnCursorBack()
-
+static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
+	variable QminDefaultForProcessing
+	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 	Wave R_Int
@@ -295,6 +308,9 @@ static Function IN3_ReturnCursorBack()
 	//print "Qmin is = "+num2str(Qmin)
 	NVAR/Z OldStartQValueForEvaluation
 	if(NVAR_Exists(OldStartQValueForEvaluation))
+		if(QminDefaultForProcessing>0)
+			OldStartQValueForEvaluation = QminDefaultForProcessing
+		endif
 		if(Qmin>OldStartQValueForEvaluation)
 			OldStartQValueForEvaluation = Qmin
 			print "Warning - too small Qmin detected. Reset to calculated Qmin = "+num2str(Qmin)
@@ -1130,7 +1146,7 @@ Function IN3_GraphButtonProc(ctrlName) : ButtonControl
 		//get position of cursors from the right window and run fitting rouitne with gaussien
 		PeakCenterFitStartPoint=min(pcsr(A, "RcurvePlotGraph#PeakCenter"),pcsr(B, "RcurvePlotGraph#PeakCenter"))
 		PeakCenterFitEndPoint=max(pcsr(A, "RcurvePlotGraph#PeakCenter"),pcsr(B, "RcurvePlotGraph#PeakCenter"))
-		IN3_FitModGaussTop("")
+		IN3_FitModGaussTop("", 1)
 		IN3_RecalculateData(1)	
 	endif
 	if(stringMatch(ctrlName,"FitLorenz"))
@@ -1176,25 +1192,30 @@ Function IN3_FitGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
 		SetScale/I x Ar_encoder[start], Ar_encoder[end1],"", PeakFitWave
 	endif
 	K0=0
-//	if(strlen(CsrInfo(A, "RcurvePlot")) <1  || strlen(CsrInfo(B, "RcurvePlot"))<1)
-//		return 0
-//	endif
+	//	if(strlen(CsrInfo(A, "RcurvePlot")) <1  || strlen(CsrInfo(B, "RcurvePlot"))<1)
+	//		return 0
+	//	endif
+	//Duplicate /R=[PeakCenterFitStartPoint,PeakCenterFitEndPoint]/Free PD_Intensity, PDIntFit
+	//Duplicate /R=[PeakCenterFitStartPoint,PeakCenterFitEndPoint]/Free Ar_encoder, ArEncFit
+	//Duplicate /R=[PeakCenterFitStartPoint,PeakCenterFitEndPoint]/Free PD_error, PDErrFit
+	//IN2G_RemoveNaNsFrom3Waves(PDIntFit,ArEncFit,PDErrFit)	
+	//CurveFit/Q/N/H="1000" /L=50  gauss PDIntFit  /X=ArEncFit/D /W=PDErrFit /I=1	//Gauss
 	CurveFit/Q/N/H="1000" /L=50  gauss PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder/D /W=PD_error /I=1	//Gauss
-//	print "Fitted Gaussian between points  "+num2str(PeakCenterFitStartPoint)+"   and    "+num2str(PeakCenterFitEndPoint)+"    reached Chi-squared/numpoints    " +num2str(V_chisq/(PeakCenterFitEndPoint-PeakCenterFitStartPoint))
-//	string ModifyWave
-//	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit
-//	ModifyGraph /W=RcurvePlot lsize(fit_PD_Intensity)=3, rgb(fit_PD_intensity)=(0,15872,65280)
-	NVAR BeamCenter
+		//	print "Fitted Gaussian between points  "+num2str(PeakCenterFitStartPoint)+"   and    "+num2str(PeakCenterFitEndPoint)+"    reached Chi-squared/numpoints    " +num2str(V_chisq/(PeakCenterFitEndPoint-PeakCenterFitStartPoint))
+		//	string ModifyWave
+		//	ModifyWave="fit_"+WaveName("",0,1)						//new wave with the lorenzian fit
+		//	ModifyGraph /W=RcurvePlot lsize(fit_PD_Intensity)=3, rgb(fit_PD_intensity)=(0,15872,65280)
+		NVAR BeamCenter
 	NVAR MaximumIntensity
 	NVAR PeakWidth		
 	NVAR PeakWidthArcSec		
 	Variable BeamCenterError, MaximumIntensityError, PeakWidthError
 	Wave W_coef
 	Wave W_sigma
-//	Wave FitResiduals
-//	FitResiduals= ((W_coef[0]+W_coef[1]*exp(-((Ar_encoder[p]-W_coef[2])/W_coef[3])^2)) - PD_Intensity[p])/PD_error[p]
-//	FitResiduals[0,PeakCenterFitStartPoint-1]=NaN
-//	FitResiduals[PeakCenterFitEndPoint+1,inf]=NaN
+		//	Wave FitResiduals
+		//	FitResiduals= ((W_coef[0]+W_coef[1]*exp(-((Ar_encoder[p]-W_coef[2])/W_coef[3])^2)) - PD_Intensity[p])/PD_error[p]
+		//	FitResiduals[0,PeakCenterFitStartPoint-1]=NaN
+		//	FitResiduals[PeakCenterFitEndPoint+1,inf]=NaN
 	PeakFitWave= W_coef[0]+W_coef[1]*exp(-((x-W_coef[2])/W_coef[3])^2)
 	BeamCenter=W_coef[2]
 	BeamCenterError=W_sigma[2]
@@ -1243,7 +1264,7 @@ Function IN3_FitDefaultTop()
 	NVAR UseLorenz
 
 	if(UseModifiedGauss)
-		IN3_FitModGaussTop("")	
+		IN3_FitModGaussTop("",0)	
 	elseif(UseGauss)
 		IN3_FitGaussTop("")
 	elseif(UseLorenz)
@@ -1258,8 +1279,9 @@ end
 ///**********************************************************************************************************
 ///**********************************************************************************************************
 
-Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fit
+Function IN3_FitModGaussTop(ctrlname, DoNOtChangeLimits) : Buttoncontrol			// calls the Gaussien fit
 	string ctrlname
+	variable DoNOtChangeLimits			//added 6-2017 to prevent some crashes in fitting...   
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
@@ -1300,24 +1322,32 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 	FindLevels /N=5/P/Q  tempPDInt, V_max/2
 	wave W_FindLevels
 	variable startPointL, endPointL
-	if(Numpnts(W_FindLevels)==2)
-		startPointL=W_FindLevels[0]
-		endPointL=W_FindLevels[1]
-	elseif(Numpnts(W_FindLevels)>2)
-		FindLevel /P/Q W_FindLevels, V_maxloc
-		startPointL = W_FindLevels[floor(V_LevelX)]
-		endPointL = W_FindLevels[ceil(V_LevelX)]
-	elseif(Numpnts(W_FindLevels)<2)		//only one or no crossing found? this happens when NaNs are in the waves
-	 	startPointL =  IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 0)
-	 	endPointL = IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 1)
+	if(DoNOtChangeLimits)
+		startPointL=PeakCenterFitStartPoint
+		endPointL=PeakCenterFitEndPoint	
+	else
+		if(Numpnts(W_FindLevels)==2)
+			startPointL=W_FindLevels[0]
+			endPointL=W_FindLevels[1]
+		elseif(Numpnts(W_FindLevels)>2)
+			FindLevel /P/Q W_FindLevels, V_maxloc
+			startPointL = W_FindLevels[floor(V_LevelX)]
+			endPointL = W_FindLevels[ceil(V_LevelX)]
+		elseif(Numpnts(W_FindLevels)<2)		//only one or no crossing found? this happens when NaNs are in the waves
+		 	startPointL =  IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 0)
+		 	endPointL = IN3_FindlevelsWithNaNs(tempPDInt, V_max/2, V_maxloc, 1)
+		endif
 	endif
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter A  PD_Intensity  startPointL 
 //	Cursor/P /W=RcurvePlotGraph#PeakCenter B  PD_Intensity  endPointL 
 	W_coef[2] = abs(Ar_encoder[startPointL] - Ar_encoder[endPointL])/(2*(2*ln(2))^0.5)
 	W_coef[3]=2
 	//W[3]>1		//modified 7/6/2010 per request from Fan. K3 coefficient needs to be large enough to avoid weird Peak shapes.
-	Make/O/T/N=1 T_Constraints
+	//more cahnges 6-2017 to fix failures in fitting. 
+	Make/O/T/N=3 T_Constraints
 	T_Constraints[0] = {"K3>1.3"}
+	T_Constraints[1] = {"K3<3"}
+	T_Constraints[2] = {"K2<0.0006"}
 	variable V_FitError=0
 	FuncFit/NTHR=0/Q/N  IN3_ModifiedGauss W_coef PD_Intensity [PeakCenterFitStartPoint,PeakCenterFitEndPoint]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
 	//FuncFit/Q/NTHR=0/L=50  IN3_ModifiedGauss W_coef PD_Intensity [startPointL,endPointL]  /X=Ar_encoder /D /W=PD_error /I=1 /C=T_Constraints 	//Gauss
@@ -1370,7 +1400,7 @@ Function IN3_FitModGaussTop(ctrlname) : Buttoncontrol			// calls the Gaussien fi
 End
 
 //******************** name **************************************
-STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
+Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
 	wave waveIn
 	variable LevelSearched, MaxLocation, LeftRight
 	//set LeftRight to 0 for left and 1 for right of the MaxLocation
@@ -1384,10 +1414,13 @@ STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftR
 			counter-=1
 		endif
 		if(numtype(waveIn[counter])==0)
-			if(waveIn[counter]>LevelSearched)
+			LevelPoint = counter
+			if(waveIn[counter]>LevelSearched && counter>0 && Counter<numpnts(WaveIn)) //fix when cannot reach 50% or less value... 
 				LevelPoint = counter
 			else
-				Done=1
+			   if(abs(MaxLocation-LevelPoint)>3)
+					Done=1
+				endif
 			endif
 		endif	
 	while (Done<1)	

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.16
+#pragma version = 1.17
 Constant IR2DversionNumber=1.15
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.17 modified fitting to include Igor display with iterations /N=0/W=0
 //1.16  removed unused functions
 //1.15 added getHelp button calling to www manual
 //1.14 added oversampling to calculation of peak parameters. When user selects "oversample", peaks are calculated at 5x higher resolution. This provides parameters 5x more precise than what measured Q points are. 
@@ -2413,7 +2414,7 @@ Function IR2D_Fitting()
 		Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
 	else
-		FuncFit /N/Q IR2D_FitFunction W_coef IntensityForFit /X=QvectorForFit /W=ErrorForFit /I=1/E=E_wave /D /C=T_Constraints 
+		FuncFit /N=0/W=0/Q IR2D_FitFunction W_coef IntensityForFit /X=QvectorForFit /W=ErrorForFit /I=1/E=E_wave /D /C=T_Constraints 
 	endif
 
 	if (V_FitError!=0)	//there was error in fitting

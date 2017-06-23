@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.11
+#pragma version=1.12
 constant IR3DversionNumber = 1.10		//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.10		//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 Added new sort strings _xyz_string
 //1.11 Modified Screen Size check to match the needs
 //1.10 added getHelp button calling to www manual
 //1.09 added control fro modifier for folder name and defaulted to new, modified name, QRS folder also. User issues. 
@@ -242,7 +243,7 @@ Function IR3D_InitDataMerging()
 		endif
 	endfor		
 	SVAR FolderSortStringAll
-	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;_xyz_string;Reverse _xyz_string;"
 	SVAR NewDataExtension
 	if(strlen(NewDataExtension)<1)
 		NewDataExtension="mrg"
@@ -1048,6 +1049,16 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
 		endfor
 		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyz_string"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse _xyz_string"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort/R TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Sxyz_"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))

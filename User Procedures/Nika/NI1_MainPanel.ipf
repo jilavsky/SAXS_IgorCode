@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.56
+#pragma version=2.57
 Constant NI1AversionNumber = 2.52
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.57 changed trinname function to accept maximum possible number of characters allowed with _XYZ orientation. Will vary based on orientation now, _C will allow 25 characters. Others will be shorter. 
 //2.56 added resize after recreating of the panels to prior user size. 
 //2.55 removed unused functions
 //2.54 Fixed bug where Fit2D loadable types were listed on incompatible versions of MacOS. 
@@ -1167,7 +1168,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			endif
 		else
 			//variable tempEnd=26-strlen(CurOrient)
-			UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
+			UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
 		endif
 	else
 		if(UseSampleNameFnct)			//user provided function
@@ -1183,7 +1184,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					Abort "Name function returned nothing"
 				endif
 				UserFileName = tempStrName
-				UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient		
+				UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient		
 				//setDataFolder OldDF1
 			else
 				Abort "No valid function returning string for data name was specified. Check the Function name" 
@@ -1201,9 +1202,9 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					TempOutputDataname = LocalUserFileName
 					TempOutputDatanameUserFor = UserSampleName
 				endif
-				UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
+				UseName=NI1A_TrimCleanDataName(LocalUserFileName, CurOrient)+"_"+CurOrient
 			else
-				UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
+				UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient
 			endif
 		endif
 	endif
@@ -1493,8 +1494,8 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-Function/T NI1A_TrimCleanDataName(InputName)
-	string InputName
+Function/T NI1A_TrimCleanDataName(InputName, CurOrient)
+	string InputName, CurOrient
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName
@@ -1505,10 +1506,11 @@ Function/T NI1A_TrimCleanDataName(InputName)
 	variable NumDots= strlen(InputName) - strlen(tempStr)
 	NewName = InputName
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
+	variable MaxLengthAllowed = 26 - strlen(CurOrient)
 	if(TrimEndOfName)
-		NewName= NewName[0,17]
+		NewName= NewName[0,MaxLengthAllowed]
 	else
-		NewName= NewName[strlen(NewName)-17,inf]
+		NewName= NewName[strlen(NewName)-MaxLengthAllowed,inf]
 	endif
 	return NewName
 end

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.14
+#pragma version=1.15
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 added Ardell distributions support
 //1.14 fixed bug where the change in Diametrer vs Radius was not reflected in Size distribution graph and calculated properly. Fixed FWHM for diff peaks calcualtion. 
 //1.13 minor fixes for existence of Size distribution graphs so we do tno get errors. 
 //1.12 removed most Executes in preparation for Igor 7
@@ -1622,6 +1623,8 @@ Function IR2L_CalculateDistributions(pop,Radius,NumDist,VolumeDist) //calculates
 	NVAR SZMeanSize=$("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(pop))
 	NVAR SZWidth=$("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(pop))
 	NVAR LSWLocation=$("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(pop))
+	NVAR ArdLocation=$("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(pop))
+	NVAR ArdParameter=$("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(pop))
 	Duplicate/Free VolumeDist, tempDist, TempVolDistL
 	Redimension/D tempDist, TempVolDistL
 	if(stringmatch(DistShape,"LogNormal"))
@@ -1630,6 +1633,8 @@ Function IR2L_CalculateDistributions(pop,Radius,NumDist,VolumeDist) //calculates
 		tempDist = IR1_GaussProbability(Radius[p],GMeanSize,GWidth, 0)
 	elseif(stringmatch(DistShape,"Schulz-Zimm"))
 		tempDist = IR1_SchulzZimmProbability(Radius[p],SZMeanSize,SZWidth, 0)
+	elseif(stringmatch(DistShape,"Ardell"))
+		multithread tempDist = IR1_ArdellProbNormalized(Radius[p],ArdLocation,ArdParameter, 0)
 	else
 		tempDist = IR1_LSWProbability(Radius[p],LSWLocation,0, 0)
 	endif
@@ -1750,6 +1755,10 @@ Function IR2L_CreateDistributionWaves(pop)
 		NVAR location = $("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(pop))
 		NVAR scale = $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(pop))
 		NVAR shape = $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(pop))
+	elseif(stringmatch(PopSizeDistShape,"Ardell"))
+		NVAR location = $("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(pop))
+		NVAR scale = $("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(pop))
+		NVAR shape = $("root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(pop))
 	elseif(stringmatch(PopSizeDistShape,"LSW"))
 		NVAR location = $("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(pop))
 		NVAR scale = $("root:Packages:IR2L_NLSQF:GWidth_pop"+num2str(pop))
@@ -1833,6 +1842,9 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 	if (cmpstr("Schulz-Zimm",MyFunction)==0)
 		Step=scale*0.02					//standard deviation
 	endif
+	if (cmpstr("Ardell",MyFunction)==0)
+		Step=location*0.02					//step from main peak location
+	endif
 	if (cmpstr("LSW",MyFunction)==0)
 		Step=location*0.3				//just some step for this distribution
 	endif
@@ -1849,6 +1861,9 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 		mode=location	//=median
 	endif
 	if (cmpstr("Schulz-Zimm",MyFunction)==0)
+		mode=location	//=median
+	endif
+	if (cmpstr("Ardell",MyFunction)==0)
 		mode=location	//=median
 	endif
 	if (cmpstr("LSW",MyFunction)==0)
@@ -1884,6 +1899,9 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 		if (cmpstr("LSW",MyFunction)==0)
 			tempResult=IR2L_LSWCumulative(tempVal,location,scale, shape)
 		endif
+		if (cmpstr("Ardell",MyFunction)==0)
+			multithread tempResult=IR1_ArdellCumulative(tempVal,location,scale, shape)
+		endif
 		if (cmpstr("LogNormal",MyFunction)==0)
 			tempResult=IR1_LogNormCumulative(tempVal,location,scale, shape)
 		endif
@@ -1907,6 +1925,9 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 			if (cmpstr("LSW",MyFunction)==0)
 				startCumTrgts=IR2L_LSWCumulative(minimumXPossible,location,scale, shape)
 			endif
+			if (cmpstr("Ardell",MyFunction)==0)
+				multithread startCumTrgts=IR1_ArdellCumulative(minimumXPossible,location,scale, shape)
+			endif
 			if (cmpstr("LogNormal",MyFunction)==0)
 				startCumTrgts=IR1_LogNormCumulative(minimumXPossible,location,scale, shape)
 			endif
@@ -1918,7 +1939,7 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 	//now we need to calculate the endx
 
 	variable maximumXPossible=1e15	//maximum, fixed for giant number due to use of the code for light scattering
-		
+				
 	tempVal=mode
 	
 	do
@@ -1933,6 +1954,9 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 		if (cmpstr("Schulz-Zimm",MyFunction)==0)
 			tempResult=IR1_SZCumulative(tempVal,location,scale, shape)
 		endif
+		if (cmpstr("Ardell",MyFunction)==0)
+			multithread tempResult=IR1_ArdellCumulative(tempVal,location,scale, shape)
+		endif
 		if (cmpstr("LSW",MyFunction)==0)
 			tempResult = 1
 			tempVal = 1.5 * location //this distribution does not exist over this value...
@@ -1945,8 +1969,12 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 			tempResult=1
 			tempVal=maximumXPossible
 		endif
-
 	while ((tempResult<(1-myprecision))&&(tempVal<maximumXPossible))			
+	//Ardell is weird, ends too soon...
+		if (cmpstr("Ardell",MyFunction)==0)
+			tempVal+=0.5*Step
+		endif
+	
 	
 	endx = tempVal
 
@@ -1955,20 +1983,27 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 	//We will also create waves with 3*as many points with diameters between startx and endx (Temp_diameters) and with appropriate cumulative distribution (Temp_CumulativeWave)
 	//then we will look for which diameters we get the cumulative numbers in Temp_CumulTargets and put these in output wave
 	
-	Make/D /N=(numberOfPoints) /O Temp_CumulTargets
-	Make/D /N=(3*numberOfPoints) /O Temp_CumulativeWave,Temp_diameters
+	Make/D /N=(numberOfPoints) /Free Temp_CumulTargets
+	Make/D /N=(3*numberOfPoints) /Free Temp_CumulativeWave,Temp_diameters
 	
 	
 	Temp_diameters=startx+p*(endx-startx)/(3*numberOfPoints-1)			//this puts the proper diameters distribution in the temp diameters wave
 	
-	Temp_CumulTargets=startCumTrgts+p*(1-myprecision-startCumTrgts)/(numberOfPoints-1) //this puts equally spaced values between myprecision and (1-myprecision) in this wave
-	
+	//Ardell is weird, ends too soon...
+		if (cmpstr("Ardell",MyFunction)==0)
+			Temp_CumulTargets=startCumTrgts+p*(1-startCumTrgts)/(numberOfPoints-1) //this puts equally spaced values between myprecision and (1-myprecision) in this wave
+		else
+			Temp_CumulTargets=startCumTrgts+p*(1-myprecision-startCumTrgts)/(numberOfPoints-1) //this puts equally spaced values between myprecision and (1-myprecision) in this wave
+		endif
 	//calculate the cumulative waves
 	if (cmpstr("Gauss",MyFunction)==0)
 		Temp_CumulativeWave=IR1_GaussCumulative(Temp_diameters,location,scale, shape)
 	endif
 	if (cmpstr("Schulz-Zimm",MyFunction)==0)
 		Temp_CumulativeWave=IR1_SZCumulative(Temp_diameters,location,scale, shape)
+	endif
+	if (cmpstr("Ardell",MyFunction)==0)
+		multithread Temp_CumulativeWave=IR1_ArdellCumulative(Temp_diameters,location,scale, shape)
 	endif
 	if (cmpstr("LSW",MyFunction)==0)
 		Temp_CumulativeWave=IR2L_LSWCumulative(Temp_diameters,location,scale, shape)
@@ -1990,12 +2025,6 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 		OutputWave=10^(log(startx)+p*((log(endx)-log(startx))/(numberOfPoints-1)))
 	endif
 
-	
-	//and now cleanup
-	
-	KillWaves/Z Temp_CumulTargets //, myTest
-	KillWaves/Z Temp_CumulativeWave,Temp_diameters
-
 	setDataFolder OldDf
 	
 end
@@ -2016,7 +2045,7 @@ Function IR2L_LSWCumulative(xx,location,scale, shape)
 			
 	variable result, pointsNeeded=ceil(xx/30+30)
 	//points neede is at least 30 and max out around 370 for 10000 A location
-	make/D /O/N=(PointsNeeded) temp_LSWwav 
+	make/D /O/N=(PointsNeeded)/Free temp_LSWwav 
 	
 	SetScale/P x 10,(xx/(numpnts(temp_LSWwav)-3)),"", temp_LSWwav	
 	//this sets scale so the model wave x scale covers area from 10 A over the needed point...
@@ -2026,11 +2055,9 @@ Function IR2L_LSWCumulative(xx,location,scale, shape)
 	integrate /T temp_LSWwav
 	//and at this point the temp_LSWwav has integral values in it... 
 	result = temp_LSWwav(xx) //here we get the value interpolated (linearly) for the needed point...
-	KillWaves/Z temp_LSWwav
 	setDataFolder OldDf
 	return result
 end
-
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

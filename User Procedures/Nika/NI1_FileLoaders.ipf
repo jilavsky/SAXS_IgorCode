@@ -810,6 +810,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	elseif(cmpstr(FileType,"RIGK/Raxis")==0)
 		FileNameToLoad= FileName
 		string RigakuHeader = NI1A_ReadRigakuUsingStructure(PathName, FileNameToLoad)
+		//print RigakuHeader
 		//variable offsetFile = NI1A_FindFirstNonZeroChar(PathName, FileNameToLoad)
 		variable offsetFile = NumberByKey("RecordLengthByte", RigakuHeader )
 		//print "Found offset in the file to be: "+num2str(offsetFile)

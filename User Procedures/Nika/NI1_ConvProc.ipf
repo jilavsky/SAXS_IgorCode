@@ -6719,7 +6719,7 @@ Function NI2T_ReadOrientationFromGlobals(d)						// sets d to the reference orie
 // NOTE THE change here:
 	d.R[1]=pi*HorizontalTilt/180
 	d.R[0]=pi*VerticalTilt/180
-//	d.R[2]=pi*AzimuthalTilt/180							// angle of detector, theta = 0
+//	d.R[2]=pi*AzimuthalTilt/180				// angle of detector, theta = 0
 	d.R[2]=0							// angle of detector, theta = 0
 	//if we are doing stuff wrt beam center, these shifts are no more needed
 //	d.P[0]=(NumPixX/2 - BeamCntrX)*PixSizeX*1000

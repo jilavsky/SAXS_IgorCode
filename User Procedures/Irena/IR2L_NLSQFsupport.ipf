@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.41
+#pragma version=1.42
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,7 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.42 added Ardell distributions support
 //1.41 added getHelp button calling to www manual
 //1.40 added modifiers to stepping by clicking on step arrows fro setVariables. With modifier step is 10x smaller now. 
 //1.39 fixed code which did nto have full paths to waves and was failing when called in some cases. 
@@ -956,6 +957,8 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		S_sw=2
 	elseif(stringmatch(Shape, "Schulz-Zimm"))
 		S_sw=4
+	elseif(stringmatch(Shape, "Ardell"))
+		S_sw=5
 	else
 		S_sw=3			//we have LSW....
 	endif
@@ -986,7 +989,7 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Button GetFFHelp,win=LSQF2_MainPanel, disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 
 		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:PopSizeDistShape_pop"+num2str(tab+1))
-		PopupMenu PopSizeDistShape,win=LSQF2_MainPanel, mode=(WhichListItem(tempSVR,"LogNormal;Gauss;LSW;Schulz-Zimm;")+1), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
+		PopupMenu PopSizeDistShape,win=LSQF2_MainPanel, mode=(WhichListItem(tempSVR,"LogNormal;Gauss;LSW;Schulz-Zimm;Ardell;")+1), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(UsePop))
 		//diffraction stuff
 		SVAR tempSVR=$("root:Packages:IR2L_NLSQF:DiffPeakProfile_pop"+num2str(tab+1))
 		SVAR tempSVR2=root:Packages:IR2L_NLSQF:ListOfKnownPeakShapes
@@ -1176,6 +1179,25 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		Checkbox LSWLocationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocationFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop))
 		SetVariable LSWLocationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocationMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop)|| !(DLSW1))
 		SetVariable LSWLocationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("LSWLocationMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==3)|| !(UsePop)|| !(DLSW1))
+
+
+		NVAR ASZM1=$("root:Packages:IR2L_NLSQF:ArdLocationFit_pop"+num2str(tab+1))
+		SetVariable ArdLocation,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdLocation_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(tab+1))
+		SetVariable ArdLocation,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox ArdLocationFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdLocationFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop))
+		SetVariable ArdLocationMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdLocationMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop)|| !(ASZM1))
+		SetVariable ArdLocationMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdLocationMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop)|| !(ASZM1))
+
+		NVAR ASZM2=$("root:Packages:IR2L_NLSQF:ArdParameterFit_pop"+num2str(tab+1))
+		SetVariable ArdParameter,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdParameter_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop))
+		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(tab+1))
+		SetVariable ArdParameter,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox ArdParameterFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdParameterFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop))
+		SetVariable ArdParameterMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdParameterMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==5) || !(UsePop)|| !(ASZM2))
+		SetVariable ArdParameterMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("ArdParameterMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==1)|| !(S_sw==5)|| !(UsePop)|| !(ASZM2))
+
+
 		//unified fit controls		
 		Button FitRgAndG,win=LSQF2_MainPanel,disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
 		Button FitPandB,win=LSQF2_MainPanel,disable=(!(DisplayModelControls)|| (F_sw)|| !(UsePop))
@@ -1486,6 +1508,50 @@ Function IR2L_PopSetVarProc(SV_Struct) : SetVariableControl
 				endif
 			endif
 				//LN controls...
+		if(stringmatch(ctrlName,"ArdLocation"))
+				//set LNMinSize limits... 
+				NVAR ArdLocation=$("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(whichDataSet))
+				NVAR ArdLocationMin=$("root:Packages:IR2L_NLSQF:ArdLocationMin_pop"+num2str(whichDataSet))
+				NVAR ArdLocationMax=$("root:Packages:IR2L_NLSQF:ArdLocationMax_pop"+num2str(whichDataSet))
+				if(varNum<3)
+					varNum=3
+					ArdLocation = 3
+					print "Cannot have Log-Normal min size smaller than ~3A, Small-angle scattering theory fails. Reset the value for user."
+				endif
+				ArdLocationMin= varNum*0.5
+				ArdLocationMax=varNum*2			
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable ArdLocation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable ArdLocation,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+
+		if(stringmatch(ctrlName,"ArdParameter"))
+				//set LNMinSize limits... 
+				NVAR ArdParameter=$("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(whichDataSet))
+				NVAR ArdParameterMin=$("root:Packages:IR2L_NLSQF:ArdParameterMin_pop"+num2str(whichDataSet))
+				NVAR ArdParameterMax=$("root:Packages:IR2L_NLSQF:ArdParameterMax_pop"+num2str(whichDataSet))
+				if(varNum>3)
+					varNum=3
+					ArdParameter = 3
+					print "Ardell parametr is defined only between 2 and 3."
+				endif
+				if(varNum<2)
+					varNum=2
+					ArdParameter = 2
+					print "Ardell parametr is defined only between 2 and 3."
+				endif
+				ArdParameterMin= 2
+				ArdParameterMax=3			
+				if(eventMod>3)		//any key is down, make small step
+					SetVariable ArdParameter,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.005)}	
+				else
+					SetVariable ArdParameter,win=LSQF2_MainPanel,limits={0,Inf,(varNum*0.05)}	
+				endif
+			endif
+
+
 			if(stringmatch(ctrlName,"LNMinSize"))
 				//set LNMinSize limits... 
 				NVAR LNMinSize=$("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(whichDataSet))
@@ -2082,6 +2148,7 @@ Function IR2L_Initialize()
 	ListOfPopulationVariablesSD+="LNMinSize;LNMinSizeFit;LNMinSizeMin;LNMinSizeMax;LNMeanSize;LNMeanSizeFit;LNMeanSizeMin;LNMeanSizeMax;LNSdeviation;LNSdeviationFit;LNSdeviationMin;LNSdeviationMax;"	
 	ListOfPopulationVariablesSD+="GMeanSize;GMeanSizeFit;GMeanSizeMin;GMeanSizeMax;GWidth;GWidthFit;GWidthMin;GWidthMax;LSWLocation;LSWLocationFit;LSWLocationMin;LSWLocationMax;"	
 	ListOfPopulationVariablesSD+="SZMeanSize;SZMeanSizeFit;SZMeanSizeMin;SZMeanSizeMax;SZWidth;SZWidthFit;SZWidthMin;SZWidthMax;"	
+	ListOfPopulationVariablesSD+="ArdLocation;ArdLocationFit;ArdLocationMin;ArdLocationMax;ArdParameter;ArdParameterFit;ArdParameterMin;ArdParameterMax;"	
 
 	ListOfPopulationVariablesSD+="StructureParam1;StructureParam1Fit;StructureParam1Min;StructureParam1Max;StructureParam2;StructureParam2Fit;StructureParam2Min;StructureParam2Max;"
 	ListOfPopulationVariablesSD+="StructureParam3;StructureParam3Fit;StructureParam3Min;StructureParam3Max;StructureParam4;StructureParam4Fit;StructureParam4Min;StructureParam4Max;"
@@ -2643,6 +2710,30 @@ Function IR2L_SetInitialValues(enforce)
 			endif
 		endfor
 
+			ListOfVariables = "ArdParameter;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=2.5
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=2
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=3	
+				endif
+			endfor
+
+
+			ListOfVariables = "ArdLocation;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=100
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Min_pop"+num2str(j))
+					testVar=50
+					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
+					testVar=200
+				endif
+			endfor
 
 	endfor
 	//here is check that smearing is in check... 
@@ -3008,6 +3099,12 @@ Function IR2L_SvNbk_ModelInf()
 					IR2L_AppendAnyText("Schulz-Zimm Mean"+"\t=\t"+num2str(SZMeanSize),0)
 					NVAR SZdeviation =  $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(i))	
 					IR2L_AppendAnyText("Schulz-Zimm Width"+"\t=\t"+num2str(SZdeviation),0)
+				elseif(stringMatch(PopSizeDistShape, "Ardell" ))
+					IR2L_AppendAnyText("DistributionShape"+"\t=\tArdell",0)
+					NVAR ArdLocation =  $("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(i))	
+					IR2L_AppendAnyText("Ardell Location"+"\t=\t"+num2str(ArdLocation),0)
+					NVAR ArdParameter =  $("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(i))	
+					IR2L_AppendAnyText("Ardell Parameter"+"\t=\t"+num2str(ArdParameter),0)
 				else //LSW
 					IR2L_AppendAnyText("DistributionShape"+"\t=\tLSW",0)
 					NVAR LSWLocation =  $("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(i))	

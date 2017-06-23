@@ -1145,12 +1145,14 @@ Function IR1G_AddDataToGraph()
 	if(stringmatch(YWaveNameStr,"ModelInt"))
 		Abort
 	endif
+	
 	Wave/Z Ywv=$(DataFoldername+YWaveNameStr)
 	Wave/Z Xwv=$(DataFoldername+XWaveNameStr)
 
 	if(!WaveExists(Ywv) || !WaveExists(Xwv))
 		DoAlert 1, "Bug, the selected data do not exist. Report as bug - send this experiment to ilavsky@aps.anl.gov"
 		setDataFolder OldDf	
+		abort
 	endif
 
 	variable NewDataAdded=0
@@ -1229,7 +1231,7 @@ Function IR1G_ResetGraphAfterChanges()
 			wave w = TraceNameToWaveRef("IR1G_OneSampleEvaluationGraph", tempname )
 			curNote = note(w)
 			FromName = stringByKey("SizesDataFrom", curNote,"=",";")	//this is for Sizes...
-			if(strlen(FromName)<2)	//thsi is for Modeling I
+			if(strlen(FromName)<2)	//this is for Modeling I
 				FromName = stringByKey("DataFolderinIgor", curNote,"=",";")	
 			endif
 			

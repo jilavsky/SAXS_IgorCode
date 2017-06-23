@@ -12,6 +12,7 @@ constant CurrentNikaVersionNumber = 1.77
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //		Creating new configuration will now reopen 9ID config screen if it was opened before. 
  //1.77 Updated CHeckForUpdate to check on Github for latest release version
  //		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for available screen size. 
  //		#pragma IgorVersion=7.00
@@ -1404,12 +1405,22 @@ Function NI1_GMCreateNewGeom()
 		elseif(V_Flag==1)
 			NI1_GMSaveGeometries()
 		endif		
+	variable WasNI1_15IDDConfigPanel
+	DoWIndow NI1_15IDDConfigPanel
+	if(V_Flag)
+		WasNI1_15IDDConfigPanel=1
+	else
+		WasNI1_15IDDConfigPanel=0
+	endif
 	NI1_GMCloseAllNikaW() 	
 	KillDataFolder root:Packages:Convert2Dto1D
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = "Not saved"
 	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
 	NI1A_Convert2Dto1DMainPanel()
+	if(WasNI1_15IDDConfigPanel)
+		NI1_15IDDConfigureNika()
+	endif
 	setDataFolder oldDf
 end
 

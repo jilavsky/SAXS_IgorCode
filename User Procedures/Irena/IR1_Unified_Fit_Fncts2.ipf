@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.06
+#pragma version=2.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.07 modified fitting to include Igor display with iterations /N=0/W=0
 //2.06 modified IR1A_UnifiedFitCalculateInt to handle data which are fitted to less than 3*slitlength
 //2.05 added optional fitting constraints throught string and user input
 //2.04 changes to provide user with fit parameters review panel before fitting
@@ -867,18 +868,18 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
 		if(UseNoLimits)	
-			FuncFit /N/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D 
+			FuncFit /N=0/W=0/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D 
 		else
-			FuncFit /N/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+			FuncFit /N=0/W=0/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
 		endif
 	else
 		Duplicate/O OriginalIntensity, FitIntensityWave		
 		Duplicate/O OriginalQvector, FitQvectorWave
 		Duplicate/O OriginalError, FitErrorWave
 		if(UseNoLimits)	
-			FuncFit /N/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D	
+			FuncFit /N=0/W=0/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D	
 		else	
-			FuncFit /N/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+			FuncFit /N=0/W=0/Q IR1A_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
 		endif
 	endif
 	if (V_FitError!=0)	//there was error in fitting

@@ -1,0 +1,23 @@
+Modification history of ASAS models.
+
+
+6/13/2017 
+Recovered from backup, Tabbetha wants to use these. 
+Modified formula 4a calculations to use waves and multithread.
+Seems to work on Igor 7
+Submitted to subversions to handle properly the changes. 
+
+
+******
+
+May 29 2005
+Version 1.1 of macros - added 5th population of scatterers...
+
+February 15 2005
+The code now will check if it needs to recalculate the existing data - if not necessary, it will use the old results. Thsi should result in MAJOR speed improvements.
+The volume scaling is done by just purer scaling of old results, not recalculating everything again...
+
+February 6 2005
+Added option to display tab-related fits to help in fitting guessing...
+
+

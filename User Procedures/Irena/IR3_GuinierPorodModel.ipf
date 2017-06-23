@@ -1,7 +1,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
 #pragma version=1.07  	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
-Constant IR3GPversionNumber=1.07
+Constant IR3GPversionNumber=1.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1.07
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.08 modified fitting to include Igor display with iterations /N=0/W=0
 //1.07 added getHelp button calling to www manual
 //1.06 GUI controls move change
 //1.05 changes for panel scaling. 
@@ -1637,18 +1638,18 @@ Function IR3GP_FitData(skipreset)
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
 		if(UseNoLimits)	
-			FuncFit /N/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D 
+			FuncFit /N=0/W=0/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D 
 		else
-			FuncFit /N/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+			FuncFit /N=0/W=0/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
 		endif
 	else
 		Duplicate/O OriginalIntensity, FitIntensityWave		
 		Duplicate/O OriginalQvector, FitQvectorWave
 		Duplicate/O OriginalError, FitErrorWave
 		if(UseNoLimits)	
-			FuncFit /N/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D	
+			FuncFit /N=0/W=0/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D	
 		else	
-			FuncFit /N/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+			FuncFit /N=0/W=0/Q IR3GP_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
 		endif
 	endif
 	if (V_FitError!=0)	//there was error in fitting

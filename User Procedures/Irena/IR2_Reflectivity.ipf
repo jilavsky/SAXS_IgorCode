@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.19
+#pragma version=1.20
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 modified fitting to include Igor display with iterations /N=0/W=0
 //1.19 added getHelp button calling to www manual
 //1.18 changes for panel scaling. 
 //1.17 removed many Executes (improvement for Igor 7) 
@@ -2566,7 +2567,7 @@ static Function IR2R_SimpleToolFit()
 		FitErrorWave = FitIntensityWave * ErrorFractionWave 
 		if(sum(FitErrorWave)==0 || !UseErrors)	//no errors to use...
 			if(UseLSQF)
-				FuncFit /N/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /E=E_wave  /C=T_Constraints 
+				FuncFit /N=0/W=0/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /E=E_wave  /C=T_Constraints 
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
@@ -2578,7 +2579,7 @@ static Function IR2R_SimpleToolFit()
 			endif
 		else		//have errorrs
 			if(UseLSQF)
-				FuncFit /N/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /C=T_Constraints 
+				FuncFit /N=0/W=0/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /C=T_Constraints 
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
@@ -2609,7 +2610,7 @@ static Function IR2R_SimpleToolFit()
 		FitErrorWave = FitIntensityWave * ErrorFractionWave
 		if(sum(FitErrorWave)==0 || !UseErrors)	//no errors to use...
 			if(UseLSQF)
-				FuncFit /N/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /E=E_wave /C=T_Constraints	
+				FuncFit /N=0/W=0/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /E=E_wave /C=T_Constraints	
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1
@@ -2621,7 +2622,7 @@ static Function IR2R_SimpleToolFit()
 			endif
 		else		//have errors
 			if(UseLSQF)
-				FuncFit /N/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave /C=T_Constraints	
+				FuncFit /N=0/W=0/Q IR2R_ST_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave /C=T_Constraints	
 			else
 				Duplicate/O FitIntensityWave, GenMaskWv
 				GenMaskWv=1

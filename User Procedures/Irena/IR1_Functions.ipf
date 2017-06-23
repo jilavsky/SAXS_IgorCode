@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.06
+#pragma version = 2.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.07 added Ardell distributions support
 //2.06 moved in this file some functions from retired Modeling I support - these are needed by other tools. 
 //2.05 added few missing window names which need to be killed when Kill all ..." is invoked. 
 //2.04 added IR2R_InsertRemoveLayers in the KillAllPanels
@@ -147,6 +148,77 @@ Function IR1_SchulzZimmProbability(x,MeanPos,Width, shape)
 	
 	return result
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+threadsafe Function IR1_ArdellProbNormalized(xval,MeanPos,np,NoP)
+	variable xval, MeanPos,np, NoP
+	//this function calculates probability for A
+	variable result
+	multithread result = IR1_ArdellProbability(xval,MeanPos,np,NoP)
+	Make/Free/N=200 NormWave
+	variable start = max(1, MeanPos/20 )
+	SetScale/I x  start, MeanPos*3,"", NormWave
+	multithread NormWave = IR1_ArdellProbability(x,MeanPos,np,NoP)
+	variable Normval = area(NormWave)
+	return result / Normval
+end	
+
+threadsafe Function IR1_ArdellProbability(x,MeanPos,np,NoP)
+		variable x, MeanPos,np, NoP
+	//this function calculates probability for Ardell distribution
+	variable result, zp
+	zp = x/MeanPos
+	result = -3*Ardell_F(zp,np)*exp(Ardell_P(zp,np))	
+	return result
+end
+
+
+
+threadsafe static Function Ardell_F(zp,np)
+	variable zp, np
+	//note np = 2 to 3
+	// zp = r/r0 = 0 - 3 max. 
+	
+	variable result
+	result = (zp*(np-1))^(np-1)
+	result = result/((np^np * (zp-1))-(zp^np * (np-1)^(np-1)))
+	
+	return result
+end
+
+threadsafe static Function Ardell_P(xp,np)
+	variable xp, np
+	make/Free tmpAF
+	SetScale/I x 0,xp,"", tmpAF
+	tmpAF = Ardell_F(x,np)
+	return area(tmpAF)
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+threadsafe Function IR1_ArdellCumulative(xpos,location,scale, shape)
+	variable xpos, location,scale, shape
+	//this function calcualtes cumulative probabliltiy for Ardell distribution
+	//only scale is useful parameters here ans is 2-3... 
+	variable result
+	Make/O/N=200/Free TempPWave, TepNorWave
+	variable start = max(1, location/20 )
+	start = min(start,xpos)
+	SetScale/I x start,xpos,"", TempPWave
+	SetScale/I x start,3*location,"", TepNorWave
+	multithread TempPWave =  IR1_ArdellProbability(x,location,scale, shape)
+	multithread TepNorWave =  IR1_ArdellProbability(x,location,scale, shape)
+	result = area(TempPWave)/area(TepNorWave)
+	return result
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -160,12 +232,11 @@ Function IR1_SZCumulative(xpos,location,scale, shape)
 	//until I find the formula for SZ I will use numberical method, slower but should work... 
 	
 	variable result
-	Make/O/N=500 tempSZDistWv
+	Make/O/N=500/Free tempSZDistWv
 	SetScale/I x 0,xpos,"", tempSZDistWv
 	tempSZDistWv =  IR1_SchulzZimmProbability(x,location,scale, shape)
 //	doupdate
 	result = area(tempSZDistWv  )
-	KillWaves/Z tempSZDistWv
 	return result
 end
 

@@ -147,30 +147,31 @@ Function IN3_FitPeakCenterEstimate()
 	setDataFolder OldDf	
 end
 //******************** name **************************************
-STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
-	wave waveIn
-	variable LevelSearched, MaxLocation, LeftRight
-	//set LeftRight to 0 for left and 1 for right of the MaxLocation
-	variable LevelPoint = 0
-	variable counter = MaxLocation
-	variable Done=0
-	Do
-		if(LeftRight)
-			counter+=1
-		else
-			counter-=1
-		endif
-		if(numtype(waveIn[counter])==0)
-			if(waveIn[counter]>LevelSearched && counter>0 && Counter<numpnts(WaveIn)) //fix when cannot reach 50% or less value... 
-				LevelPoint = counter
-			else
-				Done=1
-			endif
-		endif	
-	while (Done<1)	
-	return LevelPoint	
-end
-
+//STATIC Function IN3_FindlevelsWithNaNs(waveIn, LevelSearched, MaxLocation, LeftRight)
+//	wave waveIn
+//	variable LevelSearched, MaxLocation, LeftRight
+//	//set LeftRight to 0 for left and 1 for right of the MaxLocation
+//	variable LevelPoint = 0
+//	variable counter = MaxLocation
+//	variable Done=0
+//	Do
+//		if(LeftRight)
+//			counter+=1
+//		else
+//			counter-=1
+//		endif
+//		if(numtype(waveIn[counter])==0)
+//			LevelPoint = counter
+//			if(waveIn[counter]>LevelSearched && counter>0 && Counter<numpnts(WaveIn)) //fix when cannot reach 50% or less value... 
+//				LevelPoint = counter
+//			else
+//				Done=1
+//			endif
+//		endif	
+//	while (Done<1)	
+//	return LevelPoint	
+//end
+//
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
@@ -364,6 +365,8 @@ Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 			endfor
 		endif
 	endif
+	//IN2G_RemoveNaNsFrom7Waves(Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error)			//is this correct???
+	
 	setDataFolder OldDf		
 end
 

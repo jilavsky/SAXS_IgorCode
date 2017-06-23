@@ -1,12 +1,13 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.04
+#pragma version = 1.05
 #include "HDF5Gateway"
 
-constant NexusVersionNumber=1.0
+constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.05 add support for multidimensional data
 //1.04 fixes for Nexus standard development and suggested units
 //1.03 minor fix to forcing naming of output data. 
 //1.02 Many modifications for Nexus Import - and EXPORT of data, import to Irena, export from and to Nika. 
@@ -180,6 +181,15 @@ Function NEXUS_NikaConfigPanelFnct() : Panel
 		CheckBox NX_ReadParametersOnLoad,pos={10,130},size={195,14},title="Read Params on Import?", proc=Nexus_ConfigPanelCheckProc
 		CheckBox NX_ReadParametersOnLoad,help={"When importing NX data, read some parameters from the NX values?"}
 		CheckBox NX_ReadParametersOnLoad,variable= root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
+		
+		NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+		NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+		SetVariable NX_Index0Max, pos={10,150}, size ={200,18},limits={0,NX_Index0Max,1}, variable=root:Packages:Irena_Nexus:NX_Index0Value
+		SetVariable NX_Index0Max, title="0 index value"
+		SetVariable NX_Index1Max, pos={10,170}, size ={200,18},limits={0,NX_Index1Max,1}, variable=root:Packages:Irena_Nexus:NX_Index1Value
+		SetVariable NX_Index1Max, title="1 index value"
+		//values={0,NX_Index0Max,1}
+		//ListOfVariables+=";NX_Index0Max;;NX_Index1Max;"		//note, next two indexes are the image indexes... 
 
 		Button NX_OpenFileInBrowser,pos={200,80},size={190,20},proc=NEXUS_InputPanelButtonProc,title="Open Sel. File in Browser"
 		Button NX_OpenFileInBrowser,help={"Check file in HDF5 Browser"}
@@ -285,6 +295,9 @@ Function NEXUS_InputTabProc(name,tab) : TabControl
 	CheckBox NX_CreateNotebookWithInfo, disable=(tab!=0 || !InputisNexus), win=NEXUS_ConfigurationPanel
 	CheckBox NX_ReadParametersOnLoad, disable=(tab!=0|| !InputisNexus), win=NEXUS_ConfigurationPanel
 	Button NX_OpenFileInBrowser, disable=(tab!=0), win=NEXUS_ConfigurationPanel
+	SetVariable NX_Index0Max, disable=(tab!=0), win=NEXUS_ConfigurationPanel
+	SetVariable NX_Index1Max, disable=(tab!=0), win=NEXUS_ConfigurationPanel
+
 
 	ListBox NX_LookupTable, disable=(tab!=1 || NX_ReadParametersOnLoad!=1|| !InputisNexus), win=NEXUS_ConfigurationPanel
 	SetVariable NX_GrepStringMask, disable=(tab!=1 || NX_ReadParametersOnLoad!=1|| !InputisNexus), win=NEXUS_ConfigurationPanel
@@ -575,18 +588,63 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 		For(i=0;i<itemsInList(AllNXData);i+=1)
 			tmpPath = stringfromlist(i,AllNXData)
 			NX2Ddata+=NEXUS_IdentifyNxData(tmpPath, 2)
+			NX2Ddata+=NEXUS_IdentifyNxData(tmpPath, 3)
+			NX2Ddata+=NEXUS_IdentifyNxData(tmpPath, 4)
 		endfor
 		if(ItemsInList(NX2Ddata)>1 || ItemsInList(NX2Ddata)<1)
 			Abort "More or less than 1 2D data set found, cannot handle this for now, stopping"
 		endif
 		Wave DataWave = $(stringfromlist(0,NX2Ddata))			//just to make sure, pick the first one here (removes ending ;)
-		Duplicate/O DataWave, $("root:Packages:Convert2Dto1D:Loadedwave0")
-		Wave DataWv=$("root:Packages:Convert2Dto1D:Loadedwave0")
-		//If it is actually 3D wave but with first dimension of dimsize=1, reduce rank from [1][p][q] to only [p][q]
-		if(WaveDims(DataWave) == 3)
-			Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
+		//now, 6-2017 this may be up to 4D wave, so now we need to handle this...
+		NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+		NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+		NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+		NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+		if(WaveDims(DataWave) == 2)		//usual, 1 image in file, nothing new to handle here...
+			NX_Index0Value = 0
+			NX_Index0Max = 0
+			NX_Index1Value = 0
+			NX_Index1Max = 0
+			Duplicate/O DataWave, $("root:Packages:Convert2Dto1D:Loadedwave0")
+		elseif(WaveDims(DataWave) == 3)		//this is 3D wave
+			NX_Index0Value = 0
+			NX_Index0Max = 0
+			NX_Index1Max = dimsize(DataWave,0)
+			if(NX_Index1Value>NX_Index1Max)
+				NX_Index1Value = 0
+			endif
+			make/Free/N=(dimsize(DataWave,1),dimsize(DataWave,2)) My2DImg
+			My2DImg = DataWave[NX_Index1Value][p][q]
+			Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
+			//MatrixOp/Free My2DImg = layer(DataWave,NX_Index1Value)	
+			//Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
+			//Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
+		elseif(WaveDims(DataWave) == 4)		//this is 3D wave
+			NX_Index0Max = dimsize(DataWave,0)
+			if(NX_Index0Value>NX_Index0Max)
+				NX_Index0Value = 0
+			endif
+			NX_Index1Max = dimsize(DataWave,1)
+			if(NX_Index1Value>NX_Index1Max)
+				NX_Index1Value = 0
+			endif
+			make/Free/N=(dimsize(DataWave,2),dimsize(DataWave,3)) My2DImg
+			My2DImg = DataWave[NX_Index0Value][NX_Index1Value][p][q]
+			//Redimension/N=(dimsize(My2DImg,2),dimsize(My2DImg,3)) My2DImg
+			Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
+			//MatrixOp/Free My2DImg = layer(DataWave,NX_Index1Value)	
+			//Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
+			//Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
 		else
-
+			print "We should never get here"
+			print "Error in NEXUS_NexusNXsasDataReader"
+		endif
+		Wave DataWv=$("root:Packages:Convert2Dto1D:Loadedwave0")		
+		//update range of the dim display in window 
+		DoWIndow NEXUS_ConfigurationPanel
+		if(V_Flag)
+			SetVariable NX_Index0Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index0Max,1}
+			SetVariable NX_Index1Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index1Max,1}
 		endif
 		NEXUS_CleanUpHDF5Structure(DataWv, PathToNewData)
 		NEXUS_CreateWvNtNbk(DataWv, Filename)
@@ -891,7 +949,8 @@ static Function/S NEXUS_FindAnySignalData()
 			break
 		endif
 		Wave TestWv = $(objName)
-		if(WaveDims(TestWv) == 2 || (WaveDims(TestWv) == 3 && DimSize(TestWv, 0)==1))
+		if(WaveDims(TestWv) == 2 || WaveDims(TestWv) == 3 || WaveDims(TestWv) ==4 )
+			//6-2017 added ability to handel higher dimensions, up to 4 dimensions allowed by standard
 			WavenameStr = objName
 			break
 		endif
@@ -943,6 +1002,7 @@ Function NEXUS_Initialize(enforceReset)
 	//write part
 	ListOfVariables+="NX_SaveToProcNexusFile;NX_CreateNewRawNexusFile;NX_Append2DDataToProcNexus;NX_Append1DDataToProcNexus;"
 	ListOfVariables+="NX_AppendBlankToRawNexus;NX_AppendMaskToRawNexus;NX_Rebin2DData;NX_UseQxQyCalib2DData;"
+	ListOfVariables+="NX_Index0Value;NX_Index0Max;NX_Index1Value;NX_Index1Max;"		//note, next two indexes are the image indexes... 
 	//read part	
 	ListOfStrings="DataFolderName;GrepStringMask;NX_RebinCal2DDtToPnts;"
 	//write part

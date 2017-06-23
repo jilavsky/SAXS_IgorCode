@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.01
+#pragma version=2.02
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.02 modified fitting to include Igor display with iterations /N=0/W=0
 //2.01 added license for ANL
 
 
@@ -342,12 +343,12 @@ Function IR1V_ConstructTheFittingCommand()
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
-		FuncFit /N/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
+		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
 	else
 		Duplicate/O OriginalIntensity, FitIntensityWave		
 		Duplicate/O OriginalQvector, FitQvectorWave
 		Duplicate/O OriginalError, FitErrorWave
-		FuncFit /N/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
+		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
 	endif
 	if (V_FitError!=0)	//there was error in fitting
 		IR1V_ResetParamsAfterBadFit()

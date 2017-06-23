@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.37
+#pragma version=1.39
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,7 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.39 changed fake usaxs data from _usx to _u to save on numebr of characters
+//1.38 added to Pilatus readout of beamsize for SAXS and WAXS
 //1.37 added to SAXS use of thickness, why not - provides even better normalized data. 
 //1.36 fixed issues with use of userSampleName
 //1.35 fix for bigSAXS failure
@@ -1183,6 +1184,8 @@ Function NI1_15IDDWaveNoteValuesNx()
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("pin_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
+			BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
+			BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
 		elseif(useWAXS)
 			PixelSizeX = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
@@ -1191,6 +1194,8 @@ Function NI1_15IDDWaveNoteValuesNx()
 			BeamCenterX = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_15IDDFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_15IDDFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
+			BeamSizeX = NumberByKey(NI1_15IDDFindKeyStr("shape:xsize=", OldNote), OldNote  , "=" , ";")
+			BeamSizeY = NumberByKey(NI1_15IDDFindKeyStr("shape:ysize=", OldNote), OldNote  , "=" , ";")
 		endif		
 		print "Set experimental settinsg and geometry from file :"+Current2DFileName
 		print "Wavelength = "+num2str(Wavelength)
@@ -1200,6 +1205,8 @@ Function NI1_15IDDWaveNoteValuesNx()
 		print "BeamCenterX = "+num2str(BeamCenterX)
 		print "BeamCenterY = "+num2str(BeamCenterY)
 		print "SampleToCCDdistance = "+num2str(SampleToCCDdistance)
+		print "BeamSizeX = "+num2str(BeamSizeX)
+		print "BeamSizeY = "+num2str(BeamSizeY)
 
 	elseif(stringMatch("15ID", StringByKey("instrument:source:facility_beamline", OldNOte  , "=" , ";")) && stringMatch("CCD", StringByKey("data:model", OldNOte  , "=" , ";")))	
 		//should be for useBigSAXS=1
@@ -1977,7 +1984,7 @@ Function NI1_15IDDCreateHelpNbk()
 		Notebook $nb text="5. \tCreate mask to mask off the top few lines on detector using button: \"Create SAXS/WAXS m"
 		Notebook $nb text="ask\"\r"
 		Notebook $nb text="6.\tOptional : Either read slit length (button:\"Set Slit Length\") from one of USAXS measurements and sele"
-		Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_usx\") - OR - unselect the \"Create Smeared Data\" (resu"
+		Notebook $nb text="ct \"Create Smeared Data\" (resulting data will be \"_u\") - OR - unselect the \"Create Smeared Data\" (resu"
 		Notebook $nb text="lting data will be \"_270_30\"). Likely choose \"Delete temp Data\" if you are creating slit smeared data.\r"
 		Notebook $nb text="7. \tFind \"Empty\" (aka: Blank) file you want to use and load it in Nika (\"Emp/Dk\" tab). \r"
 		Notebook $nb text="To process SAXS select the 2D data in the main panel and push button \"Convert sel. files 1 at time\"\r"
@@ -1985,7 +1992,7 @@ Function NI1_15IDDCreateHelpNbk()
 		Notebook $nb text=" for SAXS if you have small-angle scattering. If you have diffraction peaks, select in \"Sectors\" tab "
 		Notebook $nb text="checkbox \"Max num points\" and if you need it, select \"d?\" checkbox etc. \r"
 		Notebook $nb text="   \r"
-		Notebook $nb text="Merge \"_usx\" data using \"Data manipulation I\" tool from Irena package with USAXS slit smeared data or \"_"
+		Notebook $nb text="Merge \"_u\" data using \"Data manipulation I\" tool from Irena package with USAXS slit smeared data or \"_"
 		Notebook $nb text="270_30\" data with USAXS desmeared data. \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="\r"
@@ -2129,7 +2136,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//variable tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
 		
 	elseif(strlen(UserFileName)<1)	//user did not set the file name
 		if(cmpstr(TempOutputDatanameUserFor,UserSampleName)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
@@ -2137,9 +2144,9 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		else
 				abort "could not figure out the names"	
 		endif
-		UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(LocalUserFileName, CurOrient)+"_"+CurOrient
 	else
-		UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient
 	endif
 	//UseName=cleanupName(UseName, 1 )
 	String PinFolder="root:SAXS:"+possiblyQuoteName(UseName)
@@ -2149,7 +2156,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
 	elseif(strlen(UserFileName)<1)	//user did not set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
@@ -2157,20 +2164,20 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 				abort  "could not figure out the names"	
 		endif
 		//UseName=LocalUserFileName[0,18]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(LocalUserFileName, CurOrient)+"_"+CurOrient
 	else
 		//UseName=UserFileName[0,18]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient
 	endif
 	//UseName=cleanupName(UseName, 1 )
 	String LIneProfFolder="root:SAXS:"+possiblyQuoteName(UseName)
 	String LineProfWaveNames=(UseName)
 
-	CurOrient="usx"
+	CurOrient="u"
 	if (Use2DdataName)
 		//tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserSampleName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
 	elseif(strlen(UserFileName)<1)	//user did nto set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
@@ -2178,10 +2185,10 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 				abort  "could not figure out the names"	
 		endif
 		//UseName=LocalUserFileName[0,18]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(LocalUserFileName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(LocalUserFileName, CurOrient)+"_"+CurOrient
 	else
 		//UseName=UserFileName[0,18]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserFileName)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient
 	endif
 	UseName=cleanupName(UseName, 1 )
 	String SmearedFolder="root:SAXS:"+possiblyQuoteName(UseName)

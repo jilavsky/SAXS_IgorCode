@@ -10,6 +10,8 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 
 Added ColorTable to preferences, Saved every time color table is changed and restored as needed. Should change the Panel GUI and colors of graph, if exists. 
+Modified folder name length - now each segments (_C, sectors, etc) will use longest possible part of the input file name, previously was limited to 17 characters. This allows longest user input names, but different directions may have different length of name allowed as the strings are different length. _C is shortest, in this case the length of name is about 29 characters. 
+Added ability to read multidimensional data from Nexus. Up to 4D data canbe read, index 0 is first, index 2 second index, next two indexes are the image points. Standard. 3D data have only index1 (index0=0), 2D data have both indexes=0. 
 
 1.77, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 

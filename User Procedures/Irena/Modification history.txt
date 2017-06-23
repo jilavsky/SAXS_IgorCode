@@ -9,6 +9,8 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 ********************************************
 
 Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 
+Merge two data sets - added option of sorting wqrs names by xyz_string, needed for Nika. 
+
 
 2.64, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 

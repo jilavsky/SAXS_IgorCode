@@ -1036,7 +1036,10 @@ end
 static Function IR2H_GraphModelData()
 	//next we calculate the model
 	
-	wave OriginalIntensity=root:Packages:Gels_Modeling:OriginalIntensity
+	wave/Z OriginalIntensity=root:Packages:Gels_Modeling:OriginalIntensity
+	if(!WaveExists(OriginalIntensity))//wave does nto exist, user probably did nto ccreate data yet.
+		abort
+	endif
 	Wave OriginalQvector=root:Packages:Gels_Modeling:OriginalQvector
 	Wave OriginalError=root:Packages:Gels_Modeling:OriginalError
 	IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
@@ -1066,7 +1069,7 @@ Function IR2H_CalcAndPlotResiduals(OriginalIntensity,OriginalError, DBModelInten
 		DoWindow/C IR2H_ResidualsPlot
 		ModifyGraph mode=2
 		ModifyGraph lSize=3
-		ModifyGraph mirror=1
+	 	ModifyGraph mirror=1
 		Label left "Normalized Residual"
 		Label bottom "Q[A\\S-1\\M]"
 		SetAxis/A/E=2 left

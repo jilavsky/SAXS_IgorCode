@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.24
+#pragma version=1.26
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.26 added Ardell distributions support
+//1.25 modified fitting to include Igor display with iterations /N=0/W=0
 //1.24 fix save single Contrast even when user left SameContrastForDataSets=1 but is using just one data set
 //1.23 fix error message when using model as data 
 //1.22 catch if user is loading negative, 0 , Nan, or inf value uncertainities and force use of % errors in that case. 
@@ -744,7 +746,7 @@ Function IR2L_Fitting(SkipDialogs)
 				NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 				NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 				if (FitCurVar)		//are we fitting this variable?
-					if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+					if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 						DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 						if(V_Flag==1)	//fix limits
 							CuVarMin = 0.5* CurVarTested
@@ -790,6 +792,8 @@ Function IR2L_Fitting(SkipDialogs)
 				ListOfPopulationVariables="LSWLocation;"
 			elseif(stringmatch(PopSizeDistShape,"Schulz-Zimm"))	
 				ListOfPopulationVariables="SZMeanSize;SZWidth;"
+			elseif(stringmatch(PopSizeDistShape,"Ardell"))	
+				ListOfPopulationVariables="ArdellMeanSize;ArdellWidth;"
 			else
 				ListOfPopulationVariables="LNMinSize;LNMeanSize;LNSdeviation;"	
 			endif
@@ -800,7 +804,7 @@ Function IR2L_Fitting(SkipDialogs)
 					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 					if (FitCurVar)		//are we fitting this variable?
-						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+						if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 							if(V_Flag==1)	//fix limits
 								CuVarMin = 0.5* CurVarTested
@@ -855,7 +859,7 @@ Function IR2L_Fitting(SkipDialogs)
 				NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 				NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 				if (FitCurVar)		//are we fitting this variable?
-					if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+					if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 						DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 						if(V_Flag==1)	//fix limits
 							CuVarMin = 0.5* CurVarTested
@@ -905,7 +909,7 @@ Function IR2L_Fitting(SkipDialogs)
 					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 					if (FitCurVar)		//are we fitting this variable?
-						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+						if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 							if(V_Flag==1)	//fix limits
 								CuVarMin = 0.5* CurVarTested
@@ -949,7 +953,7 @@ Function IR2L_Fitting(SkipDialogs)
 					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 					if (FitCurVar)		//are we fitting this variable?
-						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+						if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 							if(V_Flag==1)	//fix limits
 								CuVarMin = 0.5* CurVarTested
@@ -998,7 +1002,7 @@ Function IR2L_Fitting(SkipDialogs)
 					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 					if (FitCurVar)		//are we fitting this variable?
-						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+						if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 							if(V_Flag==1)	//fix limits
 								CuVarMin = 0.5* CurVarTested
@@ -1056,7 +1060,7 @@ Function IR2L_Fitting(SkipDialogs)
 					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 					if (FitCurVar)		//are we fitting this variable?
-						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+						if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 							if(V_Flag==1)	//fix limits
 								CuVarMin = 0.5* CurVarTested
@@ -1116,7 +1120,7 @@ Function IR2L_Fitting(SkipDialogs)
 					NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Min_pop"+num2str(j))
 					NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfPopulationVariables)+"Max_pop"+num2str(j))
 					if (FitCurVar)		//are we fitting this variable?
-						if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+						if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 							DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfPopulationVariables)+"_pop"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 							if(V_Flag==1)	//fix limits
 								CuVarMin = 0.5* CurVarTested
@@ -1177,7 +1181,7 @@ Function IR2L_Fitting(SkipDialogs)
 				NVAR CuVarMin=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfDataVariables)+"Min_set"+num2str(j))
 				NVAR CuVarMax=$("root:Packages:IR2L_NLSQF:"+stringfromList(i,ListOfDataVariables)+"Max_set"+num2str(j))
 				if (FitCurVar)		//are we fitting this variable?
-					if(CurVarTested<CuVarMin || CurVarTested>CuVarMax)
+					if((CurVarTested<CuVarMin || CurVarTested>CuVarMax)&&!NoFittingLimits)
 						DoAlert /T="Limits major problem" 1, "Limits for ; "+stringfromList(i,ListOfDataVariables)+"_set"+num2str(j)+" are wrong, fix (yes) or abort (NO)?"
 						if(V_Flag==1)	//fix limits
 							CuVarMin = 0.2* CurVarTested
@@ -1292,7 +1296,7 @@ Function IR2L_Fitting(SkipDialogs)
 			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
 		else
-			FuncFit /N/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D
+			FuncFit /N=0/W=0/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D
 		endif
 	else		//old code, use fitting limits
 		if(UseGeneticOptimization)
@@ -1302,7 +1306,7 @@ Function IR2L_Fitting(SkipDialogs)
 			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
 		else
-			FuncFit /N/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
+			FuncFit /N=0/W=0/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
 		endif
 	endif
 	variable LimitsReached
@@ -1722,6 +1726,8 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 					tempList="LSWLocation;LSWLocationFit;LSWLocationMin;LSWLocationMax;"
 				elseif(stringMatch(PopSizeDistShape,"Schulz-Zimm"))
 					tempList="SZMeanSize;SZMeanSizeFit;SZMeanSizeMin;SZMeanSizeMax;SZWidth;SZWidthFit;SZWidthMin;SZWidthMax;"
+				elseif(stringMatch(PopSizeDistShape,"Ardell"))
+					tempList="ArdLocation;ArdLocationFit;ArdLocationMin;ArdLocationMax;ArdParameter;ArdParameterFit;ArdParameterMin;ArdParameterMax;"
 				endif
 				for(i=0;i<itemsInList(tempList);i+=1)	
 					NVAR testVar = $(StringFromList(i,tempList)+"_pop"+num2str(j))
@@ -2201,6 +2207,8 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 					ListOfParameters+="SZMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="SZWidth_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
+					ListOfParameters+="ArdLocation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="ArdParameter_pop"+num2str(i)+"=0;"
 				elseif(stringmatch(PopSizeDistShape, "LogNormal" ))
 					ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=LogNormal;"
 					NVAR LNMinSize =  $("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(i))	
@@ -2214,12 +2222,28 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 					ListOfParameters+="SZMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="SZWidth_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
+					ListOfParameters+="ArdLocation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="ArdParameter_pop"+num2str(i)+"=0;"
 				elseif(stringMatch(PopSizeDistShape, "Schulz-Zimm" ))
 					ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=Schulz-Zimm;"
 					NVAR SZMeanSize =  $("root:Packages:IR2L_NLSQF:SZMeanSize_pop"+num2str(i))	
 					ListOfParameters+="SZMeanSize_pop"+num2str(i)+"="+num2str(SZMeanSize)+";"
 					NVAR SZwidth =  $("root:Packages:IR2L_NLSQF:SZWidth_pop"+num2str(i))	
 					ListOfParameters+="SZWidth_pop"+num2str(i)+"="+num2str(SZwidth)+";"
+					ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
+					ListOfParameters+="ArdLocation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="ArdParameter_pop"+num2str(i)+"=0;"
+				elseif(stringMatch(PopSizeDistShape, "Ardell" ))
+					ListOfParametersStr+="DistributionShape_pop"+num2str(i)+"=Ardell;"
+					NVAR ArdLocation =  $("root:Packages:IR2L_NLSQF:ArdLocation_pop"+num2str(i))	
+					ListOfParameters+="ArdLocation_pop"+num2str(i)+"="+num2str(ArdLocation)+";"
+					NVAR ArdParameter =  $("root:Packages:IR2L_NLSQF:ArdParameter_pop"+num2str(i))	
+					ListOfParameters+="ArdParameter_pop"+num2str(i)+"="+num2str(ArdParameter)+";"
 					ListOfParameters+="GaussMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="GaussWidth_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
@@ -2237,6 +2261,8 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 					ListOfParameters+="LogNormalMin_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalMean_pop"+num2str(i)+"=0;"
 					ListOfParameters+="LogNormalSdeviation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="ArdLocation_pop"+num2str(i)+"=0;"
+					ListOfParameters+="ArdParameter_pop"+num2str(i)+"=0;"
 					//ListOfParameters+="LSWLocation_pop"+num2str(i)+"=0;"				
 				endif
 				// For factor parameters.... messy... 

@@ -2279,19 +2279,21 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 //			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)
 //			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)
 		elseif(UseResults)
-			QDf=stringFromList(0,TempXlist)
-			IntDf=stringFromList(0,TempYlist)
-			EDf=stringFromList(0,TempElist)
 			Execute ("PopupMenu IntensityDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			//needs to be done in opposite order, seems to fail due to Execute calling PopProc
+			QDf=stringFromList(0,TempXlist)
+			IntDf=stringFromList(0,TempYlist)
+			EDf=stringFromList(0,TempElist)
 		elseif(UseUserDefinedData)
-			QDf=stringFromList(0,TempXlist)
-			IntDf=stringFromList(0,TempYlist)
-			EDf=stringFromList(0,TempElist)
 			Execute ("PopupMenu IntensityDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			//needs to be done in opposite order, seems to fail due to Execute calling PopProc
+			QDf=stringFromList(0,TempXlist)
+			IntDf=stringFromList(0,TempYlist)
+			EDf=stringFromList(0,TempElist)
 		else
 			IntDf="---"
 			QDf="---"
