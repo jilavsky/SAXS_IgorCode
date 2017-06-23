@@ -182,12 +182,15 @@ Function NEXUS_NikaConfigPanelFnct() : Panel
 		CheckBox NX_ReadParametersOnLoad,help={"When importing NX data, read some parameters from the NX values?"}
 		CheckBox NX_ReadParametersOnLoad,variable= root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
 		
+		TitleBox Info5 title="\Zr140Multi Dimensional Data found",pos={20,160},frame=0,fstyle=1,size={150,20},fColor=(1,4,52428)
 		NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
 		NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
-		SetVariable NX_Index0Max, pos={10,150}, size ={200,18},limits={0,NX_Index0Max,1}, variable=root:Packages:Irena_Nexus:NX_Index0Value
+		SVAR NX_Index1ProcessRule = root:Packages:Irena_Nexus:NX_Index1ProcessRule
+		SetVariable NX_Index0Max, pos={10,180}, size ={200,18},limits={0,NX_Index0Max,1}, variable=root:Packages:Irena_Nexus:NX_Index0Value
 		SetVariable NX_Index0Max, title="0 index value"
-		SetVariable NX_Index1Max, pos={10,170}, size ={200,18},limits={0,NX_Index1Max,1}, variable=root:Packages:Irena_Nexus:NX_Index1Value
+		SetVariable NX_Index1Max, pos={10,205}, size ={200,18},limits={0,NX_Index1Max,1}, variable=root:Packages:Irena_Nexus:NX_Index1Value
 		SetVariable NX_Index1Max, title="1 index value"
+		PopupMenu NX_Index1ProcessRule, pos={250, 205}, size={100,20}, mode=1,  value="One selected;All sequentially;Sum together;", popValue=NX_Index1ProcessRule, proc=NEXUS_PopMenuProc
 		//values={0,NX_Index0Max,1}
 		//ListOfVariables+=";NX_Index0Max;;NX_Index1Max;"		//note, next two indexes are the image indexes... 
 
@@ -255,30 +258,12 @@ Function NEXUS_NikaConfigPanelFnct() : Panel
 		CheckBox NX_AppendMaskToRawNexus,variable= root:Packages:Irena_Nexus:NX_AppendMaskToRawNexus
 
 	endif	
+	NEXUS_SetMultiDImCOntrols()
 End
 
 
 //**************************************************************************************
 //**************************************************************************************
-Function NEXUS_PopMenuProc(pa) : PopupMenuControl
-	STRUCT WMPopupAction &pa
-
-	switch( pa.eventCode )
-		case 2: // mouse up
-			Variable popNum = pa.popNum
-			String popStr = pa.popStr		
-			SVAR NX_RebinCal2DDtToPnts=root:Packages:Convert2Dto1D:NX_RebinCal2DDtToPnts
-			if(StringMatch(pa.ctrlName,"NX_RebinCal2DDtToPnts"))
-				NX_RebinCal2DDtToPnts = popStr
-			endif
-			
-			break
-		case -1: // control being killed
-			break
-	endswitch
-
-	return 0
-End
 //**************************************************************************************
 //**************************************************************************************
 Function NEXUS_InputTabProc(name,tab) : TabControl
@@ -295,9 +280,9 @@ Function NEXUS_InputTabProc(name,tab) : TabControl
 	CheckBox NX_CreateNotebookWithInfo, disable=(tab!=0 || !InputisNexus), win=NEXUS_ConfigurationPanel
 	CheckBox NX_ReadParametersOnLoad, disable=(tab!=0|| !InputisNexus), win=NEXUS_ConfigurationPanel
 	Button NX_OpenFileInBrowser, disable=(tab!=0), win=NEXUS_ConfigurationPanel
-	SetVariable NX_Index0Max, disable=(tab!=0), win=NEXUS_ConfigurationPanel
-	SetVariable NX_Index1Max, disable=(tab!=0), win=NEXUS_ConfigurationPanel
-
+	//SetVariable NX_Index0Max, disable=(tab!=0), win=NEXUS_ConfigurationPanel
+	//SetVariable NX_Index1Max, disable=(tab!=0), win=NEXUS_ConfigurationPanel
+	NEXUS_SetMultiDImCOntrols()
 
 	ListBox NX_LookupTable, disable=(tab!=1 || NX_ReadParametersOnLoad!=1|| !InputisNexus), win=NEXUS_ConfigurationPanel
 	SetVariable NX_GrepStringMask, disable=(tab!=1 || NX_ReadParametersOnLoad!=1|| !InputisNexus), win=NEXUS_ConfigurationPanel
@@ -315,6 +300,31 @@ Function NEXUS_InputTabProc(name,tab) : TabControl
 	return 0
 End
 
+//**************************************************************************************
+//**************************************************************************************
+Function NEXUS_SetMultiDImCOntrols()
+		NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+		NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+		NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+		NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+		string Newtext
+		Newtext = "\\Zr140Multi Dimensional Data found : "
+		if(NX_Index1Max>0)
+			if(NX_Index0Max>0)
+				Newtext += num2str(NX_Index0Max+1)+" x "+num2str(NX_Index1Max+1)+" x 2D Image"
+			else
+				Newtext += num2str(NX_Index1Max+1)+" x 2D Image"
+			endif
+		endif
+		//update range of the dim display in window 
+		DoWIndow NEXUS_ConfigurationPanel
+		if(V_Flag)
+			ControlInfo/W=NEXUS_ConfigurationPanel ImportTabs			
+			SetVariable NX_Index0Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index0Max,1}, disable=(NX_Index0Max==0||V_Value>0)
+			SetVariable NX_Index1Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index1Max,1}, disable=(NX_Index1Max==0||V_Value>0)
+			TitleBox Info5, title=Newtext,  disable=(NX_Index1Max==0||V_Value>0)
+		endif
+end
 //**************************************************************************************
 //**************************************************************************************
 
@@ -571,7 +581,7 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
 		string OldDf=getDataFolder(1)
-		//check if the file was recently imported...
+		//check if the file was recently imported... SKip to save time. 
 		string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(stringFromList(0,Filename,"."))
 		string PathToNewData
 		if(!DataFolderExists(PathToOldData))
@@ -627,11 +637,11 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 			//Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
 			//Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
 		elseif(WaveDims(DataWave) == 4)		//this is 3D wave
-			NX_Index0Max = dimsize(DataWave,0)
+			NX_Index0Max = dimsize(DataWave,0)-1
 			if(NX_Index0Value>NX_Index0Max)
 				NX_Index0Value = 0
 			endif
-			NX_Index1Max = dimsize(DataWave,1)
+			NX_Index1Max = dimsize(DataWave,1)-1
 			if(NX_Index1Value>NX_Index1Max)
 				NX_Index1Value = 0
 			endif
@@ -646,13 +656,8 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 			print "We should never get here"
 			print "Error in NEXUS_NexusNXsasDataReader"
 		endif
-		Wave DataWv=$("root:Packages:Convert2Dto1D:Loadedwave0")		
-		//update range of the dim display in window 
-		DoWIndow NEXUS_ConfigurationPanel
-		if(V_Flag)
-			SetVariable NX_Index0Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index0Max,1}
-			SetVariable NX_Index1Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index1Max,1}
-		endif
+		Wave DataWv=$("root:Packages:Convert2Dto1D:Loadedwave0")	
+		NEXUS_SetMultiDImCOntrols()	
 		NEXUS_CleanUpHDF5Structure(DataWv, PathToNewData)
 		NEXUS_CreateWvNtNbk(DataWv, Filename)
 		NEXUS_ReadNXparameters(PathToNewData)
@@ -791,7 +796,11 @@ static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 	string FldrName
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string StartDf
-	StartDf = Fldrname+"entry:"
+	//StartDf = Fldrname+"entry:"
+	StartDf = stringFromList(0,NEXUS_FindNXClassData(Fldrname, "NXentry"))
+	if(strlen(StartDf)<1)
+		StartDf = Fldrname+"entry:"
+	endif
 	string PathToStrVarValues = "root:Packages:NexusImportTMP:"
 	IN2G_UniversalFolderScan(startDF, 50, "NEXUS_ConvertTxTwvToStringList(\""+StartDf+"\",\""+PathToStrVarValues+"\")")
 	IN2G_UniversalFolderScan(startDF, 50, "NEXUS_ConvertNumWvToStringList(\""+StartDf+"\",\""+PathToStrVarValues+"\")")
@@ -1011,7 +1020,7 @@ Function NEXUS_Initialize(enforceReset)
 	ListOfVariables+="NX_AppendBlankToRawNexus;NX_AppendMaskToRawNexus;NX_Rebin2DData;NX_UseQxQyCalib2DData;"
 	ListOfVariables+="NX_Index0Value;NX_Index0Max;NX_Index1Value;NX_Index1Max;"		//note, next two indexes are the image indexes... 
 	//read part	
-	ListOfStrings="DataFolderName;GrepStringMask;NX_RebinCal2DDtToPnts;"
+	ListOfStrings="DataFolderName;GrepStringMask;NX_RebinCal2DDtToPnts;NX_Index1ProcessRule;"
 	//write part
 	ListOfStrings+="ExportDataFolderName;"
 	//Nika cross referecne
@@ -1056,6 +1065,11 @@ Function NEXUS_Initialize(enforceReset)
 			NX_RebinCal2DDtToPnts = RebinCalib2DDataToPnts
 			RebinCalib2DDataToPnts = "100x100"
 		endif
+	endif
+	
+	SVAR NX_Index1ProcessRule
+	if(!StringMatch(NX_Index1ProcessRule, "One selected") && !Stringmatch(NX_Index1ProcessRule,"All sequentially") && !Stringmatch(NX_Index1ProcessRule,"Sum together") )
+		NX_Index1ProcessRule="One selected"
 	endif
 
 	NVAR/Z UseQxyCalib2DData=root:Packages:Convert2Dto1D:UseQxyCalib2DData
@@ -2645,3 +2659,28 @@ static Function/T NEXUS_IdentifyNxclassFolder(PathToData, ClassList)	//find loca
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+Function NEXUS_PopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr		
+		//	SVAR NX_RebinCal2DDtToPnts=root:Packages:Convert2Dto1D:NX_RebinCal2DDtToPnts
+			SVAR NX_Index1ProcessRule=root:Packages:Irena_Nexus:NX_Index1ProcessRule
+			if(StringMatch(pa.ctrlName,"NX_RebinCal2DDtToPnts"))
+			//	NX_RebinCal2DDtToPnts = popStr
+			endif
+			if(stringMatch(pa.ctrlName,"NX_Index1ProcessRule"))
+				NX_Index1ProcessRule = popStr
+			endif
+			break
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End

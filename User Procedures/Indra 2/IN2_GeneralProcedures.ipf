@@ -1735,7 +1735,7 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 			//	Width = NumberByKey("Width", PanelSizeList , "=", ";")
 			//	Height = NumberByKey("Height", PanelSizeList , "=", ";")
 	if(PrefsPos.version!=kPrefsVersion)
-		print "Preferences for panel not found or wrogn version found..."
+		print "Preferences for panel "+PanelNameLocal+" not found or wrong version found..."
 	endif
 		//PanelNameOld = PrefsPos.panelName
 	width 	= 	PrefsPos.panelCoords[0]
@@ -1756,7 +1756,7 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 		Height = IN2G_ScreenWidthHeight("Height")*70
 	endif
 	variable keys= GetKeyState(0)
-	if(keys>0 || !FoundValidPrefs || DoNotRestorePanelSizes)		//ANY modifier key was pressed or no/incorrect pref file was found, reset the size
+	if(keys>0 || FoundValidPrefs<1 || DoNotRestorePanelSizes)		//ANY modifier key was pressed or no/incorrect pref file was found, reset the size
 			GetWindow $PanelNameLocal wsize
 			MoveWindow/W=$PanelNameLocal V_left, V_top, V_right, V_bottom
 			PrefsPos.version = kPrefsVersion
@@ -1772,7 +1772,7 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	else
 			MoveWindow/W=$PanelNameLocal Left, Top, Left+Width, Top+Height
 	endif
-	
+	 
 	
 end
 //***********************************************************//*****************************************************************************************************************

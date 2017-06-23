@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.45
+#pragma version=2.46
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.46 improve print message fro Nexus when multi dimensional input ddata are used. 
 //2.45 more fixes for Pilatus TVX ver 1.3 tiff header. Still mess... 
 //2.44 moved to new Nexus suport provided by HDF5Gateway and IRNI_NexusSupport
 //2.43 fixes for Pilatus Tiff file header 
@@ -1339,7 +1340,21 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
    endif
 	wave loadedwv=$(NewWaveName)
 	NewNote+=";"+"DataFilePath="+S_path+";"+note(loadedwv)+";"
-	print "Loaded file   " +FileNameToLoad
+	if(cmpstr(FileType,"Nexus")==0)
+		NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+		NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+		NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+		NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+		if(NX_Index1Max>0)
+			if(NX_Index0Max>0)
+				print "Loaded file   " +FileNameToLoad+"  index : _"+num2str(NX_Index0Value)+"_"+num2str(NX_Index1Value)
+			else
+				print "Loaded file   " +FileNameToLoad+"  index : _"+num2str(NX_Index1Value)
+			endif
+		endif
+	else
+		print "Loaded file   " +FileNameToLoad
+	endif
 //	print "Created wave note: "+NewNote
 	wave NewWv=$(NewWaveName)
 	note/K NewWv

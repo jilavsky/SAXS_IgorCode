@@ -2216,6 +2216,11 @@ Function NI1A_LoadManyDataSetsForConv()
 	NVAR SampleMeasurementTime=root:Packages:Convert2Dto1D:SampleMeasurementTime
 	NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
 	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
+	SVAR/Z NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
+	if(!SVAR_Exists(NX_Index1ProcessRule))
+		NEXUS_Initialize(0)
+		SVAR NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
+	endif
 	string extension
 	variable LoadedOK
 	Controlinfo/W=NI1A_Convert2Dto1DPanel   Select2Ddatatype
@@ -2296,6 +2301,94 @@ Function NI1A_LoadManyDataSetsForConv()
 					endfor
 				duplicate/o BSLframelistsequence, $("root:SAS:BSLframelistsequence")
 				currentframe=1
+			elseif(stringMatch(extension,"Nexus"))
+				//this is either regular or mutlidimensional Nexus file which user wantds to process all frames in with indexing over all frames. Index 1 (second in 4D)
+				// image alllowed only... 
+				NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+				NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+				NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+				NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+				//these are Nexus indexes for the up to 4D image
+				//Let's iterate over the index, start with 0 value:
+				variable nindx
+				variable indxStart
+				variable indxEnd
+				if(stringMatch(NX_Index1ProcessRule,"All sequentially")||stringMatch(NX_Index1ProcessRule,"Sum together"))
+					indxStart= 0
+					indxEnd=NX_Index1Max
+				else		//singlle image
+					indxStart= NX_Index1Value
+					indxEnd	=NX_Index1Value
+				endif
+				if(stringMatch(NX_Index1ProcessRule,"Sum together"))
+					KillWaves/Z TempCCDImageToConvert
+					SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+					UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
+					//append the order numbers in the file... 
+					if(NX_Index0Max>0)
+						UserSampleName+="_"+num2str(NX_Index0Value)
+					endif
+					UserSampleName+="_sum"
+					//
+					print "This may take serious time, loading and avergaing images from the Nexus file "+SelectedFileToLoad
+					For(nindx=indxStart;nindx<indxEnd+1;nindx+=1)
+						NX_Index1Value = nindx
+						NI1A_ImportThisOneFile(SelectedFileToLoad)	
+						Wave CCDImageToConvert
+						Wave/Z TempCCDImageToConvert
+						if(!WaveExists(TempCCDImageToConvert))
+							Duplicate CCDImageToConvert, TempCCDImageToConvert
+						else
+							TempCCDImageToConvert+=CCDImageToConvert
+						endif
+					endfor
+					print "Done loading "+num2str(indxEnd+1)+" frames from the Nexus file"
+					Duplicate/O TempCCDImageToConvert, CCDImageToConvert
+					CCDImageToConvert/=(indxEnd+1)			//average... 
+					KillWaves TempCCDImageToConvert
+					NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	
+					Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
+					Oldnote=note(CCDImageToConvert)
+					OldNote+=NI1A_CalibrationNote()
+					note/K CCDImageToConvert
+					note CCDImageToConvert, OldNote
+					NI1A_DezingerDataSetIfAskedFor(DataWaveName)
+					NI1A_Convert2DTo1D()
+					NI1A_DisplayLoadedFile()
+					NI1A_DisplayTheRight2DWave()
+					NI1A_DoDrawingsInto2DGraph()
+					NI1A_CallImageHookFunction()
+					NEXUS_NikaSave2DData()
+					DoUpdate
+				else
+					For(nindx=indxStart;nindx<indxEnd+1;nindx+=1)
+						NX_Index1Value = nindx
+						SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+						UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
+						//append the order numbers in the file... 
+						if(NX_Index0Max>0)
+							UserSampleName+="_"+num2str(NX_Index0Value)
+						endif
+						UserSampleName+="_"+num2str(NX_Index1Value)
+						//
+						NI1A_ImportThisOneFile(SelectedFileToLoad)	
+						NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	
+						Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
+						Oldnote=note(CCDImageToConvert)
+						OldNote+=NI1A_CalibrationNote()
+						note/K CCDImageToConvert
+						note CCDImageToConvert, OldNote
+						NI1A_DezingerDataSetIfAskedFor(DataWaveName)
+						NI1A_Convert2DTo1D()
+						NI1A_DisplayLoadedFile()
+						NI1A_DisplayTheRight2DWave()
+						NI1A_DoDrawingsInto2DGraph()
+						NI1A_CallImageHookFunction()
+						NEXUS_NikaSave2DData()
+						DoUpdate
+						sleep/S 1
+					endfor
+				endif
 			else
 				SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
 				UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
