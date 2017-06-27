@@ -2449,9 +2449,9 @@ static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
 		endif	
 	
 	while(i<500 && continueLoop)
-	Redimension/N=(i-1,-1) NewCard, NewCard_hklStr
-	NewCard_hklStr[p] = "("+num2str(NewCard[p][1])+num2str(NewCard[p][2])+num2str(NewCard[p][3])+")"
 	xmlclosefile(fileID,0)	
+	Redimension/N=(i-1,-1) NewCard, NewCard_hklStr
+	NewCard_hklStr = "("+num2str(NewCard[p][1])+num2str(NewCard[p][2])+num2str(NewCard[p][3])+")"
 #else
 	DoAlert 0, "Needed XMLUtils.xop or XMLutils-64.xop is not present"
 #endif
@@ -2619,13 +2619,15 @@ Function IR3W_PDF4AddLines()
 	GetAxis /W=IR3W_WAXSMainGraph/Q bottom
 	minX=V_min
 	maxX=V_max
+	string TmpStrName
 	For(i=0;i<numpnts(listWave);i+=1)
 		if(selWave[i][0][0]>40)		//unselected is 32, selected is 48
 			WvName = listWave[i]
 			RemoveFromGraph /W=IR3W_WAXSMainGraph /Z $(WvName)
 			IR3W_PDF4AppendLinesToGraph(listWave[i][0],ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
 			if(PDF4_DisplayHKLTags)
-				Wave LabelWave=$("root:WAXS_PDF:"+(listWave[i][0])[0,23]+"_hklStr")
+				TmpStrName=IN2G_RemoveExtraQuote(listWave[i][0],1,1)
+				Wave LabelWave=$("root:WAXS_PDF:"+PossiblyQUoteName(TmpStrName[0,23]+"_hklStr"))
 				IR3W_PDF4AddTagsFromWave("IR3W_WAXSMainGraph", listWave[i][0], labelWave, ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
 			endif
 		else 		//remove if needed...
@@ -2649,7 +2651,7 @@ Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
  
 	Variable index
 	for(index = 0; index < dimsize(w,0); index+=1)
-		String tagName = "Lab" +traceName[0,12]+num2str(index)
+		String tagName = CleanupName("Lab" +traceName[0,12]+num2str(index),0)
 		Tag/C/N=$tagName/F=0/TL=0/G=(Cr,Cg,Cb)/I=1 $traceName, index, labelWave[index]
 	endfor
 End

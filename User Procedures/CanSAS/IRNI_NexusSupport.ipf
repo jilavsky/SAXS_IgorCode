@@ -323,6 +323,7 @@ Function NEXUS_SetMultiDImCOntrols()
 			SetVariable NX_Index0Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index0Max,1}, disable=(NX_Index0Max==0||V_Value>0)
 			SetVariable NX_Index1Max, win=NEXUS_ConfigurationPanel, limits={0,NX_Index1Max,1}, disable=(NX_Index1Max==0||V_Value>0)
 			TitleBox Info5, title=Newtext,  disable=(NX_Index1Max==0||V_Value>0)
+			PopupMenu NX_Index1ProcessRule,  disable=(NX_Index1Max==0||V_Value>0)
 		endif
 end
 //**************************************************************************************
@@ -776,6 +777,20 @@ static Function NEXUS_CreateWvNtNbk(WaveWithWaveNote, SampleName)
 			Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
 			Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
 			Notebook $nb ruler=Title, text="Header information for "+SampleName+"\r"
+			NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+			NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+			NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+			NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+			if(NX_Index1Max>0)			//at least 3D data
+				if(NX_Index0Max>0)		//4D data
+					Notebook $nb text="This is multidimensions Nexus file"
+					Notebook $nb text="Input data are 4D, loaded image has indexes : "+Num2Str(NX_Index0Value)+"  and "+num2str(NX_Index1Value)
+				else
+					Notebook $nb text="This is multidimensions Nexus file"
+					Notebook $nb text="Input data are 3D, loaded image has index : "+num2str(NX_Index1Value)
+				endif
+			endif
+			
 			Notebook $nb ruler=Normal, text="\r"
 			For(i=0;i<ItemsInList(OldNOte,";");i+=1)
 					Notebook $nb text=stringFromList(i,OldNOte,";")+ " \r"
@@ -802,6 +817,12 @@ static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 		StartDf = Fldrname+"entry:"
 	endif
 	string PathToStrVarValues = "root:Packages:NexusImportTMP:"
+	string/g $(PathToStrVarValues+"ListOfStrValues")
+	string/g $(PathToStrVarValues+"ListOfNumValues")
+	SVAR tmpStr=$(PathToStrVarValues+"ListOfStrValues")
+	tmpStr=""
+	SVAR tmpStr=$(PathToStrVarValues+"ListOfNumValues")
+	tmpStr=""
 	IN2G_UniversalFolderScan(startDF, 50, "NEXUS_ConvertTxTwvToStringList(\""+StartDf+"\",\""+PathToStrVarValues+"\")")
 	IN2G_UniversalFolderScan(startDF, 50, "NEXUS_ConvertNumWvToStringList(\""+StartDf+"\",\""+PathToStrVarValues+"\")")
 	//now we have moved the data to stringgs and main folder of the Nexus file name 
@@ -822,18 +843,38 @@ Function NEXUS_ConvertTxTwvToStringList(StartFolderStr, Fldrname)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
 	string ListOfTXTWaves=WaveList("*", ";", "TEXT:1" )
-      SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
-	if(!SVAR_Exists(ListOfStrValues))
-		string/g $(Fldrname+"ListOfStrValues")
-		SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
-	endif
-		variable i
-		for(i=0;i<ItemsInList(ListOfTXTWaves,";");i+=1)
-			ListOfStrValues+=Newkey+StringFromList(i, ListOfTXTWaves  , ";")+"="
-			Wave/T tempWv=$(StringFromList(i, ListOfTXTWaves  , ";"))
-			ListOfStrValues+=tempWv[0]+";"
-			//KillWaves/Z tempWv
-		endfor
+   SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
+//	if(!SVAR_Exists(ListOfStrValues))
+//		string/g $(Fldrname+"ListOfStrValues")
+//		SVAR/Z ListOfStrValues = $(Fldrname+"ListOfStrValues")
+//	endif
+	variable i
+	NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+	NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+	NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+	NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
+	for(i=0;i<ItemsInList(ListOfTXTWaves,";");i+=1)
+		ListOfStrValues+=Newkey+StringFromList(i, ListOfTXTWaves  , ";")+"="
+		Wave/T tempWv=$(StringFromList(i, ListOfTXTWaves  , ";"))
+		//modify for multidimensional input data...
+		if(WaveDims(tempWv)==1)//this is usual thing - it is scalar, one value for all... or just one dimension (vector)
+			if(dimsize(tempWv,0)==1)		//one value for all..
+				ListOfStrValues+=tempWv[0]+";"
+			elseif(dimsize(tempWv,0)==NX_Index0Max+1)		//this is per Index 0
+				ListOfStrValues+=tempWv[NX_Index0Value]+";"
+			elseif(dimsize(tempWv,0)==NX_Index1Max+1)		//this is per Index 1
+				ListOfStrValues+=tempWv[NX_Index1Value]+";"
+			else
+				//what is here???
+				print "We should neverget here - NEXUS_ConvertTxTwvToStringList - 1..."
+			endif
+		elseif(WaveDims(tempWv)==2)//this is for multidim data (4D) with two indexes. This should be indexed as 2D data...
+			ListOfStrValues+=tempWv[NX_Index0Value][NX_Index1Value]+";"
+		else
+			//what is here???
+			print "We should neverget here - NEXUS_ConvertTxTwvToStringList - 2..."
+		endif
+	endfor
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -842,20 +883,47 @@ Function NEXUS_ConvertNumWvToStringList(StartFolderStr, Fldrname)
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//SVAR StartFolderStr=root:Packages:NexusImportTMP:StartFolderStr
+	NVAR NX_Index0Value = root:Packages:Irena_Nexus:NX_Index0Value
+	NVAR NX_Index0Max = root:Packages:Irena_Nexus:NX_Index0Max
+	NVAR NX_Index1Value = root:Packages:Irena_Nexus:NX_Index1Value
+	NVAR NX_Index1Max = root:Packages:Irena_Nexus:NX_Index1Max
 	string Newkey=GetDataFolder(1)[strlen(StartFolderStr),inf]
 	string ListOfNumWaves=WaveList("*", ";", "TEXT:0,DIMS:1" )
-      SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
-	if(!SVAR_Exists(ListOfNumValues))
-		string/g $(Fldrname+"ListOfNumValues")
-		SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
+	//depends on dimensionality...
+	if(NX_Index1Max>0)	//at least 3D input  data
+		ListOfNumWaves+=WaveList("*", ";", "TEXT:0,DIMS:2" )
+		if(NX_Index0Max>0)	//4D data
+			ListOfNumWaves+=WaveList("*", ";", "TEXT:0,DIMS:3" )
+		endif
 	endif
-		variable i
-		for(i=0;i<ItemsInList(ListOfNumWaves,";");i+=1)
-			ListOfNumValues+=Newkey+StringFromList(i, ListOfNumWaves  , ";")+"="
-			Wave tempWv=$(StringFromList(i, ListOfNumWaves  , ";"))
-			ListOfNumValues+=num2str(tempWv[0])+";"
-			//KillWaves/Z tempWv
-		endfor
+   SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
+//	if(!SVAR_Exists(ListOfNumValues))
+//		string/g $(Fldrname+"ListOfNumValues")
+//		SVAR/Z ListOfNumValues = $(Fldrname+"ListOfNumValues")
+//	endif
+	variable i
+	for(i=0;i<ItemsInList(ListOfNumWaves,";");i+=1)
+		ListOfNumValues+=Newkey+StringFromList(i, ListOfNumWaves  , ";")+"="
+		Wave tempWv=$(StringFromList(i, ListOfNumWaves  , ";"))
+		//modify for multidimensional input data...
+		if(WaveDims(tempWv)==1)//this is usual thing - it is scalar, one value for all... or just one dimension (vector)
+			if(dimsize(tempWv,0)==1)		//one value for all..
+				ListOfNumValues+=num2str(tempWv[0])+";"
+			elseif(dimsize(tempWv,0)==NX_Index0Max+1)		//this is per Index 0
+				ListOfNumValues+=num2str(tempWv[NX_Index0Value])+";"
+			elseif(dimsize(tempWv,0)==NX_Index1Max+1)		//this is per Index 1
+				ListOfNumValues+=num2str(tempWv[NX_Index1Value])+";"
+			else
+				//what is here???
+				print "We should neverget here... NEXUS_ConvertNumWvToStringList - 1"
+			endif
+		elseif(WaveDims(tempWv)==2)//this is for multidim data (4D) with two indexes. This should be indexed as 2D data...
+			ListOfNumValues+=num2str(tempWv[NX_Index0Value][NX_Index1Value])+";"
+		else
+			//what is here???
+			print "We should neverget here... NEXUS_ConvertNumWvToStringList - 2"
+		endif
+	endfor
 end
 
 //*****************************************************************************************************************
