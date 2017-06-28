@@ -914,8 +914,8 @@ Function NEXUS_ConvertNumWvToStringList(StartFolderStr, Fldrname)
 			elseif(dimsize(tempWv,0)==NX_Index1Max+1)		//this is per Index 1
 				ListOfNumValues+=num2str(tempWv[NX_Index1Value])+";"
 			else
-				//what is here???
-				print "We should neverget here... NEXUS_ConvertNumWvToStringList - 1"
+				//This looks like data or something else... Ignore. 
+				//print "We should neverget here... NEXUS_ConvertNumWvToStringList - 1"
 			endif
 		elseif(WaveDims(tempWv)==2)//this is for multidim data (4D) with two indexes. This should be indexed as 2D data...
 			ListOfNumValues+=num2str(tempWv[NX_Index0Value][NX_Index1Value])+";"

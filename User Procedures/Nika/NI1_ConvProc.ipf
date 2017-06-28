@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.58
+#pragma version=2.59
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.59 tried to speed up the main conversion loop. Fixed case where for negative intensities we can get nan as uncertainty and for Int=0 uncertainty=0.
 //2.58 added saving color table in preferences. 
 //2.57 removed unused functions
 //2.56 added getHelp button calling to www manual
@@ -173,28 +174,43 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Intensity=0
 	Error=0
 	variable i, j, counter, numbins, start1, end1
-	Duplicate/O LUT, tempInt
+	MatrixOp/Free/NTHR=0 tempInt = LUT
 	tempInt = Calibrated2DDataSet
+	//following si probably slow, but IndexSort cannot be multithreaded... 
 	IndexSort LUT, tempInt
 	//Duplicate/O tempInt, TempIntSqt
-	MatrixOp/O/NTHR=0 TempIntSqt = tempInt* tempInt
-	counter = HistogramWv[0]
-	For(j=1;j<QvectorNumberPoints;j+=1)
-		numbins = HistogramWv[j]
-		if(numbins>0)
-			Intensity[j] = sum(tempInt, pnt2x(tempInt,Counter), pnt2x(tempInt,Counter+numbins-1))	//this cointains sum Xi
-			Error[j] = sum(TempIntSqt, pnt2x(tempInt,Counter), pnt2x(tempInt,Counter+numbins-1))	//this now contains sum Xi^2
-		endif
-		Counter+=numbins
-	endfor
-	MatrixOp/O/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
+	MatrixOp/Free/NTHR=0 TempIntSqt = tempInt* tempInt
+	//variable timerRefNum
+	//timerRefNum = StartMSTimer
+	//counter = HistogramWv[0]
+	//	For(j=1;j<QvectorNumberPoints;j+=1)
+	//		numbins = HistogramWv[j]
+	//		if(numbins>0)
+	//			//Intensity[j] = sum(tempInt, pnt2x(tempInt,Counter), pnt2x(tempInt,Counter+numbins-1))		//this cointains sum Xi
+	//			//Error[j] = sum(TempIntSqt, pnt2x(tempInt,Counter), pnt2x(tempInt,Counter+numbins-1))			//this now contains sum Xi^2
+	//			//assuming standard point scaling the pnt2x is not necessary... This should speed it up...
+	//			Intensity[j] = sum(tempInt,Counter, Counter+numbins-1)			//this cointains sum Xi
+	//			Error[j] = sum(TempIntSqt, Counter, Counter+numbins-1)			//this now contains sum Xi^2
+	//		endif
+	//		Counter+=numbins
+	//	endfor
+
+	//2017-06-27 new, faster method for larger number of destination points... Few times faster for large number of points. 
+	MatrixOp/Free/NTHR=0 HistogramWvTemp = HistogramWv
+	MatrixOp/Free/NTHR=0 TempHistSum = HistogramWv
+	SetScale/I x 0,numpnts(TempHistSum)-1,"", TempHistSum, HistogramWvTemp
+	Multithread TempHistSum = sum(HistogramWvTemp,0,p)
+	Multithread Intensity[1,numpnts(Intensity)-1] = sum(tempInt,TempHistSum[p-1],TempHistSum[p])
+	Multithread Error[1,numpnts(Error)-1] = sum(TempIntSqt,TempHistSum[p-1],TempHistSum[p])
+	//print StopMSTimer(timerRefNum)	
+	MatrixOp/Free/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
 	MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv	//This is average intensity....
 	//version 1.43 December 2009, changed uncertainity estimates. Three new methods now available. Old method which has weird formula, standard deviation and standard error fof mean ...
 	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
 	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
 	//change in the Configuration panel. 	
-	if(ErrorCalculationsUseOld)	//this is teh old code... Hopefully I did not screw up. 
+	if(ErrorCalculationsUseOld)	//this is the old code... Hopefully I did not screw up. 
 		Error=sqrt(abs(Error - (TempSumXi^2))/(HistogramWv - 1))	
 		MatrixOp/O/NTHR=0 Error=Error/HistogramWv
 	else //now new code. Need to calculate standard deviation anyway... 
@@ -216,10 +232,11 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	endif
 	
 	//this fix is same for all - if there is only 1 point in the bin, simply use sqrt of intensity... Of course, this can be really wrong, since by now this is fully calibrated and hecne sqrt is useless... 
-	Error = (HistogramWv[p]>1)? Error[p] : sqrt(Intensity[p])
+	Error = (HistogramWv[p]>1)? Error[p] : sqrt(abs(Intensity[p]))		//for negative intensities this can give nan, so take abs(int)
+	Error = Error[p]>0 ? Error[p] : Error[p-1]									//for Int=0 we could have error = 0, which is wrong number. Assuem same as prior value. 
 	note Intensity, OldNote
 	note Error, OldNote
-	killwaves/Z tempInt, TempIntSqt, temp2D, tempQ, NewQwave, TempSumXi
+	killwaves/Z temp2D, tempQ, NewQwave
 	//remove first point - it contains all the masked points set to Q=0...
 	DeletePoints 0,1, intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth
 	setDataFolder OldDf
