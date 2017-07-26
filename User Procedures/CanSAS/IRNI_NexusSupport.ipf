@@ -1287,19 +1287,19 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
-// write out Nexus/CanSAS file for Nika
-Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, CurOrient, NoteData)
-		String SampleName, CurOrient, NoteData, DataType
+// write out Nexus/CanSAS file for Nika, Irena or Indra
+Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNameString, NoteData)
+		String SampleName, AppendToNameString, NoteData
 		wave Iwv, dIwv, Qwv, dQwv
+		
+		string Writer = "Nika"
 		
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		NVAR NX_SaveToProcNexusFile=root:Packages:Irena_Nexus:NX_SaveToProcNexusFile
 		if(NX_SaveToProcNexusFile!=1)
 			return 0
 		endif
-		
-		//DataType = "qrs", "trs", "drs", "distrs"
-		
+				
 		//this needs to change as I now need to store 1D data there... 
 		//Writes Nexus/CanSAS data based on proposed format:
 		// to this structure (NX_class attribute MUST name a NeXus base class)
@@ -1377,10 +1377,27 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 	//create sample group	
 	//NXentry aka SASentry group here... 
 	string RootGroupName=Nexus_FixNxGroupName(SampleName)
-	string ViewName=Nexus_FixNxGroupName("1D"+"_"+CurOrient)
+	string ViewName=""
+	if(strlen(AppendToNameString)>0)	//this is needed for Nika or when something is needed to be added.
+		if(StringMatch(Writer, "Nika"))
+			ViewName=Nexus_FixNxGroupName("1D"+"_"+AppendToNameString)
+		else
+			ViewName=Nexus_FixNxGroupName("_"+AppendToNameString)
+		endif
+	else
+		ViewName=""
+	endif
 	string NewGroupName
-	NEXUS_HdfSaveAttrib("creator","Nika","/", fileID)
-	NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+	NEXUS_HdfSaveAttrib("creator",Writer,"/", fileID)
+	if(StringMatch(Writer, "Nika"))
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+	elseif(StringMatch(Writer, "Irena"))
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)
+	elseif(StringMatch(Writer, "Indra"))
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/Indra_2.html","/", fileID)	
+	else
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)		
+	endif
 	NEXUS_HdfSaveAttrib( "default",RootGroupName,"/", fileID)
 	RootGroupName="/"+RootGroupName
 	HDF5CreateGroup fileID , RootGroupName , groupID		//this is NXentry group containinng possibly many "views" on sample
@@ -1446,7 +1463,7 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 	tmpPath=tmpPath+"/"
 	NVAR WV = root:Packages:Convert2Dto1D:Wavelength
 	NEXUS_HdfSaveDataVar("incident_wavelength",(Wv),tmpPath, fileID)
-	NEXUS_HdfSaveAttrib("units","Angstroms",tmpPath+"incident_wavelength", fileID)
+	NEXUS_HdfSaveAttrib("units","angstrom",tmpPath+"incident_wavelength", fileID)
 	NVAR Bsx = root:Packages:Convert2Dto1D:BeamSizeX
 	NVAR BsY = root:Packages:Convert2Dto1D:BeamSizeY
 	NEXUS_HdfSaveDataVar("beam_size_x",(BsX),tmpPath, fileID)
@@ -1488,9 +1505,228 @@ Function NEXUS_WriteNx1DCanSASData(SampleName, DataType, Iwv, dIwv, Qwv, dQwv, C
 	HDF5CloseFile fileID  
 	print "Wrote 1D data into Nexus/CanSAS file : "+Hdf5FileName
 end
+
 //*************************************************************************************************
 //*************************************************************************************************
-// write out Nexus/CanSAS file for Nika
+//*************************************************************************************************
+//*************************************************************************************************
+// write out Nexus/CanSAS file for Irena or Indra
+Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQwv, AppendToNameString, Writer, NoteData, Slit_Length)
+		String SampleName,Hdf5FileName, AppendToNameString, NoteData, Writer
+		wave Iwv, dIwv, Qwv, dQwv
+		variable Slit_Length
+				
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		
+		//DataType = "qrs", "trs", "drs", "distrs"
+		
+		//this needs to change as I now need to store 1D data there... 
+		//Writes Nexus/CanSAS data based on proposed format:
+		// to this structure (NX_class attribute MUST name a NeXus base class)
+		//
+		///sasentry01							<-- HDF5 group
+		//  @NX_class = "NXentry"			<-- NeXus requires this
+		//  @canSAS_class = "SASentry"		<-- this is between you and me, for now. Perhaps optional?
+		//
+		//  /sasdata01						<-- HDF5 group
+		//    @NX_class = "NXdata"			<-- NeXus requires this
+		//    @canSAS_class = "SASdata"		<-- this is between you and me, for now.
+		//    @canSAS_version = "0.1"		<-- this is between you and me, for now.
+		//	 	@I_axes = "Q,Q"				<-- canSAS 2012 agreed model
+		//	 	@Q_indices = "0,1"			<-- canSAS 2012 agreed model
+		//	 	@Mask_indices = "0,1"			<-- canSAS 2012 agreed model
+		//
+		//	 I: float[M,N]					<-- HDF5 dataset, the intensity array
+		//	    @uncertainty="Idev"		<-- canSAS 2012 agreed model
+		//	    @signal=1					<-- NeXus requires this
+		//		   @axes="Q"					<-- NeXus suggests this is identified
+		//	 Idev: float[M,N]				<-- HDF5 dataset, the intensity array <<<<optional
+		//	 Q: float[M,N]					<-- HDF5 dataset, |Q| at each pixel  <<<<optional
+		//or
+		//	 	@I_axes = "Qx,Qy"				<-- canSAS 2012 agreed model
+		//	Qx: float[M,N]   <-- Qx at each pixel
+		//	Qy: float[M,N]   <-- Qy at each pixel
+		//	Qz: float[M,N]   <-- Qz at each pixel (might be all zero)
+		
+		////		Q :
+		////  @units: (required) NX_CHAR
+		////    Engineering units to use when expressing Q and related terms.
+		////            
+		////    Data expressed in other units might be ignored by some software packages.
+		////
+		////    choices:
+		////       1/m
+		////       1/nm  (preferred)
+		////       1/angstrom
+		////
+		////I:
+		////  @units: (required) NX_CHAR
+		////    Engineering units to use when expressing intensity and related terms.
+		////            
+		////    Data expressed in other units will be treated as "arbitrary" by some software packages.
+		////
+		////    choices:
+		////       1/m  (includes m2/m3 and 1/m/sr)
+		////       1/cm  (includes cm2/cm3 and 1/cm/sr)
+		////       m2/g
+		////       cm2/g
+		////       arbitrary (includes "counts" and any unrecognized units)
+
+		
+	//to do - change where the data go and how they go there. Find way to indicate what type of sector it is etc. 
+//note: SampleName now has no orientation, add curOrient to make sensible... 
+	variable GroupID
+	Variable fileID, result
+	//string Hdf5FileName=NEXUS_NikaCreateOrLocNexusFile(2)
+	GetFileFolderInfo  /Q /Z Hdf5FileName
+	if(V_Flag==0)		//file found	
+		HDF5OpenFile /Z fileID as Hdf5FileName
+		if (V_flag != 0)
+			Print "HDF5 OpenFile failed"
+			return -1
+		endif
+	else
+		print "Output Nexus canSAS data file does not exist, creating it"
+		HDF5CreateFile /O /Z fileID as Hdf5FileName
+		if (V_flag != 0)
+			Print "HDF5CreateFile failed"
+			return -1
+		endif
+	endif
+	//NEXUS_HdfSaveAttrib("default","sasentry-1","/", fileID) - this makes no sense for me...
+	//create sample group	
+	//NXentry aka SASentry group here... 
+	string RootGroupName=Nexus_FixNxGroupName(SampleName)
+	string ViewName=""
+	if(strlen(AppendToNameString)>0)	//this is needed for Nika or when something is needed to be added.
+		if(StringMatch(Writer, "Nika"))
+			ViewName=Nexus_FixNxGroupName("1D"+"_"+AppendToNameString)
+		else
+			ViewName=Nexus_FixNxGroupName("_"+AppendToNameString)
+		endif
+	else
+		ViewName=RootGroupName
+	endif
+	string NewGroupName
+	NEXUS_HdfSaveAttrib("creator",Writer,"/", fileID)
+	if(StringMatch(Writer, "Nika"))
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+	elseif(StringMatch(Writer, "Irena"))
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)
+	elseif(StringMatch(Writer, "Indra"))
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/Indra_2.html","/", fileID)	
+	else
+		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)		
+	endif
+	NEXUS_HdfSaveAttrib( "default",RootGroupName,"/", fileID)
+	RootGroupName="/"+RootGroupName
+	HDF5CreateGroup fileID , RootGroupName , groupID		//this is NXentry group containinng possibly many "views" on sample
+	RootGroupName=RootGroupName+"/"
+	//its attributes
+	NEXUS_HdfSaveAttrib("NX_class","NXentry",RootGroupName, fileID)
+	NEXUS_HdfSaveAttrib( "canSAS_class","SASentry",RootGroupName, fileID)
+	NEXUS_HdfSaveAttrib( "canSAS_name",SampleName,RootGroupName, fileID)
+	NEXUS_HdfSaveAttrib( "version","1.0",RootGroupName, fileID)
+	NEXUS_HdfSaveAttrib( "default",ViewName,RootGroupName, fileID, DoNotOverwrite=1)
+	//required items in here... 
+	NEXUS_HdfSaveData("definition","NXcanSAS",RootGroupName, fileID)
+	NEXUS_HdfSaveData("title",SampleName,RootGroupName, fileID)
+	NEXUS_HdfSaveData("run","unknown",RootGroupName, fileID)
+	//now NXdata group
+	NewGroupName = RootGroupName+ViewName
+	HDF5CreateGroup fileID , NewGroupName , groupID
+	NEXUS_HdfSaveAttrib("NX_class","NXdata",NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib("canSAS_class","SASdata",NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib("canSAS_version","1.0",NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib( "canSAS_name",SampleName,NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib("I_axes","Q",NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib("signal","I",NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib("I_uncertainties","Idev",NewGroupName, fileID)
+	NEXUS_HdfSaveAttrib("Q_indices","0",NewGroupName, fileID)
+	// Save I wave as dataset
+	string Inote=note(Iwv)
+	HDF5SaveData /O /Z /GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1} Iwv, fileID, NewGroupName+"/I"
+	NEXUS_HdfSaveAttrib("uncertainties","Idev",NewGroupName+"/I", fileID)
+	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/I", fileID)
+	//store out note in the same place as I is?
+	NEXUS_WriteWaveNote(fileID,NewGroupName,Inote)
+	//Now deal with Q axes...
+	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/I", fileID)
+	//convert to 1/nm and use that, Nexus preferred units
+	Duplicate/Free Qwv, Qwvnm
+	Qwvnm = Qwvnm*10
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwvnm , fileID, NewGroupName+"/Q"
+	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Q", fileID)
+	NEXUS_HdfSaveAttrib("resolutions","Qdev",NewGroupName+"/Q", fileID)
+	//Now deal with Uncertainty
+	//NEXUS_HdfSaveAttrib("uncertainty","Idev",NewGroupName+"/sasdata01/I", fileID)
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dIwv, fileID, NewGroupName+"/Idev"
+	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/Idev", fileID)
+	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/Idev", fileID)
+	//Now Qres.   dQwv
+	Duplicate/Free dQwv, dQwvnm
+	dQwvnm = dQwvnm*10
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/Qdev"
+	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Qdev", fileID)
+	
+	//add instrument data...
+	string InstrumentPathStr=RootGroupName+"instrument"
+	string tmpPath
+	HDF5CreateGroup fileID , InstrumentPathStr , groupID		//this is NXentry group containing instrument description
+	NEXUS_HdfSaveAttrib("NX_class","NXinstrument",InstrumentPathStr, fileID)
+	NEXUS_HdfSaveAttrib("canSAS_class","SASinstrument",InstrumentPathStr, fileID)
+	InstrumentPathStr=InstrumentPathStr+"/"
+
+	tmpPath = InstrumentPathStr+"source"
+	HDF5CreateGroup fileID , tmpPath , groupID		//this is NXentry group containinng instrument description
+	NEXUS_HdfSaveAttrib("NX_class","NXsource",tmpPath, fileID)
+	tmpPath=tmpPath+"/"
+
+
+	variable wavelength
+	wavelength = NumberByKey("wavelength", NoteData, "=", ";",0)
+	if(wavelength>0)
+		NEXUS_HdfSaveDataVar("incident_wavelength",(wavelength),tmpPath, fileID)	
+		NEXUS_HdfSaveAttrib("units","angstrom",tmpPath+"incident_wavelength", fileID)
+		//HDF5CreateLink /HARD=1 targetLocationID , targetName , linkLocationID , linkName
+		HDF5CreateLink/HARD=1 fileID, InstrumentPathStr+"source/incident_wavelength", fileID, InstrumentPathStr+"incident_wavelength"
+		//NEXUS_HdfSaveAttrib(AttribName,AttribValue,AttribLoc, fileID,[DoNotOverwrite])
+		NEXUS_HdfSaveAttrib("target",InstrumentPathStr+"source/incident_wavelength",InstrumentPathStr+"incident_wavelength", fileID)
+		if(stringMatch(NameOfWave(Qwv),"*SMR_Q*") || stringMatch(NameOfWave(Qwv),"*DSM_Q*"))
+			NEXUS_HdfSaveData("radiation","Synchrotron X-ray Source",tmpPath, fileID)
+		else
+			NEXUS_HdfSaveData("radiation","unknown",tmpPath, fileID)
+		endif
+	endif
+	
+
+	tmpPath = InstrumentPathStr+"detector"
+	HDF5CreateGroup fileID , tmpPath , groupID		//this is NXentry group containinng instrument description
+	NEXUS_HdfSaveAttrib("NX_class","NXdetector",tmpPath, fileID)
+	NEXUS_HdfSaveAttrib("canSAS_class","SASdetector",tmpPath, fileID)
+	tmpPath=tmpPath+"/"
+	if(stringMatch(NameOfWave(Qwv),"*SMR_Q*") || stringMatch(NameOfWave(Qwv),"*DSM_Q*"))
+		NEXUS_HdfSaveData("name","photodiode",tmpPath, fileID)
+	else
+		NEXUS_HdfSaveData("name","unknown",tmpPath, fileID)
+	endif
+	//NXentry
+  		//NXinstrument
+    		//NXdetector
+      		//slit_length
+	if(Slit_Length>0)
+		NEXUS_HdfSaveDataVar("slit_length",(Slit_Length*10),tmpPath, fileID)
+		NEXUS_HdfSaveAttrib("units","1/nm",tmpPath+"slit_length", fileID)
+	endif
+
+	HDF5CloseFile fileID  
+	print "Wrote 1D data into Nexus/CanSAS file : "+Hdf5FileName
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+// write out Nexus/CanSAS 2D file for Nika
 static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx, Qy,AzimAngles,UnbinnedQx,UnbinnedQy])
 		String SampleName
 		wave Iwv, dIwv, Qwv, Mask, Qx, Qy, AzimAngles, UnbinnedQx,UnbinnedQy
@@ -1660,7 +1896,7 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	tmpPath=tmpPath+"/"
 	NVAR WV = root:Packages:Convert2Dto1D:Wavelength
 	NEXUS_HdfSaveDataVar("incident_wavelength",(Wv),tmpPath, fileID)
-	NEXUS_HdfSaveAttrib("units","Angstroms",tmpPath+"incident_wavelength", fileID)
+	NEXUS_HdfSaveAttrib("units","angstrom",tmpPath+"incident_wavelength", fileID)
 	NVAR Bsx = root:Packages:Convert2Dto1D:BeamSizeX
 	NVAR BsY = root:Packages:Convert2Dto1D:BeamSizeY
 	NEXUS_HdfSaveDataVar("beam_size_x",(BsX),tmpPath, fileID)
@@ -1811,11 +2047,11 @@ static Function NEXUS_WriteNikaNexus2DRawFile(FileName)
 	//NEXUS_HdfSaveAttrib("units","keV","/entry/instrument/source/energy", fileID)
 	NEXUS_HdfSaveDataVar("energy",EN,"/entry/instrument/monochromator/", fileID)
 	NEXUS_HdfSaveAttrib("units","keV","/entry/instrument/monochromator/energy", fileID)
-	//	eznx.write_dataset(nxmonochromator, 'wavelength', h5['/entry/EPICS_PV_metadata/wavelength'], units='Angstroms')
+	//	eznx.write_dataset(nxmonochromator, 'wavelength', h5['/entry/EPICS_PV_metadata/wavelength'], units='angstrom')
 	NVAR WV = root:Packages:Convert2Dto1D:Wavelength
 	NEXUS_HdfSaveDataVar("wavelength",(Wv),"/entry/instrument/monochromator/", fileID)
-	NEXUS_HdfSaveAttrib("units","Angstroms","/entry/instrument/monochromator/wavelength", fileID)
-	//	eznx.write_dataset(nxmonochromator, 'wavelength_spread', h5['/entry/EPICS_PV_metadata/wavelength_spread'], units='Angstroms/Angstroms')
+	NEXUS_HdfSaveAttrib("units","angstrom","/entry/instrument/monochromator/wavelength", fileID)
+	//	eznx.write_dataset(nxmonochromator, 'wavelength_spread', h5['/entry/EPICS_PV_metadata/wavelength_spread'], units='angstrom/angstrom')
 	//NEXUS_HdfSaveData("title","Nika NXsas example","/entry/", fileID)
 	//	eznx.write_dataset(nxshape_slit, 'shape', 'nxbox')
 	//NEXUS_HdfSaveData("title","Nika NXsas example","/entry/", fileID)
@@ -2511,14 +2747,14 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	//fix units, if needed... Following loosely what SASView is using... https://groups.google.com/forum/#!topic/cansas-dfwg/pItbRKXeFfE
 	//https://www.google.com/url?q=https%3A%2F%2Fgithub.com%2FSasView%2Fsasview%2Fblob%2Fmaster%2Fsrc%2Fsas%2Fsascalc%2Fdata_util%2Fnxsunit.py&sa=D&sntz=1&usg=AFQjCNFYvjzNK4FalmyIKxi-lswwvv0QWQ
 	string Qunits =  StringByKey("units", note(Qwv), "=", "\r")
-	string ConversionFactorQ="no scaling done, assumed 1/Angstrom"
+	string ConversionFactorQ="no scaling done, assumed 1/angstrom"
 	if(stringmatch(Qunits,"nm*")||stringmatch(Qunits,"1/nm")||stringmatch(Qunits,"n_m^-1"))		//assume Q in nm^-1, need to scale by 10x
 		NewQwv/=10
 		ConversionFactorQ = "10"
 	elseif(stringmatch(Qunits,"cm*")||stringmatch(Qunits,"1/cm"))		//assume Q in cm^-1, need to scale by 10^8x
 		NewQwv/=10^8
 		ConversionFactorQ = "10^8"
-	elseif(stringmatch(Qunits,"10^-3 Angstrom^-1"))		//assume Q in 10^-3 A^-1, need to scale by 10^3x
+	elseif(stringmatch(Qunits,"10^-3 angstrom^-1"))		//assume Q in 10^-3 A^-1, need to scale by 10^3x
 		NewQwv/=10^3
 		ConversionFactorQ = "10^3"
 	elseif(stringmatch(Qunits,"m*")||stringmatch(Qunits,"1/m"))		//assume Q in m^-1, need to scale by 10^10x
@@ -2529,7 +2765,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		ConversionFactorQ = "1"
 	else		//not matched to anything above? What is the damn unit? 
 		//assume input is 1/A and do not change, e.g.: 'invA', 'invAng', 'invAngstroms', '1/A'
-		ConversionFactorQ="units not identified, assume it is already 1/Angstrom"
+		ConversionFactorQ="units not identified, assume it is already 1/angstrom"
 	endif
 	//int units
 	string Intunits =  StringByKey("units", note(Iwv), "=", "\r")

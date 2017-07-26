@@ -15,6 +15,7 @@ constant CurrentVersionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//		 	Added simple recording to my web site about version checking for statistical purposes. Records Irena version, Igor platform and version.  
 //			added resizing back to prior size of panel after user closes and opens the panel. 
 //2.64 Updated CheckForUpdate to check on Github for latest release version
 //			#pragma IgorVersion=7.00
@@ -79,7 +80,7 @@ Menu "SAS"
 		"Import canSAS XML data", CS_XMLGUIImportDataMain(defaultType="QRS",defaultQUnits="1/A")
 		help={"Import data from XML CanSAS conforming data sets"}
 		"---"
-		"Export ASCII data", IR2E_UniversalDataExport()
+		"Export Nexus canSAS or ASCII data", IR2E_UniversalDataExport()
 		help = {"This is tool for export of any 2-3 column data sets as ASCII."}
 	End
 	"---"
@@ -1802,6 +1803,7 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 	if(datetime - LastUpdateCheckIrena >30 * 24 * 60 * 60 || CalledFromMenu)
 			//call check version procedure and advise user on citations
 			IR2C_CheckVersions()
+			IN2G_SubmitCheckRecordToWeb("Irena "+num2str(CurrentVersionNumber))
 			LastUpdateCheckIrena = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif

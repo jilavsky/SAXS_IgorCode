@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.57
+#pragma version=2.58
 Constant NI1AversionNumber = 2.52
 
 //*************************************************************************\
@@ -8,7 +8,8 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.57 changed trinname function to accept maximum possible number of characters allowed with _XYZ orientation. Will vary based on orientation now, _C will allow 25 characters. Others will be shorter. 
+//2.58 added UserSampleName to each folder. To be used in otehr functions to avoid 32 characters limit. 
+//2.57 changed trimname function to accept maximum possible number of characters allowed with _XYZ orientation. Will vary based on orientation now, _C will allow 25 characters. Others will be shorter. 
 //2.56 added resize after recreating of the panels to prior user size. 
 //2.55 removed unused functions
 //2.54 Fixed bug where Fit2D loadable types were listed on incompatible versions of MacOS. 
@@ -1149,6 +1150,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	string LocalUserFileName
 	string UseName
 	string LongUseName
+	string OriginalUserName
 	if (Use2DdataName)
 		controlinfo/W=NI1A_Convert2Dto1Dpanel Select2DDataType
 		if(cmpstr(S_Value,"BSL/SAXS")==0)
@@ -1168,6 +1170,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			endif
 		else
 			//variable tempEnd=26-strlen(CurOrient)
+			OriginalUserName = UserSampleName+"_"+CurOrient
 			UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
 		endif
 	else
@@ -1184,6 +1187,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					Abort "Name function returned nothing"
 				endif
 				UserFileName = tempStrName
+				OriginalUserName = UserFileName+"_"+CurOrient
 				UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient		
 				//setDataFolder OldDF1
 			else
@@ -1202,6 +1206,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					TempOutputDataname = LocalUserFileName
 					TempOutputDatanameUserFor = UserSampleName
 				endif
+				OriginalUserName = LocalUserFileName+"_"+CurOrient
 				UseName=NI1A_TrimCleanDataName(LocalUserFileName, CurOrient)+"_"+CurOrient
 			else
 				UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient
@@ -1246,6 +1251,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					endif
 				endif
 				NewDataFolder/S/O $(LongUseName)
+				string/g UserSampleName=	OriginalUserName
 					//print possiblyquotename("r_"+UseName)
 					Duplicate/O LineProfileIntensity, $("r_"+UseName)
 					Duplicate/O LineProfileQ, $("q_"+UseName)
@@ -1351,7 +1357,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				dQvec[1,numpnts(Qvec)-2] = Qvec[p+1]-Qvec[p-1]
 				dQvec[0]=dQvec[1]
 				dQvec[numpnts(Qvec)-1] = dQvec[numpnts(Qvec)-2] 
-				NEXUS_WriteNx1DCanSASData(UserSampleName, "qrs", Int, Err, Qvec, dQvec, CurOrient, OldNote)
+				NEXUS_WriteNx1DCanSASNika(UserSampleName, Int, Err, Qvec, dQvec, CurOrient, OldNote)
 
 			KillWaves/Z tempWv1234
 	else		//sectors profiles goes here. *****************
@@ -1365,6 +1371,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				endif
 			endif
 			NewDataFolder/S/O $(LongUseName)
+			string/g UserSampleName=	OriginalUserName
 			if (UseQvector)
 				Duplicate/O Intensity, $("r_"+UseName)
 				Duplicate/O Qvector, $("q_"+UseName)
@@ -1448,13 +1455,13 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 		OldNote=note(Intensity)
 		//DataType = "qrs", "trs", "drs", "distrs"
 		if (UseQvector)
-			NEXUS_WriteNx1DCanSASData(UserSampleName, "qrs", Intensity, Error, Qvector, Qsmearing, CurOrient, OldNote)
+			NEXUS_WriteNx1DCanSASNika(UserSampleName,  Intensity, Error, Qvector, Qsmearing, CurOrient, OldNote)
 		elseif(UseTheta)
-			NEXUS_WriteNx1DCanSASData(UserSampleName, "trs", Intensity, Error, TwoTheta, TwoThetaWidth, CurOrient, OldNote)
+			NEXUS_WriteNx1DCanSASNika(UserSampleName,  Intensity, Error, TwoTheta, TwoThetaWidth, CurOrient, OldNote)
 		elseif(UseDspacing)
-			NEXUS_WriteNx1DCanSASData(UserSampleName, "drs", Intensity, Error, Dspacing, DspacingWidth, CurOrient, OldNote)
+			NEXUS_WriteNx1DCanSASNika(UserSampleName,  Intensity, Error, Dspacing, DspacingWidth, CurOrient, OldNote)
 		elseif(UseDistanceFromCenter)
-			NEXUS_WriteNx1DCanSASData(UserSampleName, "trs", Intensity, Error, DistanceInmm, DistacneInmmWidth, CurOrient, OldNote)
+			NEXUS_WriteNx1DCanSASNika(UserSampleName, Intensity, Error, DistanceInmm, DistacneInmmWidth, CurOrient, OldNote)
 		endif
 		if(DisplayDataAfterProcessing)
 			if (UseQvector)

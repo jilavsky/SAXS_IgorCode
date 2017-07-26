@@ -12,6 +12,7 @@ constant CurrentNikaVersionNumber = 1.77
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //		Added simple recording to my web site about version checking for statistical purposes. Records Nika version, Igor platform and version.  
  //		Creating new configuration will now reopen 9ID config screen if it was opened before. 
  //1.77 Updated CHeckForUpdate to check on Github for latest release version
  //		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for available screen size. 
@@ -878,6 +879,7 @@ Function NI1_CheckNikaUpdate(CalledFromMenu)
 	if(datetime - LastUpdateCheckNika >30 * 24 * 60 * 60 || CalledFromMenu)
 			//call check version procedure and advise user on citations
 			NI1_CheckVersions()
+			IN2G_SubmitCheckRecordToWeb("Nika "+num2str(CurrentNikaVersionNumber))
 			LastUpdateCheckNika = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif 

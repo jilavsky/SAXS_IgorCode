@@ -89,19 +89,30 @@ Function IR2E_UnivDataExportPanel()
 	CheckBox DisplayWaveNote,pos={15,250},size={225,14},noproc,title="Display notes about data?"
 	CheckBox DisplayWaveNote,variable= root:Packages:IR2_UniversalDataExport:DisplayWaveNote, help={"When checked notebook with notes about data history will be displayed"}
 	Button LoadAndGraphData, pos={100,280},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Load data", help={"Load data into the tool, generate graph and display notes if checkboxes are checked."}
-	CheckBox AttachWaveNote,pos={15,350},size={225,14},noproc,title="Attach notes about data?"
+
+	//Nexus or ASCII?
+	CheckBox ExportASCII,pos={15,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export ASCII?"
+	CheckBox ExportASCII,variable= root:Packages:IR2_UniversalDataExport:ExportASCII, help={"When checked ASCII files will be created"}
+	CheckBox ExportCanSASNexus,pos={215,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export NEXUS?"
+	CheckBox ExportCanSASNexus,variable= root:Packages:IR2_UniversalDataExport:ExportCanSASNexus, help={"When checked Nexus (canSAS for data) files will be created"}
+	
+	CheckBox ExportSingleCanSASFile,pos={15,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export Single canSAS NEXUS (with multiple data)?"
+	CheckBox ExportSingleCanSASFile,variable= root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile, help={"When checked Nexus (canSAS for data) files will be created"}
+	
+	CheckBox AttachWaveNote,pos={15,375},size={190,14},noproc,title="Attach notes about data?"
 	CheckBox AttachWaveNote,variable= root:Packages:IR2_UniversalDataExport:AttachWaveNote, help={"When checked block of text with notes about data history will be attached before the data itself"}
-	CheckBox UseFolderNameForOutput,pos={15,370},size={225,14},proc=IR2E_UnivExportCheckProc,title="Use Folder Name for output?"
+	CheckBox UseFolderNameForOutput,pos={15,395},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Sample/Folder Name for output?"
 	CheckBox UseFolderNameForOutput,variable= root:Packages:IR2_UniversalDataExport:UseFolderNameForOutput, help={"Create output name from folder name"}
-	CheckBox UseYWaveNameForOutput,pos={15,390},size={225,14},proc=IR2E_UnivExportCheckProc,title="Use Y wave name for output?"
+	CheckBox UseYWaveNameForOutput,pos={215,395},size={190,14},proc=IR2E_UnivExportCheckProc,title="Use Y wave name for output?"
 	CheckBox UseYWaveNameForOutput,variable= root:Packages:IR2_UniversalDataExport:UseYWaveNameForOutput, help={"Use Y wave name to create output file name"}
 
 	SetVariable CurrentlyLoadedDataName,limits={0,Inf,0},value= root:Packages:IR2_UniversalDataExport:CurrentlyLoadedDataName, noedit=1,noProc,frame=0
 	SetVariable CurrentlyLoadedDataName,pos={3,420},size={370,25},title="Loaded data:", help={"This is data set currently loaded in the tool. These data will be saved."},fstyle=1,labelBack=(65280,21760,0)
 
 	SetVariable CurrentlySetOutputPath,limits={0,Inf,0},value= root:Packages:IR2_UniversalDataExport:CurrentlySetOutputPath, noedit=1,noProc,frame=0
-	SetVariable CurrentlySetOutputPath,pos={3,450},size={370,25},title="Export Folder:", help={"This is data folder outside Igor  where the data will be saved."},fstyle=0
-	Button ExportOutputPath, pos={100,475},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Set export  folder:", help={"Select export folder where to save new ASCII data sets."}
+	SetVariable CurrentlySetOutputPath,pos={3,455},size={370,25},title="Export Folder:", help={"This is data folder outside Igor  where the data will be saved."},fstyle=0
+	Button ExportOutputPath, pos={100,480},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Set export folder:", help={"Select export folder where to save new ASCII data sets."}
+//	Button ExportNexusFile, pos={100,492},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Create/Find Nexus Output file", help={"Create output Nexus file name in above location."}
 
 	SetVariable NewFileOutputName,limits={0,Inf,0},value= root:Packages:IR2_UniversalDataExport:NewFileOutputName,noProc,frame=1
 	SetVariable NewFileOutputName,pos={3,520},size={370,25},title="Export file name:", help={"This is name for new data file which will be created"},fstyle=1
@@ -111,13 +122,33 @@ Function IR2E_UnivDataExportPanel()
 	SetVariable HeaderSeparator,pos={3,560},size={180,25},title="Header separator:", help={"This is symnol at the start of header line. Include here spaces if you want them..."},fstyle=1
 //
 	Button ExportData, pos={100,600},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Export Data & Notes", help={"Save ASCII file with data and notes for these data"}
-	NVAR MultipleData=root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
-	Button ExportData, disable=2*MultipleData
-//;
-
+	IR2E_FixMainGUI()
 end
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
+Function IR2E_FixMainGUI()
+	
+	DoWIndow UnivDataExportPanel
+	if(V_Flag)
+		NVAR MultipleData=root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
+		Button ExportData, win=UnivDataExportPanel, disable=2*MultipleData
+		NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
+		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
+		CheckBox AttachWaveNote,win=UnivDataExportPanel, disable=ExportCanSASNexus
+		NVAR ExportSingleCanSASFile = root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile
+	
+//	Button ExportOutputPath, disable=ExportCanSASNexus
+//	Button ExportNexusFile, pos={100,475},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Create/Find Nexus Output file:", help={"Create output Nexus file name and location."}
+		SetVariable HeaderSeparator, win=UnivDataExportPanel, disable=!ExportASCII
+		CheckBox UseYWaveNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
+		CheckBox UseFolderNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
+		CheckBox ExportSingleCanSASFile, win=UnivDataExportPanel, disable=(ExportASCII)
+	
+
+	
+	endif
+end
+
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
 //*******************************************************************************************************************************
@@ -126,52 +157,52 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 
 //	DoAlert 0,"Fix IR2E_UnivExpCheckboxProc"
 	if(CB_Struct.EventCode==2)
-		NVAR MultipleData=root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
-		Button ExportData, win=UnivDataExportPanel, disable=2*MultipleData
-		if(CB_Struct.checked)
-
-			IR2E_UpdateListOfAvailFiles()
-			DoWindow IR2E_MultipleDataSelectionPnl
-			if(!V_Flag)
-				//DoWindow/K IR2E_MultipleDataSelectionPnl
-			
-				NewPanel/K=1 /W=(400,44,800,355) as "Multiple Data Export selection"
-				DoWIndow/C IR2E_MultipleDataSelectionPnl
-				SetDrawLayer UserBack
-				SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65535)
-				DrawText 29,29,"Multiple Data Export selection"
-				DrawText 10,255,"Configure Universal export tool panel options"
-				DrawText 10,275,"Select multiple data above and export : "
-				ListBox DataFolderSelection,pos={4,35},size={372,200}, mode=10
-				ListBox DataFolderSelection,listWave=root:Packages:IR2_UniversalDataExport:ListOfAvailableData
-				ListBox DataFolderSelection,selWave=root:Packages:IR2_UniversalDataExport:SelectionOfAvailableData
-
-				Button UpdateData,pos={280,245},size={100,15},proc=IR2E_ButtonProc,title="Update list"
-				Button UpdateData,fSize=10,fStyle=2
-				
-				Button AllData,pos={4,285},size={100,15},proc=IR2E_ButtonProc,title="Select all data"
-				Button AllData,fSize=10,fStyle=2
-				Button NoData,pos={120,285},size={100,15},proc=IR2E_ButtonProc,title="DeSelect all data"
-				Button NoData,fSize=10,fStyle=2
-				Button ProcessAllData,pos={240,285},size={150,15},proc=IR2E_ButtonProc,title="Export selected data"
-				Button ProcessAllData,fSize=10,fStyle=2
-				Button ProcessAllData fColor=(65535,16385,16385)
-			else
-			
-				DoWindow/F IR2E_MultipleDataSelectionPnl
-				
-			endif
-			AutoPositionWindow/M=0 /R=UnivDataExportPanel IR2E_MultipleDataSelectionPnl
-		else
-			DoWindow IR2E_MultipleDataSelectionPnl
-			if(V_Flag)
-				DoWindow/K IR2E_MultipleDataSelectionPnl
-			endif
-		
-		endif
+		if(stringMatch(CB_Struct.ctrlName,"ExportMultipleDataSets"))
+			if(CB_Struct.checked)
 	
-	endif
+				IR2E_UpdateListOfAvailFiles()
+				DoWindow IR2E_MultipleDataSelectionPnl
+				if(!V_Flag)
+					//DoWindow/K IR2E_MultipleDataSelectionPnl
+				
+					NewPanel/K=1 /W=(400,44,800,355) as "Multiple Data Export selection"
+					DoWIndow/C IR2E_MultipleDataSelectionPnl
+					SetDrawLayer UserBack
+					SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65535)
+					DrawText 29,29,"Multiple Data Export selection"
+					DrawText 10,255,"Configure Universal export tool panel options"
+					DrawText 10,275,"Select multiple data above and export : "
+					ListBox DataFolderSelection,pos={4,35},size={372,200}, mode=10
+					ListBox DataFolderSelection,listWave=root:Packages:IR2_UniversalDataExport:ListOfAvailableData
+					ListBox DataFolderSelection,selWave=root:Packages:IR2_UniversalDataExport:SelectionOfAvailableData
+	
+					Button UpdateData,pos={280,245},size={100,15},proc=IR2E_ButtonProc,title="Update list"
+					Button UpdateData,fSize=10,fStyle=2
+					
+					Button AllData,pos={4,285},size={100,15},proc=IR2E_ButtonProc,title="Select all data"
+					Button AllData,fSize=10,fStyle=2
+					Button NoData,pos={120,285},size={100,15},proc=IR2E_ButtonProc,title="DeSelect all data"
+					Button NoData,fSize=10,fStyle=2
+					Button ProcessAllData,pos={240,285},size={150,15},proc=IR2E_ButtonProc,title="Export selected data"
+					Button ProcessAllData,fSize=10,fStyle=2
+					Button ProcessAllData fColor=(65535,16385,16385)
+				else
+				
+					DoWindow/F IR2E_MultipleDataSelectionPnl
+					
+				endif
+				AutoPositionWindow/M=0 /R=UnivDataExportPanel IR2E_MultipleDataSelectionPnl
+			else
+				DoWindow IR2E_MultipleDataSelectionPnl
+				if(V_Flag)
+					DoWindow/K IR2E_MultipleDataSelectionPnl
+				endif
+			
+			endif
+		endif		//end of ExportMultipleDataSets
 
+	endif
+	IR2E_FixMainGUI()
 End
 //**************************************************************************************
 //**************************************************************************************
@@ -399,6 +430,9 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 	
+	string OldDf=getDataFOlder(1)
+	setDataFolder root:Packages:IR2_UniversalDataExport
+	
 	NVAR UseFolderNameForOutput
 	NVAR UseYWaveNameForOutput
 
@@ -408,7 +442,72 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 	SVAR ErrorWaveName
 	SVAR CurrentlyLoadedDataName
 	SVAR CurrentlySetOutputPath
+	SVAR/Z OldNexusExt
+	if(!SVAR_Exists(OldNexusExt))
+		string/g OldNexusExt
+		OldNexusExt = "h5"
+	endif
+	SVAR/Z OldASCIIExt
+	if(!SVAR_Exists(OldASCIIExt))
+		string/g OldASCIIExt
+		OldASCIIExt = "dat"
+	endif
 	SVAR NewFileOutputName
+		NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
+		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
+		SVAR OutputNameExtension = root:Packages:IR2_UniversalDataExport:OutputNameExtension
+		if(stringMatch(ctrlName,"ExportASCII"))
+			if(checked)
+				ExportASCII = 1
+				ExportCanSASNexus = 0
+				OldNexusExt = OutputNameExtension
+				OutputNameExtension  = OldASCIIExt
+			else
+				ExportASCII = 0
+				ExportCanSASNexus = 1		
+				OldASCIIExt = OutputNameExtension	
+				OutputNameExtension  = OldNexusExt
+			endif
+			if(ExportCanSASNexus)
+				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
+			endif
+		endif
+		if(stringMatch(ctrlName,"ExportCanSASNexus"))
+			if(checked)
+				ExportASCII = 0
+				ExportCanSASNexus = 1
+				OldASCIIExt = OutputNameExtension	
+				OutputNameExtension  = OldNexusExt
+			else
+				ExportASCII = 1
+				ExportCanSASNexus = 0
+				OldNexusExt = OutputNameExtension
+				OutputNameExtension  = OldASCIIExt
+			endif
+			if(ExportCanSASNexus)
+				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
+			endif
+		endif
+		NVAR UseFolderNameForOutput = root:Packages:IR2_UniversalDataExport:UseFolderNameForOutput
+		NVAR UseYWaveNameForOutput = root:Packages:IR2_UniversalDataExport:UseYWaveNameForOutput
+		if(stringMatch(ctrlName,"UseFolderNameForOutput"))
+			if(checked)
+				UseFolderNameForOutput = 1
+				UseYWaveNameForOutput = 0
+			else
+				UseFolderNameForOutput = 0
+				UseYWaveNameForOutput = 1
+			endif
+		endif
+		if(stringMatch(ctrlName,"UseYWaveNameForOutput"))
+			if(checked)
+				UseFolderNameForOutput = 0
+				UseYWaveNameForOutput = 1
+			else
+				UseFolderNameForOutput = 1
+				UseYWaveNameForOutput = 0
+			endif
+		endif
 	if(cmpstr(ctrlName,"UseFolderNameForOutput")==0 || cmpstr(ctrlName,"UseYWaveNameForOutput")==0)
 		
 		NewFileOutputName = ""
@@ -423,7 +522,20 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 		endif	
 		
 	endif
+	nVAR ExportSingleCanSASFile = root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile
+	if(stringMatch(ctrlName,"ExportSingleCanSASFile"))
+		if(checked)
+			ExportSingleCanSASFile=1
+			DoALert 0, "Type in \"Export file name\" name of file. Make sure it is acceptable name for the OS. " 
+		else
+			ExportSingleCanSASFile=0
+		endif
+	endif
+	
+	
 
+	IR2E_FixMainGUI()
+	setDataFolder OldDf
 End
 
 //*******************************************************************************************************************************
@@ -446,7 +558,7 @@ Function IR2E_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR2E_ChangeExportPath()
 	endif
 	if(cmpstr(ctrlName,"ExportData")==0)
-		//here we do whatever is appropriate...
+		//here we do whatever is apropriate...
 		IR2E_ExportTheData()
 	endif
 	if(cmpstr(ctrlName,"GetHelp")==0)
@@ -483,9 +595,36 @@ Function IR2E_ExportTheData()
 	SVAR OutputNameExtension
 	SVAR HeaderSeparator
 	
+	string UserSampleName=IN2G_ReturnUserSampleName(DataFolderName)
+
+	NVAR ExportCanSASNexus
+	NVAR ExportASCII
+	NVAR ExportMultipleCanSASFiles
+	NVAR ExportSingleCanSASFile
+
+	NVAR UseIndra2Data=root:Packages:IR2_UniversalDataExport:UseIndra2Data
+	NVAR UseQRSdata=root:Packages:IR2_UniversalDataExport:UseQRSdata
+	NVAR UseResults=root:Packages:IR2_UniversalDataExport:UseResults
+	NVAR UseSMRData=root:Packages:IR2_UniversalDataExport:UseSMRData
+	
 	Wave/Z TempY=$(DataFolderName+possiblyquoteName(IntensityWaveName))
 	Wave/Z TempX=$(DataFolderName+possiblyquoteName(QWavename))
 	Wave/Z TempE=$(DataFolderName+possiblyquoteName(ErrorWaveName))
+	if(!WaveExists(TempE))
+		Duplicate/Free TempX, TempE
+		TempE = 0
+	endif
+	if(UseIndra2Data)
+		Wave/Z TempdX=$(DataFolderName+"SMR_dQ")
+	elseif(UseQRSdata)
+		Wave/Z TempdX=$(DataFolderName+possiblyquoteName(ReplaceString("s_", ErrorWaveName, "w_", 0,1)))
+	else
+	
+	endif
+	if(!WaveExists(TempdX))
+		Duplicate/Free TempE, tempdX
+		tempdX = 0
+	endif
 
 	if(!WaveExists(TempY) && !WaveExists(TempX))
 		abort
@@ -496,47 +635,74 @@ Function IR2E_ExportTheData()
 	endif
 
 	if(strlen(NewFileOutputName)==0)
-		abort "Create output file name, please first"
+		abort "Create output file name first, please"
 	endif
-	//Chhek for existing file and manage on our own...
 	variable refnum
-	string FinalOutputName=NewFileOutputName
-	if(stringmatch(IgorInfo(2),"Macintosh") && strlen(FinalOutputName)>25)
-		FinalOutputName = FinalOutputName[0,25]
-	endif
-	if(strlen(OutputNameExtension)>0)
-		FinalOutputName+="."+OutputNameExtension
-	endif
+	string FinalOutputName, oldNote
 	
-	Open/Z=1 /R/P=IR2E_ExportPath refnum as FinalOutputName
-	if(V_Flag==0)
-		DoAlert 1, "The file with this name: "+FinalOutputName+ " in this location already exists, overwrite?"
-		if(V_Flag!=1)
-			abort
+	
+	if(ExportASCII)			//this is old ASCII method...
+		//Check for existing file and manage on our own...
+		FinalOutputName=NewFileOutputName
+//		if(stringmatch(IgorInfo(2),"Macintosh") && strlen(FinalOutputName)>25)
+//			FinalOutputName = FinalOutputName[0,25]
+//		endif
+		if(strlen(OutputNameExtension)>0)
+			FinalOutputName+="."+OutputNameExtension
 		endif
-		close/A
-		//user wants to delete the file
-		OpenNotebook/V=0/P=IR2E_ExportPath/N=JunkNbk  FinalOutputName
-		DoWindow/D /K JunkNbk
-	endif
-	close/A
 	
-	Duplicate TempY, NoteTempY
-	string OldNoteT=note(TempY)
-	note/K NoteTempY
-	note NoteTempY, OldNoteT+"Exported="+date()+" "+time()+";"
-	make/T/O WaveNoteWave
-	if (AttachWaveNote)
-		IN2G_PasteWnoteToWave("NoteTempY", WaveNoteWave,HeaderSeparator)
-		Save/G/M="\r\n"/P=IR2E_ExportPath WaveNoteWave as FinalOutputName
-	endif
-	if(HaveErrors)
-		Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY,TempE as FinalOutputName			///P=Datapath
-	else
-		Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY as FinalOutputName			///P=Datapath
+		Open/Z=1 /R/P=IR2E_ExportPath refnum as FinalOutputName
+		if(V_Flag==0)
+			DoAlert 1, "The file with this name: "+FinalOutputName+ " in this location already exists, overwrite?"
+			if(V_Flag!=1)
+				abort
+			endif
+			close/A
+			//user wants to delete the file
+			OpenNotebook/V=0/P=IR2E_ExportPath/N=JunkNbk  FinalOutputName
+			DoWindow/D /K JunkNbk
+		endif
+			close/A
+		Duplicate TempY, NoteTempY
+		string OldNoteT=note(TempY)
+		note/K NoteTempY
+		note NoteTempY, OldNoteT+"Exported="+date()+" "+time()+";"
+		make/T/O WaveNoteWave
+		if (AttachWaveNote)
+			IN2G_PasteWnoteToWave("NoteTempY", WaveNoteWave,HeaderSeparator)
+			Save/G/M="\r\n"/P=IR2E_ExportPath WaveNoteWave as FinalOutputName
+		endif
+		if(HaveErrors)
+			Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY,TempE as FinalOutputName			///P=Datapath
+		else
+			Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY as FinalOutputName			///P=Datapath
+		endif
+		KillWaves/Z WaveNoteWave, NoteTempY
 	endif
 
-	KillWaves/Z WaveNoteWave, NoteTempY
+	variable SlitLength
+	
+	if(ExportCanSASNexus)			//export Nexus... now assume this is data, not model results. 
+		if(UseIndra2Data || UseQRSdata)
+			FinalOutputName=NewFileOutputName
+			if(strlen(OutputNameExtension)>0)
+				FinalOutputName+="."+OutputNameExtension
+			else
+				OutputNameExtension= "hdf"
+				FinalOutputName+="."+"hdf"
+			endif
+			oldNote=note(TempY)
+			if(UseSMRData || stringMatch(NameOfWave(TempX),"*SMR*"))
+				SlitLength = NumberByKey("SlitLength", oldNote, "=", ";")
+			else
+				SlitLength = 0
+			endif
+			PathInfo IR2E_ExportPath
+			NEXUS_WriteNx1DCanSASdata(UserSampleName, S_path+FinalOutputName, TempY, TempE, TempX, TempdX, "", "Irena", oldNote, SlitLength)
+		else		//results, not canSAS Nexus export available
+			Abort "Cannot export Results into the canSAS Nexus files"
+		endif
+	endif	
 	print "Saved data into : "+FinalOutputName
 end
 
@@ -611,21 +777,26 @@ Function IR2E_LoadDataInTool()
 	
 // UseFolderNameForOutput
 // UseYWaveNameForOutput
+	NVAR ExportCanSASNexus
+	NVAR ExportASCII
+	NVAR ExportMultipleCanSASFiles
+	NVAR ExportSingleCanSASFile
 
-	NewFileOutputName = ""
-	if(UseFolderNameForOutput)
-		NewFileOutputName += IN2G_RemoveExtraQuote(StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":"),1,1)
+	if(ExportASCII ||(ExportCanSASNexus&&ExportMultipleCanSASFiles))
+		NewFileOutputName = ""
+		if(UseFolderNameForOutput)
+			//NewFileOutputName += IN2G_RemoveExtraQuote(StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":"),1,1)
+			NewFileOutputName += IN2G_ReturnUserSampleName(DataFolderName)
+			
+		endif
+		if(UseFolderNameForOutput && UseYWaveNameForOutput)
+			NewFileOutputName += "_"
+		endif
+		if(UseYWaveNameForOutput)
+			NewFileOutputName += IN2G_RemoveExtraQuote(IntensityWaveName,1,1)
+		endif	
 	endif
-	if(UseFolderNameForOutput && UseYWaveNameForOutput)
-		NewFileOutputName += "_"
-	endif
-	if(UseYWaveNameForOutput)
-		NewFileOutputName += IN2G_RemoveExtraQuote(IntensityWaveName,1,1)
-	endif	
-//	if(UseFolderNameForOutput || UseYWaveNameForOutput)
-//		NewFileOutputName += ".dat"
-//	endif
-
+	
 	setDataFolder oldDF
 
 end
@@ -673,6 +844,7 @@ Function IR2E_InitUnivDataExport()
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;UseSMRData;UseUserDefinedData;"
 	ListOfVariables+="AttachWaveNote;GraphData;DisplayWaveNote;UseFolderNameForOutput;UseYWaveNameForOutput;"
 	ListOfVariables+="ExportMultipleDataSets;"
+	ListOfVariables+="ExportCanSASNexus;ExportASCII;ExportMultipleCanSASFiles;ExportSingleCanSASFile;"
 
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	ListOfStrings+="CurrentlyLoadedDataName;CurrentlySetOutputPath;NewFileOutputName;"
@@ -722,8 +894,15 @@ Function IR2E_InitUnivDataExport()
 	QWavename=""
 	SVAR ErrorWaveName
 	ErrorWaveName=""
-	setDataFolder OldDf
+		
+	NVAR ExportASCII
+	NVAR ExportCanSASNexus
+	if(ExportASCII + ExportCanSASNexus !=1)
+		ExportASCII = 1
+		ExportCanSASNexus= 0
+	endif
 
+	setDataFolder OldDf
 
 end
 

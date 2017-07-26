@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.02
+#pragma version=1.03
 #include <Peak AutoFind>
 
 
@@ -11,6 +11,7 @@ Constant IN3_DeleteRawData=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.03 added UserSampleName to be used to avoid long file names limits...
 //1.02 fixed reading old data without UPDsize in the metadata
 //1.01 fixed BKG5overwrite which was not read correctly into the system. 
 //1.00 added support for Import & process GUI. 
@@ -459,7 +460,7 @@ Function IN3_FlyScanLoadHdf5File()
 					print "here belongs XPCS data conversion routine in the future" 
 					print "IN3_FlyScanLoadHdf5File()"
 				else
-					IN3_FSConvertToUSAXS(RawFolderWithData)	
+					IN3_FSConvertToUSAXS(RawFolderWithData, FileName)	
 					print "Converted : "+RawFolderWithData+" into USAXS data"
 					if(IN3_DeleteRawData)
 						KillDataFOlder RawFolderWithData
@@ -480,8 +481,8 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
-	string RawFolderWithData
+Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
+	string RawFolderWithData, origFileName
 
 	string OldDf=GetDataFolder(1)
 	setDataFolder RawFolderWithData
@@ -600,7 +601,8 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
 	FileName = IN2G_RemoveExtraQuote(FileName,1,1)
 	ListOfExistingFolders = DataFolderDir(1)
-	if(StringMatch(ListOfExistingFolders, "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ))
+	NVAR OverWriteExistingData=root:Packages:Indra3:OverWriteExistingData
+	if(StringMatch(ListOfExistingFolders, "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ) && (OverWriteExistingData==0))
 		DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
 			if(V_Flag!=1)
 				return ""
@@ -608,6 +610,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData)
 	endif
 
  	newDataFolder/O/S $(FileName)
+	string/g UserSampleName=	stringFromList(0,origFileName,".")
 	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD

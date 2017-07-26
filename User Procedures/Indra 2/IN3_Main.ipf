@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.92
+#pragma version = 1.93
 #pragma IgorVersion=7.00
+
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
@@ -9,6 +10,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.93 added Desmaering as optional data reduction step. 
 //1.92  removed unused functions
 //1.91 #pragma IgorVersion=7.00
 //1.90 added OverRideSampleTransmission, added live processing and added graph with saved subtracted data. 
@@ -30,7 +33,7 @@
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 Constant IN3_ReduceDataMainVersionNumber=1.87
-Constant IN3_NewReduceDataMainVersionNum=1.87
+Constant IN3_NewReduceDataMainVersionNum=1.93
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -174,7 +177,7 @@ Function IN3_MainPanelNew()
 	//Data Tabs definition
 	TabControl DataTabs,pos={4,340},size={410,320},proc=NI3_TabPanelControl
 	TabControl DataTabs,tabLabel(0)="Sample",tabLabel(1)="Diode"
-	TabControl DataTabs,tabLabel(2)="Geometry",tabLabel(3)="Calibration",tabLabel(4)="MSAXS", value= 0
+	TabControl DataTabs,tabLabel(2)="Geometry",tabLabel(3)="Calibration",tabLabel(4)="MSAXS",tabLabel(5)="Desmear", value= 0
 	//tab 0 Sample controls
 	NVAR CalculateWeight=root:Packages:Indra3:CalculateWeight
 	NVAR CalculateThickness=root:Packages:Indra3:CalculateThickness
@@ -361,6 +364,20 @@ Function IN3_MainPanelNew()
 	SetVariable MSAXSStartPoint,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSStartPoint
 	SetVariable MSAXSEndPoint,pos={20,430},size={300,22},title="MSAXS end point =", frame=0, disable=2
 	SetVariable MSAXSEndPoint,limits={0,Inf,0},variable= root:Packages:Indra3:MSAXSEndPoint
+
+
+//Desmear tab
+	CheckBox DesmearData,pos={20,365},size={90,14},proc=IN3_MainPanelCheckBox,title="Desmear Data?"
+	CheckBox DesmearData,variable= root:Packages:Indra3:DesmearData, help={"Check, if you  want to desmear data immediately"}
+
+	SetVariable BckgStartQ,pos={20,390},size={300,22},limits={0.01,0.5,0.01}, title="Background extrapolation start ="
+	SetVariable BckgStartQ,variable= root:Packages:Indra3:DesmearBckgStart, proc=IN3_ParametersChanged
+	SVAR BackgroundFunction=root:Packages:Indra3:DsmBackgroundFunction
+	PopupMenu BackgroundFnct,pos={20,420},size={258,21}, proc=IN3_InputPopMenuProc,title="background function :   "
+	PopupMenu BackgroundFnct,mode=1,value= "flat;PowerLaw w flat;power law;Porod;",popvalue=BackgroundFunction
+
+	
+
 	setDataFolder OldDf
 	NI3_TabPanelControl("",0)
 
@@ -380,6 +397,7 @@ Function IN3_MainPanelNew()
 
 	CheckBox OverWriteExistingData,pos={20,765},size={150,14},title="Overwrite existing data?", noproc
 	CheckBox OverWriteExistingData,variable= root:Packages:Indra3:OverWriteExistingData, help={"Check, if you want to overwrite data which already exist"}
+
 
 	
 //	Button Recalculate,pos={50,755},size={120,20},proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
@@ -504,17 +522,6 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 						KillDataFolder/Z targetFldrname
 						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
 						KillDataFolder $(TempStrName)
-//						elseif(V_Flag==2)
-//							string OldDf1=getDataFolder(1)
-//							SetDataFolder TargetRawFoldername
-//							string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrNameShort,1,1), 11, 0 ))
-//							SetDataFolder OldDf1		
-//							DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
-//							TempStrNameShort = TempStrNameNew		
-//							KillDataFolder $(TempStrName)
-//						else
-//							Abort 
-//						endif
 					endif
 				else
 					DuplicateDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
@@ -525,7 +532,7 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 #if(exists("AfterFlyImportHook")==6)  
 				AfterFlyImportHook(RawFolderWithData)
 #endif	
-				ListOfLoadedDataSets += IN3_FSConvertToUSAXS(RawFolderWithData)	+";"
+				ListOfLoadedDataSets += IN3_FSConvertToUSAXS(RawFolderWithData, FileName)	+";"
 				print "Converted : "+RawFolderWithData+" into USAXS data"
 				KillDataFOlder RawFolderWithData
 			endif
@@ -903,13 +910,14 @@ Function IN3_Initialize()
 	ListOfVariables+="TrimDataStart;TrimDataEnd;OverwriteUPD_DK5;"
 
 	ListOfVariables+="UseModifiedGauss;UseGauss;UseLorenz;"
-
-
 	ListOfVariables+="FlyScanRebinToPoints;ListProcDisplayDelay;"
+
+	ListOfVariables+="DesmearData;DesmearNumberOfInterations;DesmearNumPoints;DesmearBckgStart;"
+
 
 	// these are created automatically... "DataFoldername;IntensityWavename;QWavename;ErrorWaveName;"
 	ListOfStrings="SampleName;BlankName;userFriendlySamplename;userFriendlyBlankName;userFriendlySampleDFName;"
-	ListOfStrings+="ListOfASBParameters;LastSample;DataFolderName;"
+	ListOfStrings+="ListOfASBParameters;LastSample;DataFolderName;DsmBackgroundFunction;"
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -973,7 +981,14 @@ Function IN3_Initialize()
 	if(RemoveDropoutsAvePnts<10)
 		RemoveDropoutsAvePnts=50
 	endif
-	
+	SVAR DsmBackgroundFunction
+	if(strlen(DsmBackgroundFunction)<3)
+		DsmBackgroundFunction = "flat"
+	endif
+	NVAR DesmearBckgStart
+	if(DesmearBckgStart<0.01)
+		DesmearBckgStart=0.1
+	endif
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************

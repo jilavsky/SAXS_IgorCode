@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.59
+#pragma version=2.60
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.60 fixed case when for intensities=0 (set in software like Mar165) we wouldget error=0 and users would consider these regular data points. Removed now. 
 //2.59 tried to speed up the main conversion loop. Fixed case where for negative intensities we can get nan as uncertainty and for Int=0 uncertainty=0.
 //2.58 added saving color table in preferences. 
 //2.57 removed unused functions
@@ -173,7 +174,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Duplicate/O DspacingWidthA, DspacingWidth
 	Intensity=0
 	Error=0
-	variable i, j, counter, numbins, start1, end1
+	//variable i, j, counter, numbins, start1, end1
 	MatrixOp/Free/NTHR=0 tempInt = LUT
 	tempInt = Calibrated2DDataSet
 	//following si probably slow, but IndexSort cannot be multithreaded... 
@@ -202,6 +203,18 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	Multithread TempHistSum = sum(HistogramWvTemp,0,p)
 	Multithread Intensity[1,numpnts(Intensity)-1] = sum(tempInt,TempHistSum[p-1],TempHistSum[p])
 	Multithread Error[1,numpnts(Error)-1] = sum(TempIntSqt,TempHistSum[p-1],TempHistSum[p])
+	
+//	//suggested by Wavemetrics another way... I am uinable to make this work at this time...
+//		//Yes, MatrixOP is a possible solution.
+//		//First notice that your indexWave needs to be converted into a matrix using the following rule:
+//		//Initialize the matrix to zero.
+//		//Each row of the matrix contains as many columns as there are points in source wave.	
+//		//In each row set to 1 the index of the elements that you want to sum.  The result is simply
+//		//MatrixOP/o result=indexMatrix x sourceWave
+//		make/Free/N=(numpnts(HistogramWv),numpnts(Intensity)) indexWaveM 
+//		MatrixOp/NTHR=0 indexWaveM = 0
+//		
+	
 	//print StopMSTimer(timerRefNum)	
 	MatrixOp/Free/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
 	MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv	//This is average intensity....
@@ -211,15 +224,15 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
 	//change in the Configuration panel. 	
 	if(ErrorCalculationsUseOld)	//this is the old code... Hopefully I did not screw up. 
-		Error=sqrt(abs(Error - (TempSumXi^2))/(HistogramWv - 1))	
+		MatrixOp/O/NTHR=0 Error=sqrt(abs(Error - (TempSumXi*TempSumXi))/(HistogramWv - 1))	
 		MatrixOp/O/NTHR=0 Error=Error/HistogramWv
 	else //now new code. Need to calculate standard deviation anyway... 
 		//variance Ê= (Error - (Intensity^2 / Histogram)) / (Histogram - 1)
 		//st deviation = sqrt(variance)
-		Error = sqrt(abs(Error - (TempSumXi^2 / HistogramWv)) / (HistogramWv - 1))
+		MatrixOp/O/NTHR=0 Error = sqrt(abs(Error - (TempSumXi*TempSumXi / HistogramWv)) / (HistogramWv - 1))
 		if(ErrorCalculationsUseSEM)
 			//error_mean=stdDev/sqrt(Histogram)			use Standard error of mean...
-			Error = Error /sqrt(HistogramWv)
+			MatrixOp/O/NTHR=0 Error = Error /sqrt(HistogramWv)
 		endif
 	endif
 	//need to add comments to wave note...
@@ -233,12 +246,14 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	
 	//this fix is same for all - if there is only 1 point in the bin, simply use sqrt of intensity... Of course, this can be really wrong, since by now this is fully calibrated and hecne sqrt is useless... 
 	Error = (HistogramWv[p]>1)? Error[p] : sqrt(abs(Intensity[p]))		//for negative intensities this can give nan, so take abs(int)
-	Error = Error[p]>0 ? Error[p] : Error[p-1]									//for Int=0 we could have error = 0, which is wrong number. Assuem same as prior value. 
+	//now handling of case where we have error=0, which is possible only if Intensity=0 for each point summed together.  
+	Error = Error[p]>0 ? Error[p] : NaN								//for Int=0 we could have error = 0 if all points ahve 0 intensity, which is degenerate case (bad masking). 
 	note Intensity, OldNote
 	note Error, OldNote
-	killwaves/Z temp2D, tempQ, NewQwave
 	//remove first point - it contains all the masked points set to Q=0...
 	DeletePoints 0,1, intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth
+	//remove any Nan points (set to Nan by error evaluation above). 
+	IN2G_RemoveNaNsFrom10Waves(intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth)
 	setDataFolder OldDf
 end
 
@@ -2386,7 +2401,9 @@ Function NI1A_LoadManyDataSetsForConv()
 						if(NX_Index0Max>0)
 							UserSampleName+="_"+num2str(NX_Index0Value)
 						endif
-						UserSampleName+="_"+num2str(NX_Index1Value)
+						if(NX_Index1Value>0)
+							UserSampleName+="_"+num2str(NX_Index1Value)
+						endif
 						//
 						NI1A_ImportThisOneFile(SelectedFileToLoad)	
 						NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	

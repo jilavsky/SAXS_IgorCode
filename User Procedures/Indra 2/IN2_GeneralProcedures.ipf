@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.00
+#pragma version = 2.03
 #pragma IgorVersion = 7.00
 
 //control constants
@@ -8,12 +8,18 @@ constant IrenaDebugLevel=1
 //5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 constant RequiredMinScreenHeight=790
 constant RequiredMinScreenWidth = 1200 
+Strconstant ManualVersionString = "en/1.2.1/"
+strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//
+//2.03 added recroding to web site with version check. 
+//2.02 added overwrite for screen size abort. 
+//2.01 added IN2G_ReturnUserSampleName(FolderPathToData)  which returns sample name... 
 //2.00 added saving of color table for Nika, requested feature. 
 //1.99 added IN2G_ResetPanelSize(PanelName) to rescale panels back to "user size" selected in current Igor experiment. 
 //1.98 more changes to screen check, modified the function called by AfterCompileHook functions to provide proper user input for small screens
@@ -407,6 +413,31 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+
+
+//**************************************************************** 
+//**************************************************************** 
+Function IN2G_SubmitCheckRecordToWeb(WhichPackage)
+	string WhichPackage
+	
+	string Accesskey="IrenaNikaVersionCheck"
+	string PackagesInstalled=WhichPackage
+	string IgorVersionStr=IgorInfo(2)+" "+num2str(IgorVersion())
+	string DataPath=SpecialDirPath("Igor Pro User Files", 0, 0, 0 )
+	
+	string pathtourl=""
+	pathtourl = strConstVerCheckwwwAddress
+	pathtourl += "key="+Accesskey+"&"
+	pathtourl += "packages="+PackagesInstalled+"&"
+	pathtourl += "igor_version="+IgorVersionStr+"&"
+	pathtourl += "path="+DataPath	
+	pathtourl = ReplaceString(" ", pathtourl, "%20")
+	//print pathtourl
+	URLRequest /TIME=2/Z url=pathtourl
+	//print V_Flag
+	//print V_responseCode
+	//print S_serverResponse
+end
 //**************************************************************** 
 //**************************************************************** 
 Function IN2G_CheckForGraphicsSetting(DisplayResult) 
@@ -510,7 +541,7 @@ end
 //**************************************************************** 
 Function IN2G_OpenWebManual(WhichSpecificPage)
 		String WhichSpecificPage
-		BrowseURL "http://saxs-igorcodedocs.readthedocs.io/en/stable/"+WhichSpecificPage
+		BrowseURL "http://saxs-igorcodedocs.readthedocs.io/"+ManualVersionString+WhichSpecificPage
 end
 
 
@@ -4985,6 +5016,19 @@ Function IN2G_RemoveNaNsFrom7Waves(Wv1,wv2,wv3,wv4,wv5,wv6, wv7)		//removes NaNs
 end
 //**********************************************************************************************
 //**********************************************************************************************
+Function IN2G_RemoveNaNsFrom10Waves(Wv1,wv2,wv3,wv4,wv5,wv6, wv7, wv8, wv9, wv10)		//removes NaNs from 6 waves
+	Wave Wv1, Wv2, Wv3, wv4,wv5, wv6	, wv7, wv8, wv9, wv10				//assume same number of points in the waves
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	variable i=0, imax=numpnts(Wv1)-1
+	for (i=imax;i>=0;i-=1)
+		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2 || numtype(Wv3[i])==2 || numtype(Wv4[i])==2 || numtype(Wv5[i])==2 || numtype(Wv6[i])==2 || numtype(Wv7[i])==2 || numtype(Wv8[i])==2 || numtype(Wv9[i])==2 || numtype(Wv10[i])==2)
+			Deletepoints i, 1, Wv1, Wv2, Wv3,wv4,wv5, wv6, wv7, wv8, wv9, wv10	
+		endif
+	endfor
+end
+//**********************************************************************************************
+//**********************************************************************************************
 Function IN2G_RemoveNaNsFrom4Waves(Wv1,wv2,wv3,wv4)		//removes NaNs from 4 waves
 	Wave Wv1, Wv2, Wv3, wv4				//assume same number of points in the waves
 	
@@ -5501,6 +5545,29 @@ End
 
 //************************************************************************************************
 //************************************************************************************************
+Function/T IN2G_ReturnUserSampleName(FolderPathToData)
+	string FolderPathToData
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	if(!(DataFolderExists(FolderPathToData)))
+		return ""
+	endif
+	//OK, folder exists. Now does it have user string name, potentially long name?
+	string UserSampleName
+	SVAR/Z StringName = $(FolderPathToData+"UserSampleName")
+	if(SVAR_Exists(StringName))
+		if(Strlen(StringName)>0)
+			return StringName
+		endif
+	endif
+	//OK, long name does not exist,let's pick the folder name
+	UserSampleName = StringFromList(ItemsInList(FolderPathToData, ":")-1, FolderPathToData, ":")
+	UserSampleName = IN2G_RemoveExtraQuote(UserSampleName,1,1)
+	return UserSampleName
+end
+
+//************************************************************************************************
+//************************************************************************************************
 
 Function IN2G_CheckTheFolderName()
 
@@ -5972,17 +6039,34 @@ Function IN2G_CheckScreenSize(which,MinVal)
 		Abort "Error in IN2G_CheckScreenSize procedure. Major bug. Contact me: ilavsky@aps.anl.gov, please)"
 	endif
 	variable currentSizeInPixles=IN2G_ScreenWidthHeight(which)*100			//needs to be corrected 
-	
-	if (currentSizeInPixles<MinVal)
-		if (cmpstr(which,"height")==0)
-			Abort "Height of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor widnow, reduce dpi setting (% scaling in Display settings), or increase display resolution. On Mac increase display resolution."
-		else
-			Abort "Width of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
+	NVAR/Z PreventIrenaNikaScreenSizeCheck = root:Packages:PreventIrenaNikaScreenSizeCheck
+	variable PreventCheck = 0
+	if(NVAR_exists(PreventIrenaNikaScreenSizeCheck))
+		PreventCheck=PreventIrenaNikaScreenSizeCheck
+	endif
+	if(!PreventCheck)
+		if (currentSizeInPixles<MinVal)
+			if (cmpstr(which,"height")==0)
+				print "Height of your screen is too small. If you want to prevent checking screen size (it may make your system not usable)"
+				print " run following function in command line: PreventIrenaNikaScreenSizeCheck(1)"
+				print " to restore screen size check back, run PreventIrenaNikaScreenSizeCheck(0)"
+				Abort "Height of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor widnow, reduce dpi setting (% scaling in Display settings), or increase display resolution. On Mac increase display resolution."
+			else
+				print "Width of your screen is too small. If you want to prevent checking screen size (it may make your system not usable)"
+				print " run following function in command line: PreventIrenaNikaScreenSizeCheck(1)"
+				print " to restore screen size check back, run PreventIrenaNikaScreenSizeCheck(0)"
+				Abort "Width of your screen is too small for this panel. You have : "+num2str(floor(currentSizeInPixles))+", you need : "+num2str(floor(MinVal))+". On Windows you may : maximize the Igor window, reduce dpi setting (% scaling in Display settings) or increase display resolution. On Mac increase display resolution."
+			endif
 		endif
 	endif
-	
 end
 
+Function PreventIrenaNikaScreenSizeCheck(YesNo)
+	Variable yesNo
+	
+	variable/g root:Packages:PreventIrenaNikaScreenSizeCheck=yesNo
+	
+end
 //*******************************************************************************************************
 //*******************************************************************************************************
 //*******************************************************************************************************

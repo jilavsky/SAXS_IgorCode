@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.11
+#pragma version=2.12
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.12 fixes for case when error=0 for points. 
 //2.11 added Q width (Q resolution, dQ) to line profile. Works only for Q for now. 
 //2.10 fixed /NTHR=1 to /NTHR=0
 //2.09 fixed note/NOCR which was embedding new line in wrong place
@@ -269,6 +270,10 @@ Function NI1A_LineProf_CreateLP()
 		note/NOCR  LineProfileQy,  Newnote
 		note/NOCR  LineProfileQz , Newnote
 		note/NOCR  LineProfileAzAvalues , Newnote
+		//and here should be right place to check for error = 0
+		//now handling of case where we have error=0, which is possible only if Intensity=0 for each point summed together.  
+		LineProfileIntSdev = LineProfileIntSdev[p]>0 ? LineProfileIntSdev[p] : NaN	//for Int=0 we could have error = 0 if all points ahve 0 intensity, which is degenerate case (bad masking). 
+		//and this should clear it up as needed...
 		IN2G_RemoveNaNsFrom6Waves(LineProfileIntensity,LineProfileQvalues,LineProfileIntSdev,LineProfileQy,LineProfileQz,LineProfileAzAvalues)
 		//finally, if the data are ONLY in negative direction, then take abs of Q as that is likely what user wants to do...
 		if(numpnts(LineProfileIntensity)>3)

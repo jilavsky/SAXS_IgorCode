@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.39
+#pragma version=1.40
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.40 since Indra now can desmear data as part of last USAXS step, keep _C data always. 
 //1.39 changed fake usaxs data from _usx to _u to save on numebr of characters
 //1.38 added to Pilatus readout of beamsize for SAXS and WAXS
 //1.37 added to SAXS use of thickness, why not - provides even better normalized data. 
@@ -2124,7 +2125,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	SVAR UserFileName=root:Packages:Convert2Dto1D:OutputDataName
 	SVAR TempOutputDataname=root:Packages:Convert2Dto1D:TempOutputDataname
 	SVAR TempOutputDatanameUserFor=root:Packages:Convert2Dto1D:TempOutputDatanameUserFor
-	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
+	SVAR UserSampleNameGlobal=root:Packages:Convert2Dto1D:UserSampleName
 	string useName, LocalUserFileName
 	string CurOrient
 	//our secotr...
@@ -2136,10 +2137,10 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//variable tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleNameGlobal, CurOrient)+"_"+CurOrient
 		
 	elseif(strlen(UserFileName)<1)	//user did not set the file name
-		if(cmpstr(TempOutputDatanameUserFor,UserSampleName)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
+		if(cmpstr(TempOutputDatanameUserFor,UserSampleNameGlobal)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
 		else
 				abort "could not figure out the names"	
@@ -2156,7 +2157,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleNameGlobal, CurOrient)+"_"+CurOrient
 	elseif(strlen(UserFileName)<1)	//user did not set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
@@ -2177,7 +2178,7 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	if (Use2DdataName)
 		//tempEnd=26-strlen(CurOrient)
 		//UseName=LoadedFile[0,tempEnd]+"_"+CurOrient
-		UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
+		UseName=NI1A_TrimCleanDataName(UserSampleNameGlobal, CurOrient)+"_"+CurOrient
 	elseif(strlen(UserFileName)<1)	//user did nto set the file name
 		if(cmpstr(TempOutputDatanameUserFor,LoadedFile)==0 && strlen(TempOutputDataname)>0)		//this file output was already asked for user
 				LocalUserFileName = TempOutputDataname
@@ -2247,6 +2248,9 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 	Wave NewR=$("r_"+SmWaveNames)
 	Wave NewS=$("s_"+SmWaveNames)
 	Wave NewW=$("w_"+SmWaveNames)
+	//make UserSampleName
+	string/g UserSampleName= UserSampleNameGlobal+"_u"
+	
 
 	DoWIndow LineuotDisplayPlot_Q
 	if(V_Flag)
@@ -2260,17 +2264,17 @@ Function NI1_15IDDCreateSMRSAXSdata(listOfOrientations)
 		if(V_Flag)
 			removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(LineProfr)
 		endif
-		CheckDisplayed /W=LineuotDisplayPlot_Q  PinProfr
-		if(V_Flag)
-			removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(PinProfr)
-		endif
+		////CheckDisplayed /W=LineuotDisplayPlot_Q  PinProfr
+		//if(V_Flag)
+		//	removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(PinProfr)
+		//endif
 		DoWIndow LineuotDisplayPlot_Q
 		if(V_Flag)
 			DoWindow/F LineuotDisplayPlot_Q
 			IN2G_ColorTopGrphRainbow()
 		endif	
 		//removed, now delete folders...
-		KillDataFolder/Z $PinFolder
+		//KillDataFolder/Z $PinFolder
 		KillDataFolder/Z $LIneProfFolder
 	endif
 	SETDATAFOLDER OldDf

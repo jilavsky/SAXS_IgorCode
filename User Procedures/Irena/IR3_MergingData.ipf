@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.12
-constant IR3DversionNumber = 1.10		//Data merging panel version number
+constant IR3DversionNumber = 1.13		//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.10		//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 modified to handle clearly SMR and DSM data, related to modification of Indra package which can now desmeare automtaticallly in data reduction. 
 //1.12 Added new sort strings _xyz_string
 //1.11 Modified Screen Size check to match the needs
 //1.10 added getHelp button calling to www manual
@@ -87,7 +88,8 @@ Proc IR3D_DataMergePanel()
 	TitleBox Info1 title="\Zr120First data set",pos={60,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	//DrawText 60,25,"First data set"
 	Checkbox UseIndra2Data1, pos={10,20},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data1
-	Checkbox Indra2Data1SlitSmeared, pos={10,33},size={76,14},title="Desmeared/2D colim?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
+	Checkbox Indra2Data1DSM, pos={10,33},size={76,14},title="DSM/2D colim?", mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data1DSM
+	Checkbox Indra2Data1SlitSmeared, pos={120,33},size={76,14},title="SMR colim?", mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
 	checkbox UseQRSData1, pos={120,20}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
 	PopupMenu StartFolderSelection1,pos={10,52},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data1StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
@@ -100,7 +102,8 @@ Proc IR3D_DataMergePanel()
 	TitleBox Info2 title="\Zr120Second data set",pos={290,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	Checkbox UseIndra2Data2, pos={260,20},size={76,14},title="USAXS", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseIndra2Data2
 	checkbox UseQRSData2, pos={370,20}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata2
-	Checkbox Indra2Data2SlitSmeared, pos={260,33},size={76,14},title="Desmeared/2D colim?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
+	Checkbox Indra2Data2DSM, pos={260,33},size={76,14},title="DSM/2D colim?", mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2DSM
+	Checkbox Indra2Data2SlitSmeared, pos={370,33},size={76,14},title="SMR colim?",mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 	PopupMenu StartFolderSelection2,pos={260,52},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	PopupMenu StartFolderSelection2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data2StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
 	SetVariable FolderNameMatchString2,pos={260,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
@@ -205,8 +208,8 @@ Function IR3D_InitDataMerging()
 	ListOfStrings+="Data1StartFolder;Data1MatchString;Data2StartFolder;Data2MatchString;FolderSortString1;FolderSortString2;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;NewDataExtension;"
 
-	ListOfVariables="UseIndra2Data1;UseQRSdata1;Indra2Data1SlitSmeared;"
-	ListOfVariables+="UseIndra2Data2;UseQRSdata2;Indra2Data2SlitSmeared;"
+	ListOfVariables="UseIndra2Data1;UseQRSdata1;Indra2Data1SlitSmeared;Indra2Data1DSM;"
+	ListOfVariables+="UseIndra2Data2;UseQRSdata2;Indra2Data2SlitSmeared;Indra2Data2DSM;"
 	ListOfVariables+="Data1Background;Data2IntMultiplier;Data2Qshift;"
 	ListOfVariables+="IsUSAXSSAXSdata;ProcessMerge;ProcessMerge2;ProcessTest;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
@@ -266,6 +269,13 @@ Function IR3D_InitDataMerging()
 	if(ProcessTest)
 		AutosaveAfterProcessing=0
 	endif
+	
+	NVAR Indra2Data1SlitSmeared
+	NVAR Indra2Data1DSM
+	Indra2Data1DSM = !Indra2Data1SlitSmeared
+	NVAR Indra2Data2SlitSmeared
+	NVAR Indra2Data2DSM
+	Indra2Data2DSM = !Indra2Data2SlitSmeared
 
 	Make/O/T/N=(0,2) ListOfAvailableData
 	Make/O/N=(0,2) SelectionOfAvailableData
@@ -323,7 +333,7 @@ Function IR3D_UpdateListOfAvailFiles(WhichOne)
 	else
 		LStartFolder = StartFolderName
 	endif
-	string CurrentFolders=IR3D_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData,!(Indra2DataSlitSmeared),0,DataMatchString)
+	string CurrentFolders=IR3D_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData,Indra2DataSlitSmeared,0,DataMatchString)
 
 	Wave/T ListOfAvailableData=$("root:Packages:Irena:SASDataMerging:ListOfAvailableData"+num2str(WhichOne))
 	Wave SelectionOfAvailableData=$("root:Packages:Irena:SASDataMerging:SelectionOfAvailableData"+num2str(WhichOne))
@@ -394,6 +404,8 @@ Function/T IR3D_GenStringOfFolders(StartFolder,UseIndra2Structure, UseQRSStructu
 	else
 		result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*", 1)
 	endif
+	//remove folderr which contain "Packages" in name
+	result = GrepList(result, "root:Packages",1) 
 	//leave ONLY folders matching FolderNameMatchStringstring is set
 	if(strlen(FolderNameMatchString)>0)
 		result = GrepList(result, FolderNameMatchString) 
@@ -431,6 +443,34 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 			NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
 			NVAR OverwriteExistingData=root:Packages:Irena:SASDataMerging:OverwriteExistingData
 			NVAR AutosaveAfterProcessing=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing
+			
+			NVAR Indra2Data1SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
+			NVAR Indra2Data1DSM=root:Packages:Irena:SASDataMerging:Indra2Data1DSM
+			NVAR Indra2Data2SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
+			NVAR Indra2Data2DSM=root:Packages:Irena:SASDataMerging:Indra2Data2DSM
+
+		  	if(stringmatch(cba.ctrlName,"Indra2Data1SlitSmeared"))
+		  		Indra2Data1DSM = !Indra2Data1SlitSmeared
+		  		IR3D_UpdateListOfAvailFiles(1)
+		  		IR3D_RebuildListboxTables()
+			endif
+		  	if(stringmatch(cba.ctrlName,"Indra2Data1DSM"))
+		  		Indra2Data1SlitSmeared  = !Indra2Data1DSM
+		  		IR3D_UpdateListOfAvailFiles(1)
+		  		IR3D_RebuildListboxTables()
+			endif
+		
+		  	if(stringmatch(cba.ctrlName,"Indra2Data2SlitSmeared"))
+		  		Indra2Data2DSM = !Indra2Data2SlitSmeared
+		  		IR3D_UpdateListOfAvailFiles(2)
+		  		IR3D_RebuildListboxTables()
+			endif
+		  	if(stringmatch(cba.ctrlName,"Indra2Data2DSM"))
+		  		Indra2Data2SlitSmeared  = !Indra2Data2DSM
+		  		IR3D_UpdateListOfAvailFiles(2)
+		  		IR3D_RebuildListboxTables()
+			endif
+
 			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
 			Checkbox ProcessSequentially, win=IR3D_DataMergePanel, disable=0
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data1"))
@@ -444,7 +484,7 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  		endif
 		  	endif
 		  	
-		  	if(stringmatch(cba.ctrlName,"UseQRSData1")||stringmatch(cba.ctrlName,"UseIndra2Data1")||stringmatch(cba.ctrlName,"Indra2Data1SlitSmeared"))
+		  	if(stringmatch(cba.ctrlName,"UseQRSData1")||stringmatch(cba.ctrlName,"UseIndra2Data1"))
 		  		Data1StartFolder = "root:"
 		  		PopupMenu StartFolderSelection1,win=IR3D_DataMergePanel, mode=1,popvalue="root:"
 				IR3D_UpdateListOfAvailFiles(1)
@@ -460,7 +500,7 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  			UseIndra2Data2 = 0
 		  		endif
 		  	endif
-		  	if(stringmatch(cba.ctrlName,"UseQRSData2")||stringmatch(cba.ctrlName,"UseIndra2Data2")||stringmatch(cba.ctrlName,"Indra2Data2SlitSmeared"))
+		  	if(stringmatch(cba.ctrlName,"UseQRSData2")||stringmatch(cba.ctrlName,"UseIndra2Data2"))
 		  		Data2StartFolder = "root:"
 		  		PopupMenu StartFolderSelection2,win=IR3D_DataMergePanel, mode=1,popvalue="root:"
 				IR3D_UpdateListOfAvailFiles(2)
@@ -729,6 +769,8 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 	string oldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:Irena:SASDataMerging					//go into the folder
 	IR3D_SetSavedNotSavedMessage(0)
+	
+	string tmpStr
 
 	if(Data1or2==1)		//these are data 1
 		SVAR Data1StartFolder=root:Packages:Irena:SASDataMerging:Data1StartFolder
@@ -739,6 +781,7 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		SVAR dQWavename1=root:Packages:Irena:SASDataMerging:dQWavename1
 		NVAR UseIndra2Data1=root:Packages:Irena:SASDataMerging:UseIndra2Data1
 		NVAR UseQRSdata1=root:Packages:Irena:SASDataMerging:UseQRSdata1
+		NVAR Indra2Data1SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
 		//these are variables used by the control procedure
 		NVAR UseIndra2Data = root:Packages:Irena:SASDataMerging:UseIndra2Data
 		NVAR  UseQRSdata =  root:Packages:Irena:SASDataMerging:UseQRSdata
@@ -757,9 +800,24 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 		DataFolderName1 = Data1StartFolder+FolderNameStr
 		DataFolderName = DataFolderName1
-		QWavename1 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
-		IntensityWaveName1 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
-		ErrorWaveName1 = stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"))
+		if(Indra2Data1SlitSmeared)
+			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "SMR")
+		else
+			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "DSM")
+		endif
+		QWavename1 = stringFromList(0,tmpStr)
+		if(Indra2Data1SlitSmeared)
+			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "SMR")
+		else
+			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "DSM")
+		endif
+		IntensityWaveName1 = stringFromList(0,tmpStr)
+		if(Indra2Data1SlitSmeared)
+			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "SMR")
+		else
+			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "DSM")
+		endif
+		ErrorWaveName1 = stringFromList(0,tmpStr)
 		if(UseIndra2Data1)
 			dQWavename1 = ReplaceString("Qvec", QWavename1, "dQ")
 		elseif(UseQRSdata1)
@@ -799,6 +857,7 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		SVAR dQWavename2=root:Packages:Irena:SASDataMerging:dQWavename2
 		NVAR UseIndra2Data2=root:Packages:Irena:SASDataMerging:UseIndra2Data2
 		NVAR UseQRSdata2=root:Packages:Irena:SASDataMerging:UseQRSdata2
+		NVAR Indra2Data2SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 		//these are variables used by the control procedure
 		NVAR UseIndra2Data = root:Packages:Irena:SASDataMerging:UseIndra2Data
 		NVAR  UseQRSdata =  root:Packages:Irena:SASDataMerging:UseQRSdata
@@ -817,9 +876,28 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		//get the names of waves, assume this tool actually works. May not under some conditions. In thtat case this tool will not work. 
 		DataFolderName2 = Data2StartFolder+FolderNameStr
 		DataFolderName = DataFolderName2
-		QWavename2 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
-		IntensityWaveName2 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
-		ErrorWaveName2= stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"))
+
+		if(Indra2Data2SlitSmeared)
+			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "SMR")
+		else
+			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "DSM")
+		endif
+		QWavename2 = stringFromList(0,tmpStr)
+		if(Indra2Data2SlitSmeared)
+			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "SMR")
+		else
+			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "DSM")
+		endif
+		IntensityWaveName2 = stringFromList(0,tmpStr)
+		if(Indra2Data2SlitSmeared)
+			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "SMR")
+		else
+			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "DSM")
+		endif
+		ErrorWaveName2 = stringFromList(0,tmpStr)
+//		QWavename2 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
+//		IntensityWaveName2 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
+//		ErrorWaveName2= stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"))
 		if(UseIndra2Data2)
 			dQWavename2 = ReplaceString("Qvec", QWavename2, "dQ")
 		elseif(UseQRSdata2)

@@ -2104,7 +2104,7 @@ Function IR2L_UpdtSeparateMMM(distNum)
 		DistMedian=NaN
 		DistMode=NaN
 		DistFWHM=NaN
-	else
+	elseif(stringMatch(Model,"Size dist."))
 		Wave DistRadius=$("root:Packages:IR2L_NLSQF:Radius_Pop"+num2str(distNum))
 		Wave DistDiameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(distNum))
 		Wave DistVolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(distNum))

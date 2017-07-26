@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.30
+#pragma version=1.32
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.32 changed main graph name and size is dynamic now. 
+//1.31 added Desmearing as data reduction step. 
 //1.30 some fixes in Modified Gauss fitting. Modifed to remeber better Qmin for processign in batch. 
 //1.29 added live processing
 //1.28 added OverRideSampleTransmission
@@ -98,7 +100,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		else
 			QminDefaultForProcessing = 0
 		endif
-		//it shoudl eb recoded now. 
+		//it should be recoded now. 
 		For(i=0;i<Items;i+=1)
 			SVAR DataFolderName=	root:Packages:Indra3:DataFolderName
 			DataFolderName = stringFromList(i,LoadedDataList)
@@ -121,7 +123,10 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 			IN3_RecalculateData(1)
 			TabControl DataTabs , value= 0, win=USAXSDataReduction
 			NI3_TabPanelControl("",0)
+			IN3_DesmearData()
 			DoWIndow/F USAXSDataReduction
+			//ResumeUpdate
+			//DoUpdate /W=USAXSDataReduction
 			if(howMany)
 				IN3_SaveData()	
 				NVAR UserSavedData=root:Packages:Indra3:UserSavedData
@@ -174,6 +179,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		IN3_RecalculateData(1)	
 		DoWIndow/F USAXSDataReduction
 		IN3_FixSaveData()
+		IN3_DesmearData()
 	endif
 
 	if (cmpstr(ctrlName,"SaveResults")==0)
@@ -797,6 +803,14 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	if (cmpstr("RemoveDropouts",ctrlName)==0)
 		IN3_RecalculateData(1)
 	endif
+	
+	if (cmpstr("DesmearData",ctrlName)==0)
+		NI3_TabPanelControl("",5)
+		IN3_RecalculateData(1)
+		IN3_DesmearData()
+	endif
+	
+	
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -847,7 +861,10 @@ static Function IN3_RcurvePlot()
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
 	
 	//create main plot with R curve data
-	Display/K=1 /W=(300,36.5,900,500) R_Int vs R_Qvec as "Rocking curve plot"
+	variable NewWidth = 0.8*((IN2G_ScreenWidthHeight("width")*100 - 300))
+	variable NewHeight = 0.8*(IN2G_ScreenWidthHeight("height")*100	)
+	//Display/K=1 /W=(300,36.5,900,500) R_Int vs R_Qvec as "USAXS data reduction plot"
+	Display/K=1 /W=(300,36.5,330+NewWidth,36+NewHeight) R_Int vs R_Qvec as "USAXS data reduction plot"
 	DoWindow/C RcurvePlotGraph
 	AutoPositionWindow/M=0/R=USAXSDataReduction  RcurvePlotGraph
 //	AppendToGraph fit_PD_Intensity vs fitX_PD_Intensity
@@ -1583,6 +1600,9 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 		//UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
 	endif
 
+	if(stringmatch(ctrlName,"BckgStartQ"))
+		IN3_DesmearData()
+	endif
 
 
 	NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
@@ -1685,6 +1705,7 @@ Function NI3_TabPanelControl(name,tab)
 	NVAR CalibrateArbitrary=root:Packages:Indra3:CalibrateArbitrary
 	NVAR UsePinTransmission=root:Packages:Indra3:UsePinTransmission
 	NVAR UseMSAXSCorrection=root:Packages:Indra3:UseMSAXSCorrection
+	NVAR DesmearData = root:Packages:Indra3:DesmearData
 
 	Button RecoverDefault,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
 	CheckBox CalibrateToVolume,win=USAXSDataReduction, disable=(tab!=0 || IsBlank)
@@ -1745,6 +1766,9 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable SubtractFlatBackground,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	Button RecoverDefaultBlnkVals,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 
+	CheckBox DesmearData, win=USAXSDataReduction, disable=(tab!=5)
+	SetVariable BckgStartQ, win=USAXSDataReduction, disable=(tab!=5 || !DesmearData)
+	PopupMenu BackgroundFnct, win=USAXSDataReduction, disable=(tab!=5 || !DesmearData)
 
 	CheckBox UseMSAXSCorrection,win=USAXSDataReduction, disable=(tab!=4 || IsBlank)	
 	//UseMSAXSCorrection
@@ -1776,7 +1800,7 @@ Function NI3_TabPanelControl(name,tab)
 	else
 		IN3_ColorMainGraph(0)
 	endif
-	
+	IN3_DisplayDesExtAndError()
 	setDataFolder OldDf
 end
 
@@ -2093,13 +2117,13 @@ Function IN3_PlotProcessedData()
 			Wave/Z Xwave=$(LastSample+"Blank_R_Qvec")
 			Wave/Z Ewave=$(LastSample+"Blank_R_error")
 	else
-			Wave/Z Ywave=$(LastSample+"SMR_Int")
-			Wave/Z Xwave=$(LastSample+"SMR_Qvec")
-			Wave/Z Ewave=$(LastSample+"SMR_Error")
+			Wave/Z Ywave=$(LastSample+"DSM_Int")
+			Wave/Z Xwave=$(LastSample+"DSM_Qvec")
+			Wave/Z Ewave=$(LastSample+"DSM_Error")			
 			if(!WaveExists(Ywave))
-				Wave/Z Ywave=$(LastSample+"DSM_Int")
-				Wave/Z Xwave=$(LastSample+"DSM_Qvec")
-				Wave/Z Ewave=$(LastSample+"DSM_Error")			
+				Wave/Z Ywave=$(LastSample+"SMR_Int")
+				Wave/Z Xwave=$(LastSample+"SMR_Qvec")
+				Wave/Z Ewave=$(LastSample+"SMR_Error")
 			endif
 	endif
 	if(WaveExists(Ywave)&&WaveExists(Xwave)&&(!IsBlank))
@@ -2121,7 +2145,8 @@ Function IN3_PlotProcessedData()
 		IN2G_ColorTopGrphRainbow()
 		//IN2G_ColorTraces( )
 		IN2G_LegendTopGrphFldr(10)
-	//	IN2G_GenerateLegendForGraph(10,0,1)
+		//	IN2G_GenerateLegendForGraph(10,0,1)
+		DoUpdate /W=USAXSProcessedDataGraph
 	endif
 	
 end
@@ -2130,3 +2155,528 @@ end
 //*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
+
+Function IN3_DesmearData()
+	
+	String fldrSav0= GetDataFolder(1)
+	SetDataFolder root:Packages:Indra3:
+	NVAR DesmearData = root:Packages:Indra3:DesmearData
+	NVAR IsBlank = root:Packages:Indra3:IsBlank
+	if(DesmearData && !IsBlank)
+		NVAR SlitLength = root:Packages:Indra3:SlitLength
+		NVAR DesmearNumberOfInterations=root:Packages:Indra3:DesmearNumberOfInterations
+		WAVE SMR_Int = root:Packages:Indra3:SMR_Int
+		WAVE SMR_Error = root:Packages:Indra3:SMR_Error
+		WAVE SMR_Qvec = root:Packages:Indra3:SMR_Qvec
+		WAVE SMR_dQ = root:Packages:Indra3:SMR_dQ
+		Killwaves/Z DSM_Int, DSM_Qvec, DSM_Error, DSM_dQ
+		Duplicate/Free SMR_Int, tmpWork_Int
+		Duplicate/Free SMR_Error, tmpWork_Error
+		Duplicate/Free SMR_Qvec, tmpWork_Qvec
+		Duplicate/Free SMR_dQ, tmpWork_dQ
+
+		Duplicate/O SMR_Int, DesmNormalizedError
+		Duplicate/Free SMR_Int, absNormalizedError
+
+//		IN2G_ReplaceNegValsByNaNWaves(tmpSMR_Int,tmpSMR_Qvec,tmpSMR_Error)			//here we remove negative values by setting them to NaNs
+//		IN2G_RemoveNaNsFrom4Waves(tmpSMR_Int,tmpSMR_Qvec,tmpSMR_Error,tmpSMR_dQ)			//and here we remove NaNs all together
+		variable numOfPoints = numpnts(SMR_Int)
+		variable endme=0, oldendme = 0, DesmearAutoTargChisq, difff
+		DesmearAutoTargChisq = 0.5
+		variable ExtensionFailed
+		variable NumIterations=0
+		Do
+			ExtensionFailed = IN3_OneDesmearIteration(tmpWork_Int,tmpWork_Qvec,tmpWork_Error, SMR_Int, SMR_Error, DesmNormalizedError)
+			if(ExtensionFailed)
+				setDataFolder fldrSav0
+				return 0
+			endif
+			absNormalizedError=abs(DesmNormalizedError) 
+			Duplicate/Free/O absNormalizedError, tmpabsNormalizedError
+			IN2G_RemNaNsFromAWave(tmpabsNormalizedError)
+			endme = sum(tmpabsNormalizedError)/numpnts(absNormalizedError)
+			difff=1 - oldendme/endme
+			oldendme=endme
+			NumIterations+=1
+		while (endme>DesmearAutoTargChisq && abs(difff)>0.01 && NumIterations<50)	
+
+		Duplicate/O tmpWork_Int, DSM_Int
+		Duplicate/O tmpWork_Qvec, DSM_Qvec
+		Duplicate/O tmpWork_Error, DSM_Error
+		Duplicate/O tmpWork_dQ, DSM_dQ
+		
+		
+		DoWindow RcurvePlotGraph
+		if(V_Flag)
+			CheckDisplayed /W=RcurvePlotGraph DSM_Int 
+				if(V_Flag<1)
+					AppendToGraph/R/W=RcurvePlotGraph DSM_Int vs DSM_Qvec
+					ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=3,rgb(DSM_Int)=(1,39321,19939)		
+					//Label/W=RcurvePlotGraph right "DSM & SMR Intensity"	
+					Label/W=RcurvePlotGraph right "\\K(3,52428,1)DSM & \\K(1,16019,65535)SMR \\K(0,0,0)Intensity"
+					DoUpdate /W=RcurvePlotGraph
+				endif
+			IN3_DisplayDesExtAndError()
+		endif
+	else		//remove desmeared data if present
+		DoWindow RcurvePlotGraph
+		if(V_Flag)
+			CheckDisplayed /W=RcurvePlotGraph  DSM_Int 
+			if(V_Flag)
+				removefromgraph /W=RcurvePlotGraph/Z DSM_Int 
+				removefromgraph /W=RcurvePlotGraph/Z fit_ExtrapIntWave 
+				removefromgraph /W=RcurvePlotGraph/Z DesmNormalizedError 
+				Label/W=RcurvePlotGraph right "\\K(0,0,0)SMR Intensity"	
+				DoUpdate /W=RcurvePlotGraph
+			endif	
+		endif
+		WAVE/Z DSM_Int = root:Packages:Indra3:DSM_Int
+		WAVE/Z DSM_Error = root:Packages:Indra3:DSM_Error
+		WAVE/Z DSM_Qvec = root:Packages:Indra3:DSM_Qvec
+		WAVE/Z DSM_dQ = root:Packages:Indra3:DSM_dQ
+		Wave/Z fit_ExtrapIntwave = root:Packages:Indra3:fit_ExtrapIntwave
+		Wave/Z DesmNormalizedError = root:Packages:Indra3:DesmNormalizedError
+		KillWaves/Z DSM_Int, DSM_Qvec, DSM_Error, DSM_dQ, fit_ExtrapIntwave, DesmNormalizedError
+		
+	endif
+	setDataFolder fldrSav0
+	
+end
+
+
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+
+Function IN3_OneDesmearIteration(DesmearIntWave,DesmearQWave,DesmearEWave, origSmearedInt, origSmearedErr, NormalizedError)
+	Wave DesmearIntWave, DesmearQWave, DesmearEWave, origSmearedInt, origSmearedErr, NormalizedError
+		
+	string OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Indra3:
+
+	SVAR BackgroundFunction    = root:Packages:Indra3:DsmBackgroundFunction
+	NVAR SlitLength 			= 	root:Packages:Indra3:SlitLength
+	NVAR NumberOfIterations	=	root:Packages:Indra3:DesmearNumberOfInterations
+	NVAR numOfPoints               = root:Packages:Indra3:DesmearNumPoints
+	NVAR BckgStartQ                 = root:Packages:Indra3:DesmearBckgStart
+	numOfPoints = numpnts(DesmearIntWave)
+	if(BckgStartQ>DesmearQWave[numOfPoints-1]/2)
+		BckgStartQ = DesmearQWave[numOfPoints-1]/2
+	endif
+	Duplicate/Free DesmearIntWave, SmFitIntensity
+	Duplicate/Free origSmearedInt, OrigIntToSmear
+	Duplicate/Free origSmearedErr, SmErrors
+	variable ExtensionFailed=0
+	
+	ExtensionFailed = IN3_ExtendData(DesmearIntWave, DesmearQWave, SmErrors, slitLength, BckgStartQ, BackgroundFunction) 			//extend data to 2xnumOfPoints to Qmax+2.1xSlitLength
+	if(ExtensionFailed)
+		return 1
+	endif
+	if(slitlength>0)
+		IN3_SmearData(DesmearIntWave, DesmearQWave, slitLength, SmFitIntensity)						//smear the data, output is SmFitIntensity
+	endif
+	Redimension/N=(numOfPoints) SmFitIntensity, DesmearIntWave, DesmearQWave, NormalizedError		//cut the data back to original length (Qmax, numOfPoints)
+	
+	NormalizedError=(origSmearedInt-SmFitIntensity)/SmErrors			//NormalizedError (input-my Smeared data)/input errors
+	duplicate/O/Free DesmearIntWave, FastFitIntensity, SlowFitIntensity
+	//fast convergence
+	FastFitIntensity=DesmearIntWave*(OrigIntToSmear/SmFitIntensity)								
+	//slow convergence
+	SlowFitIntensity=DesmearIntWave+(OrigIntToSmear-SmFitIntensity)								
+	
+	variable i
+//	if(DesmearFastOnly)
+//		DesmearedIntWave = FastFitIntensity
+//	elseif(DesmearSlowOnly)
+//		DesmearedIntWave = SlowFitIntensity
+//	elseif(DesmearDampen)
+		For(i=0;i<(numpnts(DesmearIntWave));i+=1)
+			if (abs(NormalizedError[i])>0.5)
+				DesmearIntWave[i]=FastFitIntensity[i]
+			else
+				DesmearIntWave[i]=DesmearIntWave[i]
+			endif	
+		endfor
+//	else
+//		For(i=0;i<(numpnts(FitIntensity));i+=1)
+//			if (abs(NormalizedError[i])>DesmearSwitchOverVal)
+//				DesmearedIntWave[i]=FastFitIntensity[i]
+//			else
+//				DesmearedIntWave[i]=SlowFitIntensity[i]
+//			endif	
+//		endfor
+//	endif	
+	NumberOfIterations+=1
+	//remove the normalized error extremes
+	wavestats/Q NormalizedError
+	NormalizedError[x2pnt(NormalizedError,V_minLoc)] = Nan
+	NormalizedError[x2pnt(NormalizedError,V_maxLoc)] = Nan
+	//Duplicate/O DesmearIntWave, DesmearEWave
+	DesmearEWave=0
+	IN3_GetErrors(origSmearedErr, origSmearedInt, DesmearIntWave, DesmearEWave, DesmearQWave)			//this routine gets the errors
+	setDataFolder OldDf
+	return 0
+End
+
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//*************************************Extends the data using user specified parameters***************
+Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedFunction) 
+	wave Int_wave, Q_vct, Err_wave
+	variable slitLength, Qstart		//RecordFitParam=1 when we should record fit parameters in logbook
+	string SelectedFunction
+	
+	if (numtype(slitLength)!=0)
+		abort "Slit length error"
+	endif
+	if (slitLength<0.0001 || slitLength>1)
+		DoALert 0, "Weird value for Slit length, please check"
+	endif
+	
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Indra3
+
+//	WAVE/Z ColorWave=root:Packages:Irena_desmearing:ColorWave
+//	if(!WaveExists(ColorWave))
+//		Duplicate/O Int_Wave, ColorWave
+//	endif
+	WAVE/Z W_coef=W_coef
+		if (WaveExists(W_coef)!=1)					
+			make/N=2 W_coef
+		endif
+	W_coef=0		//reset for recording purposes...
+	
+	string ProblemsWithQ=""
+	string ProblemWithFit=""
+	string ProblemsWithInt=""
+	variable DataLengths=numpnts(Q_vct)-1							//get number of original data points
+	variable Qstep=((Q_vct(DataLengths)/Q_vct(DataLengths-1))-1)*Q_vct(DataLengths)
+	variable ExtendByQ=sqrt(Q_vct(DataLengths)^2 + (1.5*slitLength)^2) - Q_vct(DataLengths)
+	if (ExtendByQ<2.1*Qstep)
+		ExtendByQ=2.1*Qstep
+	endif
+	variable NumNewPoints=floor(ExtendByQ/Qstep)	
+	if (NumNewPoints<1)
+		NumNewPoints=1
+	endif	
+	variable OriginalNumPnts=numpnts(Int_wave)
+	if (NumNewPoints>OriginalNumPnts)
+		NumNewPoints=OriginalNumPnts
+	endif	
+	variable newLength=numpnts(Q_vct)+NumNewPoints				//New length of waves
+	variable FitFrom=binarySearch(Q_vct, Qstart)					//get at which point of Q start fitting for extension
+	if (FitFrom<=0)		                 								//error in selection of Q fitting range
+		FitFrom=DataLengths-10
+		ProblemsWithQ="I did reset Fitting Q range for you..."
+	endif
+	//There seems to be bug, which prevents me from using /D in FuncFit and cursor control
+	//therefore we will have to now handle this ourselves...
+	//FIrst check if the wave exists
+	Wave/Z fit_ExtrapIntwave
+	if (!WaveExists(fit_ExtrapIntwave))
+		Make/O/N=300 fit_ExtrapIntwave
+	endif
+	//Now we need to set it's x scaling to the range of Q values we need to study
+	SetScale/I x Q_vct[FitFrom],Q_vct[DataLengths-1],"", fit_ExtrapIntwave
+	//reset the fit wave to constant value
+	fit_ExtrapIntwave=Int_wave[DataLengths-1]
+		
+	Redimension /N=(newLength) Int_wave, Q_vct, Err_wave			//increase length of the two waves
+	
+//	if(exists("ColorWave")==1)
+//		Redimension /N=(newLength) ColorWave
+//		ColorWave=0
+//		ColorWave[FitFrom,DataLengths-1]=1
+//		ColorWave[DataLengths+1, ]=2	
+//	endif
+//	
+	variable i=0, ii=0	
+	variable/g V_FitError=0					//this is way to avoid bombing due to numerical problems
+	variable/g V_FitOptions=4				//this should suppress the window showing progress (4) & force robust fitting (6)
+										//using robust fitting caused problems, do not use...
+//	variable/g V_FitTol=0.00001				//and this should force better fit
+	variable/g V_FitMaxIters=50
+//	variable/g V_FitNumIters
+	
+//	DoWindow CheckTheBackgroundExtns
+//	if (V_flag)
+//		RemoveFromGraph /W=CheckTheBackgroundExtns /Z Fit_ExtrapIntwave
+//	endif
+	//***********here start different ways to extend the data
+
+	if (cmpstr(SelectedFunction,"flat")==0)				//flat background, for some reason only way this works is 
+	//lets setup parameters for FuncFit
+		if (exists("W_coef")!=1)					//using my own function to fit. Crazy!!
+			make/N=2 W_coef
+		endif
+		Redimension/D/N=1 W_coef
+		Make/O/N=1 E_wave
+		E_wave[0]=1e-6
+		W_coef[0]=Int_wave[((FitFrom+DataLengths)/2)]			//here is starting guesses
+		K0=W_coef[0]										//another way to get starting guess in
+	 	V_FitError=0											//this is way to avoid bombing due to numerical problems
+		//now lets do the fitting
+		FuncFit/N/Q IN3_FlatFnct W_coef Int_wave [FitFrom, DataLengths-1] /I=1 /W=Err_Wave /E=E_Wave /X=Q_vct	//Here we get the fit to the Int_wave in
+		//now check for the convergence
+		if (V_FitError!=0)
+			//we had error during fitting
+			ProblemWithFit="Linear fit function did not converge properly,\r change function or Q range"
+		else		//the fit converged properly
+			For(i=1;i<=NumNewPoints;i+=1)									
+				Q_vct[DataLengths+i]=Q_vct[DataLengths]+(ExtendByQ)*(i/NumNewPoints)     	//extend Q
+				Int_wave[DataLengths+i]= W_coef[0]								//extend Int
+			EndFor
+			fit_ExtrapIntwave=W_coef[0]
+		endif
+	endif
+
+
+	if (cmpstr(SelectedFunction,"power law")==0)			//power law background
+	 	V_FitError=0					//this is way to avoid bombing due to numerical problems
+		//now lets do the fitting	
+		K0 = 0
+		CurveFit/N/Q/H="100" Power Int_wave[FitFrom, DataLengths-1] /X=Q_vct /W=Err_Wave /I=1 
+		if (V_FitError!=0)
+			//we had error during fitting
+			ProblemWithFit="Power law fit function did not converge properly,\r change function or Q range"
+		else		//the fit converged properly
+			For(i=1;i<=NumNewPoints;i+=1)									
+				Q_vct[DataLengths+i]=Q_vct[DataLengths]+(ExtendByQ)*(i/NumNewPoints)     	//extend Q
+				Int_wave[DataLengths+i]= W_coef[0]+W_coef[1]*(Q_vct[DataLengths+i])^W_coef[2]			//extend Int
+			endfor
+			fit_ExtrapIntwave=W_coef[0]+W_coef[1]*(x)^W_coef[2]
+		endif
+	endif
+
+
+	if (cmpstr(SelectedFunction,"Porod")==0)				//Porod background
+		if (exists("W_coef")!=1)
+			make/N=2 W_coef
+		endif
+		Redimension/D/N=2 W_coef
+		variable estimate1_w0=Int_wave[(DataLengths-1)]
+		variable estimate1_w1=Q_vct[(FitFrom)]^4*Int_wave[(FitFrom)]
+		W_coef={estimate1_w0,estimate1_w1}							//here are starting guesses, may need to be fixed.
+		K0=estimate1_w0
+		K1=estimate1_w1
+	 	V_FitError=0					//this is way to avoid bombing due to numerical problems
+		//now lets do the fitting	
+		Make/O/T CTextWave={"K0 > "+num2str(estimate1_w0/100)}
+		FuncFit/N/Q IN3_Porod W_coef Int_wave [FitFrom, DataLengths-1] /I=1 /C=CTextWave/W=Err_Wave /X=Q_vct			//Porod function here
+		if (V_FitError!=0)
+			//we had error during fitting
+			ProblemWithFit="Porod fit function did not converge properly,\r change function or Q range"
+		else		//the fit converged properly
+			For(i=1;i<=NumNewPoints;i+=1)									
+				Q_vct[DataLengths+i]=Q_vct[DataLengths]+(ExtendByQ)*(i/NumNewPoints)     	//extend Q
+				Int_wave[DataLengths+i]=W_coef[0]+W_coef[1]/(Q_vct[DataLengths+i])^4		//extend Int
+			endfor
+			fit_ExtrapIntwave=W_coef[0]+W_coef[1]/(x)^4
+		endif
+	endif
+
+
+	if (cmpstr(SelectedFunction,"PowerLaw w flat")==0)				//fit polynom 3rd degree
+		if (exists("W_coef")!=1)
+			make/N=3 W_coef
+		endif
+	//	variable estimate1_w0=Int_wave[(DataLengths-1)]
+	//	variable estimate1_w1=Q_vct[(FitFrom)]^4*Int_wave[(FitFrom)]
+		K0=Int_wave[(DataLengths-1)]
+		K1=(Int_wave[(FitFrom)] - K0) * (Q_vct[(FitFrom)]^3)
+		K2=-3
+		W_coef={K0,K1, K2}							//here are starting guesses, may need to be fixed.
+
+		Make/O/T CTextWave={"K1 > 0","K2 < 0","K0 > 0", "K2 > -6"}
+		Redimension/D/N=3 W_coef
+	 	V_FitError=0					//this is way to avoid bombing due to numerical problems
+			Curvefit/N/G/Q power Int_wave [FitFrom, DataLengths-1] /I=1 /C=CTextWave/X=Q_vct /W=Err_Wave		
+		if (V_FitError!=0)
+			//we had error during fitting
+			ProblemWithFit="Power Law with flat fit function did not converge properly,\r change function or Q range"
+		else		//the fit converged properly
+			For(i=1;i<=NumNewPoints;i+=1)									
+				Q_vct[DataLengths+i]=Q_vct[DataLengths]+(ExtendByQ)*(i/NumNewPoints)     	//extend Q
+				Int_wave[DataLengths+i]= W_coef[0]+W_coef[1]*(Q_vct[DataLengths+i]^W_coef[2])
+			endfor
+			fit_ExtrapIntwave=W_coef[0]+W_coef[1]*(x^W_coef[2])
+			endif
+		endif
+
+//		wavestats/Q/R=[DataLengths+1,] Int_wave
+//	//	print DataLengths
+//		if (V_min<0)
+//			ProblemsWithInt="Extrapolated Intensity <0, select different function" 
+//		endif
+	variable ExtensionFailed=0
+	string ErrorMessages=""
+	if (strlen(ProblemsWithQ)!=0)
+		ErrorMessages=ProblemsWithQ+"\r"
+	endif
+	if (strlen(ProblemsWithInt)!=0)
+		ErrorMessages=ProblemsWithInt+"\r"
+	endif
+	if (strlen(ProblemWithFit)!=0)
+		ErrorMessages+=ProblemWithFit
+	endif
+	if (strlen(ErrorMessages)!=0)
+		ExtensionFailed=1
+		DoAlert /T="Desmearing failed" 0, ErrorMessages 
+	endif
+	setDataFolder OldDf
+	return ExtensionFailed
+end 
+
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//*****************************This function smears data***********************
+Function IN3_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
+	wave Int_to_smear, Q_vec_sm, Smeared_int
+	variable slitLength
+	
+	string OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Indra3
+	variable oldNumPnts=numpnts(Q_vec_sm)
+	//modified 2/28/2017 - with Fly scans and merged data having lot more points, this is getting to be slow. Keep max number of new points to 300
+	variable newNumPoints
+	if(oldNumPnts<300)
+		newNumPoints = 2*oldNumPnts
+	else
+		newNumPoints = oldNumPnts+300
+	endif
+	Duplicate/O/Free Int_to_smear, tempInt_to_smear
+	Redimension /N=(newNumPoints) tempInt_to_smear		//increase the points here.
+	Duplicate/O/Free Q_vec_sm, tempQ_vec_sm
+	Redimension/N=(newNumPoints) tempQ_vec_sm
+	tempQ_vec_sm[oldNumPnts, ] =tempQ_vec_sm[oldNumPnts-1] +20* tempQ_vec_sm[p-oldNumPnts]			//creates extension of number of points up to 20*original length
+	tempInt_to_smear[oldNumPnts, ]  = tempInt_to_smear[oldNumPnts-1] * (1-(tempQ_vec_sm[p]  - tempQ_vec_sm[oldNumPnts])/(20*tempQ_vec_sm[oldNumPnts-1]))//extend the data by simple fixed value... 
+	
+	Make/D/Free/N=(oldNumPnts) Smear_Q, Smear_Int							
+	//Q's in L spacing and intensitites in the l's will go to Smear_Int (intensity distribution in the slit, changes for each point)
+
+	variable DataLengths=numpnts(Q_vec_sm)
+
+	Smear_Q=2*slitLength*(Q_vec_sm[p]-Q_vec_sm[0])/(Q_vec_sm[DataLengths-1]-Q_vec_sm[0])		//create distribution of points in the l's which mimics the original distribution of points
+	//the 2* added later, because without it I did not  cover the whole slit length range... 
+	variable i=0
+	DataLengths=numpnts(Smeared_int)
+	MatrixOp/FREE Q_vec_sm2=powR(Q_vec_sm,2)
+	MatrixOp/FREE Smear_Q2=powR(Smear_Q,2)
+	MultiThread Smeared_int = IN3_SmearDataFastFunc(Q_vec_sm2[p], Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
+
+	Smeared_int*= 1 / slitLength															//normalize
+	
+	setDataFolder OldDf
+end
+//***********************************************************************************************************************************//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+
+Function IN3_FlatFnct(w,x) : FitFunc
+	wave w
+	variable x
+	
+	return w[0]
+end
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+
+Function IN3_Porod(w,x) : FitFunc
+	Wave w
+	Variable x
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ f(x) = c1+c2*(x^(-4))
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ x
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = c1
+	//CurveFitDialog/ w[1] = c2
+
+	return w[0]+w[1]*(x^(-4))
+End
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+Threadsafe function IN3_SmearDataFastFunc(Q_vec_sm2, Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
+			variable Q_vec_sm2, SlitLength
+			wave Smear_Q, Smear_Q2, tempQ_vec_sm, tempInt_to_smear	
+			Duplicate/Free Smear_Q, Smear_Int
+			//Smear_Int=interp(sqrt( Q_vec_sm2 +(Smear_Q2[p])), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
+			//this is using Interpolate2, seems slightly faster than above line alone... 
+			Duplicate/Free Smear_Q, InterSmear_Q
+			InterSmear_Q = sqrt( Q_vec_sm2 +(Smear_Q2[p]))
+			//surprisingly, below code is tiny bit slower that the two lines above... 
+			//MatrixOp/FREE InterSmear_Q=sqrt(Smear_Q2 + Q_vec_sm2)	
+			Interpolate2/I=3/T=1/X=InterSmear_Q /Y=Smear_Int tempQ_vec_sm, tempInt_to_smear
+			return areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 
+end
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+Function IN3_GetErrors(SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector)		//calculates errors using Petes formulas
+	wave SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector
+	
+	Silent 1	
+	
+	DsmErrors=FitIntensity*(SmErrors/SmIntensity)						//error proportional to input data
+	WAVE W_coef=W_coef
+	variable i=1, imax=numpnts(FitIntensity)
+	Redimension/N=(numpnts(FitIntensity)) DsmErrors
+	Do
+		if( (numtype(FitIntensity[i-1])==0) && (numtype(FitIntensity[i])==0) && (numtype(FitIntensity[i+1])==0) )
+			CurveFit/Q line, FitIntensity (i-1, i+1) /X=Qvector				//linear function here 
+			DsmErrors[i]+=abs(W_coef[0]+W_coef[1]*Qvector[i] - FitIntensity[i])	//error due to scatter of data
+		endif
+	i+=1
+	while (i<imax-1)
+
+	DsmErrors[0]=DsmErrors[1]									//some error needed for 1st point
+	DsmErrors[imax-1]=DsmErrors[imax-2]								//and error for last point	
+
+	Smooth /E=2 3, DsmErrors
+	
+end
+
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+
+Function IN3_DisplayDesExtAndError()
+		
+		DoWindow RcurvePlotGraph
+		if(V_Flag)
+			ControlInfo /W=USAXSDataReduction DataTabs
+			if(V_Value==5)
+				Wave/Z fit_ExtrapIntwave = root:Packages:Indra3:fit_ExtrapIntwave
+				if(WaveExists(fit_ExtrapIntwave))
+					CheckDisplayed /W=RcurvePlotGraph fit_ExtrapIntwave 
+					if(V_Flag<1)
+						AppendToGraph/R/W=RcurvePlotGraph fit_ExtrapIntwave	
+						ModifyGraph /W=RcurvePlotGraph mode(fit_ExtrapIntwave)=0,lstyle(fit_ExtrapIntwave)=3,rgb(fit_ExtrapIntwave)=(65535,0,0)
+						ModifyGraph /W=RcurvePlotGraph lsize(fit_ExtrapIntwave)=4
+					endif
+				endif	
+				Wave/Z DesmNormalizedError = root:Packages:Indra3:DesmNormalizedError
+				Wave/Z DSM_Qvec=root:Packages:Indra3:DSM_Qvec
+				if(WaveExists(DesmNormalizedError))
+					CheckDisplayed /W=RcurvePlotGraph DesmNormalizedError 
+					if(V_Flag<1)
+						AppendToGraph/L=VertCrossing/W=RcurvePlotGraph DesmNormalizedError vs ::Indra3:DSM_Qvec
+						ModifyGraph/W=RcurvePlotGraph mode(DesmNormalizedError)=2,rgb(DesmNormalizedError)=(0,0,0)
+						SetAxis/A/E=2/W=RcurvePlotGraph VertCrossing
+						ModifyGraph/W=RcurvePlotGraph lblPos(VertCrossing)=45;DelayUpdate
+						Label/W=RcurvePlotGraph VertCrossing "Normalized residual"
+					endif
+				endif	
+			else
+				RemoveFromGraph /W=RcurvePlotGraph/Z fit_ExtrapIntwave
+				RemoveFromGraph /W=RcurvePlotGraph/Z DesmNormalizedError
+			endif
+		endif
+end
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************

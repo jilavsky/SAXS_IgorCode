@@ -888,6 +888,13 @@ Function IN3_InputPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		BlankName = popStr
 		
 	endif
+	if(stringmatch(ctrlName,"BackgroundFnct"))
+		SVAR BackgroundFunction    = root:Packages:Indra3:DsmBackgroundFunction
+		BackgroundFunction = popStr
+		IN3_DesmearData()
+	endif
+	
+	
 
 End
 
