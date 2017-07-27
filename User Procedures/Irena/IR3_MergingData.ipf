@@ -46,6 +46,7 @@ Function IR3D_DataMerging()
 	IR3D_UpdateListOfAvailFiles(1)
 	IR3D_UpdateListOfAvailFiles(2)
 	IR3D_RebuildListboxTables()
+	
 end
 
 //************************************************************************************************************
@@ -178,10 +179,30 @@ Proc IR3D_DataMergePanel()
 //	DrawText 254,650,"Regex for not contain: ^((?!string).)*$"
 //	DrawText 254,663,"Regex for contain:  string"
 //	DrawText 254,676,"Regex for case independent contain:  (?i)string"
+
+	IR3D_FIxDataMergePanel()
 end
 
 
 //**********************************************************************************************************
+
+Function IR3D_FIxDataMergePanel()
+
+
+			NVAR UseIndra2Data2 =  root:Packages:Irena:SASDataMerging:UseIndra2Data2
+			NVAR UseIndra2Data1 =  root:Packages:Irena:SASDataMerging:UseIndra2Data1
+
+			NVAR Indra2Data1SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
+			NVAR Indra2Data1DSM=root:Packages:Irena:SASDataMerging:Indra2Data1DSM
+			NVAR Indra2Data2SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
+			NVAR Indra2Data2DSM=root:Packages:Irena:SASDataMerging:Indra2Data2DSM
+
+			Checkbox Indra2Data1SlitSmeared, win=IR3D_DataMergePanel, disable=!UseIndra2Data1
+			Checkbox Indra2Data1DSM, win=IR3D_DataMergePanel, disable=!UseIndra2Data1
+			Checkbox Indra2Data2SlitSmeared, win=IR3D_DataMergePanel, disable=!UseIndra2Data2
+			Checkbox Indra2Data2DSM, win=IR3D_DataMergePanel, disable=!UseIndra2Data2
+
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
@@ -448,15 +469,21 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 			NVAR Indra2Data1DSM=root:Packages:Irena:SASDataMerging:Indra2Data1DSM
 			NVAR Indra2Data2SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 			NVAR Indra2Data2DSM=root:Packages:Irena:SASDataMerging:Indra2Data2DSM
+			
+			SVAR Data2MatchString =  root:Packages:Irena:SASDataMerging:Data2MatchString
 
 		  	if(stringmatch(cba.ctrlName,"Indra2Data1SlitSmeared"))
 		  		Indra2Data1DSM = !Indra2Data1SlitSmeared
+		  		Data2MatchString="_u"
 		  		IR3D_UpdateListOfAvailFiles(1)
+		  		IR3D_UpdateListOfAvailFiles(2)
 		  		IR3D_RebuildListboxTables()
 			endif
 		  	if(stringmatch(cba.ctrlName,"Indra2Data1DSM"))
 		  		Indra2Data1SlitSmeared  = !Indra2Data1DSM
+		  		Data2MatchString = "_270"
 		  		IR3D_UpdateListOfAvailFiles(1)
+		  		IR3D_UpdateListOfAvailFiles(2)
 		  		IR3D_RebuildListboxTables()
 			endif
 		
@@ -477,11 +504,13 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  		if(checked)
 		  			UseQRSData1 = 0
 		  		endif
+		  		IR3D_FIxDataMergePanel()
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData1"))
 		  		if(checked)
 		  			UseIndra2Data1 = 0
 		  		endif
+		  		IR3D_FIxDataMergePanel()
 		  	endif
 		  	
 		  	if(stringmatch(cba.ctrlName,"UseQRSData1")||stringmatch(cba.ctrlName,"UseIndra2Data1"))
@@ -494,11 +523,16 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  		if(checked)
 		  			UseQRSData2 = 0
 		  		endif
+		  		Data2MatchString = ""
+		  		IR3D_UpdateListOfAvailFiles(2)
+		  		IR3D_RebuildListboxTables()
+		  		IR3D_FIxDataMergePanel()
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData2"))
 		  		if(checked)
 		  			UseIndra2Data2 = 0
 		  		endif
+		  		IR3D_FIxDataMergePanel()
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData2")||stringmatch(cba.ctrlName,"UseIndra2Data2"))
 		  		Data2StartFolder = "root:"
@@ -800,24 +834,30 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 		DataFolderName1 = Data1StartFolder+FolderNameStr
 		DataFolderName = DataFolderName1
-		if(Indra2Data1SlitSmeared)
-			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "SMR")
+		if(UseIndra2Data1)
+			if(Indra2Data1SlitSmeared)
+				tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "SMR")
+			else
+				tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "DSM")
+			endif
+			QWavename1 = stringFromList(0,tmpStr)
+			if(Indra2Data1SlitSmeared)
+				tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "SMR")
+			else
+				tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "DSM")
+			endif
+			IntensityWaveName1 = stringFromList(0,tmpStr)
+			if(Indra2Data1SlitSmeared)
+				tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "SMR")
+			else
+				tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "DSM")
+			endif
+			ErrorWaveName1 = stringFromList(0,tmpStr)
 		else
-			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "DSM")
+			QWavename1 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
+			IntensityWaveName1 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
+			ErrorWaveName1 = stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"))
 		endif
-		QWavename1 = stringFromList(0,tmpStr)
-		if(Indra2Data1SlitSmeared)
-			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "SMR")
-		else
-			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "DSM")
-		endif
-		IntensityWaveName1 = stringFromList(0,tmpStr)
-		if(Indra2Data1SlitSmeared)
-			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "SMR")
-		else
-			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "DSM")
-		endif
-		ErrorWaveName1 = stringFromList(0,tmpStr)
 		if(UseIndra2Data1)
 			dQWavename1 = ReplaceString("Qvec", QWavename1, "dQ")
 		elseif(UseQRSdata1)
@@ -876,28 +916,31 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		//get the names of waves, assume this tool actually works. May not under some conditions. In thtat case this tool will not work. 
 		DataFolderName2 = Data2StartFolder+FolderNameStr
 		DataFolderName = DataFolderName2
-
-		if(Indra2Data2SlitSmeared)
-			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "SMR")
+		
+		if(UseIndra2Data2)
+			if(Indra2Data2SlitSmeared)
+				tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "SMR")
+			else
+				tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "DSM")
+			endif
+			QWavename2 = stringFromList(0,tmpStr)
+			if(Indra2Data2SlitSmeared)
+				tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "SMR")
+			else
+				tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "DSM")
+			endif
+			IntensityWaveName2 = stringFromList(0,tmpStr)
+			if(Indra2Data2SlitSmeared)
+				tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "SMR")
+			else
+				tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "DSM")
+			endif
+			ErrorWaveName2 = stringFromList(0,tmpStr)
 		else
-			tmpStr = GrepList(IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"), "DSM")
+			QWavename2 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
+			IntensityWaveName2 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
+			ErrorWaveName2= stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"))	
 		endif
-		QWavename2 = stringFromList(0,tmpStr)
-		if(Indra2Data2SlitSmeared)
-			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "SMR")
-		else
-			tmpStr = GrepList(IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"), "DSM")
-		endif
-		IntensityWaveName2 = stringFromList(0,tmpStr)
-		if(Indra2Data2SlitSmeared)
-			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "SMR")
-		else
-			tmpStr = GrepList(IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"), "DSM")
-		endif
-		ErrorWaveName2 = stringFromList(0,tmpStr)
-//		QWavename2 = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3D_DataMergePanel"))
-//		IntensityWaveName2 = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3D_DataMergePanel"))
-//		ErrorWaveName2= stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3D_DataMergePanel"))
 		if(UseIndra2Data2)
 			dQWavename2 = ReplaceString("Qvec", QWavename2, "dQ")
 		elseif(UseQRSdata2)

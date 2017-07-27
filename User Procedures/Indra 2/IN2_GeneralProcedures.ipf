@@ -1553,7 +1553,7 @@ Function IN2G_PanelResizePanelSize(s)
 		//2) For use with MoveWindow, (which wants points, unless you use /I or /M) just use those coordinates.
 		//3) For use with NewPanel and for positioning and sizing controls, scale the coordinates using screenResolution/PanelResolution("winname")
 		Variable left = V_left
-		Variable right = V_right
+		Variable right = V_right 
 		Variable top = V_top
 		Variable bottom = V_bottom
 		variable horScale, verScale, OriginalWidth, OriginalHeight, CurHeight, CurWidth
@@ -1561,7 +1561,7 @@ Function IN2G_PanelResizePanelSize(s)
 		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
 		variable OriginalResolution=NumberByKey("Resolution", OrigInfo, ":", ";")
 		if(numtype(OriginalResolution)!=0)
-			if(StringMatch(IgorInfo(2), "Windows" ))
+			if(StringMatch(IgorInfo(2), "Windows" )) 
 				OriginalResolution = 96
 			else	//Windows 
 				OriginalResolution = 72
@@ -1732,7 +1732,7 @@ EndStructure
 //***********************************************************
 Function IN2G_ResetSizesForALlPanels(WindowProcNames)
 	string WindowProcNames			//contains list of panels of this package
-	//this function is used after compile and will resent all panels to proper size...
+	//this function is used after compile and will reset all panels to proper size...
 	variable i
 	string PanelName
 	For(i=0;i<ItemsInList(WindowProcNames);i+=1)
@@ -1779,12 +1779,20 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	if(width>100 && height>100 && Left < right && top < bottom && PrefsPos.version==kPrefsVersion)
 		FoundValidPrefs = 1
 	endif
-	GetWindow $PanelNameLocal wsize				
-	if(Width> IN2G_ScreenWidthHeight("Width")*50)
-		Width = IN2G_ScreenWidthHeight("Width")*50
+	//separate scaling for large panels
+	variable WidthScale=50
+	variable HeightScale = 70
+	if(stringmatch(PanelNameLocal,"IR3D_DataMergePanel"))
+		WidthScale = 95
+		HeightScale = 90
 	endif
-	if(Height> IN2G_ScreenWidthHeight("Height")*70)
-		Height = IN2G_ScreenWidthHeight("Height")*70
+	
+	GetWindow $PanelNameLocal wsize				
+	if(Width> IN2G_ScreenWidthHeight("Width")*WidthScale)
+		Width = IN2G_ScreenWidthHeight("Width")*WidthScale
+	endif
+	if(Height> IN2G_ScreenWidthHeight("Height")*HeightScale)
+		Height = IN2G_ScreenWidthHeight("Height")*HeightScale
 	endif
 	variable keys= GetKeyState(0)
 	if(keys>0 || FoundValidPrefs<1 || DoNotRestorePanelSizes)		//ANY modifier key was pressed or no/incorrect pref file was found, reset the size
@@ -1794,7 +1802,7 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 			PrefsPos.panelCoords[0] = V_right-V_left		//width
 			PrefsPos.panelCoords[1] = V_bottom-V_top		//height
 			PrefsPos.panelCoords[2] = V_left					//left
-			PrefsPos.panelCoords[3] = V_top					//top
+			PrefsPos.panelCoords[3] = V_top					//top 
 			PrefsPos.panelCoords[4] = V_right					//right
 			PrefsPos.panelCoords[5] = V_bottom				//bottom
 			if(setSizeIfNeeded)
