@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.19
+#pragma version=2.20
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 fixed bug in IR2U_CalculateInvariantbutton
 //2.19 modified to speed up, removed DoUpdate. Fixed error when plot widnow did not exist. 
 //2.18 modified IR1A_UnifiedCalculateIntensity() to handle data which have Qmax less than 3*slit length
 //2.17 Dale fixed function IR2U_CalculateInvariantbutton() to Warn the user that one can’t use "invariant btwn csrs" on SMR data and Automatically use the level-1 for B value when “All” is picked as the level in the two phase calculator (Analyze Results button on unified panel).
@@ -2703,15 +2704,16 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	Variable SelectedLevelForB=SelectedLevel
 	variable InitialselectedLevel=SelectedLevel//used to reset the panel at the end
 	NVAR LNumOfLevels =root:Packages:Irena_UnifFit:NumberOfLevels//number of levels in the full unified fit
-	NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevel)+"B")
 	If (numtype(selectedLevel)==2)//  SelectedLevel = "all",  If you pick all levels igor will take B for level 1---gets tricky here
-				//Doalert 0, "using level-1 B"
-				SelectedLevel=LNumOfLevels // use the top level when "all" is selected
-				NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(1)+"B")//uses level 1 for B when "all" is picked. DWS 2016 09 20 
-				SelectedLevelForB=1
+		//Doalert 0, "using level-1 B"
+		SelectedLevel=LNumOfLevels // use the top level when "all" is selected
+		//NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(1)+"B")//uses level 1 for B when "all" is picked. DWS 2016 09 20 
+		SelectedLevelForB=1
 	endif
+	NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevelForB)+"B")
 	NVAR PorodSlope=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevelForB)+"P")
 	If (PorodSlope!=4)
+		SelectedLevel=InitialselectedLevel
 		Doalert 0, "Porod Slope is not equal to -4"
 	endif
 	
