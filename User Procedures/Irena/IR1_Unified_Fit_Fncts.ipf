@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 modified TwoPhaseSys1-4 output per Dale's request. 
 //2.20 fixed bug in IR2U_CalculateInvariantbutton
 //2.19 modified to speed up, removed DoUpdate. Fixed error when plot widnow did not exist. 
 //2.18 modified IR1A_UnifiedCalculateIntensity() to handle data which have Qmax less than 3*slit length
@@ -3715,6 +3716,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			Print "    Sample density = "+num2str(SampleBulkDensity)+" [g/cm^3]"
 	 		Print "    Contrast = "+num2str(Contrast)+"   [1/cm^4]"
 	 		Print "    Calculated: S/V = "+num2str(SurfacePerVolume)+" [m^2/cm^3] Per sample volume"
+			Print "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g] "
 			Print "    Calculated: Minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] "
 		elseif(stringmatch(Model,"TwoPhaseSys3"))
 			Print "    Method 3: Sample density, contrast known"
@@ -3725,7 +3727,8 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			Print "    Pore density = "+num2str(DensityMajorityPhase)
 			Print "    Sample density = "+num2str(SampleBulkDensity)+" [g/cm^3]"
 			Print "    Calculated: Skeletal density = "+num2str(DensityMinorityPhase)+"  Phi = "+num2str(MinorityPhasePhi)
-	   		Print "    Calculated: S/V = "+num2str(SurfacePerVolume)+" m^2/cm^3 Per sample volume"
+	   	Print "    Calculated: S/V = "+num2str(SurfacePerVolume)+" m^2/cm^3 Per sample volume"
+			Print "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g] "
 			Print "    Calculated: Minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] "
 		elseif(stringmatch(Model,"TwoPhaseSys4"))
 			Print "    Method 4: using B and Q and contrast"
@@ -3737,6 +3740,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			Print "    Calculated: phi = "+num2str(MinorityPhasePhi)+"       or       "+num2str(MajorityPhasePhi)
 			Print "    Calculated: Sample density= "+num2str(SampleBulkDensity)+" [g/cm^3]"
 			Print "    Calculated: S/V = "+num2str(SurfacePerVolume)+" [m^2/cm^3] per sample volume for phi = "+num2str(MinorityPhasePhi)
+			Print "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g] "
 			Print "    Calculated: Minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] "
 		elseif(stringmatch(Model,"TwoPhaseSys5"))
 			Print "    Method 5: Particulate analysis"
@@ -3775,14 +3779,15 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 	
 		if(stringmatch(Model,"TwoPhaseSys1"))
 		
-				IR1L_AppendAnyText( "    Method 1: B/Q, skeletal density, and sample density known")
-				IR1L_AppendAnyText( "    Minority phase : "+TwoPhaseSys_MinName+"          Majority phase : "+TwoPhaseSys_MajName)
-				IR1L_AppendAnyText( "    Known: pi B/Q = "+num2str(SurfacePerVolume/(MinorityPhasePhi*(MajorityPhasePhi)))+" [m^2/cm^3]")
-				IR1L_AppendAnyText( "    Skeletal density = "+num2str(DensityMinorityPhase)+" [g/cm^3]"+", Pore density = "+num2str(DensityMajorityPhase)+" [g/cm^3]")
-				IR1L_AppendAnyText( "    Sample density= "+num2str(SampleBulkDensity)+" [g/cm^3]")
-				IR1L_AppendAnyText( "    Calculated: Phi=" + num2str(MinorityPhasePhi))
-				IR1L_AppendAnyText( "    Calculated: S/V = "+num2str(SurfacePerVolume)+" [m^2/cm^3] Per sample volume")
-				IR1L_AppendAnyText( "    Results: minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] ")
+			IR1L_AppendAnyText( "    Method 1: B/Q, skeletal density, and sample density known")
+			IR1L_AppendAnyText( "    Minority phase : "+TwoPhaseSys_MinName+"          Majority phase : "+TwoPhaseSys_MajName)
+			IR1L_AppendAnyText( "    Known: pi B/Q = "+num2str(SurfacePerVolume/(MinorityPhasePhi*(MajorityPhasePhi)))+" [m^2/cm^3]")
+			IR1L_AppendAnyText( "    Skeletal density = "+num2str(DensityMinorityPhase)+" [g/cm^3]"+", Pore density = "+num2str(DensityMajorityPhase)+" [g/cm^3]")
+			IR1L_AppendAnyText( "    Sample density= "+num2str(SampleBulkDensity)+" [g/cm^3]")
+			IR1L_AppendAnyText( "    Calculated: Phi=" + num2str(MinorityPhasePhi))
+			IR1L_AppendAnyText( "    Calculated: S/V = "+num2str(SurfacePerVolume)+" [m^2/cm^3] Per sample volume")
+			IR1L_AppendAnyText( "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g]")
+			IR1L_AppendAnyText( "    Results: minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] ")
 
 		elseif(stringmatch(Model,"TwoPhaseSys2"))
 			IR1L_AppendAnyText( "    Method 2:Contrast known;  B absolute.")
@@ -3792,6 +3797,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			IR1L_AppendAnyText( "    Sample density = "+num2str(SampleBulkDensity)+" [g/cm^3]")
 	 		IR1L_AppendAnyText( "    Contrast = "+num2str(Contrast)+"  [1/cm^4]")
 	 		IR1L_AppendAnyText( "    Calculated: S/V = "+num2str(SurfacePerVolume)+" [m^2/cm^3] Per sample volume")
+			IR1L_AppendAnyText( "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g]")
 			IR1L_AppendAnyText( "    Calculated: minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] ")
 		elseif(stringmatch(Model,"TwoPhaseSys3"))
 			IR1L_AppendAnyText( "    Method 3: Sample density, contrast known")
@@ -3802,7 +3808,8 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			IR1L_AppendAnyText( "    Pore density = "+num2str(DensityMajorityPhase))
 			IR1L_AppendAnyText( "    Sample density = "+num2str(SampleBulkDensity)+" [g/cm^3]")
 			IR1L_AppendAnyText( "    Calculated: Skeletal density = "+num2str(DensityMinorityPhase)+"  Phi = "+num2str(MinorityPhasePhi))
-	   		IR1L_AppendAnyText( "    Calculated: S/V = "+num2str(SurfacePerVolume)+" m^2/cm^3 Per sample volume")
+	   	IR1L_AppendAnyText( "    Calculated: S/V = "+num2str(SurfacePerVolume)+" m^2/cm^3 Per sample volume")
+			IR1L_AppendAnyText( "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g]")
 			IR1L_AppendAnyText( "    Calculated: minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] ")
 		elseif(stringmatch(Model,"TwoPhaseSys4"))
 			IR1L_AppendAnyText( "    Method 4: using B and Q and contrast")
@@ -3814,6 +3821,7 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 			IR1L_AppendAnyText( "    Calculated: phi = "+num2str(MinorityPhasePhi)+"       or       "+num2str(MajorityPhasePhi))
 			IR1L_AppendAnyText( "    Calculated: Sample density= "+num2str(SampleBulkDensity)+" [g/cm^3]")
 			IR1L_AppendAnyText( "    Calculated: S/V = "+num2str(SurfacePerVolume)+" [m^2/cm^3] per sample volume for phi = "+num2str(MinorityPhasePhi))
+			IR1L_AppendAnyText( "    Calculated: S/m = "+num2str(SurfacePerVolume/SamplebulkDensity)+" [m^2/g]")
 			IR1L_AppendAnyText( "    Calculated: minority chord ="+num2str(MinorityCordLength)+" [A]  MajorityChord = "+num2str(MajorityCordLength)+" [A] ")
 		elseif(stringmatch(Model,"TwoPhaseSys5"))
 			IR1L_AppendAnyText( "    Method 5: Particulate analysis")
