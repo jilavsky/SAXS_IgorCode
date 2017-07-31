@@ -2719,6 +2719,8 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 		SelectedLevel=LNumOfLevels // use the top level when "all" is selected
 		//NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(1)+"B")//uses level 1 for B when "all" is picked. DWS 2016 09 20 
 		SelectedLevelForB=1
+	Else
+		LNumOfLevels=SelectedLevel
 	endif
 	NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevelForB)+"B")
 	NVAR PorodSlope=$("root:Packages:irena_UnifFit:Level"+num2istr(SelectedLevelForB)+"P")
@@ -2738,17 +2740,17 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	 variable invariant=areaXY(qwave, rq2,hcsr(a), hcsr(b))+areaxy(frontqq2,frontrq2)+abs((B*hcsr(B)^-1))//extends with -4 exponent
 	 variable QvFrontPart=(G*qwave[pcsr(a)]^3/3)+(qwave[pcsr(a)]^5*RgSelectedLevel^2/15)//analytical extension to low q  NOT USED
 	inv=invariant//***DWS  Store the result so it can be used by   IR2U_TwoPhaseModelCalc()
-	If(1)
-		//Print B*hcsr(B)
-		print "Qlowq using area = "+ num2str(areaxy(frontqq2,frontrq2))
-		print "Qlowq  analytical (not used) = "+num2str( QvFrontPart)
-		print  "Qdata part = "+ num2str(areaXY(qwave, rq2,hcsr(a), hcsr(b)))
-		Print  "Qtail analytical = "+num2str(abs((B*hcsr(B)^-1)))
-		print "Qtail using area (not used) = "+num2str (areaXY(backqq2, backrq2))
-		Print "Qtotal = "+num2str (invariant)
-		Print "B = "+num2str (B)
-		Print "___________"
-	endif
+//	If(1)
+//		//Print B*hcsr(B)
+//		print "Qlowq using area = "+ num2str(areaxy(frontqq2,frontrq2))
+//		print "Qlowq  analytical (not used) = "+num2str( QvFrontPart)
+//		print  "Qdata part = "+ num2str(areaXY(qwave, rq2,hcsr(a), hcsr(b)))
+//		Print  "Qtail analytical = "+num2str(abs((B*hcsr(B)^-1)))
+//		print "Qtail using area (not used) = "+num2str (areaXY(backqq2, backrq2))
+//		Print "Qtotal = "+num2str (invariant)
+//		Print "B = "+num2str (B)
+//		Print "___________"
+//	endif
 	NVAR TwoPhaseInvariantBetweenCursors=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors
 	TwoPhaseInvariantBetweenCursors=invariant*1e24
 	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
