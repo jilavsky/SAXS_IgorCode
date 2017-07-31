@@ -1280,21 +1280,25 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	SetVariable TwoPhaseSystem_comment1, title=" ",value=root:Packages:Irena_AnalUnifFit:TwoPhaseSystem_comment1, noedit=1
 	SetVariable TwoPhaseSystem_comment1, pos={5,330}, size={365,20}, frame=0, help={"Comments"}	
 
-	SetVariable PiBoverQ, pos={20,375}, size={300,20}, title="pi*B/Invariant [m^2/cm^2]    =     ", format="%.4g"
+	SetVariable PiBoverQ, pos={20,370}, size={300,20}, title="pi*B/Invariant [m^2/cm^2]    =     ", format="%.4g"
 	SetVariable PiBoverQ, variable=root:Packages:Irena_AnalUnifFit:PiBoverQ, noedit=1, bodyWidth=80, disable=2, noedit=1
 	SetVariable PiBoverQ,proc=IR2U_SetVarProc, help={"Calculated pi * B / invariant from Unif fit"}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
 
-	SetVariable SurfacePerVolume, pos={20,400}, size={300,20}, title="Surface per Volume  [m^2/cm^3]    =     ", format="%.4g"
+	SetVariable SurfacePerVolume, pos={20,390}, size={300,20}, title="Surface per Volume  [m^2/cm^3]    =     ", format="%.4g"
 	SetVariable SurfacePerVolume, variable=root:Packages:Irena_AnalUnifFit:SurfacePerVolume, noedit=1, bodyWidth=80, disable=2, noedit=1
 	SetVariable SurfacePerVolume,proc=IR2U_SetVarProc, help={"Surface areea per volume in m2 per cm3"}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
+	SetVariable SurfacePerMass, pos={20,410}, size={300,20}, title="Surface per mass  [m^2/g]    =     ", format="%.4g"
+	SetVariable SurfacePerMass, variable=root:Packages:Irena_AnalUnifFit:SurfacePerMass, noedit=1, bodyWidth=80, disable=2, noedit=1
+	SetVariable SurfacePerMass,proc=IR2U_SetVarProc, help={"Surface areea per 1g of sample"}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
-	SetVariable MinorityPhasePhi, pos={15,425}, size={180,20}, title="Volume Fraction  :    Minority = ", format="%.4g"
+
+	SetVariable MinorityPhasePhi, pos={15,430}, size={180,20}, title="Volume Fraction  :    Minority = ", format="%.4g"
 	SetVariable MinorityPhasePhi, variable=root:Packages:Irena_AnalUnifFit:MinorityPhasePhi, noedit=1, bodyWidth=80, disable=2, noedit=1
 	SetVariable MinorityPhasePhi,proc=IR2U_SetVarProc, help={"Fractional volume of the minority phase "}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
-	SetVariable MajorityPhasePhi, pos={260,425}, size={110,20}, title="Majority = ", format="%.4g"
+	SetVariable MajorityPhasePhi, pos={260,430}, size={110,20}, title="Majority = ", format="%.4g"
 	SetVariable MajorityPhasePhi, variable=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi, noedit=1, bodyWidth=80, disable=2, noedit=1
 	SetVariable MajorityPhasePhi,proc=IR2U_SetVarProc, help={"fractional volume of the majority phase "}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
@@ -1403,7 +1407,7 @@ Function IR2U_InitUnifAnalysis()
 //	ListOfVariables+="SampleBulkDensity;mtl;solv;anal;Composition;GenericParameter;"//needed for invariant
 	ListOfVariables+="SampleBulkDensity;InvariantValue;DensityMinorityPhase;DensityMajorityPhase;"//needed for invariant
 	ListOfVariables+="SLDDensityMinorityPhase;SLDDensityMajorityPhase;TwoPhaseMediaContrast;TwoPhaseInvariant;"//needed for invariant
-	ListOfVariables+="MajorityPhasePhi;MinorityPhasePhi;PiBoverQ;MinorityCordLength;MajorityCordLength;SurfacePerVolume;"//
+	ListOfVariables+="MajorityPhasePhi;MinorityPhasePhi;PiBoverQ;MinorityCordLength;MajorityCordLength;SurfacePerVolume;SurfacePerMass;"//
 	ListOfVariables+="BforTwoPhMat;PartAnalVolumeOfParticle;PartAnalRgFromVp;PartAnalParticleDensity;PartANalRHard;"//
 	ListOfVariables+="TwoPhaseInvariantBetweenCursors;InvariantUsed;printexcel;printlogbook;UseCsrInv;"
 
@@ -1656,6 +1660,7 @@ Function IR2U_SetControlsInPanel()
 			SetVariable MinorityCordLength, disable=1
 			SetVariable MajorityCordLength, disable=1
 			SetVariable SurfacePerVolume, disable=1
+			SetVariable SurfacePerMass, disable=1
 			SetVariable MajorityPhasePhi, disable=1
 			SetVariable DensityMinorityPhase2, disable=1
 
@@ -1730,6 +1735,7 @@ Function IR2U_SetControlsInPanel()
 				SetVariable MinorityCordLength, disable=0
 				SetVariable MajorityCordLength, disable=0
 				SetVariable SurfacePerVolume, disable=0
+				SetVariable SurfacePerMass, disable=0
 				SetVariable MinorityPhasePhi, disable=0
 				SetVariable MajorityPhasePhi, disable=0
 				SetVariable TwoPhaseSystem_reference, disable=0
@@ -1751,6 +1757,7 @@ Function IR2U_SetControlsInPanel()
 				SetVariable MinorityCordLength, disable=0
 				SetVariable MajorityCordLength, disable=0
 				SetVariable SurfacePerVolume, disable=0
+				SetVariable SurfacePerMass, disable=0
 			//	SetVariable InvariantUserContrast2, disable=0
 				Button OpenScattContrCalc, disable=0
 				SetVariable BforTwoPhMat, disable=0
@@ -1762,6 +1769,7 @@ Function IR2U_SetControlsInPanel()
 				SetVariable TwoPhaseSys_MinName, disable=0
 				SetVariable TwoPhaseSys_MajName, disable=0
 				SetVariable SurfacePerVolume, disable=0
+				SetVariable SurfacePerMass, disable=0
 				SetVariable TwoPhaseMediaContrast, disable=0
 				SetVariable SampleBulkDensity, disable=0
 			//	SetVariable InvariantUserContrast2, disable=0
@@ -1799,6 +1807,7 @@ Function IR2U_SetControlsInPanel()
 				SetVariable MinorityPhasePhi, disable=0
 				SetVariable MajorityPhasePhi, disable=0
 				SetVariable SurfacePerVolume, disable=0
+				SetVariable SurfacePerMass, disable=0
 				SetVariable SampleBulkDensity2, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
@@ -3488,6 +3497,7 @@ Function IR2U_TwoPhaseModelCalc()
 	NVAR MinorityCordLength=root:Packages:Irena_AnalUnifFit:MinorityCordLength //calcualte here... 
 	NVAR MajorityCordLength=root:Packages:Irena_AnalUnifFit:MajorityCordLength //calcualte here... 
 	NVAR SurfacePerVolume=root:Packages:Irena_AnalUnifFit:SurfacePerVolume //calcualte here... 
+	NVAR SurfacePerMass = root:Packages:Irena_AnalUnifFit:SurfacePerMass
 	NVAR PartANalRHard=root:Packages:Irena_AnalUnifFit:PartANalRHard //calcualte here... 
 	NVAR BforTwoPhMat=root:Packages:Irena_AnalUnifFit:BforTwoPhMat //calcualte here... 
 	NVAR PartAnalVolumeOfParticle=root:Packages:Irena_AnalUnifFit:PartAnalVolumeOfParticle //calcualte here... 
@@ -3528,6 +3538,7 @@ Function IR2U_TwoPhaseModelCalc()
 		MinorityPhasePhi =(SampleBulkDensity-DensityMajorityPhase)/(DensityMinorityPhase-DensityMajorityPhase)//Phi referes to minority phase phi(solid)
 		MajorityPhasePhi  = 1-MinorityPhasePhi
 		SurfacePerVolume=(1e-4*Pi*Bloc/Qv)*MajorityPhasePhi*MinorityPhasePhi   //m^2/cm^3 calculate from densities and Qp 
+		SurfacePerMass = SurfacePerVolume/SamplebulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		PiBoverQ = SurfacePerVolume / (MajorityPhasePhi*MinorityPhasePhi)
@@ -3541,6 +3552,7 @@ Function IR2U_TwoPhaseModelCalc()
 		MajorityPhasePhi  = 1-MinorityPhasePhi
 		BforTwoPhMat = Bloc*1e-32
 		SurfacePerVolume=(1e-4*Bloc/(2*pi*Contrast))   //m^2/cm^3 calculate from densities and Qp 
+		SurfacePerMass = SurfacePerVolume/SamplebulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		//end of method 2
@@ -3571,6 +3583,7 @@ Function IR2U_TwoPhaseModelCalc()
 				contrast = (DensityMinorityPhase * SLDDensityMinorityPhase-DensityMinorityPhase*SLDDensityMinorityPhase)^2	//DWS Corrected 11/25/2013
 		endif
 		SurfacePerVolume=(1e-4*Pi*Bloc/Qv)*MajorityPhasePhi*MinorityPhasePhi   //m^2/cm^3 calculate from densities and Qp 
+		SurfacePerMass = SurfacePerVolume/SamplebulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		PiBoverQ = SurfacePerVolume / (MajorityPhasePhi*MinorityPhasePhi)
@@ -3587,6 +3600,7 @@ Function IR2U_TwoPhaseModelCalc()
 		MajorityPhasePhi = phi1
 		SampleBulkDensity=DensityMinorityPhase-phi*(DensityMinorityPhase-DensityMajorityPhase)
 		SurfacePerVolume=(1e-4*Bloc/(2*pi*Contrast))   //m^2/cm^3 calculate from densities and Qp 
+		SurfacePerMass = SurfacePerVolume/SamplebulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		PiBoverQ = SurfacePerVolume / (MajorityPhasePhi*MinorityPhasePhi)
