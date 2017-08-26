@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 Fixed stale graph in Analyze results calculations. 
 //2.21 modified TwoPhaseSys1-4 output per Dale's request. 
 //2.20 fixed bug in IR2U_CalculateInvariantbutton
 //2.19 modified to speed up, removed DoUpdate. Fixed error when plot widnow did not exist. 
@@ -1289,7 +1290,7 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	SetVariable SurfacePerVolume, variable=root:Packages:Irena_AnalUnifFit:SurfacePerVolume, noedit=1, bodyWidth=80, disable=2, noedit=1
 	SetVariable SurfacePerVolume,proc=IR2U_SetVarProc, help={"Surface areea per volume in m2 per cm3"}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
-	SetVariable SurfacePerMass, pos={20,410}, size={300,20}, title="Surface per mass  [m^2/g]    =     ", format="%.4g"
+	SetVariable SurfacePerMass, pos={20,410}, size={300,20}, title="Surface per mass  [m^2/g]    =     ", format="%g"
 	SetVariable SurfacePerMass, variable=root:Packages:Irena_AnalUnifFit:SurfacePerMass, noedit=1, bodyWidth=80, disable=2, noedit=1
 	SetVariable SurfacePerMass,proc=IR2U_SetVarProc, help={"Surface areea per 1g of sample"}, limits={0,inf,0}//, fColor=(13107,13107,13107), valueColor=(13107,13107,13107)
 
@@ -2606,21 +2607,27 @@ Function IR2U_ButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
-			If (cmpstr(ba.ctrlName,"KillInvWindow")==0)				//Kill invariant window and waves  DWS
-				string DF=getdatafolder(1)
-				DoWindow/F InvariantGraph
-				Wave w = CsrWaveRef(A)
-				if (!WaveExists(w))		// Cursor is not on any wave.
-					Doalert 0, "Cursor is not on any graph\r Put cursor A on a trace"
-					abort
+			If (cmpstr(ba.ctrlName,"KillInvWindow")==0 || cmpstr(ba.ctrlName,"Invariantbutt")==0)				//Kill invariant window and waves  DWS
+				DoWindow InvariantGraph
+				if(V_Flag)	//exists
+					string DF=getdatafolder(1)
+					DoWindow/F InvariantGraph
+					Wave w = CsrWaveRef(A,"InvariantGraph")
+					if (!WaveExists(w))		// Cursor is not on any wave.
+						setdatafolder DF
+						Doalert 0, "Cursor is not on any graph\r Put cursor A on a trace"
+						abort
+					endif
+					string WDF=getwavesDataFolder(w,3)
+					setdatafolder $WDF
+					dowindow/k InvariantGraph
+					killwaves/z rwaveq2,qq2,rq2,backqq2,backrq2,frontqq2,frontrq2,rlevel1,qlevel1,frontrwave
+					setdatafolder DF
 				endif
-				string WDF=getwavesDataFolder(w,3)
-				setdatafolder $WDF
-				dowindow/k InvariantGraph
-				killwaves/z rwaveq2,qq2,rq2,backqq2,backrq2,frontqq2,frontrq2,rlevel1,qlevel1,frontrwave
-				setdatafolder DF
 			endif
-			If (cmpstr(ba.ctrlName,"Invariantbutt")==0)			
+			//note, the above code clears up Graph, which will become stale if not killed for InvariantButton calculation. 
+			//DO not change order of the above and below blocks or things will break. 
+			If (cmpstr(ba.ctrlName,"Invariantbutt")==0)		
 				IR2U_TwoPhaseModelCalc()		
 			endif
 			if(stringMatch(ba.ctrlName,"SaveToHistory"))//***DWS
@@ -2667,7 +2674,9 @@ End
 //***********************************************************
 //***********************************************************
 
-Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 02 and minor fix 10/1/2016
+Function IR2U_CalculateInvariantbutton(MakeGraph)//***DWS lots of revisons as of 2013 12 02 and minor fix 10/1/2016
+	variable MakeGraph
+	
 	string OldDf=GetDataFolder(1)
 	
 	variable extrapts=600 //number of points in extrapolation waves
@@ -2692,7 +2701,7 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	wave rwave =$rwavename
 	wave qwave=$qwavename
 	wave swave=$swavename
-	setdatafolder root:Packages:Irena_UnifFit:		//do nto contaminate users data folder, just store it in Unified Fit folder... 
+	setdatafolder root:Packages:Irena_UnifFit:		//do not contaminate users data folder, just store it in Unified Fit folder... 
 	Duplicate/o rwave,$"root:Packages:Irena_UnifFit:rwaveq2"
 	wave rwaveq2=$"root:Packages:Irena_UnifFit:rwaveq2"
 	 rwaveq2=rwave*qwave^2
@@ -2760,23 +2769,25 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	string outtext="Qv = "+num2str(invariant)+" cm^-1 Å^-3\rB = "+num2str(B)+ " cm-1Å-4"
 	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" Å\rlmaj = "+num2str(majchord*1e4)+" Å"		
 	dowindow/R/k InvariantGraph
-	display/K=2  rq2 vs qwave as "q2 I(q) vs q"
-	appendtograph frontrq2 vs frontqq2
-	appendtograph backrq2 vs backqq2
-	ModifyGraph rgb(frontrq2)=(8738,8738,8738)
-	ModifyGraph rgb(backrq2)=(8738,8738,8738)
-	Cursor /A=1  A  rq2  0
-	Tag/C/N=text1/F=0/A=LC frontrq2,100,"Level Used = "+Num2str(LNumOfLevels)
-	ModifyGraph grid=2,tick=2,mirror=1,fStyle=1,fSize=15,font="Times"
-	Button KillInvWindow,pos={2,1},size={70,20},proc=IR2U_ButtonProc,title="Kill Window"	
-	ModifyGraph log=0 //***DWS
-	SetAxis bottom 1e-5,maxqback//***DWS
-	ModifyGraph log=1
-	Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
-	Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
-	textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
-	HideTools/A
-	dowindow/c InvariantGraph
+	if(MakeGraph)
+		display/K=2  rq2 vs qwave as "q2 I(q) vs q"
+		dowindow/c InvariantGraph
+		appendtograph frontrq2 vs frontqq2
+		appendtograph backrq2 vs backqq2
+		ModifyGraph rgb(frontrq2)=(8738,8738,8738)
+		ModifyGraph rgb(backrq2)=(8738,8738,8738)
+		Cursor /A=1  A  rq2  0
+		Tag/C/N=text1/F=0/A=LC frontrq2,100,"Level Used = "+Num2str(LNumOfLevels)
+		ModifyGraph grid=2,tick=2,mirror=1,fStyle=1,fSize=15,font="Times"
+		Button KillInvWindow,pos={2,1},size={70,20},proc=IR2U_ButtonProc,title="Kill Window"	
+		ModifyGraph log=0 //***DWS
+		SetAxis bottom 1e-5,maxqback//***DWS
+		ModifyGraph log=1
+		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
+		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
+		textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
+		HideTools/A
+	endif
 	SelectedLevel=InitialselectedLevel
 	setDataFolder OldDf
 	
@@ -3514,7 +3525,7 @@ Function IR2U_TwoPhaseModelCalc()
 
 	
 	If (UseCsrInv)//***DWS
-		IR2U_CalculateInvariantbutton()//***DWS
+		IR2U_CalculateInvariantbutton(0)//***DWS
 		Qv=TwoPhaseInvariantbtnCursors//***DWS
 	elseif (UsesAll==1)		//use full invarient for all levels used in unified fit. Generates TempUnifiedIntensity wave used below
 			Qv=1e24*IR2U_InvariantForMultipleLevels(OriginalLevels)//units cm-1 A-3 changed to cm-4
@@ -3523,8 +3534,8 @@ Function IR2U_TwoPhaseModelCalc()
 			Qv=Qvunified
 			Twophaseinvariant=Qv//cm-4
 	endif
-			//print "invariant used = "+num2str(Qv)
-			InvariantUsed=Qv//in cm-1A-3
+	//print "invariant used = "+num2str(Qv)
+	InvariantUsed=Qv//in cm-1A-3
 			
 	NVAR Contrast=root:Packages:Irena_AnalUnifFit:TwoPhaseMediaContrast		//Let's use the Scattering contrast calcualterif needed to ge this instead of this complciated mess...
 	SVAR Model=root:Packages:Irena_AnalUnifFit:Model
@@ -3621,6 +3632,10 @@ Function IR2U_TwoPhaseModelCalc()
 		MajorityPhasePhi = 1 - MinorityPhasePhi
 
 	ENDIF	
+	//this needs to be re-created, it is too ugly to try to recast properly... Mixes calculations and graphing in such way, that is it not practical
+	If (UseCsrInv)//***DWS
+		IR2U_CalculateInvariantbutton(1)//***DWS
+	endif
 	setDataFolder OldDf
 
 end

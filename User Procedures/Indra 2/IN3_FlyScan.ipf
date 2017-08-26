@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.03
+#pragma version=1.04
 #include <Peak AutoFind>
 
 
@@ -11,6 +11,7 @@ Constant IN3_DeleteRawData=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.04 removed spec file name as folder under USAXS, not needed with SAXS and WAXS not having it anyway. 
 //1.03 added UserSampleName to be used to avoid long file names limits...
 //1.02 fixed reading old data without UPDsize in the metadata
 //1.01 fixed BKG5overwrite which was not read correctly into the system. 
@@ -596,7 +597,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	endif
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
-	newDataFolder/O/S $(SpecFileName)
+	//newDataFolder/O/S $(SpecFileName)
 	string FileName, ListOfExistingFolders
 	FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
 	FileName = IN2G_RemoveExtraQuote(FileName,1,1)

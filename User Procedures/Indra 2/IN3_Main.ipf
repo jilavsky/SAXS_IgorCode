@@ -552,7 +552,7 @@ end
 Function IN3_USAXSDataRedCheckVersion()	
 	DoWindow USAXSDataReduction
 	if(V_Flag)
-		if(!IN3_CheckPanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber))
+		if(!IN3_CheckPanelVersionNumber("USAXSDataReduction", IN3_NewReduceDataMainVersionNum))
 			DoAlert /T="The USAXS Data Reduction  panel was created by old version of Indra " 1, "USAXS Data Reduction needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWindow/K USAXSDataReduction

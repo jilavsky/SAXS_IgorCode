@@ -861,8 +861,8 @@ static Function IN3_RcurvePlot()
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
 	
 	//create main plot with R curve data
-	variable NewWidth = 0.8*((IN2G_ScreenWidthHeight("width")*100 - 300))
-	variable NewHeight = 0.8*(IN2G_ScreenWidthHeight("height")*100	)
+	variable NewWidth = 0.6*(IN2G_ScreenWidthHeight("width")*100) - 300
+	variable NewHeight = 0.6*(IN2G_ScreenWidthHeight("height")*100)
 	//Display/K=1 /W=(300,36.5,900,500) R_Int vs R_Qvec as "USAXS data reduction plot"
 	Display/K=1 /W=(300,36.5,330+NewWidth,36+NewHeight) R_Int vs R_Qvec as "USAXS data reduction plot"
 	DoWindow/C RcurvePlotGraph

@@ -12,6 +12,7 @@ constant CurrentNikaVersionNumber = 1.77
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ //		FIxed probrlem with change geometries, when Nexus Import TMP foldr was not deleted and this caued issues. 
  //		Added simple recording to my web site about version checking for statistical purposes. Records Nika version, Igor platform and version.  
  //		Creating new configuration will now reopen 9ID config screen if it was opened before. 
  //1.77 Updated CHeckForUpdate to check on Github for latest release version
@@ -1416,6 +1417,7 @@ Function NI1_GMCreateNewGeom()
 	endif
 	NI1_GMCloseAllNikaW() 	
 	KillDataFolder root:Packages:Convert2Dto1D
+	KillDataFolder/Z root:Packages:NexusImportTMP:
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = "Not saved"
 	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1

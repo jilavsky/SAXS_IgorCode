@@ -2042,7 +2042,7 @@ Function IR2L_RecalculateIntAndErrors(WhichDataSet)
 		endif
 	endif
 	setDataFolder root:Packages:IR2L_NLSQF
-	//first handle retoring proper user data... 
+	//first handle restoring proper user data... 
 	Duplicate/O inputI, $("Intensity_set"+num2str(whichDataSet))
 	Wave IntWv = $("Intensity_set"+num2str(whichDataSet))
 	IntWv = DataScalingFactor_set * IntWv						//scale by user factor, if requested. 

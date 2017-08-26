@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.27
+#pragma version =1.28
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.28 fixed masking of first/last N rows/columns which was not working right. 
 //1.27 Modified Screen Size check to match the needs
 //1.26 added getHelp button calling to www manual
 //1.25 Modified to point to USAXS_data on USAXS computers
@@ -813,7 +814,7 @@ Function NI1M_Mask_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		xax= StringByKey("XAXIS",iminfo)
 		yax= StringByKey("YAXIS",iminfo)
 		SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
-		DrawRect /W=CCDImageForMask 0, 0, varNum, DimSize(OriginalCCD, 1 )
+		DrawRect /W=CCDImageForMask -1, -1, varNum-1, DimSize(OriginalCCD, 1 )+1
 	endif
 	if(cmpstr("RemoveLastNColumns",ctrlName)==0)
 		SetDrawLayer/W=CCDImageForMask ProgFront
@@ -822,7 +823,7 @@ Function NI1M_Mask_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		xax= StringByKey("XAXIS",iminfo)
 		yax= StringByKey("YAXIS",iminfo)
 		SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
-		DrawRect /W=CCDImageForMask (DimSize(OriginalCCD, 0)-varNum),0,DimSize(OriginalCCD, 0), DimSize(OriginalCCD, 1 )
+		DrawRect /W=CCDImageForMask (DimSize(OriginalCCD, 0)-varNum-1),-1,DimSize(OriginalCCD, 0)+1, DimSize(OriginalCCD, 1 )+1
 	endif
 	if(cmpstr("RemoveFirstNrows",ctrlName)==0)
 		SetDrawLayer/W=CCDImageForMask ProgFront
@@ -831,7 +832,7 @@ Function NI1M_Mask_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		xax= StringByKey("XAXIS",iminfo)
 		yax= StringByKey("YAXIS",iminfo)
 		SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
-		DrawRect /W=CCDImageForMask 0, 0, DimSize(OriginalCCD, 0 ), varNum
+		DrawRect /W=CCDImageForMask -1, -1, DimSize(OriginalCCD, 0)+1, varNum-1
 	endif
 	if(cmpstr("RemoveLastNRows",ctrlName)==0)
 		SetDrawLayer/W=CCDImageForMask ProgFront
@@ -840,7 +841,7 @@ Function NI1M_Mask_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		xax= StringByKey("XAXIS",iminfo)
 		yax= StringByKey("YAXIS",iminfo)
 		SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
-		DrawRect /W=CCDImageForMask 0,(DimSize(OriginalCCD, 1)-varNum),DimSize(OriginalCCD, 0), DimSize(OriginalCCD, 1 )
+		DrawRect /W=CCDImageForMask -1,(DimSize(OriginalCCD, 1)-varNum-1),DimSize(OriginalCCD, 0)+1, DimSize(OriginalCCD, 1 )+1
 	endif
 	
 	if(cmpstr("LowIntToMaskOff",ctrlName)==0)

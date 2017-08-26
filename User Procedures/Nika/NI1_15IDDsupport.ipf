@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.40
+#pragma version=1.41
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.41 modoified WAXS mask to have better masking of tile edges. 
 //1.40 since Indra now can desmear data as part of last USAXS step, keep _C data always. 
 //1.39 changed fake usaxs data from _usx to _u to save on numebr of characters
 //1.38 added to Pilatus readout of beamsize for SAXS and WAXS
@@ -415,7 +416,11 @@ Function NI1_15IDDCreateWAXSPixMask()
 	//Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
 	if(DimSize(M_ROIMask, 1)>500)	//Pilatus 200kW
-		M_ROIMask[0,194][486,494]=0
+		M_ROIMask[-1,196][485,495]=0
+		M_ROIMask[-1,1][-1,1000]=0
+		M_ROIMask[195,196][-1,1000]=0
+		M_ROIMask[-1,196][-1,1]=0
+		M_ROIMask[-1,196][979,982]=0
 	
 		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
 		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"
@@ -426,7 +431,7 @@ Function NI1_15IDDCreateWAXSPixMask()
 		notestr+="// ;ITEMNO:3;\r"
 		notestr+="SetDrawEnv save\r"
 		notestr+="// ;ITEMNO:4;\r"
-		notestr+="DrawRect 0,486,195,495\r"	
+		notestr+="DrawRect -1,485,196,495\r"	
 		note M_ROIMask, notestr
 	endif		
 	SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName

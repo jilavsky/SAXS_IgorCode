@@ -2643,7 +2643,7 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 			AllSASdataData = NEXUS_FindNXClassData(tempSASEntryPath, "NX_class=NXdata;canSAS_class=SASdata;")		//find path to all NXdata, but this can be 2D, 1D, 3D, or 4D data sets. 
 								//note: 3D and 4D data which are not meaningful at this time... 
 			Wave/T/Z DataTitle = $(tempSASEntryPath+"title")
-			if(UseFileNameasFolder)		//selection if to use internal sample name in Ttitle or Filename as folder name. 
+			if(UseFileNameasFolder)		//selection if to use internal sample name in title or Filename as folder name. 
 				SASentryName=(RemoveEnding(RemoveListItem(ItemsInList(Filename,".")-1,Filename,"."),"."))[0,28]
 			elseif(UseTileNameAsFolder && WaveExists(DataTitle))
 				SASentryName=(DataTitle[0])[0,28]
@@ -2685,26 +2685,31 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string IName, QName, QdevName, IdevName, tmpStr, tmpFldrName
 
 	NewDataFolder/O/S root:ImportedData
-	//need to create location using File name, if teh file contains more than one data set...
+	//need to create location using File name, if the file contains more than one data set...
 	if(FoundSasEntries>1)
 		//NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(DataTitleStr,1)))
 		tmpStr=(RemoveEnding(RemoveListItem(ItemsInList(sourceFileName,".")-1,sourceFileName,"."),"."))[0,28]
 		NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(tmpStr,1)))			//use file name as input
 	endif
+	//create place for data
+	NewDataFolder/O/S $(IN2G_RemoveExtraQuote(DataTitleStr,1,1))
 	//need to add one more layer and in this case, it is the last item in the path
 	string NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-1,PathToDataSet, ":")
 	NewDataName = IN2G_RemoveExtraQuote(NewDataName,1,1)
 	NewDataName = ReplaceString("sasdata", NewDataName, "")			//sasdata is default name, not helpful for anything... 
-	if(strlen(NewDataName)>0 && !stringMatch(NewDataName[0,0],"_"))		//append _ between names, if there is some name left... 
-		NewDataName="_"+NewDataName
+//	if(strlen(NewDataName)>0 && !stringMatch(NewDataName[0,0],"_"))		//append _ between names, if there is some name left... 
+///		NewDataName="_"+NewDataName
+///	endif
+	//NewDataName = CleanupName((DataTitleStr+NewDataName)[0,25],1)	
+	if(strlen(NewDataName)>0)
+		NewDataName = CleanupName((NewDataName)[0,25],1)	
+		if(DataFolderExists(NewDataName ))
+			tmpFldrName = UniqueName(NewDataName, 11, 0)
+		else
+			tmpFldrName = NewDataName
+		endif
+		NewDataFolder/O/S $(tmpFldrName)
 	endif
-	NewDataName = CleanupName((DataTitleStr+NewDataName)[0,25],1)	
-	if(DataFolderExists(NewDataName ))
-		tmpFldrName = UniqueName(NewDataName, 11, 0)
-	else
-		tmpFldrName = NewDataName
-	endif
-	NewDataFolder/O/S $(tmpFldrName)
 	print "Created new data folder : "+ GetDataFOlder(1)
 	string NewFolderFullPath=GetDataFolder(1)
 	setDataFolder PathToDataSet

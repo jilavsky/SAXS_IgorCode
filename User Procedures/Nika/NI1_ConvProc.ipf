@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.60
+#pragma version=2.61
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.61 fixed erros for case where we have missing range of Q in the middle of detecotr (space between tiles on Pilatus). 
 //2.60 fixed case when for intensities=0 (set in software like Mar165) we wouldget error=0 and users would consider these regular data points. Removed now. 
 //2.59 tried to speed up the main conversion loop. Fixed case where for negative intensities we can get nan as uncertainty and for Int=0 uncertainty=0.
 //2.58 added saving color table in preferences. 
@@ -218,6 +219,9 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	//print StopMSTimer(timerRefNum)	
 	MatrixOp/Free/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
 	MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv	//This is average intensity....
+	//Intensity = (HistogramWv>0) ? Intensity[p] : NaN
+	MatrixOp/O/NTHR=0 Intensity = replace(Intensity,inf,nan)
+
 	//version 1.43 December 2009, changed uncertainity estimates. Three new methods now available. Old method which has weird formula, standard deviation and standard error fof mean ...
 	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev

@@ -206,7 +206,7 @@ Function NI1A_LineProf_CreateLP()
 					KillWaves LineProfileIntSdev2,LineProfileIntensity2
 				endif
 		endif
-		KillWaves MaskedQ2DWave
+		KillWaves/Z MaskedQ2DWave
 		
 		//now we need to calculate the right Q values... There is difference between the regular geometry and GI geometry...
 		if(!stringMatch(LineProf_CurveType,"GI_Horizontal Line") && !stringMatch(LineProf_CurveType,"GI_vertical Line"))		//regular geometry...

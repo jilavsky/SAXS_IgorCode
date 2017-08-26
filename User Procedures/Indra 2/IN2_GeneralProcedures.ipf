@@ -10,6 +10,7 @@ constant RequiredMinScreenHeight=790
 constant RequiredMinScreenWidth = 1200 
 Strconstant ManualVersionString = "en/1.2.1/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
+constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -17,7 +18,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
-//2.03 added recroding to web site with version check. 
+//2.03 added recording to web site with version check. 
 //2.02 added overwrite for screen size abort. 
 //2.01 added IN2G_ReturnUserSampleName(FolderPathToData)  which returns sample name... 
 //2.00 added saving of color table for Nika, requested feature. 
@@ -5561,9 +5562,10 @@ Function/T IN2G_ReturnUserSampleName(FolderPathToData)
 		return ""
 	endif
 	//OK, folder exists. Now does it have user string name, potentially long name?
+	//global useUserFileNames = 1 if we want to sue this string and 0 if not... 
 	string UserSampleName
 	SVAR/Z StringName = $(FolderPathToData+"UserSampleName")
-	if(SVAR_Exists(StringName))
+	if(SVAR_Exists(StringName)&&useUserFileNames)
 		if(Strlen(StringName)>0)
 			return StringName
 		endif
