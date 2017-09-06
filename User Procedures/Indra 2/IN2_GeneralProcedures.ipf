@@ -415,7 +415,6 @@ Menu "GraphMarquee"
 End
 
 
-
 //**************************************************************** 
 //**************************************************************** 
 Function IN2G_SubmitCheckRecordToWeb(WhichPackage)
@@ -499,7 +498,7 @@ Function IN2G_CheckForGraphicsSetting(DisplayResult)
 				Message ="Your display size is "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". "
 				DoAlert /T="Screen size available to Igor" 0, Message
 			else
-				print "Found display area "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". This should be sufficient for Irena/Nika/Indra package use. "
+				// print "Found display area "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". This should be sufficient for Irena/Nika/Indra package use. "
 			endif   
 		else					//Mac
 			if(CurHeight<RequiredMinScreenHeight || Curwidth<RequiredMinScreenWidth) 
@@ -517,7 +516,7 @@ Function IN2G_CheckForGraphicsSetting(DisplayResult)
 				Message ="Your display size is "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". "
 				DoAlert /T="Screen size available to Igor" 0, Message
 			else
-				print "Found display area "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". This should be sufficient for Irena/Nika/Indra package use. "
+				//print "Found display area "+num2str(floor(Curwidth))+"x"+num2str(floor(CurHeight))+". This should be sufficient for Irena/Nika/Indra package use. "
 			endif  
 		endif 
 	endif

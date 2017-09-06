@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		   // Use modern global access method.
-#pragma IgorVersion=7.00	  //requires Igor version 4 or higher
+#pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
 #pragma version = 1.92
 
 
@@ -9,6 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 // 	added resize after recreating of the panels to prior user size. 
 //1.92 is Igor 7 only release 5/1/2017
 //1.91 is minor patch for Igor 6 on May 2017

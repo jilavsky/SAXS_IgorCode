@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.64
-#pragma IgorVersion=7.00
+#pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
@@ -15,6 +15,7 @@ constant CurrentVersionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 //		 	Added simple recording to my web site about version checking for statistical purposes. Records Irena version, Igor platform and version.  
 //			added resizing back to prior size of panel after user closes and opens the panel. 
 //2.64 Updated CheckForUpdate to check on Github for latest release version
@@ -116,7 +117,7 @@ Menu "SAS"
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
 	"Size Distribution", IR1R_Sizes()
 	help = {"SAS evaluation by regularization and maximum entropy fitting using spheroids"}
-	"Modeling II",IR2L_Main()
+	"Modeling",IR2L_Main()
 	help = {"Complicated modeling of SAS with Least square fitting or genetic optimization, allows multiple data input and is much more flexible than LSqF. Much more complicated also!)"}
 	"Gunier Porod Fit", IR3GP_Main()
 	help = {"Modeling of SAS as Guinier and Power law dependecies, based on Gunier-Porod model by Bualem Hammouda"}

@@ -93,7 +93,7 @@ end
 Proc  IR1P_makeGraphWindow() 
 	DoWindow GeneralGraph
 	if (V_Flag)
-		CloseTransformAxisGraph("GeneralGraph", 0)
+	//	CloseTransformAxisGraph("GeneralGraph", 0)
 		DoWindow/K generalGraph
 	endif
 	PauseUpdate; Silent 1		// building window...

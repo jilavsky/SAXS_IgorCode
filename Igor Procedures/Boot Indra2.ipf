@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.92
-#pragma IgorVersion=7.00
+#pragma IgorVersion=7.05
 
+//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 //1.92 Igor 7 compatible ONLY now. 
 //1.91 Igor 6 last release. 
 //1.90 fixes for Nexus support and some other changes. 

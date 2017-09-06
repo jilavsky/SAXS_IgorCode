@@ -1,6 +1,10 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.64
-#pragma IgorVersion=7.00
+#pragma IgorVersion=7.05
+
+
+
+//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 
 Menu "Macros", dynamic
 	//StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIrenaSASMacros()

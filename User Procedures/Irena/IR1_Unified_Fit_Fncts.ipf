@@ -1155,9 +1155,17 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	PopupMenu Model,pos={10,140},size={109,20},proc=IR2U_PopMenuProc,title="Model:"
 	PopupMenu Model,help={"Select model to use for data analysis"}
 	PopupMenu Model,mode=1,popvalue="---",value= #"root:Packages:Irena_AnalUnifFit:KnownModels"
-	PopupMenu AvailableLevels,pos={230,140},size={109,20},proc=IR2U_PopMenuProc,title="Level:"
+	PopupMenu AvailableLevels,pos={220,140},size={109,20},proc=IR2U_PopMenuProc,title="Level:"
 	PopupMenu AvailableLevels,help={"Select level to use for data analysis"}
 	PopupMenu AvailableLevels,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:AvailableLevels"
+
+	PopupMenu SelectedLevelHighQ,pos={313,115},size={90,20},proc=IR2U_PopMenuProc,title="Start:"
+	PopupMenu SelectedLevelHighQ,help={"Select end level to use for data analysis"}
+	PopupMenu SelectedLevelHighQ,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:SelectedLevelHighQ"
+
+	PopupMenu SelectedLevelLowQ,pos={315,140},size={90,20},proc=IR2U_PopMenuProc,title="End :"
+	PopupMenu SelectedLevelLowQ,help={"Select stat level to use for data analysis"}
+	PopupMenu SelectedLevelLowQ,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:SelectedLevelLowQ"
 
 
 	PopupMenu MinorityPhaseVals,pos={320,213},size={80,15},proc=IR2U_PopMenuProc,title=""
@@ -1410,7 +1418,7 @@ Function IR2U_InitUnifAnalysis()
 	ListOfVariables+="SLDDensityMinorityPhase;SLDDensityMajorityPhase;TwoPhaseMediaContrast;TwoPhaseInvariant;"//needed for invariant
 	ListOfVariables+="MajorityPhasePhi;MinorityPhasePhi;PiBoverQ;MinorityCordLength;MajorityCordLength;SurfacePerVolume;SurfacePerMass;"//
 	ListOfVariables+="BforTwoPhMat;PartAnalVolumeOfParticle;PartAnalRgFromVp;PartAnalParticleDensity;PartANalRHard;"//
-	ListOfVariables+="TwoPhaseInvariantBetweenCursors;InvariantUsed;printexcel;printlogbook;UseCsrInv;"
+	ListOfVariables+="TwoPhaseInvariantBetweenCursors;InvariantUsed;printexcel;printlogbook;UseCsrInv;SelectedLevelLowQ;SelectedLevelHighQ;"
 
 	//PDI is polydispersity index
 	//
@@ -1451,6 +1459,8 @@ Function IR2U_InitUnifAnalysis()
 	KnownModels = "Invariant;Porods Law;Branched mass fractal;Size distribution;TwoPhaseSys1;TwoPhaseSys2;TwoPhaseSys3;TwoPhaseSys4;TwoPhaseSys5;TwoPhaseSys6;"
 	SVAR AvailableLevels
 	AvailableLevels="---;"
+	SVAR SlectedBranchedLevels
+	SlectedBranchedLevels="---;"
 	SVAR BrFract_Reference1
 	BrFract_Reference1="Beaucage Phys.Rev.E(2004) 70(3) p10"
 	SVAR BrFract_Reference2
@@ -1531,6 +1541,8 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 	SVAR SlectedBranchedLevels=root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
 	SetVariable BrFract_ErrorMessage, win=UnifiedEvaluationPanel,  labelBack=0
 	SetVariable SizeDist_ErrorMessage, win=UnifiedEvaluationPanel,  labelBack=0
+	NVAR SelectedLevelLowQ=root:Packages:Irena_AnalUnifFit:SelectedLevelLowQ
+	NVAR SelectedLevelHighQ=root:Packages:Irena_AnalUnifFit:SelectedLevelHighQ
 
 	switch( pa.eventCode )
 		case 2: // mouse up
@@ -1555,6 +1567,25 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 			if(stringMatch(CtrlName,"AvailableLevels"))
 				SelectedLevel = str2num(popStr[0,0])
 				SlectedBranchedLevels=popStr
+				IR2U_SetControlsInPanel()
+				IR2U_RecalculateAppropriateVals()
+			endif
+			if(stringMatch(CtrlName,"SelectedLevelLowQ"))
+				SelectedLevelLowQ = str2num(popStr[0,0])
+				//SelectedLevelLowQ=popStr
+				if(SelectedLevelLowQ<=SelectedLevelHighQ  && numtype(SelectedLevelHighQ)==0)
+					Abort "End level is low-q level and must be higher number than Start"
+				endif
+				//IR2U_SetControlsInPanel()
+				IR2U_RecalculateAppropriateVals()
+			endif
+			if(stringMatch(CtrlName,"SelectedLevelHighQ"))
+				SelectedLevelHighQ = str2num(popStr[0,0])
+				//SelectedLevelHighQ=popStr
+				if(SelectedLevelLowQ<=SelectedLevelHighQ && numtype(SelectedLevelLowQ)==0)
+					Abort "Start level is high-q level and must be smaller number than End"
+				endif
+				//IR2U_SetControlsInPanel()
 				IR2U_RecalculateAppropriateVals()
 			endif
 			
@@ -1562,7 +1593,10 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 				IR2C_PanelPopupControl(pa)		
 				SVAR Model=root:Packages:Irena_AnalUnifFit:Model
 				Model = "---"
-//				PopupMenu Model,win=UnifiedEvaluationPanel, mode=1,popvalue="---",value= root:Packages:Irena_AnalUnifFit:KnownModels
+				Execute("PopupMenu Model,win=UnifiedEvaluationPanel, mode=1,popvalue=\"---\",value= root:Packages:Irena_AnalUnifFit:KnownModels")
+				IR2U_SetControlsInPanel()	
+				IR2U_FindAvailableLevels()
+				IR2U_ClearVariables()
 			endif	
 			if(stringMatch(CtrlName,"MinorityPhaseVals"))
 				SVAR TwoPhaseSys_MinName= root:Packages:Irena_AnalUnifFit:TwoPhaseSys_MinName
@@ -1600,6 +1634,10 @@ Function IR2U_SetControlsInPanel()
 
 		SVAR Model=root:Packages:Irena_AnalUnifFit:Model
 		NVAR CurrentResults = root:packages:Irena_AnalUnifFit:CurrentResults
+		SVAR SlectedBranchedLevels=root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
+		NVAR SelectedLevelLowQ = root:packages:Irena_AnalUnifFit:SelectedLevelLowQ
+		NVAR SelectedLevelHighQ = root:packages:Irena_AnalUnifFit:SelectedLevelHighQ
+	
 		DoWIndow UnifiedEvaluationPanel
 		if(V_Flag)
 			DoWIndow/F UnifiedEvaluationPanel
@@ -1612,6 +1650,9 @@ Function IR2U_SetControlsInPanel()
 				PopupMenu IntensityDataName,disable=0	
 				Setvariable FolderMatchStr, disable=0
 			endif
+
+			PopupMenu SelectedLevelLowQ,disable=1
+			PopupMenu SelectedLevelHighQ,disable=1
 
 			SetVariable InvariantValue, disable=1
 			SetVariable InvariantUserContrast, disable=1
@@ -1688,6 +1729,8 @@ Function IR2U_SetControlsInPanel()
 
 			SetVariable TwoPhaseSys_MinName, disable=1
 			SetVariable TwoPhaseSys_MajName, disable=1
+			//PopupMenu AvailableLevels, value=#SlectedBranchedLevels
+			//PopupMenu AvailableLevels,win=UnifiedEvaluationPanel,mode=1,popvalue=SlectedBranchedLevels
 			if(stringmatch(Model,"Branched mass fractal"))
 				SetVariable BrFract_G2, disable=0
 				SetVariable BrFract_Rg2, disable=0
@@ -1706,6 +1749,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable InvariantUserContrast, disable=0
 				Button OpenScattContrCalc, disable=0
 				SetVariable InvariantPhaseVolume, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0//, value=num2str(SelectedLevelLowQ)
+					PopupMenu SelectedLevelHighQ,disable=0//, value=num2str(SelectedLevelHighQ)
+				endif
 			elseif(stringmatch(Model,"Porods law"))
 				SetVariable Porod_Constant, disable=0	
 				SetVariable Porod_Contrast, disable=0	
@@ -1743,6 +1790,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable TwoPhaseSystem_comment1, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0
+					PopupMenu SelectedLevelHighQ,disable=0
+				endif
 			elseif(stringmatch(Model,"TwoPhaseSys2"))
 				SetVariable TwoPhaseSys_MinName, disable=0
 				SetVariable TwoPhaseSys_MajName, disable=0
@@ -1766,6 +1817,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable TwoPhaseSystem_comment2, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0
+					PopupMenu SelectedLevelHighQ,disable=0
+				endif
 			elseif(stringmatch(Model,"TwoPhaseSys3"))
 				SetVariable TwoPhaseSys_MinName, disable=0
 				SetVariable TwoPhaseSys_MajName, disable=0
@@ -1791,6 +1846,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable TwoPhaseSystem_comment3, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0
+					PopupMenu SelectedLevelHighQ,disable=0
+				endif
 			elseif(stringmatch(Model,"TwoPhaseSys4"))
 				SetVariable TwoPhaseSys_MinName, disable=0
 				SetVariable TwoPhaseSys_MajName, disable=0
@@ -1812,6 +1871,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable SampleBulkDensity2, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0
+					PopupMenu SelectedLevelHighQ,disable=0
+				endif
 			elseif(stringmatch(Model,"TwoPhaseSys5"))
 				SetVariable TwoPhaseSys_MinName, disable=0
 				SetVariable TwoPhaseSys_MajName, disable=0
@@ -1826,6 +1889,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable PartAnalParticleDensity, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0
+					PopupMenu SelectedLevelHighQ,disable=0
+				endif
 			elseif(stringmatch(Model,"TwoPhaseSys6"))
 				SetVariable TwoPhaseSys_MinName, disable=0
 				SetVariable TwoPhaseSys_MajName, disable=0
@@ -1846,6 +1913,10 @@ Function IR2U_SetControlsInPanel()
 				SetVariable PartANalRHard, disable=0
 				PopupMenu MinorityPhaseVals, disable=0
 				PopupMenu MajorityPhaseVals, disable=0
+				if(stringMatch(SlectedBranchedLevels,"Range"))
+					PopupMenu SelectedLevelLowQ,disable=0
+					PopupMenu SelectedLevelHighQ,disable=0
+				endif
 			endif
 		else
 			return 0
@@ -1900,6 +1971,7 @@ Function IR2U_CheckProc(cba) : CheckBoxControl
 			Variable checked = cba.checked
 			NVAR CurrentResults=root:packages:Irena_AnalUnifFit:CurrentResults
 			NVAR StoredResults=root:packages:Irena_AnalUnifFit:StoredResults
+			SVAR Model=root:Packages:Irena_AnalUnifFit:Model
 			if(stringMatch(cba.ctrlName,"CurrentResults"))
 				StoredResults=!CurrentResults
 				Button PrintToGraph, win=UnifiedEvaluationPanel, title="Print to Unified Fit Graph"
@@ -1910,11 +1982,11 @@ Function IR2U_CheckProc(cba) : CheckBoxControl
 				Button PrintToGraph, win=UnifiedEvaluationPanel, title="Print to top Graph"
 				Button Invariantbutt, win=UnifiedEvaluationPanel, disable=1
 			endif
-			IR2U_ClearVariables()
-			SVAR Model=root:Packages:Irena_AnalUnifFit:Model
 			Model = "---"
 			PopupMenu Model,win=UnifiedEvaluationPanel, mode=1,popvalue="---",value= #"root:Packages:Irena_AnalUnifFit:KnownModels"
-			IR2U_SetControlsInPanel()
+			IR2U_SetControlsInPanel()	
+			IR2U_FindAvailableLevels()
+			IR2U_ClearVariables()
 			break
 	endswitch
 
@@ -1926,8 +1998,14 @@ End
 
 Function IR2U_FindAvailableLevels()
 	
-	NVAR UseCurrentResults=root:Packages:Irena_AnalUnifFit:CurrentResults
+	NVAR/Z UseCurrentResults=root:Packages:Irena_AnalUnifFit:CurrentResults
+	DoWIndow UnifiedEvaluationPanel
+	if(!NVAR_Exists(UseCurrentresults) || !V_Flag)
+		return 0
+	endif
+	
 	NVAR UseStoredResults=root:Packages:Irena_AnalUnifFit:StoredResults
+	String quote = "\""
 
 	SVAR Model=root:Packages:Irena_AnalUnifFit:Model
 	variable LNumOfLevels, i
@@ -1951,12 +2029,33 @@ Function IR2U_FindAvailableLevels()
 			AvailableLevels+=num2str(i)+";"
 		endfor
 	endif
+	string OnlyNumLevels=AvailableLevels
 	if(stringmatch(Model,"TwoPhase*"))	
-		AvailableLevels+="All;"
+		AvailableLevels+="Range;All;"
 	endif	
-	String quote = "\""
+	if(stringmatch(Model,"Invariant*"))	
+		AvailableLevels+="Range;"
+	endif	
 	AvailableLevels = quote + AvailableLevels + quote
-	PopupMenu AvailableLevels,win=UnifiedEvaluationPanel,mode=1,popvalue="---", value=#AvailableLevels
+	OnlyNumLevels = quote + OnlyNumLevels + quote
+	NVAR SelectedLevelLowQ=root:Packages:Irena_AnalUnifFit:SelectedLevelLowQ
+	NVAR SelectedLevelHighQ=root:Packages:Irena_AnalUnifFit:SelectedLevelHighQ
+	SVAR SlectedBranchedLevels=root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
+	string loQStr="---"
+	if(SelectedLevelLowQ>0)
+		loQStr=num2str(SelectedLevelLowQ)
+	endif
+	string hiQStr="---"
+	if(SelectedLevelHighQ>0)
+		hiQStr=num2str(SelectedLevelHighQ)
+	endif
+	string AvLevStr="---"
+	if(stringmatch(AvailableLevels,"*"+SlectedBranchedLevels+"*"))
+		AvLevStr=SlectedBranchedLevels
+	endif
+	PopupMenu AvailableLevels,win=UnifiedEvaluationPanel,mode=1,popvalue= AvLevStr, value=#AvailableLevels
+	PopupMenu SelectedLevelLowQ,win=UnifiedEvaluationPanel,mode=1,popvalue=loQStr, value=#OnlyNumLevels
+	PopupMenu SelectedLevelHighQ,win=UnifiedEvaluationPanel,mode=1,popvalue=hiQStr, value=#OnlyNumLevels
 end
 //***********************************************************
 //***********************************************************
@@ -1964,12 +2063,16 @@ end
 Function IR2U_CalculateInvariantVals()
 
 	NVAR SelectedLevel = root:Packages:Irena_AnalUnifFit:SelectedLevel
+	SVAR SlectedBranchedLevels=root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
 	NVAR InvariantValue = root:Packages:Irena_AnalUnifFit:InvariantValue
 	NVAR InvariantUserContrast = root:Packages:Irena_AnalUnifFit:InvariantUserContrast
 	NVAR InvariantPhaseVolume = root:Packages:Irena_AnalUnifFit:InvariantPhaseVolume
 
 	NVAR UseCurrentResults=root:Packages:Irena_AnalUnifFit:CurrentResults
 	NVAR UseStoredResults=root:Packages:Irena_AnalUnifFit:StoredResults
+	NVAR SelectedLevelLowQ=root:Packages:Irena_AnalUnifFit:SelectedLevelLowQ
+	NVAR SelectedLevelHighQ=root:Packages:Irena_AnalUnifFit:SelectedLevelHighQ
+	variable i
 
 	if(SelectedLevel>=1)
 		if(UseCurrentResults)
@@ -1978,6 +2081,19 @@ Function IR2U_CalculateInvariantVals()
 		else
 			//look up from wave note...
 			InvariantValue = IR2U_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"Invariant")
+		endif
+	elseif(stringMatch(SlectedBranchedLevels,"Range"))
+		InvariantValue=0
+		if(numtype(SelectedLevelLowQ)==0 && numtype(SelectedLevelHighQ)==0 && SelectedLevelHighQ<SelectedLevelLowQ)
+			For(i=SelectedLevelHighQ;i<=SelectedLevelLowQ;i+=1)
+				if(UseCurrentResults)
+					NVAR Invariant=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"Invariant")
+					InvariantValue+= Invariant
+				else
+					//look up from wave note...
+					InvariantValue+= IR2U_ReturnNoteNumValue("Level"+num2str(i)+"Invariant")
+				endif
+			endfor
 		endif
 	else
 		InvariantValue=0
@@ -3527,7 +3643,7 @@ Function IR2U_TwoPhaseModelCalc()
 	If (UseCsrInv)//***DWS
 		IR2U_CalculateInvariantbutton(0)//***DWS
 		Qv=TwoPhaseInvariantbtnCursors//***DWS
-	elseif (UsesAll==1)		//use full invarient for all levels used in unified fit. Generates TempUnifiedIntensity wave used below
+	elseif (UsesAll==1)		//use full invariant for all levels used in unified fit. Generates TempUnifiedIntensity wave used below
 			Qv=1e24*IR2U_InvariantForMultipleLevels(OriginalLevels)//units cm-1 A-3 changed to cm-4
 			TwoPhaseInvariantbtnCursors=Qv
 	else

@@ -162,15 +162,16 @@ Function IN3_MainPanelNew()
 
 	//more local controls.
 	SVAR BlankName = root:Packages:Indra3:BlankName
+	NVAR IsBlank=root:Packages:Indra3:IsBlank
 	string temppopStr
 	if(strlen(BlankName)>3)
 		temppopStr = BlankName
 	else
 		temppopStr = "---"
+		IsBlank = 1
 	endif
 	PopupMenu SelectBlankFolder,pos={15,315},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
 	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)",fColor=(1,16019,65535)
-	NVAR IsBlank=root:Packages:Indra3:IsBlank
 	PopupMenu SelectBlankFolder, disable = IsBlank
 
 

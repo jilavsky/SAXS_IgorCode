@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.77
-#pragma IgorVersion=7.00
+#pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
@@ -12,6 +12,8 @@ constant CurrentNikaVersionNumber = 1.77
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
+ 
+//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
  //		FIxed probrlem with change geometries, when Nexus Import TMP foldr was not deleted and this caued issues. 
  //		Added simple recording to my web site about version checking for statistical purposes. Records Nika version, Igor platform and version.  
  //		Creating new configuration will now reopen 9ID config screen if it was opened before. 
@@ -919,7 +921,7 @@ static Function NI1_CheckVersions()
 	//sleep/s 1
 	WebNikaVersion = IN2G_CheckForNewVersion("Nika")
 	if(numtype(WebNikaVersion)!=0)
-		Print "Check for latest Nika version failed. Check you Internet connection. Try later again..."
+		Print "Check for latest Nika version failed. Check your Internet connection. Try later again..."
 	endif
 	//DeleteFile /Z /P=tempPath "Boot Nika.ipf"	
 	SetDataFOlder OldDf

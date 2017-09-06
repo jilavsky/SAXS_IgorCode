@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.30
-#include  <TransformAxis1.2>
+//#include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.29
 
 //*************************************************************************\
@@ -9,7 +9,7 @@ Constant IR1PversionNumber=2.29
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.30  removed unused functions
+//2.30  removed unused functions, rmeoved use of TransformAxis and replaced with Free axis and hokk function. Better. 
 //2.29 added getHelp button calling to www manual
 //2.28 fixed Gizmo for Igor 7, this should be improved later, but at this time this needs to work for both Igor 6 and 7
 //2.27 added more styles and changed few defaults for them. 
@@ -1167,17 +1167,15 @@ Window IR1P_MoreToolsPanel() : Panel
 	NewPanel /K=1 /W=(473,73,785,400) as "IR1P_MoreToolsPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
-	DrawText 5,22,"More handy tools are here..."
+	DrawText 5,22,"Some more handy tools are here..."
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
 	DrawText 5,43,"These settings are NOT saved in user styles"
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
 	DrawText 5,64,"and will not be recreated by the tool"
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
 	DrawText 6,85,"1.   "
-	Button AddDspacingTransAxis,pos={36.00,67.00},size={177.00,20.00},proc=IR1P_MoreToolsButtonProc,title="Add d-spacing top axis"
-	Button AddDspacingTransAxis,help={"Add to existing graqh transform axis which will display d spacing"}
-	SetDrawEnv fsize= 12,textrgb= (0,0,65280)
-	DrawText 5,105,"Change from Graph > Transform Axis > Modify ..."
+	Button AddDspacingTransAxis,pos={36.00,67.00},size={177.00,20.00},proc=IR1P_MoreToolsButtonProc,title="Add/remove d-spacing free axis"
+	Button AddDspacingTransAxis,help={"Add/Remove to graqh axis which will display d spacing in nm"}
 EndMacro
 
 //**********************************************************************************************************
@@ -1200,11 +1198,22 @@ Function IR1P_MoreToolsButtonProc(ba) : ButtonControl
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR1P_TransAxisdfromQ(w, x)
-	Wave/Z w
-	Variable x
-	return 2*pi/x
-end
+//Function IR1P_TransAxisdfromQ(w, x)
+//	Wave/Z w
+//	Variable x
+//	return 2*pi/x
+//end
+
+Function IR1P_TransAxisdfromQ(s)
+	STRUCT WMAxisHookStruct &s
+
+	GetAxis/Q/W=$s.win $s.mastName	// get master (left) axis' range in V_min, V_Max
+
+	s.max=pi/V_max / 10
+	s.min=pi/V_min / 10
+	s.units="nm"
+	return 0
+End
 
 
 //**********************************************************************************************************
@@ -1213,14 +1222,29 @@ Function IR1P_AddTransAxisQtoD()
 	
 	DoWIndow/Z GeneralGraph
 	if(V_Flag)
-		GetAxis /W=GeneralGraph /Q MT_bottom 
-		if(V_Flag)		//why in the world this is set to 1 when teh axcis DOES NOT exist??? 
-			SetupTransformMirrorAxis("GeneralGraph", "bottom", "IR1P_TransAxisdfromQ", $"", 5, 1, 5, 1)
+		GetAxis /W=GeneralGraph /Q d_axis 
+		if(V_Flag)		//why in the world this is set to 1 when the axis DOES NOT exist??? 		
+			//ModifyGraph mirror(bottom)=0	
+			NewFreeAxis/W=GeneralGraph/T d_axis
+			ModifyFreeAxis/W=GeneralGraph d_axis, master=bottom, hook=IR1P_TransAxisdfromQ
+			Label/W=GeneralGraph d_axis "Dimension (¹/q) [nm]"
+			ModifyGraph/W=GeneralGraph log=NumberByKey("log(x)",AxisInfo("GeneralGraph", "bottom" ),"=")
+			ModifyGraph/W=GeneralGraph tickExp(d_axis)=1,tickUnit(d_axis)=1,linTkLabel(d_axis)=1
+			//ModifyGraph/W=GeneralGraph lblPos(d_axis)=50,lblLatPos=0
+			ModifyGraph/W=GeneralGraph lblPosMode(d_axis)=4,lblPos(d_axis)=45,lblLatPos=0
+		else
+			KillFreeAxis/W=GeneralGraph d_axis
 		endif
-		TicksForTransformAxis("GeneralGraph", "bottom", 5, 1, 1, "MT_bottom", 1,0)
-		ModifyGraph mirror(bottom)=0,mirror(MT_bottom)=0
-		Label MT_bottom "Dimension (2pi/q) [A]"
-		ModifyGraph lblPosMode(MT_bottom)=2,lblMargin(MT_bottom)=5
+
+
+//		GetAxis /W=GeneralGraph /Q MT_bottom 
+//		if(V_Flag)		//why in the world this is set to 1 when teh axcis DOES NOT exist??? 
+//			SetupTransformMirrorAxis("GeneralGraph", "bottom", "IR1P_TransAxisdfromQ", $"", 5, 1, 5, 1)
+//		endif
+//		TicksForTransformAxis("GeneralGraph", "bottom", 5, 1, 1, "MT_bottom", 1,0)
+//		ModifyGraph mirror(bottom)=0,mirror(MT_bottom)=0
+//		Label MT_bottom "Dimension (2pi/q) [A]"
+//		ModifyGraph lblPosMode(MT_bottom)=2,lblMargin(MT_bottom)=5
 	endif
 end
 //**********************************************************************************************************
@@ -1299,7 +1323,7 @@ Function IR1P_ResetTool()
 
 	DoWindow GeneralGraph
 	if(V_Flag)
-		CloseTransformAxisGraph("GeneralGraph", 0)
+		//CloseTransformAxisGraph("GeneralGraph", 0)
 		Dowindow/K GeneralGraph
 	endif
 	DoWindow PlotingToolWaterfallGrph
