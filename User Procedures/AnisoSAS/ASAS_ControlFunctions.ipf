@@ -502,12 +502,14 @@ Function ASAS_ButtonProc(ctrlName) : ButtonControl
 	endif
 
 	if (cmpstr(ctrlName,"ASASCalcModelInt")==0)
+variable StartTime = DateTime	
 		//here we need to calculate model intensity. 
 		ASAS_CreateWvsForFitting()
 		ASAS_CalcAllIntensities()
 		ASAS_CalcAppendResultsToGraph()
 		ASAS_CalcChiSquare()
 		ASAS_CalcAllSurfaces()
+print DateTime-StartTime
 	endif
 
 	if (cmpstr(ctrlName,"ASASModelAnisotropyX")==0)

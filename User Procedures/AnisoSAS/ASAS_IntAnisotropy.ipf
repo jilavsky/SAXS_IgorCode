@@ -1,8 +1,10 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.1		//modified 5 29 2005 to accept 5 populations JIL
+#pragma version=1.2		
 
 #include  <New Polar Graphs>
 
+//1.2	modified 9/14/2017 to fix bugs from chanegd WMPolartGraph code. 
+//1.1	modified 5 29 2005 to accept 5 populations JIL
 
 Function ASAS_CalcAlphaAnisotropy(direction)
 	variable direction
@@ -43,7 +45,7 @@ Function ASAS_KillOldPolarGraphs(which, direction)
 	elseif(direction==3)
 		DirStrng="Z"
 	endif
-	
+	string settings
 	For(i=1;i<=6;i+=1)
 		string GraphNameToUse="Anisotropy_"+num2str(i)+"_Dir_"+DirStrng
 		DoWIndow $GraphNameToUse
@@ -51,7 +53,8 @@ Function ASAS_KillOldPolarGraphs(which, direction)
 			DoWIndow/K $GraphNameToUse
 //			Execute("ASAS_justUpdate()")
 //			DoUpdate
-			WMPolarRemovePolarGraphData(GraphNameToUse)
+			settings= WMPolarSettingsNameForGraph(GraphNameToUse)
+			WMPolarRemovePolarGraphData(GraphNameToUse, settings)
 		endif
 	endfor
 end
@@ -131,6 +134,7 @@ Function ASAS_AniDisplayPolarPlots(WhichTypeWave, direction)
 		NVAR Qval=$("root:Packages:AnisoSAS:Ani"+num2str(direction)+"_Qvector"+num2str(i))
 		string GraphNameToUse="Anisotropy_"+num2str(i)+"_Dir_"+DirStrng
 		string GraphTitleToUse=" Q ="+num2str(Qval)+"   " + DirStrng+" Anisotropy"  
+		string settings
 		WaveStats /Q waveToDisplay
 		ModelContainsNaNs=V_numNaNs
 		
@@ -147,7 +151,8 @@ Function ASAS_AniDisplayPolarPlots(WhichTypeWave, direction)
 		if ((ModelContainsNaNs!=0)||(DataContainNaNs!=0))
 			DoAlert 0, "Model or Exp Data for graph "+GraphNameToUse+" contained NaNs, graph will not be displayed"
 		else
-			WMPolarRemovePolarGraphData(GraphNameToUse)
+			settings= WMPolarSettingsNameForGraph(GraphNameToUse)
+			WMPolarRemovePolarGraphData(GraphNameToUse, settings)
 			ASAS_PolarPlot(waveToDisplay, GraphNameToUse)
 			DoWindow/T $(GraphNameToUse),GraphTitleToUse
 			if (ExpDataExists )

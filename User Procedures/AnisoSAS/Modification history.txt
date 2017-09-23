@@ -1,5 +1,7 @@
 Modification history of ASAS models.
 
+9/14/2017 
+Fixed up bug for Igor 7 WMPolarGraph functions. Needed minor fix. 
 
 6/13/2017 
 Recovered from backup, Tabbetha wants to use these. 

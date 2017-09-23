@@ -29,13 +29,6 @@ Function ASAS_CalcIntOf1Scatterer(Qval, PopNum, AlphaQ, OmegaQ)
 		NVAR DeltaRho=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_DeltaRho")
 		NVAR betaP=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_beta")
 	
-		NVAR UseTriangularDist=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_UseTriangularDist")
-		NVAR UseGaussSizeDist=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_UseGaussSizeDist")
-		if(abs(UseTriangularDist+UseGaussSizeDist-1)>0.01)
-			UseTriangularDist=1
-			UseGaussSizeDist=0
-		endif
-	
 		//these waves contain the probability p(alpha) and b(omega), they have X scaling from 0 to pi/2 or 2pi
 		//and they are normalized (area(p(alpha)*sin(alpha))=1 and area(b(omega))=1)
 		variable k=ASAS_Calc_k()
@@ -97,13 +90,13 @@ Function ASAS_CalcIntOf1Scatterer(Qval, PopNum, AlphaQ, OmegaQ)
 //		if (NumberOfPoints>300)
 //			smooth 4, LocalLookupTable						//and if there are many points, smooth this thing to remove oscillations and get average curve
 //		endif
-		variable smoothNum=floor(numpnts(LocalLookupTable)/10)
+		variable smoothNum=(floor(numpnts(LocalLookupTable)/10)>1) ? floor(numpnts(LocalLookupTable)/10) : 2
 		smooth (smoothNum), LocalLookupTable						// smooth this thing to remove oscillations and get average curve
 					//this is now set to 10% smooth over XX, which may be needed to change later on by user for various problems. 
-		make/Free/N=(1+ceil(OmegaMax/OmegaStep)) OmegaWv, TempR1, tempR2
+		make/Free/N=(1+ceil(OmegaMax/OmegaStep)) OmegaWv, TempR1
 		OmegaWv = OmegaStep * p
 		TempR1 = Bweight(OmegaWv[p])
-		make/Free/N=(1+ceil(AlphaMax/AlphaStep)) AlphaWv
+		make/Free/N=(1+ceil(AlphaMax/AlphaStep)) AlphaWv, tempR2
 		AlphaWv = AlphaStep * p
 		tempR2 = Pweight(AlphaWv[p])
 		make/Free/N=((1+ceil(AlphaMax/AlphaStep)),(1+ceil(OmegaMax/OmegaStep)))  XXWv, TempResWv

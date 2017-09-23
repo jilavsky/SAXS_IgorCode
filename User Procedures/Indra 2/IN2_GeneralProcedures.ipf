@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.03
+#pragma version = 2.04
 #pragma IgorVersion = 7.00
 
 //control constants
@@ -18,6 +18,7 @@ constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.04 added function to convert Q wave to log-Q wave (IN2G_ConvertTologspacing)
 //2.03 added recording to web site with version check. 
 //2.02 added overwrite for screen size abort. 
 //2.01 added IN2G_ReturnUserSampleName(FolderPathToData)  which returns sample name... 
@@ -78,6 +79,8 @@ constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(Fo
 
 //This is list of procedures with short description. 
 //
+//IN2G_ConvertTologspacing (qwave) converts Q wave in range of Qmin-Qmax to log spacing
+//
 //IN2G_ListIgorProcFiles()
 //		lists procedure files for version checking. 
 //IN2G_FindVersionOfSingleFile, IN2G_DownloadFile
@@ -96,7 +99,7 @@ constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(Fo
 //   	Can be used when user wants to preserve existing Graph or Table for future use and is worried that Irena/Nika will destroy the data at some point. 
 //
 //Function IN2G_RebinLogData(Wx,Wy,NumberOfPoints,MinStep,[Wsdev,Wxwidth,W1, W2, W3, W4, W5])
-//  Rebins data (x,y.etc) on log scale oiptionally with enforcing minimum step size. 
+//  Rebins data (x,y.etc) on log scale optionally with enforcing minimum step size. 
 //
 //Function IN2G_ScrollHook(info)
 //  Should make panels scrollable, will need to test. 
@@ -414,6 +417,24 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+
+
+//**************************************************************** 
+//**************************************************************** 
+
+function IN2G_ConvertTologspacing(qwave)//DWS 2017  best moved to a utility .ipf
+	wave qwave
+	duplicate/Free qwave, tempqwave
+	variable pts=numpnts(tempqwave)
+	variable logqmax=log(tempqwave(pts-1))
+	if (tempqwave[0]==0)
+		tempqwave[0]=tempqwave[1]
+	endif
+	variable logqmin=log(tempqwave[0])
+	tempqwave=logqmin+((logqmax-logqmin)/(pts-1))*p
+	tempqwave=10^tempqwave	
+	qwave=tempqwave
+end
 
 //**************************************************************** 
 //**************************************************************** 

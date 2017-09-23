@@ -321,8 +321,15 @@ Function ASAS_CalcOnePopDir(PopNum,DirNum)
 		NVAR UseInterference=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_UseInterference")
 		NVAR  ETA=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_InterfETA")
 		NVAR  Pack=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_InterfPack")
+		//this needs to be checked here... 
+		NVAR UseTriangularDist=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_UseTriangularDist")
+		NVAR UseGaussSizeDist=$("root:Packages:AnisoSAS:Pop"+num2str(PopNum)+"_UseGaussSizeDist")
+		if(abs(UseTriangularDist+UseGaussSizeDist-1)>0.01)
+			UseTriangularDist=1
+			UseGaussSizeDist=0
+		endif
 		
-		IntPop=ASAS_CalcIntOf1Scatterer(Qvec, PopNum,AlphaQ, OmegaQ)	//calculate intensity from one scatterer
+		IntPop=ASAS_CalcIntOf1Scatterer(Qvec[p], PopNum,AlphaQ, OmegaQ)	//calculate intensity from one scatterer
 		IntPop=IntPop*ASAS_CalcNumOfParticles(PopNum)			//multiply by number of scatterers
 		IntPop=IntPop*10^(-16)									//Calc from one scatterer is in units of radius, which is A2
 		//this converts the result into cm2

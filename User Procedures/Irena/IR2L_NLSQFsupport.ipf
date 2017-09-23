@@ -2144,7 +2144,7 @@ Function IR2L_Initialize()
 	ListOfPopulationVariablesSD+="FormFactor_Param8;FormFactor_Param8Fit;FormFactor_Param8Min;FormFactor_Param8Max;"	
 	ListOfPopulationVariablesSD+="FormFactor_Param9;FormFactor_Param9Fit;FormFactor_Param9Min;FormFactor_Param9Max;"	
 		//Distribution parameters
-	ListOfPopulationVariablesSD+="Volume;VolumeFit;VolumeMin;VolumeMax;Mean;Mode;Median;FWHM;"	
+	ListOfPopulationVariablesSD+="Volume;VolumeFit;VolumeMin;VolumeMax;Mean;Mode;Median;FWHM;Rg;"	
 	ListOfPopulationVariablesSD+="LNMinSize;LNMinSizeFit;LNMinSizeMin;LNMinSizeMax;LNMeanSize;LNMeanSizeFit;LNMeanSizeMin;LNMeanSizeMax;LNSdeviation;LNSdeviationFit;LNSdeviationMin;LNSdeviationMax;"	
 	ListOfPopulationVariablesSD+="GMeanSize;GMeanSizeFit;GMeanSizeMin;GMeanSizeMax;GWidth;GWidthFit;GWidthMin;GWidthMax;LSWLocation;LSWLocationFit;LSWLocationMin;LSWLocationMax;"	
 	ListOfPopulationVariablesSD+="SZMeanSize;SZMeanSizeFit;SZMeanSizeMin;SZMeanSizeMax;SZWidth;SZWidthFit;SZWidthMin;SZWidthMax;"	
@@ -2823,6 +2823,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						NVAR LNSdeviation =  $("root:Packages:IR2L_NLSQF:LNSdeviation_pop"+num2str(i))	
 						NVAR LSWLocation =  $("root:Packages:IR2L_NLSQF:LSWLocation_pop"+num2str(i))	
 						NVAR MeanVal =  $("root:Packages:IR2L_NLSQF:Mean_pop"+num2str(i))
+						NVAR Rg =  $("root:Packages:IR2L_NLSQF:Rg_pop"+num2str(i))
 						NVAR ModeVal =  $("root:Packages:IR2L_NLSQF:Mode_pop"+num2str(i))
 						NVAR MedianVal =  $("root:Packages:IR2L_NLSQF:Median_pop"+num2str(i))
 						NVAR FWHMVal =  $("root:Packages:IR2L_NLSQF:FWHM_pop"+num2str(i))
@@ -2846,6 +2847,7 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						LocationPnt = BinarySearch(Qvec, 1.7/ModeVal )
 						TagText="\\Z"+IN2G_LkUpDfltVar("TagSize")+"Size distribution "+num2str(i)+"P\r"
 						TagText+="Distribution : "+PopSizeDistShape+"  \r"
+						TagText+="Rg : "+num2str(Rg)+" [A]  \r"
 						TagText+="Mean / Mode / Median / FWHM  \r"
 						TagText+=num2str(MeanVal)+" / "+num2str(ModeVal)+" / "+num2str(MedianVal)+" / "+num2str(FWHMVal)+"  \r"
 						//TagText+="Median= "+num2str(MedianVal)+"  \r"

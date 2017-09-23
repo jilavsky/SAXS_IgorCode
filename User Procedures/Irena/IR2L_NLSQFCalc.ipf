@@ -84,9 +84,9 @@ Function IR2L_CalculateIntensity(skipCreateDistWvs, fitting) //Calculate distrib
 				wave Diameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(i))
 				NVAR DimensionIsDiameter = root:Packages:IR2L_NLSQF:SizeDist_DimensionIsDiameter
 				if(DimensionIsDiameter) 				//all calculations above are done in radii, if we use Diameters, volume/number distributions needs to be half 
-					IR2L_CalculateDistributions(i, Diameter, NumDist,VolumeDist)			
+					IR2L_CalculateDistributions(i, Diameter, NumDist,VolumeDist)		
 				else
-					IR2L_CalculateDistributions(i, Radius, NumDist,VolumeDist)			
+					IR2L_CalculateDistributions(i, Radius, NumDist,VolumeDist)	
 				endif		
 				// Calculate intensity of the population...
 				For(j=1;j<=10;j+=1)	//j is dataset
@@ -768,8 +768,12 @@ Function IR2L_GraphSizeDistributions() : Graph
 			//Add command bar
 			ControlBar /T/W=GraphSizeDistributions 40
 			Checkbox SizeDistLogX, pos={5,3}, size={20,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogX, help={"X axis (Radius) -log scale?"}, title="Log X axis? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-			Checkbox SizeDistDisplayVolDist, pos={100,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist, help={"Display Volume Distribution?"}, title="Display Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
-			Checkbox SizeDistDisplayNumDist, pos={100,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist, help={"Display Number distribution ?"}, title="Display Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+
+			SetVariable Rg, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
+			SetVariable Rg, pos={5,23}, size={120,25}, variable= root:Packages:IR2L_NLSQF:Rg_pop1, help={"Rg of current population"}, title="Pop 1 Rg = "
+
+			Checkbox SizeDistDisplayVolDist, pos={140,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayVolDist, help={"Disp Volume Dist?"}, title="Display Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
+			Checkbox SizeDistDisplayNumDist, pos={140,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistDisplayNumDist, help={"Disp Number Dist ?"}, title="Display Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
 			Checkbox SizeDistLogVolDist, pos={220,3}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogVolDist, help={"Volume distribution axis log scale?"}, title="Log Vol Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
 			Checkbox SizeDistLogNumDist, pos={220,23}, size={50,25}, variable= root:Packages:IR2L_NLSQF:SizeDistLogNumDist, help={"Number distribution axis log scale?"}, title="Log Num Dist? ", proc=IR2L_SizeDistGraphChkbxProc, win=GraphSizeDistributions
 			SetVariable MeanVal, limits={0,inf,0}, NoProc, noedit=1, win=GraphSizeDistributions
@@ -810,6 +814,7 @@ Function IR2L_GraphSizeDistUpdate()
 		ControlInfo/W=LSQF2_MainPanel DistTabs
 		DoWindow/F GraphSizeDistributions
 		variable curPopulation=V_Value+1
+		SetVariable Rg, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:$("Rg_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Rg = "
 		SetVariable MeanVal, win=GraphSizeDistributions, variable=root:Packages:IR2L_NLSQF:$("Mean_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Mean = "
 		SetVariable ModeVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:$("Mode_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Mode = "
 		SetVariable MedianVal, win=GraphSizeDistributions,  variable= root:Packages:IR2L_NLSQF:$("Median_pop"+num2str(curPopulation)), title="Pop "+num2str(curPopulation)+" Median = "
@@ -2109,11 +2114,14 @@ Function IR2L_UpdtSeparateMMM(distNum)
 		Wave DistDiameter=$("root:Packages:IR2L_NLSQF:Diameter_Pop"+num2str(distNum))
 		Wave DistVolumeDist=$("root:Packages:IR2L_NLSQF:VolumeDist_Pop"+num2str(distNum))
 		Wave DistNumberDist=$("root:Packages:IR2L_NLSQF:NumberDist_Pop"+num2str(distNum))
-		
+		NVAR Rg=$("root:Packages:IR2L_NLSQF:Rg_Pop"+num2str(distNum))
+							
 		if(DimensionIsDiameter)
 			Duplicate/Free DistDiameter, DistDimension
+			Rg = IR2L_CalculateRg(DistDiameter,DistVolumeDist,DimensionIsDiameter)	
 		else
 			Duplicate/Free DistRadius, DistDimension
+			Rg = IR2L_CalculateRg(DistRadius,DistVolumeDist,DimensionIsDiameter)	
 		endif
 		if (DistInputNumberDist)		//use number distribution...
 			Duplicate/Free DistNumberDist, Temp_Probability, Another_temp, Temp_Cumulative
@@ -2143,6 +2151,23 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR2L_CalculateRg(Dimension,VolumeDistribution,DimensionIsDiameter)
+ 	wave Dimension,VolumeDistribution
+ 	variable DimensionIsDiameter
+ 	
+ 	variable Rg
+ 	if(DimensionIsDiameter)	//diameter, need to divide by 2 first
+ 		Duplicate/Free Dimension, LocDimension, Integrant
+ 		LocDimension = Dimension/2
+ 	else	//radius directly
+  		Duplicate/Free Dimension, LocDimension, Integrant
+ 	endif
+	Integrant=LocDimension^2*VolumeDistribution
+	//print Areaxy(LocDimension,Integrant)
+	//print Areaxy(LocDimension,VolumeDistribution)
+	Rg=sqrt(Areaxy(LocDimension,Integrant)/Areaxy(LocDimension,VolumeDistribution))
+	return Rg
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
