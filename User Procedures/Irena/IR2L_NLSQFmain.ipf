@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.23
-Constant IR2LversionNumber = 1.23
+#pragma version=1.24
+Constant IR2LversionNumber = 1.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.23
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.24 added Rg for Size distributions and this requirtes reinitialization
 //1.23 added Ardell distributions support
 //1.22 Modified Screen Size check to match the needs
 //1.21 added getHelp button calling to www manual
