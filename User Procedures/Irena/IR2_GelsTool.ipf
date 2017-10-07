@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.13
+#pragma version=4.14
 Constant IR2HversionNumber = 4.13
 
 
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.14 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //4.13 added getHelp button calling to www manual
 //4.12 changes for panel scaling
 //4.11 removed Execute for GUI controls for Igor 7. 
@@ -1604,7 +1605,8 @@ Proc  IR2H_SI_Q2_PlotGels()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Gels_Modeling:
-	Display /W=(283.5,384,761.25,545)/K=1  OriginalSqrtIntN1 vs OriginalQ2 as "DB_Plot"
+	//Display /W=(283.5,384,761.25,545)/K=1  OriginalSqrtIntN1 vs OriginalQ2 as "DB_Plot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.3*IN2G_GetGraphWidthHeight("height"))/K=1  OriginalSqrtIntN1 vs OriginalQ2 as "DB_Plot"
 	DoWIndow/C IR2H_SI_Q2_PlotGels
 	ModifyGraph mode(OriginalSqrtIntN1)=3
 	ModifyGraph msize(OriginalSqrtIntN1)=1
@@ -1636,7 +1638,8 @@ Proc  IR2H_IQ4_Q_PlotGels()
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Gels_Modeling:
 //	 UseSlitSmearedData = root:Packages:Gels_Modeling:UseSlitSmearedData	
-	Display /W=(283.5,228.5,761.25,383)/K=1  as "Mod. Porod Plot"
+	//Display /W=(283.5,228.5,761.25,383)/K=1  as "Mod. Porod Plot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.3*IN2G_GetGraphWidthHeight("height"))/K=1  as "Mod. Porod Plot"
 	DoWindow/C IR2H_IQ4_Q_PlotGels
 	if(UseSlitSmearedData)
 		 Append OriginalIntQ3 vs OriginalQvector
@@ -1676,7 +1679,8 @@ Proc  IR2H_LogLogPlotGels()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Gels_Modeling:
-	Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	//Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.4*IN2G_GetGraphWidthHeight("height")) /K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
 	DoWIndow/C IR2H_LogLogPlotGels
 	ModifyGraph mode(OriginalIntensity)=3
 	ModifyGraph msize(OriginalIntensity)=1

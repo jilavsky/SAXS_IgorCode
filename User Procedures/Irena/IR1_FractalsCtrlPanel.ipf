@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.07
+#pragma version=2.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.08 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.07  removed unused functions
 //2.06 added getHelp button calling to www manual
 //2.05 fixes for panel scaling
@@ -761,8 +762,10 @@ Function IR1V_InputPanelButtonProc(ctrlName) : ButtonControl
 			ControlInfo DistTabs
 			IR1V_DisplayLocalFits(V_Value)
 			IR1V_AutoUpdateIfSelected()
-			MoveWindow /W=IR1V_LogLogPlotV 285,37,760,337
-			MoveWindow /W=IR1V_IQ4_Q_PlotV 285,360,760,600
+//			MoveWindow /W=IR1V_LogLogPlotV 285,37,760,337
+//			MoveWindow /W=IR1V_IQ4_Q_PlotV 285,360,760,600
+			MoveWindow /W=IR1V_LogLogPlotV 0,0,IN2G_GetGraphWidthHeight("width"),0.6*IN2G_GetGraphWidthHeight("height")
+			MoveWindow /W=IR1V_IQ4_Q_PlotV 0,300,IN2G_GetGraphWidthHeight("width"),300+0.4*IN2G_GetGraphWidthHeight("height")
 			AutoPositionWindow /M=0 /R=IR1V_ControlPanel  IR1V_LogLogPlotV
 			AutoPositionWindow /M=1 /R=IR1V_LogLogPlotV  IR1V_IQ4_Q_PlotV
 //			if (recovered)
@@ -1424,8 +1427,12 @@ Function IR1V_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		//here goes what happens when user changes the SASBackground in distribution
 		IR1V_GraphMeasuredData()
 		IR1V_AutoUpdateIfSelected()
-		MoveWindow /W=IR1V_LogLogPlotV 285,37,760,337
-		MoveWindow /W=IR1V_IQ4_Q_PlotV 285,360,760,600
+		//MoveWindow /W=IR1V_LogLogPlotV 285,37,760,337
+		//MoveWindow /W=IR1V_IQ4_Q_PlotV 285,360,760,600
+		MoveWindow /W=IR1V_LogLogPlotV 0,0,IN2G_GetGraphWidthHeight("width"),0.6*IN2G_GetGraphWidthHeight("height")
+		MoveWindow /W=IR1V_IQ4_Q_PlotV 0,300,IN2G_GetGraphWidthHeight("width"),300+0.4*IN2G_GetGraphWidthHeight("height")
+		AutoPositionWindow/M=0/R=IR1V_ControlPanel  IR1V_LogLogPlotV	
+		AutoPositionWindow/M=1/R=IR1V_ControlPanel  IR1V_IQ4_Q_PlotV	
 	endif
 	if (cmpstr(ctrlName,"MassFr1_Phi")==0)
 		//here goes what happens when user changes the SASBackground in distribution
@@ -1627,14 +1634,16 @@ Proc  IR1V_LogLogPlotV()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:FractalsModel:
-	Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	//Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.6*IN2G_GetGraphWidthHeight("height"))/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
 	DoWindow/C IR1V_LogLogPlotV
+	AutoPositionWindow/M=0/R=IR1V_ControlPanel  IR1V_LogLogPlotV		
 	ModifyGraph mode(OriginalIntensity)=3
 	ModifyGraph msize(OriginalIntensity)=1
 	ModifyGraph log=1
 	ModifyGraph mirror=1
 	ShowInfo
-	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IR2C_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
 	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr
@@ -1652,8 +1661,10 @@ Proc  IR1V_IQ4_Q_PlotV()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:FractalsModel:
-	Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
+	//Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.4*IN2G_GetGraphWidthHeight("height"))/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
 	DoWIndow/C IR1V_IQ4_Q_PlotV
+	AutoPositionWindow/M=0/E/R=IR1V_ControlPanel  IR1V_IQ4_Q_PlotV		
 	ModifyGraph mode(OriginalIntQ4)=3
 	ModifyGraph msize(OriginalIntQ4)=1
 	ModifyGraph log=1

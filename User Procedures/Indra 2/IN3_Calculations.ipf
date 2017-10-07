@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.32
+#pragma version=1.34
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.34 fixed which resulting waves are plotted to include M_DSM, DSM, M_SMR, and SMR waves in this order. 
+//1.33 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.32 changed main graph name and size is dynamic now. 
 //1.31 added Desmearing as data reduction step. 
 //1.30 some fixes in Modified Gauss fitting. Modifed to remeber better Qmin for processign in batch. 
@@ -860,13 +862,15 @@ static Function IN3_RcurvePlot()
 	NVAR PeakCenterFitStartPoint=root:Packages:Indra3:PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
 	
-	//create main plot with R curve data
-	variable NewWidth = 0.6*(IN2G_ScreenWidthHeight("width")*100) - 300
-	variable NewHeight = 0.6*(IN2G_ScreenWidthHeight("height")*100)
+	//create main plot with R curve data 
+	//variable NewWidth = 0.6*(IN2G_ScreenWidthHeight("width")*100) - 300
+	//variable NewHeight = 0.6*(IN2G_ScreenWidthHeight("height")*100)
+	//variable NewWidth = IN2G_GetGraphWidthHeight("width")
+	//variable NewHeight = IN2G_GetGraphWidthHeight("height")
 	//Display/K=1 /W=(300,36.5,900,500) R_Int vs R_Qvec as "USAXS data reduction plot"
-	Display/K=1 /W=(300,36.5,330+NewWidth,36+NewHeight) R_Int vs R_Qvec as "USAXS data reduction plot"
+	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) R_Int vs R_Qvec as "USAXS data reduction plot"
 	DoWindow/C RcurvePlotGraph
-	AutoPositionWindow/M=0/R=USAXSDataReduction  RcurvePlotGraph
+	AutoPositionWindow/M=1/R=USAXSDataReduction  RcurvePlotGraph
 //	AppendToGraph fit_PD_Intensity vs fitX_PD_Intensity
 	//modify the displayed waves
 	ModifyGraph mode(R_Int)=4
@@ -2117,19 +2121,29 @@ Function IN3_PlotProcessedData()
 			Wave/Z Xwave=$(LastSample+"Blank_R_Qvec")
 			Wave/Z Ewave=$(LastSample+"Blank_R_error")
 	else
-			Wave/Z Ywave=$(LastSample+"DSM_Int")
-			Wave/Z Xwave=$(LastSample+"DSM_Qvec")
-			Wave/Z Ewave=$(LastSample+"DSM_Error")			
+			Wave/Z Ywave=$(LastSample+"M_DSM_Int")
+			Wave/Z Xwave=$(LastSample+"M_DSM_Qvec")
+			Wave/Z Ewave=$(LastSample+"M_DSM_Error")			
 			if(!WaveExists(Ywave))
-				Wave/Z Ywave=$(LastSample+"SMR_Int")
-				Wave/Z Xwave=$(LastSample+"SMR_Qvec")
-				Wave/Z Ewave=$(LastSample+"SMR_Error")
+				Wave/Z Ywave=$(LastSample+"DSM_Int")
+				Wave/Z Xwave=$(LastSample+"DSM_Qvec")
+				Wave/Z Ewave=$(LastSample+"DSM_Error")
+				if(!WaveExists(Ywave))
+					Wave/Z Ywave=$(LastSample+"M_SMR_Int")
+					Wave/Z Xwave=$(LastSample+"M_SMR_Qvec")
+					Wave/Z Ewave=$(LastSample+"M_SMR_Error")
+					if(!WaveExists(Ywave))
+						Wave/Z Ywave=$(LastSample+"SMR_Int")
+						Wave/Z Xwave=$(LastSample+"SMR_Qvec")
+						Wave/Z Ewave=$(LastSample+"SMR_Error")
+					endif
+				endif
 			endif
 	endif
 	if(WaveExists(Ywave)&&WaveExists(Xwave)&&(!IsBlank))
 		DoWIndow/Z USAXSProcessedDataGraph
 		if(V_Flag==0)
-			Display /K=1/W=(526,376,1116,802) Ywave vs Xwave as "USAXS Processed data"
+			Display /K=1/W=(500,300,500+0.5*IN2G_GetGraphWidthHeight("width"),300+0.5*IN2G_GetGraphWidthHeight("height")) Ywave vs Xwave as "USAXS Processed data"
 			DoWindow/C USAXSProcessedDataGraph
 			ModifyGraph mode=3
 			ModifyGraph log=1

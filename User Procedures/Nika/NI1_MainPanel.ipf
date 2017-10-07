@@ -8,7 +8,7 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.58 added UserSampleName to each folder. To be used in otehr functions to avoid 32 characters limit. 
+//2.58 added UserSampleName to each folder. To be used in other functions to avoid 32 characters limit. 
 //2.57 changed trimname function to accept maximum possible number of characters allowed with _XYZ orientation. Will vary based on orientation now, _C will allow 25 characters. Others will be shorter. 
 //2.56 added resize after recreating of the panels to prior user size. 
 //2.55 removed unused functions
@@ -1539,8 +1539,10 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 				appendToGraph Int vs Qvec 
 			endif
 		else
-			Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Q"	
+			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Q"	
+			Display/K=1 /W=(350,350,350+0.5*IN2G_GetGraphWidthHeight("width"),350+0.5*IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_Q"	
 			DoWIndow/C LineuotDisplayPlot_Q
+			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel  LineuotDisplayPlot_Q	
 			ModifyGraph log=1
 			Label left "Intensity"
 			Label bottom "Q vector [A\\S-1\\M]"
@@ -1555,8 +1557,10 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 				appendToGraph Int vs Qvec 
 			endif
 		else
-			Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_D"	
+			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_D"	
+			Display/K=1 /W=(350,350,350+0.5*IN2G_GetGraphWidthHeight("width"),350+0.5*IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_D"	
 			DoWIndow/C LineuotDisplayPlot_D
+			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel  LineuotDisplayPlot_D	
 			ModifyGraph log=0
 			Label left "Intensity"
 			Label bottom "d spacing [A]"
@@ -1571,8 +1575,10 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 				appendToGraph Int vs Qvec 
 			endif
 		else
-			Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_T"	
+			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_T"	
+			Display/K=1 /W=(350,350,350+0.5*IN2G_GetGraphWidthHeight("width"),350+0.5*IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_T"	
 			DoWIndow/C LineuotDisplayPlot_T
+			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel  LineuotDisplayPlot_T	
 			ModifyGraph log=0
 			Label left "Intensity"
 			Label bottom "Two theta [degrees]"
@@ -1587,8 +1593,10 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 				appendToGraph Int vs Qvec 
 			endif
 		else
-			Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Az"	
+			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Az"	
+			Display/K=1 /W=(350,350,350+0.5*IN2G_GetGraphWidthHeight("width"),350+0.5*IN2G_GetGraphWidthHeight("height"))  Int vs Qvec as "LineuotDisplayPlot_Az"	
 			DoWIndow/C LineuotDisplayPlot_T
+			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel  LineuotDisplayPlot_T	
 			ModifyGraph log=0
 			Label left "Intensity"
 			Label bottom "Azimuthal angle"
@@ -1603,8 +1611,10 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 				appendToGraph Int vs Qvec 
 			endif
 		else
-			Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Distacne"	
+			//Display/K=1 /W=(348,368,828,587.75) Int vs Qvec as "LineuotDisplayPlot_Distacne"	
+			Display/K=1 /W=(350,350,350+0.5*IN2G_GetGraphWidthHeight("width"),350+0.5*IN2G_GetGraphWidthHeight("height")) Int vs Qvec as "LineuotDisplayPlot_Distacne"	
 			DoWIndow/C LineuotDisplayPlot_T
+			AutoPositionWindow/M=1/E/R=NI1A_Convert2Dto1DPanel  LineuotDisplayPlot_T	
 			ModifyGraph log=0
 			Label left "Intensity"
 			Label bottom "Distance from center [mm]"

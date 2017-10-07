@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.17
+#pragma version = 1.18
 Constant IR2DversionNumber=1.15
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.18 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.17 modified fitting to include Igor display with iterations /N=0/W=0
 //1.16  removed unused functions
 //1.15 added getHelp button calling to www manual
@@ -1641,8 +1642,11 @@ Proc  IR2D_LogLogPlotSAD()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Irena_SAD:
-	Display /W=(400.75,37.25,959.75,508.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	//Display /W=(400.75,37.25,959.75,508.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	Display  /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
 	DoWindow/C IR2D_LogLogPlotSAD
+	AutoPositionWindow/M=0/R=IR2D_ControlPanel  IR2D_LogLogPlotSAD	
+	
 	ModifyGraph mode(OriginalIntensity)=3
 	ModifyGraph msize(OriginalIntensity)=1
 //	NVAR UseLogX=root:Packages:Irena_SAD:UseLogX

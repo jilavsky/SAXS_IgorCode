@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -10,6 +10,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //*************************************************************************/
 
 
+//2.24 Dale's fixes... Needs checking. 
 //2.23 Modifications requetsed by Dale to make possible to calculate range of levels for each Two phase system. 
 //2.22 Fixed stale graph in Analyze results calculations. 
 //2.21 modified TwoPhaseSys1-4 output per Dale's request. 
@@ -1140,8 +1141,10 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	Checkbox StoredResults, pos={150,63}, size={50,15}, variable =root:packages:Irena_AnalUnifFit:StoredResults
 	Checkbox  StoredResults, title="Stored Unified Fit results",mode=1, proc=IR2U_CheckProc
 	Checkbox  StoredResults, help={"Select of you want to analyze Stored Unified fit data"}
-	checkbox UseCsrInv pos={255,485},size={30,20},title="Calc inv btwn csrs",proc=IR2U_DWSCheckboxProc//***DWS
-	checkbox UseCsrInv variable=root:Packages:Irena_AnalUnifFit:UseCsrInv,value=0//***DWS
+	checkbox UseCsrInv pos={255,475},size={30,20},title="Calc inv btwn csrs",proc=IR2U_DWSCheckboxProc//***DWS
+	checkbox UseCsrInv variable=root:Packages:Irena_AnalUnifFit:UseCsrInv,value=1//***DWS
+	checkbox UnifiedForInv pos={255,490},size={30,20},title="Use unified inv",proc=IR2U_DWSCheckboxProc//***DWS
+	checkbox UnifiedForInv variable=root:Packages:Irena_AnalUnifFit:UseUnifiedInv,value=0
 	CheckBox PrintExcel title="Excel Compatible",size={100,14}, pos={180,505};DelayUpdate//***DWS
 	CheckBox PrintExcel proc=IR2U_DWSCheckboxProc,variable=root:Packages:Irena_AnalUnifFit:printexcel,value=1//***DWS
 	CheckBox includelogbook title="Print to logbook",size={100,14}, pos={180,520};DelayUpdate//***DWS
@@ -1180,15 +1183,15 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	PopupMenu Model,pos={10,140},size={109,20},proc=IR2U_PopMenuProc,title="Model:"
 	PopupMenu Model,help={"Select model to use for data analysis"}
 	PopupMenu Model,mode=1,popvalue="---",value= #"root:Packages:Irena_AnalUnifFit:KnownModels"
-	PopupMenu AvailableLevels,pos={220,140},size={109,20},proc=IR2U_PopMenuProc,title="Level:"
+	PopupMenu AvailableLevels,pos={210,140},size={109,20},proc=IR2U_PopMenuProc,title="Level:"
 	PopupMenu AvailableLevels,help={"Select level to use for data analysis"}
 	PopupMenu AvailableLevels,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:AvailableLevels"
 
-	PopupMenu SelectedBlevel,pos={313,115},size={90,20},proc=IR2U_PopMenuProc,title="Start:"
+	PopupMenu SelectedBlevel,pos={313,140},size={90,20},proc=IR2U_PopMenuProc,title="Start:"
 	PopupMenu SelectedBlevel,help={"Select end level to use for data analysis"}
 	PopupMenu SelectedBlevel,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:SelectedBlevel"
 
-	PopupMenu SelectedQlevel,pos={315,140},size={90,20},proc=IR2U_PopMenuProc,title="End :"
+	PopupMenu SelectedQlevel,pos={315,115},size={90,20},proc=IR2U_PopMenuProc,title="End :"
 	PopupMenu SelectedQlevel,help={"Select stat level to use for data analysis"}
 	PopupMenu SelectedQlevel,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:SelectedQlevel"
 
@@ -1595,7 +1598,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 				SelectedLevel = str2num(popStr[0,0])
 				SlectedBranchedLevels=popStr
 				IR2U_SetControlsInPanel()
-				IR2U_RecalculateAppropriateVals()
+				//IR2U_RecalculateAppropriateVals()//DWS 2017
 			endif
 			if(stringMatch(CtrlName,"SelectedQlevel"))
 				SelectedQlevel = str2num(popStr[0,0])
@@ -1605,7 +1608,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 					abort
 				endif
 				//IR2U_SetControlsInPanel()
-				IR2U_RecalculateAppropriateVals()
+				//IR2U_RecalculateAppropriateVals()//DWS 2017
 			endif
 			if(stringMatch(CtrlName,"SelectedBlevel"))
 				SelectedBlevel = str2num(popStr[0,0])
@@ -1615,7 +1618,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 					abort
 				endif
 				//IR2U_SetControlsInPanel()
-				IR2U_RecalculateAppropriateVals()
+				//IR2U_RecalculateAppropriateVals()//DWS 2017
 			endif
 			
 			if(stringMatch(CtrlName,"IntensityDataName")||stringMatch(CtrlName,"SelectDataFolder"))
@@ -1718,7 +1721,7 @@ Function IR2U_SetControlsInPanel()
 			SetVariable Porod_PowerLawSlope, disable=1
 			SetVariable Porod_ErrorMessage, disable=1
 			Button CalcLogNormalDist, disable=1
-			Button Invariantbutt, disable=1
+			Button Invariantbutt, disable=0//dws 2017
 			Checkbox UseCsrInv, disable=1
 
 			SetVariable DensitiesLegend, disable=1
@@ -2873,7 +2876,7 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	NVAR SelectedBLevel=root:Packages:Irena_AnalUnifFit:SelectedBLevel//Unique to two phase model
 	variable LocSelBLevel, LocSelQLevel
 	if(stringmatch(SlectedBranchedLevels,"---")||numtype(SelectedQlevel)!=0||numtype(SelectedBLevel)!=0)
-		print "Levels nto selected correctly. Check controls"
+		print "Levels not selected correctly. Check controls"
 		abort
 	elseif(stringmatch(SlectedBranchedLevels,"All"))	//we use values from level 1 but summ all invariants...
 		LocSelQLevel=OriginalLevels
@@ -2901,40 +2904,40 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	variable maxqback=10*hcsr(B)//max q for porod extrapolation
 	backqq2=qwave[pcsr(b)-overlap]+P*(maxqback-qwave[pcsr(b)-overlap])/extrapts	
 	backrq2=B/backqq2^2
-	variable invariant, PlotDummy=0
+	variable invariant, PlotDummy=0,plotextensions=1
 	make/N=1000/O DummyRwave,DummyQwave
-	If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by analytical extensions
-		Plotdummy=1
+	
+If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by analytical extensions
+		Plotdummy=1//cursors are used to determine  the limits of extensions.  tests importance of extensions.
 		extrapts=1000
 		dummyQwave=lowq+maxqback*p/extrapts
 		IN2G_ConvertTologspacing(DummyQwave)
-		IR2U_UnifiedBtwnLevls_DWS(DummyQwave,dummyRwave, LocSelBLevel,LocSelQLevel)
+		IR2U_UnifiedBtwnLevls_DWS(DummyQwave,dummyRwave, SelectedBLevel,SelectedQLevel)
 		DummyRwave*=DummyQwave^2
 		invariant=areaXY(DummyQwave, DummyRwave)
-	elseif((!UseCsrInv)&&!UseUnifiedInv)//use unified but don't analytically extend
+		Print "Csrs used, Unified invariant.  Cusers determine the hi and lo extensions. Unified fit is used rather than the data."
+	elseif((!UseCsrInv)&&UseUnifiedInv)//use unified over the full rage of the data
 		Plotdummy=1
 		DummyQwave=qwave
-		IR2U_UnifiedBtwnLevls_DWS(DummyQwave,dummyRwave, LocSelBLevel,LocSelQLevel)
+		IR2U_UnifiedBtwnLevls_DWS(DummyQwave,dummyRwave, SelectedBLevel,SelectedQLevel)
 		DummyRwave*=DummyQwave^2
 		invariant=areaXY(DummyQwave, DummyRwave)
-	else//use the Data between cursors and use unified to analytically extend
+		Print "Csr not used, Unified invariant.  Inv from unified fit over full q-range of data."
+	elseif(!UseCsrInv&&!UseUnifiedInv)//Use data only, no extensions
+		invariant=areaXY(qwave, rq2)
+		plotextensions=0
+		print "Csr not used, Data invariant.  Inv from data over full q-range of data."
+	else//(UseCsrInv&&!UseUnifiedInv)
+		//use the Data between cursors and use unified to analytically extend
+		Plotdummy=0
 		invariant=areaXY(qwave, rq2,hcsr(a), hcsr(b))+areaxy(frontqq2,frontrq2)+abs((B*hcsr(B)^-1))//extends with -4 exponent
+		Print "Use Csrs, Data invariant.  Inv from data extended by unified fit.  Default method"
 	Endif
 	IF(StringMatch(model, "TwoPhaseSys1"))
 		Print "model = "+model
 	endif
 	inv=invariant//***DWS  Store the result so it can be used by   IR2U_TwoPhaseModelCalc()
-//	If(1)
-//		//Print B*hcsr(B)
-//		print "Qlowq using area = "+ num2str(areaxy(frontqq2,frontrq2))
-//		print "Qlowq  analytical (not used) = "+num2str( QvFrontPart)
-//		print  "Qdata part = "+ num2str(areaXY(qwave, rq2,hcsr(a), hcsr(b)))
-//		Print  "Qtail analytical = "+num2str(abs((B*hcsr(B)^-1)))
-//		print "Qtail using area (not used) = "+num2str (areaXY(backqq2, backrq2))
-//		Print "Qtotal = "+num2str (invariant)
-//		Print "B = "+num2str (B)
-//		Print "___________"
-//	endif
+
 	NVAR TwoPhaseInvariantBetweenCursors=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors
 	TwoPhaseInvariantBetweenCursors=invariant*1e24//must be used somewhere else
 	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
@@ -2945,25 +2948,25 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" Å\rlmaj = "+num2str(majchord*1e4)+" Å"		
 	dowindow/R/k InvariantGraph
 	//dowindow/R/k DummyGraph
-		if(plotdummy)
-			display/K=2 dummyRwave vs dummyQwave
-			dowindow/c InvariantGraph
-			ModifyGraph log(left)=1
-			ModifyGraph log(bottom)=1	
-			invariant=areaXY(DummyQwave, DummyRwave)
-		else
 			display/K=2  rq2 vs qwave as "q2 I(q) vs q"
 			dowindow/c InvariantGraph
-			appendtograph frontrq2 vs frontqq2
-			appendtograph backrq2 vs backqq2
-			ModifyGraph rgb(frontrq2)=(8738,8738,8738)
-			ModifyGraph rgb(backrq2)=(8738,8738,8738)
-			Cursor /A=1  A  rq2  0
-			Tag/C/N=text1/F=0/A=LC frontrq2,100,"Level Used = "+Num2str(LocSelQLevel)	
-		endif
+			IF(plotextensions==1)//dws 2017 b
+				appendtograph frontrq2 vs frontqq2
+				appendtograph backrq2 vs backqq2
+				ModifyGraph rgb(frontrq2)=(8738,8738,8738)
+				ModifyGraph rgb(backrq2)=(8738,8738,8738)
+				Cursor /A=1  A  rq2  0
+				Tag/C/N=text1/F=0/A=LC frontrq2,100,"Level Used = "+Num2str(SelectedQlevel)
+			endif	
+
+		
 		Button KillInvWindow,pos={2,1},size={70,20},proc=IR2U_ButtonProc,title="Kill Window"	
 		ModifyGraph grid=2,tick=2,mirror=1,fStyle=1,fSize=15,font="Times"
 		SetAxis bottom 1e-5,maxqback
+		if(!UseCsrInv)//&&!UseUnifiedInv)
+			SetAxis/A
+		endif
+		print "lmin = "+num2str(minchord*1e4)+" Å"
 		ModifyGraph log=1
 		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
 		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
@@ -3656,6 +3659,7 @@ Function IR2U_TwoPhaseModelCalc()
 	NVAR DensityMinorityPhase=root:Packages:Irena_AnalUnifFit:DensityMinorityPhase //need user input here... 
 	NVAR DensityMajorityPhase=root:Packages:Irena_AnalUnifFit:DensityMajorityPhase //need user input here... 
 	NVAR SampleBulkDensity=root:Packages:Irena_AnalUnifFit:SampleBulkDensity //need user input here... 
+print SampleBulkDensity
 	NVAR SLDDensityMinorityPhase=root:Packages:Irena_AnalUnifFit:SLDDensityMinorityPhase //need user input here... 
 	NVAR SLDDensityMajorityPhase=root:Packages:Irena_AnalUnifFit:SLDDensityMajorityPhase //need user input here... 
 	NVAR MinorityPhasePhi=root:Packages:Irena_AnalUnifFit:MinorityPhasePhi //calculate here. 
@@ -3841,10 +3845,7 @@ Function IR2U_TwoPhaseModelCalc()
 		MajorityPhasePhi = 1 - MinorityPhasePhi
 
 	ENDIF	
-	//this needs to be re-created, it is too ugly to try to recast properly... Mixes calculations and graphing in such way, that is it not practical
-	If (UseCsrInv)//***DWS
-		IR2U_CalculateInvariantbutton()//***DWS
-	endif
+	
 	setDataFolder OldDf
 
 end

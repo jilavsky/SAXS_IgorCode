@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.04
+#pragma version = 2.05
 #pragma IgorVersion = 7.00
 
 //control constants
@@ -8,6 +8,12 @@ constant IrenaDebugLevel=1
 //5 to get name of each function entered. For now in general Procedures. using IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 constant RequiredMinScreenHeight=790
 constant RequiredMinScreenWidth = 1200 
+constant MaxGraphWidthAllowed = 1920
+constant MaxGraphHeightAllowed = 1050
+constant FillGraphVerticalRatio = 0.9
+constant FillGraphHorizontalRatio = 0.8
+Constant TypicalPanelHorizontalSize = 350
+
 Strconstant ManualVersionString = "en/1.2.1/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -18,6 +24,7 @@ constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.05 added now function to set graph size and more controls for it (constants). IN2G_GetGraphWidthHeight
 //2.04 added function to convert Q wave to log-Q wave (IN2G_ConvertTologspacing)
 //2.03 added recording to web site with version check. 
 //2.02 added overwrite for screen size abort. 
@@ -4626,6 +4633,7 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	variable TopHeight = 20 //height of top bar and frame, best guess...
 	variable ScreenRes = screenresolution/panelresolution("")
 	TopHeight = TopHeight *screenresolution/96
+
 	if(stringmatch(IgorInfo(2),"Windows"))
 		//For Igor above 7.03 we can get the TopHeight from measureement...
 		if(NumberByKey("IGORVERS", IgorInfo(0))>7.02)		//this would crash anything before 7.03
@@ -4658,6 +4666,75 @@ Function IN2G_ScreenWidthHeight(what)			//keeps graphs the same size on all scre
 	endif
 	return NaN
 end
+
+//**********************************************************************************************
+//**********************************************************************************************
+Function IN2G_GetGraphWidthHeight(what)			//keeps graphs the same size on all screens
+	string what
+	string temp
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	variable height
+	variable width
+	variable TempRetVal
+	variable TopHeight = 20 //height of top bar and frame, best guess...
+	variable ScreenRes = screenresolution/panelresolution("")
+	TopHeight = TopHeight *screenresolution/96
+	//constant MaxGraphWidthAllowed = 1200
+	//constant MaxGraphHeightAllowed = 900
+	//FillGraphVerticalRatio
+	//FillGraphHorizontalRatio
+
+	if(stringmatch(IgorInfo(2),"Windows"))
+		//For Igor above 7.03 we can get the TopHeight from measureement...
+		if(NumberByKey("IGORVERS", IgorInfo(0))>7.02)		//this would crash anything before 7.03
+			GetWindow kwCmdHist wsize
+			variable SmallHeight = V_bottom-V_top
+			GetWindow kwCmdHist wsizeOuter
+			variable LargeHeight = V_bottom-V_top
+			TopHeight = LargeHeight - SmallHeight 
+		endif
+		GetWindow kwFrameInner  wsize
+		 height = ((V_bottom - V_top)-TopHeight)* ScreenRes
+		 width = (V_right - V_left)*ScreenRes
+		if (cmpstr(what,"width")==0)					//gets width of the screen
+			TempRetVal = width
+			if(TempRetVal>MaxGraphWidthAllowed)
+				TempRetVal = MaxGraphWidthAllowed
+			endif
+			return (TempRetVal*FillGraphHorizontalRatio/ScreenRes)-TypicalPanelHorizontalSize	
+		endif
+		if (cmpstr(what,"height")==0)					//gets height of screen
+			TempRetVal = height
+			if(TempRetVal>MaxGraphHeightAllowed)
+				TempRetVal = MaxGraphHeightAllowed
+			endif
+			return TempRetVal* FillGraphVerticalRatio/ScreenRes
+		endif
+	else
+		if (cmpstr(what,"width")==0)					//gets width of the screen
+			temp= StringByKey("SCREEN1", IgorInfo(0))
+			temp=stringFromList(3,  temp,",")
+			//return str2num(temp)/100						// /100 needed by graphs which use that value
+			TempRetVal = str2num(temp)
+			if(TempRetVal>MaxGraphWidthAllowed)
+				TempRetVal = MaxGraphWidthAllowed
+			endif
+			return (TempRetVal*FillGraphHorizontalRatio)-TypicalPanelHorizontalSize
+		endif
+		if (cmpstr(what,"height")==0)					//gets height of screen
+			temp= StringByKey("SCREEN1", IgorInfo(0))
+			temp=stringFromList(4,  temp,",")
+			TempRetVal = str2num(temp)
+			if(TempRetVal>MaxGraphHeightAllowed)
+				TempRetVal = MaxGraphHeightAllowed
+			endif
+			return TempRetVal*FillGraphVerticalRatio
+		endif
+	endif
+	return NaN
+end
+
 
 //**********************************************************************************************
 //**********************************************************************************************

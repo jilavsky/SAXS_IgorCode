@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.13
-Constant IR2PrversionNumber=1.12
+Constant IR2PrversionNumber=1.13
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2PrversionNumber=1.12
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 added better graph size controls for screen size using IN2G_GetGraphWidthHeight
 //1.13  removed unused functions
 //1.12 added getHelp button calling to www manual
 //1.11 changed to IR1B_SmearData which is more optimized slit smearing function. 
@@ -658,9 +659,11 @@ end
 Proc  IR2Pr_PdfInputGraph() 
 	PauseUpdate; Silent 1		// building window...
 	SetDataFolder root:Packages:Irena_PDDF:
-	Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
+	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
+	//Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
 	DoWindow/C IR2Pr_PDFInputGraph
 	DoWindow/T IR2Pr_PDFInputGraph,"Pair distribution function"
+	AutoPositionWindow/M=0/R=IR2Pr_ControlPanel  IR2Pr_PDFInputGraph	
 	IR2Pr_AppendIntOriginal()	//appends original Intensity 
 //	IN2G_AppendSizeTopWave("IR1R_SizesInputGraph",Q_vecOriginal, IntensityOriginal,-25,0,40)		//appends the size wave
 //	removed on request of Pete

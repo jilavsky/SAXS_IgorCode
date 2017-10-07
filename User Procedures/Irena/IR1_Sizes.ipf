@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.24
+#pragma version = 2.25
 Constant IR1RSversionNumber=2.20
 
 
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.25 added better Graph size control for a specific screen size. 
 //2.24 added getHelp button calling to www manual
 //2.23 changed to use of IR1B_SmearData and remvoed limitation for slit smeared data, that Qmax must be > than 3*slit length. Optimized speed, about 2x speed improvement on slit smeared data. 
 //2.22 modified trust ranges for Sizes - now correctly uses 2*pi/Q for large size and pi/Q for small size of trusted range. 
@@ -3283,8 +3284,11 @@ end
 Proc  IR1R_SizesInputGraph() 
 	PauseUpdate; Silent 1		// building window...
 	SetDataFolder root:Packages:Sizes:
-	Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
+	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
+	//Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
 	DoWindow/C IR1R_SizesInputGraph
+	AutoPositionWindow/M=0/R=IR1R_SizesInputPanel 	IR1R_SizesInputGraph
+	
 	IR1R_AppendIntOriginal()	//appends original Intensity 
 //	IN2G_AppendSizeTopWave("IR1R_SizesInputGraph",Q_vecOriginal, IntensityOriginal,-25,0,40)		//appends the size wave
 //	removed on request of Pete

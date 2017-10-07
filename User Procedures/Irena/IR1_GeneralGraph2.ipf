@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.19
+#pragma version=2.20
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.20 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.19 fix applying Graph styles which did not handle custom axes titles. 
 //2.18 limit number of contours in controur plot to 100, Igor cannot do more. 
 //2.17 added 	if(exists("AfterUpdateGenGraphHookFunction")==6)
@@ -97,7 +98,8 @@ Proc  IR1P_makeGraphWindow()
 		DoWindow/K generalGraph
 	endif
 	PauseUpdate; Silent 1		// building window...
-	Display /K=1 /W=(285,37.25,756.75,340.25) as "GeneralGraph"
+	Display /K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))  as "GeneralGraph"
+	//Display /K=1 /W=(285,37.25,756.75,340.25) as "GeneralGraph"
 	DoWindow/C GeneralGraph
 	showInfo
 EndMacro

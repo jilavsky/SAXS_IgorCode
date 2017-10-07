@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.12
+#pragma version=1.14
 constant IR3DversionNumber = 1.13		//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.13		//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 changes to Optimize function to calcualte parameters to overlap the data. SHould nto go negative now and should add background where necessary. Improved (?) Optimize also. 
 //1.13 modified to handle clearly SMR and DSM data, related to modification of Indra package which can now desmeare automtaticallly in data reduction. 
 //1.12 Added new sort strings _xyz_string
 //1.11 Modified Screen Size check to match the needs
@@ -1747,6 +1748,11 @@ Function IR3D_MergeData(VaryQshift)
 	if(endQ >= Qvector1[numpnts(Qvector1)-1])
 		endQ = Qvector1[numpnts(Qvector1)-2]
 	endif
+	if(StartQ>EndQ)
+		Abort "These data do not overlap enough"
+	endif
+	
+	
 	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
 	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
 	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift	
@@ -1801,19 +1807,39 @@ Function IR3D_MergeData(VaryQshift)
 	integral2=areaXY(TempQ2, TempInt2, startQ, endQ )
 	scalingFactor = integral1/integral2
 	highQDifference = TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1]
-	Q2shift = 0.0
-	Data2Qshift = 0
-	
+	Q2shift = 0
+	Data2Qshift = 0	
+	//scalingFactor = scalingFactor/10
+	//highQDifference = highQDifference/10
 	Concatenate /O {TempQ1Part, TempInt1Part, TempInt2Part, TempErr1Part, TempErr2Part}, TempIntCombined
-
-	variable ValueEst= 0.1* IR3D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference, Q2shift)
+	variable ValueEst= 0.11* IR3D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference, Q2shift)
 	//print ValueEst
 	if(VaryQshift>0)
-		Optimize/Q/X={scalingFactor,highQDifference, Q2shift}/R={scalingFactor,highQDifference, (TempQ1Part[0]/2)}/Y =(ValueEst) IR3D_FindMergeValues,TempIntCombined
+	  // print "Starting fitting"
+	  // variable/g TempResult=1e29
+		variable ScalFacMin,ScaleFacmax, HighQBckgMin, HighQBckgMax, tmpVal
+		ScalFacMin = 0.1 * scalingFactor
+		ScaleFacmax = 10 * scalingFactor
+		HighQBckgMin = 0 
+		HighQBckgMax = 10*highQDifference
+		Make/O/N=(3,2) XLimitWave
+		XLimitWave={{ScalFacMin,HighQBckgMin,-TempQ1Part[0]/3 },{ScaleFacmax,HighQBckgMax,TempQ1Part[0]/3}}
+		KillWaves/Z W_Extremum
+		//Make/N=3/O W_Extremum
+		//W_Extremum = {scalingFactor,highQDifference,Q2shift+0.0001}
+		if(NumberByKey("IGORVERS", IgorInfo(0))>7.05)	//for 7.05 and before the /Y flag does not work right... 
+			Optimize/Q/X={scalingFactor,highQDifference,Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,highQDifference, (TempQ1Part[0]/1)} IR3D_FindMergeValues,TempIntCombined
+		else
+			Optimize/Q/X={scalingFactor,highQDifference,Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0} /R={scalingFactor,highQDifference, (TempQ1Part[0]/1)} IR3D_FindMergeValues,TempIntCombined
+		endif
+//		Optimize/X=W_Extremum/XSA=XLimitWave/M={3,0} /R={scalingFactor,highQDifference, (TempQ1Part[0]/10)}/Y =(ValueEst) IR3D_FindMergeValues,TempIntCombined
+//		Optimize/X={scalingFactor,highQDifference, Q2shift} /R={scalingFactor,highQDifference, (TempQ1Part[0]/2)}/Y =(ValueEst) IR3D_FindMergeValues,TempIntCombined
 	else	//keep Qshift=0
+		//Optimize/Q/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference} IR3D_FindMergeValues1,TempIntCombined
 		Optimize/Q/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst) IR3D_FindMergeValues1,TempIntCombined
 	endif
 	Wave W_Extremum	
+	variable BestMinAchieved=V_min
 	KillWaves TempIntCombined
 	Data2IntMultiplier = W_Extremum[0]
 	Data1Background = W_Extremum[1]
@@ -1846,7 +1872,12 @@ Function IR3D_MergeData(VaryQshift)
 	Concatenate/NP/O {ResultdQ1, ResultdQ2}, ResultdQ
 	
 	Sort  ResultQ, ResultQ, ResultIntensity, ResultError, ResultdQ
-	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , and Data 2 Q shift = "+num2str(Data2Qshift)
+	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , and Data 2 Q shift = "+num2str(Data2Qshift)+" , ChiSquared = "+num2str(BestMinAchieved)
+	wavestats/Q ResultIntensity
+	if(V_min<0)
+		ResultIntensity-=V_min
+		print "After merging found negative intensity values, shifted data higher by adding more background of "+num2str(abs(V_min))
+	endif
 	//EvaluatePar()
 	setDataFolder OldDf
 end
@@ -1858,25 +1889,35 @@ Function IR3D_FindMergeValues(w, scalingFactor, highQDifference, Q2shift)
 	Wave w
 	Variable scalingFactor,highQDifference, Q2shift
 	variable PowerLaw=0, tmpVal
+	//scalingFactor = abs(scalingFactor)
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
 	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
 	tmpQ = w[p][0]
 	Int2tmp = w[p][2]
 	InsertPoints 0,1, tmpQ, Int2tmp
-	Int2tmp[0]=Int2tmp[1]
 	tmpQ[0]=tmpQ[1]/2
+	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
 	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
 	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]*2
-	Q2shift = (Q2shift >  -1*tmpQ[0]/2) ? Q2shift :  -1*tmpQ[0]/2
-	Q2shift = (Q2shift <  2*tmpQ[0]) ? Q2shift :  2*tmpQ[0]
+	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
+	//print Q2shift
+	//Q2shift = (Q2shift >  -1*tmpQ[0]/4) ? Q2shift :  -1*tmpQ[0]/4
+	//Q2shift = (Q2shift <  tmpQ[0]/4) ? Q2shift :  tmpQ[0]/4
 	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
 	//print Int2shifted - Int2shifted2
-	tempDifference = ((w[p][1]-highQDifference) - (abs(scalingFactor) * Int2shifted[p]))	//difference between the two values
+	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
 	tempDifference = tempDifference^2										//distance squared... 
 	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
 	tempDifference/=tempWeights											//normalize the difference by uncertainity
 	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
+	//NVAR TempResult
+	//print TempResult, sum(tempDifference)
+	//if(TempResult>sum(tempDifference))
+	//	print sum(tempDifference), scalingFactor, highQDifference, Q2shift
+	//	TempResult = sum(tempDifference)
+	//else
+		//print scalingFactor, highQDifference, Q2shift
+	//endif
 	return sum(tempDifference)												//total distance as defined above. 
 End
 //**********************************************************************************************************
@@ -1889,7 +1930,7 @@ Function IR3D_FindMergeValues1(w, scalingFactor, highQDifference)
 	variable PowerLaw=0
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
 	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights
-	tempDifference = ((w[p][1]-highQDifference) - (abs(scalingFactor) * w[p][2]))	//difference between the two values
+	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * w[p][2]))	//difference between the two values
 	tempDifference = tempDifference^2										//distance squared... 
 	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
 	tempDifference/=tempWeights											//normalize the difference by uncertainity

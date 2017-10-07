@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.20
+#pragma version=1.21
 Constant IR2RversionNumber=1.19
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2RversionNumber=1.19
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.20 modified fitting to include Igor display with iterations /N=0/W=0
 //1.19 added getHelp button calling to www manual
 //1.18 changes for panel scaling. 
@@ -435,7 +436,8 @@ Proc  IR2R_LogLogPlotRefl()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Refl_SimpleTool
-	Display /W=(300,37.25,850,300)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	//Display /W=(300,37.25,850,300)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.4*IN2G_GetGraphWidthHeight("height"))/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
 	DoWIndow/C IR2R_LogLogPlotRefl
 	ModifyGraph mode(OriginalIntensity)=3
 	ModifyGraph msize(OriginalIntensity)=1
@@ -455,7 +457,8 @@ Proc  IR2R_IQN_Q_PlotV()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Refl_SimpleTool:
-	Display /W=(300,250,850,430)/K=1  IntensityQN vs OriginalQvector as "IQ^N_Q_Plot"
+	//Display /W=(300,250,850,430)/K=1  IntensityQN vs OriginalQvector as "IQ^N_Q_Plot"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.3*IN2G_GetGraphWidthHeight("height"))/K=1  IntensityQN vs OriginalQvector as "IQ^N_Q_Plot"
 	DoWIndow/C IR2R_IQN_Q_PlotV
 	ModifyGraph mode(IntensityQN)=3
 	ModifyGraph msize(IntensityQN)=1
@@ -473,7 +476,8 @@ Proc  IR2R_SLDProfile()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:Refl_SimpleTool:
-	Display /W=(298.5,390.5,847.5,567.5)/K=1 SLDProfile as "SLD profile (top=left, substrate=right)"
+	//Display /W=(298.5,390.5,847.5,567.5)/K=1 SLDProfile as "SLD profile (top=left, substrate=right)"
+	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.3*IN2G_GetGraphWidthHeight("height"))/K=1 SLDProfile as "SLD profile (top=left, substrate=right)"
 	DoWindow/C IR2R_SLDProfile
 	Label left "SLD profile [A\\S-2\\M]"
 	if(ZeroAtTheSubstrate)

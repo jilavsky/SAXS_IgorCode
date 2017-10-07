@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.26
+#pragma version=1.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.27 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.26 added Ardell distributions support
 //1.25 modified fitting to include Igor display with iterations /N=0/W=0
 //1.24 fix save single Contrast even when user left SameContrastForDataSets=1 but is using just one data set
@@ -323,8 +324,11 @@ Function  IR2L_AppendDataIntoGraph(whichDataSet) //Adds user data into the graph
 	if(V_Flag)
 		DoWindow/F LSQF_MainGraph
 	else
-		Display /K=1/W=(313.5,38.75,900,400) as "LSQF2 main data window"
+		//Display /K=1/W=(313.5,38.75,900,400) as "LSQF2 main data window"
+		Display /K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "LSQF2 main data window"
 		Dowindow/C LSQF_MainGraph
+		AutoPositionWindow/M=0/R=LSQF2_MainPanel LSQF_MainGraph	
+		
 		//Add command bar
 		ControlBar /T/W=LSQF_MainGraph 65
 		SetVariable GraphXMin, pos={20,3}, size={140,25}, variable= root:Packages:IR2L_NLSQF:GraphXMin, help={"Set minimum value for q axis"}, title="Min q = "

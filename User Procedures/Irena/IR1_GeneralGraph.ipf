@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.30
+#pragma version=2.31
 //#include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.29
 
@@ -9,7 +9,8 @@ Constant IR1PversionNumber=2.29
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.30  removed unused functions, rmeoved use of TransformAxis and replaced with Free axis and hokk function. Better. 
+//2.31 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
+//2.30 removed unused functions, rmeoved use of TransformAxis and replaced with Free axis and hokk function. Better. 
 //2.29 added getHelp button calling to www manual
 //2.28 fixed Gizmo for Igor 7, this should be improved later, but at this time this needs to work for both Igor 6 and 7
 //2.27 added more styles and changed few defaults for them. 
@@ -1759,11 +1760,13 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	NVAR GraphLegendSize
 	NVAR GraphWindowHeight		
 	if(GraphWindowWidth==0)
-		string ScreenWidthStr=stringFromList(3,  StringByKey("SCREEN1", IgorInfo(0)),",")
-		string ScreenHeightStr=stringFromList(4,  StringByKey("SCREEN1", IgorInfo(0)),",")
+		//string ScreenWidthStr=stringFromList(3,  StringByKey("SCREEN1", IgorInfo(0)),",")
+		//string ScreenHeightStr=stringFromList(4,  StringByKey("SCREEN1", IgorInfo(0)),",")
 		//variable ScreenSizeV= IgorInfo(0)
-		GraphWindowWidth=(str2num(ScreenWidthStr))/2
-		GraphWindowHeight=(str2num(ScreenHeightStr))/2
+		//GraphWindowWidth=(str2num(ScreenWidthStr))/2
+		//GraphWindowHeight=(str2num(ScreenHeightStr))/2
+		GraphWindowWidth=IN2G_GetGraphWidthHeight("width")
+		GraphWindowHeight=IN2G_GetGraphWidthHeight("height")
 		GraphLegendSize=10
 	endif
 	SVAR GraphLegendPosition

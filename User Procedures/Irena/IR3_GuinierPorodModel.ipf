@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.07  	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.09  	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 Constant IR3GPversionNumber=1.08
 
@@ -15,6 +15,7 @@ Constant IR3GPversionNumber=1.08
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.09 modified graph size scaling for screen size using IN2G_GetGraphWidthHeight 
 //1.08 modified fitting to include Igor display with iterations /N=0/W=0
 //1.07 added getHelp button calling to www manual
 //1.06 GUI controls move change
@@ -894,18 +895,10 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 			if(cmpstr(ctrlName,"DrawGraphsSkipDialogs")!=0)
 				variable recovered = IR3GP_RecoverOldParameters()	//recovers old parameters and returns 1 if done so...
 			endif
-		//	IR1A_FixTabsInPanel()
 			IR3GP_GraphMeasuredData()
-//			NVAR ActiveLevel=root:Packages:Irena_UnifFit:ActiveLevel
-//			IR1A_DisplayLocalFits(ActiveLevel,0)
-//			IR1A_AutoUpdateIfSelected()
 			variable ScreenHeight, ScreenWidth
-			ScreenHeight = IN2G_ScreenWidthHeight("height")*100	
-			ScreenWidth = IN2G_ScreenWidthHeight("width")	*100
-			MoveWindow /W=GunierPorod_LogLogPlot 285,37,(285+ScreenWidth/2),(0.6*ScreenHeight - 37)
-			//MoveWindow /W=IR1_IQ4_Q_PlotU 285,(0.6*ScreenHeight - 37),(285+ScreenWidth/2),(0.9*(ScreenHeight-37))
+			MoveWindow /W=GunierPorod_LogLogPlot 0,0,(IN2G_GetGraphWidthHeight("width")),(IN2G_GetGraphWidthHeight("height"))
 			AutoPositionWIndow /M=0  /R=IR3DP_MainPanel GunierPorod_LogLogPlot
-		//	AutoPositionWIndow /M=1/E  /R=IR1_LogLogPlotU IR1_IQ4_Q_PlotU
 			if (recovered)
 				IR3GP_GraphModelData()		//graph the data here, all parameters should be defined
 				//need to fix number of levels, which tab seems to be stale...

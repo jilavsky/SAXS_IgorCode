@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.12
+#pragma version = 2.13
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.13 modified size of the graphs nowusing general function to make graphs suitabel for window area. 
 //2.12  removed unused functions
 //2.11 Modified Screen Size check to match the needs
 //2.10 added getHelp button calling to www manual
@@ -768,8 +769,10 @@ Function IR1B_DoDesmearing()
 	SVAR BackgroundFunction=root:Packages:Irena_desmearing:BackgroundFunction	
 			
 			//***************graph
-				Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntWave vs OrgQwave as "Intensity vs Q plot"
+				Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) OrgIntWave vs OrgQwave as "Intensity vs Q plot"
+				//Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntWave vs OrgQwave as "Intensity vs Q plot"
 				DoWindow/C DesmearingProcess
+				AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  DesmearingProcess	
 				ModifyGraph mode=4,	margin(top)=100, mirror=1, minor=1
 				showinfo										//shows info
 				ShowTools/A										//show tools
@@ -872,8 +875,10 @@ Function IR1B_CheckTheBackgroundExtns()
 	ColorWave=0				//make the colors to be one, this will change later...
 //	numOfPoints=numpnts(OrgQwave)
 	
-	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) ExtrapIntwave vs ExtrapQwave as "Check bckg functions sel."
+	Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) ExtrapIntwave vs ExtrapQwave as "Check bckg functions sel."
+	//Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) ExtrapIntwave vs ExtrapQwave as "Check bckg functions sel."
 	DoWindow/C CheckTheBackgroundExtns 
+	AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  CheckTheBackgroundExtns	
 	SetWindow CheckTheBackgroundExtns, hook(MyHook) = IR1B_CheckBckgExtHook	// Install window hook
 	ModifyGraph mode=4,	margin(top)=100, mirror=1, minor=1
 	ModifyGraph zColor(ExtrapIntwave)={ColorWave,0,2,Rainbow}
@@ -1456,8 +1461,10 @@ Function IR1B_TrimTheData()							//this function trims the data before desmeari
 	IN2G_ReplaceNegValsByNaNWaves(OrgIntWave,OrgQwave,OrgEwave)		//here we remove negative values by setting them to NaNs
 	IN2G_RemoveNaNsFrom4Waves(OrgIntWave,OrgQwave,OrgEwave,OrgdQwave)			//and here we remove NaNs all together
 	
-	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntwave vs OrgQwave as "Trim the data"
+	Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) OrgIntwave vs OrgQwave as "Trim the data"
+	//Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntwave vs OrgQwave as "Trim the data"
 	DoWindow/C TrimGraph 
+	AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  TrimGraph	
 	ModifyGraph mode=4,margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
 	ShowTools/A											//show tools
@@ -1513,9 +1520,11 @@ Function IR1B_SmoothDSMData()							//this smooths the data before desmearing.
 	Duplicate/O DesmearedEWave, SmoothDsmEWave
 	Duplicate/O DesmeareddQWave, SmoothDsmdQWave
 	
-	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) DesmearedIntWave vs DesmearedQWave as "Smooth the desmeared data"
+	Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) DesmearedIntWave vs DesmearedQWave as "Smooth the desmeared data"
+	//Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) DesmearedIntWave vs DesmearedQWave as "Smooth the desmeared data"
 	AppendToGraph SmoothDsmIntWave vs SmoothDsmQWave
 	DoWindow/C SmoothGraphDSM 
+	AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  SmoothGraphDSM	
 	ErrorBars DesmearedIntWave Y,wave=(root:Packages:Irena_desmearing:DesmearedEWave,root:Packages:Irena_desmearing:DesmearedEWave)
 	ModifyGraph mode=4,margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
@@ -1574,9 +1583,11 @@ Function IR1B_SmoothSMRData()							//this smooths the data before desmearing.
 	Duplicate/O OrgdQwave, SmoothdQwave
 	
 //	PauseUpdate; Silent 1		// building window...
-	Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntwave vs OrgQwave as "Smooth the data"
+	Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) OrgIntwave vs OrgQwave as "Smooth the data"
+	//Display/K=1 /W=(300+0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),300+60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) OrgIntwave vs OrgQwave as "Smooth the data"
 	AppendToGraph SmoothIntwave vs SmoothQwave
 	DoWindow/C SmoothGraph 
+	AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  SmoothGraph	
 	ErrorBars OrgIntwave Y,wave=(root:Packages:Irena_desmearing:OrgEwave,root:Packages:Irena_desmearing:OrgEwave)
 	ModifyGraph mode=4,margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info

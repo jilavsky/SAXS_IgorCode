@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.61
+#pragma version=2.62
 constant IR3MversionNumber = 2.61		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -9,6 +9,8 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.62 fixed when ManipII has recreated the small panel on close of the large panel. 
+//2.62 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.61 added getHelp button calling to www manual
 //2.60 fixes for DMII - Secondary panel was loosing scaling controls and some controls need to be moved around. 
 //2.59 modifications for panel scaling, Data Manipulation I is nto working right... Subwindows are problem. 
@@ -975,7 +977,7 @@ static Function IR1D_AppendResultToGraph()
 		else
 			AppendToGraph/W=IR1D_DataManipulationGraph ResultsInt vs ResultsQ
 			ModifyGraph/W=IR1D_DataManipulationGraph lsize(ResultsInt)=2,rgb(ResultsInt)=(0,0,0)
-			ModifyGraph mirror=1
+			ModifyGraph/W=IR1D_DataManipulationGraph mirror=1
 		endif
 	endif
 	if (WaveExists(ResultsE))
@@ -1988,9 +1990,11 @@ end
 //**********************************************************************************************************
 Proc IR1D_DataManipulationGraph()
 	PauseUpdate; Silent 1		// building window...
-	Display/K=1 /W=(320.25,41.75,1014.75,671.75) as "IR1D_DataManipulationGraph"
+	//Display/K=1 /W=(320.25,41.75,1014.75,671.75) as "IR1D_DataManipulationGraph"
+	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "IR1D_DataManipulationGraph"
 	DoWindow/C IR1D_DataManipulationGraph
 	ShowInfo
+	AutoPositionWindow/M=0/R=IR1D_DataManipulationPanel IR1D_DataManipulationGraph	
 EndMacro
 
 //**********************************************************************************************************
@@ -2821,12 +2825,12 @@ Function IR3M_DataManipulationIIPanel()
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;R_Int;"
 	IR2C_AddDataControls("DataManipulationII","DataManipulationII",AllowedIrenaTypes,"AllCurrentlyAllowedTypes","","","","", 0,0)
-		PopupMenu SelectDataFolder, pos={5,58}, proc=IR3M_DataFolderPopMenuProc, title="Test data folder"
-		CheckBox UseQRSData proc=IR3M_ReplaceCheckProc
-		SetVariable FolderMatchStr pos={30,80}
-		popupmenu QvecDataName, pos={500,500},disable=1
-		popupmenu IntensityDataName, pos={500,500}, disable=1
-		popupmenu ErrorDataName, pos={500,500}, disable=1
+	PopupMenu SelectDataFolder, pos={5,58}, proc=IR3M_DataFolderPopMenuProc, title="Test data folder"
+	CheckBox UseQRSData proc=IR3M_ReplaceCheckProc
+	SetVariable FolderMatchStr pos={30,80}
+	popupmenu QvecDataName, pos={500,500},disable=1
+	popupmenu IntensityDataName, pos={500,500}, disable=1
+	popupmenu ErrorDataName, pos={500,500}, disable=1
 
 	Button GetHelp,pos={305,35},size={80,15},fColor=(65535,32768,32768), proc=IR3M_DataManIIPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	Button DisplayTestFolder, pos={150,79},size={100,13}, proc=IR3M_DataManIIPanelButtonProc,title="Graph Test data", help={"Show selected folder data in graph"}
@@ -2837,7 +2841,6 @@ Function IR3M_DataManipulationIIPanel()
 	TitleBox Info6 title="\Zr120Output Options:",pos={2,452},frame=0,fstyle=3, fixedSize=0,size={40,15},fColor=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,450},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
-//Waves_Xtemplate;Waves_Ytemplate;Waves_Etemplate
 	//Graph controls
 	SVAR StartFolder
 	PopupMenu StartFolder,pos={10,133},size={180,20},proc=IR3M_PanelPopupControl,title="Start Folder", help={"Select folder where to start. Only subfolders will be searched"}
@@ -2855,7 +2858,6 @@ Function IR3M_DataManipulationIIPanel()
 	Button Waves_ReadY, pos={300,225},size={80,15}, proc=IR3M_DataManIIPanelButtonProc,title="Read Y", help={"Read name from table"}
 	Button Waves_ReadE, pos={300,250},size={80,15}, proc=IR3M_DataManIIPanelButtonProc,title="Read Error", help={"Read name from table"}
 
-
 	Button PreviewListOfSelFolders, pos={25,275},size={120,20}, proc=IR3M_DataManIIPanelButtonProc,title="Preview selection", help={"Show selected folders in the panel"}
 
 	CheckBox ManualFolderSelection,pos={200,278},size={80,14},proc= IR3M_DataMinerCheckProc,title="Enable Manual Folder Selection?"
@@ -2871,13 +2873,10 @@ Function IR3M_DataManipulationIIPanel()
 	NVAR GenerateStatisticsForAveWvs=root:Packages:DataManipulationII:GenerateStatisticsForAveWvs
 	NVAR SubtractDataFromAll = root:Packages:DataManipulationII:SubtractDataFromAll
 
-      TabControl ProcessingTabs  pos={0,300},size={400,147},tabLabel(0)="Processing", value= 0, proc=IR3M_DataManIITabProc
-    	 TabControl ProcessingTabs  tabLabel(1)="Data selection", tabLabel(2)="Errors", tabLabel(3)="Post Processing"
+   TabControl ProcessingTabs  pos={0,300},size={400,147},tabLabel(0)="Processing", value= 0, proc=IR3M_DataManIITabProc
+   TabControl ProcessingTabs  tabLabel(1)="Data selection", tabLabel(2)="Errors", tabLabel(3)="Post Processing"
 
 //Subtract one data set from all	
-
-
-
 	CheckBox SubtractDataFromAll,pos={15,325},size={80,14},title="Subtract Data?",proc= IR3M_CheckProc
 	CheckBox SubtractDataFromAll,variable= root:Packages:DataManipulationII:SubtractDataFromAll, help={"Subtract one set of data from all"}
 	CheckBox DivideDataByOneSet,pos={200,325},size={80,14},title="Divide Data?",proc= IR3M_CheckProc
@@ -3199,6 +3198,11 @@ End
 ///******************************************************************************************
 Function  IR3M_DataMinerCheckProc(CB_Struct) : CheckBoxControl
 	STRUCT WMCheckboxAction &CB_Struct
+	
+	
+	if(CB_Struct.eventCode < 0)//control being killed
+		return 0
+	endif
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:DataManipulationII
@@ -3630,7 +3634,7 @@ Function  IR3M_GraphTestFolderData()
 		endif
 		Display/K=1 Ywv vs XWv as "Preview of data in Manipulation II tool"
 		DoWindow/C DataManipulationIIPrev
-		ModifyGraph log=1
+		ModifyGraph/W=DataManipulationIIPrev log=1
 		ShowInfo
 
 		
@@ -4897,11 +4901,13 @@ Function IR3M_CreateGraph(Reset)
 		DoWIndow DataManipulationIIGraph
 		if(V_Flag&&Reset)
 			DoWIndow/K DataManipulationIIGraph
-			Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
+			//Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
+			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "DataManipulation II Graph"
 			DoWindow/C DataManipulationIIGraph
 			AutoPositionWindow/M=0 /R=ItemsInFolderPanel_DMII DataManipulationIIGraph
 		elseif(!V_Flag)	
-			Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
+			//Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
+			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "DataManipulation II Graph"
 			DoWindow/C DataManipulationIIGraph
 			AutoPositionWindow/M=0 /R=ItemsInFolderPanel_DMII DataManipulationIIGraph
 		endif

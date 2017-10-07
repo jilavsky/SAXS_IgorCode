@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 added better Graph size control using IN2G_GetGraphWidthHeight function
 //2.23 added getHelp button function. 
 //2.22 fixed IR1A_AutoUpdateIfSelected which called local display code twice. 
 //2.21 fixed display of warning messages from teh tab when tab was not used. 
@@ -1558,11 +1559,13 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 			NVAR ActiveTab=root:Packages:Irena_UnifFit:ActiveTab
 			IR1A_DisplayLocalFits(ActiveTab,0)
 			IR1A_AutoUpdateIfSelected()
-			variable ScreenHeight, ScreenWidth
-			ScreenHeight = IN2G_ScreenWidthHeight("height")*100	
-			ScreenWidth = IN2G_ScreenWidthHeight("width")	*100
-			MoveWindow /W=IR1_LogLogPlotU 285,37,(285+ScreenWidth/2),(0.6*ScreenHeight - 37)
-			MoveWindow /W=IR1_IQ4_Q_PlotU 285,(0.6*ScreenHeight - 37),(285+ScreenWidth/2),(0.9*(ScreenHeight-37))
+			//variable ScreenHeight, ScreenWidth
+			//ScreenHeight = IN2G_ScreenWidthHeight("height")*100	
+			//ScreenWidth = IN2G_ScreenWidthHeight("width")	*100
+			//MoveWindow /W=IR1_LogLogPlotU 285,37,(285+ScreenWidth/2),(0.6*ScreenHeight - 37)
+			//MoveWindow /W=IR1_IQ4_Q_PlotU 285,(0.6*ScreenHeight - 37),(285+ScreenWidth/2),(0.9*(ScreenHeight-37))
+			MoveWindow /W=IR1_LogLogPlotU 0,0,(IN2G_GetGraphWidthHeight("width")),(0.6*IN2G_GetGraphWidthHeight("height"))
+			MoveWindow /W=IR1_IQ4_Q_PlotU 0,(0.6*IN2G_GetGraphWidthHeight("height")),(IN2G_GetGraphWidthHeight("width")),(IN2G_GetGraphWidthHeight("height"))
 			AutoPositionWIndow /M=0  /R=IR1A_ControlPanel IR1_LogLogPlotU
 			AutoPositionWIndow /M=1/E  /R=IR1_LogLogPlotU IR1_IQ4_Q_PlotU
 			if (recovered)
