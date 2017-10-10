@@ -2825,7 +2825,7 @@ End
 //***********************************************************
 //***********************************************************
 
-Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 02 and minor fix 10/1/2016
+Function IR2U_CalculateInvariantbutton()				//Removed plotting capabilitires JIL 2017
 	string OldDf=GetDataFolder(1)	
 	variable extrapts=600 //number of points in extrapolation waves	
 	Variable overlap=1//number of overlaped points for Porod extrapolation	
@@ -2849,9 +2849,9 @@ Function IR2U_CalculateInvariantbutton()//***DWS lots of revisons as of 2013 12 
 	wave rwave =$rwavename
 	wave qwave=$qwavename
 	wave swave=$swavename
-	setdatafolder root:Packages:Irena_UnifFit:		//do not contaminate users data folder, just store it in Unified Fit folder... 
-	Duplicate/o rwave,$"root:Packages:Irena_UnifFit:rwaveq2"
-	wave rwaveq2=$"root:Packages:Irena_UnifFit:rwaveq2"
+	setdatafolder root:Packages:Irena_AnalUnifFit:		//do not contaminate users data folder, just store it in Unified Fit folder... 
+	Duplicate/o rwave,$"root:Packages:Irena_AnalUnifFit:rwaveq2"
+	wave rwaveq2=$"root:Packages:Irena_AnalUnifFit:rwaveq2"
 	 rwaveq2=rwave*qwave^2
 	  DoWindow/F IR1_LogLogPlotU
 	 If (0==WinType("IR1_LogLogPlotU" ))
@@ -2936,10 +2936,114 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 	IF(StringMatch(model, "TwoPhaseSys1"))
 		Print "model = "+model
 	endif
-	inv=invariant//***DWS  Store the result so it can be used by   IR2U_TwoPhaseModelCalc()
+	inv=invariant				//***DWS  Store the result so it can be used by   IR2U_TwoPhaseModelCalc()
 
 	NVAR TwoPhaseInvariantBetweenCursors=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors
 	TwoPhaseInvariantBetweenCursors=invariant*1e24//must be used somewhere else
+
+//	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
+//	variable majchord=4*majorityphi/Sv
+//	variable minchord=4* (1-majorityphi)/Sv
+//	//string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1Å-4"
+//	string outtext="Qv = "+num2str(invariant)+" cm^-1 Å^-3\rB = "+num2str(B)+ " cm-1Å-4"
+//	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" Å\rlmaj = "+num2str(majchord*1e4)+" Å"		
+//	dowindow/R/k InvariantGraph
+//	//dowindow/R/k DummyGraph
+//			display/K=2  rq2 vs qwave as "q2 I(q) vs q"
+//			dowindow/c InvariantGraph
+//			IF(plotextensions==1)//dws 2017 b
+//				appendtograph frontrq2 vs frontqq2
+//				appendtograph backrq2 vs backqq2
+//				ModifyGraph rgb(frontrq2)=(8738,8738,8738)
+//				ModifyGraph rgb(backrq2)=(8738,8738,8738)
+//				Cursor /A=1  A  rq2  0
+//				Tag/C/N=text1/F=0/A=LC frontrq2,100,"Level Used = "+Num2str(SelectedQlevel)
+//			endif	
+//
+//		
+//		Button KillInvWindow,pos={2,1},size={70,20},proc=IR2U_ButtonProc,title="Kill Window"	
+//		ModifyGraph grid=2,tick=2,mirror=1,fStyle=1,fSize=15,font="Times"
+//		SetAxis bottom 1e-5,maxqback
+//		if(!UseCsrInv)//&&!UseUnifiedInv)
+//			SetAxis/A
+//		endif
+//		print "lmin = "+num2str(minchord*1e4)+" Å"
+//		ModifyGraph log=1
+//		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
+//		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
+//		textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
+//		HideTools/A
+//	//SelectedLevel=InitialselectedLevel
+	setDataFolder OldDf
+	
+	If ((numtype(invariant)==2))
+		doAlert 0, "Pick a level";abort
+	endif
+End
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
+Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny graph Dale wants
+	string OldDf=GetDataFolder(1)	
+	NVAR majorityphi=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi//phi is picked up from unified fit data evaluation panel
+	NVAR inv=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors//***DWS
+	NVAR dens=root:Packages:Irena_AnalUnifFit:SampleBulkDensity
+	NVAR TwoPhaseInvariantBetweenCursors=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors
+	WAVE rq2=root:Packages:Irena_AnalUnifFit:rq2
+	WAVE frontrq2=root:Packages:Irena_AnalUnifFit:frontrq2
+	WAVE frontqq2=root:Packages:Irena_AnalUnifFit:frontqq2
+	WAVE backrq2=root:Packages:Irena_AnalUnifFit:backrq2
+	WAVE backqq2=root:Packages:Irena_AnalUnifFit:backqq2
+	NVAR SelectedLevel=root:Packages:Irena_AnalUnifFit:SelectedLevel//level number selected for analysis generic to other models.
+	SVAR SlectedBranchedLevels = root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
+	NVAR UseUnifiedInv=root:Packages:Irena_AnalUnifFit:UseUnifiedInv
+	NVAR UseCsrInv=root:Packages:Irena_AnalUnifFit:UseCsrInv
+
+	NVAR OriginalLevels=root:Packages:Irena_UnifFit:NumberOfLevels
+	SVAR rwavename=root:Packages:Irena_UnifFit:IntensityWaveName
+	SVAR qwavename=root:Packages:Irena_UnifFit:QWavename
+	SVAR swavename=root:Packages:Irena_UnifFit:IntensityWaveName
+	SVAR datafoldername=root:Packages:Irena_UnifFit:DataFolderName
+
+	variable plotextensions=1
+	variable invariant = inv*1e-24
+
+	setdatafolder datafoldername
+	rwavename = ReplaceString("'", rwavename, "")
+	qwavename = ReplaceString("'", qwavename, "")
+	swavename = ReplaceString("'", swavename, "")
+	wave rwave =$rwavename
+	wave qwave=$qwavename
+	wave swave=$swavename
+	setdatafolder root:Packages:Irena_AnalUnifFit:		//do not contaminate users data folder, just store it in Unified Fit folder... 
+
+	//variable InitialselectedLevel=SelectedLevel//used to reset the panel at the end.  Just in case there is some interference.
+	NVAR SelectedQlevel=root:Packages:Irena_AnalUnifFit:SelectedQlevel//Unique to two phase model
+	NVAR SelectedBLevel=root:Packages:Irena_AnalUnifFit:SelectedBLevel//Unique to two phase model
+	variable LocSelBLevel, LocSelQLevel
+	if(stringmatch(SlectedBranchedLevels,"---")||numtype(SelectedQlevel)!=0||numtype(SelectedBLevel)!=0)
+		print "Levels not selected correctly. Check controls"
+		abort
+	elseif(stringmatch(SlectedBranchedLevels,"All"))	//we use values from level 1 but summ all invariants...
+		LocSelQLevel=OriginalLevels
+		LocSelBLevel=1
+	elseif(stringmatch(SlectedBranchedLevels,"Range"))	//we use values from level 1 but summ all invariants...
+		LocSelQLevel=SelectedQlevel
+		LocSelBLevel=SelectedBLevel
+	else
+		LocSelQLevel=SelectedLevel
+		LocSelBLevel=SelectedLevel
+	endif
+	//OK, now we have selected range of levels approprioately for controls... 
+	NVAR B=$("root:Packages:irena_UnifFit:Level"+num2istr(LocSelBLevel)+"B")
+	NVAR PorodSlope=$("root:Packages:irena_UnifFit:Level"+num2istr(LocSelBLevel)+"P")
+	NVAR RgselectedQLevel=$("root:Packages:irena_UnifFit:Level"+num2istr(LocSelQLevel)+"Rg")//Rg is only used for caculating the invariant.
+	NVAR G=$("root:Packages:irena_UnifFit:Level"+num2istr(LocSelQLevel)+"G")
+	SVAR Model=root:Packages:Irena_AnalUnifFit:Model
+
+	TwoPhaseInvariantBetweenCursors=invariant*1e24						//must be used somewhere else
 	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
 	variable majchord=4*majorityphi/Sv
 	variable minchord=4* (1-majorityphi)/Sv
@@ -2962,7 +3066,7 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 		
 		Button KillInvWindow,pos={2,1},size={70,20},proc=IR2U_ButtonProc,title="Kill Window"	
 		ModifyGraph grid=2,tick=2,mirror=1,fStyle=1,fSize=15,font="Times"
-		SetAxis bottom 1e-5,maxqback
+		//SetAxis bottom 1e-5,maxqback
 		if(!UseCsrInv)//&&!UseUnifiedInv)
 			SetAxis/A
 		endif
@@ -2979,6 +3083,11 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 		doAlert 0, "Pick a level";abort
 	endif
 End
+
+//***********************************************************
+//***********************************************************
+//***********************************************************
+
 
 //***********************************************************
 //***********************************************************
@@ -3748,7 +3857,7 @@ print SampleBulkDensity
 		if ((P<=3.95 ||P>=4.05))
 			Doalert 0,"This method can be applied ONLY for P = 4 for high-q level"
 		endif
-		IR2U_CalculateInvariantbutton()//DWS 2017 eliminated argument (makegraph).  Always want plot.
+		IR2U_CalculateInvariantbutton()			//JIL removed plotting capabilities and moved to later in the code.
 		Qv=TwoPhaseInvariantbtnCursors//DWS 2017  Code eliminated here. 
 		InvariantUsed=Qv
 		//method 1 analysis, not calibrated data, valid low-q data (relative invariant valid)
@@ -3759,6 +3868,7 @@ print SampleBulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		PiBoverQ = SurfacePerVolume / (MajorityPhasePhi*MinorityPhasePhi)
+		IR2U_PlotCalcInvariantFnct()				//create the plot
 		//end of method 1 analysis...
 	elseif(stringmatch(Model,"TwoPhaseSys2"))	
 		if ((P<=3.95 ||P>=4.05))
@@ -3797,16 +3907,16 @@ print SampleBulkDensity
 					DensityMinorityPhase=densold+.1*(DensityMinorityPhase-densold)
 					phi =(SampleBulkDensity-DensityMajorityPhase)/(DensityMinorityPhase-DensityMajorityPhase)//phi is vol. Fraction of the dense phase.
 			while ((abs((DensityMinorityPhase-densold)/DensityMinorityPhase))>.00001)
-				MinorityPhasePhi= phi
-				MajorityPhasePhi=(1-phi)  
-
-				contrast = (DensityMinorityPhase * SLDDensityMinorityPhase-DensityMinorityPhase*SLDDensityMinorityPhase)^2	//DWS Corrected 11/25/2013
+			MinorityPhasePhi= phi
+			MajorityPhasePhi=(1-phi)  
+			contrast = (DensityMinorityPhase * SLDDensityMinorityPhase-DensityMinorityPhase*SLDDensityMinorityPhase)^2	//DWS Corrected 11/25/2013
 		endif
 		SurfacePerVolume=(1e-4*Pi*Bloc/Qv)*MajorityPhasePhi*MinorityPhasePhi   //m^2/cm^3 calculate from densities and Qp 
 		SurfacePerMass = SurfacePerVolume/SamplebulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		PiBoverQ = SurfacePerVolume / (MajorityPhasePhi*MinorityPhasePhi)
+		IR2U_PlotCalcInvariantFnct()				//create the plot
 	elseif(stringmatch(Model,"TwoPhaseSys4"))	
 		IR2U_CalculateInvariantbutton()//DWS 2017 eliminated argument (makegraph).  Always want plot.
 		Qv=TwoPhaseInvariantbtnCursors//DWS 2017  Code eliminated here. 
@@ -3826,6 +3936,7 @@ print SampleBulkDensity
 		MinorityCordLength = (4/SurfacePerVolume)*(MinorityPhasePhi)*10000
 		MajorityCordLength = (4/SurfacePerVolume)*(1-MinorityPhasePhi)*10000
 		PiBoverQ = SurfacePerVolume / (MajorityPhasePhi*MinorityPhasePhi)
+		IR2U_PlotCalcInvariantFnct()				//create the plot
 	elseif(stringmatch(Model,"TwoPhaseSys5"))//particulate analysis	, calculate Vp from I(0) and Qinv
 		IR2U_CalculateInvariantbutton()//DWS 2017 eliminated argument (makegraph).  Always want plot.
 		Qv=TwoPhaseInvariantbtnCursors//DWS 2017  Code eliminated here. 
@@ -3833,6 +3944,7 @@ print SampleBulkDensity
 		PartAnalVolumeOfParticle = (2 *Gloc*(pi^2))*(1-MinorityPhasePhi)/(Qv)
 		PartAnalParticleDensity = MinorityPhasePhi/PartAnalVolumeOfParticle
 		PartAnalRgFromVp = 1e8*sqrt(3/5)*(3*PartAnalVolumeOfParticle/(4*pi))^(1/3)
+		IR2U_PlotCalcInvariantFnct()				//create the plot
 	elseif(stringmatch(Model,"TwoPhaseSys6"))//particulate analysis, calcualate Vp from Rg and get numdens from I(0)/(Contrast*Vp^2)	
 		IR2U_CalculateInvariantbutton()//DWS 2017 eliminated argument (makegraph).  Always want plot.
 		Qv=TwoPhaseInvariantbtnCursors//DWS 2017  Code eliminated here. 
@@ -3843,6 +3955,7 @@ print SampleBulkDensity
 		SurfacePerVolume = 1e-4*Bloc/((Contrast)*2*pi)
 		MinorityPhasePhi =PartAnalParticleDensity*PartAnalVolumeOfParticle
 		MajorityPhasePhi = 1 - MinorityPhasePhi
+		IR2U_PlotCalcInvariantFnct()				//create the plot
 
 	ENDIF	
 	
@@ -3893,6 +4006,28 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 		UserName=IR2U_ReturnNoteStrValue("UserSampleName")
 		AnalysisComentsAndTime ="Analyzed using "+IR2U_ReturnNoteStrValue("UsersComment")
 	endif
+
+	NVAR SelectedLevel=root:Packages:Irena_AnalUnifFit:SelectedLevel//level number selected for analysis generic to other models.
+	SVAR SlectedBranchedLevels = root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
+	NVAR OriginalLevels=root:Packages:Irena_UnifFit:NumberOfLevels
+	//variable InitialselectedLevel=SelectedLevel//used to reset the panel at the end.  Just in case there is some interference.
+	NVAR SelectedQlevel=root:Packages:Irena_AnalUnifFit:SelectedQlevel//Unique to two phase model
+	NVAR SelectedBLevel=root:Packages:Irena_AnalUnifFit:SelectedBLevel//Unique to two phase model
+	variable LocSelBLevel, LocSelQLevel
+	if(stringmatch(SlectedBranchedLevels,"---")||numtype(SelectedQlevel)!=0||numtype(SelectedBLevel)!=0)
+		print "Levels not selected correctly. Check controls"
+		abort
+	elseif(stringmatch(SlectedBranchedLevels,"All"))	//we use values from level 1 but summ all invariants...
+		LocSelQLevel=OriginalLevels
+		LocSelBLevel=1
+	elseif(stringmatch(SlectedBranchedLevels,"Range"))	//we use values from level 1 but summ all invariants...
+		LocSelQLevel=SelectedQlevel
+		LocSelBLevel=SelectedBLevel
+	else
+		LocSelQLevel=SelectedLevel
+		LocSelBLevel=SelectedLevel
+	endif
+	//OK, now we have selected range of levels approprioately for controls... 
 
 
 	NVAR DensityMinorityPhase=root:Packages:Irena_AnalUnifFit:DensityMinorityPhase //need user input here... 
@@ -4184,6 +4319,8 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 		endif
 	endif
 	
+		LocSelQLevel=SelectedQlevel
+		LocSelBLevel=SelectedBLevel
 	
 	elseif((excel==1)&&(StringMatch(where, "graph" )==0))//***DWS
 		variable N=strlen(model)-1
@@ -4194,9 +4331,9 @@ Function IR2U_SaveTwoPhaseSysResults(where)
 		endif		
 		SVAR IntensityWaveName=root:Packages:Irena_UnifFit:IntensityWaveName
 		NVAR printlogbook=root:Packages:Irena_AnalUnifFit:printlogbook
-		TEXT="rWave\tModel\tLvL\tIrenaLvls\tUseCsrs\tB[cm-1A-4]\tQ[Cm-1A-3]\tpiB/Q[m2/cm3]\tMinDens[g/cm3]\tMajDens[g/cm3]\tSamDens[g/cm3]\tphimin\tSv[m2/cm3]\tSm[m2/g]\tMinChord[A]\tMajChord[A]"
+		TEXT="rWave\tModel\tStart\tEnd\tUseCsrs\tB[cm-1A-4]\tQ[Cm-1A-3]\tpiB/Q[m2/cm3]\tMinDens[g/cm3]\tMajDens[g/cm3]\tSamDens[g/cm3]\tphimin\tSv[m2/cm3]\tSm[m2/g]\tMinChord[A]\tMajChord[A]"
 		TEXT+="\t10^-10xSLmin[cm/g]\t10^-10xSLmaj[cm/g]"
-		string TEXT2=IntensityWaveName+"\t"+Mdl+"\t"+num2str(SL)+"\t"+num2str( LNumOfLevels) +"\t"+num2str(usecsrs)+"\t" +num2str(B*1e-28)+"\t"+num2str(Qv*1e-24)+"\t"+num2str(piBoverQ)
+		string TEXT2=IntensityWaveName+"\t"+Mdl+"\t"+num2str(LocSelBLevel)+"\t"+num2str( LocSelQLevel) +"\t"+num2str(usecsrs)+"\t" +num2str(B*1e-28)+"\t"+num2str(Qv*1e-24)+"\t"+num2str(piBoverQ)
 			TEXT2+="\t"+num2str(DensityMinorityPhase) +"\t"+   num2str(DensityMajorityPhase)+"\t"+num2str(SampleBulkDensity)+"\t"+num2str(MinorityPhasePhi)+"\t"+num2str(SurfacePerVolume)
 			TEXT2+="\t"+num2str(SurfacePerVolume/SamplebulkDensity)+"\t"+num2str(MinorityCordLength)+"\t"+num2str(MajorityCordLength)
 			TEXT2+="\t"+   num2str(SLDDensityMinorityPhase)   +"\t "+  num2str(SLDDensityMajorityPhase)

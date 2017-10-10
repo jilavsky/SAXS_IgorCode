@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.07
+#pragma version = 2.08
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.08 fixes to PorodsNOtebook logging requested by Dale
 //2.07 added Ardell distributions support
 //2.06 moved in this file some functions from retired Modeling I support - these are needed by other tools. 
 //2.05 added few missing window names which need to be killed when Kill all ..." is invoked. 
@@ -435,10 +436,10 @@ Function IR1_CreatePorodLogbook()//***DWS
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={180,252+1*8192,360+3*8192}, rulerDefaults={"Arial",10,0,(0,0,0)}
 	Notebook $nb newRuler=logbookRuler, justification=0, margins={0,0,1578}, spacing={0,0,0}, tabs={204+1*8192,258+1*8192,319+1*8192,388+1*8192,432+1*8192,503+1*8192,580+1*8192,665+1*8192,746+1*8192,839+1*8192,912+1*8192,980+1*8192,1035+1*8192,1097+1*8192,1167+1*8192,1268+1*8192,1377+1*8192,1476+1*8192}, rulerDefaults={"Arial",14,1,(0,0,0)}
 	Notebook $nb ruler=logbookRuler, fSize=10
-	Notebook $nb text="rWave\tMethod\tLvl\tIrenaLvls\tUseCsrs\tB[cm-1A-4]\tQv[Cm-1A-3 ]\tpiB/Q[m2/cm3]\tMinDens[g/cm3]\tMajDens[g/cm3]\tS"
+	Notebook $nb text="rWave\tMethod\tStart\tEnd\tUseCsrs\tB[cm-1A-4]\tQv[Cm-1A-3 ]\tpiB/Q[m2/cm3]\tMinDens[g/cm3]\tMajDens[g/cm3]\tS"
 	Notebook $nb text="amDens[g/cm3]\tphimin\tSv[m2/cm3]\tSm[m2/g]\tMinChord[A]\tMajChord[A]\t10^-10xSLmin[cm/g]\t10^-10xSLmaj[cm/g]\r"
 	Notebook $nb fSize=-1
-	Notebook $nb text="rWv\tMeth\tLvl\tLvls\tCsrs\tB\tQv\tpiBoQ\tMinDen\tMajDen\tSamDen\tphimin\tSv\tSm\tMinCh\tMajCh\tSLmin \tSLmaj\r"
+	Notebook $nb text="rWv\tMeth\tStart\tEnd\tCsrs\tB\tQv\tpiBoQ\tMinDen\tMajDen\tSamDen\tphimin\tSv\tSm\tMinCh\tMajCh\tSLmin \tSLmaj\r"
 	Notebook $nb text="\r"
 
 	
