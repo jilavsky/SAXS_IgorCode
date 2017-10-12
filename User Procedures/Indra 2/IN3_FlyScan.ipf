@@ -5,12 +5,14 @@
 
 Constant IN3_FlyImportVersionNumber=0.19
 Constant IN3_DeleteRawData=1
+Constant IN3_RemoveRangeChangeEffects=1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.05 added option to disable removing of raneg change transitional effects, constant IN3_RemoveRangeChangeEffects
 //1.04 removed spec file name as folder under USAXS, not needed with SAXS and WAXS not having it anyway. 
 //1.03 added UserSampleName to be used to avoid long file names limits...
 //1.02 fixed reading old data without UPDsize in the metadata
@@ -1098,9 +1100,13 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 			elseif(tmpampGain[iii]==tmpampGainReq[iii])	//got the requested range cahnge, from here we should have the gains set
 				EndRc = tmpmcsChangePnts[iii]
 					if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
-						GainWv[StartRc,EndRc] = nan	//while we were changing, set points to NaNs 
-						GainWv[EndRc+1,] = ampGain[iii]+1	//set rest fo teh measured points to the gain we set
-						IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])	//mask for time, if needed. 
+						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
+							GainWv[StartRc,EndRc] = nan	//while we were changing, set points to NaNs 
+						endif
+						GainWv[EndRc+1,] = ampGain[iii]+1	//set rest of the measured points to the gain we set
+						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
+							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])	//mask for time, if needed. 
+						endif
 					endif			
 			endif
 		endfor

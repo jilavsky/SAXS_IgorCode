@@ -1572,6 +1572,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 	SetVariable SizeDist_ErrorMessage, win=UnifiedEvaluationPanel,  labelBack=0
 	NVAR SelectedQlevel=root:Packages:Irena_AnalUnifFit:SelectedQlevel
 	NVAR SelectedBlevel=root:Packages:Irena_AnalUnifFit:SelectedBlevel
+	IR2U_ZeroStaleValues()
 
 	switch( pa.eventCode )
 		case 2: // mouse up
@@ -1598,7 +1599,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 				SelectedLevel = str2num(popStr[0,0])
 				SlectedBranchedLevels=popStr
 				IR2U_SetControlsInPanel()
-				//IR2U_RecalculateAppropriateVals()//DWS 2017
+				IR2U_RecalculateAppropriateVals()
 			endif
 			if(stringMatch(CtrlName,"SelectedQlevel"))
 				SelectedQlevel = str2num(popStr[0,0])
@@ -1608,7 +1609,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 					abort
 				endif
 				//IR2U_SetControlsInPanel()
-				//IR2U_RecalculateAppropriateVals()//DWS 2017
+				IR2U_RecalculateAppropriateVals()
 			endif
 			if(stringMatch(CtrlName,"SelectedBlevel"))
 				SelectedBlevel = str2num(popStr[0,0])
@@ -1618,7 +1619,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 					abort
 				endif
 				//IR2U_SetControlsInPanel()
-				//IR2U_RecalculateAppropriateVals()//DWS 2017
+				IR2U_RecalculateAppropriateVals()
 			endif
 			
 			if(stringMatch(CtrlName,"IntensityDataName")||stringMatch(CtrlName,"SelectDataFolder"))
@@ -1659,6 +1660,25 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 	return 0
 End
 //***********************************************************
+Function IR2U_ZeroStaleValues()		//zeroes stale results when user makes any change in controls
+
+	NVAR MinorityPhasePhi=root:Packages:Irena_AnalUnifFit:MinorityPhasePhi //calculate here. 
+	NVAR MajorityPhasePhi=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi //calculate here. 
+	NVAR PiBoverQ=root:Packages:Irena_AnalUnifFit:PiBoverQ //calculate here... 
+	NVAR MinorityCordLength=root:Packages:Irena_AnalUnifFit:MinorityCordLength //calcualte here... 
+	NVAR MajorityCordLength=root:Packages:Irena_AnalUnifFit:MajorityCordLength //calcualte here... 
+	NVAR SurfacePerVolume=root:Packages:Irena_AnalUnifFit:SurfacePerVolume //calcualte here... 
+	NVAR SurfacePerMass = root:Packages:Irena_AnalUnifFit:SurfacePerMass
+
+		MinorityPhasePhi =0
+		MajorityPhasePhi  = 0
+		SurfacePerVolume=0
+		SurfacePerMass = 0
+		MinorityCordLength = 0
+		MajorityCordLength = 0
+		PiBoverQ = 0
+
+end
 //***********************************************************
 //***********************************************************
 
@@ -2528,7 +2548,7 @@ Function IR2U_RecalculateAppropriateVals()
 	elseif(stringmatch(Model,"Branched mass fractal"))	
 		IR2U_CalculateBranchedMassFr()
 	elseif(stringmatch(Model,"TwoPhaseSys*"))	
-		IR2U_TwoPhaseModelCalc()
+		//IR2U_TwoPhaseModelCalc()				//this needs lot more controls to be set to be useful. 
 	ENDIF
 	
 end
@@ -3070,7 +3090,7 @@ Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny
 		if(!UseCsrInv)//&&!UseUnifiedInv)
 			SetAxis/A
 		endif
-		print "lmin = "+num2str(minchord*1e4)+" Å"
+		//print "lmin = "+num2str(minchord*1e4)+" Å"
 		ModifyGraph log=1
 		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
 		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
@@ -3768,7 +3788,7 @@ Function IR2U_TwoPhaseModelCalc()
 	NVAR DensityMinorityPhase=root:Packages:Irena_AnalUnifFit:DensityMinorityPhase //need user input here... 
 	NVAR DensityMajorityPhase=root:Packages:Irena_AnalUnifFit:DensityMajorityPhase //need user input here... 
 	NVAR SampleBulkDensity=root:Packages:Irena_AnalUnifFit:SampleBulkDensity //need user input here... 
-print SampleBulkDensity
+	//print SampleBulkDensity
 	NVAR SLDDensityMinorityPhase=root:Packages:Irena_AnalUnifFit:SLDDensityMinorityPhase //need user input here... 
 	NVAR SLDDensityMajorityPhase=root:Packages:Irena_AnalUnifFit:SLDDensityMajorityPhase //need user input here... 
 	NVAR MinorityPhasePhi=root:Packages:Irena_AnalUnifFit:MinorityPhasePhi //calculate here. 
@@ -3855,7 +3875,8 @@ print SampleBulkDensity
 	
 	if(stringmatch(Model,"TwoPhaseSys1"))	
 		if ((P<=3.95 ||P>=4.05))
-			Doalert 0,"This method can be applied ONLY for P = 4 for high-q level"
+			 setDataFolder OldDf
+			Abort "This method can be applied ONLY for P = 4 for high-q level"
 		endif
 		IR2U_CalculateInvariantbutton()			//JIL removed plotting capabilities and moved to later in the code.
 		Qv=TwoPhaseInvariantbtnCursors//DWS 2017  Code eliminated here. 
@@ -3872,7 +3893,8 @@ print SampleBulkDensity
 		//end of method 1 analysis...
 	elseif(stringmatch(Model,"TwoPhaseSys2"))	
 		if ((P<=3.95 ||P>=4.05))
-			Doalert 0,"This method can be applied ONLY for P = 4 for high-q level"
+			 setDataFolder OldDf
+			Abort "This method can be applied ONLY for P = 4 for high-q level"
 		endif
 		//method 2 analysis, calibrated data, not valid  data (relative invariant invalid), need contrast to get anything... 
 		MinorityPhasePhi =(SampleBulkDensity-DensityMajorityPhase)/(DensityMinorityPhase-DensityMajorityPhase)//Phi referes to minority phase phi(solid)
@@ -3885,7 +3907,8 @@ print SampleBulkDensity
 		//end of method 2
 	elseif(stringmatch(Model,"TwoPhaseSys3"))	
 		if ((P<=3.95 ||P>=4.05))
-			Doalert 0,"This method can be applied ONLY for P = 4 for high-q level"
+			 setDataFolder OldDf
+			 Abort "This method can be applied ONLY for P = 4 for high-q level"
 		endif
 		IR2U_CalculateInvariantbutton()//DWS 2017 eliminated argument (makegraph).  Always want plot.
 		Qv=TwoPhaseInvariantbtnCursors//DWS 2017  Code eliminated here. 
