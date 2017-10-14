@@ -1989,11 +1989,8 @@ Function NI1A_DisplayOneDataSet()
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	//Kill top graph with Imge if it exists..
-	DoWIndow CCDImageToConvertFig
-	if(V_Flag)
-		DoWIndow/K CCDImageToConvertFig
-	endif
-	//now kill the Calibrated wave, since this process will not create one
+	KillWIndow/Z CCDImageToConvertFig
+ 	//now kill the Calibrated wave, since this process will not create one
 	Wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
 	if(WaveExists(Calibrated2DDataSet))
 		KillWaves /Z Calibrated2DDataSet
@@ -2092,12 +2089,8 @@ Function NI1A_DisplayLoadedFile()
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
-	DoWindow CCDImageToConvertFig
-	if(V_Flag)
-		DoWindow/K CCDImageToConvertFig	
-	endif
-
-	wave basewv=root:Packages:Convert2Dto1D:CCDImageToConvert
+	KillWIndow/Z CCDImageToConvertFig
+ 	wave basewv=root:Packages:Convert2Dto1D:CCDImageToConvert
 	wave/Z waveToDisplayDis = $("root:Packages:Convert2Dto1D:CCDImageToConvert_dis")
 //	if (!WaveExists(waveToDisplayDis))
 //		MatrixOP/O CCDImageToConvert_dis, baseWv
@@ -2220,11 +2213,8 @@ Function NI1A_LoadManyDataSetsForConv()
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
 	//Kill window
-	DoWIndow CCDImageToConvertFig
-	if(V_Flag)
-		DoWIndow/K CCDImageToConvertFig
-	endif
-	//now kill the Calibrated wave, since this process will create one
+	KillWIndow/Z CCDImageToConvertFig
+ 	//now kill the Calibrated wave, since this process will create one
 	Wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
 	if(WaveExists(Calibrated2DDataSet))
 		KillWaves /Z Calibrated2DDataSet
@@ -2473,11 +2463,8 @@ Function NI1A_AveLoadNDataSetsForConv()
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
 	//Kill window
-	DoWIndow CCDImageToConvertFig
-	if(V_Flag)
-		DoWIndow/K CCDImageToConvertFig
-	endif
-	//now kill the Calibrated wave, since this process will create one
+	KillWIndow/Z CCDImageToConvertFig
+ 	//now kill the Calibrated wave, since this process will create one
 	Wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
 	if(WaveExists(Calibrated2DDataSet))
 		KillWaves /Z Calibrated2DDataSet
@@ -2505,11 +2492,8 @@ Function NI1A_AveLoadNDataSetsForConv()
 	string DataWaveNameDis="CCDImageToConvert_dis"	//name of copy (lin or log int) for display
 	Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(WaveExists(CCDImageToConvert))
-		DoWindow CCDImageToConvertFig
-		if(V_Flag)
-			DoWindow/K CCDImageToConvertFig
-		endif
-		KillWaves CCDImageToConvert
+		KillWIndow/Z CCDImageToConvertFig
+ 		KillWaves CCDImageToConvert
 	endif
 		NVAR SampleThickness=root:Packages:Convert2Dto1D:SampleThickness
 		NVAR SampleTransmission=root:Packages:Convert2Dto1D:SampleTransmission
@@ -2616,11 +2600,8 @@ Function NI1A_AveLoadManyDataSetsForConv()
 	setDataFolder root:Packages:Convert2Dto1D
 	//setup controls and display settings...
 	//Kill window
-	DoWIndow CCDImageToConvertFig
-	if(V_Flag)
-		DoWIndow/K CCDImageToConvertFig
-	endif
-	//now kill the Calibrated wave, since this process will create one
+	KillWIndow/Z CCDImageToConvertFig
+ 	//now kill the Calibrated wave, since this process will create one
 	Wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
 	if(WaveExists(Calibrated2DDataSet))
 		KillWaves /Z Calibrated2DDataSet
@@ -2647,11 +2628,8 @@ Function NI1A_AveLoadManyDataSetsForConv()
 	string DataWaveNameDis="CCDImageToConvert_dis"	//name of copy (lin or log int) for display
 	Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(WaveExists(CCDImageToConvert))
-		DoWindow CCDImageToConvertFig
-		if(V_Flag)
-			DoWindow/K CCDImageToConvertFig
-		endif
-		KillWaves CCDImageToConvert
+		KillWIndow/Z CCDImageToConvertFig
+ 		KillWaves CCDImageToConvert
 	endif
 		NVAR SampleThickness=root:Packages:Convert2Dto1D:SampleThickness
 		NVAR SampleTransmission=root:Packages:Convert2Dto1D:SampleTransmission
@@ -3097,11 +3075,8 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 		setDataFolder OldDf
 		abort
 	endif
-	DoWindow EMptyOrDarkImage
-	if(V_Flag)
-		DoWindow/K EMptyOrDarkImage
-	endif
-	SVAR CurrentEmptyName
+	KillWIndow/Z EMptyOrDarkImage
+ 	SVAR CurrentEmptyName
 	SVAR CurrentDarkFieldName
 	SVAR CurrentPixSensFile
 	string FileNameToLoad=ListOf2DEmptyData[selection]
@@ -4973,11 +4948,8 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			Use2DdataName=0
 			NI1A_CreateHelpForNameFunction()
 		else
-			DoWIndow NI1A_UseFnctToCreateName
-			if(V_Flag)
-				DoWIndow/K NI1A_UseFnctToCreateName
-			endif
-		endif
+			KillWIndow/Z NI1A_UseFnctToCreateName
+ 		endif
 		Setvariable OutputFileName, disable=(Use2DdataName ||UseSampleNameFnct), win=NI1A_Convert2Dto1DPanel
 		Setvariable SampleNameFnct, disable=!UseSampleNameFnct, win=NI1A_Convert2Dto1DPanel
 		CheckBox TrimFrontOfName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
@@ -4987,11 +4959,8 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	if(StringMatch("Use2DdataName",ctrlName))
 		if(checked)
 			UseSampleNameFnct=0
-			DoWIndow NI1A_UseFnctToCreateName
-			if(V_Flag)
-				DoWIndow/K NI1A_UseFnctToCreateName
-			endif
-		endif
+			KillWIndow/Z NI1A_UseFnctToCreateName
+ 		endif
 		Setvariable OutputFileName, disable=(Use2DdataName ||UseSampleNameFnct), win=NI1A_Convert2Dto1DPanel
 		Setvariable SampleNameFnct, disable=!UseSampleNameFnct, win=NI1A_Convert2Dto1DPanel
 		CheckBox TrimFrontOfName,disable=!(Use2DdataName), win=NI1A_Convert2Dto1DPanel
@@ -5455,11 +5424,8 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 				Execute("NI1A_PolCorPanel()")
 			endif
 		else
-			DoWindow NI1A_PolCorPanel
-			if(V_Flag)
-				DoWIndow/K NI1A_PolCorPanel
-			endif
-		endif		
+			KillWIndow/Z NI1A_PolCorPanel
+ 		endif		
 	endif
 
 	setDataFolder OldDf
@@ -7533,7 +7499,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SetVariable LineProf_EllipseAR,disable=(!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
 		SetVariable LineProf_GIIncAngle,disable=((!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal Line")&&!stringMatch(KnWCT,"GI_Vertical Line"))), win=NI1A_Convert2Dto1DPanel
 		checkbox LineProf_UseBothHalfs,disable=(stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel	
-		DoWIndow/K/Z GISAXSOptionsPanel
+		KillWIndow/Z GISAXSOptionsPanel
 		if(stringMatch(LineProf_CurveType,"GI_*"))
 			NI1_GISAXSOptions() 
 		endif

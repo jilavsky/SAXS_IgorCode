@@ -12,7 +12,9 @@ Added restore of prior size of panels when user closes and reopens a tool. Data 
 Merge two data sets - added option of sorting qrs names by xyz_string, needed for Nika. Added SMR and DSM data to USAXS.
 Modeling - added calculation of Rg for size distributions. Requested by Dale Schaefer. 
 Unified fit - changes to two phase systems requested by Dale. Added ability to handle multiple levels at the same time where possible… 
-Data merging tool - modified Optimzie code to prevent failures, hopefully improved fitting capabilities. 
+Data merging tool - modified Optimize code to prevent failures, hopefully improved fitting capabilities. 
+WAXS - Added option to import free AMS diffraction data (http://rruff.geo.arizona.edu/AMS/result.php) - this database contains d, hkl, intensities for minerals. 
+All packages - internal changes and improvements resulting in less and cleaner code. 
 
 
 2.64, 5/1/2017

@@ -285,11 +285,8 @@ Function IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	SetDataFolder root:Packages:StructureFactorCalc
 	SVAR ListOfStructureFactors=root:Packages:StructureFactorCalc:ListOfStructureFactors
 	
-	DoWindow StructureFactorControlScreen
-	if(V_Flag)
-		DoWindow/K StructureFactorControlScreen
-	endif
-		
+	KillWIndow/Z StructureFactorControlScreen
+ 		
 	SVAR/Z CurrentSF=$(SFStr)
 	if(!SVAR_Exists(CurrentSF))
 		Abort "Error in call to SF control panel. Current SF string does not exist. This is bug!"

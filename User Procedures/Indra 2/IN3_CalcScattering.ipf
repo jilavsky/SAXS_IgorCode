@@ -40,7 +40,7 @@ end
 
 
 Function IN3M_MainPanel()
-	dowindow/K IN3MMainPanel
+	KillWIndow/Z IN3MMainPanel
 	NewPanel /K=1/W=(50,43.25,430.75,570) as "Calculate Scattering From Model"
 	DoWindow/C IN3MMainPanel 
 	SetDrawLayer UserBack

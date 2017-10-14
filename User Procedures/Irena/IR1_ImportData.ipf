@@ -67,7 +67,7 @@ Function IR1I_ImportSASASCIIDataMain()
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import Other ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
 		if(V_flag==1)
-			DoWIndow/K IR1I_ImportOtherASCIIData
+			KillWIndow/Z IR1I_ImportOtherASCIIData
 		else
 			abort
 		endif
@@ -76,15 +76,12 @@ Function IR1I_ImportSASASCIIDataMain()
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
 		if(V_flag==1)
-			DoWIndow/K IR1I_ImportNexusCanSASData
+			KillWIndow/Z IR1I_ImportNexusCanSASData
 		else
 			abort
 		endif
 	endif
-	DoWindow IR1I_ImportData
-	if(V_Flag)
-		DoWIndow/K IR1I_ImportData
-	endif
+	KillWIndow/Z IR1I_ImportData
 	IR1I_InitializeImportData()
 	Execute("IR1I_ImportSASASCIIData()")
 	ING2_AddScrollControl()
@@ -1318,10 +1315,7 @@ Function IR1I_TestImportNotebook()
 	
 	
 	//LoadWave/Q/A/G/P=ImportDataPath  selectedfile
-	DOwindow FilePreview
-	if (V_Flag)
-		DoWindow/K FilePreview
-	endif
+	KillWIndow/Z FilePreview
 	OpenNotebook /K=1 /N=FilePreview /P=ImportDataPath /R /V=1 selectedfile
 	MoveWindow /W=FilePreview 450, 5, 1000, 400	
 	AutoPositionWindow/M=0 /R=$(TopPanel) FilePreview
@@ -1385,10 +1379,7 @@ Function IR1I_TestPlotData()
 	Wave/Z TempQvector
 	Wave/Z TempError
 	Wave/Z TempQError
-	DOwindow FilePlotPreview
-	if (V_Flag)
-		DoWindow/K FilePlotPreview
-	endif
+	KillWIndow/Z FilePlotPreview
 	if(WaveExists(TempIntensity) && WaveExists(TempQvector))
 		Display /K=1/N=FilePlotPreview TempIntensity vs TempQvector as "Preview of the data"
 		MoveWindow /W=FilePlotPreview 450, 5, 1000, 400	
@@ -2283,7 +2274,7 @@ Function IR1I_ImportOtherASCIIMain()
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
 		if(V_flag==1)
-			DoWIndow/K IR1I_ImportData
+			KillWIndow/Z IR1I_ImportData
 		else
 			abort
 		endif
@@ -2292,15 +2283,12 @@ Function IR1I_ImportOtherASCIIMain()
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
 		if(V_flag==1)
-			DoWIndow/K IR1I_ImportNexusCanSASData
+			KillWIndow/Z IR1I_ImportNexusCanSASData
 		else
 			abort
 		endif
 	endif
-	DoWindow IR1I_ImportOtherASCIIData
-	if(V_Flag)
-		DoWIndow/K IR1I_ImportOtherASCIIData
-	endif
+	KillWIndow/Z IR1I_ImportOtherASCIIData
 	IR1I_InitializeImportData()
 	IR1I_ImportOtherASCIIDataFnct()
 	ING2_AddScrollControl()
@@ -2920,7 +2908,7 @@ Function IR1I_ImportNexusCanSASMain()
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import SAS ASCII data cannot be open while using this tool, close (Yes) or abort (no)?"
 		if(V_flag==1)
-			DoWIndow/K IR1I_ImportData
+			KillWIndow/Z IR1I_ImportData
 		else
 			abort
 		endif
@@ -2929,15 +2917,12 @@ Function IR1I_ImportNexusCanSASMain()
 	if(V_Flag)
 		DoALert/T="Window conflict notice" 1, "Import Nexus data cannot be open while using this tool, close (Yes) or abort (no)?"
 		if(V_flag==1)
-			DoWIndow/K IR1I_ImportOtherASCIIData
+			KillWIndow/Z IR1I_ImportOtherASCIIData
 		else
 			abort
 		endif
 	endif
-	DoWindow IR1I_ImportOtherASCIIData
-	if(V_Flag)
-		DoWIndow/K IR1I_ImportOtherASCIIData
-	endif
+	KillWIndow/Z IR1I_ImportOtherASCIIData
 	IR1I_InitializeImportData()
 	IR1I_ImportNexusDataFnct()
 	ING2_AddScrollControl()

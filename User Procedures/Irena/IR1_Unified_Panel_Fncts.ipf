@@ -1418,21 +1418,8 @@ Function IR1A_GraphMeasuredData(Package)
 	
 	
 	if (cmpstr(Package,"Unified")==0)		//called from unified
-		DoWindow IR1_LogLogPlotU
-		if (V_flag)
-			Dowindow/K IR1_LogLogPlotU
-		endif
-		Execute ("IR1_LogLogPlotU()")
-//	elseif (cmpstr(Package,"LSQF")==0)
-//		DoWindow IR1_LogLogPlotLSQF
-//		if (V_flag)
-//			cursorAposition=pcsr(A,"IR1_LogLogPlotLSQF")
-//			cursorBposition=pcsr(B,"IR1_LogLogPlotLSQF")
-//			Dowindow/K IR1_LogLogPlotLSQF
-//		endif
-//		Execute ("IR1_LogLogPlotLSQF()")
-//		cursor/P/W=IR1_LogLogPlotLSQF A, OriginalIntensity,cursorAposition
-//		cursor/P/W=IR1_LogLogPlotLSQF B, OriginalIntensity,cursorBposition
+		KillWIndow/Z IR1_LogLogPlotU
+ 		Execute ("IR1_LogLogPlotU()")
 	endif
 	
 	Duplicate/O $(DataFolderName+IntensityWaveName), OriginalIntQ4
@@ -1454,17 +1441,11 @@ Function IR1A_GraphMeasuredData(Package)
 	OriginalErrQ4=OriginalErrQ4*OriginalQ4
 
 	if (cmpstr(Package,"Unified")==0)		//called from unified
-		DoWindow IR1_IQ4_Q_PlotU
-		if (V_flag)
-			Dowindow/K IR1_IQ4_Q_PlotU
-		endif
+		KillWIndow/Z IR1_IQ4_Q_PlotU
 		Execute ("IR1_IQ4_Q_PlotU()")
 	elseif (cmpstr(Package,"LSQF")==0)
-		DoWindow IR1_IQ4_Q_PlotLSQF
-		if (V_flag)
-			Dowindow/K IR1_IQ4_Q_PlotLSQF
-		endif
-		Execute ("IR1_IQ4_Q_PlotLSQF()")
+		KillWIndow/Z IR1_IQ4_Q_PlotLSQF
+ 		Execute ("IR1_IQ4_Q_PlotLSQF()")
 	endif
 	setDataFolder oldDf
 end

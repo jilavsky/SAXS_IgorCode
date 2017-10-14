@@ -848,10 +848,7 @@ Function IR1_KillGraphsAndPanels()
 	string TempNm
 	For(i=0;i<ItemsInList(ListOfWindows);i+=1)
 		TempNm = stringFromList(i,ListOfWindows)
-		DoWindow $TempNm
-		if (V_Flag)
-			DoWindow/K $TempNm	
-		endif
+		KillWIndow/Z $TempNm
 	endfor
 end
 

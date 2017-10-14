@@ -151,15 +151,9 @@ Function IR1R_Sizes()
 
 	IN2G_CheckScreenSize("height",670)
 
-	DoWindow IR1R_SizesInputGraph
-	if (V_Flag)
-		DoWindow/K IR1R_SizesInputGraph	
-	endif
-	DoWindow IR1R_SizesInputPanel
-	if (V_Flag)
-		DoWindow/K IR1R_SizesInputPanel	
-	endif
-	IR1R_InitializeSizes()	
+	KillWIndow/Z IR1R_SizesInputGraph
+	KillWIndow/Z IR1R_SizesInputPanel
+ 	IR1R_InitializeSizes()	
 	IR1T_InitFormFactors()
 //	IR1_KillGraphsAndPanels()
 	Execute("IR1R_SizesInputPanel()")				//this panel
@@ -246,11 +240,8 @@ Function IR1R_FixSetVarsInPanel()
 			SetVariable CoreShellShellRho,disable=0,win=IR1R_SizesInputPanel
 			SetVariable CoreShellSolvntRho,disable=0,win=IR1R_SizesInputPanel
 		elseif(cmpstr(ShapeType,"User")==0)	
-			DoWindow IR1R_SizesUserFFInputPanel
-			if(V_Flag)
-				DoWindow/K IR1R_SizesUserFFInputPanel
-			endif
-			Execute("IR1R_SizesUserFFInputPanel()")
+			KillWIndow/Z IR1R_SizesUserFFInputPanel
+ 			Execute("IR1R_SizesUserFFInputPanel()")
 		else
 			SetVariable AspectRatio,disable=0,win=IR1R_SizesInputPanel, title="Aspect Ratio ", help={"Aspect ratio for spheroids and other particles with AR"}
 		endif
@@ -1751,11 +1742,6 @@ static Function IR1R_CalcIntgSpheroidFFPoints(Qvalue,radius,AR)		//we have to in
 	//found on 3/22/2002, which caused wrong results with larger AR...
 	variable result= area(IntgWave, 0,1)
 	KillWaves/Z IntgWave
-//	Display IntgWave
-//	ModifyGraph log(left)=1
-//	DoUpdate
-//	sleep/s 0.5
-//	DoWindow/K Graph0
 	setDataFolder OldDf
 	return result
 end
@@ -2962,13 +2948,8 @@ Function IR1R_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SetVariable TubeWallThickness,disable=1,win=IR1R_SizesInputPanel
 		SetVariable AspectRatio,disable=1	,win=IR1R_SizesInputPanel
 		SetVariable ScatteringContrast,disable=0	,win=IR1R_SizesInputPanel
-		DoWindow IR1R_SizesUserFFInputPanel
-		if(V_Flag)
-			DoWindow/K IR1R_SizesUserFFInputPanel
-		endif
-
-
-		if (cmpstr(popstr,"Fractal Aggregate")==0)
+		KillWIndow/Z IR1R_SizesUserFFInputPanel
+ 		if (cmpstr(popstr,"Fractal Aggregate")==0)
 			SetVariable FractalRadiusOfPriPart,disable=0,win=IR1R_SizesInputPanel
 			SetVariable FractalDimension,disable=0,win=IR1R_SizesInputPanel
 		elseif(cmpstr(popstr,"Cylinder")==0)	
@@ -2997,11 +2978,8 @@ Function IR1R_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 			SetVariable CoreShellShellRho,disable=0,win=IR1R_SizesInputPanel
 			SetVariable CoreShellSolvntRho,disable=0,win=IR1R_SizesInputPanel
 		elseif(cmpstr(popstr,"User")==0)	
-			DoWindow IR1R_SizesUserFFInputPanel
-			if(V_Flag)
-				DoWindow/K IR1R_SizesUserFFInputPanel
-			endif
-			Execute("IR1R_SizesUserFFInputPanel()")
+			KillWIndow/Z IR1R_SizesUserFFInputPanel
+	 		Execute("IR1R_SizesUserFFInputPanel()")
 		else
 			SetVariable AspectRatio,disable=0,win=IR1R_SizesInputPanel, title="Aspect Ratio ", help={"Aspect ratio for spheroids and other particles with AR"}
 		endif
@@ -3015,162 +2993,6 @@ Function IR1R_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR Dtf=root:Packages:Sizes:DataFolderName
 		NVAR UseSlitSmearedData=root:Packages:Sizes:UseSlitSmearedData
 	
-//	if(cmpstr(ctrlName,"SelectFolder")==0)
-//		//here goes what happens when user selects the folder...
-//		Dtf=popStr
-//		PopupMenu SelectIntensity mode=1
-//		PopupMenu SelectQvector mode=1
-//		PopupMenu SelectError mode=1
-//		if (UseIndra2Data)
-//			if(UseSlitSmearedData)
-//				if(stringmatch(IR1R_ListOfWaves("SMR_Int"), "*M_SMR_Int*") &&stringmatch(IR1R_ListOfWaves("SMR_Qvec"), "*M_SMR_Qvec*")  &&stringmatch(IR1R_ListOfWaves("SMR_Error"), "*M_SMR_Error*") )			
-//					IntDf="M_SMR_Int"
-//					QDf="M_SMR_Qvec"
-//					EDf="M_SMR_Error"
-//					PopupMenu SelectIntensity value="M_SMR_Int;SMR_Int"
-//					PopupMenu SelectQvector value="M_SMR_Qvec;SMR_Qvec"
-//					PopupMenu SelectError value="M_SMR_Error;SMR_Error"
-//				else
-//					if(stringmatch(IR1R_ListOfWaves("SMR_Int"), "*SMR_Int*") &&stringmatch(IR1R_ListOfWaves("SMR_Qvec"), "*SMR_Qvec*")  &&stringmatch(IR1R_ListOfWaves("SMR_Error"), "*SMR_Error*") )			
-//						IntDf="SMR_Int"
-//						QDf="SMR_Qvec"
-//						EDf="SMR_Error"
-//						PopupMenu SelectIntensity value="SMR_Int"
-//						PopupMenu SelectQvector value="SMR_Qvec"
-//						PopupMenu SelectError value="SMR_Error"
-//					endif
-//				endif
-//			else
-//				if(stringmatch(IR1R_ListOfWaves("DSM_Int"), "*M_BKG_Int*") &&stringmatch(IR1R_ListOfWaves("DSM_Qvec"), "*M_BKG_Qvec*")  &&stringmatch(IR1R_ListOfWaves("DSM_Error"), "*M_BKG_Error*") )			
-//					IntDf="M_BKG_Int"
-//					QDf="M_BKG_Qvec"
-//					EDf="M_BKG_Error"
-//					PopupMenu SelectIntensity value="M_BKG_Int;M_DSM_Int;DSM_Int"
-//					PopupMenu SelectQvector value="M_BKG_Qvec;M_DSM_Qvec;DSM_Qvec"
-//					PopupMenu SelectError value="M_BKG_Error;M_DSM_Error;DCM_Error"
-//				elseif(stringmatch(IR1R_ListOfWaves("DSM_Int"), "*BKG_Int*") &&stringmatch(IR1R_ListOfWaves("DSM_Qvec"), "*BKG_Qvec*")  &&stringmatch(IR1R_ListOfWaves("DSM_Error"), "*BKG_Error*") )			
-//					IntDf="BKG_Int"
-//					QDf="BKG_Qvec"
-//					EDf="BKG_Error"
-//					PopupMenu SelectIntensity value="BKG_Int;DSM_Int"
-//					PopupMenu SelectQvector value="BKG_Qvec;DSM_Qvec"
-//					PopupMenu SelectError value="BKG_Error;DCM_Error"
-//				elseif(stringmatch(IR1R_ListOfWaves("DSM_Int"), "*M_DSM_Int*") &&stringmatch(IR1R_ListOfWaves("DSM_Qvec"), "*M_DSM_Qvec*")  &&stringmatch(IR1R_ListOfWaves("DSM_Error"), "*M_DSM_Error*") )			
-//					IntDf="M_DSM_Int"
-//					QDf="M_DSM_Qvec"
-//					EDf="M_DSM_Error"
-//					PopupMenu SelectIntensity value="M_DSM_Int;DSM_Int"
-//					PopupMenu SelectQvector value="M_DSM_Qvec;DSM_Qvec"
-//					PopupMenu SelectError value="M_DSM_Error;DCM_Error"
-//				else
-//					if(!stringmatch(IR1R_ListOfWaves("DSM_Int"), "*M_DSM_Int*") &&!stringmatch(IR1R_ListOfWaves("DSM_Qvec"), "*M_DSM_Qvec*")  &&!stringmatch(IR1R_ListOfWaves("DSM_Error"), "*M_DSM_Error*") )			
-//						IntDf="DSM_Int"
-//						QDf="DSM_Qvec"
-//						EDf="DSM_Error"
-//						PopupMenu SelectIntensity value="DSM_Int"
-//						PopupMenu SelectQvector value="DSM_Qvec"
-//						PopupMenu SelectError value="DSM_Error"
-//					endif
-//				endif
-//			
-//			endif
-//		else
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu SelectIntensity value="---"
-//			PopupMenu SelectQvector  value="---"
-//			PopupMenu SelectError  value="---"
-//		endif
-//		if(UseQRSdata)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu SelectIntensity  value="---;"+IR1R_ListOfWaves("DSM_Int")
-//			PopupMenu SelectQvector  value="---;"+IR1R_ListOfWaves("DSM_Qvec")
-//			PopupMenu SelectError  value="---;"+IR1R_ListOfWaves("DSM_Error")
-//		endif
-//		if(!UseQRSdata && !UseIndra2Data)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu SelectIntensity  value="---;"+IR1R_ListOfWaves("DSM_Int")
-//			PopupMenu SelectQvector  value="---;"+IR1R_ListOfWaves("DSM_Qvec")
-//			PopupMenu SelectError  value="---;"+IR1R_ListOfWaves("DSM_Error")
-//		endif
-//		if (cmpstr(popStr,"---")==0)
-//			IntDf=""
-//			QDf=""
-//			EDf=""
-//			PopupMenu SelectIntensity  value="---"
-//			PopupMenu SelectQvector  value="---"
-//			PopupMenu SelectError  value="---"
-//		endif
-//
-//
-//		DoWIndow IR1R_SizesInputGraph
-//		if (V_Flag)
-//			DoWindow/K IR1R_SizesInputGraph
-//		endif
-//	endif
-//	
-//	
-//	if(cmpstr(ctrlName,"SelectIntensity")==0)
-//		if (cmpstr(popStr,"---")!=0)
-//			IntDf=popStr
-//			if (UseQRSData && strlen(QDf)==0 && strlen(EDf)==0)
-//				QDf="q"+popStr[1,inf]
-//				EDf="s"+popStr[1,inf]
-//				Execute ("PopupMenu SelectQvector mode=1, value=root:Packages:Sizes:OriginalQvectorWvName+\";---;\"+IR1R_ListOfWaves(\"DSM_Qvec\")")
-//				Execute ("PopupMenu SelectError mode=1, value=root:Packages:Sizes:OriginalErrorWvName+\";---;\"+IR1R_ListOfWaves(\"DSM_Error\")")
-//			endif
-//		else
-//			IntDf=""		
-//		endif
-//
-//		DoWIndow IR1R_SizesInputGraph
-//		if (V_Flag)
-//			DoWindow/K IR1R_SizesInputGraph
-//		endif
-//	endif
-//	
-//	if(cmpstr(ctrlName,"SelectQvector")==0)
-//		if (cmpstr(popStr,"---")!=0)
-//			QDf=popStr	
-//			if (UseQRSData && strlen(IntDf)==0 && strlen(EDf)==0)
-//				IntDf="r"+popStr[1,inf]
-//				EDf="s"+popStr[1,inf]
-//				Execute ("PopupMenu SelectIntensity mode=1, value=root:Packages:Sizes:OriginalIntensityWvName+\";---;\"+IR1R_ListOfWaves(\"DSM_Int\")")
-//				Execute ("PopupMenu SelectError mode=1, value=root:Packages:Sizes:OriginalErrorWvName+\";---;\"+IR1R_ListOfWaves(\"DSM_Error\")")
-//			endif
-//		else
-//			QDf=""		
-//		endif
-//
-//		DoWIndow IR1R_SizesInputGraph
-//		if (V_Flag)
-//			DoWindow/K IR1R_SizesInputGraph
-//		endif
-//
-//		DoWIndow IR1R_SizesInputGraph
-//		if (V_Flag)
-//			DoWindow/K IR1R_SizesInputGraph
-//		endif
-//	endif
-//
-//	if(cmpstr(ctrlName,"SelectError")==0)
-//		if (cmpstr(popStr,"---")!=0)
-//			EDf=popStr	
-//			if (UseQRSData && strlen(IntDf)==0 && strlen(QDf)==0)
-//				IntDf="r"+popStr[1,inf]
-//				QDf="q"+popStr[1,inf]
-//				Execute ("PopupMenu SelectIntensity mode=1, value=root:Packages:Sizes:OriginalIntensityWvName+\";---;\"+IR1R_ListOfWaves(\"DSM_Int\")")
-//				Execute ("PopupMenu SelectQvector mode=1, value=root:Packages:Sizes:OriginalQvectorWvName+\";---;\"+IR1R_ListOfWaves(\"DSM_Qvec\")")
-//			endif
-//		else
-//			EDf=""		
-//		endif
-//	endif
 	DoWIndow/F IR1R_SizesInputPanel
 
 End
@@ -3185,11 +3007,8 @@ End
 
 Window Reg_FractalAgg_Input_Panel() 
 	Variable which
-	DoWindow Shape_Model_Input_Panel
-	if (V_Flag)
-			DoWindow/K Shape_Model_Input_Panel	
-	endif
-	PauseUpdate; Silent 1		// building window...
+	KillWIndow/Z Shape_Model_Input_Panel
+ 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(189,124.25,485.25,299.75) as "Fractal_Aggregate_Input_Panel"
 	DoWindow/C Shape_Model_Input_Panel
 	SetDrawLayer UserBack
@@ -3213,11 +3032,8 @@ endMacro
 Function IR1R_GraphIfAllowed(ctrlName)
 		string ctrlName
 
-		DoWIndow IR1R_SizesInputGraph
-		if (V_Flag)
-			DoWIndow/K IR1R_SizesInputGraph
-		endif
-		SVAR FldrNm=root:Packages:Sizes:DataFolderName
+		KillWIndow/Z IR1R_SizesInputGraph
+ 		SVAR FldrNm=root:Packages:Sizes:DataFolderName
 
 //		SVAR IntNm=root:Packages:Sizes:OriginalIntensityWvName
 //		SVAR QvcNm=root:Packages:Sizes:OriginalQvectorWvName
@@ -3845,11 +3661,8 @@ static  Function IR1R_SetupDiagnostics()
 
 	NVAR Diagnostics=root:Packages:Sizes:ShowDiagnostics
 	
-	DoWindow IR1R_RegDiagnosticsWindow
-	if (V_Flag)
-		DoWindow/K IR1R_RegDiagnosticsWindow
-	endif	
-	
+	KillWIndow/Z IR1R_RegDiagnosticsWindow
+ 	
 	if (Diagnostics)
 		//here we need to setup the waves and graphs as needed
 	//	Make/O/N=0 DiagLogAVal, DiagLogChisquareDivN, DiagSmoothness

@@ -48,27 +48,12 @@ Function IR2H_GelsMainFnct()
 	IN2G_CheckScreenSize("height",670)
 
 	IN2G_InitConfigMain()
-	DoWindow IR2H_SI_Q2_PlotGels
-	if (V_Flag)
-		DoWindow/K IR2H_SI_Q2_PlotGels	
-	endif
-	DoWindow IR2H_IQ4_Q_PlotGels
-	if (V_Flag)
-		DoWindow/K IR2H_IQ4_Q_PlotGels	
-	endif
-	DoWindow IR2H_LogLogPlotGels
-	if (V_Flag)
-		DoWindow/K IR2H_LogLogPlotGels	
-	endif
-	DoWindow IR2H_ResidualsPlot
-	if (V_Flag)
-		DoWindow/K IR2H_ResidualsPlot	
-	endif
-	DoWindow IR2H_ControlPanel
-	if (V_Flag)
-		DoWindow/K IR2H_ControlPanel
-	endif
-	IR2H_Initialize()
+	KillWIndow/Z IR2H_SI_Q2_PlotGels
+ 	KillWIndow/Z IR2H_IQ4_Q_PlotGels
+ 	KillWIndow/Z IR2H_LogLogPlotGels
+ 	KillWIndow/Z IR2H_ResidualsPlot
+ 	KillWIndow/Z IR2H_ControlPanel
+ 	IR2H_Initialize()
 	Execute ("IR2H_ControlPanel()")
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber,1)
@@ -1554,7 +1539,7 @@ static Function IR2H_GraphMeasuredData()
 		if (V_flag)
 			cursorAposition=pcsr(A,"IR2H_LogLogPlotGels")
 			cursorBposition=pcsr(B,"IR2H_LogLogPlotGels")
-			Dowindow/K IR2H_LogLogPlotGels
+			KillWIndow/Z IR2H_LogLogPlotGels
 		endif
 		Execute ("IR2H_LogLogPlotGels()")
 		cursor/P/W=IR2H_LogLogPlotGels A, OriginalIntensity,cursorAposition
@@ -1573,11 +1558,8 @@ static Function IR2H_GraphMeasuredData()
 	OriginalIntQ3=OriginalIntQ3*OriginalQ3
 	OriginalErrQ3=OriginalErrQ3*OriginalQ3
 
-		DoWindow IR2H_IQ4_Q_PlotGels
-		if (V_flag)
-			Dowindow/K IR2H_IQ4_Q_PlotGels
-		endif
-		Execute ("IR2H_IQ4_Q_PlotGels()")
+		KillWIndow/Z IR2H_IQ4_Q_PlotGels
+ 		Execute ("IR2H_IQ4_Q_PlotGels()")
 
 	Duplicate/O $(DataFolderName+IntensityWaveName), OriginalSqrtIntN1
 	Duplicate/O $(DataFolderName+QWavename), OriginalQ2
@@ -1589,11 +1571,8 @@ static Function IR2H_GraphMeasuredData()
 	OriginalSqrtIntN1=1/sqrt(OriginalSqrtIntN1)
 	OriginalSqrtErrN1=OriginalSqrtIntN1 * (OriginalError/OriginalIntensity)
 	
-		DoWindow IR2H_SI_Q2_PlotGels
-		if (V_flag)
-			Dowindow/K IR2H_SI_Q2_PlotGels
-		endif
-		Execute ("IR2H_SI_Q2_PlotGels()")
+		KillWIndow/Z IR2H_SI_Q2_PlotGels
+ 		Execute ("IR2H_SI_Q2_PlotGels()")
 	setDataFolder oldDf
 end
 //*****************************************************************************************************************

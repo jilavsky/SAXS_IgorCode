@@ -19,13 +19,13 @@ constant IR3LversionNumber = 1			//Data merging panel version number
 Function IR3L_SimpleFits()
 
 	IN2G_CheckScreenSize("width",1200)
-	IR3L_InitSimpleFits()
 	DoWIndow IR3L_SimpleFitsPanel
 	if(V_Flag)
 		DoWindow/F IR3L_SimpleFitsPanel
-		DoWindow/K IR3L_SimpleFitsPanel
-		Execute("IR3L_SimpleFitsPanel()")
+		//DoWindow/K IR3L_SimpleFitsPanel
+		//Execute("IR3L_SimpleFitsPanel()")
 	else
+		IR3L_InitSimpleFits()
 		Execute("IR3L_SimpleFitsPanel()")
 //		setWIndow IR3L_SimpleFitsPanel, hook(CursorMoved)=IR3D_PanelHookFunction
 	endif

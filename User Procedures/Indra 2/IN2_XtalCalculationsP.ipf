@@ -125,7 +125,7 @@ Window IN2Y_ChannelCutPosCalculations() : Panel
 	SetVariable xpos8Max,limits={-inf,inf,0},value= root:Packages:XtalCalc:Pos8refEnd
 	PopupMenu HKLSelection,pos={622,305},size={160,21},proc=IN2Y_PopProcedure,title="Si Xtal HKL  : "
 	PopupMenu HKLSelection,fSize=16
-	PopupMenu HKLSelection,mode=WhichListItem(root:Packages:XtalCalc:XtalHKL,"111;220;311;331;333;440;")+1,value= #"\"111;220;311;331;333;440;\""
+	PopupMenu HKLSelection,mode=WhichListItem(root:Packages:XtalCalc:XtalHKL,"111;220;311;331;333;440;660;")+1,value= #"\"111;220;311;331;333;440;660;\""
 	PopupMenu StageSelection,pos={288,284},size={174,21},proc=IN2Y_PopProcedure,title="Xtal Stage  : "
 	PopupMenu StageSelection,fSize=16
 	PopupMenu StageSelection,mode=WhichListItem(root:Packages:XtalCalc:XtalStage,"Astage;Mstage;Mstage2;")+1,value= #"\"Astage;Mstage;Mstage2;\""
@@ -275,6 +275,8 @@ Function IN2Y_CalculatePositions()
 			Dspacing=5.43102088/sqrt(27)		//333 d spacing for Si 	
 		elseif (cmpstr(XtalHKL,"440")==0) 		//
 			Dspacing=5.43102088/sqrt(32)		//440 d spacing for Si 	
+		elseif (cmpstr(XtalHKL,"660")==0) 		//
+			Dspacing=5.43102088/sqrt(72)		//660 d spacing for Si 	
 		elseif (cmpstr(XtalHKL,"111")==0) 		//
 			Dspacing=5.43102088/sqrt(3)		//111 d spacing for Si 
 		endif

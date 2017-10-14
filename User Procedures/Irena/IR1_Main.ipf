@@ -608,7 +608,7 @@ Function IR2_GetIrenaManuscript()
 		NewNotebook/F=0 /N=NewBatchFile
 		Notebook NewBatchFile, text=WhereIsManuscript//+"\r"
 		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-		DoWindow/K NewBatchFile
+		KillWIndow/Z NewBatchFile
 		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
 	endif
 
@@ -680,7 +680,7 @@ Function IR2_OpenIrenaManual()
 		NewNotebook/F=0 /N=NewBatchFile
 		Notebook NewBatchFile, text=whereIsManual//+"\r"
 		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-		DoWindow/K NewBatchFile
+		KillWIndow/Z NewBatchFile
 		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
 	endif
 end
@@ -724,11 +724,7 @@ End
 
 
 Function IR1_AboutPanel()
-	DoWindow About_Irena_1_Macros
-	if(V_Flag)
-		DoWindow/K About_Irena_1_Macros
-	endif
-
+	KillWIndow/Z About_Irena_1_Macros
 //	PauseUpdate; Silent 1		// building window...
 	NewPanel/K=1 /W=(173.25,50,580,460) as "About Irena Macros"
 	DoWindow/C About_Irena_1_Macros
@@ -783,40 +779,6 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//*****************************************************************************************************************
-//
-//Function IR1S_LSQF_StandardModelsMain()
-//
-//	IN2G_CheckScreenSize("height",670)
-//
-//	DoWindow IR1S_ControlPanel
-//	if (V_Flag)
-//		DoWindow/K IR1S_ControlPanel	
-//	endif
-//	DoWindow IR1_LogLogPlotLSQF
-//	if (V_Flag)
-//		DoWindow/K IR1_LogLogPlotLSQF	
-//	endif
-//	DoWindow IR1_IQ4_Q_PlotLSQF
-//	if (V_Flag)
-//		DoWindow/K IR1_IQ4_Q_PlotLSQF	
-//	endif
-//	DoWindow IR1_Model_Distributions
-//	if (V_Flag)
-//		DoWindow/K IR1_Model_Distributions	
-//	endif
-//	DoWindow IR1S_InterferencePanel
-//	if (V_Flag)
-//		DoWindow/K IR1S_InterferencePanel
-//	endif
-//	IR1T_InitFormFactors()
-//	IR1S_Initialize()
-//	IR1_CreateLoggbook()
-//	//IR1_KillGraphsAndPanels()	
-//	Execute ("IR1S_ControlPanel()")
-//end
-//
-//
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
@@ -1241,17 +1203,14 @@ Function IR1_GraphMeasuredData(Package)
 	
 	
 	if (cmpstr(Package,"Unified")==0)		//called from unified
-		DoWindow IR1_LogLogPlotU
-		if (V_flag)
-			Dowindow/K IR1_LogLogPlotU
-		endif
+		KillWIndow/Z IR1_LogLogPlotU
 		Execute ("IR1_LogLogPlotU()")
 	elseif (cmpstr(Package,"LSQF")==0)
 		DoWindow IR1_LogLogPlotLSQF
 		if (V_flag)
 			cursorAposition=pcsr(A,"IR1_LogLogPlotLSQF")
 			cursorBposition=pcsr(B,"IR1_LogLogPlotLSQF")
-			Dowindow/K IR1_LogLogPlotLSQF
+			KillWIndow/Z IR1_LogLogPlotLSQF
 		endif
 		Execute ("IR1_LogLogPlotLSQF()")
 		cursor/P/W=IR1_LogLogPlotLSQF A, OriginalIntensity,cursorAposition
@@ -1277,16 +1236,10 @@ Function IR1_GraphMeasuredData(Package)
 	OriginalErrQ4=OriginalErrQ4*OriginalQ4
 
 	if (cmpstr(Package,"Unified")==0)		//called from unified
-		DoWindow IR1_IQ4_Q_PlotU
-		if (V_flag)
-			Dowindow/K IR1_IQ4_Q_PlotU
-		endif
+		KillWIndow/Z IR1_IQ4_Q_PlotU
 		Execute ("IR1_IQ4_Q_PlotU()")
 	elseif (cmpstr(Package,"LSQF")==0)
-		DoWindow IR1_IQ4_Q_PlotLSQF
-		if (V_flag)
-			Dowindow/K IR1_IQ4_Q_PlotLSQF
-		endif
+		KillWIndow/Z IR1_IQ4_Q_PlotLSQF
 		Execute ("IR1_IQ4_Q_PlotLSQF()")
 	endif
 	setDataFolder oldDf

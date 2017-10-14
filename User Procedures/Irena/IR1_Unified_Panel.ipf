@@ -65,19 +65,10 @@ Function IR1A_UnifiedModel()
 
 	IN2G_CheckScreenSize("height",680)
 	
-	DoWindow IR1A_ControlPanel
-	if (V_Flag)
-		DoWindow/K IR1A_ControlPanel	
-	endif
-	DoWindow IR1_LogLogPlotU
-	if (V_Flag)
-		DoWindow/K IR1_LogLogPlotU	
-	endif
-	DoWindow IR1_IQ4_Q_PlotU
-	if (V_Flag)
-		DoWindow/K IR1_IQ4_Q_PlotU	
-	endif
-
+	KillWIndow/Z IR1A_ControlPanel
+ 	KillWIndow/Z IR1_LogLogPlotU
+ 	KillWIndow/Z IR1_IQ4_Q_PlotU
+ 
 	IR1A_Initialize(0)					//this may be OK now... 
 
 	Execute ("IR1A_ControlPanel()")

@@ -36,8 +36,8 @@ Function IN2S_InitializeStandardPlots()
 	NewDataFolder/O root:Packages
 	NewDataFolder/O/S root:Packages:StandardPlots
 	
-	DoWindow/K IN2S_TopGraph
-	DoWindow/K IN2S_BotGraph
+	KillWIndow/Z IN2S_TopGraph
+	KillWIndow/Z IN2S_BotGraph
 
 	//now lets create string & variables
 	KillWaves/A/Z
@@ -564,7 +564,7 @@ Function IN2S_StandardUSAXSPlotsPopup(ctrlName,popNum,popStr) : PopupMenuControl
 			IN2S_SetTopAxis()
 		else
 			PlotTypeOne=popStr
-			DoWindow/K IN2S_TopGraph		
+			KillWIndow/Z IN2S_TopGraph		
 		endif
 	endif
 	
@@ -603,7 +603,7 @@ Function IN2S_StandardUSAXSPlotsPopup(ctrlName,popNum,popStr) : PopupMenuControl
 			IN2S_SetBotAxis()
 		else	
 			PlotTypeTwo=popStr
-			DoWindow/K IN2S_BotGraph			
+			KillWIndow/Z IN2S_BotGraph			
 		endif
 	endif	
 End
@@ -684,7 +684,7 @@ End
 //**********************************************************************************
 
 Window IN2S_StandardPlotPanel() : Panel
-	DoWindow/K IN2S_StandardPlotPanel
+	KillWIndow/Z IN2S_StandardPlotPanel
 	//creates panel, closes the old one, if it exists
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(543.75,49.25,963,688.25) as "Standard Plot panel"
@@ -959,11 +959,8 @@ End
 
 Function IN2S_CreateTopGraph()
 		//creates Top Graph, if it exists, it is first deleted
- 	DoWindow IN2S_TopGraph
- 	if (V_Flag)
- 		DoWindow/K IN2S_TopGraph
- 	endif
- 	PauseUpdate    //*************************Graph section**********************************
+ 	KillWIndow/Z IN2S_TopGraph
+  	PauseUpdate    //*************************Graph section**********************************
 	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),55*IN2G_ScreenWidthHeight("width"),47*IN2G_ScreenWidthHeight("height")) as "Top Graph"		
 	DoWindow/C IN2S_TopGraph
 	ModifyGraph mode=4,	margin(top)=20, mirror=1, minor=1
@@ -1023,12 +1020,8 @@ end
 Function IN2S_CreateBotGraph()
 		//creates Bot Graph, if it exists, it is first deleted
 
- 	DoWindow IN2S_BotGraph
- 	if (V_Flag)
- 		DoWindow/K IN2S_BotGraph
- 	endif
-
- 	PauseUpdate    //*************************Graph section**********************************
+ 	KillWIndow/Z IN2S_BotGraph
+  	PauseUpdate    //*************************Graph section**********************************
 	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),53*IN2G_ScreenWidthHeight("height"),55*IN2G_ScreenWidthHeight("width"),95*IN2G_ScreenWidthHeight("height")) as "Bottom Graph"		
 	DoWindow/C IN2S_BotGraph
 	ModifyGraph mode=4,	margin(top)=20, mirror=1, minor=1
@@ -1417,11 +1410,8 @@ Function IN2S_SizeDistPanel(which)
 	endif
 	gwhich=which
 	
-	DoWindow IN2S_SizeDistPanelProc
-	if (V_flag)
-		DoWindow/K IN2S_SizeDistPanelProc
-	endif
-	Execute("IN2S_SizeDistPanelProc()")
+	KillWIndow/Z IN2S_SizeDistPanelProc
+ 	Execute("IN2S_SizeDistPanelProc()")
 end
 
 Function IN2S_CalculateSizeDistparam(ctrlName) : ButtonControl

@@ -63,15 +63,9 @@ Function IR2M_GetDataMiner()
 
 	IR2M_InitDataMiner()
 	
-	DoWindow DataMiningTool
-	if(V_Flag)
-		DoWindow/K DataMiningTool
-	endif
-	DoWindow ItemsInFolderPanel
-	if(V_Flag)
-		DoWindow/K ItemsInFolderPanel
-	endif
-	
+	KillWIndow/Z DataMiningTool
+ 	KillWIndow/Z ItemsInFolderPanel
+ 	
 	IR2M_DataMinerPanel()
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("DataMiningTool", IR2MversionNumber,1)
@@ -630,7 +624,7 @@ Function IR2M_KillNotebook()
 	string nbl="DataMinerNotebook"
 	Silent 1
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
-		DoWindow/K $nbl
+		KillWIndow/Z $nbl
 	endif
 end
 
@@ -932,11 +926,8 @@ Function IR2M_CreateWavestoMineOthers()
 	endif
 	SetDataFolder $("root:"+Others_FolderForWaves)
 	
-	DoWindow SearchOutputTable
-	if(V_Flag)
-		DOWIndow/K SearchOutputTable
-	endif
-	
+	KillWIndow/Z SearchOutputTable
+ 	
 	Wave/T/Z DataFolderName
 	if(WaveExists(DataFoldername))
 		DoAlert 1, "Some search results in this folder exists, do you want to overwrite them? If not, click No and change output folder name."
@@ -1058,11 +1049,8 @@ Function IR2M_CreateOutputTable()
 
 	variable tempVal
 	SetDataFolder $("root:"+Others_FolderForWaves)
-	DoWIndow SearchOutputTable
-	if(V_Flag)
-		DoWindow/K SearchOutputTable
-	endif
-	Edit/K=1/W=(471,48.5,1149,600.5) DataFolderName
+	KillWIndow/Z SearchOutputTable
+ 	Edit/K=1/W=(471,48.5,1149,600.5) DataFolderName
 	DoWindow/C SearchOutputTable
 
 	variable i
@@ -1451,11 +1439,8 @@ end
 ///******************************************************************************************
 Function IR2M_CreateGraph()
 	
-	DoWIndow DataMiningGraph
-	if(V_Flag)
-		DoWIndow/K DataMiningGraph
-	endif
-	Display/K=1/W=(305.25,42.5,870,498.5) 
+	KillWIndow/Z DataMiningGraph
+ 	Display/K=1/W=(305.25,42.5,870,498.5) 
 	DoWindow/C DataMiningGraph
 
 end
@@ -1670,11 +1655,8 @@ Function IR2M_MakePanelWithListBox(skipCreatePanel)
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:DataMiner
 	if(!skipCreatePanel)
-		DoWindow ItemsInFolderPanel
-		if(V_Flag)
-			DoWindow/K ItemsInFolderPanel
-		endif
-	endif
+		KillWIndow/Z ItemsInFolderPanel
+ 	endif
 	SVAR DataFolderName=root:Packages:DataMiner:DataFolderName
 	if(!DataFolderExists(DataFolderName) || cmpstr(DataFolderName,"---")==0)
 		return 1
@@ -1746,12 +1728,8 @@ Function IR2M_MakePanelWithListBox(skipCreatePanel)
 	WaveNoteListSelections = 0
 	ItemsInFolderSelections = 0
 	if(!skipCreatePanel)
-		DoWindow ItemsInFolderPanel
-		if(V_Flag)
-			DoWindow/K ItemsInFolderPanel
-		endif
-		
-		//PauseUpdate; Silent 1		// building window...
+		KillWIndow/Z ItemsInFolderPanel
+ 		//PauseUpdate; Silent 1		// building window...
 		NewPanel /K=1 /W=(400,50,720,696) as "Items in selected folder"
 		DoWindow/C ItemsInFolderPanel
 		SetDrawLayer UserBack
@@ -1944,11 +1922,8 @@ Function  IR2M_DataMinerCheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR SaveToGraph = root:Packages:DataMiner:SaveToGraph
 
 	if(cmpstr(ctrlName,"MineVariables")==0 || cmpstr(ctrlName,"MineStrings")==0 || cmpstr(ctrlName,"MineWaves")==0 || cmpstr(ctrlName,"MineWavenotes")==0)
-		DoWindow ItemsInFolderPanel
-		if(V_Flag)
-			DoWindow/K ItemsInFolderPanel
-		endif
-	endif
+		KillWIndow/Z ItemsInFolderPanel
+ 	endif
 	if(cmpstr(ctrlName,"MineVariables")==0)
 		if(Checked)
 			// MineVariables = 0

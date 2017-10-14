@@ -692,7 +692,7 @@ print 	ExecuteCmd
 //	string FlnmToLoad=RemoveEnding(removeEnding(StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":"),".mar2300"),".mar3450")
 	string FlnmToLoad=StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":")	//RemoveEnding(removeEnding(StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":"),".mar2300"),".mar3450")
 	SaveNotebook /O/P=TempFilepath RunFit2DBatch as "RunFit2DBatch.bat"
-	DoWindow/K RunFit2DBatch
+	KillWIndow/Z RunFit2DBatch
 
 	nb = "RunFit2D"
 	NewNotebook/V=1/N=$nb/F=0/V=1/K=0/W=(277.5,81.5,644.25,487.25) 
@@ -741,7 +741,7 @@ print 	ExecuteCmd
 
 	close/A
 	SaveNotebook /O/P=TempFilepath RunFit2D as "Fit2DNika.mac"
-	DoWindow/K RunFit2D
+	KillWIndow/Z RunFit2D
 	return ExecuteCmd	
 end
 

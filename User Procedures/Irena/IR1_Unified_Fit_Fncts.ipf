@@ -1098,7 +1098,7 @@ Function IR2U_EvaluateUnifiedData()
 		IR2U_UnifiedEvaPanelFnct() 
 		IR1_UpdatePanelVersionNumber("UnifiedEvaluationPanel", IR2UversionNumber,1)
 	endif
-	DoWIndow/K/Z IR2U_UnifLogNormalSizeDist
+	KillWIndow/Z IR2U_UnifLogNormalSizeDist
 end
 
 //***********************************************************
@@ -1111,7 +1111,7 @@ Function IR2U_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("UnifiedEvaluationPanel", IR2UversionNumber))
 			DoAlert /T="The Unified fit data evaluation panel was created by old version of Irena " 1, "The code needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("DoWIndow/K UnifiedEvaluationPanel")
+				Execute/P("KillWIndow/Z UnifiedEvaluationPanel")
 				Execute/P("IR2U_EvaluateUnifiedData()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2U_InitUnifAnalysis()					//this may be OK now... 
@@ -1677,7 +1677,7 @@ Function IR2U_ZeroStaleValues()		//zeroes stale results when user makes any chan
 		MinorityCordLength = 0
 		MajorityCordLength = 0
 		PiBoverQ = 0
-
+	KillWIndow/Z InvariantGraph
 end
 //***********************************************************
 //***********************************************************
@@ -2001,7 +2001,7 @@ Function IR2U_DWSCheckboxProc(ctrlName,checked) : CheckBoxControl//**DWS
 			string DF=getdatafolder(1)
 				
 				setdatafolder root:Packages:Irena_UnifFit:
-				dowindow/k invariantGraph
+				KillWIndow/Z invariantGraph
 				killwaves/z rwaveq2,qq2,rq2,backqq2,backrq2,frontqq2,frontrq2,rlevel1,qlevel1,DummyRwave,DummyQwave
 				setdatafolder DF
 			endif
@@ -2791,7 +2791,7 @@ Function IR2U_ButtonProc(ba) : ButtonControl
 					string DF=getdatafolder(1)
 					DoWindow/F InvariantGraph
 					setdatafolder root:Packages:Irena_UnifFit:
-					dowindow/k InvariantGraph//need kill in order dump temp waves
+					KillWIndow/Z InvariantGraph//need kill in order dump temp waves
 					killwaves/Z rwaveq2,qq2,rq2,backqq2,backrq2,frontqq2,frontrq2,rlevel1,qlevel1,frontrwave,DummyRwave, DummyQwave
 					setdatafolder DF
 				endif
@@ -5103,15 +5103,9 @@ static Function IR1A_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	IR1A_TabPanelControl("",LevelUsed-1)
 	//DoUpdate
 
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	//create folder where we dump this thing...
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	//create folder where we dump this thing...
 	NewDataFolder/O/S root:ConfidenceEvaluation
 	SVAR SampleFullName=root:Packages:Irena_UnifFit:DataFolderName
 	NVAR ConfEvAutoOverwrite = root:Packages:Irena_UnifFit:ConfEvAutoOverwrite
@@ -5326,15 +5320,9 @@ static Function IR1A_ConEvAnalyzeEvalResults2(ParamName)
 		endif
 	endfor
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	variable levellow, levelhigh
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	variable levellow, levelhigh
 
 	IR1_CreateResultsNbk()
 	//IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
@@ -5388,15 +5376,9 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		endif
 	endfor
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	variable levellow, levelhigh
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	variable levellow, levelhigh
 
 	if(FittedParameter)	//fitted parameter, chi-square analysis needs a bit different... 
 		wavestats/Q ChiSquareValues

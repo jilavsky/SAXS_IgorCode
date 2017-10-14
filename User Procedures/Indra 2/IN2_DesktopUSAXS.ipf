@@ -1067,11 +1067,8 @@ Function IN2U_TestImportNotebook()
 	
 	
 	//LoadWave/Q/A/G/P=DesktopUSAXSDataPath  selectedfile
-	DOwindow FilePreview
-	if (V_Flag)
-		DoWindow/K FilePreview
-	endif
-	OpenNotebook /K=1 /N=FilePreview /P=DesktopUSAXSDataPath /R /V=1 selectedfile
+	KillWIndow/Z FilePreview
+ 	OpenNotebook /K=1 /N=FilePreview /P=DesktopUSAXSDataPath /R /V=1 selectedfile
 	MoveWindow /W=FilePreview 350, 5, 700, 400	
 end
 

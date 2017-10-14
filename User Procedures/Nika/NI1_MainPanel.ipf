@@ -183,11 +183,8 @@ Function NI1A_Convert2Dto1DMainPanel()
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
 	IN2G_CheckScreenSize("height",720)
-	DoWindow NI1A_Convert2Dto1DPanel
-	if(V_Flag)
-		DoWindow/K NI1A_Convert2Dto1DPanel
-	endif
-	NI1A_Convert2Dto1DPanelFnct()
+	KillWIndow/Z NI1A_Convert2Dto1DPanel
+ 	NI1A_Convert2Dto1DPanelFnct()
 	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber)
 	NI1A_TabProc("nothing",0)
 end
@@ -1969,11 +1966,8 @@ Function NI1A_MovieCreateUpdate1DGraphF()
 	NVAR Movie_DisplayLogInt=root:Packages:Convert2Dto1D:Movie_DisplayLogInt
 
 	if(!Movie_Use1DData)		//probably want to do 1D graph for Movie
-		DoWindow NI1A_MovieCreate1DGraph
-		if(V_Flag) 
-			DoWIndow/K NI1A_MovieCreate1DGraph
-		endif
-		return 0
+		KillWIndow/Z NI1A_MovieCreate1DGraph
+ 		return 0
 	endif
 
 	if(!DataFolderExists(Movie_Last1DdataSet))
@@ -2048,22 +2042,16 @@ Function NI1A_MovieCreateUpdateImageFnct()
 	NVAR Movie_Use2DProcesseddata=root:Packages:Convert2Dto1D:Movie_Use2DProcesseddata
 
 	if(!Movie_Use2DRAWdata && !Movie_Use2DProcesseddata)		//probably want to do 1D graph for Movie
-		DoWindow NI1A_MovieCreateImage
-		if(V_Flag) 
-			DoWIndow/K NI1A_MovieCreateImage
-		endif		
-		return 0
+		KillWIndow/Z NI1A_MovieCreateImage
+ 		return 0
 	endif
 
 	if(Movie_Use2DRAWdata)
 		Wave/Z RAWImageToDisplay = root:Packages:Convert2Dto1D:CCDImageToConvert 	//this contains RAW data ONLY
 		if(!WaveExists(RAWImageToDisplay))
 			Abort "The 2D image does not exist, please load test image in Nika first"
-			DoWindow NI1A_MovieCreateImage
-			if(!V_Flag) 
-				DoWindow/K NI1A_MovieCreateImage 
-			endif
-		endif
+			KillWIndow/Z NI1A_MovieCreateImage
+ 		endif
 		Duplicate/O RAWImageToDisplay, Movie2DImage
 	else			//use Calibrated data
 		Wave/Z CalibratedImageToDisplay = root:Packages:Convert2Dto1D:Calibrated2DDataSet 	//this contains calibrated data 

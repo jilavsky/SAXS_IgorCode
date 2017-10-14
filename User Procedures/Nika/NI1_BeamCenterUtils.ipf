@@ -59,7 +59,7 @@ Function NIBC_MainCheckVersion()
 		if(!NI1_CheckPanelVersionNumber("NI1_CreateBmCntrFieldPanel", NI1BCversionNumber))
 			DoAlert /T="The Beam center panel was created by old version of Nika " 1, "Beamcenter tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				DoWindow/K NI1_CreateBmCntrFieldPanel
+				KillWIndow/Z NI1_CreateBmCntrFieldPanel
 				Execute/P("NI1_CreateBmCntrFile()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				NI1A_Initialize2Dto1DConversion()
@@ -81,11 +81,8 @@ Function NI1BC_CreateBmCntrField()
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
-	DoWindow NI1_CreateBmCntrFieldPanel
-	if( V_Flag==1 )
-		DoWindow/K NI1_CreateBmCntrFieldPanel
-	endif
-//BmCntrFileName
+	KillWIndow/Z NI1_CreateBmCntrFieldPanel
+ //BmCntrFileName
 	SVAR BmCntrFileType=root:Packages:Convert2Dto1D:BmCntrFileType
 	SVAR BMColorTableName=root:Packages:Convert2Dto1D:BMColorTableName
 	SVAR BmCalibrantName=root:Packages:Convert2Dto1D:BmCalibrantName
@@ -1779,11 +1776,8 @@ Function NI1BC_BmCntrCreateImage()
 		setDataFolder OldDf
 		abort
 	endif
-	DoWindow CCDImageForBmCntr
-	if(V_Flag)
-		DoWindow/K CCDImageForBmCntr
-	endif
-	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
+	KillWIndow/Z CCDImageForBmCntr
+ 	SVAR FileNameToLoad=root:Packages:Convert2Dto1D:FileNameToLoad
 	FileNameToLoad=ListOfCCDDataInBmCntrPath[selection]
 	SVAR BmCntrFileType=root:Packages:Convert2Dto1D:BmCntrFileType
 	//need to communicate to Nexus reader what we are loading and this seems the only way to do so
@@ -2077,11 +2071,8 @@ Function NI1BC_FitParameters()
 	//variable angleStep=360/numberOfSectors
 
 	//create wave containing d spacifngs for each point from known d spacing for that ring... 
-	DoWIndow LineFitWindow
-	if(V_Flag)
-		DoWindow/K LineFitWindow
-	endif
-	make/O/N=0 CalibrantDspacings, CalibrantFitXpnts, calibrantFitYpnts
+	KillWIndow/Z LineFitWindow
+ 	make/O/N=0 CalibrantDspacings, CalibrantFitXpnts, calibrantFitYpnts
 	variable tempStart
 	For(i=1;i<=10;i+=1)
 		NVAR BMUseCalibrantD=$("root:Packages:Convert2Dto1D:BMUseCalibrantD"+num2str(i))

@@ -34,22 +34,10 @@ Function IR1B_DesmearingMain()
 	
 	IN2G_CheckScreenSize("height",650)
 
-	DoWindow IR1B_DesmearingControlPanel
-	if (V_Flag)
-		DoWindow/K IR1B_DesmearingControlPanel	
-	endif
-	DoWindow TrimGraph
-	if(V_Flag)
-		DoWIndow/K TrimGraph
-	endif
-	DoWindow CheckTheBackgroundExtns
-	if(V_Flag)
-		DoWIndow/K CheckTheBackgroundExtns
-	endif
-	DoWindow DesmearingProcess
-	if(V_Flag)
-		DoWIndow/K DesmearingProcess
-	endif
+	KillWIndow/Z IR1B_DesmearingControlPanel
+	KillWIndow/Z TrimGraph
+	KillWIndow/Z CheckTheBackgroundExtns
+	KillWIndow/Z DesmearingProcess
 	IR1B_Initialize()					//this may be OK now... 
 	IR1B_DesmearingControlPanelFnct()
 end
@@ -1450,10 +1438,7 @@ Function IR1B_TrimTheData()							//this function trims the data before desmeari
 	string OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Irena_desmearing:
 
-	DoWindow TrimGraph
-	if(V_Flag)
-		DoWIndow/K TrimGraph
-	endif
+	KillWIndow/Z TrimGraph
 	Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 	Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
 	Wave OrgEwave=root:Packages:Irena_desmearing:OrgEwave
@@ -1728,10 +1713,7 @@ Function IR1B_TabPanelControl(name,tab)
 			AutoPositionWindow /M=0 /R=IR1B_DesmearingControlPanel TrimGraph
 		endif
 	else
-		DoWindow TrimGraph
-		if(V_Flag)
-			DoWindow/K TrimGraph
-		endif
+		KillWIndow/Z TrimGraph
 	endif
 	
 //Smooth SMR data
@@ -1749,10 +1731,7 @@ Function IR1B_TabPanelControl(name,tab)
 			AutoPositionWindow /M=0 /R=IR1B_DesmearingControlPanel SmoothGraph
 		endif
 	else
-		DoWindow SmoothGraph
-		if(V_Flag)
-			DoWindow/K SmoothGraph
-		endif
+		KillWIndow/Z SmoothGraph
 	endif
 
 
@@ -1771,10 +1750,7 @@ Function IR1B_TabPanelControl(name,tab)
 			AutoPositionWindow /M=0 /R=IR1B_DesmearingControlPanel CheckTheBackgroundExtns
 		endif
 	else
-		DoWindow CheckTheBackgroundExtns
-		if(V_Flag)
-			DoWindow/K CheckTheBackgroundExtns
-		endif
+		KillWIndow/Z CheckTheBackgroundExtns
 	endif
 
 //Desmearing third tab
@@ -1799,10 +1775,7 @@ Function IR1B_TabPanelControl(name,tab)
 			AutoPositionWindow /M=0 /R=IR1B_DesmearingControlPanel DesmearingProcess
 		endif
 	else
-		DoWindow DesmearingProcess
-		if(V_Flag)
-			DoWindow/K DesmearingProcess
-		endif
+		KillWIndow/Z DesmearingProcess
 	endif
 
 //Smooth DSM data
@@ -1821,10 +1794,7 @@ Function IR1B_TabPanelControl(name,tab)
 			endif
 		endif
 	else
-		DoWindow SmoothGraphDSM
-		if(V_Flag)
-			DoWindow/K SmoothGraphDSM
-		endif
+		KillWIndow/Z SmoothGraphDSM
 	endif
 	Dowindow/F IR1B_DesmearingControlPanel
 

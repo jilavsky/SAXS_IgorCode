@@ -145,7 +145,7 @@ Function IR2T_LoadFFDescription()
 			NewNotebook/F=0 /N=NewBatchFile
 			Notebook NewBatchFile, text=whereIsManual//+"\r"
 			SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat"
-			DoWindow/K NewBatchFile
+			KillWIndow/Z NewBatchFile
 			ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartFormFactors.bat\""
 		endif
 	else
@@ -2119,10 +2119,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	SVAR ListOfFormFactors=root:Packages:FormFactorCalc:ListOfFormFactors
 	SVAR CoreShellVolumeDefinition=root:Packages:FormFactorCalc:CoreShellVolumeDefinition
 	
-	DoWindow FormFactorControlScreen
-	if(V_Flag)
-		DoWindow/K FormFactorControlScreen
-	endif
+	KillWIndow/Z FormFactorControlScreen
 	SVAR CurFF=$(FFStr)
 
 		NVAR FitP1=$(FitP1Str)

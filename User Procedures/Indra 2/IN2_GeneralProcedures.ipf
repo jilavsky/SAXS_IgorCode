@@ -1447,7 +1447,7 @@ Function IN2G_KillPrefsButtonProc(ba) : ButtonControl
 			// click code here
 			if(stringmatch(ba.ctrlName,"OKBUtton"))
 				IN2G_SaveIrenaGUIPackagePrefs(0)
- 				DoWIndow/K IN2G_MainConfigPanel
+ 				KillWIndow/Z IN2G_MainConfigPanel
 			elseif(stringmatch(ba.ctrlName,"DefaultValues"))
 				string defFnt
 				variable defFntSize
@@ -3643,7 +3643,7 @@ Function IN2G_FolderSelectButtonProc(ctrlName) : ButtonControl
 			WHereToPutRes=CurrentFolder	
 		endif
 		LastFolder=CurrentFolder
-		DoWIndow/K IN2G_FolderSelectPanelPanel
+		KillWIndow/Z IN2G_FolderSelectPanelPanel
 		if (strlen(ExecuteMyFunction)>0)
 			Execute(ExecuteMyFunction)
 		endif
@@ -3655,7 +3655,7 @@ Function IN2G_FolderSelectButtonProc(ctrlName) : ButtonControl
 		SVAR NewNameStr=root:Packages:FolderSelectPanel:NewName
 		LastFolder=CurrentFolder
 		WHereToPutRes=""	
-		DoWIndow/K IN2G_FolderSelectPanelPanel
+		KillWIndow/Z IN2G_FolderSelectPanelPanel
 	endif
 
 
@@ -3714,11 +3714,8 @@ static Function IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowD
 	string TitleString
 	variable FolderOrFile,AllowNew,AllowDelete,AllowRename
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	DoWIndow IN2G_FolderSelectPanelPanel
-	if(V_Flag)
-		DoWIndow/K IN2G_FolderSelectPanelPanel
-	endif
-	//PauseUpdate; Silent 1		// building window...
+	KillWIndow/Z IN2G_FolderSelectPanelPanel
+ 	//PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(100,60,630,340)/N=IN2G_FolderSelectPanelPanel as TitleString
 	//DoWindow/C IN2G_FolderSelectPanelPanel
 	TitleBox Title title="   "+TitleString+"   ",disable=2,frame=0,pos={1,3}
@@ -4529,7 +4526,7 @@ Function IN2G_KillAllGraphsAndTables(ctrlname) :Buttoncontrol
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         	
 	if (strlen(WinList("UPD control",";","WIN:64"))>0)		//Kills the controls when not needed anymore
-			DoWindow/K PDcontrols
+			KillWIndow/Z PDcontrols
 	endif
 
         String wName=WinName(0, 71)              // 1=graphs, 2=tables,4=layouts, 64=panels = 71
@@ -4555,7 +4552,7 @@ Function IN2G_KillGraphsAndTables(ctrlname) :Buttoncontrol
       String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
                 dowindow /K $wName
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)	//Kills the controls when not needed anymore
-			DoWindow/K  IN2A_UPDControlPanel
+			KillWIndow/Z  IN2A_UPDControlPanel
 	endif
 End
 
@@ -4567,7 +4564,7 @@ Function IN2G_KillGraphsTablesEnd(ctrlname) :Buttoncontrol
       String wName=WinName(0, 1)              // 1=graphs, 2=tables,4=layouts
                 dowindow /K $wName
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)	//Kills the controls when not needed anymore
-			DoWindow/K  IN2A_UPDControlPanel
+			KillWIndow/Z  IN2A_UPDControlPanel
 	endif
        abort
 End

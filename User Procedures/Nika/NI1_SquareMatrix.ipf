@@ -204,11 +204,8 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 	SetScale/P y SectorsGraphStartAngle,AngleStep,"", SquareMap
 	KillWaves/Z MaskedImage
 	KillWaves/Z MaskS
-	DoWindow SquareMapIntvsPixels
-	if(V_Flag)
-		DoWindow/K SquareMapIntvsPixels
-	endif
-	//comment
+	KillWIndow/Z SquareMapIntvsPixels
+ 	//comment
 	// In order to convert the data next into Int vs Q scale, we need to produce also Q scale which would map pixels into Q, this is 
 	//function of geometry...
 	// also we need to propage somehow errors through. This can be done here, but it is unclear to me how to easily propaget it further.

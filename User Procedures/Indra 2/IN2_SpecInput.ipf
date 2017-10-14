@@ -152,7 +152,7 @@ Function IN2_CopySpecFileLocally(skipDialog)									//this function copies spec
 	String /G root:Packages:Indra3:specUSAXSSourceFile=specDefaultFile
 
 	SaveNotebook/O/S=3 $Nname as TempFileName
-	DoWindow/K $Nname 
+	KillWIndow/Z $Nname 
 	Close/A																// now the data are in the C:\temp\junk.txt file and rest of the time we work on this junk file
 	
 end
@@ -1894,7 +1894,7 @@ Function IN2_ExtractComments()					// scans spec file to extract #S lines and of
       NewPath/O RawDataPath, RemoveFromList(tempSpecDefaultFile, fullFilePath,":")
 
 	SaveNotebook/O/S=3 $Nname as TempFileName
-	DoWindow/K $Nname 
+	KillWIndow/Z $Nname 
 										// now the data are in the C:\temp\junk.txt file and rest of the time we work on this junk file
 	
 	Variable fileVar						// file ref number
@@ -2070,11 +2070,8 @@ Function IN2_GetInputAndCreateListPanel()			//this does dialog for user input wh
 	USAXSRawDataFolder=PossiblyQuoteName(StringFromList(0,specUSAXSSourceFile,"."))	//setup the pointer
 	
 	IN2_CreateDialogForRangeSel()
-	DoWindow IN2_ConvertSpecScansPanel
-	if(V_Flag)
-		DoWindow/K IN2_ConvertSpecScansPanel
-	endif
-	IN2_ConvertSpecScans()
+	KillWIndow/Z IN2_ConvertSpecScansPanel
+ 	IN2_ConvertSpecScans()
 end
 
 Function IN2_CreateDialogForRangeSel()

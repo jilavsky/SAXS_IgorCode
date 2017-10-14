@@ -21,11 +21,8 @@ Function IR1F_CreateFldrStrctMain()
 
 	IN2G_CheckScreenSize("height",450)
 	IR1F_InitializeCreateFldrStrct()
-	DoWindow IR1F_CreateQRSFldrStructure
-	if(V_Flag)
-		DOwindow/K IR1F_CreateQRSFldrStructure
-	endif
-	Execute ("IR1F_CreateQRSFldrStructure()")
+	KillWIndow/Z IR1F_CreateQRSFldrStructure
+ 	Execute ("IR1F_CreateQRSFldrStructure()")
 	
 end
 

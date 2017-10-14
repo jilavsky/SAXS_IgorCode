@@ -84,7 +84,7 @@ Function IR2L_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("LSQF2_MainPanel", IR2LversionNumber))
 			DoAlert /T="The Modeling II panel was created by old version of Irena " 1, "Modeling II may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("DoWindow/K LSQF2_MainPanel")
+				Execute/P("KillWIndow/Z LSQF2_MainPanel")
 				Execute/P("IR2L_Main()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2L_Initialize()

@@ -514,10 +514,7 @@ Function IR3GP_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber))
 			DoAlert /T="The Gunier-Porod panel was created by old version of Irena " 1, "Guinier Porod tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				DoWindow IR3DP_MainPanel
-				if(V_Flag)
-					DoWIndow/K IR3DP_MainPanel
-				endif
+				KillWIndow/Z IR3DP_MainPanel
 				Execute/P("IR3GP_Main()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR3GP_Initialize(0)					//this may be OK now... 
@@ -1273,43 +1270,9 @@ Function IR3GP_GraphMeasuredData()
 		endif
 	endif
 	
-		DoWindow IR1_LogLogPlotU
-		if (V_flag)
-			Dowindow/K IR3GP_LogLogPlotU
-		endif
+		KillWIndow/Z IR1_LogLogPlotU
 		IR3GP_LogLogPlotU()
 	
-//	Duplicate/O $(DataFolderName+IntensityWaveName), OriginalIntQ4
-//	Duplicate/O $(DataFolderName+QWavename), OriginalQ4
-//	Duplicate/O $(DataFolderName+ErrorWaveName), OriginalErrQ4
-//	Redimension/D OriginalIntQ4, OriginalQ4, OriginalErrQ4
-//	wavestats /Q OriginalQ4
-//	if(V_min<0)
-//		OriginalQ4 = OriginalQ4[p]<=0 ? NaN : OriginalQ4[p] 
-//	endif
-//	IN2G_RemoveNaNsFrom3Waves(OriginalQ4,OriginalIntQ4, OriginalErrQ4)
-//
-//	if(NVAR_Exists(SubtractBackground) && (cmpstr(Package,"Unified")==0))
-//		OriginalIntQ4 =OriginalIntQ4 - SubtractBackground
-//	endif
-//	
-//	OriginalQ4=OriginalQ4^4
-//	OriginalIntQ4=OriginalIntQ4*OriginalQ4
-//	OriginalErrQ4=OriginalErrQ4*OriginalQ4
-//
-//	if (cmpstr(Package,"Unified")==0)		//called from unified
-//		DoWindow IR1_IQ4_Q_PlotU
-//		if (V_flag)
-//			Dowindow/K IR1_IQ4_Q_PlotU
-//		endif
-//		Execute ("IR1_IQ4_Q_PlotU()")
-//	elseif (cmpstr(Package,"LSQF")==0)
-//		DoWindow IR1_IQ4_Q_PlotLSQF
-//		if (V_flag)
-//			Dowindow/K IR1_IQ4_Q_PlotLSQF
-//		endif
-//		Execute ("IR1_IQ4_Q_PlotLSQF()")
-//	endif
 	setDataFolder oldDf
 end
 //*****************************************************************************************************************
@@ -3183,15 +3146,9 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 	Variable MinValue,MaxValue,NumSteps
 	String ParamName,Method
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	//create folder where we dump this thing...
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	//create folder where we dump this thing...
 	NewDataFolder/O/S root:ConfidenceEvaluation
 	SVAR SampleFullName=root:Packages:Irena:GuinierPorod:DataFolderName
 	NVAR ConfEvAutoOverwrite = root:Packages:Irena:GuinierPorod:ConfEvAutoOverwrite
@@ -3436,15 +3393,9 @@ static Function IR3GP_ConEvAnalyzeEvalResults2(ParamName)
 		endif
 	endfor
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	variable levellow, levelhigh
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	variable levellow, levelhigh
 
 	IR1_CreateResultsNbk()
 	//IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
@@ -3498,15 +3449,9 @@ static Function IR3GP_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPa
 		endif
 	endfor
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	variable levellow, levelhigh
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	variable levellow, levelhigh
 
 	if(FittedParameter)	//fitted parameter, chi-square analysis needs a bit different... 
 		wavestats/Q ChiSquareValues

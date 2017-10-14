@@ -47,17 +47,9 @@ Function IN3_Main()
 	string OldDf=GetDataFolder(1)
 
 	IN3_Initialize()
-	DoWIndow RcurvePlotGraph
-	if(V_Flag)
-		DoWIndow/K RcurvePlotGraph
-	endif
-	//KillWindow/Z RcurvePlotGraph
-	DoWIndow USAXSDataReduction
-	if(V_Flag)
-		DoWIndow/K USAXSDataReduction
-	endif
-	//KillWindow/Z USAXSDataReduction
-	IN3_MainPanel()
+	KillWIndow/Z RcurvePlotGraph
+ 	KillWIndow/Z USAXSDataReduction
+ 	IN3_MainPanel()
   	ING2_AddScrollControl()
 	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
 	setDataFolder OldDf
@@ -73,17 +65,9 @@ Function IN3_NewMain()
 	IN2G_CheckScreenSize("height",790)
 	IN3_Initialize()
 	IN3_FlyScanInitializeImport()
-	DoWIndow RcurvePlotGraph
-	if(V_Flag)
-		DoWIndow/K RcurvePlotGraph
-	endif
-	//KillWindow/Z RcurvePlotGraph
-	DoWIndow USAXSDataReduction
-	if(V_Flag)
-		DoWIndow/K USAXSDataReduction
-	endif
-	//KillWindow/Z USAXSDataReduction
-	IN3_MainPanelNew()
+	KillWIndow/Z RcurvePlotGraph
+ 	KillWIndow/Z USAXSDataReduction
+ 	IN3_MainPanelNew()
   	ING2_AddScrollControl()
 	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_NewReduceDataMainVersionNum)
 	setDataFolder OldDf

@@ -1514,7 +1514,7 @@ static Function GraphButtonProc(ctrlName) : ButtonControl
 	String browserName = NI2_HDF5GetTopBrowserName()
 	
 	if (NI2_HDF5BrowserGraphIsVisible())
-		DoWindow/K HDF5BrowserGraph
+		KillWIndow/Z HDF5BrowserGraph
 	else
 		NI2_HDF5CreateBrowserGraph()				// Create if it does not exist.
 	endif
@@ -1537,7 +1537,7 @@ static Function TableButtonProc(ctrlName) : ButtonControl
 	String browserName = NI2_HDF5GetTopBrowserName()
 	
 	if (NI2_HDF5BrowserTableIsVisible())
-		DoWindow/K HDF5BrowserTable
+		KillWIndow/Z HDF5BrowserTable
 	else
 		NI2_HDF5CreateBrowserTable()				// Create if it does not exist.
 	endif
@@ -3483,7 +3483,7 @@ static Function DoneButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
 	String panelName = WinName(0, 64)
-	DoWindow/K $panelName
+	KillWIndow/Z $panelName
 End
 
 static Function GetPrefSavePanelSettings(saveGroupsRecursively, includeIgorAttributes)
@@ -3666,7 +3666,7 @@ End
 static Function SaveWavesButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	
-	DoWindow/K HDF5SaveDataFolderPanel	// One save panel open at a time.
+	KillWIndow/Z HDF5SaveDataFolderPanel	// One save panel open at a time.
 	DisplaySaveWavesPanel()
 	
 	return 0
@@ -3675,15 +3675,15 @@ End
 static Function SaveDataFolderButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	
-	DoWindow/K HDF5SaveWavesPanel	// One save panel open at a time.
+	KillWIndow/Z HDF5SaveWavesPanel	// One save panel open at a time.
 	DisplaySaveDataFolderPanel()
 	
 	return 0
 End
 
 static Function CloseSavePanels()
-	DoWindow/K HDF5SaveWavesPanel
-	DoWindow/K HDF5SaveDataFolderPanel
+	KillWIndow/Z HDF5SaveWavesPanel
+	KillWIndow/Z HDF5SaveDataFolderPanel
 End
 
 static Function HDF5SaveWavesPanelIsVisible()

@@ -87,17 +87,9 @@ Constant AmplifierRange5BlockTime=0.4
 //************************************************************************************************************
 //************************************************************************************************************
 Function IN3_FlyScanMain()
-	DoWIndow IN3_FlyScanImportPanel
-	if(V_Flag)
-		DoWIndow/K IN3_FlyScanImportPanel
-	endif
-	//KillWIndow/Z IN3_FlyScanImportPanel
-	DoWIndow USAXSDataReduction
-	if(V_Flag)
-		DoWIndow/K USAXSDataReduction
-	endif
-	//KillWIndow/Z USAXSDataReduction
-	IN3_FlyScanInitializeImport()
+	KillWIndow/Z IN3_FlyScanImportPanel
+ 	KillWIndow/Z USAXSDataReduction
+ 	IN3_FlyScanInitializeImport()
 	IN3_FlyScanImportPanelFnct()
 	ING2_AddScrollControl()
 	IN3_UpdatePanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber)

@@ -35,11 +35,8 @@ Function IR2R_ReflectivitySimpleToolMain()
 	IN2G_CheckScreenSize("height",670)
 	IR2R_InitializeSimpleTool()
 	
-	DoWindow IR2R_ReflSimpleToolMainPanel
-	if(V_Flag)
-		DOWIndow/K IR2R_ReflSimpleToolMainPanel
-	endif
-	Execute("IR2R_ReflSimpleToolMainPanel()")
+	KillWIndow/Z IR2R_ReflSimpleToolMainPanel
+ 	Execute("IR2R_ReflSimpleToolMainPanel()")
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber,1) 
 	print "***** Important information *****"
@@ -395,11 +392,8 @@ static Function IR2R_GraphMeasuredData()
 	endif
 	Redimension/D OriginalIntensity, OriginalQvector, OriginalError
 
-	DoWindow IR2R_LogLogPlotRefl
-	if (V_flag)
-		Dowindow/K IR2R_LogLogPlotRefl
-	endif
-	Execute ("IR2R_LogLogPlotRefl()")
+	KillWIndow/Z IR2R_LogLogPlotRefl
+ 	Execute ("IR2R_LogLogPlotRefl()")
 	
 	//create different view on data (may be fitting view?)
 	Duplicate/O OriginalIntensity, IntensityQN
@@ -412,18 +406,12 @@ static Function IR2R_GraphMeasuredData()
 	ErrorQN = OriginalError  * OriginalQvector^FitIQN
 	
 
-		DoWindow IR2R_IQN_Q_PlotV
-		if (V_flag)
-			Dowindow/K IR2R_IQN_Q_PlotV
-		endif
+		KillWIndow/Z IR2R_IQN_Q_PlotV
 		Execute ("IR2R_IQN_Q_PlotV()")
 
 		IR2R_CalculateSLDProfile()
-		DoWindow IR2R_SLDProfile
-		if (V_flag)
-			Dowindow/K IR2R_SLDProfile
-		endif
-		Execute ("IR2R_SLDProfile()")
+		KillWIndow/Z IR2R_SLDProfile
+ 		Execute ("IR2R_SLDProfile()")
 	AutopositionWindow/E/M=0 /R=IR2R_ReflSimpleToolMainPanel  IR2R_LogLogPlotRefl
 	AutopositionWindow/E/M=1 /R=IR2R_LogLogPlotRefl IR2R_IQN_Q_PlotV
 	AutopositionWindow/E/M=1 /R=IR2R_IQN_Q_PlotV IR2R_SLDProfile
@@ -2639,11 +2627,8 @@ static Function IR2R_SimpleToolFit()
 		endif
 	endif
 	Print "Optimization fit ended at: \t"+ time()+"\tafter\t"+num2str((ticks-startTicks)/60)+" [s]"
-	DoWIndow UserOptimizationWidnow
-	if(V_Flag)
-		DoWIndow/K UserOptimizationWidnow
-	endif
-	if (V_FitError!=0)	//there was error in fitting
+	KillWIndow/Z UserOptimizationWidnow
+ 	if (V_FitError!=0)	//there was error in fitting
 		IR2R_ResetParamsAfterBadFit()
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
@@ -2766,12 +2751,12 @@ Function IR2R_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
 	
 	if(stringmatch(ctrlName,"*CancelBtn*"))
 		variable/g root:Packages:Refl_SimpleTool:UserCanceled=1
-		DoWindow/K IR2R_CheckFittingParams
+		KillWIndow/Z IR2R_CheckFittingParams
 	endif
 
 	if(stringmatch(ctrlName,"*ContinueBtn*"))
 		variable/g root:Packages:Refl_SimpleTool:UserCanceled=0
-		DoWindow/K IR2R_CheckFittingParams
+		KillWIndow/Z IR2R_CheckFittingParams
 	endif
 
 End

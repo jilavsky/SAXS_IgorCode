@@ -39,12 +39,8 @@ Function NI1_CreateFloodField()
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
-	DoWindow NI1_CreateFloodFieldPanel
-	if( V_Flag==1 )
-		DoWindow/K NI1_CreateFloodFieldPanel
-	endif
-//FloodFileName
-	SVAR FloodFileType=root:Packages:Convert2Dto1D:FloodFileType
+	KillWIndow/Z NI1_CreateFloodFieldPanel
+ 	SVAR FloodFileType=root:Packages:Convert2Dto1D:FloodFileType
 	SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
 	NVAR ImageRangeMaxLimit=root:Packages:Convert2Dto1D:ImageRangeMaxLimit
 	NVAR ImageRangeMinLimit=root:Packages:Convert2Dto1D:ImageRangeMinLimit
@@ -217,25 +213,14 @@ Function NI1M_CalculateFloodField(AndSave)
 		ImageSave/P=Convert2Dto1DFloodPath/F/T="TIFF"/O a2DPixSensTemp tempExportFloodFileName
 		NI1_UpdateFloodListBox()
 		NI1A_UpdateMainMaskListBox()
-		DoWIndow FloodFieldImage
-		if(V_Flag)
-			DoWindow/K FloodFieldImage
-		endif
-		
-		
-		Duplicate/O a2DPixSensTemp, Pixel2Dsensitivity
+		KillWIndow/Z FloodFieldImage
+ 		Duplicate/O a2DPixSensTemp, Pixel2Dsensitivity
 		SVAR CurrentPixSensFile=root:Packages:Convert2Dto1D:CurrentPixSensFile
 		CurrentPixSensFile = tempExportFloodFileName
 		redimension/S Pixel2Dsensitivity
-		DoWindow CCDImageForFlood
-		if(V_Flag)
-			DoWindow/K CCDImageForFlood
-		endif
-		DoWindow FloodFieldImageTemporary
-		if(V_Flag)
-			DoWindow/K FloodFieldImageTemporary
-		endif
-
+		KillWIndow/Z CCDImageForFlood
+ 		KillWIndow/Z FloodFieldImageTemporary
+ 
 		NVAR InvertImages=root:Packages:Convert2Dto1D:InvertImages
 		DoWindow Pixel2DSensitivityImage
 		if(V_Flag)
@@ -418,11 +403,8 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 		setDataFolder OldDf
 		abort
 	endif
-	DoWindow CCDImageForFlood
-	if(V_Flag)
-		DoWindow/K CCDImageForFlood
-	endif
-	SVAR FileNameToLoad
+	KillWIndow/Z CCDImageForFlood
+ 	SVAR FileNameToLoad
 	FileNameToLoad=ListOfCCDDataInFloodPath[selection]
 	SVAR FloodFileType=root:Packages:Convert2Dto1D:FloodFileType
 	variable ImgExisted

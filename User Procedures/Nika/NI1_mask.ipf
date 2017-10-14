@@ -52,12 +52,8 @@ Function NI1M_CreateImageROIPanel()
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
-	DoWindow NI1M_ImageROIPanel
-	if( V_Flag==1 )
-		DoWindow/K NI1M_ImageROIPanel
-	endif
-
-	SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
+	KillWIndow/Z NI1M_ImageROIPanel
+ 	SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
 	SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
 	NVAR ImageRangeMaxLimit=root:Packages:Convert2Dto1D:ImageRangeMaxLimit
 	NVAR ImageRangeMinLimit=root:Packages:Convert2Dto1D:ImageRangeMinLimit
@@ -547,11 +543,8 @@ Function NI1M_MaskCreateImage()
 		setDataFolder OldDf
 		abort
 	endif
-	DoWindow CCDImageForMask
-	if(V_Flag)
-		DoWindow/K CCDImageForMask
-	endif
-	SVAR FileNameToLoad
+	KillWIndow/Z CCDImageForMask
+ 	SVAR FileNameToLoad
 	FileNameToLoad=ListOfCCDDataInCCDPath[selection]
 	SVAR CCDFileExtension=root:Packages:Convert2Dto1D:CCDFileExtension
 	//need to communicate to Nexus reader what we are loading and this seems the only way to do so

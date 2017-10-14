@@ -64,10 +64,7 @@ Function NEXUS_NikaCall(CreatePanel)
 	variable CreatePanel
 
 	if(CreatePanel==2)
-		DoWindow NEXUS_ConfigurationPanel
-		if(V_Flag)
-			DoWIndow/K NEXUS_ConfigurationPanel
-		endif
+		KillWIndow/Z NEXUS_ConfigurationPanel
 	endif
 	
 	if(CreatePanel>0)

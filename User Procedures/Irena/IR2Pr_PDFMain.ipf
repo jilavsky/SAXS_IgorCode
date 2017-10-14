@@ -766,11 +766,8 @@ end
 static Function IR2Pr_GraphIfAllowed(ctrlName)
 		string ctrlName
 
-		DoWIndow IR2Pr_PDFInputGraph
-		if (V_Flag)
-			DoWIndow/K IR2Pr_PDFInputGraph
-		endif
-		SVAR FldrNm=root:Packages:Irena_PDDF:DataFolderName
+		KillWIndow/Z IR2Pr_PDFInputGraph
+ 		SVAR FldrNm=root:Packages:Irena_PDDF:DataFolderName
 
 		SVAR IntNm=root:Packages:Irena_PDDF:IntensityWaveName
 		SVAR QvcNm=root:Packages:Irena_PDDF:QWavename
@@ -2285,7 +2282,7 @@ Function IR2Pr_ExportGNOMoutFile()
 	Notebook $nb text="     Real space: Rg =   "+num2str(CurrentRg)+" +-"+IR2Pr_FormatNumber(0,3)+"   I(0) = "+IR2Pr_FormatNumber(Intensity_0,4)+" +-  0.000E+00\r"
 
 	SaveNotebook /O/P=GNOMOutputPath /S=6  GNOM_OUT as FlNm
-	DoWIndow/K GNOM_OUT
+	KillWIndow/Z GNOM_OUT
 	PathInfo GNOMOutputPath
 	Print "GNOM data output was saved to :       "+S_path+FlNm
 	close/A

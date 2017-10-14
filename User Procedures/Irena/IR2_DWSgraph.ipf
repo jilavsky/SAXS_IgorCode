@@ -50,7 +50,7 @@ end
 
 
 Function IR2D_DWSPlotTool()
-	dowindow/K IR2D_DWSGraphPanel
+	KillWIndow/Z IR2D_DWSGraphPanel
 	NewPanel /K=1/N=IR2D_DWSGraphPanel /W=(50,43.25,430.75,570) as "General Plotting tool"
 	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={10,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={340,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={300,3},pos={16,199},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)

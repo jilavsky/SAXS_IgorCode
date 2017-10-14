@@ -276,11 +276,8 @@ Function IN2P_CommonUSAXSPlots()			//this function generates graph of standard U
  	WAVE WaveX=$(SampleFolder+ScanTypeX)
  	WAVE WaveErr=$(SampleFolder+ScanTypeError)
 
-	DoWindow StandardPlot
-	if(V_Flag)
-		DoWindow/K StandardPlot
-	endif
-
+	KillWIndow/Z StandardPlot
+ 
  	PauseUpdate    //*************************Graph section**********************************
 	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height"))  WaveY vs WaveX  as "Plot of any wave to any wave"
 	DoWindow/C StandardPlot
@@ -783,11 +780,8 @@ Function IN2P_GenericUSAXSPlots()
 		BottomAxisLabel=DataX+"3"
 	endif
 
-	DoWindow GenericPlot
-	if (V_Flag)
-		DoWindow/K GenericPlot
-	endif
-	
+	KillWIndow/Z GenericPlot
+ 	
  	PauseUpdate    //*************************Graph section**********************************
 	Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) WaveYInPckgs vs WaveXInPckgs	as GraphTitleString								//I like graphs
 	DoWindow/C GenericPlot

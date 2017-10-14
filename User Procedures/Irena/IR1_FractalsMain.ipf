@@ -31,10 +31,7 @@ Function IR1V_FractalsModel()
 	IN2G_CheckScreenSize("height",670)
 	IR1V_InitializeFractals()
 	
-	DoWindow IR1V_ControlPanel
-	if(V_Flag)
-		DOWIndow/K IR1V_ControlPanel
-	endif
+	KillWIndow/Z IR1V_ControlPanel
 	Execute("IR1V_ControlPanel()")
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR1V_ControlPanel", IRVversionNumber,1)

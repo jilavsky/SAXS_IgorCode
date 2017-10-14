@@ -609,10 +609,7 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 			else
 				StrFac = popStr
 			endif
-			DoWindow StructureFactorControlScreen
-			if(V_Flag)
-				DoWindow/K StructureFactorControlScreen
-			endif
+			KillWIndow/Z StructureFactorControlScreen
 //	ListOfPopulationVariables+="StructureParam3;StructureParam3Fit;StructureParam3Min;StructureParam3Max;StructureParam4;StructureParam4Fit;StructureParam4Min;StructureParam4Max;"
 ///	ListOfPopulationVariables+="StructureParam5;StructureParam5Fit;StructureParam5Min;StructureParam5Max;"
 
@@ -785,11 +782,8 @@ Function IR2L_MakeFFParamPanel(TitleStr, which)
 	
 	string OldDf=GetDataFolder(1)
 	
-	DoWindow FormFactorControlScreen
-	if(V_Flag)
-		DoWindow/K FormFactorControlScreen
-	endif
-	//make the new panel 
+	KillWIndow/Z FormFactorControlScreen
+ 	//make the new panel 
 	NewPanel/K=1 /W=(96,94,530,370) as "FormFactorControlScreen"
 	DoWindow/C FormFactorControlScreen
 	SetDrawLayer UserBack
@@ -873,15 +867,7 @@ Function IR2L_Data_TabPanelControl(name,tab)
 		CheckBox UseSQRTErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:$("UseSQRTErrors_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
 		CheckBox UsePercentErrors_set,win=LSQF2_MainPanel, variable= root:Packages:IR2L_NLSQF:$("UsePercentErrors_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
 		SetVariable ErrorScalingFactor_set,win=LSQF2_MainPanel,value= root:Packages:IR2L_NLSQF:$("ErrorScalingFactor_set"+num2str(tab+1)), disable=( !(displayControls)||!(DisplayInputDataControls))
-		
-//		DoWindow IR2L_ResSmearingPanel
-//		if(V_Flag)
-//			//	Print "Called by " + GetRTStackInfo(2) + "()"
-//			if(!stringmatch(GetRTStackInfo(2) ,"*IR2L_DataTabCheckboxProc*"))
-//				DoWindow/K IR2L_ResSmearingPanel
-//			endif
-//		endif
-	
+			
 	setDataFolder OldDf
 	IR2L_AppendOrRemoveLocalPopInts()
 	DoWindow/F LSQF2_MainPanel
@@ -4065,15 +4051,9 @@ static Function IR2L_ConEvAnalyzeEvalResults2(ParamName)
 		endif
 	endfor
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	variable levellow, levelhigh
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	variable levellow, levelhigh
 
 	IR1_CreateResultsNbk()
 	//IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
@@ -4111,15 +4091,9 @@ static Function IR2L_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	
 	string LParamName=IR2L_FIxParamName(ParamName)
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	//create folder where we dump this thing...
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	//create folder where we dump this thing...
 	NewDataFolder/O/S root:ConfidenceEvaluation
 	SVAR SampleFullName=root:Packages:IR2L_NLSQF:FolderName_set1
 	NVAR ConfEvAutoOverwrite = root:Packages:IR2L_NLSQF:ConfEvAutoOverwrite
@@ -4363,15 +4337,9 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		endif
 	endfor
 	
-	DoWindow ChisquaredAnalysis
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis
-	endif
-	DoWindow ChisquaredAnalysis2
-	if(V_Flag)
-		DoWindow/K ChisquaredAnalysis2
-	endif
-	variable levellow, levelhigh
+	KillWIndow/Z ChisquaredAnalysis
+ 	KillWIndow/Z ChisquaredAnalysis2
+ 	variable levellow, levelhigh
 
 	if(FittedParameter)	//fitted parameter, chi-square analysis needs a bit different... 
 		wavestats/Q ChiSquareValues
@@ -4765,7 +4733,7 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	variable i
 
 	if(stringmatch(ctrlName,"Continue_SDDetails"))
-		DoWindow/K LSQF2_ModelingII_MoreDetails
+		KillWIndow/Z LSQF2_ModelingII_MoreDetails
 	endif
 	if(cmpstr(ctrlName,"GetHelp")==0)
 		//Open www manual with the right page
@@ -4945,11 +4913,8 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR2L_FormatLegend()
 	endif
 	if(cmpstr(ctrlName,"ReGraph")==0)
-		DoWindow LSQF_MainGraph
-		if(V_Flag)
-			DoWindow/K LSQF_MainGraph
-		endif
-		NVAR MultipleInputData = root:Packages:IR2L_NLSQF:MultipleInputData
+		KillWIndow/Z LSQF_MainGraph
+ 		NVAR MultipleInputData = root:Packages:IR2L_NLSQF:MultipleInputData
 		variable MaxDataSets=10
 		if(!MultipleInputData)
 			MaxDataSets=1
@@ -5237,10 +5202,7 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 			setWindow IR2L_ResSmearingPanel, hook(KillFunction)=IRL2_SmearingHookFunction
 			setWindow IR2L_ResSmearingPanel, note="DataSet="+num2str(V_Value+1)+";"
 		else
-			DoWIndow IR2L_ResSmearingPanel
-			if(V_Flag)
-				DoWIndow/K IR2L_ResSmearingPanel
-			endif
+			KillWIndow/Z IR2L_ResSmearingPanel
 		endif
 	endif
 
@@ -5262,11 +5224,8 @@ end
 
 Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	variable WhichSet
-	DoWIndow IR2L_ResSmearingPanel
-	if(V_Flag)
-		DoWIndow/K IR2L_ResSmearingPanel
-	endif
-	variable CurDataTab = WhichSet+1
+	KillWIndow/Z IR2L_ResSmearingPanel
+ 	variable CurDataTab = WhichSet+1
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(456,270,878,560) as "Resolution Smearing"
 	DoWindow/C IR2L_ResSmearingPanel

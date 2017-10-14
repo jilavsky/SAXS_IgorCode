@@ -62,10 +62,7 @@ Function IR1P_GeneralPlotTool()
 	
 	variable i
 	For(i=0;i<ItemsInList(ListOfWindowsToClose);i+=1)
-		DoWindow $(StringFromList(i,ListOfWindowsToClose,";"))
-		if (V_Flag)
-			DoWindow/K $(StringFromList(i,ListOfWindowsToClose,";"))
-		endif
+		KillWIndow/Z $(StringFromList(i,ListOfWindowsToClose,";"))
 	endfor
 	IR1P_InitializeGenGraph()
 	//IR1_KillGraphsAndPanels()
@@ -567,10 +564,7 @@ end
 Function IR1P_RemoveDataFn()
 	//here we create new panel with some more controls...
 	
-	DoWindow IR1P_RemoveDataPanel
-	if(V_Flag)
-		DoWindow/K IR1P_RemoveDataPanel
-	endif
+	KillWIndow/Z IR1P_RemoveDataPanel
 	Execute ("IR1P_RemoveDataPanel()")
 
 end
@@ -598,10 +592,7 @@ Function IR1P_ModifyDataFn()
 	ModifyDataErrorMult=1
 	ListOfRemovedPoints=""
 	
-	DoWindow IR1P_ModifyDataPanel
-	if(V_Flag)
-		DoWindow/K IR1P_ModifyDataPanel
-	endif
+	KillWIndow/Z IR1P_ModifyDataPanel
 	Execute ("IR1P_ModifyDataPanel()")
 end
 //**********************************************************************************************************
@@ -610,10 +601,8 @@ end
 Function IR1P_FittingDataFn()
 	//here we create new panel with some more controls...
 	
-	DoWindow IR1P_FittingDataPanel
-	if(V_Flag)
-		DoWindow/K IR1P_FittingDataPanel
-	endif
+	KillWIndow/Z IR1P_FittingDataPanel
+
 	Execute ("IR1P_FittingDataPanel()")
 end
 
@@ -1153,10 +1142,7 @@ end
 Function IR1P_MoreToolsFn()
 	//here we create new panel with some more controls...
 	
-	DoWindow IR1P_MoreToolsPanel
-	if(V_Flag)
-		DoWindow/K IR1P_MoreToolsPanel
-	endif
+	KillWIndow/Z IR1P_MoreToolsPanel
 	Execute ("IR1P_MoreToolsPanel()")
 	
 end
@@ -1257,10 +1243,7 @@ end
 Function IR1P_ChangeGraphDetailsFn()
 	//here we create new panel with some more controls...
 	
-	DoWindow IR1P_ChangeGraphDetailsPanel
-	if(V_Flag)
-		DoWindow/K IR1P_ChangeGraphDetailsPanel
-	endif
+	KillWIndow/Z IR1P_ChangeGraphDetailsPanel
 	Execute ("IR1P_ChangeGraphDetailsPanel()")
 	
 end
@@ -1322,15 +1305,8 @@ EndMacro
 Function IR1P_ResetTool()
 	//kill graph and reset the strings for new start
 
-	DoWindow GeneralGraph
-	if(V_Flag)
-		//CloseTransformAxisGraph("GeneralGraph", 0)
-		Dowindow/K GeneralGraph
-	endif
-	DoWindow PlotingToolWaterfallGrph
-	if(V_Flag)
-		Dowindow/K PlotingToolWaterfallGrph
-	endif
+	KillWIndow/Z GeneralGraph
+	KillWIndow/Z PlotingToolWaterfallGrph
 	
 	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
 	SVAR ListOfDataWaveNames=root:Packages:GeneralplottingTool:ListOfDataWaveNames
@@ -2084,10 +2060,7 @@ end
 
 Function IR1P_StoreGraphs()
 
-	DoWIndow IR1P_StoreGraphsCtrlPnl
-	if(V_Flag)
-		DoWindow/K IR1P_StoreGraphsCtrlPnl
-	endif
+	KillWIndow/Z IR1P_StoreGraphsCtrlPnl
 
 	IR1P_StoreGraphInit()
 	Execute("IR1P_StoreGraphsCtrlPnl()")
@@ -2351,10 +2324,7 @@ end
 //*************************************************************************************************************
 //*************************************************************************************************************
 Function IR1P_GizmoFunctionality()
-	DoWindow testGizmo
-	if(V_Flag)
-		DoWindow/K testGizmo
-	endif
+	KillWIndow/Z testGizmo
 #if(IgorVersion()<6.99)		//Igor 6
 	Execute("NewGizmo/i/Z/N=testGizmo")
 #else
@@ -2362,7 +2332,7 @@ Function IR1P_GizmoFunctionality()
 #endif
 	DoWIndow testGizmo
 	if(V_Flag)
-		DoWIndow/K testGizmo
+		KillWIndow/Z testGizmo
 		//print "GC OK"
 		return 1
 	else
@@ -2880,10 +2850,7 @@ Function IR1P_ManageStyles()
 
 	IR1P_InitExportStyles()
 	
-	DoWindow IR1P_StylesManagementPanel
-	if(V_Flag)
-		DoWindow/K IR1P_StylesManagementPanel
-	endif
+	KillWIndow/Z IR1P_StylesManagementPanel
 	Execute ("IR1P_StylesManagementPanel()")
 
 end

@@ -487,51 +487,17 @@ end
 
 Function IN2A_CleanupAllWIndows()
 	//this routine kills all open windows of this package at the start of any routine...
-	DoWIndow LinLinBeamCenterPlot					//cleanup old windows of Create R wave routine...
-	if (V_Flag)
-		DoWindow/K LinLinBeamCenterPlot
-	endif
-	DoWIndow IN2A_UPDControlPanel
-	if (V_Flag)
-		DoWindow/K IN2A_UPDControlPanel
-	endif
-	DoWIndow LogLogRPlot
-	if (V_Flag)
-		DoWindow/K LogLogRPlot
-	endif
-	DoWIndow ASBLinLinPlot
-	if (V_Flag)
-		DoWindow/K ASBLinLinPlot
-	endif
-	DoWIndow MSAXSCorrection
-	if (V_Flag)
-		DoWindow/K MSAXSCorrection
-	endif
-	DoWIndow IN2A_MSAXSPanel
-	if (V_Flag)
-		DoWindow/K IN2A_MSAXSPanel
-	endif
-	DoWIndow TrimGraph
-	if (V_Flag)
-		DoWindow/K TrimGraph
-	endif
-//	DoWIndow CheckGraph1
-//	if (V_Flag)
-//		DoWindow/K CheckGraph1
-//	endif
-	DoWIndow SmearingProcess
-	if (V_Flag)
-		DoWindow/K SmearingProcess
-	endif
-	DoWIndow SmearingProcess
-	if (V_Flag)
-		DoWindow/K SmearingProcess
-	endif
-	DoWIndow FinalDesmeared
-	if (V_Flag)
-		DoWindow/K FinalDesmeared
-	endif
-end
+	KillWIndow/Z LinLinBeamCenterPlot					//cleanup old windows of Create R wave routine...
+ 	KillWIndow/Z IN2A_UPDControlPanel
+ 	KillWIndow/Z LogLogRPlot
+ 	KillWIndow/Z ASBLinLinPlot
+ 	KillWIndow/Z MSAXSCorrection
+ 	KillWIndow/Z IN2A_MSAXSPanel
+ 	KillWIndow/Z TrimGraph
+ 	KillWIndow/Z SmearingProcess
+ 	KillWIndow/Z SmearingProcess
+ 	KillWIndow/Z FinalDesmeared
+ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -1400,7 +1366,7 @@ Function IN2A_RepeatMacroButton(ctrlname) : Buttoncontrol			// calls the repeat 
 		endif
 	endif	
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)					//Kills the controls when not needed anymore
-			DoWindow/K IN2A_UPDControlPanel
+			KillWIndow/Z IN2A_UPDControlPanel
 	endif
 	IN2G_KillGraphsAndTables("yes")
 	IN2A_CreateRWave()
@@ -1436,7 +1402,7 @@ Function IN2A_SaveRWave(ctrlname) : Buttoncontrol						//Save the PD_current wav
 
 
 	if (strlen(WinList("IN2A_UPDControlPanel",";","WIN:64"))>0)		//Kills the UPD controls when not needed anymore
-			DoWindow/K IN2A_UPDControlPanel
+			KillWIndow/Z IN2A_UPDControlPanel
 	endif
 
 end
@@ -2126,15 +2092,9 @@ Function IN2A_MSAXScorrection()
 
 	IN2A_CleanupAllWIndows()						//cleanup all open windows from Indra 2
 
-	DOWIndow IN2A_MSAXSPanel
-	if(V_Flag)
-		DoWindow/K IN2A_MSAXSPanel
-	endif
-	DOWIndow MSAXSCorrection
-	if(V_Flag)
-		DoWindow/K MSAXSCorrection
-	endif
-	IN2G_UniversalFolderScan("root:USAXS:", 5, "IN2G_CheckTheFolderName()")  //here we fix the folder names/sample names in wave notes if necessary
+	KillWIndow/Z IN2A_MSAXSPanel
+ 	KillWIndow/Z MSAXSCorrection
+ 	IN2G_UniversalFolderScan("root:USAXS:", 5, "IN2G_CheckTheFolderName()")  //here we fix the folder names/sample names in wave notes if necessary
 	
 	String DataFolderName 
 	String NextMSAXSData=IN2A_NextMSAXSDataToEvaluate()
@@ -2476,12 +2436,8 @@ end
 Function IN2A_RestartMSMR(ctrlname) : Buttoncontrol			// calls the repeat function fit
 	string ctrlname
 
-//	IN2G_KillAllGraphsAndTables("yes")
-	DoWindow MSAXSCorrection
-	if (V_Flag)
-		DoWindow/K MSAXSCorrection
-	endif
-	IN2A_MSAXScorrection()
+ 	KillWIndow/Z MSAXSCorrection
+ 	IN2A_MSAXScorrection()
 End
 
 
@@ -2489,7 +2445,7 @@ Window IN2A_MSAXSPanel() : Panel
 	setDataFolder root:Packages:MSAXSCorrection
 	 
 	if (strlen(WinList("IN2A_MSAXSPanel",";","WIN:64"))>0)
-			DoWindow/K IN2A_MSAXSPanel
+			KillWIndow/Z IN2A_MSAXSPanel
 	endif
 	PauseUpdate; Silent 1		// building window...
 	NewPanel/k=1 /W=(738.75,52.25,1120,311) as "MSAXS corrections"
@@ -2835,17 +2791,11 @@ Function IN2A_AnisotropicMSAXS()
 	
 	IN2A_AMSAXS_Intitialize()
 	
-	DoWindow IN2A_AMSAXSTable
-	if (V_Flag)
-		DoWindow/K IN2A_AMSAXSTable
-	endif
-	Execute ("IN2A_AMSAXSTable()")
+	KillWIndow/Z IN2A_AMSAXSTable
+ 	Execute ("IN2A_AMSAXSTable()")
 
-	DoWindow IN2A_AMSAXS_Panel
-	if (V_Flag)
-		DoWindow/K IN2A_AMSAXS_Panel
-	endif
-	Execute ("IN2A_AMSAXS_Panel()")
+	KillWIndow/Z IN2A_AMSAXS_Panel
+ 	Execute ("IN2A_AMSAXS_Panel()")
 	
 	
 
@@ -3726,7 +3676,7 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 		close refnum2
 		 IN2_MakeExampleXSL()
 		SaveNotebook /O ExampleXSL  as XSLFileName
-		DoWIndow/K ExampleXSL
+		KillWIndow/Z ExampleXSL
 		print "Created XSL file for you..."
 	else
 		close refnum2

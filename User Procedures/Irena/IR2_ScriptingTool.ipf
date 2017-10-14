@@ -73,7 +73,7 @@ Function IR2S_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR2S_ScriptingToolPnl", IR2SversionNumber))
 			DoAlert /T="The Scripting tool panel was created by old version of Irena " 1, "Scripting tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("DoWindow/K IR2S_ScriptingToolPnl")
+				Execute/P("KillWIndow/Z IR2S_ScriptingToolPnl")
 				Execute/P("IR2S_ScriptingTool()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2S_InitScriptingTool()

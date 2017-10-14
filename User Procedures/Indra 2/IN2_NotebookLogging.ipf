@@ -230,7 +230,7 @@ Function IN2N_LogBookControlPanel()
 //Let's create panel to control changes in dark currents etc.
 	Silent 1
 	if (strlen(WinList("LogBookControl",";","WIN:64"))>0)
-			DoWindow/K LogBookControl
+			KillWIndow/Z LogBookControl
 	endif
 	String PanelTitle= " LogBookControl "
 	NewPanel /K=1 /W=(480.75,389,663,589.25) as " LogBookControl "

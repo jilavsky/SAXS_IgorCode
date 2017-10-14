@@ -309,7 +309,7 @@ Function NI1_Open15IDDManual()
 		NewNotebook/F=0 /N=NewBatchFile
 		Notebook NewBatchFile, text=whereIsManual//+"\r"
 		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-		DoWindow/K NewBatchFile
+		KillWIndow/Z NewBatchFile
 		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
 	endif
 end

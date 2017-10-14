@@ -2208,12 +2208,12 @@ Function IR1A_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
 	
 	if(stringmatch(ctrlName,"*CancelBtn*"))
 		variable/g root:Packages:Irena_UnifFit:UserCanceled=1
-		DoWindow/K IR1A_CheckFittingParams
+		KillWIndow/Z IR1A_CheckFittingParams
 	endif
 
 	if(stringmatch(ctrlName,"*ContinueBtn*"))
 		variable/g root:Packages:Irena_UnifFit:UserCanceled=0
-		DoWindow/K IR1A_CheckFittingParams
+		KillWIndow/Z IR1A_CheckFittingParams
 	endif
 
 End

@@ -75,14 +75,8 @@ Function IR1D_DataManipulation()
 
 	IN2G_CheckScreenSize("height",670)
 	//IR1_KillGraphsAndPanels()
-	DoWindow IR1D_DataManipulationPanel
-	if(V_Flag)
-		DoWindow/K IR1D_DataManipulationPanel
-	endif
-	DoWindow IR1D_DataManipulationGraph
-	if(V_Flag)
-		DoWindow/K IR1D_DataManipulationGraph
-	endif
+	KillWIndow/Z IR1D_DataManipulationPanel
+	KillWIndow/Z IR1D_DataManipulationGraph
 
 	IR1D_InitDataManipulation()
 	
@@ -1825,10 +1819,7 @@ static Function IR1D_ResetModifyData()
 		teststr =""
 	endfor		
 
-	DOWIndow IR1D_DataManipulationGraph
-	if(V_Flag)
-		DoWindow/K IR1D_DataManipulationGraph
-	endif
+	KillWIndow/Z IR1D_DataManipulationGraph
 	string OldDf
 	OldDf=GetDataFolder (1)
 	setDataFolder root:Packages:SASDataModification:
@@ -1925,10 +1916,7 @@ end
 //**********************************************************************************************************
 static Function IR1D_CopyDataAndGraph()
 
-	DoWIndow IR1D_DataManipulationGraph
-	if(V_Flag)
-		DoWindow/K IR1D_DataManipulationGraph
-	endif
+	KillWIndow/Z IR1D_DataManipulationGraph
 	IR1D_CopyDataLocally()
 	Execute("IR1D_DataManipulationGraph()")
 	AutoPositionWindow/M=0 /R=IR1D_DataManipulationPanel IR1D_DataManipulationGraph
@@ -2743,14 +2731,8 @@ Function IR3M_DataManipulationII()
 
 	IR3M_InitDataManipulationII()
 	
-	DoWindow DataManipulationII
-	if(V_Flag)
-		DoWindow/K DataManipulationII
-	endif
-	DoWindow ItemsInFolderPanel_DMII
-	if(V_Flag)
-		DoWindow/K ItemsInFolderPanel_DMII
-	endif
+	KillWIndow/Z DataManipulationII
+	KillWIndow/Z ItemsInFolderPanel_DMII
 	
 	IN2G_CheckScreenSize("height",650)
 	IR3M_DataManipulationIIPanel()
@@ -3628,10 +3610,7 @@ Function  IR3M_GraphTestFolderData()
 	Wave/Z Ywv=$(DataFOldername+YWaveNm)
 	Wave/Z Xwv=$(DataFOldername+XWaveNm)
 	if(WaveExists(YWv) && WaveExists(Xwv))
-		DoWIndow DataManipulationIIPrev
-		if(V_Flag)
-			DoWindow/K DataManipulationIIPrev
-		endif
+		KillWIndow/Z DataManipulationIIPrev
 		Display/K=1 Ywv vs XWv as "Preview of data in Manipulation II tool"
 		DoWindow/C DataManipulationIIPrev
 		ModifyGraph/W=DataManipulationIIPrev log=1
@@ -4900,7 +4879,7 @@ Function IR3M_CreateGraph(Reset)
 	if(DisplayResults)	
 		DoWIndow DataManipulationIIGraph
 		if(V_Flag&&Reset)
-			DoWIndow/K DataManipulationIIGraph
+			KillWIndow/Z DataManipulationIIGraph
 			//Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
 			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "DataManipulation II Graph"
 			DoWindow/C DataManipulationIIGraph
@@ -5064,10 +5043,7 @@ Function IR3M_MakePanelWithListBox()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:DataManipulationII
 	
-	DoWindow ItemsInFolderPanel_DMII
-	if(V_Flag)
-		DoWindow/K ItemsInFolderPanel_DMII
-	endif
+	KillWIndow/Z ItemsInFolderPanel_DMII
 	SVAR DataFolderName=root:Packages:DataManipulationII:DataFolderName
 	if(!DataFolderExists(DataFolderName) || cmpstr(DataFolderName,"---")==0)
 		return 1
@@ -5093,10 +5069,7 @@ Function IR3M_MakePanelWithListBox()
 	Make/O/T/N=0 PreviewSelectedFolder
 	Make/O/N=0 SelectedFoldersWv
 
-	DoWindow ItemsInFolderPanel
-	if(V_Flag)
-		DoWindow/K ItemsInFolderPanel
-	endif
+	KillWIndow/Z ItemsInFolderPanel
 	
 	//PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(400,50,720,696) as "Items in selected folder"

@@ -1622,11 +1622,8 @@ Function IR2D_GraphMeasuredData()
 	endif
 	
 	
-		DoWindow IR2D_LogLogPlotSAD
-		if (V_flag)
-			Dowindow/K IR2D_LogLogPlotSAD
-		endif
-		Execute ("IR2D_LogLogPlotSAD()")
+		KillWIndow/Z IR2D_LogLogPlotSAD
+ 		Execute ("IR2D_LogLogPlotSAD()")
 	setDataFolder oldDf
 end
 
@@ -2525,12 +2522,12 @@ Function IR2D_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
 	
 	if(stringmatch(ctrlName,"*CancelBtn*"))
 		variable/g root:Packages:Irena_SAD:UserCanceled=1
-		DoWindow/K IR2D_CheckFittingParams
+		KillWIndow/Z IR2D_CheckFittingParams
 	endif
 
 	if(stringmatch(ctrlName,"*ContinueBtn*"))
 		variable/g root:Packages:Irena_SAD:UserCanceled=0
-		DoWindow/K IR2D_CheckFittingParams
+		KillWIndow/Z IR2D_CheckFittingParams
 	endif
 
 End

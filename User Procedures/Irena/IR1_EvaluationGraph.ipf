@@ -37,10 +37,7 @@ Function IR1G_EvaluateONESample()
 	//initialize
 	IR1G_IniEvaluationGraph()
 	//create graph
-	DoWindow IR1G_OneSampleEvaluationGraph
-	if (V_Flag)
-		DoWindow/K IR1G_OneSampleEvaluationGraph
-	endif
+	KillWIndow/Z IR1G_OneSampleEvaluationGraph
 	Execute("IR1G_OneSampleEvaluationGraph()")
 	SetWindow IR1G_OneSampleEvaluationGraph, hook(named)=IRG1_MainHookFunction
 		//now set the checkboxes for appropriate number of distributions fitted
@@ -286,7 +283,7 @@ Function IR1G_CalculateStatistics()
 			IR1G_MIPDataGraph()
 		endif
 	else
-		DoWIndow/K/Z MIPDataGraph
+		KillWIndow/Z MIPDataGraph
 		KillWaves/Z MIPVolume, MIPDistDiameters, MIPPressure	
 	endif
 	

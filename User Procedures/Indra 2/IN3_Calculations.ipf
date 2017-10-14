@@ -497,11 +497,8 @@ static Function IN3_LoadData()
 	setDataFolder root:Packages:Indra3
 	
 	//First Kill waves which may cause conflict. 
-	DoWindow RcurvePlotGraph
-	if(V_Flag)
-		DoWindow/K RcurvePlotGraph
-	endif
-	String ListOfWaves  = DataFolderDir (2)[6,inf]
+	KillWIndow/Z RcurvePlotGraph
+ 	String ListOfWaves  = DataFolderDir (2)[6,inf]
 	ListOfWaves = RemoveFromList("ListBoxDataSelWv", ListOfWaves,",")
 	ListOfWaves = RemoveFromList("ListBoxDataPositions", ListOfWaves,",")
 	ListOfWaves = RemoveFromList("ListBoxData", ListOfWaves,",")
@@ -666,11 +663,8 @@ static Function IN3_GraphData()
 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
-	DoWindow RcurvePlotGraph
-	if(V_Flag)
-		DoWindow/K RcurvePlotGraph
-	endif
-	IN3_RcurvePlot() 
+	KillWIndow/Z RcurvePlotGraph
+ 	IN3_RcurvePlot() 
 	IN3_DisplayRightSubwindow()
 	IN3_FixDispControlsInRcurvePlot()
 

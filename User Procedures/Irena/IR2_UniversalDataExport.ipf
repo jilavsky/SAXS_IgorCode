@@ -162,9 +162,7 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 	
 				IR2E_UpdateListOfAvailFiles()
 				DoWindow IR2E_MultipleDataSelectionPnl
-				if(!V_Flag)
-					//DoWindow/K IR2E_MultipleDataSelectionPnl
-				
+				if(!V_Flag)				
 					NewPanel/K=1 /W=(400,44,800,355) as "Multiple Data Export selection"
 					DoWIndow/C IR2E_MultipleDataSelectionPnl
 					SetDrawLayer UserBack
@@ -193,11 +191,7 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 				endif
 				AutoPositionWindow/M=0 /R=UnivDataExportPanel IR2E_MultipleDataSelectionPnl
 			else
-				DoWindow IR2E_MultipleDataSelectionPnl
-				if(V_Flag)
-					DoWindow/K IR2E_MultipleDataSelectionPnl
-				endif
-			
+				KillWIndow/Z IR2E_MultipleDataSelectionPnl
 			endif
 		endif		//end of ExportMultipleDataSets
 
@@ -375,7 +369,7 @@ Function IR2E_UnivExportToolSetVarProc(ctrlName,varNum,varStr,varName) : SetVari
 	if(cmpstr(ctrlName,"HeaderSeparator")==0)
 		DoWindow ExportNoteDisplay
 		if(V_Flag)
-			DoWindow/K ExportNoteDisplay
+			KillWIndow/Z ExportNoteDisplay
 		else
 			abort
 		endif
@@ -714,15 +708,9 @@ end
 
 Function IR2E_LoadDataInTool()
 
-	DoWindow TempExportGraph
-	if(V_Flag)
-		DoWindow/K TempExportGraph
-	endif
-	DoWindow ExportNoteDisplay
-	if(V_Flag)
-		DoWindow/K ExportNoteDisplay
-	endif
-	KillWaves/Z TempX, TampY, TempE
+	KillWIndow/Z TempExportGraph
+ 	KillWIndow/Z ExportNoteDisplay
+ 	KillWaves/Z TempX, TampY, TempE
 
 
 	string oldDf=GetDataFolder(1)

@@ -1,10 +1,10 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.06
+#pragma version=1.07
 #include <Multi-peak fitting 2.0>
 
 //local configurations
 Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
-constant IR3WversionNumber = 0.4		//Diffraction panel version number
+constant IR3WversionNumber = 1.07		//Diffraction panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 0.4		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.07 added button to import AMS txtx files (from http://rruff.geo.arizona.edu/AMS/result.php)
 //1.06  removed unused functions
 //1.05 added call to web manual also. 
 //1.04 change LauGo calculate method to import of xml PDF-4+ cards. 
@@ -32,10 +33,7 @@ Function IR3W_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber))
 			DoAlert /T="The WAXS panel was created by old version of Irena " 1, "WAXS tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				DoWIndow IR3W_WAXSPanel
-				if(V_Flag)
-					DoWindow/K IR3W_WAXSPanel
-				endif
+				KillWIndow/Z IR3W_WAXSPanel
 				Execute/P("IR3W_WAXS()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				Execute/P("IR3W_WAXS()")
@@ -182,10 +180,10 @@ Proc IR3W_WAXSPanel()
 	
 	Checkbox PDF4_DisplayHKLTags, pos={340,405},size={76,14},title="Display HKL tags", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
 	Button PDF4UpdateList, pos={300,425}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
-
-	Button PDF4ExportImport, pos={300,450}, size={200,20}, title="Export/Import/Delete PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
-	Button PDF4ImportPDF4xml, pos={300,475}, size={200,20}, title="Import PDF-4+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines using LaueGo package from Jon Tischler"}
-	Button PDF4AddManually, pos={300,500}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
+	Button PDF4ExportImport, pos={300,447}, size={200,20}, title="Export/Import/Delete PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
+	Button PDF4ImportPDF4xml, pos={300,469}, size={200,20}, title="Import PDF-4+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from JCPDS xml cards"}
+	Button AMSImportAMStxt, pos={300,491}, size={200,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
+	Button PDF4AddManually, pos={300,513}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
 
 	DrawText 4,680,"Double click to add data to graph."
 	DrawText 4,693,"Shift-click to select range of data."
@@ -235,6 +233,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				ListBox PDF4CardsSelection, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4AddManually, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4ImportPDF4xml, win=IR3W_WAXSPanel, disable=(tab!=1)
+				Button AMSImportAMStxt, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4UpdateList, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4ExportImport, win=IR3W_WAXSPanel, disable=(tab!=1)			
 				Checkbox PDF4_DisplayHKLTags, win=IR3W_WAXSPanel, disable=(tab!=1)
@@ -1401,6 +1400,11 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				//IR3W_PDF4AddFromLaueGo()
 				IR3W_UpdatePDF4OfAvailFiles()
 			endif
+			if(stringmatch(ba.ctrlname,"AMSImportAMStxt"))
+				IR3W_ImportAMSData()
+				//IR3W_PDF4AddFromLaueGo()
+				IR3W_UpdatePDF4OfAvailFiles()
+			endif
 			if(stringmatch(ba.ctrlname,"PDF4UpdateList"))
 				IR3W_UpdatePDF4OfAvailFiles()
 			endif
@@ -1630,11 +1634,8 @@ static function IR3W_SaveMultiPeakResults()
 		endfor
 
 		DoUpdate
-		DoWindow $("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber))
-		if(V_Flag)
-			DoWIndow/K $("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber))
-		endif
-		//arrange the widnows around...
+		KillWIndow/Z $("MPF2_ResultsPanel_"+num2str(MPF2CurrentFolderNumber))
+ 		//arrange the widnows around...
 		string TableWinName, NotebookWinName
 		TableWinName= WinList("MultipeakSet*_TD",";","") //MultipeakSet5_TD
 		NotebookWinName= WinList("MultipeakSet*Report",";","") //MultipeakSet5_TD
@@ -2212,11 +2213,8 @@ Function IR3W_PDF4AddManually()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	string NewCardFullName
-	DoWIndow JCPDS_Input
-	if(V_Flag)
-		DoWIndow/K JCPDS_Input
-	endif
-	NewDataFolder/O/S root:WAXS_PDF
+	KillWIndow/Z JCPDS_Input
+ 	NewDataFolder/O/S root:WAXS_PDF
 	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
 	DeleteCardName="---"
 	OldCardName = "---"
@@ -2280,6 +2278,134 @@ end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
+Function IR3W_ImportAMSData()
+	//for data from http://rruff.geo.arizona.edu/AMS/amcsd.php
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string OldDf=getDataFolder(1)
+	string NewCardFullName
+ 	NewDataFolder/O/S root:WAXS_PDF
+	//Get the file to read:
+	variable fileID
+	Open/D/A/T=".txt"/M="Find AMS file" fileID
+	String PathToFile = S_fileName
+	string MaterialName, tmpStr
+	string OtherInfo=""
+	variable refNum
+	Open /R /Z refNum  as PathToFile
+	if(V_Flag>1) //no success
+		abort "Could not load file correctly"
+	endif
+	FReadLine  refNum, MaterialName
+	Do
+		FReadLine  refNum, tmpStr
+		OtherInfo +=tmpStr
+	while(strlen(tmpStr)>5)
+	Close refNum
+	//print MaterialName
+	//print OtherInfo
+	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
+	DeleteCardName="---"
+	OldCardName = "---"
+	NewCardNumber = "---"
+	NewCardName = IN2G_TrimFrontBackWhiteSpace(ReplaceString("/r", MaterialName, ""))
+	NewCardNote = OtherInfo
+	Prompt OldCardName, "Select existing card to overwrite", popup "---;"+IR3W_PDF4CreateListOfCards()
+	Prompt NewCardName, "Enter new card name, e.g. Corundum"
+	DoPrompt "Overwrite existing card or Create new card? " OldCardName, NewCardName//, NewCardNote
+	if(V_Flag)
+		KillWIndow/Z AMS_Input
+ 		KillDataFolder/Z root:Packages:WAXSImportAMS:
+		setDataFolder OldDf
+		return 0
+	endif
+	KillDataFolder/Z root:Packages:WAXSImportAMS
+	newDataFolder/O/S root:Packages:WAXSImportAMS
+	LoadWave /A/G/O/W PathToFile
+	//Open /R /Z refNum  as (S_path+ S_fileName)
+	//if(V_Flag>1) //no success
+	//	abort "Could not load file correctly"
+	//endif
+	//these waves should have been created:
+	WAVE/Z D_SPACING
+	WAVE/Z H
+	WAVE/Z INTENSITY
+	WAVE/Z K
+	WAVE/Z L
+	WAVE/Z Multiplicity
+	if(!WaveExists(D_SPACING) ||!WaveExists(h) ||!WaveExists(intensity) ||!WaveExists(k) ||!WaveExists(l) ||!WaveExists(Multiplicity))
+		abort "Waves seems missing"
+	endif 	
+
+	//now that looks like ths is correct AMC card we had example of, let's read it. 
+		make/O/N=(numpnts(D_SPACING),8) NewCard
+		make/O/T/N=(numpnts(D_SPACING)) NewCard_hkl
+		Wave NewCard
+		SetDimLabel 1,0,d_A,NewCard
+		SetDimLabel 1,1,h,NewCard
+		SetDimLabel 1,2,k,NewCard
+		SetDimLabel 1,3,l,NewCard
+		SetDimLabel 1,4,theta,NewCard
+		SetDimLabel 1,5,F2,NewCard
+		SetDimLabel 1,6,Intensity,NewCard
+		SetDimLabel 1,7,mult,NewCard
+	//this is now target where ot store various numbers from JCPDS card.
+	variable i=0
+	For(i=0;i<numpnts(D_SPACING);i+=1)
+			NewCard[i][0] = D_SPACING[i]
+			NewCard[i][6] = intensity[i]
+			NewCard[i][1] = h[i]
+			NewCard[i][2] = k[i]
+			NewCard[i][3] = l[i]
+			//NewCard[i][5] = (str2num(ContentTemp))^2
+			//NewCard[i][4] = str2num(ContentTemp)
+			//ContentTemp = XMLstrFmXpath(fileID,tempStr+"/t","","")
+			NewCard[i][7] = Multiplicity[i]
+	endfor	
+	Redimension/N=(i-1,-1) NewCard, NewCard_hkl
+	NewCard_hkl = "("+num2str(NewCard[p][1])+num2str(NewCard[p][2])+num2str(NewCard[p][3])+")"
+	//done here
+	setDataFolder root:WAXS_PDF
+	if(stringmatch(OldCardName,"---"))
+		NewCardFullName=((NewCardName)[0,23])
+		if(CheckName(NewCardFullName,1)!=0)
+			KillWIndow/Z AMS_Input
+ 			KillDataFolder/Z root:Packages:WAXSImportAMS:
+			setDataFolder OldDf
+			DoAlert 0, "Not unique name"	
+			return 0
+		endif
+		//wave NewCard  = root:Packages:Irena_JCPDSImport:NewCard
+		//wave/T NewCard_hkl  = root:Packages:Irena_JCPDSImport:NewCard_hklStr
+		Duplicate NewCard, $(NewCardFullName)
+		Duplicate NewCard_hkl, $(NewCardFullName+"_hklStr")
+		Wave NewCard= $(NewCardFullName)
+		SetDimLabel 1,0,d_A,NewCard
+		SetDimLabel 1,1,h,NewCard
+		SetDimLabel 1,2,k,NewCard
+		SetDimLabel 1,3,l,NewCard
+		SetDimLabel 1,4,theta,NewCard
+		SetDimLabel 1,5,F2,NewCard
+		SetDimLabel 1,6,Intensity,NewCard
+		SetDimLabel 1,7,mult,NewCard
+	elseif(!stringmatch(OldCardName,"---"))
+		NewCardFullName=OldCardName
+		//wave NewCard  = root:Packages:Irena_JCPDSImport:NewCard
+		//WAVE/T NewCard_hkl  = root:Packages:Irena_JCPDSImport:NewCard_hklStr
+		Duplicate/O NewCard, $(NewCardFullName)
+		Duplicate/O NewCard_hkl, $(NewCardFullName+"_hklStr")
+		Wave NewCard= $(NewCardFullName)
+	else
+		Print "Could not figure out what to do..."
+	endif
+	KillDataFOlder/Z root:Packages:WAXSImportAMS
+	KillWIndow/Z AMS_Input
+	Edit/K=1/W=(351,213,873,819) NewCard
+	DoWindow/C/R AMS_Input
+	ModifyTable format(Point)=1
+	ModifyTable horizontalIndex=2
+	ModifyTable showParts=0xFD
+	setDataFolder OldDf
+end
 //**************************************************************************************
 //**************************************************************************************
 
@@ -2287,14 +2413,11 @@ Function IR3W_ImportPDF4xmlFile()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	string NewCardFullName
-	DoWIndow JCPDS_Input
-	if(V_Flag)
-		DoWIndow/K JCPDS_Input
-	endif
-	NewDataFolder/O/S root:WAXS_PDF
+	KillWIndow/Z JCPDS_Input
+ 	NewDataFolder/O/S root:WAXS_PDF
 	//Get the file to read:
 	variable fileID
-	Open/D/A/T=".xml"/M="Find xml file exported from PDF-4+ databse" fileID
+	Open/D/A/T=".xml"/M="Find xml file exported from PDF-4+ database" fileID
 	String PathToFile = S_fileName
 	string pdfNumber
 	pdfNumber = IR3W_ReadXMLJCPDSCard(PathToFile)
@@ -2308,22 +2431,16 @@ Function IR3W_ImportPDF4xmlFile()
 	Prompt NewCardName, "Enter new card name, e.g. Corundum"
 	DoPrompt "Overwrite existing card or Create new card? " OldCardName, NewCardName//, NewCardNote
 	if(V_Flag)
-		DoWIndow JCPDS_Input
-		if(V_Flag)
-			DoWIndow/K JCPDS_Input
-		endif
-		KillDataFolder root:Packages:Irena_JCPDSImport:
+		KillWIndow/Z JCPDS_Input
+ 		KillDataFolder root:Packages:Irena_JCPDSImport:
 		setDataFolder OldDf
 		return 0
 	endif
 	if(stringmatch(OldCardName,"---"))
 		NewCardFullName=((NewCardName)[0,23])
 		if(CheckName(NewCardFullName,1)!=0)
-			DoWIndow JCPDS_Input
-			if(V_Flag)
-				DoWIndow/K JCPDS_Input
-			endif
-			KillDataFolder root:Packages:Irena_JCPDSImport:
+			KillWIndow/Z JCPDS_Input
+ 			KillDataFolder root:Packages:Irena_JCPDSImport:
 			setDataFolder OldDf
 			DoAlert 0, "Not unique name"	
 			return 0

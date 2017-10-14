@@ -1380,11 +1380,8 @@ end
 
 Function IR2L_CheckFittingParamsFnct() 
 
-	DoWIndow IR2L_CheckFittingParams
-	if(V_Flag)
-		DoWindow/K IR2L_CheckFittingParams
-	endif
-	//PauseUpdate; Silent 1		// building window...
+	KillWIndow/Z IR2L_CheckFittingParams
+ 	//PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(400,140,1000,600) as "Check fitting parameters"
 	Dowindow/C IR2L_CheckFittingParams
 	SetDrawLayer UserBack
@@ -1463,12 +1460,12 @@ Function IR2L_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
 	
 	if(stringmatch(ctrlName,"*CancelBtn*"))
 		variable/g root:Packages:IR2L_NLSQF:UserCanceled=1
-		DoWindow/K IR2L_CheckFittingParams
+		KillWIndow/Z IR2L_CheckFittingParams
 	endif
 
 	if(stringmatch(ctrlName,"*ContinueBtn*"))
 		variable/g root:Packages:IR2L_NLSQF:UserCanceled=0
-		DoWindow/K IR2L_CheckFittingParams
+		 KillWIndow/Z IR2L_CheckFittingParams
 	endif
 
 End

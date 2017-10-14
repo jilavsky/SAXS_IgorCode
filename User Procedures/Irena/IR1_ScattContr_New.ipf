@@ -38,10 +38,7 @@ Function IR1K_ScattCont2()
 	IN2G_CheckScreenSize("height",500)
 	IN2G_CheckScreenSize("width",800)
 	
-	DoWindow IR1K_ScatteringContCalc
-	if (V_Flag)
-		DoWindow/K IR1K_ScatteringContCalc
-	endif	
+	KillWIndow/Z IR1K_ScatteringContCalc
 	
 	Execute("IR1K_ScatteringContCalc()")
 	IR1_UpdatePanelVersionNumber("IR1K_ScatteringContCalc", 1,1)
@@ -228,10 +225,7 @@ Function IR1K_ButtonProc(ctrlName) : ButtonControl
 	endif
 ////		Button LoadMatrixData size={120,20},pos={610,470},proc=IR1Y_ButtonProc
 	if(cmpstr(ctrlName,"SelectElement")==0)
-		DoWIndow IN2G_PeriodicTableInput
-		if(V_Flag)
-			DoWIndow/K IN2G_PeriodicTableInput
-		endif
+		KillWIndow/Z IN2G_PeriodicTableInput
 		NVAR SelectedElement=root:Packages:ScatteringContrast:SelectedElement
 		SVAR SelectedElementName=root:Packages:ScatteringContrast:SelectedElementName
 		IN2G_InputPeriodicTable("IR1K_PerTblButtonProc", "IN2G_PeriodicTableInput", "Select element", 180,220)
@@ -265,7 +259,7 @@ Function IR1K_PerTblButtonProc(ctrlName) : ButtonControl
 	//print ctrlName
 	SVAR SelectedElementName=root:Packages:ScatteringContrast:SelectedElementName
 	SelectedElementName=ctrlName
-	DoWindow/k IN2G_PeriodicTableInput
+	KillWIndow/Z IN2G_PeriodicTableInput
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2022,34 +2016,13 @@ End
 
 Function IR1K_KillAllGraphs()
 
-	DoWindow DeltaRhoSquaredGrph
-	if(V_Flag)
-		DoWindow/K DeltaRhoSquaredGrph
-	endif
-	DoWindow FPrimeGrph
-	if(V_Flag)
-		DoWindow/K FPrimeGrph
-	endif
-	DoWindow FDoublePrimeGrph
-	if(V_Flag)
-		DoWindow/K FDoublePrimeGrph
-	endif
-	DoWindow MuOverRhoGrph
-	if(V_Flag)
-		DoWindow/K MuOverRhoGrph
-	endif
-	DoWindow OneOverMuGrph
-	if(V_Flag)
-		DoWindow/K OneOverMuGrph
-	endif
-	DoWindow eToMinusMuTGrph
-	if(V_Flag)
-		DoWindow/K eToMinusMuTGrph
-	endif
-	DoWindow F0FPrimeGrph
-	if(V_Flag)
-		DoWindow/K F0FPrimeGrph
-	endif
+	KillWIndow/Z DeltaRhoSquaredGrph
+	KillWIndow/Z FPrimeGrph
+	KillWIndow/Z FDoublePrimeGrph
+	KillWIndow/Z MuOverRhoGrph
+	KillWIndow/Z OneOverMuGrph
+	KillWIndow/Z eToMinusMuTGrph
+	KillWIndow/Z F0FPrimeGrph
 	
 End
 

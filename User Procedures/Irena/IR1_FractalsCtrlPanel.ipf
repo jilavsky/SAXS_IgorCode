@@ -1603,11 +1603,8 @@ Function IR1V_GraphMeasuredData()
 		OriginalIntensity =OriginalIntensity - SubtractBackground
 	endif
 	
-		DoWindow IR1V_LogLogPlotV
-		if (V_flag)
-			Dowindow/K IR1V_LogLogPlotV
-		endif
-		Execute ("IR1V_LogLogPlotV()")
+	KillWIndow/Z IR1V_LogLogPlotV
+	Execute ("IR1V_LogLogPlotV()")
 	
 	Duplicate/O $(DataFolderName+IntensityWaveName), OriginalIntQ4
 	Duplicate/O $(DataFolderName+QWavename), OriginalQ4
@@ -1622,11 +1619,8 @@ Function IR1V_GraphMeasuredData()
 	OriginalIntQ4=OriginalIntQ4*OriginalQ4
 	OriginalErrQ4=OriginalErrQ4*OriginalQ4
 
-		DoWindow IR1V_IQ4_Q_PlotV
-		if (V_flag)
-			Dowindow/K IR1V_IQ4_Q_PlotV
-		endif
-		Execute ("IR1V_IQ4_Q_PlotV()")
+	KillWIndow/Z IR1V_IQ4_Q_PlotV
+	Execute ("IR1V_IQ4_Q_PlotV()")
 	setDataFolder oldDf
 end
 

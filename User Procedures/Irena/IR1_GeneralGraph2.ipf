@@ -92,11 +92,7 @@ end
 //**********************************************************************************************************
 //makes graph 
 Proc  IR1P_makeGraphWindow() 
-	DoWindow GeneralGraph
-	if (V_Flag)
-	//	CloseTransformAxisGraph("GeneralGraph", 0)
-		DoWindow/K generalGraph
-	endif
+	KillWIndow/Z GeneralGraph
 	PauseUpdate; Silent 1		// building window...
 	Display /K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))  as "GeneralGraph"
 	//Display /K=1 /W=(285,37.25,756.75,340.25) as "GeneralGraph"
@@ -1750,10 +1746,7 @@ Function IR1P_Create3DGraph()
 
 	//IR1P_CreateGraph()
 	//IR1P_AddDataToGenGraph()
-	DoWIndow PlotingToolWaterfallGrph
-	if(V_Flag)
-		DoWIndow/K PlotingToolWaterfallGrph
-	endif
+	KillWIndow/Z PlotingToolWaterfallGrph
 	IR1P_CreateDataToPlot()
 	
 	IR1P_genGraphCreateDataWF()
@@ -1799,10 +1792,7 @@ end
 
 Function IR1P_CreateCountourGraph()
 
-	DoWIndow PlotingToolContourGrph
-	if(V_Flag)
-		DoWIndow/K PlotingToolContourGrph
-	endif
+	KillWIndow/Z PlotingToolContourGrph
 	IR1P_CreateDataToPlot()
 	IR1P_genGraphCreateDataWF()
 	Wave PlottingTool_Int_M=root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_M

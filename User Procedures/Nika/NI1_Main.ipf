@@ -160,7 +160,7 @@ Function NI1_OpenNikaManual()
 		NewNotebook/F=0 /N=NewBatchFile
 		Notebook NewBatchFile, text=whereIsManual//+"\r"
 		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-		DoWindow/K NewBatchFile
+		KillWIndow/Z NewBatchFile
 		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
 	endif
 end
@@ -248,12 +248,8 @@ End
 //*****************************************************************************************************************
 
 Function NI1_AboutPanel()
-	DoWindow About_Nika_1_Macros
-	if(V_Flag)
-		DoWindow/K About_Nika_1_Macros
-	endif
-
-	PauseUpdate; Silent 1		// building window...
+	KillWIndow/Z About_Nika_1_Macros
+ 	PauseUpdate; Silent 1		// building window...
 	NewPanel/K=1 /W=(173.25,101.75,490,370) as "About_Nika_1_Macros"
 	DoWindow/C About_Nika_1_Macros
 	SetDrawLayer UserBack
@@ -1504,11 +1500,8 @@ Function NI1_GMCloseAllNikaW() 		//close all open panels and windows
 	string TempNm
 	For(i=0;i<ItemsInList(ListOfNikaWindows);i+=1)
 		TempNm = stringFromList(i,ListOfNikaWindows)
-		DoWindow $TempNm
-		if (V_Flag)
-			DoWindow/K $TempNm	
-		endif
-	endfor
+		KillWIndow/Z $TempNm
+ 	endfor
 	//
 end
 //**************************************************************************
