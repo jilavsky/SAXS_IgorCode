@@ -1,5 +1,6 @@
 Nika package
-Code modification history 
+
+Modification history 
 
 Jan Ilavsky, ilavsky@aps.anl.gov
 ************************************
@@ -7,7 +8,8 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
-1.78 XYZ
+1.78 10/15/2017
+Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 
 Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 
 Added ColorTable to preferences, Saved every time color table is changed and restored as needed. Should change the Panel GUI and colors of graph, if exists. 
 Modified folder name length - now each segments (_C, sectors, etc) will use longest possible part of the input file name, previously was limited to 17 characters. This allows longest user input names, but different directions may have different length of name allowed as the strings are different length. _C is shortest, in this case the length of name is about 29 characters. 

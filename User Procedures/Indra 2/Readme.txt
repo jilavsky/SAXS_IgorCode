@@ -1,14 +1,17 @@
-Read me for Indra2 - USAXS - data reduction macros.
+Indra2 - USAXS - data reduction macros.
+
+Modification history
 
 Jan Ilavsky, ilavsky@aps.anl.gov
 ************************************
 
-This set of macros is developed for evaluation of USAXS data obtained on APS USAXS instrument beamline instrument. It runs on Wavemetrics Igor Pro version 6 and higher.
+This set of macros is developed for evaluation of USAXS data obtained on APS USAXS instrument beamline instrument. It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 
 Revision history:
 _____________________________________________________________________________________
-1.93 XYZ
+1.93 10/15/2017
+Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 
 Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 
 Added Desmearing to Data reduction as final step. Saves both SMR and DSM data. Contains much less choices as USAXS is reasonably stable and choices are known. May fail for border cases. 
 Added UserSamplename string to each folder for long names. 

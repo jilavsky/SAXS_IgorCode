@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.64
+#pragma version=2.65
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -7,7 +7,7 @@
 
 //define manual date and release verison 
 constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
-constant CurrentVersionNumber = 2.64
+constant CurrentIrenaVersionNumber = 2.65
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -15,9 +15,10 @@ constant CurrentVersionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
+//2.65   Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 //		 	Added simple recording to my web site about version checking for statistical purposes. Records Irena version, Igor platform and version.  
 //			added resizing back to prior size of panel after user closes and opens the panel. 
+//			Removed most DoWIndows/K and repalced with KillWIndow and number of smaller changes. 
 //2.64 Updated CheckForUpdate to check on Github for latest release version
 //			#pragma IgorVersion=7.00
 //			removed Modeling I cocde (IR1S_ functions). Moved stuff around. 
@@ -356,7 +357,7 @@ Function IR2C_SendEMailBugReport()
 	else
 		separator="%0A"
 	endif
-	url="mailto:ilavsky@aps.anl.gov?subject=Irena ver "+num2str(CurrentVersionNumber)+" bug or user comment"
+	url="mailto:ilavsky@aps.anl.gov?subject=Irena ver "+num2str(CurrentIrenaVersionNumber)+" bug or user comment"
 	url+="&body=The problem or bug occurred on "+separator
 	url+="IgorInfo(0) = "+IgorInfo(0)+separator
 	url+="IgorInfo(3) = "+IgorInfo(3)+separator+separator
@@ -733,7 +734,7 @@ Function IR1_AboutPanel()
 	DrawText 23,30,"Irena macros for Igor Pro 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 100,60,"@ ANL, 2017"
-	DrawText 10,80,"release "+num2str(CurrentVersionNumber)
+	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 11,120,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.htm"
@@ -1759,12 +1760,12 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 	if(datetime - LastUpdateCheckIrena >30 * 24 * 60 * 60 || CalledFromMenu)
 			//call check version procedure and advise user on citations
 			IR2C_CheckVersions()
-			IN2G_SubmitCheckRecordToWeb("Irena "+num2str(CurrentVersionNumber))
+			IN2G_SubmitCheckRecordToWeb("Irena "+num2str(CurrentIrenaVersionNumber))
 			LastUpdateCheckIrena = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.02)
-			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.02 or higher. Please, update your Igor to the latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.05)
+			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.05 or higher. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	
@@ -1790,13 +1791,6 @@ static Function IR2C_CheckVersions()
 	variable/g InstalledIrenaVersion
 	variable/g WebIrenaVersion		
 	InstalledIrenaVersion = IN2G_FindFileVersion("Boot Irena1 modeling.ipf")	
-	//now get the web based version.
-	//NewPath /O/Q TempPath  (SpecialDirPath("temporary", 0, 0, 0 ))
-	//download the file
-	//variable InstallHadFatalError
-	//InstallHadFatalError = IN2G_DownloadFile("IgorCode/Igor Procedures/Boot Irena1 modeling.ipf","TempPath", "Boot Irena1 modeling.ipf")
-	//sleep/s 1
-	//Igor 7 version, using Github. 
 	WebIrenaVersion = IN2G_CheckForNewVersion("Irena")
 	if(numtype(WebIrenaVersion)!=0)
 		Print "Check for latest Irena version failed. Check your Internet connection. Try later again..."

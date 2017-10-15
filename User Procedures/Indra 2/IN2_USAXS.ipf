@@ -1,8 +1,8 @@
 #pragma rtGlobals=1		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.92
+#pragma version = 1.93
 
-
+constant CurrentIndraVersionNumber = 1.93
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -10,8 +10,8 @@
 //*************************************************************************/
 
 
-//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
-// 	added resize after recreating of the panels to prior user size. 
+//1.93 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
+// 	 added resize after recreating of the panels to prior user size. 
 //1.92 is Igor 7 only release 5/1/2017
 //1.91 is minor patch for Igor 6 on May 2017
 //1.90 use Indra release numbers here, #pragma IgorVersion=7.00
@@ -475,7 +475,7 @@ Function IN2_AboutPanel()
 	DrawText 10,37,"Indra 2 macros for Igor Pro 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2017"
-	DrawText 49,103,"release 1.92 from 5/1/2017"
+	DrawText 49,103,"release "+num2str(CurrentIndraVersionNumber)
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"
 end

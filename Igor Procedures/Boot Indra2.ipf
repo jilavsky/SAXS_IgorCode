@@ -1,12 +1,12 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.92
+#pragma version = 1.93
 #pragma IgorVersion=7.05
 
-//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
+//1.93 Promoted requirements to 7.05 due to bug in HDF5 support at lower versions
 //1.92 Igor 7 compatible ONLY now. 
 //1.91 Igor 6 last release. 
 //1.90 fixes for Nexus support and some other changes. 
-//1.89 FIxes for panel scaling and added new FlysScan load & process tool 
+//1.89 FIxes for panel scaling and added new FlyScan load & process tool 
 //1.88 Panel scaling and other fixes. 
 //1.87 Igor 7 updates
 //1.86 Improvements to Flyscan handling
@@ -118,7 +118,7 @@ Proc LoadUSAXSIrenaandNika()
 end
 
 Function LoadUSAXSMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>6.34)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
 		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
 		Execute/P "IN2N_CreateShowNtbkForLogging(0)"
@@ -130,7 +130,7 @@ Function LoadUSAXSMacros()
 		BuildMenu "USAXS"
 		IN2L_GenerateReadMe()
 	else
-		DoAlert 0, "Your version of Igor is lower than 6.34, these macros need version 6.34 or higher"  
+		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher"  
 	endif
 	
 end

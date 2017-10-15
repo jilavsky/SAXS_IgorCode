@@ -12,13 +12,13 @@ end
 
 
 Proc LoadAnisoSAS()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.30)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
 		Execute/P "INSERTINCLUDE \"ASAS_Loader\""
 		Execute/P "COMPILEPROCEDURES "
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:AnisoSASLoad1Str
 		root:Packages:AnisoSASLoad1Str= "---"
 	else
-		DoAlert 0, "Your version of Igor is lower than 6.30, these macros need version 6.30 or higher. Please, update..."  
+		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher. Please, update..."  
 	endif
 end

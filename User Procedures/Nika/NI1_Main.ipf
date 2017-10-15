@@ -1,10 +1,10 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.77
+#pragma version=1.78
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.77
+constant CurrentNikaVersionNumber = 1.78
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -13,29 +13,30 @@ constant CurrentNikaVersionNumber = 1.77
 //*************************************************************************/
  
  
-//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
- //		FIxed probrlem with change geometries, when Nexus Import TMP foldr was not deleted and this caued issues. 
- //		Added simple recording to my web site about version checking for statistical purposes. Records Nika version, Igor platform and version.  
- //		Creating new configuration will now reopen 9ID config screen if it was opened before. 
- //1.77 Updated CHeckForUpdate to check on Github for latest release version
- //		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for available screen size. 
- //		#pragma IgorVersion=7.00
- //1.76 version 1.75 with on line help and Igor 6 only
- //1.75 rewrote Nexus support, added check for desktop resolution
- //1.74		added scaling of images on large displays	
- //1.73 added functions to scale panels to larger sizes.
- //1.72 changed check for update procedure to check http first, then ftp, and the fail. 
- //1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
- //1.70 added multiple geometries manager, removed the warning about the uncertainty method, drive me crazy and no one seems to care enough. 
- //1.69 added some warnings about uncertainty method changes when read from preferences. 
- //1.68 release, fixes for 9ID USAXS and other fixes listed 
- //1.67 Release to fix Mask tool broken in 1.66 release. 
- //1.66 fixed ListProRoutine which had troubles with links 
- //1.65 minor changes, timed with Indra 2 release. 
- //1.64 match current release number 
- //1.61 added Monthly check for updates and reminder with citations 
- //1.60  15idd support changes
- //1.59 Minor updates 
+//1.78	Promoted Igor requirements to 7.05 due to bug in HDF5 support at lower versions
+//		FIxed problem with change geometries, when Nexus Import TMP foldr was not deleted and this caused issues. 
+//		Added simple recording to my web site about version checking for statistical purposes. Records Nika version, Igor platform and version.  
+//		Creating new configuration will now reopen 9ID config screen if it was opened before. 
+//		modified Configuration manager to be may be less confusing... 
+//1.77 	Updated CheckForUpdate to check on Github for latest release version
+//		Add call to ReadTheDocs manuals. Added CheckDisplayArea and modified how Nika checks for available screen size. 
+//		#pragma IgorVersion=7.00
+//1.76 version 1.75 with on line help and Igor 6 only
+//1.75 rewrote Nexus support, added check for desktop resolution
+//1.74		added scaling of images on large displays	
+//1.73 added functions to scale panels to larger sizes.
+//1.72 changed check for update procedure to check http first, then ftp, and the fail. 
+//1.71 Added NI1_SetAllPathsInNIka function to set all paths to the same place for users with simple setups.
+//1.70 added multiple geometries manager, removed the warning about the uncertainty method, drive me crazy and no one seems to care enough. 
+//1.69 added some warnings about uncertainty method changes when read from preferences. 
+//1.68 release, fixes for 9ID USAXS and other fixes listed 
+//1.67 Release to fix Mask tool broken in 1.66 release. 
+//1.66 fixed ListProRoutine which had troubles with links 
+//1.65 minor changes, timed with Indra 2 release. 
+//1.64 match current release number 
+//1.61 added Monthly check for updates and reminder with citations 
+//1.60  15idd support changes
+//1.59 Minor updates 
 //1.58 Fixed GUI fonts/size controls issues on Widonws 7, modified Configure Nika preferences to include action on double click.
 //1.57 New mailing list, SSRL SAXS support, fixes to 15ID SAXS etc. 
 //1.56 More pinSAXS support (and not finished yet) and some changes to available color scales. 
@@ -882,8 +883,8 @@ Function NI1_CheckNikaUpdate(CalledFromMenu)
 			LastUpdateCheckNika = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif 
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.02)
-			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.02 or higher. Please, update your Igor to the latest version."  
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.05)
+			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.05 or higher. Please, update your Igor to the latest version."  
 			BrowseURL "http://www.wavemetrics.com/support/versions.htm"
 	endif
 	 
@@ -1323,6 +1324,10 @@ end
 //**************************************************************************
 Function NI1_GMLoadGeometries(LoadThisGeom)
 	STRING LoadThisGeom
+	
+	if(stringMatch(LoadThisGeom,"---")||stringmatch(LoadThisGeom,"None Saved")||stringmatch(LoadThisGeom,"_none_"))
+		return 0
+	endif
 	string OldDF=GetDataFolder(1)
 	SetDataFolder root:Packages:NikaGeometries
 	SVAR CurrentGeomName = root:Packages:NikaGeometries:CurrentGeomName
@@ -1355,7 +1360,7 @@ Function NI1_GMLoadGeometries(LoadThisGeom)
 
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = LoadThisGeom
-	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
+	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 	setDataFolder oldDf
 	NI1A_Convert2Dto1DMainPanel()
 end
@@ -1418,7 +1423,7 @@ Function NI1_GMCreateNewGeom()
 	KillDataFolder/Z root:Packages:NexusImportTMP:
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = "Not saved"
-	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
+	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 	NI1A_Convert2Dto1DMainPanel()
 	if(WasNI1_15IDDConfigPanel)
 		NI1_15IDDConfigureNika()
@@ -1483,7 +1488,7 @@ Function NI1_GMSaveGeometries()
 	ListOfGeomsSaved = IN2G_ConvertDataDirToList(DataFolderDir(1)) 
 	CurrentGeomName = NewSaveName
 	
-	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value=#"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=1
+	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value=#"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 
 	
 	setDataFolder oldDf
@@ -1566,16 +1571,21 @@ Window NI1_GeometriesManagerPanel() : Panel
 	DrawText 15,45,"Save and restore Nika Configurations + switch between them"
 	DrawText 15,60,"as needed. Please note, that this is very memory intensive "
 	DrawText 15,75,"and creates huge Igor files. Delete Configs when no more needed."
-	DrawText 15,90,"When changing Configruations, all Nika windows are closed."
+	DrawText 15,90,"When changing Configurations, all Nika windows are closed."
 	DrawText 15,105,"You need to reopen them. "
 	Button NewGeometries,pos={99,123},size={200,20},proc=NI1_GMButtonProc,title="Create New Configuration"
+	Button NewGeometries,help={"This will create a new (empty) Nika. Existing one can be saved and named."}
 	Button SaveGeometries,pos={99,150},size={200,20},proc=NI1_GMButtonProc,title="Save Current Configuration"
+	Button SaveGeometries,help={"This will save current Nika configuration so it can be restored later."}
 	Setvariable CurrentGeomName, pos={5,200}, size={300,25}, title="Last Saved/loaded Config name: ", variable=root:Packages:NikaGeometries:CurrentGeomName, disable=2
+	Setvariable CurrentGeomName, help={"Name of last saved - or loaded - geometry. Keep in mind yuou might have changed it since the last save/load operation."}
 	checkbox CleanupTheFolderPriorSave, pos={80,175}, size={200,15}, variable=root:Packages:NikaGeometries:CleanupTheFolderPriorSave, noproc, title="Clean up folder before saving? (Housekeeping)"
-//	String/G CurrentGeomName, ListOfGeomsSaved
-	PopupMenu RestoreGeometries,pos={73,228},size={152,20},proc=NI1_GMPopMenuProc,title="Load Stored Configurations :"
-	PopupMenu RestoreGeometries,mode=1,mode=1,value= root:Packages:NikaGeometries:ListOfGeomsSaved
+	checkbox CleanupTheFolderPriorSave,help={"If checked, the geometry being stored will be cleaned up to save space."}
+	PopupMenu RestoreGeometries,pos={99,228},size={200,20},proc=NI1_GMPopMenuProc,title="Load Stored Configurations :"
+	PopupMenu RestoreGeometries,mode=0,value= root:Packages:NikaGeometries:ListOfGeomsSaved
+	PopupMenu RestoreGeometries,help={"This is list of saved geometries available in this Igor experiment."}
 	Button DeleteGeometries,pos={99,263},size={200,20},proc=NI1_GMButtonProc,title="Delete Saved Configuration"
+	Button DeleteGeometries,help={"Will let you select from existing saved geometries one to delete."}
 EndMacro
 //**************************************************************************
 //**************************************************************************

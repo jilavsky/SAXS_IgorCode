@@ -1,10 +1,10 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.64
+#pragma version = 2.65
 #pragma IgorVersion=7.05
 
 
 
-//		 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
+//2.65 Promoted requirements to 7.05 due to bug in HDF5 support at lower versions
 
 Menu "Macros", dynamic
 	//StrVarOrDefault("root:Packages:SASItem1Str","Load Irena SAS Macros"), LoadIrenaSASMacros()
@@ -48,7 +48,7 @@ end
 
 
 Function LoadIrenaSASMacros()
-	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=6.34)
+	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
 		//check for old version of Irena
 		pathInfo Igor
 		NewPath/Q/O/Z UserProcPath , S_path+"User procedures"
@@ -79,6 +79,6 @@ Function LoadIrenaSASMacros()
 		//Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
 		//not needed, done automatically as part of after compile hook function
 	else
-		DoAlert 0, "Your version of Igor is lower than 6.34, these macros need version 6.34 or higher, please update your Igor to the latest release "  
+		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher, please update your Igor to the latest release "  
 	endif
 end
