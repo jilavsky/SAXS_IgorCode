@@ -125,7 +125,7 @@
 			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes.</VersionComment>
 		</release>
 		<release name="November2017Beta" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2017beta.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2017Beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.65</version>
