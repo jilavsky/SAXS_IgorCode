@@ -18,7 +18,7 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>May2017</current_release>
-		<current_beta_release>November2017beta</current_beta_release>
+		<current_beta_release>November2017Beta</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
@@ -124,7 +124,7 @@
 			</Package>
 			<VersionComment>Igor 7 re-release or versions from 6/28/2016. Only minor changes.</VersionComment>
 		</release>
-		<release name="November2017beta" beta="true">
+		<release name="November2017Beta" beta="true">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2017beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
