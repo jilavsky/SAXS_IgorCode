@@ -35,14 +35,14 @@ constant CurrentNikaVersionNumber = 1.78
 //1.65 minor changes, timed with Indra 2 release. 
 //1.64 match current release number 
 //1.61 added Monthly check for updates and reminder with citations 
-//1.60  15idd support changes
+//1.60  9IDC support changes
 //1.59 Minor updates 
 //1.58 Fixed GUI fonts/size controls issues on Widonws 7, modified Configure Nika preferences to include action on double click.
 //1.57 New mailing list, SSRL SAXS support, fixes to 15ID SAXS etc. 
 //1.56 More pinSAXS support (and not finished yet) and some changes to available color scales. 
-//1.55 Fixed 15IDD Nexus support for 2/2012 Nexus files. 
+//1.55 Fixed 9IDC Nexus support for 2/2012 Nexus files. 
 //1.53 Added support for azimuthal angle output (useful when using ellipse for line profile)
-//1.52 Added pinSAXS support for 15IDD USAXS instrument
+//1.52 Added pinSAXS support for 9IDC USAXS instrument
 //1.51 added Movie creation and Pilatus 300k
 //1.50 minor update, fixed bug in calibration routien when correction for transmission was done before dark frame subtraction. 
 //1.49 main fix is tilts. Number of other improvements. 
@@ -74,8 +74,8 @@ Menu "SAS 2D"
 	"Configuration manager", NI1_GeometriesManager()
 	help={"This enables switching among multiple Nika geometries, such as distances or wavelengths"}
 	Submenu "Instrument configurations"
-		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_15IDDConfigureNika()
-		help={"Support for data from 9ID or15IDD (USAXS/SAXS) beamline at APS"}
+		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_9IDCConfigureNika()
+		help={"Support for data from 9ID or9IDC (USAXS/SAXS) beamline at APS"}
 		"DND CAT", NI1_DNDConfigureNika()
 		help={"Support for data from DND CAT (5ID) beamline at APS"}
 		"SSRL Mat SAXS", NI1_SSRLSetup()
@@ -1411,12 +1411,12 @@ Function NI1_GMCreateNewGeom()
 		elseif(V_Flag==1)
 			NI1_GMSaveGeometries()
 		endif		
-	variable WasNI1_15IDDConfigPanel
-	DoWIndow NI1_15IDDConfigPanel
+	variable WasNI1_9IDCConfigPanel
+	DoWIndow NI1_9IDCConfigPanel
 	if(V_Flag)
-		WasNI1_15IDDConfigPanel=1
+		WasNI1_9IDCConfigPanel=1
 	else
-		WasNI1_15IDDConfigPanel=0
+		WasNI1_9IDCConfigPanel=0
 	endif
 	NI1_GMCloseAllNikaW() 	
 	KillDataFolder root:Packages:Convert2Dto1D
@@ -1425,8 +1425,8 @@ Function NI1_GMCreateNewGeom()
 	CurrentGeomName = "Not saved"
 	PopupMenu RestoreGeometries,win=NI1_GeometriesManagerPanel,value= #"root:Packages:NikaGeometries:ListOfGeomsSaved", mode=0
 	NI1A_Convert2Dto1DMainPanel()
-	if(WasNI1_15IDDConfigPanel)
-		NI1_15IDDConfigureNika()
+	if(WasNI1_9IDCConfigPanel)
+		NI1_9IDCConfigureNika()
 	endif
 	setDataFolder oldDf
 end
@@ -1500,7 +1500,7 @@ end
 Function NI1_GMCloseAllNikaW() 		//close all open panels and windows
 	string ListOfNikaWindows="NI1A_Convert2Dto1DPanel;CCDImageToConvertFig;LineuotDisplayPlot_Q;LineuotDisplayPlot_D;LineuotDisplayPlot_T;"
 	ListOfNikaWindows+="Sample_Information;SquareMapIntvsPixels;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;NI1M_ImageROIPanel;CCDImageForMask;"
-	ListOfNikaWindows+="EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_15IDDConfigPanel;Instructions_15IDD;"
+	ListOfNikaWindows+="EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_9IDCConfigPanel;Instructions_9IDC;"
 	variable i
 	string TempNm
 	For(i=0;i<ItemsInList(ListOfNikaWindows);i+=1)

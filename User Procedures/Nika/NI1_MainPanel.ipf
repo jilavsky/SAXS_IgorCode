@@ -40,7 +40,7 @@ Constant NI1AversionNumber = 2.52
 //2.32 adds DataCalibrationStgring to data and GUI
 //2.31 added *.maccd and combined all mpa formats into one loader (*.mpa). Have 4 versions of this format, three I had working versions, csv I did tno. SO the three are loaded, csv gives error. 
 //2.30 added move up down controls for small screens
-//2.29 updated graphs so they will not plot same data multiple times and changed where 15IDD data are stored.
+//2.29 updated graphs so they will not plot same data multiple times and changed where 9IDC data are stored.
 //2.28 fixed bug in line profile ASCII export causing problem with data expoort for line and no names of waves being exported. 
 //2.27 adds TPA/XML data file
 //2.26 adds SSRLMatSAXS, fixed export of Ellipse data, fixed debugger in case movie was closed with no frames. 
@@ -759,8 +759,8 @@ Function NI1A_Convert2DTo1D()
 		
 		doUpdate
 	endif
-	//here we will create special waves in case we are using 15IDD SAXS...
-	NI1_15IDDCreateSMRSAXSdata(tempListOfProcessedSectors)
+	//here we will create special waves in case we are using 9IDC SAXS...
+	NI1_9IDCCreateSMRSAXSdata(tempListOfProcessedSectors)
 	
 	setDataFolder OldDf
 end

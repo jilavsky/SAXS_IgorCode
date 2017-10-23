@@ -39,7 +39,7 @@
 //2.18 fixed BSL file loader which was getting the detector dimensions wrong.  
 //2.17 adds SSRLMatSAXS
 //2.16 cleaned up the Nexus folder before loadin g new Nexus file, this place was getting dirty and files were growing really large. 
-//2.15 modified for 15iddSAXS nexus (big SAXS)
+//2.15 modified for 9IDCSAXS nexus (big SAXS)
 //2.14 added 128x128 ASCII file format for KWS2 SANS data
 //2.13 set point 1023,1023 of mpa/bin to 0. Seems we have a problem here. This is not the right solution, but works for now. 
 //2.12 try to catch failed loads... return 1 if load succeeded, 0 if not. Update upstrea to deal with the report...
@@ -926,8 +926,8 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		endif	
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
-//#if(Exists("NI1_15IDDCreateWvNtNbk")==6)		
-//		NI1_15IDDCreateWvNtNbk(FileNameToLoad)
+//#if(Exists("NI1_9IDCCreateWvNtNbk")==6)		
+//		NI1_9IDCCreateWvNtNbk(FileNameToLoad)
 //#endif		
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"Nexus"+";"

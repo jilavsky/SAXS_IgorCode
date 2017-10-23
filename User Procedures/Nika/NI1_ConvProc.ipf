@@ -49,7 +49,7 @@
 //2.23 Refresh now sets top data set as selected. Added first version of background task monitoring folder...
 //2.22 added user defined Image range and display color scale... 
 //2.21 added export in distacne from center, minor fix in search for match files
-//2.20 changed behavior to enable calculation of smeared data in 15IDD SAXS instrument
+//2.20 changed behavior to enable calculation of smeared data in 9IDC SAXS instrument
 //2.19 fixed NI1A_UpdateEmptyDarkListBox() for bug (was looking in wrong path...)
 //2.18 fixed UpdateEmptyDark File list 
 //2.17 Support for SAXS and Nexus file reader, fixed loadEMpty/dark bug which used wrong extension for file 
@@ -696,18 +696,17 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 	setDataFolder root:Packages:Convert2Dto1D
 	
 	Wave/Z GeometryCorrection = root:Packages:Convert2Dto1D:GeometryCorrection
-//	NI1A_CheckGeometryWaves("C")
-//	Wave PixRadius2DWave = root:Packages:Convert2Dto1D:PixRadius2DWave
+	Wave DataWave=root:Packages:Convert2Dto1D:CCDImageToConvert
+	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance
+	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
+
 	Wave/Z Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
 	if(!WaveExists(Q2DWave))
-		Wave DataWave=root:Packages:Convert2Dto1D:CCDImageToConvert
 		NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave 
 		wave Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
 	endif
-
-	NVAR SampleToCCDDistance = root:Packages:Convert2Dto1D:SampleToCCDDistance
-	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
 	string O2N = note(Q2DWave)
+
 
 	if(WaveExists(GeometryCorrection))
 		string OGN= note(GeometryCorrection)
@@ -732,8 +731,10 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 			return 1
 		endif
 	endif
+	//OK, we need to recaluclate the GeometryCorrention, here is the procedure...
 	variable Ltemp = Wavelength / (4 * pi)
-//    theta=2*asin(qwave * Lambda /( 4 * pi) )		//theta here is really 2Theta, since it is angle between beam in and out... 
+	NI1A_Create2DQWave(DataWave)			//creates 2-D Q wave 
+	wave Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
 	MatrixOp/O/NTHR=0 GeometryCorrection =  2 * asin(Q2DWave * Ltemp))
 	MatrixOp/O/NTHR=0 GeometryCorrection = powR(cos(GeometryCorrection),3)
 	Wave GeometryCorrection
@@ -2064,6 +2065,7 @@ Function NI1A_DisplayOneDataSet()
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NI1A_DisplayStatsLoadedFile(WaveNameStr)

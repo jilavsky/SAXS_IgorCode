@@ -364,6 +364,10 @@ Function NEXUS_ConfigPanelCheckProc(cba) : CheckBoxControl
 				if(dimsize(ListOfParamsAndPaths,0)<15)
 					NEXUS_ResetParamXRef(1)
 				endif
+				NVAR/Z My9IDRead=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
+				if(NVAR_Exists(My9IDRead))
+					My9IDRead = cba.checked
+				endif
 			endif
 			if(stringmatch(cba.ctrlName,"NX_CreateNewRawNexusFile"))
 				Nexus_SetOutputControls()
@@ -1191,7 +1195,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function NEXUS_ResetParamXRef(enforce)
+Function NEXUS_ResetParamXRef(enforce)
 	variable enforce
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -1232,7 +1236,7 @@ end
 //*****************************************************************************************************************
 //*************************************************************************************************
 
-static Function NEXUS_GuessParamXRef()
+Function NEXUS_GuessParamXRef()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFolder(1)

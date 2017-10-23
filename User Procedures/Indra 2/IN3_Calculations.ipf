@@ -2670,10 +2670,10 @@ Function IN3_DisplayDesExtAndError()
 				endif	
 				Wave/Z DesmNormalizedError = root:Packages:Indra3:DesmNormalizedError
 				Wave/Z DSM_Qvec=root:Packages:Indra3:DSM_Qvec
-				if(WaveExists(DesmNormalizedError))
+				if(WaveExists(DesmNormalizedError)&&WaveExists(DSM_Qvec))
 					CheckDisplayed /W=RcurvePlotGraph DesmNormalizedError 
 					if(V_Flag<1)
-						AppendToGraph/L=VertCrossing/W=RcurvePlotGraph DesmNormalizedError vs ::Indra3:DSM_Qvec
+						AppendToGraph/L=VertCrossing/W=RcurvePlotGraph DesmNormalizedError vs DSM_Qvec
 						ModifyGraph/W=RcurvePlotGraph mode(DesmNormalizedError)=2,rgb(DesmNormalizedError)=(0,0,0)
 						SetAxis/A/E=2/W=RcurvePlotGraph VertCrossing
 						ModifyGraph/W=RcurvePlotGraph lblPos(VertCrossing)=45;DelayUpdate

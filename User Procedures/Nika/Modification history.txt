@@ -16,6 +16,7 @@ Modified folder name length - now each segments (_C, sectors, etc) will use long
 Added ability to read multidimensional data from Nexus. Up to 4D data can be read, index 0 is first, index 2 second index, next two indexes are the image points. Standard. 3D data have only index1 (index0=0), 2D data have both indexes=0. 
 9ID support - will keep the _270_30 sector of SAXS data for use with desmeared USAXS data. 
 Added UserSamplename string to each folder for long names. 
+Changed and streamlined 9IDC support package to have less controls and be more robust. Reads parameters from each file. 
 
 1.77, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 

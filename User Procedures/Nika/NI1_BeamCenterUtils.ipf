@@ -27,7 +27,7 @@ Constant NI1BCversionNumber = 2.25
 //2.10 added SSRLMatSAXS format. 
 //2.09 added Math name string so one can easier find Ag behenate data
 //2.08 added check on Nika version when file is reopened. Force user to restart when old version of Nika was used... 
-//2.07 changed to enable to run update fundtion without the widnwo as needed by 15IDD software configuration
+//2.07 changed to enable to run update fundtion without the widnwo as needed by 9IDC software configuration
 //2.06 adds response to FileLoader returning 0 for failed loads
 //2.05 added azimuthal tilt on detector, changed method of fitting beam center and other parameters to more robust method... 
 // 2.04  added ability to subtract empty cell from the imorted image (reduce background for weak images
