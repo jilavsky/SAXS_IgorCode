@@ -5586,6 +5586,12 @@ Function IN2G_PasteWnoteToWave(waveNm, textWv,separator)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Wave WvwithNote=$waveNm
 	string ListOfNotes=note(WvwithNote)
+	//remove empty lines
+	ListOfNotes=ReplaceString(";;", ListOfNotes, ";") 
+	ListOfNotes=ReplaceString("\r", ListOfNotes, ";") 
+	ListOfNotes=ReplaceString("\r\n", ListOfNotes, ";") 
+	ListOfNotes=ReplaceString("\n", ListOfNotes, ";") 
+
 	
 	variable ItemsInLst=ItemsInList(ListOfNotes), i=0	
 	Redimension /N=(ItemsInLst) TextWv 

@@ -659,6 +659,13 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 			print "Error in NEXUS_NexusNXsasDataReader"
 		endif
 		Wave DataWv=$("root:Packages:Convert2Dto1D:Loadedwave0")	
+		//Fix Nexus wave note stuff..
+		string OldNote=note(DataWv)
+		OldNote=ReplaceString("\r\n", OldNote, ";" )
+		OldNote=ReplaceString("\n", OldNote, ";" )
+		OldNote=ReplaceString("\r", OldNote, ";" )
+		OldNote=ReplaceString(" ", OldNote, "" )
+		note/K DataWv,  "Nexus_attributesStartHere;"+OldNote+";"
 		NEXUS_SetMultiDImCOntrols()	
 		NEXUS_CleanUpHDF5Structure(DataWv, PathToNewData)
 		NEXUS_CreateWvNtNbk(DataWv, Filename)
@@ -830,10 +837,10 @@ static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 	SVAR/Z StringVals=$(PathToStrVarValues+"ListOfStrValues")
 	SVAR/Z NumVals=$(PathToStrVarValues+"ListOfNumValues")
 	if(SVAR_Exists(StringVals))
-		note/NOCR DataWv, "\r\t\tNEXUS_StringDataStartHere;"+StringVals+"\t\tNEXUS_StringDataEndHere;"
+		note/NOCR DataWv, "NEXUS_StringDataStartHere;"+StringVals+"NEXUS_StringDataEndHere;"
 	endif
 	if(SVAR_Exists(NumVals))
-		note/NOCR DataWv, "\t\tNEXUS_VariablesDataStartHere;"+NumVals+"\t\tNEXUS_VariablesDataEndHere;"
+		note/NOCR DataWv, "NEXUS_VariablesDataStartHere;"+NumVals+"NEXUS_VariablesDataEndHere;"
 	endif
 end
 //*******************************************************************************************************************************************

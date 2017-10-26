@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.09
-Constant IR2EversionNumber = 1.09
+#pragma version=1.10
+Constant IR2EversionNumber = 1.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.09
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.10 added export of xye data file for GSAS-II
 //1.09 added getHelp button calling to www manual
 //1.08 changes for panel scaling
 //1.07 fixed multiple data erxport with QRS
@@ -18,7 +19,7 @@ Constant IR2EversionNumber = 1.09
 //1.03 fixed QRS data export which was not working due to eventCode missing in structure
 //1.02 removed all font and font size from panel definitions to enable user control
 //1.01 added license for ANL
-
+ 
 
 //This is tool to export any type of 2 -3 column data we have (x, y, and error (if exists)
 
@@ -91,9 +92,11 @@ Function IR2E_UnivDataExportPanel()
 	Button LoadAndGraphData, pos={100,280},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Load data", help={"Load data into the tool, generate graph and display notes if checkboxes are checked."}
 
 	//Nexus or ASCII?
-	CheckBox ExportASCII,pos={15,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export ASCII?"
+	CheckBox ExportASCII,pos={15,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export ASCII?", mode=1
 	CheckBox ExportASCII,variable= root:Packages:IR2_UniversalDataExport:ExportASCII, help={"When checked ASCII files will be created"}
-	CheckBox ExportCanSASNexus,pos={215,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export NEXUS?"
+	CheckBox ExportGSASxye,pos={130,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export GSAS-II xye?", mode=1
+	CheckBox ExportGSASxye,variable= root:Packages:IR2_UniversalDataExport:ExportGSASxye, help={"When checked ASCII files for GSAS-II will be created"}
+	CheckBox ExportCanSASNexus,pos={250,340},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export NEXUS?", mode=1
 	CheckBox ExportCanSASNexus,variable= root:Packages:IR2_UniversalDataExport:ExportCanSASNexus, help={"When checked Nexus (canSAS for data) files will be created"}
 	
 	CheckBox ExportSingleCanSASFile,pos={15,360},size={190,14},proc=IR2E_UnivExportCheckProc,title="Export Single canSAS NEXUS (with multiple data)?"
@@ -131,21 +134,17 @@ Function IR2E_FixMainGUI()
 	DoWIndow UnivDataExportPanel
 	if(V_Flag)
 		NVAR MultipleData=root:Packages:IR2_UniversalDataExport:ExportMultipleDataSets
-		Button ExportData, win=UnivDataExportPanel, disable=2*MultipleData
 		NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
 		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
-		CheckBox AttachWaveNote,win=UnivDataExportPanel, disable=ExportCanSASNexus
+		NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
 		NVAR ExportSingleCanSASFile = root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile
-	
-//	Button ExportOutputPath, disable=ExportCanSASNexus
-//	Button ExportNexusFile, pos={100,475},size={180,20}, proc=IR2E_InputPanelButtonProc,title="Create/Find Nexus Output file:", help={"Create output Nexus file name and location."}
-		SetVariable HeaderSeparator, win=UnivDataExportPanel, disable=!ExportASCII
+
+		Button ExportData, win=UnivDataExportPanel, disable=2*MultipleData
+		CheckBox AttachWaveNote,win=UnivDataExportPanel, disable=(ExportCanSASNexus || ExportGSASxye)
+		SetVariable HeaderSeparator, win=UnivDataExportPanel, disable=!(ExportASCII)
 		CheckBox UseYWaveNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
 		CheckBox UseFolderNameForOutput, win=UnivDataExportPanel, disable=(ExportCanSASNexus&&ExportSingleCanSASFile)
-		CheckBox ExportSingleCanSASFile, win=UnivDataExportPanel, disable=(ExportASCII)
-	
-
-	
+		CheckBox ExportSingleCanSASFile, win=UnivDataExportPanel, disable=(ExportASCII || ExportGSASxye)
 	endif
 end
 
@@ -449,6 +448,8 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 	SVAR NewFileOutputName
 		NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
 		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
+		NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
+		
 		SVAR OutputNameExtension = root:Packages:IR2_UniversalDataExport:OutputNameExtension
 		if(stringMatch(ctrlName,"ExportASCII"))
 			if(checked)
@@ -456,27 +457,38 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 				ExportCanSASNexus = 0
 				OldNexusExt = OutputNameExtension
 				OutputNameExtension  = OldASCIIExt
-			else
-				ExportASCII = 0
-				ExportCanSASNexus = 1		
-				OldASCIIExt = OutputNameExtension	
-				OutputNameExtension  = OldNexusExt
+				ExportGSASxye = 0
+//			else
+//				ExportASCII = 0
+//				ExportCanSASNexus = 1		
+//				OldASCIIExt = OutputNameExtension	
+//				OutputNameExtension  = OldNexusExt
 			endif
-			if(ExportCanSASNexus)
-				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
+//			if(ExportCanSASNexus)
+//				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
+//			endif
+		endif
+		if(stringMatch(ctrlName,"ExportGSASxye"))
+			if(checked)
+				ExportGSASxye = 1
+				ExportASCII = 0
+				ExportCanSASNexus = 0
+				OldNexusExt = OutputNameExtension
+				OutputNameExtension  = "xye"
 			endif
 		endif
 		if(stringMatch(ctrlName,"ExportCanSASNexus"))
 			if(checked)
+				ExportGSASxye =0 
 				ExportASCII = 0
 				ExportCanSASNexus = 1
 				OldASCIIExt = OutputNameExtension	
 				OutputNameExtension  = OldNexusExt
-			else
-				ExportASCII = 1
-				ExportCanSASNexus = 0
-				OldNexusExt = OutputNameExtension
-				OutputNameExtension  = OldASCIIExt
+//			else
+//				ExportASCII = 1
+//				ExportCanSASNexus = 0
+//				OldNexusExt = OutputNameExtension
+//				OutputNameExtension  = OldASCIIExt
 			endif
 			if(ExportCanSASNexus)
 				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
@@ -593,6 +605,7 @@ Function IR2E_ExportTheData()
 
 	NVAR ExportCanSASNexus
 	NVAR ExportASCII
+	NVAR ExportGSASxye
 	NVAR ExportMultipleCanSASFiles
 	NVAR ExportSingleCanSASFile
 
@@ -670,6 +683,59 @@ Function IR2E_ExportTheData()
 			Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY,TempE as FinalOutputName			///P=Datapath
 		else
 			Save/A=2/G/W/M="\r\n"/P=IR2E_ExportPath TempX,TempY as FinalOutputName			///P=Datapath
+		endif
+		KillWaves/Z WaveNoteWave, NoteTempY
+	endif
+
+	if(ExportGSASxye)			//this is GSAS-II xye file...
+		//Check for existing file and manage on our own...
+		FinalOutputName=NewFileOutputName
+		if(strlen(OutputNameExtension)>0)
+			FinalOutputName+="."+OutputNameExtension
+		endif
+	
+		Open/Z=1 /R/P=IR2E_ExportPath refnum as FinalOutputName
+		if(V_Flag==0)
+			DoAlert 1, "The file with this name: "+FinalOutputName+ " in this location already exists, overwrite?"
+			if(V_Flag!=1)
+				abort
+			endif
+			close/A
+			//user wants to delete the file
+			OpenNotebook/V=0/P=IR2E_ExportPath/N=JunkNbk  FinalOutputName
+			DoWindow/D /K JunkNbk
+		endif
+		close/A
+		Duplicate TempY, NoteTempY
+		string OldNoteT1=note(TempY)
+		note/K NoteTempY
+		note NoteTempY, OldNoteT1+"Exported="+date()+" "+time()+";"
+		variable wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+		//convert q or d into two theta as needed... 
+		Duplicate/Free tempX, TempXCOnverted 
+		if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave
+			TempXCOnverted = 2 * 180/pi * asin(TempX * wvlgth /(4*pi))		
+		elseif(StringMatch(QWavename, "d_*") || StringMatch(QWavename, "'d_*"))		//d wave
+			TempXCOnverted = 2 * 180/pi * (wvlgth / (2*TempX))
+		else		//Two theta qweve nothing needed...
+
+		endif
+		
+		make/T/O WaveNoteWave
+		if (1)
+			IN2G_PasteWnoteToWave("NoteTempY",WaveNoteWave ,HeaderSeparator)
+			InsertPoints 0, 2, WaveNoteWave
+			InsertPoints numpnts(WaveNoteWave), 2, WaveNoteWave
+			WaveNoteWave[0] = "/*"
+			WaveNoteWave[1] = HeaderSeparator+"wavelength = "+num2str(wvlgth)
+			WaveNoteWave[numpnts(WaveNoteWave)-2] = "# 2Theta  Intensity  Error"	
+			WaveNoteWave[numpnts(WaveNoteWave)-1] = "*/"	
+			Save/G/M="\r\n"/P=IR2E_ExportPath WaveNoteWave as FinalOutputName
+		endif
+		if(HaveErrors)
+			Save/A=2/G/M="\r\n"/P=IR2E_ExportPath TempXCOnverted,TempY,TempE as FinalOutputName			///P=Datapath
+		else
+			Save/A=2/G/M="\r\n"/P=IR2E_ExportPath TempXCOnverted,TempY as FinalOutputName			///P=Datapath
 		endif
 		KillWaves/Z WaveNoteWave, NoteTempY
 	endif
@@ -832,7 +898,8 @@ Function IR2E_InitUnivDataExport()
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;UseSMRData;UseUserDefinedData;"
 	ListOfVariables+="AttachWaveNote;GraphData;DisplayWaveNote;UseFolderNameForOutput;UseYWaveNameForOutput;"
 	ListOfVariables+="ExportMultipleDataSets;"
-	ListOfVariables+="ExportCanSASNexus;ExportASCII;ExportMultipleCanSASFiles;ExportSingleCanSASFile;"
+	ListOfVariables+="ExportCanSASNexus;ExportASCII;ExportGSASxye;"
+	ListOfVariables+="ExportMultipleCanSASFiles;ExportSingleCanSASFile;"
 
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	ListOfStrings+="CurrentlyLoadedDataName;CurrentlySetOutputPath;NewFileOutputName;"
@@ -882,12 +949,21 @@ Function IR2E_InitUnivDataExport()
 	QWavename=""
 	SVAR ErrorWaveName
 	ErrorWaveName=""
+	
+	NVAR UseFolderNameForOutput
+	NVAR UseYWaveNameForOutput
+	if(UseFolderNameForOutput+UseYWaveNameForOutput !=1)
+		UseFolderNameForOutput = 1
+		UseYWaveNameForOutput = 0
+	endif
 		
 	NVAR ExportASCII
 	NVAR ExportCanSASNexus
-	if(ExportASCII + ExportCanSASNexus !=1)
+	NVAR ExportGSASxye
+	if(ExportASCII + ExportCanSASNexus + ExportGSASxye !=1)
 		ExportASCII = 1
 		ExportCanSASNexus= 0
+		ExportGSASxye = 0
 	endif
 
 	setDataFolder OldDf

@@ -17,6 +17,7 @@ Added ability to read multidimensional data from Nexus. Up to 4D data can be rea
 9ID support - will keep the _270_30 sector of SAXS data for use with desmeared USAXS data. 
 Added UserSamplename string to each folder for long names. 
 Changed and streamlined 9IDC support package to have less controls and be more robust. Reads parameters from each file. 
+ASCII exporter - added export of GSAS-II xye data file. 
 
 1.77, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 

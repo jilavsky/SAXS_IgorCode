@@ -914,8 +914,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	elseif(UseCalib2DData&&cmpstr(FileType,"canSAS/Nexus")==0)
 		//import CanSAS file format and convert to proper calibrated data.
 		FileNameToLoad = FileName
-		NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
-		
+		NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)		
 	elseif(cmpstr(FileType,"Nexus")==0)
 		FileNameToLoad = FileName
 		//NI2NX_NexusReader(PathName, FileNameToLoad)
@@ -926,14 +925,11 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		endif	
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
-//#if(Exists("NI1_9IDCCreateWvNtNbk")==6)		
-//		NI1_9IDCCreateWvNtNbk(FileNameToLoad)
-//#endif		
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+"Nexus"+";"
 	elseif(cmpstr(FileType,"Fuji/img")==0)
 		string FujiHeader
-      		FileNameToLoad=   FileName
+      FileNameToLoad =  FileName
 		FujiHeader = NI1_ReadFujiImgHeader(PathName, FileNameToLoad)
 		NI1_ReadFujiImgFile(PathName, FileNameToLoad, FujiHeader)
 		Wave/Z Loadedwave0
@@ -1385,22 +1381,20 @@ Function NI1_MaskHDFLoader(PathName,FileName,FileType,NewWaveName)
 	variable RefNum, NumBytes
 	variable Offset
 	string headerStr=""
-
-
-		FileNameToLoad= FileName
-		pathInfo $(PathName)
-		string FullFileName=S_Path+FileName
-		HDF5OpenFile   /Z RefNum  as FullFileName
-		HDF5ListGroup /TYPE=2  RefNum, "/"	//for now lets handle only hdf files with one data set on root level...
-		// we will need to develop some kind of panel and more controls here. need test file
-		//print S_HDF5ListGroup
-		if(ItemsInList(S_HDF5ListGroup)==1)
-			HDF5LoadData /O RefNum, (StringFromList(0,S_HDF5ListGroup)) 	
-		endif
-		HDF5CloseFile  RefNum 
-		wave/Z LoadedWvHere=$(StringFromList(0,S_HDF5ListGroup))
-		NewNote+="DataFileName="+FileNameToLoad+";"
-		NewNote+="DataFileType="+".hdf"+";"
+	FileNameToLoad= FileName
+	pathInfo $(PathName)
+	string FullFileName=S_Path+FileName
+	HDF5OpenFile   /Z RefNum  as FullFileName
+	HDF5ListGroup /TYPE=2  RefNum, "/"	//for now lets handle only hdf files with one data set on root level...
+	// we will need to develop some kind of panel and more controls here. need test file
+	//print S_HDF5ListGroup
+	if(ItemsInList(S_HDF5ListGroup)==1)
+		HDF5LoadData /O RefNum, (StringFromList(0,S_HDF5ListGroup)) 	
+	endif
+	HDF5CloseFile  RefNum 
+	wave/Z LoadedWvHere=$(StringFromList(0,S_HDF5ListGroup))
+	NewNote+="DataFileName="+FileNameToLoad+";"
+	NewNote+="DataFileType="+".hdf"+";"
 
 	if(cmpstr(StringFromList(0,S_HDF5ListGroup), NewWaveName)!=0)
 		Duplicate/O LoadedWvHere, $(NewWaveName)
