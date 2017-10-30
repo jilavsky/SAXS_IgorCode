@@ -5155,42 +5155,54 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		//UseDspacing=0
 		UseTheta=0
 		UseDistanceFromCenter=0
-		SetVariable UserQMin,disable=(!UseQvector)
-		SetVariable UserQMax,disable=( !UseQvector)
-		SetVariable UserThetaMin,disable=( !UseTheta)
-		SetVariable UserThetaMax,disable=( !UseTheta)
-		SetVariable UserDMin,disable=( !UseDspacing)
-		SetVariable UserDMax,disable=( !UseDspacing)
-		Checkbox SaveGSASdata, disable=(!UseTheta)
-//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
+		ControlInfo /W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
+		if(V_Value==4)
+			DoWIndow/F NI1A_Convert2Dto1DPanel
+			SetVariable UserQMin,disable=(!UseQvector)
+			SetVariable UserQMax,disable=( !UseQvector)
+			SetVariable UserThetaMin,disable=( !UseTheta)
+			SetVariable UserThetaMax,disable=( !UseTheta)
+			SetVariable UserDMin,disable=( !UseDspacing)
+			SetVariable UserDMax,disable=( !UseDspacing)
+			Checkbox SaveGSASdata, disable=(!UseTheta)
+	//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
+		endif
 	endif
 	if(cmpstr("UseTheta",ctrlName)==0)
 		UseQvector=0
 		UseDspacing=0
 		//UseTheta=0
 		UseDistanceFromCenter=0
-		SetVariable UserQMin,disable=(!UseQvector)
-		SetVariable UserQMax,disable=( !UseQvector)
-		SetVariable UserThetaMin,disable=( !UseTheta)
-		SetVariable UserThetaMax,disable=( !UseTheta)
-		SetVariable UserDMin,disable=( !UseDspacing)
-		SetVariable UserDMax,disable=( !UseDspacing)
-		Checkbox SaveGSASdata, disable=(!UseTheta)
-//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
+		ControlInfo /W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
+		if(V_Value==4)
+			DoWIndow/F NI1A_Convert2Dto1DPanel
+			SetVariable UserQMin,disable=(!UseQvector)
+			SetVariable UserQMax,disable=( !UseQvector)
+			SetVariable UserThetaMin,disable=( !UseTheta)
+			SetVariable UserThetaMax,disable=( !UseTheta)
+			SetVariable UserDMin,disable=( !UseDspacing)
+			SetVariable UserDMax,disable=( !UseDspacing)
+			Checkbox SaveGSASdata, disable=(!UseTheta)
+	//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
+		endif
 	endif
 	if(cmpstr("UseDistanceFromCenter",ctrlName)==0)
 		UseQvector=0
 		UseDspacing=0
 		UseTheta=0
 		//UseDistanceFromCenter=0
-		SetVariable UserQMin,disable=(!UseQvector)
-		SetVariable UserQMax,disable=( !UseQvector)
-		SetVariable UserThetaMin,disable=( !UseTheta)
-		SetVariable UserThetaMax,disable=( !UseTheta)
-		SetVariable UserDMin,disable=( !UseDspacing)
-		SetVariable UserDMax,disable=( !UseDspacing)
-		Checkbox SaveGSASdata, disable=(!UseTheta)
-//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
+		ControlInfo /W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
+		if(V_Value==4)
+			DoWIndow/F NI1A_Convert2Dto1DPanel
+			SetVariable UserQMin,disable=(!UseQvector)
+			SetVariable UserQMax,disable=( !UseQvector)
+			SetVariable UserThetaMin,disable=( !UseTheta)
+			SetVariable UserThetaMax,disable=( !UseTheta)
+			SetVariable UserDMin,disable=( !UseDspacing)
+			SetVariable UserDMax,disable=( !UseDspacing)
+			Checkbox SaveGSASdata, disable=(!UseTheta)
+	//		CheckBox ThetaSameNumPoints,disable=(!UseTheta)
+		endif
 	endif
 
 
@@ -5294,15 +5306,32 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		if(checked)
 			NVAR QvectorMaxNumPnts=root:Packages:Convert2Dto1D:QvectorMaxNumPnts
 			QvectorMaxNumPnts=0
-			SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=QvectorMaxNumPnts
+			SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=(QvectorMaxNumPnts )
 		endif
 	endif
 	if(cmpstr("QvectorMaxNumPnts",ctrlName)==0)
-		SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=checked
-		if(checked)
-			NVAR QbinningLogarithmic=root:Packages:Convert2Dto1D:QbinningLogarithmic
-			QbinningLogarithmic=0
+		NVAR QbinningLogarithmic=root:Packages:Convert2Dto1D:QbinningLogarithmic
+		ControlInfo /W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
+		SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=(checked || V_Value!=4)
+		DoWindow NI1_9IDCConfigPanel
+		if(V_Flag)
+			SetVariable QbinPoints, win=NI1_9IDCConfigPanel, disable=(checked)
 		endif
+		if(checked)
+			QbinningLogarithmic=0
+		else
+			QbinningLogarithmic = 1
+		endif
+//		NVAR/Z USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
+//		if(NVAR_Exists(USAXSSAXSselector))
+//			if(USAXSSAXSselector==1)
+//				NVAR QbinPoints=root:Packages:Convert2Dto1D:QvectorNumberPoints
+//				if(checked)
+//				
+//				endif
+//					QbinPoints =120
+//			endif
+//		endif
 	endif
 	if(cmpstr("DoSectorAverages",ctrlName)==0)
 		NI1A_TabProc("nothing",4)

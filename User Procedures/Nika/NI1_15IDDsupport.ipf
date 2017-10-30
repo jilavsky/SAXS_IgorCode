@@ -169,6 +169,31 @@ Window NI1_9IDCConfigPanel() : Panel
 	Checkbox SAXSGenSmearedPinData, title ="Create Smeared Data", help={"Set to create smeared data for merging with USAXS"}
 	Checkbox SAXSDeleteTempPinData,pos={229,220},size={150,20}, variable=root:Packages:Convert2Dto1D:SAXSDeleteTempPinData, noproc
 	Checkbox SAXSDeleteTempPinData, title ="Delete temp Data", help={"Delete the sector and line averages"}
+
+
+	TitleBox MoreUserControls  pos={20,257}, size={400,20}, title="\\Zr150Useful controls from Main Nika panel : "
+	TitleBox MoreUserControls frame=0,fColor=(2,39321,1),help={"These are Duplciates of controls fromNIka user may need. "}
+	//this is for SAXS
+	CheckBox QvectorMaxNumPnts,pos={10,280},size={130,14},title="Max num points?",proc=NI1A_CheckProc
+	CheckBox QvectorMaxNumPnts,help={"Use Max possible number of points? Num pnts = num pixels"}
+	CheckBox QvectorMaxNumPnts,variable= root:Packages:Convert2Dto1D:QvectorMaxNumPnts
+	SetVariable QbinPoints,pos={150,280},size={200,16},title="Number of points   "
+	SetVariable QbinPoints,help={"Number of points in Q you want to create"}
+	SetVariable QbinPoints,limits={0,Inf,10},value= root:Packages:Convert2Dto1D:QvectorNumberPoints
+	
+
+
+	//This is for WAXS
+	CheckBox UseQvector,pos={10,280},size={90,14},title="Q space?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseQvector,help={"Select to have output as function of q [inverse nm]"}
+	CheckBox UseQvector,variable= root:Packages:Convert2Dto1D:UseQvector
+	CheckBox UseDspacing,pos={130,280},size={90,14},title="d ?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseDspacing,help={"Select to have output as function of d spacing"}
+	CheckBox UseDspacing,variable= root:Packages:Convert2Dto1D:UseDspacing
+	CheckBox UseTheta,pos={250,280},size={90,14},title="2 Theta ?", mode=1, proc=NI1A_CheckProc
+	CheckBox UseTheta,help={"Select to have output as function of 2 theta"}
+	CheckBox UseTheta,variable= root:Packages:Convert2Dto1D:UseTheta
+	
 	
 //	Checkbox USAXSForceUSAXSTransmission,pos={29,255},size={150,20}, variable=root:Packages:Convert2Dto1D:USAXSForceUSAXSTransmission, noproc
 //	Checkbox USAXSForceUSAXSTransmission, title ="Force use of USAXS Empty/Transm. ?", help={"Set to force use of same empty as USAXS and USAXS Transmission"}
@@ -207,6 +232,15 @@ Function NI1_9IDCDisplayAndHideControls()
 //	Button CreateBadPIXMASK,win= NI1_9IDCConfigPanel, disable = USAXSBigSAXSselector
 	Button SetUSAXSSlitLength, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 	SetVariable USAXSSlitLength, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
+
+	NVAR QvectorMaxNumPnts=root:Packages:Convert2Dto1D:QvectorMaxNumPnts
+	CheckBox QvectorMaxNumPnts, win= NI1_9IDCConfigPanel, disable = (DisplayPinCntrls)
+	SetVariable QbinPoints, win= NI1_9IDCConfigPanel, disable = (DisplayPinCntrls || QvectorMaxNumPnts)
+	//This is for WAXS
+	CheckBox UseQvector,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
+	CheckBox UseDspacing,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
+	CheckBox UseTheta,win= NI1_9IDCConfigPanel, disable = !USAXSWAXSselector
+
 //	Checkbox USAXSForceUSAXSTransmission, win= NI1_9IDCConfigPanel, disable = DisplayPinCntrls
 
 //	Checkbox USAXSCheckForRIghtEmpty, win= NI1_9IDCConfigPanel, disable = DisplayWAXSCntrls
@@ -360,7 +394,7 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				KillDataFolder/Z root:Packages:NexusImportTMP:
 				//now we should be able to read this in without challenges? 
 				string selectedFile
-				selectedFile = NI1_9IDCSetDefaultNx()				
+				selectedFile = NI1_9IDCSetDefaultConfiguration()				
 				NI1A_Convert2Dto1DMainPanel()
 				Wave SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers 
 				Wave/T ListOfCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleData
@@ -706,7 +740,7 @@ end
 
 //************************************************************************************************************
 //************************************************************************************************************
-Function/S NI1_9IDCSetDefaultNx()
+Function/S NI1_9IDCSetDefaultConfiguration()
 	
 	NI1A_Initialize2Dto1DConversion()
 	NI1BC_InitCreateBmCntrFile()
@@ -729,7 +763,8 @@ Function/S NI1_9IDCSetDefaultNx()
 				NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
 				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
-				QvectorNumberPoints=487
+
+				QvectorNumberPoints=2*487
 				QBinningLogarithmic=0
 				QvectormaxNumPnts = 1
 				DoSectorAverages = 0
@@ -741,6 +776,7 @@ Function/S NI1_9IDCSetDefaultNx()
 				StoreDataInIgor = 1
 				OverwriteDataIfExists = 1
 				Use2Ddataname = 1
+				QvectorMaxNumPnts = 1
 			
 				NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile
 				NVAR LineProfileUseRAW = root:Packages:Convert2Dto1D:LineProfileUseRAW
