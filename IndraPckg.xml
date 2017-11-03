@@ -35,9 +35,7 @@
 		<File>User Procedures/Indra 2/Indra 2 test.pxp</File>
 		<File>User Procedures/Indra 2/indra2.cmd</File>
 		<File>User Procedures/Indra 2/IonChamber3.1.ipf</File>
-		<File>User Procedures/Indra 2/Manual Indra 2.pdf</File>
 		<File>User Procedures/Indra 2/Readme.txt</File>
 		<File>User Procedures/Indra 2/spec.ipf</File>
-		<!--File>User Procedures/Indra 2/USAXS math.doc</File-->
 		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
 </PackageContent>

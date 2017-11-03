@@ -30,7 +30,6 @@
 		<File>User Procedures/Nika/NI1_LineProfCalcs.ipf</File>
 		<File>User Procedures/Nika/NI1_HDF5Browser.ipf</File>
 		<File>User Procedures/Nika/NI1_InstrumentSupport.ipf</File>
-		<File>User Procedures/Nika/Nika manual.pdf</File>
 		<File>User Procedures/Nika/license.txt</File>
 		<File>User Procedures/Nika/15IDDpinSAXSAnalysis.pdf</File>
 </PackageContent>
