@@ -15,6 +15,7 @@ Promoted required minimum version to 7.05 due to bug in Igor prior of this versi
 Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 
 Added Desmearing to Data reduction as final step. Saves both SMR and DSM data. Contains much less choices as USAXS is reasonably stable and choices are known. May fail for border cases. 
 Added UserSamplename string to each folder for long names. 
+Removed pdf manual from distribution.It is obsolete, use on-line version and if needed, download pdf from the on-line source.  
 
 
 

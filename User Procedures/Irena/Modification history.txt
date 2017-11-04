@@ -17,6 +17,7 @@ Unified fit - changes to two phase systems requested by Dale. Added ability to h
 Data merging tool - modified Optimize code to prevent failures, hopefully improved fitting capabilities. 
 WAXS - Added option to import free AMS diffraction data (http://rruff.geo.arizona.edu/AMS/result.php) - this database contains d, hkl, intensities for minerals. 
 All packages - internal changes and improvements resulting in less and cleaner code. 
+Removed pdf manual from distribution.It is obsolete, use on-line version and if needed, download pdf from the on-line source.  
 
 
 2.64, 5/1/2017
