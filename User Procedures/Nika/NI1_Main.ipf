@@ -138,32 +138,33 @@ Function NI1_OpenNikaManual()
 	//this function writes batch file and starts the manual.
 	//we need to write following batch file: "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures\Irena\Irena manual.pdf"
 	//on Mac we just fire up the Finder with Mac type path... 
-	
-	//check where we run...
-		string WhereIsManual
-		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"NI1_Main.ipf")
-		String manualPath = ParseFilePath(5,"Nika manual.pdf","*",0,0)
-       	String cmd 
-	
-	if (stringmatch(IgorInfo(2), "*Macintosh*"))
-             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
-               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
-               ExecuteScriptText cmd
-      		if (strlen(S_value)>2)
-//			DoAlert 0, S_value
-		endif
+		DoAlert /T="PDF manuals removed" 0, "pdf manuals are not distributed with the packages anymore. Use web manuals. If needed download pdf file from the web" 
 
-	else 
-		//manualPath = "User Procedures\Irena\Irena manual.pdf"
-		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
-		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
-		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
-		NewNotebook/F=0 /N=NewBatchFile
-		Notebook NewBatchFile, text=whereIsManual//+"\r"
-		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-		KillWIndow/Z NewBatchFile
-		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
-	endif
+//	//check where we run...
+//		string WhereIsManual
+//		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"NI1_Main.ipf")
+//		String manualPath = ParseFilePath(5,"Nika manual.pdf","*",0,0)
+//       	String cmd 
+//	
+//	if (stringmatch(IgorInfo(2), "*Macintosh*"))
+//             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
+//               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
+//               ExecuteScriptText cmd
+//      		if (strlen(S_value)>2)
+////			DoAlert 0, S_value
+//		endif
+//
+//	else 
+//		//manualPath = "User Procedures\Irena\Irena manual.pdf"
+//		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
+//		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
+//		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
+//		NewNotebook/F=0 /N=NewBatchFile
+//		Notebook NewBatchFile, text=whereIsManual//+"\r"
+//		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
+//		KillWIndow/Z NewBatchFile
+//		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
+//	endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************

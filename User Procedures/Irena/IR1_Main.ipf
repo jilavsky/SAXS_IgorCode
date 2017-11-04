@@ -622,68 +622,68 @@ Function IR2_OpenIrenaManual()
 	//this function writes batch file and starts the manual.
 	//we need to write following batch file: "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures\Irena\Irena manual.pdf"
 	//on Mac we just fire up the Finder with Mac type path... 
-	
+	DoAlert /T="PDF manuals removed" 0, "pdf manuals are not distributed with the packages anymore. Use web manuals. If needed download pdf file from the web" 
 	//check where we run...
 		//string WhereIsIgor
 		//pathInfo Igor
-		string WhereIsManual
-		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_Main.ipf")
-		String manualPath = ParseFilePath(5,"Irena Manual.pdf","*",0,0)
-       	String cmd 
-	
-	variable refnum
-	GetFileFolderInfo/Z=1/Q WhereAreProcedures+manualPath
-	variable foundIt=V_Flag
-	variable ManualModDate=V_modificationDate
-	printf "The current manual date is: %+015.4f\r", V_modificationDate
-	if(ManualModDate>0)
-		//print  V_modificationDate
-		print "Found version of Manual is from : " + secs2Date(ManualModDate,1)
-	endif
-	if(foundIt!=0 || ManualModDate<CurrentManualDateInSecs)
-       	NewPath/O/Q tempPath, WhereAreProcedures
-		DoAlert 1,  "Local copy of manual not found or is obsolete. Should Igor try to download from APS public web site?"
-		if(V_Flag==1)
-			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
-			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/Irena Manual.pdf", "%20")		//handle just spaces here... 
-			String fileBytes, tempPathStr
-			Variable error = GetRTError(1)
-			 fileBytes = FetchURL(httpPath)
-			 error = GetRTError(1)
-			 sleep/S 0.2
-			 if(error!=0)
-				 print "Manual download FAILED, please download from directly from Irena web page "
-			else
-				Open/P=tempPath  refNum as "Irena Manual.pdf"
-				FBinWrite refNum, fileBytes
-				Close refNum
-				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
-			endif
-		else
-			abort
-		endif
-		killPath tempPath	
-	endif
-	
-	if (stringmatch(IgorInfo(2), "*Macintosh*"))
-             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
-               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
-               ExecuteScriptText cmd
-      		if (strlen(S_value)>2)
-//			DoAlert 0, S_value
-		endif
-
-	else 
-		//manualPath = "User Procedures\Irena\Irena manual.pdf"
-		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
-		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
-		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
-		NewNotebook/F=0 /N=NewBatchFile
-		Notebook NewBatchFile, text=whereIsManual//+"\r"
-		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-		KillWIndow/Z NewBatchFile
-		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
-	endif
+//		string WhereIsManual
+//		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_Main.ipf")
+//		String manualPath = ParseFilePath(5,"Irena Manual.pdf","*",0,0)
+//       	String cmd 
+//	
+//	variable refnum
+//	GetFileFolderInfo/Z=1/Q WhereAreProcedures+manualPath
+//	variable foundIt=V_Flag
+//	variable ManualModDate=V_modificationDate
+//	printf "The current manual date is: %+015.4f\r", V_modificationDate
+//	if(ManualModDate>0)
+//		//print  V_modificationDate
+//		print "Found version of Manual is from : " + secs2Date(ManualModDate,1)
+//	endif
+//	if(foundIt!=0 || ManualModDate<CurrentManualDateInSecs)
+//       	NewPath/O/Q tempPath, WhereAreProcedures
+//		DoAlert 1,  "Local copy of manual not found or is obsolete. Should Igor try to download from APS public web site?"
+//		if(V_Flag==1)
+//			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
+//			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/Irena Manual.pdf", "%20")		//handle just spaces here... 
+//			String fileBytes, tempPathStr
+//			Variable error = GetRTError(1)
+//			 fileBytes = FetchURL(httpPath)
+//			 error = GetRTError(1)
+//			 sleep/S 0.2
+//			 if(error!=0)
+//				 print "Manual download FAILED, please download from directly from Irena web page "
+//			else
+//				Open/P=tempPath  refNum as "Irena Manual.pdf"
+//				FBinWrite refNum, fileBytes
+//				Close refNum
+//				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
+//			endif
+//		else
+//			abort
+//		endif
+//		killPath tempPath	
+//	endif
+//	
+//	if (stringmatch(IgorInfo(2), "*Macintosh*"))
+//             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
+//               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
+//               ExecuteScriptText cmd
+//      		if (strlen(S_value)>2)
+////			DoAlert 0, S_value
+//		endif
+//
+//	else 
+//		//manualPath = "User Procedures\Irena\Irena manual.pdf"
+//		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
+//		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
+//		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
+//		NewNotebook/F=0 /N=NewBatchFile
+//		Notebook NewBatchFile, text=whereIsManual//+"\r"
+//		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
+//		KillWIndow/Z NewBatchFile
+//		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
+//	endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
