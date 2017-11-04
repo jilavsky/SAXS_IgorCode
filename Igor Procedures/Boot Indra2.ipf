@@ -69,7 +69,7 @@ Function/S IndraMacrosMenuItem(itemNumber)
 			if(SVAR_Exists(USAXSItem1Str))
 				return USAXSItem1Str
 			else
-				return "Load USAXS macros (Indra)"	
+				return "Load USAXS macros"	
 			endif
 	endif
 
