@@ -19,6 +19,7 @@ Added UserSamplename string to each folder for long names.
 Changed and streamlined 9IDC support package to have less controls and be more robust. Reads parameters from each file. 
 ASCII exporter - added export of GSAS-II xye data file. 
 Removed pdf manual from distribution.It is obsolete, use on-line version and if needed, download pdf from the on-line source.  
+Added Update Message to CheckForUpdate code. If present, it will display a message for users. 
 
 1.77, 5/1/2017
 Made Igor 7 compatible ONLY. Thanks to GeneralProcedures changes will not work on Igor 6. 

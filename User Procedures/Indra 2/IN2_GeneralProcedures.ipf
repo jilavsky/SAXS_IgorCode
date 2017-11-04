@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.05
+#pragma version = 2.06
 #pragma IgorVersion = 7.00
 
 //control constants
@@ -24,6 +24,7 @@ constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.06 added IN2G_GetAndDisplayUpdateMessage()
 //2.05 added now function to set graph size and more controls for it (constants). IN2G_GetGraphWidthHeight
 //2.04 added function to convert Q wave to log-Q wave (IN2G_ConvertTologspacing)
 //2.03 added recording to web site with version check. 
@@ -2244,6 +2245,7 @@ End
 Strconstant ListOfPackageNames ="Irena;Nika;Indra;"
 Strconstant WebAddressForConfFile ="https://raw.githubusercontent.com/jilavsky/SAXS_IgorCode/master/"
 Strconstant NameOfConfFile ="IgorInstallerConfig.xml"
+Strconstant NameOfUpdateMessageFile ="UpdateMessage.ifn"
 
 
 Function IN2G_CheckForNewVersion(WhichPackage)
@@ -2282,6 +2284,29 @@ Function IN2G_CheckForNewVersion(WhichPackage)
 	return NewVerNumber
 end
 
+//  ======================================================================================  //
+//  ======================================================================================  //
+
+Function IN2G_GetAndDisplayUpdateMessage()
+		//checks for update message and if available, gets it and presents to user. 
+		
+	string FileContent
+	string ConfigFileURL=WebAddressForConfFile+NameOfUpdateMessageFile
+	URLRequest/Z/TIME=2 url=ConfigFileURL
+	if (V_Flag != 0)
+		print "Could not get Update message file from server."
+		return 0
+	endif
+	FileContent =  S_serverResponse
+	variable refNum
+	NewPath/O/C/Q TempUserUpdateMessage, SpecialDirPath("Temporary",0,0,0)
+	Open/P=TempUserUpdateMessage  refNum as NameOfUpdateMessageFile
+	FBinWrite refNum, FileContent
+	Close refNum
+	OpenNotebook/k=1/N=MessageFromAuthor/P=TempUserUpdateMessage/Z NameOfUpdateMessageFile
+   return 1
+end
+//  ======================================================================================  //
 //  ======================================================================================  //
 Function/T IN2G_ListReleases(str, Releasetw)
 	string str

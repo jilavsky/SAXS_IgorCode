@@ -1763,6 +1763,7 @@ Function IR2C_CheckIrenaUpdate(CalledFromMenu)
 			IN2G_SubmitCheckRecordToWeb("Irena "+num2str(CurrentIrenaVersionNumber))
 			LastUpdateCheckIrena = datetime
 			IN2G_SaveIrenaGUIPackagePrefs(0)
+			IN2G_GetAndDisplayUpdateMessage()
 	endif
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))<7.05)
 			DoAlert /T="Igor update message :"  0, "Igor has been updated to version 7.05 or higher. Please, update your Igor to the latest version."  
