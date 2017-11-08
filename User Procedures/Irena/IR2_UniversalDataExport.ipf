@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.10
+#pragma version=1.11
 Constant IR2EversionNumber = 1.10
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 fix bug that GSAS-II data type was not updating/chaqnging output name as expected. 
 //1.10 added export of xye data file for GSAS-II
 //1.09 added getHelp button calling to www manual
 //1.08 changes for panel scaling
@@ -782,20 +783,25 @@ Function IR2E_LoadDataInTool()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2_UniversalDataExport
 
-	NVAR AttachWaveNote
-	NVAR GraphData
-	NVAR DisplayWaveNote
-	NVAR UseFolderNameForOutput
-	NVAR UseYWaveNameForOutput
+	NVAR AttachWaveNote = root:Packages:IR2_UniversalDataExport:AttachWaveNote
+	NVAR GraphData = root:Packages:IR2_UniversalDataExport:GraphData
+	NVAR DisplayWaveNote = root:Packages:IR2_UniversalDataExport:DisplayWaveNote
+	NVAR UseFolderNameForOutput = root:Packages:IR2_UniversalDataExport:UseFolderNameForOutput
+	NVAR UseYWaveNameForOutput = root:Packages:IR2_UniversalDataExport:UseYWaveNameForOutput
+	NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
+	NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
+	NVAR ExportMultipleCanSASFiles = root:Packages:IR2_UniversalDataExport:ExportMultipleCanSASFiles
+	NVAR ExportSingleCanSASFile = root:Packages:IR2_UniversalDataExport:ExportSingleCanSASFile
+	NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
 
-	SVAR DataFolderName
-	SVAR IntensityWaveName
-	SVAR QWavename
-	SVAR ErrorWaveName
-	SVAR CurrentlyLoadedDataName
-	SVAR CurrentlySetOutputPath
-	SVAR NewFileOutputName
-	SVAR HeaderSeparator
+	SVAR DataFolderName = root:Packages:IR2_UniversalDataExport:DataFolderName
+	SVAR IntensityWaveName = root:Packages:IR2_UniversalDataExport:IntensityWaveName
+	SVAR QWavename = root:Packages:IR2_UniversalDataExport:QWavename
+	SVAR ErrorWaveName = root:Packages:IR2_UniversalDataExport:ErrorWaveName
+	SVAR CurrentlyLoadedDataName = root:Packages:IR2_UniversalDataExport:CurrentlyLoadedDataName
+	SVAR CurrentlySetOutputPath = root:Packages:IR2_UniversalDataExport:CurrentlySetOutputPath
+	SVAR NewFileOutputName = root:Packages:IR2_UniversalDataExport:NewFileOutputName
+	SVAR HeaderSeparator = root:Packages:IR2_UniversalDataExport:HeaderSeparator
 	
 	
 	Wave/Z tempY=$(DataFolderName+possiblyquoteName(IntensityWaveName))
@@ -829,19 +835,11 @@ Function IR2E_LoadDataInTool()
 			AutopositionWindow/M=0 /R=TempExportGraph ExportNoteDisplay 
 	endif
 	
-// UseFolderNameForOutput
-// UseYWaveNameForOutput
-	NVAR ExportCanSASNexus
-	NVAR ExportASCII
-	NVAR ExportMultipleCanSASFiles
-	NVAR ExportSingleCanSASFile
 
-	if(ExportASCII ||(ExportCanSASNexus&&ExportMultipleCanSASFiles))
+	if(ExportASCII || ExportGSASxye ||(ExportCanSASNexus&&ExportMultipleCanSASFiles))
 		NewFileOutputName = ""
 		if(UseFolderNameForOutput)
-			//NewFileOutputName += IN2G_RemoveExtraQuote(StringFromList(ItemsInList(DataFolderName,":")-1,DataFolderName,":"),1,1)
-			NewFileOutputName += IN2G_ReturnUserSampleName(DataFolderName)
-			
+			NewFileOutputName += IN2G_ReturnUserSampleName(DataFolderName)			
 		endif
 		if(UseFolderNameForOutput && UseYWaveNameForOutput)
 			NewFileOutputName += "_"

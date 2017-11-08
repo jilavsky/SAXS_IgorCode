@@ -10,7 +10,7 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 ********************************************
 2.65 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 
-Panels now restore prior size and position. This is set when you drag lower-left corner to scale them up. Data stored on the user computer and size is limited to 50% width and 90% height of current screen size. Hold down any modifier key and size will be reset to original default state. 
+Panels now restore prior size and position. This is set when you drag lower-right corner to scale them up. Data stored on the user computer and size is limited to 50% width and 90% height of current screen size. Hold down any modifier key and size will be reset to original default state. 
 Merge two data sets - added option of sorting qrs names by xyz_string, needed for Nika. Added SMR and DSM data to USAXS.
 Modeling - added calculation of Rg for size distributions. Requested by Dale Schaefer. 
 Unified fit - changes to two phase systems requested by Dale. Added ability to handle multiple levels at the same time where possible… 
@@ -19,6 +19,7 @@ WAXS - Added option to import free AMS diffraction data (http://rruff.geo.arizon
 All packages - internal changes and improvements resulting in less and cleaner code. 
 Removed pdf manual from distribution. It is obsolete, use on-line version and if needed, download pdf from the on-line source.  
 Added Update Message to CheckForUpdate code. If present, it will display a message for users. 
+ASCII exporter - added export of GSAS-II xye data file. 
 
 
 2.64, 5/1/2017
