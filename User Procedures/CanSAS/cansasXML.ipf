@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// rtGlobals=3 requires IgorPro 6.3+
 #pragma version=1.12
 
@@ -791,8 +792,8 @@ FUNCTION testCollette()
 // suggestions from ISIS users
 	// 3.	Loading actual data from LOQ caused some problems. 
 	//	Data created by Colette names files with run number. 
-	//	When entering full path to load the data if you use "…\example\31531.X" Igor will read \3 as a character. 
-	//	A simple fix which has worked for this is to use / instead of \ e.g. "…\example/31531.X".
+	//	When entering full path to load the data if you use "Ã–\example\31531.X" Igor will read \3 as a character. 
+	//	A simple fix which has worked for this is to use / instead of \ e.g. "Ã–\example/31531.X".
 	
 	//4.	Once data is loaded in Igor it is relatively easy to work with but would be nicer if the SASdata 
 	//	was loaded into root directory (named using run number rather than generically as it is at the moment) rather than another folder.

@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.13
 Constant IR2PrversionNumber=1.13
@@ -1134,11 +1135,11 @@ static Function IR2Pr_FitMooreAutocorrelation()
 	MooreParametersS[Moore_NumOfFncts+4]=MooreParametersS[Moore_NumOfFncts+4]/(2*MooreParametersV[Moore_NumOfFncts+4])
 	maximumR=MooreParametersV[Moore_NumOfFncts+2]
 	string FitNote="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fit using Moore's indirect Fourier transform"
-	Fitnote+="\rMaximum extent "+num2str(maximumR)+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" Å"
+	Fitnote+="\rMaximum extent "+num2str(maximumR)+" Â± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" â‰ˆ"
 	Fitnote+="\r"+num2str(Moore_NumOfFncts)+" basis functions used"
-	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
-	fitnote+="\rRadius of Gyration = "+num2str(MooreParametersV[Moore_NumOfFncts+4])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+4])+" Å"
-	Fitnote+="\rBackground "+num2str(MooreParametersV[Moore_NumOfFncts])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts])
+	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" Â± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
+	fitnote+="\rRadius of Gyration = "+num2str(MooreParametersV[Moore_NumOfFncts+4])+" Â± "+num2str(MooreParametersS[Moore_NumOfFncts+4])+" â‰ˆ"
+	Fitnote+="\rBackground "+num2str(MooreParametersV[Moore_NumOfFncts])+" Â± "+num2str(MooreParametersS[Moore_NumOfFncts])
 	Fitnote+="\rReduced Chi Squared "+num2str(rchisq)
 	variable/g CurrentRg = MooreParametersV[Moore_NumOfFncts+4]
 	variable/g CurrentRgError = MooreParametersS[Moore_NumOfFncts+4]

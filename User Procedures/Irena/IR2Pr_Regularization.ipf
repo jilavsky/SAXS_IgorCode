@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.03
 
@@ -156,9 +157,9 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 	variable/g CurrentRg=IR2Pr_regRg(CurrentResultPdf,R_distribution)
 	variable/g CurrentRgError=NaN
 	string FitNote="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fit using Regularization "
-	Fitnote+="\rMaximum extent "+num2str(maximumR)+"  A"//+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" Å"
+	Fitnote+="\rMaximum extent "+num2str(maximumR)+"  A"//+" Â± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" â‰ˆ"
 //	Fitnote+="\r"+num2str(Moore_NumOfFncts)+" basis functions used"
-//	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
+//	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" Â± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
 	fitnote+="\rRadius of Gyration = "+num2str(CurrentRg)+"  A"
 	Fitnote+="\rBackground "+num2str(Background)
 //	Fitnote+="\rReduced Chi Squared "+num2str(Chisquared/(numpnts(Intensity)-1))

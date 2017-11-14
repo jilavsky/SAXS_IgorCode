@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma version=1.07
 
@@ -1100,10 +1101,10 @@ Function IR2_HayterPenfoldMSA(w,x) : FitFunc
 	variable VolFrac, SIdiam, diam, Kappa, cs, IonSt
 	variable dialec, Perm, BetaVar, Temp, zz, charge, ierr
 
-	diam=2*w[0]		//note: Wrapper code uses radius, not diameter as the original NIST code... in Å  (not SI .. should force people to think in nm!!!)
+	diam=2*w[0]		//note: Wrapper code uses radius, not diameter as the original NIST code... in √Ö  (not SI .. should force people to think in nm!!!)
 	zz = w[1]		//# of charges
 	VolFrac=w[2]	
-	QQ=x			//in Å^-1 (not SI .. should force people to think in nm^-1!!!)
+	QQ=x			//in √Ö^-1 (not SI .. should force people to think in nm^-1!!!)
 	Temp=w[3]		//in degrees Kelvin
 	csalt=w[4]		//in molarity
 	dialec=w[5]		// unitless
@@ -1270,7 +1271,7 @@ Function IR2_InitHayterPenfoldMSA()
 //	//Display ywave_hpmsa vs xdiamwave_hpmsa	
 //	Display ywave_hpmsa vs xwave_hpmsa	
 //	ModifyGraph log=0,marker=29,msize=2,mode=4,grid=1			//**** log=0 if linear scale desired
-//	Label bottom "q (Å\\S-1\\M)"
+//	Label bottom "q (√Ö\\S-1\\M)"
 //	Label left "Structure Factor"	
 //	AutoPositionWindow/M=1/R=$(WinName(0,1)) $WinName(0,2)
 

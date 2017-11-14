@@ -114,6 +114,8 @@ Function IN3_MainPanelNew()
 	PopupMenu SortOptionString, pos={285,91}
 	TitleBox Info1PanelProc, pos={10,108}
 	ListBox ListOfAvailableData,pos={3,123}, size={252,148}
+
+	Button GetHelp,pos={315,25},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 		
 	CheckBox IsBlank,pos={265,115},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}

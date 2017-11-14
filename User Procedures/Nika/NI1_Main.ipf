@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.78
 #pragma IgorVersion=7.05
@@ -1267,7 +1268,7 @@ Window CheckForNikaUpdatePanel() : Panel
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 27,133,"J. Ilavsky Nika: software for two-dimensional data reduction "
 	SetDrawEnv textrgb= (0,0,65535)
-	DrawText 27,158,"J. Appl. Cryst. (2012). 45, 324Ð328"
+	DrawText 27,158,"J. Appl. Cryst. (2012). 45, 324â€“328"
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 27,205,"Glassy Carbon Absolute Int. Calibration: F. Zhang, J. Ilavsky, G. G. Long, J. P.G. Quintana, "
 	SetDrawEnv textrgb= (0,0,65535)

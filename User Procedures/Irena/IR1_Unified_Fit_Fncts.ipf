@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.24
 
@@ -17,7 +18,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //2.20 fixed bug in IR2U_CalculateInvariantbutton
 //2.19 modified to speed up, removed DoUpdate. Fixed error when plot widnow did not exist. 
 //2.18 modified IR1A_UnifiedCalculateIntensity() to handle data which have Qmax less than 3*slit length
-//2.17 Dale fixed function IR2U_CalculateInvariantbutton() to Warn the user that one can’t use "invariant btwn csrs" on SMR data and Automatically use the level-1 for B value when “All” is picked as the level in the two phase calculator (Analyze Results button on unified panel).
+//2.17 Dale fixed function IR2U_CalculateInvariantbutton() to Warn the user that one can‚Äôt use "invariant btwn csrs" on SMR data and Automatically use the level-1 for B value when ‚ÄúAll‚Äù is picked as the level in the two phase calculator (Analyze Results button on unified panel).
 //2.16 minor fix pre Dale's request. 
 //2.15 fixes to Graph display of local levels. 
 //2.14 corrected Invariant analysis to do correctly phi*(1-phi) calculation to get phi. 
@@ -1506,7 +1507,7 @@ Function IR2U_InitUnifAnalysis()
 	DensitiesLegend = "Density [g/cm3]              SL/g  10^10 [cm/ g)]"
 	
 	SVAR TwoPhaseSystem_reference
-	TwoPhaseSystem_reference = "Ref: N. Hu, et al. J. Membrane Sci., V. 379, Is. 1–2, 2011, p. 138–145." 
+	TwoPhaseSystem_reference = "Ref: N. Hu, et al. J. Membrane Sci., V. 379, Is. 1‚Äì2, 2011, p. 138‚Äì145." 
 	SVAR TwoPhaseSystem_comment1
 	TwoPhaseSystem_comment1 = "Valid for P=4, known all densities, defined invariant, abs. calibration not needed."
 	SVAR TwoPhaseSystem_comment2
@@ -2964,9 +2965,9 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 //	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
 //	variable majchord=4*majorityphi/Sv
 //	variable minchord=4* (1-majorityphi)/Sv
-//	//string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1Å-4"
-//	string outtext="Qv = "+num2str(invariant)+" cm^-1 Å^-3\rB = "+num2str(B)+ " cm-1Å-4"
-//	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" Å\rlmaj = "+num2str(majchord*1e4)+" Å"		
+//	//string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1√Ö-4"
+//	string outtext="Qv = "+num2str(invariant)+" cm^-1 √Ö^-3\rB = "+num2str(B)+ " cm-1√Ö-4"
+//	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" √Ö\rlmaj = "+num2str(majchord*1e4)+" √Ö"		
 //	dowindow/R/k InvariantGraph
 //	//dowindow/R/k DummyGraph
 //			display/K=2  rq2 vs qwave as "q2 I(q) vs q"
@@ -2987,9 +2988,9 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 //		if(!UseCsrInv)//&&!UseUnifiedInv)
 //			SetAxis/A
 //		endif
-//		print "lmin = "+num2str(minchord*1e4)+" Å"
+//		print "lmin = "+num2str(minchord*1e4)+" √Ö"
 //		ModifyGraph log=1
-//		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
+//		Label left "\\F'arial'\\Z18I(q)¬∑(q \\S2\\M)"
 //		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
 //		textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
 //		HideTools/A
@@ -3067,9 +3068,9 @@ Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny
 	variable Sv=(1e4*pi*B/invariant)*majorityphi*(1-majorityphi)
 	variable majchord=4*majorityphi/Sv
 	variable minchord=4* (1-majorityphi)/Sv
-	//string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1Å-4"
-	string outtext="Qv = "+num2str(invariant)+" cm^-1 Å^-3\rB = "+num2str(B)+ " cm-1Å-4"
-	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" Å\rlmaj = "+num2str(majchord*1e4)+" Å"		
+	//string outtext="Qv = "+num2str(invariant)+" cm^-4\rB = "+num2str(B)+ " cm-1√Ö-4"
+	string outtext="Qv = "+num2str(invariant)+" cm^-1 √Ö^-3\rB = "+num2str(B)+ " cm-1√Ö-4"
+	outtext=outtext+"\rpiB/Q = "+num2str(1e4*pi*B/invariant)+" m2/cm3\rSv = "+num2str(Sv)+" m2/cm3\rSm = "+num2str(Sv/dens)+" m2/g\rlmin = "+num2str(minchord*1e4)+" √Ö\rlmaj = "+num2str(majchord*1e4)+" √Ö"		
 	dowindow/R/k InvariantGraph
 	//dowindow/R/k DummyGraph
 			display/K=2  rq2 vs qwave as "q2 I(q) vs q"
@@ -3090,9 +3091,9 @@ Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny
 		if(!UseCsrInv)//&&!UseUnifiedInv)
 			SetAxis/A
 		endif
-		//print "lmin = "+num2str(minchord*1e4)+" Å"
+		//print "lmin = "+num2str(minchord*1e4)+" √Ö"
 		ModifyGraph log=1
-		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
+		Label left "\\F'arial'\\Z18I(q)¬∑(q \\S2\\M)"
 		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
 		textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
 		HideTools/A
@@ -4545,15 +4546,15 @@ Function IR2U_UnifAnalysisHelp()
 		Notebook $nb fStyle=2, text="References", fStyle=-1, text=": \r"
 		Notebook $nb text="Beaucage, Phys rev E (2004), 70(3), p10\r"
 		Notebook $nb text="Beaucage, Biophys J. (2008), 95(2), p503\r"
-		Notebook $nb text="Naiping Hu, Neha Borkar, Doug Kohls and Dale W. Schaefer, “Characterization of Porous Materials Using Co"
-		Notebook $nb text="mbined Small-Angle X-ray and Neutron Scattering Techniques”, J Appl Cryst 2011)\r"
+		Notebook $nb text="Naiping Hu, Neha Borkar, Doug Kohls and Dale W. Schaefer, ‚ÄúCharacterization of Porous Materials Using Co"
+		Notebook $nb text="mbined Small-Angle X-ray and Neutron Scattering Techniques‚Äù, J Appl Cryst 2011)\r"
 		Notebook $nb text="\r"
-		Notebook $nb text="All of these can be analyzed by using “Analyze results” tool. It can be called from the bottom of the Un"
-		Notebook $nb text="ified main panel.  There are two options which data can be analyzed… Current Unified data in the Unified"
+		Notebook $nb text="All of these can be analyzed by using ‚ÄúAnalyze results‚Äù tool. It can be called from the bottom of the Un"
+		Notebook $nb text="ified main panel.  There are two options which data can be analyzed‚Ä¶ Current Unified data in the Unified"
 		Notebook $nb text=" fit tool or Unified results saved to any folder in the Igor experiment.\r"
 		Notebook $nb text="\r"
 		Notebook $nb text="\r"
-		Notebook $nb text="User can output results of any analysis to either command line, the log book (Igor “notebook” into which"
+		Notebook $nb text="User can output results of any analysis to either command line, the log book (Igor ‚Äúnotebook‚Äù into which"
 		Notebook $nb text=" many Irena tools save records) or in the top graph as legend.  \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="\r"
@@ -4589,7 +4590,7 @@ Function IR2U_UnifAnalysisHelp()
 		Notebook $nb text=" \r"
 		Notebook $nb fSize=12, fStyle=3, text="Two Phase media (aka: Porous system):\r"
 		Notebook $nb fSize=-1, fStyle=-1
-		Notebook $nb text="This is copied from the manuscript by Dale Schaefer … For details, please, check the manuscript… It is a"
+		Notebook $nb text="This is copied from the manuscript by Dale Schaefer ‚Ä¶ For details, please, check the manuscript‚Ä¶ It is a"
 		Notebook $nb text="pplicable for two-phase systems which at high-Q satisfy Porod's law (power law slope = -4, Porod's law i"
 		Notebook $nb text="s valid). \r"
 		Notebook $nb text="\r"
@@ -4599,13 +4600,13 @@ Function IR2U_UnifAnalysisHelp()
 		Notebook $nb text=" that the results vary depending on what can be calculated from the input data provided. Make sure that "
 		Notebook $nb text="assumptions about validity of data (calibration, quality of G and Rg, Power law slope = - 4 (Porod's law"
 		Notebook $nb text=" valid) when needed) are satisfied. \r"
-		Notebook $nb text="Note, these models can be evaluated also for combination of Unified levels… Only single level or “All” i"
-		Notebook $nb text="s allowed. If “All” is used, Porod constant from level 1 is used, but invariant is calculated from all l"
-		Notebook $nb text="evels together… \r"
+		Notebook $nb text="Note, these models can be evaluated also for combination of Unified levels‚Ä¶ Only single level or ‚ÄúAll‚Äù i"
+		Notebook $nb text="s allowed. If ‚ÄúAll‚Äù is used, Porod constant from level 1 is used, but invariant is calculated from all l"
+		Notebook $nb text="evels together‚Ä¶ \r"
 		Notebook $nb text="You can use the button to open Scattering contrast calculator. ", fStyle=1, text="IMPORTANT", fStyle=-1
 		Notebook $nb text=": ", fStyle=4
 		Notebook $nb text="this tool uses scattering length density per gram of materials. This is kind of unique, I have extended "
-		Notebook $nb text="the Scattering contrast calculator to calculate these values. Please, NOTE this… \r"
+		Notebook $nb text="the Scattering contrast calculator to calculate these values. Please, NOTE this‚Ä¶ \r"
 		Notebook $nb fStyle=-1, text="\r"
 		Notebook $nb text="\r"
 		Notebook $nb fStyle=1, text="TwoPhaseSys1", fStyle=-1
@@ -4640,7 +4641,7 @@ Function IR2U_UnifAnalysisHelp()
 		Notebook $nb text=" particle density. \r"
 		Notebook $nb text="          \r"
 		Notebook $nb text="Note, that there are differences in what needs to be known. Method 6 requires knowledge of contrast, whi"
-		Notebook $nb text="le the method 5 does not, while method 5 requires knowledge of sample bulk density… \r"
+		Notebook $nb text="le the method 5 does not, while method 5 requires knowledge of sample bulk density‚Ä¶ \r"
 		Notebook $nb text=" \r"
 	endif
 end

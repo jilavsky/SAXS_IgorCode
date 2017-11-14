@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.46
 
@@ -2202,17 +2203,17 @@ static Function/T NI1A_ReadRigakuUsingStructure(PathName, FileNameToLoad)
 	NewKWList+= "CrystalName:"+RH.CrystalName+";"//	char CrystalName[20]
 ////4 	Crystal system 	Character 	12 	52
 	NewKWList+= "CrystalSystem:"+RH.CrystalSystem+";"//	char CrystalSystem[12]
-////5 	ÇÅÅiÅÅj 	Real Number 	4 	56
+////5 	√á√Ö√Öi√ÖÔ£ø√Öj 	Real Number 	4 	56
 	NewKWList+= "LatticeA:"+num2str(RH.LatticeA)+";"//	float LatticeA  
-////6 	ÇÇÅiÅÅj 	Real Number 	4 	60
+////6 	√á√á√Öi√ÖÔ£ø√Öj 	Real Number 	4 	60
 	NewKWList+= "LatticeB:"+num2str(RH.LatticeB)+";"//	float LatticeB 
-///////7 	ÇÉÅiÅÅj 	Real Number 	4 	64
+///////7 	√á√â√Öi√ÖÔ£ø√Öj 	Real Number 	4 	64
 	NewKWList+= "LatticeC:"+num2str(RH.LatticeC)+";"//	float LatticeC  
-//////8 	Éø 	Real Number 	4 	68
+//////8 	√â√∏ 	Real Number 	4 	68
 	NewKWList+= "LatticeAlpha:"+num2str(RH.LatticeAlpha)+";"//	float LatticeAlpha  
-////////9 	É¿ 	Real Number 	4 	72
+////////9 	√â¬ø 	Real Number 	4 	72
 	NewKWList+= "LatticeBeta:"+num2str(RH.LatticeBeta)+";"//	float LatticeBeta  
-//////10 	É¡ 	Real Number 	4 	76
+//////10 	√â¬° 	Real Number 	4 	76
 	NewKWList+= "LatticeGamma:"+num2str(RH.LatticeGamma)+";"//	float LatticeGamma  
 //////11 	Space group 	Character 	12 	88
 	NewKWList+= "SpaceGroup:"+RH.SpaceGroup+";"//	char SpaceGroup[12]
@@ -2231,17 +2232,17 @@ static Function/T NI1A_ReadRigakuUsingStructure(PathName, FileNameToLoad)
 	NewKWList+= "Xraytarget:"+RH.Xraytarget+";"//	char Xraytarget[4]
 //////18 	Wavelength 	Real Number 	4 	296
 	NewKWList+= "Wavelength:"+num2str(RH.Wavelength)+";"//	float Wavelength  
-//////19 	Monochrometer Å@Å@ 	Character 	20 	316
+//////19 	Monochrometer √Ö@√Ö@ 	Character 	20 	316
 	NewKWList+= "Monochromator:"+RH.Monochromator+";"//	char Monochromator[20]
-//////20 	MonochromeÇQÉ∆ÅiÅãÅj 	Real Number 	4 	320
+//////20 	Monochrome√áQ√â‚àÜ√Öi√Ö√£√Öj 	Real Number 	4 	320
 	NewKWList+= "MonocromatorDq:"+num2str(RH.MonocromatorDq)+";"//	float MonocromatorDq  
 //////21 	Collimeter 	Character 	20 	340
 	NewKWList+= "Collimator:"+RH.Collimator+";"//	char Collimator[20]
-//////22 	ÇjÉ¿ Filter 	Character 	4 	344
+//////22 	√áj√â¬ø Filter 	Character 	4 	344
 	NewKWList+= "v:"+RH.Filter+";"//	char Filter[4]
 //////23 	Camera Length (mm) 	Real Number 	4 	348
 	NewKWList+= "CameraLength_mm:"+num2str(RH.CameraLength_mm)+";"//	float CameraLength_mm  
-//////24 	X-ray Pipe VolgageÅ@ 	Real Number 	4 	352
+//////24 	X-ray Pipe Volgage√Ö@ 	Real Number 	4 	352
 	NewKWList+= "XrayTubeVoltage:"+num2str(RH.XrayTubeVoltage)+";"//	float XrayTubeVoltage  
 //////25 	X-ray  Electric Current 	Real Number 	4 	356
 	NewKWList+= "XrayTubeCurrent:"+num2str(RH.XrayTubeCurrent)+";"//	float XrayTubeCurrent
@@ -2255,15 +2256,15 @@ static Function/T NI1A_ReadRigakuUsingStructure(PathName, FileNameToLoad)
 	NewKWList+= "WeissenbergOscillation:"+num2str(RH.WeissenbergOscillation)+";"//	float WeissenbergOscillation
 //////30 	Reserve 	Character 	56 	512
 //	char Reserve2[56]
-//////31 	Mount Axis 	Character 	4 	Å}reciprocal lattice axis		516
+//////31 	Mount Axis 	Character 	4 	√Ö}reciprocal lattice axis		516
 	NewKWList+= "MountAxis:"+RH.MountAxis+";"//	char MountAxis[4]
-//////32 	Beam Axis 	Character 	4 	Å}lattice axis					520
+//////32 	Beam Axis 	Character 	4 	√Ö}lattice axis					520
 	NewKWList+= "BeamAxis:"+RH.BeamAxis+";"//	char BeamAxis[4]
-//////33 	É”0 	Real Number 	4 								524
+//////33 	√â‚Äù0 	Real Number 	4 								524
 //	float something7
-////34 	É” Start 	Real Number 	4 			528
+////34 	√â‚Äù Start 	Real Number 	4 			528
 //	float StartSomething 
-////35 	É” End 	Real Number 	4 	
+////35 	√â‚Äù End 	Real Number 	4 	
 //	float EndSomething
 ////36 	Times of Oscillation 	Integer 	4 	
 //	int32 TimesOfOscillation
@@ -2273,13 +2274,13 @@ static Function/T NI1A_ReadRigakuUsingStructure(PathName, FileNameToLoad)
 	NewKWList+= "DirectBeamPositionX:"+num2str(RH.DirectBeamPositionX)+";"//	float DirectBeamPositionX
 ////39 	Direct Beam Position (y) 	Real Number 	4 	
 	NewKWList+= "DirectBeamPositionY:"+num2str(RH.DirectBeamPositionY)+";"//	float DirectBeamPositionY
-////40 	É÷ÅiÉ∆Åj 	Real Number 	4 	
+////40 	√â√∑√Öi√â‚àÜ√Öj 	Real Number 	4 	
 //	float Something8 
-////41 	É‘ 	Real Number 	4 	
+////41 	√â‚Äò 	Real Number 	4 	
 //	float Something9
-////42 	ÇQÉ∆ 	Real Number 	4 	
+////42 	√áQ√â‚àÜ 	Real Number 	4 	
 //	float Something10
-////43 	É  	Real Number 	4 	
+////43 	√â¬† 	Real Number 	4 	
 //	float Something11
 ////44 	Reserve 	Character 	180 	
 //	char Reserve3[100]

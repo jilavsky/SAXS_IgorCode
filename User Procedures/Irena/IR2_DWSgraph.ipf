@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.00
 
@@ -188,7 +189,7 @@ Function IR2D_DWSPlotToolInit()
 	SVAR DataFolderName=root:packages:Irena:DWSPlottingTool:DataFolderName
 	foldernames=1;errors=0;	TicRotation = 0;axwidth= 2
 	
-	xname="\F'Helvetica'\f01\Z14q (Å\S-1\M\Z14)";yname="\F'Helvetica'\f01\Z14Intensity (cm\S-1\M\Z14)"
+	xname="\F'Helvetica'\f01\Z14q (√Ö\S-1\M\Z14)";yname="\F'Helvetica'\f01\Z14Intensity (cm\S-1\M\Z14)"
 	ListOfGraphFormating=ReplaceStringByKey("Label left",ListOfGraphFormating,yname,"=")
 	ListOfGraphFormating=ReplaceStringByKey("Label bottom",ListOfGraphFormating, xname,"=")
 	ListOfGraphFormating=ReplaceStringByKey("ErrorBars",ListOfGraphFormating, "0","=")

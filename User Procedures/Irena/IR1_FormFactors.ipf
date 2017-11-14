@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.28
 
@@ -776,14 +777,14 @@ end
 static Function IR1T_RecParallVolume(A,P1,P2,P3,P4,P5)
 	Variable A, P1, P2,P3,P4,P5
 	//A is size, 
-	variable side=2*A   	//size going in is "radius"Ê
+	variable side=2*A   	//size going in is "radius"Â 
 	return side*side*side*P1*P2
 end
 //*****************************************************************************************************************
 static Function IR1T_RecParallSurface(A,P1,P2,P3,P4,P5)
 	Variable A, P1, P2,P3,P4,P5
 	//A is size, 
-	variable side=2*A   	//size going in is "radius"Ê
+	variable side=2*A   	//size going in is "radius"Â 
 	//Surface Area = 2lw + 2lh + 2wh
 	return 2*side*side*P1+2*side*side*P2+2*side*side*P1*P2
 end
@@ -794,7 +795,7 @@ end
 //	//size going in is "radius" , formula requires side length, which is radius * 2
 //	variable FormFactor=2/pi* IR1T_ParallExtIntegral(Qv,2*A, P1, P2)
 //	return FormFactor
-//endÊ
+//endÂ 
 //
 ////*****************************************************************************************************************
 //threadsafe static Function IR1T_Parall_InternalPart(Qv,A2, P1, P2,Alfa,Bta)

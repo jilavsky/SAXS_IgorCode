@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version = 1.14
 
@@ -1113,7 +1114,7 @@ Proc IN2P_FitPowerLawWithCursors()
 	endif
 	Modify lsize($name)=2
 	String pw=num2str(K1),pr=num2str(10^K0),DIN=num2str((V_siga*10^K0)/2.3026),ca=num2str(pcsr(A)),cb=num2str(pcsr(B)),gf=num2str(V_Pr),DP=num2str(V_sigb)
-	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z10Power Law Slope= "+pw+"\Z10 ± "+DP+"\Z08\rPrefactor= "+pr+"\Z08 cm\S-1\M\Z08 ± "+DIN+"\Z08\rx Cursor A::B= "+ca+"\Z08 :: "+cb+"\Z08\rGoodness of fit= "+gf
+	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z10Power Law Slope= "+pw+"\Z10 Â± "+DP+"\Z08\rPrefactor= "+pr+"\Z08 cm\S-1\M\Z08 Â± "+DIN+"\Z08\rx Cursor A::B= "+ca+"\Z08 :: "+cb+"\Z08\rGoodness of fit= "+gf
 
 	KillWaves/Z LogYFitData, LogXFitData
 

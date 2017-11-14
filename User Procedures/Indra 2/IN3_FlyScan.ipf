@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.04
 #include <Peak AutoFind>
@@ -27,7 +28,7 @@ Constant IN3_RemoveRangeChangeEffects=1
 //0.33 more fixes for 9ID. 
 //0.32 fixes for 9ID, 02-08-2015, Modified function creating gain changes - needs fixing for I0 and I00.
 //0.31 added some fixes for flyscan gain issues and DSM support. 
-//0.30 added Ê/entry/flyScan/is_2D_USAXS_scan
+//0.30 added Â /entry/flyScan/is_2D_USAXS_scan
 //0.29 fixed problem with liberal h5 file names (containing ".") which caused havock in addressing folders.  
 //0.28 fixed I0 gaincalcualtions (and fixed FLyscan program on LAX). 
 //0.27 Attempt to fix vibrations when happen... 

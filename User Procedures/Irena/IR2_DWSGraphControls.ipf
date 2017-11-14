@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version 1.01
 
@@ -721,8 +722,8 @@ Proc IR2D_DWSStdGraph(width,maxY,minY,BW,ylabel,xlabel,modetype,aspect,linewidth
 	prompt width, "Enter width in inches"
 	Prompt aspect, "Enter aspect ratio (1.4)"
 	Prompt modetype, "Type of display", popup,"Lines;Sticks;Dots;Markers;Lines &Markers;No change"
-	Prompt ylabel,"Y axis Label", popup, "No Change;\f01\Z1610\S6\M\Z16 x SLD (Å\S-2\M\Z16);\F'Helvetica'\Z16\f01Intensity (cm\S-1\M\Z16);\F'Helvetica'\Z16\f01Intensity;\F'Helvetica'\Z16\f01Reflectivity;\F'Helvetica'\Z12\f01Relative Intensity;"
-	Prompt xlabel,"X axis Label", popup, "No Change;\Z16Distance from Si (Å);\F'Helvetica'\Z16\f01q (Å\S-1\M\Z16);\F'Helvetica'\Z16\f01q(µm\S-1\M\Z16);\F'Helvetica'\Z16\f01Diameter (µm);\F'Helvetica'\Z12\f01q (Å\S-1\M\Z12)"
+	Prompt ylabel,"Y axis Label", popup, "No Change;\f01\Z1610\S6\M\Z16 x SLD (√Ö\S-2\M\Z16);\F'Helvetica'\Z16\f01Intensity (cm\S-1\M\Z16);\F'Helvetica'\Z16\f01Intensity;\F'Helvetica'\Z16\f01Reflectivity;\F'Helvetica'\Z12\f01Relative Intensity;"
+	Prompt xlabel,"X axis Label", popup, "No Change;\Z16Distance from Si (√Ö);\F'Helvetica'\Z16\f01q (√Ö\S-1\M\Z16);\F'Helvetica'\Z16\f01q(¬µm\S-1\M\Z16);\F'Helvetica'\Z16\f01Diameter (¬µm);\F'Helvetica'\Z12\f01q (√Ö\S-1\M\Z12)"
 	prompt linewidth, "Line width"
 	prompt markersize, "Marker size"
 	silent 1
@@ -821,7 +822,7 @@ endmacro
 ////	SVAR DataFolderName=root:Packages:Irena:DWSplottingTool:DataFolderName
 ////	foldernames=1;errors=0;	TicRotation = 0;axwidth= 2
 ////	
-////	xname="\F'Helvetica'\f01\Z14q (Å\S-1\M\Z14)";yname="\F'Helvetica'\f01\Z14Intensity (cm\S-1\M\Z14)"
+////	xname="\F'Helvetica'\f01\Z14q (√Ö\S-1\M\Z14)";yname="\F'Helvetica'\f01\Z14Intensity (cm\S-1\M\Z14)"
 ////	ListOfGraphFormating=ReplaceStringByKey("Label left",ListOfGraphFormating,yname,"=")
 ////	ListOfGraphFormating=ReplaceStringByKey("Label bottom",ListOfGraphFormating, xname,"=")
 ////	ListOfGraphFormating=ReplaceStringByKey("ErrorBars",ListOfGraphFormating, "0","=")

@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.61
 #include <TransformAxis1.2>
@@ -231,7 +232,7 @@ Function NI1A_AverageDataPerUserReq(orientation)
 		MatrixOp/O/NTHR=0 Error=sqrt(abs(Error - (TempSumXi*TempSumXi))/(HistogramWv - 1))	
 		MatrixOp/O/NTHR=0 Error=Error/HistogramWv
 	else //now new code. Need to calculate standard deviation anyway... 
-		//variance Ê= (Error - (Intensity^2 / Histogram)) / (Histogram - 1)
+		//variance Â = (Error - (Intensity^2 / Histogram)) / (Histogram - 1)
 		//st deviation = sqrt(variance)
 		MatrixOp/O/NTHR=0 Error = sqrt(abs(Error - (TempSumXi*TempSumXi / HistogramWv)) / (HistogramWv - 1))
 		if(ErrorCalculationsUseSEM)
@@ -6990,7 +6991,7 @@ Function NI2t_printDetectorStructure(d)							// print the details for passed de
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	printf "	Nx=%d, Ny=%d			// number of un-binned pixels in detector\r",d.Nx,d.Ny
 	printf "	sizeX=%g, sizeY=%g		// size of detector (mm)\r",(d.sizeX/1000), (d.sizeY/1000)
-	printf "	R = {%.7g, %.7g, %.7g}, a rotation of %.7g¡	// rotation vector\r",d.R[0],d.R[1],d.R[2],sqrt(d.R[0]*d.R[0] + d.R[1]*d.R[1] + d.R[2]*d.R[2])*180/PI
+	printf "	R = {%.7g, %.7g, %.7g}, a rotation of %.7gÂ°	// rotation vector\r",d.R[0],d.R[1],d.R[2],sqrt(d.R[0]*d.R[0] + d.R[1]*d.R[1] + d.R[2]*d.R[2])*180/PI
 	printf "	P = {%g, %g, %g}					// translation vector (mm)\r",(d.P[0])/1000,(d.P[1])/1000,(d.P[2])/1000
 
 	printf "	geometry measured on  '%s'\r",d.timeMeasured

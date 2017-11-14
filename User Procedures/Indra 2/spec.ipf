@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion = 4.0
 #pragma version = 2.2
@@ -467,7 +468,7 @@ Function DisplaySpecScan(scanNum,overlay)
 	Variable showXunits = -1
 	if (exists(xname)==1)
 		showXunits = (strlen(WaveUnits($xname,1))>0) - 1
-		showXunits = cmpstr(WaveUnits($xname,1),"¡") ? showXunits : 1
+		showXunits = cmpstr(WaveUnits($xname,1),"Â°") ? showXunits : 1
 	endif
 	Variable showYunits = (strlen(WaveUnits($yname,1))>0)
 
@@ -480,7 +481,7 @@ Function DisplaySpecScan(scanNum,overlay)
 	endif
 	Label left yname + SelectString(showYunits," \\E","  (\\U)")
 	if (cmpstr(xname,"ttheta")==0 || cmpstr(xname,"Two_Theta")==0 || cmpstr(xname,"2theta")==0)
-		xname = "2\\F'Symbol'q\\]0"
+		xname = "2\\F'Symbol'Î¸\\]0"
 	endif
 	if (cmpstr(xname,"Time_")==0)
 		xname = "time"
@@ -1132,10 +1133,10 @@ Function AddStandardWaveScaling(nameList)
 	// Add standard units to spec waves.  This is just a guess (hopefully a good one)
 	String nameList			// list of wave names, one for each column
 
-	String unitList="delta_:¡;phi_:¡;mu_:¡;nu_:¡;kappa_:¡;keta_:¡;eta_:¡;kphi_:¡;chi_:¡"
-	unitList += ";Delta_:¡"
-	unitList += ";H:rlu;K:rlu;L:rlu;seconds:s;Epoch:s;Xburleigh:µm;Yburleigh:µm;Zburleigh:µm"
-	unitList += "Two_Theta:¡;2theta:¡;Theta:¡;Chi:¡;Phi:¡;anal-2th:¡;anal-th"
+	String unitList="delta_:Â°;phi_:Â°;mu_:Â°;nu_:Â°;kappa_:Â°;keta_:Â°;eta_:Â°;kphi_:Â°;chi_:Â°"
+	unitList += ";Delta_:Â°"
+	unitList += ";H:rlu;K:rlu;L:rlu;seconds:s;Epoch:s;Xburleigh:Âµm;Yburleigh:Âµm;Zburleigh:Âµm"
+	unitList += "Two_Theta:Â°;2theta:Â°;Theta:Â°;Chi:Â°;Phi:Â°;anal-2th:Â°;anal-th"
 	String name
 	Variable i = 0
 	do
@@ -1696,31 +1697,31 @@ Function/T WordToGreek(str)
 	String str
 
 	if (cmpstr(str,"alpha")==0)
-		str = "\\F'Symbol'a\\]0"
+		str = "\\F'Symbol'Î±\\]0"
 	endif
 	if (cmpstr(str,"beta")==0)
-		str = "\\F'Symbol'b\\]0"
+		str = "\\F'Symbol'Î²\\]0"
 	endif
 	if (cmpstr(str,"gamma")==0)
-		str = "\\F'Symbol'g\\]0"
+		str = "\\F'Symbol'Î³\\]0"
 	endif
 	if (cmpstr(str,"delta")==0)
-		str = "\\F'Symbol'd\\]0"
+		str = "\\F'Symbol'Î´\\]0"
 	endif
 	if (cmpstr(str,"lambda")==0)
-		str = "\\F'Symbol'l\\]0"
+		str = "\\F'Symbol'Î»\\]0"
 	endif
 	if (cmpstr(str,"chi")==0)
-		str = "\\F'Symbol'c\\]0"
+		str = "\\F'Symbol'Ï‡\\]0"
 	endif
 	if (cmpstr(str,"phi")==0)
-		str = "\\F'Symbol'f\\]0"
+		str = "\\F'Symbol'Ï†\\]0"
 	endif
 	if (cmpstr(str,"theta")==0)
-		str = "\\F'Symbol'q\\]0"
+		str = "\\F'Symbol'Î¸\\]0"
 	endif
 	if (cmpstr(str,"2theta")==0)
-		str = "\\F'Symbol'2q\\]0"
+		str = "\\F'Symbol'2Î¸\\]0"
 	endif
 
 	return str

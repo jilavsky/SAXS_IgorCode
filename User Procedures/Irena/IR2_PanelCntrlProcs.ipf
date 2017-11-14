@@ -2557,7 +2557,7 @@ Function IR3C_AddControlsToWndw(PckgPathName, PckgDataFolder, PanelWindowName,De
 	SetVariable DataPathString,limits={-Inf,Inf,0},value= $(CntrlLocation+":DataSelPathString")
 	SetVariable DataPathString disable=0,frame=0, styledText=1, valueColor=(1,4,52428)
 	SetVariable NameMatchString,pos={5,91},size={240,19},proc=IR3C_SetVarProc,title="Match name (string):"
-	SetVariable NameMatchString,help={"Insert RegEx select only data with matching name (uses grep)"}
+	SetVariable NameMatchString,help={"Insert RegEx to select only data with matching name (uses grep)"}
 	SetVariable NameMatchString,value= $(CntrlLocation+":DataSelListBoxMatchString")
 	SetVariable DataExtensionString,pos={260,91},size={150,19},proc=IR3C_SetVarProc,title="Data extension:"
 	SetVariable DataExtensionString,help={"Insert extension string to mask data of only some type (dat, txt, ...)"}

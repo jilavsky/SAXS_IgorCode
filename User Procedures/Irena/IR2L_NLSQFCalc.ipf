@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.15
 
@@ -400,8 +401,8 @@ Function IR2L_CalcSurfFIntPopXDataSetY(pop,dataSet)
 		ModelInt *= sin((3-DS)* atan(ModelQ*Ksi))/((1+(ModelQ*Ksi)^2)^((5-DS)/2) * ModelQ*Ksi)
 		if(Qc>0&& Qc<ModelQ[numpnts(ModelQ)-1])
 			//h(Q) = C(xc - x)f(Q) + C(x - xc)g(Q).
-			//The transition from one behavior to another is determined by C. Ê
-			//For an infinitely sharp transition, C would be a Heaviside step function. Ê
+			//The transition from one behavior to another is determined by C. Â 
+			//For an infinitely sharp transition, C would be a Heaviside step function. Â 
 			//Our choice for C is a smoothed step function:
 			//C(x) = 0.5 * (1 + erfc(x/W)).
 			//C(x) = 0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )
@@ -412,8 +413,8 @@ Function IR2L_CalcSurfFIntPopXDataSetY(pop,dataSet)
 			//h(Q) = C(xc - x)f(Q) + C(x -xc)AQ^-4.
 			//The value for A is not a free parameter. It is fixed by a continuity condition:
 			//f(Qc) = g(Qc), or A = Qc^4 * f(Qc).
-			//Intensity = ASF *Ê0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )Ê Ê +
-			//+ ( ÊPf * Q^-4 *Ê0.5 * (1 + ERF( (Q-Qc) /SQRT(2*((Qw/2.3548)^2) ) )Ê
+			//Intensity = ASF *Â 0.5 * (1 + ERF( (Qc-Q) /SQRT(2*((Qw/2.3548)^2) ) )Â  Â  +
+			//+ ( Â Pf * Q^-4 *Â 0.5 * (1 + ERF( (Q-Qc) /SQRT(2*((Qw/2.3548)^2) ) )Â 
 			variable PorodSurface=Qc^4 * ModelInt[BinarySearchInterp(ModelQ, Qc )]
 			TempFractInt2 = ModelInt * StepFunction1 + PorodSurface * ModelQ^-4 * StepFunction2
 			ModelInt = TempFractInt2

@@ -61,6 +61,11 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	setDataFolder root:Packages:Indra3
 	NVAR ListProcDisplayDelay = root:Packages:Indra3:ListProcDisplayDelay
 
+	if(cmpstr(ctrlName,"GetHelp")==0)
+		//Open www manual with the right page
+		IN2G_OpenWebManual("Indra/DataReductionPanel.html")
+	endif
+
 	if (cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
 		SVAR DataFolderName=root:Packages:Indra3:DataFolderName
 		SVAR LastSample=root:Packages:Indra3:LastSample

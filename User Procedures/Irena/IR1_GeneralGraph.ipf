@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.31
 //#include  <TransformAxis1.2>
@@ -1214,7 +1215,7 @@ Function IR1P_AddTransAxisQtoD()
 			//ModifyGraph mirror(bottom)=0	
 			NewFreeAxis/W=GeneralGraph/T d_axis
 			ModifyFreeAxis/W=GeneralGraph d_axis, master=bottom, hook=IR1P_TransAxisdfromQ
-			Label/W=GeneralGraph d_axis "Dimension (¹/q) [nm]"
+			Label/W=GeneralGraph d_axis "Dimension (Ï€/q) [nm]"
 			ModifyGraph/W=GeneralGraph log=NumberByKey("log(x)",AxisInfo("GeneralGraph", "bottom" ),"=")
 			ModifyGraph/W=GeneralGraph tickExp(d_axis)=1,tickUnit(d_axis)=1,linTkLabel(d_axis)=1
 			//ModifyGraph/W=GeneralGraph lblPos(d_axis)=50,lblLatPos=0
@@ -2608,9 +2609,9 @@ Function IR1P_genGraphCreateDataGizmo()
 	
 	Make/O/N=(NumberOfQPoints,3) GizmoWaveData
 	//next need to fill this with the points as below, [0] is q, [1] is order number [2] is Intensity
-//¥triplet [][0]=PlottingTool_q[p]
-//¥triplet [][1]=0
-//¥triplet [][2]=PlottingTool_Int_M[p][0]
+//â€¢triplet [][0]=PlottingTool_q[p]
+//â€¢triplet [][1]=0
+//â€¢triplet [][2]=PlottingTool_Int_M[p][0]
 	Make/O/Free/N=0 IntWvTmp, OrderTmp, QWvTmp
 	variable j
 	For(i=0;i<NumberOfWaves;i+=1)

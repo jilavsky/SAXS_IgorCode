@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.65
 #pragma IgorVersion=7.05
@@ -414,7 +415,7 @@ Proc IR2P_FitPowerLawWithCursors()
 	Modify lsize($name)=2
 	String pw=num2str(K1),pr=num2str(10^K0),DIN=num2str((V_siga*10^K0)/2.3026),ca=num2str(pcsr(A)),cb=num2str(pcsr(B)),gf=num2str(V_Pr),DP=num2str(V_sigb)
 	string LSs=IN2G_LkUpDfltVar("LegendSize")
-	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z"+LSs+"Power Law Slope= "+pw+"\Z"+LSs+" ± "+DP+"\Z"+LSs+"\rPrefactor= "+pr+"\Z"+LSs+" ± "+DIN+"\Z"+LSs+"\rx Cursor A::B= "+ca+"\Z"+LSs+" :: "+cb+"\Z"+LSs+"\rGoodness of fit= "+gf
+	Tag/C/N=$LegendName/F=0/A=MC  $name, (pcsr(A)+pcsr(B))/2, "\Z"+LSs+"Power Law Slope= "+pw+"\Z"+LSs+" Â± "+DP+"\Z"+LSs+"\rPrefactor= "+pr+"\Z"+LSs+" Â± "+DIN+"\Z"+LSs+"\rx Cursor A::B= "+ca+"\Z"+LSs+" :: "+cb+"\Z"+LSs+"\rGoodness of fit= "+gf
 
 	KillWaves/Z LogYFitData, LogXFitData
 
@@ -2004,7 +2005,7 @@ Window CheckForIrenaUpdatePanel() : Panel
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 27,133,"J. Ilavsky and P. Jemian, Irena: tool suite for modeling and analysis of small- angle scattering "
 	SetDrawEnv textrgb= (0,0,65535)
-	DrawText 27,158,"J. Appl. Cryst. (2009). 42, 347Ð353"
+	DrawText 27,158,"J. Appl. Cryst. (2009). 42, 347â€“353"
 	SetDrawEnv textrgb= (0,0,65535)
 	DrawText 27,205,"Glassy Carbon Absolute Int. Calibration: F. Zhang, J. Ilavsky, G. G. Long, J. P.G. Quintana, "
 	SetDrawEnv textrgb= (0,0,65535)

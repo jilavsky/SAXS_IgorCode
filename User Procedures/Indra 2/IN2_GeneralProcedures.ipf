@@ -14,7 +14,7 @@ constant FillGraphVerticalRatio = 0.9
 constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
-Strconstant ManualVersionString = "en/1.3.0/"
+Strconstant ManualVersionString = "en/1.3.1/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
 

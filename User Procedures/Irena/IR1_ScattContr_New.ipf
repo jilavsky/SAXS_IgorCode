@@ -1,3 +1,4 @@
+#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 #pragma version=2.26
 
@@ -2802,7 +2803,7 @@ Function IR1K_SetLookupLists()
 	ListOfElements ="---;H;"
 	ListOfElNumbers ="H=1;"
 	ListOfElAtomWghts ="H=1.00794;"
-	//D Ê(see http://en.wikipedia.org/wiki/Isotopes_of_hydrogen)
+	//D Â (see http://en.wikipedia.org/wiki/Isotopes_of_hydrogen)
 	ListOfElements +="D;"
 	ListOfElNumbers +="D=1;"
 	ListOfElAtomWghts +="D=2.014101778;"
