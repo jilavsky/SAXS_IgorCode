@@ -10,6 +10,10 @@ This set of macros is developed for evaluation of USAXS data obtained on APS USA
 
 Revision history:
 _____________________________________________________________________________________
+1.94
+Converted all procedure files to UTF8 to prevent text encoding issues. 
+Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
+
 1.93 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 
 Added restore of prior size of panels when user closes and reopens a tool. Data stored in the current Igor experiment. Size limited to 50% width and 90% height. Hold down any modifier key and size will be reset to original default state. 

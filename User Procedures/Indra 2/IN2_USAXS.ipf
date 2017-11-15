@@ -3467,19 +3467,19 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 	if(stringmatch(IndraDataType,"smr"))
 		WAVE Qvec = SMR_Qvec
 		WAVE Int = SMR_Int
-		WAVE Error = SMR_error
+		WAVE Error = SMR_Error
 	elseif(stringmatch(IndraDataType,"dsm"))
 		WAVE Qvec = DSM_Qvec
 		WAVE Int = DSM_Int
-		WAVE Error = DSM_error
+		WAVE Error = DSM_Error
 	elseif(stringmatch(IndraDataType,"M_smr"))
 		WAVE Qvec = M_SMR_Qvec
 		WAVE Int = M_SMR_Int
-		WAVE Error = M_SMR_error
+		WAVE Error = M_SMR_Error
 	elseif(stringmatch(IndraDataType,"M_dsm"))
 		WAVE Qvec = M_DSM_Qvec
 		WAVE Int = M_DSM_Int
-		WAVE Error = M_DSM_error
+		WAVE Error = M_DSM_Error
 	endif
 
 	// this is useful for reporting on some standard parameters

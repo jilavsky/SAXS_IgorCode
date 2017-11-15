@@ -225,7 +225,7 @@ Function IN2P_CommonUSAXSPlots()			//this function generates graph of standard U
 	endif
 	if (cmpstr(ScanTypeY,"DSM_Int")==0)
 		ScanTypeX="DSM_Qvec"
-		ScanTypeError="DSM_error"
+		ScanTypeError="DSM_Error"
 	endif
 	if (cmpstr(ScanTypeY,"M_SMR_Int")==0)
 		ScanTypeX="M_SMR_Qvec"
@@ -233,7 +233,7 @@ Function IN2P_CommonUSAXSPlots()			//this function generates graph of standard U
 	endif
 	if (cmpstr(ScanTypeY,"M_DSM_Int")==0)
 		ScanTypeX="M_DSM_Qvec"
-		ScanTypeError="M_DSM_error"	
+		ScanTypeError="M_DSM_Error"	
 	endif
 	if (cmpstr(ScanTypeY,"PD_Intensity")==0)
 		ScanTypeX="Qvec"
@@ -332,7 +332,7 @@ End
 //  	String/G PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
 //  	PathToFirstPlotY=StringFromList(0,CurrentDataFolder, ",")+"SMR_Int"			//again names calling
 // 	PathToFirstPlotX=StringFromList(0,CurrentDataFolder, ",")+"SMR_Qvec"
-// 	PathToFirstPlotError=StringFromList(0,CurrentDataFolder, ",")+"SMR_error"
+// 	PathToFirstPlotError=StringFromList(0,CurrentDataFolder, ",")+"SMR_Error"
 //
 // 	Make/O/D/N=(numpnts($PathToFirstPlotY)) tempY, tempY3
 //	Make/O/D/N=(numpnts($PathToFirstPlotX)) tempX
@@ -396,7 +396,7 @@ End
 //  	String/G PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
 //  	PathToFirstPlotY=StringFromList(0,CurrentDataFolder, ",")+"M_SMR_Int"			//again names calling
 // 	PathToFirstPlotX=StringFromList(0,CurrentDataFolder, ",")+"SMR_Qvec"
-// 	PathToFirstPlotError=StringFromList(0,CurrentDataFolder, ",")+"M_SMR_error"
+// 	PathToFirstPlotError=StringFromList(0,CurrentDataFolder, ",")+"M_SMR_Error"
 //
 // 	Make/O/D/N=(numpnts($PathToFirstPlotY)) tempY, tempY3
 //	Make/O/D/N=(numpnts($PathToFirstPlotX)) tempX
@@ -523,7 +523,7 @@ End
 //  	String/G PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
 //  	PathToFirstPlotY=StringFromList(0,CurrentDataFolder, ",")+"SMR_Int"			//again names calling
 // 	PathToFirstPlotX=StringFromList(0,CurrentDataFolder, ",")+"SMR_Qvec"
-// 	PathToFirstPlotError=StringFromList(0,CurrentDataFolder, ",")+"SMR_error"
+// 	PathToFirstPlotError=StringFromList(0,CurrentDataFolder, ",")+"SMR_Error"
 //
 // 	Make/D/O/N=(numpnts($PathToFirstPlotY)) tempY
 //	tempY=ln($PathToFirstPlotY)

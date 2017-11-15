@@ -369,8 +369,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O R_Qvec, SMR_Qvec
 		
 		//remove points which are surely not useful
-		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_error 
-		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_error 
+		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_Error 
+		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_Error 
 		Duplicate/O SMR_Qvec, SMR_dQ		
 		SMR_dQ = InstrumentQresolution			//this same q resolution, given by instrument resolution, about 0.00008 for Si220. 
 		//end append data
@@ -405,8 +405,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		SMR_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
 		Duplicate/O R_Qvec, SMR_Qvec		
 		//remove points which are surely not useful
-		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_error 
-		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_error 
+		DeletePoints EndPointCut, inf, SMR_Int, SMR_Qvec, SMR_Error 
+		DeletePoints 0, StartPointCut, SMR_Int, SMR_Qvec, SMR_Error 
 		//end append data
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
@@ -427,7 +427,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O SMR_Qvec, SMR_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=SMR_Qvec[1]-SMR_Qvec[0]
-			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_error,Wxwidth=SMR_dQ)
+			IN2G_RebinLogData(SMR_Qvec,SMR_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=SMR_Error,Wxwidth=SMR_dQ)
 		else
 			SMR_dQ[1,numpnts(SMR_dQ)-2] = SMR_dQ[p+1]-SMR_dQ[p-1]
 			SMR_dQ[0]=2*(SMR_dQ[1]-SMR_dQ[0])
@@ -451,8 +451,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		DSM_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
 		KillWaves/Z log_BL_R_error
 		Duplicate/O R_Qvec, DSM_Qvec
-		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_error 
-		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_error 	//end append data
+		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_Error 
+		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_Error 	//end append data
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
 			checkdisplayed /W=RcurvePlotGraph DSM_Int
@@ -471,7 +471,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		Duplicate/O DSM_Qvec, DSM_dQ
 		if(FlyScanRebinToPoints>0)
 			tempMinStep=DSM_Qvec[1]-DSM_Qvec[0]
-			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_error,Wxwidth=DSM_dQ)
+			IN2G_RebinLogData(DSM_Qvec,DSM_Int,FlyScanRebinToPoints,tempMinStep,Wsdev=DSM_Error,Wxwidth=DSM_dQ)
 		else
 			DSM_dQ[1,numpnts(DSM_dQ)-2] = DSM_dQ[p+1]-DSM_dQ[p-1]
 			DSM_dQ[0]=2*(DSM_dQ[1]-DSM_dQ[0])
@@ -494,8 +494,8 @@ Function IN3_RecalcSubtractSaAndBlank()
 		DSM_Error*=SampleTransmission		//change 2/2014 to fix cases, when samples have really high absorption, but scatter well... 
 		KillWaves/Z log_BL_R_error
 		Duplicate/O R_Qvec, DSM_Qvec
-		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_error 
-		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_error 	//end append data
+		DeletePoints EndPointCut, inf, DSM_Int, DSM_Qvec, DSM_Error 
+		DeletePoints 0, StartPointCut, DSM_Int, DSM_Qvec, DSM_Error 	//end append data
 		Duplicate/O DSM_Qvec, DSM_dQ		
 		DSM_dQ = InstrumentQresolution			//set to FWHM of the AR stage rocking curve... 
 		DoWindow RcurvePlotGraph
@@ -708,11 +708,11 @@ Function IN3_SaveData()
 		if(WaveExists(SMR_Int) && WaveExists(SMR_Error)&&WaveExists(SMR_Qvec))
 			if(UseMSAXSCorrection)
 				Duplicate/O SMR_Int, $(DataFolderName+"M_SMR_Int")
-				Duplicate/O SMR_Error, $(DataFolderName+"M_SMR_error")
+				Duplicate/O SMR_Error, $(DataFolderName+"M_SMR_Error")
 				Duplicate/O SMR_Qvec, $(DataFolderName+"M_SMR_Qvec")
 				Duplicate/O SMR_dQ, $(DataFolderName+"M_SMR_dQ")
 				IN2G_AppendorReplaceWaveNote("M_SMR_Int","Wname","M_SMR_Int") 
-				IN2G_AppendorReplaceWaveNote("M_SMR_error","Wname","M_SMR_error") 
+				IN2G_AppendorReplaceWaveNote("M_SMR_Error","Wname","M_SMR_Error") 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","Wname","M_SMR_Qvec") 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","Units","A-1")
 				IN2G_AppendorReplaceWaveNote("M_SMR_dQ","Wname","M_SMR_dQ") 
@@ -725,21 +725,21 @@ Function IN3_SaveData()
 					IN2G_AppendorReplaceWaveNote("M_SMR_Int","Units","cm2/cm3")
 				endif
 				IN2G_AppendorReplaceWaveNote("M_SMR_Int","BlankComment",oldNoteValue) 
-				IN2G_AppendorReplaceWaveNote("M_SMR_error","BlankComment",oldNoteValue) 
+				IN2G_AppendorReplaceWaveNote("M_SMR_Error","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Int","BlankFolder",oldNoteValue2) 
-				IN2G_AppendorReplaceWaveNote("M_SMR_error","BlankFolder",oldNoteValue2) 
+				IN2G_AppendorReplaceWaveNote("M_SMR_Error","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Int","Kfactor",num2str(Kfactor)) 
-				IN2G_AppendorReplaceWaveNote("M_SMR_error","Kfactor",num2str(Kfactor)) 
+				IN2G_AppendorReplaceWaveNote("M_SMR_Error","Kfactor",num2str(Kfactor)) 
 				IN2G_AppendorReplaceWaveNote("M_SMR_Qvec","Kfactor",num2str(Kfactor)) 
 			else
 				Duplicate/O SMR_Int, $(DataFolderName+"SMR_Int")
-				Duplicate/O SMR_Error, $(DataFolderName+"SMR_error")
+				Duplicate/O SMR_Error, $(DataFolderName+"SMR_Error")
 				Duplicate/O SMR_Qvec, $(DataFolderName+"SMR_Qvec")
 				Duplicate/O SMR_dQ, $(DataFolderName+"SMR_dQ")
 				IN2G_AppendorReplaceWaveNote("SMR_Int","Wname","SMR_Int") 
-				IN2G_AppendorReplaceWaveNote("SMR_error","Wname","SMR_error") 
+				IN2G_AppendorReplaceWaveNote("SMR_Error","Wname","SMR_Error") 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","Wname","SMR_Qvec") 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","Units","A-1")
 				IN2G_AppendorReplaceWaveNote("SMR_dQ","Wname","SMR_dQ") 
@@ -752,24 +752,24 @@ Function IN3_SaveData()
 					IN2G_AppendorReplaceWaveNote("SMR_Int","Units","cm2/cm3")
 				endif
 				IN2G_AppendorReplaceWaveNote("SMR_Int","BlankComment",oldNoteValue) 
-				IN2G_AppendorReplaceWaveNote("SMR_error","BlankComment",oldNoteValue) 
+				IN2G_AppendorReplaceWaveNote("SMR_Error","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("SMR_Int","BlankFolder",oldNoteValue2) 
-				IN2G_AppendorReplaceWaveNote("SMR_error","BlankFolder",oldNoteValue2) 
+				IN2G_AppendorReplaceWaveNote("SMR_Error","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("SMR_Int","Kfactor",num2str(Kfactor)) 
-				IN2G_AppendorReplaceWaveNote("SMR_error","Kfactor",num2str(Kfactor)) 
+				IN2G_AppendorReplaceWaveNote("SMR_Error","Kfactor",num2str(Kfactor)) 
 				IN2G_AppendorReplaceWaveNote("SMR_Qvec","Kfactor",num2str(Kfactor)) 
 			endif
 		endif
 		if(WaveExists(DSM_Int) && WaveExists(DSM_Error)&&WaveExists(DSM_Qvec))
 			if(UseMSAXSCorrection)
 				Duplicate/O DSM_Int, $(DataFolderName+"M_DSM_Int")
-				Duplicate/O DSM_Error, $(DataFolderName+"M_DSM_error")
+				Duplicate/O DSM_Error, $(DataFolderName+"M_DSM_Error")
 				Duplicate/O DSM_Qvec, $(DataFolderName+"M_DSM_Qvec")
 				Duplicate/O DSM_dQ, $(DataFolderName+"M_DSM_dQ")
 				IN2G_AppendorReplaceWaveNote("M_DSM_Int","Wname","M_DSM_Int") 
-				IN2G_AppendorReplaceWaveNote("M_DSM_error","Wname","M_DSM_error") 
+				IN2G_AppendorReplaceWaveNote("M_DSM_Error","Wname","M_DSM_Error") 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","Wname","M_DSM_Qvec") 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","Units","A-1")
 				IN2G_AppendorReplaceWaveNote("M_DSM_dQ","Wname","M_DSM_dQ") 
@@ -782,21 +782,21 @@ Function IN3_SaveData()
 					IN2G_AppendorReplaceWaveNote("M_DSM_Int","Units","cm2/cm3")
 				endif
 				IN2G_AppendorReplaceWaveNote("M_DSM_Int","BlankComment",oldNoteValue) 
-				IN2G_AppendorReplaceWaveNote("M_DSM_error","BlankComment",oldNoteValue) 
+				IN2G_AppendorReplaceWaveNote("M_DSM_Error","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Int","BlankFolder",oldNoteValue2) 
-				IN2G_AppendorReplaceWaveNote("M_DSM_error","BlankFolder",oldNoteValue2) 
+				IN2G_AppendorReplaceWaveNote("M_DSM_Error","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Int","Kfactor",num2str(Kfactor)) 
-				IN2G_AppendorReplaceWaveNote("M_DSM_error","Kfactor",num2str(Kfactor)) 
+				IN2G_AppendorReplaceWaveNote("M_DSM_Error","Kfactor",num2str(Kfactor)) 
 				IN2G_AppendorReplaceWaveNote("M_DSM_Qvec","Kfactor",num2str(Kfactor)) 
 			else
 				Duplicate/O DSM_Int, $(DataFolderName+"DSM_Int")
-				Duplicate/O DSM_Error, $(DataFolderName+"DSM_error")
+				Duplicate/O DSM_Error, $(DataFolderName+"DSM_Error")
 				Duplicate/O DSM_Qvec, $(DataFolderName+"DSM_Qvec")
 				Duplicate/O DSM_dQ, $(DataFolderName+"DSM_dQ")
 				IN2G_AppendorReplaceWaveNote("DSM_Int","Wname","DSM_Int") 
-				IN2G_AppendorReplaceWaveNote("DSM_error","Wname","DSM_error") 
+				IN2G_AppendorReplaceWaveNote("DSM_Error","Wname","DSM_Error") 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","Wname","DSM_Qvec") 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","Units","A-1")
 				IN2G_AppendorReplaceWaveNote("DSM_dQ","Wname","DSM_dQ") 
@@ -809,13 +809,13 @@ Function IN3_SaveData()
 					IN2G_AppendorReplaceWaveNote("DSM_Int","Units","cm2/cm3")
 				endif
 				IN2G_AppendorReplaceWaveNote("DSM_Int","BlankComment",oldNoteValue) 
-				IN2G_AppendorReplaceWaveNote("DSM_error","BlankComment",oldNoteValue) 
+				IN2G_AppendorReplaceWaveNote("DSM_Error","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","BlankComment",oldNoteValue) 
 				IN2G_AppendorReplaceWaveNote("DSM_Int","BlankFolder",oldNoteValue2) 
-				IN2G_AppendorReplaceWaveNote("DSM_error","BlankFolder",oldNoteValue2) 
+				IN2G_AppendorReplaceWaveNote("DSM_Error","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","BlankFolder",oldNoteValue2) 
 				IN2G_AppendorReplaceWaveNote("DSM_Int","Kfactor",num2str(Kfactor)) 
-				IN2G_AppendorReplaceWaveNote("DSM_error","Kfactor",num2str(Kfactor)) 
+				IN2G_AppendorReplaceWaveNote("DSM_Error","Kfactor",num2str(Kfactor)) 
 				IN2G_AppendorReplaceWaveNote("DSM_Qvec","Kfactor",num2str(Kfactor)) 
 			endif
 		endif

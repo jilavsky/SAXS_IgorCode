@@ -4601,7 +4601,7 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 
 				if(CreateErrors)
 					if(!WaveExists(TempSubtractedEWv0123))
-						Duplicate TempSubtractedEWv0123, TempSubtractedEWv0123
+						Duplicate TempSubtractedYWv0123, TempSubtractedEWv0123
 					endif
 					if(CreateSQRTErrors)			
 						IN2G_GenerateSASErrors(TempSubtractedYWv0123,TempSubtractedEWv0123,3,0, 0,1,3)

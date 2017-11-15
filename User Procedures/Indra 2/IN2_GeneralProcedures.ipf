@@ -2987,7 +2987,7 @@ Function/T IN2G_ReturnExistingWaveNameGrep(FolderNm,WaveMatchStr)
 	string WaveNmFound=""
 	variable i
 	For(i=0;i<itemsInList(ListOfWvs);i+=1)
-		if(grepString(StringFromList(i,ListOfWvs),WaveMatchStr))
+		if(grepString(StringFromList(i,ListOfWvs),"(?i)"+WaveMatchStr))
 			WaveNmFound = StringFromList(i,ListOfWvs)
 			return WaveNmFound
 		endif

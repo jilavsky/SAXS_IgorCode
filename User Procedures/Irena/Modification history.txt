@@ -8,6 +8,10 @@ Jan Ilavsky, ilavsky@aps.anl.gov
 
 -latest stuff first
 ********************************************
+2.66
+Converted all procedure files to UTF8 to prevent text encoding issues. 
+Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
+
 2.65 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 
 Panels now restore prior size and position. This is set when you drag lower-right corner to scale them up. Data stored on the user computer and size is limited to 50% width and 90% height of current screen size. Hold down any modifier key and size will be reset to original default state. 
