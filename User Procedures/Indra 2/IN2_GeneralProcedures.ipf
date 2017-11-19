@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.06
-#pragma IgorVersion = 7.00
+#pragma version = 2.07
+#pragma IgorVersion = 7.05
 
 //control constants
 constant IrenaDebugLevel=1
@@ -14,9 +14,12 @@ constant FillGraphVerticalRatio = 0.9
 constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
-Strconstant ManualVersionString = "en/1.3.1/"
+      //For releases uncomment the next line and set to correct version number:
+//Strconstant ManualVersionString = "en/1.3.1/"
+      //For developent version uncomment next line, it points to latest (developement) version of manuals:
+Strconstant ManualVersionString = "en/latest/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
-constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
+constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -24,6 +27,7 @@ constant useUserFileNames = 0			//this controsl, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.07 ManualVersionNumber modifications for beta versions and release versions. 
 //2.06 added IN2G_GetAndDisplayUpdateMessage()
 //2.05 added now function to set graph size and more controls for it (constants). IN2G_GetGraphWidthHeight
 //2.04 added function to convert Q wave to log-Q wave (IN2G_ConvertTologspacing)
