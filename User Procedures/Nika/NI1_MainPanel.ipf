@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.58
-Constant NI1AversionNumber = 2.52
+#pragma version=2.59
+Constant NI1AversionNumber = 2.59
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.52
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.59 Modified GUI on main panel to have selection of actions chose with radiobuttons and only one "Process data" button. Cleaner/simple to read interface. 
 //2.58 added UserSampleName to each folder. To be used in other functions to avoid 32 characters limit. 
 //2.57 changed trimname function to accept maximum possible number of characters allowed with _XYZ orientation. Will vary based on orientation now, _C will allow 25 characters. Others will be shorter. 
 //2.56 added resize after recreating of the panels to prior user size. 
@@ -182,7 +183,7 @@ Function NI1A_Convert2Dto1DMainPanel()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//first initialize 
 	NI1A_Initialize2Dto1DConversion()
-	IN2G_CheckScreenSize("height",720)
+	IN2G_CheckScreenSize("height",740)
 	KillWIndow/Z NI1A_Convert2Dto1DPanel
  	NI1A_Convert2Dto1DPanelFnct()
 	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber)
@@ -285,6 +286,8 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="UserThetaMin;UserThetaMax;UserDMin;UserDMax;UserQMin;UserQMax;ThetaSameNumPoints;"
 	ListOfVariables+="DoGeometryCorrection;DoPolarizationCorrection;Use2DPolarizationCor;Use1DPolarizationCor;StartAngle2DPolCor;InvertImages;SkipBadFiles;MaxIntForBadFile;"
 	ListOfVariables+="DisplayRaw2DData;DisplayProcessed2DData;TwoDPolarizFract;"
+
+	ListOfVariables+="Process_DisplayAve;Process_Individually;Process_Average;Process_AveNFiles;"
 	//and now the function calls variables
 	ListOfVariables+="UseSampleThicknFnct;UseSampleTransmFnct;UseSampleMonitorFnct;UseSampleCorrectFnct;UseSampleMeasTimeFnct;UseSampleNameFnct;"
 	ListOfVariables+="UseEmptyTimeFnct;UseBackgTimeFnct;UseEmptyMonitorFnct;"
@@ -541,6 +544,17 @@ Function NI1A_Initialize2Dto1DConversion()
 			testVal =0
 		endif
 	endfor		
+
+	NVAR Process_DisplayAve
+	NVAR Process_Individually
+	NVAR Process_Average
+	NVAR Process_AveNFiles
+	if(	Process_DisplayAve + Process_Individually + Process_Average + Process_AveNFiles !=1)
+		Process_DisplayAve = 1
+		Process_Individually = 0
+		Process_Average = 0
+		Process_AveNFiles = 0
+	endif
 
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
 	NVAR TrimFrontOfName=root:Packages:Convert2Dto1D:TrimFrontOfName

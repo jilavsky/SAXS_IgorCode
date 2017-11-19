@@ -1523,7 +1523,7 @@ Function NI1_9IDCFIndSlitLength()
 		DoALert 0, "Slit smeared USAXS data NOT found, input slit length value manually in the input field and check Checkbox \"Create Smeared data\" length again."
 		NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 		SAXSGenSmearedPinData = 0
-		return NaN
+		return 0
 	endif
 
 	Wave/Z SMR_int=$(SlitLengthIsHereL+"SMR_Int")
@@ -1539,6 +1539,7 @@ Function NI1_9IDCFIndSlitLength()
 		NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 		SAXSGenSmearedPinData = 0
 		DoALert 0, "Slit length not found, input slit length value manually in the input field and check Checkbox \"Create Smeared data\" length again."
+		return 0
 //		Prompt transmissionUser, "Transmission not found, plese input value"
 //		DoPrompt "USAXS transmission NOT FOUND, input value between 0 and 1", transmissionUser
 //		Print "For sample :    "+sampleName+"    has been used manually input transmission = "+num2str(Transmission)

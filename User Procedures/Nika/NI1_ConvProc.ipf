@@ -1592,39 +1592,44 @@ end
 Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(cmpstr(ctrlName,"CreateOutputPath")==0)
+	if(StringMatch(ctrlName,"CreateOutputPath"))
 		PathInfo/S Convert2Dto1DOutputPath
 		NewPath/C/O/M="Select path to save your data" Convert2Dto1DOutputPath	
 	endif
-	if(cmpstr(ctrlName,"GetHelp")==0)
+	if(StringMatch(ctrlName,"GetHelp"))
 		//Open www manual with the right page
 		IN2G_OpenWebManual("Nika/Main.html")
 	endif
-	if(cmpstr(ctrlName,"SelectMaskDarkPath")==0)
+	if(StringMatch(ctrlName,"SelectMaskDarkPath"))
 		PathInfo/S Convert2Dto1DEmptyDarkPath
 		NewPath/C/O/M="Select path to your Empty, Dark, and Mask data" Convert2Dto1DEmptyDarkPath	
 		NI1A_UpdateEmptyDarkListBox()	
 	endif
-	if(cmpstr(ctrlName,"RefreshList")==0)
+	if(StringMatch(ctrlName,"RefreshList"))
 		ControlInfo/W=NI1A_Convert2Dto1DPanel Select2DInputWave
 		variable oldSets=V_startRow
 		NI1A_UpdateDataListBox()	
 		ListBox Select2DInputWave,win=NI1A_Convert2Dto1DPanel,row=V_startRow
 	endif
-	if(cmpstr(ctrlName,"LoadDarkField")==0)
+	if(StringMatch(ctrlName,"LoadDarkField"))
 		NI1A_LoadEmptyOrDark("Dark")	
 	endif
-	if(cmpstr(ctrlName,"LoadEmpty")==0)
+	if(StringMatch(ctrlName,"LoadEmpty"))
 		NI1A_LoadEmptyOrDark("Empty")		
 	endif
-	if(cmpstr(ctrlName,"CreateMovie")==0)
+	if(StringMatch(ctrlName,"CreateMovie"))
 		NI1A_CreateMovie()		
 	endif
-	if(cmpstr(ctrlName,"OnLineDataProcessing")==0)
+	if(StringMatch(ctrlName,"OnLineDataProcessing"))
 		NI1A_OnLineDataProcessing()		
 	endif
-	
-	if(cmpstr(ctrlName,"DisplaySelectedFile")==0)
+	//now new controls, keep old ones to keep other code functioning...
+	NVAR Process_DisplayAve = root:Packages:Convert2Dto1D:Process_DisplayAve
+	NVAR Process_Individually = root:Packages:Convert2Dto1D:Process_Individually
+	NVAR Process_Average = root:Packages:Convert2Dto1D:Process_Average
+	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
+		
+	if(StringMatch(ctrlName,"DisplaySelectedFile") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_DisplayAve))
 		//set selections for using RAW/Converted data...
 		NVAR LineProfileUseRAW=root:Packages:Convert2Dto1D:LineProfileUseRAW
 		NVAR LineProfileUseCorrData=root:Packages:Convert2Dto1D:LineProfileUseCorrData
@@ -1637,14 +1642,14 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		//selection done
 		NI1A_DisplayOneDataSet()	
 	endif
-	if(cmpstr(ctrlName,"ExportDisplayedImage")==0)
+	if(StringMatch(ctrlName,"ExportDisplayedImage"))
 		NI1A_ExportDisplayedImage()			
 	endif
-	if(cmpstr(ctrlName,"SaveDisplayedImage")==0)
+	if(StringMatch(ctrlName,"SaveDisplayedImage"))
 		NI1A_SaveDisplayedImage()			
 	endif
 
-	if(cmpstr(ctrlName,"ConvertSelectedFiles")==0)
+	if(stringmatch(ctrlName,"ConvertSelectedFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_Individually))
 		NI1A_CheckParametersForConv()
 		//set selections for using RAW/Converted data...
 		NVAR LineProfileUseRAW=root:Packages:Convert2Dto1D:LineProfileUseRAW
@@ -1658,7 +1663,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		//selection done
 		NI1A_LoadManyDataSetsForConv()			
 	endif
-	if(cmpstr(ctrlName,"AveConvertSelectedFiles")==0)
+	if(StringMatch(ctrlName,"AveConvertSelectedFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_Average))
 		NI1A_CheckParametersForConv()
 		//set selections for using RAW/Converted data...
 		NVAR LineProfileUseRAW=root:Packages:Convert2Dto1D:LineProfileUseRAW
@@ -1672,7 +1677,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		//selection done
 		NI1A_AveLoadManyDataSetsForConv()		
 	endif
-	if(cmpstr(ctrlName,"AveConvertNFiles")==0)
+	if(StringMatch(ctrlName,"AveConvertNFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_AveNFiles))
 		NI1A_CheckParametersForConv()
 		//set selections for using RAW/Converted data...
 		NVAR LineProfileUseRAW=root:Packages:Convert2Dto1D:LineProfileUseRAW
@@ -1687,7 +1692,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		NI1A_AveLoadNDataSetsForConv()		
 	endif
 
-	if(cmpstr(ctrlName,"Select2DDataPath")==0)
+	if(StringMatch(ctrlName,"Select2DDataPath"))
 		//check if we are running on USAXS computers
 		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
 		if(V_isFolder)
@@ -1706,7 +1711,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		TitleBox PathInfoStrt, win =NI1A_Convert2Dto1DPanel, variable=MainPathInfoStr
 		NI1A_UpdateDataListBox()		
 	endif
-	if(cmpstr(ctrlName,"MaskSelectPath")==0)
+	if(StringMatch(ctrlName,"MaskSelectPath"))
 		//check if we are running on USAXS computers
 		GetFileFOlderInfo/Q/Z "Z:USAXS_data:"
 		if(V_isFolder)
@@ -1722,35 +1727,35 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		NI1A_UpdateMainMaskListBox()	
 		NI1M_UpdateMaskListBox()		
 	endif
-	if(cmpstr(ctrlName,"LoadMask")==0)
+	if(StringMatch(ctrlName,"LoadMask"))
 		NI1A_LoadMask()
 	endif
-	if(cmpstr(ctrlName,"DisplayMaskOnImage")==0)
+	if(StringMatch(ctrlName,"DisplayMaskOnImage"))
 		NI1M_DisplayMaskOnImage()
 		PopupMenu MaskImageColor,win=NI1A_Convert2Dto1DPanel, mode=1
 	endif
-	if(cmpstr(ctrlName,"RemoveMaskFromImage")==0)
+	if(StringMatch(ctrlName,"RemoveMaskFromImage"))
 		NI1M_RemoveMaskFromImage()
 	endif
 
 //LoadPixel2DSensitivity
-	if(cmpstr(ctrlName,"LoadPixel2DSensitivity")==0)
+	if(StringMatch(ctrlName,"LoadPixel2DSensitivity"))
 		NI1A_LoadEmptyOrDark("Pixel2DSensitivity")		
 	endif
 	//this pops up the main panel back, some code should nto do that... 
 	DoWIndow/F NI1A_Convert2Dto1DPanel
 	//here is code which shiuld nto end with main panel at the top.  
 //Store current setting for future use
-	if(cmpstr(ctrlName,"SaveCurrentToolSetting")==0)
+	if(StringMatch(ctrlName,"SaveCurrentToolSetting"))
 		//call create mask routine here
 		NI1A_StoreLoadCurSettingPnl()
 	endif
 
-	if(cmpstr(ctrlName,"CreateMask")==0)
+	if(StringMatch(ctrlName,"CreateMask"))
 		NI1M_CreateMask()
 	endif
 //create squared sector graph...
-	if(cmpstr(ctrlName,"CreateSectorGraph")==0)
+	if(StringMatch(ctrlName,"CreateSectorGraph"))
 		//call create mask routine here
 		NI1_MakeSectorGraph()
 	endif
@@ -1793,13 +1798,13 @@ Function NI1M_ChangeMaskColor(ColorToUse) //red, blue, green
 		Wave/Z M_ROIMask=root:Packages:Convert2Dto1D:M_ROIMask
 		CheckDisplayed/W=CCDImageToConvertFig M_ROIMask
 		if(WaveExists(M_ROIMask) && V_Flag)
-			if(cmpstr(ColorToUse,"red")==0)//red
+			if(StringMatch(ColorToUse,"red"))//red
 				ModifyImage/W=CCDImageToConvertFig M_ROIMask ctab ={0.2,0.5,Grays}, minRGB=(65280,0,0),maxRGB=NaN
-			elseif(cmpstr(ColorToUse,"blue")==0)//blue
+			elseif(StringMatch(ColorToUse,"blue"))//blue
 				ModifyImage/W=CCDImageToConvertFig M_ROIMask ctab ={0.2,0.5,Grays}, minRGB=(0,0,65280),maxRGB=NaN
-			elseif(cmpstr(ColorToUse,"grey")==0)//grey
+			elseif(StringMatch(ColorToUse,"grey"))//grey
 				ModifyImage/W=CCDImageToConvertFig M_ROIMask ctab ={0.2,0.5,Grays}, minRGB=(16000,16000,16000),maxRGB=NaN
-			elseif(cmpstr(ColorToUse,"black")==0)
+			elseif(StringMatch(ColorToUse,"black"))
 				ModifyImage/W=CCDImageToConvertFig M_ROIMask ctab ={0.2,0.5,Grays}, minRGB=(0,0,0),maxRGB=NaN
 			else
 				ModifyImage/W=CCDImageToConvertFig M_ROIMask ctab ={0.2,0.5,Grays}, minRGB=(0,65280,0),maxRGB=NaN
@@ -2155,17 +2160,17 @@ Function NI1A_DezingerDataSetIfAskedFor(whichFile)
 	
 	wave w = $("root:Packages:Convert2Dto1D:"+whichFile)
 	variable i
-	if (cmpstr(whichFile,"CCDImageToConvert")==0 && DezingerCCDData)
+	if (StringMatch(whichFile,"CCDImageToConvert") && DezingerCCDData)
 		For(i=0;i<DezingerHowManyTimes;i+=1)
 			NI1A_DezingerImage(w)
 		endfor
 	endif
-	if (cmpstr(whichFile,"EmptyData")==0 && DezingerEmpty)
+	if (StringMatch(whichFile,"EmptyData") && DezingerEmpty)
 		For(i=0;i<DezingerHowManyTimes;i+=1)
 			NI1A_DezingerImage(w)
 		endfor
 	endif
-	if (cmpstr(whichFile,"DarkFieldData")==0 && DezingerDarkField)
+	if (StringMatch(whichFile,"DarkFieldData") && DezingerDarkField)
 		For(i=0;i<DezingerHowManyTimes;i+=1)
 			NI1A_DezingerImage(w)
 		endfor
@@ -3394,7 +3399,7 @@ end
 Function NI1A_Convert2Dto1DPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,770) as "Main 2D to 1D conversion panel"
+	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,790) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
 	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
@@ -3910,13 +3915,6 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable LineProf_WidthQ,pos={280,425},size={100,17},title="Q =  "
 	SetVariable LineProf_WidthQ,help={"Width in q units"},format="%.4f"
 	SetVariable LineProf_WidthQ,limits={-inf,inf,0},variable= root:Packages:Convert2Dto1D:LineProf_WidthQ 
-	//last few items under the tabs area
-	Button DisplaySelectedFile,pos={14,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Display sel. file(s)"
-	Button DisplaySelectedFile,help={"Average selected files and display, only correction is dezingering!"}
-	Button ConvertSelectedFiles,pos={15,607},size={150,18},proc=NI1A_ButtonProc,title="Convert sel. files 1 at time"
-	Button ConvertSelectedFiles,help={"Convert selected files (1 by 1) using parameters selected in the tabs"}
-	Button AveConvertSelectedFiles,pos={15,627},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert sel. files"
-	Button AveConvertSelectedFiles,help={"Average and convert files selected above using parameters set here"}
 //	//Tab 7 - export 2D calibrated data
 //	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
 //	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
@@ -3936,48 +3934,59 @@ Function NI1A_Convert2Dto1DPanelFnct()
 //	SVAR Calib2DDataOutputFormat = root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
 //	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
 
-	//bottom controls
-	NVAR ImageRangeMinLimit = root:Packages:Convert2Dto1D:ImageRangeMinLimit
-	NVAR ImageRangeMaxLimit = root:Packages:Convert2Dto1D:ImageRangeMaxLimit
-	Slider ImageRangeMin,pos={15,647},size={150,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
-	Slider ImageRangeMin,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
-	Slider ImageRangeMax,pos={15,663},size={150,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
-	Slider ImageRangeMax,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
 
-	Button AveConvertNFiles,pos={170,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert N files"
-	Button AveConvertNFiles,help={"Average N files at time, convert all files selected above using parameters set here"}
+	//last few items under the tabs area
+	Button ProcessSelectedImages,pos={170,585},size={180,20},proc=NI1A_ButtonProc,title="Process image(s)"
+	Button ProcessSelectedImages,help={"Process images as selected in the checkboxes"}, fColor=(65535,49151,49151)
 
-	SetVariable ProcessNImagesAtTime,pos={335,589},size={80,16},title="N = "
-	SetVariable ProcessNImagesAtTime,help={"Howmany images at time should be averaged?"}, limits={1,inf,1}
+//	Button DisplaySelectedFile,pos={14,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Display sel. file(s)"
+//	Button DisplaySelectedFile,help={"Average selected files and display, only correction is dezingering!"}
+//	Button ConvertSelectedFiles,pos={15,607},size={150,18},proc=NI1A_ButtonProc,title="Convert sel. files 1 at time"
+//	Button ConvertSelectedFiles,help={"Convert selected files (1 by 1) using parameters selected in the tabs"}
+//	Button AveConvertSelectedFiles,pos={15,627},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert sel. files"
+//	Button AveConvertSelectedFiles,help={"Average and convert files selected above using parameters set here"}
+//	Button AveConvertNFiles,pos={170,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert N files"
+//	Button AveConvertNFiles,help={"Average N files at time, convert all files selected above using parameters set here"}
+
+	//control variable for what happens...
+	CheckBox Process_DisplayAve,pos={5,585},size={80,16},title="Display only",variable= root:Packages:Convert2Dto1D:Process_DisplayAve, proc=NI1A_CheckProc
+	CheckBox Process_DisplayAve,help={"Average all selected files and display them in image, no processing"}, mode=1
+	CheckBox Process_Individually,pos={5,600},size={80,16},title="Process sel. files individualy",variable= root:Packages:Convert2Dto1D:Process_Individually, proc=NI1A_CheckProc
+	CheckBox Process_Individually,help={"Load each file individually and process them (separately)"}, mode=1
+	CheckBox Process_Average,pos={5,615},size={80,16},title="Average all selected and process",variable= root:Packages:Convert2Dto1D:Process_Average, proc=NI1A_CheckProc
+	CheckBox Process_Average,help={"Average all selected files together and process them into one output data"}, mode=1
+	CheckBox Process_AveNFiles,pos={5,630},size={80,16},title="Average N of selected and process",variable= root:Packages:Convert2Dto1D:Process_AveNFiles, proc=NI1A_CheckProc
+	CheckBox Process_AveNFiles,help={"Average N selected files and process them into output"}, mode=1
+
+	SetVariable ProcessNImagesAtTime,pos={5,650},size={80,16},title="N = "
+	SetVariable ProcessNImagesAtTime,help={"How many images at time should be averaged?"}, limits={1,inf,1}
 	SetVariable ProcessNImagesAtTime,variable= root:Packages:Convert2Dto1D:ProcessNImagesAtTime, proc=NI1A_SetVarProcMainPanel
 	//
-	CheckBox SkipBadFiles,pos={185,605},size={120,16},title="Skip bad files?"
+	CheckBox SkipBadFiles,pos={5,665},size={100,16},title="Skip bad files?"
 	CheckBox SkipBadFiles,help={"Skip images with low maximum intensity?"}
 	CheckBox SkipBadFiles,variable= root:Packages:Convert2Dto1D:SkipBadFiles
 	CheckBox SkipBadFiles proc=NI1A_CheckProc
-	SetVariable MaxIntForBadFile,pos={300,610},size={120,16},title="Min. Int = "
-	SetVariable MaxIntForBadFile,help={"Bad file has less than this intensity?"}, limits={0,inf,1}
-	NVAR SkipBadFiles = root:Packages:Convert2Dto1D:SkipBadFiles
-	SetVariable MaxIntForBadFile,variable= root:Packages:Convert2Dto1D:MaxIntForBadFile, disable=!(SkipBadFiles)
+	SetVariable MaxIntForBadFile,pos={100,665},size={100,16},title="Min. Int = "
+	SetVariable MaxIntForBadFile,help={"Bad file has less than this intensity?"}, limits={0,inf,0}
+//	NVAR SkipBadFiles = root:Packages:Convert2Dto1D:SkipBadFiles
+	SetVariable MaxIntForBadFile,variable= root:Packages:Convert2Dto1D:MaxIntForBadFile//, disable=!(SkipBadFiles)
 
-	CheckBox DisplayRaw2DData,pos={185,623},size={120,16},title="Display RAW data?"
+	CheckBox DisplayRaw2DData,pos={185,610},size={120,16},title="Display RAW data?"
 	CheckBox DisplayRaw2DData,help={"In the 2D image, display raw data?"}, mode=1
 	CheckBox DisplayRaw2DData,variable= root:Packages:Convert2Dto1D:DisplayRaw2DData
 	CheckBox DisplayRaw2DData proc=NI1A_CheckProc
-	CheckBox DisplayProcessed2DData,pos={185,640},size={120,16},title="Display Processed?"
+	CheckBox DisplayProcessed2DData,pos={185,628},size={120,16},title="Display Processed?"
 	CheckBox DisplayProcessed2DData,help={"In the 2D image, display processed, calibrated data?"}, mode=1
 	CheckBox DisplayProcessed2DData,variable= root:Packages:Convert2Dto1D:DisplayProcessed2DData
 	CheckBox DisplayProcessed2DData proc=NI1A_CheckProc
 
 	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 	SVAR ColorTableList = root:Packages:Convert2Dto1D:ColorTableList
-
-	PopupMenu ColorTablePopup,pos={170,658},size={107,21},proc=NI1A_PopMenuProc,title="Colors"
-//	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"\"Geo32;Geo32_R;Terrain;Terrain_R;Grays;Grays_R;Rainbow;Rainbow_R;YellowHot;YellowHot_R;BlueHot;BlueHot_R;BlueRedGreen;BlueRedGreen_R;RedWhiteBlue;RedWhiteBlue_R;PlanetEarth;PlanetEarth_R;\""
+	PopupMenu ColorTablePopup,pos={190,650},size={100,21},proc=NI1A_PopMenuProc,title="Colors"
 	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"root:Packages:Convert2Dto1D:ColorTableList"
-	
+	NVAR ScaleImageBy = root:Packages:Convert2Dto1D:ScaleImageBy
 	SetVariable ScaleImageBy,pos={310,610},size={120,16},title="Scale Img x", proc=NI1A_SetVarProcMainPanel
-	SetVariable ScaleImageBy,help={"Select minimum intensity to display?"}, limits={0.05,inf,0.5}
+	SetVariable ScaleImageBy,help={"Scale Image size by this factor - make it larger or smaller"}, limits={0.05,inf,0.2*ScaleImageBy}
 	SetVariable ScaleImageBy,variable= root:Packages:Convert2Dto1D:ScaleImageBy
 
 	CheckBox ImageDisplayBeamCenter,variable= root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph, help={"Display beam center on teh image?"}
@@ -3999,25 +4008,34 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DisplayQvalsWIthGridsOnImg,variable= root:Packages:Convert2Dto1D:DisplayQvalsWIthGridsOnImg
 	CheckBox DisplayQvalsWIthGridsOnImg proc=NI1A_CheckProc
 
-	CheckBox DisplayColorScale,pos={10,680},size={120,15},title="Display Color scale?"
+	CheckBox DisplayColorScale,pos={260,710},size={120,15},title="Display Color scale?"
 	CheckBox DisplayColorScale,help={"Display image with color scale?"}
 	CheckBox DisplayColorScale,variable= root:Packages:Convert2Dto1D:DisplayColorScale
 	CheckBox DisplayColorScale proc=NI1A_CheckProc
 
-	CheckBox UseUserDefMinMax,pos={10,695},size={120,15},title="User def. Min/Max?"
+	CheckBox UseUserDefMinMax,pos={5,680},size={120,15},title="User def. Min/Max?"
 	CheckBox UseUserDefMinMax,help={"Display image with color scale?"}
 	CheckBox UseUserDefMinMax,variable= root:Packages:Convert2Dto1D:UseUserDefMinMax
 	CheckBox UseUserDefMinMax proc=NI1A_CheckProc
-	NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
-	SetVariable UserImageRangeMin,pos={140,680},size={100,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
-	SetVariable UserImageRangeMin,help={"Select minimum intensity to display?"}, limits={0,inf,0}
-	SetVariable UserImageRangeMin,variable= root:Packages:Convert2Dto1D:UserImageRangeMin, disable=!(UseUserDefMinMax)
 
-	SetVariable UserImageRangeMax,pos={140,695},size={100,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
+	//bottom controls
+	NVAR ImageRangeMinLimit = root:Packages:Convert2Dto1D:ImageRangeMinLimit
+	NVAR ImageRangeMaxLimit = root:Packages:Convert2Dto1D:ImageRangeMaxLimit
+	Slider ImageRangeMin,pos={5,693},size={180,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
+	Slider ImageRangeMin,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
+	Slider ImageRangeMax,pos={5,708},size={180,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
+	Slider ImageRangeMax,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
+
+	//NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
+	SetVariable UserImageRangeMin,pos={130,685},size={120,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
+	SetVariable UserImageRangeMin,help={"Select minimum intensity to display?"}, limits={0,inf,0}
+	SetVariable UserImageRangeMin,variable= root:Packages:Convert2Dto1D:UserImageRangeMin//, disable=!(UseUserDefMinMax)
+
+	SetVariable UserImageRangeMax,pos={130,710},size={120,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMax,help={"Select minimum intensity to display?"}, limits={0,inf,0}
-	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax, disable=!(UseUserDefMinMax)
+	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax//, disable=!(UseUserDefMinMax)
 	
-	NI1A_FixMovieButton()
+	NI1A_FixMovieBtnAndOtherCntrls()
 	//print Exists("Nika_Hook_ModifyMainPanel")
 	if(Exists("Nika_Hook_ModifyMainPanel")==6)
 		Execute("Nika_Hook_ModifyMainPanel()")
@@ -4027,7 +4045,9 @@ Function NI1A_Convert2Dto1DPanelFnct()
 EndMacro
 
 
-Function NI1A_FixMovieButton()
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function NI1A_FixMovieBtnAndOtherCntrls()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	NVAR Movie_FileOpened=root:Packages:Convert2Dto1D:Movie_FileOpened
 	NVAR Movie_AppendAutomatically=root:Packages:Convert2Dto1D:Movie_AppendAutomatically
@@ -4036,6 +4056,19 @@ Function NI1A_FixMovieButton()
 	elseif(Movie_FileOpened && !Movie_AppendAutomatically)
 		Button CreateMovie win=NI1A_Convert2Dto1DPanel, title="Creating Movie Manual",fColor=(16386,65535,16385)
 	endif
+	//N averagin g controls can be now hidden
+	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
+	NVAR SkipBadFiles = root:Packages:Convert2Dto1D:SkipBadFiles
+
+	SetVariable ProcessNImagesAtTime win=NI1A_Convert2Dto1DPanel,disable=!Process_AveNFiles
+	CheckBox SkipBadFiles win=NI1A_Convert2Dto1DPanel,disable=!Process_AveNFiles
+	SetVariable MaxIntForBadFile win=NI1A_Convert2Dto1DPanel,disable=!(Process_AveNFiles && SkipBadFiles)
+	
+	NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
+	SetVariable UserImageRangeMin win=NI1A_Convert2Dto1DPanel, disable=!(UseUserDefMinMax)
+	SetVariable UserImageRangeMax win=NI1A_Convert2Dto1DPanel, disable=!(UseUserDefMinMax)
+	Slider ImageRangeMin win=NI1A_Convert2Dto1DPanel, disable=(UseUserDefMinMax)
+	Slider ImageRangeMax win=NI1A_Convert2Dto1DPanel, disable=(UseUserDefMinMax)
 
 end
 
@@ -4113,6 +4146,8 @@ Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 			GetWindow CCDImageToConvertFig wsize
 			MoveWindow/W=CCDImageToConvertFig  V_left, V_top, V_left+ScaleImageBy*oldWidth, V_top+ScaleImageBy*oldHeight
 			AutoPositionWindow/E/M=0/R=NI1A_Convert2Dto1DPanel CCDImageToConvertFig
+			SetVariable ScaleImageBy win=NI1A_Convert2Dto1DPanel, limits={0.05,inf,0.2*ScaleImageBy}
+
 		endif
 	endif
 	
@@ -4926,6 +4961,12 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR UseCalib2DData = root:Packages:Convert2Dto1D:UseCalib2DData
 	NVAR UseSampleNameFnct = root:Packages:Convert2Dto1D:UseSampleNameFnct
 	NVAR Use2DdataName = root:Packages:Convert2Dto1D:Use2DdataName
+
+	NVAR Process_DisplayAve = root:Packages:Convert2Dto1D:Process_DisplayAve
+	NVAR Process_Individually = root:Packages:Convert2Dto1D:Process_Individually
+	NVAR Process_Average = root:Packages:Convert2Dto1D:Process_Average
+	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
+
 	
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
 
@@ -4980,6 +5021,45 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			DoAlert 0, "Mask is not used, cannot include it in the export file"
 		endif
 	endif
+
+	if(StringMatch(ctrlName,"Process_DisplayAve"))
+		if(checked)
+			//Process_DisplayAve = 0
+			Process_Individually = 0
+			Process_Average = 0
+			Process_AveNFiles = 0
+			NI1A_FixMovieBtnAndOtherCntrls()
+		endif
+	endif
+	if(StringMatch(ctrlName,"Process_Individually"))
+		if(checked)
+			Process_DisplayAve = 0
+			//Process_Individually = 0
+			Process_Average = 0
+			Process_AveNFiles = 0
+			NI1A_FixMovieBtnAndOtherCntrls()
+		endif
+	endif
+	if(StringMatch(ctrlName,"Process_Average"))
+		if(checked)
+			Process_DisplayAve = 0
+			Process_Individually = 0
+			//Process_Average = 0
+			Process_AveNFiles = 0
+			NI1A_FixMovieBtnAndOtherCntrls()
+		endif
+	endif
+	if(StringMatch(ctrlName,"Process_AveNFiles"))
+		if(checked)
+			Process_DisplayAve = 0
+			Process_Individually = 0
+			Process_Average = 0
+			//Process_AveNFiles = 0
+			NI1A_FixMovieBtnAndOtherCntrls()
+		endif
+	endif
+
+
 	if(StringMatch("TrimFrontOfName",ctrlName))
 		if(checked)
 			TrimEndOfName=0
@@ -5104,6 +5184,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		else
 			NI1A_TopCCDImageUpdateColors(0)
 		endif
+		NI1A_FixMovieBtnAndOtherCntrls()
 	endif
 
 	if(StringMatch("SectorsUseRAWData",ctrlName))
@@ -5117,11 +5198,11 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		SetVariable MaxIntForBadFile,disable=(!SkipBadFiles)
 	endif
 
-	if(cmpstr("UseUserDefMinMax",ctrlName)==0)
-		NVAR UseUserDefMinMax =  root:Packages:Convert2Dto1D:UseUserDefMinMax
-		SetVariable UserImageRangeMin,disable=!(UseUserDefMinMax)
-		SetVariable UserImageRangeMax, disable=!(UseUserDefMinMax)
-	endif
+//	if(cmpstr("UseUserDefMinMax",ctrlName)==0)
+//		NVAR UseUserDefMinMax =  root:Packages:Convert2Dto1D:UseUserDefMinMax
+//		SetVariable UserImageRangeMin,disable=!(UseUserDefMinMax)
+//		SetVariable UserImageRangeMax, disable=!(UseUserDefMinMax)
+//	endif
 	
 	NVAR DisplayRaw2DData=root:Packages:Convert2Dto1D:DisplayRaw2DData
 	NVAR DisplayProcessed2DData=root:Packages:Convert2Dto1D:DisplayProcessed2DData
