@@ -306,7 +306,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="Movie_Use2DRAWdata;Movie_Use2DProcesseddata;Movie_Use1DData;Movie_AppendFileName;Movie_AppendAutomatically;Movie_DisplayLogInt;Movie_FrameRate;Movie_FileOpened;"
 	ListOfVariables+="Movie_UseMain2DImage;Movie_UseUserHookFnct;"
 	//Behavior controls
-	ListOfVariables+="DoubleClickConverts;TrimFrontOfName;TrimEndOfName;ScaleImageBy;"
+	ListOfVariables+="TrimFrontOfName;TrimEndOfName;ScaleImageBy;"	//DoubleClickConverts
 
 	ListOfStrings="CurrentInstrumentGeometry;DataFileType;DataFileExtension;MaskFileExtension;BlankFileExtension;CurrentMaskFileName;DataCalibrationString;"
 	ListOfStrings+="CurrentEmptyName;CurrentDarkFieldName;CalibrationFormula;CurrentPixSensFile;OutputDataName;UserSampleName;"

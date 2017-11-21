@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.07
+#pragma version = 2.08
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -27,6 +27,7 @@ constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.08 Nika removed DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts as it is not needed anymore. 
 //2.07 ManualVersionNumber modifications for beta versions and release versions. 
 //2.06 added IN2G_GetAndDisplayUpdateMessage()
 //2.05 added now function to set graph size and more controls for it (constants). IN2G_GetGraphWidthHeight
@@ -1347,8 +1348,8 @@ Proc IN2G_MainConfigPanelProc()
 		PopupMenu FontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:FontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
 		PopupMenu FontType,popvalue=root:Packages:IrenaConfigFolder:FontType,value= #"root:Packages:IrenaConfigFolder:ListOfKnownFontTypes"
 		//Nika
-		CheckBox DoubleClickConverts,pos={250,340},size={80,16},noproc,title="Double click converts ?", mode=0
-		CheckBox DoubleClickConverts,variable= root:Packages:Convert2Dto1D:DoubleClickConverts, help={"Check to convert files on double click in Files selection"}
+		//CheckBox DoubleClickConverts,pos={250,340},size={80,16},noproc,title="Double click converts ?", mode=0
+		//CheckBox DoubleClickConverts,variable= root:Packages:Convert2Dto1D:DoubleClickConverts, help={"Check to convert files on double click in Files selection"}
 		CheckBox ErrorCalculationsUseOld,pos={10,340},size={80,16},proc=IN2G_ConfigErrorsCheckProc,title="Use Old Uncertainity ?", mode=1
 		CheckBox ErrorCalculationsUseOld,variable= root:Packages:Convert2Dto1D:ErrorCalculationsUseOld, help={"Check to use Error estimates for before version 1.42?"}
 		CheckBox ErrorCalculationsUseStdDev,pos={10,370},size={80,16},proc=IN2G_ConfigErrorsCheckProc,title="Use Std Devfor Uncertainity?", mode=1

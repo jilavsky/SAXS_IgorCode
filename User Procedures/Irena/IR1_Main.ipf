@@ -527,6 +527,10 @@ Function IR2P_DrawLineOfRequiredSlope(LineSlope,YourNumber,qLabel,label1)
 	Variable lineslope,YourNumber,qlabel
 	string label1
 	
+	if(wintype("")!=1)
+		Abort "Top window is not graph, make sure the top window is graph before use of this function"
+	endif
+	
 	SetDrawEnv xcoord= bottom,ycoord= left,save
 	variable X_start, Y_start
 	getAxis bottom

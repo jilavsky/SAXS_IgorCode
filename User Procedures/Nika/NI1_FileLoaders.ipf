@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.46
+#pragma version=2.47
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.47 remvoed DoubleClickConverts, not needed anymore. 
 //2.46 improve print message fro Nexus when multi dimensional input ddata are used. 
 //2.45 more fixes for Pilatus TVX ver 1.3 tiff header. Still mess... 
 //2.44 moved to new Nexus suport provided by HDF5Gateway and IRNI_NexusSupport
@@ -2685,7 +2686,7 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 	string items=""
 	wave ListOf2DSampleDataNumbers=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 	wave/t ListOf2DSampleData=root:Packages:Convert2Dto1D:ListOf2DSampleData
-	NVAR DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts
+	//NVAR DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts
 	NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
 	switch (lba.eventCode)
 		case 4:
@@ -2701,11 +2702,12 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 			endif
 			break
 		case 3:			//double click
-			if(DoubleClickConverts) 
-				NI1A_ButtonProc("ConvertSelectedFiles")
-			else
-				NI1A_ButtonProc("DisplaySelectedFile")
-			endif
+//			if(DoubleClickConverts) 
+//				NI1A_ButtonProc("ConvertSelectedFiles")
+//			else
+//				NI1A_ButtonProc("DisplaySelectedFile")
+//			endif
+			NI1A_ButtonProc("ProcessSelectedImages")			
 			break
 		case 1:
 			if (lba.eventMod & 0x10)	// rightclick
