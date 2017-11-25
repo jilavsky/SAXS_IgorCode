@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.08
+#pragma version = 2.09
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -27,6 +27,7 @@ constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.09 fixed errro when both Nika and Irena check for update at the smae time and MeesageFromAuthor is already opened. 
 //2.08 Nika removed DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts as it is not needed anymore. 
 //2.07 ManualVersionNumber modifications for beta versions and release versions. 
 //2.06 added IN2G_GetAndDisplayUpdateMessage()
@@ -2294,6 +2295,10 @@ end
 
 Function IN2G_GetAndDisplayUpdateMessage()
 		//checks for update message and if available, gets it and presents to user. 
+	DoWIndow MessageFromAuthor
+	if(V_Flag)		//message already exists...
+		return 0
+	endif
 		
 	string FileContent
 	string ConfigFileURL=WebAddressForConfFile+NameOfUpdateMessageFile
