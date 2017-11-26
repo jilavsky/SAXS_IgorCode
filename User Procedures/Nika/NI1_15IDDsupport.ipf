@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.42
+#pragma version=1.43
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.43 minor fix for configruation. 
 //1.42 changed 15IDD to 9IDC and modified for reading parameters from a file dynamically. 
 //1.41 modified WAXS mask to have better masking of tile edges. 
 //1.40 since Indra now can desmear data as part of last USAXS step, keep _C data always. 
@@ -744,6 +745,15 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 	
 	NI1A_Initialize2Dto1DConversion()
 	NI1BC_InitCreateBmCntrFile()
+	
+	NVAR  Displ=root:Packages:Convert2Dto1D:Process_DisplayAve
+	NVAR 	Proc1= root:Packages:Convert2Dto1D:Process_Individually
+	NVAR 	Proc2= root:Packages:Convert2Dto1D:Process_Average
+	NVAR 	Proc3 = root:Packages:Convert2Dto1D:Process_AveNFiles
+	Displ = 0
+	Proc1 = 1
+	Proc2 = 0
+	Proc3 = 0
 
 	NVAR SAXSSelected=root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR bigSAXSSelected=root:Packages:Convert2Dto1D:USAXSBigSAXSselector
@@ -1257,17 +1267,24 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 	endif
 	PopupMenu SelectBlank2DDataType win=NI1A_Convert2Dto1DPanel, mode=4
 	
-
-
-	DoWIndow NI1_CreateBmCntrFieldPanel
-	if(V_Flag)
-		DoWindow/F NI1_CreateBmCntrFieldPanel
-		//set to Ag Behenate
-		NI1BC_BmCntrPopMenuProc("BmCalibrantName",2,"Ag behenate")
-		PopupMenu BmCntrFileType win=NI1_CreateBmCntrFieldPanel, mode=4
-		TabControl BmCntrTab win=NI1_CreateBmCntrFieldPanel, value=0
-		NI1BC_TabProc("BmCntrTab",0)
-	endif
+	//these windows are stale anyway, kill them, even if they exist... 
+	KilLWIndow/Z CCDImageForBmCntr
+	KilLWIndow/Z NI1_CreateBmCntrFieldPanel
+	
+//	DoWIndow NI1_CreateBmCntrFieldPanel
+//	if(V_Flag)
+//		DoWindow/F NI1_CreateBmCntrFieldPanel
+//		if(SAXSSelected)
+//			//set to Ag Behenate
+//			NI1BC_BmCntrPopMenuProc("BmCalibrantName",2,"Ag behenate")
+//		elseif(WAXSSelected)
+//			//set to LaB6
+//			NI1BC_BmCntrPopMenuProc("BmCalibrantName",3,"LaB6")
+//		endif
+//		PopupMenu BmCntrFileType win=NI1_CreateBmCntrFieldPanel, mode=4
+//		TabControl BmCntrTab win=NI1_CreateBmCntrFieldPanel, value=0
+//		NI1BC_TabProc("BmCntrTab",0)
+//	endif
 	NI1BC_UpdateBmCntrListBox()	
 	NI1A_UpdateDataListBox()	
 	NI1A_UpdateEmptyDarkListBox()	

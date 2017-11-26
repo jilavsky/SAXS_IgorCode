@@ -2299,8 +2299,7 @@ Function IN2G_GetAndDisplayUpdateMessage()
 	if(V_Flag)		//message already exists...
 		return 0
 	endif
-		
-	string FileContent
+			string FileContent
 	string ConfigFileURL=WebAddressForConfFile+NameOfUpdateMessageFile
 	URLRequest/Z/TIME=2 url=ConfigFileURL
 	if (V_Flag != 0)
