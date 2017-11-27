@@ -773,7 +773,8 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
 				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
-
+				NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
+				FIlesSortOrder = 3
 				QvectorNumberPoints=2*487
 				QBinningLogarithmic=0
 				QvectormaxNumPnts = 1
@@ -806,15 +807,38 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
 				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+				NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
+				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
 				
-				UseSampleTransmission = 0
-				UseEmptyField = 0
+	
+				UseSampleThickness = 1			
+				UseSampleTransmission = 1
+				UseEmptyField = 1
 				UseI0ToCalibrate = 1
-				DoGeometryCorrection = 0
-				UseMonitorForEf = 0
-				UseSampleTransmFnct = 0
+				DoGeometryCorrection = 1
+				UseMonitorForEf = 1
+				UseSampleTransmFnct = 1
 				UseSampleMonitorFnct = 1
 				UseEmptyMonitorFnct = 1
+				UseSampleThicknFnct = 1 
+
+//				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
+//				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
+//				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
+//				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
+//				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
+//				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+//				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
+//				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+//				
+//				UseSampleTransmission = 1
+//				UseEmptyField = 0
+//				UseI0ToCalibrate = 1
+//				DoGeometryCorrection = 0
+//				UseMonitorForEf = 0
+//				UseSampleTransmFnct = 0
+//				UseSampleMonitorFnct = 1
+//				UseEmptyMonitorFnct = 1
 				
 
 				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
@@ -831,13 +855,24 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
 				endif
 
+//				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+//				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
+//				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
+//			
+//				SampleTransmFnct = ""
+//				SampleMonitorFnct = "NI1_15IDWFindI0"
+//				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
+
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
+				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
+				
+				SampleTransmFnct = "NI1_9IDCSFIndTransmission"
+				SampleMonitorFnct = "NI1_9IDCSFindI0"
+				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
+				SampleThicknFnct = "NI1_9IDCSFindThickness"
 			
-				SampleTransmFnct = ""
-				SampleMonitorFnct = "NI1_15IDWFindI0"
-				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
 			
 				NI1A_SetCalibrationFormula()			
 				
@@ -930,6 +965,8 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
 				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
+				NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
+				FIlesSortOrder = 3
 				
 				QvectorNumberPoints=120
 				QBinningLogarithmic=1
@@ -1087,7 +1124,7 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				BMCntrDisplayLogImage = 1
 				NVAR SAXSDeleteTempPinData= root:Packages:Convert2Dto1D:SAXSDeleteTempPinData
 				SAXSDeleteTempPinData = 1
-	else		//end of SAXS selectetin, bellow starts bigSAXS specifics...
+	else		//end of SAXS selection, bellow starts bigSAXS specifics...
 				NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 				UseSectors = 1
 				NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts

@@ -102,7 +102,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		NVAR QminDefaultForProcessing
 		Wave/Z R_qvec
 		DoWIndow RcurvePlotGraph
-		if(WaveExists(R_qvec) && V_Flag)
+		if(WaveExists(R_qvec) && V_Flag && strlen(CsrInfo(A,"RcurvePlotGraph")))
 			QminDefaultForProcessing = R_Qvec[pcsr(A, "RcurvePlotGraph")]
 		else
 			QminDefaultForProcessing = 0
@@ -121,7 +121,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 				//	hopefully not needed any more IN2A_CleanWavesForSPECtroubles()				//clean the waves with USAXS data for Spec timing troubles, if needed
 			IN3_GetMeasParam()	
 			IN3_RecalculateData(0)
-			IN3_GraphData()		//create graphs
+			IN3_GraphData()		//create graphs			
 			IN3_ReturnCursorBack(QminDefaultForProcessing)
 			IN3_FitDefaultTop()
 			IN3_RecalculateData(4)
@@ -669,7 +669,7 @@ static Function IN3_GraphData()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 	KillWIndow/Z RcurvePlotGraph
- 	IN3_RcurvePlot() 
+ 	IN3_RcurvePlot()  	
 	IN3_DisplayRightSubwindow()
 	IN3_FixDispControlsInRcurvePlot()
 
@@ -984,6 +984,8 @@ static Function IN3_PeakCenter()
 //	Wave R_error
 	Wave AR_encoder
 	Wave/Z PeakFitWave
+	Wave PD_Intensity
+	Wave PD_Error
 	NVAR PeakCenterFitStartPoint=root:Packages:Indra3:PeakCenterFitStartPoint
 	NVAR PeakCenterFitEndPoint=root:Packages:Indra3:PeakCenterFitEndPoint
 	
