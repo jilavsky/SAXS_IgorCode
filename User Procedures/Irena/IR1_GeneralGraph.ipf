@@ -1,8 +1,8 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.31
+#pragma version=2.32
 //#include  <TransformAxis1.2>
-Constant IR1PversionNumber=2.29
+Constant IR1PversionNumber=2.32
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant IR1PversionNumber=2.29
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.32 modified IR1P_AttachLegend to limit max number of items in Legend
 //2.31 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.30 removed unused functions, rmeoved use of TransformAxis and replaced with Free axis and hokk function. Better. 
 //2.29 added getHelp button calling to www manual
@@ -1254,7 +1255,7 @@ end
 //and macro for this job...
 Window IR1P_ChangeGraphDetailsPanel() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(63,128.75,375,455.75) as "IR1P_ChangeGraphDetailsPanel"
+	NewPanel /K=1 /W=(63,128.75,400,455.75) as "IR1P_ChangeGraphDetailsPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
 	DrawText 5,23,"Here you can change details of graph formating"
@@ -1279,6 +1280,10 @@ Window IR1P_ChangeGraphDetailsPanel()
 	PopupMenu GraphLegendSize,mode=1,value= "06;08;10;12;14;16;18;20;22;24;", popvalue="10"
 	PopupMenu GraphLegendPosition,pos={10,190},size={180,20},proc=IR1P_PanelPopupControl,title="Legend position", help={"Select position for legend in the graph."}
 	PopupMenu GraphLegendPosition,mode=1,value= "Left Top;Right Top;Left Bottom;Right Bottom;Middle Center;Left Center;Right Center;Middle Top;Middle Bottom;", popvalue="---"
+
+	SetVariable GraphLegendMaxItems pos={155,168},size={140,20},proc=IR1P_SetVarProc,title="Legend Max Items:", limits={10,100,10}
+	SetVariable GraphLegendMaxItems value= root:Packages:GeneralplottingTool:GraphLegendMaxItems, help={"Approximate maximum number of items in Legend (100 is Igor max)."}		
+
 	CheckBox GraphLegendFrame pos={10,220},title="Legend frame?", variable=root:Packages:GeneralplottingTool:GraphLegendFrame
 	CheckBox GraphLegendFrame proc=IR1P_GenPlotCheckBox, help={"Check to have frame around the legend?"}	
 	CheckBox GraphLegendUseFolderNms pos={10,240},title="Use folders in Legend?", variable=root:Packages:GeneralplottingTool:GraphLegendUseFolderNms
@@ -1668,7 +1673,7 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	ListOfVariables+="GraphLogX;GraphLogY;GraphErrors;GraphXMajorGrid;GraphXMinorGrid;GraphYMajorGrid;GraphYMinorGrid;"
 	ListOfVariables+="GraphLegend;GraphUseColors;GraphUseRainbow;GraphUseBW;GraphUseSymbols;GraphXMirrorAxis;GraphYMirrorAxis;GraphLineWidth;"
 	ListOfVariables+="GraphUseSymbolSet1;GraphUseSymbolSet2;GraphLegendUseWaveNote;"
-	ListOfVariables+="GraphLegendUseFolderNms;GraphLegendShortNms;GraphLeftAxisAuto;GraphLeftAxisMin;GraphLeftAxisMax;"
+	ListOfVariables+="GraphLegendUseFolderNms;GraphLegendShortNms;GraphLegendMaxItems;GraphLeftAxisAuto;GraphLeftAxisMin;GraphLeftAxisMax;"
 	ListOfVariables+="GraphBottomAxisAuto;GraphBottomAxisMin;GraphBottomAxisMax;GraphAxisStandoff;"
 	ListOfVariables+="GraphUseLines;GraphSymbolSize;GraphVarySymbols;GraphVaryLines;GraphAxisWidth;"
 	ListOfVariables+="GraphWindowWidth;GraphWindowHeight;GraphTicksIn;GraphLegendSize;GraphLegendFrame;"
@@ -1787,8 +1792,11 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	if(MovieDisplayDelay<=0)
 		MovieDisplayDelay=0.5
 	endif
+	NVAR GraphLegendMaxItems
+	if(GraphLegendMaxItems<10 || GraphLegendMaxItems>100)
+		GraphLegendMaxItems = 30
+	endif
 
-	
 	if (!DataFolderExists("root:Packages:plottingToolsStyles"))		//create folder
 		NewDataFolder/O root:Packages
 		NewDataFolder/O root:Packages:plottingToolsStyles

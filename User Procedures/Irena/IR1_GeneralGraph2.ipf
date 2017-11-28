@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.20
+#pragma version=2.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.21 modified IR1P_AttachLegend to limit max number of items in Legend. 
 //2.20 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.19 fix applying Graph styles which did not handle custom axes titles. 
 //2.18 limit number of contours in controur plot to 100, Igor cannot do more. 
@@ -1014,36 +1015,61 @@ Function IR1P_AttachLegend(addOrRemove)
 		variable i, imax, test2
 		string FontSize, test1, test3
 		imax=ItemsInList(ListOfWavesNames , ";")
+		//if imax is too large (imax in Igor is 100) this is not useful...
+		variable stepI=1
+		NVAR MaxDisplaidLegend=root:Packages:GeneralplottingTool:GraphLegendMaxItems
+		if(imax>MaxDisplaidLegend)
+			stepI = floor(imax/MaxDisplaidLegend)
+		endif
 		SVAR GraphLegendPosition=root:Packages:GeneralplottingTool:GraphlegendPosition
 		NVAR GraphLegendFrame=root:Packages:GeneralplottingTool:GraphLegendFrame
 		NVAR GraphLegendShortNms=root:Packages:GeneralplottingTool:GraphLegendShortNms
 				
 		string text0=""
-		For(i=0;i<imax;i+=1)
+		string longname
+		For(i=0;i<imax;i+=stepI)
 			if(addOrRemove==1)		//if 1 use only wave names, if 2 use full folder structure for legend
 					test1=StringFromList(i, ListOfWavesNames)
 					test2=ItemsInList(StringFromList(i, ListOfWavesNames),":")
-//					test3=StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-1,StringFromList(i, ListOfWavesNames))
 					FontSize = stringByKey("Graph Legend Size", ListOfGraphFormating, "=",";")
 					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-1,StringFromList(i, ListOfWavesNames),":")
 			else
 				if (GraphLegendShortNms)
 					test1=StringFromList(i, ListOfWavesNames)
 					test2=ItemsInList(StringFromList(i, ListOfWavesNames),":")
-//					test3=StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-1,StringFromList(i, ListOfWavesNames))
 					FontSize = stringByKey("Graph Legend Size", ListOfGraphFormating, "=",";")
-					string longname=StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-2,StringFromList(i, ListOfWavesNames),":")
-//					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+StringFromList(ItemsInList(LongName,":")-2,Longname,":")
+					longname=StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-2,StringFromList(i, ListOfWavesNames),":")
 					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+Longname
 				else
 					FontSize = stringByKey("Graph Legend Size", ListOfGraphFormating, "=",";")
 					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+StringFromList(i, ListOfWavesNames)
 				endif
 			endif
-			if (i<imax-1)
+			if (i<imax-stepI)
 				text0+="\r"
 			endif
 		endfor
+		if(i!=(imax+stepI-1))	//append the very last one if not done yet... 
+			i=imax-1
+			text0+="\r"
+			if(addOrRemove==1)		//if 1 use only wave names, if 2 use full folder structure for legend
+					test1=StringFromList(i, ListOfWavesNames)
+					test2=ItemsInList(StringFromList(i, ListOfWavesNames),":")
+					FontSize = stringByKey("Graph Legend Size", ListOfGraphFormating, "=",";")
+					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-1,StringFromList(i, ListOfWavesNames),":")
+			else
+				if (GraphLegendShortNms)
+					test1=StringFromList(i, ListOfWavesNames)
+					test2=ItemsInList(StringFromList(i, ListOfWavesNames),":")
+					FontSize = stringByKey("Graph Legend Size", ListOfGraphFormating, "=",";")
+					longname=StringFromList(ItemsInList(StringFromList(i, ListOfWavesNames),":")-2,StringFromList(i, ListOfWavesNames),":")
+					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+Longname
+				else
+					FontSize = stringByKey("Graph Legend Size", ListOfGraphFormating, "=",";")
+					text0+="\\Z"+FontSize+"\\s("+StringFromList(i, ListOfWaves)+") "+StringFromList(i, ListOfWavesNames)
+				endif
+			endif		
+		endif
 		Legend/C/N=text0/W=GeneralGraph/A=$(GraphLegendPosition)/J/F=(2*GraphLegendFrame) text0
 	else
 		Legend/W=GeneralGraph/K/N=text0
