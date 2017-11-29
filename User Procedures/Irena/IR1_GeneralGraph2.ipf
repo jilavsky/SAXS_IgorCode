@@ -1019,7 +1019,7 @@ Function IR1P_AttachLegend(addOrRemove)
 		variable stepI=1
 		NVAR MaxDisplaidLegend=root:Packages:GeneralplottingTool:GraphLegendMaxItems
 		if(imax>MaxDisplaidLegend)
-			stepI = floor(imax/MaxDisplaidLegend)
+			stepI = ceil(imax/MaxDisplaidLegend)
 		endif
 		SVAR GraphLegendPosition=root:Packages:GeneralplottingTool:GraphlegendPosition
 		NVAR GraphLegendFrame=root:Packages:GeneralplottingTool:GraphLegendFrame
