@@ -235,7 +235,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IR2C_CheckIrenaUpdate(0)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_CheckForGraphicsSetting(0)
-	IN2G_ResetSizesForALlPanels(WindowProcNames)
+	IN2G_ResetSizesForALlPanels(WindowProcNames) 
 end
 //****************************************************************************************
 //****************************************************************************************
