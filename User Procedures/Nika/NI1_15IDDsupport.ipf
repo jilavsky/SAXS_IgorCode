@@ -1000,6 +1000,13 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR LineProfileUseCorrData = root:Packages:Convert2Dto1D:LineProfileUseCorrData
 				SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
 				NVAR SAXSGenSmearedPinData= root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
+				NVAR/Z DesmearData = root:Packages:Indra3:DesmearData
+				if(NVAR_Exists(DesmearData))
+					if(DesmearData)
+						SAXSGenSmearedPinData =0 			//user is generating desmeared data, likely does not need smeared SAXS data
+					endif
+				endif
+				
 				if(SAXSGenSmearedPinData)
 					LineProf_CurveType="Vertical Line" 
 					UseLineProfile=1

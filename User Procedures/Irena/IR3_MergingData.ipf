@@ -240,7 +240,7 @@ Function IR3D_InitDataMerging()
 	ListOfVariables+="Optim_Data1Background;Optim_Data2IntMultiplier;Optim_Data2Qshift;"
 	ListOfVariables+="IsUSAXSSAXSdata;ProcessMerge;ProcessMerge2;ProcessTest;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
-	ListOfVariables+="Data1QEnd;Data2QEnd,Data2Qstart;Data1Qstart;ExtrapData1Start;ExtrapData1End;"
+	ListOfVariables+="Data1QEnd;Data2QEnd;Data2Qstart;Data1Qstart;ExtrapData1Start;ExtrapData1End;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -290,6 +290,17 @@ Function IR3D_InitDataMerging()
 	endif
 	SVAR ListOfExtrapolationFunctions
 	ListOfExtrapolationFunctions = "Porod;Power law w backg;Power law;"
+	
+	NVAR Optim_Data1Background
+	NVAR Optim_Data2IntMultiplier
+	NVAR Data2IntMultiplier
+	if(Data2IntMultiplier<=0)
+		Data2IntMultiplier = 1
+	endif
+	if(Optim_Data1Background+Optim_Data2IntMultiplier<1)
+		Optim_Data2IntMultiplier = 1
+		Optim_Data1Background = 1
+	endif
 	
 	NVAR ProcessMerge
 	NVAR ProcessMerge2
@@ -1900,7 +1911,10 @@ end
 Function IR3D_AddCursorsForExtensions()
 		//this will add cursors, if they are needed for extensions, see IR3D_AppendDataToGraph
 		SVAR MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
-		Wave OriginalData1IntWave=root:Packages:Irena:SASDataMerging:OriginalData1IntWave
+		Wave/Z OriginalData1IntWave=root:Packages:Irena:SASDataMerging:OriginalData1IntWave
+		if(!WaveExists(OriginalData1IntWave))
+			return 0			//avoid bombing when starting and data do not exist. 
+		endif
 		Wave OriginalData1QWave=root:Packages:Irena:SASDataMerging:OriginalData1QWave
 		Wave OriginalData1ErrorWave=root:Packages:Irena:SASDataMerging:OriginalData1ErrorWave
 		NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
@@ -1928,7 +1942,7 @@ Function IR3D_AddCursorsForExtensions()
 			endif
 		endif
 end
-
+ 
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2650,15 +2664,17 @@ Function IR3D_PanelHookFunction(H_Struct)
 		else
 			NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
 			NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
-			NVAR/Z ExtrapData1Start = root:Packages:Irena:SASDataMerging:ExtrapData1Start
-			NVAR/Z ExtrapData1End = root:Packages:Irena:SASDataMerging:ExtrapData1End
-			SVAR/Z MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
-			variable tmpP, MethodCD
-			if(SVAR_Exists(MergeMethodSelected))
-				if(stringMatch(MergeMethodSelected,"Optimize Overlap"))
-					MethodCD = 0
-				else
-					MethodCD = 1
+			if((stringmatch(cursorName,"C")||stringmatch(cursorName,"D"))&&stringmatch(H_Struct.eventName,"cursormoved"))
+				NVAR/Z ExtrapData1Start = root:Packages:Irena:SASDataMerging:ExtrapData1Start
+				NVAR/Z ExtrapData1End = root:Packages:Irena:SASDataMerging:ExtrapData1End
+				SVAR/Z MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
+				variable tmpP, MethodCD
+				if(SVAR_Exists(MergeMethodSelected))
+					if(stringMatch(MergeMethodSelected,"Optimize Overlap"))
+						MethodCD = 0
+					else
+						MethodCD = 1
+					endif
 				endif
 			endif
 			if(stringmatch(cursorName,"C")&&stringmatch(H_Struct.eventName,"cursormoved")&&MethodCD)
@@ -2731,6 +2747,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 			endif
 			if(stringmatch(cursorName,"B")&&stringmatch(H_Struct.eventName,"cursormoved"))
 				WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
+				//variable Qval=OriginalData1QWave[pntNum]
 				if(!stringmatch(H_Struct.traceName,"OriginalData1IntWave"))
 					cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, numpnts(OriginalData1QWave)-2
 					Data1QEnd = OriginalData1QWave[numpnts(OriginalData1QWave)-2]
