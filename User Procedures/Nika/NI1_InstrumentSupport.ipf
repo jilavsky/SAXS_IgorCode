@@ -17,10 +17,14 @@
 
 Function NI1_RSoXSCreateGUI()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DoWIndow NI1A_Convert2Dto1DPanel
+	if(!V_Flag)
+		NI1A_Convert2Dto1DMainPanel()
+	endif
 	NI1_RSoXSInitialize()
-	DoWIndow RSoXSMainPanel
+	DoWIndow NI1_RSoXSMainPanel
 	if(V_Flag)
-		DoWIndow/F RSoXSMainPanel
+		DoWIndow/F NI1_RSoXSMainPanel
 	else
 		Execute("NI1_RSoXSMainPanel()")
 	endif
@@ -89,47 +93,60 @@ Function NI1_RSoXSLoadI0()
 	SVAR I0ColumnLabels=root:Packages:Nika_RSoXS:I0ColumnLabels
 	SVAR PhotoDiodeDatatoLoad = root:Packages:Nika_RSoXS:PhotoDiodeDatatoLoad	
 	NVAR ColumnNamesLineNo = root:Packages:Nika_RSoXS:ColumnNamesLineNo	
+	NVAR PhotoDiodeOffset = root:Packages:Nika_RSoXS:PhotoDiodeOffset	
+	NVAR I0Offset = root:Packages:Nika_RSoXS:I0Offset	
+
 	LoadWave/L={ColumnNamesLineNo, ColumnNamesLineNo+1, 0, 0, 0}/J/W/A/O I0FileNamePath 
 	//polarization is in the file... 
 	Wave/Z EPU_Polarization = root:Packages:Nika_RSoXS:EPU_Polarization
+	variable PolarizationLocal
+	NVAR PolarizationValue = root:Packages:Nika_RSoXS:PolarizationValue
 	if(!WaveExists(EPU_Polarization))
 		abort "Loaded waves seem incorrect"
 	else
-		NVAR PolarizationValue = root:Packages:Nika_RSoXS:PolarizationValue
 		if(PolarizationValue<0)
-			PolarizationValue = EPU_Polarization[0]
+			PolarizationLocal = EPU_Polarization[0]
+		else
+			PolarizationLocal = PolarizationValue
 		endif
 	endif
-	//display a graph for users, just in case
+	//Calculate CorrectionFactor and display a graph for users, just in case
 	Wave/Z Beamline_Energy=root:Packages:Nika_RSoXS:Beamline_Energy
 	Wave/Z Photodiode=$("root:Packages:Nika_RSoXS:"+PhotoDiodeDatatoLoad)
 	Wave/Z I0=$("root:Packages:Nika_RSoXS:"+I0DataToLoad)
 	if(WaveExists(Beamline_Energy)&&WaveExists(Photodiode)&&WaveExists(I0))
-		KilLWIndow/Z I0andDiodeGraph
-		Display /K=1/W=(468,386,1003,727) I0 vs Beamline_Energy as "I0 and Diode"
-		DoWindow/C/R/T I0andDiodeGraph,"I0 and Diode"
-		AppendToGraph/R Photodiode vs Beamline_Energy
-		ModifyGraph mode=3
-		ModifyGraph marker(Photodiode)=41
-		ModifyGraph rgb(Photodiode)=(0,0,65535)
-		ModifyGraph mirror(bottom)=1
-		Label left "I0"
-		Label bottom "Beamline energy [eV]"
-		Label right "Diode"
+//		KilLWIndow/Z I0andDiodeGraph
+//		Display /K=1/W=(468,386,1003,727) I0 vs Beamline_Energy as "I0 and Diode"
+//		DoWindow/C/R/T I0andDiodeGraph,"I0 and Diode"
+//		AppendToGraph/R Photodiode vs Beamline_Energy
+//		ModifyGraph mode=3
+//		ModifyGraph marker(Photodiode)=41
+//		ModifyGraph rgb(Photodiode)=(0,0,65535)
+//		ModifyGraph mirror(bottom)=1
+//		Label left "I0"
+//		Label bottom "Beamline energy [eV]"
+//		Label right "Diode"
 		//calcualte correction factor here for now.
 		Duplicate/O Photodiode, CorrectionFactor
-		CorrectionFactor=Photodiode * 2.4e10	/ Beamline_Energy / I0			//per instructions  
-		KilLWIndow/Z CorrectionGraph
-		Display /K=1/W=(468,386,1003,727) CorrectionFactor vs Beamline_Energy as "CorrectionFactor"
-		DoWindow/C/R/T CorrectionGraph,"CorrectionFactor"
-	//	ModifyGraph mode=3
-	//	ModifyGraph marker(CorrectionFactor)=41
-	//	ModifyGraph rgb(CorrectionFactor)=(0,0,65535)
+		CorrectionFactor=(Photodiode-PhotoDiodeOffset) * 2.4e10	/ Beamline_Energy / (I0-I0Offset)			//per instructions  
+
+		//Duplicate these data to proper 	wave
+		Wave/Z CorrectionFactor=root:Packages:Nika_RSoXS:CorrectionFactor
+		Duplicate/O Beamline_Energy, $("root:Packages:Nika_RSoXS:Beamline_Energy"+"_pol"+num2str(PolarizationLocal))
+		Duplicate/O CorrectionFactor, $("root:Packages:Nika_RSoXS:CorrectionFactor"+"_pol"+num2str(PolarizationLocal))
+		Wave Beamline_Energy = $("root:Packages:Nika_RSoXS:Beamline_Energy"+"_pol"+num2str(PolarizationLocal))
+		Wave CorrectionFactor = $("root:Packages:Nika_RSoXS:CorrectionFactor"+"_pol"+num2str(PolarizationLocal))
+
+		KilLWIndow/Z $("CorrectionGraph_P"+num2str(PolarizationLocal))
+		Display /K=1/W=(468,386,1003,727) CorrectionFactor vs Beamline_Energy as "CorrectionFactor Polarization "+num2str(PolarizationLocal)
+		DoWindow/C/R $("CorrectionGraph_P"+num2str(PolarizationLocal))
 		ModifyGraph mirror=1
 		Label left "CorrectionGraph"
 		Label bottom "Beamline energy [eV]"
+	else
+		DoAlert /T="Did not find data" 0, "Please check wave names selections" 
 	endif
-		
+	
 	
 	setDataFolder OldDf
 end
@@ -149,13 +166,15 @@ Function NI1_RSoXSFindCorrectionFactor(SampleName)
 	string OldNOte=note(w2D)
 	//Mono Energy
 	variable Energy = NumberByKey("Mono Energy", OldNote , "=" , ";")
+	variable PolarizationLocal = NumberByKey("EPU Polarization", OldNote , "=" , ";")
 	//print Energy
-	Wave/Z CorrectionFactor=root:Packages:Nika_RSoXS:CorrectionFactor
-	Wave/Z Beamline_Energy=root:Packages:Nika_RSoXS:Beamline_Energy
+	Wave/Z CorrectionFactor=$("root:Packages:Nika_RSoXS:CorrectionFactor_pol"+num2str(PolarizationLocal))
+	Wave/Z Beamline_Energy=$("root:Packages:Nika_RSoXS:Beamline_Energy_pol"+num2str(PolarizationLocal))
 	if(!WaveExists(Beamline_Energy)||!WaveExists(CorrectionFactor))
 		abort "Did not find Correction factor values, cannot continue"
 	endif
 	variable result = CorrectionFactor[BinarySearchInterp(Beamline_Energy, Energy )]
+	print "Read Correction factor from file : CorrectionFactor_pol"+num2str(PolarizationLocal)+"  and got value = "+num2str(result)
 	return result
 end
 //************************************************************************************************************
@@ -194,12 +213,15 @@ Function NI1_RSoXSInitialize()
 	SVAR I0DataToLoad
 	SVAR PhotoDiodeDataToLoad
 	if(strlen(I0DataToLoad)<3)
-		I0DataToLoad="Al_3_Izero"
+		I0DataToLoad="AI_3_Izero"
 	endif
 	if(strlen(PhotoDiodeDataToLoad)<3)
 		PhotoDiodeDataToLoad="Photodiode"
 	endif
-	
+	NVAR PolarizationValue
+	if(PolarizationValue==0)
+		PolarizationValue=-1
+	endif
 	
 	
 	
@@ -222,7 +244,7 @@ Window NI1_RSoXSMainPanel() : Panel
 	Button FindI0DataFile,help={"Locate I0 containing text file and check teh content. "}
 	SetVariable PolarizationValue,pos={45.00,129.00},size={151.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="Polarization Value"
 	SetVariable PolarizationValue,help={"Polarization value, -1 reads from the file"}
-	SetVariable PolarizationValue,limits={0,inf,1},value= root:Packages:Nika_RSoXS:PolarizationValue
+	SetVariable PolarizationValue,limits={-1,360,1},value= root:Packages:Nika_RSoXS:PolarizationValue
 	SetVariable ColumnNamesLineNo,pos={16.00,87.00},size={180.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="Line with Column Names"
 	SetVariable ColumnNamesLineNo,help={"No of column with names"}
 	SetVariable ColumnNamesLineNo,limits={0,inf,1},value= root:Packages:Nika_RSoXS:ColumnNamesLineNo
@@ -399,7 +421,12 @@ Function NI1_RSoXSConfigureNika()
 //				NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
 //				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
 				NVAR UseDarkField = root:Packages:Convert2Dto1D:UseDarkField
-				NVAR UseSampleMeasTime = root:Packages:Convert2Dto1D:
+				NVAR UseSampleMeasTime = root:Packages:Convert2Dto1D:UseSampleMeasTime
+				
+				SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+				SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
+				DataFileExtension="FITS"
+				BlankFileExtension="FITS"
 				
 				UseSampleMeasTime=1
 				UseDarkField = 1
