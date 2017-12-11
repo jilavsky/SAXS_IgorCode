@@ -725,11 +725,28 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	
 	if (cmpstr("IsBlank",ctrlName)==0)
 		NVAR IsBlank=root:Packages:Indra3:IsBlank
+		NVAR SmoothRCurveData=root:Packages:Indra3:SmoothRCurveData
 		PopupMenu SelectBlankFolder, disable = IsBlank
-		
+		//check if Blank name is correct
+		SVAR BlankName = root:Packages:Indra3:BlankName
+		if(stringMatch(BlankName,"")&&!IsBlank)
+			BlankName = StringFromList(0,IN3_GenStringOfFolders(1))
+			PopupMenu SelectBlankFolder win=USAXSDataReduction, mode=WhichListItem(BlankName, "---;"+IN3_GenStringOfFolders(1))+1, value="---;"+IN3_GenStringOfFolders(1) 
+			DoALert 0, "No Blank was selected, we found Blank "+BlankName+"  , and used this one. Change if necessary."
+		elseif(!stringMatch(BlankName,"")&&!IsBlank)
+			PopupMenu SelectBlankFolder win=USAXSDataReduction, mode=WhichListItem(BlankName, "---;"+IN3_GenStringOfFolders(1))+1, value="---;"+IN3_GenStringOfFolders(1) 
+		endif
+		if(isBlank)
+			SmoothRCurveData=1
+		else
+			SmoothRCurveData=0
+		endif
 	endif
 	if (cmpstr("RecalculateAutomatically",ctrlName)==0)
 
+	endif
+	if (cmpstr("SmoothRCurveData",ctrlName)==0)
+			IN3_RecalculateData(2)
 	endif
 	NVAR CalculateWeight=root:Packages:Indra3:CalculateWeight
 	NVAR CalculateThickness=root:Packages:Indra3:CalculateThickness
@@ -927,7 +944,7 @@ static Function IN3_RcurvePlot()
 		Wave/Z BL_R_error=root:Packages:Indra3:BL_R_error
 		Wave/Z BL_R_Qvec= root:Packages:Indra3:BL_R_Qvec
 		AppendToGraph BL_R_Int vs BL_R_Qvec
-		ModifyGraph rgb(BL_R_Int)=(0,0,0)
+		ModifyGraph rgb(BL_R_Int)=(0,0,0), mode(BL_R_Int)=0
 		NVAR TrimDataStart=root:Packages:Indra3:TrimDataStart
 		NVAR TrimDataEnd=root:Packages:Indra3:TrimDataEnd
 		if(TrimDataStart>0)
@@ -1572,54 +1589,55 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
-
-	//need to sync blanks widths, if changed by user...
-	NVAR WidthDeg=root:Packages:Indra3:BlankFWHM
-	NVAR WidthArcSec=root:Packages:Indra3:BlankWidth
-	if(stringmatch(ctrlName,"BlankWidth"))
-		WidthArcSec = WidthDeg * 3600
-	endif
-	if(stringmatch(ctrlName,"BlankWidthArcSec"))
-		WidthDeg =  WidthArcSec/3600
-	endif
-	if(stringmatch(ctrlName,"SubtractFlatBackground"))
-		NVAR SubtractFlatBackground= root:Packages:Indra3:SubtractFlatBackground
-		SetVariable SubtractFlatBackground,win=USAXSDataReduction,limits={0,Inf,0.05*SubtractFlatBackground}
-	endif
-	if(stringmatch(ctrlName,"PhotoDiodeSize"))
-		SVAR UPDParameters= root:Packages:Indra3:UPDParameters
-		UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
-	endif
-	if(stringmatch(ctrlName,"OverideSampleThickness"))
-		NVAR OverideSampleThickness=root:Packages:Indra3:OverideSampleThickness
-		NVAR SampleThickness=root:Packages:Indra3:SampleThickness
-		NVAR SampleThicknessBckp=root:Packages:Indra3:SampleThicknessBckp
-		if(OverideSampleThickness>0)
-			SampleThickness = OverideSampleThickness
+	DoWIndow RcurvePlotGraph				//only of the graph exists, or we get error... 
+	if(V_Flag)
+		//need to sync blanks widths, if changed by user...
+		NVAR WidthDeg=root:Packages:Indra3:BlankFWHM
+		NVAR WidthArcSec=root:Packages:Indra3:BlankWidth
+		if(stringmatch(ctrlName,"BlankWidth"))
+			WidthArcSec = WidthDeg * 3600
+		endif
+		if(stringmatch(ctrlName,"BlankWidthArcSec"))
+			WidthDeg =  WidthArcSec/3600
+		endif
+		if(stringmatch(ctrlName,"SubtractFlatBackground"))
+			NVAR SubtractFlatBackground= root:Packages:Indra3:SubtractFlatBackground
+			SetVariable SubtractFlatBackground,win=USAXSDataReduction,limits={0,Inf,0.05*SubtractFlatBackground}
+		endif
+		if(stringmatch(ctrlName,"PhotoDiodeSize"))
+			SVAR UPDParameters= root:Packages:Indra3:UPDParameters
+			UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
+		endif
+		if(stringmatch(ctrlName,"OverideSampleThickness"))
+			NVAR OverideSampleThickness=root:Packages:Indra3:OverideSampleThickness
+			NVAR SampleThickness=root:Packages:Indra3:SampleThickness
+			NVAR SampleThicknessBckp=root:Packages:Indra3:SampleThicknessBckp
+			if(OverideSampleThickness>0)
+				SampleThickness = OverideSampleThickness
+			else
+				SampleThickness = SampleThicknessBckp
+			endif
+			IN3_RecalculateData(2)
+			DoWIndow/F USAXSDataReduction
+			//SVAR UPDParameters= root:Packages:Indra3:UPDParameters
+			//UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
+		endif
+	
+		if(stringmatch(ctrlName,"BckgStartQ"))
+			IN3_DesmearData()
+		endif
+	
+	
+		NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
+		//recalculate what needs to be done...
+		if((stringmatch(ctrlName,"RemoveDropoutsTime")) || (stringmatch(ctrlName,"RemoveDropoutsFraction")) || (stringmatch(ctrlName,"RemoveDropoutsAvePnts")))
+			if(RemoveDropouts)
+				IN3_RecalculateData(1)
+			endif
 		else
-			SampleThickness = SampleThicknessBckp
+			IN3_RecalculateData(2)
 		endif
-		IN3_RecalculateData(2)
-		DoWIndow/F USAXSDataReduction
-		//SVAR UPDParameters= root:Packages:Indra3:UPDParameters
-		//UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
 	endif
-
-	if(stringmatch(ctrlName,"BckgStartQ"))
-		IN3_DesmearData()
-	endif
-
-
-	NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
-	//recalculate what needs to be done...
-	if((stringmatch(ctrlName,"RemoveDropoutsTime")) || (stringmatch(ctrlName,"RemoveDropoutsFraction")) || (stringmatch(ctrlName,"RemoveDropoutsAvePnts")))
-		if(RemoveDropouts)
-			IN3_RecalculateData(1)
-		endif
-	else
-		IN3_RecalculateData(2)
-	endif
-
 	setDataFolder OldDf
 End
 ///*****************************************************************************************************************

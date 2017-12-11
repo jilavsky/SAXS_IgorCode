@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.93
+#pragma version = 1.94
 #pragma IgorVersion=7.00
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -10,7 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.94 Added smooth R data option. 
 //1.93 added Desmaering as optional data reduction step. 
 //1.92  removed unused functions
 //1.91 #pragma IgorVersion=7.00
@@ -33,7 +33,7 @@
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 Constant IN3_ReduceDataMainVersionNumber=1.87
-Constant IN3_NewReduceDataMainVersionNum=1.93
+Constant IN3_NewReduceDataMainVersionNum=1.94
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -117,8 +117,10 @@ Function IN3_MainPanelNew()
 
 	Button GetHelp,pos={315,25},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 		
-	CheckBox IsBlank,pos={265,115},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
+	CheckBox IsBlank,pos={265,113},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
+	CheckBox SmoothRCurveData,pos={360,113},size={90,14},proc=IN3_MainPanelCheckBox,title="Smooth"
+	CheckBox SmoothRCurveData,variable= root:Packages:Indra3:SmoothRCurveData, help={"Check, if you want to smooth these data"}
 
 	Button ProcessData2,pos={265,130},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/process one", help={"Load data and process them"}
 	Button SelectNextSampleAndProcess2,pos={265,152},size={130,20},proc=IN3_InputPanelButtonProc,title="Load/Process Many", help={"Select next sample in order - process - and save"}
@@ -149,12 +151,14 @@ Function IN3_MainPanelNew()
 	//more local controls.
 	SVAR BlankName = root:Packages:Indra3:BlankName
 	NVAR IsBlank=root:Packages:Indra3:IsBlank
+	NVAR SmoothRCurveData = root:Packages:Indra3:SmoothRCurveData
 	string temppopStr
 	if(strlen(BlankName)>3)
 		temppopStr = BlankName
 	else
 		temppopStr = "---"
 		IsBlank = 1
+		SmoothRCurveData = 1
 	endif
 	PopupMenu SelectBlankFolder,pos={15,315},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
 	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)",fColor=(1,16019,65535)
@@ -885,7 +889,7 @@ Function IN3_Initialize()
 	ListOfVariables+="PhotoDiodeSize;SlitLength;NumberOfSteps;SDDistance;"
 	ListOfVariables+="PeakCenterFitStartPoint;PeakCenterFitEndPoint;"
 	ListOfVariables+="BeamCenter;MaximumIntensity;PeakWidth;PeakWidthArcSec;"
-	ListOfVariables+="SampleQOffset;DisplayPeakCenter;DisplayAlignSaAndBlank;SampleAngleOffset;"
+	ListOfVariables+="SampleQOffset;DisplayPeakCenter;DisplayAlignSaAndBlank;SampleAngleOffset;SmoothRCurveData;"
 	ListOfVariables+="RemoveDropouts;RemoveDropoutsTime;RemoveDropoutsFraction;RemoveDropoutsAvePnts;"
 
 	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
@@ -929,6 +933,12 @@ Function IN3_Initialize()
 		ListProcDisplayDelay=5
 	endif
 	
+	NVAR IsBlank
+	NVAR SmoothRCurveData
+	if(isBlank)
+		SmoothRCurveData=1
+	endif
+	
 	NVAR DisplayPeakCenter
 	NVAR FlyScanRebinToPoints
 	if(FlyScanRebinToPoints<100)
@@ -956,10 +966,12 @@ Function IN3_Initialize()
 		 CalibrateToVolume=1
 		 CalibrateArbitrary=0
 	endif
+	NVAR RemoveDropouts
+	RemoveDropouts=1
 	NVAR RemoveDropoutsTime
 	NVAR RemoveDropoutsFraction
 	if(RemoveDropoutsTime<0.01)
-		RemoveDropoutsTime=0.1
+		RemoveDropoutsTime=0.25
 	endif
 	if(RemoveDropoutsFraction<0.01)
 		RemoveDropoutsFraction=0.5

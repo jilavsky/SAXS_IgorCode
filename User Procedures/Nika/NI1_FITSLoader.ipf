@@ -1,5 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=2.17
+//#include <FITS Loader>
 #include <Autosize Images>
 
 //2.17 fixed bug when data in Extension 2 of some FITS files with long and complicated bintable (Extension 1) were not read. 
@@ -53,14 +54,23 @@ Function/S NI1_ReadFITSFIleFormat3(PathName, FileName)
 	open /R/P=$(PathName) RefNum as FileName
 	FStatus refnum
 	//print "FITS Load from",S_fileName
+	//this is Nika's modified loader...
 	NI1_LoadOneFITS(refnum,S_fileName,1,1,1,0,0,1e12)
+	//LoadOneFITS(refnum,S_fileName,1,1,1,0,0,1e12,1e8)		//this would be WVM procedure, but it would nto return what I need... 
 	close RefNum
 	SVAR LatestImportedData			//contains string with name of recently imported FITS data.
 	//next deal with the header information and convert it to more useful Igor form
 	SVAR AllHeaderInfoAsString = $("root:Packages:Nika_FITS_Import:"+possiblyquotename(LatestImportedData)+":AllHeaderInfoAsString")
-	AllHeaderInfoAsString = ReplaceString("  ", AllHeaderInfoAsString, "")
 	//done - this is next wave note... 
+	AllHeaderInfoAsString = ReplaceString("  ", AllHeaderInfoAsString, "")
+	AllHeaderInfoAsString = ReplaceString("\r", AllHeaderInfoAsString, "")
 	//print AllHeaderInfoAsString
+	AllHeaderInfoAsString = NI1_ReadFITSFileCleanNote(AllHeaderInfoAsString)
+	//print AllHeaderInfoAsString
+	//this is now packed info with no spaces and in sensible way for wave note - e.g., Sample Y Scaled=9.92832238491352 [Counts]; . To find values read using following commands:
+	//print NumberByKey("CCD Theta", AllHeaderInfoAsString , "=" , ";")
+	//print NumberByKey("Stamp Server Time", AllHeaderInfoAsString , "=" , ";")
+	//print NumberByKey("AI 0", AllHeaderInfoAsString , "=" , ";")
 	//Next find the data. Data should be in Primary location, but in some cases may be in Extension location. 
 	//assume we are looking for sufficiently lareg image, so let's check what we have
 	setDataFolder $(LatestImportedData)
@@ -105,7 +115,39 @@ end
 //	NI1_DoFITSPanel()
 //end
 //	
-
+static Function/S NI1_ReadFITSFileCleanNote(NoteIn)
+	string NoteIn
+	
+	variable i
+	string tmpStr, resultStr, newTempStr, UnitsStr, ts
+	resultStr = ""
+	For(i=0;i<ItemsInList(NoteIn  , ";");i+=1)
+		tmpStr=StringFromList(i, NoteIn, ";")
+		if(GrepString(tmpStr, "HIERARCH"))
+			tmpStr=ReplaceString("HIERARCH Time ", tmpStr, "")	//remove HIERARCH
+			tmpStr=ReplaceString("HIERARCH ", tmpStr, "")	//remove HIERARCH
+			newTempStr = RemoveEnding(StringFromList(0, tmpStr, "=")," ") +"="
+			newTempStr+=  IN2G_TrimFrontBackWhiteSpace(StringFromList(0, StringFromList(1, tmpStr, "="),"/"))
+			UnitsStr =  GrepList(IN2G_TrimFrontBackWhiteSpace(StringFromList(1, StringFromList(1, tmpStr, "="),"/")), "\[?\]",0," " )
+			if(strlen(UnitsStr))
+				UnitsStr = RemoveEnding(UnitsStr," ")
+				newTempStr+=" "+UnitsStr
+			endif
+		else
+			newTempStr = IN2G_TrimFrontBackWhiteSpace(StringFromList(0,tmpStr,"/"))
+		endif
+		resultStr = ReplaceString("= ", resultStr, "=")
+		resultStr = ReplaceString(" =", resultStr, "=")
+		if(!GrepString(tmpStr, "EXTEND") && !GrepString(tmpStr, "COMMENT") && !GrepString(tmpStr, "bibcode"))
+			resultStr+=newTempStr+";"
+		endif
+	endfor
+	resultStr = ReplaceString("END;", resultStr, "")
+	resultStr = ReplaceString("must=0;", resultStr, "")
+	resultStr = ReplaceString("must=1;", resultStr, "")
+	
+	return resultStr
+end
 
 //Static Function NI1_LoadFITS()
 //	Variable doHeader= NumVarOrDefault("root:Packages:Nika_FITS:wantHeader",1)			// set true to put header(s) in a notebook

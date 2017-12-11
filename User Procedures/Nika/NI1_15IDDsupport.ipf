@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.43
+#pragma version=1.44
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.44 add better handling of Slit length for SAXS with default value of 0.025 when user has nothing else. Better than 0. 
 //1.43 minor fix for configruation. 
 //1.42 changed 15IDD to 9IDC and modified for reading parameters from a file dynamically. 
 //1.41 modified WAXS mask to have better masking of tile edges. 
@@ -433,7 +434,24 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=3
 				NI1A_TabProc("NI1A_Convert2Dto1DPanel",3)
 				
+				//force user to find SLit length oif needed
+				NVAR/Z DesmearData = root:Packages:Indra3:DesmearData
+				NVAR SAXSGenSmearedPinData = root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
+				if(NVAR_Exists(DesmearData))
+					if(DesmearData)
+						SAXSGenSmearedPinData =0 			//user is generating desmeared data, likely does not need smeared SAXS data
+					else
+						NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
+						USAXSSlitLength = NI1_9IDCFIndSlitLength()
+						NI1_9IDCSetLineWIdth()							
+					endif
+				else
+						NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
+						USAXSSlitLength = NI1_9IDCFIndSlitLength()
+						NI1_9IDCSetLineWIdth()							
+				endif
 				
+							
 				
 			endif
 			if (stringmatch("ConfigureWaveNoteParameters",ba.CtrlName))
@@ -1581,10 +1599,10 @@ Function NI1_9IDCFIndSlitLength()
 		Prompt SlitLengthIsHereL, "USAXS Folders available ", popup,  SlitLengthIsHere
 		DoPrompt "Pick USAXS folder where to read slit length", SlitLengthIsHereL
 	else
-		DoALert 0, "Slit smeared USAXS data NOT found, input slit length value manually in the input field and check Checkbox \"Create Smeared data\" length again."
+		DoALert 0, "Slit smeared USAXS data NOT found, input slit length value was set to default value of 0.025. While this is common number, you shoudl reduce USAXS data and use the correct one."
 		NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
-		SAXSGenSmearedPinData = 0
-		return 0
+		SAXSGenSmearedPinData = 1
+		return 0.025
 	endif
 
 	Wave/Z SMR_int=$(SlitLengthIsHereL+"SMR_Int")
@@ -1598,13 +1616,9 @@ Function NI1_9IDCFIndSlitLength()
 		return SlitLength
 	else
 		NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
-		SAXSGenSmearedPinData = 0
-		DoALert 0, "Slit length not found, input slit length value manually in the input field and check Checkbox \"Create Smeared data\" length again."
-		return 0
-//		Prompt transmissionUser, "Transmission not found, plese input value"
-//		DoPrompt "USAXS transmission NOT FOUND, input value between 0 and 1", transmissionUser
-//		Print "For sample :    "+sampleName+"    has been used manually input transmission = "+num2str(Transmission)
-//		return transmissionUser
+		SAXSGenSmearedPinData = 1
+		DoALert 0, "Slit length not found, input slit length value was set to default value of 0.025. While this is common number, you shoudl reduce USAXS data and use correct one. "
+		return 0.025
 	endif
 end
 

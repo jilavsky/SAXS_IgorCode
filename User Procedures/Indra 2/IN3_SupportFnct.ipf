@@ -83,9 +83,9 @@ Function IN3_ColorMainGraph(PdRanges)
 			if(PdRanges)
 				Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
 				IN3_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
-		 		ModifyGraph /W=RcurvePlotGraph/Z mode=4, zColor(R_Int)={root:Packages:Indra3:MyColorWave,0,10,Rainbow}
+		 		ModifyGraph /W=RcurvePlotGraph/Z mode=0, zColor(R_Int)={root:Packages:Indra3:MyColorWave,0,10,Rainbow}
 			else
-		 		ModifyGraph /W=RcurvePlotGraph/Z  mode=4, zColor(R_Int)=0
+		 		ModifyGraph /W=RcurvePlotGraph/Z  mode=0, zColor(R_Int)=0
 			endif
 		endif
 	endif
@@ -209,10 +209,12 @@ Function IN3_CalculateRdata()
 	endif
 	R_Int = PD_Intensity /SampleTransmissionPeakToPeak
 	R_Error = PD_Error /SampleTransmissionPeakToPeak
-	//remove negative intensities
-	//R_Int = log(R_Int)											//changed 2017-02-02 was causing problems when background was incorrectly set. 
-	//IN2G_RemoveNaNsFrom3Waves(R_Int,R_Qvec,R_Error)
-	//R_int= 10^R_int
+	print "Before"
+	wavestats R_Int
+	
+	IN3_SmoothRData()
+	print "After"
+	wavestats R_Int
 	setDataFolder OldDf	
 end
 //***********************************************************************************************************************************

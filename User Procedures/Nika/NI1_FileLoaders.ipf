@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.47
+#pragma version=2.48
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,12 +8,13 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.47 remvoed DoubleClickConverts, not needed anymore. 
+//2.48 added ALS RXoXS instrument support.
+//2.47 removed DoubleClickConverts, not needed anymore. 
 //2.46 improve print message fro Nexus when multi dimensional input ddata are used. 
 //2.45 more fixes for Pilatus TVX ver 1.3 tiff header. Still mess... 
 //2.44 moved to new Nexus suport provided by HDF5Gateway and IRNI_NexusSupport
 //2.43 fixes for Pilatus Tiff file header 
-//2.42 Added more or less universal FITS fiel loader (checked against data in Extension1 and 2), removed printing of wave note in history area. 
+//2.42 Added more or less universal FITS file loader (checked against data in Extension1 and 2), removed printing of wave note in history area. 
 //2.41 Updated Pilatus img file to handle header (example contained 4096 bytes header) - added code which will find header length and skip it. 
 //2.40 update to 9ID pinSAXS Nexus files
 //2.39 removed Executes in preparation for Igor 7
@@ -482,22 +483,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Wave LoadedWave0=$(FITSWaveLocationString)
 		FITSWaveNoteString = note(LoadedWave0)
 		note /K LoadedWave0
-//		open /R/P=$(PathName) RefNum as FileNameToLoad
-//		testLine=""
-//		testLine=PadString (testLine, 8640, 0x20)
-//		FBinRead RefNum, testLine
-//		close RefNum
-//		variable bitpix =str2num(NI1_FITSFindKey(testLine, "BITPIX"))
-//		variable NAXIS1= str2num(NI1_FITSFindKey(testLine, "NAXIS1"))
-//		variable NAXIS2 = str2num(NI1_FITSFindKey(testLine, "NAXIS2"))
-//		variable BZERO = str2num(NI1_FITSFindKey(testLine, "BZERO"))
-//		GBLoadWave/Q/B=(0)/T={bitpix,4}/S=(8640)/W=1/P=$(PathName)/N=Loadedwave FileNameToLoad
-//			if(V_flag==0)		//check if we loaded at least some data...
-//				return 0
-//			endif
-//		wave Loadedwave0
-//		Redimension/N=(NAXIS1,NAXIS2) Loadedwave0
-//		Loadedwave0+=BZERO 	//fix offset
 		duplicate/O Loadedwave0, $(NewWaveName)
 		killwaves Loadedwave0
 		NewNote+="DataFileName="+FileNameToLoad+";"
@@ -1357,6 +1342,18 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	wave NewWv=$(NewWaveName)
 	note/K NewWv
 	note NewWv, newnote
+
+	//add here options to get something done by instrument controls... 
+	//this is used by support for ALS RXoXS support
+	NVAR/Z UseRSoXSCodeModifications=root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
+	if(NVAR_Exists(UseRSoXSCodeModifications))
+		if(UseRSoXSCodeModifications&&stringmatch(NewWaveName,"CCDImageToConvert"))
+				Execute("NI1_RSoXSLoadHeaderValues()")
+		endif
+	endif
+	//this has restored proper Dark exposure time data for RSoXS ALS support. 
+
+
 	setDataFolder OldDf
 	
 	return LoadedOK

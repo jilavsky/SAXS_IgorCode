@@ -77,6 +77,8 @@ Menu "SAS 2D"
 	Submenu "Instrument configurations"
 		"9IDC or 15IDD USAXS-SAXS-WAXS", NI1_9IDCConfigureNika()
 		help={"Support for data from 9ID or9IDC (USAXS/SAXS) beamline at APS"}
+		"RSoXS ALS soft energy instrument", NI1_RSoXSCreateGUI()
+		help={"Support for data from ALS soft energy beamline"}
 		"DND CAT", NI1_DNDConfigureNika()
 		help={"Support for data from DND CAT (5ID) beamline at APS"}
 		"SSRL Mat SAXS", NI1_SSRLSetup()

@@ -2813,6 +2813,16 @@ Function NI1A_LoadParamsUsingFncts(SelectedFileToLoad)
 	setDataFolder root:Packages:Convert2Dto1D
 
 		variable/g temp
+		//add here options to get something done by instrument controls... 
+		//this is used by support for ALS RXoXS support
+		NVAR/Z UseRSoXSCodeModifications=root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
+		if(NVAR_Exists(UseRSoXSCodeModifications))
+			if(UseRSoXSCodeModifications)
+					Execute("NI1_RSoXSRestoreDarkOnImport()")
+			endif
+		endif
+		//this has restored proper Dark exposure time data for RSoXS ALS support. 
+		
 		
 		NVAR UseSampleThickness=root:Packages:Convert2Dto1D:UseSampleThickness
 		NVAR UseSampleThicknFnct=root:Packages:Convert2Dto1D:UseSampleThicknFnct
@@ -3110,9 +3120,13 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	
 	NI1A_UniversalLoader("Convert2Dto1DEmptyDarkPath",FileNameToLoad,FileExtLocal,NewWaveName)
 
-//	NI1A_DezingerDataSetIfAskedFor(NewWaveName)
-
 	wave NewCCDData = $(NewWaveName)
+	//this is modification needed for RSoXS data processing
+	NVAR/Z UseRSoXSCodeModifications = root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
+	if(NVAR_Exists(UseRSoXSCodeModifications)&&StringMatch(NewWaveName, "DarkFieldData"))
+		Execute("NI1_RSoXSCopyDarkOnImport()")		//this guarrantees compile if function not present. 
+	endif
+
 
 	//allow user function modification to the image through hook function...
 #if Exists("ModifyImportedImageHook")

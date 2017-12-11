@@ -62,6 +62,7 @@ Function IR3D_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber))
 			DoAlert /T="The Data Merging panel was created by old version of Irena " 1, "Data Merging may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
+				KillWIndow/Z IR3D_DataMergePanel
 				Execute/P("IR3D_DataMerging()")
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR3D_InitDataMerging()

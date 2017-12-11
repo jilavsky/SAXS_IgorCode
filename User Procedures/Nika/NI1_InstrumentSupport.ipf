@@ -7,10 +7,495 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//version 1.1 adds support for ALS RSoXS data - sfot X-ray energy beamlione at ALS. 
 //version 1.0 original release, Instrument support for SSRLMatSAXS
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+//RSoXS support
+
+
+Function NI1_RSoXSCreateGUI()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NI1_RSoXSInitialize()
+	DoWIndow RSoXSMainPanel
+	if(V_Flag)
+		DoWIndow/F RSoXSMainPanel
+	else
+		Execute("NI1_RSoXSMainPanel()")
+	endif
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSFindI0File()
+	variable refNum, i
+	string LineContent
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR ColumnNamesLineNo = root:Packages:Nika_RSoXS:ColumnNamesLineNo
+	SVAR I0ColumnLabels = root:Packages:Nika_RSoXS:I0ColumnLabels
+	SVAR I0FileNamePath = root:Packages:Nika_RSoXS:I0FileNamePath
+	Open /R /T=".txt" refNum 
+	I0FileNamePath = S_fileName
+	//it is opened for reading, now lets find the stuff we need.
+	i=-1
+	Do
+		i+=1  //line we are reading now
+		FReadLine  refNum, LineContent			
+	while(!GrepString(LineContent, "TEY signal" ))		//line containing kyeword TEY signal
+	close refNum
+	ColumnNamesLineNo = i
+	I0ColumnLabels = LineContent
+	//convert lisyt separated by tabs in list with ;
+	I0ColumnLabels = ReplaceString("\t", I0ColumnLabels, ";")
+	I0ColumnLabels = ReplaceString(" ", I0ColumnLabels, "_")
+	I0ColumnLabels = ReplaceString(")", I0ColumnLabels, "_")
+	I0ColumnLabels = ReplaceString("(", I0ColumnLabels, "_")
+	NI1_RSoXSSetPanelControls()
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSSetPanelControls()
+	DoWIndow RSoXSMainPanel
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	if(V_Flag)
+		SVAR I0DataToLoad=root:Packages:Nika_RSoXS:I0DataToLoad
+		SVAR I0ColumnLabels=root:Packages:Nika_RSoXS:I0ColumnLabels
+		SVAR PhotoDiodeDatatoLoad = root:Packages:Nika_RSoXS:PhotoDiodeDatatoLoad		
+		PopupMenu I0DataToLoad,win=RSoXSMainPanel, mode=WhichListItem(I0DataToLoad, I0ColumnLabels)+1,value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
+		PopupMenu PhotoDiodeDatatoLoad,win=RSoXSMainPanel, mode=WhichListItem(PhotoDiodeDatatoLoad, I0ColumnLabels)+1,value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
+		
+		
+	endif
+
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSLoadI0()
+	//this loads I0 records and deals with them. 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string OldDf=getDataFOlder(1)
+	setDataFolder root:Packages:Nika_RSoXS
+	SVAR I0FileNamePath = root:Packages:Nika_RSoXS:I0FileNamePath
+	SVAR I0DataToLoad=root:Packages:Nika_RSoXS:I0DataToLoad
+	SVAR I0ColumnLabels=root:Packages:Nika_RSoXS:I0ColumnLabels
+	SVAR PhotoDiodeDatatoLoad = root:Packages:Nika_RSoXS:PhotoDiodeDatatoLoad	
+	NVAR ColumnNamesLineNo = root:Packages:Nika_RSoXS:ColumnNamesLineNo	
+	LoadWave/L={ColumnNamesLineNo, ColumnNamesLineNo+1, 0, 0, 0}/J/W/A/O I0FileNamePath 
+	//polarization is in the file... 
+	Wave/Z EPU_Polarization = root:Packages:Nika_RSoXS:EPU_Polarization
+	if(!WaveExists(EPU_Polarization))
+		abort "Loaded waves seem incorrect"
+	else
+		NVAR PolarizationValue = root:Packages:Nika_RSoXS:PolarizationValue
+		if(PolarizationValue<0)
+			PolarizationValue = EPU_Polarization[0]
+		endif
+	endif
+	//display a graph for users, just in case
+	Wave/Z Beamline_Energy=root:Packages:Nika_RSoXS:Beamline_Energy
+	Wave/Z Photodiode=$("root:Packages:Nika_RSoXS:"+PhotoDiodeDatatoLoad)
+	Wave/Z I0=$("root:Packages:Nika_RSoXS:"+I0DataToLoad)
+	if(WaveExists(Beamline_Energy)&&WaveExists(Photodiode)&&WaveExists(I0))
+		KilLWIndow/Z I0andDiodeGraph
+		Display /K=1/W=(468,386,1003,727) I0 vs Beamline_Energy as "I0 and Diode"
+		DoWindow/C/R/T I0andDiodeGraph,"I0 and Diode"
+		AppendToGraph/R Photodiode vs Beamline_Energy
+		ModifyGraph mode=3
+		ModifyGraph marker(Photodiode)=41
+		ModifyGraph rgb(Photodiode)=(0,0,65535)
+		ModifyGraph mirror(bottom)=1
+		Label left "I0"
+		Label bottom "Beamline energy [eV]"
+		Label right "Diode"
+		//calcualte correction factor here for now.
+		Duplicate/O Photodiode, CorrectionFactor
+		CorrectionFactor=Photodiode * 2.4e10	/ Beamline_Energy / I0			//per instructions  
+		KilLWIndow/Z CorrectionGraph
+		Display /K=1/W=(468,386,1003,727) CorrectionFactor vs Beamline_Energy as "CorrectionFactor"
+		DoWindow/C/R/T CorrectionGraph,"CorrectionFactor"
+	//	ModifyGraph mode=3
+	//	ModifyGraph marker(CorrectionFactor)=41
+	//	ModifyGraph rgb(CorrectionFactor)=(0,0,65535)
+		ModifyGraph mirror=1
+		Label left "CorrectionGraph"
+		Label bottom "Beamline energy [eV]"
+	endif
+		
+	
+	setDataFolder OldDf
+end
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSFindCorrectionFactor(SampleName)
+	string sampleName
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(w2D))
+		Abort "Image file not found "  
+	endif
+	string OldNOte=note(w2D)
+	//Mono Energy
+	variable Energy = NumberByKey("Mono Energy", OldNote , "=" , ";")
+	//print Energy
+	Wave/Z CorrectionFactor=root:Packages:Nika_RSoXS:CorrectionFactor
+	Wave/Z Beamline_Energy=root:Packages:Nika_RSoXS:Beamline_Energy
+	if(!WaveExists(Beamline_Energy)||!WaveExists(CorrectionFactor))
+		abort "Did not find Correction factor values, cannot continue"
+	endif
+	variable result = CorrectionFactor[BinarySearchInterp(Beamline_Energy, Energy )]
+	return result
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSInitialize()
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string OldDf=GetDataFolder(1)
+	newDataFOlder/O root:Packages
+	newDataFolder/O/S root:Packages:Nika_RSoXS
+	
+	string/g ListOfVariables
+	string/g ListOfStrings
+
+	ListOfVariables="UseRSoXSCodeModifications;"
+	ListOfVariables+="ColumnNamesLineNo;OrderSorterValue;PolarizationValue;PhotoDiodeOffset;I0Offset;"
+	ListOfStrings="I0DataToLoad;PhotoDiodeDataToLoad;I0ColumnLabels;I0FileNamePath;"
+	
+	variable i
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+										
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+	
+	SVAR I0ColumnLabels
+	if(strlen(I0ColumnLabels)<3)
+		I0ColumnLabels="---;"
+	endif
+	SVAR I0DataToLoad
+	SVAR PhotoDiodeDataToLoad
+	if(strlen(I0DataToLoad)<3)
+		I0DataToLoad="Al_3_Izero"
+	endif
+	if(strlen(PhotoDiodeDataToLoad)<3)
+		PhotoDiodeDataToLoad="Photodiode"
+	endif
+	
+	
+	
+	
+	setDataFolder OldDf
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Window NI1_RSoXSMainPanel() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(464,54,908,469) as "RSoXS Data reduction panel"
+	SetDrawLayer UserBack
+	SetDrawEnv fstyle= 3,textrgb= (0,0,65535)
+	DrawText 70,31,"\\Zr125Controls for RSoXS Data reduction"
+	CheckBox UseRSoXSCodeModifications,pos={12.00,42.00},size={124.00,16.00},proc=NI1_RSoXSCheckProc,title="Use RSoXS modifications"
+	CheckBox UseRSoXSCodeModifications,variable= root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
+	Button FindI0DataFile,pos={219.00,35.00},size={182.00,23.00},proc=NI1_RSoXSButtonProc,title="Find I0 Data file"
+	Button FindI0DataFile,help={"Locate I0 containing text file and check teh content. "}
+	SetVariable PolarizationValue,pos={45.00,129.00},size={151.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="Polarization Value"
+	SetVariable PolarizationValue,help={"Polarization value, -1 reads from the file"}
+	SetVariable PolarizationValue,limits={0,inf,1},value= root:Packages:Nika_RSoXS:PolarizationValue
+	SetVariable ColumnNamesLineNo,pos={16.00,87.00},size={180.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="Line with Column Names"
+	SetVariable ColumnNamesLineNo,help={"No of column with names"}
+	SetVariable ColumnNamesLineNo,limits={0,inf,1},value= root:Packages:Nika_RSoXS:ColumnNamesLineNo
+	SetVariable OrderSorterValue,pos={41.00,107.00},size={155.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="Order Sorter Value"
+	SetVariable OrderSorterValue,help={"Order sorter value"}
+	SetVariable OrderSorterValue,limits={0,inf,1},value= root:Packages:Nika_RSoXS:OrderSorterValue
+	PopupMenu I0DataToLoad,pos={229.00,83.00},size={167.00,23.00},bodyWidth=100,proc=NI1_RSoXSPopMenuProc,title="I0 data to load"
+	PopupMenu I0DataToLoad,help={"Which column contains I0 data?"}
+	PopupMenu I0DataToLoad,mode=1,popvalue="AI 3 Izero",value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
+	PopupMenu PhotoDiodeDatatoLoad,pos={214.00,110.00},size={183.00,23.00},bodyWidth=100,proc=NI1_RSoXSPopMenuProc,title="Diode data to load"
+	PopupMenu PhotoDiodeDatatoLoad,help={"Which Column contains diode data?"}
+	PopupMenu PhotoDiodeDatatoLoad,mode=1,popvalue="Photodiode",value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
+	SetVariable PhotoDiodeOffset,pos={44.00,148.00},size={152.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="Photodiode offset"
+	SetVariable PhotoDiodeOffset,help={"Diode offset intensity - dark current"}
+	SetVariable PhotoDiodeOffset,limits={0,inf,1},value= root:Packages:Nika_RSoXS:PhotoDiodeOffset
+	SetVariable I0Offset,pos={85.00,168.00},size={111.00,15.00},bodyWidth=70,proc=NI1_RSoXSSetVarProc,title="I0 offset"
+	SetVariable I0Offset,help={"I0 offset intensity - dark current"}
+	SetVariable I0Offset,limits={0,inf,1},value= root:Packages:Nika_RSoXS:I0Offset
+	Button LoadI0Data,pos={222.00,153.00},size={174.00,29.00},proc=NI1_RSoXSButtonProc,title="Load and display I0 data"
+	Button LoadI0Data,help={"This will read I0 data from the file and display a graph. It overwrtites any prior I0 data. "}
+	SetVariable I0FileNamePath,pos={19.00,63.00},size={385.00,15.00},bodyWidth=351,disable=2,proc=NI1_RSoXSSetVarProc,title="I0 file: "
+	SetVariable I0FileNamePath,help={"No of column with names"},frame=0
+	SetVariable I0FileNamePath,limits={0,inf,1},value= root:Packages:Nika_RSoXS:I0FileNamePath,noedit= 1
+EndMacro
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			if(stringmatch(cba.ctrlName,"UseRSoXSCodeModifications"))
+				//do what needs to be done when we are using this code...
+				if(checked)
+					NI1_RSoXSConfigureNika()
+				endif
+			endif
+			
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+			if(stringMatch(sva.ctrlName,"ColumnNamesLineNo"))
+					//do something
+			endif
+			if(stringMatch(sva.ctrlName,"OrderSorterValue"))
+					//do something
+			endif
+			if(stringMatch(sva.ctrlName,"PolarizationValue"))
+					//do something
+			endif
+			if(stringMatch(sva.ctrlName,"PhotoDiodeOffset"))
+					//do something
+			endif
+			if(stringMatch(sva.ctrlName,"I0Offset"))
+					//do something
+			endif
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(StringMatch(ba.ctrlName,"FindI0DataFile"))
+				//FInd the I0 text file. 
+				NI1_RSoXSFindI0File()
+			endif
+			if(StringMatch(ba.ctrlName,"LoadI0Data"))
+				//FInd the I0 text file. 
+				NI1_RSoXSLoadI0()
+			endif
+
+
+
+
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			if(Stringmatch(pa.ctrlname,"I0DataToLoad"))
+				SVAR I0DataToLoad=root:Packages:Nika_RSoXS:I0DataToLoad
+				I0DataToLoad= popStr
+			
+			endif
+			if(Stringmatch(pa.ctrlname,"PhotoDiodeDatatoLoad"))
+				SVAR PhotoDiodeDatatoLoad = root:Packages:Nika_RSoXS:PhotoDiodeDatatoLoad
+				PhotoDiodeDatatoLoad = popStr
+			endif
+
+
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSConfigureNika()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+
+//				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
+//				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
+				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
+//				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
+//				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
+//				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
+//				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+//				NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
+//				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
+				NVAR UseDarkField = root:Packages:Convert2Dto1D:UseDarkField
+				NVAR UseSampleMeasTime = root:Packages:Convert2Dto1D:
+				
+				UseSampleMeasTime=1
+				UseDarkField = 1
+//				UseSampleThickness = 1			
+//				UseSampleTransmission = 1
+//				UseEmptyField = 1
+				UseI0ToCalibrate = 1
+//				DoGeometryCorrection = 1
+//				UseMonitorForEf = 1
+//				UseSampleTransmFnct = 1
+				UseSampleMonitorFnct = 1
+//				UseEmptyMonitorFnct = 1
+//				UseSampleThicknFnct = 1 
+
+				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
+				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
+				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
+				
+//				SampleTransmFnct = "NI1_9IDCSFIndTransmission"
+				SampleMonitorFnct = "NI1_RSoXSFindCorrectionFactor"
+//				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
+//				SampleThicknFnct = "NI1_9IDCSFindThickness"
+
+end
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSCopyDarkOnImport()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Wave/Z DarkFieldData=root:Packages:Convert2Dto1D:DarkFieldData
+	if(WaveExists(DarkFieldData))
+		string oldNote=note(DarkFieldData)
+		variable ExposureTime = NumberByKey("EXPOSURE", OldNote , "=" , ";")
+		Duplicate/O DarkFieldData, $("DarkFieldData_"+ReplaceString(".", num2str(ExposureTime),"p"))
+		print "Imported Dark field and stored as :"+("DarkFieldData_"+ReplaceString(".", num2str(ExposureTime),"p"))
+	else
+		abort "Dark data to store do not exist"
+	endif
+
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSRestoreDarkOnImport()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Wave CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
+	string SampleNote=note(CCDImageToConvert)
+	variable SampleTime=NumberByKey("EXPOSURE", SampleNote , "=" , ";")
+	string ExpectedDarkname="DarkFieldData_"+ReplaceString(".", num2str(SampleTime),"p")
+	Wave/Z DarkFieldData=$("root:Packages:Convert2Dto1D:"+ExpectedDarkname)
+	if(WaveExists(DarkFieldData))
+		Duplicate/O DarkFieldData, $("DarkFieldData")
+		//string oldNote=note(DarkFieldData)
+		//variable ExposureTime = NumberByKey("EXPOSURE", OldNote , "=" , ";")
+		//Duplicate/O DarkFieldData, $("DarkFieldData_"+ReplaceString(".", num2str(ExposureTime),"p"))
+		print "Restored Dark field from file : "+ExpectedDarkname
+	else
+		abort "Dark data with needed Exposure time : "+num2str(SampleTime)+" do not exist"
+	endif
+
+end
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function NI1_RSoXSLoadHeaderValues()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Wave CCDImageToConvert = root:Packages:Convert2Dto1D:CCDImageToConvert
+	string SampleNote=note(CCDImageToConvert)
+	variable SampleTime=NumberByKey("EXPOSURE", SampleNote , "=" , ";")
+	variable Energy=NumberByKey("Beamline Energy", SampleNote , "=" , ";")
+	variable Wavelength=12.3984/(Energy/1000)
+	NVAR WV = root:Packages:Convert2Dto1D:Wavelength
+	NVAR En = root:Packages:Convert2Dto1D:XrayEnergy
+	En= Energy/1000
+	Wv= Wavelength
+	NVAR SampleMeasurementTime = root:Packages:Convert2Dto1D:SampleMeasurementTime
+	SampleMeasurementTime = SampleTime 
+end
+
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+
+
+
+
+
 // TPA/XML  note support is here
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

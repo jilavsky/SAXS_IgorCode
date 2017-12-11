@@ -1,6 +1,7 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.11
+#pragma version 1.12
 
+constant SmoothBlankForUSAXS = 1
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 Added smooth R data option. 
 //1.11 Modifed way the range for fitting is found to handle NaNs in PD_Intensity
 //1.10 added finding Qmin from FWHM of the sample peak, modified handling cases when only 1 crossing for peak fitting found. 
 //1.09 removed border points to reange changes in IN3_CalculateRWaveIntensity() to try to fix problems with stickying poitns at low-q values. 
@@ -19,6 +21,11 @@
 //1.03 added pinDiode tranmission
 //1.02 updated to use 	I0AmpGain			
 //1.01 updated IN3_calculateRwaveQvec to enable analysis of scans down (as usually) or up (as needed for GIUSAXS)
+constant	RwaveSmooth1time = 0.01
+constant	RwaveSmooth2time = 0.01
+constant	RwaveSmooth3time = 0.03
+constant	RwaveSmooth4time = 0.3
+constant	RwaveSmooth5time = 0.6
 
 
 Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specified point
@@ -48,9 +55,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 		IN3_calculateRwaveQvec()
 		IN3_CalculateRdata()
 	endif
-	if(StepFrom<=3 && !IsBlank)
-			// calculate transmission (can be done, we have the data now) and scale the data to it... 
-		//IN3_CalcSampleWeightOrThickness()
+	if(StepFrom<=3)
 	endif
 	if(StepFrom<=4 && !IsBlank)
 	// subtract sample and Blank to create SMR data...
@@ -77,6 +82,73 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 		endif
 	endif
 	UserSavedData = 0
+	setDataFolder OldDf	
+end
+
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+Function IN3_SmoothRData()
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Indra3
+	Wave Intensity= root:Packages:Indra3:R_Int
+	Wave Qvector= root:Packages:Indra3:Qvec
+	Wave PD_range = root:Packages:Indra3:PD_range
+	Wave R_Error = root:Packages:Indra3:R_Error
+	Wave MeasTime = root:Packages:Indra3:MeasTime
+	Wave PD_range = root:Packages:Indra3:PD_range
+	NVAR SmoothRCurveData=SmoothRCurveData
+	if(SmoothRCurveData)
+		//smooth Blank_R using smoothng times for different ranges. 
+		variable tmpTime, StartPoints
+		variable EndPoints, QrangeIntg, midPoint, startX, endX
+		Duplicate /Free  Intensity, TempIntLog
+		TempIntLog = log(Intensity)
+		Duplicate/Free TempIntLog, SmoothIntensity
+		variable i
+		For(i=40;i<numpnts(Intensity);i+=1)
+			if(PD_range[i]==1)
+				tmpTime = RwaveSmooth1time
+			elseif(PD_range[i]==2)
+				tmpTime = RwaveSmooth2time
+			elseif(PD_range[i]==3)
+				tmpTime = RwaveSmooth3time
+			elseif(PD_range[i]==4)
+				tmpTime = RwaveSmooth4time
+			else
+				tmpTime = RwaveSmooth5time
+			endif	
+			if(MeasTime[i]>tmpTime)		//no need to smooth
+				SmoothIntensity[i] = TempIntLog[i]
+			else //need to smooth
+				//somehow we need to stay within one range also... 
+				StartPoints = ceil(tmpTime/MeasTime[i])+1
+				EndPoints = StartPoints
+				if(i+EndPoints>numpnts(Intensity))
+					EndPoints = numpnts(Intensity) - i
+				endif
+				if((PD_range[i-StartPoints]!=PD_range[i])||(PD_range[i+EndPoints]!=PD_range[i]))
+					//range change, do not average, use line fitting to get the point... 
+					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
+					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+					CurveFit/Q line tempR /X=tempQ 
+					Wave W_coef
+					SmoothIntensity[i] = W_coef[0]+W_coef[1]*Qvector[i]
+					R_Error[i]=R_Error[i]/3
+				else
+					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
+					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
+					startX =  tempQ[0] 
+					endX =  tempQ[numpnts(tempQ)-1]
+					SmoothIntensity[i] = areaXY(tempQ, tempR, startX,endX)
+					SmoothIntensity[i] /= (endX - startX)
+					R_Error[i]=R_Error[i]/3
+				endif
+			endif	
+		endfor
+		Intensity = 10^SmoothIntensity
+	endif
 	setDataFolder OldDf	
 end
 
