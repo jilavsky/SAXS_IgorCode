@@ -189,13 +189,15 @@ Function NI1_RSoXSFindNormalFactor(SampleName)
 	SVAR I0DataToLoad = root:Packages:Nika_RSoXS:I0DataToLoad
 	I0DataToLoad = ReplaceString("_", I0DataToLoad, " ")
 	variable SampleI0 = NumberByKey(I0DataToLoad, OldNote , "=" , ";")
+	variable SampleExposure = NumberByKey("EXPOSURE", OldNote , "=" , ";")
+	print "Sample I0 value is = "+num2str(SampleI0)
 	Wave/Z CorrectionFactor=$("root:Packages:Nika_RSoXS:CorrectionFactor_pol"+num2str(PolarizationLocal))
 	Wave/Z Beamline_Energy=$("root:Packages:Nika_RSoXS:Beamline_Energy_pol"+num2str(PolarizationLocal))
 	if(!WaveExists(Beamline_Energy)||!WaveExists(CorrectionFactor))
 		abort "Did not find Correction factor values, cannot continue"
 	endif
-	variable result = SampleI0*CorrectionFactor[BinarySearchInterp(Beamline_Energy, Energy )]
-	print "Read I0 from image and Correction factor from file : CorrectionFactor_pol"+num2str(PolarizationLocal)+"  and got value = "+num2str(result)
+	variable result = SampleExposure*SampleI0*CorrectionFactor[BinarySearchInterp(Beamline_Energy, Energy )]
+	print "Read Exposure time and I0 from image and Correction factor from file : CorrectionFactor_pol"+num2str(PolarizationLocal)+"  and got value = "+num2str(result)
 	return result
 end
 //************************************************************************************************************
