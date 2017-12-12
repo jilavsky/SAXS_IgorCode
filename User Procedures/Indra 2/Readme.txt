@@ -12,7 +12,8 @@ Revision history:
 _____________________________________________________________________________________
 1.94
 Converted all procedure files to UTF8 to prevent text encoding issues. 
-Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
+Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
+Added ability to smooth R_Int data - suitabel mostly for Blank where it removes noise from the blank. Should reduce noise of the USAXS data. 
 
 1.93 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 

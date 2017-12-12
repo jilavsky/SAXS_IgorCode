@@ -153,9 +153,28 @@ end
 
 
 //************************************************************************************************************
-//************************************************************************************************************
-//************************************************************************************************************
 Function NI1_RSoXSFindCorrectionFactor(SampleName)
+	string sampleName
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(w2D))
+		Abort "Image file not found "  
+	endif
+	string OldNOte=note(w2D)
+	//Mono Energy
+
+	//root:Packages:Convert2Dto1D:CorrectionFactor
+	variable Energy = NumberByKey("Mono Energy", OldNote , "=" , ";")
+	variable result = 10/Energy
+	print "Set Calibration Constant to 10/energy = "+num2str(result)
+	return result
+end
+
+
+//************************************************************************************************************
+//************************************************************************************************************
+Function NI1_RSoXSFindNormalFactor(SampleName)
 	string sampleName
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -167,14 +186,16 @@ Function NI1_RSoXSFindCorrectionFactor(SampleName)
 	//Mono Energy
 	variable Energy = NumberByKey("Mono Energy", OldNote , "=" , ";")
 	variable PolarizationLocal = NumberByKey("EPU Polarization", OldNote , "=" , ";")
-	//print Energy
+	SVAR I0DataToLoad = root:Packages:Nika_RSoXS:I0DataToLoad
+	I0DataToLoad = ReplaceString("_", I0DataToLoad, " ")
+	variable SampleI0 = NumberByKey(I0DataToLoad, OldNote , "=" , ";")
 	Wave/Z CorrectionFactor=$("root:Packages:Nika_RSoXS:CorrectionFactor_pol"+num2str(PolarizationLocal))
 	Wave/Z Beamline_Energy=$("root:Packages:Nika_RSoXS:Beamline_Energy_pol"+num2str(PolarizationLocal))
 	if(!WaveExists(Beamline_Energy)||!WaveExists(CorrectionFactor))
 		abort "Did not find Correction factor values, cannot continue"
 	endif
-	variable result = CorrectionFactor[BinarySearchInterp(Beamline_Energy, Energy )]
-	print "Read Correction factor from file : CorrectionFactor_pol"+num2str(PolarizationLocal)+"  and got value = "+num2str(result)
+	variable result = SampleI0*CorrectionFactor[BinarySearchInterp(Beamline_Energy, Energy )]
+	print "Read I0 from image and Correction factor from file : CorrectionFactor_pol"+num2str(PolarizationLocal)+"  and got value = "+num2str(result)
 	return result
 end
 //************************************************************************************************************
@@ -253,7 +274,7 @@ Window NI1_RSoXSMainPanel() : Panel
 	SetVariable OrderSorterValue,limits={0,inf,1},value= root:Packages:Nika_RSoXS:OrderSorterValue
 	PopupMenu I0DataToLoad,pos={229.00,83.00},size={167.00,23.00},bodyWidth=100,proc=NI1_RSoXSPopMenuProc,title="I0 data to load"
 	PopupMenu I0DataToLoad,help={"Which column contains I0 data?"}
-	PopupMenu I0DataToLoad,mode=1,popvalue="AI 3 Izero",value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
+	PopupMenu I0DataToLoad,mode=1,popvalue="AI_3_Izero",value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
 	PopupMenu PhotoDiodeDatatoLoad,pos={214.00,110.00},size={183.00,23.00},bodyWidth=100,proc=NI1_RSoXSPopMenuProc,title="Diode data to load"
 	PopupMenu PhotoDiodeDatatoLoad,help={"Which Column contains diode data?"}
 	PopupMenu PhotoDiodeDatatoLoad,mode=1,popvalue="Photodiode",value= #"root:Packages:Nika_RSoXS:I0ColumnLabels"
@@ -418,8 +439,8 @@ Function NI1_RSoXSConfigureNika()
 //				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
 //				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
-//				NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
-//				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
+				NVAR UseSampleCorrectFnct = root:Packages:Convert2Dto1D:UseSampleCorrectFnct
+				NVAR UseCorrectionFactor = root:Packages:Convert2Dto1D:UseCorrectionFactor
 				NVAR UseDarkField = root:Packages:Convert2Dto1D:UseDarkField
 				NVAR UseSampleMeasTime = root:Packages:Convert2Dto1D:UseSampleMeasTime
 				
@@ -427,8 +448,16 @@ Function NI1_RSoXSConfigureNika()
 				SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
 				DataFileExtension="FITS"
 				BlankFileExtension="FITS"
+				DoWIndow NI1A_Convert2Dto1DPanel
+				if(V_Flag)
+					SVAR ListOfKnownExtensions = root:Packages:Convert2Dto1D:ListOfKnownExtensions
+					PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
+					PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, mode=WhichListItem(DataFileExtension, ListOfKnownExtensions)+1
+				endif
 				
-				UseSampleMeasTime=1
+				UseSampleCorrectFnct = 1
+				UseCorrectionFactor = 1
+				UseSampleMeasTime=0
 				UseDarkField = 1
 //				UseSampleThickness = 1			
 //				UseSampleTransmission = 1
@@ -441,13 +470,13 @@ Function NI1_RSoXSConfigureNika()
 //				UseEmptyMonitorFnct = 1
 //				UseSampleThicknFnct = 1 
 
-				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+				SVAR SampleCorrectFnct = root:Packages:Convert2Dto1D:SampleCorrectFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 				SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
 				
-//				SampleTransmFnct = "NI1_9IDCSFIndTransmission"
-				SampleMonitorFnct = "NI1_RSoXSFindCorrectionFactor"
+				SampleCorrectFnct = "NI1_RSoXSFindCorrectionFactor"
+				SampleMonitorFnct = "NI1_RSoXSFindNormalFactor"
 //				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
 //				SampleThicknFnct = "NI1_9IDCSFindThickness"
 
