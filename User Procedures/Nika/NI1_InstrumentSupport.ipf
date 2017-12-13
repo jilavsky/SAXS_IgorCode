@@ -436,7 +436,7 @@ Function NI1_RSoXSConfigureNika()
 //				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
 //				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
 				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
-//				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
+				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
 //				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
 //				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
 				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
@@ -445,6 +445,8 @@ Function NI1_RSoXSConfigureNika()
 				NVAR UseCorrectionFactor = root:Packages:Convert2Dto1D:UseCorrectionFactor
 				NVAR UseDarkField = root:Packages:Convert2Dto1D:UseDarkField
 				NVAR UseSampleMeasTime = root:Packages:Convert2Dto1D:UseSampleMeasTime
+				NVAR PixelSizeX = root:Packages:Convert2Dto1D:PixelSizeX
+				NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
 				
 				SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
 				SVAR BlankFileExtension=root:Packages:Convert2Dto1D:BlankFileExtension
@@ -457,6 +459,8 @@ Function NI1_RSoXSConfigureNika()
 					PopupMenu Select2DDataType,win=NI1A_Convert2Dto1DPanel, mode=WhichListItem(DataFileExtension, ListOfKnownExtensions)+1
 				endif
 				
+				PixelSizeX = 0.027
+				PixelSizeY = 0.027
 				UseSampleCorrectFnct = 1
 				UseCorrectionFactor = 1
 				UseSampleMeasTime=0
@@ -465,7 +469,7 @@ Function NI1_RSoXSConfigureNika()
 //				UseSampleTransmission = 1
 //				UseEmptyField = 1
 				UseI0ToCalibrate = 1
-//				DoGeometryCorrection = 1
+				DoGeometryCorrection = 1
 //				UseMonitorForEf = 1
 //				UseSampleTransmFnct = 1
 				UseSampleMonitorFnct = 1
