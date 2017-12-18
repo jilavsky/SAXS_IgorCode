@@ -2818,7 +2818,7 @@ Function NI1A_LoadParamsUsingFncts(SelectedFileToLoad)
 		NVAR/Z UseRSoXSCodeModifications=root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
 		if(NVAR_Exists(UseRSoXSCodeModifications))
 			if(UseRSoXSCodeModifications)
-					Execute("NI1_RSoXSRestoreDarkOnImport()")
+					NI1_RSoXSRestoreDarkOnImport()
 			endif
 		endif
 		//this has restored proper Dark exposure time data for RSoXS ALS support. 
@@ -3124,7 +3124,7 @@ Function NI1A_LoadEmptyOrDark(EmptyOrDark)
 	//this is modification needed for RSoXS data processing
 	NVAR/Z UseRSoXSCodeModifications = root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
 	if(NVAR_Exists(UseRSoXSCodeModifications)&&StringMatch(NewWaveName, "DarkFieldData"))
-		Execute("NI1_RSoXSCopyDarkOnImport()")		//this guarrantees compile if function not present. 
+		NI1_RSoXSCopyDarkOnImport()		
 	endif
 
 

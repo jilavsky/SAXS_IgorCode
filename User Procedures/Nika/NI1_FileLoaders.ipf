@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.48
+#pragma version=2.49
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.49 MOdified NI1_MainListBoxProc to allow to easily remove "Blank" and Empty - and unmatch them... 
 //2.48 added ALS RXoXS instrument support.
 //2.47 removed DoubleClickConverts, not needed anymore. 
 //2.46 improve print message fro Nexus when multi dimensional input ddata are used. 
@@ -1348,7 +1349,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	NVAR/Z UseRSoXSCodeModifications=root:Packages:Nika_RSoXS:UseRSoXSCodeModifications
 	if(NVAR_Exists(UseRSoXSCodeModifications))
 		if(UseRSoXSCodeModifications&&stringmatch(NewWaveName,"CCDImageToConvert"))
-				Execute("NI1_RSoXSLoadHeaderValues()")
+				NI1_RSoXSLoadHeaderValues()
 		endif
 	endif
 	//this has restored proper Dark exposure time data for RSoXS ALS support. 
@@ -2709,8 +2710,9 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 		case 1:
 			if (lba.eventMod & 0x10)	// rightclick
 				// list of items for PopupContextualMenu
-				items = "Refresh Content;Select All;Deselect All;Sort;Sort2;Sort _001;Invert Sort _001;Reverse Sort;Reverse Sort2;"	
+				items = "Refresh Content;Select All;Deselect All;Sort;Sort2;Sort _001;Invert Sort _001;Reverse Sort;Reverse Sort2;Hide \"Blank\";Hide \"Empty\";Remove Match;"	
 				PopupContextualMenu items
+				SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
 				// V_flag is index of user selected item
 				switch (V_flag)
 					case 1:	// "Refresh Content"
@@ -2757,6 +2759,18 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 						FIlesSortOrder = 6
 //						Execute("PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(root:Packages:Convert2Dto1D:FIlesSortOrder+1),value= \"None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;\"")
 						PopupMenu FIlesSortOrder,win=NI1A_Convert2Dto1DPanel, mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001.;Invert_001;Invert Sort;Invert Sort2;"
+						NI1A_UpdateDataListBox()	
+						break;
+					case 10:	// "Hide mathicng Blank"
+						SampleNameMatchStr="^((?!(?i)Blank).)*$"
+						NI1A_UpdateDataListBox()	
+						break;
+					case 11:	// "Hide mathicng Blank"
+						SampleNameMatchStr="^((?!(?i)Empty).)*$"
+						NI1A_UpdateDataListBox()	
+						break;
+					case 12:	// "Hide mathicng Blank"
+						SampleNameMatchStr=""
 						NI1A_UpdateDataListBox()	
 						break;
 					endswitch

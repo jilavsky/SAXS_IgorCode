@@ -77,7 +77,7 @@ Function IR2D_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR2D_ControlPanel", IR2DversionNumber))
 			DoAlert /T="The Diffraction tool panel was created by old version of Irena " 1, "Diffraction tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR2D_MainSmallAngleDiff()")
+				IR2D_MainSmallAngleDiff()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2D_InitializeSAD()					//this may be OK now... 
 			endif

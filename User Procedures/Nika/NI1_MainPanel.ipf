@@ -124,7 +124,7 @@ Function NI1A_MainCheckVersion()
 		if(!NI1_CheckPanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber))
 			DoAlert /T="The Nika main panel was created by old version of Nika " 1, "Nika needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("NI1A_Convert2Dto1DMainPanel()")
+				NI1A_Convert2Dto1DMainPanel()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				NI1A_Initialize2Dto1DConversion()
 			endif
@@ -145,6 +145,10 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		IN2G_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
 		IN2G_ResetPanelSize(panelName,1)
+		STRUCT WMWinHookStruct s
+		s.eventcode=6
+		s.winName=panelName
+		IN2G_PanelResizePanelSize(s)
 	endif
 end 
 

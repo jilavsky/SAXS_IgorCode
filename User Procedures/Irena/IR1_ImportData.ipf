@@ -102,7 +102,7 @@ Function IR1I_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
 			DoAlert /T="The ASCII Import panel was created by old version of Irena " 1, "Import ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1I_ImportDataMain()")
+				IR1I_ImportSASASCIIDataMain()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1I_InitializeImportData()
 			endif
@@ -119,7 +119,7 @@ Function IR1I_MainCheckVersion2()
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2))
 			DoAlert /T="The non-SAS Import panel was created by old version of Irena " 1, "Import non-SAS may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1I_ImportOtherASCIIMain()")
+				IR1I_ImportOtherASCIIMain()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1I_InitializeImportData()
 			endif
@@ -364,7 +364,7 @@ Function IR1I_ImportDataFnct()
 			IR1I_CreateImportDataFolder(selectedFile)
 			KillWaves/Z TempIntensity, TempQvector, TempError
 			IR1I_ImportOneFile(selectedFile)
-					IR1I_ProcessImpWaves(selectedFile)		//this thing also creates new error waves, removes negative qs and intesities and does everything else
+			IR1I_ProcessImpWaves(selectedFile)		//this thing also creates new error waves, removes negative qs and intesities and does everything else
 			IR1I_RecordResults(selectedFile)
 			icount+=1
 		endif

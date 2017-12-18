@@ -1,14 +1,17 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.12
+#pragma version 1.13
 
 constant SmoothBlankForUSAXS = 1
+Constant Indra_PDIntBackFixScaleVmin=1.1
+Constant Indra_PDIntBackFixScaleVmax=0.2e-10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//1.13 Modfifed IN3_RemoveDropouts to work only when adropout starts at ranges 1-4. 
+//1.13 Tried to fix range 5 background oversubtraction by shifting data by needed Intensity up. Done in IN3_CalculateRWaveIntensity only when Intensity is negative due to Bckg5 subtraction
 //1.12 Added smooth R data option. 
 //1.11 Modifed way the range for fitting is found to handle NaNs in PD_Intensity
 //1.10 added finding Qmin from FWHM of the sample peak, modified handling cases when only 1 crossing for peak fitting found. 
@@ -97,10 +100,13 @@ Function IN3_SmoothRData()
 	Wave PD_range = root:Packages:Indra3:PD_range
 	Wave R_Error = root:Packages:Indra3:R_Error
 	Wave MeasTime = root:Packages:Indra3:MeasTime
-	Wave PD_range = root:Packages:Indra3:PD_range
 	NVAR SmoothRCurveData=SmoothRCurveData
 	if(SmoothRCurveData)
-		//smooth Blank_R using smoothng times for different ranges. 
+		//firs remove NaNs as this is really difficult to deal with...
+		Duplicate/Free PD_range, tmpPD_range
+		Duplicate/Free MeasTime, tmpMeasTime		
+		//IN2G_RemoveNaNsFrom5Waves(Intensity, Qvector,R_Error,tmpPD_range, tmpMeasTime)
+		//smooth Blank_R using smoothing times for different ranges. 
 		variable tmpTime, StartPoints
 		variable EndPoints, QrangeIntg, midPoint, startX, endX
 		Duplicate /Free  Intensity, TempIntLog
@@ -108,27 +114,27 @@ Function IN3_SmoothRData()
 		Duplicate/Free TempIntLog, SmoothIntensity
 		variable i
 		For(i=40;i<numpnts(Intensity);i+=1)
-			if(PD_range[i]==1)
+			if(tmpPD_range[i]==1)
 				tmpTime = RwaveSmooth1time
-			elseif(PD_range[i]==2)
+			elseif(tmpPD_range[i]==2)
 				tmpTime = RwaveSmooth2time
-			elseif(PD_range[i]==3)
+			elseif(tmpPD_range[i]==3)
 				tmpTime = RwaveSmooth3time
-			elseif(PD_range[i]==4)
+			elseif(tmpPD_range[i]==4)
 				tmpTime = RwaveSmooth4time
 			else
 				tmpTime = RwaveSmooth5time
 			endif	
-			if(MeasTime[i]>tmpTime)		//no need to smooth
+			if(tmpMeasTime[i]>tmpTime)		//no need to smooth
 				SmoothIntensity[i] = TempIntLog[i]
 			else //need to smooth
 				//somehow we need to stay within one range also... 
-				StartPoints = ceil(tmpTime/MeasTime[i])+1
+				StartPoints = ceil(tmpTime/tmpMeasTime[i])+1
 				EndPoints = StartPoints
 				if(i+EndPoints>numpnts(Intensity))
 					EndPoints = numpnts(Intensity) - i
 				endif
-				if((PD_range[i-StartPoints]!=PD_range[i])||(PD_range[i+EndPoints]!=PD_range[i]))
+				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
 					//range change, do not average, use line fitting to get the point... 
 					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
 					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
@@ -355,8 +361,8 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	//this will simply set border points to range changes nan and they should get later removed. 
 	//this is not set to remove points ONLY if we cahnge from higher gain to lower gain, not in the other direction
 	//OK, another incarnation of the error calculations...
-	Duplicate/O PD_Error,  A
-	Duplicate/O/Free PD_Error, SigmaUSAXSPD, SigmaPDwDC, SigmaRwave, SigmaMonitor, ScaledMonitor
+	Duplicate/Free PD_Error,  A
+	Duplicate/Free PD_Error, SigmaUSAXSPD, SigmaPDwDC, SigmaRwave, SigmaMonitor, ScaledMonitor
 	SigmaUSAXSPD=sqrt(USAXS_PD*(1+0.0001*USAXS_PD))		//this is our USAXS_PD error estimate, Poisson error + 1% of value
 	SigmaPDwDC=sqrt(SigmaUSAXSPD^2+(MeasTime*ErrorParameters[pd_range-1])^2)		//This should be measured error for background
 	SigmaPDwDC=SigmaPDwDC/(VToFFactor*LocalParameters[pd_range-1][0])
@@ -372,8 +378,15 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	endif
 	PD_error=SigmaRwave
 	KillWaves/Z LocalParameters , ErrorParameters
-//	KillWaves TempPD_Int
-//	KillWaves/Z SigmaUSAXSPD, SigmaPDwDC, SigmaMonitor, SigmaRwave, A
+
+	//fix oversubtraction of PD_Intensity here?
+	wavestats/Q PD_Intensity
+	if(V_min<0)
+		PD_Intensity+=Indra_PDIntBackFixScaleVmin*abs(V_min)+V_max*Indra_PDIntBackFixScaleVmax
+		//print "Fixed USAXS Range 5 background subtraction by Intensity = Intensity + "+num2str(1.05*abs(V_min)+V_max*1e-10)
+	endif
+
+
 	Duplicate/O PD_error, R_error
 	Duplicate/O PD_Intensity, R_Int
 	NVAR SampleTransmissionPeakToPeak=root:Packages:Indra3:SampleTransmissionPeakToPeak
@@ -381,6 +394,8 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 		SampleTransmissionPeakToPeak=1
 	endif
 	IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, PD_Intensity,PD_error)
+	
+	
 	R_Int = PD_Intensity * SampleTransmissionPeakToPeak
 	R_error = PD_error * SampleTransmissionPeakToPeak
 	//now remove dropouts if needed...
@@ -416,23 +431,26 @@ Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 			For(i=0;i<numpnts(W_FindLevels);i+=1)
 				DropoutIndex = W_FindLevels[i]
 			//	print "Found dropout at point number "+num2str(DropoutIndex)
-				tmpTime=RemoveDropoutsTime/2
-				j=DropoutIndex
-				totPnts=0
-				do
-					R_Int[j]=nan
-					tmpTime-=MeasTime[j]
-					j-=1
-					totPnts+=1
-				while(tmpTime>0)
-				tmpTime=RemoveDropoutsTime/2
-				j=DropoutIndex
-				do
-					R_Int[j]=nan
-					tmpTime-=MeasTime[j]
-					j+=1
-					totPnts+=1
-				while(tmpTime>0)
+			//only modify if this is at gain hignher than 5
+				if(PD_range[DropoutIndex-10]<5)
+					tmpTime=RemoveDropoutsTime/2
+					j=DropoutIndex
+					totPnts=0
+					do
+						R_Int[j]=nan
+						tmpTime-=MeasTime[j]
+						j-=1
+						totPnts+=1
+					while(tmpTime>0)
+					tmpTime=RemoveDropoutsTime/2
+					j=DropoutIndex
+					do
+						R_Int[j]=nan
+						tmpTime-=MeasTime[j]
+						j+=1
+						totPnts+=1
+					while(tmpTime>0)
+				endif
 			//	print "Removed "+Num2str(totPnts)+" around the found point at "+num2str(DropoutIndex)
 			endfor
 		endif

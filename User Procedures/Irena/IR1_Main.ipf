@@ -229,8 +229,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
 	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;"
-
-	
+ 
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
 	IN2G_CheckPlatformGUIFonts()
@@ -289,6 +288,10 @@ Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHoo
 			IN2G_PanelAppendSizeRecordNote(panelName)
 			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
 			IN2G_ResetPanelSize(panelName,1)
+			STRUCT WMWinHookStruct s
+			s.eventcode=6
+			s.winName=panelName
+			IN2G_PanelResizePanelSize(s)
 		endif
 	endif
 end

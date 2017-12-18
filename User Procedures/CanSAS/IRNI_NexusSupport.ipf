@@ -111,6 +111,12 @@ static Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddRe
 		if(AddResizeHookFunction==1)
 			IN2G_PanelAppendSizeRecordNote(panelName)
 			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+			IN2G_ResetPanelSize(panelName,1)
+			//Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
+			STRUCT WMWinHookStruct s
+			s.eventcode=6
+			s.winName=panelName
+			IN2G_PanelResizePanelSize(s)
 		endif
 	endif
 end
@@ -123,7 +129,7 @@ Function Nexus_MainCheckVersion()
 		if(!NI1_CheckPanelVersionNumber("NEXUS_ConfigurationPanel", NexusVersionNumber))
 			DoAlert /T="The Nexus configuration panel was created by old version of Nika " 1, "Nexus Config needs to be reopened to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("NEXUS_NikaCall(2)")
+				NEXUS_NikaCall(2)
 			else		//at least reinitialize the variables so we avoid major crashes...
 				NEXUS_Initialize(0)
 			endif

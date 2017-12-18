@@ -227,6 +227,10 @@ Function IN3_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		IN2G_PanelAppendSizeRecordNote(panelName)
 		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
 		IN2G_ResetPanelSize(panelName,1)		
+		STRUCT WMWinHookStruct s
+		s.eventcode=6
+		s.winName=panelName
+		IN2G_PanelResizePanelSize(s)
 	endif
 end
 //***********************************************************
@@ -917,48 +921,7 @@ Function IN2A_CalculateRWave(df, askForFactor)				//Recalculate the R wave in fo
 		PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0AmpGain)
 	else
 		PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0_gain)
-	endif
-	
-	//Fix for nonlinearity of the photodiode observed in August 2006
-	//removed 12/2013. This was wrong - this was bad tilt and it cannot be fixed this way anyway... 
-//		variable DataCollectedEpoch
-//		DataCollectedEpoch = NumberByKey("EPOCH", note(PD_Intensity)  ,"=" ,";")
-//		if (numtype(DataCollectedEpoch)!=0)
-//			DataCollectedEpoch = 1154542000
-//		endif
-//		//found correct number by comparing glassy carbon to be 1.095 - 1.105... measured by PD linearity 1.056
-//		//may be the right number is 1.056^2 = 1.115 ???
-//		//this is mystery. 
-//		if(DataCollectedEpoch > 1154542500 && DataCollectedEpoch < (1154542500 + 24*60*60*35))   //set for data with EPOCH between 
-//			NVAR/Z PowerLawCorrectionFactor=root:Packages:Indra3:PowerLawCorrectionFactor
-//			if(!NVAR_Exists(PowerLawCorrectionFactor))
-//				variable/g root:Packages:Indra3:PowerLawCorrectionFactor=1.13
-//				NVAR PowerLawCorrectionFactor=root:Packages:Indra3:PowerLawCorrectionFactor
-//			endif
-//			variable PowerLawCorrectionFactorL=PowerLawCorrectionFactor
-//			if(askForFactor)
-//				Prompt PowerLawCorrectionFactorL, "Diode linearity correction exponent"
-//				DoPrompt "Data in August 2006 may have problem of diode non linearity, check exponent",  PowerLawCorrectionFactorL
-//				if(V_Flag==0)
-//					PowerLawCorrectionFactor=PowerLawCorrectionFactorL
-//				else
-//					PowerLawCorrectionFactor=0
-//					abort
-//				endif
-//			endif
-//			if(PowerLawCorrectionFactor>0.9 && PowerLawCorrectionFactor<1.2)
-//					//correct PD_Intensity 
-//					//according to Andrew (8/10/2006) the corrected intensity is:
-//					// Icorrected = (Imeasured/Imax)^(1/ PowerLawCorrectionFactor) * Imax
-//					wavestats/Q PD_Intensity
-//					PD_Intensity = ((PD_Intensity/V_max)^(1/PowerLawCorrectionFactor)) * V_max
-//			else
-//					DoAlert 0, "Correction factor out of range, no correction applied"
-//			endif
-//		endif
-	
-	//end of the fix...
-	
+	endif	
 	//OK, another incarnation of the error calculations...
 	Duplicate/O PD_Error,  A
 	Duplicate/O/Free PD_Error, SigmaUSAXSPD, SigmaPDwDC, SigmaRwave, SigmaMonitor, ScaledMonitor

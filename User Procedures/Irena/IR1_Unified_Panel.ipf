@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.22
-Constant IR1AversionNumber=2.20
+Constant IR1AversionNumber=2.22
 
 
 //*************************************************************************\
@@ -99,7 +99,7 @@ Function IR1A_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber))
 			DoAlert /T="The Unified fit panel was created by old version of Irena " 1, "Unified fit may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1A_UnifiedModel()")
+				IR1A_UnifiedModel()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1A_Initialize(0)					//this may be OK now... 
 			endif

@@ -72,7 +72,7 @@ Function IR2Pr_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR2Pr_ControlPanel", IR2PrversionNumber))
 			DoAlert /T="The Pair distance dist. panel was created by old version of Irena " 1, "Pair distance dist. may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR2Pr_MainPDDF()")
+				IR2Pr_MainPDDF()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2Pr_InitializePDDF()					//this may be OK now... 
 			endif

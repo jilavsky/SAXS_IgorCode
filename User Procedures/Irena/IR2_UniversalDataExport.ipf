@@ -56,7 +56,7 @@ Function IR2E_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("UnivDataExportPanel", IR2EversionNumber))
 			DoAlert /T="The ASCII Export panel was created by old version of Irena " 1, "Export ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR2E_UniversalDataExport()")
+				IR2E_UniversalDataExport()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2E_InitUnivDataExport()
 			endif

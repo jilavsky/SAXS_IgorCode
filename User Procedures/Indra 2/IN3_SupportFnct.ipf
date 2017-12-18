@@ -209,12 +209,15 @@ Function IN3_CalculateRdata()
 	endif
 	R_Int = PD_Intensity /SampleTransmissionPeakToPeak
 	R_Error = PD_Error /SampleTransmissionPeakToPeak
-	print "Before"
-	wavestats R_Int
-	
+	//wavestats/Q R_Int
+	//fix the oversubtracted background here? 
+	//if(V_min<0)
+	//	R_Int+=abs(1.05*V_min)
+	//endif
+
 	IN3_SmoothRData()
-	print "After"
-	wavestats R_Int
+
+	
 	setDataFolder OldDf	
 end
 //***********************************************************************************************************************************

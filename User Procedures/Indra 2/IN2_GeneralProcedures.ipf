@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.09
+#pragma version = 2.10
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -27,6 +27,7 @@ constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.10 Modifed startup panel controls to better handle rescaling panels on startup. 
 //2.09 fixed errro when both Nika and Irena check for update at the smae time and MeesageFromAuthor is already opened. 
 //2.08 Nika removed DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts as it is not needed anymore. 
 //2.07 ManualVersionNumber modifications for beta versions and release versions. 
@@ -1612,7 +1613,7 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop  = top//*moveConvFac
 			MoveRight = (left+OriginalWidth)//*moveConvFac
 			moveBottom = (top+OriginalHeight)//*moveConvFac
-			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+			MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1*moveConvFac
 			verScale = 1*moveConvFac
@@ -1622,7 +1623,7 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop  = top//*moveConvFac
 			MoveRight = (left+OriginalWidth)//*moveConvFac
 			moveBottom = (top+CurHeight)//*moveConvFac
-			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+			MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1*moveConvFac
 			verScale = CurHeight / (OriginalHeight)	*moveConvFac
@@ -1632,7 +1633,7 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop = top//*moveConvFac
 			MoveRight = (left+CurWidth)//*moveConvFac
 			moveBottom = (top+OriginalHeight)//*moveConvFac
-			MoveWindow moveLeft, MoveTop, MoveRight, moveBottom
+			MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
 		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = 1 *moveConvFac
 			horScale = curWidth/OriginalWidth*moveConvFac
@@ -1670,7 +1671,7 @@ Function IN2G_PanelResizePanelSize(s)
 		if(Strlen(SubwindowList)>0)
 			ListOfPanels+=SubwindowList
 		endif
-		controlslist = ControlNameList("", ";")
+		controlslist = ControlNameList(s.winName, ";")
 		For(i=0;i<ItemsInList(controlslist, ";");i+=1)
 			TmpNm = StringFromList(i, controlslist, ";")			
 			OrigCntrlV_left=NumberByKey(TmpNm+"Left", OrigInfo, ":", ";")
@@ -1681,13 +1682,13 @@ Function IN2G_PanelResizePanelSize(s)
 			NewCntrlV_top = OrigCntrlV_top * verScale
 			NewWidth = OrigWidth * horScale
 			NewHeight = OrigHeight * verScale
-			ModifyControl $(TmpNm) pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+			ModifyControl $(TmpNm) pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}, win=$(s.winName) 
 			//special cases...
-			ControlInfo $(TmpNm)
+			ControlInfo/W=$(s.winName) $(TmpNm)
 			if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
 				OrigBodyWidth=NumberByKey(TmpNm+"bodyWidth", OrigInfo, ":", ";")
 				if(numtype(OrigBodyWidth)==0)
-					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+					ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth, win=$(s.winName) 
 				endif
 			endif
 		endfor
@@ -1708,11 +1709,11 @@ Function IN2G_PanelResizePanelSize(s)
 					NewHeight = OrigHeight * verScale
 					ModifyControl $(TmpNm) win=$(tmpName1),pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
 					//special cases...
-					ControlInfo $(TmpNm)
+					ControlInfo/W=$(tmpName1) $(TmpNm)
 					if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
 						OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
 						if(numtype(OrigBodyWidth)==0)
-							ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth
+							ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth, win=$(tmpName1)
 						endif
 					endif
 				endfor
@@ -1774,8 +1775,14 @@ Function IN2G_ResetSizesForALlPanels(WindowProcNames)
 		PanelName = StringFromList(0,(StringFromList(i, WindowProcNames, ";")+"="),"=")
 		DoWindow $PanelName 
 		if(V_Flag)
-			Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
-			//print "Restored size"  
+			//Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
+			//debugger
+			IN2G_ResetPanelSize(PanelName, 0)
+			DoWIndow/F $(PanelName)
+			STRUCT WMWinHookStruct s
+			s.eventcode=6
+			s.winName=panelName
+			IN2G_PanelResizePanelSize(s)
 		endif 
 	endfor
 end

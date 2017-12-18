@@ -52,7 +52,7 @@ Function IR1V_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1V_ControlPanel", IRVversionNumber))
 			DoAlert /T="The Fractals panel was created by old version of Irena " 1, "Fractals tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1V_FractalsModel()")
+				IR1V_FractalsModel()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1V_InitializeFractals()					//this may be OK now... 
 			endif

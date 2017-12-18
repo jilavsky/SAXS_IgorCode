@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.94
+#pragma version = 1.95
 #pragma IgorVersion=7.00
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 
 //1.93 added Desmaering as optional data reduction step. 
 //1.92  removed unused functions
@@ -32,8 +33,8 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=1.87
-Constant IN3_NewReduceDataMainVersionNum=1.94
+Constant IN3_ReduceDataMainVersionNumber=1.95
+Constant IN3_NewReduceDataMainVersionNum=1.95
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -99,7 +100,7 @@ Function IN3_MainPanelNew()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(22.25,43.25,445,830) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
-	TitleBox Title title="\Zr210USAXS data reduction panel",pos={45,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
+	TitleBox Title title="\Zr210USAXS data reduction panel",pos={15,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={10,705},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
 	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={10,720},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 	//some local controls
@@ -115,7 +116,8 @@ Function IN3_MainPanelNew()
 	TitleBox Info1PanelProc, pos={10,108}
 	ListBox ListOfAvailableData,pos={3,123}, size={252,148}
 
-	Button GetHelp,pos={315,25},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetHelp,pos={315,10},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetReadme,pos={315,27},size={80,15}, proc=IN3_InputPanelButtonProc,title="Read me", help={"Open Read me short instructions"}
 		
 	CheckBox IsBlank,pos={265,113},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
@@ -547,7 +549,7 @@ Function IN3_USAXSDataRedCheckVersion()
 			DoAlert /T="The USAXS Data Reduction  panel was created by old version of Indra " 1, "USAXS Data Reduction needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWindow/K USAXSDataReduction
-				Execute/P("IN3_Main()")
+				IN3_Main()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IN3_Initialize()
 			endif
@@ -1013,6 +1015,8 @@ Function IN3_MainPanel()
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
 //	CheckBox RecalculateAutomatically,pos={220,25},size={90,14},proc=IN3_MainPanelCheckBox,title="Process Automatically"
 //	CheckBox RecalculateAutomatically,variable= root:Packages:Indra3:RecalculateAutomatically, help={"Check, if you want to process data automatically"}
+	Button GetHelp,pos={290,25},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetReadme,pos={290,42},size={80,15}, proc=IN3_InputPanelButtonProc,title="Read me", help={"Open Read me short instructions"}
 
 	//use general controls package, modify asnecessary
 	string AllowedUserTypes="USAXS_PD;"
@@ -1271,4 +1275,69 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IN3_GenerateReadMe()
+	Dowindow USAXSQuickManual
+	if (V_flag)
+		Dowindow/F USAXSQuickManual
+		abort
+	endif
+	String nb = "USAXSQuickManual"
+	NewNotebook/N=$nb/F=1/V=1/K=3/W=(464,45,1152,768) as "Read Me"
+	Notebook $nb defaultTab=36, magnification=150
+	Notebook $nb showRuler=1, rulerUnits=2, updating={1, 3600}
+	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",9,0,(0,0,0)}
+	Notebook $nb newRuler=Header, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",14,0,(0,0,0)}
+	Notebook $nb ruler=Header, text="Quick Manual for Indra 2 version of USAXS macros\r"
+	Notebook $nb ruler=Normal, text="This is version 1.90 of Indra macros, date: 2/20/2017\r"
+	Notebook $nb text="\r"
+	Notebook $nb text="Data reduction summary:\r"
+	Notebook $nb ruler=Normal; Notebook $nb  margins={0,35,468}
+	Notebook $nb text="1.\tImport data: menu \"USAXS\" - \"Import and Reduce USAXS data\". ", fStyle=1
+	Notebook $nb text="ONLY if you have Flyscan Nexus files as input", fStyle=-1, text=". ", fStyle=4, text="Most common"
+	Notebook $nb fStyle=-1
+	Notebook $nb text=". Opens GUI which can import data and process them at the same time. Follow procedure in step 3. \r"
+	Notebook $nb text="2.\tAlternative: \r"
+	Notebook $nb text="\ta.\tmenu \"USAXS\" - \"Other input methods\" - \"Import USAXS .... data\" - imports either Flyscan Nexus data,"
+	Notebook $nb text=" Step scan data from spec file or Osmic-Rigaku data. Opens separate GUI to import appropriate data type."
+	Notebook $nb text=" \r"
+	Notebook $nb text="\tb. \tmenu \"USAXS\" - \"Other input methods\" - \"Reduce data \"    This will open GUI panel which is used to "
+	Notebook $nb text="reduce data imported in step 2a. Follow procedure in step 3. \r"
+	Notebook $nb text="3.\tProcess data - FIRST you need instrumental curve  (\"Process as Blank\"). Save processed instrumental c"
+	Notebook $nb text="urve (Blank). With ", fStyle=1, text="correct", fStyle=-1, text=" Blank you can process samples. \r"
+	Notebook $nb text="\tIf you want absolute intensities, you will need to know the sample thickness at this time.  If you don'"
+	Notebook $nb text="t have that \tnow, you will need to repeat this procedure from this step. [NOTE: not exactly true, you ca"
+	Notebook $nb text="n calculate it, if you \tknow linear absorption coefficient]\r"
+	Notebook $nb text="\tIf we measured USAXS transmission (most likely) using pinDiode, it will be used automatically ("
+	Notebook $nb fStyle=4, text="MSAXS correction is not needed", fStyle=-1
+	Notebook $nb text=") If we did not measure pinDIode, may be you need to use MSAXS correction - but only if data are contami"
+	Notebook $nb text="nated by mulitple scattering in the main tool. Check with staff. \r"
+	Notebook $nb text="\tIf you use FlyScan, you may need to select FlyScan rebin to number of points...\r"
+	Notebook $nb text="\tFor regular samples - 200 - 300 points\r"
+	Notebook $nb text="\tFor Samples with monodispersed systems/diff peaks: more (up to 1000-2000) may be necessary\r"
+	Notebook $nb text="\tDo NOT produce needlesly too many points - data will take much more time to analyze.  \r"
+	Notebook $nb ruler=Normal, text="4.\tOther possible useful tools:\r"
+	Notebook $nb text="\tTo Desmear data you will need Irena package which contains the desmearing routine in \"Other tools\"\r"
+	Notebook $nb text="\t\"USAXS->USAXS Plotting tools\" - preferably use Irena \"Plotting tool I\"\r"
+	Notebook $nb text="\t\t\"Standard ....\"\t standard USAXS type plots (Int-Q, Porod plot, Guinier plot)\r"
+	Notebook $nb text="\t\t\"Basic ....\"\toffers wave variables most likely to be used in USAXS plots\r"
+	Notebook $nb text="\t\t\"Generic ....\"\tallows user to plot any available wave variables (only one for non-USAXS data)\r"
+	Notebook $nb ruler=Normal; Notebook $nb  margins={0,34,468}
+	Notebook $nb text="5.\tTo export data use Irena, data export tool. But if you need to export ASCII data, they should be desm"
+	Notebook $nb text="eared first, very likely... Keep that in mind. \r"
+	Notebook $nb ruler=Normal, text="\t\r"
+	Notebook $nb text="Suggestions: \r"
+	Notebook $nb text="a.\tSave Igor experiment once in a while.\r"
+	Notebook $nb text="b.\tDo not work with Igor files over an NFS network connection, first copy those files to a local disk.\r"
+	Notebook $nb text="c.\tUse automatic logging functions -  \r"
+	Notebook $nb text="\tmenu \"USAXS\" - \"Log in Notebook\" - \"Create logbook\" and \"Create Summary Notebook\". \r"
+	Notebook $nb text="\r"
+	Notebook $nb text="Make notes of any bugs and forward them to me. Make notes of any suggestions on changes in the wording o"
+	Notebook $nb text="f dialogs - I am opened to any reasonable changes....\r"
+end
 

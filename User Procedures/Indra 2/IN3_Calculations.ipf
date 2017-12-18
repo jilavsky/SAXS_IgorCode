@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.34
+#pragma version=1.35
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.35 modify the sleep between multiple USAXS data reductions in IN3_InputPanelButtonProc to be more user friendly
 //1.34 fixed which resulting waves are plotted to include M_DSM, DSM, M_SMR, and SMR waves in this order. 
 //1.33 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.32 changed main graph name and size is dynamic now. 
@@ -64,6 +65,14 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 	if(cmpstr(ctrlName,"GetHelp")==0)
 		//Open www manual with the right page
 		IN2G_OpenWebManual("Indra/DataReductionPanel.html")
+	endif
+	if(cmpstr(ctrlName,"GetReadme")==0)
+		Dowindow USAXSQuickManual
+		if (V_flag)
+			Dowindow/F USAXSQuickManual
+		else
+			IN3_GenerateReadMe()	
+		endif
 	endif
 
 	if (cmpstr(ctrlName,"SelectNextSampleAndProcess")==0)
@@ -140,9 +149,11 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 				UserSavedData=2
 				IN3_FixSaveData()
 				DoWIndow/F USAXSDataReduction
-				sleep/S ListProcDisplayDelay
 				UserSavedData=1
 				IN3_FixSaveData()
+				if(i<Items-1)
+					sleep/S/B/C=6/M="Delay "+num2str(ListProcDisplayDelay)+" seconds for user data review" ListProcDisplayDelay
+				endif
 			endif
 		endfor
 	endif

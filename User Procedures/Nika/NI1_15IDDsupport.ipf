@@ -65,7 +65,6 @@ Function NI1_9IDCConfigureNika()
 	NEXUS_Initialize(0)
 	NVAR NX_InputFileIsNexus = root:Packages:Irena_Nexus:NX_InputFileIsNexus
 	NX_InputFileIsNexus = 1
-	NI1_9IDCCreateHelpNbk()
 	//set some parameters here:
 	
 	setDataFOlder root:Packages:Convert2Dto1D:
@@ -118,10 +117,9 @@ Function NI1_9IDCConfigureNika()
 	if(V_Flag)
 		DoWindow /F NI1_9IDCConfigPanel
 	else
-		Execute("NI1_9IDCConfigPanel()")
+		NI1_9IDCConfigPanelFunction()
 	endif
 	AutopositionWindow/M=0 NI1_9IDCConfigPanel  
-	AutopositionWindow/M=1/r=NI1_9IDCConfigPanel  Instructions_9IDC
 	
 	setDataFolder OldDFf
 end
@@ -129,10 +127,10 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Window NI1_9IDCConfigPanel() : Panel
+Function NI1_9IDCConfigPanelFunction() : Panel
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(470,87,1016,439)/N=NI1_9IDCConfigPanel
-	//DoWindow/C NI1_9IDCConfigPanel
+	DoWindow/C NI1_9IDCConfigPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (16385,16388,65535)
 	DrawText 10,25,"9ID-C (or 15ID-D) Nexus file configuration"
@@ -147,14 +145,17 @@ Window NI1_9IDCConfigPanel() : Panel
 //	Checkbox BigSAXSSelection,pos={290,90},size={100,20}, variable=root:Packages:Convert2Dto1D:USAXSBigSAXSselector, proc=NI1_9IDCCheckProc
 //	Checkbox BigSAXSSelection, title ="15ID SAXS", help={"Use to configure Nika for SAXS"}
 
-	Button Open9IDCManual,pos={390,20},size={150,20},proc=NI1_9IDCButtonProc,title="Open manual"
+	Button Open9IDCManual,pos={430,5},size={100,20},proc=NI1_9IDCButtonProc,title="Open manual"
 	Button Open9IDCManual,help={"Open manual"}
-
+	Button OpenReadme9IDC,pos={430,25},size={100,20},proc=NI1_9IDCButtonProc,title="Open Instructions"
+	Button OpenReadme9IDC,help={"Open reademe with instructions"}
+	
+	NVAR ReadParametersFromEachFile = root:Packages:Convert2Dto1D:ReadParametersFromEachFile
 	Checkbox ReadParametersFromEachFile,pos={229,115},size={100,20}, variable=root:Packages:Convert2Dto1D:ReadParametersFromEachFile, proc=NI1_9IDCCheckProc
 	Checkbox ReadParametersFromEachFile, title ="Read Parameters from data files", help={"In this case we will read geometry values from each data file"}
 	Button ConfigureDefaultMethods,pos={29,115},size={150,20},proc=NI1_9IDCButtonProc,title="Set default settings"
 	Button ConfigureDefaultMethods,help={"Sets default methods for the data reduction at 9IDC (or 15IDD)"}
-	Button ConfigureWaveNoteParameters,pos={229,138},size={200,20},proc=NI1_9IDCButtonProc,title="Read geometry from wave note", disable=root:Packages:Convert2Dto1D:ReadParametersFromEachFile
+	Button ConfigureWaveNoteParameters,pos={229,138},size={200,20},proc=NI1_9IDCButtonProc,title="Read geometry from wave note", disable=ReadParametersFromEachFile
 	Button ConfigureWaveNoteParameters,help={"Sets default geometry values based on image currently loaded in the Nika package"}
 	SetVariable USAXSSlitLength, pos={29,175}, size={150,20}, proc=NI1_9IDCSetVarProc, title="Slit length", variable=root:Packages:Convert2Dto1D:USAXSSlitLength
 	SetVariable USAXSSlitLength,help={"USAXS slit length in 1/A"}
@@ -391,6 +392,9 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 			if (stringmatch("Open9IDCManual",ba.CtrlName))
 				NI1_Open9IDCManual()
 			endif
+			if (stringmatch("OpenReadme9IDC",ba.CtrlName))
+				NI1_9IDCCreateHelpNbk()
+			endif
 			if (stringmatch("ConfigureDefaultMethods",ba.CtrlName))
 				//first kill teh Nexus loader file in case we are using same name for SAXS and WAXS...
 				KillDataFolder/Z root:Packages:NexusImportTMP:
@@ -424,7 +428,25 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				if(isSAXS)
 					NI1_9IDCCreateSAXSPixMask()		
 					TitleBox LoadBlankWarning  win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank and set Slit legth; ... done   <<<<"
+					//force user to find Slit length oif needed
+					NVAR/Z DesmearData = root:Packages:Indra3:DesmearData
+					NVAR SAXSGenSmearedPinData = root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
+					if(NVAR_Exists(DesmearData))
+						if(DesmearData)
+							SAXSGenSmearedPinData =0 			//user is generating desmeared data, likely does not need smeared SAXS data
+						else
+							NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
+							USAXSSlitLength = NI1_9IDCFIndSlitLength()
+							NI1_9IDCSetLineWIdth()							
+						endif
+					else
+							NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
+							USAXSSlitLength = NI1_9IDCFIndSlitLength()
+							NI1_9IDCSetLineWIdth()							
+					endif
 				elseif(isWAXS)	
+					NVAR UseLineProfile= root:Packages:Convert2Dto1D:UseLineProfile		//uncheck just in case leftover from SAXS
+					UseLineProfile=0
 					NI1_9IDCWAXSBlankSUbtraction(1)				
 					NI1_9IDCCreateWAXSPixMask()	
 					TitleBox LoadBlankWarning  win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank; ... done   <<<<"
@@ -433,39 +455,10 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				//set user to Empty?Dasrk tab 
 				TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=3
 				NI1A_TabProc("NI1A_Convert2Dto1DPanel",3)
-				
-				//force user to find SLit length oif needed
-				NVAR/Z DesmearData = root:Packages:Indra3:DesmearData
-				NVAR SAXSGenSmearedPinData = root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
-				if(NVAR_Exists(DesmearData))
-					if(DesmearData)
-						SAXSGenSmearedPinData =0 			//user is generating desmeared data, likely does not need smeared SAXS data
-					else
-						NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
-						USAXSSlitLength = NI1_9IDCFIndSlitLength()
-						NI1_9IDCSetLineWIdth()							
-					endif
-				else
-						NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
-						USAXSSlitLength = NI1_9IDCFIndSlitLength()
-						NI1_9IDCSetLineWIdth()							
-				endif
-				
-							
-				
 			endif
 			if (stringmatch("ConfigureWaveNoteParameters",ba.CtrlName))
 				NI1_9IDCWaveNoteValuesNx()				
 			endif
-//			if (stringmatch("CreateBadPIXMASK",ba.CtrlName))
-//				NVAR isSAXS=root:Packages:Convert2Dto1D:USAXSSAXSselector
-//				NVAR isWAXS=root:Packages:Convert2Dto1D:USAXSWAXSselector
-//				if(isSAXS)
-//					NI1_9IDCCreateSAXSPixMask()		
-//				elseif(isWAXS)	
-//					NI1_9IDCCreateWAXSPixMask()	
-//				endif	
-//			endif
 			if (stringmatch("SetUSAXSSlitLength",ba.CtrlName))
 				NVAR USAXSSlitLength=root:Packages:Convert2Dto1D:USAXSSlitLength
 				USAXSSlitLength = NI1_9IDCFIndSlitLength()
@@ -2376,7 +2369,7 @@ Function NI1_9IDCCreateHelpNbk()
 		Notebook $nb text="n this on the YouTube channel or USAXS web site.   "
 		Notebook $nb selection={startOfFile, startOfFile }, findText={"I",1}
 	endif
-
+	AutopositionWindow/M=1/r=NI1_9IDCConfigPanel  Instructions_9IDC
 end
 
 //************************************************************************************************************

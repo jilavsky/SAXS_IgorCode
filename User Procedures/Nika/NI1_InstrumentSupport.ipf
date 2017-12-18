@@ -26,7 +26,7 @@ Function NI1_RSoXSCreateGUI()
 	if(V_Flag)
 		DoWIndow/F NI1_RSoXSMainPanel
 	else
-		Execute("NI1_RSoXSMainPanel()")
+		NI1_RSoXSMainPanelFnct()
 	endif
 end
 //************************************************************************************************************
@@ -255,9 +255,10 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Window NI1_RSoXSMainPanel() : Panel
+Function NI1_RSoXSMainPanelFnct() : Panel
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(464,54,908,469) as "RSoXS Data reduction panel"
+	NewPanel /K=1/W=(464,54,908,300) as "RSoXS Data reduction panel"
+	DoWIndow/C NI1_RSoXSMainPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fstyle= 3,textrgb= (0,0,65535)
 	DrawText 70,31,"\\Zr125Controls for RSoXS Data reduction"
@@ -309,6 +310,9 @@ Function NI1_RSoXSCheckProc(cba) : CheckBoxControl
 				//do what needs to be done when we are using this code...
 				if(checked)
 					NI1_RSoXSConfigureNika()
+					NI1_RSoXSGenerateHelpNbk()
+				else
+					KillWIndow/Z RSoXS_Instructions
 				endif
 			endif
 			
@@ -327,7 +331,62 @@ End
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
+Function NI1_RSoXSGenerateHelpNbk()
 
+	DoWIndow RSoXS_Instructions
+	if(V_Flag)
+		DoWIndow/F RSoXS_Instructions
+	else
+		String nb = "RSoXS_Instructions"
+		NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={2,1}/W=(455,300,1300,1000)
+		Notebook $nb defaultTab=36
+		Notebook $nb showRuler=1, rulerUnits=2, updating={1, 1}
+		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",11,0,(0,0,0)}
+		Notebook $nb ruler=Normal, fStyle=1, text="Basic user instructions for RSoXS Data reduction panel\r"
+		Notebook $nb fStyle=-1, text="\r"
+		Notebook $nb text="Setting up 'Main 2D to 1D conversion panel'\r"
+		Notebook $nb text="1) Select 'Use RSoXS modifications' on the 'RSoXS Data reduction panel'. This will initialize basic sett"
+		Notebook $nb text="ings for RSoXS data reduction. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="2) Load I0 reference by selecting 'Find I0 Data file' on the 'RSoXS Data reduction panel'. Navigate to t"
+		Notebook $nb text="he desired text file and double click to select. 'Line with Column Names' should automatically fill in t"
+		Notebook $nb text="o be 15 and the Polarization Value will be set to -1 (This will read the polarization from the I0 file u"
+		Notebook $nb text="nder the 'EPU Polarization' header. Otherwise you can manually set a value here). Select an I0 monitor t"
+		Notebook $nb text="o be used under 'I0 data to load' (Ai_3_Izero is the default) and the 'Diode data to load' will be autom"
+		Notebook $nb text="atically set as 'Photodiode'. Offsets for Photodiode and I0 energies are available for advanced users.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Select 'Load and display I0 data' to store the correction factor for a given polarization. Repeat with a"
+		Notebook $nb text="s many I0s as you require. Correction factors will be overwritten upon importing a new I0 with repeat po"
+		Notebook $nb text="larization value.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="3) On the 'Main 2D to 1D conversion panel' select Em/Dk and locate appropriate RSoXS data for dark backg"
+		Notebook $nb text="round subtraction. For a given data series, select a scan corresponding to each exposure time and click "
+		Notebook $nb text="'Load Dark Field.' When loading an image the exposure time will be read in the file header and matched w"
+		Notebook $nb text="ith an appropriate dark for subtraction.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="4) On the 'Main 2D to 1D conversion panel' click 'Select data path' and navigate to the folder containin"
+		Notebook $nb text="g RSoXS data. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Final user options before data reduction\r"
+		Notebook $nb text="From here, it is up to the user to decide on an appropriate mask, geometry, and sector averages for the "
+		Notebook $nb text="given file to be imported.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Creating a mask: Under the 'SAS 2D' menu select 'Create Mask' and follow instructions from the NIKA user"
+		Notebook $nb text=" manual. On the 'Main 2D to 1D conversion panel' be sure to select 'Use Mask' under the 'Mask' tab.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Beam center and geometry refinement: Under the 'SAS 2D' menu select 'Beam centering and geometry cor.' a"
+		Notebook $nb text="nd follow instructions from the NIKA user manual.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Sectors: On the 'Main 2D to 1D conversion panel' select 'Sect.' and check the box 'Use?' Basic data redu"
+		Notebook $nb text="ction will have the following boxes checked: 'Do Circular Average?', 'Create 1D graph', 'Store data in I"
+		Notebook $nb text="gor experiment', 'Overwrite Existing data if exist?', and 'Use input data name for output?'.\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Processing data\r"
+		Notebook $nb text="Finally, to process data: click 'Process sel, files individually', select one or more images in the list"
+		Notebook $nb text="box on the 'Main 2D to 1D conversion panel', and click 'Process image(s)'"
+		Notebook $nb selection={startOfFile, startOfFile }, findText={"",1}		
+	endif
+end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************

@@ -107,7 +107,7 @@ Function IN3_FlyScanCheckVersion()
 		if(!IN3_CheckPanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber))
 			DoAlert /T="The Fly Scan Import panel was created by old version of Indra " 1, "FlyScan Import needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IN3_FlyScanMain()")
+				IN3_FlyScanMain()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IN3_FlyScanInitializeImport()
 			endif

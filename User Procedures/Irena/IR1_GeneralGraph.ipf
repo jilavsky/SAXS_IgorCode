@@ -67,8 +67,7 @@ Function IR1P_GeneralPlotTool()
 		KillWIndow/Z $(StringFromList(i,ListOfWindowsToClose,";"))
 	endfor
 	IR1P_InitializeGenGraph()
-	//IR1_KillGraphsAndPanels()
-	Execute ("IR1P_ControlPanel()")
+	IR1P_ControlPanelFunc()
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber,1)
 
@@ -88,7 +87,8 @@ Function IR1P_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber))
 			DoAlert /T="The Ploting tool I panel was created by old version of Irena " 1, "Ploting tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1P_GeneralPlotTool()")
+				//Execute/P("IR1P_GeneralPlotTool()")
+				IR1P_GeneralPlotTool()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1P_InitializeGenGraph()
 			endif
@@ -103,9 +103,10 @@ end
 //**************************************************************************************
 
 
-Window IR1P_ControlPanel() 
+Function IR1P_ControlPanelFunc() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,402,690) as "General Plotting tool"
+	DoWIndow/C IR1P_ControlPanel
 	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,200},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
@@ -200,19 +201,22 @@ Window IR1P_ControlPanel()
 
 
 	//Axis ranges
-	
+	NVAR GraphLeftAxisMin = root:Packages:GeneralplottingTool:GraphLeftAxisMin
+	NVAR GraphLeftAxisMax = root:Packages:GeneralplottingTool:GraphLeftAxisMax
+	NVAR GraphBottomAxisMin = root:Packages:GeneralplottingTool:GraphBottomAxisMin
+	NVAR GraphBottomAxisMax = root:Packages:GeneralplottingTool:GraphBottomAxisMax
 	CheckBox GraphLeftAxisAuto pos={180,565},title="Y axis autoscale?", variable=root:Packages:GeneralplottingTool:GraphLeftAxisAuto
 	CheckBox GraphLeftAxisAuto proc=IR1P_GenPlotCheckBox, help={"Autoscale Y (left) axis using data range?"}	
-	SetVariable GraphLeftAxisMin pos={180,585},size={140,20},proc=IR1P_SetVarProc,title="Min: ", limits={0,inf,1e-6+root:Packages:GeneralplottingTool:GraphLeftAxisMin}
+	SetVariable GraphLeftAxisMin pos={180,585},size={140,20},proc=IR1P_SetVarProc,title="Min: ", limits={0,inf,1e-6+GraphLeftAxisMin}
 	SetVariable GraphLeftAxisMin value= root:Packages:GeneralplottingTool:GraphLeftAxisMin, format="%4.4e",help={"Minimum on Y (left) axis"}		
-	SetVariable GraphLeftAxisMax pos={180,605},size={140,20},proc=IR1P_SetVarProc,title="Max:", limits={0,inf,1e-6+root:Packages:GeneralplottingTool:GraphLeftAxisMax}
+	SetVariable GraphLeftAxisMax pos={180,605},size={140,20},proc=IR1P_SetVarProc,title="Max:", limits={0,inf,1e-6+GraphLeftAxisMax}
 	SetVariable GraphLeftAxisMax value= root:Packages:GeneralplottingTool:GraphLeftAxisMax, format="%4.4e", help={"Maximum on Y (left) axis"}		
 
 	CheckBox GraphBottomAxisAuto pos={20,565},title="X axis autoscale?", variable=root:Packages:GeneralplottingTool:GraphBottomAxisAuto
 	CheckBox GraphBottomAxisAuto proc=IR1P_GenPlotCheckBox, help={"Autoscale X (bottom) axis using data range?"}	
-	SetVariable GraphBottomAxisMin pos={20,585},size={140,20},proc=IR1P_SetVarProc,title="Min: ", limits={0,inf,1e-6+root:Packages:GeneralplottingTool:GraphBottomAxisMin}
+	SetVariable GraphBottomAxisMin pos={20,585},size={140,20},proc=IR1P_SetVarProc,title="Min: ", limits={0,inf,1e-6+GraphBottomAxisMin}
 	SetVariable GraphBottomAxisMin value= root:Packages:GeneralplottingTool:GraphBottomAxisMin, format="%4.4e", help={"Minimum on X (bottom) axis"}		
-	SetVariable GraphBottomAxisMax pos={20,605},size={140,20},proc=IR1P_SetVarProc,title="Max:", limits={0,inf,1e-6+root:Packages:GeneralplottingTool:GraphBottomAxisMax}
+	SetVariable GraphBottomAxisMax pos={20,605},size={140,20},proc=IR1P_SetVarProc,title="Max:", limits={0,inf,1e-6+GraphBottomAxisMax}
 	SetVariable GraphBottomAxisMax value= root:Packages:GeneralplottingTool:GraphBottomAxisMax, format="%4.4e", help={"Maximum on X (bottom) axis"}		
 	
 end

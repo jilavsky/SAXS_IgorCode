@@ -34,9 +34,9 @@ Function IR3W_MainCheckVersion()
 			DoAlert /T="The WAXS panel was created by old version of Irena " 1, "WAXS tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z IR3W_WAXSPanel
-				Execute/P("IR3W_WAXS()")
+				IR3W_WAXS()
 			else		//at least reinitialize the variables so we avoid major crashes...
-				Execute/P("IR3W_WAXS()")
+				IR3W_WAXS()
 			endif
 		endif
 	endif

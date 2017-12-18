@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.45
+#pragma version = 1.46
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.46 Added to Listbox procedure IR3C_ListBoxProc rigth click for Match Blank and Match EMpty. 
 //1.45 try to catch bug which pops debugger when panel is being killed. 
 //1.44 Added right alignemnet of data path string to show end of the string if it is too long. 
 //1.43 Added Listbox for external files programmed similarly to allow easy addition of input directluy from files. Need for multipel tools in the future.
@@ -2611,16 +2612,19 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 			Wave/T WaveOfFiles      	= $(CntrlLocation+":WaveOfFiles")
 			Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
 			SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
+			SVAR DataSelListBoxMatchString = $(CntrlLocation+":DataSelListBoxMatchString")
+			variable oldSets
+
 			if (lba.eventMod & 0x10)	// rightclick
 				// list of items for PopupContextualMenu
-				items = "Refresh Content;Select All;Deselect All;"+SortOptionsString	
+				items = "Refresh Content;Select All;Deselect All;Match \"Blank\";Match \"Empty\";Remove Match;"+SortOptionsString	
 				PopupContextualMenu items
 				// V_flag is index of user selected item
 				switch (V_flag)
 					case 1:	// "Refresh Content"
 						//refresh content, but here it will depend where we call it from.
 						ControlInfo/W=$(TopPanel) ListOfAvailableData
-						variable oldSets=V_startRow
+						 oldSets=V_startRow
 						IR3C_UpdateListOfFilesInWvs(TopPanel)
 						IR3C_SortListOfFilesInWvs(TopPanel)	
 						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
@@ -2630,6 +2634,30 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 						break;
 					case 3:	// "Deselect All"
 					      selWave = 0
+						break;
+					case 4:	//M<atch Blank
+						DataSelListBoxMatchString="(?i)Blank"
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_UpdateListOfFilesInWvs(TopPanel)
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
+						break;
+					case 5:	//Match EMpty
+						DataSelListBoxMatchString="(?i)Empty"
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_UpdateListOfFilesInWvs(TopPanel)
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
+						break;
+					case 6:	//remove Match
+						DataSelListBoxMatchString=""
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_UpdateListOfFilesInWvs(TopPanel)
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
 						break;
 					default :	// "Sort"
 						DataSelSortString = StringFromList(V_flag-1, items)

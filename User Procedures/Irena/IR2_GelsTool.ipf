@@ -72,7 +72,7 @@ Function IR2H_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR2H_ControlPanel", IR2HversionNumber))
 			DoAlert /T="The Analytical models panel was created by old version of Irena " 1, "Analytical models may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
- 				Execute/P("IR2H_GelsMainFnct()")
+ 				IR2H_GelsMainFnct()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2H_Initialize()
 			endif

@@ -175,7 +175,7 @@ Function IR1R_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber))
 			DoAlert /T="The Size distribution panel was created by old version of Irena " 1, "Size distribution may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1R_Sizes()")
+				IR1R_Sizes()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1R_InitializeSizes()	
 				IR1T_InitFormFactors()

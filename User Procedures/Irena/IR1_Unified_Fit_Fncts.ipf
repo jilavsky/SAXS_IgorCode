@@ -171,7 +171,10 @@ Function IR1A_UnifiedCalculateIntensity()
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
 	NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 	NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
-	Wave OriginalIntensity
+	Wave/Z OriginalIntensity
+	if(!WaveExists(OriginalIntensity))
+		abort 
+	endif
 	Duplicate/O OriginalIntensity, UnifiedFitIntensity, UnifiedIQ4
 	Redimension/D UnifiedFitIntensity, UnifiedIQ4
 	Wave OriginalQvector
@@ -1112,8 +1115,8 @@ Function IR2U_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("UnifiedEvaluationPanel", IR2UversionNumber))
 			DoAlert /T="The Unified fit data evaluation panel was created by old version of Irena " 1, "The code needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("KillWIndow/Z UnifiedEvaluationPanel")
-				Execute/P("IR2U_EvaluateUnifiedData()")
+				KillWIndow/Z UnifiedEvaluationPanel
+				IR2U_EvaluateUnifiedData()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2U_InitUnifAnalysis()					//this may be OK now... 
 			endif

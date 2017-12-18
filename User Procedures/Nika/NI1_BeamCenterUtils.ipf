@@ -60,7 +60,7 @@ Function NIBC_MainCheckVersion()
 			DoAlert /T="The Beam center panel was created by old version of Nika " 1, "Beamcenter tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z NI1_CreateBmCntrFieldPanel
-				Execute/P("NI1_CreateBmCntrFile()")
+				NI1_CreateBmCntrFile()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				NI1A_Initialize2Dto1DConversion()
 				NI1BC_InitCreateBmCntrFile()

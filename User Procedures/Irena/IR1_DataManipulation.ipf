@@ -95,7 +95,7 @@ Function IR1D_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("IR1D_DataManipulationPanel", IR1DversionNumber))
 			DoAlert /T="The Data manipualtion panel was created by old version of Irena " 1, "Data manipualtion may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR1D_DataManipulation()")
+				IR1D_DataManipulation()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR1D_InitDataManipulation()
 			endif
@@ -2756,7 +2756,7 @@ Function IR3M_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("DataManipulationII", IR3MversionNumber))
 			DoAlert /T="The Data Manipulation II panel was created by old version of Irena " 1, "Data Manipulation II may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR3M_DataManipulationII()")
+				IR3M_DataManipulationII()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR3M_InitDataManipulationII()
 			endif

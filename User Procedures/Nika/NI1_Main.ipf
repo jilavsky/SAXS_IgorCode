@@ -219,7 +219,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 //	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
 	
 //	IR2C_CheckWIndowsProcVersions(WindowProcNames)
-
+ 
 	NI1_CheckNikaUpdate(0)
 	IN2G_CheckForGraphicsSetting(0)
 end

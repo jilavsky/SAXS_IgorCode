@@ -92,7 +92,7 @@ Function IR2M_MainCheckVersion()
 		if(!IR1_CheckPanelVersionNumber("DataMiningTool", IR2MversionNumber))
 			DoAlert /T="The Data mining panel was created by old version of Irena " 1, "Data mining needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				Execute/P("IR2M_GetDataMiner()")
+				IR2M_GetDataMiner()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR2M_InitDataMiner()
 				IR2M_SyncSearchListAndListBox()	//sync the list box... 
@@ -1747,8 +1747,8 @@ Function IR2M_MakePanelWithListBox(skipCreatePanel)
 		setVariable WaveNoteMatchString, pos={5,595}, size={210,20}, bodyWidth=130, title="Match (RegEx)", limits={-inf,inf,0}, proc=IR2M_ListboxSetVarProc
 		setVariable WaveNoteMatchString, help={"Input Regular expressiong to match names of items to "}, variable= root:Packages:DataMiner:WaveNoteMatchString
 		
-		AutoPositionWindow/M=0 /R=DataMiningTool ItemsInFolderPanel
 		IR1_UpdatePanelVersionNumber("ItemsInFolderPanel", IR2MversionNumber,1)
+		AutoPositionWindow/M=0 /R=DataMiningTool ItemsInFolderPanel
 	endif
 
 	if(MineWaves)
