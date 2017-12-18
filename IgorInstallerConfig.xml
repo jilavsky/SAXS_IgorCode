@@ -18,7 +18,7 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>November2017</current_release>
-		<current_beta_release></current_beta_release>
+		<current_beta_release>December2017beta</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
@@ -56,23 +56,23 @@
 			</Package>
 			<VersionComment>Versions of Irena 2.65, Nika 1.78 and Indra 1.93 from 11/05/2017.</VersionComment>
 		</release>
-		<release name="November2017Beta" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/November2017Beta.zip</SourceFileAddress>
+		<release name="December2017beta" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/December2017beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.65</version>
+				<version>2.66</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.78</version>
+				<version>1.79</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.93</version>
+				<version>1.94</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -88,7 +88,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta for Irena 2.65, Nika 1.78 and Indra 1.93 from 10/15/2017.</VersionComment>
+			<VersionComment>Beta for Irena 2.66, Nika 1.79 and Indra 1.94 from 12/18/2017.</VersionComment>
 		</release>
 		<release name="May2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
