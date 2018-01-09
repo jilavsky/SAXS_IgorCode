@@ -14,6 +14,7 @@ Modified main interface to have radio buttons and only one button for action. Th
 Added support for ALS SRoXS soft energy beamline. 
 Improved 9IDC USAXS support. 
 Added more masking options into main panel listbox right click. 
+Checked that - with reduced functionality - code will work without Github distributed xops. 
 
 1.78 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.25
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -10,7 +10,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//2.25 Fixes to Dale's fixes - initial state for Invariant failed with debugger. 
 //2.24 Dale's fixes... Needs checking. 
 //2.23 Modifications requetsed by Dale to make possible to calculate range of levels for each Two phase system. 
 //2.22 Fixed stale graph in Analyze results calculations. 
@@ -2150,7 +2150,7 @@ Function IR2U_CalculateInvariantVals()
 		endif
 	elseif(stringMatch(SlectedBranchedLevels,"Range"))
 		InvariantValue=0
-		if(numtype(SelectedQlevel)==0 && numtype(SelectedBlevel)==0 && SelectedBlevel<SelectedQlevel)
+		if(numtype(SelectedQlevel)==0 && numtype(SelectedBlevel)==0 && SelectedBlevel<SelectedQlevel && SelectedBlevel>0 && SelectedQlevel>0)
 			For(i=SelectedBlevel;i<=SelectedQlevel;i+=1)
 				if(UseCurrentResults)
 					NVAR Invariant=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"Invariant")

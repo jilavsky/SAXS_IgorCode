@@ -787,7 +787,7 @@ Function IR1A_FixLimitsInPanel(VarName)
 	elseif(stringmatch(VarName,"*G"))
 		testVariableLL = 0.1*testVariable
 		testVariableHL = testVariable/0.1
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*testVariable)}	
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.1*testVariable)}	
 	elseif(stringmatch(VarName,"*ETA"))//**DWS
 		testVariableLL = 0.5*testVariable
 		testVariableHL = 2*testVariable	
@@ -1583,6 +1583,9 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		//Open www manual with the right page
 		IN2G_OpenWebManual("Irena/UnifiedFit.html")
 	endif
+	if(cmpstr(ctrlName,"CopyMoveLevel")==0)
+		 IR1A_CopySwapUnifiedLevel()
+	endif
 
 	if(cmpstr(ctrlName,"ScriptingTool")==0)
 		IR2S_ScriptingTool() 
@@ -1793,6 +1796,154 @@ End
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
+Function IR1A_CopySwapUnifiedLevel()
+	//this function swaps current Unified level to another level. 
+	//figrue out which level user has at the top...
+	
+	ControlInfo /W=IR1A_ControlPanel  DistTabs
+	variable CurrentLevel=V_Value+1
+	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
+	string MoveToLevel=""
+	string SwapLevels=""
+	string ListOfLevels="1;2;3;4;5"
+	ListOfLevels=RemoveFromList(num2str(CurrentLevel), ListOfLevels)
+	string YesNoList="No;Yes"
+	Prompt MoveToLevel, "Target level", popup, ListOfLevels
+	Prompt SwapLevels, "Swap?", popup, YesNoList
+	DoPrompt "Select where to; move or swap", MoveToLevel, SwapLevels
+	if (V_Flag)
+		return 0									// user canceled
+	endif
+	variable MoveToLevelNum=str2num(MoveToLevel)
+	if(NumberOfLevels<MoveToLevelNum)
+		NumberOfLevels = MoveToLevelNum
+	endif
+	//print MoveToLevel, SwapLevels
+	//find all values we will be changing...
+	NVAR LevelOldCorelations=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"Corelations")
+	NVAR LevelOldFitRg			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"FitRg")
+	NVAR LevelOldFitG			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"FitG")
+	NVAR LevelOldFitP			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"FitP")
+	NVAR LevelOldFitB			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"FitB")
+	NVAR LevelOldFitEta		=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"FitEta")
+	NVAR LevelOldFitPack		=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"FitPack")
+	NVAR LevelOldMassFractal	=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"MassFractal")
+	NVAR LevelOldLinkRGCO		=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"LinkRGCO")
+	NVAR LevelOldLinkB			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"LinkB")
+
+	NVAR LevelOldRg			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"Rg")
+	NVAR LevelOldG			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"G")
+	NVAR LevelOldP			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"P")
+	NVAR LevelOldB			=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"B")
+	NVAR LevelOldEta		=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"Eta")
+	NVAR LevelOldPack		=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"Pack")
+	NVAR LevelOldRGCO		=$("root:Packages:Irena_UnifFit:Level"+num2str(CurrentLevel)+"RGCO")
+
+	NVAR LevelNewCorelations=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"Corelations")
+	NVAR LevelNewFitRg			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"FitRg")
+	NVAR LevelNewFitG			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"FitG")
+	NVAR LevelNewFitP			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"FitP")
+	NVAR LevelNewFitB			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"FitB")
+	NVAR LevelNewFitEta		=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"FitEta")
+	NVAR LevelNewFitPack		=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"FitPack")
+	NVAR LevelNewMassFractal	=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"MassFractal")
+	NVAR LevelNewLinkRGCO		=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"LinkRGCO")
+	NVAR LevelNewLinkB			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"LinkB")
+
+	NVAR LevelNewRg			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"Rg")
+	NVAR LevelNewG			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"G")
+	NVAR LevelNewP			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"P")
+	NVAR LevelNewB			=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"B")
+	NVAR LevelNewEta		=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"Eta")
+	NVAR LevelNewPack		=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"Pack")
+	NVAR LevelNewRGCO		=$("root:Packages:Irena_UnifFit:Level"+num2str(MoveToLevelNum)+"RGCO")
+	
+	variable tmpCorel, tmpFitRg, tmpFitG, tmpFitP, tmpFitB, tmpFitETA, tmpFitPack, tmpLinkB
+	variable tmpMassFrac, tmpLinkRGCO, tmpRg, tmpG, tmpP, tmpB, tmpEta, tmpPack, tmpRGCO
+	if(stringmatch(SwapLevels,"Yes"))			//user wants to swap the levels, needto store old values to return them later...
+		tmpCorel			=		LevelNewCorelations
+		tmpFitRg			=		LevelNewFitRg
+		tmpFitG			=		LevelNewFitG
+		tmpFitP			=		LevelNewFitP
+		tmpFitB			=		LevelNewFitB
+		tmpFitETA			=		LevelNewFitEta
+		tmpFitPack		=		LevelNewFitPack
+		tmpMassFrac		=		LevelNewMassFractal
+		tmpLinkRGCO		=		LevelNewLinkRGCO
+		tmpLinkB			=		LevelNewLinkB
+		tmpRg				=		LevelNewRg
+		tmpG				=		LevelNewG
+		tmpP				=		LevelNewP
+		tmpB				=		LevelNewB
+		tmpEta			=		LevelNewEta
+		tmpPack			=		LevelNewPack
+		tmpRGCO			=		LevelNewRGCO
+	endif
+	 LevelNewCorelations = 	LevelOldCorelations
+	 LevelNewFitRg			=	LevelOldFitRg
+	 LevelNewFitG			=	LevelOldFitG
+	 LevelNewFitP			=	LevelOldFitP
+	 LevelNewFitB			=	LevelOldFitB
+	 LevelNewFitEta			=	LevelOldFitEta
+	 LevelNewFitPack		=	LevelOldFitPack
+	 LevelNewMassFractal	=	LevelOldMassFractal
+	 LevelNewLinkRGCO		=	LevelOldLinkRGCO
+	 LevelNewLinkB			=	LevelOldLinkB
+	 LevelNewRg				=	LevelOldRg
+	 LevelNewG				=	LevelOldG
+	 LevelNewP				=	LevelOldP
+	 LevelNewB				=	LevelOldB
+	 LevelNewEta				=	LevelOldEta
+	 LevelNewPack			=	LevelOldPack
+	 LevelNewRGCO			=	LevelOldRGCO
+	
+	if(stringmatch(SwapLevels,"Yes"))			//user wants to swap the levels, needto store old values to return them later...
+		LevelOldCorelations = tmpCorel					
+		LevelOldFitRg = tmpFitRg					
+		LevelOldFitG = tmpFitG				
+		LevelOldFitP = tmpFitP					
+		LevelOldFitB = tmpFitB					
+		LevelOldFitEta = tmpFitETA					
+		LevelOldFitPack = tmpFitPack			
+		LevelOldMassFractal = tmpMassFrac			
+		LevelOldLinkRGCO = tmpLinkRGCO				
+		LevelOldLinkB = tmpLinkB					
+		LevelOldRg = tmpRg						
+		LevelOldG = tmpG					
+		LevelOldP = tmpP					
+		LevelOldB = tmpB					
+		LevelOldEta= tmpEta				
+		LevelOldPack = tmpPack				
+		LevelOldRGCO = tmpRGCO		
+	else		//reset the level to default state
+		LevelOldCorelations = 0					
+		LevelOldFitRg = 0					
+		LevelOldFitG = 0				
+		LevelOldFitP = 0					
+		LevelOldFitB = 0					
+		LevelOldFitEta = 0					
+		LevelOldFitPack = 0			
+		LevelOldMassFractal = 0			
+		LevelOldLinkRGCO = 0				
+		LevelOldLinkB = 0					
+		LevelOldRg = 100						
+		LevelOldG = 100					
+		LevelOldP = 0.01					
+		LevelOldB = 4					
+		LevelOldEta= 100				
+		LevelOldPack = 2.5				
+		LevelOldRGCO = 0		
+	endif
+	
+	IR1A_CorrectLimitsAndValues()
+	IR1A_FixLimits()
+	IR1A_TabPanelControl("DistTabs",MoveToLevelNum-1)
+	PopupMenu NumberOfLevels win=IR1A_ControlPanel, mode=(MoveToLevelNum-1)
+	IR1A_FixTabsInPanel()
+	IR1A_AutoUpdateIfSelected()
+	
+	
+end
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************

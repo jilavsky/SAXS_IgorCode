@@ -20,6 +20,8 @@ Constant TypicalPanelHorizontalSize = 350
 Strconstant ManualVersionString = "en/latest/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
+constant useIgor8LongNames = 10		//this controls if on Igor 8 we will use short or long name
+//will need to change this later when the hdf5.xop is updated to handle long names... 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2017, Argonne National Laboratory
@@ -27,6 +29,7 @@ constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(Fo
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.11 Added IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) to handle names of different lengts
 //2.10 Modifed startup panel controls to better handle rescaling panels on startup. 
 //2.09 fixed errro when both Nika and Irena check for update at the smae time and MeesageFromAuthor is already opened. 
 //2.08 Nika removed DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts as it is not needed anymore. 
@@ -100,6 +103,9 @@ constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(Fo
 //		lists procedure files for version checking. 
 //IN2G_FindVersionOfSingleFile, IN2G_DownloadFile
 //		functions supporting version checking
+//
+//IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)    returns string of length which user wants - and is Igor 8 aware, 
+//			FolderWaveStrNum - 11 for folder, 1 for wave, 3 for string 4 for number
 //
 //Function/S IN2G_CreateUniqueFolderName(InFolderName)	//takes folder name and returns unique version if needed
 //	string InFolderName										//this will take root:Packages:SomethingHere and will make SomethingHere unique if necessary. 
@@ -433,6 +439,30 @@ Menu "GraphMarquee"
 End
 
 
+Function/T IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
+	string NameIn
+	variable MaxShortLength, MakeUnique, FolderWaveStrNum
+	//FolderWaveStrNum - 11 for folder, 1 for wave, 3 for string 4 for number
+	
+	string resultStr 
+				
+	if(useIgor8LongNames && IgorVersion()>7.99)		//Igor 8 and user wants long names 
+		resultStr = NameIn 
+	else			//create a short name
+		resultStr = NameIn[0,MaxShortLength-1]
+	endif
+	if (FolderWaveStrNum == 3 || FolderWaveStrNum == 4 )		// 1 for waves, 11 for folders, 3 and 4 for strings and variables
+		resultStr = CleanupName(resultStr, 0)		// variables and strings must have only non liberal names anyway... 
+	endif
+	if (CheckName(resultStr,FolderWaveStrNum) != 0)		// 1 for waves, 11 for folders, 3 and 4 for strings and variables
+		resultStr = CleanupName(resultStr, 1)				// Make sure it's valid for folders and waves
+	endif
+	if(MakeUnique&&(CheckName(resultStr,FolderWaveStrNum) != 0))
+		resultStr = UniqueName(resultStr, 1, 0) 			// Make sure it's unique
+	endif
+	
+	return resultStr
+end
 
 //**************************************************************** 
 //**************************************************************** 

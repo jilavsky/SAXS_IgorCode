@@ -452,8 +452,9 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 			NumOpenedFiles=1
 			FileName= WaveOfFiles[i]
 			shortFileName = ReplaceString("."+DataExtension, FileName, "")
-			newShortName = ReplaceString(RemoveFromNameString,shortFileName,"")[0,30]
-			shortFileName = shortFileName[0,30]
+			//IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
+			newShortName = IN2G_CreateUserName(ReplaceString(RemoveFromNameString,shortFileName,""),31,0,11)
+			shortFileName = IN2G_CreateUserName(shortFileName,31,0,11)
 			//check if such data exist already...
 			ListOfExistingFolders = DataFolderDir(1)
 			HDF5OpenFile/R/Z /P=USAXSHDFPath locFileID as FileName

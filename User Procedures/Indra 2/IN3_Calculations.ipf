@@ -152,7 +152,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 				UserSavedData=1
 				IN3_FixSaveData()
 				if(i<Items-1)
-					sleep/S/B/C=6/M="Delay "+num2str(ListProcDisplayDelay)+" seconds for user data review" ListProcDisplayDelay
+					sleep/S/B/Q/C=6/M="Delay "+num2str(ListProcDisplayDelay)+" seconds for user data review" ListProcDisplayDelay
 				endif
 			endif
 		endfor

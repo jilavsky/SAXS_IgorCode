@@ -1906,7 +1906,7 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 			tempResult=IR2L_LSWCumulative(tempVal,location,scale, shape)
 		endif
 		if (cmpstr("Ardell",MyFunction)==0)
-			multithread tempResult=IR1_ArdellCumulative(tempVal,location,scale, shape)
+			tempResult=IR1_ArdellCumulative(tempVal,location,scale, shape)
 		endif
 		if (cmpstr("LogNormal",MyFunction)==0)
 			tempResult=IR1_LogNormCumulative(tempVal,location,scale, shape)
@@ -1932,7 +1932,7 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 				startCumTrgts=IR2L_LSWCumulative(minimumXPossible,location,scale, shape)
 			endif
 			if (cmpstr("Ardell",MyFunction)==0)
-				multithread startCumTrgts=IR1_ArdellCumulative(minimumXPossible,location,scale, shape)
+				startCumTrgts=IR1_ArdellCumulative(minimumXPossible,location,scale, shape)
 			endif
 			if (cmpstr("LogNormal",MyFunction)==0)
 				startCumTrgts=IR1_LogNormCumulative(minimumXPossible,location,scale, shape)
@@ -1961,7 +1961,7 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 			tempResult=IR1_SZCumulative(tempVal,location,scale, shape)
 		endif
 		if (cmpstr("Ardell",MyFunction)==0)
-			multithread tempResult=IR1_ArdellCumulative(tempVal,location,scale, shape)
+			tempResult=IR1_ArdellCumulative(tempVal,location,scale, shape)
 		endif
 		if (cmpstr("LSW",MyFunction)==0)
 			tempResult = 1

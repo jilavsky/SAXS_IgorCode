@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.22
-Constant IR1AversionNumber=2.22
+#pragma version=2.23
+Constant IR1AversionNumber=2.23
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1AversionNumber=2.22
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.23 removed Execute for main panel, added button to move around the levels if users needs...
 //2.22 Modified Screen Size check to match the needs
 //2.21 added  Help button calling www manual page
 //2.20 added scaling panel content
@@ -71,7 +72,7 @@ Function IR1A_UnifiedModel()
  
 	IR1A_Initialize(0)					//this may be OK now... 
 
-	Execute ("IR1A_ControlPanel()")
+	IR1A_ControlPanelFnct()			//make the main panel,. 
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber,1)
 
@@ -411,9 +412,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Window IR1A_ControlPanel() 
+Function IR1A_ControlPanelFnct() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,396,720) as "Unified fit"
+	DoWindow/C IR1A_ControlPanel
 	DefaultGUIControls /W=IR1A_ControlPanel ///Mac os9
 
 	string UserDataTypes=""
@@ -435,7 +437,8 @@ Window IR1A_ControlPanel()
 	//Experimental data input
 	CheckBox UseSMRData,pos={170,40},size={141,14},proc=IR1A_InputPanelCheckboxProc,title="SMR data"
 	CheckBox UseSMRData,variable= root:packages:Irena_UnifFit:UseSMRData, help={"Check, if you are using slit smeared data"}
-	SetVariable SlitLength,limits={0,Inf,0},value= root:Packages:Irena_UnifFit:SlitLengthUnif, disable=!root:packages:Irena_UnifFit:UseSMRData
+	NVAR UseSMRData = root:packages:Irena_UnifFit:UseSMRData
+	SetVariable SlitLength,limits={0,Inf,0},value= root:Packages:Irena_UnifFit:SlitLengthUnif, disable=!UseSMRData
 	SetVariable SlitLength,pos={260,40},size={100,16},title="SL=",proc=IR1A_PanelSetVarProc, help={"slit length"}
 	Button DrawGraphs,pos={5,158},size={100,20},proc=IR1A_InputPanelButtonProc,title="Graph data", help={"Create a graph (log-log) of your experiment data"}
 	Button ScriptingTool,pos={280,160},size={100,15},proc=IR1A_InputPanelButtonProc,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
@@ -476,8 +479,9 @@ Window IR1A_ControlPanel()
 	CheckBox ExtendedWarnings,pos={285,650},size={80,16},noproc,title="Ext. warnings?"
 	CheckBox ExtendedWarnings,variable= root:Packages:Irena_UnifFit:ExtendedWarnings, help={"Print extended warnings in the history area?"}
 
+	NVAR SASBackground = root:Packages:Irena_UnifFit:SASBackground
 	SetVariable SASBackground,pos={15,565},size={160,16},proc=IR1A_PanelSetVarProc,title="SAS Background", help={"SAS background"},bodyWidth=80, format="%0.4g"
-	SetVariable SASBackground,limits={-inf,Inf,0.05*root:Packages:Irena_UnifFit:SASBackground},value= root:Packages:Irena_UnifFit:SASBackground
+	SetVariable SASBackground,limits={-inf,Inf,0.05*SASBackground},value= root:Packages:Irena_UnifFit:SASBackground
 	CheckBox FitBackground,pos={195,566},size={63,14},proc=IR1A_InputPanelCheckboxProc,title="Fit Bckg?"
 	CheckBox FitBackground,variable= root:Packages:Irena_UnifFit:FitSASBackground, help={"Check if you want the background to be fitting parameter"}
 	CheckBox SkipFitControlDialog,pos={270,566},size={63,14},proc=IR1A_InputPanelCheckboxProc,title="Skip Fit Check?"
@@ -488,11 +492,20 @@ Window IR1A_ControlPanel()
 	TabControl DistTabs,tabLabel(0)="1. Level ",tabLabel(1)="2. Level "
 	TabControl DistTabs,tabLabel(2)="3. Level ",tabLabel(3)="4. Level "
 	TabControl DistTabs,tabLabel(4)="5. Level ",value= 0
+
+
+	Button CopyMoveLevel,pos={200,540},size={150,15}, proc=IR1A_InputPanelButtonProc,title="Copy/Move/swap level", help={"Copy/move/swap current values to different level"}
+	
+	NVAR Level1G = root:Packages:Irena_UnifFit:Level1G
+	NVAR Level1B = root:Packages:Irena_UnifFit:Level1B
+	NVAR Level1P = root:Packages:Irena_UnifFit:Level1P
+	NVAR Level1Rg = root:Packages:Irena_UnifFit:Level1Rg
+	NVAR Level1Eta=root:Packages:Irena_UnifFit:Level1Eta
+	NVAR Level1Pack=root:Packages:Irena_UnifFit:Level1Pack
 	
 	TitleBox Level1Title, title="   Level  1 controls    ", frame=1, labelBack=(64000,0,0), pos={14,258}, size={150,8}
-
 	SetVariable Level1G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level1G,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level1G},value= root:Packages:Irena_UnifFit:Level1G, help={"Gunier prefactor"}
+	SetVariable Level1G,limits={0,inf,0.05*Level1G},value= root:Packages:Irena_UnifFit:Level1G, help={"Gunier prefactor"}
 	CheckBox Level1FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitG,variable= root:Packages:Irena_UnifFit:Level1FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level1GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -501,7 +514,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level1GHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1GHighLimit, help={"High limit for G fitting"}
 
 	SetVariable Level1Rg,pos={14,300},size={180,16},proc=IR1A_PanelSetVarProc,title="Rg   ", help={"Radius of gyration, e.g., sqrt(5/3)*R for sphere etc..."}
-	SetVariable Level1Rg,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level1Rg},variable= root:Packages:Irena_UnifFit:Level1Rg,bodyWidth=140, format="%0.4g"
+	SetVariable Level1Rg,limits={0,inf,0.05*Level1Rg},variable= root:Packages:Irena_UnifFit:Level1Rg,bodyWidth=140, format="%0.4g"
 	CheckBox Level1FitRg,pos={200,301},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitRg,variable= root:Packages:Irena_UnifFit:Level1FitRg, help={"Fit Rg? Select properly starting conditions and limits"}
 	SetVariable Level1RgLowLimit,pos={230,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -517,7 +530,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level1SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level1SurfaceToVolRat
 
 	SetVariable Level1B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"}
-	SetVariable Level1B,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level1B},value= root:Packages:Irena_UnifFit:Level1B,bodyWidth=140, format="%0.4g"
+	SetVariable Level1B,limits={0,inf,0.05*Level1B},value= root:Packages:Irena_UnifFit:Level1B,bodyWidth=140, format="%0.4g"
 	CheckBox Level1FitB,pos={200,371},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitB,variable= root:Packages:Irena_UnifFit:Level1FitB, help={"Fit the Power law prefactor?, select properly the starting conditions and limits before fitting"}
 	SetVariable Level1BLowLimit,pos={230,370},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -526,7 +539,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level1BHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1BHighLimit, help={"Power law prefactor high limit"}
 
 	SetVariable Level1P,pos={14,390},size={180,16},proc=IR1A_PanelSetVarProc,title="P   ", help={"Power law slope, e.g., -4 for Porod tails"}
-	SetVariable Level1P,limits={0,6,0.05*root:Packages:Irena_UnifFit:Level1P},value= root:Packages:Irena_UnifFit:Level1P,bodyWidth=140, format="%0.4g"
+	SetVariable Level1P,limits={0,6,0.05*Level1P},value= root:Packages:Irena_UnifFit:Level1P,bodyWidth=140, format="%0.4g"
 	CheckBox Level1FitP,pos={200,391},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitP,variable= root:Packages:Irena_UnifFit:Level1FitP, help={"Fit the Power law slope, select good starting conditions and appropriate limits"}
 	SetVariable Level1PLowLimit,pos={230,390},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -557,7 +570,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level1Corelations,variable= root:Packages:Irena_UnifFit:Level1Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level1ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level1ETA,limits={0,inf,0.01*root:Packages:Irena_UnifFit:Level1Eta},value= root:Packages:Irena_UnifFit:Level1ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level1ETA,limits={0,inf,0.01*Level1Eta},value= root:Packages:Irena_UnifFit:Level1ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level1FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitETA,variable= root:Packages:Irena_UnifFit:Level1FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level1ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -566,7 +579,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level1ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1ETAHighLimit, help={"Correlation distance high limit"}
 
 	SetVariable Level1PACK,pos={14,520},size={180,16},proc=IR1A_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level1PACK,limits={0,8,0.05*root:Packages:Irena_UnifFit:Level1Pack},value= root:Packages:Irena_UnifFit:Level1PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
+	SetVariable Level1PACK,limits={0,8,0.05*Level1Pack},value= root:Packages:Irena_UnifFit:Level1PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
 	CheckBox Level1FitPACK,pos={200,520},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitPACK,variable= root:Packages:Irena_UnifFit:Level1FitPACK, help={"Fit packing factor? Select properly starting condions and limits"}
 	SetVariable Level1PACKLowLimit,pos={230,520},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -579,10 +592,17 @@ Window IR1A_ControlPanel()
 //
 	//Level2 controls
 
+	NVAR Level2G = root:Packages:Irena_UnifFit:Level2G
+	NVAR Level2B = root:Packages:Irena_UnifFit:Level2B
+	NVAR Level2P = root:Packages:Irena_UnifFit:Level2P
+	NVAR Level2Rg = root:Packages:Irena_UnifFit:Level2Rg
+	NVAR Level2Eta=root:Packages:Irena_UnifFit:Level2Eta
+	NVAR Level2Pack=root:Packages:Irena_UnifFit:Level2Pack
+	
 	TitleBox Level2Title, title="   Level  2 controls    ", frame=1, labelBack=(0,64000,0), pos={14,258}, size={150,8}
 
 	SetVariable Level2G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level2G,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level2G},value= root:Packages:Irena_UnifFit:Level2G, help={"Gunier prefactor"}
+	SetVariable Level2G,limits={0,inf,0.05*Level2G},value= root:Packages:Irena_UnifFit:Level2G, help={"Gunier prefactor"}
 	CheckBox Level2FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitG,variable= root:Packages:Irena_UnifFit:Level2FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level2GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -591,7 +611,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level2GHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2GHighLimit, help={"High limit for G fitting"}
 
 	SetVariable Level2Rg,pos={14,300},size={180,16},proc=IR1A_PanelSetVarProc,title="Rg  ", help={"Radius of gyration, e.g., sqrt(5/3)*R for sphere etc..."}
-	SetVariable Level2Rg,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level2Rg},value= root:Packages:Irena_UnifFit:Level2Rg,bodyWidth=140, format="%0.4g"
+	SetVariable Level2Rg,limits={0,inf,0.05*Level2Rg},value= root:Packages:Irena_UnifFit:Level2Rg,bodyWidth=140, format="%0.4g"
 	CheckBox Level2FitRg,pos={200,301},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitRg,variable= root:Packages:Irena_UnifFit:Level2FitRg, help={"Fit Rg? Select properly starting conditions and limits"}
 	SetVariable Level2RgLowLimit,pos={230,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -609,7 +629,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level2SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level2SurfaceToVolRat
 
 	SetVariable Level2B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"}
-	SetVariable Level2B,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level2B},value= root:Packages:Irena_UnifFit:Level2B,bodyWidth=140, format="%0.4g"
+	SetVariable Level2B,limits={0,inf,0.05*Level2B},value= root:Packages:Irena_UnifFit:Level2B,bodyWidth=140, format="%0.4g"
 	CheckBox Level2FitB,pos={200,371},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitB,variable= root:Packages:Irena_UnifFit:Level2FitB, help={"Fit the Power law prefactor?, select properly the starting conditions and limits before fitting"}
 	SetVariable Level2BLowLimit,pos={230,370},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -621,7 +641,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level2DegreeOfAggreg,limits={-inf,inf,0},value= root:Packages:Irena_UnifFit:Level2DegreeOfAggreg
 
 	SetVariable Level2P,pos={14,390},size={180,16},proc=IR1A_PanelSetVarProc,title="P   ", help={"Power law slope, e.g., -4 for Porod tails"}
-	SetVariable Level2P,limits={0,6,0.05*root:Packages:Irena_UnifFit:Level2P},value= root:Packages:Irena_UnifFit:Level2P,bodyWidth=140, format="%0.4g"
+	SetVariable Level2P,limits={0,6,0.05*Level2P},value= root:Packages:Irena_UnifFit:Level2P,bodyWidth=140, format="%0.4g"
 	CheckBox Level2FitP,pos={200,390},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitP,variable= root:Packages:Irena_UnifFit:Level2FitP, help={"Fit the Power law slope, select good starting conditions and appropriate limits"}
 	SetVariable Level2PLowLimit,pos={230,390},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -651,7 +671,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level2Corelations,variable= root:Packages:Irena_UnifFit:Level2Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level2ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level2ETA,limits={0,inf,0.01*root:Packages:Irena_UnifFit:Level2Eta},value= root:Packages:Irena_UnifFit:Level2ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level2ETA,limits={0,inf,0.01*Level2Eta},value= root:Packages:Irena_UnifFit:Level2ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level2FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitETA,variable= root:Packages:Irena_UnifFit:Level2FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level2ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -660,7 +680,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level2ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2ETAHighLimit, help={"Correlation distance high limit"}
 
 	SetVariable Level2PACK,pos={14,520},size={180,16},proc=IR1A_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level2PACK,limits={0,8,0.05*root:Packages:Irena_UnifFit:Level2Pack},value= root:Packages:Irena_UnifFit:Level2PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
+	SetVariable Level2PACK,limits={0,8,0.05*Level2Pack},value= root:Packages:Irena_UnifFit:Level2PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
 	CheckBox Level2FitPACK,pos={200,520},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitPACK,variable= root:Packages:Irena_UnifFit:Level2FitPACK, help={"Fit packing factor? Select properly starting condions and limits"}
 	SetVariable Level2PACKLowLimit,pos={230,520},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -670,10 +690,16 @@ Window IR1A_ControlPanel()
 //////End of Level2 	
 ////	
 	//Level3 controls
+	NVAR Level3G = root:Packages:Irena_UnifFit:Level3G
+	NVAR Level3B = root:Packages:Irena_UnifFit:Level3B
+	NVAR Level3P = root:Packages:Irena_UnifFit:Level3P
+	NVAR Level3Rg = root:Packages:Irena_UnifFit:Level3Rg
+	NVAR Level3Eta=root:Packages:Irena_UnifFit:Level3Eta
+	NVAR Level3Pack=root:Packages:Irena_UnifFit:Level3Pack
 	TitleBox Level3Title, title="   Level  3 controls    ", frame=1, labelBack=(30000,30000,64000), pos={14,258}, size={150,8}
 
 	SetVariable Level3G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level3G,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level3G},value= root:Packages:Irena_UnifFit:Level3G, help={"Gunier prefactor"}
+	SetVariable Level3G,limits={0,inf,0.05*Level3G},value= root:Packages:Irena_UnifFit:Level3G, help={"Gunier prefactor"}
 	CheckBox Level3FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitG,variable= root:Packages:Irena_UnifFit:Level3FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level3GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -682,7 +708,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level3GHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3GHighLimit, help={"High limit for G fitting"}
 
 	SetVariable Level3Rg,pos={14,300},size={180,16},proc=IR1A_PanelSetVarProc,title="Rg   ", help={"Radius of gyration, e.g., sqrt(5/3)*R for sphere etc..."}
-	SetVariable Level3Rg,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level3Rg},value= root:Packages:Irena_UnifFit:Level3Rg,bodyWidth=140, format="%0.4g"
+	SetVariable Level3Rg,limits={0,inf,0.05*Level3Rg},value= root:Packages:Irena_UnifFit:Level3Rg,bodyWidth=140, format="%0.4g"
 	CheckBox Level3FitRg,pos={200,301},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitRg,variable= root:Packages:Irena_UnifFit:Level3FitRg, help={"Fit Rg? Select properly starting conditions and limits"}
 	SetVariable Level3RgLowLimit,pos={230,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -700,7 +726,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level3SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level3SurfaceToVolRat
 
 	SetVariable Level3B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"}
-	SetVariable Level3B,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level3B},value= root:Packages:Irena_UnifFit:Level3B,bodyWidth=140, format="%0.4g"
+	SetVariable Level3B,limits={0,inf,0.05*Level3B},value= root:Packages:Irena_UnifFit:Level3B,bodyWidth=140, format="%0.4g"
 	CheckBox Level3FitB,pos={200,371},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitB,variable= root:Packages:Irena_UnifFit:Level3FitB, help={"Fit the Power law prefactor?, select properly the starting conditions and limits before fitting"}
 	SetVariable Level3BLowLimit,pos={230,370},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -712,7 +738,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level3DegreeOfAggreg,limits={-inf,inf,0},value= root:Packages:Irena_UnifFit:Level3DegreeOfAggreg
 
 	SetVariable Level3P,pos={14,390},size={180,16},proc=IR1A_PanelSetVarProc,title="P   ", help={"Power law slope, e.g., -4 for Porod tails"}
-	SetVariable Level3P,limits={0,6,0.05*root:Packages:Irena_UnifFit:Level3P},value= root:Packages:Irena_UnifFit:Level3P,bodyWidth=140, format="%0.4g"
+	SetVariable Level3P,limits={0,6,0.05*Level3P},value= root:Packages:Irena_UnifFit:Level3P,bodyWidth=140, format="%0.4g"
 	CheckBox Level3FitP,pos={200,391},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitP,variable= root:Packages:Irena_UnifFit:Level3FitP, help={"Fit the Power law slope, select good starting conditions and appropriate limits"}
 	SetVariable Level3PLowLimit,pos={230,390},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -725,12 +751,6 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level3RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level3RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level3RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-//	CheckBox Level3FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-//	CheckBox Level3FitRGCO,variable= root:Packages:Irena_UnifFit:Level3FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-//	SetVariable Level3RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-//	SetVariable Level3RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgCoLowLimit, help={"RgCutOff low limit"}
-//	SetVariable Level3RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-//	SetVariable Level3RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level3SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level3LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -743,7 +763,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level3Corelations,variable= root:Packages:Irena_UnifFit:Level3Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level3ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level3ETA,limits={0,inf,0.01*root:Packages:Irena_UnifFit:Level3Eta},value= root:Packages:Irena_UnifFit:Level3ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level3ETA,limits={0,inf,0.01*Level3Eta},value= root:Packages:Irena_UnifFit:Level3ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level3FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitETA,variable= root:Packages:Irena_UnifFit:Level3FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level3ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -752,7 +772,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level3ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3ETAHighLimit, help={"Correlation distance high limit"}
 
 	SetVariable Level3PACK,pos={14,520},size={180,16},proc=IR1A_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level3PACK,limits={0,8,0.05*root:Packages:Irena_UnifFit:Level3Pack},value= root:Packages:Irena_UnifFit:Level3PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
+	SetVariable Level3PACK,limits={0,8,0.05*Level3Pack},value= root:Packages:Irena_UnifFit:Level3PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
 	CheckBox Level3FitPACK,pos={200,520},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitPACK,variable= root:Packages:Irena_UnifFit:Level3FitPACK, help={"Fit packing factor? Select properly starting condions and limits"}
 	SetVariable Level3PACKLowLimit,pos={230,520},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -762,10 +782,16 @@ Window IR1A_ControlPanel()
 ////Level 3
 ////
 	//Level4 controls
+	NVAR Level4G = root:Packages:Irena_UnifFit:Level4G
+	NVAR Level4B = root:Packages:Irena_UnifFit:Level4B
+	NVAR Level4P = root:Packages:Irena_UnifFit:Level4P
+	NVAR Level4Rg = root:Packages:Irena_UnifFit:Level4Rg
+	NVAR Level4Eta=root:Packages:Irena_UnifFit:Level4Eta
+	NVAR Level4Pack=root:Packages:Irena_UnifFit:Level4Pack
 	TitleBox Level4Title, title="   Level  4 controls    ", frame=1, labelBack=(52000,52000,0), pos={14,258}, size={150,8}
 
 	SetVariable Level4G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level4G,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level4G},value= root:Packages:Irena_UnifFit:Level4G, help={"Gunier prefactor"}
+	SetVariable Level4G,limits={0,inf,0.05*Level4G},value= root:Packages:Irena_UnifFit:Level4G, help={"Gunier prefactor"}
 	CheckBox Level4FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitG,variable= root:Packages:Irena_UnifFit:Level4FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level4GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -774,7 +800,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level4GHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4GHighLimit, help={"High limit for G fitting"}
 
 	SetVariable Level4Rg,pos={14,300},size={180,16},proc=IR1A_PanelSetVarProc,title="Rg   ", help={"Radius of gyration, e.g., sqrt(5/3)*R for sphere etc..."}
-	SetVariable Level4Rg,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level4Rg},value= root:Packages:Irena_UnifFit:Level4Rg,bodyWidth=140, format="%0.4g"
+	SetVariable Level4Rg,limits={0,inf,0.05*Level4Rg},value= root:Packages:Irena_UnifFit:Level4Rg,bodyWidth=140, format="%0.4g"
 	CheckBox Level4FitRg,pos={200,301},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitRg,variable= root:Packages:Irena_UnifFit:Level4FitRg, help={"Fit Rg? Select properly starting conditions and limits"}
 	SetVariable Level4RgLowLimit,pos={230,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -792,7 +818,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level4SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level4SurfaceToVolRat
 
 	SetVariable Level4B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"},bodyWidth=140, format="%0.4g"
-	SetVariable Level4B,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level4B},value= root:Packages:Irena_UnifFit:Level4B
+	SetVariable Level4B,limits={0,inf,0.05*Level4B},value= root:Packages:Irena_UnifFit:Level4B
 	CheckBox Level4FitB,pos={200,371},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitB,variable= root:Packages:Irena_UnifFit:Level4FitB, help={"Fit the Power law prefactor?, select properly the starting conditions and limits before fitting"}
 	SetVariable Level4BLowLimit,pos={230,370},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -804,7 +830,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level4DegreeOfAggreg,limits={-inf,inf,0},value= root:Packages:Irena_UnifFit:Level4DegreeOfAggreg
 
 	SetVariable Level4P,pos={14,390},size={180,16},proc=IR1A_PanelSetVarProc,title="P   ", help={"Power law slope, e.g., -4 for Porod tails"}
-	SetVariable Level4P,limits={0,6,0.05*root:Packages:Irena_UnifFit:Level4P},value= root:Packages:Irena_UnifFit:Level4P,bodyWidth=140, format="%0.4g"
+	SetVariable Level4P,limits={0,6,0.05*Level4P},value= root:Packages:Irena_UnifFit:Level4P,bodyWidth=140, format="%0.4g"
 	CheckBox Level4FitP,pos={200,391},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitP,variable= root:Packages:Irena_UnifFit:Level4FitP, help={"Fit the Power law slope, select good starting conditions and appropriate limits"}
 	SetVariable Level4PLowLimit,pos={230,390},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -817,12 +843,6 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level4RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level4RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level4RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-//	CheckBox Level4FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-//	CheckBox Level4FitRGCO,variable= root:Packages:Irena_UnifFit:Level4FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-//	SetVariable Level4RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-//	SetVariable Level4RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgCoLowLimit, help={"RgCutOff low limit"}
-//	SetVariable Level4RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-//	SetVariable Level4RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgCOHighLimit, help={"RgCutOff high limit"}
 //
 	Button Level4SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level4LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -835,7 +855,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level4Corelations,variable= root:Packages:Irena_UnifFit:Level4Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level4ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level4ETA,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level4Eta},value= root:Packages:Irena_UnifFit:Level4ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level4ETA,limits={0,inf,0.05*Level4Eta},value= root:Packages:Irena_UnifFit:Level4ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level4FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitETA,variable= root:Packages:Irena_UnifFit:Level4FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level4ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -844,7 +864,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level4ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4ETAHighLimit, help={"Correlation distance high limit"}
 
 	SetVariable Level4PACK,pos={14,520},size={180,16},proc=IR1A_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level4PACK,limits={0,8,0.05*root:Packages:Irena_UnifFit:Level4Pack},value= root:Packages:Irena_UnifFit:Level4PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
+	SetVariable Level4PACK,limits={0,8,0.05*Level4Pack},value= root:Packages:Irena_UnifFit:Level4PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
 	CheckBox Level4FitPACK,pos={200,520},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitPACK,variable= root:Packages:Irena_UnifFit:Level4FitPACK, help={"Fit packing factor? Select properly starting condions and limits"}
 	SetVariable Level4PACKLowLimit,pos={230,520},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -855,10 +875,16 @@ Window IR1A_ControlPanel()
 ////Level 4
 ////
 	//Level5 controls
+	NVAR Level5G = root:Packages:Irena_UnifFit:Level5G
+	NVAR Level5B = root:Packages:Irena_UnifFit:Level5B
+	NVAR Level5P = root:Packages:Irena_UnifFit:Level5P
+	NVAR Level5Rg = root:Packages:Irena_UnifFit:Level5Rg
+	NVAR Level5Eta=root:Packages:Irena_UnifFit:Level5Eta
+	NVAR Level5Pack=root:Packages:Irena_UnifFit:Level5Pack
 	TitleBox Level5Title, title="   Level  5 controls    ", frame=1, labelBack=(0,50000,50000), pos={14,258}, size={150,8}
 
 	SetVariable Level5G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level5G,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level5G},value= root:Packages:Irena_UnifFit:Level5G, help={"Gunier prefactor"}
+	SetVariable Level5G,limits={0,inf,0.05*Level5G},value= root:Packages:Irena_UnifFit:Level5G, help={"Gunier prefactor"}
 	CheckBox Level5FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitG,variable= root:Packages:Irena_UnifFit:Level5FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level5GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -867,7 +893,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level5GHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5GHighLimit, help={"High limit for G fitting"}
 
 	SetVariable Level5Rg,pos={14,300},size={180,16},proc=IR1A_PanelSetVarProc,title="Rg   ", help={"Radius of gyration, e.g., sqrt(5/3)*R for sphere etc..."}
-	SetVariable Level5Rg,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level5Rg},value= root:Packages:Irena_UnifFit:Level5Rg,bodyWidth=140, format="%0.4g"
+	SetVariable Level5Rg,limits={0,inf,0.05*Level5Rg},value= root:Packages:Irena_UnifFit:Level5Rg,bodyWidth=140, format="%0.4g"
 	CheckBox Level5FitRg,pos={200,301},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitRg,variable= root:Packages:Irena_UnifFit:Level5FitRg, help={"Fit Rg? Select properly starting conditions and limits"}
 	SetVariable Level5RgLowLimit,pos={230,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -885,7 +911,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level5SurfToVolRat,limits={inf,inf,0},value= root:Packages:Irena_UnifFit:Level5SurfaceToVolRat
 
 	SetVariable Level5B,pos={14,370},size={180,16},proc=IR1A_PanelSetVarProc,title="B   ", help={"Power law prefactor"},bodyWidth=140, format="%0.4g"
-	SetVariable Level5B,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level5B},value= root:Packages:Irena_UnifFit:Level5B
+	SetVariable Level5B,limits={0,inf,0.05*Level5B},value= root:Packages:Irena_UnifFit:Level5B
 	CheckBox Level5FitB,pos={200,371},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitB,variable= root:Packages:Irena_UnifFit:Level5FitB, help={"Fit the Power law prefactor?, select properly the starting conditions and limits before fitting"}
 	SetVariable Level5BLowLimit,pos={230,370},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -897,7 +923,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level5DegreeOfAggreg,limits={-inf,inf,0},value= root:Packages:Irena_UnifFit:Level5DegreeOfAggreg
 
 	SetVariable Level5P,pos={14,390},size={180,16},proc=IR1A_PanelSetVarProc,title="P   ", help={"Power law slope, e.g., -4 for Porod tails"}
-	SetVariable Level5P,limits={0,6,0.05*root:Packages:Irena_UnifFit:Level5P},value= root:Packages:Irena_UnifFit:Level5P,bodyWidth=140, format="%0.4g"
+	SetVariable Level5P,limits={0,6,0.05*Level5P},value= root:Packages:Irena_UnifFit:Level5P,bodyWidth=140, format="%0.4g"
 	CheckBox Level5FitP,pos={200,391},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitP,variable= root:Packages:Irena_UnifFit:Level5FitP, help={"Fit the Power law slope, select good starting conditions and appropriate limits"}
 	SetVariable Level5PLowLimit,pos={230,390},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -910,12 +936,6 @@ Window IR1A_ControlPanel()
 
 	SetVariable Level5RGCO,pos={14,430},size={180,16},proc=IR1A_PanelSetVarProc,title="RgCutoff  ",bodyWidth=100
 	SetVariable Level5RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level5RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
-//	CheckBox Level5FitRGCO,pos={200,431},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
-//	CheckBox Level5FitRGCO,variable= root:Packages:Irena_UnifFit:Level5FitRgCo, help={"Fit the RgCutoff ? Select properly starting point and limits."}
-//	SetVariable Level5RGCOLowLimit,pos={230,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-//	SetVariable Level5RGCOLowLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgCoLowLimit, help={"RgCutOff low limit"}
-//	SetVariable Level5RGCOHighLimit,pos={300,430},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
-//	SetVariable Level5RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level5SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
 	CheckBox Level5LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
@@ -928,7 +948,7 @@ Window IR1A_ControlPanel()
 	CheckBox Level5Corelations,variable= root:Packages:Irena_UnifFit:Level5Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level5ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level5ETA,limits={0,inf,0.05*root:Packages:Irena_UnifFit:Level5Eta},value= root:Packages:Irena_UnifFit:Level5ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level5ETA,limits={0,inf,0.05*Level5Eta},value= root:Packages:Irena_UnifFit:Level5ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
 	CheckBox Level5FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitETA,variable= root:Packages:Irena_UnifFit:Level5FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level5ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -937,7 +957,7 @@ Window IR1A_ControlPanel()
 	SetVariable Level5ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5ETAHighLimit, help={"Correlation distance high limit"}
 
 	SetVariable Level5PACK,pos={14,520},size={180,16},proc=IR1A_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level5PACK,limits={0,8,0.05*root:Packages:Irena_UnifFit:Level5Pack},value= root:Packages:Irena_UnifFit:Level5PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
+	SetVariable Level5PACK,limits={0,8,0.05*Level5Pack},value= root:Packages:Irena_UnifFit:Level5PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
 	CheckBox Level5FitPACK,pos={200,520},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitPACK,variable= root:Packages:Irena_UnifFit:Level5FitPACK, help={"Fit packing factor? Select properly starting condions and limits"}
 	SetVariable Level5PACKLowLimit,pos={230,520},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -1005,7 +1025,7 @@ Function IR1A_TabPanelControl(name,tab)
 
 		Button LevelXFitRgAndG,disable= ((tab+1)> Nmbdist)
 		Button LevelXFitPAndB,disable= ((tab+1)> Nmbdist)
-
+		Button CopyMoveLevel,disable= ((tab+1)> Nmbdist)
 		TitleBox PhysValidityWarning, disable=(IR1A_CheckOneUnifiedLevel(tab+1,ExtendedWarnings)!=0 || Nmbdist<tab+1)
 		
 		TitleBox Level1Title, disable= (tab!=0 || Nmbdist<1)

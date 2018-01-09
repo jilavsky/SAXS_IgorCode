@@ -159,7 +159,7 @@ threadsafe Function IR1_ArdellProbNormalized(xval,MeanPos,np,NoP)
 	variable xval, MeanPos,np, NoP
 	//this function calculates probability for A
 	variable result
-	multithread result = IR1_ArdellProbability(xval,MeanPos,np,NoP)
+	result = IR1_ArdellProbability(xval,MeanPos,np,NoP)
 	Make/Free/N=200 NormWave
 	variable start = max(1, MeanPos/20 )
 	SetScale/I x  start, MeanPos*3,"", NormWave
