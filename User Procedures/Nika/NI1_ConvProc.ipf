@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.61
+#pragma version=2.62
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.62 fixed single precision rounding error (ki and kout were single precision) which caused under some cconditions problems with data at low-q bining. 
 //2.61 fixed erros for case where we have missing range of Q in the middle of detecotr (space between tiles on Pilatus). 
 //2.60 fixed case when for intensities=0 (set in software like Mar165) we wouldget error=0 and users would consider these regular data points. Removed now. 
 //2.59 tried to speed up the main conversion loop. Fixed case where for negative intensities we can get nan as uncertainty and for Int=0 uncertainty=0.
@@ -6668,8 +6669,8 @@ Function NI2T_pixelGamma(d,px,py)				// returns 2-theta (rad)
 	STRUCT NikadetectorGeometry &d
 	Variable px,py									// pixel position, 0 based, first pixel is (0,0), NOT (1,1)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	make/FREE/N=3 ki
-	make/FREE/N=3 kout
+	make/FREE/N=3/D ki
+	make/FREE/N=3/D kout
 	ki = {0,0,1}									//	ki =   ki[p],  incident beam direction
 
 	NI2T_pixel3XYZ(d,px,py,kout)						// kout is in direction of pixel in beam line coords...
@@ -6759,8 +6760,8 @@ ThreadSafe Function NI2T_pixelTheta(d,px,py)				// returns 2-theta (rad)
 	STRUCT NikadetectorGeometry &d
 	Variable px,py									// pixel position, 0 based, first pixel is (0,0), NOT (1,1)
 
-	make/FREE/N=3 ki
-	make/FREE/N=3 kout
+	make/FREE/N=3/D ki
+	make/FREE/N=3/D kout
 	ki = {0,0,1}									//	ki =   ki[p],  incident beam direction
 
 	NI2T_pixel2XYZ(d,px,py,kout)						// kout is in direction of pixel in beam line coords
