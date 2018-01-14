@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.10
+#pragma version = 2.11
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -24,12 +24,14 @@ constant useIgor8LongNames = 10		//this controls if on Igor 8 we will use short 
 //will need to change this later when the hdf5.xop is updated to handle long names... 
 //
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
 //2.11 Added IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) to handle names of different lengts
+//		modified IN2G_LegendTopGrphFldr to have max number of items in legend to keep the list under controls. Most code uses 15 at this time. And control if use of folder, wave, or both names. 
+//		modified IN2G_ColorTopGrphRainbow to have basic colors for few waves (up to 4). Then colorization as expected.   
 //2.10 Modifed startup panel controls to better handle rescaling panels on startup. 
 //2.09 fixed errro when both Nika and Irena check for update at the smae time and MeesageFromAuthor is already opened. 
 //2.08 Nika removed DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts as it is not needed anymore. 
@@ -3266,53 +3268,68 @@ Function IN2G_ColorTopGrphRainbow()
 	if( strlen(topGraph) )
 		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
 		//print TraceNameList(topGraph,";",3)
-		if (numTraces > 0)
-			//w=numTraces/2
+		if (numTraces > 4)
 		    variable r,g,b,scale
 		    colortab2wave Rainbow
 		    wave M_colors
 			 For(i=0;i<numTraces;i+=1)
-//	                      io = 0
-//		                iRed = exp(-(i-io)^2/w)
-//		                io = numTraces/2
-//		                iBlue = exp(-(i-io)^2/w)
-//		                io = numTraces
-//		                iGreen = exp(-(i-io)^2/w)
-//	     	                ColorNorm = sqrt(iRed^2 + iBlue^2 + iGreen^2)	
-//		                Red = 65535 * (iRed/ColorNorm)
-//		                Blue = 65535 * (iBlue/ColorNorm)
-//		                Green = 65535 * (iGreen/ColorNorm)
-//		               // print "("+num2str(Red)+","+num2str(Blue)+","+num2str(Green)+")"
-//					ModifyGraph/w=$(topGraph) rgb[i]=(Red,Blue,Green)
 			        scale =  (numTraces-i)  / (numTraces-1) * dimsize(M_colors,0)
 			        r = M_colors[scale][0]
 			        g = M_colors[scale][1]
 			        b = M_colors[scale][2]
 			       ModifyGraph/Z/W=$(topGraph) rgb[i]=( r, g, b )
-			    endfor
+			 endfor
+		else
+			ModifyGraph/Z/W=$(topGraph) rgb[0]=(65535,0,0),rgb[1]=(0,0,65535),rgb[2]=(0,65535,0),rgb[3]=(0,0,0)
 		endif
 		//AutoPositionWindow/M=0/R=$topGraph KBColorizePanel
 	endif
 end
 ///******************************************************************************************
 ///******************************************************************************************
-Function IN2G_LegendTopGrphFldr(FontSize)
-	variable FontSize
+Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
+	variable FontSize, MaxItems, UseFolderName, UseWavename
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String topGraph=WinName(0,1)
 	string Traces=TraceNameList(topGraph, ";", 1 )
-	variable i
-	string legendStr=""
+	string legendStr="", tmpStr
 	if(Fontsize<10)
 		legendStr="\Z0"+num2str(floor(FontSize))	
 	else
 		legendStr="\Z"+num2str(floor(FontSize))	
 	endif
-	For(i=0;i<ItemsInList(Traces);i+=1)
-		legendStr+="\\s("+StringFromList(i,traces)+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, StringFromList(i,traces)),0)+":"+StringFromList(i,traces)+"\r"
+	variable i, imax, test2
+	imax=ItemsInList(Traces , ";")
+	variable stepI=1
+	if(imax>MaxItems)
+			stepI = ceil(imax/MaxItems)
+	endif
+	For(i=0;i<imax;i+=stepI)
+		tmpStr = StringFromList(i,traces)
+		if(UseFolderName && UseWavename)
+			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)+":"+tmpStr
+		elseif(UseFolderName && !UseWavename)
+			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
+		elseif(!UseFolderName && UseWavename)
+			legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+		endif
+		if (i<imax-stepI)
+			legendStr+="\r"
+		endif
 	endfor
-	
+	if(i!=(imax+stepI-1))	//append the very last one if not done yet... 
+		i=imax-1
+		legendStr+="\r"
+		tmpStr = StringFromList(i,traces)
+		if(UseFolderName && UseWavename)
+			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)+":"+tmpStr
+		elseif(UseFolderName && !UseWavename)
+			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
+		elseif(!UseFolderName && UseWavename)
+			legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+		endif
+	endif	
 	Legend/C/N=text0/A=LB legendStr
 end
 

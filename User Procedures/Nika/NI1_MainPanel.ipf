@@ -3,7 +3,7 @@
 Constant NI1AversionNumber = 2.59
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1638,7 +1638,8 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	else
 		Abort "error in NI1A_DisplayLineoutAfterProc"
 	endif
-	Legend/C/N=text0/A=RT
+	IN2G_LegendTopGrphFldr(10, 15,1,0)
+	//Legend/C/N=text0/A=RT
 	ModifyGraph mirror=1
 	IN2G_ColorTopGrphRainbow()
 #if Exists("Nika_Hook_AfterDisplayLineout")

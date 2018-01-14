@@ -2,7 +2,7 @@
 #pragma version=1.35
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -2183,12 +2183,15 @@ Function IN3_PlotProcessedData()
 			SetAxis bottom 1e-4,*
 		elseif(V_Flag>0)
 			DoWIndow/F USAXSProcessedDataGraph
-			AppendToGraph Ywave vs Xwave
-			ModifyGraph mode=3
+			CheckDisplayed /W=USAXSProcessedDataGraph $(NameOfWave(Ywave))
+			if(!V_Flag)
+				AppendToGraph Ywave vs Xwave
+				ModifyGraph mode=3
+			endif
 		endif
 		IN2G_ColorTopGrphRainbow()
 		//IN2G_ColorTraces( )
-		IN2G_LegendTopGrphFldr(10)
+		IN2G_LegendTopGrphFldr(10,12,1,0)
 		//	IN2G_GenerateLegendForGraph(10,0,1)
 		DoUpdate /W=USAXSProcessedDataGraph
 	endif

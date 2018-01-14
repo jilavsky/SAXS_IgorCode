@@ -1,13 +1,14 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.10
+#pragma version =1.11
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 modfiied IN3_RecalcSubtractSaAndBlank to avoid negative data.
 //1.10  removed unused functions
 //1.09 change in code, do not remove negative values for R_Int, causes problems in some cases. 
 //1.08 fixed typo with DSM data dq. 
@@ -362,6 +363,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		BlankInterp=10^LogBlankInterp
 		SMR_Int= (R_Int - BlankInterp)/(Kfactor*MSAXSCorLocal)
 		SMR_Int -= SubtractFlatBackground
+		IN3_FixNegativeIntensities(SMR_Int)
 		KillWaves/Z logBlankInterp, BlankInterp, logBlankR
 		Duplicate/O R_error, SMR_Error
 		Duplicate/O BL_R_error, log_BL_R_error
@@ -403,6 +405,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		//BlankInterp=10^LogBlankInterp
 		SMR_Int= (R_Int - BlankInterp)/(Kfactor*MSAXSCorLocal)
 		SMR_Int -= SubtractFlatBackground
+		IN3_FixNegativeIntensities(SMR_Int)
 		Duplicate/O R_error, SMR_Error
 		Duplicate/Free BL_R_error, log_BL_R_error
 		log_BL_R_error=log(abs(BL_R_error))
@@ -448,6 +451,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		//BlankInterp=10^LogBlankInterp
 		DSM_Int=  (R_Int - BlankInterp)/(MSAXSCorLocal*Kfactor)
 		DSM_Int -=SubtractFlatBackground
+		IN3_FixNegativeIntensities(DSM_Int)
 		KillWaves/Z logBlankInterp, BlankInterp, logBlankR
 		Duplicate/O R_error, DSM_Error
 		Duplicate/O BL_R_error, log_BL_R_error
@@ -491,6 +495,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 		BlankInterp=10^LogBlankInterp
 		DSM_Int=  (R_Int - BlankInterp)/(MSAXSCorLocal*Kfactor)
 		DSM_Int -=SubtractFlatBackground
+		IN3_FixNegativeIntensities(DSM_Int)
 		KillWaves/Z logBlankInterp, BlankInterp, logBlankR
 		Duplicate/O R_error, DSM_Error
 		Duplicate/O BL_R_error, log_BL_R_error

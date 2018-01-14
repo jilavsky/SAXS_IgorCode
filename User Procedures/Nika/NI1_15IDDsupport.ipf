@@ -2,7 +2,7 @@
 #pragma version=1.44
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -2598,7 +2598,10 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 	DoWIndow LineuotDisplayPlot_Q
 	if(V_Flag)
 		DoWindow/F LineuotDisplayPlot_Q
-		AppendToGraph /W=LineuotDisplayPlot_Q NewR vs NewQ
+		CheckDisplayed /W=LineuotDisplayPlot_Q  $(NameOfWave(NewR))
+		if(!V_Flag) 
+			AppendToGraph /W=LineuotDisplayPlot_Q NewR vs NewQ 
+		endif
 	endif	
 	//now delete the data which user did not want...
 	
@@ -2611,14 +2614,16 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 		//if(V_Flag)
 		//	removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(PinProfr)
 		//endif
-		DoWIndow LineuotDisplayPlot_Q
-		if(V_Flag)
-			DoWindow/F LineuotDisplayPlot_Q
-			IN2G_ColorTopGrphRainbow()
-		endif	
 		//removed, now delete folders...
 		//KillDataFolder/Z $PinFolder
 		KillDataFolder/Z $LIneProfFolder
 	endif
+	DoWIndow LineuotDisplayPlot_Q
+	if(V_Flag)
+		DoWindow/F LineuotDisplayPlot_Q
+		IN2G_LegendTopGrphFldr(10,15,1,0)
+		IN2G_ColorTopGrphRainbow()
+	endif	
+	
 	SETDATAFOLDER OldDf
 end

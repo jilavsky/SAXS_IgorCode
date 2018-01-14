@@ -1,15 +1,16 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.13
+#pragma version 1.14
 
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.2e-10
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.14 fixed rare case when fix backgroundoversubtraction from 1.13 caused problems. In some cases early data may be negative. Now looking for negative value only in last 1/2 of the data points.  
 //1.13 Modfifed IN3_RemoveDropouts to work only when adropout starts at ranges 1-4. 
 //1.13 Tried to fix range 5 background oversubtraction by shifting data by needed Intensity up. Done in IN3_CalculateRWaveIntensity only when Intensity is negative due to Bckg5 subtraction
 //1.12 Added smooth R data option. 
@@ -356,6 +357,7 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	else
 		PD_Intensity=(USAXS_PD - MeasTime*LocalParameters[pd_range-1][1])*(1/(VToFFactor*LocalParameters[pd_range-1][0])) /((Monitor-I0AmpDark*MeasTime)/I0_gain)
 	endif
+
 	//need to remove bad points caused by range changes at low qs here... 
 	PD_Intensity [1,numpnts(pd_range)-2] = ((pd_range[p+1]-pd_range[p])<-0.5 || (pd_range[p]-pd_range[p-1])<-0.5) ? nan : PD_Intensity
 	//this will simply set border points to range changes nan and they should get later removed. 
@@ -380,11 +382,12 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	KillWaves/Z LocalParameters , ErrorParameters
 
 	//fix oversubtraction of PD_Intensity here?
-	wavestats/Q PD_Intensity
-	if(V_min<0)
-		PD_Intensity+=Indra_PDIntBackFixScaleVmin*abs(V_min)+V_max*Indra_PDIntBackFixScaleVmax
-		//print "Fixed USAXS Range 5 background subtraction by Intensity = Intensity + "+num2str(1.05*abs(V_min)+V_max*1e-10)
-	endif
+	IN3_FixNegativeIntensities(PD_Intensity)
+//	wavestats/Q/R=[numpnts(PD_Intensity)/2,numpnts(PD_Intensity)-1 ] PD_Intensity
+//	if(V_min<0)
+//		PD_Intensity+=Indra_PDIntBackFixScaleVmin*abs(V_min)+V_max*Indra_PDIntBackFixScaleVmax
+//		//print "Fixed USAXS Range 5 background subtraction by Intensity = Intensity + "+num2str(1.05*abs(V_min)+V_max*1e-10)
+//	endif
 
 
 	Duplicate/O PD_error, R_error
@@ -403,7 +406,16 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 end
 ///*********************************************************************************
 ///*********************************************************************************
-///*********************************************************************************
+Function IN3_FixNegativeIntensities(waveIn)
+	wave WaveIn
+	//fix oversubtraction of WaveIn here?
+	wavestats/Q/R=[numpnts(WaveIn)/2,numpnts(WaveIn)-1 ] WaveIn
+	if(V_min<0)
+		WaveIn+=Indra_PDIntBackFixScaleVmin*abs(V_min)+V_max*Indra_PDIntBackFixScaleVmax
+		//print "Fixed USAXS Range 5 background subtraction by Intensity = Intensity + "+num2str(1.05*abs(V_min)+V_max*1e-10)
+	endif
+end
+	///*********************************************************************************
 ///*********************************************************************************
 Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int,R_error)
 	WAVE Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error

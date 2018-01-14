@@ -7,7 +7,7 @@ Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
 constant IR3WversionNumber = 1.07		//Diffraction panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2017, Argonne National Laboratory
+//* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -2072,7 +2072,7 @@ Function IR3W_MPF2PlotPeakGraph()
 	Label/W=$(NewGraphName) bottom "d [A]"
 	DoWindow/F $(NewGraphName)
 	IN2G_ColorTopGrphRainbow()
-	IN2G_LegendTopGrphFldr(10)
+	IN2G_LegendTopGrphFldr(10,15,1,1)
 	setDataFolder OldDF
 end
 Function IR3W_MPF2AppendDataToGraph(GraphName, DataWvName)
@@ -2151,7 +2151,7 @@ Function IR3W_MPF2PlotPeakParameters()
 		endswitch
 		DoWindow/F $(NewGraphName)
 		//IN2G_ColorTopGrphRainbow()
-		IN2G_LegendTopGrphFldr(10)
+		IN2G_LegendTopGrphFldr(10,15,1,1)
 	endfor
 	SetDimLabel 1,0,Angle,ParamWv
 	SetDimLabel 1,1,AngleESD,ParamWv
