@@ -30,13 +30,13 @@ Window ExportToXLSFilePanel()
 	Button Add_New_Results_to_XLS,pos={290,78},size={172,45},proc=IR1A_InputPanelButtonXLSProc,title="Select Fit Result to add"
 	PopupMenu SelectDataFolderXLS,pos={192,45},size={336,24},proc=IR1A_PanelPopupControlXLS,title="Data: "
 	PopupMenu SelectDataFolderXLS,help={"Select folder containing your SAS data"}
-	PopupMenu SelectDataFolderXLS,mode=17,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_UnifFit:UseIndra2Data,0,0,0)"
+	PopupMenu SelectDataFolderXLS,mode=17,popvalue="---",value= #"\"---;\"+IR3D_GenStringOfFolders(\"root:\",root:Packages:Irena_UnifFit:UseIndra2Data,0,0,0,\"\")"
 	Button Add_Last_Results_to_XLS01,pos={291,131},size={172,45},proc=IR1A_InputPanelButtonXLSProc,title="Add last Results to XLS"
 	Button Start_Erase_XLS_Notebook,pos={19,91},size={195,33},proc=IR1A_InputPanelButtonXLSProc,title="Erase Old Notebook (BtoFront)"
 	Button AutoSaveXLS,pos={306,261},size={172,45},proc=IR1A_InputPanelButtonXLSProc,title="2) Auto Save All Latest Fits"
 EndMacro
 
-//*****************************************************************************************************************
+//************************************************************************************************ *****************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

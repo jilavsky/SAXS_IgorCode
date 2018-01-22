@@ -1420,7 +1420,6 @@ Function IR2D_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			PopupMenu QvecDataName, mode=1,win=IR2D_ControlPanel, value="---"
 			PopupMenu ErrorDataName, mode=1,win=IR2D_ControlPanel, value="---"
 		//here we control the data structure checkbox
-			//PopupMenu SelectDataFolder,win=IR2D_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_SAD:UseIndra2Data, root:Packages:Irena_SAD:UseQRSData,root:Packages:Irena_SAD:UseSMRData,0)"
 			execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+"IR2D_ControlPanel"+"\")")
 
 	elseif(!stringmatch(ctrlName,"DisplayPeaks") && !stringMatch(ctrlname,"AutoRecalculate") && !stringMatch(ctrlname,"Oversample"))

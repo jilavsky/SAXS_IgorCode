@@ -2499,7 +2499,7 @@ end
 //**********************************************************************************************************
 
 //Select path, populate Listbox with files with input extension and allow one or more files selection. 
-//Include Match name string and make this universally usable as data selection tool so we do nto have to this again.
+//Include Match name string and make this universally usable as data selection tool so we do not have to this again.
 
 //**********************************************************************************************************
 //**********************************************************************************************************

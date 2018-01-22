@@ -35,7 +35,7 @@ Proc IR1F_CreateQRSFldrStructure()
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
 	DrawText 64,30,"Create folder structure for QRS data"
 	PopupMenu SelectFolderWithData,pos={19,49},size={171,21},proc=IR1F_PopMenuProc,title="Select folder with data :"
-	PopupMenu SelectFolderWithData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 1,0,0)"
+	PopupMenu SelectFolderWithData,mode=1,popvalue="---",value= #"\"---;\"+IR3D_GenStringOfFolders(\"root:\",0, 1,0,0,\"\")"
 	SetVariable NewFolderForData,pos={16,88},size={380,19},proc=IR1F_SetVarProc,title="Where to create new data folders?"
 	SetVariable NewFolderForData,value= root:Packages:CreateFldrStructure:NewFldrPath
 	Button CreateFolders,pos={124,177},size={150,20}, proc=IR1F_ButtonProc,title="Convert structure"

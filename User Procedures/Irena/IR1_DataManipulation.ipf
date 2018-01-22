@@ -257,7 +257,7 @@ Proc IR1D_DataManipulationPanel()
 	Slider SmoothSplineSlider help={"Slide to change smoothing parameter"}		
 
 	PopupMenu SelectFolderNewData,pos={1,562},size={250,21},proc=IR1D_PanelPopupControl,title="Pick new data folder", help={"Select folder with data"}
-	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
+	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IRD_GenStringOfFolders(\"root:\",0, 0,0,0,\"\")"
 
 	PopupMenu DataUnits,pos={250,562},size={250,21},proc=IR1D_PanelPopupControl,title="Int. Units", help={"Select output Intensity units"}
 	PopupMenu DataUnits,mode=1,popvalue="Arbitrary",value="Arbitrary;cm2/cm3;cm3/g;"

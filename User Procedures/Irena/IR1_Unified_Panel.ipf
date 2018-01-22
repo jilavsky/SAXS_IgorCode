@@ -491,7 +491,7 @@ Function IR1A_ControlPanelFnct()
 	TabControl DistTabs,pos={5,240},size={370,320},proc=IR1A_TabPanelControl
 	TabControl DistTabs,tabLabel(0)="1. Level ",tabLabel(1)="2. Level "
 	TabControl DistTabs,tabLabel(2)="3. Level ",tabLabel(3)="4. Level "
-	TabControl DistTabs,tabLabel(4)="5. Level ",value= 0
+	TabControl DistTabs,tabLabel(4)="5. Level ",value= 0 //, fsize="Zr100"
 
 
 	Button CopyMoveLevel,pos={200,540},size={150,15}, proc=IR1A_InputPanelButtonProc,title="Copy/Move/swap level", help={"Copy/move/swap current values to different level"}

@@ -1065,8 +1065,9 @@ Function NEXUS_SearchForType(WhichNXClass)
 	SVAR FoundClassDataLocation = root:Packages:Irena_Nexus:FoundClassDataLocation
 	Wave/Z Igor___folder_attributes
 	string tmpnote, tmpClass
-	variable i, matches=1
+	variable i, matches=0
 	if(WaveExists(Igor___folder_attributes))
+	    matches=1
 		tmpnote = note(Igor___folder_attributes)
 //		if(GrepString(tmpnote, "NX_class="+WhichNXClass))
 //		endif

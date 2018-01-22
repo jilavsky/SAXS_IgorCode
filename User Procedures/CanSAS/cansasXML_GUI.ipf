@@ -135,7 +135,7 @@ Proc CS_XMLGUIImportDataPanel() 			//main panel
 	CheckBox UseQISNames,pos={230,395},size={16,14},proc=CS_XMLGUICheckProc,title="Use QIS data names?",variable= root:Packages:CS_XMLreader_GUI:UseQISNames, help={"Use NIST QIS naming structure? (filename_Q, filename_I, filename_S etc..)"}
 
 	PopupMenu SelectFolderNewData,pos={1,430},size={250,21},proc=CS_XMLGUIPopMenuProc,title="Select data folder", help={"Select folder with data"}
-	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR1_GenStringOfFolders(0, 0,0,0)"
+	PopupMenu SelectFolderNewData,mode=1,popvalue="---",value= #"\"---;\"+IR3D_GenStringOfFolders(\"root:\",0, 0,0,0,\"\")"
 
 	SetVariable NewDataFolderName, pos={5,455}, size={410,20},title="New data folder:"//, proc=IR1I_setvarProc
 	SetVariable NewDataFolderName value= root:packages:CS_XMLreader_GUI:NewDataFolderName,help={"Folder for the new data. Will be created, if does not exist. Use popup above to preselect."}

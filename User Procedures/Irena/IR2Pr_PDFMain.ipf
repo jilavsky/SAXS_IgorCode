@@ -483,8 +483,7 @@ Function IR2Pr_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			PopupMenu IntensityDataName,  mode=1,win=IR2Pr_ControlPanel, value="---"
 			PopupMenu QvecDataName, mode=1,win=IR2Pr_ControlPanel, value="---"
 			PopupMenu ErrorDataName, mode=1,win=IR2Pr_ControlPanel, value="---"
-		//here we control the data structure checkbox
-		//	PopupMenu SelectDataFolder,win=IR2Pr_ControlPanel, value= #"\"---;\"+IR1_GenStringOfFolders(root:Packages:Irena_PDDF:UseIndra2Data, root:Packages:Irena_PDDF:UseQRSData,root:Packages:Irena_PDDF:UseSMRData,0)"
+		   //here we control the data structure checkbox
 			execute("PopupMenu SelectDataFolder,mode=1,popvalue=\"---\",value= \"---;\"+IR2P_GenStringOfFolders(winNm=\""+"IR2Pr_ControlPanel"+"\")")
 	endif
 
