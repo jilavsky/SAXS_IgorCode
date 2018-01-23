@@ -539,14 +539,14 @@ Function NI1_9IDCConfigNexus()
 
 
 			ListOfParamsAndPaths[14][0]="HorizontalTilt"
-			ListOfParamsAndPaths[14][1]=	":entry:"+NI1_9IDCFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_x=", OldNote)	
+			ListOfParamsAndPaths[14][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote)	
 			ListOfParamsAndPaths[15][0]="VerticalTilt"
-			ListOfParamsAndPaths[15][1]=	":entry:"+NI1_9IDCFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_y=", OldNote)
+			ListOfParamsAndPaths[15][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote)
 
 //			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
 //			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-//			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-//			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+//			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+//			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
  
 //			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 //			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
@@ -1504,8 +1504,8 @@ Function NI1_9IDCWaveNoteValuesNx()
 		elseif(useWAXS)
 			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
-			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
-			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
+			HorizontalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_x=", OldNote), OldNote  , "=" , ";")
+			VerticalTilt = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_tilt_y=", OldNote), OldNote  , "=" , ";")
 			BeamCenterX = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote), OldNote  , "=" , ";")
 			BeamCenterY = NumberByKey(NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote), OldNote  , "=" , ";")
 			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("waxs_detector:distance=", OldNote), OldNote  , "=" , ";")
@@ -1541,7 +1541,7 @@ Function NI1_9IDCWaveNoteValuesNx()
 			endif
 			SampleToCCDdistance = NumberByKey(NI1_9IDCFindKeyStr("detector:distance=", OldNote), OldNote  , "=" , ";")
 		elseif(beamline_support_version>=1)		//latest version for now. Written when beamline_support_version=1 May 2012
-			Wavelength = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:wavelength=", OldNote), OldNote  , "=" , ";")
+			Wavelength = NumberByKey(NI1_9IDCFindKeyStr("wavelength=", OldNote), OldNote  , "=" , ";")
 			XRayEnergy = 12.3984/Wavelength
 			PixelSizeX = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:x_pixel_size=", OldNote), OldNote  , "=" , ";")
 			PixelSizeY = NumberByKey(NI1_9IDCFindKeyStr("instrument:detector:y_pixel_size=", OldNote), OldNote  , "=" , ";")
@@ -1634,8 +1634,8 @@ Function NI1_9IDCSFIndTransmission(SampleName)
 	
 	//ideally, this is the right transmission... 
 	//but we need to check that the Empty and dark are correct...
-	string NoteEmptyName=NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:Empty_Filename")
-	string NoteDarkName=NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:Dark_Filename")
+	string NoteEmptyName=NI1_9IDCFindWaveNoteValue("Empty_Filename")
+	string NoteDarkName=NI1_9IDCFindWaveNoteValue("Dark_Filename")
 	SVAR LoadedEmptyName = root:Packages:Convert2Dto1D:CurrentEmptyName
 	SVAR LoadedDarkName=root:Packages:Convert2Dto1D:CurrentDarkFieldName
 	SVAR EmptyDarknameMatchString=root:Packages:Convert2Dto1D:EmptyDarknameMatchStr
@@ -1742,7 +1742,7 @@ Function NI1_9IDCSFIndTransmission(SampleName)
 	endif
 	
 	 EmptyDarknameMatchString = tempStrlSavematch
-	variable ExistingTransmissionInFile=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transmission"))
+	variable ExistingTransmissionInFile=str2num(NI1_9IDCFindWaveNoteValue("transmission"))
 	variable IsTransValid=0
 	if((ExistingTransmissionInFile>0)&&(ExistingTransmissionInFile<=1))
 		IsTransValid = 1
@@ -1760,42 +1760,42 @@ Function NI1_9IDCSFIndTransmission(SampleName)
 		variable EmptyPD
 		variable DarkI0
 		variable DarkPD
-		if(str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transI0_Spl"))<1)
-			 SampleI0=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transI0_Spl"))
-			 SamplePD=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transNosePD_Value_Spl"))
-			 EmptyI0=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transI0_Empty"))
-			 EmptyPD=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transNosePD_Value_Empty"))
-			 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transI0_Dark"))
-			 DarkPD=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transNosePD_Value_Dark"))
+		if(str2num(NI1_9IDCFindWaveNoteValue("transI0_Spl"))<1)
+			 SampleI0=str2num(NI1_9IDCFindWaveNoteValue("transI0_Spl"))
+			 SamplePD=str2num(NI1_9IDCFindWaveNoteValue("transNosePD_Value_Spl"))
+			 EmptyI0=str2num(NI1_9IDCFindEmptyNoteValue("transI0_Empty"))
+			 EmptyPD=str2num(NI1_9IDCFindEmptyNoteValue("transNosePD_Value_Empty"))
+			 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("transI0_Dark"))
+			 DarkPD=str2num(NI1_9IDCFindDarkNoteValue("transNosePD_Value_Dark"))
 		else
-			 SampleI0=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transI0_Sample"))
+			 SampleI0=str2num(NI1_9IDCFindWaveNoteValue("transI0_Sample"))
 			 if(SampleI0<1000)	//something wrong, old system???
-				 SampleI0=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
-				 SampleI0+=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
-				 SampleI0+=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
-				 SampleI0+=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
+				 SampleI0=str2num(NI1_9IDCFindWaveNoteValue("transBPM_B_Sample"))
+				 SampleI0+=str2num(NI1_9IDCFindWaveNoteValue("transBPM_L_Sample"))
+				 SampleI0+=str2num(NI1_9IDCFindWaveNoteValue("transBPM_T_Sample"))
+				 SampleI0+=str2num(NI1_9IDCFindWaveNoteValue("transBPM_R_Sample"))
 			 endif
-			 SamplePD=str2num(NI1_9IDCFindWaveNoteValue("EPICS_PV_metadata:transPD_Sample"))
+			 SamplePD=str2num(NI1_9IDCFindWaveNoteValue("transPD_Sample"))
 //
 
-			 EmptyI0=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transI0_Empty"))
+			 EmptyI0=str2num(NI1_9IDCFindEmptyNoteValue("transI0_Empty"))
 			 if(EmptyI0<1000)	//something wrong, old system???
-				 EmptyI0=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transBPM_B_Empty"))
-				 EmptyI0+=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transBPM_L_Empty"))
-				 EmptyI0+=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transBPM_T_Empty"))
-				 EmptyI0+=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transBPM_R_Empty"))
+				 EmptyI0=str2num(NI1_9IDCFindEmptyNoteValue("transBPM_B_Empty"))
+				 EmptyI0+=str2num(NI1_9IDCFindEmptyNoteValue("transBPM_L_Empty"))
+				 EmptyI0+=str2num(NI1_9IDCFindEmptyNoteValue("transBPM_T_Empty"))
+				 EmptyI0+=str2num(NI1_9IDCFindEmptyNoteValue("transBPM_R_Empty"))
 			 endif
-			 EmptyPD=str2num(NI1_9IDCFindEmptyNoteValue("EPICS_PV_metadata:transPD_Empty"))
+			 EmptyPD=str2num(NI1_9IDCFindEmptyNoteValue("transPD_Empty"))
 			 DarkI0=0
 			 DarkPD = 0
-//			 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transI0_Sample"))
+//			 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("transI0_Sample"))
 //			 if(DarkI0<10)	//something wrong, old system???
-//				 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transBPM_B_Sample"))
-//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transBPM_L_Sample"))
-//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transBPM_T_Sample"))
-//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transBPM_R_Sample"))
+//				 DarkI0=str2num(NI1_9IDCFindDarkNoteValue("transBPM_B_Sample"))
+//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("transBPM_L_Sample"))
+//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("transBPM_T_Sample"))
+//				 DarkI0+=str2num(NI1_9IDCFindDarkNoteValue("transBPM_R_Sample"))
 //			endif
-//			 DarkPD=str2num(NI1_9IDCFindDarkNoteValue("EPICS_PV_metadata:transPD_Sample"))
+//			 DarkPD=str2num(NI1_9IDCFindDarkNoteValue("transPD_Sample"))
 		endif
 		transmissionUser = ((SamplePD - DarkPD)/(SampleI0-DarkI0))/((EmptyPD-DarkPD)/(EmptyI0-DarkI0))
 		print "The NX file lists transmission = "+num2str(ExistingTransmissionInFile)
@@ -1859,7 +1859,7 @@ Function NI1_9IDCFindThickness(SampleName)
 	endif
 	string OldNOte=note(w2D)
 	variable thickness1 = NumberByKey(NI1_9IDCFindKeyStr("sample:thickness=", OldNote), OldNote  , "=" , ";")
-	variable thickness2 = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:sample_thickness=", OldNote), OldNote  , "=" , ";")
+	variable thickness2 = NumberByKey(NI1_9IDCFindKeyStr("sample_thickness=", OldNote), OldNote  , "=" , ";")
 	if(numtype(thickness1)==0)
 		Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
 		return thickness1
@@ -2102,12 +2102,12 @@ Function NI1_9IDCSFindI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:I0_Sample=", OldNote), OldNote  , "=" , ";")
+	variable I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_Sample=", OldNote), OldNote  , "=" , ";")
 	if(numtype(I000)!=0 || I000<1)
-		I000 = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_B_Sample=", OldNote), OldNote  , "=" , ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_T_Sample=", OldNote), OldNote  , "=" , ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_L_Sample=", OldNote), OldNote  , "=" , ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_R_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 = NumberByKey(NI1_9IDCFindKeyStr("BPM_B_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_T_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_L_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_R_Sample=", OldNote), OldNote  , "=" , ";")
 	endif
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"
@@ -2126,7 +2126,7 @@ Function NI1_9IDCSFindThickness(SampleName)
 	endif
 	string OldNOte=note(w2D)
 	variable thickness1 = NumberByKey(NI1_9IDCFindKeyStr("sample:thickness=", OldNote), OldNote  , "=" , ";")
-	variable thickness2 = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:sample_thickness=", OldNote), OldNote  , "=" , ";")
+	variable thickness2 = NumberByKey(NI1_9IDCFindKeyStr("sample_thickness=", OldNote), OldNote  , "=" , ";")
 	if(numtype(thickness1)==0)
 		Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
 		return thickness1
@@ -2151,12 +2151,12 @@ Function NI1_9IDCSFindEfI0(SampleName)
 		Abort "Image file not found "  
 	endif
 	string OldNOte=note(w2D)
-	variable I000 = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:I0_Sample=", OldNote), OldNote  , "=" , ";")
+	variable I000 = NumberByKey(NI1_9IDCFindKeyStr("I0_Sample=", OldNote), OldNote  , "=" , ";")
 	if(numtype(I000)!=0 || I000<1)
-		I000 = NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_B_Sample=", OldNote), OldNote  , "=" , ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_T_Sample=", OldNote), OldNote  , "=" , ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_L_Sample=", OldNote), OldNote  , "=" , ";")
-		I000 += NumberByKey(NI1_9IDCFindKeyStr("EPICS_PV_metadata:BPM_R_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 = NumberByKey(NI1_9IDCFindKeyStr("BPM_B_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_T_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_L_Sample=", OldNote), OldNote  , "=" , ";")
+		I000 += NumberByKey(NI1_9IDCFindKeyStr("BPM_R_Sample=", OldNote), OldNote  , "=" , ";")
 	endif
 	if(numtype(I000)!=0)
 		Print "I0 value not found in the wave note of the sample file, setting to 1"

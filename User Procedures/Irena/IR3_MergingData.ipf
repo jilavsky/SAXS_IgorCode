@@ -773,24 +773,32 @@ Function IR3D_MergeDataSetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"Data1QEnd"))
 				NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
 				WAVE OriginalData1QWave = root:Packages:Irena:SASDataMerging:OriginalData1QWave
+				WAVE OriginalData1IntWave = root:Packages:Irena:SASDataMerging:OriginalData1IntWave
 				tempP = BinarySearch(OriginalData1QWave, Data1QEnd )
 				if(tempP<1)
 					print "Wrong Q value set, Data 1 Q max must be at most 1 point before the end of Data 1"
 					tempP = numpnts(OriginalData1QWave)-2
 					Data1QEnd = OriginalData1QWave[tempP]
 				endif
-				cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, tempP
+				checkDisplayed /W=IR3D_DataMergePanel#DataDisplay OriginalData1IntWave
+				if(V_flag)
+					cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, tempP
+				endif
 			endif
 			if(stringmatch(sva.ctrlName,"Data2Qstart"))
 				NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
 				WAVE OriginalData2QWave = root:Packages:Irena:SASDataMerging:OriginalData2QWave
+				WAVE OriginalData2IntWave = root:Packages:Irena:SASDataMerging:OriginalData2IntWave
 				tempP = BinarySearch(OriginalData2QWave, Data2Qstart )
 				if(tempP<1)
 					print "Wrong Q value set, Data 2 Q min must be at least 1 point from the start of Data 2"
 					tempP = 1
 					Data2Qstart = OriginalData2QWave[tempP]
 				endif
-				cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, tempP
+				checkDisplayed /W=IR3D_DataMergePanel#DataDisplay OriginalData2IntWave
+				if(V_flag)
+					cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, tempP
+				endif
 			endif
 			break
 
