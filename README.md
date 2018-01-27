@@ -1,5 +1,5 @@
 # SAXS_IgorCode
-Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7 ONLY!
+Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7.05 and higher (including Igor 8 beta)!
 
 The current stable release version is November2017. For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
@@ -17,11 +17,11 @@ If you want to install one or more packages from here, download the latest versi
 
 For more information on releases of distributions, please visit:
 
-http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html
+https://usaxs.xray.aps.anl.gov/software/irena
 
-http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html
+https://usaxs.xray.aps.anl.gov/software/indra
 
-http://usaxs.xray.aps.anl.gov/staff/ilavsky/indra_2.html
+https://usaxs.xray.aps.anl.gov/software/nika
 
 
 and for instructions how to use them :
