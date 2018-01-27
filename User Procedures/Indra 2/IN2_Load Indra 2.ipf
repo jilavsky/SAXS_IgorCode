@@ -36,30 +36,27 @@
 //	Good luck....
 
 
-//#include ":IN2_BckgSubtr", version>=1.01
+//this is in Indra2 folder
 #include ":IN2_Conversion Procedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.3
-//#include ":IN2_GAUSAXS 1", version>=1
-#include ":IN2_GeneralProcedures", version>=2.06
-//#include ":IN2_ImportX23", version>=1.10
-//#include ":IN2_Merging Data", version>=1.10
+#include ":IN2_GeneralProcedures", version>=2.11
 #include ":IN2_NotebookLogging", version>=1.10
 #include ":IN2_PlottingTools", version>=1.14
 #include ":IN2_SpecInput", version>=1.20
 #include ":IN2_Standard Plots", version>=1.13
-#include ":IN2_USAXS", version>=1.93
+#include ":IN2_USAXS", version>=1.94
 #include ":IN2_XtalCalculationsP", version>=1.1
 #include ":IN3_CalcScattering", version>=1.01
-#include ":IN3_Calculations", version>=1.34
+#include ":IN3_Calculations", version>=1.36
 #include ":IN3_FlyScan", version>=1.04
-#include ":IN3_Main", version>=1.93
+#include ":IN3_Main", version>=1.95
 #include ":IN3_Rwave", version>=1
-#include ":IN3_SupportFnct", version>=1.10
+#include ":IN3_SupportFnct", version>=1.11
 #include ":spec", version>=2.2
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
-#include "::Irena:IR2_PanelCntrlProcs", version>=1.45
+#include "::Irena:IR2_PanelCntrlProcs", version>=1.46
 #include "::CanSAS:IRNI_NexusSupport", version>=1.05
 
 #include <HDF5 Browser>

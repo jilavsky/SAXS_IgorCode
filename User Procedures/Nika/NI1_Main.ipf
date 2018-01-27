@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.78
+#pragma version=1.79
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.78
+constant CurrentNikaVersionNumber = 1.79
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -13,7 +13,15 @@ constant CurrentNikaVersionNumber = 1.78
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
  
- 
+//1.79	Converted all procedure files to UTF8 to prevent text encoding issues. 
+//			Modified main interface to have radio buttons and only one button for action. This makes cleaner interface as some controls can be hidden. Unluckily, panel is now higher by 20 points. 
+//			Added support for ALS SRoXS soft energy beamline. 
+//			Improved 9IDC USAXS support. 
+//			Added more masking options into main panel listbox right click. 
+//			Checked that - with reduced functionality - code will work without Github distributed xops. 
+//			Bug fix - changed ki/kout single precision waves to double precision. This caused issues under very small angles when data were unintentionally binned to less points what should have been produced. This is very old bug causing issues at very small Q vectors with short wavelengths and no beamstops.  
+//			Tested and fixed for Igor 8 beta version. 
+//			 
 //1.78	Promoted Igor requirements to 7.05 due to bug in HDF5 support at lower versions
 //		FIxed problem with change geometries, when Nexus Import TMP foldr was not deleted and this caused issues. 
 //		Added simple recording to my web site about version checking for statistical purposes. Records Nika version, Igor platform and version.  
@@ -261,7 +269,7 @@ Function NI1_AboutPanel()
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 10,37,"Nika 1 macros Igor Pro 7 "
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ ANL, 2017"
+	DrawText 52,64,"@ ANL, 2018"
 	DrawText 49,103,"Release "+num2str(CurrentNikaVersionNumber)
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"

@@ -1,14 +1,14 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.65
+#pragma version=2.66
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
 
 //define manual date and release verison 
-constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
-constant CurrentIrenaVersionNumber = 2.65
+//constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
+constant CurrentIrenaVersionNumber = 2.66
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -16,6 +16,13 @@ constant CurrentIrenaVersionNumber = 2.65
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.66   Converted all procedure files to UTF8 to prevent text encoding issues. 
+//			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
+//			Plotting tool I - added control which enforces maximum number of items in legend (default=30). If more waves are in graph, legend gets decimated by necessary integer(2, 3, 4,...). First and last are always included. This presents selection of data names when too many data sets are used. 
+//			MergeData - added ability to fit-extrapolate data 1 at high q end and added possibility to fit arbitrary combination of merging parameters. Lots of changes. More capable and more complicated. 
+//			Unified Fit - added button "Copy/Swap level" which will move content of existing level to another level. 
+//			Checked that - with reduced functionality - code will work without Github distributed xops. 
+//			Tested and fixed for Igor 8 beta version. 
 //2.65   Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 //		 	Added simple recording to my web site about version checking for statistical purposes. Records Irena version, Igor platform and version.  
 //			added resizing back to prior size of panel after user closes and opens the panel. 
@@ -741,7 +748,7 @@ Function IR1_AboutPanel()
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 23,30,"Irena macros for Igor Pro 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2017"
+	DrawText 100,60,"@ ANL, 2018"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)

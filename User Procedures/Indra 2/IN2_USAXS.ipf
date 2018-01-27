@@ -1,15 +1,21 @@
 #pragma rtGlobals=1		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.93
+#pragma version = 1.94
 
-constant CurrentIndraVersionNumber = 1.93
+constant CurrentIndraVersionNumber = 1.94
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
+//			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
+//			Added ability to smooth R_Int data - suitable mostly for Blank where it removes noise from the blank. Should reduce noise of the USAXS data. 
+//			Added masking options into FLyscan panel Listbox. 
+//			Checked that - with reduced functionality - code will work without Github distributed xops. 
+//			Tested and fixed for Igor 8 beta version. 
+//			
 //1.93 Promoted requriements to 7.05 due to bug in HDF5 support at lower versions
 // 	 added resize after recreating of the panels to prior user size. 
 //1.92 is Igor 7 only release 5/1/2017
@@ -478,7 +484,7 @@ Function IN2_AboutPanel()
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 10,37,"Indra 2 macros for Igor Pro 7"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ Jan Ilavsky, 2017"
+	DrawText 52,64,"@ Jan Ilavsky, 2018"
 	DrawText 49,103,"release "+num2str(CurrentIndraVersionNumber)
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/"

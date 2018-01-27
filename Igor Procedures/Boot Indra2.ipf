@@ -1,7 +1,13 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.93
+#pragma version = 1.94
 #pragma IgorVersion=7.05
 
+//1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
+//			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
+//			Added ability to smooth R_Int data - suitable mostly for Blank where it removes noise from the blank. Should reduce noise of the USAXS data. 
+//			Added masking options into FLyscan panel Listbox. 
+//			Checked that - with reduced functionality - code will work without Github distributed xops. 
+//			Tested and fixed for Igor 8 beta version. 
 //1.93 Promoted requirements to 7.05 due to bug in HDF5 support at lower versions
 //1.92 Igor 7 compatible ONLY now. 
 //1.91 Igor 6 last release. 

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.44
+#pragma version=1.45
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.45 minor fixes nd function names replaced. 
 //1.44 add better handling of Slit length for SAXS with default value of 0.025 when user has nothing else. Better than 0. 
 //1.43 minor fix for configruation. 
 //1.42 changed 15IDD to 9IDC and modified for reading parameters from a file dynamically. 
@@ -279,6 +280,16 @@ Function NI1_9IDCCheckProc(cba) : CheckBoxControl
 				endif
 				NI1_9IDCDisplayAndHideControls()
 			endif
+			if(stringmatch(cba.ctrlName,"SAXSSelection"))
+				TitleBox LoadBlankWarning win=NI1_9IDCConfigPanel, title="\\Zr150>>>>    Push \"Set default settings\" button now     <<<<"
+				if(checked)
+					USAXSBigSAXSselector =0
+					USAXSSAXSselector=1
+					//USAXSWAXSselector=0
+				endif
+				NI1_9IDCDisplayAndHideControls()
+			endif
+			
 			if(stringmatch(cba.ctrlName,"BigSAXSSelection"))
 				if(checked)
 					//USAXSBigSAXSselector =0
@@ -396,12 +407,12 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				NI1_9IDCCreateHelpNbk()
 			endif
 			if (stringmatch("ConfigureDefaultMethods",ba.CtrlName))
-				//first kill teh Nexus loader file in case we are using same name for SAXS and WAXS...
+				//first kill the Nexus loader file in case we are using same name for SAXS and WAXS...
 				KillDataFolder/Z root:Packages:NexusImportTMP:
 				//now we should be able to read this in without challenges? 
+				NI1A_Convert2Dto1DMainPanel()
 				string selectedFile
 				selectedFile = NI1_9IDCSetDefaultConfiguration()				
-				NI1A_Convert2Dto1DMainPanel()
 				Wave SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers 
 				Wave/T ListOfCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleData
 				variable i
@@ -725,9 +736,9 @@ Function NI1_9IDCWAXSBlankSUbtraction(Yes)
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 			
-				SampleTransmFnct = "NI1_15IDWFindTRANS"
-				SampleMonitorFnct = "NI1_15IDWFindI0"
-				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
+				SampleTransmFnct = "NI1_9IDWFindTRANS"
+				SampleMonitorFnct = "NI1_9IDWFindI0"
+				EmptyMonitorFnct = "NI1_IDWFindEFI0"
 			else //(NO)
 				UseSampleTransmission = 0
 				UseEmptyField = 0
@@ -742,9 +753,9 @@ Function NI1_9IDCWAXSBlankSUbtraction(Yes)
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
 			
-				SampleTransmFnct = "NI1_15IDWFindTRANS"
-				SampleMonitorFnct = "NI1_15IDWFindI0"
-				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
+				SampleTransmFnct = "NI1_9IDWFindTRANS"
+				SampleMonitorFnct = "NI1_9IDWFindI0"
+				EmptyMonitorFnct = "NI1_9IDWFindEFI0"
 			endif
 			NI1A_SetCalibrationFormula()			
 
@@ -866,14 +877,6 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 					print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
 				endif
 
-//				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
-//				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
-//				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
-//			
-//				SampleTransmFnct = ""
-//				SampleMonitorFnct = "NI1_15IDWFindI0"
-//				EmptyMonitorFnct = "NI1_15IDWFindEFI0"
-
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
 				SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
@@ -991,7 +994,15 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				StoreDataInIgor = 1
 				OverwriteDataIfExists = 1
 				Use2Ddataname = 1
-			
+				
+				NVAR UseQvector = root:Packages:Convert2Dto1D:UseQvector
+				NVAR UseDspacing = root:Packages:Convert2Dto1D:UseDspacing
+				NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
+				
+				UseQvector = 1
+				UseDspacing = 0
+				UseTheta = 0
+				
 				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
 				NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
@@ -1964,6 +1975,11 @@ end
 //************************************************************************************************************
 Function NI1_15IDWFindI0(SampleName)
 	string sampleName
+	abort "Please, rerun configuration to update function names"
+end
+
+Function NI1_9IDWFindI0(SampleName)
+	string sampleName
 
 	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
 	if(!WaveExists(w2D))
@@ -1987,6 +2003,11 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_15IDWFindTRANS(SampleName)
+	string sampleName
+	abort "Please, rerun configuration to update function names"
+end
+
+Function NI1_9IDWFindTRANS(SampleName)
 	string sampleName
 
 	Wave/Z w2D = root:Packages:Convert2Dto1D:CCDImageToConvert
@@ -2052,6 +2073,11 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_15IDWFindEFI0(SampleName)
+	string sampleName
+	abort "Please, rerun configuration to update function names"
+end
+
+Function NI1_9IDWFindEFI0(SampleName)
 	string sampleName
 
 	Wave/Z w2D = root:Packages:Convert2Dto1D:EmptyData

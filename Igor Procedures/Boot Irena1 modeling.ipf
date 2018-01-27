@@ -1,9 +1,16 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.65
+#pragma version = 2.66
 #pragma IgorVersion=7.05
 
 
 
+//2.66   Converted all procedure files to UTF8 to prevent text encoding issues. 
+//			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
+//			Plotting tool I - added control which enforces maximum number of items in legend (default=30). If more waves are in graph, legend gets decimated by necessary integer(2, 3, 4,...). First and last are always included. This presents selection of data names when too many data sets are used. 
+//			MergeData - added ability to fit-extrapolate data 1 at high q end and added possibility to fit arbitrary combination of merging parameters. Lots of changes. More capable and more complicated. 
+//			Unified Fit - added button "Copy/Swap level" which will move content of existing level to another level. 
+//			Checked that - with reduced functionality - code will work without Github distributed xops. 
+//			Tested and fixed for Igor 8 beta version. 
 //2.65 Promoted requirements to 7.05 due to bug in HDF5 support at lower versions
 
 Menu "Macros", dynamic
