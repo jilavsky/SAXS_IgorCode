@@ -738,7 +738,7 @@ Function NI1_9IDCWAXSBlankSUbtraction(Yes)
 			
 				SampleTransmFnct = "NI1_9IDWFindTRANS"
 				SampleMonitorFnct = "NI1_9IDWFindI0"
-				EmptyMonitorFnct = "NI1_IDWFindEFI0"
+				EmptyMonitorFnct = "NI1_9IDWFindEFI0"
 			else //(NO)
 				UseSampleTransmission = 0
 				UseEmptyField = 0
