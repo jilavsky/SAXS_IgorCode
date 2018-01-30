@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.11
+#pragma version = 2.12
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -15,10 +15,11 @@ constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
       //For releases uncomment the next line and set to correct version number:
-Strconstant ManualVersionString = "en/1.3.2/"
+//Strconstant ManualVersionString = "en/1.3.2/"					//1.3.2 is january2018 release
       //For developent version uncomment next line, it points to latest (developement) version of manuals:
-//Strconstant ManualVersionString = "en/latest/"
-strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
+Strconstant ManualVersionString = "en/latest/"
+//strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
+strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
 constant useIgor8LongNames = 10		//this controls if on Igor 8 we will use short or long name
 //will need to change this later when the hdf5.xop is updated to handle long names... 
@@ -29,6 +30,7 @@ constant useIgor8LongNames = 10		//this controls if on Igor 8 we will use short 
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.12 redirect to new VersionCheck location.
 //2.11 Added IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) to handle names of different lengts
 //		modified IN2G_LegendTopGrphFldr to have max number of items in legend to keep the list under controls. Most code uses 15 at this time. And control if use of folder, wave, or both names. 
 //		modified IN2G_ColorTopGrphRainbow to have basic colors for few waves (up to 4). Then colorization as expected.   
@@ -500,7 +502,7 @@ Function IN2G_SubmitCheckRecordToWeb(WhichPackage)
 	pathtourl += "igor_version="+IgorVersionStr+"&"
 	pathtourl += "path="+DataPath	
 	pathtourl = ReplaceString(" ", pathtourl, "%20")
-	//print pathtourl
+	print pathtourl
 	URLRequest /TIME=2/Z url=pathtourl
 	//print V_Flag
 	//print V_responseCode
