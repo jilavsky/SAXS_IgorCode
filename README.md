@@ -3,6 +3,8 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7.05 and higher (i
 
 The current stable release version is January2018. For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
+Current Beta version : February2018. This is important fix for users of 9ID WAXS instrument - it fixes changes introduced in data file format for 2018-01 cycle and later. 
+
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
 
