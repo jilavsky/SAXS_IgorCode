@@ -91,7 +91,7 @@
 			<VersionComment>Versions of Irena 2.65, Nika 1.78 and Indra 1.93 from 11/05/2017.</VersionComment>
 		</release>
 		<release name="February2018" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2018-2.zip</SourceFileAddress>
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2018-3.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.66</version>
