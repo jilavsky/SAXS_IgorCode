@@ -8,18 +8,12 @@
 		<File>User Procedures/CanSAS/IRNI_NexusSupport.ipf</File>
 		<File>User Procedures/CanSAS/HDF5gateway.ipf</File>
 		<File>User Procedures/Indra 2/ANL copyright.txt</File>
-		<File>User Procedures/Indra 2/IN2_ASAXS.ipf</File>
-		<File>User Procedures/Indra 2/IN2_BckgSubtr.ipf</File>
 		<File>User Procedures/Indra 2/IN2_Conversion Procedure.ipf</File>
 		<File>User Procedures/Indra 2/IN2_DesktopUSAXS.ipf</File>
-		<File>User Procedures/Indra 2/IN2_GAUSAXS 1.ipf</File>
 		<File>User Procedures/Indra 2/IN2_GeneralProcedures.ipf</File>
-		<File>User Procedures/Indra 2/IN2_ImportX23.ipf</File>
 		<File>User Procedures/Indra 2/IN2_Load Indra 2.ipf</File>
-		<File>User Procedures/Indra 2/IN2_Merging Data.ipf</File>
 		<File>User Procedures/Indra 2/IN2_NotebookLogging.ipf</File>
 		<File>User Procedures/Indra 2/IN2_PlottingTools.ipf</File>
-		<File>User Procedures/Indra 2/IN2_spec.ipf</File>
 		<File>User Procedures/Indra 2/IN2_SpecInput.ipf</File>
 		<File>User Procedures/Indra 2/IN2_Standard Plots.ipf</File>
 		<File>User Procedures/Indra 2/IN2_Test file.dat</File>

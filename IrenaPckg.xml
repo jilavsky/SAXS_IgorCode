@@ -20,7 +20,6 @@
 		<File>User Procedures/Irena/IR1_DataManipulation.ipf</File>
 		<File>User Procedures/Irena/IR1_Desmearing.ipf</File>
 		<File>User Procedures/Irena/IR1_EvaluationGraph.ipf</File>
-		<File>User Procedures/Irena/IR1_FittingProc.ipf</File>
 		<File>User Procedures/Irena/IR1_FormFactors.ipf</File>
 		<File>User Procedures/Irena/IR1_FractalsCtrlPanel.ipf</File>
 		<File>User Procedures/Irena/IR1_FractalsFiting.ipf</File>
@@ -31,15 +30,10 @@
 		<File>User Procedures/Irena/IR1_GeneralGraph2.ipf</File>
 		<File>User Procedures/Irena/IR1_GraphStyling.ipf</File>
 		<File>User Procedures/Irena/IR1_ImportData.ipf</File>
-		<File>User Procedures/Irena/IR1_IntCalculations.ipf</File>
-		<File>User Procedures/Irena/IR1_InterferenceLQSF.ipf</File>
 		<File>User Procedures/Irena/IR1_Loader.ipf</File>
 		<File>User Procedures/Irena/IR1_Main.ipf</File>
-		<File>User Procedures/Irena/IR1_Panel.ipf</File>
-		<File>User Procedures/Irena/IR1_Recording.ipf</File>
 		<File>User Procedures/Irena/IR1_ScattContr_New.ipf</File>
 		<File>User Procedures/Irena/IR1_Sizes.ipf</File>
-		<File>User Procedures/Irena/IR1_SupportFncts.ipf</File>
 		<File>User Procedures/Irena/IR1_Unified_Fit_Fncts.ipf</File>
 		<File>User Procedures/Irena/IR1_Unified_Fit_Fncts2.ipf</File>
 		<File>User Procedures/Irena/IR1_Unified_Panel.ipf</File>
