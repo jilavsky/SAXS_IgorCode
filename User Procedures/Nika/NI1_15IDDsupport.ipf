@@ -536,7 +536,7 @@ Function NI1_9IDCConfigNexus()
 			ListOfParamsAndPaths[8][1]=":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_center_x_pixel=", OldNote)
 
 			ListOfParamsAndPaths[9][0]="BeamCenterY"
-			ListOfParamsAndPaths[9][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
+			ListOfParamsAndPaths[9][1]=":entry:"+NI1_9IDCFindKeyStr("waxs_ccd_center_y_pixel=", OldNote)
 
 			ListOfParamsAndPaths[10][0]="BeamSizeX"
 			ListOfParamsAndPaths[10][1]=	":entry:"+NI1_9IDCFindKeyStr("shape:xsize=", OldNote)	
@@ -544,9 +544,9 @@ Function NI1_9IDCConfigNexus()
 			ListOfParamsAndPaths[11][1]=	":entry:"+NI1_9IDCFindKeyStr("shape:ysize=", OldNote)
 
 			ListOfParamsAndPaths[12][0]="PixelSizeX"
-			ListOfParamsAndPaths[12][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_detector:x_pixel_size=", OldNote)	
+			ListOfParamsAndPaths[12][1]=":entry:"+NI1_9IDCFindKeyStr("x_pixel_size=", OldNote)	
 			ListOfParamsAndPaths[13][0]="PixelSizeY"
-			ListOfParamsAndPaths[13][1]=	":entry:"+NI1_9IDCFindKeyStr("waxs_detector:y_pixel_size=", OldNote)
+			ListOfParamsAndPaths[13][1]=	":entry:"+NI1_9IDCFindKeyStr("y_pixel_size=", OldNote)
 
 
 			ListOfParamsAndPaths[14][0]="HorizontalTilt"

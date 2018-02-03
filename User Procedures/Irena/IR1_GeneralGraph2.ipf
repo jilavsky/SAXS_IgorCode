@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.21
+#pragma version=2.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 optimize function IR1P_CreateGraph, doing stuff 2x - not needed. 
 //2.21 modified IR1P_AttachLegend to limit max number of items in Legend. 
 //2.20 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.19 fix applying Graph styles which did not handle custom axes titles. 
@@ -39,10 +40,10 @@
 //this creates graph, adds data into the graph, synchronizes the formating string and control
 //variables and formats the graph
 Function IR1P_CreateGraph()
-	IR1P_CheckForDataIntegrity()
+//	IR1P_CheckForDataIntegrity()			//done also in IR1P_UpdateGenGraph
 	Execute ("IR1P_makeGraphWindow()")
-	IR1P_CreateDataToPlot()
-	IR1P_AddDataToGenGraph()
+//	IR1P_CreateDataToPlot()			//done also in IR1P_UpdateGenGraph
+//	IR1P_AddDataToGenGraph()			//done also in IR1P_UpdateGenGraph
 	IR1P_SynchronizeListAndVars()
 	IR1P_UpdateGenGraph()
 end
@@ -111,10 +112,12 @@ Function IR1P_AddDataToGenGraph()
 	SVAR ListOfDataWaveNames=root:Packages:GeneralplottingTool:ListOfDataWaveNames
 	variable NumberOfWaves,i
 	
-	string ListOfWaves=TraceNameList("GeneralGraph", ",", 1 )		//list of waves in the graph
-	ListOfWaves=TraceNameList("GeneralGraph", ",", 1 )	
+	string ListOfWaves, tmpName
+	ListOfWaves=TraceNameList("GeneralGraph", ",", 1 )			//list of waves in the graph
 	For(i=(ItemsInList(ListOfWaves,",")-1);i>=0;i-=1)
-		RemoveFromGraph/W=GeneralGraph $(stringFromList(i,ListOfWaves,","))
+		tmpName= stringFromList(i,ListOfWaves,",")
+		//RemoveFromGraph/W=GeneralGraph $(stringFromList(i,ListOfWaves,","))
+		RemoveFromGraph/W=GeneralGraph $(tmpName)
 	endfor
 	
 	NumberOfWaves=ItemsInList(ListOfDataFolderNames)

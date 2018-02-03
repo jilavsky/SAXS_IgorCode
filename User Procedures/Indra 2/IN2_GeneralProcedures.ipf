@@ -1995,7 +1995,7 @@ Function IN2G_PrintDebugStatement(CurrentDebugLevel, DebugLevel,DebugStatement)
 	string DebugStatement
 	
 	if(CurrentDebugLevel>=DebugLevel)
-		string Location=GetRTStackInfo(1)
+		string Location=GetRTStackInfo(3)
 		print Secs2Date(DateTime,2)	+Secs2Time(DateTime,3)+"  :  "+Location +" : "+ DebugStatement
 	endif
 
