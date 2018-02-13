@@ -142,7 +142,8 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 			NI3_TabPanelControl("",0)
 			IN3_DesmearData()
 			DoWIndow/F USAXSDataReduction
-			//ResumeUpdate
+			ResumeUpdate
+			DoUpdate /W=RcurvePlotGraph
 			//DoUpdate /W=USAXSDataReduction
 			if(howMany)
 				IN3_SaveData()	
@@ -152,7 +153,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 				DoWIndow/F USAXSDataReduction
 				UserSavedData=1
 				IN3_FixSaveData()
-				if(i<Items-1)
+				if(i<Items-1)	
 					sleep/S/B/Q/C=6/M="Delay "+num2str(ListProcDisplayDelay)+" seconds for user data review" ListProcDisplayDelay
 				endif
 			endif

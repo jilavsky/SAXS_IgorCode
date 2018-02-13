@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.45
+#pragma version=1.46
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.46 fix problem with WAXS when "WAXS use Blank" is not selected incorrectly set parameters. 
 //1.45 minor fixes nd function names replaced. 
 //1.44 add better handling of Slit length for SAXS with default value of 0.025 when user has nothing else. Better than 0. 
 //1.43 minor fix for configruation. 
@@ -458,7 +459,8 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				elseif(isWAXS)	
 					NVAR UseLineProfile= root:Packages:Convert2Dto1D:UseLineProfile		//uncheck just in case leftover from SAXS
 					UseLineProfile=0
-					NI1_9IDCWAXSBlankSUbtraction(1)				
+					NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
+					NI1_9IDCWAXSBlankSUbtraction(WAXSSubtractBlank)
 					NI1_9IDCCreateWAXSPixMask()	
 					TitleBox LoadBlankWarning  win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank; ... done   <<<<"
 				endif	
@@ -744,10 +746,10 @@ Function NI1_9IDCWAXSBlankSUbtraction(Yes)
 				UseEmptyField = 0
 				UseI0ToCalibrate = 1
 				DoGeometryCorrection = 1
-				UseMonitorForEf = 1
+				UseMonitorForEf = 0
 				UseSampleTransmFnct = 0
 				UseSampleMonitorFnct = 1
-				UseEmptyMonitorFnct = 1
+				UseEmptyMonitorFnct = 0
 
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
 				SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
@@ -831,8 +833,7 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
 				NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
 				NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct
-				
-	
+			
 				UseSampleThickness = 1			
 				UseSampleTransmission = 1
 				UseEmptyField = 1
@@ -843,25 +844,6 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				UseSampleMonitorFnct = 1
 				UseEmptyMonitorFnct = 1
 				UseSampleThicknFnct = 1 
-
-//				NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
-//				NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
-//				NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
-//				NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
-//				NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
-//				NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
-//				NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
-//				NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
-//				
-//				UseSampleTransmission = 1
-//				UseEmptyField = 0
-//				UseI0ToCalibrate = 1
-//				DoGeometryCorrection = 0
-//				UseMonitorForEf = 0
-//				UseSampleTransmFnct = 0
-//				UseSampleMonitorFnct = 1
-//				UseEmptyMonitorFnct = 1
-				
 
 				NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 				NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
@@ -887,6 +869,8 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				EmptyMonitorFnct = "NI1_9IDCSFindEfI0"
 				SampleThicknFnct = "NI1_9IDCSFindThickness"
 			
+				NVAR WAXSSubtractBlank = root:Packages:Convert2Dto1D:WAXSSubtractBlank
+				NI1_9IDCWAXSBlankSUbtraction(WAXSSubtractBlank)
 			
 				NI1A_SetCalibrationFormula()			
 				

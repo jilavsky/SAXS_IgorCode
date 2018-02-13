@@ -1078,6 +1078,9 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 	while (i>0 && tmpmcsChangePnts[i] <1)
 	//this blasts on these 3 waves any lines, which contain NaN in any of the three waves. 
 	IN2G_RemoveNaNsFrom3Waves(tmpmcsChangePnts,tmpampGainReq,tmpampGain)
+	//debug code
+	//print tmpmcsChangePnts, tmpampGainReq, tmpampGain
+	//abort
 	//set Gains to first point on record
 	GainWv = tmpampGain[0]
 	variable iii, iiimax=numpnts(tmpmcsChangePnts)-1
@@ -1090,15 +1093,15 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 		For(iii=0;iii<iiimax+1;iii+=1)		//find points when we requested ranege change and when we got it, record and deal with it
 			if(tmpampGain[iii]!=tmpampGainReq[iii])		//requested gain change
 				StartRc = tmpmcsChangePnts[iii]	
-			elseif(tmpampGain[iii]==tmpampGainReq[iii])	//got the requested range cahnge, from here we should have the gains set
+			elseif(tmpampGain[iii]==tmpampGainReq[iii])	//got the requested range change, from here we should have the gains set
 				EndRc = tmpmcsChangePnts[iii]
 					if((EndRc<numpnts(GainWv)-1)&&(numtype(StartRc)==0))
 						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
-							GainWv[StartRc,EndRc] = nan	//while we were changing, set points to NaNs 
+							GainWv[StartRc,EndRc] = nan			//while we were changing, set points to NaNs 
 						endif
-						GainWv[EndRc+1,] = ampGain[iii]+1	//set rest of the measured points to the gain we set
+						GainWv[EndRc+1,] = ampGain[iii]+1		//set rest of the measured points to the gain we set
 						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
-							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])	//mask for time, if needed. 
+							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed. 
 						endif
 					endif			
 			endif

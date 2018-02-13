@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11
+#pragma version=1.12
 Constant IR2EversionNumber = 1.10
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 fix extensions mess, force extesions, cannot make the old one to be remebered correctly... Too many options. 
 //1.11 fix bug that GSAS-II data type was not updating/chaqnging output name as expected. 
 //1.10 added export of xye data file for GSAS-II
 //1.09 added getHelp button calling to www manual
@@ -436,45 +437,25 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 	SVAR ErrorWaveName
 	SVAR CurrentlyLoadedDataName
 	SVAR CurrentlySetOutputPath
-	SVAR/Z OldNexusExt
-	if(!SVAR_Exists(OldNexusExt))
-		string/g OldNexusExt
-		OldNexusExt = "h5"
-	endif
-	SVAR/Z OldASCIIExt
-	if(!SVAR_Exists(OldASCIIExt))
-		string/g OldASCIIExt
-		OldASCIIExt = "dat"
-	endif
 	SVAR NewFileOutputName
 		NVAR ExportCanSASNexus = root:Packages:IR2_UniversalDataExport:ExportCanSASNexus
 		NVAR ExportASCII = root:Packages:IR2_UniversalDataExport:ExportASCII
 		NVAR ExportGSASxye = root:Packages:IR2_UniversalDataExport:ExportGSASxye
-		
+			
 		SVAR OutputNameExtension = root:Packages:IR2_UniversalDataExport:OutputNameExtension
 		if(stringMatch(ctrlName,"ExportASCII"))
 			if(checked)
 				ExportASCII = 1
 				ExportCanSASNexus = 0
-				OldNexusExt = OutputNameExtension
-				OutputNameExtension  = OldASCIIExt
 				ExportGSASxye = 0
-//			else
-//				ExportASCII = 0
-//				ExportCanSASNexus = 1		
-//				OldASCIIExt = OutputNameExtension	
-//				OutputNameExtension  = OldNexusExt
+				OutputNameExtension  = "dat"
 			endif
-//			if(ExportCanSASNexus)
-//				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
-//			endif
 		endif
 		if(stringMatch(ctrlName,"ExportGSASxye"))
 			if(checked)
 				ExportGSASxye = 1
 				ExportASCII = 0
 				ExportCanSASNexus = 0
-				OldNexusExt = OutputNameExtension
 				OutputNameExtension  = "xye"
 			endif
 		endif
@@ -483,13 +464,7 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 				ExportGSASxye =0 
 				ExportASCII = 0
 				ExportCanSASNexus = 1
-				OldASCIIExt = OutputNameExtension	
-				OutputNameExtension  = OldNexusExt
-//			else
-//				ExportASCII = 1
-//				ExportCanSASNexus = 0
-//				OldNexusExt = OutputNameExtension
-//				OutputNameExtension  = OldASCIIExt
+				OutputNameExtension  = "h5"
 			endif
 			if(ExportCanSASNexus)
 				DoAlert /T="NXcanSAS Warning for slit smeared data" 0, "At this time NO software has been verified to be able to use slit smeared data. Export ONLY desmeared USAXS data, please."
