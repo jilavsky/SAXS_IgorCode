@@ -2407,6 +2407,8 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^(Refl|SLD)",0, ";" )
 	elseif(stringmatch(ToolName,"Modeling II"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "ModelLSQF",0, ";" )
+	else
+		ListOfLookups = ""
 	endif
 
 
@@ -2617,7 +2619,7 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 
 			if (lba.eventMod & 0x10)	// rightclick
 				// list of items for PopupContextualMenu
-				items = "Refresh Content;Select All;Deselect All;Match \"Blank\";Match \"Empty\";Remove Match;"+SortOptionsString	
+				items = "Refresh Content;Select All;Deselect All;Match \"Blank\";Match \"Empty\";Hide \"Blank\";Hide \"Empty\";Remove Match or Hide;"+SortOptionsString	
 				PopupContextualMenu items
 				// V_flag is index of user selected item
 				switch (V_flag)
@@ -2651,7 +2653,23 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 						IR3C_SortListOfFilesInWvs(TopPanel)	
 						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
 						break;
-					case 6:	//remove Match
+					case 6:	//hide blank
+						DataSelListBoxMatchString="^((?!(?i)Blank).)*$"
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_UpdateListOfFilesInWvs(TopPanel)
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
+						break;
+					case 7:	//hide empty
+						DataSelListBoxMatchString="^((?!(?i)Empty).)*$"
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_UpdateListOfFilesInWvs(TopPanel)
+						IR3C_SortListOfFilesInWvs(TopPanel)	
+						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
+						break;
+					case 8:	//remove Match
 						DataSelListBoxMatchString=""
 						ControlInfo/W=$(TopPanel) ListOfAvailableData
 						 oldSets=V_startRow
@@ -2659,6 +2677,7 @@ Function IR3C_ListBoxProc(lba) : ListBoxControl
 						IR3C_SortListOfFilesInWvs(TopPanel)	
 						ListBox ListOfAvailableData,win=$(TopPanel),row=V_startRow
 						break;
+
 					default :	// "Sort"
 						DataSelSortString = StringFromList(V_flag-1, items)
 						PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString

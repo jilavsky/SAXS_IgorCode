@@ -444,6 +444,7 @@ Function RemovePointsWithMarquee()
 			endfor
 		endif
 		IN3_RecalculateData(0)
+		IN3_DesmearData()
 		IN3_DisplayRightSubwindow()
 	endif
 	

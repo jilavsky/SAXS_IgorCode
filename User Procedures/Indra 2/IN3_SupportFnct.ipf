@@ -1198,6 +1198,7 @@ Function IN3_MSAXSHookFunction(H_Struct)
 		SampleTransmission = SampleTransmissionPeakToPeak * MSAXSCorrection
 			//recalculate what needs to be done...
 		IN3_RecalculateData(2)
+		IN3_DesmearData()
 		setDataFolder oldDf
 	endif
     return 0        // 0 if nothing done, else 1

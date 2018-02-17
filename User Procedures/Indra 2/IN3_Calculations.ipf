@@ -181,6 +181,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		IN3_FitDefaultTop()
 		IN3_GetDiodeTransmission(0)
 		IN3_RecalculateData(1)
+		IN3_DesmearData()
 		TabControl DataTabs , value= 0, win=USAXSDataReduction
 		NI3_TabPanelControl("",0)
 		DoWIndow/F USAXSDataReduction
@@ -214,6 +215,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		NVAR SampleThicknessBckp
 		SampleThickness = SampleThicknessBckp
 		IN3_RecalculateData(2)
+		IN3_DesmearData()
 		DoWIndow/F USAXSDataReduction
 	endif
 	if (cmpstr(ctrlName,"RecoverDefaultBlnkVals")==0)
@@ -227,6 +229,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 		NVAR BlankMaximum
 		BlankMaximum = BlankMaximumBckp
 		IN3_RecalculateData(2)
+		IN3_DesmearData()
 		DoWIndow/F USAXSDataReduction
 	endif
 
@@ -760,6 +763,7 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 	endif
 	if (cmpstr("SmoothRCurveData",ctrlName)==0)
 			IN3_RecalculateData(2)
+			IN3_DesmearData()
 	endif
 	NVAR CalculateWeight=root:Packages:Indra3:CalculateWeight
 	NVAR CalculateThickness=root:Packages:Indra3:CalculateThickness
@@ -816,23 +820,20 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 			 UsePinTransmission=0
 		endif
 		NI3_TabPanelControl("",4)
-		//IN3_CalculateMSAXSCorrection()
-		//IN3_CalculateTransmission(1)
-		//IN3_CalculateSampleThickness()
 		IN3_RecalculateData(3)
+		IN3_DesmearData()
 	endif
 	if (cmpstr("UsePinTransmission",ctrlName)==0)
 		IF(checked)
 			 UseMSAXSCorrection=0
 		endif
 		NI3_TabPanelControl("",0)
-		//IN3_CalculateMSAXSCorrection()
-		//IN3_CalculateTransmission(1)
-		//IN3_CalculateSampleThickness()
 		IN3_RecalculateData(3)
+		IN3_DesmearData()
 	endif
 	if (cmpstr("RemoveDropouts",ctrlName)==0)
 		IN3_RecalculateData(1)
+		IN3_DesmearData()
 	endif
 	
 	if (cmpstr("DesmearData",ctrlName)==0)
@@ -1181,6 +1182,7 @@ Function IN3_GraphButtonProc(ctrlName) : ButtonControl
 			else
 				PD_range[curPntNum]=CurPDRange
 				IN3_RecalculateData(1)	
+				IN3_DesmearData()
 				DoWIndow/F USAXSDataReduction
  			endif			
 		endif
@@ -1193,6 +1195,7 @@ Function IN3_GraphButtonProc(ctrlName) : ButtonControl
 		PeakCenterFitEndPoint=max(pcsr(A, "RcurvePlotGraph#PeakCenter"),pcsr(B, "RcurvePlotGraph#PeakCenter"))
 		IN3_FitGaussTop("")
 		IN3_RecalculateData(1)	
+		IN3_DesmearData()
 	endif
 	if(stringMatch(ctrlName,"FitModGauss"))
 		//get position of cursors from the right window and run fitting rouitne with gaussien
@@ -1200,6 +1203,7 @@ Function IN3_GraphButtonProc(ctrlName) : ButtonControl
 		PeakCenterFitEndPoint=max(pcsr(A, "RcurvePlotGraph#PeakCenter"),pcsr(B, "RcurvePlotGraph#PeakCenter"))
 		IN3_FitModGaussTop("", 1)
 		IN3_RecalculateData(1)	
+		IN3_DesmearData()
 	endif
 	if(stringMatch(ctrlName,"FitLorenz"))
 		//get position of cursors from the right window and run fitting rouitne with lorenzian
@@ -1207,6 +1211,7 @@ Function IN3_GraphButtonProc(ctrlName) : ButtonControl
 		PeakCenterFitEndPoint=max(pcsr(A, "RcurvePlotGraph#PeakCenter"),pcsr(B, "RcurvePlotGraph#PeakCenter"))
 		IN3_FitLorenzianTop("")
 		IN3_RecalculateData(1)	
+		IN3_DesmearData()
 	endif
 End
 
@@ -1631,6 +1636,7 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 				SampleThickness = SampleThicknessBckp
 			endif
 			IN3_RecalculateData(2)
+			IN3_DesmearData()
 			DoWIndow/F USAXSDataReduction
 			//SVAR UPDParameters= root:Packages:Indra3:UPDParameters
 			//UPDParameters =  ReplaceNumberByKey("UPDsize", UPDParameters, varNum, "=")
@@ -1639,16 +1645,16 @@ Function IN3_ParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableCont
 		if(stringmatch(ctrlName,"BckgStartQ"))
 			IN3_DesmearData()
 		endif
-	
-	
 		NVAR RemoveDropouts = root:Packages:Indra3:RemoveDropouts
 		//recalculate what needs to be done...
 		if((stringmatch(ctrlName,"RemoveDropoutsTime")) || (stringmatch(ctrlName,"RemoveDropoutsFraction")) || (stringmatch(ctrlName,"RemoveDropoutsAvePnts")))
 			if(RemoveDropouts)
 				IN3_RecalculateData(1)
+				IN3_DesmearData()
 			endif
 		else
 			IN3_RecalculateData(2)
+			IN3_DesmearData()
 		endif
 	endif
 	setDataFolder OldDf
@@ -1716,6 +1722,7 @@ Function IN3_UPDParametersChanged(ctrlName,varNum,varStr,varName) : SetVariableC
 
 
 	IN3_RecalculateData(1)			//and here we recalcualte the R wave
+	IN3_DesmearData()
 	setDataFolder OldDf
 End
 //*****************************************************************************************************************
@@ -1817,18 +1824,9 @@ Function NI3_TabPanelControl(name,tab)
 		ExistingSubWindows=ChildWindowList("USAXSDataReduction") 
 	endif
 	if(tab!=4 || !UseMSAXSCorrection)
-			IN3_HideMSAXSGraph()
+		IN3_HideMSAXSGraph()
 	else
 		IN3_ShowMSAXSGraph()
-//		if(!stringmatch(ExistingSubWindows,"*MSAXSGraph*"))
-//			IN3_ShowMSAXSGraph()
-//		else
-//			//setWindow USAXSDataReduction#MSAXSGraph, hide =0	
-//			IN3_ShowMSAXSGraph()
-//		endif
-//		if((!UseMSAXSCorrection || IsBlank) &&stringmatch(ExistingSubWindows,"*MSAXSGraph*")  )
-//			IN3_ShowMSAXSGraph()
-//		endif
 	endif
 	//color wave in main graph as appropriate
 	if(tab==1)
@@ -2260,11 +2258,12 @@ Function IN3_DesmearData()
 			CheckDisplayed /W=RcurvePlotGraph DSM_Int 
 				if(V_Flag<1)
 					AppendToGraph/R/W=RcurvePlotGraph DSM_Int vs DSM_Qvec
-					ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=3,rgb(DSM_Int)=(1,39321,19939)		
-					//Label/W=RcurvePlotGraph right "DSM & SMR Intensity"	
-					Label/W=RcurvePlotGraph right "\\K(3,52428,1)DSM & \\K(1,16019,65535)SMR \\K(0,0,0)Intensity"
-					DoUpdate /W=RcurvePlotGraph
 				endif
+			ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=3,rgb(DSM_Int)=(1,39321,19939)		
+			ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=4
+			//Label/W=RcurvePlotGraph right "DSM & SMR Intensity"	
+			Label/W=RcurvePlotGraph right "\\K(3,52428,1)DSM & \\K(1,16019,65535)SMR \\K(0,0,0)Intensity"
+			DoUpdate /W=RcurvePlotGraph
 			IN3_DisplayDesExtAndError()
 		endif
 	else		//remove desmeared data if present
@@ -2717,11 +2716,20 @@ Function IN3_DisplayDesExtAndError()
 						AppendToGraph/L=VertCrossing/W=RcurvePlotGraph DesmNormalizedError vs DSM_Qvec
 						ModifyGraph/W=RcurvePlotGraph mode(DesmNormalizedError)=2,rgb(DesmNormalizedError)=(0,0,0)
 						SetAxis/A/E=2/W=RcurvePlotGraph VertCrossing
-						ModifyGraph/W=RcurvePlotGraph lblPos(VertCrossing)=45;DelayUpdate
+						ModifyGraph/W=RcurvePlotGraph lblPos(VertCrossing)=45
 						Label/W=RcurvePlotGraph VertCrossing "Normalized residual"
 					endif
 				endif	
 			else
+				CheckDisplayed /W=RcurvePlotGraph DSM_Int 
+					if(V_Flag)
+						ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=3,rgb(DSM_Int)=(1,39321,19939)		
+						ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=4
+						//Label/W=RcurvePlotGraph right "DSM & SMR Intensity"	
+						Label/W=RcurvePlotGraph right "\\K(3,52428,1)DSM & \\K(1,16019,65535)SMR \\K(0,0,0)Intensity"
+					else
+					
+					endif
 				RemoveFromGraph /W=RcurvePlotGraph/Z fit_ExtrapIntwave
 				RemoveFromGraph /W=RcurvePlotGraph/Z DesmNormalizedError
 			endif

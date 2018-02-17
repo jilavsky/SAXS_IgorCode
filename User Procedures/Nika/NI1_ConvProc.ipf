@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.62
+#pragma version=2.63
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.63 fix bug when user did stuff our of order. 
 //2.62 fixed single precision rounding error (ki and kout were single precision) which caused under some cconditions problems with data at low-q bining. 
 //2.61 fixed erros for case where we have missing range of Q in the middle of detecotr (space between tiles on Pilatus). 
 //2.60 fixed case when for intensities=0 (set in software like Mar165) we wouldget error=0 and users would consider these regular data points. Removed now. 
@@ -5408,8 +5409,11 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	endif
 	if(cmpstr("QvectorMaxNumPnts",ctrlName)==0)
 		NVAR QbinningLogarithmic=root:Packages:Convert2Dto1D:QbinningLogarithmic
-		ControlInfo /W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
-		SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=(checked || V_Value!=4)
+		DoWIndow NI1A_Convert2Dto1DPanel
+		if(V_Flag)
+			ControlInfo /W=NI1A_Convert2Dto1DPanel Convert2Dto1DTab
+			SetVariable QbinPoints, win=NI1A_Convert2Dto1DPanel, disable=(checked || V_Value!=4)
+		endif
 		DoWindow NI1_9IDCConfigPanel
 		if(V_Flag)
 			SetVariable QbinPoints, win=NI1_9IDCConfigPanel, disable=(checked)
@@ -5419,16 +5423,6 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 		else
 			QbinningLogarithmic = 1
 		endif
-//		NVAR/Z USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
-//		if(NVAR_Exists(USAXSSAXSselector))
-//			if(USAXSSAXSselector==1)
-//				NVAR QbinPoints=root:Packages:Convert2Dto1D:QvectorNumberPoints
-//				if(checked)
-//				
-//				endif
-//					QbinPoints =120
-//			endif
-//		endif
 	endif
 	if(cmpstr("DoSectorAverages",ctrlName)==0)
 		NI1A_TabProc("nothing",4)
