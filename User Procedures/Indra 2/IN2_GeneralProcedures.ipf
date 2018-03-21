@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.12
+#pragma version = 2.13
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -18,18 +18,25 @@ Constant TypicalPanelHorizontalSize = 350
 //Strconstant ManualVersionString = "en/1.3.2/"					//1.3.2 is january2018 release
       //For developent version uncomment next line, it points to latest (developement) version of manuals:
 Strconstant ManualVersionString = "en/latest/"
-//strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
-strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
-constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
-constant useIgor8LongNames = 10		//this controls if on Igor 8 we will use short or long name
+strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
+//strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
+//constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
+//replaced with root:Packages:IrenaConfigFolder:UseUserNameString
+//constant useIgor8LongNames = 1 		//this controls if on Igor 8 we will use short or long name
+// replaced with root:Packages:IrenaConfigFolder:Igor8UseLongNames
 //will need to change this later when the hdf5.xop is updated to handle long names... 
-//
+// Names handling: 
+//  IN2G_ReturnUserSampleName(FolderPathToData) returns name, either folder name or content of UserName string
+//  IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) returns name for specific element
+//  On Igor 7 always less than 31 characters. On Igor 8 optionally more, based on constats above.  
+//  
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.13 Get the Igor8 long files names support sorted out. 
 //2.12 redirect to new VersionCheck location.
 //2.11 Added IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) to handle names of different lengts
 //		modified IN2G_LegendTopGrphFldr to have max number of items in legend to keep the list under controls. Most code uses 15 at this time. And control if use of folder, wave, or both names. 
@@ -442,31 +449,60 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+//************************************************************************************************
+//************************************************************************************************
 
-Function/T IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
+Function/T IN2G_CreateUserName(NameIn,I7MaxShortLength, MakeUnique, FolderWaveStrNum)
 	string NameIn
-	variable MaxShortLength, MakeUnique, FolderWaveStrNum
+	variable I7MaxShortLength, MakeUnique, FolderWaveStrNum
 	//FolderWaveStrNum - 11 for folder, 1 for wave, 3 for string 4 for number
 	
+	NVAR useIgor8LongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
 	string resultStr 
 				
 	if(useIgor8LongNames && IgorVersion()>7.99)		//Igor 8 and user wants long names 
 		resultStr = NameIn 
 	else			//create a short name
-		resultStr = NameIn[0,MaxShortLength-1]
+		resultStr = NameIn[0,I7MaxShortLength-1]
 	endif
 	if (FolderWaveStrNum == 3 || FolderWaveStrNum == 4 )		// 1 for waves, 11 for folders, 3 and 4 for strings and variables
-		resultStr = CleanupName(resultStr, 0)		// variables and strings must have only non liberal names anyway... 
+		resultStr = CleanupName(resultStr, 0)						// variables and strings must have only non liberal names anyway... 
 	endif
-	if (CheckName(resultStr,FolderWaveStrNum) != 0)		// 1 for waves, 11 for folders, 3 and 4 for strings and variables
-		resultStr = CleanupName(resultStr, 1)				// Make sure it's valid for folders and waves
+	if (CheckName(resultStr,FolderWaveStrNum) != 0)				// 1 for waves, 11 for folders, 3 and 4 for strings and variables
+		resultStr = CleanupName(resultStr, 1)						// Make sure it's valid for folders and waves
 	endif
 	if(MakeUnique&&(CheckName(resultStr,FolderWaveStrNum) != 0))
-		resultStr = UniqueName(resultStr, 1, 0) 			// Make sure it's unique
+		resultStr = UniqueName(resultStr, 1, 0) 					// Make sure it's unique in the current folder
 	endif
 	
 	return resultStr
 end
+
+//************************************************************************************************
+//************************************************************************************************
+Function/T IN2G_ReturnUserSampleName(FolderPathToData)
+	string FolderPathToData
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	if(!(DataFolderExists(FolderPathToData)))
+		return ""
+	endif
+	//OK, folder exists. Now does it have user string name, potentially long name?
+	//global useUserFileNames = 1 if we want to use this string and 0 if not... 
+	NVAR useUserFileNames = root:Packages:IrenaConfigFolder:UseUserNameString
+	string UserSampleName
+	SVAR/Z StringName = $(FolderPathToData+"UserSampleName")
+	if(SVAR_Exists(StringName)&&useUserFileNames)
+		if(Strlen(StringName)>0)
+			return StringName
+		endif
+	endif
+	//OK, string/long name does not exist, let's pick the folder name
+	UserSampleName = StringFromList(ItemsInList(FolderPathToData, ":")-1, FolderPathToData, ":")
+	UserSampleName = IN2G_RemoveExtraQuote(UserSampleName,1,1)
+	return UserSampleName
+end
+
 
 //**************************************************************** 
 //**************************************************************** 
@@ -502,7 +538,7 @@ Function IN2G_SubmitCheckRecordToWeb(WhichPackage)
 	pathtourl += "igor_version="+IgorVersionStr+"&"
 	pathtourl += "path="+DataPath	
 	pathtourl = ReplaceString(" ", pathtourl, "%20")
-	print pathtourl
+	//print pathtourl
 	URLRequest /TIME=2/Z url=pathtourl
 	//print V_Flag
 	//print V_responseCode
@@ -982,7 +1018,9 @@ structure IrenaPanelDefaults
 	variable LastUpdateCheckNika
 	int16 DoNotRestorePanelSizes //do not restore panel sizes
 	uchar NikaColorTable[20]		//20 characters for legend font name
-	uint32 reserved[79]			// Reserved for future use
+	uint32 Igor8UseLongNames		// Use long names in gor 8+.
+	uint32 UseUserNameString		// Use UserSampleName instead of folder names.
+	uint32 reserved[77]			// Reserved for future use
 	
 endstructure
 //***********************************************************
@@ -1020,6 +1058,7 @@ Function IN2G_InitConfigMain()
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfVariables="LegendSize;TagSize;AxisLabelSize;LegendUseFolderName;LegendUseWaveName;DefaultFontSize;LastUpdateCheck;"
 	ListOfVariables+="SelectedUncertainity;LastUpdateCheckNika;LastUpdateCheckIrena;DoNotRestorePanelSizes;"
+	ListOfVariables+="Igor8UseLongNames;UseUserNameString;"
 	ListOfStrings="FontType;ListOfKnownFontTypes;DefaultFontType;"
 	variable i
 	//and here we create them
@@ -1118,6 +1157,8 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	NVAR LastUpdateCheck=root:Packages:IrenaConfigFolder:LastUpdateCheck
 	NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
 	NVAR DoNotRestorePanelSizes = root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+	NVAR Igor8UseLongNames=root:Packages:IrenaConfigFolder:Igor8UseLongNames
+	NVAR UseUserNameString=root:Packages:IrenaConfigFolder:UseUserNameString
 	SVAR FontType=root:Packages:IrenaConfigFolder:FontType
 	SVAR/Z ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 	if(!SVAR_Exists(ColorTableName))
@@ -1141,6 +1182,8 @@ Function IN2G_SaveIrenaGUIPackagePrefs(KillThem)
 	Defs.Uncertainity  		= 		SelectedUncertainity
 	Defs.DoNotRestorePanelSizes = DoNotRestorePanelSizes
 	Defs.NikaColorTable	 = 		ColorTableName
+	Defs.Igor8UseLongNames	 = 	Igor8UseLongNames
+	Defs.UseUserNameString	 = 	UseUserNameString
 	
 	if(KillThem)
 		SavePackagePreferences /Kill   "IrenaNika" , "IrenaNikaDefaultPanelControls.bin", 0 , Defs		//does not work below 6.10
@@ -1179,6 +1222,8 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 		NVAR LastUpdateCheckNika=root:Packages:IrenaConfigFolder:LastUpdateCheckNika
 		NVAR SelectedUncertainity = root:Packages:IrenaConfigFolder:SelectedUncertainity
 		NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+		NVAR Igor8UseLongNames=root:Packages:IrenaConfigFolder:Igor8UseLongNames
+		NVAR UseUserNameString=root:Packages:IrenaConfigFolder:UseUserNameString
 		variable PanelUp=0
 		DOWindow IN2G_MainConfigPanel  
 		if(V_Flag)
@@ -1237,6 +1282,19 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				 LegendUseWaveName=Defs.LegendUseWaveName
 				 FontType=Defs.LegendFontType
 				 DoNotRestorePanelSizes = Defs.DoNotRestorePanelSizes
+				 if(numtype(Defs.Igor8UseLongNames)==0)
+				 	Igor8UseLongNames = Defs.Igor8UseLongNames
+				 else
+				 	Igor8UseLongNames = 0
+				 	print "Set Igor8UseLongNames to 0" 
+				 endif	
+				 if(numtype(Defs.UseUserNameString)==0)
+				 	UseUserNameString = Defs.UseUserNameString
+				 else
+				 	UseUserNameString = 0
+				 	print "Set UseUserNameString to 0" 
+				 endif	
+				 
 				//Nika uncertainity
 				NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 				NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
@@ -1383,6 +1441,12 @@ Proc IN2G_MainConfigPanelProc()
 		PopupMenu FontType,pos={48,255},size={114,21},proc=IN2G_PopMenuProc,title="Font type"
 		PopupMenu FontType,mode=(1+WhichListItem(root:Packages:IrenaConfigFolder:FontType, root:Packages:IrenaConfigFolder:ListOfKnownFontTypes))
 		PopupMenu FontType,popvalue=root:Packages:IrenaConfigFolder:FontType,value= #"root:Packages:IrenaConfigFolder:ListOfKnownFontTypes"
+		//Long names handling
+		CheckBox Igor8UseLongNames,pos={210,340},size={80,16},noproc,title="Use long names (Igor 8+) ?"
+		CheckBox Igor8UseLongNames,variable= root:Packages:IrenaConfigFolder:Igor8UseLongNames, help={"Check to use long names in igor 8+?"}
+		CheckBox UseUserNameString,pos={210,370},size={80,16},noproc,title="Use UserNameString ?"
+		CheckBox UseUserNameString,variable= root:Packages:IrenaConfigFolder:UseUserNameString, help={"Check to use usernameString notfolder for GUI "}
+
 		//Nika
 		//CheckBox DoubleClickConverts,pos={250,340},size={80,16},noproc,title="Double click converts ?", mode=0
 		//CheckBox DoubleClickConverts,variable= root:Packages:Convert2Dto1D:DoubleClickConverts, help={"Check to convert files on double click in Files selection"}
@@ -5741,30 +5805,6 @@ Function IN2G_UniversalFolderScan(startDF, levels, FunctionName)
         SetDataFolder(dfSave)
         return 1
 End
-
-//************************************************************************************************
-//************************************************************************************************
-Function/T IN2G_ReturnUserSampleName(FolderPathToData)
-	string FolderPathToData
-	
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(!(DataFolderExists(FolderPathToData)))
-		return ""
-	endif
-	//OK, folder exists. Now does it have user string name, potentially long name?
-	//global useUserFileNames = 1 if we want to sue this string and 0 if not... 
-	string UserSampleName
-	SVAR/Z StringName = $(FolderPathToData+"UserSampleName")
-	if(SVAR_Exists(StringName)&&useUserFileNames)
-		if(Strlen(StringName)>0)
-			return StringName
-		endif
-	endif
-	//OK, long name does not exist,let's pick the folder name
-	UserSampleName = StringFromList(ItemsInList(FolderPathToData, ":")-1, FolderPathToData, ":")
-	UserSampleName = IN2G_RemoveExtraQuote(UserSampleName,1,1)
-	return UserSampleName
-end
 
 //************************************************************************************************
 //************************************************************************************************

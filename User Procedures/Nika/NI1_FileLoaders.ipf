@@ -2710,7 +2710,7 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 		case 1:
 			if (lba.eventMod & 0x10)	// rightclick
 				// list of items for PopupContextualMenu
-				items = "Refresh Content;Select All;Deselect All;Sort;Sort2;Sort _001;Invert Sort _001;Reverse Sort;Reverse Sort2;Hide \"Blank\";Hide \"Empty\";Remove Match;"	
+				items = "Refresh Content;Select All;Deselect All;Sort;Sort2;Sort _001;Invert Sort _001;Reverse Sort;Reverse Sort2;Hide \"Blank\";Hide \"Empty\";Remove Hide;"	
 				PopupContextualMenu items
 				SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
 				// V_flag is index of user selected item

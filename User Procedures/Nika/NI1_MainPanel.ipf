@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.59
-Constant NI1AversionNumber = 2.59
+#pragma version=2.61
+Constant NI1AversionNumber = 2.61
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -8,6 +8,9 @@ Constant NI1AversionNumber = 2.59
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.61 Fixed normalization bug which causes spike in intensity on our WAXS data (+1 missing Intensity normalization)
+//			added Reprocess curren data and modified panel as needed.   
+//2.60 added controls for delay between images and for statitics calculation
 //2.59 Modified GUI on main panel to have selection of actions chose with radiobuttons and only one "Process data" button. Cleaner/simple to read interface. 
 //2.58 added UserSampleName to each folder. To be used in other functions to avoid 32 characters limit. 
 //2.57 changed trimname function to accept maximum possible number of characters allowed with _XYZ orientation. Will vary based on orientation now, _C will allow 25 characters. Others will be shorter. 
@@ -272,6 +275,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables="BeamCenterX;BeamCenterY;QvectorNumberPoints;QvectorMaxNumPnts;QbinningLogarithmic;SampleToCCDDistance;Wavelength;"
 	ListOfVariables+="PixelSizeX;PixelSizeY;StartDataRangeNumber;EndDataRangeNumber;XrayEnergy;HorizontalTilt;VerticalTilt;AzimuthalTilt;"
 	ListOfVariables+="BeamSizeX;BeamSizeY;"
+	ListOfVariables+="DelayBetweenImages;CalculateStatistics;"
 	ListOfVariables+="SampleThickness;SampleTransmission;UseI0ToCalibrate;SampleI0;EmptyI0;"
 	ListOfVariables+="UseSampleThickness;UseSampleTransmission;UseI0ToCalibrate;UseSampleI0;UseEmptyI0;"
 	ListOfVariables+="UseCorrectionFactor;UseMask;UseDarkField;UseEmptyField;UseSubtractFixedOffset;SubtractFixedOffset;UseSolidAngle;"
@@ -291,7 +295,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="DoGeometryCorrection;DoPolarizationCorrection;Use2DPolarizationCor;Use1DPolarizationCor;StartAngle2DPolCor;InvertImages;SkipBadFiles;MaxIntForBadFile;"
 	ListOfVariables+="DisplayRaw2DData;DisplayProcessed2DData;TwoDPolarizFract;"
 
-	ListOfVariables+="Process_DisplayAve;Process_Individually;Process_Average;Process_AveNFiles;"
+	ListOfVariables+="Process_DisplayAve;Process_Individually;Process_Average;Process_AveNFiles;Process_ReprocessExisting;"
 	//and now the function calls variables
 	ListOfVariables+="UseSampleThicknFnct;UseSampleTransmFnct;UseSampleMonitorFnct;UseSampleCorrectFnct;UseSampleMeasTimeFnct;UseSampleNameFnct;"
 	ListOfVariables+="UseEmptyTimeFnct;UseBackgTimeFnct;UseEmptyMonitorFnct;"
@@ -553,11 +557,13 @@ Function NI1A_Initialize2Dto1DConversion()
 	NVAR Process_Individually
 	NVAR Process_Average
 	NVAR Process_AveNFiles
-	if(	Process_DisplayAve + Process_Individually + Process_Average + Process_AveNFiles !=1)
+	NVAR Process_ReprocessExisting
+	if(	Process_DisplayAve + Process_Individually + Process_Average + Process_AveNFiles + Process_ReprocessExisting !=1)
 		Process_DisplayAve = 1
 		Process_Individually = 0
 		Process_Average = 0
 		Process_AveNFiles = 0
+		Process_ReprocessExisting = 0
 	endif
 
 	NVAR TrimEndOfName=root:Packages:Convert2Dto1D:TrimEndOfName
@@ -1191,10 +1197,6 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	else
 		if(UseSampleNameFnct)			//user provided function
 			if(exists(functionName)==6)
-				//	string oldDf1=GetDataFOlder(1)
-				//	setDataFolder root:Packages:Convert2Dto1D
-				//	string/g tempStrName
-				//	Execute("root:Packages:Convert2Dto1D:tempStrName ="+functionName+"(root:Packages:Convert2Dto1D:CCImageToConvert,\""+LoadedFile+"\")")
 				string tempStrName
 				FUNCREF NI1A_UserNameStrProto UserStrNameFnct=$(functionName)
 				tempStrName = UserStrNameFnct(CCDImageToConvert, UserSampleName)
@@ -1529,10 +1531,17 @@ Function/T NI1A_TrimCleanDataName(InputName, CurOrient)
 	NewName = InputName
 	NewName = ReplaceString(RemoveStringFromName, NewName, "")
 	variable MaxLengthAllowed = 26 - strlen(CurOrient)
-	if(TrimEndOfName)
-		NewName= NewName[0,MaxLengthAllowed]
+	//OK, modify for Igor 8
+	NVAR useIgor8LongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
+	if(IgorVersion()>7.99 && useIgor8LongNames)		//this is Igor 8 code and user wnts to us long names. In this case trimming of name is not necessary, unless asked for
+			NewName= IN2G_CreateUserName(NewName,MaxLengthAllowed, 0, 11)	
 	else
-		NewName= NewName[strlen(NewName)-MaxLengthAllowed,inf]
+		if(TrimEndOfName)
+			//NewName= NewName[0,MaxLengthAllowed]
+			NewName= IN2G_CreateUserName(NewName,MaxLengthAllowed, 0, 11)
+		else
+			NewName= NewName[strlen(NewName)-MaxLengthAllowed,inf]
+		endif
 	endif
 	return NewName
 end

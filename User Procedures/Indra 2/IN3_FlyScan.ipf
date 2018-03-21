@@ -489,6 +489,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	SpecFileName=SpecFileNameWv[0]
 	SpecFileName=stringFromList(0,SpecFileName,".")
 	NVAR HdfWriterVersion = HdfWriterVersion
+	Wave/T UserSampleNameWv = :entry:sample:name
 	//wave data to locate
 	Wave TimeWv=:entry:flyScan:mca1
 	Wave I0Wv=:entry:flyScan:mca2
@@ -551,10 +552,6 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	Wave/Z  AR_PulsePositions = :entry:flyScan:AR_PulsePositions
 	Wave/Z  AR_pulses= :entry:flyScan:AR_pulses
 	Wave/Z  AR_waypoints= :entry:flyScan:AR_waypoints
-//temp for developement today...
-//HdfWriterVersion = 1.1
-	//USAXSPinT_Measure=1;USAXSPinT_AyPosition=11.1725;USAXSPinT_Time=3;USAXSPinT_pinCounts=1918487;
-	//USAXSPinT_pinGain=1000000;USAXSPinT_I0Counts=219754;USAXSPinT_I0Gain=10000000;
 	make/Free/N=5 TimeRangeAfterUPD, TimeRangeAfterI0
 	if(HdfWriterVersion<1)
 		Wave mcsChangePnts = :entry:flyScan:changes_mcsChan
@@ -592,21 +589,20 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	endif
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
-	//newDataFolder/O/S $(SpecFileName)
 	string FileName, ListOfExistingFolders
-	FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
-	FileName = IN2G_RemoveExtraQuote(FileName,1,1)
+	//FileName=StringFromList(ItemsInList(RawFolderWithData ,":")-1, RawFolderWithData,  ":")
+	FileName = origFileName
+	//FileName = IN2G_RemoveExtraQuote(FileName,1,1)
 	ListOfExistingFolders = DataFolderDir(1)
 	NVAR OverWriteExistingData=root:Packages:Indra3:OverWriteExistingData
-	if(StringMatch(ListOfExistingFolders, "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ) && (OverWriteExistingData==0))
+	if(StringMatch(IN2G_ConvertDataDirToList(ListOfExistingFolders), "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ) && (OverWriteExistingData==0))
 		DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
 			if(V_Flag!=1)
 				return ""
 			endif	
 	endif
-
  	newDataFolder/O/S $(FileName)
-	string/g UserSampleName=	stringFromList(0,origFileName,".")
+	string/g UserSampleName=	UserSampleNameWv[0]			 //stringFromList(0,origFileName,".")
 	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD

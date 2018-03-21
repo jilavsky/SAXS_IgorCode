@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.63
+#pragma version=2.64
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.64 added new tab with Save data opions, seems better. Removed range selections. Added controls for delay between images and display ImageStatistics. 
 //2.63 fix bug when user did stuff our of order. 
 //2.62 fixed single precision rounding error (ki and kout were single precision) which caused under some cconditions problems with data at low-q bining. 
 //2.61 fixed erros for case where we have missing range of Q in the middle of detecotr (space between tiles on Pilatus). 
@@ -205,7 +206,12 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	MatrixOp/Free/NTHR=0 TempHistSum = HistogramWv
 	SetScale/I x 0,numpnts(TempHistSum)-1,"", TempHistSum, HistogramWvTemp
 	Multithread TempHistSum = sum(HistogramWvTemp,0,p)
-	Multithread Intensity[1,numpnts(Intensity)-1] = sum(tempInt,TempHistSum[p-1],TempHistSum[p])
+	//this is 2018-03-1 old method which seems to fail and has error in normalization by nuber of bins. 
+	//Multithread Intensity[1,numpnts(Intensity)-1] = sum(tempInt,TempHistSum[p-1],TempHistSum[p])
+	//MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv			//This is average intensity....
+	//basially, the above has problem, that the binning has always 1 more point included, so this does not work for 1 bin large bins here
+	
+	Multithread Intensity[1,numpnts(Intensity)-1] = (TempHistSum[p] - TempHistSum[p-1] )>0 ? sum(tempInt,TempHistSum[p-1],TempHistSum[p]) : 0
 	Multithread Error[1,numpnts(Error)-1] = sum(TempIntSqt,TempHistSum[p-1],TempHistSum[p])
 	
 //	//suggested by Wavemetrics another way... I am uinable to make this work at this time...
@@ -221,8 +227,9 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	
 	//print StopMSTimer(timerRefNum)	
 	MatrixOp/Free/NTHR=0 TempSumXi=Intensity				//OK, now we have sumXi saved
-	MatrixOp/O/NTHR=0 Intensity=Intensity/HistogramWv	//This is average intensity....
-	//Intensity = (HistogramWv>0) ? Intensity[p] : NaN
+	MatrixOp/O/NTHR=0 Intensity=Intensity/(HistogramWv+1)			//This is average intensity...., for +1 see above notes. 
+	//MatrixOp/O/NTHR=0 Intensity=Intensity/(HistogramWv)			//This is average intensity...., for +1 see above notes. 
+	Intensity = (HistogramWv>0) ? Intensity[p] : NaN
 	MatrixOp/O/NTHR=0 Intensity = replace(Intensity,inf,nan)
 
 	//version 1.43 December 2009, changed uncertainity estimates. Three new methods now available. Old method which has weird formula, standard deviation and standard error fof mean ...
@@ -1630,6 +1637,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	NVAR Process_Individually = root:Packages:Convert2Dto1D:Process_Individually
 	NVAR Process_Average = root:Packages:Convert2Dto1D:Process_Average
 	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
+	NVAR Process_ReprocessExisting = root:Packages:Convert2Dto1D:Process_ReprocessExisting
 		
 	if(StringMatch(ctrlName,"DisplaySelectedFile") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_DisplayAve))
 		//set selections for using RAW/Converted data...
@@ -1643,6 +1651,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		SectorsUseCorrData=0
 		//selection done
 		NI1A_DisplayOneDataSet()	
+		NI1_CalculateImageStatistics()
 	endif
 	if(StringMatch(ctrlName,"ExportDisplayedImage"))
 		NI1A_ExportDisplayedImage()			
@@ -1651,6 +1660,20 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		NI1A_SaveDisplayedImage()			
 	endif
 
+	if(StringMatch(ctrlName, "ProcessSelectedImages") & Process_ReprocessExisting)
+		NI1A_CheckParametersForConv()
+		//set selections for using RAW/Converted data...
+		NVAR LineProfileUseRAW=root:Packages:Convert2Dto1D:LineProfileUseRAW
+		NVAR LineProfileUseCorrData=root:Packages:Convert2Dto1D:LineProfileUseCorrData
+		NVAR SectorsUseRAWData=root:Packages:Convert2Dto1D:SectorsUseRAWData
+		NVAR SectorsUseCorrData=root:Packages:Convert2Dto1D:SectorsUseCorrData
+		LineProfileUseRAW=0
+		LineProfileUseCorrData=1
+		SectorsUseRAWData=0
+		SectorsUseCorrData=1
+		//selection done
+		NI1A_ReprocessCurrentImae()			
+	endif
 	if(stringmatch(ctrlName,"ConvertSelectedFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_Individually))
 		NI1A_CheckParametersForConv()
 		//set selections for using RAW/Converted data...
@@ -1964,7 +1987,7 @@ Function NI1A_DisplayTheRight2DWave()
 			Redimension/S CCDImageToConvert_dis
 			Redimension/S waveToDisplay
 			if(ImageDisplayLogScaled)
-				MatrixOp/O/NTHR=0 CCDImageToConvert_dis =  log(waveToDisplay)
+				MatrixOp/O/NTHR=0 CCDImageToConvert_dis = log(waveToDisplay)
 			else
 				MatrixOp/O/NTHR=0 CCDImageToConvert_dis = waveToDisplay
 			endif
@@ -2217,6 +2240,70 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
+Function NI1A_ReprocessCurrentImae()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string oldDf=GetDataFOlder(1)
+	setDataFolder root:Packages:Convert2Dto1D
+	//setup controls and display settings...
+	//Kill window
+	KillWIndow/Z CCDImageToConvertFig
+ 	//now kill the Calibrated wave, since this process will create one
+	Wave/Z Calibrated2DDataSet = root:Packages:Convert2Dto1D:Calibrated2DDataSet
+	if(WaveExists(Calibrated2DDataSet))
+		KillWaves /Z Calibrated2DDataSet
+	endif
+	//end set the parameters for display...
+	NVAR DisplayProcessed2DData=root:Packages:Convert2Dto1D:DisplayProcessed2DData
+	NVAR DisplayRaw2DData=root:Packages:Convert2Dto1D:DisplayRaw2DData
+	if(DisplayProcessed2DData+DisplayRaw2DData!=1)
+		DisplayProcessed2DData=0
+		DisplayRaw2DData=1
+	endif
+	//and enable the controls...
+	CheckBox DisplayProcessed2DData,win=NI1A_Convert2Dto1DPanel, disable=0
+	string DataWaveName="CCDImageToConvert"
+	string DataWaveNameDis="CCDImageToConvert_dis"	//name of copy (lin or log int) for display
+	NVAR SampleThickness=root:Packages:Convert2Dto1D:SampleThickness
+	NVAR SampleTransmission=root:Packages:Convert2Dto1D:SampleTransmission
+	NVAR CorrectionFactor=root:Packages:Convert2Dto1D:CorrectionFactor
+	NVAR SampleMeasurementTime=root:Packages:Convert2Dto1D:SampleMeasurementTime
+	NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
+	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
+	SVAR/Z NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
+	NVAR DelayBetweenImages=root:Packages:Convert2Dto1D:DelayBetweenImages
+	if(!SVAR_Exists(NX_Index1ProcessRule))
+		NEXUS_Initialize(0)
+		SVAR NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
+	endif
+	string extension
+	variable LoadedOK
+	//SelectedFileToLoad=ListOf2DSampleData[i]		//this is the file selected to be processed
+	//UserSampleName = RemoveEnding(RemoveListItem(ItemsInList(SelectedFileToLoad,".")-1, SelectedFileToLoad, "."))
+	//NI1A_ImportThisOneFile(SelectedFileToLoad)	
+	//NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	
+	Wave/Z CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
+	if(!WaveExists(CCDImageToConvert))
+		Abort "Data set does not exist" 
+	endif
+	string Oldnote=note(CCDImageToConvert)
+	OldNote+=NI1A_CalibrationNote()
+	note/K CCDImageToConvert
+	note CCDImageToConvert, OldNote
+	NI1A_DezingerDataSetIfAskedFor(DataWaveName)
+	NI1A_Convert2DTo1D()
+	NI1A_DisplayLoadedFile()
+	NI1A_DisplayTheRight2DWave()
+	NI1A_DoDrawingsInto2DGraph()
+	NI1A_CallImageHookFunction()
+	NI1_CalculateImageStatistics()
+	NEXUS_NikaSave2DData()
+	DoUpdate
+	setDataFolder OldDf
+end
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
 Function NI1A_LoadManyDataSetsForConv()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
@@ -2253,6 +2340,7 @@ Function NI1A_LoadManyDataSetsForConv()
 	NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
 	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	SVAR/Z NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
+	NVAR DelayBetweenImages=root:Packages:Convert2Dto1D:DelayBetweenImages
 	if(!SVAR_Exists(NX_Index1ProcessRule))
 		NEXUS_Initialize(0)
 		SVAR NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
@@ -2294,6 +2382,7 @@ Function NI1A_LoadManyDataSetsForConv()
 					NI1A_TopCCDImageUpdateColors(1)
 					NI1A_DoDrawingsInto2DGraph()
 					NI1A_CallImageHookFunction()
+					NI1_CalculateImageStatistics()
 					NEXUS_NikaSave2DData()
 					DoUpdate
 				endfor
@@ -2332,6 +2421,7 @@ Function NI1A_LoadManyDataSetsForConv()
 						NI1A_TopCCDImageUpdateColors(1)
 						NI1A_DoDrawingsInto2DGraph()
 						NI1A_CallImageHookFunction()
+						NI1_CalculateImageStatistics()
 						NEXUS_NikaSave2DData()
 						DoUpdate
 					endfor
@@ -2394,6 +2484,7 @@ Function NI1A_LoadManyDataSetsForConv()
 					NI1A_DisplayTheRight2DWave()
 					NI1A_DoDrawingsInto2DGraph()
 					NI1A_CallImageHookFunction()
+					NI1_CalculateImageStatistics()
 					NEXUS_NikaSave2DData()
 					DoUpdate
 				else
@@ -2422,9 +2513,12 @@ Function NI1A_LoadManyDataSetsForConv()
 						NI1A_DisplayTheRight2DWave()
 						NI1A_DoDrawingsInto2DGraph()
 						NI1A_CallImageHookFunction()
+						NI1_CalculateImageStatistics()
 						NEXUS_NikaSave2DData()
+						ResumeUpdate
 						DoUpdate
-						sleep/S 1
+						sleep/S DelayBetweenImages
+						//sleep/S/B/Q/C=6/M="Paused for "+num2str(DelayBetweenImages)+" seconds for user data review" DelayBetweenImages
 					endfor
 				endif
 			else
@@ -2443,6 +2537,7 @@ Function NI1A_LoadManyDataSetsForConv()
 				NI1A_DisplayTheRight2DWave()
 				NI1A_DoDrawingsInto2DGraph()
 				NI1A_CallImageHookFunction()
+				NI1_CalculateImageStatistics()
 				NEXUS_NikaSave2DData()
 				DoUpdate
 			endif
@@ -3271,7 +3366,10 @@ Function NI1A_UpdateDataListBox()
 			if(strlen(ListOfAvailableDataSets)<2)	//none found
 				ListOfAvailableDataSets="--none--;"
 			endif
-			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!_mask.hdf).)*$" ) //remove _mask files... 
+			//ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!_mask.hdf).)*$" ) //remove _mask files... 
+			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "_mask.hdf",1 ) //remove _mask files... 
+			//ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, "^((?!.pxp).)*$" ) //remove _mask files... 
+			ListOfAvailableDataSets = GrepList(ListOfAvailableDataSets, ".pxp",1 ) //remove _mask files... 
 			ListOfAvailableDataSets =  IN2G_RemoveInvisibleFiles(ListOfAvailableDataSets)
 			ListOfAvailableDataSets=NI1A_CleanListOfFilesForTypes(ListOfAvailableDataSets,DataFileExtension,SampleNameMatchStr)
 			redimension/N=(ItemsInList(ListOfAvailableDataSets)) ListOf2DSampleData
@@ -3315,8 +3413,8 @@ Function NI1A_UpdateDataListBox()
 			if(V_Flag)
 				ListBox Select2DInputWave win=NI1A_Convert2Dto1DPanel,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData, row=0,selRow= 0
 				ListBox Select2DInputWave win=NI1A_Convert2Dto1DPanel,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
-				PopupMenu SelectStartOfRange,win=NI1A_Convert2Dto1DPanel,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
-				PopupMenu SelectEndOfRange,win=NI1A_Convert2Dto1DPanel,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
+				//PopupMenu SelectStartOfRange,win=NI1A_Convert2Dto1DPanel,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
+				//PopupMenu SelectEndOfRange,win=NI1A_Convert2Dto1DPanel,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
 			endif
 		endif
 	setDataFolder OldDf
@@ -3344,6 +3442,7 @@ Function/T NI1A_CleanListOfFilesForTypes(ListOfAvailableCompounds,DataFileType, 
 	if(strlen(ListOfAvailableCompounds)<2)
 		return ""
 	endif
+	ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, ".pxp",1)
 	//match if needed...
 	if(strlen(MatchString)>0)
 		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, MatchString)
@@ -3415,12 +3514,11 @@ end
 Function NI1A_Convert2Dto1DPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,790) as "Main 2D to 1D conversion panel"
+	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,810) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
 	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox Info1 title="\Zr120Select input data here",pos={5,72},frame=0,fstyle=1, size={130,20},fColor=(1,4,52428)
-	TitleBox Info2 title="\Zr120Select contiguous range  :",pos={30,237},frame=0,fstyle=2, fixedSize=1,size={150,20}
 	Button GetHelp,pos={335,5},size={80,15},fColor=(65535,32768,32768), proc=NI1A_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
@@ -3444,7 +3542,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox ReverseBinnedData,help={"Reverse binning if necessary?"}, disable=!(UseCalib2DData|| !StringMatch(DataFileExtension, "canSAS/Nexus"))
 	CheckBox ReverseBinnedData,variable= root:Packages:Convert2Dto1D:ReverseBinnedData
 
-	CheckBox InvertImages,pos={150,75},size={146,14},proc=NI1A_CheckProc,title="Invert 0, 0 corner?"
+	CheckBox InvertImages,pos={150,73},size={146,14},proc=NI1A_CheckProc,title="Invert 0, 0 corner?"
 	CheckBox InvertImages,help={"Check to have 0,0 in left BOTTOM corner, uncheck to have 0,0 in left TOP corner. Only for newly loaded images!"}
 	CheckBox InvertImages,variable= root:Packages:Convert2Dto1D:InvertImages
 	PopupMenu FIlesSortOrder,pos={275,73},size={111,13},proc=NI1A_PopMenuProc,title="Sort order: "
@@ -3454,7 +3552,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 //	Button RefreshList,pos={330,97},size={100,18},proc=NI1A_ButtonProc,title="Refresh"
 //	Button RefreshList,help={"Refresh lisbox"}
-	TitleBox RefreshList1 title="Refresh using Right click",pos={325,99},frame=0,fstyle=1, fixedSize=1,size={120,11},fSize=9
+	TitleBox RefreshList1 title="Refresh using Right click",pos={320,99},frame=0,fstyle=1, fixedSize=1,size={120,11},fSize=9
 	//TitleBox RefreshList2 title="",pos={340,105},frame=0,fstyle=1, fixedSize=1,size={100,11},fSize=9
 
 	Button SaveCurrentToolSetting,pos={330,117},size={100,18},proc=NI1A_ButtonProc,title="Save/Load Config"
@@ -3467,37 +3565,47 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	Button CreateMovie,help={"Create movie from the data during reduction"}
 	Button OnLineDataProcessing,pos={330,197},size={100,18},proc=NI1A_ButtonProc,title="Live processing"
 	Button OnLineDataProcessing,help={"Switch on and off live data visualization and processing"}
-	SetVariable SampleNameMatchStr,pos={10,214},size={145,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
-	SetVariable SampleNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleNameMatchStr
-	SetVariable UserSampleName,pos={170,214},size={250,18},proc=NI1A_PanelSetVarProc,title="Sample name"
-	SetVariable UserSampleName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:UserSampleName
+	PopupMenu DataCalibrationString,pos={280,218},size={211,18},proc=NI1A_PopMenuProc,title="Int. Calibration:"
+	PopupMenu DataCalibrationString,help={"Select data calibration string"}
+	SVAR DataCalibrationString = root:Packages:Convert2Dto1D:DataCalibrationString
+	PopupMenu DataCalibrationString,mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
+
+	CheckBox CalculateStatistics,pos={350,238},size={146,14},noproc,title="Calc. Stats."
+	CheckBox CalculateStatistics,help={"Check to have sttistics on each image calculated on import"}
+	CheckBox CalculateStatistics,variable= root:Packages:Convert2Dto1D:CalculateStatistics
+
 
 	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0, clickEventModifiers=4
 	ListBox Select2DInputWave,help={"Select data file to be converted, you can select multiple data sets"}
 	ListBox Select2DInputWave,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	ListBox Select2DInputWave,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
 	ListBox Select2DInputWave,mode= 9, proc=NI1_MainListBoxProc
-	PopupMenu SelectStartOfRange,pos={195,235},size={300,20},proc=NI1A_PopMenuProc,title="Start"
-	PopupMenu SelectStartOfRange,help={"Select first 2D data to process"}
-	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
-	PopupMenu SelectEndOfRange,pos={203,258},size={300,20},proc=NI1A_PopMenuProc,title="End"
-	PopupMenu SelectEndOfRange,help={"Select last 2D data to process"}
-	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
-	PopupMenu DataCalibrationString,pos={10,258},size={211,18},proc=NI1A_PopMenuProc,title="Int. Calibration:"
-	PopupMenu DataCalibrationString,help={"Select data calibration string"}
-	SVAR DataCalibrationString = root:Packages:Convert2Dto1D:DataCalibrationString
-	PopupMenu DataCalibrationString,mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
+
+	SetVariable SampleNameMatchStr,pos={10,217},size={245,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
+	SetVariable SampleNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleNameMatchStr, help={"Gegula expression used to select some of the fle name above."}
+	TitleBox Info2 title="\Zr100Sample name [controls are on Save tab] :",pos={10,240},frame=0,fstyle=2, fixedSize=1,size={350,20}, fColor=(1,12815,52428)
+	SetVariable UserSampleName,pos={10,253},size={410,18},proc=NI1A_PanelSetVarProc,title=" ", noedit=1,frame=0
+	SetVariable UserSampleName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:UserSampleName, help={"Sampe name build based on controls in \"Save\" tab"}
+	SetVariable UserSampleName styledText=1,fstyle=1,valueColor=(65535,0,0)
+	
+//	PopupMenu SelectStartOfRange,pos={195,235},size={300,20},proc=NI1A_PopMenuProc,title="Start"
+//	PopupMenu SelectStartOfRange,help={"Select first 2D data to process"}
+//	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
+//	PopupMenu SelectEndOfRange,pos={203,258},size={300,20},proc=NI1A_PopMenuProc,title="End"
+//	PopupMenu SelectEndOfRange,help={"Select last 2D data to process"}
+//	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
 
 
 //tab controls here
-	TabControl Convert2Dto1DTab,pos={4,280},size={430,304},proc=NI1A_TabProc
+	TabControl Convert2Dto1DTab,pos={4,274},size={430,310},proc=NI1A_TabProc
 	TabControl Convert2Dto1DTab,help={"Select tabs to control various parameters"}
 	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Par"
 	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Em/Dk"
-	TabControl Convert2Dto1DTab,tabLabel(4)="Sect.",tabLabel(5)="PolTran", tabLabel(6)="LineProf", value= 0
+	TabControl Convert2Dto1DTab,tabLabel(4)="Sect.",tabLabel(5)="PolTran"
+	TabControl Convert2Dto1DTab,tabLabel(6)="LineProf", tabLabel(7)="Save", value= 0
 //	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
-	SetVariable SampleToDetectorDistance,pos={54,302},size={230,16},proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
+	SetVariable SampleToDetectorDistance,pos={54,300},size={230,16},proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
 	SetVariable SampleToDetectorDistance,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleToCCDDistance
 	SetVariable Wavelength,pos={20,322},size={162,16},proc=NI1A_PanelSetVarProc,title="Wavelength [A]  "
 	SetVariable Wavelength,help={"\"Input wavelegth of X-rays in Angstroems\" "}, bodyWidth=80
@@ -3812,55 +3920,6 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable SectorsStepInAngle,help={"Angle between center directions of sectors"}
 	SetVariable SectorsStepInAngle,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SectorsStepInAngle
 
-	CheckBox DisplayDataAfterProcessing,pos={20,455},size={159,14},title="Create 1D graph?"
-	CheckBox DisplayDataAfterProcessing,help={"Create graph of 1D data after processing"},proc=NI1A_CheckProc
-	CheckBox DisplayDataAfterProcessing,variable= root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
-
-
-	CheckBox AppendToNexusFile,pos={20,478},size={170,14},title="Export to Nexus?"
-	CheckBox AppendToNexusFile,help={"Append to Nexus file- more controls on separate screen."}
-	CheckBox AppendToNexusFile,variable= root:Packages:Convert2Dto1D:AppendToNexusFile,proc=NI1A_CheckProc
-
-	CheckBox StoreDataInIgor,pos={225,455},size={159,14},title="Store data in Igor experiment?"
-	CheckBox StoreDataInIgor,help={"Save data in current Igor experiment"},proc=NI1A_CheckProc
-	CheckBox StoreDataInIgor,variable= root:Packages:Convert2Dto1D:StoreDataInIgor
-	CheckBox OverwriteDataIfExists,pos={225,478},size={159,14},title="Overwrite existing data if exist?"
-	CheckBox OverwriteDataIfExists,help={"Overwrite data in current Igor experiment if they already exist"}
-	CheckBox OverwriteDataIfExists,variable= root:Packages:Convert2Dto1D:OverwriteDataIfExists
-	
-
-	CheckBox ExportDataOutOfIgor,pos={20,500},size={122,14},title="Export data as ASCII?"
-	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
-	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
-	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
-	CheckBox SaveGSASdata,pos={150,504},size={122,14},title="GSAS?", disable=!(UseTheta)
-	CheckBox SaveGSASdata,help={"Check to export data out of Igoras GSAS data"}
-	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
-
-	CheckBox Use2DdataName,pos={20,522},size={170,14},title="Use input data name for output?",proc=NI1A_CheckProc
-	CheckBox Use2DdataName,help={"Check to have output data named after input data name"}
-	CheckBox Use2DdataName,variable= root:Packages:Convert2Dto1D:Use2DdataName
-	CheckBox UseSampleNameFnct,pos={230,522},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
-	CheckBox UseSampleNameFnct,help={"Check to use String function to provide output data name"}
-	CheckBox UseSampleNameFnct,variable= root:Packages:Convert2Dto1D:UseSampleNameFnct
-	Button CreateOutputPath,pos={250,500},size={160,20},title="Select output path"
-	Button CreateOutputPath,help={"Select path to export data into"},proc=NI1A_ButtonProc
-	NVAR Use2DdataName = root:Packages:Convert2Dto1D:Use2DdataName
-	SetVariable OutputFileName,pos={20,540},size={360,16},title="ASCII data name"
-	SetVariable OutputFileName,help={"Input string for 1D data"}
-	SetVariable OutputFileName,value= root:Packages:Convert2Dto1D:OutputDataName, disable=Use2DdataName
-	NVAR UseSampleNameFnct = root:Packages:Convert2Dto1D:UseSampleNameFnct
-	SetVariable SampleNameFnct,pos={20,540},size={360,16},title="Function name"
-	SetVariable SampleNameFnct,help={"String Name function "}
-	SetVariable SampleNameFnct,value= root:Packages:Convert2Dto1D:SampleNameFnct, disable=UseSampleNameFnct
-
-	CheckBox TrimFrontOfName,pos={12,560},size={100,18},proc=NI1A_CheckProc,title="Trim Front"
-	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
-	CheckBox TrimEndOfName,pos={125,560},size={100,18},proc=NI1A_CheckProc,title="Trim End"
-	CheckBox TrimEndOfName,help={"Check to trim END of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimEndOfName
-	SetVariable RemoveStringFromName,pos={240,560},size={180,18},noproc,title="Remove from name:"
-	SetVariable RemoveStringFromName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:RemoveStringFromName
-
 	//tab 6 - sectors for namual processing...
 	Button CreateSectorGraph,pos={20,530},size={160,20},title="Create sector graph"
 	Button CreateSectorGraph,help={"Create graph in of angle vs pixel for manual processing"},proc=NI1A_ButtonProc
@@ -3931,7 +3990,60 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable LineProf_WidthQ,pos={280,425},size={100,17},title="Q =  "
 	SetVariable LineProf_WidthQ,help={"Width in q units"},format="%.4f"
 	SetVariable LineProf_WidthQ,limits={-inf,inf,0},variable= root:Packages:Convert2Dto1D:LineProf_WidthQ 
-//	//Tab 7 - export 2D calibrated data
+//	//Tab 7 - Save data
+	TitleBox Tab7_1 title="\Zr120Store data controls:",pos={20,310},frame=0,fstyle=2, fixedSize=1,size={350,20}, fColor=(1,12815,52428)
+	CheckBox DisplayDataAfterProcessing,pos={20,335},size={159,14},title="Create 1D graph?"
+	CheckBox DisplayDataAfterProcessing,help={"Create graph of 1D data after processing"},proc=NI1A_CheckProc
+	CheckBox DisplayDataAfterProcessing,variable= root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
+	CheckBox StoreDataInIgor,pos={230,325},size={159,14},title="Store data in Igor experiment?"
+	CheckBox StoreDataInIgor,help={"Save data in current Igor experiment"},proc=NI1A_CheckProc
+	CheckBox StoreDataInIgor,variable= root:Packages:Convert2Dto1D:StoreDataInIgor
+	CheckBox OverwriteDataIfExists,pos={230,350},size={159,14},title="Overwrite existing data if exist?"
+	CheckBox OverwriteDataIfExists,help={"Overwrite data in current Igor experiment if they already exist"}
+	CheckBox OverwriteDataIfExists,variable= root:Packages:Convert2Dto1D:OverwriteDataIfExists
+	//Data hame handling
+	TitleBox Tab7_2 title="\Zr120Name data controls:",pos={20,370},frame=0,fstyle=2, fixedSize=1,size={350,20}, fColor=(1,12815,52428)
+	CheckBox Use2DdataName,pos={20,390},size={170,14},title="Use input data name for output?",proc=NI1A_CheckProc
+	CheckBox Use2DdataName,help={"Check to have output data named after input data name"}
+	CheckBox Use2DdataName,variable= root:Packages:Convert2Dto1D:Use2DdataName
+	CheckBox UseSampleNameFnct,pos={230,390},size={170,14},title="Use function for output name?",proc=NI1A_CheckProc
+	CheckBox UseSampleNameFnct,help={"Check to use String function to provide output data name"}
+	CheckBox UseSampleNameFnct,variable= root:Packages:Convert2Dto1D:UseSampleNameFnct
+	NVAR Use2DdataName = root:Packages:Convert2Dto1D:Use2DdataName
+	SetVariable OutputFileName,pos={20,410},size={360,16},title="ASCII data name"
+	SetVariable OutputFileName,help={"Input string for 1D data"}
+	SetVariable OutputFileName,value= root:Packages:Convert2Dto1D:OutputDataName, disable=Use2DdataName
+	NVAR UseSampleNameFnct = root:Packages:Convert2Dto1D:UseSampleNameFnct
+	SetVariable SampleNameFnct,pos={20,410},size={360,16},title="Function name"
+	SetVariable SampleNameFnct,help={"String Name function "}
+	SetVariable SampleNameFnct,value= root:Packages:Convert2Dto1D:SampleNameFnct, disable=UseSampleNameFnct
+	CheckBox TrimFrontOfName,pos={20,410},size={100,18},proc=NI1A_CheckProc,title="Trim Front"
+	CheckBox TrimFrontOfName,help={"Check to trim FRONT of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimFrontOfName
+	CheckBox TrimEndOfName,pos={230,410},size={100,18},proc=NI1A_CheckProc,title="Trim End"
+	CheckBox TrimEndOfName,help={"Check to trim END of name to 20 characters"}, variable=root:Packages:Convert2Dto1D:TrimEndOfName
+	SetVariable RemoveStringFromName,pos={20,430},size={280,18},noproc,title="Remove from name:"
+	SetVariable RemoveStringFromName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:RemoveStringFromName
+
+	TitleBox Tab7_3 title="\Zr120Export data controls:",pos={20,470},frame=0,fstyle=2, fixedSize=1,size={350,20}, fColor=(1,12815,52428)
+
+	CheckBox AppendToNexusFile,pos={20,490},size={170,14},title="Export to Nexus?"
+	CheckBox AppendToNexusFile,help={"Append to Nexus file- more controls on separate screen."}
+	CheckBox AppendToNexusFile,variable= root:Packages:Convert2Dto1D:AppendToNexusFile,proc=NI1A_CheckProc
+
+	
+	Button CreateOutputPath,pos={250,490},size={160,20},title="Select output path"
+	Button CreateOutputPath,help={"Select path to export data into"},proc=NI1A_ButtonProc
+
+	CheckBox ExportDataOutOfIgor,pos={20,510},size={122,14},title="Export data as ASCII?"
+	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
+	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
+	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
+	CheckBox SaveGSASdata,pos={20,530},size={122,14},title="GSAS?", disable=!(UseTheta)
+	CheckBox SaveGSASdata,help={"Check to export data out of Igor as GSAS data"}
+	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
+
+
+
 //	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
 //	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
 //	CheckBox InclMaskCalib2DData,pos={15,330},size={90,14},title="Include Mask?", mode=0, proc=NI1A_CheckProc
@@ -3952,58 +4064,54 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 
 	//last few items under the tabs area
-	Button ProcessSelectedImages,pos={170,585},size={180,20},proc=NI1A_ButtonProc,title="Process image(s)"
+	Button ProcessSelectedImages,pos={160,585},size={150,20},proc=NI1A_ButtonProc,title="Process image(s)"
 	Button ProcessSelectedImages,help={"Process images as selected in the checkboxes"}, fColor=(65535,49151,49151)
 
-//	Button DisplaySelectedFile,pos={14,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Display sel. file(s)"
-//	Button DisplaySelectedFile,help={"Average selected files and display, only correction is dezingering!"}
-//	Button ConvertSelectedFiles,pos={15,607},size={150,18},proc=NI1A_ButtonProc,title="Convert sel. files 1 at time"
-//	Button ConvertSelectedFiles,help={"Convert selected files (1 by 1) using parameters selected in the tabs"}
-//	Button AveConvertSelectedFiles,pos={15,627},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert sel. files"
-//	Button AveConvertSelectedFiles,help={"Average and convert files selected above using parameters set here"}
-//	Button AveConvertNFiles,pos={170,587},size={150,18},proc=NI1A_ButtonProc,title="Ave & Convert N files"
-//	Button AveConvertNFiles,help={"Average N files at time, convert all files selected above using parameters set here"}
+	SetVariable DelayBetweenImages,pos={320,587},size={110,18},proc=NI1A_PanelSetVarProc,title="Pause b/Imgs"
+	SetVariable DelayBetweenImages,limits={0,500,1},value= root:Packages:Convert2Dto1D:DelayBetweenImages, help={"Delay to see data when multiple images are being processed"}
+	NVAR ScaleImageBy = root:Packages:Convert2Dto1D:ScaleImageBy
+	SetVariable ScaleImageBy,pos={320,608},size={110,16},title="Scale Img x", proc=NI1A_SetVarProcMainPanel
+	SetVariable ScaleImageBy,help={"Scale Image size by this factor - make it larger or smaller"}, limits={0.05,inf,0.2*ScaleImageBy}
+	SetVariable ScaleImageBy,variable= root:Packages:Convert2Dto1D:ScaleImageBy
 
 	//control variable for what happens...
 	CheckBox Process_DisplayAve,pos={5,585},size={80,16},title="Display only",variable= root:Packages:Convert2Dto1D:Process_DisplayAve, proc=NI1A_CheckProc
 	CheckBox Process_DisplayAve,help={"Average all selected files and display them in image, no processing"}, mode=1
 	CheckBox Process_Individually,pos={5,600},size={80,16},title="Process sel. files individualy",variable= root:Packages:Convert2Dto1D:Process_Individually, proc=NI1A_CheckProc
 	CheckBox Process_Individually,help={"Load each file individually and process them (separately)"}, mode=1
-	CheckBox Process_Average,pos={5,615},size={80,16},title="Average all selected and process",variable= root:Packages:Convert2Dto1D:Process_Average, proc=NI1A_CheckProc
+	CheckBox Process_ReprocessExisting,pos={5,615},size={80,16},title="Re-Process current",variable= root:Packages:Convert2Dto1D:Process_ReprocessExisting, proc=NI1A_CheckProc
+	CheckBox Process_ReprocessExisting,help={"Reprocess the current image"}, mode=1
+	CheckBox Process_Average,pos={5,630},size={80,16},title="Average all selected and process",variable= root:Packages:Convert2Dto1D:Process_Average, proc=NI1A_CheckProc
 	CheckBox Process_Average,help={"Average all selected files together and process them into one output data"}, mode=1
-	CheckBox Process_AveNFiles,pos={5,630},size={80,16},title="Average N of selected and process",variable= root:Packages:Convert2Dto1D:Process_AveNFiles, proc=NI1A_CheckProc
+	CheckBox Process_AveNFiles,pos={5,645},size={80,16},title="Average N of selected and process",variable= root:Packages:Convert2Dto1D:Process_AveNFiles, proc=NI1A_CheckProc
 	CheckBox Process_AveNFiles,help={"Average N selected files and process them into output"}, mode=1
 
-	SetVariable ProcessNImagesAtTime,pos={5,650},size={80,16},title="N = "
+	SetVariable ProcessNImagesAtTime,pos={5,665},size={80,16},title="N = "
 	SetVariable ProcessNImagesAtTime,help={"How many images at time should be averaged?"}, limits={1,inf,1}
 	SetVariable ProcessNImagesAtTime,variable= root:Packages:Convert2Dto1D:ProcessNImagesAtTime, proc=NI1A_SetVarProcMainPanel
 	//
-	CheckBox SkipBadFiles,pos={5,665},size={100,16},title="Skip bad files?"
+	CheckBox SkipBadFiles,pos={5,680},size={100,16},title="Skip bad files?"
 	CheckBox SkipBadFiles,help={"Skip images with low maximum intensity?"}
 	CheckBox SkipBadFiles,variable= root:Packages:Convert2Dto1D:SkipBadFiles
 	CheckBox SkipBadFiles proc=NI1A_CheckProc
-	SetVariable MaxIntForBadFile,pos={100,665},size={100,16},title="Min. Int = "
+	SetVariable MaxIntForBadFile,pos={120,680},size={100,16},title="Min. Int = "
 	SetVariable MaxIntForBadFile,help={"Bad file has less than this intensity?"}, limits={0,inf,0}
 //	NVAR SkipBadFiles = root:Packages:Convert2Dto1D:SkipBadFiles
 	SetVariable MaxIntForBadFile,variable= root:Packages:Convert2Dto1D:MaxIntForBadFile//, disable=!(SkipBadFiles)
 
-	CheckBox DisplayRaw2DData,pos={185,610},size={120,16},title="Display RAW data?"
+	CheckBox DisplayRaw2DData,pos={195,607},size={120,16},title="Display RAW ?"
 	CheckBox DisplayRaw2DData,help={"In the 2D image, display raw data?"}, mode=1
 	CheckBox DisplayRaw2DData,variable= root:Packages:Convert2Dto1D:DisplayRaw2DData
 	CheckBox DisplayRaw2DData proc=NI1A_CheckProc
-	CheckBox DisplayProcessed2DData,pos={185,628},size={120,16},title="Display Processed?"
+	CheckBox DisplayProcessed2DData,pos={195,625},size={120,16},title="Display Processed?"
 	CheckBox DisplayProcessed2DData,help={"In the 2D image, display processed, calibrated data?"}, mode=1
 	CheckBox DisplayProcessed2DData,variable= root:Packages:Convert2Dto1D:DisplayProcessed2DData
 	CheckBox DisplayProcessed2DData proc=NI1A_CheckProc
 
 	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 	SVAR ColorTableList = root:Packages:Convert2Dto1D:ColorTableList
-	PopupMenu ColorTablePopup,pos={190,650},size={100,21},proc=NI1A_PopMenuProc,title="Colors"
+	PopupMenu ColorTablePopup,pos={250,680},size={100,21},proc=NI1A_PopMenuProc,title="Colors"
 	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"root:Packages:Convert2Dto1D:ColorTableList"
-	NVAR ScaleImageBy = root:Packages:Convert2Dto1D:ScaleImageBy
-	SetVariable ScaleImageBy,pos={310,610},size={120,16},title="Scale Img x", proc=NI1A_SetVarProcMainPanel
-	SetVariable ScaleImageBy,help={"Scale Image size by this factor - make it larger or smaller"}, limits={0.05,inf,0.2*ScaleImageBy}
-	SetVariable ScaleImageBy,variable= root:Packages:Convert2Dto1D:ScaleImageBy
 
 	CheckBox ImageDisplayBeamCenter,variable= root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph, help={"Display beam center on teh image?"}
 	CheckBox ImageDisplayBeamCenter proc=NI1A_CheckProc, pos={310,630},size={120,16},title="Display beam center?"
@@ -4014,22 +4122,22 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox ImageDisplayLogScaled,variable= root:Packages:Convert2Dto1D:ImageDisplayLogScaled
 	CheckBox ImageDisplayLogScaled proc=NI1A_CheckProc
 
-	CheckBox DisplayQValsOnImage,pos={260,680},size={120,15},title="Image with Q axes?"
+	CheckBox DisplayQValsOnImage,pos={250,705},size={120,15},title="Image with Q axes?"
 	CheckBox DisplayQValsOnImage,help={"Display image with Q values on axis?"}
 	CheckBox DisplayQValsOnImage,variable= root:Packages:Convert2Dto1D:DisplayQValsOnImage
 	CheckBox DisplayQValsOnImage proc=NI1A_CheckProc
 
-	CheckBox DisplayQvalsWIthGridsOnImg,pos={260,695},size={120,15},title="Img w/Q axes with grids?"
+	CheckBox DisplayQvalsWIthGridsOnImg,pos={250,720},size={120,15},title="Img w/Q axes with grids?"
 	CheckBox DisplayQvalsWIthGridsOnImg,help={"Display image with Q values on axis and grids?"}
 	CheckBox DisplayQvalsWIthGridsOnImg,variable= root:Packages:Convert2Dto1D:DisplayQvalsWIthGridsOnImg
 	CheckBox DisplayQvalsWIthGridsOnImg proc=NI1A_CheckProc
 
-	CheckBox DisplayColorScale,pos={260,710},size={120,15},title="Display Color scale?"
+	CheckBox DisplayColorScale,pos={250,735},size={120,15},title="Display Color scale?"
 	CheckBox DisplayColorScale,help={"Display image with color scale?"}
 	CheckBox DisplayColorScale,variable= root:Packages:Convert2Dto1D:DisplayColorScale
 	CheckBox DisplayColorScale proc=NI1A_CheckProc
 
-	CheckBox UseUserDefMinMax,pos={5,680},size={120,15},title="User def. Min/Max?"
+	CheckBox UseUserDefMinMax,pos={5,695},size={120,15},title="User def. Min/Max?"
 	CheckBox UseUserDefMinMax,help={"Display image with color scale?"}
 	CheckBox UseUserDefMinMax,variable= root:Packages:Convert2Dto1D:UseUserDefMinMax
 	CheckBox UseUserDefMinMax proc=NI1A_CheckProc
@@ -4037,17 +4145,17 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	//bottom controls
 	NVAR ImageRangeMinLimit = root:Packages:Convert2Dto1D:ImageRangeMinLimit
 	NVAR ImageRangeMaxLimit = root:Packages:Convert2Dto1D:ImageRangeMaxLimit
-	Slider ImageRangeMin,pos={5,693},size={180,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
+	Slider ImageRangeMin,pos={5,708},size={180,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMin,live= 0,side= 2,vert= 0,ticks= 0
 	Slider ImageRangeMin,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
-	Slider ImageRangeMax,pos={5,708},size={180,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
+	Slider ImageRangeMax,pos={5,723},size={180,16},proc=NI1A_MainSliderProc,variable= root:Packages:Convert2Dto1D:ImageRangeMax,live= 0,side= 2,vert= 0,ticks= 0
 	Slider ImageRangeMax,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
 
 	//NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
-	SetVariable UserImageRangeMin,pos={130,685},size={120,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
+	SetVariable UserImageRangeMin,pos={130,700},size={120,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMin,help={"Select minimum intensity to display?"}, limits={0,inf,0}
 	SetVariable UserImageRangeMin,variable= root:Packages:Convert2Dto1D:UserImageRangeMin//, disable=!(UseUserDefMinMax)
 
-	SetVariable UserImageRangeMax,pos={130,710},size={120,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
+	SetVariable UserImageRangeMax,pos={130,725},size={120,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMax,help={"Select minimum intensity to display?"}, limits={0,inf,0}
 	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax//, disable=!(UseUserDefMinMax)
 	
@@ -4583,29 +4691,6 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable QbinPoints,disable=(tabNum!=4 || QvectorMaxNumPnts||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	CheckBox QvectorMaxNumPnts,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	CheckBox DoCircularAverage,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
-	//the nextset will be used also in Line profile, so make it appear also when that is selected on its tab...
-	CheckBox StoreDataInIgor,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
-	CheckBox OverwriteDataIfExists,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel
-	CheckBox ExportDataOutOfIgor,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel 
-	CheckBox SaveGSASdata,disable=(tabNum!=4 || !UseTheta||!UseSectors), win=NI1A_Convert2Dto1DPanel
-
-	CheckBox AppendToNexusFile,disable=!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
-	Button CreateOutputPath,disable=(!((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
-
-	CheckBox UseSampleNameFnct,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
-	CheckBox Use2DdataName,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
-	variable disableFnct, disableStr
-	disableFnct = !UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))
-	disableStr = Use2DdataName || UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))
-	SetVariable OutputFileName,disable=(disableStr), win=NI1A_Convert2Dto1DPanel
-	SetVariable SampleNameFnct,disable=(disableFnct), win=NI1A_Convert2Dto1DPanel
-
-	CheckBox TrimFrontOfName,disable=!(Use2DdataName &&((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile))), win=NI1A_Convert2Dto1DPanel
-	CheckBox TrimEndOfName,disable=!(Use2DdataName &&( (tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile))), win=NI1A_Convert2Dto1DPanel
-	SetVariable RemoveStringFromName,disable=!(Use2DdataName &&( (tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile))), win=NI1A_Convert2Dto1DPanel
-
-
-	CheckBox DisplayDataAfterProcessing,disable= !((tabNum==4&&UseSectors)||(tabNum==6&&UseLineProfile)), win=NI1A_Convert2Dto1DPanel	
 	//end of common block for line profiel and secotrs
 	CheckBox DoSectorAverages,disable=(tabNum!=4||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	SetVariable NumberOfSectors,disable=(tabNum!=4 || !DoSectorAverages||!UseSectors), win=NI1A_Convert2Dto1DPanel
@@ -4651,6 +4736,32 @@ Function NI1A_TabProc(ctrlName,tabNum)
 		DoWIndow/Z/K GISAXSOptionsPanel
 	endif
 ////tab 7 controls
+	//the nextset will be used also in Line profile, so make it appear also when that is selected on its tab...
+	CheckBox StoreDataInIgor,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel
+	CheckBox OverwriteDataIfExists,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel
+	CheckBox ExportDataOutOfIgor,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel 
+	CheckBox SaveGSASdata,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel
+
+	CheckBox AppendToNexusFile,disable=!((tabNum==7)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
+	Button CreateOutputPath,disable=(!((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
+
+	CheckBox DisplayDataAfterProcessing,disable= !(tabNum==7), win=NI1A_Convert2Dto1DPanel	
+	TitleBox Tab7_1,disable= !(tabNum==7), win=NI1A_Convert2Dto1DPanel	
+	TitleBox Tab7_2,disable= !(tabNum==7), win=NI1A_Convert2Dto1DPanel	
+	TitleBox Tab7_3,disable= !(tabNum==7), win=NI1A_Convert2Dto1DPanel	
+
+	CheckBox UseSampleNameFnct,disable= !((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
+	CheckBox Use2DdataName,disable= !((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile)), win=NI1A_Convert2Dto1DPanel
+	variable disableFnct, disableStr
+	disableFnct = !UseSampleNameFnct || !((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))
+	disableStr = Use2DdataName || UseSampleNameFnct || !((tabNum==4&&UseSectors)||(tabNum==7))
+	SetVariable OutputFileName,disable=(disableStr), win=NI1A_Convert2Dto1DPanel
+	SetVariable SampleNameFnct,disable=(disableFnct), win=NI1A_Convert2Dto1DPanel
+
+	CheckBox TrimFrontOfName,disable=!(Use2DdataName &&(tabNum==7)), win=NI1A_Convert2Dto1DPanel
+	CheckBox TrimEndOfName,disable=!(Use2DdataName &&( tabNum==7)), win=NI1A_Convert2Dto1DPanel
+	SetVariable RemoveStringFromName,disable=!(Use2DdataName &&( tabNum==7)), win=NI1A_Convert2Dto1DPanel
+
 //	CheckBox ExpCalib2DData,disable=(tabNum!=7), win=NI1A_Convert2Dto1DPanel
 //	CheckBox InclMaskCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
 //	CheckBox UseQxyCalib2DData,disable=(tabNum!=7||!ExpCalib2DData), win=NI1A_Convert2Dto1DPanel
@@ -4982,6 +5093,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR Process_Individually = root:Packages:Convert2Dto1D:Process_Individually
 	NVAR Process_Average = root:Packages:Convert2Dto1D:Process_Average
 	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
+	NVAR Process_ReprocessExisting = root:Packages:Convert2Dto1D:Process_ReprocessExisting
 
 	
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
@@ -5044,6 +5156,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			Process_Individually = 0
 			Process_Average = 0
 			Process_AveNFiles = 0
+			Process_ReprocessExisting = 0
 			NI1A_FixMovieBtnAndOtherCntrls()
 		endif
 	endif
@@ -5053,6 +5166,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			//Process_Individually = 0
 			Process_Average = 0
 			Process_AveNFiles = 0
+			Process_ReprocessExisting = 0
 			NI1A_FixMovieBtnAndOtherCntrls()
 		endif
 	endif
@@ -5062,6 +5176,7 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			Process_Individually = 0
 			//Process_Average = 0
 			Process_AveNFiles = 0
+			Process_ReprocessExisting = 0
 			NI1A_FixMovieBtnAndOtherCntrls()
 		endif
 	endif
@@ -5071,6 +5186,17 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 			Process_Individually = 0
 			Process_Average = 0
 			//Process_AveNFiles = 0
+			Process_ReprocessExisting = 0
+			NI1A_FixMovieBtnAndOtherCntrls()
+		endif
+	endif
+	if(StringMatch(ctrlName,"Process_ReprocessExisting"))
+		if(checked)
+			Process_DisplayAve = 0
+			Process_Individually = 0
+			Process_Average = 0
+			Process_AveNFiles = 0
+			//Process_ReprocessExisting = 0
 			NI1A_FixMovieBtnAndOtherCntrls()
 		endif
 	endif
@@ -7544,16 +7670,6 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 	
-//	SVAR RebinCalib2DDataToPnts=root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-//	SVAR Calib2DDataOutputFormat =root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
-
-//	if(StringMatch(ctrlName,"Calib2DDataOutputFormat"))
-//		Calib2DDataOutputFormat = popStr
-//	endif
-//	if(StringMatch(ctrlName,"RebinCalib2DData"))
-//		RebinCalib2DDataToPnts = popStr
-//	endif
-
 	if(cmpstr(ctrlName,"Select2DDataType")==0)
 		//set appropriate extension
 		SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
@@ -7626,25 +7742,30 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		endif
 		NI1A_LineProf_Update()
 	endif
-
-
-	if(cmpstr(ctrlName,"SelectStartOfRange")==0)
-		//here we select start of the range...
-		NVAR StartDataRangeNumber=root:Packages:Convert2Dto1D:StartDataRangeNumber
-		StartDataRangeNumber=popNum
-		NI1A_MakeContiguousSelection()
-	endif
-	if(cmpstr(ctrlName,"SelectEndOfRange")==0)
-		//here we select end of the range...
-		NVAR EndDataRangeNumber=root:Packages:Convert2Dto1D:EndDataRangeNumber
-		EndDataRangeNumber=popNum
-		NI1A_MakeContiguousSelection()
-	endif
+//	if(cmpstr(ctrlName,"SelectStartOfRange")==0)
+//		//here we select start of the range...
+//		NVAR StartDataRangeNumber=root:Packages:Convert2Dto1D:StartDataRangeNumber
+//		StartDataRangeNumber=popNum
+//		NI1A_MakeContiguousSelection()
+//	endif
+//	if(cmpstr(ctrlName,"SelectEndOfRange")==0)
+//		//here we select end of the range...
+//		NVAR EndDataRangeNumber=root:Packages:Convert2Dto1D:EndDataRangeNumber
+//		EndDataRangeNumber=popNum
+//		NI1A_MakeContiguousSelection()
+//	endif
 	if(cmpstr(ctrlName,"ColorTablePopup")==0)
 		SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
 		ColorTableName = popStr
+		//check if there is image at the top, if not, bring up the CCDImageoCOnvert  
+		if(strlen(ImageNameList("", ";"))<1)
+			DoWIndow CCDImageToConvertFig
+			if(V_Flag)
+				DoWIndow/F CCDImageToConvertFig
+			endif
+		endif
 		NI1A_TopCCDImageUpdateColors(1)
-		 IN2G_SaveIrenaGUIPackagePrefs(0)
+		IN2G_SaveIrenaGUIPackagePrefs(0)
 	endif
 	if(cmpstr(ctrlName,"MaskImageColor")==0)
 		NI1M_ChangeMaskColor(popStr) 
@@ -7662,3 +7783,73 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 
 	setDataFolder OldDf
 End
+
+
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function NI1_CalculateImageStatistics()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR CalculateStatistics=root:Packages:Convert2Dto1D:CalculateStatistics
+	String nb = "ImageStatistics"
+	if(CalculateStatistics)
+		//first figure out if there is anything to do...
+		//1. we need CCDImageToConvertFig
+		//2. we need root:Packages:Convert2Dto1D:CCDImageToConvert
+		//3. alternatively, if available also : root:Packages:Convert2Dto1D:Calibrated2DDataSet
+		DoWIndow CCDImageToConvertFig
+		string tmpsStr1
+		if(V_Flag)
+			Wave/Z CCDImageToConvert =  root:Packages:Convert2Dto1D:CCDImageToConvert
+			Wave/Z Calibrated2DDataSet =  root:Packages:Convert2Dto1D:Calibrated2DDataSet
+			SVAR UserSampleName = root:Packages:Convert2Dto1D:UserSampleName
+			SVAR FileNameToLoad = root:Packages:Convert2Dto1D:FileNameToLoad
+			NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
+			if(WaveExists(CCDImageToConvert))
+				KilLWIndow/Z ImageStatistics
+				NewNotebook/N=$nb/F=0/V=1/K=1/ENCG={1,1}/W=(678,55,1113,713)
+				Notebook $nb defaultTab=20
+				Notebook $nb font="Monaco", fSize=11, fStyle=0, textRGB=(0,0,0)
+				AutoPositionWindow/M=0/R=CCDImageToConvertFig ImageStatistics		
+				Notebook $nb text="***************************\r"
+				Notebook $nb text="User sample name :\t"+UserSampleName+"\r"
+				Notebook $nb text="File name : \t\t\t"+FileNameToLoad+"\r"			
+				PathInfo Convert2Dto1DDataPath
+				Notebook $nb text="Data path: \t\t\t"+S_path+"\r"				
+				Notebook $nb text="\r"
+				Notebook $nb text="***************************\r"		
+				Duplicate/Free CCDImageToConvert, tmpCCDImageToConvert
+				if(UseMask)
+					Wave mask = root:Packages:Convert2Dto1D:M_ROIMask
+					WaveStats/Q mask
+					Notebook $nb text="Data are masked\r"
+					Notebook $nb text="Number of Masked points = "+num2str(V_npnts - V_Sum)+"\r"	
+					tmpCCDImageToConvert /=mask
+					tmpsStr1 = "Masked Raw image statistics:\r"
+					Notebook $nb text="\r"
+				else
+					tmpsStr1 = "Raw image statistics:\r"
+				endif
+				Notebook $nb text=tmpsStr1
+				WaveStats  tmpCCDImageToConvert
+				Notebook $nb text="Image dimensions: "+num2str(DimSize(CCDImageToConvert, 0 ))+" x "+ num2str(DimSize(CCDImageToConvert, 1 ))+"\r"
+				Notebook $nb text="Nuber of pixels = "+num2str(V_npnts)+"\r"
+				Notebook $nb text="Average counts/pix = "+num2str(V_avg)+"\r"
+				Notebook $nb text="Sum counts = "+num2str(V_Sum)+"\r"
+				Notebook $nb text="Max Counts/pix = "+num2str(V_max)+"\r"
+				Notebook $nb text="Min Counts/pix = "+num2str(V_min)+"\r"
+				if(WaveExists(Calibrated2DDataSet))
+					Notebook $nb text="\r"
+					Notebook $nb text="***************************\r"
+					Notebook $nb text="Processed image statistics:\r"
+					WaveStats/Q  Calibrated2DDataSet
+					Notebook $nb text="Average Intensity/pix = "+num2str(V_avg)+"\r"
+					Notebook $nb text="Sum Intensity = "+num2str(V_Sum)+"\r"
+					Notebook $nb text="Max Int/pix = "+num2str(V_max)+"\r"
+					Notebook $nb text="Min Int/pix = "+num2str(V_min)+""
+				endif						
+			endif
+		endif
+	endif
+end

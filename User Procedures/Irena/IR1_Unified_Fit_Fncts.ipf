@@ -1022,7 +1022,7 @@ Function IR1A_UpdatePorodSfcandInvariant()
 		Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
 		variable maxQ=2*pi/(Rg/10)
 		variable Newnumpnts=2000
-		Make/O/D/N=(Newnumpnts) SurfToVolQvec, SurfToVolInt, SurfToVolInvariant
+		Make/free/N=(Newnumpnts) SurfToVolQvec, SurfToVolInt, SurfToVolInvariant
 		SurfToVolQvec=(maxQ/Newnumpnts)*p
 		IR1A_SurfToVolCalcInvarVec(i, SurfToVolQvec, SurfToVolInt)
 		SurfToVolInt[0]=SurfToVolInt[1]
@@ -1044,7 +1044,7 @@ Function IR1A_UpdatePorodSfcandInvariant()
 //		print Invariant
 	endfor
 	
-	KillWaves/Z SurfToVolQvec, SurfToVolInt, SurfToVolInvariant
+	//KillWaves/Z SurfToVolQvec, SurfToVolInt, SurfToVolInvariant
 end
 //***********************************************************
 //***********************************************************

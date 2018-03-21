@@ -443,22 +443,22 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 	endif	
 	variable i, Overwrite
 	string FileName, ListOfExistingFolders, tmpDtaFldr, shortNameBckp, TargetRawFoldername
-	String browserName, shortFileName, RawFolderWithData, SpecFileName, RawFolderWithFldr
-	String newShortName
+	String browserName, FileNameNoExtension, HDF5RawFolderWithData, SpecFileName
 	Variable locFileID
 	For(i=0;i<numpnts(WaveOfSelections);i+=1)
 		if(WaveOfSelections[i]&&(LoadManyDataSets || NumOpenedFiles<1))
 			WaveOfSelections[i]=0
 			NumOpenedFiles=1
 			FileName= WaveOfFiles[i]
-			shortFileName = ReplaceString("."+DataExtension, FileName, "")
-			//IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
-			newShortName = IN2G_CreateUserName(ReplaceString(RemoveFromNameString,shortFileName,""),31,0,11)
-			shortFileName = IN2G_CreateUserName(shortFileName,31,0,11)
+			FileNameNoExtension = ReplaceString("."+DataExtension, FileName, "")
+								//IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
+			FileNameNoExtension=IN2G_CreateUserName(ReplaceString(RemoveFromNameString,FileNameNoExtension,""),31,0,11)
+								//shortFileName = IN2G_CreateUserName(shortFileName,31,0,11)
 			//check if such data exist already...
 			ListOfExistingFolders = DataFolderDir(1)
 			HDF5OpenFile/R/Z /P=USAXSHDFPath locFileID as FileName
 			if(V_flag!=0)	//failed
+			   HDF5CLoseFile/Z locFileID 
 				IN3_FailedLoadMessage(FileName)
 				sleep/s 3
 				DoWindow FailedLoadmessage
@@ -471,64 +471,62 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 			else
 				// Open OK?
 				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"			
+				if(strlen(S_dataFolderPaths)<5)
+					Abort "HDF5 import failed in "+GetDataFolder(1) 
+				endif
+				HDF5RawFolderWithData=stringFromList(0,S_dataFolderPaths,";")
+				//create Config_Version and make sure it has correct content... 
 				KillWaves/Z Config_Version
 				HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
 				if(V_Flag!=0)
 					Make/T/N=1 Config_Version
 					Config_Version[0]="0"
 				endif
+			   HDF5CloseFile/Z locFileID 		//cose HDF5 file here... 
 				Wave/T Config_Version
-				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
-				string TempStrName=PossiblyQuoteName(shortFileName)
-				string TempStrNameShort=PossiblyQuoteName(newShortName)
-				if(DataFolderExists(shortFileName))		//Name exists and folder is fine... 
-					RawFolderWithData = GetDataFOlder(1)+TempStrName
-					RawFolderWithFldr = GetDataFolder(1)
-				else		//something failed. Expect too long name
-						Abort "Cannot find raw data, something went wrong. Send Nexus file to Jan so we can get this fixed."
-				endif
-				variable/g $(RawFolderWithData+":HdfWriterVersion")
-				NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
+				variable/g $(HDF5RawFolderWithData+"HdfWriterVersion")
+				NVAR HdfWriterVersion = $(HDF5RawFolderWithData+"HdfWriterVersion")
 				HdfWriterVersion = str2num(Config_Version[0])
 				KillWaves/Z Config_Version					
-				Wave/T SpecFileNameWv=$(RawFolderWithData+":entry:metadata:SPEC_data_file")
-				SpecFileName=SpecFileNameWv[0]
-				SpecFileName=stringFromList(0,SpecFileName,".")
-				TargetRawFoldername = SpecFileName+"_Fly"
-				if(strlen(TargetRawFoldername)>30)
-					//DoAlert /T="Too long folder name warning" 0, "The folder name is too long for Igor Pro, it will be cut to 30 characters"
-					print "*****    ERROR MESSAGE  ***** "
-					print "The folder name was too long for Igor Pro, it will be cut to 30 characters, it is now:   " +TargetRawFoldername[0,30] 
-					print "^^^^^^    ERROR MESSAGE  ^^^^^^"		
-					TargetRawFoldername = TargetRawFoldername[0,30]  
-				endif
-				NewDataFolder/O $(TargetRawFoldername)
-				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
-				if(DataFolderExists(targetFldrname))
-					if(OverWriteExistingData)
-						KillDataFolder/Z targetFldrname
-						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
-						KillDataFolder $(TempStrName)
-					else
-						//DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
-						print "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwriting"
-						//if(V_Flag==1)
-						KillDataFolder/Z targetFldrname
-						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
-						KillDataFolder $(TempStrName)
-					endif
-				else
-					DuplicateDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
-					KillDataFolder $(shortFileName)
-				endif
-				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
-				print "Imported HDF5 file : "+RawFolderWithData
+									//Wave/T SpecFileNameWv=$(HDF5RawFolderWithData+"entry:metadata:SPEC_data_file")
+									//SpecFileName=SpecFileNameWv[0]
+									//SpecFileName=stringFromList(0,SpecFileName,".")
+									//create root:raw:specfile Folder name and save the data there...
+									//TargetRawFoldername = IN2G_CreateUserName(SpecFileName+"_Fly",31, 0, 11) 
+									//				if(strlen(SpecFileName+"_Fly")>30 && (IgorVersion()<8.00 || useIgor8LongNames<1))
+									//					print "*****    ERROR MESSAGE  ***** "
+									//					print "The folder name was too long for Igor Pro, it will be cut to 30 characters, it is now:   " +TargetRawFoldername[0,30] 
+									//					print "^^^^^^    ERROR MESSAGE  ^^^^^^"		
+									//					//TargetRawFoldername = TargetRawFoldername[0,30]  
+									//				endif
+									//NewDataFolder/O $(TargetRawFoldername)
+									//string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort
+									//				if(DataFolderExists(targetFldrname))
+									//					if(OverWriteExistingData)
+									//						KillDataFolder/Z targetFldrname
+									//						DuplicateDataFolder $(HDF5RawFolderWithData), $(":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort)
+									//						KillDataFolder $(HDF5RawFolderWithData)
+									////					else
+									//						//DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
+									//						print "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwriting"
+									//						//if(V_Flag==1)
+									//						KillDataFolder/Z targetFldrname
+									//						DuplicateDataFolder $(HDF5RawFolderWithData), $(":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort)
+									//						KillDataFolder $(HDF5RawFolderWithData)
+									//					endif
+									//				else
+									//					DuplicateDataFolder $(HDF5RawFolderWithData), $(":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort)
+									//					KillDataFolder/Z $(HDF5RawFolderWithData)
+									//				endif
+													//RawFolderWithData = HDF5ImportFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort
+				print "Imported HDF5 file : "+FileName
 #if(exists("AfterFlyImportHook")==6)  
-				AfterFlyImportHook(RawFolderWithData)
+				AfterFlyImportHook(HDF5RawFolderWithData)
 #endif	
-				ListOfLoadedDataSets += IN3_FSConvertToUSAXS(RawFolderWithData, FileName)	+";"
-				print "Converted : "+RawFolderWithData+" into USAXS data"
-				KillDataFOlder RawFolderWithData
+				string tempStrProcessedName = IN3_FSConvertToUSAXS(HDF5RawFolderWithData, FileNameNoExtension)
+				ListOfLoadedDataSets += tempStrProcessedName	+";"
+				print "Converted : "+HDF5RawFolderWithData+" into USAXS data : "+ tempStrProcessedName
+				KillDataFOlder/Z HDF5RawFolderWithData
 			endif
 
 		endif

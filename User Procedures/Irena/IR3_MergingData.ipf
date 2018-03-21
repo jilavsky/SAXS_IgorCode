@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.15
+#pragma version=1.16
 constant IR3DversionNumber = 1.15		//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.15		//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//.16 fixes for long ames in Igor 8
 //1.15 Big change. Added ability to optimize any combination of parameters and fit the data 1 first with fitting function to remove noise. 
 //1.14 changes to Optimize function to calculate parameters to overlap the data. SHould not go negative now and should add background where necessary. Improved (?) Optimize also. 
 //1.13 modified to handle clearly SMR and DSM data, related to modification of Indra package which can now desmeare automtaticallly in data reduction. 
@@ -934,7 +935,8 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		if(UseIndra2Data1)
 			dQWavename1 = ReplaceString("Qvec", QWavename1, "dQ")
 		elseif(UseQRSdata1)
-			dQWavename1 = "w"+QWavename1[1,31]
+			dQWavename1 = ReplaceString("q_", QWavename1, "w_")
+			//dQWavename1 = "w"+QWavename1[1,strlen(dQWavename1)-1]
 		else
 			dQWavename1 = ""
 		endif
@@ -1017,7 +1019,8 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		if(UseIndra2Data2)
 			dQWavename2 = ReplaceString("Qvec", QWavename2, "dQ")
 		elseif(UseQRSdata2)
-			dQWavename2 = "w"+QWavename2[1,31]
+			dQWavename2 = ReplaceString("q_", QWavename2, "w_")
+			//dQWavename2 = "w"+QWavename2[1,strlen(dQWavename2)-1]
 		else
 			dQWavename2 = ""
 		endif

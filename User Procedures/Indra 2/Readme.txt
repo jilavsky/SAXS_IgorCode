@@ -1,14 +1,16 @@
-Indra2 - USAXS - data reduction macros.
 
-Modification history
+****  I n d r a  *****
+
+USAXS - data reduction macros.
 
 Jan Ilavsky, ilavsky@aps.anl.gov
+
 ************************************
+This set of macros is developed for data reduction of USAXS data obtained on APS USAXS instrument beamline instrument. 
+It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
-This set of macros is developed for evaluation of USAXS data obtained on APS USAXS instrument beamline instrument. It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
-
-Revision history:
+Modification history:
 _____________________________________________________________________________________
 1.94 1/27/2018
 Converted all procedure files to UTF8 to prevent text encoding issues. 

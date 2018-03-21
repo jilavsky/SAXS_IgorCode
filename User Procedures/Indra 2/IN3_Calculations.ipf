@@ -569,7 +569,7 @@ static Function IN3_LoadData()
 		SVAR userFriendlySamplename = root:Packages:Indra3:userFriendlySamplename
 		SVAR userFriendlySampleDFName = root:Packages:Indra3:userFriendlySampleDFName
 		userFriendlySamplename = OrigSpecComment
-		userFriendlySampleDFName = RemoveListItem(ItemsInList(DFloc, ":")-1, DFloc,":")
+		userFriendlySampleDFName = StringFromList(ItemsInList(DFloc, ":")-1, DFloc,":")
 		//fix BK5 is user specified its change...
 		NVAR OverwriteUPD_DK5 = root:Packages:Indra3:OverwriteUPD_DK5
 		if(OverwriteUPD_DK5>0)

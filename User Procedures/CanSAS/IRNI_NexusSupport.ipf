@@ -684,7 +684,6 @@ End
 static Function NEXUS_ReadNXparameters(PathToNewData)
 		string PathToNewData
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		//print GetRTStackInfo(0 )
 		string OldDf=getDataFolder(1)
 		NVAR ReadParams = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
 		variable i, ScaleFctVal, skipLoading
@@ -1264,7 +1263,11 @@ Function NEXUS_GuessParamXRef()
 //	NikaParamsNames+="BeamSizeX;BeamSizeY;PixelSizeX;PixelSizeY;HorizontalTilt;VerticalTilt;"
 //	NikaParamsNames+="CorrectionFactor;"
 	SVAR DataFolderName = root:Packages:Irena_Nexus:DataFolderName
-	Wave/T HDF5___xref = $(DataFolderName+"HDF5___xref")					//list of parameters in the Nexus file
+	Wave/T/Z HDF5___xref = $(DataFolderName+"HDF5___xref")					//list of parameters in the Nexus file
+	if(!WaveExists(HDF5___xref))
+		Abort "Load Nexus file first, did not ind loaded Nexus ile yet"
+	endif
+	
 	Wave/T ListOfParamsAndPaths = root:Packages:Irena_Nexus:ListOfParamsAndPaths	//list of parameters in Nika
 	WAVE/Z ListOfParamsAndPathsSel= root:Packages:Irena_Nexus:ListOfParamsAndPathsSel
 	String LookUpList=""

@@ -1,12 +1,14 @@
-Irena package 
 
-Modification history 
+******    I r e n a    ******* 
 
 Jan Ilavsky, ilavsky@aps.anl.gov
+
 ************************************
+This set of macros is developed for analysis data of USAXS, SAXS, and WAXS data from various instruments. 
+It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 
--latest stuff first
+Modification history:
 ********************************************
 
 2.65 11/05/2017

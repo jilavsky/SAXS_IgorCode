@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.62
+#pragma version=2.63
 constant IR3MversionNumber = 2.61		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.63 fxed for long names in Igor 8
 //2.62 fixed when ManipII has recreated the small panel on close of the large panel. 
 //2.62 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.61 added getHelp button calling to www manual
@@ -2020,7 +2021,7 @@ static Function IR1D_PresetOutputStrings()
 	if (stringmatch(IntensityWaveName1,"*DSM_Int*") && stringmatch(QWavename1,"*DSM_Qvec*") && stringmatch(ErrorWaveName1,"*DSM_Error*"))
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
-		LastPartOfPath = LastPartOfPath[0,26]
+		LastPartOfPath = IN2G_CreateUserName(LastPartOfPath,26, 0, 11) //LastPartOfPath[0,26]
 		LastPartOfPath += "_mod" 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"
@@ -2028,7 +2029,7 @@ static Function IR1D_PresetOutputStrings()
 	if (stringmatch(IntensityWaveName1,"*SMR_Int*") && stringmatch(QWavename1,"*SMR_Qvec*") && stringmatch(ErrorWaveName1,"*SMR_Error*"))
 		//using Indra naming convention on input Data 1, change NewDataFolderName
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
-		LastPartOfPath = LastPartOfPath[0,26]
+		LastPartOfPath = IN2G_CreateUserName(LastPartOfPath,26, 0, 11) //LastPartOfPath[0,26]
 		LastPartOfPath += "_comb" 
 		LastPartOfPath = PossiblyQuoteName(LastPartOfPath)
 		NewDataFolderName = MostOfThePath+LastPartOfPath+":"

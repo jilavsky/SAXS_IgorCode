@@ -289,7 +289,7 @@ Function NI1M_saveRoiCopyProc(ctrlName) : ButtonControl
 	DrawAction /L=ProgFront /W=CCDImageForMask commands
 	if(strlen(S_recreation)>0)
 		CommandStr=MaskLowIntInfo+S_recreation
-		ImageGenerateROIMask/E=1/I=0 MaskCCDImage		//sets mask to 0
+		ImageGenerateROIMask/E=1/I=0/W=CCDImageForMask MaskCCDImage		//sets mask to 0
 	else
 		CommandStr=MaskLowIntInfo
 		Duplicate/O MaskCCDImage, M_ROIMask
@@ -643,6 +643,7 @@ Function NI1M_UpdateMaskListBox()
 		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, "^((?!.plist).)*$" ) //.plist files on Mac files... 
 		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, "^((?!.DS_Store).)*$" ) //.DS_Store files on Mac files... 
 		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, "^((?!^\._).)*$" ) //this should remove on PCs the files starting with ._ (OSX system files). 
+		ListOfAvailableCompounds = GrepList(ListOfAvailableCompounds, ".pxp",1 ) //this should remove on PCs the files starting with ._ (OSX system files). 
 		ListOfAvailableCompounds=NI1A_CleanListOfFilesForTypes(ListOfAvailableCompounds,CCDFileExtension, EmptyDarkNameMatchStr)
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) ListOfCCDDataInCCDPath
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) SelectionsofCCDDataInCCDPath

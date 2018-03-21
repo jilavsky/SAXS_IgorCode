@@ -1,13 +1,21 @@
-Nika package
 
-Modification history 
+****   N i k a   ******
 
 Jan Ilavsky, ilavsky@aps.anl.gov
+
 ************************************
 
+This set of macros is developed for data reduction of SAXS and WAXS area detector data. 
+It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
--latest stuff first
+
+
+Modification history:
 ********************************************
+1.80
+Removed range selection controls and moved Save data options to its own tab "Save"
+Added ImageStatistics and control for user for delay between series of images. 
+
 1.79 1/27/2018
 Converted all procedure files to UTF8 to prevent text encoding issues. 
 Modified main interface to have radio buttons and only one button for action. This makes cleaner interface as some controls can be hidden. Unluckily, panel is now higher by 20 points. 
