@@ -896,7 +896,7 @@ Function IN3_InputPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		//user wants to load blank data into this tool...
 		SVAR BlankName = root:Packages:Indra3:BlankName
 		BlankName = popStr
-		
+		PopupMenu SelectBlankFolder win=USAXSDataReduction, mode=popNum
 	endif
 	if(stringmatch(ctrlName,"BackgroundFnct"))
 		SVAR BackgroundFunction    = root:Packages:Indra3:DsmBackgroundFunction

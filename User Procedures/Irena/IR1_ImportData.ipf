@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.38
+#pragma version=2.39
 #include <HDF5 Browser>
 Constant IR1IversionNumber = 2.37
 Constant IR1IversionNumber2 = 2.36
@@ -13,6 +13,7 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.39 made long names cabale for Igor 8 when user chooses. 
 //2.38 Modified Screen Size check to match the needs
 //2.37 added Plot button to SAXS importer also. 
 //2.36 added GetHelp button
@@ -617,7 +618,11 @@ Function/S IR1I_TrunkateName(InputName,TrunkateStart,TrunkateEnd, RemoveStringFr
 	variable TrunkateStart,TrunkateEnd
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
+	NVAR Igor8UseLongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
 	string ModName=ReplaceString(RemoveStringFromName, InputName, "")
+	if(Igor8UseLongNames && IgorVersion()>7.99)		//Igor 8 and user wants long names 
+		return IN2G_CreateUserName(ModName,31, 0, 11)
+	endif
 	variable inpuLength=strlen(ModName)
 	variable removePoints=inpuLength - IR1TrimNameLength
 	string TempStr=ModName	
@@ -976,6 +981,13 @@ Function IR1I_ProcessImpWaves(selectedFile)
 	endif	
 	if(WaveExists(TempQError))
 		Duplicate/O TempQError, $NewQEName
+	else
+//		//fake resolution here
+//		Duplicate/Free TempQvector, TempdQvector
+//		TempdQvector[1,numpnts(TempdQvector)-1]=TempdQvector[p]-TempdQvector[p-1]
+//		TempdQvector[0]=TempdQvector[1]
+//		print "Q Resolution not provided, Import function faked them with dQ difference between points. This may be totally wrong, BE AWARE." 
+//		Duplicate/O TempdQvector, $NewQEName
 	endif	
 	KillWaves/Z tempError, tempQvector, TempIntensity, TempQError
 	IR1I_KillAutoWaves()
@@ -3078,11 +3090,6 @@ Function IR1I_ImportDataFnctNexus()
 	for(i=0;i<imax;i+=1)
 		if (WaveOfSelections[i])
 			selectedfile = WaveOfFiles[i]
-			//IR1I_CreateImportDataFolder(selectedFile)
-			//KillWaves/Z TempIntensity, TempQvector, TempError
-			//IR1I_ImportOneFile(selectedFile)
-			//		IR1I_ProcessImpWaves2(selectedFile)		//this thing also creates new error waves, removes negative qs and intesities and does everything else
-			//IR1I_RecordResults(selectedFile)
 			NEXUS_NXcanSASDataReader("ImportDataPath",selectedFile,1,0, UseFolder, UseEntry,UseTitle, NX_SasIns,NX_SASSam,NX_SASNote )	
 			icount+=1
 		endif

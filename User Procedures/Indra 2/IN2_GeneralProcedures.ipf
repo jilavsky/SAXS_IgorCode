@@ -458,15 +458,16 @@ Function/T IN2G_CreateUserName(NameIn,I7MaxShortLength, MakeUnique, FolderWaveSt
 	//FolderWaveStrNum - 11 for folder, 1 for wave, 3 for string 4 for number
 	
 	NVAR useIgor8LongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
-	string resultStr 
+	string resultStr
+	resultStr =  IN2G_RemoveExtraQuote(NameIn,1,1)
 				
 	if(useIgor8LongNames && IgorVersion()>7.99)		//Igor 8 and user wants long names 
-		resultStr = NameIn 
+		resultStr = resultStr 
 	else			//create a short name
-		resultStr = NameIn[0,I7MaxShortLength-1]
+		resultStr = resultStr[0,I7MaxShortLength-1]
 	endif
 	if (FolderWaveStrNum == 3 || FolderWaveStrNum == 4 )		// 1 for waves, 11 for folders, 3 and 4 for strings and variables
-		resultStr = CleanupName(resultStr, 0)						// variables and strings must have only non liberal names anyway... 
+		resultStr = CleanupName(resultStr, 1)						// variables and strings must have only non liberal names anyway... 
 	endif
 	if (CheckName(resultStr,FolderWaveStrNum) != 0)				// 1 for waves, 11 for folders, 3 and 4 for strings and variables
 		resultStr = CleanupName(resultStr, 1)						// Make sure it's valid for folders and waves

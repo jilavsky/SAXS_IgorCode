@@ -1,12 +1,13 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.05
+#pragma version = 1.06
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.06 modfied for Igor 8 to support long files names based on Irena settings. 
 //1.05 add support for multidimensional data
 //1.04 fixes for Nexus standard development and suggested units
 //1.03 minor fix to forcing naming of output data. 
@@ -2662,11 +2663,11 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 								//note: 3D and 4D data which are not meaningful at this time... 
 			Wave/T/Z DataTitle = $(tempSASEntryPath+"title")
 			if(UseFileNameasFolder)		//selection if to use internal sample name in title or Filename as folder name. 
-				SASentryName=(RemoveEnding(RemoveListItem(ItemsInList(Filename,".")-1,Filename,"."),"."))[0,28]
+				SASentryName=IN2G_CreateUserName((RemoveEnding(RemoveListItem(ItemsInList(Filename,".")-1,Filename,"."),".")),28,0,11)
 			elseif(UseTileNameAsFolder && WaveExists(DataTitle))
-				SASentryName=(DataTitle[0])[0,28]
+				SASentryName=IN2G_CreateUserName((DataTitle[0]),28,0,11)
 			else
-				SASentryName=(stringFromList(ItemsInList(tempSASEntryPath,":")-1,tempSASEntryPath,":"))[0,28]
+				SASentryName=IN2G_CreateUserName((stringFromList(ItemsInList(tempSASEntryPath,":")-1,tempSASEntryPath,":")),28,0,11)
 			endif
 			FoundSasEntries = ItemsInList(AllSASdataData)*ItemsInList(AllSASentryData,";")
 			For(j=0;j<ItemsInList(AllSASdataData);j+=1)			//SASdata, sectors, segments,... 				
@@ -2705,8 +2706,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	NewDataFolder/O/S root:ImportedData
 	//need to create location using File name, if the file contains more than one data set...
 	if(FoundSasEntries>1)
-		//NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(DataTitleStr,1)))
-		tmpStr=(RemoveEnding(RemoveListItem(ItemsInList(sourceFileName,".")-1,sourceFileName,"."),"."))[0,28]
+		tmpStr=IN2G_CreateUserName((RemoveEnding(RemoveListItem(ItemsInList(sourceFileName,".")-1,sourceFileName,"."),".")),28,0,11)
 		NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(tmpStr,1)))			//use file name as input
 	endif
 	//create place for data
@@ -2715,12 +2715,8 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-1,PathToDataSet, ":")
 	NewDataName = IN2G_RemoveExtraQuote(NewDataName,1,1)
 	NewDataName = ReplaceString("sasdata", NewDataName, "")			//sasdata is default name, not helpful for anything... 
-//	if(strlen(NewDataName)>0 && !stringMatch(NewDataName[0,0],"_"))		//append _ between names, if there is some name left... 
-///		NewDataName="_"+NewDataName
-///	endif
-	//NewDataName = CleanupName((DataTitleStr+NewDataName)[0,25],1)	
 	if(strlen(NewDataName)>0)
-		NewDataName = CleanupName((NewDataName)[0,25],1)	
+		NewDataName = IN2G_CreateUserName(CleanupName((NewDataName),1),25,0,11)	
 		if(DataFolderExists(NewDataName ))
 			tmpFldrName = UniqueName(NewDataName, 11, 0)
 		else

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.46
+#pragma version=1.47
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.47 minor fix to mask size. 
 //1.46 fix problem with WAXS when "WAXS use Blank" is not selected incorrectly set parameters. 
 //1.45 minor fixes nd function names replaced. 
 //1.44 add better handling of Slit length for SAXS with default value of 0.025 when user has nothing else. Better than 0. 
@@ -640,7 +641,7 @@ Function NI1_9IDCCreateWAXSPixMask()
 	//Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
 	if(DimSize(M_ROIMask, 1)>500)	//Pilatus 200kW
-		M_ROIMask[-1,196][485,495]=0
+		M_ROIMask[-1,196][486,494]=0
 		M_ROIMask[-1,1][-1,1000]=0
 		M_ROIMask[195,196][-1,1000]=0
 		M_ROIMask[-1,196][-1,1]=0
