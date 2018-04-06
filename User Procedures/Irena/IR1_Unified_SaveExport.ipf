@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.02
+#pragma version=2.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 added user folder selection for model saving of data.  
 //2.02 added print startement when Unified fit results are saved so users have some feedback. 
 //2.01 added license for ANL
 
@@ -219,6 +220,7 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
 	SVAR DataFolderName=root:Packages:Irena_UnifFit:DataFolderName
 	NVAR ExportLocalFits=root:Packages:Irena_UnifFit:ExportLocalFits
+	NVAR UseModelData = root:Packages:Irena_UnifFit:UseModelData
 	variable/G LastSavedUnifOutput
 	
 	Duplicate/O UnifiedFitIntensity, tempUnifiedFitIntensity
@@ -226,6 +228,23 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	string ListOfWavesForNotes="tempUnifiedFitIntensity;tempUnifiedFitQvector;"
 	
 	IR1A_AppendWaveNote(ListOfWavesForNotes)
+	
+	if(UseModelData)
+		string NewFolderNameStr="UnifiedModelResults"
+		Prompt NewFolderNameStr, "Model data, need target folder"
+		DoPrompt "How should new fodler with model be named?", NewFolderNameStr
+		if (V_Flag)
+			abort
+		endif
+		setDataFolder root:
+		if(DataFolderExists(NewFolderNameStr))
+			NewFolderNameStr=UniqueName(NewFolderNameStr, 11, 0)
+		endif
+		NewDataFolder/O $(NewFolderNameStr)
+		setDataFolder root:Packages:Irena_UnifFit
+		DataFolderName = "root:"+NewFolderNameStr+":"
+		print "User chose to save data in:"+DataFolderName
+	endif
 	
 	setDataFolder $DataFolderName
 	string tempname 

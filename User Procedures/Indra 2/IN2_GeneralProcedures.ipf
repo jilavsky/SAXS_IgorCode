@@ -1894,7 +1894,11 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 			//find if record exists
 			//NewDataFolder/O root:Packages
 			//newDataFolder/O root:Packages:IrenaNikaPanelSizes
-	NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+	NVAR/Z DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+	if(!NVAR_Exists(DoNotRestorePanelSizes))
+		variable/g root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+		NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
+	endif
 
 	string packageFileName = PanelNameLocal+".bin"
 	STRUCT IrenaNikaPanelSizePos PrefsPos
