@@ -18,7 +18,7 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>January2018</current_release>
-		<current_beta_release>February2018</current_beta_release>
+		<current_beta_release>April2018</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
@@ -90,8 +90,8 @@
 			</Package>
 			<VersionComment>Versions of Irena 2.65, Nika 1.78 and Indra 1.93 from 11/05/2017.</VersionComment>
 		</release>
-		<release name="February2018" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2018-3.zip</SourceFileAddress>
+		<release name="April2018" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/April2018Beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.66</version>
@@ -122,7 +122,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Fix 9ID WAXS file reading issue in January2018 release.</VersionComment>
+			<VersionComment>Support Long names for Igor 8. Fix 9ID WAXS bug.</VersionComment>
 		</release>
 		<release name="May2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
