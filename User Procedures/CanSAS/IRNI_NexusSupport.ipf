@@ -591,7 +591,9 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 		
 		string OldDf=getDataFolder(1)
 		//check if the file was recently imported... SKip to save time. 
-		string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(stringFromList(0,Filename,"."))
+		//string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(stringFromList(0,Filename,"."))
+		string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(IN2G_CreateUserName(Filename,30, 0, 11))
+		
 		string PathToNewData
 		if(!DataFolderExists(PathToOldData))
 		 	PathToNewData= NEXUS_ImportAFile(FilePathName,Filename)		//this will import data file. "" if failed
@@ -762,8 +764,14 @@ static Function/T NEXUS_ImportAFile(FilePathName,Filename)		//imports any Nexus 
 		print "HDF5 import failed, message: "+Status		//if not "" then error ocured, Handle somehow!
 		return ""
 	endif
-	Filename = stringfromlist(0, Filename, ".")		//new folder name.  Will fail if there are more . in the name!
-	string NewDataPath = "root:Packages:NexusImportTMP:"+PossiblyQuoteName(Filename)		//this should be where the file is.
+	string desiredFilename = (IN2G_CreateUserName(Filename,30, 0, 11))
+	string HDF5Filename = stringfromlist(0, Filename, ".")		//new folder name.  Will fail if there are more . in the name!		
+	string NewDataPath = "root:Packages:NexusImportTMP:"+PossiblyQuoteName(HDF5Filename)		//this should be where the file is.
+	if(!stringmatch(desiredFilename,HDF5Filename))
+		//move to the new location, if user has weird name
+		RenameDataFolder $(NewDataPath), $(desiredFilename)
+		NewDataPath = "root:Packages:NexusImportTMP:"+PossiblyQuoteName(desiredFilename)		//this should be where the file is.
+	endif
 	return NewDataPath
 end
 //*****************************************************************************************************************
@@ -1297,8 +1305,10 @@ Function NEXUS_GuessParamXRef()
 		SearchedParam = ListOfParamsAndPaths[i][0]
 		tempPath = StringByKey(SearchedParam, LookUpList, "=" , ";")
 		grep/e=tempPath ListOfFOundPaths as ResultsWv
-		if(strlen(ResultsWv[0])>3)
-			ListOfParamsAndPaths[i][1] = ResultsWv[0]
+		if(numpnts(ResultsWv)>0)
+			if(strlen(ResultsWv[0])>3)
+				ListOfParamsAndPaths[i][1] = ResultsWv[0]
+			endif
 		endif
 	endfor
 end
