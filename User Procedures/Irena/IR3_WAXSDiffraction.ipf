@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.07
+#pragma version=1.08
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.07		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.08 added for multipeak fitting results in Q units for Gauss, LogNormal and Lorenz shapes. 
 //1.07 added button to import AMS txtx files (from http://rruff.geo.arizona.edu/AMS/result.php)
 //1.06  removed unused functions
 //1.05 added call to web manual also. 
@@ -1727,7 +1728,7 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 	
 	Wave/T MPF2_ResultsListWave
 
-	Notebook $nb text="Type\tLocation\tLocSigma\tAmplitude\tAmpSigma\tArea\tAreaSigma\tFWHM\tFWHMSigma\r"
+	Notebook $nb text="Type\tLocation[tth]\tLocSigma[tth]\tLocation[Q]\tLocSigma[Q]\tAmplitude\tAmpSigma\tArea\tAreaSigma\tFWHM[tth]\tFWHMSigma[tth]\tFWHM[Q]\tFWHMSigma[Q]\r"
 
 	Variable numBLParams = 0
 	String BL_typename = MPF2_PeakOrBLTypeFromListString( WMHL_GetExtraColumnData(gname+"#MultiPeak2Panel#P1", "MPF2_PeakList", 0, 0) )
@@ -1745,6 +1746,7 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 	
 	Variable totalArea = 0
 	Variable totalAreaVariance = 0
+	NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
 
 	for (i = 0; i < npeaks; i += 1)
 		oneLine = ""
@@ -1753,6 +1755,10 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 		theRow = WMHL_GetRowNumberForItem(gname+"#MultiPeak2Panel#P1", "MPF2_PeakList", "Peak "+num2istr(i))
 		PeakTypeName = MPF2_PeakOrBLTypeFromListString( WMHL_GetExtraColumnData(gname+"#MultiPeak2Panel#P1", "MPF2_PeakList", 0, theRow) )
 		oneLine = PeakTypeName
+		if(!(stringMatch(PeakTypeName,"Gauss")||stringMatch(PeakTypeName,"Lorentzian")||stringMatch(PeakTypeName,"LogNormal")))
+			Notebook $nb, text = "Peak type : "+PeakTypeName+" is not handled by this table well, parameters may make no sense - let me know if you use this and I will fix it. Jan."+"\r"
+			
+		endif
 		
 		FUNCREF MPF2_FuncInfoTemplate infoFunc=$(PeakTypeName+PEAK_INFO_SUFFIX)
 		ParamNames = infoFunc(PeakFuncInfo_ParamNames)
@@ -1771,7 +1777,7 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 			FUNCREF MPF2_ParamFuncTemplate paramFunc=$ParamFuncName
 			Wave M_covar
 			Make/O/D/N=(nParams, nParams) MPF2_TempCovar
-			Make/O/D/N=(4,2) MPF2_TempParams=NaN			// initialize to blanks so that if the function doesn't exist, we just get blanks back- the template function doesn't do anything.
+			Make/O/D/N=(8,2) MPF2_TempParams=NaN			// initialize to blanks so that if the function doesn't exist, we just get blanks back- the template function doesn't do anything.
 			MPF2_TempCovar[][] = M_covar[totalParams+p][totalParams+q]
 			paramFunc(coefs, MPF2_TempCovar, MPF2_TempParams)
 			
@@ -1782,6 +1788,10 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 			for (j = 0; j < 4; j += 1)
 				sprintf OneParamText, "\t%g\t%g", MPF2_TempParams[j][0], MPF2_TempParams[j][1]
 				oneLine += OneParamText
+				if(j==0||j==3)
+					sprintf OneParamText, "\t%g\t%g", IN2G_ConvertTTHtoQ(MPF2_TempParams[j][0],wavelength) , IN2G_ConvertTTHtoQ(MPF2_TempParams[j][1],wavelength)	
+					oneLine += OneParamText		
+				endif
 			endfor
 			Notebook $nb text=oneLine+"\r"
 		endif
@@ -1793,6 +1803,47 @@ Function IR3W_TabDelimitedResultsBtnProc(s) : ButtonControl
 	Notebook $nb, text = "Total Peak Area = "+num2str(totalArea)+" +/- "+num2str(sqrt(totalAreaVariance))+"\r"
 	Notebook $nb selection={endOfFile,endOfFile}
 	Notebook $nb text="\r"
+//	Notebook $nb text="Same values in Q units:\r"
+//	for (i = 0; i < npeaks; i += 1)
+//		oneLine = ""
+//		
+//		Wave coefs = $("Peak "+num2istr(i)+" Coefs")
+//		theRow = WMHL_GetRowNumberForItem(gname+"#MultiPeak2Panel#P1", "MPF2_PeakList", "Peak "+num2istr(i))
+//		PeakTypeName = MPF2_PeakOrBLTypeFromListString( WMHL_GetExtraColumnData(gname+"#MultiPeak2Panel#P1", "MPF2_PeakList", 0, theRow) )
+//		oneLine = PeakTypeName
+//		
+//		FUNCREF MPF2_FuncInfoTemplate infoFunc=$(PeakTypeName+PEAK_INFO_SUFFIX)
+//		ParamNames = infoFunc(PeakFuncInfo_ParamNames)
+//		nParams = ItemsInList(ParamNames)
+//
+//		Wave coefs = $("Peak "+num2istr(i)+" Coefs")
+//		sigmaSequenceNumber = (numBLParams > 0) ? i+1 : i
+//		Wave sigma = $("W_sigma_"+num2istr(sigmaSequenceNumber))
+//
+//
+//		MPF2_ResultsListWave[i][0] = "Peak "+num2str(i)
+//		MPF2_ResultsListWave[i][1] = PeakTypeName
+//		
+//	   ParamFuncName = infoFunc(PeakFuncInfo_ParameterFunc)
+//		if (strlen(ParamFuncName) > 0)
+//			FUNCREF MPF2_ParamFuncTemplate paramFunc=$ParamFuncName
+//			Wave M_covar
+//			Make/O/D/N=(nParams, nParams) MPF2_TempCovar
+//			Make/O/D/N=(4,2) MPF2_TempParams=NaN			// initialize to blanks so that if the function doesn't exist, we just get blanks back- the template function doesn't do anything.
+//			MPF2_TempCovar[][] = M_covar[totalParams+p][totalParams+q]
+//			paramFunc(coefs, MPF2_TempCovar, MPF2_TempParams)
+//			
+//			// the first four parameters are always the same and the names are always in the column titles
+//			for (j = 0; j < 4; j += 1)
+//				sprintf OneParamText, "\t%g\t%g", IN2G_ConvertTTHtoQ(MPF2_TempParams[j][0],wavelength) , IN2G_ConvertTTHtoQ(MPF2_TempParams[j][1],wavelength)
+//				oneLine += OneParamText
+//			endfor
+//			Notebook $nb text=oneLine+"\r"
+//		endif
+//	
+//		totalParams += nParams
+//	endfor
+//
 	Notebook $nb text="\r"
 	
 	SetDataFolder saveDF
