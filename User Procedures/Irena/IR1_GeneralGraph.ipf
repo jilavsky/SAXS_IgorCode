@@ -105,8 +105,7 @@ end
 
 Function IR1P_ControlPanelFunc() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,402,690) as "General Plotting tool"
-	DoWIndow/C IR1P_ControlPanel
+	NewPanel /K=1 /W=(2.25,43.25,402,690)/N=IR1P_ControlPanel as "General Plotting tool"
 	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,200},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)

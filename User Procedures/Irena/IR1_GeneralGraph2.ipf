@@ -96,9 +96,7 @@ end
 Proc  IR1P_makeGraphWindow() 
 	KillWIndow/Z GeneralGraph
 	PauseUpdate; Silent 1		// building window...
-	Display /K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))  as "GeneralGraph"
-	//Display /K=1 /W=(285,37.25,756.75,340.25) as "GeneralGraph"
-	DoWindow/C GeneralGraph
+	Display /K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=GeneralGraph  as "GeneralGraph"
 	showInfo
 EndMacro
 //**********************************************************************************************************
@@ -1784,8 +1782,7 @@ Function IR1P_Create3DGraph()
 	SetDataFolder root:Packages:GeneralplottingTool:Waterfall:
 	WAVE PlottingTool_Int_M=root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_M
 	WAVE PlottingTool_Q = root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Q
-	NewWaterfall/W=(405,467,950,900) /K=1  PlottingTool_Int_M vs {PlottingTool_Q,*} as "Plotting Tool I 3D graph"
-	DoWindow/C PlotingToolWaterfallGrph
+	NewWaterfall/W=(405,467,950,900) /K=1/N=PlotingToolWaterfallGrph PlottingTool_Int_M vs {PlottingTool_Q,*} as "Plotting Tool I 3D graph"
 	ControlBar /T/W=PlotingToolWaterfallGrph 50
 	//Angle, colorscale, ax length
 	SVAR Graph3DColorScale = root:Packages:GeneralplottingTool:Graph3DColorScale
@@ -1832,10 +1829,9 @@ Function IR1P_CreateCountourGraph()
 		MatrixFilter /N=(ContSmoothOverValue) avg PlottingTool_Int_Contour
 	endif
 	SVAR Graph3DColorScale = root:Packages:GeneralplottingTool:ContGraph3DColorScale
-	Display /K=1/W=(405,467,950,900) as "Plotting tool I Contour plot"
+	Display /K=1/W=(405,467,950,900)/N=PlotingToolContourGrph as "Plotting tool I Contour plot"
 	AppendMatrixContour PlottingTool_Int_Contour vs {PlottingTool_Q,*}
 	ModifyGraph mirror=2
-	DoWindow/C PlotingToolContourGrph
 	ControlBar /T/W=PlotingToolContourGrph 52
 	SetVariable ContNumCountours,pos={10,2},size={170,15},title="Number of contours",bodyWidth=70
 	SetVariable ContNumCountours, proc=IR1P_ContSetVarProc, help={"Number of contours to use"}
@@ -2588,8 +2584,7 @@ end
 
 Function IR1P_CreateMovieFnct() : Panel
 	//PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(376,264,674,504) as "Ploting tool I Create Movie"
-	DoWIndow/C IR1P_CreateMovie
+	NewPanel /K=1/W=(376,264,674,504)/N=IR1P_CreateMovie as "Ploting tool I Create Movie"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)
 	DrawText 42,28,"Create Movie from Plots"

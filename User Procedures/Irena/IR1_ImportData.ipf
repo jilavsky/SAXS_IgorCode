@@ -153,8 +153,7 @@ end
 Proc IR1I_ImportSASASCIIData() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(3,40,430,760) as "Import SAXS/SANS data"
-	DoWindow/C IR1I_ImportData
+	NewPanel /K=1 /W=(3,40,430,760)/N=IR1I_ImportData as "Import SAXS/SANS data"
 	TitleBox MainTitle title="\Zr200Import SAS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140List of available files",pos={30,107},frame=0,fstyle=1, fixedSize=1,size={120,20},fColor=(0,0,52224)
@@ -2317,8 +2316,7 @@ end
 Function IR1I_ImportOtherASCIIDataFnct() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(3,40,430,760) as "Import non-SAS data"
-	DoWindow/C IR1I_ImportOtherASCIIData
+	NewPanel /K=1 /W=(3,40,430,760)/N=IR1I_ImportOtherASCIIData as "Import non-SAS data"
 	TitleBox MainTitle title="\Zr200Import non SAS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={400,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info21 title="\Zr140Col. 1",pos={239,192},frame=0,fstyle=2, fixedSize=1,size={150,20}
@@ -2961,10 +2959,8 @@ end
 Function IR1I_ImportNexusDataFnct() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(3,40,430,620) as "Import Nexus canSAS data"
-	DoWindow/C IR1I_ImportNexusCanSASData
+	NewPanel /K=1 /W=(3,40,430,620)/N=IR1I_ImportNexusCanSASData as "Import Nexus canSAS data"
 	TitleBox MainTitle title="\Zr200Import Nexus canSAS Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={400,24},anchor=MC,fColor=(0,0,52224)
-//	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)	
 	IR3C_AddDataControls("ImportDataPath", "ImportData", "IR1I_ImportNexusCanSASData","", "","","IR1I_NexusDoubleClickFUnction")
 	ListBox ListOfAvailableData,size={410,250}
 	Button SelectDataPath pos={110,40}

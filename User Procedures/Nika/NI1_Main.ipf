@@ -78,7 +78,7 @@ Menu "SAS 2D"
 	"Image line profile", NI1_CreateImageLineProfileGraph()
 	help={"Calls Image line profile (Wavemetrics provided) function"}
 	"---"
-	"GUI & uncertainty config",NI1_ConfigMain()
+	"Configure default fonts & uncertainty",NI1_ConfigMain()
 	help={"Configure method for uncertainity values for GUI behavior and for panels font sizes and font types"}
 	"Configuration manager", NI1_GeometriesManager()
 	help={"This enables switching among multiple Nika geometries, such as distances or wavelengths"}

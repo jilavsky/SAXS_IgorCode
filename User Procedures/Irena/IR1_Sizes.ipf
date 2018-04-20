@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.25
+#pragma version = 2.27
 Constant IR1RSversionNumber=2.20
 
 
@@ -9,6 +9,8 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 add Total volume fraction and Rg to main Graph control bar. 
+//2.26 add Rg to Calculate parameters button. 
 //2.25 added better Graph size control for a specific screen size. 
 //2.24 added getHelp button calling to www manual
 //2.23 changed to use of IR1B_SmearData and remvoed limitation for slit smeared data, that Qmax must be > than 3*slit length. Optimized speed, about 2x speed improvement on slit smeared data. 
@@ -281,6 +283,11 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	if (cmpstr(SlitSmearedData, "Yes")==0)				//if we are working with slit smeared data
 		IR1R_ExtendQVecForSmearing()				//here we extend them by slitLength
 	endif		
+	//reset this
+	NVAR TotalVolumeFraction = root:Packages:Sizes:TotalVolumeFraction
+	NVAR Rg = root:Packages:Sizes:Rg
+	TotalVolumeFraction = 0
+	Rg = 0
 
 	//testing....	New Formfactor calculations Check that the G matrix actually exists. We need it... 
 	//we will setup only form factor G matrix G_matrixFF, which will be scaled by contrats later on...
@@ -414,7 +421,14 @@ Function IR1R_SizesFitting(ctrlName) : ButtonControl			//this function is called
 	
 	SVAR SizesParameters=root:Packages:Sizes:SizesParameters
 	SizesParameters=ReplaceStringByKey("MethodRun", SizesParameters, MethodRun,"=")
-
+	//calculate parametrs
+	Wave/Z SizesVolumeDistribution = root:Packages:Sizes:CurrentResultSizeDistribution
+	Wave/Z SizeDistDiameter = root:Packages:Sizes:D_distribution
+	
+	if(WaveExists(SizesVolumeDistribution))
+		TotalVolumeFraction = areaXY(SizeDistDiameter,SizesVolumeDistribution)
+		Rg=IR2L_CalculateRg(SizeDistDiameter,SizesVolumeDistribution,1)		//Dimension is diameter, 3rd parameter is 1
+	endif
 	IR1R_FinishGraph()								//finish the graph to proper shape
 	NVAR ChiSquare=root:Packages:Sizes:ChiSquare
 	if(numtype(ChiSquare)!=0)
@@ -787,8 +801,7 @@ Function IR1R_SelectAndCopyData()		//this function selects data to be used and c
 	NVAR SlitLength=root:Packages:Sizes:SlitLength
 	SlitLength=NumberByKey("SlitLength", Note(IntensityOriginal), "=")
 	
-	Execute("IR1R_SizesInputGraph()")				//this creates the graph
-//	IN2G_AutoAlignGraphAndPanel()						//this aligns them together
+	IR1R_SizesInputGraphFnct() 							//this creates the graph
 	setDataFolder OldDf
 end
 //*****************************************************************************************************************
@@ -899,6 +912,7 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	ListOfVariables+="UseRegularization;UseMaxEnt;UseTNNLS;"
 	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
 	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;AutoCalculateParameters;RemoveTrustRegionIndicators;"
+	ListOfVariables+="Rg;TotalVolumeFraction;"
 	
 //	ListOfStrings="DataFolderName;OriginalIntensityWvName;OriginalQvectorWvName;OriginalErrorWvName;SizesParameters;"
 	ListOfStrings="DataFolderName;SizesParameters;"
@@ -2235,6 +2249,12 @@ end
 	SetVariable NumFittedPoints size={180,15}, pos={400,25}, title="Number of fitted points", win=IR1R_SizesInputGraph
 	SetVariable NumFittedPoints limits={-Inf,Inf,0},value= root:Packages:Sizes:FittedNumberOfpoints, win=IR1R_SizesInputGraph
 
+	SetVariable TotalVolumeFraction size={180,15}, pos={850,5}, title="Total Vol. Frac", win=IR1R_SizesInputGraph
+	SetVariable TotalVolumeFraction limits={-Inf,Inf,0},value= root:Packages:Sizes:TotalVolumeFraction, win=IR1R_SizesInputGraph
+
+	SetVariable Rg size={180,15}, pos={850,25}, title="Rg [A]    ", win=IR1R_SizesInputGraph
+	SetVariable Rg limits={-Inf,Inf,0},value= root:Packages:Sizes:Rg, win=IR1R_SizesInputGraph
+
 	IN2G_GenerateLegendForGraph(7,0,1)
 	Legend/J/C/N=Legend1/J/A=LB/X=-8/Y=-8/W=IR1R_SizesInputGraph
 	string LegendText2="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Method used: "+MethodRun+"\r"
@@ -2432,16 +2452,23 @@ static  Function IR1R_ReturnFitBack(ctrlName)			//copies data back to folder wit
 	endif
 	
 	variable MeanSize=IR1R_MeanOfDistribution(SizesVolumeDistribution,SizeDistDiameter)
-
+	variable Rg = IR2L_CalculateRg(D_distribution,CurrentResultSizeDistribution,1)
+	variable SdVolume= areaXY(D_distribution, CurrentResultSizeDistribution )
 
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"Wname","SizesVolumeDistribution")
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"Units","cm3/cm3/A")
 	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"MeanSizeOfDistribution",num2str(MeanSize))
+	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"VolumeFractionOfDistribution",num2str(SdVolume))
+	IN2G_AppendorReplaceWaveNote(tempnameVolNm,"RgOfDistribution",num2str(Rg))
+
+
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"UsersComment",UsersComment)
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"Wname","SizesNumberDistribution")
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"Units","1/cm3/A")
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"MeanSizeOfDistribution",num2str(MeanSize))
+	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"VolumeFractionOfDistribution",num2str(SdVolume))
+	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"RgOfDistribution",num2str(Rg))
 
 	//create record of all Sizes parameters to add to all of the waves as wave note...
 	string ListOfVariables="SuggestedSkyBackground;UseSlitSmearedData;"
@@ -3009,8 +3036,7 @@ Window Reg_FractalAgg_Input_Panel()
 	Variable which
 	KillWIndow/Z Shape_Model_Input_Panel
  	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(189,124.25,485.25,299.75) as "Fractal_Aggregate_Input_Panel"
-	DoWindow/C Shape_Model_Input_Panel
+	NewPanel /K=1 /W=(189,124.25,485.25,299.75)/N=Shape_Model_Input_Panel as "Fractal_Aggregate_Input_Panel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,65280)
 	DrawText 38,29,"Parameters for Fractal Aggregate"
@@ -3097,17 +3123,12 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Proc  IR1R_SizesInputGraph() 
+Function  IR1R_SizesInputGraphFnct() 
 	PauseUpdate; Silent 1		// building window...
 	SetDataFolder root:Packages:Sizes:
-	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
-	//Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
-	DoWindow/C IR1R_SizesInputGraph
-	AutoPositionWindow/M=0/R=IR1R_SizesInputPanel 	IR1R_SizesInputGraph
-	
+	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=IR1R_SizesInputGraph IntensityOriginal vs Q_vecOriginal
+	AutoPositionWindow/M=0/R=IR1R_SizesInputPanel 	IR1R_SizesInputGraph	
 	IR1R_AppendIntOriginal()	//appends original Intensity 
-//	IN2G_AppendSizeTopWave("IR1R_SizesInputGraph",Q_vecOriginal, IntensityOriginal,-25,0,40)		//appends the size wave
-//	removed on request of Pete
 	ModifyGraph mirror=1
 	AppendToGraph BackgroundWave vs Q_vecOriginal
 	ModifyGraph/Z margin(top)=80
@@ -3128,21 +3149,19 @@ Proc  IR1R_SizesInputGraph()
 	Label bottom "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	ModifyGraph fSize=str2num(IN2G_LkUpDfltVar("AxisLabelSize"))
 	ShowInfo
-	variable testQRS
-	testQRS = root:Packages:Sizes:UseQRSdata
+	NVAR testQRS = root:Packages:Sizes:UseQRSdata
+	SVAR IntensityWaveName=root:Packages:Sizes:IntensityWaveName
+	SVAR DataFolderName=root:Packages:Sizes:DataFolderName
 	if(strlen(StringByKey("UserSampleName", note(IntensityOriginal), "="))>1)
 		Textbox/N=text0/S=3/A=RT  "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+StringByKey("UserSampleName", note(IntensityOriginal), "=")
 	else
 		if(testQRS==1)
-			Textbox/N=text0/S=3/A=RT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+root:Packages:Sizes:IntensityWaveName
+			Textbox/N=text0/S=3/A=RT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"The sample evaluated is:  "+IntensityWaveName
 		else
 			Textbox/K/N=text0
 		endif	
 	endif
 	//and now some controls
-//	ControlBar 30
-//	Button SaveStyle size={80,20}, pos={50,5},proc=IR1U_StyleButtonCotrol,title="Save Style"
-//	Button ApplyStyle size={80,20}, pos={150,5},proc=IR1U_StyleButtonCotrol,title="Apply Style"
 	TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
 
@@ -3166,6 +3185,8 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 	wave MyXWave=root:Packages:Sizes:D_distribution
 	Wave MyYWave=root:Packages:Sizes:CurrentResultSizeDistribution
 	Wave/Z MyEWave=root:Packages:Sizes:CurrentResultSizeDistErrors
+	NVAR Rg=root:Packages:Sizes:Rg
+	NVAR TotalVolumeFraction = root:Packages:Sizes:TotalVolumeFraction
 	variable volume, volumeMax, VolumeMin
 	variable meanDia
 	variable modeDia
@@ -3190,6 +3211,7 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 //	endif		
 	
 	volume = areaXY(MyXWave,MyYWave, MyXWave[pcsr(A)],MyXWave[pcsr(B)])
+	TotalVolumeFraction = volume
 	CheckDisplayed /W=IR1R_SizesInputGraph MyEWave
 	if(WaveExists(MyEWave)&&V_Flag)
 		Duplicate/Free MyYWave, tempWv
@@ -3199,8 +3221,8 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 		VolumeMin= areaXY(MyXWave,tempWv, MyXWave[pcsr(A)],MyXWave[pcsr(B)])
 	endif
 	//now calculate meanDia
-	Duplicate/Free/R=[startA,startB] MyYwave, temp_cumulative, temp_probability, Another_temp
-	Duplicate/Free/R=[startA,startB] MyXwave, tempXwave
+	Duplicate/Free/R=[startA,startB] MyYwave, temp_cumulative, temp_probability, Another_temp, RgVolumeDist
+	Duplicate/Free/R=[startA,startB] MyXwave, tempXwave, RgtempXwave
 	Another_temp=temp_probability*tempXwave
 	MeanDia=areaXY(tempXwave, Another_temp,0,inf)	/ areaXY(tempXwave, temp_probability,0,inf)				//Sum P(D)*D*deltaD/P(D)*deltaD
 	//median
@@ -3210,19 +3232,21 @@ Function IN2R_CalculateVolume(ctrlname) : Buttoncontrol
 	//mode
 		FindPeak/P/Q Temp_Probability
 		modeDia=tempXwave[V_PeakLoc]								//location of maximum on the P(R)
-
+	//Rg
+	Rg=IR2L_CalculateRg(RgtempXwave,RgVolumeDist,1)		//Dimension is diameter, 3rd parameter is 1
 	
 	print "Volume of scatterers between "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+"  A particle diameter is  "+num2str(volume)
 	print "Mean diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(meanDia)
 	print "Mode diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(modeDia)
 	print "Median diameter between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is " +num2str(medianDia)
+	print "Rg between  "+num2str(MyXWave[pcsr(A)])+"  and " +num2str(MyXWave[pcsr(B)])+" is "+num2str(Rg)+" [A]"
 	string tagText = "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"\r"
 	CheckDisplayed /W=IR1R_SizesInputGraph MyEWave
  	if(WaveExists(MyEWave)&&V_Flag)
 		tagText =  "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Volume of scatterers = "+num2str(volume)+"  +/- "+num2str((volumeMax-VolumeMin)/2)+"\r"
 	endif
+	tagText += "Rg = "+num2str(Rg)+"\r"
 	tagText += "Mean diameter = "+num2str(meanDia)+"\r"
-	//tagText += "Mode diameter = "+num2str(modeDia)+"\r"
 	tagText += "Median diameter = "+num2str(medianDia)+"\r"
 	tagText += "Range of diameters from "+num2str(MyXWave[pcsr(A)])+"  to " +num2str(MyXWave[pcsr(B)])+"  [A]"
 	
@@ -3722,8 +3746,7 @@ Proc  IR1R_RegDiagnosticsWindow()
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Sizes:
-	Display /K=1/W=(10,250,350,450) CurrentEntropyW as "Diagnostic of the Sizes"
-	DoWIndow/C IR1R_RegDiagnosticsWindow
+	Display /K=1/W=(10,250,350,450)/N=IR1R_RegDiagnosticsWindow CurrentEntropyW as "Diagnostic of the Sizes"
 	AppendToGraph /R CurrentChiSqW //vs DiagLogAVal
 	AppendToGraph/L=ChiMinAlphaS CurChiSqMinusAlphaEntropyW
 	SetDataFolder fldrSav

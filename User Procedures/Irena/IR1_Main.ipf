@@ -742,8 +742,7 @@ End
 Function IR1_AboutPanel()
 	KillWIndow/Z About_Irena_1_Macros
 //	PauseUpdate; Silent 1		// building window...
-	NewPanel/K=1 /W=(173.25,50,580,460) as "About Irena Macros"
-	DoWindow/C About_Irena_1_Macros
+	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
 	DrawText 23,30,"Irena macros for Igor Pro 7"
@@ -1273,7 +1272,7 @@ Proc  IR1_IQ4_Q_PlotLSQF()
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:SAS_Modeling:
 	Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
-	DoWindow/C IR1_IQ4_Q_PlotLSQF
+	DoWIndow/C=IR1_IQ4_Q_PlotLSQF
 	ModifyGraph mode(OriginalIntQ4)=3
 	ModifyGraph msize(OriginalIntQ4)=1
 	ModifyGraph log=1
@@ -1331,7 +1330,7 @@ Proc  IR1_LogLogPlotLSQF()
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:SAS_Modeling:
 	Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
-	DoWindow/C IR1_LogLogPlotLSQF
+	DoWIndow/C=IR1_LogLogPlotLSQF
 	ModifyGraph mode(OriginalIntensity)=3
 	ModifyGraph msize(OriginalIntensity)=1
 	ModifyGraph log=1

@@ -26,8 +26,7 @@
 Proc IR1V_ControlPanel() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Fractals model"
-	DoWIndow/C IR1V_ControlPanel
-
+	DoWindow/C=IR1V_ControlPanel
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup="r*:q*;"
@@ -1631,7 +1630,7 @@ Proc  IR1V_LogLogPlotV()
 	SetDataFolder root:Packages:FractalsModel:
 	//Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
 	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.6*IN2G_GetGraphWidthHeight("height"))/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
-	DoWindow/C IR1V_LogLogPlotV
+	DOWIndow/C=IR1V_LogLogPlotV
 	AutoPositionWindow/M=0/R=IR1V_ControlPanel  IR1V_LogLogPlotV		
 	ModifyGraph mode(OriginalIntensity)=3
 	ModifyGraph msize(OriginalIntensity)=1
@@ -1658,7 +1657,7 @@ Proc  IR1V_IQ4_Q_PlotV()
 	SetDataFolder root:Packages:FractalsModel:
 	//Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
 	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.4*IN2G_GetGraphWidthHeight("height"))/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
-	DoWIndow/C IR1V_IQ4_Q_PlotV
+	DoWIndow/C=IR1V_IQ4_Q_PlotV
 	AutoPositionWindow/M=0/E/R=IR1V_ControlPanel  IR1V_IQ4_Q_PlotV		
 	ModifyGraph mode(OriginalIntQ4)=3
 	ModifyGraph msize(OriginalIntQ4)=1

@@ -2234,8 +2234,7 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 		abort	
 	endif	
 	//make the new panel 
-	NewPanel/K=1 /W=(96,94,530,370) as "FormFactorControlScreen"
-	DoWindow/C FormFactorControlScreen
+	NewPanel/K=1 /W=(96,94,530,370)/N=FormFactorControlScreen as "FormFactorControlScreen"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (0,12800,52224)
 	DrawText 32,34,TitleStr

@@ -2161,7 +2161,7 @@ Function NI1A_DisplayLoadedFile()
 	else
 			LegendImg+=StringByKey("DataFileName", note(waveToDisplayDis) , "=", ";")
 	endif
-	TextBox/C/N=text0/S=1/B=2/A=LT "\\K(65280,16384,16384)\\Z14"+LegendImg
+	TextBox/C/N=text0/S=1/B=2/A=LT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\K(65280,16384,16384)\\Z"+IN2G_LkUpDfltVar("LegendSize")+LegendImg
 	
 	setDataFolder OldDf
 end

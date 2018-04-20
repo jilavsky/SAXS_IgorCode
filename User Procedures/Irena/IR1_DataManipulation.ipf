@@ -113,7 +113,7 @@ end
 Proc IR1D_DataManipulationPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,415,720) as "Data Manipulation"
-	DoWIndow/C IR1D_DataManipulationPanel
+	DoWIndow/C=IR1D_DataManipulationPanel
 	TitleBox MainTitle title="\Zr200Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={355,24},anchor=MC,fColor=(0,0,52224)
 	//TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,143},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -1981,7 +1981,7 @@ Proc IR1D_DataManipulationGraph()
 	PauseUpdate; Silent 1		// building window...
 	//Display/K=1 /W=(320.25,41.75,1014.75,671.75) as "IR1D_DataManipulationGraph"
 	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "IR1D_DataManipulationGraph"
-	DoWindow/C IR1D_DataManipulationGraph
+	DoWIndow/C=IR1D_DataManipulationGraph
 	ShowInfo
 	AutoPositionWindow/M=0/R=IR1D_DataManipulationPanel IR1D_DataManipulationGraph	
 EndMacro
@@ -2803,8 +2803,7 @@ Function IR3M_DataManipulationIIPanel()
 	DataFolderName="---"
 
 	//PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Data manipulation II"
-	DoWindow/C DataManipulationII
+	NewPanel /K=1 /W=(2.25,43.25,390,690)/N=DataManipulationII as "Data manipulation II"
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;R_Int;"
 	IR2C_AddDataControls("DataManipulationII","DataManipulationII",AllowedIrenaTypes,"AllCurrentlyAllowedTypes","","","","", 0,0)
@@ -3612,8 +3611,7 @@ Function  IR3M_GraphTestFolderData()
 	Wave/Z Xwv=$(DataFOldername+XWaveNm)
 	if(WaveExists(YWv) && WaveExists(Xwv))
 		KillWIndow/Z DataManipulationIIPrev
-		Display/K=1 Ywv vs XWv as "Preview of data in Manipulation II tool"
-		DoWindow/C DataManipulationIIPrev
+		Display/K=1/N=DataManipulationIIPrev Ywv vs XWv as "Preview of data in Manipulation II tool"
 		ModifyGraph/W=DataManipulationIIPrev log=1
 		ShowInfo
 
@@ -4882,13 +4880,12 @@ Function IR3M_CreateGraph(Reset)
 		if(V_Flag&&Reset)
 			KillWIndow/Z DataManipulationIIGraph
 			//Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
-			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "DataManipulation II Graph"
-			DoWindow/C DataManipulationIIGraph
+			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=DataManipulationIIGraph as "DataManipulation II Graph"
 			AutoPositionWindow/M=0 /R=ItemsInFolderPanel_DMII DataManipulationIIGraph
 		elseif(!V_Flag)	
 			//Display/K=1/W=(305.25,42.5,870,498.5) as "DataManipulation II Graph"
-			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "DataManipulation II Graph"
-			DoWindow/C DataManipulationIIGraph
+			Display/K=1/W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=DataManipulationIIGraph as "DataManipulation II Graph"
+			//DoWindow/C DataManipulationIIGraph
 			AutoPositionWindow/M=0 /R=ItemsInFolderPanel_DMII DataManipulationIIGraph
 		endif
 	endif
@@ -5073,8 +5070,8 @@ Function IR3M_MakePanelWithListBox()
 	KillWIndow/Z ItemsInFolderPanel
 	
 	//PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(400,50,720,696) as "Items in selected folder"
-	DoWindow/C ItemsInFolderPanel_DMII
+	NewPanel /K=1 /W=(400,50,720,696)/N=ItemsInFolderPanel_DMII as "Items in selected folder"
+	//DoWindow/C ItemsInFolderPanel_DMII
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
 	DrawText 45,21,"Items In the selected folder"

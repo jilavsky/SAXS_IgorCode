@@ -414,10 +414,8 @@ end
 
 Function IR1A_ControlPanelFnct() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,396,720) as "Unified fit"
-	DoWindow/C IR1A_ControlPanel
+	NewPanel /K=1 /W=(2.25,43.25,396,720)/N=IR1A_ControlPanel as "Unified fit"
 	DefaultGUIControls /W=IR1A_ControlPanel ///Mac os9
-
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup="r*:q*;"
