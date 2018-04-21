@@ -1372,7 +1372,7 @@ Proc  IR1G_OneSampleEvaluationGraph()
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:SASDataEvaluation:
 	Display /W=(5.25,42,1000,590)/K=1 /R  as "Evaluate Irena results"
-	DoWIndow/C=IR1G_OneSampleEvaluationGraph
+	DoWIndow/C IR1G_OneSampleEvaluationGraph
 	SetDataFolder fldrSav
 	ShowInfo
 	ControlBar 130

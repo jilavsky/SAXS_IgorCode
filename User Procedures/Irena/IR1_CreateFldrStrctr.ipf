@@ -30,7 +30,7 @@ end
 Proc IR1F_CreateQRSFldrStructure() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(135,98,551.25,392.75) as "Create QRS Folder Structure"
-	DoWIndow/C=IR1F_CreateQRSFldrStructure
+	DoWIndow/C IR1F_CreateQRSFldrStructure
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
 	DrawText 64,30,"Create folder structure for QRS data"
