@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.27
-Constant IR1RSversionNumber=2.20
+#pragma version = 2.28
+Constant IR1RSversionNumber=2.28
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.20
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.28 add low-q power law background subtraction for data. Treat same as background for now. 
 //2.27 add Total volume fraction and Rg to main Graph control bar. 
 //2.26 add Rg to Calculate parameters button. 
 //2.25 added better Graph size control for a specific screen size. 
@@ -788,15 +789,15 @@ Function IR1R_SelectAndCopyData()		//this function selects data to be used and c
 		//IR1D_rebinData(IntensityOriginal,SizesQvector,ErrorsOriginal,RebinDataTo, 1)
 		IN2G_RebinLogData(SizesQvector,IntensityOriginal,RebinDataTo,0,Wsdev = ErrorsOriginal)
 	endif
-
-	Duplicate/O IntensityOriginal BackgroundWave			//this background wave is to help user to subtract background
+	Duplicate/O SizesQvector, BackgroundWave
+	IR1R_CalculateBackgroundData(SizesQvector, BackgroundWave)	//this background wave is to help user to subtract background
 	Duplicate/O IntensityOriginal DeletePointsMaskWave		//this wave is used to delete points by using this as amark wave and seting points to 
 	Duplicate/O ErrorsOriginal DeletePointsMaskErrorWave		//delete to NaN. Then Intensity is at appropriate time mulitplied by this wave (and divided)
 	IR1R_UpdateErrorWave()
 														//to set points to delete to NaNs
 	DeletePointsMaskWave=7								//this is symbol number used...
-	NVAR Bckg=root:Packages:Sizes:Bckg
-	BackgroundWave=Bckg
+	//NVAR Bckg=root:Packages:Sizes:Bckg
+	
 
 	NVAR SlitLength=root:Packages:Sizes:SlitLength
 	SlitLength=NumberByKey("SlitLength", Note(IntensityOriginal), "=")
@@ -913,6 +914,7 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
 	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;AutoCalculateParameters;RemoveTrustRegionIndicators;"
 	ListOfVariables+="Rg;TotalVolumeFraction;"
+	ListOfVariables+="LowQPowerLawSlope;LowQScalingFactor;"
 	
 //	ListOfStrings="DataFolderName;OriginalIntensityWvName;OriginalQvectorWvName;OriginalErrorWvName;SizesParameters;"
 	ListOfStrings="DataFolderName;SizesParameters;"
@@ -1060,6 +1062,10 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	NVAR ErrorsMultiplier =root:Packages:Sizes:ErrorsMultiplier
 	if (ErrorsMultiplier==0)
 		ErrorsMultiplier=1
+	endif
+	NVAR LowQPowerLawSlope =root:Packages:Sizes:LowQPowerLawSlope
+	if (LowQPowerLawSlope<1)
+		LowQPowerLawSlope=4
 	endif
 	NVAR BinWidthInGMatrix=root:Packages:Sizes:BinWidthInGMatrix
 	BinWidthInGMatrix=0		//this is right setting, will default to this one...
@@ -1406,7 +1412,9 @@ static  Function IR1R_FinishSetupOfRegParam()			//Finish the preparation for par
 
 	Intensity=Intensity*(DeletePointsMaskWave/7)				//since DeletePointsMaskWave contains NaNs for points which we want to delete
 															//at this moment we set these points in intensity to NaNs
-	Intensity=Intensity-Bckg									//subtract background from Intensity
+	Duplicate/O Intensity, BackgroundWaveForFit
+	IR1R_CalculateBackgroundData(Q_vec, BackgroundWaveForFit)					//calculate backgroudn wave as needed															
+	Intensity=Intensity-BackgroundWaveForFit									//subtract background from Intensity
 	if ( ((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
 		//make sure the cursors are on the right waves..
 		IR1R_TrimData(Intensity,Q_vec,Errors)					//this trims the data with cursors
@@ -2518,17 +2526,17 @@ Window IR1R_SizesInputPanel()
 	NewPanel /K=1 /W=(6,10,406,670) as "Size distribution"
 	TitleBox MainTitle title="\Zr230Sizes input panel",pos={50,0},frame=0,fstyle=3,font= "Times New Roman", size={300,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={72,3},pos={8,26},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine2 title=" ",fixedSize=1,size={340,3},pos={8,209},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine2 title=" ",fixedSize=1,size={340,3},pos={8,194},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine3 title=" ",fixedSize=1,size={190,3},pos={160,407},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine4 title=" ",fixedSize=1,size={340,3},pos={8,487},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine5 title=" ",fixedSize=1,size={148,3},pos={200,583},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine6 title=" ",fixedSize=1,size={340,3},pos={8,285},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine6 title=" ",fixedSize=1,size={340,3},pos={8,268},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	TitleBox Info1 title="\Zr130Data : ",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
-	TitleBox Info2 title="\Zr110Fitting parameters",pos={5,290},frame=0,fstyle=1, fixedSize=1,size={150,20},fColor=(0,0,52224)
-	TitleBox Info3 title="\Zr110Particle model",pos={5,402},frame=0,fstyle=1, size={130,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info4 title="\Zr110Method",pos={5,492},frame=0,fstyle=1, size={90,20},fSize=14,fColor=(0,0,52224)
-	TitleBox Info5 title="\Zr110Distribution parameters",pos={5,213},frame=0,fstyle=1, size={190,20},fSize=14,fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr130Fitting parameters",pos={5,278},frame=0,fstyle=1, fixedSize=1,size={150,20},fColor=(0,0,52224)
+	TitleBox Info3 title="\Zr130Particle model",pos={5,402},frame=0,fstyle=1, size={130,20},fColor=(0,0,52224)
+	TitleBox Info4 title="\Zr130Method",pos={5,492},frame=0,fstyle=1, size={90,20},fColor=(0,0,52224)
+	TitleBox Info5 title="\Zr130Distribution parameters",pos={5,200},frame=0,fstyle=1, size={190,20},fColor=(0,0,52224)
 	TitleBox Info6 title="\Zr100Set range of data to fit with cursors!!",pos={5,579},frame=0,fstyle=1, size={190,20},fColor=(0,0,52224)
 	TitleBox Info7 title="\Zr100You need to store the results or they are lost!!",pos={5,643},frame=0,fstyle=1, size={250,20},fColor=(0,0,52224)
 
@@ -2540,46 +2548,53 @@ Window IR1R_SizesInputPanel()
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:Sizes:RebinDataTo, noproc
 	SetVariable RebinDataTo,pos={290,130},size={105,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 	//root:Packages:FormFactorCalc:ListOfFormFactorsSD
-	CheckBox ShowDiagnostics,pos={10,165},size={141,14},title="Diagnostics?", help={"Check to show extendend diagnostics during evaluation"}
+	CheckBox ShowDiagnostics,pos={10,150},size={141,14},title="Diagnostics?", help={"Check to show extendend diagnostics during evaluation"}
 	CheckBox ShowDiagnostics,variable= root:Packages:Sizes:ShowDiagnostics
-	Button GraphIfAllowed,pos={10,183},size={100,20},proc=IR1R_GraphDataButton,title="Graph", help={"Push to graph data"}
-	Button ScriptingTool,pos={280,185},size={90,15},proc=IR1R_GraphDataButton,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
-	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1R_GraphDataButton,title="Get Help", help={"Open www manual page for this tool"}
-
-
-	CheckBox SlitSmearedData,pos={160,164},size={150,21},proc=IR1R_InputPanelCheckboxProc,title="Slit smeared data?"
+	CheckBox SlitSmearedData,pos={160,150},size={150,21},proc=IR1R_InputPanelCheckboxProc,title="Slit smeared data?"
 	CheckBox SlitSmearedData,variable=root:Packages:Sizes:UseSlitSmearedData, help={"Are these slit smeared data?"}
+
+	Button GraphIfAllowed,pos={10,168},size={100,20},proc=IR1R_GraphDataButton,title="Graph", help={"Push to graph data"}
+	Button ScriptingTool,pos={280,169},size={90,15},proc=IR1R_GraphDataButton,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
+	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1R_GraphDataButton,title="Get Help", help={"Open www manual page for this tool"}
+	
 	SetVariable SlitLength,pos={125,186},size={140,16},title="Slit Length   ", help={"If slit smeared data, input slit length (automatically inserted for Indra 2 data"}
 	SetVariable SlitLength,limits={0,Inf,0.001},value= root:Packages:Sizes:SlitLength, disable=!(root:Packages:Sizes:UseSlitSmearedData)
-	SetVariable RminInput,pos={13,237},size={150,16},title="Minimum diameter", help={"Input minimum diameter of the particles being modeled"}
+
+	SetVariable RminInput,pos={13,223},size={150,16},title="Minimum diameter", help={"Input minimum diameter of the particles being modeled"}
 	SetVariable RminInput,limits={0,Inf,5},value= root:Packages:Sizes:Dmin
-	SetVariable RmaxInput,pos={199,237},size={150,16},title="Maximum diameter", help={"Input maximum diamter of particles being modeled"}
+	SetVariable RmaxInput,pos={199,223},size={150,16},title="Maximum diameter", help={"Input maximum diamter of particles being modeled"}
 	SetVariable RmaxInput,limits={1,Inf,5},value= root:Packages:Sizes:Dmax
-	PopupMenu Binning,pos={188,264},size={161,21},proc=IR1R_PopMenuProc,title="Logaritmic binning ?"
+	PopupMenu Binning,pos={199,244},size={161,21},proc=IR1R_PopMenuProc,title="Logaritmic binning ?"
 	PopupMenu Binning,mode=1,popvalue=root:Packages:Sizes:LogDist,value= #"\"Yes;No\"", help={"If selected Yes, bins diameter are equidistantly spaced in their logarithm, if No selected the bins are all same width"}
-	SetVariable RadiaSteps,pos={13,264},size={150,16},title="Bins in diameter"
+	SetVariable RadiaSteps,pos={13,244},size={150,16},title="Bins in diameter"
 	SetVariable RadiaSteps,limits={1,Inf,5},value= root:Packages:Sizes:numOfPoints, help={"Number of bins modeled."}
 
-	CheckBox UseUserErrors,pos={250,310},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use user errors?", mode=1
+	CheckBox UseUserErrors,pos={260,310},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use user errors?", mode=1
 	CheckBox UseUserErrors,variable= root:packages:Sizes:UseUserErrors, help={"Check, if you want to use errors provided by you from error wave"}
-	CheckBox UseSQRTErrors,pos={250,330},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use sqrt errors?", mode=1
+	CheckBox UseSQRTErrors,pos={260,330},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use sqrt errors?", mode=1
 	CheckBox UseSQRTErrors,variable= root:packages:Sizes:UseSQRTErrors, help={"Check, if you want to use errors equal square root of intensity"}
-	CheckBox UsePercentErrors,pos={250,350},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use % errors?", mode=1
+	CheckBox UsePercentErrors,pos={260,350},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use % errors?", mode=1
 	CheckBox UsePercentErrors,variable= root:packages:Sizes:UsePercentErrors, help={"Check, if you want to use errors equal n% of intensity"}
-	CheckBox UseNoErrors,pos={250,370},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use No errors?", mode=1
+	CheckBox UseNoErrors,pos={260,370},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use No errors?", mode=1
 	CheckBox UseNoErrors,variable= root:packages:Sizes:UseNoErrors, help={"Check, if you do not want to use errors"}
 
-	SetVariable ErrorMultiplier,pos={5,358},size={220,16},title="Multiply Errors by :                        ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseUserErrors || root:packages:Sizes:UseSQRTErrors)
+	SetVariable Background,pos={5,295},size={240,16},proc=IR1R_BackgroundInput,title="Subtract Background                   "
+	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Sizes:Bckg, help={"Value for flat backgound"}
+	SetVariable LowQScalingFactor,pos={5,315},size={240,16},proc=IR1R_BackgroundInput,title="Low Q Scaling                   "
+	SetVariable LowQScalingFactor,limits={0,Inf,0.001},value= root:Packages:Sizes:LowQScalingFactor, help={"Value for Low-q power law slope scaling (Porod const)"}
+	SetVariable LowQPowerLawSlope,pos={5,335},size={240,16},proc=IR1R_BackgroundInput,title="Low-q Slope                   "
+	SetVariable LowQPowerLawSlope,limits={1,4.5,0.01},value= root:Packages:Sizes:LowQPowerLawSlope, help={"Value for Low-q slope value"}
+
+
+	SetVariable ScatteringContrast,pos={5,356},size={240,16},title="Contrast (drho^2)[10^20, 1/cm4] ", proc=IR1R_SetVarProc, disable=1
+	SetVariable ScatteringContrast,limits={0,Inf,1},value= root:Packages:Sizes:ScatteringContrast, help={"Scattering contrast, if data are calibrated and proper scattering contrast used, the results are calibrated."}
+	SetVariable ErrorMultiplier,pos={5,378},size={240,16},title="Multiply Errors by :                        ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseUserErrors || root:packages:Sizes:UseSQRTErrors)
 	SetVariable ErrorMultiplier,limits={0,Inf,root:Packages:Sizes:ErrorsMultiplier/10},value= root:Packages:Sizes:ErrorsMultiplier, help={"Errors scaling factor"}
-	SetVariable PercentErrorToUse,pos={5,358},size={220,16},title="Errors % ofintensity :                     ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UsePercentErrors)
+	SetVariable PercentErrorToUse,pos={5,378},size={240,16},title="Errors % of intensity :                     ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UsePercentErrors)
 	SetVariable PercentErrorToUse,limits={0,Inf,1},value= root:Packages:Sizes:PercentErrorToUse, help={"Percent errors of intensity"}
 	PopupMenu SizesPowerToUse,pos={5,380},size={161,21},proc=IR1R_PopMenuProc,title="Scaling power ?", disable=!(root:packages:Sizes:UseNoErrors)
 	PopupMenu SizesPowerToUse,mode=(1+root:Packages:Sizes:SizesPowerToUse),popvalue=num2str(root:Packages:Sizes:SizesPowerToUse),value= #"\"0;1;2;3;4\"", help={"Parameter used to scale SAXS data - most likely 1 or 2, range 0 to 4, test to find ideal..."}
 
-	SetVariable Background,pos={5,315},size={220,16},proc=IR1R_BackgroundInput,title="Subtract Background                   "
-	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Sizes:Bckg, help={"Value for flat backgound"}
-	SetVariable ScatteringContrast,pos={5,336},size={220,16},title="Contrast (drho^2)[10^20, 1/cm4] ", proc=IR1R_SetVarProc, disable=1
-	SetVariable ScatteringContrast,limits={0,Inf,1},value= root:Packages:Sizes:ScatteringContrast, help={"Scattering contrast, if data are calibrated and proper scattering contrast used, the results are calibrated."}
 
 //shapes
 	PopupMenu ShapeModel,pos={10,418},size={223,21},proc=IR1R_PopMenuProc,title="Select particle shape model", help={"Particle shape models in the code. Set appropriate Aspect ratio. "}
@@ -3131,6 +3146,7 @@ Function  IR1R_SizesInputGraphFnct()
 	IR1R_AppendIntOriginal()	//appends original Intensity 
 	ModifyGraph mirror=1
 	AppendToGraph BackgroundWave vs Q_vecOriginal
+	ModifyGraph lstyle(BackgroundWave)=3
 	ModifyGraph/Z margin(top)=80
 	ControlBar /T 60
 	Button RemovePointR pos={115,5}, size={120,15},  title="Remove pnt w/csrA", proc=IR1R_RemovePointWithCursorA
@@ -3390,19 +3406,48 @@ Function IR1R_BackgroundInput(ctrlName,varNum,varStr,varName) : SetVariableContr
 	OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Sizes
 	DOWIndow/F IR1R_SizesInputPanel
-	IR1G_UpdateSetVarStep("Background",0.1)
-
-	Wave Q_vec=root:Packages:Sizes:Q_vec
-	Duplicate/O Q_vecOriginal BackgroundWave
-	BackgroundWave=varNum
+	if(stringMatch(ctrlName,"Background"))
+		IR1G_UpdateSetVarStep("Background",0.1)
+	elseif(stringMatch(ctrlName,"LowQScalingFactor"))
+		IR1G_UpdateSetVarStep("LowQScalingFactor",0.3)
+	else
+		IR1G_UpdateSetVarStep("LowQPowerLawSlope",0.01)
+	endif
+//	NVAR LowQPowerLawSlope=root:Packages:Sizes:LowQPowerLawSlope
+//	NVAR LowQScalingFactor=root:Packages:Sizes:LowQScalingFactor
+//	NVAR Background=root:Packages:Sizes:Bckg
+//	
+//
+	Wave Q_vec=root:Packages:Sizes:Q_vecOriginal
+	Duplicate/O Q_vec BackgroundWave
+//	BackgroundWave=LowQScalingFactor*(Q_vec^(-1*LowQPowerLawSlope)) + Background
+	IR1R_CalculateBackgroundData(Q_vec, BackgroundWave)
 	CheckDisplayed BackgroundWave 
 	if (!V_Flag)
-		AppendToGraph BackgroundWave vs Q_vecOriginal
+		AppendToGraph BackgroundWave vs Q_vec
 	endif
 
 	DoWIndow/F IR1R_SizesInputPanel
 	setDataFolder OldDf
 End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR1R_CalculateBackgroundData(Qwave, BackgroundWaveForFit)
+	wave Qwave, BackgroundWaveForFit
+	string OldDf
+	OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Sizes
+	NVAR LowQPowerLawSlope=root:Packages:Sizes:LowQPowerLawSlope
+	NVAR LowQScalingFactor=root:Packages:Sizes:LowQScalingFactor
+	NVAR Background=root:Packages:Sizes:Bckg
+	BackgroundWaveForFit=LowQScalingFactor*(Qwave^(-1*LowQPowerLawSlope)) + Background
+	setDataFolder OldDf
+
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

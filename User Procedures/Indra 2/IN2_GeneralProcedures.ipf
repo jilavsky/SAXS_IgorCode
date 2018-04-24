@@ -3943,7 +3943,12 @@ Function IR1G_UpdateSetVarStep(MyControlName,NewStepFraction)
 	//updates setVar step. Needs setVarName, and fraction of current value to be new step
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	ControlInfo $MyControlName
-	variable NewStep=V_Value * NewStepFraction
+	variable StepFraction=NewStepFraction
+	variable keys= GetKeyState(0)
+	if(keys>0)	//any modifier key pressed, make smaller steps
+		StepFraction=NewStepFraction*0.1
+	endif
+	variable NewStep=V_Value * StepFraction
 	variable startS =strsearch(S_recreation,"{",strsearch(S_recreation,"limits",0))
 	variable endS =strsearch(S_recreation,"}",strsearch(S_recreation,"limits",0))
 	variable oldMin=str2num((stringFromList(0,S_recreation[startS+1,endS-1],",")))
