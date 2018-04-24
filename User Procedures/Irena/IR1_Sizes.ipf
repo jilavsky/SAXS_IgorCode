@@ -645,6 +645,15 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 	OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Sizes
 
+	if(stringmatch(ctrlName,"FitPowerLaw"))
+		IR1R_FitPowerLawBackground()			
+		//DoWIndow/F IR1R_SizesInputPanel
+	endif
+	if(stringmatch(ctrlName,"FitBackground"))
+		IR1R_FitFlatBackground()			
+		//DoWIndow/F IR1R_SizesInputPanel
+	endif
+
 	if(stringmatch(ctrlName,"GraphIfAllowed"))
 		IR1R_GraphIfAllowed(ctrlName)			
 		DoWIndow/F IR1R_SizesInputPanel
@@ -2569,20 +2578,23 @@ Window IR1R_SizesInputPanel()
 	SetVariable RadiaSteps,pos={13,244},size={150,16},title="Bins in diameter"
 	SetVariable RadiaSteps,limits={1,Inf,5},value= root:Packages:Sizes:numOfPoints, help={"Number of bins modeled."}
 
-	CheckBox UseUserErrors,pos={260,310},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use user errors?", mode=1
+	CheckBox UseUserErrors,pos={270,315},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use user errors?", mode=1
 	CheckBox UseUserErrors,variable= root:packages:Sizes:UseUserErrors, help={"Check, if you want to use errors provided by you from error wave"}
-	CheckBox UseSQRTErrors,pos={260,330},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use sqrt errors?", mode=1
+	CheckBox UseSQRTErrors,pos={270,335},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use sqrt errors?", mode=1
 	CheckBox UseSQRTErrors,variable= root:packages:Sizes:UseSQRTErrors, help={"Check, if you want to use errors equal square root of intensity"}
-	CheckBox UsePercentErrors,pos={260,350},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use % errors?", mode=1
+	CheckBox UsePercentErrors,pos={270,355},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use % errors?", mode=1
 	CheckBox UsePercentErrors,variable= root:packages:Sizes:UsePercentErrors, help={"Check, if you want to use errors equal n% of intensity"}
-	CheckBox UseNoErrors,pos={260,370},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use No errors?", mode=1
+	CheckBox UseNoErrors,pos={270,375},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use No errors?", mode=1
 	CheckBox UseNoErrors,variable= root:packages:Sizes:UseNoErrors, help={"Check, if you do not want to use errors"}
 
-	SetVariable Background,pos={5,295},size={240,16},proc=IR1R_BackgroundInput,title="Subtract Background                   "
+	Button FitPowerLaw,pos={270,275},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q", help={"Push to fit Power law slope between cursors"}
+	Button FitBackground,pos={270,295},size={90,15},proc=IR1R_GraphDataButton,title="Fit Background", help={"Push to Fit background between cursors"}
+
+	SetVariable Background,pos={5,295},size={240,16},proc=IR1R_BackgroundInput,title="Subtract Background             "
 	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Sizes:Bckg, help={"Value for flat backgound"}
-	SetVariable LowQScalingFactor,pos={5,315},size={240,16},proc=IR1R_BackgroundInput,title="Low Q Scaling                   "
+	SetVariable LowQScalingFactor,pos={5,315},size={240,16},proc=IR1R_BackgroundInput,title="Low Q Scaling                       "
 	SetVariable LowQScalingFactor,limits={0,Inf,0.001},value= root:Packages:Sizes:LowQScalingFactor, help={"Value for Low-q power law slope scaling (Porod const)"}
-	SetVariable LowQPowerLawSlope,pos={5,335},size={240,16},proc=IR1R_BackgroundInput,title="Low-q Slope                   "
+	SetVariable LowQPowerLawSlope,pos={5,335},size={240,16},proc=IR1R_BackgroundInput,title="Low-q Slope                          "
 	SetVariable LowQPowerLawSlope,limits={1,4.5,0.01},value= root:Packages:Sizes:LowQPowerLawSlope, help={"Value for Low-q slope value"}
 
 
@@ -3454,7 +3466,85 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR1R_FitPowerLawBackground()
 
+	string OldDf
+	OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Sizes
+	NVAR LowQPowerLawSlope=root:Packages:Sizes:LowQPowerLawSlope
+	NVAR LowQScalingFactor=root:Packages:Sizes:LowQScalingFactor
+	NVAR Background=root:Packages:Sizes:Bckg
+	Wave BackgroundWave=root:Packages:Sizes:BackgroundWave
+	
+	DoWindow/F IR1R_SizesInputGraph				//pulls the control graph, in case it is not the top...
+	if (((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
+		//make sure the cursors are on the right waves..
+		if (stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution") || stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution"))
+			Abort "Cursors are set on wrong data, please, set cursors on range of Intensity you want to fit before continuing" 
+		endif
+		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
+		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+		endif
+		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+		endif
+	endif
+	Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
+	Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
+	
+	Duplicate /R=[pcsr(A, "IR1R_SizesInputGraph"),pcsr(B, "IR1R_SizesInputGraph")]/Free  IntensityOriginal, IntForFit 
+	Duplicate /R=[pcsr(A, "IR1R_SizesInputGraph"),pcsr(B, "IR1R_SizesInputGraph")]/Free  Q_vecOriginal, QForFit 
+	IntForFit = log(IntForFit)
+	QForFit = log(QForFit)
+	CurveFit line IntForFit /X=QForFit
+	Wave W_coef
+	LowQPowerLawSlope = abs(W_coef[1])
+	LowQScalingFactor = 10^W_coef[0]
+	IR1R_CalculateBackgroundData(Q_vecOriginal,BackgroundWave)
+	
+	setDataFolder OldDf
+
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_FitFlatBackground()
+
+	string OldDf
+	OldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Sizes
+	NVAR LowQPowerLawSlope=root:Packages:Sizes:LowQPowerLawSlope
+	NVAR LowQScalingFactor=root:Packages:Sizes:LowQScalingFactor
+	NVAR Background=root:Packages:Sizes:Bckg
+	Wave BackgroundWave=root:Packages:Sizes:BackgroundWave
+	DoWindow/F IR1R_SizesInputGraph				//pulls the control graph, in case it is not the top...
+	if (((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
+		//make sure the cursors are on the right waves..
+		if (stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution") || stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution"))
+			Abort "Cursors are set on wrong data, please, set cursors on range of Intensity you want to fit before continuing" 
+		endif
+		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
+		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+		endif
+		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+		endif
+	endif
+	Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
+	Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
+	
+	Duplicate /R=[pcsr(A, "IR1R_SizesInputGraph"),pcsr(B, "IR1R_SizesInputGraph")]/Free  IntensityOriginal, IntForFit 
+	Background = mean(IntForFit)
+	IR1R_CalculateBackgroundData(Q_vecOriginal,BackgroundWave)
+	setDataFolder OldDf
+
+
+end
 //Function IR1R_SelectShapeModel(ctrlName,popNum,popStr) : PopupMenuControl
 //	String ctrlName
 //	Variable popNum
