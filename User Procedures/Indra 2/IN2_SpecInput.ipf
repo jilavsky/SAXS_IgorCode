@@ -749,7 +749,8 @@ Function/S IN2_FindFolderWithScanTypes(startDF, levels, ScanType, LongShortType)
         dfSave = GetDataFolder(1)
         SetDataFolder startDF
         
-        templist = DataFolderDir(0)
+       // templist = DataFolderDir(0)
+        templist = DataFolderDir(1)
     	 SVAR/Z Command=specCommand
     	 if (SVAR_exists (Command))
         	if (stringmatch(Command,ScanType+"*"))

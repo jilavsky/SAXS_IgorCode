@@ -287,7 +287,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="ImageRangeMin;ImageRangeMax;ImageRangeMinLimit;ImageRangeMaxLimit;ImageDisplayLogScaled;UserImageRangeMin;UserImageRangeMax;UseUserDefMinMax;"
 	ListOfVariables+="A2DImageRangeMin;A2DImageRangeMax;A2DImageRangeMinLimit;A2DImageRangeMaxLimit;A2DLineoutDisplayLogInt;A2DmaskImage;"
 	ListOfVariables+="RemoveFirstNColumns;RemoveLastNColumns;RemoveFirstNRows;RemoveLastNRows;MaskDisplayLogImage;"
-	ListOfVariables+="MaskOffLowIntPoints;LowIntToMaskOff;"
+	ListOfVariables+="MaskOffLowIntPoints;LowIntToMaskOff;FixBackgroundOversubtraction;"
 	ListOfVariables+="OverwriteDataIfExists;SectorsNumSect;SectorsSectWidth;SectorsGraphStartAngle;SectorsGraphEndAngle;SectorsUseRAWData;SectorsUseCorrData;"
 	ListOfVariables+="DisplayBeamCenterIn2DGraph;DisplaySectorsIn2DGraph;"
 	ListOfVariables+="UseQvector;UseTheta;UseDspacing;UseDistanceFromCenter;"

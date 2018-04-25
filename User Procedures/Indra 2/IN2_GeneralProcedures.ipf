@@ -5041,7 +5041,8 @@ Function/S IN2G_FindFolderWithWvTpsList(startDF, levels, WaveTypes, LongShortTyp
   	
         SetDataFolder startDF
         
-        templist = DataFolderDir(0)
+       // templist = DataFolderDir(0)
+        templist = DataFolderDir(1)
         skipRest=0
         string AllWaves = ";"+WaveList("*",";","")
 //	For(i=0;i<ItemsInList(WaveList("*",";",""));i+=1)
@@ -5108,7 +5109,8 @@ Function/S IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortTyp
   	
         SetDataFolder startDF
         
-        templist = DataFolderDir(0)
+        //templist = DataFolderDir(0)
+        templist = DataFolderDir(1)
         skipRest=0
  	//first treat the empty folders... 
  	if(strlen(WaveList("*",";",""))>0 && cmpstr(WaveTypes,"*")==0)  //if the folder is NOT empty and matchstr="*", then we need to include this folder... 
@@ -5181,7 +5183,8 @@ Function/S IN2G_NewFindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShort
   	
         SetDataFolder startDF
         
-        templist = DataFolderDir(0)
+        //templist = DataFolderDir(0)
+        templist = DataFolderDir(1)
  //		new method?
  		if (Stringmatch(WaveList("*",";",""),WaveTypes))
 			if (LongShortType)
@@ -5789,7 +5792,7 @@ Function IN2G_UniversalFolderScan(startDF, levels, FunctionName)
         endif
         SetDataFolder startDF
         
-        templist = DataFolderDir(0)
+        templist = DataFolderDir(1)
 
     	 //here goes the function which needs to be called
     	  Execute(FunctionName)

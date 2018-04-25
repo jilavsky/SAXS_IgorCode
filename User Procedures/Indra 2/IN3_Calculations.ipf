@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.36
+#pragma version=1.37
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.37 fix bug when debugger when no data and Desmearing waqs checked. 
 //1.36 fix manual page called by help button
 //1.35 modify the sleep between multiple USAXS data reductions in IN3_InputPanelButtonProc to be more user friendly
 //1.34 fixed which resulting waves are plotted to include M_DSM, DSM, M_SMR, and SMR waves in this order. 
@@ -19,7 +20,7 @@
 //1.27 Fixes to Mod Gauss fitting to avoid problems when NaNs from range changes are present. 
 //1.26 GUI fixes for USAXS graphs and panels
 //1.25 added finding Qmin from FWHM of the sample peak
-//1.24 enable override of UPDsize, whichdid nto work up to now... 
+//1.24 enable override of UPDsize, which did not work up to now... 
 //1.23 fixed Bkg5 Overwrite which was not correctly read intot he system. 
 //1.22 Added support for Import & process new FLyscan processing GUI. 
 //1.21 added PUD size to step scan data and some otehr changes. 
@@ -2212,7 +2213,11 @@ Function IN3_DesmearData()
 	if(DesmearData && !IsBlank)
 		NVAR SlitLength = root:Packages:Indra3:SlitLength
 		NVAR DesmearNumberOfInterations=root:Packages:Indra3:DesmearNumberOfInterations
-		WAVE SMR_Int = root:Packages:Indra3:SMR_Int
+		WAVE/Z SMR_Int = root:Packages:Indra3:SMR_Int
+		if(!WaveExists(SMR_Int))		//wave does n to exist, stop here... 	
+			setDataFolder fldrSav0
+			return 0
+		endif
 		WAVE SMR_Error = root:Packages:Indra3:SMR_Error
 		WAVE SMR_Qvec = root:Packages:Indra3:SMR_Qvec
 		WAVE SMR_dQ = root:Packages:Indra3:SMR_dQ

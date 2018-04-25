@@ -3846,6 +3846,10 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 	SetVariable EmptyDarkNameMatchStr,pos={245,510},size={155,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
 	SetVariable EmptyDarkNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:EmptyDarkNameMatchStr
+	CheckBox FixBackgroundOversubtraction,pos={255,535},size={95,14},title="Fix Background Oversubtraction"
+	CheckBox FixBackgroundOversubtraction,help={"Check to add flat background to prevent negative intensities"}, proc=NI1A_CheckProc
+	CheckBox FixBackgroundOversubtraction,variable= root:Packages:Convert2Dto1D:FixBackgroundOversubtraction
+
 
 //tab 5 output conditions
 	
@@ -4662,6 +4666,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable CurrentPixSensFileName,disable=(tabNum!=3 || !UsePixelSensitivity||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	Button SelectMaskDarkPath,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable EmptyDarkNameMatchStr,disable=(tabNum!=3 || !(UseEmptyField || UseDarkField || UsePixelSensitivity)||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
+	CheckBox FixBackgroundOversubtraction,disable=(tabNum!=3), win=NI1A_Convert2Dto1DPanel
 	//tab 4 controls
 	NVAR UseQvector=root:Packages:Convert2Dto1D:UseQvector
 	NVAR UseDspacing=root:Packages:Convert2Dto1D:UseDspacing
