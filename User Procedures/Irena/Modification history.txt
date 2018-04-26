@@ -11,7 +11,7 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 Modification history:
 ********************************************
 2.66
-Size distribution - added power law slope to Background so one can subtract also low-q power law slope. 
+Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to do power law fit and background fit. 
 
 2.65 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 

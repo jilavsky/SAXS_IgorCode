@@ -16,6 +16,7 @@ Modification history:
 Removed range selection controls and moved Save data options to its own tab "Save"
 Added ImageStatistics and control for user for delay between series of images. 
 Added font type and size control from configuration to be used for CCD image label. 
+Added ability to fix negative intensities oversubtraction. Checkbox on Empty tab and if checked, ~1.5*abs(V_min) is added to ALL points intensities. 
 
 1.79 1/27/2018
 Converted all procedure files to UTF8 to prevent text encoding issues. 

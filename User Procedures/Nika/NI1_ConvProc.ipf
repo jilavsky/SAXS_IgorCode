@@ -268,6 +268,19 @@ Function NI1A_AverageDataPerUserReq(orientation)
 	DeletePoints 0,1, intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth
 	//remove any Nan points (set to Nan by error evaluation above). 
 	IN2G_RemoveNaNsFrom10Waves(intensity, error, Qvector, Qsmearing, TwoTheta, TwoThetaWidth, Dspacing, DspacingWidth, DistanceInmm, DistacneInmmWidth)
+	//now fix oversubtraction of background, if selected.
+	NVAR FixBackgroundOversubtraction = root:Packages:Convert2Dto1D:FixBackgroundOversubtraction
+	if(FixBackgroundOversubtraction)
+		//need to find out minimum of Intensity
+		Wavestats/Q/Z Intensity
+		//V_min is the lowest value we got, likely negative.
+		if(V_min<0)	//it is negative
+			//add FixBackgroundOversubScale 8 abs(V_min), fix FixBackgroundOversubScale in NI1_Main.ipf
+			Intensity+=FixBackgroundOversubScale * abs(V_min)
+		endif
+		
+	endif
+	
 	setDataFolder OldDf
 end
 

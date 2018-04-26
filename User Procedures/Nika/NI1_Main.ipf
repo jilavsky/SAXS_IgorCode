@@ -6,6 +6,7 @@
 //DO NOT renumber Main files every time, these are main release numbers...
 
 constant CurrentNikaVersionNumber = 1.79
+constant FixBackgroundOversubScale=1.5			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
