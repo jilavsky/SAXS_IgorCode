@@ -687,6 +687,12 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
 	endif
+	//temp overwrite:
+	//I0gain = 1e7
+	//Duplicate/O Monitor, root:Packages:Backup:Monitor
+	//Wave OldMon=root:Packages:Backup:Monitor
+	//Monitor =OldMon
+	//end of temp fixes... 
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
 	//let's make some standard strings we need.
 	string/g PathToRawData

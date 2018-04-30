@@ -800,6 +800,10 @@ Function IR1R_SelectAndCopyData()		//this function selects data to be used and c
 	endif
 	Duplicate/O SizesQvector, BackgroundWave
 	IR1R_CalculateBackgroundData(SizesQvector, BackgroundWave)	//this background wave is to help user to subtract background
+	if(Exists("SizesAfterLoadDatabackgroundHookFun"))
+		Execute("SizesAfterLoadDatabackgroundHookFun()")
+		IR1R_CalculateBackgroundData(SizesQvector, BackgroundWave)
+	endif
 	Duplicate/O IntensityOriginal DeletePointsMaskWave		//this wave is used to delete points by using this as amark wave and seting points to 
 	Duplicate/O ErrorsOriginal DeletePointsMaskErrorWave		//delete to NaN. Then Intensity is at appropriate time mulitplied by this wave (and divided)
 	IR1R_UpdateErrorWave()
