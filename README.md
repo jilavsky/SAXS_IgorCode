@@ -1,5 +1,5 @@
 # SAXS_IgorCode
-Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7.05 and higher (including Igor 8 beta)!
+Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor 7.05 and higher, including Igor 8. 
 
 The current stable release version is January2018. For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
