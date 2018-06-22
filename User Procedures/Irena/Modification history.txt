@@ -11,7 +11,8 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 Modification history:
 ********************************************
 2.66
-Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to do power law fit and background fit. 
+Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to do power law fit and background fit. Added option to fit the parameters when data are added to the tool.
+Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
 
 2.65 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 

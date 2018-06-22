@@ -315,6 +315,10 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 				reason = "Qvector value"
 			endif
 		endfor
+		if(cmpstr(StringByKey("R_0", OldNote),num2str(R_dist[0]))!=0)
+				Recalculate=1
+				reason = "Radius value"
+		endif
 		For(i=0;i<floor(numpnts(R_dist)/5);i+=1)
 			if(cmpstr(StringByKey("R_"+num2str(i), OldNote),num2str(R_dist[i]))!=0 )		//check every 5th R value written in wave note
 				Recalculate=1

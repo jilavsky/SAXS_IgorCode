@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.24
+#pragma version=1.25
 Constant IR2LversionNumber = 1.24
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2LversionNumber = 1.24
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.25 mofied min number of Num points to 6, G matrix breask when less... 
 //1.24 added Rg for Size distributions and this requirtes reinitialization
 //1.23 added Ardell distributions support
 //1.22 Modified Screen Size check to match the needs
@@ -234,7 +235,7 @@ Function IR2L_MainPanel()
 		CheckBox RdistMan,pos={340,257},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Manual?", mode=1
 		CheckBox RdistMan,variable= root:Packages:IR2L_NLSQF:RdistMan_pop1, help={"Manually set Rmin R max?"}
 
-		SetVariable RdistNumPnts,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistNumPnts_pop1, proc=IR2L_PopSetVarProc
+		SetVariable RdistNumPnts,limits={6,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistNumPnts_pop1, proc=IR2L_PopSetVarProc
 		SetVariable RdistNumPnts,pos={5,275},size={110,15},title="Num pnts:", help={"Number of points in the population"} 
 		SetVariable RdistManMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:RdistManMin_pop1, noproc
 		SetVariable RdistManMin,pos={140,275},size={100,15},title="R min:", help={"This is R min selected for this population"} 

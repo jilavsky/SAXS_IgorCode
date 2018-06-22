@@ -1366,7 +1366,7 @@ Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNam
 		////    choices:
 		////       1/m
 		////       1/nm  (preferred)
-		////       1/angstrom
+		////       1/angstrom		//2018-06 sasView cannot convert units for Q, use 1/angstrom until they fix it in 4.3 or hgher version. 
 		////
 		////I:
 		////  @units: (required) NX_CHAR
@@ -1462,10 +1462,11 @@ Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNam
 	//Now deal with Q axes...
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/I", fileID)
 	//convert to 1/nm and use that, Nexus preferred units
+	//sasView 2018-6 cannot convert from 1/nm to 1/A, use 1/angstrom in teh mean time. 
 	Duplicate/Free Qwv, Qwvnm
-	Qwvnm = Qwvnm*10
+	//Qwvnm = Qwvnm*10
 	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwvnm , fileID, NewGroupName+"/Q"
-	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Q", fileID)
+	NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Q", fileID)
 	NEXUS_HdfSaveAttrib("resolutions","Qdev",NewGroupName+"/Q", fileID)
 	//Now deal with Uncertainty
 	//NEXUS_HdfSaveAttrib("uncertainty","Idev",NewGroupName+"/sasdata01/I", fileID)
@@ -1474,9 +1475,9 @@ Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNam
 	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/Idev", fileID)
 	//Now Qres.   dQwv
 	Duplicate/Free dQwv, dQwvnm
-	dQwvnm = dQwvnm*10
+	//dQwvnm = dQwvnm*10
 	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/Qdev"
-	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Qdev", fileID)
+	NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qdev", fileID)
 	
 	//add instrument data...
 	string InstrumentPathStr=RootGroupName+"/"+"instrument"
@@ -1585,7 +1586,7 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
 		////
 		////    choices:
 		////       1/m
-		////       1/nm  (preferred)
+		////       1/nm  (preferred)		//2018-06 sasView cannot convert units for Q, use 1/angstrom until they fix it in 4.3 or hgher version.
 		////       1/angstrom
 		////
 		////I:
@@ -1682,22 +1683,37 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
 	//Now deal with Q axes...
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/I", fileID)
 	//convert to 1/nm and use that, Nexus preferred units
+	//DO NOT change to 1/nm (6/2018) sasView cannot use it for now. 		1/angstrom
 	Duplicate/Free Qwv, Qwvnm
-	Qwvnm = Qwvnm*10
+	//Qwvnm = Qwvnm*10
 	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwvnm , fileID, NewGroupName+"/Q"
-	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Q", fileID)
-	NEXUS_HdfSaveAttrib("resolutions","Qdev",NewGroupName+"/Q", fileID)
+	NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Q", fileID)
+	if(Slit_Length>0)		//slit smeared data, change 6/2018
+		make/Free/T/N=2 tempAtribTextVals
+		tempAtribTextVals = {"dQw","dQI"}
+		NEXUS_HdfSaveArrayAttrib("resolutions",tempAtribTextVals,NewGroupName+"/Q", fileID)
+	else
+		NEXUS_HdfSaveAttrib("resolutions","Qdev",NewGroupName+"/Q", fileID)
+	endif
 	//Now deal with Uncertainty
 	//NEXUS_HdfSaveAttrib("uncertainty","Idev",NewGroupName+"/sasdata01/I", fileID)
 	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dIwv, fileID, NewGroupName+"/Idev"
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/Idev", fileID)
 	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/Idev", fileID)
 	//Now Qres.   dQwv
-	Duplicate/Free dQwv, dQwvnm
-	dQwvnm = dQwvnm*10
-	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/Qdev"
-	NEXUS_HdfSaveAttrib("units","1/nm",NewGroupName+"/Qdev", fileID)
-	
+	Duplicate/Free dQwv, dQwvnm, dQl
+	//DO NOT change to 1/nm (6/2018) sasView cannot use it for now. 1/angstrom
+	//dQl = Slit_Length*10
+	//dQwvnm = dQwvnm*10
+	if(Slit_Length>0)		//slit smeared data, change 6/2018
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/dQw"
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/dQw", fileID)
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQl, fileID, NewGroupName+"/dQl"
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/dQl", fileID)
+	else
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/Qdev"
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qdev", fileID)
+	endif
 	//add instrument data...
 	string InstrumentPathStr=RootGroupName+"instrument"
 	string tmpPath
@@ -1744,8 +1760,9 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
     		//NXdetector
       		//slit_length
 	if(Slit_Length>0)
-		NEXUS_HdfSaveDataVar("slit_length",(Slit_Length*10),tmpPath, fileID)
-		NEXUS_HdfSaveAttrib("units","1/nm",tmpPath+"slit_length", fileID)
+		//Do not use nm, 6-2018, sasView cannot use it yet. 
+		NEXUS_HdfSaveDataVar("slit_length",(Slit_Length),tmpPath, fileID)
+		NEXUS_HdfSaveAttrib("units","1/angstrom",tmpPath+"slit_length", fileID)
 	endif
 
 	HDF5CloseFile fileID  
@@ -2531,6 +2548,29 @@ static Function NEXUS_WriteWaveNote(fileID,Location,NoteStr)
 	endfor
 end
 //*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+static Function NEXUS_HdfSaveArrayAttrib(AttribName,AttribValue,AttribLoc, fileID,[DoNotOverwrite])
+	string AttribName,AttribLoc
+	Wave/T AttribValue
+	Variable fileID,DoNotOverwrite
+	variable DoNotOverwriteL= !ParamIsDefault(DoNotOverwrite)
+	//		NEXUS_HdfSaveAttrib("resolutions","dQw,dQI",NewGroupName+"/Q", fileID)
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//make/T/Free/N=(numpnts(AttribValue)) groupAttribute
+	//groupAttribute = AttribValue[p]	
+	if(DoNotOverwriteL)	
+		HDF5LoadData /Z/O/TYPE=1/A=AttribName fileID, AttribLoc
+		if(V_Flag==0)
+			return 0
+		endif
+	endif						
+	//HDF5SaveData /O/A=AttribName groupAttribute, fileID, AttribLoc
+	HDF5SaveData /O/A=AttribName AttribValue, fileID, AttribLoc
+	if (V_flag != 0)
+		Print "HDF5SaveData failed when saving Attribute "+AttribName+" with value of "+AttribValue[0]+" at location of "+AttribLoc
+	endif	
+end
 //*************************************************************************************************
 //*************************************************************************************************
 static Function NEXUS_HdfSaveAttrib(AttribName,AttribValue,AttribLoc, fileID,[DoNotOverwrite])

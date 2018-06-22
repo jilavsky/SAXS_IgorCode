@@ -12,6 +12,9 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 _____________________________________________________________________________________
+1.95 
+Modified behavior of Automatic blank selection in GUI. 
+
 1.94 1/27/2018
 Converted all procedure files to UTF8 to prevent text encoding issues. 
 Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.

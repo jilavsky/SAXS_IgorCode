@@ -746,14 +746,17 @@ Function IN3_MainPanelCheckBox(ctrlName,checked) : CheckBoxControl
 		PopupMenu SelectBlankFolder, disable = IsBlank
 		//check if Blank name is correct
 		SVAR BlankName = root:Packages:Indra3:BlankName
-		if(stringMatch(BlankName,"")&&!IsBlank)
+		if((stringMatch(BlankName,"")||stringMatch(BlankName,"---"))&&!IsBlank)
 			BlankName = StringFromList(0,IN3_GenStringOfFolders(1))
 			PopupMenu SelectBlankFolder win=USAXSDataReduction, mode=WhichListItem(BlankName, "---;"+IN3_GenStringOfFolders(1))+1, value="---;"+IN3_GenStringOfFolders(1) 
-			DoALert 0, "No Blank was selected, we found Blank "+BlankName+"  , and used this one. Change if necessary."
+			Print "No Blank was selected, we found Blank "+BlankName+"  , and used this one. Change if necessary."
+			TitleBox SelectBlankFolderWarning win=USAXSDataReduction, disable=0
 		elseif(!stringMatch(BlankName,"")&&!IsBlank)
+			TitleBox SelectBlankFolderWarning win=USAXSDataReduction, disable=1
 			PopupMenu SelectBlankFolder win=USAXSDataReduction, mode=WhichListItem(BlankName, "---;"+IN3_GenStringOfFolders(1))+1, value="---;"+IN3_GenStringOfFolders(1) 
 		endif
 		if(isBlank)
+			TitleBox SelectBlankFolderWarning win=USAXSDataReduction, disable=1
 			SmoothRCurveData=1
 		else
 			SmoothRCurveData=0

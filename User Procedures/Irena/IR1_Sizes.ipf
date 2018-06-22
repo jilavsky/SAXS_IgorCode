@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.28
-Constant IR1RSversionNumber=2.28
+#pragma version = 2.29
+Constant IR1RSversionNumber=2.29
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.29 modify behavior of low-q power law slope and add "fit on Graph data" options... 
 //2.28 add low-q power law background subtraction for data. Treat same as background for now. 
 //2.27 add Total volume fraction and Rg to main Graph control bar. 
 //2.26 add Rg to Calculate parameters button. 
@@ -152,17 +153,18 @@ constant RegularizationMinRatio = 1e-4			//this is internal parameter of Regular
 //****************************************
 Function IR1R_Sizes()
 
-	IN2G_CheckScreenSize("height",670)
+	IN2G_CheckScreenSize("height",720)
 
 	KillWIndow/Z IR1R_SizesInputGraph
 	KillWIndow/Z IR1R_SizesInputPanel
+	KillWIndow/Z IR1R_SizeDistImportFitPanel
  	IR1R_InitializeSizes()	
 	IR1T_InitFormFactors()
-//	IR1_KillGraphsAndPanels()
-	Execute("IR1R_SizesInputPanel()")				//this panel
+	Execute("IR1R_SizesInputPanel()")				//main panel
 	ING2_AddScrollControl()
 	IR1R_FixSetVarsInPanel()
 	IR1_UpdatePanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber,1)
+	IR1R_RecreateFitBackPBPanel()
 end
 
 
@@ -646,7 +648,11 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 	setDataFolder root:Packages:Sizes
 
 	if(stringmatch(ctrlName,"FitPowerLaw"))
-		IR1R_FitPowerLawBackground()			
+		IR1R_FitPowerLawBackground(0)			
+		//DoWIndow/F IR1R_SizesInputPanel
+	endif
+	if(stringmatch(ctrlName,"FitPowerLawB"))
+		IR1R_FitPowerLawBackground(1)			
 		//DoWIndow/F IR1R_SizesInputPanel
 	endif
 	if(stringmatch(ctrlName,"FitBackground"))
@@ -654,9 +660,24 @@ Function IR1R_GraphDataButton(ctrlName) : ButtonControl			//this function is cal
 		//DoWIndow/F IR1R_SizesInputPanel
 	endif
 
+	if(stringmatch(ctrlName,"ReadBPQs"))
+		IR1R_ReadQsForBackFits(1)			
+		//DoWIndow/F IR1R_SizesInputPanel
+	endif
+	if(stringmatch(ctrlName,"ReadBackgQs"))
+		IR1R_ReadQsForBackFits(0)			
+		//DoWIndow/F IR1R_SizesInputPanel
+	endif
+
+	if(stringmatch(ctrlName,"SetBPQs"))
+		IR1R_SetCsrstoQsBFits(1)			
+	endif
+	if(stringmatch(ctrlName,"SetBackgQs"))
+		IR1R_SetCsrstoQsBFits(0)			
+	endif
+
 	if(stringmatch(ctrlName,"GraphIfAllowed"))
 		IR1R_GraphIfAllowed(ctrlName)			
-		DoWIndow/F IR1R_SizesInputPanel
 	endif
 	if(cmpstr(ctrlName,"GetHelp")==0)
 		//Open www manual with the right page
@@ -927,7 +948,8 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
 	ListOfVariables+="StartFItQvalue;EndFItQvalue;RebinDataTo;AutoCalculateParameters;RemoveTrustRegionIndicators;"
 	ListOfVariables+="Rg;TotalVolumeFraction;"
-	ListOfVariables+="LowQPowerLawSlope;LowQScalingFactor;"
+	ListOfVariables+="LowQPowerLawSlope;LowQScalingFactor;FitBPBackOnImport;FitBonImport;FitBPonImport;FitBckgOnImport;"
+	ListOfVariables+="FitBPonImportQmin;FitBPonImportQmax;FitBackonImportQmin;FitBackonImportQmax;"
 	
 //	ListOfStrings="DataFolderName;OriginalIntensityWvName;OriginalQvectorWvName;OriginalErrorWvName;SizesParameters;"
 	ListOfStrings="DataFolderName;SizesParameters;"
@@ -1154,7 +1176,7 @@ Function IR1R_RecoverOldParameters()
 			abort
 		endif
 	else
-		abort
+		return 0
 	endif
 
 
@@ -2536,22 +2558,23 @@ end
 
 Window IR1R_SizesInputPanel() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(6,10,406,670) as "Size distribution"
+	NewPanel /K=1 /W=(6,10,406,700) as "Size distribution"
 	TitleBox MainTitle title="\Zr230Sizes input panel",pos={50,0},frame=0,fstyle=3,font= "Times New Roman", size={300,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={72,3},pos={8,26},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={340,3},pos={8,194},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine3 title=" ",fixedSize=1,size={190,3},pos={160,407},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine4 title=" ",fixedSize=1,size={340,3},pos={8,487},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox FakeLine5 title=" ",fixedSize=1,size={148,3},pos={200,583},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine3 title=" ",fixedSize=1,size={190,3},pos={160,437},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine4 title=" ",fixedSize=1,size={340,3},pos={8,517},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox FakeLine5 title=" ",fixedSize=1,size={148,3},pos={200,618},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox FakeLine6 title=" ",fixedSize=1,size={340,3},pos={8,268},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
 	TitleBox Info1 title="\Zr130Data : ",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
-	TitleBox Info2 title="\Zr130Fitting parameters",pos={5,278},frame=0,fstyle=1, fixedSize=1,size={150,20},fColor=(0,0,52224)
-	TitleBox Info3 title="\Zr130Particle model",pos={5,402},frame=0,fstyle=1, size={130,20},fColor=(0,0,52224)
-	TitleBox Info4 title="\Zr130Method",pos={5,492},frame=0,fstyle=1, size={90,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr130Background parameters",pos={5,274},frame=0,fstyle=1, fixedSize=1,size={170,20},fColor=(0,0,52224)
+	TitleBox Info8 title="\Zr130Fitting parameters",pos={5,365},frame=0,fstyle=1, fixedSize=1,size={150,20},fColor=(0,0,52224)
+	TitleBox Info3 title="\Zr130Particle model",pos={5,432},frame=0,fstyle=1, size={130,20},fColor=(0,0,52224)
+	TitleBox Info4 title="\Zr130Method",pos={5,522},frame=0,fstyle=1, size={90,20},fColor=(0,0,52224)
 	TitleBox Info5 title="\Zr130Distribution parameters",pos={5,200},frame=0,fstyle=1, size={190,20},fColor=(0,0,52224)
-	TitleBox Info6 title="\Zr100Set range of data to fit with cursors!!",pos={5,579},frame=0,fstyle=1, size={190,20},fColor=(0,0,52224)
-	TitleBox Info7 title="\Zr100You need to store the results or they are lost!!",pos={5,643},frame=0,fstyle=1, size={250,20},fColor=(0,0,52224)
+	TitleBox Info6 title="\Zr100Set range of data to fit with cursors!!",pos={5,613},frame=0,fstyle=1, size={190,20},fColor=(0,0,52224)
+	TitleBox Info7 title="\Zr100You need to store the results or they are lost!!",pos={5,673},frame=0,fstyle=1, size={250,20},fColor=(0,0,52224)
 
 	string UserDataTypes=""
 	string UserNameString="Test me"
@@ -2582,101 +2605,104 @@ Window IR1R_SizesInputPanel()
 	SetVariable RadiaSteps,pos={13,244},size={150,16},title="Bins in diameter"
 	SetVariable RadiaSteps,limits={1,Inf,5},value= root:Packages:Sizes:numOfPoints, help={"Number of bins modeled."}
 
-	CheckBox UseUserErrors,pos={270,315},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use user errors?", mode=1
+	CheckBox UseUserErrors,pos={270,370},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use user errors?", mode=1
 	CheckBox UseUserErrors,variable= root:packages:Sizes:UseUserErrors, help={"Check, if you want to use errors provided by you from error wave"}
-	CheckBox UseSQRTErrors,pos={270,335},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use sqrt errors?", mode=1
+	CheckBox UseSQRTErrors,pos={270,386},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use sqrt errors?", mode=1
 	CheckBox UseSQRTErrors,variable= root:packages:Sizes:UseSQRTErrors, help={"Check, if you want to use errors equal square root of intensity"}
-	CheckBox UsePercentErrors,pos={270,355},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use % errors?", mode=1
+	CheckBox UsePercentErrors,pos={270,402},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use % errors?", mode=1
 	CheckBox UsePercentErrors,variable= root:packages:Sizes:UsePercentErrors, help={"Check, if you want to use errors equal n% of intensity"}
-	CheckBox UseNoErrors,pos={270,375},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use No errors?", mode=1
+	CheckBox UseNoErrors,pos={270,418},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Use No errors?", mode=1
 	CheckBox UseNoErrors,variable= root:packages:Sizes:UseNoErrors, help={"Check, if you do not want to use errors"}
 
-	Button FitPowerLaw,pos={270,275},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q", help={"Push to fit Power law slope between cursors"}
-	Button FitBackground,pos={270,295},size={90,15},proc=IR1R_GraphDataButton,title="Fit Background", help={"Push to Fit background between cursors"}
+	CheckBox FitBPBackOnImport,pos={220,275},size={141,14},proc=IR1R_BackPanelCheckboxProc,title="Fit B/P/Bckg on \"Graph\"?", mode=0, fColor=(1,16019,65535)
+	CheckBox FitBPBackOnImport,variable= root:packages:Sizes:FitBPBackOnImport, help={"Check, if you do not want to fit background on import"}
+	Button FitPowerLawB,pos={250,300},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B", help={"Push to scale Power law slope between cursors"}
+	Button FitPowerLaw,pos={250,320},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B+P", help={"Push to fit Power law slope between cursors"}
+	Button FitBackground,pos={250,345},size={90,15},proc=IR1R_GraphDataButton,title="Fit Background", help={"Push to Fit background between cursors"}
 
-	SetVariable Background,pos={5,295},size={240,16},proc=IR1R_BackgroundInput,title="Subtract Background             "
-	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Sizes:Bckg, help={"Value for flat backgound"}
-	SetVariable LowQScalingFactor,pos={5,315},size={240,16},proc=IR1R_BackgroundInput,title="Low Q Scaling                       "
+	SetVariable LowQScalingFactor,pos={5,300},size={220,16},proc=IR1R_BackgroundInput,title="Low Q Scaling  \"B\"         "
 	SetVariable LowQScalingFactor,limits={0,Inf,0.001},value= root:Packages:Sizes:LowQScalingFactor, help={"Value for Low-q power law slope scaling (Porod const)"}
-	SetVariable LowQPowerLawSlope,pos={5,335},size={240,16},proc=IR1R_BackgroundInput,title="Low-q Slope                          "
+	SetVariable LowQPowerLawSlope,pos={5,320},size={220,16},proc=IR1R_BackgroundInput,title="Low-q Slope   \"P\"           "
 	SetVariable LowQPowerLawSlope,limits={1,4.5,0.01},value= root:Packages:Sizes:LowQPowerLawSlope, help={"Value for Low-q slope value"}
+	SetVariable Background,pos={5,345},size={220,16},proc=IR1R_BackgroundInput,title="Subtract Background      "
+	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Sizes:Bckg, help={"Value for flat backgound"}
 
 
-	SetVariable ScatteringContrast,pos={5,356},size={240,16},title="Contrast (drho^2)[10^20, 1/cm4] ", proc=IR1R_SetVarProc, disable=1
+	SetVariable ScatteringContrast,pos={5,386},size={240,16},title="Contrast (drho^2)[10^20, 1/cm4] ", proc=IR1R_SetVarProc, disable=1
 	SetVariable ScatteringContrast,limits={0,Inf,1},value= root:Packages:Sizes:ScatteringContrast, help={"Scattering contrast, if data are calibrated and proper scattering contrast used, the results are calibrated."}
-	SetVariable ErrorMultiplier,pos={5,378},size={240,16},title="Multiply Errors by :                        ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseUserErrors || root:packages:Sizes:UseSQRTErrors)
+	SetVariable ErrorMultiplier,pos={5,408},size={240,16},title="Multiply Errors by :                        ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseUserErrors || root:packages:Sizes:UseSQRTErrors)
 	SetVariable ErrorMultiplier,limits={0,Inf,root:Packages:Sizes:ErrorsMultiplier/10},value= root:Packages:Sizes:ErrorsMultiplier, help={"Errors scaling factor"}
-	SetVariable PercentErrorToUse,pos={5,378},size={240,16},title="Errors % of intensity :                     ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UsePercentErrors)
+	SetVariable PercentErrorToUse,pos={5,408},size={240,16},title="Errors % of intensity :                     ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UsePercentErrors)
 	SetVariable PercentErrorToUse,limits={0,Inf,1},value= root:Packages:Sizes:PercentErrorToUse, help={"Percent errors of intensity"}
-	PopupMenu SizesPowerToUse,pos={5,380},size={161,21},proc=IR1R_PopMenuProc,title="Scaling power ?", disable=!(root:packages:Sizes:UseNoErrors)
+	PopupMenu SizesPowerToUse,pos={5,410},size={161,21},proc=IR1R_PopMenuProc,title="Scaling power ?", disable=!(root:packages:Sizes:UseNoErrors)
 	PopupMenu SizesPowerToUse,mode=(1+root:Packages:Sizes:SizesPowerToUse),popvalue=num2str(root:Packages:Sizes:SizesPowerToUse),value= #"\"0;1;2;3;4\"", help={"Parameter used to scale SAXS data - most likely 1 or 2, range 0 to 4, test to find ideal..."}
 
 
 //shapes
-	PopupMenu ShapeModel,pos={10,418},size={223,21},proc=IR1R_PopMenuProc,title="Select particle shape model", help={"Particle shape models in the code. Set appropriate Aspect ratio. "}
+	PopupMenu ShapeModel,pos={10,448},size={223,21},proc=IR1R_PopMenuProc,title="Select particle shape model", help={"Particle shape models in the code. Set appropriate Aspect ratio. "}
 	PopupMenu ShapeModel,mode=1,popvalue=root:Packages:Sizes:ShapeType,value= root:Packages:FormFactorCalc:ListOfFormFactorsSD
 
-	Button GetFFHelp,pos={290,418},size={80,15}, proc=IR1R_GraphDataButton,title="F.F. Help", help={"Get help for Form factors"}
+	Button GetFFHelp,pos={290,448},size={80,15}, proc=IR1R_GraphDataButton,title="F.F. Help", help={"Get help for Form factors"}
 
-	SetVariable AspectRatio,pos={10,444},size={140,16},title="Aspect Ratio ", help={"Aspect ratio for spheroids and other particles with AR"}
+	SetVariable AspectRatio,pos={10,474},size={140,16},title="Aspect Ratio ", help={"Aspect ratio for spheroids and other particles with AR"}
 	SetVariable AspectRatio,limits={0,Inf,0.1},value= root:Packages:Sizes:AspectRatio
 
-	SetVariable CoreShellThickness,pos={5,440},size={170,15},title="Shell thickness [A] ", disable=1
+	SetVariable CoreShellThickness,pos={5,470},size={170,15},title="Shell thickness [A] ", disable=1
 	SetVariable CoreShellThickness,limits={0,Inf,0},value= root:Packages:Sizes:CoreShellThickness, help={"Thickness of shell in A"}
-	SetVariable CoreShellCoreRho,pos={5,455},size={170,15},title="Core Rho [10^10 cm-2] ", disable=1
+	SetVariable CoreShellCoreRho,pos={5,485},size={170,15},title="Core Rho [10^10 cm-2] ", disable=1
 	SetVariable CoreShellCoreRho,limits={-inf,Inf,0},value= root:Packages:Sizes:CoreShellCoreRho, help={"Rho (not delat rho sqaured) for core material"}
-	SetVariable CoreShellShellRho,pos={5,470},size={170,15},title="Shell Rho [10^10 cm-2] ", disable=1
+	SetVariable CoreShellShellRho,pos={5,500},size={170,15},title="Shell Rho [10^10 cm-2] ", disable=1
 	SetVariable CoreShellShellRho,limits={-inf,Inf,0},value= root:Packages:Sizes:CoreShellShellRho, help={"Rho (not delat rho sqaured) for shell material"}
-	SetVariable CoreShellSolvntRho,pos={180,470},size={180,15},title="Solvant Rho [10^10 cm-2] ", disable=1
+	SetVariable CoreShellSolvntRho,pos={180,500},size={180,15},title="Solvant Rho [10^10 cm-2] ", disable=1
 	SetVariable CoreShellSolvntRho,limits={-inf,Inf,0},value= root:Packages:Sizes:CoreShellSolvntRho, help={"Rho (not delat rho sqaured) for surrownding material (air ~0)"}
 
-	SetVariable TubeLength,pos={5,440},size={160,15},title="Tube length [A]   ", disable=1
+	SetVariable TubeLength,pos={5,470},size={160,15},title="Tube length [A]   ", disable=1
 	SetVariable TubeLength,limits={0,Inf,0},value= root:Packages:Sizes:TubeLength, help={"Length of Core shell cylinder = tube"}
-	SetVariable TubeWallThickness,pos={180,455},size={160,15},title="Tube wall thickn. ", disable=1
+	SetVariable TubeWallThickness,pos={180,485},size={160,15},title="Tube wall thickn. ", disable=1
 	SetVariable TubeWallThickness,limits={0,Inf,0},value= root:Packages:Sizes:TubeWallThickness, help={"Thickness shell of the core shell cylinder = tube"}
 
-	SetVariable CylinderLength,pos={10,444},size={140,16},title="Cylinder Length ", disable=1
+	SetVariable CylinderLength,pos={10,474},size={140,16},title="Cylinder Length ", disable=1
 	SetVariable CylinderLength,limits={0,Inf,100},value= root:Packages:Sizes:CylinderLength, help={"Length of cylinder"}
 
-	SetVariable FractalRadiusOfPriPart,pos={10,444},size={170,16},title="Primary part radius ", disable=1
+	SetVariable FractalRadiusOfPriPart,pos={10,474},size={170,16},title="Primary part radius ", disable=1
 	SetVariable FractalRadiusOfPriPart,limits={0,Inf,5},value= root:Packages:Sizes:FractalRadiusOfPriPart, help={"Radius of the primary particle (A)"}
-	SetVariable FractalDimension,pos={10,464},size={170,16},title="Fractal dimension ", disable=1
+	SetVariable FractalDimension,pos={10,494},size={170,16},title="Fractal dimension ", disable=1
 	SetVariable FractalDimension,limits={0,4,0.2},value= root:Packages:Sizes:FractalDimension, help={"Fractal dimension)"}
 
 //Method
-	CheckBox UseTNNLS,pos={100,493},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="IPG/TNNLS", mode=1
+	CheckBox UseTNNLS,pos={100,523},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="IPG/TNNLS", mode=1
 	CheckBox UseTNNLS,variable= root:packages:Sizes:UseTNNLS, help={"Select to use Interior-point gradient method - totally NNLS method"}
-	CheckBox UseMaxEnt,pos={190,493},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="MaxEnt", mode=1
+	CheckBox UseMaxEnt,pos={190,523},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="MaxEnt", mode=1
 	CheckBox UseMaxEnt,variable= root:packages:Sizes:UseMaxEnt, help={"Select to use Maximum Entropy method"}
-	CheckBox UseRegularization,pos={280,493},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Regularization", mode=1
+	CheckBox UseRegularization,pos={280,523},size={141,14},proc=IR1R_InputPanelCheckboxProc,title="Regularization", mode=1
 	CheckBox UseRegularization,variable= root:packages:Sizes:UseRegularization, help={"Select to use Regularization method"}
 
 //NNLS 
-	SetVariable NNLS_ApproachParameter,pos={10,514},size={220,16},title="NNLS approach param.       ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseTNNLS)
+	SetVariable NNLS_ApproachParameter,pos={10,544},size={220,16},title="NNLS approach param.       ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseTNNLS)
 	SetVariable NNLS_ApproachParameter,limits={0.3,0.99,0.03},value= root:Packages:Sizes:NNLS_ApproachParameter, help={"Internal precision parameter for NNLS Entropy, usually ~0.6, range 0.3 to 0.99."}
-	SetVariable NNLS_MaxNumIterations,pos={10,534},size={220,16},title="NNLS max Num of Iterations", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseTNNLS)
+	SetVariable NNLS_MaxNumIterations,pos={10,564},size={220,16},title="NNLS max Num of Iterations", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseTNNLS)
 	SetVariable NNLS_MaxNumIterations,limits={10,Inf,100},value= root:Packages:Sizes:NNLS_MaxNumIterations, help={"IPG/TNNLS maximum number of iterations. Varies significantly."}
 
 	//NVAR SizesPowerToUse=root:Packages:Sizes:SizesPowerToUse
 
 //MaxSAS stuf
-	SetVariable SizesStabilityParam,pos={10,514},size={240,16},title="Sizes precision param              ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseMaxEnt)
+	SetVariable SizesStabilityParam,pos={10,544},size={240,16},title="Sizes precision param              ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseMaxEnt)
 	SetVariable SizesStabilityParam,limits={0,Inf,1},value= root:Packages:Sizes:MaxEntStabilityParam, help={"Internal precision parameter for Maximum Entropy, usually ~0.01, range 0 to 0.5. Lower value requires resulting chi^2 to be closer to target "}
-	SetVariable MaxsasIter,pos={10,534},size={240,16},title="MaxEnt max Num of Iterations ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseMaxEnt)
+	SetVariable MaxsasIter,pos={10,564},size={240,16},title="MaxEnt max Num of Iterations ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseMaxEnt)
 	SetVariable MaxsasIter,limits={0,Inf,1},value= root:Packages:Sizes:MaxsasNumIter, help={"Maximum Entropy maximum number of iterations"}
-	SetVariable MaxSkyBckg,pos={10,559},size={200,16},title="MaxEnt sky backg      ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseMaxEnt)
+	SetVariable MaxSkyBckg,pos={10,589},size={200,16},title="MaxEnt sky backg      ", proc=IR1R_SetVarProc, disable=!(root:packages:Sizes:UseMaxEnt)
 	SetVariable MaxSkyBckg,limits={0,Inf,1e-06},value= root:Packages:Sizes:MaxEntSkyBckg, help={"Parameter for Maximum Entropy"}
-	SetVariable SuggestedSkyBackground,pos={230,550},title="Suggested:", disable=!(root:packages:Sizes:UseMaxEnt)
+	SetVariable SuggestedSkyBackground,pos={230,580},title="Suggested:", disable=!(root:packages:Sizes:UseMaxEnt)
 	SetVariable SuggestedSkyBackground,limits={0,Inf,0},value= root:Packages:Sizes:SuggestedSkyBackground, help={"Suggested value forParameter for Maximum Entropy"}
 	SetVariable SuggestedSkyBackground size={130,16},noedit=1,frame=0
 	SetVariable SuggestedSkyBackground font="Times New Roman",fstyle=0
-	Button SetMaxEntSkyBckg,pos={230,565},size={100,13}, proc=IR1R_SizesButtonProc,title="Set", help={"Set suggested MaxEnt Sky background to suggested value"}
+	Button SetMaxEntSkyBckg,pos={230,595},size={100,13}, proc=IR1R_SizesButtonProc,title="Set", help={"Set suggested MaxEnt Sky background to suggested value"}
 
 //end buttons
-	Button RunSizes,pos={200,600},size={150,15}, proc=IR1R_ButtonProc,title="Fit (no uncertainities)", help={"Push to run fitting using method selected above"}
-	Button EstimateUncertainities,pos={200,620},size={150,15}, proc=IR1R_ButtonProc,title="Fit (w/uncertainities)", help={"Will tun 10x and estimate uncetainities"}
-	Button CopyDataToNbk,pos={26,600},size={150,15}, proc=IR1R_saveData,title="Paste to Notebook", help={"Push to copy results to folder where the data came from"}
-	Button SaveData,pos={26,620},size={150,15}, proc=IR1R_saveData,title="Store in Data Folder", help={"Push to copy results to folder where the data came from"}
+	Button RunSizes,pos={200,630},size={150,15}, proc=IR1R_ButtonProc,title="Fit (no uncertainities)", help={"Push to run fitting using method selected above"}
+	Button EstimateUncertainities,pos={200,650},size={150,15}, proc=IR1R_ButtonProc,title="Fit (w/uncertainities)", help={"Will tun 10x and estimate uncetainities"}
+	Button CopyDataToNbk,pos={26,630},size={150,15}, proc=IR1R_saveData,title="Paste to Notebook", help={"Push to copy results to folder where the data came from"}
+	Button SaveData,pos={26,650},size={150,15}, proc=IR1R_saveData,title="Store in Data Folder", help={"Push to copy results to folder where the data came from"}
 EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -2897,6 +2923,7 @@ Function IR1R_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		//UseNoErrors=0
 		IR1R_UpdateErrorWave()
 	endif
+
 	SetVariable ErrorMultiplier,disable=!(UseUserErrors||UseSQRTErrors)
 	SetVariable PercentErrorToUse, disable=!(UsePercentErrors)
 	PopupMenu SizesPowerToUse, disable=!(UseNoErrors)
@@ -3089,12 +3116,30 @@ endMacro
 Function IR1R_GraphIfAllowed(ctrlName)
 		string ctrlName
 
+		variable OldCursorA, OldCursorB
+		DoWindow IR1R_SizesInputGraph
+		if(V_Flag)
+			if (((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
+					//make sure the cursors are on the right waves..
+					if (stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution") || stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution"))
+						Abort "Cursors are set on wrong data, please, set cursors on range of Intensity you want to fit before continuing" 
+					endif
+					Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
+					if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+						Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+					endif
+					if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+						Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+					endif
+				endif
+				Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
+				Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
+				OldCursorA=pcsr(A, "IR1R_SizesInputGraph")
+				OldCursorB=pcsr(B, "IR1R_SizesInputGraph")		
+		endif
 		KillWIndow/Z IR1R_SizesInputGraph
  		SVAR FldrNm=root:Packages:Sizes:DataFolderName
 
-//		SVAR IntNm=root:Packages:Sizes:OriginalIntensityWvName
-//		SVAR QvcNm=root:Packages:Sizes:OriginalQvectorWvName
-//		SVAR ErrNm=root:Packages:Sizes:OriginalErrorWvName	
 		SVAR IntNm=root:Packages:Sizes:IntensityWaveName
 		SVAR QvcNm=root:Packages:Sizes:QWavename
 		SVAR ErrNm=root:Packages:Sizes:ErrorWaveName	
@@ -3144,8 +3189,14 @@ Function IR1R_GraphIfAllowed(ctrlName)
 		endif
 	
 	endif
-
+	if(OldCursorA + OldCursorB>0)
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  OldCursorA
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  OldCursorB
+	endif
 	DoWIndow/F IR1R_SizesInputPanel
+	IR1R_FitBPBackOnGraph()
+	DoWIndow/F IR1R_SizesInputPanel
+
 end
 
 //*****************************************************************************************************************
@@ -3470,8 +3521,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR1R_FitPowerLawBackground()
-
+Function IR1R_FitPowerLawBackground(FixPowerlaw)
+	variable FixPowerlaw
 	string OldDf
 	OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Sizes
@@ -3501,10 +3552,16 @@ Function IR1R_FitPowerLawBackground()
 	Duplicate /R=[pcsr(A, "IR1R_SizesInputGraph"),pcsr(B, "IR1R_SizesInputGraph")]/Free  Q_vecOriginal, QForFit 
 	IntForFit = log(IntForFit)
 	QForFit = log(QForFit)
-	CurveFit line IntForFit /X=QForFit
+	if(FixPowerlaw)
+		K1 = -1*(abs(LowQPowerLawSlope))
+		CurveFit/Q/H="01" line IntForFit /X=QForFit 
+	else
+		CurveFit/Q line IntForFit /X=QForFit
+	endif
 	Wave W_coef
 	LowQPowerLawSlope = abs(W_coef[1])
 	LowQScalingFactor = 10^W_coef[0]
+	print "Fitted low-q power law slope with P = "+num2str(LowQPowerLawSlope)+" and B = "+num2str(LowQScalingFactor)
 	IR1R_CalculateBackgroundData(Q_vecOriginal,BackgroundWave)
 	
 	setDataFolder OldDf
@@ -3545,9 +3602,8 @@ Function IR1R_FitFlatBackground()
 	Duplicate /R=[pcsr(A, "IR1R_SizesInputGraph"),pcsr(B, "IR1R_SizesInputGraph")]/Free  IntensityOriginal, IntForFit 
 	Background = mean(IntForFit)
 	IR1R_CalculateBackgroundData(Q_vecOriginal,BackgroundWave)
+	print "Fitted high-q flat background with background = "+num2str(Background)
 	setDataFolder OldDf
-
-
 end
 //Function IR1R_SelectShapeModel(ctrlName,popNum,popStr) : PopupMenuControl
 //	String ctrlName
@@ -4725,3 +4781,240 @@ Function IR1R_ButtonProc(ba) : ButtonControl
 
 	return 0
 End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR1R_RecreateFitBackPBPanel()
+	NVAR FitBPBackOnImport=root:Packages:Sizes:FitBPBackOnImport
+	if(FitBPBackOnImport)
+		IR1R_SizeDistImpFitPanelF()
+	else
+		KillWIndow/Z IR1R_SizeDistImportFitPanel
+	endif
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_SizeDistImpFitPanelF() : Panel
+	DoWIndow IR1R_SizeDistImportFitPanel
+	if(V_Flag)
+		DoWIndow/F IR1R_SizeDistImportFitPanel
+		return 0
+	endif
+
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(20,470,420,690) as "Size Distribution Import Fitting"
+	DoWIndow/C  IR1R_SizeDistImportFitPanel
+	SetDrawLayer UserBack
+	SetDrawEnv textrgb= (1,16019,65535)
+	TitleBox MainTitle title="\Zr230Setup Background Fit on \"Graph\"",pos={50,5},frame=0,fstyle=3,font= "Times New Roman", size={300,24},anchor=MC,fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr100Check what Background params fit when adding data to Size Distribution",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={400,20},fColor=(0,0,52224)
+
+	CheckBox FitBOnImport,pos={10.00,60},size={91.00,16.00},title="Fit B on Graph?",proc=IR1R_BackPanelCheckboxProc
+	CheckBox FitBOnImport,variable= root:Packages:Sizes:FitBonImport, help={"Check if you want to fit B on Graph fo data?"}
+	CheckBox FitBPonImport,pos={10.00,85},size={91.00,16.00},title="Fit B+P on Graph?",proc=IR1R_BackPanelCheckboxProc
+	CheckBox FitBPonImport,variable= root:Packages:Sizes:FitBPonImport, help={"Check if you want to fit B and P on Graph fo data?"}
+
+	SetVariable FitBPonImportQmin,pos={130,60},size={140,16},title="B/B+P Q min", help={"Set Q min for B+P fitting"}
+	SetVariable FitBPonImportQmin,limits={0,Inf,0.001},value= root:Packages:Sizes:FitBPonImportQmin
+	SetVariable FitBPonImportQmax,pos={130,85},size={140,16},title="B/B+P Q max", help={"Set Q max for B+P fitting"}
+	SetVariable FitBPonImportQmax,limits={0,Inf,0.001},value= root:Packages:Sizes:FitBPonImportQmax
+	
+	CheckBox FitBckgOnImport,pos={10.00,120},size={91.00,16.00},title="Fit Backg on Graph?",proc=IR1R_BackPanelCheckboxProc
+	CheckBox FitBckgOnImport,variable= root:Packages:Sizes:FitBckgOnImport, help={"Check if you want to fit flat Background on Graph?"}
+
+	SetVariable FitBackonImportQmin,pos={130,120},size={140,16},title="Backg. Q min", help={"Set Q min for Flat Background fitting"}
+	SetVariable FitBackonImportQmin,limits={0,Inf,0.001},value= root:Packages:Sizes:FitBackonImportQmin
+	SetVariable FitBackonImportQmax,pos={130,145},size={140,16},title="Backg. Q max", help={"Set Q max for Flat Background fitting"}
+	SetVariable FitBackonImportQmax,limits={0,Inf,0.001},value= root:Packages:Sizes:FitBackonImportQmax
+
+	Button ReadBPQs,pos={275,60},size={115,15},proc=IR1R_GraphDataButton,title="Read Qs from csrs", help={"Reads Qs from Graph"}
+	Button ReadBackgQs,pos={275,120},size={115,15},proc=IR1R_GraphDataButton,title="Read Qs from csrs", help={"Read Qs from Graph"}
+	Button SetBPQs,pos={275,85},size={115,15},proc=IR1R_GraphDataButton,title="Set csrs to Qs", help={"Sets cursors Qs on Graph"}
+	Button SetBackgQs,pos={275,145},size={115,15},proc=IR1R_GraphDataButton,title="Set csrs to Qs", help={"Sets cursors Qs on Graph"}
+
+	
+	Button FitPowerLawB,pos={10,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B", help={"Push to scale Power law slope between cursors"}
+	Button FitPowerLaw,pos={130,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B+P", help={"Push to fit Power law slope between cursors"}
+	Button FitBackground,pos={250,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Background", help={"Push to Fit background between cursors"}
+	
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_ReadQsForBackFits(whichOnes)
+	variable whichOnes
+	//whichOnes = 0 for Flat Background
+	//whichOnes =  1 for B and P
+	
+	NVAR FitBPonImportQmin= root:Packages:Sizes:FitBPonImportQmin
+	NVAR FitBPonImportQmax= root:Packages:Sizes:FitBPonImportQmax
+	NVAR FitBackonImportQmin= root:Packages:Sizes:FitBackonImportQmin
+	NVAR FitBackonImportQmax= root:Packages:Sizes:FitBackonImportQmax
+	DoWindow IR1R_SizesInputGraph
+	if (((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
+		//make sure the cursors are on the right waves..
+		if (stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution") || stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution"))
+			Abort "Cursors are set on wrong data, please, set cursors on range of Intensity you want to fit before continuing" 
+		endif
+		Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
+		if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+			Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+		endif
+		if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+		endif
+	endif
+	Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
+	Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
+	if(whichOnes==0)	//Flat Background
+		FitBackonImportQmin = Q_vecOriginal(pcsr(A, "IR1R_SizesInputGraph"))
+		FitBackonImportQmax = Q_vecOriginal(pcsr(B, "IR1R_SizesInputGraph"))
+	elseif(whichOnes==1)
+		FitBPonImportQmin = Q_vecOriginal(pcsr(A, "IR1R_SizesInputGraph"))
+		FitBPonImportQmax = Q_vecOriginal(pcsr(B, "IR1R_SizesInputGraph"))
+	endif
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR1R_SetCsrstoQsBFits(whichOnes)
+	variable whichOnes
+	//whichOnes = 0 for Flat Background
+	//whichOnes =  1 for B and P
+	
+	NVAR FitBPonImportQmin= root:Packages:Sizes:FitBPonImportQmin
+	NVAR FitBPonImportQmax= root:Packages:Sizes:FitBPonImportQmax
+	NVAR FitBackonImportQmin= root:Packages:Sizes:FitBackonImportQmin
+	NVAR FitBackonImportQmax= root:Packages:Sizes:FitBackonImportQmax
+	DoWindow IR1R_SizesInputGraph
+	if(V_flag)
+		DoWindow/F IR1R_SizesInputGraph
+		Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
+		Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
+		if(whichOnes==0)	//Flat Background
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmax)
+		elseif(whichOnes==1)
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmax)
+		endif
+	endif	
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_FitBPBackOnGraph()
+
+	NVAR FitBPonImportQmin= root:Packages:Sizes:FitBPonImportQmin
+	NVAR FitBPonImportQmax= root:Packages:Sizes:FitBPonImportQmax
+	NVAR FitBackonImportQmin= root:Packages:Sizes:FitBackonImportQmin
+	NVAR FitBackonImportQmax= root:Packages:Sizes:FitBackonImportQmax
+	NVAR FitBonImport=root:packages:Sizes:FitBonImport
+	NVAR FitBPonImport=root:packages:Sizes:FitBPonImport
+	NVAR FitBckgOnImport=root:packages:Sizes:FitBckgOnImport
+	NVAR FitBPBackOnImport=root:packages:Sizes:FitBPBackOnImport
+	if(FitBPBackOnImport)			//OK, we will be doing anything here...
+		//first check we have graph and grab positions of the cursors 
+		DoWindow IR1R_SizesInputGraph
+		if(V_Flag==0)
+			Return 0
+		endif
+		//OK, graph exists, get the cursor positions
+		if (((strlen(CsrWave(A))!=0) && (strlen(CsrWave(B))!=0) ) && (pcsr (A)!=pcsr (B)) )	//this should make sure, that both cursors are in the graph and not on the same point
+			//make sure the cursors are on the right waves..
+			if (stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution") || stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"CurrentResultSizeDistribution"))
+				Abort "Cursors are set on wrong data, please, set cursors on range of Intensity you want to fit before continuing" 
+			endif
+			Wave QvectorTmp=root:Packages:Sizes:Q_vecOriginal
+			if (!stringmatch(CsrWave(A, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+				Cursor/P/W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(QvectorTmp, CsrXWaveRef(A) [pcsr(A, "IR1R_SizesInputGraph")])
+			endif
+			if (!stringmatch(CsrWave(B, "IR1R_SizesInputGraph"),"IntensityOriginal"))
+				Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(QvectorTmp,CsrXWaveRef(B) [pcsr(B, "IR1R_SizesInputGraph")])
+			endif
+		endif
+		variable OldCursorA, OldCursorB
+		Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
+		Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
+		OldCursorA=pcsr(A, "IR1R_SizesInputGraph")
+		OldCursorB=pcsr(B, "IR1R_SizesInputGraph")
+		//Now lets do low-q first
+		if(FitBonImport+FitBPonImport>0)	//something needs to be done	
+			if(FitBonImport+FitBPonImport>1)
+				FitBPonImport=1
+				FitBonImport = 0
+			endif
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBPonImportQmax)
+			if(FitBonImport)
+				IR1R_FitPowerLawBackground(1)	
+			elseif(FitBPonImport)
+				IR1R_FitPowerLawBackground(0)			
+			endif
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  OldCursorA
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  OldCursorB
+		endif
+		if(FitBckgOnImport)	//something needs to be done	
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmin)
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  binarysearch(Q_vecOriginal,FitBackonImportQmax)
+			IR1R_FitFlatBackground()			
+			Cursor/P /W=IR1R_SizesInputGraph A  IntensityOriginal  OldCursorA
+			Cursor/P /W=IR1R_SizesInputGraph B  IntensityOriginal  OldCursorB
+		endif
+	endif
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR1R_BackPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
+	String ctrlName
+	Variable checked
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:Sizes
+
+	NVAR FitBonImport=root:packages:Sizes:FitBonImport
+	NVAR FitBPonImport=root:packages:Sizes:FitBPonImport
+	NVAR FitBckgOnImport=root:packages:Sizes:FitBckgOnImport
+	NVAR FitBPBackOnImport=root:packages:Sizes:FitBPBackOnImport
+	if(cmpstr(ctrlName,"FitBPBackOnImport")==0)
+		if(checked)
+			IR1R_SizeDistImpFitPanelF()
+		else
+			KillWIndow/Z IR1R_SizeDistImportFitPanel
+		endif
+	endif
+	if(cmpstr(ctrlName,"FitBonImport")==0)
+		if(checked)
+			FitBPonImport=0
+		endif
+	endif
+	if(cmpstr(ctrlName,"FitBPonImport")==0)
+		if(checked)
+			FitBonImport=0
+		endif
+	endif
+	if(cmpstr(ctrlName,"FitBckgOnImport")==0)
+		if(checked)
+			//FitBckgOnImport=0
+		endif
+	endif
+	
+	SETDATaFolder OldDf
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************

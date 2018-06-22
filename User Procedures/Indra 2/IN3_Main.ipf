@@ -165,6 +165,7 @@ Function IN3_MainPanelNew()
 	PopupMenu SelectBlankFolder,pos={15,315},size={330,21},proc=IN3_InputPopMenuProc,title="Blank folder", help={"Select folder with Blank data"}
 	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)",fColor=(1,16019,65535)
 	PopupMenu SelectBlankFolder, disable = IsBlank
+	TitleBox SelectBlankFolderWarning title="\Zr120 Blank auto selected!!",pos={290,292},frame=0,fstyle=1, anchor=MC,size={120,20},fColor=(65535,0,0), disable=1
 
 
 	//Data Tabs definition

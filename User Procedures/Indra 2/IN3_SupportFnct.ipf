@@ -553,7 +553,10 @@ Function IN3_SaveData()
 	Wave/Z BL_R_Int = root:Packages:Indra3:BL_R_Int
 	Wave/Z BL_R_Qvec = root:Packages:Indra3:BL_R_Qvec
 	Wave/Z BL_R_Error = root:Packages:Indra3:BL_R_Error
-	Wave R_Int = root:Packages:Indra3:R_Int
+	Wave/Z R_Int = root:Packages:Indra3:R_Int
+	if(!WaveExists(R_Int))
+		abort
+	endif
 	Wave R_Qvec = root:Packages:Indra3:R_Qvec
 	Wave R_Error = root:Packages:Indra3:R_Error
 	NVAR BeamCenterL = root:Packages:Indra3:BeamCenter
@@ -897,6 +900,7 @@ Function IN3_InputPopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR BlankName = root:Packages:Indra3:BlankName
 		BlankName = popStr
 		PopupMenu SelectBlankFolder win=USAXSDataReduction, mode=popNum
+		TitleBox SelectBlankFolderWarning win=USAXSDataReduction, disable=1
 	endif
 	if(stringmatch(ctrlName,"BackgroundFnct"))
 		SVAR BackgroundFunction    = root:Packages:Indra3:DsmBackgroundFunction

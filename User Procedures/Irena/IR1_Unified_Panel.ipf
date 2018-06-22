@@ -64,7 +64,7 @@ Constant IR1AversionNumber=2.23
 
 Function IR1A_UnifiedModel()
 
-	IN2G_CheckScreenSize("height",680)
+	IN2G_CheckScreenSize("height",720)
 	
 	KillWIndow/Z IR1A_ControlPanel
  	KillWIndow/Z IR1_LogLogPlotU
