@@ -2618,13 +2618,13 @@ Window IR1R_SizesInputPanel()
 	CheckBox FitBPBackOnImport,variable= root:packages:Sizes:FitBPBackOnImport, help={"Check, if you do not want to fit background on import"}
 	Button FitPowerLawB,pos={250,300},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B", help={"Push to scale Power law slope between cursors"}
 	Button FitPowerLaw,pos={250,320},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B+P", help={"Push to fit Power law slope between cursors"}
-	Button FitBackground,pos={250,345},size={90,15},proc=IR1R_GraphDataButton,title="Fit Background", help={"Push to Fit background between cursors"}
+	Button FitBackground,pos={250,345},size={90,15},proc=IR1R_GraphDataButton,title="Fit Flat Backg.", help={"Push to Fit background between cursors"}
 
 	SetVariable LowQScalingFactor,pos={5,300},size={220,16},proc=IR1R_BackgroundInput,title="Low Q Scaling  \"B\"         "
 	SetVariable LowQScalingFactor,limits={0,Inf,0.001},value= root:Packages:Sizes:LowQScalingFactor, help={"Value for Low-q power law slope scaling (Porod const)"}
-	SetVariable LowQPowerLawSlope,pos={5,320},size={220,16},proc=IR1R_BackgroundInput,title="Low-q Slope   \"P\"           "
+	SetVariable LowQPowerLawSlope,pos={5,320},size={220,16},proc=IR1R_BackgroundInput,title="Low Q Slope   \"P\"           "
 	SetVariable LowQPowerLawSlope,limits={1,4.5,0.01},value= root:Packages:Sizes:LowQPowerLawSlope, help={"Value for Low-q slope value"}
-	SetVariable Background,pos={5,345},size={220,16},proc=IR1R_BackgroundInput,title="Subtract Background      "
+	SetVariable Background,pos={5,345},size={220,16},proc=IR1R_BackgroundInput,title="Flat Background        "
 	SetVariable Background,limits={-Inf,Inf,0.001},value= root:Packages:Sizes:Bckg, help={"Value for flat backgound"}
 
 
@@ -4788,6 +4788,7 @@ Function IR1R_RecreateFitBackPBPanel()
 	NVAR FitBPBackOnImport=root:Packages:Sizes:FitBPBackOnImport
 	if(FitBPBackOnImport)
 		IR1R_SizeDistImpFitPanelF()
+		IR1R_addSizeControls()
 	else
 		KillWIndow/Z IR1R_SizeDistImportFitPanel
 	endif
@@ -4809,16 +4810,16 @@ Function IR1R_SizeDistImpFitPanelF() : Panel
 	SetDrawLayer UserBack
 	SetDrawEnv textrgb= (1,16019,65535)
 	TitleBox MainTitle title="\Zr230Setup Background Fit on \"Graph\"",pos={50,5},frame=0,fstyle=3,font= "Times New Roman", size={300,24},anchor=MC,fColor=(0,0,52224)
-	TitleBox Info2 title="\Zr100Check what Background params fit when adding data to Size Distribution",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={400,20},fColor=(0,0,52224)
+	TitleBox Info2 title="\Zr100Check what Background params are optimized when adding data to SizeDist",pos={5,30},frame=0,fstyle=1, fixedSize=1,size={400,20},fColor=(0,0,52224)
 
 	CheckBox FitBOnImport,pos={10.00,60},size={91.00,16.00},title="Fit B on Graph?",proc=IR1R_BackPanelCheckboxProc
 	CheckBox FitBOnImport,variable= root:Packages:Sizes:FitBonImport, help={"Check if you want to fit B on Graph fo data?"}
 	CheckBox FitBPonImport,pos={10.00,85},size={91.00,16.00},title="Fit B+P on Graph?",proc=IR1R_BackPanelCheckboxProc
 	CheckBox FitBPonImport,variable= root:Packages:Sizes:FitBPonImport, help={"Check if you want to fit B and P on Graph fo data?"}
 
-	SetVariable FitBPonImportQmin,pos={130,60},size={140,16},title="B/B+P Q min", help={"Set Q min for B+P fitting"}
+	SetVariable FitBPonImportQmin,pos={130,60},size={140,16},title="B+P Q min", help={"Set Q min for B+P fitting"}
 	SetVariable FitBPonImportQmin,limits={0,Inf,0.001},value= root:Packages:Sizes:FitBPonImportQmin
-	SetVariable FitBPonImportQmax,pos={130,85},size={140,16},title="B/B+P Q max", help={"Set Q max for B+P fitting"}
+	SetVariable FitBPonImportQmax,pos={130,85},size={140,16},title="B+P Q max", help={"Set Q max for B+P fitting"}
 	SetVariable FitBPonImportQmax,limits={0,Inf,0.001},value= root:Packages:Sizes:FitBPonImportQmax
 	
 	CheckBox FitBckgOnImport,pos={10.00,120},size={91.00,16.00},title="Fit Backg on Graph?",proc=IR1R_BackPanelCheckboxProc
@@ -4837,12 +4838,22 @@ Function IR1R_SizeDistImpFitPanelF() : Panel
 	
 	Button FitPowerLawB,pos={10,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B", help={"Push to scale Power law slope between cursors"}
 	Button FitPowerLaw,pos={130,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Low Q B+P", help={"Push to fit Power law slope between cursors"}
-	Button FitBackground,pos={250,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Background", help={"Push to Fit background between cursors"}
+	Button FitBackground,pos={250,190},size={90,15},proc=IR1R_GraphDataButton,title="Fit Flat Backg.", help={"Push to Fit background between cursors"}
 	
 End
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+static function IR1R_addSizeControls()
+	string panelName="IR1R_SizeDistImportFitPanel"
+	IN2G_PanelAppendSizeRecordNote(panelName)
+	SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+	IN2G_ResetPanelSize(panelName,1)
+	STRUCT WMWinHookStruct s
+	s.eventcode=6
+	s.winName=panelName
+	IN2G_PanelResizePanelSize(s)
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -4990,6 +5001,7 @@ Function IR1R_BackPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	if(cmpstr(ctrlName,"FitBPBackOnImport")==0)
 		if(checked)
 			IR1R_SizeDistImpFitPanelF()
+			IR1R_addSizeControls()
 		else
 			KillWIndow/Z IR1R_SizeDistImportFitPanel
 		endif

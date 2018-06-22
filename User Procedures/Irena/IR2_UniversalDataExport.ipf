@@ -811,7 +811,7 @@ Function IR2E_LoadDataInTool()
 	endif
 	
 
-	if(ExportASCII || ExportGSASxye ||(ExportCanSASNexus&&ExportMultipleCanSASFiles))
+	if(ExportASCII || ExportGSASxye ||(ExportCanSASNexus * ExportMultipleCanSASFiles))
 		NewFileOutputName = ""
 		if(UseFolderNameForOutput)
 			NewFileOutputName += IN2G_ReturnUserSampleName(DataFolderName)			
