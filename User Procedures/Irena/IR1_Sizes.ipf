@@ -3561,7 +3561,7 @@ Function IR1R_FitPowerLawBackground(FixPowerlaw)
 	Wave W_coef
 	LowQPowerLawSlope = abs(W_coef[1])
 	LowQScalingFactor = 10^W_coef[0]
-	print "Fitted low-q power law slope with P = "+num2str(LowQPowerLawSlope)+" and B = "+num2str(LowQScalingFactor)
+	//print "Fitted low-q power law slope with P = "+num2str(LowQPowerLawSlope)+" and B = "+num2str(LowQScalingFactor)
 	IR1R_CalculateBackgroundData(Q_vecOriginal,BackgroundWave)
 	
 	setDataFolder OldDf
@@ -3602,7 +3602,7 @@ Function IR1R_FitFlatBackground()
 	Duplicate /R=[pcsr(A, "IR1R_SizesInputGraph"),pcsr(B, "IR1R_SizesInputGraph")]/Free  IntensityOriginal, IntForFit 
 	Background = mean(IntForFit)
 	IR1R_CalculateBackgroundData(Q_vecOriginal,BackgroundWave)
-	print "Fitted high-q flat background with background = "+num2str(Background)
+	//print "Fitted high-q flat background with background = "+num2str(Background)
 	setDataFolder OldDf
 end
 //Function IR1R_SelectShapeModel(ctrlName,popNum,popStr) : PopupMenuControl
