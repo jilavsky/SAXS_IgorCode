@@ -10,9 +10,18 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 ********************************************
-2.66
-Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to do power law fit and background fit. Added option to fit the parameters when data are added to the tool.
+2.67
+Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to perform power law fit and background fit. Added option to fit the parameters when data are added to the tool.
 Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
+
+2.66 1/27/2018
+Converted all procedure files to UTF8 to prevent text encoding issues. 
+Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
+Plotting tool I - added control which enforces maximum number of items in legend (default=30). If more waves are in graph, legend gets decimated by necessary integer(2, 3, 4,...). First and last are always included. This presents selection of data names when too many data sets are used. 
+MergeData - added ability to fit-extrapolate data 1 at high q end and added possibility to fit arbitrary combination of merging parameters. Lots of changes. More capable and more complicated. 
+Unified Fit - added button "Copy/Swap level" which will move content of existing level to another level. 
+Checked that - with reduced functionality - code will work without Github distributed xops. 
+Tested and fixed for Igor 8. 
 
 2.65 11/05/2017
 Promoted required minimum version to 7.05 due to bug in Igor prior of this version. 
