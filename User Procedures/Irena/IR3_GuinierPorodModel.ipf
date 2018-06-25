@@ -3381,7 +3381,7 @@ static Function IR3GP_ConEvAnalyzeEvalResults2(ParamName)
 	string ParamName
 	print GetDataFOlder(1)
 	SVAR SampleFullName=root:Packages:Irena:GuinierPorod:DataFolderName
-	NVAR CoefEVNumSteps=root:Packages:Irena:GuinierPorod:ConfEVNumSteps
+	NVAR ConfEVNumSteps=root:Packages:Irena:GuinierPorod:ConfEVNumSteps
 	Wave ConfEvStartValues=$("ConfEvStartValues")
 	Wave ConfEvEndValues=$("ConfEvEndValues")
 	Wave/T ConfEvCoefNames=$("ConfEvCoefNames")
@@ -3403,7 +3403,7 @@ static Function IR3GP_ConEvAnalyzeEvalResults2(ParamName)
 	IR1_AppendAnyText("Effect of data uncertainities on variability of parameters", 2)
 	IR1_AppendAnyText(SampleFullName, 2)	
 	IR1_AppendAnyText("  ", 0)
-	IR1_AppendAnyText("Run "+num2str(CoefEVNumSteps)+" fittings using data modified by random Gauss noise within \"Errors\" ", 2)
+	IR1_AppendAnyText("Run "+num2str(ConfEVNumSteps)+" fittings using data modified by random Gauss noise within \"Errors\" ", 2)
 	IR1_AppendAnyText("To get following statistical results ", 0)
 	wavestats/Q ChiSquareValues
 	variable MeanChiSquare=V_avg

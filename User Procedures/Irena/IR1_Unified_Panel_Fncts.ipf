@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.24
+#pragma version=2.25
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.25 modifed handling of limits and steps in the arrows to avoid loosing the arrows altogether when user inputs 0. 
 //2.24 added better Graph size control using IN2G_GetGraphWidthHeight function
 //2.23 added getHelp button function. 
 //2.22 fixed IR1A_AutoUpdateIfSelected which called local display code twice. 
@@ -769,36 +770,57 @@ Function IR1A_FixLimitsInPanel(VarName)
 		if(testVariableHL>5)
 			testVariableHL = 5	
 		endif
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,5,0.05*testVariable}		
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,5,0.05*IR1A_FixZeroesForLimits(testVariable)}		
 	elseif(stringmatch(VarName,"*Pack"))
 		testVariableLL = 0.4*testVariable
 		testVariableHL = 2*testVariable
 		if(testVariableHL>10)
 			testVariableHL =10
 		endif
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,(testVariableHL),(0.05*testVariable)}		
+		if(testVariableHL<0.1)
+			testVariableHL = 0.1
+		endif
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,(testVariableHL),(0.05*IR1A_FixZeroesForLimits(testVariable))}		
 	elseif(stringmatch(VarName,"*Rg"))
 		testVariableLL = 0.4*testVariable
 		testVariableHL = testVariable/0.4
 		if(testVariableLL<2)
 			testVariableLL=2
 		endif
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*testVariable)}		
+		if(testVariableHL<10)
+			testVariableHL = 10
+		endif
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*IR1A_FixZeroesForLimits(testVariable))}		
 	elseif(stringmatch(VarName,"*G"))
 		testVariableLL = 0.1*testVariable
 		testVariableHL = testVariable/0.1
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.1*testVariable)}	
+		if(testVariableHL<1e-20)
+			testVariableHL = 1e-20
+		endif
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.1*IR1A_FixZeroesForLimits(testVariable))}	
 	elseif(stringmatch(VarName,"*ETA"))//**DWS
 		testVariableLL = 0.5*testVariable
 		testVariableHL = 2*testVariable	
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.01*testVariable)}
+		if(testVariableHL<10)
+			testVariableHL = 10
+		endif
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.01*IR1A_FixZeroesForLimits(testVariable))}
 	else	
-		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*testVariable)}
+		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,inf,(0.05*IR1A_FixZeroesForLimits(testVariable))}
 		testVariableLL = 0.2*testVariable
 		testVariableHL = 5*testVariable	
 	endif
 end
 
+//************************************************************************************************************
+static Function IR1A_FixZeroesForLimits(ValueIn)
+	variable ValueIn
+	if(ValueIn<1e-30)
+		return 1
+	else	
+		return ValueIn
+	endif
+end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1972,10 +1994,11 @@ Function IR1A_FixTabsInPanel()
 	//here we modify the panel, so it reflects the selected number of distributions
 	
 	NVAR NumOfDist=root:Packages:Irena_UnifFit:NumberOfLevels
-	
-	
 	//and now return us back to original tab...
 	NVAR ActTab=root:Packages:Irena_UnifFit:ActiveTab
+	if(numtype(ActTab)!=0)
+		ActTab = 1
+	endif
 	IR1A_TabPanelControl("Checkbox",ActTab-1)
 	variable SetToTab
 	SetToTab=ActTab-1

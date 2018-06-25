@@ -13,6 +13,7 @@ Modification history:
 2.67
 Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to perform power law fit and background fit. Added option to fit the parameters when data are added to the tool.
 Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
+Unified fit - modified how the limits and steps are handled when user set value to 0. Fixed Uncertainty analysis in Unified fit which seems to have failed on Igor 8. 
 
 2.66 1/27/2018
 Converted all procedure files to UTF8 to prevent text encoding issues. 

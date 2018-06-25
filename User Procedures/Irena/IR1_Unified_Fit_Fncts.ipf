@@ -5103,9 +5103,10 @@ static Function IR1A_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumSteps
 	
 
 	variable LevelUsed=str2num(ParamName[5])
-	TabControl DistTabs win=IR1A_ControlPanel, value=(LevelUsed-1)
-	IR1A_TabPanelControl("",LevelUsed-1)
-	//DoUpdate
+	if(numtype(LevelUsed)==0 && LevelUsed>0 && LevelUsed<6)
+		TabControl DistTabs win=IR1A_ControlPanel, value=(LevelUsed-1)
+		IR1A_TabPanelControl("",LevelUsed-1)
+	endif
 
 	KillWIndow/Z ChisquaredAnalysis
  	KillWIndow/Z ChisquaredAnalysis2
@@ -5311,7 +5312,7 @@ static Function IR1A_ConEvAnalyzeEvalResults2(ParamName)
 	string ParamName
 	print GetDataFOlder(1)
 	SVAR SampleFullName=root:Packages:Irena_UnifFit:DataFolderName
-	NVAR CoefEVNumSteps=root:Packages:Irena_UnifFit:CoefEVNumSteps
+	NVAR ConfEVNumSteps=root:Packages:Irena_UnifFit:ConfEVNumSteps
 	Wave ConfEvStartValues=$("ConfEvStartValues")
 	Wave ConfEvEndValues=$("ConfEvEndValues")
 	Wave/T ConfEvCoefNames=$("ConfEvCoefNames")
@@ -5333,7 +5334,7 @@ static Function IR1A_ConEvAnalyzeEvalResults2(ParamName)
 	IR1_AppendAnyText("Effect of data uncertainities on variability of parameters", 2)
 	IR1_AppendAnyText(SampleFullName, 2)	
 	IR1_AppendAnyText("  ", 0)
-	IR1_AppendAnyText("Run "+num2str(CoefEVNumSteps)+" fittings using data modified by random Gauss noise within \"Errors\" ", 2)
+	IR1_AppendAnyText("Run "+num2str(ConfEVNumSteps)+" fittings using data modified by random Gauss noise within \"Errors\" ", 2)
 	IR1_AppendAnyText("To get following statistical results ", 0)
 	wavestats/Q ChiSquareValues
 	variable MeanChiSquare=V_avg
