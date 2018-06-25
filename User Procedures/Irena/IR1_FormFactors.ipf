@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.28
+#pragma version=2.29
 
 Constant AlwaysRecalculateFF = 0			//set to 1 to recalculate always the FF. 
 #define UseXOPforFFCalcs					//comment out to prevent use of xops
@@ -11,6 +11,7 @@ Constant AlwaysRecalculateFF = 0			//set to 1 to recalculate always the FF.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.29 remove Unified fit form factors from form factor listings, code stays, but shoudl not be used anymore. Let's see if someone complains. 
 //2.28 added controls for debugging (at the top) and added Cylinder and Spheroid as optional XOP form factor.
 //2.27 fixed IR1T_CreateAveVolumeWave, IR1T_CreateAveSurfaceAreaWave  to have all form factors, do nto foget to fix next time when adding new FF
 //2.26 added Rectangular Parallelepiped (cuboid and other similar shapes) USING NIST XOP - IF the XOP is installed, Parallelpiped is available. Fast, need to convert more FFs to this... 
@@ -99,12 +100,13 @@ Function IR1T_InitFormFactors()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
-	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
+	//string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;Fractal Aggregate;"
+	string/g ListOfFormFactors="Spheroid;Cylinder;CylinderAR;CoreShell;CoreShellShell;CoreShellCylinder;User;Integrated_Spheroid;Fractal Aggregate;"
 	ListOfFormFactors+="NoFF_setTo1;SphereWHSLocMonoSq;Janus CoreShell Micelle 1;Janus CoreShell Micelle 2;Janus CoreShell Micelle 3;CoreShellPrecipitate;"//"
 #if (exists("ParallelepipedX")&&defined(UseXOPforFFCalcs))
 	ListOfFormFactors+="---NIST XOP : ;RectParallelepiped;"
 #endif	
-	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
+	string/g ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;"//Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
 	string/g CoreShellVolumeDefinition
 	SVAR CoreShellVolumeDefinition			//this will be user choice for definition of volume of core shell particle: "Whole particle;Core;Shell;", NIST standard definition is Whole particle, default... 
 	if(strlen(CoreShellVolumeDefinition)<1)

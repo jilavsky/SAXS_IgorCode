@@ -2593,7 +2593,7 @@ Window IR1R_SizesInputPanel()
 	Button ScriptingTool,pos={280,169},size={90,15},proc=IR1R_GraphDataButton,title="Scripting tool", help={"Script this tool for multiple data sets processing"}
 	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1R_GraphDataButton,title="Get Help", help={"Open www manual page for this tool"}
 	
-	SetVariable SlitLength,pos={125,186},size={140,16},title="Slit Length   ", help={"If slit smeared data, input slit length (automatically inserted for Indra 2 data"}
+	SetVariable SlitLength,pos={125,174},size={140,16},title="Slit Length   ", help={"If slit smeared data, input slit length (automatically inserted for Indra 2 data"}
 	SetVariable SlitLength,limits={0,Inf,0.001},value= root:Packages:Sizes:SlitLength, disable=!(root:Packages:Sizes:UseSlitSmearedData)
 
 	SetVariable RminInput,pos={13,223},size={150,16},title="Minimum diameter", help={"Input minimum diameter of the particles being modeled"}
