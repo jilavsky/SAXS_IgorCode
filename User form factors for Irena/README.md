@@ -1,5 +1,5 @@
 ## User form factors for Modeling tool
-**************************************
+
 These are user contributed - or requested - form factors for use in "User Form factor" in Modeling package in Irena. 
 To use:
 1. Download the ipf file you need - click on the file, it opens in new type of view, now click in the right corner of the frame button "Raw", opens in text view. Now "Save as" from your browser File menu and save as text file with extension ipf (remove .txt browsers attach.) 
@@ -11,10 +11,8 @@ To use:
 #Core Shell Ellipsoid, June 2018
 This is modified version of NIST CoreShellEllipsoid, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
 To use Open this file in Experiment where you want to use it (and keep it there, if needed minimize, do NOT kill) and follow these instructions:
-//*************************************************************************************************
-//*************************************************************************************************
-//USE in Irena :
-//In Modeling II select User form factor 
+USE in Irena :
+* In Modeling II select User form factor 
 //In panel put in "Name of ForFactor function this string:    IR1T_EllipsoidalCoreShell
 //In Panel put in Name of volume FF function this string:     IR1T_EllipsoidalVolume
 //
