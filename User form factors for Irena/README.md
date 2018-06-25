@@ -7,7 +7,7 @@ To use:
 4. Follow these instructions below to setup that specific Form factor
 
 
-## Core Shell Ellipsoid, June 2018
+### Core Shell Ellipsoid, June 2018
 This is modified version of NIST CoreShellEllipsoid, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
 
 USE in Irena :
@@ -21,7 +21,7 @@ USE in Irena :
 * In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case. 
 
 
-## Flexible Cylinder, June 2018
+### Flexible Cylinder, June 2018
 This is modified version of NIST Flexible Cylinder, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
 
 USE in Irena :
