@@ -30,4 +30,5 @@ USE in Irena :
 * In Panel put in Name of volume FF function this string:    IR1T_FlexExclVolCylVol
 * Parameter 1 is the length of the cylinder
 * Parameter 2 is the Kuhn length
+
 **Other parameters are not being used.** 
