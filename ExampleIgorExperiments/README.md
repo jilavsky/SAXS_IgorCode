@@ -3,4 +3,4 @@ These are Igor experiments provided to users so they can follow instructional mo
 
 https://www.youtube.com/channel/UCDTzjGr3mAbRi3O4DJG7xHA
 
-To download, click on the file you need and on teh new page, the button "View Raw", will download the file on your computer. 
+To download, click on the file you need and on the new page, click button "View Raw". This will download the file on your computer. 
