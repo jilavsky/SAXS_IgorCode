@@ -8,14 +8,13 @@ To use:
 4. Follow these instructions below to setup that specific Form factor
 
 
-#Core Shell Ellipsoid, June 2018
+# Core Shell Ellipsoid, June 2018
 This is modified version of NIST CoreShellEllipsoid, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
 To use Open this file in Experiment where you want to use it (and keep it there, if needed minimize, do NOT kill) and follow these instructions:
 USE in Irena :
 * In Modeling II select User form factor 
 * In panel put in "Name of ForFactor function this string:    IR1T_EllipsoidalCoreShell
 * In Panel put in Name of volume FF function this string:     IR1T_EllipsoidalVolume
- 
 * Par1 is the aspect ratio which for ellipsoids are defiend as rotational objects with dimensions R x R x AR*R, note, AR=1 may fail. 
 * Par 2 is shell thickness in A, and it is the same thickness everywhere on the ellipsoid. 
 * Par3, 4 and 5 are contrasts as this is core shell system and contrasts are part of the form factor. 
@@ -23,17 +22,12 @@ USE in Irena :
 * In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case. 
 
 
-#Flexible Cylinder, June 2018
+# Flexible Cylinder, June 2018
 This is modified version of NIST Flexible Cylinder, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
-//*************************************************************************************************
-//*************************************************************************************************
-//USE in Irena :
-//In Modeling II select User form factor 
-//In panel put in "Name of ForFactor function this string:    IR1T_FlexExclVolCyl
-//In Panel put in Name of volume FF function this string:    IR1T_FlexExclVolCylVol
-//
-// Parameter 1 is the length of the cylinder
-// Parameter 2 is the Kuhn length
-// other parameters are not being used. 
-//*************************************************************************************************
-//*************************************************************************************************
+USE in Irena :
+* In Modeling II select User form factor 
+* In panel put in "Name of ForFactor function this string:    IR1T_FlexExclVolCyl
+* In Panel put in Name of volume FF function this string:    IR1T_FlexExclVolCylVol
+* Parameter 1 is the length of the cylinder
+* Parameter 2 is the Kuhn length
+* other parameters are not being used. 
