@@ -9,6 +9,7 @@ To use:
 
 ## Core Shell Ellipsoid, June 2018
 This is modified version of NIST CoreShellEllipsoid, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
+
 USE in Irena :
 * In Modeling II select User form factor 
 * In panel put in "Name of ForFactor function this string:    IR1T_EllipsoidalCoreShell
@@ -22,6 +23,7 @@ USE in Irena :
 
 ## Flexible Cylinder, June 2018
 This is modified version of NIST Flexible Cylinder, created by Jan Ilavsky in June 2018. Original author is Steven Kline from NIST. 
+
 USE in Irena :
 * In Modeling II select User form factor 
 * In panel put in Name of FormFactor function this string:    IR1T_FlexExclVolCyl
