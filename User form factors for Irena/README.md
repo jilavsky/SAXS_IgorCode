@@ -18,7 +18,7 @@ USE in Irena :
 * Par 2 is shell thickness in A, and it is the same thickness everywhere on the ellipsoid. 
 * Par3, 4 and 5 are contrasts as this is core shell system and contrasts are part of the form factor. 
 * Par3, 4 and 5 are implicitelyu multipled by 10^10cm^-2, so insert only a number. These are rhos not, delta-rho-square
-* In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case. 
+**In main panel set contrast = 1 !!!!! Contrasts are part of the form factor in this case.**
 
 
 ### Flexible Cylinder, June 2018
@@ -30,4 +30,4 @@ USE in Irena :
 * In Panel put in Name of volume FF function this string:    IR1T_FlexExclVolCylVol
 * Parameter 1 is the length of the cylinder
 * Parameter 2 is the Kuhn length
-* other parameters are not being used. 
+**Other parameters are not being used.** 
