@@ -1958,12 +1958,17 @@ Function IR1T_GenerateHelpForUserFF()
 	
 	DoWindow HelpForUserFF
 	if(!V_Flag)
-		NewNotebook/K=3/N=$nb/F=1/V=1/K=0/W=(221.25,52.25,712.5,530) as "HowToUseUserFF"
+		NewNotebook/K=1/N=$nb/F=1/V=1/K=0/W=(221.25,52.25,812.5,830) as "HowToUseUserFF"
 		Notebook $nb defaultTab=36, statusWidth=238, pageMargins={72,72,72,72}
 		Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
 		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",10,0,(0,0,0)}
 		Notebook $nb ruler=Normal, fSize=12, fStyle=1, text="How to use \"User\" form factor\r"
 		Notebook $nb fSize=-1, fStyle=-1, text="\r"
+		Notebook $nb text="User contributed form factors you can use are now available on Github:\r"
+		Notebook $nb fStyle=4, textRGB=(0,0,65535)
+		Notebook $nb text="https://github.com/jilavsky/SAXS_IgorCode/tree/master/User%20form%20factors%20for%20Irena\r"
+		Notebook $nb fStyle=-1, textRGB=(0,0,0), text="\r"
+		Notebook $nb text="\r"
 		Notebook $nb text="To use \"User\" form factor you will need to supply two functions:\r"
 		Notebook $nb fStyle=6, text="1. Form factor itself\r"
 		Notebook $nb text="2. Volume of particle function\r"
