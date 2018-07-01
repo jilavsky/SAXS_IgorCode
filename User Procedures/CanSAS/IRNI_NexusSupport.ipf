@@ -1462,13 +1462,13 @@ Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNam
 	string NewGroupName
 	NEXUS_HdfSaveAttrib("creator",Writer,"/", fileID)
 	if(StringMatch(Writer, "Nika"))
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/nika","/", fileID)
 	elseif(StringMatch(Writer, "Irena"))
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/irena","/", fileID)
 	elseif(StringMatch(Writer, "Indra"))
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/Indra_2.html","/", fileID)	
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/indra","/", fileID)	
 	else
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)		
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/irena","/", fileID)		
 	endif
 	NEXUS_HdfSaveAttrib( "default",RootGroupName,"/", fileID)
 	RootGroupName="/"+RootGroupName
@@ -1683,13 +1683,13 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
 	string NewGroupName
 	NEXUS_HdfSaveAttrib("creator",Writer,"/", fileID)
 	if(StringMatch(Writer, "Nika"))
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/nika","/", fileID)
 	elseif(StringMatch(Writer, "Irena"))
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/irena","/", fileID)
 	elseif(StringMatch(Writer, "Indra"))
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/Indra_2.html","/", fileID)	
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/indra","/", fileID)	
 	else
-		NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html","/", fileID)		
+		NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/irena","/", fileID)		
 	endif
 	NEXUS_HdfSaveAttrib( "default",RootGroupName,"/", fileID)
 	RootGroupName="/"+RootGroupName
@@ -1885,7 +1885,7 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	string ViewName=Nexus_FixNxGroupName("2DCalibrated")
 	string NewGroupName
 	NEXUS_HdfSaveAttrib("creator","Nika","/", fileID)
-	NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+	NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/nika","/", fileID)
 	NEXUS_HdfSaveAttrib( "default",RootGroupName,"/", fileID)
 	RootGroupName="/"+RootGroupName
 	HDF5CreateGroup fileID , RootGroupName , groupID
@@ -2094,7 +2094,7 @@ static Function NEXUS_WriteNikaNexus2DRawFile(FileName)
 	//	eznx.addAttributes(root, creator=h5_files[0].attrs['creator'] + ' and spec2nexus.eznx')
 	NEXUS_HdfSaveAttrib("NeXus_version","4.3.0","/", fileID)
 	NEXUS_HdfSaveAttrib("creator","Nika","/", fileID)
-	NEXUS_HdfSaveAttrib("url","http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html","/", fileID)
+	NEXUS_HdfSaveAttrib("url","https://usaxs.xray.aps.anl.gov/software/nika","/", fileID)
 	NEXUS_HdfSaveAttrib("default","entry","/", fileID)
 	NEXUS_HdfSaveAttrib("file_time",date()+" "+time(),"/", fileID)	
 	//	eznx.write_dataset(nxentry, 'title', 'NeXus NXsas example')

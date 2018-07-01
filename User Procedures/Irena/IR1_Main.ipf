@@ -708,7 +708,8 @@ end
 Function IR2_OpenHelpMoviePage()
 	DoAlert 1,"Your web browser will open page with help movies. OK? (You must have QuickTime installed)"
 	if(V_flag==1)
-		BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaHelpMovies.html"
+		//BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaHelpMovies.html"
+		BrowseURL "https://www.youtube.com/channel/UCDTzjGr3mAbRi3O4DJG7xHA/feed"
 	endif
 End
 
@@ -1980,7 +1981,7 @@ Function IR2C_CheckVersionButtonProc(ba) : ButtonControl
 			// click code here
 			if(stringmatch(ba.ctrlName,"OpenIrenaWebPage"))
 				//open web page with Irena
-				BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html"
+				BrowseURL "https://usaxs.xray.aps.anl.gov/software/irena"
 			endif
 			if(stringmatch(ba.ctrlName,"OpenIrenaManuscriptWebPage"))
 				//open web page with Irena

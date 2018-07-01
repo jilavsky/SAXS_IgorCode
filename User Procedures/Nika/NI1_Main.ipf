@@ -278,7 +278,7 @@ Function NI1_AboutPanel()
 	DrawText 52,64,"@ ANL, 2018"
 	DrawText 49,103,"Release "+num2str(CurrentNikaVersionNumber)
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
-	DrawText 11,156,"http://usaxs.xray.aps.anl.gov/staff/ilavsky/index.html"
+	DrawText 11,156,"https://usaxs.xray.aps.anl.gov/software-description"
 
 	DrawText 11,190,"Set of macros to convert 2D SAS images"
 	DrawText 11,210,"into 1 D data"
@@ -1250,7 +1250,7 @@ Function NI1_CheckVersionButtonProc(ba) : ButtonControl
 			// click code here
 			if(stringmatch(ba.ctrlName,"OpenNikaWebPage"))
 				//open web page with Nika
-				BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/nika.html"
+				BrowseURL "https://usaxs.xray.aps.anl.gov/software/nika"
 			endif
 			if(stringmatch(ba.ctrlName,"OpenNikaManuscriptWebPage"))
 				//open web page with Nika
