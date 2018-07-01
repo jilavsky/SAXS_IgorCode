@@ -1,7 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.94
+#pragma version = 1.95
 #pragma IgorVersion=7.05
 
+//1.95 	July 2018 release, first official Igor 8 release
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
 //			Added ability to smooth R_Int data - suitable mostly for Blank where it removes noise from the blank. Should reduce noise of the USAXS data. 

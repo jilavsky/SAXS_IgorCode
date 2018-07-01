@@ -1,8 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.79
+#pragma version = 1.80
 #pragma IgorVersion=7.05
 
 
+//1.80 	July 2018 release, first official Igor 8 release
 //1.79	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Modified main interface to have radio buttons and only one button for action. This makes cleaner interface as some controls can be hidden. Unluckily, panel is now higher by 20 points. 
 //			Added support for ALS SRoXS soft energy beamline. 
