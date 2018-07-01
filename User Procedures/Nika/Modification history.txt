@@ -12,7 +12,8 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 ********************************************
-1.80
+1.80 7/7/2018
+Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
 Removed range selection controls and moved Save data options to its own tab "Save"
 Added ImageStatistics and control for user for delay between series of images. 
 Added font type and size control from configuration to be used for CCD image label. 

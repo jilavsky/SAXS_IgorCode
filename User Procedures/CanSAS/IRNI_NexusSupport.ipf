@@ -1,12 +1,14 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.06
+#pragma version = 1.07
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.07 FIxed export to use 1/Angstrom for Qs and change units=1/A to units=1/angstrom per units definition in NXcanSAS Nexus definition 
+//modified export file extensions to .h5 which seems to be needed for sasView 
 //1.06 modfied for Igor 8 to support long files names based on Irena settings. 
 //1.05 add support for multidimensional data
 //1.04 fixes for Nexus standard development and suggested units
@@ -220,7 +222,7 @@ Function NEXUS_NikaConfigPanelFnct() : Panel
 		SetVariable NX_ShowExportPath, pos={10,360}, size={380,20}, variable=root:Packages:Irena_Nexus:ExportDataFolderName, noedit=1
 		SetVariable NX_ShowExportPath, help={"This is where data will be exported"}, title="Path:", disable=2,frame=0
 		
-		TitleBox Info3 title="\Zr100Processed data Nexus (NXcanSAS) template: InputDataName_Nika.hdf",pos={10,390},frame=0,fstyle=0,size={380,20},fColor=(1,4,52428)
+		TitleBox Info3 title="\Zr100Processed data Nexus (NXcanSAS) template: InputDataName_Nika.h5",pos={10,390},frame=0,fstyle=0,size={380,20},fColor=(1,4,52428)
 		
 		CheckBox NX_SaveToProcNexusFile,pos={10,420},size={195,14},proc=Nexus_ConfigPanelCheckProc,title="Save data in canSAS Nexus file?"
 		CheckBox NX_SaveToProcNexusFile,help={"Output data to canSAS Nexus file as selected below. "}
@@ -247,7 +249,7 @@ Function NEXUS_NikaConfigPanelFnct() : Panel
 		PopupMenu NX_RebinCal2DDtToPnts,pos={260,495},size={214,21},proc=NEXUS_PopMenuProc,title="Rebin to:"
 		PopupMenu NX_RebinCal2DDtToPnts,help={"Select Line profile method to use"}
 	
-		TitleBox Info4 title="\Zr100New RAW Nexus (NXsas) file name template: InputDataName.hdf",pos={10,535},frame=0,fstyle=0,size={380,20},fColor=(1,4,52428)
+		TitleBox Info4 title="\Zr100New RAW Nexus (NXsas) file name template: InputDataName.h5",pos={10,535},frame=0,fstyle=0,size={380,20},fColor=(1,4,52428)
 
 		CheckBox NX_CreateNewRawNexusFile,pos={10,555},size={195,14},proc=Nexus_ConfigPanelCheckProc,title="Create NEW Nexus file with RAW data? (NXsas data)"
 		CheckBox NX_CreateNewRawNexusFile,help={"Create new RAW data (NXsas) Nexus file."}
@@ -780,7 +782,7 @@ static Function NEXUS_CreateWvNtNbk(WaveWithWaveNote, SampleName)
 	wave WaveWithWaveNote
 	string SampleName
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(!WaveExists(WaveWithWaveNote))		//hm, are we laoding the empty?
+	if(!WaveExists(WaveWithWaveNote))		//hm, are we loading the empty?
 		return 0
 	else
 		string OldNOte=note(WaveWithWaveNote)
@@ -849,6 +851,8 @@ static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 	IN2G_UniversalFolderScan(startDF, 50, "NEXUS_ConvertNumWvToStringList(\""+StartDf+"\",\""+PathToStrVarValues+"\")")
 	//now we have moved the data to stringgs and main folder of the Nexus file name 
 	SVAR/Z StringVals=$(PathToStrVarValues+"ListOfStrValues")
+	//print StringVals
+	StringVals = NEXUS_FixStringNoteFormating(StringVals)		//fix any ugly formating issues here, this relates to stuff making it in with weird formating
 	SVAR/Z NumVals=$(PathToStrVarValues+"ListOfNumValues")
 	if(SVAR_Exists(StringVals))
 		note/NOCR DataWv, "NEXUS_StringDataStartHere;"+StringVals+"NEXUS_StringDataEndHere;"
@@ -857,6 +861,45 @@ static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 		note/NOCR DataWv, "NEXUS_VariablesDataStartHere;"+NumVals+"NEXUS_VariablesDataEndHere;"
 	endif
 end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+static Function/T NEXUS_FixStringNoteFormating(StringIn)
+	string StringIn
+	
+	string StringOut=""
+	string Metadata =  StringByKey("Metadata:TIFFImageDescription", StringIn  , "=",";" )
+			//AD Tiff file metadata, needs to be cleaned up and fixed. 
+					//  # Pixel_size 172e-6 m x 172e-6 m
+					//# Silicon sensor, thickness 0.000320 m
+					//# Exposure_time 30.0000000 s
+					//# Exposure_period 30.0000000 s
+					//# Tau = 124.0e-09 s
+					//# Count_cutoff 1053148 counts
+					//# Threshold_setting: 10500 eV
+					//# Gain_setting: low gain (vrf = -0.30
+	Metadata = ReplaceString("#", Metadata, ";")
+	Metadata = ReplaceString(":", Metadata, "=")
+	Metadata = ReplaceString("\r\n", Metadata, ";" )
+	Metadata = ReplaceString("\n", Metadata, ";" )
+	Metadata = ReplaceString("\r", Metadata, "")
+	Metadata = ReplaceString("Pixel_size", Metadata, "Metadata:Pixel_size=")
+	Metadata = ReplaceString("Silicon sensor, thickness", Metadata, "Metadata:SiliconSensorThickness=")
+	Metadata = ReplaceString("Exposure_time", Metadata, "Metadata:Exposure_time=")
+	Metadata = ReplaceString("Exposure_period", Metadata, "Metadata:Exposure_period=")
+	Metadata = ReplaceString("Tau", Metadata, "Metadata:Tau")
+	Metadata = ReplaceString("Count_cutoff", Metadata, "Metadata:Count_cutoff=")
+	Metadata = ReplaceString("Threshold_setting", Metadata, "Metadata:Threshold_setting")
+	Metadata = ReplaceString("Gain_setting", Metadata, "Metadata:Gain_setting")
+	Metadata = ReplaceString(";;", Metadata, ";" )
+	Metadata = Metadata[1,inf]
+	Metadata = ReplaceString(" ", Metadata, "" )
+	//print Metadata
+	StringOut = ReplaceStringByKey("Metadata:TIFFImageDescription", StringIn, Metadata , "=", ";")
+	StringOut = ReplaceString("Metadata:TIFFImageDescription=", StringOut, "")
+	//print StringOut		
+	return StringOut
+end
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 Function NEXUS_ConvertTxTwvToStringList(StartFolderStr, Fldrname)
@@ -1892,7 +1935,7 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 	if(useQwv)
 		NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/I", fileID)
 		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwv , fileID, NewGroupName+"/Q"
-		NEXUS_HdfSaveAttrib("units","1/A",NewGroupName+"/Q", fileID)
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Q", fileID)
 	else		//UIse Qx, Qy, Qz
 		NEXUS_HdfSaveAttrib("axes","Qx,Qy",NewGroupName+"/I", fileID)
 		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qx , fileID, NewGroupName+"/Qx"
@@ -1900,9 +1943,9 @@ static Function NEXUS_WriteNx2DCanSASData(SampleName, Iwv, [dIwv, Qwv, Mask, Qx,
 		Duplicate/Free Qx, Qz
 		Qz=0
 		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qz , fileID, NewGroupName+"/Qz"
-		NEXUS_HdfSaveAttrib("units","1/A",NewGroupName+"/Qx", fileID)
-		NEXUS_HdfSaveAttrib("units","1/A",NewGroupName+"/Qy", fileID)
-		NEXUS_HdfSaveAttrib("units","1/A",NewGroupName+"/Qz", fileID)
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qx", fileID)
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qy", fileID)
+		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qz", fileID)
 	endif
 	//Now deal with Uncertainty
 	if(usedIwv)
@@ -2642,11 +2685,11 @@ static Function/T NEXUS_NikaCreateOrLocNexusFile(RawOrProcessedFile)
 	MainFileNamePart = RemoveEnding(MainFileNamePart, "." )
 	string FullPathAndName
 	if(RawOrProcessedFile==1)
-		FullPathAndName = ExportDataFolderName+MainFileNamePart+".hdf"
+		FullPathAndName = ExportDataFolderName+MainFileNamePart+".h5"
 		return FullPathAndName
 	endif
 	if(RawOrProcessedFile==2)
-		FullPathAndName = ExportDataFolderName+MainFileNamePart+"_Nika.hdf"
+		FullPathAndName = ExportDataFolderName+MainFileNamePart+"_Nika.h5"
 		return FullPathAndName
 	endif
 end
@@ -2830,6 +2873,9 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		NewQwv/=10^10
 		ConversionFactorQ = "10^10"
 	elseif(stringmatch(Qunits,"invA*")||stringmatch(Qunits,"1/A*"))		// Q in 1/A
+		//NewQwv*=10^10
+		ConversionFactorQ = "1"
+	elseif(stringmatch(Qunits,"1/angstrom"))		// Q in 1/A
 		//NewQwv*=10^10
 		ConversionFactorQ = "1"
 	else		//not matched to anything above? What is the damn unit? 

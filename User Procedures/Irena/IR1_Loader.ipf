@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion=7.05 	//requires Igor version 7.00 or higher
-#pragma version=2.17
+#pragma version=2.18
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.18 July 2018 release
 //2.17 November 2017 release
 //2.16 March 31, 2017 removed code related to Modeling I finally. 
 //2.15 release 2.61 with new Import non-SAS ASCII tool and better panel scaling & preferences management. 
@@ -41,27 +42,27 @@
 //these should be all in /User Procedures/Irena folder
 #include ":IR1_CreateFldrStrctr", version>=2.06
 #include ":IR1_CromerLiberman", version>=2.04						//cannot be rtG=1, runtime error in Cromer_Get_fp
-#include ":IR1_DataManipulation", version>=2.62
+#include ":IR1_DataManipulation", version>=2.63
 #include ":IR1_Desmearing", version>=2.13
 #include ":IR1_EvaluationGraph", version>=2.09
-#include ":IR1_FormFactors", version>=2.28
+#include ":IR1_FormFactors", version>=2.29
 #include ":IR1_FractalsCtrlPanel", version>=2.08
 #include ":IR1_FractalsFiting", version>=2.02
 #include ":IR1_FractalsInit", version>=2.02
 #include ":IR1_FractalsMain", version>=2.06
 #include ":IR1_Functions", version>=2.08
 #include ":IR1_GeneralGraph", version >=2.32
-#include ":IR1_GeneralGraph2", version >=2.21
+#include ":IR1_GeneralGraph2", version >=2.22
 #include ":IR1_GraphStyling", version>=2.01
-#include ":IR1_ImportData", version>=2.38
-#include ":IR1_Main", version>=2.66
+#include ":IR1_ImportData", version>=2.39
+#include ":IR1_Main", version>=2.67
 #include ":IR1_ScattContr_New", version>=2.26
-#include ":IR1_Sizes", version>=2.25
+#include ":IR1_Sizes", version>=2.29
 #include ":IR1_Unified_Fit_Fncts", version>=2.25
 #include ":IR1_Unified_Fit_Fncts2", version>=2.07
 #include ":IR1_Unified_Panel", version>=2.23
-#include ":IR1_Unified_Panel_Fncts", version>=2.24
-#include ":IR1_Unified_SaveExport", version>=2.02
+#include ":IR1_Unified_Panel_Fncts", version>=2.25
+#include ":IR1_Unified_SaveExport", version>=2.03
 #include ":IR1_UnifiedSavetoXLS", version>=2.01
 #include ":IR2_dataMiner", version >=1.13
 #include ":IR2_GelsTool", version>=4.14
@@ -70,25 +71,25 @@
 #include ":IR2_ScriptingTool", version>=1.28
 #include ":IR2_SmallAngleDiff", version>=1.18
 #include ":IR2_StructureFactors", version>=1.07
-#include ":IR2_UniversalDataExport", version>=1.11
+#include ":IR2_UniversalDataExport", version>=1.12
 #include ":IR2L_NLSQFCalc", version>=1.15
 #include ":IR2L_NLSQFfunctions", version>=1.27
-#include ":IR2L_NLSQFmain", version>=1.24
+#include ":IR2L_NLSQFmain", version>=1.25
 #include ":IR2L_NLSQFsupport", version>=1.42
 #include ":IR2Pr_PDFMain", version>=1.13
 #include ":IR2Pr_Regularization", version>=1.03
 #include ":IR2_DWSGraphControls", version>=1
 #include ":IR2_DWSgraph", version>=1
 #include ":IR3_GuinierPorodModel", version>=1.09
-#include ":IR3_MergingData", version>=1.15
+#include ":IR3_MergingData", version>=1.16
 #include ":IR3_SimpleFits", version>=1
 #include ":IR3_SimpleFitsModels", version>=1
-#include ":IR3_WAXSDiffraction", version>=1.07
+#include ":IR3_WAXSDiffraction", version>=1.08
 
 //these are in different folders...
 #include "::CanSAS:cansasXML_GUI", version>=1.04
 #include "::CanSAS:cansasXML", version>=1.12
 
-#include "::Indra 2:IN2_GeneralProcedures", version>=2.11
+#include "::Indra 2:IN2_GeneralProcedures", version>=2.13
 
-#include "::CanSAS:IRNI_NexusSupport", version>=1.05
+#include "::CanSAS:IRNI_NexusSupport", version>=1.07

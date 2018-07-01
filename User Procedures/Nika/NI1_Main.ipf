@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.79
+#pragma version=1.80
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.79
+constant CurrentNikaVersionNumber = 1.80
 constant FixBackgroundOversubScale=1.5			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 
 //*************************************************************************\
@@ -13,7 +13,12 @@ constant FixBackgroundOversubScale=1.5			//this is used to fix oversubtracted ba
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
- 
+
+//1.80	Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
+//			Removed range selection controls and moved Save data options to its own tab "Save"
+//			Added ImageStatistics and control for user for delay between series of images. 
+//			Added font type and size control from configuration to be used for CCD image label. 
+//			Added ability to fix negative intensities oversubtraction. Checkbox on Empty tab and if checked, ~1.5*abs(V_min) is added to ALL points intensities. 
 //1.79	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Modified main interface to have radio buttons and only one button for action. This makes cleaner interface as some controls can be hidden. Unluckily, panel is now higher by 20 points. 
 //			Added support for ALS SRoXS soft energy beamline. 

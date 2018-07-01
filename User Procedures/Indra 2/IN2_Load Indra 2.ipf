@@ -1,6 +1,6 @@
 #pragma rtGlobals=1			// Use modern global access method.
 #pragma IgorVersion=7.05  	//requires Igor version 7.05 or higher
-#pragma version=1.93
+#pragma version=1.95
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.95 July 2018 release
 //1.93 November 2017 updates
 //1.92 May 2017 updates
 //1.89, added Import & COnvert tool, foldes cleanup and some modifications and fixes to panel scaling. 
@@ -47,7 +48,7 @@
 #include ":IN2_USAXS", version>=1.94
 #include ":IN2_XtalCalculationsP", version>=1.1
 #include ":IN3_CalcScattering", version>=1.01
-#include ":IN3_Calculations", version>=1.36
+#include ":IN3_Calculations", version>=1.37
 #include ":IN3_FlyScan", version>=1.04
 #include ":IN3_Main", version>=1.95
 #include ":IN3_Rwave", version>=1
@@ -57,7 +58,7 @@
 #include ":IonChamber3.1", version>=3.1
 
 #include "::Irena:IR2_PanelCntrlProcs", version>=1.46
-#include "::CanSAS:IRNI_NexusSupport", version>=1.05
+#include "::CanSAS:IRNI_NexusSupport", version>=1.07
 
 #include <HDF5 Browser>
 

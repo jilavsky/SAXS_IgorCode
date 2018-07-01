@@ -16,6 +16,9 @@ constant CurrentIrenaVersionNumber = 2.67
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.67 	heavily modified Size Distribution (added power law background). First official Igor 8 release. 
+//			Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
+//			Unified fit - modified how the limits and steps are handled when user set value to 0. Fixed Uncertainty analysis in Unified fit which seems to have failed on Igor 8. 
 //2.66   Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
 //			Plotting tool I - added control which enforces maximum number of items in legend (default=30). If more waves are in graph, legend gets decimated by necessary integer(2, 3, 4,...). First and last are always included. This presents selection of data names when too many data sets are used. 

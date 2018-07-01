@@ -1,14 +1,15 @@
 #pragma rtGlobals=1		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.94
+#pragma version = 1.95
 
-constant CurrentIndraVersionNumber = 1.94
+constant CurrentIndraVersionNumber = 1.95
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.95 	Igor 8 release, ongoing fixes for USAXS software changes. Modified behavior of Automatic blank selection in GUI. 
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
 //			Added ability to smooth R_Int data - suitable mostly for Blank where it removes noise from the blank. Should reduce noise of the USAXS data. 
