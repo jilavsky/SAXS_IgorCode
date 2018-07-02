@@ -1,13 +1,14 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.07
+#pragma version = 1.08
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
-//1.07 FIxed export to use 1/Angstrom for Qs and change units=1/A to units=1/angstrom per units definition in NXcanSAS Nexus definition 
+//1.08 fixes for sasView and other (old) Nexus file types. This is a mess... Stupid mess... 
+//1.07 Fixed export to use 1/Angstrom for Qs and change units=1/A to units=1/angstrom per units definition in NXcanSAS Nexus definition 
 //modified export file extensions to .h5 which seems to be needed for sasView 
 //1.06 modfied for Igor 8 to support long files names based on Irena settings. 
 //1.05 add support for multidimensional data
@@ -2744,7 +2745,11 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 		string AllSASentryData, AllSASdataData, SASentryName, SASdataName
 		string tempSASEntryPath, tmpPath
 		AllSASentryData = NEXUS_FindNXClassData(NewFileDataLocation, "NX_class=NXentry;canSAS_class=SASentry;")		//find path to all NXdata, but this can be 2D, 1D, 3D, or 4D data sets. 
-					//these are all SAS entry - each is one data but possibly many SASdata of the same data
+		//fix for obsolete data 
+		if(strlen(AllSASentryData)<2)
+			AllSASentryData = NEXUS_FindNXClassData(NewFileDataLocation, "NX_class=SASentry;")		//find path to all NXdata, but this can be 2D, 1D, 3D, or 4D data sets. 
+		endif
+		//these are all SAS entry - each is one data but possibly many SASdata of the same data
 		string SASEntryNameOnly
 		variable i, j, k
 		string tempAttrStr
@@ -2753,6 +2758,10 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 		For(i=0;i<ItemsInList(AllSASentryData,";");i+=1)		//SAS entry, likely sample name
 			tempSASEntryPath = stringFromList(i,AllSASentryData,";")
 			AllSASdataData = NEXUS_FindNXClassData(tempSASEntryPath, "NX_class=NXdata;canSAS_class=SASdata;")		//find path to all NXdata, but this can be 2D, 1D, 3D, or 4D data sets. 
+			//fix for obsolete data 
+			if(strlen(AllSASdataData)<2)
+				AllSASdataData = NEXUS_FindNXClassData(NewFileDataLocation, "NX_class=SASdata;")		//find path to all NXdata, but this can be 2D, 1D, 3D, or 4D data sets. 
+			endif			
 								//note: 3D and 4D data which are not meaningful at this time... 
 			Wave/T/Z DataTitle = $(tempSASEntryPath+"title")
 			if(UseFileNameasFolder)		//selection if to use internal sample name in title or Filename as folder name. 
@@ -2768,6 +2777,13 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 				tmpPath = stringfromlist(j,AllSASdataData)
 				//is it 1D or 2D data?
 				tempAttrStr = NEXUS_GetNXAttributeInIgor(tmpPath, "I_axes")
+				//iof this is old definition, we do not have I_axes, but "axes"
+				if(strlen(tempAttrStr)<1)
+					tempAttrStr = NEXUS_GetNXAttributeInIgor(tmpPath, "axes")
+					if(strlen(tempAttrStr)>0)
+						print "This looks like obsolete NXcanSAS file. Loading anyway..." 
+					endif
+				endif
 				if(stringmatch(tempAttrStr,"Q"))		//1D data
 					if(Read1D)
 						NEXUS_ReadOne1DcanSASDataset(tmpPath, SASentryName, Filename, FoundSasEntries, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote)	
@@ -2797,13 +2813,14 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string IName, QName, QdevName, IdevName, tmpStr, tmpFldrName
 
 	NewDataFolder/O/S root:ImportedData
-	//need to create location using File name, if the file contains more than one data set...
-	if(FoundSasEntries>1)
-		tmpStr=IN2G_CreateUserName((RemoveEnding(RemoveListItem(ItemsInList(sourceFileName,".")-1,sourceFileName,"."),".")),28,0,11)
-		NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(tmpStr,1)))			//use file name as input
-	endif
-	//create place for data
-	NewDataFolder/O/S $(IN2G_RemoveExtraQuote(DataTitleStr,1,1))
+//	//need to create location using File name, if the file contains more than one data set...
+//	if(FoundSasEntries>1)
+//		tmpStr=IN2G_CreateUserName((RemoveEnding(RemoveListItem(ItemsInList(sourceFileName,".")-1,sourceFileName,"."),".")),28,0,11)
+//		NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(tmpStr,1)))			//use file name as input
+//	endif
+//	//create place for data
+	string tmopFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 1, 11)
+	NewDataFolder/O/S $(tmopFlrdName)
 	//need to add one more layer and in this case, it is the last item in the path
 	string NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-1,PathToDataSet, ":")
 	NewDataName = IN2G_RemoveExtraQuote(NewDataName,1,1)
@@ -2815,14 +2832,32 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		else
 			tmpFldrName = NewDataName
 		endif
+		//NewDataFolder/O/S $(tmpFldrName)
+	else
+		//take the name of folder above... 
+		NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-2,PathToDataSet, ":")
+		tmpFldrName = IN2G_RemoveExtraQuote(NewDataName,1,1)			//this is in case the default name sasdata was used. In this case file name is the right thing.  
+		//NewDataFolder/O/S $(NewDataName)
+	endif
+	if(FoundSasEntries>1)
 		NewDataFolder/O/S $(tmpFldrName)
+	else
+		NewDataName = IN2G_RemoveExtraQuote(DataTitleStr,1,1)
 	endif
 	print "Created new data folder : "+ GetDataFOlder(1)
 	string NewFolderFullPath=GetDataFolder(1)
 	setDataFolder PathToDataSet
 	//get basic waves, Q and I must be in attributes
 	IName	  	= NEXUS_GetNXAttributeInIgor(PathToDataSet, "signal")
-	QName		= NEXUS_GetNXAttributeInIgor(PathToDataSet, "I_axes")
+	QName		= NEXUS_GetNXAttributeInIgor(PathToDataSet, "I_axes")	
+	if(strlen(QName)<1)
+		QName = NEXUS_GetNXAttributeInIgor(PathToDataSet, "axes")
+		if(strlen(QName)>0)
+			print "This looks like obsolete NXcanSAS file. Loading anyway..." 
+		else
+			abort "Missing correct frefinition of I_axes or axes, cannot load this file. failed in : "+"NEXUS_ReadOne1DcanSASDataset function"
+		endif
+	endif
 	Wave/Z Iwv = $(IName)
 	if(!WaveExists(Iwv))
 		Wave/Z Iwv = $(IName+"0")		//I cannot be used as name, so in Igor it shoudl be I0
@@ -2838,9 +2873,17 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		endif	
 	endif
 	IdevName	= NEXUS_GetNXAttributeInIgor(PathToDataSet, "I_uncertainties")	
-	if(strlen(IdevName)<1)		//not there, hm... There is other way:
-		tmpStr = note(Iwv)
-		IdevName	= StringByKey("uncertainties", tmpStr, "=", "\r")
+	if(strlen(IdevName)<1)		//not there, hm... NIST seems to be using uncertainty:
+		tmpStr = NEXUS_GetNXAttributeInIgor(PathToDataSet, "I_uncertainty")
+		IdevName	= StringByKey("uncertainty", tmpStr, "=", "\r")
+		if(strlen(IdevName)<1)		//not there, hm... There is other way:
+			tmpStr = note(Iwv)
+			IdevName	= StringByKey("uncertainties", tmpStr, "=", "\r")
+			if(strlen(IdevName)<1)		//not there, hm... NIST seems to be using uncertainty:
+				tmpStr = note(Iwv)
+				IdevName	= StringByKey("uncertainty", tmpStr, "=", "\r")
+			endif
+		endif
 	endif
 	Wave/Z IdevWv=$(IdevName)
 	//This is in attribute to Q

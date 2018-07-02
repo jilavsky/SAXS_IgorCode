@@ -983,8 +983,8 @@ Static Function H5GW__HDF5ReadAttributes(fileID, hdf5Path, baseName)
 	String S_HDF5ListGroup
 	HDF5ListGroup/F/R/TYPE=(group_attributes_type)  fileID, hdf5Path		//	TYPE=1 reads groups
 	String/G group_name_list = hdf5Path + ";" + S_HDF5ListGroup
-	
-	Variable length = ItemsInList(group_name_list)
+ 
+ 	Variable length = ItemsInList(group_name_list)
 	Variable index, i_attr
 	String group_name
 	String attr_name_list, attr_name, attribute_str
@@ -995,7 +995,8 @@ Static Function H5GW__HDF5ReadAttributes(fileID, hdf5Path, baseName)
 		attribute_str = H5GW__HDF5AttributesToString(fileID, group_name, group_attributes_type)
 		if ( strlen(attribute_str) > 0 )
 			// store these attributes in the wavenote of a unique wave in the group
-			tmpStr = (ReplaceString("/", group_name, ":"))			//should be something like :_Test...etc...
+			tmpStr = ReplaceString(":", group_name, "_")		//fix for Igor replacing : in names with _
+			tmpStr = (ReplaceString("/", tmpStr, ":"))			//should be something like :_Test...etc...
 			tmpStr = H5GW_PossiblyQuoteNXPathinIgor(tmpStr)
 			subdir = ":" + baseName + tmpStr
 			SetDataFolder $subdir
