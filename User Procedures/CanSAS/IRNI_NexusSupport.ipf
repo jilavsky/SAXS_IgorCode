@@ -1,12 +1,13 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.08
+#pragma version = 1.09
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.09 fixes and modifications for DAWN creative data layouts. It now handles all canSAS examples, DAWN, sasView (Mantid) and hopefully others. 
 //1.08 fixes for sasView and other (old) Nexus file types. This is a mess... Stupid mess... 
 //1.07 Fixed export to use 1/Angstrom for Qs and change units=1/A to units=1/angstrom per units definition in NXcanSAS Nexus definition 
 //modified export file extensions to .h5 which seems to be needed for sasView 
@@ -2819,7 +2820,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 //		NewDataFolder/O/S $("root:ImportedData:"+PossiblyQUoteName(CleanupName(tmpStr,1)))			//use file name as input
 //	endif
 //	//create place for data
-	string tmopFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 1, 11)
+	string tmopFlrdName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(DataTitleStr,1,1),28, 0, 11)
 	NewDataFolder/O/S $(tmopFlrdName)
 	//need to add one more layer and in this case, it is the last item in the path
 	string NewDataName = stringFromList(ItemsInList(PathToDataSet,":")-1,PathToDataSet, ":")
@@ -2894,11 +2895,71 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	//copy them to new place using qrs naming system:
 	//new name is q_NewDataName  etc...
 	//string newNameShort=(DataTitleStr+NewDataName)
-	DUplicate/O Iwv, $(NewFolderFullPath+PossiblyQuoteName(CleanupName("r_"+NewDataName[0,28],1)))
-	Wave NewIwv=$(NewFolderFullPath+PossiblyQuoteName(CleanupName("r_"+NewDataName[0,28],1)))
+	//now we need to deal with DAWN weird case wehre data are stacked in one data group - mutiple data for intensity and Idev, one Q and Qdev
+	if(DimSize(Iwv, 1)>0)
+		print "*** WARNING: Found multiple data stored in one sasdata group. This is not strictly acording to NXcanSAS standard, but we can deal with it. ***"
+		variable ii
+		DFREF dataDFR = GetDataFolderDFR()		// Save
+		For(ii=0;ii<DimSize(Iwv, 0);ii+=1)
+			//write the data here... 
+			Duplicate/Free/R=[ii][] Iwv, tmpIwv
+			Redimension/N=(dimsize(tmpIwv,1)) tmpIwv
+			if(WaveExists(QdevWv))	//presume also IdeWv exists...
+				Duplicate/Free/R=[ii][] IdevWv, IdevWvIwv
+				Redimension/N=(dimsize(IdevWvIwv,1)) IdevWvIwv
+				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, IdevWv=IdevWvIwv, QdevWv=QdevWv, indx=ii )
+			elseif(WaveExists(IdevWv))
+				Duplicate/Free/R=[ii][] IdevWv, IdevWvIwv
+				Redimension/N=(dimsize(IdevWvIwv,1)) IdevWvIwv
+				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, IdevWv=IdevWvIwv, indx=ii)
+			else
+				NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, tmpIwv, Qwv, indx=ii )
+			endif
+			SetDataFolder dataDFR		// and restore
+		endfor	
+	else	//classical, standard one data in one sasdata group, correct NXcanSAS file. 
+		if(WaveExists(QdevWv))	//presume also IdeWv exists...
+			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv, QdevWv=QdevWv )
+		elseif(WaveExists(IdevWv))
+			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv, IdevWv=IdevWv )
+		else
+			NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet, InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, Iwv, Qwv )
+		endif
+	endif
+
+
+	SetDataFolder saveDFR		// and restore
+	return NewDataName
+end
+
+
+
+
+static Function NEXUS_WriteOutNexusData(NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet,InclNX_SasIns,InclNX_SASSam,InclNX_SASNote,  Iwv, Qwv, [IdevWv, QdevWv, indx] )
+	string NewDataName, NewFolderFullPath, sourceFileName, PathToDataSet
+	wave Iwv, Qwv, IdevWv, QdevWv
+	variable InclNX_SasIns,InclNX_SASSam,InclNX_SASNote, indx
+
+	variable HaveIdev, HaveQdev, NewFLdrIndx
+	HaveIdev= !ParamIsDefault(IdevWv) 
+	HaveQdev= !ParamIsDefault(QdevWv) 
+	NewFLdrIndx = ParamIsDefault(indx) ? -1 : indx
+
+	string AppendToName=""
+	if(NewFLdrIndx>=0)
+		NewFolderFullPath = NewFolderFullPath+"DataSet"+num2str(indx)
+		NewDataFolder/O $(NewFolderFullPath)
+		NewFolderFullPath = NewFolderFullPath+":"
+		AppendToName="_d"+num2str(indx)
+	endif
 	
-	DUplicate/O Qwv, $(NewFolderFullPath+PossiblyQuoteName(CleanupName("q_"+NewDataName[0,28],1)))
-	Wave NewQwv=$(NewFolderFullPath+PossiblyQuoteName(CleanupName("q_"+NewDataName[0,28],1)))
+	
+	string tempStrName=IN2G_CreateUserName(IN2G_RemoveExtraQuote(NewDataName,1,1),26, 1, 11)+AppendToName
+	DUplicate/O Iwv, $(NewFolderFullPath+PossiblyQuoteName("r_"+tempStrName))
+	Wave NewIwv=$(NewFolderFullPath+PossiblyQuoteName("r_"+tempStrName))
+	
+	DUplicate/O Qwv, $(NewFolderFullPath+PossiblyQuoteName("q_"+tempStrName))
+	Wave NewQwv=$(NewFolderFullPath+PossiblyQuoteName("q_"+tempStrName))
 	//fix units, if needed... Following loosely what SASView is using... https://groups.google.com/forum/#!topic/cansas-dfwg/pItbRKXeFfE
 	//https://www.google.com/url?q=https%3A%2F%2Fgithub.com%2FSasView%2Fsasview%2Fblob%2Fmaster%2Fsrc%2Fsas%2Fsascalc%2Fdata_util%2Fnxsunit.py&sa=D&sntz=1&usg=AFQjCNFYvjzNK4FalmyIKxi-lswwvv0QWQ
 	string Qunits =  StringByKey("units", note(Qwv), "=", "\r")
@@ -2935,23 +2996,23 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 		Intunits="Units=Arbitrary;"	
 	endif
 	print "Imported data from  : "+ sourceFileName
-	print "Created new I and Q data  : "+ PossiblyQuoteName(CleanupName("r_"+NewDataName[0,28],1)) +"   "+PossiblyQuoteName(CleanupName("q_"+NewDataName[0,28],1))
+	print "Created new I and Q data  : "+ PossiblyQuoteName("r_"+tempStrName) +"   "+PossiblyQuoteName("q_"+tempStrName)
 	print "Found Intensity units  : "+ StringByKey("units", note(Iwv), "=", "\r")+"   converted to : "+Intunits
 	print "Found Q units  : "+ Qunits+ "   converted to [1/A] by scaling using conversion factor of : "+ConversionFactorQ
 
 
-	if(WaveExists(IdevWv))
-		DUplicate/O IdevWv, $(NewFolderFullPath+PossiblyQuoteName(CleanupName("s_"+NewDataName[0,28],1)))
-		Wave NewIdevwv=$(NewFolderFullPath+PossiblyQuoteName(CleanupName("s_"+NewDataName[0,28],1)))
-		print "Created new Idev data  : "+ PossiblyQuoteName(CleanupName("s_"+NewDataName[0,28],1)) 
+	if(HaveIdev)
+		DUplicate/O IdevWv, $(NewFolderFullPath+PossiblyQuoteName("s_"+tempStrName))
+		Wave NewIdevwv=$(NewFolderFullPath+PossiblyQuoteName("s_"+tempStrName))
+		print "Created new Idev data  : "+ PossiblyQuoteName("s_"+tempStrName) 
 	endif
-	if(WaveExists(QdevWv))
-		DUplicate/O QdevWv, $(NewFolderFullPath+PossiblyQuoteName(CleanupName("w_"+NewDataName[0,28],1)))
-		Wave NewQdevwv=$(NewFolderFullPath+PossiblyQuoteName(CleanupName("w_"+NewDataName[0,28],1)))
+	if(HaveQdev)
+		DUplicate/O QdevWv, $(NewFolderFullPath+PossiblyQuoteName("w_"+tempStrName))
+		Wave NewQdevwv=$(NewFolderFullPath+PossiblyQuoteName("w_"+tempStrName))
 		if(stringmatch(Qunits,"nm*"))		//assume Q in nm^-1, need to scale by 10x
 			NewQdevwv*=10
 		endif
-		print "Created new Qres data  : "+ PossiblyQuoteName(CleanupName("w_"+NewDataName[0,28],1)) 
+		print "Created new Qres data  : "+ PossiblyQuoteName("w_"+tempStrName)
 	endif
 	//main wave exist.
 	
@@ -2959,6 +3020,7 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	string WaveNoteStr="Imported_to_Irena="+date()+" "+time()+";"
 	WaveNoteStr+="Imported_from_source="+sourceFileName+";"
 	//title and definition are one level higher above the data.
+	string tmpStr
 	tmpStr = RemoveListItem(ItemsInList(PathToDataSet,":")-1, PathToDataSet, ":" )
 	Wave/T/Z tmpWv=$(tmpStr +"title")
 	if(WaveExists(tmpWv))
@@ -3001,9 +3063,6 @@ static Function/T NEXUS_ReadOne1DcanSASDataset(PathToDataSet, DataTitleStr, sour
 	if(WaveExists(NewIdevwv))
 		Note /K/NOCR NewIdevwv , Intunits
 	endif
-
-	SetDataFolder saveDFR		// and restore
-	return NewDataName
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
