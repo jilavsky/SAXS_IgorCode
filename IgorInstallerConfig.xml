@@ -158,39 +158,6 @@
 			</Package>
 			<VersionComment>Adds upgraded version of Size Distribution tool.</VersionComment>
 		</release>
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/April2018Beta.zip</SourceFileAddress>
-			<Package>
-				<name>Irena</name>
-				<version>2.66</version>
-				<PackageList>IrenaPckg.xml</PackageList>
-				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>Nika</name>
-				<version>1.79</version>
-				<PackageList>NikaPckg.xml</PackageList>
-				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>Indra</name>
-				<version>1.94</version>
-				<PackageList>IndraPckg.xml</PackageList>
-				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop32bit</name>
-				<version>1</version>
-				<PackageList>xopPckg32.xml</PackageList>
-				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
-			</Package>
-			<Package>
-				<name>xop64bit</name>
-				<version>1</version>
-				<PackageList>xopPckg64.xml</PackageList>
-				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
-			</Package>
-			<VersionComment>Support Long names for Igor 8. Fix 9ID WAXS bug.</VersionComment>
-		</release>
 		<release name="May2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
 			<Package>
