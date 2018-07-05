@@ -17,7 +17,7 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>January2018</current_release>
+		<current_release>July2018</current_release>
 		<current_beta_release>June2018</current_beta_release>
 	</VersionCheck>
 
