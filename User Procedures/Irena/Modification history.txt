@@ -14,6 +14,7 @@ Modification history:
 Igor 8.0 tested. 
 Size distribution - added power law slope to Background so one can subtract also low-q power law slope. Added buttons to perform power law fit and background fit. Added option to fit the parameters when data are added to the tool.
 Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
+Nexus Importer - fixed and modified to be able to import NXcanSAS files from DAWN and Mantid. 
 Unified fit - modified how the limits and steps are handled when user set value to 0. Fixed Uncertainty analysis in Unified fit which seems to have failed on Igor 8. 
 Created depository for user contributed form factors on Github: https://github.com/jilavsky/SAXS_IgorCode/tree/master/User%20form%20factors%20for%20Irena
 
