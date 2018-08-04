@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.28
+#pragma version=1.29
 Constant IR2SversionNumber=1.28
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,8 @@ Constant IR2SversionNumber=1.28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.29 fix probem with DSM data folders showing as QRS data folders which caused issues. 
 //1.28 added better regular expression cheat sheet on the panel. 
 //1.27 added getHelp button calling to www manual
 //1.26 added in popup grandparent folder to the parent folder to reduce scope. 
@@ -599,7 +601,7 @@ Function/T IR2S_CheckForRightQRSTripletWvs(ResultingWave, AllowQROnly)
 				matchX=0
 				matchE=0
 				ty=stringFromList(j,allRwaves)[1,inf]
-				if(stringmatch(";"+AllWaves, ";*q"+ty+";*" )||stringmatch(";"+AllWaves, ";*m"+ty+";*" )||stringmatch(";"+AllWaves, ";*t"+ty+";*" )||stringmatch(";"+AllWaves, ";*d"+ty+";*" )||stringmatch(";"+AllWaves, ";*az"+ty+";*" ))
+				if((stringmatch(";"+AllWaves, ";*q"+ty+";*" )||stringmatch(";"+AllWaves, ";*m"+ty+";*" )||stringmatch(";"+AllWaves, ";*t"+ty+";*" )||stringmatch(";"+AllWaves, ";*d"+ty+";*" )||stringmatch(";"+AllWaves, ";*az"+ty+";*" )&&!stringmatch(";"+AllWaves, ";*DSM"+ty+";*" )))
 					matchX=1
 				endif
 				if(stringmatch(";"+AllWaves,";*s"+ty+";*" ))
