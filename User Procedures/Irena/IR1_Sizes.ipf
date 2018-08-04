@@ -788,11 +788,6 @@ Function IR1R_SelectAndCopyData()		//this function selects data to be used and c
 		PopupMenu SizesPowerToUse, disable=!(UseNoErrors), WIN=IR1R_SizesInputPanel
 	endif
 	
-//	IR1L_AppendAnyText("\r************************************\r")
-//	IR1L_AppendAnyText("Started Size distribution fitting procedure")
-//	IR1L_AppendAnyText("Data:  \t"+DataFolderName)
-	
-
 	SVAR/Z SlitSmearedData=root:Packages:Sizes:SlitSmearedData
 	If (!SVAR_Exists(SlitSmearedData))
 		string/G SlitSmearedData="No"
@@ -3227,7 +3222,7 @@ Function  IR1R_SizesInputGraphFnct()
 	Checkbox LogDistVolumeAxis, pos={250,20}, title="Log Particle Volume axis?", proc = IR1R_GraphCheckboxes, help={"Check to have logarithmic particle voilume distribution (right) axis"}
 	Checkbox LogDistVolumeAxis, variable=root:Packages:Sizes:GraphLogRightAxis
 	ModifyGraph log=1
-	Label left "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label left "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity  ["+IN2G_ReturnUnitsForYAxis(IntensityOriginal)+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	ModifyGraph lblPos(left)=50
 	Label bottom "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	ModifyGraph fSize=str2num(IN2G_LkUpDfltVar("AxisLabelSize"))

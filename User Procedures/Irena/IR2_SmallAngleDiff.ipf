@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.18
+#pragma version = 1.19
 Constant IR2DversionNumber=1.15
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2DversionNumber=1.15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 added units to Intensity
 //1.18 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.17 modified fitting to include Igor display with iterations /N=0/W=0
 //1.16  removed unused functions
@@ -1659,7 +1660,7 @@ Proc  IR2D_LogLogPlotSAD()
 	endif
 	ModifyGraph mirror=1
 	ShowInfo
-	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity ["+IN2G_ReturnUnitsForYAxis(OriginalIntensity)+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label left LabelStr
 	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label bottom LabelStr

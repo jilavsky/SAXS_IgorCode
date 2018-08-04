@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.39
+#pragma version=2.40
 #include <HDF5 Browser>
 Constant IR1IversionNumber = 2.37
 Constant IR1IversionNumber2 = 2.36
@@ -13,7 +13,8 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.39 made long names cabale for Igor 8 when user chooses. 
+//2.40 minor fixes for importing Slit smeared data. 
+//2.39 made long names capable for Igor 8 when user chooses. 
 //2.38 Modified Screen Size check to match the needs
 //2.37 added Plot button to SAXS importer also. 
 //2.36 added GetHelp button
@@ -680,24 +681,24 @@ Function IR1I_ProcessImpWaves(selectedFile)
 		if (testIntStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempIntensity
 			//print "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
-			note/NOCR TempIntensity, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
+			note/NOCR TempIntensity, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";Data header (1st line)="+HeaderFromData+";"
 			//print note(TempIntensity)
 			numOfInts+=1
 		endif
 		if (testQvecStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempQvector
-			note/NOCR TempQvector, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
+			note/NOCR TempQvector, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";Data header (1st line)="+HeaderFromData+";"
 			numOfQs+=1
 		endif
 		if (testErrStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempError
-			note/NOCR TempError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
+			note/NOCR TempError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";Data header (1st line)="+HeaderFromData+";"
 			numOfErrs+=1
 			DataContainErrors=1
 		endif
 		if (testQErrStr&&WaveExists(CurrentWave))
 			duplicate/O CurrentWave, TempQError
-			note TempQError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";"+HeaderFromData+";"
+			note TempQError, "Data imported from folder="+DataPathName+";Data file name="+selectedFile+";Data header (1st line)="+HeaderFromData+";"
 			numOfQErrs+=1
 		endif
 		if(!WaveExists(CurrentWave))
@@ -821,6 +822,25 @@ Function IR1I_ProcessImpWaves(selectedFile)
 		endif
 		TempQError = sqrt(TempQError[p]^2+SlitLength^2)
 	endif
+	//add slit length if imported data are slit smeared... 
+	NVAR ImportSMRdata=root:Packages:ImportData:ImportSMRdata
+	if(ImportSMRdata)
+		if(SlitLength<0.0001)
+			//SLit length not set, we need tyo get that set by user...
+			variable SlitLengthLocal
+			Prompt SlitLengthLocal, "Bad slit length found, need correct value in [1/A]"
+			DoPrompt "Missing Slit length input needed", SlitLengthLocal
+			if(V_Flag)
+				abort
+			endif
+			SlitLength = SlitLengthLocal
+		endif
+		note/NOCR TempIntensity, "Slitlength="+num2str(SlitLength)+";"	
+		if(WaveExists(TempError))		
+			note/NOCR TempError, "Slitlength="+num2str(SlitLength)+";"				
+		endif		
+	endif
+	
 	//now remove negative intensities. If there are still some left and asked for. 
 	NVAR RemoveNegativeIntensities = root:packages:ImportData:RemoveNegativeIntensities
 	if(RemoveNegativeIntensities)
@@ -944,8 +964,8 @@ Function IR1I_ProcessImpWaves(selectedFile)
 		NewEName = CleanupName(NewEName, 1 )
 	endif
 	if(stringMatch(NewQErrorWaveName,"*<fileName>*")==0)
-		NewQEName =IR1I_RemoveBadCharacters(NewQEName)
-		NewQEName = CleanupName(NewQErrorWaveName, 1 )
+		NewQEName =IR1I_RemoveBadCharacters(NewQErrorWaveName)
+		NewQEName = CleanupName(NewQEName, 1 )
 		NewQEName=IR1I_TrunkateName(NewQEName,TrunkateStart,TrunkateEnd,RemoveStringFromName)
 	else
 		TempFirstPart = NewQErrorWaveName[0,strsearch(NewQErrorWaveName, "<fileName>", 0 )-1]
@@ -1611,6 +1631,13 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 			if(UseIndra2Names)
 				ImportSMRdata=1
 			endif
+			DoAlert /T="Just checking..." 1, "Do you really want to slit smear imported data?"
+			if(V_Flag>1)
+				ImportSMRdata=0
+				SetVariable SlitLength, disable=1
+				NVAR SlitSmearData = root:Packages:ImportData:SlitSmearData
+				SlitSmearData = 0
+			endif
 		else
 			SetVariable SlitLength, disable=1
 			if(UseIndra2Names)
@@ -1679,6 +1706,7 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 			UseFileNameAsFolder = 1
 			UseQRSNames = 0
 			UseQISNames = 0
+			SetVariable SlitLength, disable=0
 			//UseIndra2Names = 0
 			if (UseIndra2Names)
 				NewDataFolderName = "root:USAXS:ImportedData:<fileName>:"	
@@ -1688,6 +1716,7 @@ Function IR1I_CheckProc(ctrlName,checked) : CheckBoxControl
 				NewQErrorWavename = "SMR_dQ"
 			endif
 		else
+			SetVariable SlitLength, disable=1
 			if (UseIndra2Names)
 				NewDataFolderName = "root:USAXS:ImportedData:<fileName>:"	
 				NewIntensityWaveName= "DSM_Int"

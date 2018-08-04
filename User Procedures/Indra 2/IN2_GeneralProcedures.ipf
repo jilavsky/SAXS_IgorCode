@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.13
+#pragma version = 2.14
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -15,9 +15,9 @@ constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
       //For releases uncomment the next line and set to correct version number:
-Strconstant ManualVersionString = "en/1.3.3/"					//1.3.3 is July2018 release
+//Strconstant ManualVersionString = "en/1.3.3/"					//1.3.3 is July2018 release
       //For development version uncomment next line, it points to latest (development) version of manuals:
-//Strconstant ManualVersionString = "en/latest/"
+Strconstant ManualVersionString = "en/latest/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -36,6 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.14 added function IN2G_ReturnUnitsForYAxis(Ywave) which creates units string for Intensity vs Q Intensity axis based on wave note. 
 //2.13 Get the Igor8 long files names support sorted out. 
 //2.12 redirect to new VersionCheck location.
 //2.11 Added IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) to handle names of different lengts
@@ -5359,6 +5360,31 @@ Function IN2G_ReplaceNegValsByNaNWaves(Wv1,wv2,wv3)			//replaces Negative values
 	endfor
 end
 
+//************************************************************************************************************************
+//************************************************************************************************************************
+Function/S IN2G_ReturnUnitsForYAxis(Ywave)
+	wave Ywave
+	//this function creates string with units for Y wave for graphs. Uses units string in wave note, if exists
+	string OldNote=note(Ywave)
+	string Yunits=""
+	if(stringmatch(nameofWave(Ywave),"*Intensity*"))
+		Yunits = "cm\\S-1\\M"			//this is default for intensity
+	endif
+	if(strlen(StringByKey("Units", OldNote,"="))>0)			//we have units string
+		strswitch(StringByKey("Units", OldNote,"="))			// string switch
+			case "cm2/g":			// execute if case matches expression
+				Yunits = "cm\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"/g\\M"
+				break		// exit from switch
+			case "cm2/cm3":			// execute if case matches expression
+				Yunits = "cm\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"/cm\\S3\\M"
+				break					// exit from switch
+			default:					// optional default expression executed
+				Yunits = "Arbitrary"
+		endswitch
+		
+	endif
+	return Yunits
+end
 //************************************************************************************************************************
 //************************************************************************************************************************
 

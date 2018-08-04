@@ -2616,7 +2616,7 @@ static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
 			continueLoop=0
 		endif	
 	
-	while(i<500 && continueLoop)
+	while(i<100 && continueLoop)
 	xmlclosefile(fileID,0)	
 	Redimension/N=(i-1,-1) NewCard, NewCard_hklStr
 	NewCard_hklStr = "("+num2str(NewCard[p][1])+num2str(NewCard[p][2])+num2str(NewCard[p][3])+")"

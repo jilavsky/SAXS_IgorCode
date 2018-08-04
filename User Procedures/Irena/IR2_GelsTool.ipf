@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.14
+#pragma version=4.15
 Constant IR2HversionNumber = 4.13
 
 
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.15 added display of units for Intensity
 //4.14 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //4.13 added getHelp button calling to www manual
 //4.12 changes for panel scaling
@@ -1398,8 +1399,8 @@ static Function IR2H_AppendModelToMeasuredData()
 	ModifyGraph/W=IR2H_LogLogPlotGels log(left)=1
 	ModifyGraph/W=IR2H_LogLogPlotGels log(bottom)=1
 	ModifyGraph/W=IR2H_LogLogPlotGels mirror(bottom)=1
-	Label/W=IR2H_LogLogPlotGels left "Intensity [cm\\S-1\\M]"
-	Label/W=IR2H_LogLogPlotGels bottom "Q [A\\S-1\\M]"
+	Label/W=IR2H_LogLogPlotGels left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity ["+IN2G_ReturnUnitsForYAxis(Intensity)+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+	Label/W=IR2H_LogLogPlotGels bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	ErrorBars/W=IR2H_LogLogPlotGels OriginalIntensity Y,wave=(root:Packages:Gels_Modeling:OriginalError,root:Packages:Gels_Modeling:OriginalError)
 	Legend/W=IR2H_LogLogPlotGels/N=text0/K
 	Legend/W=IR2H_LogLogPlotGels/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\s(OriginalIntensity) Experimental intensity"
@@ -1413,7 +1414,7 @@ static Function IR2H_AppendModelToMeasuredData()
 		checkdisplayed /W=IR2H_IQ4_Q_PlotGels OriginalIntQ3
 		if(V_Flag)
 			ErrorBars/W=IR2H_IQ4_Q_PlotGels OriginalIntQ3 Y,wave=(root:Packages:Gels_Modeling:OriginalErrQ3,root:Packages:Gels_Modeling:OriginalErrQ3)
-			Label/W=IR2H_IQ4_Q_PlotGels left "Intensity * Q^3"
+			Label/W=IR2H_IQ4_Q_PlotGels left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q^3"
 			Legend/W=IR2H_IQ4_Q_PlotGels/N=text0/K
 			Legend/W=IR2H_IQ4_Q_PlotGels/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\s(OriginalIntQ3) Experimental intensity * Q^3"
 			AppendText/W=IR2H_IQ4_Q_PlotGels "\\s(DBModelIntensityQ3) Model Calculated intensity * Q^3"
@@ -1425,7 +1426,7 @@ static Function IR2H_AppendModelToMeasuredData()
 		checkdisplayed /W=IR2H_IQ4_Q_PlotGels OriginalIntQ4
 		if(V_Flag)
 			ErrorBars/W=IR2H_IQ4_Q_PlotGels OriginalIntQ4 Y,wave=(root:Packages:Gels_Modeling:OriginalErrQ4,root:Packages:Gels_Modeling:OriginalErrQ4)
-			Label/W=IR2H_IQ4_Q_PlotGels left "Intensity * Q^4"
+			Label/W=IR2H_IQ4_Q_PlotGels left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q^4"
 			Legend/W=IR2H_IQ4_Q_PlotGels/N=text0/K
 			Legend/W=IR2H_IQ4_Q_PlotGels/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\s(OriginalIntQ4) Experimental intensity * Q^4"
 			AppendText/W=IR2H_IQ4_Q_PlotGels "\\s(DBModelIntensityQ4) Model Calculated intensity * Q^4"
@@ -1446,8 +1447,8 @@ static Function IR2H_AppendModelToMeasuredData()
 	ModifyGraph/W=IR2H_SI_Q2_PlotGels log=0
 	ModifyGraph/W=IR2H_SI_Q2_PlotGels mirror=1
 	ModifyGraph/W=IR2H_SI_Q2_PlotGels mode(DBModelIntSqrtN1)=0
-	Label/W=IR2H_SI_Q2_PlotGels left "1/sqrt(Intensity)"
-	Label/W=IR2H_SI_Q2_PlotGels bottom "Q^2 [A\\S-2\\M]"
+	Label/W=IR2H_SI_Q2_PlotGels left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"1/sqrt(Intensity)"
+	Label/W=IR2H_SI_Q2_PlotGels bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q^2 [A\\S-2\\M]"
 	ErrorBars/W=IR2H_SI_Q2_PlotGels OriginalSqrtIntN1 Y,wave=(root:Packages:Gels_Modeling:OriginalSqrtErrN1,root:Packages:Gels_Modeling:OriginalSqrtErrN1)
 	Legend/W=IR2H_SI_Q2_PlotGels/N=text0/K
 	Legend/W=IR2H_SI_Q2_PlotGels/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\s(OriginalSqrtIntN1) Experimental intensity ^ -(1/2)"
@@ -1591,8 +1592,8 @@ Proc  IR2H_SI_Q2_PlotGels()
 	ModifyGraph msize(OriginalSqrtIntN1)=1
 	ModifyGraph log=0
 	ModifyGraph mirror=1
-	Label left "1/sqrt(Intensity)"
-	Label bottom "Q^2 [A\\S-2\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"1/sqrt(Intensity)"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q^2 [A\\S-2\\M]"
 	ErrorBars/Y=1 OriginalSqrtIntN1 Y,wave=(OriginalSqrtErrN1,OriginalSqrtErrN1)
 	ShowInfo
 	TextBox/W=IR2H_SI_Q2_PlotGels/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
@@ -1636,9 +1637,9 @@ Proc  IR2H_IQ4_Q_PlotGels()
 	ModifyGraph log=0
 	ModifyGraph mirror=1
 	if(UseSlitSmearedData)
-		 Label left "Intensity * Q^3"
+		 Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q^3"
 	else
-		 Label left "Intensity * Q^4"
+		 Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q^4"
 	endif
 	Label bottom "Q [A\\S-1\\M]"
 	SetDataFolder fldrSav
@@ -1666,8 +1667,8 @@ Proc  IR2H_LogLogPlotGels()
 	ModifyGraph log=1
 	ModifyGraph mirror=1
 	ShowInfo
-	Label left "Intensity [cm\\S-1\\M]"
-	Label bottom "Q [A\\S-1\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity ["+IN2G_ReturnUnitsForYAxis(OriginalIntensity)+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Legend/W=IR2H_LogLogPlotGels /N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\s(OriginalIntensity) Experimental intensity"
 	TextBox/W=IR2H_LogLogPlotGels/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR2H_LogLogPlotGels/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	

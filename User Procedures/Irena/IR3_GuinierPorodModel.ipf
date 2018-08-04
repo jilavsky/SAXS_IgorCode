@@ -1302,7 +1302,7 @@ Function  IR3GP_LogLogPlotU()
 		ModifyGraph log=1
 		ModifyGraph mirror=1
 		ShowInfo
-		String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+		String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity  ["+IN2G_ReturnUnitsForYAxis(OriginalIntensity)+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		Label left LabelStr
 		LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 		Label bottom LabelStr
