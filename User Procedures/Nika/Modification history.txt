@@ -12,6 +12,10 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 ********************************************
+1.81
+Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
+
+
 1.80 7/7/2018
 Igor 8.0 tested. 
 Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 

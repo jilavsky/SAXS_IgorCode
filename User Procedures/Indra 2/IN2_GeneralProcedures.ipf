@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.14
+#pragma version = 2.15
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -36,6 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.15 minor modification of some functions to seep it up a bit... 
 //2.14 added function IN2G_ReturnUnitsForYAxis(Ywave) which creates units string for Intensity vs Q Intensity axis based on wave note. 
 //2.13 Get the Igor8 long files names support sorted out. 
 //2.12 redirect to new VersionCheck location.
@@ -4417,20 +4418,14 @@ Function/T IN2G_CreateListOfItemsInFolder(df,item)			//Generates list of items i
 	String df
 	variable item										//1-directories, 2-waves, 4 - variables, 8- strings
 	
-	//String dfSave
-	//dfSave=GetDataFolder(1)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string MyList=""
 	DFREF TestDFR=$(df)
 	if (DataFolderRefStatus(TestDFR))
-	//	SetDataFolder $df
-		//DataFolderDir(mode [, dfr ] )
-		MyList= IN2G_ConvertDataDirToList(DataFolderDir(item, TestDFR))	//here we convert the WAVES:wave1;wave2;wave3 into list
+		MyList= IN2G_ConvertDataDirToList(DataFolderDir(item, TestDFR))				//here we convert the WAVES:wave1;wave2;wave3 into list
 		return MyList
-	//	SetDataFolder $dfSave
 	else
 		return ""
-	//	MyList=""
 	endif
 end
 

@@ -1,8 +1,8 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.32
+#pragma version=2.33
 //#include  <TransformAxis1.2>
-Constant IR1PversionNumber=2.32
+Constant IR1PversionNumber=2.33
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant IR1PversionNumber=2.32
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.33 remove data type CanSAS as option, that is likely never used. Confuses everyone. 
 //2.32 modified IR1P_AttachLegend to limit max number of items in Legend
 //2.31 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //2.30 removed unused functions, rmeoved use of TransformAxis and replaced with Free axis and hokk function. Better. 
@@ -109,10 +110,14 @@ Function IR1P_ControlPanelFunc()
 	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,200},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
-	string UserDataTypes="Isas;"
-	string UserNameString="CanSAS"
-	string XUserLookup="Isas:Qsas;"
-	string EUserLookup="Isas:Idev;"
+//	string UserDataTypes="Isas;"
+//	string UserNameString="CanSAS"
+//	string XUserLookup="Isas:Qsas;"
+//	string EUserLookup="Isas:Idev;"
+	string UserDataTypes=""
+	string UserNameString=""
+	string XUserLookup=""
+	string EUserLookup=""
 
 	IR2C_AddDataControls("GeneralplottingTool","IR1P_ControlPanel","M_DSM_Int;DSM_Int;M_SMR_Int;SMR_Int","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,0)
 	Button ScriptingTool,pos={302,138},size={95,20}, proc=IR1P_InputPanelButtonProc,title="Scripting tool", help={"Start scripting tool to add multiple data at once"}

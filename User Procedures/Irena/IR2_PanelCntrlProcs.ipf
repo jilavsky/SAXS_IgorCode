@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.46
+#pragma version = 1.47
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.47 sped up popup string generation by at least 50%, increased the time for use of cached values to 10 seconds. 
 //1.46 Added to Listbox procedure IR3C_ListBoxProc rigth click for Match Blank and Match EMpty. 
 //1.45 try to catch bug which pops debugger when panel is being killed. 
 //1.44 Added right alignemnet of data path string to show end of the string if it is too long. 
@@ -909,18 +910,20 @@ end
 Function/T IR2P_CleanUpPackagesFolder(FolderList)
 		string FolderList
 		
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		variable i
-		string tempstr
-		string newList=""
-		For(I=0;i<ItemsInList(FolderList , ";" );i+=1)
-			tempstr=StringFromList(i, FolderList , ";")
-			if(!(stringmatch(Tempstr,"root:packages:*")||stringmatch(Tempstr,"root:raw:*")))
-				NewList+=Tempstr+";"
-			endif
-		endfor
-	return newList
-//	return FolderList
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	FolderList = GrepList(FolderList, "root:packages" ,1 , ";" )
+	FolderList = GrepList(FolderList, "root:raw" ,1 , ";" )
+//		variable i
+//		string tempstr
+//		string newList=""
+//		For(I=0;i<ItemsInList(FolderList , ";" );i+=1)
+//			tempstr=StringFromList(i, FolderList , ";")
+//			if(!(stringmatch(Tempstr,"root:packages:*")||stringmatch(Tempstr,"root:raw:*")))
+//				NewList+=Tempstr+";"
+//			endif
+//		endfor
+//	return newList
+	return FolderList
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -970,7 +973,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	SVAR IntDf=$(CntrlLocation+":IntensityWaveName")
 	SVAR QDf=$(CntrlLocation+":QWaveName")
 	SVAR EDf=$(CntrlLocation+":ErrorWaveName")
-	///endof common block  
+	///end of common block  
 	string ListOfQFolders
 	string result="", tempResult, resultShort=""
 	variable i, j, StartTime, AlreadyIn
@@ -981,25 +984,28 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	if (UseIndra2Structure)
 		SVAR/Z ListOfIndraFolders = $(CntrlLocation+":ListOfIndraFolders")
 		NVAR/Z SetTimeOfIndraFoldersStr = $(CntrlLocation+":SetTimeOfIndraFoldersStr")
-		if(NVAR_Exists(SetTimeOfIndraFoldersStr) && SVAR_Exists(ListOfIndraFolders) && (datetime - SetTimeOfIndraFoldersStr)<5)
+		if(NVAR_Exists(SetTimeOfIndraFoldersStr) && SVAR_Exists(ListOfIndraFolders) && (datetime - SetTimeOfIndraFoldersStr)<10)
 			result = ListOfIndraFolders
+			SVAR/Z DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
+			if(SVAR_Exists(DataFldrListOfFolder))
+				resultShort = DataFldrListOfFolder
+			else
+				resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)	
+			endif
 			SetTimeOfIndraFoldersStr = datetime			//lets keep it as updated here...
 		else
 			tempResult=IN2G_FindFolderWithWvTpsList("root:USAXS:", 10,LocallyAllowedIndra2Data, 1) //contains list of all folders which contain any of the tested Intensity waves...
 			//match to user mask using greplist
 			if(strlen(FolderMatchStr)>0)
-				//tempResult=GrepList(tempResult, IR2C_PreparematchString(FolderMatchStr) )
 				tempResult=GrepList(tempResult, FolderMatchStr)
 			endif
 			//done, now rest...
 			//now prune the folders off the ones which do not contain full triplet of waves...
 			For(j=0;j<ItemsInList(tempResult);j+=1)			//each folder one by one
 				temp1 = stringFromList(j,tempResult)
-				//AlreadyIn=0
 				for(i=0;i<ItemsInList(LocallyAllowedIndra2Data);i+=1)			//each type of data one by one...
 					temp2=stringFromList(i,LocallyAllowedIndra2Data)
 					if(cmpstr("---",IR2P_CheckForRightIN2TripletWvs(TopPanel,stringFromList(j,tempResult),stringFromList(i,LocallyAllowedIndra2Data)))!=0 )//&& AlreadyIn<1)
-						//AlreadyIn=1
 						result += stringFromList(j,tempResult)+";"
 						break
 					endif
@@ -1010,15 +1016,23 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			SVAR/Z ListOfIndraFolders = $(CntrlLocation+":ListOfIndraFolders")
 			NVAR/Z SetTimeOfIndraFoldersStr = $(CntrlLocation+":SetTimeOfIndraFoldersStr")
 			ListOfIndraFolders = result
+			resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)
 			SetTimeOfIndraFoldersStr = datetime
 		endif	
 	elseif (UseQRSStructure)
 			//Wave/Z/T ResultingWave=$(CntrlLocation+":ResultingWave")
 			SVAR/Z  ListOfQFoldersLookup = $(CntrlLocation+":ListOfQFolders")
 			NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
-			if(SVAR_Exists(ListOfQFoldersLookup) && (datetime - SetTimeOfQFoldersStr) < 5)
+			if(SVAR_Exists(ListOfQFoldersLookup) && (datetime - SetTimeOfQFoldersStr) < 10)
 				result=ListOfQFoldersLookup	
+				SVAR/Z DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
+				if(SVAR_Exists(DataFldrListOfFolder))
+					resultShort = DataFldrListOfFolder
+				else
+					resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)	
+				endif
 				SetTimeOfQFoldersStr = datetime
+				//print "Used cache"
 			else
 				//make/N=0/O/T $(CntrlLocation+":ResultingWave")
 				//Wave/T ResultingWave=$(CntrlLocation+":ResultingWave")
@@ -1045,6 +1059,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 				ListOfQFolders=IR2P_RemoveDuplicateStrfLst(ListOfQFolders)
 				ListOfQFoldersLookup = ListOfQFolders
 				result=ListOfQFolders
+				resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)
 				SetTimeOfQFoldersStr = datetime
 				//print "recalculated lookup"
 			endif
@@ -1053,6 +1068,12 @@ Function/T IR2P_GenStringOfFolders([winNm])
 		NVAR/Z SetTimeOfResultsFoldersStr = $(CntrlLocation+":SetTimeOfResultsFoldersStr")
 		if(NVAR_Exists(SetTimeOfResultsFoldersStr) && SVAR_Exists(ListOfResultsFolders) && (datetime - SetTimeOfResultsFoldersStr)<5)
 			result = ListOfResultsFolders
+			SVAR/Z DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
+			if(SVAR_Exists(DataFldrListOfFolder))
+				resultShort = DataFldrListOfFolder
+			else
+				resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)	
+			endif
 			SetTimeOfResultsFoldersStr = datetime
 		else
 			temp3=""
@@ -1074,6 +1095,7 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			SVAR/Z ListOfResultsFolders = $(CntrlLocation+":ListOfResultsFolders")
 			NVAR/Z SetTimeOfResultsFoldersStr = $(CntrlLocation+":SetTimeOfResultsFoldersStr")
 			ListOfResultsFolders = result
+			resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)
 			SetTimeOfResultsFoldersStr = datetime
 			//print "recalculated lookup"
 		endif
@@ -1082,6 +1104,12 @@ Function/T IR2P_GenStringOfFolders([winNm])
 		NVAR/Z SetTimeOfUserDefFoldersStr = $(CntrlLocation+":SetTimeOfUserDefFoldersStr")
 		if(NVAR_Exists(SetTimeOfUserDefFoldersStr) && SVAR_Exists(ListOfUserDefinedFolders) && (datetime - SetTimeOfUserDefFoldersStr)<5)
 			result = ListOfUserDefinedFolders
+			SVAR/Z DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
+			if(SVAR_Exists(DataFldrListOfFolder))
+				resultShort = DataFldrListOfFolder
+			else
+				resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)	
+			endif
 			SetTimeOfUserDefFoldersStr = datetime
 		else
 			tempResult=IN2G_FindFolderWithWvTpsList("root:", 10,LocallyAllowedUserData, 1) //contains list of all folders which contain any of the tested Intensity waves...
@@ -1108,22 +1136,52 @@ Function/T IR2P_GenStringOfFolders([winNm])
 			SVAR/Z ListOfUserDefinedFolders = $(CntrlLocation+":ListOfUserDefinedFolders")
 			NVAR/Z SetTimeOfUserDefFoldersStr = $(CntrlLocation+":SetTimeOfUserDefFoldersStr")
 			ListOfUserDefinedFolders = result
+			resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)
 			SetTimeOfUserDefFoldersStr = datetime
 		endif
 	else
 		result=IN2G_NewFindFolderWithWaveTypes("root:", 10, "*", 1)         //any data.
-		
-            //match to user mask using greplist
-            if(strlen(FolderMatchStr)>0)
-                  //result=GrepList(result, IR2C_PreparematchString(FolderMatchStr) )
-                  result=GrepList(result, (FolderMatchStr) )
-            endif
-           result= IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
+	    //match to user mask using greplist
+	    if(strlen(FolderMatchStr)>0)
+	          result=GrepList(result, (FolderMatchStr) )
+	    endif
+	    result= IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
 	endif
 	//create short list...
+//	String LastFolderPath, tempStrItem, FolderPath, resultShortWP
+//	resultShortWP=""
+//	LastFolderPath = ""
+//	for(i=0;i<ItemsInList(result,";");i+=1)
+//		tempStrItem = stringFromList(i,result)
+//		FolderPath = RemoveFromList(stringFromList(ItemsInList(tempStrItem,":")-1, tempStrItem,":"), tempStrItem,":")
+//		if(!stringMatch(FolderPath, LastFolderPath ))
+//			resultShort+=FolderPath+" ----------- "+";"
+//			resultShortWP+=FolderPath+" ----------- "+";"
+//		endif
+//		resultShort+=stringFromList(ItemsInList(tempStrItem,":")-1,tempStrItem,":")+";"
+//		resultShortWP+=tempStrItem+";"
+//		LastFolderPath = FolderPath
+//	endfor
+//	string/g $(CntrlLocation+":RealLongListOfFolder")
+//	SVAR RealLongListOfFolder = $(CntrlLocation+":RealLongListOfFolder")
+//	RealLongListOfFolder = result
+//	string/g $(CntrlLocation+":ShortListOfFolders")
+//	SVAR ShortListOfFolders = $(CntrlLocation+":ShortListOfFolders")
+//	ShortListOfFolders = resultShortWP
+	setDataFolder OldDf
+	return resultShort
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function/T IR2P_CreateFolderPathLists(CntrlLocation, result)
+	string CntrlLocation, result
+	//create short list...
 	String LastFolderPath, tempStrItem, FolderPath, resultShortWP
+	string resultShort
+	variable i
 	resultShortWP=""
-	LastFolderPath = ""//		RemoveFromList(stringFromList(ItemsInList(tempStrItem,":")-1, tempStrItem,":"), tempStrItem,":")	//stringFromList(ItemsInList(stringFromList(j,result),":")-1,stringFromList(j,result),":")+";"
+	LastFolderPath = ""
+	resultShort = ""
 	for(i=0;i<ItemsInList(result,";");i+=1)
 		tempStrItem = stringFromList(i,result)
 		FolderPath = RemoveFromList(stringFromList(ItemsInList(tempStrItem,":")-1, tempStrItem,":"), tempStrItem,":")
@@ -1141,33 +1199,44 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	string/g $(CntrlLocation+":ShortListOfFolders")
 	SVAR ShortListOfFolders = $(CntrlLocation+":ShortListOfFolders")
 	ShortListOfFolders = resultShortWP
-//print "the long one"
-//print resultShortWP
-//print "now the shorter one"
-//print resultShort
-//print "done"
-//print StringFromList(20,resultShortWP)
-//print StringFromList(20,resultShort)
-	setDataFolder OldDf
+	string/g $(CntrlLocation+":DataFldrListOfFolder")
+	SVAR DataFldrListOfFolder = $(CntrlLocation+":DataFldrListOfFolder")
+	DataFldrListOfFolder = resultShort
 	return resultShort
 end
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-static Function/T IR2P_RemoveDuplicateStrfLst(StrList)
+
+
+//static Function/T IR2P_RemoveDuplicateStrfLst(StrList)
+//	string StrList
+//
+//	
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	variable i
+//	string result=""///stringFromList(0,StrList,";")+";"
+//	string tempStr
+//	For(i=0;i<ItemsInList(StrList,";");i+=1)
+//		tempStr=stringFromList(i,StrList,";")
+//		if(!stringmatch(result, "*"+tempStr+"*" ))		//surprisingly, this is faster that GrepString... 
+//		//if(!GrepString(result, stringFromList(i,StrList,";")))
+//			result+=tempStr+";"
+//		endif
+//	endfor
+//	return result
+//end
+//
+
+Function/T IR2P_RemoveDuplicateStrfLst(StrList)
 	string StrList
 
-	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable i
-	string result=""///stringFromList(0,StrList,";")+";"
-	string tempStr
-	For(i=0;i<ItemsInList(StrList,";");i+=1)
-		tempStr=stringFromList(i,StrList,";")
-		if(!stringmatch(result, "*"+tempStr+"*" ))		//surprisingly, this is faster that GrepString... 
-		//if(!GrepString(result, stringFromList(i,StrList,";")))
-			result+=tempStr+";"
-		endif
-	endfor
+	if(ItemsInList(StrList)>1)
+		Wave/T wr = ListToTextWave(StrList, ";")	// Returns a free wave
+		FindDuplicates/RT=StrWvUnique/Free wr
+		String result=""
+		wfprintf result, "%s;", StrWvUnique 			// ; separated list
+	else
+		result = StrList
+	endif
 	return result
 end
 
@@ -1410,16 +1479,7 @@ Function/T IR2P_ListOfWavesOfType(type,ListOfWaves)
 		//wave types: r* should work
 		//wave types : *i  
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		string tempresult=""
-	//start of old method
-//		variable i
-//		for (i=0;i<ItemsInList(ListOfWaves);i+=1)
-//			if (stringMatch(StringFromList(i,ListOfWaves),type))
-//				tempresult+=StringFromList(i,ListOfWaves)+";"
-//			endif
-//		endfor
-	//end of old method
-	//new method
+	string tempresult=""
 	string tempType=""
 	//if(GrepString(type, "^\*" ) )	//r* type
 	//fixed 3/25/2012 after Dale found some bugs looking for his user defined data. Trying to fix and make all working
@@ -2330,49 +2390,52 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
         Variable levels, LongShortType		//set 1 for long type and 0 for short type return
         wave/T ResultingWave
         			 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		  IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
         String dfSave
         String list = "", templist, tempWvName
         variable i, skipRest
         
-       dfSave = GetDataFolder(1)
-     	 DFREF startDFRef = $(startDF)
-      templist = IN2G_ConvertDataDirToList(DataFolderDir(2,startDFRef))
-      //templist = IN2G_ConvertDataDirToList(DataFolderDir(2))
- 		if (strlen(GrepList(templist,WaveTypes))>0)
-			if (LongShortType)
-		      			Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
-		      			ResultingWave[numpnts(ResultingWave)-1]=startDF
-		      	else
-		      			Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
-		      			ResultingWave[numpnts(ResultingWave)-1]=GetDataFolder(0)
-	      		endif
+       	dfSave = GetDataFolder(1)
+     	 	//DFREF startDFRef = $(startDF)
+     	 	setDataFolder startDF
+     		//templist = IN2G_ConvertDataDirToList(DataFolderDir(2,startDFRef))
+     		templist = IN2G_ConvertDataDirToList(DataFolderDir(2))
+	 		if (strlen(GrepList(templist,WaveTypes))>0)
+				if (LongShortType)
+		      		Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
+		      		ResultingWave[numpnts(ResultingWave)-1]=startDF
+		     	else
+		      		Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
+		      		ResultingWave[numpnts(ResultingWave)-1]=GetDataFolder(0)
+	     		endif
       	endif
         levels -= 1
         if (levels <= 0)
                 return 1
         endif
         
-        String subDF
-        Variable index = 0, npnts
-  	  Make/Free/T/N=0 FoldersToScanWv
-  	  variable NumOfFolders= CountObjectsDFR(startDFRef, 4)
-  	  for(i=0;i<NumOfFolders;i+=1)
-  	  	npnts=numpnts(FoldersToScanWv)
-  	  	redimension/N=(npnts+1) FoldersToScanWv
-  	  	FoldersToScanWv[npnts] = GetIndexedObjNameDFR(startDFRef, 4, i )
-  	  endfor
+      String subDF
+      Variable index = 0, npnts
+   	Make/Free/T/N=0 FoldersToScanWv
+  	   //variable NumOfFolders= CountObjectsDFR(startDFRef, 4)
+   	variable NumOfFolders= CountObjects("", 4)
+ 	   for(i=0;i<NumOfFolders;i+=1)
+  	   	npnts=numpnts(FoldersToScanWv)
+  	  		redimension/N=(npnts+1) FoldersToScanWv
+  	  		//FoldersToScanWv[npnts] = GetIndexedObjNameDFR(startDFRef, 4, i )
+  	  		FoldersToScanWv[npnts] = GetIndexedObjName("", 4, i )
+  	   endfor
   	  
-       String temp
+      String temp
         For(i=0;i<NumOfFolders;i+=1)
                //temp = PossiblyQuoteName(StringFromList(i,FoldersToScan))     	// Name of next data folder.
                temp = PossiblyQuoteName(FoldersToScanWv[i])     	// Name of next data folder.
-     	              subDF = startDF + temp + ":"
-		 	if(!stringmatch(subDF, "*:Packages*" ))		
-           	 		 IR2P_FindFolderWithWaveTypesWV(subDF, levels, WaveTypes, LongShortType,ResultingWave)       	// Recurse.
-           	 	endif
+     	         subDF = startDF + temp + ":"
+		 		if(!stringmatch(subDF, "*:Packages*" ))		
+           		 IR2P_FindFolderWithWaveTypesWV(subDF, levels, WaveTypes, LongShortType,ResultingWave)       	// Recurse.
+     	 		endif
         endfor
-        
+        setDataFolder dfSave
         return 1
 End
 

@@ -12,6 +12,10 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 _____________________________________________________________________________________
+1.96 
+Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
+
+
 1.95  7/7/2018
 Igor 8.0 tested. 
 Modified behavior of Automatic blank selection in GUI. 

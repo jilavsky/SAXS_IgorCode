@@ -11,9 +11,12 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 Modification history:
 ********************************************
 2.68
+Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
+Control procedures - increases speed about twice of generating the menu strings. 
 ASCII SAS data import - improve importing of slit smeared data. 
 Unified fit - add left axis units which match units inside the Intensity wave note. 
 Size distribution, Guinier-Porod, Analytical models, SASDiffraction - add left axis units which match units inside the Intensity wave note. 
+Plotting - remove CanSAS data type. Not used... 
 
 
 
