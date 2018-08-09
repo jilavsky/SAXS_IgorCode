@@ -1231,7 +1231,7 @@ Function/T IR2P_RemoveDuplicateStrfLst(StrList)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	if(ItemsInList(StrList)>1)
 		Wave/T wr = ListToTextWave(StrList, ";")	// Returns a free wave
-		FindDuplicates/RT=StrWvUnique/Free wr
+		FindDuplicates/RT=StrWvUnique wr
 		String result=""
 		wfprintf result, "%s;", StrWvUnique 			// ; separated list
 	else
