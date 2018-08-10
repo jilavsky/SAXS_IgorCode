@@ -12,6 +12,7 @@ Modification history:
 ********************************************
 2.68
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
+Removed link to pdf manual, does not exist anymore. 
 Control procedures - increases speed about twice of generating the menu strings. 
 ASCII SAS data import - improve importing of slit smeared data. 
 Unified fit - add left axis units which match units inside the Intensity wave note. 

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.67
+#pragma version=2.68
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -8,7 +8,7 @@
 
 //define manual date and release verison 
 //constant CurrentManualDateInSecs= 3567096688 			//this is mod date for Manual version 2.62, Thursday, January 12, 2017
-constant CurrentIrenaVersionNumber = 2.67
+constant CurrentIrenaVersionNumber = 2.68
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -16,6 +16,7 @@ constant CurrentIrenaVersionNumber = 2.67
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.68   Beta version. New 64-bit xops for OSX. 
 //2.67 	heavily modified Size Distribution (added power law background). First official Igor 8 release. 
 //			Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
 //			Unified fit - modified how the limits and steps are handled when user set value to 0. Fixed Uncertainty analysis in Unified fit which seems to have failed on Igor 8. 
@@ -173,25 +174,24 @@ Menu "SAS"
 			help={"Get Panel with info about this release of Irena macros"}
 			"Check for updates", IR2C_CheckIrenaUpdate(1)
 			help={"Run Check for update and present citations to use in publications"}	
+			"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
+			help={"Check if current display area is suitable for the code"}
+			"---"
+			"Open Irena Web page ", IR2_OpenIrenaPage()
+			help={"Opens Irena web page in the browser "}
 			"Open Irena web manual", IN2G_OpenWebManual("")
 			help={"Opens Irena web manual in default web bropwser."}
-			"Open Irena pdf manual", IR2_OpenIrenaManual()
-			help={"Opens your pdf reader (Acrobat) with Irena manual in it"}
 			"Open Form and Structure Factor description", IR2T_LoadFFDescription()
 			help={"Opens Description of included form factors and structure factors"}
 			"Open Irena manuscript", IR2_GetIrenaManuscript()
 			help={"Open or download using ftp and open Irena J. Appl. Cryst manuscript"}
-			"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
-			help={"Check if current display area is suitable for the code"}
-			"---"
+			//"---"
 			"Irena Mailing list signup and options", IR2_SignUpForMailingList()
 			help={"Opens web page in the browser where you can sing up or control options for Irena_users mailing list."}
 			"Open Youtube page with help movies", IR2_OpenYouTubeMoviePage()
 			help={"Opens YouTube page in the browser where different movies showing use of Irena are available"}
-			"Open Web page with help movies", IR2_OpenHelpMoviePage()
-			help={"Opens web page in the browser where different movies showing use of Irena can be downloaded"}
-			"Open Irena Web page ", IR2_OpenIrenaPage()
-			help={"Opens Irena web page in the browser "}
+			//"Open Web page with help movies", IR2_OpenHelpMoviePage()
+			//help={"Opens web page in the browser where different movies showing use of Irena can be downloaded"}
 			"Submit e-mail with bug or feature request", IR2C_SendEMailBugReport()
 			help={"This will open your e-mail browser with some info and address. Use to submit info to me. "}
 			"---"
@@ -636,74 +636,74 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2_OpenIrenaManual()
-	//this function writes batch file and starts the manual.
-	//we need to write following batch file: "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures\Irena\Irena manual.pdf"
-	//on Mac we just fire up the Finder with Mac type path... 
-	DoAlert /T="PDF manuals removed" 0, "pdf manuals are not distributed with the packages anymore. Use web manuals. If needed download pdf file from the web" 
-	//check where we run...
-		//string WhereIsIgor
-		//pathInfo Igor
-//		string WhereIsManual
-//		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_Main.ipf")
-//		String manualPath = ParseFilePath(5,"Irena Manual.pdf","*",0,0)
-//       	String cmd 
-//	
-//	variable refnum
-//	GetFileFolderInfo/Z=1/Q WhereAreProcedures+manualPath
-//	variable foundIt=V_Flag
-//	variable ManualModDate=V_modificationDate
-//	printf "The current manual date is: %+015.4f\r", V_modificationDate
-//	if(ManualModDate>0)
-//		//print  V_modificationDate
-//		print "Found version of Manual is from : " + secs2Date(ManualModDate,1)
-//	endif
-//	if(foundIt!=0 || ManualModDate<CurrentManualDateInSecs)
-//       	NewPath/O/Q tempPath, WhereAreProcedures
-//		DoAlert 1,  "Local copy of manual not found or is obsolete. Should Igor try to download from APS public web site?"
-//		if(V_Flag==1)
-//			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
-//			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/Irena Manual.pdf", "%20")		//handle just spaces here... 
-//			String fileBytes, tempPathStr
-//			Variable error = GetRTError(1)
-//			 fileBytes = FetchURL(httpPath)
-//			 error = GetRTError(1)
-//			 sleep/S 0.2
-//			 if(error!=0)
-//				 print "Manual download FAILED, please download from directly from Irena web page "
-//			else
-//				Open/P=tempPath  refNum as "Irena Manual.pdf"
-//				FBinWrite refNum, fileBytes
-//				Close refNum
-//				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
-//			endif
-//		else
-//			abort
-//		endif
-//		killPath tempPath	
-//	endif
-//	
-//	if (stringmatch(IgorInfo(2), "*Macintosh*"))
-//             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
-//               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
-//               ExecuteScriptText cmd
-//      		if (strlen(S_value)>2)
-////			DoAlert 0, S_value
-//		endif
-//
-//	else 
-//		//manualPath = "User Procedures\Irena\Irena manual.pdf"
-//		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
-//		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
-//		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
-//		NewNotebook/F=0 /N=NewBatchFile
-//		Notebook NewBatchFile, text=whereIsManual//+"\r"
-//		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
-//		KillWIndow/Z NewBatchFile
-//		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
-//	endif
-end
-//*****************************************************************************************************************
+//Function IR2_OpenIrenaManual()
+//	//this function writes batch file and starts the manual.
+//	//we need to write following batch file: "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures\Irena\Irena manual.pdf"
+//	//on Mac we just fire up the Finder with Mac type path... 
+//	DoAlert /T="PDF manuals removed" 0, "pdf manuals are not distributed with the packages anymore. Use web manuals. If needed download pdf file from the web" 
+//	//check where we run...
+//		//string WhereIsIgor
+//		//pathInfo Igor
+////		string WhereIsManual
+////		string WhereAreProcedures=RemoveEnding(FunctionPath(""),"IR1_Main.ipf")
+////		String manualPath = ParseFilePath(5,"Irena Manual.pdf","*",0,0)
+////       	String cmd 
+////	
+////	variable refnum
+////	GetFileFolderInfo/Z=1/Q WhereAreProcedures+manualPath
+////	variable foundIt=V_Flag
+////	variable ManualModDate=V_modificationDate
+////	printf "The current manual date is: %+015.4f\r", V_modificationDate
+////	if(ManualModDate>0)
+////		//print  V_modificationDate
+////		print "Found version of Manual is from : " + secs2Date(ManualModDate,1)
+////	endif
+////	if(foundIt!=0 || ManualModDate<CurrentManualDateInSecs)
+////       	NewPath/O/Q tempPath, WhereAreProcedures
+////		DoAlert 1,  "Local copy of manual not found or is obsolete. Should Igor try to download from APS public web site?"
+////		if(V_Flag==1)
+////			//string url="ftp://ftp.xray.aps.anl.gov/pub/usaxs/Irena Manual.pdf"		
+////			string httpPath =  ReplaceString(" ", "http://ftp.xray.aps.anl.gov/usaxs/Irena Manual.pdf", "%20")		//handle just spaces here... 
+////			String fileBytes, tempPathStr
+////			Variable error = GetRTError(1)
+////			 fileBytes = FetchURL(httpPath)
+////			 error = GetRTError(1)
+////			 sleep/S 0.2
+////			 if(error!=0)
+////				 print "Manual download FAILED, please download from directly from Irena web page "
+////			else
+////				Open/P=tempPath  refNum as "Irena Manual.pdf"
+////				FBinWrite refNum, fileBytes
+////				Close refNum
+////				SetFileFolderInfo/P=tempPath/RO=0  "Irena Manual.pdf"		
+////			endif
+////		else
+////			abort
+////		endif
+////		killPath tempPath	
+////	endif
+////	
+////	if (stringmatch(IgorInfo(2), "*Macintosh*"))
+////             //  manualPath = "User Procedures:Irena:Irena manual.pdf"
+////               sprintf cmd "tell application \"Finder\" to open \"%s\"",WhereAreProcedures+manualPath
+////               ExecuteScriptText cmd
+////      		if (strlen(S_value)>2)
+//////			DoAlert 0, S_value
+////		endif
+////
+////	else 
+////		//manualPath = "User Procedures\Irena\Irena manual.pdf"
+////		//WhereIsIgor=WhereIsIgor[0,1]+"\\"+IN2G_ChangePartsOfString(WhereIsIgor[2,inf],":","\\")
+////		WhereAreProcedures=ParseFilePath(5,WhereAreProcedures,"*",0,0)
+////		whereIsManual = "\"" + WhereAreProcedures+manualPath+"\""
+////		NewNotebook/F=0 /N=NewBatchFile
+////		Notebook NewBatchFile, text=whereIsManual//+"\r"
+////		SaveNotebook/O NewBatchFile as SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat"
+////		KillWIndow/Z NewBatchFile
+////		ExecuteScriptText "\""+SpecialDirPath("Temporary", 0, 1, 0 )+"StartManual.bat\""
+////	endif
+//end
+////*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR2_OpenHelpMoviePage()
 	DoAlert 1,"Your web browser will open page with help movies. OK? (You must have QuickTime installed)"
@@ -725,14 +725,14 @@ End
 Function IR2_OpenIrenaPage()
 	DoAlert 1,"Your web browser will Irena home page. OK?"
 	if(V_flag==1)
-		BrowseURL "http://usaxs.xray.aps.anl.gov/staff/ilavsky/irena.html"
+		BrowseURL "https://usaxs.xray.aps.anl.gov/software/irena"
 	endif
 End
 
 Function IR2_SignUpForMailingList()
 	DoAlert 1,"Your web browser will open page with the page where you can control your maling list options. OK?"
 	if(V_flag==1)
-		BrowseURL "http://www.aps.anl.gov/mailman/listinfo/irena_users"
+		BrowseURL "https://mailman.aps.anl.gov/mailman/listinfo/irena_users"
 	endif
 End
 
@@ -749,7 +749,7 @@ Function IR1_AboutPanel()
 	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro 7"
+	DrawText 23,30,"Irena macros for Igor Pro 7 & 8"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 100,60,"@ ANL, 2018"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)

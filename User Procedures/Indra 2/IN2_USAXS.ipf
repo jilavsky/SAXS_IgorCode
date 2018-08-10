@@ -1,14 +1,15 @@
 #pragma rtGlobals=1		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.95
+#pragma version = 1.96
 
-constant CurrentIndraVersionNumber = 1.95
+constant CurrentIndraVersionNumber = 1.96
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.96   Beta version. Updtaes 64 bit OSX xops.
 //1.95 	Igor 8 release, ongoing fixes for USAXS software changes. Modified behavior of Automatic blank selection in GUI. 
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
@@ -139,8 +140,12 @@ Menu "USAXS"
 		"Fit Power Law with Cursors", IN2P_FitPowerLawWithCursors()
 	End
 
+	"Open Indra web page", IN2A_OpenIndraPage()
+	help={"Open Indra homepage in  web browser"}
+
 	"Remove USAXS Macros", IN2_RemoveUSAXSMacros()
 	help={"Removes USAXS macros from current experiment"}
+
 
 	"About", IN2_AboutPanel()
 	help={"Information about the version"}
@@ -475,6 +480,13 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IN2A_OpenIndraPage()
+	DoAlert 1,"Your web browser will Indra home page. OK?"
+	if(V_flag==1)
+		BrowseURL "https://usaxs.xray.aps.anl.gov/software/indra"
+	endif
+End
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
@@ -484,7 +496,7 @@ Function IN2_AboutPanel()
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Indra 2 macros for Igor Pro 7"
+	DrawText 10,37,"Indra 2 macros for Igor Pro 7 & 8"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
 	DrawText 52,64,"@ Jan Ilavsky, 2018"
 	DrawText 49,103,"release "+num2str(CurrentIndraVersionNumber)

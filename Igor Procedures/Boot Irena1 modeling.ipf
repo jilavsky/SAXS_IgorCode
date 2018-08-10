@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.67
+#pragma version = 2.68
 #pragma IgorVersion=7.05
 
-
-//2.67 July 2018 release, first official Igor 8 release
+//2.68   Beta version. New 64 bit OSX xops. Other changes. 
+//2.67   July 2018 release, first official Igor 8 release
 //2.66   Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error
 //			Plotting tool I - added control which enforces maximum number of items in legend (default=30). If more waves are in graph, legend gets decimated by necessary integer(2, 3, 4,...). First and last are always included. This presents selection of data names when too many data sets are used. 

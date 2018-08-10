@@ -652,90 +652,9 @@ Function IN2G_OpenWebManual(WhichSpecificPage)
 		String WhichSpecificPage
 		BrowseURL "http://saxs-igorcodedocs.readthedocs.io/"+ManualVersionString+WhichSpecificPage
 end
-
-
-
-
-//
-//Function IN2G_DownloadFile(StringWithPathAndname,LocalPath, LocalName)
-//	string StringWithPathAndname, LocalPath, LocalName
-//
-//	variable InstallUsingLocalCopy = 0
-//	variable InstallUsinghttp = 1
-//	variable i
-//	variable APSError=0
-//	variable OtherError=0
-//	Variable error
-//	if(InstallUsingLocalCopy)		 
-//		string tempFldrNm
-//		tempFldrNm = removeFromList("IgorCode",StringWithPathAndname,"/")
-//		PathInfo LocalCopyForInstallation
-//		if(V_Flag==0)		//local copy path was not found.
-//			//let's try to find in where Igor experiment started from, that path is known as "home"
-//			string ItemsInTheFolder= IndexedDir(home, -1, 0 )
-//			if(stringmatch(ItemsInTheFolder, "*IgorCode;*" ))
-//				PathInfo/S home
-//				NewPath /C/O/Q  LocalCopyForInstallation, S_Path+"IgorCode:"
-//				Print "Found IgorCode folder in location where this experiment started, using that folder as file source"
-//			else		
-//				NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
-//				if(V_Flag!=0)
-//					abort "Local copy of Installation files not found and user cancelled. Visit: http://usaxs.xray.aps.anl.gov/staff/ilavsky/Nika.html if you want to download it" 
-//				endif
-//			endif
-//		endif
-//		PathInfo LocalCopyForInstallation
-//		GetFileFolderInfo  /P=$(LocalPath) /Q /Z S_Path+ReplaceString("/", tempFldrNm, ":")
-//		if(V_Flag!=0)
-//			NewPath /C/M="Find Folder called \"IgorCode\""/O/Q  LocalCopyForInstallation
-//		endif
-//		PathInfo LocalCopyForInstallation
-//		CopyFile /O/P=$(LocalPath)/Z S_Path+ReplaceString("/", tempFldrNm, ":")  as LocalName 
-//		// Remove ReadOnly property from the file. This is important on WIndows when copying from CD or DVD
-//		SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName
-//	else
-//		string httpurl="http://ftp.xray.aps.anl.gov/usaxs/"
-//		//string url="http://ftp.xray.aps.anl.gov/usaxs/"		//this is http address for future use with URLencode, URLdecode, and FetchURL
-//		String httpPath = httpurl+StringWithPathAndname	//HR Use local variable for easier debugging.
-//		httpPath =  ReplaceString(" ", httpPath, "%20")		//handle just spaces here... 
-//		String fileBytes, tempPathStr
-//		fileBytes = FetchURL(httpPath)
-//		error = GetRTError(1)
-//		if(error!=0)
-//			 print "file: "+httpPath+" download FAILED, this was http download attempt No: "+num2str(i)
-//			 print "Trying to download same file using ftp"
-//			 tempPathStr = ReplaceString("http://ftp.xray.aps.anl.gov/usaxs/", httpPath, "ftp://ftp.xray.aps.anl.gov/pub/usaxs/")
-//			 fileBytes = FetchURL(tempPathStr)
-//			 error = GetRTError(1)
-//			 if(error!=0)
-//					print "file: "+tempPathStr+" download FAILED also using ftp "
-//					Print "*************         S E R V E R      E R R O R                 ****************"
-//					Print "**** Please, report problem to ilavsky@aps.anl.gov  the following:"
-//					Print "Failed to get from http/ftp server following file.....   " + StringWithPathAndname
-//					Print Date() +"   "+time()
-//					print "Igor version :"+IgorInfo(3)
-//					print "********************  end of error message  ********************"
-//					OtherError=1
-//			 else
-//				 print "file: "+tempPathStr+" downloaded succesfully by ftp"
-//			 endif
-//		  endif
-//			if(error==0)
-//				Variable refNum
-//				Open/P=$(LocalPath)  refNum as LocalName
-//				FBinWrite refNum, fileBytes
-//				Close refNum
-//				SetFileFolderInfo/P=$(LocalPath)/RO=0 LocalName		
-//			endif
-//	endif
-//	variable nosuccess
-//	if(V_Flag!=0)
-//		nosuccess=1
-//	endif
-//	return OtherError
-//	
-//end
-////**************************************************************** 
+//**************************************************************** 
+//**************************************************************** 
+//************************************************************** 
 //**************************************************************** 
 Function IN2G_FindFileVersion(FilenameStr)
 	string FilenameStr
