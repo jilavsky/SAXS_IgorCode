@@ -18,7 +18,7 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>July2018</current_release>
-		<current_beta_release>June2018</current_beta_release>
+		<current_beta_release>August2018</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
@@ -124,23 +124,23 @@
 			</Package>
 			<VersionComment>Versions of Irena 2.65, Nika 1.78 and Indra 1.93 from 11/05/2017.</VersionComment>
 		</release>
-		<release name="June2018" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/June2018Beta.zip</SourceFileAddress>
+		<release name="August2018" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/August2018.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.67</version>
+				<version>2.69</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.79</version>
+				<version>1.81</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.94</version>
+				<version>1.96</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -152,11 +152,11 @@
 			</Package>
 			<Package>
 				<name>xop64bit</name>
-				<version>1</version>
+				<version>2</version>
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Adds upgraded version of Size Distribution tool.</VersionComment>
+			<VersionComment>Beta release AUgst 2018, adds version 2.0 of 64-bit xops.</VersionComment>
 		</release>
 		<release name="May2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
