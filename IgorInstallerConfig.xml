@@ -128,7 +128,7 @@
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/August2018.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.69</version>
+				<version>2.68</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
@@ -156,7 +156,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release AUgst 2018, adds version 2.0 of 64-bit xops.</VersionComment>
+			<VersionComment>Beta release August 2018, adds version 2.0 of 64-bit xops.</VersionComment>
 		</release>
 		<release name="May2017">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2017.zip</SourceFileAddress>
