@@ -18,6 +18,7 @@ ASCII SAS data import - improve importing of slit smeared data.
 Unified fit - add left axis units which match units inside the Intensity wave note. 
 Size distribution, Guinier-Porod, Analytical models, SASDiffraction - add left axis units which match units inside the Intensity wave note. 
 Plotting - remove CanSAS data type. Not used... 
+Modified "Configure GUI..." menu name and added warning on name shortening. Should generate dialog when names are too long and users are not using Igor 8 with long names enabled. Only once per Igor experiment.  
 
 
 

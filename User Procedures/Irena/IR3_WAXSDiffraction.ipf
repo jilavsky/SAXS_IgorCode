@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.08
+#pragma version=1.09
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.07		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.09 fix panel autoscaling to move all stuff around. 
 //1.08 added for multipeak fitting results in Q units for Gauss, LogNormal and Lorenz shapes. 
 //1.07 added button to import AMS txtx files (from http://rruff.geo.arizona.edu/AMS/result.php)
 //1.06  removed unused functions
@@ -112,7 +113,8 @@ Proc IR3W_WAXSPanel()
 //root:Packages:Irena:WAXSBackground
 //	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	//Experimental data input
-	NewPanel /W=(255,690,545,770) /HOST=# /N=Background
+	NewPanel /W=(0.38,0.84,0.98,0.98) /HOST=# /N=Background
+//	NewPanel /W=(0.01,0.035,0.97,0.225) /HOST=# /N=Top
 	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
 	IR2C_AddDataControls("Irena:WAXSBackground","IR3W_WAXSPanel#Background","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=0)
 	SetDrawLayer UserBack
@@ -186,12 +188,19 @@ Proc IR3W_WAXSPanel()
 	Button AMSImportAMStxt, pos={300,491}, size={200,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button PDF4AddManually, pos={300,513}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
 
-	DrawText 4,680,"Double click to add data to graph."
-	DrawText 4,693,"Shift-click to select range of data."
-	DrawText 4,706,"Ctrl/Cmd-click to select one data set."
-	DrawText 4,719,"Regex for not contain: ^((?!string).)*$"
-	DrawText 4,732,"Regex for contain:  string"
-	DrawText 4,745,"Case indep. contain:  (?i)string"
+	TitleBox txt1 title="\Zr100Double click to add data to graph.",pos={4,665},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox txt2 title="\Zr100Shift-click to select range of data.",pos={4,678},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox txt3 title="\Zr100Ctrl/Cmd-click to select one data set.",pos={4,691},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox txt4 title="\Zr100Regex for not contain: ^((?!string).)*$",pos={4,704},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox txt5 title="\Zr100Regex for contain:  string",pos={4,717},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox txt6 title="\Zr100DCase indep. contain:  (?i)string",pos={4,730},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+
+//	DrawText 4,680,"Double click to add data to graph."
+//	DrawText 4,693,"Shift-click to select range of data."
+//	DrawText 4,706,"Ctrl/Cmd-click to select one data set."
+//	DrawText 4,719,"Regex for not contain: ^((?!string).)*$"
+//	DrawText 4,732,"Regex for contain:  string"
+//	DrawText 4,745,"Case indep. contain:  (?i)string"
 	
 	Execute ("IR3W_ModifyPanelControls()")
 end

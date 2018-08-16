@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.27
+#pragma version=2.28
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.28 fix autoscaling panel components. 
 //2.27  removed unused functions
 //2.26 Modified Screen Size check to match the needs
 //2.25 added getHelp button calling to www manual
@@ -104,17 +105,17 @@ Function NI1BC_CreateBmCntrField()
 	//Dowindow/C NI1_CreateBmCntrFieldPanel
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 19,fstyle= 1,textrgb= (0,0,65280)
-	DrawText 10,25,"Refinement of Beam Center & Calibration"
-	DrawText 18,92,"Select data set to use:"
+	TitleBox MainTitle title="\Zr160Refinement of Beam Center & Calibration",pos={10,4},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox DataSetUse title="\Zr100Select data set to use:",pos={18,72},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 
-	Button SelectPathToData,pos={27,35},size={130,20},proc=NI1BC_BmCntrButtonProc,title="Select path to data"
+	Button SelectPathToData,pos={15,31},size={150,20},proc=NI1BC_BmCntrButtonProc,title="Select path to data"
 	Button SelectPathToData,help={"Sets path to data where BmCntr image is"}
 	Button GetHelp,pos={335,105},size={80,15},fColor=(65535,32768,32768), proc=NI1BC_BmCntrButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
-	PopupMenu BmCntrFileType,pos={247,35},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="File type:"
+	PopupMenu BmCntrFileType,pos={247,31},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="File type:"
 	PopupMenu BmCntrFileType,help={"Select image type of data to be used"}
 	PopupMenu BmCntrFileType,mode=1,popvalue=BmCntrFileType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
-	TitleBox BCPathInfoStrt, pos={3,60}, size={350,20}, variable=root:Packages:Convert2Dto1D:BCPathInfoStr, fsize=9, frame=0, fstyle=2, fColor=(0,12800,32000)
+	TitleBox BCPathInfoStrt, pos={3,56}, size={325,20}, variable=root:Packages:Convert2Dto1D:BCPathInfoStr, fixedSize=0, frame=0, fstyle=2, fColor=(0,12800,32000)
 
 	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1BC_ListBoxProc
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}

@@ -151,7 +151,7 @@ Menu "SAS"
 	"---"
 	"Scattering contrast calculator", IR1K_ScattCont2()
 	help={"Calculator for scattering contrast. Both X rays and neutrons. Anomalous effects available."}
-	"Configure default fonts and names",IR2C_ConfigMain()
+	"Config fonts, uncertainties, names",IR2C_ConfigMain()
 	help={"Configure default values for GUI Panels and Graph common items, such as font sizes and font types"}
 	SubMenu "Support tools"
 			"Evaluate Size Distributions", IR1G_EvaluateONESample()

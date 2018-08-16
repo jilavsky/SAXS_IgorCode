@@ -36,7 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
-//2.15 minor modification of some functions to seep it up a bit... 
+//2.15 minor modification of some functions to speed it up a bit... Added long names warning. 
 //2.14 added function IN2G_ReturnUnitsForYAxis(Ywave) which creates units string for Intensity vs Q Intensity axis based on wave note. 
 //2.13 Get the Igor8 long files names support sorted out. 
 //2.12 redirect to new VersionCheck location.
@@ -460,9 +460,23 @@ Function/T IN2G_CreateUserName(NameIn,I7MaxShortLength, MakeUnique, FolderWaveSt
 	//FolderWaveStrNum - 11 for folder, 1 for wave, 3 for string 4 for number
 	
 	NVAR useIgor8LongNames = root:Packages:IrenaConfigFolder:Igor8UseLongNames
+	NVAR/Z Igor7LongNamesWarning = root:Packages:IrenaConfigFolder:Igor7LongNamesWarning
 	string resultStr
 	resultStr =  IN2G_RemoveExtraQuote(NameIn,1,1)
-				
+	if(strlen(resultStr)>I7MaxShortLength)
+		if((IgorVersion()>7.99 && !useIgor8LongNames) || IgorVersion()<7.99)
+			if(!NVAR_Exists(Igor7LongNamesWarning))
+				variable/g root:Packages:IrenaConfigFolder:Igor7LongNamesWarning
+				NVAR Igor7LongNamesWarning = root:Packages:IrenaConfigFolder:Igor7LongNamesWarning
+				Igor7LongNamesWarning = 1
+				if(IgorVersion()<7.99)
+					DoAlert /T="Long name use detected" 0, "Igor 7 has 32 characters limit for names. Your name "+resultStr+" is "+num2str(strlen(resultStr))+" long. It will be truncated. Consider upgrading to Igor 8 where names can be up to 256 characters long."
+				elseif(IgorVersion()>7.99 && !useIgor8LongNames)
+					DoAlert /T="Long name use detected" 0, "Name "+resultStr+" is "+num2str(strlen(resultStr))+" chars long. Current Nika/Indra/Irena setting is "+num2str(I7MaxShortLength)+" char max. Names will be truncated. Allow lengths up to 256 characters long using \"Config fonts, uncertainties, names\"."
+				endif
+			endif
+		endif
+	endif			
 	if(useIgor8LongNames && IgorVersion()>7.99)		//Igor 8 and user wants long names 
 		resultStr = resultStr 
 	else			//create a short name

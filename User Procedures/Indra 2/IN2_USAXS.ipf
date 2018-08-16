@@ -65,13 +65,13 @@ Menu "USAXS"
 //	"Desmear Fast", IN2D_DesmearFastMain()  //removed since no one used it, but code stays...
 	"--"
 	"Shrink Igor experiment size",IN3_ShrinkIgorFileSize() 
-	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
+	help={"Export all data from within Igor for use in different packages. Not necessary for Irena 1 package."}
 	"Export data",IN2B_ExportAllData() 
 	help={"Export all data from weithin Igor for use in different packages. Not necessary for Irena 1 package."}
 
 	"Xtal position calc", IN2Y_GapCalculations()
 	help={"Crystal position callculator for beamline staff."}
-	"Configure GUI fonts", IN3_ConfigureGUIfonts()
+	"Config fonts, uncertainties, names", IN3_ConfigureGUIfonts()
 	help={"Crystal position callculator for beamline staff."}
 	"Check Igor display size", IN2G_CheckForGraphicsSetting(1)
 	help={"Check if current display area is suitable for the code"}

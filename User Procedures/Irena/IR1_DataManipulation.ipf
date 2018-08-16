@@ -125,7 +125,6 @@ Proc IR1D_DataManipulationPanel()
 
 	//Experimental data input
 	NewPanel /W=(0.01,0.035,0.97,0.225) /HOST=# /N=Top
-	//NewPanel /W=(0,25,398,157) /HOST=# /N=Top
 	ModifyPanel cbRGB=(52428,52428,52428), frameStyle=1
 	string UserDataTypes=""
 	string UserNameString=""

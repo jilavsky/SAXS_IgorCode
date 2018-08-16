@@ -14,6 +14,7 @@ Modification history:
 _____________________________________________________________________________________
 1.96 
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
+Modified "Configure GUI..." menu name and added warning on name shortening. Should generate dialog when names are too long and users are not using Igor 8 with long names enabled. Only once per Igor experiment.  
 
 
 1.95  7/7/2018
