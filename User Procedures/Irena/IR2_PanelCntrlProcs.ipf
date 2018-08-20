@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.47
+#pragma version = 1.48
 
 
 //*************************************************************************\
@@ -8,7 +8,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.47 sped up popup string generation by at least 50%, increased the time for use of cached values to 10 seconds. 
+//1.48 Modifed IR2P_CheckForRightQRSTripletWvs for QRS to use GrepList, seems cleaner and more obviosu. Also, fixes worng includions of DSM waves in QRS. 
+//1.47 speed up popup string generation by at least 50%, increased the time for use of cached values to 10 seconds. 
 //1.46 Added to Listbox procedure IR3C_ListBoxProc rigth click for Match Blank and Match EMpty. 
 //1.45 try to catch bug which pops debugger when panel is being killed. 
 //1.44 Added right alignemnet of data path string to show end of the string if it is too long. 
@@ -527,23 +528,14 @@ Function IR2C_AddControlsToWndw(PckgDataFolder,PanelWindowName,AllowedIrenaTypes
 	if(strlen(AllowedResultsTypes)>0)
 		CheckBox UseResults,pos={200,25},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="Irena results"
 		CheckBox UseResults,variable= $(CntrlLocation+":UseResults"), help={"Check, if you want to use results of Irena macros"}
-//		CheckBox UseResults,userdata(ResizeControlsInfo)= A"!!,F-!!#>:!!#?9!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
-//		CheckBox UseResults,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
-//		CheckBox UseResults,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
 	endif
 	if(strlen(AllowedUserTypes)>0)
 		CheckBox UseUserDefinedData,pos={200,40},size={90,14},proc=IR2C_InputPanelCheckboxProc,title=UserNameString
 		CheckBox UseUserDefinedData,variable= $(CntrlLocation+":UseUserDefinedData"), help={"Check, if you want to use "+UserNameString+" data"}
-//		CheckBox UseUserDefinedData,userdata(ResizeControlsInfo)= A"!!,F-!!#>:!!#?9!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
-//		CheckBox UseUserDefinedData,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
-//		CheckBox UseUserDefinedData,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
 	endif
 	if(AllowModelData>0)
 		CheckBox UseModelData,pos={300,25},size={90,14},proc=IR2C_InputPanelCheckboxProc,title="Model"
 		CheckBox UseModelData,variable= $(CntrlLocation+":UseModelData"), help={"Check, if you want to generate Q data for modeling"}
-//		CheckBox UseModelData,userdata(ResizeControlsInfo)= A"!!,HQ!!#=;!!#>B!!#<8z!!\";f=(u2eBE/#4zzzzzzzzzzzzz!!\";f=(u2eBE/#4z"
-//		CheckBox UseModelData,userdata(ResizeControlsInfo) += A"zzzzzzzzzzzz!!\";f87cLJBQO4Szzzzzzzzzz"
-//		CheckBox UseModelData,userdata(ResizeControlsInfo) += A"zzz!!#r+D.Oh\\ASGdjF8u:@zzzzzzzzzzzz!!!"
 	endif
 
 	SetVariable FolderMatchStr, pos={280,56},size={100,15},bodyWidth=60, proc=IR2C_NamesSetVarProc,title="Fldr :", help={"Regular Expression to match folder names"}
@@ -1407,6 +1399,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 	string AllWaves
 	string allRwaves
 	string tempStr
+	string ShortWaveList
 
 	variable startTime=ticks	
 //	for(i=0;i<ItemsInList(FullFldrNames);i+=1)			//this looks for qrs tripplets
@@ -1422,12 +1415,26 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 					matchX=0
 					matchE=0
 					tempStr = stringFromList(j,allRwaves)[1,inf]
-					if(stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*m"+tempStr+";*" ))
+					//print stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )
+					//print stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )
+					//print stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )
+					//print stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )
+					//print stringmatch(";"+AllWaves, ";*m"+tempStr+";*" )
+					//ShortWaveList = GrepList(AllWaves, "q"+tempStr )+GrepList(AllWaves, "az"+tempStr )+GrepList(AllWaves, "d"+tempStr )+GrepList(AllWaves, "t"+tempStr )+GrepList(AllWaves, "m"+tempStr )
+					ShortWaveList = GrepList(AllWaves, "[qzdtm]"+tempStr) //not sure if this really works for az, needs to be tested. 
+					if(strlen(ShortWaveList)>0)
 						matchX=1
 					endif
-					if(stringmatch(";"+AllWaves,";*s"+tempStr+";*" ))
+					//if(stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )||(stringmatch(";"+AllWaves, ";*m"+tempStr+";*" )&&!stringmatch(";"+AllWaves, ";*dsm"+tempStr+";*" )))
+					//	matchX=1
+					//endif
+					ShortWaveList = GrepList(AllWaves, "s"+tempStr) //not sure if this really works for az, needs to be tested. 
+					if(strlen(ShortWaveList)>0)
 						matchE=1
 					endif
+					//if(stringmatch(";"+AllWaves,";*s"+tempStr+";*" ))
+					//	matchE=1
+					//endif
 					if(matchX && (matchE || !RequireErrorWvs))
 						tempResult+= FullFldrName+";"
 						break

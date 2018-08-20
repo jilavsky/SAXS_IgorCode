@@ -1733,10 +1733,13 @@ Function IR2M_MakePanelWithListBox(skipCreatePanel)
 		NewPanel /K=1 /W=(400,50,720,696) as "Items in selected folder"
 		DoWindow/C ItemsInFolderPanel
 		SetDrawLayer UserBack
-		SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
-		DrawText 45,21,"Items In the selected folder"
-		SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
-		DrawText 11,343,"Wave note/value for selection above:"
+		//SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
+		//DrawText 45,21,"Items In the selected folder"
+		TitleBox Text0 title="\Zr140Items In the selected folder:",pos={15,5},frame=0,fstyle=3,size={100,24},fColor=(1,4,52428)
+		//SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65280)
+		//DrawText 11,343,"Wave note/value for selection above:"
+		TitleBox Text1 title="\Zr140Wave note/value for selection above:",pos={15,320},frame=0,fstyle=3,size={100,24},fColor=(1,4,52428)
+
 		ListBox ItemsInCurrentFolder,pos={2,23},size={311,268}, selWave=root:Packages:DataMiner:ItemsInFolderSelections
 		ListBox ItemsInCurrentFolder,listWave=root:Packages:DataMiner:ItemsInFolder
 		ListBox ItemsInCurrentFolder,mode= 1,selRow= selItemOld, proc=IR2M_ListBoxProc
