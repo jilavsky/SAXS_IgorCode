@@ -1,7 +1,8 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 
+constant IR1K_CurrentPanelVersion=2.27
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -9,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 added Compound name mask (regex) string to handle when lots of names is listed. 
 //2.26  removed unused functions
 //2.25  Modified Screen Size check to match the needs
 //2.24 added getHelp button calling to www manual
@@ -42,7 +44,7 @@ Function IR1K_ScattCont2()
 	KillWIndow/Z IR1K_ScatteringContCalc
 	
 	Execute("IR1K_ScatteringContCalc()")
-	IR1_UpdatePanelVersionNumber("IR1K_ScatteringContCalc", 1,1)
+	IR1_UpdatePanelVersionNumber("IR1K_ScatteringContCalc", IR1K_CurrentPanelVersion,1)
 
 	IR1K_FixDisplayedVariables()
 	IR1K_DisplayRightElement()
@@ -134,11 +136,11 @@ Window IR1K_ScatteringContCalc()
 	SetVariable NeutronsScatlengthDensPerGram,pos={14,404},size={270,16},title="Neut. SLD (rho) per gram [10^10 cm/g]  ",frame=0,labelBack=(32768,65280,32768)
 	SetVariable NeutronsScatlengthDensPerGram,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:NeutronsScatlengthDensPerGram,noedit= 1, format="%.4g",help={"Neutron scattering length density in cm per gram, also known as rho per gram"}
 	
-	SetVariable UsedMatrixCompound,pos={330,350},size={250,16},title="Second phase :  ",help={"This is the name of compound set as matrix using button on right"}
+	SetVariable UsedMatrixCompound,pos={330,370},size={250,16},title="Second phase :  ",help={"This is the name of compound set as matrix using button on right"}
 	SetVariable UsedMatrixCompound,value= root:Packages:ScatteringContrast:UsedMatrixCompound, frame=0, noedit=1
-	SetVariable MatrixScattContXrays,pos={330,370},size={390,16},title="X ray scatt length dens second phase (rho)  [10^10 cm-2]       ",help={"Input matrix X rays rho"}
+	SetVariable MatrixScattContXrays,pos={330,390},size={390,16},title="X ray scatt length dens second phase (rho)  [10^10 cm-2]       ",help={"Input matrix X rays rho"}
 	SetVariable MatrixScattContXrays,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:MatrixScattContXrays, proc=IR1K_SetVarProc, format="%.5g"
-	SetVariable MatrixScattContNeutrons,pos={330,390},size={390,16},title="Neutrons scatt length dens second phase  (rho)  [10^10 cm-2]  ",help={"Input matrix Neutron rho"}
+	SetVariable MatrixScattContNeutrons,pos={330,410},size={390,16},title="Neutrons scatt length dens second phase  (rho)  [10^10 cm-2]  ",help={"Input matrix Neutron rho"}
 	SetVariable MatrixScattContNeutrons,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:MatrixScattContNeutrons, proc=IR1K_SetVarProc, format="%.4g"
 
 	SetVariable CalcXrays,pos={14,422},size={270,16},title="X rays delta-rho squared   [10^20 cm-4]          ",frame=0,labelBack=(32768,65280,32768)
@@ -151,11 +153,16 @@ Window IR1K_ScatteringContCalc()
 
 	CheckBox StoreCompoundsInIgorExperiment, pos={450,200}, title="Within this experiment (or on the computer)?",proc=IR1K_CheckProc
 	CheckBox StoreCompoundsInIgorExperiment, variable=root:Packages:ScatteringContrast:StoreCompoundsInIgorExperiment, help={"Store compounds inside current Igor experiment? Or outside this experiment on the hard drive."}
-	ListBox ListOfAvailableData,pos={300,220},size={280,120}
+	ListBox ListOfAvailableData,pos={300,220},size={280,126}
 	ListBox ListOfAvailableData,help={"List of stored data "}
 	ListBox ListOfAvailableData,listWave=root:Packages:ScatteringContrast:WaveOfCompoundsOutsideIgor
 //	ListBox ListOfAvailableData,selWave=root:Packages:ScatteringContrast:NumbersOfCompoundsOutsideIgor
 	ListBox ListOfAvailableData,mode= 2
+
+	SetVariable AvailableCompoundsMask,pos={300,350},size={280,16},title="Mask names (regex) :  ",help={"Mask Stored data list using regex"}
+	SetVariable AvailableCompoundsMask,value= root:Packages:ScatteringContrast:AvailableCompoundsMask, frame=1, proc=IR1K_SetVarProc
+
+
 
 	Button SaveData size={120,20},pos={610,220}, proc=IR1K_ButtonProc
 	Button SaveData title="Save data",help={"Stores this compound for later use"}
@@ -168,10 +175,10 @@ Window IR1K_ScatteringContCalc()
 	Button SetAsMatrix size={140,20},pos={600,320}, proc=IR1K_ButtonProc
 	Button SetAsMatrix title="Load as second phase",help={"Sets current data contrasts as second phase"}
 
-	CheckBox UseMatrixVacuum, pos={610,350}, title="Use Vacuum?",proc=IR1K_CheckProc
+	CheckBox UseMatrixVacuum, pos={610,370}, title="Use Vacuum?",proc=IR1K_CheckProc
 	CheckBox UseMatrixVacuum, variable=root:Packages:ScatteringContrast:UseMatrixVacuum, help={"Use vacuum as second phase "}
 
-	Button AnomalousCalc size={190,30},pos={400,420}, proc=IR1K_ButtonProc
+	Button AnomalousCalc size={190,30},pos={400,440}, proc=IR1K_ButtonProc
 	Button AnomalousCalc title="Anomalous calculator",help={"Call Anomalous calculator tool"}
 
 EndMacro
@@ -831,6 +838,11 @@ Function IR1K_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		UsedMatrixCompound=""
 		UseMatrixVacuum=0
 	endif
+	if(cmpstr(ctrlName,"AvailableCompoundsMask")==0)
+		IR1K_UpdateCalcExportDta()	
+	endif
+	
+	
 	if(cmpstr(ctrlName,"Elementcontent")==0)
 		//here we do what happens when we change element content
 		NVAR SelectedElement=root:Packages:ScatteringContrast:SelectedElement
@@ -1028,7 +1040,7 @@ Function IR1K_InitializeScattContrast()
 	ListOfStrings+="El22_type;El22_Isotope;"
 	ListOfStrings+="El23_type;El23_Isotope;"
 	ListOfStrings+="El24_type;El24_Isotope;"
-	ListOfStrings+="ListOfAvailableCompounds;UsedMatrixCompound;LastLoadedCompound;SelectedElementName;"
+	ListOfStrings+="ListOfAvailableCompounds;UsedMatrixCompound;LastLoadedCompound;SelectedElementName;AvailableCompoundsMask;"
 	ListOfStrings+="Anom_Compound1;Anom_Compound2;Anom_CompFormula1;Anom_CompFormula2;"
 	
 	variable /C SingE_F_1, SingE_F_2
@@ -1143,7 +1155,6 @@ Function IR1K_InitCalculatorExportDta()
 	string IgorPathStr=S_Path
 	string WhereAreProcedures=RemoveEnding(FunctionPath(""),"Irena:IR1_ScattContr_New.ipf")
 
-//	string/g StylePath=IgorPathStr+"User Procedures:Irena_CalcSavedCompounds"
 	string/g StylePath=WhereAreProcedures+"Irena_CalcSavedCompounds"
 	NewPath/C/O/Q/Z CalcSavedCompounds, StylePath
 	if(V_flag!=0)	//user cannot write in the place where procedures are... Force user to use only internal storage of compounds....
@@ -1167,9 +1178,11 @@ Function IR1K_InitCalculatorExportDta()
 	Make/O/N=(ItemsInList(ListOfAvailableCompounds)) NumbersOfCompoundsOutsideIgor
 	variable i
 	For(i=0;i<ItemsInList(ListOfAvailableCompounds);i+=1)
-		//WaveOfCompoundsOutsideIgor[i]=StringFromList(0,StringFromList(i, ListOfAvailableCompounds),".")
 		WaveOfCompoundsOutsideIgor[i]=StringFromList(i, ListOfAvailableCompounds)[0,strlen(StringFromList(i, ListOfAvailableCompounds))-5]
 	endfor
+	SVAR AvailableCompoundsMask=root:Packages:ScatteringContrast:AvailableCompoundsMask
+	grep/E=(AvailableCompoundsMask) WaveOfCompoundsOutsideIgor as WaveOfCompoundsOutsideIgor
+	redimension/N=(numpnts(WaveOfCompoundsOutsideIgor)) NumbersOfCompoundsOutsideIgor
 	sort WaveOfCompoundsOutsideIgor, NumbersOfCompoundsOutsideIgor
 	
 	setDataFolder oldDf
@@ -1209,6 +1222,9 @@ Function IR1K_UpdateCalcExportDta()
 			WaveOfCompoundsOutsideIgor[i]=StringFromList(i, ListOfAvailableCompounds)[0,strlen(StringFromList(i, ListOfAvailableCompounds))-5]
 		endif
 	endfor
+	SVAR AvailableCompoundsMask=root:Packages:ScatteringContrast:AvailableCompoundsMask
+	grep/E=(AvailableCompoundsMask) WaveOfCompoundsOutsideIgor as WaveOfCompoundsOutsideIgor
+	redimension/N=(numpnts(WaveOfCompoundsOutsideIgor)) NumbersOfCompoundsOutsideIgor
 	sort WaveOfCompoundsOutsideIgor, WaveOfCompoundsOutsideIgor		//, NumbersOfCompoundsOutsideIgor
 	
 	setDataFolder oldDf
@@ -2055,6 +2071,9 @@ Function IR1K_AnomScattContCalc()
 	else
 		ListBox CompoundSelection,mode= 4
 	endif
+	SetVariable AvailableCompoundsMask,pos={10,454},size={215,16},title="Mask (regex):",help={"Mask Stored data list using regex"}
+	SetVariable AvailableCompoundsMask,value= root:Packages:ScatteringContrast:AvailableCompoundsMask, frame=1, proc=IR1K_SetVarProc
+
 	CheckBox Anom_UseSingleEnergy,pos={256,53},size={139,14},proc=IR1K_AnomCheckProc,title="Calculate at single energy"
 	CheckBox Anom_UseSingleEnergy,help={"Check to calculate data at single energy"}
 	CheckBox Anom_UseSingleEnergy,variable= root:Packages:ScatteringContrast:Anom_UseSingleEnergy,mode=1
@@ -2087,108 +2106,108 @@ Function IR1K_AnomScattContCalc()
 
 
 
-	SetVariable Sing_F0_1,pos={237,281},size={170,18},title=" f0  [ e- ]      ", bodywidth=80
+	SetVariable Sing_F0_1,pos={237,281},size={170,18},title=" f0  [ e- ]      ", bodywidth=60
 	SetVariable Sing_F0_1,labelBack=(48896,52992,65280) 
 	SetVariable Sing_F0_1,frame=0, format="%4.4g"
 	SetVariable Sing_F0_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_F0_1
 	SetVariable Sing_F0_2,pos={424,281},size={170,18},title=" f0  [ e- ]      "
-	SetVariable Sing_F0_2,help={"F0 (energy independent] in cm-1"}, bodywidth=80
+	SetVariable Sing_F0_2,help={"F0 (energy independent] in cm-1"}, 				bodywidth=60
 	SetVariable Sing_F0_2,labelBack=(49152,65280,32768) 
 	SetVariable Sing_F0_2,frame=0, format="%4.4g"
 	SetVariable Sing_F0_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_F0_2
 
-	SetVariable Sing_FPrime_1,pos={237,301},size={170,18},title=" f ' [ e- ]      ", bodywidth=80
+	SetVariable Sing_FPrime_1,pos={237,301},size={170,18},title=" f ' [ e- ]      ", bodywidth=60
 	SetVariable Sing_FPrime_1,help={"Fprime (energy dependent] in electrons"}
 	SetVariable Sing_FPrime_1,labelBack=(48896,52992,65280) 
 	SetVariable Sing_FPrime_1,frame=0, format="%4.4g"
 	SetVariable Sing_FPrime_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_Fprime_1
-	SetVariable Sing_FPrime_2,pos={424,301},size={170,18},title=" f'  [ e- ]      ", bodywidth=80
+	SetVariable Sing_FPrime_2,pos={424,301},size={170,18},title=" f'  [ e- ]      ", bodywidth=60
 	SetVariable Sing_FPrime_2,help={"Fprime (energy dependent] in electrons"}
 	SetVariable Sing_FPrime_2,labelBack=(49152,65280,32768) 
 	SetVariable Sing_FPrime_2,frame=0, format="%4.4g"
 	SetVariable Sing_FPrime_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_Fprime_2
 
-	SetVariable Sing_F0FPrime_1,pos={237,321},size={170,18},title=" f0+f'  [ e- ]      ", bodywidth=80
+	SetVariable Sing_F0FPrime_1,pos={237,321},size={170,18},title=" f0+f'  [ e- ]      ", bodywidth=60
 	SetVariable Sing_F0FPrime_1,help={"F0+Fprime (energy dependent] in electrons"}
 	SetVariable Sing_F0FPrime_1,labelBack=(48896,52992,65280) 
 	SetVariable Sing_F0FPrime_1,frame=0, format="%4.4g"
 	SetVariable Sing_F0FPrime_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_F0Fprime_1
-	SetVariable Sing_F0FPrime_2,pos={424,321},size={170,18},title=" f0+f'  [ e- ]      ", bodywidth=80
+	SetVariable Sing_F0FPrime_2,pos={424,321},size={170,18},title=" f0+f'  [ e- ]      ", bodywidth=60
 	SetVariable Sing_F0FPrime_2,help={"F0+Fprime (energy dependent] in electrons"}
 	SetVariable Sing_F0FPrime_2,labelBack=(49152,65280,32768) 
 	SetVariable Sing_F0FPrime_2,frame=0, format="%4.4g"
 	SetVariable Sing_F0FPrime_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_F0Fprime_2
 
-	SetVariable Sing_FDoublePrime_1,pos={237,341},size={170,18},title=" f''  [ e- ]      ", bodywidth=80
+	SetVariable Sing_FDoublePrime_1,pos={237,341},size={170,18},title=" f''  [ e- ]      ", bodywidth=60
 	SetVariable Sing_FDoublePrime_1,help={"F double prime (energy dependent], imaginary part  in electrons"}
 	SetVariable Sing_FDoublePrime_1,labelBack=(48896,52992,65280)
 	SetVariable Sing_FDoublePrime_1 ,frame=0, format="%4.4g"
 	SetVariable Sing_FDoublePrime_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_FdoublePrime_1
-	SetVariable Sing_FDoublePrime_2,pos={424,341},size={170,18},title=" f''  [ e- ]      ", bodywidth=80
+	SetVariable Sing_FDoublePrime_2,pos={424,341},size={170,18},title=" f''  [ e- ]      ", bodywidth=60
 	SetVariable Sing_FDoublePrime_2,help={"F double prime (energy dependent], imaginary part  in electrons"}
 	SetVariable Sing_FDoublePrime_2,labelBack=(49152,65280,32768)
 	SetVariable Sing_FDoublePrime_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_FDoublePrime_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_FdoublePrime_2
-	SetVariable Sing_MuOverRho_1,pos={237,361},size={170,18},title=" Mu/Rho [cm2/g]", bodywidth=80
+	SetVariable Sing_MuOverRho_1,pos={237,361},size={170,18},title=" Mu/Rho [cm2/g]", bodywidth=60
 	SetVariable Sing_MuOverRho_1,help={"Mu over Rho in [cm2/g]"}
 	SetVariable Sing_MuOverRho_1,labelBack=(48896,52992,65280)
 	SetVariable Sing_MuOverRho_1 ,frame=0, format="%4.4g"
 	SetVariable Sing_MuOverRho_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_MuOverRho_1
-	SetVariable Sing_MuOverRho_2,pos={424,361},size={170,18},title=" Mu/Rho [cm2/g]", bodywidth=80
+	SetVariable Sing_MuOverRho_2,pos={424,361},size={170,18},title=" Mu/Rho [cm2/g]", bodywidth=60
 	SetVariable Sing_MuOverRho_2,help={"Mu over Rho in [cm2/g]"}
 	SetVariable Sing_MuOverRho_2,labelBack=(49152,65280,32768)
 	SetVariable Sing_MuOverRho_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_MuOverRho_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_MuOverRho_2
-	SetVariable Sing_Mu_1,pos={237,381},size={170,18},title=" Mu [1/cm]    ", bodywidth=80
+	SetVariable Sing_Mu_1,pos={237,381},size={170,18},title=" Mu [1/cm]    ", bodywidth=60
 	SetVariable Sing_Mu_1,help={"Mu on [1/cm]"},labelBack=(48896,52992,65280)
 	SetVariable Sing_Mu_1 ,frame=0, format="%4.4g"
 	SetVariable Sing_Mu_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_Mu_1
-	SetVariable Sing_Mu_2,pos={424,381},size={170,18},title=" Mu [1/cm]    ", bodywidth=80
+	SetVariable Sing_Mu_2,pos={424,381},size={170,18},title=" Mu [1/cm]    ", bodywidth=60
 	SetVariable Sing_Mu_2,help={"Mu on [1/cm]"},labelBack=(49152,65280,32768)
 	SetVariable Sing_Mu_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_Mu_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_Mu_2
-	SetVariable Sing_1OverMu_1,pos={237,401},size={170,18},title=" 1/Mu [cm]     ", bodywidth=80
+	SetVariable Sing_1OverMu_1,pos={237,401},size={170,18},title=" 1/Mu [cm]     ", bodywidth=60
 	SetVariable Sing_1OverMu_1,help={"1/Mu in [cm]"},labelBack=(48896,52992,65280)
 	SetVariable Sing_1OverMu_1 ,frame=0, format="%4.4g"
 	SetVariable Sing_1OverMu_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_OneOverMu_1
-	SetVariable Sing_1OverMu_2,pos={424,401},size={170,18},title=" 1/Mu [cm]    ", bodywidth=80
+	SetVariable Sing_1OverMu_2,pos={424,401},size={170,18},title=" 1/Mu [cm]    ", bodywidth=60
 	SetVariable Sing_1OverMu_2,help={"1/Mu in [cm]"},labelBack=(49152,65280,32768)
 	SetVariable Sing_1OverMu_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_1OverMu_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_OneOverMu_2
-	SetVariable Sing_eToMinusMuT_1,pos={237,421},size={170,18},title="Trans = exp(-Mu*T)", bodywidth=80
+	SetVariable Sing_eToMinusMuT_1,pos={237,421},size={170,18},title="Trans = exp(-Mu*T)", bodywidth=60
 	SetVariable Sing_eToMinusMuT_1,help={"Transmission for thickness given above"}
 	SetVariable Sing_eToMinusMuT_1,labelBack=(48896,52992,65280)
 	SetVariable Sing_eToMinusMuT_1 ,frame=0, format="%4.4g"
 	SetVariable Sing_eToMinusMuT_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_eToMInusMuT_1
-	SetVariable Sing_eToMinusMuT_2,pos={424,421},size={170,18},title=" Trans = exp(-Mu*T)", bodywidth=80
+	SetVariable Sing_eToMinusMuT_2,pos={424,421},size={170,18},title=" Trans = exp(-Mu*T)", bodywidth=60
 	SetVariable Sing_eToMinusMuT_2,help={"Transmission for thickness given above"}
 	SetVariable Sing_eToMinusMuT_2,labelBack=(49152,65280,32768)
 	SetVariable Sing_eToMinusMuT_2 ,frame=0, format="%4.4g"
 	SetVariable Sing_eToMinusMuT_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_eToMInusMuT_2
 
-	SetVariable SingE_Fdrho_1,pos={237,441},size={170,18},title=" f [10^10 cm^-2]    ", bodywidth=80
+	SetVariable SingE_Fdrho_1,pos={237,441},size={170,18},title=" f [10^10 cm^-2]    ", bodywidth=60
 	SetVariable SingE_Fdrho_1,help={"f in cm^2 units"}
 	SetVariable SingE_Fdrho_1,labelBack=(48896,52992,65280)
 	SetVariable SingE_Fdrho_1 ,frame=0, format="%4.4g"
 	SetVariable SingE_Fdrho_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_Fdrho_1
-	SetVariable SingE_Fdrho_2,pos={424,441},size={170,18},title=" f  [10^10 cm^-2]   ", bodywidth=80
+	SetVariable SingE_Fdrho_2,pos={424,441},size={170,18},title=" f  [10^10 cm^-2]   ", bodywidth=60
 	SetVariable SingE_Fdrho_2,help={"f in cm2 units"}
 	SetVariable SingE_Fdrho_2,labelBack=(49152,65280,32768)
 	SetVariable SingE_Fdrho_2 ,frame=0, format="%4.4g"
 	SetVariable SingE_Fdrho_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_Fdrho_2
 
-	SetVariable SingE_FDPrho_1,pos={237,461},size={170,18},title=" f\"  [10^10 cm^-2]   ", bodywidth=80
+	SetVariable SingE_FDPrho_1,pos={237,461},size={170,18},title=" f\"  [10^10 cm^-2]   ", bodywidth=60
 	SetVariable SingE_FDPrho_1,help={"f\" in cm2 units"}
 	SetVariable SingE_FDPrho_1,labelBack=(48896,52992,65280)
 	SetVariable SingE_FDPrho_1 ,frame=0, format="%4.4g"
 	SetVariable SingE_FDPrho_1,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_FDPrho_1
-	SetVariable SingE_FDPrho_2,pos={424,461},size={170,18},title=" f\"  [10^10 cm^-2]   ", bodywidth=80
+	SetVariable SingE_FDPrho_2,pos={424,461},size={170,18},title=" f\"  [10^10 cm^-2]   ", bodywidth=60
 	SetVariable SingE_FDPrho_2,help={"f\" in cm2 units"}
 	SetVariable SingE_FDPrho_2,labelBack=(49152,65280,32768)
 	SetVariable SingE_FDPrho_2 ,frame=0, format="%4.4g"
 	SetVariable SingE_FDPrho_2,limits={-Inf,Inf,0},value= root:Packages:ScatteringContrast:SingE_FDPrho_2
 
-	SetVariable Sing_Contrast,pos={255,481},size={300,19},title="Delta Rho Squared [10^20 cm^-4]    ", bodywidth=80
+	SetVariable Sing_Contrast,pos={255,490},size={300,19},title="Delta Rho Squared [10^20 cm^-4]    ", bodywidth=60
 	SetVariable Sing_Contrast,help={"Delta Rho Squared "}, format="%5.5g"
 	SetVariable Sing_Contrast,labelBack=(65280,43520,32768) 
 	SetVariable Sing_Contrast,frame=0
@@ -2275,37 +2294,12 @@ Function IR1K_AnomScattContCalc()
 	Anom_UseSingleEnergy=!Anom_UseEnergyRange
 	IR1K_AnomCheckProc("Anom_UseSingleEnergy",Anom_UseSingleEnergy)
 	IR1K_AnomCheckProc("Anom_UseEnergyRange",Anom_UseEnergyRange)
-	IR1_UpdatePanelVersionNumber("IR1K_AnomCalcPnl", 1,1)
+	IR1_UpdatePanelVersionNumber("IR1K_AnomCalcPnl", IR1K_CurrentPanelVersion,1)
 EndMacro
 
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-//
-//Function IR1K_AnomalousCalc()
-//	DoWIndow IR1K_AnomCalcPnl
-//	if(V_Flag)
-//		DoWIndow/F IR1K_AnomCalcPnl
-//	else
-//		IR1K_AnomScattContCalc()
-//	endif
-////	IR1K_LoadCromerLiberman()
-//
-//end
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//
-//Function IR1K_LoadCromerLiberman()
-//	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>3.99)
-//		Execute/P "INSERTINCLUDE \"CromerLiberman\""
-//		Execute/P "COMPILEPROCEDURES "
-//	else
-//		DoAlert 0, "Your version of Igor is lower than 4.00, these macros need version 4.0 or higher"  
-//	endif
-//end
-// 
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
