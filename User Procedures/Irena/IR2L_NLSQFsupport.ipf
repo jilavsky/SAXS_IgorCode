@@ -1322,6 +1322,7 @@ Function IR2L_PopSetVarProc(SV_Struct) : SetVariableControl
 		//	Bit 3:	Command (Macintosh ) or Ctrl (Windows ) is down.
 		//	Bit 4:	Contextual menu click occurred.
 	if(SV_struct.eventcode==1 || SV_struct.eventcode==2)
+			SV_struct.blockReentry = 1
 			string OldDf=GetDataFolder(1)
 			setDataFolder root:Packages:IR2L_NLSQF
 			variable whichDataSet

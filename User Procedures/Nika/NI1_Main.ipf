@@ -15,6 +15,7 @@ constant FixBackgroundOversubScale=1.5			//this is used to fix oversubtracted ba
 //*************************************************************************/
 
 //1.81   Beta version. Updated 64bit xops, mainly for OSX. 
+//			Added 12ID-C support, first release. 
 //1.80	Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
 //			Removed range selection controls and moved Save data options to its own tab "Save"
 //			Added ImageStatistics and control for user for delay between series of images. 
@@ -94,6 +95,8 @@ Menu "SAS 2D"
 		help={"Support for data from 9ID or9IDC (USAXS/SAXS) beamline at APS"}
 		"RSoXS ALS soft energy instrument", NI1_RSoXSCreateGUI()
 		help={"Support for data from ALS soft energy beamline"}
+		"APS 12ID-C SAXS with Gold Detector", NI1_12IDCLoadAndSetup()
+		help={"Support for data from APS 12ID-C camera"}
 		"DND CAT", NI1_DNDConfigureNika()
 		help={"Support for data from DND CAT (5ID) beamline at APS"}
 		"SSRL Mat SAXS", NI1_SSRLSetup()

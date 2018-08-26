@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.00
+#pragma version=1.2
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//version 1.2 adds support for 12ID-C SAXS camera with Gold detector
 //version 1.1 adds support for ALS RSoXS data - sfot X-ray energy beamlione at ALS. 
 //version 1.0 original release, Instrument support for SSRLMatSAXS
 //*******************************************************************************************************************************************
@@ -862,6 +863,525 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//		APS 12ID-C camera with Gold detector
+
+Function NI1_12IDCLoadAndSetup()
+	//this is function to setup data reduction for APS 12ID-C station using Gold detector
+	
+	string OldDFf=GetDataFolder(1)
+	//first initialize 
+	NI1A_Convert2Dto1DMainPanel()
+	NI1BC_InitCreateBmCntrFile()
+	setDataFOlder root:Packages:Convert2Dto1D:
+	//save the Spec file for #Z lines nad store the values for calibration... 
+	string/g specCalibDataName=""
+	SVAR DataFileExtension=root:Packages:Convert2Dto1D:DataFileExtension
+	DataFileExtension = ".tif"
+	//Now we need to load lookup table witgh calibration numbers
+	NI1_12IDCReadSpecFile(100)		//assume 100 images is normal. 
+	//set some usable energy, assume one of the first ones is useful
+	Wave MonoEnenergy = root:Packages:Nika_12IDCLookups:MonoEnenergy
+	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
+	NVAR XrayEnergy = root:Packages:Convert2Dto1D:XrayEnergy
+	XrayEnergy = MonoEnenergy[ceil(1*numpnts(MonoEnenergy)/10)]
+	Wavelength = 12.39841857/XrayEnergy
+	NI1_12IDCReadScriptFile()
+	//these are setting so user is processing files... 	
+	NVAR  Displ=root:Packages:Convert2Dto1D:Process_DisplayAve
+	NVAR 	Proc1= root:Packages:Convert2Dto1D:Process_Individually
+	NVAR 	Proc2= root:Packages:Convert2Dto1D:Process_Average
+	NVAR 	Proc3 = root:Packages:Convert2Dto1D:Process_AveNFiles
+	Displ = 0
+	Proc1 = 1
+	Proc2 = 0
+	Proc3 = 0
+	//default settings, change as needed
+	NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
+	NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
+	NVAR QBinningLogarithmic = root:Packages:Convert2Dto1D:QBinningLogarithmic
+	NVAR DoSectorAverages = root:Packages:Convert2Dto1D:DoSectorAverages
+	NVAR DoCircularAverage = root:Packages:Convert2Dto1D:DoCircularAverage
+	NVAR NumberOfSectors = root:Packages:Convert2Dto1D:NumberOfSectors
+	NVAR SectorsStartAngle = root:Packages:Convert2Dto1D:SectorsStartAngle
+	NVAR SectorsHalfWidth = root:Packages:Convert2Dto1D:SectorsHalfWidth
+	NVAR DisplayDataAfterProcessing = root:Packages:Convert2Dto1D:DisplayDataAfterProcessing
+	NVAR StoreDataInIgor = root:Packages:Convert2Dto1D:StoreDataInIgor
+	NVAR OverwriteDataIfExists = root:Packages:Convert2Dto1D:OverwriteDataIfExists
+	NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
+	NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
+	NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
+
+	UseSectors = 1
+	FIlesSortOrder = 3	
+	QvectorNumberPoints=300
+	QBinningLogarithmic=1
+	QvectormaxNumPnts = 0
+	DoSectorAverages = 0
+	DoCircularAverage = 1
+	NumberOfSectors = 12
+	SectorsStartAngle = 0
+	SectorsHalfWidth = 10
+	DisplayDataAfterProcessing = 1
+	StoreDataInIgor = 1
+	OverwriteDataIfExists = 1
+	Use2Ddataname = 1
+	
+	NVAR UseQvector = root:Packages:Convert2Dto1D:UseQvector
+	NVAR UseDspacing = root:Packages:Convert2Dto1D:UseDspacing
+	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
+	
+	UseQvector = 1
+	UseDspacing = 0
+	UseTheta = 0
+	
+	NVAR ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
+	NVAR ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
+	NVAR ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
+	ErrorCalculationsUseOld=0
+	ErrorCalculationsUseStdDev=0
+	ErrorCalculationsUseSEM=1
+	if(ErrorCalculationsUseOld)
+		print "Uncertainty calculation method is set to \"Old method (see manual for description)\""
+	elseif(ErrorCalculationsUseStdDev)
+		print "Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
+	else
+		print "Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+	endif
+	//
+		
+	NVAR UseSampleTransmission = root:Packages:Convert2Dto1D:UseSampleTransmission
+	NVAR UseEmptyField = root:Packages:Convert2Dto1D:UseEmptyField
+	NVAR UseI0ToCalibrate = root:Packages:Convert2Dto1D:UseI0ToCalibrate
+	NVAR DoGeometryCorrection = root:Packages:Convert2Dto1D:DoGeometryCorrection
+	NVAR UseMonitorForEf = root:Packages:Convert2Dto1D:UseMonitorForEf
+	NVAR UseSampleTransmFnct = root:Packages:Convert2Dto1D:UseSampleTransmFnct
+	NVAR UseSampleMonitorFnct = root:Packages:Convert2Dto1D:UseSampleMonitorFnct
+	NVAR UseEmptyMonitorFnct = root:Packages:Convert2Dto1D:UseEmptyMonitorFnct
+	NVAR UseSampleThickness = root:Packages:Convert2Dto1D:UseSampleThickness
+	NVAR UseSampleThicknFnct = root:Packages:Convert2Dto1D:UseSampleThicknFnct	
+
+	UseSampleThickness = 0			
+	UseSampleTransmission = 1
+	UseEmptyField = 1
+	UseI0ToCalibrate = 1
+	DoGeometryCorrection = 1
+	UseMonitorForEf = 1
+	UseSampleTransmFnct = 1
+	UseSampleMonitorFnct = 1
+	UseEmptyMonitorFnct = 1
+	UseSampleThicknFnct = 0 
+	
+	SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct
+	SVAR SampleMonitorFnct = root:Packages:Convert2Dto1D:SampleMonitorFnct
+	SVAR EmptyMonitorFnct = root:Packages:Convert2Dto1D:EmptyMonitorFnct
+	SVAR SampleThicknFnct = root:Packages:Convert2Dto1D:SampleThicknFnct
+	
+	SampleTransmFnct = "NI1_12IDCFindTrans"
+	SampleMonitorFnct = "NI1_12IDCFindI0"
+	EmptyMonitorFnct = "NI1_12IDCFindEmptyI0"
+	SampleThicknFnct = ""
+	
+
+	NI1A_SetCalibrationFormula()			
+	NI1BC_UpdateBmCntrListBox()	
+	NI1A_UpdateDataListBox()	
+	NI1A_UpdateEmptyDarkListBox()	
+	
+	setDataFolder OldDFf
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+Function NI1_12IDCReadScriptFile()
+
+	Variable refNum,err=0, ReadParams=0, CreateMask=0
+	String YesNoStrParams="No"
+	String YesNoStrMask="No"
+	OPEN/R/F="."/P=Convert2Dto1DDataPath refNum as "goldnormengavg"
+	if(strlen(S_fileName)>0)
+		String lineStr
+		Variable count=0
+		do
+			FreadLine refNum,lineStr
+			if(strlen(lineStr)<=0)
+				break
+			endif
+			if(strsearch(lineStr,"goldaverage",0)>=0)
+				Prompt YesNoStrParams, "Load beamline parameters in Nika? (overwrites any existing params!)", popup, "No;Yes;"
+				Prompt YesNoStrMask, "Create beamline defined mask? (overwrites any existing mask!)", popup, "No;Yes;"
+				DoPrompt "Beamline params & mask found, load in Nika?", YesNoStrParams, YesNoStrMask
+				if(V_Flag)
+					abort
+				endif
+				if(stringMatch(YesNoStrParams,"Yes"))
+					ReadParams=1
+				endif
+				if(stringMatch(YesNoStrMask,"Yes"))
+					CreateMask=1
+				endif
+				NI1_12IDC_Parsegoldnormengavg(lineStr, ReadParams)
+				NI1_12IDC_ParsegoldMask(lineStr, CreateMask)
+			endif
+		while(err==0)
+	else
+		print "goldnormengavg file not found, parameters not set..."
+	endif		
+	close refnum
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
+	string CommandLine
+	variable MakeMask
+	
+	string OldDf=getDataFolder(1)
+	SetDataFolder root:Packages:Nika_12IDCLookups
+
+	Variable tempStart, tempEnd, NumLines, i
+	String TempStr, TempStr2
+	
+	// goldaverage -o Averaged_norm -y -p 0.175 -d 2345 -Z 200 -k $normval -e $energyval -r146,915,158,980 -r143,980,164,1024 -r 0,908,1024,914 -c6@166,907 -c12@154,911 154 911 $filename
+	//need to create list of items, first rectangles
+	Make/O/N=(0,4) Rectangles
+	tempStart = 0
+	NumLines = 0
+	Do
+		tempStart=strsearch(CommandLine, "-r", tempStart+1)
+		tempEnd = strsearch(CommandLine, " ", tempStart+3)
+		if(tempEnd<0 || tempStart<0)
+			BREAk
+		endif	
+		TempStr = CommandLine[tempStart,tempEnd]
+		TempStr = ReplaceString("-r",TempStr,"")+","
+		redimension/N=(NumLines+1, 4) Rectangles
+		Rectangles[NumLines][0]=str2num(stringFromList(0,TempStr,","))
+		Rectangles[NumLines][1]=str2num(stringFromList(1,TempStr,","))
+		Rectangles[NumLines][2]=str2num(stringFromList(2,TempStr,","))
+		Rectangles[NumLines][3]=str2num(stringFromList(3,TempStr,","))
+		print "Found Rectangular mask with corners of: "+num2str(Rectangles[NumLines][0])+" ; "+num2str(Rectangles[NumLines][1])+" ; "+num2str(Rectangles[NumLines][2])+" ; "+num2str(Rectangles[NumLines][3])
+		NumLines+=1
+	while(tempEnd>0 && strlen(TempStr)>1 )
+
+	//need to create list of items, second circles
+	Make/O/N=(0,3) Circles
+	tempStart = 0
+	NumLines = 0
+	Do
+		tempStart=strsearch(CommandLine, "-c", tempStart+1)
+		tempEnd = strsearch(CommandLine, " ", tempStart+3)
+		if(tempEnd<0 || tempStart<0)
+			BREAk
+		endif	
+		TempStr = CommandLine[tempStart,tempEnd]
+		TempStr = ReplaceString("-c",TempStr,"")+","
+		TempStr2 = stringFromList(1,TempStr,"@")
+		redimension/N=(NumLines+1, 3) Circles
+		Circles[NumLines][0]=str2num(stringFromList(0,TempStr,"@"))
+		Circles[NumLines][1]=str2num(stringFromList(0,TempStr2,","))
+		Circles[NumLines][2]=str2num(stringFromList(1,TempStr2,","))
+		print "Found Circular mask with radius of: "+num2str(Circles[NumLines][0])+" ; and centers "+num2str(Circles[NumLines][1])+" ; "+num2str(Circles[NumLines][21])
+		NumLines+=1
+	while(tempEnd>0 && strlen(TempStr)>1 )
+	SetDataFolder	OldDf
+	if(MakeMask)
+		//here we will make mask... We need image to make copy of. 
+		SetDataFolder	root:Packages:Convert2Dto1D:
+		Wave/Z CCDImage=root:Packages:Convert2Dto1D:CCDImageToConvert
+		if(!WaveExists(CCDImage))
+			DoAlert/T="CCD image not found, we need one to create mask", 0, "In next dialog select any one from tiff files you will be reducing. All we need is correct image size." 
+			//print "Mask was not created, first load image and then try again"
+			ImageLoad/P=Convert2Dto1DDataPath/T=tiff/Q/O/N=M_ROIMask 
+			if(V_flag==0)		//return 0 if not succesuful.
+				print "Mask was not created, first load image and then try again"
+				SetDataFolder	OldDf
+				return 0
+			endif
+			wave M_ROIMask
+			Redimension/N=(-1,-1,0) 	M_ROIMask			//this is fix for 3 layer tiff files...
+		else
+			Duplicate/O CCDImage, root:Packages:Convert2Dto1D:M_ROIMask		
+		endif
+		Wave Mask = root:Packages:Convert2Dto1D:M_ROIMask
+		Mask = 1
+		//this is all enable mask... 
+		//Now we need to add masked off areas... 
+		print "Created new Mask based on beamline command file"
+		For(i=0;i<dimSize(Rectangles,0);i+=1)
+			Mask[Rectangles[i][0],Rectangles[i][2]][Rectangles[i][1],Rectangles[i][3]] = 0
+			print "Added Rectangular mask with corners of: "+num2str(Rectangles[i][0])+" ; "+num2str(Rectangles[i][1])+" ; "+num2str(Rectangles[i][2])+" ; "+num2str(Rectangles[i][3])
+		endfor
+		For(i=0;i<dimSize(Circles,0);i+=1)
+			Mask = sqrt((p-Circles[i][1])^2+(q-Circles[i][2])^2)>Circles[i][0] ? Mask[p][q] : 0
+			print "Added Circular mask with radius of: "+num2str(Circles[i][0])+" ; and centers "+num2str(Circles[i][1])+" ; "+num2str(Circles[i][21])
+		endfor
+		NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
+		UseMask=1
+		SetDataFolder	OldDf
+	endif
+end
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDC_Parsegoldnormengavg(CommandLine, LoadInNIka)
+	string CommandLine
+	variable LoadInNIka
+	
+	Variable PixSize,Distance,n3,n4,n5,BCX,BCY
+	String s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16
+	
+	// goldaverage -o Averaged_norm -y -p 0.175 -d 2345 -Z 200 -k $normval -e $energyval -r146,915,158,980 -r143,980,164,1024 -r 0,908,1024,914 -c6@166,907 -c12@154,911 154 911 $filename
+						//s1,s2,s3,s4,s5,pixSize,s6,Distance,s6,n3,s7,s8,s9,s10,s11,s12,s13,s14,n4,n5,s16
+	sscanf CommandLine,"%s %s %s %s %s %f %s %f %s %f %s %s %s %s %s %s %s %s %f %f %s",s1,s2,s3,s4,s5,pixSize,s6,Distance,s6,n3,s7,s8,s9,s10,s11,s12,s13,s14,n4,n5,s16
+	//this shoudl get us Distacne and pix size. 
+	string ReadEndStr=ReplaceString(" ", CommandLine, ";")
+	BCX=str2num(StringFromList((ItemsInList(ReadEndStr)-3), ReadEndStr))
+	BCY=str2num(StringFromList((ItemsInList(ReadEndStr)-2), ReadEndStr))
+	if(numType(BCX)==2 || numtype(BCY)==2 || numtype(pixSIze)==2)
+		Print "bad format line: "+CommandLine		
+	endif
+	//the pixel size of the Gold detector is 0.175 micron
+	NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
+	NVAR PixelSizeY = root:Packages:Convert2Dto1D:PixelSizeY
+	NVAR SampleToCCDDistance =root:Packages:Convert2Dto1D:SampleToCCDDistance
+	NVAR BcentX = root:Packages:Convert2Dto1D:BeamCenterX
+	NVAR BcentY = root:Packages:Convert2Dto1D:BeamCenterY
+	print "Found distacne in command file  : "+num2str(SampleToCCDDistance)+" mm"
+	print "Found Pixel Size in command file  : "+num2str(PixelSizeX)+" mm"
+	print "Found Beam Center X in command file  : "+num2str(BcentX)+" pix"
+	print "Found Beam Center Y in command file  : "+num2str(BcentY)+" pix"
+	if(LoadInNIka)
+		PixelSizeX = pixSize
+		PixelSizeY = pixSize
+		SampleToCCDDistance = Distance
+		BcentX = BCX
+		BcentY = BCY
+		print "Loaded distacne from command file of : "+num2str(SampleToCCDDistance)+" mm"
+		print "Loaded Pixel Size from command file of : "+num2str(PixelSizeX)+" mm"
+		print "Loaded Beam Center X from command file of : "+num2str(BcentX)+" pix"
+		print "Loaded Beam Center Y from command file of : "+num2str(BcentY)+" pix"	
+	endif
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDCReadSpecFile(NumFilesExpected)
+	Variable NumFilesExpected
+	
+	string OldDFf
+	OldDFf = getDataFolder(1)
+
+	Variable refNum,err=0
+	OPEN/R/F="."/M="Find spec file" refNum
+	if(strlen(S_fileName)>0)
+		//init paths to the place where this file is... 
+		SVAR specCalibDataName=root:Packages:Convert2Dto1D:specCalibDataName
+		specCalibDataName = S_fileName
+		string pathInforStrL
+		pathInforStrL = RemoveListItem((ItemsInList(S_fileName,":")-1),S_fileName,":")
+		NewPath/O/Q Convert2Dto1DDataPath, pathInforStrL		
+		NewPath/O/Q Convert2Dto1DEmptyDarkPath, pathInforStrL		
+		NewPath/O/Q Convert2Dto1DBmCntrPath, pathInforStrL
+		NewPath/O/Q Convert2Dto1DMaskPath, pathInforStrL
+		NI1_12IDCinitSpecFileArrays(NumFilesExpected)			// max number of expected atoms
+		Wave ExpTime=root:Packages:Nika_12IDCLookups:ExpTime
+		Wave/T tt=root:Packages:Nika_12IDCLookups:Filenames
+		String lineStr
+		Variable count=0
+		do
+			FreadLine refNum,lineStr
+			if(strlen(lineStr)<=0)
+				break
+			endif
+			if(strsearch(lineStr,"#Z",0)>=0)
+				NI1_12IDCprocessSpecLine(lineStr,count)
+				count+=1
+				if(NumFilesExpected<=count)
+					NumFilesExpected+=100
+					NI1_12IDCredimSpecFileArrays(NumFilesExpected)
+				endif
+			endif
+		while(err==0)
+		Close refNum
+		// trim the waves to final sizes:
+		NI1_12IDCredimSpecFileArrays(count)
+	endif
+	
+	setDataFolder OldDFf
+	
+End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+
+Function NI1_12IDCinitSpecFileArrays(num)
+	Variable num
+	
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S Nika_12IDCLookups
+	
+	Make/O/D/n=(num) ExpTime=nan
+	Make/O/D/n=(num) I0=nan
+	Make/O/D/n=(num) ITR=nan
+	Make/O/D/n=(num) I01=nan
+	Make/O/D/n=(num) MP1=nan
+	Make/O/D/n=(num) MP2=nan
+	Make/O/D/n=(num) MP3=nan
+	Make/O/D/n=(num) MP4=nan
+	Make/O/D/n=(num) MP5=nan
+	Make/O/D/n=(num) MonoEnenergy=nan
+	Make/O/D/n=(num) LakeShoreTemp=nan
+	Make/O/T/n=(num) TimeString=""
+	Make/O/D/n=(num) UnixTime=nan
+	Make/O/T/n=(num) Filenames=""
+End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDCredimSpecFileArrays(num)
+	Variable num
+	
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S Nika_12IDCLookups
+
+	Wave ExpTime=root:Packages:Nika_12IDCLookups:ExpTime
+	Wave I0=root:Packages:Nika_12IDCLookups:I0
+	Wave ITR=root:Packages:Nika_12IDCLookups:ITR
+	Wave I01=root:Packages:Nika_12IDCLookups:I01
+	Wave MP1=root:Packages:Nika_12IDCLookups:MP1
+	Wave MP2=root:Packages:Nika_12IDCLookups:MP2
+	Wave MP3=root:Packages:Nika_12IDCLookups:MP3
+	Wave MP4=root:Packages:Nika_12IDCLookups:MP4
+	Wave MP5=root:Packages:Nika_12IDCLookups:MP5
+	Wave MonoEnenergy=root:Packages:Nika_12IDCLookups:MonoEnenergy
+	Wave LakeShoreTemp=root:Packages:Nika_12IDCLookups:LakeShoreTemp
+	Wave UnixTime=root:Packages:Nika_12IDCLookups:UnixTime
+	Redimension/E=1/N=(num) ExpTime, I0, ITR, I01, MP1, MP2, MP3, MP4, MP5, MonoEnenergy, LakeShoreTemp, UnixTime
+	Wave/T Filenames=root:Packages:Nika_12IDCLookups:Filenames
+	Wave/T TimeString=root:Packages:Nika_12IDCLookups:TimeString
+	Redimension/E=1/N=(num) TimeString, Filenames
+End
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDCprocessSpecLine(lineStr,count)
+	String lineStr
+	Variable count
+	
+	Variable n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,untime
+	String s1,s2,s3,s4,s5,s6,s7
+	
+	//sscanf lineStr,"%s %d %s %s %s %d %f %f %f %f %f %s",s1,n1,s2,s3,s4,n2,xx,yy,zz,n4,n5,s5
+	sscanf lineStr,"%s %s %f %f %f %f %f %f %f %f %f %f %f %f %s %s %s %s %s %f",s1,s2,n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,s3,s4,s5,s6,s7,untime
+	if(numType(n1)==2 || numtype(n2)==2 || numtype(untime)==2)
+		Print "bad format line: "+lineStr		
+	endif
+	Wave ExpTime=root:Packages:Nika_12IDCLookups:ExpTime
+	Wave I0=root:Packages:Nika_12IDCLookups:I0
+	Wave ITR=root:Packages:Nika_12IDCLookups:ITR
+	Wave I01=root:Packages:Nika_12IDCLookups:I01
+	Wave MP1=root:Packages:Nika_12IDCLookups:MP1
+	Wave MP2=root:Packages:Nika_12IDCLookups:MP2
+	Wave MP3=root:Packages:Nika_12IDCLookups:MP3
+	Wave MP4=root:Packages:Nika_12IDCLookups:MP4
+	Wave MP5=root:Packages:Nika_12IDCLookups:MP5
+	Wave MonoEnenergy=root:Packages:Nika_12IDCLookups:MonoEnenergy
+	Wave LakeShoreTemp=root:Packages:Nika_12IDCLookups:LakeShoreTemp
+	Wave UnixTime=root:Packages:Nika_12IDCLookups:UnixTime
+	Wave/T Filenames=root:Packages:Nika_12IDCLookups:Filenames
+	Wave/T TimeString=root:Packages:Nika_12IDCLookups:TimeString
+	Filenames[count] = s2
+	ExpTime[count] = n1-0.5
+	I0[count] = n2
+	ITR[count] = n3
+	I01[count] = n4
+	MP1[count] = n6
+	MP2[count] = n7
+	MP3[count] = n8
+	MP4[count] = n9
+	MP5[count] = n10
+	MonoEnenergy[count] = n11
+	LakeShoreTemp[count] = n12
+	TimeString[count] = s3+" "+s4+" "+s5+" "+s6+" "+s7
+	UnixTime[count] = untime
+End
+
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDCFindI0(FileNameString)
+	string FileNameString
+	Wave/T Filenames=root:Packages:Nika_12IDCLookups:Filenames
+	Wave I0=root:Packages:Nika_12IDCLookups:I0
+	grep/INDX/Q/E=FileNameString Filenames	
+	wave W_Index
+	//let use this place to also insert energy
+	Wave MonoEnenergy = root:Packages:Nika_12IDCLookups:MonoEnenergy
+	NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength
+	NVAR XrayEnergy = root:Packages:Convert2Dto1D:XrayEnergy
+	XrayEnergy = MonoEnenergy[W_Index[0]]
+	Wavelength = 12.39841857/XrayEnergy
+	if(numpnts(W_Index)==1)
+		return I0[W_Index[0]]
+	else
+		return nan
+	endif
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDCFindEmptyI0(FileNameString)
+	string FileNameString
+	SVAR CurrentEmptyName = root:Packages:Convert2Dto1D:CurrentEmptyName
+	Wave/T Filenames=root:Packages:Nika_12IDCLookups:Filenames
+	Wave I0=root:Packages:Nika_12IDCLookups:I0
+	grep/INDX/Q/E=CurrentEmptyName Filenames	
+	wave W_Index
+	if(numpnts(W_Index)==1)
+		return I0[W_Index[0]]
+	else
+		return nan
+	endif
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1_12IDCFindTrans(FileNameString)
+	string FileNameString
+	SVAR CurrentEmptyName = root:Packages:Convert2Dto1D:CurrentEmptyName
+	Wave/T Filenames=root:Packages:Nika_12IDCLookups:Filenames
+	Wave I0=root:Packages:Nika_12IDCLookups:I0
+	Wave ITR =root:Packages:Nika_12IDCLookups:ITR
+	grep/INDX/Q/E=CurrentEmptyName Filenames	
+	wave W_Index
+	variable I0E = I0[W_Index[0]]
+	variable ITRE = ITR[W_Index[0]]
+	grep/INDX/Q/E=FileNameString Filenames	
+	wave W_Index
+	variable I0S = I0[W_Index[0]]
+	variable ITRS = ITR[W_Index[0]]
+	variable Transm = (ITRS/I0S)/(ITRE/I0E)
+	
+	if(numtype(Transm)==0 && Transm>0)
+		return Transm
+	else
+		return nan
+	endif
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+//			end of 12ID-C camera support. 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

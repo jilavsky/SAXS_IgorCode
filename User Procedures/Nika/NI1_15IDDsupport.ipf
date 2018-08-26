@@ -1046,7 +1046,7 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				UseMonitorForEf = 1
 				UseSampleTransmFnct = 1
 				UseSampleMonitorFnct = 1
-				UseEmptyMonitorFnct = 1
+				UseEmptyMonitorFnct = 1  
 				UseSampleThicknFnct = 1 
 				
 				SVAR SampleTransmFnct = root:Packages:Convert2Dto1D:SampleTransmFnct

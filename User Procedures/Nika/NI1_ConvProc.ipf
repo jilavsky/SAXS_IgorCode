@@ -3859,7 +3859,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 	SetVariable EmptyDarkNameMatchStr,pos={245,510},size={155,18},proc=NI1A_PanelSetVarProc,title="Match (RegEx)"
 	SetVariable EmptyDarkNameMatchStr,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:EmptyDarkNameMatchStr
-	CheckBox FixBackgroundOversubtraction,pos={255,535},size={95,14},title="Fix Background Oversubtraction"
+	CheckBox FixBackgroundOversubtraction,pos={255,535},size={95,14},title="Fix Backg. Oversubtraction"
 	CheckBox FixBackgroundOversubtraction,help={"Check to add flat background to prevent negative intensities"}, proc=NI1A_CheckProc
 	CheckBox FixBackgroundOversubtraction,variable= root:Packages:Convert2Dto1D:FixBackgroundOversubtraction
 
