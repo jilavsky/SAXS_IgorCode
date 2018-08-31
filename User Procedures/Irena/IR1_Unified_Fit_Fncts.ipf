@@ -2565,6 +2565,7 @@ Function IR2U_SetVarProc(sva) : SetVariableControl
 	STRUCT WMSetVariableAction &sva
 
 	switch( sva.eventCode )
+		sva.blockReentry = 1
 		case 1: // mouse up
 			if(stringMatch(sva.CtrlName,"InvariantUserContrast"))
 				IR2U_CalculateInvariantVals()

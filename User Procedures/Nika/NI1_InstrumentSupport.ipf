@@ -875,6 +875,7 @@ Function NI1_12IDCLoadAndSetup()
 	//first initialize 
 	NI1A_Convert2Dto1DMainPanel()
 	NI1BC_InitCreateBmCntrFile()
+	NI1_12IDCHowTo()
 	setDataFOlder root:Packages:Convert2Dto1D:
 	//save the Spec file for #Z lines nad store the values for calibration... 
 	string/g specCalibDataName=""
@@ -899,6 +900,8 @@ Function NI1_12IDCLoadAndSetup()
 	Proc2 = 0
 	Proc3 = 0
 	//default settings, change as needed
+	NVAR UseSubtractFixedOffset = root:Packages:Convert2Dto1D:UseSubtractFixedOffset
+	NVAR SubtractFixedOffset = root:Packages:Convert2Dto1D:SubtractFixedOffset
 	NVAR UseSectors = root:Packages:Convert2Dto1D:UseSectors
 	NVAR QvectormaxNumPnts = root:Packages:Convert2Dto1D:QvectormaxNumPnts
 	NVAR QBinningLogarithmic = root:Packages:Convert2Dto1D:QBinningLogarithmic
@@ -913,7 +916,9 @@ Function NI1_12IDCLoadAndSetup()
 	NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 	NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
 	NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
-
+	
+	SubtractFixedOffset = 200
+	UseSubtractFixedOffset=1
 	UseSectors = 1
 	FIlesSortOrder = 3	
 	QvectorNumberPoints=300
@@ -989,7 +994,9 @@ Function NI1_12IDCLoadAndSetup()
 	NI1BC_UpdateBmCntrListBox()	
 	NI1A_UpdateDataListBox()	
 	NI1A_UpdateEmptyDarkListBox()	
-	
+	//send user to Empty/Dark tab
+	TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=3
+	NI1A_TabProc("NI1A_Convert2Dto1DPanel",3)	
 	setDataFolder OldDFf
 end
 //*******************************************************************************************************************************************
@@ -1095,6 +1102,7 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 			DoAlert/T="CCD image not found, we need one to create mask", 0, "In next dialog select any one from tiff files you will be reducing. All we need is correct image size." 
 			//print "Mask was not created, first load image and then try again"
 			ImageLoad/P=Convert2Dto1DDataPath/T=tiff/Q/O/N=M_ROIMask 
+			//Make/O/B/U/N=(1024,1024) root:Packages:Convert2Dto1D:M_ROIMask
 			if(V_flag==0)		//return 0 if not succesuful.
 				print "Mask was not created, first load image and then try again"
 				SetDataFolder	OldDf
@@ -1106,7 +1114,8 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 			Duplicate/O CCDImage, root:Packages:Convert2Dto1D:M_ROIMask		
 		endif
 		Wave Mask = root:Packages:Convert2Dto1D:M_ROIMask
-		Mask = 1
+		Mask = (Mask > 10) ? 1 : 0
+		Redimension/B/U Mask
 		//this is all enable mask... 
 		//Now we need to add masked off areas... 
 		print "Created new Mask based on beamline command file"
@@ -1195,7 +1204,8 @@ Function NI1_12IDCReadSpecFile(NumFilesExpected)
 		do
 			FreadLine refNum,lineStr
 			if(strlen(lineStr)<=0)
-				break
+				//break
+				err=1
 			endif
 			if(strsearch(lineStr,"#Z",0)>=0)
 				NI1_12IDCprocessSpecLine(lineStr,count)
@@ -1380,6 +1390,54 @@ Function NI1_12IDCFindTrans(FileNameString)
 end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+
+Function NI1_12IDCHowTo()
+	
+	doWIndow APS12IDC_Instructions
+	if(V_Flag)
+		DoWIndow/F APS12IDC_Instructions
+	else
+		String nb = "APS12IDC_Instructions"
+		NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={1,1}/W=(20,20,680,620) as "APS12IDC_Instructions"
+		Notebook $nb defaultTab=36, magnification=125
+		Notebook $nb showRuler=1, rulerUnits=2, updating={1, 1}
+		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",11,0,(0,0,0)}
+		Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
+		Notebook $nb ruler=Title, text="Instructions for use of APS 12IDC special configuration\r"
+		Notebook $nb ruler=Normal, text="\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="1. Find and open you spec file, located in the same folder as your tiff images. Note, data collections f"
+		Notebook $nb text="or all images are loaded, this may take some time if there is lots of images recorded in that spec file."
+		Notebook $nb text=" \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="2. If the code can find  \"goldnormengavg\" file in this location, you will get dialog that \"Beamline para"
+		Notebook $nb text="ms & mask was found\". Choices are \"Load beamline parameters\" and  \"Create beamline defined mask?\", default choise is No.\r"
+		Notebook $nb text="* If you select yes for \"Load beamline parameters\" you will load pixel size, distance and beam center.\r"
+		Notebook $nb text="* If you select yes for \"Create beamline defined mask?\" you will replace any existing mask with beamline"
+		Notebook $nb text=" deifined mask.\r"
+		Notebook $nb text="Select No if you changed this parameters against what beamline defined. \r"
+		Notebook $nb text="note: X-ray energy is re-loaded for each image individually, when I0 is looked up by the lookup function"
+		Notebook $nb text=". \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="3. If no image has been loaded in Nika and you want to create Mask, in order to know image size you will"
+		Notebook $nb text=" get dialog to load any of the images with data from this folder. Select any image of same size as all y"
+		Notebook $nb text="our other data im ages. Image is overwritten anyway. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="4. Next select Empty image in the Em/Dark tab. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Nika should be configured - you need to select output and method of data reduction, if deafault values a"
+		Notebook $nb text="re not correct...  \r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Note: if you are still collecting data, you will need to go through this routine again if you callect mo"
+		Notebook $nb text="re images from the last time you loaded the spec file. "
+		Notebook $nb text="\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="\r"
+		Notebook $nb text="Jan Ilavsky, 8/27/2018\r"
+	endif
+end
+
 //*******************************************************************************************************************************************
 //			end of 12ID-C camera support. 
 //*******************************************************************************************************************************************

@@ -750,7 +750,7 @@ end
 Function NI1_GMCloseAllNikaW() 		//close all open panels and windows
 	string ListOfNikaWindows="NI1A_Convert2Dto1DPanel;CCDImageToConvertFig;LineuotDisplayPlot_Q;LineuotDisplayPlot_D;LineuotDisplayPlot_T;"
 	ListOfNikaWindows+="Sample_Information;SquareMapIntvsPixels;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;NI1M_ImageROIPanel;CCDImageForMask;"
-	ListOfNikaWindows+="EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_9IDCConfigPanel;Instructions_9IDC;"
+	ListOfNikaWindows+="EmptyOrDarkImage;NI1_CreateFloodFieldPanel;NI1_MainConfigPanel;NI1_9IDCConfigPanel;Instructions_9IDC;APS12IDC_Instructions;"
 	variable i
 	string TempNm
 	For(i=0;i<ItemsInList(ListOfNikaWindows);i+=1)
