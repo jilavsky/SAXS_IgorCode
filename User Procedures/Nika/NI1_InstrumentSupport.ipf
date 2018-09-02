@@ -1007,8 +1007,8 @@ Function NI1_12IDCReadScriptFile()
 	Variable refNum,err=0, ReadParams=0, CreateMask=0
 	String YesNoStrParams="No"
 	String YesNoStrMask="No"
-	OPEN/R/F="."/P=Convert2Dto1DDataPath refNum as "goldnormengavg"
-	if(strlen(S_fileName)>0)
+	OPEN/R/Z/P=Convert2Dto1DDataPath refNum as "goldnormengavg"
+	if(V_Flag==0)
 		String lineStr
 		Variable count=0
 		do
@@ -1129,7 +1129,10 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 		endfor
 		NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
 		UseMask=1
+		SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
+		CurrentMaskFileName = "12ID-C beamline mask"
 		SetDataFolder	OldDf
+		
 	endif
 end
 
@@ -1159,10 +1162,6 @@ Function NI1_12IDC_Parsegoldnormengavg(CommandLine, LoadInNIka)
 	NVAR SampleToCCDDistance =root:Packages:Convert2Dto1D:SampleToCCDDistance
 	NVAR BcentX = root:Packages:Convert2Dto1D:BeamCenterX
 	NVAR BcentY = root:Packages:Convert2Dto1D:BeamCenterY
-	print "Found distacne in command file  : "+num2str(SampleToCCDDistance)+" mm"
-	print "Found Pixel Size in command file  : "+num2str(PixelSizeX)+" mm"
-	print "Found Beam Center X in command file  : "+num2str(BcentX)+" pix"
-	print "Found Beam Center Y in command file  : "+num2str(BcentY)+" pix"
 	if(LoadInNIka)
 		PixelSizeX = pixSize
 		PixelSizeY = pixSize
@@ -1173,6 +1172,11 @@ Function NI1_12IDC_Parsegoldnormengavg(CommandLine, LoadInNIka)
 		print "Loaded Pixel Size from command file of : "+num2str(PixelSizeX)+" mm"
 		print "Loaded Beam Center X from command file of : "+num2str(BcentX)+" pix"
 		print "Loaded Beam Center Y from command file of : "+num2str(BcentY)+" pix"	
+	else
+		print "Found distacne in command file  : "+num2str(Distance)+" mm"
+		print "Found Pixel Size in command file  : "+num2str(pixSize)+" mm"
+		print "Found Beam Center X in command file  : "+num2str(BCX)+" pix"
+		print "Found Beam Center Y in command file  : "+num2str(BCY)+" pix"	
 	endif
 end
 //*******************************************************************************************************************************************
@@ -1185,17 +1189,16 @@ Function NI1_12IDCReadSpecFile(NumFilesExpected)
 	OldDFf = getDataFolder(1)
 
 	Variable refNum,err=0
-	OPEN/R/F="."/M="Find spec file" refNum
+	string pathInforStrL
+	OPEN/R/T="????"/M="Find spec file" refNum
+	//abort
+	//OPEN/R/F="All Files:.*;"/M="Find spec file" refNum
+	//OPEN/R/M="Find spec file" refNum
 	if(strlen(S_fileName)>0)
 		//init paths to the place where this file is... 
 		SVAR specCalibDataName=root:Packages:Convert2Dto1D:specCalibDataName
 		specCalibDataName = S_fileName
-		string pathInforStrL
 		pathInforStrL = RemoveListItem((ItemsInList(S_fileName,":")-1),S_fileName,":")
-		NewPath/O/Q Convert2Dto1DDataPath, pathInforStrL		
-		NewPath/O/Q Convert2Dto1DEmptyDarkPath, pathInforStrL		
-		NewPath/O/Q Convert2Dto1DBmCntrPath, pathInforStrL
-		NewPath/O/Q Convert2Dto1DMaskPath, pathInforStrL
 		NI1_12IDCinitSpecFileArrays(NumFilesExpected)			// max number of expected atoms
 		Wave ExpTime=root:Packages:Nika_12IDCLookups:ExpTime
 		Wave/T tt=root:Packages:Nika_12IDCLookups:Filenames
@@ -1219,7 +1222,14 @@ Function NI1_12IDCReadSpecFile(NumFilesExpected)
 		Close refNum
 		// trim the waves to final sizes:
 		NI1_12IDCredimSpecFileArrays(count)
+	else
+		Close refNum
+		abort
 	endif
+	NewPath/O/Q Convert2Dto1DDataPath, pathInforStrL		
+	NewPath/O/Q Convert2Dto1DEmptyDarkPath, pathInforStrL		
+	NewPath/O/Q Convert2Dto1DBmCntrPath, pathInforStrL
+	NewPath/O/Q Convert2Dto1DMaskPath, pathInforStrL
 	
 	setDataFolder OldDFf
 	
@@ -1406,35 +1416,40 @@ Function NI1_12IDCHowTo()
 		Notebook $nb ruler=Title, text="Instructions for use of APS 12IDC special configuration\r"
 		Notebook $nb ruler=Normal, text="\r"
 		Notebook $nb text="\r"
-		Notebook $nb text="1. Find and open you spec file, located in the same folder as your tiff images. Note, data collections f"
-		Notebook $nb text="or all images are loaded, this may take some time if there is lots of images recorded in that spec file."
+		Notebook $nb text="1. Find and open your spec file, located in the same folder as your tiff images. Note, data collection records f"
+		Notebook $nb text="or all images present in that spec file are loaded, this may take some time if there is lots of images recorded in that spec file."
 		Notebook $nb text=" \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="2. If the code can find  \"goldnormengavg\" file in this location, you will get dialog that \"Beamline para"
-		Notebook $nb text="ms & mask was found\". Choices are \"Load beamline parameters\" and  \"Create beamline defined mask?\", default choise is No.\r"
-		Notebook $nb text="* If you select yes for \"Load beamline parameters\" you will load pixel size, distance and beam center.\r"
-		Notebook $nb text="* If you select yes for \"Create beamline defined mask?\" you will replace any existing mask with beamline"
-		Notebook $nb text=" deifined mask.\r"
-		Notebook $nb text="Select No if you changed this parameters against what beamline defined. \r"
+		Notebook $nb text="ms & mask was found\". Choices are \"Load beamline parameters\" and  \"Create beamline defined mask?\", default choice is NO.\r"
+		Notebook $nb text="* If you select YES for \"Load beamline parameters\" code will load pixel size, distance and beam center.\r"
+		Notebook $nb text="* If you select YES for \"Create beamline defined mask?\" code will replace any existing mask with beamline"
+		Notebook $nb text=" defined mask.\r"
+		Notebook $nb text="Select No if you changed parameters or mask against what beamline defined. \r"
 		Notebook $nb text="note: X-ray energy is re-loaded for each image individually, when I0 is looked up by the lookup function"
-		Notebook $nb text=". \r"
+		Notebook $nb text=". This guarantees, that during ASAXS each image is reduced with correct wavelength. \r"
 		Notebook $nb text="\r"
-		Notebook $nb text="3. If no image has been loaded in Nika and you want to create Mask, in order to know image size you will"
-		Notebook $nb text=" get dialog to load any of the images with data from this folder. Select any image of same size as all y"
-		Notebook $nb text="our other data im ages. Image is overwritten anyway. \r"
+		Notebook $nb text="3. If you choose to create Mask, you will get dialog to load any of the data images from this folder."
+		Notebook $nb text="This is needed to identify 0 intensity pixels and mask them. Select any data containing image"
+		Notebook $nb text=" in this folder. \r"
 		Notebook $nb text="\r"
-		Notebook $nb text="4. Next select Empty image in the Em/Dark tab. \r"
+		Notebook $nb text="4. Next select correct Empty image in the Em/Dark tab. \r"
 		Notebook $nb text="\r"
-		Notebook $nb text="Nika should be configured - you need to select output and method of data reduction, if deafault values a"
-		Notebook $nb text="re not correct...  \r"
+		Notebook $nb text="Nika should be configured - you may want to change method of data reduction (default is circular average with 300 log-spaced Q bins)"
+		Notebook $nb text=" and output type (default is save data in Igor)...  \r"
 		Notebook $nb text="\r"
-		Notebook $nb text="Note: if you are still collecting data, you will need to go through this routine again if you callect mo"
-		Notebook $nb text="re images from the last time you loaded the spec file. "
-		Notebook $nb text="\r"
-		Notebook $nb text="\r"
+		Notebook $nb text="Note: if you are still collecting data, you will need to go through this routine again after you callect new"
+		Notebook $nb text=" images from the last time you loaded the spec file. "
 		Notebook $nb text="\r"
 		Notebook $nb text="\r"
 		Notebook $nb text="Jan Ilavsky, 8/27/2018\r"
+		Notebook $nb text="\r"
+		Notebook $nb defaultTab=36, magnification=125
+		Notebook $nb showRuler=1, rulerUnits=2, updating={1, 1}
+		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Helvetica",11,0,(0,0,0)}
+		Notebook $nb ruler=Normal, fStyle=2, text="Hint: watch history area for notes on what Nika has found and done. \r"
+		Notebook $nb selection={startOfFile,startOfFile}
+		
 	endif
 end
 
