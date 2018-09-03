@@ -3527,7 +3527,7 @@ end
 Function NI1A_Convert2Dto1DPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,454,810) as "Main 2D to 1D conversion panel"
+	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,459,810) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
 	TitleBox MainTitle title="\Zr1602D to 1D data conversion panel",pos={48,2},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
@@ -3563,11 +3563,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	NVAR FIlesSortOrder = root:Packages:Convert2Dto1D:FIlesSortOrder
 	PopupMenu FIlesSortOrder,mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001;Invert_001;Invert Sort;Invert Sort2;"
 
-//	Button RefreshList,pos={330,97},size={100,18},proc=NI1A_ButtonProc,title="Refresh"
-//	Button RefreshList,help={"Refresh lisbox"}
 	TitleBox RefreshList1 title="Refresh using Right click",pos={320,99},frame=0,fstyle=1, fixedSize=1,size={120,11},fSize=9
-	//TitleBox RefreshList2 title="",pos={340,105},frame=0,fstyle=1, fixedSize=1,size={100,11},fSize=9
-
 	Button SaveCurrentToolSetting,pos={330,117},size={100,18},proc=NI1A_ButtonProc,title="Save/Load Config"
 	Button SaveCurrentToolSetting,help={"Save or recall configuration of this panel"}
 	Button ExportDisplayedImage,pos={330,137},size={100,18},proc=NI1A_ButtonProc,title="Export image"
@@ -3601,22 +3597,14 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable UserSampleName,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:UserSampleName, help={"Sampe name build based on controls in \"Save\" tab"}
 	SetVariable UserSampleName styledText=1,fstyle=1,valueColor=(65535,0,0)
 	
-//	PopupMenu SelectStartOfRange,pos={195,235},size={300,20},proc=NI1A_PopMenuProc,title="Start"
-//	PopupMenu SelectStartOfRange,help={"Select first 2D data to process"}
-//	PopupMenu SelectStartOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"
-//	PopupMenu SelectEndOfRange,pos={203,258},size={300,20},proc=NI1A_PopMenuProc,title="End"
-//	PopupMenu SelectEndOfRange,help={"Select last 2D data to process"}
-//	PopupMenu SelectEndOfRange,mode=1,popvalue="---",value= #"NI1A_Create2DSelectionPopup()"  
-
-
 //tab controls here
-	TabControl Convert2Dto1DTab,pos={4,274},size={430,310},proc=NI1A_TabProc
+	TabControl Convert2Dto1DTab,pos={4,274},size={435,310},proc=NI1A_TabProc
 	TabControl Convert2Dto1DTab,help={"Select tabs to control various parameters"}
 	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Par"
 	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Em/Dk"
 	TabControl Convert2Dto1DTab,tabLabel(4)="Sect.",tabLabel(5)="PolTran"
 	TabControl Convert2Dto1DTab,tabLabel(6)="LineProf", tabLabel(7)="Save", value= 0
-//	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
+	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
 	SetVariable SampleToDetectorDistance,pos={54,300},size={230,16},proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
 	SetVariable SampleToDetectorDistance,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleToCCDDistance
@@ -4059,27 +4047,6 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox SaveGSASdata,help={"Check to export data out of Igor as GSAS data"}
 	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
 
-
-
-//	CheckBox ExpCalib2DData,pos={15,310},size={90,14},title="Export 2D Calibrated data?", mode=0, proc=NI1A_CheckProc
-//	CheckBox ExpCalib2DData,help={"Use this tab and export 2D caclibrated data?"}, variable=root:Packages:Convert2Dto1D:ExpCalib2DData
-//	CheckBox InclMaskCalib2DData,pos={15,330},size={90,14},title="Include Mask?", mode=0, proc=NI1A_CheckProc
-//	CheckBox InclMaskCalib2DData,help={"Include Mask with 2D calibrated data?"}, variable=root:Packages:Convert2Dto1D:InclMaskCalib2DData
-//	CheckBox UseQxyCalib2DData,pos={15,350},size={90,14},title="Use Qx/Qy (not |Q|)?", mode=0, proc=NI1A_CheckProc
-//	CheckBox UseQxyCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:UseQxyCalib2DData
-//	CheckBox RebinCalib2DData,pos={15,370},size={90,14},title="Rebin Data?", mode=0, proc=NI1A_CheckProc
-//	CheckBox RebinCalib2DData,help={"Use Qx and Qy as opposed to Q?"}, variable=root:Packages:Convert2Dto1D:RebinCalib2DData
-//	PopupMenu RebinCalib2DDataToPnts,pos={150,370},size={214,21},proc=NI1A_PopMenuProc,title="Rebin to:"
-//	PopupMenu RebinCalib2DDataToPnts,help={"Select Line profile method to use"}
-//	SVAR RebinCalib2DDataToPnts = root:Packages:Convert2Dto1D:RebinCalib2DDataToPnts
-//	PopupMenu RebinCalib2DDataToPnts,mode=1,popvalue=RebinCalib2DDataToPnts,value= "100x100;200x200;300x300;400x400;600x600;"
-//
-//	PopupMenu Calib2DDataOutputFormat,pos={220,530},size={111,21},proc=NI1A_PopMenuProc,title="Output data type"
-//	PopupMenu Calib2DDataOutputFormat,help={"Select type of 2D images being loaded"}
-//	SVAR Calib2DDataOutputFormat = root:Packages:Convert2Dto1D:Calib2DDataOutputFormat
-//	PopupMenu Calib2DDataOutputFormat,mode=2,popvalue=Calib2DDataOutputFormat,value= "CanSAS/Nexus;EQSANS;"
-
-
 	//last few items under the tabs area
 	Button ProcessSelectedImages,pos={160,585},size={150,20},proc=NI1A_ButtonProc,title="Process image(s)"
 	Button ProcessSelectedImages,help={"Process images as selected in the checkboxes"}, fColor=(65535,49151,49151)
@@ -4182,7 +4149,6 @@ Function NI1A_Convert2Dto1DPanelFnct()
 		Execute("Nika_Hook_ModifyMainPanel()")
 	endif
 	ING2_AddScrollControl()
-	//NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", 1)
 EndMacro
 
 

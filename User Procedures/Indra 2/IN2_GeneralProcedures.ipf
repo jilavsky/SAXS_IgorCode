@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.15
+#pragma version = 2.16
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -36,6 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.167 FIx IN2G_PanelResizePanelSize to return 0 when handled, seems needed to prevent GUI problems. 
 //2.15 minor modification of some functions to speed it up a bit... Added long names warning. 
 //2.14 added function IN2G_ReturnUnitsForYAxis(Ywave) which creates units string for Intensity vs Q Intensity axis based on wave note. 
 //2.13 Get the Igor8 long files names support sorted out. 
@@ -1262,12 +1263,12 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 					ErrorCalculationsUseStdDev=0
 					ErrorCalculationsUseSEM=1
 				endif
-				if(ErrorCalculationsUseOld)
-					print "Nika users : Uncertainty calculation method is set to \"Old method (see manual for description)\""
-				elseif(ErrorCalculationsUseStdDev)
-					print "Nika users : Uncertainty calculation method is set to \"Standard deviation (see manual for description)\""
-				else
-					print "Nika users : Uncertainty calculation method is set to \"Standard error of mean (see manual for description)\""
+				if(ErrorCalculationsUseOld && !pOld)
+					print "Nika users : Uncertainty calculation method has changed to \"Old method (see manual for description)\""
+				elseif(ErrorCalculationsUseStdDev && !pStdDev)
+					print "Nika users : Uncertainty calculation method has changed to \"Standard deviation (see manual for description)\""
+				elseif(ErrorCalculationsUseSEM && !pSEM)
+					print "Nika users : Uncertainty calculation method has changed to \"Standard error of mean (see manual for description)\""
 				endif
 				SVAR/Z ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 				if(!SVAR_Exists(ColorTableName))
@@ -1613,7 +1614,6 @@ Function IN2G_PanelResizePanelSize(s)
 		endif
 		//print s
 		GetWindow $s.winName wsize					 
-		//tested on Igor 6 on regular resolution Windows, Igor 7 Macbook Pro (with retina). 
 		//wsizeRM?, wsizeDC returns pixels, wsize is in points.
 		//MoveWindow is in points <<<<<< !!!!!!!   
 		//ModifyControl pos is in pixels, size is in pixels
@@ -1647,8 +1647,8 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop  = top//*moveConvFac
 			MoveRight = (left+OriginalWidth)//*moveConvFac
 			moveBottom = (top+OriginalHeight)//*moveConvFac
-			MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
+			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1*moveConvFac
 			verScale = 1*moveConvFac
 		elseif(CurWidth<OriginalWidth && CurHeight>=OriginalHeight)		
@@ -1657,8 +1657,8 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop  = top//*moveConvFac
 			MoveRight = (left+OriginalWidth)//*moveConvFac
 			moveBottom = (top+CurHeight)//*moveConvFac
-			MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
+			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1*moveConvFac
 			verScale = CurHeight / (OriginalHeight)	*moveConvFac
 		elseif(CurWidth>=OriginalWidth && CurHeight<OriginalHeight)
@@ -1667,8 +1667,8 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop = top//*moveConvFac
 			MoveRight = (left+CurWidth)//*moveConvFac
 			moveBottom = (top+OriginalHeight)//*moveConvFac
-			MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
+			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = 1 *moveConvFac
 			horScale = curWidth/OriginalWidth*moveConvFac
 		else
@@ -1676,10 +1676,11 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop = top//*moveConvFac
 			MoveRight = (right)//*moveConvFac
 			moveBottom = (bottom)//*moveConvFac
-		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
+			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = CurHeight /OriginalHeight *moveConvFac
 			horScale = curWidth/OriginalWidth *moveConvFac
 		endif
+		MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
 		variable scale= min(horScale, verScale )
 		string FontName = IN2G_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
 		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
@@ -1753,22 +1754,6 @@ Function IN2G_PanelResizePanelSize(s)
 				endfor
 				SetActiveSubwindow $(StringFromList(0, ListOfPanels,";"))
 		endfor
-									//and now record the latest size of this panel for future use...
-									//NewDataFolder/O root:Packages
-									//NewDataFolder/O root:Packages:IrenaNikaPanelSizes
-									//SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
-									//if(!SVAR_Exists(PanelSizeList))
-									//	string/g $("root:Packages:IrenaNikaPanelSizes:"+s.winName)
-									//	SVAR PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+s.winName)
-									//endif
-							//			moveLeft = left//*moveConvFac
-							//			MoveTop = top//*moveConvFac
-							//			MoveRight = (right)//*moveConvFac
-							//			moveBottom = (bottom)//*moveConvFac
-									//PanelSizeList = "Width="+num2str(	MoveRight-moveLeft)+";Height="+num2str(moveBottom-MoveTop)+";"
-									//PanelSizeList += "Left="+num2str(	moveLeft)+";Top="+num2str(MoveTop)+";"
-									//PanelSizeList += "Right="+num2str(	MoveRight)+";Bottom="+num2str(moveBottom)+";"
-									//and this should be possible to use to recover size of panel AFTER user closes it and re-starts the tool again... 
 		//Better way, let's lets store it in preferences...
 		STRUCT IrenaNikaPanelSizePos PrefsPos
 		PrefsPos.version = kPrefsVersion
@@ -1779,8 +1764,10 @@ Function IN2G_PanelResizePanelSize(s)
 		PrefsPos.panelCoords[4] = MoveRight					//right
 		PrefsPos.panelCoords[5] = moveBottom					//bottom
 		string Prefname=s.winName+".bin"
-		SavePackagePreferences/FLSH=1 kPackageName, Prefname, kPrefsRecordID, PrefsPos
-		
+		SavePackagePreferences/FLSH=1 kPackageName, Prefname, kPrefsRecordID, PrefsPos	
+		return 1
+	else
+		return 0	
 	endif
 end
 
@@ -1826,9 +1813,7 @@ end
 Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	string PanelNameLocal
 	variable setSizeIfNeeded
-			//find if record exists
-			//NewDataFolder/O root:Packages
-			//newDataFolder/O root:Packages:IrenaNikaPanelSizes
+
 	NVAR/Z DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	if(!NVAR_Exists(DoNotRestorePanelSizes))
 		variable/g root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
@@ -1840,15 +1825,9 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	LoadPackagePreferences kPackageName, packageFileName, kPrefsRecordID, PrefsPos
 	variable Left, Top, right, bottom, width, height
 	string PanelNameOld
-			//SVAR/Z PanelSizeList=$("root:Packages:IrenaNikaPanelSizes:"+PanelName)
-			//if(SVAR_Exists(PanelSizeList))
-			//	variable Width, Height
-			//	Width = NumberByKey("Width", PanelSizeList , "=", ";")
-			//	Height = NumberByKey("Height", PanelSizeList , "=", ";")
 	if(PrefsPos.version!=kPrefsVersion)
 		print "Preferences for panel "+PanelNameLocal+" not found or wrong version found..."
 	endif
-		//PanelNameOld = PrefsPos.panelName
 	width 	= 	PrefsPos.panelCoords[0]
 	height	=	PrefsPos.panelCoords[1]
 	Left		=	PrefsPos.panelCoords[2]

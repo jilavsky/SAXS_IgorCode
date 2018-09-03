@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.61
-Constant NI1AversionNumber = 2.61
+Constant NI1AversionNumber = 2.62
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.61
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.62 fix bug in Igor 8 which causes hang of the window. Panel made wider. 
 //2.61 Fixed normalization bug which causes spike in intensity on our WAXS data (+1 missing Intensity normalization)
 //			added Reprocess curren data and modified panel as needed.   
 //2.60 added controls for delay between images and for statitics calculation
@@ -146,12 +147,13 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		GetWindow  $(panelName) note
 		SetWindow $(panelName), note=S_Value+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
 		IN2G_PanelAppendSizeRecordNote(panelName)
-		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
-		IN2G_ResetPanelSize(panelName,1)
-		STRUCT WMWinHookStruct s
-		s.eventcode=6
-		s.winName=panelName
-		IN2G_PanelResizePanelSize(s)
+//		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+//		IN2G_ResetPanelSize(panelName,1)
+//		STRUCT WMWinHookStruct s
+//		s.eventcode=6
+//		s.winName=panelName
+//		IN2G_PanelResizePanelSize(s)
+		//print "Done resizing"
 	endif
 end 
 
@@ -193,8 +195,8 @@ Function NI1A_Convert2Dto1DMainPanel()
 	IN2G_CheckScreenSize("height",740)
 	KillWIndow/Z NI1A_Convert2Dto1DPanel
  	NI1A_Convert2Dto1DPanelFnct()
-	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber)
 	NI1A_TabProc("nothing",0)
+	NI1_UpdatePanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber)
 end
 
 //*******************************************************************************************************************************************
