@@ -59,15 +59,15 @@ Function LoadIrenaSASMacros()
 		//check for old version of Irena
 		pathInfo Igor
 		NewPath/Q/O/Z UserProcPath , S_path+"User procedures"
-		GetfILEfOLDERiNFO/Q/Z/P=UserProcPath "Irena 1"
+		GetFileFolderInfo/Q/Z/P=UserProcPath "Irena 1"
 		string MessageStr="Original Irena folder found in User Procedures! \nFrom the version 2.04 Irena should be installed in \"Irena\" folder."
 		MessageStr +=" Delete old version in folder \"Irena 1\" and the folder itself and install new version in \"Irena\" folder"
 		if(V_Flag==0)
 			Abort MessageStr
 		endif
-		GetfILEfOLDERiNFO/Q/Z/P=UserProcPath "Irena1_Saved_styles"
+		GetFileFolderInfo/Q/Z/P=UserProcPath "Irena1_Saved_styles"
 		variable StylesExist=V_Flag
-		GetfILEfOLDERiNFO/Q/Z/P=UserProcPath "Irena1_CalcSavedCompounds"
+		GetFileFolderInfo/Q/Z/P=UserProcPath "Irena1_CalcSavedCompounds"
 		variable CompoundsExist=V_Flag
 		if(StylesExist==0 || CompoundsExist==0)
 			MessageStr ="Old folders for Styles and Compounds found! \nRename folders \"Irena1_Saved_styles\" into \"Irena_Saved_styles\""
@@ -80,11 +80,8 @@ Function LoadIrenaSASMacros()
 		NewDataFolder/O root:Packages			//create the folder for string variable
 		string/g root:Packages:SASItem1Str
 		SVAR SASItem1Str = root:Packages:SASItem1Str
-		//root:Packages:SASItem1Str= "(Load Irena SAS Modeling Macros"
 		SASItem1Str= "---"
 		BuildMenu "SAS"
-		//Execute/P ("IR2C_ReadIrenaGUIPackagePrefs()")			//this executes configuration and makes sure all exists.
-		//not needed, done automatically as part of after compile hook function
 	else
 		DoAlert 0, "Your version of Igor is lower than 7.05, these macros need version 7.05 or higher, please update your Igor to the latest release "  
 	endif

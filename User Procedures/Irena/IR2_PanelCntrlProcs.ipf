@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.48
+#pragma version = 1.49
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.49 fixed IR2P_CheckForRightQRSTripletWvs to work also for QRS names, not only qrs... 
 //1.48 Modifed IR2P_CheckForRightQRSTripletWvs for QRS to use GrepList, seems cleaner and more obviosu. Also, fixes worng includions of DSM waves in QRS. 
 //1.47 speed up popup string generation by at least 50%, increased the time for use of cached values to 10 seconds. 
 //1.46 Added to Listbox procedure IR3C_ListBoxProc rigth click for Match Blank and Match EMpty. 
@@ -1139,27 +1140,6 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	    endif
 	    result= IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
 	endif
-	//create short list...
-//	String LastFolderPath, tempStrItem, FolderPath, resultShortWP
-//	resultShortWP=""
-//	LastFolderPath = ""
-//	for(i=0;i<ItemsInList(result,";");i+=1)
-//		tempStrItem = stringFromList(i,result)
-//		FolderPath = RemoveFromList(stringFromList(ItemsInList(tempStrItem,":")-1, tempStrItem,":"), tempStrItem,":")
-//		if(!stringMatch(FolderPath, LastFolderPath ))
-//			resultShort+=FolderPath+" ----------- "+";"
-//			resultShortWP+=FolderPath+" ----------- "+";"
-//		endif
-//		resultShort+=stringFromList(ItemsInList(tempStrItem,":")-1,tempStrItem,":")+";"
-//		resultShortWP+=tempStrItem+";"
-//		LastFolderPath = FolderPath
-//	endfor
-//	string/g $(CntrlLocation+":RealLongListOfFolder")
-//	SVAR RealLongListOfFolder = $(CntrlLocation+":RealLongListOfFolder")
-//	RealLongListOfFolder = result
-//	string/g $(CntrlLocation+":ShortListOfFolders")
-//	SVAR ShortListOfFolders = $(CntrlLocation+":ShortListOfFolders")
-//	ShortListOfFolders = resultShortWP
 	setDataFolder OldDf
 	return resultShort
 end
@@ -1421,14 +1401,14 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 					//print stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )
 					//print stringmatch(";"+AllWaves, ";*m"+tempStr+";*" )
 					//ShortWaveList = GrepList(AllWaves, "q"+tempStr )+GrepList(AllWaves, "az"+tempStr )+GrepList(AllWaves, "d"+tempStr )+GrepList(AllWaves, "t"+tempStr )+GrepList(AllWaves, "m"+tempStr )
-					ShortWaveList = GrepList(AllWaves, "[qzdtm]"+tempStr) //not sure if this really works for az, needs to be tested. 
+					ShortWaveList = GrepList(AllWaves, "(?i)[qzdtm]"+tempStr) //not sure if this really works for az, needs to be tested. 
 					if(strlen(ShortWaveList)>0)
 						matchX=1
 					endif
 					//if(stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )||stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )||(stringmatch(";"+AllWaves, ";*m"+tempStr+";*" )&&!stringmatch(";"+AllWaves, ";*dsm"+tempStr+";*" )))
 					//	matchX=1
 					//endif
-					ShortWaveList = GrepList(AllWaves, "s"+tempStr) //not sure if this really works for az, needs to be tested. 
+					ShortWaveList = GrepList(AllWaves, "(?i)s"+tempStr) //not sure if this really works for az, needs to be tested. 
 					if(strlen(ShortWaveList)>0)
 						matchE=1
 					endif
