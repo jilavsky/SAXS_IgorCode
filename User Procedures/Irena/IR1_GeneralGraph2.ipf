@@ -1110,6 +1110,7 @@ Function IR1P_ApplySelectedStyle(StyleString)
 	string StyleString
 	
 	if (cmpstr("NewUserStyle",StyleString)!=0)
+		IR1P_WarnUsersOnQRSstyles(StyleString)
 		SVAR StringToApply=$("root:Packages:plottingToolsStyles:"+possiblyQuoteName(StyleString))
 		SVAR FormatingString=root:Packages:GeneralplottingTool:ListOfGraphFormating
 		FormatingString=StringToApply
@@ -1125,6 +1126,25 @@ Function IR1P_ApplySelectedStyle(StyleString)
 	endif
 end
 //**********************************************************************************************************
+//**********************************************************************************************************
+Function IR1P_WarnUsersOnQRSstyles(StyleString)
+	string StyleString
+	NVAR UseQRSdata = root:Packages:GeneralplottingTool:UseQRSdata
+	if(UseQRSdata)
+		SVAR QWavename = root:Packages:GeneralplottingTool:QWavename
+		if(StringMatch(StyleString, "q_Intensity") && !StringMatch(QWavename, "q_*"))
+			DoAlert /T="Looks like wrong data are plotted" 1, "Style is q_intensity, but data type is QRS and X wave name does not start wqith q. Something is wrong. This tool cannot convert between q/d/theta."
+		endif
+		if(StringMatch(StyleString, "d_Intensity") && !StringMatch(QWavename, "d_*"))
+			DoAlert /T="Looks like wrong data are plotted" 1, "Style is d_intensity, but data type is QRS and X wave name does not start with d. Something is wrong. This tool cannot convert between q/d/theta."
+		endif
+		if(StringMatch(StyleString, "tth_Intensity") && !StringMatch(QWavename, "d_*"))
+			DoAlert /T="Looks like wrong data are plotted" 1, "Style is tth_intensity, but data type is QRS and X wave name does not start with t. Something is wrong. This tool cannot convert between q/d/theta."
+		endif
+	endif
+	
+end
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 //very important. The string with graph formating is primary record of the graph style. This

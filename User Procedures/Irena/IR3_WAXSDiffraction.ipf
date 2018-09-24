@@ -108,7 +108,7 @@ Proc IR3W_WAXSPanel()
 	Setvariable DataTTHEnd, variable=root:Packages:Irena:WAXS:DataTTHEnd, limits={0,inf,0}
 	Checkbox DisplayUncertainties, pos={280,80},size={76,14},title="Display Uncertainties", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayUncertainties
 	Button DisplayHelp,pos={420,5.00},size={90.00,15},proc=IR3W_WAXSButtonProc,title="Display Help"
-	Button DisplayHelp,help={"Open WAXS help"}
+	Button DisplayHelp,help={"Open WAXS help"},fColor=(65535,32768,32768)
 
 //root:Packages:Irena:WAXSBackground
 //	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
@@ -1396,8 +1396,8 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				IR3W_MPF2PlotPeakParameters()
 			endif
 			if(stringmatch(ba.ctrlname,"DisplayHelp"))
-				DisplayHelpTopic "Irena WAXS tool"
-				DoIgorMenu "Control", "Retrieve Window"		// let's make sure it is visible
+				//DisplayHelpTopic "Irena WAXS tool"
+				//DoIgorMenu "Control", "Retrieve Window"		// let's make sure it is visible
 				//and open the web page also...
 				IN2G_OpenWebManual("Irena/WAXS.html")
 			endif
@@ -2829,7 +2829,7 @@ Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
 	Variable index
 	for(index = 0; index < dimsize(w,0); index+=1)
 		String tagName = CleanupName("Lab" +traceName[0,12]+num2str(index),0)
-		Tag/C/N=$tagName/F=0/TL=0/G=(Cr,Cg,Cb)/I=1 $traceName, index, labelWave[index]
+		Tag/C/W=IR3W_WAXSMainGraph/N=$tagName/F=0/TL=0/G=(Cr,Cg,Cb)/I=1 $traceName, index, labelWave[index]
 	endfor
 End
 
@@ -2878,10 +2878,10 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][6] vs TheCardNew[][4]
 	//DoUpdate  /W=IR3W_WAXSMainGraph 
 	string WvName=possiblyquotename(NameOfWave(TheCardNew))
-	ModifyGraph mode($(WvName))=1,usePlusRGB($(WvName))=1, lsize($(WvName))=3
-	ModifyGraph plusRGB($(WvName))=(V_Red, V_Green, V_Blue)	
-	SetAxis bottom oldMin, OldMax
-	SetAxis left OldMinInt, OldIntMax
+	ModifyGraph/W=IR3W_WAXSMainGraph mode($(WvName))=1,usePlusRGB($(WvName))=1, lsize($(WvName))=3
+	ModifyGraph/W=IR3W_WAXSMainGraph plusRGB($(WvName))=(V_Red, V_Green, V_Blue)	
+	SetAxis/W=IR3W_WAXSMainGraph bottom oldMin, OldMax
+	SetAxis/W=IR3W_WAXSMainGraph left OldMinInt, OldIntMax
 	setDataFolder oldDf
 end
 

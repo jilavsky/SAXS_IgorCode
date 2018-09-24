@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=4.15
+#pragma version=4.16
 Constant IR2HversionNumber = 4.13
 
 
@@ -9,6 +9,7 @@ Constant IR2HversionNumber = 4.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//4.16 added check for errors = 0 
 //4.15 added display of units for Intensity
 //4.14 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //4.13 added getHelp button calling to www manual
@@ -2397,6 +2398,17 @@ static Function IR2H_ConstructTheFittingCommand()
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 			Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
+			//***Catch error issues
+			wavestats/Q FitErrorWave
+			if(V_Min<1e-20)
+				Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
+				Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
+			endif
+			if(V_avg<=0)
+				Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
+				Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
+			endif
+			//***End of Catch error issues
 			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
 #if Exists("gencurvefit")
 			Duplicate/O FitIntensityWave, GenMaskWv
@@ -2409,6 +2421,17 @@ static Function IR2H_ConstructTheFittingCommand()
 			Duplicate/O OriginalIntensity, FitIntensityWave		
 			Duplicate/O OriginalQvector, FitQvectorWave
 			Duplicate/O OriginalError, FitErrorWave
+			//***Catch error issues
+			wavestats/Q FitErrorWave
+			if(V_Min<1e-20)
+				Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
+				Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
+			endif
+			if(V_avg<=0)
+				Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
+				Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
+			endif
+			//***End of Catch error issues
 			//FuncFit /N/Q IR2H_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
 #if Exists("gencurvefit")
 		  	gencurvefit  /I=1 /W=FitErrorWave /M=GenMaskWv /N /TOL=0.001 /K={50,20,0.7,0.5} /X=FitQvectorWave IR2H_FitFunction, FitIntensityWave  , W_Coef, HoldStr, Gen_Constraints  	

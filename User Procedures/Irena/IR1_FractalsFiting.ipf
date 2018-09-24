@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.02
+#pragma version=2.03
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.03 added check for errors = 0 
 //2.02 modified fitting to include Igor display with iterations /N=0/W=0
 //2.01 added license for ANL
 
@@ -343,11 +344,33 @@ Function IR1V_ConstructTheFittingCommand()
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
 		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
+		//***Catch error issues
+		wavestats/Q FitErrorWave
+		if(V_Min<1e-20)
+			Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
+			Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
+		endif
+		if(V_avg<=0)
+			Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
+			Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
+		endif
+		//***End of Catch error issues
 		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1/E=E_wave /D /C=T_Constraints 
 	else
 		Duplicate/O OriginalIntensity, FitIntensityWave		
 		Duplicate/O OriginalQvector, FitQvectorWave
 		Duplicate/O OriginalError, FitErrorWave
+		//***Catch error issues
+		wavestats/Q FitErrorWave
+		if(V_Min<1e-20)
+			Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
+			Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
+		endif
+		if(V_avg<=0)
+			Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
+			Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
+		endif
+		//***End of Catch error issues
 		FuncFit /N=0/W=0/Q IR1V_FitFunction W_coef FitIntensityWave /X=FitQvectorWave /W=FitErrorWave /I=1 /E=E_wave/D /C=T_Constraints	
 	endif
 	if (V_FitError!=0)	//there was error in fitting

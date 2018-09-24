@@ -186,9 +186,18 @@ Proc IR1I_ImportSASASCIIData()
 	ListBox ListOfAvailableData,selWave=root:Packages:ImportData:WaveOfSelections
 	ListBox ListOfAvailableData,mode= 4, proc=IR1_ImportListBoxProc
 
+
 	SetVariable NameMatchString,pos={10,375},size={180,19},proc=IR1I_SetVarProc,title="Match name (string):"
 	SetVariable NameMatchString,help={"Insert RegEx select only data with matching name (uses grep)"}
 	SetVariable NameMatchString,value= root:Packages:ImportData:NameMatchString
+
+
+	Button SelectAll,pos={5,396},size={100,20}, proc=IR1I_ButtonProc,title="Select All"
+	Button SelectAll,help={"Select all waves in the list"}
+
+	Button DeSelectAll,pos={120,396},size={100,20}, proc=IR1I_ButtonProc,title="Deselect All"
+	Button DeSelectAll,help={"Deselect all waves in the list"}
+
 
 	CheckBox SkipLines,pos={220,133},size={16,14},proc=IR1I_CheckProc,title="Skip lines?",variable= root:Packages:ImportData:SkipLines, help={"Check if you want to skip lines in header. Needed ONLY for weird headers..."}
 	SetVariable SkipNumberOfLines,pos={300,133},size={70,19},proc=IR1I_SetVarProc,title=" "
@@ -247,12 +256,6 @@ Proc IR1I_ImportSASASCIIData()
 	SetVariable PercentErrorsToUse, pos={240,403}, size={100,20},title="Error %?:", proc=IR1I_setvarProc, disable=!(root:Packages:ImportData:CreatePercentErrors)
 	SetVariable PercentErrorsToUse value= root:packages:ImportData:PercentErrorsToUse,help={"Input how many percent error you want to create."}
 
-
-	Button SelectAll,pos={5,396},size={100,20}, proc=IR1I_ButtonProc,title="Select All"
-	Button SelectAll,help={"Select all waves in the list"}
-
-	Button DeSelectAll,pos={120,396},size={100,20}, proc=IR1I_ButtonProc,title="Deselect All"
-	Button DeSelectAll,help={"Deselect all waves in the list"}
 
 	CheckBox UseFileNameAsFolder,pos={10,420},size={16,14},proc=IR1I_CheckProc,title="Use File Nms as Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
 	CheckBox IncludeExtensionInName,pos={240,420},size={16,14},proc=IR1I_CheckProc,title="Include Extn?",variable= root:Packages:ImportData:IncludeExtensionInName, help={"Include file extension in imported data foldername?"}, disable=!(root:Packages:ImportData:UseFileNameAsFolder)
@@ -2217,7 +2220,7 @@ Function IR1I_InitializeImportData()
 	ListOfVariables += "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;FoundNWaves;"	
 	ListOfVariables += "Col2Int;Col2Qvec;Col2Err;Col2QErr;Col3Int;Col3Qvec;Col3Err;Col3QErr;Col4Int;Col4Qvec;Col4Err;Col4QErr;"	
 	ListOfVariables += "Col5Int;Col5Qvec;Col5Err;Col5QErr;Col6Int;Col6Qvec;Col6Err;Col6QErr;Col7Int;Col7Qvec;Col7Err;Col7QErr;"	
-	ListOfVariables += "QvectInA;QvectInNM;CreateSQRTErrors;CreatePercentErrors;PercentErrorsToUse;"
+	ListOfVariables += "QvectInA;QvectInNM;QvectInDegrees;CreateSQRTErrors;CreatePercentErrors;PercentErrorsToUse;"
 	ListOfVariables += "ScaleImportedData;ScaleImportedDataBy;ImportSMRdata;SkipLines;SkipNumberOfLines;"	
 	ListOfVariables += "IncludeExtensionInName;RemoveNegativeIntensities;AutomaticallyOverwrite;"	
 	ListOfVariables += "TrimData;TrimDataQMin;TrimDataQMax;ReduceNumPnts;TargetNumberOfPoints;ReducePntsParam;"	
@@ -2248,7 +2251,7 @@ Function IR1I_InitializeImportData()
 	ListOfVariables += "QvectInNM;CreateSQRTErrors;CreatePercentErrors;"	
 	ListOfVariables += "ScaleImportedData;ImportSMRdata;SkipLines;SkipNumberOfLines;UseQISNames;UseIndra2Names;NumOfPointsFound;"	
 
-	//We need list of known Dtaa types for non-SAS importer
+	//We need list of known Data types for non-SAS importer
 	string/g ListOfKnownDataTypes
 	ListOfKnownDataTypes = "Q-Int;D-Int;Tth-Int;"//VolumeDistribution(Radius);VolumeDistribution(Diameter);"
 	SVAR DataTypeToImport
@@ -2297,6 +2300,15 @@ Function IR1I_InitializeImportData()
 		TrunkateStart=0
 		TrunkateEnd=1
 	endif
+	NVAR QvectInA
+	NVAR QvectInNM
+	NVAR QvectInDegrees
+	if(QvectInA+QvectInNM+QvectInDegrees!=1)
+		QvectInA=1
+		QvectInNM=0
+		QvectInDegrees=0
+	endif
+	
 	IR1I_UpdateListOfFilesInWvs()
 end
 
@@ -2360,7 +2372,9 @@ Function IR1I_ImportOtherASCIIDataFnct()
 	TitleBox Info9 title="\Zr150dX",pos={392,172},frame=0,fstyle=2, fixedSize=0,size={40,15}
 	
 	IR3C_AddDataControls("ImportDataPath", "ImportData", "IR1I_ImportOtherASCIIData","", "","","IR1I_DoubleClickFUnction")
-	ListBox ListOfAvailableData,size={220,250}
+	ListBox ListOfAvailableData,size={220,277}, pos={5,113}
+	Button SelectAll,pos={5,395}
+	Button DeSelectAll, pos={120,395}
 
 	CheckBox SkipLines,pos={230,133},size={16,14},proc=IR1I_CheckProc,title="Skip lines?",variable= root:Packages:ImportData:SkipLines, help={"Check if you want to skip lines in header. Needed ONLY for weird headers..."}
 	SetVariable SkipNumberOfLines,pos={300,133},size={70,19},proc=IR1I_SetVarProc,title=" "
@@ -2374,8 +2388,6 @@ Function IR1I_ImportOtherASCIIDataFnct()
 	Button Preview,help={"Preview selected file."}
 	Button GetHelp,pos={335,60},size={80,15},fColor=(65535,32768,32768), proc=IR1I_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 //
-////	TitleBox TooManyPointsWarning variable=root:Packages:ImportData:TooManyPointsWarning,fColor=(0,0,0)
-//	TitleBox TooManyPointsWarning pos={220,170},size={150,19}, disable=1
 	CheckBox Col1Qvec,pos={299,192},size={16,14},proc=IR1I_CheckProc,title="",variable= root:Packages:ImportData:Col1Qvec, help={"What does this column contain?"}
 	CheckBox Col1Int,pos={331,192},size={16,14},proc=IR1I_CheckProc,title="", variable= root:Packages:ImportData:Col1Int, help={"What does this column contain?"}
 	CheckBox Col1Error,pos={364,192},size={16,14},proc=IR1I_CheckProc,title="",variable= root:Packages:ImportData:Col1Err, help={"What does this column contain?"}
@@ -2415,23 +2427,17 @@ Function IR1I_ImportOtherASCIIDataFnct()
 	Button Plot,pos={330,317},size={80,15}, proc=IR1I_ButtonProc,title="Plot"
 	Button Plot,help={"Preview selected file."}
 
-	CheckBox QvectorInA,pos={240,340},size={16,14},proc=IR1I_CheckProc,title="X units [A^-1]",variable= root:Packages:ImportData:QvectInA, help={"What units is Q in? Select if in Angstroems ^-1"}
-	CheckBox QvectorInNM,pos={240,355},size={16,14},proc=IR1I_CheckProc,title="X units [nm^-1]",variable= root:Packages:ImportData:QvectInNM, help={"What units is Q in? Select if in nanometers ^-1. WIll be converted to inverse Angstroems"}
+	CheckBox QvectorInA,pos={240,340},size={16,14},proc=IR1I_CheckProc,title="X units [1/A, deg, A]",variable= root:Packages:ImportData:QvectInA, help={"What units is X in? Select if in 1/A for Q, A for d, degree for TwoTheta"}
+	CheckBox QvectorInNM,pos={240,355},size={16,14},proc=IR1I_CheckProc,title="X units [1/nm or nm]",variable= root:Packages:ImportData:QvectInNM, help={"What units is X in? Select if in 1/nm for Q or nm for d. WIll be converted to 1/A or A"}
+	//CheckBox QvectInDegrees,pos={240,355},size={16,14},proc=IR1I_CheckProc,title="X units [degree]",variable= root:Packages:ImportData:QvectInDegrees, help={"What units is X axis in? Select if in degrees... WIll be converted to inverse Angstroems"}
+
 	CheckBox CreateSQRTErrors,pos={240,370},size={16,14},proc=IR1I_CheckProc,title="Create SQRT dY?",variable= root:Packages:ImportData:CreateSQRTErrors, help={"If input data do not contain errors, create errors as sqrt of intensity?"}
 	CheckBox CreatePercentErrors,pos={240,385},size={16,14},proc=IR1I_CheckProc,title="Create n% dY?",variable= root:Packages:ImportData:CreatePercentErrors, help={"If input data do not contain errors, create errors as n% of intensity?, select how many %"}
 	NVAR DiablePctErr=root:Packages:ImportData:CreatePercentErrors
 	SetVariable PercentErrorsToUse, pos={240,403}, size={100,20},title="dY %?:", proc=IR1I_setvarProc, disable=!(DiablePctErr)
 	SetVariable PercentErrorsToUse value= root:packages:ImportData:PercentErrorsToUse,help={"Input how many percent error you want to create."}
-//
 	CheckBox UseFileNameAsFolder,pos={10,420},size={16,14},proc=IR1I_CheckProc,title="Use File Nms as Fldr Nms?",variable= root:Packages:ImportData:UseFileNameAsFolder, help={"Use names of imported files as folder names for the data?"}
 	NVAR DisableExt=root:Packages:ImportData:UseFileNameAsFolder
-//	CheckBox IncludeExtensionInName,pos={260,418},size={16,14},proc=IR1I_CheckProc,title="Include Extn?",variable= root:Packages:ImportData:IncludeExtensionInName, help={"Include file extension in imported data foldername?"}, disable=!(DisableExt)
-////	CheckBox UseIndra2Names,pos={10,436},size={16,14},proc=IR1I_CheckProc,title="Use USAXS names?",variable= root:Packages:ImportData:UseIndra2Names, help={"Use wave names using Indra 2 name structure? (DSM_Int, DSM_Qvec, DSM_Error)"}
-////	CheckBox ImportSMRdata,pos={150,436},size={16,14},proc=IR1I_CheckProc,title="Slit smeared?",variable= root:Packages:ImportData:ImportSMRdata, help={"Check if the data are slit smeared, changes suggested Indra data names to SMR_Qvec, SMR_Int, SMR_Error"}
-////	CheckBox ImportSMRdata, disable= !root:Packages:ImportData:UseIndra2Names
-//	CheckBox UseQRSNames,pos={10,452},size={16,14},proc=IR1I_CheckProc,title="Use QRS wave names?",variable= root:Packages:ImportData:UseQRSNames, help={"Use QRS name structure? (Q_filename, R_filename, S_filename)"}
-////	CheckBox UseQISNames,pos={150,452},size={16,14},proc=IR1I_CheckProc,title="Use QIS (NIST) wv nms?",variable= root:Packages:ImportData:UseQISNames, help={"Use QIS name structure? (filename_q, filename_i, filename_s)"}
-//
 	NVAR DisableOver=root:Packages:ImportData:UseFileNameAsFolder
 	CheckBox AutomaticallyOverwrite,pos={240,420},size={16,14},proc=IR1I_CheckProc,title="Overwrite existing data?",variable= root:Packages:ImportData:AutomaticallyOverwrite, help={"Automatically overwrite imported data if same data exist?"}, disable=!(DisableOver)
 
@@ -2454,20 +2460,10 @@ Function IR1I_ImportOtherASCIIDataFnct()
 	SetVariable TrimDataQMax, pos={240,524}, size={110,20},title="X max=", proc=IR1I_setvarProc, disable=!(DisableTrim)
 	SetVariable TrimDataQMax limits={0,inf,0},value= root:packages:ImportData:TrimDataQMax,help={"Xmax for trimming data. Leave 0 if not trimming at low q is needed."}
 //
-//	CheckBox ReduceNumPnts,pos={10,543},size={16,14},proc=IR1I_CheckProc,title="Reduce points?",variable= root:Packages:ImportData:ReduceNumPnts, help={"Check to log-reduce number of points"}
-//	NVAR ReduceNumPnts = root:Packages:ImportData:ReduceNumPnts
-//	SetVariable TargetNumberOfPoints, pos={140,541}, size={110,20},title="Num points=", proc=IR1I_setvarProc, disable=!(ReduceNumPnts)
-//	SetVariable TargetNumberOfPoints limits={10,1000,0},value= root:packages:ImportData:TargetNumberOfPoints,help={"Target number of points after reduction. Uses same method as Data manipulation I"}
-//
 	CheckBox TrunkateStart,pos={10,545},size={16,14},proc=IR1I_CheckProc,title="Truncate start of long names?",variable= root:Packages:ImportData:TrunkateStart, help={"Truncate names longer than 24 characters in front"}
 	CheckBox TrunkateEnd,pos={240,545},size={16,14},proc=IR1I_CheckProc,title="Truncate end of long names?",variable= root:Packages:ImportData:TrunkateEnd, help={"Truncate names longer than 24 characters at the end"}
 	SetVariable RemoveStringFromName, pos={5,565}, size={320,20},title="Remove Str From Name=", noproc
 	SetVariable RemoveStringFromName value= root:packages:ImportData:RemoveStringFromName,help={"Input string to be removed from name, leve empty if none"}
-//
-////	CheckBox DataCalibratedArbitrary,pos={10,597},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration Arbitrary\S \M",variable= root:Packages:ImportData:DataCalibratedArbitrary, help={"Data not calibrated (on relative scale)"}
-////	CheckBox DataCalibratedVolume,pos={150,597},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedVolume, help={"Data calibrated to volume"}
-////	CheckBox DataCalibratedWeight,pos={290,597},size={16,14},mode=1,proc=IR1I_CheckProc,title="Calibration cm\S2\Mg\S-1\Msr\S-1\M",variable= root:Packages:ImportData:DataCalibratedWeight, help={"Data calibrated to weight"}
-//
 	PopupMenu SelectFolderNewData2,pos={10,590},size={250,21},proc=IR1I_PopMenuProc,title="Select data folder", help={"Select folder with data"}
 	PopupMenu SelectFolderNewData2,mode=1,popvalue="---",value= #"\"---;\"+IN2G_NewFindFolderWithWaveTypes(\"root:\", 10, \"*\", 1)"
 	SetVariable NewDataFolderName, pos={5,620}, size={410,20},title="New data folder:", proc=IR1I_setvarProc
@@ -2724,12 +2720,22 @@ Function IR1I_ProcessImpWaves2(selectedFile)
 	NVAR QvectInNM=root:Packages:ImportData:QvectInNM
 	NVAR ScaleImportedData=root:Packages:ImportData:ScaleImportedData
 	NVAR ScaleImportedDataBy=root:Packages:ImportData:ScaleImportedDataBy
+	SVAR DataTypeToImport=root:Packages:ImportData:DataTypeToImport
 	if (QvectInNM)
-		TempQvector=TempQvector/10			//converts nm-1 in A-1  ???
-		note TempQvector, "Q data converted from nm to A-1;"
-		if(WaveExists(TempQError))
-			TempQError = TempQError/10
-			note/NOCR TempQError, "Q error converted from nm to A-1;"
+		if(stringMatch(DataTypeToImport,"Q-Int"))
+			TempQvector=TempQvector/10			//converts nm-1 in A-1  
+			note TempQvector, "Q data converted from nm to A-1;"
+			if(WaveExists(TempQError))
+				TempQError = TempQError/10
+				note/NOCR TempQError, "Q error converted from nm to A-1;"
+			endif
+		elseif(stringMatch(DataTypeToImport,"D-Int"))
+			TempQvector=TempQvector*10			//converts nm in A
+			note TempQvector, "d data converted from nm to A;"
+			if(WaveExists(TempQError))
+				TempQError = TempQError/10
+				note/NOCR TempQError, "d error converted from nm to A;"
+			endif
 		endif
 	endif
 	if (ScaleImportedData)
@@ -2742,7 +2748,6 @@ Function IR1I_ProcessImpWaves2(selectedFile)
 	endif
 	//lets insert here the Units into the wave notes...
 	//deal with wavelength if data are Tth-Int:
-	SVAR DataTypeToImport=root:Packages:ImportData:DataTypeToImport
 	if(StringMatch(DataTypeToImport,"Tth-Int"))
 		NVAR Wavelength=root:Packages:ImportData:Wavelength
 		note/NOCR TempIntensity, "wavelength="+num2str(Wavelength)+";"

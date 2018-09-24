@@ -8,7 +8,7 @@ Constant IR2EversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.13 fix naming bug for Nexus whichc casused the names not being changed as needed, when Nexus was used. 
+//1.13 fix naming bug for Nexus which caused the names not being changed as needed, when Nexus was used. 
 //1.12 fix extensions mess, force extesions, cannot make the old one to be remebered correctly... Too many options. 
 //1.11 fix bug that GSAS-II data type was not updating/chaqnging output name as expected. 
 //1.10 added export of xye data file for GSAS-II
@@ -812,7 +812,7 @@ Function IR2E_LoadDataInTool()
 	endif
 	
 
-	if(ExportASCII || ExportGSASxye ||(ExportCanSASNexus * !ExportMultipleCanSASFiles))
+	if(ExportASCII || ExportGSASxye ||(ExportCanSASNexus * !ExportSingleCanSASFile))
 		NewFileOutputName = ""
 		if(UseFolderNameForOutput)
 			NewFileOutputName += IN2G_ReturnUserSampleName(DataFolderName)			

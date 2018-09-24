@@ -1578,7 +1578,7 @@ Function NEXUS_WriteNx1DCanSASNika(SampleName, Iwv, dIwv, Qwv, dQwv, AppendToNam
 
 	
 	HDF5CloseFile fileID  
-	print "Wrote 1D data into Nexus/CanSAS file : "+Hdf5FileName
+	print "Wrote 1D data "+SampleName+" into into Nexus/CanSAS file : "+Hdf5FileName
 end
 
 //*************************************************************************************************
@@ -1811,7 +1811,7 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
 	endif
 
 	HDF5CloseFile fileID  
-	print "Wrote 1D data into Nexus/CanSAS file : "+Hdf5FileName
+	print "Wrote 1D data "+SampleName+" into Nexus/CanSAS file : "+Hdf5FileName
 end
 //*************************************************************************************************
 //*************************************************************************************************

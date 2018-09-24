@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.27
+#pragma version=1.29
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.29 added check for errors = 0 
+//1.28 fix bug with Ardell Parameters which were incorrectly named in one place which resulted in runtime error. 
 //1.27 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
 //1.26 added Ardell distributions support
 //1.25 modified fitting to include Igor display with iterations /N=0/W=0
@@ -797,7 +799,7 @@ Function IR2L_Fitting(SkipDialogs)
 			elseif(stringmatch(PopSizeDistShape,"Schulz-Zimm"))	
 				ListOfPopulationVariables="SZMeanSize;SZWidth;"
 			elseif(stringmatch(PopSizeDistShape,"Ardell"))	
-				ListOfPopulationVariables="ArdellMeanSize;ArdellWidth;"
+				ListOfPopulationVariables="ArdLocation;ArdParameter;"
 			else
 				ListOfPopulationVariables="LNMinSize;LNMeanSize;LNSdeviation;"	
 			endif
@@ -1245,6 +1247,15 @@ Function IR2L_Fitting(SkipDialogs)
 	if(numpnts(W_Coef)<1)
 		DoAlert 0, "Nothing to fit, select at least 1 parameter to fit"
 		return 1
+	endif
+	wavestats/Q EWvForFit
+	if(V_Min<1e-20)
+		Print "Warning: Looks like you have some very small uncertainties (ERRORS). Any point with uncertaitny (error) < = 0 is masked off and not fitted. "
+		Print "Make sure your uncertainties are all LARGER than 0 for ALL points." 
+	endif
+	if(V_avg<=0)
+		Print "Note: these are uncertainties after scaling/processing. Did you accidentally scale uncertainties by 0 ? " 
+		Abort "Uncertainties (ERRORS) make NO sense. Points with uncertainty (error) <= 0 are not fitted and this causes troubles. Fix uncertainties and try again. See history area for more details."
 	endif
 
 	Duplicate/O W_Coef, E_wave, CoefficientInput

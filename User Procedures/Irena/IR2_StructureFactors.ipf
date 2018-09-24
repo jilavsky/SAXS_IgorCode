@@ -790,6 +790,7 @@ Function IR2S_SFCntrlPnlSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 		P6HighLimVar= 1.2 * P6Var
 		SetVariable P6Value,win=StructureFactorControlScreen,limits={0,Inf,(varNum*0.05)}	
 	endif
+	IR2L_RecalculateIfSelected()
 
 end
 //*****************************************************************************************************************
