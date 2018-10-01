@@ -199,13 +199,6 @@ Proc IR3D_DataMergePanel()
 	TitleBox Info8 title="Regex for contain:  string",pos={254,648},frame=0,fstyle=1, fixedSize=1,size={350,13}
 	TitleBox Info9 title="Regex for case independent contain:  (?i)string",pos={254,661},frame=0,fstyle=1, fixedSize=1,size={350,13}
 
-//	DrawText 4,650,"Double click to add data to graph."
-//	DrawText 4,663,"Shift-click to select range of data."
-//	DrawText 4,676,"Ctrl/Cmd-click to select one data set."
-//	DrawText 254,650,"Regex for not contain: ^((?!string).)*$"
-//	DrawText 254,663,"Regex for contain:  string"
-//	DrawText 254,676,"Regex for case independent contain:  (?i)string"
-
 	IR3D_SetGUIControls()
 end
 

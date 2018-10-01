@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.09
+#pragma version=1.11
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,9 @@ constant IR3WversionNumber = 1.07		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.11 Added Table of parameters which contains all parameters for all sampels. Bit useless for now, but future plans... 
+//		Fixed bug which prevented FOlder Match string from working. 
+//1.10 fixed missing uncertainties for fitted parameters recorded inmy tables. 
 //1.09 fix panel autoscaling to move all stuff around. 
 //1.08 added for multipeak fitting results in Q units for Gauss, LogNormal and Lorenz shapes. 
 //1.07 added button to import AMS txtx files (from http://rruff.geo.arizona.edu/AMS/result.php)
@@ -79,9 +82,6 @@ Proc IR3W_WAXSPanel()
 	TitleBox DataSelection title="\Zr140Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20}
 	Checkbox UseIndra2Data, pos={10,50},size={76,14},title="USAXS", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseIndra2Data
 	checkbox UseQRSData, pos={120,50}, title="QRS(QIS)", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseQRSdata
-	//fix case when neither is selected and default to qrs
-	//NVAR UseIndra2Data = root:Packages:Irena:WAXS:UseIndra2Data
-	//NVAR UseQRSdata = root:Packages:Irena:WAXS:UseQRSdata
 	if(root:Packages:Irena:WAXS:UseQRSdata+root:Packages:Irena:WAXS:UseIndra2Data!=1)
 		root:Packages:Irena:WAXS:UseIndra2Data=0
 		root:Packages:Irena:WAXS:UseQRSdata = 1
@@ -195,13 +195,11 @@ Proc IR3W_WAXSPanel()
 	TitleBox txt5 title="\Zr100Regex for contain:  string",pos={4,717},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox txt6 title="\Zr100DCase indep. contain:  (?i)string",pos={4,730},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 
-//	DrawText 4,680,"Double click to add data to graph."
-//	DrawText 4,693,"Shift-click to select range of data."
-//	DrawText 4,706,"Ctrl/Cmd-click to select one data set."
-//	DrawText 4,719,"Regex for not contain: ^((?!string).)*$"
-//	DrawText 4,732,"Regex for contain:  string"
-//	DrawText 4,745,"Case indep. contain:  (?i)string"
-	
+
+	TitleBox Warning1 title="\Zr100Supported peak shapes are :",pos={270,570},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox Warning2 title="\Zr120Gauss and Lorenzian",pos={270,585},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+	TitleBox Warning3 title="\Zr100Other shapes cannot be properly recorded",pos={270,603},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
+
 	Execute ("IR3W_ModifyPanelControls()")
 end
 //**********************************************************************************************************
@@ -766,7 +764,6 @@ Function IR3W_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		MPF2PlotFolderStart = popStr
 		MPF2PlotPeakProfile = stringFromList(0,IR3W_PlotUpdateListsOfResults("Peak Profiles"))
 		PopupMenu MPF2PlotPeakProfile,win=IR3W_WAXS_MPFPlots ,mode=1,value= #"IR3W_PlotUpdateListsOfResults(\"Peak Profiles\")"
-		//PopupMenu MPF2PlotPeakProfile,win=IR3W_WAXS_MPFPlots ,popvalue=MPF2PlotPeakProfile,value= #"IR3W_PlotUpdateListsOfResults(\"Peak Profiles\")"
 	endif
 	if(stringmatch(ctrlName,"MPF2PlotPeakProfile"))
 		//do something here
@@ -825,10 +822,8 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 		case 1: // mouse up
 		case 2: // Enter key
 			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-			if(stringmatch(sva.ctrlName,"FolderNameMatchString1"))
-				IR3D_UpdateListOfAvailFiles(1)
-				IR3D_RebuildListboxTables()
-//				IR2S_SortListOfAvailableFldrs()
+			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
+				IR3W_UpdateListOfAvailFiles()
 			endif
 
 			NVAR DataTTHstart = root:Packages:Irena:WAXS:DataTTHstart
@@ -1367,6 +1362,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 						IR3W_ModifyPanelControls()
 					endif
 				endif
+				KillWIndow/Z MultiPeak2StarterPanel
 			endif
 			if(stringmatch(ba.ctrlname,"MultiPeakFitRange"))
 				IR3W_FitMultiPeakFit2ForWAXS()
@@ -1393,8 +1389,17 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				IR3W_MPF2PlotPeakGraph()
 			endif
 			if(stringmatch(ba.ctrlname,"MPF2PlotPeakParams"))
-				IR3W_MPF2PlotPeakParameters()
+				IR3W_MPF2PlotPeakParameters("Angle")
 			endif
+			if(stringmatch(ba.ctrlname,"MPF2PlotPeakParamsD"))
+				IR3W_MPF2PlotPeakParameters("Dspacing")
+			endif
+			if(stringmatch(ba.ctrlname,"MPF2GenerateParamTbl"))
+				//IR3W_MPF2PlotPeakParameters("Dspacing")
+				IR3W_MPF2CreateAllParTable()
+			endif
+
+
 			if(stringmatch(ba.ctrlname,"DisplayHelp"))
 				//DisplayHelpTopic "Irena WAXS tool"
 				//DoIgorMenu "Control", "Retrieve Window"		// let's make sure it is visible
@@ -1428,6 +1433,118 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 
 	return 0
 End
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+Function IR3W_MPF2ExtractParamsToTable(StartFolder)
+	string StartFolder
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	variable NumGraphs, i=0
+	variable curLength=0
+	WAVE/Z wv0 = $(StartFolder+possiblyquotename("All_Params"))
+	WAVE/Z/T wvT = $(StartFolder+possiblyquotename("Peak_Labels"))
+	WAVE/Z/T wvTS = $(StartFolder+possiblyquotename("Sample_Labels"))
+	if(!WaveExists(wv0))
+		make/O/N=(1000,6,0) $(StartFolder+possiblyquotename("All_Params"))
+		make/O/N=(1000)/T $(StartFolder+possiblyquotename("Peak_Labels"))
+		make/O/N=(1,1,0)/T $(StartFolder+possiblyquotename("Sample_Labels"))
+		WAVE wv0 = $(StartFolder+possiblyquotename("All_Params"))
+		WAVE/T wvT = $(StartFolder+possiblyquotename("Peak_Labels"))
+		WAVE/Z/T wvTS = $(StartFolder+possiblyquotename("Sample_Labels"))
+	endif
+	i=0
+	Wave/Z WaveToAppend=$(("Peak "+num2str(i)+" Coefs"))
+	if(!WaveExists(WaveToAppend))
+		return 0
+	endif	
+	curLength = dimsize(wvTS,2)
+	redimension/N=(1000,6,curLength+1) wv0
+	redimension/N=(1,1,curLength+1) wvTS
+
+	Do
+		Wave/Z WaveToAppend=$(("Peak "+num2str(i)+" Coefs"))
+		if(!WaveExists(WaveToAppend))
+			return 0
+		endif	
+		
+		Wave/Z WvErsToAppend=$(("Peak "+num2str(i)+" Coefseps"))
+		if(!WaveExists(WvErsToAppend))
+			Duplicate WaveToAppend, $(("Peak "+num2str(i)+" Coefseps"))
+			Wave WvErsToAppend=$(("Peak "+num2str(i)+" Coefseps"))
+			WvErsToAppend = NaN
+		endif	
+
+	
+		wv0[i][0][curLength] = WaveToAppend[0]
+		wv0[i][1][curLength] = WvErsToAppend[0]
+		wv0[i][2][curLength] = WaveToAppend[1]
+		wv0[i][3][curLength] = WvErsToAppend[1]
+		wv0[i][4][curLength] = WaveToAppend[2]
+		wv0[i][5][curLength] = WvErsToAppend[2]
+		wvTS[0][0][curLength] = GetDataFOlder(0)
+		wvT[i] 					= "Peak "+num2str(i)
+		SetDimLabel 0,i, $("Peak "+num2str(i)),wv0
+		i+=1
+	while(i<10000)
+end
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3W_MPF2CreateAllParTable()
+	//string WhichUnit		//Angle, - use only Dspacing
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string OldDF=GetDataFolder(1)
+	string NewGraphName
+	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
+	string StartFolder = "root:WAXSFitResults:"+MPF2PlotFolderStart
+   if (stringmatch(":", StartFolder[strlen(StartFolder)-1,strlen(StartFolder)-1] )!=1)
+    		StartFolder=StartFolder+":"
+   endif
+   SetDataFolder StartFolder
+	string AllResults=IN2G_CreateListOfItemsInFolder(StartFolder,1)
+	string TestFolder = StringFromList(0, AllResults, ";")
+	variable i, NumGraphs=3	
+	string TmpName
+	WAVE/Z ParamWv = $(StartFolder+possiblyquotename("All_Params"))
+	WAVE/Z/T ParamLabels = $(StartFolder+possiblyquotename("Peak_Labels"))
+	WAVE/Z/T SampleLabels = $(StartFolder+possiblyquotename("Sample_Labels"))
+//	Wave/Z ParamWv_d = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_d"))
+	KillWaves/Z ParamWv
+	KillWaves/Z ParamLabels
+	KillWaves/Z SampleLabels
+	IN2G_UniversalFolderScan(StartFolder, 2, "IR3W_MPF2ExtractParamsToTable(\""+GetDataFolder(1)+"\")")
+	WAVE/Z ParamWv = $(StartFolder+possiblyquotename("All_Params"))
+	WAVE/Z/T ParamLabels = $(StartFolder+possiblyquotename("Peak_Labels"))
+	WAVE/Z/T SampleLabels = $(StartFolder+possiblyquotename("Sample_Labels"))
+	//truncate end points
+	For(i=0;i<dimsize(ParamWv,0);i+=1)
+		if(ParamWv[i][0][0]<=0)
+			break
+		endif
+	endfor
+	Redimension/N=(i,-1,-1) ParamWv
+
+	SetDimLabel 1,0,Angle,ParamWv
+	SetDimLabel 1,1,AngleESD,ParamWv
+	SetDimLabel 1,2,Width,ParamWv
+	SetDimLabel 1,3,WidthESD,ParamWv
+	SetDimLabel 1,4,Height,ParamWv
+	SetDimLabel 1,5,HeightESD,ParamWv
+
+	Edit/K=1/W=(335,384,1274,710) SampleLabels.d,ParamWv.ld
+	ModifyTable format(Point)=1,width(SampleLabels.d)=182
+	ModifyTable horizontalIndex=2
+	setDataFolder OldDF
+end
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
 //**********************************************************************************************************
 Function IR3W_MPF2PanelHookFunction(s)
 	STRUCT WMWinHookStruct &s
@@ -1634,12 +1751,14 @@ static function IR3W_SaveMultiPeakResults()
 				Wave PeakData=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+"'")
 				Wave PeakDataCoefs=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefs'")
 				//Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":'Peak "+num2str(i)+" Coefseps'")
+				Wave PeakDataCoefSig=$("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(MPF2CurrentFolderNumber)+":W_sigma_"+num2str(i+1))		//Peak 0 has W_sigma_1, talk about logic here... 
+				//root:Packages:MultiPeakFit2:MPF_SetFolder_2:W_sigma_1
 				Duplicate/O  PeakData, $("Peak "+num2str(i))
 				Duplicate/O  PeakData, $("Peak "+num2str(i)+"_d")
 				Wave NewDwave=$("Peak "+num2str(i)+"_d")
 				NewDwave[] = IN2G_ConvertTTHtoD(pnt2x(PeakData, p ),Wavelength)
 				Duplicate/O  PeakDataCoefs, $("Peak "+num2str(i)+" Coefs")
-				//Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")		//these are starting parameter estimates, not errors..., always set to 1e-6
+				Duplicate/O  PeakDataCoefSig, $("Peak "+num2str(i)+" Coefseps")		//fitting uncertainities
 			endif
 		endfor
 
@@ -2060,21 +2179,25 @@ end
 
 Window IR3W_WAXS_MPFPlots() : Panel
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1/W=(625,232,1066,702) as "PowderMPF2 DIff/WAXS plots"
+	NewPanel /K=1/W=(625,232,970,600) as "PowderMPF2 DIff/WAXS plots"
 	DoWIndow/C IR3W_WAXS_MPFPlots
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (0,0,65535)
 	TitleBox MainTitle title="Plots for MPF2 results",pos={100,10},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={250,30},fSize=22,fColor=(0,0,52224)
-	TitleBox Info1 title="Plot Individual Peak Profiles",pos={60,75},frame=0,fstyle=1, fixedSize=1,font= "Times New Roman", size={200,20},fSize=15,fColor=(0,0,52224)
+	TitleBox Info1 title="Plot Individual Peak Profiles",pos={60,175},frame=0,fstyle=1, fixedSize=1,font= "Times New Roman", size={200,20},fSize=15,fColor=(0,0,52224)
 	
 	PopupMenu MPF2PlotFolderStart, pos={10,50},size={180,15},proc=IR3W_PopMenuProc,title="Folder with Data"
 	PopupMenu MPF2PlotFolderStart,mode=1,popvalue=root:Packages:Irena:WAXS:MPF2PlotFolderStart,value= #"IN2G_CreateListOfItemsInFolder(\"root:WAXSFitResults\",1)"
 
-	PopupMenu MPF2PlotPeakProfile, pos={20,100},size={200,15},proc=IR3W_PopMenuProc,title="Selected Peak"
+	PopupMenu MPF2PlotPeakProfile, pos={20,200},size={200,15},proc=IR3W_PopMenuProc,title="Selected Peak"
 	PopupMenu MPF2PlotPeakProfile,mode=1,popvalue=root:Packages:Irena:WAXS:MPF2PlotPeakProfile,value= #"IR3W_PlotUpdateListsOfResults(\"Peak Profiles\")"
+
+	Button MPF2GenerateParamTbl, pos={50,80}, size={250,20}, title="Generate Parameters Table", proc=IR3W_WAXSButtonProc, help={"Create table for all peaks"}
+
 	
-	Button MPF2PlotPeakGraph, pos={50,130}, size={250,20}, title="Graph above of selected Peaks profiles", proc=IR3W_WAXSButtonProc, help={"Create graph of selected peaks"}
-	Button MPF2PlotPeakParams, pos={50,158}, size={250,20}, title="Graph above selected Peaks parameters", proc=IR3W_WAXSButtonProc, help={"Create graph of selected peaks parameters"}
+	Button MPF2PlotPeakGraph, pos={50,230}, size={250,20}, title="Graph above of selected Peaks profiles", proc=IR3W_WAXSButtonProc, help={"Create graph of selected peaks"}
+	Button MPF2PlotPeakParams, pos={50,258}, size={250,20}, title="Graph above selected Peak parameters [Angle]", proc=IR3W_WAXSButtonProc, help={"Create graph of selected peaks parameters, position in degrees"}
+	Button MPF2PlotPeakParamsD, pos={50,286}, size={250,20}, title="Graph above selected Peak parameters [d]", proc=IR3W_WAXSButtonProc, help={"Create graph of selected peaks parameters, posiition in d-sapcing"}
 	
 EndMacro
 
@@ -2084,7 +2207,7 @@ EndMacro
 Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 	string ReturnWhat
 
-		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDF=GetDataFolder(1)
 	if(!DataFolderExists("root:WAXSFitResults"))
 		return ""
@@ -2102,10 +2225,8 @@ Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 		result = GrepList(AllResultsWaxs, "Peak [0-9]$" )
 	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients"))
 		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefs)$" )
-	//elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
-		//result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
-//	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
-//		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
+	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
+		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
 	endif
 //	print result
 	setDataFolder OldDF
@@ -2151,7 +2272,8 @@ end
 //**************************************************************************************
 //**************************************************************************************
 
-Function IR3W_MPF2PlotPeakParameters()
+Function IR3W_MPF2PlotPeakParameters(WhichUnit)
+	string WhichUnit		//Angle, Dspacing
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDF=GetDataFolder(1)
 	string NewGraphName
@@ -2165,7 +2287,7 @@ Function IR3W_MPF2PlotPeakParameters()
 	string TestFolder = StringFromList(0, AllResults, ";")
 	SetDataFolder $("root:WAXSFitResults:"+MPF2PlotFolderStart)
 	//root:WAXSFitResults:Test1:'Inconel718_1066C_629._C':'Peak 0 Coefs'
-	Wave/Z testWv = $("root:WAXSFitResults:"+MPF2PlotFolderStart+":"+possiblyQuoteName(TestFOlder)+":"+possiblyQuoteName(MPF2PlotPeakProfile+" Coefs"))
+	Wave/Z testWv = $("root:WAXSFitResults:"+MPF2PlotFolderStart+":"+possiblyQuoteName(TestFolder)+":"+possiblyQuoteName(MPF2PlotPeakProfile+" Coefs"))
 	if(!WaveExists(testWv))
 		abort "No parameters data found"
 	endif
@@ -2173,7 +2295,10 @@ Function IR3W_MPF2PlotPeakParameters()
 	string TmpName
 	WAVE/Z ParamWv = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params"))
 	WAVE/Z/T ParamLabels = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Labels"))
-	KillWaves/Z ParamWv, ParamLabels
+	Wave/Z ParamWv_d = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_d"))
+	KillWaves/Z ParamWv
+	KillWaves/Z ParamLabels
+	KillWaves/Z ParamWv_d
 	IN2G_UniversalFolderScan(StartFolder, 2, "IR3W_MPF2ExtractParamsToGraph(\""+GetDataFolder(1)+"\",\""+ MPF2PlotPeakProfile+"\")")
 	WAVE/Z ParamWv = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params"))
 	WAVE/Z/T ParamLabels = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Labels"))
@@ -2183,48 +2308,108 @@ Function IR3W_MPF2PlotPeakParameters()
 	if(!WaveExists(ParamWv))
 		abort
 	endif
-	For(i=0;i<NumGraphs;i+=1)
-		Display /K=1/W=(386,292,1042,715) as "MPF2 "+MPF2PlotPeakProfile+" Parameter "+num2str(i)+" Plot"
-		AppendToGraph ParamWv[*][2*i]
-	 	NewGraphName=WinName(0, 1)	
-		TmpName = stringFromList(0,TraceNameList(NewGraphName, ";", 1 ))
-		ErrorBars $(TmpName) Y,wave=(ParamWv[*][1],ParamWv[*][1])
-		ModifyGraph userticks(bottom)={LabelLocs,ParamLabels}
-		ModifyGraph tkLblRot(bottom)=90
-		ModifyGraph mode=3
-		switch(i)	// numeric switch
-			case 0:		// execute if case matches expression
-				Label/W=$(NewGraphName) left "Angle [deg]"
-				Label/W=$(NewGraphName) bottom "Sequence"
-				break					// exit from switch
-			case 1:		// execute if case matches expression
-				Label/W=$(NewGraphName) left "Width [deg]"
-				Label/W=$(NewGraphName) bottom "Sequence"
-				break
-			case 2:		// execute if case matches expression
-				Label/W=$(NewGraphName) left "Area"
-				Label/W=$(NewGraphName) bottom "Sequence"
-				break
-			default:							// optional default expression executed
-				Label/W=$(NewGraphName) left " "
-				Label/W=$(NewGraphName) bottom " "
-		endswitch
-		DoWindow/F $(NewGraphName)
-		//IN2G_ColorTopGrphRainbow()
-		IN2G_LegendTopGrphFldr(10,15,1,1)
-	endfor
-	SetDimLabel 1,0,Angle,ParamWv
-	SetDimLabel 1,1,AngleESD,ParamWv
-	SetDimLabel 1,2,Width,ParamWv
-	SetDimLabel 1,3,WidthESD,ParamWv
-	SetDimLabel 1,4,Height,ParamWv
-	SetDimLabel 1,5,HeightESD,ParamWv
-
-	Edit/K=1/W=(335,384,1274,710) ParamLabels, ParamWv as "MPF2 "+MPF2PlotPeakProfile+" Parameter Listing "
-	ModifyTable format(Point)=1,width(ParamLabels)=172,title(ParamLabels)="Sample Name"
-	ModifyTable width(ParamWv)=92
-	ModifyTable showParts=0x76
-	ModifyTable horizontalIndex=2
+	//create results in d spacing... 
+	Duplicate/O ParamWv, $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_d"))
+	Duplicate/O ParamWv, $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_T"))
+	Wave ParamWv_d = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_d"))
+	Wave ParamWv_T = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_T"))
+	//convert first 4 columns from angular unit to d spacing, need wavelength
+	NVAR wavelength=root:Packages:Irena:WAXS:Wavelength
+	//IN2G_ConvertTTHtoD(TTH,wavelength)
+	//need to use fraction to push into d space, get each subsequent vcalue as fraction of angle and propagate as fraction of the d-spacing. 
+	ParamWv_d[][0] =  IN2G_ConvertTTHtoD(ParamWv[p][0],wavelength)
+	ParamWv_d[][1] =  ParamWv[p][1]/ParamWv[p][0] * ParamWv_d[p][0]
+	ParamWv_d[][2] =  ParamWv[p][2]/ParamWv[p][0] * ParamWv_d[p][0]
+	ParamWv_d[][3] =  ParamWv[p][3]/ParamWv[p][2] * ParamWv_d[p][2]
+	SetDimLabel 1,0,Angle,ParamWv_T
+	SetDimLabel 1,1,AngleESD,ParamWv_T
+	SetDimLabel 1,2,Width,ParamWv_T
+	SetDimLabel 1,3,WidthESD,ParamWv_T
+	SetDimLabel 1,4,Height,ParamWv_T
+	SetDimLabel 1,5,HeightESD,ParamWv_T
+	SetDimLabel 1,0,d,ParamWv_d
+	SetDimLabel 1,1,d_ESD,ParamWv_d
+	SetDimLabel 1,2,Width,ParamWv_d
+	SetDimLabel 1,3,WidthESD,ParamWv_d
+	SetDimLabel 1,4,Height,ParamWv_d
+	SetDimLabel 1,5,HeightESD,ParamWv_d
+	
+	if(stringMatch(WhichUnit,"Angle"))
+		For(i=0;i<NumGraphs;i+=1)
+			Display /K=1/W=(386,292,1042,715) as "MPF2 "+MPF2PlotPeakProfile+" Parameter "+num2str(i)+" Plot"
+			AppendToGraph ParamWv_T[*][2*i]
+		 	NewGraphName=WinName(0, 1)	
+			TmpName = stringFromList(0,TraceNameList(NewGraphName, ";", 1 ))
+			ErrorBars $(TmpName) Y,wave=(ParamWv_T[*][1],ParamWv_T[*][1])
+			ModifyGraph userticks(bottom)={LabelLocs,ParamLabels}
+			ModifyGraph tkLblRot(bottom)=90
+			ModifyGraph mode=3
+			switch(i)	// numeric switch
+				case 0:		// execute if case matches expression
+					Label/W=$(NewGraphName) left "Angle [deg]"
+					Label/W=$(NewGraphName) bottom "Sequence"
+					break					// exit from switch
+				case 1:		// execute if case matches expression
+					Label/W=$(NewGraphName) left "Width [deg]"
+					Label/W=$(NewGraphName) bottom "Sequence"
+					break
+				case 2:		// execute if case matches expression
+					Label/W=$(NewGraphName) left "Area"
+					Label/W=$(NewGraphName) bottom "Sequence"
+					break
+				default:							// optional default expression executed
+					Label/W=$(NewGraphName) left " "
+					Label/W=$(NewGraphName) bottom " "
+			endswitch
+			DoWindow/F $(NewGraphName)
+			//IN2G_ColorTopGrphRainbow()
+			IN2G_LegendTopGrphFldr(10,15,1,1)
+		endfor
+	
+		Edit/K=1/W=(335,384,1274,710) ParamLabels, ParamWv_T as "MPF2 "+MPF2PlotPeakProfile+" Parameter Listing "
+		ModifyTable format(Point)=1,width(ParamLabels)=172,title(ParamLabels)="Sample Name"
+		ModifyTable width(ParamWv_T)=92
+		ModifyTable showParts=0x76
+		ModifyTable horizontalIndex=2
+	else
+		//and now the same in d-spacing...
+		For(i=0;i<NumGraphs;i+=1)
+			Display /K=1/W=(386,292,1042,715) as "MPF2 "+MPF2PlotPeakProfile+" Parameter "+num2str(i)+" Plot in d"
+			AppendToGraph ParamWv_d[*][2*i]
+		 	NewGraphName=WinName(0, 1)	
+			TmpName = stringFromList(0,TraceNameList(NewGraphName, ";", 1 ))
+			ErrorBars $(TmpName) Y,wave=(ParamWv_d[*][1],ParamWv_d[*][1])
+			ModifyGraph userticks(bottom)={LabelLocs,ParamLabels}
+			ModifyGraph tkLblRot(bottom)=90
+			ModifyGraph mode=3
+			switch(i)	// numeric switch
+				case 0:		// execute if case matches expression
+					Label/W=$(NewGraphName) left "d [A]"
+					Label/W=$(NewGraphName) bottom "Sequence"
+					break					// exit from switch
+				case 1:		// execute if case matches expression
+					Label/W=$(NewGraphName) left "Width [A]"
+					Label/W=$(NewGraphName) bottom "Sequence"
+					break
+				case 2:		// execute if case matches expression
+					Label/W=$(NewGraphName) left "Area"
+					Label/W=$(NewGraphName) bottom "Sequence"
+					break
+				default:							// optional default expression executed
+					Label/W=$(NewGraphName) left " "
+					Label/W=$(NewGraphName) bottom " "
+			endswitch
+			DoWindow/F $(NewGraphName)
+			//IN2G_ColorTopGrphRainbow()
+			IN2G_LegendTopGrphFldr(10,15,1,1)
+		endfor
+	
+		Edit/K=1/W=(335,384,1274,710) ParamLabels, ParamWv_d as "MPF2 "+MPF2PlotPeakProfile+" Parameter Listing in d"
+		ModifyTable format(Point)=1,width(ParamLabels)=172,title(ParamLabels)="Sample Name"
+		ModifyTable width(ParamWv_d)=92
+		ModifyTable showParts=0x76
+		ModifyTable horizontalIndex=2
+	endif
 	setDataFolder OldDF
 end
 //**************************************************************************************
@@ -2240,7 +2425,12 @@ Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	if(!WaveExists(WaveToAppend))
 		return 0
 	endif	
-	//Wave/Z WvErsToAppend=$((DataWvName+" Coefseps"))
+	Wave/Z WvErsToAppend=$((DataWvName+" Coefseps"))
+	if(!WaveExists(WvErsToAppend))
+		Duplicate WaveToAppend, $((DataWvName+" Coefseps"))
+		Wave WvErsToAppend=$((DataWvName+" Coefseps"))
+		WvErsToAppend = NaN
+	endif	
 	NumGraphs = numpnts(WaveToAppend)
 	variable curLength=0
 	
@@ -2256,11 +2446,11 @@ Function IR3W_MPF2ExtractParamsToGraph(StartFolder, DataWvName)
 	redimension/N=(curLength+1,6) wv0
 	redimension/N=(curLength+1)  wvT
 	wv0[curLength][0] =WaveToAppend[0]
-	wv0[curLength][1] =NaN	//WvErsToAppend[0]
+	wv0[curLength][1] =WvErsToAppend[0]
 	wv0[curLength][2] =WaveToAppend[1]
-	wv0[curLength][3] =NaN	//WvErsToAppend[1]
+	wv0[curLength][3] =WvErsToAppend[1]
 	wv0[curLength][4] =WaveToAppend[2]
-	wv0[curLength][5] =NaN	//WvErsToAppend[2]
+	wv0[curLength][5] =WvErsToAppend[2]
 	wvT[curLength] = GetDataFOlder(0)
 end
 
