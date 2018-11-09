@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.96 added use of FWHM from sample to GUI. 
 //1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 
 //1.93 added Desmaering as optional data reduction step. 
@@ -34,7 +35,16 @@
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 Constant IN3_ReduceDataMainVersionNumber=1.95
-Constant IN3_NewReduceDataMainVersionNum=1.95
+Constant IN3_NewReduceDataMainVersionNum=1.96
+constant SmoothBlankForUSAXS = 1
+Constant Indra_PDIntBackFixScaleVmin=1.1
+Constant Indra_PDIntBackFixScaleVmax=0.3e-10
+constant	RwaveSmooth1time = 0.01
+constant	RwaveSmooth2time = 0.01
+constant	RwaveSmooth3time = 0.03
+constant	RwaveSmooth4time = 0.3
+constant	RwaveSmooth5time = 0.6
+constant CalMaxRatioUseSamFWHM = 1.2
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -346,6 +356,9 @@ Function IN3_MainPanelNew()
 	SetVariable SubtractFlatBackground,pos={20,560},size={300,22},title="Subtract Flat background=", frame=1
 	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
 	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
+
+	CheckBox CalibrateUseSampleFWHM,pos={18,590},size={300,14},proc=IN3_MainPanelCheckBox,title="Use Sample FWHM for calibration?"
+	CheckBox CalibrateUseSampleFWHM,variable= root:Packages:Indra3:CalibrateUseSampleFWHM, help={"Check, if you want to use FWHM for absolute intensity calibration"}
 	
 
 //MSAXS stuff
@@ -895,6 +908,7 @@ Function IN3_Initialize()
 	ListOfVariables+="RemoveDropouts;RemoveDropoutsTime;RemoveDropoutsFraction;RemoveDropoutsAvePnts;"
 
 	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
+	ListOfVariables+="CalibrateUseSampleFWHM;"
 
 	ListOfVariables+="BlankWidth;MSAXSCorrection;UseMSAXSCorrection;UsePinTransmission;USAXSPinTvalue;"
 	ListOfVariables+="MSAXSStartPoint;MSAXSEndPoint;BlankFWHM;BlankMaximum;"
@@ -1239,6 +1253,9 @@ Function IN3_MainPanel()
 	SetVariable SubtractFlatBackground,pos={8,420},size={300,22},title="Subtract Flat background=", frame=1
 	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
 	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
+
+	CheckBox CalibrateUseSampleFWHM,pos={8,440},size={300,14},proc=IN3_MainPanelCheckBox,title="Use Sample FWHM for calibration?"
+	CheckBox CalibrateUseSampleFWHM,variable= root:Packages:Indra3:CalibrateUseSampleFWHM, help={"Check, if you want to use FWHM for absolute intensity calibration"}
 	
 
 //MSAXS stuff

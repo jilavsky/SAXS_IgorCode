@@ -147,12 +147,12 @@ Function NI1_UpdatePanelVersionNumber(panelName, CurentProcVersion)
 		GetWindow  $(panelName) note
 		SetWindow $(panelName), note=S_Value+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
 		IN2G_PanelAppendSizeRecordNote(panelName)
-//		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
-//		IN2G_ResetPanelSize(panelName,1)
-//		STRUCT WMWinHookStruct s
-//		s.eventcode=6
-//		s.winName=panelName
-//		IN2G_PanelResizePanelSize(s)
+		SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+		IN2G_ResetPanelSize(panelName,1)
+		STRUCT WMWinHookStruct s
+		s.eventcode=6
+		s.winName=panelName
+		IN2G_PanelResizePanelSize(s)
 		//print "Done resizing"
 	endif
 end 

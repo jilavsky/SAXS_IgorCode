@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.47
+#pragma version=1.49
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,10 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.49 add support for calibration factor in USAXS/SAXS/WAXS instrument
+//1.48 add solid angle correction to data reduction to match better SAXS and WAXS data. 
+		//added Correction factor use, but for now hwardwired. This needs to be part of Nexus file... 
+		//the correction factor will change for SAXS and WAXS due to different sensitivity needed, WAXS is 1/0.690699 more sensitive. 
 //1.47 minor fix to mask size. 
 //1.46 fix problem with WAXS when "WAXS use Blank" is not selected incorrectly set parameters. 
 //1.45 minor fixes nd function names replaced. 
@@ -799,6 +803,15 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
 				NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
+				NVAR UseSolidAngle= root:Packages:Convert2Dto1D:UseSolidAngle
+				NVAR UseCorrectionFactor = root:Packages:Convert2Dto1D:UseCorrectionFactor
+				NVAR CorrFactor=root:Packages:Convert2Dto1D:CorrectionFactor				
+				UseCorrectionFactor = 1
+				//this nees to be part of calibration!!!
+				//note, the 0.690699 seems correction for better sensitivity of WAXZS detector at 21keV. This will be part of calibbration formula. 
+				//CorrFactor = 7.02455e-14 * 0.690699
+				
+				UseSolidAngle = 1
 				FIlesSortOrder = 3
 				QvectorNumberPoints=2*487
 				QBinningLogarithmic=0
@@ -965,8 +978,15 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 				NVAR Use2Ddataname = root:Packages:Convert2Dto1D:Use2Ddataname
 				NVAR QvectorNumberPoints = root:Packages:Convert2Dto1D:QvectorNumberPoints
 				NVAR FIlesSortOrder=root:Packages:Convert2Dto1D:FIlesSortOrder
-				FIlesSortOrder = 3
+				NVAR UseSolidAngle= root:Packages:Convert2Dto1D:UseSolidAngle
+				NVAR UseCorrectionFactor = root:Packages:Convert2Dto1D:UseCorrectionFactor
+				NVAR CorrFactor=root:Packages:Convert2Dto1D:CorrectionFactor				
+				UseCorrectionFactor = 1
+				//this nees to be part of calibration!!!
+				//CorrFactor = 7.02455e-14
 				
+				UseSolidAngle = 1
+				FIlesSortOrder = 3				
 				QvectorNumberPoints=120
 				QBinningLogarithmic=1
 				QvectormaxNumPnts = 0

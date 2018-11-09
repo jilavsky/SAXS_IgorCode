@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma IgorVersion= 6.0	// Requires Igor Pro v4.0 or later.
-#pragma version = 1.20
+#pragma IgorVersion= 7.0	// Requires Igor Pro v4.0 or later.
+#pragma version = 1.21
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 added Scan Type match to enable loading of specific type of scans
 //1.20 added Grapsrtring to extract information from spec file. 
 //1.19 changed checkIntegrity logic not to check for first few points for I0 value. Due to autoranging that may fail. 
 //1.18 updated to pass specMotors to USAXS folder as it is now needed later (and may be useful). 2/2013 JIL
@@ -71,6 +72,7 @@ Function IN2_USAXSInitPackage()									//initialization of USAXS folderin Packa
 	endif
 	
 	string/g root:Packages:Indra3:ImmediatelyConvertUSAXSData="Yes"
+	string/g root:Packages:Indra3:ScanTypeMatchString=""
 end
 
 
@@ -671,6 +673,26 @@ End
 //End of panel area
 //*************************************************************************************************************
 //*************************************************************************************************************
+
+Function IN2_ConvertSpecSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+				IN2_CreateDialogForRangeSel()
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+
 //*************************************************************************************************************
 // ***************Begining of RAW to USAXS conversion************************************************
 
@@ -2084,6 +2106,7 @@ Function IN2_CreateDialogForRangeSel()
 	SVAR scanList = root:Packages:Indra3:CommandList 	//contains list of commands used to create these scans
 	SVAR posList = root:Packages:spec:posList 			//contains list of positions for scans, where they start
 	SVAR DialogListForRangeSelection = root:Packages:Indra3:DialogListForRangeSelection 
+	SVAR ScanTypeMatchString = root:Packages:Indra3:ScanTypeMatchString
 	string TempListOfPositions=""
 	if(ItemsInList(scanList)!=ItemsInList(posList))
 		abort "Problem in IN2_CreateDialogForRangeSel()"
@@ -2097,9 +2120,11 @@ Function IN2_CreateDialogForRangeSel()
 				TempListOfPositions+=StringFromList(i, posList)+";"
 			endif	
 		else
+			if (stringmatch(StringFromList(i, scanList), "*"+ScanTypeMatchString+"*" ))								
 				DialogListForRangeSelection+="Scan "+StringFromList(0,StringFromList(i, scanList)," ")+"  "+StringFromList(1,StringFromList(i, scanList)," ")+"  "+StringFromList(2,StringFromList(i, scanList)," ")+"  :>"
 				DialogListForRangeSelection+=StringFromList(i, commentList)[0,30]+";"	
 				TempListOfPositions+=StringFromList(i, posList)+";"
+			endif
 		endif
 	endfor													
 
@@ -2122,6 +2147,7 @@ Function IN2_LoadSpecPanelCheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR LoadSpec_Range=root:Packages:Indra3:LoadSpec_Range
 	NVAR LoadSpec_ConvertUSAXSData=root:Packages:Indra3:LoadSpec_ConvertUSAXSData
 	Wave  ListBoxDataSelWv  = root:Packages:Indra3:ListBoxDataSelWv
+	SVAR ScanTypeMatchString = root:Packages:Indra3:ScanTypeMatchString
 	
 	if(cmpstr(ctrlName,"SpecLoad_OnlyUSAXS")==0)
 		IN2_CreateDialogForRangeSel()
@@ -2129,6 +2155,7 @@ Function IN2_LoadSpecPanelCheckProc(ctrlName,checked) : CheckBoxControl
 			LoadSpec_Selected = 0
 			LoadSpec_Range = 0
 			ListBoxDataSelWv =0
+			ScanTypeMatchString=""
 	endif
 	if(cmpstr(ctrlName,"ConvertToUSAXSData")==0)
 	
@@ -2188,9 +2215,9 @@ Function  IN2_ConvertSpecScans()
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65280)
 	DrawText 136,31,"Load SPEC scans"
-	Button SpecSelectFile help={"Select new spec data file through dialog" }, pos={50,40 }, size={150,20 }, title = "Load Spec file"
+	Button SpecSelectFile help={"Select new spec data file through dialog" }, pos={50,35 }, size={150,20 }, title = "Load Spec file"
 	Button SpecSelectFile  proc=IN2_SPecLoadButtonProc, help={"Get dialog to select the spec file - new or the same one"}
-	Button SpecReloadFile help={"reload same spec data file" }, pos={50,65}, size={150,20 }, title = "Reload same Spec file"
+	Button SpecReloadFile help={"reload same spec data file" }, pos={50,60}, size={150,20 }, title = "Reload same Spec file"
 	Button SpecReloadFile  proc=IN2_SPecLoadButtonProc, help={"Get dialog to select the spec file - new or the same one"}
 	SetVariable SpecOriginalFile value = root:Packages:Indra3:specUSAXSSourceFile, noproc, help={"This is the name of the file loaded"}
 	SetVariable SpecOriginalFile noedit=1, pos = {240,52}, size = {250,20}, title = "Spec file: ", frame=0
@@ -2199,8 +2226,13 @@ Function  IN2_ConvertSpecScans()
 	CheckBox SpecLoad_All,variable = root:Packages:Indra3:LoadSpec_All, help={"Check to load all data listed below. Note, the list will not be possible to control."}
 	CheckBox SpecLoad_Selected,pos={162,131},size={122,14},proc=IN2_LoadSpecPanelCheckProc,title="Load selected scan(s)"
 	CheckBox SpecLoad_Selected,variable = root:Packages:Indra3:LoadSpec_Selected, help={"Check to be able to select any combination of scans"}
-	CheckBox SpecLoad_OnlyUSAXS,pos={15,96},size={210,14},proc=IN2_LoadSpecPanelCheckProc,title="Display and convert USAXS scans only?"
+	CheckBox SpecLoad_OnlyUSAXS,pos={15,90},size={210,14},proc=IN2_LoadSpecPanelCheckProc,title="Display and convert USAXS scans only?"
 	CheckBox SpecLoad_OnlyUSAXS,variable = root:Packages:Indra3:LoadSpec_OnlyUSAXS, help={"Check to have only USAXS data listed, uncheck to have all data listed"}
+
+	SetVariable ScanTypeMatchString value = root:Packages:Indra3:ScanTypeMatchString, proc=IN2_ConvertSpecSetVarProc, help={"Match string for scan types"}
+	SetVariable ScanTypeMatchString pos = {10,110}, size = {250,20}, title = "Scan type match : ", frame=1
+
+
 	CheckBox SpecLoad_Range,pos={313,131},size={115,14},proc=IN2_LoadSpecPanelCheckProc,title="Load range of scans"
 	CheckBox SpecLoad_Range,variable = root:Packages:Indra3:LoadSpec_Range, help={"Check to be able to select continuous range of data, hold shift/option to select the second point in range"}
 	CheckBox ConvertToUSAXSData,pos={277,85},size={172,14},proc=IN2_LoadSpecPanelCheckProc,title="Convert directly to USAXS data?"
@@ -2260,7 +2292,7 @@ Function IN2_SpecLoadButtonProc(ctrlName) : ButtonControl
 
 	if(cmpstr(ctrlName,"SpecReloadFile")==0)
 		IN2_CopySpecFileLocally(1)
-		TempFileName=IN2_CreateTempFileName()			//this returns the propert pointer to the temp  file	
+		TempFileName=IN2_CreateTempFileName()			//this returns the proper pointer to the temp  file	
 		IN2_specScansList(TempFileName,"TempFilePath","*")		//creates list of scan lines commands and position list
 		IN2_CreateDialogForRangeSel()
 		SVAR USAXSRawDataFolder=root:Packages:Indra3:USAXSRawDataFolder

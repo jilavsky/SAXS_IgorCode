@@ -1395,7 +1395,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				IR3W_MPF2PlotPeakParameters("Dspacing")
 			endif
 			if(stringmatch(ba.ctrlname,"MPF2GenerateParamTbl"))
-				//IR3W_MPF2PlotPeakParameters("Dspacing")
+				KillWIndow/Z ParametersTable
 				IR3W_MPF2CreateAllParTable()
 			endif
 
@@ -1448,7 +1448,7 @@ Function IR3W_MPF2ExtractParamsToTable(StartFolder)
 	WAVE/Z/T wvT = $(StartFolder+possiblyquotename("Peak_Labels"))
 	WAVE/Z/T wvTS = $(StartFolder+possiblyquotename("Sample_Labels"))
 	if(!WaveExists(wv0))
-		make/O/N=(1000,6,0) $(StartFolder+possiblyquotename("All_Params"))
+		make/O/N=(1000,10,0) $(StartFolder+possiblyquotename("All_Params"))
 		make/O/N=(1000)/T $(StartFolder+possiblyquotename("Peak_Labels"))
 		make/O/N=(1,1,0)/T $(StartFolder+possiblyquotename("Sample_Labels"))
 		WAVE wv0 = $(StartFolder+possiblyquotename("All_Params"))
@@ -1461,8 +1461,8 @@ Function IR3W_MPF2ExtractParamsToTable(StartFolder)
 		return 0
 	endif	
 	curLength = dimsize(wvTS,2)
-	redimension/N=(1000,6,curLength+1) wv0
-	redimension/N=(1,1,curLength+1) wvTS
+	redimension/N=(-1,-1,curLength+1) wv0
+	redimension/N=(-1,-1,curLength+1) wvTS
 
 	Do
 		Wave/Z WaveToAppend=$(("Peak "+num2str(i)+" Coefs"))
@@ -1476,12 +1476,12 @@ Function IR3W_MPF2ExtractParamsToTable(StartFolder)
 			Wave WvErsToAppend=$(("Peak "+num2str(i)+" Coefseps"))
 			WvErsToAppend = NaN
 		endif	
+		NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
 
-	
-		wv0[i][0][curLength] = WaveToAppend[0]
-		wv0[i][1][curLength] = WvErsToAppend[0]
-		wv0[i][2][curLength] = WaveToAppend[1]
-		wv0[i][3][curLength] = WvErsToAppend[1]
+		wv0[i][0][curLength] = IN2G_ConvertTTHtoD(WaveToAppend[0],wavelength)
+		wv0[i][1][curLength] = wv0[i][0][curLength] * WvErsToAppend[0]/WaveToAppend[0]
+		wv0[i][2][curLength] = abs(wv0[i][0][curLength] * WaveToAppend[1]/WaveToAppend[0] )
+		wv0[i][3][curLength] = abs(wv0[i][0][curLength] * WvErsToAppend[1]/WaveToAppend[1])
 		wv0[i][4][curLength] = WaveToAppend[2]
 		wv0[i][5][curLength] = WvErsToAppend[2]
 		wvTS[0][0][curLength] = GetDataFOlder(0)
@@ -1514,7 +1514,6 @@ Function IR3W_MPF2CreateAllParTable()
 	WAVE/Z ParamWv = $(StartFolder+possiblyquotename("All_Params"))
 	WAVE/Z/T ParamLabels = $(StartFolder+possiblyquotename("Peak_Labels"))
 	WAVE/Z/T SampleLabels = $(StartFolder+possiblyquotename("Sample_Labels"))
-//	Wave/Z ParamWv_d = $(StartFolder+possiblyquotename(MPF2PlotPeakProfile+"_Params_d"))
 	KillWaves/Z ParamWv
 	KillWaves/Z ParamLabels
 	KillWaves/Z SampleLabels
@@ -1530,20 +1529,148 @@ Function IR3W_MPF2CreateAllParTable()
 	endfor
 	Redimension/N=(i,-1,-1) ParamWv
 
-	SetDimLabel 1,0,Angle,ParamWv
-	SetDimLabel 1,1,AngleESD,ParamWv
+	SetDimLabel 1,0,d,ParamWv
+	SetDimLabel 1,1,d_ESD,ParamWv
 	SetDimLabel 1,2,Width,ParamWv
 	SetDimLabel 1,3,WidthESD,ParamWv
 	SetDimLabel 1,4,Height,ParamWv
 	SetDimLabel 1,5,HeightESD,ParamWv
+	SetDimLabel 1,6,h,ParamWv
+	SetDimLabel 1,7,k,ParamWv
+	SetDimLabel 1,8,l,ParamWv
+	SetDimLabel 1,9,a,ParamWv
+	
+//	ParamWv[][9][] := ParamWv[p][0][r] * sqrt(ParamWv[p][6][r]^2 + ParamWv[p][7][r]^2 + ParamWv[p][8][r]^2)
 
-	Edit/K=1/W=(335,384,1274,710) SampleLabels.d,ParamWv.ld
-	ModifyTable format(Point)=1,width(SampleLabels.d)=182
-	ModifyTable horizontalIndex=2
+	//Edit/K=1/W=(335,384,1274,710) ParamWv.ld
+	//ModifyTable format(Point)=1
+	//ModifyTable horizontalIndex=2
+	IR3W_MPF2ResultsPanel(ParamWv, ParamLabels, SampleLabels)
 	setDataFolder OldDF
 end
 //**************************************************************************************
 //**************************************************************************************
+Function IR3W_MPF2ResultsPanel(ParamWv, ParamLabels, SampleLabels) : Panel
+	wave ParamWv, ParamLabels, SampleLabels
+	variable/g root:Packages:Irena:WAXS:TableDisplayedLayer
+	NVAR DisplayedLayer = root:Packages:Irena:WAXS:TableDisplayedLayer
+	DisplayedLayer = 1
+	string/g root:Packages:Irena:WAXS:TableCrystalStructure
+	SVAR CrystalStructure=root:Packages:Irena:WAXS:TableCrystalStructure
+	CrystalStructure = "Cubic"
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1/W=(100,50,1150,350) as "Parameters Table and Analysis"
+	DoWindow/C ParametersTable
+	TitleBox MainTitle title="\Zr200WAXS results Table",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1000,30},anchor=MC,fColor=(0,0,52224)
+	SetVariable SampleName title="\Zr090Name of displayed results : ",pos={20,30},fsize=16,size={500,20},noedit=1,value=Sample_Labels[DisplayedLayer-1],frame=0,help={"Sample Name for currently displayed results"}
+	Slider DisplaySampleSlider pos={20,60},size={500,20},vert=0,proc=IR3W_TableSliderProc,variable=DisplayedLayer,limits={1,dimsize(SampleLabels,2),1}
+	Button layerDown,pos={530,35},size={100.00,20.00},proc=IR3W_TableButtonProc,title="\\W546Previous Layer"
+	SetVariable DisplayedSample title="\Zr090 ",pos={630,35},fsize=14,size={80,20},value=DisplayedLayer,frame=1,help={"Index of currently displayed results"}, proc=IR3W_TableSetVarProc
+	SetVariable DisplayedSample limits={1,dimsize(SampleLabels,2),1}
+	Button layerUp,pos={720.00,35},size={100.00,20.00},proc=IR3W_TableButtonProc,title="Next Layer \\W549"
+	PopupMenu CrystalStructure,pos={900,62},size={210,15},proc=IR3W_TablePopMenuProc,title="Crystal Structure"
+	PopupMenu CrystalStructure,mode=1,popvalue=CrystalStructure,value= "Cubic;"
+
+	Edit/K=1/W=(10,100,1100,290)/FG=(FL,$"",FR,FB)/HOST=# /N=TableOfResults ParamLabels, ParamWv
+	ModifyTable elements =(-1, -1, DisplayedLayer-1 )
+	ModifyTable format(Point)=1
+	ModifyTable horizontalIndex=2
+	ModifyTable showParts=2^4+2^5+2^2
+	
+EndMacro
+
+//**************************************************************************************
+//**********************************************************************************************************
+Function IR3W_TableButtonProc(ctrlName) : ButtonControl
+	String ctrlName
+	if(stringMatch(ctrlName,"layerUp"))
+		NVAR DisplayedLayer = root:Packages:Irena:WAXS:TableDisplayedLayer
+		DisplayedLayer += 1
+		IR3W_TableDisplayRightLayer()
+	endif
+	if(stringMatch(ctrlName,"layerDown"))
+		NVAR DisplayedLayer = root:Packages:Irena:WAXS:TableDisplayedLayer
+		DisplayedLayer -= 1
+		IR3W_TableDisplayRightLayer()
+	endif
+	
+End
+//**************************************************************************************
+//**********************************************************************************************************
+Function IR3W_TablePopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
+	String ctrlName
+	Variable popNum
+	String popStr
+
+	SVAR CrystalStructure=root:Packages:Irena:WAXS:TableCrystalStructure
+	if(stringmatch(ctrlName,"CrystalStructure"))
+		CrystalStructure = popStr
+	endif
+
+end
+//**************************************************************************************
+//**********************************************************************************************************
+Function IR3W_TableSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+	
+	variable tempP
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+			if(stringmatch(sva.ctrlName,"DisplayedSample"))
+				NVAR DisplayedLayer = root:Packages:Irena:WAXS:TableDisplayedLayer
+				DisplayedLayer = sva.dval
+				IR3W_TableDisplayRightLayer()
+			endif
+		case 3: // live update
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+end
+
+//**************************************************************************************
+//**********************************************************************************************************
+Function IR3W_TableSliderProc(sa) : SliderControl
+	STRUCT WMSliderAction &sa
+
+	switch( sa.eventCode )
+		case -1: // control being killed
+			break
+		default:
+			if( sa.eventCode & 1 ) // value set
+				Variable curval = sa.curval
+				if(stringmatch(sa.ctrlName,"DisplaySampleSlider"))
+					NVAR DisplayedLayer = root:Packages:Irena:WAXS:TableDisplayedLayer
+					DisplayedLayer = curval
+					IR3W_TableDisplayRightLayer()
+				endif
+			endif
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************************************
+//**********************************************************************************************************
+Function IR3W_TableDisplayRightLayer()
+	NVAR DisplayedLayer = root:Packages:Irena:WAXS:TableDisplayedLayer
+	DoWindow ParametersTable
+	if(V_Flag)
+		ControlInfo/W=ParametersTable SampleName
+		Wave Sample_Labels=$(S_DataFolder+StringFromList(0,S_Value,"["))
+		if(DisplayedLayer>DimSize(Sample_Labels,2))
+			DisplayedLayer = DimSize(Sample_Labels,2)
+		elseif(DisplayedLayer<1)
+			DisplayedLayer =1
+		endif
+		SetVariable SampleName win=ParametersTable ,value=Sample_Labels[DisplayedLayer-1]
+		ModifyTable/W=ParametersTable#TableOfResults  elements =(-1, -1, DisplayedLayer-1 )
+		
+	endif
+end
 //**************************************************************************************
 //**********************************************************************************************************
 Function IR3W_MPF2PanelHookFunction(s)
@@ -2222,11 +2349,11 @@ Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 	string result
 	result=""
 	if(stringmatch(ReturnWhat,"Peak Profiles"))
-		result = GrepList(AllResultsWaxs, "Peak [0-9]$" )
+		result = GrepList(AllResultsWaxs, "Peak [0-9]+$" )
 	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients"))
-		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefs)$" )
+		result = GrepList(AllResultsWaxs, "Peak [0-9]+ (Coefs)$" )
 	elseif(stringmatch(ReturnWhat,"Peak Profiles Coeficients EPS"))
-		result = GrepList(AllResultsWaxs, "Peak [0-9] (Coefseps)$" )
+		result = GrepList(AllResultsWaxs, "Peak [0-9]+ (Coefseps)$" )
 	endif
 //	print result
 	setDataFolder OldDF

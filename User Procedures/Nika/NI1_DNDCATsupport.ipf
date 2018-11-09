@@ -84,6 +84,8 @@ Function NI1_DNDConfigureNika()
 	
 	NVAR wvlng=root:Packages:Convert2Dto1D:Wavelength
 	wvlng=NI1_DNDWavelength(Selectedheader)
+	NVAR XrayEnergy = root:Packages:Convert2Dto1D:XrayEnergy
+	XrayEnergy = 12.3984/wvlng
 	NVAR PixX=root:Packages:Convert2Dto1D:PixelSizeX
 	pixX=NI1_DNDPixelSize(Selectedheader)
 	NVAR pixY=root:Packages:Convert2Dto1D:PixelSizeY
@@ -94,7 +96,8 @@ Function NI1_DNDConfigureNika()
 	Wave Img=root:Packages:Convert2Dto1D:CCDImageToConvert
 	//BmX=DimSize(Img, 0)-  NI1_DNDBeamCenterX(Selectedheader)
 	BmX= NI1_DNDBeamCenterX(Selectedheader)
-	BMY=DimSize(Img, 1) - 1 - NI1_DNDBeamCenterY(Selectedheader)			//fixed -1 JIL 10 14 09 since I again forgot about 0 numbering... 
+	//BMY=DimSize(Img, 1) - 1 - NI1_DNDBeamCenterY(Selectedheader)			//fixed -1 JIL 10 14 09 since I again forgot about 0 numbering... 
+	BMY= NI1_DNDBeamCenterY(Selectedheader)			//changed, now in regular units?... 
 	
 	NVAR SaTh=root:Packages:Convert2Dto1D:SampleThickness
 	NVAR UseSaTH=root:Packages:Convert2Dto1D:UseSampleThickness
@@ -176,24 +179,25 @@ Function NI1_DNDEmptyCorrection(UselessString)
 			Abort "Problem in NI1_DNDSampleTransmission routine, please contact auhtor of the code"
 		endif
 		variable IToverI0 = NumberByKey("Relative transmission it/i0",curKwList,"=",";")
-			variable ctTime = NumberByKey("Exposure time (s)",curKwList,"=",";")
-		if(numtype(ctTime)!=0)
-			ctTime = NumberByKey("Mean exposure time (s)",curKwList,"=",";")
-		endif
-		variable I0 = NumberByKey("Incident intensity (cps)",curKwList,"=",";")
-		if(numtype(I0)!=0)
-			I0 = NumberByKey("Mean incident intensity (cps)",curKwList,"=",";")
-		endif
-		variable NormI0 = NumberByKey("Original normalization number (cps)",curKwList,"=",";")
-		variable Itransmitted=NumberByKey("Transmitted intensity",curKwList,"=",";")
-		if(numtype(Itransmitted)!=0)
-			Itransmitted = NumberByKey("Mean transmitted intensity (cps)",curKwList,"=",";")
-		endif
+		variable ctTime = NumberByKey("Exposure time (s)",curKwList,"=",";")
+		//if(numtype(ctTime)!=0)
+		//	ctTime = NumberByKey("Mean exposure time (s)",curKwList,"=",";")
+		//endif
+		variable I0 = NumberByKey("Incident detector intensity (pAs)",curKwList,"=",";")
+		//if(numtype(I0)!=0)
+		//	I0 = NumberByKey("Mean incident intensity (cps)",curKwList,"=",";")
+		//endif
+		//variable NormI0 = NumberByKey("Original normalization number (cps)",curKwList,"=",";")
+		variable Itransmitted=NumberByKey("Transmitted detector intensity (pAs)",curKwList,"=",";")
+		//if(numtype(Itransmitted)!=0)
+		//	Itransmitted = NumberByKey("Mean transmitted intensity (cps)",curKwList,"=",";")
+		//endif
 		variable normfct=NumberByKey("Image normalization scale factor (norm/i0)",curKwList,"=",";")
-		if(numtype(normfct)!=0)
-			normfct = NumberByKey("Mean image normalization scale factor sum(norm/i0)/n",curKwList,"=",";")
-		endif
-	
+		//if(numtype(normfct)!=0)
+		//	normfct = NumberByKey("Mean image normalization scale factor sum(norm/i0)/n",curKwList,"=",";")
+		//endif
+		normfct =1
+		
 		 target =(normfct* Itransmitted *cttime)
 	else
 		target=1
@@ -224,12 +228,12 @@ Function NI1_DNDSampleTransmission(FileNameStr)
 	if(numtype(ctTime)!=0)
 		ctTime = NumberByKey("Mean exposure time (s)",curKwList,"=",";")
 	endif
-	variable I0 = NumberByKey("Incident intensity (cps)",curKwList,"=",";")
+	variable I0 = NumberByKey("Incident detector intensity (pAs)",curKwList,"=",";")
 	if(numtype(I0)!=0)
 		I0 = NumberByKey("Mean incident intensity (cps)",curKwList,"=",";")
 	endif
 	variable NormI0 = NumberByKey("Original normalization number (cps)",curKwList,"=",";")
-	variable Itransmitted=NumberByKey("Transmitted intensity",curKwList,"=",";")
+	variable Itransmitted=NumberByKey("Transmitted detector intensity (pAs)",curKwList,"=",";")
 	if(numtype(Itransmitted)!=0)
 		Itransmitted = NumberByKey("Mean transmitted intensity (cps)",curKwList,"=",";")
 	endif
@@ -237,7 +241,9 @@ Function NI1_DNDSampleTransmission(FileNameStr)
 	if(numtype(normfct)!=0)
 		normfct = NumberByKey("Mean image normalization scale factor sum(norm/i0)/n",curKwList,"=",";")
 	endif
-
+	normfct = 1		//What is it now???
+	
+	
 	 target =(normfct* Itransmitted *cttime)
 	
 	//Now if the suer uses empty field, we can be bit smarter...
@@ -305,19 +311,14 @@ Function NI1_DNDSampleCorrFnct(FileNameStr)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDSampleCorrFnct routine, please contact auhtor of the code"
 	endif
-	variable Version=NumberByKey("Version of chewlog used",curKwList,"=",";")
+	//variable Version=NumberByKey("Version of chewlog used",curKwList,"=",";")
 	variable CF
-	if(Version>=1.10)
-		CF= NumberByKey("Calibration factor",curKwList,"=",";")
-	else
-		CF= NumberByKey(" CF ",curKwList,"=",";")
-	endif
-	//9/3/09 changed to add the other parameters here, so transmission is more meaningful, even though it will need to be set to 1 for now...
-
-	variable target = CF* 10		//his calibration assumes thickness in cm. Nika uses mm... 
-
-//print "Sample Corr factor = "+num2str(target)
-	
+	//if(Version>=1.10)
+	CF= NumberByKey("Calibration factor",curKwList,"=",";")
+	//else
+	//	CF= NumberByKey(" CF ",curKwList,"=",";")
+	//endif
+	variable target = CF* 10		//this calibration assumes thickness in cm. Nika uses mm... 
 	return target
 end
 
@@ -336,7 +337,7 @@ Function NI1_DNDSampleThickness(FileNameStr)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDSampleThickness routine, please contact auhtor of the code"
 	endif
-	variable target= NumberByKey(" samp_thick ",curKwList,"=",";") * 10
+	variable target= NumberByKey("Sample thickness (cm)",curKwList,"=",";") * 10
 
 //print "Sample thickness = "+num2str(target)
 
@@ -378,8 +379,8 @@ Function NI1_DNDPixelSize(FileNameStr)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDPixelSize routine, please contact auhtor of the code"
 	endif
-	variable target=NumberByKey("Pixel size (microns)",curKwList,"=",";")
-	return target/1000			//convert to mm as needede by Nika
+	variable target=NumberByKey("X pixel size (mm)",curKwList,"=",";")
+	return target			//convert to mm as needede by Nika
 end
 
 //************************************************************************************************************
@@ -397,7 +398,7 @@ Function NI1_DNDWavelength(FileNameStr)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDWavelength routine, please contact auhtor of the code"
 	endif
-	variable target=NumberByKey("Wavelength (A)",curKwList,"=",";")
+	variable target=NumberByKey("Wavelength (Angstrom)",curKwList,"=",";")
 	return target
 end
 
@@ -498,19 +499,44 @@ end
 //************************************************************************************************************
 
 
-Function/T NI1_FineDNDTifFile(TXTPathName,TXTFileName,HeaderStr)	
+Function/T NI1_FindDNDTifFile(TXTPathName,TXTFileName,HeaderStr)	
 	string TXTPathName,TXTFileName,HeaderStr
 	pathInfo $(TXTPathName)
 	string CurrentPathString=S_path
-	string DNDPath=StringByKey("2D image filename", HeaderStr , "=", ";")
-	string TifFileName=StringFromList(ItemsInList(DNDPath,"/") - 1, DNDPath ,"/")
-	if(stringMatch(StringFromList(0, DNDPath,"/"),"."))
-		CurrentPathString = RemoveListItem(ItemsInList(CurrentPathString,":") - 1, CurrentPathString ,":")
-		DNDPath = removeListItem(0,DNDPath,"/")
+	//print CurrentPathString
+	string ThisFileNameDND = ReplaceString("/",StringByKey("Filename", HeaderStr , "=", ";"),":")
+	//print ThisFileNameDND
+	string DNDPath=ReplaceString("/",StringByKey("Image filename", HeaderStr , "=", ";"),":")
+	//print DNDPath
+	string TifFileName=StringFromList(ItemsInList(DNDPath,":") - 1, DNDPath ,":")
+	//print 	TifFileName
+	//strip the file name from the DND path
+	DNDPath = removeListItem(ItemsInList(DNDPath,":") - 1, DNDPath , ":")
+	//print DNDPath
+	//find "working folder" DND is using
+	string tmpFldrsToRemove = removeListItem( ItemsInList(ThisFileNameDND,":") - 1, ThisFileNameDND , ":")
+	//print tmpFldrsToRemove
+	CurrentPathString = RemoveFromList(tmpFldrsToRemove, CurrentPathString , ":")
+	//print CurrentPathString
+	//this is the working directory of DND system... 
+	string StartOfFilePath=StringFromList(0,DNDPath,":")
+	if(stringMatch(StartOfFilePath,".."))		//we need to go up and remove the .. from name... 
+		DNDPath = removeListItem(0, DNDPath, ":")
+		CurrentPathString = removeListItem(ItemsInList(CurrentPathString,":") - 1, CurrentPathString , ":")
+		//print CurrentPathString	
 	endif
-	DNDPath=RemoveListItem(ItemsInList(DNDPath,"/") - 1, DNDPath ,"/")
-	DNDPath = ReplaceString("/", DNDPath, ":")
+
+		//abort
+		//	if(stringMatch(StringFromList(0, DNDPath,"/"),"."))
+		//		CurrentPathString = RemoveListItem(ItemsInList(CurrentPathString,":") - 1, CurrentPathString ,":")
+		//		DNDPath = removeListItem(0,DNDPath,"/")
+		//	endif
+		//	DNDPath=RemoveListItem(ItemsInList(DNDPath,"/") - 1, DNDPath ,"/")
+		//	DNDPath = ReplaceString("/", DNDPath, ":")
+			//Make the path to tiff files
+	
 	CurrentPathString+=DNDPath
+	//print CurrentPathString	
 	//Found possible path to tif file
 	//remove ending:
 	TifFileName = RemoveListItem(1,TifFileName,".")+"tif"

@@ -1,4 +1,4 @@
-Copyright © 2004 - 2010, Argonne National Laboratory. All rights reserved.
+Copyright ï¿½ 2004 - 2018, Argonne National Laboratory. All rights reserved.
 
 Irena is distributed subject to the following license conditions:
 SOFTWARE LICENSE AGREEMENT

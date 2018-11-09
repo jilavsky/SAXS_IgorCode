@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.49
+#pragma version = 1.50
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.50 fixes case when stale FOlder string was returned when user chanegd too fast from USAXS to QRSS type. Fixed case when R_Int was showing as QRS data. 
 //1.49 fixed IR2P_CheckForRightQRSTripletWvs to work also for QRS names, not only qrs... 
 //1.48 Modifed IR2P_CheckForRightQRSTripletWvs for QRS to use GrepList, seems cleaner and more obviosu. Also, fixes worng includions of DSM waves in QRS. 
 //1.47 speed up popup string generation by at least 50%, increased the time for use of cached values to 10 seconds. 
@@ -806,6 +807,10 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 	NVAR UseUserDefinedData=$(CntrlLocation+":UseUserDefinedData")
 	NVAR UseModelData=$(CntrlLocation+":UseModelData")
 
+	NVAR/Z SetTimeOfQFoldersStr = $(CntrlLocation+":SetTimeOfQFoldersStr")
+	NVAR/Z SetTimeOfIndraFoldersStr = $(CntrlLocation+":SetTimeOfIndraFoldersStr")
+	NVAR/Z SetTimeOfResultsFoldersStr = $(CntrlLocation+":SetTimeOfResultsFoldersStr")
+
 	Execute ("SetVariable WaveMatchStr disable=0, win="+TopPanel)
 	Execute ("SetVariable FolderMatchStr disable=0, win="+TopPanel)
 
@@ -816,6 +821,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 			UseResults=0
 			UseUserDefinedData=0
 			UseModelData=0
+			SetTimeOfIndraFoldersStr = 0
 			ControlRequireErrorWvs = ReplaceStringByKey(TopPanel, ControlRequireErrorWvs, "1"  , ":"  , ";")		//Indra 2 data do require errors, let user change that later, if needed.
 			Execute ("SetVariable WaveMatchStr disable=1, win="+TopPanel)
 		endif
@@ -827,6 +833,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 			UseResults=0
 			UseUserDefinedData=0
 			UseModelData=0
+			SetTimeOfQFoldersStr = 0
 			ControlRequireErrorWvs = ReplaceStringByKey(TopPanel, ControlRequireErrorWvs, "0"  , ":"  , ";")		//no require errors, let user change that later, if needed.
 		endif
 	endif
@@ -837,6 +844,7 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 			UseQRSData=0
 			UseUserDefinedData=0
 			UseModelData=0
+			SetTimeOfResultsFoldersStr = 0
 			ControlRequireErrorWvs = ReplaceStringByKey(TopPanel, ControlRequireErrorWvs, "0"  , ":"  , ";")		//no require errors, let user change that later, if needed.
 			Execute ("SetVariable WaveMatchStr disable=1, win="+TopPanel)
 		endif
@@ -2387,14 +2395,17 @@ Function IR2P_FindFolderWithWaveTypesWV(startDF, levels, WaveTypes, LongShortTyp
      	 	setDataFolder startDF
      		//templist = IN2G_ConvertDataDirToList(DataFolderDir(2,startDFRef))
      		templist = IN2G_ConvertDataDirToList(DataFolderDir(2))
-	 		if (strlen(GrepList(templist,WaveTypes))>0)
-				if (LongShortType)
-		      		Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
-		      		ResultingWave[numpnts(ResultingWave)-1]=startDF
-		     	else
-		      		Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
-		      		ResultingWave[numpnts(ResultingWave)-1]=GetDataFolder(0)
-	     		endif
+     		string ListOfRWaves=GrepList(templist,WaveTypes)
+	 		if (strlen(ListOfRWaves)>0)
+	 			if(!stringMatch(ListOfRWaves,"*R_Int;*"))
+					if (LongShortType)
+			      		Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
+			      		ResultingWave[numpnts(ResultingWave)-1]=startDF
+			     	else
+			      		Redimension /N=(numpnts(ResultingWave)+1) ResultingWave
+			      		ResultingWave[numpnts(ResultingWave)-1]=GetDataFolder(0)
+		     		endif
+		     	endif
       	endif
         levels -= 1
         if (levels <= 0)

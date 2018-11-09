@@ -242,10 +242,12 @@ Function IN3_CalculateCalibration()
 	NVAR SampleWeightInBeam 	=	root:Packages:Indra3:SampleWeightInBeam
 	NVAR SampleDensity 		=	root:Packages:Indra3:SampleDensity
 	NVAR SampleWeightInBeam 	=	root:Packages:Indra3:SampleWeightInBeam
-	NVAR BeamExposureArea	=	root:Packages:Indra3:BeamExposureArea
+	NVAR BeamExposureArea		=	root:Packages:Indra3:BeamExposureArea
+	NVAR SamplePeakWidth 		=	root:Packages:Indra3:PeakWidth
 	NVAR BLPeakWidth			=	root:Packages:Indra3:BlankFWHM
-	NVAR BLPeakMax			=	root:Packages:Indra3:BlankMaximum
+	NVAR BLPeakMax				=	root:Packages:Indra3:BlankMaximum
 	NVAR SampleThickness		=	root:Packages:Indra3:SampleThickness
+	NVAR CalibrateUseSampleFWHM = root:Packages:Indra3:CalibrateUseSampleFWHM
 	string Calibrated			=	StringByKey("Calibrate", ASBParameters,"=",";")
 	NVAR PhotoDiodeSize		=	root:Packages:Indra3:PhotoDiodeSize															//Default PD size to 5.5mm at this time....
 	SVAR/Z MeasurementParameters
@@ -256,6 +258,20 @@ Function IN3_CalculateCalibration()
 	Variable OmegaFactor,ASStageWidthAtHalfMax
 	NVAR Kfactor
 	variable BLPeakWidthL
+	//Decide if to use sample peak witdth or Blank peak width - added JIL 2018-11-08 to fix variability of the Blank FWHM... 
+	//this is NOT fix, its workaround... 
+	if(CalibrateUseSampleFWHM) 			//user wants to use that... 
+		if(SamplePeakWidth/BLPeakWidth < CalMaxRatioUseSamFWHM)			//assume CalMaxRatioUseSamFWHM describes when MSAXS needs to be accounted for...
+			print "Using Sample FWHM for absolute instensity calibration. Can be changed in \"Calibration\" tab"
+			BLPeakWidthL = SamplePeakWidth
+		else
+			BLPeakWidthL = BLPeakWidth
+			print "Using Blank FWHM for absolute instensity calibration; WHile SampleFWHM was requested in \"Calibration\" tab, the width of sample is too high, suggesting MSAXS."
+		endif
+	else
+		BLPeakWidthL = BLPeakWidth
+	endif
+	BLPeakWidthL=BLPeakWidthL*3600													//W_coef[3]*3600*2
 	
 	PhotoDiodeSize=NumberByKey("UPDsize", UPDParameters,"=")																//Default PD size to 5.5mm at this time....
 	if(numtype(PhotoDiodeSize)!=0|| PhotoDiodeSize<=1)
@@ -263,13 +279,11 @@ Function IN3_CalculateCalibration()
 	endif
 
 	if (cmpstr(StringByKey("Calibrate", ASBParameters,"=",";"),"USAXS")==0)		//USAXS callibration, width given by SDD and PD size
-		BLPeakWidthL=BLPeakWidth*3600													//W_coef[3]*3600*2
 		OmegaFactor= (PhotoDiodeSize/SampleToDetectorDistance)*(BLPeakWidthL/3600)*(pi/180)
 		Kfactor=BLPeakMax*OmegaFactor 				// *SampleThickness*0.1  ; 0.1 converts the thickness of sample from mm to cm
 	endif
 
 	if (cmpstr(StringByKey("Calibrate", ASBParameters,"=",";"),"SBUSAXS")==0)	//SBUSAXS callibration, width given by rocking curve width
-		BLPeakWidthL=BLPeakWidth*3600												//W_coef[3]*3600*2
 		ASStageWidthAtHalfMax=BLPeakWidthL
 		OmegaFactor=(ASStageWidthAtHalfMax/3600)*(pi/180)*(BLPeakWidthL/3600)*(pi/180)	//Is this correct callibration for SBUSAXS?????
 		Kfactor=BLPeakMax*OmegaFactor				//*SampleThickness*0.1   ; 0.1 converts the thickness of sample from mm to cm

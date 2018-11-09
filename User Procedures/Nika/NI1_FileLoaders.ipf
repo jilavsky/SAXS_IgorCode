@@ -1051,7 +1051,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		HeaderStr=NI1_ReadDNDHeader(RefNum)		//read the header from the text file
 		close RefNum
 		//header string contains now all information from the text file... Now need to open the tiff file
-		string tiffFilename=NI1_FineDNDTifFile(PathName,FileName,HeaderStr)
+		string tiffFilename=NI1_FindDNDTifFile(PathName,FileName,HeaderStr)
 		//and also established data path "DNDDataPath" where teh data are
 		LoadedOK=NI1A_UniversalLoader("DNDDataPath",tiffFilename,".tif",NewWaveName)
 			if(!LoadedOK)		//check if we loaded at least some data...

@@ -7,7 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.37 fix bug when debugger when no data and Desmearing waqs checked. 
+//1.37 fix bug when debugger when no data and Desmearing was checked. 
 //1.36 fix manual page called by help button
 //1.35 modify the sleep between multiple USAXS data reductions in IN3_InputPanelButtonProc to be more user friendly
 //1.34 fixed which resulting waves are plotted to include M_DSM, DSM, M_SMR, and SMR waves in this order. 
@@ -1811,6 +1811,7 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable BlankWidth,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	SetVariable BlankWidthArcSec,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	SetVariable SubtractFlatBackground,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
+	CheckBox CalibrateUseSampleFWHM,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	Button RecoverDefaultBlnkVals,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 
 	CheckBox DesmearData, win=USAXSDataReduction, disable=(tab!=5)
@@ -2315,8 +2316,8 @@ Function IN3_OneDesmearIteration(DesmearIntWave,DesmearQWave,DesmearEWave, origS
 	NVAR numOfPoints               = root:Packages:Indra3:DesmearNumPoints
 	NVAR BckgStartQ                 = root:Packages:Indra3:DesmearBckgStart
 	numOfPoints = numpnts(DesmearIntWave)
-	if(BckgStartQ>DesmearQWave[numOfPoints-1]/2)
-		BckgStartQ = DesmearQWave[numOfPoints-1]/2
+	if(BckgStartQ>DesmearQWave[numOfPoints-1]/1.5)
+		BckgStartQ = DesmearQWave[numOfPoints-1]/1.5
 	endif
 	Duplicate/Free DesmearIntWave, SmFitIntensity
 	Duplicate/Free origSmearedInt, OrigIntToSmear

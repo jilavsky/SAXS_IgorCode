@@ -19,6 +19,8 @@ Unified fit - add left axis units which match units inside the Intensity wave no
 Size distribution, Guinier-Porod, Analytical models, SASDiffraction - add left axis units which match units inside the Intensity wave note. 
 Plotting - remove CanSAS data type. Not used... 
 Modified "Configure GUI..." menu name and added warning on name shortening. Should generate dialog when names are too long and users are not using Igor 8 with long names enabled. Only once per Igor experiment.  
+Evaluate Size distributions - fixed failure with data from Modeling (II) when user used Pop1 as non-size distribution and used Size distribution in higher Pops. GUI and parameter readout failed at that situation. 
+Nexus export - fixed Nexus export to output files compatible with SasView (beta version for now). Should work with both desmeared and slit smeared data now. 
 
 
 

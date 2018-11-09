@@ -1,9 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version 1.14
 
-constant SmoothBlankForUSAXS = 1
-Constant Indra_PDIntBackFixScaleVmin=1.1
-Constant Indra_PDIntBackFixScaleVmax=0.2e-10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -25,12 +22,6 @@ Constant Indra_PDIntBackFixScaleVmax=0.2e-10
 //1.03 added pinDiode tranmission
 //1.02 updated to use 	I0AmpGain			
 //1.01 updated IN3_calculateRwaveQvec to enable analysis of scans down (as usually) or up (as needed for GIUSAXS)
-constant	RwaveSmooth1time = 0.01
-constant	RwaveSmooth2time = 0.01
-constant	RwaveSmooth3time = 0.03
-constant	RwaveSmooth4time = 0.3
-constant	RwaveSmooth5time = 0.6
-
 
 Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specified point
 	variable StepFrom
@@ -383,12 +374,7 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 
 	//fix oversubtraction of PD_Intensity here?
 	IN3_FixNegativeIntensities(PD_Intensity)
-//	wavestats/Q/R=[numpnts(PD_Intensity)/2,numpnts(PD_Intensity)-1 ] PD_Intensity
-//	if(V_min<0)
-//		PD_Intensity+=Indra_PDIntBackFixScaleVmin*abs(V_min)+V_max*Indra_PDIntBackFixScaleVmax
-//		//print "Fixed USAXS Range 5 background subtraction by Intensity = Intensity + "+num2str(1.05*abs(V_min)+V_max*1e-10)
-//	endif
-
+	IN3_FixZeroUncertainties(PD_error)
 
 	Duplicate/O PD_error, R_error
 	Duplicate/O PD_Intensity, R_Int
@@ -409,13 +395,29 @@ end
 Function IN3_FixNegativeIntensities(waveIn)
 	wave WaveIn
 	//fix oversubtraction of WaveIn here?
+	wavestats/Q WaveIn
+	variable MaxValue = V_max
 	wavestats/Q/R=[numpnts(WaveIn)/2,numpnts(WaveIn)-1 ] WaveIn
 	if(V_min<0)
-		WaveIn+=Indra_PDIntBackFixScaleVmin*abs(V_min)+V_max*Indra_PDIntBackFixScaleVmax
+		WaveIn+=Indra_PDIntBackFixScaleVmin*abs(V_min)+MaxValue*Indra_PDIntBackFixScaleVmax
 		//print "Fixed USAXS Range 5 background subtraction by Intensity = Intensity + "+num2str(1.05*abs(V_min)+V_max*1e-10)
 	endif
 end
-	///*********************************************************************************
+//*********************************************************************************
+///*********************************************************************************
+
+Function IN3_FixZeroUncertainties(PD_error)
+	wave PD_error
+	//fix zero values of uncertaitnies here... 
+	Duplicate/Free PD_error, tempWv
+	tempWv = (tempWv>0) ? tempWv : nan
+	wavestats/Q tempWv
+	variable minErr=V_min
+	PD_error = (PD_error>0) ? PD_error : minErr
+
+end
+
+//*********************************************************************************
 ///*********************************************************************************
 Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int,R_error)
 	WAVE Ar_encoder,MeasTime,Monitor,PD_range, USAXS_PD, R_Int,R_error

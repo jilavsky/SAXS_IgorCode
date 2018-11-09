@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.09
+#pragma version=2.10
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.10 fixed operations for case when user uses Modeling II (now MOdeling) cdata and used not first, but later pop for Size distribution. Needed to build in skipping of non-size distribution cases...
 //2.09  removed unused functions
 //2.08 added getHelp button calling to www manual
 //2.07 minor fix for parameter6 of form factor parameter. 
@@ -82,12 +83,14 @@ Function IRG1_MainHookFunction(H_Struct)
 				WvNote=note(CsrWaveRef(A))
 				For(i=1;i<=NumOfPops;i+=1)
 					if(NumberByKey("UseThePop_pop"+num2str(i), WvNote , "=" , ";"))
-						Values+=num2str(i)+": "+StringByKey("FormFactor_pop"+num2str(i), WvNote, "=" , ";" ) +";"
+						if(strlen(StringByKey("FormFactor_pop"+num2str(i), WvNote, "=" , ";" ))>2)		//this removes non-size distribution cases, like Unified fit etc. 
+							Values+=num2str(i)+": "+StringByKey("FormFactor_pop"+num2str(i), WvNote, "=" , ";" ) +";"
+						endif
 					else
 						//Values+=num2str(i)+": "+"The population not used +";"
 					endif
 				endfor
-				Values+="\""+Values+"\""
+				Values ="\""+Values+"\""
 				PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=#Values, disable=0
 		else
 				PopupMenu EvaluatePopulationNumber win=IR1G_OneSampleEvaluationGraph, value=#("\""+num2str(abs(NumOfPops))+"\""), disable=2
@@ -1493,7 +1496,7 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 	string UserVolFunct="", ShapeType=""
 	
 	
-	if(stringmatch(NoteStr,"*SizesDataFrom*"))		//date from Size dsistributioon package
+	if(stringmatch(NoteStr,"*SizesDataFrom*"))		//data from Size dsistributioon package
 		//ListOfFormFactorsSD="Spheroid;Cylinder;CylinderAR;Unified_Sphere;Unified_Rod;Unified_RodAR;Unified_Disk;Unified_Tube;"
 		shapeType= StringByKey("ShapeType", NoteStr , "=" ,";")
 		if(strlen(ShapeType)<3)
@@ -1529,7 +1532,7 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 			Par3 = numberByKey("DistScatShapeParam3", NoteStr , ":" ,";")
 			Par4 = 0
 			Par5 = 0
-	elseif(stringmatch(NoteStr,"*FormFactor_pop1*"))		//date from Modeling II package, total of size distribution..
+	elseif(stringmatch(NoteStr,"*FormFactor_pop*"))		//date from Modeling II package, total of size distribution..
 		print "These data may contain mixture of shapes for different populations. Please select the right population number to evaluate"
 		NVAR EvaluatePopulationNumber=root:Packages:SASDataEvaluation:EvaluatePopulationNumber
 		shapeType= StringByKey("FormFactor_pop"+num2str(EvaluatePopulationNumber), NoteStr , "=" ,";")

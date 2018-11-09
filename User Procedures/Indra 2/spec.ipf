@@ -1,12 +1,13 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion = 4.0
-#pragma version = 2.2
-#pragma ModuleName=specProc
+#pragma version = 2.21
+//#pragma ModuleName=specProc
 //#include "Utility_JZT"
 
 Constant Epoch_spec_Igor = 2082844800			// add this number of spec EPOCH to get Igor EPOCH, i.e. print Secs2Date(EPOCH+Epoch_spec_Igor,1)
                                                                              //Secs2time(EPOCH+Epoch_spec_Igor-3600*5,1)  Will give time using Central US Time
+//2.12 JIL - modified to fix minor problem with AnisoFLyScan
 
 // written by Jon Tischler.
 // last modified October 16, 2003
@@ -957,6 +958,9 @@ Function specReadFromSline(fileVar,FilePosScan)
 
 	line = ReduceSpaceRunsInString(line,2)
 	line = ChangePartsOfString(line,"  ",";")
+	if(stringmatch(line[0],";"))			//fix 2018-11-03 for cases when we end up having space at the beggining of the line here. 
+		line =  line[1,inf]
+	endif
 	line = ChangePartsOfString(line," ","_")// change remaining spaces to "_"
 
 	line += ";"

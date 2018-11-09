@@ -1,12 +1,15 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.09
+#pragma version = 1.12
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//fix typo in Nexus attribute name dQI - capital i, instead of correct dQl - lower case l as slit length
+//1.11 add support for calibration facor, pet Pete's suggestion called I_scaling. Stupid name, but suggested based on other NXcansas standard, even though this is NXsas. 
+//1.10 fix debugger when no file is loaded and lookup does not exist. 
 //1.09 fixes and modifications for DAWN creative data layouts. It now handles all canSAS examples, DAWN, sasView (Mantid) and hopefully others. 
 //1.08 fixes for sasView and other (old) Nexus file types. This is a mess... Stupid mess... 
 //1.07 Fixed export to use 1/Angstrom for Qs and change units=1/A to units=1/angstrom per units definition in NXcanSAS Nexus definition 
@@ -472,7 +475,10 @@ static Function/T NEXUS_NXParamSelection(row)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR DataFolderName = root:Packages:Irena_Nexus:DataFolderName
 	SVAR GrepStringMask = root:Packages:Irena_Nexus:GrepStringMask
-	Wave HDF5___xref = $(DataFolderName+"HDF5___xref")					//list of parameters in the Nexus file
+	Wave/Z HDF5___xref = $(DataFolderName+"HDF5___xref")					//list of parameters in the Nexus file
+	if(!WaveExists(HDF5___xref))
+		abort
+	endif
 	Wave ListOfParamsAndPaths = root:Packages:Irena_Nexus:ListOfParamsAndPaths	//list of parameters in Nika
 	
 	string result, SearchTerm
@@ -1341,7 +1347,8 @@ Function NEXUS_GuessParamXRef()
 	LookUpList+="PixelSizeY=:entry:instrument:detector:y_pixel_size;"
 	LookUpList+="HorizontalTilt=:pin_ccd_tilt_x;"
 	LookUpList+="VerticalTilt=:pin_ccd_tilt_y;"
-//	CorrectionFactor
+	LookUpList+="CorrectionFactor=:I_scaling;"
+//	
 	make/Free/T/N=1 ResultsWv
 	make/Free/T/N=(dimsize(HDF5___xref,0)) ListOfFOundPaths
 	ListOfFOundPaths = HDF5___xref[p][1]
@@ -1729,13 +1736,13 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/I", fileID)
 	//convert to 1/nm and use that, Nexus preferred units
 	//DO NOT change to 1/nm (6/2018) sasView cannot use it for now. 		1/angstrom
-	Duplicate/Free Qwv, Qwvnm
+	//Duplicate/Free Qwv, Qwvnm
 	//Qwvnm = Qwvnm*10
-	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwvnm , fileID, NewGroupName+"/Q"
+	HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   Qwv , fileID, NewGroupName+"/Q"
 	NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Q", fileID)
 	if(Slit_Length>0)		//slit smeared data, change 6/2018
 		make/Free/T/N=2 tempAtribTextVals
-		tempAtribTextVals = {"dQw","dQI"}
+		tempAtribTextVals = {"dQw","dQl"}
 		NEXUS_HdfSaveArrayAttrib("resolutions",tempAtribTextVals,NewGroupName+"/Q", fileID)
 	else
 		NEXUS_HdfSaveAttrib("resolutions","Qdev",NewGroupName+"/Q", fileID)
@@ -1746,17 +1753,16 @@ Function NEXUS_WriteNx1DCanSASdata(SampleName, Hdf5FileName, Iwv, dIwv, Qwv, dQw
 	//NEXUS_HdfSaveAttrib("axes","Q",NewGroupName+"/sasdata01/Idev", fileID)
 	NEXUS_HdfSaveAttrib("units","1/cm",NewGroupName+"/Idev", fileID)
 	//Now Qres.   dQwv
-	Duplicate/Free dQwv, dQwvnm, dQl
+	Duplicate/Free dQwv, dQl
 	//DO NOT change to 1/nm (6/2018) sasView cannot use it for now. 1/angstrom
-	//dQl = Slit_Length*10
-	//dQwvnm = dQwvnm*10
+	dQl = Slit_Length
 	if(Slit_Length>0)		//slit smeared data, change 6/2018
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/dQw"
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwv, fileID, NewGroupName+"/dQw"
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/dQw", fileID)
 		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQl, fileID, NewGroupName+"/dQl"
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/dQl", fileID)
 	else
-		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwvnm, fileID, NewGroupName+"/Qdev"
+		HDF5SaveData /O /Z/GZIP={2 , 1}  /LAYO={2,32,32}/IGOR=0 /MAXD={-1,-1}   dQwv, fileID, NewGroupName+"/Qdev"
 		NEXUS_HdfSaveAttrib("units","1/angstrom",NewGroupName+"/Qdev", fileID)
 	endif
 	//add instrument data...
@@ -2600,7 +2606,7 @@ static Function NEXUS_HdfSaveArrayAttrib(AttribName,AttribValue,AttribLoc, fileI
 	Wave/T AttribValue
 	Variable fileID,DoNotOverwrite
 	variable DoNotOverwriteL= !ParamIsDefault(DoNotOverwrite)
-	//		NEXUS_HdfSaveAttrib("resolutions","dQw,dQI",NewGroupName+"/Q", fileID)
+	//		NEXUS_HdfSaveAttrib("resolutions","dQw,dQl",NewGroupName+"/Q", fileID)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//make/T/Free/N=(numpnts(AttribValue)) groupAttribute
 	//groupAttribute = AttribValue[p]	

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.64
+#pragma version=2.65
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.65 fixerd solid angle correction. It was doing the wrong thing. 
 //2.64 added new tab with Save data opions, seems better. Removed range selections. Added controls for delay between images and display ImageStatistics. 
 //2.63 fix bug when user did stuff our of order. 
 //2.62 fixed single precision rounding error (ki and kout were single precision) which caused under some cconditions problems with data at low-q bining. 
@@ -438,8 +439,10 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		endif
 		if(UseSolidAngle)
 			variable solidAngle =PixelSizeX/SampleToCCDDistance * PixelSizeY/SampleToCCDDistance
+			//print solidANgle
+			//fixed bug 10-13-2018, was multiplying by solid angle. not dividing.But we need to divide by solid angle - if the detector is further, we see less of area, 
 			//well, this is approximate, but should be just fine... my testing shows, that for 30mm far pixel with 0.3mm size the difference is less than 4e-4... Who cares?
-			CalibrationPrefactor*=solidAngle
+			CalibrationPrefactor/=solidAngle
 		endif
 		if(UseI0ToCalibrate)
 			CalibrationPrefactor/=SampleI0
