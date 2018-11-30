@@ -102,7 +102,7 @@ Function IR1I_MainCheckVersion()
 	DoWindow IR1I_ImportData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportData", IR1IversionNumber))
-			DoAlert /T="The ASCII Import panel was created by old version of Irena " 1, "Import ASCII may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The ASCII Import panel was created by incorrect version of Irena " 1, "Import ASCII may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR1I_ImportSASASCIIDataMain()
 			else		//at least reinitialize the variables so we avoid major crashes...
@@ -119,7 +119,7 @@ Function IR1I_MainCheckVersion2()
 	DoWindow IR1I_ImportOtherASCIIData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportOtherASCIIData", IR1IversionNumber2))
-			DoAlert /T="The non-SAS Import panel was created by old version of Irena " 1, "Import non-SAS may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The non-SAS Import panel was created by incorrect version of Irena " 1, "Import non-SAS may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR1I_ImportOtherASCIIMain()
 			else		//at least reinitialize the variables so we avoid major crashes...
@@ -136,7 +136,7 @@ Function IR1I_MainCheckVersionNexus()
 	DoWindow IR1I_ImportNexusCanSASData
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1I_ImportNexusCanSASData", IR1IversionNumberNexus))
-			DoAlert /T="The Nexus Import panel was created by old version of Irena " 1, "Import Nexus canSAS may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Nexus Import panel was created by incorrect version of Irena " 1, "Import Nexus canSAS may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				Execute/P("IR1I_ImportNexusCanSASMain()")
 			else		//at least reinitialize the variables so we avoid major crashes...

@@ -93,7 +93,7 @@ Function IN3_FlyScanMain()
  	IN3_FlyScanInitializeImport()
 	IN3_FlyScanImportPanelFnct()
 	ING2_AddScrollControl()
-	IN3_UpdatePanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber)
+	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_FlyImportVersionNumber)
 	IN3_FSUpdateListOfFilesInWvs()
 end
 //************************************************************************************************************
@@ -102,12 +102,13 @@ end
 //************************************************************************************************************
 
 Function IN3_FlyScanCheckVersion()	
-	DoWindow IN3_FlyScanImportPanel
+	DoWindow USAXSDataReduction
 	if(V_Flag)
-		if(!IN3_CheckPanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber))
-			DoAlert /T="The Fly Scan Import panel was created by old version of Indra " 1, "FlyScan Import needs to be restarted to work properly. Restart now?"
+		if(!IN3_CheckPanelVersionNumber("USAXSDataReduction", IN3_FlyImportVersionNumber))
+			DoAlert /T="The Fly Scan Import panel was created by incorrect version of Indra " 1, "FlyScan Import needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				IN3_FlyScanMain()
+ 				KillWIndow/Z USAXSDataReduction
+				//IN3_NewMain()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IN3_FlyScanInitializeImport()
 			endif
@@ -587,6 +588,31 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		Wave changes_AR_PSOpulse = :entry:flyScan:changes_AR_PSOpulse
 		Wave changes_AR_angle = :entry:flyScan:changes_AR_angle
 	endif
+	//handle here the Masking times... 
+//	ListOfVariables+="FSOverWriteRage1DeadTime;FSOverWriteRage2DeadTime;FSOverWriteRage3DeadTime;FSOverWriteRage4DeadTime;FSOverWriteRage5DeadTime;"
+//	ListOfVariables+="FSRage1DeadTime;FSRage2DeadTime;FSRage3DeadTime;FSRage4DeadTime;FSRage5DeadTime;"
+	NVAR	FSRage1DeadTime = root:Packages:Indra3:FSRage1DeadTime
+	NVAR	FSRage2DeadTime = root:Packages:Indra3:FSRage2DeadTime
+	NVAR	FSRage3DeadTime = root:Packages:Indra3:FSRage3DeadTime
+	NVAR	FSRage4DeadTime = root:Packages:Indra3:FSRage4DeadTime
+	NVAR	FSRage5DeadTime = root:Packages:Indra3:FSRage5DeadTime
+	NVAR	FSOverWriteRage1DeadTime = root:Packages:Indra3:FSOverWriteRage1DeadTime
+	NVAR	FSOverWriteRage2DeadTime = root:Packages:Indra3:FSOverWriteRage2DeadTime
+	NVAR	FSOverWriteRage3DeadTime = root:Packages:Indra3:FSOverWriteRage3DeadTime
+	NVAR	FSOverWriteRage4DeadTime = root:Packages:Indra3:FSOverWriteRage4DeadTime
+	NVAR	FSOverWriteRage5DeadTime = root:Packages:Indra3:FSOverWriteRage5DeadTime
+	//store the old ones...
+	FSRage1DeadTime = TimeRangeAfterUPD[0]
+	FSRage2DeadTime = TimeRangeAfterUPD[1]
+	FSRage3DeadTime = TimeRangeAfterUPD[2]
+	FSRage4DeadTime = TimeRangeAfterUPD[3]
+	FSRage5DeadTime = TimeRangeAfterUPD[4]
+	//overwrite with new ones if not 0
+	TimeRangeAfterUPD[0] = FSOverWriteRage1DeadTime>0 ? FSOverWriteRage1DeadTime : TimeRangeAfterUPD[0]
+	TimeRangeAfterUPD[1] = FSOverWriteRage2DeadTime>0 ? FSOverWriteRage2DeadTime : TimeRangeAfterUPD[1]
+	TimeRangeAfterUPD[2] = FSOverWriteRage3DeadTime>0 ? FSOverWriteRage3DeadTime : TimeRangeAfterUPD[2]
+	TimeRangeAfterUPD[3] = FSOverWriteRage4DeadTime>0 ? FSOverWriteRage4DeadTime : TimeRangeAfterUPD[3]
+	TimeRangeAfterUPD[4] = FSOverWriteRage5DeadTime>0 ? FSOverWriteRage5DeadTime : TimeRangeAfterUPD[4]
 	//here we copy data to new place
 	newDataFolder/O/S root:USAXS
 	string FileName, ListOfExistingFolders
@@ -687,12 +713,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		NVAR NumberOfTempPoints = root:Packages:USAXS_FlyScanImport:NumberOfTempPoints
 		IN2G_RebinLogData(Ar_encoder,MeasTime,NumberOfTempPoints,Ar_increment[0],W1=USAXS_PD, W2=Monitor, W3=PD_range, W4=I0gain)
 	endif
-	//temp overwrite:
-	//I0gain = 1e7
-	//Duplicate/O Monitor, root:Packages:Backup:Monitor
-	//Wave OldMon=root:Packages:Backup:Monitor
-	//Monitor =OldMon
-	//end of temp fixes... 
+	//something is failing here... 
 	IN2G_RemoveNaNsFrom6Waves(Ar_encoder, MeasTime, Monitor, USAXS_PD, PD_range, I0gain)
 	//let's make some standard strings we need.
 	string/g PathToRawData
@@ -1103,7 +1124,7 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 						endif
 						GainWv[EndRc+1,] = ampGain[iii]+1		//set rest of the measured points to the gain we set
 						if(IN3_RemoveRangeChangeEffects)		//remove transitional effects
-							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed. 
+							IN3_MaskPointsForGivenTime(GainWv,MeasTime,EndRc+1, TimeRangeAfter[ampGain[iii]])		//mask for time, if needed.
 						endif
 					endif			
 			endif

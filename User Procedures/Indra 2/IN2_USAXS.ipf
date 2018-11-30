@@ -172,14 +172,7 @@ End
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
-	//these are tools which have been upgraded to this functionality
-	//Modeling II = LSQF2_MainPanel
-	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
-//	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
-//	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
-//	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
-//	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
-	
+	string WindowProcNames="USAXSDataReduction=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_ResetSizesForALlPanels(WindowProcNames)
@@ -1061,32 +1054,6 @@ Function IN2A_PlotToGetBeamCenter()		//here we get the plot to get beam center
 //	IN2A_AutoFitGaussTop("")		//this does not work, unluckily.... 
 	IN2A_FitGaussTop("")
 End
-
-Function IN2A_MakeMyColors(PDrange,NewColors)		//makes color wave for 
- 	Wave PDrange, NewColors
- 	
- 	variable i=0
- 	
- 	Do
- 		if (PDrange[i]==1)		//range 1 color
- 			NewColors[i]=0
-		endif 	
- 		if (PDrange[i]==2)		//range 2 color
- 			NewColors[i]=4.5
-		endif 	
- 		if (PDrange[i]==3)		//range 3 color
- 			NewColors[i]=7.7
-		endif 	
- 		if (PDrange[i]==4)		//range 4 color
- 			NewColors[i]=1.3
-		endif 	
- 		if (PDrange[i]==5)		//range 5 color
- 			NewColors[i]=10
-		endif 	
- 	
- 	i+=1
- 	while(i<numpnts(PDrange)) 	
- end
 
 //******************** FitLorenzianOnTopMacro **************************************
 Function IN2A_FitLorenzianTop(ctrlname) : Buttoncontrol			// calls the Lorenzian fit

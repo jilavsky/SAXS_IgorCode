@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.95
+#pragma version = 1.97
 #pragma IgorVersion=7.00
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.97 switched off RemoveDropouts by default. Added ability to overwrite Flyscan amplifier dead times. 
 //1.96 added use of FWHM from sample to GUI. 
 //1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 
@@ -35,7 +36,7 @@
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 Constant IN3_ReduceDataMainVersionNumber=1.95
-Constant IN3_NewReduceDataMainVersionNum=1.96
+Constant IN3_NewReduceDataMainVersionNum=1.97
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.3e-10
@@ -44,7 +45,7 @@ constant	RwaveSmooth2time = 0.01
 constant	RwaveSmooth3time = 0.03
 constant	RwaveSmooth4time = 0.3
 constant	RwaveSmooth5time = 0.6
-constant CalMaxRatioUseSamFWHM = 1.2
+constant CalMaxRatioUseSamFWHM = 1.12
 
 //************************************************************************************************************
 //************************************************************************************************************
@@ -276,22 +277,22 @@ Function IN3_MainPanelNew()
 
 
 	//tab 1 Diode controls
-	SetVariable VtoF,pos={20,370},size={200,22},proc=IN3_UPDParametersChanged,title="UPD V to f factor :"
+	SetVariable VtoF,pos={20,370},size={180,22},proc=IN3_UPDParametersChanged,title="UPD V to f factor :"
 	SetVariable VtoF ,format="%3.1e"
 	SetVariable VtoF,limits={0,Inf,0},value= root:Packages:Indra3:UPD_Vfc
-	SetVariable Gain1,pos={20,395},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 1 :"
+	SetVariable Gain1,pos={20,395},size={150,22},proc=IN3_UPDParametersChanged,title="Gain 1 :"
 	SetVariable Gain1 ,format="%3.1e",labelBack=(65280,0,0) 
 	SetVariable Gain1,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G1
-	SetVariable Gain2,pos={20,420},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
+	SetVariable Gain2,pos={20,420},size={150,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
 	SetVariable Gain2 ,format="%3.1e",labelBack=(0,52224,0)
 	SetVariable Gain2,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G2
-	SetVariable Gain3,pos={20,445},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
+	SetVariable Gain3,pos={20,445},size={150,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
 	SetVariable Gain3 ,format="%3.1e",labelBack=(0,0,65280)
 	SetVariable Gain3,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G3
-	SetVariable Gain4,pos={20,470},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
+	SetVariable Gain4,pos={20,470},size={150,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
 	SetVariable Gain4 ,format="%3.1e",labelBack=(65280,35512,15384)
 	SetVariable Gain4,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G4
-	SetVariable Gain5,pos={20,495},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
+	SetVariable Gain5,pos={20,495},size={150,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
 	SetVariable Gain5 ,format="%3.1e",labelBack=(29696,4096,44800)
 	SetVariable Gain5,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G5
 	NVAR UPD_DK1Err=root:packages:Indra3:UPD_DK1Err
@@ -299,39 +300,81 @@ Function IN3_MainPanelNew()
 	NVAR UPD_DK3Err=root:packages:Indra3:UPD_DK3Err
 	NVAR UPD_DK4Err=root:packages:Indra3:UPD_DK4Err
 	NVAR UPD_DK5Err=root:packages:Indra3:UPD_DK5Err
-	SetVariable Bkg1,pos={20,520},size={200,18},proc=IN3_UPDParametersChanged,title="Background 1"
+	SetVariable Bkg1,pos={20,520},size={150,18},proc=IN3_UPDParametersChanged,title="Background 1"
 	SetVariable Bkg1 ,format="%g", labelBack=(65280,0,0)
 	SetVariable Bkg1,limits={-inf,Inf,UPD_DK1Err},value= root:Packages:Indra3:UPD_DK1
-	SetVariable Bkg2,pos={20,545},size={200,18},proc=IN3_UPDParametersChanged,title="Background 2"
+	SetVariable Bkg2,pos={20,545},size={150,18},proc=IN3_UPDParametersChanged,title="Background 2"
 	SetVariable Bkg2 ,format="%g",labelBack=(0,52224,0)
 	SetVariable Bkg2,limits={-inf,Inf,UPD_DK2Err},value= root:Packages:Indra3:UPD_DK2
-	SetVariable Bkg3,pos={20,570},size={200,18},proc=IN3_UPDParametersChanged,title="Background 3"
+	SetVariable Bkg3,pos={20,570},size={150,18},proc=IN3_UPDParametersChanged,title="Background 3"
 	SetVariable Bkg3 ,format="%g",labelBack=(0,0,65280)
 	SetVariable Bkg3,limits={-inf,Inf,UPD_DK3Err},value= root:Packages:Indra3:UPD_DK3
-	SetVariable Bkg4,pos={20,595},size={200,18},proc=IN3_UPDParametersChanged,title="Background 4"
+	SetVariable Bkg4,pos={20,595},size={150,18},proc=IN3_UPDParametersChanged,title="Background 4"
 	SetVariable Bkg4 ,format="%g",labelBack=(65280,35512,15384)
 	SetVariable Bkg4,limits={-inf,Inf,UPD_DK4Err},value= root:Packages:Indra3:UPD_DK4
-	SetVariable Bkg5,pos={20,620},size={200,18},proc=IN3_UPDParametersChanged,title="Background 5"
+	SetVariable Bkg5,pos={20,620},size={150,18},proc=IN3_UPDParametersChanged,title="Background 5"
 	SetVariable Bkg5 ,format="%g",labelBack=(29696,4096,44800)
 	SetVariable Bkg5,limits={-inf,Inf,UPD_DK5Err},value= root:Packages:Indra3:UPD_DK5
-	SetVariable Bkg1Err,pos={225,520},size={90,18},title="Err"
+	SetVariable Bkg1Err,pos={175,520},size={70,18},title="Err"
 	SetVariable Bkg1Err ,format="%2.2g", labelBack=(65280,0,0)
 	SetVariable Bkg1Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK1Err,noedit=1
-	SetVariable Bkg2Err,pos={225,545},size={90,18},title="Err"
+	SetVariable Bkg2Err,pos={175,545},size={70,18},title="Err"
 	SetVariable Bkg2Err ,format="%2.2g", labelBack=(0,52224,0)
 	SetVariable Bkg2Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK2Err,noedit=1
-	SetVariable Bkg3Err,pos={225,570},size={90,18},title="Err"
+	SetVariable Bkg3Err,pos={175,570},size={70,18},title="Err"
 	SetVariable Bkg3Err ,format="%2.2g", labelBack=(0,0,65280)
 	SetVariable Bkg3Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK3Err,noedit=1
-	SetVariable Bkg4Err,pos={225,595},size={90,18},title="Err"
+	SetVariable Bkg4Err,pos={175,595},size={70,18},title="Err"
 	SetVariable Bkg4Err ,format="%2.2g", labelBack=(65280,35512,15384)
 	SetVariable Bkg4Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK4Err,noedit=1
-	SetVariable Bkg5Err,pos={225,620},size={90,18},title="Err"
+	SetVariable Bkg5Err,pos={175,620},size={90,18},title="Err"
 	SetVariable Bkg5Err ,format="%2.2g", labelBack=(29696,4096,44800)
 	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK5Err,noedit=1
-	SetVariable Bkg5Overwrite,pos={20,640},size={300,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
+	SetVariable Bkg5Overwrite,pos={20,640},size={245,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
 	SetVariable Bkg5Overwrite ,format="%g"
 	SetVariable Bkg5Overwrite,limits={-inf,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
+
+	TitleBox Info5 title="\Zr100Subtract Flat backg = ",pos={290,610},frame=0,fstyle=1, anchor=LC,size={150,20},fColor=(1,4,52428)
+	SetVariable SubtractFlatBackground,pos={300,630},size={100,22},title=" ", frame=1
+	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
+	SetVariable SubtractFlatBackground,limits={0,Inf,0},variable= root:Packages:Indra3:SubtractFlatBackground
+
+	TitleBox Info3 title="\Zr100 Amplifier dead times [sec]",pos={230,365},frame=0,fstyle=1, anchor=MC,size={200,20},fColor=(1,4,52428)
+	TitleBox Info4 title="\Zr100 RAW                Overwrite",pos={230,376},frame=0,fstyle=1, anchor=MC,size={200,20},fColor=(1,4,52428)
+
+	SetVariable FSRage1DeadTime,pos={250,395},size={70,22},noproc,title="R1:"
+	SetVariable FSRage1DeadTime ,format="%2.3g",labelBack=(65280,0,0), noedit=1
+	SetVariable FSRage1DeadTime,limits={0,Inf,0},value= root:Packages:Indra3:FSRage1DeadTime
+	SetVariable FSRage2DeadTime,pos={250,420},size={70,22},noproc,title="R2:"
+	SetVariable FSRage2DeadTime ,format="%2.3g",labelBack=(0,52224,0), noedit=1
+	SetVariable FSRage2DeadTime,limits={0,Inf,0},value= root:Packages:Indra3:FSRage2DeadTime
+	SetVariable FSRage3DeadTime,pos={250,445},size={70,22},noproc,title="R3:"
+	SetVariable FSRage3DeadTime ,format="%2.3g",labelBack=(0,0,65280), noedit=1
+	SetVariable FSRage3DeadTime,limits={0,Inf,0},value= root:Packages:Indra3:FSRage3DeadTime
+	SetVariable FSRage4DeadTime,pos={250,470},size={70,22},noproc,title="R4:"
+	SetVariable FSRage4DeadTime ,format="%2.3g",labelBack=(65280,35512,15384), noedit=1
+	SetVariable FSRage4DeadTime,limits={0,Inf,0},value= root:Packages:Indra3:FSRage4DeadTime
+	SetVariable FSRage5DeadTime,pos={250,495},size={70,22},noproc,title="R5:"
+	SetVariable FSRage5DeadTime ,format="%2.3g",labelBack=(29696,4096,44800), noedit=1
+	SetVariable FSRage5DeadTime,limits={0,Inf,0},value= root:Packages:Indra3:FSRage5DeadTime
+
+	SetVariable FSOverWriteRage1DeadTime,pos={340,395},size={60,18},noproc,title=" "
+	SetVariable FSOverWriteRage1DeadTime ,format="%g", labelBack=(65280,0,0)
+	SetVariable FSOverWriteRage1DeadTime,limits={-0,Inf,0},value= root:Packages:Indra3:FSOverWriteRage1DeadTime
+	SetVariable FSOverWriteRage2DeadTime,pos={340,420},size={60,18},noproc,title=" "
+	SetVariable FSOverWriteRage2DeadTime ,format="%g",labelBack=(0,52224,0)
+	SetVariable FSOverWriteRage2DeadTime,limits={-0,Inf,0},value= root:Packages:Indra3:FSOverWriteRage2DeadTime
+	SetVariable FSOverWriteRage3DeadTime,pos={340,445},size={60,18},noproc,title=" "
+	SetVariable FSOverWriteRage3DeadTime ,format="%g",labelBack=(0,0,65280)
+	SetVariable FSOverWriteRage3DeadTime,limits={-0,Inf,0},value= root:Packages:Indra3:FSOverWriteRage3DeadTime
+	SetVariable FSOverWriteRage4DeadTime,pos={340,470},size={60,18},noproc,title=" "
+	SetVariable FSOverWriteRage4DeadTime ,format="%g",labelBack=(65280,35512,15384)
+	SetVariable FSOverWriteRage4DeadTime,limits={-0,Inf,0},value= root:Packages:Indra3:FSOverWriteRage4DeadTime
+	SetVariable FSOverWriteRage5DeadTime,pos={340,495},size={60,18},noproc,title=" "
+	SetVariable FSOverWriteRage5DeadTime ,format="%g",labelBack=(29696,4096,44800)
+	SetVariable FSOverWriteRage5DeadTime,limits={-0,Inf,0},value= root:Packages:Indra3:FSOverWriteRage5DeadTime
+
+
 
 //calibration stuff...
 	SetVariable MaximumIntensity,pos={20,370},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2
@@ -352,10 +395,6 @@ Function IN3_MainPanelNew()
 	SetVariable BlankWidthArcSec,limits={0,Inf,0},variable= root:Packages:Indra3:BlankWidth
 
 	Button RecoverDefaultBlnkVals,pos={240,510},size={100,20} ,proc=IN3_InputPanelButtonProc,title="Spec values", help={"Reload original value from spec record"}
-
-	SetVariable SubtractFlatBackground,pos={20,560},size={300,22},title="Subtract Flat background=", frame=1
-	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
-	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
 
 	CheckBox CalibrateUseSampleFWHM,pos={18,590},size={300,14},proc=IN3_MainPanelCheckBox,title="Use Sample FWHM for calibration?"
 	CheckBox CalibrateUseSampleFWHM,variable= root:Packages:Indra3:CalibrateUseSampleFWHM, help={"Check, if you want to use FWHM for absolute intensity calibration"}
@@ -381,7 +420,7 @@ Function IN3_MainPanelNew()
 	SetVariable BckgStartQ,variable= root:Packages:Indra3:DesmearBckgStart, proc=IN3_ParametersChanged
 	SVAR BackgroundFunction=root:Packages:Indra3:DsmBackgroundFunction
 	PopupMenu BackgroundFnct,pos={20,420},size={258,21}, proc=IN3_InputPopMenuProc,title="background function :   "
-	PopupMenu BackgroundFnct,mode=1,value= "flat;PowerLaw w flat;power law;Porod;",popvalue=BackgroundFunction
+	PopupMenu BackgroundFnct,mode=1,value= "PowerLaw w flat;flat;power law;Porod;",popvalue=BackgroundFunction
 
 	
 
@@ -502,37 +541,6 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 				NVAR HdfWriterVersion = $(HDF5RawFolderWithData+"HdfWriterVersion")
 				HdfWriterVersion = str2num(Config_Version[0])
 				KillWaves/Z Config_Version					
-									//Wave/T SpecFileNameWv=$(HDF5RawFolderWithData+"entry:metadata:SPEC_data_file")
-									//SpecFileName=SpecFileNameWv[0]
-									//SpecFileName=stringFromList(0,SpecFileName,".")
-									//create root:raw:specfile Folder name and save the data there...
-									//TargetRawFoldername = IN2G_CreateUserName(SpecFileName+"_Fly",31, 0, 11) 
-									//				if(strlen(SpecFileName+"_Fly")>30 && (IgorVersion()<8.00 || useIgor8LongNames<1))
-									//					print "*****    ERROR MESSAGE  ***** "
-									//					print "The folder name was too long for Igor Pro, it will be cut to 30 characters, it is now:   " +TargetRawFoldername[0,30] 
-									//					print "^^^^^^    ERROR MESSAGE  ^^^^^^"		
-									//					//TargetRawFoldername = TargetRawFoldername[0,30]  
-									//				endif
-									//NewDataFolder/O $(TargetRawFoldername)
-									//string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort
-									//				if(DataFolderExists(targetFldrname))
-									//					if(OverWriteExistingData)
-									//						KillDataFolder/Z targetFldrname
-									//						DuplicateDataFolder $(HDF5RawFolderWithData), $(":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort)
-									//						KillDataFolder $(HDF5RawFolderWithData)
-									////					else
-									//						//DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
-									//						print "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwriting"
-									//						//if(V_Flag==1)
-									//						KillDataFolder/Z targetFldrname
-									//						DuplicateDataFolder $(HDF5RawFolderWithData), $(":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort)
-									//						KillDataFolder $(HDF5RawFolderWithData)
-									//					endif
-									//				else
-									//					DuplicateDataFolder $(HDF5RawFolderWithData), $(":"+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort)
-									//					KillDataFolder/Z $(HDF5RawFolderWithData)
-									//				endif
-													//RawFolderWithData = HDF5ImportFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+RawDataStrNameShort
 				print "Imported HDF5 file : "+FileName
 #if(exists("AfterFlyImportHook")==6)  
 				AfterFlyImportHook(HDF5RawFolderWithData)
@@ -559,10 +567,10 @@ Function IN3_USAXSDataRedCheckVersion()
 	DoWindow USAXSDataReduction
 	if(V_Flag)
 		if(!IN3_CheckPanelVersionNumber("USAXSDataReduction", IN3_NewReduceDataMainVersionNum))
-			DoAlert /T="The USAXS Data Reduction  panel was created by old version of Indra " 1, "USAXS Data Reduction needs to be restarted to work properly. Restart now?"
+			DoAlert /T="The USAXS Data Reduction  panel was created by incorrect version of Indra " 1, "USAXS Data Reduction needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWindow/K USAXSDataReduction
-				IN3_Main()
+				//IN3_Main()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IN3_Initialize()
 			endif
@@ -906,6 +914,8 @@ Function IN3_Initialize()
 	ListOfVariables+="BeamCenter;MaximumIntensity;PeakWidth;PeakWidthArcSec;"
 	ListOfVariables+="SampleQOffset;DisplayPeakCenter;DisplayAlignSaAndBlank;SampleAngleOffset;SmoothRCurveData;"
 	ListOfVariables+="RemoveDropouts;RemoveDropoutsTime;RemoveDropoutsFraction;RemoveDropoutsAvePnts;"
+	ListOfVariables+="FSOverWriteRage1DeadTime;FSOverWriteRage2DeadTime;FSOverWriteRage3DeadTime;FSOverWriteRage4DeadTime;FSOverWriteRage5DeadTime;"
+	ListOfVariables+="FSRage1DeadTime;FSRage2DeadTime;FSRage3DeadTime;FSRage4DeadTime;FSRage5DeadTime;"
 
 	ListOfVariables+="CalibrateToWeight;CalibrateToVolume;CalibrateArbitrary;SampleWeightInBeam;CalculateWeight;BeamExposureArea;SampleDensity;"
 	ListOfVariables+="CalibrateUseSampleFWHM;"
@@ -946,7 +956,7 @@ Function IN3_Initialize()
 	endif
 	NVAR ListProcDisplayDelay
 	if(ListProcDisplayDelay<=0)
-		ListProcDisplayDelay=5
+		ListProcDisplayDelay=2
 	endif
 	
 	NVAR IsBlank
@@ -983,7 +993,7 @@ Function IN3_Initialize()
 		 CalibrateArbitrary=0
 	endif
 	NVAR RemoveDropouts
-	RemoveDropouts=1
+	RemoveDropouts=0
 	NVAR RemoveDropoutsTime
 	NVAR RemoveDropoutsFraction
 	if(RemoveDropoutsTime<0.01)
@@ -998,7 +1008,7 @@ Function IN3_Initialize()
 	endif
 	SVAR DsmBackgroundFunction
 	if(strlen(DsmBackgroundFunction)<3)
-		DsmBackgroundFunction = "flat"
+		DsmBackgroundFunction = "PowerLaw w flat"
 	endif
 	NVAR DesmearBckgStart
 	if(DesmearBckgStart<0.01)

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.25
+#pragma version=2.26
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -9,7 +9,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-
+//2.26 fixes to IR2U_CalculateBranchedMassFr() per Greg's updated instructions. 
 //2.25 Fixes to Dale's fixes - initial state for Invariant failed with debugger. 
 //2.24 Dale's fixes... Needs checking. 
 //2.23 Modifications requetsed by Dale to make possible to calculate range of levels for each Two phase system. 
@@ -1113,7 +1113,7 @@ Function IR2U_MainCheckVersion()
 	DoWindow UnifiedEvaluationPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("UnifiedEvaluationPanel", IR2UversionNumber))
-			DoAlert /T="The Unified fit data evaluation panel was created by old version of Irena " 1, "The code needs to be restarted to work properly. Restart now?"
+			DoAlert /T="The Unified fit data evaluation panel was created by incorrect version of Irena " 1, "The code needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z UnifiedEvaluationPanel
 				IR2U_EvaluateUnifiedData()
@@ -2498,7 +2498,7 @@ Function IR2U_CalculateBranchedMassFr()
 	if(strlen(SlectedBranchedLevels)>1)
 		BrFract_dmin  =BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)
 		BrFract_c  =BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2))
-		BrFract_z  =BrFract_G2/BrFract_G1
+		BrFract_z  =BrFract_G2/BrFract_G1 + 1 			//Greg, 11-24-2018: It should be G2/G1 +1  Karsten figured that out.  If G2 is 0 you still have one primary particle. 
 		BrFract_fBr =(1-(BrFract_G2/BrFract_G1)^(1/(BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)))-1))
 		BrFract_fM  = (1-(BrFract_G2/BrFract_G1)^(1/((BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)))-1))
 	else

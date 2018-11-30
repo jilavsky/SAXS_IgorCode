@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.18
-constant IR3DversionNumber = 1.15		//Data merging panel version number
+#pragma version=1.19
+constant IR3DversionNumber = 1.159	//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -8,6 +8,7 @@ constant IR3DversionNumber = 1.15		//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.19 modified panel and added ability to optimize data 1 q shift also. Completely re-wrote internal fitting routine... Fixed name formation for d and tth data. 
 //1.18 added manual controls to variables to enable easier changes manuyally. Also, fixed case when input negative intensities caused issues in merging result. 
 //1.17 fix case where resolution wave name for ars was incorrectly created sometimes... 
 //1.16 fixes for long ames in Igor 8
@@ -44,7 +45,7 @@ Function IR3D_DataMerging()
 	if(V_Flag)
 		DoWindow/F IR3D_DataMergePanel
 	else
-		Execute("IR3D_DataMergePanel()")
+		IR3D_DataMergePanelFnct()
 		setWIndow IR3D_DataMergePanel, hook(CursorMoved)=IR3D_PanelHookFunction
 	endif
 	IR1_UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber,1)
@@ -63,7 +64,7 @@ Function IR3D_MainCheckVersion()
 	DoWindow IR3D_DataMergePanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber))
-			DoAlert /T="The Data Merging panel was created by old version of Irena " 1, "Data Merging may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Data Merging panel was created by incorrect version of Irena " 1, "Data Merging may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z IR3D_DataMergePanel
 				IR3D_DataMerging()
@@ -80,11 +81,11 @@ end
 ///******************************************************************************************
 
 
-Proc IR3D_DataMergePanel()
+Function IR3D_DataMergePanelFnct()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,720) as "Data Merging"
 	DoWIndow/C IR3D_DataMergePanel
-	TitleBox MainTitle title="\Zr200Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr230Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -99,11 +100,13 @@ Proc IR3D_DataMergePanel()
 	Checkbox Indra2Data1SlitSmeared, pos={120,33},size={76,14},title="SMR colim?", mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data1SlitSmeared
 	checkbox UseQRSData1, pos={120,18}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
 	PopupMenu StartFolderSelection1,pos={10,52},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
-	PopupMenu StartFolderSelection1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data1StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
+	SVAR Data1StartFolder = root:Packages:Irena:SASDataMerging:Data1StartFolder
+	PopupMenu StartFolderSelection1,mode=1,popvalue=Data1StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
 	SetVariable FolderNameMatchString1,pos={10,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString1,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data1MatchString
 	PopupMenu SortFolders1,pos={10,95},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders1"
-	PopupMenu SortFolders1,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString1,value= root:Packages:Irena:SASDataMerging:FolderSortStringAll
+	SVAR FolderSortString1 = root:Packages:Irena:SASDataMerging:FolderSortString1
+	PopupMenu SortFolders1,mode=1,popvalue=FolderSortString1,value= #"root:Packages:Irena:SASDataMerging:FolderSortStringAll"
 
 	//DrawText 290,25,"Second data set"
 	TitleBox Info2 title="\Zr120Second data set",pos={290,2},frame=0,fstyle=1, fixedSize=1,size={350,20}
@@ -112,14 +115,20 @@ Proc IR3D_DataMergePanel()
 	Checkbox Indra2Data2DSM, pos={260,33},size={76,14},title="DSM/2D colim?", mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2DSM
 	Checkbox Indra2Data2SlitSmeared, pos={370,33},size={76,14},title="SMR colim?",mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 	PopupMenu StartFolderSelection2,pos={260,52},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
-	PopupMenu StartFolderSelection2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:Data2StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
+	SVAR Data2StartFolder = root:Packages:Irena:SASDataMerging:Data2StartFolder
+	PopupMenu StartFolderSelection2,mode=1,popvalue=Data2StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
 	SetVariable FolderNameMatchString2,pos={260,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString2,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data2MatchString
 	PopupMenu SortFolders2,pos={260,95},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders2"
-	PopupMenu SortFolders2,mode=1,popvalue=root:Packages:Irena:SASDataMerging:FolderSortString2,value=root:Packages:Irena:SASDataMerging:FolderSortStringAll
+	SVAR FolderSortString2 = root:Packages:Irena:SASDataMerging:FolderSortString2
+	PopupMenu SortFolders2,mode=1,popvalue=FolderSortString2,value=#"root:Packages:Irena:SASDataMerging:FolderSortStringAll"
 
 	Button IsUSAXSSAXSdata, pos={140,117}, size={200,14}, title="Sort USAXS/SAXS/WAXS data", proc=IR3D_MergeButtonProc, help={"Sorts USAXS/SAXS?WAXS data to order proper pairs together. "}
-	Button GetHelp,pos={1105,5},size={80,15},fColor=(65535,32768,32768), proc=IR3D_MergeButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetHelp,pos={1030,2},size={100,15},fColor=(65535,32768,32768), proc=IR3D_MergeButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+
+	Checkbox DataAreSAXS, pos={825,48},size={76,14},title="SAXS (log/log)", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:DataAreSAXS
+	Checkbox DataAreWAXS, pos={825,62},size={76,14},title="WAXS (lin/lin)", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:DataAreWAXS
+
 
 	ListBox DataFolderSelection,pos={4,135},size={480,500}, mode=10
 	ListBox DataFolderSelection,listWave=root:Packages:Irena:SASDataMerging:ListOfAvailableData
@@ -129,59 +138,57 @@ Proc IR3D_DataMergePanel()
 	//TextBox/C/N=text1/O=90/A=MC "Save Data", TextBox/C/N=text1/A=MC "S\rA\rV\rE\r\rD\rA\rT\rA"
 	//controls above the Data merging part...
 	
-	PopupMenu MergeMethodSelected,pos={760,6},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Merge Method"
-	PopupMenu MergeMethodSelected,mode=1,popvalue=root:Packages:Irena:SASDataMerging:MergeMethodSelected,value= root:Packages:Irena:SASDataMerging:MergeMethodsAvailable
+	PopupMenu MergeMethodSelected,pos={750,5},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Merge Method"
+	SVAR MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
+	PopupMenu MergeMethodSelected,mode=1,popvalue=MergeMethodSelected,value= #"root:Packages:Irena:SASDataMerging:MergeMethodsAvailable"
 
-	PopupMenu SelectedExtrapolationFunction,pos={760,30},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Extrap. fnc."
-	PopupMenu SelectedExtrapolationFunction,mode=1,popvalue=root:Packages:Irena:SASDataMerging:SelectedExtrapolationFunction,value= root:Packages:Irena:SASDataMerging:ListOfExtrapolationFunctions
+	PopupMenu SelectedExtrapolationFunction,pos={765,26},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Extrap. fnc."
+	SVAR SelectedExtrapolationFunction = root:Packages:Irena:SASDataMerging:SelectedExtrapolationFunction
+	PopupMenu SelectedExtrapolationFunction,mode=1,popvalue=SelectedExtrapolationFunction,value=#"root:Packages:Irena:SASDataMerging:ListOfExtrapolationFunctions"
 
 
 	Checkbox ProcessTest, pos={520,30},size={76,14},title="Test mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessTest
 	Checkbox ProcessMerge, pos={520,50},size={76,14},title="Merge mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessMerge
 //	Checkbox ProcessMerge2, pos={520,70},size={76,14},title="Merge 2 mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessMerge2
-	Checkbox AutosaveAfterProcessing, pos={520,70},size={76,14},title="Save Immediately", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing, disable=!root:Packages:Irena:SASDataMerging:ProcessManually
+	NVAR ProcessManually = root:Packages:Irena:SASDataMerging:ProcessManually
+	Checkbox AutosaveAfterProcessing, pos={520,70},size={76,14},title="Save Immediately", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing, disable=!ProcessManually
 
 	Checkbox ProcessManually, pos={650,30},size={76,14},title="Process individually", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessManually
 	Checkbox ProcessSequentially, pos={650,50},size={76,14},title="Process as sequence", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessSequentially
 	Checkbox OverwriteExistingData, pos={650,70},size={76,14},title="Overwrite existing data", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:OverwriteExistingData
 
-
-	SetVariable Data1Background,pos={990,30},size={140,15}, noproc,title="Data 1 Backg.",bodyWidth=90, proc=IR3D_SetVarProc
-	Setvariable Data1Background, variable=root:Packages:Irena:SASDataMerging:Data1Background, limits={-inf,inf,0.03*root:Packages:Irena:SASDataMerging:Data1Background}
-	SetVariable Data2IntMultiplier,pos={990,50},size={140,15}, noproc,title="Data 2 Scaling ",bodyWidth=90, proc=IR3D_SetVarProc
-	Setvariable Data2IntMultiplier, variable=root:Packages:Irena:SASDataMerging:Data2IntMultiplier, limits={-inf,inf,0.03*root:Packages:Irena:SASDataMerging:Data2IntMultiplier}
-	SetVariable Data2Qshift,pos={990,70},size={140,15}, noproc,title="Data 2 Q shift ",bodyWidth=90, proc=IR3D_SetVarProc
+	NVAR Data1Background = root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Data2IntMultiplier = root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	SetVariable Data1Background,pos={990,22},size={140,15}, noproc,title="Data 1 Backg.",bodyWidth=90, proc=IR3D_SetVarProc
+	Setvariable Data1Background, variable=root:Packages:Irena:SASDataMerging:Data1Background, limits={-inf,inf,0.03*Data1Background}
+	SetVariable Data1Qshift,pos={990,40},size={140,15}, noproc,title="D 1 Q/d/tth shift",bodyWidth=90, proc=IR3D_SetVarProc
+	Setvariable Data1Qshift, variable=root:Packages:Irena:SASDataMerging:Data1Qshift, limits={-inf,inf,0}
+	SetVariable Data2IntMultiplier,pos={990,58},size={140,15}, noproc,title="Data 2 Scaling ",bodyWidth=90, proc=IR3D_SetVarProc
+	Setvariable Data2IntMultiplier, variable=root:Packages:Irena:SASDataMerging:Data2IntMultiplier, limits={-inf,inf,0}//0.03*Data2IntMultiplier}
+	SetVariable Data2Qshift,pos={990,76},size={140,15}, noproc,title="D 2 Q/d/tth shift ",bodyWidth=90, proc=IR3D_SetVarProc
 	Setvariable Data2Qshift, variable=root:Packages:Irena:SASDataMerging:Data2Qshift, limits={-inf,inf,0}
-	SetVariable Data1QEnd,pos={990,90},size={140,15}, proc=IR3D_MergeDataSetVarProc,title="Data 1 Q max ", proc=IR3D_SetVarProc
+	SetVariable Data1QEnd,pos={990,94},size={140,15}, proc=IR3D_MergeDataSetVarProc,title="Data 1 max ", proc=IR3D_SetVarProc
 	Setvariable Data1QEnd, variable=root:Packages:Irena:SASDataMerging:Data1QEnd, limits={1e-6,inf,0},bodyWidth=90
-	SetVariable Data2Qstart,pos={990,110},size={140,15}, proc=IR3D_MergeDataSetVarProc,title="Data 2 Q start ", proc=IR3D_SetVarProc
+	SetVariable Data2Qstart,pos={990,112},size={140,15}, proc=IR3D_MergeDataSetVarProc,title="Data 2 start ", proc=IR3D_SetVarProc
 	Setvariable Data2Qstart, variable=root:Packages:Irena:SASDataMerging:Data2Qstart, limits={1e-6,inf,0},bodyWidth=90
 
-	Checkbox Optim_Data1Background, pos={1150,27},size={50,14},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data1Background
-	Checkbox Optim_Data2IntMultiplier, pos={1150,47},size={50,14},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data2IntMultiplier
-	Checkbox Optim_Data2Qshift, pos={1150,67},size={50,14},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
+	Checkbox Optim_Data1Background, pos={1143,21},size={50,14},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data1Background
+	Checkbox Optim_Data1Qshift, pos={1143,39},size={50,14},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data1Qshift
+	Checkbox Optim_Data2IntMultiplier, pos={1143,57},size={50,14},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data2IntMultiplier
+	Checkbox Optim_Data2Qshift, pos={1143,75},size={50,82},title="Fit?", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
 
 
-	TitleBox SavedDataMessage title="",fixedSize=1,size={100,17}, pos={780,70}, variable= root:Packages:Irena:SASDataMerging:SavedDataMessage
+	TitleBox SavedDataMessage title="",fixedSize=1,size={100,17}, pos={800,76}, variable= root:Packages:Irena:SASDataMerging:SavedDataMessage
 	TitleBox SavedDataMessage help={"Are the data saved?"}, fColor=(65535,16385,16385), frame=0, fSize=12,fstyle=1
 
 	TitleBox UserMessage title="",fixedSize=1,size={470,20}, pos={480,90}, variable= root:Packages:Irena:SASDataMerging:UserMessageString
 	TitleBox UserMessage help={"This is what will happen"}
 
-		
-//	Button AutoScale,pos={520,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-//	Button MergeData,pos={640,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-//	Button MergeData2,pos={760,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge 2", help={"Scales data 2 to data 1, optimizes Q shift for data 2 and sets background for data 1 for merging. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-
-
 	Button ResetMergeSettings, pos={500,117},size={140,17}, proc=IR3D_MergeButtonProc, title="Reset merge params", help={"Resets the merging parameters to defaults"}
 	Button ProcessData, pos={660,117},size={170,17}, proc=IR3D_MergeButtonProc,title="Process Data", help={"Runs the data processing (if needed) manually"}
 	Button SaveData2, pos={850,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Save Data", help={"Saves the data as they are now processed."}
 
-
-	//Display /W=(521,135,1183,620) /HOST=# /N=DataDisplay
 	Display /W=(0.44,0.20,0.99,0.916) /HOST=# /N=DataDisplay
-
 	SetActiveSubwindow ##
 
 	SetVariable DataFolderName1,pos={550,625},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName1, title="Data 1:       ", disable=2
@@ -264,8 +271,9 @@ Function IR3D_InitDataMerging()
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;Indra2Data1SlitSmeared;Indra2Data1DSM;"
 	ListOfVariables+="UseIndra2Data2;UseQRSdata2;Indra2Data2SlitSmeared;Indra2Data2DSM;"
-	ListOfVariables+="Data1Background;Data2IntMultiplier;Data2Qshift;"
-	ListOfVariables+="Optim_Data1Background;Optim_Data2IntMultiplier;Optim_Data2Qshift;"
+	ListOfVariables+="DataAreSAXS;DataAreWAXS;"
+	ListOfVariables+="Data1Background;Data2IntMultiplier;Data2Qshift;Data1Qshift;"
+	ListOfVariables+="Optim_Data1Background;Optim_Data2IntMultiplier;Optim_Data2Qshift;Optim_Data1Qshift;"
 	ListOfVariables+="IsUSAXSSAXSdata;ProcessMerge;ProcessMerge2;ProcessTest;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="Data1QEnd;Data2QEnd;Data2Qstart;Data1Qstart;ExtrapData1Start;ExtrapData1End;"
@@ -319,6 +327,13 @@ Function IR3D_InitDataMerging()
 	SVAR ListOfExtrapolationFunctions
 	ListOfExtrapolationFunctions = "Porod;Power law w backg;Power law;"
 	
+	NVAR DataAreSAXS
+	NVAR DataAreWAXS
+	if(DataAreSAXS+DataAreWAXS!=1)
+		DataAreSAXS=1
+		DataAreWAXS=0
+	endif
+	
 	NVAR Optim_Data1Background
 	NVAR Optim_Data2IntMultiplier
 	NVAR Data2IntMultiplier
@@ -328,6 +343,11 @@ Function IR3D_InitDataMerging()
 	if(Optim_Data1Background+Optim_Data2IntMultiplier<1)
 		Optim_Data2IntMultiplier = 1
 		Optim_Data1Background = 1
+	endif
+	NVAR Optim_Data1Qshift
+	NVAR Optim_Data2Qshift
+	if((Optim_Data1Qshift+Optim_Data2Qshift)>1)
+		Optim_Data1Qshift=0
 	endif
 	
 	NVAR ProcessMerge
@@ -528,13 +548,49 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 			NVAR Indra2Data2SlitSmeared=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 			NVAR Indra2Data2DSM=root:Packages:Irena:SASDataMerging:Indra2Data2DSM
 			
+			NVAR Data1Qshift=root:Packages:Irena:SASDataMerging:Data1Qshift
+			NVAR Optim_Data1Qshift=root:Packages:Irena:SASDataMerging:Optim_Data1Qshift
+			NVAR DataAreSAXS=root:Packages:Irena:SASDataMerging:DataAreSAXS
+			NVAR DataAreWAXS=root:Packages:Irena:SASDataMerging:DataAreWAXS
+
 			SVAR Data2MatchString =  root:Packages:Irena:SASDataMerging:Data2MatchString
+			
+			NVAR Optim_Data1Qshift=root:Packages:Irena:SASDataMerging:Optim_Data1Qshift
+			NVAR Optim_Data2Qshift=root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
+			NVAR Data1Qshift=root:Packages:Irena:SASDataMerging:Data1Qshift
+			NVAR Data2Qshift=root:Packages:Irena:SASDataMerging:Data2Qshift
 
 			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
 			Checkbox ProcessSequentially, win=IR3D_DataMergePanel, disable=0
 
+
+
+		  	if(stringmatch(cba.ctrlName,"Optim_Data1Qshift"))
+		  		if(cba.checked)
+		  			Optim_Data2Qshift = 0	
+		  			Data2Qshift = 0
+		  		endif	  		
+			endif
+		  	if(stringmatch(cba.ctrlName,"Optim_Data2Qshift"))
+		  		if(cba.checked)
+		  			Optim_Data1Qshift = 0	
+		  			Data1Qshift = 0
+		  		endif	  		
+			endif
+		  	if(stringmatch(cba.ctrlName,"DataAreWAXS"))
+		  		DataAreSAXS = !DataAreWAXS		
+		  		IR3D_FormatGraph()  		
+			endif
+		  	if(stringmatch(cba.ctrlName,"DataAreSAXS"))
+		  		DataAreWAXS = !DataAreSAXS		
+		  		IR3D_FormatGraph()  		
+			endif
+
+
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data1"))
 		  		if(checked)
+		  			DataAreSAXS = 1
+		  			DataAreWAXS = 0
 			  		Indra2Data1DSM = !Indra2Data1SlitSmeared
 		  			UseQRSData1 = 0
 		  			UseQRSData2 = 1
@@ -591,6 +647,8 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data2"))
 		  		if(checked)
+		  			DataAreSAXS = 1
+		  			DataAreWAXS = 0
 		  			UseQRSData2 = 0
 		  		endif
 		  		Data2MatchString = ""
@@ -646,15 +704,6 @@ Function IR3D_DataMergeCheckProc(cba) : CheckBoxControl
 					UserMessageString += "Using Merge. "
 	  			endif
 	  		endif
-//		  	if(stringmatch(cba.ctrlName,"ProcessMerge2"))
-//	  			if(checked)
-//	  				ProcessMerge = 0
-//	  				ProcessTest = 0
-//					UserMessageString += "Using Merge2. "
-//	  			endif
-//	  		endif
-	//	  	if(stringmatch(cba.ctrlName,"ProcessMerge2")||stringmatch(cba.ctrlName,"ProcessMerge")||stringmatch(cba.ctrlName,"ProcessTest"))
-//			endif
 			IR3D_SetGUIControls()
 		  	DoUpdate  /W=IR3D_DataMergePanel 
 	  		
@@ -680,9 +729,14 @@ Function IR3D_SetGUIControls()
 
 			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=ProcessTest
 			Checkbox ProcessSequentially, win=IR3D_DataMergePanel, disable=ProcessTest
-//			Button AutoScale,win=IR3D_DataMergePanel, disable=!ProcessTest
-//			Button MergeData,win=IR3D_DataMergePanel, disable=!ProcessTest
-//			Button MergeData2,win=IR3D_DataMergePanel, disable=!ProcessTest
+			
+			NVAR UseIndra2Data2=root:Packages:Irena:SASDataMerging:UseIndra2Data2 
+			NVAR UseIndra2Data1=root:Packages:Irena:SASDataMerging:UseIndra2Data1 
+			NVAR Data1Qshift=root:Packages:Irena:SASDataMerging:Data1Qshift 
+			NVAR Optim_Data1Qshift=root:Packages:Irena:SASDataMerging:Optim_Data1Qshift 
+			NVAR Data2Qshift=root:Packages:Irena:SASDataMerging:Data2Qshift 
+			NVAR Optim_Data2Qshift=root:Packages:Irena:SASDataMerging:Optim_Data2Qshift 
+			
 //
 			if(ProcessTest)
 				//Button ProcessSaveData,win=IR3D_DataMergePanel, disable=1
@@ -725,10 +779,40 @@ Function IR3D_SetGUIControls()
 			NVAR Optim_Data1Background=root:Packages:Irena:SASDataMerging:Optim_Data1Background
 			NVAR Optim_Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Optim_Data2IntMultiplier
 			NVAR Optim_Data2Qshift=root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
+			NVAR Optim_Data1Qshift=root:Packages:Irena:SASDataMerging:Optim_Data1Qshift
 	
 			SetVariable Data1Background, win=IR3D_DataMergePanel, disable=(2*Optim_Data1Background)
 			SetVariable Data2IntMultiplier, win=IR3D_DataMergePanel, disable=(2*Optim_Data2IntMultiplier)
-			SetVariable Data2Qshift, win=IR3D_DataMergePanel, disable=(2*Optim_Data2Qshift)
+			//SetVariable Data2Qshift, win=IR3D_DataMergePanel, disable=(2*Optim_Data2Qshift)
+			//SetVariable Data1Qshift, win=IR3D_DataMergePanel, disable=(2*Optim_Data1Qshift)
+
+	  		if(UseIndra2Data1)
+		  			SetVariable Data1Qshift win=IR3D_DataMergePanel, disable=1		  		
+		  			CheckBox Optim_Data1Qshift win=IR3D_DataMergePanel,disable=1
+		  			Data1Qshift = 0
+		  			Optim_Data1Qshift = 0
+	  		else
+	  			if(Optim_Data1Qshift)
+		  			SetVariable Data1Qshift win=IR3D_DataMergePanel, disable=2
+		  		else
+		  			SetVariable Data1Qshift win=IR3D_DataMergePanel, disable=0
+		  		endif
+		  			CheckBox Optim_Data1Qshift win=IR3D_DataMergePanel,disable=0
+	  		endif
+	  		if(UseIndra2Data2)
+		  			SetVariable Data2Qshift win=IR3D_DataMergePanel, disable=(2*Optim_Data2Qshift)
+		  			CheckBox Optim_Data2Qshift win=IR3D_DataMergePanel,disable=1
+		  			Data2Qshift = 0
+		  			Optim_Data2Qshift = 0
+	  		else
+	  			if(Optim_Data2Qshift)
+		  			SetVariable Data2Qshift win=IR3D_DataMergePanel, disable=2
+		  		else
+		  			SetVariable Data2Qshift win=IR3D_DataMergePanel, disable=0
+		  		endif
+		  			CheckBox Optim_Data2Qshift win=IR3D_DataMergePanel,disable=0
+	  		endif
+
 
 			SVAR MergeMethodSelected = root:Packages:Irena:SASDataMerging:MergeMethodSelected
 			variable HideExtrap=0
@@ -981,6 +1065,15 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		else
 			dQWavename1=""
 		endif
+		//now we need to fix QRS data wrt to d, they are going the wrong way for this tool... But this shoudl be done for any input data set anyway... 
+		if(UseQRSdata1 && StringMatch(QWavename1, "d*"))
+			if(WaveExists(OriginalData1dQWave))
+				Sort/R OriginalData1QWave, OriginalData1QWave, OriginalData1ErrorWave, OriginalData1IntWave, OriginalData1dQWave
+			else
+				Sort/R OriginalData1QWave, OriginalData1QWave, OriginalData1ErrorWave, OriginalData1IntWave
+			endif
+		endif
+		//done fixing d type qrs data
 		IR3D_AppendDataToGraph("Data1")
 		IR3D_PresetOutputStrings()
 		Wave/Z ResultIntensity = root:Packages:Irena:SASDataMerging:ResultIntensity
@@ -1065,6 +1158,15 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		else
 			dQWavename2 = ""
 		endif
+		//now we need to fix QRS data wrt to d, they are going the wrong way for this tool... But this shoudl be done for any input data set anyway... 
+		if(UseQRSdata2 && StringMatch(QWavename2, "d*"))
+			if(WaveExists(OriginalData2dQWave))
+				Sort/R OriginalData2QWave, OriginalData2QWave, OriginalData2ErrorWave, OriginalData2IntWave, OriginalData2dQWave
+			else
+				Sort/R OriginalData2QWave, OriginalData2QWave, OriginalData2ErrorWave, OriginalData2IntWave
+			endif
+		endif
+		//done fixing d type qrs data
 		IR3D_AppendDataToGraph("Data2")
 		Wave/Z ResultIntensity = root:Packages:Irena:SASDataMerging:ResultIntensity
 		if(WaveExists(ResultIntensity))
@@ -1103,6 +1205,12 @@ Function IR3D_AppendDataToGraph(WhichData)
 	endif
 	variable WhichLegend=0
 	variable startQp, endQp, tmpStQ
+	NVAR DataAreSAXS=root:Packages:Irena:SASDataMerging:DataAreSAXS
+	NVAR DataAreWAXS=root:Packages:Irena:SASDataMerging:DataAreWAXS
+	if((DataAreSAXS+DataAreWAXS)!=1)
+		DataAreSAXS=1
+		DataAreWAXS=0
+	endif
 	if(StringMatch(WhichData, "Data1" ))
 		Wave OriginalData1IntWave=root:Packages:Irena:SASDataMerging:OriginalData1IntWave
 		Wave OriginalData1QWave=root:Packages:Irena:SASDataMerging:OriginalData1QWave
@@ -1110,9 +1218,9 @@ Function IR3D_AppendDataToGraph(WhichData)
 		CheckDisplayed /W=IR3D_DataMergePanel#DataDisplay OriginalData1IntWave
 		if(!V_flag)
 			AppendToGraph /W=IR3D_DataMergePanel#DataDisplay  OriginalData1IntWave  vs OriginalData1QWave
-			ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
+			//ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
 			Label /W=IR3D_DataMergePanel#DataDisplay left "Intensity 1"
-			Label /W=IR3D_DataMergePanel#DataDisplay bottom "Q [A\\S-1\\M]"
+			Label /W=IR3D_DataMergePanel#DataDisplay bottom "Q/d/tth [A\\S-1\\M/A/degrees]"
 			ErrorBars /W=IR3D_DataMergePanel#DataDisplay OriginalData1IntWave Y,wave=(OriginalData1ErrorWave,OriginalData1ErrorWave)		
 		endif
 		NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
@@ -1134,7 +1242,7 @@ Function IR3D_AppendDataToGraph(WhichData)
 		CheckDisplayed /W=IR3D_DataMergePanel#DataDisplay OriginalData2IntWave
 		if(!V_flag)
 			AppendToGraph /W=IR3D_DataMergePanel#DataDisplay/R  OriginalData2IntWave  vs OriginalData2QWave
-			ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
+			//ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
 			ModifyGraph /W=IR3D_DataMergePanel#DataDisplay rgb(OriginalData2IntWave)=(0,0,0)
 			ErrorBars /W=IR3D_DataMergePanel#DataDisplay OriginalData2IntWave Y,wave=(OriginalData2ErrorWave,OriginalData2ErrorWave)		
 		endif
@@ -1163,13 +1271,15 @@ Function IR3D_AppendDataToGraph(WhichData)
 			CheckDisplayed /W=IR3D_DataMergePanel#DataDisplay ResultIntensity
 			if(!V_flag)
 				AppendToGraph /W=IR3D_DataMergePanel#DataDisplay  ResultIntensity  vs ResultQ
-				ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
+				//ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
 				ModifyGraph /W=IR3D_DataMergePanel#DataDisplay rgb(ResultIntensity)=(1,16019,65535)
 				ErrorBars /W=IR3D_DataMergePanel#DataDisplay ResultIntensity Y,wave=(ResultError,ResultError)		
 			endif
 		endif
 		DoUpdate
 	endif
+
+	IR3D_FormatGraph()
 
 	Wave/Z OriginalData1IntWave=root:Packages:Irena:SASDataMerging:OriginalData1IntWave
 	Wave/Z OriginalData2IntWave=root:Packages:Irena:SASDataMerging:OriginalData2IntWave
@@ -1208,6 +1318,52 @@ Function IR3D_AppendDataToGraph(WhichData)
 	
 end
 	
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+Function IR3D_FormatGraph()
+	
+	DoWindow IR3D_DataMergePanel
+	if(!V_Flag)
+		return 0
+	endif
+	NVAR DataAreSAXS=root:Packages:Irena:SASDataMerging:DataAreSAXS
+	NVAR DataAreWAXS=root:Packages:Irena:SASDataMerging:DataAreWAXS
+	SVAR QWavename1 = root:Packages:Irena:SASDataMerging:QWavename1
+	SVAR QWavename2 = root:Packages:Irena:SASDataMerging:QWavename2
+	NVAR UseQRSdata1 = root:Packages:Irena:SASDataMerging:UseQRSdata1
+	NVAR UseQRSdata2 = root:Packages:Irena:SASDataMerging:UseQRSdata2
+	if((DataAreSAXS+DataAreWAXS)!=1)
+		DataAreSAXS=1
+		DataAreWAXS=0
+	endif
+	Wave/Z OriginalData1IntWave=root:Packages:Irena:SASDataMerging:OriginalData1IntWave
+	if(WaveExists(OriginalData1IntWave))
+		CheckDisplayed /W=IR3D_DataMergePanel#DataDisplay OriginalData1IntWave
+		if(V_flag)
+			if(DataAreSAXS)
+				ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=1, mirror(bottom)=1
+				Label /W=IR3D_DataMergePanel#DataDisplay left "Intensity 1"
+				Label /W=IR3D_DataMergePanel#DataDisplay bottom "Q [A\\S-1\\M]"
+				//SetAxis /W=IR3D_DataMergePanel#DataDisplay /A
+			else
+				ModifyGraph /W=IR3D_DataMergePanel#DataDisplay log=0, mirror(bottom)=1
+				Label /W=IR3D_DataMergePanel#DataDisplay left "Intensity 1"
+				Label /W=IR3D_DataMergePanel#DataDisplay bottom "Q/d/Two-theta [1/A,A,Degrees]"
+				//SetAxis /W=IR3D_DataMergePanel#DataDisplay /A
+			endif
+			//reverse axis if we use qrs data and d or tth x-wave type
+//			if(UseQRSdata1 && (StringMatch(QWavename1, "d*")||StringMatch(QWavename1, "t*") ))
+//				//GetAxis /W=IR3D_DataMergePanel#DataDisplay /Q bottom
+//				SetAxis /W=IR3D_DataMergePanel#DataDisplay /A/R bottom
+//			else
+//				SetAxis /W=IR3D_DataMergePanel#DataDisplay /A bottom
+//			endif
+		endif
+	endif
+end
+//**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
@@ -1494,7 +1650,7 @@ Function IR3D_PresetOutputStrings()
 	tempNIN = IN2G_RemoveExtraQuote(NewIntensityWaveName,1,1)
 	tempNQN = IN2G_RemoveExtraQuote(NewQWavename,1,1)
 	tempNEN = IN2G_RemoveExtraQuote(NewErrorWaveName,1,1)
-	if ((cmpstr(tempNIN[0],"r")==0) &&(cmpstr(tempNQN[0],"q")==0) &&(cmpstr(tempNEN[0],"s")==0))
+	if (stringMatch(tempNIN,"r*") && (stringMatch(tempNQN,"q*")||stringMatch(tempNQN,"d*")||stringMatch(tempNQN,"t*")) && stringMatch(tempNEN,"s*"))
 		//here is alternative, create new folder for the waves... 
 		LastPartOfPath = IN2G_RemoveExtraQuote(LastPartOfPath,1,1)	//remove ' from liberal names
 		LastPartOfPath = LastPartOfPath[0,26]
@@ -1549,18 +1705,13 @@ Function IR3D_MergeButtonProc(ba) : ButtonControl
 				IR3D_ResetMergeMethod()
 				//IR3D_SetSavedNotSavedMessage(0)
 			endif
-//			if(stringmatch(ba.ctrlname,"MergeData"))
-//				//Merge data only
-//				IR3D_MergeData()
-//				IR3D_AppendDataToGraph("Merged")
-//				IR3D_SetSavedNotSavedMessage(0)
-//			endif
 			if(stringmatch(ba.ctrlname,"GetHelp"))
 				//Open www manual with the right page
 				IN2G_OpenWebManual("Irena/DataManipulation.html")
 			endif
 			if(stringmatch(ba.ctrlname,"AutoScaleGraph"))
 				//autoscale graph since it seems really difficult to do
+				//IR3D_FormatGraph()
 				SetAxis/W=IR3D_DataMergePanel#DataDisplay/A
 				DoUpdate
 				GetAxis/W=IR3D_DataMergePanel#DataDisplay/Q right
@@ -1799,6 +1950,7 @@ Function IR3D_AutoScale(autoscale)
 	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
 	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
 	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Data1Qshift = root:Packages:Irena:SASDataMerging:Data1Qshift
 
 //	Data2Qshift = 0
 //	Data1Background = 0
@@ -1830,14 +1982,14 @@ Function IR3D_AutoScale(autoscale)
 		//nothing to do here...  
 	endif
 	
-	Duplicate/O TempInt2, ResultIntensity	
-	Duplicate/O TempQ2, ResultQ	
-	Duplicate/O TempE2, ResultError	
+	//Duplicate/O TempInt2, ResultIntensity	
+	//Duplicate/O TempQ2, ResultQ	
+	//Duplicate/O TempE2, ResultError	
 
 	//corrections for autoscaling and Data1Background and Q shift
-	TempQ2-=Data2Qshift
-	ResultIntensity = (ResultIntensity-Data1Background)*Data2IntMultiplier
-	ResultError = ResultError*Data2IntMultiplier
+	//TempQ2-=Data2Qshift
+	//ResultIntensity = (ResultIntensity-Data1Background)*Data2IntMultiplier
+	//ResultError = ResultError*Data2IntMultiplier
 
 	variable StartQp, EndQp
 	StartQp = BinarySearch(TempQ1, startQ)+1		//+1 needs to be here or merging will fail. Lesson learned. Get error on index out of bounds...  
@@ -1861,6 +2013,7 @@ Function IR3D_AutoScale(autoscale)
 	ResultErr2 *=Data2IntMultiplier
 	ResultIntensity1-=Data1Background
 	ResultQ2-=Data2Qshift
+	ResultQ1-=Data1Qshift
 	
 	Concatenate/NP/O {ResultIntensity1, ResultIntensity2}, ResultIntensity
 	Concatenate/NP/O {ResultQ1, ResultQ2}, ResultQ
@@ -1869,7 +2022,7 @@ Function IR3D_AutoScale(autoscale)
 	variable BestMinAchieved
 		
 	Sort  ResultQ, ResultQ, ResultIntensity, ResultError, ResultdQ
-	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , and Data 2 Q shift = "+num2str(Data2Qshift)
+	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , Data 1 Q/d/tth shift = "+num2str(Data1Qshift)+", and Data 2 Q/d/tth shift = "+num2str(Data2Qshift)
 	wavestats/Q ResultIntensity
 	if(V_min<0 && !InputNegative)
 		ResultIntensity-=V_min
@@ -1890,6 +2043,7 @@ Function IR3D_MergeData()  //call this and from here go to different routines
 	NVAR Optim_Data1Background = root:Packages:Irena:SASDataMerging:Optim_Data1Background
 	NVAR Optim_Data2IntMultiplier = root:Packages:Irena:SASDataMerging:Optim_Data2IntMultiplier
 	NVAR Optim_Data2Qshift = root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
+	NVAR Optim_Data1Qshift = root:Packages:Irena:SASDataMerging:Optim_Data1Qshift
 	SVAR MergeMethodSelected= root:Packages:Irena:SASDataMerging:MergeMethodSelected
 	variable result = 0 	
 	//make working copies of data
@@ -1924,27 +2078,16 @@ Function IR3D_MergeData()  //call this and from here go to different routines
 	endif
 	
 	//and now merge...
-	if(StringMatch(MergeMethodSelected, "Optimize Overlap" ) || StringMatch(MergeMethodSelected, "Extrap. Data1 and Optimize" ))		//old regular overlap...
-		if(Optim_Data2IntMultiplier && !Optim_Data1Background && !Optim_Data2Qshift)
-			IR3D_AutoScale(1)
-			result =1
-		elseif(Optim_Data2IntMultiplier && Optim_Data1Background && !Optim_Data2Qshift)
+	if(StringMatch(MergeMethodSelected, "Optimize Overlap" ) || StringMatch(MergeMethodSelected, "Extrap. Data1 and Optimize" ))		
+		if(Optim_Data2IntMultiplier && !Optim_Data1Background && !Optim_Data2Qshift && !Optim_Data1Qshift)
+			//IR3D_AutoScale(1)
 			IR3D_MergeDataOverlap()	
-			result =1
-		elseif(Optim_Data2IntMultiplier && Optim_Data1Background && Optim_Data2Qshift)
-			IR3D_MergeDataOverlap()	
-			result =1
-		elseif(Optim_Data2IntMultiplier && !Optim_Data1Background && Optim_Data2Qshift)
-			IR3D_MergeDataOverlap()	
-			result =1
-		elseif(!Optim_Data2IntMultiplier && !Optim_Data1Background && Optim_Data2Qshift)
-			IR3D_MergeDataOverlap()	
-			result =1
-		elseif(!Optim_Data2IntMultiplier && Optim_Data1Background && !Optim_Data2Qshift)
-			IR3D_MergeDataOverlap()
-			result =1
-		elseif(!Optim_Data2IntMultiplier && !Optim_Data1Background && !Optim_Data2Qshift)
+			result =1 
+		elseif(!Optim_Data2IntMultiplier && !Optim_Data1Background && !Optim_Data2Qshift && !Optim_Data1Qshift)
 			IR3D_AutoScale(0)
+			result =1
+		else
+			IR3D_MergeDataOverlap()	
 			result =1
 		endif
 	endif
@@ -2119,16 +2262,20 @@ Function IR3D_MergeDataOverlap()
 	OldDf= GetDataFOlder(1)
 	setDataFolder root:Packages:Irena:SASDataMerging
 
-	variable VaryQshift=0	
+	variable VaryQ1shift=0	
+	variable VaryQ2shift=0	
 	NVAR Optim_Data1Background = root:Packages:Irena:SASDataMerging:Optim_Data1Background
 	NVAR Optim_Data2IntMultiplier = root:Packages:Irena:SASDataMerging:Optim_Data2IntMultiplier
 	NVAR Optim_Data2Qshift = root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
+	NVAR Optim_Data1Qshift = root:Packages:Irena:SASDataMerging:Optim_Data1Qshift
 	
 	NVAR Data1Background=root:Packages:Irena:SASDataMerging:Data1Background
 	NVAR Data2IntMultiplier=root:Packages:Irena:SASDataMerging:Data2IntMultiplier
 	NVAR Data2Qshift = root:Packages:Irena:SASDataMerging:Data2Qshift	
+	NVAR Data1Qshift = root:Packages:Irena:SASDataMerging:Data1Qshift	
 	
-	VaryQshift = Optim_Data2Qshift
+	VaryQ2shift = Optim_Data2Qshift
+	VaryQ1shift = Optim_Data1Qshift
 	
 	Wave/Z Intensity1=root:Packages:Irena:SASDataMerging:MergeData1IntWave
 	Wave/Z Intensity2=root:Packages:Irena:SASDataMerging:MergeData2IntWave
@@ -2165,15 +2312,18 @@ Function IR3D_MergeDataOverlap()
 		tmpEQ = (tmpEQ<numpnts(Intensity1)-2) ? tmpEQ : numpnts(Intensity1)-2
 		cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, tmpEQ
 		endQ = CsrXWaveRef(B,"IR3D_DataMergePanel#DataDisplay")[tmpEQ]
-		//Data1QEnd = endQ
 	else
 		endQ = Qvector1[numpnts(Qvector1)-1]
-	//	Data1QEnd = endQ
 	endif
 	if(endQ >= Qvector1[numpnts(Qvector1)-1])
 		endQ = Qvector1[numpnts(Qvector1)-2]
 	endif
-	if(StartQ>EndQ)
+	//figure if there is overlap...
+	variable Data1StartPoint = BinarySearch(Qvector1, startQ )
+	variable Data2StartPoint = BinarySearch(Qvector2, endQ )
+	Duplicate /R=[Data1StartPoint,numpnts(Intensity1)-1]/Free  Intensity1, tmpIntensity1 
+	Duplicate /R=[0,Data2StartPoint]/Free  Intensity2, tmpIntensity2 
+	if(numpnts(tmpIntensity1)<10 || numpnts(tmpIntensity2)<10)
 		Abort "These data do not overlap enough"
 	endif
 	
@@ -2221,8 +2371,8 @@ Function IR3D_MergeDataOverlap()
 	variable StartQp, EndQp
 	StartQp = BinarySearch(TempQ1, startQ)+1		//+1 needs to be here or merging will fail. Lesson learned. Get error on index out of bounds...  
 	EndQp = BinarySearch(TempQ1, endQ )
-	if((EndQp-StartQp)<3)
-		abort "Not enough overlap"
+	if((EndQp-StartQp)<3 || StartQp<0 || EndQp<0)
+		abort "Not enough overlap, cursors set incorrectly. Fix Cursor positions... "
 	endif
 
 	Duplicate/O/Free/R=[StartQp, EndQp] TempInt1, TempInt1Part, TempInt2Part
@@ -2232,95 +2382,131 @@ Function IR3D_MergeDataOverlap()
 
 	TempInt2Part = TempInt2[BinarySearchInterp(TempQ2, TempQ1Part[p])]
 	TempErr2Part = TempErr2[BinarySearchInterp(TempQ2, TempQ1Part[p])]
-	variable integral1, integral2, scalingFactor, highQDifference, Q2shift
+	variable integral1, integral2, scalingFactor, highQDifference
 	integral1=areaXY(TempQ1, TempInt1, startQ, endQ )
 	integral2=areaXY(TempQ2, TempInt2, startQ, endQ )
 	scalingFactor = integral1/integral2
-	highQDifference = TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1]
-	//Q2shift = 0
-	//Data2Qshift = 0	
-	//scalingFactor = scalingFactor/10
-	//highQDifference = highQDifference/10
+	//highQDifference = TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1]
+	highQDifference = 0
 	Concatenate /O {TempQ1Part, TempInt1Part, TempInt2Part, TempErr1Part, TempErr2Part}, TempIntCombined
-	variable ValueEst= 0.11* IR3D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference, Q2shift)
+	variable ValueEst= 0.11* IR3D_FindMergeValues(TempIntCombined, scalingFactor, highQDifference, 0,0)
 	variable BestMinAchieved
-		//print ValueEst
-	if(VaryQshift>0)
-		variable ScalFacMin,ScaleFacmax, HighQBckgMin, HighQBckgMax, tmpVal
-		ScalFacMin = 0.1 * scalingFactor
-		ScaleFacmax = 10 * scalingFactor
-		HighQBckgMin = 0 
-		HighQBckgMax = 10*highQDifference
-		if(Optim_Data1Background && Optim_Data2IntMultiplier)		//vary Qshift, background, and scale
-			Make/O/N=(3,2) XLimitWave
-			XLimitWave={{ScalFacMin,HighQBckgMin,-TempQ1Part[0]/3 },{ScaleFacmax,HighQBckgMax,TempQ1Part[0]/3}}
-			KillWaves/Z W_Extremum
-						//if(NumberByKey("IGORVERS", IgorInfo(0))>7.05)	//for 7.05 and before the /Y flag does not work right... 
-			Optimize/Q/X={scalingFactor,highQDifference,Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,highQDifference, (TempQ1Part[0]/1)} IR3D_FindMergeValues,TempIntCombined
-						//else
-						//Optimize/Q/X={scalingFactor,highQDifference,Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0} /R={scalingFactor,highQDifference, (TempQ1Part[0]/1)} IR3D_FindMergeValues,TempIntCombined
-						//endif
-			Wave W_Extremum	
-			BestMinAchieved=V_min
-			KillWaves TempIntCombined
-			Data2IntMultiplier = W_Extremum[0]
-			Data1Background = W_Extremum[1]
-			Data2Qshift =W_Extremum[2] 
-		elseif(Optim_Data2IntMultiplier)	//vary Scale and Qshift, not background
-			if(Optim_Data2IntMultiplier)	//vary Scale and Qshift
+	variable ScalFacMin,ScaleFacmax, HighQBckgMin, HighQBckgMax, tmpVal, QshiftLimit
+			//print ValueEst
+			//print IR3D_FindMergeValuesInternal(TempIntCombined, Data2IntMultiplier, Data1Background,Data1Qshift, Data2Qshift)
+			//abort
+	highQDifference = abs(TempInt1Part[numpnts(TempInt1Part)-1] - scalingFactor*TempInt2Part[numpnts(TempInt2Part)-1])
+	ScalFacMin = 0.1 * abs(scalingFactor)
+	ScaleFacmax = 10 * abs(scalingFactor)
+	HighQBckgMin = 0 
+	HighQBckgMax = 10*highQDifference
+	QshiftLimit = TempQ1Part[0]/20
+	KillWaves/Z W_Extremum
+		if(!VaryQ1shift && VaryQ2shift && Optim_Data1Background && Optim_Data2IntMultiplier)		//vary Qshift, background, and scale
+				// D2Q, Scale, Background
+				Make/O/N=(3,2) XLimitWave
+				XLimitWave={{ScalFacMin,HighQBckgMin,-QshiftLimit },{ScaleFacmax,HighQBckgMax,QshiftLimit}}
+				Optimize/Q/X={scalingFactor,highQDifference,Data2Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,highQDifference, (TempQ1Part[0]/1)} IR3D_FindMergeValuesQ2ScaleBckg,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data2IntMultiplier = W_Extremum[0]
+				Data1Background = W_Extremum[1]
+				Data2Qshift =W_Extremum[2] 
+		elseif(VaryQ1shift && !VaryQ2shift && Optim_Data1Background && Optim_Data2IntMultiplier)		//vary Qshift, background, and scale
+				// D1Q, Scale, Background
+				Make/O/N=(3,2) XLimitWave
+				XLimitWave={{ScalFacMin,HighQBckgMin,-QshiftLimit },{ScaleFacmax,HighQBckgMax,QshiftLimit}}
+				Optimize/Q/X={scalingFactor,highQDifference,Data1Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,highQDifference, (QshiftLimit)} IR3D_FindMergeValuesQ1ScaleBckg,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data2IntMultiplier = W_Extremum[0]
+				Data1Background = W_Extremum[1]
+				Data1Qshift =W_Extremum[2] 
+		elseif(!VaryQ1shift && VaryQ2shift && Optim_Data2IntMultiplier && !Optim_Data1Background)	//vary Scale , not background
+				// D2Q, Scale
 				Make/O/N=(2,2) XLimitWave
-				XLimitWave={{ScalFacMin,-TempQ1Part[0]/3 },{ScaleFacmax,TempQ1Part[0]/3}}
-				KillWaves/Z W_Extremum
-							//if(NumberByKey("IGORVERS", IgorInfo(0))>7.05)	//for 7.05 and before the /Y flag does not work right... 
-				Optimize/Q/X={scalingFactor,Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,(TempQ1Part[0]/1)} IR3D_FindMergeValues2,TempIntCombined
-							//else
-							//Optimize/Q/X={scalingFactor,Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0} /R={scalingFactor, (TempQ1Part[0]/1)} IR3D_FindMergeValues2,TempIntCombined
-							//endif
+				XLimitWave={{ScalFacMin,-QshiftLimit },{ScaleFacmax,QshiftLimit}}
+				Optimize/Q/X={scalingFactor,Data2Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,(QshiftLimit)} IR3D_FindMergeValuesQ2Scale,TempIntCombined
 				Wave W_Extremum	
 				BestMinAchieved=V_min
 				KillWaves TempIntCombined
 				Data2IntMultiplier = W_Extremum[0]
 				Data2Qshift =W_Extremum[1] 
-			else		//vary only Qshift
+		elseif(!VaryQ1shift && VaryQ2shift && Optim_Data1Background && !Optim_Data2IntMultiplier)	//vary background
+				// D2Q, Background
+				Make/O/N=(2,2) XLimitWave
+				XLimitWave={{HighQBckgMin,-QshiftLimit },{HighQBckgMax,QshiftLimit}}
+				Optimize/Q/X={highQDifference,Data2Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={highQDifference,QshiftLimit} IR3D_FindMergeValuesQ2Backg,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data1Background = W_Extremum[0]
+				Data2Qshift =W_Extremum[1] 
+		elseif(VaryQ1shift && !VaryQ2shift && Optim_Data2IntMultiplier && !Optim_Data1Background)	//vary Scale and Qshift, not background
+				// D1Q, Scale
+				Make/O/N=(2,2) XLimitWave
+				XLimitWave={{ScalFacMin,-QshiftLimit },{ScaleFacmax,QshiftLimit}}
+				Optimize/Q/X={scalingFactor,Data1Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={scalingFactor,QshiftLimit} IR3D_FindMergeValuesQ1Scale,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data2IntMultiplier = W_Extremum[0]
+				Data1Qshift =W_Extremum[1] 
+		elseif(VaryQ1shift && !VaryQ2shift && Optim_Data1Background && !Optim_Data2IntMultiplier)	//vary background
+				// D1Q, Background
+				Make/O/N=(2,2) XLimitWave
+				XLimitWave={{HighQBckgMin,-QshiftLimit },{HighQBckgMax,QshiftLimit}}
+				Optimize/Q/X={highQDifference,Data2Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={highQDifference,QshiftLimit} IR3D_FindMergeValuesQ1Backg,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data1Background = W_Extremum[0]
+				Data1Qshift =W_Extremum[1] 
+		elseif(!VaryQ1shift && !VaryQ2shift && Optim_Data1Background && Optim_Data2IntMultiplier)
+				// Scale, Background
+				Make/O/N=(2,2) XLimitWave
+				XLimitWave={{ScalFacMin,HighQBckgMin },{ScaleFacmax,HighQBckgMax}}
+				Optimize/Q/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/TSA = {0,0.2}/M={3,0}/XSA=XLimitWave/Y =(ValueEst) IR3D_FindMergeValuesScaleBckg,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data2IntMultiplier = abs(W_Extremum[0])
+				Data1Background = W_Extremum[1]
+		elseif(!VaryQ1shift && VaryQ2shift && !Optim_Data1Background && !Optim_Data2IntMultiplier)		//vary only Qshift
+				// D2Q
 				Make/O/N=(1,1) XLimitWave
-				XLimitWave={{-TempQ1Part[0]/3 },{TempQ1Part[0]/3}}
-				KillWaves/Z W_Extremum
-				Optimize/Q/X={Q2shift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={(TempQ1Part[0]/1)} IR3D_FindMergeValues3,TempIntCombined
+				XLimitWave={{-QshiftLimit },{QshiftLimit}}
+				Optimize/Q/X={Data2Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={QshiftLimit} IR3D_FindMergeValuesQ2,TempIntCombined
 				Wave W_Extremum	
 				BestMinAchieved=V_min
 				KillWaves TempIntCombined
 				Data2Qshift =W_Extremum[0] 
-			endif
+		elseif(VaryQ1shift && !VaryQ2shift && !Optim_Data1Background && !Optim_Data2IntMultiplier)		//vary only Qshift
+				// D1Q
+				Make/O/N=(1,1) XLimitWave
+				XLimitWave={{-QshiftLimit },{QshiftLimit}}
+				Optimize/Q/X={Data1Qshift+0.0001}/XSA=XLimitWave/TSA = {0,0.2}/M={3,0}/Y =(ValueEst) /R={QshiftLimit} IR3D_FindMergeValuesQ1,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data1Qshift =W_Extremum[0] 
+		elseif(!VaryQ1shift && !VaryQ2shift && Optim_Data2IntMultiplier && !Optim_Data1Background)  		//scaling only, works... 
+				// Scale
+				Optimize/Q/X={scalingFactor}/R={scalingFactor}/Y =(ValueEst) IR3D_FindMergeValuesScale,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data2IntMultiplier = V_minloc	//for one parameter optimize we need to read this value and not the W_Extremum
+		elseif(!VaryQ1shift && !VaryQ2shift && !Optim_Data2IntMultiplier && Optim_Data1Background)		//background only
+				// Background
+				Optimize/Q/M={3,0}/X={HighQBckgMin}/TSA = {0,0.2}/M={3,0} IR3D_FindMergeValuesBackg,TempIntCombined
+				Wave W_Extremum	
+				BestMinAchieved=V_min
+				KillWaves TempIntCombined
+				Data1Background = W_Extremum[0]	
 		endif
-	else	//vary Scale and background, not Qshift
-		if(Optim_Data1Background && Optim_Data2IntMultiplier)
-			Optimize/Q/X={scalingFactor,highQDifference}/R={scalingFactor,highQDifference}/Y =(ValueEst) IR3D_FindMergeValues1,TempIntCombined
-			Wave W_Extremum	
-			BestMinAchieved=V_min
-			KillWaves TempIntCombined
-			Data2IntMultiplier = W_Extremum[0]
-			Data1Background = W_Extremum[1]
-		elseif(Optim_Data2IntMultiplier && !Optim_Data1Background)
-			//IR3D_FindMergeValues5(w, scalingFactor)		
-			Optimize/Q/X={scalingFactor}/R={scalingFactor}/Y =(ValueEst) IR3D_FindMergeValues5,TempIntCombined
-			Wave W_Extremum	
-			BestMinAchieved=V_min
-			KillWaves TempIntCombined
-			Data2IntMultiplier = W_Extremum[0]
-		elseif(!Optim_Data2IntMultiplier && Optim_Data1Background)
-			//IR3D_FindMergeValues4(w, highQDifference)
-			Optimize/Q/X={highQDifference}/R={highQDifference}/Y =(ValueEst) IR3D_FindMergeValues4,TempIntCombined
-			Wave W_Extremum	
-			BestMinAchieved=V_min
-			KillWaves TempIntCombined
-			Data1Background = W_Extremum[0]
-		endif
-	endif
-
-//	NVAR Optim_Data1Background = root:Packages:Irena:SASDataMerging:Optim_Data1Background
-//	NVAR Optim_Data2IntMultiplier = root:Packages:Irena:SASDataMerging:Optim_Data2IntMultiplier
-//	NVAR Optim_Data2Qshift = root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
-
 
 	StartQp = BinarySearch(Qvector2, startQ )
 
@@ -2337,6 +2523,7 @@ Function IR3D_MergeDataOverlap()
 	ResultErr2 *=Data2IntMultiplier
 	ResultIntensity1-=Data1Background
 	ResultQ2-=Data2Qshift
+	ResultQ1-=Data1Qshift
 	
 	Concatenate/NP/O {ResultIntensity1, ResultIntensity2}, ResultIntensity
 	Concatenate/NP/O {ResultQ1, ResultQ2}, ResultQ
@@ -2344,7 +2531,7 @@ Function IR3D_MergeDataOverlap()
 	Concatenate/NP/O {ResultdQ1, ResultdQ2}, ResultdQ
 	
 	Sort  ResultQ, ResultQ, ResultIntensity, ResultError, ResultdQ
-	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , and Data 2 Q shift = "+num2str(Data2Qshift)+" , ChiSquared = "+num2str(BestMinAchieved)
+	print "Merged data with following parameters: Data 2 ScalingFct = "+num2str(Data2IntMultiplier)+" , Data 1 bckg = "+num2str(Data1Background)+" , Data 1 Q/d/tth shift = "+num2str(Data1Qshift)+", and Data 2 Q/d/tth shift = "+num2str(Data2Qshift)+" , ChiSquared = "+num2str(BestMinAchieved)
 	wavestats/Q ResultIntensity
 	if(V_min<0 && !InputNegative)
 		ResultIntensity-=V_min
@@ -2356,189 +2543,230 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+//optimize 4 parameters
+Function IR3D_FindMergeValues(w, scalingFactor, Background, Q2shift, Q1shift)
+	Wave w
+	Variable scalingFactor,Background, Q2shift, Q1shift
+	//scalingFactor = abs(scalingFactor)
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	//NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	//NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. End
+End
+//**********************************************************************************************************
 //optimize 3 parameters
-Function IR3D_FindMergeValues(w, scalingFactor, highQDifference, Q2shift)
+Function IR3D_FindMergeValuesQ2ScaleBckg(w, scalingFactor, Background, Q2shift)
 	Wave w
-	Variable scalingFactor,highQDifference, Q2shift
-	variable PowerLaw=0, tmpVal
+	Variable scalingFactor,Background, Q2shift
 	//scalingFactor = abs(scalingFactor)
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
-	tmpQ = w[p][0]
-	Int2tmp = w[p][2]
-	InsertPoints 0,1, tmpQ, Int2tmp
-	tmpQ[0]=tmpQ[1]/2
-	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
-	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
-	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
-	//print Q2shift
-	//Q2shift = (Q2shift >  -1*tmpQ[0]/4) ? Q2shift :  -1*tmpQ[0]/4
-	//Q2shift = (Q2shift <  tmpQ[0]/4) ? Q2shift :  tmpQ[0]/4
-	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
-	//print Int2shifted - Int2shifted2
-	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
-	tempDifference = tempDifference^2										//distance squared... 
-	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
-	tempDifference/=tempWeights											//normalize the difference by uncertainity
-	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
-	//NVAR TempResult
-	//print TempResult, sum(tempDifference)
-	//if(TempResult>sum(tempDifference))
-	//	print sum(tempDifference), scalingFactor, highQDifference, Q2shift
-	//	TempResult = sum(tempDifference)
-	//else
-		//print scalingFactor, highQDifference, Q2shift
-	//endif
-	return sum(tempDifference)												//total distance as defined above. 
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	//NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. End
+End
+//**********************************************************************************************************
+//optimize 3 parameters
+Function IR3D_FindMergeValuesQ1ScaleBckg(w, scalingFactor, Background, Q1shift)
+	Wave w
+	Variable scalingFactor,Background, Q1shift
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	//NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. End
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//optimize 2 parameters - keep Qshift fixed...
+//this will compensate for Q2 shift which user selected. 
+Function IR3D_FindMergeValuesScaleBckg(w, scalingFactor, Background)
+	Wave w
+	Variable scalingFactor,Background
+	//scalingFactor = abs(scalingFactor)
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-//optimize 2 parameters - keep Qshift fixed...
-//this will compensate for Q2 shit which user selected. 
-Function IR3D_FindMergeValues1(w, scalingFactor, highQDifference)
-	Wave w
-	Variable scalingFactor,highQDifference
-	variable PowerLaw=0, tmpVal
-	//scalingFactor = abs(scalingFactor)
-	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
-	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
-	tmpQ = w[p][0]
-	Int2tmp = w[p][2]
-	InsertPoints 0,1, tmpQ, Int2tmp
-	tmpQ[0]=tmpQ[1]/2
-	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
-	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
-	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
-	//print Q2shift
-	//Q2shift = (Q2shift >  -1*tmpQ[0]/4) ? Q2shift :  -1*tmpQ[0]/4
-	//Q2shift = (Q2shift <  tmpQ[0]/4) ? Q2shift :  tmpQ[0]/4
-	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
-	//print Int2shifted - Int2shifted2
-	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
-	tempDifference = tempDifference^2										//distance squared... 
-	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
-	tempDifference/=tempWeights											//normalize the difference by uncertainity
-	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
-	//NVAR TempResult
-	//print TempResult, sum(tempDifference)
-	//if(TempResult>sum(tempDifference))
-	//	print sum(tempDifference), scalingFactor, highQDifference, Q2shift
-	//	TempResult = sum(tempDifference)
-	//else
-		//print scalingFactor, highQDifference, Q2shift
-	//endif
-	return sum(tempDifference)												//total distance as defined above. 
-End
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-//optimize 2 parameters - keep Qshift fixed...
-//this will compensate for Q2 shit which user selected. 
-Function IR3D_FindMergeValues2(w, scalingFactor, Q2shift)
+//optimize 2 parameters - keep Data1Background fixed...
+//this will compensate for Data1Background shit which user selected. 
+Function IR3D_FindMergeValuesQ2Scale(w, scalingFactor, Q2shift)
 	Wave w
 	Variable scalingFactor,Q2shift
-	variable PowerLaw=0, tmpVal
-	//scalingFactor = abs(scalingFactor)
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
-	NVAR highQDifference =root:Packages:Irena:SASDataMerging:Optim_Data1Background
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
-	tmpQ = w[p][0]
-	Int2tmp = w[p][2]
-	InsertPoints 0,1, tmpQ, Int2tmp
-	tmpQ[0]=tmpQ[1]/2
-	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
-	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
-	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
-	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
-	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
-	tempDifference = tempDifference^2										//distance squared... 
-	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
-	tempDifference/=tempWeights											//normalize the difference by uncertainity
-	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
-	return sum(tempDifference)												//total distance as defined above. 
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	//NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
 End
-//optimize 1 parameter -  Qshift
-Function IR3D_FindMergeValues3(w, Q2shift)
+//**********************************************************************************************************
+Function IR3D_FindMergeValuesQ1Backg(w, Background, Q1shift)
+	Wave w
+	Variable Background,Q1shift
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Optim_Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	//NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
+End
+//**********************************************************************************************************
+Function IR3D_FindMergeValuesQ2Backg(w, Background, Q2shift)
+	Wave w
+	Variable Background,Q2shift
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Optim_Data1Background
+	//NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_FindMergeValuesQ1Scale(w, scalingFactor, Q1shift)
+	Wave w
+	Variable scalingFactor,Q1shift
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	//NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_FindMergeValuesQ2(w, Q2shift)
 	Wave w
 	Variable Q2shift
-	variable PowerLaw=0, tmpVal
-	//scalingFactor = abs(scalingFactor)
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
-	NVAR highQDifference =root:Packages:Irena:SASDataMerging:Optim_Data1Background
 	NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
-	tmpQ = w[p][0]
-	Int2tmp = w[p][2]
-	InsertPoints 0,1, tmpQ, Int2tmp
-	tmpQ[0]=tmpQ[1]/2
-	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
-	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
-	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
-	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
-	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
-	tempDifference = tempDifference^2										//distance squared... 
-	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
-	tempDifference/=tempWeights											//normalize the difference by uncertainity
-	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
-	return sum(tempDifference)												//total distance as defined above. 
+	NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	//NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//optimize 1 parameter -  Qshift
+Function IR3D_FindMergeValuesQ1(w, Q1shift)
+	Wave w
+	Variable Q1shift
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	//NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
 End
 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 //find only 1 parameter, high-q background. 
-Function IR3D_FindMergeValues4(w, highQDifference)
+Function IR3D_FindMergeValuesBackg(w, Background)
 	Wave w
-	Variable highQDifference
-	variable PowerLaw=0, tmpVal
+	Variable Background
 	//scalingFactor = abs(scalingFactor)
 	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
-	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
 	NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
-	tmpQ = w[p][0]
-	Int2tmp = w[p][2]
-	InsertPoints 0,1, tmpQ, Int2tmp
-	tmpQ[0]=tmpQ[1]/2
-	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
-	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
-	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
-	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
-	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
-	tempDifference = tempDifference^2										//distance squared... 
-	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
-	tempDifference/=tempWeights											//normalize the difference by uncertainity
-	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
-	return sum(tempDifference)												//total distance as defined above. 
+	//NVAR Background =root:Packages:Irena:SASDataMerging:Optim_Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
 End
 //find only 1 parameter, ScalingFactor. 
-Function IR3D_FindMergeValues5(w, scalingFactor)
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_FindMergeValuesScale(w, scalingFactor)
 	Wave w
 	Variable scalingFactor
-	variable PowerLaw=0, tmpVal
-	NVAR highQDifference =root:Packages:Irena:SASDataMerging:Optim_Data1Background
-	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Optim_Data2Qshift
-	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp
+	//scalingFactor = abs(scalingFactor)
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	//NVAR scalingFactor =root:Packages:Irena:SASDataMerging:Data2IntMultiplier
+	NVAR Background =root:Packages:Irena:SASDataMerging:Data1Background
+	NVAR Q2shift =root:Packages:Irena:SASDataMerging:Data2Qshift
+	NVAR Q1shift =root:Packages:Irena:SASDataMerging:Data1Qshift
+	variable result = IR3D_FindMergeValuesInternal(w, scalingFactor, Background,Q1shift, Q2shift)
+	return result								//total distance as defined above. 
+End
+
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_FindMergeValuesInternal(w, scalingFactor, highQDifference,Q1shift, Q2shift)
+	Wave w
+	Variable scalingFactor, highQDifference, Q1shift, Q2shift
+	variable tmpVal
+	//scalingFactor = abs(scalingFactor)
+	//dimensions 0 is Q, 1 is USAXS, 2 is SAXS, 3 is USAXS error, 4 is SAXS error
+	make/Free/N=(dimsize(w,0)) tempDifference, tempWeights, Int2shifted, tmpQ, Int2tmp, Int1tmp, Int1shifted, OrgQ
 	tmpQ = w[p][0]
+	OrgQ = tmpQ
+	Int1tmp = w[p][1]
 	Int2tmp = w[p][2]
-	InsertPoints 0,1, tmpQ, Int2tmp
-	tmpQ[0]=tmpQ[1]/2
-	Int2tmp[0]=Int2tmp[1]+((Int2tmp[1]-Int2tmp[2])/(tmpQ[2]-tmpQ[1]))*tmpQ[1]/2
-	InsertPoints (numpnts(tmpQ)),1, tmpQ, Int2tmp
-	Int2tmp[numpnts(tmpQ)-1]=Int2tmp[numpnts(tmpQ)-2]
-	tmpQ[numpnts(tmpQ)-1]=tmpQ[numpnts(tmpQ)-2]+tmpQ[1]/2
-	Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(w[p][0]+Q2shift))]
-	tempDifference = ((w[p][1]-highQDifference) - ((scalingFactor) * Int2shifted[p]))	//difference between the two values
+	if(Q2shift!=0)
+		IR3D_ExtendDataForMerge(Int2tmp, tmpQ)
+		Int2shifted = Int2tmp[BinarySearchInterp(tmpQ,(OrgQ[p]+Q2shift))]
+		tempDifference = ((Int1tmp[p]-highQDifference) - (scalingFactor * Int2shifted[p]))	//difference between the two values
+	else
+		IR3D_ExtendDataForMerge(Int1tmp, tmpQ)
+		Int1shifted = Int1tmp[BinarySearchInterp(tmpQ,(OrgQ[p]+Q1shift))]
+		tempDifference = ((Int1shifted[p]-highQDifference) - ((scalingFactor) * Int2tmp[p]))	//difference between the two values
+	endif
 	tempDifference = tempDifference^2										//distance squared... 
 	tempWeights = (w[p][3] + scalingFactor * w[p][4])						//sum of uncertainities
 	tempDifference/=tempWeights											//normalize the difference by uncertainity
 	tempDifference = abs(tempDifference)									//this may not be necessary if difference is squared
 	return sum(tempDifference)												//total distance as defined above. 
 End
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3D_ExtendDataForMerge(Inttmp, Qtemp)
+	wave Inttmp, Qtemp
+	InsertPoints 0,1, Inttmp, Qtemp
+	InsertPoints (numpnts(Qtemp)),1, Qtemp, Inttmp
+	//Q extension
+	if(Qtemp[2]<Qtemp[3])
+		Qtemp[0]=Qtemp[1]/2
+		Qtemp[numpnts(Qtemp)-1]=2*Qtemp[numpnts(Qtemp)-2]
+	else
+		Qtemp[numpnts(Qtemp)-1]=Qtemp[numpnts(Qtemp)-2]/2
+		Qtemp[0]=2*Qtemp[1]
+	endif
+	Inttmp[0]=Inttmp[1]//+((Inttmp[1]-Inttmp[2])/(Qtemp[2]-Qtemp[1]))*Qtemp[1]/2
+	Inttmp[numpnts(Qtemp)-1]=Inttmp[numpnts(Qtemp)-2]
+	
+end 
 
 
 //**********************************************************************************************************
@@ -2706,6 +2934,8 @@ Function IR3D_PanelHookFunction(H_Struct)
 	
 	String subWinName 	= H_Struct.winName
 	String cursorName 		= H_Struct.cursorName
+	
+	variable UsingQRS_D_data = 0
 	// *!*! The only way to determine which subWindow is active
 	//GetWindow $"" activeSW
 	//print S_value
@@ -2746,6 +2976,12 @@ Function IR3D_PanelHookFunction(H_Struct)
 		else
 			NVAR Data2Qstart = root:Packages:Irena:SASDataMerging:Data2Qstart
 			NVAR Data1QEnd = root:Packages:Irena:SASDataMerging:Data1QEnd
+			NVAR UseQRSdata1 = root:Packages:Irena:SASDataMerging:UseQRSdata1
+			SVAR QWavename1 = root:Packages:Irena:SASDataMerging:QWavename1
+			if(UseQRSdata1 && StringMatch(QWavename1, "d*"))
+				UsingQRS_D_data=1			//disable checking when yusing d spacing, it is way too messy.... 
+			endif
+			
 			if((stringmatch(cursorName,"C")||stringmatch(cursorName,"D"))&&stringmatch(H_Struct.eventName,"cursormoved"))
 				NVAR/Z ExtrapData1Start = root:Packages:Irena:SASDataMerging:ExtrapData1Start
 				NVAR/Z ExtrapData1End = root:Packages:Irena:SASDataMerging:ExtrapData1End
@@ -2771,7 +3007,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 						Print "C cursor must be on OriginalData1IntWave, set to last known positiont"
 					else
 						ExtrapData1Start = OriginalData1QWave[H_Struct.pointNumber]
-						if(ExtrapData1Start>=ExtrapData1End)
+						if(ExtrapData1Start>=ExtrapData1End &&(!UsingQRS_D_data))
 							tmpP=binarysearch(OriginalData1QWave,ExtrapData1End)
 							tmpP=max(0,tmpP)
 							cursor /W=IR3D_DataMergePanel#DataDisplay C, OriginalData1IntWave, tmpP-8
@@ -2794,7 +3030,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 						Print "D cursor must be on OriginalData1IntWave, set to last known positiont"
 					else
 						ExtrapData1End = OriginalData1QWave[H_Struct.pointNumber]
-						if(ExtrapData1Start>=ExtrapData1End)
+						if(ExtrapData1Start>=ExtrapData1End &&(!UsingQRS_D_data))
 							tmpP=binarysearch(OriginalData1QWave,ExtrapData1Start)
 							tmpP=min(tmpP,numpnts(OriginalData1QWave)-1)
 							cursor /W=IR3D_DataMergePanel#DataDisplay C, OriginalData1IntWave, tmpP+8
@@ -2819,7 +3055,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 						Print "A cursor must be on OriginalData2IntWave and at least on second point from the start"
 					else
 						Data2Qstart = OriginalData2QWave[H_Struct.pointNumber]
-						if(Data2Qstart>=Data1QEnd)
+						if(Data2Qstart>=Data1QEnd &&(!UsingQRS_D_data))
 							cursor /W=IR3D_DataMergePanel#DataDisplay A, OriginalData2IntWave, 1
 							Data2Qstart = OriginalData2QWave[1]
 							DoALert 0, "Must have overlap of the data set. You are trying to set Data 2 start Q value higher than your current end value for Data 1. Reset Data 2 start to default position. "
@@ -2842,7 +3078,7 @@ Function IR3D_PanelHookFunction(H_Struct)
 					else
 						Data1QEnd = OriginalData1QWave[H_Struct.pointNumber]		
 						variable Data2StartP=BinarySearch(OriginalData1QWave, Data2Qstart)+1
-						if(Data2Qstart>=Data1QEnd && (H_Struct.pointNumber - Data2StartP)<4)
+						if(Data2Qstart>=Data1QEnd && (H_Struct.pointNumber - Data2StartP)<4 &&(!UsingQRS_D_data))
 							//find more sensible place for B cursor here...
 							variable EndPoint
 							EndPoint = min(Data2StartP+5,numpnts(OriginalData1QWave)-2 )

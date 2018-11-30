@@ -135,7 +135,7 @@ Function Nexus_MainCheckVersion()
 	DoWindow NEXUS_ConfigurationPanel
 	if(V_Flag)
 		if(!NI1_CheckPanelVersionNumber("NEXUS_ConfigurationPanel", NexusVersionNumber))
-			DoAlert /T="The Nexus configuration panel was created by old version of Nika " 1, "Nexus Config needs to be reopened to work properly. Restart now?"
+			DoAlert /T="The Nexus configuration panel was created by incorrect version of Nika " 1, "Nexus Config needs to be reopened to work properly. Restart now?"
 			if(V_flag==1)
 				NEXUS_NikaCall(2)
 			else		//at least reinitialize the variables so we avoid major crashes...

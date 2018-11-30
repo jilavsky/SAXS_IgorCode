@@ -513,7 +513,7 @@ Function IR3GP_MainCheckVersion()
 	DoWindow IR3DP_MainPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR3DP_MainPanel", IR3GPversionNumber))
-			DoAlert /T="The Gunier-Porod panel was created by old version of Irena " 1, "Guinier Porod tool may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Gunier-Porod panel was created by incorrect version of Irena " 1, "Guinier Porod tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z IR3DP_MainPanel
 				IR3GP_Main()

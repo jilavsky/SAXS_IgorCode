@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.37
+#pragma version=1.38
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -7,6 +7,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.38 switched off RemoveDropouts by default. Added ability to overwrite Flyscan amplifier dead times. 
 //1.37 fix bug when debugger when no data and Desmearing was checked. 
 //1.36 fix manual page called by help button
 //1.35 modify the sleep between multiple USAXS data reductions in IN3_InputPanelButtonProc to be more user friendly
@@ -1777,7 +1778,8 @@ Function NI3_TabPanelControl(name,tab)
 	//SetVariable BeamExposureArea, win=USAXSDataReduction, disable=(tab!=0 || IsBlank || CalibrateArbitrary), noedit=!(CalculateWeight&&CalibrateToWeight), frame=!CalculateWeight
 
 
-
+	TitleBox Info3,win=USAXSDataReduction, disable=(tab!=1)
+	TitleBox Info4,win=USAXSDataReduction, disable=(tab!=1) 
 	SetVariable VtoF,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Gain1,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Gain2,win=USAXSDataReduction, disable=(tab!=1)
@@ -1796,6 +1798,19 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable Bkg5Err,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Bkg5Overwrite,win=USAXSDataReduction, disable=(tab!=1)
 
+	SetVariable FSOverWriteRage1DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSOverWriteRage2DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSOverWriteRage3DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSOverWriteRage4DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSOverWriteRage5DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSRage1DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSRage2DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSRage3DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSRage4DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+	SetVariable FSRage5DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+
+	TitleBox Info5,win=USAXSDataReduction, disable=(tab!=1 || IsBlank)
+	SetVariable SubtractFlatBackground,win=USAXSDataReduction, disable=(tab!=1 || IsBlank)
 
 	SetVariable SpecCommand,win=USAXSDataReduction, disable=(tab!=2)
 	SetVariable PhotoDiodeSize,win=USAXSDataReduction, disable=(tab!=2)
@@ -1810,7 +1825,6 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable BlankMaximum,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	SetVariable BlankWidth,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	SetVariable BlankWidthArcSec,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
-	SetVariable SubtractFlatBackground,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	CheckBox CalibrateUseSampleFWHM,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 	Button RecoverDefaultBlnkVals,win=USAXSDataReduction, disable=(tab!=3 || IsBlank)
 

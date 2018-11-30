@@ -1116,19 +1116,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			close tempFilNmNum
 		endif
 		//end of special section for case or parameter file... This al section should be skipped for any other ASCIi files. 
-//	elseif(cmpstr(FileType,"mp/asc")==0)
-//		FileNameToLoad= FileName
-//		killwaves/Z Loadedwave0,Loadedwave1
-//		LoadWave/G/P=$(PathName)/A=Loadedwave FileNameToLoad
-//			if(V_flag==0)		//check if we loaded at least some data...
-//				return 0
-//			endif
-//		wave Loadedwave0
-//		Redimension/N=(sqrt(numpnts(Loadedwave0)),sqrt(numpnts(Loadedwave0))) Loadedwave0
-//		duplicate/O Loadedwave0, $(NewWaveName)
-//		killwaves Loadedwave0
-//		NewNote+="DataFileName="+FileNameToLoad+";"
-//		NewNote+="DataFileType="+"mp/asc"+";"
 	elseif(cmpstr(FileType,"BSRC/Gold")==0)
 		FileNameToLoad= FileName
 		killwaves/Z Loadedwave0,Loadedwave1
@@ -1157,26 +1144,9 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		//string temp=StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":")
 		NewNote+="DataFileName="+StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":")+";"
 		NewNote+="DataFileType="+"marIP/Fit2D"+";"
-//	elseif(cmpstr(FileType,"Mar")==0)
-//		PathInfo $(PathName)
-//		FileNameToLoad=  S_path + FileName
-//		DoReadMAR345(FileNameToLoad, NewWaveName)
-//		NewNote+="DataFileName="+FileNameToLoad+";"
-//		NewNote+="DataFileType="+"Mar"+";"
-//	elseif(cmpstr(FileType,"RigakuRaxis/xop")==0)
-//		PathInfo $(PathName)
-//		FileNameToLoad=  S_path + FileName
-//#if(Exists("RigakuRaxisReader"))	
-//		 RigakuRaxisReader FileNameToLoad
-//		 //NewWaveName
-//		abort
-//#endif
-//		NewNote+="DataFileName="+FileNameToLoad+";"
-//		NewNote+="DataFileType="+"Rigaku Raxis"+";"
 	elseif(cmpstr(FileType,"MarIP/xop")==0)		//added 9/16/2008, needs ccp4xop ... 
 		PathInfo $(PathName)
 		FileNameToLoad=  S_path + FileName
-//		FileNameToLoad=  FileName
 #if(Exists("ccp4unpack"))	
 		ccp4unpack/M /N=$(NewWaveName)/O  FileNameToLoad		//note: Fails for names too long... 
 		LoadedOK=1		//??? how to check if it works?

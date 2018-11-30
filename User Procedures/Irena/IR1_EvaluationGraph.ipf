@@ -550,25 +550,28 @@ Function IR1G_CalculateSurfaceArea(DistributionWv,diametersWv, StartP, EndP, Dis
 	
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:SASDataEvaluation
-	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, ParticleSurface, ParticleVolumes
-	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
+	Duplicate/O/R=(StartP, EndP)/Free DistributionWv, Dist_temp, ParticleSurface, ParticleVolumes
+	Duplicate/O/R=(StartP, EndP)/Free diametersWv, Dia_temp, Dia_tempOrig
 	variable number
 
+	string XWvName = NameOfWave(diametersWv)
+	if(stringMatch(XWvName,"*Radi*"))		//this is really radius wave...
+		Dia_temp =  2 * Dia_temp		//convert to diameters for next calculations
+	endif
 	IR1G_CreateAveVolSfcWvUsingNote(ParticleSurface,Dia_temp,Note(DistributionWv),"Surface")
 
 	if (stringmatch(DistWaveName,"*Number*") || stringmatch(DistWaveName,"*NumDist*"))
 		//this is easy, just integrate
 		Dist_temp = Dist_temp * ParticleSurface
-		number=areaXY(Dia_temp, Dist_temp, 0, inf)
+		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
 	if (stringmatch(DistWaveName,"*Volume*") || stringmatch(DistWaveName,"*VolDist*"))
 		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume")
 		Dist_temp = Dist_temp / ParticleVolumes			//this is now number distribution
 		Dist_temp = Dist_temp * ParticleSurface			//this is now specific surface area
-		number=areaXY(Dia_temp, Dist_temp, 0, inf)
+		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
 
-	KillWaves/Z  Dist_temp, Dia_temp, ParticleSurface, ParticleVolumes
 	setDataFolder OldDf	
 	return number
 end
@@ -585,22 +588,25 @@ Function IR1G_CalculateNumber(DistributionWv,diametersWv, StartP, EndP, DistWave
 	
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:SASDataEvaluation
-	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp,  ParticleVolumes
-	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
+	Duplicate/O/R=(StartP, EndP)/Free DistributionWv, Dist_temp,  ParticleVolumes
+	Duplicate/O/R=(StartP, EndP)/Free diametersWv, Dia_temp, Dia_tempOrig
 	variable number
-
+	//need to fix this in case we have radius wave and not diameter...
+	string XWvName = NameOfWave(diametersWv)
+	if(stringMatch(XWvName,"*Radi*"))		//this is really radius wave...
+		Dia_temp =  2 * Dia_temp			//convert to diameters for next calculations
+	endif
 
 	if (stringmatch(DistWaveName,"*Number*") || stringmatch(DistWaveName,"*NumDist*"))
 		//this is easy, just integrate
-		number=areaXY(Dia_temp, Dist_temp, 0, inf)
+		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
 	if (stringmatch(DistWaveName,"*Volume*") || stringmatch(DistWaveName,"*VolDist*"))
 		IR1G_CreateAveVolSfcWvUsingNote(ParticleVolumes,Dia_temp,Note(DistributionWv),"Volume")
 		Dist_temp = Dist_temp / ParticleVolumes			//this is now number distribution
-		number=areaXY(Dia_temp, Dist_temp, 0, inf)
+		number=areaXY(Dia_tempOrig, Dist_temp, 0, inf)
 	endif
 
-	KillWaves/Z  Dist_temp, Dia_temp, ParticleVolumes
 	setDataFolder OldDf	
 	return number
 end
@@ -1415,7 +1421,7 @@ Proc  IR1G_OneSampleEvaluationGraph()
 	SetVariable Volume,limits={-Inf,Inf,0},value= root:Packages:SASDataEvaluation:GR1_Volume
 	SetVariable Number,pos={490,78},size={250,16},title="Number density [1/cm3]       ", format="%1.3e", disable=2, help={"This is total number of scatterers in cm3 in the range evaluated *between csr A and B)"}
 	SetVariable Number,limits={-Inf,Inf,0},value= root:Packages:SASDataEvaluation:GR1_NumberDens
-	SetVariable PorodSurface,pos={490,98},size={250,16},title="Specific surface area [cm2/cm3]", format="%3.1f"
+	SetVariable PorodSurface,pos={490,98},size={250,16},title="Specific surface area [cm2/cm3]", format="%3.1e"
 	SetVariable PorodSurface,limits={-Inf,Inf,0},value= root:Packages:SASDataEvaluation:GR1_PorodSurface, disable=2, help={"This is total specificc surface area (cm2/cm3) in the range evaluated (between csr A and B)"}
 
 	SetVariable NumerOrVolume,pos={490,2},size={450,16},title="Statistics for:"//, format="%3.1f"

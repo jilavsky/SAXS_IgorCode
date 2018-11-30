@@ -37,7 +37,7 @@ Function IR2D_DWSMainCheckVersion()
 	DoWindow IR2D_DWSGraphPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR2D_DWSGraphPanel", IR1D_DWSversionNumber))
-			DoAlert /T="The Plotting tool II panel was created by old version of Irena " 1, "Plotting tool II may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Plotting tool II panel was created by incorrect version of Irena " 1, "Plotting tool II may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR2D_DWSPlotToolMain()
 			else		//at least reinitialize the variables so we avoid major crashes...

@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.61
-Constant NI1AversionNumber = 2.62
+Constant NI1AversionNumber = 2.63
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2018, Argonne National Laboratory
@@ -8,6 +8,7 @@ Constant NI1AversionNumber = 2.62
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.63 added Circular Q axes. 
 //2.62 fix bug in Igor 8 which causes hang of the window. Panel made wider. 
 //2.61 Fixed normalization bug which causes spike in intensity on our WAXS data (+1 missing Intensity normalization)
 //			added Reprocess curren data and modified panel as needed.   
@@ -126,7 +127,7 @@ Function NI1A_MainCheckVersion()
 			print tempStr
 		endif
 		if(!NI1_CheckPanelVersionNumber("NI1A_Convert2Dto1DPanel", NI1AversionNumber))
-			DoAlert /T="The Nika main panel was created by old version of Nika " 1, "Nika needs to be restarted to work properly. Restart now?"
+			DoAlert /T="The Nika main panel was created by incorrect version of Nika " 1, "Nika needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				NI1A_Convert2Dto1DMainPanel()
 			else		//at least reinitialize the variables so we avoid major crashes...
@@ -311,7 +312,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="LineProf_UseBothHalfs;LineProf_DistanceFromCenter;LineProf_Width;LineProf_DistanceQ;LineProf_WidthQ;"
 	ListOfVariables+="LineProfileDisplayWithQ;LineProfileDisplayWithQy;LineProfileDisplayWithQz;LineProfileDisplayWithAzA;LineProfileDisplayLogX;LineProfileDisplayLogY;"
 	ListOfVariables+="LineProfileUseRAW;LineProfileUseCorrData;LineProf_EllipseAR;LineProf_LineAzAngle;LineProf_GIIncAngle;GISAXS_ycenterReflectedbeam;"
-	ListOfVariables+="DisplayQValsOnImage;DisplayQvalsWIthGridsOnImg;DisplayColorScale;"	
+	ListOfVariables+="DisplayQValsOnImage;DisplayQvalsWIthGridsOnImg;DisplayColorScale;DisplayQCirclesOnImage;"	
 	//movie creation controls
 	ListOfVariables+="Movie_Use2DRAWdata;Movie_Use2DProcesseddata;Movie_Use1DData;Movie_AppendFileName;Movie_AppendAutomatically;Movie_DisplayLogInt;Movie_FrameRate;Movie_FileOpened;"
 	ListOfVariables+="Movie_UseMain2DImage;Movie_UseUserHookFnct;"
@@ -554,6 +555,16 @@ Function NI1A_Initialize2Dto1DConversion()
 			testVal =0
 		endif
 	endfor		
+	
+	NVAR DisplayQValsOnImage
+	NVAR DisplayQvalsWIthGridsOnImg
+	NVAR DisplayQCirclesOnImage
+	if(DisplayQCirclesOnImage+DisplayQValsOnImage+DisplayQvalsWIthGridsOnImg>1)
+		DisplayQValsOnImage = 0
+		DisplayQvalsWIthGridsOnImg = 0
+		DisplayQCirclesOnImage = 0
+	endif
+
 
 	NVAR Process_DisplayAve
 	NVAR Process_Individually

@@ -98,7 +98,7 @@ Function IR1A_MainCheckVersion()
 	DoWindow IR1A_ControlPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1A_ControlPanel", IR1AversionNumber))
-			DoAlert /T="The Unified fit panel was created by old version of Irena " 1, "Unified fit may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Unified fit panel was created by incorrect version of Irena " 1, "Unified fit may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR1A_UnifiedModel()
 			else		//at least reinitialize the variables so we avoid major crashes...

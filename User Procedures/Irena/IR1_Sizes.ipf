@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.29
-Constant IR1RSversionNumber=2.29
+#pragma version = 2.30
+Constant IR1RSversionNumber=2.30
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@ Constant IR1RSversionNumber=2.29
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.30 added new parameters to storing the data, so they can be recovered. Forgot to do this last time. 
 //2.29 modify behavior of low-q power law slope and add "fit on Graph data" options... 
 //2.28 add low-q power law background subtraction for data. Treat same as background for now. 
 //2.27 add Total volume fraction and Rg to main Graph control bar. 
@@ -178,7 +179,7 @@ Function IR1R_MainCheckVersion()
 	DoWindow IR1R_SizesInputPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1R_SizesInputPanel", IR1RSversionNumber))
-			DoAlert /T="The Size distribution panel was created by old version of Irena " 1, "Size distribution may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Size distribution panel was created by incorrect version of Irena " 1, "Size distribution may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR1R_Sizes()
 			else		//at least reinitialize the variables so we avoid major crashes...
@@ -922,10 +923,10 @@ Function IR1R_InitializeSizes()			//dialog for radius wave creation, simple line
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:Sizes
 	
-	//initializes the Maximum lentropy part of Sizes
+	//initializes the Maximum entropy part of Sizes
 	
-	string ListOfVariables
-	string ListOfStrings
+	string/g ListOfVariables
+	string/g ListOfStrings
 	variable i
 	//AspectRatio;FractalRadiusOfPriPart;FractalDimension;CylinderLength;TubeLength;
 	//CylinderLength;CoreShellThicknessRatio;CoreShellContrastRatio;TubeWallThickness;TubeCoreContrastRatio
@@ -1146,7 +1147,26 @@ Function IR1R_RecoverOldParameters()
 	NVAR UseTNNLS			=root:Packages:Sizes:UseTNNLS
 	NVAR StartFItQvalue
 	NVAR EndFItQvalue
-
+	NVAR 	UseUserErrors
+	NVAR 	UseSQRTErrors
+	NVAR 	UsePercentErrors
+	NVAR 	PercentErrorToUse
+	NVAR 	UseNoErrors
+	NVAR 	RebinDataTo
+	NVAR 	AutoCalculateParameters
+	NVAR 	RemoveTrustRegionIndicators
+	NVAR 	Rg
+	NVAR 	TotalVolumeFraction
+	NVAR 	LowQPowerLawSlope
+	NVAR 	LowQScalingFactor
+	NVAR 	FitBPBackOnImport
+	NVAR 	FitBonImport
+	NVAR 	FitBPonImport
+	NVAR 	FitBckgOnImport
+	NVAR 	FitBPonImportQmin
+	NVAR 	FitBPonImportQmax
+	NVAR 	FitBackonImportQmin
+	NVAR 	FitBackonImportQmax
 
 
 
@@ -1200,13 +1220,34 @@ Function IR1R_RecoverOldParameters()
 		//	BinWidthInGMatrix=NumberbyKey("BinWidthInGMatrix", OldNote,"=")
 			BinWidthInGMatrix=0			//patch, found to be right setting
 	
-			 SizesPowerToUse		=NumberByKey("SizesPowerToUse", OldNote,"=")
+			 SizesPowerToUse			=NumberByKey("SizesPowerToUse", OldNote,"=")
 			 NNLS_MaxNumIterations	=NumberByKey("NNLS_MaxNumIterations", OldNote,"=")
 			 NNLS_ApproachParameter	=NumberByKey("NNLS_ApproachParameter", OldNote,"=")
-			 UseRegularization		=NumberByKey("UseRegularization", OldNote,"=")
-			 UseMaxEnt			=NumberByKey("UseMaxEnt", OldNote,"=")
-			 UseTNNLS			=NumberByKey("UseTNNLS", OldNote,"=")
-		
+			 UseRegularization			=NumberByKey("UseRegularization", OldNote,"=")
+			 UseMaxEnt					=NumberByKey("UseMaxEnt", OldNote,"=")
+			 UseTNNLS						=NumberByKey("UseTNNLS", OldNote,"=")
+			if(StringMatch(OldNote, "*FitBackonImportQmax*" ))		//2018-10 modification data, includes new values...
+		    	UseUserErrors			=NumberByKey("UseUserErrors", OldNote,"=")
+		    	UseSQRTErrors			=NumberByKey("UseSQRTErrors", OldNote,"=")
+		    	UsePercentErrors		=NumberByKey("UsePercentErrors", OldNote,"=")
+		    	PercentErrorToUse		=NumberByKey("PercentErrorToUse", OldNote,"=")
+		    	UseNoErrors				=NumberByKey("UseNoErrors", OldNote,"=")
+		    	RebinDataTo				=NumberByKey("RebinDataTo", OldNote,"=")
+		    	AutoCalculateParameters	=NumberByKey("AutoCalculateParameters", OldNote,"=")
+				RemoveTrustRegionIndicators	=NumberByKey("RemoveTrustRegionIndicators", OldNote,"=")
+		    	Rg							=NumberByKey("Rg", OldNote,"=")
+		    	TotalVolumeFraction	=NumberByKey("TotalVolumeFraction", OldNote,"=")
+		    	LowQPowerLawSlope		=NumberByKey("LowQPowerLawSlope", OldNote,"=")
+		    	LowQScalingFactor		=NumberByKey("LowQScalingFactor", OldNote,"=")
+		    	FitBPBackOnImport		=NumberByKey("FitBPBackOnImport", OldNote,"=")
+		    	FitBonImport				=NumberByKey("FitBonImport", OldNote,"=")
+		    	FitBPonImport			=NumberByKey("FitBPonImport", OldNote,"=")
+		    	FitBckgOnImport			=NumberByKey("FitBckgOnImport", OldNote,"=")
+		    	FitBPonImportQmin		=NumberByKey("FitBPonImportQmin", OldNote,"=")
+		    	FitBPonImportQmax		=NumberByKey("FitBPonImportQmax", OldNote,"=")
+		    	FitBackonImportQmin	=NumberByKey("FitBackonImportQmin", OldNote,"=")
+		    	FitBackonImportQmax	=NumberByKey("FitBackonImportQmax", OldNote,"=")
+			endif
 			if((UseRegularization+UseMaxEnt+UseTNNLS)!=1)
 				if(cmpstr(MethodRun,"Regularization")==0)
 					UseRegularization=1
@@ -2509,20 +2550,23 @@ static  Function IR1R_ReturnFitBack(ctrlName)			//copies data back to folder wit
 	IN2G_AppendorReplaceWaveNote(tempnameNumNm,"RgOfDistribution",num2str(Rg))
 
 	//create record of all Sizes parameters to add to all of the waves as wave note...
-	string ListOfVariables="SuggestedSkyBackground;UseSlitSmearedData;"
-	ListOfVariables+="MaxEntSkyBckg;MaxEntRegular;MaxsasNumIter;numOfPoints;SlitLength;Rmin;Rmax;Bckg;ScatteringContrast;Dmin;"
-	ListOfVariables+="Dmax;ErrorsMultiplier;TicksForDiagnostics;MaxEntStabilityParam;NumberIterations;MaxEntNumIter;"	
-	ListOfVariables+="AspectRatio;FractalRadiusOfPriPart;FractalDimension;CylinderLength;TubeLength;"
-	ListOfVariables+="CylinderLength;TubeWallThickness;TubeCoreContrastRatio;"
-	ListOfVariables+="CoreShellThickness;CoreShellCoreRho;CoreShellShellRho;CoreShellSolvntRho;"
-	ListOfVariables+="UserFFpar1;UserFFpar2;UserFFpar3;UserFFpar4;UserFFpar5;"
-	ListOfVariables+="NNLS_MaxNumIterations;NNLS_ApproachParameter;"
-	ListOfVariables+="UseRegularization;UseMaxEnt;UseTNNLS;"
-	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
-	ListOfVariables+="StartFItQvalue;EndFItQvalue;"
-	
-	string ListOfStrings=""
-	ListOfStrings+="LogDist;ShapeType;SlitSmearedData;MethodRun;User_FormFactorFnct;User_FormFactorVol;"	
+	SVAR ListOfVariables = root:Packages:Sizes:ListOfVariables
+	SVAR ListOfStrings = root:Packages:Sizes:ListOfStrings
+
+//	string ListOfVariables="SuggestedSkyBackground;UseSlitSmearedData;"
+//	ListOfVariables+="MaxEntSkyBckg;MaxEntRegular;MaxsasNumIter;numOfPoints;SlitLength;Rmin;Rmax;Bckg;ScatteringContrast;Dmin;"
+//	ListOfVariables+="Dmax;ErrorsMultiplier;TicksForDiagnostics;MaxEntStabilityParam;NumberIterations;MaxEntNumIter;"	
+//	ListOfVariables+="AspectRatio;FractalRadiusOfPriPart;FractalDimension;CylinderLength;TubeLength;"
+//	ListOfVariables+="CylinderLength;TubeWallThickness;TubeCoreContrastRatio;"
+//	ListOfVariables+="CoreShellThickness;CoreShellCoreRho;CoreShellShellRho;CoreShellSolvntRho;"
+//	ListOfVariables+="UserFFpar1;UserFFpar2;UserFFpar3;UserFFpar4;UserFFpar5;"
+//	ListOfVariables+="NNLS_MaxNumIterations;NNLS_ApproachParameter;"
+//	ListOfVariables+="UseRegularization;UseMaxEnt;UseTNNLS;"
+//	ListOfVariables+="SizesPowerToUse;UseUserErrors;UseSQRTErrors;UsePercentErrors;PercentErrorToUse;UseNoErrors;"
+//	ListOfVariables+="StartFItQvalue;EndFItQvalue;"
+//	
+//	string ListOfStrings=""
+//	ListOfStrings+="LogDist;ShapeType;SlitSmearedData;MethodRun;User_FormFactorFnct;User_FormFactorVol;"	
 	variable i
 	For(i=0;i<ItemsInList(ListOfVariables);i+=1)
 		NVAR TempVal=$("root:Packages:Sizes:"+StringFromList(i,ListOfVariables))	

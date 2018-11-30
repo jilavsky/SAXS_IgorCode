@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.11
+#pragma version =1.12
 
 
 //*************************************************************************\
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 fixed problem when PD_range used to create MyCOlorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
 //1.11 modfiied IN3_RecalcSubtractSaAndBlank to avoid negative data.
 //1.10  removed unused functions
 //1.09 change in code, do not remove negative values for R_Int, causes problems in some cases. 
@@ -38,38 +39,6 @@
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
-
-Function IN3_MakeMyColors(PDrange,NewColors)		//makes color wave for 
- 	Wave PDrange, NewColors
- 	
- 	variable i=0
- 	
- 	Do
- 		if (PDrange[i]==1)		//range 1 color
- 			NewColors[i]=0
-		endif 	
- 		if (PDrange[i]==2)		//range 2 color
- 			NewColors[i]=4.5
-		endif 	
- 		if (PDrange[i]==3)		//range 3 color
- 			NewColors[i]=7.7
-		endif 	
- 		if (PDrange[i]==4)		//range 4 color
- 			NewColors[i]=1.3
-		endif 	
- 		if (PDrange[i]==5)		//range 5 color
- 			NewColors[i]=10
-		endif 	
- 	
- 	i+=1
- 	while(i<numpnts(PDrange)) 	
- end
-
-//***********************************************************************************************************************************
-//***********************************************************************************************************************************
-//***********************************************************************************************************************************
-//***********************************************************************************************************************************
-//***********************************************************************************************************************************
 //***********************************************************************************************************************************
 
 Function IN3_ColorMainGraph(PdRanges)
@@ -78,12 +47,15 @@ Function IN3_ColorMainGraph(PdRanges)
 	DoWIndow RcurvePlotGraph
 	if(V_Flag)		//exists, other studff shoudl exist also...
 		SVAR DataFolderName=root:Packages:Indra3:DataFolderName
-		Wave/Z PD_range=$(DataFolderName+"PD_Range")
+		Wave/Z PD_range=$(DataFolderName+"PD_RangeModified")
+		if(!WaveExists(PD_range))
+			Wave/Z PD_range=$(DataFolderName+"PD_Range")
+		endif
 		//set PdRanges to 1 to have colored main data in correct colors., 0 to uncolor
 		if(WaveExists(PD_range)&&V_Flag)
 			if(PdRanges)
 				Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
-				IN3_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
+				IN2G_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
 		 		ModifyGraph /W=RcurvePlotGraph/Z mode=0, zColor(R_Int)={root:Packages:Indra3:MyColorWave,0,10,Rainbow}
 			else
 		 		ModifyGraph /W=RcurvePlotGraph/Z  mode=0, zColor(R_Int)=0
@@ -210,15 +182,9 @@ Function IN3_CalculateRdata()
 	endif
 	R_Int = PD_Intensity /SampleTransmissionPeakToPeak
 	R_Error = PD_Error /SampleTransmissionPeakToPeak
-	//wavestats/Q R_Int
-	//fix the oversubtracted background here? 
-	//if(V_min<0)
-	//	R_Int+=abs(1.05*V_min)
-	//endif
 
 	IN3_SmoothRData()
 
-	
 	setDataFolder OldDf	
 end
 //***********************************************************************************************************************************
@@ -266,7 +232,7 @@ Function IN3_CalculateCalibration()
 			BLPeakWidthL = SamplePeakWidth
 		else
 			BLPeakWidthL = BLPeakWidth
-			print "Using Blank FWHM for absolute instensity calibration; WHile SampleFWHM was requested in \"Calibration\" tab, the width of sample is too high, suggesting MSAXS."
+			print "Using Blank FWHM for absolute instensity calibration; While SampleFWHM was requested in \"Calibration\" tab, the width of sample is too high, suggesting MSAXS."
 		endif
 	else
 		BLPeakWidthL = BLPeakWidth
@@ -329,6 +295,7 @@ Function IN3_RecalcSubtractSaAndBlank()
 	Wave R_Int
 	Wave R_error
 	Wave R_Qvec
+	Wave PD_Range
 	Wave BL_R_Int
 	Wave BL_R_error
 	Wave BL_R_Qvec
@@ -365,8 +332,9 @@ Function IN3_RecalcSubtractSaAndBlank()
 	string oldNoteValue			
 	variable tempMinStep
 
-
-	IN2G_RemoveNaNsFrom5Waves(R_Int,R_Int,R_error,R_Qvec,R_Qvec)
+	//need fix for PD_range used for coloring... 
+	Duplicate/O PD_Range, PD_RangeModified
+	IN2G_RemoveNaNsFrom4Waves(R_Int,R_error,R_Qvec, PD_RangeModified)
 	IN2G_RemoveNaNsFrom3Waves(BL_R_Int,BL_R_error,BL_R_Qvec)
 
 	if (stringmatch(IsItSBUSAXS,"uascan*"))			//if this is sbuascan, go to other part, otherwise create SMR data

@@ -90,7 +90,7 @@ Function IR2M_MainCheckVersion()
 	DoWindow DataMiningTool
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("DataMiningTool", IR2MversionNumber))
-			DoAlert /T="The Data mining panel was created by old version of Irena " 1, "Data mining needs to be restarted to work properly. Restart now?"
+			DoAlert /T="The Data mining panel was created by incorrect version of Irena " 1, "Data mining needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR2M_GetDataMiner()
 			else		//at least reinitialize the variables so we avoid major crashes...

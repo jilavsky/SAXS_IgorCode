@@ -17,11 +17,12 @@ Control procedures - increases speed about twice of generating the menu strings.
 ASCII SAS data import - improve importing of slit smeared data. 
 Unified fit - add left axis units which match units inside the Intensity wave note. 
 Size distribution, Guinier-Porod, Analytical models, SASDiffraction - add left axis units which match units inside the Intensity wave note. 
+Size distribution - add new parameters introduced in version 2.67 to wave note and arrange their saving and recovery. Somehow this was forgotten during the original work. 
 Plotting - remove CanSAS data type. Not used... 
 Modified "Configure GUI..." menu name and added warning on name shortening. Should generate dialog when names are too long and users are not using Igor 8 with long names enabled. Only once per Igor experiment.  
-Evaluate Size distributions - fixed failure with data from Modeling (II) when user used Pop1 as non-size distribution and used Size distribution in higher Pops. GUI and parameter readout failed at that situation. 
+Evaluate Size distributions - fixed failure with data from Modeling (II) when user used Pop1 as non-size distribution and used Size distribution in higher Pops. GUI and parameter readout failed at that situation. Checked (and fixed) for data from Modeling package - using Number of Volume distribution and using Radius or Diameter. Previously problem was with Number density of particles and Specific surface area = all worked well only for Diameters. Needed to add hooks for Radius conversion as needed... 
 Nexus export - fixed Nexus export to output files compatible with SasView (beta version for now). Should work with both desmeared and slit smeared data now. 
-
+Merge data - added more functionality, ability to shift in Q data 1 as well as 2, and modified graph for WAXS and SAXS display. Completely reworked optimization routines to make all more robust and easier to fix. Removed lots of ugly repetitive code. 
 
 
 2.67  7/7/2018

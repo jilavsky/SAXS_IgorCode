@@ -36,7 +36,7 @@ Function IR3W_MainCheckVersion()
 	DoWindow IR3W_WAXSPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber))
-			DoAlert /T="The WAXS panel was created by old version of Irena " 1, "WAXS tool may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The WAXS panel was created by incorrect version of Irena " 1, "WAXS tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z IR3W_WAXSPanel
 				IR3W_WAXS()

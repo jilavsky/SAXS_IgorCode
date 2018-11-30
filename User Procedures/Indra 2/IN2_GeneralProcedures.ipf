@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.16
+#pragma version = 2.17
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -36,7 +36,8 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
-//2.167 FIx IN2G_PanelResizePanelSize to return 0 when handled, seems needed to prevent GUI problems. 
+//2.17 added create COlordScale for USAXS graphs. 
+//2.16 Fix IN2G_PanelResizePanelSize to return 0 when handled, seems needed to prevent GUI problems. 
 //2.15 minor modification of some functions to speed it up a bit... Added long names warning. 
 //2.14 added function IN2G_ReturnUnitsForYAxis(Ywave) which creates units string for Intensity vs Q Intensity axis based on wave note. 
 //2.13 Get the Igor8 long files names support sorted out. 
@@ -1816,6 +1817,8 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 
 	NVAR/Z DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	if(!NVAR_Exists(DoNotRestorePanelSizes))
+		NewDataFOlder/O root:Packages
+		NewDataFOlder/O root:Packages:IrenaConfigFolder
 		variable/g root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 		NVAR DoNotRestorePanelSizes=root:Packages:IrenaConfigFolder:DoNotRestorePanelSizes
 	endif
@@ -4680,7 +4683,7 @@ Proc IN2G_BasicGraphStyle()
 	Label/Z left "Intensity"
 	Label/Z bottom "Ar encoder"
 	Duplicate/O PD_range, root:Packages:Indra3:MyColorWave							//creates new color wave
-	IN2A_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
+	IN2G_MakeMyColors(PD_range,root:Packages:Indra3:MyColorWave)						//creates colors in it
  	ModifyGraph mode=4, zColor={root:Packages:Indra3:MyColorWave,0,10,Rainbow}, margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
 	ShowTools/A											//show tools
@@ -4688,6 +4691,46 @@ Proc IN2G_BasicGraphStyle()
 	Button ResetWindow pos={10,40}, size={100,25}, title="Reset window", proc=IN2G_ResetGraph
 	Button Reverseaxis pos={10,70}, size={100,25}, title="Reverse X axis", proc=IN2G_ReversXAxis
 EndMacro
+
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+
+
+Function IN2G_MakeMyColors(PDrange,NewColors)		//makes color wave for 
+ 	Wave PDrange, NewColors
+ 	
+ 	variable i=0
+ 	
+ 	NewColors = (PDrange[p]==1) ? 0   : NewColors[p]
+ 	NewColors = (PDrange[p]==2) ? 4.5 : NewColors[p]
+ 	NewColors = (PDrange[p]==3) ? 7.7 : NewColors[p]
+ 	NewColors = (PDrange[p]==4) ? 1.3 : NewColors[p]
+ 	NewColors = (PDrange[p]==5) ? 10  : NewColors[p]
+ 	
+// 	Do
+// 		if (PDrange[i]==1)		//range 1 color
+// 			NewColors[i]=0
+//		endif 	
+// 		if (PDrange[i]==2)		//range 2 color
+// 			NewColors[i]=4.5
+//		endif 	
+// 		if (PDrange[i]==3)		//range 3 color
+// 			NewColors[i]=7.7
+//		endif 	
+// 		if (PDrange[i]==4)		//range 4 color
+// 			NewColors[i]=1.3
+//		endif 	
+// 		if (PDrange[i]==5)		//range 5 color
+// 			NewColors[i]=10
+//		endif 	
+// 	
+// 	i+=1
+// 	while(i<numpnts(PDrange)) 	
+ end
+
 
 //**********************************************************************************************
 //**********************************************************************************************

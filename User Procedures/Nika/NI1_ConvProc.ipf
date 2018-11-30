@@ -3605,9 +3605,9 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	TabControl Convert2Dto1DTab,help={"Select tabs to control various parameters"}
 	TabControl Convert2Dto1DTab,tabLabel(0)="Main",tabLabel(1)="Par"
 	TabControl Convert2Dto1DTab,tabLabel(2)="Mask",tabLabel(3)="Em/Dk"
-	TabControl Convert2Dto1DTab,tabLabel(4)="Sect.",tabLabel(5)="PolTran"
-	TabControl Convert2Dto1DTab,tabLabel(6)="LineProf", tabLabel(7)="Save", value= 0
-	TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
+	TabControl Convert2Dto1DTab,tabLabel(4)="Sect",tabLabel(5)="PolTran"
+	TabControl Convert2Dto1DTab,tabLabel(6)="LineProf", tabLabel(7)="Save/Exp", value= 0
+	//TabControl Convert2Dto1DTab,tabLabel(7)="2D Exp."
 //tab 1 geometry and method of calibration
 	SetVariable SampleToDetectorDistance,pos={54,300},size={230,16},proc=NI1A_PanelSetVarProc,title="Sample to CCD distance [mm]"
 	SetVariable SampleToDetectorDistance,limits={0,Inf,1},value= root:Packages:Convert2Dto1D:SampleToCCDDistance
@@ -4097,7 +4097,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 
 	SVAR ColorTableName = root:Packages:Convert2Dto1D:ColorTableName
 	SVAR ColorTableList = root:Packages:Convert2Dto1D:ColorTableList
-	PopupMenu ColorTablePopup,pos={250,680},size={100,21},proc=NI1A_PopMenuProc,title="Colors"
+	PopupMenu ColorTablePopup,pos={195,657},size={100,21},proc=NI1A_PopMenuProc,title="Colors"
 	PopupMenu ColorTablePopup,mode=1,popvalue=ColorTableName,value= #"root:Packages:Convert2Dto1D:ColorTableList"
 
 	CheckBox ImageDisplayBeamCenter,variable= root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph, help={"Display beam center on teh image?"}
@@ -4108,6 +4108,12 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox ImageDisplayLogScaled,help={"Display image with log(intensity)?"}
 	CheckBox ImageDisplayLogScaled,variable= root:Packages:Convert2Dto1D:ImageDisplayLogScaled
 	CheckBox ImageDisplayLogScaled proc=NI1A_CheckProc
+
+
+	CheckBox DisplayQCirclesOnImage,pos={250,690},size={120,15},title="Img w/Q circles?"
+	CheckBox DisplayQCirclesOnImage,help={"Display image with Q circles on axis?"}
+	CheckBox DisplayQCirclesOnImage,variable= root:Packages:Convert2Dto1D:DisplayQCirclesOnImage
+	CheckBox DisplayQCirclesOnImage proc=NI1A_CheckProc
 
 	CheckBox DisplayQValsOnImage,pos={250,705},size={120,15},title="Image with Q axes?"
 	CheckBox DisplayQValsOnImage,help={"Display image with Q values on axis?"}
@@ -4124,7 +4130,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DisplayColorScale,variable= root:Packages:Convert2Dto1D:DisplayColorScale
 	CheckBox DisplayColorScale proc=NI1A_CheckProc
 
-	CheckBox UseUserDefMinMax,pos={5,695},size={120,15},title="User def. Min/Max?"
+	CheckBox UseUserDefMinMax,pos={45,695},size={120,15},title="User def. Min/Max?"
 	CheckBox UseUserDefMinMax,help={"Display image with color scale?"}
 	CheckBox UseUserDefMinMax,variable= root:Packages:Convert2Dto1D:UseUserDefMinMax
 	CheckBox UseUserDefMinMax proc=NI1A_CheckProc
@@ -4138,11 +4144,11 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	Slider ImageRangeMax,limits={ImageRangeMinLimit,ImageRangeMaxLimit,0}
 
 	//NVAR UseUserDefMinMax = root:Packages:Convert2Dto1D:UseUserDefMinMax
-	SetVariable UserImageRangeMin,pos={130,700},size={120,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
+	SetVariable UserImageRangeMin,pos={80,712},size={120,16},title="Min. =  ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMin,help={"Select minimum intensity to display?"}, limits={0,inf,0}
 	SetVariable UserImageRangeMin,variable= root:Packages:Convert2Dto1D:UserImageRangeMin//, disable=!(UseUserDefMinMax)
 
-	SetVariable UserImageRangeMax,pos={130,725},size={120,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
+	SetVariable UserImageRangeMax,pos={80,732},size={120,16},title="Max. = ", proc=NI1A_SetVarProcMainPanel
 	SetVariable UserImageRangeMax,help={"Select minimum intensity to display?"}, limits={0,inf,0}
 	SetVariable UserImageRangeMax,variable= root:Packages:Convert2Dto1D:UserImageRangeMax//, disable=!(UseUserDefMinMax)
 	
@@ -5081,7 +5087,6 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 	NVAR Process_Average = root:Packages:Convert2Dto1D:Process_Average
 	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
 	NVAR Process_ReprocessExisting = root:Packages:Convert2Dto1D:Process_ReprocessExisting
-
 	
 	NVAR SkipBadFiles=root:Packages:Convert2Dto1D:SkipBadFiles
 
@@ -5272,26 +5277,47 @@ Function NI1A_CheckProc(ctrlName,checked) : CheckBoxControl
 
 	NVAR QnoGrids= root:Packages:Convert2Dto1D:DisplayQValsOnImage
 	NVAR Qgrids = root:Packages:Convert2Dto1D:DisplayQvalsWIthGridsOnImg
+	NVAR DisplayQCirclesOnImage=root:Packages:Convert2Dto1D:DisplayQCirclesOnImage
 
+	if(StringMatch("DisplayQCirclesOnImage",ctrlName))
+		DoWIndow CCDImageToConvertFig
+		if(!V_flag)
+			return 0
+		endif
+		if(checked)
+			if(Qgrids+QnoGrids > 0.1)
+				Qgrids=0
+				QnoGrids=0
+				NI1G_RemoveQAxisToImage(1)
+			endif
+		endif
+		NI1G_AppendQCirclesToImage()		
+	endif
+	
 	if(StringMatch("DisplayQValsOnImage",ctrlName))
 		if(checked)
 			Qgrids=0
+			DisplayQCirclesOnImage = 0
 			DoWIndow CCDImageToConvertFig
 			if(!V_flag)
 				return 0
 			endif
+			NI1G_AppendQCirclesToImage()		//removed drawings if needed also
 			NI1G_AddQAxisToImage(0)
 		else
 			NI1G_RemoveQAxisToImage(1)
 		endif
 	endif
+	
 	if(StringMatch("DisplayQvalsWIthGridsOnImg",ctrlName))
 		if(checked)
 			QnoGrids=0
+			DisplayQCirclesOnImage = 0
 			DoWIndow CCDImageToConvertFig
 			if(!V_flag)
 				return 0
 			endif
+			NI1G_AppendQCirclesToImage()		//removed drawings if needed also
 			NI1G_AddQAxisToImage(1)
 		else
 			NI1G_RemoveQAxisToImage(1)
@@ -5696,6 +5722,7 @@ Function NI1A_DoDrawingsInto2DGraph()
 	NVAR DisplayQValsOnImage= root:Packages:Convert2Dto1D:DisplayQValsOnImage
 	NVAR DisplayQvalsWIthGridsOnImg = root:Packages:Convert2Dto1D:DisplayQvalsWIthGridsOnImg
 	NVAR DisplayColorScale = root:Packages:Convert2Dto1D:DisplayColorScale
+	NVAR DisplayQCirclesOnImage=root:Packages:Convert2Dto1D:DisplayQCirclesOnImage
 	
 	NI1A_AllDrawingsFrom2DGraph()
 	if(DisplayBeamCenterIn2DGraph)
@@ -5709,6 +5736,9 @@ Function NI1A_DoDrawingsInto2DGraph()
 	endif
 	if(DisplayQValsOnImage)
 		NI1G_AddQAxisToImage(0)
+	endif
+	if(DisplayQCirclesOnImage)
+		NI1G_AppendQCirclesToImage()
 	endif
 	if(DisplayQvalsWIthGridsOnImg)
 		NI1G_AddQAxisToImage(1)
@@ -6440,6 +6470,124 @@ End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+//this is way to get a circle on the main graph...
+Function NI1G_AppendQCircle(Qvalue)
+		variable QValue
+		//OK, now the window is at the top...
+		//what is this for? This is from Beam Center utilities... 
+		if(stringMatch(AxisList("CCDImageToConvertFig"),"*top*"))
+			setdrawenv/W=CCDImageToConvertFig fillpat=0,xcoord=top,ycoord=left,save
+		else
+			setdrawenv/W=CCDImageToConvertFig fillpat=0,xcoord=bottom,ycoord=left,save
+		endif
+		//lets use tilts always...
+		make/O/N=180 $("QCircleWaveX"+num2str(QValue)), $("QCircleWaveY"+num2str(QValue))		//these are two "Paths" for the drawing
+		wave wvX=$("QCircleWaveX"+num2str(QValue))
+		wave wvY = $("QCircleWaveY"+num2str(QValue))
+		SetScale /I x, 0, 2*pi,"rad" , wvX, wvY					//their x dimension is their azimuthal direction
+		//we need to fill them with px and py values for given Q
+		Wave CCDImageToCOnvert=root:Packages:Convert2Dto1D:CCDImageToCOnvert
+		//round Q value to be easy number
+		if(QValue<1)
+			QValue = IN2G_roundSignificant(QValue,2)
+		else
+			QValue = IN2G_roundSignificant(QValue,3)
+		endif
+		variable dPosition = 2*pi/QValue
+		NI1BC_FindTiltedQvalues(wvx,wvy,dPosition, CCDImageToCOnvert,"CCDImageToConvertFig")
+		variable Xattach, Yattach
+		variable PntNumber = NI1G_FindAttachPoint(wvx)
+		
+		Xattach = wvx[PntNumber]
+		Yattach = wvy[PntNumber]
+		print Xattach, Yattach
+		//setDrawLayer/W=CCDImageToConvertFig ProgFront
+		SetDrawEnv/W=CCDImageToConvertFig linefgc=(65535, 65535,65535)
+		SetDrawEnv/W=CCDImageToConvertFig linethick=2, linefgc= (65535,0,0)
+		DrawPoly /W=CCDImageToConvertFig /ABS 0,0, 1, 1, wvX,wvY
+		SetDrawEnv textrgb= (65535,0,0),fsize= 16
+		DrawText /W=CCDImageToConvertFig Xattach, Yattach, num2str(QValue)
+		//setDrawLayer/W=CCDImageToConvertFig/K UserFront
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+static Function NI1G_FindAttachPoint(xWaveIn)
+	wave xWaveIn
+	//locate point for attaching the label
+	//ideally at the top or bottom 
+	//alternative is left or right
+	variable PointNum
+	if(numtype(xWaveIn(3*pi/2))==0)	//real value at 90 deg up
+		PointNum = x2pnt(xWaveIn, 3*pi/2 )
+	elseif(numtype(xWaveIn(pi/2))==0)	//real value at 90 deg up
+		PointNum = x2pnt(xWaveIn, pi/2 )
+	elseif(numtype(xWaveIn(pi))==0)	//real value at 90 deg up
+		PointNum = x2pnt(xWaveIn,pi )
+	elseif(numtype(xWaveIn(0))==0)	//real value at 90 deg up
+		PointNum = x2pnt(xWaveIn, 0)
+	else
+		PointNum = 0
+	endif
+	return PointNum	
+end
+//	wave BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+
+Function NI1G_AppendQCirclesToImage()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	
+	string OldDf = GetDataFolder(1)
+	setDataFolder root:Packages:Convert2Dto1D
+	DoWIndow CCDImageToConvertFig
+	if(!V_flag)
+		abort
+	else
+		DoWIndow/F CCDImageToConvertFig
+	endif
+	NVAR DisplayQCirclesOnImage=root:Packages:Convert2Dto1D:DisplayQCirclesOnImage
+	//figure out Q raneg using root:Packages:Convert2Dto1D:Q2DWave
+	Wave/Z Q2DWave = root:Packages:Convert2Dto1D:Q2DWave
+	if(!WaveExists(Q2DWave))
+		return 0		//cannot append Q axis if we do not know the Q range.  
+	else
+		Duplicate/Free Q2DWave, TmpQ2DWave
+	endif
+	Wave/Z Mask = root:Packages:Convert2Dto1D:M_ROIMask
+	if(WaveExists(Mask))	//mask the Q values... 
+		//check dimensions agree...
+		if(dimsize(Q2DWave,0)!=dimsize(Mask,0)||dimsize(Q2DWave,1)!=dimsize(Mask,1))
+			return 0		//something worng, stop here...
+		else
+			MatrixOp/O TmpQ2DWave=TmpQ2DWave/Mask
+		endif
+	endif
+	if(DisplayQCirclesOnImage)
+		variable Qmin, Qmax
+		wavestats/Q TmpQ2DWave
+		Qmin=V_min*1.2
+		Qmax=V_max*0.95
+		variable NumLines=NikaNumberOfQCirclesDisp
+		make/O/D/FREE/N=(NumLines) QPositions
+		variable Qvalue, i, tmpVal, logstartX, logendX
+		logstartX=log(Qmin)
+		logendX=log(Qmax)
+		QPositions = logstartX + p*(logendX-logstartX)/(numpnts(QPositions)-1)
+		QPositions = 10^(QPositions)
+	
+		For(i=0;i<NikaNumberOfQCirclesDisp;i+=1)
+			Qvalue = QPositions[i]
+			//print Qvalue
+			NI1G_AppendQCircle(Qvalue)
+		endfor
+	else	//remove drawings
+		//setDrawLayer/W=CCDImageToConvertFig/K ProgFront
+	   setDrawLayer/W=CCDImageToConvertFig/K UserFront
+	endif
+
+	setDataFolder OldDf
+end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -6452,8 +6600,8 @@ Function NI1G_AddQAxisToImage(UseGrids)
 	variable UseGrids
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
-		string OldDf = GetDataFolder(1)
-		setDataFolder root:Packages:Convert2Dto1D
+	string OldDf = GetDataFolder(1)
+	setDataFolder root:Packages:Convert2Dto1D
 		
 	DoWIndow CCDImageToConvertFig
 	if(!V_flag)
@@ -6488,8 +6636,8 @@ Function NI1G_AddQAxisToImage(UseGrids)
 	SetWindow CCDImageToConvertFig, hook(MyKillGraphHook) = NI1U_KillWindowHookF
 	//And now we need to format them. 
 
-		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
-		NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile
+	SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
+	NVAR UseLineProfile = root:Packages:Convert2Dto1D:UseLineProfile
 
 
 

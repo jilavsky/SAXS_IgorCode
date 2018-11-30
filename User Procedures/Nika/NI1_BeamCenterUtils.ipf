@@ -58,7 +58,7 @@ Function NIBC_MainCheckVersion()
 	DoWindow NI1_CreateBmCntrFieldPanel
 	if(V_Flag)
 		if(!NI1_CheckPanelVersionNumber("NI1_CreateBmCntrFieldPanel", NI1BCversionNumber))
-			DoAlert /T="The Beam center panel was created by old version of Nika " 1, "Beamcenter tool may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Beam center panel was created by incorrect version of Nika " 1, "Beamcenter tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z NI1_CreateBmCntrFieldPanel
 				NI1_CreateBmCntrFile()
@@ -671,6 +671,7 @@ Function NI1BC_DisplayCalibrantCircles()
 	NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt							//tilt in degrees
 	NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt								//tilt in degrees
 	NVAR BMCalibrantDisplayCircles=root:Packages:Convert2Dto1D:BMCalibrantDisplayCircles
+	wave BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	//remove all drawings
 	DoWindow CCDImageForBmCntr
 	if(V_Flag)
@@ -698,11 +699,11 @@ Function NI1BC_DisplayCalibrantCircles()
 						make/O/N=180 $("CalibrantCenterWaveX"+num2str(i)), $("CalibrantCenterWaveY"+num2str(i))		//these are two "Paths" for the drawing
 						wave wvX=$("CalibrantCenterWaveX"+num2str(i))
 						wave wvY = $("CalibrantCenterWaveY"+num2str(i))
-						SetScale /I x, 0, 2*pi,"rad" , wvX, wvY					//their x dimension is their zimuthal direction
+						SetScale /I x, 0, 2*pi,"rad" , wvX, wvY					//their x dimension is their azimuthal direction
 						//we need to fill them with px and py values for given Q
 						//radX = NI1BC_GetPixelFromDSpacing(BMCalibrantD, "X")		//these are no tilts estimates
 						//radY = NI1BC_GetPixelFromDSpacing(BMCalibrantD, "Y")		//these are no tilts estimates
-						NI1BC_FindTiltedQvalues(wvx,wvy,BMCalibrantD)
+						NI1BC_FindTiltedQvalues(wvx,wvy,BMCalibrantD,BmCntrCCDImg,"CCDImageForBmCntr")
 						SetDrawEnv/W=CCDImageForBmCntr linefgc=(65535, 65535,65535)
 						SetDrawEnv/W=CCDImageForBmCntr linethick=2
 						DrawPoly /W=CCDImageForBmCntr /ABS 0,0, 1, 1, wvX,wvY
@@ -833,10 +834,12 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1BC_FindTiltedQvalues(wvx,wvy,dspacing)
+Function NI1BC_FindTiltedQvalues(wvx,wvy,dspacing, BmCntrCCDImg, WindowNameToAttach)
 		wave wvx, wvy
 		variable dspacing		//find this d-spacing
-		
+		wave BmCntrCCDImg
+		string WindowNameToAttach
+	
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
 
@@ -862,10 +865,9 @@ Function NI1BC_FindTiltedQvalues(wvx,wvy,dspacing)
 	 variable direction 
 	 variable/C tempresult
 	 variable ImageSizeX, ImageSizeY
-	wave BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
 	 ImageSizeX=DimSize(BmCntrCCDImg, 0 )
 	 ImageSizeY=DimSize(BmCntrCCDImg, 1 )
-	DoWindow CCDImageForBmCntr
+	DoWindow $(WindowNameToAttach)
 	if(V_Flag)
 		for(ii=0;ii<numpnts(wvx);ii+=1)					//for each point on wvx, wvy
 			direction = pnt2x(wvx, ii)						//this is azimuthal direction in radians

@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.14
+#pragma version 1.15
 
 
 //*************************************************************************\
@@ -7,6 +7,8 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+//1.15 fixed problem when PD_range used to create MyCOlorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
 //1.14 fixed rare case when fix backgroundoversubtraction from 1.13 caused problems. In some cases early data may be negative. Now looking for negative value only in last 1/2 of the data points.  
 //1.13 Modfifed IN3_RemoveDropouts to work only when adropout starts at ranges 1-4. 
 //1.13 Tried to fix range 5 background oversubtraction by shifting data by needed Intensity up. Done in IN3_CalculateRWaveIntensity only when Intensity is negative due to Bckg5 subtraction
@@ -39,12 +41,12 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 
 
 	if(StepFrom==0)			//very beggining, all needs to be calculated
-		IN3_CalculateRWaveIntensity()			//using UPD parameters recalculate the R wave intensity
+		IN3_CalculateRWaveIntensity(1)			//using UPD parameters recalculate the R wave intensity, 1 means it will clean up the before peak raneg changes.. 
 		IN3_FitPeakCenterEstimate() 			//sets up original fit to peak center using gaussian	
 	endif
 	if(StepFrom<=1)
 		IN3_CalculateTransmission(0)
-		IN3_CalculateRWaveIntensity()			//fix the R wave 
+		IN3_CalculateRWaveIntensity(0)			//fix the R wave 
 	endif
 	if(StepFrom<=2)
 		IN3_calculateRwaveQvec()
@@ -59,7 +61,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 		IN3_CalculateTransmission(1)
 		IN3_CalcSampleWeightOrThickness()
 		IN3_CalculateCalibration()
-		IN3_RecalcSubtractSaAndBlank()
+		IN3_RecalcSubtractSaAndBlank()		
 		//and store Q position for starting next time
 		DoWIndow RcurvePlotGraph
 		if(V_Flag)
@@ -282,7 +284,8 @@ End
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 
-Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
+Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R wave in folder df
+	variable CleanUpRangeCHange
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
@@ -296,14 +299,14 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	Wave MeasTime
 	Wave Ar_encoder
 	
-	Wave/Z PD_Intensity						//these waves may be new
-	Wave/Z PD_Error
-	if (!WaveExists(PD_Intensity) || !WaveExists(PD_Error))	
-		Duplicate/O PD_range, PD_Intensity, PD_Error
-		IN2G_AppendorReplaceWaveNote("PD_range","Wname","PD_range") 
-		IN2G_AppendorReplaceWaveNote("PD_Intensity","Wname","PD_Intensity") 
-		IN2G_AppendorReplaceWaveNote("PD_Error","Wname","PD_Error") 
-	endif
+//	if (!WaveExists(PD_Intensity) || !WaveExists(PD_Error))	
+	Duplicate/O PD_range, PD_Intensity, PD_Error
+	IN2G_AppendorReplaceWaveNote("PD_range","Wname","PD_range") 
+	IN2G_AppendorReplaceWaveNote("PD_Intensity","Wname","PD_Intensity") 
+	IN2G_AppendorReplaceWaveNote("PD_Error","Wname","PD_Error") 
+//	endif
+	Wave PD_Intensity						//these waves may be new
+	Wave PD_Error
 	Redimension/D PD_Intensity				//intensity should be double precision
 	
 	SVAR UPDparameters					//now we need to get the dark currents and gains here
@@ -350,7 +353,9 @@ Function IN3_CalculateRWaveIntensity()				//Recalculate the R wave in folder df
 	endif
 
 	//need to remove bad points caused by range changes at low qs here... 
-	PD_Intensity [1,numpnts(pd_range)-2] = ((pd_range[p+1]-pd_range[p])<-0.5 || (pd_range[p]-pd_range[p-1])<-0.5) ? nan : PD_Intensity
+	if(CleanUpRangeCHange)	//to be done ONLY in the beggining step, not later... 
+		PD_Intensity [1,numpnts(pd_range)-2] = ((pd_range[p+1]-pd_range[p])<-0.5 || (pd_range[p]-pd_range[p-1])<-0.5) ? nan : PD_Intensity
+	endif
 	//this will simply set border points to range changes nan and they should get later removed. 
 	//this is not set to remove points ONLY if we cahnge from higher gain to lower gain, not in the other direction
 	//OK, another incarnation of the error calculations...

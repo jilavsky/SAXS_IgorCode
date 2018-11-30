@@ -86,7 +86,7 @@ Function IR1P_MainCheckVersion()
 	DoWindow IR1P_ControlPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR1P_ControlPanel", IR1PversionNumber))
-			DoAlert /T="The Ploting tool I panel was created by old version of Irena " 1, "Ploting tool may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Ploting tool I panel was created by incorrect version of Irena " 1, "Ploting tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				//Execute/P("IR1P_GeneralPlotTool()")
 				IR1P_GeneralPlotTool()

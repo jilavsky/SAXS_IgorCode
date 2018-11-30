@@ -26,28 +26,79 @@
 
 Function NI1_DNDCreateHelpNbk()
 	String nb = "DND_Instructions"
-	DoWindow DND_Instructions
+	DoWIndow DND_Instructions
 	if(V_Flag)
-		DoWindow /F DND_Instructions
-		return 1
+		DOWIndow/F DND_Instructions
+		return 0
 	endif
-	NewNotebook/N=$nb/F=1/V=1/K=0/W=(459,208,999,491)
-	Notebook $nb defaultTab=36, statusWidth=252
+	NewNotebook/N=$nb/F=1/V=1/K=1/ENCG={1,1}/W=(431,214,1179,1072)
+	Notebook $nb defaultTab=36, magnification=125
 	Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
 	Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",10,0,(0,0,0)}
 	Notebook $nb newRuler=Title, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Geneva",12,3,(0,0,0)}
 	Notebook $nb ruler=Title, text="Instructions for use of DND CAT special configuration\r"
 	Notebook $nb ruler=Normal, text="\r"
-	Notebook $nb text="1. Select \"DND/txt\" Image type\r"
-	Notebook $nb text="2. Load one txt file located in .../APSCycle/YourName/Month/processing/plot_files, these are the files w"
-	Notebook $nb text="ith the data you want. Note, you can load DND processed data from these files into the Irena package usi"
-	Notebook $nb text="ng ASCII loader. Q is second column, Intensty is third and error is fourth. \r"
-	Notebook $nb text="3. Select in the \"SAS 2D\"->\"Instrument configurations\"--> \"DND CAT\". This will configure the Nika proper"
-	Notebook $nb text="ly, including wavelength, distance, etc.\r"
-	Notebook $nb text="4. Create mask. You need to create it.\r"
-	Notebook $nb text="4. Select the text file and load. Nika will parse parameters from this file and locate the tif file to b"
-	Notebook $nb text="e loaded. Note, that if you changed the folder structure you may have to point Nika to location of the t"
-	Notebook $nb text="iff files.\r"
+	Notebook $nb fStyle=1, text="0. ", fStyle=-1, text="Open Nika's main panel, if needed. \r"
+	Notebook $nb fStyle=1, text="1.", fStyle=-1, text=" Select \"DND/txt\" as image type. Check \"Display only\" as processing method so you do not get errors if mask/parameters are not correct. \r"
+	Notebook $nb fStyle=1, text="2. ", fStyle=-1
+	Notebook $nb text="Using \"Select data path\" load one txt file located in .../APSCycle/YourName/Month/processing/plot_files,"
+	Notebook $nb text=" these are the ", fStyle=5, text="txt", fStyle=-1, text=" files you want to see in the file list. "
+	Notebook $nb fStyle=4, text="Nika will find tiff files on its own", fStyle=-1, text=". \r"
+	Notebook $nb text="       ", fStyle=2
+	Notebook $nb text=" Note, you can load DND processed 1D ASCII data from these files directly into the Irena package using A"
+	Notebook $nb text="SCII loader. Q is second column, Intensty is third and error is fourth. Nika is needed only if you want "
+	Notebook $nb text="to reprocess the 2D->1D data again, for example if you need sector averages, different mask, etc. \r"
+	Notebook $nb fStyle=1, text="3.", fStyle=-1
+	Notebook $nb text=" Now, run the Configuration function again... Select in the \"SAS 2D\"->\"Instrument configurations\"--> \"DN"
+	Notebook $nb text="D CAT\". Select name.txt file with the same name as tiff file you want to process. This will configure th"
+	Notebook $nb text="e Nika properly (", fStyle=1, text="for that detector!!!, there are 3 detecotrs on DND SAXS", fStyle=-1
+	Notebook $nb text="), including wavelength, distance, etc. Correct checkboxes will be checked and functions set to provide "
+	Notebook $nb text="same data processing as DND suggests to do (see below). \r"
+	Notebook $nb fStyle=1, text="4.", fStyle=-1, text=" Create mask. ", fStyle=5
+	Notebook $nb text="You need to create it or load it if you have already created it.", fStyle=-1
+	Notebook $nb text=" Make sure you use the correct image file to create it - with the three different image files associated"
+	Notebook $nb text=" with each sample, it is bit complicated. Nika does not like when mask and image dimension do not match."
+	Notebook $nb text=" \r"
+	Notebook $nb fStyle=1, text="5.", fStyle=-1
+	Notebook $nb text=" Set Nika processing & output options you want = set tabs \"Sect.\", \"LineProf\" and \"Save/Exp\". Set Proces"
+	Notebook $nb text="sing options (checkboxes), likely you need \"Process sel. files individually\" \r"
+	Notebook $nb fStyle=1, text="6. ", fStyle=-1
+	Notebook $nb text="To reduce image, select the text file with the same name as the tiff file you want to process and \""
+	Notebook $nb fStyle=1, text="Process image(s)", fStyle=-1
+	Notebook $nb text="\". Nika will parse parameters (wavelength, calibration values, thickenmss,...) from this txt file, locat"
+	Notebook $nb text="e the tiff file, load it, and process as described. If you do circular average, you shoudl get what the "
+	Notebook $nb text="text file contains. It si good to check that you actually get the same output before using Nika to do di"
+	Notebook $nb text="fferent types of processing (e.g., sectors). If something does not match, let me know... \r"
+	Notebook $nb text="\r"
+	Notebook $nb fStyle=3, text="Here is DND description which Nika is trying to reproduce:\r"
+	Notebook $nb fStyle=-1
+	Notebook $nb text="What I do with the TIFF image to re-produce columns 3 and 4 in the *.txt files in the plot_files directo"
+	Notebook $nb text="ry.\r"
+	Notebook $nb text="I = (I_raw - 10) * CF / (it - itd) / t \r"
+	Notebook $nb text="where: \r"
+	Notebook $nb text="I_raw = the radial averaged counts from the masked tif image in ADU as produced by GSAS \r"
+	Notebook $nb text="10 = the number of ADU units which are added to the image by Rayonix software before saving to prevent n"
+	Notebook $nb text="egative values due to read noise. \r"
+	Notebook $nb text="CF = Calibration factor = the scale factor to get absolute intensities based on my glassy carbon standar"
+	Notebook $nb text="d \r"
+	Notebook $nb text="it = Transmitted detector intensity, measured intensity on the beam stop diode in pAsec\r"
+	Notebook $nb text="itd = Transmitted detector dark, the beam stop diode dark current in pAsec \r"
+	Notebook $nb text="t = Sample thickness, thickness of the sample as entered by the user in cm\r"
+	Notebook $nb text="\r"
+	Notebook $nb text="It CF has not yet been determined, then the column headings for columns 3 and 4 will be \"I_ite (relative"
+	Notebook $nb text=" units)\" and \"sigma(I_ite)\"  if the intensity calibration has been determined (i.e. CF <> 1.0) then thes"
+	Notebook $nb text="e columns with be named \"I (1/cm)\" and \"sigma(I)\"\r"
+	Notebook $nb text="\r"
+	Notebook $nb text="Also if anyone wants to use the incident detector intensity to estimate sample thickness (i.e. measure t"
+	Notebook $nb text="he sample transmission) they need to realize that the two detectors are completely different (ion chambe"
+	Notebook $nb text="r and photodiode) and on different linear scales.  Thus they need to first\r"
+	Notebook $nb text="calculate the ratio of (ii - iid)/(it - itd) with no sample in the beam then they can multiply this rati"
+	Notebook $nb text="o by (it - itd)/(ii -iid) for the sample frames to get the transmission of the sample.\r"
+	Notebook $nb text="\r"
+	Notebook $nb fStyle=1, text="NOTE: ", fStyle=-1, text="records from the text file for each sample were here: \r"
+	Notebook $nb text="\troot:DNDCAtLookupTables:\r"
+	Notebook $nb text="User can use these to extract more information and do more calculations. \r"
+	Notebook $nb text="\r"
 end
 
 //************************************************************************************************************
@@ -61,8 +112,8 @@ Function NI1_DNDConfigureNika()
 
 	//this function will configure Nika for use with DND CAT data
 	string OldDf=getDataFolder(1)
+	NI1_DNDCreateHelpNbk()
 	if(!DataFolderExists("root:DNDCAtLookupTables"))
-		NI1_DNDCreateHelpNbk()
 		Abort "Load some DND data in first to create string with header information"
 	endif
 	string ListOfheaders=""
@@ -78,7 +129,7 @@ Function NI1_DNDConfigureNika()
 		abort
 	endif
 
-	//and now configrue items:
+	//and now configure items:
 	NVAR Dist=root:Packages:Convert2Dto1D:SampleToCCDDistance
 	Dist=NI1_DNDSampleToDetDistance(Selectedheader)
 	
@@ -131,13 +182,18 @@ Function NI1_DNDConfigureNika()
 	NVAR UseSampleMonitorFnct=root:Packages:Convert2Dto1D:UseSampleMonitorFnct
 	NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
 	SVAR EmptyMonitorFnct=root:Packages:Convert2Dto1D:EmptyMonitorFnct
+	
+	NVAR UseSubtractFixedOffset = root:Packages:Convert2Dto1D:UseSubtractFixedOffset
+	NVAR SubtractFixedOffset = root:Packages:Convert2Dto1D:SubtractFixedOffset
+	UseSubtractFixedOffset = 1
+	SubtractFixedOffset = 10
 
 	NVAR UseMonitorForEF=root:Packages:Convert2Dto1D:UseMonitorForEF
 	SampleI0=1
-	UseMonitorForEF=1
+	UseMonitorForEF=0
 	UseSampleMonitorFnct=0
-	UseEmptyMonitorFnct=1
-	EmptyMonitorFnct="NI1_DNDEmptyCorrection"
+	UseEmptyMonitorFnct=0
+	//EmptyMonitorFnct="NI1_DNDEmptyCorrection"
 
 	UseSampleTransmission=1
 	UseSampleTransmFnct=1
@@ -222,55 +278,31 @@ Function NI1_DNDSampleTransmission(FileNameStr)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDSampleTransmission routine, please contact auhtor of the code"
 	endif
-	variable target
-	variable IToverI0 = NumberByKey("Relative transmission it/i0",curKwList,"=",";")
-		variable ctTime = NumberByKey("Exposure time (s)",curKwList,"=",";")
-	if(numtype(ctTime)!=0)
-		ctTime = NumberByKey("Mean exposure time (s)",curKwList,"=",";")
-	endif
-	variable I0 = NumberByKey("Incident detector intensity (pAs)",curKwList,"=",";")
-	if(numtype(I0)!=0)
-		I0 = NumberByKey("Mean incident intensity (cps)",curKwList,"=",";")
-	endif
-	variable NormI0 = NumberByKey("Original normalization number (cps)",curKwList,"=",";")
-	variable Itransmitted=NumberByKey("Transmitted detector intensity (pAs)",curKwList,"=",";")
-	if(numtype(Itransmitted)!=0)
-		Itransmitted = NumberByKey("Mean transmitted intensity (cps)",curKwList,"=",";")
-	endif
-	variable normfct=NumberByKey("Image normalization scale factor (norm/i0)",curKwList,"=",";")
-	if(numtype(normfct)!=0)
-		normfct = NumberByKey("Mean image normalization scale factor sum(norm/i0)/n",curKwList,"=",";")
-	endif
-	normfct = 1		//What is it now???
-	
-	
-	 target =(normfct* Itransmitted *cttime)
-	
-	//Now if the suer uses empty field, we can be bit smarter...
-	NVAR useEmptyField = root:Packages:Convert2Dto1D:useEmptyField
-	if(useEmptyField)
-		SVAR CurrentEmptyName = root:Packages:Convert2Dto1D:CurrentEmptyName
-		string FixedEMptyname= RemoveEnding(CurrentEmptyName, ".txt") [0,31] 
-		SVAR/Z curEmptyKwList=$("root:DNDCAtLookupTables:"+FixedEMptyname)
-		if(!SVAR_Exists(curEmptyKwList))
-			Abort "Problem in NI1_DNDSampleTransmission routine, please contact auhtor of the code"
-		endif
-		variable IToverI0Empty = NumberByKey("Relative transmission it/i0",curEmptyKwList,"=",";")
-		//To get tranmission...
-		// Take the poorly named "Relative transmission it/io" value from the sample's file and divide it by the same value from the empty's file.
-		variable target2 = IToverI0 / IToverI0Empty
-		if(numtype(target2!=0))
-			DoAlert 1, "Failure in NI1_DNDSampleTransmission routine. This is a bug. Please report"
-		endif
-		Print "*********     This is only for your information   ****************"
-		Print "Calculated transmission for sample : "+FileNameStr+" using empty measurement : "+CurrentEmptyName
-		Print "                The transmission value is  = "+num2str(target2)
-		Print "Note, that the data have been already corrected for transmission and this value is not used in data reduction"
-		Print "****************************************************"
-		
-	endif
+	//this thing calculate it-itd in DND formula:
+//		I = (I_raw - 10) * CF / (it - itd) / t 
+//	
+//	where: 
+//	I_raw = the radial averaged counts from the masked tif image in ADU as produced by GSAS 
+//	10 = the number of ADU units which are added to the image by Rayonix
+//	software before saving to prevent negative values due to read noise. 
+//	CF = Calibration factor = the scale factor to get absolute intensities
+//	based on my glassy carbon standard 
+//	it = Transmitted detector intensity = is the measured intensity on the beam stop diode in picoamp * seconds
+//# Transmitted detector intensity (pAs)	1091995.00000
+//# Image AcquireTime (s)	0.90200
+//# Exposure Time (s)	0.90000
+//	itd = Transmitted detector dark = the beam stop diode dark current in	picoamp * seconds 
+// # Transmitted detector dark (pAs)	212.40000
 
-//print "Sample Transmission = "+num2str(target)
+//	t = Sample thickness =  is the thickness of my glassy
+//	carbon standard (or the sample if entered by the user) in cm
+
+	variable target
+	variable itpA = NumberByKey("Transmitted detector intensity (pAs)",curKwList,"=",";")
+	//variable ctTime = NumberByKey("Exposure Time (s)",curKwList,"=",";")
+	variable itdpA = NumberByKey("Transmitted detector dark (pAs)",curKwList,"=",";")
+	
+	target =(itpA - itdpA)
 
 	return target
 end
@@ -318,7 +350,7 @@ Function NI1_DNDSampleCorrFnct(FileNameStr)
 	//else
 	//	CF= NumberByKey(" CF ",curKwList,"=",";")
 	//endif
-	variable target = CF* 10		//this calibration assumes thickness in cm. Nika uses mm... 
+	variable target = CF		//this calibration assumes thickness in cm. Nika uses mm... 
 	return target
 end
 

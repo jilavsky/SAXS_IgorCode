@@ -56,7 +56,7 @@ Function IR2R_MainCheckVersion()
 	DoWindow IR2R_ReflSimpleToolMainPanel
 	if(V_Flag)
 		if(!IR1_CheckPanelVersionNumber("IR2R_ReflSimpleToolMainPanel", IR2RversionNumber))
-			DoAlert /T="The Reflectivity panel was created by old version of Irena " 1, "Reflectivity may need to be restarted to work properly. Restart now?"
+			DoAlert /T="The Reflectivity panel was created by incorrect version of Irena " 1, "Reflectivity may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				IR2R_ReflectivitySimpleToolMain()
 			else		//at least reinitialize the variables so we avoid major crashes...

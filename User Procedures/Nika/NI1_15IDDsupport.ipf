@@ -2584,7 +2584,11 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 		LineProfw[0]=LineProfQ[1]-LineProfQ[0]
 	endif
 
-	Wave PinProfq= $(PinFolder+":"+possiblyQuoteName("q_"+PinWaveNames))
+	Wave/Z PinProfq= $(PinFolder+":"+possiblyQuoteName("q_"+PinWaveNames))
+	if(!WaveExists(PinProfq))	//something is worng here...
+		print "Cannot create smeared data" 
+		return 0
+	endif
 	Wave PinProfr= $(PinFolder+":"+possiblyQuoteName("r_"+PinWaveNames))
 	Wave PinProfs= $(PinFolder+":"+possiblyQuoteName("s_"+PinWaveNames))
 	Wave PinProfw= $(PinFolder+":"+possiblyQuoteName("w_"+PinWaveNames))
