@@ -4,7 +4,7 @@
 #include <Peak AutoFind>
 
 
-Constant IN3_FlyImportVersionNumber=0.19
+Constant IN3_FlyImportVersionNumber=1.97
 Constant IN3_DeleteRawData=1
 Constant IN3_RemoveRangeChangeEffects=1
 
