@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #pragma version = 1.96
-#pragma IgorVersion=7.00
+#pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
@@ -34,7 +34,7 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=1.95
+Constant IN3_ReduceDataMainVersionNumber=1.97
 Constant IN3_NewReduceDataMainVersionNum=1.97
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1

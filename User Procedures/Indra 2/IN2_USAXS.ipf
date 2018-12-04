@@ -172,7 +172,7 @@ End
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
-	string WindowProcNames="USAXSDataReduction=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
+	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_ResetSizesForALlPanels(WindowProcNames)

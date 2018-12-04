@@ -4,7 +4,7 @@
 #include <Peak AutoFind>
 
 
-Constant IN3_FlyImportVersionNumber=1.97
+Constant IN3_FlyImportVersionNumber=0.96
 Constant IN3_DeleteRawData=1
 Constant IN3_RemoveRangeChangeEffects=1
 
@@ -104,7 +104,7 @@ end
 Function IN3_FlyScanCheckVersion()	
 	DoWindow USAXSDataReduction
 	if(V_Flag)
-		if(!IN3_CheckPanelVersionNumber("USAXSDataReduction", IN3_FlyImportVersionNumber))
+		if(!IN3_CheckPanelVersionNumber("IN3_FlyScanImportPanel", IN3_FlyImportVersionNumber))
 			DoAlert /T="The Fly Scan Import panel was created by incorrect version of Indra " 1, "FlyScan Import needs to be restarted to work properly. Restart now?"
 			if(V_flag==1)
  				KillWIndow/Z USAXSDataReduction
