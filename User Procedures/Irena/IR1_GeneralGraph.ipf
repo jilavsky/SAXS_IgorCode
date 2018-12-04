@@ -5,7 +5,7 @@
 Constant IR1PversionNumber=2.33
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2018, Argonne National Laboratory
+//* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1204,10 +1204,10 @@ End
 Function IR1P_TransAxisdfromQ(s)
 	STRUCT WMAxisHookStruct &s
 
-	GetAxis/Q/W=$s.win $s.mastName	// get master (left) axis' range in V_min, V_Max
+	GetAxis/Q/W=$s.win $s.mastName	// get master (bottom) axis' range in V_min, V_Max
 
-	s.max=pi/V_max / 10
-	s.min=pi/V_min / 10
+	s.max=2*pi/V_max / 10
+	s.min=2*pi/V_min / 10
 	s.units="nm"
 	return 0
 End
@@ -1224,7 +1224,7 @@ Function IR1P_AddTransAxisQtoD()
 			//ModifyGraph mirror(bottom)=0	
 			NewFreeAxis/W=GeneralGraph/T d_axis
 			ModifyFreeAxis/W=GeneralGraph d_axis, master=bottom, hook=IR1P_TransAxisdfromQ
-			Label/W=GeneralGraph d_axis "Dimension (π/q) [nm]"
+			Label/W=GeneralGraph d_axis "Diameter/Dimension (2π/q) [nm]"
 			ModifyGraph/W=GeneralGraph log=NumberByKey("log(x)",AxisInfo("GeneralGraph", "bottom" ),"=")
 			ModifyGraph/W=GeneralGraph tickExp(d_axis)=1,tickUnit(d_axis)=1,linTkLabel(d_axis)=1
 			//ModifyGraph/W=GeneralGraph lblPos(d_axis)=50,lblLatPos=0
@@ -1232,16 +1232,6 @@ Function IR1P_AddTransAxisQtoD()
 		else
 			KillFreeAxis/W=GeneralGraph d_axis
 		endif
-
-
-//		GetAxis /W=GeneralGraph /Q MT_bottom 
-//		if(V_Flag)		//why in the world this is set to 1 when teh axcis DOES NOT exist??? 
-//			SetupTransformMirrorAxis("GeneralGraph", "bottom", "IR1P_TransAxisdfromQ", $"", 5, 1, 5, 1)
-//		endif
-//		TicksForTransformAxis("GeneralGraph", "bottom", 5, 1, 1, "MT_bottom", 1,0)
-//		ModifyGraph mirror(bottom)=0,mirror(MT_bottom)=0
-//		Label MT_bottom "Dimension (2pi/q) [A]"
-//		ModifyGraph lblPosMode(MT_bottom)=2,lblMargin(MT_bottom)=5
 	endif
 end
 //**********************************************************************************************************

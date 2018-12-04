@@ -3,7 +3,7 @@
 #pragma IgorVersion=7.05
 
 
-//1.81   Beta release. New OSX 64-bit xop version.  
+//1.81   December 2018. New OSX 64-bit xop version.  
 //1.80 	July 2018 release, first official Igor 8 release
 //1.79	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Modified main interface to have radio buttons and only one button for action. This makes cleaner interface as some controls can be hidden. Unluckily, panel is now higher by 20 points. 

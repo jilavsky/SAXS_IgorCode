@@ -1,17 +1,16 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.97
+#pragma version = 1.96
 #pragma IgorVersion=7.00
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2018, Argonne National Laboratory
+//* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.97 switched off RemoveDropouts by default. Added ability to overwrite Flyscan amplifier dead times. 
-//1.96 added use of FWHM from sample to GUI. 
+//1.96 added use of FWHM from sample to GUI. Added ability to overwrite Flyscan amplifier dead times. 
 //1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 
 //1.93 added Desmaering as optional data reduction step. 
@@ -993,7 +992,7 @@ Function IN3_Initialize()
 		 CalibrateArbitrary=0
 	endif
 	NVAR RemoveDropouts
-	RemoveDropouts=0
+	RemoveDropouts=1
 	NVAR RemoveDropoutsTime
 	NVAR RemoveDropoutsFraction
 	if(RemoveDropoutsTime<0.01)

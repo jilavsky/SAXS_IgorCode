@@ -15,9 +15,9 @@ constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
       //For releases uncomment the next line and set to correct version number:
-//Strconstant ManualVersionString = "en/1.3.3/"					//1.3.3 is July2018 release
+Strconstant ManualVersionString = "en/1.4/"					//1.3.3 is July2018 release
       //For development version uncomment next line, it points to latest (development) version of manuals:
-Strconstant ManualVersionString = "en/latest/"
+//Strconstant ManualVersionString = "en/latest/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -31,12 +31,12 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //  On Igor 7 always less than 31 characters. On Igor 8 optionally more, based on constats above.  
 //  
 //*************************************************************************\
-//* Copyright (c) 2005 - 2018, Argonne National Laboratory
+//* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
-//2.17 added create COlordScale for USAXS graphs. 
+//2.17 added create ColorScale for USAXS graphs. 
 //2.16 Fix IN2G_PanelResizePanelSize to return 0 when handled, seems needed to prevent GUI problems. 
 //2.15 minor modification of some functions to speed it up a bit... Added long names warning. 
 //2.14 added function IN2G_ReturnUnitsForYAxis(Ywave) which creates units string for Intensity vs Q Intensity axis based on wave note. 

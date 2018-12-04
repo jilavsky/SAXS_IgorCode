@@ -12,7 +12,7 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 _____________________________________________________________________________________
-1.96 
+1.96  12/5/2018
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
 Modified "Configure GUI..." menu name and added warning on name shortening. Should generate dialog when names are too long and users are not using Igor 8 with long names enabled. Only once per Igor experiment.  
 Added checkbox to use for calibration FWHM of sample and not Blank. Variability of Blanks adds to uncertainty of the absolute intensity calibration. Usually sample FHWM is better measure of Solid angle. Will be overwritten if sample FWHM is too large (Multiple scattering). 

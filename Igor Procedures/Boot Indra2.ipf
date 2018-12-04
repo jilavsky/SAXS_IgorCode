@@ -2,7 +2,7 @@
 #pragma version = 1.96
 #pragma IgorVersion=7.05
 
-//1.96   Beta version. Updtaes 64 bit OSX xops.
+//1.96   December 2018, updates 64 bit OSX xops, changes and fixes for 2018-03 cycle and general improvements. 
 //1.95 	July 2018 release, first official Igor 8 release
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.
@@ -34,7 +34,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2018, Argonne National Laboratory
+//* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/

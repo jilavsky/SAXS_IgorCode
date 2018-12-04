@@ -3,7 +3,7 @@
 constant IR3DversionNumber = 1.159	//Data merging panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2018, Argonne National Laboratory
+//* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1707,7 +1707,7 @@ Function IR3D_MergeButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlname,"GetHelp"))
 				//Open www manual with the right page
-				IN2G_OpenWebManual("Irena/DataManipulation.html")
+				IN2G_OpenWebManual("Irena/DataManipulation.html#data-merge")
 			endif
 			if(stringmatch(ba.ctrlname,"AutoScaleGraph"))
 				//autoscale graph since it seems really difficult to do

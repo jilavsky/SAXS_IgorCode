@@ -9,7 +9,7 @@ Constant IN3_DeleteRawData=1
 Constant IN3_RemoveRangeChangeEffects=1
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2018, Argonne National Laboratory
+//* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
