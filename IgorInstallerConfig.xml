@@ -17,11 +17,45 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>July2018</current_release>
+		<current_release>December2018</current_release>
 		<current_beta_release>August2018</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
+		<release name="December2018">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/December2018.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.68</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.81</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.96</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version>2</version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version>2</version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
+			</Package>
+			<VersionComment>Irena 2.68, Nika 1.81 and Indra 1.96 from 12/7/2018. Adds xops version 2.0 critical for OSX Igor 8 users.</VersionComment>
+		</release>
 		<release name="July2018">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/July2018.zip</SourceFileAddress>
 			<Package>
@@ -190,7 +224,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.92 from 5/1/2017. Fixed few bugs, Irena improvements.</VersionComment>
+			<VersionComment>Versions of Irena 2.64, Nika 1.77 and Indra 1.92 from 5/1/2017.</VersionComment>
 		</release>
 	</InstallerConfig>
 </IgorInstaller>
