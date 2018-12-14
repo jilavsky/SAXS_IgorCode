@@ -1,6 +1,6 @@
 #pragma rtGlobals=1		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.96
+#pragma version = 1.97
 
 constant CurrentIndraVersionNumber = 1.96
 //*************************************************************************\
@@ -9,7 +9,8 @@ constant CurrentIndraVersionNumber = 1.96
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.96   Beta version. Updtaes 64 bit OSX xops.
+//1.97 	TBA
+//1.96   December 2018 release. Updtaes 64 bit OSX xops.
 //1.95 	Igor 8 release, ongoing fixes for USAXS software changes. Modified behavior of Automatic blank selection in GUI. 
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
 //			Fixed Case spelling of USAXS Error data to SMR_Error and DSM_Error.

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.81
+#pragma version=1.82
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -14,7 +14,9 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.81   Beta version. Updated 64bit xops, mainly for OSX. 
+//1.82 	TBA
+//
+//1.81   December 2018 release. Updated 64bit xops, mainly for OSX. 
 //			Added 12ID-C support, first release. 
 //1.80	Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
 //			Removed range selection controls and moved Save data options to its own tab "Save"

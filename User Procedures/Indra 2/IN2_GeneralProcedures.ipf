@@ -15,9 +15,9 @@ constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
       //For releases uncomment the next line and set to correct version number:
-Strconstant ManualVersionString = "en/1.4/"					//1.3.3 is July2018 release
+//Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
       //For development version uncomment next line, it points to latest (development) version of manuals:
-//Strconstant ManualVersionString = "en/latest/"
+Strconstant ManualVersionString = "en/latest/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
