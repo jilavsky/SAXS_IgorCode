@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1
+#pragma version=1.1
 constant IR3LversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ constant IR3LversionNumber = 1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.1 combined this ipf with "Simple fits models"
 //1.0 Simple Fits tool first release version 
 
 

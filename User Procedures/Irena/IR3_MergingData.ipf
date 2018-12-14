@@ -2323,7 +2323,7 @@ Function IR3D_MergeDataOverlap()
 	variable Data2StartPoint = BinarySearch(Qvector2, endQ )
 	Duplicate /R=[Data1StartPoint,numpnts(Intensity1)-1]/Free  Intensity1, tmpIntensity1 
 	Duplicate /R=[0,Data2StartPoint]/Free  Intensity2, tmpIntensity2 
-	if(numpnts(tmpIntensity1)<10 || numpnts(tmpIntensity2)<10)
+	if(numpnts(tmpIntensity1)<4 || numpnts(tmpIntensity2)<4)
 		Abort "These data do not overlap enough"
 	endif
 	
