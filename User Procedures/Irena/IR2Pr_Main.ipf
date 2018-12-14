@@ -1,9 +1,6 @@
 #pragma rtGlobals=1		// Use modern global access method.
 #include "IN2_GeneralProcedures", version>=1.46
 #include "IR2_PanelCntrlProcs", version>=1.04
-#include "IR1_Recording"
-#include "IR2Pr_Regularization"
-#include "IR2Pr_PDFMain"
 
 
 //this is new Main loading procedure for Pair distance distribution function for those, who do not want whole Irena package...

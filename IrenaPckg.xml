@@ -11,38 +11,26 @@
 		<File>User Procedures/CanSAS/HDF5gateway.ipf</File>
 		<File>User Procedures/Indra 2/ANL copyright.txt</File>
 		<File>User Procedures/Indra 2/IN2_GeneralProcedures.ipf</File>
-		<File>User Procedures/Irena/CombinedFractalModel.pdf</File>
 		<File>User Procedures/Irena/DWS_GeneralGraph.ipf</File>
-		<File>User Procedures/Irena/DWS_GeneralGraphControls.ipf</File>
 		<File>User Procedures/Irena/FormFactorList.pdf</File>
-		<File>User Procedures/Irena/IR1_CreateFldrStrctr.ipf</File>
 		<File>User Procedures/Irena/IR1_CromerLiberman.ipf</File>
 		<File>User Procedures/Irena/IR1_DataManipulation.ipf</File>
 		<File>User Procedures/Irena/IR1_Desmearing.ipf</File>
 		<File>User Procedures/Irena/IR1_EvaluationGraph.ipf</File>
 		<File>User Procedures/Irena/IR1_FormFactors.ipf</File>
-		<File>User Procedures/Irena/IR1_FractalsCtrlPanel.ipf</File>
-		<File>User Procedures/Irena/IR1_FractalsFiting.ipf</File>
-		<File>User Procedures/Irena/IR1_FractalsInit.ipf</File>
 		<File>User Procedures/Irena/IR1_FractalsMain.ipf</File>
 		<File>User Procedures/Irena/IR1_Functions.ipf</File>
 		<File>User Procedures/Irena/IR1_GeneralGraph.ipf</File>
 		<File>User Procedures/Irena/IR1_GeneralGraph2.ipf</File>
-		<File>User Procedures/Irena/IR1_GraphStyling.ipf</File>
 		<File>User Procedures/Irena/IR1_ImportData.ipf</File>
 		<File>User Procedures/Irena/IR1_Loader.ipf</File>
 		<File>User Procedures/Irena/IR1_Main.ipf</File>
 		<File>User Procedures/Irena/IR1_ScattContr_New.ipf</File>
 		<File>User Procedures/Irena/IR1_Sizes.ipf</File>
 		<File>User Procedures/Irena/IR1_Unified_Fit_Fncts.ipf</File>
-		<File>User Procedures/Irena/IR1_Unified_Fit_Fncts2.ipf</File>
 		<File>User Procedures/Irena/IR1_Unified_Panel.ipf</File>
-		<File>User Procedures/Irena/IR1_Unified_Panel_Fncts.ipf</File>
-		<File>User Procedures/Irena/IR1_Unified_SaveExport.ipf</File>
-		<File>User Procedures/Irena/IR1_UnifiedSavetoXLS.ipf</File>
 		<File>User Procedures/Irena/IR2_dataMiner.ipf</File>
 		<File>User Procedures/Irena/IR2_DWSgraph.ipf</File>
-		<File>User Procedures/Irena/IR2_DWSGraphControls.ipf</File>
 		<File>User Procedures/Irena/IR2_GelsTool.ipf</File>
 		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
 		<File>User Procedures/Irena/IR2_Reflectivity.ipf</File>
@@ -50,17 +38,12 @@
 		<File>User Procedures/Irena/IR2_SmallAngleDiff.ipf</File>
 		<File>User Procedures/Irena/IR2_StructureFactors.ipf</File>
 		<File>User Procedures/Irena/IR2_UniversalDataExport.ipf</File>
-		<File>User Procedures/Irena/IR2L_NLSQFCalc.ipf</File>
-		<File>User Procedures/Irena/IR2L_NLSQFfunctions.ipf</File>
 		<File>User Procedures/Irena/IR2L_NLSQFmain.ipf</File>
 		<File>User Procedures/Irena/IR2L_NLSQFsupport.ipf</File>
-		<File>User Procedures/Irena/IR2Pr_Main.ipf</File>
 		<File>User Procedures/Irena/IR2Pr_PDFMain.ipf</File>
-		<File>User Procedures/Irena/IR2Pr_Regularization.ipf</File>
 		<File>User Procedures/Irena/IR3_GuinierPorodModel.ipf</File>
 		<File>User Procedures/Irena/IR3_MergingData.ipf</File>
 		<File>User Procedures/Irena/IR3_SimpleFits.ipf</File>
-		<File>User Procedures/Irena/IR3_SimpleFitsModels.ipf</File>
 		<File>User Procedures/Irena/IR3_WAXSDiffraction.ipf</File>
 		<File>User Procedures/Irena/IR3_WAXSDiffraction.ihf</File>
 		<File>User Procedures/Irena/license.txt</File>
