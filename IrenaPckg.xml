@@ -18,29 +18,28 @@
 		<File>User Procedures/Irena/IR1_Desmearing.ipf</File>
 		<File>User Procedures/Irena/IR1_EvaluationGraph.ipf</File>
 		<File>User Procedures/Irena/IR1_FormFactors.ipf</File>
-		<File>User Procedures/Irena/IR1_FractalsMain.ipf</File>
-		<File>User Procedures/Irena/IR1_Functions.ipf</File>
+		<File>User Procedures/Irena/IR1_Fractals.ipf</File>
 		<File>User Procedures/Irena/IR1_GeneralGraph.ipf</File>
 		<File>User Procedures/Irena/IR1_GeneralGraph2.ipf</File>
 		<File>User Procedures/Irena/IR1_ImportData.ipf</File>
 		<File>User Procedures/Irena/IR1_Loader.ipf</File>
 		<File>User Procedures/Irena/IR1_Main.ipf</File>
-		<File>User Procedures/Irena/IR1_ScattContr_New.ipf</File>
+		<File>User Procedures/Irena/IR1_ScattContrast.ipf</File>
 		<File>User Procedures/Irena/IR1_Sizes.ipf</File>
-		<File>User Procedures/Irena/IR1_Unified_Fit_Fncts.ipf</File>
-		<File>User Procedures/Irena/IR1_Unified_Panel.ipf</File>
+		<File>User Procedures/Irena/IR1_UnifiedFitFncts.ipf</File>
+		<File>User Procedures/Irena/IR1_UnifiedFitPanel.ipf</File>
 		<File>User Procedures/Irena/IR2_dataMiner.ipf</File>
 		<File>User Procedures/Irena/IR2_DWSgraph.ipf</File>
-		<File>User Procedures/Irena/IR2_GelsTool.ipf</File>
+		<File>User Procedures/Irena/IR2_AnalyticalModels.ipf</File>
 		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
 		<File>User Procedures/Irena/IR2_Reflectivity.ipf</File>
 		<File>User Procedures/Irena/IR2_ScriptingTool.ipf</File>
 		<File>User Procedures/Irena/IR2_SmallAngleDiff.ipf</File>
 		<File>User Procedures/Irena/IR2_StructureFactors.ipf</File>
 		<File>User Procedures/Irena/IR2_UniversalDataExport.ipf</File>
-		<File>User Procedures/Irena/IR2L_NLSQFmain.ipf</File>
-		<File>User Procedures/Irena/IR2L_NLSQFsupport.ipf</File>
-		<File>User Procedures/Irena/IR2Pr_PDFMain.ipf</File>
+		<File>User Procedures/Irena/IR2_ModelingMain.ipf</File>
+		<File>User Procedures/Irena/IR2_ModelingSupport.ipf</File>
+		<File>User Procedures/Irena/IR2_PDDFMain.ipf</File>
 		<File>User Procedures/Irena/IR3_GuinierPorodModel.ipf</File>
 		<File>User Procedures/Irena/IR3_MergingData.ipf</File>
 		<File>User Procedures/Irena/IR3_SimpleFits.ipf</File>
