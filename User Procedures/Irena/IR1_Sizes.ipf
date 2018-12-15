@@ -1,4 +1,5 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=21	// Use modern global access method.
 #pragma version = 2.30
 Constant IR1RSversionNumber=2.30
 
@@ -2022,6 +2023,9 @@ static Function IR1R_FindOptimumAvalue(Evalue)						//does the fitting itself, c
 	Wave Intensity=root:Packages:Sizes:IntensityQ2N
 	Wave Errors=root:Packages:Sizes:ErrorsQ2N
 	Wave D_distribution=root:Packages:Sizes:D_distribution
+	Wave A_matrix
+	Wave B_vector
+	Wave ModelDistribution
 
 	variable LogAmax=100, LogAmin=-100, M=numpnts(Intensity)
 	variable tolerance=Evalue*sqrt(2*M)
@@ -2259,6 +2263,14 @@ end
 			SetAxis/W=IR1R_SizesInputGraph/N=1 right -(V_max*0.1),V_max*1.1
 		endif
 	endif
+	Wave Intensity
+	Wave Q_vec
+	Wave SizesFitIntensity
+	Wave BackgroundWave
+	Wave IntensityOriginal
+	Wave NormalizedResidual
+	Wave DeletePointsMaskWave
+	Wave DeletePointsMaskErrorWave
 	AppendToGraph/W=IR1R_SizesInputGraph Intensity vs Q_vec
 	AppendToGraph/W=IR1R_SizesInputGraph SizesFitIntensity vs Q_vec
 	AppendToGraph/W=IR1R_SizesInputGraph BackgroundWave vs Q_vecOriginal
@@ -3247,6 +3259,9 @@ end
 Function  IR1R_SizesInputGraphFnct() 
 	PauseUpdate; Silent 1		// building window...
 	SetDataFolder root:Packages:Sizes:
+	Wave IntensityOriginal 
+	Wave Q_vecOriginal
+	Wave BackgroundWave
 	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=IR1R_SizesInputGraph IntensityOriginal vs Q_vecOriginal
 	AutoPositionWindow/M=0/R=IR1R_SizesInputPanel 	IR1R_SizesInputGraph	
 	IR1R_AppendIntOriginal()	//appends original Intensity 
@@ -3410,6 +3425,7 @@ Function IR1R_AppendIntOriginal()		//appends (and removes) and configures in gra
 	Wave IntensityOriginal=root:Packages:Sizes:IntensityOriginal
 	Wave Q_vecOriginal=root:Packages:Sizes:Q_vecOriginal
 	Wave DeletePointsMaskErrorWave=root:Packages:Sizes:DeletePointsMaskErrorWave
+	Wave DeletePointsMaskWave=root:Packages:Sizes:DeletePointsMaskWave
 	variable csrApos
 	variable csrBpos
 	

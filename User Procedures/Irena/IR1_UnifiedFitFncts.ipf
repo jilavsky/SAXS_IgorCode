@@ -1,5 +1,6 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=1	// Use modern global access method.
 #pragma version=2.30
 
 
@@ -395,6 +396,7 @@ Function IR1A_FitLocalPorod(Level)
 		SetDataFolder oldDf
 		abort "Set both cursors before fitting"
 	endif
+	Wave OriginalError
 	
 	if (FitP)
 		FuncFit/Q/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFitAllATOnce New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave  /C=T_Constraints 
@@ -509,7 +511,7 @@ Function IR1A_FitLocalGuinier(Level)
 	endif
 	Variable V_FitError=0			//This should prevent errors from being generated
 	//modifed 12 20 2004 to use fit at once function to allow use on smeared data
-
+	Wave OriginalError
 	FuncFit/Q/H=(num2str(abs(FitG-1))+num2str(abs(FitRg-1)))/N IR1_GuinierFitAllAtOnce New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
 //	FuncFit/H=(num2str(abs(FitG-1))+num2str(abs(FitRg-1)))/N IR1_GuinierFit New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
 
@@ -5428,6 +5430,7 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		EndValuesGraphAvg = V_avg
 		EndValuesGraphMin = V_avg-V_sdev
 		EndValuesGraphMax = V_avg+V_sdev
+		Wave Level1RgStartValue
 		AppendToGraph EndValuesGraphMax,EndValuesGraphMin,EndValuesGraphAvg vs Level1RgStartValue	
 		ModifyGraph lstyle(EndValuesGraphMax)=1,rgb(EndValuesGraphMax)=(0,0,0)
 		ModifyGraph lstyle(EndValuesGraphMin)=1,rgb(EndValuesGraphMin)=(0,0,0)

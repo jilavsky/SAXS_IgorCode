@@ -1,4 +1,5 @@
-#pragma rtGlobals=2		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion=7.05 	//requires Igor version 7.00 or higher
 #pragma version=2.20
 
@@ -48,32 +49,32 @@
 #include ":IR1_EvaluationGraph", version>=2.10
 #include ":IR1_FormFactors", version>=2.29
 #include ":IR1_Fractals", version>=2.06
-#include ":IR1_PlotingToolI", version >=2.33
-#include ":IR1_PlotingToolI2", version >=2.22
 #include ":IR1_ImportData", version>=2.40
 #include ":IR1_Main", version>=2.68
+#include ":IR1_PlotingToolI", version >=2.33
+#include ":IR1_PlotingToolI2", version >=2.22
 #include ":IR1_ScattContrast", version>=2.27
 #include ":IR1_Sizes", version>=2.30
 #include ":IR1_UnifiedFitFncts", version>=2.26
 #include ":IR1_UnifiedFitPanel", version>=2.23
-#include ":IR2_dataMiner", version >=1.13
-#include ":IR2_PlotingToolII", version>=1.1
 #include ":IR2_AnalyticalModels", version>=4.16
+#include ":IR2_DataExport", version>=1.13
+#include ":IR2_DataMiner", version >=1.13
+#include ":IR2_ModelingMain", version>=1.25
+#include ":IR2_ModelingSupport", version>=1.42
 #include ":IR2_PanelCntrlProcs", version>=1.50
+#include ":IR2_PlotingToolII", version>=1.1
 #include ":IR2_Reflectivity", version >=1.21
 #include ":IR2_ScriptingTool", version>=1.29
 #include ":IR2_SmallAngleDiffraction", version>=1.19
 #include ":IR2_StructureFactors", version>=1.07
-#include ":IR2_DataExport", version>=1.13
-#include ":IR2_ModelingMain", version>=1.25
-#include ":IR2_ModelingSupport", version>=1.42
 #include ":IR2_PDDF", version>=1.13
 #include ":IR3_GuinierPorodModel", version>=1.09
 #include ":IR3_MergingData", version>=1.19
 #include ":IR3_SimpleFits", version>=1
 #include ":IR3_WAXSDiffraction", version>=1.11
 
-//these are in different folders...
+//these are in different folders... 
 #include "::CanSAS:cansasXML_GUI", version>=1.04
 #include "::CanSAS:cansasXML", version>=1.12
 

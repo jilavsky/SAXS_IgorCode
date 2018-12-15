@@ -1153,7 +1153,7 @@ Function IR1K_InitCalculatorExportDta()
 	//Now outside
 	PathInfo Igor
 	string IgorPathStr=S_Path
-	string WhereAreProcedures=RemoveEnding(FunctionPath(""),"Irena:IR1_ScattContr_New.ipf")
+	string WhereAreProcedures=RemoveEnding(FunctionPath(""),"Irena:IR1_ScattContrast.ipf")
 
 	string/g StylePath=WhereAreProcedures+"Irena_CalcSavedCompounds"
 	NewPath/C/O/Q/Z CalcSavedCompounds, StylePath

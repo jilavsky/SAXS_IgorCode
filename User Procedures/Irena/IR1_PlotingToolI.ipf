@@ -1,5 +1,6 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=1	// Use modern global access method.
 #pragma version=2.33
 //#include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.33

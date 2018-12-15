@@ -1,4 +1,5 @@
-#pragma rtGlobals=2		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=2		// Use modern global access method.
 #pragma version = 2.13
 
 

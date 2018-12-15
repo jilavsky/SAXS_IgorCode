@@ -1,4 +1,5 @@
-#pragma rtGlobals=2		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=2		// Use modern global access method.
 #pragma version=2.63
 constant IR3MversionNumber = 2.61		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number

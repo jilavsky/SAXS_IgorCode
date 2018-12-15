@@ -1,4 +1,5 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=21	// Use modern global access method.
 #pragma version=2.10
 
 //*************************************************************************\
@@ -303,6 +304,8 @@ Function IR1G_MIPDataGraph()
 
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:SASDataEvaluation
+	Wave MIPVOlume
+	Wave MIPPressure
 
 //	PauseUpdate; Silent 1		// building window...
 	String fldrSav0= GetDataFolder(1)

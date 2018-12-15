@@ -1,4 +1,5 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.25
 
 Constant IR1AversionNumber=2.23
@@ -3609,6 +3610,8 @@ Function IR1A_AppendModelToMeasuredData()
 	ModifyGraph/W=IR1_LogLogPlotU log(left)=1
 	ModifyGraph/W=IR1_LogLogPlotU log(bottom)=1
 	ModifyGraph/W=IR1_LogLogPlotU mirror(bottom)=1
+	Wave OriginalIntensity
+	
 	Label/W=IR1_LogLogPlotU left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity ["+IN2G_ReturnUnitsForYAxis(OriginalIntensity)+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label/W=IR1_LogLogPlotU bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	ErrorBars/Y=1/W=IR1_LogLogPlotU OriginalIntensity Y,wave=(root:Packages:Irena_UnifFit:OriginalError,root:Packages:Irena_UnifFit:OriginalError)

@@ -1,4 +1,5 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.23
 
 //*************************************************************************\
@@ -1851,6 +1852,7 @@ Function IR1P_CreateCountourGraph()
 		MatrixFilter /N=(ContSmoothOverValue) avg PlottingTool_Int_Contour
 	endif
 	SVAR Graph3DColorScale = root:Packages:GeneralplottingTool:ContGraph3DColorScale
+	Wave PlottingTool_Q
 	Display /K=1/W=(405,467,950,900)/N=PlotingToolContourGrph as "Plotting tool I Contour plot"
 	AppendMatrixContour PlottingTool_Int_Contour vs {PlottingTool_Q,*}
 	ModifyGraph mirror=2
@@ -2243,6 +2245,7 @@ Function IR1P_Color3DGraph(ForceScale)
 	endif
 
 	if((Graph3DClrMin==0 && Graph3DClrMax==0))
+		Wave PlottingTool_Int_M
 		ModifyGraph/W=PlotingToolWaterfallGrph zColor(PlottingTool_Int_M)={PlottingTool_Int_M,*,*,$(Graph3DColorScale),0}
 	else //not in auto mode...
 		if(ForceScale)
