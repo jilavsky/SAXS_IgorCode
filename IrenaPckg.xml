@@ -11,7 +11,6 @@
 		<File>User Procedures/CanSAS/HDF5gateway.ipf</File>
 		<File>User Procedures/Indra 2/ANL copyright.txt</File>
 		<File>User Procedures/Indra 2/IN2_GeneralProcedures.ipf</File>
-		<File>User Procedures/Irena/DWS_GeneralGraph.ipf</File>
 		<File>User Procedures/Irena/FormFactorList.pdf</File>
 		<File>User Procedures/Irena/IR1_CromerLiberman.ipf</File>
 		<File>User Procedures/Irena/IR1_DataManipulation.ipf</File>
@@ -19,8 +18,8 @@
 		<File>User Procedures/Irena/IR1_EvaluationGraph.ipf</File>
 		<File>User Procedures/Irena/IR1_FormFactors.ipf</File>
 		<File>User Procedures/Irena/IR1_Fractals.ipf</File>
-		<File>User Procedures/Irena/IR1_GeneralGraph.ipf</File>
-		<File>User Procedures/Irena/IR1_GeneralGraph2.ipf</File>
+		<File>User Procedures/Irena/IR1_PlotingToolI.ipf</File>
+		<File>User Procedures/Irena/IR1_PlotingToolI2.ipf</File>
 		<File>User Procedures/Irena/IR1_ImportData.ipf</File>
 		<File>User Procedures/Irena/IR1_Loader.ipf</File>
 		<File>User Procedures/Irena/IR1_Main.ipf</File>
@@ -29,17 +28,17 @@
 		<File>User Procedures/Irena/IR1_UnifiedFitFncts.ipf</File>
 		<File>User Procedures/Irena/IR1_UnifiedFitPanel.ipf</File>
 		<File>User Procedures/Irena/IR2_dataMiner.ipf</File>
-		<File>User Procedures/Irena/IR2_DWSgraph.ipf</File>
+		<File>User Procedures/Irena/IR2_PlotingToolII.ipf</File>
 		<File>User Procedures/Irena/IR2_AnalyticalModels.ipf</File>
 		<File>User Procedures/Irena/IR2_PanelCntrlProcs.ipf</File>
 		<File>User Procedures/Irena/IR2_Reflectivity.ipf</File>
 		<File>User Procedures/Irena/IR2_ScriptingTool.ipf</File>
-		<File>User Procedures/Irena/IR2_SmallAngleDiff.ipf</File>
+		<File>User Procedures/Irena/IR2_SmallAngleDiffraction.ipf</File>
 		<File>User Procedures/Irena/IR2_StructureFactors.ipf</File>
-		<File>User Procedures/Irena/IR2_UniversalDataExport.ipf</File>
+		<File>User Procedures/Irena/IR2_DataExport.ipf</File>
 		<File>User Procedures/Irena/IR2_ModelingMain.ipf</File>
 		<File>User Procedures/Irena/IR2_ModelingSupport.ipf</File>
-		<File>User Procedures/Irena/IR2_PDDFMain.ipf</File>
+		<File>User Procedures/Irena/IR2_PDDF.ipf</File>
 		<File>User Procedures/Irena/IR3_GuinierPorodModel.ipf</File>
 		<File>User Procedures/Irena/IR3_MergingData.ipf</File>
 		<File>User Procedures/Irena/IR3_SimpleFits.ipf</File>
