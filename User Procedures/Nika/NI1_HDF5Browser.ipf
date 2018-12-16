@@ -1,4 +1,6 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version = 1.01
 
 #include <WaveSelectorWidget>
@@ -462,6 +464,7 @@ Function/S NI2_GetPreviewString(locationID, objectType, di, fullPath, attributeN
 				value = "ERROR!"
 			else
 				if (rank > 1)
+					wave tempTextAttributeWave
 					// So we can treat multi-dimensional wave as one big row.
 					Redimension/N=(numElements)/E=1 tempTextAttributeWave
 				endif

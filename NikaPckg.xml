@@ -13,7 +13,11 @@
 		<File>User Procedures/Nika/Modification history.txt</File>
 		<File>User Procedures/Nika/NI1_BeamCenterUtils.ipf</File>
 		<File>User Procedures/Nika/NI1_ConvProc.ipf</File>
+		<File>User Procedures/Nika/NI1_DNDCATsupport.ipf</File>
 		<File>User Procedures/Nika/NI1_FileLoaders.ipf</File>
+		<File>User Procedures/Nika/NI1_FITSLoader.ipf</File>
+		<File>User Procedures/Nika/NI1_HDF5Browser.ipf</File>
+		<File>User Procedures/Nika/NI1_InstrumentSupport.ipf</File>
 		<File>User Procedures/Nika/NI1_LineProfile.ipf</File>
 		<File>User Procedures/Nika/NI1_loader.ipf</File>
 		<File>User Procedures/Nika/NI1_Main.ipf</File>
@@ -24,12 +28,7 @@
 		<File>User Procedures/Nika/NI1_SaveRecallConfig.ipf</File>
 		<File>User Procedures/Nika/NI1_SquareMatrix.ipf</File>
 		<File>User Procedures/Nika/NI1_WinView.ipf</File>
-		<File>User Procedures/Nika/NI1_FITSLoader.ipf</File>
-		<File>User Procedures/Nika/NI1_DNDCATsupport.ipf</File>
-		<File>User Procedures/Nika/NI1_15IDDsupport.ipf</File>
-		<File>User Procedures/Nika/NI1_LineProfCalcs.ipf</File>
-		<File>User Procedures/Nika/NI1_HDF5Browser.ipf</File>
-		<File>User Procedures/Nika/NI1_InstrumentSupport.ipf</File>
+		<File>User Procedures/Nika/NI1_USAXSSupport.ipf</File>
 		<File>User Procedures/Nika/license.txt</File>
 		<File>User Procedures/Nika/15IDDpinSAXSAnalysis.pdf</File>
 </PackageContent>

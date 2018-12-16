@@ -1,4 +1,6 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version =1.28
 
 
@@ -484,7 +486,8 @@ Function NI1M_LoadOldHdfImage()
 	DoWIndow /F CCDImageForMask
 	ShowTools/W=CCDImageForMask/A rect
 	SetDrawLayer/W=CCDImageForMask ProgFront
-	String iminfo= ImageInfo("CCDImageForMask", NameOfWave(w), 0)
+	string ImgName=ImageNameList("CCDImageForMask", ";" )
+	String iminfo= ImageInfo("CCDImageForMask", StringFromList(0,ImgName,";"), 0)
 	String xax= StringByKey("XAXIS",iminfo)
 	String yax= StringByKey("YAXIS",iminfo)
 	SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
@@ -754,6 +757,7 @@ Function NI1M_MaskUpdateColors()
 		NVAR LowIntToMaskOff=root:Packages:Convert2Dto1D:LowIntToMaskOff
 		NVAR MaskDisplayLogImage=root:Packages:Convert2Dto1D:MaskDisplayLogImage
 		NVAR MaskOffLowIntPoints=root:Packages:Convert2Dto1D:MaskOffLowIntPoints
+		wave UnderLevelImage
 		
 		CheckDisplayed /W=CCDImageForMask  UnderLevelImage
 		if(V_Flag)

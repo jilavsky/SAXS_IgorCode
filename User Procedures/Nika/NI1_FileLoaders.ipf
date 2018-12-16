@@ -1,6 +1,7 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.49
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
+#pragma version=2.50
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -8,7 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.49 MOdified NI1_MainListBoxProc to allow to easily remove "Blank" and Empty - and unmatch them... 
+//2.50 removed mar345 support. Let's see if someone complains. 
+//2.49 Modified NI1_MainListBoxProc to allow to easily remove "Blank" and Empty - and unmatch them... 
 //2.48 added ALS RXoXS instrument support.
 //2.47 removed DoubleClickConverts, not needed anymore. 
 //2.46 improve print message fro Nexus when multi dimensional input ddata are used. 
@@ -1136,14 +1138,14 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 //		if(cmpstr(IgorInfo(2),"Windows")!=0)
 //			Abort "This import tool works only on WIndows for now"
 //		endif
-		FileNameToLoad=  S_path + FileName
-		LoadedOK=ReadMAR345UsingFit2D(FileNameToLoad, NewWaveName,FileType,PathName)
-			if(!LoadedOK)		//check if we loaded at least some data...
-				return 0
-			endif
+//		FileNameToLoad=  S_path + FileName
+//		LoadedOK=ReadMAR345UsingFit2D(FileNameToLoad, NewWaveName,FileType,PathName)
+//			if(!LoadedOK)		//check if we loaded at least some data...
+//				return 0
+//			endif
 		//string temp=StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":")
-		NewNote+="DataFileName="+StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":")+";"
-		NewNote+="DataFileType="+"marIP/Fit2D"+";"
+//		NewNote+="DataFileName="+StringFromList(ItemsInList(FileNameToLoad,":")-1,FileNameToLoad,":")+";"
+//		NewNote+="DataFileType="+"marIP/Fit2D"+";"
 	elseif(cmpstr(FileType,"MarIP/xop")==0)		//added 9/16/2008, needs ccp4xop ... 
 		PathInfo $(PathName)
 		FileNameToLoad=  S_path + FileName
@@ -3994,6 +3996,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 		 		BeamCenterY = V_minColLoc
 			else		//used just Q, need to create AzimuthalWave
 				Wave Q2Dwave
+				Wave Qvector
 				Wavestats/Q Q2DWave
 				BeamCenterX = V_minRowLoc
 		 		BeamCenterY = V_minColLoc
@@ -4003,6 +4006,10 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				endif	
 			endif
 			Redimension/S AnglesWave
+			Wave CCDImageToConvert
+			Wave UnbinnedQxW
+			Wave UnbinnedQyW
+			Wave CCDImageToConvert_Errs
 //			//now need to check, if the data are not rebinned... 
 			if(UnbinnedQx && UnbinnedQy&&ReverseBinnedData)
 				if(HaveMask)

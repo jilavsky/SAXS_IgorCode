@@ -1,4 +1,5 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.49
 
 //*************************************************************************\

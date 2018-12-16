@@ -1,4 +1,6 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.28
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
@@ -1175,7 +1177,7 @@ Function NI1BC_Fitto2DGaussian1(left,right,bottom,top,wvToFItTo)
 	if(stddev<2)
 		stddev=2
 	endif
-	
+	wave fit_BmCntrCCDImg
 	Silent 1
 //	root:P:gPeakInt=PeakInt ;root:P:gxcenter=xcenter ;root:P:gycenter=ycenter ;root:P:gstddev=stddev
 	Make/o/n=4 gw2DGaussian

@@ -1,4 +1,6 @@
-#pragma rtGlobals=1.01		// Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.03
 
 //*************************************************************************\
@@ -146,7 +148,8 @@ Function ReadMAR345_Data(marFile, theFilename, headerData, inDF, inWaveName)
 		endif
 	while (1)
 	
-	if (PACK > 1)
+	if (PACK > 1)	
+		wave mar345
 		KillWaves mar345	
 		if (headerData[%overflows] > 0)
 			KillWaves mar345overflow

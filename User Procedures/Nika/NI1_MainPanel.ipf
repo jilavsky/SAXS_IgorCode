@@ -1,6 +1,8 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3		// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.61
-Constant NI1AversionNumber = 2.63
+Constant NI1AversionNumber = 2.64
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -8,6 +10,7 @@ Constant NI1AversionNumber = 2.63
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.64 removed mar345 and Fit2D support, let's see if someone complains. 
 //2.63 added Circular Q axes. 
 //2.62 fix bug in Igor 8 which causes hang of the window. Panel made wider. 
 //2.61 Fixed normalization bug which causes spike in intensity on our WAXS data (+1 missing Intensity normalization)
@@ -222,9 +225,9 @@ Function NI1A_Initialize2Dto1DConversion()
 	//internal loaders
 	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
 	ListOfKnownExtensions+="SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;"//mpa/bin;mpa/asc;mp/bin;mp/asc
-#if(Exists("ccp4unpack"))	
-	ListOfKnownExtensions+="MarIP/xop;"
-#endif
+//#if(Exists("ccp4unpack"))	
+//	ListOfKnownExtensions+="MarIP/xop;"
+//#endif
 	//add Fit2D known types of PC 
 	//tif					tif file
 	//GeneralBinary		configurable binary loader using GBLoadWave
@@ -239,12 +242,12 @@ Function NI1A_Initialize2Dto1DConversion()
 	//BSRC/Gold			BESSERC 1536x1536 Gold detector binary format. It has header and 16 bit binary data
 	//ASCII 				ASCII data matrix...
 	//      note, if the ASCII data matrix has extension mtx, then will try to find same file with extension prn and read header info from there...
-	variable OSXVersion = str2num(StringFromList(0, StringByKey("OSVERSION",IgorInfo(3),":",";"),".")+"."+StringFromList(1, StringByKey("OSVERSION",IgorInfo(3),":",";"),"."))
- 	if(cmpstr(IgorInfo(2),"Windows")==0 || (OSXVersion>10.2 && OSXVersion<10.5))
-		ListOfKnownExtensions+="MarIP/Fit2d;ADSC/Fit2D;Bruker/Fit2D;BSL/Fit2D;Diffract/Fit2D;DIP2000/Fit2D;"		
-		ListOfKnownExtensions+="ESRF/Fit2d;Fit2D/Fi2tD;BAS/Fit2D;GAS/Fit2D;HAMA/Fit2D;IMGQ/Fit2D;"		
-		ListOfKnownExtensions+="KLORA/Fit2d;MarPck/Fi2tD;PDS/Fit2D;PHOTOM/Fit2D;PMC/Fit2D;PRINC/Fit2D;RIGK/Fit2D;"		
-	endif
+//	variable OSXVersion = str2num(StringFromList(0, StringByKey("OSVERSION",IgorInfo(3),":",";"),".")+"."+StringFromList(1, StringByKey("OSVERSION",IgorInfo(3),":",";"),"."))
+// 	if(cmpstr(IgorInfo(2),"Windows")==0 || (OSXVersion>10.2 && OSXVersion<10.5))
+//		ListOfKnownExtensions+="MarIP/Fit2d;ADSC/Fit2D;Bruker/Fit2D;BSL/Fit2D;Diffract/Fit2D;DIP2000/Fit2D;"		
+//		ListOfKnownExtensions+="ESRF/Fit2d;Fit2D/Fi2tD;BAS/Fit2D;GAS/Fit2D;HAMA/Fit2D;IMGQ/Fit2D;"		
+//		ListOfKnownExtensions+="KLORA/Fit2d;MarPck/Fi2tD;PDS/Fit2D;PHOTOM/Fit2D;PMC/Fit2D;PRINC/Fit2D;RIGK/Fit2D;"		
+//	endif
 //	ADSC		ADSC Detector Format : Keyword-value header and binary data
 //	Bruker		Bruker format : Bruker area detector frame data format
 //	BSL			BSL format : Daresbury SAXS format, based on Hmaburg format
