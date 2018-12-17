@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.61
+#pragma version=2.65
 Constant NI1AversionNumber = 2.64
 
 //*************************************************************************\
@@ -10,6 +10,7 @@ Constant NI1AversionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.65 fixes for rtGlobal=3
 //2.64 removed mar345 and Fit2D support, let's see if someone complains. 
 //2.63 added Circular Q axes. 
 //2.62 fix bug in Igor 8 which causes hang of the window. Panel made wider. 
@@ -931,8 +932,8 @@ Function NI1A_FixNumPntsIfNeeded(CurOrient)
 		QvectorNumberPoints=floor((V_max-V_min))
 		redimension/N=(numpnts(MaxNumPntsLookupWv)+1) MaxNumPntsLookupWvLBL, MaxNumPntsLookupWv
 		
-		MaxNumPntsLookupWvLBL[numpnts(MaxNumPntsLookupWv)]= CurOrient
-		MaxNumPntsLookupWv[numpnts(MaxNumPntsLookupWv)]= QvectorNumberPoints
+		MaxNumPntsLookupWvLBL[numpnts(MaxNumPntsLookupWv)-1]= CurOrient
+		MaxNumPntsLookupWv[numpnts(MaxNumPntsLookupWv)-1]= QvectorNumberPoints
 		
 		print "Recalculated the right number of points LUT"
 
@@ -982,7 +983,9 @@ Function NI1A_Create2DPixRadiusWave(DataWave)
 	Multithread	PixRadius2DWave = sqrt((cos(HorizontalTilt*pi/180)*(p-BeamCenterX))^2 + (cos(VerticalTilt*pi/180)*(q-BeamCenterY))^2)
 //	endif
 //	print (ticks-tm)/60
-	PixRadius2DWave[beamCenterX][beamCenterY] = NaN
+	if(beamCenterX>0 && beamCenterX<dimsize(PixRadius2DWave,0) && beamCenterY>0 && beamCenterY<dimsize(PixRadius2DWave,1))
+		PixRadius2DWave[beamCenterX][beamCenterY] = NaN
+	endif
 	//record for which geometry this Radius vector wave was created
 	string NoteStr
 	NoteStr = note(DataWave)
@@ -1085,7 +1088,7 @@ Function NI1A_RemoveInfNaNsFrom10Waves(Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8, wv9, wv1
 	Wave Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8,wv9, wv10					//assume same number of points in the waves
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	variable i=0, imax=numpnts(Wv1)
+	variable i=0, imax=numpnts(Wv1)-1
 	For(i=imax;i>=0;i-=1)
 			if (numtype(Wv1[i])!=0)
 				Deletepoints i, 1, Wv1,wv2,wv3,wv4,wv5,wv6,wv7,wv8,wv9, wv10

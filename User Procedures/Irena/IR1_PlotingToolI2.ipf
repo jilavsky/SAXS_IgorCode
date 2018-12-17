@@ -772,7 +772,7 @@ static Function IR1P_GraphUseRainbow(UseRainbow, GraphUseBW)
 	    colortab2wave Rainbow
 	    wave M_colors
 	    For(i=0;i<NumberOfWaves;i+=1)
-	        scale =  (NumberOfWaves-i)  / (NumberOfWaves-1) * dimsize(M_colors,0)
+	        scale =  (NumberOfWaves-i)  / (NumberOfWaves) * (dimsize(M_colors,0)-1)
 	        r = M_colors[scale][0]
 	        g = M_colors[scale][1]
 	        b = M_colors[scale][2]

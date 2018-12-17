@@ -8,17 +8,17 @@
 		<File>User Procedures/CanSAS/IRNI_NexusSupport.ipf</File>
 		<File>User Procedures/CanSAS/HDF5gateway.ipf</File>
 		<File>User Procedures/Indra 2/ANL copyright.txt</File>
-		<File>User Procedures/Indra 2/IN2_Conversion Procedure.ipf</File>
+		<File>User Procedures/Indra 2/IN2_ConversionProcedure.ipf</File>
 		<File>User Procedures/Indra 2/IN2_DesktopUSAXS.ipf</File>
 		<File>User Procedures/Indra 2/IN2_GeneralProcedures.ipf</File>
-		<File>User Procedures/Indra 2/IN2_Load Indra 2.ipf</File>
+		<File>User Procedures/Indra 2/IN2_LoadIndra.ipf</File>
 		<File>User Procedures/Indra 2/IN2_NotebookLogging.ipf</File>
 		<File>User Procedures/Indra 2/IN2_PlottingTools.ipf</File>
 		<File>User Procedures/Indra 2/IN2_SpecInput.ipf</File>
-		<File>User Procedures/Indra 2/IN2_Standard Plots.ipf</File>
+		<File>User Procedures/Indra 2/IN2_StandardPlots.ipf</File>
 		<File>User Procedures/Indra 2/IN2_Test file.dat</File>
 		<File>User Procedures/Indra 2/IN2_USAXS.ipf</File>
-		<File>User Procedures/Indra 2/IN2_XtalCalculationsP.ipf</File>
+		<File>User Procedures/Indra 2/IN2_XtalCalculations.ipf</File>
 		<File>User Procedures/Indra 2/IN3_Calculations.ipf</File>
 		<File>User Procedures/Indra 2/IN3_FlyScan.ipf</File>
 		<File>User Procedures/Indra 2/IN3_loader.ipf</File>
@@ -27,7 +27,6 @@
 		<File>User Procedures/Indra 2/IN3_SupportFnct.ipf</File>
 		<File>User Procedures/Indra 2/IN3_CalcScattering.ipf</File>
 		<File>User Procedures/Indra 2/Indra 2 test.pxp</File>
-		<File>User Procedures/Indra 2/indra2.cmd</File>
 		<File>User Procedures/Indra 2/IonChamber3.1.ipf</File>
 		<File>User Procedures/Indra 2/Readme.txt</File>
 		<File>User Procedures/Indra 2/spec.ipf</File>

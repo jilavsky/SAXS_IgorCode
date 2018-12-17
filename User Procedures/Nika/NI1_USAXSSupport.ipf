@@ -646,11 +646,11 @@ Function NI1_9IDCCreateWAXSPixMask()
 	//Make/O/B/U/N=(195,487) M_ROIMask
 	M_ROIMask =1
 	if(DimSize(M_ROIMask, 1)>500)	//Pilatus 200kW
-		M_ROIMask[-1,196][486,494]=0
-		M_ROIMask[-1,1][-1,1000]=0
-		M_ROIMask[195,196][-1,1000]=0
-		M_ROIMask[-1,196][-1,1]=0
-		M_ROIMask[-1,196][979,982]=0
+		M_ROIMask[0,194][486,494]=0
+		M_ROIMask[0,1][0,980]=0
+		M_ROIMask[193,194][0,980]=0
+		M_ROIMask[0,194][0,1]=0
+		M_ROIMask[0,194][979,980]=0
 	
 		string notestr="MaskOffLowIntPoints:0;LowIntToMaskOff:0>// ;ITEMNO:0;\r"
 		notestr+="	SetDrawEnv xcoord= top,ycoord= left\r"

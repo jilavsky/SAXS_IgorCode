@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.05
+#pragma version=2.06
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.06 fixes for rtGLobal=3
 //2.05 merged with NI1_LineProfCalcs.ipf
 //2.04  removed unused functions
 //2.03 minor fix to avoid name collision with LaueGo
@@ -1915,18 +1916,18 @@ Function NI1A_LineProf_CreateLP()
 		Wave DSpacingWidth
 		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistacneInmmWidth, LineProfileDspacingWidth
 		Duplicate/Free LineProfileQvalues, LineProfileTwoTheta, LineProfileDistacneInmm, LineProfileDspacing
-		LineProfiledQvalues = LineProfileQvalues[p+1] - LineProfileQvalues[p]
+		LineProfiledQvalues[0,numpnts(LineProfileQvalues)-2] = LineProfileQvalues[p+1] - LineProfileQvalues[p]
 		LineProfiledQvalues[numpnts(LineProfileQvalues)-1]=LineProfiledQvalues[numpnts(LineProfileQvalues)-2]
 		LineProfileTwoTheta =  2 * asin ( LineProfileQvalues * constVal) * 180 /pi
-		LineProfileTwoThetaWidth  = LineProfileTwoTheta[p+1] - LineProfileTwoTheta [p]
+		LineProfileTwoThetaWidth[0,numpnts(LineProfileTwoThetaWidth)-2]  = LineProfileTwoTheta[p+1] - LineProfileTwoTheta [p]
 		LineProfileTwoThetaWidth[numpnts(LineProfileTwoThetaWidth)-1]=LineProfileTwoThetaWidth[numpnts(LineProfileTwoThetaWidth)-2]
 		constVal = 2*pi
 		LineProfileDspacing = constVal / LineProfileQvalues
-		LineProfileDspacingWidth  = LineProfileDspacing [p] - LineProfileDspacing[p+1]
+		LineProfileDspacingWidth[0,numpnts(LineProfileDspacingWidth)-2]  = LineProfileDspacing [p] - LineProfileDspacing[p+1]
 		LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-1]=LineProfileDspacingWidth[numpnts(DSpacingWidth)-2]
 	
 		LineProfileDistacneInmm =  SampleToCCDDistance*tan(LineProfileTwoTheta*pi/180)
-		LineProfileDistacneInmmWidth  = LineProfileDistacneInmm[p+1] - LineProfileDistacneInmm[p]
+		LineProfileDistacneInmmWidth[0,numpnts(LineProfileDistacneInmmWidth)-2]  = LineProfileDistacneInmm[p+1] - LineProfileDistacneInmm[p]
 		LineProfileDistacneInmmWidth[numpnts(LineProfileDistacneInmmWidth)-1]=LineProfileDistacneInmmWidth[numpnts(LineProfileDistacneInmmWidth)-2]
 
 		//create proper Q smearing data accounting for all other parts of gemoetry - beam size and pixels size

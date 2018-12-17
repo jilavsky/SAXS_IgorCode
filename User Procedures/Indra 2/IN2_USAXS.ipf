@@ -1,4 +1,7 @@
-#pragma rtGlobals=1		   // Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3			// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
+		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
 #pragma version = 1.97
 
@@ -1283,7 +1286,8 @@ Function IN2A_CreateLogLogPlot()	//this creates log log plot for check of dark c
 	variable/G wavelength=12.398424437/NumberByKey("DCM_energy", MeasurementParameters,"=")
 
 	Qvec=((4*pi)/wavelength)*sin((pi/360)*(BeamCenter-ar_encoder))
-
+	
+	Wave PD_Intensity
 	Silent 1
 	PauseUpdate    //*************************Graph section**********************************
 		//Display /k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs Qvec as "Log-log R for sample/blank"		//plots selected data, axis lin-lin
@@ -1568,7 +1572,7 @@ Function/T IN2B_SelectBlankForASB()								//this selects the blank folder
 		SVAR ListOfASBParameters
 		LParameters=Parameters
 	endif
-	
+	Wave R_Int
 	string IsItSBUSAXS=StringByKey("SPECCOMMAND", note(R_Int), "=")[0,7]			//find out if this is SBUSAXS
 	string ListOfCalibrateOptions=""
 	
@@ -1643,6 +1647,7 @@ Function/T IN2B_CalculateASBCalibration()		//get user input and calculate calibr
 	if (NumType(NumberByKey("SaThickness", ASBParameters ,"=" ,";"))!=2)			//this carries forward the old sample thickness - the previous 
 		SampleThickness=NumberByKey("SaThickness", ASBParameters ,"=" ,";")		//sample sample thickness is offered
 	endif
+	Wave R_Int
 														//lets check if we have old sample thickness in the wave note for R_Int here
 	variable oldthickness=NumberByKey("Thickness", note(R_Int) ,"=",";")
 	if (numtype(oldthickness)==0)			//if it existed in the wave note, we will offer that to user
@@ -1844,7 +1849,8 @@ end
 
 Function IN2B_RepeatASBButton(ctrlname) : Buttoncontrol			// calls the repeat function fit
 	string ctrlname
-		
+	Wave/Z SMR_Int
+	Wave/Z DSM_Int
 	CheckDisplayed/W=ASBLinLinPlot SMR_Int		//this checks if the SMR (or DSM) wave are in the graph
 	variable testSMR	=V_Flag
 	CheckDisplayed/W=ASBLinLinPlot DSM_Int
@@ -2662,7 +2668,7 @@ Function IN2A_MSAXSAverageCorr()
 		Wave DSM_Error	=$(CurrentFolder+"DSM_Error")
 		
 		TempTransmission=NumberByKey("Transmission", note(DSM_Int) ,"=")
-	
+		Wave MSAXSTransmissions
 		if (cmpstr(stringByKey("MSAXSDataType",note(MSAXSTransmissions),"="),"USAXS")==0)			//OK, the data are suppose to be USAXS, therefore we should be working on SMR data
 			DoAlert 0, "These data are from USAXS config., this does not make sense"
 			Abort
@@ -3122,8 +3128,14 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 			IN2G_PasteWnoteToWave("R_Int", WaveNoteWave,"#   ")
 			if (cmpstr(IncludeData,"within")==0)
 				Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
+				Wave Qvec
+				Wave R_Int
+				Wave R_error
 				Save/A/G/M="\r\n"/P=ExportDatapath Qvec,R_Int,R_error as filename1			///P=Datapath
 			else
+				Wave Qvec
+				Wave R_Int
+				Wave R_error
 				Save/G/M="\r\n"/P=ExportDatapath Qvec,R_Int,R_error as filename1			///P=Datapath
 				filename1 = filename+"_R.txt"											//here we include description of the 
 				Save/O/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1		//samples with this name
@@ -3137,6 +3149,9 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 			filename1 = filename+".smr"
 			if (exists("SMR_Int")==1)
 				IN2G_PasteWnoteToWave("SMR_Int", WaveNoteWave,"#   ")
+				Wave SMR_Qvec
+				Wave SMR_Int
+				Wave SMR_Error
 				if (cmpstr(IncludeData,"within")==0)
 					Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
 					Save/A/G/M="\r\n"/P=ExportDatapath SMR_Qvec,SMR_Int, SMR_Error as filename1				///P=Datapath
@@ -3162,6 +3177,9 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 			filename1 = filename+".dsm"
 			if (exists("DSM_Int")==1)
 				IN2G_PasteWnoteToWave("DSM_Int", WaveNoteWave,"#   ")
+				Wave DSM_Qvec
+				Wave DSM_Int
+				Wave DSM_Error
 				if (cmpstr(IncludeData,"within")==0)
 					Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
 					Save/A/G/M="\r\n"/P=ExportDatapath DSM_Qvec,DSM_Int, DSM_Error as filename1				///P=Datapath
@@ -3185,6 +3203,9 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 		filename1 = filename+".Bkg"
 		if (exists("BKG_Int")==1)
 			IN2G_PasteWnoteToWave("BKG_Int", WaveNoteWave,"#   ")
+			Wave BKG_Qvec
+			Wave BKG_Int
+			Wave BKG_Error
 			if (cmpstr(IncludeData,"within")==0)
 				Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
 				Save/A/G/M="\r\n"/P=ExportDatapath BKG_Qvec,BKG_Int, BKG_Error as filename1				///P=Datapath
@@ -3200,6 +3221,9 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 		filename1 = filename+"_M.Bkg"
 		if (exists("M_BKG_Int")==1)
 			IN2G_PasteWnoteToWave("M_BKG_Int", WaveNoteWave,"#   ")
+			Wave M_BKG_Qvec
+			Wave M_BKG_Int
+			Wave M_BKG_Error
 			if (cmpstr(IncludeData,"within")==0)
 				Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
 				Save/A/G/M="\r\n"/P=ExportDatapath M_BKG_Qvec,M_BKG_Int, M_BKG_Error as filename1				///P=Datapath
@@ -3217,6 +3241,9 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 			filename1 = filename+"_m.smr"
 			if (exists("M_SMR_Int")==1)
 				IN2G_PasteWnoteToWave("M_SMR_Int", WaveNoteWave,"#   ")
+				Wave SMR_Qvec
+				Wave M_SMR_Int
+				Wave M_SMR_Error
 				if (cmpstr(IncludeData,"within")==0)
 					Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
 					Save/A/G/M="\r\n"/P=ExportDatapath SMR_Qvec,M_SMR_Int, M_SMR_Error as filename1				///P=Datapath		
@@ -3242,6 +3269,9 @@ Function IN2B_WriteAllDifferentData(IncludeData,DataTypes, ExportDataType)
 			filename1 = filename+"_m.dsm"
 			if (exists("M_DSM_Int")==1)
 				IN2G_PasteWnoteToWave("M_DSM_Int", WaveNoteWave,"#   ")
+				Wave M_DSM_Qvec
+				Wave M_DSM_Int
+				Wave M_DSM_Error
 				if (cmpstr(IncludeData,"within")==0)
 					Save/G/M="\r\n"/P=ExportDatapath WaveNoteWave as filename1
 					Save/A/G/M="\r\n"/P=ExportDatapath M_DSM_Qvec,M_DSM_Int, M_DSM_Error as filename1				///P=Datapath	
@@ -3508,6 +3538,7 @@ FUNCTION IN2B_OneDataXmlWriter(xmlFile, IndraDataType)		//take data from current
 	XMLaddNode(fileID, 	"/SASroot/SASentry", 	"", "SASdata", "", 1)
 	XMLsetAttr(fileID,		"/SASroot/SASentry/SASdata", "", "name", RunInfo)
 	STRING xpathstr
+	Wave SMR_Qvec
 	FOR ( i = 0; i < NumPnts(SMR_Qvec); i += 1 )
 		xpathstr = "/SASroot/SASentry/SASdata/Idata["+num2str(i+1)+"]"
 		XMLaddNode(fileID, 	"/SASroot/SASentry/SASdata", 	"", "Idata", "", 1)

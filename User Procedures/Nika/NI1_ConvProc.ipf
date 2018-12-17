@@ -1012,7 +1012,7 @@ Function NI1A_CreateHistogram(orientation)
 		Histogram /B={MinQ, ((MaxQ-MinQ)/QvectorNumberPoints), QvectorNumberPoints } logQdistribution1D, HistogramWv 
 		Qvector = MinQ + 0.5*(MaxQ-MinQ)/QvectorNumberPoints+p*(MaxQ-MinQ)/QvectorNumberPoints
 		Qvector = 10^(Qvector)
-		QvectorWidth = Qvector[p+1] - Qvector[p]
+		QvectorWidth[0,numpnts(Qvector)-2] = Qvector[p+1] - Qvector[p]
 		QvectorWidth[numpnts(Qvector)-1]=QvectorWidth[numpnts(Qvector)-2]
 		killwaves logQdistribution1D
 	else
@@ -1083,7 +1083,7 @@ Function NI1A_CreateHistogram(orientation)
 	// tg(2*theta) = distFromCenter / SDD     This is valid for notiltscase, but here the Q is corrected for the tilts anyway, so this is no tilts case
 	// distance from center =SDD * tg(twoTheta)
 	TwoTheta =  2 * asin ( Qvector * constVal) * 180 /pi
-	TwoThetaWidth  = TwoTheta[p+1] - TwoTheta [p]
+	TwoThetaWidth[0,numpnts(TwoThetaWidth)-2]  = TwoTheta[p+1] - TwoTheta [p]
 	TwoThetaWidth[numpnts(TwoThetaWidth)-1]=TwoThetaWidth[numpnts(TwoThetaWidth)-2]
 	constVal = 2*pi
 	Dspacing = constVal / Qvector
@@ -1263,7 +1263,9 @@ Function NI1A_Create2DQWave(DataWave)
 			// MatrixOp/O/NTHR=0 Theta2DWave = atan(Theta2DWave/SampleToCCDDistance)/2
 			print "No tilts used, time was = "+num2str((ticks-ts)/60)
 		endif
-		Theta2DWave[beamCenterX][beamCenterY] = NaN
+		if( (beamCenterX>=0 && beamCenterX<dimsize(Theta2DWave,0))&&(beamCenterY>=0 && beamCenterY<dimsize(Theta2DWave,1)))
+			Theta2DWave[beamCenterX][beamCenterY] = NaN
+		endif
 		//theta values exist by now... Now convert to real Q. Theta2D may be neededc later... 
 		Multithread Q2DWave = ((4*pi)/Wavelength)*sin(Theta2DWave)
 		//record for which geometry this Radius vector wave was created

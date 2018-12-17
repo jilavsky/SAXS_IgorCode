@@ -1,4 +1,6 @@
-#pragma rtGlobals=1		// Use modern global access method.
+#pragma TextEncoding = "UTF-8"
+#pragma rtGlobals=3			// Use modern global access method.
+//#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=1.38
 
 //*************************************************************************\
@@ -2744,6 +2746,7 @@ Function IN3_DisplayDesExtAndError()
 					endif
 				endif	
 			else
+				Wave/Z DSM_Int
 				CheckDisplayed /W=RcurvePlotGraph DSM_Int 
 					if(V_Flag)
 						ModifyGraph/W=RcurvePlotGraph mode(DSM_Int)=3,rgb(DSM_Int)=(1,39321,19939)		
