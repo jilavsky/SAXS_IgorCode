@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.96
+#pragma version = 1.97
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -12,6 +12,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.97 fix GUI for step scanning
 //1.96 added use of FWHM from sample to GUI. Added ability to overwrite Flyscan amplifier dead times. 
 //1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 
@@ -1190,16 +1191,16 @@ Function IN3_MainPanel()
 	SetVariable Gain1,pos={29,255},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 1 :"
 	SetVariable Gain1 ,format="%3.1e",labelBack=(65280,0,0) 
 	SetVariable Gain1,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G1
-	SetVariable Gain2,pos={29,280},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
+	SetVariable Gain2,pos={29,277},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 2 :"
 	SetVariable Gain2 ,format="%3.1e",labelBack=(0,52224,0)
 	SetVariable Gain2,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G2
-	SetVariable Gain3,pos={29,305},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
+	SetVariable Gain3,pos={29,299},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 3 :"
 	SetVariable Gain3 ,format="%3.1e",labelBack=(0,0,65280)
 	SetVariable Gain3,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G3
-	SetVariable Gain4,pos={29,330},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
+	SetVariable Gain4,pos={29,321},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 4 :"
 	SetVariable Gain4 ,format="%3.1e",labelBack=(65280,35512,15384)
 	SetVariable Gain4,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G4
-	SetVariable Gain5,pos={29,355},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
+	SetVariable Gain5,pos={29,343},size={200,22},proc=IN3_UPDParametersChanged,title="Gain 5 :"
 	SetVariable Gain5 ,format="%3.1e",labelBack=(29696,4096,44800)
 	SetVariable Gain5,limits={0,Inf,0},value= root:Packages:Indra3:UPD_G5
 	NVAR UPD_DK1Err=root:packages:Indra3:UPD_DK1Err
@@ -1207,39 +1208,43 @@ Function IN3_MainPanel()
 	NVAR UPD_DK3Err=root:packages:Indra3:UPD_DK3Err
 	NVAR UPD_DK4Err=root:packages:Indra3:UPD_DK4Err
 	NVAR UPD_DK5Err=root:packages:Indra3:UPD_DK5Err
-	SetVariable Bkg1,pos={20,380},size={200,18},proc=IN3_UPDParametersChanged,title="Background 1"
+	SetVariable Bkg1,pos={20,365},size={200,18},proc=IN3_UPDParametersChanged,title="Background 1"
 	SetVariable Bkg1 ,format="%g", labelBack=(65280,0,0)
 	SetVariable Bkg1,limits={-inf,Inf,UPD_DK1Err},value= root:Packages:Indra3:UPD_DK1
-	SetVariable Bkg2,pos={20,405},size={200,18},proc=IN3_UPDParametersChanged,title="Background 2"
+	SetVariable Bkg2,pos={20,387},size={200,18},proc=IN3_UPDParametersChanged,title="Background 2"
 	SetVariable Bkg2 ,format="%g",labelBack=(0,52224,0)
 	SetVariable Bkg2,limits={-inf,Inf,UPD_DK2Err},value= root:Packages:Indra3:UPD_DK2
-	SetVariable Bkg3,pos={20, 430},size={200,18},proc=IN3_UPDParametersChanged,title="Background 3"
+	SetVariable Bkg3,pos={20, 409},size={200,18},proc=IN3_UPDParametersChanged,title="Background 3"
 	SetVariable Bkg3 ,format="%g",labelBack=(0,0,65280)
 	SetVariable Bkg3,limits={-inf,Inf,UPD_DK3Err},value= root:Packages:Indra3:UPD_DK3
-	SetVariable Bkg4,pos={20,455},size={200,18},proc=IN3_UPDParametersChanged,title="Background 4"
+	SetVariable Bkg4,pos={20,431},size={200,18},proc=IN3_UPDParametersChanged,title="Background 4"
 	SetVariable Bkg4 ,format="%g",labelBack=(65280,35512,15384)
 	SetVariable Bkg4,limits={-inf,Inf,UPD_DK4Err},value= root:Packages:Indra3:UPD_DK4
-	SetVariable Bkg5,pos={20,480},size={200,18},proc=IN3_UPDParametersChanged,title="Background 5"
+	SetVariable Bkg5,pos={20,453},size={200,18},proc=IN3_UPDParametersChanged,title="Background 5"
 	SetVariable Bkg5 ,format="%g",labelBack=(29696,4096,44800)
 	SetVariable Bkg5,limits={-inf,Inf,UPD_DK5Err},value= root:Packages:Indra3:UPD_DK5
-	SetVariable Bkg1Err,pos={225,380},size={90,18},title="Err"
+	SetVariable Bkg1Err,pos={225,365},size={90,18},title="Err"
 	SetVariable Bkg1Err ,format="%2.2g", labelBack=(65280,0,0)
 	SetVariable Bkg1Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK1Err,noedit=1
-	SetVariable Bkg2Err,pos={225,405},size={90,18},title="Err"
+	SetVariable Bkg2Err,pos={225,387},size={90,18},title="Err"
 	SetVariable Bkg2Err ,format="%2.2g", labelBack=(0,52224,0)
 	SetVariable Bkg2Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK2Err,noedit=1
-	SetVariable Bkg3Err,pos={225,430},size={90,18},title="Err"
+	SetVariable Bkg3Err,pos={225,409},size={90,18},title="Err"
 	SetVariable Bkg3Err ,format="%2.2g", labelBack=(0,0,65280)
 	SetVariable Bkg3Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK3Err,noedit=1
-	SetVariable Bkg4Err,pos={225,455},size={90,18},title="Err"
+	SetVariable Bkg4Err,pos={225,431},size={90,18},title="Err"
 	SetVariable Bkg4Err ,format="%2.2g", labelBack=(65280,35512,15384)
 	SetVariable Bkg4Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK4Err,noedit=1
-	SetVariable Bkg5Err,pos={225,480},size={90,18},title="Err"
+	SetVariable Bkg5Err,pos={225,453},size={90,18},title="Err"
 	SetVariable Bkg5Err ,format="%2.2g", labelBack=(29696,4096,44800)
 	SetVariable Bkg5Err,limits={-inf,Inf,0},value= root:Packages:Indra3:UPD_DK5Err,noedit=1
-	SetVariable Bkg5Overwrite,pos={20,500},size={300,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
+	SetVariable Bkg5Overwrite,pos={20,475},size={300,18},proc=IN3_UPDParametersChanged,title="Overwrite Background 5"
 	SetVariable Bkg5Overwrite ,format="%g"
 	SetVariable Bkg5Overwrite,limits={0,Inf,0},value= root:Packages:Indra3:OverwriteUPD_DK5
+	SetVariable SubtractFlatBackground,pos={8,497},size={300,22},title="Subtract Flat background=", frame=1
+	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
+	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
+
 
 //calibration stuff...
 	SetVariable MaximumIntensity,pos={8,230},size={300,22},title="Sample Maximum Intensity =", frame=0, disable=2
@@ -1260,10 +1265,6 @@ Function IN3_MainPanel()
 	SetVariable BlankWidthArcSec,limits={0,Inf,0},variable= root:Packages:Indra3:BlankWidth
 
 	Button RecoverDefaultBlnkVals,pos={200,370},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec values", help={"Reload original value from spec record"}
-
-	SetVariable SubtractFlatBackground,pos={8,420},size={300,22},title="Subtract Flat background=", frame=1
-	SetVariable SubtractFlatBackground ,proc=IN3_ParametersChanged
-	SetVariable SubtractFlatBackground,limits={0,Inf,1},variable= root:Packages:Indra3:SubtractFlatBackground
 
 	CheckBox CalibrateUseSampleFWHM,pos={8,440},size={300,14},proc=IN3_MainPanelCheckBox,title="Use Sample FWHM for calibration?"
 	CheckBox CalibrateUseSampleFWHM,variable= root:Packages:Indra3:CalibrateUseSampleFWHM, help={"Check, if you want to use FWHM for absolute intensity calibration"}

@@ -128,7 +128,7 @@ end
 
 Function LoadUSAXSMacros()
 	if (str2num(stringByKey("IGORVERS",IgorInfo(0)))>=7.05)
-		Execute/P "INSERTINCLUDE \"IN2_LoadIndra\""
+		Execute/P "INSERTINCLUDE \"IN2_Load Indra 2\""
 		Execute/P "COMPILEPROCEDURES "
 		Execute/P "IN2N_CreateShowNtbkForLogging(0)"
 		Execute/P "ionChamberInitPackage()"

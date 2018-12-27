@@ -349,7 +349,7 @@ static Function IR2Pr_EstimateDmax()
 		SetAxis/W=IR2Pr_PDFInputGraph left, V_min, V_max
 		ModifyGraph /W=IR2Pr_PDFInputGraph lstyle(GuessFitScattProfile)=8,lsize(GuessFitScattProfile)=3
 		ModifyGraph /W=IR2Pr_PDFInputGraph rgb(GuessFitScattProfile)=(1,3,39321)
-		Tag/C/N=GuessRg/L=0/TL=0 GuessFitScattProfile, numpnts(GuessFitScattProfile)/10,"\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Estimated Rg = "+num2str(W_Coef[1])
+		Tag/C/N=GuessRg/L=0/TL=0/W=IR2Pr_PDFInputGraph GuessFitScattProfile, numpnts(GuessFitScattProfile)/10,"\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Estimated Rg = "+num2str(W_Coef[1])
 	endif
 	NVAR dmax=root:Packages:Irena_PDDF:MaximumR
 	dmax=2.5*abs(W_coef[1])

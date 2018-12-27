@@ -130,7 +130,7 @@ Function IN3_SmoothRData()
 				if(i+EndPoints>numpnts(Intensity))
 					EndPoints = numpnts(Intensity) - i
 				endif
-				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints]!=tmpPD_range[i]))
+				if((tmpPD_range[i-StartPoints]!=tmpPD_range[i])||(tmpPD_range[i+EndPoints-1]!=tmpPD_range[i]))
 					//range change, do not average, use line fitting to get the point... 
 					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
 					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ

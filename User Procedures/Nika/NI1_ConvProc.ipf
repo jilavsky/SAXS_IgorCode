@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.65
+#pragma version=2.66
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.66 fixes for rtGlobal=3
 //2.65 fixerd solid angle correction. It was doing the wrong thing. 
 //2.64 added new tab with Save data opions, seems better. Removed range selections. Added controls for delay between images and display ImageStatistics. 
 //2.63 fix bug when user did stuff our of order. 
@@ -1051,7 +1052,7 @@ Function NI1A_CreateHistogram(orientation)
 			Histogram /B={MinQ, ((MaxQ-MinQ)/QvectorNumberPoints), QvectorNumberPoints } Qdistribution1D, HistogramWv 
 			Qvector = MinQ + 0.5*(MaxQ-MinQ)/QvectorNumberPoints+ p*(MaxQ-MinQ)/QvectorNumberPoints
 //		endif
-		QvectorWidth = Qvector[p+1] - Qvector[p]
+		QvectorWidth[0,numpnts(Qvector)-2] = Qvector[p+1] - Qvector[p]
 		QvectorWidth[numpnts(Qvector)-1]=QvectorWidth[numpnts(Qvector)-2]
 		
 	endif
@@ -1087,11 +1088,11 @@ Function NI1A_CreateHistogram(orientation)
 	TwoThetaWidth[numpnts(TwoThetaWidth)-1]=TwoThetaWidth[numpnts(TwoThetaWidth)-2]
 	constVal = 2*pi
 	Dspacing = constVal / Qvector
-	DSpacingWidth  = Dspacing [p] - Dspacing[p+1]
+	DSpacingWidth[0,numpnts(DSpacingWidth)-2]  = Dspacing [p] - Dspacing[p+1]
 	DSpacingWidth[numpnts(DSpacingWidth)-1]=DSpacingWidth[numpnts(DSpacingWidth)-2]
 	
 	DistanceInmm =  SampleToCCDDistance*tan(TwoTheta*pi/180)
-	DistacneInmmWidth  = DistanceInmm[p+1] - DistanceInmm[p]
+	DistacneInmmWidth[0,numpnts(DistacneInmmWidth)-2]  = DistanceInmm[p+1] - DistanceInmm[p]
 	DistacneInmmWidth[numpnts(DistacneInmmWidth)-1]=DistacneInmmWidth[numpnts(DistacneInmmWidth)-2]
 
 	//create proper Q smearing data accounting for all other parts of gemoetry - beam size and pixels size

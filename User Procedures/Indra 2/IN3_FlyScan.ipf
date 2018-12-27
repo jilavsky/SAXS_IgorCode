@@ -1091,14 +1091,16 @@ Function IN3_FSCreateGainWave(GainWv,ampGainReq,ampGain,mcsChangePnts, TimeRange
 	Duplicate/Free ampGain, tmpampGain
 	variable i
 	i = numpnts(tmpmcsChangePnts)-1
-	Do		//this simply removes any tailing change points in teh records, whichscrew up the working code
-		if(tmpmcsChangePnts[i]==0)
-			tmpmcsChangePnts[i]=nan
-		else
-			break
-		endif
-		i-=1
-	while (i>0 && tmpmcsChangePnts[i] <1)
+	if(i>1)
+		Do		//this simply removes any trailing change points in the records, which screw up the working code
+			if(tmpmcsChangePnts[i]==0)
+				tmpmcsChangePnts[i]=nan
+			else
+				break
+			endif
+			i-=1
+		while (i>0 && tmpmcsChangePnts[i] <1)
+	endif
 	//this blasts on these 3 waves any lines, which contain NaN in any of the three waves. 
 	IN2G_RemoveNaNsFrom3Waves(tmpmcsChangePnts,tmpampGainReq,tmpampGain)
 	//debug code

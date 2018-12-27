@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.38
+#pragma version=1.39
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,7 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.38 switched off RemoveDropouts by default. Added ability to overwrite Flyscan amplifier dead times. 
+//1.39 Fixed step scanning GUI issues. 
+//1.38 Added ability to overwrite Flyscan amplifier dead times. 
 //1.37 fix bug when debugger when no data and Desmearing was checked. 
 //1.36 fix manual page called by help button
 //1.35 modify the sleep between multiple USAXS data reductions in IN3_InputPanelButtonProc to be more user friendly
@@ -1799,21 +1800,23 @@ Function NI3_TabPanelControl(name,tab)
 	SetVariable Bkg4Err,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Bkg5Err,win=USAXSDataReduction, disable=(tab!=1)
 	SetVariable Bkg5Overwrite,win=USAXSDataReduction, disable=(tab!=1)
+	
+	ControlInfo/W=USAXSDataReduction FSOverWriteRage1DeadTime
+	if(V_Flag!=0)
+		SetVariable FSOverWriteRage1DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSOverWriteRage2DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSOverWriteRage3DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSOverWriteRage4DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSOverWriteRage5DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSRage1DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSRage2DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSRage3DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSRage4DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		SetVariable FSRage5DeadTime,win=USAXSDataReduction, disable=(tab!=1)
+		TitleBox Info5,win=USAXSDataReduction, disable=(tab!=1 || IsBlank)
+	endif
 
-	SetVariable FSOverWriteRage1DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSOverWriteRage2DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSOverWriteRage3DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSOverWriteRage4DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSOverWriteRage5DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSRage1DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSRage2DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSRage3DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSRage4DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-	SetVariable FSRage5DeadTime,win=USAXSDataReduction, disable=(tab!=1)
-
-	TitleBox Info5,win=USAXSDataReduction, disable=(tab!=1 || IsBlank)
 	SetVariable SubtractFlatBackground,win=USAXSDataReduction, disable=(tab!=1 || IsBlank)
-
 	SetVariable SpecCommand,win=USAXSDataReduction, disable=(tab!=2)
 	SetVariable PhotoDiodeSize,win=USAXSDataReduction, disable=(tab!=2)
 	SetVariable Wavelength,win=USAXSDataReduction, disable=(tab!=2)

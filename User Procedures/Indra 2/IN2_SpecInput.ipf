@@ -17,6 +17,8 @@
 // 4/18/2012 JIL
 //This is part of Indra 2 macros for USAXS data evaluation at UNICAT APS Bonse-Hartman camera
 
+constant LimitValForMoniToAssumeBeamDump=1000
+
 
 Function IN2_RemoveUSAXSMacros()
 
@@ -1165,13 +1167,11 @@ Function IN2_CheckScanIntegrity()		//checks if the scan has proper number of poi
 		Valid = 0
 		return Valid
 	endif
-	NVAR/Z MonitorLimit=root:Packages:Indra3:LimitValForMoniToAssumeBeamDump		//this is place where we can stor asumption for beam dump monitor limit
-	if (!NVAR_Exists (MonitorLimit))
-		variable/G root:Packages:Indra3:LimitValForMoniToAssumeBeamDump=5000
-		NVAR MonitorLimit=root:Packages:Indra3:LimitValForMoniToAssumeBeamDump
+	if(Numpnts(Monitor)<5)
+		return 0			//bad data set in any case, skip... 
 	endif
-	wavestats/Q/R=[5, ] Monitor
-	if (V_min<MonitorLimit)			//assumption - the monitor count below 5000 is beam dump
+	wavestats/Q/R=[numpnts(Monitor)/4,numpnts(Monitor)-5] Monitor
+	if (V_min<LimitValForMoniToAssumeBeamDump)			//assumption - the monitor count below 5000 is beam dump
 		DoAlert 1, "Monitor counts for "+GetDataFolder(1)+" is very low, probably beam dump. Do you want to skip the scan?"
 	endif
 	if (V_flag==1)

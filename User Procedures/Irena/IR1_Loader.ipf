@@ -69,6 +69,7 @@
 #include ":IR2_SmallAngleDiffraction", version>=1.19
 #include ":IR2_StructureFactors", version>=1.07
 #include ":IR2_PDDF", version>=1.13
+#include ":IR3_3DModels", version>=1.00
 #include ":IR3_GuinierPorodModel", version>=1.09
 #include ":IR3_MergingData", version>=1.19
 #include ":IR3_SimpleFits", version>=1

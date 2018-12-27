@@ -7254,7 +7254,7 @@ Function IR1A_FitFunction(w,yw,xw) : FitFunc
 	IR1A_UnifiedFitCalculateInt(QvectorWave)		
 	
 	Wave resultWv=root:Packages:Irena_UnifFit:UnifiedFitIntensity
-	
+	redimension/N=(numpnts(resultWv)) yw
 	yw=resultWv
 End
 
