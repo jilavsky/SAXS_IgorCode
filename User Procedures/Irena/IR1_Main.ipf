@@ -195,7 +195,6 @@ Menu "SAS"
 		"Two Phase Solids", IR3A_TwoPhaseSystem()
 		"Display 3D data", IR3A_Display3DData()
 		"Import POV or PDB", IR3A_ImportPOVPDB()
-	
 	end
 	"---"
 	"Scattering contrast calculator", IR1K_ScattCont2()
@@ -288,7 +287,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
-	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;"
+	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;"
  
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)

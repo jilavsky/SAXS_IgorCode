@@ -2957,11 +2957,6 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 			NVAR ActiveTab=root:Packages:Irena_UnifFit:ActiveTab
 			IR1A_DisplayLocalFits(ActiveTab,0)
 			IR1A_AutoUpdateIfSelected()
-			//variable ScreenHeight, ScreenWidth
-			//ScreenHeight = IN2G_ScreenWidthHeight("height")*100	
-			//ScreenWidth = IN2G_ScreenWidthHeight("width")	*100
-			//MoveWindow /W=IR1_LogLogPlotU 285,37,(285+ScreenWidth/2),(0.6*ScreenHeight - 37)
-			//MoveWindow /W=IR1_IQ4_Q_PlotU 285,(0.6*ScreenHeight - 37),(285+ScreenWidth/2),(0.9*(ScreenHeight-37))
 			MoveWindow /W=IR1_LogLogPlotU 0,0,(IN2G_GetGraphWidthHeight("width")),(0.6*IN2G_GetGraphWidthHeight("height"))
 			MoveWindow /W=IR1_IQ4_Q_PlotU 0,(0.6*IN2G_GetGraphWidthHeight("height")),(IN2G_GetGraphWidthHeight("width")),(IN2G_GetGraphWidthHeight("height"))
 			AutoPositionWIndow /M=0  /R=IR1A_ControlPanel IR1_LogLogPlotU
@@ -3033,11 +3028,6 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 	endif
 
 	if(cmpstr(ctrlName,"GraphDistribution")==0)
-		//here we graph the distribution
-		//NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
-		//NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif
-		//Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
-		//IN2G_CheckForSlitSmearedRange(UseSMRData,OriginalQvector [pcsr(B  , "IR1_LogLogPlotU")], SlitLengthUnif)
 		IR1A_GraphModelData()
 	endif
 	if(cmpstr(ctrlName,"FixLimits")==0)

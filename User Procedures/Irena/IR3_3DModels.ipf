@@ -2,7 +2,7 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.00
 
-
+Constant IR3AMassFrAggVersionNumber = 1.00
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -23,22 +23,31 @@
 //******************************************************************************************************************************************************
 
 
-Menu "Grow Aggregate"
-	"IR3A_RunAllAgregate"			// Runs all procedures in order
-	"IR3A_Print Results"		// Displays topological parameters
-	"-"
-	"IR3A_GrowAggregate"		// Grows aggregate
-	"IR3A_FindEnds"			// Finds endpoints of aggregate
-	"IR3A_End to End"			// Calculates R, df
-	"IR3A_Find Paths"			// Required to calculate dmin, p
-	"IR3A_Gizmo View Aggregate" //3d view
-End
+//Menu "Grow Aggregate"
+//	"IR3A_RunAllAgregate"			// Runs all procedures in order
+//	"IR3A_Print Results"		// Displays topological parameters
+//	"-"
+//	"IR3A_GrowAggregate"		// Grows aggregate
+//	"IR3A_FindEnds"			// Finds endpoints of aggregate
+//	"IR3A_End to End"			// Calculates R, df
+//	"IR3A_Find Paths"			// Required to calculate dmin, p
+//	"IR3A_Gizmo View Aggregate",  //3d view
+//End
 //******************************************************************************************************************************************************
 //			Main packages as they are called from main menu. 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 Function IR3A_MassFractalAggregate()
 		//this calls Fractal aggregate controls. 
+	DoWIndow FractalAggregatePanel
+	if(V_Flag)
+		DoWIndow/K FractalAggregatePanel
+	endif
+	IN2G_CheckScreenSize("height",670)
+	IR3A_InitializeMassFractAgg()
+	IR3A_FractalAggregatePanel()
+	ING2_AddScrollControl()
+	IR1_UpdatePanelVersionNumber("FractalAggregatePanel", IR3AMassFrAggVersionNumber,1)
 		
 
 end
@@ -62,7 +71,29 @@ Function IR3A_Display3DData()
 		
 end
 //******************************************************************************************************************************************************
+//			Utility functions
 //******************************************************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IR3A_MainCheckVersion()	
+	//this needs to get more of these lines for each tool/panel... 
+	DoWindow FractalAggregatePanel
+	if(V_Flag)
+		if(!IR1_CheckPanelVersionNumber("FractalAggregatePanel", IR3AMassFrAggVersionNumber))
+			DoAlert /T="The Mass Fractal Aggregate panel was created by incorrect version of Irena " 1, "Mass Fractal Aggregate may need to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				DoWindow/K FractalAggregatePanel
+ 				IR3A_MassFractalAggregate()
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IR3A_InitializeMassFractAgg()
+			endif
+		endif
+	endif
+end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //			3D aggregate code, modified from Alex 2018-12-26
@@ -70,35 +101,40 @@ end
 //******************************************************************************************************************************************************
 
 
-Function IR3A_RunAllAgregate()
+Function IR3A_CalculateAllMassFractAgreg()
 
 	string OldDf=GetDataFolder(1)
-	IR3A_AggInitialize()
+	IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
-
-	NVAR gGL
-	NVAR gDOA
-	NVAR gstick
-	NVAR gPathNo
+	DoWindow MassFractalAggregateView
+	if(V_Flag)
+		DoWIndow/K MassFractalAggregateView
+	endif
 	
-	variable GL=gGL, DOA=gDOA, stick=gstick, PathNo=gPathNo
-	Prompt DOA, "Enter the size of the aggregate (250)"	// Degree of aggregation, z
-	Prompt stick, "Enter sticking probability (1 - 100)"	// SP = 100% for DLA; less for RLA
-	Prompt PathNo,"Enter number of paths (1000)."		// More paths = more accuracy
-	DoPrompt/Help="Basic parameters" "Input model parameters", DOA, stick, PathNo
+	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
+	NVAR NumberOfTestPaths=root:Packages:AggregateModeling:NumberOfTestPaths
+	
+//	variable DegreeOfAggregationL=DegreeOfAggregation, StickingProbabilityL=StickingProbability, NumberOfTestPathsL=NumberOfTestPaths
+//	Prompt DegreeOfAggregationL, "Enter the size of the aggregate (250)"	// Degree of aggregation, z
+//	Prompt StickingProbabilityL, "Enter StickingProbabilitying probability (1 - 100)"	// SP = 100% for DLA; less for RLA
+//	Prompt NumberOfTestPathsL,"Enter number of paths (1000)."		// More paths = more accuracy
+//	DoPrompt/Help="Basic parameters" "Input model parameters", DegreeOfAggregationL, StickingProbabilityL, NumberOfTestPathsL
 
-	gGL=GL;gDOA=DOA;gstick=stick;gPathNo=PathNo;
+//	DegreeOfAggregation=DegreeOfAggregationL
+//	StickingProbability=StickingProbabilityL
+//	NumberOfTestPaths=NumberOfTestPathsL
 	// Get the starting position of the aggregate
-	Make/n=(gDOA,3)/O Agg=0		// It starts at 0,0,0
-	Make/n=(gDOA,4)/o endpoints
-	make/N=(gDOA)/O Distances 	// Distance between existing particles & new one. Needed by MakeAgg
+	Make/n=(DegreeOfAggregation,3)/O MassFractalAggregate=0		// It starts at 0,0,0
+	Make/n=(DegreeOfAggregation,4)/O endpoints							//List of end points
+	make/N=(DegreeOfAggregation)/O Distances 							// Distance between existing particles & new one. Needed by MakeAgg
 	variable StartTicks=ticks
 	print time()+"  Started Run All" 
-		IR3A_MakeAgg(gDOA,Agg,gstick)		// Agg is made with DOA particles
-		IR3A_Ends(agg)
-		IR3A_Reted(endpoints)
-		IR3A_Path(gPathNo)
-		Execute("IR3A_GizmoViewAggregate()")
+	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability)		// Agg is made with DegreeOfAggregation particles
+	IR3A_Ends(MassFractalAggregate)
+	IR3A_Reted(endpoints)
+	IR3A_Path(NumberOfTestPaths)
+	IR3A_GizmoViewScatterPlot(MassFractalAggregate)
 	print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
 	setDataFOlder OldDf
 End
@@ -108,33 +144,115 @@ End
 
 Function IR3A_GrowAggregate()
 	string OldDf=GetDataFolder(1)
-	IR3A_AggInitialize()
+	IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
 
-	NVAR gGL
-	NVAR gDOA
-	NVAR gstick
-	variable GL=gGL, DOA=gDOA, stick=gstick
-	Prompt DOA, "Enter the size of the aggregate (250)"
-	Prompt stick, "Enter sticking probability (1 - 100)"
-	DoPrompt/Help="Basic parameters" "Input model parameters", DOA, stick
-	gGL=GL;gDOA=DOA;gstick=stick
+	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
+	variable DegreeOfAggregationL=DegreeOfAggregation
+	VARIABLE StickingProbabilityL=StickingProbability
+	Prompt DegreeOfAggregationL, "Enter the size of the aggregate (250)"
+	Prompt StickingProbabilityL, "Enter StickingProbabilitying probability (1 - 100)"
+	DoPrompt/Help="Basic parameters" "Input model parameters", DegreeOfAggregationL, StickingProbabilityL
+	DegreeOfAggregation=DegreeOfAggregationL
+	StickingProbability=StickingProbabilityL
 	// Get the starting position of the aggregate
-	Make/n=(gDOA,3)/O Agg=0		// It starts at 0,0,0
-	make/N=(gDOA)/O Distances 	// Distance between existing particles & new one. Needed by MakeAgg
-	IR3A_MakeAgg(gDOA,Agg,gstick)		// Agg is made with DOA particles
+	Make/n=(DegreeOfAggregation,3)/O MassFractalAggregate=0		// It starts at 0,0,0
+	make/N=(DegreeOfAggregation)/O Distances 	// Distance between existing particles & new one. Needed by MakeAgg
+	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability)		// Agg is made with DegreeOfAggregation particles
 	setDataFOlder OldDf
 End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-Function IR3A_AggInitialize()
+Function IR3A_InitializeMassFractAgg()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:AggregateModeling
-	variable/g gGL, gDOA, gstick, gPathNo
 	IR3A_MakeNBROffsetList()
+	string/g ListOfVariables
+	string/g ListOfStrings
+	//here define the lists of variables and strings needed, separate names by ;...
+	ListOfVariables="DegreeOfAggregation;StickingProbability;NumberOfTestPaths;BoxSize;"
+	ListOfVariables+="pValue;dfValue;RValue;cValue;dminValue;sValue;AttemptValue;TrueStickingProbability;"
+	ListOfVariables+="SelectedLevel;SelectedQlevel;SelectedBlevel;CurrentResults;StoredResults;"
+	ListOfVariables+="BrFract_G2;BrFract_Rg2;BrFract_B2;BrFract_P2;BrFract_G1;BrFract_Rg1;BrFract_B1;BrFract_P1;BrFract_dmin;"
+	ListOfVariables+="BrFract_c;BrFract_z;BrFract_fBr;BrFract_fM;"
+	ListOfStrings="SlectedBranchedLevels;Model;BrFract_ErrorMessage;"
+	Make/O/N=1/T Stored3DAggregates, Stored3DAggregatesPaths
+	Make/O/N=1 Stored3DAggSelections
+	Wave/T Stored3DAggregates
+	Stored3DAggregates[0] = "Current model"
+	variable i
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor												
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+	NVAR DegreeOfAggregation
+	if(DegreeOfAggregation<10)
+		DegreeOfAggregation = 250
+	endif
+	NVAR StickingProbability
+	if(StickingProbability<1 || StickingProbability>100)
+		StickingProbability = 75
+	endif
+	NVAR NumberOfTestPaths
+	if(NumberOfTestPaths<1000)
+		NumberOfTestPaths = 2500
+	endif
+	NVAR CurrentResults
+	NVAR StoredResults
+	if(CurrentResults+StoredResults!=1)
+		StoredResults =1
+		CurrentResults = 0
+	endif
+	SVAR Model
+	Model = "Branched mass fractal"
+
+//	NVAR gdf, gR
+//	variable/g gp = mom2,gc=ln(DegreeOfAggregation)/ln(gp),gdmin=gdf/gc,gs=round(exp(ln(DegreeOfAggregation)/gdmin))
+		
 	setDataFOlder OldDf
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+Function IR3A_MakeNBROffsetList()
+
+	Make/n=(26,3)/O nghbrOfsetList
+	Wave nghbrOfsetList = nghbrOfsetList
+		nghbrOfsetList[0][0] =+1;nghbrOfsetList[0][1] = 0;nghbrOfsetList[0][2] = 0
+		nghbrOfsetList[1][0] =-1;nghbrOfsetList[1][1] = 0;nghbrOfsetList[1][2] = 0
+		nghbrOfsetList[2][0] = 0;nghbrOfsetList[2][1] =+1;nghbrOfsetList[2][2] = 0
+		nghbrOfsetList[3][0] = 0;nghbrOfsetList[3][1] =-1;nghbrOfsetList[3][2] = 0
+		nghbrOfsetList[4][0] =+1;nghbrOfsetList[4][1] =+1;nghbrOfsetList[4][2] = 0
+		nghbrOfsetList[5][0] =-1;nghbrOfsetList[5][1] =-1;nghbrOfsetList[5][2] = 0
+		nghbrOfsetList[6][0] =-1;nghbrOfsetList[6][1] =+1;nghbrOfsetList[6][2] = 0
+		nghbrOfsetList[7][0] =+1;nghbrOfsetList[7][1] =-1;nghbrOfsetList[7][2] = 0
+		nghbrOfsetList[8][0] = 0;nghbrOfsetList[8][1] = 0;nghbrOfsetList[8][2] =+1
+		nghbrOfsetList[9][0] =+1;nghbrOfsetList[9][1] = 0;nghbrOfsetList[9][2] =+1
+		nghbrOfsetList[10][0]=-1;nghbrOfsetList[10][1]= 0;nghbrOfsetList[10][2]=+1
+		nghbrOfsetList[11][0]= 0;nghbrOfsetList[11][1]=+1;nghbrOfsetList[11][2]=+1
+		nghbrOfsetList[12][0]= 0;nghbrOfsetList[12][1]=-1;nghbrOfsetList[12][2]=+1
+		nghbrOfsetList[13][0]=+1;nghbrOfsetList[13][1]=+1;nghbrOfsetList[13][2]=+1
+		nghbrOfsetList[14][0]=-1;nghbrOfsetList[14][1]=-1;nghbrOfsetList[14][2]=+1
+		nghbrOfsetList[15][0]=-1;nghbrOfsetList[15][1]=+1;nghbrOfsetList[15][2]=+1
+		nghbrOfsetList[16][0]=+1;nghbrOfsetList[16][1]=-1;nghbrOfsetList[16][2]=+1
+		nghbrOfsetList[17][0]= 0;nghbrOfsetList[17][1]= 0;nghbrOfsetList[17][2]=-1
+		nghbrOfsetList[18][0]=+1;nghbrOfsetList[18][1]= 0;nghbrOfsetList[18][2]=-1
+		nghbrOfsetList[19][0]=-1;nghbrOfsetList[19][1]= 0;nghbrOfsetList[19][2]=-1
+		nghbrOfsetList[20][0]= 0;nghbrOfsetList[20][1]=+1;nghbrOfsetList[20][2]=-1
+		nghbrOfsetList[21][0]= 0;nghbrOfsetList[21][1]=-1;nghbrOfsetList[21][2]=-1
+		nghbrOfsetList[22][0]=+1;nghbrOfsetList[22][1]=+1;nghbrOfsetList[22][2]=-1
+		nghbrOfsetList[23][0]=-1;nghbrOfsetList[23][1]=-1;nghbrOfsetList[23][2]=-1
+		nghbrOfsetList[24][0]=-1;nghbrOfsetList[24][1]=+1;nghbrOfsetList[24][2]=-1
+		nghbrOfsetList[25][0]=+1;nghbrOfsetList[25][1]=-1;nghbrOfsetList[25][2]=-1
+
 end
 //******************************************************************************************************************************************************
 //Function ProfilingRun()
@@ -143,27 +261,27 @@ end
 //	AggMod_Initialize()
 //
 //	NVAR gGL
-//	NVAR gDOA
-//	NVAR gstick
-//	NVAR gPathNo
+//	NVAR DegreeOfAggregation
+//	NVAR StickingProbability
+//	NVAR NumberOfTestPaths
 //	
-//	//variable GL=gGL, DOA=gDOA, stick=gstick, PathNo=gPathNo
-//	//Prompt DOA, "Enter the size of the aggregate (250)"	// Degree of aggregation, z
-//	//Prompt stick, "Enter sticking probability (1 - 100)"	// SP = 100% for DLA; less for RLA
-//	//Prompt PathNo,"Enter number of paths (10000)."		// More paths = more accuracy
-//	//DoPrompt/Help="Basic parameters" "Input model parameters", DOA, stick, PathNo
+//	//variable GL=gGL, DegreeOfAggregation=DegreeOfAggregation, StickingProbability=StickingProbability, NumberOfTestPaths=NumberOfTestPaths
+//	//Prompt DegreeOfAggregation, "Enter the size of the aggregate (250)"	// Degree of aggregation, z
+//	//Prompt StickingProbability, "Enter StickingProbabilitying probability (1 - 100)"	// SP = 100% for DLA; less for RLA
+//	//Prompt NumberOfTestPaths,"Enter number of paths (10000)."		// More paths = more accuracy
+//	//DoPrompt/Help="Basic parameters" "Input model parameters", DegreeOfAggregation, StickingProbability, NumberOfTestPaths
 //
-//	gGL=500;gDOA=500;gstick=40;gPathNo=500;
+//	gGL=500;DegreeOfAggregation=500;StickingProbability=40;NumberOfTestPaths=500;
 //	// Get the starting position of the aggregate
-//	Make/n=(gDOA,3)/O Agg=0		// It starts at 0,0,0
-//	Make/n=(gDOA,4)/O endpoints
-//	make/N=(gDOA)/O Distances 	// Distance between existing particles & new one. Needed by MakeAgg
+//	Make/n=(DegreeOfAggregation,3)/O Agg=0		// It starts at 0,0,0
+//	Make/n=(DegreeOfAggregation,4)/O endpoints
+//	make/N=(DegreeOfAggregation)/O Distances 	// Distance between existing particles & new one. Needed by MakeAgg
 //	variable StartTicks=ticks
 //	print "Started Run All" 
-//		MakeAgg(gDOA,Agg,gstick)		// Agg is made with DOA particles
+//		MakeAgg(DegreeOfAggregation,Agg,StickingProbability)		// Agg is made with DegreeOfAggregation particles
 //		Ends(agg)
 //		Reted(endpoints)
-//		Path(gPathNo)
+//		Path(NumberOfTestPaths)
 //		Execute("GizmoViewAggregate()")
 //	print "Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
 //	setDataFOlder OldDf
@@ -176,30 +294,31 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 
-Function IR3A_MakeAgg(DOA,Agg,stick)
-	variable DOA,stick
-	wave Agg
+Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability)
+	variable DegreeOfAggregation,StickingProbability
+	wave MassFractalAggregate
 	
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
 	Wave Distances
-	//Make/n=(26,3)/Free nghbr		// 26-way neighbor-checking
-	make/Free/N=(dimsize(Agg,0),3) CurSite
-	make/Free/N=(dimsize(Agg,0)) tmpCol
+	make/Free/N=(dimsize(MassFractalAggregate,0),3) CurSite
+	make/Free/N=(dimsize(MassFractalAggregate,0)) tmpCol
 	variable chcnt=1,px,py,pz,aggct=1,cnt,con,stuck,dim,choice,wall,Rd=16,GL=16,farpoint,index=0, tmpVal
-	variable/g gattempt=1
-	NVAR gGL
+	NVAR AttemptValue
+	AttemptValue=1
+	NVAR BoxSize
 	PauseUpdate
 	Do
 		// resize box based on size of Agg
 		index=0
 		do
-			if(Agg[aggct-1][index]>farpoint)
-				farpoint=Agg[aggct-1][index]
+			if(MassFractalAggregate[aggct-1][index]>farpoint)
+				farpoint=MassFractalAggregate[aggct-1][index]
 			endif
 			index+=1
 		while(index<3)
-		GL=2*abs(farpoint)+10;gGL=GL		
+		GL=2*abs(farpoint)+10
+		BoxSize=GL		
 		// initialize particle on a random wall of the box
 		wall=0;choice=0
 		if(aggct<64)	// choose random wall on smaller box for low aggct
@@ -313,55 +432,40 @@ Function IR3A_MakeAgg(DOA,Agg,stick)
 				endif
 			endif
 			cnt=0;con=0
-																			// check how many neighboring sites are occupied
-																			//replacing this brute force search below with distance calculation (1) speeds up total time on test case from ~90s to 5-9 sec.  
-																			//			do
-																			//				dim=0
-																			//				do
-																			//					if(nghbr[dim][0]==agg[cnt][0]&&nghbr[dim][1]==agg[cnt][1]&&nghbr[dim][2]==agg[cnt][2])
-																			//						con+=1
-																			//					endif
-																			//					dim+=1
-																			//				while(dim<26)
-																			//				cnt+=1
-																			//			while(cnt<aggct)
-																			// (1) replace above brute force with disctance calculation below, this seems fastest way: 
-																			//				make/Free/O/N=(DimSize(agg,0)) Distances 			//mocved to teh top to avoid making it again...
-																			//				Distances[] = sqrt( (px-agg[p][0])^2+(py-agg[p][1])^2+(pz-agg[p][2])^2)		//	this is distance, but why sqrt? Save time... 
+			// check how many neighboring sites are occupied
 			//this is by far the longest step in the whole procedure
 			//basically, we are looking for how many neighbors px,py,pz position has 
 			//this is already much better than before, but it would really be nice to find better way of doing this. We are doing this A LOT. With every particle move, so it is done many, many times. 
-			Multithread Distances[0,aggct] = ((px-agg[p][0])^2 + (py-agg[p][1])^2 + (pz-agg[p][2])^2)		//	Multithread helps, in my test case reduces time by ~60%
-																			//this is slower... 
-																			//CurSite[][0]=px
-																			//CurSite[][1]=py
-																			//CurSite[][2]=pz
-																			//MatrixOp/O/Free/NTHR=0 Distances = sumRows(powR((agg-CurSite),2))
+			Multithread Distances[0,aggct] = ((px-MassFractalAggregate[p][0])^2 + (py-MassFractalAggregate[p][1])^2 + (pz-MassFractalAggregate[p][2])^2)		//	Multithread helps, in my test case reduces time by ~60%
+			//this is slower... 
+			//CurSite[][0]=px
+			//CurSite[][1]=py
+			//CurSite[][2]=pz
+			//MatrixOp/O/Free/NTHR=0 Distances = sumRows(powR((MassFractalAggregate-CurSite),2))
 			Histogram/B={0.5,2.6,2}/R=[0,aggct]/Dest=DistHist Distances			//histogram - bin[0] is from 0.5 - 3.1, max allowed distance^2 is 3
-				con = DistHist[0]																	// this is number of nearest neighbors with distance below sqrt(3)
-																			//another method, suggested by WM, but is slower, much slower ...
-																			//			CurSite[0][0]=px
-																			//			CurSite[0][1]=py
-																			//			CurSite[0][2]=pz
-																			//			MatrixOp/Free TestWv = catRows(CurSite,agg)
-																			//			FPClustering /DSO TestWv
-																			//			Wave M_DistanceMap
-																			//			//Edit/K=1 root:M_DistanceMap
-																			//			MatrixOp/Free Distances=row(M_DistanceMap,0)
-																			//			//Edit/K=1 root:Distances
-																			//			Histogram/B={0.1,1.8,2}/Dest=DistHist Distances
-																			//			//Edit/K=1 root:DistHist
-																			//			con = DistHist[0]
-																			// end of neighbor counting. 
+			con = DistHist[0]																	// this is number of nearest neighbors with distance below sqrt(3)
+			//another method, suggested by WM, but is slower, much slower ...
+			//			CurSite[0][0]=px
+			//			CurSite[0][1]=py
+			//			CurSite[0][2]=pz
+			//			MatrixOp/Free TestWv = catRows(CurSite,agg)
+			//			FPClustering /DSO TestWv
+			//			Wave M_DistanceMap
+			//			//Edit/K=1 root:M_DistanceMap
+			//			MatrixOp/Free Distances=row(M_DistanceMap,0)
+			//			//Edit/K=1 root:Distances
+			//			Histogram/B={0.1,1.8,2}/Dest=DistHist Distances
+			//			//Edit/K=1 root:DistHist
+			//			con = DistHist[0]
+			// end of neighbor counting. 
 			//choice=0
-			if(con>=1)	// particle can stick if there is at least 1 neighbor
+			if(con>=1)	// particle can StickingProbability if there is at least 1 neighbor
 				do
-					//do	// apply sticking probability between 1% and 100%
+					// apply StickingProbabilitying probability between 1% and 100%
 					choice=floor(1 + mod(abs(enoise(100*99)),100))		//generates random integer from 1 to 99
-					//while(choice==0 || choice==102)
 					choice-=1
-					gattempt+=1
-					if(choice<=stick)
+					AttemptValue+=1
+					if(choice<=StickingProbability)
 						stuck=1
 						con=0
 					else
@@ -369,25 +473,25 @@ Function IR3A_MakeAgg(DOA,Agg,stick)
 						stuck=0
 					endif
 				while(con>=1)
-			//keep moving if alone or rejected by sticking probability
+			//keep moving if alone or rejected by StickingProbabilitying probability
 			else
 				stuck=0
 			endif
-			//if the particle sticks, add it to the aggregate
-			variable steps=trunc(DOA/10)
+			//if the particle StickingProbabilitys, add it to the aggregate
+			variable steps=trunc(DegreeOfAggregation/10)
 			steps = max(steps,100)
 			if(stuck==1)
-				if(mod(aggct,steps)<1) ///round(DOA/50))==aggct/round(DOA/50))
+				if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
 					Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
 				endif
-				Agg[aggct][0]=px
-				Agg[aggct][1]=py
-				Agg[aggct][2]=pz
+				MassFractalAggregate[aggct][0]=px
+				MassFractalAggregate[aggct][1]=py
+				MassFractalAggregate[aggct][2]=pz
 				aggct+=1
 			endif
 		while(stuck==0)
 		stuck=0 //reset stuck flag
-	While(aggct<DOA)	// stop aggregate growth when there are DOA particles in Agg
+	While(aggct<DegreeOfAggregation)	// stop aggregate growth when there are DegreeOfAggregation particles in Agg
 	Print time()+"  Created Aggregate with "+num2str(aggct)+" particles in it" 	//takes needless time.. 
 	setDataFOlder OldDf
 
@@ -434,20 +538,20 @@ End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-Proc IR3A_FindEnds()	
-	Silent 1
-	Ends(agg)
-End
+//Proc IR3A_FindEnds()	
+//	Silent 1
+//	Ends(MassFractalAggregate)
+//End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 
 
-Function IR3A_Ends(agg)
-	wave agg
+Function IR3A_Ends(MassFractalAggregate)
+	wave MassFractalAggregate
 
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
-	NVAR gDOA
+	NVAR DegreeOfAggregation
 
 	variable cnt=0,ncnt=0,con=0,endcnt=0,dim=0
 	Make/n=(26,3)/Free nghbr
@@ -455,32 +559,32 @@ Function IR3A_Ends(agg)
 	if(!WaveExists(	nghbrOfsetList))
 		IR3A_MakeNBROffsetList()
 	endif
-	Make/n=(gDOA,4)/o endpoints
+	Make/n=(DegreeOfAggregation,4)/o endpoints
 	do
 		// define neighbors for each point in agg
-		nghbr = nghbrOfsetList[p][q] + agg[cnt][q]
+		nghbr = nghbrOfsetList[p][q] + MassFractalAggregate[cnt][q]
 		ncnt=0;con=0
 		do
 			dim=0
 			do
-				if(nghbr[dim][0]==agg[ncnt][0]&&nghbr[dim][1]==agg[ncnt][1]&&nghbr[dim][2]==agg[ncnt][2])
+				if(nghbr[dim][0]==MassFractalAggregate[ncnt][0]&&nghbr[dim][1]==MassFractalAggregate[ncnt][1]&&nghbr[dim][2]==MassFractalAggregate[ncnt][2])
 					con+=1
 				endif
 				dim+=1
 			while(dim<26)
 			ncnt+=1
-		while(ncnt<gDOA)
+		while(ncnt<DegreeOfAggregation)
 		// it's an endpoint if there is exactly 1 neighboring point
 		// record position in x, y, z and then record index in agg
 		if(con==1)
-			endpoints[endcnt][0]=agg[cnt][0];endpoints[endcnt][1]=agg[cnt][1];endpoints[endcnt][2]=agg[cnt][2];endpoints[endcnt][3]=cnt
+			endpoints[endcnt][0]=MassFractalAggregate[cnt][0];endpoints[endcnt][1]=MassFractalAggregate[cnt][1];endpoints[endcnt][2]=MassFractalAggregate[cnt][2];endpoints[endcnt][3]=cnt
 			endcnt+=1
 		endif
 		cnt+=1
 		//Print cnt
-	while(cnt<gDOA)
+	while(cnt<DegreeOfAggregation)
 	//remove extra rows from endpoints wave
-	DeletePoints endcnt,gDOA, endpoints
+	DeletePoints endcnt,DegreeOfAggregation, endpoints
 	setDataFOlder OldDf
 	Print time()+"  Finished running Find Ends" 	//takes needless time.. 
 	
@@ -491,10 +595,10 @@ End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 
-Proc IR3A_EndtoEnd()	
-	Silent 1
-	Reted(endpoints)
-End
+//Proc IR3A_EndtoEnd()	
+//	Silent 1
+//	Reted(endpoints)
+//End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -506,8 +610,9 @@ Function IR3A_Reted(endpoints)
 	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance	
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
-	NVAR gDOA
-	variable/g gR,gdf
+	NVAR DegreeOfAggregation
+	NVAR RValue
+	NVAR dfValue
 	variable endnum=DimSize(endpoints,0), numcomb=binomial(endnum,2), cnt=0,endadd=0,ecnt=1,REnd=0,Rsum=0,Retend=0,RAve=0,rem=endnum
 	Make/n=(numcomb,1)/o enddist=0
 	Make/n=(endnum-3,7)/o Rlarge=0
@@ -538,8 +643,9 @@ Function IR3A_Reted(endpoints)
 	cnt=0
 	// Print and record R, df
 	Print "R = "+num2str(REnd)
-	Print "df= "+num2str(log(gDOA)/log(REnd))
-	gR=Rend;gdf=log(gDOA)/log(REnd)
+	Print "df= "+num2str(log(DegreeOfAggregation)/log(REnd))
+	RValue=Rend
+	dfValue=log(DegreeOfAggregation)/log(REnd)
 
 	setDataFOlder OldDf
 End
@@ -549,91 +655,49 @@ End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 
-Proc IR3A_FindPaths(PathNo)	
-	variable/g gPathNo
-	variable PathNo=gPathNo
-	Prompt PathNo,"Enter number of paths (10000)."
-	Silent 1
-	gPathNo=PathNo
-	Path(PathNo)
-End
+//Proc IR3A_FindPaths(NumberOfTestPaths)	
+//	variable/g NumberOfTestPaths
+//	variable NumberOfTestPaths=NumberOfTestPaths
+//	Prompt NumberOfTestPaths,"Enter number of paths (10000)."
+//	Silent 1
+//	NumberOfTestPaths=NumberOfTestPaths
+//	Path(NumberOfTestPaths)
+//End
 
 
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
 
-Function IR3A_MakeNBROffsetList()
-
-	Make/n=(26,3)/O nghbrOfsetList
-	Wave nghbrOfsetList = nghbrOfsetList
-		nghbrOfsetList[0][0] =+1;nghbrOfsetList[0][1] = 0;nghbrOfsetList[0][2] = 0
-		nghbrOfsetList[1][0] =-1;nghbrOfsetList[1][1] = 0;nghbrOfsetList[1][2] = 0
-		nghbrOfsetList[2][0] = 0;nghbrOfsetList[2][1] =+1;nghbrOfsetList[2][2] = 0
-		nghbrOfsetList[3][0] = 0;nghbrOfsetList[3][1] =-1;nghbrOfsetList[3][2] = 0
-		nghbrOfsetList[4][0] =+1;nghbrOfsetList[4][1] =+1;nghbrOfsetList[4][2] = 0
-		nghbrOfsetList[5][0] =-1;nghbrOfsetList[5][1] =-1;nghbrOfsetList[5][2] = 0
-		nghbrOfsetList[6][0] =-1;nghbrOfsetList[6][1] =+1;nghbrOfsetList[6][2] = 0
-		nghbrOfsetList[7][0] =+1;nghbrOfsetList[7][1] =-1;nghbrOfsetList[7][2] = 0
-		nghbrOfsetList[8][0] = 0;nghbrOfsetList[8][1] = 0;nghbrOfsetList[8][2] =+1
-		nghbrOfsetList[9][0] =+1;nghbrOfsetList[9][1] = 0;nghbrOfsetList[9][2] =+1
-		nghbrOfsetList[10][0]=-1;nghbrOfsetList[10][1]= 0;nghbrOfsetList[10][2]=+1
-		nghbrOfsetList[11][0]= 0;nghbrOfsetList[11][1]=+1;nghbrOfsetList[11][2]=+1
-		nghbrOfsetList[12][0]= 0;nghbrOfsetList[12][1]=-1;nghbrOfsetList[12][2]=+1
-		nghbrOfsetList[13][0]=+1;nghbrOfsetList[13][1]=+1;nghbrOfsetList[13][2]=+1
-		nghbrOfsetList[14][0]=-1;nghbrOfsetList[14][1]=-1;nghbrOfsetList[14][2]=+1
-		nghbrOfsetList[15][0]=-1;nghbrOfsetList[15][1]=+1;nghbrOfsetList[15][2]=+1
-		nghbrOfsetList[16][0]=+1;nghbrOfsetList[16][1]=-1;nghbrOfsetList[16][2]=+1
-		nghbrOfsetList[17][0]= 0;nghbrOfsetList[17][1]= 0;nghbrOfsetList[17][2]=-1
-		nghbrOfsetList[18][0]=+1;nghbrOfsetList[18][1]= 0;nghbrOfsetList[18][2]=-1
-		nghbrOfsetList[19][0]=-1;nghbrOfsetList[19][1]= 0;nghbrOfsetList[19][2]=-1
-		nghbrOfsetList[20][0]= 0;nghbrOfsetList[20][1]=+1;nghbrOfsetList[20][2]=-1
-		nghbrOfsetList[21][0]= 0;nghbrOfsetList[21][1]=-1;nghbrOfsetList[21][2]=-1
-		nghbrOfsetList[22][0]=+1;nghbrOfsetList[22][1]=+1;nghbrOfsetList[22][2]=-1
-		nghbrOfsetList[23][0]=-1;nghbrOfsetList[23][1]=-1;nghbrOfsetList[23][2]=-1
-		nghbrOfsetList[24][0]=-1;nghbrOfsetList[24][1]=+1;nghbrOfsetList[24][2]=-1
-		nghbrOfsetList[25][0]=+1;nghbrOfsetList[25][1]=-1;nghbrOfsetList[25][2]=-1
-
-end
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-
-
-Function IR3A_Path(PathNo)
-	variable PathNo
+Function IR3A_Path(NumberOfTestPaths)
+	variable NumberOfTestPaths
 
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
 	print time()+"  Started parameters evaluation, Calculating...   this takes longest time for these functions "
-	wave agg, endpoints
-	NVAR gDOA,gattempt
+	wave MassFractalAggregate
+	Wave endpoints
+	NVAR DegreeOfAggregation
+	NVAR AttemptValue
 	variable minPathLengthAccepted
-	minPathLengthAccepted = floor(min(gDOA^(1/2), 20))		//minimum length opf path accpeted as evaluation path, for large particles original value is crazily large. 
+	minPathLengthAccepted = floor(min(DegreeOfAggregation^(1/2), 20))		//minimum length opf path accpeted as evaluation path, for large particles original value is crazily large. 
 	Make/n=(26,3)/Free nghbr
 	Wave/Z nghbrOfsetList
 	if(!WaveExists(nghbrOfsetList ))
 		IR3A_MakeNBROffsetList()
 	endif
-	Make /n=(gDOA,26)/O NeighborList=nan
-	Make/n=(gDOA,1)/Free Pathing=nan
-	Make/n=(PathNo,7)/Free Paths=nan
+	Make /n=(DegreeOfAggregation,26)/O NeighborList=nan
+	Make/n=(DegreeOfAggregation,1)/Free Pathing=nan
+	Make/n=(NumberOfTestPaths,7)/Free Paths=nan
 	variable endnum=DimSize(endpoints,0), choice=0, cnt=0,ncnt=0,nnum=0,dim=0,con=0,pcnt=0,nans=0,flag=0,ecnt=0,highp,p1,p2,mom1,mom2,startpoint
 	Make/n=(endnum,1)/O LongPath=0
 	variable i
 	MatrixOp/Free EndPointsDistances=col(endpoints,3)
 	variable startTime=ticks
-	For(cnt=0;cnt<gDOA;cnt+=1)
-		nghbr = nghbrOfsetList[p][q] + agg[cnt][q]					//this generates list of 26 neighbor positions, if any, around the agg[cnt] particle
+	For(cnt=0;cnt<DegreeOfAggregation;cnt+=1)
+		nghbr = nghbrOfsetList[p][q] + MassFractalAggregate[cnt][q]					//this generates list of 26 neighbor positions, if any, around the agg[cnt] particle
 		nnum=0
-		For(ncnt=0;ncnt<gDOA;ncnt+=1)
+		For(ncnt=0;ncnt<DegreeOfAggregation;ncnt+=1)
 			For(dim=0;dim<26;dim+=1)
-				if(nghbr[dim][0]==agg[ncnt][0]&&nghbr[dim][1]==agg[ncnt][1]&&nghbr[dim][2]==agg[ncnt][2])
-					NeighborList[cnt][nnum]=ncnt			//cnt is external loop, cnt = 0 ...gDOA
+				if(nghbr[dim][0]==MassFractalAggregate[ncnt][0]&&nghbr[dim][1]==MassFractalAggregate[ncnt][1]&&nghbr[dim][2]==MassFractalAggregate[ncnt][2])
+					NeighborList[cnt][nnum]=ncnt			//cnt is external loop, cnt = 0 ...DegreeOfAggregation
 					nnum+=1
 				endif
 			endfor
@@ -685,7 +749,10 @@ Function IR3A_Path(PathNo)
 			// (2) done... 			
 		while(con!=1)
 		if(pcnt>minPathLengthAccepted) 				// only interested in longer paths that span aggregate; throws away short paths
-			Paths[cnt][3]=agg[Pathing[pcnt]][0];Paths[cnt][4]=agg[Pathing[pcnt]][1];Paths[cnt][5]=agg[Pathing[pcnt]][2];Paths[cnt][6]=pcnt+1
+			Paths[cnt][3]=MassFractalAggregate[Pathing[pcnt]][0]
+			Paths[cnt][4]=MassFractalAggregate[Pathing[pcnt]][1]
+			Paths[cnt][5]=MassFractalAggregate[Pathing[pcnt]][2]
+			Paths[cnt][6]=pcnt+1
 			if(Paths[cnt][6]>LongPath[startpoint])
 				LongPath[startpoint]=Paths[cnt][6]	
 			endif
@@ -698,7 +765,7 @@ Function IR3A_Path(PathNo)
 		if(mod(cnt,500)==0) 
 			Print time()+"  Working... Evaluated "+num2str(cnt)+" Paths through the system"	//takes needless time.. 
 		endif
-	while(cnt<PathNo)
+	while(cnt<NumberOfTestPaths)
 	ncnt=0;highp=0;p1=0;p2=0
 	do	// determine weight-averaged percolation pathway
 		if(LongPath[ncnt]>highp)
@@ -710,58 +777,95 @@ Function IR3A_Path(PathNo)
 	while(ncnt<endnum)
 	mom2=round(p2/p1);mom1=round(p1/endnum)
 	// print results
-	NVAR gdf, gR
-	variable/g gp = mom2,gc=ln(gDOA)/ln(gp),gdmin=gdf/gc,gs=round(exp(ln(gDOA)/gdmin))
-	Print "R= "+num2str(gR)
-	Print "z = "+num2str(gDOA)
-	Print "p= "+num2str(gp)
-	Print "s = "+num2str(gs)
-	Print "df = "+num2str(gdf)
-	Print "dmin = "+num2str(gdmin)
-	Print "c = "+num2str(gc)
-	Print "True Sticking Probability = "+num2str(100*gDOA/gattempt)+"%"
-	setDataFOlder OldDf
+	NVAR dfValue
+	NVAR RValue
+	NVAR pValue
+	NVAR sValue
+	NVAR cValue
+	NVAR dminValue
+	NVAR TrueStickingProbability
+	pValue = mom2
+	cValue=ln(DegreeOfAggregation)/ln(pValue)
+	dminValue=dfValue/cValue
+	sValue=round(exp(ln(DegreeOfAggregation)/dminValue))
+	TrueStickingProbability = 100*DegreeOfAggregation/AttemptValue
+	Print "R = "+num2str(RValue)
+	Print "z = "+num2str(DegreeOfAggregation)
+	Print "p = "+num2str(pValue)
+	Print "s = "+num2str(sValue)
+	Print "df = "+num2str(dfValue)
+	Print "dmin = "+num2str(dminValue)
+	Print "c = "+num2str(cValue)
+	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
+	//appned note to MassFractalAggregate
+	string NoteText
+	NoteText="Mass Fractal Aggregate created="+time()+";z="+num2str(DegreeOfAggregation)+";R="+num2str(RValue)+";p="+num2str(pValue)
+	NoteText+=";s="+num2str(sValue)+";df="+num2str(dfValue)+";dmin="+num2str(dminValue)+";c="+num2str(cValue)+"True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)+";"
+	Note MassFractalAggregate, NoteText
+	setDataFolder OldDf
 End
 
-Proc IR3A_PrintResults()
-	Silent 1
-	GetResults()
-End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
 
 Function IR3A_GetResults()
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
-	NVAR gDOA,gp,gdf,gdmin,gc,gs,gattempt
-	gc=ln(gDOA)/ln(gp);gdmin=gdf/gc;gs=round(exp(ln(gDOA)/gdmin))
-	Print "R= "+num2str(gDOA^gdf)
-	Print "df = "+num2str(gdf)
-	Print "z = "+num2str(gDOA)
-	Print "p= "+num2str(gp)
-	Print "s = "+num2str(gs)
-	Print "dmin = "+num2str(gdmin)
-	Print "c = "+num2str(gc)
-	Print "True Sticking Probability = "+num2str(100*gDOA/gattempt)+"%"
+	NVAR DegreeOfAggregation
+	NVAR RValue
+	NVAR pValue
+	NVAR dfValue
+	NVAR dminValue
+	NVAR cValue
+	NVAR sValue
+	NVAR AttemptValue
+	cValue=ln(DegreeOfAggregation)/ln(pValue)
+	dminValue=dfValue/cValue
+	sValue=round(exp(ln(DegreeOfAggregation)/dminValue))
+	Print "R= "+num2str(RValue)
+	Print "df = "+num2str(dfValue)
+	Print "z = "+num2str(DegreeOfAggregation)
+	Print "p= "+num2str(pValue)
+	Print "s = "+num2str(sValue)
+	Print "dmin = "+num2str(dminValue)
+	Print "c = "+num2str(cValue)
+	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
 	setDataFOlder OldDf
 End
 
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
 
-Window IR3A_GizmoViewAggregate() : GizmoPlot
 
-	variable mnd = IR3A_GetAggMaxSize(root:Packages:AggregateModeling:Agg)
+Function IR3A_GizmoViewScatterPlot(ScatterPlotWave) : GizmoPlot
+	wave ScatterPlotWave
+
+	variable mnd = IR3A_GetAggMaxSize(ScatterPlotWave)
 	variable boxSize=mnd+2		//make the box larger... 
-	DoWIndow IR3A_GizmoViewAggregate
+	DoWIndow MassFractalAggregateView
 	if(V_Flag)
-		DoWIndow/F IR3A_GizmoViewAggregate
+		DoWIndow/F MassFractalAggregateView
 		ModifyGizmo setOuterBox={-1*boxSize,boxSize,-1*boxSize,boxSize,-1*boxSize,boxSize}
 		ModifyGizmo scalingOption=0
 		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={radius,1/mnd}
-	
 	else
 		PauseUpdate; Silent 1		// building window...
 		// Building Gizmo 7 window...
-		NewGizmo/K=1/T="Aggregate View"/W=(35,45,550,505)
+		NewGizmo/K=1/T="Mass Fractal Aggregate View"/W=(35,45,550,505)
+		DoWIndow/C MassFractalAggregateView
 		ModifyGizmo startRecMacro=700
-		AppendToGizmo Scatter=root:Packages:AggregateModeling:Agg,name=scatter0
+		AppendToGizmo Scatter=ScatterPlotWave,name=scatter0
 		ModifyGizmo ModifyObject=scatter0,objectType=scatter,property={ scatterColorType,0}
 		ModifyGizmo ModifyObject=scatter0,objectType=scatter,property={ markerType,0}
 		ModifyGizmo ModifyObject=scatter0,objectType=scatter,property={ sizeType,0}
@@ -801,22 +905,501 @@ Window IR3A_GizmoViewAggregate() : GizmoPlot
 		//now scale this thing... 
 		ModifyGizmo setOuterBox={-1*boxSize,boxSize,-1*boxSize,boxSize,-1*boxSize,boxSize}
 		ModifyGizmo scalingOption=0
+		Modifygizmo enhance
 		//give user tools to work with
-		ModifyGizmo showInfo
-		ModifyGizmo infoWindow={5,550,822,320}
+		//ModifyGizmo showInfo
+		//ModifyGizmo infoWindow={350,550,822,320}
 		ModifyGizmo resumeUpdates
 		ModifyGizmo endRecMacro
 		ModifyGizmo SETQUATERNION={-0.041312,-0.884834,-0.102589,0.452588}
-
 	endif
-EndMacro
+	DoWindow FractalAggregatePanel
+	if(V_Flag)
+		AutoPositionWindow /M=0/R=FractalAggregatePanel MassFractalAggregateView
+		//ModifyGizmo/N=MassFractalAggregateView infoWindow={350,550,822,520}
+	endif
 
-Function IR3A_GetAggMaxSize(Agg)
-	wave Agg
+EndMacro
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_GetAggMaxSize(MassFractalAggregate)
+	wave MassFractalAggregate
 	
-	WaveStats/Q Agg
+	WaveStats/Q MassFractalAggregate
 
 	variable MaxNeeded=max(V_max, abs(V_min) )
 	
 	return MaxNeeded
 end
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_PopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	NVAR SelectedLevel=root:Packages:AggregateModeling:SelectedLevel
+	SVAR SlectedBranchedLevels=root:Packages:AggregateModeling:SlectedBranchedLevels
+	NVAR SelectedQlevel=root:Packages:AggregateModeling:SelectedQlevel
+	NVAR SelectedBlevel=root:Packages:AggregateModeling:SelectedBlevel
+
+	switch( pa.eventCode )
+		case 2: // mouse up
+			Variable popNum = pa.popNum
+			String popStr = pa.popStr
+			string CtrlName=pa.ctrlName
+			if(stringMatch(CtrlName,"AvailableLevels"))
+				SelectedLevel = str2num(popStr[0,0])
+				SlectedBranchedLevels=popStr
+				//IR2U_SetControlsInPanel()
+				IR3A_CalculateBranchedMassFr()
+			endif
+			if(stringMatch(CtrlName,"IntensityDataName")||stringMatch(CtrlName,"SelectDataFolder"))
+				IR2C_PanelPopupControl(pa)		
+				//SVAR Model=root:Packages:Irena_AnalUnifFit:Model
+				//Model = "---"
+				//Execute("PopupMenu Model,win=UnifiedEvaluationPanel, mode=1,popvalue=\"---\",value= root:Packages:Irena_AnalUnifFit:KnownModels")
+				IR3A_SetControlsInPanel()	
+				IR3A_FindAvailableLevels()
+				IR3A_ClearVariables()
+			endif	
+			break
+	endswitch
+
+	return 0
+End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_FindAvailableLevels()
+	
+	NVAR/Z UseCurrentResults=root:Packages:AggregateModeling:CurrentResults
+	DoWIndow FractalAggregatePanel
+	if(!NVAR_Exists(UseCurrentresults) || !V_Flag)
+		return 0
+	endif
+	
+	NVAR UseStoredResults=root:Packages:AggregateModeling:StoredResults
+	String quote = "\""
+
+	SVAR Model=root:Packages:AggregateModeling:Model
+	variable LNumOfLevels, i
+	
+	if(UseCurrentResults)
+		NVAR NumberOfLevels = root:Packages:Irena_UnifFit:NumberOfLevels
+		LNumOfLevels = NumberOfLevels
+	else
+		LNumOfLevels =IR3A_ReturnNoteNumValue("NumberOfModelledLevels")	
+	endif
+	string AvailableLevels=""
+	if(stringmatch(Model,"Branched mass fractal"))	
+//		if(LNumOfLevels>=1)
+//			AvailableLevels+=num2str(1)+";"
+//		endif
+		For(i=2;i<=LNumOfLevels;i+=1)
+			AvailableLevels+=num2str(i)+"/"+num2str(i-1)+";"//+num2str(i)+";"
+		endfor
+	else
+		AvailableLevels=""
+//		For(i=1;i<=LNumOfLevels;i+=1)
+//			AvailableLevels+=num2str(i)+";"
+//		endfor
+	endif
+	string OnlyNumLevels=AvailableLevels
+//	if(stringmatch(Model,"TwoPhase*"))	
+//		AvailableLevels+="Range;All;"
+//	endif	
+//	if(stringmatch(Model,"Invariant*"))	
+//		AvailableLevels+="Range;"
+//	endif	
+	AvailableLevels = quote + AvailableLevels + quote
+	OnlyNumLevels = quote + OnlyNumLevels + quote
+	NVAR SelectedQlevel=root:Packages:Irena_AnalUnifFit:SelectedQlevel
+	NVAR SelectedBlevel=root:Packages:Irena_AnalUnifFit:SelectedBlevel
+	SVAR SlectedBranchedLevels=root:Packages:Irena_AnalUnifFit:SlectedBranchedLevels
+	string loQStr="---"
+	if(SelectedQlevel>0)
+		loQStr=num2str(SelectedQlevel)
+	endif
+	string hiQStr="---"
+	if(SelectedBlevel>0)
+		hiQStr=num2str(SelectedBlevel)
+	endif
+	string AvLevStr="---"
+	if(stringmatch(AvailableLevels,"*"+SlectedBranchedLevels+"*"))
+		AvLevStr=SlectedBranchedLevels
+	endif
+	PopupMenu AvailableLevels,win=FractalAggregatePanel,mode=1,popvalue= AvLevStr, value=#AvailableLevels
+//	PopupMenu SelectedQlevel,win=FractalAggregatePanel,mode=1,popvalue=loQStr, value=#OnlyNumLevels
+//	PopupMenu SelectedBlevel,win=FractalAggregatePanel,mode=1,popvalue=hiQStr, value=#OnlyNumLevels
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+ Function IR3A_ReturnNoteNumValue(KeyWord)
+ 	string KeyWord
+ 	
+ 	variable LUKVal
+ 	SVAR DataFolderName= root:Packages:AggregateModeling:DataFolderName
+ 	SVAR IntensityWaveName = root:Packages:AggregateModeling:IntensityWaveName
+ 	
+ 	Wave/Z LkpWv=$(DataFolderName+IntensityWaveName)
+ 	if(!WaveExists(LkpWv))
+ 		return NaN
+ 	endif
+ 	
+ 	LUKVal = NumberByKey(KeyWord, note(LkpWv)  , "=",";")
+ 	return LUKVal
+ 	
+ end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_CalculateBranchedMassFr()
+
+	NVAR SelectedLevel = root:Packages:AggregateModeling:SelectedLevel
+	SVAR SlectedBranchedLevels=root:Packages:AggregateModeling:SlectedBranchedLevels
+	NVAR UseCurrentResults=root:Packages:AggregateModeling:CurrentResults
+	NVAR UseStoredResults=root:Packages:AggregateModeling:StoredResults
+
+	NVAR BrFract_G2=root:Packages:AggregateModeling:BrFract_G2
+	NVAR BrFract_Rg2=root:Packages:AggregateModeling:BrFract_Rg2
+	NVAR BrFract_B2=root:Packages:AggregateModeling:BrFract_B2
+	NVAR BrFract_P2=root:Packages:AggregateModeling:BrFract_P2
+	NVAR BrFract_G1=root:Packages:AggregateModeling:BrFract_G1
+	NVAR BrFract_Rg1=root:Packages:AggregateModeling:BrFract_Rg1
+	NVAR BrFract_B1=root:Packages:AggregateModeling:BrFract_B1
+	NVAR BrFract_P1=root:Packages:AggregateModeling:BrFract_P1
+	SVAR BrFract_ErrorMessage=root:Packages:AggregateModeling:BrFract_ErrorMessage
+	NVAR BrFract_dmin=root:Packages:AggregateModeling:BrFract_dmin
+	NVAR BrFract_c=root:Packages:AggregateModeling:BrFract_c
+	NVAR BrFract_z=root:Packages:AggregateModeling:BrFract_z
+	NVAR BrFract_fBr=root:Packages:AggregateModeling:BrFract_fBr
+	NVAR BrFract_fM=root:Packages:AggregateModeling:BrFract_fM
+	
+	if(stringMatch(SlectedBranchedLevels,"2/1"))
+		SelectedLevel = 2
+	elseif(stringMatch(SlectedBranchedLevels,"3/2"))
+		SelectedLevel = 3
+	elseif(stringMatch(SlectedBranchedLevels,"4/3"))
+		SelectedLevel = 4
+	elseif(stringMatch(SlectedBranchedLevels,"5/4"))
+		SelectedLevel = 5
+	endif
+
+	if(SelectedLevel>=2)
+		if(UseCurrentResults)
+			NVAR gG2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"G")
+			BrFract_G2 = gG2
+			NVAR gRg2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"Rg")
+			BrFract_Rg2 = gRg2
+			NVAR gB2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"B")
+			BrFract_B2 = gB2
+			NVAR gP2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"P")
+			BrFract_P2 = gP2
+			NVAR gG1=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel-1)+"G")
+			BrFract_G1 = gG1
+			NVAR gRg1=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel-1)+"Rg")
+			BrFract_Rg1 = gRg1
+			NVAR gB1=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel-1)+"B")
+			BrFract_B1 = gB1
+			NVAR gP1=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel-1)+"P")
+			BrFract_P1 = gP1
+		else
+			//look up from wave note...
+			BrFract_G2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"G")
+			BrFract_Rg2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"Rg")
+			BrFract_B2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"B")
+			BrFract_P2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"P")
+			BrFract_G1 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel-1)+"G")
+			BrFract_Rg1 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel-1)+"Rg")
+			BrFract_B1 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel-1)+"B")
+			BrFract_P1 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel-1)+"P")
+		endif
+	elseif(SelectedLevel==1)
+		if(UseCurrentResults)
+			NVAR gG2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"G")
+			BrFract_G2 = gG2
+			NVAR gRg2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"Rg")
+			BrFract_Rg2 = gRg2
+			NVAR gB2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"B")
+			BrFract_B2 = gB2
+			NVAR gP2=$("root:Packages:Irena_UnifFit:Level"+num2str(SelectedLevel)+"P")
+			BrFract_P2 = gP2
+			BrFract_G1 =0
+			BrFract_Rg1 = 0
+			BrFract_B1 =0
+			BrFract_P1 = 0
+		else
+			//look up from wave note...
+			BrFract_G2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"G")
+			BrFract_Rg2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"Rg")
+			BrFract_B2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"B")
+			BrFract_P2 = IR3A_ReturnNoteNumValue("Level"+num2str(SelectedLevel)+"P")
+			BrFract_G1 = 0
+			BrFract_Rg1 = 0
+			BrFract_B1 = 0
+			BrFract_P1 = 0
+		endif
+	else
+			BrFract_G2 = 0
+			BrFract_Rg2 = 0
+			BrFract_B2 = 0
+			BrFract_P2 = 0
+			BrFract_G1 = 0
+			BrFract_Rg1 = 0
+			BrFract_B1 = 0
+			BrFract_P1 = 0
+	endif
+	if(strlen(SlectedBranchedLevels)>1)
+		BrFract_dmin  =BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)
+		BrFract_c  =BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2))
+		BrFract_z  =BrFract_G2/BrFract_G1 + 1 			//Greg, 11-24-2018: It should be G2/G1 +1  Karsten figured that out.  If G2 is 0 you still have one primary particle. 
+		BrFract_fBr =(1-(BrFract_G2/BrFract_G1)^(1/(BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)))-1))
+		BrFract_fM  = (1-(BrFract_G2/BrFract_G1)^(1/((BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)))-1))
+	else
+		BrFract_dmin  =BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)
+		BrFract_c  =BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2))
+		BrFract_z  =Nan
+		BrFract_fBr =NaN
+		BrFract_fM  = NaN
+	endif
+	
+	if(BrFract_c<0.96)
+		BrFract_ErrorMessage =  "The mass fractal is too polydisperse to analyse, c < 1"
+	else
+		if(BrFract_c>=0.96 && BrFract_c<=1.04)//this should be in the range of 1 say +- .02
+			BrFract_ErrorMessage = "THIS IS A LINEAR CHAIN WITH NO BRANCHES!"
+		endif
+		if(BrFract_c>=3)
+			BrFract_ErrorMessage =  "There is a problem with the fit, c must be less than 3"
+		endif
+		if(BrFract_dmin>=3)
+			BrFract_ErrorMessage = "There is a problem with the fit since dmin must be less than 3"
+		endif
+		if(BrFract_dmin>=0.96 && BrFract_dmin<=1.04 )//this should be in the range of 1 say +- .02
+			BrFract_ErrorMessage = "This is a regular object, i.e.  c=1 rod, c=2 disk, c=3 sphere, etc."
+		endif
+	endif
+	
+	if(strlen(BrFract_ErrorMessage)>0)
+		SetVariable BrFract_ErrorMessage, win=FractalAggregatePanel,  labelBack=(65535,49151,49151)
+		beep
+	else
+		SetVariable BrFract_ErrorMessage, win=FractalAggregatePanel,  labelBack=0
+	endif
+
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_CheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			NVAR CurrentResults=root:packages:AggregateModeling:CurrentResults
+			NVAR StoredResults=root:packages:AggregateModeling:StoredResults
+			SVAR Model=root:Packages:AggregateModeling:Model
+			if(stringMatch(cba.ctrlName,"CurrentResults"))
+				StoredResults=!CurrentResults
+				//Button PrintToGraph, win=UnifiedEvaluationPanel, title="Print to Unified Fit Graph"
+				//Button Invariantbutt, win=UnifiedEvaluationPanel, disable=0
+			endif
+			if(stringMatch(cba.ctrlName,"StoredResults"))
+				CurrentResults=!StoredResults
+				////Button PrintToGraph, win=UnifiedEvaluationPanel, title="Print to top Graph"
+				//Button Invariantbutt, win=FractalAggregatePanel, disable=1
+			endif
+			//Model = "---"
+			//PopupMenu Model,win=UnifiedEvaluationPanel, mode=1,popvalue="---",value= #"root:Packages:Irena_AnalUnifFit:KnownModels"
+			IR3A_SetControlsInPanel()	
+			IR3A_FindAvailableLevels()
+			IR3A_ClearVariables()
+			break
+	endswitch
+
+	return 0
+End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_SetControlsInPanel()
+
+		SVAR Model=root:Packages:AggregateModeling:Model
+		NVAR CurrentResults = root:packages:AggregateModeling:CurrentResults
+		
+		PopupMenu SelectDataFolder, win=FractalAggregatePanel, disable=CurrentResults
+		PopupMenu IntensityDataName, win=FractalAggregatePanel, disable=CurrentResults
+		Setvariable FolderMatchStr, win=FractalAggregatePanel, disable=CurrentResults
+
+end
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+Function IR3A_ClearVariables()
+
+
+	NVAR BrFract_G2=root:Packages:AggregateModeling:BrFract_G2
+	NVAR BrFract_Rg2=root:Packages:AggregateModeling:BrFract_Rg2
+	NVAR BrFract_B2=root:Packages:AggregateModeling:BrFract_B2
+	NVAR BrFract_P2=root:Packages:AggregateModeling:BrFract_P2
+	NVAR BrFract_G1=root:Packages:AggregateModeling:BrFract_G1
+	NVAR BrFract_Rg1=root:Packages:AggregateModeling:BrFract_Rg1
+	NVAR BrFract_B1=root:Packages:AggregateModeling:BrFract_B1
+	NVAR BrFract_P1=root:Packages:AggregateModeling:BrFract_P1
+	SVAR BrFract_ErrorMessage=root:Packages:AggregateModeling:BrFract_ErrorMessage
+	NVAR BrFract_dmin=root:Packages:AggregateModeling:BrFract_dmin
+	NVAR BrFract_c=root:Packages:AggregateModeling:BrFract_c
+	NVAR BrFract_z=root:Packages:AggregateModeling:BrFract_z
+	NVAR BrFract_fBr=root:Packages:AggregateModeling:BrFract_fBr
+	NVAR BrFract_fM=root:Packages:AggregateModeling:BrFract_fM
+		BrFract_G2 = 0
+		BrFract_Rg2 = 0
+		BrFract_B2 = 0
+		BrFract_P2 = 0
+		BrFract_G1 = 0
+		BrFract_Rg1 = 0
+		BrFract_B1 = 0
+		BrFract_P1 = 0
+		BrFract_ErrorMessage=""
+		BrFract_dmin=0
+		BrFract_c=0
+		BrFract_z=0
+		BrFract_fBr=0
+		BrFract_fM=0
+
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_PanelButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(stringmatch(ba.ctrlName,"CalculateAll"))
+				IR3A_CalculateAllMassFractAgreg()
+			endif
+			if(stringmatch(ba.ctrlName,"Display3DMassFracGizmo"))
+				IR3A_Display3DAggregate()
+			endif
+			if(stringmatch(ba.ctrlName,"SaveAggregateData"))
+				IR3A_StoreCurrentMassFractAgreg()
+				IR3A_Create3DAggListForListbox()
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+Function IR3A_StoreCurrentMassFractAgreg()
+	string OldDf=GetDataFolder(1)
+	SetDataFolder root:Packages:AggregateModeling
+	NVAR OldDegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
+	NVAR OldStickingProbability=root:Packages:AggregateModeling:StickingProbability
+	NVAR OldRValue=root:Packages:AggregateModeling:RValue
+	NVAR OldpValue=root:Packages:AggregateModeling:pValue
+	NVAR OlddfValue=root:Packages:AggregateModeling:dfValue
+	NVAR OlddminValue=root:Packages:AggregateModeling:dminValue
+	NVAR OldcValue=root:Packages:AggregateModeling:cValue
+	NVAR OldsValue=root:Packages:AggregateModeling:sValue
+	NVAR OldAttemptValue=root:Packages:AggregateModeling:AttemptValue
+	Wave/Z MSF=root:Packages:AggregateModeling:MassFractalAggregate
+	if(WaveExists(MSF))
+		string NewFolderName
+		NewFolderName = "MFA_DOA_"+num2str(OldDegreeOfAggregation)+"_Stick_"+num2str(OldStickingProbability)+"_"
+		NewDataFolder/O/S root:MassFractalAggregates
+		NewFolderName = UniqueName(NewFolderName, 11, 0 )
+		NewDataFolder/O/S $(NewFolderName)
+		Duplicate/O MSF, MassFractalAggregate
+		variable/g DegreeOfAggregation = OldDegreeOfAggregation
+		variable/g StickingProbability = OldStickingProbability
+		variable/g RValue = OldRValue
+		variable/g pValue = OldpValue
+		variable/g dfValue = OlddfValue
+		variable/g dminValue = OlddminValue
+		variable/g cValue = OldcValue
+		variable/g sValue = OldsValue
+		variable/g AttemptValue = OldAttemptValue		
+	endif
+	setDataFOlder OldDf
+
+
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
