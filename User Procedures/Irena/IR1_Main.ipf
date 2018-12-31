@@ -17,7 +17,7 @@ constant CurrentIrenaVersionNumber = 2.69
 
 //2.69 	Removed 14 ipf files to reduce clutter. 
 //			Combined with IR1_CreateFldrStrctr.ipf, IR1_Functions.ipf
-//			added 3DModels
+//			added 3DModels, 4D aggregate and Two Phase ssytems. 
 //2.68   Beta version. New 64-bit xops for OSX. 
 //2.67 	heavily modified Size Distribution (added power law background). First official Igor 8 release. 
 //			Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
@@ -192,7 +192,7 @@ Menu "SAS"
 	help={"Simple reflectivity model using Parrat's recursive code."}
 	SubMenu "3D Models"
 		"Mass Fractal Aggregate", IR3A_MassFractalAggregate()
-		"Two Phase Solids", IR3A_TwoPhaseSystem()
+		"Two Phase Solids", IR3T_TwoPhaseSystem()
 		"Display 3D data", IR3A_Display3DData()
 		"Import POV or PDB", IR3A_ImportPOVPDB()
 	end
@@ -287,7 +287,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
-	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;"
+	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;TwoPhaseSystems=IR3T_MainCheckVersion;"
  
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)

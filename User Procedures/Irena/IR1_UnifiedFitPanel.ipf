@@ -413,6 +413,7 @@ Function IR1A_SetInitialValues(enforce)
 		endif
 	endfor
 	IR1A_SetErrorsToZero()
+	setDataFOlder OldDf
 end
 
 

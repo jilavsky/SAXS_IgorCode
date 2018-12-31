@@ -39,6 +39,8 @@
 		<File>User Procedures/Irena/IR2_SmallAngleDiffraction.ipf</File>
 		<File>User Procedures/Irena/IR2_StructureFactors.ipf</File>
 		<File>User Procedures/Irena/IR2_PDDF.ipf</File>
+		<File>User Procedures/Irena/IR3_3DModels.ipf</File>
+		<File>User Procedures/Irena/IR3_3DTwoPhaseSolid.ipf</File>
 		<File>User Procedures/Irena/IR3_GuinierPorodModel.ipf</File>
 		<File>User Procedures/Irena/IR3_MergingData.ipf</File>
 		<File>User Procedures/Irena/IR3_SimpleFits.ipf</File>
