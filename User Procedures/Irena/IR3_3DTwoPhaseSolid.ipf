@@ -900,7 +900,7 @@ Function IR3T_CalculateTwoPhaseSolid()
  	startTicks=ticks
 	print "Calculating g(r)" 		
 	Duplicate/O Radii,gR
-	//multithread gR = IR3T_Formula2Main(gammaAR[p], GammAlfa0, alfaValue )		/gets different results than SAXSMorph, 
+	//multithread gR = IR3T_Formula2Main(gammaAR[p], GammAlfa0, alfaValue )		//gets different results than SAXSMorph, 
 	gR = IR3T_SMcalcgr(alfaValue, GammAlfa0, gammaAR[p])					//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
 	gR[0]=1																				//first point is 1 by definition and code gets NaN
 	print "g(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
@@ -968,9 +968,8 @@ Function IR3T_SMcalcgr(alfa, porosity, gammaR)
 		pWave[1] = porosity
 		pWave[2] = gammaR
 		//This call finds minimum of the called function
-		Optimize /I=100/H=1/L=-.1 /Q IR3T_SMOptimizeFnct, pWave
+		Optimize /I=100/H=1/L=-0.9 /Q IR3T_SMOptimizeFnct, pWave
 		variable result = V_MinLoc		//this is x for which IR3T_SMOptimizeFnct returns 0.
-		//result = (numtype(result)==0) ? result : 0		//there are NaNs in teh results when search gets below porosity^2... 
 		//This is completely baffling line from SAXSMorph, why is it here??? 
 		result = result * sqrt(2.0 - result * result)
 		//if(numtype(result)!=0)
@@ -1045,30 +1044,30 @@ end
 //note, thsi gets same g(r) profile as we get from monkey calculation below:
 //this does not produce same results as SAXSSMorph... 
 ////threadsafe
-//threadsafe Function IR3T_Formula2Main(gammaAR, GamAlfa0, Alfa)		//this is basically Java code calcgr...
-//	variable gammaAR, GamAlfa0, Alfa
-//	Make/N=10000/Free/D ExpWave, ExpWaveSum			//in Java it has 10000 points, but with Igor smart interpolation, may be not needed??? Check. 
-//	SetScale/I x 0,1,"", ExpWave, ExpWaveSum
-//	ExpWave = IR3T_Formula2Exp(x,Alfa)
-//	//ExpWaveSum = area(ExpWave,x,pnt2x(ExpWave, numpnts(ExpWave)-2))
-//	ExpWaveSum = area(ExpWave,x,0.9998)
-//	variable LookValFor=2*pi*(GamAlfa0 - gammaAR)
-//	FindLevel/Q  ExpWaveSum, LookValFor
-//	//note, it seems to be doing this in the code:     double ret = testx * Math.sqrt(2.0D - testx * testx);
-//	if(V_Flag==0)
-//		return V_levelX
-//		//return V_levelX * sqrt(2.0 - V_levelX * V_levelX) //does not fix anything...
-//	else
-//		return 0
-//	endif
-//end
-//
-//threadsafe Function IR3T_Formula2Exp(tval,Alfa)
-//	variable tval,Alfa
-//	
-//	return exp(-1*Alfa^2/(1+tval))/(sqrt(1-tval^2))
-//	
-//end
+threadsafe Function IR3T_Formula2Main(gammaAR, GamAlfa0, Alfa)		//this is basically Java code calcgr...
+	variable gammaAR, GamAlfa0, Alfa
+	Make/N=10000/Free/D ExpWave, ExpWaveSum			//in Java it has 10000 points, but with Igor smart interpolation, may be not needed??? Check. 
+	SetScale/I x 0,1,"", ExpWave, ExpWaveSum
+	ExpWave = IR3T_Formula2Exp(x,Alfa)
+	//ExpWaveSum = area(ExpWave,x,pnt2x(ExpWave, numpnts(ExpWave)-2))
+	ExpWaveSum = area(ExpWave,x,0.9998)
+	variable LookValFor=2*pi*(GamAlfa0 - gammaAR)
+	FindLevel/Q  ExpWaveSum, LookValFor
+	//note, it seems to be doing this in the code:     double ret = testx * Math.sqrt(2.0D - testx * testx);
+	if(V_Flag==0)
+		return V_levelX
+		//return V_levelX * sqrt(2.0 - V_levelX * V_levelX) //does not fix anything...
+	else
+		return 0
+	endif
+end
+
+threadsafe Function IR3T_Formula2Exp(tval,Alfa)
+	variable tval,Alfa
+	
+	return exp(-1*Alfa^2/(1+tval))/(sqrt(1-tval^2))
+	
+end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
