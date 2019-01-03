@@ -3,7 +3,7 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher
 
 **The current stable release version is December2018.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
-**December 2018 - DO NOT install Master version. Major "under the hood" modifications are going on during December 2018 - January 2019 time frame which make Master version not usable.** 
+**Master version contains early versions of 3D aggregate model and 3D Two phase soldi model. It currently compiles and can be used, but keep in mind that there is no manual and codeis cahngign routinely. If you have any issues with Master version, please report them ASAP to me.** 
 
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
