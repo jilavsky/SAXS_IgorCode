@@ -142,19 +142,21 @@ Function IR3T_TwoPhaseControlPanel()
 	
 
 	//these are advanced parameters. Need to move to Tab 2... 
+	CheckBox RKParametersManual,pos={100,345},size={200,14},proc=IR3T_InputPanelCheckboxProc,title="Manual R/K parameters?"
+	CheckBox RKParametersManual,variable= root:packages:TwoPhaseSolidModel:RKParametersManual, help={"Check to select manually R/K parameetrs below. "}
 	SetVariable NumberofRPoints,limits={100,10000,50},value= root:Packages:TwoPhaseSolidModel:NumberofRPoints
 	SetVariable NumberofRPoints,pos={15,375},size={170,16},title="R vector points ",noproc, help={"Number of points on R vector"}
 	CheckBox RKlogSpaced,pos={220,375},size={250,14},proc=IR3T_InputPanelCheckboxProc,title="R/K vectors log-spaced?"
-	CheckBox RKlogSpaced,variable= root:packages:TwoPhaseSolidModel:RKlogSpaced, help={"Use K vectrror with log-R binning, Not sure how useful this is. "}
-	SetVariable Rmin,limits={0.0001,50,0.2},value= root:Packages:TwoPhaseSolidModel:Rmin
+	CheckBox RKlogSpaced,variable= root:packages:TwoPhaseSolidModel:RKlogSpaced, help={"Use K vector with log-R binning, Not sure how useful this is. "}
+	SetVariable Rmin,limits={0.1,50,0},value= root:Packages:TwoPhaseSolidModel:Rmin
 	SetVariable Rmin,pos={15,400},size={150,16},title="Rmin ",noproc, help={"Minimum of R vector"}
-	SetVariable Rmax,limits={50,10000,50},value= root:Packages:TwoPhaseSolidModel:Rmax
+	SetVariable Rmax,limits={50,10000,0},value= root:Packages:TwoPhaseSolidModel:Rmax
 	SetVariable Rmax,pos={220,400},size={150,16},title="Rmax ",noproc, help={"Maximum value of R vector"}
-	SetVariable NumberOfKPoints,limits={100,10000,50},value= root:Packages:TwoPhaseSolidModel:NumberOfKPoints
+	SetVariable NumberOfKPoints,limits={100,10000,0},value= root:Packages:TwoPhaseSolidModel:NumberOfKPoints
 	SetVariable NumberOfKPoints,pos={15,445},size={170,16},title="K vector points ",noproc, help={"Number of points on K vector"}
-	SetVariable Kmin,limits={0.0001,50,0.2},value= root:Packages:TwoPhaseSolidModel:Kmin
+	SetVariable Kmin,limits={0.0001,1,0},value= root:Packages:TwoPhaseSolidModel:Kmin
 	SetVariable Kmin,pos={15,470},size={100,16},title="Kmin ",noproc, help={"Minimum of K vector"}
-	SetVariable Kmax,limits={50,10000,50},value= root:Packages:TwoPhaseSolidModel:Kmax
+	SetVariable Kmax,limits={1,50,0},value= root:Packages:TwoPhaseSolidModel:Kmax
 	SetVariable Kmax,pos={220,470},size={100,16},title="Kmax ",noproc, help={"Maximum of K vector"}
 
 	SetVariable LowQExtrapolationMin,limits={1e-8,1e-2,0},value= root:Packages:TwoPhaseSolidModel:LowQExtrapolationMin, noproc
@@ -178,7 +180,8 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:TwoPhaseSolidModel
-
+	NVAR RKPars = root:packages:TwoPhaseSolidModel:RKParametersManual
+	variable RKParsShow
 	switch( tca.eventCode )
 		case 2: // mouse up
 			Variable tab = tca.tab
@@ -191,15 +194,25 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 			SetVariable HighQExtrapolationEnd, win=TwoPhaseSystems, disable=(tab!=0)
 			
 			//tab 2
-			SetVariable NumberofRPoints, win=TwoPhaseSystems, disable=(tab!=1)
-			CheckBox RKlogSpaced, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable Rmin, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable Rmax, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable NumberOfKPoints, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable Kmin, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable Kmax, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable LowQExtrapolationMin, win=TwoPhaseSystems, disable=(tab!=1)
-			SetVariable HighQExtrapolationMax, win=TwoPhaseSystems, disable=(tab!=1)
+			CheckBox RKParametersManual, win=TwoPhaseSystems, disable=(tab!=1)
+			if(tab==1)
+				if(RKPars)
+					RKParsShow = 0
+				else
+					RKParsShow = 2
+				endif
+			else
+				RKParsShow = 1
+			endif
+			SetVariable NumberofRPoints, win=TwoPhaseSystems, disable=RKParsShow
+			CheckBox RKlogSpaced, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable Rmin, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable Rmax, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable NumberOfKPoints, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable Kmin, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable Kmax, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable LowQExtrapolationMin, win=TwoPhaseSystems, disable=RKParsShow
+			SetVariable HighQExtrapolationMax, win=TwoPhaseSystems, disable=RKParsShow
 			break
 		case -1: // control being killed
 			break
@@ -335,11 +348,11 @@ Function IR3T_SetControlsInPanel()
 		SetVariable Porosity disable=2*CalcPor
 		SetVariable ScatteringContrast disable=abs(2*(CalcPor-1))
 		
-		
+		ControlInfo /W=TwoPhaseSystems  TwoPhaseModelTabs
 		//this sets the tab content right... 
-		TabControl TwoPhaseModelTabs, win=TwoPhaseSystems, value=0
+		//TabControl TwoPhaseModelTabs, win=TwoPhaseSystems, value=0
 		STRUCT WMTabControlAction tca
-		tca.tab = 0
+		tca.tab = V_Value
 		tca.eventcode = 2
 		IR3T_TwoPhaseTabProc(tca)	
 	endif
@@ -357,6 +370,11 @@ Function IR3T_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	if (stringMatch(ctrlName,"CalculatePorosityFromInvariant"))
 		IR3T_SetControlsInPanel()
 	endif
+	if (stringMatch(ctrlName,"RKParametersManual"))
+		IR3T_SetControlsInPanel()
+	endif
+
+
 	setDataFolder oldDF
 end
 
@@ -426,7 +444,7 @@ Function IR3T_ExtrapolatelowQ()
 		NVAR Kmin=root:Packages:TwoPhaseSolidModel:Kmin
 		NVAR Kmax=root:Packages:TwoPhaseSolidModel:Kmax
 		//this is formula from SAXSMorph manual...
-		Rmax = 5*6.5/(lowQExtrapolationEnd)
+		Rmax = 2*pi/(lowQExtrapolationEnd)
 		Kmin = lowQExtrapolationEnd / 10
 		setDataFolder oldDF
 	endif
@@ -504,7 +522,7 @@ Function IR3T_ExtrapolateHighQ()
 		NVAR Kmin=root:Packages:TwoPhaseSolidModel:Kmin
 		NVAR Kmax=root:Packages:TwoPhaseSolidModel:Kmax
 		//this is formula from SAXSMorph manual...
-		Kmax = 10*highQExtrapolationStart
+		Kmax = ceil(10*highQExtrapolationStart)
 		
 		setDataFolder oldDF
 	endif
@@ -711,7 +729,7 @@ Function IR3T_InitializeTwoPhaseSys()
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseSMRData;"
 	ListOfVariables+="BoxSideSize;BoxResolution;Porosity;Invariant;ScatteringContrast;SurfaceToVolumeRatio;CalculatePorosityFromInvariant;"
-	ListOfVariables+="NumberofRPoints;NumberOfKPoints;Kmin;Kmax;Rmin;Rmax;RKlogSpaced;TotalNumberOfVoxels;"
+	ListOfVariables+="NumberofRPoints;NumberOfKPoints;Kmin;Kmax;Rmin;Rmax;RKlogSpaced;TotalNumberOfVoxels;RKParametersManual;"
 	ListOfVariables+="LowQExtrapolationMin;LowQExtrapolationStart;LowQExtrapolationEnd;HighQExtrapolationEnd;HighQExtrapolationStart;HighQExtrapolationMax;"
 	ListOfVariables+="PorodConstant;Background;"
 	ListOfStrings="LowQExtrapolationMethod;"
@@ -1053,10 +1071,8 @@ threadsafe Function IR3T_Formula2Main(gammaAR, GamAlfa0, Alfa)		//this is basica
 	ExpWaveSum = area(ExpWave,x,0.9998)
 	variable LookValFor=2*pi*(GamAlfa0 - gammaAR)
 	FindLevel/Q  ExpWaveSum, LookValFor
-	//note, it seems to be doing this in the code:     double ret = testx * Math.sqrt(2.0D - testx * testx);
 	if(V_Flag==0)
 		return V_levelX
-		//return V_levelX * sqrt(2.0 - V_levelX * V_levelX) //does not fix anything...
 	else
 		return 0
 	endif

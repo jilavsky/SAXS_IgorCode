@@ -1716,7 +1716,7 @@ static Function IR1T_EndOfBinInDiameters(D_distribution,i)			//calculates the st
 	if (i==0)
 		endL=D_distribution[0]+(D_distribution[1]-D_distribution[0])/2
 	elseif (i==Imax-1)
-		endL=D_distribution[i]+((D_distribution[i+1]-D_distribution[i])/2)
+		endL=D_distribution[i]+((D_distribution[i]-D_distribution[i-1])/2)
 	else
 		endL=D_distribution[i]+((D_distribution[i+1]-D_distribution[i])/2)
 	endif
