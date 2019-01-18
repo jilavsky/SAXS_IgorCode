@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.50
+#pragma version = 1.51
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.51 fixes for generic case of data (all checkboxes unchecked). Should work now. 
 //1.50 fixes case when stale FOlder string was returned when user chanegd too fast from USAXS to QRSS type. Fixed case when R_Int was showing as QRS data. 
 //1.49 fixed IR2P_CheckForRightQRSTripletWvs to work also for QRS names, not only qrs... 
 //1.48 Modifed IR2P_CheckForRightQRSTripletWvs for QRS to use GrepList, seems cleaner and more obviosu. Also, fixes worng includions of DSM waves in QRS. 
@@ -1109,7 +1110,15 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	    if(strlen(FolderMatchStr)>0)
 	          result=GrepList(result, (FolderMatchStr) )
 	    endif
-	    result= IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
+	    //and prepare short list 
+	 	//match to user mask using greplist
+		if(strlen(FolderMatchStr)>0)
+			result=GrepList(result, (FolderMatchStr) )
+		endif
+	   //result = IR2P_CheckForRightUsrTripletWvs(TopPanel, result,"*",IR2C_PreparematchString(WaveMatchStr))
+		//done, now rest...
+		resultShort = IR2P_CreateFolderPathLists(CntrlLocation, result)
+	 	SetTimeOfUserDefFoldersStr = datetime
 	endif
 	setDataFolder OldDf
 	return resultShort
