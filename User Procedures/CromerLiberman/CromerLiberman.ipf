@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.7
+#pragma version=1.8
 
 //This is implementation of Cromer-Liberman code for calcualtions of fprime and f double prime, and mu-over-rho
 // included is also code to calculate f0 as function f Q ( = 2p/d = 4*pi*sin(theta)/lambda [A^-1])
@@ -17,6 +17,7 @@
 //release 1.6 fixed confusion of using sometimes S and sometimes Q for scattering vector, resulting in wrong results for Q(S) !=0 calculations. 
 //		 Scattering vector should be now in the whole code called Q only.
 //release 1.7 fixed CromerBufferEnenergyPrecision call which caused the lookup to work with fixed precision and not controlled by user...
+//1.8 fixes to Be and Mo values
 
 //this code is translated from C translation of the Fortran source code. It is inefficient and difficult to read.
 //
@@ -1087,7 +1088,7 @@ static Function Initialize_f0()
 	make/N=4/O Be_a, Be_b
 	variable/g Be_c
 	Be_a={2.22744, 1.55249, 1.40060, 0.58290}
-	Be_b={42.9165, 1.66379, 100.361}
+	Be_b={0.04965, 42.9165, 1.66379, 100.361}
 	Be_c=-1.76339
 	//********************************
 	//	"BE",   2.22744, 1.55249, 1.40060, 0.58290, 0.04965, 42.9165, 1.66379, 100.361,-1.76339,
@@ -1095,7 +1096,7 @@ static Function Initialize_f0()
 	make/N=4/O 'Be+2_a', 'Be+2_b'
 	variable/g 'Be+2_c'
 	'Be+2_a'={5.69034, 1.19706, 1.03057, 0.20150}
-	'Be+2_b'={0.01336, 0.39000, 1.97441, 4.90642}
+	'Be+2_b'={-0.01336, 0.39000, 1.97441, 4.90642}
 	'Be+2_c'=-6.11950
 	//********************************
 	//	"BE+2", 5.69034, 1.19706, 1.03057, 0.20150,-0.01336, 0.39000, 1.97441, 4.90642,-6.11950,
@@ -1696,7 +1697,7 @@ static Function Initialize_f0()
 	variable/g 'Mo+3_c'
 	'Mo+3_a'={19.6761, 18.0893, 11.7086, 2.50624}
 	'Mo+3_b'={0.95118,-0.00669, 9.61097, 24.0356}
-	'Mo+3_c'=-12.981
+	'Mo+3_c'=-12.9813
 	//********************************
 	//	"MO+3", 19.6761, 18.0893, 11.7086, 2.50624, 0.95118,-0.00669, 9.61097, 24.0356,-12.9813,
 	//********************************     Mo+5

@@ -1,8 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.00
+#pragma version=1.01
 
-Constant IR3TTwoPhaseVersionNumber = 1.00
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -11,11 +10,13 @@ Constant IR3TTwoPhaseVersionNumber = 1.00
 //*************************************************************************/
 
 
+//1.01 modified GSR generation to use MatrixOp and time to calculate (50x50x50) went from 30+ sec to 4. 
 //1.00 first version, added code for Two Phase solid based on 
 	//Bridget Ingham, Haiyong Li, Emily L. Allen and Michael F. Toney, SAXSMorph program with manuscript: J. Appl. Cryst. (2011). 44, 221–224, doi:10.1107/S0021889810048557
 	//and  
 	//John A Quintanilla, Jordan T Chen, Richard F Reidy and Andrew J Allen Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351, doi:10.1088/0965-0393/15/4/S02
 
+constant useSAXSMorphCode = 1
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -37,25 +38,6 @@ end
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-//******************************************************************************************************************************************************
-//			Utility functions
-//******************************************************************************************************************************************************
-//*****************************************************************************************************************
-Function IR3T_MainCheckVersion()	
-	//this needs to get more of these lines for each tool/panel... 
-	DoWindow TwoPhaseSystems
-	if(V_Flag)
-		if(!IR1_CheckPanelVersionNumber("TwoPhaseSystems", IR3AMassFrAggVersionNumber))
-			DoAlert /T="The Two Phase 3D modeling panel was created by incorrect version of Irena " 1, "Two Phase 3D modeling tool may need to be restarted to work properly. Restart now?"
-			if(V_flag==1)
-				DoWindow/K TwoPhaseSystems
- 				IR3T_TwoPhaseSystem()
-			else		//at least reinitialize the variables so we avoid major crashes...
-				IR3T_InitializeTwoPhaseSys()
-			endif
-		endif
-	endif
-end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //			Two Phase system - typically Porosu media modeling. 
@@ -93,7 +75,7 @@ Function IR3T_TwoPhaseControlPanel()
 	CheckBox CalculatePorosityFromInvariant,variable= root:packages:TwoPhaseSolidModel:CalculatePorosityFromInvariant, help={"For calibrated data and contrast - calculate porosity from invariant"}
 
 
-	SetVariable Porosity,limits={0.001,0.5,0},value= root:Packages:TwoPhaseSolidModel:Porosity //proc=IR1A_PanelSetVarProc
+	SetVariable Porosity,limits={0.001,1,0},value= root:Packages:TwoPhaseSolidModel:Porosity //proc=IR1A_PanelSetVarProc
 	SetVariable Porosity,pos={10,215},size={190,16},title="Porosity fraction (0-0.5)",noproc, help={"Minority phase as fraction (0 - 1)"}
 
 	SetVariable ScatteringContrast,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:ScatteringContrast //proc=IR1A_PanelSetVarProc
@@ -110,10 +92,10 @@ Function IR3T_TwoPhaseControlPanel()
 
 
 	SetVariable BoxSideSize,limits={100,10000,50},value= root:Packages:TwoPhaseSolidModel:BoxSideSize, proc=IR3T_SetVarProc
-	SetVariable BoxSideSize,pos={10,265},size={200,16},title="Box size [A]           ",noproc, help={"Physical size of the box for modeling in Angstroms"}
+	SetVariable BoxSideSize,pos={10,265},size={200,16},title="Box size [A]           ", help={"Physical size of the box for modeling in Angstroms"}
 
-	SetVariable BoxResolution,limits={10,500,50},value= root:Packages:TwoPhaseSolidModel:BoxResolution, proc=IR3T_SetVarProc
-	SetVariable BoxResolution,pos={10,290},size={200,16},title="Box divisions           ",noproc, help={"How many steps per side to take"}
+	SetVariable BoxResolution,limits={10,500,50},proc=IR3T_SetVarProc, value= root:Packages:TwoPhaseSolidModel:BoxResolution
+	SetVariable BoxResolution,pos={10,290},size={200,16},title="Box divisions           ", help={"How many steps per side to take"}
 
 	SetVariable TotalNumberOfVoxels,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:TotalNumberOfVoxels, noedit=1, frame=0, format="%2.2e" //proc=IR1A_PanelSetVarProc
 	SetVariable TotalNumberOfVoxels,pos={230,290},size={200,16},title="No of Voxels ",noproc, help={"How many voxels is in box, impacts speed!"}
@@ -146,11 +128,11 @@ Function IR3T_TwoPhaseControlPanel()
 	CheckBox RKParametersManual,variable= root:packages:TwoPhaseSolidModel:RKParametersManual, help={"Check to select manually R/K parameetrs below. "}
 	SetVariable NumberofRPoints,limits={100,10000,50},value= root:Packages:TwoPhaseSolidModel:NumberofRPoints
 	SetVariable NumberofRPoints,pos={15,375},size={170,16},title="R vector points ",noproc, help={"Number of points on R vector"}
-	CheckBox RKlogSpaced,pos={220,375},size={250,14},proc=IR3T_InputPanelCheckboxProc,title="R/K vectors log-spaced?"
-	CheckBox RKlogSpaced,variable= root:packages:TwoPhaseSolidModel:RKlogSpaced, help={"Use K vector with log-R binning, Not sure how useful this is. "}
+//	CheckBox RKlogSpaced,pos={220,375},size={250,14},proc=IR3T_InputPanelCheckboxProc,title="R/K vectors log-spaced?"
+//	CheckBox RKlogSpaced,variable= root:packages:TwoPhaseSolidModel:RKlogSpaced, help={"Use K vector with log-R binning, Not sure how useful this is. "}
 	SetVariable Rmin,limits={0.1,50,0},value= root:Packages:TwoPhaseSolidModel:Rmin
 	SetVariable Rmin,pos={15,400},size={150,16},title="Rmin ",noproc, help={"Minimum of R vector"}
-	SetVariable Rmax,limits={50,10000,0},value= root:Packages:TwoPhaseSolidModel:Rmax
+	SetVariable Rmax,limits={50,1000000,0},value= root:Packages:TwoPhaseSolidModel:Rmax
 	SetVariable Rmax,pos={220,400},size={150,16},title="Rmax ",noproc, help={"Maximum value of R vector"}
 	SetVariable NumberOfKPoints,limits={100,10000,0},value= root:Packages:TwoPhaseSolidModel:NumberOfKPoints
 	SetVariable NumberOfKPoints,pos={15,445},size={170,16},title="K vector points ",noproc, help={"Number of points on K vector"}
@@ -180,10 +162,10 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:TwoPhaseSolidModel
-	NVAR RKPars = root:packages:TwoPhaseSolidModel:RKParametersManual
-	variable RKParsShow
 	switch( tca.eventCode )
 		case 2: // mouse up
+			NVAR RKPars = root:packages:TwoPhaseSolidModel:RKParametersManual
+			variable RKParsShow
 			Variable tab = tca.tab
 			PopupMenu LowQExtrapolationMethod, win=TwoPhaseSystems, disable=(tab!=0)
 			Button ExtrapolateLowQ, win=TwoPhaseSystems, disable=(tab!=0)
@@ -205,7 +187,7 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 				RKParsShow = 1
 			endif
 			SetVariable NumberofRPoints, win=TwoPhaseSystems, disable=RKParsShow
-			CheckBox RKlogSpaced, win=TwoPhaseSystems, disable=RKParsShow
+			//CheckBox RKlogSpaced, win=TwoPhaseSystems, disable=RKParsShow
 			SetVariable Rmin, win=TwoPhaseSystems, disable=RKParsShow
 			SetVariable Rmax, win=TwoPhaseSystems, disable=RKParsShow
 			SetVariable NumberOfKPoints, win=TwoPhaseSystems, disable=RKParsShow
@@ -443,8 +425,8 @@ Function IR3T_ExtrapolatelowQ()
 		NVAR Rmin=root:Packages:TwoPhaseSolidModel:Rmin
 		NVAR Kmin=root:Packages:TwoPhaseSolidModel:Kmin
 		NVAR Kmax=root:Packages:TwoPhaseSolidModel:Kmax
-		//this is formula from SAXSMorph manual...
-		Rmax = 2*pi/(lowQExtrapolationEnd)
+		//this is close to formula from SAXSMorph manual...
+		Rmax = 5*2*pi/(lowQExtrapolationEnd)
 		Kmin = lowQExtrapolationEnd / 10
 		setDataFolder oldDF
 	endif
@@ -607,6 +589,15 @@ FUnction IR3T_ExtendDataCalcParams()
 		NVAR lowQExtrapolationMin = root:Packages:TwoPhaseSolidModel:lowQExtrapolationMin
 		
 		NVAR CalculatePorosityFromInvariant=root:Packages:TwoPhaseSolidModel:CalculatePorosityFromInvariant
+		NVAR RKParametersManual=root:Packages:TwoPhaseSolidModel:RKParametersManual
+		
+		NVAR Rmin = root:Packages:TwoPhaseSolidModel:Rmin
+		NVAR Rmax = root:Packages:TwoPhaseSolidModel:Rmax
+		NVAR Kmin = root:Packages:TwoPhaseSolidModel:Kmin
+		NVAR Kmax = root:Packages:TwoPhaseSolidModel:Kmax
+		
+		NVAR BoxResolution = root:Packages:TwoPhaseSolidModel:BoxResolution
+		NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
 		
 		if(WaveExists(HighQExtrapolatedIntensity) && WaveExists(lowQExtrapolatedIntensity))
 			variable OrgStart, OrgEnd
@@ -642,6 +633,13 @@ FUnction IR3T_ExtendDataCalcParams()
 				ScatteringContrast  = (Invariant / Porosity )*1e-20/(2*pi^2)
 			endif
 			SurfaceToVolumeRatio = Porosity*(1-porosity)* 1e4*pi*PorodConstant/Invariant											// this is not really S/V, that would be S/V = piB/Q * (phi*(1-phi))
+			if(RKParametersManual==0)		//calculate and set R and K parameters here...
+				Rmin = BoxSideSize / BoxResolution / 2
+				Rmax = IN2G_roundSignificant(35/lowQExtrapolationStart,2)
+				Kmin =IN2G_roundSignificant(lowQExtrapolationStart/10,1)
+				Kmax = IN2G_roundSignificant(highQExtrapolationStart*10, 1)			
+			endif
+
 		else
 			DoAlert /T="Data do not exist" 0, "Cannot do any calculations, data do not exist. Extrapolate low and high Q first. "
 		endif
@@ -773,8 +771,8 @@ static Function IR3T_SetInitialValues()
 		Kmax=6
 	endif
 	NVAR Rmin
-	if(Rmin<1)
-		Rmin = 0.5
+	if(Rmin<0.001 || Rmin>20)
+		Rmin = 0.1
 	endif
 	NVAR Rmax
 	if(Rmax<100)
@@ -818,10 +816,10 @@ static Function IR3T_SetInitialValues()
 	if(NumberOfKPoints<100)
 		NumberOfKPoints = 1000
 	endif
-	NVAR RKlogSpaced
-	if(RKlogSpaced!=0 || RKlogSpaced!=1)
-		RKlogSpaced = 1
-	endif
+//	NVAR RKlogSpaced
+//	if(RKlogSpaced!=0 || RKlogSpaced!=1)
+//		RKlogSpaced = 1
+//	endif
 	NVAR LowQExtrapolationMin
 	if(LowQExtrapolationMin<=0 || LowQExtrapolationMin>0.01)
 		LowQExtrapolationMin=1e-5
@@ -857,7 +855,7 @@ Function IR3T_CalculateTwoPhaseSolid()
 	endif
 	
 	Wave/Z Qvec	= root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector	
-
+	string OldDf=GetDataFolder(1)
 	PauseUpdate
 	NewDataFOlder/O/S root:Packages
 	NewDataFOlder/O/S root:Packages:TwoPhaseSolidModel
@@ -865,7 +863,7 @@ Function IR3T_CalculateTwoPhaseSolid()
 	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize 					//Box size in Angstroms
 	NVAR BoxResolution = root:Packages:TwoPhaseSolidModel:BoxResolution 			// typically 50 divisions on each side, Voxel size is BoxSideSize/BoxResolution
 	NVAR Porosity = root:Packages:TwoPhaseSolidModel:Porosity
-	NVAR RKlogSpaced = root:Packages:TwoPhaseSolidModel:RKlogSpaced
+//	NVAR RKlogSpaced = root:Packages:TwoPhaseSolidModel:RKlogSpaced
 	NVAR NumberOfKPoints = root:Packages:TwoPhaseSolidModel:NumberOfKPoints
 	NVAR NumberofRPoints = root:Packages:TwoPhaseSolidModel:NumberofRPoints
 	NVAR Kmin = root:Packages:TwoPhaseSolidModel:Kmin
@@ -874,9 +872,9 @@ Function IR3T_CalculateTwoPhaseSolid()
 	NVAR RadMax = root:Packages:TwoPhaseSolidModel:RMax
 
 	make/O/N=(NumberOfKPoints)/D Kvalues
-	Make/O/N=(NumberofRPoints)/D Radii, gammaAR
+	Make/O/N=(NumberofRPoints)/D Radii, DebyeAutoCorFnct
 	Wave Kvalues
-	Wave gammaAR
+	Wave DebyeAutoCorFnct
 	Wave Radii
 	variable GammAlfa0 = porosity
 	variable alfaValue
@@ -884,44 +882,75 @@ Function IR3T_CalculateTwoPhaseSolid()
 	//Radius wave needs to be set right. 
 	//need min and max radius, their model uses 0.1 - 242 by default, I think this comes from input data... 
 	// this.gammar[i][0] = radius = (i * (this.rmax - this.rmin) / this.rpts + this.rmin);
-	if(RKlogSpaced)
-		Radii = 10^(log(RadMin)+p*((log(RadMax)-log(RadMin))/(NumberofRPoints-1))) 				//sets k scaling on log-scale...
-	else
-		Radii = p*(RadMax-RadMin)/NumberofRPoints + RadMin					//this makes the GammaAR match their function... 
-	endif
+	//note; log spacing simply doe snot work well. Needs to be lin spaced... 
+	//	if(RKlogSpaced)
+	//		Radii = 10^(log(RadMin)+p*((log(RadMax)-log(RadMin))/(NumberofRPoints-1))) 				//sets k scaling on log-scale...
+	//	else
+		Radii = p*(RadMax-RadMin)/NumberofRPoints + RadMin					//this makes the DebyeAutoCorFnct match their function... 
+	//	endif
 	//Now the K vector values... 
 	//need limits, here are their startup limits:
 	//SAXSMorh uses linear binning, which results in weird spikes in the spectral function on my test case... 
 	//not sure what is right here. 
-	if(RKlogSpaced)
-		Kvalues = 10^(log(Kmin)+p*((log(KMax)-log(Kmin))/(NumberOfKPoints-1))) 				//sets k scaling on log-scale...
-	else
-		Kvalues = Kmin + p*KMax/NumberOfKPoints									//sets k scaling on lin-scale...
-	endif
-	//important notes:
-	//In paper GammaAlfa(0) = porosity
+	//	if(RKlogSpaced)
+	//		Kvalues = 10^(log(Kmin)+p*((log(KMax)-log(Kmin))/(NumberOfKPoints-1))) 				//sets k scaling on log-scale...
+	//	else
+	Kvalues = Kmin + p*KMax/NumberOfKPoints									//sets k scaling on lin-scale...
+	//endif
+	Duplicate/O Radii, DebyeAutoCorFnctRadii									//cretae separate copy for Debye Autocorelation function for plotting and user use... 
 	variable startTicks=ticks
+	//important notes:
+	//		Per all of the literature... 
+	//		This is a function that describes the correlation at two points separated by a distance r, arising from real-space density ﬂuctuations in the sample. 
+	//		That is, it represents the probability that two points separated by a distance r are of the same phase.
 	print "Calculating Gamma_alfa(r)" 									//calculate formula 1	
-	multithread gammaAR = IR3T_Formula1(Radii[p],Intensity,Qvec)
+	multithread DebyeAutoCorFnct = IR3T_Formula1(DebyeAutoCorFnctRadii[p],Intensity,Qvec)
 	print "Gamma_alfa(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//renormalize
-	wavestats/Q gammaAR
-	//Refer to original SAXSMorph java code, their normalization is bit confusing. They normalized as below:
-	gammaAR = (porosity - porosity^2) * gammaAR[p]/V_max + porosity^2
- 	//Kind of makes sense, porosity^2 is random probability that two random points will be both in pore/solid
- 	//It would be nice to write this in paper, though... This should be correct gammaAR
-	//calculate alfaValue
+	wavestats/Q DebyeAutoCorFnct
+	//Refer to original SAXSMorph java code, and John A. Quintanilla papers, explains why this is normalized as below:
+	// Quintanilla: DebyeAutoCorFnct = S2, and S2(0) = porosity (volume fractio of pores)
+	//   limit(R->inf) DebyeAutoCorFnct  = porosity^2
+	//Java code:      this.gammar[i][1] = ((this.porosity - this.porosity * this.porosity) * gamma_r_val[i] / gamma_r_max + this.porosity * this.porosity);
+	DebyeAutoCorFnct = (porosity - porosity^2) * DebyeAutoCorFnct[p]/V_max + porosity^2
+ 	// Makes sense, porosity^2 is random probability that two random points will be both in pore/solid (whatever the minority phase is).
+ 	//       >>>>>>      this now works, 2-24-2019, but still seem to get different values than SAXSMorph
+  	//**************************************************************
+	//calculate alfaValue		- note that the two methods use different integration limits  ******************************************
 	alfaValue = sqrt(2) * inverseErf(1 - porosity * 2)
- 	// this is from SAXSMorph java code, for 20% ~ 0.841621, Checked by porting their Java inverf in Igor, it is inverse error function. So this is correct.  
+  	// this is from SAXSMorph java code, for 20% ~ 0.841621, Checked by porting their Java inverf in Igor, it is inverse error function. So this is correct.  
+ 	//tested, see commented out code CalculateApproxAlfa(fiVal). Note, that the definitions between SAXSMorph and John A. Quintanilla vary in which side of erfunction is integrated.
+ 	//this resutls in sign difference between the two papers, which is not material since we make decision which phase is which phase anyway. 
+ 	//CalculateApproxAlfa(0.9)
+  	//Approx number is : 1.2817
+  	//Erf calculation is : -1.2816
+  	//this is also reflected in g(r) calculations below, where SAXSmorph intergates from g(r) to 1, while QUINTANILLA integrated from 0 to g(r). 
+  	//**************************************************************
+  	//**************************************************************
  	//Now formula 2 in Main paper... 
  	//calculate g(r)																//nb: GammAlfa0 = porosity
  	startTicks=ticks
-	print "Calculating g(r)" 		
+	print "Calculating gR(r) - the two-point correlation function g(r)" 		
 	Duplicate/O Radii,gR
-	//multithread gR = IR3T_Formula2Main(gammaAR[p], GammAlfa0, alfaValue )		//gets different results than SAXSMorph, 
-	gR = IR3T_SMcalcgr(alfaValue, GammAlfa0, gammaAR[p])					//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
-	gR[0]=1																				//first point is 1 by definition and code gets NaN
-	print "g(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
+	if(useSAXSMorphCode)
+		print "Calculating g(r) using SAXSMorph code"
+		gR = IR3T_SMcalcgr(alfaValue, GammAlfa0, DebyeAutoCorFnct[p])	//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
+		gR[0]=1																			//first point is 1 by definition and code gets NaN
+	else
+		//if using Quantanilla Formula 2 integration, change sign of the next calculation... 
+		//also Quintanilla uses function Xi(r) = S2(r) - porosity^2, where S2(r) is DebyeAutoCorFnct
+		//let us create it for sanity...
+		Duplicate/O DebyeAutoCorFnct, XiFunctionQuint
+		XiFunctionQuint = DebyeAutoCorFnct - GammAlfa0^2
+		variable alfaValueQ = -1 * alfaValue
+		print "Calculating g(r) using code in Quantanilla paper"
+  		multithread gR = IR3T_ProperCalcgr(alfaValueQ, XiFunctionQuint[p])				//this is correct way of calculating gr
+		gR[0]=1																				//first point is 1 by definition and code gets NaN
+		//gR = numtype(gR[p]) == 0 ? gR[p] : 1											//for log scaled data we have number of nans at the begginign due to really small values, need to be 1 for all such values. 
+	endif
+	print "gamma(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
+	//    fascinating. So the complete voddo in SAXSMorph creates same gR function as code from Quintanilla 
+	//		*******
 	//OK, the stuff above nearly matches SAXSMorph, if the k values are linearly spaced... If they are log-spaced, we get different curve a bit. Not really surprising...  
 	//Bessel function osciallations I would expect in test data, which is sphere intensity profile... 
 	//what is correct here??? Need to check how the data are used later... 
@@ -929,16 +958,60 @@ Function IR3T_CalculateTwoPhaseSolid()
 	print "Calculating Spectral function" 		
 	duplicate/O Kvalues, SpectralFk 
 	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p],gR,Radii)
-	 //this gets some differecnes between SAXSMorph and igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
+	// spectreal function is ridiculously noisy, lets smooth it. 
+	//note: this makes HUGE difference and results look lot closer to SAXSMorph and expectations... 
+	variable SMoothBy= ceil(numpnts(SpectralFk)/60)
+	Smooth/EVEN/B SMoothBy, SpectralFk
+	//this gets some differecnes between SAXSMorph and igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
 	print "Spectral function calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//now we need to implement function calcGRF from java code...
-	//this has lots of check code and them calls generateMatrix()
+	//this has lots of check code and them calls generateMatrix() 
 	startTicks=ticks
 	print "Calculating Matrix" 		
 	IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
 	print "GenerateMatrix time is "+num2str((ticks-startTicks)/60) +" sec"
+	print "Calculating PDF and SAS curve."
+	Wave TwoPhaseSolidMatrix
+	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize			// range of modeled radii in Angstroms
+	NVAR BoxResolution = root:Packages:TwoPhaseSolidModel:BoxResolution	// number of steps per size of the box. 
+	variable VoxelSize= BoxSideSize / BoxResolution  							// voxel size in Angstroms
+	variable NumStepsToUse=ceil(sqrt(3)*BoxResolution)							//max distance inside the box
+	variable oversample = 4																// oversample for evaluation for pdf calculations... 
+	oversample = BoxResolution>100 ? 2 : 4
+	//variable Qmin = 																		//these need to be selected sensibly. There are two R - Rmax for R vector and Box side size... 
+	//variable Qmax = 																		//cannot be higher than voxel size combined with oversampling... 
+	IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
+	IR3T_AppendModelIntToGraph()
 	print "Done..."
 	resumeUpdate
+	setDataFOlder OldDf	
+end
+
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+Function IR3T_AppendModelIntToGraph()
+	DoWindow TwoPhaseSystemData
+	if(V_Flag)
+		DoWIndow/F TwoPhaseSystemData
+		Wave/Z PDFQWv = root:Packages:TwoPhaseSolidModel:PDFQWv
+		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
+		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
+		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
+		if(WaveExists(PDFQWv))
+			//need to renormalzie this together...
+			variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
+			variable InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
+			PDFIntensityWv*=InvarData/InvarModel
+			CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
+			if(V_flag==0)
+				AppendToGraph/W=TwoPhaseSystemData  PDFIntensityWv vs PDFQWv
+			endif
+			ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
+			ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
+			ModifyGraph msize(PDFIntensityWv)=3
+		endif
+	endif
+
 end
 
 ///*************************************************************************************************************************************
@@ -951,36 +1024,74 @@ threadsafe Function IR3T_Formula1(Radius,Intensity,Qvec)
 	variable Radius
 	wave Intensity,Qvec	
 	Make/Free/N=(numpnts(Intensity))/D QRWave
-	QRWave=IR3T_ReturnSQRQR	(Qvec[p],Radius)			//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
+	QRWave=sinc(Qvec[p]*Radius)			//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
 	matrixOP/Nthr=0/Free tempWave = powR(Qvec, 2) * Intensity * QRWave
 	return 4*pi*areaXY(Qvec, TempWave)
 end
 
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
-ThreadSafe Function IR3T_ReturnSQRQR(Qvalue, RadVaue)
-		variable Qvalue, RadVaue
-		variable QR=Qvalue*RadVaue
-		if(QR>0.05)
-			return sin(QR)/QR
-		else
-			return 1
-		endif
-end		
+//					here is calculation of gR 
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+//This is using published formulas as best as I can...proper way the g(r) - not the SAXSMorph way...
+//this is using the QUINTANILLA definition of alfa
+threadsafe Function IR3T_ProperCalcgr(alfa, gammaR)
+		variable alfa, gammaR
+		//input values are input numbers for each g(r) value	
+		//thsi is needed for Optimize, no science here... 
+		make/Free/N=3 pWave
+		pWave[0] = alfa
+		pWave[1] = gammaR
+		//This call finds minimum of the called function
+		Optimize /I=100/H=1/L=-0.9 /Q IR3T_ProperOptimizeFnct, pWave
+		variable result = V_MinLoc		//this is x for which IR3T_ProperOptimizeFnct returns 0.
+		return result		//hence, this is g(r)
+end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+//this is our function, but Optimize compatible. 
+threadsafe Function IR3T_ProperOptimizeFnct(w,xval)
+	Wave w
+	Variable xval
+	variable alfa=w[0]
+	variable gammaR=w[1]
+	make/Free/N=1 pWave
+	pWave[0] = alfa
+	variable value
+	//value = Integrate1D(IR3T_JanCalcOfRInt, xval, 0.9999 , 1, 50, pWave)	 //Formula 2 integral from g(r) to 1, as in SAXSmorph paper.
+	//note that QUINTANILLA has this intergated from 0 to g(r) in Formula 2, but also has alfaValue of oposite sign. 
+	value = Integrate1D(IR3T_JanCalcOfRInt, 0, xval , 1, 50, pWave)	 			//Formula 2 integral from g(r) to 1, as in QUINTANILLA paper.
+	value/=2*pi																					//divide by 2pi, same as Formula 2
+	variable result
+	result = abs(gammaR - value)			//and this creates the minimum. Value when this is =0 is g(r) value, note the difference from SAXSMorph definitions here... 
+	return result
+End
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+//this is code I think we should have here:
+threadsafe Function IR3T_JanCalcOfRInt(pWave, xvalue)		//this is integral inside Formula 2 in SAXSMorph paper.  
+		variable  xvalue
+		wave pWave
+		variable part1, part2
+		variable alfa = pWave[0]
+		// we are using Formula 2 internals of the Integration...
+		part1 = exp(-1*alfa*alfa/(1+xvalue))
+		part2 = sqrt(1 - xvalue*xvalue)
+		return part1/part2
+end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
-//					here is calculation of gR using SAXSMorph code.
+///*************************************************************************************************************************************
+//	here is calculation of g(R) using SAXSMorph code.
 // calcGOfR is actually done above by Igor wave calling line..., all it does is iterates over all points. 
-//	this is line which evaluates for each combination of porosity value, alfa, and GammaAR
+//	this is line which evaluates for each combination of porosity value, alfa, and DebyeAutoCorFnct
 Function IR3T_SMcalcgr(alfa, porosity, gammaR)
 		variable alfa, porosity, gammaR
 		//input values are input numbers for each g(r) value	
 		//this function is returning testx = g(r) for which called IR3T_SMgr_fun is 0  
-		//thsi is needed for Optimize, no science here... 
 		make/Free/N=3 pWave
 		pWave[0] = alfa
 		pWave[1] = porosity
@@ -990,10 +1101,8 @@ Function IR3T_SMcalcgr(alfa, porosity, gammaR)
 		variable result = V_MinLoc		//this is x for which IR3T_SMOptimizeFnct returns 0.
 		//This is completely baffling line from SAXSMorph, why is it here??? 
 		result = result * sqrt(2.0 - result * result)
-		//if(numtype(result)!=0)
-		//	debugger
-		//endif
 		return result		//hence, this is g(r)
+		// Surprise - 02-24-2018, Tested against QUintanilla method using formulas from both Quyintanilla and SAXSMorph papers and has same results
 end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
@@ -1001,32 +1110,17 @@ end
 Function IR3T_SMOptimizeFnct(w,x)
 	Wave w
 	Variable x
-	variable alfa=w[0]
 	variable porosity=w[1]
 	variable gammaR=w[2]
-	//we could rewrite the internal functions and pass waves, but this seems fast enough and is more readable... 
-	variable result = IR3T_SMgr_fun(x, alfa, porosity, gammaR)
-	return result
-End
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
-//OK, back to SAXSMorph code. This is the function which is being minimized. 
-//Basically, looks like we are working on Formula 2 in SAXSMorph paper
-//
-function IR3T_SMgr_fun(xval, alfa, porosity, gammaR)
-	variable xval, alfa, porosity, gammaR
-	
 	make/Free/N=1 pWave
-	pWave[0] = alfa
+	pWave[0] = w[0]
 	variable value
-	//thsi calculates the integral in Formula 2 of SAXSMorph paper. Presumably, if the IR3T_SMCalcOfRInt was what is in the paper or manual. 
-	value = Integrate1D(IR3T_SMCalcOfRInt, xval, 1 , 1, 50, pWave)		//SAXSMorph code
-	//value = Integrate1D(IR3T_JanCalcOfRInt, xval, 0.999 , 1, 10, pWave)			//Jans code, but returns SAME AS ORIGINAL AREAXY/FINDLEVEL CODE... 
-	value/=2*pi		//divide by 2pi, same as Formula 2
-	variable result
-	result = abs(porosity - gammaR - value)			//and this creates the minimum. Value when this is =0 is g(r) value
-	return result
-end
+	//this calculates the integral in Formula 2 of SAXSMorph paper. Presumably, if the IR3T_SMCalcOfRInt was what is in the paper or manual. 
+	// Surprise - 02-24-2018, Tested against QUintanilla method using formulas from both Quyintanilla and SAXSMorph papers and has same results
+	value = Integrate1D(IR3T_SMCalcOfRInt, x, 1 , 1, 50, pWave)						//SAXSMorph code
+	value/=2*pi														//divide by 2pi, same as Formula 2
+	return abs(porosity - gammaR - value)			//and this creates the minimum. Value when this is =0 is g(r) value
+End
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 
@@ -1040,61 +1134,47 @@ Function IR3T_SMCalcOfRInt(pWave, xvalue)		//this is integral inside Formula 2 i
 		part1 = 2*exp(-1*alfa*alfa/denom)
 		part2 = sqrt(2 - xvalue*xvalue)
 		//But this is different formula. So how did it get here???? 
+		// Surprise - 02-24-2018, Tested against QUintanilla method using formulas from both Quyintanilla and SAXSMorph papers and has same results
 		return part1/part2
 end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-//this is code I think we should have here:
-Function IR3T_JanCalcOfRInt(pWave, xvalue)		//this is integral inside Formula 2 in SAXSMorph paper, principally. But teh code makes no sense to me. 
-		variable  xvalue
-		wave pWave
-		variable denom, part1, part2
-		variable alfa = pWave[0]
-		//now, principally we should be looking at Formula 2 internals of the Integration...
-		denom = (1+xvalue)
-		part1 = exp(-1*alfa*alfa/denom)
-		part2 = sqrt(1 - xvalue*xvalue)
-		//But this is different formula. So how did it get here???? 
-		return part1/part2
-end
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
-//note, thsi gets same g(r) profile as we get from monkey calculation below:
+//note, this gets same g(r) profile as we get from monkey calculation below:
 //this does not produce same results as SAXSSMorph... 
 ////threadsafe
-threadsafe Function IR3T_Formula2Main(gammaAR, GamAlfa0, Alfa)		//this is basically Java code calcgr...
-	variable gammaAR, GamAlfa0, Alfa
-	Make/N=10000/Free/D ExpWave, ExpWaveSum			//in Java it has 10000 points, but with Igor smart interpolation, may be not needed??? Check. 
-	SetScale/I x 0,1,"", ExpWave, ExpWaveSum
-	ExpWave = IR3T_Formula2Exp(x,Alfa)
-	//ExpWaveSum = area(ExpWave,x,pnt2x(ExpWave, numpnts(ExpWave)-2))
-	ExpWaveSum = area(ExpWave,x,0.9998)
-	variable LookValFor=2*pi*(GamAlfa0 - gammaAR)
-	FindLevel/Q  ExpWaveSum, LookValFor
-	if(V_Flag==0)
-		return V_levelX
-	else
-		return 0
-	endif
-end
-
-threadsafe Function IR3T_Formula2Exp(tval,Alfa)
-	variable tval,Alfa
-	
-	return exp(-1*Alfa^2/(1+tval))/(sqrt(1-tval^2))
-	
-end
+//threadsafe Function IR3T_Formula2Main(DebyeAutoCorFnct, GamAlfa0, Alfa)		//this is basically Java code calcgr...
+//	variable DebyeAutoCorFnct, GamAlfa0, Alfa
+//	Make/N=10000/Free/D ExpWave, ExpWaveSum			//in Java it has 10000 points, but with Igor smart interpolation, may be not needed??? Check. 
+//	SetScale/I x 0,1,"", ExpWave, ExpWaveSum
+//	ExpWave = IR3T_Formula2Exp(x,Alfa)
+//	//ExpWaveSum = area(ExpWave,x,pnt2x(ExpWave, numpnts(ExpWave)-2))
+//	ExpWaveSum = area(ExpWave,x,0.9998)
+//	variable LookValFor=2*pi*(GamAlfa0 - DebyeAutoCorFnct)
+//	FindLevel/Q  ExpWaveSum, LookValFor
+//	if(V_Flag==0)
+//		return V_levelX
+//	else
+//		return 0
+//	endif
+//end
+//
+//threadsafe Function IR3T_Formula2Exp(tval,Alfa)
+//	variable tval,Alfa
+//	
+//	return exp(-1*Alfa^2/(1+tval))/(sqrt(1-tval^2))
+//	
+//end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
+//
 threadsafe Function IR3T_Formula4_SpectralFnct(Kvector,gR,Radii)	
 		variable Kvector		//this is Q value, or here called k
 		wave gR,Radii
 		//this sums for each k vector over all r and g(r) using paper formula 4
 		Make/Free/N=(numpnts(Radii))/D tempVals
-		tempVals = (4*pi*radii[p]*radii[p]*gR[p]*IR3T_ReturnSQRQR(Kvector, Radii[p])) //				Besselj(0,(Kvector*Radii[p]))
+		tempVals = (4*pi*radii[p]*radii[p]*gR[p]*sinc(Kvector*Radii[p])) //				Besselj(0,(Kvector*Radii[p]))
 		return abs(areaXY(Radii, tempVals))
 end
 ///*************************************************************************************************************************************
@@ -1136,13 +1216,13 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 	xmax = BoxResolution 		//num points per side of the box
 	ymax = BoxResolution
 	zmax = BoxResolution
-	Make/Free/N=(xmax,3) rmat		//this assumes xmax is at leats largest, if not all same??? 
+	Make/Free/N=(xmax,3) rmat		//this assumes xmax is at least largest, if not all same??? 
 	//this is radius matrix, these are dimensions to match with k-vectors randomly generated...
-	// BoxSideSize is real world dimension in Angstroms? 
+	// BoxSideSize is real world dimension in Angstroms 
 	// 
-	rmat[][0] = p*10*BoxSideSize/xmax
-	rmat[][1] = p*10*BoxSideSize/ymax
-	rmat[][2] = p*10*BoxSideSize/zmax
+	rmat[][0] = p*BoxSideSize/BoxResolution
+	rmat[][1] = p*BoxSideSize/BoxResolution
+	rmat[][2] = p*BoxSideSize/BoxResolution
 		//    int xmax = this.BoxResolution;
 		//    int ymax = this.BoxResolution;
 		//    int zmax = this.BoxResolution;
@@ -1152,7 +1232,9 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 		//      rmat[i][1] = (i * 10.0D * this.BoxSideSize / ymax);
 		//      rmat[i][2] = (i * 10.0D * this.BoxSideSize / zmax);
 		//    }
-   
+	//in the Java code there is 10.0D* this.BoxSideSize, which is confusing what is it doing...
+	//looks like conversion from A to nm, but the manual indicates it is using A or nm based on Q units and that seems logical. No conversion is done as far as I can say.  	
+
    make/Free/N=3 kvec
    variable kvecnorm = 0.0
    make/Free/N=(IntgNumber,3) Kn
@@ -1161,49 +1243,50 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 	fkx = Kvalues
 	fky = SpectralFk
 	
-	print "Calculating K values" 		
+	print "Calculating K values" 	
+	//phin[i] = (2*pi * abs(enoise(1)))	
+	multithread phin = IR3T_GeneratePhi()
+
 	For(i=0;i<IntgNumber;i+=1)
-		do		//thsi fills randk and randfk with random values in proper ranges
+		do		//this fills randk and randfk with random values in proper ranges
 			randk = mink + (maxk - mink) * abs(enoise(1))		// in Igor enoise(1) returns -1 to 1, in abs we should have suitable random number between 0 and 1. 
          randfk = minsf + specrange * abs(enoise(1))
 			//calcfk = interpolate(fkx, fky, randk);
-         calcfk = interp(randk, fkx, fky)				//thsi looks up for random k value which the model has in spectral function
+         calcfk = interp(randk, fkx, fky)				//this looks up for random k value which the model has in spectral function
 			//} while (randfk > calcfk);
-		while(randfk > calcfk)							//accept only solutions where randfk is less than model spectreal function... 
+		while(randfk > calcfk)							//accept only solutions where randfk is less than model spectral function... 
       kamp = randk     
-		//      kvec[0] = (1.0D - 2.0D * Math.random());
-		//      kvec[1] = (1.0D - 2.0D * Math.random());
-		//      kvec[2] = (1.0D - 2.0D * Math.random());
-		kvec[0] = enoise(1)		//same as above... 
+		kvec[0] = enoise(1)		//same as above... , these are set to +/-1 randomly. 
 		kvec[1] = enoise(1)
 		kvec[2] = enoise(1)
       //kvecnorm = Math.sqrt(kvec[0] * kvec[0] + kvec[1] * kvec[1] + kvec[2] * kvec[2]);
       kvecnorm = sqrt(kvec[0] * kvec[0] + kvec[1] * kvec[1] + kvec[2] * kvec[2])
       //phin[i] = (6.283185307179586D * Math.random());
-      phin[i] = (6.283185307179586 * abs(enoise(1)))
-		//      Kn[i][0] = (kvec[0] * kamp / kvecnorm);
-		//      Kn[i][1] = (kvec[1] * kamp / kvecnorm);
-		//      Kn[i][2] = (kvec[2] * kamp / kvecnorm);
       Kn[i][0] = (kvec[0] * kamp / kvecnorm)
       Kn[i][1] = (kvec[1] * kamp / kvecnorm)
       Kn[i][2] = (kvec[2] * kamp / kvecnorm)
 	endfor
 		
 							//      this.TwoPhaseSolidMatrix = new MorphVoxel[xmax][ymax][zmax];
-		make/O/N=(xmax,ymax,zmax)/U/B TwoPhaseSolidMatrix    				// TwoPhaseSolidMatrix[p][q][r] is solid (1) or Void (0)
+	make/O/N=(xmax,ymax,zmax)/U/B TwoPhaseSolidMatrix    				// TwoPhaseSolidMatrix[p][q][r] is solid (1) or Void (0)
 							//need to do something... 
-							//this will be fun, MorphVOxel is structure with parameters such as solid/void, belongs to group, and position... 
+							//this will be fun, MorphVoxel is structure with parameters such as solid/void, belongs to group, and position... 
 							//this creates matrix with X x Y x Z positions for each we can write MorphVoxel 
 
-		print "Calculating Gauss random fields, this is the slowest part of the code!" 		
-		multithread TwoPhaseSolidMatrix = IR3T_SumInMatrix(Kn,rmat[p][0],rmat[q][1], rmat[r][2], phin, alpha)	
+	print "Calculating Gauss random fields, this is the slowest part of the code!" 		
+	multithread TwoPhaseSolidMatrix = IR3T_GenerateGRFUsingCosSaxsMorph(Kn,rmat[p][0],rmat[q][1], rmat[r][2], phin, alpha)	
 
 end
 
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
-threadsafe Function IR3T_SumInMatrix(Kn,rmat0,rmat1, rmat2, phin, alpha)		//rmat[i][0], rmat1 = rmat[j][1], rmat[k][2]
+Threadsafe Function IR3T_GeneratePhi()
+	return (2*pi * abs(enoise(1)))
+end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+//
+threadsafe Function IR3T_GenerateGRFUsingCosSaxsMorph(Kn,rmat0,rmat1, rmat2, phin, alpha)		//rmat[i][0], rmat1 = rmat[j][1], rmat[k][2]
 		wave Kn,phin
 		variable alpha, rmat0,rmat1, rmat2
 		
@@ -1234,12 +1317,20 @@ threadsafe Function IR3T_SumInMatrix(Kn,rmat0,rmat1, rmat2, phin, alpha)		//rmat
 			//		endfor
 			//	endfor
 		variable sumtemp=0
-		Make/Free/N=(10000) tempWv
-		tempWv = cos(Kn[p][0] * rmat0 + Kn[p][1] * rmat1  + Kn[p][2] * rmat2 + phin[p])
+		//Old method
+		//		Make/Free/N=(10000) tempWv
+		//		tempWv = cos(Kn[p][0] * rmat0 + Kn[p][1] * rmat1  + Kn[p][2] * rmat2 + phin[p])
+		//MatrixOp solution... this seems about 10x faster... 
+		Make/Free/N=(3) tmpRwv1D
+		tmpRwv1D = {rmat0,rmat1,rmat2}
+		MatrixOp/Free tempWv = cos((Kn x tmpRwv1D) + phin)
+		variable NumPntsK=DimSize(Kn, 0 )
+		//common... 
 		sumtemp = sum(tempWv)
-		variable tval = sqrt(2) * sumtemp/100
+		//normalize, see paper in Manual
+		variable tval = sqrt(2/NumPntsK) * sumtemp
      if (tval < alpha)				//solid
-			return 255
+			return 1
      else								//void... 
 			return 0
 		endif
@@ -1272,7 +1363,7 @@ Window TwoPhaseSolidGizmo() : GizmoPlot
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineWidthType,0}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ fillMode,2}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineWidth,1}
-	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ isoValue,128}
+	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ isoValue,0.5}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ frontColor,1,0,0,1}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ backColor,0,0,1,1}
 	ModifyGizmo modifyObject=TwoPhaseSolidSurface,objectType=Surface,property={calcNormals,1}

@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.11
+#pragma version=1.12
 #include <Multi-peak fitting 2.0>
 
 //local configurations
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.07		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 fix IR3W_PDF4AppendLinesToGraph for when user scales vertical axis with minimum being negative value
 //1.11 Added Table of parameters which contains all parameters for all sampels. Bit useless for now, but future plans... 
 //		Fixed bug which prevented FOlder Match string from working. 
 //1.10 fixed missing uncertainties for fitted parameters recorded inmy tables. 
@@ -3191,6 +3192,7 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	GetAxis /W=IR3W_WAXSMainGraph /Q left
 	OldMinInt = V_min
 	OldIntMax = V_max
+	V_min = (V_min>0) ? V_min : 0					//fix fro when user scales vertical axis, so its minimum is < 0
 	TheCardNew[][6] = V_min + TheCard[p][6] * (V_Max-V_min)/MaxInt
 	AppendToGraph/W=IR3W_WAXSMainGraph TheCardNew[][6] vs TheCardNew[][4]
 	//DoUpdate  /W=IR3W_WAXSMainGraph 

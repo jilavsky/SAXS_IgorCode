@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.17
+#pragma version = 2.18
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -36,6 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.18 modified IN2G_PanelResizePanelSize(s) to move panels in the view if they are due to change of resolution left outside of the view. This may not work well on dual monitor systems, though... 
 //2.17 added create ColorScale for USAXS graphs. 
 //2.16 Fix IN2G_PanelResizePanelSize to return 0 when handled, seems needed to prevent GUI problems. 
 //2.15 minor modification of some functions to speed it up a bit... Added long names warning. 
@@ -46,7 +47,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //		modified IN2G_LegendTopGrphFldr to have max number of items in legend to keep the list under controls. Most code uses 15 at this time. And control if use of folder, wave, or both names. 
 //		modified IN2G_ColorTopGrphRainbow to have basic colors for few waves (up to 4). Then colorization as expected.   
 //2.10 Modifed startup panel controls to better handle rescaling panels on startup. 
-//2.09 fixed errro when both Nika and Irena check for update at the smae time and MeesageFromAuthor is already opened. 
+//2.09 fixed errror when both Nika and Irena check for update at the smae time and MeesageFromAuthor is already opened. 
 //2.08 Nika removed DoubleClickConverts=root:Packages:Convert2Dto1D:DoubleClickConverts as it is not needed anymore. 
 //2.07 ManualVersionNumber modifications for beta versions and release versions. 
 //2.06 added IN2G_GetAndDisplayUpdateMessage()
@@ -1631,13 +1632,18 @@ Function IN2G_PanelResizePanelSize(s)
 		variable moveLeft, MoveRight, MoveTop, moveBottom 			//these need to be in points!! What a mess...
 		//variable moveConvFac=PanelResolution(s.winName)/ScreenResolution
 		variable OriginalResolution=NumberByKey("Resolution", OrigInfo, ":", ";")
+		//SCREEN1:DEPTH=32,RECT=0,0,3840
+		string ScreenInfo=StringByKey("SCREEN1", IgorInfo(0)  , ":", ";")+","
+		ScreenInfo = RemoveListItem(0, ScreenInfo, ",")
+		variable ScreenWidth=str2num(stringFromList(2,StringByKey("RECT", ScreenInfo, "=", ";"),","))
+		variable ScreenHeight=str2num(stringFromList(3,StringByKey("RECT", ScreenInfo, "=", ";"),","))
 		if(numtype(OriginalResolution)!=0)
 			if(StringMatch(IgorInfo(2), "Windows" )) 
 				OriginalResolution = 96
 			else	//Windows 
 				OriginalResolution = 72
 			endif
-		endif
+		endif 
 		variable moveConvFac=screenResolution/OriginalResolution
 		OriginalWidth = NumberByKey("PanelWidth", OrigInfo, ":", ";")		//pixels
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
@@ -1648,8 +1654,6 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop  = top//*moveConvFac
 			MoveRight = (left+OriginalWidth)//*moveConvFac
 			moveBottom = (top+OriginalHeight)//*moveConvFac
-			//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1*moveConvFac
 			verScale = 1*moveConvFac
 		elseif(CurWidth<OriginalWidth && CurHeight>=OriginalHeight)		
@@ -1658,8 +1662,6 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop  = top//*moveConvFac
 			MoveRight = (left+OriginalWidth)//*moveConvFac
 			moveBottom = (top+CurHeight)//*moveConvFac
-			//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			horScale = 1*moveConvFac
 			verScale = CurHeight / (OriginalHeight)	*moveConvFac
 		elseif(CurWidth>=OriginalWidth && CurHeight<OriginalHeight)
@@ -1668,8 +1670,6 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop = top//*moveConvFac
 			MoveRight = (left+CurWidth)//*moveConvFac
 			moveBottom = (top+OriginalHeight)//*moveConvFac
-			//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = 1 *moveConvFac
 			horScale = curWidth/OriginalWidth*moveConvFac
 		else
@@ -1677,11 +1677,20 @@ Function IN2G_PanelResizePanelSize(s)
 			MoveTop = top//*moveConvFac
 			MoveRight = (right)//*moveConvFac
 			moveBottom = (bottom)//*moveConvFac
-			//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 			verScale = CurHeight /OriginalHeight *moveConvFac
 			horScale = curWidth/OriginalWidth *moveConvFac
 		endif
+		//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
+		//	print "Moved to "+num2str(moveLeft) +", "+num2str(MoveTop) +", "+num2str(MoveRight) +", "+num2str(moveBottom)
 		MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
+		//make sure the window is in the existing field fo view if user changed drastically scrfeen resolution... 
+		if(MoveLeft>0.8*ScreenWidth || MoveTop>0.8*ScreenHeight)
+			moveLeft = 0.8*ScreenWidth
+			MoveTop = 0.8*ScreenHeight
+			MoveWindow/W=$(s.winName) moveLeft, MoveTop, -1, -1
+
+		endif		
+		
 		variable scale= min(horScale, verScale )
 		string FontName = IN2G_LkUpDfltStr("DefaultFontType")  //returns font with ' in the beggining and end as needed for Graph formating
 		FontName = ReplaceString("'", FontName, "") 				//remove the thing....
@@ -3997,6 +4006,9 @@ Function IN2G_CreateItem(TheSwitch,NewName)
 	string TheSwitch, NewName
 //this function creates strings or variables with the name passed
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	if(strlen(NewName)<1)
+		return 0
+	endif
 	if (cmpstr(TheSwitch,"string")==0)
 		SVAR/Z test=$NewName
 		if (!SVAR_Exists(test))

@@ -1,7 +1,7 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
 #pragma IgorVersion=7.05 	//requires Igor version 7.00 or higher
-#pragma version=2.21
+#pragma version=2.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.22 added 3DSupportFunctions, February 2019
 //2.21 Added 3DModels, December/January 2018
 //2.20 removed files December/January 2018
 //2.19 December 2018 release. 
@@ -71,6 +72,7 @@
 #include ":IR2_StructureFactors", version>=1.07
 #include ":IR2_PDDF", version>=1.13
 #include ":IR3_3DModels", version>=1.00
+#include ":IR3_3DSupportFunctions", version>=1.00
 #include ":IR3_3DTwoPhaseSolid", version>=1.00
 #include ":IR3_GuinierPorodModel", version>=1.09
 #include ":IR3_MergingData", version>=1.19

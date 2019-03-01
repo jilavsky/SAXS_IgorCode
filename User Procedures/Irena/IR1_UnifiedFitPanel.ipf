@@ -2163,8 +2163,8 @@ Function IR1A_FixLimitsInPanel(VarName)
 			testVariableLL = 1
 		endif
 		testVariableHL = 1.4 * testVariable
-		if(testVariableHL>5)
-			testVariableHL = 5	
+		if(testVariableHL>5.5)
+			testVariableHL = 5.5	
 		endif
 		SetVariable $(VarName),win=IR1A_ControlPanel,limits={0,5,0.05*IR1A_FixZeroesForLimits(testVariable)}		
 	elseif(stringmatch(VarName,"*Pack"))

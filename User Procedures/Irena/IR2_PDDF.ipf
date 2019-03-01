@@ -2686,7 +2686,7 @@ static  Function IR2Pr_CalculateChisquared()			//calculates Chisquared differenc
 	IN2G_AppendorReplaceWaveNote("NormalizedResidual","Units"," ")
 	
 	
-	MatrixMultiply  G_matrix, M_x				//generates scattering intesity from current result (M_x - before correction for contrast and diameter)
+	MatrixMultiply  G_matrix, M_x				//generates scattering intensity from current result (M_x - before correction for contrast and diameter)
 	Wave M_product	
 	Redimension/D/N=(-1,0) M_product			//again make the matrix with one dimension 0 into regular wave
 

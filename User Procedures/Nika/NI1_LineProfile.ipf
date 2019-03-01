@@ -1924,7 +1924,7 @@ Function NI1A_LineProf_CreateLP()
 		constVal = 2*pi
 		LineProfileDspacing = constVal / LineProfileQvalues
 		LineProfileDspacingWidth[0,numpnts(LineProfileDspacingWidth)-2]  = LineProfileDspacing [p] - LineProfileDspacing[p+1]
-		LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-1]=LineProfileDspacingWidth[numpnts(DSpacingWidth)-2]
+		LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-1]=LineProfileDspacingWidth[numpnts(LineProfileDspacingWidth)-2]
 	
 		LineProfileDistacneInmm =  SampleToCCDDistance*tan(LineProfileTwoTheta*pi/180)
 		LineProfileDistacneInmmWidth[0,numpnts(LineProfileDistacneInmmWidth)-2]  = LineProfileDistacneInmm[p+1] - LineProfileDistacneInmm[p]

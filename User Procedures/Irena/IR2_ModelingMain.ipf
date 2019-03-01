@@ -1,5 +1,5 @@
-#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=1.30
+#pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.31
 Constant IR2LversionNumber = 1.24
 
 //*************************************************************************\
@@ -8,6 +8,8 @@ Constant IR2LversionNumber = 1.24
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.31 added ability to save individual pop data when running from Scripting tool. COnverted to rtGlobals=3, which may cause some issues... 
 //1.30 Combined together with IR2L_NLSQFfunctions
 //1.25 mofied min number of Num points to 6, G matrix breask when less... 
 //1.24 added Rg for Size distributions and this requirtes reinitialization
@@ -1892,6 +1894,9 @@ Function IR2L_Fitting(SkipDialogs)
 	endfor
 	Duplicate/O IntWvForFit, MaskWaveGenOpt
 	MaskWaveGenOpt=1
+	variable/g UserCanceled
+	NVAR UserCanceled=root:Packages:IR2L_NLSQF:UserCanceled
+	UserCanceled = 0
 
 	if(NoFittingLimits && UseGeneticOptimization)
 			Abort "Genetic optimization cannot be used without fitting limits!"
@@ -1900,13 +1905,12 @@ Function IR2L_Fitting(SkipDialogs)
 	if(!SkipDialogs)
 		IR2L_CheckFittingParamsFnct()
 		PauseForUser IR2L_CheckFittingParams
-
-		NVAR UserCanceled=root:Packages:IR2L_NLSQF:UserCanceled
 		if (UserCanceled)
 			setDataFolder OldDf
 			abort
 		endif
 	endif
+
 	//add more constraints, is user added them or if thy already are in AdditionalFittingConstraints
 	if(strlen(AdditionalFittingConstraints)>3)
 		AdditionalFittingConstraints = RemoveEnding(AdditionalFittingConstraints , ";")+";"
@@ -1936,7 +1940,7 @@ Function IR2L_Fitting(SkipDialogs)
 			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
 		else
-			FuncFit /N=0/W=0/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D
+			FuncFit /N=0/W=0/Q/L=(numpnts(IntWvForFit)) IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D
 		endif
 	else		//old code, use fitting limits
 		if(UseGeneticOptimization)
@@ -1946,7 +1950,7 @@ Function IR2L_Fitting(SkipDialogs)
 			Abort  "Genetic Optimization xop NOT installed. Install xop support and then try again"
 #endif
 		else
-			FuncFit /N=0/W=0/Q IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
+			FuncFit /N=0/W=0/Q/L=(numpnts(IntWvForFit)) IR2L_FitFunction W_coef IntWvForFit /X=QWvForFit /W=EWvForFit /I=1/E=E_wave /D /C=T_Constraints 
 		endif
 	endif
 	variable LimitsReached
@@ -2016,13 +2020,13 @@ end
 
 Function IR2L_CheckFittingParamsFnct() 
 
-	KillWIndow/Z IR2L_CheckFittingParams
+	//KillWIndow/Z IR2L_CheckFittingParams
  	//PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1/W=(400,140,1000,600) as "Check fitting parameters"
 	Dowindow/C IR2L_CheckFittingParams
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65280)
-	DrawText 39,28,"Modeling II Fit Params & Limits"
+	DrawText 39,28,"Modeling Params & Limits"
 	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
 	if(UseGeneticOptimization)
 		SetDrawEnv fstyle= 1,fsize= 14
@@ -2059,28 +2063,17 @@ Function IR2L_CheckFittingParamsFnct()
 		SetDimLabel 0,i,$(CoefNames[i]),Gen_Constraints
 	endfor
 	if(UseGeneticOptimization)
-		//Edit/W=(0.05,0.25,0.95,0.865)/HOST=#  ParamNamesK, Gen_Constraints.ld,W_coef
 		Edit/W=(0.05,0.25,0.95,0.865)/HOST=#  Gen_Constraints.ld,W_coef
-//		ModifyTable format(Point)=1,width(Point)=0, width(Gen_Constraints)=110
-//		ModifyTable alignment(W_coef)=1,sigDigits(W_coef)=4,title(W_coef)="Curent value"
-//		ModifyTable alignment(Gen_Constraints)=1,sigDigits(Gen_Constraints)=4,title(Gen_Constraints)="Limits"
-//		ModifyTable statsArea=85
 		ModifyTable format(Point)=1,width(Point)=0,alignment(W_coef.y)=1,sigDigits(W_coef.y)=4
-		//title(ParamNamesK)="Constr.",width(ParamNamesK)=35
 		ModifyTable width(W_coef.y)=90,title(W_coef.y)="Start value",width(Gen_Constraints.l)=142
-//		ModifyTable title[1]="Min"
-//		ModifyTable title[2]="Max"
 		ModifyTable alignment(Gen_Constraints.d)=1,sigDigits(Gen_Constraints.d)=4,width(Gen_Constraints.d)=72
 		ModifyTable title(Gen_Constraints.d)="Limits"
-//		ModifyTable statsArea=85
-//		ModifyTable statsArea=20
 	else
 		Edit/W=(0.03,0.18,0.98,0.865)/HOST=#  ParamNamesK, CoefNames, ParamNames, PopNumber, W_coef
 		ModifyTable format(Point)=1,width(Point)=0,width(CoefNames)=144,title(CoefNames)="Internal name", title(ParamNamesK)="Constr.",width(ParamNamesK)=40
 		ModifyTable width(W_coef.y)=90,title(W_coef.y)="Start value", alignment(ParamNamesK)=1, alignment=1
 		ModifyTable width(PopNumber)=25,title(PopNumber)="Pop", alignment(PopNumber)=1
 		ModifyTable width(ParamNames)=100,title(ParamNames)="Name"
-//		ModifyTable statsArea=85
 	endif
 	SetDataFolder fldrSav0
 	RenameWindow #,T0
@@ -2093,14 +2086,15 @@ End
 //*****************************************************************************************************************
 Function IR2L_CheckFitPrmsButtonProc(ctrlName) : ButtonControl
 	String ctrlName
+	NVAR UserCanceled=root:Packages:IR2L_NLSQF:UserCanceled
 	
 	if(stringmatch(ctrlName,"*CancelBtn*"))
-		variable/g root:Packages:IR2L_NLSQF:UserCanceled=1
+		UserCanceled=1
 		KillWIndow/Z IR2L_CheckFittingParams
 	endif
 
 	if(stringmatch(ctrlName,"*ContinueBtn*"))
-		variable/g root:Packages:IR2L_NLSQF:UserCanceled=0
+		UserCanceled=0
 		 KillWIndow/Z IR2L_CheckFittingParams
 	endif
 
@@ -2252,8 +2246,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_SaveResultsInDataFolder(SkipDialogs)
-	variable SkipDialogs
+Function IR2L_SaveResultsInDataFolder(SkipDialogs, ExportSeparatePopData)
+	variable SkipDialogs, ExportSeparatePopData
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:IR2L_NLSQF
@@ -2469,12 +2463,12 @@ Function IR2L_SaveResultsInDataFolder(SkipDialogs)
 		for(i=1;i<11;i+=1)
 			NVAR UseSet=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(i))
 			if(UseSet)
-				IR2L_ReturnOneDataSetToFolder(i, ListOfParameters, SkipDialogs)
+				IR2L_ReturnOneDataSetToFolder(i, ListOfParameters, SkipDialogs, ExportSeparatePopData)
 			endif
 		endfor
 	else
 		//only one data set to be returned... the first one
-		IR2L_ReturnOneDataSetToFolder(1, ListOfParameters, SkipDialogs)
+		IR2L_ReturnOneDataSetToFolder(1, ListOfParameters, SkipDialogs, ExportSeparatePopData)
 	endif
 	
 
@@ -2486,8 +2480,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
-	variable whichDataSet, SkipDialogs
+Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, ExportSeparatePopData)
+	variable whichDataSet, SkipDialogs, ExportSeparatePopData
 	string WaveNoteText
 
 	string oldDf=GetDataFolder(1)
@@ -2513,6 +2507,9 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 	string UsersComment, ExportSeparateDistributions
 	UsersComment="Result from LSQF2 Modeling "+date()+"  "+time()
 	ExportSeparateDistributions="No"
+	if(ExportSeparatePopData)
+		ExportSeparateDistributions="Yes"
+	endif
 	Prompt UsersComment, "Modify comment to be saved with these results"
 	Prompt ExportSeparateDistributions, "Export separately populations data", popup, "No;Yes;"
 	if(!SkipDialogs)
@@ -2521,7 +2518,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs)
 			abort
 		endif
 	endif
-	string DataFolderNameL="Model II "+Secs2Date(DateTime,-2)+" "+Secs2Time(DateTime,3)
+	string DataFolderNameL="Modeling "+Secs2Date(DateTime,-2)+" "+Secs2Time(DateTime,3)
 	if(useModelData)	//these are model data, so the Folder is really "dirty" and not meaningful
 		Prompt  DataFolderNameL, "Folder to save data to, it will be created if it is needed"
 		DoPrompt "Input name for folder to save the model data to, the name will be cleaned up as needed", DataFolderNameL

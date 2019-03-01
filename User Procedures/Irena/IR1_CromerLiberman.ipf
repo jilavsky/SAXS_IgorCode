@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.04
+#pragma version=2.05
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.05 fixed some values for Be and Mo which were found wrong by John Tishler. 
 //2.04  removed unused functions
 //2.03 tried converting to rtGlobals=3, but on run there is runtime error on Cromer_Get_fp. Index out od bounds. 
 //2.02 Fixed comments on how to use sicne they were from independenrt CremoerLiberman.ipf while this is part of Irena and all non-static function start with IR1_
@@ -1091,7 +1092,7 @@ static Function Initialize_f0()
 	make/N=4/O Be_a, Be_b
 	variable/g Be_c
 	Be_a={2.22744, 1.55249, 1.40060, 0.58290}
-	Be_b={42.9165, 1.66379, 100.361}
+	Be_b={0.04965, 42.9165, 1.66379, 100.361}
 	Be_c=-1.76339
 	//********************************
 	//	"BE",   2.22744, 1.55249, 1.40060, 0.58290, 0.04965, 42.9165, 1.66379, 100.361,-1.76339,
@@ -1099,7 +1100,7 @@ static Function Initialize_f0()
 	make/N=4/O 'Be+2_a', 'Be+2_b'
 	variable/g 'Be+2_c'
 	'Be+2_a'={5.69034, 1.19706, 1.03057, 0.20150}
-	'Be+2_b'={0.01336, 0.39000, 1.97441, 4.90642}
+	'Be+2_b'={-0.01336, 0.39000, 1.97441, 4.90642}
 	'Be+2_c'=-6.11950
 	//********************************
 	//	"BE+2", 5.69034, 1.19706, 1.03057, 0.20150,-0.01336, 0.39000, 1.97441, 4.90642,-6.11950,
@@ -1700,7 +1701,7 @@ static Function Initialize_f0()
 	variable/g 'Mo+3_c'
 	'Mo+3_a'={19.6761, 18.0893, 11.7086, 2.50624}
 	'Mo+3_b'={0.95118,-0.00669, 9.61097, 24.0356}
-	'Mo+3_c'=-12.981
+	'Mo+3_c'=-12.9813
 	//********************************
 	//	"MO+3", 19.6761, 18.0893, 11.7086, 2.50624, 0.95118,-0.00669, 9.61097, 24.0356,-12.9813,
 	//********************************     Mo+5

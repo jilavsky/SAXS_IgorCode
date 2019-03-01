@@ -12,6 +12,10 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 ********************************************
+1.82 beta for now
+Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please.  
+
+
 1.81 12/5/2018
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
 Added circles on drawing which are in Q steps. Currently 12 log-spaced circles will be added, red color, with labels of Q values. 

@@ -12,6 +12,10 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 _____________________________________________________________________________________
+1.97 beta for now
+Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please.  
+
+
 1.96  12/5/2018
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 
 Modified "Configure GUI..." menu name and added warning on name shortening. Should generate dialog when names are too long and users are not using Igor 8 with long names enabled. Only once per Igor experiment.  

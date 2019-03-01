@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.50
+#pragma version=1.51
 
 
 constant ChangeFromGaussToSlit=2
@@ -9,6 +9,8 @@ constant ChangeFromGaussToSlit=2
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//1.51 added option to save population results from scripting tool. 
 //1.50 merged togetehr with IR2L_NLSQFCalc.ipf
 //1.42 added Ardell distributions support
 //1.41 added getHelp button calling to www manual
@@ -4921,10 +4923,15 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 		IR2L_unUseAllDataSets()
 	endif
 	if(cmpstr(ctrlName,"SaveInDataFolder")==0)
-		IR2L_SaveResultsInDataFolder(0)
+		IR2L_SaveResultsInDataFolder(0,0)
 	endif
 	if(cmpstr(ctrlName,"SaveInDataFolderSkipDialog")==0)
-		IR2L_SaveResultsInDataFolder(1)
+		NVAR/Z ExportSeparatePopData=root:Packages:Irena:ScriptingTool:ExportSeparatePopData
+		if(NVAR_Exists(ExportSeparatePopData))
+				IR2L_SaveResultsInDataFolder(1,ExportSeparatePopData)
+		else
+				IR2L_SaveResultsInDataFolder(1,0)
+		endif
 	endif
 	if(cmpstr(ctrlName,"SaveInWaves")==0)
 		IR2L_SaveResultsInWaves(0)

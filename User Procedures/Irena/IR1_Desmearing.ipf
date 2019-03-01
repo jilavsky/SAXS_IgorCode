@@ -1374,9 +1374,9 @@ Function IR1B_CopyDataLocally()
 	else
 		Duplicate/O Qvector, OrgdQwave
 		//Duplicate/O Qvector, dQ
-		OrgdQwave[1,numpnts(dQ)-2] = (OrgQwave[p+1] - OrgQwave[p-1])/2
+		OrgdQwave[1,numpnts(OrgdQwave)-2] = (OrgQwave[p+1] - OrgQwave[p-1])/2
 		OrgdQwave[0]= OrgdQwave[1]
-		OrgdQwave[numpnts(dQ)-1] = OrgdQwave[-2]
+		OrgdQwave[numpnts(OrgdQwave)-1] = OrgdQwave[numpnts(OrgdQwave)-2]
 	endif
 	
 	Redimension/D OrgIntWave, OrgQwave, OrgEwave

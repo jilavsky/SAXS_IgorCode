@@ -2,7 +2,9 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.00
 
-Constant IR3AMassFrAggVersionNumber = 1.00
+Constant IR3AMassFrAggVersionNumber 	= 1.00
+Constant IR3TPOVPDBVersionNumber 		= 1.00
+Constant IR3TTwoPhaseVersionNumber 	= 1.00
 
 
 //*************************************************************************\
@@ -44,17 +46,22 @@ Function IR3A_MassFractalAggregate()
 end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-//Function IR3A_TwoPhaseSystem()
-//		//this calls GUI controlling code for two-phase solid, acrding to what SAXSMorph and otherpackages are doing.  
-//		//this function and rest of the code are located in IR3_3DTwoPhaseSolid.ipf
-//end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-Function IR3A_ImportPOVPDB()
+Function IR3P_ImportPOVPDB()
 		//this calls GUI for import of various 3D formats - POV from SAXSMorph and PDB files from GNOM.
 		//this reads POV files: IR3T_ReadPOVFile(dimx,dimy,dimz)
-		//for pdb there is code in SUbversion which needs to be added here... 
-		DoAlert /T="Unfinished" 0, "IR3A_ImportPOVPDB() is not finished yet" 
+		//for pdb there is code in Subversion which needs to be added here... 
+		//DoAlert /T="Unfinished" 0, "IR3A_ImportPOVPDB() is not finished yet" 
+		//this calls POV/PDB import controls. 
+	DoWIndow/K/Z POVPDBPanel
+	DoWIndow/K/Z POV3DData
+
+	IN2G_CheckScreenSize("height",670)
+	IR3P_InitializePOVPDB()
+	IR3P_POVPDBPanel()
+	ING2_AddScrollControl()
+	IR1_UpdatePanelVersionNumber("POVPDBPanel", IR3TPOVPDBVersionNumber,1)
 end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -63,8 +70,6 @@ Function IR3A_Display3DData()
 		//use Gizmo, add some way of selecting data and do some simple tricks... 
 		DoAlert /T="Unfinished" 0, "IR3A_Display3DData() is not finished yet" 
 		//this may be useful: IR3T_Convert3DMatrixToList(My3DVoxelWave, threshVal)
-		
-	
 end
 //******************************************************************************************************************************************************
 //			Utility functions
@@ -72,8 +77,40 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function IR3T_MainCheckVersion()	
+	//this needs to get more of these lines for each tool/panel... 
+	DoWindow TwoPhaseSystems
+	if(V_Flag)
+		if(!IR1_CheckPanelVersionNumber("TwoPhaseSystems", IR3AMassFrAggVersionNumber))
+			DoAlert /T="The Two Phase 3D modeling panel was created by incorrect version of Irena " 1, "Two Phase 3D modeling tool may need to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				DoWindow/K TwoPhaseSystems
+ 				IR3T_TwoPhaseSystem()
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IR3T_InitializeTwoPhaseSys()
+			endif
+		endif
+	endif
+end
 //*****************************************************************************************************************
-
+//*****************************************************************************************************************
+Function IR3P_MainCheckVersion()	
+	//this needs to get more of these lines for each tool/panel... 
+	DoWindow POVPDBPanel
+	if(V_Flag)
+		if(!IR1_CheckPanelVersionNumber("POVPDBPanel", IR3TPOVPDBVersionNumber))
+			DoAlert /T="The POV/PDB panel was created by incorrect version of Irena " 1, "POV/PDB panel may need to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				DoWindow/K POVPDBPanel
+ 				IR3P_ImportPOVPDB()
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IR3P_InitializePOVPDB()
+			endif
+		endif
+	endif 
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
 Function IR3A_MainCheckVersion()	
 	//this needs to get more of these lines for each tool/panel... 
 	DoWindow FractalAggregatePanel
@@ -159,16 +196,24 @@ Function IR3A_FractalAggregatePanel()
 	TitleBox Info1 title="\Zr160Unified results",pos={10,26},frame=0,fstyle=1, fixedSize=1,size={280,18},fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={350,3},pos={16,215},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info2 title="\Zr160Model input parameters",pos={10,230},frame=0,fstyle=1, fixedSize=1,size={280,18},fColor=(0,0,52224)
-	SetVariable AggregateModeling,pos={10,260},size={280,16},noproc,title="Degree of Aggregation \"z\" (250)    ", help={"Size of aggregate, degree of aggregation"}
-	SetVariable AggregateModeling,limits={10,Inf,0},variable= root:Packages:AggregateModeling:DegreeOfAggregation, bodyWidth=80
-	SetVariable StickingProbability,pos={10,285},size={280,16},noproc,title="Sticking probability (10-100)  ", help={"Sticking probablility, 100 for DLA, less for RLA"}
-	SetVariable StickingProbability,limits={10,100,0},variable= root:Packages:AggregateModeling:StickingProbability, bodyWidth=80
-	SetVariable NumberOfTestPaths,pos={10,310},size={280,16},noproc,title="No of test paths (1000-10,000)  ", help={"Test paths for parameetr evaluation. Larger takes long time but is more precise"}
-	SetVariable NumberOfTestPaths,limits={10,100,0},variable= root:Packages:AggregateModeling:NumberOfTestPaths, bodyWidth=80
+	SetVariable AggregateModeling,pos={10,260},size={180,16},noproc,title="Deg. of Agg. \"z\" (250)    ", help={"Size of aggregate, degree of aggregation"}
+	SetVariable AggregateModeling,limits={10,Inf,0},variable= root:Packages:AggregateModeling:DegreeOfAggregation, bodyWidth=50
+	SetVariable StickingProbability,pos={10,285},size={180,16},noproc,title="Sticking prob. (10-100)  ", help={"Sticking probablility, 100 for DLA, less for RLA"}
+	SetVariable StickingProbability,limits={10,100,0},variable= root:Packages:AggregateModeling:StickingProbability, bodyWidth=50
+	SetVariable NumberOfTestPaths,pos={10,310},size={180,16},noproc,title="No of test paths (1k -10k)  ", help={"Test paths for parameetr evaluation. Larger takes long time but is more precise"}
+	SetVariable NumberOfTestPaths,limits={1000,100000,0},variable= root:Packages:AggregateModeling:NumberOfTestPaths, bodyWidth=50
+
+	SetVariable RgPrimary,pos={200,260},size={180,16},noproc,title="Rg of primaries (10)[A]", help={"Size of primary particle from which Aggregate is created"}
+	SetVariable RgPrimary,limits={10,Inf,0},variable= root:Packages:AggregateModeling:RgPrimary, bodyWidth=50
+	PopupMenu AllowedNearDistance,pos={220,290},size={109,20},proc=IR3A_PopMenuProc,title="Sticking method:"
+	PopupMenu AllowedNearDistance,help={"Which neighbors are allowed to stick"}
+	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
+	PopupMenu AllowedNearDistance,mode=1,popvalue=num2str(AllowedNearDistance), value="1;2;3;"
+
 	
 	Button CalculateAll,pos={60,338},size={220,20}, proc=IR3A_PanelButtonProc,title="Grow Aggregate", help={"Perform all steps and generate 3D graph"}
-	SetVariable RValue,pos={10,370},size={120,16},noproc,title="R = ", help={"R value of the aggregate"},limits={10,100,0}, format="%6.2f"
-	SetVariable RValue,variable= root:Packages:AggregateModeling:RValue, bodyWidth=80, disable=0,noedit=1,frame=0
+	SetVariable RValue,pos={10,370},size={120,16},noproc,title="R [A] = ", help={"R value of the aggregate"},limits={10,100,0}, format="%6.2f"
+	SetVariable RValue,variable= root:Packages:AggregateModeling:RxRgPrimaryValue, bodyWidth=80, disable=0,noedit=1,frame=0
 	SetVariable dfValue,pos={10,390},size={120,16},noproc,title="df = ", help={"df value of the aggregate"},limits={10,100,0}, format="%.4f"
 	SetVariable dfValue,variable= root:Packages:AggregateModeling:dfValue, bodyWidth=80, disable=0,noedit=1,frame=0
 	SetVariable pValue,pos={10,410},size={120,16},noproc,title="p = ", help={"p value of the aggregate"},limits={10,100,0}, format="%6.0f"
@@ -361,13 +406,14 @@ static Function IR3A_CalculateAllMassFractAgreg()
 	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
 	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
 	NVAR NumberOfTestPaths=root:Packages:AggregateModeling:NumberOfTestPaths
+	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
 		// Get the starting position of the aggregate
 	Make/n=(DegreeOfAggregation,3)/O MassFractalAggregate=0		// It starts at 0,0,0
 	Make/n=(DegreeOfAggregation,4)/O endpoints							//List of end points
 	make/N=(DegreeOfAggregation)/O Distances 							// Distance between existing particles & new one. Needed by MakeAgg
 	variable StartTicks=ticks
 	print time()+"  Started Run All" 
-	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability)		// Agg is made with DegreeOfAggregation particles
+	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability,AllowedNearDistance)		// Agg is made with DegreeOfAggregation particles
 	IR3A_Ends(MassFractalAggregate)
 	IR3A_Reted(endpoints)
 	IR3A_Path(NumberOfTestPaths)
@@ -386,6 +432,7 @@ static Function IR3A_GrowAggregate()
 
 	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
 	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
+	NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
 	variable DegreeOfAggregationL=DegreeOfAggregation
 	VARIABLE StickingProbabilityL=StickingProbability
 	Prompt DegreeOfAggregationL, "Enter the size of the aggregate (250)"
@@ -396,7 +443,7 @@ static Function IR3A_GrowAggregate()
 	// Get the starting position of the aggregate
 	Make/n=(DegreeOfAggregation,3)/O MassFractalAggregate=0		// It starts at 0,0,0
 	make/N=(DegreeOfAggregation)/O Distances 	// Distance between existing particles & new one. Needed by MakeAgg
-	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability)		// Agg is made with DegreeOfAggregation particles
+	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability,AllowedNearDistance)		// Agg is made with DegreeOfAggregation particles
 	setDataFOlder OldDf
 End
 //******************************************************************************************************************************************************
@@ -411,8 +458,8 @@ static Function IR3A_InitializeMassFractAgg()
 	string/g ListOfVariables
 	string/g ListOfStrings
 	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="DegreeOfAggregation;StickingProbability;NumberOfTestPaths;BoxSize;"
-	ListOfVariables+="pValue;dfValue;RValue;cValue;dminValue;sValue;AttemptValue;TrueStickingProbability;"
+	ListOfVariables="DegreeOfAggregation;StickingProbability;NumberOfTestPaths;BoxSize;RgPrimary;AllowedNearDistance;"
+	ListOfVariables+="pValue;dfValue;RValue;RxRgPrimaryValue;cValue;dminValue;sValue;AttemptValue;TrueStickingProbability;"
 	ListOfVariables+="SelectedLevel;SelectedQlevel;SelectedBlevel;CurrentResults;StoredResults;"
 	ListOfVariables+="BrFract_G2;BrFract_Rg2;BrFract_B2;BrFract_P2;BrFract_G1;BrFract_Rg1;BrFract_B1;BrFract_P1;BrFract_dmin;"
 	ListOfVariables+="BrFract_c;BrFract_z;BrFract_fBr;BrFract_fM;"
@@ -440,6 +487,14 @@ static Function IR3A_InitializeMassFractAgg()
 	NVAR NumberOfTestPaths
 	if(NumberOfTestPaths<1000)
 		NumberOfTestPaths = 2500
+	endif
+	NVAR RgPrimary
+	if(RgPrimary<5)		//Rg of primary partice (voxel size in the model).
+		RgPrimary = 10
+	endif
+	NVAR AllowedNearDistance
+	if(AllowedNearDistance<0.9 || AllowedNearDistance>3.1)
+		AllowedNearDistance = 3				//nearest neighbor distacne squared, for in line neighbors (x,y,z dir) = 1^2, for in plane neighbors is 2 (1^2+1^2), and for in body neighbors is 3  
 	endif
 	NVAR CurrentResults
 	NVAR StoredResults
@@ -530,9 +585,9 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-
-static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability)
-	variable DegreeOfAggregation,StickingProbability
+//static
+ Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability, AllowedNearDistance)
+	variable DegreeOfAggregation,StickingProbability, AllowedNearDistance
 	wave MassFractalAggregate
 	
 	string OldDf=GetDataFolder(1)
@@ -679,7 +734,8 @@ static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingPr
 			//CurSite[][1]=py
 			//CurSite[][2]=pz
 			//MatrixOp/O/Free/NTHR=0 Distances = sumRows(powR((MassFractalAggregate-CurSite),2))
-			Histogram/B={0.5,2.6,2}/R=[0,aggct]/Dest=DistHist Distances			//histogram - bin[0] is from 0.5 - 3.1, max allowed distance^2 is 3
+			variable MaxDistance = 1.05*AllowedNearDistance			//1 - in line nearest neighbor (1 step), 2 is two step nearest neighbor and 3 is nearest neighbor in any direction (3 step nearest neighbor). 
+			Histogram/B={0.5,MaxDistance,2}/R=[0,aggct]/Dest=DistHist Distances			//histogram - bin[0] is from 0.5 - 3.1, max allowed distance^2 is 3
 			con = DistHist[0]																	// this is number of nearest neighbors with distance below sqrt(3)
 			//another method, suggested by WM, but is slower, much slower ...
 			//			CurSite[0][0]=px
@@ -717,7 +773,7 @@ static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingPr
 			//if the particle StickingProbabilitys, add it to the aggregate
 			variable steps=trunc(DegreeOfAggregation/10)
 			steps = max(steps,100)
-			if(stuck==1)
+			if(stuck==1 && IR3A_IsPXYZNOTinList3DWave(MassFractalAggregate,px,py,pz, aggct))	//added here to make sure we do nto accidentally add existing particle. 
 				if(mod(aggct,steps)<1) ///round(DegreeOfAggregation/50))==aggct/round(DegreeOfAggregation/50))
 					Print time()+"  Added "+num2str(aggct)+" particles to the aggregate  "	//takes needless time.. 
 				endif
@@ -735,6 +791,18 @@ static Function IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingPr
 End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+static Function IR3A_IsPXYZNOTinList3DWave(A3DWaveList,px,py,pz, MaxPoints)
+	wave A3DWaveList
+	variable px,py,pz, MaxPoints
+	variable i
+	FOr(i=0;i<MaxPoints;i+=1)
+		if((abs(A3DWaveList[i][0]-px)+abs(A3DWaveList[i][1]-py)+abs(A3DWaveList[i][2]-pz))<0.2)
+			return 0
+		endif
+	endfor
+	return 1
+	
+end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -828,11 +896,14 @@ static Function IR3A_Reted(endpoints)
 	REnd/=RSum
 	cnt=0
 	// Print and record R, df
-	Print "R = "+num2str(REnd)
+	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
+	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
+	
+	Print "R = "+num2str(REnd*RgPrimary)
 	Print "df= "+num2str(log(DegreeOfAggregation)/log(REnd))
 	RValue=Rend
 	dfValue=log(DegreeOfAggregation)/log(REnd)
-
+	RxRgPrimaryValue = REnd*RgPrimary
 	setDataFOlder OldDf
 End
 //******************************************************************************************************************************************************
@@ -960,12 +1031,15 @@ static Function IR3A_Path(NumberOfTestPaths)
 	NVAR dminValue
 	NVAR TrueStickingProbability
 	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
+	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
 	pValue = mom2
 	cValue=ln(DegreeOfAggregation)/ln(pValue)
 	dminValue=dfValue/cValue
 	sValue=round(exp(ln(DegreeOfAggregation)/dminValue))
 	TrueStickingProbability = 100*DegreeOfAggregation/AttemptValue
-	Print "R = "+num2str(RValue)
+	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
+	RxRgPrimaryValue = RValue*RgPrimary
+	Print "R = "+num2str(RValue*RgPrimary)
 	Print "z = "+num2str(DegreeOfAggregation)
 	Print "p = "+num2str(pValue)
 	Print "s = "+num2str(sValue)
@@ -975,8 +1049,8 @@ static Function IR3A_Path(NumberOfTestPaths)
 	Print "True Sticking Probability = "+num2str(100*DegreeOfAggregation/AttemptValue)+"%"
 	//appned note to MassFractalAggregate
 	string NoteText
-	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";R="+num2str(RValue)+";p="+num2str(pValue)
-	NoteText+=";s="+num2str(sValue)+";df="+num2str(dfValue)+";dmin="+num2str(dminValue)+";c="+num2str(cValue)+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)+";"
+	NoteText="Mass Fractal Aggregate created="+date()+", "+time()+";z="+num2str(DegreeOfAggregation)+";StickingProbability="+num2str(StickingProbability)+";R="+num2str(RValue)+";Rprimary="+num2str(RgPrimary)+";p="+num2str(pValue)
+	NoteText+=";RxRgPrimaryValue="+num2str(RValue*RgPrimary)+";s="+num2str(sValue)+";df="+num2str(dfValue)+";dmin="+num2str(dminValue)+";c="+num2str(cValue)+";True Sticking Probability="+num2str(100*DegreeOfAggregation/AttemptValue)+";"
 	Note MassFractalAggregate, NoteText
 	setDataFolder OldDf
 End
@@ -993,6 +1067,8 @@ End
 static Function IR3A_GetResults()
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
+	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
+	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
 	NVAR DegreeOfAggregation
 	NVAR RValue
 	NVAR pValue
@@ -1004,7 +1080,7 @@ static Function IR3A_GetResults()
 	cValue=ln(DegreeOfAggregation)/ln(pValue)
 	dminValue=dfValue/cValue
 	sValue=round(exp(ln(DegreeOfAggregation)/dminValue))
-	Print "R= "+num2str(RValue)
+	Print "R [A]= "+num2str(RxRgPrimaryValue)
 	Print "df = "+num2str(dfValue)
 	Print "z = "+num2str(DegreeOfAggregation)
 	Print "p= "+num2str(pValue)
@@ -1150,6 +1226,13 @@ Function IR3A_PopMenuProc(pa) : PopupMenuControl
 				IR3A_ClearVariables()
 				IR3A_CalculateBranchedMassFr()
 			endif	
+			if(stringMatch(CtrlName,"AllowedNearDistance"))
+				NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
+				AllowedNearDistance = popNum
+			endif
+			
+			
+
 			break
 	endswitch
 
@@ -1581,55 +1664,311 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//			POV/PDB import/export/modeling code 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
+Function IR3P_POVPDBPanel()
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1 /W=(5,20,395,680) as "POV/PDB Panel"
+	DoWindow/C POVPDBPanel
+	TitleBox MainTitle title="\Zr200POV/PDB panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
+	Button GetHelp,pos={305,45},size={80,15},fColor=(65535,32768,32768), proc=IR3P_POVPDBButtonProc,title="Get Help", help={"Open www manual page for this tool"}	//<<< fix button to help!!!
+	//COPY FROM IR2U_UnifiedEvaPanelFnct()
+	Checkbox  UseForPOV, pos={50,40}, size={50,15}, variable =root:packages:POVPDBImport:UseForPOV
+	Checkbox  UseForPOV, title="Use for POV",mode=1,proc=IR3P_POVPDBCheckProc
+	Checkbox  UseForPOV, help={"Select of you want to import POV files from SAXSMorph"}
+	Checkbox  UseForPDB, pos={200,40}, size={50,15}, variable =root:packages:POVPDBImport:UseForPDB
+	Checkbox  UseForPDB, title="Use for PDB",mode=1,proc=IR3P_POVPDBCheckProc
+	Checkbox  UseForPDB, help={"Select of you want to import PDB files from SAXSMorph"}
 
+	TitleBox Info1 title="\Zr120Select where to put the data",pos={60,65},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(0,0,52224)
+	SetVariable NewFolderName,value= root:Packages:POVPDBImport:NewFolderName
+	SetVariable NewFolderName,pos={15,90},size={200,20},title="root:",noproc, help={"Type in new folder name"}
+	Button CreateFolder,pos={250,87},size={100,20},proc=IR3P_POVPDBButtonProc,title="Create Folder", help={"Create Folder for data"}
 
-Function IR3T_ReadPOVFile(dimx,dimy,dimz)
-	variable dimx,dimy,dimz
-	
-	Variable refNum,err=0
-	OPEN/R/M="Find POV file" refNum
-	if(strlen(S_fileName)>0)
-		IR3T_initAtomArrays(dimx,dimy,dimz)			// max number of expected atoms
-		Wave dest=centersWave
-		String lineStr
-		Variable count=0
-		do
-			FreadLine refNum,lineStr
-			if(strlen(lineStr)<=0)
-				break
+	SetVariable CurrentFolderName,value= root:Packages:POVPDBImport:CurrentFolderName, noedit=1,frame=0
+	SetVariable CurrentFolderName,pos={15,120},size={280,20},title="Current Folder Name",noproc, help={"Current FOlder name to use"}
+
+	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,145},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox Info2 title="\Zr120Import data",pos={60,160},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(0,0,52224)
+	Button Import3DData,pos={30,190},size={150,20},proc=IR3P_POVPDBButtonProc,title="Import 3D Data", help={"Import 3D data in this folder"}
+	Button Display3DData,pos={30,220},size={150,20},proc=IR3P_POVPDBButtonProc,title="Display 3D Data", help={"Display 3D data in this folder"}
+	Button ImportIntQData,pos={30,250},size={150,20},proc=IR3P_POVPDBButtonProc,title="Import Int/Q Data", help={"Import 1D data in this folder"}
+	Button DisplayIntQData,pos={30,280},size={150,20},proc=IR3P_POVPDBButtonProc,title="Display Int/Q Data", help={"Display 1D data in this folder"}
+	Button CalculateIntQData,pos={30,310},size={150,20},proc=IR3P_POVPDBButtonProc,title="Calculate Int/Q Data", help={"Calculate 1D data and append"}
+
+end
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//*****************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+Function IR3P_POVPDBCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			Variable checked = cba.checked
+			NVAR UseForPOV=root:packages:POVPDBImport:UseForPOV
+			NVAR UseForPDB=root:packages:POVPDBImport:UseForPDB
+			if(stringMatch(cba.ctrlName,"UseForPOV"))
+				UseForPDB=!UseForPOV
 			endif
-			if(strsearch(lineStr,"sphere",0)>=0)
-				IR3T_processAtomLine(lineStr,count)
-				count+=1
+			if(stringMatch(cba.ctrlName,"UseForPDB"))
+				UseForPOV=!UseForPDB
 			endif
-		while(err==0)
-		Close refNum
-	endif
+			break
+	endswitch
 
+	return 0
+End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+Function IR3P_POVPDBButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			string oldDf=GetDataFolder(1)
+			setDataFolder root:Packages:POVPDBImport	
+			if(StringMatch(ba.ctrlName, "CreateFolder" ))
+					IR3P_CreateFolder()	
+			endif
+			if(StringMatch(ba.ctrlName, "GetHelp" ))
+					print "Fix IR3P_POVPDBButtonProc to do what it is suppose to do..."
+			endif
+			if(StringMatch(ba.ctrlName, "Import3DData" ))
+					IR3P_Read3DDataFile()
+			endif
+			if(StringMatch(ba.ctrlName, "Display3DData" ))
+					IR3P_POV3DDataGizmo() 
+			endif
+			if(StringMatch(ba.ctrlName, "ImportIntQData" ))
+					IR3P_Read1DDataFile()
+			endif
+			if(StringMatch(ba.ctrlName, "DisplayIntQData" ))
+					IR3P_DIsplay1DDataFile()
+			endif
+			if(StringMatch(ba.ctrlName, "CalculateIntQData" ))
+					IR3P_Calculate1DDataFile()
+			endif
+			
+			setDataFolder oldDF		
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+Function IR3P_InitializePOVPDB()
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string OldDf=GetDataFolder(1)
+	NewDataFolder/O/S root:Packages
+	NewDataFolder/O/S root:Packages:POVPDBImport
+	string/g ListOfVariables
+	string/g ListOfStrings
+	//here define the lists of variables and strings needed, separate names by ;...
+	ListOfVariables="UseForPOV;UseForPDB;"
+	ListOfStrings="NewFolderName;CurrentFolderName;"
+	variable i
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor												
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+		
+	setDataFOlder OldDf
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+////******************************************************************************************************************************************************
+//
+//Window POV3DData() : GizmoPlot
+//	PauseUpdate; Silent 1		// building window...
+//	// Building Gizmo 8 window...
+//	NewGizmo/T="POV Imported 3D data"/W=(919,45,1434,505)
+//	ModifyGizmo startRecMacro=700
+//	ModifyGizmo scalingOption=63
+//	AppendToGizmo isoSurface=root:test:centersWave,name=isoSurface0
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ surfaceColorType,1}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ lineColorType,0}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ lineWidthType,0}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ fillMode,2}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ lineWidth,1}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ isoValue,0.5}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ frontColor,1,0,0,1}
+//	ModifyGizmo ModifyObject=isoSurface0,objectType=isoSurface,property={ backColor,0,0,1,1}
+//	ModifyGizmo modifyObject=isoSurface0,objectType=Surface,property={calcNormals,1}
+//	AppendToGizmo light=Directional,name=light0
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ position,-0.241800,-0.664500,0.707100,0.000000}
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ direction,-0.241800,-0.664500,0.707100}
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ ambient,0.133000,0.133000,0.133000,1.000000}
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ specular,1.000000,1.000000,1.000000,1.000000}
+//	AppendToGizmo Axes=boxAxes,name=axes0
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisScalingMode,1}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisColor,0,0,0,1}
+//	ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,Clipped,0}
+//	AppendToGizmo attribute specular={1,1,0,1,1032},name=specular0
+//	AppendToGizmo attribute shininess={5,20},name=shininess0
+//	ModifyGizmo setDisplayList=0, object=light0
+//	ModifyGizmo setDisplayList=1, attribute=shininess0
+//	ModifyGizmo setDisplayList=2, attribute=specular0
+//	ModifyGizmo setDisplayList=3, object=isoSurface0
+//	ModifyGizmo setDisplayList=4, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
+//	ModifyGizmo setDisplayList=5, object=axes0
+//	ModifyGizmo autoscaling=1
+//	ModifyGizmo currentGroupObject=""
+//	ModifyGizmo showInfo
+//	ModifyGizmo infoWindow={1436,23,2253,322}
+//	ModifyGizmo endRecMacro
+//	ModifyGizmo SETQUATERNION={-0.134543,0.320522,-0.081181,0.934117}
+//EndMacro
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+
+
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+Function IR3P_CreateFolder()	
+	SVAR NewFolderName=root:packages:POVPDBImport:NewFolderName
+	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
+	setDataFOlder root:
+	NewDataFOlder/O/S $(PossiblyQuoteName(NewFolderName))
+	CurrentFolderName = GetDataFolder(1)
+end
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+Function IR3P_Read1DDataFile()
+
+	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
+	SetDataFOlder $(CurrentFolderName)
+	IR1I_KillAutoWaves()
+	KillWaves/Z Qwave, IntWave
+	LoadWave/Q/A/D/G/D
+	Wave Wave0
+	Wave Wave1
+	Rename Wave0, Qwave
+	Rename Wave1, IntWave
 end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
+Function IR3P_DIsplay1DDataFile()
+	DOWIndow/K/Z POV1DGraph
+	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
+	SetDataFOlder $(CurrentFolderName)
+	Wave IntWave
+	Wave QWave
+	Display/K=1/W=(100,50,600,550) IntWave vs QWave as "POV 1D Data display"
+	DoWindow/C POV1DGraph
+	Label left "Intensity"
+	Label bottom "Qvector"
+	ModifyGraph log=1
+end
 
-
-Function IR3T_initAtomArrays(dimx,dimy,dimz)
-	Variable dimx,dimy,dimz
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+Function IR3P_Calculate1DDataFile()
+	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
+	SetDataFOlder $(CurrentFolderName)
+	Wave ThreeDVoxelGram = POVVoxelWave
+	variable voxelSize = 2
+	variable NumRSteps=300
+	variable IsoValue = 0.5
+	variable oversample = 4
+	variable Qmin = 0.001 
+	variable Qmax = 0.3
+	variable NumQSteps = 200
+	IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversample, Qmin, Qmax, NumQSteps)
+	Wave PDFQWv
+	Wave PDFIntensityWv
+	Wave Qwave
+	Wave IntWave
+	variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
+	variable InvarData=areaXY(Qwave, IntWave )
+	PDFIntensityWv*=InvarData/InvarModel
+	DOWIndow POV1DGraph
+	if(V_Flag)
+		DoWIndow/F POV1DGraph
+		CheckDisplayed /W=POV1DGraph PDFIntensityWv
+		if(V_flag==0)
+			AppendToGraph/W=POV1DGraph  PDFIntensityWv vs PDFQWv
+		endif
+		ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
+		ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
+		ModifyGraph msize(PDFIntensityWv)=3
+	endif
+end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+Function IR3P_Read3DDataFile()
+	//variable dimx,dimy,dimz
 	
-	Make/O/D/n=(dimx,dimy,dimz) centersWave=nan
-End
+	NVAR UseForPOV = root:Packages:POVPDBImport:UseForPOV
+	NVAR UseForPDB = root:Packages:POVPDBImport:UseForPDB
+	if(UseForPOV+UseForPDB !=1)
+		UseForPDB=0
+		UseForPOV=1
+	endif
+	if(UseForPOV)
+		SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
+		//SetDataFOlder $(CurrentFolderName)
+		Variable refNum,err=0
+		variable FInalSize
+		OPEN/R/F=".POV"/M="Find POV file" refNum
+		if(strlen(S_fileName)>0)
+			Make/O/U/B/Free/n=((500),(500),(500)) centersWave
+			centersWave=0
+			String lineStr
+			Variable count=0
+			do
+				FreadLine refNum,lineStr
+				if(strlen(lineStr)<=0)
+					break
+				endif
+				if(strsearch(lineStr,"sphere",0)>=0)
+					IR3P_POVprocessAtomLine(lineStr,count,centersWave)
+					count+=1
+				endif
+			while(err==0)
+			Close refNum
+			FinalSize = count^(1/3)
+			//print FinalSize
+			Redimension/N=(FInalSize,FInalSize,FInalSize) centersWave
+			Duplicate/O centersWave, $(CurrentFolderName+"POVVoxelWave")
+		endif
+	elseif(UseForPDB)
+		print "Finish PDB in IR3P_Read3DDataFile"
+	endif
+end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
-Function IR3T_processAtomLine(lineStr,count)
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+Function IR3P_POVprocessAtomLine(lineStr,count, destWv)
 	String lineStr
 	Variable count
+	Wave destWv
 	
 	Variable n1,n2,n3,n4,n5,xx,yy,zz
 	String s1,s2,s3,s4,s5
@@ -1639,38 +1978,89 @@ Function IR3T_processAtomLine(lineStr,count)
 	lineStr = ReplaceString("} \r", lineStr, ",")
 	lineStr = ReplaceString(" ", lineStr, "")
 	sscanf lineStr,"sphere,%i,%i,%i,%f,%f,",n1,n2,n3,n4,n5
-	Wave dest=centersWave
-	dest[n1-1][n2-1][n3-1]=n5
+	variable FillVal = 0
+	if(n5>0)
+		FillVal = 1
+	endif
+	destWv[(n1-1)][(n2-1)][(n3-1)]= FillVal
 End
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
-///*************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
 
-Function IR3T_Convert3DMatrixToList(My3DVoxelWave, threshVal)
-	wave My3DVoxelWave
-	variable threshVal
-	
-	variable maxlen=DimSize(My3DVoxelWave, 0 )*DimSize(My3DVoxelWave,1)*DimSize(My3DVoxelWave, 2)
-	
-	Make/O/N=(maxlen,3) MyScatterWave
-	MyScatterWave = NaN
-	variable i, j, k, indx=0
-	For(i=0;i<DimSize(My3DVoxelWave, 0 );i+=1)
-		For(j=0;j<DimSize(My3DVoxelWave, 1 );j+=1)
-			For(k=0;k<DimSize(My3DVoxelWave, 2 );k+=1)
-				if(My3DVoxelWave[i][j][k]<threshVal)
-					MyScatterWave[indx][0]=i
-					MyScatterWave[indx][1]=j
-					MyScatterWave[indx][2]=k
-					indx+=1
-				endif
-			endfor
-		endfor
-	endfor
-	DeletePoints/M=0 indx, (maxlen-indx),  MyScatterWave
-	
-end
+Function IR3P_POV3DDataGizmo() : GizmoPlot
+	DoWIndow/K/Z POV3DData
+	PauseUpdate; Silent 1		// building window...
+	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
+	Wave Imported3DPOVWave = $(CurrentFolderName+"POVVoxelWave")
+	// Building Gizmo 8 window...
+	NewGizmo/T="POV Imported 3D data"/W=(919,45,1434,505)
+	DoWindow/C POV3DData
+	ModifyGizmo startRecMacro=700
+	ModifyGizmo scalingOption=63
+	AppendToGizmo isoSurface=Imported3DPOVWave,name=ImportedPOV
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ surfaceColorType,1}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ lineColorType,0}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ lineWidthType,0}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ fillMode,2}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ lineWidth,1}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ isoValue,0.5}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ frontColor,1,0,0,1}
+	ModifyGizmo ModifyObject=ImportedPOV,objectType=isoSurface,property={ backColor,0,0,1,1}
+	ModifyGizmo modifyObject=ImportedPOV,objectType=Surface,property={calcNormals,1}
+	AppendToGizmo light=Directional,name=light0
+	ModifyGizmo modifyObject=light0,objectType=light,property={ position,-0.241800,-0.664500,0.707100,0.000000}
+	ModifyGizmo modifyObject=light0,objectType=light,property={ direction,-0.241800,-0.664500,0.707100}
+	ModifyGizmo modifyObject=light0,objectType=light,property={ ambient,0.133000,0.133000,0.133000,1.000000}
+	ModifyGizmo modifyObject=light0,objectType=light,property={ specular,1.000000,1.000000,1.000000,1.000000}
+	AppendToGizmo Axes=boxAxes,name=axes0
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisScalingMode,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisColor,0,0,0,1}
+	ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,Clipped,0}
+	AppendToGizmo attribute specular={1,1,0,1,1032},name=specular0
+	AppendToGizmo attribute shininess={5,20},name=shininess0
+	ModifyGizmo setDisplayList=0, object=light0
+	ModifyGizmo setDisplayList=1, attribute=shininess0
+	ModifyGizmo setDisplayList=2, attribute=specular0
+	ModifyGizmo setDisplayList=3, object=ImportedPOV
+	ModifyGizmo setDisplayList=4, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
+	ModifyGizmo setDisplayList=5, object=axes0
+	ModifyGizmo autoscaling=1
+	ModifyGizmo currentGroupObject=""
+	ModifyGizmo showInfo
+	ModifyGizmo infoWindow={1436,23,2253,322}
+	ModifyGizmo endRecMacro
+	ModifyGizmo SETQUATERNION={-0.134543,0.320522,-0.081181,0.934117}
+EndMacro
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
+//
+//Function IR3P_Convert3DMatrixToList(My3DVoxelWave, threshVal)
+//	wave My3DVoxelWave
+//	variable threshVal
+//	
+//	variable maxlen=DimSize(My3DVoxelWave, 0 )*DimSize(My3DVoxelWave,1)*DimSize(My3DVoxelWave, 2)
+//	
+//	Make/O/N=(maxlen,3) MyScatterWave
+//	MyScatterWave = NaN
+//	variable i, j, k, indx=0
+//	For(i=0;i<DimSize(My3DVoxelWave, 0 );i+=1)
+//		For(j=0;j<DimSize(My3DVoxelWave, 1 );j+=1)
+//			For(k=0;k<DimSize(My3DVoxelWave, 2 );k+=1)
+//				if(My3DVoxelWave[i][j][k]<threshVal)
+//					MyScatterWave[indx][0]=i
+//					MyScatterWave[indx][1]=j
+//					MyScatterWave[indx][2]=k
+//					indx+=1
+//				endif
+//			endfor
+//		endfor
+//	endfor
+//	DeletePoints/M=0 indx, (maxlen-indx),  MyScatterWave
+//	
+//end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+ 

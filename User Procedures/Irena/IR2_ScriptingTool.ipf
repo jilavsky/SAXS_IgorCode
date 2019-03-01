@@ -1,13 +1,14 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.29
-Constant IR2SversionNumber=1.28
+#pragma version=1.30
+
+Constant IR2SversionNumber=1.30
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.30 added ability to save separate ppopulation data in Modeling
 //1.29 fix probem with DSM data folders showing as QRS data folders which caused issues. 
 //1.28 added better regular expression cheat sheet on the panel. 
 //1.27 added getHelp button calling to www manual
@@ -347,7 +348,7 @@ end
 
 Window IR2S_ScriptingToolPnl() 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel/K=1 /W=(28,44,412,625) as "Scripting tool"
+	NewPanel/K=1 /W=(28,44,412,660) as "Scripting tool"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65535)
 	DrawText 29,29,"Scripting tool"
@@ -415,12 +416,16 @@ Window IR2S_ScriptingToolPnl()
 
 	CheckBox SaveResultsInNotebook,pos={10,490},size={64,14},proc=IR2S_CheckProc,title="Save results in notebook?"
 	CheckBox SaveResultsInNotebook,variable= root:Packages:Irena:ScriptingTool:SaveResultsInNotebook
-	CheckBox ResetBeforeNextFit,pos={10,510},size={64,14},proc=IR2S_CheckProc,title="Reset before next fit? (Unified/Modeling II)"
+	CheckBox ResetBeforeNextFit,pos={10,510},size={64,14},proc=IR2S_CheckProc,title="Reset before next fit? (Unif./Model.)"
 	CheckBox ResetBeforeNextFit,variable= root:Packages:Irena:ScriptingTool:ResetBeforeNextFit
 	CheckBox SaveResultsInFldrs,pos={10,530},size={64,14},proc=IR2S_CheckProc,title="Save results in folders?"
 	CheckBox SaveResultsInFldrs,variable= root:Packages:Irena:ScriptingTool:SaveResultsInFldrs
-	CheckBox SaveResultsInWaves,pos={10,550},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling II)?"
+	CheckBox ExportSeparatePopData,pos={30,550},size={64,14},proc=IR2S_CheckProc,title="Modeling - save separate Pop results?"
+	CheckBox ExportSeparatePopData,variable= root:Packages:Irena:ScriptingTool:ExportSeparatePopData
+	CheckBox SaveResultsInWaves,pos={10,570},size={64,14},proc=IR2S_CheckProc,title="Save results in waves (Modeling)?"
 	CheckBox SaveResultsInWaves,variable= root:Packages:Irena:ScriptingTool:SaveResultsInWaves
+	
+	
 
 	//DrawText 170,505,"RegEx - Not contain: ^((?!string).)*$"
 	TitleBox Regex1 title="\Zr150Regex cheat sheet",pos={240,490},frame=0,fstyle=2, size={184,15}, fColor=(1,16019,65535)
@@ -886,6 +891,7 @@ Function IR2S_InitScriptingTool()
 	ListOfStrings+="WaveNameMatchString;"
 	//"DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;SaveResultsInNotebook;ResetBeforeNextFit;SaveResultsInFldrs;SaveResultsInWaves;"
+	ListOfVariables+="ExportSeparatePopData;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -1263,6 +1269,7 @@ Function IR2S_FItWithModelingII()
 			IR2L_InputPanelButtonProc("FitModelSkipDialogs")
 			DoUpdate
 			NVAR FitFailed=root:Packages:IR2L_NLSQF:FitFailed
+			NVAR ExportSeparatePopData=root:Packages:Irena:ScriptingTool:ExportSeparatePopData
 			
 			if(SaveResultsInNotebook)
 				IR2L_InputPanelButtonProc("SaveInNotebook")
@@ -1763,6 +1770,7 @@ Function IR2S_FItWithUnifiedFit()
 			IR1A_InputPanelButtonProc("DoFittingSkipReset")
 			DoUpdate
 			NVAR FitFailed=root:Packages:Irena_UnifFit:FitFailed
+			NVAR ExportSeparatePopData=root:Packages:Irena:ScriptingTool:ExportSeparatePopData
 			
 			if(SaveResultsInNotebook)
 				IR2S_SaveResInNbkUnif(FitFailed)

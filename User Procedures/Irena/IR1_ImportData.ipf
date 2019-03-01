@@ -909,6 +909,9 @@ Function IR1I_ProcessImpWaves(selectedFile)
 		endif
 	endif
 	//check on TempError if it contains meaningful number and stop user if not...
+	if(!WaveExists(TempError))
+		abort "The Errors (Uncertainities) data do NOT exiost. Please, select a method to create them and try again."
+	endif
 	wavestats/Q TempError
 	if((V_min<=0)||(V_numNANs>0)||(V_numINFs>0))
 		abort "The Errors (Uncertainities) contain negative values, 0, NANs, or INFs. This is not acceptable. Import aborted. Please, check the input data or use % or SQRT errors"
@@ -1043,7 +1046,7 @@ Function IR1I_ImportOneFile(selectedFile)
 		
 	NVAR SkipNumberOfLines=root:Packages:ImportData:SkipNumberOfLines
 	NVAR SkipLines=root:Packages:ImportData:SkipLines	
-	IR1I_KillAutoWaves()
+		IR1I_KillAutoWaves()
 //	LoadWave/Q/A/G/P=ImportDataPath  selectedfile
 	if (SkipLines)
 		LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile

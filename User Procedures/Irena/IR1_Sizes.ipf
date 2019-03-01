@@ -599,6 +599,7 @@ static Function IR1R_MaxEntUpdateDataForGrph()
 	Wave/Z SizesFitIntensity=root:Packages:Sizes:SizesFitIntensity
 	Wave ox=root:Packages:Sizes:ox
 	Duplicate/O ox, SizesFitIntensity
+	Duplicate/O Intensity, NormalizedResidual
 	
 	if(UseNoErrors)
 		SizesFitIntensity = ox/Q_vec^SizesPowerToUse

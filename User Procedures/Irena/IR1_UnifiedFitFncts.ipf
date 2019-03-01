@@ -8064,7 +8064,7 @@ end
 Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	string StandardOrUser, SaveMe
 	//here we need to copy the final data back to folder
-	//before that we need to also attach note to teh waves with the results
+	//before that we need to also attach note to the waves with the results
 	if(ParamIsDefault(SaveMe ))
 		SaveMe="NO"
 	ENDIF

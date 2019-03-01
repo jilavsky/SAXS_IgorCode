@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=21	// Use modern global access method.
-#pragma version=2.69
+#pragma version=2.70
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -14,7 +14,7 @@ constant CurrentIrenaVersionNumber = 2.69
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//2.70 	POV/PDB import and fixes for 3D Models
 //2.69 	Removed 14 ipf files to reduce clutter. 
 //			Combined with IR1_CreateFldrStrctr.ipf, IR1_Functions.ipf
 //			added 3DModels, 4D aggregate and Two Phase ssytems. 
@@ -194,7 +194,7 @@ Menu "SAS"
 		"Mass Fractal Aggregate", IR3A_MassFractalAggregate()
 		"Two Phase Solids", IR3T_TwoPhaseSystem()
 		"Display 3D data", IR3A_Display3DData()
-		"Import POV or PDB", IR3A_ImportPOVPDB()
+		"Import POV or PDB", IR3P_ImportPOVPDB()
 	end
 	"---"
 	"Scattering contrast calculator", IR1K_ScattCont2()
@@ -288,6 +288,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
 	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;TwoPhaseSystems=IR3T_MainCheckVersion;"
+	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;"
  
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
@@ -2998,8 +2999,20 @@ Function IR1_FindFWHM(IntProbWave,DiaWave)
 	Duplicate/O/R=[maxLoc, numpnts(IntProbWave)-1] IntProbWave temp_wv2
 	Duplicate/O/R=[maxLoc, numpnts(IntProbWave)-1] DiaWave, temp_RWwv2
 	
-	variable MinD=temp_RWwv1[BinarySearchInterp(temp_wv1, (maximum/2) )]
-	variable MaxD=temp_RWwv2[BinarySearchInterp(temp_wv2, (maximum/2) )]
+	variable tempMin=BinarySearchInterp(temp_wv1, (maximum/2) )
+	variable tmpMax=BinarySearchInterp(temp_wv2, (maximum/2) )
+	variable MinD
+	variable MaxD
+	if(tempMin>0 && tempMin<numpnts(temp_wv1))
+		MinD=temp_RWwv1[tempMin]
+	else
+		MinD=0
+	endif
+	if(tmpMax>0  && tmpMax<numpnts(temp_wv2))
+		MaxD=temp_RWwv2[tmpMax]
+	else
+		MaxD=0
+	endif
 	KillWaves/Z temp_wv2, temp_wv1,temp_RWwv1,temp_RWwv2
 
 //	setDataFolder OldDf
