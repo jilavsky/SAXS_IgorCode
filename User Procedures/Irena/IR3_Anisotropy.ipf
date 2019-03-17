@@ -77,15 +77,12 @@ Function IR3N_AnisotropicSystemsPanel()
 	CheckBox UseUserDefinedData pos={120,35}
 	CheckBox UseQRSdata disable=1
 	
-	
-	//SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:TwoPhaseSolidModel:RebinDataTo, noproc
-	//SetVariable RebinDataTo,pos={290,130},size={100,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 	TitleBox MainTitle title="\Zr200Anisotropy Evalution",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox Info1 title="\Zr150Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
 	Button DrawGraphs,pos={225,158},size={150,20},proc=IR3N_AniSysButtonProc,title="Graph data", help={"Create a graph (log-log) of your experiment data"}
 	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR3N_AniSysButtonProc,title="Get Help", help={"Open www manual page for this tool"}	//<<< fix button to help!!!
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	TitleBox Info2 title="\Zr150Model",pos={10,195},frame=0,fstyle=2, fixedSize=1,size={150,20}
+	TitleBox Info2 title="\Zr150Model",pos={10,195},frame=0,fstyle=2, fixedSize=1,size={150,20},fColor=(0,0,52224)
 
 
 	SVAR PeakProfileShape = root:Packages:AnisotropicSystems:PeakProfileShape
