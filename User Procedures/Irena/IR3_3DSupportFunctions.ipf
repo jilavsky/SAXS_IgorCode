@@ -75,7 +75,7 @@ Function IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversamp
 		// this uses at least 1e5 points - and up to 1e7 points.
 		// but also always limits the run to 20 seconds. Should adjust dynamically quality fo calculations for cpu and complexity of the problem. 
 		multithread  Distancestmp =  IR3T_FindNextDistance(Use3DWave, IsoValue)
-		concatenate/Free/NP/O {Distances, Distancestmp}, Distances
+		concatenate/NP/O {Distances, Distancestmp}, Distances
 		endDo = ((ticks-StartTicks)/60 > 20 ) || (numpnts(Distances)>1e7)
 	while(!endDo)
 	print "Done calculating distacnes after "+num2str((ticks-StartTicks)/60)
@@ -218,7 +218,7 @@ Function IR3T_FindNearestPrimeSize(ValueIn)
 	make/N=12/Free PrimeList2,PrimeList3
 	PrimeList2 = 2^p
 	PrimeList3 = 3^p
-	Concatenate /FREE/NP {PrimeList2,PrimeList3}, PrimeList
+	Concatenate /O/NP {PrimeList2,PrimeList3}, PrimeList
 	sort PrimeList, PrimeList
 	variable index
 	index = BinarySearch(PrimeList, ValueIn )

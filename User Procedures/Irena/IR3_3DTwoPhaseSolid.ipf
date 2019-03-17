@@ -1315,7 +1315,7 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 							//this creates matrix with X x Y x Z positions for each we can write MorphVoxel 
 
 	print "Calculating Gauss random fields, this is the slowest part of the code!" 		
-	multithread TwoPhaseSolidMatrix = IR3T_GenerateGRFUsingCosSaxsMorph(Kn,rmat[p][0],rmat[q][1], rmat[r][2], phin, alpha)	
+	multithread TwoPhaseSolidMatrix = IR3T_GenGRFUsingCosSaxsMorph(Kn,rmat[p][0],rmat[q][1], rmat[r][2], phin, alpha)	
 
 end
 
@@ -1327,7 +1327,7 @@ end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 //
-threadsafe Function IR3T_GenerateGRFUsingCosSaxsMorph(Kn,rmat0,rmat1, rmat2, phin, alpha)		//rmat[i][0], rmat1 = rmat[j][1], rmat[k][2]
+threadsafe Function IR3T_GenGRFUsingCosSaxsMorph(Kn,rmat0,rmat1, rmat2, phin, alpha)		//rmat[i][0], rmat1 = rmat[j][1], rmat[k][2]
 		wave Kn,phin
 		variable alpha, rmat0,rmat1, rmat2
 		

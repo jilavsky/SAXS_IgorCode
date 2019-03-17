@@ -24,7 +24,7 @@ Function IR3N_AnisotropicSystems()
 	KillWIndow/Z AnisotropicSystemsPanel
 	KillWIndow/Z AnisotropicSystemsPlot
 	IN2G_CheckScreenSize("height",670)
-	IR3N_InitializeAnisotropicSystems()
+	IR3N_InitAnisotropicSystems()
 	IR3N_AnisotropicSystemsPanel() 
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("AnisotropicSystemsPanel", IR3NAnisSystemVersionNumber,1)
@@ -43,7 +43,7 @@ Function IR3N_MainCheckVersion()
 				DoWindow/K AnisotropicSystemsPanel
  				IR3N_AnisotropicSystems()
 			else		//at least reinitialize the variables so we avoid major crashes...
-				IR3N_InitializeAnisotropicSystems()
+				IR3N_InitAnisotropicSystems()
 			endif
 		endif
 	endif
@@ -317,13 +317,13 @@ Function IR3N_FitHOPOnDataData()
 	if(PeakCenterDegrees<90)		//peak was too close to negative edge, not enough data... Need to rotate data around. 
 		Duplicate/FREE HOPAZvector, HOPAZvector2
 		HOPAZvector2 = -360+HOPAZvector
-		Concatenate/FREE/NP {HOPIntensity,HOPIntensity}, HOPIntensityExtended
-		Concatenate/FREE/NP {HOPAZvector2,HOPAZvector}, HOPAZvectorExtended		
+		Concatenate/O/NP {HOPIntensity,HOPIntensity}, HOPIntensityExtended
+		Concatenate/O/NP {HOPAZvector2,HOPAZvector}, HOPAZvectorExtended		
 	elseif(PeakCenterDegrees>270)	//peak was too close to edge, not enough data... Need to ratate data around. 
 		Duplicate/FREE HOPAZvector, HOPAZvector2
 		HOPAZvector2 = 360+HOPAZvector
-		Concatenate/FREE/NP {HOPIntensity,HOPIntensity}, HOPIntensityExtended
-		Concatenate/FREE/NP {HOPAZvector,HOPAZvector2}, HOPAZvectorExtended	
+		Concatenate/O/NP {HOPIntensity,HOPIntensity}, HOPIntensityExtended
+		Concatenate/O/NP {HOPAZvector,HOPAZvector2}, HOPAZvectorExtended	
 	else
 		Duplicate/FREE 	HOPIntensity, HOPIntensityExtended
 		Duplicate/FREE 	HOPAZvector, HOPAZvectorExtended
@@ -452,7 +452,7 @@ end
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-Function IR3N_InitializeAnisotropicSystems()
+Function IR3N_InitAnisotropicSystems()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
