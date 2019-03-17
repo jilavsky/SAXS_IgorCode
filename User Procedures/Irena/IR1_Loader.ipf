@@ -74,6 +74,7 @@
 #include ":IR3_3DModels", version>=1.00
 #include ":IR3_3DSupportFunctions", version>=1.00
 #include ":IR3_3DTwoPhaseSolid", version>=1.00
+#include ":IR3_Anisotropy", version>=1.00
 #include ":IR3_GuinierPorodModel", version>=1.09
 #include ":IR3_MergingData", version>=1.19
 #include ":IR3_SimpleFits", version>=1

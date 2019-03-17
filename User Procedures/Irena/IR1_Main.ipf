@@ -15,6 +15,7 @@ constant CurrentIrenaVersionNumber = 2.69
 //*************************************************************************/
 
 //2.70 	POV/PDB import and fixes for 3D Models
+//			Added Anisotropy analsysis (Hermans orienational parameter)
 //2.69 	Removed 14 ipf files to reduce clutter. 
 //			Combined with IR1_CreateFldrStrctr.ipf, IR1_Functions.ipf
 //			added 3DModels, 4D aggregate and Two Phase ssytems. 
@@ -196,6 +197,9 @@ Menu "SAS"
 		"Display 3D data", IR3A_Display3DData()
 		"Import POV or PDB", IR3P_ImportPOVPDB()
 	end
+	SubMenu "Anisotropy"
+		"Anisotropy analysis (HOP)", IR3N_AnisotropicSystems()
+	end
 	"---"
 	"Scattering contrast calculator", IR1K_ScattCont2()
 	help={"Calculator for scattering contrast. Both X rays and neutrons. Anomalous effects available."}
@@ -280,7 +284,6 @@ End
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
 	//these are tools which have been upgraded to this functionality 
-	//Modeling II = LSQF2_MainPanel
 	string WindowProcNames="LSQF2_MainPanel=IR2L_MainCheckVersion;IR2H_ControlPanel=IR2H_MainCheckVersion;DataMiningTool=IR2M_MainCheckVersion;DataManipulationII=IR3M_MainCheckVersion;"
 	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
 	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
@@ -288,7 +291,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
 	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;TwoPhaseSystems=IR3T_MainCheckVersion;"
-	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;"
+	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;"
  
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)

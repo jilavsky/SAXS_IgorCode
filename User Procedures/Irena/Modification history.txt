@@ -11,7 +11,7 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 Modification history:
 ********************************************
 2.69 - beta for now
-3D models - added new set of tools : 3DAggregate, 2PhaseSolid and support for import of data from SAXSMorph (POV) and ATSAS (PDB) for visualization
+3D models - added new set of tools : 3DAggregate, 2PhaseSolid and support for import of data frqom SAXSMorph (POV) and ATSAS (PDB) for visualization
 Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please.  
 Scripting tool - added save individual Populations data when running from Scripting tool. 
 

@@ -150,6 +150,7 @@ Function IR3T_TwoPhaseControlPanel()
 	//bottom controls
 	Button CalcualteParameters,pos={25,610},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Calculate Params", help={"Calculate Invariant and S/V ratio. Sets Rmax and Rmin."}
 	Button Generate3DModel,pos={25,640},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Generate 3D model", help={"Create 3D model using parameters above. "}
+	Button Display1DtempData,pos={225,610},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Display 1D temp data", help={"Create graphs of 1D transitional data."}
 	Button Generate3DView,pos={225,640},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Display 3D model", help={"Create 3D display using Gizmo. "}
 
 
@@ -304,6 +305,9 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DView" ))
 					Execute("TwoPhaseSolidGizmo()") 
+			endif
+			if(StringMatch(ba.ctrlName, "Display1DtempData" ))
+					IR3T_Display1DTempData()
 			endif
 
 
@@ -882,7 +886,7 @@ Function IR3T_CalculateTwoPhaseSolid()
 	//Radius wave needs to be set right. 
 	//need min and max radius, their model uses 0.1 - 242 by default, I think this comes from input data... 
 	// this.gammar[i][0] = radius = (i * (this.rmax - this.rmin) / this.rpts + this.rmin);
-	//note; log spacing simply doe snot work well. Needs to be lin spaced... 
+	//note; log spacing simply does not work well. Needs to be lin spaced... 
 	//	if(RKlogSpaced)
 	//		Radii = 10^(log(RadMin)+p*((log(RadMax)-log(RadMin))/(NumberofRPoints-1))) 				//sets k scaling on log-scale...
 	//	else
@@ -903,8 +907,8 @@ Function IR3T_CalculateTwoPhaseSolid()
 	//		Per all of the literature... 
 	//		This is a function that describes the correlation at two points separated by a distance r, arising from real-space density ﬂuctuations in the sample. 
 	//		That is, it represents the probability that two points separated by a distance r are of the same phase.
-	print "Calculating Gamma_alfa(r)" 									//calculate formula 1	
-	multithread DebyeAutoCorFnct = IR3T_Formula1(DebyeAutoCorFnctRadii[p],Intensity,Qvec)
+	print "Calculating Gamma_alfa(r)" 									//calculate formula 1	, convert Intensity to Debaye Autocorreclation Function DACF
+	multithread DebyeAutoCorFnct = IR3T_ConvertIntToDACF(DebyeAutoCorFnctRadii[p],Intensity,Qvec)
 	print "Gamma_alfa(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//renormalize
 	wavestats/Q DebyeAutoCorFnct
@@ -970,6 +974,18 @@ Function IR3T_CalculateTwoPhaseSolid()
 	print "Calculating Matrix" 		
 	IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
 	print "GenerateMatrix time is "+num2str((ticks-startTicks)/60) +" sec"
+	//calculate theoretical intensity from gR data per Quintanilla, Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351
+	//these are steps 7 and 8
+	//evaluate TheoreticalAutocorrelationFnct as function of R from gR
+	Duplicate/O Radii, RadiiTheorAutoCorrFnct, TheorAutoCorrFnct
+	TheorAutoCorrFnct = IR3T_CalcTheorAutocorF(alfaValue,gR[p])
+	//some calibration fixes... 
+	TheorAutoCorrFnct[0]=porosity//-porosity^2
+	//TheorAutoCorrFnct+=porosity^2
+	//and calculate intensity, step 8
+	Duplicate/O Qvec, TheoreticalIntensityDACF, QvecTheorIntensityDACF
+	TheoreticalIntensityDACF = IR3T_ConvertDACFToInt(Radii,TheorAutoCorrFnct,QvecTheorIntensityDACF[p])
+	//this is using PDF method for intensity calculation... 
 	print "Calculating PDF and SAS curve."
 	Wave TwoPhaseSolidMatrix
 	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize			// range of modeled radii in Angstroms
@@ -980,7 +996,7 @@ Function IR3T_CalculateTwoPhaseSolid()
 	oversample = BoxResolution>100 ? 2 : 4
 	//variable Qmin = 																		//these need to be selected sensibly. There are two R - Rmax for R vector and Box side size... 
 	//variable Qmax = 																		//cannot be higher than voxel size combined with oversampling... 
-	IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
+//	IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
 	IR3T_AppendModelIntToGraph()
 	print "Done..."
 	resumeUpdate
@@ -997,6 +1013,7 @@ Function IR3T_AppendModelIntToGraph()
 		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
 		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
 		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
+		Wave TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
 		if(WaveExists(PDFQWv))
 			//need to renormalzie this together...
 			variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
@@ -1020,15 +1037,39 @@ end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 
-threadsafe Function IR3T_Formula1(Radius,Intensity,Qvec)
+threadsafe Function IR3T_ConvertIntToDACF(Radius,Intensity,Qvec)		//formula 1 in SAXSMorph/Quntanilla, DACF is Debye AUtocoreelation Function
 	variable Radius
 	wave Intensity,Qvec	
 	Make/Free/N=(numpnts(Intensity))/D QRWave
 	QRWave=sinc(Qvec[p]*Radius)			//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
-	matrixOP/Nthr=0/Free tempWave = powR(Qvec, 2) * Intensity * QRWave
+	matrixOP/Free tempWave = powR(Qvec, 2) * Intensity * QRWave
 	return 4*pi*areaXY(Qvec, TempWave)
 end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
 
+threadsafe Function IR3T_ConvertDACFToInt(Radius,DACF,Qvec)		//Convert DACF (Debye AUtocoreelation Function) to intensity
+	wave Radius, DACF
+	variable Qvec	
+	Make/Free/N=(numpnts(Radius))/D QRWave
+	QRWave=sinc(Qvec*Radius[p])			//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
+	matrixOP/Free tempWave = powR(Radius, 2) * DACF * QRWave
+	return 4*pi*areaXY(Radius, TempWave)
+end
+
+
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+threadsafe Function IR3T_CalcTheorAutocorF(alfa,grValue)
+	variable alfa,grValue
+	make/Free/N=1 pWave
+	pWave[0] = alfa
+	//pWave[1] = gammaR
+	variable value 
+	value = Integrate1D(IR3T_JanCalcOfRInt, 0, grValue , 1, 50, pWave)	 		
+	value = value/(2*pi)
+	return value
+end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 //					here is calculation of gR 
@@ -1336,7 +1377,55 @@ threadsafe Function IR3T_GenerateGRFUsingCosSaxsMorph(Kn,rmat0,rmat1, rmat2, phi
 		endif
 		return NaN
 end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
 
+static Function IR3T_Display1DTempData()
+
+	string OldDf=GetDataFolder(1)
+	NewDataFOlder/O/S root:Packages
+	NewDataFOlder/O/S root:Packages:TwoPhaseSolidModel
+	
+	Wave/Z Kvalues
+	if(!WaveExists(Kvalues))
+		setDataFOlder OldDf	
+		return 0
+	endif
+	Wave DebyeAutoCorFnctRadii
+	Wave DebyeAutoCorFnct
+	DoWIndow DebyeAutocorFnctGraph
+	if(V_Flag)
+		DoWIndow/F DebyeAutocorFnctGraph
+	else
+		Display/K=1 DebyeAutoCorFnct vs DebyeAutoCorFnctRadii as "Debye Autocorrelation Function"
+		DoWIndow/C DebyeAutocorFnctGraph
+		Label/W=DebyeAutocorFnctGraph bottom "Radius [Angstroms]"	
+	endif
+	Wave gR
+	Wave Radii
+	DoWIndow GrFnctGraph
+	if(V_Flag)
+		DoWIndow/F GrFnctGraph
+	else
+		Display/K=1 gR vs Radii as "G(r) Function"
+		DoWIndow/C GrFnctGraph
+		Label/W=GrFnctGraph bottom "Radius [Angstroms]"	
+	endif
+	Wave Kvalues
+	Wave SpectralFk
+	DoWIndow FkFnctGraph
+	if(V_Flag)
+		DoWIndow/F FkFnctGraph
+	else
+		Display/K=1 SpectralFk vs Kvalues as "F(k) Function"
+		DoWIndow/C FkFnctGraph
+		Label/W=FkFnctGraph bottom "K vector [1/Angstroms]"	
+	endif
+	
+
+	setDataFOlder OldDf	
+	
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

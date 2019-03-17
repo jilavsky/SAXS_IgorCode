@@ -836,7 +836,6 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 	endif
 	
 	
-//	if (cmpstr(ctrlName,"QLogScale")==0 || cmpstr(ctrlName,"UseModelData")==0)
 	if ( cmpstr(ctrlName,"UseModelData")==0 || cmpstr(ctrlName,"QLogScale")==0)
 		STRUCT WMSetVariableAction SV_Struct
 		SV_Struct.ctrlName=""
@@ -877,17 +876,9 @@ Function/T IR2P_CleanUpPackagesFolder(FolderList)
 		
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	FolderList = GrepList(FolderList, "root:packages" ,1 , ";" )
+	FolderList = GrepList(FolderList, "root:Packages" ,1 , ";" )
 	FolderList = GrepList(FolderList, "root:raw" ,1 , ";" )
-//		variable i
-//		string tempstr
-//		string newList=""
-//		For(I=0;i<ItemsInList(FolderList , ";" );i+=1)
-//			tempstr=StringFromList(i, FolderList , ";")
-//			if(!(stringmatch(Tempstr,"root:packages:*")||stringmatch(Tempstr,"root:raw:*")))
-//				NewList+=Tempstr+";"
-//			endif
-//		endfor
-//	return newList
+	FolderList = GrepList(FolderList, "root:Raw" ,1 , ";" )
 	return FolderList
 end
 //**********************************************************************************************************
@@ -1511,21 +1502,40 @@ static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTy
 				for(j=0;j<ItemsInList(allRwaves);j+=1)
 					matchX=0
 					matchE=0
-					if(stringmatch(";"+AllWaves, ";*"+LocallyAllowedUserXData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserXData),inf]+";*" )||stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-strlen(LocallyAllowedUserXData)-1]+LocallyAllowedUserXData+";*" )||stringmatch(XwaveType,"x-scaling"))
-						//matchX=1
-						if(RequireErrorWvs)
-							if(stringmatch(";"+AllWaves,";*"+LocallyAllowedUserEData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserEData),inf]+";*" ) || stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves)) - strlen(LocallyAllowedUserEData)-1]+LocallyAllowedUserEData+";*" ))
-								tempResult+= FullFldrName+";"
-								break
+					if(StringMatch(LocallyAllowedUserXData, "az")||StringMatch(LocallyAllowedUserXData, "qz")||StringMatch(LocallyAllowedUserXData, "qy")||StringMatch(LocallyAllowedUserXData, "qx"))		//these areunique, two letters replace on in wave bames... 
+						if(stringmatch(";"+AllWaves, ";*"+LocallyAllowedUserXData+stringFromList(j,allRwaves)[1,inf]+";*" )||stringmatch(XwaveType,"x-scaling"))
+							//matchX=1
+							if(RequireErrorWvs)
+								if(stringmatch(";"+AllWaves,";*"+LocallyAllowedUserEData+stringFromList(j,allRwaves)[1,inf]+";*" ))
+									tempResult+= FullFldrName+";"
+									break
+								else
+									//not the right combination
+								endif
 							else
-								//not the right combination
+								tempResult+= FullFldrName+";"
+								break					
 							endif
 						else
-							tempResult+= FullFldrName+";"
-							break					
-						endif
+							//not the right combination
+						endif					
 					else
-						//not the right combination
+						if(stringmatch(";"+AllWaves, ";*"+LocallyAllowedUserXData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserXData),inf]+";*" )||stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-strlen(LocallyAllowedUserXData)-1]+LocallyAllowedUserXData+";*" )||stringmatch(XwaveType,"x-scaling"))
+							//matchX=1
+							if(RequireErrorWvs)
+								if(stringmatch(";"+AllWaves,";*"+LocallyAllowedUserEData+stringFromList(j,allRwaves)[strlen(LocallyAllowedUserEData),inf]+";*" ) || stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves)) - strlen(LocallyAllowedUserEData)-1]+LocallyAllowedUserEData+";*" ))
+									tempResult+= FullFldrName+";"
+									break
+								else
+									//not the right combination
+								endif
+							else
+								tempResult+= FullFldrName+";"
+								break					
+							endif
+						else
+							//not the right combination
+						endif
 					endif
 				endfor
 				result+=tempresult

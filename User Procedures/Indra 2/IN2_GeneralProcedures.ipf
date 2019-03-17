@@ -526,20 +526,52 @@ end
 
 //**************************************************************** 
 //**************************************************************** 
+//
+//function IN2G_ConvertTologspacing(qwave)//DWS 2017  best moved to a utility .ipf
+//	wave qwave
+//	duplicate/Free qwave, tempqwave
+//	variable pts=numpnts(tempqwave)
+//	variable logqmax=log(tempqwave(pts-1))
+//	if (tempqwave[0]==0)
+//		tempqwave[0]=tempqwave[1]
+//	endif
+//	variable logqmin=log(tempqwave[0])
+//	tempqwave=logqmin+((logqmax-logqmin)/(pts-1))*p
+//	tempqwave=10^tempqwave	
+//	qwave=tempqwave
+//end
 
-function IN2G_ConvertTologspacing(qwave)//DWS 2017  best moved to a utility .ipf
-	wave qwave
-	duplicate/Free qwave, tempqwave
-	variable pts=numpnts(tempqwave)
-	variable logqmax=log(tempqwave(pts-1))
-	if (tempqwave[0]==0)
-		tempqwave[0]=tempqwave[1]
-	endif
-	variable logqmin=log(tempqwave[0])
-	tempqwave=logqmin+((logqmax-logqmin)/(pts-1))*p
-	tempqwave=10^tempqwave	
-	qwave=tempqwave
-end
+
+Function IN2G_ConvertTologspacing(WaveToRebin,MinStep)
+		Wave WaveToRebin
+		Variable  MinStep
+
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//assume WaveToRebin is linearly binned... 
+		if(WaveToRebin[1]-WaveToRebin[0]< MinStep)
+				return 0			//nothing to do. Cannot be changed. 
+		endif
+		variable OldNumPnts=numpnts(WaveToRebin)
+		variable StartX, EndX, CorrectStart, logStartX, logEndX
+		if(WaveToRebin[0]<=0)				//log scale cannot start at 0, so let's pick something close to what user wanted...  
+			WaveToRebin[0] = WaveToRebin[1]/2
+		endif
+		CorrectStart = WaveToRebin[0]
+		if(MinStep>0)
+			StartX = IN2G_FindCorrectLogScaleStart(WaveToRebin[0],WaveToRebin[numpnts(WaveToRebin)-1],OldNumPnts,MinStep)
+		else
+			StartX = CorrectStart
+		endif
+		Endx = StartX +abs(WaveToRebin[numpnts(WaveToRebin)-1] - WaveToRebin[0])
+		make/O/D/FREE/N=(OldNumPnts) tempNewLogDist
+		logstartX=log(startX)
+		logendX=log(endX)
+		tempNewLogDist = logstartX + p*(logendX-logstartX)/numpnts(tempNewLogDist)
+		tempNewLogDist = 10^(tempNewLogDist)
+		startX = tempNewLogDist[0]
+		tempNewLogDist += CorrectStart - StartX
+		WaveToRebin = tempNewLogDist
+end		
 
 //**************************************************************** 
 //**************************************************************** 
@@ -2839,6 +2871,8 @@ Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
 //	print LastMinStep
 	return V_minloc
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
 Function myFindStartValueFunc(w,x1)
 	Wave w		//this is {totalRange, NumSteps,MinStep}
 	Variable x1	//this is startValue where we need to start with log stepping...
@@ -2846,6 +2880,8 @@ Function myFindStartValueFunc(w,x1)
 	variable LastMinStep = 10^(log(X1) + (log(X1+w[0])-log(X1))/w[1]) - 10^(log(X1))
 	return abs(LastMinStep-w[2])
 End
+//**********************************************************************************************************
+//**********************************************************************************************************
 
 //Function IN2G_FindCorrectLogScaleStart(StartValue,EndValue,NumPoints,MinStep)
 //	variable StartValue,EndValue,NumPoints,MinStep

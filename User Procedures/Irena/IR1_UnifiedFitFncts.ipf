@@ -1247,15 +1247,15 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	SetVariable BrFract_ErrorMessage, title=" ",value=root:Packages:Irena_AnalUnifFit:BrFract_ErrorMessage, noedit=1
 	SetVariable BrFract_ErrorMessage, pos={5,215}, size={365,20}, frame=0, help={"Error message, if any"}	
 
-	SetVariable BrFract_dmin, pos={10,240}, size={120,20}, title="dmin = ", help={"Parameter as defined in the references"}, format="%.4g"
+	SetVariable BrFract_dmin, pos={10,240}, size={150,20}, title="Min. dim. dmin =   ", help={"Minimum dimension of the aggregate"}, format="%.4g"
 	SetVariable BrFract_dmin, variable=root:Packages:Irena_AnalUnifFit:BrFract_dmin, noedit=1,limits={-inf,inf,0}
-	SetVariable BrFract_c, pos={170,240}, size={120,20}, title="c =     ", help={"Parameter as defined in the references"}, format="%.4g"
+	SetVariable BrFract_c, pos={170,240}, size={150,20}, title="Connectivity dim. c = ", help={"Connectivity dimension of the aggregate"}, format="%.4g"
 	SetVariable BrFract_c, variable=root:Packages:Irena_AnalUnifFit:BrFract_c, noedit=1,limits={-inf,inf,0}
-	SetVariable BrFract_z, pos={10,260}, size={120,20}, title="z =      ", help={"Parameter as defined in the references"}, format="%.4g"
+	SetVariable BrFract_z, pos={10,260}, size={150,20}, title="Degree of agg. z =", help={"Degree of aggregation, 1+G2/G1"}, format="%.4g"
 	SetVariable BrFract_z, variable=root:Packages:Irena_AnalUnifFit:BrFract_z, noedit=1,limits={-inf,inf,0}
-	SetVariable BrFract_fBr, pos={170,260}, size={120,20}, title="fBr = ", help={"Parameter as defined in the referecnes"}, format="%.4g"
+	SetVariable BrFract_fBr, pos={170,260}, size={150,20}, title="Brach fract. Fi (Br) = ", help={"Brach Fraction Phys Rev E, formula 9 "}, format="%.4g"
 	SetVariable BrFract_fBr, variable=root:Packages:Irena_AnalUnifFit:BrFract_fBr, noedit=1,limits={-inf,inf,0}
-	SetVariable BrFract_fM, pos={10,280}, size={120,20}, title="fM =   ", help={"Parameter as defined in the references"}, format="%.4g"
+	SetVariable BrFract_fM, pos={10,280}, size={150,20}, title="Fi (M) =              ", help={"Parameter as defined in the references"}, format="%.4g"
 	SetVariable BrFract_fM, variable=root:Packages:Irena_AnalUnifFit:BrFract_fM, noedit=1,limits={-inf,inf,0}
 
 	SetVariable BrFract_Reference1, title="Ref: ",value=root:Packages:Irena_AnalUnifFit:BrFract_Reference1, noedit=1
@@ -2512,11 +2512,13 @@ Function IR2U_CalculateBranchedMassFr()
 			BrFract_P1 = 0
 	endif
 	if(strlen(SlectedBranchedLevels)>1)
-		BrFract_dmin  =BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)
+		BrFract_dmin  = BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)
 		BrFract_c  =BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2))
 		BrFract_z  =BrFract_G2/BrFract_G1 + 1 			//Greg, 11-24-2018: It should be G2/G1 +1  Karsten figured that out.  If G2 is 0 you still have one primary particle. 
 		BrFract_fBr =(1-(BrFract_G2/BrFract_G1)^(1/(BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)))-1))
-		BrFract_fM  = (1-(BrFract_G2/BrFract_G1)^(1/((BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)))-1))
+		//BrFract_fBr =(1-(BrFract_G2/BrFract_G1)^(1/(BrFract_P2/BrFract_c-1))
+		BrFract_fM  = (1-(BrFract_G2/BrFract_G1)^(1/(   (BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)  ))-1))
+		//BrFract_fM  = (1-(BrFract_G2/BrFract_G1)^(1/BrFract_dmin - 1))
 	else
 		BrFract_dmin  =BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2)
 		BrFract_c  =BrFract_P2/(BrFract_B2*BrFract_Rg2^(BrFract_P2)/(exp(gammln(BrFract_P2/2))*BrFract_G2))
@@ -2952,7 +2954,7 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 		Plotdummy=1//cursors are used to determine  the limits of extensions.  tests importance of extensions.
 		extrapts=1000
 		dummyQwave=lowq+maxqback*p/extrapts
-		IN2G_ConvertTologspacing(DummyQwave)
+		IN2G_ConvertTologspacing(DummyQwave,0)
 		IR2U_UnifiedBtwnLevls_DWS(DummyQwave,dummyRwave, SelectedBLevel,SelectedQLevel)
 		DummyRwave*=DummyQwave^2
 		invariant=areaXY(DummyQwave, DummyRwave)
