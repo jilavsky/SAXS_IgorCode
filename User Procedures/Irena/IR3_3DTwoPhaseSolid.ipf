@@ -59,7 +59,7 @@ Function IR3T_TwoPhaseControlPanel()
 	string UserNameString=""
 	string XUserLookup="r*:q*;"
 	string EUserLookup="r*:s*;"
-	IR2C_AddDataControls("TwoPhaseSolidModel","TwoPhaseSystems","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,0)
+	IR2C_AddDataControls("TwoPhaseSolidModel","TwoPhaseSystems","DSM_Int;M_DSM_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,0)
 	//CheckBox UseModelData disable=3
 	
 	//SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:TwoPhaseSolidModel:RebinDataTo, noproc
@@ -91,7 +91,7 @@ Function IR3T_TwoPhaseControlPanel()
 	SetVariable SurfaceToVolumeRatio,pos={230,250},size={150,16},title="Surf/Vol Ratio",noproc, help={"Surface To VolumeRatio, calculated from extrapolated data when possible"}
 
 
-	SetVariable BoxSideSize,limits={100,10000,50},value= root:Packages:TwoPhaseSolidModel:BoxSideSize, proc=IR3T_SetVarProc
+	SetVariable BoxSideSize,limits={100,100000,50},value= root:Packages:TwoPhaseSolidModel:BoxSideSize, proc=IR3T_SetVarProc
 	SetVariable BoxSideSize,pos={10,265},size={200,16},title="Box size [A]           ", help={"Physical size of the box for modeling in Angstroms"}
 
 	SetVariable BoxResolution,limits={10,500,50},proc=IR3T_SetVarProc, value= root:Packages:TwoPhaseSolidModel:BoxResolution
@@ -298,7 +298,8 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 					IR3T_ExtrapolateHighQ()
 			endif
 			if(StringMatch(ba.ctrlName, "GetHelp" ))
-					print "Fix IR3T_TwoPhaseButtonProc to do what it is suppose to do..."
+				//Open www manual with the right page
+				IN2G_OpenWebManual("Irena/TwoPhaseSolid.html")
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DModel" ))
 					IR3T_CalculateTwoPhaseSolid()
@@ -1014,18 +1015,32 @@ Function IR3T_AppendModelIntToGraph()
 		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
 		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
 		Wave TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
-		if(WaveExists(PDFQWv))
+		Wave QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
+//		if(WaveExists(PDFQWv))
+//			//need to renormalzie this together...
+//			variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
+//			variable InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
+//			PDFIntensityWv*=InvarData/InvarModel
+//			CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
+//			if(V_flag==0)
+//				AppendToGraph/W=TwoPhaseSystemData  PDFIntensityWv vs PDFQWv
+//			endif
+//			ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
+//			ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
+//			ModifyGraph msize(PDFIntensityWv)=3
+//		endif
+		if(WaveExists(TheoreticalIntensityDACF))
 			//need to renormalzie this together...
-			variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
+			variable InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF )
 			variable InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
-			PDFIntensityWv*=InvarData/InvarModel
-			CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
+			TheoreticalIntensityDACF*=InvarData/InvarModel
+			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
 			if(V_flag==0)
-				AppendToGraph/W=TwoPhaseSystemData  PDFIntensityWv vs PDFQWv
+				AppendToGraph/W=TwoPhaseSystemData  TheoreticalIntensityDACF vs QvecTheorIntensityDACF
 			endif
-			ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
-			ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
-			ModifyGraph msize(PDFIntensityWv)=3
+			ModifyGraph lstyle(TheoreticalIntensityDACF)=9,lsize(TheoreticalIntensityDACF)=3,rgb(TheoreticalIntensityDACF)=(1,16019,65535)
+			ModifyGraph mode(TheoreticalIntensityDACF)=4,marker(TheoreticalIntensityDACF)=19
+			ModifyGraph msize(TheoreticalIntensityDACF)=3
 		endif
 	endif
 

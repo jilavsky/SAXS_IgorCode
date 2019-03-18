@@ -176,7 +176,7 @@ Function IR3N_AniSysButtonProc(ba) : ButtonControl
 			endif
 			if(StringMatch(ba.ctrlName, "FitPeak" ))
 					IR3N_FitHOPOnDataData()
-					//to test original code reusltrs, uncomment next 3 lines... 
+					//to test original code results, uncomment next 3 lines... 
 					//Wave OriginalIntensity = root:Packages:AnisotropicSystems:OriginalIntensity
 					//Wave OriginalAZvector = root:Packages:AnisotropicSystems:OriginalAZvector
 					//IR3N_HOP(OriginalIntensity,OriginalAZvector)
@@ -246,7 +246,7 @@ end
 //*****************************************************************************************************************
 //******************************************************************************************************************************************************
 
-Function IR3N_FitHOPOnDataData()
+static Function IR3N_FitHOPOnDataData()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:AnisotropicSystems
 
@@ -359,7 +359,7 @@ Function IR3N_FitHOPOnDataData()
 end
 ///******************************************************************************************
 ///******************************************************************************************
-Function IR3N_CopyAndGraphInputData()
+static Function IR3N_CopyAndGraphInputData()
 	//this function graphs data into the various graphs as needed
 	
 	string oldDf=GetDataFolder(1)
@@ -409,7 +409,7 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR3N_GraphInputData()
+static Function IR3N_GraphInputData()
 
 	PauseUpdate; Silent 1		// building window...
 	String fldrSav= GetDataFolder(1)
@@ -452,7 +452,7 @@ end
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-Function IR3N_InitAnisotropicSystems()
+static Function IR3N_InitAnisotropicSystems()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string OldDf=GetDataFolder(1)
@@ -483,7 +483,7 @@ Function IR3N_InitAnisotropicSystems()
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR3N_HOP(R_sam,Az_sam)			//original provided code... Can bve tested 
+static Function IR3N_HOP(R_sam,Az_sam)			//original provided code... Can bve tested 
 	//Calculates Hermans Orientation Parameter
 	//P. C. van der Heijden, L. Rubatat, O. Diat, Macromolecules 2004, 37, 5327.
 	//Check L.E. Alexander, R.J. Roe, etc.
