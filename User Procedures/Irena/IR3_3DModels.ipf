@@ -137,6 +137,7 @@ Function IR3A_FractalAggregatePanel()
 	NewPanel /K=1 /W=(5,20,395,680) as "Fractal Aggregate Model"
 	DoWindow/C FractalAggregatePanel
 	TitleBox MainTitle title="\Zr200Mass Fractal Aggregate model",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
+	Button GetHelp,pos={305,50},size={80,15},fColor=(65535,32768,32768), proc=IR3A_PanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}	//<<< fix button to help!!!
 	//COPY FROM IR2U_UnifiedEvaPanelFnct()
 	Checkbox  CurrentResults, pos={10,52}, size={50,15}, variable =root:packages:AggregateModeling:CurrentResults
 	Checkbox  CurrentResults, title="Current Unified Fit",mode=1,proc=IR3A_CheckProc
@@ -1950,6 +1951,10 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlName,"Display1DData"))
 				IR3A_Display1DIntensity()
+			endif
+			if(StringMatch(ba.ctrlName, "GetHelp" ))
+				//Open www manual with the right page
+				IN2G_OpenWebManual("Irena/3DAggregate.html")
 			endif
 
 
