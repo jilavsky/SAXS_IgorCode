@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+#pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.30
+#pragma version=2.31
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -11,6 +11,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.31 fixed IR1A_UnifiedCalcIntOne for when extension of data for SMR data requires extension, failed for rtGlobals=3
 //2.30 combined with smaller ipf files: IR1_Unified_SaveExport.ipf
 //		IR1_UnifiedSaveToXLS.ipf, and IR1_Unified_Fit_Fncts2.ipf
 //2.26 fixes to IR2U_CalculateBranchedMassFr() per Greg's updated instructions. 
@@ -224,7 +225,7 @@ Function IR1A_UnifiedCalculateIntensity()
 	variable i
 	
 	for(i=1;i<=NumberOfLevels;i+=1)	// initialize variables;continue test
-		IR1A_UnifiedCalcIntOne(i)
+		IR1A_UnifiedCalcIntOne(i, UnifiedFitIntensity, UnifiedFitQvector)
 		Wave TempUnifiedIntensity
 		UnifiedFitIntensity+=TempUnifiedIntensity
 	endfor								
@@ -250,12 +251,12 @@ end
 //****************************************************************************************************************
 //****************************************************************************************************************
 
-Function IR1A_UnifiedCalcIntOne(level)
+Function IR1A_UnifiedCalcIntOne(level, OriginalIntensity, OriginalQvector)
 	variable level
-	
-	setDataFolder root:Packages:Irena_UnifFit
 	Wave OriginalIntensity
 	Wave OriginalQvector
+	
+	setDataFolder root:Packages:Irena_UnifFit
 	
 	Duplicate/O OriginalIntensity, TempUnifiedIntensity
 	Duplicate /O OriginalQvector, QstarVector
@@ -814,7 +815,7 @@ Function IR1A_UpdateUnifiedLevels(level, overwride)
 		string FitIntName="Level"+num2str(Level)+"Unified"
 		Wave FitIntIQ4=$("Level"+num2str(Level)+"UnifiedIQ4")
 		string FitIntNameIQ4="Level"+num2str(Level)+"UnifiedIQ4"
-		IR1A_UnifiedCalcIntOne(level)
+		IR1A_UnifiedCalcIntOne(level, OriginalIntensity, OriginalQvector)
 		Wave TempUnifiedIntensity=root:Packages:Irena_UnifFit:TempUnifiedIntensity
 		NVAR UseSMRData=root:Packages:Irena_UnifFit:UseSMRData
 		NVAR SlitLengthUnif=root:Packages:Irena_UnifFit:SlitLengthUnif

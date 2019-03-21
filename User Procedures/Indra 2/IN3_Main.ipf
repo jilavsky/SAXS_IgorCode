@@ -1119,6 +1119,7 @@ Function IN3_MainPanel()
 	SetVariable SampleThickness,pos={5,285},size={280,22},title="\Zr120Sample Thickness [mm] =", bodyWidth=100
 	SetVariable SampleThickness ,proc=IN3_ParametersChanged
 	SetVariable SampleThickness,limits={0,Inf,0},variable= root:Packages:Indra3:SampleThickness, noedit=(CalculateThickness||CalculateWeight)//, frame=!(CalculateThickness&&CalculateWeight)
+	SetVariable OverideSampleThickness ,pos={555,285}
 
 	Button RecoverDefault,pos={290,283},size={80,20} ,proc=IN3_InputPanelButtonProc,title="Spec value", help={"Reload original value from spec record"}
 

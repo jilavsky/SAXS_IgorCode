@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.12
+#pragma version =1.13
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.13 minor fix for MSAXS correction graphing. 
 //1.12 fixed problem when PD_range used to create MyCOlorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
 //1.11 modfiied IN3_RecalcSubtractSaAndBlank to avoid negative data.
 //1.10  removed unused functions
@@ -1137,9 +1138,11 @@ Function IN3_FormatMSAXSGraph()
 //		variable start = BinarySearch(R_Qvec, Qmin )+(gnoise(1) <1 ? 0 : 1)
 //		variable end1 = BinarySearch(R_Qvec, Qmax )+(gnoise(1) <1 ? 0 : 1)
 		variable start = round(BinarySearchInterp(R_Qvec, Qmin ))
+		start = start-8
+		start = start>1 ? start : 1
 		variable end1 = ROUND(BinarySearchInterp(R_Qvec, Qmax ))
 //		PRINT START, "   ", end1
-		SetAxis/W=USAXSDataReduction#MSAXSGraph bottom R_Qvec[start-8],R_Qvec[end1+8]
+		SetAxis/W=USAXSDataReduction#MSAXSGraph bottom R_Qvec[start],R_Qvec[end1+8]
 		Cursor/P/W=USAXSDataReduction#MSAXSGraph  A  R_Int  start
 		Cursor/P/W=USAXSDataReduction#MSAXSGraph  B  R_Int  end1
 		SetWindow USAXSDataReduction, hook(named)=IN3_MSAXSHookFunction

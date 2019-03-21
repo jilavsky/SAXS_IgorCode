@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.2
+#pragma version=1.21
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.21 fixe3s to 12ID support, unexpected stuff in theor configuration file found. 
 //version 1.2 adds support for 12ID-C SAXS camera with Gold detector
 //version 1.1 adds support for ALS RSoXS data - sfot X-ray energy beamlione at ALS. 
 //version 1.0 original release, Instrument support for SSRLMatSAXS
@@ -1018,7 +1019,7 @@ Function NI1_12IDCReadScriptFile()
 			if(strlen(lineStr)<=0)
 				break
 			endif
-			if(strsearch(lineStr,"goldaverage",0)>=0)
+			if(strsearch(lineStr,"goldaverage",0)>=0 && !StringMatch(lineStr[0], "#"))
 				Prompt YesNoStrParams, "Load beamline parameters in Nika? (overwrites any existing params!)", popup, "No;Yes;"
 				Prompt YesNoStrMask, "Create beamline defined mask? (overwrites any existing mask!)", popup, "No;Yes;"
 				DoPrompt "Beamline params & mask found, load in Nika?", YesNoStrParams, YesNoStrMask
@@ -1092,7 +1093,7 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 		Circles[NumLines][0]=str2num(stringFromList(0,TempStr,"@"))
 		Circles[NumLines][1]=str2num(stringFromList(0,TempStr2,","))
 		Circles[NumLines][2]=str2num(stringFromList(1,TempStr2,","))
-		print "Found Circular mask with radius of: "+num2str(Circles[NumLines][0])+" ; and centers "+num2str(Circles[NumLines][1])+" ; "+num2str(Circles[NumLines][21])
+		print "Found Circular mask with radius of: "+num2str(Circles[NumLines][0])+" ; and centers "+num2str(Circles[NumLines][1])+" ; "+num2str(Circles[NumLines][2])
 		NumLines+=1
 	while(tempEnd>0 && strlen(TempStr)>1 )
 	SetDataFolder	OldDf
@@ -1121,13 +1122,14 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 		//this is all enable mask... 
 		//Now we need to add masked off areas... 
 		print "Created new Mask based on beamline command file"
+		Rectangles = Rectangles[p][q]<dimsize(Mask,0) ? Rectangles[p][q] : Rectangles[p][q]-1			//Staff uses 2048 index for mask, even though image is 0 to 2047 only. And now, they do NOT use 1 based pixel counting, they use 0 for first pixel... 
 		For(i=0;i<dimSize(Rectangles,0);i+=1)
 			Mask[Rectangles[i][0],Rectangles[i][2]][Rectangles[i][1],Rectangles[i][3]] = 0
 			print "Added Rectangular mask with corners of: "+num2str(Rectangles[i][0])+" ; "+num2str(Rectangles[i][1])+" ; "+num2str(Rectangles[i][2])+" ; "+num2str(Rectangles[i][3])
 		endfor
 		For(i=0;i<dimSize(Circles,0);i+=1)
 			Mask = sqrt((p-Circles[i][1])^2+(q-Circles[i][2])^2)>Circles[i][0] ? Mask[p][q] : 0
-			print "Added Circular mask with radius of: "+num2str(Circles[i][0])+" ; and centers "+num2str(Circles[i][1])+" ; "+num2str(Circles[i][21])
+			print "Added Circular mask with radius of: "+num2str(Circles[i][0])+" ; and centers "+num2str(Circles[i][1])+" ; "+num2str(Circles[i][2])
 		endfor
 		NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
 		UseMask=1
@@ -1225,7 +1227,7 @@ Function NI1_12IDCReadSpecFile(NumFilesExpected)
 		// trim the waves to final sizes:
 		NI1_12IDCredimSpecFileArrays(count)
 	else
-		Close refNum
+		//Close refNum
 		abort
 	endif
 	NewPath/O/Q Convert2Dto1DDataPath, pathInforStrL		

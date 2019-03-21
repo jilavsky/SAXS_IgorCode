@@ -66,16 +66,18 @@ Function IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversamp
 	VoxDistanceWave = p*(RadMax-RadMin)/NumRSteps	+ 1 						//linear distance space... 
 	//testing shows, that linear radius binning is better. We get better behavior at high q values. 
 	//IN2G_ConvertTologspacing(VoxDistanceWave, 0.5)							//sets k scaling on log-scale...	
-	Make/FREE/N=0 Distances
+	Make/FREE/N=0 Distances, Distances1
 	Make/Free/N=	(1e5) Distancestmp
 	Print "Calculating distances "
 	StartTicks=ticks	
-	variable endDo
+	variable endDo, startPoint
 	do						
 		// this uses at least 1e5 points - and up to 1e7 points.
 		// but also always limits the run to 20 seconds. Should adjust dynamically quality fo calculations for cpu and complexity of the problem. 
 		multithread  Distancestmp =  IR3T_FindNextDistance(Use3DWave, IsoValue)
-		concatenate/NP/O {Distances, Distancestmp}, Distances
+		startPoint = numpnts(Distances)
+		Redimension /N=(numpnts(Distances)+numpnts(Distancestmp)) Distances
+		Distances[startPoint,numpnts(Distances)-1 ] = Distancestmp[p-startPoint]
 		endDo = ((ticks-StartTicks)/60 > 20 ) || (numpnts(Distances)>1e7)
 	while(!endDo)
 	print "Done calculating distacnes after "+num2str((ticks-StartTicks)/60)
@@ -90,6 +92,11 @@ Function IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversamp
 	InsertPoints 0, 1, RadiiWave, PDFWave
 	PDFWave[0]=0
 	RadiiWave[0]=0
+	
+	//this is questionable here - these "radii waves" are actually distances, not radii but steps. Do we need to divide this by two??? 
+	RadiiWave/=2
+	//this surely works very well now for Fractal aggregate, but the hell if I understand  this!!!!!
+	
 	//remove tailing 0 values from calculations. Note: leaves last 0 point in there... 
 	IR3T_RemoveTailZeroes(PDFwave,RadiiWave)						//remove end 0 values, just waste to drag around and plot. 
 	//Duplicate/O RadiiWave, GammaWave
@@ -98,7 +105,7 @@ Function IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversamp
 	//normalize the PDF
 	variable areaPDF= areaXY(RadiiWave, PDFWave)		
 	PDFWave/=areaPDF
-	//this is nto needed and for now not useful. 
+	//this is not needed and for now not useful. 
 	//Duplicate/O PDFWave, GammaWave
 	//GammaWave = PDFWave/(4*pi*RadiiWave^2)
 	//GammaWave[0] = GammaWave[1]
@@ -191,7 +198,7 @@ Function IR3T_ConvertToVoxelGram(ListWv, primaryradius)
 	wave ListWv
 	variable primaryradius
 	
-	if(primaryradius<2 || primaryradius>20)
+	if(primaryradius<2 || primaryradius>12)
 		Abort "primaryradius parameter passed to IR3T_ConvertToVoxelGram makes no sense." 
 	endif
 	//get max size needed... 
@@ -224,8 +231,6 @@ Function IR3T_FindNearestPrimeSize(ValueIn)
 	index = BinarySearch(PrimeList, ValueIn )
 	return PrimeList[index+1]
 end
-//**************************************************************************************************************************************************************
-//**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************

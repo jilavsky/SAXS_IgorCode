@@ -381,7 +381,7 @@ Function IR2GP_CalculateGPlevel(Qvector,Intensity,Par )
 	wave Qvector, Intensity
 	STRUCT GunierPorodLevel &Par
 
-//for non spherical (infinitely large) objects with two Guinier areas - (s1!=0, s1!=0)
+//for non spherical (infinitely large) objects with two Guinier areas - (s1!=0, s2=0)
 // for Q<Q2		: 	I(Q) = G2/Q2^s2 * exp(-Q^2 * Rg2^2 / (3-s2))
 // for Q<Q1		: 	I(Q) = G1/Q^s1 * exp(-Q^2 * Rg1^2 / (3-s1))
 // for Q>=Q1 	: 	I(Q) = D / Q^d
@@ -424,7 +424,7 @@ end
 
 Function IR2GP_CalculateGPValue(Qval,Pval,Rg1,Gval,S1,Rg2,S2,Background)
 	variable Qval,Pval,Rg1,Gval,S1,Rg2,S2,Background
-//for non spherical (infinitely large) objects with two Guinier areas - (s1!=0, s1!=0)
+//for non spherical (infinitely large) objects with two Guinier areas - (s1!=0, s2=0)
 // for Q<Q2		: 	I(Q) = G2/Q2^s2 * exp(-Q^2 * Rg2^2 / (3-s2))
 // for Q<Q1		: 	I(Q) = G1/Q^s1 * exp(-Q^2 * Rg1^2 / (3-s1))
 // for Q>=Q1 	: 	I(Q) = D / Q^d
