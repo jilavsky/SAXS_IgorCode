@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.21
+#pragma version=1.22
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,7 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.21 fixe3s to 12ID support, unexpected stuff in theor configuration file found. 
+//1.22 added all options to mask reading of goldavergae command line, lots of options. 
+//1.21 fixes to 12ID support, unexpected stuff in theor configuration file found. 
 //version 1.2 adds support for 12ID-C SAXS camera with Gold detector
 //version 1.1 adds support for ALS RSoXS data - sfot X-ray energy beamlione at ALS. 
 //version 1.0 original release, Instrument support for SSRLMatSAXS
@@ -1021,7 +1022,7 @@ Function NI1_12IDCReadScriptFile()
 			endif
 			if(strsearch(lineStr,"goldaverage",0)>=0 && !StringMatch(lineStr[0], "#"))
 				Prompt YesNoStrParams, "Load beamline parameters in Nika? (overwrites any existing params!)", popup, "No;Yes;"
-				Prompt YesNoStrMask, "Create beamline defined mask? (overwrites any existing mask!)", popup, "No;Yes;"
+				Prompt YesNoStrMask, "NOT SUGGESTED: Create beamline defined mask? (overwrites any existing mask!)", popup, "No;Yes;"
 				DoPrompt "Beamline params & mask found, load in Nika?", YesNoStrParams, YesNoStrMask
 				if(V_Flag)
 					abort
@@ -1047,58 +1048,16 @@ end
 Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 	string CommandLine
 	variable MakeMask
-	
-	string OldDf=getDataFolder(1)
-	SetDataFolder root:Packages:Nika_12IDCLookups
 
+//	string CommandLine="goldaverage -o Averaged_norm -y -p 0.1465 -d 3775 -Z 10 -k $normval -e $energyval -r 0,0,2048,2048 -C1090@1024,1000 -r753,300,766,232 -r748,0,775,232 -r0,303,2048,318 -r1520,310,1545,440 -r90,1120,170,1177 -c14@774,309 774 311 $filename"
+//	CommandLine="goldaverage -o Averaged_norm -y -p 0.1465 -d 3775 -Z 10 -k $normval -e $energyval -rect 120x80@20,30  -a10-100@300,300 -R753,300,766,232 -A 100-200@500,500 774 311 $filename"
 	Variable tempStart, tempEnd, NumLines, i
 	String TempStr, TempStr2
-	
-	// goldaverage -o Averaged_norm -y -p 0.175 -d 2345 -Z 200 -k $normval -e $energyval -r146,915,158,980 -r143,980,164,1024 -r 0,908,1024,914 -c6@166,907 -c12@154,911 154 911 $filename
-	//need to create list of items, first rectangles
-	Make/O/N=(0,4) Rectangles
 	tempStart = 0
-	NumLines = 0
-	Do
-		tempStart=strsearch(CommandLine, "-r", tempStart+1)
-		tempEnd = strsearch(CommandLine, " ", tempStart+3)
-		if(tempEnd<0 || tempStart<0)
-			BREAk
-		endif	
-		TempStr = CommandLine[tempStart,tempEnd]
-		TempStr = ReplaceString("-r",TempStr,"")+","
-		redimension/N=(NumLines+1, 4) Rectangles
-		Rectangles[NumLines][0]=str2num(stringFromList(0,TempStr,","))
-		Rectangles[NumLines][1]=str2num(stringFromList(1,TempStr,","))
-		Rectangles[NumLines][2]=str2num(stringFromList(2,TempStr,","))
-		Rectangles[NumLines][3]=str2num(stringFromList(3,TempStr,","))
-		print "Found Rectangular mask with corners of: "+num2str(Rectangles[NumLines][0])+" ; "+num2str(Rectangles[NumLines][1])+" ; "+num2str(Rectangles[NumLines][2])+" ; "+num2str(Rectangles[NumLines][3])
-		NumLines+=1
-	while(tempEnd>0 && strlen(TempStr)>1 )
 
-	//need to create list of items, second circles
-	Make/O/N=(0,3) Circles
-	tempStart = 0
-	NumLines = 0
-	Do
-		tempStart=strsearch(CommandLine, "-c", tempStart+1)
-		tempEnd = strsearch(CommandLine, " ", tempStart+3)
-		if(tempEnd<0 || tempStart<0)
-			BREAk
-		endif	
-		TempStr = CommandLine[tempStart,tempEnd]
-		TempStr = ReplaceString("-c",TempStr,"")+","
-		TempStr2 = stringFromList(1,TempStr,"@")
-		redimension/N=(NumLines+1, 3) Circles
-		Circles[NumLines][0]=str2num(stringFromList(0,TempStr,"@"))
-		Circles[NumLines][1]=str2num(stringFromList(0,TempStr2,","))
-		Circles[NumLines][2]=str2num(stringFromList(1,TempStr2,","))
-		print "Found Circular mask with radius of: "+num2str(Circles[NumLines][0])+" ; and centers "+num2str(Circles[NumLines][1])+" ; "+num2str(Circles[NumLines][2])
-		NumLines+=1
-	while(tempEnd>0 && strlen(TempStr)>1 )
-	SetDataFolder	OldDf
 	if(MakeMask)
-		//here we will make mask... We need image to make copy of. 
+		string OldDf=GetDataFOlder(1)
+		//go to the right data folder... Create Mask image to work on... 
 		SetDataFolder	root:Packages:Convert2Dto1D:
 		Wave/Z CCDImage=root:Packages:Convert2Dto1D:CCDImageToConvert
 		if(!WaveExists(CCDImage))
@@ -1120,25 +1079,401 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 		Mask = (Mask > 10) ? 1 : 0
 		Redimension/B/U Mask
 		//this is all enable mask... 
-		//Now we need to add masked off areas... 
-		print "Created new Mask based on beamline command file"
-		Rectangles = Rectangles[p][q]<dimsize(Mask,0) ? Rectangles[p][q] : Rectangles[p][q]-1			//Staff uses 2048 index for mask, even though image is 0 to 2047 only. And now, they do NOT use 1 based pixel counting, they use 0 for first pixel... 
-		For(i=0;i<dimSize(Rectangles,0);i+=1)
-			Mask[Rectangles[i][0],Rectangles[i][2]][Rectangles[i][1],Rectangles[i][3]] = 0
-			print "Added Rectangular mask with corners of: "+num2str(Rectangles[i][0])+" ; "+num2str(Rectangles[i][1])+" ; "+num2str(Rectangles[i][2])+" ; "+num2str(Rectangles[i][3])
-		endfor
-		For(i=0;i<dimSize(Circles,0);i+=1)
-			Mask = sqrt((p-Circles[i][1])^2+(q-Circles[i][2])^2)>Circles[i][0] ? Mask[p][q] : 0
-			print "Added Circular mask with radius of: "+num2str(Circles[i][0])+" ; and centers "+num2str(Circles[i][1])+" ; "+num2str(Circles[i][2])
-		endfor
+	
+		
+		Do
+			tempStart=strsearch(CommandLine, "-", tempStart+1)
+			if(tempStart<0)
+				break
+			endif
+			TempStr = CommandLine[tempStart+1,tempStart+30]
+			if(GrepString(TempStr, "^rect"))					//rectangle, full word
+				TempStr =TempStr[4,inf]
+				tempEnd = strsearch(TempStr, " ", 5)
+				TempStr = TempStr[0,tempEnd]
+				print "Added Masked rect  :  "+TempStr
+				NI1_12IDC_AddRectangleMask(Mask,TempStr,1)
+			elseif(GrepString(TempStr, "^r"))					//rectangle, short
+				TempStr =TempStr[1,inf]
+				tempEnd = strsearch(TempStr, " ", 2)
+				TempStr = TempStr[0,tempEnd]
+				print "Added Masked rect  :  "+TempStr
+				NI1_12IDC_AddRectangleMask(Mask,TempStr,1)
+			elseif(GrepString(TempStr, "^negrect"))			//negative rectangle, full negrect
+				TempStr =TempStr[7,inf]
+				tempEnd = strsearch(TempStr, " ", 9)
+				TempStr = TempStr[0,tempEnd]
+				print "Added unmasked rect  : "+TempStr
+				NI1_12IDC_AddRectangleMask(Mask,TempStr,0)
+			elseif(GrepString(TempStr, "^R"))					//negative rectangle, short negrect
+				TempStr =TempStr[1,inf]
+				tempEnd = strsearch(TempStr, " ", 2)
+				TempStr = TempStr[0,tempEnd]
+				print "Added unmasked rect  : "+TempStr
+				NI1_12IDC_AddRectangleMask(Mask,TempStr,0)
+			elseif(GrepString(TempStr, "^circle"))			//circle, full word
+				TempStr =TempStr[6,inf]
+				tempEnd = strsearch(TempStr, " ", 8)
+				TempStr = TempStr[0,tempEnd]
+				print "Added Masked circle  : "+TempStr
+				NI1_12IDC_AddCircleMask(Mask,TempStr,1)
+			elseif(GrepString(TempStr, "^c"))					//circle, short
+				TempStr =TempStr[1,inf]
+				tempEnd = strsearch(TempStr, " ", 3)
+				TempStr = TempStr[0,tempEnd]
+				print "Added Masked circle  : "+TempStr
+				NI1_12IDC_AddCircleMask(Mask,TempStr,1)
+			elseif(GrepString(TempStr, "^negcircle"))		//negcircle, full word	
+				TempStr =TempStr[9,inf]
+				tempEnd = strsearch(TempStr, " ", 11)
+				TempStr = TempStr[0,tempEnd]
+				print "Added unmasked circle  : "+TempStr
+				NI1_12IDC_AddCircleMask(Mask,TempStr,0)
+			elseif(GrepString(TempStr, "^C"))							//negcircle, short	
+				TempStr =TempStr[1,inf]
+				tempEnd = strsearch(TempStr, " ", 3)
+				TempStr = TempStr[0,tempEnd]
+				print "Added unMasked Circle  : "+TempStr
+				NI1_12IDC_AddCircleMask(Mask,TempStr,0)
+			elseif(GrepString(TempStr, "^annulus"))					//annulus
+				TempStr =TempStr[7,inf]
+				tempEnd = strsearch(TempStr, " ", 10)
+				TempStr = TempStr[0,tempEnd]
+				print "Added Masked annulus  : "+TempStr
+				NI1_12IDC_AddAnnulusMask(Mask,TempStr,1)
+			elseif(GrepString(TempStr, "^a"))							//annulus
+				TempStr =TempStr[1,inf]
+				tempEnd = strsearch(TempStr, " ", 3)
+				TempStr = TempStr[0,tempEnd]
+				print "Added Masked a  : "+TempStr
+				NI1_12IDC_AddAnnulusMask(Mask,TempStr,1)
+			elseif(GrepString(TempStr, "^negannulus"))				//negannulus
+				TempStr =TempStr[10,inf]
+				tempEnd = strsearch(TempStr, " ", 13)
+				TempStr = TempStr[0,tempEnd]
+				print "Added unMasked annulus  : "+TempStr
+				NI1_12IDC_AddAnnulusMask(Mask,TempStr,0)
+			elseif(GrepString(TempStr, "^A"))							//negannulus
+				TempStr =TempStr[1,inf]
+				tempEnd = strsearch(TempStr, " ", 3)
+				TempStr = TempStr[0,tempEnd]
+				print "Added unMasked Annulus  : "+TempStr
+				NI1_12IDC_AddAnnulusMask(Mask,TempStr,0)
+			else
+				//print "Unknown command to creat emask : "+TempStr
+			endif
+		while(tempStart>0)
+		
 		NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
 		UseMask=1
 		SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
 		CurrentMaskFileName = "12ID-C beamline mask"
+
 		SetDataFolder	OldDf
-		
+	
+endif	
+	
+
+
+	
+//	string OldDf=getDataFolder(1)
+//	SetDataFolder root:Packages:Nika_12IDCLookups
+//
+//	Variable tempStart, tempEnd, NumLines, i
+//	String TempStr, TempStr2
+//	
+//	// goldaverage -o Averaged_norm -y -p 0.175 -d 2345 -Z 200 -k $normval -e $energyval -r146,915,158,980 -r143,980,164,1024 -r 0,908,1024,914 -c6@166,907 -c12@154,911 154 911 $filename
+//	//need to create list of items, first rectangles
+//	Make/O/N=(0,4) Rectangles
+//	tempStart = 0
+//	NumLines = 0
+//	Do
+//		tempStart=strsearch(CommandLine, "-r", tempStart+1)
+//		tempEnd = strsearch(CommandLine, " ", tempStart+3)
+//		if(tempEnd<0 || tempStart<0)
+//			BREAk
+//		endif	
+//		TempStr = CommandLine[tempStart,tempEnd]
+//		TempStr = ReplaceString("-r",TempStr,"")+","
+//		redimension/N=(NumLines+1, 4) Rectangles
+//		Rectangles[NumLines][0]=str2num(stringFromList(0,TempStr,","))
+//		Rectangles[NumLines][1]=str2num(stringFromList(1,TempStr,","))
+//		Rectangles[NumLines][2]=str2num(stringFromList(2,TempStr,","))
+//		Rectangles[NumLines][3]=str2num(stringFromList(3,TempStr,","))
+//		print "Found Rectangular mask with corners of: "+num2str(Rectangles[NumLines][0])+" ; "+num2str(Rectangles[NumLines][1])+" ; "+num2str(Rectangles[NumLines][2])+" ; "+num2str(Rectangles[NumLines][3])
+//		NumLines+=1
+//	while(tempEnd>0 && strlen(TempStr)>1 )
+//
+//	//need to create list of items, second circles
+//	Make/O/N=(0,3) Circles
+//	tempStart = 0
+//	NumLines = 0
+//	Do
+//		tempStart=strsearch(CommandLine, "-c", tempStart+1)
+//		tempEnd = strsearch(CommandLine, " ", tempStart+3)
+//		if(tempEnd<0 || tempStart<0)
+//			BREAk
+//		endif	
+//		TempStr = CommandLine[tempStart,tempEnd]
+//		TempStr = ReplaceString("-c",TempStr,"")+","
+//		TempStr2 = stringFromList(1,TempStr,"@")
+//		redimension/N=(NumLines+1, 3) Circles
+//		Circles[NumLines][0]=str2num(stringFromList(0,TempStr,"@"))
+//		Circles[NumLines][1]=str2num(stringFromList(0,TempStr2,","))
+//		Circles[NumLines][2]=str2num(stringFromList(1,TempStr2,","))
+//		print "Found Circular mask with radius of: "+num2str(Circles[NumLines][0])+" ; and centers "+num2str(Circles[NumLines][1])+" ; "+num2str(Circles[NumLines][2])
+//		NumLines+=1
+//	while(tempEnd>0 && strlen(TempStr)>1 )
+//	SetDataFolder	OldDf
+//	if(MakeMask)
+//		//here we will make mask... We need image to make copy of. 
+//		SetDataFolder	root:Packages:Convert2Dto1D:
+//		Wave/Z CCDImage=root:Packages:Convert2Dto1D:CCDImageToConvert
+//		if(!WaveExists(CCDImage))
+//			DoAlert/T="CCD image not found, we need one to create mask", 0, "In next dialog select any one from tiff files you will be reducing. All we need is correct image size." 
+//			//print "Mask was not created, first load image and then try again"
+//			ImageLoad/P=Convert2Dto1DDataPath/T=tiff/Q/O/N=M_ROIMask 
+//			//Make/O/B/U/N=(1024,1024) root:Packages:Convert2Dto1D:M_ROIMask
+//			if(V_flag==0)		//return 0 if not succesuful.
+//				print "Mask was not created, first load image and then try again"
+//				SetDataFolder	OldDf
+//				return 0
+//			endif
+//			wave M_ROIMask
+//			Redimension/N=(-1,-1,0) 	M_ROIMask			//this is fix for 3 layer tiff files...
+//		else
+//			Duplicate/O CCDImage, root:Packages:Convert2Dto1D:M_ROIMask		
+//		endif
+//		Wave Mask = root:Packages:Convert2Dto1D:M_ROIMask
+//		Mask = (Mask > 10) ? 1 : 0
+//		Redimension/B/U Mask
+//		//this is all enable mask... 
+//		//Now we need to add masked off areas... 
+//		print "Created new Mask based on beamline command file"
+//		Rectangles = Rectangles[p][q]<dimsize(Mask,0) ? Rectangles[p][q] : Rectangles[p][q]-1			//Staff uses 2048 index for mask, even though image is 0 to 2047 only. And now, they do NOT use 1 based pixel counting, they use 0 for first pixel... 
+//		For(i=0;i<dimSize(Rectangles,0);i+=1)
+//			Mask[Rectangles[i][0],Rectangles[i][2]][Rectangles[i][1],Rectangles[i][3]] = 0
+//			print "Added Rectangular mask with corners of: "+num2str(Rectangles[i][0])+" ; "+num2str(Rectangles[i][1])+" ; "+num2str(Rectangles[i][2])+" ; "+num2str(Rectangles[i][3])
+//		endfor
+//		For(i=0;i<dimSize(Circles,0);i+=1)
+//			Mask = sqrt((p-Circles[i][1])^2+(q-Circles[i][2])^2)>Circles[i][0] ? Mask[p][q] : 0
+//			print "Added Circular mask with radius of: "+num2str(Circles[i][0])+" ; and centers "+num2str(Circles[i][1])+" ; "+num2str(Circles[i][2])
+//		endfor
+//		NVAR UseMask = root:Packages:Convert2Dto1D:UseMask
+//		UseMask=1
+//		SVAR CurrentMaskFileName = root:Packages:Convert2Dto1D:CurrentMaskFileName
+//		CurrentMaskFileName = "12ID-C beamline mask"
+//		SetDataFolder	OldDf
+//		
+//	endif
+end
+
+//GOLDAVERAGE (Version 1.4.4)
+//
+//Perform azimuthal averaging of gold data
+//Each input file is averaged to produce a separate output file
+//usage: goldaverage [OPTION]... CX CY GOLDFILE...
+//
+//-d DISTANCE
+//-distance DISTANCE   specify sample-detector distance in mm (default 3050mm)
+//-y
+//-overwrite           force overwriting of duplicate output files
+//-o OUTDIR
+//-output OUTDIR       put output files in this directory (default 'Averaged')
+//-Z OFFSET
+//-offset OFFSET       specify an alternative image intensity offset (default=10)
+//-help                Print extended help information & extra options
+//-b BINSIZE
+//-binsize BINSIZE   specify output bin size in camera pixels (default 1)
+//-l
+//-log               specify logarithmic bin sizes (default linear)
+//-d DISTANCE
+//-detector DISTANCE specify sample-detector distance in mm (default 3050mm)
+//-p PIXELSIZE
+//-pixelsize PIXELSIZE specify camera pixel size (default = 0.098mm, i.e. gold detector)
+//-e ENERGY
+//-energy ENERGY     specify photon energy in keV, overriding value stored in file header
+//-q QBINSIZE
+//-qpix QBINSIZE     specify q bin size (default is calculated from above parameters)
+//-h
+//-header            propagate the 'gold' header into the output file
+//-approxq           use the 'old' style linear approximation for q
+//-rmin MINVAL       specify a minimum bin number to be output (default = 0)
+//-rmax MAXVAL       specify a maximum bin number of be output
+//-labels            output column header labels in the output file
+//-g PLOTCMDFILE
+//-gnuplot PLOTCMDFILE output gnuplot commands to plot the averaged data into 'PLOTCMDFILE'
+//-k NORMVAL
+//-fixedscale NORMVAL override intensity normalization to use a constant 'NORMVAL'
+//-K NORMKEY
+//-headerscale NORMKEY intens norm uses header value (default 'ID12_SCLC1_COUNTS_03')
+//Masking options:
+//
+//The program contains a mask array which governs which pixels are used
+//in calculations.  The mask array is initialised to allow all pixels to
+//be used, and various options can be specified to add and remove regions
+//of pixels from the mask.  Options may be repeated and their cumulative effect
+//is governed by the order in which they are given.
+//
+//-m maskfile
+//-mask maskfile                 specify the name of a mask file and mask out those pixels
+//                               masked in the maskfile.  The mask file can either be another
+//                               gold image file or an RGB TIFF file
+//                               If a TIFF file is used, any pixel whose RGB value is not a
+//                               shade of gray will be considered masked.  This allows you to
+//                               use goldconvert to convert a gold image file into a TIFF file
+//                               which can then be edited with an image editor (such as the GIMP)
+//                               where you can 'paint' the pixels that you want to exclude in some
+//                               color (say red) while leaving the original gold image visible as
+//                               a grayscale image in the unmasked pixel positions
+//
+//-M maskfile
+//-negmask maskfile              specify the name of a mask file and unmask those pixels
+//                               masked in the maskfile.  The format and interpretation of the
+//                               mask file is described above
+//
+//-n
+//-invert                        invert the current mask.  masked pixels become unmasked, and vice
+//                               versa
+//
+//-r rectspec
+//-rect rectspec                 Add a rectangle of masked pixels to the mask.  The rectangle can
+//                               be given in two different forms e.g. '10,15,80,250' specifies a
+//                               rectangle with 10 >= x > 80 and 15 >= y > 250 and
+//                               e.g. '120x80@20,30' specifies a rectangle of width 120 pixels and
+//                               height 80 pixels centered at x=20, y=30
+//                               All coordinates must be integers
+//
+//-R rectspec
+//-negrect rectspec              Remove a rectangle of masked pixels from the mask.  The rectangle
+//                               coordinates are as given above
+//
+//-c radius@xcenter,ycenter
+//-circle radius@xcenter,ycenter Add a circle of masked pixels to the mask.  The circle is specified
+//                               by its radius and its center, which may be floating point
+//                               values
+//
+//-C radius@xcenter,ycenter
+//-negcircle radius@xcenter,ycenter   remove a circle of masked pixels from the mask.
+//
+//-a r1-r2@xcenter,ycenter
+//-annulus r1-r2@xcenter,ycenter Add an annular region of pixels to the mask.  The annulus is
+//                               specified by its inner and outer radii and its center, which
+//                               may be floating point values.
+//-A r1-r2@xcenter,ycenter
+//-negannulus r1-r2@xcenter,ycenter   remove an annular region of masked pixels from the mask
+
+static Function NI1_12IDC_AddAnnulusMask(MaskWave,MaskSpecs,MaskIt)
+		wave MaskWave		//thsi is Mask file
+		string MaskSpecs		//thsi specifying mask location	
+		variable MaskIt			//1 to mask off pixels, 0 to unmask pixels. 
+		//-a r1-r2@xcenter,ycenter
+		//-annulus r1-r2@xcenter,ycenter Add an annular region of pixels to the mask.  The annulus is
+		//                               specified by its inner and outer radii and its center, which
+		//                               may be floating point values.
+		//-A r1-r2@xcenter,ycenter
+		//-negannulus r1-r2@xcenter,ycenter   remove an annular region of masked pixels from the mask
+	variable Dim1Center, Dim2Center, RadiusS, RadiusL
+	string RadiusSpecs = StringFromList(0, MaskSpecs+"@", "@")
+	RadiusS = str2num(StringFromList(0, RadiusSpecs+"-", "-"))
+	RadiusL = str2num(StringFromList(1, RadiusSpecs+"-", "-"))
+	string CenterSpecs=StringFromList(1, MaskSpecs+"@", "@")
+	Dim1Center = str2num(StringFromList(0, CenterSpecs+",", ","))
+	Dim2Center = str2num(StringFromList(1, CenterSpecs+",", ","))
+	if(RadiusS>RadiusL)
+		variable tmp1=RadiusS
+		RadiusS = RadiusL
+		RadiusL = tmp1
+	endif
+
+	Dim1Center = Dim1Center>0 ? Dim1Center : 0
+	Dim2Center = Dim2Center>0 ? Dim2Center : 0
+	Dim1Center = Dim1Center<DimSize(MaskWave,0) ? Dim1Center : DimSize(MaskWave,0)-1
+	Dim2Center = Dim2Center<DimSize(MaskWave,1) ? Dim2Center : DimSize(MaskWave,1)-1
+	if(MaskIt)
+		Multithread MaskWave = (sqrt((p-Dim1Center)^2+(q-Dim2Center)^2)>RadiusS && sqrt((p-Dim1Center)^2+(q-Dim2Center)^2)>RadiusL) ? MaskWave[p][q] : 0
+	else
+		Multithread MaskWave = (sqrt((p-Dim1Center)^2+(q-Dim2Center)^2)>RadiusS && sqrt((p-Dim1Center)^2+(q-Dim2Center)^2)>RadiusL) ? MaskWave[p][q] : 1
 	endif
 end
+
+
+static Function NI1_12IDC_AddCircleMask(MaskWave,MaskSpecs,MaskIt)
+		wave MaskWave		//thsi is Mask file
+		string MaskSpecs		//thsi specifying mask location	
+		variable MaskIt			//1 to mask off pixels, 0 to unmask pixels. 
+//-circle radius@xcenter,ycenter Add a circle of masked pixels to the mask.  The circle is specified
+//                               by its radius and its center, which may be floating point
+//                               values  e.g.,  -circle 14@774,309
+	variable Dim1Center, Dim2Center, Radius
+	Radius = str2num(StringFromList(0, MaskSpecs+"@", "@"))
+	string CenterSpecs=StringFromList(1, MaskSpecs+"@", "@")
+	Dim1Center = str2num(StringFromList(0, CenterSpecs+",", ","))
+	Dim2Center = str2num(StringFromList(1, CenterSpecs+",", ","))
+
+	Dim1Center = Dim1Center>0 ? Dim1Center : 0
+	Dim2Center = Dim2Center>0 ? Dim2Center : 0
+	Dim1Center = Dim1Center<DimSize(MaskWave,0) ? Dim1Center : DimSize(MaskWave,0)-1
+	Dim2Center = Dim2Center<DimSize(MaskWave,1) ? Dim2Center : DimSize(MaskWave,1)-1
+	if(MaskIt)
+		Multithread MaskWave = sqrt((p-Dim1Center)^2+(q-Dim2Center)^2)>Radius ? MaskWave[p][q] : 0
+	else
+		Multithread MaskWave = sqrt((p-Dim1Center)^2+(q-Dim2Center)^2)>Radius ? MaskWave[p][q] : 1
+	endif
+end
+
+static Function NI1_12IDC_AddRectangleMask(MaskWave,MaskSpecs,MaskIt)
+		wave MaskWave		//thsi is Mask file
+		string MaskSpecs		//thsi specifying mask location	
+		variable MaskIt			//1 to mask off pixels, 0 to unmask pixels. 
+//-r rectspec
+//-rect rectspec                 Add a rectangle of masked pixels to the mask.  The rectangle can
+//                               be given in two different forms e.g. '10,15,80,250' specifies a
+//                               rectangle with 10 >= x > 80 and 15 >= y > 250 and
+//                               e.g. '120x80@20,30' specifies a rectangle of width 120 pixels and
+//                               height 80 pixels centered at x=20, y=30
+//                               All coordinates must be integers
+	variable Dim1Left, Dim2Left, Dim1Right, Dim2Right
+	if(GrepString(MaskSpecs, "x"))		//this is e.g. '120x80@20,30' specifies a rectangle of width 120 pixels and
+		string SizeSpecs=StringFromList(0, MaskSpecs+"@", "@")
+		string CenterSpecs=StringFromList(1, MaskSpecs+"@", "@")
+		variable width=str2num(StringFromList(0, SizeSpecs+"x", "x"))
+		variable height=str2num(StringFromList(1, SizeSpecs+"x", "x"))
+		variable dim1Center=str2num(StringFromList(0, CenterSpecs+",", ","))
+		variable dim2Center=str2num(StringFromList(1, CenterSpecs+",", ","))
+		Dim1Left = dim1Center - ceil(width/2)
+		Dim2Left = dim2Center - ceil(height/2)
+		Dim1Right = dim1Center + ceil(width/2)
+		Dim2Right = dim2Center + ceil(height/2)
+	else			//assume '10,15,80,250' specifies a
+		MaskSpecs = MaskSpecs+","
+		Dim1Left = str2num(StringFromList(0, MaskSpecs, ","))
+		Dim2Left = str2num(StringFromList(1, MaskSpecs, ","))
+		Dim1Right = str2num(StringFromList(2, MaskSpecs, ","))
+		Dim2Right = str2num(StringFromList(3, MaskSpecs, ","))
+	endif
+	if(Dim1Left>Dim1Right)
+		variable tmp1=Dim1Left
+		Dim1Left = Dim1Right
+		Dim1Right = tmp1
+	endif
+	if(Dim2Left>Dim2Right)
+		variable tmp2=Dim2Left
+		Dim2Left = Dim2Right
+		Dim2Right = tmp2
+	endif
+	Dim1Left = Dim1Left>0 ? Dim1Left : 0
+	Dim2Left = Dim2Left>0 ? Dim2Left : 0
+	Dim1Right = Dim1Right<DimSize(MaskWave,0) ? Dim1Right : DimSize(MaskWave,0)-1
+	Dim2Right = Dim2Right<DimSize(MaskWave,1) ? Dim2Right : DimSize(MaskWave,1)-1
+	if(MaskIt)
+		MaskWave[Dim1Left,Dim1Right][Dim2Left,Dim2Right] = 0
+	else
+		MaskWave[Dim1Left,Dim1Right][Dim2Left,Dim2Right] = 1
+	endif
+end
+
+
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1430,6 +1765,9 @@ Function NI1_12IDCHowTo()
 		Notebook $nb text="* If you select YES for \"Create beamline defined mask?\" code will replace any existing mask with beamline"
 		Notebook $nb text=" defined mask.\r"
 		Notebook $nb text="Select No if you changed parameters or mask against what beamline defined. \r"
+		Notebook $nb text="\r"
+		Notebook $nb text=">>>  MASK suggestion: Create new Mask in Nika, DO NOT reuse old beamline mask. Nika has easier to use tools to create the best possible mask. <<<\r"
+		Notebook $nb text="\r"
 		Notebook $nb text="note: X-ray energy is re-loaded for each image individually, when I0 is looked up by the lookup function"
 		Notebook $nb text=". This guarantees, that during ASAXS each image is reduced with correct wavelength. \r"
 		Notebook $nb text="\r"
