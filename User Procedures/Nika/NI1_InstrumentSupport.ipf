@@ -1049,8 +1049,8 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 	string CommandLine
 	variable MakeMask
 
-//	string CommandLine="goldaverage -o Averaged_norm -y -p 0.1465 -d 3775 -Z 10 -k $normval -e $energyval -r 0,0,2048,2048 -C1090@1024,1000 -r753,300,766,232 -r748,0,775,232 -r0,303,2048,318 -r1520,310,1545,440 -r90,1120,170,1177 -c14@774,309 774 311 $filename"
-//	CommandLine="goldaverage -o Averaged_norm -y -p 0.1465 -d 3775 -Z 10 -k $normval -e $energyval -rect 120x80@20,30  -a10-100@300,300 -R753,300,766,232 -A 100-200@500,500 774 311 $filename"
+//	CommandLine="goldaverage -o Averaged_norm -y -p 0.1465 -d 3775 -Z 10 -k $normval -e $energyval -r 0,0,2048,2048 -C      1090@1024,1000 -r    753,300,766,232 -r748,0,775,232 -r0,303,2048,318 -r1520,310,1545,440 -r90,1120,170,1177 -c14@774,309 774 311 $filename"
+//	CommandLine="goldaverage -o Averaged_norm -y -p 0.1465 -d 3775 -Z 10 -k $normval -e $energyval -rect 120x80@20,30  -a10-1000@300,300 -R753,300,766,232 -A 100-200@500,500 774 311 $filename"
 	Variable tempStart, tempEnd, NumLines, i
 	String TempStr, TempStr2
 	tempStart = 0
@@ -1079,8 +1079,11 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 		Mask = (Mask > 10) ? 1 : 0
 		Redimension/B/U Mask
 		//this is all enable mask... 
-	
-		
+		//now reduce spaces in CommandLine to max of one space. 
+		Do
+			CommandLine = ReplaceString("  ", CommandLine, " ")
+		while (StringMatch(CommandLine, "*  *" ))
+		//OK, now we shoudl have at most one space between commands and parameters. 
 		Do
 			tempStart=strsearch(CommandLine, "-", tempStart+1)
 			if(tempStart<0)
@@ -1089,13 +1092,13 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 			TempStr = CommandLine[tempStart+1,tempStart+30]
 			if(GrepString(TempStr, "^rect"))					//rectangle, full word
 				TempStr =TempStr[4,inf]
-				tempEnd = strsearch(TempStr, " ", 5)
+				tempEnd = strsearch(TempStr, " ", 6)
 				TempStr = TempStr[0,tempEnd]
 				print "Added Masked rect  :  "+TempStr
 				NI1_12IDC_AddRectangleMask(Mask,TempStr,1)
 			elseif(GrepString(TempStr, "^r"))					//rectangle, short
 				TempStr =TempStr[1,inf]
-				tempEnd = strsearch(TempStr, " ", 2)
+				tempEnd = strsearch(TempStr, " ", 3)
 				TempStr = TempStr[0,tempEnd]
 				print "Added Masked rect  :  "+TempStr
 				NI1_12IDC_AddRectangleMask(Mask,TempStr,1)
@@ -1107,7 +1110,7 @@ Function NI1_12IDC_ParsegoldMask(CommandLine, MakeMask)
 				NI1_12IDC_AddRectangleMask(Mask,TempStr,0)
 			elseif(GrepString(TempStr, "^R"))					//negative rectangle, short negrect
 				TempStr =TempStr[1,inf]
-				tempEnd = strsearch(TempStr, " ", 2)
+				tempEnd = strsearch(TempStr, " ", 3)
 				TempStr = TempStr[0,tempEnd]
 				print "Added unmasked rect  : "+TempStr
 				NI1_12IDC_AddRectangleMask(Mask,TempStr,0)

@@ -510,6 +510,7 @@ Function IR3T_ExtrapolateHighQ()
 		NVAR Kmax=root:Packages:TwoPhaseSolidModel:Kmax
 		//this is formula from SAXSMorph manual...
 		Kmax = ceil(10*highQExtrapolationStart)
+		Kmax =  Kmax<6.28 ? 6.28 : Kmax
 		
 		setDataFolder oldDF
 	endif
@@ -642,7 +643,8 @@ FUnction IR3T_ExtendDataCalcParams()
 				Rmin = BoxSideSize / BoxResolution / 2
 				Rmax = IN2G_roundSignificant(35/lowQExtrapolationStart,2)
 				Kmin =IN2G_roundSignificant(lowQExtrapolationStart/10,1)
-				Kmax = IN2G_roundSignificant(highQExtrapolationStart*10, 1)			
+				Kmax = IN2G_roundSignificant(highQExtrapolationStart*10, 1)	
+				Kmax =  Kmax>6.28 ? Kmax : 2*pi		
 			endif
 
 		else
@@ -773,7 +775,7 @@ static Function IR3T_SetInitialValues()
 	endif
 	NVAR Kmax
 	if(Kmax<3)
-		Kmax=6
+		Kmax=2*pi
 	endif
 	NVAR Rmin
 	if(Rmin<0.001 || Rmin>20)
@@ -985,19 +987,27 @@ Function IR3T_CalculateTwoPhaseSolid()
 	//TheorAutoCorrFnct+=porosity^2
 	//and calculate intensity, step 8
 	Duplicate/O Qvec, TheoreticalIntensityDACF, QvecTheorIntensityDACF
-	TheoreticalIntensityDACF = IR3T_ConvertDACFToInt(Radii,TheorAutoCorrFnct,QvecTheorIntensityDACF[p])
-	//this is using PDF method for intensity calculation... 
-	print "Calculating PDF and SAS curve."
-	Wave TwoPhaseSolidMatrix
+	multithread TheoreticalIntensityDACF = IR3T_ConvertDACFToInt(Radii,TheorAutoCorrFnct,QvecTheorIntensityDACF[p])
+	//OK, but there is resolution limit to this calculation. Cannot have higher Q values than voxel size resolution...
 	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize			// range of modeled radii in Angstroms
 	NVAR BoxResolution = root:Packages:TwoPhaseSolidModel:BoxResolution	// number of steps per size of the box. 
 	variable VoxelSize= BoxSideSize / BoxResolution  							// voxel size in Angstroms
 	variable NumStepsToUse=ceil(sqrt(3)*BoxResolution)							//max distance inside the box
 	variable oversample = 4																// oversample for evaluation for pdf calculations... 
-	oversample = BoxResolution>100 ? 2 : 4
-	//variable Qmin = 																		//these need to be selected sensibly. There are two R - Rmax for R vector and Box side size... 
-	//variable Qmax = 																		//cannot be higher than voxel size combined with oversampling... 
-//	IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
+	NVAR Rmax=root:Packages:TwoPhaseSolidModel:Rmax
+	NVAR HighQStart = root:Packages:TwoPhaseSolidModel:HighQExtrapolationStart
+	variable MaxMeaningfulQmax = pi/(Rmax/(2*BoxResolution))
+	//TheoreticalIntensityDACF
+	variable MaxMeaningfulPnt = BinarySearch(QvecTheorIntensityDACF, 0.95*HighQStart)
+	TheoreticalIntensityDACF[MaxMeaningfulPnt, numpnts(TheoreticalIntensityDACF)-1] = nan
+	IN2G_RemoveNaNsFrom2Waves(TheoreticalIntensityDACF,QvecTheorIntensityDACF)	
+	
+	//this is using PDF method for intensity calculation... 
+	print "Calculating PDF and SAS curve."
+	Wave TwoPhaseSolidMatrix
+	//oversample = BoxResolution>100 ? 2 : 4
+	//This thing does not work - we always get scattering from the box size, not from internal strucutre. So this is probably not realistic to do...  
+	//IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
 	IR3T_AppendModelIntToGraph()
 	print "Done..."
 	resumeUpdate
@@ -1014,12 +1024,16 @@ Function IR3T_AppendModelIntToGraph()
 		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
 		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
 		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
-		Wave TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
-		Wave QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
+		Wave OriginalQvector = root:Packages:TwoPhaseSolidModel:OriginalQvector
+		Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
+		Wave/Z TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
+		Wave/Z QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
+		variable InvarModel
+		variable InvarData
 //		if(WaveExists(PDFQWv))
 //			//need to renormalzie this together...
-//			variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
-//			variable InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
+//			InvarModel=areaXY(PDFQWv, PDFIntensityWv )
+//			InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
 //			PDFIntensityWv*=InvarData/InvarModel
 //			CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
 //			if(V_flag==0)
@@ -1031,8 +1045,8 @@ Function IR3T_AppendModelIntToGraph()
 //		endif
 		if(WaveExists(TheoreticalIntensityDACF))
 			//need to renormalzie this together...
-			variable InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF )
-			variable InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
+			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, OriginalQvector[0], QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
+			InvarData=areaXY(OriginalQvector, OriginalIntensity, OriginalQvector[0], QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
 			TheoreticalIntensityDACF*=InvarData/InvarModel
 			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
 			if(V_flag==0)
@@ -1062,8 +1076,8 @@ threadsafe Function IR3T_ConvertIntToDACF(Radius,Intensity,Qvec)		//formula 1 in
 end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
-threadsafe Function IR3T_ConvertDACFToInt(Radius,DACF,Qvec)		//Convert DACF (Debye AUtocoreelation Function) to intensity
+//
+threadsafe Function IR3T_ConvertDACFToInt(Radius,DACF,Qvec)		//Convert DACF (Debye Autocorelation Function) to intensity
 	wave Radius, DACF
 	variable Qvec	
 	Make/Free/N=(numpnts(Radius))/D QRWave
