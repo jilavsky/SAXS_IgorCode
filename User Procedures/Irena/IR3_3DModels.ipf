@@ -430,6 +430,11 @@ static Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
 		endif
 	endif
 	//fix q rave of overlap
+	//proper scaling of model... this is not so easy here, but may be needed in teh future. 
+	//variable QRg2 = 0.5*pi/Level2Rg
+	//variable QRg1 = 1.5*pi/Level1Rg
+	//print "Scaling Model to data using integral intensities in Q range from "+num2str(QRg2)+"  to "+num2str(QRg1)
+	//variable InvarModel=areaXY(A3DAgg1DQwave, Model3DAggIntensity, QRg2, QRg1)
 	variable InvarModel=areaXY(QvectorWV, IntensityWV )
 	variable InvarData=areaXY(QwaveOriginal, IntWaveOriginal, QvectorWV[0], QvectorWV[numpnts(QvectorWV)-1])
 	IntensityWV*=InvarData/InvarModel
@@ -600,8 +605,12 @@ static Function IR3A_Calculate1DIntensity()
 	else
 		DoWIndow/F MassFractalAggDataPlot
 	endif
-	variable InvarModel=areaXY(A3DAgg1DQwave, Model3DAggIntensity )
-	variable InvarData=areaXY(QwaveOriginal, IntWaveOriginal)
+	//proper scaling of model... 
+	variable QRg2 = 0.5*pi/Level2Rg
+	variable QRg1 = 1.5*pi/Level1Rg
+	print "Scaling Model to data using integral intensities in Q range from "+num2str(QRg2)+"  to "+num2str(QRg1)
+	variable InvarModel=areaXY(A3DAgg1DQwave, Model3DAggIntensity, QRg2, QRg1)
+	variable InvarData=areaXY(QwaveOriginal, IntWaveOriginal, QRg2, QRg1)
 	Model3DAggIntensity*=InvarData/InvarModel
 	CheckDisplayed /W=MassFractalAggDataPlot Model3DAggIntensity
 	if(V_flag==0)
@@ -1485,7 +1494,10 @@ static Function IR3A_Path(NumberOfTestPaths)
 			if(flag>=2)	// is there a loop in the aggregate?
 				con=1
 			else		// add normally
-				pcnt+=1
+				pcnt+=1				//this pcnt is sometimes too large, not sure how to avoid it... 
+				if(pcnt>=DegreeOfAggregation)
+					Abort "Wrong value in IR3A_Path, try again."
+				endif
 				Pathing[pcnt]=NeighborList[Pathing[pcnt-1]][choice]
 			endif
 			ncnt=1
@@ -1617,7 +1629,7 @@ static Function IR3A_GizmoViewScatterPlot(ScatterPlotWave) : GizmoPlot
 		DoWIndow/F MassFractalAggregateView
 		ModifyGizmo setOuterBox={-1*boxSize,boxSize,-1*boxSize,boxSize,-1*boxSize,boxSize}
 		ModifyGizmo scalingOption=0
-		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={radius,1/mnd}
+		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={radius,1/(4+mnd)}
 	else
 		PauseUpdate; Silent 1		// building window...
 		// Building Gizmo 7 window...
@@ -1638,7 +1650,7 @@ static Function IR3A_GizmoViewScatterPlot(ScatterPlotWave) : GizmoPlot
 		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={color,0.000015,0.600000,0.304250,1.000000}
 		AppendToGizmo attribute diffuse={0.5,0.5,0.5,1,1032},name=diffuse0
 		ModifyGizmo attributeType=diffuse,modifyAttribute={diffuse0,0.733333,0.733333,0.733333,1,1032}
-		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={radius,1/(2*mnd)}
+		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={radius,1/(4+mnd)}
 		ModifyGizmo ModifyObject=scatter0,objectType=scatter,property={ Shape,7}
 		ModifyGizmo ModifyObject=scatter0,objectType=scatter,property={ objectName,Particle}
 		AppendToGizmo Axes=boxAxes,name=axes0
@@ -1657,7 +1669,7 @@ static Function IR3A_GizmoViewScatterPlot(ScatterPlotWave) : GizmoPlot
 		ModifyGizmo modifyObject=LightFor3dView,objectType=light,property={ position,-0.6392,0.7354,0.2250,0.0000}
 		ModifyGizmo modifyObject=LightFor3dView,objectType=light,property={ direction,-0.6392,0.7354,0.2250}
 		ModifyGizmo setDisplayList=0, object=LightFor3dView
-		ModifyGizmo setDisplayList=1, object=scatter0
+		ModifyGizmo setDisplayList=1, object=scatter0 
 		ModifyGizmo setDisplayList=2, object=axes0
 		ModifyGizmo currentGroupObject=""
 		//ModifyGizmo SETQUATERNION={0.535993,-0.191531,-0.283415,0.771818}
