@@ -1,8 +1,8 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.25
+#pragma version=2.26
 
-Constant IR1AversionNumber=2.23
+Constant IR1AversionNumber=2.26
 
 
 //*************************************************************************\
@@ -11,6 +11,7 @@ Constant IR1AversionNumber=2.23
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.26 added info on K value to panel. Need to force reopen now, unluckily. 
 //2.25 combined with IR1_Unified_Panel_Fncts.ipf and removed that from code
 //2.23 removed Execute for main panel, added button to move around the levels if users needs...
 //2.22 Modified Screen Size check to match the needs
@@ -594,11 +595,13 @@ Function IR1A_ControlPanelFnct()
 //	SetVariable Level1RgCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level1RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level1SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
-	CheckBox Level1LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
+	CheckBox Level1LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level1LinkRGCO,variable= root:Packages:Irena_UnifFit:Level1LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level1KFactor,pos={230,450},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+	PopupMenu Level1KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
 	PopupMenu Level1KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
+	TitleBox Info20 title="\Zr100=1 usually",pos={325,438},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
+	TitleBox Info21 title="\Zr100k=1.06 for Mass Fractals",pos={250,456},frame=0,fstyle=2, fixedSize=0,size={40,15},fColor=(0,0,52224)
 
 	CheckBox Level1Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
 	CheckBox Level1Corelations,variable= root:Packages:Irena_UnifFit:Level1Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
@@ -695,10 +698,10 @@ Function IR1A_ControlPanelFnct()
 //	SetVariable Level2RGCOHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgCOHighLimit, help={"RgCutOff high limit"}
 
 	Button Level2SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
-	CheckBox Level2LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
+	CheckBox Level2LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level2LinkRGCO,variable= root:Packages:Irena_UnifFit:Level2LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level2KFactor,pos={230,450},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+	PopupMenu Level2KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
 	PopupMenu Level2KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level2Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
@@ -787,10 +790,10 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level3RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level3RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
 
 	Button Level3SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
-	CheckBox Level3LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
+	CheckBox Level3LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level3LinkRGCO,variable= root:Packages:Irena_UnifFit:Level3LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level3KFactor,pos={230,450},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+	PopupMenu Level3KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
 	PopupMenu Level3KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level3Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
@@ -879,10 +882,10 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level4RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level4RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
 //
 	Button Level4SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
-	CheckBox Level4LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
+	CheckBox Level4LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level4LinkRGCO,variable= root:Packages:Irena_UnifFit:Level4LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level4KFactor,pos={230,450},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+	PopupMenu Level4KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
 	PopupMenu Level4KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level4Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
@@ -972,10 +975,10 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level5RGCO,limits={0,inf,1},value= root:Packages:Irena_UnifFit:Level5RgCO, help={"Size, where the power law dependence ends, usually Rg of lower level, for level 1 it is 0"}
 
 	Button Level5SetRGCODefault,pos={20,450},size={100,20}, proc=IR1A_InputPanelButtonProc,title="Rg(level-1)->RGCO", help={"This button sets the RgCutOff to value of Rg from previous level (or 0 for level 1)"}
-	CheckBox Level5LinkRGCO,pos={160,455},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
+	CheckBox Level5LinkRGCO,pos={140,452},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Link RGCO"
 	CheckBox Level5LinkRGCO,variable= root:Packages:Irena_UnifFit:Level5LinkRgCo, help={"Link the RgCO to lower level and fit at the same time?"}
 
-	PopupMenu Level5KFactor,pos={230,450},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
+	PopupMenu Level5KFactor,pos={230,435},size={170,21},proc=IR1A_PanelPopupControl,title="k factor :"
 	PopupMenu Level5KFactor,mode=2,popvalue="1",value= #"\"1;1.06;\"", help={"This value is usually 1, for weak decays and mass fractals 1.06"}
 
 	CheckBox Level5Corelations,pos={90,480},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this correlated system? "
@@ -1061,6 +1064,8 @@ Function IR1A_TabPanelControl(name,tab)
 		Button LevelXFitPAndB,disable= ((tab+1)> Nmbdist)
 		Button CopyMoveLevel,disable= ((tab+1)> Nmbdist)
 		TitleBox PhysValidityWarning, disable=(IR1A_CheckOneUnifiedLevel(tab+1,ExtendedWarnings)!=0 || Nmbdist<tab+1)
+		TitleBox Info20 ,disable= ((tab+1)> Nmbdist)
+		TitleBox Info21,disable= ((tab+1)> Nmbdist)
 		
 		TitleBox Level1Title, disable= (tab!=0 || Nmbdist<1)
 		SetVariable Level1Rg,disable= (tab!=0 || Nmbdist<1)

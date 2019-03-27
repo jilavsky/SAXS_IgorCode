@@ -15,6 +15,8 @@ Modification history:
 Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please.  
 Scripting tool - added save individual Populations data when running from Scripting tool. 
 Added new group of Anisotropy characterization tools, first one is HOP - Hermans Orientational Parameter. 
+Unified fit added info about k value on the panel.
+Data manipulation II - fixed issues with liberal names and actually very long names. Now should create long names, if Igor 8 and user enabled it. 
 
 2.68 12/5/2018
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 

@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.63
+#pragma version=2.64
 constant IR3MversionNumber = 2.61		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -10,6 +10,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.64 fixes for long wave names which caused issues... 
 //2.63 fxed for long names in Igor 8
 //2.62 fixed when ManipII has recreated the small panel on close of the large panel. 
 //2.62 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
@@ -3607,8 +3608,8 @@ Function  IR3M_GraphTestFolderData()
  	SVAR XwaveNm=root:Packages:DataManipulationII:QWavename
  	SVAR EwaveNm=root:Packages:DataManipulationII:ErrorWaveName
 
-	Wave/Z Ywv=$(DataFOldername+YWaveNm)
-	Wave/Z Xwv=$(DataFOldername+XWaveNm)
+	Wave/Z Ywv=$(DataFOldername+PossiblyQuoteName(YWaveNm))
+	Wave/Z Xwv=$(DataFOldername+PossiblyQuoteName(XWaveNm))
 	if(WaveExists(YWv) && WaveExists(Xwv))
 		KillWIndow/Z DataManipulationIIPrev
 		Display/K=1/N=DataManipulationIIPrev Ywv vs XWv as "Preview of data in Manipulation II tool"
@@ -3705,10 +3706,14 @@ Function IR3M_PresetOutputWvsNms()
 		ResultsQvecWaveName = QWavename
 		ResultsErrWaveName =  ErrorWaveName
 	else
-		ResultsIntWaveName  = IN2G_RemoveExtraQuote(IntensityWaveName,1,1)[0,25]+NameModifier
-		ResultsQvecWaveName = IN2G_RemoveExtraQuote(QWavename,1,1)[0,25]+NameModifier
+		ResultsIntWaveName  = IN2G_CreateUserName(IN2G_RemoveExtraQuote(IntensityWaveName,1,1), 26, 0, 1)+NameModifier
+		ResultsQvecWaveName = IN2G_CreateUserName(IN2G_RemoveExtraQuote(QWavename,1,1), 26, 0, 1)+NameModifier
+		//ResultsIntWaveName  = IN2G_RemoveExtraQuote(IntensityWaveName,1,1)[0,25]+NameModifier
+		//ResultsQvecWaveName = IN2G_RemoveExtraQuote(QWavename,1,1)[0,25]+NameModifier
+		//		IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
+		//IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum)
 		if(!stringmatch(ErrorWaveName,"---")&&!stringmatch(IntensityWaveName,ErrorWaveName))
-			ResultsErrWaveName =  IN2G_RemoveExtraQuote(ErrorWaveName,1,1)[0,25]+NameModifier
+			ResultsErrWaveName =  IN2G_CreateUserName(IN2G_RemoveExtraQuote(ErrorWaveName,1,1), 26, 0, 1)+NameModifier
 		else
 			ResultsErrWaveName = "s"+ResultsIntWaveName[1,inf]
 		endif

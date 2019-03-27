@@ -34,6 +34,7 @@ Function IR3T_TwoPhaseSystem()
 	IR3T_TwoPhaseControlPanel() 
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("TwoPhaseSystems", IR3TTwoPhaseVersionNumber,1)
+	IR3T_FixTabsInPanel()
 end
 
 //******************************************************************************************************************************************************
@@ -76,7 +77,7 @@ Function IR3T_TwoPhaseControlPanel()
 
 
 	SetVariable Porosity,limits={0.001,1,0},value= root:Packages:TwoPhaseSolidModel:Porosity //proc=IR1A_PanelSetVarProc
-	SetVariable Porosity,pos={10,215},size={190,16},title="Porosity fraction (0-0.5)",noproc, help={"Minority phase as fraction (0 - 1)"}
+	SetVariable Porosity,pos={10,215},size={190,16},title="Porosity fraction (0-0.5)",noproc, help={"Minority phase as fract (0-0.5), corrected for phi*(1-phi), so correct voluem fraction"}
 
 	SetVariable ScatteringContrast,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:ScatteringContrast //proc=IR1A_PanelSetVarProc
 	SetVariable ScatteringContrast,pos={10,240},size={190,16},title="Scattering contrast      ",noproc, help={"Contrast to calculate minoritpy phase colume fraction"}
@@ -97,30 +98,36 @@ Function IR3T_TwoPhaseControlPanel()
 	SetVariable BoxResolution,limits={10,500,50},proc=IR3T_SetVarProc, value= root:Packages:TwoPhaseSolidModel:BoxResolution
 	SetVariable BoxResolution,pos={10,290},size={200,16},title="Box divisions           ", help={"How many steps per side to take"}
 
+	SetVariable VoxelResolution,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:VoxelResolution, noedit=1, frame=0 //proc=IR1A_PanelSetVarProc
+	SetVariable VoxelResolution,pos={230,270},size={200,16},title="Voxels size [A] ",noproc, help={"How big is each voxels in box = model resolution"}
+
 	SetVariable TotalNumberOfVoxels,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:TotalNumberOfVoxels, noedit=1, frame=0, format="%2.2e" //proc=IR1A_PanelSetVarProc
 	SetVariable TotalNumberOfVoxels,pos={230,290},size={200,16},title="No of Voxels ",noproc, help={"How many voxels is in box, impacts speed!"}
 
-	//TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,320},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-	//TitleBox Info3 title="\Zr150Advanced Parameters",pos={10,340},frame=0,fstyle=2, fixedSize=1,size={200,20}
 	//Dist Tabs definition
 	TabControl TwoPhaseModelTabs,pos={5,320},size={370,280},proc=IR3T_TwoPhaseTabProc
 	TabControl TwoPhaseModelTabs,tabLabel(0)="1. Extrapolate ",tabLabel(1)="2. Advanced Pars ",tabLabel(2)="3. Results "
 
-	SVAR LowQExtrapolationMethod = root:Packages:TwoPhaseSolidModel:LowQExtrapolationMethod
-	PopupMenu LowQExtrapolationMethod,pos={20,360},size={380,21},proc=IR3T_TwoPhasePopMenuProc,title="Low-Q Extrapolation method :", help={"Select method to extrapolate low-q data "}
-	PopupMenu LowQExtrapolationMethod,mode=2,popvalue=LowQExtrapolationMethod,value= #"\"Constant;Linear;\""
-	Button ExtrapolateLowQ,pos={100,390},size={150,20}, proc=IR3T_TwoPhaseButtonProc,title="Extrapolate low-Q", help={"Set cursors and extrapolate low-q"}
+	Button CalculateRg,pos={100,355},size={150,20}, proc=IR3T_TwoPhaseButtonProc,title="Calculate Rg", help={"Set cursors and calculate Rg fro main feature"}
+	SetVariable RgValue,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:RgValue, noedit=1, frame=0
+	SetVariable RgValue,pos={120,380},size={220,16},title="Rg value [A] ",noproc, help={"Rg Value for main feature"}
 
+	SVAR LowQExtrapolationMethod = root:Packages:TwoPhaseSolidModel:LowQExtrapolationMethod
+	PopupMenu LowQExtrapolationMethod,pos={20,410},size={380,21},proc=IR3T_TwoPhasePopMenuProc,title="Low-Q Extrapolation method :", help={"Select method to extrapolate low-q data "}
+	PopupMenu LowQExtrapolationMethod,mode=2,popvalue=LowQExtrapolationMethod,value= #"\"Constant;Linear;\""
+	Button ExtrapolateLowQ,pos={100,435},size={150,20}, proc=IR3T_TwoPhaseButtonProc,title="Extrapolate low-Q", help={"Set cursors and extrapolate low-q"}
 	SetVariable LowQExtrapolationStart,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:LowQExtrapolationStart, noedit=1, frame=0
-	SetVariable LowQExtrapolationStart,pos={15,420},size={180,16},title="Start LowQ extrap ",noproc, help={"Start lowQ extrapolation"}
+	SetVariable LowQExtrapolationStart,pos={15,465},size={180,16},title="Start LowQ extrap ",noproc, help={"Start lowQ extrapolation"}
 	SetVariable LowQExtrapolationEnd,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:LowQExtrapolationEnd, noedit=1, frame=0
-	SetVariable LowQExtrapolationEnd,pos={215,420},size={180,16},title="End LowQ extrap ",noproc, help={"End lowQ extrapolation"}
+	SetVariable LowQExtrapolationEnd,pos={215,465},size={180,16},title="End LowQ extrap ",noproc, help={"End lowQ extrapolation"}
 	
-	Button ExtrapolateHighQ,pos={100,450},size={150,20}, proc=IR3T_TwoPhaseButtonProc,title="Extrapolate high-Q", help={"Set cursors and extrapolate high-q"}
+	Button ExtrapolateHighQ,pos={100,495},size={150,20}, proc=IR3T_TwoPhaseButtonProc,title="Extrapolate high-Q", help={"Set cursors and extrapolate high-q"}
 	SetVariable HighQExtrapolationStart,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:HighQExtrapolationStart, noedit=1, frame=0
-	SetVariable HighQExtrapolationStart,pos={15,480},size={180,16},title="Start HighQ extrap ",noproc, help={"Start highQ extrapolation"}
+	SetVariable HighQExtrapolationStart,pos={15,525},size={180,16},title="Start HighQ extrap ",noproc, help={"Start highQ extrapolation"}
 	SetVariable HighQExtrapolationEnd,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd, noedit=1, frame=0
-	SetVariable HighQExtrapolationEnd,pos={215,480},size={180,16},title="End HighQ extrap ",noproc, help={"End highQ extrapolation"}
+	SetVariable HighQExtrapolationEnd,pos={215,525},size={180,16},title="End HighQ extrap ",noproc, help={"End highQ extrapolation"}
+
+	Button CalculateParameters,pos={100,565},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Calculate Params", help={"Calculate Invariant and S/V ratio. Sets Rmax and Rmin."}
 	
 
 	//these are advanced parameters. Need to move to Tab 2... 
@@ -146,18 +153,47 @@ Function IR3T_TwoPhaseControlPanel()
 	SetVariable HighQExtrapolationMax,limits={1e-8,1e-2,0},value= root:Packages:TwoPhaseSolidModel:HighQExtrapolationMax, noproc
 	SetVariable HighQExtrapolationMax,pos={20,535},size={220,16},title="High-Q extrapolation Qmax ", help={"Which high-q should code strapolate to (50)"}
 
+	//tab 3
+	Button Display1DtempData,pos={100,370},size={200,15},proc=IR3T_TwoPhaseButtonProc,title="Display 1D temp data", help={"Create graphs of 1D transitional data."}
+	Button Display2DView,pos={100,440},size={200,20},proc=IR3T_TwoPhaseButtonProc,title="Display 2D view", help={"Create 2D display of 3D data."}
+	Button Generate3DView,pos={100,510},size={200,20},proc=IR3T_TwoPhaseButtonProc,title="Display 3D view", help={"Create 3D display using Gizmo. "}
+	CheckBox GizmoFillSolid,pos={50,540},size={130,14},proc=IR3T_InputPanelCheckboxProc,title="3D fill Solid?"
+	CheckBox GizmoFillSolid,variable= root:packages:TwoPhaseSolidModel:GizmoFillSolid, help={"Check to  fill solid phase in Gizmo 3D. "}
+
 
 	//bottom controls
-	Button CalcualteParameters,pos={25,610},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Calculate Params", help={"Calculate Invariant and S/V ratio. Sets Rmax and Rmin."}
-	Button Generate3DModel,pos={25,640},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Generate 3D model", help={"Create 3D model using parameters above. "}
-	Button Display1DtempData,pos={225,610},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Display 1D temp data", help={"Create graphs of 1D transitional data."}
-	Button Generate3DView,pos={225,640},size={150,20},proc=IR3T_TwoPhaseButtonProc,title="Display 3D model", help={"Create 3D display using Gizmo. "}
+	Button Generate3DModel,pos={100,620},size={200,25},proc=IR3T_TwoPhaseButtonProc,title="Generate 3D model", help={"Create 3D model using parameters above. "}, disable=2,fColor=(43690,43690,43690)
+	SetVariable AchievedVolumeFraction,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:AchievedVolumeFraction, noedit=1, frame=0
+	SetVariable AchievedVolumeFraction,pos={15,650},size={130,16},title="Achieved Porosity ",noproc, help={"3D data achieved porosity value"},disable=2
 
 
 	IR3T_SetControlsInPanel()
 end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+///******************************************************************************************
+
+
+Function IR3T_FixTabsInPanel()
+	//here we modify the panel, so it reflects the selected number of distributions
+	
+	//NVAR NumOfDist=root:Packages:Irena_UnifFit:NumberOfLevels
+	//and now return us back to original tab...
+	//NVAR ActTab=root:Packages:Irena_UnifFit:ActiveTab
+	//if(numtype(ActTab)!=0)
+	//	ActTab = 1
+	//endif
+	STRUCT WMTabControlAction tca
+	tca.eventCode = 2
+	tca.tab = 0
+	TabControl TwoPhaseModelTabs,value= 0, win=TwoPhaseSystems
+	IR3T_TwoPhaseTabProc(tca)
+end
+
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+///******************************************************************************************
 Function IR3T_TwoPhaseTabProc(tca) : TabControl
 	STRUCT WMTabControlAction &tca
 
@@ -168,6 +204,10 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 			NVAR RKPars = root:packages:TwoPhaseSolidModel:RKParametersManual
 			variable RKParsShow
 			Variable tab = tca.tab
+
+			Button CalculateParameters, win=TwoPhaseSystems, disable=(tab!=0)
+			Button CalculateRg, win=TwoPhaseSystems, disable=(tab!=0)
+			SetVariable RgValue, win=TwoPhaseSystems, disable=(tab!=0)
 			PopupMenu LowQExtrapolationMethod, win=TwoPhaseSystems, disable=(tab!=0)
 			Button ExtrapolateLowQ, win=TwoPhaseSystems, disable=(tab!=0)
 			SetVariable LowQExtrapolationStart, win=TwoPhaseSystems, disable=(tab!=0)
@@ -196,6 +236,13 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 			SetVariable Kmax, win=TwoPhaseSystems, disable=RKParsShow
 			SetVariable LowQExtrapolationMin, win=TwoPhaseSystems, disable=RKParsShow
 			SetVariable HighQExtrapolationMax, win=TwoPhaseSystems, disable=RKParsShow
+
+			//tab 3
+			Button Display1DtempData, win=TwoPhaseSystems, disable=(tab!=2)
+			Button Display2DView, win=TwoPhaseSystems, disable=(tab!=2)
+			Button Generate3DView, win=TwoPhaseSystems, disable=(tab!=2)
+			CheckBox GizmoFillSolid, win=TwoPhaseSystems, disable=(tab!=2)
+
 			break
 		case -1: // control being killed
 			break
@@ -216,10 +263,13 @@ Function IR3T_SetVarProc(sva) : SetVariableControl
 		case 3: // Live update
 			Variable dval = sva.dval
 			String sval = sva.sval
-			if(StringMatch(sva.ctrlName, "BoxResolution"))
+			if(StringMatch(sva.ctrlName, "BoxResolution") || StringMatch(sva.ctrlName, "BoxSideSize") )
+				NVAR VoxelResolution = root:Packages:TwoPhaseSolidModel:VoxelResolution
+				NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
 				NVAR Steps=root:Packages:TwoPhaseSolidModel:BoxResolution
 				NVAR Voxels=root:Packages:TwoPhaseSolidModel:TotalNumberOfVoxels
 				Voxels = Steps^3
+				VoxelResolution = BoxSideSize / Steps
 			endif
 			break
 		case -1: // control being killed
@@ -264,6 +314,9 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 	
 			if (cmpstr(ba.ctrlName,"DrawGraphs")==0)
 				//here goes what is done, when user pushes Graph button
+				KillWIndow/Z TwoPhaseSystemData
+				KillWIndow/Z TwoPhaseSolidGizmo
+				KillWIndow/Z TwoPhaseSolid2DImage
 				SVAR DFloc=root:Packages:TwoPhaseSolidModel:DataFolderName
 				SVAR DFInt=root:Packages:TwoPhaseSolidModel:IntensityWaveName
 				SVAR DFQ=root:Packages:TwoPhaseSolidModel:QWaveName
@@ -283,13 +336,18 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 				endif
 				
 				if (IsAllAllRight)
-					//IR1A_FixTabsInPanel()
+					IR3T_FixTabsInPanel()
 					IR3T_CopyAndGraphInputData()
 					MoveWindow /W=TwoPhaseSystemData 0,0,(IN2G_GetGraphWidthHeight("width")),(0.6*IN2G_GetGraphWidthHeight("height"))
 					AutoPositionWIndow /M=0  /R=TwoPhaseSystems TwoPhaseSystemData
 				else
 					Abort "Data not selected properly"
 				endif
+			endif
+
+
+			if(StringMatch(ba.ctrlName, "CalculateRg" ))
+					IR3T_CalculateRg()
 			endif
 			if(StringMatch(ba.ctrlName, "ExtrapolateLowQ" ))
 					IR3T_ExtrapolateLowQ()
@@ -302,17 +360,21 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 				IN2G_OpenWebManual("Irena/TwoPhaseSolid.html")
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DModel" ))
-					IR3T_CalculateTwoPhaseSolid()
+					IR3T_GenerateTwoPhaseSolid()
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DView" ))
-					Execute("TwoPhaseSolidGizmo()") 
+					IR3T_TwoPhaseSolidGizmo()
 			endif
+			if(StringMatch(ba.ctrlName, "Display2DView" ))
+					IR3T_TwoPhaseSolid2DImage() 
+			endif
+
 			if(StringMatch(ba.ctrlName, "Display1DtempData" ))
 					IR3T_Display1DTempData()
 			endif
 
 
-			if(StringMatch(ba.ctrlName, "CalcualteParameters" ))
+			if(StringMatch(ba.ctrlName, "CalculateParameters" ))
 					IR3T_ExtendDataCalcParams()
 			endif
 			
@@ -359,6 +421,9 @@ Function IR3T_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	endif
 	if (stringMatch(ctrlName,"RKParametersManual"))
 		IR3T_SetControlsInPanel()
+	endif
+	if (stringMatch(ctrlName,"GizmoFillSolid"))
+		IR3T_FixGizmoDisplay()
 	endif
 
 
@@ -431,10 +496,94 @@ Function IR3T_ExtrapolatelowQ()
 		NVAR Kmin=root:Packages:TwoPhaseSolidModel:Kmin
 		NVAR Kmax=root:Packages:TwoPhaseSolidModel:Kmax
 		//this is close to formula from SAXSMorph manual...
-		Rmax = 5*2*pi/(lowQExtrapolationEnd)
+		//Rmax = 5*2*pi/(lowQExtrapolationEnd)
 		Kmin = lowQExtrapolationEnd / 10
 		setDataFolder oldDF
 	endif
+
+end
+///******************************************************************************************
+///******************************************************************************************
+Function IR3T_CalculateRg()
+	//we will Calculate Rg value from cursors set by user...
+	
+	DoWindow TwoPhaseSystemData
+	if(V_Flag)
+		string oldDf=GetDataFolder(1)
+		setDataFolder root:Packages:TwoPhaseSolidModel
+		//check is cursors are set, if not, ask user to set tehm
+		if (strlen(CsrWave(A))==0 || strlen(CsrWave(B))==0)
+			beep
+			abort "Select range fo data to use using Cursors A and B in the graph, set on wave Experimental Intensity"
+		endif
+		Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
+		Wave OriginalQvector = root:Packages:TwoPhaseSolidModel:OriginalQvector
+		//Wave OriginalError = root:Packages:TwoPhaseSolidModel:OriginalError
+		Wave/Z ErrorWave=root:Packages:TwoPhaseSolidModel:OriginalError
+		NVAR RgValue = root:Packages:TwoPhaseSolidModel:RgValue
+		//now get the start and end, make sure they are in proper order, just on case...
+		RemoveFromGraph/W=TwoPhaseSystemData/Z $("fit_OriginalIntensity")
+		Tag/K/W=TwoPhaseSystemData/N=$("RgTag")
+		variable CursorQstart =  OriginalQvector[pcsr(A , "TwoPhaseSystemData")]
+		variable CursorQend =  OriginalQvector[pcsr(B , "TwoPhaseSystemData")]
+		variable tempVal
+		if(CursorQstart<CursorQend)
+			//all OK... 
+		else
+			tempVal=CursorQstart
+			CursorQstart = CursorQend
+			CursorQend = tempVal
+		endif	
+		//make the wave for extrapolated data
+		make/O/N=100/D RgFitIntensity, RgFitQvec
+		RgFitQvec = CursorQstart+p*(CursorQend - CursorQstart)/(100-1)			//sets k scaling on lin-scale...
+		//now lets get the proper values we need...
+		Make/D/N=0/O W_coef, LocalEwave
+		Make/D/T/N=0/O T_Constraints
+		Wave/Z W_sigma
+		//find the error wave and make it available, if exists
+		Variable V_FitError=0			//This should prevent errors from being generated
+		Redimension /N=2 W_coef, LocalEwave
+		Redimension/N=2 T_Constraints
+		T_Constraints[0] = {"K1 > 0"}
+		T_Constraints[1] = {"K0 > 0"}
+
+		W_coef[0]=OriginalIntensity[CursorQstart] 	//G
+		W_coef[1]=PI/((CursorQend + CursorQstart)/2)	//Rg
+
+		LocalEwave[0]=(W_coef[0]/20)
+		LocalEwave[1]=(W_coef[1]/20)
+
+		V_FitError=0			//This should prevent errors from being generated
+		if (WaveExists(ErrorWave))
+			FuncFit IR1_GuinierFit W_coef OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /D /C=T_Constraints /W=ErrorWave /I=1//E=LocalEwave 
+		else
+			FuncFit IR1_GuinierFit W_coef OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /D /C=T_Constraints //E=LocalEwave 
+		endif
+		if (V_FitError!=0)	//there was error in fitting
+			RemoveFromGraph/W=TwoPhaseSystemData/Z $("fit_OriginalIntensity")
+			beep
+			Abort "Fitting error, check starting parameters and fitting limits" 
+		endif
+		Wave W_sigma
+		string TagText = "Fitted Guinier G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
+		if (WaveExists(ErrorWave))
+			TagText+="\r chi-square = "+num2str(V_chisq)
+		endif
+		Tag/C/W=TwoPhaseSystemData/N=$("RgTag")/L=2 $NameOfWave(OriginalIntensity), ((pcsr(A) + pcsr(B))/2),TagText	
+		
+		//FittingParam1=W_coef[0] 	//G
+		RgValue=W_coef[1]	//Rg
+		NVAR Rmax=root:Packages:TwoPhaseSolidModel:Rmax
+//		NVAR Rmin=root:Packages:TwoPhaseSolidModel:Rmin
+//		NVAR Kmin=root:Packages:TwoPhaseSolidModel:Kmin
+//		NVAR Kmax=root:Packages:TwoPhaseSolidModel:Kmax
+//		//this is close to formula from SAXSMorph manual...
+		Rmax = 5*2*RgValue
+//		Kmin = lowQExtrapolationEnd / 10
+		setDataFolder oldDF
+	endif
+
 
 end
 ///******************************************************************************************
@@ -477,8 +626,9 @@ Function IR3T_ExtrapolateHighQ()
 		Make/D/N=2/O W_coef
 		Make/D/T/O/N=1 T_Constraints
 		variable V_FitError
-		T_Constraints[0] = {"K1 > 0"}
-		W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]/(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,OriginalIntensity[pcsr(B , "TwoPhaseSystemData")]}
+		T_Constraints[0] = {"K1 >= 0"}
+		//W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]/(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,0.01*OriginalIntensity[pcsr(B , "TwoPhaseSystemData")]}
+		W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]/(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,0}
 		V_FitError=0			//This should prevent errors from being generated
 		FuncFit/Q PorodInLogLog W_coef OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /C=T_Constraints /W=OriginalError /I=1
 		if (V_FitError!=0)	//there was error in fitting
@@ -582,6 +732,8 @@ FUnction IR3T_ExtendDataCalcParams()
 		NVAR highQExtrapolationStart = root:Packages:TwoPhaseSolidModel:highQExtrapolationStart
 		NVAR highQExtrapolationEnd = root:Packages:TwoPhaseSolidModel:highQExtrapolationEnd
 		NVAR highQExtrapolationMax = root:Packages:TwoPhaseSolidModel:highQExtrapolationMax
+		NVAR RgValue = root:Packages:TwoPhaseSolidModel:RgValue
+
 		
 		NVAR PorodConstant= root:Packages:TwoPhaseSolidModel:PorodConstant
 		NVAR Background= root:Packages:TwoPhaseSolidModel:Background
@@ -623,14 +775,20 @@ FUnction IR3T_ExtendDataCalcParams()
 				endif
 				ModifyGraph/W=TwoPhaseSystemData lstyle(ExtrapolatedIntensity)=6,rgb(ExtrapolatedIntensity)=(1,12815,52428)
 			endif
-			//calculate Invariant???
+			//calculate Invariant
+			variable Qmax=2		//Qmax=2 hardwired here... 
 			Duplicate/Free ExtrapolatedQvector, ExtrapolatedIntQ2
 			ExtrapolatedIntQ2 = ExtrapolatedIntensity * ExtrapolatedQvector^2
-			Invariant = areaXY(ExtrapolatedQvector, ExtrapolatedIntensity)* 10^24  // in cm^-4
+			Invariant  = areaXY(ExtrapolatedQvector, ExtrapolatedIntQ2,0,Qmax)
+			//see IR1A_UpdatePorodSfcandInvariant() in Unified fit. 		
+			NVAR PorodConstant= root:Packages:TwoPhaseSolidModel:PorodConstant
+			Invariant += PorodConstant * Qmax^0.5 							// 12/2/2013 provided by by dws as Invariant extension to infinity... 
+			//see IR1A_UpdatePorodSfcandInvariant() in Unified fit. 		
+			Invariant  = Invariant* 10^24  // in cm^-4
 			if(CalculatePorosityFromInvariant)
 				Porosity = (Invariant / ScatteringContrast)*1e-20/(2*pi^2)
 				if(Porosity>0.5^2)
-					DoALert 0, "Calculated volume is too large when we do phi*(1-phi). Seems like there is problem with calibration of contrast. Input Porosity value manually. "
+					DoAlert 0, "Calculated volume is too large when we do phi*(1-phi). Seems like there is problem with calibration of contrast. Input Porosity value manually. "
 					CalculatePorosityFromInvariant = 0
 					Porosity = 0.1
 					IR3T_SetControlsInPanel()
@@ -638,13 +796,20 @@ FUnction IR3T_ExtendDataCalcParams()
 			else
 				ScatteringContrast  = (Invariant / Porosity )*1e-20/(2*pi^2)
 			endif
-			SurfaceToVolumeRatio = Porosity*(1-porosity)* 1e4*pi*PorodConstant/Invariant											// this is not really S/V, that would be S/V = piB/Q * (phi*(1-phi))
+			Porosity = (1-sqrt(1-4*Porosity))/2					//this is quadratic equation solver
+			SurfaceToVolumeRatio = Porosity*(1-porosity)* 1e4*pi*PorodConstant/Invariant	// this is not really S/V, that would be S/V = piB/Q * (phi*(1-phi))
 			if(RKParametersManual==0)		//calculate and set R and K parameters here...
-				Rmin = BoxSideSize / BoxResolution / 2
-				Rmax = IN2G_roundSignificant(35/lowQExtrapolationStart,2)
+				//Rmin = BoxSideSize / BoxResolution / 2
+				Rmin = 0.1
+				//Rmax = IN2G_roundSignificant(35/lowQExtrapolationStart,2)
+				Rmax = IN2G_roundSignificant(10*RgValue,2)			
 				Kmin =IN2G_roundSignificant(lowQExtrapolationStart/10,1)
 				Kmax = IN2G_roundSignificant(highQExtrapolationStart*10, 1)	
 				Kmax =  Kmax>6.28 ? Kmax : 2*pi		
+			endif
+			DoWIndow TwoPhaseSystems
+			if(V_Flag)	
+				Button Generate3DModel, win=TwoPhaseSystems, disable=0, fColor=(3,52428,1)
 			endif
 
 		else
@@ -664,11 +829,16 @@ Function IR3T_ClearStaleNumbers()
 	NVAR SurfaceToVolumeRatio=root:Packages:TwoPhaseSolidModel:SurfaceToVolumeRatio
 	NVAR ScatteringContrast=root:Packages:TwoPhaseSolidModel:ScatteringContrast
 	NVAR Porosity=root:Packages:TwoPhaseSolidModel:Porosity
+	NVAR RgValue=root:Packages:TwoPhaseSolidModel:RgValue
+	NVAR AchievedVolumeFraction = root:Packages:TwoPhaseSolidModel:AchievedVolumeFraction
+	
 	
 	PorodConstant = 0
 	Background = 0
 	Invariant=0
 	SurfaceToVolumeRatio = 0
+	RgValue = 0
+	AchievedVolumeFraction = 0
 
 	DoWIndow TwoPhaseSystemData
 	if(V_Flag)
@@ -677,7 +847,10 @@ Function IR3T_ClearStaleNumbers()
 	Wave/Z lowQExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:lowQExtrapolatedIntensity
 	Wave/Z highQExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:highQExtrapolatedIntensity
 	KillWaves/Z lowQExtrapolatedIntensity, highQExtrapolatedIntensity
-	
+	DoWIndow TwoPhaseSystems
+	if(V_Flag)	
+		Button Generate3DModel, win=TwoPhaseSystems, disable=2,fColor=(43690,43690,43690)// fColor=(3,52428,1)
+	endif
 end
 
 ///******************************************************************************************
@@ -736,7 +909,9 @@ Function IR3T_InitializeTwoPhaseSys()
 	ListOfVariables+="BoxSideSize;BoxResolution;Porosity;Invariant;ScatteringContrast;SurfaceToVolumeRatio;CalculatePorosityFromInvariant;"
 	ListOfVariables+="NumberofRPoints;NumberOfKPoints;Kmin;Kmax;Rmin;Rmax;RKlogSpaced;TotalNumberOfVoxels;RKParametersManual;"
 	ListOfVariables+="LowQExtrapolationMin;LowQExtrapolationStart;LowQExtrapolationEnd;HighQExtrapolationEnd;HighQExtrapolationStart;HighQExtrapolationMax;"
-	ListOfVariables+="PorodConstant;Background;"
+	ListOfVariables+="PorodConstant;Background;RgValue;VoxelResolution;GizmoFillSolid;"
+	ListOfVariables+="AchievedVolumeFraction;"
+	
 	ListOfStrings="LowQExtrapolationMethod;"
 	ListOfStrings+="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
 	variable i
@@ -806,6 +981,8 @@ static Function IR3T_SetInitialValues()
 	endif
 	NVAR TotalNumberOfVoxels
 	TotalNumberOfVoxels = BoxResolution^3
+	NVAR VoxelResolution
+	VoxelResolution = BoxSideSize/BoxResolution
 	
 	NVAR Porosity
 	if(Porosity>0.5 || Porosity<0.01)
@@ -817,11 +994,11 @@ static Function IR3T_SetInitialValues()
 	endif
 	NVAR NumberofRPoints
 	if(NumberofRPoints<100)
-		NumberofRPoints = 1000
+		NumberofRPoints = 10000
 	endif
 	NVAR NumberOfKPoints
 	if(NumberOfKPoints<100)
-		NumberOfKPoints = 1000
+		NumberOfKPoints = 10000
 	endif
 //	NVAR RKlogSpaced
 //	if(RKlogSpaced!=0 || RKlogSpaced!=1)
@@ -853,7 +1030,7 @@ end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-Function IR3T_CalculateTwoPhaseSolid()
+Function IR3T_GenerateTwoPhaseSolid()
 
 
 	wave/Z Intensity=root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity 	//Int/Q extended enough that we can ignore edge effects... 
@@ -1009,12 +1186,26 @@ Function IR3T_CalculateTwoPhaseSolid()
 	//This thing does not work - we always get scattering from the box size, not from internal strucutre. So this is probably not realistic to do...  
 	//IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
 	IR3T_AppendModelIntToGraph()
+	IR3T_CalculateAchievedValues()
 	print "Done..."
 	resumeUpdate
 	setDataFOlder OldDf	
 end
 
 ///*************************************************************************************************************************************
+
+Function IR3T_CalculateAchievedValues()
+
+		Wave/Z TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+		NVAR AchievedVolumeFraction = root:Packages:TwoPhaseSolidModel:AchievedVolumeFraction
+		
+		if(WaveExists(TwoPhaseSolidMatrix))
+			Wavestats/Q TwoPhaseSolidMatrix
+			
+			AchievedVolumeFraction = 1-V_avg
+		endif
+
+end
 ///*************************************************************************************************************************************
 Function IR3T_AppendModelIntToGraph()
 	DoWindow TwoPhaseSystemData
@@ -1458,24 +1649,74 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-Window TwoPhaseSolidGizmo() : GizmoPlot
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=getDataFolder(1)
-	setDataFolder root:Packages:TwoPhaseSolidModel
-	DoWIndow TwoPhaseSolidGizmo
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+Function IR3T_TwoPhaseSolid2DImage() : Graph
+	DOWindow TwoPhaseSolid2DImage
 	if(V_Flag)
-		DoWIndow/K TwoPhaseSolidGizmo
+		DoWIndow/F TwoPhaseSolid2DImage
+	else
+		Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+		PauseUpdate; Silent 1		// building window...
+		Display /W=(710,1006,1185,1540)/K=1/N=TwoPhaseSolid2DImage  as "2D Image Slices"
+		AppendImage/T TwoPhaseSolidMatrix
+		ModifyImage TwoPhaseSolidMatrix ctab= {*,*,Grays,1}
+		ModifyImage TwoPhaseSolidMatrix plane= 0
+		ModifyGraph margin(left)=14,margin(bottom)=14,margin(top)=14,margin(right)=14
+		ModifyGraph mirror=2
+		ModifyGraph nticks=3
+		ModifyGraph minor=1
+		ModifyGraph fSize=9
+		ModifyGraph standoff=0
+		ModifyGraph tkLblRot(left)=90
+		ModifyGraph btLen=3
+		ModifyGraph tlOffset=-2
+		SetAxis/A/R left
+		ControlBar 50
+		Slider LayerSlider,pos={8.00,3.00},size={200.00,47.00},proc=IR3T_2DImageSliderProc
+		Slider LayerSlider,limits={0,100,1},value= 0,vert= 0
 	endif
+EndMacro
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+Function IR3T_2DImageSliderProc(sa) : SliderControl
+	STRUCT WMSliderAction &sa
+
+	switch( sa.eventCode )
+		case -1: // control being killed
+			break
+		default:
+			if( sa.eventCode & 1 ) // value set
+				Variable curval = sa.curval
+				//change displayed slice
+				ModifyImage TwoPhaseSolidMatrix plane=curval
+			endif
+			break
+	endswitch
+
+	return 0
+End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
+
+	Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
+	NVAR GizmoFillSolid = 	root:packages:TwoPhaseSolidModel:GizmoFillSolid
+
+
 	PauseUpdate; Silent 1		// building window...
 	// Building Gizmo 8 window...
-	NewGizmo/T="Two Phase Solid"/K=1/W=(796,73,1311,533)
+	NewGizmo/K=1/T="Two Phase Solid"/W=(796,73,1311,533)
+	DoWindow/C TwoPhaseSolid3D
 	ModifyGizmo startRecMacro=700
 	ModifyGizmo scalingOption=63
-	AppendToGizmo isoSurface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=TwoPhaseSolidSurface
+	AppendToGizmo isoSurface=TwoPhaseSolidMatrix,name=TwoPhaseSolidSurface
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ surfaceColorType,1}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineColorType,0}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineWidthType,0}
@@ -1488,34 +1729,64 @@ Window TwoPhaseSolidGizmo() : GizmoPlot
 	AppendToGizmo Axes=boxAxes,name=axes0
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisScalingMode,1}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisColor,0,0,0,1}
-	ModifyGizmo modifyObject=axes0,objectType=Axes,property={calcNormals,1}
+	//ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,calcNormals,1}
 	ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,Clipped,0}
 	AppendToGizmo light=Directional,name=light0
 	ModifyGizmo modifyObject=light0,objectType=light,property={ position,-0.241800,-0.664500,0.707100,0.000000}
 	ModifyGizmo modifyObject=light0,objectType=light,property={ direction,-0.241800,-0.664500,0.707100}
 	ModifyGizmo modifyObject=light0,objectType=light,property={ ambient,0.133000,0.133000,0.133000,1.000000}
 	ModifyGizmo modifyObject=light0,objectType=light,property={ specular,1.000000,1.000000,1.000000,1.000000}
+	//this is 3D voxelgram "filler"
+	AppendToGizmo voxelgram=TwoPhaseSolidMatrix,name=Solid
+	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ valueRGBA,0,GizmoFillSolid,0.000015,0.195544,0.800000,1.000000}
+	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ mode,0}
+	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ pointSize,8}
+	///
 	AppendToGizmo attribute specular={1,1,0,1,1032},name=specular0
 	AppendToGizmo attribute shininess={5,20},name=shininess0
 	ModifyGizmo setDisplayList=0, object=light0
 	ModifyGizmo setDisplayList=1, attribute=shininess0
 	ModifyGizmo setDisplayList=2, attribute=specular0
-	ModifyGizmo setDisplayList=3, object=TwoPhaseSolidSurface
-	ModifyGizmo setDisplayList=4, object=axes0
-	ModifyGizmo setDisplayList=5, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
+	ModifyGizmo setDisplayList=3, object=Solid
+	ModifyGizmo setDisplayList=4, object=TwoPhaseSolidSurface
+	ModifyGizmo setDisplayList=5, object=axes0
+	ModifyGizmo setDisplayList=6, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
+
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelText,num2str(BoxSideSize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ 1,axisLabelText,num2str(BoxSideSize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ 2,axisLabelText,num2str(BoxSideSize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisLabelCenter,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelScale,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelRGBA,0.000000,0.000000,0.000000,1.000000}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelTilt,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisLabelFont,"default"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelFlip,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,labelBillboarding,1}
+
 	ModifyGizmo autoscaling=1
 	ModifyGizmo currentGroupObject=""
 	ModifyGizmo showInfo
-	ModifyGizmo infoWindow={1339,72,2156,371}
+	ModifyGizmo infoWindow={639,659,1456,956}
 	ModifyGizmo endRecMacro
-	ModifyGizmo SETQUATERNION={-0.212396,0.339791,0.024011,0.915892}
-	setDataFOlder OldDf
-
+	ModifyGizmo SETQUATERNION={-0.092963,-0.838295,-0.165945,0.510964}
 EndMacro
 
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+Function IR3T_FixGizmoDisplay()
+
+	NVAR GizmoFillSolid = root:packages:TwoPhaseSolidModel:GizmoFillSolid
+
+	DoWIndow TwoPhaseSolid3D
+	if(V_Flag)
+
+		ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ valueRGBA,0,GizmoFillSolid,0.000015,0.195544,0.800000,1.000000}
+	endif
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
