@@ -507,6 +507,7 @@ static Function IR3A_Calculate1DIntensity()
 	string OldNote=note(MassFractalAggregate)
 
 	//figure out where we are working... 
+	variable measuredDataExists = 0
 	string CurrentFolder
 	NVAR useCurrentResults = root:packages:AggregateModeling:CurrentResults
 	NVAR useStoredResults = root:packages:AggregateModeling:StoredResults
@@ -518,8 +519,8 @@ static Function IR3A_Calculate1DIntensity()
 		Wave/Z IntWaveOriginal = root:Packages:Irena_UnifFit:OriginalIntensity
 		Wave/Z QwaveOriginal = root:Packages:Irena_UnifFit:OriginalQvector
 		Wave/Z ErrorOriginal = root:Packages:Irena_UnifFit:OriginalError
-		if(!WaveExists(IntWaveOriginal))
-			abort
+		if(WaveExists(IntWaveOriginal))
+			measuredDataExists = 1
 		endif
 		CurrentFolder = "root:Packages:Irena_UnifFit"
 	else //use stored results, in this case the strings shoudl be set...
@@ -530,15 +531,27 @@ static Function IR3A_Calculate1DIntensity()
 		Wave/Z IntWaveOriginal = $(DataFolderName+IntensityWaveName)
 		Wave/Z QwaveOriginal = $(DataFolderName+QWavename)
 		Wave/Z ErrorOriginal = $(DataFolderName+ErrorWaveName)
-		if(!WaveExists(IntWaveOriginal))
-			abort
+		if(WaveExists(IntWaveOriginal))
+			measuredDataExists = 1
 		endif
 		CurrentFolder = DataFolderName
 	endif
+	if(!measuredDataExists)
+		NewDataFOlder/O root:Aggregate1DModel
+		CurrentFolder = "root:Aggregate1DModel"
+	endif
+	
 	//OK, now lets go where we have the data..
 	SetDataFolder $(CurrentFolder)
-	Duplicate/O IntWaveOriginal, Model3DAggIntensity
-	Duplicate/O QwaveOriginal, A3DAgg1DQwave
+	if(measuredDataExists)
+		Duplicate/O IntWaveOriginal, Model3DAggIntensity
+		Duplicate/O QwaveOriginal, A3DAgg1DQwave
+	else
+		Make/O/N=200 IntWaveOriginal, Model3DAggIntensity, QwaveOriginal, A3DAgg1DQwave
+		A3DAgg1DQwave = 10^(log(0.001)+p*((log(1)-log(0.001))/(199))) 				//sets k scaling on log-scale...
+		QwaveOriginal = 10^(log(0.001)+p*((log(1)-log(0.001))/(199))) 				//sets k scaling on log-scale...
+		IntWaveOriginal = 1
+	endif
 	//DoAlert /T="This is not working right yet" 0, "IR3A_Calculate1DIntensity() is not finished yet, using Guinier-Porod does nto work right... " 
 	//SetDataFolder OldDf
 	//abort
@@ -599,9 +612,28 @@ static Function IR3A_Calculate1DIntensity()
 	//summ together
 	Model3DAggIntensity = Model3DAggIntensityL1 + Model3DAggIntensityL2
 	//make graph if needed... 
+	String LabelStr
 	DoWIndow MassFractalAggDataPlot
 	if(!V_Flag)
-		IR3A_Display1DIntensity()
+		if(measuredDataExists)
+			IR3A_Display1DIntensity()
+		else
+			Display /W=(282.75,37.25,900,400)/K=1  IntWaveOriginal vs QwaveOriginal as "Mass Fractal Aggregate 1D Data Plot"
+			DoWindow/C MassFractalAggDataPlot
+			ModifyGraph mode($(nameofwave(IntWaveOriginal)))=3
+			ModifyGraph msize($(nameofwave(IntWaveOriginal)))=0
+			ModifyGraph log=1
+			ModifyGraph mirror=1
+			ShowInfo
+			LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+			Label left LabelStr
+			LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+			Label bottom LabelStr
+			string LegendStr="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(IntWaveOriginal) Data intensity"
+			Legend/W=MassFractalAggDataPlot/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 LegendStr
+			TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
+			TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+GetWavesDataFolder(IntWaveOriginal,1)	
+		endif
 	else
 		DoWIndow/F MassFractalAggDataPlot
 	endif
@@ -622,7 +654,7 @@ static Function IR3A_Calculate1DIntensity()
 	ModifyGraph/W=MassFractalAggDataPlot log=1
 	ModifyGraph/W=MassFractalAggDataPlot mirror=1
 	ShowInfo
-	String LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	Label/W=MassFractalAggDataPlot left LabelStr
 	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label/W=MassFractalAggDataPlot bottom LabelStr

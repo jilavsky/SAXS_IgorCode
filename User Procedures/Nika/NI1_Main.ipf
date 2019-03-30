@@ -15,8 +15,8 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.82 	TBA
-//
+//1.82 	April 1 BETA release, rtGLolab=3 forced for all
+//			Added support for 12ID-C data. 
 //1.81   December 2018 release. Updated 64bit xops, mainly for OSX. 
 //			Added 12ID-C support, first release. 
 //1.80	Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 

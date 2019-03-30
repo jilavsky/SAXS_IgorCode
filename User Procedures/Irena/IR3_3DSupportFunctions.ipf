@@ -222,10 +222,10 @@ end
 Function IR3T_FindNearestPrimeSize(ValueIn)
 	variable ValueIn
 	
-	make/N=12/Free PrimeList2,PrimeList3
-	PrimeList2 = 2^p
-	PrimeList3 = 3^p
-	Concatenate /O/NP {PrimeList2,PrimeList3}, PrimeList
+	make/N=12/Free PrimeList,PrimeList3
+	PrimeList = 2^p
+	//PrimeList3 = 3^p
+	//Concatenate /O/NP {PrimeList2,PrimeList3}, PrimeList
 	sort PrimeList, PrimeList
 	variable index
 	index = BinarySearch(PrimeList, ValueIn )

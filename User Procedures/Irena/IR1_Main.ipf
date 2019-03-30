@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=21	// Use modern global access method.
-#pragma version=2.70
+#pragma version=2.69
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -14,11 +14,11 @@ constant CurrentIrenaVersionNumber = 2.69
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.70 	POV/PDB import and fixes for 3D Models
-//			Added Anisotropy analsysis (Hermans orienational parameter)
 //2.69 	Removed 14 ipf files to reduce clutter. 
 //			Combined with IR1_CreateFldrStrctr.ipf, IR1_Functions.ipf
 //			added 3DModels, 4D aggregate and Two Phase ssytems. 
+//		 	POV/PDB import and fixes for 3D Models
+//			Added Anisotropy analsysis (Hermans orienational parameter)
 //2.68   Beta version. New 64-bit xops for OSX. 
 //2.67 	heavily modified Size Distribution (added power law background). First official Igor 8 release. 
 //			Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 

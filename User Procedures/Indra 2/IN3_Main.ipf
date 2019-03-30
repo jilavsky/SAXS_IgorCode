@@ -12,7 +12,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.97 fix GUI for step scanning
+//1.97 April 1 BETA release, fix GUI for step scanning
 //1.96 added use of FWHM from sample to GUI. Added ability to overwrite Flyscan amplifier dead times. 
 //1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 

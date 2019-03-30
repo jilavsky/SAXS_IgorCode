@@ -3805,8 +3805,15 @@ Function IR1A_InsertOneLevelResInGrph(Lnmb)
 	endif
 	
 	IQ4Tag=LogLogTag
-	Tag/W=IR1_LogLogPlotU/C/N=$(tagname)/F=2/L=2/M OriginalIntensity, AttachPointNum, LogLogTag
-	Tag/W=IR1_IQ4_Q_PlotU/C/N=$(tagname)/F=2/L=2/M OriginalIntQ4, AttachPointNum, IQ4Tag
+	DoWIndow IR1_LogLogPlotU
+	if(V_Flag)
+		Tag/W=IR1_LogLogPlotU/C/N=$(tagname)/F=2/L=2/M OriginalIntensity, AttachPointNum, LogLogTag
+	endif
+	
+	DoWIndow IR1_IQ4_Q_PlotU
+	if(V_Flag)
+		Tag/W=IR1_IQ4_Q_PlotU/C/N=$(tagname)/F=2/L=2/M OriginalIntQ4, AttachPointNum, IQ4Tag
+	endif
 	
 	
 end
