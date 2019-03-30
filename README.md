@@ -3,13 +3,10 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher
 
 **The current stable release version is December2018.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
-**Master version contains early versions of 3D aggregate model and 3D Two phase soldi model. It currently compiles and can be used, but keep in mind that there is no manual and codeis cahngign routinely. If you have any issues with Master version, please report them ASAP to me.** 
+**The current BETA version is April2019** This release includes new tools - 3D aggregate model and 3D Two phase solid model. There is also tool for quatification of anisotropy (Hermansen orientation parameter, HOP). If you have any issues with this beta release, please report them ASAP to me. 
 
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
-
-Gitter discussion forum (test mode for now):
-https://gitter.im/SAXS_IgorCode/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link
 
 This code can be installed manually or using Igor installer from : 
 https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub
