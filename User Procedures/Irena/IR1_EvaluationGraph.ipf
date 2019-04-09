@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=21	// Use modern global access method.
-#pragma version=2.10
+#pragma version=2.11
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.11 fixed some bugs in find FWHM IR1G_FindFWHM(IntProbWave,DiaWave, StartP, EndP)
 //2.10 fixed operations for case when user uses Modeling II (now MOdeling) cdata and used not first, but later pop for Size distribution. Needed to build in skipping of non-size distribution cases...
 //2.09  removed unused functions
 //2.08 added getHelp button calling to www manual
@@ -344,28 +345,32 @@ Function IR1G_FindFWHM(IntProbWave,DiaWave, StartP, EndP)
 		return NaN
 	endif
 
-	wavestats/Q Int_temp
+	wavestats/Q/P Int_temp
 	
 	variable maximum=V_max
 	variable maxLoc=V_maxLoc
 	Duplicate/O/R=[0,maxLoc] Int_temp, temp_wv1
 	Duplicate/O/R=[0,maxLoc] Dia_temp, temp_DWwv1
 	
-	wavestats/Q temp_wv1
+	wavestats/Q/P temp_wv1
 	variable OneMin=V_min
 	
-	Duplicate/O/R=[maxLoc, numpnts(IntProbWave)-1] Int_temp, temp_wv2
-	Duplicate/O/R=[maxLoc, numpnts(IntProbWave)-1] Dia_temp, temp_DWwv2
+	Duplicate/O/R=[maxLoc, numpnts(Int_temp)-1] Int_temp, temp_wv2
+	Duplicate/O/R=[maxLoc, numpnts(Int_temp)-1] Dia_temp, temp_DWwv2
 
-	wavestats/Q temp_wv2
+	wavestats/Q/P temp_wv2
 	variable TwoMin=V_min
 	
 	if (OneMin>(maximum/2) || TwoMin>(maximum/2))
 		return NaN
 	endif
-	
-	variable MinD=temp_DWwv1[BinarySearchInterp(temp_wv1, (maximum/2) )]
-	variable MaxD=temp_DWwv2[BinarySearchInterp(temp_wv2, (maximum/2) )]
+	FindLevel/P/Q temp_wv1, (maximum/2)
+	//Print V_levelX
+	//variable MinD=temp_DWwv1[BinarySearchInterp(temp_wv1, (maximum/2) )]
+	variable MinD=temp_DWwv1[V_levelX]
+	FindLevel/P/Q temp_wv2, (maximum/2)
+	//variable MaxD=temp_DWwv2[BinarySearchInterp(temp_wv2, (maximum/2) )]
+	variable MaxD=temp_DWwv2[V_levelX]
 	KillWaves/Z temp_wv2, temp_wv1,temp_DWwv1,temp_DWwv2, Dia_temp, Int_temp
 
 	setDataFolder OldDf

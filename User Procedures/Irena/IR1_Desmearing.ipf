@@ -626,6 +626,7 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	MatrixOp/FREE Q_vec_sm2=powR(Q_vec_sm,2)
 	MatrixOp/FREE Smear_Q2=powR(Smear_Q,2)
 	MultiThread Smeared_int = IR1B_SmearDataFastFunc(Q_vec_sm2[p], Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
+	//Smeared_int = IR1B_SmearDataFastFunc(Q_vec_sm2[p], Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
 
 	Smeared_int*= 1 / slitLength															//normalize
 	
@@ -634,15 +635,20 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
+//
 Threadsafe function IR1B_SmearDataFastFunc(Q_vec_sm2, Smear_Q,Smear_Q2, tempQ_vec_sm, tempInt_to_smear, SlitLength)
 			variable Q_vec_sm2, SlitLength
 			wave Smear_Q, Smear_Q2, tempQ_vec_sm, tempInt_to_smear	
-			Duplicate/Free Smear_Q, Smear_Int
+			Duplicate/Free Smear_Q, InterSmear_Q
 			//Smear_Int=interp(sqrt( Q_vec_sm2 +(Smear_Q2[p])), tempQ_vec_sm, tempInt_to_smear)		//put the distribution of intensities in the slit for each point 
 			//this is using Interpolate2, seems slightly faster than above line alone... 
-			Duplicate/Free Smear_Q, InterSmear_Q
 			InterSmear_Q = sqrt( Q_vec_sm2 +(Smear_Q2[p]))
 			//surprisingly, below code is tiny bit slower that the two lines above... 
+			//meed q range only over slit length, actually...
+			//this is kind of slow... For large waves... 
+			//variable EndOfSLitLegth = BinarySearch(InterSmear_Q, 1.02*slitLength )
+			//deletepoints EndOfSLitLegth, (numpnts(InterSmear_Q) - EndOfSLitLegth - 1), InterSmear_Q 
+			Duplicate/Free InterSmear_Q, Smear_Int
 			//MatrixOp/FREE InterSmear_Q=sqrt(Smear_Q2 + Q_vec_sm2)	
 			Interpolate2/I=3/T=1/X=InterSmear_Q /Y=Smear_Int tempQ_vec_sm, tempInt_to_smear
 			return areaXY(Smear_Q, Smear_Int, 0, slitLength) 							//integrate the intensity over the slit 

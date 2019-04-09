@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.31
+#pragma version=2.32
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -11,6 +11,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.32 prevent invariant from being negative. Happens when P<3 for level which is extending to infinity at which point invariant makes little sense anyway. 
 //2.31 fixed IR1A_UnifiedCalcIntOne for when extension of data for SMR data requires extension, failed for rtGlobals=3
 //2.30 combined with smaller ipf files: IR1_Unified_SaveExport.ipf
 //		IR1_UnifiedSaveToXLS.ipf, and IR1_Unified_Fit_Fncts2.ipf
@@ -1052,6 +1053,12 @@ Function IR1A_UpdatePorodSfcandInvariant()
 			Invariant+=-B*maxQ^(3-abs(Porod))/(3-abs(Porod))			// 12/2/2013 modified by dws					
 		endif
 		//Invariant is at this time in cm^-1 * A^-3  (Gregg Beaucage)
+		//Invariant calculations fails if P<3 since the integration to infinity is negative. 
+		//set Invariant to NaN in that case...
+		if(Invariant<0)		//bad extrapolation
+			Invariant = NaN
+		endif
+		
 		if (Porod>=3.95 && Porod<=4.05)
 			SurfaceToVolRat=1e4*pi*B/Invariant//***DWS  This is not the suface to volume ratio.  S/V = piB/Q * (phi*(1-phi))
 		else
