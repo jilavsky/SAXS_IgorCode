@@ -1,6 +1,6 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.01
+#pragma version=1.02
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //*************************************************************************/
 
 
+//1.02 fix Intensity plotting scaling. 
 //1.01 modified GSR generation to use MatrixOp and time to calculate (50x50x50) went from 30+ sec to 4. 
 //1.00 first version, added code for Two Phase solid based on 
 	//Bridget Ingham, Haiyong Li, Emily L. Allen and Michael F. Toney, SAXSMorph program with manuscript: J. Appl. Cryst. (2011). 44, 221–224, doi:10.1107/S0021889810048557
@@ -360,7 +361,13 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 				IN2G_OpenWebManual("Irena/TwoPhaseSolid.html")
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DModel" ))
+					KillWIndow/Z TwoPhaseSolid2DImage
+					KillWIndow/Z TwoPhaseSolid3D
 					IR3T_GenerateTwoPhaseSolid()
+					//This thing does not work - we always get scattering from the box size, not from internal strucutre. So this is probably not realistic to do...  
+					//IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
+					IR3T_AppendModelIntToGraph()
+					IR3T_CalculateAchievedValues()
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DView" ))
 					IR3T_TwoPhaseSolidGizmo()
@@ -1183,10 +1190,6 @@ Function IR3T_GenerateTwoPhaseSolid()
 	print "Calculating PDF and SAS curve."
 	Wave TwoPhaseSolidMatrix
 	//oversample = BoxResolution>100 ? 2 : 4
-	//This thing does not work - we always get scattering from the box size, not from internal strucutre. So this is probably not realistic to do...  
-	//IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
-	IR3T_AppendModelIntToGraph()
-	IR3T_CalculateAchievedValues()
 	print "Done..."
 	resumeUpdate
 	setDataFOlder OldDf	
@@ -1219,6 +1222,8 @@ Function IR3T_AppendModelIntToGraph()
 		Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
 		Wave/Z TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
 		Wave/Z QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
+		NVAR Qmin = root:Packages:TwoPhaseSolidModel:LowQExtrapolationStart
+		NVAR Qmax = root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd
 		variable InvarModel
 		variable InvarData
 //		if(WaveExists(PDFQWv))
@@ -1236,8 +1241,8 @@ Function IR3T_AppendModelIntToGraph()
 //		endif
 		if(WaveExists(TheoreticalIntensityDACF))
 			//need to renormalzie this together...
-			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, OriginalQvector[0], QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
-			InvarData=areaXY(OriginalQvector, OriginalIntensity, OriginalQvector[0], QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
+			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
+			InvarData=areaXY(OriginalQvector, OriginalIntensity, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
 			TheoreticalIntensityDACF*=InvarData/InvarModel
 			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
 			if(V_flag==0)
@@ -1659,7 +1664,7 @@ Function IR3T_TwoPhaseSolid2DImage() : Graph
 	else
 		Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 		PauseUpdate; Silent 1		// building window...
-		Display /W=(710,1006,1185,1540)/K=1/N=TwoPhaseSolid2DImage  as "2D Image Slices"
+		Display /W=(110,106,585,640)/K=1/N=TwoPhaseSolid2DImage  as "2D Image Slices"
 		AppendImage/T TwoPhaseSolidMatrix
 		ModifyImage TwoPhaseSolidMatrix ctab= {*,*,Grays,1}
 		ModifyImage TwoPhaseSolidMatrix plane= 0

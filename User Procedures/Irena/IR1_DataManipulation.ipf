@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.65
+#pragma version=2.66
 constant IR3MversionNumber = 2.61		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -10,7 +10,8 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.65 fix ZData manipualtion I - change names acording to qrs naming ssystem only if input top data set is QRS system, avoid for USAXS, results and otehrs. 
+//2.66 fix Data Manipulation I - make long file names on Igor 8 usign standard Irena choices setup. 
+//2.65 fix Data Manipulation I - change names acording to qrs naming ssystem only if input top data set is QRS system, avoid for USAXS, results and otehrs. 
 //2.64 fixes for long wave names which caused issues... 
 //2.63 fxed for long names in Igor 8
 //2.62 fixed when ManipII has recreated the small panel on close of the large panel. 
@@ -332,9 +333,10 @@ Function IR1D_setvarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		SVAR CheckString=root:packages:SASDataModification:NewIntensityWaveName
 		if(strlen(CheckString)>0)
 			CheckString =  CleanupName(CheckString,1)
-			if (CheckName(CheckString,1)!=0)
-				CheckString=UniqueName(CheckString,1,0)
-			endif 
+			CheckString =  IN2G_CreateUserName(CheckString,31, 1, 1)
+			//if (CheckName(CheckString,1)!=0)
+			//	CheckString=UniqueName(CheckString,1,0)
+			///endif 
 			if ((strlen(NewQWaveName)==0)&&(strlen(NewErrorWaveName)==0))
 				NewQWaveName = "q"+CheckString[1,inf]
 				NewErrorWaveName = "s"+CheckString[1,inf]
@@ -347,10 +349,11 @@ Function IR1D_setvarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		NVAR UseQRSdata = root:Packages:SASDataModificationTop:UseQRSdata
 		if(strlen(CheckString)>0)
 			CheckString =  CleanupName(CheckString,1)
-			if (CheckName(CheckString,1)!=0)
-				CheckString=UniqueName(CheckString,1,0)
-			endif 
-//			if ((strlen(NewIntensityWaveName)==0)&&(strlen(NewErrorWaveName)==0))	//commented byrequest of Dale Schefer, 4 12 2005
+			CheckString =  IN2G_CreateUserName(CheckString,31, 1, 1)
+			//if (CheckName(CheckString,1)!=0)
+			//	CheckString=UniqueName(CheckString,1,0)
+			//endif 
+			//			if ((strlen(NewIntensityWaveName)==0)&&(strlen(NewErrorWaveName)==0))	//commented byrequest of Dale Schefer, 4 12 2005
 			if(UseQRSdata)			//change the names ONLY is using QRS data structure, else leave to users... 
 				NewIntensityWaveName = "r"+CheckString[1,inf]
 				NewErrorWaveName = "s"+CheckString[1,inf]
@@ -361,9 +364,10 @@ Function IR1D_setvarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 		SVAR CheckString=root:packages:SASDataModification:NewErrorWaveName
 		if(strlen(CheckString)>0)
 			CheckString =  CleanupName(CheckString,1)
-			if (CheckName(CheckString,1)!=0)
-				CheckString=UniqueName(CheckString,1,0)
-			endif 
+			CheckString =  IN2G_CreateUserName(CheckString,31, 1, 1)
+			//if (CheckName(CheckString,1)!=0)
+			//	CheckString=UniqueName(CheckString,1,0)
+			//endif 
 			if ((strlen(NewIntensityWaveName)==0)&&(strlen(NewQWaveName)==0))
 				NewIntensityWaveName = "r"+CheckString[1,inf]
 				NewQWaveName = "q"+CheckString[1,inf]
@@ -855,19 +859,19 @@ static Function  IR1D_SaveData()
 	SVAR NewErrorWaveName=root:Packages:SASDataModification:NewErrorWaveName
 	SVAR OutputDataUnits=root:Packages:SASDataModification:OutputDataUnits
 	//check for name errors
-	if(strlen(NewIntensityWaveName)>30)
-		NewIntensityWaveName=NewIntensityWaveName[0,30]
-	endif
-	if(strlen(NewQWavename)>30)
-		NewQWavename=NewQWavename[0,30]
-	endif
-	if(strlen(NewErrorWaveName)>30)
-		NewErrorWaveName=NewErrorWaveName[0,30]
-	endif
-
-	NewIntensityWaveName=cleanupName(NewIntensityWaveName,1)
-	NewQWavename=cleanupName(NewQWavename,1)
-	NewErrorWaveName=cleanupName(NewErrorWaveName,1)
+//	if(strlen(NewIntensityWaveName)>30)
+//		NewIntensityWaveName=NewIntensityWaveName[0,30]
+//	endif
+//	if(strlen(NewQWavename)>30)
+//		NewQWavename=NewQWavename[0,30]
+//	endif
+//	if(strlen(NewErrorWaveName)>30)
+//		NewErrorWaveName=NewErrorWaveName[0,30]
+//	endif
+//
+//	NewIntensityWaveName=cleanupName(NewIntensityWaveName,1)
+//	NewQWavename=cleanupName(NewQWavename,1)
+//	NewErrorWaveName=cleanupName(NewErrorWaveName,1)
 	
 	Wave/Z ResultsInt = root:packages:SASDataModification:ResultsInt
 	Wave/Z ResultsQ = root:packages:SASDataModification:ResultsQ
@@ -915,6 +919,27 @@ static Function  IR1D_SaveData()
 			endif
 		endfor	
 	endif
+	
+//	if(strlen(NewIntensityWaveName)>30)
+//		NewIntensityWaveName=NewIntensityWaveName[0,30]
+//	endif
+//	if(strlen(NewQWavename)>30)
+//		NewQWavename=NewQWavename[0,30]
+//	endif
+//	if(strlen(NewErrorWaveName)>30)
+//		NewErrorWaveName=NewErrorWaveName[0,30]
+//	endif
+//
+//	NewIntensityWaveName=cleanupName(NewIntensityWaveName,1)
+//	NewQWavename=cleanupName(NewQWavename,1)
+//	NewErrorWaveName=cleanupName(NewErrorWaveName,1)
+	NewIntensityWaveName	=IN2G_CreateUserName(NewIntensityWaveName,31, 1, 1)
+	NewQWavename				=IN2G_CreateUserName(NewQWavename,31, 1, 1)
+	NewErrorWaveName		=IN2G_CreateUserName(NewErrorWaveName,31, 1, 1)
+	
+	
+	
+	
 	if(WaveExists(ResultsInt)&&WaveExists(ResultsQ))
 		Wave/Z testOutputInt=$NewIntensityWaveName
 		Wave/Z testOutputQ=$NewQWaveName

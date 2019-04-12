@@ -2528,7 +2528,7 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 		DataFolderNameL=possiblyquotename(cleanupname(DataFolderNameL,1))
 		NewDataFolder/O $("root:"+DataFolderNameL)
 		Print "Data will be saved in folder :  root:"+DataFolderNameL
-		DataFOlderName="root:"+DataFolderNameL
+		DataFolderName="root:"+DataFolderNameL+":"
 	endif
 
 	setDataFolder $(DataFolderName)
