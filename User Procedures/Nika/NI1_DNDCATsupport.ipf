@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.11		//dated 10/25/2009
+#pragma version=1.12		//dated 4/12/2019
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.12 2019 fixes, fixed bug when names starting with number needed quoting. Note: Not long file name compatible yet, limits names to 32 charatcers. 
 //1.11 added license for ANL
 
 //this is package for support of DND CAT beamline. 
@@ -390,6 +391,7 @@ end
 Function NI1_DNDSampleToDetDistance(FileNameStr)
 	string FileNameStr
 	string Fixedname= RemoveEnding(FileNameStr, ".txt") [0,31] 
+	Fixedname = PossiblyQuoteName(Fixedname)
 	SVAR/Z curKwList=$("root:DNDCAtLookupTables:"+Fixedname)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDSampleToDetDistance routine, please contact auhtor of the code"
@@ -409,6 +411,7 @@ end
 Function NI1_DNDPixelSize(FileNameStr)
 	string FileNameStr
 	string Fixedname= RemoveEnding(FileNameStr, ".txt") [0,31] 
+	Fixedname = PossiblyQuoteName(Fixedname)
 	SVAR/Z curKwList=$("root:DNDCAtLookupTables:"+Fixedname)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDPixelSize routine, please contact auhtor of the code"
@@ -428,6 +431,7 @@ end
 Function NI1_DNDWavelength(FileNameStr)
 	string FileNameStr
 	string Fixedname= RemoveEnding(FileNameStr, ".txt") [0,31] 
+	Fixedname = PossiblyQuoteName(Fixedname)
 	SVAR/Z curKwList=$("root:DNDCAtLookupTables:"+Fixedname)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDWavelength routine, please contact auhtor of the code"
@@ -447,6 +451,7 @@ end
 Function NI1_DNDBeamCenterX(FileNameStr)
 	string FileNameStr
 	string Fixedname= RemoveEnding(FileNameStr, ".txt") [0,31] 
+	Fixedname = PossiblyQuoteName(Fixedname)
 	SVAR/Z curKwList=$("root:DNDCAtLookupTables:"+Fixedname)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDBeamCenterX routine, please contact auhtor of the code"
@@ -466,6 +471,7 @@ end
 Function NI1_DNDBeamCenterY(FileNameStr)
 	string FileNameStr
 	string Fixedname= RemoveEnding(FileNameStr, ".txt") [0,31] 
+	Fixedname = PossiblyQuoteName(Fixedname)
 	SVAR/Z curKwList=$("root:DNDCAtLookupTables:"+Fixedname)
 	if(!SVAR_Exists(curKwList))
 		Abort "Problem in NI1_DNDBeamCenterY routine, please contact auhtor of the code"
