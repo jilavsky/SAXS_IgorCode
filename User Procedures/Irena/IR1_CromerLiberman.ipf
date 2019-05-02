@@ -1,5 +1,5 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
+#pragma rtGlobals = 2			// Use strict wave reference mode and runtime bounds checking
 #pragma version=2.05
 
 
@@ -9,6 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//		 reduced rtGlobals to 2 due to bug on lines 609, 610 , reported bug to Jon Tisher
 //2.05 fixed some values for Be and Mo which were found wrong by John Tishler. 
 //2.04  removed unused functions
 //2.03 tried converting to rtGlobals=3, but on run there is runtime error on Cromer_Get_fp. Index out od bounds. 

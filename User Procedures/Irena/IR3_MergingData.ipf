@@ -2055,6 +2055,16 @@ Function IR3D_MergeData()  //call this and from here go to different routines
 	Wave/Z Error2=root:Packages:Irena:SASDataMerging:OriginalData2ErrorWave
 	Wave/Z TempdQ2=root:Packages:Irena:SASDataMerging:OriginalData2dQWave
 	Wave/Z TempdQ1=root:Packages:Irena:SASDataMerging:OriginalData1dQWave
+	if(!WaveExists(TempdQ2))
+		Duplicate/O Qvector2, OriginalData2dQWave
+		Wave TempdQ2=root:Packages:Irena:SASDataMerging:OriginalData2dQWave
+		TempdQ2[1,numpnts(TempdQ2)-1] = OriginalData2dQWave[p]-OriginalData2dQWave[p-1]
+	endif
+	if(!WaveExists(TempdQ1))
+		Duplicate/O Qvector1, OriginalData1dQWave
+		Wave/Z TempdQ1=root:Packages:Irena:SASDataMerging:OriginalData1dQWave
+		TempdQ1[1,numpnts(TempdQ1)-1] = OriginalData1dQWave[p]-OriginalData1dQWave[p-1]
+	endif
 	if(WaveExists(Intensity1)&&WaveExists(Qvector1)&&WaveExists(Error1)&&WaveExists(TempdQ1))
 		Duplicate/O Intensity1, MergeData1IntWave
 		Duplicate/O Qvector1, MergeData1QWave

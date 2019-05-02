@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=21	// Use modern global access method.
-#pragma version = 2.30
+//#pragma rtGlobals=2	// Use modern global access method.
+#pragma version = 2.31
 Constant IR1RSversionNumber=2.30
 
 
@@ -10,6 +10,7 @@ Constant IR1RSversionNumber=2.30
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.31 fixes for rtGlobals=3
 //2.30 added new parameters to storing the data, so they can be recovered. Forgot to do this last time. 
 //2.29 modify behavior of low-q power law slope and add "fit on Graph data" options... 
 //2.28 add low-q power law background subtraction for data. Treat same as background for now. 
@@ -2024,7 +2025,6 @@ static Function IR1R_FindOptimumAvalue(Evalue)						//does the fitting itself, c
 	Wave Intensity=root:Packages:Sizes:IntensityQ2N
 	Wave Errors=root:Packages:Sizes:ErrorsQ2N
 	Wave D_distribution=root:Packages:Sizes:D_distribution
-	Wave A_matrix
 	Wave B_vector
 	Wave ModelDistribution
 
@@ -2035,6 +2035,7 @@ static Function IR1R_FindOptimumAvalue(Evalue)						//does the fitting itself, c
 		MidPoint=(LogAmax+LogAmin)/2
 		Avalue=10^MidPoint								//calculate A
 		IR1R_CalculateAmatrix(Avalue)
+		Wave A_matrix
 		//this needs to change for Igor 7, MatrixLUD/MatrixLUDBkSub is retired. 
 		//MatrixLUD A_matrix								//decompose A_matrix 
 		//Wave M_Lower									//results in these matrices for next step:
@@ -4539,7 +4540,7 @@ static Function IR1R_DoNNLS()
 	Wave R_distribution=root:Packages:Sizes:R_distribution
 	Wave ModelDistribution=root:Packages:Sizes:ModelDistribution
 	Wave InitialModelBckg=root:Packages:Sizes:InitialModelBckg
-	Wave NormalizedResidual=root:Packages:Sizes:NormalizedResidual
+	//Wave NormalizedResidual=root:Packages:Sizes:NormalizedResidual
 	Wave G_matrix=root:Packages:Sizes:G_matrix
 	Duplicate/O Intensity, root:Packages:Sizes:SIzesFitIntensity
 	Duplicate/O ModelDistribution, root:Packages:Sizes:CurrentResultSizeDistribution
@@ -4574,12 +4575,12 @@ end
 	//copy data to update graph
 	Wave/Z CurrentResultSizeDistribution = root:Packages:Sizes:CurrentResultSizeDistribution
 //	Wave ModelDistribution=root:Packages:Sizes:ModelDistribution
-	Wave NormalizedResidual=root:Packages:Sizes:NormalizedResidual
 	Wave Intensity=root:Packages:Sizes:Intensity
 	Wave Errors=root:Packages:Sizes:Errors
-
-//	Duplicate/O ModelDistribution, CurrentResultSizeDistribution
 	Wave SizesFitIntensity=root:Packages:Sizes:SizesFitIntensity
+	Duplicate/O Intensity, NormalizedResidual
+	Wave NormalizedResidual=root:Packages:Sizes:NormalizedResidual
+
 	NormalizedResidual = (Intensity - SizesFitIntensity)/Errors
 
 	NVAR Chisquare=root:Packages:Sizes:Chisquare
@@ -4669,11 +4670,12 @@ static Function IR1R_TNNLS(G_matrix,ModelDistribution,Intensity, Qvector, errors
 		Wave SizesFitIntensity=root:Packages:Sizes:SizesFitIntensity
 		Wave CurrentResultsSizeDistribution=root:Packages:Sizes:CurrentResultSizeDistribution
 		CurrentResultsSizeDistribution=Xwave[p]/ (2*IR1R_BinWidthInRadia(p))		//converts results into radi and scales to width of each bin
-		Wave NormalizedResidual=root:Packages:Sizes:NormalizedResidual
 		NVAR NumberIterations=root:Packages:Sizes:NumberIterations
 		NVAR Chisquare=root:Packages:Sizes:Chisquare
 		MatrixOp/O SizesFitIntensity = AmatrixOrig x Xwave
-		duplicate/O SizesFitIntensity, tempWv
+		duplicate/O SizesFitIntensity, tempWv, NormalizedResidual
+		Wave NormalizedResidual=root:Packages:Sizes:NormalizedResidual
+
 		tempWv = (Intensity - SizesFitIntensity)/Errors
 		tempWv = tempWv^2
 		NormalizedResidual = tempWv

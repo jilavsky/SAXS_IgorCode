@@ -165,7 +165,7 @@ Function IR3T_TwoPhaseControlPanel()
 	//bottom controls
 	Button Generate3DModel,pos={100,620},size={200,25},proc=IR3T_TwoPhaseButtonProc,title="Generate 3D model", help={"Create 3D model using parameters above. "}, disable=2,fColor=(43690,43690,43690)
 	SetVariable AchievedVolumeFraction,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:AchievedVolumeFraction, noedit=1, frame=0
-	SetVariable AchievedVolumeFraction,pos={15,650},size={130,16},title="Achieved Porosity ",noproc, help={"3D data achieved porosity value"},disable=2
+	SetVariable AchievedVolumeFraction,pos={15,650},size={230,16},title="Achieved Porosity ",noproc, help={"3D data achieved porosity value"},disable=2
 
 
 	IR3T_SetControlsInPanel()
@@ -1146,20 +1146,27 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//Bessel function osciallations I would expect in test data, which is sphere intensity profile... 
 	//what is correct here??? Need to check how the data are used later... 
  	startTicks=ticks
-	print "Calculating Spectral function" 		
+	print "Calculating Spectral function, that is fft of the G(r) (Covariance) function" 		
 	duplicate/O Kvalues, SpectralFk 
 	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p],gR,Radii)
-	// spectreal function is ridiculously noisy, lets smooth it. 
+	// spectral function is ridiculously noisy, lets smooth it. 
 	//note: this makes HUGE difference and results look lot closer to SAXSMorph and expectations... 
-	variable SMoothBy= ceil(numpnts(SpectralFk)/60)
+	variable SMoothBy = ceil(numpnts(SpectralFk)/60)
 	Smooth/EVEN/B SMoothBy, SpectralFk
-	//this gets some differecnes between SAXSMorph and igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
+	//this gets some differeces between SAXSMorph and Igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
 	print "Spectral function calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//now we need to implement function calcGRF from java code...
 	//this has lots of check code and them calls generateMatrix() 
 	startTicks=ticks
 	print "Calculating Matrix" 		
+	//this is SAXSMoprh way
 	IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
+	//and this is using FFT
+	//you need FFTGRF.ipf for following step. Its is much faster but the sizes generated are smaller and make not much sense for now... 
+	
+	//may be need better - properly fft's gR (bot spectralfk, which has same absolute values and shape, but seem shfited by Rmin...
+	//and ????
+	//IR3T_GenerateMatrixFFT(SpectralFk, Kvalues, BoxSideSize, BoxResolution, porosity)
 	print "GenerateMatrix time is "+num2str((ticks-startTicks)/60) +" sec"
 	//calculate theoretical intensity from gR data per Quintanilla, Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351
 	//these are steps 7 and 8
@@ -1486,9 +1493,9 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 	//this is radius matrix, these are dimensions to match with k-vectors randomly generated...
 	// BoxSideSize is real world dimension in Angstroms 
 	// 
-	rmat[][0] = p*BoxSideSize/BoxResolution
-	rmat[][1] = p*BoxSideSize/BoxResolution
-	rmat[][2] = p*BoxSideSize/BoxResolution
+	rmat[][0] = p*BoxSideSize/xmax
+	rmat[][1] = p*BoxSideSize/ymax
+	rmat[][2] = p*BoxSideSize/zmax
 		//    int xmax = this.BoxResolution;
 		//    int ymax = this.BoxResolution;
 		//    int zmax = this.BoxResolution;
@@ -1713,7 +1720,7 @@ Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 	Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
 	NVAR GizmoFillSolid = 	root:packages:TwoPhaseSolidModel:GizmoFillSolid
-
+	KillWIndow/Z TwoPhaseSolid3D
 
 	PauseUpdate; Silent 1		// building window...
 	// Building Gizmo 8 window...
