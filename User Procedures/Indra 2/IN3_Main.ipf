@@ -446,6 +446,12 @@ Function IN3_MainPanelNew()
 	CheckBox OverWriteExistingData,pos={20,765},size={150,14},title="Overwrite existing data?", noproc
 	CheckBox OverWriteExistingData,variable= root:Packages:Indra3:OverWriteExistingData, help={"Check, if you want to overwrite data which already exist"}
 
+	CheckBox FindMinQForData,pos={230,743},size={150,14},title="Find MinQ automatically?", noproc
+	CheckBox FindMinQForData,variable= root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
+	SetVariable MinQMinFindRatio,pos={220,765},size={170,22},title="I_S/I_Bl ratio =  ", frame=1
+	SetVariable MinQMinFindRatio,limits={1,10,0.1},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
+
+
 
 	
 //	Button Recalculate,pos={50,755},size={120,20},proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
@@ -930,6 +936,8 @@ Function IN3_Initialize()
 
 	ListOfVariables+="UseModifiedGauss;UseGauss;UseLorenz;"
 	ListOfVariables+="FlyScanRebinToPoints;ListProcDisplayDelay;"
+	
+	ListOfVariables+="FindMinQForData;MinQMinFindRatio;"
 
 	ListOfVariables+="DesmearData;DesmearNumberOfInterations;DesmearNumPoints;DesmearBckgStart;"
 
@@ -965,6 +973,11 @@ Function IN3_Initialize()
 	NVAR SmoothRCurveData
 	if(isBlank)
 		SmoothRCurveData=1
+	endif
+	
+	NVAR MinQMinFindRatio
+	if(MinQMinFindRatio<1.05)
+		MinQMinFindRatio=1.3
 	endif
 	
 	NVAR DisplayPeakCenter
@@ -1293,6 +1306,11 @@ Function IN3_MainPanel()
 	SetVariable RemoveDropoutsTime,limits={0.01,5,0.1},variable= root:Packages:Indra3:RemoveDropoutsTime, proc=IN3_ParametersChanged
 	SetVariable RemoveDropoutsFraction,pos={200,545},size={180,22},title="Drp Int. fract. (0.1-0.7) =", frame=1
 	SetVariable RemoveDropoutsFraction,limits={0,1,0.1},variable= root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
+
+	CheckBox FindMinQForData,pos={200,580},size={150,14},title="Find MinQ automatically?", noproc
+	CheckBox FindMinQForData,variable= root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
+	SetVariable MinQMinFindRatio,pos={200,600},size={150,22},title="I_S/I_Bl ratio =", frame=1
+	SetVariable MinQMinFindRatio,limits={1,10,0.1},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
 
 	
 	Button Recalculate,pos={50,615},size={120,20},proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}

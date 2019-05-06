@@ -76,7 +76,7 @@ Function IN3_RecalculateData(StepFrom)   //recalculate R wave from user specifie
 				NVAR PeakWidth = root:Packages:Indra3:PeakWidthArcSec
 				NVAR Wavelength = root:Packages:Indra3:Wavelength
 				variable Qmin = 4 * pi * sin(PeakWidth*4.848e-6 /2) / Wavelength
-				variable/g OldStartQValueForEvaluation=Qmin
+				variable/g OldStartQValueForEvaluation=Qmin			
 			endif
 		endif
 	endif
