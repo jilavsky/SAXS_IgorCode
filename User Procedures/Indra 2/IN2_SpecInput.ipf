@@ -2023,10 +2023,10 @@ Function IN2_CreateNbkForSpecComments()
 		nbl=UniqueName(nbl, 10,0)
 	//	IN2_CreateNbkForSpecComments()
 	endif
-	
+	KillWindow/Z $nbL
 	NewNotebook/N=$nbL/F=1/V=1/W=(235.5,44.75,817.5,592.25) as nbL+":  Spec File Comments"
 
-		DoWindow/C $nbL
+	DoWindow/C $nbL
 	Notebook $nbL defaultTab=36, statusWidth=238, pageMargins={72,72,72,72}
 	Notebook $nbL showRuler=1, rulerUnits=1, updating={1, 60}
 	Notebook $nbL newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={}, rulerDefaults={"Arial",10,0,(0,0,0)}

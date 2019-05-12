@@ -10,7 +10,7 @@ Constant NI1AversionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.65 fixes for rtGlobal=3
+//2.65 fixes for rtGlobal=3, changed Nika GSAS outptu file to xye instead of GSA. xye is better. 
 //2.64 removed mar345 and Fit2D support, let's see if someone complains. 
 //2.63 added Circular Q axes. 
 //2.62 fix bug in Igor 8 which causes hang of the window. Panel made wider. 
@@ -769,7 +769,7 @@ Function NI1A_Convert2DTo1D()
 	endif
 	//line profile averages are here... 
 	if(UseLineProfile)
-		NI1A_LineProf_CreateLP()		//thsi creates line profile as user set conditions... 
+		NI1A_LineProf_CreateLP()		//this creates line profile as user set conditions... 
 		//note for future. There is a lot of unnecessary calculations here. This could be sped up by better programming. 
 		//figure out which Q we analyzed...
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType	
@@ -1379,9 +1379,9 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					if(DisplayDataAfterProcessing)
 						NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,4)
 					endif
-				else
+				else			//these are the others, use q value and display as log-log. 
 					Wave Int=$("r_"+UseName)
-					Wave Qvec=$("qy_"+UseName)
+					Wave Qvec=$("q_"+UseName)
 					Wave err=$("s_"+UseName)
 					if(DisplayDataAfterProcessing)
 						NI1A_DisplayLineoutAfterProc(int,Qvec,Err,1,1)
@@ -1446,11 +1446,13 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				variable/g SaveGSASdata=0
 			endif
 			
-	
+			variable refnum
+			string FinalOutputName, HeaderSeparator
+			HeaderSeparator = "#   "
 			make/T/O/N=(ItemsInLst) TextWv 		
 			if(!(UseTheta && SaveGSASdata))
 				For (i=0;i<ItemsInLst;i+=1)
-					TextWv[i]="#   "+stringFromList(i,OldNote)
+					TextWv[i]=HeaderSeparator+stringFromList(i,OldNote)
 				endfor
 				Save/G/O/M="\r\n"/P=Convert2Dto1DOutputPath TextWv as (UseName+".dat")
 			endif
@@ -1458,23 +1460,68 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				Save/A/G/M="\r\n"/P=Convert2Dto1DOutputPath Qvector,Intensity,Error,Qsmearing as (UseName+".dat")
 			elseif(UseTheta)
 				if(SaveGSASdata)
-					//first create header...
-					Redimension/N=2 TextWV
-					Duplicate/O TwoTheta, TwoThetaCentidegrees
-					TwoThetaCentidegrees*=100
-					//create the text header... 
-					String Header1="BANK 1 "+num2str(numpnts(TwoTheta))+" "+num2str(numpnts(TwoTheta))+" CONS "
-					variable StarANgle=TwoThetaCentidegrees[0]
-					variable StepSize=(TwoThetaCentidegrees(numpnts(TwoTheta)-1) - TwoThetaCentidegrees[0])/(numpnts(TwoTheta)-1)
-					string TempHeader
-					sprintf TempHeader, "%E %E", StarANgle, StepSize
-					Header1+=TempHeader
-					Header1+=" 0 0 FXYE"
-					TextWv[0]=stringFromList(0,OldNote)+";"+stringFromList(1,OldNote)
-					TextWV[1]=Header1
-					Save/G/O/M="\r\n"/P=Convert2Dto1DOutputPath TextWv as (UseName+".GSA")
-					Save/A=2/G/M="\r\n"/P=Convert2Dto1DOutputPath TwoThetaCentidegrees,Intensity,Error as (UseName+".GSA")
-					KillWaves TwoThetaCentidegrees
+					//this is ild GSA file for GSAS-I, change 2019-05 to xye file format... 
+					//					//first create header...
+					//					Redimension/N=2 TextWV
+					//					Duplicate/O TwoTheta, TwoThetaCentidegrees
+					//					TwoThetaCentidegrees*=100
+					//					//create the text header... 
+					//					String Header1="BANK 1 "+num2str(numpnts(TwoTheta))+" "+num2str(numpnts(TwoTheta))+" CONS "
+					//					variable StarANgle=TwoThetaCentidegrees[0]
+					//					variable StepSize=(TwoThetaCentidegrees(numpnts(TwoTheta)-1) - TwoThetaCentidegrees[0])/(numpnts(TwoTheta)-1)
+					//					string TempHeader
+					//					sprintf TempHeader, "%E %E", StarANgle, StepSize
+					//					Header1+=TempHeader
+					//					Header1+=" 0 0 FXYE"
+					//					TextWv[0]=stringFromList(0,OldNote)+";"+stringFromList(1,OldNote)
+					//					TextWV[1]=Header1
+					//					Save/G/O/M="\r\n"/P=Convert2Dto1DOutputPath TextWv as (UseName+".GSA")
+					//					Save/A=2/G/M="\r\n"/P=Convert2Dto1DOutputPath TwoThetaCentidegrees,Intensity,Error as (UseName+".GSA")
+					//					KillWaves TwoThetaCentidegrees
+					FinalOutputName = UseName+".xye"
+					Open/Z=1 /R/P=Convert2Dto1DOutputPath refnum as FinalOutputName
+					if(V_Flag==0)
+						DoAlert 1, "The file with this name: "+FinalOutputName+ " in this location already exists, overwrite?"
+						if(V_Flag!=1)
+							abort
+						endif
+						close/A
+						//user wants to delete the file
+						OpenNotebook/V=0/P=Convert2Dto1DOutputPath/N=JunkNbk  FinalOutputName
+						DoWindow/D /K JunkNbk
+					endif
+					close/A
+					Duplicate Intensity, NoteTempY
+					string OldNoteT1=note(Intensity)
+					note/K NoteTempY
+					note NoteTempY, OldNoteT1+"Exported="+date()+" "+time()+";"
+					variable wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+					if (UseQvector)
+						wave XWaveTmp = $("q_"+UseName)
+						Duplicate/Free XWaveTmp, XWave
+						XWave = 2 * 180/pi * asin(XWaveTmp * wvlgth /(4*pi))		
+					elseif(UseTheta)
+						wave XWave = $("t_"+UseName)
+					elseif(UseDspacing)
+						wave XWaveTmp = $("d_"+UseName)
+						Duplicate/Free XWaveTmp, XWave
+						XWave = 2 * 180/pi * (wvlgth / (2*XWaveTmp))
+					else
+						abort "GSAS xye output error - not suitabel data, need TwoTheta, d-spacing or q_ as x-wave"
+					endif				
+					make/T/O WaveNoteWave
+					if (1)
+						IN2G_PasteWnoteToWave("NoteTempY",WaveNoteWave ,HeaderSeparator)
+						InsertPoints 0, 2, WaveNoteWave
+						InsertPoints numpnts(WaveNoteWave), 2, WaveNoteWave
+						WaveNoteWave[0] = "/*"
+						WaveNoteWave[1] = HeaderSeparator+"wavelength = "+num2str(wvlgth)
+						WaveNoteWave[numpnts(WaveNoteWave)-2] = "# 2Theta  Intensity  Error"	
+						WaveNoteWave[numpnts(WaveNoteWave)-1] = "*/"	
+						Save/G/M="\r\n"/P=Convert2Dto1DOutputPath WaveNoteWave as FinalOutputName
+					endif
+					Save/A=2/G/M="\r\n"/P=Convert2Dto1DOutputPath XWave,Intensity,Error as FinalOutputName			///P=Datapath
+					KillWaves/Z WaveNoteWave, NoteTempY
 				else
 					Save/A/G/M="\r\n"/P=Convert2Dto1DOutputPath TwoTheta,Intensity,Error,TwoThetaWidth as (UseName+".dat")
 				endif		

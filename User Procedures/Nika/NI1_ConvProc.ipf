@@ -4050,8 +4050,8 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox ExportDataOutOfIgor,help={"Check to export data out of Igor, select data path"}
 	CheckBox ExportDataOutOfIgor,variable= root:Packages:Convert2Dto1D:ExportDataOutOfIgor
 	NVAR UseTheta = root:Packages:Convert2Dto1D:UseTheta
-	CheckBox SaveGSASdata,pos={20,530},size={122,14},title="GSAS?", disable=!(UseTheta)
-	CheckBox SaveGSASdata,help={"Check to export data out of Igor as GSAS data"}
+	CheckBox SaveGSASdata,pos={50,530},size={122,14},title="GSAS xye?", disable=!(UseTheta)
+	CheckBox SaveGSASdata,help={"Export data as GSAS xye data. Must use Two Theta"}
 	CheckBox SaveGSASdata,variable= root:Packages:Convert2Dto1D:SaveGSASdata
 
 	//last few items under the tabs area
@@ -4737,7 +4737,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	CheckBox StoreDataInIgor,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel
 	CheckBox OverwriteDataIfExists,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel
 	CheckBox ExportDataOutOfIgor,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel 
-	CheckBox SaveGSASdata,disable=!(tabNum==7), win=NI1A_Convert2Dto1DPanel
+	CheckBox SaveGSASdata,disable=!(tabNum==7&&UseTheta), win=NI1A_Convert2Dto1DPanel
 
 	CheckBox AppendToNexusFile,disable=!((tabNum==7)||(tabNum==7&&ExpCalib2DData)), win=NI1A_Convert2Dto1DPanel
 	Button CreateOutputPath,disable=(!((tabNum==7)||(tabNum==7&&ExpCalib2DData&&!AppendToNexusFile))), win=NI1A_Convert2Dto1DPanel
@@ -6104,9 +6104,9 @@ Function NI1A_GenerAngleLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	//generate X-Y path for angle line on the detector
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
-	
-	make/O/N=(DetDimX) tempWvX
-	make/O/N=(DetDimY) tempWvY
+	variable MaxDIm=max(DetDimX, DetDimY)		//rtGlobals=3 fix. 
+	make/O/N=(MaxDIm) tempWvX
+	make/O/N=(MaxDIm) tempWvY
 	if(abs(angle)<45)
 		tempWvX=p
 		tempWvY=BCy-(tempWvX-BCx)*tan(Angle*pi/180)

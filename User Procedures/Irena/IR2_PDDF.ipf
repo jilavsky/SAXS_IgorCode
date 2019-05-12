@@ -1879,19 +1879,19 @@ end
 
 
 	//Create Gamma plot.
-	Wave CurrentResultsGamma=root:Packages:Irena_PDDF:CurrentResultsGamma
-	DoWindow IR2PR_GammaFunction
-	if(!V_Flag)
-		Display/K=1 /W=(92,155,635,463)  CurrentResultsGamma vs R_distribution as "Gamma distribution"
-		DoWindow/C IR2PR_GammaFunction
-		ModifyGraph mode=3
-		ModifyGraph mirror=1
-		Label left "Gamma(r) = pdf(r)/(4*pi*r^2)"
-		Label bottom "Distance [A]"
-		SetAxis left 0,*
-	endif	
-//	DoWIndow/F IR2PR_GammaFunction
-
+	Wave/Z CurrentResultsGamma=root:Packages:Irena_PDDF:CurrentResultsGamma
+	if(WaveExists(CurrentResultsGamma ))
+		DoWindow IR2PR_GammaFunction
+		if(!V_Flag)
+			Display/K=1 /W=(92,155,635,463)  CurrentResultsGamma vs R_distribution as "Gamma distribution"
+			DoWindow/C IR2PR_GammaFunction
+			ModifyGraph mode=3
+			ModifyGraph mirror=1
+			Label left "Gamma(r) = pdf(r)/(4*pi*r^2)"
+			Label bottom "Distance [A]"
+			SetAxis left 0,*
+		endif	
+	endif
 	setDataFolder OldDf
 end
 

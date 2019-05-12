@@ -1913,7 +1913,11 @@ Function NI1A_LineProf_CreateLP()
 		endif
 		
 		variable constVal=Wavelength / (4 * pi)
-		Wave DSpacingWidth
+		Wave/Z DSpacingWidth
+		if(!WaveExists(DSpacingWidth))
+			abort
+		endif
+		
 		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistacneInmmWidth, LineProfileDspacingWidth
 		Duplicate/Free LineProfileQvalues, LineProfileTwoTheta, LineProfileDistacneInmm, LineProfileDspacing
 		LineProfiledQvalues[0,numpnts(LineProfileQvalues)-2] = LineProfileQvalues[p+1] - LineProfileQvalues[p]

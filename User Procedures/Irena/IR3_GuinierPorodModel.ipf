@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.09  	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.10  	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 Constant IR3GPversionNumber=1.08
 
@@ -16,6 +16,8 @@ Constant IR3GPversionNumber=1.08
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
+//1.10 2019-05 Testing, fixes for Correlation fitting parameters (were nto fitted at all) and some fixes to Uncertainty evaluation, was misbehaving. 
+//		fixed some error messages and GUI. 
 //1.09 modified graph size scaling for screen size using IN2G_GetGraphWidthHeight 
 //1.08 modified fitting to include Igor display with iterations /N=0/W=0
 //1.07 added getHelp button calling to www manual
@@ -584,12 +586,12 @@ Function IR3DP_MainPanelFunction()
 	Button DoFitting,pos={175,584},size={70,20},proc=IR3GP_PanelButtonProc,title="Fit", help={"Do least sqaures fitting of the whole model, find good starting conditions and proper limits before fitting"}
 	Button RevertFitting,pos={255,584},size={100,20},proc=IR3GP_PanelButtonProc,title="Revert back",help={"Return back befoire last fitting attempt"}
 	Button FixLimits,pos={93,605},size={80,16},proc=IR3GP_PanelButtonProc,title="Fix limits?", help={"Reset variables to default values?"}
-	Button CopyToFolder,pos={55,623},size={120,20},proc=IR3GP_PanelButtonProc,title="Results -> Data Folder", help={"Copy results of the modeling into original data folder"}
 	Button MarkGraphs,pos={277,623},size={110,20},proc=IR3GP_PanelButtonProc,title="Results -> graphs", help={"Insert text boxes with results into the graphs for printing"}
+	Button CopyToFolder,pos={5,645},size={130,20},proc=IR3GP_PanelButtonProc,title="Store in Data Folder", help={"Copy results of the modeling into original data folder"}
 	Button CleanupGraph,pos={277,645},size={110,20},proc=IR3GP_PanelButtonProc,title="Clean graph", help={"Remove text boxes with results into the graphs for printing"}
 
 
-	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Uncertainity Evaluation", help={"Analyze confidence range for different parameters"}
+	Button ConfidenceEvaluation,pos={150,645},size={120,20},proc=IR3GP_PanelButtonProc,title="Uncertainity Eval.", help={"Analyze confidence range for different parameters"}
 	SetVariable SASBackground,pos={15,565},size={160,16},proc=IR3GP_PanelSetVarProc,title="SAS Background", help={"SAS background"},bodyWidth=80, format="%0.4g"
 	SetVariable SASBackground,limits={-inf,Inf,0.05*SASBackground},value= root:Packages:Irena:GuinierPorod:SASBackground
 	CheckBox FitBackground,pos={195,566},size={63,14},proc=IR3GP_PanelCheckboxProc,title="Fit Bckg?"
@@ -692,24 +694,24 @@ Function IR3DP_MainPanelFunction()
 	NVAR Level_ETA=root:Packages:Irena:GuinierPorod:Level_ETA
 	NVAR Level_PACK=root:Packages:Irena:GuinierPorod:Level_PACK
 	step = Level_ETA>0 ? 0.05*Level_ETA : 1
-	SetVariable Level_ETA,pos={14,520},size={180,16},proc=IR3GP_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level_ETA,limits={0,inf,step},value= root:Packages:Irena:GuinierPorod:Level_ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
-	CheckBox Level_ETAFit,pos={200,520},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
-	CheckBox Level_ETAFit,variable= root:Packages:Irena:GuinierPorod:LevelETAFit, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
-	SetVariable Level_ETALowLimit,pos={230,520},size={60,16},noproc, title=" ", format="%0.3g"
-	SetVariable Level_ETALowLimit,limits={0,inf,0},value= root:Packages:Irena:GuinierPorod:Level_ETALowLimit, help={"Correlation distance low limit"}
-	SetVariable Level_ETAHighLimit,pos={300,520},size={60,16},noproc,  title=" ", format="%0.3g"
-	SetVariable Level_ETAHighLimit,limits={0,inf,0},value= root:Packages:Irena:GuinierPorod:Level_ETAHighLimit, help={"Correlation distance high limit"}
+	SetVariable Level_ETA pos={14,520},size={180,16},proc=IR3GP_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
+	SetVariable Level_ETA limits={0,inf,step},value= root:Packages:Irena:GuinierPorod:Level_ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	CheckBox Level_ETAFit pos={200,520},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
+	CheckBox Level_ETAFit variable=root:Packages:Irena:GuinierPorod:Level_ETAFit, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
+	SetVariable Level_ETALowLimit pos={230,520},size={60,16},noproc, title=" ", format="%0.3g"
+	SetVariable Level_ETALowLimit limits={0,inf,0},value= root:Packages:Irena:GuinierPorod:Level_ETALowLimit, help={"Correlation distance low limit"}
+	SetVariable Level_ETAHighLimit pos={300,520},size={60,16},noproc,  title=" ", format="%0.3g"
+	SetVariable Level_ETAHighLimit limits={0,inf,0},value= root:Packages:Irena:GuinierPorod:Level_ETAHighLimit, help={"Correlation distance high limit"}
 
 	step = Level_PACK>0 ? 0.05*Level_PACK : 1
-	SetVariable Level_PACK,pos={14,538},size={180,16},proc=IR3GP_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level_PACK,limits={0,8,step},value= root:Packages:Irena:GuinierPorod:Level_PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
-	CheckBox Level_PACKFit,pos={200,538},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
-	CheckBox Level_PACKFit,variable= root:Packages:Irena:GuinierPorod:LevelPACKFit, help={"Fit packing factor? Select properly starting condions and limits"}
-	SetVariable Level_PACKLowLimit,pos={230,538},size={60,16},noproc, title=" ", format="%0.3g"
-	SetVariable Level_PACKLowLimit,limits={0,8,0},value= root:Packages:Irena:GuinierPorod:Level_PACKLowLimit, help={"Low limit for packing factor"}
-	SetVariable Level_PACKHighLimit,pos={300,538},size={60,16},noproc,  title=" ", format="%0.3g"
-	SetVariable Level_PACKHighLimit,limits={0,8,0},value= root:Packages:Irena:GuinierPorod:Level_PACKHighLimit, help={"High limit for packing factor"}
+	SetVariable Level_PACK pos={14,538},size={180,16},proc=IR3GP_PanelSetVarProc,title="Pack    ",bodyWidth=140, format="%0.4g"
+	SetVariable Level_PACK limits={0,8,step},value= root:Packages:Irena:GuinierPorod:Level_PACK, help={"Packing factor for domains. For dilute objects 0, for FCC packed spheres 8*0.592"}
+	CheckBox Level_PACKFit pos={200,538},size={80,16},proc=IR3GP_PanelCheckboxProc,title=" "
+	CheckBox Level_PACKFit variable= root:Packages:Irena:GuinierPorod:Level_PACKFit, help={"Fit packing factor? Select properly starting condions and limits"}
+	SetVariable Level_PACKLowLimit pos={230,538},size={60,16},noproc, title=" ", format="%0.3g"
+	SetVariable Level_PACKLowLimit limits={0,8,0},value= root:Packages:Irena:GuinierPorod:Level_PACKLowLimit, help={"Low limit for packing factor"}
+	SetVariable Level_PACKHighLimit pos={300,538},size={60,16},noproc,  title=" ", format="%0.3g"
+	SetVariable Level_PACKHighLimit limits={0,8,0},value= root:Packages:Irena:GuinierPorod:Level_PACKHighLimit, help={"High limit for packing factor"}
 
 	IR3GP_PanelTabControl("",0)
 end
@@ -745,6 +747,13 @@ Function IR3GP_PanelTabControl(name,tab)
 	String name
 	Variable tab			
 	STRUCT GunierPorodLevel Par
+	
+	DoWindow IR3DP_MainPanel
+	if(V_Flag)
+		DoWIndow/F IR3DP_MainPanel
+	else
+		abort
+	endif
 	
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Irena:GuinierPorod
@@ -1513,6 +1522,7 @@ Function IR3GP_FitData(skipreset)
 	NVAR SASBackground=root:Packages:Irena:GuinierPorod:SASBackground
 	NVAR FitSASBackground=root:Packages:Irena:GuinierPorod:FitSASBackground
 	String ListOfParameters = "Level_G;Level_Rg1;Level_Rg2;Level_P;Level_S1;Level_S2;"
+	String ListOfParametersSF = "Level_PACK;Level_ETA;"
 	//Level_GFit,Level_GLowLimit,Level_Rg1HighLimit,Level_PError
 		//First check the reasonability of all parameters
 
@@ -1544,6 +1554,28 @@ Function IR3GP_FitData(skipreset)
 			tempStr= stringfromlist(j,ListOfParameters)
 			NVAR FitMe=$("root:Packages:Irena:GuinierPorod:"+tempStr+"Fit")
 			if (FitMe)		//are we this parameter?
+				NVAR Param=$("root:Packages:Irena:GuinierPorod:"+tempStr)
+				NVAR LowLimit=$("root:Packages:Irena:GuinierPorod:"+tempStr+"LowLimit")
+				NVAR HighLimit=$("root:Packages:Irena:GuinierPorod:"+tempStr+"HighLimit")
+		
+				if ((LowLimit > Param || HighLimit < Param)&&!UseNoLimits)
+					abort "Level "+num2str(i)+" "+tempStr+" limits set incorrectly, fix the limits before fitting"
+				endif
+				Redimension /N=(numpnts(W_coef)+1) W_coef, CoefNames, LowLimCoefName, HighLimCoefNames 
+				Redimension /N=(numpnts(T_Constraints)+2) T_Constraints
+				W_Coef[numpnts(W_Coef)-1]=Param
+				CoefNames[numpnts(CoefNames)-1]=num2str(i)+":"+tempStr
+				LowLimCoefName[numpnts(CoefNames)-1]=num2str(i)+":"+tempStr+"LowLimit"
+				HighLimCoefNames[numpnts(CoefNames)-1]=num2str(i)+":"+tempStr+"HighLimit"
+				T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(LowLimit)}
+				T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(HighLimit)}		
+			endif
+		endfor
+		For(j=0;j<ItemsInList(ListOfParametersSF);j+=1)			//Structure Factor, if needed... 
+			tempStr= stringfromlist(j,ListOfParametersSF)
+			NVAR FitMe=$("root:Packages:Irena:GuinierPorod:"+tempStr+"Fit")
+			NVAR UseSF=$("root:Packages:Irena:GuinierPorod:Level_UseCorrelations")
+			if (UseSF && FitMe)		//are we this parameter?
 				NVAR Param=$("root:Packages:Irena:GuinierPorod:"+tempStr)
 				NVAR LowLimit=$("root:Packages:Irena:GuinierPorod:"+tempStr+"LowLimit")
 				NVAR HighLimit=$("root:Packages:Irena:GuinierPorod:"+tempStr+"HighLimit")
@@ -1654,7 +1686,8 @@ Function IR3GP_FitData(skipreset)
 		if(LimitsReached && !UseNoLimits)
 			print "Following parameters may have reached their Min/Max limits during fitting:"
 			print  ListOfLimitsReachedParams
-			if(!stringmatch(GetRTStackInfo(0),"*IR1A_ConEvEvaluateParameter*") && !stringmatch(GetRTStackInfo(0),"*IR2S_ButtonProc*") )		//skip when calling from either Confidence evaluation or scripting tool 
+			//print GetRTStackInfo(0)
+			if(!stringmatch(GetRTStackInfo(0),"*IR3GP_ConfEvButtonProc*") )		//skip when calling from either Confidence evaluation or scripting tool 
 				DoAlert /T="Warning about possible fitting limits violation" 0, "One or more limits may have been reached, check history for the list of parameters" 
 			endif
 		endif
@@ -3224,8 +3257,12 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 		make/O/N=0 $(ParamName+"StartValue"), $(ParamName+"EndValue"), $(ParamName+"ChiSquare")
 		Wave StartValues=$(ParamName+"StartValue")
 		Wave EndValues=$(ParamName+"EndValue")
+		TabControl LevelsTabs win=IR3DP_MainPanel, value=SelLevel-1
+		IR3GP_PanelTabControl("",SelLevel-1)
 		IR3GP_LoadLevelFromWave(SelLevel)		
+
 		NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+		NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
 		variable StartHere=Param
 		variable step=(MaxValue-MinValue)/(NumSteps)
 		if(stringMatch(Method,"Sequential, fix param"))
@@ -3233,12 +3270,10 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
 				currentParValue = MinValue+ i* step
 				StartValues[i]=currentParValue
-					IR3GP_LoadLevelFromWave(SelLevel)		
-					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
-					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
-					ParamFit=0
-					Param = currentParValue
-					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_LoadLevelFromWave(SelLevel)		
+				ParamFit=0
+				Param = currentParValue
+				IR3GP_MoveLevelToWave(SelLevel)		
 				IR3GP_ConEvFixParamsIfNeeded()
 				IR3GP_PanelButtonProc("DoFittingSkipReset")
 				EndValues[i]=Param
@@ -3253,12 +3288,12 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
 				currentParValue = MinValue+ i* step
 				StartValues[i]=currentParValue
-					IR3GP_LoadLevelFromWave(SelLevel)		
-					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
-					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
-					ParamFit=0
-					Param = currentParValue
-					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_LoadLevelFromWave(SelLevel)		
+				//NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+				//NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+				ParamFit=0
+				Param = currentParValue
+				IR3GP_MoveLevelToWave(SelLevel)		
 				IR3GP_ConEvFixParamsIfNeeded()
 				IR3GP_PanelButtonProc("DoFittingSkipReset")
 				EndValues[i]=Param
@@ -3277,12 +3312,12 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 				redimension/N=(tempi) StartValues, EndValues, ChiSquareValues
 				currentParValue = StartHere - i* step
 				StartValues[tempi-1]=currentParValue
-					IR3GP_LoadLevelFromWave(SelLevel)		
-					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
-					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
-					ParamFit=0
-					Param = currentParValue
-					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_LoadLevelFromWave(SelLevel)		
+				//NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+				//NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+				ParamFit=0
+				Param = currentParValue
+				IR3GP_MoveLevelToWave(SelLevel)		
 				IR3GP_ConEvFixParamsIfNeeded()
 				IR3GP_PanelButtonProc("DoFittingSkipReset")
 				EndValues[tempi-1]=Param
@@ -3296,12 +3331,12 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 				redimension/N=(tempi) StartValues, EndValues, ChiSquareValues
 				currentParValue = StartHere + i* step
 				StartValues[tempi-1]=currentParValue
-					IR3GP_LoadLevelFromWave(SelLevel)		
-					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
-					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
-					ParamFit=0
-					Param = currentParValue
-					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_LoadLevelFromWave(SelLevel)		
+				//NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+				//NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+				ParamFit=0
+				Param = currentParValue
+				IR3GP_MoveLevelToWave(SelLevel)		
 				IR3GP_ConEvFixParamsIfNeeded()
 				IR3GP_PanelButtonProc("DoFittingSkipReset")
 				EndValues[tempi-1]=Param
@@ -3317,12 +3352,12 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
 				currentParValue = MinValue + (0.5+enoise(0.5))*(MaxValue-MinValue)
 				StartValues[i]=currentParValue
-					IR3GP_LoadLevelFromWave(SelLevel)		
-					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
-					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
-					ParamFit=0
-					Param = currentParValue
-					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_LoadLevelFromWave(SelLevel)		
+				//NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+				//NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+				ParamFit=0
+				Param = currentParValue
+				IR3GP_MoveLevelToWave(SelLevel)		
 				IR3GP_ConEvFixParamsIfNeeded()
 				IR3GP_PanelButtonProc("DoFittingSkipReset")
 				EndValues[i]=Param
@@ -3338,12 +3373,12 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 				redimension/N=(i+1) StartValues, EndValues, ChiSquareValues
 				currentParValue = MinValue + (0.5+enoise(0.5))*(MaxValue-MinValue)
 				StartValues[i]=currentParValue
-					IR3GP_LoadLevelFromWave(SelLevel)		
-					NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
-					NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
-					ParamFit=1
-					Param = currentParValue
-					IR3GP_MoveLevelToWave(SelLevel)		
+				IR3GP_LoadLevelFromWave(SelLevel)		
+				//NVAR Param=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf])
+				//NVAR ParamFit=$("root:Packages:Irena:GuinierPorod:"+"Level_"+ParamName[7,inf]+"Fit")
+				ParamFit=1
+				Param = currentParValue
+				IR3GP_MoveLevelToWave(SelLevel)		
 				IR3GP_ConEvFixParamsIfNeeded()
 				IR3GP_PanelButtonProc("DoFittingSkipReset")
 				EndValues[i]=Param
@@ -3362,10 +3397,14 @@ static Function IR3GP_ConEvEvaluateParameter(ParamName,MinValue,MaxValue,NumStep
 		
 		IR3GP_ConEvRestoreBackupSet(BackupFilesLocation)
 		IR3GP_PanelButtonProc("GraphDistribution")
+
+		TabControl LevelsTabs win=IR3DP_MainPanel, value=SelLevel-1
+		IR3GP_PanelTabControl("",SelLevel-1)
 	
 		//something changed data folder, set it back for following functions
 		SetDataFolder BackupFilesLocation
 		IR3GP_ConEvAnalyzeEvalResults(ParamName, SortForAnalysis,FittedParameter)
+
 	endif	//end of parameters analysis
 	DoWIndow IR3GP_ConfEvaluationPanel
 	if(V_Flag)

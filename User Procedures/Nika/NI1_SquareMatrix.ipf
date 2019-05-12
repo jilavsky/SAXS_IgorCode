@@ -145,6 +145,7 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 	Duplicate/O CCDImageToConvert, MaskedImage	//working waves
 	Redimension/S MaskedImage					//to use NaN as masked point, this has to be single precision
 	Make/O/N=(MaxDist,SectorsNumSect) SquareMap			//create angle vs point number squared intensity wave
+	SquareMap = 0
 	Make/O/N=(MaxDist) PixelAddressesX, PixelAddressesY, PathWidth, PathWidthTemp	//create addresses and width for path around which to get profile 
 	PathWidth = 2* p * tan(AngleWidth*(pi/180))		//create the path profile width - same for all sectors
 
@@ -156,36 +157,11 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 		Redimension/N=(MaxDist) PathWidthTemp, PixelAddressesY, PixelAddressesX
 		PixelAddressesX=BeamCenterX + p * cos((SectorsGraphStartAngle+(i*AngleStep))*(pi/180))		//calculate the path, this is now in "pixles", assumes same
 		PixelAddressesY=BeamCenterY - p * sin((SectorsGraphStartAngle+(i*AngleStep))*(pi/180))		// pixel size in both directions
-		//now need to check for indexes outside the image, so we do not needlessly calculate points outside..
-//		NumPntsXS=0
-//		NumPntsXE=MaxDist
-//		NumPntsYS=0
-//		NumPntsYE=MaxDist
-//		wavestats/Q PixelAddressesX
-//		if(V_min<0)			//min on wave less than 0, crosses 0
-//			NumPntsXS =  BinarySearch(PixelAddressesX,0)
-//		endif
-//		if(V_max>dimSize(CCDImageToConvert,0))
-//			NumPntsXE=BinarySearch(PixelAddressesX,dimSize(CCDImageToConvert,0))
-//		endif
-//		wavestats/Q PixelAddressesY
-//		if(V_min<0)
-//			NumPntsYS = BinarySearch(PixelAddressesY,0)
-//		endif
-//		if(V_max>dimSize(CCDImageToConvert,1))
-//			NumPntsYE=BinarySearch(PixelAddressesY,dimSize(CCDImageToConvert,1))
-//		endif
-//		tempVal = max(NumPntsXS,NumPntsYS)
-//		DeletePoints 0, tempVal, PathWidthTemp, PixelAddressesY, PixelAddressesX
-//		 
-//		Redimension/N=(tempVal) PathWidthTemp, PixelAddressesY, PixelAddressesX
 		PathWidthTemp = PathWidth
-//		//and now the data should be all calcualte only within the image....
-		 	
 		ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskedImage , widthWave=PathWidthTemp
 		Wave W_ImageLineProfile
-//		Redimension /N=(MaxDist) W_ImageLineProfile
-//		W_ImageLineProfile[tempVal,inf ] = NaN
+		Redimension /N=(MaxDist) W_ImageLineProfile			//fix for rtGlobals=3
+					//		W_ImageLineProfile[tempVal,inf ] = NaN
 		SquareMap[][i] = W_ImageLineProfile[p]
 		if(recalculateMask)
 			ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskS , widthWave=PathWidthTemp

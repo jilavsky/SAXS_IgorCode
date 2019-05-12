@@ -757,12 +757,9 @@ Function NI1M_MaskUpdateColors()
 		NVAR LowIntToMaskOff=root:Packages:Convert2Dto1D:LowIntToMaskOff
 		NVAR MaskDisplayLogImage=root:Packages:Convert2Dto1D:MaskDisplayLogImage
 		NVAR MaskOffLowIntPoints=root:Packages:Convert2Dto1D:MaskOffLowIntPoints
-		wave UnderLevelImage
-		
-		CheckDisplayed /W=CCDImageForMask  UnderLevelImage
-		if(V_Flag)
-			removeimage/W=CCDImageForMask UnderLevelImage
-		endif
+
+		removeimage/Z/W=CCDImageForMask UnderLevelImage
+
 		if(MaskOffLowIntPoints)
 			MatrixOp/O/NTHR=0 UnderLevelImage= MaskCCDImage
 			AppendImage/T/W=CCDImageForMask UnderLevelImage

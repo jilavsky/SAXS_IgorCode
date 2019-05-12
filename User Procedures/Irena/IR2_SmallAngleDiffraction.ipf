@@ -284,7 +284,7 @@ Window IR2D_ControlPanel()
 
 
 	TabControl DataTabs,pos={2,220},size={380,320},proc=IR2D_TabPanelControl
-	TabControl DataTabs,fSize=9,tabLabel(0)="SAS",tabLabel(1)="Pk 1"
+	TabControl DataTabs,tabLabel(0)="SAS",tabLabel(1)="Pk 1"
 	TabControl DataTabs,tabLabel(2)="Pk 2",tabLabel(3)="Pk 3"
 	TabControl DataTabs,tabLabel(4)="Pk 4",tabLabel(5)="Pk 5"
 	TabControl DataTabs,tabLabel(6)="Pk 6", value= 0

@@ -387,7 +387,7 @@ Proc IR2H_ControlPanel()
 
 	//Dist Tabs definition
 	TabControl DistTabs,pos={5,260},size={370,270},proc=IR2H_TabPanelControl
-	TabControl DistTabs,fSize=10,tabLabel(0)="Unified", tabLabel(1)="Debye-Bueche",tabLabel(2)="Teubner-Strey",tabLabel(3)="Ciccar.-Bened."
+	TabControl DistTabs,tabLabel(0)="Unified", tabLabel(1)="Debye-Bueche",tabLabel(2)="Teubner-Strey",tabLabel(3)="Ciccar.-Bened."
 
 	//unified level controls
 	CheckBox UseLowQInDB,pos={40,290},size={79,14},proc=IR2H_InputPanelCheckboxProc,title="Use Unified?"
