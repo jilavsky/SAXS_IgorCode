@@ -17,6 +17,7 @@ Scripting tool - added save individual Populations data when running from Script
 Added new group of Anisotropy characterization tools, first one is HOP - Hermans Orientational Parameter. 
 Unified fit added info about k value on the panel.
 Data manipulation II - fixed issues with liberal names and actually very long names. Now should create long names, if Igor 8 and user enabled it. 
+Guinier-Porod - fixed fitting of structure factor parameters. Was not working at all (forgot to include that). 
 
 2.68 12/5/2018
 Igor 8 OSX XOPs now available. version 2.0 of 64-bit xops. 

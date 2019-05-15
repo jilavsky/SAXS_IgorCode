@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.23
+#pragma version=2.24
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 per request added sqrt(Y) as one of the Y options. 
 //2.23 combined together with IR1_GraphStyling.ipf
 //2.22 optimize function IR1P_CreateGraph, doing stuff 2x - not needed. 
 //2.21 modified IR1P_AttachLegend to limit max number of items in Legend. 
@@ -263,6 +264,15 @@ Function IR1P_CreateDataToPlot()
 			Wave IntNew=$(tempFullName)
 			IntNew=ln(IntNew)
 			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
+		elseif(cmpstr(DataY,"sqrt(Y)")==0)		//Want to plot I^2, create data and name...
+			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
+			tempShortName=tempShortName[0,26]	+ "_sqy"			//Igor names are limited to 30 characters
+			tempShortName = possiblyQuoteName(tempShortName)
+			tempFullName=tempPath+tempShortName
+			Duplicate/o IntOrg, $tempFullName
+			Wave IntNew=$(tempFullName)
+			IntNew=sqrt(IntNew)
+			ListOfDataWaveNames=replaceStringByKey("IntWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
 		elseif(cmpstr(DataY,"sqrt(1/Y)")==0)		//Want to plot I^2, create data and name...
 			tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
 			tempShortName=tempShortName[0,26]	+ "_sr1"			//Igor names are limited to 30 characters
@@ -428,6 +438,16 @@ Function IR1P_CreateDataToPlot()
 				Wave ENew=$(tempFullName)
 				ENew = IRP_ErrorsForInverse(IntOrg, EOrg)
 				ENew = IRP_ErrorsForSQRT(IntNew, ENew)
+				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
+			elseif(cmpstr(DataE,"sqrt(Y)")==0)		//Want to plot I^2, create data and name...
+				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)
+				tempShortName=tempShortName[0,26]	+ "_sqy"			//Igor names are limited to 30 characters
+				tempShortName = possiblyQuoteName(tempShortName)
+				tempFullName=tempPath+tempShortName
+				Duplicate/o EOrg, $tempFullName
+				Wave ENew=$(tempFullName)
+				//ENew = IRP_ErrorsForInverse(IntOrg, EOrg)
+				ENew = IRP_ErrorsForSQRT(IntNew, EOrg)
 				ListOfDataWaveNames=replaceStringByKey("EWave"+num2str(i),ListOfDataWaveNames, tempFullName,"=")		
  			elseif(cmpstr(DataE,"ln(Y*X^2)")==0)		//Want to plot I^2, create data and name...
 				tempShortName=IN2G_RemoveExtraQuote(tempShortName,1,1)

@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.33
+#pragma version=2.34
 //#include  <TransformAxis1.2>
 Constant IR1PversionNumber=2.33
 
@@ -11,6 +11,7 @@ Constant IR1PversionNumber=2.33
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.34 per request added sqrt(Y) as one of the Y options. 
 //2.33 remove data type CanSAS as option, that is likely never used. Confuses everyone. 
 //2.32 modified IR1P_AttachLegend to limit max number of items in Legend
 //2.31 modified graph size control to use IN2G_GetGraphWidthHeight and associated settings. Should work on various display sizes. 
@@ -147,7 +148,7 @@ Function IR1P_ControlPanelFunc()
 	PopupMenu XAxisDataType,pos={10,300},size={178,21},proc=IR1P_PanelPopupControl,title="X axis data", help={"Select data to be displayed on X axis, needed data types will be created if necessary"}
 	PopupMenu XAxisDataType,mode=1,popvalue="X",value= "X;X^2;X^3;X^4;"
 	PopupMenu YAxisDataType,pos={220,300},size={178,21},proc=IR1P_PanelPopupControl,title="Y axis data", help={"Select data to be displayed on Y axis, needed data types will be created if necessary"}
-	PopupMenu YAxisDataType,mode=1,popvalue="I",value= "Y;Y^2;Y^3;Y^4;Y*X^4;Y*X^3;Y*X^2;1/Y;sqrt(1/Y);ln(Y);ln(Y*X);ln(Y*X^2);"
+	PopupMenu YAxisDataType,mode=1,popvalue="I",value= "Y;Y^2;Y^3;Y^4;Y*X^4;Y*X^3;Y*X^2;1/Y;sqrt(Y);sqrt(1/Y);ln(Y);ln(Y*X);ln(Y*X^2);"
 
 	CheckBox GraphLogX pos={12,330},title="Log X axis?", variable=root:Packages:GeneralplottingTool:GraphLogX
 	CheckBox GraphLogX proc=IR1P_GenPlotCheckBox, help={"Select to modify horizontal axis to log scale, uncheck for linear scale"}
@@ -1618,6 +1619,8 @@ Function IR1P_UpdateAxisName(which,WhatTypeSelected)
 			NewLabel="Intensity\S-1\M [("+Units+")\S-1\M]"
 		elseif(cmpstr(WhatTypeSelected,"sqrt(1/Y)")==0)
 			NewLabel="sqrt(Intensity\S-1\M) [sqrt("+Units+")]"
+		elseif(cmpstr(WhatTypeSelected,"sqrt(Y)")==0)
+			NewLabel="sqrt(Intensity) [sqrt("+Units+")]"
 		elseif(cmpstr(WhatTypeSelected,"ln(Y*X^2)")==0)
 			NewLabel="ln(Intensity * q\S2\M)"
 		elseif(cmpstr(WhatTypeSelected,"ln(Y)")==0)

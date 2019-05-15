@@ -15,6 +15,7 @@ Modification history:
 1.82 beta for now
 Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please.  
 12ID support fix. Added ability to read all many options how mask can be defined for goldaverage program. 
+Changed Nika GSAS export file type to xye (was using old GSA). 
 
 
 1.81 12/5/2018
