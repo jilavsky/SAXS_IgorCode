@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.06
+#pragma version=2.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.07 Added Batch processing
 //2.06 fixes for rtGLobal=3
 //2.05 merged with NI1_LineProfCalcs.ipf
 //2.04  removed unused functions
@@ -1764,6 +1765,7 @@ Function NI1A_LineProf_CreateLP()
 		Wave W_LineProfileY = root:Packages:Convert2Dto1D:W_LineProfileY
 		Wave W_ImageLineProfile = root:Packages:Convert2Dto1D:W_ImageLineProfile
 		Wave W_LineProfileStdv=root:Packages:Convert2Dto1D:W_LineProfileStdv
+		NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 		if(LineProf_Width<2)
 			Print "NOTE: Width used for line profile is less than 2 points. Intensity error in this case is calculated as square root of intensity, which may be WRONG."
 			W_LineProfileStdv=sqrt(W_ImageLineProfile)
@@ -1771,7 +1773,9 @@ Function NI1A_LineProf_CreateLP()
 			if(ErrorCalculationsUseSEM)
 				W_LineProfileStdv/=sqrt(LineProf_Width)
 			endif
-			Print "NOTE: Width used for line profile is 2 points or more, used standard deviation to estimate intensity error."
+			if(!UseBatchProcessing)
+				Print "NOTE: Width used for line profile is 2 points or more, used standard deviation to estimate intensity error."
+			endif
 		endif
 		//Now calculate the angle wave for ellipse but calculate for everything...
 		Duplicate/O W_ImageLineProfile, LineProfileAzAvalues

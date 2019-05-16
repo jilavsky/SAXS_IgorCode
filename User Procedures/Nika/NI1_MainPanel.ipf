@@ -1,8 +1,8 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.65
-Constant NI1AversionNumber = 2.64
+#pragma version=2.66
+Constant NI1AversionNumber = 2.66
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant NI1AversionNumber = 2.64
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.66 added UseBatchProcessing to prevent graphs from being displays to speed up processing of large number of images. 
 //2.65 fixes for rtGlobal=3, changed Nika GSAS outptu file to xye instead of GSA. xye is better. 
 //2.64 removed mar345 and Fit2D support, let's see if someone complains. 
 //2.63 added Circular Q axes. 
@@ -282,6 +283,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables="BeamCenterX;BeamCenterY;QvectorNumberPoints;QvectorMaxNumPnts;QbinningLogarithmic;SampleToCCDDistance;Wavelength;"
 	ListOfVariables+="PixelSizeX;PixelSizeY;StartDataRangeNumber;EndDataRangeNumber;XrayEnergy;HorizontalTilt;VerticalTilt;AzimuthalTilt;"
 	ListOfVariables+="BeamSizeX;BeamSizeY;"
+	ListOfVariables+="UseBatchProcessing;"
 	ListOfVariables+="DelayBetweenImages;CalculateStatistics;"
 	ListOfVariables+="SampleThickness;SampleTransmission;UseI0ToCalibrate;SampleI0;EmptyI0;"
 	ListOfVariables+="UseSampleThickness;UseSampleTransmission;UseI0ToCalibrate;UseSampleI0;UseEmptyI0;"
@@ -728,6 +730,7 @@ Function NI1A_Convert2DTo1D()
 	NVAR SectorsStepInAngle=root:Packages:Convert2Dto1D:SectorsStepInAngle
 	NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
 	NVAR LineProf_WidthQ=root:Packages:Convert2Dto1D:LineProf_WidthQ
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 	SVAR Movie_Last1DdataSet=root:Packages:Convert2Dto1D:Movie_Last1DdataSet
 	string tempListOfProcessedSectors=""
 	//let user run some hook function to modify parameters, if needed here. 
@@ -764,7 +767,9 @@ Function NI1A_Convert2DTo1D()
 			NI1A_SaveDataPerUserReq(CurOrient)
 			
 			tempListOfProcessedSectors+=CurOrient+";"
-			DoUpdate
+			if(!UseBatchProcessing)
+				DoUpdate
+			endif
 		endfor
 	endif
 	//line profile averages are here... 
@@ -797,8 +802,9 @@ Function NI1A_Convert2DTo1D()
 		NI1A_SaveDataPerUserReq(tempStr1+tempStr)
 		
 		tempListOfProcessedSectors+=tempStr1+tempStr+";"
-		
-		doUpdate
+		if(!UseBatchProcessing)
+			doUpdate
+		endif
 	endif
 	//here we will create special waves in case we are using 9IDC SAXS...
 	NI1_9IDCCreateSMRSAXSdata(tempListOfProcessedSectors)
@@ -1620,6 +1626,11 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	variable typeGraph	//1 for q, 2 for d, and 3 for twoTheta, 4 for azimuthal angle
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
+	if(UseBatchProcessing)
+		return 0
+	endif
+	
 	if(typeGraph==1)
 		DoWindow LineuotDisplayPlot_Q
 		if(V_Flag)

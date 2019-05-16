@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.49
+#pragma version=1.50
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.50 Added Batch processing
 //1.49 add support for calibration factor in USAXS/SAXS/WAXS instrument
 //1.48 add solid angle correction to data reduction to match better SAXS and WAXS data. 
 		//added Correction factor use, but for now hwardwired. This needs to be part of Nexus file... 
@@ -1877,15 +1878,22 @@ Function NI1_9IDCFindThickness(SampleName)
 	string OldNOte=note(w2D)
 	variable thickness1 = NumberByKey(NI1_9IDCFindKeyStr("sample:thickness=", OldNote), OldNote  , "=" , ";")
 	variable thickness2 = NumberByKey(NI1_9IDCFindKeyStr("sample_thickness=", OldNote), OldNote  , "=" , ";")
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 	if(numtype(thickness1)==0)
-		Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
+		if(!UseBatchProcessing)
+			Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
+		endif
 		return thickness1
 	else
 		if(numtype(thickness2)==0)
-			Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness2)
+			if(!UseBatchProcessing)
+				Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness2)
+			endif
 			return thickness2
 		else
-			Print "Thickness value not found in the wave note of the sample file, setting to 1 [mm]"
+			if(!UseBatchProcessing)
+				Print "Thickness value not found in the wave note of the sample file, setting to 1 [mm]"
+			endif
 			return 1
 		endif
 	endif
@@ -2159,15 +2167,22 @@ Function NI1_9IDCSFindThickness(SampleName)
 	string OldNOte=note(w2D)
 	variable thickness1 = NumberByKey(NI1_9IDCFindKeyStr("sample:thickness=", OldNote), OldNote  , "=" , ";")
 	variable thickness2 = NumberByKey(NI1_9IDCFindKeyStr("sample_thickness=", OldNote), OldNote  , "=" , ";")
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 	if(numtype(thickness1)==0)
-		Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
+		if(!UseBatchProcessing)
+			Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness1)
+		endif
 		return thickness1
 	else
 		if(numtype(thickness2)==0)
-			Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness2)
+			if(!UseBatchProcessing)
+				Print "Found thickness value in the wave note of the sample file, the value is [mm] = "+num2str(thickness2)
+			endif
 			return thickness2
 		else
-			Print "Thickness value not found in the wave note of the sample file, setting to 1 [mm]"
+			if(!UseBatchProcessing)
+				Print "Thickness value not found in the wave note of the sample file, setting to 1 [mm]"
+			endif
 			return 1
 		endif
 	endif
@@ -2642,16 +2657,13 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 	//now delete the data which user did not want...
 	
 	if(SAXSDeleteTempPinData)
-		CheckDisplayed /W=LineuotDisplayPlot_Q  LineProfr
+		DoWIndow LineuotDisplayPlot_Q
 		if(V_Flag)
-			removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(LineProfr)
+			CheckDisplayed /W=LineuotDisplayPlot_Q  LineProfr
+			if(V_Flag)
+				removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(LineProfr)
+			endif
 		endif
-		////CheckDisplayed /W=LineuotDisplayPlot_Q  PinProfr
-		//if(V_Flag)
-		//	removeFromGraph /W=LineuotDisplayPlot_Q $nameofWave(PinProfr)
-		//endif
-		//removed, now delete folders...
-		//KillDataFolder/Z $PinFolder
 		KillDataFolder/Z $LIneProfFolder
 	endif
 	DoWIndow LineuotDisplayPlot_Q

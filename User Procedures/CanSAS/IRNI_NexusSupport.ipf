@@ -1,13 +1,14 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.12
+#pragma version = 1.13
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
-//fix typo in Nexus attribute name dQI - capital i, instead of correct dQl - lower case l as slit length
+//1.13 added skip for printing stuff in history in Nika batch mode. 
+//1,12 fix typo in Nexus attribute name dQI - capital i, instead of correct dQl - lower case l as slit length
 //1.11 add support for calibration facor, pet Pete's suggestion called I_scaling. Stupid name, but suggested based on other NXcansas standard, even though this is NXsas. 
 //1.10 fix debugger when no file is loaded and lookup does not exist. 
 //1.09 fixes and modifications for DAWN creative data layouts. It now handles all canSAS examples, DAWN, sasView (Mantid) and hopefully others. 
@@ -705,6 +706,14 @@ static Function NEXUS_ReadNXparameters(PathToNewData)
 		//removed Blank and empty values here: EmptyI0;BackgroundMeasTime;EmptyMeasurementTime;
 		SVAR ImageBeingLoaded=root:Packages:Convert2Dto1D:ImageBeingLoaded
 		//this will be Empty, Dark, sample, or ""
+		variable printRecords=1
+		NVAR/Z UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
+		if(NVAR_Exists(UseBatchProcessing))
+			if(UseBatchProcessing)
+				printRecords = 0
+			endif
+		endif
+
 		if(ReadParams&&(strlen(ImageBeingLoaded)>3))
 			Wave/Z/T ListOfParamsAndPaths = root:Packages:Irena_Nexus:ListOfParamsAndPaths
 			if(WaveExists(ListOfParamsAndPaths))
@@ -741,13 +750,17 @@ static Function NEXUS_ReadNXparameters(PathToNewData)
 						NVAR/Z NikaPar = $(NikaParameterStr)
 						if(NVAR_Exists(NikaPar))
 							NikaPar = ScaleFctVal * NexParWv[0]
-							print "Read Nexus parameter "+NexusPathStr+", scaled by "+num2str(ScaleFctVal)+" and set "+NikaParameterStr+" = "+num2str(NikaPar)
+							if(printRecords)
+								print "Read Nexus parameter "+NexusPathStr+", scaled by "+num2str(ScaleFctVal)+" and set "+NikaParameterStr+" = "+num2str(NikaPar)
+							endif
 						else //may be string?
 							SVAR NikaParS = $(NikaParameterStr)
 							if(SVAR_Exists(NikaParS))
 								Wave/Z/T NexParWvS = $(removeending(PathToNewData,":")+NexusPathStr)
 								NikaParS = NexParWvS[0]
-								print "Read Nexus parameter "+NexusPathStr+",  and set "+NikaParameterStr+" = "+(NikaParS)
+								if(printRecords)
+									print "Read Nexus parameter "+NexusPathStr+",  and set "+NikaParameterStr+" = "+(NikaParS)
+								endif
 							endif
 						endif
 					endif

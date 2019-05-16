@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.66
+#pragma version=2.67
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.67 Added Batch processing
 //2.66 fixes for rtGlobal=3
 //2.65 fixerd solid angle correction. It was doing the wrong thing. 
 //2.64 added new tab with Save data opions, seems better. Removed range selections. Added controls for delay between images and display ImageStatistics. 
@@ -740,20 +741,20 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 		string OGN= note(GeometryCorrection)
 		//BeamCenterX=501.19;BeamCenterY=506.05;PixelSizeX=0.1;  PixelSizeY=0.1;HorizontalTilt=0;VerticalTilt=0;SampleToCCDDistance=250.5;Wavelength=1.541;
 		variable Match1=0, Match2=0, Match3=0, Match4=0, Match5=0
-		if(NumberByKey("BeamCenterX",OGN,"=",";")==NumberByKey("BeamCenterX",O2N,"=",";") && NumberByKey("BeamCenterY",OGN,"=+",";")==NumberByKey("BeamCenterY",O2N,"=",";") )
+		if(abs(NumberByKey("BeamCenterX",OGN,"=",";")-NumberByKey("BeamCenterX",O2N,"=",";"))<0.01 && abs(NumberByKey("BeamCenterY",OGN,"=",";")-NumberByKey("BeamCenterY",O2N,"=",";"))<0.01 )
 			Match1=1
 		endif
-		if(NumberByKey("PixelSizeX",OGN,"=",";")==NumberByKey("PixelSizeX",O2N,"=",";") && NumberByKey("PixelSizeY",OGN,"=",";")==NumberByKey("PixelSizeY",O2N,"=",";") )
+		if(abs(NumberByKey("PixelSizeX",OGN,"=",";")-NumberByKey("PixelSizeX",O2N,"=",";"))<0.01 && abs(NumberByKey("PixelSizeY",OGN,"=",";")-NumberByKey("PixelSizeY",O2N,"=",";"))<0.01 )
 			Match2=1
 		endif
-		if(NumberByKey("HorizontalTilt",OGN,"=",";")==NumberByKey("HorizontalTilt",O2N,"=",";") && NumberByKey("VerticalTilt",OGN,"=",";")==NumberByKey("VerticalTilt",O2N,"=",";") )
+		if(abs(NumberByKey("HorizontalTilt",OGN,"=",";")-NumberByKey("HorizontalTilt",O2N,"=",";"))<0.01 && abs(NumberByKey("VerticalTilt",OGN,"=",";")-NumberByKey("VerticalTilt",O2N,"=",";"))<0.01 )
 			Match3=1
 		endif
-		if(NumberByKey("SampleToCCDDistance",OGN,"=",";")==NumberByKey("SampleToCCDDistance",O2N,"=",";") && NumberByKey("Wavelength",OGN,"=",";")==NumberByKey("Wavelength",O2N,"=",";") )
+		if(abs(NumberByKey("SampleToCCDDistance",OGN,"=",";")-NumberByKey("SampleToCCDDistance",O2N,"=",";"))<0.01 && abs(NumberByKey("Wavelength",OGN,"=",";")-NumberByKey("Wavelength",O2N,"=",";"))<0.01 )
 			Match4=1
 		endif
 		if(DimSize(GeometryCorrection, 0 )==DimSize(DataWave, 0 ) && DimSize(GeometryCorrection,1 )==DimSize(DataWave, 1 ))
-			Match1=5
+			Match5=1
 		endif
 		if(Match1 && match2 && Match3 && Match4 && Match5)
 			return 1
@@ -768,7 +769,7 @@ Function  NI1A_GenerateGeometryCorr2DWave()
 	Wave GeometryCorrection
 	Redimension/S GeometryCorrection
 	
-	Note GeometryCorrection, O2N
+	Note/K GeometryCorrection, O2N
 	setDataFolder OldDf
 end
 
@@ -1279,14 +1280,22 @@ Function NI1A_Create2DQWave(DataWave)
 		endif
 		NoteStr = "Q calibration based on imported 2D data values. Geometry values are fake to make Nika work. Do not trust them.;"
 	endif
-	NoteStr+="BeamCenterX="+num2str(BeamCenterX)+";"
-	NoteStr+="BeamCenterY="+num2str(BeamCenterY)+";"
-	NoteStr+="PixelSizeX="+num2str(PixelSizeX)+";"
-	NoteStr+="PixelSizeY="+num2str(PixelSizeY)+";"
-	NoteStr+="HorizontalTilt="+num2str(HorizontalTilt)+";"
-	NoteStr+="VerticalTilt="+num2str(VerticalTilt)+";"
-	NoteStr+="SampleToCCDDistance="+num2str(SampleToCCDDistance)+";"
-	NoteStr+="Wavelength="+num2str(Wavelength)+";"	
+	NoteStr = ReplaceStringByKey("BeamCenterX", NoteStr, num2str(BeamCenterX), "=", ";")
+	NoteStr = ReplaceStringByKey("BeamCenterY", NoteStr, num2str(BeamCenterY), "=", ";")
+	NoteStr = ReplaceStringByKey("PixelSizeX", NoteStr, num2str(PixelSizeX), "=", ";")
+	NoteStr = ReplaceStringByKey("PixelSizeY", NoteStr, num2str(PixelSizeY), "=", ";")
+	NoteStr = ReplaceStringByKey("HorizontalTilt", NoteStr, num2str(HorizontalTilt), "=", ";")
+	NoteStr = ReplaceStringByKey("VerticalTilt", NoteStr, num2str(VerticalTilt), "=", ";")
+	NoteStr = ReplaceStringByKey("SampleToCCDDistance", NoteStr, num2str(SampleToCCDDistance), "=", ";")
+	NoteStr = ReplaceStringByKey("Wavelength", NoteStr, num2str(Wavelength), "=", ";")
+//	NoteStr+="BeamCenterX="+num2str(BeamCenterX)+";"
+//	NoteStr+="BeamCenterY="+num2str(BeamCenterY)+";"
+//	NoteStr+="PixelSizeX="+num2str(PixelSizeX)+";"
+//	NoteStr+="PixelSizeY="+num2str(PixelSizeY)+";"
+//	NoteStr+="HorizontalTilt="+num2str(HorizontalTilt)+";"
+//	NoteStr+="VerticalTilt="+num2str(VerticalTilt)+";"
+//	NoteStr+="SampleToCCDDistance="+num2str(SampleToCCDDistance)+";"
+//	NoteStr+="Wavelength="+num2str(Wavelength)+";"	
 	note/K Q2DWave, NoteStr
 	setDataFolder OldDf
 end
@@ -1621,6 +1630,8 @@ end
 Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//variable StartTicks=ticks
+	
 	if(StringMatch(ctrlName,"CreateOutputPath"))
 		PathInfo/S Convert2Dto1DOutputPath
 		NewPath/C/O/M="Select path to save your data" Convert2Dto1DOutputPath	
@@ -1658,6 +1669,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	NVAR Process_Average = root:Packages:Convert2Dto1D:Process_Average
 	NVAR Process_AveNFiles = root:Packages:Convert2Dto1D:Process_AveNFiles
 	NVAR Process_ReprocessExisting = root:Packages:Convert2Dto1D:Process_ReprocessExisting
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 		
 	if(StringMatch(ctrlName,"DisplaySelectedFile") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_DisplayAve))
 		//set selections for using RAW/Converted data...
@@ -1669,6 +1681,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		LineProfileUseCorrData=0
 		SectorsUseRAWData=1
 		SectorsUseCorrData=0
+		UseBatchProcessing = 0
 		//selection done
 		NI1A_DisplayOneDataSet()	
 		NI1_CalculateImageStatistics()
@@ -1691,8 +1704,9 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		LineProfileUseCorrData=1
 		SectorsUseRAWData=0
 		SectorsUseCorrData=1
+		UseBatchProcessing = 0
 		//selection done
-		NI1A_ReprocessCurrentImae()			
+		NI1A_ReprocessCurrentImage()			
 	endif
 	if(stringmatch(ctrlName,"ConvertSelectedFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_Individually))
 		NI1A_CheckParametersForConv()
@@ -1706,7 +1720,9 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		SectorsUseRAWData=0
 		SectorsUseCorrData=1
 		//selection done
-		NI1A_LoadManyDataSetsForConv()			
+		NI1A_BatchSetupWarningPanel()
+		NI1A_LoadManyDataSetsForConv()		
+		NI1A_BatchKillWarningPanel()	
 	endif
 	if(StringMatch(ctrlName,"AveConvertSelectedFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_Average))
 		NI1A_CheckParametersForConv()
@@ -1720,7 +1736,9 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		SectorsUseRAWData=0
 		SectorsUseCorrData=1
 		//selection done
+		NI1A_BatchSetupWarningPanel()
 		NI1A_AveLoadManyDataSetsForConv()		
+		NI1A_BatchKillWarningPanel()
 	endif
 	if(StringMatch(ctrlName,"AveConvertNFiles") ||(StringMatch(ctrlName, "ProcessSelectedImages") && Process_AveNFiles))
 		NI1A_CheckParametersForConv()
@@ -1734,7 +1752,9 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		SectorsUseRAWData=0
 		SectorsUseCorrData=1
 		//selection done
+		NI1A_BatchSetupWarningPanel()
 		NI1A_AveLoadNDataSetsForConv()		
+		NI1A_BatchKillWarningPanel()
 	endif
 
 	if(StringMatch(ctrlName,"Select2DDataPath"))
@@ -1783,14 +1803,14 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		NI1M_RemoveMaskFromImage()
 	endif
 
-//LoadPixel2DSensitivity
+	//LoadPixel2DSensitivity
 	if(StringMatch(ctrlName,"LoadPixel2DSensitivity"))
 		NI1A_LoadEmptyOrDark("Pixel2DSensitivity")		
 	endif
 	//this pops up the main panel back, some code should nto do that... 
 	DoWIndow/F NI1A_Convert2Dto1DPanel
 	//here is code which shiuld nto end with main panel at the top.  
-//Store current setting for future use
+	//Store current setting for future use
 	if(StringMatch(ctrlName,"SaveCurrentToolSetting"))
 		//call create mask routine here
 		NI1A_StoreLoadCurSettingPnl()
@@ -1799,15 +1819,54 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	if(StringMatch(ctrlName,"CreateMask"))
 		NI1M_CreateMask()
 	endif
-//create squared sector graph...
+	//create squared sector graph...
 	if(StringMatch(ctrlName,"CreateSectorGraph"))
 		//call create mask routine here
 		NI1_MakeSectorGraph()
 	endif
 	
+	//print "The processing took : "+num2str((ticks-StartTicks)/60)+" seconds to process" 
+	
 End
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
+Function NI1A_BatchSetupWarningPanel()
+
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
+	if(!UseBatchProcessing)
+		return 0
+	endif
+	variable/g root:Packages:Convert2Dto1D:BatchProcessingStart
+	NVAR BatchProcessingStart = root:Packages:Convert2Dto1D:BatchProcessingStart
+	BatchProcessingStart = ticks
+	print "*****************************************************************"
+	print "Batch processing selected, no images will be displayed or updated"
+	print "Igor will look like it is hanging. "
+	print "Progress can be seen as changing Sample name (red text) on Main Nika panel"
+
+	NewPanel /K=1/W=(395,325,750,444)/N=NikaBatchProcessRunning as "Nika is batch Processing data"
+	ModifyPanel cbRGB=(65535,43690,0)
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 20,textrgb= (52428,1,1)
+	DrawText 47,40,"Nika is batch processing data ..."
+	DrawText 47,65,"At the end this window will disapper"
+	DrawText 47,90,"and message in history will appear"
+	DoUpdate /W=NikaBatchProcessRunning  
+	
+end
+//*******************************************************************************************************************************************
+//*******************************************************************************************************************************************
+
+Function NI1A_BatchKillWarningPanel()
+	KillWIndow/Z NikaBatchProcessRunning
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
+	if(UseBatchProcessing)
+		NVAR BatchProcessingStart = root:Packages:Convert2Dto1D:BatchProcessingStart
+		print "Done with Batch processing. Nika is yours again..."
+		print "Batch processing took : "+num2str((ticks-BatchProcessingStart)/60)+"  seconds"
+		print "*****************************************************************"
+	endif
+end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
@@ -1989,10 +2048,11 @@ Function NI1A_DisplayTheRight2DWave()
 			NVAR DisplayProcessed2DData=root:Packages:Convert2Dto1D:DisplayProcessed2DData
 			NVAR DisplayRaw2DData=root:Packages:Convert2Dto1D:DisplayRaw2DData
 			NVAR ImageDisplayLogScaled=root:Packages:Convert2Dto1D:ImageDisplayLogScaled
+			NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 			
 			Wave/Z CCDImageToConvert_dis=root:Packages:Convert2Dto1D:CCDImageToConvert_dis
 			Wave/Z CCDImageToConvert =root:Packages:Convert2Dto1D:CCDImageToConvert
-			if(!WaveExists(CCDImageToConvert_dis)||!WaveExists(CCDImageToConvert))
+			if(!WaveExists(CCDImageToConvert_dis)||!WaveExists(CCDImageToConvert) || UseBatchProcessing)		//no need to claculate display wave here... 
 				return 0
 			endif
 			if(DisplayRaw2DData)
@@ -2142,13 +2202,25 @@ Function NI1A_DisplayLoadedFile()
 	string OldDf=GetDataFOlder(1)
 	setDataFOlder root:Packages:Convert2Dto1D
 
+
 	KillWIndow/Z CCDImageToConvertFig
  	wave basewv=root:Packages:Convert2Dto1D:CCDImageToConvert
 	wave/Z waveToDisplayDis = $("root:Packages:Convert2Dto1D:CCDImageToConvert_dis")
-//	if (!WaveExists(waveToDisplayDis))
-//		MatrixOP/O CCDImageToConvert_dis, baseWv
-//		wave waveToDisplayDis = $("root:Packages:Convert2Dto1D:CCDImageToConvert_dis")
-//	endif
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
+	NVAR/Z LastDisplayedGBatchMessage=root:Packages:Convert2Dto1D:LastDisplayedGBatchMessage
+	if(!NVAR_Exists(LastDisplayedGBatchMessage))
+		variable/g root:Packages:Convert2Dto1D:LastDisplayedGBatchMessage
+		NVAR LastDisplayedGBatchMessage=root:Packages:Convert2Dto1D:LastDisplayedGBatchMessage
+		LastDisplayedGBatchMessage = 0
+	endif
+	if(UseBatchProcessing)
+		if(abs(DateTime-LastDisplayedGBatchMessage)>10)
+			//print "Batch processing selected, no images will be displayed or updated"
+			print "Batch processing selected, I am working, hang on ... "
+		endif
+		LastDisplayedGBatchMessage = DateTime
+		return 0
+	endif
 	NI1A_DisplayTheRight2DWave()
 	note/K waveToDisplayDis
 	note waveToDisplayDis, note(basewv)
@@ -2260,7 +2332,7 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 
-Function NI1A_ReprocessCurrentImae()
+Function NI1A_ReprocessCurrentImage()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
 	setDataFolder root:Packages:Convert2Dto1D
@@ -2361,6 +2433,7 @@ Function NI1A_LoadManyDataSetsForConv()
 	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
 	SVAR/Z NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
 	NVAR DelayBetweenImages=root:Packages:Convert2Dto1D:DelayBetweenImages
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
 	if(!SVAR_Exists(NX_Index1ProcessRule))
 		NEXUS_Initialize(0)
 		SVAR NX_Index1ProcessRule= root:Packages:Irena_Nexus:NX_Index1ProcessRule
@@ -2535,10 +2608,12 @@ Function NI1A_LoadManyDataSetsForConv()
 						NI1A_CallImageHookFunction()
 						NI1_CalculateImageStatistics()
 						NEXUS_NikaSave2DData()
-						ResumeUpdate
-						DoUpdate
-						sleep/S DelayBetweenImages
-						//sleep/S/B/Q/C=6/M="Paused for "+num2str(DelayBetweenImages)+" seconds for user data review" DelayBetweenImages
+						if(!UseBatchProcessing)
+							ResumeUpdate
+							DoUpdate
+							sleep/S DelayBetweenImages
+							//sleep/S/B/Q/C=6/M="Paused for "+num2str(DelayBetweenImages)+" seconds for user data review" DelayBetweenImages
+						endif
 					endfor
 				endif
 			else
@@ -2571,7 +2646,8 @@ end
 //*******************************************************************************************************************************************
 Function NI1A_CallImageHookFunction()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	if(exists("AfterDisplayImageHook")==6)
+	DoWIndow CCDImageToConvertFig
+	if(exists("AfterDisplayImageHook")==6 && V_Flag)
 		Execute("AfterDisplayImageHook()")
 	endif
 
@@ -3587,8 +3663,12 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	PopupMenu DataCalibrationString,mode=1+WhichListItem(DataCalibrationString, "Arbitrary;cm2/cm3;cm2/g;" ),value= "Arbitrary;cm2/cm3;cm2/g;"
 
 	CheckBox CalculateStatistics,pos={350,238},size={146,14},noproc,title="Calc. Stats."
-	CheckBox CalculateStatistics,help={"Check to have sttistics on each image calculated on import"}
+	CheckBox CalculateStatistics,help={"Check to have statistics on each image calculated on import"}
 	CheckBox CalculateStatistics,variable= root:Packages:Convert2Dto1D:CalculateStatistics
+
+	CheckBox UseBatchProcessing,pos={280,255},size={146,14},noproc,title="Batch Proc (no images)"
+	CheckBox UseBatchProcessing,help={"Prevent Images to be updated, speeds up processing."}
+	CheckBox UseBatchProcessing,variable= root:Packages:Convert2Dto1D:UseBatchProcessing
 
 
 	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0, clickEventModifiers=4
@@ -5718,6 +5798,11 @@ end
 Function NI1A_DoDrawingsInto2DGraph()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string oldDf=GetDataFOlder(1)
+	DoWIndow CCDImageToConvertFig
+	if(!V_Flag)
+		return 0
+	endif
+	
 	setDataFolder root:Packages:Convert2Dto1D
 	NVAR DisplayBeamCenterIn2DGraph=root:Packages:Convert2Dto1D:DisplayBeamCenterIn2DGraph
 	NVAR DisplaySectorsIn2DGraph=root:Packages:Convert2Dto1D:DisplaySectorsIn2DGraph
@@ -7377,6 +7462,8 @@ Function NI1A_OnLineDataProcessing()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String OldDf=GetDataFolder(1)
 	SetDataFOlder root:Packages:Convert2Dto1D
+	NVAR UseBatchProcessing=root:Packages:Convert2Dto1D:UseBatchProcessing
+	UseBatchProcessing = 0
 	NewDataFolder/O/S BckgMonitorParams
 	String ListOfVariables, ListOfStrings
 	ListOfVariables = "BckgUpdateInterval;BckgDisplayOnly;BckgConvertData;"

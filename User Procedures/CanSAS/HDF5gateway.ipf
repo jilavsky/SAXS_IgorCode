@@ -1,6 +1,10 @@
 #pragma rtGlobals=3		// Use modern global access method.
+#pragma version=1.01
 
 #include <HDF5 Browser>
+
+
+//1.01 rmoeved KillWaves/Z which took surprisngly long time. Not needed. 
 
 // requires the Wavemetrics "HDF5.xop" to be installed for IgorPro
 
@@ -1168,7 +1172,7 @@ Static Function/T H5GW__HDF5AttributeDataToString(fileID, hdf5_Object, hdf5_Type
 			endfor
 		endif
 	endif
-	KillWaves/Z attr_wave
+	//KillWaves/Z attr_wave		//takes significant time and does not seem needed... 
 	return attr_str
 End
 
