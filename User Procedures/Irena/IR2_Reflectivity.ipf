@@ -432,11 +432,11 @@ Proc  IR2R_LogLogPlotRefl()
 	ModifyGraph log(left)=1
 	ModifyGraph mirror=1
 	ShowInfo
-	Label left "Reflectivity"
-	Label bottom "Q [A\\S-1\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Reflectivity"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	TextBox/W=IR2R_LogLogPlotRefl/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR2R_LogLogPlotRefl/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
-	Legend/W=IR2R_LogLogPlotRefl/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\s(OriginalIntensity) Experimental intensity"
+	Legend/W=IR2R_LogLogPlotRefl/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	SetDataFolder fldrSav
 	ErrorBars/Y=1 OriginalIntensity Y,wave=(root:Packages:Refl_SimpleTool:OriginalError,root:Packages:Refl_SimpleTool:OriginalError)
 EndMacro
@@ -452,8 +452,8 @@ Proc  IR2R_IQN_Q_PlotV()
 	ModifyGraph msize(IntensityQN)=1
 	ModifyGraph log=1
 	ModifyGraph mirror=1
-	Label left "Reflectivity * Q^n"
-	Label bottom "Q [A\\S-1\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Reflectivity * Q^n"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	TextBox/W=IR2R_IQN_Q_PlotV/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/W=IR2R_IQN_Q_PlotV/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
 	SetDataFolder fldrSav
@@ -467,12 +467,12 @@ Proc  IR2R_SLDProfile()
 	//Display /W=(298.5,390.5,847.5,567.5)/K=1 SLDProfile as "SLD profile (top=left, substrate=right)"
 	Display /W=(0,0,IN2G_GetGraphWidthHeight("width"),0.3*IN2G_GetGraphWidthHeight("height"))/K=1 SLDProfile as "SLD profile (top=left, substrate=right)"
 	DoWindow/C IR2R_SLDProfile
-	Label left "SLD profile [A\\S-2\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"SLD profile [A\\S-2\\M]"
 	if(ZeroAtTheSubstrate)
-		Label bottom "<<--Substrate                                               Layer thickness [A]                                         Top -->>"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"<<--Substrate                                               Layer thickness [A]                                         Top -->>"
 		DoWindow/T IR2R_SLDProfile,"SLD profile (substrate=left, top=right)"
 	else
-		Label bottom "<<--TOP                                               Layer thickness [A]                                         Substrate -->>"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"<<--TOP                                               Layer thickness [A]                                         Substrate -->>"
 		DoWindow/T IR2R_SLDProfile,"SLD profile (top=left, substrate=right) "
 	endif
 	SetDataFolder fldrSav0
@@ -1496,10 +1496,10 @@ Function IR2R_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 			NVAR ZeroAtTheSubstrate=root:Packages:Refl_SimpleTool:ZeroAtTheSubstrate
 			DoWindow/F IR2R_SLDProfile
 			if(ZeroAtTheSubstrate)
-				Label bottom "<<--Substrate                                               Layer thickness [A]                                         Top -->>"
+				Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"<<--Substrate                                               Layer thickness [A]                                         Top -->>"
 				DoWindow/T IR2R_SLDProfile,"SLD profile (substrate=left,  top=right) "
 			else
-				Label bottom "<<--TOP                                               Layer thickness [A]                                         Substrate -->>"
+				Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"<<--TOP                                               Layer thickness [A]                                         Substrate -->>"
 				DoWindow/T IR2R_SLDProfile,"SLD profile (top=left, substrate=right) "
 			endif
 			IR2R_CalculateSLDProfile()

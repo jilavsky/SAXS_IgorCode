@@ -3123,8 +3123,8 @@ Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny
 		endif
 		//print "lmin = "+num2str(minchord*1e4)+" Å"
 		ModifyGraph log=1
-		Label left "\\F'arial'\\Z18I(q)·(q \\S2\\M)"
-		Label bottom "\\F'arial'\\Z18q (A\\S-1\\M)"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"I(q)·(q \\S2\\M)"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"q (A\\S-1\\M)"
 		textbox/C/N=text1df/F=0/X=46.00/Y=30.00  outtext
 		HideTools/A
 	//SelectedLevel=InitialselectedLevel
@@ -5419,8 +5419,8 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 	
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+"Chi-squared analysis of "+SampleFullName
-		Label left "Achieved Chi-squared"
-		Label bottom "End "+ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"End "+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
 		SetAxis left (V_avg-1.5*(V_avg-V_min)),(V_avg+1.5*(V_max-V_avg))
@@ -5430,8 +5430,8 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		variable StdDevEndValue=V_sdev
 		Display/W=(35,44,555,335)/K=1 EndValues vs StartValues
 		DoWindow/C/T ChisquaredAnalysis2,ParamName+" reproducibility analysis of "+SampleFullName
-		Label left "End "+ParamName+" value"
-		Label bottom "Start "+ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"End "+ParamName+" value"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Start "+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19		
 		variable TempDisplayRange=max(V_avg-V_min, V_max-V_avg)
@@ -5468,8 +5468,8 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+" Chi-squared analysis "
-		Label left "Achieved Chi-squared"
-		Label bottom ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
 		Findlevels/Q/N=2 ChiSquareValues, ConfEvTargetChiSqRange*V_min

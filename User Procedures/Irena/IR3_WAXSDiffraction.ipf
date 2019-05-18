@@ -1151,8 +1151,8 @@ Function IR3W_GraphWAXSData()
 		Display/K=1/W=(630,45,1531,570) DataIntWave  vs Data2ThetaWave as "Powder Diffraction / WAXS Main Graph"
 		DoWindow/C IR3W_WAXSMainGraph
 		setWIndow IR3W_WAXSMainGraph, hook(CursorMoved)=IR3W_GraphHookFunction
-		Label /W=IR3W_WAXSMainGraph left "Intensity"
-		Label /W=IR3W_WAXSMainGraph bottom "2Theta [deg]"
+		Label /W=IR3W_WAXSMainGraph left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+		Label /W=IR3W_WAXSMainGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"2Theta [deg]"
 		ErrorBars /W=IR3W_WAXSMainGraph DataIntWave Y,wave=(DataErrorWave,DataErrorWave)		
 		showinfo
 	endif

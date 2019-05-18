@@ -4396,8 +4396,8 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 	
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+"Chi-squared analysis of "+SampleFullName
-		Label left "Achieved Chi-squared"
-		Label bottom "End "+ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"End "+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
 		SetAxis left (V_avg-1.5*(V_avg-V_min)),(V_avg+1.5*(V_max-V_avg))
@@ -4407,8 +4407,8 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		variable StdDevEndValue=V_sdev
 		Display/W=(35,44,555,335)/K=1 EndValues vs StartValues
 		DoWindow/C/T ChisquaredAnalysis2,ParamName+" reproducibility analysis of "+SampleFullName
-		Label left "End "+ParamName+" value"
-		Label bottom "Start "+ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"End "+ParamName+" value"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Start "+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19		
 		variable TempDisplayRange=max(V_avg-V_min, V_max-V_avg)
@@ -4442,8 +4442,8 @@ static Function IR2L_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 		
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+" Chi-squared analysis "
-		Label left "Achieved Chi-squared"
-		Label bottom ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
 		Findlevels/Q/N=2 ChiSquareValues, ConfEvTargetChiSqRange*V_min
@@ -6700,18 +6700,18 @@ Function IR2L_AppendWvsGraphSizeDist()
 
 	DOWindow GraphSizeDistributions
 	if(V_Flag)
-		Label/Z /W=GraphSizeDistributions bottom SizeDist_DimensionType+" [A]"
+		Label/Z /W=GraphSizeDistributions bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+SizeDist_DimensionType+" [A]"
 		if(SizeDistDisplayNumDist)
-			Label /Z/W=GraphSizeDistributions right "Number distribution [1/(A*cm\\S3\\M)]"
+			Label /Z/W=GraphSizeDistributions right "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Number distribution [1/(A*cm\\S3\\M)]"
 		endif
 		if(!SizeDistDisplayNumDist)
 			ModifyGraph /Z/W=GraphSizeDistributions mirror(left)=1
 		endif
 		if(SizeDistDisplayVolDist)
 			if(DimensionIsDiameter)
-				Label/Z /W=GraphSizeDistributions left "Volume distribution f(D) [1/A]"
+				Label/Z /W=GraphSizeDistributions left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution f(D) [1/A]"
 			else
-				Label/Z /W=GraphSizeDistributions left "Volume distribution f(R) [1/A]"
+				Label/Z /W=GraphSizeDistributions left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution f(R) [1/A]"
 			endif
 		endif	
 		if(!SizeDistDisplayVolDist)
@@ -7286,8 +7286,8 @@ Function IR2L_GraphIQ4vsQ()
 			//ModifyGraph/Z/W=LSQF_IQ4vsQGraph mode=3,marker=19,rgb=(0,0,0)
 			ModifyGraph/Z/W=LSQF_IQ4vsQGraph log(bottom)=1
 			ModifyGraph/Z/W=LSQF_IQ4vsQGraph grid=1,mirror=1
-			Label/Z/W=LSQF_IQ4vsQGraph left "Intensity * Q^4"
-			Label/Z/W=LSQF_IQ4vsQGraph bottom "Q [A\\S-1\\M]"
+			Label/Z/W=LSQF_IQ4vsQGraph left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q^4"
+			Label/Z/W=LSQF_IQ4vsQGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 			ModifyGraph log=1
 		endif
 	endif
@@ -7362,8 +7362,8 @@ Function IR2L_GraphResiduals()
 		ModifyGraph/Z/W=LSQF_ResidualsGraph mode=3,marker=19,rgb=(0,0,0)
 		ModifyGraph/Z/W=LSQF_ResidualsGraph log(bottom)=1
 		ModifyGraph/Z/W=LSQF_ResidualsGraph grid=1,mirror=1
-		Label/Z/W=LSQF_ResidualsGraph left "Normalized residual\r(Data - Model / Error)"
-		Label/Z/W=LSQF_ResidualsGraph bottom "Q [A\\S-1\\M]"
+		Label/Z/W=LSQF_ResidualsGraph left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Normalized residual\r(Data - Model / Error)"
+		Label/Z/W=LSQF_ResidualsGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	endif
 	setDataFolder OldDf	
 	return ResidualsExisted

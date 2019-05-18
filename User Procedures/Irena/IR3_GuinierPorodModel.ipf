@@ -3500,8 +3500,8 @@ static Function IR3GP_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPa
 	
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+"Chi-squared analysis of "+SampleFullName
-		Label left "Achieved Chi-squared"
-		Label bottom "End "+ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"End "+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
 		SetAxis left (V_avg-1.5*(V_avg-V_min)),(V_avg+1.5*(V_max-V_avg))
@@ -3511,8 +3511,8 @@ static Function IR3GP_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPa
 		variable StdDevEndValue=V_sdev
 		Display/W=(35,44,555,335)/K=1 EndValues vs StartValues
 		DoWindow/C/T ChisquaredAnalysis2,ParamName+" reproducibility analysis of "+SampleFullName
-		Label left "End "+ParamName+" value"
-		Label bottom "Start "+ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"End "+ParamName+" value"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Start "+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19		
 		variable TempDisplayRange=max(V_avg-V_min, V_max-V_avg)
@@ -3548,8 +3548,8 @@ static Function IR3GP_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPa
 		
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+" Chi-squared analysis "
-		Label left "Achieved Chi-squared"
-		Label bottom ParamName+" value"
+		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
+		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
 		Findlevels/Q/N=2 ChiSquareValues, ConfEvTargetChiSqRange*V_min

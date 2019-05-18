@@ -1,8 +1,8 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.00
+#pragma version=1.01
 
-Constant IR3AMassFrAggVersionNumber 	= 1.00
+Constant IR3AMassFrAggVersionNumber 	= 1.01
 Constant IR3TPOVPDBVersionNumber 		= 1.00
 Constant IR3TTwoPhaseVersionNumber 	= 1.00
 
@@ -14,6 +14,7 @@ Constant IR3TTwoPhaseVersionNumber 	= 1.00
 //*************************************************************************/
 
 
+//1.01 3dAggregate added ability ot grow N aggregates and Compare Stored graph
 //1.00 first version, added code for 3DMassFractalAggregate from Alex McGlassson 
 //			note: this ipf file also contains tools for import of pdb (ATSAS, GNOM produced output files) and for POV files produced by SAXSMorph. 
 //			and some Gizmo tools to be used to visualize these. 
@@ -136,6 +137,7 @@ Function IR3A_FractalAggregatePanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(5,20,395,680) as "Fractal Aggregate Model"
 	DoWindow/C FractalAggregatePanel
+	DefaultGUIControls /W=FractalAggregatePanel ///Mac os9
 	TitleBox MainTitle title="\Zr200Mass Fractal Aggregate model",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	Button GetHelp,pos={305,50},size={80,15},fColor=(65535,32768,32768), proc=IR3A_PanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}	//<<< fix button to help!!!
 	//COPY FROM IR2U_UnifiedEvaPanelFnct()
@@ -224,7 +226,16 @@ Function IR3A_FractalAggregatePanel()
 	PopupMenu AllowedNearDistance,mode=1,popvalue=num2str(AllowedNearDistance), value="1;2;3;"
 
 	
-	Button CalculateAll,pos={30,338},size={290,20}, proc=IR3A_PanelButtonProc,title="Grow Aggregate, do 1D and 3D graphs", help={"Perform all steps and generate 3D graph"}
+	Button Grow1AggAll,pos={5,338},size={150,20}, proc=IR3A_PanelButtonProc,title="Grow 1 Agg, graph", help={"Perform all steps and generate 3D graph"}
+	Button GrowNAggAll,pos={165,338},size={150,20}, proc=IR3A_PanelButtonProc,title="Grow N Agg.", help={"Generate N aggregates randomly"}
+
+	PopupMenu NUmberOfTestAggregates,pos={320,338},size={150,20},proc=IR3A_PopMenuProc,title="N ="
+	PopupMenu NUmberOfTestAggregates,help={"How many test aggregates to grow"}
+	NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
+	PopupMenu NUmberOfTestAggregates,mode=1,popvalue=num2str(NUmberOfTestAggregates), value="5;10;20;30;50;"
+
+
+
 	//repeat the target values
 	SetVariable Target_dmin, pos={10,360}, size={100,20}, title="Target dmin = ", help={"Minimum dimension of the aggregate"}, format="%.2g",fColor=(1,16019,65535),valueColor=(16385,16388,65535)
 	SetVariable Target_dmin, variable=root:Packages:AggregateModeling:BrFract_dmin, noedit=1,limits={-inf,inf,0},  disable=0,noedit=1,frame=0, bodyWidth=50
@@ -257,16 +268,18 @@ Function IR3A_FractalAggregatePanel()
 	Button SaveAggregateData,pos={220,445},size={150,20}, proc=IR3A_PanelButtonProc,title="Store Current Aggregate", help={"Copy this aggregate with parameters in a folder"}
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,469},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 
-	TitleBox ListBoxTitle title="\Zr130Available 3D Mass Fract Data",size={250,15},pos={5,480},frame=0,fColor=(0,0,52224)
+	TitleBox ListBoxTitle title="\Zr130Saved 3D Mass Fract aggregates",size={250,15},pos={5,480},frame=0,fColor=(0,0,52224)
 	wave/T Stored3DAggregates= root:Packages:AggregateModeling:Stored3DAggregates
 	wave Stored3DAggSelections= root:Packages:AggregateModeling:Stored3DAggSelections
 	ListBox StoredAggregates pos={5,500}, size={250,145}
 	ListBox StoredAggregates listWave=Stored3DAggregates,mode=1,selRow=-1,selWave=Stored3DAggSelections
 	
-	Button Display1DData,pos={262,500},size={120,20}, proc=IR3A_PanelButtonProc,title="Display 1D Graph", help={"Display 1 D graph with Intensity vs Q for these data"}
-	Button Display3DMassFracGizmo,pos={262,530},size={120,20}, proc=IR3A_PanelButtonProc,title="Display 3D Graph", help={"Display Gizmo with 3D Mass Fractal Aggregate"}
-	Button Calculate1DIntensity,pos={262,560},size={120,20}, proc=IR3A_PanelButtonProc,title="Calculate 1D Int.", help={"Calculate using UF 1D intensity and append to graph"}
-	Button Model1DIntensity,pos={262,590},size={120,20}, proc=IR3A_PanelButtonProc,title="Monte Carlo 1D Int.", help={"Calculate using Monte Carlo 1D intensity and append to graph"}
+	Button Display1DData,pos={262,480},size={120,20}, proc=IR3A_PanelButtonProc,title="Display 1D Graph", help={"Display 1 D graph with Intensity vs Q for these data"}
+	Button Display3DMassFracGizmo,pos={262,505},size={120,20}, proc=IR3A_PanelButtonProc,title="Display 3D Graph", help={"Display Gizmo with 3D Mass Fractal Aggregate"}
+	Button Calculate1DIntensity,pos={262,530},size={120,20}, proc=IR3A_PanelButtonProc,title="Calculate 1D Int.", help={"Calculate using UF 1D intensity and append to graph"}
+	Button Model1DIntensity,pos={262,555},size={120,20}, proc=IR3A_PanelButtonProc,title="Monte Carlo 1D Int.", help={"Calculate using Monte Carlo 1D intensity and append to graph"}
+	Button CompareStoredResults,pos={262,580},size={120,20}, proc=IR3A_PanelButtonProc,title="Compare Stored", help={"Present statistcs on stored results"}
+	Button DeleteStoredResults,pos={262,635},size={100,15}, proc=IR3A_PanelButtonProc,title="Delete all Stored", help={"Delete all stored results"}
 	//the above button works, but the results seem to take forever and do not look too good.  
 	IR3A_SetControlsInPanel()
 	IR3A_Create3DAggListForListbox()
@@ -292,9 +305,6 @@ static Function IR3A_Create3DAggListForListbox()
 	endif
 	wave/T Stored3DAggregates= root:Packages:AggregateModeling:Stored3DAggregates
 	wave/T Stored3DAggregatesPaths= root:Packages:AggregateModeling:Stored3DAggregatesPaths
-	
-
-//	Stored3DAggregates[0] = "Current model"
 	variable NumOfFolders
 	string CurrentList, tempStr
 	if(DataFolderExists("root:MassFractalAggregates"))
@@ -314,10 +324,10 @@ static Function IR3A_Create3DAggListForListbox()
 		For(i=0;i<NumOfFolders-1;i+=1)
 			tempStr = StringFromList(i, CurrentList, ",")
 			Stored3DAggregatesPaths	[i+1] ="root:MassFractalAggregates:"+tempStr
-			Stored3DAggregates	[i+1] = IR3A_BuildUser3DAggNames("root:MassFractalAggregates:"+tempStr)
+			Stored3DAggregates	[i+1] = num2str(i)+" : "+IR3A_BuildUser3DAggNames("root:MassFractalAggregates:"+tempStr)
 		endfor	
 	endif
-	
+	DoUpdate  /W=FractalAggregatePanel 
 	setDataFOlder OldDf
 end
 //******************************************************************************************************************************************************
@@ -331,7 +341,9 @@ static Function/T IR3A_BuildUser3DAggNames(PathToFolder)
 	NVAR Stick=StickingProbability
 	NVAR SMeth=StickingMethod
 	NVAR dMin=DminValue
-	UserFriendlyString="z="+num2str(DOA)+", SProb="+num2str(Stick)+", SMeth="+num2str(SMeth)+", dmin="+num2str(dmin)
+	NVAR df = dfValue
+	NVAR cval= cValue
+	UserFriendlyString="z="+num2str(DOA)+",dmin="+num2str(IN2G_roundDecimalPlaces(dmin,2))+",c="+num2str(IN2G_roundDecimalPlaces(cval,2))+",df="+num2str(IN2G_roundDecimalPlaces(df,2))
 	setDataFOlder OldDf
 	return UserFriendlyString
 end
@@ -477,12 +489,6 @@ static Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
 //		TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+GetWavesDataFolder(IntWaveOriginal,1)	
 //	endif
 	AutoPositionWindow/R=FractalAggregatePanel MassFractalAggDataPlot
-
-
-
-
-
-	
 end
 
 
@@ -822,7 +828,8 @@ end
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-static Function IR3A_Display3DAggregate()
+static Function IR3A_Display3DAggregate(AppendToNotebook)
+	variable AppendToNotebook
 
 	string selection = IR3A_FindSelectedAggData()
 	if(strlen(selection)>0)
@@ -830,7 +837,7 @@ static Function IR3A_Display3DAggregate()
 		Wave/Z MassFractalAggregate=$(selection)
 		if(WaveExists(MassFractalAggregate))
 			IR3A_GizmoViewScatterPlot(MassFractalAggregate)
-			IR3A_DisplayAggNotebook(MassFractalAggregate)
+			IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
 		else
 			Print "MassFractalAggregate 3D wave does not exist, cannot do anything"
 		endif
@@ -856,7 +863,12 @@ Function/S IR3A_FindSelectedAggData()
 			Print "MassFractalAggregate 3D wave does not exist, cannot do anything"
 		endif
 	endif
-	string selection = Stored3DAggregatesPaths	[V_Value]
+	string selection
+	if(V_Value<numpnts(Stored3DAggregatesPaths))
+	 	selection = Stored3DAggregatesPaths	[V_Value]
+	else
+		selection = ""
+	endif
 	if(stringMatch(selection,"Current model"))
 				Wave/Z MassFractalAggregate=root:Packages:AggregateModeling:MassFractalAggregate
 				if(WaveExists(MassFractalAggregate))
@@ -877,8 +889,9 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-static Function IR3A_DisplayAggNotebook(MassFractalAggregate)
+static Function IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
 	wave MassFractalAggregate
+	variable AppendToNotebook
 	
 	
 	String nb = "Summary3DAggregate"
@@ -893,33 +906,46 @@ static Function IR3A_DisplayAggNotebook(MassFractalAggregate)
 	else
 		DoWIndow/F Summary3DAggregate
 	endif
-	//and append results for aggregate we are looking at
-	NVAR Target_dmin=root:Packages:AggregateModeling:BrFract_dmin
-	NVAR Target_c=root:Packages:AggregateModeling:BrFract_c
-	NVAR Target_df=root:Packages:AggregateModeling:BrFract_df
-	string ResultsLocation = GetWavesDataFolder(MassFractalAggregate, 1 )
-	string OldNote=note(MassFractalAggregate)
-	Notebook $nb selection={endOfFile,endOfFile}
-	Notebook $nb ruler=Normal, text="\r"
-	Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
-	Notebook $nb ruler=Normal, text="Mass Fractal 3D Aggregate from : "+ResultsLocation+"\r"
-	Notebook $nb ruler=Normal, text="Date & time generated : "+StringByKey("Mass Fractal Aggregate created", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Degree of Aggregation z : \t\t"+StringByKey("z", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Aggregate Size R : \t\t\t"+StringByKey("R", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Short circuit path length p : \t\t"+StringByKey("p", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Connective path length s : \t\t"+StringByKey("s", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Mass fractal dimension df : \t\t"+StringByKey("df", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Minimum dimension dmin : \t\t"+StringByKey("dmin", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Connectivity dimension c : \t\t"+StringByKey("c", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="True Sticking Probability : \t\t"+StringByKey("True Sticking Probability", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="Sticking Method : \t\t\t"+StringByKey("StickingMethod", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="******          Target    &    resulting values         ************   \r"
-	Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="dmin : \t\t Target : "+num2str(IN2G_roundSignificant(Target_dmin,3))+"\t\tResult : "+StringByKey("dmin", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="c : \t\t Target : "+num2str(IN2G_roundSignificant(Target_c,3))+"\t\tResult : "+StringByKey("c", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="df : \t\t Target : "+num2str(IN2G_roundSignificant(Target_df,3))+"\t\tResult : "+StringByKey("df", OldNote, "=", ";")+"\r"
-	Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
+	if(AppendToNotebook)
+		//and append results for aggregate we are looking at
+		NVAR Target_dmin=root:Packages:AggregateModeling:BrFract_dmin
+		NVAR Target_c=root:Packages:AggregateModeling:BrFract_c
+		NVAR Target_df=root:Packages:AggregateModeling:BrFract_df
+		string ResultsLocation = GetWavesDataFolder(MassFractalAggregate, 1 )
+		string OldNote=note(MassFractalAggregate)
+		Notebook $nb selection={endOfFile,endOfFile}
+		Notebook $nb ruler=Normal, text="\r"
+		Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
+		Notebook $nb ruler=Normal, text="Mass Fractal 3D Aggregate from : "+ResultsLocation+"\r"
+		Notebook $nb ruler=Normal, text="Date & time generated : "+StringByKey("Mass Fractal Aggregate created", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Degree of Aggregation z : \t\t"+StringByKey("z", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Aggregate Size R : \t\t\t"+StringByKey("R", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Short circuit path length p : \t\t"+StringByKey("p", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Connective path length s : \t\t"+StringByKey("s", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Mass fractal dimension df : \t\t"+StringByKey("df", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Minimum dimension dmin : \t\t"+StringByKey("dmin", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Connectivity dimension c : \t\t"+StringByKey("c", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="True Sticking Probability : \t\t"+StringByKey("True Sticking Probability", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="Sticking Method : \t\t\t"+StringByKey("StickingMethod", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="******          Target    &    resulting values         ************   \r"
+		Notebook $nb ruler=Normal, text="Sticking Probability :\t\t\t"+StringByKey("StickingProbability", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="dmin : \t\t Target : "+num2str(IN2G_roundSignificant(Target_dmin,3))+"\t\tResult : "+StringByKey("dmin", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="c : \t\t Target : "+num2str(IN2G_roundSignificant(Target_c,3))+"\t\tResult : "+StringByKey("c", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="df : \t\t Target : "+num2str(IN2G_roundSignificant(Target_df,3))+"\t\tResult : "+StringByKey("df", OldNote, "=", ";")+"\r"
+		Notebook $nb ruler=Normal, text="*************************************************************************************************   \r"
+	
+		DoWIndow MassFractalAggregateView
+		if(V_Flag)
+			Notebook $nb scaling={80,80}, picture={MassFractalAggregateView, -5, 1 }
+			Notebook $nb ruler=Normal, text="\r"
+		endif
+		DoWIndow MassFractalAggDataPlot
+		if(V_Flag)
+			Notebook $nb scaling={75,75}, picture={MassFractalAggDataPlot, 2, 1 }
+			Notebook $nb ruler=Normal, text="\r"
+		endif
+	endif
 	//	R - aggregate size 
 	//	df - Mass fractal dimension of the aggregate 
 	//	p - short circuit path length 
@@ -936,13 +962,15 @@ end
 
 
 
-static Function IR3A_CalculateAllMassFractAgreg()
+static Function IR3A_Grow1MassFractAgreg(breakOnFail)
+	variable breakOnFail
 
 	string OldDf=GetDataFolder(1)
 	IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
 	KillWIndow/Z MassFractalAggregateView
 	KillWIndow/Z MassFractalAggDataPlot
+	KillWindow/Z AggStoredResultsOverview
 		
 	NVAR DegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
 	NVAR StickingProbability=root:Packages:AggregateModeling:StickingProbability
@@ -953,14 +981,20 @@ static Function IR3A_CalculateAllMassFractAgreg()
 	Make/n=(DegreeOfAggregation,4)/O endpoints							//List of end points
 	make/N=(DegreeOfAggregation)/O Distances 							// Distance between existing particles & new one. Needed by MakeAgg
 	variable StartTicks=ticks
+	variable Failed
 	print time()+"  Started Run All" 
 	IR3A_MakeAgg(DegreeOfAggregation,MassFractalAggregate,StickingProbability,AllowedNearDistance)		// Agg is made with DegreeOfAggregation particles
-	IR3A_Ends(MassFractalAggregate)
-	IR3A_Reted(endpoints)
-	IR3A_Path(NumberOfTestPaths)
-	IR3A_GizmoViewScatterPlot(MassFractalAggregate)
-	print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
+	Failed = IR3A_Ends(MassFractalAggregate, breakOnFail)
+	if(!Failed)
+		IR3A_Reted(endpoints)
+		IR3A_Path(NumberOfTestPaths)
+		IR3A_GizmoViewScatterPlot(MassFractalAggregate)
+		print time()+"  Finished, done in "+num2str((ticks-StartTicks)/60)+" seconds" 	
+	else
+		print time()+"  Failed, Aggregate is too compact " 	
+	endif
 	setDataFOlder OldDf
+	return Failed
 End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -999,7 +1033,7 @@ static Function IR3A_InitializeMassFractAgg()
 	string/g ListOfVariables
 	string/g ListOfStrings
 	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="DegreeOfAggregation;StickingProbability;NumberOfTestPaths;BoxSize;RgPrimary;AllowedNearDistance;"
+	ListOfVariables="DegreeOfAggregation;StickingProbability;NumberOfTestPaths;BoxSize;RgPrimary;AllowedNearDistance;NUmberOfTestAggregates;"
 	ListOfVariables+="pValue;dfValue;RValue;RxRgPrimaryValue;cValue;dminValue;sValue;AttemptValue;TrueStickingProbability;"
 	ListOfVariables+="SelectedLevel;SelectedQlevel;SelectedBlevel;CurrentResults;StoredResults;"
 	ListOfVariables+="BrFract_G2;BrFract_Rg2;BrFract_B2;BrFract_P2;BrFract_G1;BrFract_Rg1;BrFract_B1;BrFract_P1;BrFract_dmin;"
@@ -1046,6 +1080,10 @@ static Function IR3A_InitializeMassFractAgg()
 	SVAR Model
 	Model = "Branched mass fractal"
 
+	NVAR NUmberOfTestAggregates
+	if(NUmberOfTestAggregates<5)
+		NUmberOfTestAggregates = 5
+	endif
 //	NVAR gdf, gR
 //	variable/g gp = mom2,gc=ln(DegreeOfAggregation)/ln(gp),gdmin=gdf/gc,gs=round(exp(ln(DegreeOfAggregation)/gdmin))
 		
@@ -1351,8 +1389,9 @@ end
 //******************************************************************************************************************************************************
 
 
-static Function IR3A_Ends(MassFractalAggregate)
+static Function IR3A_Ends(MassFractalAggregate, breakOnFail)
 	wave MassFractalAggregate
+	variable breakOnFail
 
 	string OldDf=GetDataFolder(1)
 	SetDataFolder root:Packages:AggregateModeling
@@ -1390,12 +1429,16 @@ static Function IR3A_Ends(MassFractalAggregate)
 	while(cnt<DegreeOfAggregation)
 	//remove extra rows from endpoints wave
 	DeletePoints endcnt,DegreeOfAggregation, endpoints
+	variable Failed = 0
 	if(dimsize(endpoints,0)<5)
-		abort "Not enough endpoints found, too compact particle"
+		Failed = 1
+		if(breakOnFail)
+			DoALert/T="FailedGrowth" 0, "Not enough endpoints found, too compact particle"
+		endif
 	endif
 	setDataFOlder OldDf
 	Print time()+"  Finished running Find Ends" 	//takes needless time.. 
-	
+	return Failed
 End
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -1783,6 +1826,10 @@ Function IR3A_PopMenuProc(pa) : PopupMenuControl
 				NVAR AllowedNearDistance=root:Packages:AggregateModeling:AllowedNearDistance
 				AllowedNearDistance = popNum
 			endif
+			if(stringMatch(CtrlName,"NUmberOfTestAggregates"))
+				NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
+				NUmberOfTestAggregates = str2num(popStr)
+			endif
 			
 			
 
@@ -2157,17 +2204,35 @@ end
 Function IR3A_PanelButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 
+	variable failed = 0
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
-			if(stringmatch(ba.ctrlName,"CalculateAll"))
-				IR3A_CalculateAllMassFractAgreg()
-				IR3A_Calculate1DIntensity()
-				IR3A_Display3DAggregate()
-				IR3A_Create3DAggListForListbox()
+			if(stringmatch(ba.ctrlName,"Grow1AggAll"))
+				failed = IR3A_Grow1MassFractAgreg(1)
+				if(!failed)
+					IR3A_Calculate1DIntensity()
+					IR3A_Display3DAggregate(1)
+					IR3A_Create3DAggListForListbox()
+				endif
+			endif
+			if(stringmatch(ba.ctrlName,"GrowNAggAll"))
+				NVAR NUmberOfTestAggregates=root:Packages:AggregateModeling:NUmberOfTestAggregates
+				variable i
+				For(i=0;i<NUmberOfTestAggregates;i+=1)
+					failed = IR3A_Grow1MassFractAgreg(0)
+					if(!failed)
+						IR3A_Calculate1DIntensity()
+						IR3A_StoreCurrentMassFractAgreg()
+						IR3A_Display3DAggregate(1)
+						IR3A_Create3DAggListForListbox()
+						print ">>>      Grown "+num2str(i+1)+" aggregate out of "+num2str(NUmberOfTestAggregates)
+					endif
+				endfor
+				print "   >>>>     Done Growing "+num2str(NUmberOfTestAggregates)+" aggregates <<<<    "
 			endif
 			if(stringmatch(ba.ctrlName,"Display3DMassFracGizmo"))
-				IR3A_Display3DAggregate()
+				IR3A_Display3DAggregate(0)
 				IR3A_Create3DAggListForListbox()
 			endif
 			if(stringmatch(ba.ctrlName,"SaveAggregateData"))
@@ -2177,7 +2242,7 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 			if(stringmatch(ba.ctrlName,"Display3DMFASummary"))
 				Wave/Z MassFractalAggregate = root:Packages:AggregateModeling:MassFractalAggregate
 				if(WaveExists(MassFractalAggregate))
-					IR3A_DisplayAggNotebook(MassFractalAggregate)
+					IR3A_DisplayAggNotebook(MassFractalAggregate,0)
 				endif
 				IR3A_Create3DAggListForListbox()
 			endif
@@ -2198,6 +2263,12 @@ Function IR3A_PanelButtonProc(ba) : ButtonControl
 				//Open www manual with the right page
 				IN2G_OpenWebManual("Irena/3DAggregate.html")
 			endif
+			if(StringMatch(ba.ctrlName, "CompareStoredResults" ))
+				IR3A_CompareStoredResults()
+			endif
+			if(StringMatch(ba.ctrlName, "DeleteStoredResults" ))
+				IR3A_DeleteStoredResults()
+			endif
 
 
 			break
@@ -2210,6 +2281,165 @@ End
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+static Function IR3A_DeleteStoredResults()
+
+	DoAlert /T="Did you thnk about this?" 1, "You will delete all stored Mass Fractal AGgregates, really want to do it?" 
+
+	if(V_FLag==1)
+		string OldDf=GetDataFolder(1)
+		KillWIndow/Z MassFractalAggregateView
+		KillWIndow/Z MassFractalAggDataPlot
+		KillWindow/Z AggStoredResultsOverview
+			
+		KillDataFolder /Z root:MassFractalAggregates:
+		IR3A_Create3DAggListForListbox()
+		setDataFOlder OldDf
+	endif
+end
+
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+	
+static Function IR3A_CompareStoredResults()
+
+	string OldDf=GetDataFolder(1)
+
+	DOWindow FractalAggregatePanel
+	if(!V_Flag)
+		return 0
+	endif 
+	wave/Z Stored3DAggSelections= root:Packages:AggregateModeling:Stored3DAggSelections
+	if(!WaveExists(Stored3DAggSelections))
+		abort
+	endif
+	///wave/T Stored3DAggregates= root:Packages:AggregateModeling:Stored3DAggregates
+	//wave/T Stored3DAggregatesPaths= root:Packages:AggregateModeling:Stored3DAggregatesPaths
+	variable NumOfFolders
+	string CurrentList, tempStr
+	if(DataFolderExists("root:MassFractalAggregates"))
+		setDataFolder root:MassFractalAggregates
+		CurrentList=stringByKey("FOLDERS",DataFolderDir(1),":")+","
+		NumOfFolders = ItemsInList(CurrentList,",")+1
+	else
+		CurrentList=""
+		NumOfFolders = 1
+	endif
+	
+	if(NumOfFolders>0)
+		redimension/N=(NumOfFolders) Stored3DAggSelections
+		Stored3DAggSelections = 0
+		setDataFolder root:Packages:AggregateModeling:
+		make/O/N=(NumOfFolders-1) IndexStoredResWave, dMinStoredResWave, cValStoredResWave, dfStoredResWave
+		make/O/N=(NumOfFolders-1) dMinTarget, cValTarget, dfTarget
+		Wave IndexStoredResWave
+		Wave dMinStoredResWave
+		Wave cValStoredResWave
+		Wave dfStoredResWave
+		setDataFolder root:MassFractalAggregates
+	else
+		return 0
+	endif	
+		
+	variable i
+	if(NumOfFolders>1)
+		For(i=0;i<NumOfFolders-1;i+=1)
+			tempStr = StringFromList(i, CurrentList, ",")
+			IndexStoredResWave[i] = i
+			cValStoredResWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"cval")
+			dMinStoredResWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"dMin")
+			dfStoredResWave[i] = IR3A_Return3DAggParamVal("root:MassFractalAggregates:"+tempStr,"df")
+		endfor	
+	endif
+	variable MinVal, MaxVal
+	//create plot of the three against the target values... 
+	NVAR dminTarg = root:Packages:AggregateModeling:BrFract_dmin
+	NVAR cTarg = root:Packages:AggregateModeling:BrFract_c
+	NVAR dfTarg = root:Packages:AggregateModeling:BrFract_df
+	dMinTarget = dminTarg
+	cValTarget = cTarg
+	dfTarget = dfTarg
+	KillWIndow/Z AggStoredResultsOverview
+	
+	Display/W=(695,66,1292,720)/K=1/N=AggStoredResultsOverview dMinStoredResWave vs IndexStoredResWave as "Overview of the Stored 3D Aggregates" 
+	AppendToGraph dMinTarget vs IndexStoredResWave
+	AppendToGraph/L=cAxis cValStoredResWave,cValTarget vs IndexStoredResWave
+	AppendToGraph/L=dfAxis dfStoredResWave,dfTarget vs IndexStoredResWave
+	ModifyGraph mode(dMinStoredResWave)=3,mode(cValStoredResWave)=3,mode(dfStoredResWave)=3
+	ModifyGraph marker(dMinStoredResWave)=19,marker(cValStoredResWave)=17,marker(dfStoredResWave)=26
+	ModifyGraph lStyle(dMinTarget)=3,lStyle(cValTarget)=3,lStyle(dfTarget)=3
+	ModifyGraph rgb(cValStoredResWave)=(1,16019,65535),rgb(cValTarget)=(1,16019,65535)
+	ModifyGraph rgb(dfStoredResWave)=(3,52428,1),rgb(dfTarget)=(3,52428,1)
+	ModifyGraph lblPosMode(cAxis)=3
+	ModifyGraph lblPos(left)=63,lblPos(cAxis)=64,lblPos(dfAxis)=66
+	ModifyGraph lblLatPos(left)=-8,lblLatPos(cAxis)=-6,lblLatPos(dfAxis)=-6
+	ModifyGraph freePos(cAxis)=0
+	ModifyGraph freePos(dfAxis)=0
+	ModifyGraph axisEnab(left)={0,0.31}
+	ModifyGraph axisEnab(cAxis)={0.35,0.64}
+	ModifyGraph axisEnab(dfAxis)={0.68,1}
+	ModifyGraph mirror=1
+	ModifyGraph tick(bottom)=2
+	ModifyGraph tick(left)=1
+	ModifyGraph tick(cAxis)=1
+	ModifyGraph tick(dfAxis)=1
+	
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"d\\Bmin"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Stored model index"
+	Label cAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"c value"
+	Label dfAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"df"
+	wavestats/Q dMinStoredResWave
+	MinVal=min(V_min,dminTarg)*0.95
+	MaxVal=max(V_max,dminTarg)*1.05
+	SetAxis left MinVal,MaxVal
+	//
+	wavestats/Q cValStoredResWave
+	MinVal=min(V_min,cTarg)*0.95
+	MaxVal=max(V_max,cTarg)*1.05
+	SetAxis cAxis MinVal,MaxVal
+	//
+	wavestats/Q dfStoredResWave
+	MinVal=min(V_min,dfTarg)*0.95
+	MaxVal=max(V_max,dfTarg)*1.05
+	SetAxis dfAxis MinVal,MaxVal
+
+	DrawLine 0,0.67,1,0.67
+	DrawLine 0,0.34,1,0.34
+	string LegendText="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(dMinStoredResWave) d\\Bmin\r\\s(dMinTarget) d\\Bmin\\M  target\r\\s(cValStoredResWave) c\r\\s(cValTarget) c target\r\\s(dfStoredResWave) d\\Bf\r\\s(dfTarget) d\\Bf\\M target"
+	Legend/C/N=LegendText/J/A=LT LegendText
+	setDataFOlder OldDf
+end	
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+static Function IR3A_Return3DAggParamVal(PathToFolder, ParName)
+	string PathToFOlder, ParName
+	string OldDf=GetDataFolder(1)
+	SetDataFolder PathToFolder
+	variable RetValue
+	if(StringMatch(ParName, "cval" ))
+		NVAR cval= cValue
+		RetValue = cval
+	elseif(StringMatch(ParName, "dMin"))
+		NVAR dMin=DminValue
+		RetValue = dMin
+	elseif(StringMatch(ParName, "df"))
+		NVAR df = dfValue
+		RetValue = df
+	else
+		RetValue = 0
+	endif
+	setDataFOlder OldDf
+	return RetValue
+end
+
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -2474,8 +2704,8 @@ Function IR3P_DIsplay1DDataFile()
 	Wave QWave
 	Display/K=1/W=(100,50,600,550) IntWave vs QWave as "POV 1D Data display"
 	DoWindow/C POV1DGraph
-	Label left "Intensity"
-	Label bottom "Qvector"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Qvector"
 	ModifyGraph log=1
 end
 

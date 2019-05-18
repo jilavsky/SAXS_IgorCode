@@ -688,9 +688,9 @@ Proc  IR2Pr_PdfInputGraph()
 	Checkbox LogDistVolumeAxis, pos={250,20}, title="Log Particle Volume axis?", proc = IR2Pr_GraphCheckboxes, help={"Check to have logarithmic particle voilume distribution (right) axis"}
 	Checkbox LogDistVolumeAxis, variable=root:Packages:Irena_PDDF:GraphLogRightAxis
 	ModifyGraph log=1
-	Label left "Intensity"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph lblPos(left)=50
-	Label bottom "Q [A\\S-1\\M]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	ShowInfo
 	variable testQRS
 	testQRS = root:Packages:Irena_PDDF:UseQRSdata
@@ -747,9 +747,9 @@ Function IR2Pr_AppendIntOriginal()		//appends (and removes) and configures in gr
 	RemoveFromGraph/Z IntensityOriginal
 	AppendToGraph IntensityOriginal vs Q_vecOriginal
 	
-	Label left "Intensity"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
 	ModifyGraph lblPos(left)=50
-	Label bottom "Q [A\\S-1\\M]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 
 	ModifyGraph mode(IntensityOriginal)=3
 	ModifyGraph msize(IntensityOriginal)=2
@@ -1887,8 +1887,8 @@ end
 			DoWindow/C IR2PR_GammaFunction
 			ModifyGraph mode=3
 			ModifyGraph mirror=1
-			Label left "Gamma(r) = pdf(r)/(4*pi*r^2)"
-			Label bottom "Distance [A]"
+			Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Gamma(r) = pdf(r)/(4*pi*r^2)"
+			Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Distance [A]"
 			SetAxis left 0,*
 		endif	
 	endif

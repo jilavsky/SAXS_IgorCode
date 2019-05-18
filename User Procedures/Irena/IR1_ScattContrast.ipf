@@ -1872,8 +1872,8 @@ Function IR1K_DeltaRhoSquaredGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(DeltaRhoSq) "+Anom_Compound1+" vs "+Anom_Compound2
-	Label left "Delta Rho squared [10\\S20\\M cm\\S4\\M]"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Delta Rho squared [10\\S20\\M cm\\S4\\M]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 
 //**********************************************************************************************************
@@ -1897,8 +1897,8 @@ Function IR1K_FPrimeGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(Fprime_1) "+Anom_Compound1+"\r\\s(Fprime_2) "+Anom_Compound2
-	Label left "f '  [ e- ]"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"f '  [ e- ]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1922,8 +1922,8 @@ Function IR1K_F0FPrimeGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(F0Fprime_1) "+Anom_Compound1+"\r\\s(F0Fprime_2) "+Anom_Compound2
-	Label left "f\B0\M + f '  [ e- ]"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"f\B0\M + f '  [ e- ]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 
 
@@ -1948,8 +1948,8 @@ Function IR1K_FDoublePrimeGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(FDoublePrime_1) "+Anom_Compound1+"\r\\s(FDoublePrime_2) "+Anom_Compound2
-	Label left "f ' '  [ e- ]"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"f ' '  [ e- ]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 
 //**********************************************************************************************************
@@ -1973,8 +1973,8 @@ Function IR1K_MuOverRhoGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(MuOverRho_1) "+Anom_Compound1+"\r\\s(MuOverRho_2) "+Anom_Compound2
-	Label left "Mu/Rho [cm\\S2\\M/g]"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Mu/Rho [cm\\S2\\M/g]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 
 //**********************************************************************************************************
@@ -1998,8 +1998,8 @@ Function IR1K_OneOverMuGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(OneOverMu_1) "+Anom_Compound1+"\r\\s(OneOverMu_2) "+Anom_Compound2
-	Label left "1/mu [cm]"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"1/mu [cm]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 
 //**********************************************************************************************************
@@ -2023,8 +2023,8 @@ Function IR1K_eToMinusMuTGraph() : Graph
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
 	Legend/C/N=text0/F=0/A=RB "\\s(eToMinusMuT_1) "+Anom_Compound1+"\r\\s(eToMinusMuT_2) "+Anom_Compound2
-	Label left "exp(-mu*T)"
-	Label bottom "Energy [keV]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"exp(-mu*T)"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Energy [keV]"
 End
 
 //**********************************************************************************************************

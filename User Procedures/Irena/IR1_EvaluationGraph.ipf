@@ -256,7 +256,7 @@ Function IR1G_CalculateStatistics()
 			AppendToGraph/W=IR1G_OneSampleEvaluationGraph /L=CumulVolumeAxis CumulativeSizeDist vs CumulativeDistDiameters
 		endif
 		ModifyGraph freePos(CumulVolumeAxis)=-571
-		Label CumulVolumeAxis "Cumulative size dist [fraction]"
+		Label CumulVolumeAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Cumulative size dist [fraction]"
 		ModifyGraph rgb(CumulativeSizeDist)=(0,0,0)
 		ModifyGraph lstyle(CumulativeSizeDist)=3,lsize(CumulativeSizeDist)=2
 
@@ -265,7 +265,7 @@ Function IR1G_CalculateStatistics()
 			AppendToGraph/W=IR1G_OneSampleEvaluationGraph /L=SurfaceAreaAxis CumulativeSfcArea vs CumulativeDistDiameters
 		endif
 		ModifyGraph freePos(SurfaceAreaAxis)=-110
-		Label SurfaceAreaAxis "Cumulative surface area [cm\S2\M/cm\S3\M]"
+		Label SurfaceAreaAxis "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Cumulative surface area [cm\S2\M/cm\S3\M]"
 		ModifyGraph rgb(CumulativeSfcArea)=(16385,16388,65535)
 		ModifyGraph lstyle(CumulativeSfcArea)=6,lsize(CumulativeSfcArea)=2
 
@@ -313,8 +313,8 @@ Function IR1G_MIPDataGraph()
 	string WavesFrom=GetWavesDataFolder(CsrWaveRef(A), 0 )
 	Display /K=1/W=(35,84,380,291)/N=MIPDataGraph MIPVolume vs MIPPressure as "MIP curve for "+WavesFrom
 	ModifyGraph log(bottom)=1
-	Label left "Intruded volume [fraction]"
-	Label bottom "Pressure [Psi]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intruded volume [fraction]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Pressure [Psi]"
 	ModifyGraph mirror=1
 	ModifyGraph mode=0,lsize=2,rgb=(0,0,0)
 	string WaveNameWithCsr=CsrWave(A,"IR1G_OneSampleEvaluationGraph")
@@ -322,7 +322,7 @@ Function IR1G_MIPDataGraph()
 	Wave Xwv=CsrXWaveRef(A,"IR1G_OneSampleEvaluationGraph")
 	startD=Xwv[pcsr(A,"IR1G_OneSampleEvaluationGraph")]
 	endD=Xwv[pcsr(B,"IR1G_OneSampleEvaluationGraph")]
-	Legend/C/N=text1/J/F=0/A=LT "\\s(MIPVolume) MIP Volume for "+WaveNameWithCsr +"  for "+num2str(startD)+" < D [A] < " +num2str(endD)
+	Legend/C/N=text1/J/F=0/A=LT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(MIPVolume) MIP Volume for "+WaveNameWithCsr +"  for "+num2str(startD)+" < D [A] < " +num2str(endD)
 	setDataFolder OldDf
 
 end
@@ -1188,9 +1188,9 @@ Function IR1G_AddDataToGraph()
 			ModifyGraph/Z/W=IR1G_OneSampleEvaluationGraph lblMargin(bottom)=6
 			ModifyGraph/Z/W=IR1G_OneSampleEvaluationGraph axOffset(bottom)=0.388889
 			ModifyGraph/Z/W=IR1G_OneSampleEvaluationGraph lblLatPos(bottom)=9
-			Label/Z/W=IR1G_OneSampleEvaluationGraph bottom "Scatterers size (radius or diameter) [A]"
-			Label/Z/W=IR1G_OneSampleEvaluationGraph LEFT "Volume distribution [cm\\S3\\M/cm\\S3\\MA\\S1\\M]"
-			Label/Z/W=IR1G_OneSampleEvaluationGraph right "Number distribution [1/cm\\S3\\MA\\S1\\M]"
+			Label/Z/W=IR1G_OneSampleEvaluationGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Scatterers size (radius or diameter) [A]"
+			Label/Z/W=IR1G_OneSampleEvaluationGraph LEFT "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution [cm\\S3\\M/cm\\S3\\MA\\S1\\M]"
+			Label/Z/W=IR1G_OneSampleEvaluationGraph right "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Number distribution [1/cm\\S3\\MA\\S1\\M]"
 		
 	endif
 	NVAR logXaxis = root:Packages:SASDataEvaluation:logXAxis
@@ -1296,7 +1296,7 @@ Function IR1G_ResetGraphAfterChanges()
 	ModifyGraph lblMargin(bottom)=6
 	ModifyGraph axOffset(bottom)=0.388889
 	ModifyGraph lblLatPos(bottom)=9
-	string BottomLabel="Scatterers "
+	string BottomLabel="\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Scatterers "
 	if(DisplayedRad)
 		BottomLabel+="radii "
 	endif
@@ -1308,9 +1308,9 @@ Function IR1G_ResetGraphAfterChanges()
 	endif
 	BottomLabel+="[A]"
 	Label/Z bottom BottomLabel
-	Label/Z left "Volume distribution [cm\\S3\\M/cm\\S3\\MA\\S1\\M]"
-	Label/Z right "Number distribution [1/cm\\S3\\MA\\S1\\M]"
-	TextBox/C/N=SampleName/F=0/A=RT "\\F'Times New Roman'\\Z12"+LegendStuff
+	Label/Z left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Volume distribution [cm\\S3\\M/cm\\S3\\MA\\S1\\M]"
+	Label/Z right "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Number distribution [1/cm\\S3\\MA\\S1\\M]"
+	TextBox/C/N=SampleName/F=0/A=RT "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+LegendStuff
 	ShowInfo
 
 //	Legend/C/N=text0/S=3/A=RT

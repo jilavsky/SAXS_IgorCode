@@ -800,7 +800,7 @@ Function IR1B_DoDesmearing()
 				if(WaveExists(ColorWave))
 					ModifyGraph zColor(DesmearedIntWave)={ColorWave,0,2,Rainbow}
 				endif
-				Legend/N=text0/J/F=0/A=LB/B=1 "\\s(SmoothIntWave) Smeared data\r\\s(DesmearedIntWave) Current desmeared fit"
+				Legend/N=text0/J/F=0/A=LB/B=1 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(SmoothIntWave) Smeared data\r\\s(DesmearedIntWave) Current desmeared fit"
 				AppendText "\\s(NormalizedError) Standardized residual\r"
 				AppendText "User sample name:  "+UserSampleName
 				AppendText "Used extrapolation function:  "+BackgroundFunction
@@ -874,7 +874,6 @@ Function IR1B_CheckTheBackgroundExtns()
 	ModifyGraph zColor(ExtrapIntwave)={ColorWave,0,2,Rainbow}
 	showinfo												//shows info
 	//ShowTools/A											//show tools
-	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
 	Button KillThisWindow pos={10,10}, size={100,25},  title="Kill window", proc=IN2G_KillGraphsTablesEnd
 	Button ResetWindow pos={10,40}, size={100,25},  title="Reset window", proc=IN2G_ResetGraph
 	SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName
@@ -883,8 +882,8 @@ Function IR1B_CheckTheBackgroundExtns()
 	TextBox/W=CheckTheBackgroundExtns/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
 	ModifyGraph mode=3
 	ModifyGraph log=1
-	Label left "Intensity"
-	Label bottom "Q"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q"
 	ShowTools
 	ResumeUpdate
 	ModifyGraph width=0, height=0
@@ -1455,7 +1454,6 @@ Function IR1B_TrimTheData()							//this function trims the data before desmeari
 	ShowTools/A											//show tools
 	cursor/P A, OrgIntwave, (BinarySearch(OrgQwave, 0.00008)+1)
 	cursor/P B, OrgIntwave, (numpnts(OrgIntwave)-1)
-	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
 	Button KillThisWindow pos={10,10}, size={100,25},  title="Kill window", proc=IN2G_KillGraphsTablesEnd
 	Button ResetWindow pos={10,40}, size={100,25},  title="Reset window", proc=IN2G_ResetGraph
 	SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName
@@ -1464,8 +1462,8 @@ Function IR1B_TrimTheData()							//this function trims the data before desmeari
 	TextBox/W=TrimGraph/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
 	ModifyGraph mode=3
 	ModifyGraph log=1
-	Label left "Intensity"
-	Label bottom "Q"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q"
 	ResumeUpdate
 	ModifyGraph width=0, height=0
 	IN2G_AutoAlignPanelAndGraph()
@@ -1514,7 +1512,6 @@ Function IR1B_SmoothDSMData()							//this smooths the data before desmearing.
 	ShowTools/A											//show tools
 	cursor/P A, DesmearedIntWave, (BinarySearch(DesmearedQWave, 0.00015)+1)
 	cursor/P B, DesmearedIntWave, (numpnts(DesmearedIntWave)-1)
-	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
 	Button KillThisWindow pos={10,10}, size={100,25},  title="Kill window", proc=IN2G_KillGraphsTablesEnd
 	Button ResetWindow pos={10,40}, size={100,25},  title="Reset window", proc=IN2G_ResetGraph
 	SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName
@@ -1523,8 +1520,8 @@ Function IR1B_SmoothDSMData()							//this smooths the data before desmearing.
 	TextBox/W=SmoothGraphDSM/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
 	ModifyGraph mode=3
 	ModifyGraph log=1
-	Label left "Intensity"
-	Label bottom "Q"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q"
 	ModifyGraph mode(SmoothDsmIntWave)=0,rgb(SmoothDsmIntWave)=(0,0,0)
 	ResumeUpdate
 	ModifyGraph width=0, height=0
@@ -1573,7 +1570,6 @@ Function IR1B_SmoothSMRData()							//this smooths the data before desmearing.
 	ModifyGraph mode=4,margin(top)=100, mirror=1, minor=1
 	showinfo												//shows info
 	ShowTools/A											//show tools
-	ModifyGraph fSize=12,font="Times New Roman"				//modifies size and font of labels
 	Button KillThisWindow pos={10,10}, size={100,25},  title="Kill window", proc=IN2G_KillGraphsTablesEnd
 	Button ResetWindow pos={10,40}, size={100,25},  title="Reset window", proc=IN2G_ResetGraph
 	SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName
@@ -1582,8 +1578,8 @@ Function IR1B_SmoothSMRData()							//this smooths the data before desmearing.
 	TextBox/W=SmoothGraph/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
 	ModifyGraph mode=3
 	ModifyGraph log=1
-	Label left "Intensity"
-	Label bottom "Q"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q"
 	ModifyGraph mode(SmoothIntwave)=0,rgb(SmoothIntwave)=(0,0,0)
 	ResumeUpdate
 	ModifyGraph width=0, height=0

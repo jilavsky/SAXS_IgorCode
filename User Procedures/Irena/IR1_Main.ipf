@@ -1334,8 +1334,8 @@ Proc  IR1_IQ4_Q_PlotLSQF()
 	ModifyGraph msize(OriginalIntQ4)=1
 	ModifyGraph log=1
 	ModifyGraph mirror=1
-	Label left "Intensity * Q^4"
-	Label bottom "Q [A\\S-1\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity * Q^4"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	ErrorBars/Y=1 OriginalIntQ4 Y,wave=(OriginalErrQ4,OriginalErrQ4)
 	TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	
 	TextBox/C/N=SampleNameTag/F=0/A=LB/E=2/X=2.00/Y=1.00 "\\Z07"+DataFolderName+IntensityWaveName	
@@ -1393,9 +1393,9 @@ Proc  IR1_LogLogPlotLSQF()
 	ModifyGraph log=1
 	ModifyGraph mirror=1
 	ShowInfo
-	Label left "Intensity [cm\\S-1\\M]"
-	Label bottom "Q [A\\S-1\\M]"
-	Legend/W=IR1_LogLogPlotLSQF/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\s(OriginalIntensity) Experimental intensity"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
+	Legend/W=IR1_LogLogPlotLSQF/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	ErrorBars/Y=1 OriginalIntensity Y,wave=(OriginalError,OriginalError)
 	//and now some controls
 	TextBox/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()	

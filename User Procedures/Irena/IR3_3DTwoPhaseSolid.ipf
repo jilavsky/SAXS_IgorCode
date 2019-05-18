@@ -1631,7 +1631,7 @@ static Function IR3T_Display1DTempData()
 	else
 		Display/K=1 DebyeAutoCorFnct vs DebyeAutoCorFnctRadii as "Debye Autocorrelation Function"
 		DoWIndow/C DebyeAutocorFnctGraph
-		Label/W=DebyeAutocorFnctGraph bottom "Radius [Angstroms]"	
+		Label/W=DebyeAutocorFnctGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Radius [Angstroms]"	
 	endif
 	Wave gR
 	Wave Radii
@@ -1641,7 +1641,7 @@ static Function IR3T_Display1DTempData()
 	else
 		Display/K=1 gR vs Radii as "G(r) Function"
 		DoWIndow/C GrFnctGraph
-		Label/W=GrFnctGraph bottom "Radius [Angstroms]"	
+		Label/W=GrFnctGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Radius [Angstroms]"	
 	endif
 	Wave Kvalues
 	Wave SpectralFk
@@ -1651,7 +1651,7 @@ static Function IR3T_Display1DTempData()
 	else
 		Display/K=1 SpectralFk vs Kvalues as "F(k) Function"
 		DoWIndow/C FkFnctGraph
-		Label/W=FkFnctGraph bottom "K vector [1/Angstroms]"	
+		Label/W=FkFnctGraph bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"K vector [1/Angstroms]"	
 	endif
 	
 

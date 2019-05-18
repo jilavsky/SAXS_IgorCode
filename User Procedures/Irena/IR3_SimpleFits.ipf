@@ -760,8 +760,8 @@ Function IR3L_AppendDataToGraphModel()
 	if(!V_flag)
 		AppendToGraph /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
 		ModifyGraph /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
-		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay left "Intensity"
-		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay bottom "Q [A\\S-1\\M]"
+		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 		ErrorBars /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
 	endif
 //	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
@@ -781,8 +781,8 @@ Function IR3L_AppendDataToGraphModel()
 	if(!V_flag)
 		AppendToGraph /W=IR3L_SimpleFitsPanel#ResidualDataDisplay  ModelNormalizedResidual  vs ModelNormResXWave
 		ModifyGraph /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
-		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay left "Normalized res."
-		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay bottom "Q [A\\S-1\\M]"
+		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Normalized res."
+		Label /W=IR3L_SimpleFitsPanel#LinearizedDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	endif
 
 

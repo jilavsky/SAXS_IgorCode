@@ -995,9 +995,9 @@ static Function IR1D_AppendResultToGraph()
 			AppendToGraph/W=IR1D_DataManipulationGraph/T ResultsInt vs ResultsQ
 			ModifyGraph/W=IR1D_DataManipulationGraph lsize(ResultsInt)=2,rgb(ResultsInt)=(0,0,0)
 			if(Data1ConvertToD)
-				Label top "d-spacing [A]"
+				Label top "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"d-spacing [A]"
 			elseif(Data1ConvertToTheta)
-				Label top "Two-theta [degrees]"
+				Label top "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Two-theta [degrees]"
 			endif
 		else
 			AppendToGraph/W=IR1D_DataManipulationGraph ResultsInt vs ResultsQ
@@ -5342,8 +5342,8 @@ Function IR3M_FormatManIIGraph()
 	NVAR GraphLogX=root:Packages:DataManipulationII:GraphLogX
 	NVAR GraphLogY=root:Packages:DataManipulationII:GraphLogY
 
-	Label left "Intensity [cm\\S-1\\M]"
-	Label bottom "Q [A\\S-1\\M]"
+	Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity [cm\\S-1\\M]"
+	Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 
 	DoWIndow DataManipulationIIGraph
 	if(!V_Flag)

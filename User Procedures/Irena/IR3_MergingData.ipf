@@ -1293,26 +1293,26 @@ Function IR3D_AppendDataToGraph(WhichData)
 		case 1:		// execute if case matches expression
 			SVAR DataFolderName1=root:Packages:Irena:SASDataMerging:DataFolderName1
 			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
+			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalData1IntWave) "+Shortname1
 			break
 		case 2:
 			SVAR DataFolderName2=root:Packages:Irena:SASDataMerging:DataFolderName2
 			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
+			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalData2IntWave) " + Shortname2		
 			break
 		case 3:
 			SVAR DataFolderName1=root:Packages:Irena:SASDataMerging:DataFolderName1
 			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
 			SVAR DataFolderName2=root:Packages:Irena:SASDataMerging:DataFolderName2
 			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
+			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
 			break
 		case 7:
 			SVAR DataFolderName1=root:Packages:Irena:SASDataMerging:DataFolderName1
 			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
 			SVAR DataFolderName2=root:Packages:Irena:SASDataMerging:DataFolderName2
 			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
+			Legend/W=IR3D_DataMergePanel#DataDisplay /C/N=text0/J/A=LB "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
 			break
 	endswitch
 	

@@ -2106,7 +2106,7 @@ Function IR1V_AppendModelToMeasuredData()
 	Label/W=IR1V_LogLogPlotV bottom "Q [A\\S-1\\M]"
 	ErrorBars/Y=1/W=IR1V_LogLogPlotV OriginalIntensity Y,wave=(root:Packages:FractalsModel:OriginalError,root:Packages:FractalsModel:OriginalError)
 	Legend/W=IR1V_LogLogPlotV/N=text0/K
-	Legend/W=IR1V_LogLogPlotV/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\s(OriginalIntensity) Experimental intensity"
+	Legend/W=IR1V_LogLogPlotV/N=text0/J/F=0/A=MC/X=32.03/Y=38.79 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntensity) Experimental intensity"
 	AppendText/W=IR1V_LogLogPlotV "\\s(FractFitIntensity) Fractal model calculated Intensity"
 	if (WaveExists(NormalizedError))
 		AppendText/W=IR1V_LogLogPlotV "\\s(NormalizedError) Standardized residual"
@@ -2126,7 +2126,7 @@ Function IR1V_AppendModelToMeasuredData()
 	Label/W=IR1V_IQ4_Q_PlotV bottom "Q [A\\S-1\\M]"
 	ErrorBars/Y=1/W=IR1V_IQ4_Q_PlotV OriginalIntQ4 Y,wave=(root:Packages:FractalsModel:OriginalErrQ4,root:Packages:FractalsModel:OriginalErrQ4)
 	Legend/W=IR1V_IQ4_Q_PlotV/N=text0/K
-	Legend/W=IR1V_IQ4_Q_PlotV/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\s(OriginalIntQ4) Experimental intensity * Q^4"
+	Legend/W=IR1V_IQ4_Q_PlotV/N=text0/J/F=0/A=MC/X=-29.74/Y=37.76 "\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("LegendSize")+"\\s(OriginalIntQ4) Experimental intensity * Q^4"
 	AppendText/W=IR1V_IQ4_Q_PlotV "\\s(FractIQ4) Fractal model Calculated intensity * Q^4"
 	ModifyGraph/W=IR1V_IQ4_Q_PlotV rgb(OriginalIntq4)=(0,0,0)
 	setDataFolder oldDF
