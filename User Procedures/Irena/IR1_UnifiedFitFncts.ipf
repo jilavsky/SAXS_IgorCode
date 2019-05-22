@@ -1634,7 +1634,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 				//SelectedQlevel=popStr
 				if(SelectedQlevel<SelectedBlevel  && numtype(SelectedBlevel)==0)
 					Print "End level is low-q level and must be higher number than Start"
-					abort
+					abort "End level is low-q level and must be higher number than Start"
 				endif
 				//IR2U_SetControlsInPanel()
 				IR2U_RecalculateAppropriateVals()
@@ -1644,7 +1644,7 @@ Function IR2U_PopMenuProc(pa) : PopupMenuControl
 				//SelectedBlevel=popStr
 				if(SelectedQlevel<SelectedBlevel && numtype(SelectedQlevel)==0)
 					Print "Start level is high-q level and must be smaller number than End"
-					abort
+					Abort "Start level is high-q level and must be smaller number than End"
 				endif
 				//IR2U_SetControlsInPanel()
 				IR2U_RecalculateAppropriateVals()
@@ -2836,6 +2836,10 @@ Function IR2U_ButtonProc(ba) : ButtonControl
 				//here code to print results to history area
 				NVAR  printlogbook=root:Packages:Irena_AnalUnifFit:printlogbook
 				If (printlogbook==1)
+					DoWIndow PorodAnalysisResults
+					if(V_Flag)
+						DoWIndow/F PorodAnalysisResults
+					endif
 					IR2U_SaveResultsperUsrReq("Logbook")
 				else
 					IR2U_SaveResultsperUsrReq("History")

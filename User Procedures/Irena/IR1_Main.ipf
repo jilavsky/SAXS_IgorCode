@@ -2810,7 +2810,7 @@ Function IR1_CreatePorodLogbook()//***DWS
 	endif
 	Silent 1
 	if (strsearch(WinList("*",";","WIN:16"),nb,0)!=-1) 		///Logbook exists
-		DoWindow/B $nb
+		DoWindow/HIDE=1 $nb
 	else
 
 

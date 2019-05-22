@@ -1047,11 +1047,20 @@ Function IR1I_ImportOneFile(selectedFile)
 	NVAR SkipNumberOfLines=root:Packages:ImportData:SkipNumberOfLines
 	NVAR SkipLines=root:Packages:ImportData:SkipLines	
 		IR1I_KillAutoWaves()
-//	LoadWave/Q/A/G/P=ImportDataPath  selectedfile
+		//Variable err
 	if (SkipLines)
 		LoadWave/Q/A/D/G/L={0, SkipNumberOfLines, 0, 0, 0}/P=ImportDataPath  selectedfile
 	else
 		LoadWave/Q/A/D/G/P=ImportDataPath  selectedfile
+		//; err = GetRTError(0)	
+		//if (err != 0)
+		//	String message = GetErrMessage(err)
+		//	string usermessage
+		//	sprintf usermessage, "Error loading data: %s\r", message
+		//	DoAlert /T="Error loading" 0, usermessage
+		//	err = GetRTError(1)			// Clear error state
+		//	abort 
+		//endif
 		SkipNumberOfLines = IR1I_CountHeaderLines("ImportDataPath", selectedfile)
 	endif
 
@@ -1388,7 +1397,8 @@ Function IR1I_TestPlotData()
 	selectedfile = WaveOfFiles[firstSelectedPoint]
 
 	NewDataFOlder/O/S root:Packages:IrenaImportTemp
-	KillWaves/Z TempIntensity, TempQvector, TempError, tempdQ
+	KillWIndow/Z FilePlotPreview
+	KillWaves/Z TempIntensity, TempQvector, TempError, TempQError
 	IR1I_KillAutoWaves()
 	//LoadWave/Q/A/G/P=ImportDataPath  selectedfile
 	IR1I_ImportOneFile(selectedFile)
@@ -1417,7 +1427,6 @@ Function IR1I_TestPlotData()
 	Wave/Z TempQvector
 	Wave/Z TempError
 	Wave/Z TempQError
-	KillWIndow/Z FilePlotPreview
 	if(WaveExists(TempIntensity) && WaveExists(TempQvector))
 		Display /K=1/N=FilePlotPreview TempIntensity vs TempQvector as "Preview of the data"
 		MoveWindow /W=FilePlotPreview 450, 5, 1000, 400	
@@ -1427,7 +1436,7 @@ Function IR1I_TestPlotData()
 			if(!WaveExists(TempQError))
 				ErrorBars TempIntensity Y,wave=(TempError,TempError)
 			else
-				ErrorBars TempIntensity XY,wave=(TempError,TempError),wave=(TempError,TempError)
+				ErrorBars TempIntensity XY,wave=(TempQError,TempQError),wave=(TempError,TempError)
 			endif
 		endif
 		DoWindow IR1I_ImportData
