@@ -18,12 +18,12 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>December2018</current_release>
-		<current_beta_release>April2019</current_beta_release>
+		<current_beta_release>May2019</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="April2019" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/April2019.zip</SourceFileAddress>
+		<release name="May2019" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2019.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
 				<version>2.69</version>
@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release April 2019, adds new 3D models.</VersionComment>
+			<VersionComment>Beta release May 2019, adds new 3D models.</VersionComment>
 		</release>
 		<release name="December2018">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/December2018.zip</SourceFileAddress>
