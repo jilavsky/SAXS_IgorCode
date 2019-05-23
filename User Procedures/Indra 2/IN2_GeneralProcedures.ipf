@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.18
+#pragma version = 2.19
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -36,6 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.19 Added IN2G_CleanStringForgrep(stringIn) which is used to comment out special characters used in grep, so they can be used as part of names... 
 //2.18 modified IN2G_PanelResizePanelSize(s) to move panels in the view if they are due to change of resolution left outside of the view. This may not work well on dual monitor systems, though... 
 //2.17 added create ColorScale for USAXS graphs. 
 //2.16 Fix IN2G_PanelResizePanelSize to return 0 when handled, seems needed to prevent GUI problems. 
@@ -171,6 +172,9 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //IN2G_CleanupFolderOfWaves
 //	Deletes waves with names starting on fit_ and W_, which are used by Igor fitting routines
 //	
+//IN2G_CleanStringForgrep(stringIn)	
+// Comments out special grep characters so they can be used in names. 
+//
 //IN2G_ConvertDataDirToList(str)
 //	Converts string returned by FolderDirectory function into list of folders. Meant for directories of specXX types...
 //	
@@ -498,6 +502,27 @@ Function/T IN2G_CreateUserName(NameIn,I7MaxShortLength, MakeUnique, FolderWaveSt
 	return resultStr
 end
 
+//************************************************************************************************
+//************************************************************************************************
+
+Function/T IN2G_CleanStringForgrep(stringIn)	
+	string stringIn
+	
+	string stringOut="", SingleChar
+	string EscapeCharacters="[].^(){},"
+	variable i
+	for(i=0;i<strlen(stringIn);i+=1)
+		SingleChar = stringIn[i]
+		if(StringMatch(EscapeCharacters, "*"+SingleChar+"*" ))
+			stringOut+="\\"+SingleChar
+		else
+			stringOut+=SingleChar
+		endif
+		
+	endfor
+	
+	return stringOut
+end
 //************************************************************************************************
 //************************************************************************************************
 Function/T IN2G_ReturnUserSampleName(FolderPathToData)

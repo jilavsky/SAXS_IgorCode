@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.51
+#pragma version = 1.52
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.52 fixes for special characters " [ ] , . " iused in folder and wave names. Broke grep, fixed by escaping before use. 
 //1.51 fixes for generic case of data (all checkboxes unchecked). Should work now. 
 //1.50 fixes case when stale FOlder string was returned when user chanegd too fast from USAXS to QRSS type. Fixed case when R_Int was showing as QRS data. 
 //1.49 fixed IR2P_CheckForRightQRSTripletWvs to work also for QRS names, not only qrs... 
@@ -1366,11 +1367,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 					matchX=0
 					matchE=0
 					tempStr = stringFromList(j,allRwaves)[1,inf]
-					//print stringmatch(";"+AllWaves, ";*q"+tempStr+";*" )
-					//print stringmatch(";"+AllWaves, ";*az"+tempStr+";*" )
-					//print stringmatch(";"+AllWaves, ";*d"+tempStr+";*" )
-					//print stringmatch(";"+AllWaves, ";*t"+tempStr+";*" )
-					//print stringmatch(";"+AllWaves, ";*m"+tempStr+";*" )
+					tempStr = IN2G_CleanStringForgrep(tempStr)
 					//ShortWaveList = GrepList(AllWaves, "q"+tempStr )+GrepList(AllWaves, "az"+tempStr )+GrepList(AllWaves, "d"+tempStr )+GrepList(AllWaves, "t"+tempStr )+GrepList(AllWaves, "m"+tempStr )
 					ShortWaveList = GrepList(AllWaves, "(?i)[qzdtm]"+tempStr) //not sure if this really works for az, needs to be tested. 
 					if(strlen(ShortWaveList)>0)

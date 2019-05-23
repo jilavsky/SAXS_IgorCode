@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.41
+#pragma version=2.40
 #include <HDF5 Browser>
 Constant IR1IversionNumber = 2.37
 Constant IR1IversionNumber2 = 2.36
@@ -14,7 +14,6 @@ Constant IR1TrimNameLength = 28
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.41 added "[" and "]" as bad characters not allowed in the names. Seen used by users, broke the QRS namming system functionality. Also, added "?", just in case. 
 //2.40 minor fixes for importing Slit smeared data. 
 //2.39 made long names capable for Igor 8 when user chooses. 
 //2.38 Modified Screen Size check to match the needs
@@ -1029,7 +1028,7 @@ Function/S IR1I_RemoveBadCharacters(StringName)
 	
 	//here we can clean up what Igor allows but would be major problem with my code, such as ( or ) from names
 	make/Free/T/N=0 ListOfBadChars
-	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@","*","[","]","?"}
+	ListOfBadChars = {"(", ")", "{","}","%","&","$","#","@","*"}
 	variable i
 	For (i=0;i<numpnts(ListOfBadChars);i+=1)
 		StringName = ReplaceString(ListOfBadChars[i], StringName, "_" )
