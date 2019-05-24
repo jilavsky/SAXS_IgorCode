@@ -1881,7 +1881,7 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 			endfor
 		endif
 	elseif(UseQRSStructure) 
-		tempStringX=IR2P_RemoveDuplicateStrfLst(IR2P_ListOfWavesOfType("q*",tempresult)+IR2P_ListOfWavesOfType("*q",tempresult)+IR2P_ListOfWavesOfType("t*",tempresult)+IR2P_ListOfWavesOfType("m*",tempresult)+IR2P_ListOfWavesOfType("d*",tempresult)+IR2P_ListOfWavesOfType("a*",tempresult))
+		tempStringX=IR2P_RemoveDuplicateStrfLst(IR2P_ListOfWavesOfType("q*",tempresult)+IR2P_ListOfWavesOfType("*q",tempresult)+IR2P_ListOfWavesOfType("t_*",tempresult)+IR2P_ListOfWavesOfType("m_*",tempresult)+IR2P_ListOfWavesOfType("d_*",tempresult)+IR2P_ListOfWavesOfType("a*",tempresult))
 		tempStringY=IR2P_RemoveDuplicateStrfLst(IR2P_ListOfWavesOfType("r*",tempresult)+IR2P_ListOfWavesOfType("*i",tempresult))
 		tempStringE=IR2P_RemoveDuplicateStrfLst(IR2P_ListOfWavesOfType("s*",tempresult)+IR2P_ListOfWavesOfType("*s",tempresult))
 		
@@ -1898,7 +1898,7 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 				if(StringMatch(tmpstr2[strlen(tmpstr2)-2,inf], "_i"))
 					ts=tmpstr2[0,strlen(tmpstr2)-2]
 					tx=tempStringX
-					if ((stringMatch(tx,ts+"q;*")) && (!RequireErrorWvs || stringMatch(";"+tempStringE,ts+"s;*")))
+					if ((stringMatch(tx,ts+"q;*") || stringMatch(tx,"*;"+ts+"q;*")) && (!RequireErrorWvs || stringMatch(";"+tempStringE,ts+"s;*")||stringMatch(tempStringE,ts+"s;*")))
 						if(cmpstr(MatchMeTo,"*")==0 || cmpstr(tmpstr2,MatchMeTo[0,strlen(MatchMeTo)-2]+"i")==0)
 							result+=StringFromList(j,tempStringY)+";"
 						endif

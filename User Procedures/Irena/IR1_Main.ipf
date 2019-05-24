@@ -19,6 +19,7 @@ constant CurrentIrenaVersionNumber = 2.69
 //			added 3DModels, 4D aggregate and Two Phase ssytems. 
 //		 	POV/PDB import and fixes for 3D Models
 //			Added Anisotropy analsysis (Hermans orienational parameter)
+//			Create QRS folder structure should now handle also QIS data. 
 //2.68   Beta version. New 64-bit xops for OSX. 
 //2.67 	heavily modified Size Distribution (added power law background). First official Igor 8 release. 
 //			Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
@@ -2281,7 +2282,7 @@ Function	IR1F_MoveData(ListOfDataAvailable, FolderWithData,NewFldrPath )
 			NewDataFolder /O/S $(StringFromList(i, NewFldrPath ,":"))
 		endif
 	endfor
-	
+	//QRS data
 	For(i=0;i<ItemsInList(ListOfDataAvailable);i+=1)
 		setDataFolder FolderWithData
 		RWvname = StringFromList(i, ListOfDataAvailable)
@@ -2329,9 +2330,57 @@ Function	IR1F_MoveData(ListOfDataAvailable, FolderWithData,NewFldrPath )
 			endif
 			//KillWaves/Z RWave, QWave, SWave
 		endif
-
 	endfor
-	
+	//QIS data
+	For(i=0;i<ItemsInList(ListOfDataAvailable);i+=1)
+		setDataFolder FolderWithData
+		RWvname = StringFromList(i, ListOfDataAvailable)
+		QWvName = RWvname[0,strlen(RWvname)-2]+"Q"
+		SWvName = RWvname[0,strlen(RWvname)-2]+"S"
+		SaFldrName = RWvname[0,strlen(RWvname)-2]
+		if(cmpstr(SaFldrName[strlen(RWvname)-2],"_")==0)
+			SaFldrName=SaFldrName[0,strlen(RWvname)-3]
+		endif
+		Wave/Z RWave = $RWvname
+		Wave/Z QWave = $QWvname
+		Wave/Z SWave = $SWvname
+		if(WaveExists(RWave) && WaveExists(QWave) &&WaveExists(SWave))
+			SetDataFolder NewFldrPath
+			if(DataFolderExists(SaFldrName))
+				SaFldrName=UniqueName(SaFldrName,11,0)
+				SaFldrName=CleanupName(SaFldrName, 0 )
+			endif
+			NewDataFolder/O/S $(SaFldrName)
+			Wave/Z testR= $(RWvname)
+			Wave/Z testQ= $(QWvname)
+			Wave/Z testS= $(SWvname)
+			if((!WaveExists(testR))&&(!WaveExists(testQ))&&(!WaveExists(testS)))		
+				MoveWave RWave, $(RWvname)
+				MoveWave QWave, $(QWvname)
+				MoveWave SWave, $(SWvname)
+			else
+				Print "Cannot move waves into folder : "+SaFldrName+" since there are already waves with same name"
+			endif
+			//KillWaves/Z RWave, QWave, SWave
+		elseif(WaveExists(RWave) && WaveExists(QWave))
+			SetDataFolder NewFldrPath
+			if(DataFolderExists(SaFldrName))
+				SaFldrName=UniqueName(SaFldrName,11,0)
+				SaFldrName=CleanupName(SaFldrName, 0 )
+			endif
+			NewDataFolder/O/S $(SaFldrName)
+			Wave/Z testR= $(RWvname)
+			Wave/Z testQ= $(QWvname)
+			if((!WaveExists(testR))&&(!WaveExists(testQ)))		
+				MoveWave RWave, $(RWvname)
+				MoveWave QWave, $(QWvname)
+			else
+				Print "Cannot move waves into folder : "+SaFldrName+" since there are already waves with same name"
+			endif
+			//KillWaves/Z RWave, QWave, SWave
+		endif
+	endfor
+
 	setDataFolder OldDf
 
 end
@@ -2362,6 +2411,7 @@ Function IR1F_BackupData(ListOfDataAvailable, FolderWithData, NewBackupFldr)
 	endfor
 	
 	setDataFolder FolderWithData
+	//QRS DATA
 	For(i=0;i<ItemsInList(ListOfDataAvailable);i+=1)
 		RWvname = StringFromList(i, ListOfDataAvailable)
 		QWvName = "Q"+RWvname[1,inf]
@@ -2378,6 +2428,24 @@ Function IR1F_BackupData(ListOfDataAvailable, FolderWithData, NewBackupFldr)
 			Duplicate /O QWave, $(NewBackupFldr+possiblyquotename(QWvname))
 		endif
 	endfor	
+	//QIS data
+	For(i=0;i<ItemsInList(ListOfDataAvailable);i+=1)
+		RWvname = StringFromList(i, ListOfDataAvailable)
+		QWvName = RWvname[0,strlen(RWvname)-2]+"Q"
+		SWvName = RWvname[0,strlen(RWvname)-2]+"S"
+		Wave/Z RWave = $RWvname
+		Wave/Z QWave = $QWvname
+		Wave/Z SWave = $SWvname
+		if(WaveExists(RWave) && WaveExists(QWave) &&WaveExists(SWave))
+			Duplicate /O RWave, $(NewBackupFldr+possiblyquotename(RWvname))
+			Duplicate /O QWave, $(NewBackupFldr+possiblyquotename(QWvname))
+			Duplicate /O SWave, $(NewBackupFldr+possiblyquotename(SWvname))
+		elseif(WaveExists(RWave) && WaveExists(QWave))
+			Duplicate /O RWave, $(NewBackupFldr+possiblyquotename(RWvname))
+			Duplicate /O QWave, $(NewBackupFldr+possiblyquotename(QWvname))
+		endif
+	endfor	
+	
 	setDataFOlder OldDf
 end
 
@@ -2396,8 +2464,10 @@ Function/T IR1F_CreateListQRSOfData(FolderWithData)
 	variable i
 	string ListOfQRSWaves, TempRWaveName, TempQWaveName, TempSWaveName
 	ListOfQRSWaves = ""
+	string AllWaves=IN2G_CreateListOfItemsInFolder(FolderWithData, 2)
+	//GetIndexedObjName(FolderWithData, 1, i )
 	FOr(i=0;i<=NumberOfAllWaves;i+=1)
-		TempRWaveName = GetIndexedObjName(FolderWithData, 1, i )
+		TempRWaveName = StringFromList(i, AllWaves)
 		if (cmpstr(TempRWaveName[0],"R")==0)	//the wave starts with R
 			TempQWaveName="Q"+TempRWaveName[1,inf]
 			TempSWaveName="S"+TempRWaveName[1,inf]
@@ -2407,10 +2477,24 @@ Function/T IR1F_CreateListQRSOfData(FolderWithData)
 				ListOfQRSWaves+=TempRWaveName+";"
 			elseif(WaveExists(testQ))
 				ListOfQRSWaves+=TempRWaveName+";"
-			endif
-			
+			endif		
 		endif
-		
+	endfor
+	//next try to handle QIS data
+	FOr(i=0;i<=NumberOfAllWaves;i+=1)
+		TempRWaveName = StringFromList(i, AllWaves)
+		print TempRWaveName[strlen(TempRWaveName)-2,inf],"I"
+		if (cmpstr(TempRWaveName[strlen(TempRWaveName)-1],"I")==0)	//the wave ends with i
+			TempQWaveName=TempRWaveName[0,strlen(TempRWaveName)-2]+"Q"
+			TempSWaveName=TempRWaveName[0,strlen(TempRWaveName)-2]+"S"
+			Wave/Z testQ=$(TempQWaveName)
+			Wave/Z testS=$(TempSWaveName)
+			if(WaveExists(testQ) && WaveExists(testS))
+				ListOfQRSWaves+=TempRWaveName+";"
+			elseif(WaveExists(testQ))
+				ListOfQRSWaves+=TempRWaveName+";"
+			endif		
+		endif
 	endfor
 
 	setDataFolder OldDf
