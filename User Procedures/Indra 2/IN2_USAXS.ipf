@@ -12,7 +12,8 @@ constant CurrentIndraVersionNumber = 1.96
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.97 	TBA
+//1.97 	Add print in history which version has compiled, Useful info later when debugging.
+//			attempt to set automatically Qmin for the data. 
 //1.96   December 2018 release. Updtaes 64 bit OSX xops.
 //1.95 	Igor 8 release, ongoing fixes for USAXS software changes. Modified behavior of Automatic blank selection in GUI. 
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 
@@ -180,6 +181,12 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_ResetSizesForALlPanels(WindowProcNames)
+	//and print in history which version of codeis being used for future reference.
+	string file= StringFromList((ItemsInList(FunctionPath("LoadUSAXSMacros"), ":")-1), FunctionPath("LoadUSAXSMacros"), ":")
+	String path = RemoveFromList(file, FunctionPath("LoadUSAXSMacros") , ":")
+	NewPath /O/Q TmpPathToIgorProcs  , path
+	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	print "*** >>>  Indra version: "+num2str(version)+", compiled on "+date()+"  "+time()
 
 end
 //****************************************************************************************

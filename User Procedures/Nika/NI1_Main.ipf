@@ -17,6 +17,7 @@ constant NikaNumberOfQCirclesDisp=15
 
 //1.82 	April 1 BETA release, rtGLolab=3 forced for all
 //			Added support for 12ID-C data. 
+//			Add print in history which version has compiled, Useful info later when debugging.
 //1.81   December 2018 release. Updated 64bit xops, mainly for OSX. 
 //			Added 12ID-C support, first release. 
 //1.80	Official Igor 8 release, Fixed NEXUS exporter to save data which are easily compatible with sasView. sasView has serious limitations on what it can accept as input NXcanSAS nexus data. 
@@ -196,18 +197,21 @@ end
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
-	//these are tools which have been upgraded to this functionality
-	//Modeling II = LSQF2_MainPanel
-//	string WindowProcNames="LSQF2_MainPanel=IR2L_MainCheckVersion;IR2H_ControlPanel=IR2H_MainCheckVersion;DataMiningTool=IR2M_MainCheckVersion;DataManipulationII=IR3M_MainCheckVersion;"
-//	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
-//	WindowProcNames+="IR1P_ControlPanel=IR1P_MainCheckVersion;IR2R_ReflSimpleToolMainPanel=IR2R_MainCheckVersion;IR3DP_MainPanel=IR3GP_MainCheckVersion;"
-//	WindowProcNames+="IR1V_ControlPanel=IR1V_MainCheckVersion;IR2D_ControlPanel=IR2D_MainCheckVersion;IR2Pr_ControlPanel=IR2Pr_MainCheckVersion;UnivDataExportPanel=IR2E_MainCheckVersion;"
-//	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;"
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+ 	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
 	
-//	IR2C_CheckWIndowsProcVersions(WindowProcNames)
- 
+	NI1A_CheckWIndowsProcVersions(WindowProcNames)
+	IN2G_ResetSizesForALlPanels(WindowProcNames)
+
 	NI1_CheckNikaUpdate(0)
 	IN2G_CheckForGraphicsSetting(0)
+	//and print in history which version of codeis being used for future reference.
+	string file= StringFromList((ItemsInList(FunctionPath("LoadNika2DSASMacros"), ":")-1), FunctionPath("LoadNika2DSASMacros"), ":")
+	String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
+	NewPath /O/Q TmpPathToIgorProcs  , path
+	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	print "*** >>>  Nika version : "+num2str(version)+", compiled on "+date()+"  "+time()
+	
 end
 
 

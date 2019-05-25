@@ -20,6 +20,7 @@ constant CurrentIrenaVersionNumber = 2.69
 //		 	POV/PDB import and fixes for 3D Models
 //			Added Anisotropy analsysis (Hermans orienational parameter)
 //			Create QRS folder structure should now handle also QIS data. 
+//			Add print in history which version has compiled, Useful info later when debugging.
 //2.68   Beta version. New 64-bit xops for OSX. 
 //2.67 	heavily modified Size Distribution (added power law background). First official Igor 8 release. 
 //			Nexus exporter - changed to use 1/angstrom for Q as sasView below 4.1.2 (probably below 4.3 at least) cannot convert Q units on import. 
@@ -299,6 +300,15 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_CheckForGraphicsSetting(0)
 	IN2G_ResetSizesForALlPanels(WindowProcNames) 
+
+	//and print in history which version of codeis being used for future reference.
+	string file= StringFromList((ItemsInList(FunctionPath("LoadIrenaSASMacros"), ":")-1), FunctionPath("LoadIrenaSASMacros"), ":")
+	String path = RemoveFromList(file, FunctionPath("LoadIrenaSASMacros") , ":")
+	NewPath /O/Q TmpPathToIgorProcs  , path
+	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	print "*** >>>  Irena version: "+num2str(version)+", compiled on "+date()+"  "+time()
+	
+	
 end
 //****************************************************************************************
 //****************************************************************************************

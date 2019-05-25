@@ -81,17 +81,17 @@ Constant NI1AversionNumber = 2.66
 //****************************************************************************************
 //****************************************************************************************
 
-static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
-
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	//these are tools which have been upgraded to this functionality
-	//Modeling II = LSQF2_MainPanel
-	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
-	
-	NI1A_CheckWIndowsProcVersions(WindowProcNames)
-	IN2G_ResetSizesForALlPanels(WindowProcNames)
-
-end
+//static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
+//
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//these are tools which have been upgraded to this functionality
+//	//Modeling II = LSQF2_MainPanel
+//	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
+//	
+//	NI1A_CheckWIndowsProcVersions(WindowProcNames)
+//	IN2G_ResetSizesForALlPanels(WindowProcNames)
+//
+//end 
 //****************************************************************************************
 //****************************************************************************************
 
