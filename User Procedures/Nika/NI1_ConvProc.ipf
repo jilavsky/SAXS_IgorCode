@@ -4312,8 +4312,20 @@ Function NI1A_SetVarProcMainPanel(sva) : SetVariableControl
 			Optimize /H=(highBracket) /L=(lowBracket)/Q /I=50/T=0.1 NI1A_CalcQValForSearch, pWave 
 			LineProf_DistanceFromCenter = round(V_minloc)
 	endif
+
 	
 	if(stringMatch("LineProf_DistanceQ",ctrlName)||stringMatch("LineProf_DistanceFromCenter",ctrlName)||stringMatch("LineProf_Width",ctrlName)||stringMatch("LineProf_LineAzAngle",ctrlName)||stringMatch("LineProf_GIIncAngle",ctrlName)||stringMatch("LineProf_EllipseAR",ctrlName))
+		//fix negative allowed Az angle behavior...
+		if(stringMatch("LineProf_LineAzAngle",ctrlName))
+			variable oldvalue=str2num(sva.userdata)
+			NVAR LineProf_DistanceFromCenter = root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
+			if ((sign(oldvalue) * sign(sva.dval))<0)
+				 // print "sign changed"
+				 LineProf_DistanceFromCenter*=-1
+			endif
+			sva.userdata=num2str(sva.dval)
+		endif
+
 		NI1A_LineProfUpdateQ()
 		NI1A_AllDrawingsFrom2DGraph()
 		NI1A_DrawCenterIn2DGraph()
@@ -5048,6 +5060,16 @@ Function NI1A_LineProfUpdateQ()
 		variable Qval= ((4*pi)/Wavelength)*sin(theta)
 		variable Qvalw1= ((4*pi)/Wavelength)*sin(thetaw1)
 		variable Qvalw2= ((4*pi)/Wavelength)*sin(thetaw2)
+		//fix for allowed negative AZ angle values...
+		if(stringMatch(LineProf_CurveType,"Angle Line"))
+			NVAR LPAzAngle = root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+			NVAR LPDistanceFromCenter = root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
+			if(sign(LPAzAngle) == sign(LPDistanceFromCenter))
+				Qval = abs(Qval)
+			else
+				Qval = -1*abs(Qval)
+			endif
+		endif
 
 		if( stringMatch(LineProf_CurveType,"GI_Vertical line"))
 			Qval = NI1GI_CalculateQxyz(LineProf_DistanceFromCenter+BeamCenterX,BeamCenterY,"Y")

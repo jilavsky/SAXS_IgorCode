@@ -848,9 +848,11 @@ static Function IN2G_ListProcFiles(PathStr, resetWaves)
 					NewPath/Q/O tempPath, tempPathStr
 					//try to get version from #pragma version = ... This seems to be the most robust way I found...
 					if(stringmatch(tempFileName, "*.ipf"))
-						Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
-						sleep/s (0.02)
-						tempScraptext = GetScrapText()
+						Grep/P=$(PathStr)/Z/Q/LIST/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName 
+						//print S_Value
+						//Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+						//sleep/s (0.02)
+						tempScraptext = S_Value //GetScrapText()
 						if(strlen(tempScraptext)>10)		//found line with #pragma version"
 							tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
 							tempScraptext = replaceString("version",tempScraptext,"")		//remove version
@@ -895,9 +897,11 @@ static Function IN2G_ListProcFiles(PathStr, resetWaves)
 			PathToFiles[numpnts(FileNames)-1] = PathStr
 			//try to get version from #pragma version = ... This seems to be the most robust way I found...
 			if(stringmatch(tempFileName, "*.ipf"))
-				Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
-				sleep/s(0.02)
-				tempScraptext = GetScrapText()
+				Grep/P=$(PathStr)/Z/Q/LIST/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName 
+						//print S_Value
+				//Grep/P=tempPath/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+				//sleep/s(0.02)
+				tempScraptext = S_Value			//GetScrapText()
 				if(strlen(tempScraptext)>10)		//found line with #pragma version"
 					tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
 					tempScraptext = replaceString("version",tempScraptext,"")		//remove version
@@ -911,7 +915,7 @@ static Function IN2G_ListProcFiles(PathStr, resetWaves)
 				endif
 			else                    //no version for non-ipf files
 				FileVersions[numpnts(FileNames)-1]=NaN
-			endif
+			endif 
 		endif
 	endfor
 //	if(runningTopLevel)
@@ -958,22 +962,24 @@ Function IN2G_FindVersionOfSingleFile(tempFileName,PathStr)
 	string tempFileName, PathStr
 		
 		string tempScraptext, oldScrap
-		oldScrap = GetScrapText()
-		Grep/P=$(PathStr)/Z/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
-		sleep/s (0.02)
-		tempScraptext = GetScrapText()
+				//oldScrap = GetScrapText()
+				//Grep/P=$(PathStr)/Z/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
+		Grep/P=$(PathStr)/Z/Q/LIST/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName 
+				//print S_Value
+				///sleep/s (0.02)
+		tempScraptext = S_Value //GetScrapText()
 		if(strlen(tempScraptext)>10)		//found line with #pragma version"
 			tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
 			tempScraptext = replaceString("version",tempScraptext,"")		//remove version
 			tempScraptext = replaceString("=",tempScraptext,"")			//remove =
 			tempScraptext = replaceString("\t",tempScraptext,"  ")			//remove optional tabulators, some actually use them. 
 			tempScraptext = RemoveEnding(tempScraptext,"\r")			//remove optional tabulators, some actually use them. 
-			//forget about the comments behind the text. 
-			PutScrapText oldScrap
-         //str2num is actually quite clever in this and converts start of the string which makes sense. 
+					//forget about the comments behind the text. 
+					//PutScrapText oldScrap
+         			//str2num is actually quite clever in this and converts start of the string which makes sense. 
 			return str2num(tempScraptext)
 		else             //no version found, set to NaN
-			PutScrapText oldScrap
+					//PutScrapText oldScrap
 			return NaN
 		endif
 
