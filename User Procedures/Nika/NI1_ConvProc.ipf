@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.68
+#pragma version=2.69
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.69 fixed NI1A_GenerAngleLine for angles between 135 - 360 deg. Allow negative angles, If Angle<0, Angle = 180+Angle
 //2.68 Fixed to accept tiff as tif extension.
 //2.67 Added Batch processing
 //2.66 fixes for rtGlobal=3
@@ -1777,7 +1778,7 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 		PathInfo Convert2Dto1DDataPath
 		SVAR MainPathInfoStr=root:Packages:Convert2Dto1D:MainPathInfoStr
 		MainPathInfoStr=S_path
-		TitleBox PathInfoStrt, win =NI1A_Convert2Dto1DPanel, variable=MainPathInfoStr
+		TitleBox PathInfoStr, win =NI1A_Convert2Dto1DPanel, variable=MainPathInfoStr
 		NI1A_UpdateDataListBox()		
 	endif
 	if(StringMatch(ctrlName,"MaskSelectPath"))
@@ -4070,7 +4071,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	SetVariable LineProf_EllipseAR,variable= root:Packages:Convert2Dto1D:LineProf_EllipseAR, proc=NI1A_SetVarProcMainPanel
 
 	SetVariable LineProf_LineAzAngle,pos={220,355},size={210,16},title="Line Az angle [deg]"
-	SetVariable LineProf_LineAzAngle,help={"Azimuthal angle for line going through center in degrees?"}, limits={0, 179.999,1}
+	SetVariable LineProf_LineAzAngle,help={"Azimuthal angle for line going through center in degrees?"}, limits={-179.99, 179.999,1}
 	SetVariable LineProf_LineAzAngle,variable= root:Packages:Convert2Dto1D:LineProf_LineAzAngle, proc=NI1A_SetVarProcMainPanel
 	
 	//other controls	
@@ -5022,7 +5023,10 @@ Function NI1A_LineProfUpdateQ()
 		NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt
 		NVAR LineProf_UseBothHalfs=root:Packages:Convert2Dto1D:LineProf_UseBothHalfs
 
-		NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		//NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		NVAR LineProf_LineAzAngleG =root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		variable LineProf_LineAzAngle
+		LineProf_LineAzAngle = LineProf_LineAzAngleG>=0 ? LineProf_LineAzAngleG : LineProf_LineAzAngleG+180	
 		NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
 		NVAR LineProf_EllipseAR=root:Packages:Convert2Dto1D:LineProf_EllipseAR
 		
@@ -6021,7 +6025,10 @@ Function NI1A_DrawLinesIn2DGraph()
 		variable RightStartX,RightStartY,RightEndX,RightEndY
 		NVAR LineProf_UseBothHalfs=root:Packages:Convert2Dto1D:LineProf_UseBothHalfs
 
-		NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		//NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		NVAR LineProf_LineAzAngleG =root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		variable LineProf_LineAzAngle
+		LineProf_LineAzAngle = LineProf_LineAzAngleG>=0 ? LineProf_LineAzAngleG : LineProf_LineAzAngleG+180
 		NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
 		NVAR LineProf_EllipseAR=root:Packages:Convert2Dto1D:LineProf_EllipseAR
 
@@ -6199,7 +6206,7 @@ Function NI1A_GenerAngleLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	if(abs(angle)<45)
 		tempWvX=p
 		tempWvY=BCy-(tempWvX-BCx)*tan(Angle*pi/180)
-	elseif(abs(angle)>=45 || abs(angle)<135)
+	elseif(abs(angle)>=45 && abs(angle)<135)
 		tempWvY=p
 		tempWvX=BCx+(tempWvY-BCy)*tan((Angle-90)*pi/180)
 	else
@@ -6209,7 +6216,7 @@ Function NI1A_GenerAngleLine(DetDimX,DetDimY,BCx,BCy,Angle,Offset,WaveX,WaveY)
 	//now offset the line by the geometrically corrected offset...
 	if(abs(angle)<45)
 		tempWvY-=Offset / cos(Angle*pi/180)
-	elseif(abs(angle)>=45 || abs(angle)<135)
+	elseif(abs(angle)>=45 && abs(angle)<135)
 		tempWvX-=Offset / sin((Angle)*pi/180) 
 	else
 		tempWvY-=Offset / cos(Angle*pi/180)	
@@ -7962,7 +7969,7 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType
 		LineProf_CurveType=popStr		
 		SVAR KnWCT=root:Packages:Convert2Dto1D:LineProf_CurveType
-		SetVariable LineProf_LineAzAngle,disable=(!stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel
+		SetVariable LineProf_LineAzAngle,disable=(!stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel 
 		SetVariable LineProf_EllipseAR,disable=(!stringMatch(KnWCT,"Ellipse")), win=NI1A_Convert2Dto1DPanel
 		SetVariable LineProf_GIIncAngle,disable=((!stringMatch(KnWCT,"GISAXS_FixQy")&&!stringMatch(KnWCT,"GI_Horizontal Line")&&!stringMatch(KnWCT,"GI_Vertical Line"))), win=NI1A_Convert2Dto1DPanel
 		checkbox LineProf_UseBothHalfs,disable=(stringMatch(KnWCT,"Angle Line")), win=NI1A_Convert2Dto1DPanel	

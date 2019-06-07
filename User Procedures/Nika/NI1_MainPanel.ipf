@@ -778,7 +778,10 @@ Function NI1A_Convert2DTo1D()
 		//note for future. There is a lot of unnecessary calculations here. This could be sped up by better programming. 
 		//figure out which Q we analyzed...
 		SVAR LineProf_CurveType=root:Packages:Convert2Dto1D:LineProf_CurveType	
-		NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+//		NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		NVAR LineProf_LineAzAngleG =root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		variable LineProf_LineAzAngle
+		LineProf_LineAzAngle = LineProf_LineAzAngleG>=0 ? LineProf_LineAzAngleG : LineProf_LineAzAngleG+180
 		string tempStr, tempStr1
 		if(stringMatch(LineProf_CurveType,"Horizontal Line"))
 			tempStr1="HLp_"

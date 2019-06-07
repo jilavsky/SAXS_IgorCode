@@ -1666,7 +1666,10 @@ Function NI1A_LineProf_CreateLP()
 
 		NVAR LineProf_GIIncAngle=root:Packages:Convert2Dto1D:LineProf_GIIncAngle
 		NVAR LineProf_EllipseAR=root:Packages:Convert2Dto1D:LineProf_EllipseAR
-		NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		//NVAR LineProf_LineAzAngle=root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		NVAR LineProf_LineAzAngleG =root:Packages:Convert2Dto1D:LineProf_LineAzAngle
+		variable LineProf_LineAzAngle
+		LineProf_LineAzAngle = LineProf_LineAzAngleG>=0 ? LineProf_LineAzAngleG : LineProf_LineAzAngleG+180
 		NVAR LineProf_DistanceFromCenter=root:Packages:Convert2Dto1D:LineProf_DistanceFromCenter
 		NVAR LineProf_Width=root:Packages:Convert2Dto1D:LineProf_Width
 		NVAR LineProf_DistanceQ=root:Packages:Convert2Dto1D:LineProf_DistanceQ
@@ -1917,10 +1920,10 @@ Function NI1A_LineProf_CreateLP()
 		endif
 		
 		variable constVal=Wavelength / (4 * pi)
-		Wave/Z DSpacingWidth
-		if(!WaveExists(DSpacingWidth))
-			abort
-		endif
+//		Wave/Z DSpacingWidth
+//		if(!WaveExists(DSpacingWidth))
+//			abort
+//		endif
 		
 		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistacneInmmWidth, LineProfileDspacingWidth
 		Duplicate/Free LineProfileQvalues, LineProfileTwoTheta, LineProfileDistacneInmm, LineProfileDspacing

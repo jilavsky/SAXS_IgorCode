@@ -1213,7 +1213,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			endif
 	       skipBytes = NumberByKey("HEADER_BYTES",(header0[1]),"=")
 	       variable dummy
-	        for(i = 0; i <= 45;i=i+1)
+	        for(i = 0; i < numpnts(header0);i=i+1)
 	               dummy = NumberByKey("SIZE2",(header0[i]),"=")
 	               if(dummy)
 	               NIGBNumberOfXPoints = dummy
