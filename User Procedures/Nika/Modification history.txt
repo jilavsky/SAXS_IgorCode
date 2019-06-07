@@ -17,6 +17,7 @@ Many tools - changed code compiler instruction to rtGLobals=3, this is less forg
 Main code - added Batch processing - this prevents display of images and all graphing updates. Speeds up code by 2-3x in my testing. Added info window when in use and comments in History since else it looks like Nika hangs.  
 12ID support fix. Added ability to read all many options how mask can be defined for goldaverage program. 
 Changed Nika GSAS export file type to xye (was using old GSA). 
+Modified to accept in Empty/Dark, Mask, Flood, etc. that tiff and tif files are the same. 
 
 
 1.81 12/5/2018

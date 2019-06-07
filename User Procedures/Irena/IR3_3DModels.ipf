@@ -82,7 +82,7 @@ Function IR3T_MainCheckVersion()
 	//this needs to get more of these lines for each tool/panel... 
 	DoWindow TwoPhaseSystems
 	if(V_Flag)
-		if(!IR1_CheckPanelVersionNumber("TwoPhaseSystems", IR3AMassFrAggVersionNumber))
+		if(!IR1_CheckPanelVersionNumber("TwoPhaseSystems", IR3TTwoPhaseVersionNumber))
 			DoAlert /T="The Two Phase 3D modeling panel was created by incorrect version of Irena " 1, "Two Phase 3D modeling tool may need to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				DoWindow/K TwoPhaseSystems
@@ -92,7 +92,7 @@ Function IR3T_MainCheckVersion()
 			endif
 		endif
 	endif
-end
+end 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR3P_MainCheckVersion()	

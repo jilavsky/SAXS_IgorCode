@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.06
+#pragma version=1.07
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.07 Fixed to accept tiff as tif extension.
 //1.06 Modified Screen Size check to match the needs
 //1.05 added getHelp button calling to www manual
 //1.04 modified to point to USAXS_data on USAXS computers
@@ -327,6 +327,11 @@ Function NI1_UpdateFloodListBox()
 		endif
 
 		ListOfAvailableCompounds=IndexedFile(Convert2Dto1DFloodPath,-1,RealExtension)
+
+		if(cmpstr(realExtension, ".tif")==0)//there are many options for hdf...
+			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DFloodPath,-1,".tiff")
+		endif
+
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) ListOfCCDDataInFloodPath
 		redimension/N=(ItemsInList(ListOfAvailableCompounds)) SelectionsofCCDDataInFloodDPath
 		variable i
@@ -430,10 +435,6 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 #if Exists("ModifyImportedImageHook")
 	ModifyImportedImageHook(FloodFieldImg)
 #endif
-//		infostr = FunctionInfo("ModifyImportedImageHook")
-//		if (strlen(infostr) >0)
-//			Execute("ModifyImportedImageHook(FloodFieldImg)")
-//		endif
 		//end of allow user modification of imported image through hook function
 		redimension/S FloodFieldImg
 		if(ImgExisted)
@@ -447,10 +448,6 @@ Function NI1_FloodCreateAppendImage(AppendImg)
 #if Exists("ModifyImportedImageHook")
 	ModifyImportedImageHook(FloodFieldImg)
 #endif
-//		infostr = FunctionInfo("ModifyImportedImageHook")
-//		if (strlen(infostr) >0)
-//			Execute("ModifyImportedImageHook(FloodFieldImg)")
-//		endif
 		//end of allow user modification of imported image through hook function
 		redimension/S FloodFieldImg
 	endif

@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.67
+#pragma version=2.68
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.68 Fixed to accept tiff as tif extension.
 //2.67 Added Batch processing
 //2.66 fixes for rtGlobal=3
 //2.65 fixerd solid angle correction. It was doing the wrong thing. 
@@ -1556,6 +1557,9 @@ Function NI1A_UpdateEmptyDarkListBox()
 				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DEmptyDarkPath,-1,".hdf")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DEmptyDarkPath,-1,".h5")
 				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DEmptyDarkPath,-1,".hdf5")
+			elseif(cmpstr(realExtension, ".tif")==0)//there are many options for hdf...
+				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DEmptyDarkPath,-1,".tif")
+				ListOfAvailableDataSets+=IndexedFile(Convert2Dto1DEmptyDarkPath,-1,".tiff")
 			else
 				ListOfAvailableDataSets=IndexedFile(Convert2Dto1DEmptyDarkPath,-1,realExtension)
 			endif	

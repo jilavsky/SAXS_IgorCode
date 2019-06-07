@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version =1.28
+#pragma version =1.29
 
 
 //*************************************************************************\
@@ -10,6 +10,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.29 Fixed to accept tiff as tif extension.
 //1.28 fixed masking of first/last N rows/columns which was not working right. 
 //1.27 Modified Screen Size check to match the needs
 //1.26 added getHelp button calling to www manual
@@ -637,6 +638,9 @@ Function NI1M_UpdateMaskListBox()
 			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".h5")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".hdf5")
+		elseif(cmpstr(realExtension, ".tif")==0)//there are many options for hdf...
+			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,".tif")
+			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DMaskPath,-1,".tiff")
 		else
 			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DMaskPath,-1,RealExtension)
 		endif

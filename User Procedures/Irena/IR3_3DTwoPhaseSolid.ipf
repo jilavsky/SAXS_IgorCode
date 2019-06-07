@@ -1174,7 +1174,9 @@ Function IR3T_GenerateTwoPhaseSolid()
 	Duplicate/O Radii, RadiiTheorAutoCorrFnct, TheorAutoCorrFnct
 	TheorAutoCorrFnct = IR3T_CalcTheorAutocorF(alfaValue,gR[p])
 	//some calibration fixes... 
-	TheorAutoCorrFnct[0]=porosity//-porosity^2
+	Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+	wavestats/Q TwoPhaseSolidMatrix
+	TheorAutoCorrFnct[0]=1-V_avg //-porosity^2
 	//TheorAutoCorrFnct+=porosity^2
 	//and calculate intensity, step 8
 	Duplicate/O Qvec, TheoreticalIntensityDACF, QvecTheorIntensityDACF
@@ -1548,6 +1550,9 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 
 	print "Calculating Gauss random fields, this is the slowest part of the code!" 		
 	multithread TwoPhaseSolidMatrix = IR3T_GenGRFUsingCosSaxsMorph(Kn,rmat[p][0],rmat[q][1], rmat[r][2], phin, alpha)	
+	SetScale/I x 0,BoxSideSize,"A", TwoPhaseSolidMatrix
+	SetScale/I y 0,BoxSideSize,"A", TwoPhaseSolidMatrix
+	SetScale/I z 0,BoxSideSize,"A", TwoPhaseSolidMatrix
 
 end
 

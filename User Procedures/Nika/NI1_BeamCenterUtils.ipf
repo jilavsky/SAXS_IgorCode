@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.28
+#pragma version=2.29
 Constant NI1BCversionNumber = 2.25
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@ Constant NI1BCversionNumber = 2.25
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.29 Fixed to accept tiff as tif extension.
 //2.28 fix autoscaling panel components. 
 //2.27  removed unused functions
 //2.26 Modified Screen Size check to match the needs
@@ -1670,6 +1671,9 @@ Function NI1BC_UpdateBmCntrListBox()
 			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DBmCntrPath,-1,".hdf")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DBmCntrPath,-1,".h5")
 			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DBmCntrPath,-1,".hdf5")
+		elseif(cmpstr(realExtension, ".tif")==0)//there are many options for hdf...
+			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DBmCntrPath,-1,".tif")
+			ListOfAvailableCompounds+=IndexedFile(Convert2Dto1DBmCntrPath,-1,".tiff")
 		else
 			ListOfAvailableCompounds=IndexedFile(Convert2Dto1DBmCntrPath,-1,realExtension)
 		endif	

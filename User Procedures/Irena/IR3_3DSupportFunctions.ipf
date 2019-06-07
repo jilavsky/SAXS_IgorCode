@@ -18,6 +18,190 @@
 //			3D packages, 2019-02-27
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
+//this will calculate Two-point correlation function for 3D object:
+
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+
+Function IR3T_Calc3DTwoPntCorrelation(My3DWv)
+	Wave My3DWv
+	
+	//this code calculates Two-point autocorelation function on 3D wave. 
+	//1. Checks wave for sensibility. Needs wave with mostly 0 in it and 1 for minority phase. 
+	//2. Calculates autocorelation in p, q, and r directions, at most 100x100 vectors in each direction (3x100*100 calculations).
+	//3. Copies scaling to output wave, so if the 3DWave has correct x scaling, data have correct x dimension
+	//note: due to autocorrelation using circular mechanism the max distance to which this is calculate is 1/2 max length of the 3DWave
+	// 3DWave does nto have to have same length side,s but this has not been tested at all yet. 
+	
+	//result is in the sample folder in TwoPntCorrelationsWv which has x scaling set per scaling of input wave. 
+	
+	//Check  My3DWv
+	Wavestats/Q My3DWv
+	//1. Min=0 , max=1
+	if(V_min!=0 || V_max!=1)
+		Abort "Wave must contain 0 and 1 ONLY, 1 being minority phase, 0 being majority phase" 
+	endif
+	variable MatrixPhase=0
+	if(V_avg>0.49)
+		MatrixPhase=1
+		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 0 in provided matrix" 
+	else
+		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 1 in provided matrix" 
+	endif
+//	variable startTicks=ticks
+	variable pDim, qdim, rdim
+	variable pstep, qstep, rstep
+	pDim  = DimSize(My3DWv, 0 )
+	qDim  = DimSize(My3DWv, 1 )
+	rDim  = DimSize(My3DWv, 2 )
+	variable pDelta, qDelta, rDelta	//these should be voxel sides, if scaling is used for dimansions. 
+	string pUnits, qUnits, rUnits
+	pUnits = WaveUnits(My3DWv, 0 )
+	qUnits = WaveUnits(My3DWv, 1 )
+	rUnits = WaveUnits(My3DWv, 2 )
+	pDelta = DimDelta(My3DWv, 0 )
+	qDelta = DimDelta(My3DWv, 1 )
+	rDelta = DimDelta(My3DWv, 2 )
+	if((pDim*qDim*rDim) < (50*50*50))
+		Abort "This 3D object seems too small to evaluate, minimum dimensions are 50^3"
+	endif
+	if(pDelta!=qDelta || qDelta!=rDelta)
+		Abort "This 3D object seems to have different side scaling - voxel sides. You can only analyze object with cubical voxels."
+	endif
+	//OK, now we may be able to conaculate something... 
+	pstep = ceil(pDim/100)
+	qstep = ceil(qDim/100)
+	rstep = ceil(rDim/100)
+	variable MaxLength=max(pDim, qDim, rDim)
+	//temp working waves. 	
+	Make/Free/N=(DimSize(My3DWv, 0 )) RowCorrelations
+	Make/Free/N=(DimSize(My3DWv, 1 )) ColumnCorrelations
+	Make/Free/N=(DimSize(My3DWv, 2 )) BeamCorrelations
+	//this is wave for results. 
+	Make/O/N=(MaxLength) TwoPntCorrelationsWv
+	variable i, j
+	//row (p index)
+	For(i=0;i<qDim;i+=qstep)
+		For(j=0;j<rDim;j+=rstep)
+			ImageTransform /G=(i) /P=(j) getRow My3DWv
+			Wave W_ExtractedRow
+			if(MatrixPhase)
+				W_ExtractedRow=!W_ExtractedRow[p]
+			endif
+			MatrixOp/Free RowCorrelated = correlate(W_ExtractedRow,W_ExtractedRow,0)
+			RowCorrelated/=numpnts(RowCorrelated)
+			RowCorrelations+=RowCorrelated
+		endfor
+	endfor
+	RowCorrelations/=(round(qDim/qstep)*round(rDim/rstep))
+	//circular correlation causes this to be mirrored around center. ALl we get is half of teh ddistance across this way 
+	redimension/N=(numpnts(RowCorrelations)/2)	 RowCorrelations
+	
+	//this works, but I am worried that this is not correct logically... 
+//	//pick random row to extend data for correlation
+//	p1=trunc(abs(enoise(1))*qDim-1e-6)
+//	p2=trunc(abs(enoise(1))*rDim-1e-6)
+//	ImageTransform /G=(p1) /P=(p2) getRow My3DWv
+//	Wave W_ExtractedRow
+//	KillWaves/Z RandRow
+//	Rename W_ExtractedRow, RandRow
+//	Wave RandRow
+//	For(i=0;i<qDim;i+=qstep)
+//		For(j=0;j<rDim;j+=rstep)
+//			ImageTransform /G=(i) /P=(j) getRow My3DWv
+//			Wave W_ExtractedRow
+//			Concatenate /NP/O  {W_ExtractedRow, RandRow}, W_ExtractedRowL
+//			MatrixOp/Free RowCorrelated = correlate(W_ExtractedRowL,W_ExtractedRowL,0)
+//			RowCorrelated/=numpnts(RowCorrelated)/2
+//			RowCorrelations+=RowCorrelated
+//		endfor
+//	endfor
+//	Redimension /N=(DimSize(My3DWv, 0 )) RowCorrelations
+//	RowCorrelations/=(round(qDim/qstep)*round(rDim/rstep))
+	
+	//column (q index) 
+	For(i=0;i<pDim;i+=pstep)
+		For(j=0;j<rDim;j+=rstep)
+			ImageTransform /G=(i) /P=(j) getCol My3DWv
+			Wave W_ExtractedCol
+			if(MatrixPhase)
+				W_ExtractedCol=!W_ExtractedCol[p]
+			endif
+			MatrixOp/Free ColCorrelated = correlate(W_ExtractedCol,W_ExtractedCol,0)
+			ColCorrelated/=numpnts(ColCorrelated) 
+			ColumnCorrelations+=ColCorrelated
+		endfor
+	endfor
+	ColumnCorrelations/=(round(pDim/pstep)*round(rDim/rstep))
+	//circular correlation causes this to be mirrored around center. ALl we get is half of teh ddistance across this way 
+	redimension/N=(numpnts(ColumnCorrelations)/2)	 ColumnCorrelations
+
+	//beam (r index)	
+	For(i=0;i<pDim;i+=pstep)
+		For(j=0;j<qDim;j+=qstep)
+			ImageTransform /BEAM={(i),(j)} getBeam My3DWv
+			Wave W_Beam
+			if(MatrixPhase)
+				W_Beam=!W_Beam[p]
+			endif
+			MatrixOp/Free BeamCorrelated = correlate(W_Beam,W_Beam,0)
+			BeamCorrelated/=numpnts(BeamCorrelated)
+			BeamCorrelations+=BeamCorrelated
+		endfor
+	endfor
+	BeamCorrelations/=(round(pDim/pstep)*round(qDim/qstep))
+	//circular correlation causes this to be mirrored around center. All we get is half of the ddistance across this way 
+	redimension/N=(numpnts(BeamCorrelations)/2) BeamCorrelations
+	//average, this handles wave of different lenghts. 	
+	IR3T_Average3Waves(RowCorrelations,ColumnCorrelations,BeamCorrelations ,TwoPntCorrelationsWv)
+	//Duplicate/O BeamCorrelations, TwoPntCorrelationsWv
+	SetScale/P x 0,pDelta/2,pUnits, TwoPntCorrelationsWv			//???????  Need scale by 2  the units??? Why??? Is this conversion from diameter to radius for some weird reason???
+	
+	Display TwoPntCorrelationsWv
+	//print (ticks-startTicks)/60
+end
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+
+static Function IR3T_Average3Waves(w1,w2,w3,wOut)
+	wave w1,w2,w3,wOut
+	
+	variable L1, L2, L3, i, LM, tmpV
+	L1=numpnts(w1)
+	L2=numpnts(w2)
+	L3=numpnts(w3)
+	LM=max(L1, L2, L3)
+	make/Free/N=(LM) TempWave
+	For(i=0;i<LM;i+=1)
+		tmpV=0
+		TempWave[i]=0
+		if(i<L1)
+			TempWave[i]+=w1[i]
+			tmpV+=1
+		endif
+		if(i<L2)
+			TempWave[i]+=w2[i]
+			tmpV+=1
+		endif
+		if(i<L3)
+			TempWave[i]+=w3[i]
+			tmpV+=1
+		endif
+		TempWave[i]/=tmpV
+	endfor
+	redimension/N=(LM) wOut
+	wOut=TempWave
+end
+
+
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+
+
 
 
 //******************************************************************************************************************************************************
