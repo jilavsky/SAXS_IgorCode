@@ -18,25 +18,83 @@
 //			3D packages, 2019-02-27
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
-//this will calculate Two-point correlation function for 3D object:
+//this will calculate Two-point correlation function and associated Debye phase correlation function for 3D object:
 
 ///******************************************************************************************************************************************
 ///******************************************************************************************************************************************
 
-Function IR3T_Calc3DTwoPntCorrelation(My3DWv)
-	Wave My3DWv
+Function IR3T_CalcTwoPntsCorFIntensity()
+	//to be run after running IR3T_Calc3DTwoPntCorrelation
+	//calculates intensity vs q vercor for results of that function
 	
+	setDataFOlder root:Packages:TwoPhaseSolidModel:	
+	
+	DoWindow TwoPhaseSystemData
+	if(V_Flag)
+		DoWIndow/F TwoPhaseSystemData
+		//thsi should exist:
+		Wave	TwoPntDebyePhCorrFnct	 = root:Packages:TwoPhaseSolidModel:TwoPntDebyePhCorrFnct			//= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
+		Wave	TwoPntDebyePhCorrRadii = root:Packages:TwoPhaseSolidModel:TwoPntDebyePhCorrRadii			//= Radii wave for TwoPntDebyePhCorrFnct
+		Wave/Z PDFQWv = root:Packages:TwoPhaseSolidModel:PDFQWv
+		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
+		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
+		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
+		Wave OriginalQvector = root:Packages:TwoPhaseSolidModel:OriginalQvector
+		Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
+		Wave/Z TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
+		Wave/Z QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
+		NVAR Qmin = root:Packages:TwoPhaseSolidModel:LowQExtrapolationStart
+		NVAR Qmax = root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd
+		//calculate intensity:
+		Duplicate/O ExtrapolatedQvector, TwoPntModelIntensity, TwoPntModelQvec
+		TwoPntModelIntensity = IR3T_ConvertDACFToInt(TwoPntDebyePhCorrRadii,TwoPntDebyePhCorrFnct,TwoPntModelQvec)	
+		variable InvarModel
+		variable InvarData
+		//need to renormalzie this together...
+		InvarModel=areaXY(TwoPntModelQvec, TwoPntModelIntensity, Qmin, TwoPntModelQvec[numpnts(TwoPntModelQvec)-2] )
+		InvarData=areaXY(OriginalQvector, OriginalIntensity, Qmin, TwoPntModelQvec[numpnts(TwoPntModelQvec)-2]  )
+			TwoPntModelIntensity*=InvarData/InvarModel
+			CheckDisplayed /W=TwoPhaseSystemData TwoPntModelIntensity
+			if(V_flag==0)
+				AppendToGraph/W=TwoPhaseSystemData  TwoPntModelIntensity vs TwoPntModelQvec
+			endif
+			ModifyGraph lstyle(TwoPntModelIntensity)=9,lsize(TwoPntModelIntensity)=3,rgb(TwoPntModelIntensity)=(2,39321,1)
+			//ModifyGraph mode(TwoPntModelIntensity)=4,marker(TwoPntModelIntensity)=19
+			//ModifyGraph msize(TwoPntModelIntensity)=3
+	endif
+
+end
+
+
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+
+Function IR3T_Calc3DTwoPntCorrelation()
+
+
+	setDataFOlder root:Packages:TwoPhaseSolidModel:	
 	//this code calculates Two-point autocorelation function on 3D wave. 
-	//1. Checks wave for sensibility. Needs wave with mostly 0 in it and 1 for minority phase. 
+	//1. Checks wave for sensibility. Needs wave with mostly 0 in it and 1 for minority phase, if needed, it will switch between 0 and 1 so it evaluates minority phase. 
 	//2. Calculates autocorelation in p, q, and r directions, at most 100x100 vectors in each direction (3x100*100 calculations).
 	//3. Copies scaling to output wave, so if the 3DWave has correct x scaling, data have correct x dimension
-	//note: due to autocorrelation using circular mechanism the max distance to which this is calculate is 1/2 max length of the 3DWave
-	// 3DWave does nto have to have same length side,s but this has not been tested at all yet. 
+	//4. creates Debye phase correlation function and its radii wave
+	//these are resulting waves:
+	// 	TwoPntCorrelationsWv				= two points correltaiton function, TwoPntCorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
+	//		TwoPntDebyePhCorrFnct				= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
+	//		TwoPntDebyePhCorrRadii			= Radii wave for TwoPntDebyePhCorrFnct
+	// 3DWave does not have to have same length side,s but this has not been tested at all yet. 
+	
 	
 	//result is in the sample folder in TwoPntCorrelationsWv which has x scaling set per scaling of input wave. 
+	Wave/Z My3DWv = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+	
+	if(!WaveExists(My3DWv))
+		abort
+	endif
 	
 	//Check  My3DWv
 	Wavestats/Q My3DWv
+	variable VOlumeFraction
 	//1. Min=0 , max=1
 	if(V_min!=0 || V_max!=1)
 		Abort "Wave must contain 0 and 1 ONLY, 1 being minority phase, 0 being majority phase" 
@@ -44,8 +102,10 @@ Function IR3T_Calc3DTwoPntCorrelation(My3DWv)
 	variable MatrixPhase=0
 	if(V_avg>0.49)
 		MatrixPhase=1
+		VOlumeFraction = 1-V_avg
 		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 0 in provided matrix" 
 	else
+		VOlumeFraction = V_avg
 		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 1 in provided matrix" 
 	endif
 //	variable startTicks=ticks
@@ -62,7 +122,7 @@ Function IR3T_Calc3DTwoPntCorrelation(My3DWv)
 	pDelta = DimDelta(My3DWv, 0 )
 	qDelta = DimDelta(My3DWv, 1 )
 	rDelta = DimDelta(My3DWv, 2 )
-	if((pDim*qDim*rDim) < (50*50*50))
+	if((pDim*qDim*rDim) < (48*48*48))
 		Abort "This 3D object seems too small to evaluate, minimum dimensions are 50^3"
 	endif
 	if(pDelta!=qDelta || qDelta!=rDelta)
@@ -74,29 +134,119 @@ Function IR3T_Calc3DTwoPntCorrelation(My3DWv)
 	rstep = ceil(rDim/100)
 	variable MaxLength=max(pDim, qDim, rDim)
 	//temp working waves. 	
-	Make/Free/N=(DimSize(My3DWv, 0 )) RowCorrelations
-	Make/Free/N=(DimSize(My3DWv, 1 )) ColumnCorrelations
-	Make/Free/N=(DimSize(My3DWv, 2 )) BeamCorrelations
+//	Make/Free/N=(DimSize(My3DWv, 0 )) RowCorrelations
+//	Make/Free/N=(DimSize(My3DWv, 1 )) ColumnCorrelations
+//	Make/Free/N=(DimSize(My3DWv, 2 )) BeamCorrelations
 	//this is wave for results. 
 	Make/O/N=(MaxLength) TwoPntCorrelationsWv
 	variable i, j
+
 	//row (p index)
 	For(i=0;i<qDim;i+=qstep)
 		For(j=0;j<rDim;j+=rstep)
-			ImageTransform /G=(i) /P=(j) getRow My3DWv
+			ImageTransform /G=(i)/P=(j) getRow My3DWv
 			Wave W_ExtractedRow
 			if(MatrixPhase)
 				W_ExtractedRow=!W_ExtractedRow[p]
 			endif
-			MatrixOp/Free RowCorrelated = correlate(W_ExtractedRow,W_ExtractedRow,0)
-			RowCorrelated/=numpnts(RowCorrelated)
-			RowCorrelations+=RowCorrelated
+			redimension/S W_ExtractedRow
+			//MatrixOp/Free RowCorrelated = correlate(W_ExtractedRow,W_ExtractedRow,0)
+			//RowCorrelated/=numpnts(RowCorrelated)
+			Correlate /AUTO W_ExtractedRow, W_ExtractedRow
+			Wave/Z RowCorrelations
+			if(!WaveExists(RowCorrelations))
+				Duplicate/O W_ExtractedRow, RowCorrelations
+			else
+				RowCorrelations+=W_ExtractedRow
+			endif
 		endfor
 	endfor
-	RowCorrelations/=(round(qDim/qstep)*round(rDim/rstep))
-	//circular correlation causes this to be mirrored around center. ALl we get is half of teh ddistance across this way 
-	redimension/N=(numpnts(RowCorrelations)/2)	 RowCorrelations
+	//RowCorrelations/=(round(qDim/qstep)*round(rDim/rstep))
+	//circular correlation causes this to be mirrored around center. ALl we get is half of the distance across this way 
+	//reverse RowCorrelations
+	//redimension/N=(numpnts(RowCorrelations)/2)	 RowCorrelations
+	DeletePoints 0, (numpnts(RowCorrelations)/2),  RowCorrelations
 	
+	//column (q index) 
+	For(i=0;i<pDim;i+=pstep)
+		For(j=0;j<rDim;j+=rstep)
+			ImageTransform /G=(i) /P=(j) getCol My3DWv
+			Wave W_ExtractedCol
+			if(MatrixPhase)
+				W_ExtractedCol=!W_ExtractedCol[p]
+			endif
+			redimension/S W_ExtractedCol
+			//MatrixOp/Free ColCorrelated = correlate(W_ExtractedCol,W_ExtractedCol,0)
+			//ColCorrelated/=numpnts(ColCorrelated) 
+			Correlate /AUTO W_ExtractedCol, W_ExtractedCol
+			//ColumnCorrelations+=W_ExtractedCol
+			Wave/Z ColumnCorrelations
+			if(!WaveExists(ColumnCorrelations))
+				Duplicate/O W_ExtractedCol, ColumnCorrelations
+			else
+				ColumnCorrelations+=W_ExtractedCol
+			endif
+		endfor
+	endfor
+	//ColumnCorrelations/=(round(pDim/pstep)*round(rDim/rstep))
+	//circular correlation causes this to be mirrored around center. ALl we get is half of the distance across this way 
+	//reverse ColumnCorrelations
+	//redimension/N=(numpnts(ColumnCorrelations)/2)	 ColumnCorrelations
+	DeletePoints 0, (numpnts(ColumnCorrelations)/2),  ColumnCorrelations
+
+	//beam (r index)	
+	For(i=0;i<pDim;i+=pstep)
+		For(j=0;j<qDim;j+=qstep)
+			ImageTransform /BEAM={(i),(j)} getBeam My3DWv
+			Wave W_Beam
+			if(MatrixPhase)
+				W_Beam=!W_Beam[p]
+			endif
+			redimension/S W_Beam
+			//MatrixOp/Free BeamCorrelated = correlate(W_Beam,W_Beam,4)
+			Correlate /AUTO W_Beam, W_Beam
+			//BeamCorrelated/=numpnts(BeamCorrelated)
+			//BeamCorrelations+=BeamCorrelated
+			Wave/Z BeamCorrelations
+			if(!WaveExists(BeamCorrelations))
+				Duplicate/O W_Beam, BeamCorrelations
+			else
+				BeamCorrelations+=W_Beam
+			endif
+			//BeamCorrelations+=W_Beam
+		endfor
+	endfor
+	//BeamCorrelations/=(round(pDim/pstep)*round(qDim/qstep))
+	//circular correlation causes this to be mirrored around center. All we get is half of the distance across this way 
+	//reverse BeamCorrelations
+	//redimension/N=(numpnts(BeamCorrelations)/2) BeamCorrelations
+	//average, this handles wave of different lenghts. 	
+	//Correlate/AUTO needs rotation around end point
+	DeletePoints 0, (numpnts(BeamCorrelations)/2),  BeamCorrelations
+
+	IR3T_Average3Waves(RowCorrelations,ColumnCorrelations,BeamCorrelations ,TwoPntCorrelationsWv)
+	KillWaves/Z RowCorrelations,ColumnCorrelations,BeamCorrelations
+//	Duplicate/O BeamCorrelations, TwoPntCorrelationsWv
+	//redimension/N=(numpnts(TwoPntCorrelationsWv)/2) TwoPntCorrelationsWv
+	//normalize to volume fratcion as epxected
+	Wavestats/Q TwoPntCorrelationsWv
+	TwoPntCorrelationsWv = VOlumeFraction* TwoPntCorrelationsWv[p]/V_max 
+	
+	Duplicate/O TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct, TwoPntDebyePhCorrRadii
+	TwoPntDebyePhCorrFnct =  TwoPntCorrelationsWv - VOlumeFraction^2				//thsi converts this from TwoPointCor FUnction to Debye Phase Correlation function
+	
+	TwoPntDebyePhCorrFnct = TwoPntDebyePhCorrFnct[p]>0 ? TwoPntDebyePhCorrFnct : 0			//this needs to be non-negative... - note it is bit more complcaited, but this is OK for now... 
+
+	SetScale/P x 0,pDelta,pUnits, TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct				//assign x-scaling in A from 3D model. 
+//what am I missing here??? ^^^^^^   Why do I need this to be scaled by pi??? 	
+
+	TwoPntDebyePhCorrRadii = pnt2x(TwoPntDebyePhCorrFnct, p )
+	
+	
+	//Display/K=1 TwoPntCorrelationsWv
+	//print (ticks-startTicks)/60
+end
+///******************************************************************************************************************************************
 	//this works, but I am worried that this is not correct logically... 
 //	//pick random row to extend data for correlation
 //	p1=trunc(abs(enoise(1))*qDim-1e-6)
@@ -118,49 +268,6 @@ Function IR3T_Calc3DTwoPntCorrelation(My3DWv)
 //	endfor
 //	Redimension /N=(DimSize(My3DWv, 0 )) RowCorrelations
 //	RowCorrelations/=(round(qDim/qstep)*round(rDim/rstep))
-	
-	//column (q index) 
-	For(i=0;i<pDim;i+=pstep)
-		For(j=0;j<rDim;j+=rstep)
-			ImageTransform /G=(i) /P=(j) getCol My3DWv
-			Wave W_ExtractedCol
-			if(MatrixPhase)
-				W_ExtractedCol=!W_ExtractedCol[p]
-			endif
-			MatrixOp/Free ColCorrelated = correlate(W_ExtractedCol,W_ExtractedCol,0)
-			ColCorrelated/=numpnts(ColCorrelated) 
-			ColumnCorrelations+=ColCorrelated
-		endfor
-	endfor
-	ColumnCorrelations/=(round(pDim/pstep)*round(rDim/rstep))
-	//circular correlation causes this to be mirrored around center. ALl we get is half of teh ddistance across this way 
-	redimension/N=(numpnts(ColumnCorrelations)/2)	 ColumnCorrelations
-
-	//beam (r index)	
-	For(i=0;i<pDim;i+=pstep)
-		For(j=0;j<qDim;j+=qstep)
-			ImageTransform /BEAM={(i),(j)} getBeam My3DWv
-			Wave W_Beam
-			if(MatrixPhase)
-				W_Beam=!W_Beam[p]
-			endif
-			MatrixOp/Free BeamCorrelated = correlate(W_Beam,W_Beam,0)
-			BeamCorrelated/=numpnts(BeamCorrelated)
-			BeamCorrelations+=BeamCorrelated
-		endfor
-	endfor
-	BeamCorrelations/=(round(pDim/pstep)*round(qDim/qstep))
-	//circular correlation causes this to be mirrored around center. All we get is half of the ddistance across this way 
-	redimension/N=(numpnts(BeamCorrelations)/2) BeamCorrelations
-	//average, this handles wave of different lenghts. 	
-	IR3T_Average3Waves(RowCorrelations,ColumnCorrelations,BeamCorrelations ,TwoPntCorrelationsWv)
-	//Duplicate/O BeamCorrelations, TwoPntCorrelationsWv
-	SetScale/P x 0,pDelta/2,pUnits, TwoPntCorrelationsWv			//???????  Need scale by 2  the units??? Why??? Is this conversion from diameter to radius for some weird reason???
-	
-	Display TwoPntCorrelationsWv
-	//print (ticks-startTicks)/60
-end
-///******************************************************************************************************************************************
 ///******************************************************************************************************************************************
 ///******************************************************************************************************************************************
 
@@ -361,7 +468,7 @@ threadsafe Function IR3T_CalcIntensityPDF(Qvalue,PDF,Radius)		//AMemiys - my the
 	Make/Free/N=(numpnts(PDF))/D QRWave
 	QRWave=sinc(Qvalue*Radius[p])								//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
 	matrixOP/Nthr=0/Free tempWave = PDF * QRWave
-	variable AreaW = areaXY(Radius, TempWave)
+	//variable AreaW = areaXY(Radius, TempWave)
 	return (4*pi*(areaXY(Radius, TempWave)))
 end
 //******************************************************************************************************************************************************

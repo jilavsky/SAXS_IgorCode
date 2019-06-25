@@ -348,7 +348,7 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	NVAR/Z MinQMinFindRatio=root:Packages:Indra3:MinQMinFindRatio
 	if(!NVAR_Exists(FindMinQForData))
 		variable/g FindMinQForData
-		FindMinQForData = 0
+		FindMinQForData = 1
 		variable/g MinQMinFindRatio
 		MinQMinFindRatio = 1.3
 	endif

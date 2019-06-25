@@ -671,8 +671,9 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		//let's figure out, if all worked as expected.
 		Duplicate/O/Free changes_AR_PSOpulse, AR_PSOpulse
 		Duplicate/O/Free changes_AR_angle, AR_angle, DiffARValues
-		variable EndOFData = BinarySearch(AR_angle, 0.1)
-		DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
+		//this seems to cause issues, not sure why it was here. Seems to work without it quite OK... 
+		//variable EndOFData = BinarySearch(AR_angle, 0.1)
+		//DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
 		//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from. 
 		print "Found that there were likely vibrations during scan, doing fix using PSO channel record" 
 		IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)

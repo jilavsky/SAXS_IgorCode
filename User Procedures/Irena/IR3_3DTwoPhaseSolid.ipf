@@ -156,7 +156,8 @@ Function IR3T_TwoPhaseControlPanel()
 
 	//tab 3
 	Button Display1DtempData,pos={100,370},size={200,15},proc=IR3T_TwoPhaseButtonProc,title="Display 1D temp data", help={"Create graphs of 1D transitional data."}
-	Button Display2DView,pos={100,440},size={200,20},proc=IR3T_TwoPhaseButtonProc,title="Display 2D view", help={"Create 2D display of 3D data."}
+	Button Calc1DTwoPhaseSys,pos={100,410},size={200,20},proc=IR3T_TwoPhaseButtonProc,title="Calculate 1D", help={"Calculate 1D data using Two Phase Correlation Function."}
+	Button Display2DView,pos={100,460},size={200,20},proc=IR3T_TwoPhaseButtonProc,title="Display 2D view", help={"Create 2D display of 3D data."}
 	Button Generate3DView,pos={100,510},size={200,20},proc=IR3T_TwoPhaseButtonProc,title="Display 3D view", help={"Create 3D display using Gizmo. "}
 	CheckBox GizmoFillSolid,pos={50,540},size={130,14},proc=IR3T_InputPanelCheckboxProc,title="3D fill Solid?"
 	CheckBox GizmoFillSolid,variable= root:packages:TwoPhaseSolidModel:GizmoFillSolid, help={"Check to  fill solid phase in Gizmo 3D. "}
@@ -240,6 +241,7 @@ Function IR3T_TwoPhaseTabProc(tca) : TabControl
 
 			//tab 3
 			Button Display1DtempData, win=TwoPhaseSystems, disable=(tab!=2)
+			Button Calc1DTwoPhaseSys, win=TwoPhaseSystems, disable=(tab!=2)
 			Button Display2DView, win=TwoPhaseSystems, disable=(tab!=2)
 			Button Generate3DView, win=TwoPhaseSystems, disable=(tab!=2)
 			CheckBox GizmoFillSolid, win=TwoPhaseSystems, disable=(tab!=2)
@@ -356,7 +358,11 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 			if(StringMatch(ba.ctrlName, "ExtrapolateHighQ" ))
 					IR3T_ExtrapolateHighQ()
 			endif
-			if(StringMatch(ba.ctrlName, "GetHelp" ))
+			if(StringMatch(ba.ctrlName, "Calc1DTwoPhaseSys" ))
+					IR3T_Calc3DTwoPntCorrelation()
+					IR3T_CalcTwoPntsCorFIntensity()
+			endif
+				if(StringMatch(ba.ctrlName, "GetHelp" ))
 				//Open www manual with the right page
 				IN2G_OpenWebManual("Irena/TwoPhaseSolid.html")
 			endif
@@ -1094,8 +1100,8 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//		Per all of the literature... 
 	//		This is a function that describes the correlation at two points separated by a distance r, arising from real-space density ﬂuctuations in the sample. 
 	//		That is, it represents the probability that two points separated by a distance r are of the same phase.
-	print "Calculating Gamma_alfa(r)" 									//calculate formula 1	, convert Intensity to Debaye Autocorreclation Function DACF
-	multithread DebyeAutoCorFnct = IR3T_ConvertIntToDACF(DebyeAutoCorFnctRadii[p],Intensity,Qvec)
+	print "Calculating Gamma_alfa(r)" 									//calculate formula 1	, convert Intensity to Debye Autocorreclation Function DACF
+	multithread DebyeAutoCorFnct = IR3T_ConvertIntToDACF(DebyeAutoCorFnctRadii[p],Intensity,Qvec)			//this is really Debye Autocorreclation Function  
 	print "Gamma_alfa(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//renormalize
 	wavestats/Q DebyeAutoCorFnct
@@ -1103,7 +1109,8 @@ Function IR3T_GenerateTwoPhaseSolid()
 	// Quintanilla: DebyeAutoCorFnct = S2, and S2(0) = porosity (volume fractio of pores)
 	//   limit(R->inf) DebyeAutoCorFnct  = porosity^2
 	//Java code:      this.gammar[i][1] = ((this.porosity - this.porosity * this.porosity) * gamma_r_val[i] / gamma_r_max + this.porosity * this.porosity);
-	DebyeAutoCorFnct = (porosity - porosity^2) * DebyeAutoCorFnct[p]/V_max + porosity^2
+	Duplicate/O DebyeAutoCorFnct, TwoPointsCorFData			//thsi is two points correlation function. 
+	TwoPointsCorFData = (porosity - porosity^2) * DebyeAutoCorFnct[p]/V_max + porosity^2					//this converts Two Points Correlation function... . 
  	// Makes sense, porosity^2 is random probability that two random points will be both in pore/solid (whatever the minority phase is).
  	//       >>>>>>      this now works, 2-24-2019, but still seem to get different values than SAXSMorph
   	//**************************************************************
@@ -1125,14 +1132,14 @@ Function IR3T_GenerateTwoPhaseSolid()
 	Duplicate/O Radii,gR
 	if(useSAXSMorphCode)
 		print "Calculating g(r) using SAXSMorph code"
-		gR = IR3T_SMcalcgr(alfaValue, GammAlfa0, DebyeAutoCorFnct[p])	//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
+		gR = IR3T_SMcalcgr(alfaValue, GammAlfa0, TwoPointsCorFData[p])	//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
 		gR[0]=1																			//first point is 1 by definition and code gets NaN
 	else
 		//if using Quantanilla Formula 2 integration, change sign of the next calculation... 
 		//also Quintanilla uses function Xi(r) = S2(r) - porosity^2, where S2(r) is DebyeAutoCorFnct
 		//let us create it for sanity...
-		Duplicate/O DebyeAutoCorFnct, XiFunctionQuint
-		XiFunctionQuint = DebyeAutoCorFnct - GammAlfa0^2
+		Duplicate/O TwoPointsCorFData, XiFunctionQuint
+		XiFunctionQuint = TwoPointsCorFData - GammAlfa0^2
 		variable alfaValueQ = -1 * alfaValue
 		print "Calculating g(r) using code in Quantanilla paper"
   		multithread gR = IR3T_ProperCalcgr(alfaValueQ, XiFunctionQuint[p])				//this is correct way of calculating gr
@@ -1163,10 +1170,9 @@ Function IR3T_GenerateTwoPhaseSolid()
 	IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
 	//and this is using FFT
 	//you need FFTGRF.ipf for following step. Its is much faster but the sizes generated are smaller and make not much sense for now... 
-	
 	//may be need better - properly fft's gR (bot spectralfk, which has same absolute values and shape, but seem shfited by Rmin...
 	//and ????
-	//IR3T_GenerateMatrixFFT(SpectralFk, Kvalues, BoxSideSize, BoxResolution, porosity)
+//	IR3T_GenerateMatrixFFT(SpectralFk, Kvalues, BoxSideSize, BoxResolution, porosity)
 	print "GenerateMatrix time is "+num2str((ticks-startTicks)/60) +" sec"
 	//calculate theoretical intensity from gR data per Quintanilla, Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351
 	//these are steps 7 and 8
@@ -1488,9 +1494,9 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
    variable kamp = 0.0
    variable IntgNumber = 10000
 	variable xmax, ymax, zmax
-	xmax = BoxResolution 		//num points per side of the box
-	ymax = BoxResolution
-	zmax = BoxResolution
+	xmax = BoxResolution-1 		//num points per side of the box
+	ymax = BoxResolution-1
+	zmax = BoxResolution-1
 	Make/Free/N=(xmax,3) rmat		//this assumes xmax is at least largest, if not all same??? 
 	//this is radius matrix, these are dimensions to match with k-vectors randomly generated...
 	// BoxSideSize is real world dimension in Angstroms 
