@@ -1,5 +1,5 @@
 #pragma TextEncoding = "UTF-8"
-#pragma rtGlobals = 2			// Use strict wave reference mode and runtime bounds checking
+#pragma rtGlobals = 2			// do NOT change to rtGlobals=3, uses rtGlobals=2 convention for functionality... 
 #pragma version=2.05
 
 
@@ -609,8 +609,8 @@ static Function/C Cromer_Get_fp(AtomType, xK, ReturnWhat)
 				mm = nx -n1 +1
 				duplicate/O el, elc
 				duplicate/O sl, slc
-				elc = el[p+n1-1]
-				slc = sl[p+n1-1]
+				elc = el[p+n1-1]					//this fails on rtGl.obals=3, but is intended to be used this way
+				slc = sl[p+n1-1]					//this fails on rtGl.obals=3, but is intended to be used this way
 				cx = cAknint(zx,mm,nord,elc,slc, tMatrix)
 				cx = exp(cx)
 			endif

@@ -1,10 +1,10 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.13
+#pragma version=1.14
 #include <Multi-peak fitting 2.0>
 
 //local configurations
 Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
-constant IR3WversionNumber = 1.07		//Diffraction panel version number
+constant IR3WversionNumber = 1.14	//Diffraction panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.07		//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 add button to open AMS www so users can search for cards easily. 
 //1.13 add background parameters to recorded values and add GUI to extract them into table. Add Graph of peak areas. 
 //1.12 fix IR3W_PDF4AppendLinesToGraph for when user scales vertical axis with minimum being negative value
 //1.11 Added Table of parameters which contains all parameters for all sampels. Bit useless for now, but future plans... 
@@ -187,7 +188,8 @@ Proc IR3W_WAXSPanel()
 	Button PDF4UpdateList, pos={300,425}, size={200,20}, title="Update list of cards", proc=IR3W_WAXSButtonProc, help={"After using LaueGo package from Jon Tischler update list"}
 	Button PDF4ExportImport, pos={300,447}, size={200,20}, title="Export/Import/Delete PDF cards", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from hard drive folder on this computer"}
 	Button PDF4ImportPDF4xml, pos={300,469}, size={200,20}, title="Import PDF-4+ xml card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from JCPDS xml cards"}
-	Button AMSImportAMStxt, pos={300,491}, size={200,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
+	Button AMSOpenWebSite, pos={275,491}, size={90,20}, title="AMS www", proc=IR3W_WAXSButtonProc, help={"Open http://rruff.geo.arizona.edu/AMS/amcsd.php"}
+	Button AMSImportAMStxt, pos={375,491}, size={160,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button PDF4AddManually, pos={300,513}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
 
 	TitleBox txt1 title="\Zr100Double click to add data to graph.",pos={4,665},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
@@ -243,6 +245,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				ListBox PDF4CardsSelection, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4AddManually, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4ImportPDF4xml, win=IR3W_WAXSPanel, disable=(tab!=1)
+				Button AMSOpenWebSite, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button AMSImportAMStxt, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4UpdateList, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4ExportImport, win=IR3W_WAXSPanel, disable=(tab!=1)			
@@ -1414,12 +1417,7 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				KillWIndow/Z BackgroundTable
 				IR3W_MPF2CreateBckgParTable()
 			endif
-
-
 			if(stringmatch(ba.ctrlname,"DisplayHelp"))
-				//DisplayHelpTopic "Irena WAXS tool"
-				//DoIgorMenu "Control", "Retrieve Window"		// let's make sure it is visible
-				//and open the web page also...
 				IN2G_OpenWebManual("Irena/WAXS.html")
 			endif
 			if(stringmatch(ba.ctrlname,"PDF4AddManually"))
@@ -1435,6 +1433,9 @@ Function IR3W_WAXSButtonProc(ba) : ButtonControl
 				IR3W_ImportAMSData()
 				//IR3W_PDF4AddFromLaueGo()
 				IR3W_UpdatePDF4OfAvailFiles()
+			endif
+			if(stringmatch(ba.ctrlname,"AMSOpenWebSite"))
+					BrowseURL "http://rruff.geo.arizona.edu/AMS/amcsd.php/"
 			endif
 			if(stringmatch(ba.ctrlname,"PDF4UpdateList"))
 				IR3W_UpdatePDF4OfAvailFiles()

@@ -979,6 +979,11 @@ Function IN3_Initialize()
 	if(MinQMinFindRatio<1.05)
 		MinQMinFindRatio=1.3
 	endif
+	NVAR FindMinQForData
+	FindMinQForData = 1
+	NVAR OverWriteExistingData
+	OverWriteExistingData = 1
+	
 	
 	NVAR DisplayPeakCenter
 	NVAR FlyScanRebinToPoints

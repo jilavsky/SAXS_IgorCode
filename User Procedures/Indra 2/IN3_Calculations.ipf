@@ -367,42 +367,46 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	//now calculate Qmin based in intensity difference... 
 	variable QminIntDifference=0
 	variable QminAUtoFOund=0
+	variable QminBl = 1.05 * 4 * pi * sin(BlankWidth*4.848e-6 /2) / Wavelength		//This is Qmin due to multiple scattering... scaled up a bit to make sure this makes sense... 
+
 	if(FindMinQForData)
-		Duplicate/Free R_Int, IntRatio
-		Duplicate/Free R_Qvec, QCorrection	//this is per point correction, we need bigger difference at low-q than high-q
-		//need to find function which is q dependent and varies from Max correction to 1 over our range of Qs. 
-		variable MaxCorrection = 2
-		variable PowerCorrection=4
-		QCorrection =  1 + MaxCorrection*(abs(QminTheoretical/R_Qvec))^PowerCorrection
-		QCorrection = (QCorrection<(MaxCorrection+1)) ? QCorrection : (MaxCorrection+1)
-		//the above should peak at Q=0 with max correction of "MaxCorrection"+1 and drop off as function of q resolution. 
-		Duplicate/Free BL_R_Int, LogBlankInt
-		LogBlankInt = log(BL_R_Int)
-		IntRatio = interp(R_Qvec, BL_R_Qvec, LogBlankInt)		//this is interpolated log(BlankInt)
-		IntRatio = 10^IntRatio											//interpolated BlankInt
-		IntRatio = R_Int / IntRatio										//this is R_int/BlankInt (interpolated to R_+Qvec)
-		IntRatio = IntRatio / QCorrection
-		FindLevel  /Q/EDGE=1 IntRatio, MinQMinFindRatio
-		if(V_Flag==0)	//found level
-			QminIntDifference = R_Qvec[ceil(V_LevelX)]
-			if(QminIntDifference > QminTheoretical)
-				Qmin = QminIntDifference									//this overwrites the Qmin selection, based on Intensity difference. User uses checkbox to control this!
-				QminAUtoFOund = 1
-			ELSE
-				Qmin = QminTheoretical
-				QminAUtoFOund = 1
+			Duplicate/Free R_Int, IntRatio
+			Duplicate/Free R_Qvec, QCorrection	//this is per point correction, we need bigger difference at low-q than high-q
+			//need to find function which is q dependent and varies from Max correction to 1 over our range of Qs. 
+			variable MaxCorrection = 2
+			variable PowerCorrection=4
+			QCorrection =  1 + MaxCorrection*(abs(QminTheoretical/R_Qvec))^PowerCorrection
+			QCorrection = (QCorrection<(MaxCorrection+1)) ? QCorrection : (MaxCorrection+1)
+			//the above should peak at Q=0 with max correction of "MaxCorrection"+1 and drop off as function of q resolution. 
+			Duplicate/Free BL_R_Int, LogBlankInt
+			LogBlankInt = log(BL_R_Int)
+			IntRatio = interp(R_Qvec, BL_R_Qvec, LogBlankInt)		//this is interpolated log(BlankInt)
+			IntRatio = 10^IntRatio											//interpolated BlankInt
+			IntRatio = R_Int / IntRatio										//this is R_int/BlankInt (interpolated to R_+Qvec)
+			IntRatio = IntRatio / QCorrection
+			FindLevel  /Q/EDGE=1 IntRatio, MinQMinFindRatio
+			if(V_Flag==0)	//found level
+				QminIntDifference = R_Qvec[ceil(V_LevelX)]
+				if(QminIntDifference > QminTheoretical)
+					Qmin = QminIntDifference									//this overwrites the Qmin selection, based on Intensity difference. User uses checkbox to control this!
+					QminAUtoFOund = 1
+				ELSE
+					Qmin = QminTheoretical
+					QminAUtoFOund = 1
+				endif
 			endif
-		endif
 	endif																	//so now, if user wants, we have qmin when data are 2*Background (first time). 
+
 	//		multiple scattering
 	//lets try to set Qmin for user based on FWHM, this is correction for multiple scattering. 
-	//this needs to be done later as MSAXS will have plenty of scattering, so intensity differndce mnakes no sense here... 
-	variable QminBl = 1.05 * 4 * pi * sin(BlankWidth*4.848e-6 /2) / Wavelength		//This is Qmin due to multiple scattering... scaled up a bit to make sure this makes sense... 
-	if( QminBl > 1.1 * Qmin)
-		Qmin = QminBl
-		QminIntDifference = 0				//set to 0, indcates that we shoudl not use autolocated value. 
-		QminTheoretical = QminBl
+	//this needs to be done later as MSAXS will have plenty of scattering, so intensity differedce makes no sense here... 
+	if( QminTheoretical > 1.1 * QminBl)
+		Qmin = QminTheoretical
+		QminIntDifference = 0				//set to 0, indicates that we should not use autolocated value. 
+		//QminTheoretical = Qmin
 		HaveMSAXSCOrrection = 1
+	else	//single scattering
+
 	endif
 	//now the logic what to use and when... 
 	TextBox/C/W=RcurvePlotGraph/A=LB/X=0.2/Y=0.20/E=2/N=QminInformation/F=0 "\\Z10\\K(0,12800,52224)Theoretical Qmin of these data is = "+num2str(QminTheoretical)
@@ -410,14 +414,14 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	if (QminAUtoFOund && !HaveMSAXSCOrrection)		//use autolocated value 
 		OldStartQValueForEvaluation = Qmin
 		print "Warning - Qmin automatic search was requested. Located Qmin = "+num2str(Qmin)
-		TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "Located Qmin based on Int Sa/Bl ratio. Set to calculated Qmin = "+num2str(Qmin)
+		TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "\Zr050Located Qmin based on Int Sa/Bl ratio. Set to calculated Qmin = "+num2str(Qmin)
 		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, OldStartQValueForEvaluation ))
 		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
 	elseif(HaveMSAXSCOrrection)			//this is in case of multiple scattering... 
 		OldStartQValueForEvaluation = Qmin
-		print "Warning - too small Qmin detected. Reset to calculated Qmin = "+num2str(Qmin)
+		print "Warning - too small Qmin detected due to MSAXS. Reset to calculated Qmin = "+num2str(Qmin)
 		print "This can be due to multiple scattering in the sample. Note, you may need to return the Qmin back for other samples" 
-		TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "Warning - too small Qmin detected. Reset to calculated Qmin = "+num2str(Qmin)
+		TextBox/C/W=RcurvePlotGraph/N=QminReset/F=0/A=LT "\Zr050Warning - small Qmin detected due to MSAXS. Reset to calculated Qmin = "+num2str(Qmin)
 		Cursor /P /W=RcurvePlotGraph  A  R_Int  round(BinarySearchInterp(R_Qvec, OldStartQValueForEvaluation ))
 		Cursor /P /W=RcurvePlotGraph  B  R_Int  (numpnts(R_Qvec)-1)
 	else

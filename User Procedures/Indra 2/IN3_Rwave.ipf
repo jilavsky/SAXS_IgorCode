@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version 1.15
+#pragma version 1.16
 
 
 //*************************************************************************\
@@ -10,7 +10,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.15 fixed problem when PD_range used to create MyCOlorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
+//1.16 another attempt to fix problem with negative intensities on some ranges (range 4 and 5) which caused issues with smoothing of blanks... 
+//1.15 fixed problem when PD_range used to create MyColorWave was getting out of sync with data as points were being removed. Flyscan only, added PD_RangeModified to fix this... 
 //1.14 fixed rare case when fix backgroundoversubtraction from 1.13 caused problems. In some cases early data may be negative. Now looking for negative value only in last 1/2 of the data points.  
 //1.13 Modfifed IN3_RemoveDropouts to work only when adropout starts at ranges 1-4. 
 //1.13 Tried to fix range 5 background oversubtraction by shifting data by needed Intensity up. Done in IN3_CalculateRWaveIntensity only when Intensity is negative due to Bckg5 subtraction
@@ -134,10 +135,16 @@ Function IN3_SmoothRData()
 					//range change, do not average, use line fitting to get the point... 
 					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
 					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
-					CurveFit/Q line tempR /X=tempQ 
-					Wave W_coef
-					SmoothIntensity[i] = W_coef[0]+W_coef[1]*Qvector[i]
-					R_Error[i]=R_Error[i]/3
+					WaveStats /Q tempR
+					if(V_npnts>V_numNans+5)
+						CurveFit/Q line tempR /X=tempQ 
+						Wave W_coef
+						SmoothIntensity[i] = W_coef[0]+W_coef[1]*Qvector[i]
+						R_Error[i]=R_Error[i]/3
+					else
+						SmoothIntensity[i] = TempIntLog[i]
+						R_Error[i]=R_Error[i]
+					endif
 				else
 					Duplicate/Free/O/R=[i-StartPoints,i+EndPoints] TempIntLog, tempR
 					Duplicate/O/Free/R=[i-StartPoints,i+EndPoints] Qvector, tempQ
@@ -450,7 +457,7 @@ Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 		Wave/Z W_FindLevels 
 		if(WaveExists(W_FindLevels))
 			For(i=0;i<numpnts(W_FindLevels);i+=1)
-				DropoutIndex = W_FindLevels[i]
+				DropoutIndex = round(W_FindLevels[i])
 			//	print "Found dropout at point number "+num2str(DropoutIndex)
 			//only modify if this is at gain hignher than 5
 				if(PD_range[DropoutIndex-10]<5)
@@ -462,7 +469,7 @@ Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 						tmpTime-=MeasTime[j]
 						j-=1
 						totPnts+=1
-					while(tmpTime>0)
+					while(tmpTime>0 && j>0)
 					tmpTime=RemoveDropoutsTime/2
 					j=DropoutIndex
 					do
@@ -470,7 +477,7 @@ Function IN3_RemoveDropouts(Ar_encoder,MeasTime,Monitor,PD_range,USAXS_PD, R_Int
 						tmpTime-=MeasTime[j]
 						j+=1
 						totPnts+=1
-					while(tmpTime>0)
+					while(tmpTime>0 && j<(numpnts(R_Int)-1))
 				endif
 			//	print "Removed "+Num2str(totPnts)+" around the found point at "+num2str(DropoutIndex)
 			endfor
