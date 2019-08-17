@@ -1,6 +1,6 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.67
+#pragma version=2.68
 constant IR3MversionNumber = 2.62		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -10,6 +10,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.68 handle weird case of DM I when data 1 is regular Q-I-S data set and data 2 are model data without error. Generate fake error here is the solution. 
 //2.67 add toDataManipulation II ability to rescale to Q scale for data set to produce data at same Q values
 //2.66 fix Data Manipulation I - make long file names on Igor 8 usign standard Irena choices setup. 
 //2.65 fix Data Manipulation I - change names acording to qrs naming ssystem only if input top data set is QRS system, avoid for USAXS, results and otehrs. 
@@ -1070,7 +1071,17 @@ static Function IR1D_ConvertData()
 	if (WaveExists(Error2))
 		Duplicate/O Error2, TempE2	
 	endif
-			variable Length1, Length2
+	variable Length1, Length2
+	// need to handle here weird case user created, when we have input data 1 with error and second data 2 is model result without errors. 
+	// In this case we need to create errors for second data set and set them to something really small above 0 (0 values get removed). 
+	// the trouble is, that there may be a lot of other weird cases and I see no clear and easy way of catching them all... 
+	NVAR UseIndra2data1 = root:Packages:SASDataModificationTop:UseIndra2data
+	NVAR UseQRSdata1 = root:Packages:SASDataModificationTop:UseQRSdata
+	if((UseIndra2data1||UseQRSdata1)&&(!WaveExists(Error2))&&WaveExists(Error1))
+		Duplicate/O Intensity2, TempE2
+		TempE2 = 1e-8*Intensity2
+	endif
+	
 	
 	if (ReducePointNumber)
 		If (WaveExists(TempInt1)&&WaveExists(TempQ1)&&WaveExists(TempE1) &&(ReducePointNumberBy>0)&&(numpnts(TempInt1)/ReducePointNumberBy>5))
@@ -1088,7 +1099,7 @@ static Function IR1D_ConvertData()
 			Duplicate/O TempInt1, ResultsInt
 			Duplicate/O TempQ1, ResultsQ
 			Redimension/N=(floor(numpnts(ResultsInt)/ReducePointNumberBy)) ResultsInt, ResultsQ
-			ResultsInt =TempInt1 [floor(p*ReducePointNumberBy)]
+			ResultsInt = TempInt1 [floor(p*ReducePointNumberBy)]
 			ResultsQ  = TempQ1[floor(p*ReducePointNumberBy)]
 		else
 			DoAlert 0, "Incorrect data, you need data 1 set with at least Intensity and Q (errors are optional) and Reduce number by such that at least 5 points are left"

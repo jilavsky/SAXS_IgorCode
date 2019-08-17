@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.40
+#pragma version=1.41
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.41 added some fudge factor for Qmin search and MSAXS handling. 
 //1.40 added automatci location of the Qmin where data start due to Int Sa/Bl ratio. 
 //1.39 Fixed step scanning GUI issues. 
 //1.38 Added ability to overwrite Flyscan amplifier dead times. 
@@ -359,7 +360,8 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	endif
 
 	//this is real instrument Qmin under any conditions... 
-	QminTheoretical = 4 * pi * sin(PeakWidth*4.848e-6 /2) / Wavelength
+	//0.57 is fudge factor here... Seems to work for MSAXS calculations
+	QminTheoretical = 4 * pi * sin(0.57 *PeakWidth*4.848e-6 /2) / Wavelength
 	Qmin = QminTheoretical
 	if (Qmin > OldStartQValueForEvaluation)
 		Qmin = OldStartQValueForEvaluation
@@ -367,7 +369,7 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 	//now calculate Qmin based in intensity difference... 
 	variable QminIntDifference=0
 	variable QminAUtoFOund=0
-	variable QminBl = 1.05 * 4 * pi * sin(BlankWidth*4.848e-6 /2) / Wavelength		//This is Qmin due to multiple scattering... scaled up a bit to make sure this makes sense... 
+	variable QminBl = 1.05 * 4 * pi * sin(0.57 *BlankWidth*4.848e-6 /2) / Wavelength		//This is Qmin due to multiple scattering... scaled up a bit to make sure this makes sense... 
 
 	if(FindMinQForData)
 			Duplicate/Free R_Int, IntRatio
@@ -399,8 +401,8 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 
 	//		multiple scattering
 	//lets try to set Qmin for user based on FWHM, this is correction for multiple scattering. 
-	//this needs to be done later as MSAXS will have plenty of scattering, so intensity differedce makes no sense here... 
-	if( QminTheoretical > 1.1 * QminBl)
+	//this needs to be done later as MSAXS will have plenty of scattering, so intensity difference makes no sense here... 
+	if( QminTheoretical > 1.05 * QminBl)
 		Qmin = QminTheoretical
 		QminIntDifference = 0				//set to 0, indicates that we should not use autolocated value. 
 		//QminTheoretical = Qmin

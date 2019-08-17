@@ -1743,12 +1743,7 @@ Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 	NVAR GraphWindowWidth
 	NVAR GraphLegendSize
 	NVAR GraphWindowHeight		
-	if(GraphWindowWidth==0)
-		//string ScreenWidthStr=stringFromList(3,  StringByKey("SCREEN1", IgorInfo(0)),",")
-		//string ScreenHeightStr=stringFromList(4,  StringByKey("SCREEN1", IgorInfo(0)),",")
-		//variable ScreenSizeV= IgorInfo(0)
-		//GraphWindowWidth=(str2num(ScreenWidthStr))/2
-		//GraphWindowHeight=(str2num(ScreenHeightStr))/2
+	if(GraphWindowWidth<50 || numtype(GraphWindowWidth)!=0  || numtype(GraphLegendSize)!=0  || numtype(GraphWindowHeight)!=0 || GraphWindowHeight<50 || GraphLegendSize<6 )
 		GraphWindowWidth=IN2G_GetGraphWidthHeight("width")
 		GraphWindowHeight=IN2G_GetGraphWidthHeight("height")
 		GraphLegendSize=10

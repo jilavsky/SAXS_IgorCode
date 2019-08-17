@@ -1839,6 +1839,19 @@ Function NI1A_LineProf_CreateLP()
 				endif
 		endif
 		KillWaves/Z MaskedQ2DWave
+
+		//need to fix background oversubtraction here, if requested. 
+		NVAR FixBackgroundOversubtraction = root:Packages:Convert2Dto1D:FixBackgroundOversubtraction
+		if(FixBackgroundOversubtraction)
+			//need to find out minimum of Intensity
+			Wavestats/Q/Z LineProfileIntensity
+			//V_min is the lowest value we got, likely negative.
+			if(V_min<0)	//it is negative
+				//add FixBackgroundOversubScale 8 abs(V_min), fix FixBackgroundOversubScale in NI1_Main.ipf
+				LineProfileIntensity+=FixBackgroundOversubScale * abs(V_min)
+			endif
+		endif
+
 		
 		//now we need to calculate the right Q values... There is difference between the regular geometry and GI geometry...
 		if(!stringMatch(LineProf_CurveType,"GI_Horizontal Line") && !stringMatch(LineProf_CurveType,"GI_vertical Line"))		//regular geometry...
@@ -1904,7 +1917,7 @@ Function NI1A_LineProf_CreateLP()
 		note/NOCR  LineProfileAzAvalues , Newnote
 		//and here should be right place to check for error = 0
 		//now handling of case where we have error=0, which is possible only if Intensity=0 for each point summed together.  
-		LineProfileIntSdev = LineProfileIntSdev[p]>0 ? LineProfileIntSdev[p] : NaN	//for Int=0 we could have error = 0 if all points ahve 0 intensity, which is degenerate case (bad masking). 
+		LineProfileIntSdev = LineProfileIntSdev[p]>0 ? LineProfileIntSdev[p] : NaN	//for Int=0 we could have error = 0 if all points have 0 intensity, which is degenerate case (bad masking). 
 		//and this should clear it up as needed...
 		IN2G_RemoveNaNsFrom6Waves(LineProfileIntensity,LineProfileQvalues,LineProfileIntSdev,LineProfileQy,LineProfileQz,LineProfileAzAvalues)
 		//finally, if the data are ONLY in negative direction, then take abs of Q as that is likely what user wants to do...
@@ -1918,12 +1931,12 @@ Function NI1A_LineProf_CreateLP()
 			LineProfileQy=abs(LineProfileQy)
 			LineProfileQz=abs(LineProfileQz)
 		endif
-		
+						
 		variable constVal=Wavelength / (4 * pi)
-//		Wave/Z DSpacingWidth
-//		if(!WaveExists(DSpacingWidth))
-//			abort
-//		endif
+		//		Wave/Z DSpacingWidth
+		//		if(!WaveExists(DSpacingWidth))
+		//			abort
+		//		endif
 		
 		Duplicate/O LineProfileQvalues, LineProfiledQvalues, LineProfileTwoThetaWidth, LineProfileDistacneInmmWidth, LineProfileDspacingWidth
 		Duplicate/Free LineProfileQvalues, LineProfileTwoTheta, LineProfileDistacneInmm, LineProfileDspacing
