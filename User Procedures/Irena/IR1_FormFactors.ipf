@@ -2760,8 +2760,10 @@ Function/T IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder)
 	CoreShellPrecipitate = {"Shell thickness calc","Core Rho","Shell Rho","Solvent Rho"}
 	
 	Wave/T/Z Lookup=$(FormFactorName) 
-	if(WaveExists(Lookup))
+	if(WaveExists(Lookup) && ParameterOrder <= numpnts(Lookup))
 		FFParamName=Lookup[ParameterOrder-1]
+	else
+		FFParamName = ""
 	endif
 	
 	setDataFolder OldDf

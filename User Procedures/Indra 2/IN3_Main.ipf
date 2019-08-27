@@ -113,7 +113,7 @@ Function IN3_MainPanelNew()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(22.25,43.25,445,830) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
-	TitleBox Title title="\Zr180USAXS data reduction panel",pos={5,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
+	TitleBox Title title="\Zr170USAXS data reduction panel",pos={5,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={10,705},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
 	TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={10,720},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 	//some local controls
@@ -449,7 +449,7 @@ Function IN3_MainPanelNew()
 	CheckBox FindMinQForData,pos={230,743},size={150,14},title="Find MinQ automatically?", noproc
 	CheckBox FindMinQForData,variable= root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
 	SetVariable MinQMinFindRatio,pos={220,765},size={170,22},title="I_S/I_Bl ratio =  ", frame=1
-	SetVariable MinQMinFindRatio,limits={1,10,0.1},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
+	SetVariable MinQMinFindRatio,limits={0.1,10,0.1},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
 
 
 

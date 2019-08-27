@@ -1591,10 +1591,10 @@ Function IR2L_PopSetVarProc(SV_Struct) : SetVariableControl
 				NVAR LNMinSize=$("root:Packages:IR2L_NLSQF:LNMinSize_pop"+num2str(whichDataSet))
 				NVAR LNMinSizeMin=$("root:Packages:IR2L_NLSQF:LNMinSizeMin_pop"+num2str(whichDataSet))
 				NVAR LNMinSizeMax=$("root:Packages:IR2L_NLSQF:LNMinSizeMax_pop"+num2str(whichDataSet))
-				if(varNum<3)
-					varNum=3
-					LNMinSize = 3
-					print "Cannot have Log-Normal min size smaller than ~3A, Small-angle scattering theory fails. Reset the value for user."
+				if(varNum<2)
+					varNum=2
+					LNMinSize = 1
+					print "Cannot have Log-Normal min size smaller than ~2A, Small-angle scattering theory fails. Reset the value for user."
 				endif
 				LNMinSizeMin= varNum*0.5
 				LNMinSizeMax=varNum*2			
@@ -2884,23 +2884,6 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						TagText+="Rg : "+num2str(Rg)+" [A]  \r"
 						TagText+="Mean / Mode / Median / FWHM  \r"
 						TagText+=num2str(MeanVal)+" / "+num2str(ModeVal)+" / "+num2str(MedianVal)+" / "+num2str(FWHMVal)+"  \r"
-						//TagText+="Median= "+num2str(MedianVal)+"  \r"
-						//TagText+="FWHM = "+num2str(FWHMVal)+"  \r"
-//						if(stringMatch(PopSizeDistShape, "Gauss") )
-//							LocationPnt = BinarySearch(Qvec, 1.8/GMeanSize )
-//							TagText+="Mean = "+num2str(GMeanSize)+"  \r"
-//							TagText+="Width = "+num2str(GWidth)+"  \r"
-//						elseif(stringMatch(PopSizeDistShape, "LogNormal" ))
-//							LocationPnt = BinarySearch(Qvec, 1.8/LNMeanSize )
-//							TagText+="Mean = "+num2str(LNMeanSize)+"  \r"
-//							TagText+="Min = "+num2str(LNMinSize)+"  \r"
-//							TagText+="Deviation = "+num2str(LNSdeviation)+"  \r"
-//						else //LSW
-//							IR2L_AppendAnyText("DistributionShape"+"\t=\tLSW",0)
-//							IR2L_AppendAnyText("LSWLocation"+"\t=\t"+num2str(LSWLocation),0)				
-//							LocationPnt = BinarySearch(Qvec, 1.8/LSWLocation )
-//							TagText+="Location = "+num2str(LSWLocation)+"  \r"
-//						endif
 
 						TagText+="Form Factor : "+FormFac+"  \r"
 						if(stringmatch(FormFac, "*User*"))
@@ -2943,7 +2926,11 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 						else
 							//TagText+="Dilute system assumed \r"
 						endif
-						TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
+						if(LastDataSet>1)
+							TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
+						else
+							TagText =  RemoveEnding(TagText, "\r" )
+						endif
 						Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
 
 					elseif(stringmatch(Model,"Unified level"))			//Unified level results
@@ -2990,7 +2977,11 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 							else
 								//TagText+="Dilute system assumed \r"
 							endif
-							TagText =  RemoveEnding(TagText, "\r" )
+							if(LastDataSet>1)
+								TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
+							else
+								TagText =  RemoveEnding(TagText, "\r" )
+							endif
 							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
 					elseif(stringmatch(Model,"SurfaceFractal"))			//Surface Fractal results
 						//here appedn tag for Unified level model
@@ -3010,7 +3001,11 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 								TagText+="Terminal Qc  = "+num2str(SurfFrQc)+"[1/A]\r"
 								TagText+="assumed width Qc  = "+num2str(100*SurfFrQcWidth)+"%\r"
 							endif
-							TagText =  RemoveEnding(TagText, "\r" )
+							if(LastDataSet>1)
+								TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
+							else
+								TagText =  RemoveEnding(TagText, "\r" )
+							endif
 							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
 					elseif(stringmatch(Model,"MassFractal"))			//Surface Fractal results
 						//here append tag for Mass Fractal model
@@ -3030,7 +3025,11 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 							TagText+="Corr. Length = "+num2str(MassFrKsi)+"  [A]\r"
 							TagText+="Fractal Dim.  = "+num2str(MassFrDv)+"\r"
 							TagText+="Particle AR  = "+num2str(MassFrBeta)+";   Volume filling  = "+num2str(MassFrEta)+"\r"
-							TagText =  RemoveEnding(TagText, "\r" )
+							if(LastDataSet>1)
+								TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
+							else
+								TagText =  RemoveEnding(TagText, "\r" )
+							endif
 							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText						
 					elseif(stringmatch(Model,"Diffraction Peak"))
 						//here append tag for Diffraction peak
@@ -3052,7 +3051,11 @@ Function IR2L_AddRemoveTagsToGraph(AddAlso)
 							TagText+="Position (Q) = "+num2str(DiffPeakQPos)+"  [A^-1]\r"
 							TagText+="Integral intensity = "+num2str(DiffPeakIntgInt)+"\r"
 							TagText+="FWHM (Q) = "+num2str(DiffPeakQFWHM)+" [A^-1]"
-							TagText =  RemoveEnding(TagText, "\r" )
+							if(LastDataSet>1)
+								TagText =  RemoveEnding(TagText, "\r" )+"set"+num2str(k)
+							else
+								TagText =  RemoveEnding(TagText, "\r" )
+							endif
 							Tag/C/W=LSQF_MainGraph /N=$(TagName)/F=0/L=2/TL=0 $("IntensityModel_set"+num2str(k)), LocationPnt, TagText
 	
 					endif

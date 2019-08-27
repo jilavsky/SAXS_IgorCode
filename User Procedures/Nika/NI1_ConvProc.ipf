@@ -3624,7 +3624,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 //first data selection part
 	Button Select2DDataPath,pos={5,30},size={140,20},proc=NI1A_ButtonProc,title="Select data path"
 	Button Select2DDataPath,help={"Select Data path where 2D data are"}
-	TitleBox PathInfoStrt, pos={3,55}, size={350,20}, variable=root:Packages:Convert2Dto1D:MainPathInfoStr, fsize=9, frame=0, fstyle=2, fColor=(0,12800,32000)
+	TitleBox PathInfoStr, pos={3,55}, size={350,20}, variable=root:Packages:Convert2Dto1D:MainPathInfoStr, frame=0, fstyle=2, fColor=(0,12800,32000)//,fSize=1.3
 	PopupMenu Select2DDataType,pos={290,30},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu Select2DDataType,help={"Select type of 2D images being loaded"}
 	PopupMenu Select2DDataType,mode=2,popvalue=DataFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
@@ -3651,7 +3651,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	NVAR FIlesSortOrder = root:Packages:Convert2Dto1D:FIlesSortOrder
 	PopupMenu FIlesSortOrder,mode=(FIlesSortOrder+1),value= "None;Sort;Sort2;_001;Invert_001;Invert Sort;Invert Sort2;"
 
-	TitleBox RefreshList1 title="Refresh using Right click",pos={320,99},frame=0,fstyle=1, fixedSize=1,size={120,11},fSize=9
+	TitleBox RefreshList1 title="\Zr080Refresh using Right click",pos={320,99},frame=0,fstyle=1, fixedSize=1,size={120,11}
 	Button SaveCurrentToolSetting,pos={330,117},size={100,18},proc=NI1A_ButtonProc,title="Save/Load Config"
 	Button SaveCurrentToolSetting,help={"Save or recall configuration of this panel"}
 	Button ExportDisplayedImage,pos={330,137},size={100,18},proc=NI1A_ButtonProc,title="Export image"

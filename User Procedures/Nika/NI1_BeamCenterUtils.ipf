@@ -118,7 +118,7 @@ Function NI1BC_CreateBmCntrField()
 	PopupMenu BmCntrFileType,pos={247,31},size={101,21},proc=NI1BC_BmCntrPopMenuProc,title="File type:"
 	PopupMenu BmCntrFileType,help={"Select image type of data to be used"}
 	PopupMenu BmCntrFileType,mode=1,popvalue=BmCntrFileType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
-	TitleBox BCPathInfoStrt, pos={3,56}, size={325,20}, variable=root:Packages:Convert2Dto1D:BCPathInfoStr, fixedSize=0, frame=0, fstyle=2, fColor=(0,12800,32000)
+	TitleBox BCPathInfoStr, pos={3,56}, size={325,20}, variable=root:Packages:Convert2Dto1D:BCPathInfoStr, fixedSize=0, frame=0, fstyle=2, fColor=(0,12800,32000)
 
 	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1BC_ListBoxProc
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
