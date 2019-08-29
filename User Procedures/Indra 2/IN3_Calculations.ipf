@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.41 added some fudge factor for Qmin search and MSAXS handling. And change the llogic so one can understand, what is happening. 
+//1.41 added some fudge factor for Qmin search and MSAXS handling. And change the logic so one can understand, what is happening. 
 //1.40 added automatci location of the Qmin where data start due to Int Sa/Bl ratio. 
 //1.39 Fixed step scanning GUI issues. 
 //1.38 Added ability to overwrite Flyscan amplifier dead times. 
@@ -389,7 +389,7 @@ static Function IN3_ReturnCursorBack(QminDefaultForProcessing)
 			IntRatio = 10^IntRatio											//interpolated BlankInt
 			IntRatio = R_Int / IntRatio										//this is R_int/BlankInt (interpolated to R_+Qvec)
 			IntRatio = IntRatio / QCorrection
-			wavestats/Q IntRatio
+			wavestats/Q/R=[10,numpnts(IntRatio)/10] IntRatio
 			FindLevel  /Q/EDGE=1/R=[V_minloc,numpnts(IntRatio)-1] IntRatio, MinQMinFindRatio
 			if(V_Flag==0)	//found level
 				QminDifferenceInIntensities = R_Qvec[ceil(V_LevelX)]
@@ -664,11 +664,15 @@ static Function IN3_LoadData()
 		Parameters=ReplaceStringByKey("Sample",Parameters,DFloc,"=")		//write results into ASBparameters
 
 		string IsItSBUSAXS=StringByKey("SPECCOMMAND", note(OrigAR_encoder), "=")[0,7]			//find out if this is SBUSAXS
+		NVAR is2DCollimated=root:Packages:Indra3:is2DCollimated										//store this info for later... 
+		is2DCollimated = 0
 		string Calibrate
 		if (stringmatch(IsItSBUSAXS,"sbuascan")||stringmatch(IsItSBUSAXS,"sbflysca"))				//SBUSAXS, do not let user to select USAXS calibration
 			Calibrate="SBUSAXS;"
+			is2DCollimated = 1
 		else																			
 			Calibrate="USAXS;"				//and if it is USAXS data, do not let user select SBUSAXS calibration
+			is2DCollimated = 0
 		endif
 		Parameters=ReplaceStringByKey("Calibrate",Parameters,Calibrate,"=")
 		NVAR SampleThickness
@@ -2311,8 +2315,12 @@ Function IN3_DesmearData()
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:Indra3:
 	NVAR DesmearData = root:Packages:Indra3:DesmearData
-	NVAR IsBlank = root:Packages:Indra3:IsBlank
-	if(DesmearData && !IsBlank)
+	NVAR IsBlank = root:Packages:Indra3:IsBlank						//cannot desmear Blank
+	NVAR is2DCollimated=root:Packages:Indra3:is2DCollimated		//cannot desmear pinhole data
+	if(IsBlank)
+		return 0
+	endif	
+	if(DesmearData && !is2DCollimated)
 		NVAR SlitLength = root:Packages:Indra3:SlitLength
 		NVAR DesmearNumberOfInterations=root:Packages:Indra3:DesmearNumberOfInterations
 		WAVE/Z SMR_Int = root:Packages:Indra3:SMR_Int
@@ -2331,9 +2339,6 @@ Function IN3_DesmearData()
 
 		Duplicate/O SMR_Int, DesmNormalizedError
 		Duplicate/Free SMR_Int, absNormalizedError
-
-//		IN2G_ReplaceNegValsByNaNWaves(tmpSMR_Int,tmpSMR_Qvec,tmpSMR_Error)			//here we remove negative values by setting them to NaNs
-//		IN2G_RemoveNaNsFrom4Waves(tmpSMR_Int,tmpSMR_Qvec,tmpSMR_Error,tmpSMR_dQ)			//and here we remove NaNs all together
 		variable numOfPoints = numpnts(SMR_Int)
 		variable endme=0, oldendme = 0, DesmearAutoTargChisq, difff
 		DesmearAutoTargChisq = 0.5
@@ -2358,8 +2363,6 @@ Function IN3_DesmearData()
 		Duplicate/O tmpWork_Qvec, DSM_Qvec
 		Duplicate/O tmpWork_Error, DSM_Error
 		Duplicate/O tmpWork_dQ, DSM_dQ
-		
-		
 		DoWindow RcurvePlotGraph
 		if(V_Flag)
 			CheckDisplayed /W=RcurvePlotGraph DSM_Int 
@@ -2372,6 +2375,16 @@ Function IN3_DesmearData()
 			Label/W=RcurvePlotGraph right "\\K(3,52428,1)DSM & \\K(1,16019,65535)SMR \\K(0,0,0)Intensity"
 			DoUpdate /W=RcurvePlotGraph
 			IN3_DisplayDesExtAndError()
+		endif
+	elseif(is2DCollimated)		//2DUSAXS, keep desmeared data, remove slit smeared data if present
+		DoWindow RcurvePlotGraph
+		if(V_Flag)
+			CheckDisplayed /W=RcurvePlotGraph  SMR_Int 
+			if(V_Flag)
+				removefromgraph /W=RcurvePlotGraph/Z SMR_Int 
+				Label/W=RcurvePlotGraph right "\\K(0,0,0)DSM Intensity"	
+				DoUpdate /W=RcurvePlotGraph
+			endif	
 		endif
 	else		//remove desmeared data if present
 		DoWindow RcurvePlotGraph

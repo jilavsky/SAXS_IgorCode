@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.97
+#pragma version = 1.98
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -12,6 +12,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.98 add is2DCollimated and fix sbFLyscan handling. few more fixes. 
 //1.97 April 1 BETA release, fix GUI for step scanning
 //1.96 added use of FWHM from sample to GUI. Added ability to overwrite Flyscan amplifier dead times. 
 //1.95 Added button to open Read me. 
@@ -38,7 +39,7 @@
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
 Constant IN3_ReduceDataMainVersionNumber=1.97
-Constant IN3_NewReduceDataMainVersionNum=1.97
+Constant IN3_NewReduceDataMainVersionNum=1.98 
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.3e-10
@@ -911,7 +912,7 @@ Function IN3_Initialize()
 	
 	
 	//Main parameters
-	ListOfVariables="IsBlank;CalculateThickness;Wavelength;RecalculateAutomatically;SampleFilledFraction;Kfactor;"
+	ListOfVariables="IsBlank;is2DCollimated;CalculateThickness;Wavelength;RecalculateAutomatically;SampleFilledFraction;Kfactor;"
 	ListOfVariables+="SampleThickness;OverideSampleThickness;SampleTransmission;SampleLinAbsorption;SampleTransmissionPeakToPeak;"
 	ListOfVariables+="SampleThicknessBckp;BlankWidthBckp;BlankFWHMBckp;BlankMaximumBckp;"
 	ListOfVariables+="UPD_G1;UPD_G2;UPD_G3;UPD_G4;UPD_G5;UPD_Vfc;"
