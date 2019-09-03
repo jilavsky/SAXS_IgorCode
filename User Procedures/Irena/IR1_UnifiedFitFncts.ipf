@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.32
+#pragma version=2.33
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -11,6 +11,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.33 fixes to how messages fro CheckFitting parameters are defined. 
 //2.32 prevent invariant from being negative. Happens when P<3 for level which is extending to infinity at which point invariant makes little sense anyway. 
 //2.31 fixed IR1A_UnifiedCalcIntOne for when extension of data for SMR data requires extension, failed for rtGlobals=3
 //2.30 combined with smaller ipf files: IR1_Unified_SaveExport.ipf
@@ -7808,39 +7809,50 @@ Function IR1A_CheckFittingParamsFnct()
 	Duplicate/T/O CoefNames, ParameterWarnings
 	variable i
 	string tmpStr
-	For(i=0;i<Numpnts(CoefNames);i+=1)
+	For(i=0;i<Numpnts(CoefNames)-1;i+=1)
 		ParameterWarnings[i]=""
 		tmpStr = CoefNames[i]
 		if(stringmatch(tmpStr,"Background"))
 			ParameterWarnings[i]=""		//no problem ever here
-		elseif(stringmatch(tmpStr[6,7], "Rg")&& !stringmatch(tmpStr[6,9], "RGCO"))  //"Level1Rg"
-			if(!stringmatch(tmpStr[0,5]+"G",CoefNames[i+1]))
+		elseif(stringmatch(tmpStr[6,7], "Rg")&& !stringmatch(tmpStr[6,9], "RGCO"))
+			if(i==(numpnts(CoefNames)-1))							//this solves issue when looking for paramter which should be after the current parameter and it is not there. 
+				ParameterWarnings[i]="G is not fitted?"		
+			elseif(!stringmatch(tmpStr[0,5]+"G",CoefNames[i+1]))
 				ParameterWarnings[i]="G is not fitted?"		
 			endif
-		elseif(stringmatch(tmpStr[6], "G")&& !stringmatch(tmpStr[6,8], "GCO"))  //"Level1Rg"
-			if(!stringmatch(tmpStr[0,5]+"Rg",CoefNames[i-1]))
+		elseif(stringmatch(tmpStr[6], "G")&& !stringmatch(tmpStr[6,8], "GCO"))
+			if(i==0)													//this solves issue when looking for paramter which should be before the current parameter and it is not there. 
+				ParameterWarnings[i]="Rg is not fitted?"		
+			elseif(!stringmatch(tmpStr[0,5]+"Rg",CoefNames[i-1]))
 				ParameterWarnings[i]="Rg is not fitted?"		
 			endif
-		elseif(stringmatch(tmpStr[6], "P")&& !stringmatch(tmpStr[6,8], "PAC"))  //"Level1Rg"
-			if(!stringmatch(tmpStr[0,5]+"B",CoefNames[i +1]))
+		elseif(stringmatch(tmpStr[6], "P")&& !stringmatch(tmpStr[6,8], "PAC")) 
+			if(i==(numpnts(CoefNames)-1))							//this solves issue when looking for paramter which should be after the current parameter and it is not there. 
+				ParameterWarnings[i]="B is not fitted?"		
+			elseif(!stringmatch(tmpStr[0,5]+"B",CoefNames[i +1]))
 				ParameterWarnings[i]="B is not fitted?"		
 			endif
-		elseif(stringmatch(tmpStr[6], "B")&& !stringmatch(tmpStr[6,8], "PAC"))  //"Level1Rg"
-			if(!stringmatch(tmpStr[0,5]+"P",CoefNames[i -1]))
+		elseif(stringmatch(tmpStr[6], "B")&& !stringmatch(tmpStr[6,8], "PAC"))
+			if(i==0)													//this solves issue when looking for paramter which should be before the current parameter and it is not there. 
+				ParameterWarnings[i]="P is not fitted?"		
+			elseif(!stringmatch(tmpStr[0,5]+"P",CoefNames[i -1]))
 				ParameterWarnings[i]="P is not fitted?"		
 			endif
-		elseif(stringmatch(tmpStr[6,9], "PACK"))  //"Level1Rg"
-			if(!stringmatch(tmpStr[0,5]+"ETA",CoefNames[i -1]))
+		elseif(stringmatch(tmpStr[6,9], "PACK")) 
+			if(i==0)													//this solves issue when looking for paramter which should be before the current parameter and it is not there. 
+				ParameterWarnings[i]="ETA is not fitted?"		
+			elseif(!stringmatch(tmpStr[0,5]+"ETA",CoefNames[i -1]))
 				ParameterWarnings[i]="ETA is not fitted?"		
 			endif
-		elseif(stringmatch(tmpStr[6,8], "ETA"))  //"Level1Rg"
-			if(!stringmatch(tmpStr[0,5]+"PACK",CoefNames[i +1]))
+		elseif(stringmatch(tmpStr[6,8], "ETA")) 
+			if(i==(numpnts(CoefNames)-1))							//this solves issue when looking for paramter which should be after the current parameter and it is not there. 
+				ParameterWarnings[i]="PACK is not fitted?"		
+			elseif(!stringmatch(tmpStr[0,5]+"PACK",CoefNames[i +1]))
 				ParameterWarnings[i]="PACK is not fitted?"		
 			endif
-		elseif(stringmatch(tmpStr[6,9], "RGCO"))  //"Level1Rg"
+		elseif(stringmatch(tmpStr[6,9], "RGCO")) 
 				ParameterWarnings[i]="Fitting RgCO is BAD idea..."		
 		endif
-
 	endfor
 	NVAR UseNoLimits = root:Packages:Irena_UnifFit:UseNoLimits
 	WAVE HighLimit=root:Packages:Irena_UnifFit:HighLimit
