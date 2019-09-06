@@ -2,7 +2,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.66
-Constant NI1AversionNumber = 2.66
+Constant NI1AversionNumber = 2.67
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant NI1AversionNumber = 2.66
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.67 Fixed case when user set ASCII name for output - apprently this was broken forever... 
 //2.66 added UseBatchProcessing to prevent graphs from being displays to speed up processing of large number of images. 
 //2.65 fixes for rtGlobal=3, changed Nika GSAS outptu file to xye instead of GSA. xye is better. 
 //2.64 removed mar345 and Fit2D support, let's see if someone complains. 
@@ -1192,8 +1193,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	NVAR UseSampleNameFnct=root:Packages:Convert2Dto1D:UseSampleNameFnct
 	SVAR functionName = root:Packages:Convert2Dto1D:SampleNameFnct
 	SVAR UserSampleName=root:Packages:Convert2Dto1D:UserSampleName
-	
-	
+		
 	variable ItemsInLst, i
 	string OldNote
 	string LocalUserFileName
@@ -1218,7 +1218,6 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				UseName=UserSampleName[0,9]+"_"+num2str(BSLcurrentframe)+"_"+CurOrient
 			endif
 		else
-			//variable tempEnd=26-strlen(CurOrient)
 			OriginalUserName = UserSampleName+"_"+CurOrient
 			UseName=NI1A_TrimCleanDataName(UserSampleName, CurOrient)+"_"+CurOrient
 		endif
@@ -1254,6 +1253,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				OriginalUserName = LocalUserFileName+"_"+CurOrient
 				UseName=NI1A_TrimCleanDataName(LocalUserFileName, CurOrient)+"_"+CurOrient
 			else
+				OriginalUserName = UserFileName+"_"+CurOrient		//this is when user sets manually ASCII data name string. 
 				UseName=NI1A_TrimCleanDataName(UserFileName, CurOrient)+"_"+CurOrient
 			endif
 		endif
