@@ -1003,7 +1003,9 @@ Function IN3_CalculateMSAXSCorrection()
 		endif
 
 		if(stringmatch(ChildWindowList("USAXSDataReduction"),"*MSAXSGraph*"))
- 			SetAxis/W=USAXSDataReduction#MSAXSGraph bottom R_Qvec[start-8],R_Qvec[end1+8]
+			variable tmpStart
+			tmpStart = (start-8)>1 ? start-8 : 1
+ 			SetAxis/W=USAXSDataReduction#MSAXSGraph bottom R_Qvec[tmpStart],R_Qvec[end1+8]
 			Cursor/P/W=USAXSDataReduction#MSAXSGraph  A  R_Int  start
 			Cursor/P/W=USAXSDataReduction#MSAXSGraph  B  R_Int  end1
 		endif

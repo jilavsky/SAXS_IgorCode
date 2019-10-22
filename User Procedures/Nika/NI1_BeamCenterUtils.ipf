@@ -674,7 +674,10 @@ Function NI1BC_DisplayCalibrantCircles()
 	NVAR HorizontalTilt=root:Packages:Convert2Dto1D:HorizontalTilt							//tilt in degrees
 	NVAR VerticalTilt=root:Packages:Convert2Dto1D:VerticalTilt								//tilt in degrees
 	NVAR BMCalibrantDisplayCircles=root:Packages:Convert2Dto1D:BMCalibrantDisplayCircles
-	wave BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
+	wave/Z BmCntrCCDImg = root:Packages:Convert2Dto1D:BmCntrCCDImg
+	if(!WaveExists(BmCntrCCDImg))
+		return 0
+	endif
 	//remove all drawings
 	DoWindow CCDImageForBmCntr
 	if(V_Flag)

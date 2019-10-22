@@ -389,7 +389,7 @@ Function IN3_CalculateRWaveIntensity(CleanUpRangeCHange)				//Recalculate the R 
 	//fix oversubtraction of PD_Intensity here?
 	IN3_FixNegativeIntensities(PD_Intensity)
 	IN3_FixZeroUncertainties(PD_error)
-
+	KillWaves/Z R_error,R_Int
 	Duplicate/O PD_error, R_error
 	Duplicate/O PD_Intensity, R_Int
 	NVAR SampleTransmissionPeakToPeak=root:Packages:Indra3:SampleTransmissionPeakToPeak

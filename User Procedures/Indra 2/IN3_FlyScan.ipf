@@ -629,11 +629,16 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	endif
  	newDataFolder/O/S $(FileName)
 	string/g UserSampleName=	UserSampleNameWv[0]			 //stringFromList(0,origFileName,".")
+	//reading Time failed?
+	if(WaveType(TimeWv ,1)!=1)
+		Abort "Struk data read failure found in the file fro sample :"+UserSampleName+", these data are unusable, aborting" 
+	endif
 	Duplicate/O TimeWv, MeasTime
 	Duplicate/O I0Wv, Monitor
 	Duplicate/O updWv, USAXS_PD
-	Duplicate/O TimeWv, PD_range
-	Duplicate/O TimeWv, I0gain
+
+	Duplicate/O MeasTime, PD_range
+	Duplicate/O MeasTime, I0gain
 	variable OscillationsFound
 	OscillationsFound=0
 	//create AR data
@@ -680,7 +685,31 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		Redimension /D/N=(numpnts(MeasTime)) ArValues
 		IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
 	endif
+
 	redimension/D MeasTime, Monitor, USAXS_PD
+//
+//	if(WaveType(MeasTime ,1)==1)
+//		redimension/D MeasTime 
+//	else
+//		print "Failed to record measurement time from struk, replace with monitor counts" 
+//		KillWaves MeasTime
+//		Duplicate Monitor, MeasTime
+//		redimension/D MeasTime
+//	endif
+//	if(WaveType(Monitor ,1)==1)
+//		redimension/D Monitor 
+//	else
+//		print "Failed to record I0 from struk, replace with Measuemernt time " 
+//		KillWaves Monitor
+//		Duplicate MeasTime, Monitor
+//		redimension/D Monitor
+//	endif
+//	if(WaveType(USAXS_PD ,1)==1)
+//		redimension/D USAXS_PD 
+//	else
+//		Abort "Failed to record USAXS_PD from struk, fail here, this cannot be fixed." 
+//	endif
+	
 	redimension/S PD_range, I0gain
 	//need to append the wave notes...
 	string WaveNote

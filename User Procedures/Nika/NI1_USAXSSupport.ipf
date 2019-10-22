@@ -2669,7 +2669,7 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 	DoWIndow LineuotDisplayPlot_Q
 	if(V_Flag)
 		DoWindow/F LineuotDisplayPlot_Q
-		IN2G_LegendTopGrphFldr(10,15,1,0)
+		IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")),15,1,0)
 		IN2G_ColorTopGrphRainbow()
 	endif	
 	

@@ -2298,7 +2298,7 @@ Function IN3_PlotProcessedData()
 		endif
 		IN2G_ColorTopGrphRainbow()
 		//IN2G_ColorTraces( )
-		IN2G_LegendTopGrphFldr(10,12,1,0)
+		IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")),12,1,0)
 		//	IN2G_GenerateLegendForGraph(10,0,1)
 		DoUpdate /W=USAXSProcessedDataGraph
 	endif

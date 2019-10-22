@@ -1727,7 +1727,7 @@ Function NI1A_DisplayLineoutAfterProc(int,Qvec,Err,NumOfWavesToKeep,typeGraph)
 	else
 		Abort "error in NI1A_DisplayLineoutAfterProc"
 	endif
-	IN2G_LegendTopGrphFldr(10, 15,1,0)
+	IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")), 15,1,0)
 	//Legend/C/N=text0/A=RT
 	ModifyGraph mirror=1
 	IN2G_ColorTopGrphRainbow()

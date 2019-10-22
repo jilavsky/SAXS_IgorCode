@@ -2478,7 +2478,7 @@ Function IR3W_MPF2PlotPeakGraph()
 	Label/W=$(NewGraphName) bottom "d [A]"
 	DoWindow/F $(NewGraphName)
 	IN2G_ColorTopGrphRainbow()
-	IN2G_LegendTopGrphFldr(10,15,1,1)
+	IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")),15,1,1)
 	Wave AreaWv = $(StartFolder+":"+PossiblyQuoteName(MPF2PlotPeakProfile+"_Area"))
 	Wave AreaNames=$(StartFolder+":"+PossiblyQuoteName(MPF2PlotPeakProfile+"_AreaNames"))
 	make/O/N=(numpnts(AreaWv)) $(StartFolder+":"+possiblyquotename(MPF2PlotPeakProfile+"_AreaLabelLocs"))
@@ -2620,7 +2620,7 @@ Function IR3W_MPF2PlotPeakParameters(WhichUnit)
 			endswitch
 			DoWindow/F $(NewGraphName)
 			//IN2G_ColorTopGrphRainbow()
-			IN2G_LegendTopGrphFldr(10,15,1,1)
+			IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")),15,1,1)
 		endfor
 	
 		Edit/K=1/W=(335,384,1274,710) ParamLabels, ParamWv_T as "MPF2 "+MPF2PlotPeakProfile+" Parameter Listing "
@@ -2658,7 +2658,7 @@ Function IR3W_MPF2PlotPeakParameters(WhichUnit)
 			endswitch
 			DoWindow/F $(NewGraphName)
 			//IN2G_ColorTopGrphRainbow()
-			IN2G_LegendTopGrphFldr(10,15,1,1)
+			IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("LegendSize")),15,1,1)
 		endfor
 	
 		Edit/K=1/W=(335,384,1274,710) ParamLabels, ParamWv_d as "MPF2 "+MPF2PlotPeakProfile+" Parameter Listing in d"
