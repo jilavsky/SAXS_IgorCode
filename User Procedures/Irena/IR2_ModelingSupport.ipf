@@ -4964,7 +4964,8 @@ Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	endif
 	if(cmpstr(ctrlName,"ConfigureGraph")==0)
 		IR2C_ConfigMain()
-		PauseForUser IR2C_MainConfigPanel
+		//PauseForUser IR2C_MainConfigPanel
+		PauseForUser IN2G_MainConfigPanel
 		IR2L_FormatInputGraph()
 		IR2L_FormatLegend()
 	endif

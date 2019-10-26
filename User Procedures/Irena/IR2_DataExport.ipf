@@ -223,6 +223,7 @@ Function IR2E_ButtonProc(ctrlName) : ButtonControl
 	endif
 	if(stringmatch(ctrlName,"ProcessAllData"))
 		IR2E_ExportMultipleFiles()
+		print "Export of all data is DONE!"
 	endif
 	
 	

@@ -892,10 +892,10 @@ Function IN2U_ConvCurrentlyLoadedDataSet(DataFolderName)
 			endfor
 			if(!found)
 				Redimension/N=(numpnts(RangeVals)+1) RangeVals,RangeValsIndex
-				RangeVals[numpnts(RangeVals)+1] = Factor[i]
+				RangeVals[numpnts(RangeVals)-1] = Factor[i]
 				curvalue = Factor[i]
 				curIndex=curIndex-1
-				RangeValsIndex[numpnts(RangeVals)+1]=curIndex
+				RangeValsIndex[numpnts(RangeVals)-1]=curIndex
 				PD_range[i]=curIndex
 			endif
 		endif

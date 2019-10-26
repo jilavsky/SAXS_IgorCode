@@ -3187,8 +3187,12 @@ Function IR1R_GraphIfAllowed(ctrlName)
 				endif
 				Wave IntensityOriginal = root:Packages:Sizes:IntensityOriginal 
 				Wave Q_vecOriginal = root:Packages:Sizes:Q_vecOriginal
-				OldCursorA=pcsr(A, "IR1R_SizesInputGraph")
-				OldCursorB=pcsr(B, "IR1R_SizesInputGraph")		
+				if(strlen(CsrInfo(A))>0)
+					OldCursorA=pcsr(A, "IR1R_SizesInputGraph")
+				endif
+				if(strlen(CsrInfo(B))>0)
+					OldCursorB=pcsr(B, "IR1R_SizesInputGraph")		
+				endif
 		endif
 		KillWIndow/Z IR1R_SizesInputGraph
  		SVAR FldrNm=root:Packages:Sizes:DataFolderName

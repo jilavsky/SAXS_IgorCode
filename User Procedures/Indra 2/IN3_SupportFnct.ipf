@@ -332,6 +332,10 @@ Function IN3_RecalcSubtractSaAndBlank()
 
 	string IsItSBUSAXS
 	IsItSBUSAXS=StringByKey("SPECCOMMAND", note(R_Int), "=")[0,7]
+	IF(STRLEN(IsItSBUSAXS)<4)	//lookup of type of scan in wavenote failed, here is backup for old cases
+		SVAR SpecCommand = root:Packages:Indra3:SpecCommand
+		IsItSBUSAXS=SpecCommand[0,7]
+	endif
 	string oldNoteValue			
 	variable tempMinStep
 

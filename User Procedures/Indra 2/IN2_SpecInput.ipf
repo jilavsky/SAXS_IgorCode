@@ -1,5 +1,5 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma IgorVersion= 7.0	// Requires Igor Pro v4.0 or later.
+#pragma IgorVersion= 7.06  // Requires Igor Pro v7.06 or later.
 #pragma version = 1.21
 
 
@@ -21,6 +21,11 @@ constant LimitValForMoniToAssumeBeamDump=1000
 
 
 Function IN2_RemoveUSAXSMacros()
+	//kill windows as needed, needs to be smarter here???
+	KillWIndow/Z RcurvePlotGraph
+ 	KillWIndow/Z USAXSDataReduction
+ 	
+
 
 	Execute/P "DELETEINCLUDE \"IN2_Load Indra 2\""
 	Execute/P "COMPILEPROCEDURES "

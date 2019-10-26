@@ -1042,7 +1042,8 @@ Function IN2G_ConfigMain()		//call configuration routine
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//this is main configuration utility... 
 	IN2G_InitConfigMain()
-	DoWindow IR2C_MainConfigPanel
+	//DoWindow IR2C_MainConfigPanel
+	DoWindow IN2G_MainConfigPanel
 	if(!V_Flag)
 		Execute ("IN2G_MainConfigPanelProc()")
 	else

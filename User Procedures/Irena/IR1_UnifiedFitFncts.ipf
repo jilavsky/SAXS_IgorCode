@@ -1127,7 +1127,7 @@ Function IR2U_EvaluateUnifiedData()
 		IR2U_UnifiedEvaPanelFnct() 
 		IR1_UpdatePanelVersionNumber("UnifiedEvaluationPanel", IR2UversionNumber,1)
 	endif
-	KillWIndow/Z IR2U_UnifLogNormalSizeDist
+	KillWIndow/Z IR2U_UnifLogNormalSizeDist 
 end
 
 //***********************************************************
@@ -1216,11 +1216,11 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	PopupMenu AvailableLevels,help={"Select level to use for data analysis"}
 	PopupMenu AvailableLevels,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:AvailableLevels"
 
-	PopupMenu SelectedBlevel,pos={313,140},size={90,20},proc=IR2U_PopMenuProc,title="Start:"
+	PopupMenu SelectedBlevel,pos={313,140},size={90,20},proc=IR2U_PopMenuProc,title="Low :"
 	PopupMenu SelectedBlevel,help={"Select end level to use for data analysis"}
 	PopupMenu SelectedBlevel,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:SelectedBlevel"
 
-	PopupMenu SelectedQlevel,pos={315,115},size={90,20},proc=IR2U_PopMenuProc,title="End :"
+	PopupMenu SelectedQlevel,pos={315,115},size={90,20},proc=IR2U_PopMenuProc,title="High:"
 	PopupMenu SelectedQlevel,help={"Select stat level to use for data analysis"}
 	PopupMenu SelectedQlevel,mode=1,popvalue="---", value=#"root:Packages:Irena_AnalUnifFit:SelectedQlevel"
 
@@ -2049,7 +2049,14 @@ Function IR2U_DWSCheckboxProc(ctrlName,checked) : CheckBoxControl//**DWS
 	if(stringmatch(ctrlName, "includelogbook"))
 		NVAR value=root:packages:Irena_AnalUnifFit:printlogbook
 		value=checked
-	
+  		SVAR nbl=root:Packages:Irena_AnalUnifFit:PorodNotebookName
+		if (strsearch(WinList("*",";","WIN:16"),nbl,0)!=-1) 		///Logbook exists
+			if(checked)
+				DoWindow/HIDE=0 $nbl
+			else
+				DoWindow/HIDE=1 $nbl
+			endif
+		endif
 	endif
 	
 end
