@@ -419,6 +419,8 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				KillDataFolder/Z root:Packages:NexusImportTMP:
 				//now we should be able to read this in without challenges? 
 				NI1A_Convert2Dto1DMainPanel()
+				SVAR SampleNameMatchStr = root:Packages:Convert2Dto1D:SampleNameMatchStr
+				SampleNameMatchStr =""
 				string selectedFile
 				selectedFile = NI1_9IDCSetDefaultConfiguration()				
 				Wave SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers 

@@ -38,8 +38,8 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=1.97
-Constant IN3_NewReduceDataMainVersionNum=1.98 
+Constant IN3_ReduceDataMainVersionNumber=1.98		//these two needs to be the same!
+Constant IN3_NewReduceDataMainVersionNum=1.98 	//these two needs to be the same!
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.3e-10
@@ -55,7 +55,7 @@ constant CalMaxRatioUseSamFWHM = 1.12
 //************************************************************************************************************
 //************************************************************************************************************
 //****************************************************************************************
-
+ 
 
 Function IN3_Main()
 
@@ -1050,7 +1050,7 @@ Function IN3_MainPanel()
 	setDataFolder root:Packages:Indra3
 
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(2.25,43.25,390,690) as "USAXS data reduction"
+	NewPanel /K=1 /W=(2.25,43.25,390,710) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
 	TitleBox Title title="\Zr210USAXS data reduction panel",pos={40,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 	TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={5,565},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
@@ -1058,10 +1058,8 @@ Function IN3_MainPanel()
 	//some local controls
 	CheckBox IsBlank,pos={20,35},size={90,14},proc=IN3_MainPanelCheckBox,title="Proces as blank"
 	CheckBox IsBlank,variable= root:Packages:Indra3:IsBlank, help={"Check, if you want to process this run as blank"}
-//	CheckBox RecalculateAutomatically,pos={220,25},size={90,14},proc=IN3_MainPanelCheckBox,title="Process Automatically"
-//	CheckBox RecalculateAutomatically,variable= root:Packages:Indra3:RecalculateAutomatically, help={"Check, if you want to process data automatically"}
 	Button GetHelp,pos={290,25},size={80,15},fColor=(65535,32768,32768), proc=IN3_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-	Button GetReadme,pos={290,42},size={80,15}, proc=IN3_InputPanelButtonProc,title="Read me", help={"Open Read me short instructions"}
+	Button GetReadme,pos={290,40},size={80,15}, proc=IN3_InputPanelButtonProc,title="Read me", help={"Open Read me short instructions"}
 
 	//use general controls package, modify asnecessary
 	string AllowedUserTypes="USAXS_PD;"
@@ -1291,7 +1289,7 @@ Function IN3_MainPanel()
 	
 
 //MSAXS stuff
-	CheckBox UseMSAXSCorrection,pos={8,230},size={300,14},proc=IN3_MainPanelCheckBox,title="MSAXS correctin on absolute intensity?"
+	CheckBox UseMSAXSCorrection,pos={8,230},size={300,14},proc=IN3_MainPanelCheckBox,title="MSAXS correctinon absolute intensity?"
 	CheckBox UseMSAXSCorrection,variable= root:Packages:Indra3:UseMSAXSCorrection, help={"Check, if you want to use MSAXS correction"}
 
 	SetVariable MSAXSCorrection,pos={8,250},size={300,22},title="MSAXS Correction =", frame=0, disable=2
@@ -1313,14 +1311,14 @@ Function IN3_MainPanel()
 	SetVariable RemoveDropoutsFraction,pos={200,545},size={180,22},title="Drp Int. fract. (0.1-0.7) =", frame=1
 	SetVariable RemoveDropoutsFraction,limits={0,1,0.1},variable= root:Packages:Indra3:RemoveDropoutsFraction, proc=IN3_ParametersChanged
 
-	CheckBox FindMinQForData,pos={200,580},size={150,14},title="Find MinQ automatically?", noproc
+	CheckBox FindMinQForData,pos={10,610},size={150,14},title="Find MinQ automatically?", noproc
 	CheckBox FindMinQForData,variable= root:Packages:Indra3:FindMinQForData, help={"Check, if you want to locate min-q for data start"}
-	SetVariable MinQMinFindRatio,pos={200,600},size={150,22},title="I_S/I_Bl ratio =", frame=1
+	SetVariable MinQMinFindRatio,pos={200,610},size={150,22},title="I_S/I_Bl ratio =", frame=1
 	SetVariable MinQMinFindRatio,limits={1,10,0.1},variable= root:Packages:Indra3:MinQMinFindRatio, noproc
 
 	
-	Button Recalculate,pos={50,615},size={120,20},proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
-	Button RemovePoint,pos={200,615},size={170,20},proc=IN3_InputPanelButtonProc,title="Remove point with csr A", help={"Remove point with cursor A"}
+	Button Recalculate,pos={50,635},size={120,20},proc=IN3_InputPanelButtonProc,title="Recalculate", help={"Recalculate the data"}
+	Button RemovePoint,pos={200,635},size={170,20},proc=IN3_InputPanelButtonProc,title="Remove point with csr A", help={"Remove point with cursor A"}
 end
 
 

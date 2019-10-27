@@ -52,17 +52,18 @@ End
 
 
 Menu "USAXS"
-	"Import and Reduce USAXS data",IN3_NewMain()
-	help={"Open main panel for Indra 3 package and initialize"}
+	"Import and Reduce USAXS Flyscan data",IN3_NewMain()
+	help={"GUI to import and process Flyscan data (reccomended for Flyscans)"}
 	Submenu "Other input methods"
-		"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
-		help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
-		"Import USAXS Stepscan Data [SPEC]", In2_ImportData()
+		"Import USAXS Step scan Data [SPEC]", In2_ImportData()
 		help={"Import USAXS data from APS USAXS instrument - from Spec file"}
 		"Import Desktop data [Osmic-Rigaku]",  IN2U_LoadDesktopData()
 		help={"Import USAXS data set from desktop instrument - Osmic/Rigaku"}
-		"Reduce data",IN3_Main()
-		help={"Open main panel for Indra 3 package and initialize"}
+		"Import USAXS FlyScan data [hdf5]", IN3_FlyScanMain()
+		help={"Import USAXS data from USAXS using FlyScan - HDF5 data"}
+		"---"
+		"Reduce USAXS data (old)",IN3_Main()
+		help={"This willl reduce USAXS data stored in this experiment"}
 	end
 	"Calculate Scattering from model", IN3M_CalculateDataFromModel()
 	help={"Use model and sample parameters to calculate scattering"}
