@@ -1235,26 +1235,40 @@ Function/S IR2M_FindLatestGeneration(ResultsName)
 	//assume we are in current folder, find last index of results known
 	variable i
 	string tempName, latestResult
-	string endingStr
+	string endingStr, CommonPartStr
 	latestResult = ResultsName
 	endingStr = StringFromList(ItemsInList(ResultsName,"_")-1, ResultsName , "_")
 	if(!GrepString(endingStr, "^[0-9]+$" ))
 		return ResultsName
 	endif
-	tempName = RemoveEnding(ResultsName  , StringFromList(ItemsInList(ResultsName,"_")-1, ResultsName , "_"))
-	//print tempName
-	For(i=0;i<1000;i+=1)
-		if(checkname(tempName+num2str(i),1))
-			latestResult = tempName+num2str(i)
-		else
-			if(strlen(latestResult)>1)
-				return latestResult
-			else
-				return " "
-			endif
-		endif
-	endfor
+	//this is fix for cases, when some of the order numbers are missing. User is changing the model
+	//in this case we need to create al list of matching wave names and sort it acroding to the index. 
+	CommonPartStr = RemoveEnding(ResultsName, endingStr)
+	string ListOfWaves=IN2G_CreateListOfItemsInFolder(GetDataFolder(1), 2)	//all waves
+	ListOfWaves = GrepList(ListOfWaves, CommonPartStr)								//waves which match the string part of the name except the order number
+	ListOfWaves = SortList(ListOfWaves , ";" , 16+1)									//this sorts the higherst order number first, 16 is special sort mode for this case and +1 inverses teh order. 
+	//print ListOfWaves
+	if(strlen(ListOfWaves)<1)
+		return ""
+	else
+		return StringFromList(0, ListOfWaves)											//returns first element of the list, highest order
+	endif
 	return " "
+	//this is old code, it failed with some of the order numebrs were missing. 
+	//	tempName = RemoveEnding(ResultsName  , StringFromList(ItemsInList(ResultsName,"_")-1, ResultsName , "_"))
+	//	//print tempName
+	//	For(i=0;i<1000;i+=1)
+	//		if(checkname(tempName+num2str(i),1))
+	//			latestResult = tempName+num2str(i)
+	//		else
+	//			if(strlen(latestResult)>1)
+	//				return latestResult
+	//			else
+	//				return " "
+	//			endif
+	//		endif
+	//	endfor
+	//	return " "
 	
 end
 ///******************************************************************************************
