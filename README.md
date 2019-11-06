@@ -1,5 +1,5 @@
 # SAXS_IgorCode
-Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher (will still work also on Igor Pro 7.05 - 7.08). Note, that Igor Pro is offically **unsupported** on macOS **Catalina** for now. *My code will install and run on Catalina + Igor Pro 8.04beta (I tested it), but that is unsupported combination.* 
+Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher (will still work also on Igor Pro 7.08). Note, that Igor Pro is offically **unsupported** on macOS **Catalina** for now. *My code will install and run on Catalina + Igor Pro 8.04beta (I tested it), but that is unsupported combination.* 
 
 **The current stable release version is December2018.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
