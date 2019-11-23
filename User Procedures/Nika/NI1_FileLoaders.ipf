@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.50
+#pragma version=2.51
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //2.50 removed mar345 support. Let's see if someone complains. 
 //2.49 Modified NI1_MainListBoxProc to allow to easily remove "Blank" and Empty - and unmatch them... 
 //2.48 added ALS RXoXS instrument support.
@@ -907,7 +908,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)		
 	elseif(cmpstr(FileType,"Nexus")==0)
 		FileNameToLoad = FileName
-		//NI2NX_NexusReader(PathName, FileNameToLoad)
 		NEXUS_NexusNXsasDataReader(PathName, FileNameToLoad)
 		Wave/Z Loadedwave0
 		if(!WaveExists(Loadedwave0))
@@ -2672,11 +2672,6 @@ Function NI1_MainListBoxProc(lba) : ListBoxControl
 			endif
 			break
 		case 3:			//double click
-//			if(DoubleClickConverts) 
-//				NI1A_ButtonProc("ConvertSelectedFiles")
-//			else
-//				NI1A_ButtonProc("DisplaySelectedFile")
-//			endif
 			NI1A_ButtonProc("ProcessSelectedImages")			
 			break
 		case 1:

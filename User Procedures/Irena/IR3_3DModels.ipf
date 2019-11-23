@@ -422,25 +422,6 @@ static Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
 		useStoredResults = 0
 		useCurrentResults = 1
 	endif
-	if(useCurrentResults)
-		Wave/Z IntWaveOriginal = root:Packages:Irena_UnifFit:OriginalIntensity
-		Wave/Z QwaveOriginal = root:Packages:Irena_UnifFit:OriginalQvector
-		Wave/Z ErrorOriginal = root:Packages:Irena_UnifFit:OriginalError
-		if(!WaveExists(IntWaveOriginal))
-			abort
-		endif
-	else //use stored results, in this case the strings shoudl be set...
-		SVAR DataFolderName = root:Packages:AggregateModeling:DataFolderName
-		SVAR IntensityWaveName = root:Packages:AggregateModeling:IntensityWaveName
-		SVAR QWavename = root:Packages:AggregateModeling:QWavename
-		SVAR ErrorWaveName = root:Packages:AggregateModeling:ErrorWaveName
-		Wave/Z IntWaveOriginal = $(DataFolderName+IntensityWaveName)
-		Wave/Z QwaveOriginal = $(DataFolderName+QWavename)
-		Wave/Z ErrorOriginal = $(DataFolderName+ErrorWaveName)
-		if(!WaveExists(IntWaveOriginal))
-			abort
-		endif
-	endif
 	//fix q rave of overlap
 	//proper scaling of model... this is not so easy here, but may be needed in teh future. 
 	//variable QRg2 = 0.5*pi/Level2Rg
@@ -448,7 +429,40 @@ static Function IR3A_Append1DInMassFracAgg(IntensityWV,QvectorWV)
 	//print "Scaling Model to data using integral intensities in Q range from "+num2str(QRg2)+"  to "+num2str(QRg1)
 	//variable InvarModel=areaXY(A3DAgg1DQwave, Model3DAggIntensity, QRg2, QRg1)
 	variable InvarModel=areaXY(QvectorWV, IntensityWV )
-	variable InvarData=areaXY(QwaveOriginal, IntWaveOriginal, QvectorWV[0], QvectorWV[numpnts(QvectorWV)-1])
+	variable InvarData
+	//Model3DAggIntensity
+	//need to also work, when no data are present. In this case the root:Packages:AggregateModeling:DataFolderName is set to non-sensical value...
+	SVAR DataFolderName = root:Packages:AggregateModeling:DataFolderName
+	if(strlen(DataFolderName)<4)
+		//this is non sensical case. Use Model3DAggIntensity to get proper normalization
+		Wave/Z IntWaveOriginal = root:Aggregate1DModel:Model3DAggIntensity
+		Wave/Z QwaveOriginal = root:Aggregate1DModel:A3DAgg1DQwave
+		if(!WaveExists(IntWaveOriginal))
+			abort
+		endif
+		InvarData=areaXY(QwaveOriginal, IntWaveOriginal, QvectorWV[0], QvectorWV[numpnts(QvectorWV)-1])
+	else
+		if(useCurrentResults)
+			Wave/Z IntWaveOriginal = root:Packages:Irena_UnifFit:OriginalIntensity
+			Wave/Z QwaveOriginal = root:Packages:Irena_UnifFit:OriginalQvector
+			Wave/Z ErrorOriginal = root:Packages:Irena_UnifFit:OriginalError
+			if(!WaveExists(IntWaveOriginal))
+				abort
+			endif
+		else //use stored results, in this case the strings should be set...
+			SVAR DataFolderName = root:Packages:AggregateModeling:DataFolderName
+			SVAR IntensityWaveName = root:Packages:AggregateModeling:IntensityWaveName
+			SVAR QWavename = root:Packages:AggregateModeling:QWavename
+			SVAR ErrorWaveName = root:Packages:AggregateModeling:ErrorWaveName
+			Wave/Z IntWaveOriginal = $(DataFolderName+IntensityWaveName)
+			Wave/Z QwaveOriginal = $(DataFolderName+QWavename)
+			Wave/Z ErrorOriginal = $(DataFolderName+ErrorWaveName)
+			if(!WaveExists(IntWaveOriginal))
+				abort
+			endif
+		endif
+		InvarData=areaXY(QwaveOriginal, IntWaveOriginal, QvectorWV[0], QvectorWV[numpnts(QvectorWV)-1])
+	endif
 	IntensityWV*=InvarData/InvarModel
 	CheckDisplayed /W=MassFractalAggDataPlot IntensityWV
 	if(V_flag==0)
@@ -665,7 +679,7 @@ static Function IR3A_Calculate1DIntensity()
 	LabelStr= "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 	Label/W=MassFractalAggDataPlot bottom LabelStr
 	
-	
+	AutoPositionWindow/M=0 /R=FractalAggregatePanel MassFractalAggDataPlot
 	SetDataFolder OldDf
 	
 end
@@ -759,7 +773,7 @@ static Function IR3A_Model1DIntensity()
 		IR3T_ConvertToVoxelGram(MassFractalAggregate, PrimarySphereRadius)
 		Wave ThreeDVoxelGram = Wave3DwithPrimary  		//thsi is voxelgram
 	endif
-	//if the 3DVocelgram is sufficientl;y small, oversample to get better data...
+	//if the 3DVocelgram is sufficiently small, oversample to get better data...
 	if(dimsize(ThreeDVoxelGram,0)*dimsize(ThreeDVoxelGram,1)*dimsize(ThreeDVoxelGram,2)< 80^3)
 		oversample = 4
 	elseif(dimsize(ThreeDVoxelGram,0)*dimsize(ThreeDVoxelGram,1)*dimsize(ThreeDVoxelGram,2)< 150^3)
@@ -768,6 +782,8 @@ static Function IR3A_Model1DIntensity()
 		oversample = 1
 	endif
 
+
+abort
 	//Calculate pdf intensity
 	IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversample, Qmin, Qmax, NumQSteps)
 	//append to graph... 
@@ -838,6 +854,11 @@ static Function IR3A_Display3DAggregate(AppendToNotebook)
 		if(WaveExists(MassFractalAggregate))
 			IR3A_GizmoViewScatterPlot(MassFractalAggregate)
 			IR3A_DisplayAggNotebook(MassFractalAggregate, AppendToNotebook)
+			DoWIndow MassFractalAggDataPlot
+			if(V_FLag)
+				AutoPositionWindow /M=1 /R=MassFractalAggDataPlot MassFractalAggregateView
+				AutoPositionWindow /M=0 /R=MassFractalAggregateView Summary3DAggregate				
+			endif
 		else
 			Print "MassFractalAggregate 3D wave does not exist, cannot do anything"
 		endif

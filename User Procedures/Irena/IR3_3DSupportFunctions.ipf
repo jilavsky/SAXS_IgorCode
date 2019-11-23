@@ -317,9 +317,9 @@ end
 //******************************************************************************************************************************************************
 //*****************************************************************************************************************
 //this function takes as input voxelgram, generated directly or using ConvertToVoxelGram(ListWv, primaryradius)
-// VoxelSize here is dimension, which is the size of the voxel... For 3D Solids it is waht mdoel assumed.
+// VoxelSize here is dimension, which is the size of the voxel... For 3D Solids it is waht model assumed.
 // If using ConvertToVoxelGram(ListWv, primaryradius) one needs to calculated this from two values:
-// Size of the primary particle of teh aggregate, close to Rg level 1, may be needs to be slightly modified
+// Size of the primary particle of the aggregate, close to Rg level 1, may be needs to be slightly modified
 // Oversampling used in ConvertToVoxelGram - currently defaulted to 10. 
 //   Therefore, if Rg of level 1 is 20 A = assume diameter is 40A, the VoxelSize is actually 4 
 //   each original "particle" in the Aggregate was replaced with 10 x 10 x 10 voxels, basically we made assumption that diameter of the primary particle is 10.   
@@ -332,7 +332,7 @@ Function IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversamp
 	//Qmin, Qmax, NumQSteps 		what q range for intensity calculation
 	variable StartTicks=ticks
 	
-	if(oversample>1)		//this helps a lot, takes time, but imporves high-q fitting... 
+	if(oversample>1)		//this helps a lot, takes time, but improves high-q fitting... 
 		Print "oversampling Data by factor of "+num2str(oversample)
 		StartTicks=ticks
 		oversample = ceil (oversample)			//make sure we have integer. 

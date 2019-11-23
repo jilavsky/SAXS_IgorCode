@@ -2765,7 +2765,7 @@ Function IR1_CreatePorodLogbook()//***DWS
 	if (strsearch(WinList("*",";","WIN:16"),nb,0)!=-1) 		///Logbook exists
 		DoWindow/HIDE=1 $nb
 	else
-		NewNotebook/N=$nb/F=1/V=1/K=3/W=(83,131,1766,800) as "PorodAnalysisResults"
+		NewNotebook/N=$nb/F=1/V=0/K=3/W=(83,131,1766,800) as "PorodAnalysisResults"
 		Notebook $nb defaultTab=144, statusWidth=238
 		Notebook $nb showRuler=1, rulerUnits=1, updating={1, 60}
 		Notebook $nb newRuler=Normal, justification=0, margins={0,0,468}, spacing={0,0,0}, tabs={180,252+1*8192,360+3*8192}, rulerDefaults={"Arial",10,0,(0,0,0)}

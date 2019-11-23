@@ -2837,11 +2837,11 @@ Function NI1A_AveLoadManyDataSetsForConv()
 		KillWIndow/Z CCDImageToConvertFig
  		KillWaves CCDImageToConvert
 	endif
-		NVAR SampleThickness=root:Packages:Convert2Dto1D:SampleThickness
-		NVAR SampleTransmission=root:Packages:Convert2Dto1D:SampleTransmission
-		NVAR CorrectionFactor=root:Packages:Convert2Dto1D:CorrectionFactor
-		NVAR SampleMeasurementTime=root:Packages:Convert2Dto1D:SampleMeasurementTime
-		NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
+	NVAR SampleThickness=root:Packages:Convert2Dto1D:SampleThickness
+	NVAR SampleTransmission=root:Packages:Convert2Dto1D:SampleTransmission
+	NVAR CorrectionFactor=root:Packages:Convert2Dto1D:CorrectionFactor
+	NVAR SampleMeasurementTime=root:Packages:Convert2Dto1D:SampleMeasurementTime
+	NVAR SampleI0=root:Packages:Convert2Dto1D:SampleI0
 	variable LocSampleThickness=0
 	variable LocSampleTransmission=0
 	variable LocCorrectionFactor=0
@@ -2864,7 +2864,7 @@ Function NI1A_AveLoadManyDataSetsForConv()
 				Wave CCDImageToConvert=root:Packages:Convert2Dto1D:CCDImageToConvert
 				wavestats/Q CCDImageToConvert
 			endif
-				if(!SkipBadFiles || (SkipBadFiles && MaxIntForBadFile<=V_max))
+			if(!SkipBadFiles || (SkipBadFiles && MaxIntForBadFile<=V_max))
 				NI1A_LoadParamsUsingFncts(SelectedFileToLoad)	//thsi will call user functions which get sample parameters, if exist
 					 LocSampleThickness+=SampleThickness
 					 LocSampleTransmission+=SampleTransmission

@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.66
+#pragma version=2.68
 Constant NI1AversionNumber = 2.67
 
 //*************************************************************************\
@@ -10,6 +10,7 @@ Constant NI1AversionNumber = 2.67
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.68 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //2.67 Fixed case when user set ASCII name for output - apprently this was broken forever... 
 //2.66 added UseBatchProcessing to prevent graphs from being displays to speed up processing of large number of images. 
 //2.65 fixes for rtGlobal=3, changed Nika GSAS outptu file to xye instead of GSA. xye is better. 
@@ -1262,6 +1263,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 	NVAR/Z USAXSWAXSselector = root:Packages:Convert2Dto1D:USAXSWAXSselector
 	NVAR/Z USAXSSAXSselector = root:Packages:Convert2Dto1D:USAXSSAXSselector
 	NVAR/Z USAXSBigSAXSselector = root:Packages:Convert2Dto1D:USAXSBigSAXSselector
+	SVAR DataType = root:Packages:Convert2Dto1D:DataFileExtension
 	String DataFolderNameL
 	if(NVAR_Exists(USAXSWAXSselector))
 		if(USAXSWAXSselector)
@@ -1308,7 +1310,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 					if(stringmatch(LineProf_CurveType, "GI*"))
 						Duplicate/O LineProfileQx, $("qx_"+UseName)	
 					endif		
-				//and resort for users so these are relaibly acording to Q values
+					//and resort for users so these are reliably acording to Q values
 					Wave wv1= $("r_"+UseName)
 					Wave wv2= $("q_"+UseName)
 					Wave wv3= $("s_"+UseName)
@@ -1327,6 +1329,30 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				else
 						Sort wv2, wv1, wv2, wv3, wv4, wv5, wv7
 				endif		
+				//For Nexus, when available store metadata... 
+				if(stringMatch(DataType,"Nexus"))
+					//	//add recording of metatdata from Nexus file, if they exist... 
+					SVAR/Z NXMetadataOld = root:Packages:Convert2Dto1D:NXMetadata
+					SVAR/Z NXSampleOld = root:Packages:Convert2Dto1D:NXSample
+					SVAR/Z NXInstrumentOld = root:Packages:Convert2Dto1D:NXInstrument
+					SVAR/Z NXUserOld = root:Packages:Convert2Dto1D:NXUser
+					if(SVAR_Exists(NXMetadataOld ))
+						string/g NXMetadata 
+						NXMetadata 	= 	NXMetadataOld
+					endif
+					if(SVAR_Exists(NXSampleOld ))
+						string/g NXSample 
+						NXSample 	= 	NXSampleOld
+					endif
+					if(SVAR_Exists(NXUserOld ))
+						string/g NXUser 
+						NXUser 	= 	NXUserOld
+					endif
+					if(SVAR_Exists(NXInstrumentOld ))
+						string/g NXInstrument 
+						NXInstrument 	= 	NXInstrumentOld
+					endif		
+				endif
 					
 			endif
 			if(ExportDataOutOfIgor)
@@ -1444,7 +1470,30 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 			else
 				abort "Error - no output type selected"
 			endif
-			
+			//For Nexus, when available store metadata... 
+			if(stringMatch(DataType,"Nexus"))
+				//	//add recording of metatdata from Nexus file, if they exist... 
+				SVAR/Z NXMetadataOld = root:Packages:Convert2Dto1D:NXMetadata
+				SVAR/Z NXSampleOld = root:Packages:Convert2Dto1D:NXSample
+				SVAR/Z NXInstrumentOld = root:Packages:Convert2Dto1D:NXInstrument
+				SVAR/Z NXUserOld = root:Packages:Convert2Dto1D:NXUser
+				if(SVAR_Exists(NXMetadataOld ))
+					string/g NXMetadata 
+					NXMetadata 	= 	NXMetadataOld
+				endif
+				if(SVAR_Exists(NXSampleOld ))
+					string/g NXSample 
+					NXSample 	= 	NXSampleOld
+				endif
+				if(SVAR_Exists(NXUserOld ))
+					string/g NXUser 
+					NXUser 	= 	NXUserOld
+				endif
+				if(SVAR_Exists(NXInstrumentOld ))
+					string/g NXInstrument 
+					NXInstrument 	= 	NXInstrumentOld
+				endif		
+			endif
 		endif
 		//Convert2Dto1DOutputPath
 		if(ExportDataOutOfIgor)
@@ -1469,7 +1518,7 @@ Function NI1A_SaveDataPerUserReq(CurOrient)
 				Save/A/G/M="\r\n"/P=Convert2Dto1DOutputPath Qvector,Intensity,Error,Qsmearing as (UseName+".dat")
 			elseif(UseTheta)
 				if(SaveGSASdata)
-					//this is ild GSA file for GSAS-I, change 2019-05 to xye file format... 
+					//this is old GSA file for GSAS-I, change 2019-05 to xye file format... 
 					//					//first create header...
 					//					Redimension/N=2 TextWV
 					//					Duplicate/O TwoTheta, TwoThetaCentidegrees

@@ -353,6 +353,14 @@ Window IR2S_ScriptingToolPnl()
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65535)
 	DrawText 29,29,"Scripting tool"
 
+	if(!DataFolderExists("root:Packages:IrenaControlProcs"))
+		string UserDataTypes=""
+		string UserNameString=""
+		string XUserLookup=""
+		string EUserLookup=""
+		IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+	endif
+
 	Button GetHelp,pos={280,4},size={90,15},proc=IR2S_ButtonProc,title="Get help"
 	Button GetHelp,fSize=10,fStyle=2, fColor=(65535,32768,32768)
 	Button GetLogbook,pos={280,21},size={90,15},proc=IR2S_ButtonProc,title="Open logbook"
@@ -878,6 +886,7 @@ end
 Function IR2S_InitScriptingTool()
 	
 	string OldDF=GetDataFolder(1)
+	
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S Irena
 	NewDataFolder/O/S ScriptingTool

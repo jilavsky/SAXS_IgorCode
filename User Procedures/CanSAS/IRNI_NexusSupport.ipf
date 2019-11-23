@@ -1,12 +1,13 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version = 1.13
+#pragma version = 1.14
 #include "HDF5Gateway"
 
 constant NexusVersionNumber=1.05
 
 // support of Nexus files
 
+//1.14 added NEXUS_Read_Metadata, NEXUS_Read_Sample, NEXUS_Read_User, NEXUS_Read_Instrument, NEXUS_Read_CreateLocalList - used to store lists with teh values from these metadata locations. 
 //1.13 added skip for printing stuff in history in Nika batch mode. 
 //1,12 fix typo in Nexus attribute name dQI - capital i, instead of correct dQl - lower case l as slit length
 //1.11 add support for calibration facor, pet Pete's suggestion called I_scaling. Stupid name, but suggested based on other NXcansas standard, even though this is NXsas. 
@@ -655,9 +656,6 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 			make/Free/N=(dimsize(DataWave,1),dimsize(DataWave,2)) My2DImg
 			My2DImg = DataWave[NX_Index1Value][p][q]
 			Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
-			//MatrixOp/Free My2DImg = layer(DataWave,NX_Index1Value)	
-			//Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
-			//Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
 		elseif(WaveDims(DataWave) == 4)		//this is 3D wave
 			NX_Index0Max = dimsize(DataWave,0)-1
 			if(NX_Index0Value>NX_Index0Max)
@@ -671,9 +669,6 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 			My2DImg = DataWave[NX_Index0Value][NX_Index1Value][p][q]
 			//Redimension/N=(dimsize(My2DImg,2),dimsize(My2DImg,3)) My2DImg
 			Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
-			//MatrixOp/Free My2DImg = layer(DataWave,NX_Index1Value)	
-			//Duplicate/O My2DImg, $("root:Packages:Convert2Dto1D:Loadedwave0")
-			//Redimension/N=(dimsize(DataWv,1),dimsize(DataWv,2)) DataWv
 		else
 			print "We should never get here"
 			print "Error in NEXUS_NexusNXsasDataReader"
@@ -713,6 +708,14 @@ static Function NEXUS_ReadNXparameters(PathToNewData)
 				printRecords = 0
 			endif
 		endif
+		//add record of metatdata
+		string/g NXMetadata, NXSample, NXInstrument, NXUser 
+		NXMetadata 	= 	NEXUS_Read_Metadata(PathToNewData)	
+		NXSample 		= 	NEXUS_Read_Sample(PathToNewData)	
+		NXUser 		= 	NEXUS_Read_User(PathToNewData)	
+		NXInstrument = 	NEXUS_Read_Instrument(PathToNewData)	
+		
+		
 
 		if(ReadParams&&(strlen(ImageBeingLoaded)>3))
 			Wave/Z/T ListOfParamsAndPaths = root:Packages:Irena_Nexus:ListOfParamsAndPaths
@@ -854,6 +857,9 @@ end
 static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 	Wave DataWv
 	string FldrName
+
+	string PathToStrVarValues = "root:Packages:NexusImportTMP:"
+	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string StartDf
 	//StartDf = Fldrname+"entry:"
@@ -861,7 +867,7 @@ static Function NEXUS_CleanUpHDF5Structure(DataWv, Fldrname)
 	if(strlen(StartDf)<1)
 		StartDf = Fldrname+"entry:"
 	endif
-	string PathToStrVarValues = "root:Packages:NexusImportTMP:"
+	//string PathToStrVarValues = "root:Packages:NexusImportTMP:"
 	string/g $(PathToStrVarValues+"ListOfStrValues")
 	string/g $(PathToStrVarValues+"ListOfNumValues")
 	SVAR tmpStr=$(PathToStrVarValues+"ListOfStrValues")
@@ -3224,3 +3230,121 @@ Function NEXUS_PopMenuProc(pa) : PopupMenuControl
 
 	return 0
 End
+//************************************************************************************************
+//************************************************************************************************
+////**********************************************************************************************
+////**********************************************************************************************
+//this function returns content of Metadata folder for HDF5 file loaded in Igor
+FUnction/S NEXUS_Read_Metadata(RawFolderWithData)	
+	string RawFolderWithData
+	
+	string OldDf=GetDataFolder(1)
+	setDataFolder RawFolderWithData	
+	string StringWithData
+	StringWithData = ""
+	if(DataFolderExists(RawFolderWithData+"entry:metadata:"))
+		setDataFolder $(RawFolderWithData+"entry:metadata:")
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
+	setDataFolder OldDf
+	return StringWIthData	
+end
+
+////**********************************************************************************************
+////**********************************************************************************************
+//this function returns content of Sample folder for HDF5 file loaded in Igor
+FUnction/S NEXUS_Read_Sample(RawFolderWithData)	
+	string RawFolderWithData	
+	string OldDf=GetDataFolder(1)
+	setDataFolder RawFolderWithData	
+	string StringWithData
+	StringWithData = ""
+	if(DataFolderExists(RawFolderWithData+"entry:sample:"))
+		setDataFolder $(RawFolderWithData+"entry:sample:")	
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
+	setDataFolder OldDf
+	return StringWIthData	
+end
+////**********************************************************************************************
+////**********************************************************************************************
+//this function returns content of user folder for HDF5 file loaded in Igor
+FUnction/S NEXUS_Read_User(RawFolderWithData)	
+	string RawFolderWithData	
+	string OldDf=GetDataFolder(1)
+	setDataFolder RawFolderWithData	
+	string StringWithData
+	StringWithData = ""
+	if(DataFolderExists(RawFolderWithData+"entry:user:"))
+		setDataFolder $(RawFolderWithData+"entry:user:")	
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
+	setDataFolder OldDf
+	return StringWIthData	
+end
+
+////**********************************************************************************************
+////**********************************************************************************************
+//this function returns content of Instrument folder for HDF5 file loaded in Igor
+FUnction/S NEXUS_Read_Instrument(RawFolderWithData)	
+	string RawFolderWithData
+	
+	string OldDf=GetDataFolder(1)
+	setDataFolder RawFolderWithData
+	
+	string StringWithData
+	StringWithData = ""
+	if(DataFolderExists(RawFolderWithData+"entry:instrument:"))
+		setDataFolder $(RawFolderWithData+"entry:instrument:")
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
+	if(DataFolderExists(RawFolderWithData+"entry:instrument:monochromator:"))
+		setDataFolder $(RawFolderWithData+"entry:instrument:monochromator:")
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
+	if(DataFolderExists(RawFolderWithData+"entry:instrument:source:"))
+		setDataFolder $(RawFolderWithData+"entry:instrument:source:")
+		StringWithData = NEXUS_Read_CreateLocalList()
+	endif
+	setDataFolder OldDf
+	return StringWIthData	
+end
+
+////**********************************************************************************************
+////**********************************************************************************************
+//this function returns is internal function for Create Local list.
+static Function/T NEXUS_Read_CreateLocalList()
+	string StringWithData = ""
+	string ALlWavesNames, CurWaveName, wvNote, Units
+	variable i
+	//first create list of all waves here, all HDF5 elements are waves...
+	ALlWavesNames=IN2G_CreateListOfItemsInFolder(GetDataFolder(1), 2)
+	//now iterate over them and store their values. 
+		For(i=0;i<itemsInList(ALlWavesNames);i+=1)
+			CurWaveName = StringFromList(i, ALlWavesNames)
+			if(!StringMatch(CurWaveName, "Igor___folder_attributes" ))			//this funny wave has 0 points and is used to held notes. 
+				Wave CurWave = $(CurWaveName)
+				if(WaveType(CurWave,1)==1)		//numerical wave					!!! modify to pass though units, if available in the wavenote. 
+					StringWithData+=CurWaveName+"="+num2str(CurWave[0])+";"
+					wvNote = note(CurWave)
+					if(strlen(wvNote)>3)
+						wvNote = ReplaceString("\r", wvNote, ";")
+						wvNote = IN2G_ZapControlCodes(wvNote)
+						wvNote = ReplaceString(" ", wvNote, "")
+						Units = StringByKey("units", wvNote, "=", ";")
+						if(strlen(Units)>1)
+								StringWithData+=CurWaveName+"Units="+Units+";"
+						endif
+					endif
+					//print StringByKey("units", note(root:Packages:NexusImportTMP:'TestWAXS_0002.hdf':entry:sample:thickness), "=", "\r")
+ 					// mm
+				elseif(WaveType(CurWave,1)==2)		//text wave
+					Wave/T CurWaveT = $(CurWaveName)
+					StringWithData+=CurWaveName+"="+ReplaceString("\r\n",ReplaceString("#", CurWaveT[0], ""),",") +";"
+				endif
+			endif
+		endfor		
+	return StringWithData
+end
+////**********************************************************************************************
+////**********************************************************************************************

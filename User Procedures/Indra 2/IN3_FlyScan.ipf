@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.04
+#pragma version=1.06
 #include <Peak AutoFind>
 
 
@@ -13,6 +13,7 @@ Constant IN3_RemoveRangeChangeEffects=1
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+//1.06 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.05 added option to disable removing of raneg change transitional effects, constant IN3_RemoveRangeChangeEffects
 //1.04 removed spec file name as folder under USAXS, not needed with SAXS and WAXS not having it anyway. 
 //1.03 added UserSampleName to be used to avoid long file names limits...
@@ -687,29 +688,6 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	endif
 
 	redimension/D MeasTime, Monitor, USAXS_PD
-//
-//	if(WaveType(MeasTime ,1)==1)
-//		redimension/D MeasTime 
-//	else
-//		print "Failed to record measurement time from struk, replace with monitor counts" 
-//		KillWaves MeasTime
-//		Duplicate Monitor, MeasTime
-//		redimension/D MeasTime
-//	endif
-//	if(WaveType(Monitor ,1)==1)
-//		redimension/D Monitor 
-//	else
-//		print "Failed to record I0 from struk, replace with Measuemernt time " 
-//		KillWaves Monitor
-//		Duplicate MeasTime, Monitor
-//		redimension/D Monitor
-//	endif
-//	if(WaveType(USAXS_PD ,1)==1)
-//		redimension/D USAXS_PD 
-//	else
-//		Abort "Failed to record USAXS_PD from struk, fail here, this cannot be fixed." 
-//	endif
-	
 	redimension/S PD_range, I0gain
 	//need to append the wave notes...
 	string WaveNote
@@ -718,12 +696,13 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	else
 		WaveNote="DATAFILE="+SpecFileNameWv[0]+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+"flyScan  ar 17.8217 17.8206 14.5895 2e-05  26.2812 "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" 100 1"		
 	endif
-	WaveNote+=";SpecComment="+SampleNameW[0]+";"
-	note/K MeasTime, WaveNote
-	note/K Monitor, WaveNote
-	note/K USAXS_PD, WaveNote
-	note/K PD_range, WaveNote
-	note/K Ar_encoder, WaveNote
+	WaveNote+=";SpecComment="+SampleNameW[0]+";"+"Nexus_attributesStartHere;"
+	note/K/NOCR MeasTime, WaveNote
+	note/K/NOCR Monitor, WaveNote
+	note/K/NOCR USAXS_PD, WaveNote
+	note/K/NOCR PD_range, WaveNote
+	note/K/NOCR Ar_encoder, WaveNote
+	
 	//create PD_range using records, not mca channel...
 	if(HdfWriterVersion<1)
 		MeasTime*=2e-08				//convert to seconds
@@ -775,6 +754,24 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 		MeasurementParameters+="USAXSPinT_pinGain="+num2str(USAXSPinT_pinGain[0])+";USAXSPinT_I0Counts="+num2str(USAXSPinT_I0Counts[0])+";USAXSPinT_I0Gain="+num2str(USAXSPinT_I0Gain[0])+";"
 		endif
 	endif
+	//add recording of metatdata
+	string/g NXMetadata, NXSample, NXInstrument, NXUser 
+	NXMetadata 	= 	NEXUS_Read_Metadata(RawFolderWithData)	
+	NXSample 		= 	NEXUS_Read_Sample(RawFolderWithData)	
+	NXUser 		= 	NEXUS_Read_User(RawFolderWithData)	
+	NXInstrument = 	NEXUS_Read_Instrument(RawFolderWithData)	
+	
+	//add Nexus file Metadata here... 
+	string NXMetadataNote=""
+	NXMetadataNote+="NXUserStart;"+NXUser+";NXUserEnd;"
+	NXMetadataNote+="NXSampleStart;"+NXSample+";NXSampleEnd;"
+	NXMetadataNote+="NXInstrumentStart;"+NXInstrument+";NXInstrumentEnd;"
+	NXMetadataNote+="NXMetadataStart;"+NXMetadata+";NXMetadataEnd;Nexus_attributesEndHere;"
+	note/NOCR MeasTime, NXMetadataNote
+	note/NOCR Monitor, NXMetadataNote
+	note/NOCR USAXS_PD, NXMetadataNote
+	note/NOCR PD_range, NXMetadataNote
+	note/NOCR Ar_encoder, NXMetadataNote
 	//overwrite the UPD5Bkg if user chose to do so. 
 	DoWIndow USAXSDataReduction 
 	if(V_FLag)

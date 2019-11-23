@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.50
+#pragma version=1.51
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -8,6 +8,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //1.50 Added Batch processing
 //1.49 add support for calibration factor in USAXS/SAXS/WAXS instrument
 //1.48 add solid angle correction to data reduction to match better SAXS and WAXS data. 
@@ -164,6 +165,10 @@ Function NI1_9IDCConfigPanelFunction() : Panel
 	Checkbox ReadParametersFromEachFile, title ="Read Parameters from data files", help={"In this case we will read geometry values from each data file"}
 	Button ConfigureDefaultMethods,pos={29,115},size={150,20},proc=NI1_9IDCButtonProc,title="Set default settings"
 	Button ConfigureDefaultMethods,help={"Sets default methods for the data reduction at 9IDC (or 15IDD)"}
+	
+	Button CalibrateDistance,pos={29,138},size={150,20},proc=NI1_9IDCButtonProc,title="Calibrate geometry"
+	Button CalibrateDistance,help={"COnfigures for geometry calibration"}
+	
 	Button ConfigureWaveNoteParameters,pos={229,138},size={200,20},proc=NI1_9IDCButtonProc,title="Read geometry from wave note", disable=ReadParametersFromEachFile
 	Button ConfigureWaveNoteParameters,help={"Sets default geometry values based on image currently loaded in the Nika package"}
 	SetVariable USAXSSlitLength, pos={29,175}, size={150,20}, proc=NI1_9IDCSetVarProc, title="Slit length", variable=root:Packages:Convert2Dto1D:USAXSSlitLength
@@ -405,16 +410,16 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 
-	//		if (stringmatch("WAXSUseBlank",ba.CtrlName))
-	//			NI1_9IDCWAXSBlankSUbtraction(0)				
-	//		endif
+			NVAR isSAXS=root:Packages:Convert2Dto1D:USAXSSAXSselector
+			NVAR isWAXS=root:Packages:Convert2Dto1D:USAXSWAXSselector
+			variable i
 			if (stringmatch("Open9IDCManual",ba.CtrlName))
 				NI1_Open9IDCManual()
 			endif
 			if (stringmatch("OpenReadme9IDC",ba.CtrlName))
 				NI1_9IDCCreateHelpNbk()
 			endif
-			if (stringmatch("ConfigureDefaultMethods",ba.CtrlName))
+			if (stringmatch("ConfigureDefaultMethods",ba.CtrlName) || stringmatch("CalibrateDistance",ba.CtrlName))
 				//first kill the Nexus loader file in case we are using same name for SAXS and WAXS...
 				KillDataFolder/Z root:Packages:NexusImportTMP:
 				//now we should be able to read this in without challenges? 
@@ -425,7 +430,6 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				selectedFile = NI1_9IDCSetDefaultConfiguration()				
 				Wave SelectionsofCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers 
 				Wave/T ListOfCCDDataInCCDPath = root:Packages:Convert2Dto1D:ListOf2DSampleData
-				variable i
 				SelectionsofCCDDataInCCDPath=0
 				for(i=0;i<numpnts(SelectionsofCCDDataInCCDPath);i+=1)
 					if(stringmatch(selectedFile,ListOfCCDDataInCCDPath[i]))
@@ -444,8 +448,6 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 					NI1A_DisplayOneDataSet()
 				endif
 				//and create mask automatically...
-				NVAR isSAXS=root:Packages:Convert2Dto1D:USAXSSAXSselector
-				NVAR isWAXS=root:Packages:Convert2Dto1D:USAXSWAXSselector
 				if(isSAXS)
 					NI1_9IDCCreateSAXSPixMask()		
 					TitleBox LoadBlankWarning  win=NI1_9IDCConfigPanel, title="\\Zr150>>>> Load Empty/Blank and set Slit legth; ... done   <<<<"
@@ -478,6 +480,37 @@ Function NI1_9IDCButtonProc(ba) : ButtonControl
 				TabControl Convert2Dto1DTab win=NI1A_Convert2Dto1DPanel, value=3
 				NI1A_TabProc("NI1A_Convert2Dto1DPanel",3)
 			endif
+
+			if (stringmatch("CalibrateDistance",ba.CtrlName))
+				NI1_CreateBmCntrFile()
+				SVAR BCMatchNameString = root:Packages:Convert2Dto1D:BCMatchNameString
+				if(isSAXS)
+					BCMatchNameString = "(?i)AgB"
+				else
+					BCMatchNameString = "(?i)LaB"
+				endif
+				NI1BC_UpdateBMCntrListBOx()
+				Wave/T ListOfCCDDataInBmCntrPath = root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
+				Wave SelofCCDDataInBmCntrDPath = root:Packages:Convert2Dto1D:SelofCCDDataInBmCntrDPath
+				variable found=0
+				for(i=0;i<numpnts(SelofCCDDataInBmCntrDPath);i+=1)
+					if(stringmatch(selectedFile,ListOfCCDDataInBmCntrPath[i]))
+						SelofCCDDataInBmCntrDPath[i] = 1
+						found = 1
+					endif
+				endfor
+				if(!found)
+					if(numpnts(SelofCCDDataInBmCntrDPath)==1)
+						SelofCCDDataInBmCntrDPath[0]=1
+						found=1
+					endif
+				endif
+				if(found)
+					NI1BC_BmCntrButtonProc("CreateROIWorkImage")
+				endif		
+			endif
+
+
 			if (stringmatch("ConfigureWaveNoteParameters",ba.CtrlName))
 				NI1_9IDCWaveNoteValuesNx()				
 			endif
@@ -1612,7 +1645,7 @@ Function NI1_9IDCFIndSlitLength()
 		Prompt SlitLengthIsHereL, "USAXS Folders available ", popup,  SlitLengthIsHere
 		DoPrompt "Pick USAXS folder where to read slit length", SlitLengthIsHereL
 	else
-		DoALert 0, "Slit smeared USAXS data NOT found, input slit length value was set to default value of 0.025. While this is common number, you shoudl reduce USAXS data and use the correct one."
+		print "Slit smeared USAXS data NOT found, input slit length value was set to default value of 0.025. While this is common number, you shoudl reduce USAXS data and use the correct one."
 		NVAR SAXSGenSmearedPinData=root:Packages:Convert2Dto1D:SAXSGenSmearedPinData
 		SAXSGenSmearedPinData = 1
 		return 0.025
@@ -2644,6 +2677,30 @@ Function NI1_9IDCCreateSMRSAXSdata(listOfOrientations)
 	Wave NewR=$("r_"+SmWaveNames)
 	Wave NewS=$("s_"+SmWaveNames)
 	Wave NewW=$("w_"+SmWaveNames)
+	SVAR DataType = root:Packages:Convert2Dto1D:DataFileExtension
+	if(stringMatch(DataType,"Nexus"))
+		//	//add recording of metatdata from Nexus file, if they exist... 
+		SVAR/Z NXMetadataOld = root:Packages:Convert2Dto1D:NXMetadata
+		SVAR/Z NXSampleOld = root:Packages:Convert2Dto1D:NXSample
+		SVAR/Z NXInstrumentOld = root:Packages:Convert2Dto1D:NXInstrument
+		SVAR/Z NXUserOld = root:Packages:Convert2Dto1D:NXUser
+		if(SVAR_Exists(NXMetadataOld ))
+			string/g NXMetadata 
+			NXMetadata 	= 	NXMetadataOld
+		endif
+		if(SVAR_Exists(NXSampleOld ))
+			string/g NXSample 
+			NXSample 	= 	NXSampleOld
+		endif
+		if(SVAR_Exists(NXUserOld ))
+			string/g NXUser 
+			NXUser 	= 	NXUserOld
+		endif
+		if(SVAR_Exists(NXInstrumentOld ))
+			string/g NXInstrument 
+			NXInstrument 	= 	NXInstrumentOld
+		endif		
+	endif
 	//make UserSampleName
 	string/g UserSampleName= UserSampleNameGlobal+"_u"
 	

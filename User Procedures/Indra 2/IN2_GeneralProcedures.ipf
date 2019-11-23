@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.19
+#pragma version = 2.20
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -36,6 +36,7 @@ strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilav
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.20 modified IN2G_ConvertDataDirToList to IN2G_ConvertDataDirToListNew and used that. This will break list of spe scans for step scanning and needs to be fixed.
 //2.19 Added IN2G_CleanStringForgrep(stringIn) which is used to comment out special characters used in grep, so they can be used as part of names... 
 //2.18 modified IN2G_PanelResizePanelSize(s) to move panels in the view if they are due to change of resolution left outside of the view. This may not work well on dual monitor systems, though... 
 //2.17 added create ColorScale for USAXS graphs. 
@@ -457,6 +458,7 @@ Menu "GraphMarquee"
        "Insert subwindow", IN2G_CreateSubwindowAtMarqee()
  //      "Clone this window with data", IN2G_CloneWindow()
 End
+
 
 //************************************************************************************************
 //************************************************************************************************
@@ -4393,6 +4395,23 @@ Function/T IN2G_ConvertDataDirToList(Str)		//converts   FOLDERS:spec1,spec2,spec
  					
 	return strList
 end
+//**********************************************************************************************
+//**********************************************************************************************
+
+Function/T IN2G_ConvertDataDirToListNew(Str)		//converts   FOLDERS:spec1,spec2,spec3,spec4; type fo strring into list
+	string str
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	str=RemoveListItem(0, Str , ":")					//remove the "FOLDERS"
+	variable i=0, imax=itemsInList(str,",")			//working parameters
+	string strList="", tmpstr						//working parameters
+	str=str[0,strlen(str)-3]						//remove  /r; at the end
+	strList = ReplaceString(",", str, ";" )+";"
+	if(strlen(strList)==1)
+		strList=""
+	endif				
+	return strList
+end
 
 
 //**********************************************************************************************
@@ -4426,7 +4445,8 @@ Function/T IN2G_CreateListOfItemsInFolder(df,item)			//Generates list of items i
 	string MyList=""
 	DFREF TestDFR=$(df)
 	if (DataFolderRefStatus(TestDFR))
-		MyList= IN2G_ConvertDataDirToList(DataFolderDir(item, TestDFR))				//here we convert the WAVES:wave1;wave2;wave3 into list
+		//MyList= IN2G_ConvertDataDirToList(DataFolderDir(item, TestDFR))				//here we convert the WAVES:wave1;wave2;wave3 into list
+		MyList= IN2G_ConvertDataDirToListNew(DataFolderDir(item, TestDFR))				// this one does not handle now specNumber lists... 	
 		return MyList
 	else
 		return ""

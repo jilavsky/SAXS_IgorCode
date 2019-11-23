@@ -5477,15 +5477,25 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 	
 	else	//parameter fixed..		
 		wavestats/q ChiSquareValues
-		
+		variable MinLocation=V_minLoc
+		variable minValue=V_min
 		Display/W=(35,44,555,335)/K=1 ChiSquareValues vs EndValues
 		DoWindow/C/T ChisquaredAnalysis,ParamName+" Chi-squared analysis "
 		Label left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Achieved Chi-squared"
 		Label bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+ParamName+" value"
 		ModifyGraph mirror=1
 		ModifyGraph mode=3,marker=19
-		Findlevels/Q/N=2 ChiSquareValues, ConfEvTargetChiSqRange*V_min
-		if(V_Flag!=0)
+		//Findlevels/Q/N=2 ChiSquareValues, ConfEvTargetChiSqRange*V_min		//this is failing in some cases...
+		//find lower level...
+		Findlevel/P/Q/R=[MinLocation,0] ChiSquareValues, ConfEvTargetChiSqRange*V_min
+		variable minNotFound=V_FLag
+		variable minPLocation = ceil(V_levelX)
+		//find higher level...
+		Findlevel/P/Q/R=[MinLocation,numpnts(ChiSquareValues)-1] ChiSquareValues, ConfEvTargetChiSqRange*V_min
+		variable maxNotFound=V_FLag
+		variable maxPLocation = floor(V_levelX)
+		
+		if(maxNotFound && minNotFound)
 			print  "The range of parameters analyzed for "+ParamName +" was not sufficiently large, code did not find large enough values for chi-squared"
 			IR1_CreateResultsNbk()
 //			IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
@@ -5498,22 +5508,22 @@ static Function IR1A_ConEvAnalyzeEvalResults(ParamName,SortForAnalysis,FittedPar
 			IR1_AppendAnyText("  ", 0)
 		else   
 			Wave W_FindLevels
-			levellow=EndValues[W_FindLevels[0]]
-			levelhigh=EndValues[W_FindLevels[1]]
-			Tag/C/N=MinTagLL/F=0/L=2/TL=0/X=0.00/Y=30.00 $(nameofwave(ChiSquareValues)), W_FindLevels[0],"\\JCLow edge\r\\JC"+num2str(levellow)
-			Tag/C/N=MinTagHL/F=0/L=2/TL=0/X=0.00/Y=30.00 $(nameofwave(ChiSquareValues)), W_FindLevels[1],"\\JCHigh edge\r\\JC"+num2str(levelhigh)
+			levellow=EndValues[minPLocation]
+			levelhigh=EndValues[maxPLocation]
+			Tag/C/N=MinTagLL/F=0/L=2/TL=0/X=0.00/Y=30.00 $(nameofwave(ChiSquareValues)), minPLocation,"\\JCLow edge\r\\JC"+num2str(levellow)
+			Tag/C/N=MinTagHL/F=0/L=2/TL=0/X=0.00/Y=30.00 $(nameofwave(ChiSquareValues)), maxPLocation,"\\JCHigh edge\r\\JC"+num2str(levelhigh)
 			//Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[V_minLoc])+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
-			Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[V_minLoc])//+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
+			Tag/C/N=MinTag/F=0/L=2/TL=0/X=0.00/Y=50.00 $(nameofwave(ChiSquareValues)), V_minLoc,"Minimum chi-squared = "+num2str(V_min)+"\rat "+ParamName+" = "+num2str(EndValues[MinLocation])//+"\rRange : "+num2str(levellow)+" to "+num2str(levelhigh)
 			AutoPositionWindow/M=0/R=IR1A_ConfEvaluationPanel ChisquaredAnalysis
 			IR1_CreateResultsNbk()
 	//		IR1_AppendAnyText("Analyzed sample "+SampleFullName, 1)	
 			IR1_AppendAnyText("Unified fit evaluation of parameter "+ParamName, 2)
 			IR1_AppendAnyText("  ", 0)
 			IR1_AppendAnyText("Method used to evaluate parameter stability: "+Method, 0)	
-			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(V_min)+" for "+ParamName+"  = "+ num2str(EndValues[V_minLoc]), 0)
-			IR1_AppendAnyText("Range of "+ParamName+" in which the chi-squared < "+num2str(ConfEvTargetChiSqRange)+"*"+num2str(V_min)+" is from "+num2str(levellow)+" to "+ num2str(levelhigh), 0)
+			IR1_AppendAnyText("Minimum chi-squared found = "+num2str(minValue)+" for "+ParamName+"  = "+ num2str(EndValues[MinLocation]), 0)
+			IR1_AppendAnyText("Range of "+ParamName+" in which the chi-squared < "+num2str(ConfEvTargetChiSqRange)+"*"+num2str(minValue)+" is from "+num2str(levellow)+" to "+ num2str(levelhigh), 0)
 			IR1_AppendAnyText("           **************************************************     ", 0)
-			IR1_AppendAnyText("\"Simplistic presentation\" for publications :    >>>>   "+ParamName+" =  "+IN2G_roundToUncertainity(EndValues[V_minLoc], (levelhigh - levellow)/2,2),0)
+			IR1_AppendAnyText("\"Simplistic presentation\" for publications :    >>>>   "+ParamName+" =  "+IN2G_roundToUncertainity(EndValues[MinLocation], (levelhigh - levellow)/2,2),0)
 			IR1_AppendAnyText("           **************************************************     ", 0)
 			IR1_AppendAnyGraph("ChisquaredAnalysis")
 			IR1_AppendAnyText("  ", 0)
@@ -5602,7 +5612,10 @@ Function IR1A_ConfEvHelp()
 		Notebook $nb fStyle=1, text="2. Uncertainity for individual parameters \r", fStyle=-1
 		Notebook $nb text="Analysis of quality of fits achievable with tested parameter variation.  "
 		Notebook $nb text="The tool will fix tested parameter within the user defined range and fit the other parameters to the data. Plot of achieved chi-squared as function of the fixed value of the tested parameter "
-		Notebook $nb text="is used to estimate uncertainity. User needs to pick method of analysis as described below. User can analyze one parameter or create list of parameters and analyze them sequentially. \r"
+		Notebook $nb text="is used to estimate uncertainity. User needs to pick method of analysis as described below. User can analyze one parameter or create list of parameters and analyze them sequentially. "
+		Notebook $nb text="This method is based on chapter 11 \"Testing the fit\" in \"Data Reduction and Error Analysis\" P. Bevington and D. K. Robinson, available here "
+		Notebook $nb text="(http://hosting.astro.cornell.edu/academics/courses/astro3310/Books/Bevington_opt.pdf). The calculation of Chi-Square target is obtained by using data from table C4 "
+		Notebook $nb text="in this book and approximating them with polynomial function for ease of calculation. Special thanks goes to Mateus Cardoso from LLNL (Brazil) who proposed this method. \r"
 		Notebook $nb text="\r"
 		Notebook $nb text="All parameters which are supposed to be varied during analysis must have \"Fit?\" checkbox checked before the tool si started. Correct fitting limits may be set or use \"Fix fit limits\" checkbox. "
 		Notebook $nb text="Range of data for fitting must be selected correctly with cursors (Unified fit) or set for data with controls (Modeling II). The code does not mo"
