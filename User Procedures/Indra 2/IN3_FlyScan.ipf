@@ -7,6 +7,7 @@
 Constant IN3_FlyImportVersionNumber=0.96
 Constant IN3_DeleteRawData=1
 Constant IN3_RemoveRangeChangeEffects=1
+Constant IN3_TrimDoNOTremoveVibrations=0			//this controls if vibrations are found and attempt to remove is worse than keeping them, what happens. 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -641,18 +642,19 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	Duplicate/O MeasTime, PD_range
 	Duplicate/O MeasTime, I0gain
 	variable OscillationsFound
+	NVAR RemoveOscillations= root:Packages:Indra3:RemoveOscillations
 	OscillationsFound=0
 	//create AR data
-	if(HdfWriterVersion<1.1)
+	if(HdfWriterVersion<1.1)									//trajectory using fixed point system.
 		Duplicate/Free TimeWv, ArValues
 		Redimension /D ArValues
 		ArValues = abs(Ar_increment[0])*p
 	else
-		if(AR_PulseMode[0]==0)		//trajectory using fixed point system.
+		if(AR_PulseMode[0]==0)								//trajectory using fixed point system.
 			Duplicate/Free TimeWv, ArValues
 			Redimension /D ArValues
 			ArValues = abs(Ar_increment[0])*p
-		elseif(AR_PulseMode[0]==1)		// this is using PSO pulse positions, typically 2-8k points, need to also trim extra end as we always save 8k points
+		elseif(AR_PulseMode[0]==1)							// this is using PSO pulse positions, typically 2-8k points, need to also trim extra end as we always save 8k points
 			Duplicate/Free AR_PulsePositions, ArValues
 			Redimension /D/N=(AR_pulses[0]) ArValues
 			ArValues[1,numpnts(ArValues)-1] = (ArValues[p]+ArValues[p-1])/2		// shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point. 
@@ -660,7 +662,7 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 			if(numpnts(MeasTime)!=numpnts(ArValues))
 				OscillationsFound=1
 			endif
-		elseif(AR_PulseMode[0]==2)		//this is using trajectory way points, typically 200 points
+		elseif(AR_PulseMode[0]==2)							//this is using trajectory way points, typically 200 points
 			Duplicate/Free AR_waypoints, ArValues
 			Redimension /D ArValues
 			ArValues[1,numpnts(ArValues)-1] = (ArValues[p]+ArValues[p-1])/2		// shift to have mean AR value for each point and not the end of the AR value, when the system advanced to next point. 
@@ -675,16 +677,19 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	Duplicate/O ArValues, Ar_encoder	
 	if(OscillationsFound)
 		//let's figure out, if all worked as expected.
-		Duplicate/O/Free changes_AR_PSOpulse, AR_PSOpulse
-		Duplicate/O/Free changes_AR_angle, AR_angle, DiffARValues
+		Duplicate/O changes_AR_PSOpulse, AR_PSOpulse
+		Duplicate/O changes_AR_angle, AR_angle, DiffARValues
 		//this seems to cause issues, not sure why it was here. Seems to work without it quite OK... 
 		//variable EndOFData = BinarySearch(AR_angle, 0.1)
 		//DeletePoints  EndOFData, (numpnts(AR_angle)-EndOFData), AR_angle, AR_PSOpulse, DiffARValues
 		//OK, let's fix the weird PSOpulse errors we see. Not sure where these come from. 
 		print "Found that there were likely vibrations during scan, doing fix using PSO channel record" 
-		IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)
-		Redimension /D/N=(numpnts(MeasTime)) ArValues
-		IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
+		IN3_CleanUpStaleMCAChannel(AR_PSOpulse, AR_angle)	
+		if(RemoveOscillations)			//remove vibration as usual, default...
+			IN3_LocateAndRemoveOscillations(AR_encoder,AR_PSOpulse,AR_angle)
+		else													//remove end points from angles.
+			AR_encoder[numpnts(MeasTime)-1, ] =nan
+		endif
 	endif
 
 	redimension/D MeasTime, Monitor, USAXS_PD

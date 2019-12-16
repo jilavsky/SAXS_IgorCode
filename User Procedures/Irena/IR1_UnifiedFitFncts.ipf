@@ -1434,9 +1434,9 @@ Function IR2U_UnifiedEvaPanelFnct() : Panel
 	
 	Button OpenScattContrCalc, pos={5,275}, size={200,20}, title="Open Scatt. Contr. Calc"
 	Button OpenScattContrCalc proc=IR2U_ButtonProc, help={"Create tag with results in the graph"}
-	Button GetHelp, pos={210,273}, size={90,20}, title="Get Help"
+	Button GetHelp, pos={210,277}, size={90,20}, title="Get Help"
 	Button GetHelp proc=IR2U_ButtonProc, help={"Open notebook with some help"}
-	Button CalcLogNormalDist, pos={225,482}, size={100,20}, title="Display Dist."
+	Button CalcLogNormalDist, pos={180,482}, size={160,20}, title="Calc. & Display Dist."
 	Button CalcLogNormalDist proc=IR2U_ButtonProc, help={"Calculate & display Log-normal distribution for these parameters"}	
 	Button SaveToHistory, pos={5,510}, size={150,20}, title="Print to history or LogBook"
 	Button SaveToHistory proc=IR2U_ButtonProc, help={"Create printout in the history area and  SAS logbook"}//***DWS

@@ -7,7 +7,7 @@
 //DO NOT renumber Main files every time, these are main release numbers...
 
 constant CurrentNikaVersionNumber = 1.81
-constant FixBackgroundOversubScale=1.5			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
+constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -222,6 +222,7 @@ end
 //*****************************************************************************************************************
 
 Function NI1_RemoveNika1Mac()
+		Execute/P "NI1_KillGraphsAndPanels()"
 		Execute/P "DELETEINCLUDE \"NI1_Loader\""
 		SVAR strChagne=root:Packages:Nika12DSASItem1Str
 		strChagne= "Load Nika 2D SAS Macros"
@@ -230,6 +231,27 @@ Function NI1_RemoveNika1Mac()
 end
 
 //*****************************************************************************************************************
+
+Function NI1_KillGraphsAndPanels()
+
+
+
+	String ListOfWindows
+	ListOfWindows = "NI1A_Convert2Dto1DPanel;NI1_9IDCConfigPanel;CCDImageToConvertFig;EmptyOrDarkImage;NI1_CreateBmCntrFieldPanel;CCDImageForBmCntr;"
+	ListOfWindows += "NI1M_ImageROIPanel;NI1_CreateFloodFieldPanel;NI1_GeometriesManagerPanel;NI1_RSoXSMainPanel;APS12IDC_Instructions;DND_Instructions;"
+	
+	
+	variable i
+	string TempNm
+	For(i=0;i<ItemsInList(ListOfWindows);i+=1)
+		TempNm = stringFromList(i,ListOfWindows)
+		KillWIndow/Z $TempNm
+	endfor
+end
+
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+////*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function NI1_SignUpForMailingList()
