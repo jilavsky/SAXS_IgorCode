@@ -3189,6 +3189,7 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "FormFactorControlScreen;StructureFactorControlScreen;UnifiedEvaluationPanel;IR2H_ResidualsPlot;IR1P_StylesManagementPanel;"
 	ListOfWindows += "ModelingII_Results;LSQF_IQ4vsQGraph;IR2L_ResSmearingPanel;IR1P_MoreToolsPanel;IR1R_SizeDistImportFitPanel;"
 	ListOfWindows += "TwoPhaseSystemData;TwoPhaseSolidGizmo;TwoPhaseSystems;FractalAggregatePanel;MassFractalAggregateView;TwoPhaseSolid2DImage;"
+	ListOfWindows += "IR3D_DataMergePanel;"
 	
 	
 	variable i

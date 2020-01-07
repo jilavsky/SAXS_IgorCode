@@ -17,7 +17,7 @@
 	//and  
 	//John A Quintanilla, Jordan T Chen, Richard F Reidy and Andrew J Allen Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351, doi:10.1088/0965-0393/15/4/S02
 
-constant useSAXSMorphCode = 1
+constant useSAXSMorphCode = 0
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -359,8 +359,7 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 					IR3T_ExtrapolateHighQ()
 			endif
 			if(StringMatch(ba.ctrlName, "Calc1DTwoPhaseSys" ))
-					IR3T_Calc3DTwoPntCorrelation()
-					IR3T_CalcTwoPntsCorFIntensity()
+					IR3T_Calc1DSASData()
 			endif
 				if(StringMatch(ba.ctrlName, "GetHelp" ))
 				//Open www manual with the right page
@@ -399,6 +398,18 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 
 	return 0
 End
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+//******************************************************************************************************************************************************
+
+Function IR3T_Calc1DSASData()
+
+		IR3T_Calc3DTwoPntCorrelation()
+		IR3T_CalcTwoPntsCorFIntensity()
+end
+
+
+//******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 Function IR3T_SetControlsInPanel()
@@ -640,8 +651,8 @@ Function IR3T_ExtrapolateHighQ()
 		Make/D/T/O/N=1 T_Constraints
 		variable V_FitError
 		T_Constraints[0] = {"K1 >= 0"}
-		//W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]/(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,0.01*OriginalIntensity[pcsr(B , "TwoPhaseSystemData")]}
-		W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]/(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,0}
+		//W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]*(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,0.01*OriginalIntensity[pcsr(B , "TwoPhaseSystemData")]}
+		W_coef = {OriginalIntensity[pcsr(A , "TwoPhaseSystemData")]*(OriginalQvector[pcsr(A , "TwoPhaseSystemData")])^4,0}
 		V_FitError=0			//This should prevent errors from being generated
 		FuncFit/Q PorodInLogLog W_coef OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /C=T_Constraints /W=OriginalError /I=1
 		if (V_FitError!=0)	//there was error in fitting
@@ -1069,10 +1080,11 @@ Function IR3T_GenerateTwoPhaseSolid()
 	NVAR RadMax = root:Packages:TwoPhaseSolidModel:RMax
 
 	make/O/N=(NumberOfKPoints)/D Kvalues
-	Make/O/N=(NumberofRPoints)/D Radii, DebyeAutoCorFnct
+	Make/O/N=(NumberofRPoints)/D PhaseAutocorFnctRadii, PhaseAutocorFnct, Radii
 	Wave Kvalues
-	Wave DebyeAutoCorFnct
+	Wave PhaseAutocorFnct
 	Wave Radii
+	Wave PhaseAutocorFnctRadii
 	variable GammAlfa0 = porosity
 	variable alfaValue
 	//Now starting conditions. 
@@ -1083,7 +1095,8 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//	if(RKlogSpaced)
 	//		Radii = 10^(log(RadMin)+p*((log(RadMax)-log(RadMin))/(NumberofRPoints-1))) 				//sets k scaling on log-scale...
 	//	else
-		Radii = p*(RadMax-RadMin)/NumberofRPoints + RadMin					//this makes the DebyeAutoCorFnct match their function... 
+	Radii = p*(RadMax-RadMin)/NumberofRPoints + RadMin					//this makes the DebyeAutoCorFnct match their function... 
+	PhaseAutocorFnctRadii = Radii
 	//	endif
 	//Now the K vector values... 
 	//need limits, here are their startup limits:
@@ -1094,26 +1107,34 @@ Function IR3T_GenerateTwoPhaseSolid()
 	//	else
 	Kvalues = Kmin + p*KMax/NumberOfKPoints									//sets k scaling on lin-scale...
 	//endif
-	Duplicate/O Radii, DebyeAutoCorFnctRadii									//cretae separate copy for Debye Autocorelation function for plotting and user use... 
 	variable startTicks=ticks
 	//important notes:
 	//		Per all of the literature... 
 	//		This is a function that describes the correlation at two points separated by a distance r, arising from real-space density ﬂuctuations in the sample. 
 	//		That is, it represents the probability that two points separated by a distance r are of the same phase.
+				//********************************************
+				//  >>>>   Step 1 from Quintanilla  <<<<<<
+				//********************************************
 	print "Calculating Gamma_alfa(r)" 									//calculate formula 1	, convert Intensity to Debye Autocorreclation Function DACF
-	multithread DebyeAutoCorFnct = IR3T_ConvertIntToDACF(DebyeAutoCorFnctRadii[p],Intensity,Qvec)			//this is really Debye Autocorreclation Function  
+	multithread PhaseAutocorFnct = IR3T_ConvertIntToDACF(PhaseAutocorFnctRadii[p],Intensity,Qvec)			//this is really Debye Autocorreclation Function  
 	print "Gamma_alfa(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//renormalize
-	wavestats/Q DebyeAutoCorFnct
+	wavestats/Q PhaseAutocorFnct
 	//Refer to original SAXSMorph java code, and John A. Quintanilla papers, explains why this is normalized as below:
 	// Quintanilla: DebyeAutoCorFnct = S2, and S2(0) = porosity (volume fractio of pores)
 	//   limit(R->inf) DebyeAutoCorFnct  = porosity^2
 	//Java code:      this.gammar[i][1] = ((this.porosity - this.porosity * this.porosity) * gamma_r_val[i] / gamma_r_max + this.porosity * this.porosity);
-	Duplicate/O DebyeAutoCorFnct, TwoPointsCorFData			//thsi is two points correlation function. 
-	TwoPointsCorFData = (porosity - porosity^2) * DebyeAutoCorFnct[p]/V_max + porosity^2					//this converts Two Points Correlation function... . 
+	Duplicate/O PhaseAutocorFnct, TwoPointsCorFData																	//thsi is two points correlation function. 
+	TwoPointsCorFData = (porosity - porosity^2) * PhaseAutocorFnct[p]/V_max + porosity^2					//this converts Two Points Correlation function... . 
  	// Makes sense, porosity^2 is random probability that two random points will be both in pore/solid (whatever the minority phase is).
  	//       >>>>>>      this now works, 2-24-2019, but still seem to get different values than SAXSMorph
-  	//**************************************************************
+
+	display PhaseAutocorFnct vs Radii as "PhaseAutocorFnct"
+	display TwoPointsCorFData vs Radii as "TwoPointsCorFData"
+
+			  	//**************************************************************
+				// >>>>   Step 2 from Quintanilla   <<<<<<
+				//********************************************
 	//calculate alfaValue		- note that the two methods use different integration limits  ******************************************
 	alfaValue = sqrt(2) * inverseErf(1 - porosity * 2)
   	// this is from SAXSMorph java code, for 20% ~ 0.841621, Checked by porting their Java inverf in Igor, it is inverse error function. So this is correct.  
@@ -1124,61 +1145,101 @@ Function IR3T_GenerateTwoPhaseSolid()
   	//Erf calculation is : -1.2816
   	//this is also reflected in g(r) calculations below, where SAXSmorph intergates from g(r) to 1, while QUINTANILLA integrated from 0 to g(r). 
   	//**************************************************************
-  	//**************************************************************
+
+
+			  	//**************************************************************
+				// >>>>   Step 3 from Quintanilla   <<<<<<
+				//********************************************
  	//Now formula 2 in Main paper... 
  	//calculate g(r)																//nb: GammAlfa0 = porosity
  	startTicks=ticks
 	print "Calculating gR(r) - the two-point correlation function g(r)" 		
-	Duplicate/O Radii,gR
+	Duplicate/O Radii,AutoCorfnctGr
 	if(useSAXSMorphCode)
 		print "Calculating g(r) using SAXSMorph code"
-		gR = IR3T_SMcalcgr(alfaValue, GammAlfa0, TwoPointsCorFData[p])	//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
-		gR[0]=1																			//first point is 1 by definition and code gets NaN
+		AutoCorfnctGr = IR3T_SMcalcgr(alfaValue, GammAlfa0, TwoPointsCorFData[p])	//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
+		AutoCorfnctGr[0]=1																			//first point is 1 by definition and code gets NaN
 	else
 		//if using Quantanilla Formula 2 integration, change sign of the next calculation... 
-		//also Quintanilla uses function Xi(r) = S2(r) - porosity^2, where S2(r) is DebyeAutoCorFnct
+		//also Quintanilla uses function Xi(r) = S2(r) - porosity^2, where S2(r) is PhaseAutocorFnct
 		//let us create it for sanity...
 		Duplicate/O TwoPointsCorFData, XiFunctionQuint
 		XiFunctionQuint = TwoPointsCorFData - GammAlfa0^2
 		variable alfaValueQ = -1 * alfaValue
 		print "Calculating g(r) using code in Quantanilla paper"
-  		multithread gR = IR3T_ProperCalcgr(alfaValueQ, XiFunctionQuint[p])				//this is correct way of calculating gr
-		gR[0]=1																				//first point is 1 by definition and code gets NaN
-		//gR = numtype(gR[p]) == 0 ? gR[p] : 1											//for log scaled data we have number of nans at the begginign due to really small values, need to be 1 for all such values. 
+  		multithread AutoCorfnctGr = IR3T_ProperCalcgr(alfaValueQ, XiFunctionQuint[p])				//this is correct way of calculating gr
+		AutoCorfnctGr[0]=1																				//first point is 1 by definition and code gets NaN
+		AutoCorfnctGr = numtype(AutoCorfnctGr[p]) == 0 ? AutoCorfnctGr[p] : 1											//for log scaled data we have number of nans at the begginign due to really small values, need to be 1 for all such values. 
 	endif
+
+	display AutoCorfnctGr vs Radii as "AutoCorfnctGr"
+
 	print "gamma(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//    fascinating. So the complete voddo in SAXSMorph creates same gR function as code from Quintanilla 
-	//		*******
+				//********************************************
+				// >>>>   Step 4 from Quintanilla   <<<<<<
+				//********************************************
 	//OK, the stuff above nearly matches SAXSMorph, if the k values are linearly spaced... If they are log-spaced, we get different curve a bit. Not really surprising...  
 	//Bessel function osciallations I would expect in test data, which is sphere intensity profile... 
 	//what is correct here??? Need to check how the data are used later... 
  	startTicks=ticks
+	//Compute FFT of AutoCorfnctGr to later get non-negative version of it... 
 	print "Calculating Spectral function, that is fft of the G(r) (Covariance) function" 		
 	duplicate/O Kvalues, SpectralFk 
-	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p],gR,Radii)
+	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p],AutoCorfnctGr,PhaseAutocorFnctRadii)
 	// spectral function is ridiculously noisy, lets smooth it. 
-	//note: this makes HUGE difference and results look lot closer to SAXSMorph and expectations... 
-	variable SMoothBy = ceil(numpnts(SpectralFk)/60)
-	Smooth/EVEN/B SMoothBy, SpectralFk
-	//this gets some differeces between SAXSMorph and Igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
+
+	display SpectralFk vs Kvalues as "SpectralFk"
+
 	print "Spectral function calculation time was "+num2str((ticks-startTicks)/60) +" sec"
-	//now we need to implement function calcGRF from java code...
-	//this has lots of check code and them calls generateMatrix() 
-	startTicks=ticks
-	print "Calculating Matrix" 		
-	//this is SAXSMoprh way
-	IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
-	//and this is using FFT
-	//you need FFTGRF.ipf for following step. Its is much faster but the sizes generated are smaller and make not much sense for now... 
-	//may be need better - properly fft's gR (bot spectralfk, which has same absolute values and shape, but seem shfited by Rmin...
-	//and ????
-//	IR3T_GenerateMatrixFFT(SpectralFk, Kvalues, BoxSideSize, BoxResolution, porosity)
+				//********************************************
+				// >>>>   Step 5 from Quintanilla   <<<<<<
+				//********************************************
+				//Step 5. Compute a nonnegative approximation of SpectralFk by solving the following convex quadratic programming problem:
+	Duplicate/O SpectralFk, PositiveSpectralFk
+
+	//note: this makes HUGE difference and results look lot closer to SAXSMorph and expectations... 
+	variable SMoothBy = ceil(numpnts(PositiveSpectralFk)/60)
+	Smooth/EVEN/B SMoothBy, PositiveSpectralFk
+	//this gets some differeces between SAXSMorph and Igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
+
+	display PositiveSpectralFk vs Kvalues as "PositiveSpectralFk"
+
+				//********************************************
+				// >>>>   Step 6 from Quintanilla   <<<<<<
+				//********************************************
+				//Evaluate G(r), the optimal positive-deﬁnite approximation to g(r).
+	duplicate/O Radii, PositiveAutoCorfnctGr
+	multithread PositiveAutoCorfnctGr = 	IR3T_ConvertSpectrFtoGr(Radii[p],PositiveSpectralFk,Kvalues)			
+				
+	display PositiveAutoCorfnctGr vs Radii as "PositiveAutoCorfnctGr"
+ 	startTicks=ticks
+ 	if(!useSAXSMorphCode)
+ 		print "Using FFT to genrate 2 phase solid, this is not optimized yet"
+ 		//need to first create 
+		//here we can take over by use of FFT... 
+		IR3T_UseFFTtoGenerateMatrix(PositiveAutoCorfnctGr,Radii, alfaValue, BoxResolution, BoxSideSize)
+	else
+		print "Using SAXSMorph code... "
+		//this is SAXSMorph
+		//now we need to implement function calcGRF from java code...
+		//this has lots of check code and them calls generateMatrix() 
+		startTicks=ticks
+		print "Calculating Matrix" 		
+		//this is SAXSMoprh way
+		IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
+		//and this is using FFT
+		//you need FFTGRF.ipf for following step. Its is much faster but the sizes generated are smaller and make not much sense for now... 
+		//may be need better - properly fft's gR (bot spectralfk, which has same absolute values and shape, but seem shfited by Rmin...
+		//and ????
+		//	IR3T_GenerateMatrixFFT(SpectralFk, Kvalues, BoxSideSize, BoxResolution, porosity)
+	endif
 	print "GenerateMatrix time is "+num2str((ticks-startTicks)/60) +" sec"
 	//calculate theoretical intensity from gR data per Quintanilla, Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351
 	//these are steps 7 and 8
 	//evaluate TheoreticalAutocorrelationFnct as function of R from gR
 	Duplicate/O Radii, RadiiTheorAutoCorrFnct, TheorAutoCorrFnct
-	TheorAutoCorrFnct = IR3T_CalcTheorAutocorF(alfaValue,gR[p])
+	TheorAutoCorrFnct = IR3T_CalcTheorAutocorF(alfaValue,AutoCorfnctGr[p])
 	//some calibration fixes... 
 	Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 	wavestats/Q TwoPhaseSolidMatrix
@@ -1211,6 +1272,94 @@ Function IR3T_GenerateTwoPhaseSolid()
 end
 
 ///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+
+//this works now, but it is getting very noisy results. In SAXSMorph I had to smooth the F(k) or I had much noisier, unrealistic results. 
+//what to do here?  
+
+Function IR3T_UseFFTtoGenerateMatrix(Gr,Radii, alfaValue, BoxDivisions, BoxSide )
+	wave Gr, radii					//this is covariance function (1D)
+	variable alfaValue					//this is cut off value
+	variable BoxDivisions, BoxSide		//Divisions is number of pixels per side, Side is length in A
+	
+	//need to add radius 0 = Gr = 1
+	Make/O/N=(numpnts(Gr)+1) GRtemp, Radiitemp
+	GRtemp[0]=1
+	GRtemp[1, ] = Gr[p-1]
+	Radiitemp[0]=0
+	Radiitemp[1, ]=Radii[p-1]	
+	//now we need to create Corelation. 
+	make/O/N=5000 CovarFunction1D
+	variable maxRadgR = radii[numpnts(radii)-1] - 10
+	SetScale x -2*maxRadgR,2*maxRadgR,"A", CovarFunction1D
+
+	//for testing
+	Duplicate/O CovarFunction1D, CovarFunction1DGauss, CovarFunction1DOrig
+		
+	//Let's see what using smooth function would do...
+	//Curve fitting with Gaussian works fine, but is not generic enough...
+	make/N=4/O W_coef
+	W_coef={0,1,0,50}
+	K0 = 0;K1 = 1;K2 = 0;K3 = 50;
+	CurveFit/G/H="1110" gauss GRtemp /X=Radiitemp	
+	CovarFunction1D =  W_coef[0]+W_coef[1]*exp(-((x-W_coef[2])/(W_coef[3]))^2)				//<<<< is this to convert radius to distance??? I think Covar FUnction needs distance. 
+	//end of use of gauss to smooth Gr...
+
+					//use FFT to remove high osciallations... 
+				//	CovarFunction1D = abs(x)<maxRadgR ? GRtemp[binarysearchInterp(Radiitemp, abs(x) )] : 0
+				//	FFT/OUT=3/DEST=CovarFunction1D_FFT 	CovarFunction1D
+				//	Smooth/EVEN/B 30, CovarFunction1D_FFT
+					//IFFT/DEST=CovarFunction1D_FFT_SM_IFFT  CovarFunction1D_FFT
+				//end, this seems to be a problem...
+		
+	Make/N=(BoxDivisions,BoxDivisions,BoxDivisions)/O RandomField, CovarFunction3D
+	variable HalfBox = BoxSide/2
+	SetScale x 0,BoxSide,"A", RandomField
+	SetScale y 0,BoxSide,"A", RandomField
+	SetScale z 0,BoxSide,"A", RandomField
+	multithread RandomField = gnoise(1)
+	SetScale y -1*BoxSide,BoxSide,"A", CovarFunction3D
+	SetScale x -1*BoxSide,BoxSide,"A", CovarFunction3D
+	SetScale z -1*BoxSide,BoxSide,"A", CovarFunction3D
+	//thsi does not fix anything... This is generating too small particles, something is off here. 
+	//Need to increase size of the particles twice, but cannot find way to scaqle them up. 
+//	SetScale y -1*HalfBox,HalfBox,"A", CovarFunction3D
+//	SetScale x -1*HalfBox,HalfBox,"A", CovarFunction3D
+//	SetScale z -1*HalfBox,HalfBox,"A", CovarFunction3D
+//	SetScale x -1*HalfBox,HalfBox,"A", RandomField
+//	SetScale y -1*HalfBox,HalfBox,"A", RandomField
+//	SetScale z -1*HalfBox,HalfBox,"A", RandomField
+
+	multithread CovarFunction3D = CovarFunction1D(sqrt(x^2+y^2+z^2))
+
+	//Now FFT the two components:
+	FFT/OUT=1/DEST=RandomField_FFT  RandomField				// this is random field after FFT, it should be more or less another random Gauss field. 
+	FFT/OUT=1/DEST=CovarFunction3D_FFT  CovarFunction3D		// this is FFT of covariance function
+	
+	//cannot make this below work somehow.... 
+	//multithread CovarFunction3D_FFT = CovarFunction1D_FFT(sqrt(x^2+y^2+z^2))
+
+
+	matrixOp/NTHR=0/O CovarFunction3D_FFTpwr = powC(CovarFunction3D_FFT, 1/2)	//	<< even for 3D this needs to be sqrt, so why is it for 1D not sqrt??? 
+	
+	matrixOp/NTHR=0/O RandomField_FFT_Covar = RandomField_FFT * CovarFunction3D_FFTpwr
+
+	IFFT/DEST=RandomField_FFT_Covar_IFFT  RandomField_FFT_Covar
+
+
+	MatrixOp/NTHR=0/O TwoPhaseSolidMatrix = greater(RandomField_FFT_Covar_IFFT,alfaValue)
+
+	SetScale x 0,BoxSide,"A", TwoPhaseSolidMatrix
+	SetScale y 0,BoxSide,"A", TwoPhaseSolidMatrix
+	SetScale z 0,BoxSide,"A", TwoPhaseSolidMatrix
+
+	print "Done"
+end
+
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
 
 Function IR3T_CalculateAchievedValues()
 
@@ -1220,7 +1369,7 @@ Function IR3T_CalculateAchievedValues()
 		if(WaveExists(TwoPhaseSolidMatrix))
 			Wavestats/Q TwoPhaseSolidMatrix
 			
-			AchievedVolumeFraction = 1-V_avg
+			AchievedVolumeFraction = V_avg
 		endif
 
 end
@@ -1254,19 +1403,19 @@ Function IR3T_AppendModelIntToGraph()
 //			ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
 //			ModifyGraph msize(PDFIntensityWv)=3
 //		endif
-		if(WaveExists(TheoreticalIntensityDACF))
-			//need to renormalzie this together...
-			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
-			InvarData=areaXY(OriginalQvector, OriginalIntensity, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
-			TheoreticalIntensityDACF*=InvarData/InvarModel
-			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
-			if(V_flag==0)
-				AppendToGraph/W=TwoPhaseSystemData  TheoreticalIntensityDACF vs QvecTheorIntensityDACF
-			endif
-			ModifyGraph lstyle(TheoreticalIntensityDACF)=9,lsize(TheoreticalIntensityDACF)=3,rgb(TheoreticalIntensityDACF)=(1,16019,65535)
-			ModifyGraph mode(TheoreticalIntensityDACF)=4,marker(TheoreticalIntensityDACF)=19
-			ModifyGraph msize(TheoreticalIntensityDACF)=3
-		endif
+//		if(WaveExists(TheoreticalIntensityDACF))
+//			//need to renormalzie this together...
+//			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
+//			InvarData=areaXY(OriginalQvector, OriginalIntensity, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
+//			TheoreticalIntensityDACF*=InvarData/InvarModel
+//			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
+//			if(V_flag==0)
+//				AppendToGraph/W=TwoPhaseSystemData  TheoreticalIntensityDACF vs QvecTheorIntensityDACF
+//			endif
+//			ModifyGraph lstyle(TheoreticalIntensityDACF)=9,lsize(TheoreticalIntensityDACF)=3,rgb(TheoreticalIntensityDACF)=(1,16019,65535)
+//			ModifyGraph mode(TheoreticalIntensityDACF)=4,marker(TheoreticalIntensityDACF)=19
+//			ModifyGraph msize(TheoreticalIntensityDACF)=3
+//		endif
 	endif
 
 end
@@ -1276,6 +1425,28 @@ end
 //			Utility functions
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
+///******************************************************************************************************************************************
+//******************************************************************************************************************************************
+
+Function IR3T_Autocorelate3D(Mat)
+	wave Mat
+	FFT/Dest=TmpFFTMat/Free Mat			//this is fft2(H)
+	Duplicate/O/C/Free TmpFFTMat, TmpFFTMatConj, TmpInternal
+	multithread TmpFFTMatConj = conj(TmpFFTMat)		//this is conj(fft2(H))	
+	multithread TmpInternal=TmpFFTMat*TmpFFTMatConj
+	IFFT/Dest=AutoCorMatrix TmpInternal
+	//AutoCorMatrix/=(dimsize(Mat,0)*dimSize(Mat,1))
+	ImageTransform swap3D AutoCorMatrix			//this is for 3D waves. 
+	//ImageTransform swap AutoCorMatrix
+	wavestats/Q AutoCorMatrix
+	AutoCorMatrix = AutoCorMatrix/V_max				//this scales to max =1 for autocorrelation 
+end
+
+
+
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
 
 threadsafe Function IR3T_ConvertIntToDACF(Radius,Intensity,Qvec)		//formula 1 in SAXSMorph/Quntanilla, DACF is Debye AUtocoreelation Function
 	variable Radius
@@ -1455,8 +1626,19 @@ threadsafe Function IR3T_Formula4_SpectralFnct(Kvector,gR,Radii)
 		wave gR,Radii
 		//this sums for each k vector over all r and g(r) using paper formula 4
 		Make/Free/N=(numpnts(Radii))/D tempVals
-		tempVals = (4*pi*radii[p]*radii[p]*gR[p]*sinc(Kvector*Radii[p])) //				Besselj(0,(Kvector*Radii[p]))
+		tempVals = (4*pi*radii[p]*radii[p]*gR[p]*sinc(Kvector*Radii[p])) 
 		return abs(areaXY(Radii, tempVals))
+end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
+//
+threadsafe Function IR3T_ConvertSpectrFtoGr(Radius,SpectralFk,Kvector)	
+		variable Radius 		//this is Q value, or here called k
+		wave SpectralFk,Kvector
+		//this sums for each k vector over all r and g(r) using paper formula 4
+		Make/Free/N=(numpnts(Kvector))/D tempVals
+		tempVals = (4*pi*Kvector[p]*Kvector[p]*SpectralFk[p]*sinc(Radius*Kvector[p])) 
+		return abs(areaXY(Kvector, tempVals))
 end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
@@ -1614,9 +1796,9 @@ threadsafe Function IR3T_GenGRFUsingCosSaxsMorph(Kn,rmat0,rmat1, rmat2, phin, al
 		//normalize, see paper in Manual
 		variable tval = sqrt(2/NumPntsK) * sumtemp
      if (tval < alpha)				//solid
-			return 1
-     else								//void... 
 			return 0
+     else								//void... 
+			return 1
 		endif
 		return NaN
 end
@@ -1728,18 +1910,84 @@ End
 //*****************************************************************************************************************
 Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 
+	//Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:FFTTwoPhaseSolid
 	Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
 	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
 	NVAR GizmoFillSolid = 	root:packages:TwoPhaseSolidModel:GizmoFillSolid
 	KillWIndow/Z TwoPhaseSolid3D
 
-	PauseUpdate; Silent 1		// building window...
-	// Building Gizmo 8 window...
-	NewGizmo/K=1/T="Two Phase Solid"/W=(796,73,1311,533)
-	DoWindow/C TwoPhaseSolid3D
+	//need to make surfaces here... AGs instructions
+		//2.  I noted that the dimensions are 64x64
+		//
+		//make/n=(64,64) x0=FFTTwoPhaseSolid[0][p][q]
+		//
+		//This looks like 0-1 range and I know you are plotting 0.5 in this case.
+		//
+		//I created a color wave for the surface object:
+		//
+		//make/o/n=(64,64,4) x0ColorWave=1
+		//•x0ColorWave[][][1]=0
+		//•x0ColorWave[][][2]=0
+		//•x0ColorWave[][][0]=x0[p][q]
+		//•x0ColorWave[][][3]=x0[p][q]
+		//
+		//I’m setting the color of the fill to simple red.  
+		//You can do anything else you wish, but note that I set the alpha to zero outside the fill region.  
+		//I also enabled the transparency blend (from Gizmo menu).  <<< this is IMPORTANT !!!
+		//
+	//these are X directions
+	make/O/N=(dimsize(TwoPhaseSolidMatrix,1),dimsize(TwoPhaseSolidMatrix,2)) x0, x1
+	x0 = TwoPhaseSolidMatrix[0][p][q]
+	x1 = TwoPhaseSolidMatrix[dimsize(TwoPhaseSolidMatrix,0)-1][p][q]
+	
+	make/o/n=(dimsize(TwoPhaseSolidMatrix,1),dimsize(TwoPhaseSolidMatrix,2),4) x0ColorWave, x1ColorWave
+	x0ColorWave = 1 
+	x1ColorWave = 1
+	x0ColorWave[][][1]=0
+	x0ColorWave[][][2]=0
+	x0ColorWave[][][0]=x0[p][q]
+	x0ColorWave[][][3]=x0[p][q]
+	x1ColorWave[][][1]=0
+	x1ColorWave[][][2]=0
+	x1ColorWave[][][0]=x1[p][q]
+	x1ColorWave[][][3]=x1[p][q]
+	//these are y directions
+	make/O/N=(dimsize(TwoPhaseSolidMatrix,0),dimsize(TwoPhaseSolidMatrix,2)) y0, y1
+	y0 = TwoPhaseSolidMatrix[p][0][q]
+	y1 = TwoPhaseSolidMatrix[p][dimsize(TwoPhaseSolidMatrix,1)-1][q]	
+	make/o/n=(dimsize(TwoPhaseSolidMatrix,0),dimsize(TwoPhaseSolidMatrix,2),4) y0ColorWave, y1ColorWave
+	y0ColorWave = 1 
+	y1ColorWave = 1
+	y0ColorWave[][][1]=0
+	y0ColorWave[][][2]=0
+	y0ColorWave[][][0]=y0[p][q]
+	y0ColorWave[][][3]=y0[p][q]
+	y1ColorWave[][][1]=0
+	y1ColorWave[][][2]=0
+	y1ColorWave[][][0]=y1[p][q]
+	y1ColorWave[][][3]=y1[p][q]
+
+	//these are z directions
+	make/O/N=(dimsize(TwoPhaseSolidMatrix,0),dimsize(TwoPhaseSolidMatrix,1)) z0, z1
+	z0 = TwoPhaseSolidMatrix[p][q][0]
+	z1 = TwoPhaseSolidMatrix[p][q][dimsize(TwoPhaseSolidMatrix,2)-1]	
+	make/o/n=(dimsize(TwoPhaseSolidMatrix,0),dimsize(TwoPhaseSolidMatrix,1),4) z0ColorWave, z1ColorWave
+	z0ColorWave = 1 
+	z1ColorWave = 1
+	z0ColorWave[][][1]=0
+	z0ColorWave[][][2]=0
+	z0ColorWave[][][0]=z0[p][q]
+	z0ColorWave[][][3]=z0[p][q]
+	z1ColorWave[][][1]=0
+	z1ColorWave[][][2]=0
+	z1ColorWave[][][0]=z1[p][q]
+	z1ColorWave[][][3]=z1[p][q]
+	
+
+	NewGizmo/K=1/T="TwoPhaseSolid3D"/W=(627,70,1142,530)
 	ModifyGizmo startRecMacro=700
 	ModifyGizmo scalingOption=63
-	AppendToGizmo isoSurface=TwoPhaseSolidMatrix,name=TwoPhaseSolidSurface
+	AppendToGizmo isoSurface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=TwoPhaseSolidSurface
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ surfaceColorType,1}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineColorType,0}
 	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineWidthType,0}
@@ -1752,48 +2000,185 @@ Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 	AppendToGizmo Axes=boxAxes,name=axes0
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisScalingMode,1}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisColor,0,0,0,1}
-	//ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,calcNormals,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabel,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabelDistance,0}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabelRGBA,0,0,0,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,labelBillboarding,1}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,labelBillboarding,1}
 	ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,Clipped,0}
 	AppendToGizmo light=Directional,name=light0
 	ModifyGizmo modifyObject=light0,objectType=light,property={ position,-0.241800,-0.664500,0.707100,0.000000}
 	ModifyGizmo modifyObject=light0,objectType=light,property={ direction,-0.241800,-0.664500,0.707100}
 	ModifyGizmo modifyObject=light0,objectType=light,property={ ambient,0.133000,0.133000,0.133000,1.000000}
 	ModifyGizmo modifyObject=light0,objectType=light,property={ specular,1.000000,1.000000,1.000000,1.000000}
-	//this is 3D voxelgram "filler"
-	AppendToGizmo voxelgram=TwoPhaseSolidMatrix,name=Solid
-	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ valueRGBA,0,GizmoFillSolid,0.000015,0.195544,0.800000,1.000000}
-	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ mode,0}
-	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ pointSize,8}
-	///
+	AppendToGizmo Surface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=x0
+	ModifyGizmo ModifyObject=x0,objectType=surface,property={ surfaceColorType,3}
+	ModifyGizmo ModifyObject=x0,objectType=surface,property={ srcMode,128}
+	ModifyGizmo ModifyObject=x0,objectType=surface,property={ surfaceColorWave,root:Packages:TwoPhaseSolidModel:x0ColorWave}
+	AppendToGizmo Surface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=x1
+	ModifyGizmo ModifyObject=x1,objectType=surface,property={ surfaceColorType,3}
+	ModifyGizmo ModifyObject=x1,objectType=surface,property={ srcMode,128}
+	ModifyGizmo ModifyObject=x1,objectType=surface,property={ surfaceColorWave,root:Packages:TwoPhaseSolidModel:x1ColorWave}
+	ModifyGizmo ModifyObject=x1,objectType=surface,property={ plane,dimsize(TwoPhaseSolidMatrix,0)-1}
+	AppendToGizmo Surface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=y0
+	ModifyGizmo ModifyObject=y0,objectType=surface,property={ surfaceColorType,3}
+	ModifyGizmo ModifyObject=y0,objectType=surface,property={ srcMode,64}
+	ModifyGizmo ModifyObject=y0,objectType=surface,property={ surfaceColorWave,root:Packages:TwoPhaseSolidModel:y0ColorWave}
+	AppendToGizmo Surface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=y1
+	ModifyGizmo ModifyObject=y1,objectType=surface,property={ surfaceColorType,3}
+	ModifyGizmo ModifyObject=y1,objectType=surface,property={ srcMode,64}
+	ModifyGizmo ModifyObject=y1,objectType=surface,property={ surfaceColorWave,root:Packages:TwoPhaseSolidModel:y1ColorWave}
+	ModifyGizmo ModifyObject=y1,objectType=surface,property={ plane,dimsize(TwoPhaseSolidMatrix,1)-1}
+	AppendToGizmo Surface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=z0
+	ModifyGizmo ModifyObject=z0,objectType=surface,property={ surfaceColorType,3}
+	ModifyGizmo ModifyObject=z0,objectType=surface,property={ srcMode,32}
+	ModifyGizmo ModifyObject=z0,objectType=surface,property={ surfaceColorWave,root:Packages:TwoPhaseSolidModel:z0ColorWave}
+	AppendToGizmo Surface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=z1
+	ModifyGizmo ModifyObject=z1,objectType=surface,property={ surfaceColorType,3}
+	ModifyGizmo ModifyObject=z1,objectType=surface,property={ srcMode,32}
+	ModifyGizmo ModifyObject=z1,objectType=surface,property={ surfaceColorWave,root:Packages:TwoPhaseSolidModel:z1ColorWave}
+	ModifyGizmo ModifyObject=z1,objectType=surface,property={ plane,dimsize(TwoPhaseSolidMatrix,2)-1}
 	AppendToGizmo attribute specular={1,1,0,1,1032},name=specular0
 	AppendToGizmo attribute shininess={5,20},name=shininess0
-	ModifyGizmo setDisplayList=0, object=light0
-	ModifyGizmo setDisplayList=1, attribute=shininess0
-	ModifyGizmo setDisplayList=2, attribute=specular0
-	ModifyGizmo setDisplayList=3, object=Solid
-	ModifyGizmo setDisplayList=4, object=TwoPhaseSolidSurface
-	ModifyGizmo setDisplayList=5, object=axes0
-	ModifyGizmo setDisplayList=6, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
-
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabel,1}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelText,num2str(BoxSideSize)+" [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ 1,axisLabelText,num2str(BoxSideSize)+" [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ 2,axisLabelText,num2str(BoxSideSize)+" [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisLabelCenter,0}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelDistance,0}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelScale,1}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelRGBA,0.000000,0.000000,0.000000,1.000000}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelTilt,0}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisLabelFont,"default"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelFlip,0}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,labelBillboarding,1}
-
+	AppendToGizmo attribute blendFunc={770,771},name=blendFunc0
+	ModifyGizmo setDisplayList=0, attribute=blendFunc0
+	ModifyGizmo setDisplayList=1, opName=enableBlend, operation=enable, data=3042
+	ModifyGizmo setDisplayList=2, object=light0
+	ModifyGizmo setDisplayList=3, attribute=shininess0
+	ModifyGizmo setDisplayList=4, attribute=specular0
+	ModifyGizmo setDisplayList=5, object=TwoPhaseSolidSurface
+	ModifyGizmo setDisplayList=6, object=x0
+	ModifyGizmo setDisplayList=7, object=x1
+	ModifyGizmo setDisplayList=8, object=y0
+	ModifyGizmo setDisplayList=9, object=y1
+	ModifyGizmo setDisplayList=10, object=z0
+	ModifyGizmo setDisplayList=11, object=z1
+	ModifyGizmo setDisplayList=12, object=axes0
+	ModifyGizmo setDisplayList=13, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
 	ModifyGizmo autoscaling=1
 	ModifyGizmo currentGroupObject=""
 	ModifyGizmo showInfo
-	ModifyGizmo infoWindow={639,659,1456,956}
+	ModifyGizmo infoWindow={1335,74,2152,371}
 	ModifyGizmo endRecMacro
-	ModifyGizmo SETQUATERNION={-0.092963,-0.838295,-0.165945,0.510964}
+	ModifyGizmo SETQUATERNION={0.059717,-0.967522,-0.237711,0.061868}
+
+
+//	PauseUpdate; Silent 1		// building window...
+//	// Building Gizmo 8 window...
+//	NewGizmo/K=1/T="Two Phase Solid"/W=(796,73,1311,533)
+//	DoWindow/C TwoPhaseSolid3D
+//	ModifyGizmo startRecMacro=700
+//	ModifyGizmo scalingOption=63
+//	AppendToGizmo isoSurface=TwoPhaseSolidMatrix,name=TwoPhaseSolidSurface
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ surfaceColorType,1}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineColorType,0}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineWidthType,0}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ fillMode,2}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ lineWidth,1}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ isoValue,0.5}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ frontColor,1,0,0,1}
+//	ModifyGizmo ModifyObject=TwoPhaseSolidSurface,objectType=isoSurface,property={ backColor,0,0,1,1}
+//	ModifyGizmo modifyObject=TwoPhaseSolidSurface,objectType=Surface,property={calcNormals,1}
+//	AppendToGizmo Axes=boxAxes,name=axes0
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisScalingMode,1}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisColor,0,0,0,1}
+//	//ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,calcNormals,1}
+//	ModifyGizmo modifyObject=axes0,objectType=Axes,property={-1,Clipped,0}
+//	AppendToGizmo light=Directional,name=light0
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ position,-0.241800,-0.664500,0.707100,0.000000}
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ direction,-0.241800,-0.664500,0.707100}
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ ambient,0.133000,0.133000,0.133000,1.000000}
+//	ModifyGizmo modifyObject=light0,objectType=light,property={ specular,1.000000,1.000000,1.000000,1.000000}
+//	//this is 3D voxelgram "filler"
+//	AppendToGizmo voxelgram=TwoPhaseSolidMatrix,name=Solid
+//	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ valueRGBA,0,GizmoFillSolid,0.000015,0.195544,0.800000,1.000000}
+//	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ mode,0}
+//	ModifyGizmo ModifyObject=Solid,objectType=voxelgram,property={ pointSize,8}
+//	///
+//	AppendToGizmo attribute specular={1,1,0,1,1032},name=specular0
+//	AppendToGizmo attribute shininess={5,20},name=shininess0
+//	ModifyGizmo setDisplayList=0, object=light0
+//	ModifyGizmo setDisplayList=1, attribute=shininess0
+//	ModifyGizmo setDisplayList=2, attribute=specular0
+//	ModifyGizmo setDisplayList=3, object=Solid
+//	ModifyGizmo setDisplayList=4, object=TwoPhaseSolidSurface
+//	ModifyGizmo setDisplayList=5, object=axes0
+//	ModifyGizmo setDisplayList=6, opName=clearColor, operation=clearColor, data={0.8,0.8,0.8,1}
+//
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabel,1}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelText,num2str(BoxSideSize)+" [A]"}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ 1,axisLabelText,num2str(BoxSideSize)+" [A]"}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ 2,axisLabelText,num2str(BoxSideSize)+" [A]"}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisLabelCenter,0}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelDistance,0}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelScale,1}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelRGBA,0.000000,0.000000,0.000000,1.000000}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelTilt,0}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={-1,axisLabelFont,"default"}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,axisLabelFlip,0}
+//	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={ -1,labelBillboarding,1}
+//
+//	ModifyGizmo autoscaling=1
+//	ModifyGizmo currentGroupObject=""
+//	ModifyGizmo showInfo
+//	ModifyGizmo infoWindow={639,659,1456,956}
+//	ModifyGizmo endRecMacro
+//	ModifyGizmo SETQUATERNION={-0.092963,-0.838295,-0.165945,0.510964}
 EndMacro
 
 

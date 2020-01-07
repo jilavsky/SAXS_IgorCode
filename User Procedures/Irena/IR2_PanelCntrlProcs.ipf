@@ -1,7 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.52
+#pragma version = 1.53
 
 
 //*************************************************************************\
@@ -10,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.53 addes Level fits for Guinier-Porod
 //1.52 fixes for special characters " [ ] , . " iused in folder and wave names. Broke grep, fixed by escaping before use. 
 //1.51 fixes for generic case of data (all checkboxes unchecked). Should work now. 
 //1.50 fixes case when stale FOlder string was returned when user chanegd too fast from USAXS to QRSS type. Fixed case when R_Int was showing as QRS data. 
@@ -215,7 +215,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="SADModelIntPeak4;SADModelIntPeak5;SADModelIntPeak6;"
 	AllCurrentlyAllowedTypes+="PDDFIntensity;PDDFDistFunction;PDDFChiSquared;SADUnifiedIntensity;PDDFGammaFunction;"
 	AllCurrentlyAllowedTypes+="UnifSizeDistVolumeDist;UnifSizeDistNumberDist;"
-	AllCurrentlyAllowedTypes+="GuinierPorodFitIntensity;"
+	AllCurrentlyAllowedTypes+="GuinierPorodFitIntensity;GuinierPorodIntLevel1;GuinierPorodIntLevel2;GuinierPorodIntLevel3;GuinierPorodIntLevel4;GuinierPorodIntLevel5;"
 
 
 	string/g AllKnownToolsResults
@@ -413,7 +413,13 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	ResultsDataTypesLookup+="PDDFDistFunction:PDDFDistances;"
 	ResultsDataTypesLookup+="PDDFGammaFunction:PDDFDistances;"
 	//Guinier-Porod
-	ResultsDataTypesLookup+="GuinierPorodFitIntensity:GuinierPorodFitQvector;"//old, now next line...
+	ResultsDataTypesLookup+="GuinierPorodFitIntensity:GuinierPorodFitQvector;"
+	ResultsDataTypesLookup+="GuinierPorodIntLevel1:GuinierPorodQvecLevel1;"
+	ResultsDataTypesLookup+="GuinierPorodIntLevel2:GuinierPorodQvecLevel2;"
+	ResultsDataTypesLookup+="GuinierPorodIntLevel3:GuinierPorodQvecLevel3;"
+	ResultsDataTypesLookup+="GuinierPorodIntLevel4:GuinierPorodQvecLevel4;"
+	ResultsDataTypesLookup+="GuinierPorodIntLevel5:GuinierPorodQvecLevel5;"
+	
 	
 	//NLQSF2
 	ResultsDataTypesLookup+="IntensityModelLSQF2:QvectorModelLSQF2;"

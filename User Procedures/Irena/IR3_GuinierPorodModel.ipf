@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.10  	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.101 	//this is Irena package Guinier-Porod model based on Hammouda's paper
 // J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 Constant IR3GPversionNumber=1.08
 
@@ -16,7 +16,8 @@ Constant IR3GPversionNumber=1.08
 //report any problems to: ilavsky@aps.anl.gov 
 
 //version history
-//1.10 2019-05 Testing, fixes for Correlation fitting parameters (were nto fitted at all) and some fixes to Uncertainty evaluation, was misbehaving. 
+//1.11 Added ability to export Level fits (Int-Q) which was missing before. 
+//1.10 2019-05 Testing, fixes for Correlation fitting parameters (were not fitted at all) and some fixes to Uncertainty evaluation, was misbehaving. 
 //		fixed some error messages and GUI. 
 //1.09 modified graph size scaling for screen size using IN2G_GetGraphWidthHeight 
 //1.08 modified fitting to include Igor display with iterations /N=0/W=0
@@ -942,6 +943,7 @@ Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 		IR3GP_FixLimits()
 	endif
 	if (cmpstr(ctrlName,"CopyToFolder")==0)
+		IR3GP_CalculateModelIntensity()
 		IR3GP_CopyDataBackToFolder("")
 	endif
 	if (cmpstr(ctrlName,"CopyTFolderNoQuestions")==0)
@@ -1140,6 +1142,8 @@ Function IR3GP_CalculateModelIntensity()
 	NVAR UseSMRData=root:Packages:Irena:GuinierPorod:UseSMRData
 	NVAR SlitLengthUnif=root:Packages:Irena:GuinierPorod:SlitLengthUnif
 	NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
+	//clean old individual levels, so they arfe not in our way...
+	KillWaves/Z ModelIntGPLevel_1, ModelIntGPLevel_2, ModelIntGPLevel_3, ModelIntGPLevel_4, ModelIntGPLevel_5
 	Duplicate/O OriginalIntensity, ModelIntensity, ModelCurrentLevel
 	Redimension/D ModelIntensity
 	Wave OriginalQvector		
@@ -1147,11 +1151,16 @@ Function IR3GP_CalculateModelIntensity()
 	Duplicate/Free ModelIntensity, tempIntensity
 	ModelCurrentLevel=nan
 	variable i
-	
-	for(i=1;i<=NumberOfLevels;i+=1)	// initialize variables;continue test
+	//create all components we want... 
+	for(i=1;i<=NumberOfLevels;i+=1)				
+		// iterate over all used levels, claculate components of the model and sum into common level.
 		IR3GP_CalculateOneLevelModelInt(OriginalQvector,TempIntensity, i)
+		//create individual levels here... Needed for export later. 
+		Duplicate/O TempIntensity, $("ModelIntGPLevel_"+num2str(i))
+		Wave ModelLevel = $("ModelIntGPLevel_"+num2str(i))
 		ModelIntensity+=TempIntensity
 	endfor		
+	//calculate currnetly diplasyed tab level. 
 	if(ActiveLevel<=NumberOfLevels)	
 		IR3GP_CalculateOneLevelModelInt(OriginalQvector,ModelCurrentLevel, ActiveLevel)
 	endif
@@ -1160,11 +1169,25 @@ Function IR3GP_CalculateModelIntensity()
 	ModelIntensity+=SASBackground	
 	
 	if(UseSMRData)
+		//smear all data if needed. 
+		//this is the full model. 
 		duplicate/free ModelIntensity, ModelIntensitySM
 		IR1B_SmearData(ModelIntensity, OriginalQvector, SlitLengthUnif, ModelIntensitySM)
 		ModelIntensity=ModelIntensitySM
-		IR1B_SmearData(ModelCurrentLevel, OriginalQvector, SlitLengthUnif, ModelIntensitySM)
-		ModelCurrentLevel=ModelIntensitySM
+		//this is the active level
+		if(ActiveLevel<=NumberOfLevels)	
+			IR1B_SmearData(ModelCurrentLevel, OriginalQvector, SlitLengthUnif, ModelIntensitySM)
+			ModelCurrentLevel=ModelIntensitySM
+		else
+			ModelCurrentLevel = 0
+		endif
+		//and these are the individual levels.
+		for(i=1;i<=NumberOfLevels;i+=1)	
+			//smear all indvidual levels here... Needed for export later. 
+			Wave ModelLevel = $("ModelIntGPLevel_"+num2str(i))
+			IR1B_SmearData(ModelLevel, OriginalQvector, SlitLengthUnif, ModelIntensitySM)
+			ModelLevel = ModelIntensitySM
+		endfor		
 	endif
 	
 end
@@ -1991,17 +2014,19 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	string StandardOrUser, SaveMe
 	//here we need to copy the final data back to folder
 	//before that we need to also attach note to teh waves with the results
-	if(ParamIsDefault(SaveMe ))
+	if(ParamIsDefault(SaveMe))
 		SaveMe="NO"
 	ENDIF
 	string OldDf=getDataFOlder(1)
 	setDataFolder root:Packages:Irena:GuinierPorod
 	
 	string UsersComment="Guinier-Porod Fit results from "+date()+"  "+time()
+	string ExportIndividualLevels = "No"
 	
 	Prompt UsersComment, "Modify comment to be included with these results"
+	Prompt ExportIndividualLevels, "Export separately Level data", popup, "No;Yes;"
 	if(!stringmatch(SaveMe,"Yes"))
-		DoPrompt "Copy data back to folder comment", UsersComment
+		DoPrompt "Copy data back to folder options", UsersComment, ExportIndividualLevels
 		if (V_Flag)
 			abort
 		endif
@@ -2041,29 +2066,25 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
 	IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 	
-//	//and now local fits also
-//	if(ExportLocalFits)
-//		For(i=1;i<=NumberOfLevels;i+=1)
-//			Wave FitIntPowerLaw=$("root:Packages:Irena_UnifFit:FitLevel"+num2str(i)+"Porod")
-//			Wave FitIntGuinier=$("root:Packages:Irena_UnifFit:FitLevel"+num2str(i)+"Guinier")
-//			Wave LevelUnified=$("root:Packages:Irena_UnifFit:Level"+num2str(i)+"Unified")
-//			tempname="UniLocalLevel"+num2str(i)+"Unified_"+num2str(ii)
-//			Duplicate /O LevelUnified, $tempname
-//			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-//			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
-//			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
-//			tempname="UniLocalLevel"+num2str(i)+"Pwrlaw_"+num2str(ii)
-//			Duplicate /O FitIntPowerLaw, $tempname
-//			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-//			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
-//			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
-//			tempname="UniLocalLevel"+num2str(i)+"Guinier_"+num2str(ii)
-//			Duplicate /O FitIntGuinier, $tempname
-//			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-//			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
-//			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
-//		endfor
-//	endif
+	//and now local fits also
+	if(stringmatch(ExportIndividualLevels,"Yes"))
+		For(i=1;i<=NumberOfLevels;i+=1)
+			Wave/Z ModelLevelInt =$("root:Packages:Irena:GuinierPorod:ModelIntGPLevel_"+num2str(i))
+			if(WaveExists(ModelLevelInt))
+				tempname="GuinierPorodIntLevel"+num2str(i)+"_"+num2str(ii)
+				IR3GP_AppendWaveNote(tempname+";")
+				Duplicate /O ModelLevelInt, $tempname
+				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+				tempname="GuinierPorodQvecLevel"+num2str(i)+"_"+num2str(ii)
+				Duplicate /O tempFitQvectorWave, $tempname
+				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+			endif
+		endfor
+	endif
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	Killwaves/Z tempFitIntensityWave,tempFitQvectorWave

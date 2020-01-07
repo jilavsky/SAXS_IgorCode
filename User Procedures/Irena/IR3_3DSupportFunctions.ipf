@@ -79,10 +79,10 @@ Function IR3T_Calc3DTwoPntCorrelation()
 	//3. Copies scaling to output wave, so if the 3DWave has correct x scaling, data have correct x dimension
 	//4. creates Debye phase correlation function and its radii wave
 	//these are resulting waves:
-	// 	TwoPntCorrelationsWv				= two points correltaiton function, TwoPntCorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
+	// 	TwoPntCorrelationsWv				= two points correlatiton function, TwoPntCorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
 	//		TwoPntDebyePhCorrFnct				= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
 	//		TwoPntDebyePhCorrRadii			= Radii wave for TwoPntDebyePhCorrFnct
-	// 3DWave does not have to have same length side,s but this has not been tested at all yet. 
+	// 3DWave does not have to have same length side, but this has not been tested at all yet. 
 	
 	
 	//result is in the sample folder in TwoPntCorrelationsWv which has x scaling set per scaling of input wave. 
@@ -133,10 +133,6 @@ Function IR3T_Calc3DTwoPntCorrelation()
 	qstep = ceil(qDim/100)
 	rstep = ceil(rDim/100)
 	variable MaxLength=max(pDim, qDim, rDim)
-	//temp working waves. 	
-//	Make/Free/N=(DimSize(My3DWv, 0 )) RowCorrelations
-//	Make/Free/N=(DimSize(My3DWv, 1 )) ColumnCorrelations
-//	Make/Free/N=(DimSize(My3DWv, 2 )) BeamCorrelations
 	//this is wave for results. 
 	Make/O/N=(MaxLength) TwoPntCorrelationsWv
 	variable i, j
@@ -162,7 +158,7 @@ Function IR3T_Calc3DTwoPntCorrelation()
 		endfor
 	endfor
 	//RowCorrelations/=(round(qDim/qstep)*round(rDim/rstep))
-	//circular correlation causes this to be mirrored around center. ALl we get is half of the distance across this way 
+	//circular correlation causes this to be mirrored around center. All we get is half of the distance across this way 
 	//reverse RowCorrelations
 	//redimension/N=(numpnts(RowCorrelations)/2)	 RowCorrelations
 	DeletePoints 0, (numpnts(RowCorrelations)/2),  RowCorrelations
@@ -233,12 +229,13 @@ Function IR3T_Calc3DTwoPntCorrelation()
 	TwoPntCorrelationsWv = VOlumeFraction* TwoPntCorrelationsWv[p]/V_max 
 	
 	Duplicate/O TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct, TwoPntDebyePhCorrRadii
-	TwoPntDebyePhCorrFnct =  TwoPntCorrelationsWv - VOlumeFraction^2				//thsi converts this from TwoPointCor FUnction to Debye Phase Correlation function
+	TwoPntDebyePhCorrFnct =  TwoPntCorrelationsWv - VolumeFraction^2				//thsi converts this from TwoPointCor FUnction to Debye Phase Correlation function
 	
-	TwoPntDebyePhCorrFnct = TwoPntDebyePhCorrFnct[p]>0 ? TwoPntDebyePhCorrFnct : 0			//this needs to be non-negative... - note it is bit more complcaited, but this is OK for now... 
+	TwoPntDebyePhCorrFnct = TwoPntDebyePhCorrFnct[p]>0 ? TwoPntDebyePhCorrFnct : 0			//this needs to be non-negative... - note it should be bit more complicated, but this is OK for now... 
 
-	SetScale/P x 0,pDelta,pUnits, TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct				//assign x-scaling in A from 3D model. 
-//what am I missing here??? ^^^^^^   Why do I need this to be scaled by pi??? 	
+	SetScale/P x 0,(pDelta),pUnits, TwoPntCorrelationsWv, TwoPntDebyePhCorrFnct				//assign x-scaling in A from 3D model. 
+	//Seems like this is distance distribution, not radius distribution... 
+	//that is why we need the 1/2 there??? 
 
 	TwoPntDebyePhCorrRadii = pnt2x(TwoPntDebyePhCorrFnct, p )
 	
@@ -247,8 +244,87 @@ Function IR3T_Calc3DTwoPntCorrelation()
 	//print (ticks-startTicks)/60
 end
 ///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
+Function IR3T_Calc3D_3DTwoPntCorrelation()
+	//does the asme thing as Function IR3T_Calc3DTwoPntCorrelation()
+	//but uses 3DAutcorrelation
+
+
+	setDataFOlder root:Packages:TwoPhaseSolidModel:	
+	//this code calculates Two-point autocorelation function on 3D wave. 
+	//1. Checks wave for sensibility. Needs wave with mostly 0 in it and 1 for minority phase, if needed, it will switch between 0 and 1 so it evaluates minority phase. 
+	//2. Calculates autocorelation in p, q, and r directions, at most 100x100 vectors in each direction (3x100*100 calculations).
+	//3. Copies scaling to output wave, so if the 3DWave has correct x scaling, data have correct x dimension
+	//4. creates Debye phase correlation function and its radii wave
+	//these are resulting waves:
+	// 	TwoPntCorrelationsWv				= two points correlatiton function, TwoPntCorrelationsWv[0] is volume fraction, x-scaling set based on voxel size
+	//		TwoPntDebyePhCorrFnct				= Debye phase correlation function (TwoPntCorrelationsWv - TwoPntCorrelationsWv[0]^2, negative values = 0), x-scaling set as above
+	//		TwoPntDebyePhCorrRadii			= Radii wave for TwoPntDebyePhCorrFnct
+	// 3DWave does not have to have same length side, but this has not been tested at all yet. 
+	
+	//result is in the sample folder in TwoPntCorrelationsWv which has x scaling set per scaling of input wave. 
+	Wave/Z My3DWv = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+	
+	if(!WaveExists(My3DWv))
+		abort
+	endif
+	
+	//Check  My3DWv
+	Wavestats/Q My3DWv
+	variable VOlumeFraction
+	//1. Min=0 , max=1
+	if(V_min!=0 || V_max!=1)
+		Abort "Wave must contain 0 and 1 ONLY, 1 being minority phase, 0 being majority phase" 
+	endif
+	variable MatrixPhase=0
+	if(V_avg>0.49)
+		MatrixPhase=1
+		VOlumeFraction = 1-V_avg
+		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 0 in provided matrix" 
+	else
+		VOlumeFraction = V_avg
+		Print "Two-point corelation function characterized minority phase. Minority phase is expressed by 1 in provided matrix" 
+	endif
+//	variable startTicks=ticks
+	variable pDim, qdim, rdim
+	variable pstep, qstep, rstep
+	pDim  = DimSize(My3DWv, 0 )
+	qDim  = DimSize(My3DWv, 1 )
+	rDim  = DimSize(My3DWv, 2 )
+	variable pDelta, qDelta, rDelta	//these should be voxel sides, if scaling is used for dimansions. 
+	string pUnits, qUnits, rUnits
+	pUnits = WaveUnits(My3DWv, 0 )
+	qUnits = WaveUnits(My3DWv, 1 )
+	rUnits = WaveUnits(My3DWv, 2 )
+	pDelta = DimDelta(My3DWv, 0 )
+	qDelta = DimDelta(My3DWv, 1 )
+	rDelta = DimDelta(My3DWv, 2 )
+	if((pDim*qDim*rDim) < (48*48*48))
+		Abort "This 3D object seems too small to evaluate, minimum dimensions are 50^3"
+	endif
+	if(pDelta!=qDelta || qDelta!=rDelta)
+		Abort "This 3D object seems to have different side scaling - voxel sides. You can only analyze object with cubical voxels."
+	endif
+	//OK, now we may be able to conaculate something... 
+
+	IR3T_Autocorelate3D(My3DWv)
+	
+	wave AutoCorMatrix		//this is resulting autcorrelation wave
+	
+	//we need better method, but for now we can simply extract beam along z direction and get the G(r)
+	
+	ImageTransform /BEAM={(DimSize(AutoCorMatrix, 0)/2 -1),(DimSize(AutoCorMatrix, 1)/2 -1)} getBeam AutoCorMatrix
+	Wave W_Beam
+	//this has proper scaling from -Size to +Size along that direction. 
+	
+	
+end
+///******************************************************************************************************************************************
+///******************************************************************************************************************************************
 	//this works, but I am worried that this is not correct logically... 
-//	//pick random row to extend data for correlation
+	
+	//	//pick random row to extend data for correlation
 //	p1=trunc(abs(enoise(1))*qDim-1e-6)
 //	p2=trunc(abs(enoise(1))*rDim-1e-6)
 //	ImageTransform /G=(p1) /P=(p2) getRow My3DWv
