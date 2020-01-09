@@ -198,7 +198,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	//List of all types currently existing: 
 	AllCurrentlyAllowedTypes = "SizesFitIntensity;SizesVolumeDistribution;SizesNumberDistribution;UnifiedFitIntensity;"
 	AllCurrentlyAllowedTypes+="IntensityModelLSQF2;NumberDistModelLSQF2;VolumeDistModelLSQF2;"
-	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop1;NumberDistModelLSQF2pop1;VolumeDistModelLSQF2pop1;"
+	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop0;IntensityModelLSQF2pop1;NumberDistModelLSQF2pop1;VolumeDistModelLSQF2pop1;"
 	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop2;NumberDistModelLSQF2pop2;VolumeDistModelLSQF2pop2;"
 	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop3;NumberDistModelLSQF2pop3;VolumeDistModelLSQF2pop3;"
 	AllCurrentlyAllowedTypes+="IntensityModelLSQF2pop4;NumberDistModelLSQF2pop4;VolumeDistModelLSQF2pop4;"
@@ -215,8 +215,12 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="SADModelIntPeak4;SADModelIntPeak5;SADModelIntPeak6;"
 	AllCurrentlyAllowedTypes+="PDDFIntensity;PDDFDistFunction;PDDFChiSquared;SADUnifiedIntensity;PDDFGammaFunction;"
 	AllCurrentlyAllowedTypes+="UnifSizeDistVolumeDist;UnifSizeDistNumberDist;"
-	AllCurrentlyAllowedTypes+="GuinierPorodFitIntensity;GuinierPorodIntLevel1;GuinierPorodIntLevel2;GuinierPorodIntLevel3;GuinierPorodIntLevel4;GuinierPorodIntLevel5;"
-
+	AllCurrentlyAllowedTypes+="UniLocalLevel0Unified;UniLocalLevel1Unified;UniLocalLevel1Pwrlaw;UniLocalLevel1Guinier;"
+	AllCurrentlyAllowedTypes+="UniLocalLevel2Unified;UniLocalLevel2Pwrlaw;UniLocalLevel2Guinier;"
+	AllCurrentlyAllowedTypes+="UniLocalLevel3Unified;UniLocalLevel3Pwrlaw;UniLocalLevel3Guinier;"
+	AllCurrentlyAllowedTypes+="UniLocalLevel4Unified;UniLocalLevel4Pwrlaw;UniLocalLevel4Guinier;"
+	AllCurrentlyAllowedTypes+="UniLocalLevel5Unified;UniLocalLevel5Pwrlaw;UniLocalLevel5Guinier;"
+	AllCurrentlyAllowedTypes+="GuinierPorodFitIntensity;GuinierPorodIntLevel0;GuinierPorodIntLevel1;GuinierPorodIntLevel2;GuinierPorodIntLevel3;GuinierPorodIntLevel4;GuinierPorodIntLevel5;"
 
 	string/g AllKnownToolsResults
 	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;"
@@ -350,6 +354,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	ResultsDataTypesLookup+="UnifiedFitIntensity:UnifiedFitQvector;"
 	ResultsDataTypesLookup+="UnifSizeDistVolumeDist:UnifSizeDistRadius;"
 	ResultsDataTypesLookup+="UnifSizeDistNumberDist:UnifSizeDistRadius;"
+	ResultsDataTypesLookup+="UniLocalLevel0Unified:UnifiedFitQvector;"			//this is flat background
 	ResultsDataTypesLookup+="UniLocalLevel1Unified:UnifiedFitQvector;"
 	ResultsDataTypesLookup+="UniLocalLevel1Pwrlaw:UnifiedFitQvector;"
 	ResultsDataTypesLookup+="UniLocalLevel1Guinier:UnifiedFitQvector;"
@@ -414,6 +419,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	ResultsDataTypesLookup+="PDDFGammaFunction:PDDFDistances;"
 	//Guinier-Porod
 	ResultsDataTypesLookup+="GuinierPorodFitIntensity:GuinierPorodFitQvector;"
+	ResultsDataTypesLookup+="GuinierPorodIntLevel0:GuinierPorodQvecLevel0;"		//this is flat background
 	ResultsDataTypesLookup+="GuinierPorodIntLevel1:GuinierPorodQvecLevel1;"
 	ResultsDataTypesLookup+="GuinierPorodIntLevel2:GuinierPorodQvecLevel2;"
 	ResultsDataTypesLookup+="GuinierPorodIntLevel3:GuinierPorodQvecLevel3;"
@@ -423,12 +429,13 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	
 	//NLQSF2
 	ResultsDataTypesLookup+="IntensityModelLSQF2:QvectorModelLSQF2;"
-	ResultsDataTypesLookup+="IntensityModelLSQF2pop6:QvectorModelLSQF2pop6;"
+	ResultsDataTypesLookup+="IntensityModelLSQF2pop0:QvectorModelLSQF2pop0;"		//this is flat background
 	ResultsDataTypesLookup+="IntensityModelLSQF2pop1:QvectorModelLSQF2pop1;"
 	ResultsDataTypesLookup+="IntensityModelLSQF2pop2:QvectorModelLSQF2pop2;"
 	ResultsDataTypesLookup+="IntensityModelLSQF2pop3:QvectorModelLSQF2pop3;"
 	ResultsDataTypesLookup+="IntensityModelLSQF2pop5:QvectorModelLSQF2pop5;"
 	ResultsDataTypesLookup+="IntensityModelLSQF2pop4:QvectorModelLSQF2pop4;"
+	ResultsDataTypesLookup+="IntensityModelLSQF2pop6:QvectorModelLSQF2pop6;"
 
 		ResultsDataTypesLookup+="VolumeDistModelLSQF2:RadiiModelLSQF2,DiametersModelLSQF2;"
 		ResultsDataTypesLookup+="NumberDistModelLSQF2:RadiiModelLSQF2,DiametersModelLSQF2;"

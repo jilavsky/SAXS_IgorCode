@@ -8182,6 +8182,19 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	
 	//and now local fits also
 	if(ExportLocalFits)
+		//export background as flat wave...
+		if(NumberOfLevels>0)	//at least Level 1 must exist!
+			Wave LevelUnified=$("root:Packages:Irena_UnifFit:Level1Unified")
+			tempname="UniLocalLevel0Unified_"+num2str(ii)
+			Duplicate /O LevelUnified, $tempname
+			Wave ModelLevelInt = $tempname
+			NVAR SASBackground = root:Packages:Irena_UnifFit:SASBackground
+			ModelLevelInt = SASBackground
+			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+		endif		
+		//and now all used levels. 
 		For(i=1;i<=NumberOfLevels;i+=1)
 			Wave FitIntPowerLaw=$("root:Packages:Irena_UnifFit:FitLevel"+num2str(i)+"Porod")
 			Wave FitIntGuinier=$("root:Packages:Irena_UnifFit:FitLevel"+num2str(i)+"Guinier")

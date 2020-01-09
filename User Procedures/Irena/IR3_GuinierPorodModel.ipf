@@ -2068,6 +2068,25 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	
 	//and now local fits also
 	if(stringmatch(ExportIndividualLevels,"Yes"))
+		//export background as flat wave...
+		if(NumberOfLevels>0)	//at least Level 1 must exist!
+			Wave/Z ModelLevelInt =$("root:Packages:Irena:GuinierPorod:ModelIntGPLevel_1")
+				tempname="GuinierPorodIntLevel0_"+num2str(ii)
+				IR3GP_AppendWaveNote(tempname+";")
+				Duplicate /O ModelLevelInt, $tempname
+				Wave ModelLevelInt = $tempname
+				NVAR SASBackground = root:Packages:Irena:GuinierPorod:SASBackground
+				ModelLevelInt = SASBackground
+				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
+				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+				tempname="GuinierPorodQvecLevel0_"+num2str(ii)
+				Duplicate /O tempFitQvectorWave, $tempname
+				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+		endif		
+		//and now all used levels. 
 		For(i=1;i<=NumberOfLevels;i+=1)
 			Wave/Z ModelLevelInt =$("root:Packages:Irena:GuinierPorod:ModelIntGPLevel_"+num2str(i))
 			if(WaveExists(ModelLevelInt))
@@ -2075,7 +2094,7 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 				IR3GP_AppendWaveNote(tempname+";")
 				Duplicate /O ModelLevelInt, $tempname
 				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
 				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 				tempname="GuinierPorodQvecLevel"+num2str(i)+"_"+num2str(ii)
 				Duplicate /O tempFitQvectorWave, $tempname

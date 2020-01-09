@@ -2624,6 +2624,22 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 	variable j
 		
 	if(stringmatch(ExportSeparateDistributions,"Yes"))
+		//create Background population 0
+		For(j=1;j<11;j+=1)
+			NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(j))
+			if(UseThePop)
+				Wave Intensity		= $("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(whichDataSet)+"_pop"+num2str(j))
+				Wave Qvector 		= $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(whichDataSet))
+				NVAR Background   =  $("root:Packages:IR2L_NLSQF:Background_set"+num2str(whichDataSet))
+				Duplicate Intensity, $("IntensityModelLSQF2pop0_"+num2str(ii))
+				print "Created results Backgroundf wave : "+DataFolderName+("IntensityModelLSQF2pop0_"+num2str(ii))
+				Duplicate Qvector, $("QvectorModelLSQF2pop0_"+num2str(ii))
+				print "Created results Background wave : "+DataFolderName+("QvectorModelLSQF2pop0_"+num2str(ii))
+				Wave TempInt  = $("IntensityModelLSQF2pop0_"+num2str(ii))
+				TempInt = Background
+			endif
+		endfor		
+		//and now the real models with intensity profiles... 
 		For(j=1;j<11;j+=1)
 			NVAR UseThePop=$("root:Packages:IR2L_NLSQF:UseThePop_pop"+num2str(j))
 			if(UseThePop)
