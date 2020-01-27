@@ -2631,12 +2631,23 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 				Wave Intensity		= $("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(whichDataSet)+"_pop"+num2str(j))
 				Wave Qvector 		= $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(whichDataSet))
 				NVAR Background   =  $("root:Packages:IR2L_NLSQF:Background_set"+num2str(whichDataSet))
-				Duplicate Intensity, $("IntensityModelLSQF2pop0_"+num2str(ii))
+				Duplicate/O Intensity, $("IntensityModelLSQF2pop0_"+num2str(ii))
 				print "Created results Backgroundf wave : "+DataFolderName+("IntensityModelLSQF2pop0_"+num2str(ii))
-				Duplicate Qvector, $("QvectorModelLSQF2pop0_"+num2str(ii))
+				Duplicate/O Qvector, $("QvectorModelLSQF2pop0_"+num2str(ii))
 				print "Created results Background wave : "+DataFolderName+("QvectorModelLSQF2pop0_"+num2str(ii))
 				Wave TempInt  = $("IntensityModelLSQF2pop0_"+num2str(ii))
 				TempInt = Background
+				tempname = ("IntensityModelLSQF2pop0_"+num2str(ii))
+				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
+				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+				IN2G_AppendorReplaceWaveNote(tempname,"Units",IntCalibrationUnits)
+
+				tempname = "QvectorModelLSQF2pop0_"+num2str(ii)
+				IN2G_AppendorReplaceWaveNote(tempname,"DataFrom",GetDataFolder(0))
+				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
+				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","1/A")
 			endif
 		endfor		
 		//and now the real models with intensity profiles... 
@@ -2645,8 +2656,8 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 			if(UseThePop)
 				Wave Intensity		= $("root:Packages:IR2L_NLSQF:IntensityModel_set"+num2str(whichDataSet)+"_pop"+num2str(j))
 				Wave Qvector 		= $("root:Packages:IR2L_NLSQF:Qmodel_set"+num2str(whichDataSet))
-				Wave Radii 			=  $("root:Packages:IR2L_NLSQF:Radius"+"_pop"+num2str(j))
-				Wave Diameter 		=  $("root:Packages:IR2L_NLSQF:Diameter"+"_pop"+num2str(j))
+				Wave/Z Radii 			=  $("root:Packages:IR2L_NLSQF:Radius"+"_pop"+num2str(j))
+				Wave/Z Diameter 		=  $("root:Packages:IR2L_NLSQF:Diameter"+"_pop"+num2str(j))
 				Wave NumberDist 	=  $("root:Packages:IR2L_NLSQF:NumberDist"+"_pop"+num2str(j))
 				Wave VolumeDist 	=  $("root:Packages:IR2L_NLSQF:VolumeDist"+"_pop"+num2str(j))
 

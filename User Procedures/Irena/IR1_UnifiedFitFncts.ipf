@@ -11,7 +11,8 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.33 fixes to how messages fro CheckFitting parameters are defined. 
+//2.34 Added Level0 Local level which conatins flat background and fixed minor issues with loacl fits export. Fixed control procs to handle them correctly.  
+//2.33 fixes to how messages for CheckFitting parameters are defined. 
 //2.32 prevent invariant from being negative. Happens when P<3 for level which is extending to infinity at which point invariant makes little sense anyway. 
 //2.31 fixed IR1A_UnifiedCalcIntOne for when extension of data for SMR data requires extension, failed for rtGlobals=3
 //2.30 combined with smaller ipf files: IR1_Unified_SaveExport.ipf
@@ -8191,7 +8192,7 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 			NVAR SASBackground = root:Packages:Irena_UnifFit:SASBackground
 			ModelLevelInt = SASBackground
 			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+			IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
 			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 		endif		
 		//and now all used levels. 
@@ -8202,17 +8203,17 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 			tempname="UniLocalLevel"+num2str(i)+"Unified_"+num2str(ii)
 			Duplicate /O LevelUnified, $tempname
 			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+			IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
 			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 			tempname="UniLocalLevel"+num2str(i)+"Pwrlaw_"+num2str(ii)
 			Duplicate /O FitIntPowerLaw, $tempname
 			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+			IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
 			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 			tempname="UniLocalLevel"+num2str(i)+"Guinier_"+num2str(ii)
 			Duplicate /O FitIntGuinier, $tempname
 			IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-			IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
+			IN2G_AppendorReplaceWaveNote(tempname,"Units","1/cm")
 			IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 		endfor
 		print "Saved also the local fits for the Unified fit." 

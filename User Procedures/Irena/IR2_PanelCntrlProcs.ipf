@@ -9,7 +9,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.53 addes Level fits for Guinier-Porod
+//1.53 addes Level fits for Guinier-Porod. Adds Level0 for Unified/GP and pop0 for Modeling which are simply flat background wave. 
+			//fixed results lookup which seemed to have failed for more than two results available... 
+			//removed duplicates fromWave with X list. 
 //1.52 fixes for special characters " [ ] , . " iused in folder and wave names. Broke grep, fixed by escaping before use. 
 //1.51 fixes for generic case of data (all checkboxes unchecked). Should work now. 
 //1.50 fixes case when stale FOlder string was returned when user chanegd too fast from USAXS to QRSS type. Fixed case when R_Int was showing as QRS data. 
@@ -2005,51 +2007,66 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 			tt2=""
 			if(cmpstr(MatchMeTo,"*")!=0)
 				tmpLookupStr = IR2C_ReverseLookup(ResultsDataTypesLookup,stringFromList(0,MatchMeTo,"_"))
-				tt1=stringFromList(0,tmpLookupStr)
-				tt2=stringFromList(1,tmpLookupStr)
-				EndStr1="_"+stringFromList(1,MatchMeTo,"_")	//this is current index _XX	
-				if(Stringmatch(tempresult, "*"+tt1+EndStr1+";*"))
-					result+=tt1+EndStr1+";"
-				endif
-				if(strlen(tt2)>0 && Stringmatch(tempresult, "*"+tt2+EndStr1+";*"))
-					result+=tt2+EndStr1+";"
-				endif
+				EndStr1="_"+stringFromList(1,MatchMeTo,"_")	//this is current index _XX
+				for(jj=0;jj<ItemsInList(tmpLookupStr);jj+=1)
+						tt1=stringFromList(jj,tmpLookupStr)
+					if(Stringmatch(tempresult, "*"+tt1+EndStr1+";*"))
+						result+=tt1+EndStr1+";"
+					endif
+				endfor
+				
+				//				tt1=stringFromList(0,tmpLookupStr)
+				//				tt2=stringFromList(1,tmpLookupStr)
+				//				EndStr1="_"+stringFromList(1,MatchMeTo,"_")	//this is current index _XX	
+				//				if(Stringmatch(tempresult, "*"+tt1+EndStr1+";*"))
+				//					result+=tt1+EndStr1+";"
+				//				endif
+				//				if(strlen(tt2)>0 && Stringmatch(tempresult, "*"+tt2+EndStr1+";*"))
+				//					result+=tt2+EndStr1+";"
+				//				endif
 			else		//this is call from GUI and so we need to figure out the order number ourselves... 
 				tmpLookupStr = IR2C_ReverseLookup(ResultsDataTypesLookup,stringFromList(0,QDf,"_"))
-				tt1=stringFromList(0,tmpLookupStr)
-				tt2=stringFromList(1,tmpLookupStr)
+				//tt1=stringFromList(0,tmpLookupStr)
+				//	tt2=stringFromList(1,tmpLookupStr)
 				EndStr1="_"+stringFromList(1,QDf,"_")	//this is current index _XX	
-				if(Stringmatch(tempresult, "*"+tt1+EndStr1+";*"))
-					result+=tt1+EndStr1+";"
-				endif
-				if(strlen(tt2)>0 &&Stringmatch(tempresult, "*"+tt2+EndStr1+";*"))
-					result+=tt2+EndStr1+";"
-				endif
-			
-//				for(i=0;i<itemsInList(LocallyAllowedResultsData);i+=1)				//iterates over all known Irena data types
-//					tempStringY=stringFromList(i,LocallyAllowedResultsData)			//one data type (Y axis data) at a time
-//					tempStringX=stringByKey(tempStringY,ResultsDataTypesLookup)	//this is appropriate data x data type 
-//					//print tempStringY, tempStringX
-//					if(stringmatch(tempStringX,"*,*"))
-//						tempRadDia=2
-//					else
-//						tempRadDia=1
-//					endif
-//						For(jj=0;jj<itemsInList(tempresult);jj+=1)						//tempresult contains all waves in the given folder
-//							if (stringMatch(StringFromList(jj,tempresult), tempStringY+"_*"))
-//							//if ((stringMatch(StringFromList(jj,tempresult), tempStringY+"_*") &&(cmpstr(MatchMeTo,"*")==0) || stringMatch(StringFromList(jj,tempresult),tt1+EndStr1) || stringMatch(StringFromList(jj,tempresult),tt2+EndStr1) )	)
-//							//if (stringMatch(StringFromList(jj,tempresult), tempStringY+"_*") &&(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(jj,tempresult),IR2C_ReverseLookup(ResultsDataTypesLookup,stringFromList(0,MatchMeTo,"_"))+"_"+stringFromList(1,MatchMeTo,"_"))==0 ))	
-//								//Ok, this is appriapriate Y data set
-//								Endstr="_"+StringByKey(StringFromList(j,tempStringY), StringFromList(jj,tempresult) , "_" )	//this is current index _XX	
-//								for(ijk=0;ijk<tempRadDia;ijk+=1)
-//									tempRadDiaStr = stringFromList(ijk,tempStringX+",",",")
-//									if (stringMatch(";"+tempresult,"*;"+tempRadDiaStr+EndStr+";*") || cmpstr("x-scaling",tempStringX)==0  )		//Ok, the appropriate X data set exists or x-scaling is allowed...
-//										result+=tempStringY+Endstr+";"
-//									endif
-//								endfor
-//							endif
-//						endfor
-//				endfor
+				for(jj=0;jj<ItemsInList(tmpLookupStr);jj+=1)
+						tt1=stringFromList(jj,tmpLookupStr)
+					if(Stringmatch(tempresult, "*"+tt1+EndStr1+";*"))
+						result+=tt1+EndStr1+";"
+					endif
+				endfor
+								
+				//				if(Stringmatch(tempresult, "*"+tt1+EndStr1+";*"))
+				//					result+=tt1+EndStr1+";"
+				//				endif
+				//				if(strlen(tt2)>0 &&Stringmatch(tempresult, "*"+tt2+EndStr1+";*"))
+				//					result+=tt2+EndStr1+";"
+				//				endif
+							
+				//				for(i=0;i<itemsInList(LocallyAllowedResultsData);i+=1)				//iterates over all known Irena data types
+				//					tempStringY=stringFromList(i,LocallyAllowedResultsData)			//one data type (Y axis data) at a time
+				//					tempStringX=stringByKey(tempStringY,ResultsDataTypesLookup)	//this is appropriate data x data type 
+				//					//print tempStringY, tempStringX
+				//					if(stringmatch(tempStringX,"*,*"))
+				//						tempRadDia=2
+				//					else
+				//						tempRadDia=1
+				//					endif
+				//						For(jj=0;jj<itemsInList(tempresult);jj+=1)						//tempresult contains all waves in the given folder
+				//							if (stringMatch(StringFromList(jj,tempresult), tempStringY+"_*"))
+				//							//if ((stringMatch(StringFromList(jj,tempresult), tempStringY+"_*") &&(cmpstr(MatchMeTo,"*")==0) || stringMatch(StringFromList(jj,tempresult),tt1+EndStr1) || stringMatch(StringFromList(jj,tempresult),tt2+EndStr1) )	)
+				//							//if (stringMatch(StringFromList(jj,tempresult), tempStringY+"_*") &&(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(jj,tempresult),IR2C_ReverseLookup(ResultsDataTypesLookup,stringFromList(0,MatchMeTo,"_"))+"_"+stringFromList(1,MatchMeTo,"_"))==0 ))	
+				//								//Ok, this is appriapriate Y data set
+				//								Endstr="_"+StringByKey(StringFromList(j,tempStringY), StringFromList(jj,tempresult) , "_" )	//this is current index _XX	
+				//								for(ijk=0;ijk<tempRadDia;ijk+=1)
+				//									tempRadDiaStr = stringFromList(ijk,tempStringX+",",",")
+				//									if (stringMatch(";"+tempresult,"*;"+tempRadDiaStr+EndStr+";*") || cmpstr("x-scaling",tempStringX)==0  )		//Ok, the appropriate X data set exists or x-scaling is allowed...
+				//										result+=tempStringY+Endstr+";"
+				//									endif
+				//								endfor
+				//							endif
+				//						endfor
+				//				endfor
 			endif
 		elseif(cmpstr(DataType,"Error")==0)
 			string MatchMeToY = ""					//holds name of Y axis based on MatchMeTo	
@@ -2177,6 +2194,10 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			//10/27/2013 - changed lines below, why were the top lines commented out when they work (and the ones below do not?)
 			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
+			//1/10/2020 - the above has doubled the first element. This seems to work. 
+			//Execute ("PopupMenu IntensityDataName mode=1, value=IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
+			//Execute ("PopupMenu ErrorDataName mode=1, value=IR2P_ListOfWaves(\"Error\",\"*\",\""+TopPanel+"\"), win="+TopPanel)
+			//but at the same time, the selected element can be simply wrong. This needs to be smarter or we will preferably have possibly first line doubled. 
 		endif
 		//now we need to deal with allowing x-scaling...
 		if(cmpstr(popStr,"x-scaling")==0)
@@ -2305,6 +2326,9 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 				TempXList="---;"	
 			endif
 		endif
+		//seems we need to remove from tempXlist duplicates... 
+		//TempXList=SortList(TempXList,";", 32)
+		TempXList = IR2P_RemoveDUplicatesFromList(TempXList)
 		if (UseIndra2Structure)
 			QDf=stringFromList(0,TempXlist)
 			IntDf=stringFromList(0,TempYlist)
@@ -2324,8 +2348,6 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			endif
 			Execute ("PopupMenu IntensityDataName mode="+num2str(WhichListItem(IntDf, TempYlist, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
 			Execute ("PopupMenu ErrorDataName mode="+num2str(WhichListItem(EDf, tempEList, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
-//			Execute ("PopupMenu IntensityDataName mode=1, value=\""+IntDf +";\"+IR2P_ListOfWaves(\"Yaxis\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)
-//			Execute ("PopupMenu ErrorDataName mode=1, value=\""+EDf +";\"+IR2P_ListOfWaves(\"Error\",\""+QDf+"\",\""+TopPanel+"\"), win="+TopPanel)
 		elseif(UseResults)
 			Execute ("PopupMenu IntensityDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
 			Execute ("PopupMenu QvecDataName mode=1,value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
@@ -2351,11 +2373,6 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			Execute ("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
 		endif
 
-//		Execute ("PopupMenu IntensityDataName proc=IR2C_PanelPopupControl, win="+TopPanel)
-//		Execute ("PopupMenu QvecDataName proc=IR2C_PanelPopupControl, win="+TopPanel)
-//		Execute ("PopupMenu ErrorDataName proc=IR2C_PanelPopupControl, win="+TopPanel)
-
-
 	 	//allow user function through hook function...
 		infostr = FunctionInfo("IR2_ContrProc_F_Hook_Proc")
 		if (strlen(infostr) >0)
@@ -2368,6 +2385,18 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+Function/T IR2P_RemoveDUplicatesFromList(Listin)
+	string ListIn
+	string ListOut="", tmpStr
+	variable i
+	For(i=0;i<ItemsInList(ListIn);i+=1)
+		tmpStr = stringFromList(i, ListIn)
+		if(! stringmatch(ListOut, "*"+tmpStr+";*") )
+			ListOut += tmpStr+";"
+		endif
+	endfor
+	return ListOut
+end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************

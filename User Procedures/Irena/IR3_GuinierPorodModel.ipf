@@ -1,7 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 #pragma version=1.101 	//this is Irena package Guinier-Porod model based on Hammouda's paper
-// J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
 Constant IR3GPversionNumber=1.08
 
 //*************************************************************************\
@@ -15,8 +14,11 @@ Constant IR3GPversionNumber=1.08
 //please, read Readme distributed with the package
 //report any problems to: ilavsky@aps.anl.gov 
 
+// J. Appl. Cryst. (2010). 43, 716–719, Boualem Hammouda, A new Guinier–Porod model
+
+
 //version history
-//1.11 Added ability to export Level fits (Int-Q) which was missing before. 
+//1.11 Added ability to export Level fits (Int-Q) which was missing before.  Adds Level0 which is simply flat background wave. 
 //1.10 2019-05 Testing, fixes for Correlation fitting parameters (were not fitted at all) and some fixes to Uncertainty evaluation, was misbehaving. 
 //		fixed some error messages and GUI. 
 //1.09 modified graph size scaling for screen size using IN2G_GetGraphWidthHeight 
@@ -2083,7 +2085,7 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 				tempname="GuinierPorodQvecLevel0_"+num2str(ii)
 				Duplicate /O tempFitQvectorWave, $tempname
 				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
 				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 		endif		
 		//and now all used levels. 
@@ -2099,7 +2101,7 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 				tempname="GuinierPorodQvecLevel"+num2str(i)+"_"+num2str(ii)
 				Duplicate /O tempFitQvectorWave, $tempname
 				IN2G_AppendorReplaceWaveNote(tempname,"Wname",tempname)
-				IN2G_AppendorReplaceWaveNote(tempname,"Units","A")
+				IN2G_AppendorReplaceWaveNote(tempname,"Units","A-1")
 				IN2G_AppendorReplaceWaveNote(tempname,"UsersComment",UsersComment)
 			endif
 		endfor
