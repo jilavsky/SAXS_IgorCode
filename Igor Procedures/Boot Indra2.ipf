@@ -2,7 +2,7 @@
 #pragma version = 1.97
 #pragma IgorVersion=7.05
 
-//1.97 	TBA
+//1.97 	February 2020 release. 
 //1.96   December 2018, updates 64 bit OSX xops, changes and fixes for 2018-03 cycle and general improvements. 
 //1.95 	July 2018 release, first official Igor 8 release
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 

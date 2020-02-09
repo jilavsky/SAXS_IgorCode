@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.101 	//this is Irena package Guinier-Porod model based on Hammouda's paper
+#pragma version=1.11    	//this is Irena package Guinier-Porod model based on Hammouda's paper
 Constant IR3GPversionNumber=1.08
 
 //*************************************************************************\

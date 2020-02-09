@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.97 April 1 BETA release
+//1.97 February 2020 release. 
 //1.96 December 2018 release. 
 //1.95 July 2018 release
 //1.93 November 2017 updates
@@ -41,7 +41,7 @@
 //this is in Indra2 folder
 #include ":IN2_ConversionProcedure", version>=1.10
 #include ":IN2_DesktopUSAXS", version>=0.3
-#include ":IN2_GeneralProcedures", version>=2.18
+#include ":IN2_GeneralProcedures", version>=2.20
 #include ":IN2_NotebookLogging", version>=1.10
 #include ":IN2_PlottingTools", version>=1.14
 #include ":IN2_SpecInput", version>=1.21
@@ -49,8 +49,8 @@
 #include ":IN2_USAXS", version>=1.97
 #include ":IN2_XtalCalculations", version>=1.1
 #include ":IN3_CalcScattering", version>=1.01
-#include ":IN3_Calculations", version>=1.39
-#include ":IN3_FlyScan", version>=1.04
+#include ":IN3_Calculations", version>=1.41
+#include ":IN3_FlyScan", version>=1.06
 #include ":IN3_Main", version>=1.97
 #include ":IN3_Rwave", version>=1
 #include ":IN3_SupportFnct", version>=1.13
@@ -58,8 +58,8 @@
 //#include ":IN2_XtalCalculations", version>=1
 #include ":IonChamber3.1", version>=3.1
 
-#include "::Irena:IR2_PanelCntrlProcs", version>=1.51
-#include "::CanSAS:IRNI_NexusSupport", version>=1.12
+#include "::Irena:IR2_PanelCntrlProcs", version>=1.53
+#include "::CanSAS:IRNI_NexusSupport", version>=1.14
 
 #include <HDF5 Browser>
 

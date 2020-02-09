@@ -1083,6 +1083,7 @@ Function/T check_fileID(fileVar)
 		FSetPos fileVar, 0						// reset file position to start of header
 		String/G root:Packages:spec:specScanPositions=ListPosOfLineTypes(fileVar,"#S ")
 		String/G root:Packages:spec:specScanPositionsID=idStr
+		//string/g root:Packages:spec:specScanPositions
 		SVAR specScanPositions=root:Packages:spec:specScanPositions
 		Variable scanNum
 		String line

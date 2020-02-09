@@ -17,7 +17,7 @@ Constant TypicalPanelHorizontalSize = 350
       //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
       //For development version uncomment next line, it points to latest (development) version of manuals:
-Strconstant ManualVersionString = "en/latest/"
+Strconstant ManualVersionString = "en/1.4.1/"
 strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -5302,6 +5302,19 @@ Function IN2G_RemoveNaNsFrom2Waves(Wv1,wv2)							//removes NaNs from 3 waves
 	for (i=imax;i>=0;i-=1)
 		if (numtype(Wv1[i])==2 || numtype(Wv2[i])==2)
 			Deletepoints i, 1, Wv1, Wv2
+		endif
+	endfor
+end
+//**********************************************************************************************
+//**********************************************************************************************
+Function IN2G_RemoveNaNsFrom1Wave(Wv1)							//removes NaNs from 3 waves
+	Wave Wv1				//assume same number of points in the waves
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	variable i=0, imax=numpnts(Wv1)-1
+	for (i=imax;i>=0;i-=1)
+		if (numtype(Wv1[i])==2)
+			Deletepoints i, 1, Wv1
 		endif
 	endfor
 end

@@ -149,22 +149,25 @@ Function ASAS_AniDisplayPolarPlots(WhichTypeWave, direction)
 		endif
 		
 		if ((ModelContainsNaNs!=0)||(DataContainNaNs!=0))
-			DoAlert 0, "Model or Exp Data for graph "+GraphNameToUse+" contained NaNs, graph will not be displayed"
-		else
-			settings= WMPolarSettingsNameForGraph(GraphNameToUse)
-			WMPolarRemovePolarGraphData(GraphNameToUse, settings)
-			ASAS_PolarPlot(waveToDisplay, GraphNameToUse)
-			DoWindow/T $(GraphNameToUse),GraphTitleToUse
-			if (ExpDataExists )
-				string polesTraceName=WMPolarAppendTrace(GraphNameToUse,ExpIntensityWave, ExpAngleWave, 360)
-	//			WMAppendPolarTrace(GraphNameToUse,ExpIntensityWave, ExpAngleWave, 360)		//this should work but does not 
-			endif
-			WMPolarAxesRedrawGraphNow(GraphNameToUse)
-			if (ExpDataExists )
-				ModifyGraph lsize(polarY1)=2,rgb(polarY1)=(0,0,0)
-			endif
-			SetAxis/W=$GraphNameToUse /N=1/A
+			DoAlert 0, "Model or Exp Data for graph "+GraphNameToUse+" contained NaNs, these will be cleaned up"
+			IN2G_RemoveNaNsFrom2Waves(ExpIntensityWave,ExpAngleWave)	
+			IN2G_RemoveNaNsFrom1Wave(waveToDisplay)	 			
 		endif
+		
+		settings= WMPolarSettingsNameForGraph(GraphNameToUse)
+		WMPolarRemovePolarGraphData(GraphNameToUse, settings)
+		ASAS_PolarPlot(waveToDisplay, GraphNameToUse)
+		DoWindow/T $(GraphNameToUse),GraphTitleToUse
+		if (ExpDataExists )
+			string polesTraceName=WMPolarAppendTrace(GraphNameToUse,ExpIntensityWave, ExpAngleWave, 360)
+			//			WMAppendPolarTrace(GraphNameToUse,ExpIntensityWave, ExpAngleWave, 360)		//this should work but does not 
+		endif
+		WMPolarAxesRedrawGraphNow(GraphNameToUse)
+		if (ExpDataExists )
+			ModifyGraph lsize(polarY1)=2,rgb(polarY1)=(0,0,0)
+		endif
+		SetAxis/W=$GraphNameToUse /N=1/A
+		
 	endfor
 end
 

@@ -5,7 +5,7 @@
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
 #pragma version = 1.97
 
-constant CurrentIndraVersionNumber = 1.96
+constant CurrentIndraVersionNumber = 1.97
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
@@ -13,7 +13,7 @@ constant CurrentIndraVersionNumber = 1.96
 //*************************************************************************/
 
 //1.97 	Add print in history which version has compiled, Useful info later when debugging.
-//			attempt to set automatically Qmin for the data. 
+//			attempt to set automatically Qmin for the data. Increase default number of points to 500
 //1.96   December 2018 release. Updtaes 64 bit OSX xops.
 //1.95 	Igor 8 release, ongoing fixes for USAXS software changes. Modified behavior of Automatic blank selection in GUI. 
 //1.94	Converted all procedure files to UTF8 to prevent text encoding issues. 

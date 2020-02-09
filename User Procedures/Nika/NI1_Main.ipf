@@ -6,7 +6,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.81
+constant CurrentNikaVersionNumber = 1.82
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -15,7 +15,7 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.82 	April 1 BETA release, rtGLolab=3 forced for all
+//1.82 	rtGLolab=3 forced for all
 //			Added support for 12ID-C data. 
 //			Add print in history which version has compiled, Useful info later when debugging.
 //1.81   December 2018 release. Updated 64bit xops, mainly for OSX. 

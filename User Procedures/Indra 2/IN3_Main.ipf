@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.99
+#pragma version = 1.97
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -12,9 +12,9 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.99 add controls if to remove vibrations or not, seems sometimes is not vibrations which causes less points to be recorded... 
-//1.98 add is2DCollimated and fix sbFLyscan handling. few more fixes. 
-//1.97 April 1 BETA release, fix GUI for step scanning
+//1.97 February 2020, fix GUI for step scanning
+	//1.97 add controls if to remove vibrations or not, seems sometimes is not vibrations which causes less points to be recorded... 
+	//1.97 add is2DCollimated and fix sbFLyscan handling. few more fixes. 
 //1.96 added use of FWHM from sample to GUI. Added ability to overwrite Flyscan amplifier dead times. 
 //1.95 Added button to open Read me. 
 //1.94 Added smooth R data option. 
@@ -994,7 +994,7 @@ Function IN3_Initialize()
 	NVAR DisplayPeakCenter
 	NVAR FlyScanRebinToPoints
 	if(FlyScanRebinToPoints<100)
-		FlyScanRebinToPoints=300
+		FlyScanRebinToPoints=500			//2020-2-3 changed to 500, cpu seems to be good by now. 
 	endif
 	NVAR DisplayAlignSaAndBlank
 	if(DisplayPeakCenter+DisplayAlignSaAndBlank!=1)

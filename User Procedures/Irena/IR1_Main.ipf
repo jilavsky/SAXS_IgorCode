@@ -195,9 +195,9 @@ Menu "SAS"
 	help={"Simple reflectivity model using Parrat's recursive code."}
 	SubMenu "3D Models"
 		"Mass Fractal Aggregate", IR3A_MassFractalAggregate()
-		"Two Phase Solids", IR3T_TwoPhaseSystem()
-		"Display 3D data", IR3A_Display3DData()
-		"Import POV or PDB", IR3P_ImportPOVPDB()
+		//"Two Phase Solids", IR3T_TwoPhaseSystem()
+		//"Display 3D data", IR3A_Display3DData()
+		//"Import POV or PDB", IR3P_ImportPOVPDB()
 	end
 	SubMenu "Anisotropy"
 		"Anisotropy analysis (HOP)", IR3N_AnisotropicSystems()
