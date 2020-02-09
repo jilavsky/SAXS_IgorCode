@@ -17,7 +17,7 @@
 			<Package>xop32bit</Package>
 			<Package>xop64bit</Package>
 		</KnownPackages>
-		<current_release>December2018</current_release>
+		<current_release>February2020</current_release>
 		<current_beta_release>May2019</current_beta_release>
 	</VersionCheck>
 
@@ -55,6 +55,40 @@
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
 			<VersionComment>Beta release May 2019, adds new 3D models.</VersionComment>
+		</release>
+		<release name="February2020">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2020.zip</SourceFileAddress>
+			<Package>
+				<name>Irena</name>
+				<version>2.69</version>
+				<PackageList>IrenaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Nika</name>
+				<version>1.82</version>
+				<PackageList>NikaPckg.xml</PackageList>
+				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>Indra</name>
+				<version>1.97</version>
+				<PackageList>IndraPckg.xml</PackageList>
+				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop32bit</name>
+				<version>2</version>
+				<PackageList>xopPckg32.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop32Ver.ipf</VersionCheckFile>
+			</Package>
+			<Package>
+				<name>xop64bit</name>
+				<version>2</version>
+				<PackageList>xopPckg64.xml</PackageList>
+				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
+			</Package>
+			<VersionComment>Irena 2.69, Nika 1.82 and Indra 1.97 from 2/9/2020.</VersionComment>
 		</release>
 		<release name="December2018">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/December2018.zip</SourceFileAddress>
