@@ -1,9 +1,9 @@
 # SAXS_IgorCode
-Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher (will still work also on Igor Pro 7.08). Note, that Igor Pro is offically **unsupported** on macOS **Catalina** for now. *My code will install and run on Catalina + Igor Pro 8.04beta (I tested it), but that is unsupported combination.* 
+Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher (will still work also on Igor Pro 7.08). Note, that Igor Pro is offically **unsupported** on macOS **Catalina** for now. *My code will install and run on Catalina + Igor Pro 8.04 (I tested it), but there are issues with used xop packages.* 
 
-**The current stable release version is December2018.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
+**Catalina :** If you need to use Catalina, here are some helpful links. General Wavemetrics statement: https://www.wavemetrics.com/news/igor-pro-macos-1015-catalina, and how to get xops loading: https://www.wavemetrics.com/node/21088
 
-**The current BETA version is May2019** This release includes new tools - 3D aggregate model and 3D Two phase solid model. There is also tool for quatification of anisotropy (Hermans orientation parameter, HOP). Nika adds "bnatch" mode when thanks to skipping images, processing is 50-75% faster. If you have any issues with this beta release, please report them ASAP to me. 
+**The current stable release version is February 2020.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
