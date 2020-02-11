@@ -1,17 +1,16 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-		   // Use modern global access method.
 #pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.97
+#pragma version = 1.971
 
-constant CurrentIndraVersionNumber = 1.97
+constant CurrentIndraVersionNumber = 1.971
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.971 	Beta version after February2020 release
 //1.97 	Add print in history which version has compiled, Useful info later when debugging.
 //			attempt to set automatically Qmin for the data. Increase default number of points to 500
 //1.96   December 2018 release. Updtaes 64 bit OSX xops.

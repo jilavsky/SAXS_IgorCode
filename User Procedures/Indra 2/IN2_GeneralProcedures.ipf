@@ -14,17 +14,15 @@ constant FillGraphVerticalRatio = 0.9
 constant FillGraphHorizontalRatio = 0.8
 Constant TypicalPanelHorizontalSize = 350
 
-      //For releases uncomment the next line and set to correct version number:
+   //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
-      //For development version uncomment next line, it points to latest (development) version of manuals:
-Strconstant ManualVersionString = "en/1.4.1/"
-strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
-//strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
+//Strconstant ManualVersionString = "en/1.4.1/"		//this was for February2020 release. 
+   //For development version uncomment next line, it points to latest (development) version of manuals:
+Strconstant ManualVersionString = "en/latest/"		//thsi is for beta version, so it sees current version of manual. 
+strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
+		//this is probably useless... strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
 //replaced with root:Packages:IrenaConfigFolder:UseUserNameString
-//constant useIgor8LongNames = 1 		//this controls if on Igor 8 we will use short or long name
-// replaced with root:Packages:IrenaConfigFolder:Igor8UseLongNames
-//will need to change this later when the hdf5.xop is updated to handle long names... 
 // Names handling: 
 //  IN2G_ReturnUserSampleName(FolderPathToData) returns name, either folder name or content of UserName string
 //  IN2G_CreateUserName(NameIn,MaxShortLength, MakeUnique, FolderWaveStrNum) returns name for specific element

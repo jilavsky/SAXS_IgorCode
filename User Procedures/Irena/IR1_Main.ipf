@@ -1,12 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=21	// Use modern global access method.
-#pragma version=2.69
+#pragma version=2.691
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.69
+constant CurrentIrenaVersionNumber = 2.691
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -14,6 +13,8 @@ constant CurrentIrenaVersionNumber = 2.69
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
+//2.691	Beta version after February2020 release
 //2.69 	Removed 14 ipf files to reduce clutter. 
 //			Combined with IR1_CreateFldrStrctr.ipf, IR1_Functions.ipf
 //			added 3DModels, 4D aggregate and Two Phase ssytems. 

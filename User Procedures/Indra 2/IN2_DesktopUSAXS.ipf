@@ -1014,6 +1014,19 @@ Function IN2U_Initialize()
 	if(NewNumPnts<=0)
 		NewNumPnts=200
 	endif
+	//need to set Guass as fitting function:   
+	//Added for David Londono 2020-02-10
+	variable/g root:Packages:Indra3:UseGauss
+	variable/g root:Packages:Indra3:UseModifiedGauss
+	variable/g root:Packages:Indra3:UseLorenz
+	NewDataFolder/O root:Packages:Indra3
+	NVAR UseGauss = root:Packages:Indra3:UseGauss
+	NVAR UseModGauss = root:Packages:Indra3:UseModifiedGauss
+	NVAR UseLor = root:Packages:Indra3:UseLorenz
+	UseGauss = 1
+	UseModGauss = 0
+	UseLor = 0
+	//end of fix to use Gauss 
 	setDataFolder OldDf
 end
 
