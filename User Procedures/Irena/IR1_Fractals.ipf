@@ -1,8 +1,8 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.10
-Constant IRVversionNumber=2.06
+#pragma version=2.11
+Constant IRVversionNumber=2.11
+
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant IRVversionNumber=2.06
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.11 add option to use Unified Spere form factor instead of Spheroid
 //2.10 comibed with IR1_FractalsFiting.ipf, IR1_FractalsInit.ipf, and IR1_FractalsCntrlPanel.ipf
 //2.06 added getHelp button calling to www manual 
 //2.05 fixed BessJ into Besselj, newer function. 
@@ -25,8 +26,6 @@ Constant IRVversionNumber=2.06
 //2.04 added controls for Qc width
 //2.03 Added Qc as transition from Surface fractal to Porods termainal (Q^-4) slope. 
 //2.02  Modified all controls not to define font and font size to enable proper control by user 
-
-
 
 //Fractals model using Andrew ALlens theory of combining together mass and surface fractal
 //systems. 
@@ -46,7 +45,9 @@ Function IR1V_FractalsModel()
 	IR1V_InitializeFractals()
 	
 	KillWIndow/Z IR1V_ControlPanel
-	Execute("IR1V_ControlPanel()")
+	KillWIndow/Z IR1V_LogLogPlotV
+	KillWindow/Z IR1V_IQ4_Q_PlotV
+	IR1V_ControlPanelFnct()
 	ING2_AddScrollControl()
 	IR1_UpdatePanelVersionNumber("IR1V_ControlPanel", IRVversionNumber,1)
 
@@ -83,7 +84,7 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Proc IR1V_ControlPanel() 
+Function IR1V_ControlPanelFnct() 
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Fractals model"
 	DoWindow/C IR1V_ControlPanel
@@ -129,7 +130,8 @@ Proc IR1V_ControlPanel()
 	Button ExportData,pos={170,620},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Export ASCII", help={"Export ASCII data out of Igor"}
 	Button MarkGraphs,pos={280,620},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Results to graphs", help={"Insert text boxes with results into the graphs for printing"}
 	SetVariable SASBackground,pos={10,569},size={190,16},proc=IR1V_PanelSetVarProc,title="SAS Background", help={"SAS background"}
-	SetVariable SASBackground,limits={-inf,Inf,root:Packages:FractalsModel:SASBackgroundStep},value= root:Packages:FractalsModel:SASBackground
+	NVAR SASBackgroundStep = root:Packages:FractalsModel:SASBackgroundStep
+	SetVariable SASBackground,limits={-inf,Inf,SASBackgroundStep},value= root:Packages:FractalsModel:SASBackground
 	SetVariable SASBackgroundStep,pos={205,569},size={70,16},title="step",proc=IR1V_PanelSetVarProc, help={"Step for increments in SAS background"}
 	SetVariable SASBackgroundStep,limits={0,Inf,0},value= root:Packages:FractalsModel:SASBackgroundStep
 	CheckBox FitBackground,pos={285,569},size={63,14},proc=IR1V_InputPanelCheckboxProc,title="Fit Bckg?"
@@ -145,7 +147,8 @@ Proc IR1V_ControlPanel()
 	TitleBox MassFract1_Title, title="   Mass fractal 1 controls    ", frame=1, labelBack=(64000,0,0), pos={16,272},size={128,17}, fixedSize=1
 
 	SetVariable MassFr1_Phi,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Particle volume   "
-	SetVariable MassFr1_Phi,limits={0,inf,root:Packages:FractalsModel:MassFr1_PhiStep},value= root:Packages:FractalsModel:MassFr1_Phi, help={"Fractional volume of particles in the system"}
+	NVAR MassFr1_PhiStep = root:Packages:FractalsModel:MassFr1_PhiStep
+	SetVariable MassFr1_Phi,limits={0,inf,MassFr1_PhiStep},value= root:Packages:FractalsModel:MassFr1_Phi, help={"Fractional volume of particles in the system"}
 	CheckBox MassFr1_FitPhi,pos={200,296},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr1_FitPhi,variable= root:Packages:FractalsModel:MassFr1_FitPhi, help={"Fit particle volume?, find god starting conditions and select fitting limits..."}
 	SetVariable MassFr1_PhiMin,pos={230,295},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -153,8 +156,9 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr1_PhiMax,pos={300,295},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable MassFr1_PhiMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr1_PhiMax, help={"High limit for Particle volume fitting"}
 
-	SetVariable MassFr1_Radius,pos={14,320},size={160,16},proc=IR1V_PanelSetVarProc,title="Radius                ", help={"Mean particle Radius"}
-	SetVariable MassFr1_Radius,limits={0,inf,root:Packages:FractalsModel:MassFr1_RadiusStep},value= root:Packages:FractalsModel:MassFr1_Radius
+	SetVariable MassFr1_Radius,pos={14,320},size={160,16},proc=IR1V_PanelSetVarProc,title="Radius              ", help={"Mean particle Radius"}
+	NVAR MassFr1_RadiusStep = root:Packages:FractalsModel:MassFr1_RadiusStep
+	SetVariable MassFr1_Radius,limits={0,inf,MassFr1_RadiusStep},value= root:Packages:FractalsModel:MassFr1_Radius
 	CheckBox MassFr1_FitRadius,pos={200,321},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr1_FitRadius,variable= root:Packages:FractalsModel:MassFr1_FitRadius, help={"Fit Radius? Select properly starting conditions and limits"}
 	SetVariable MassFr1_RadiusMin,pos={230,320},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -163,7 +167,8 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr1_RadiusMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr1_RadiusMax, help={"High limit for Radius fitting"}
 
 	SetVariable MassFr1_Dv,pos={14,345},size={160,16},proc=IR1V_PanelSetVarProc,title="Dv (fractal dim.)  ", help={"Fractal dimension - for mass fractal between 1 and 3, chanegs slope..."}
-	SetVariable MassFr1_Dv,limits={1,3,root:Packages:FractalsModel:MassFr1_DvStep},value= root:Packages:FractalsModel:MassFr1_Dv
+	NVAR MassFr1_DvStep = root:Packages:FractalsModel:MassFr1_DvStep
+	SetVariable MassFr1_Dv,limits={1,3,MassFr1_DvStep},value= root:Packages:FractalsModel:MassFr1_Dv
 	CheckBox MassFr1_FitDv,pos={200,346},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr1_FitDv,variable= root:Packages:FractalsModel:MassFr1_FitDv, help={"Fit the Dv?, select properly the starting conditions and limits before fitting"}
 	SetVariable MassFr1_DvMin,pos={230,345},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -172,7 +177,8 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr1_DvMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr1_DvMax, help={"Dv high limit"}
 
 	SetVariable MassFr1_Ksi,pos={14,370},size={160,16},proc=IR1V_PanelSetVarProc,title="Correlation length ", help={"Correlation length of mass fractal, Ksi in the formula"}
-	SetVariable MassFr1_Ksi,limits={0,inf,root:Packages:FractalsModel:MassFr1_KsiStep},value= root:Packages:FractalsModel:MassFr1_Ksi
+	NVAR MassFr1_KsiStep = root:Packages:FractalsModel:MassFr1_KsiStep
+	SetVariable MassFr1_Ksi,limits={0,inf,MassFr1_KsiStep},value= root:Packages:FractalsModel:MassFr1_Ksi
 	CheckBox MassFr1_FitKsi,pos={200,371},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr1_FitKsi,variable= root:Packages:FractalsModel:MassFr1_FitKsi, help={"Fit the Correlation length, select good starting conditions and appropriate limits"}
 	SetVariable MassFr1_KsiMin,pos={230,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -180,20 +186,23 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr1_KsiMax,pos={300,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable MassFr1_KsiMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr1_KsiMax, help={"Correlation length high limit"}
 
+	CheckBox MassFr1_UseUFFormFactor,pos={20,400},size={200,16},proc=IR1V_InputPanelCheckboxProc,title="Use UF Particle Form factor? "
+	CheckBox MassFr1_UseUFFormFactor,variable= root:Packages:FractalsModel:MassFr1_UseUFFormFactor, help={"Check to use Unified Fit Form Factor. Beta=1 = Primary particle is sphere."}
 
-	SetVariable MassFr1_Beta,pos={14,420},size={220,16},proc=IR1V_PanelSetVarProc,title="Particle aspect ratio                    "
+	SetVariable MassFr1_Beta,pos={14,420},size={320,16},proc=IR1V_PanelSetVarProc,title="Particle aspect ratio                           "
 	SetVariable MassFr1_Beta,limits={0.01,100,0.1},value= root:Packages:FractalsModel:MassFr1_Beta, help={"Beta, aspect ratio of particles, should be about 0.5 and 2"}
-	SetVariable MassFr1_Contrast,pos={14,440},size={220,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]                      "
+	SetVariable MassFr1_Contrast,pos={14,440},size={320,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]                           "
 	SetVariable MassFr1_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:MassFr1_Contrast, help={"Scattering contrast"}
-	SetVariable MassFr1_Eta,pos={14,460},size={220,16},proc=IR1V_PanelSetVarProc,title="Volume filling                              "
+	SetVariable MassFr1_Eta,pos={14,460},size={320,16},proc=IR1V_PanelSetVarProc,title="Volume filling                                    "
 	SetVariable MassFr1_Eta,limits={0.3,0.8,0.05},value= root:Packages:FractalsModel:MassFr1_Eta, help={"Eta (filling of the volume) about 0.4 to 0.6 "}
-	SetVariable MassFr1_IntgNumPnts,pos={14,480},size={220,16},proc=IR1V_PanelSetVarProc,title="Internal Integration Num pnts     "
+	SetVariable MassFr1_IntgNumPnts,pos={14,480},size={320,16},proc=IR1V_PanelSetVarProc,title="Internal Integration Num pnts             "
 	SetVariable MassFr1_IntgNumPnts,limits={50,500,50},value= root:Packages:FractalsModel:MassFr1_IntgNumPnts, help={"Number of points for internal integration. About 500 is usual, increase if there are artefacts. "}
 
 	TitleBox MassFract2_Title, title="   Mass fractal 2 controls    ", frame=1, labelBack=(0,0,64000), pos={16,272},size={128,17}, fixedSize=1
 
 	SetVariable MassFr2_Phi,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Particle volume   "
-	SetVariable MassFr2_Phi,limits={0,inf,root:Packages:FractalsModel:MassFr2_PhiStep},value= root:Packages:FractalsModel:MassFr2_Phi, help={"Volme of particles in the system"}
+	NVAR MassFr2_PhiStep = root:Packages:FractalsModel:MassFr2_PhiStep
+	SetVariable MassFr2_Phi,limits={0,inf,MassFr2_PhiStep},value= root:Packages:FractalsModel:MassFr2_Phi, help={"Volme of particles in the system"}
 	CheckBox MassFr2_FitPhi,pos={200,296},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr2_FitPhi,variable= root:Packages:FractalsModel:MassFr2_FitPhi, help={"Fit particle volume?, find god starting conditions and select fitting limits..."}
 	SetVariable MassFr2_PhiMin,pos={230,295},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -201,8 +210,9 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr2_PhiMax,pos={300,295},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable MassFr2_PhiMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr2_PhiMax, help={"High limit for Particle volume fitting"}
 
-	SetVariable MassFr2_Radius,pos={14,320},size={160,16},proc=IR1V_PanelSetVarProc,title="Mean Radius           ", help={"Mean particle Radius"}
-	SetVariable MassFr2_Radius,limits={0,inf,root:Packages:FractalsModel:MassFr2_RadiusStep},value= root:Packages:FractalsModel:MassFr2_Radius
+	SetVariable MassFr2_Radius,pos={14,320},size={160,16},proc=IR1V_PanelSetVarProc,title="Mean Radius         ", help={"Mean particle Radius"}
+	NVAR MassFr2_RadiusStep = root:Packages:FractalsModel:MassFr2_RadiusStep
+	SetVariable MassFr2_Radius,limits={0,inf,MassFr2_RadiusStep},value= root:Packages:FractalsModel:MassFr2_Radius
 	CheckBox MassFr2_FitRadius,pos={200,321},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr2_FitRadius,variable= root:Packages:FractalsModel:MassFr2_FitRadius, help={"Fit Radius? Select properly starting conditions and limits"}
 	SetVariable MassFr2_RadiusMin,pos={230,320},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -211,7 +221,8 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr2_RadiusMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr2_RadiusMax, help={"High limit for Radius fitting"}
 
 	SetVariable MassFr2_Dv,pos={14,345},size={160,16},proc=IR1V_PanelSetVarProc,title="Dv (fractal dim.)  ", help={"Fractal dimension for mass fractal between 1 and 3"}
-	SetVariable MassFr2_Dv,limits={1,3,root:Packages:FractalsModel:MassFr2_DvStep},value= root:Packages:FractalsModel:MassFr2_Dv
+	NVAR MassFr2_DvStep = root:Packages:FractalsModel:MassFr2_DvStep
+	SetVariable MassFr2_Dv,limits={1,3,MassFr2_DvStep},value= root:Packages:FractalsModel:MassFr2_Dv
 	CheckBox MassFr2_FitDv,pos={200,346},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr2_FitDv,variable= root:Packages:FractalsModel:MassFr2_FitDv, help={"Fit the Dv?, select properly the starting conditions and limits before fitting"}
 	SetVariable MassFr2_DvMin,pos={230,345},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -220,7 +231,8 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr2_DvMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr2_DvMax, help={"Dv high limit"}
 
 	SetVariable MassFr2_Ksi,pos={14,370},size={160,16},proc=IR1V_PanelSetVarProc,title="Correlation length ", help={"Correlation length of mass fractal, Ksi in the formula"}
-	SetVariable MassFr2_Ksi,limits={0,inf,root:Packages:FractalsModel:MassFr2_KsiStep},value= root:Packages:FractalsModel:MassFr2_Ksi
+	NVAR MassFr2_KsiStep = root:Packages:FractalsModel:MassFr2_KsiStep
+	SetVariable MassFr2_Ksi,limits={0,inf,MassFr2_KsiStep},value= root:Packages:FractalsModel:MassFr2_Ksi
 	CheckBox MassFr2_FitKsi,pos={200,371},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox MassFr2_FitKsi,variable= root:Packages:FractalsModel:MassFr2_FitKsi, help={"Fit the correlation length, select good starting conditions and appropriate limits"}
 	SetVariable MassFr2_KsiMin,pos={230,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -228,21 +240,25 @@ Proc IR1V_ControlPanel()
 	SetVariable MassFr2_KsiMax,pos={300,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
 	SetVariable MassFr2_KsiMax,limits={0,inf,0},value= root:Packages:FractalsModel:MassFr2_KsiMax, help={"Correlation length high limit"}
 
+	CheckBox MassFr2_UseUFFormFactor,pos={20,400},size={200,16},proc=IR1V_InputPanelCheckboxProc,title="Use UF Particle Form factor? "
+	CheckBox MassFr2_UseUFFormFactor,variable= root:Packages:FractalsModel:MassFr2_UseUFFormFactor, help={"Check to use Unified Fit Form Factor. Beta=1 = Primary particle is sphere."}
 
-	SetVariable MassFr2_Beta,pos={14,420},size={220,16},proc=IR1V_PanelSetVarProc,title="Particle aspect ratio                    "
+	SetVariable MassFr2_Beta,pos={14,420},size={320,16},proc=IR1V_PanelSetVarProc,title="Particle aspect ratio                           "
 	SetVariable MassFr2_Beta,limits={0.01,100,0.1},value= root:Packages:FractalsModel:MassFr2_Beta, help={"Beta, aspect ratio of particles, should be about 0.5 and 2"}
-	SetVariable MassFr2_Contrast,pos={14,440},size={220,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]                      "
+	SetVariable MassFr2_Contrast,pos={14,440},size={320,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]                           "
 	SetVariable MassFr2_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:MassFr2_Contrast, help={"Scattering contrast"}
-	SetVariable MassFr2_Eta,pos={14,460},size={220,16},proc=IR1V_PanelSetVarProc,title="Volume filling                              "
+	SetVariable MassFr2_Eta,pos={14,460},size={320,16},proc=IR1V_PanelSetVarProc,title="Volume filling                                    "
 	SetVariable MassFr2_Eta,limits={0.3,0.8,0.05},value= root:Packages:FractalsModel:MassFr2_Eta, help={"Eta (filling of the volume) about 0.4 to 0.6 "}
-	SetVariable MassFr2_IntgNumPnts,pos={14,480},size={220,16},proc=IR1V_PanelSetVarProc,title="Internal Integration Num pnts     "
+	SetVariable MassFr2_IntgNumPnts,pos={14,480},size={320,16},proc=IR1V_PanelSetVarProc,title="Internal Integration Num pnts             "
 	SetVariable MassFr2_IntgNumPnts,limits={50,500,50},value= root:Packages:FractalsModel:MassFr2_IntgNumPnts, help={"Number of points for internal integration. About 500 is usual, increase if there are artefacts. "}
 
 //SUrface fractal 1 controls
 	TitleBox SurfFract1_Title, title="   Surface fractal 1 controls    ", frame=1, labelBack=(0,64000,0), pos={16,272},size={128,17},fixedSize=1
 
+	NVAR SurfFr1_SurfaceStep = root:Packages:FractalsModel:SurfFr1_SurfaceStep
+
 	SetVariable SurfFr1_Surface,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Smooth surface   "
-	SetVariable SurfFr1_Surface,limits={0,inf,root:Packages:FractalsModel:SurfFr1_SurfaceStep},value= root:Packages:FractalsModel:SurfFr1_Surface, help={"Smooth surface in this surface fractal"}
+	SetVariable SurfFr1_Surface,limits={0,inf,SurfFr1_SurfaceStep},value= root:Packages:FractalsModel:SurfFr1_Surface, help={"Smooth surface in this surface fractal"}
 	CheckBox SurfFr1_FitSurface,pos={200,296},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr1_FitSurface,variable= root:Packages:FractalsModel:SurfFr1_FitSurface, help={"Fit smooth surface?, find god starting conditions and select fitting limits..."}
 	SetVariable SurfFr1_SurfaceMin,pos={230,295},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -251,7 +267,8 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr1_SurfaceMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr1_SurfaceMax, help={"High limit for Particle volume fitting"}
 
 	SetVariable SurfFr1_DS,pos={14,345},size={160,16},proc=IR1V_PanelSetVarProc,title="Ds (fractal dim.)  ", help={"Fractal dimension, 2 to 3 for surface fractals, gives -(6-DS) slope (-3 to -4)"}
-	SetVariable SurfFr1_DS,limits={2,3,root:Packages:FractalsModel:SurfFr1_DSStep},value= root:Packages:FractalsModel:SurfFr1_DS
+	NVAR SurfFr1_DSStep = root:Packages:FractalsModel:SurfFr1_DSStep
+	SetVariable SurfFr1_DS,limits={2,3,SurfFr1_DSStep},value= root:Packages:FractalsModel:SurfFr1_DS
 	CheckBox SurfFr1_fitDS,pos={200,346},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr1_fitDS,variable= root:Packages:FractalsModel:SurfFr1_FitDS, help={"Fit the DS?, select properly the starting conditions and limits before fitting"}
 	SetVariable SurfFr1_DSMin,pos={230,345},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -260,7 +277,8 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr1_DSMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr1_DSMax, help={"DS high limit"}
 
 	SetVariable SurfFr1_Ksi,pos={14,370},size={160,16},proc=IR1V_PanelSetVarProc,title="Correlation length  ", help={"Correlation length of surface fractal, Ksi in the formula"}
-	SetVariable SurfFr1_Ksi,limits={0,inf,root:Packages:FractalsModel:SurfFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr1_Ksi
+	NVAR SurfFr1_KsiStep = root:Packages:FractalsModel:SurfFr1_KsiStep
+	SetVariable SurfFr1_Ksi,limits={0,inf,SurfFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr1_Ksi
 	CheckBox SurfFr1_FitKsi,pos={200,371},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr1_FitKsi,variable= root:Packages:FractalsModel:SurfFr1_FitKsi, help={"Fit the Correlation legth, select good starting conditions and appropriate limits"}
 	SetVariable SurfFr1_KsiMin,pos={230,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -269,10 +287,12 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr1_KsiMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr1_KsiMax, help={"Correlation legth high limit"}
 
 	SetVariable SurfFr1_Qc,pos={14,395},size={160,16},proc=IR1V_PanelSetVarProc,title="Qc (Terminal Q)  ", help={"Q max when scattering changes to Porod's law"}
-	SetVariable SurfFr1_Qc,limits={0,inf,root:Packages:FractalsModel:SurfFr1_QcStep},value= root:Packages:FractalsModel:SurfFr1_Qc
+	NVAR SurfFr1_QcStep = root:Packages:FractalsModel:SurfFr1_QcStep
+	SetVariable SurfFr1_Qc,limits={0,inf,SurfFr1_QcStep},value= root:Packages:FractalsModel:SurfFr1_Qc
 
 	PopupMenu SurfFr1_QcW,pos={14,415},size={180,16},title="Qc width [% of Qc] ", help={"Transition width at Q max when scattering changes to Porod's law"}
-	PopupMenu SurfFr1_QcW,proc=IR1V_PopMenuProc,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*root:Packages:FractalsModel:SurfFr1_QcWidth), "5;10;15;20;25;")
+	NVAR SurfFr1_QcWidth = root:Packages:FractalsModel:SurfFr1_QcWidth
+	PopupMenu SurfFr1_QcW,proc=IR1V_PopMenuProc,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*SurfFr1_QcWidth), "5;10;15;20;25;")
 
 	SetVariable SurfFr1_Contrast,pos={14,450},size={220,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]              "
 	SetVariable SurfFr1_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr1_Contrast, help={"Scattering contrast"}
@@ -281,7 +301,8 @@ Proc IR1V_ControlPanel()
 	TitleBox SurfFract2_Title, title="   Surface fractal 2 controls    ", frame=1, labelBack=(52000,52000,0), pos={16,272},size={128,17}, fixedSize=1
 
 	SetVariable SurfFr2_Surface,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Smooth surface   "
-	SetVariable SurfFr2_Surface,limits={0,inf,root:Packages:FractalsModel:SurfFr2_SurfaceStep},value= root:Packages:FractalsModel:SurfFr2_Surface, help={"Smooth surface in this surface fractal"}
+	NVAR SurfFr2_SurfaceStep = root:Packages:FractalsModel:SurfFr2_SurfaceStep
+	SetVariable SurfFr2_Surface,limits={0,inf,SurfFr2_SurfaceStep},value= root:Packages:FractalsModel:SurfFr2_Surface, help={"Smooth surface in this surface fractal"}
 	CheckBox SurfFr2_FitSurface,pos={200,296},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr2_FitSurface,variable= root:Packages:FractalsModel:SurfFr2_FitSurface, help={"Fit smooth surface?, find god starting conditions and select fitting limits..."}
 	SetVariable SurfFr2_SurfaceMin,pos={230,295},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -290,7 +311,8 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr2_SurfaceMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr2_SurfaceMax, help={"High limit for Particle volume fitting"}
 
 	SetVariable SurfFr2_DS,pos={14,345},size={160,16},proc=IR1V_PanelSetVarProc,title="Ds (fractal dim.)  ", help={"Fractal dimension, 2 to 3 for surface fractals, gives -(6-DS) slope (-3 to -4)"}
-	SetVariable SurfFr2_DS,limits={2,3,root:Packages:FractalsModel:SurfFr2_DSStep},value= root:Packages:FractalsModel:SurfFr2_DS
+	NVAR SurfFr2_DSStep = root:Packages:FractalsModel:SurfFr2_DSStep
+	SetVariable SurfFr2_DS,limits={2,3,SurfFr2_DSStep},value= root:Packages:FractalsModel:SurfFr2_DS
 	CheckBox SurfFr2_fitDS,pos={200,346},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr2_fitDS,variable= root:Packages:FractalsModel:SurfFr2_FitDS, help={"Fit the DS?, select properly the starting conditions and limits before fitting"}
 	SetVariable SurfFr2_DSMin,pos={230,345},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -299,7 +321,8 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr2_DSMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr2_DSMax, help={"DS high limit"}
 
 	SetVariable SurfFr2_Ksi,pos={14,370},size={160,16},proc=IR1V_PanelSetVarProc,title="Correlation length  ", help={"Correlation length of surface fractal, Ksi in the formula"}
-	SetVariable SurfFr2_Ksi,limits={0,inf,root:Packages:FractalsModel:SurfFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr2_Ksi
+	NVAR SurfFr1_KsiStep = root:Packages:FractalsModel:SurfFr1_KsiStep
+	SetVariable SurfFr2_Ksi,limits={0,inf,SurfFr1_KsiStep},value= root:Packages:FractalsModel:SurfFr2_Ksi
 	CheckBox SurfFr2_FitKsi,pos={200,371},size={80,16},proc=IR1V_InputPanelCheckboxProc,title=" "
 	CheckBox SurfFr2_FitKsi,variable= root:Packages:FractalsModel:SurfFr2_FitKsi, help={"Fit the Correlation length, select good starting conditions and appropriate limits"}
 	SetVariable SurfFr2_KsiMin,pos={230,370},size={60,16},proc=IR1V_PanelSetVarProc, title=" "
@@ -308,10 +331,12 @@ Proc IR1V_ControlPanel()
 	SetVariable SurfFr2_KsiMax,limits={0,inf,0},value= root:Packages:FractalsModel:SurfFr2_KsiMax, help={"Correlation length high limit"}
 
 	SetVariable SurfFr2_Qc,pos={14,395},size={160,16},proc=IR1V_PanelSetVarProc,title="Qc (Terminal Q)  ", help={"Q max when scattering changes to Porod's law"}
-	SetVariable SurfFr2_Qc,limits={0,inf,root:Packages:FractalsModel:SurfFr2_QcStep},value= root:Packages:FractalsModel:SurfFr2_Qc
+	NVAR SurfFr2_QcStep = root:Packages:FractalsModel:SurfFr2_QcStep
+	SetVariable SurfFr2_Qc,limits={0,inf,SurfFr2_QcStep},value= root:Packages:FractalsModel:SurfFr2_Qc
 
 	PopupMenu SurfFr2_QcW,pos={14,415},size={180,16},title="Qc width [% of Qc] ", help={"Transition width at Q max when scattering changes to Porod's law"}
-	PopupMenu SurfFr2_QcW,proc=IR1V_PopMenuProc,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*root:Packages:FractalsModel:SurfFr2_QcWidth), "5;10;15;20;25;")
+	NVAR SurfFr2_QcWidth = root:Packages:FractalsModel:SurfFr2_QcWidth
+	PopupMenu SurfFr2_QcW,proc=IR1V_PopMenuProc,value="5;10;15;20;25;", mode=1+whichListItem(num2str(100*SurfFr2_QcWidth), "5;10;15;20;25;")
 
 	SetVariable SurfFr2_Contrast,pos={14,450},size={220,16},proc=IR1A_PanelSetVarProc,title="Contrast [x 10^20]              "
 	SetVariable SurfFr2_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr2_Contrast, help={"Scattering contrast"}
@@ -381,6 +406,9 @@ Function IR1V_TabPanelControl(name,tab)
 	NVAR UseSurfFract1=root:Packages:FractalsModel:UseSurfFract1
 	NVAR UseMassFract2=root:Packages:FractalsModel:UseMassFract2
 	NVAR UseSurfFract2=root:Packages:FractalsModel:UseSurfFract2
+	NVAR MassFr2_UseUFFormFactor=root:Packages:FractalsModel:MassFr2_UseUFFormFactor
+	NVAR MassFr1_UseUFFormFactor=root:Packages:FractalsModel:MassFr1_UseUFFormFactor
+
 //	Mass fractal 1 controls
 	
 	TitleBox MassFract1_Title, disable= (tab!=0 || !UseMassFract1)
@@ -404,7 +432,10 @@ Function IR1V_TabPanelControl(name,tab)
 	SetVariable MassFr1_Contrast, disable= (tab!=0 || !UseMassFract1)
 	SetVariable MassFr1_Eta, disable= (tab!=0 || !UseMassFract1)
 	SetVariable MassFr1_IntgNumPnts, disable= (tab!=0 || !UseMassFract1)
-	
+	CheckBox MassFr1_UseUFFormFactor,  disable= (tab!=0 || !UseMassFract1)
+	if(MassFr1_UseUFFormFactor)
+		SetVariable MassFr1_Beta, disable=1
+	endif	
 	TitleBox SurfFract1_Title, disable= (tab!=1 || !UseSurfFract1)
 
 	SetVariable SurfFr1_Surface, disable= (tab!=1 || !UseSurfFract1)
@@ -444,6 +475,10 @@ Function IR1V_TabPanelControl(name,tab)
 	SetVariable MassFr2_Contrast, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_Eta, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_IntgNumPnts, disable= (tab!=2 || !UseMassFract2)
+	CheckBox MassFr2_UseUFFormFactor,  disable= (tab!=2 || !UseMassFract2)
+	if(MassFr2_UseUFFormFactor)
+		SetVariable MassFr2_Beta, disable=1
+	endif
 	
 	TitleBox SurfFract2_Title, disable= (tab!=3 || !UseSurfFract2)
 
@@ -482,6 +517,8 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:FractalsModel
+	ControlInfo/W=IR1V_ControlPanel DistTabs
+	VARIABLE ActiveTab=V_Value
 
 	if (cmpstr(ctrlName,"UseIndra2Data")==0)
 		//here we control the data structure checkbox
@@ -533,6 +570,19 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		//here we control the data structure checkbox
 	endif
 
+
+	if (cmpstr(ctrlName,"MassFr2_UseUFFormFactor")==0)
+		NVAR MassFr2_UseUFFormFactor=root:Packages:FractalsModel:MassFr2_UseUFFormFactor
+		SetVariable MassFr2_Beta, win=IR1V_ControlPanel,  disable=MassFr2_UseUFFormFactor
+		IR1V_AutoUpdateIfSelected()
+	endif
+
+	if (cmpstr(ctrlName,"MassFr1_UseUFFormFactor")==0)
+		NVAR MassFr1_UseUFFormFactor=root:Packages:FractalsModel:MassFr1_UseUFFormFactor
+		SetVariable MassFr1_Beta, win=IR1V_ControlPanel, disable=MassFr1_UseUFFormFactor
+		IR1V_AutoUpdateIfSelected()
+	endif
+
 	if (cmpstr(ctrlName,"DisplayLocalFits")==0)
 //		//here we control the data structure checkbox
 		IR1V_AutoUpdateIfSelected()
@@ -560,8 +610,7 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 		IR1V_AutoUpdateIfSelected()
 	endif
 	
-	ControlInfo DistTabs
-	IR1V_TabPanelControl("",V_Value)
+	IR1V_TabPanelControl("",ActiveTab)
 	DoWIndow/F IR1V_ControlPanel
 	setDataFolder oldDF
 end
@@ -1809,13 +1858,14 @@ Function IR1V_CalculateMassFractal(which)
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:FractalsModel
 
-	NVAR Phi=$("MassFr"+num2str(which)+"_Phi")
-	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
-	NVAR Dv=$("MassFr"+num2str(which)+"_Dv")
-	NVAR Ksi=$("MassFr"+num2str(which)+"_Ksi")
-	NVAR BetaVar=$("MassFr"+num2str(which)+"_Beta")
-	NVAR Contrast=$("MassFr"+num2str(which)+"_Contrast")
-	NVAR Eta=$("MassFr"+num2str(which)+"_Eta")
+	NVAR Phi=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Phi")
+	NVAR Radius=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Radius")
+	NVAR Dv=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Dv")
+	NVAR Ksi=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Ksi")
+	NVAR BetaVar=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Beta")
+	NVAR Contrast=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Contrast")
+	NVAR Eta=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Eta")
+	NVAR UseUFFormFactor=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_UseUFFormFactor")
 	
 
 	Wave Qvec=root:Packages:FractalsModel:FractFitQvector
@@ -1831,10 +1881,14 @@ Function IR1V_CalculateMassFractal(which)
 //	tempFractFitIntensity *= IR1V_SpheroidVolume(Radius,Beta)* 1e-24		//volume of particle
 	variable Bracket
 	Bracket = ( Eta * RC^3 / (BetaVar * Radius^3)) * ((Ksi/RC)^Dv )
-	if(BetaVar!=1)
-		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(which,Qvec)
+	if(UseUFFormFactor)								//use Unified fit Form factor for sphere...
+		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(which,Qvec)
 	else
-		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_SphereFFSquared(which,Qvec)
+		if(BetaVar!=1)
+			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(which,Qvec)
+		else
+			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_SphereFFSquared(which,Qvec)
+		endif
 	endif
 	//	tempFractFitIntensity*=1e-48									//this is conversion for Volume of particles from A to cm
 	FractFitIntensity+=tempFractFitIntensity
@@ -1856,6 +1910,24 @@ Function IR1V_SphereFFSquared(which, Qvalue)
 	variable QR=Qvalue*radius
 
 	return  ((3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR))))^2
+end
+
+
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+///******************************************************************************************
+
+Function IR1V_UnifiedSphereFFSquared(which, Qvalue)
+	variable Qvalue, which										//does the math for Unified fit Sphere Form factor function
+
+	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
+
+   Variable G1=1, P1=4, Rg1=sqrt(3/5)*radius
+   variable B1=1.62*G1/Rg1^4
+   variable QstarVector=qvalue/(erf(qvalue*Rg1/sqrt(6)))^3
+   variable result =G1*exp(-qvalue^2*Rg1^2/3)+(B1/QstarVector^P1)
+   return (result)			//normalized to one
 end
 
 
@@ -2175,6 +2247,8 @@ Function IR1V_InitializeFractals()
 	ListOfVariables+="MassFr2_PhiError;MassFr2_RadiusError;MassFr2_DvError;MassFr2_KsiError;MassFr2_FitError;"
 	ListOfVariables+="MassFr2_PhiMin;MassFr2_PhiMax;MassFr2_PhiStep;MassFr2_RadiusMin;MassFr2_RadiusMax;MassFr2_RadiusStep;"
 	ListOfVariables+="MassFr2_DvMin;MassFr2_DvMax;MassFr2_DvStep;MassFr2_KsiMin;MassFr2_KsiMax;MassFr2_KsiStep;MassFr2_FitMin;MassFr2_FitMax;"
+
+	ListOfVariables+="MassFr1_UseUFFormFactor;MassFr2_UseUFFormFactor;"
 	
 	ListOfVariables+="SurfFr1_Surface;SurfFr1_Ksi;SurfFr1_DS;SurfFr1_Contrast;"
 	ListOfVariables+="SurfFr1_FitSurface;SurfFr1_FitKsi;SurfFr1_FitDS;"

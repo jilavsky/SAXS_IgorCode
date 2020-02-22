@@ -873,10 +873,10 @@ Function IR1I_ProcessImpWaves(selectedFile)
 		if(TrimDataQMax>0 && TrimDataQMax<TempQvector[inf])
 			EndPointsToRemove=binarysearch(TempQvector,TrimDataQMax)
 		endif
-		if(TrimDataQMin>0)
+		if(TrimDataQMin>0 && StartPointsToRemove>0)
 			TempQvector[0,StartPointsToRemove]=NaN
 		endif
-		if(TrimDataQMax>0 && TrimDataQMax<TempQvector[inf])
+		if(TrimDataQMax>0 && TrimDataQMax<TempQvector[inf] && EndPointsToRemove>0)
 			TempQvector[EndPointsToRemove+1,inf]=NaN
 		endif
 		if(WaveExists(TempError)&&WaveExists(TempQError))	//have 4 waves
