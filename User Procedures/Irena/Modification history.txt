@@ -12,6 +12,7 @@ Modification history:
 ********************************************
 2.691 (beta)
 Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are nto reasonable for most cases. 
+Added Multi Data Plot tool, new tool to plot quickly many data sets. New ipf file... 
 
 
 2.69 2/9/2020

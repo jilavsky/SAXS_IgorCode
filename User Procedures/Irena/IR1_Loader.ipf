@@ -78,6 +78,7 @@
 #include ":IR3_Anisotropy", version>=1.00
 #include ":IR3_GuinierPorodModel", version>=1.11
 #include ":IR3_MergingData", version>=1.19
+#include ":IR3_MultiDataPlot", version>=1
 #include ":IR3_SimpleFits", version>=1.10
 #include ":IR3_WAXSDiffraction", version>=1.14
 

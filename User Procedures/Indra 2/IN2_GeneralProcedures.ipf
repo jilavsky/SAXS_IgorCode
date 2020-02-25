@@ -5161,45 +5161,43 @@ Function/S IN2G_FindFolderWithWaveTypes(startDF, levels, WaveTypes, LongShortTyp
         
         dfSave = GetDataFolder(1)
   	
-  	if (!DataFolderExists(startDF))
-  		return ""
-  	endif
+		  	if (!DataFolderExists(startDF))
+		  		return ""
+		  	endif
   	
         SetDataFolder startDF
         
         //templist = DataFolderDir(0)
         templist = DataFolderDir(1)
         skipRest=0
- 	//first treat the empty folders... 
- 	if(strlen(WaveList("*",";",""))>0 && cmpstr(WaveTypes,"*")==0)  //if the folder is NOT empty and matchstr="*", then we need to include this folder... 
- 		if (LongShortType)
-	            		list += startDF + ";"
-				skipRest=1
-	      	else
-     		      		list += GetDataFolder(0) + ";"
-      				skipRest=1
-      		endif	
- 	elseif(strlen(WaveList("*",";",""))>0)	//folder not empty, but need to test match strings... 
- 		//and now the non-empty folders...
-		 	// For(i=0;i<ItemsInList(WaveList("*",";",""));i+=1)
-		 TempWvList = 	WaveList(WaveTypes,";","")
-		  For(i=0;i<ItemsInList(TempWvList);i+=1)
-			tempWvName = StringFromList(i, TempWvList ,";")
-			 //   	 if (Stringmatch(WaveList("*",";",""),WaveTypes))
-				if (Stringmatch(tempWvName,WaveTypes))
-					if (LongShortType)
-				            		list += startDF + ";"
-							break
-				      	else
-			     		      		list += GetDataFolder(0) + ";"
-		      					break
-			      		endif
-		        	endif
-		        //	endif
-	        endfor
-	 else		//folder empty, nothing to do...
-	 
- 	 endif
+		 	//first treat the empty folders... 
+		 	string AllWaves=WaveList("*",";","")
+	 		if(strlen(AllWaves)>0 && cmpstr(WaveTypes,"*")==0)  //if the folder is NOT empty and matchstr="*", then we need to include this folder... 
+	 			if (LongShortType)
+		            		list += startDF + ";"
+					skipRest=1
+		      	else
+	     		      	list += GetDataFolder(0) + ";"
+	      				skipRest=1
+	      		endif	
+		 	elseif(strlen(AllWaves)>0)									//folder not empty, but need to test match strings... 
+			  TempWvList = 	WaveList(WaveTypes,";","")
+			  For(i=0;i<ItemsInList(TempWvList);i+=1)
+					tempWvName = StringFromList(i, TempWvList ,";")
+					if (Stringmatch(tempWvName,WaveTypes))
+						if (LongShortType)
+					           	list += startDF + ";"
+									break
+					      	else
+				     		      list += GetDataFolder(0) + ";"
+			      				break
+				      		endif
+			        	endif
+			        //	endif
+		        endfor
+		 else		//folder empty, nothing to do...
+		 
+	 	 endif
  
         levels -= 1
         if (levels <= 0)

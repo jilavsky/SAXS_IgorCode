@@ -211,6 +211,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
 	NewPath /O/Q TmpPathToIgorProcs  , path
 	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	KillPath /Z TmpPathToIgorProcs	
 	print "*** >>>  Nika version : "+num2str(version)+", compiled on "+date()+"  "+time()
 	
 end

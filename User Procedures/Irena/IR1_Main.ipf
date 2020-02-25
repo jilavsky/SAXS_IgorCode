@@ -159,6 +159,8 @@ Menu "SAS"
 	help = {"Plotting tool with wide functionality, hopefully"}
 	"Plotting II", IR2D_DWSPlotToolMain()
 	help = {"Plotting tool which controls any top graph"}
+	"Multi Sample Plot-Fit - under developement", IR3L_MultiSaPlotFit()
+	help={"Plotting and fitting of multiple SAS data. Developement for now. Do not use. "}
 		SubMenu "Support Tools for plots and tables"
 		"Draw Line Of Any Slope", IR2P_DrawLineOfAnySlope()
 		"Draw Line Of -4 Slope",  IR2P_DrawLineOf4Slope()
@@ -172,6 +174,8 @@ Menu "SAS"
 	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
+	//"Multi Sample Fit - under developement", IR3L_MultiSaPlotFit()
+	//help={"Plotting and fitting of multiple SAS data. Developement for now. Do not use. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
 	"Size Distribution", IR1R_Sizes()
@@ -186,10 +190,8 @@ Menu "SAS"
 	help={"Debye-Bueche, Teubner-Strey model"}
 	"Small-Angle Diffraction", IR2D_MainSmallAngleDiff()
 	help={"Modeling of small angle diffraction - up to 6 peaks and Powerlaw background"}
-	//"Simple Fits - under developement", IR3L_SimpleFits()
-	//help={"Simple fitting of SAS data. Developement for now. Do not use. "}
 	"Powder Diffraction fitting = WAXS", IR3W_WAXS()
-	help={"Simple tool for analysis of WAXS/Powder diffraction data. Developement version for public."}
+	help={"Tool for analysis of WAXS/Powder diffraction data. Developement version for public."}
 	"Pair distance dist. fnct.", IR2Pr_MainPDDF()
 	help={"Calculate pair distribution function using various methods"}
 	"Reflectivity", IR2R_ReflectivitySimpleToolMain()
@@ -307,6 +309,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	String path = RemoveFromList(file, FunctionPath("LoadIrenaSASMacros") , ":")
 	NewPath /O/Q TmpPathToIgorProcs  , path
 	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	KillPath /Z TmpPathToIgorProcs
 	print "*** >>>  Irena version: "+num2str(version)+", compiled on "+date()+"  "+time()
 	
 	

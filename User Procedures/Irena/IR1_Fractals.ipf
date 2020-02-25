@@ -189,6 +189,9 @@ Function IR1V_ControlPanelFnct()
 	CheckBox MassFr1_UseUFFormFactor,pos={20,400},size={200,16},proc=IR1V_InputPanelCheckboxProc,title="Use UF Particle Form factor? "
 	CheckBox MassFr1_UseUFFormFactor,variable= root:Packages:FractalsModel:MassFr1_UseUFFormFactor, help={"Check to use Unified Fit Form Factor. Beta=1 = Primary particle is sphere."}
 
+	SetVariable MassFr1_UFPDIIndex,pos={14,420},size={320,16},proc=IR1V_PanelSetVarProc,title="Polydispersity index                         "
+	SetVariable MassFr1_UFPDIIndex,limits={1,10,0.5},value=root:Packages:FractalsModel:MassFr1_UFPDIIndex, help={"Polydispersity index for Unified fit size distribution 1 to 10"}
+
 	SetVariable MassFr1_Beta,pos={14,420},size={320,16},proc=IR1V_PanelSetVarProc,title="Particle aspect ratio                           "
 	SetVariable MassFr1_Beta,limits={0.01,100,0.1},value= root:Packages:FractalsModel:MassFr1_Beta, help={"Beta, aspect ratio of particles, should be about 0.5 and 2"}
 	SetVariable MassFr1_Contrast,pos={14,440},size={320,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]                           "
@@ -243,6 +246,8 @@ Function IR1V_ControlPanelFnct()
 	CheckBox MassFr2_UseUFFormFactor,pos={20,400},size={200,16},proc=IR1V_InputPanelCheckboxProc,title="Use UF Particle Form factor? "
 	CheckBox MassFr2_UseUFFormFactor,variable= root:Packages:FractalsModel:MassFr2_UseUFFormFactor, help={"Check to use Unified Fit Form Factor. Beta=1 = Primary particle is sphere."}
 
+	SetVariable MassFr2_UFPDIIndex,pos={14,420},size={320,16},proc=IR1V_PanelSetVarProc,title="Polydispersity index                         "
+	SetVariable MassFr2_UFPDIIndex,limits={1,10,0.5},value=root:Packages:FractalsModel:MassFr2_UFPDIIndex, help={"Polydispersity index for Unified fit size distribution 1 to 10"}
 	SetVariable MassFr2_Beta,pos={14,420},size={320,16},proc=IR1V_PanelSetVarProc,title="Particle aspect ratio                           "
 	SetVariable MassFr2_Beta,limits={0.01,100,0.1},value= root:Packages:FractalsModel:MassFr2_Beta, help={"Beta, aspect ratio of particles, should be about 0.5 and 2"}
 	SetVariable MassFr2_Contrast,pos={14,440},size={320,16},proc=IR1V_PanelSetVarProc,title="Contrast [x 10^20]                           "
@@ -428,14 +433,13 @@ Function IR1V_TabPanelControl(name,tab)
 	CheckBox MassFr1_FitKsi, disable= (tab!=0 || !UseMassFract1)
 	SetVariable MassFr1_KsiMin, disable= (tab!=0 || !UseMassFract1)
 	SetVariable MassFr1_KsiMax, disable= (tab!=0 || !UseMassFract1)
-	SetVariable MassFr1_Beta, disable= (tab!=0 || !UseMassFract1)
+	SetVariable MassFr1_Beta, disable= (tab!=0 || (!UseMassFract1 || MassFr1_UseUFFormFactor))
 	SetVariable MassFr1_Contrast, disable= (tab!=0 || !UseMassFract1)
 	SetVariable MassFr1_Eta, disable= (tab!=0 || !UseMassFract1)
 	SetVariable MassFr1_IntgNumPnts, disable= (tab!=0 || !UseMassFract1)
 	CheckBox MassFr1_UseUFFormFactor,  disable= (tab!=0 || !UseMassFract1)
-	if(MassFr1_UseUFFormFactor)
-		SetVariable MassFr1_Beta, disable=1
-	endif	
+	SetVariable MassFr1_UFPDIIndex,  disable= (tab!=0 || (!UseMassFract1 || !MassFr1_UseUFFormFactor))
+
 	TitleBox SurfFract1_Title, disable= (tab!=1 || !UseSurfFract1)
 
 	SetVariable SurfFr1_Surface, disable= (tab!=1 || !UseSurfFract1)
@@ -471,14 +475,12 @@ Function IR1V_TabPanelControl(name,tab)
 	CheckBox MassFr2_FitKsi, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_KsiMin, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_KsiMax, disable= (tab!=2 || !UseMassFract2)
-	SetVariable MassFr2_Beta, disable= (tab!=2 || !UseMassFract2)
+	SetVariable MassFr2_Beta, disable= (tab!=2 || !UseMassFract2 || MassFr2_UseUFFormFactor)
 	SetVariable MassFr2_Contrast, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_Eta, disable= (tab!=2 || !UseMassFract2)
 	SetVariable MassFr2_IntgNumPnts, disable= (tab!=2 || !UseMassFract2)
 	CheckBox MassFr2_UseUFFormFactor,  disable= (tab!=2 || !UseMassFract2)
-	if(MassFr2_UseUFFormFactor)
-		SetVariable MassFr2_Beta, disable=1
-	endif
+	SetVariable MassFr2_UFPDIIndex,  disable= (tab!=2 || (!UseMassFract2 || !MassFr2_UseUFFormFactor))
 	
 	TitleBox SurfFract2_Title, disable= (tab!=3 || !UseSurfFract2)
 
@@ -574,12 +576,14 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	if (cmpstr(ctrlName,"MassFr2_UseUFFormFactor")==0)
 		NVAR MassFr2_UseUFFormFactor=root:Packages:FractalsModel:MassFr2_UseUFFormFactor
 		SetVariable MassFr2_Beta, win=IR1V_ControlPanel,  disable=MassFr2_UseUFFormFactor
+		SetVariable MassFr1_UFPDIIndex, win=IR1V_ControlPanel,  disable=!MassFr2_UseUFFormFactor
 		IR1V_AutoUpdateIfSelected()
 	endif
 
 	if (cmpstr(ctrlName,"MassFr1_UseUFFormFactor")==0)
 		NVAR MassFr1_UseUFFormFactor=root:Packages:FractalsModel:MassFr1_UseUFFormFactor
 		SetVariable MassFr1_Beta, win=IR1V_ControlPanel, disable=MassFr1_UseUFFormFactor
+		SetVariable MassFr1_UFPDIIndex, win=IR1V_ControlPanel, disable=!MassFr1_UseUFFormFactor
 		IR1V_AutoUpdateIfSelected()
 	endif
 
@@ -1631,6 +1635,12 @@ Function IR1V_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 		IR1G_UpdateSetVarStep("MassFr2_Beta",0.005)
 		IR1V_AutoUpdateIfSelected()
 	endif
+	if (cmpstr(ctrlName,"MassFr1_UFPDIIndex")==0 || cmpstr(ctrlName,"MassFr2_UFPDIIndex")==0)
+		//here goes what happens when user changes the MassFr1_UFPDIIndex in distribution
+		IR1V_AutoUpdateIfSelected()
+	endif
+	
+	
 	if (cmpstr(ctrlName,"MassFr2_Contrast")==0)
 		//here goes what happens when user changes the SASBackground in distribution
 		IR1G_UpdateSetVarStep("MassFr2_Contrast",0.005)
@@ -1866,6 +1876,7 @@ Function IR1V_CalculateMassFractal(which)
 	NVAR Contrast=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Contrast")
 	NVAR Eta=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Eta")
 	NVAR UseUFFormFactor=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_UseUFFormFactor")
+	NVAR PDI= $("root:Packages:FractalsModel:MassFr"+num2str(which)+"_UFPDIIndex") 
 	
 
 	Wave Qvec=root:Packages:FractalsModel:FractFitQvector
@@ -1882,12 +1893,12 @@ Function IR1V_CalculateMassFractal(which)
 	variable Bracket
 	Bracket = ( Eta * RC^3 / (BetaVar * Radius^3)) * ((Ksi/RC)^Dv )
 	if(UseUFFormFactor)								//use Unified fit Form factor for sphere...
-		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(which,Qvec)
+		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(Radius,Qvec, PDI)
 	else
 		if(BetaVar!=1)
-			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(which,Qvec)
+			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(Radius,Qvec)
 		else
-			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_SphereFFSquared(which,Qvec)
+			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_SphereFFSquared(Radius,Qvec)
 		endif
 	endif
 	//	tempFractFitIntensity*=1e-48									//this is conversion for Volume of particles from A to cm
@@ -1902,10 +1913,8 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1V_SphereFFSquared(which, Qvalue)
-	variable Qvalue, which										//does the math for Sphere Form factor function
-
-	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
+Function IR1V_SphereFFSquared(Radius, Qvalue)
+	variable Qvalue, Radius										//does the math for Sphere Form factor function
 
 	variable QR=Qvalue*radius
 
@@ -1918,13 +1927,11 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1V_UnifiedSphereFFSquared(which, Qvalue)
-	variable Qvalue, which										//does the math for Unified fit Sphere Form factor function
-
-	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
+Function IR1V_UnifiedSphereFFSquared(radius, Qvalue, PDI)
+	variable Qvalue, radius, PDI										//does the math for Unified fit Sphere Form factor function
 
    Variable G1=1, P1=4, Rg1=sqrt(3/5)*radius
-   variable B1=1.62*G1/Rg1^4
+   variable B1=PDI*1.62*G1/Rg1^4
    variable QstarVector=qvalue/(erf(qvalue*Rg1/sqrt(6)))^3
    variable result =G1*exp(-qvalue^2*Rg1^2/3)+(B1/QstarVector^P1)
    return (result)			//normalized to one
@@ -2248,7 +2255,7 @@ Function IR1V_InitializeFractals()
 	ListOfVariables+="MassFr2_PhiMin;MassFr2_PhiMax;MassFr2_PhiStep;MassFr2_RadiusMin;MassFr2_RadiusMax;MassFr2_RadiusStep;"
 	ListOfVariables+="MassFr2_DvMin;MassFr2_DvMax;MassFr2_DvStep;MassFr2_KsiMin;MassFr2_KsiMax;MassFr2_KsiStep;MassFr2_FitMin;MassFr2_FitMax;"
 
-	ListOfVariables+="MassFr1_UseUFFormFactor;MassFr2_UseUFFormFactor;"
+	ListOfVariables+="MassFr1_UseUFFormFactor;MassFr2_UseUFFormFactor;MassFr1_UFPDIIndex;MassFr2_UFPDIIndex;"
 	
 	ListOfVariables+="SurfFr1_Surface;SurfFr1_Ksi;SurfFr1_DS;SurfFr1_Contrast;"
 	ListOfVariables+="SurfFr1_FitSurface;SurfFr1_FitKsi;SurfFr1_FitDS;"
@@ -2444,11 +2451,18 @@ Function IR1V_SetInitialValues()
 	endfor
 	
 	ListOfVariables="MassFr1_IntgNumPnts;MassFr2_IntgNumPnts;"
-	
 	For(i=0;i<itemsInList(ListOfVariables);i+=1)
 		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
 		if (testVar==0)
 			testVar=500
+		endif
+	endfor
+
+	ListOfVariables="MassFr1_UFPDIIndex;MassFr2_UFPDIIndex;"
+	For(i=0;i<itemsInList(ListOfVariables);i+=1)
+		NVAR/Z testVar=$(StringFromList(i,ListOfVariables))
+		if (testVar==0)
+			testVar=3
 		endif
 	endfor
 	

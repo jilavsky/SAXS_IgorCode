@@ -1,6 +1,5 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-//#pragma rtGlobals=2		// Use modern global access method.
-#pragma version=2.68
+#pragma version=2.69
 constant IR3MversionNumber = 2.62		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -10,6 +9,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.69 fixed leftover RT global issues which threw errors on users due to incorrect search for high-q end of usabel data. Fixed positions on DMII after creation. 
 //2.68 handle weird case of DM I when data 1 is regular Q-I-S data set and data 2 are model data without error. Generate fake error here is the solution. 
 //2.67 add toDataManipulation II ability to rescale to Q scale for data set to produce data at same Q values
 //2.66 fix Data Manipulation I - make long file names on Igor 8 usign standard Irena choices setup. 
@@ -1176,8 +1176,8 @@ static Function IR1D_ConvertData()
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1]), ]=Nan
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1]), ]=Nan
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=Nan
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=Nan
 			endif
 			ResultsInt = TempInt1 - TempIntInterp2
 			ResultsE = sqrt(TempE1^2 + TempEInterp2^2)
@@ -1197,7 +1197,7 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt = TempInt1 - TempIntInterp2
 			IN2G_ReplaceNegValsByNaNWaves(ResultsInt,ResultsQ,ResultsEtemp)
@@ -1223,8 +1223,8 @@ static Function IR1D_ConvertData()
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=0
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2) )
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,  ]=NaN
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,  ]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt =  TempIntInterp2 -TempInt1
 			ResultsE = sqrt(TempE1^2 + TempEInterp2^2)
@@ -1244,7 +1244,7 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1, ]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt =  TempIntInterp2 - TempInt1
 			IN2G_ReplaceNegValsByNaNWaves(ResultsInt,ResultsQ,ResultsEtemp)
@@ -1298,8 +1298,8 @@ static Function IR1D_ConvertData()
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=Nan
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt = TempInt1+ TempIntInterp2
 			ResultsE = sqrt(TempE1^2 + TempEInterp2^2)
@@ -1319,7 +1319,7 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=Nan
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=Nan
 			endif
 			ResultsInt = TempInt1+ TempIntInterp2
 			IN2G_ReplaceNegValsByNaNWaves(ResultsInt,ResultsQ,ResultsEtemp)
@@ -1345,8 +1345,8 @@ static Function IR1D_ConvertData()
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt = TempInt1/ TempIntInterp2
 			ResultsE = sqrt((TempInt1^2)*(TempEInterp2^4) + (TempE1^2)*(TempIntInterp2^4) + ((TempInt1^2)+(TempE1^2))*TempIntInterp2^2 *TempEInterp2^2 ) / (TempIntInterp2*(TempIntInterp2^2 -TempEInterp2^2 ))
@@ -1366,7 +1366,7 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt = TempInt1 / TempIntInterp2
 			IN2G_ReplaceNegValsByNaNWaves(ResultsInt,ResultsQ,ResultsEtemp)
@@ -1392,8 +1392,8 @@ static Function IR1D_ConvertData()
 				TempEInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
-				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
+				TempEInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt = (TempInt1- TempIntInterp2)/TempIntInterp2
 			ResultsE = sqrt(TempE1^2 + TempEInterp2^2)		//this creates erros for subtraction, line below for division...
@@ -1415,7 +1415,7 @@ static Function IR1D_ConvertData()
 				TempIntInterp2[0,BinarySearch(ResultsQ, TempQ2[0] )]=NaN
 			endif
 			if ((BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=numpnts(ResultsQ)-1)&&(BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1] )!=-2))
-				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)])+1,inf]=NaN
+				TempIntInterp2[BinarySearch(ResultsQ, TempQ2[numpnts(TempQ2)-1])+1,inf]=NaN
 			endif
 			ResultsInt = (TempInt1 - TempIntInterp2)/TempIntInterp2
 			IN2G_ReplaceNegValsByNaNWaves(ResultsInt,ResultsQ,ResultsEtemp)
@@ -5418,7 +5418,7 @@ Function IR3M_MakePanelWithListBox()
 	Button SelectAll,pos={15,610},size={120,14},proc= IR3M_DataManIIPanelButtonProc,title="Select All", disable=!ManualFolderSelection
 	Button DeselectAll,pos={155,610},size={120,14},proc= IR3M_DataManIIPanelButtonProc,title="Deselect All", disable=!ManualFolderSelection
 	
-	AutoPositionWindow/M=0 /R=DataManipulationII ItemsInFolderPanel_DMII
+	Execute/P("AutoPositionWindow/M=0 /R=DataManipulationII ItemsInFolderPanel_DMII")
 	setDataFolder oldDF
 end
 ///******************************************************************************************
