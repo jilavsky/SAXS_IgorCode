@@ -1886,19 +1886,17 @@ Function IR1V_CalculateMassFractal(which)
 	
 	variable CHiS=IR1V_CaculateChiS(BetaVar)
 	variable RC=Radius*sqrt(2)/ChiS * sqrt(1+((2+BetaVar^2)/3)*ChiS^2)
+	variable Bracket
 	//and now calculations
 	tempFractFitIntensity=0
-//	tempFractFitIntensity = Phi * Contrast* 1e20								//this is phi * deltaRhoSquared
-//	tempFractFitIntensity *= IR1V_SpheroidVolume(Radius,Beta)* 1e-24		//volume of particle
-	variable Bracket
 	Bracket = ( Eta * RC^3 / (BetaVar * Radius^3)) * ((Ksi/RC)^Dv )
 	if(UseUFFormFactor)								//use Unified fit Form factor for sphere...
-		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(Radius,Qvec, PDI)
+		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(which,Qvec, PDI)
 	else
-		if(BetaVar!=1)
-			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(Radius,Qvec)
+		if(BetaVar>1.01 || BetaVar<0.99)
+			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(which,Qvec)
 		else
-			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_SphereFFSquared(Radius,Qvec)
+			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_SphereFFSquared(which,Qvec)
 		endif
 	endif
 	//	tempFractFitIntensity*=1e-48									//this is conversion for Volume of particles from A to cm
@@ -1913,9 +1911,10 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1V_SphereFFSquared(Radius, Qvalue)
-	variable Qvalue, Radius										//does the math for Sphere Form factor function
+Function IR1V_SphereFFSquared(which, Qvalue)
+	variable Qvalue, which										//does the math for Sphere Form factor function
 
+	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
 	variable QR=Qvalue*radius
 
 	return  ((3/(QR*QR*QR))*(sin(QR)-(QR*cos(QR))))^2
@@ -1927,9 +1926,10 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1V_UnifiedSphereFFSquared(radius, Qvalue, PDI)
-	variable Qvalue, radius, PDI										//does the math for Unified fit Sphere Form factor function
+Function IR1V_UnifiedSphereFFSquared(which, Qvalue, PDI)
+	variable Qvalue, which, PDI										//does the math for Unified fit Sphere Form factor function
 
+	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
    Variable G1=1, P1=4, Rg1=sqrt(3/5)*radius
    variable B1=PDI*1.62*G1/Rg1^4
    variable QstarVector=qvalue/(erf(qvalue*Rg1/sqrt(6)))^3
@@ -1945,8 +1945,8 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1V_SpheroidVolume(radius,AspectRatio)							//returns the spheroid volume...
-	variable radius, AspectRatio
+Function IR1V_SpheroidVolume(Radius,AspectRatio)							//returns the spheroid volume...
+	variable Radius, AspectRatio
 	return ((4/3)*pi*radius*radius*radius*AspectRatio)				//what is the volume of spheroid?
 end
 
@@ -2083,23 +2083,6 @@ Function	IR1V_CalculateNormalizedError(CalledWhere)
 	string OldDf
 	OldDf=GetDataFolder(1)
 	setDataFolder root:Packages:FractalsModel
-//		if (cmpstr(CalledWhere,"fit")==0)
-//			Wave/Z ExpInt=root:Packages:FractalsModel:FitIntensityWave
-//			if (WaveExists(ExpInt))
-//				Wave ExpError=root:Packages:FractalsModel:FitErrorWave
-//				Wave FitIntCalc=root:Packages:FractalsModel:FractFitIntensity
-//				Wave FitIntQvec=root:Packages:FractalsModel:FractFitQvector
-//				Wave FitQvec=root:Packages:FractalsModel:FitQvectorWave
-//				variable mystart=binarysearch(FitIntQvec,FitQvec[0])
-//				variable myend=binarysearch(FitIntQvec,FitQvec[numpnts(FitQvec)-1])
-//				Duplicate/O/R=[mystart,myend] FitIntCalc, FitInt
-//				Wave FitInt
-//				Duplicate /O ExpInt, NormalizedError
-//				Duplicate/O FitQvec, NormErrorQvec
-//				NormalizedError=(ExpInt-FitInt)/ExpError
-//				KillWaves FitInt
-//			endif
-//		endif
 		if (cmpstr(CalledWhere,"graph")==0)
 			Wave ExpInt=root:Packages:FractalsModel:OriginalIntensity
 			Wave ExpError=root:Packages:FractalsModel:OriginalError
