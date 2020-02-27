@@ -2230,6 +2230,7 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
+
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Irena_UnifFit
 	if (cmpstr(ctrlName,"UseSMRData")==0)

@@ -5869,6 +5869,14 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	NVAR  Level5LinkRGCO=root:Packages:Irena_UnifFit:Level5LinkRGCO
 
 
+	NVAR  Level1LinkB=root:Packages:Irena_UnifFit:Level1LinkB
+	NVAR  Level2LinkB=root:Packages:Irena_UnifFit:Level2LinkB
+	NVAR  Level3LinkB=root:Packages:Irena_UnifFit:Level3LinkB
+	NVAR  Level4LinkB=root:Packages:Irena_UnifFit:Level4LinkB
+	NVAR  Level5LinkB=root:Packages:Irena_UnifFit:Level5LinkB
+
+
+
 	NVAR  SkipFitControlDialog=root:Packages:Irena_UnifFit:SkipFitControlDialog
 	SVAR/Z AdditionalFittingConstraints
 	if(!SVAR_Exists(AdditionalFittingConstraints))
@@ -5954,7 +5962,7 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level1PLowLimit)}
 		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Level1PHighLimit)}		
 	endif
-	if (Level1FitB && NumberOfLevels>0)		//are we fitting distribution 1 location?
+	if (Level1FitB && NumberOfLevels>0 && !(Level1LinkB))		//are we fitting distribution 1 B?
 		if (Level1BLowLimit > Level1B || Level1BHighLimit < Level1B)
 			abort "Level 1 B limits set incorrectly, fix the limits before fitting"
 		endif
@@ -6068,7 +6076,7 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level2PLowLimit)}
 		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Level2PHighLimit)}		
 	endif
-	if (Level2FitB && NumberOfLevels>1)		//are we fitting distribution 1 location?
+	if (Level2FitB && NumberOfLevels>1 && !(Level2LinkB))		//are we fitting distribution 1 location?
 		if (Level2BLowLimit > Level2B || Level2BHighLimit < Level2B)
 			abort "Level 2 B limits set incorrectly, fix the limits before fitting"
 		endif
@@ -6181,7 +6189,7 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level3PLowLimit)}
 		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Level3PHighLimit)}		
 	endif
-	if (Level3FitB && NumberOfLevels>2)		//are we fitting distribution 1 location?
+	if (Level3FitB && NumberOfLevels>2 && !(Level3LinkB))		//are we fitting distribution 1 location?
 		if (Level3BLowLimit > Level3B || Level3BHighLimit < Level3B)
 			abort "Level 3 B limits set incorrectly, fix the limits before fitting"
 		endif
@@ -6294,7 +6302,7 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level4PLowLimit)}
 		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Level4PHighLimit)}		
 	endif
-	if (Level4FitB && NumberOfLevels>3)		//are we fitting distribution 1 location?
+	if (Level4FitB && NumberOfLevels>3 && !(Level4LinkB))		//are we fitting distribution 1 location?
 		if (Level4BLowLimit > Level4B || Level4BHighLimit < Level4B)
 			abort "Level 4 B limits set incorrectly, fix the limits before fitting"
 		endif
@@ -6407,7 +6415,7 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		T_Constraints[numpnts(T_Constraints)-2] = {"K"+num2str(numpnts(W_coef)-1)+" > "+num2str(Level5PLowLimit)}
 		T_Constraints[numpnts(T_Constraints)-1] = {"K"+num2str(numpnts(W_coef)-1)+" < "+num2str(Level5PHighLimit)}		
 	endif
-	if (Level5FitB && NumberOfLevels>4)		//are we fitting distribution 1 location?
+	if (Level5FitB && NumberOfLevels>4  && !(Level5LinkB))		//are we fitting distribution 1 location?
 		if (Level5BLowLimit > Level5B || Level5BHighLimit < Level5B)
 			abort "Level 5 B limits set incorrectly, fix the limits before fitting"
 		endif
