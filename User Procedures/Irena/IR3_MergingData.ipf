@@ -1,13 +1,14 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.19
+#pragma version=1.20
 constant IR3DversionNumber = 1.159	//Data merging panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.20 fix problems with dQ waves which could become stale and bomb on users under specific conditions. 
 //1.19 modified panel and added ability to optimize data 1 q shift also. Completely re-wrote internal fitting routine... Fixed name formation for d and tth data. 
 //1.18 added manual controls to variables to enable easier changes manuyally. Also, fixed case when input negative intensities caused issues in merging result. 
 //1.17 fix case where resolution wave name for ars was incorrectly created sometimes... 
@@ -991,6 +992,7 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 	string tmpStr
 
 	if(Data1or2==1)		//these are data 1
+		KillWaves/Z OriginalData1dQWave,OriginalData1ErrorWave,OriginalData1IntWave,OriginalData1QWave
 		SVAR Data1StartFolder=root:Packages:Irena:SASDataMerging:Data1StartFolder
 		SVAR DataFolderName1=root:Packages:Irena:SASDataMerging:DataFolderName1
 		SVAR IntensityWaveName1=root:Packages:Irena:SASDataMerging:IntensityWaveName1
@@ -1083,6 +1085,7 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		print "Added Data 1 from folder : "+DataFolderName1
 	endif
 	if(Data1or2==2)		//these are data 2
+		KillWaves/Z OriginalData2dQWave,OriginalData2ErrorWave,OriginalData2IntWave,OriginalData2QWave
 		SVAR Data2StartFolder=root:Packages:Irena:SASDataMerging:Data2StartFolder
 		SVAR DataFolderName2=root:Packages:Irena:SASDataMerging:DataFolderName2
 		SVAR IntensityWaveName2=root:Packages:Irena:SASDataMerging:IntensityWaveName2
@@ -1107,7 +1110,7 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 		UseResults = 0
 		UseUserDefinedData = 0
 		UseModelData = 0
-		//get the names of waves, assume this tool actually works. May not under some conditions. In thtat case this tool will not work. 
+		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 		DataFolderName2 = Data2StartFolder+FolderNameStr
 		DataFolderName = DataFolderName2
 		

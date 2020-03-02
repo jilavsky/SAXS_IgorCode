@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.20
+#pragma version = 2.21
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -29,11 +29,17 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //  On Igor 7 always less than 31 characters. On Igor 8 optionally more, based on constats above.  
 //  
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.21 added bunch of formating tools for graphs:
+		//IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
+		//IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
+		//IN2G_VaryLinesTopGrphRainbow(LineThickness, varyLines)
+		//IN2G_VaryMarkersTopGrphRainbow(UseOpenSYmbols, SymbolSize, SameSymbol)
+		//IN2G_ColorTopGrphRainbow()
 //2.20 modified IN2G_ConvertDataDirToList to IN2G_ConvertDataDirToListNew and used that. This will break list of spe scans for step scanning and needs to be fixed.
 //2.19 Added IN2G_CleanStringForgrep(stringIn) which is used to comment out special characters used in grep, so they can be used as part of names... 
 //2.18 modified IN2G_PanelResizePanelSize(s) to move panels in the view if they are due to change of resolution left outside of the view. This may not work well on dual monitor systems, though... 
@@ -256,6 +262,11 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //
 //IN2G_ColorTopGrphRainbow()
 //    Colors top graph with rainbow colors
+//these are similarly useful graph formating macros:
+//IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
+//IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
+//IN2G_VaryLinesTopGrphRainbow(LineThickness, varyLines)
+//IN2G_VaryMarkersTopGrphRainbow(UseOpenSYmbols, SymbolSize, SameSymbol)
 //
 //IN2G_LegendTopGrphFldr(FontSize)
 //		Appedn legend containing the last folder name and wave name 
@@ -3356,7 +3367,89 @@ Function IN2G_ColorTopGrphRainbow()
 		else
 			ModifyGraph/Z/W=$(topGraph) rgb[0]=(65535,0,0),rgb[1]=(0,0,65535),rgb[2]=(0,65535,0),rgb[3]=(0,0,0)
 		endif
-		//AutoPositionWindow/M=0/R=$topGraph KBColorizePanel
+	endif
+end
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
+Function IN2G_VaryMarkersTopGrphRainbow(UseOpenSYmbols, SymbolSize, SameSymbol)
+	variable UseOpenSYmbols, SymbolSize, SameSymbol
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String topGraph=WinName(0,1)
+	Variable traceIndex, numTraces
+	Variable i
+	make/Free/N=10 ClosedSymb, OpenSymb
+	ClosedSymb = {19,16,17, 23, 26, 29 ,18, 15, 14, 52,60}
+	OpenSymb = {8, 5, 6, 22, 25, 28, 7, 4, 3, 56, 61}
+	if(strlen(topGraph))
+		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
+		//print TraceNameList(topGraph,";",3)
+		if(SameSymbol)
+			ModifyGraph/W=$(topGraph) marker = 8, msize[i]=SymbolSize		
+		else
+			if (UseOpenSYmbols)
+				For(i=0;i<numTraces;i+=1)
+			   	    ModifyGraph/Z/W=$(topGraph) marker[i]=OpenSymb[i-10*floor(i/10)], msize[i]=SymbolSize
+				endfor	
+			else		//symbol set1
+				For(i=0;i<numTraces;i+=1)
+			   	    ModifyGraph/Z/W=$(topGraph) marker[i]=ClosedSymb[i-10*floor(i/10)], msize[i]=SymbolSize
+				endfor
+			endif
+		endif
+	endif
+end
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
+Function IN2G_VaryLinesTopGrphRainbow(LineThickness, varyLines)
+	variable LineThickness, varyLines
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String topGraph=WinName(0,1)
+	Variable traceIndex, numTraces
+	Variable i
+	if(strlen(topGraph))
+		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
+		//print TraceNameList(topGraph,";",3)
+		if(varyLines)
+			For(i=0;i<numTraces;i+=1)
+		   	   ModifyGraph/Z/W=$(topGraph) lstyle[i]=i-18*floor(i/18), lsize[i]=LineThickness
+			endfor	
+		else
+			ModifyGraph/W=$(topGraph) lstyle = 0 , lsize=0
+		endif
+	endif
+end
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
+Function IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
+	variable LogXAxis, XOffset ,LogYAxis, YOffset
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String topGraph=WinName(0,1)
+	Variable traceIndex, numTraces
+	Variable i
+	if(strlen(topGraph))
+		ModifyGraph/Z/W=$(topGraph) muloffset = {0,0}, offset={0,0}
+		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
+		For(i=0;i<numTraces;i+=1)
+			if(LogXAxis)
+				if(LogYAxis)		//both log axes...
+					ModifyGraph/Z/W=$(topGraph) muloffset[i] = {XOffset^i,YOffset^i}
+				else //X log, y lin
+					ModifyGraph/Z/W=$(topGraph) muloffset[i] = {XOffset^i,0}, offset[i] = {0,i*YOffset}
+				endif
+			else
+				if(LogYAxis)		//y log, x lin...
+					ModifyGraph/Z/W=$(topGraph) offset[i] = {i*XOffset,0}, muloffset[i] = {0,YOffset^i}
+				else			//both lin	
+			 	  ModifyGraph/Z/W=$(topGraph) offset[i] = {i*XOffset,i*YOffset}
+			 	endif
+		 	endif
+		endfor
 	endif
 end
 ///******************************************************************************************

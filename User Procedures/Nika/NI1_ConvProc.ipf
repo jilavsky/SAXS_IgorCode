@@ -5,7 +5,7 @@
 #include <TransformAxis1.2>
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -1290,14 +1290,6 @@ Function NI1A_Create2DQWave(DataWave)
 	NoteStr = ReplaceStringByKey("VerticalTilt", NoteStr, num2str(VerticalTilt), "=", ";")
 	NoteStr = ReplaceStringByKey("SampleToCCDDistance", NoteStr, num2str(SampleToCCDDistance), "=", ";")
 	NoteStr = ReplaceStringByKey("Wavelength", NoteStr, num2str(Wavelength), "=", ";")
-//	NoteStr+="BeamCenterX="+num2str(BeamCenterX)+";"
-//	NoteStr+="BeamCenterY="+num2str(BeamCenterY)+";"
-//	NoteStr+="PixelSizeX="+num2str(PixelSizeX)+";"
-//	NoteStr+="PixelSizeY="+num2str(PixelSizeY)+";"
-//	NoteStr+="HorizontalTilt="+num2str(HorizontalTilt)+";"
-//	NoteStr+="VerticalTilt="+num2str(VerticalTilt)+";"
-//	NoteStr+="SampleToCCDDistance="+num2str(SampleToCCDDistance)+";"
-//	NoteStr+="Wavelength="+num2str(Wavelength)+";"	
 	note/K Q2DWave, NoteStr
 	setDataFolder OldDf
 end
@@ -3446,6 +3438,8 @@ Function NI1A_UpdateDataListBox()
 		elseif(stringmatch(DataFileExtension, "*Nexus*"))
 			realExtension=".hdf"
 		elseif(cmpstr(DataFileExtension, "SSRLMatSAXS")==0)
+			realExtension=".tif"
+		elseif(cmpstr(DataFileExtension, "12IDB_tif")==0)
 			realExtension=".tif"
 		else
 			realExtension="????"
@@ -8001,18 +7995,6 @@ Function NI1A_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		endif
 		NI1A_LineProf_Update()
 	endif
-//	if(cmpstr(ctrlName,"SelectStartOfRange")==0)
-//		//here we select start of the range...
-//		NVAR StartDataRangeNumber=root:Packages:Convert2Dto1D:StartDataRangeNumber
-//		StartDataRangeNumber=popNum
-//		NI1A_MakeContiguousSelection()
-//	endif
-//	if(cmpstr(ctrlName,"SelectEndOfRange")==0)
-//		//here we select end of the range...
-//		NVAR EndDataRangeNumber=root:Packages:Convert2Dto1D:EndDataRangeNumber
-//		EndDataRangeNumber=popNum
-//		NI1A_MakeContiguousSelection()
-//	endif
 	if(cmpstr(ctrlName,"ColorTablePopup")==0)
 		SVAR ColorTableName=root:Packages:Convert2Dto1D:ColorTableName
 		ColorTableName = popStr

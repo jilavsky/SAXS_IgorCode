@@ -3,13 +3,13 @@
 constant IR3JversionNumber = 1			//Data merging panel version number
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
 //1.1 combined this ipf with "Simple fits models"
-//1.0 Simple Fits tool first test version 
+//1.0 Simple Fits tool first release version 
 
 
 
@@ -17,18 +17,16 @@ constant IR3JversionNumber = 1			//Data merging panel version number
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
-Function IR3J_MultiSaPlotFit()
+Function IR3J_SimpleFits()
 
 	IN2G_CheckScreenSize("width",1200)
-	DoWIndow IR3J_MultiSaPlotFitPanel
+	DoWIndow IR3J_SimpleFitsPanel
 	if(V_Flag)
-		DoWindow/F IR3J_MultiSaPlotFitPanel
-		//DoWindow/K IR3J_MultiSaPlotFitPanel
-		//Execute("IR3J_MultiSaPlotFitPanel()")
+		DoWindow/F IR3J_SimpleFitsPanel
 	else
-		IR3J_InitMultiSaPlotFit()
-		IR3J_MultiSaPlotFitPanelFnct()
-//		setWIndow IR3J_MultiSaPlotFitPanel, hook(CursorMoved)=IR3D_PanelHookFunction
+		IR3J_InitSimpleFits()
+		IR3J_SimpleFitsPanelFnct()
+//		setWIndow IR3J_SimpleFitsPanel, hook(CursorMoved)=IR3D_PanelHookFunction
 	endif
 //	UpdatePanelVersionNumber("IR3D_DataMergePanel", IR3DversionNumber)
 //	IR3D_UpdateListOfAvailFiles(1)
@@ -40,11 +38,11 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Function IR3J_MultiSaPlotFitPanelFnct()
+Function IR3J_SimpleFitsPanelFnct()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,800) as "Simple Fits"
-	DoWIndow/C IR3J_MultiSaPlotFitPanel
-	TitleBox MainTitle title="Multi Sample plot & fit",pos={200,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	DoWIndow/C IR3J_SimpleFitsPanel
+	TitleBox MainTitle title="Linerization fits panel",pos={280,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
 //	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 //	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 //	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -55,57 +53,46 @@ Function IR3J_MultiSaPlotFitPanelFnct()
 	string UserNameString=""
 	string XUserLookup=""
 	string EUserLookup=""
-	IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3J_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+	IR2C_AddDataControls("Irena:SimpleFits","IR3J_SimpleFitsPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 
 
 	DrawText 60,25,"Data selection"
-	Checkbox UseIndra2Data, pos={10,30},size={76,14},title="USAXS", proc=IR3J_LinearFitsCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	checkbox UseQRSData, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3J_LinearFitsCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
+	Checkbox UseIndra2Data, pos={10,30},size={76,14},title="USAXS", proc=IR3J_LinearFitsCheckProc, variable=root:Packages:Irena:SimpleFits:UseIndra2Data
+	checkbox UseQRSData, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3J_LinearFitsCheckProc, variable=root:Packages:Irena:SimpleFits:UseQRSdata
 	PopupMenu StartFolderSelection,pos={10,50},size={180,15},proc=IR3J_PopMenuProc,title="Start fldr"
-	SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
-	PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:MultiSaPlotFit:UseIndra2Data, root:Packages:Irena:MultiSaPlotFit:UseQRSdata,2,1)"
+	SVAR DataStartFolder = root:Packages:Irena:SimpleFits:DataStartFolder
+	PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SimpleFits:UseIndra2Data, root:Packages:Irena:SimpleFits:UseQRSdata,2,1)"
 	SetVariable FolderNameMatchString,pos={10,75},size={210,15}, proc=IR3J_SetVarProc,title="Folder Match (RegEx)"
-	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:DataMatchString
+	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:SimpleFits:DataMatchString
 	PopupMenu SortFolders,pos={10,100},size={180,20},fStyle=2,proc=IR3J_PopMenuProc,title="Sort Folders"
-	SVAR FolderSortString = root:Packages:Irena:MultiSaPlotFit:FolderSortString
-	PopupMenu SortFolders,mode=1,popvalue=FolderSortString,value=#"root:Packages:Irena:MultiSaPlotFit:FolderSortStringAll"
+	SVAR FolderSortString = root:Packages:Irena:SimpleFits:FolderSortString
+	PopupMenu SortFolders,mode=1,popvalue=FolderSortString,value= #"root:Packages:Irena:SimpleFits:FolderSortStringAll"
 
-	PopupMenu SubTypeData,pos={10,120},size={180,20},fStyle=2,proc=IR3J_PopMenuProc,title="Sub-type Data"
-	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-	PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value= #""
-
-
-	ListBox DataFolderSelection,pos={4,165},size={250,500}, mode=10
-	ListBox DataFolderSelection,listWave=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
-	ListBox DataFolderSelection,selWave=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
+	ListBox DataFolderSelection,pos={4,135},size={250,480}, mode=10
+	ListBox DataFolderSelection,listWave=root:Packages:Irena:SimpleFits:ListOfAvailableData
+	ListBox DataFolderSelection,selWave=root:Packages:Irena:SimpleFits:SelectionOfAvailableData
 	ListBox DataFolderSelection,proc=IR3J_LinFitsListBoxProc
 
+	SetVariable DataQEnd,pos={280,90},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Fit Q max      ",bodyWidth=150
+	Setvariable DataQEnd, variable=root:Packages:Irena:SimpleFits:DataQEnd, limits={-inf,inf,0}
+	SetVariable DataQstart,pos={280,110},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Fit Q start      ",bodyWidth=150
+	Setvariable DataQstart, variable=root:Packages:Irena:SimpleFits:DataQstart, limits={-inf,inf,0}
+	SetVariable DataBackground,pos={280,130},size={200,15}, noproc,title="Background",bodyWidth=150
+	Setvariable DataBackground, variable=root:Packages:Irena:SimpleFits:DataBackground, limits={-inf,inf,0}
+//	ListOfVariables+="DataBackground;"
+//	ListOfVariables+="Guinier_Rg;Guinier_I0;"
+//	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
+//	ListOfVariables+="DataQEnd;DataQstart;"
 
-	//Plotting controls...
-	
-	Button PlotData,pos={280,180},size={100,20}, proc=noproc,title="Plot Selected", help={"Plot selected data"}
+	PopupMenu SimpleModel,pos={280,175},size={180,20},fStyle=2,proc=IR3J_PopMenuProc,title="Model to fit : "
+	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	PopupMenu SimpleModel,mode=1,popvalue=SimpleModel,value= #"root:Packages:Irena:SimpleFits:ListOfSimpleModels" 
 
+	SetVariable Guinier_Rg,pos={280,220},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Guinier  Rg    ",bodyWidth=150
+	Setvariable Guinier_Rg, variable=root:Packages:Irena:SimpleFits:Guinier_Rg, limits={-inf,inf,0}
 
-	//this is for fits, for now Guinier. Move to tab as needed
-	//	ListOfVariables+="DataBackground;"
-	//	ListOfVariables+="Guinier_Rg;Guinier_I0;"
-	//	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
-	//	ListOfVariables+="DataQEnd;DataQstart;"	
-	//		SetVariable DataQEnd,pos={280,90},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Fit Q max      ",bodyWidth=150
-	//		Setvariable DataQEnd, variable=root:Packages:Irena:MultiSaPlotFit:DataQEnd, limits={-inf,inf,0}
-	//		SetVariable DataQstart,pos={280,110},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Fit Q start      ",bodyWidth=150
-	//		Setvariable DataQstart, variable=root:Packages:Irena:MultiSaPlotFit:DataQstart, limits={-inf,inf,0}
-	//		SetVariable DataBackground,pos={280,130},size={200,15}, noproc,title="Background",bodyWidth=150
-	//		Setvariable DataBackground, variable=root:Packages:Irena:MultiSaPlotFit:DataBackground, limits={-inf,inf,0}
-	//	
-	//		PopupMenu SimpleModel,pos={280,175},size={180,20},fStyle=2,proc=IR3J_PopMenuProc,title="Model to fit : "
-	//		PopupMenu SimpleModel,mode=1,popvalue=root:Packages:Irena:MultiSaPlotFit:ListOfSimpleModels,value= root:Packages:Irena:MultiSaPlotFit:SimpleModel
-	//	
-	//		SetVariable Guinier_Rg,pos={280,220},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Guinier  Rg    ",bodyWidth=150
-	//		Setvariable Guinier_Rg, variable=root:Packages:Irena:MultiSaPlotFit:Guinier_Rg, limits={-inf,inf,0}
-	//	
-	//		SetVariable Guinier_I0,pos={280,200},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Guinier I0    ",bodyWidth=150
-	//		Setvariable Guinier_I0, variable=root:Packages:Irena:MultiSaPlotFit:Guinier_I0, limits={-inf,inf,0}
+	SetVariable Guinier_I0,pos={280,200},size={200,15}, proc=IR3D_MergeDataSetVarProc,title="Guinier I0    ",bodyWidth=150
+	Setvariable Guinier_I0, variable=root:Packages:Irena:SimpleFits:Guinier_I0, limits={-inf,inf,0}
 
 
 //	Button ProcessSaveData, pos={490,135}, size={20,500}, title="S\rA\rV\rE\r\rD\rA\rT\rA", proc=IR3D_MergeButtonProc, help={"Saves data which were automtaticaly processed already. "}, labelBack=(65535,60076,49151)
@@ -142,39 +129,18 @@ Function IR3J_MultiSaPlotFitPanelFnct()
 //	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:       ", disable=2
 //	SetVariable NewDataFolderName,pos={550,659},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:NewDataFolderName, title="Merged Data: "
 
-	DrawText 4,678,"Double click to add data to graph."
-	DrawText 4,695,"Shift-click to select range of data."
-	DrawText 4,710,"Ctrl/Cmd-click to select one data set."
-	DrawText 4,725,"Regex for not contain: ^((?!string).)*$"
-	DrawText 4,740,"Regex for contain:  string"
-	DrawText 4,755,"Regex for case independent contain:  (?i)string"
-	
-	IR3J_FixPanelControls()
+	DrawText 4,650,"Double click to add data to graph."
+	DrawText 4,663,"Shift-click to select range of data."
+	DrawText 4,676,"Ctrl/Cmd-click to select one data set."
+	DrawText 4,689,"Regex for not contain: ^((?!string).)*$"
+	DrawText 4,702,"Regex for contain:  string"
+	DrawText 4,715,"Regex for case independent contain:  (?i)string"
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR3J_FixPanelControls()
 
-	NVAR UseIndra2Data = root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	NVAR UseQRSData=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
-	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-	SVAR DataSubTypeResultsList=root:Packages:Irena:MultiSaPlotFit:DataSubTypeResultsList
-	SVAR DataSubTypeUSAXSList = root:Packages:Irena:MultiSaPlotFit:DataSubTypeUSAXSList 
-	if(UseIndra2Data)
-			PopupMenu SubTypeData, disable =0
-			PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value=#"root:Packages:Irena:MultiSaPlotFit:DataSubTypeUSAXSList"
-	else
-			PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value= ""
-			PopupMenu SubTypeData, disable=1
-	endif
-end
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
-
-Function IR3J_InitMultiSaPlotFit()	
+Function IR3J_InitSimpleFits()	
 
 
 	string oldDf=GetDataFolder(1)
@@ -182,19 +148,18 @@ Function IR3J_InitMultiSaPlotFit()
 	string ListOfStrings
 	variable i
 		
-	if (!DataFolderExists("root:Packages:Irena:MultiSaPlotFit"))		//create folder
+	if (!DataFolderExists("root:Packages:Irena:SimpleFits"))		//create folder
 		NewDataFolder/O root:Packages
 		NewDataFolder/O root:Packages:Irena
-		NewDataFolder/O root:Packages:Irena:MultiSaPlotFit
+		NewDataFolder/O root:Packages:Irena:SimpleFits
 	endif
-	SetDataFolder root:Packages:Irena:MultiSaPlotFit					//go into the folder
+	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;DataUnits;"
 	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;"
 	ListOfStrings+="SimpleModel;ListOfSimpleModels;"
-	ListOfStrings+="DataSubTypeUSAXSList;DataSubTypeResultsList;DataSubType;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
 	ListOfVariables+="DataBackground;"
@@ -212,6 +177,7 @@ Function IR3J_InitMultiSaPlotFit()
 	endfor	
 
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;"
+//	ListOfStrings+="NewDataFolderName;NewIntensityWaveName;NewQWavename;NewErrorWaveName;"
 	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
 		SVAR teststr=$(StringFromList(i,ListOfStrings))
 		teststr =""
@@ -231,21 +197,13 @@ Function IR3J_InitMultiSaPlotFit()
 		endif
 	endfor		
 	SVAR ListOfSimpleModels
-	ListOfSimpleModels="Guinier;"
+	ListOfSimpleModels="Guinier;Porod;"
 	SVAR FolderSortStringAll
 	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
 	SVAR SimpleModel
 	if(strlen(SimpleModel)<1)
 		SimpleModel="Guinier"
 	endif
-	SVAR DataSubTypeUSAXSList
-	DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;BL_R_Int;USAXS_PD;Monitor;"
-	SVAR DataSubTypeResultsList
-	DataSubTypeResultsList="Size"
-	SVAR DataSubType
-	DataSubType="DSM_Int"
-
-
 //	NVAR OverwriteExistingData
 //	NVAR AutosaveAfterProcessing
 //	OverwriteExistingData=1
@@ -274,9 +232,9 @@ Function IR3J_LinearFitsCheckProc(cba) : CheckBoxControl
 	switch( cba.eventCode )
 		case 2: // mouse up
 			Variable checked = cba.checked
-			NVAR UseIndra2Data =  root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-			NVAR UseQRSData =  root:Packages:Irena:MultiSaPlotFit:UseQRSData
-			SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
+			NVAR UseIndra2Data =  root:Packages:Irena:SimpleFits:UseIndra2Data
+			NVAR UseQRSData =  root:Packages:Irena:SimpleFits:UseQRSData
+			SVAR DataStartFolder = root:Packages:Irena:SimpleFits:DataStartFolder
 //		  	SVAR UserMessageString=root:Packages:Irena:SASDataMerging:UserMessageString
 //			NVAR ProcessManually =root:Packages:Irena:SASDataMerging:ProcessManually
 //			NVAR ProcessSequentially=root:Packages:Irena:SASDataMerging:ProcessSequentially
@@ -287,18 +245,16 @@ Function IR3J_LinearFitsCheckProc(cba) : CheckBoxControl
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data"))
 		  		if(checked)
 		  			UseQRSData = 0
-		  			IR3J_FixPanelControls()
 		  		endif
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData"))
 		  		if(checked)
 		  			UseIndra2Data = 0
-		  			IR3J_FixPanelControls()
 		  		endif
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData")||stringmatch(cba.ctrlName,"UseIndra2Data"))
 		  		DataStartFolder = "root:"
-		  		PopupMenu StartFolderSelection,win=IR3J_MultiSaPlotFitPanel, mode=1,popvalue="root:"
+		  		PopupMenu StartFolderSelection,win=IR3J_SimpleFitsPanel, mode=1,popvalue="root:"
 				IR3J_UpdateListOfAvailFiles()
 		  	endif
 //			Checkbox AutosaveAfterProcessing, win=IR3D_DataMergePanel, disable=0
@@ -363,12 +319,12 @@ Function IR3J_UpdateListOfAvailFiles()
 
 
 	string OldDF=GetDataFolder(1)
-	setDataFolder root:Packages:Irena:MultiSaPlotFit
+	setDataFolder root:Packages:Irena:SimpleFits
 	
-	NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSData
-	SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
-	SVAR DataMatchString= root:Packages:Irena:MultiSaPlotFit:DataMatchString
+	NVAR UseIndra2Data=root:Packages:Irena:SimpleFits:UseIndra2Data
+	NVAR UseQRSdata=root:Packages:Irena:SimpleFits:UseQRSData
+	SVAR StartFolderName=root:Packages:Irena:SimpleFits:DataStartFolder
+	SVAR DataMatchString= root:Packages:Irena:SimpleFits:DataMatchString
 	string LStartFolder, FolderContent
 	if(stringmatch(StartFolderName,"---"))
 		LStartFolder="root:"
@@ -377,8 +333,8 @@ Function IR3J_UpdateListOfAvailFiles()
 	endif
 	string CurrentFolders=IR3D_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData, 2,0,DataMatchString)
 
-	Wave/T ListOfAvailableData=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
-	Wave SelectionOfAvailableData=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
+	Wave/T ListOfAvailableData=root:Packages:Irena:SimpleFits:ListOfAvailableData
+	Wave SelectionOfAvailableData=root:Packages:Irena:SimpleFits:SelectionOfAvailableData
 	variable i, j, match
 	string TempStr, FolderCont
 
@@ -412,9 +368,9 @@ end
 //**************************************************************************************
 Function IR3J_SortListOfAvailableFldrs()
 	
-	SVAR FolderSortString=root:Packages:Irena:MultiSaPlotFit:FolderSortString
-	Wave/T ListOfAvailableData=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
-	Wave SelectionOfAvailableData=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
+	SVAR FolderSortString=root:Packages:Irena:SimpleFits:FolderSortString
+	Wave/T ListOfAvailableData=root:Packages:Irena:SimpleFits:ListOfAvailableData
+	Wave SelectionOfAvailableData=root:Packages:Irena:SimpleFits:SelectionOfAvailableData
 	if(numpnts(ListOfAvailableData)<2)
 		return 0
 	endif
@@ -569,29 +525,24 @@ Function IR3J_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 
 	if(stringmatch(ctrlName,"StartFolderSelection"))
 		//Update the listbox using start folde popStr
-		SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
+		SVAR StartFolderName=root:Packages:Irena:SimpleFits:DataStartFolder
 		StartFolderName = popStr
 		IR3J_UpdateListOfAvailFiles()
 	endif
 	if(stringmatch(ctrlName,"SortFolders"))
 		//do something here
-		SVAR FolderSortString = root:Packages:Irena:MultiSaPlotFit:FolderSortString
+		SVAR FolderSortString = root:Packages:Irena:SimpleFits:FolderSortString
 		FolderSortString = popStr
 		IR3J_UpdateListOfAvailFiles()
 	endif
 	if(stringmatch(ctrlName,"SimpleModel"))
 		//do something here
-		SVAR SimpleModel = root:Packages:Irena:MultiSaPlotFit:SimpleModel
+		SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 		SimpleModel = popStr
 		IR3J_CreateLinearizedData()
 		IR3J_AppendDataToGraphModel()
 	endif
-
-	if(stringmatch(ctrlName,"SubTypeData"))
-		//do something here
-		SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-		DataSubType = popStr
-	endif
+	
 end
 
 //**************************************************************************************
@@ -611,11 +562,11 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 				IR3D_RebuildListboxTables()
 //				IR2S_SortListOfAvailableFldrs()
 			endif
-			NVAR DataQstart=root:Packages:Irena:MultiSaPlotFit:DataQstart
-			NVAR DataQEnd=root:Packages:Irena:MultiSaPlotFit:DataQEnd
+			NVAR DataQstart=root:Packages:Irena:SimpleFits:DataQstart
+			NVAR DataQEnd=root:Packages:Irena:SimpleFits:DataQEnd
 			
 			if(stringmatch(sva.ctrlName,"DataQEnd"))
-				WAVE OriginalDataQWave = root:Packages:Irena:MultiSaPlotFit:OriginalDataQWave
+				WAVE OriginalDataQWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
 				tempP = BinarySearch(OriginalDataQWave, DataQEnd )
 				if(tempP<1)
 					print "Wrong Q value set, Data Q max must be at most 1 point before the end of Data"
@@ -625,7 +576,7 @@ Function IR3J_SetVarProc(sva) : SetVariableControl
 	//			cursor /W=IR3D_DataMergePanel#DataDisplay B, OriginalData1IntWave, tempP
 			endif
 			if(stringmatch(sva.ctrlName,"DataQstart"))
-				WAVE OriginalDataQWave = root:Packages:Irena:MultiSaPlotFit:OriginalDataQWave
+				WAVE OriginalDataQWave = root:Packages:Irena:SimpleFits:OriginalDataQWave
 				tempP = BinarySearch(OriginalDataQWave, DataQstart )
 				if(tempP<1)
 					print "Wrong Q value set, Data Q min must be at least 1 point from the start of Data"
@@ -700,72 +651,50 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
 	string oldDf=GetDataFolder(1)
-	SetDataFolder root:Packages:Irena:MultiSaPlotFit					//go into the folder
+	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	//IR3D_SetSavedNotSavedMessage(0)
 
-		SVAR DataStartFolder=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
-		SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
-		SVAR IntensityWaveName=root:Packages:Irena:MultiSaPlotFit:IntensityWaveName
-		SVAR QWavename=root:Packages:Irena:MultiSaPlotFit:QWavename
-		SVAR ErrorWaveName=root:Packages:Irena:MultiSaPlotFit:ErrorWaveName
-		SVAR dQWavename=root:Packages:Irena:MultiSaPlotFit:dQWavename
-		NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-		NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
-		SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
+		SVAR DataStartFolder=root:Packages:Irena:SimpleFits:DataStartFolder
+		SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
+		SVAR IntensityWaveName=root:Packages:Irena:SimpleFits:IntensityWaveName
+		SVAR QWavename=root:Packages:Irena:SimpleFits:QWavename
+		SVAR ErrorWaveName=root:Packages:Irena:SimpleFits:ErrorWaveName
+		SVAR dQWavename=root:Packages:Irena:SimpleFits:dQWavename
+		NVAR UseIndra2Data=root:Packages:Irena:SimpleFits:UseIndra2Data
+		NVAR UseQRSdata=root:Packages:Irena:SimpleFits:UseQRSdata
 		//these are variables used by the control procedure
-		NVAR  UseResults=  root:Packages:Irena:MultiSaPlotFit:UseResults
-		NVAR  UseUserDefinedData=  root:Packages:Irena:MultiSaPlotFit:UseUserDefinedData
-		NVAR  UseModelData = root:Packages:Irena:MultiSaPlotFit:UseModelData
-		SVAR DataFolderName  = root:Packages:Irena:MultiSaPlotFit:DataFolderName 
-		SVAR IntensityWaveName = root:Packages:Irena:MultiSaPlotFit:IntensityWaveName
-		SVAR QWavename = root:Packages:Irena:MultiSaPlotFit:QWavename
-		SVAR ErrorWaveName = root:Packages:Irena:MultiSaPlotFit:ErrorWaveName
+		NVAR  UseResults=  root:Packages:Irena:SimpleFits:UseResults
+		NVAR  UseUserDefinedData=  root:Packages:Irena:SimpleFits:UseUserDefinedData
+		NVAR  UseModelData = root:Packages:Irena:SimpleFits:UseModelData
+		SVAR DataFolderName  = root:Packages:Irena:SimpleFits:DataFolderName 
+		SVAR IntensityWaveName = root:Packages:Irena:SimpleFits:IntensityWaveName
+		SVAR QWavename = root:Packages:Irena:SimpleFits:QWavename
+		SVAR ErrorWaveName = root:Packages:Irena:SimpleFits:ErrorWaveName
 		UseResults = 0
 		UseUserDefinedData = 0
 		UseModelData = 0
+		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 		DataFolderName = DataStartFolder+FolderNameStr
-		if(UseQRSdata)
-			//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
-			QWavename = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3J_MultiSaPlotFitPanel"))
-			IntensityWaveName = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3J_MultiSaPlotFitPanel"))
-			ErrorWaveName = stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3J_MultiSaPlotFitPanel"))
-			if(UseIndra2Data)
-				dQWavename = ReplaceString("Qvec", QWavename, "dQ")
-			elseif(UseQRSdata)
-				dQWavename = "w"+QWavename[1,31]
-			else
-				dQWavename = ""
-			endif
-		elseif(UseIndra2Data)
-			string DataSubTypeInt = DataSubType
-			string QvecLookup="R_Int=R_Qvec;BL_R_Int=BL_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
-			string ErrorLookup="R_Int=R_Error;BL_R_Int=BL_R_error;SMR_Int=SMR_Error;DSM_Int=DSM_error;"
-			string dQLookup="SMR_Int=SMR_dQ;DSM_Int=DSM_dQ;"
-			string DataSubTypeQvec = StringByKey(DataSubTypeInt, QvecLookup,"=",";")
-			string DataSubTypeError = StringByKey(DataSubTypeInt, ErrorLookup,"=",";")
-			string DataSubTypedQ = StringByKey(DataSubTypeInt, dQLookup,"=",";")
-			IntensityWaveName = DataSubTypeInt
-			QWavename = QvecLookup
-			ErrorWaveName = ErrorLookup
-			dQWavename = dQLookup
+		QWavename = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3J_SimpleFitsPanel"))
+		IntensityWaveName = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3J_SimpleFitsPanel"))
+		ErrorWaveName = stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3J_SimpleFitsPanel"))
+		if(UseIndra2Data)
+			dQWavename = ReplaceString("Qvec", QWavename, "dQ")
+		elseif(UseQRSdata)
+			dQWavename = "w"+QWavename[1,31]
+		else
+			dQWavename = ""
 		endif
 		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
 		Wave/Z SourceQWv=$(DataFolderName+QWavename)
 		Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
 		Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
-		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv))
-			print "Data selection failed for "+DataFolderName
-			return 0
+		if(!WaveExists(SourceIntWv)||	!WaveExists(SourceQWv)||!WaveExists(SourceErrorWv))
+			Abort "Data selection failed for Data 1"
 		endif
 		Duplicate/O SourceIntWv, OriginalDataIntWave
 		Duplicate/O SourceQWv, OriginalDataQWave
-		if(WaveExists(SourceErrorWv))
-			Duplicate/O SourceErrorWv, OriginalDataErrorWave
-		else
-			Duplicate/O OriginalDataIntWave, OriginalDataErrorWave
-			Wave OriginalDataErrorWave
-			OriginalDataErrorWave = 0
-		endif
+		Duplicate/O SourceErrorWv, OriginalDataErrorWave
 		if(WaveExists(SourcedQWv))
 			Duplicate/O SourcedQWv, OriginalDatadQWave
 		else
@@ -774,9 +703,13 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		IR3J_AppendDataToGraphLogLog()
 		IR3J_CreateLinearizedData()
 		IR3J_AppendDataToGraphModel()
+//		IR3D_PresetOutputStrings()
+//		Wave/Z ResultIntensity = root:Packages:Irena:SASDataMerging:ResultIntensity
+//		if(WaveExists(ResultIntensity))
+//			ResultIntensity= NaN
+//		endif
 		print "Added Data from folder : "+DataFolderName
 	SetDataFolder oldDf
-	return 1
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -784,16 +717,18 @@ end
 Function IR3J_CreateLinearizedData()
 
 	string oldDf=GetDataFolder(1)
-	SetDataFolder root:Packages:Irena:MultiSaPlotFit					//go into the folder
-	Wave OriginalDataIntWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataIntWave
-	Wave OriginalDataQWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataQWave
-	Wave OriginalDataErrorWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataErrorWave
-	SVAR SimpleModel=root:Packages:Irena:MultiSaPlotFit:SimpleModel
+	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
+	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave OriginalDataQWave=root:Packages:Irena:SimpleFits:OriginalDataQWave
+	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	SVAR SimpleModel=root:Packages:Irena:SimpleFits:SimpleModel
 	Duplicate/O OriginalDataIntWave, LinModelDataIntWave, ModelNormalizedResidual
 	Duplicate/O OriginalDataQWave, LinModelDataQWave, ModelNormResXWave
 	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
 	ModelNormalizedResidual = 0
 	if(stringmatch(SimpleModel,"Guinier"))
+		LinModelDataIntWave = log(OriginalDataIntWave)
+		LinModelDataEWave = log(OriginalDataErrorWave)
 		LinModelDataQWave = OriginalDataQWave^2
 		ModelNormResXWave = OriginalDataQWave^2
 	endif
@@ -810,29 +745,25 @@ end
 
 Function IR3J_AppendDataToGraphModel()
 	
-	DoWindow IR3J_MultiSaPlotFitPanel
+	DoWindow IR3J_SimpleFitsPanel
 	if(!V_Flag)
 		return 0
 	endif
 	variable WhichLegend=0
 	variable startQp, endQp, tmpStQ
 
-//	Duplicate/O OriginalDataIntWave, LinModelDataIntWave, ModelNormalizedResidual
-//	Duplicate/O OriginalDataQWave, LinModelDataQWave, ModelNormResXWave
-//	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
-
-	Wave LinModelDataIntWave=root:Packages:Irena:MultiSaPlotFit:LinModelDataIntWave
-	Wave LinModelDataQWave=root:Packages:Irena:MultiSaPlotFit:LinModelDataQWave
-	Wave LinModelDataEWave=root:Packages:Irena:MultiSaPlotFit:LinModelDataEWave
-	CheckDisplayed /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay LinModelDataIntWave
+	Wave LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
+	Wave LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
+	Wave LinModelDataEWave=root:Packages:Irena:SimpleFits:LinModelDataEWave
+	CheckDisplayed /W=IR3J_SimpleFitsPanel#LogLogDataDisplay LinModelDataIntWave
 	if(!V_flag)
-		AppendToGraph /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
-		ModifyGraph /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
-		Label /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
-		Label /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
-		ErrorBars /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
+		AppendToGraph /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
+		ModifyGraph /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay log=0, mirror(bottom)=1
+		Label /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Intensity"
+		Label /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+		ErrorBars /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
 	endif
-//	NVAR DataQEnd = root:Packages:Irena:MultiSaPlotFit:DataQEnd
+//	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
 //	if(DataQEnd>0)	 		//old Q max already set.
 //		endQp = BinarySearch(OriginalDataQWave, DataQEnd)
 //	endif
@@ -840,17 +771,17 @@ Function IR3J_AppendDataToGraphModel()
 //		DataQEnd = OriginalDataQWave[numpnts(OriginalDataQWave)-2]
 //		endQp = numpnts(OriginalDataQWave)-2
 //	endif
-//	cursor /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay B, OriginalDataIntWave, endQp
+//	cursor /W=IR3J_SimpleFitsPanel#LogLogDataDisplay B, OriginalDataIntWave, endQp
 	DoUpdate
 
-	Wave/Z ModelNormalizedResidual=root:Packages:Irena:MultiSaPlotFit:ModelNormalizedResidual
-	Wave/Z ModelNormResXWave=root:Packages:Irena:MultiSaPlotFit:ModelNormResXWave
-	CheckDisplayed /W=IR3J_MultiSaPlotFitPanel#ResidualDataDisplay ModelNormalizedResidual  //, ResultIntensity
+	Wave/Z ModelNormalizedResidual=root:Packages:Irena:SimpleFits:ModelNormalizedResidual
+	Wave/Z ModelNormResXWave=root:Packages:Irena:SimpleFits:ModelNormResXWave
+	CheckDisplayed /W=IR3J_SimpleFitsPanel#ResidualDataDisplay ModelNormalizedResidual  //, ResultIntensity
 	if(!V_flag)
-		AppendToGraph /W=IR3J_MultiSaPlotFitPanel#ResidualDataDisplay  ModelNormalizedResidual  vs ModelNormResXWave
-		ModifyGraph /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
-		Label /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Normalized res."
-		Label /W=IR3J_MultiSaPlotFitPanel#LinearizedDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
+		AppendToGraph /W=IR3J_SimpleFitsPanel#ResidualDataDisplay  ModelNormalizedResidual  vs ModelNormResXWave
+		ModifyGraph /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay log=1, mirror(bottom)=1
+		Label /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Normalized res."
+		Label /W=IR3J_SimpleFitsPanel#LinearizedDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q [A\\S-1\\M]"
 	endif
 
 
@@ -859,27 +790,27 @@ Function IR3J_AppendDataToGraphModel()
 	
 	switch(V_Flag)	// numeric switch
 		case 0:		// execute if case matches expression
-			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /N=text0/K
+			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /N=text0/K
 			break						// exit from switch
 //		case 1:		// execute if case matches expression
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
 //			break
 //		case 2:
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
 //			break
 //		case 3:
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
 //			break
 //		case 7:
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
 			break
 	endswitch
 
@@ -892,24 +823,24 @@ end
 
 Function IR3J_AppendDataToGraphLogLog()
 	
-	DoWindow IR3J_MultiSaPlotFitPanel
+	DoWindow IR3J_SimpleFitsPanel
 	if(!V_Flag)
 		return 0
 	endif
 	variable WhichLegend=0
 	variable startQp, endQp, tmpStQ
-	Wave OriginalDataIntWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataIntWave
-	Wave OriginalDataQWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataQWave
-	Wave OriginalDataErrorWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataErrorWave
-	CheckDisplayed /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay OriginalDataIntWave
+	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	Wave OriginalDataQWave=root:Packages:Irena:SimpleFits:OriginalDataQWave
+	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
+	CheckDisplayed /W=IR3J_SimpleFitsPanel#LogLogDataDisplay OriginalDataIntWave
 	if(!V_flag)
-		AppendToGraph /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay  OriginalDataIntWave  vs OriginalDataQWave
-		ModifyGraph /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay log=1, mirror(bottom)=1
-		Label /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay left "Intensity 1"
-		Label /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay bottom "Q [A\\S-1\\M]"
-		ErrorBars /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
+		AppendToGraph /W=IR3J_SimpleFitsPanel#LogLogDataDisplay  OriginalDataIntWave  vs OriginalDataQWave
+		ModifyGraph /W=IR3J_SimpleFitsPanel#LogLogDataDisplay log=1, mirror(bottom)=1
+		Label /W=IR3J_SimpleFitsPanel#LogLogDataDisplay left "Intensity 1"
+		Label /W=IR3J_SimpleFitsPanel#LogLogDataDisplay bottom "Q [A\\S-1\\M]"
+		ErrorBars /W=IR3J_SimpleFitsPanel#LogLogDataDisplay OriginalDataIntWave Y,wave=(OriginalDataErrorWave,OriginalDataErrorWave)		
 	endif
-	NVAR DataQEnd = root:Packages:Irena:MultiSaPlotFit:DataQEnd
+	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
 	if(DataQEnd>0)	 		//old Q max already set.
 		endQp = BinarySearch(OriginalDataQWave, DataQEnd)
 	endif
@@ -917,36 +848,36 @@ Function IR3J_AppendDataToGraphLogLog()
 		DataQEnd = OriginalDataQWave[numpnts(OriginalDataQWave)-2]
 		endQp = numpnts(OriginalDataQWave)-2
 	endif
-	cursor /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay B, OriginalDataIntWave, endQp
+	cursor /W=IR3J_SimpleFitsPanel#LogLogDataDisplay B, OriginalDataIntWave, endQp
 	DoUpdate
 
-	Wave/Z OriginalDataIntWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataIntWave
-	CheckDisplayed /W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay OriginalDataIntWave  //, ResultIntensity
+	Wave/Z OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
+	CheckDisplayed /W=IR3J_SimpleFitsPanel#LogLogDataDisplay OriginalDataIntWave  //, ResultIntensity
 	string Shortname1, ShortName2
 	
 	switch(V_Flag)	// numeric switch
 		case 0:		// execute if case matches expression
-			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /N=text0/K
+			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /N=text0/K
 			break						// exit from switch
 //		case 1:		// execute if case matches expression
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1
 //			break
 //		case 2:
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname2 = StringFromList(ItemsInList(DataFolderName2, ":")-1, DataFolderName2  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData2IntWave) " + Shortname2		
 //			break
 //		case 3:
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2
 //			break
 //		case 7:
-//			SVAR DataFolderName=root:Packages:Irena:MultiSaPlotFit:DataFolderName
+//			SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 //			Shortname1 = StringFromList(ItemsInList(DataFolderName1, ":")-1, DataFolderName1  ,":")
-//			Legend/W=IR3J_MultiSaPlotFitPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
+//			Legend/W=IR3J_SimpleFitsPanel#LogLogDataDisplay /C/N=text0/J/A=LB "\\s(OriginalData1IntWave) "+Shortname1+"\r\\s(OriginalData2IntWave) "+Shortname2+"\r\\s(ResultIntensity) Merged Data"
 			break
 	endswitch
 

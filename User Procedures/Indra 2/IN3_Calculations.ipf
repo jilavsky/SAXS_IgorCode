@@ -2504,15 +2504,16 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 
-//	WAVE/Z ColorWave=root:Packages:Irena_desmearing:ColorWave
-//	if(!WaveExists(ColorWave))
-//		Duplicate/O Int_Wave, ColorWave
-//	endif
 	WAVE/Z W_coef=W_coef
-		if (WaveExists(W_coef)!=1)					
-			make/N=2 W_coef
-		endif
+	if (WaveExists(W_coef)!=1)					
+		make/N=2 W_coef
+	endif
 	W_coef=0		//reset for recording purposes...
+	//check if this makes any sense, sometimes we have issues with data and need to break here. 
+	Wavestats/Q Int_wave
+	if(V_numNans>0 || V_numINFs>0)
+		abort 
+	endif
 	
 	string ProblemsWithQ=""
 	string ProblemWithFit=""
@@ -2551,13 +2552,6 @@ Function IN3_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, SelectedF
 		
 	Redimension /N=(newLength) Int_wave, Q_vct, Err_wave			//increase length of the two waves
 	
-//	if(exists("ColorWave")==1)
-//		Redimension /N=(newLength) ColorWave
-//		ColorWave=0
-//		ColorWave[FitFrom,DataLengths-1]=1
-//		ColorWave[DataLengths+1, ]=2	
-//	endif
-//	
 	variable i=0, ii=0	
 	variable/g V_FitError=0					//this is way to avoid bombing due to numerical problems
 	variable/g V_FitOptions=4				//this should suppress the window showing progress (4) & force robust fitting (6)

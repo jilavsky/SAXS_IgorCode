@@ -1,15 +1,16 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.68
+#pragma version=2.69
 Constant NI1AversionNumber = 2.67
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.69 added 12ID-B tiff file which is tiff file combined with metadata log file. 
 //2.68 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //2.67 Fixed case when user set ASCII name for output - apprently this was broken forever... 
 //2.66 added UseBatchProcessing to prevent graphs from being displays to speed up processing of large number of images. 
@@ -227,7 +228,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	NewDataFolder/O/S root:Packages:Convert2Dto1D
 
 	//internal loaders
-	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
+	string/g ListOfKnownExtensions=".tif;GeneralBinary;Pilatus;Nexus;BrukerCCD;MarCCD;mpa;mp/bin;BSRC/Gold;12IDB_tif;DND/txt;RIGK/Raxis;ADSC;ADSC_A;WinView spe (Princeton);ASCII;ibw;BSL/SAXS;BSL/WAXS;ascii512x512;ascii128x128;ESRFedf;"
 	ListOfKnownExtensions+="SSRLMatSAXS;TPA/XML;Fuji/img;mpa/UC;FITS;.hdf;GE binary;---;"//mpa/bin;mpa/asc;mp/bin;mp/asc
 //#if(Exists("ccp4unpack"))	
 //	ListOfKnownExtensions+="MarIP/xop;"

@@ -1,14 +1,14 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-//#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.51
+#pragma version=2.52
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.52 added 12ID-B tiff files, these are tiff files with associated metadata file. Location based on folder structure. 
 //2.51 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //2.50 removed mar345 support. Let's see if someone complains. 
 //2.49 Modified NI1_MainListBoxProc to allow to easily remove "Blank" and Empty - and unmatch them... 
@@ -96,7 +96,7 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 	Variable LoadedOK=1			//set to 1 if loaded seemed OK
 	NVAR UseCalib2DData=root:Packages:Convert2Dto1D:UseCalib2DData
 
-	if(cmpstr(FileType,".tif")==0 || cmpstr(FileType,"tiff")==0)
+	if(stringmatch(FileType,".tif") || stringmatch(FileType,"tiff") || stringmatch(FileType,"12IDB_tif"))
 		FileNameToLoad= FileName
 		if(cmpstr(FileName[strlen(FileName)-4,inf],".tif")!=0&&cmpstr(FileName[strlen(FileName)-5,inf],".tiff")!=0)
 			FileNameToLoad= FileName+ ".tif"
@@ -109,6 +109,12 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 		Redimension/N=(-1,-1,0) 	LoadedWvHere			//this is fix for 3 layer tiff files...
 		NewNote+="DataFileName="+FileNameToLoad+";"
 		NewNote+="DataFileType="+".tif"+";"
+		if(stringmatch(FileType,"12IDB_tif"))
+			string AddOnNOte
+			AddOnNOte = NI1_12IDBLoadMetadata(FileNameToLoad, LoadedWvHere)
+			NewNote+=AddOnNOte+";"
+		endif		
+
 	elseif(cmpstr(FileType,"EQSANS400x400")==0)
 		FileNameToLoad= FileName
 		KillWaves/Z wave0,wave1,wave2,wave3,wave4
@@ -722,7 +728,6 @@ Function NI1A_UniversalLoader(PathName,FileName,FileType,NewWaveName)
 			testLine = "Start of img header>>>;"+testLine+"<<<<End of img header;"
 		elseif(stringmatch(FileNameToLoad, "*.tiff" )&&(PilskipBytes>0))
 			testLine = ReplaceString("\n", testLine, "")
-	print testline		
 			testLine = ReplaceString("#", testLine, ";")
 			testLine = ReplaceString(":", testLine, "=")
 			testLine = NI1_RemoveNonASCII(testLine)

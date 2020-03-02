@@ -10,7 +10,7 @@ constant CurrentNikaVersionNumber = 1.821
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -102,6 +102,8 @@ Menu "SAS 2D"
 		help={"Support for data from ALS soft energy beamline"}
 		"APS 12ID-C SAXS with Gold Detector", NI1_12IDCLoadAndSetup()
 		help={"Support for data from APS 12ID-C camera"}
+		"APS 12ID-B SAXS-WAXS ", NI1_12IDBLoadAndSetup()
+		help={"Support for data from APS 12ID-B camera"}		
 		"DND CAT", NI1_DNDConfigureNika()
 		help={"Support for data from DND CAT (5ID) beamline at APS"}
 		"SSRL Mat SAXS", NI1_SSRLSetup()

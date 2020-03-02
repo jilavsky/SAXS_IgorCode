@@ -5,7 +5,7 @@ Constant IRVversionNumber=2.11
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -98,7 +98,9 @@ Function IR1V_ControlPanelFnct()
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr140Data input",pos={8,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
 	TitleBox Info2 title="\Zr140Fractals model input",pos={10,185},frame=0,fstyle=2, fixedSize=1,size={150,20},fstyle=3,fColor=(0,0,65535)
-	TitleBox Info3 title="\Zr140Fit?  Low limit:    High Limit:",pos={200,275},frame=0,fstyle=2, fixedSize=0,size={20,15}
+	TitleBox Info31 title="\Zr130Fit?",pos={200,275},frame=0,fstyle=2, fixedSize=0,size={20,15}
+	TitleBox Info32 title="\Zr130Low limit:",pos={230,275},frame=0,fstyle=2, fixedSize=0,size={20,15}
+	TitleBox Info33 title="\Zr130High Limit:",pos={300,275},frame=0,fstyle=2, fixedSize=0,size={20,15}
 	TitleBox Info5 title="\Zr130Fit using least square fitting ?",pos={2,588},frame=0,fstyle=3, fixedSize=0,size={140,15},fColor=(0,0,52224)
 	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,612},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info6 title="\Zr140Results",pos={2,620},frame=0,fstyle=3, fixedSize=0,size={40,15},fColor=(0,0,52224)
@@ -124,8 +126,8 @@ Function IR1V_ControlPanelFnct()
 	CheckBox UseSurfFract2,variable= root:Packages:FractalsModel:UseSurfFract2, help={"Use Surface fractal 2 to model these data"}
 
 
-	Button DoFitting,pos={175,588},size={70,20}, proc=IR1V_InputPanelButtonProc,title="Fit", help={"Do least sqaures fitting of the whole model, find good starting conditions and proper limits before fitting"}
-	Button RevertFitting,pos={255,588},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Revert back",help={"Return back befoire last fitting attempt"}
+	Button DoFitting,pos={195,588},size={70,20}, proc=IR1V_InputPanelButtonProc,title="Fit", help={"Do least sqaures fitting of the whole model, find good starting conditions and proper limits before fitting"}
+	Button RevertFitting,pos={275,588},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Revert back",help={"Return back befoire last fitting attempt"}
 	Button CopyToFolder,pos={60,620},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Store in Data Folder", help={"Copy results of the modeling into original data folder"}
 	Button ExportData,pos={170,620},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Export ASCII", help={"Export ASCII data out of Igor"}
 	Button MarkGraphs,pos={280,620},size={100,20}, proc=IR1V_InputPanelButtonProc,title="Results to graphs", help={"Insert text boxes with results into the graphs for printing"}
@@ -144,7 +146,7 @@ Function IR1V_ControlPanelFnct()
 
 	//Mass fractal 1 controls
 	
-	TitleBox MassFract1_Title, title="   Mass fractal 1 controls    ", frame=1, labelBack=(64000,0,0), pos={16,272},size={128,17}, fixedSize=1
+	TitleBox MassFract1_Title, title="   Mass fractal 1 controls    ", frame=1, labelBack=(64000,0,0), pos={13,272},size={150,21}, fixedSize=1
 
 	SetVariable MassFr1_Phi,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Particle volume   "
 	NVAR MassFr1_PhiStep = root:Packages:FractalsModel:MassFr1_PhiStep
@@ -201,7 +203,7 @@ Function IR1V_ControlPanelFnct()
 	SetVariable MassFr1_IntgNumPnts,pos={14,480},size={320,16},proc=IR1V_PanelSetVarProc,title="Internal Integration Num pnts             "
 	SetVariable MassFr1_IntgNumPnts,limits={50,500,50},value= root:Packages:FractalsModel:MassFr1_IntgNumPnts, help={"Number of points for internal integration. About 500 is usual, increase if there are artefacts. "}
 
-	TitleBox MassFract2_Title, title="   Mass fractal 2 controls    ", frame=1, labelBack=(0,0,64000), pos={16,272},size={128,17}, fixedSize=1
+	TitleBox MassFract2_Title, title="   Mass fractal 2 controls    ", frame=1, labelBack=(0,0,64000), pos={13,272},size={150,21}, fixedSize=1
 
 	SetVariable MassFr2_Phi,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Particle volume   "
 	NVAR MassFr2_PhiStep = root:Packages:FractalsModel:MassFr2_PhiStep
@@ -258,7 +260,7 @@ Function IR1V_ControlPanelFnct()
 	SetVariable MassFr2_IntgNumPnts,limits={50,500,50},value= root:Packages:FractalsModel:MassFr2_IntgNumPnts, help={"Number of points for internal integration. About 500 is usual, increase if there are artefacts. "}
 
 //SUrface fractal 1 controls
-	TitleBox SurfFract1_Title, title="   Surface fractal 1 controls    ", frame=1, labelBack=(0,64000,0), pos={16,272},size={128,17},fixedSize=1
+	TitleBox SurfFract1_Title, title="   Surface fractal 1 controls    ", frame=1, labelBack=(0,64000,0), pos={13,272},size={150,21},fixedSize=1
 
 	NVAR SurfFr1_SurfaceStep = root:Packages:FractalsModel:SurfFr1_SurfaceStep
 
@@ -303,7 +305,7 @@ Function IR1V_ControlPanelFnct()
 	SetVariable SurfFr1_Contrast,limits={0,inf,1},value= root:Packages:FractalsModel:SurfFr1_Contrast, help={"Scattering contrast"}
 
 //SUrface fractal 2
-	TitleBox SurfFract2_Title, title="   Surface fractal 2 controls    ", frame=1, labelBack=(52000,52000,0), pos={16,272},size={128,17}, fixedSize=1
+	TitleBox SurfFract2_Title, title="   Surface fractal 2 controls    ", frame=1, labelBack=(52000,52000,0), pos={13,272},size={150,21}, fixedSize=1
 
 	SetVariable SurfFr2_Surface,pos={14,295},size={160,16},proc=IR1V_PanelSetVarProc,title="Smooth surface   "
 	NVAR SurfFr2_SurfaceStep = root:Packages:FractalsModel:SurfFr2_SurfaceStep
@@ -574,6 +576,8 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 
 
 	if (cmpstr(ctrlName,"MassFr2_UseUFFormFactor")==0)
+		NVAR MassFr2_Beta = root:Packages:FractalsModel:MassFr2_Beta
+		MassFr2_Beta = 1
 		NVAR MassFr2_UseUFFormFactor=root:Packages:FractalsModel:MassFr2_UseUFFormFactor
 		SetVariable MassFr2_Beta, win=IR1V_ControlPanel,  disable=MassFr2_UseUFFormFactor
 		SetVariable MassFr1_UFPDIIndex, win=IR1V_ControlPanel,  disable=!MassFr2_UseUFFormFactor
@@ -581,6 +585,8 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	endif
 
 	if (cmpstr(ctrlName,"MassFr1_UseUFFormFactor")==0)
+		NVAR MassFr1_Beta = root:Packages:FractalsModel:MassFr1_Beta
+		MassFr1_Beta = 1
 		NVAR MassFr1_UseUFFormFactor=root:Packages:FractalsModel:MassFr1_UseUFFormFactor
 		SetVariable MassFr1_Beta, win=IR1V_ControlPanel, disable=MassFr1_UseUFFormFactor
 		SetVariable MassFr1_UFPDIIndex, win=IR1V_ControlPanel, disable=!MassFr1_UseUFFormFactor

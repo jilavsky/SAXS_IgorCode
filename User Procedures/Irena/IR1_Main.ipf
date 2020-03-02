@@ -8,7 +8,7 @@
 constant CurrentIrenaVersionNumber = 2.691
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -159,8 +159,8 @@ Menu "SAS"
 	help = {"Plotting tool with wide functionality, hopefully"}
 	"Plotting II", IR2D_DWSPlotToolMain()
 	help = {"Plotting tool which controls any top graph"}
-	"Multi Sample Plot-Fit - under developement", IR3L_MultiSaPlotFit()
-	help={"Plotting and fitting of multiple SAS data. Developement for now. Do not use. "}
+	"Multi-Plotting tool - beta 1", IR3L_MultiSaPlotFit()
+	help={"Plotting of multiple SAS data. Developement for now. Do not use. "}
 		SubMenu "Support Tools for plots and tables"
 		"Draw Line Of Any Slope", IR2P_DrawLineOfAnySlope()
 		"Draw Line Of -4 Slope",  IR2P_DrawLineOf4Slope()
@@ -174,8 +174,8 @@ Menu "SAS"
 	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
-	//"Multi Sample Fit - under developement", IR3L_MultiSaPlotFit()
-	//help={"Plotting and fitting of multiple SAS data. Developement for now. Do not use. "}
+	"Multi Sample Fit - alfa", IR3J_SimpleFits()
+	help={"Plotting and fitting of multiple SAS data. Developement for now. Do not use. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
 	"Size Distribution", IR1R_Sizes()

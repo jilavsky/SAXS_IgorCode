@@ -3,7 +3,7 @@
 constant IR3LversionNumber = 1			//MultiDataPloting tool version number. 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -28,6 +28,8 @@ Function IR3L_MultiSaPlotFit()
 		IR3L_MultiSaPlotFitPanelFnct()
 		//		setWIndow IR3L_MultiSaPlotFitPanel, hook(CursorMoved)=IR3D_PanelHookFunction
 		IR1_UpdatePanelVersionNumber("IR3L_MultiSaPlotFitPanel", IR3LversionNumber,1)
+		//link it to top graph, if exists
+		IR3L_SetStartConditions()
 	endif
 	IR3L_UpdateListOfAvailFiles()
 //	IR3D_RebuildListboxTables()
@@ -53,6 +55,35 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
+Function IR3L_SetStartConditions()
+		
+		SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+		
+		//look for top MultiDataPlot_*, if does nto exist, attach to top graph, if exists... 
+		string List=WinList("MultiDataPlot_*", ";", "WIN:1" )
+		string TopWinName
+		if(ItemsInList(list)>0)
+			TopWinName = stringFromList(0,list)
+		else
+			list = WinList("*", ";", "WIN:1" )
+			if(ItemsInList(list)>0)
+				TopWinName = stringFromList(0,list)
+			else
+				TopWinName = ""
+			endif
+		endif
+		if(strlen(TopWinName)>0)
+			GetWindow $(TopWinName) title 
+			GraphUserTitle = S_value
+			GraphWindowName = TopWinName
+			DoWindow/F $(TopWinName)
+		else
+			GraphUserTitle = ""
+			GraphWindowName = ""
+		
+		endif
+end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -71,14 +102,14 @@ Function IR3L_MultiSaPlotFitPanelFnct()
 	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	TitleBox Dataselection title="\Zr130Data selection",size={100,15},pos={10,10},frame=0,fColor=(0,0,65535),labelBack=0
-	Checkbox UseIndra2Data, pos={10,30},size={76,14},title="USAXS", proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	checkbox UseQRSData, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
+	Checkbox UseIndra2Data, pos={10,30},size={76,14},title="USAXS", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
+	checkbox UseQRSData, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
 	PopupMenu StartFolderSelection,pos={10,50},size={180,15},proc=IR3L_PopMenuProc,title="Start fldr"
 	SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
 	PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:MultiSaPlotFit:UseIndra2Data, root:Packages:Irena:MultiSaPlotFit:UseQRSdata,2,1)"
 	SetVariable FolderNameMatchString,pos={10,75},size={210,15}, proc=IR3L_SetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:DataMatchString
-	checkbox InvertGrepSearch, pos={222,75}, title="Invert?", size={76,14},proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:InvertGrepSearch
+	checkbox InvertGrepSearch, pos={222,75}, title="Invert?", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:InvertGrepSearch
 
 	PopupMenu SortFolders,pos={10,100},size={180,20},fStyle=2,proc=IR3L_PopMenuProc,title="Sort Folders"
 	SVAR FolderSortString = root:Packages:Irena:MultiSaPlotFit:FolderSortString
@@ -113,6 +144,8 @@ Function IR3L_MultiSaPlotFitPanelFnct()
 	Button NewGraphPlotData,pos={270,170},size={120,20}, proc=IR3L_ButtonProc,title="New graph", help={"Plot selected data in new graph"}
 	Button AppendPlotData,pos={410,170},size={180,20}, proc=IR3L_ButtonProc,title="Append to selected graph", help={"Append selected data to graph selected above"}
 	Button ApplyPresetFormating,pos={420,195},size={160,20}, proc=IR3L_ButtonProc,title="Apply All Formating", help={"Apply Preset Formating to update graph based on these choices"}
+	Button ExportGraphJPG,pos={420,220},size={70,20}, proc=IR3L_ButtonProc,title="Export jpg", help={"Export as jpg file"}
+	Button ExportGraphTIF,pos={505,220},size={70,20}, proc=IR3L_ButtonProc,title="Export tiff", help={"Export as tiff file"}
 
 
 
@@ -126,15 +159,35 @@ Function IR3L_MultiSaPlotFitPanelFnct()
 	SetVariable YAxislegend,pos={430,300},size={160,15}, proc=IR3L_SetVarProc,title=" "
 	Setvariable YAxislegend,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:YAxislegend, help={"legend for Y axis. You can change it. "}
 	
-	Checkbox LogXAxis, pos={280,320},size={76,14},title="LogXAxis?", proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:LogXAxis, help={"Use log X axis. You can change it. "}
-	Checkbox LogYAxis, pos={450,320},size={76,14},title="LogYAxis?", proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:LogYAxis, help={"Use log X axis. You can change it. "}
+	Checkbox LogXAxis, pos={280,320},size={76,14},title="LogXAxis?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:LogXAxis, help={"Use log X axis. You can change it. "}
+	Checkbox LogYAxis, pos={450,320},size={76,14},title="LogYAxis?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:LogYAxis, help={"Use log X axis. You can change it. "}
+
+	SetVariable XOffset,pos={260,340},size={130,15}, proc=IR3L_SetVarProc,title="X offset :     ", limits={0,inf,1}
+	Setvariable XOffset,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:XOffset, help={"X Offxet for X axis, you can change it. "}
+	SetVariable YOffset,pos={430,340},size={130,15}, proc=IR3L_SetVarProc,title="Y offset :     ",limits={0,inf,1}
+	Setvariable YOffset,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:YOffset, help={"Y Offset for Y axis. You can change it. "}
 
 
 	TitleBox GraphTraceControls title="\Zr100Graph Trace Options",fixedSize=1,size={150,20},pos={350,420},frame=0,fstyle=1, fixedSize=1
 
-	Checkbox Colorize, pos={280,440},size={76,14},title="Colorize?", proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:Colorize, help={"Colorize the data? Oposite is B/W"}
-	Checkbox AddLegend, pos={280,460},size={76,14},title="AddLegend?", proc=IR3L_MultiPlotCheckProc, variable=root:Packages:Irena:MultiSaPlotFit:AddLegend, help={"Add legend to data."}
+	Checkbox Colorize, pos={280,440},size={76,14},title="Vary colors?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:Colorize, help={"Colorize the data? Oposite is B/W"}
+	Checkbox UseSymbols, pos={280,480},size={76,14},title="Use Symbols?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseSymbols, help={"Use Symbols for data. "}
+	Checkbox UseLines, pos={280,500},size={76,14},title="Use Lines?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseLines, help={"Use Lines for data"}
 
+	NVAR SymbolSize=root:Packages:Irena:MultiSaPlotFit:SymbolSize
+	PopupMenu SymbolSize,pos={430,480},size={310,20},proc=IR3L_PopMenuProc, title="Symbol Size : ",help={"Symbol Size"}
+	PopupMenu SymbolSize,value="0;1;2;3;5;7;10;",mode=1, popvalue=num2str(SymbolSize)
+	SetVariable LineThickness,pos={430,500},size={160,15}, proc=IR3L_SetVarProc,title="Line Thickness",limits={0.5,10,0.5}
+	Setvariable LineThickness,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:LineThickness, help={"Line Thickness. You can change it. "}
+
+
+	TitleBox GraphOtherControls title="\Zr100Graph Other Options",fixedSize=1,size={150,20},pos={350,560},frame=0,fstyle=1, fixedSize=1
+
+	Checkbox AddLegend, pos={280,580},size={76,14},title="Add Legend?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:AddLegend, help={"Add legend to data."}
+	Checkbox UseOnlyFoldersInLegend, pos={280,600},size={76,14},title="Only Folders?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend, help={"Only Folders in Legend?"}
+	NVAR LegendSize=root:Packages:Irena:MultiSaPlotFit:LegendSize
+	PopupMenu LegendSize,pos={430,580},size={310,20},proc=IR3L_PopMenuProc, title="Legend Size : ",help={"legend Size"}
+	PopupMenu LegendSize,value="8;10;12;14;16;20;24;",mode=1, popvalue=num2str(LegendSize)
 
 
 	TitleBox Instructions1 title="\Zr100Double click to add data to graph.",size={330,15},pos={4,665},frame=0,fColor=(0,0,65535),labelBack=0
@@ -159,21 +212,20 @@ end
 Function/S IR3L_GraphListPopupString()
 	// Create some waves for demo purposes
 	string list = WinList("MultiDataPlot_*", ";", "WIN:1" )
+	list = SortList(list)
 	//now, append names to them
 	variable i
 	string LongList=""
-	for(i=0;i<ItemsInList(list);i+=1)
-		GetWindow $(StringFromList(i, list)) wtitle 
-		LongList+=StringFromList(i, list)+"="+S_value+";"
-	endfor
-	
 	if(strlen(WinList("*", ";", "WIN:1" ))>2)
 		GetWindow $(stringFromList(0,WinList("*", ";", "WIN:1" ))) wtitle 
-		LongList+="Top Graph"+"="+S_value+";"
-		
+		LongList+="Top Graph"+"="+S_value+";"		
 	else
 		LongList+="---;"
 	endif
+	for(i=0;i<ItemsInList(list);i+=1)
+		GetWindow $(StringFromList(i, list)) wtitle 
+		LongList+=StringFromList(i, list)+"="+S_value+";"
+	endfor	
 	return LongList
 End
 
@@ -228,7 +280,10 @@ Function IR3L_InitMultiSaPlotFit()
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
 	ListOfVariables+="InvertGrepSearch;"
-	ListOfVariables+="LogXAxis;LogYAxis;Colorize;AddLegend;"
+	ListOfVariables+="LogXAxis;LogYAxis;MajorGridXaxis;MajorGridYaxis;MinorGridXaxis;MinorGridYaxis;"
+	ListOfVariables+="Colorize;UseSymbols;UseLines;SymbolSize;LineThickness;"
+	ListOfVariables+="XOffset;YOffset;"
+	ListOfVariables+="AddLegend;UseOnlyFoldersInLegend;LegendSize;"
 	
 	//ListOfVariables+="Guinier_Rg;Guinier_I0;"
 	//ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
@@ -291,6 +346,10 @@ Function IR3L_InitMultiSaPlotFit()
 	if(strlen(GraphWindowName)<2)
 		GraphWindowName="---"
 	endif
+	NVAR LegendSize
+	if(LegendSize<8)
+		LegendSize=12
+	endif
 
 //	NVAR OverwriteExistingData
 //	NVAR AutosaveAfterProcessing
@@ -314,7 +373,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 
-Function IR3L_MultiPlotCheckProc(cba) : CheckBoxControl
+Function IR3L_CheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
 	switch( cba.eventCode )
@@ -324,6 +383,13 @@ Function IR3L_MultiPlotCheckProc(cba) : CheckBoxControl
 			NVAR UseQRSData =  root:Packages:Irena:MultiSaPlotFit:UseQRSData
 			SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
 			SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+		  	NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
+		  	NVAR UseSymbols = root:Packages:Irena:MultiSaPlotFit:UseSymbols
+		  	NVAR SymbolSize = root:Packages:Irena:MultiSaPlotFit:SymbolSize
+		  	NVAR LineThickness= root:Packages:Irena:MultiSaPlotFit:LineThickness
+		  	NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
+		  	NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
+		  	NVAR AddLegend= root:Packages:Irena:MultiSaPlotFit:AddLegend
 		  	if(stringmatch(cba.ctrlName,"InvertGrepSearch"))
 					IR3L_UpdateListOfAvailFiles()	
 		  	endif
@@ -359,21 +425,55 @@ Function IR3L_MultiPlotCheckProc(cba) : CheckBoxControl
 		  		endif
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"Colorize"))
+ 	 			DoWIndow/F $(GraphWindowName)
 		  		if(checked)
-		  			DoWIndow/F $(GraphWindowName)
 		  			IN2G_ColorTopGrphRainbow()
 		  		else
-      		ModifyGraph/W=$(GraphWindowName) rgb=(0,0,0)
+      			ModifyGraph/W=$(GraphWindowName) rgb=(0,0,0)
 		  		endif
+				DoWIndow/F IR3L_MultiSaPlotFitPanel
 		  	endif
-		  	if(stringmatch(cba.ctrlName,"AddLegend"))
+		  	if(stringmatch(cba.ctrlName,"UseSymbols"))
+ 	 			DoWIndow/F $(GraphWindowName)
+		  		if(UseLines+UseSymbols<1)
+		  			UseSymbols = checked
+		  			UseLines = !checked
+		  		endif
 		  		if(checked)
-		  			DoWIndow/F $(GraphWindowName)
+					ModifyGraph mode=3*UseSymbols+UseLines 	
+					IN2G_VaryMarkersTopGrphRainbow(1, SymbolSize, 0)
+		  		else
+					ModifyGraph mode=!(UseLines) 	
+		  		endif
+				DoWIndow/F IR3L_MultiSaPlotFitPanel
+		  	endif
+		  	if(stringmatch(cba.ctrlName,"UseLines"))
+ 	 			DoWIndow/F $(GraphWindowName)
+		  		if(UseLines+UseSymbols<1)
+		  			UseSymbols = !checked
+		  			UseLines = checked
+		  		endif
+		  		if(LineThickness<0.5)
+		  			LineThickness = 0.5
+		  		endif
+		  		if(checked)
+					ModifyGraph mode=UseSymbols*3 + UseLines
+		  			IN2G_VaryLinesTopGrphRainbow(LineThickness, 1)
+		  		else
+					ModifyGraph mode=UseSymbols*3 	
+		  		endif
+				DoWIndow/F IR3L_MultiSaPlotFitPanel
+		  	endif
+		  	
+		  	if(stringmatch(cba.ctrlName,"AddLegend") || stringmatch(cba.ctrlName,"UseOnlyFoldersInLegend"))
+ 	 			DoWIndow/F $(GraphWindowName)
+		  		if(AddLegend)
 		  			//IN2G_LegendTopGrphFldr(fontsize, numberofItems, UseFolderName, UseWavename)
-		  			IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("defaultFontSize")), 20, 1, 1)
+		  			IN2G_LegendTopGrphFldr(LegendSize, 20, 1, !(UseOnlyFoldersInLegend))
 		  		else
 					Legend/K/N=text0/W=$(GraphWindowName)
 		  		endif
+				DoWIndow/F IR3L_MultiSaPlotFitPanel
 		  	endif
   		
   	
@@ -381,7 +481,6 @@ Function IR3L_MultiPlotCheckProc(cba) : CheckBoxControl
 		case -1: // control being killed
 			break
 	endswitch
-
 	return 0
 End
 //**************************************************************************************
@@ -613,6 +712,7 @@ Function IR3L_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
+	//SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
 	if(stringmatch(ctrlName,"StartFolderSelection"))
 		//Update the listbox using start folde popStr
 		SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
@@ -653,6 +753,39 @@ Function IR3L_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 		DataSubType = popStr
 		IR3L_UpdateListOfAvailFiles()
 	endif
+	if(stringmatch(ctrlName,"SymbolSize"))
+		//do something here
+		NVAR UseSymbols = root:Packages:Irena:MultiSaPlotFit:UseSymbols
+		NVAR SymbolSize = root:Packages:Irena:MultiSaPlotFit:SymbolSize
+		NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
+		SymbolSize = str2num(popStr)
+  		if(UseLines+UseSymbols<1)
+  			UseSymbols = 1
+  		endif
+		DoWIndow/F $(GraphWindowName)
+		if(UseSymbols)
+			ModifyGraph mode=3*UseSymbols+UseLines 	
+			IN2G_VaryMarkersTopGrphRainbow(1, SymbolSize, 0)
+		else
+			ModifyGraph mode=!(UseLines) 	
+		endif
+
+	endif
+
+	if(stringmatch(ctrlName,"LegendSize"))
+		//do something here
+		NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
+		NVAR AddLegend = root:Packages:Irena:MultiSaPlotFit:AddLegend
+		NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
+		LegendSize = str2num(popStr)
+		if(AddLegend)
+	 			IN2G_LegendTopGrphFldr(LegendSize, 20, 1, !(UseOnlyFoldersInLegend))
+		endif
+	endif
+
+
+
+	DOWIndow/F IR3L_MultiSaPlotFitPanel
 end
 
 //**************************************************************************************
@@ -670,6 +803,33 @@ Function IR3L_SetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
 				IR3L_UpdateListOfAvailFiles()
 			endif
+			if(stringmatch(sva.ctrlName,"GraphUserTitle"))
+				SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+				SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+				DoWindow/T $(GraphWindowName),(GraphUserTitle)
+			endif
+			
+			if(stringmatch(sva.ctrlName,"LineThickness"))
+				SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+				NVAR LineThickness = root:Packages:Irena:MultiSaPlotFit:LineThickness
+				if(LineThickness<0.5)
+					LineThickness = 0.5
+				endif
+				DoWindow/F $(GraphWindowName)
+	  			IN2G_VaryLinesTopGrphRainbow(LineThickness, 1)
+			endif
+			
+			if(stringmatch(sva.ctrlName,"XOffset") || stringmatch(sva.ctrlName,"YOffset"))
+				NVAR XOffset=root:Packages:Irena:MultiSaPlotFit:XOffset
+				NVAR YOffset=root:Packages:Irena:MultiSaPlotFit:YOffset
+				NVAR LogXAxis=root:Packages:Irena:MultiSaPlotFit:LogXAxis
+				NVAR LogYAxis=root:Packages:Irena:MultiSaPlotFit:LogYAxis
+				SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+				DoWindow/F $(GraphWindowName)
+				IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
+				//ModifyGraph/W=$(GraphWindowName) offset={XOffset,YOffset}
+			endif
+
 			break
 
 		case 3: // live update
@@ -677,7 +837,7 @@ Function IR3L_SetVarProc(sva) : SetVariableControl
 		case -1: // control being killed
 			break
 	endswitch
-
+	DoWIndow/F IR3L_MultiSaPlotFitPanel
 	return 0
 End
 
@@ -895,6 +1055,17 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 				//Open www manual with the right page
 				IN2G_OpenWebManual("Irena/Plotting.html")
 			endif
+			if(cmpstr(ba.ctrlname,"ExportGraphJPG")==0)
+				DoWindow/F $(GraphWindowName)
+				SavePICT/E=-6/B=288	as (GraphUserTitle)				//this is jpg
+				DoWIndow/F IR3L_MultiSaPlotFitPanel
+			endif
+			if(cmpstr(ba.ctrlname,"ExportGraphTif")==0)
+				DoWindow/F $(GraphWindowName)
+				SavePICT/E=-7/B=288	as (GraphUserTitle)					//this is TIFF
+				DoWIndow/F IR3L_MultiSaPlotFitPanel
+			endif
+
 
 			break
 		case -1: // control being killed
@@ -932,7 +1103,15 @@ Function IR3L_ApplyPresetFormating(GraphNameString)
 		SVAR XAxisLegend=root:Packages:Irena:MultiSaPlotFit:XAxisLegend
 		SVAR YAxislegend=root:Packages:Irena:MultiSaPlotFit:YAxislegend	
 		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+		NVAR LineThickness = root:Packages:Irena:MultiSaPlotFit:LineThickness
+		NVAR UseSymbols = root:Packages:Irena:MultiSaPlotFit:UseSymbols
+		NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
+		NVAR SymbolSize = root:Packages:Irena:MultiSaPlotFit:SymbolSize
+		NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
+		NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
+		
 		ModifyGraph mirror=1
+		DoWIndow/F $(GraphNameString)
   		if(LogXAxis)
   			ModifyGraph/W= $(GraphNameString)/Z log(bottom)=1
   		else
@@ -959,19 +1138,42 @@ Function IR3L_ApplyPresetFormating(GraphNameString)
   		else
 			ModifyGraph/Z/W=$(GraphNameString) rgb=(0,0,0)
   		endif
-
-  		if(AddLegend)
-  			DoWIndow/F  $(GraphNameString)
-  			IN2G_LegendTopGrphFldr(str2num(IN2G_LkUpDfltVar("defaultFontSize")), 20, 1, 1)
+ 		if(AddLegend)
+  			IN2G_LegendTopGrphFldr(LegendSize, 20, 1, !(UseOnlyFoldersInLegend))
   		else
 			Legend/K/N=text0/W= $(GraphNameString)
   		endif
-		//time stamp
-		TextBox/W=$(GraphNameString)/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()		
-		//else
-		//TextBox/W=GeneralGraph/K/N=DateTimeTag
-	
+	  	if(UseLines)
+	  		if(UseLines+UseSymbols<1)
+	  			UseSymbols = !UseLines
+	  		endif
+			if(LineThickness<0.5)
+				LineThickness = 0.5
+			endif
+			ModifyGraph/Z/W=$(GraphNameString) mode=UseSymbols*3 + UseLines
+  			IN2G_VaryLinesTopGrphRainbow(LineThickness, 1)
+  		else
+			ModifyGraph/Z/W=$(GraphNameString) mode=UseSymbols*3 	
+	  	endif
+	  	if(UseSymbols)
+	  		if(UseLines+UseSymbols<1)
+	  			UseLines = !UseSymbols
+	  		endif
+			ModifyGraph/Z/W=$(GraphNameString) mode=3*UseSymbols+UseLines 	
+			IN2G_VaryMarkersTopGrphRainbow(1, SymbolSize, 0)
+  		else
+			ModifyGraph/Z/W=$(GraphNameString) mode=!(UseLines) 	
+	  	endif
+		NVAR XOffset=root:Packages:Irena:MultiSaPlotFit:XOffset
+		NVAR YOffset=root:Packages:Irena:MultiSaPlotFit:YOffset
+		NVAR LogXAxis=root:Packages:Irena:MultiSaPlotFit:LogXAxis
+		NVAR LogYAxis=root:Packages:Irena:MultiSaPlotFit:LogYAxis
+		IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
 
+
+		TextBox/W=$(GraphNameString)/C/N=DateTimeTag/F=0/A=RB/E=2/X=2.00/Y=1.00 "\\Z07"+date()+", "+time()		
+	
+		DoWIndow/F IR3L_MultiSaPlotFitPanel
 
 	endif
 end

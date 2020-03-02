@@ -5,7 +5,7 @@
 
 
 //*************************************************************************\
-//* Copyright (c) 2005 - 2019, Argonne National Laboratory
+//* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
@@ -431,6 +431,21 @@ Function NI1M_RoiDrawButtonProc(ctrlName) : ButtonControl
 		MoveWindow/W=CCDImageForMask V_left+33, V_top, V_right+33, V_bottom
 		DoWindow/F CCDImageForMask
 	endif
+//	if( CmpStr(ctrlName,"EditExistingROI") == 0 )
+//		ShowTools/W=CCDImageForMask/A rect
+//		SetDrawLayer/W=CCDImageForMask ProgFront
+//		Wave w= $NI1M_GetImageWave("CCDImageForMask")		// the target matrix
+//		String iminfo= ImageInfo("CCDImageForMask", NameOfWave(w), 0)
+//		String xax= StringByKey("XAXIS",iminfo)
+//		String yax= StringByKey("YAXIS",iminfo)
+//		SetDrawEnv/W=CCDImageForMask linefgc= (3,52428,1),fillpat= 5,fillfgc= (0,0,0),xcoord=$xax,ycoord=$yax,save
+//		DoWindow/F  CCDImageForMask 
+//		AutoPositionWindow/M=0 /R=NI1M_ImageROIPanel CCDImageForMask 
+//		GetWindow CCDImageForMask wsize
+//		//print V_left, V_top, V_right, V_bottom
+//		MoveWindow/W=CCDImageForMask V_left+33, V_top, V_right+33, V_bottom
+//		DoWindow/F CCDImageForMask
+//	endif
 	if( CmpStr(ctrlName,"FinishROI") == 0 )
 		GraphNormal/W=CCDImageForMask
 		HideTools/W=CCDImageForMask/A
