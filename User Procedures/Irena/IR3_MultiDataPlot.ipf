@@ -712,7 +712,7 @@ Function IR3L_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	//SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+	SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
 	if(stringmatch(ctrlName,"StartFolderSelection"))
 		//Update the listbox using start folde popStr
 		SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
