@@ -1763,8 +1763,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
-static Function IR1T_CalcIntgSpheroidFFPoints(Qvalue,radius,AR)		//we have to integrate from 0 to 1 over cos(th)
+//this needs to be used in Simple fit models also. 
+Function IR1T_CalcIntgSpheroidFFPoints(Qvalue,radius,AR)		//we have to integrate from 0 to 1 over cos(th)
 	variable Qvalue, radius	, AR
 	
 	string OldDf

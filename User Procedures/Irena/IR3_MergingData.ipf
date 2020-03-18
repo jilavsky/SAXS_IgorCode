@@ -102,7 +102,7 @@ Function IR3D_DataMergePanelFnct()
 	checkbox UseQRSData1, pos={120,18}, title="QRS(QIS)", size={76,14},proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:UseQRSdata1
 	PopupMenu StartFolderSelection1,pos={10,52},size={180,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	SVAR Data1StartFolder = root:Packages:Irena:SASDataMerging:Data1StartFolder
-	PopupMenu StartFolderSelection1,mode=1,popvalue=Data1StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
+	PopupMenu StartFolderSelection1,mode=1,popvalue=Data1StartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data1, root:Packages:Irena:SASDataMerging:UseQRSdata1,2,1)"
 	SetVariable FolderNameMatchString1,pos={10,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString1,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data1MatchString
 	PopupMenu SortFolders1,pos={10,95},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders1"
@@ -117,7 +117,7 @@ Function IR3D_DataMergePanelFnct()
 	Checkbox Indra2Data2SlitSmeared, pos={370,33},size={76,14},title="SMR colim?",mode=1, proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:Indra2Data2SlitSmeared
 	PopupMenu StartFolderSelection2,pos={260,52},size={210,15},proc=IR3D_PopMenuProc,title="Start fldr"
 	SVAR Data2StartFolder = root:Packages:Irena:SASDataMerging:Data2StartFolder
-	PopupMenu StartFolderSelection2,mode=1,popvalue=Data2StartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
+	PopupMenu StartFolderSelection2,mode=1,popvalue=Data2StartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:SASDataMerging:UseIndra2Data2, root:Packages:Irena:SASDataMerging:UseQRSdata2,2,1)"
 	SetVariable FolderNameMatchString2,pos={260,75},size={210,15}, proc=IR3D_MergeDataSetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString2,fSize=10,fStyle=2, variable=root:Packages:Irena:SASDataMerging:Data2MatchString
 	PopupMenu SortFolders2,pos={260,95},size={180,20},fStyle=2,proc=IR3D_MergingPopMenuProc,title="Sort Folders2"
@@ -500,7 +500,7 @@ Function/T IR3D_GenStringOfFolders(StartFolder,UseIndra2Structure, UseQRSStructu
 	elseif (UseQRSStructure)
 			make/N=0/FREE/T ResultingWave
 			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, "(?i)^r|i$", 1, ResultingWave)
-			result=IR2S_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
+			result=IR3C_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
 	else
 		result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*", 1)
 	endif

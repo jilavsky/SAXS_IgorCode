@@ -492,7 +492,7 @@ Function IR1A_ControlPanelFnct()
 	CheckBox UseNoLimits,variable= root:Packages:Irena_UnifFit:UseNoLimits, help={"Check if you want to fit without use of limits"}
 	CheckBox DisplayLocalFits,pos={110,225},size={225,14},proc=IR1A_InputPanelCheckboxProc,title="Display local (Porod & Guinier) fits?"
 	CheckBox DisplayLocalFits,variable= root:Packages:Irena_UnifFit:DisplayLocalFits, help={"Check to display in graph local Porod and Guinier fits for selected level, fits change with changes in values of P, B, Rg and G"}
-	Button LevelXFitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	Button LevelXFitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 	Button LevelXFitPAndB,pos={230,408},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit P/B bwtn cursors", help={"Do Power law fitting between the cursors and put resulting parameters in the P and B fields"}
 	
 	TitleBox PhysValidityWarning title="Level may not be physically feasible", pos={10,410},size={300,16}
@@ -540,7 +540,7 @@ Function IR1A_ControlPanelFnct()
 	
 	TitleBox Level1Title, title="   Level  1 controls    ", frame=1, labelBack=(64000,0,0), pos={14,258}, size={150,8}
 	SetVariable Level1G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level1G,limits={0,inf,0.05*Level1G},value= root:Packages:Irena_UnifFit:Level1G, help={"Gunier prefactor"}
+	SetVariable Level1G,limits={0,inf,0.05*Level1G},value= root:Packages:Irena_UnifFit:Level1G, help={"Guinier prefactor"}
 	CheckBox Level1FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitG,variable= root:Packages:Irena_UnifFit:Level1FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level1GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -607,7 +607,7 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level1Corelations,variable= root:Packages:Irena_UnifFit:Level1Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level1ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level1ETA,limits={0,inf,0.01*Level1Eta},value= root:Packages:Irena_UnifFit:Level1ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level1ETA,limits={0,inf,0.01*Level1Eta},value= root:Packages:Irena_UnifFit:Level1ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Guinier for multiple order Corelations"}
 	CheckBox Level1FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level1FitETA,variable= root:Packages:Irena_UnifFit:Level1FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level1ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -639,7 +639,7 @@ Function IR1A_ControlPanelFnct()
 	TitleBox Level2Title, title="   Level  2 controls    ", frame=1, labelBack=(0,64000,0), pos={14,258}, size={150,8}
 
 	SetVariable Level2G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level2G,limits={0,inf,0.05*Level2G},value= root:Packages:Irena_UnifFit:Level2G, help={"Gunier prefactor"}
+	SetVariable Level2G,limits={0,inf,0.05*Level2G},value= root:Packages:Irena_UnifFit:Level2G, help={"Guinier prefactor"}
 	CheckBox Level2FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitG,variable= root:Packages:Irena_UnifFit:Level2FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level2GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -656,7 +656,7 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level2RgHighLimit,pos={300,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level2RgHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level2RgHighLimit, help={"High limit for Rg fitting"}
 
-	//Button Level2FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	//Button Level2FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
 	CheckBox Level2MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level2MassFractal,variable= root:Packages:Irena_UnifFit:Level2MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
@@ -708,7 +708,7 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level2Corelations,variable= root:Packages:Irena_UnifFit:Level2Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level2ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level2ETA,limits={0,inf,0.01*Level2Eta},value= root:Packages:Irena_UnifFit:Level2ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level2ETA,limits={0,inf,0.01*Level2Eta},value= root:Packages:Irena_UnifFit:Level2ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Guinier for multiple order Corelations"}
 	CheckBox Level2FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level2FitETA,variable= root:Packages:Irena_UnifFit:Level2FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level2ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -736,7 +736,7 @@ Function IR1A_ControlPanelFnct()
 	TitleBox Level3Title, title="   Level  3 controls    ", frame=1, labelBack=(30000,30000,64000), pos={14,258}, size={150,8}
 
 	SetVariable Level3G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level3G,limits={0,inf,0.05*Level3G},value= root:Packages:Irena_UnifFit:Level3G, help={"Gunier prefactor"}
+	SetVariable Level3G,limits={0,inf,0.05*Level3G},value= root:Packages:Irena_UnifFit:Level3G, help={"Guinier prefactor"}
 	CheckBox Level3FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitG,variable= root:Packages:Irena_UnifFit:Level3FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level3GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -753,7 +753,7 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level3RgHighLimit,pos={300,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level3RgHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level3RgHighLimit, help={"High limit for Rg fitting"}
 
-	//Button Level3FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	//Button Level3FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do locol fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
 	CheckBox Level3MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level3MassFractal,variable= root:Packages:Irena_UnifFit:Level3MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
@@ -800,7 +800,7 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level3Corelations,variable= root:Packages:Irena_UnifFit:Level3Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level3ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level3ETA,limits={0,inf,0.01*Level3Eta},value= root:Packages:Irena_UnifFit:Level3ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level3ETA,limits={0,inf,0.01*Level3Eta},value= root:Packages:Irena_UnifFit:Level3ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Guinier for multiple order Corelations"}
 	CheckBox Level3FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level3FitETA,variable= root:Packages:Irena_UnifFit:Level3FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level3ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -828,7 +828,7 @@ Function IR1A_ControlPanelFnct()
 	TitleBox Level4Title, title="   Level  4 controls    ", frame=1, labelBack=(52000,52000,0), pos={14,258}, size={150,8}
 
 	SetVariable Level4G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level4G,limits={0,inf,0.05*Level4G},value= root:Packages:Irena_UnifFit:Level4G, help={"Gunier prefactor"}
+	SetVariable Level4G,limits={0,inf,0.05*Level4G},value= root:Packages:Irena_UnifFit:Level4G, help={"Guinier prefactor"}
 	CheckBox Level4FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitG,variable= root:Packages:Irena_UnifFit:Level4FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level4GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -845,7 +845,7 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level4RgHighLimit,pos={300,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level4RgHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level4RgHighLimit, help={"High limit for Rg fitting"}
 
-	//Button Level4FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	//Button Level4FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
 	CheckBox Level4MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level4MassFractal,variable= root:Packages:Irena_UnifFit:Level4MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
@@ -892,7 +892,7 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level4Corelations,variable= root:Packages:Irena_UnifFit:Level4Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level4ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level4ETA,limits={0,inf,0.05*Level4Eta},value= root:Packages:Irena_UnifFit:Level4ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level4ETA,limits={0,inf,0.05*Level4Eta},value= root:Packages:Irena_UnifFit:Level4ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Guinier for multiple order Corelations"}
 	CheckBox Level4FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level4FitETA,variable= root:Packages:Irena_UnifFit:Level4FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level4ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -921,7 +921,7 @@ Function IR1A_ControlPanelFnct()
 	TitleBox Level5Title, title="   Level  5 controls    ", frame=1, labelBack=(0,50000,50000), pos={14,258}, size={150,8}
 
 	SetVariable Level5G,pos={14,280},size={180,16},proc=IR1A_PanelSetVarProc,title="G   ",bodyWidth=140, format="%0.4g"
-	SetVariable Level5G,limits={0,inf,0.05*Level5G},value= root:Packages:Irena_UnifFit:Level5G, help={"Gunier prefactor"}
+	SetVariable Level5G,limits={0,inf,0.05*Level5G},value= root:Packages:Irena_UnifFit:Level5G, help={"Guinier prefactor"}
 	CheckBox Level5FitG,pos={200,281},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitG,variable= root:Packages:Irena_UnifFit:Level5FitG, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable Level5GLowLimit,pos={230,280},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
@@ -938,7 +938,7 @@ Function IR1A_ControlPanelFnct()
 	SetVariable Level5RgHighLimit,pos={300,300},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"
 	SetVariable Level5RgHighLimit,limits={0,inf,0},value= root:Packages:Irena_UnifFit:Level5RgHighLimit, help={"High limit for Rg fitting"}
 
-	//Button Level5FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+	//Button Level5FitRgAndG,pos={230,318},size={130,20}, proc=IR1A_InputPanelButtonProc,title="Fit Rg/G bwtn cursors", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 
 	CheckBox Level5MassFractal,pos={20,330},size={80,16},proc=IR1A_InputPanelCheckboxProc,title="Is this mass fractal from lower level?"
 	CheckBox Level5MassFractal,variable= root:Packages:Irena_UnifFit:Level5MassFractal, help={"Is this mass fractal composed of particles from lower level?"}
@@ -985,7 +985,7 @@ Function IR1A_ControlPanelFnct()
 	CheckBox Level5Corelations,variable= root:Packages:Irena_UnifFit:Level5Corelations, help={"Is there a peak or do you expect Corelations between particles to have importance"}
 
 	SetVariable Level5ETA,pos={14,500},size={180,16},proc=IR1A_PanelSetVarProc,title="ETA    ",bodyWidth=140, format="%0.4g"
-	SetVariable Level5ETA,limits={0,inf,0.05*Level5Eta},value= root:Packages:Irena_UnifFit:Level5ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Gunier for multiple order Corelations"}
+	SetVariable Level5ETA,limits={0,inf,0.05*Level5Eta},value= root:Packages:Irena_UnifFit:Level5ETA, help={"Corelations distance for correlated systems using Born-Green approximation by Guinier for multiple order Corelations"}
 	CheckBox Level5FitETA,pos={200,500},size={80,16},proc=IR1A_InputPanelCheckboxProc,title=" "
 	CheckBox Level5FitETA,variable= root:Packages:Irena_UnifFit:Level5FitETA, help={"Fit correaltion distance? Slect properly the starting conditions and limits."}
 	SetVariable Level5ETALowLimit,pos={230,500},size={60,16},proc=IR1A_PanelSetVarProc, title=" ", format="%0.3g"

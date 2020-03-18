@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.53
+#pragma version = 1.60
 
 
 //*************************************************************************\
@@ -9,6 +9,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.60 addd Multi controls - controsl with listbox... For tools needing ability to select multipel data sets. 
+// 
 //1.53 addes Level fits for Guinier-Porod. Adds Level0 for Unified/GP and pop0 for Modeling which are simply flat background wave. 
 			//fixed results lookup which seemed to have failed for more than two results available... 
 			//removed duplicates fromWave with X list. 
@@ -66,8 +68,35 @@
 //version 1.04 adds to "qrs" also "qis" - NIST intended naming structure as of 11/2007 
 
 
-//How to - readme 
-//version 1  7/19/2005 - first release, allows already user type (type Indra2 and QRS logic) of data
+
+
+//Three different controls supported:
+
+ 
+//1.	Multi data controls...	Adds multiple data folders selection for WAXS and otehr panel types, where one needs to pick many data setds at once... 
+//	Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm)
+//		string PanelName,ToolPackageFolder,DoubleClickFunNm
+	//this will append controls to panels, which require set of control for multi sample selection	
+	//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
+	//initialize controls first by running this command
+	//IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+	//then call this function:
+	// Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm)
+	//, it will add listbox and other controls. 
+	//   DoubleClickFUnction name is stored with other control info and when called, this happens:
+	//				Execute(DoubleClickFunctionName+"("+FoldernameStr+")")
+	//this is how the double click action suppose to look:
+	//Function IR3L_DoubleClickAction(FoldernameStr)
+	//		string FoldernameStr
+
+
+//2.   External files picker....   there is listbox support to select external files :
+//	Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString, DoubleCLickFnctName)
+
+
+//3.   Single data set at a time (oldest) for most Irena panels:
+//	IR2C_AddDataControls("testpackage2","TestPanel2","DSM_Int;M_DSM_Int;R_Int;SMR_Int;M_SMR_Int;","SizesFitIntensity;SizesVolumeDistribution;SizesNumberDistribution;",UserDataTypes,UserNameString,XUserLookup,EUserLookup, RequireErrorWaves, AllowModelData)
+
 //Adds controls to select data to panels 
 //How to:
 //	Following are parameters
@@ -106,7 +135,6 @@
 //	variable RequireErrorWaves =0
 //	variable AllowModelData = 0
 //and this creates the controls. 
-//	IR2C_AddDataControls("testpackage2","TestPanel2","DSM_Int;M_DSM_Int;R_Int;SMR_Int;M_SMR_Int;","SizesFitIntensity;SizesVolumeDistribution;SizesNumberDistribution;",UserDataTypes,UserNameString,XUserLookup,EUserLookup, RequireErrorWaves, AllowModelData)
 //end
 
 //modifications:
@@ -751,10 +779,6 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-//Function IR2C_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
-//	String ctrlName
-//	Variable checked
-
 Function IR2C_InputPanelCheckboxProc(CB_Struct)
 	STRUCT WMCheckboxAction &CB_Struct
 
@@ -1327,6 +1351,7 @@ static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames,WNMStr)
 			result+=tempresult
 //		endif
 	endfor
+	setDataFolder OldDf
 	if(strlen(result)>1)
 		return result
 	else
@@ -1431,6 +1456,7 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 			endif
 	endfor
 //	print ticks-startTime
+	setDataFolder OldDf
 	if(strlen(result)>1)
 		return result
 	else
@@ -1570,6 +1596,7 @@ static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTy
 			endif
 		endif
 	endfor
+	setDataFolder OldDf
 	if(strlen(result)>1)
 		return result
 	else
@@ -1620,6 +1647,7 @@ static Function/T IR2P_CheckForRightIN2TripletWvs(TopPanel, FullFldrNames,DataTy
 		endif
 		result+=tempresult
 	endfor
+	setDataFolder OldDf
 	if(strlen(result)>1)
 		return result
 	else
@@ -2104,7 +2132,7 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 	if(strlen(result)<1)
 		result="---"
 	endif
-//	print result
+	setDataFolder OldDf
 	return result
 end
 //**********************************************************************************************************
@@ -2133,7 +2161,6 @@ end
 //**************************************************************************************************
 
 //popup procedure
-//Function IR2C_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 	STRUCT WMPopupAction &Pa
 
@@ -2489,6 +2516,8 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^(Refl|SLD)",0, ";" )
 	elseif(stringmatch(ToolName,"Modeling II"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "ModelLSQF",0, ";" )
+	elseif(stringmatch(ToolName,"Guinier-Porod"))
+		ListOfLookups = GrepList(ResultsDataTypesLookup, "GuinierPorod",0, ";" )
 	else
 		ListOfLookups = ""
 	endif
@@ -2584,7 +2613,7 @@ end
 
 //Select path, populate Listbox with files with input extension and allow one or more files selection. 
 //Include Match name string and make this universally usable as data selection tool so we do not have to this again.
-
+//this is used by Import ASCII and Nexus/CanSAS data
 //**********************************************************************************************************
 //**********************************************************************************************************
 
@@ -2838,20 +2867,26 @@ Function IR3C_SortListOfFilesInWvs(TopPanel)
 			TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
 		endfor
 		Sort/R TempWv, WaveOfFiles, WaveOfSelections
+	elseif(StringMatch(DataSelSortString, "Sort _XYZ_xyz" ))			//sort by XYZ first and then by xyz
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-2, WaveOfFiles[i]  , "_"))*1e6+str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
+		endfor
+		Sort TempWv, WaveOfFiles, WaveOfSelections
 	endif
 	
 end
 //************************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR3C_SetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
-	String ctrlName
-	Variable varNum
-	String varStr
-	String varName
+Function IR3C_SetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	Variable dval = sva.dval
+	String sval = sva.sval
+	string ctrlName = sva.ctrlName
+	string TopPanel=sva.win
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string TopPanel=WinName(0, 64)
 	if (cmpstr(ctrlName,"NameMatchString")==0)
 		IR3C_UpdateListOfFilesInWvs(TopPanel)
 		IR3C_SortListOfFilesInWvs(TopPanel)
@@ -3064,7 +3099,7 @@ Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,Default
 	endif
 	ControlDoubleCLickFnctName=ReplaceStringByKey(PanelWindowName, ControlDoubleCLickFnctName, DoubleCLickFnctName, "=",";" )
 
-	string/g SortOptionsString="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
+	string/g SortOptionsString="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;Sort _XYZ_xyz;"
 	SVAR SortOptionsString
 
 	//check for presence of the folder where this is suppose to work.
@@ -3116,10 +3151,852 @@ Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,Default
 	else
 		DataSelSortString = StringFromList(0,SortOptionsString)
 	endif
+	setDataFolder OldDf
 	
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+//			Multi data selection tools  		!!!!!!!
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm, OnlyUSAXSReducedData,AllowSlitSmearedData)
+		string PanelName,ToolPackageFolder,DoubleClickFunNm
+		variable OnlyUSAXSReducedData,AllowSlitSmearedData
+		//this will append controls to panels, which require set of control for multi sample selection	
+		//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
+		//initialize controls first by running this command
+		//IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+		//then call this function, it will add listbopx and other controls. 
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		string PathToPackagesFolder="root:Packages:"+ToolPackageFolder
+		IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunNm,OnlyUSAXSReducedData,AllowSlitSmearedData)			
+		TitleBox Dataselection, win=$(PanelName), title="\Zr130Data selection",size={100,15},pos={10,10},frame=0,fColor=(0,0,65535),labelBack=0
+		Checkbox UseIndra2Data, win=$(PanelName),pos={10,30},size={76,14},title="USAXS", proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":UseIndra2Data")
+		checkbox UseQRSData, win=$(PanelName),pos={100,30}, title="QRS(QIS)", size={76,14},proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":UseQRSdata") 
+		checkbox UseResults, win=$(PanelName),pos={190,30}, title="Irena results", size={76,14},proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":UseResults") 
+		PopupMenu StartFolderSelection,win=$(PanelName),pos={10,50},size={180,15},proc=IR3C_MultiPopMenuProc,title="Start fldr"
+		SVAR DataStartFolder =  $(PathToPackagesFolder+":DataStartFolder") 
+		//PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(\"+PathToPackagesFolder+\":UseIndra2Data, \"+PathToPackagesFolder+\":UseQRSdata,2,1)"
+		PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= IR2C_MultiSTartFolderSelection()
+		
+		SetVariable FolderNameMatchString,win=$(PanelName),pos={10,75},size={210,15}, proc=IR3C_MultiSetVarProc,title="Folder Match (RegEx)"
+		Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=$(PathToPackagesFolder+":DataMatchString")
+		checkbox InvertGrepSearch, win=$(PanelName),pos={222,75}, title="Invert?", size={76,14},proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":InvertGrepSearch")
+	
+		PopupMenu SortFolders,win=$(PanelName),pos={10,100},size={180,20},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Sort Folders"
+		SVAR FolderSortString =  $(PathToPackagesFolder+":FolderSortString") 
+		string pathToAll
+		pathToAll = PathToPackagesFolder+":FolderSortStringAll"
+		PopupMenu SortFolders,mode=1,popvalue=FolderSortString,value= #pathToAll
+		
+		//Indra data types:
+		PopupMenu SubTypeData,win=$(PanelName),pos={10,120},size={180,20},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Sub-type Data"
+		SVAR DataSubType = $(PathToPackagesFolder+":DataSubType") 
+		PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value= ""
+		//results data types
+		SVAR SelectedResultsTool =  $(PathToPackagesFolder+":SelectedResultsTool") 
+		SVAR SelectedResultsType =  $(PathToPackagesFolder+":SelectedResultsType") 
+		SVAR ResultsGenerationToUse =  $(PathToPackagesFolder+":ResultsGenerationToUse") 
+		PopupMenu ToolResultsSelector,win=$(PanelName),pos={10,120},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Which tool results?    "
+		PopupMenu ToolResultsSelector,win=$(PanelName),mode=1,popvalue=SelectedResultsTool,value= #"root:Packages:IrenaControlProcs:AllKnownToolsResults"
+		PopupMenu ResultsTypeSelector,win=$(PanelName),pos={10,140},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Which results?          "
+		PopupMenu ResultsTypeSelector,win=$(PanelName),mode=1,popvalue=SelectedResultsType,value= #"IR2C_ReturnKnownToolResults(\"+PathToPackagesFolder+\":SelectedResultsTool)"
+		PopupMenu ResultsGenerationToUse,pos={10,160},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Results Generation?           "
+		PopupMenu ResultsGenerationToUse,win=$(PanelName),mode=1,popvalue=ResultsGenerationToUse,value= "Latest;_0;_1;_2;_3;_4;_5;_6;_7;_8;_9;_10;"
+	
+	
+		ListBox DataFolderSelection,win=$(PanelName),pos={4,180},size={250,495}, mode=10
+		ListBox DataFolderSelection,listWave=$(PathToPackagesFolder+":ListOfAvailableData")
+		ListBox DataFolderSelection,selWave=$(PathToPackagesFolder+":SelectionOfAvailableData")
+		ListBox DataFolderSelection,proc=IR3C_MultiListBoxProc
+	
+	
+		IR3C_MultiFixPanelControls(PanelName,"root:Packages:"+ToolPackageFolder)	
+
+end
+
+//**************************************************************************************
+//**************************************************************************************
+Function/S IR2C_MultiSTartFolderSelection()
+		string PopStringPath
+		SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
+		string PanelName = WinName(0,64)
+		string CntrlLocation="root:Packages:"+StringByKey(PanelName, ControlProcsLocations,":",";")
+		NVAR UseIndra2=$(CntrlLocation+":UseIndra2Data")
+		NVAR UseQRSdata=$(CntrlLocation+":UseQRSdata")		
+		string OtherFolders=IR3C_GenStringOfFolders2(UseIndra2,UseQRSdata,2,1)
+		OtherFolders=RemoveFromList("root:", OtherFolders , ";")
+		PopStringPath = "root:;"+OtherFolders
+		return PopStringPath
+end
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3C_MultiListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Variable row = lba.row
+	WAVE/T/Z listWave = lba.listWave
+	WAVE/Z selWave = lba.selWave
+	string WinNameStr=lba.win
+	string FoldernameStr
+	Variable isData1or2
+	string DoubleClickFunctionName
+	SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
+	DoubleClickFunctionName=StringByKey(WinNameStr, ControlDoubleClickFunction,":",";" )
+
+	switch( lba.eventCode )
+		case -1: // control being killed
+			break
+		case 1: // mouse down
+			break
+		case 3: // double click
+			FoldernameStr=listWave[row]
+			Execute(DoubleClickFunctionName+"(\""+FoldernameStr+"\")")
+			break
+		case 4: // cell selection
+		case 5: // cell selection plus shift key
+			break
+		case 6: // begin edit
+			break
+		case 7: // finish edit
+			break
+		case 13: // checkbox clicked (Igor 6.2 or later)
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
 
 
+Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunction,OnlyUSAXSReducedData,AllowSlitSmearedData)	
+	string PathToPackagesFolder, PanelName, DoubleClickFunction
+	variable OnlyUSAXSReducedData,AllowSlitSmearedData
+
+	string oldDf=GetDataFolder(1)
+	string ListOfVariables
+	string ListOfStrings
+	variable i
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		
+	string/G root:Packages:IrenaControlProcs:ControlDoubleClickFunction
+	SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
+	ControlDoubleClickFunction=ReplaceStringByKey(PanelName, ControlDoubleClickFunction, DoubleClickFunction,":",";" )
+
+	SetDataFolder $(PathToPackagesFolder)					//go into the folder
+
+	//here define the lists of variables and strings needed, separate names by ;...
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;DataUnits;"
+	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
+	ListOfStrings+="SelectedResultsTool;SelectedResultsType;ResultsGenerationToUse;"
+	ListOfStrings+="DataSubTypeUSAXSList;DataSubTypeResultsList;DataSubType;"
+	ListOfStrings+="QvecLookupUSAXS;ErrorLookupUSAXS;dQLookupUSAXS;"
+
+	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;"
+	ListOfVariables+="InvertGrepSearch;"
+	
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+								
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;"
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		SVAR teststr=$(StringFromList(i,ListOfStrings))
+		teststr =""
+	endfor		
+	ListOfStrings="DataMatchString;FolderSortString;FolderSortStringAll;"
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		SVAR teststr=$(StringFromList(i,ListOfStrings))
+		if(strlen(teststr)<1)
+			teststr =""
+		endif
+	endfor		
+	ListOfStrings="DataStartFolder;"
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		SVAR teststr=$(StringFromList(i,ListOfStrings))
+		if(strlen(teststr)<1)
+			teststr ="root:"
+		endif
+	endfor		
+	SVAR FolderSortStringAll
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;_XYZ_xyz;"
+	SVAR DataSubTypeUSAXSList
+	if(OnlyUSAXSReducedData)
+		if(AllowSlitSmearedData)
+			DataSubTypeUSAXSList="DSM_Int;SMR_Int;"
+		else
+			DataSubTypeUSAXSList="DSM_Int;"
+		endif
+	else
+		DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;Blank_R_Int;USAXS_PD;Monitor;"
+	endif
+	SVAR DataSubTypeResultsList
+	DataSubTypeResultsList="Size"
+	SVAR DataSubType
+	DataSubType="DSM_Int"
+
+	SVAR QvecLookupUSAXS
+	QvecLookupUSAXS="R_Int=R_Qvec;Blank_R_Int=Blank_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
+	SVAR ErrorLookupUSAXS
+	ErrorLookupUSAXS="R_Int=R_Error;Blank_R_Int=Blank_R_error;SMR_Int=SMR_Error;DSM_Int=DSM_error;"
+	SVAR dQLookupUSAXS
+	dQLookupUSAXS="SMR_Int=SMR_dQ;DSM_Int=DSM_dQ;"
+	
+	SVAR SelectedResultsTool 
+	SVAR SelectedResultsType 
+	SVAR ResultsGenerationToUse
+	if(strlen(SelectedResultsTool)<1)
+		SelectedResultsTool="Unified Fit"
+		SelectedResultsType="UnifiedFitIntensity"
+	endif
+	if(strlen(SelectedResultsTool)<1)
+		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
+	endif
+	if(strlen(ResultsGenerationToUse)<1)
+		ResultsGenerationToUse="Latest"
+	endif
+	Make/O/T/N=(0) ListOfAvailableData
+	Make/O/N=(0) SelectionOfAvailableData
+
+	NVAR UseIndra2Data 
+	NVAR UseQRSdata
+	NVAR UseResults 
+	if(UseResults+UseQRSdata+UseIndra2Data!=1)
+		UseIndra2Data = 0
+		UseQRSdata = 1
+		UseResults = 0
+	endif
+
+
+	SetDataFolder oldDf
+
+end
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3C_MultiSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Variable dval = sva.dval
+	String sval = sva.sval
+	String WinNm = sva.win
+	string ctrlName = sva.ctrlName
+	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
+	string CntrlLocation="root:Packages:"+StringByKey(WinNm, ControlProcsLocations,":",";")
+
+	variable tempP
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
+				IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+			endif
+		break
+		case 3: // live update
+			break
+		case -1: // control being killed
+			break
+	endswitch
+	return 0
+End
+
+//**************************************************************************************
+//**************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3C_MultiCheckProc(cba) : CheckBoxControl
+	STRUCT WMCheckboxAction &cba
+
+	if(cba.eventcode<1 ||cba.eventcode>2)
+		return 0
+	endif
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	//figure out where are controls
+	String ctrlName=cba.ctrlName
+	Variable checked=cba.checked
+	string oldDf=GetDataFolder(1)
+	string TopPanel=cba.win
+
+	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,":",";")
+
+	switch( cba.eventCode )
+		case 2: // mouse up
+			NVAR UseIndra2Data=$(CntrlLocation+":UseIndra2Data")
+			NVAR UseQRSData=$(CntrlLocation+":UseQRSData")
+			NVAR UseResults=$(CntrlLocation+":UseResults")
+			NVAR UseUserDefinedData=$(CntrlLocation+":UseUserDefinedData")
+			NVAR UseModelData=$(CntrlLocation+":UseModelData")
+			SVAR DataStartFolder=$(CntrlLocation+":DataStartFolder")
+
+		  	if(stringmatch(cba.ctrlName,"InvertGrepSearch"))
+					IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)	
+		  	endif
+		  	if(stringmatch(cba.ctrlName,"UseIndra2Data"))
+		  		if(checked)
+		  			UseQRSData = 0
+		  			UseResults = 0
+					IR3C_MultiFixPanelControls(TopPanel,CntrlLocation)	
+					//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		  		endif
+		  	endif
+		  	if(stringmatch(cba.ctrlName,"UseResults"))
+		  		if(checked)
+		  			UseQRSData = 0
+		  			UseIndra2Data = 0
+					IR3C_MultiFixPanelControls(TopPanel,CntrlLocation)	
+					//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		  		endif
+		  	endif
+		  	if(stringmatch(cba.ctrlName,"UseQRSData"))
+		  		if(checked)
+		  			UseIndra2Data = 0
+		  			UseResults = 0
+					IR3C_MultiFixPanelControls(TopPanel,CntrlLocation)	
+					//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		  		endif
+		  	endif
+		  	if(stringmatch(cba.ctrlName,"UseQRSData")||stringmatch(cba.ctrlName,"UseIndra2Data")||stringmatch(cba.ctrlName,"UseResults"))
+		  		DataStartFolder = "root:"
+		  		PopupMenu StartFolderSelection,win=$(TopPanel), mode=1,popvalue="root:"
+				IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		  	endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+	setDataFolder OldDf
+	return 0
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR3C_MultiFixPanelControls(TopPanel,CntrlLocation )	
+	string TopPanel,CntrlLocation
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR UseIndra2Data=$(CntrlLocation+":UseIndra2Data")
+	NVAR UseQRSData=$(CntrlLocation+":UseQRSData")
+	NVAR UseResults=$(CntrlLocation+":UseResults")
+	NVAR UseUserDefinedData=$(CntrlLocation+":UseUserDefinedData")
+	NVAR UseModelData=$(CntrlLocation+":UseModelData")
+	SVAR DataSubType = $(CntrlLocation+":DataSubType")
+	SVAR DataSubTypeResultsList=$(CntrlLocation+":DataSubTypeResultsList")
+	SVAR DataSubTypeUSAXSList = $(CntrlLocation+":DataSubTypeUSAXSList")
+	string tempStr=CntrlLocation+":DataSubTypeUSAXSList"
+	if(UseIndra2Data)
+			PopupMenu SubTypeData, win=$(TopPanel), disable =0
+			PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value=#tempStr
+			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=1
+			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=1
+			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=1
+	elseif(UseQRSData)
+			PopupMenu SubTypeData,win=$(TopPanel),mode=1,popvalue=DataSubType,value= ""
+			PopupMenu SubTypeData, disable=1
+			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=1
+			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=1
+			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=1
+	else	//Results
+			PopupMenu SubTypeData, win=$(TopPanel),disable=1
+			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=0
+			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=0
+			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=0
+	endif
+end
+
+//**********************************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+
+Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	if(Pa.eventCode!=2)
+		return 0
+	endif
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String ctrlName=Pa.ctrlName
+	Variable popNum=Pa.popNum
+	String popStr=Pa.popStr
+	//part to copy everywhere...	
+	string oldDf=GetDataFolder(1)
+	string TopPanel=Pa.win	
+	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
+	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,":",";")
+
+	if(stringmatch(ctrlName,"StartFolderSelection"))
+		//Update the listbox using start folde popStr
+		SVAR StartFolderName=$(CntrlLocation+":DataStartFolder")
+		StartFolderName = popStr
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	endif
+	if(stringmatch(ctrlName,"SortFolders"))
+		//do something here
+		SVAR FolderSortString = $(CntrlLocation+":FolderSortString")
+		FolderSortString = popStr
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	endif
+	if(stringmatch(ctrlName,"SubTypeData"))
+		//do something here
+		SVAR DataSubType = $(CntrlLocation+":DataSubType")
+		DataSubType = popStr
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	endif
+	if(stringmatch(ctrlName,"ToolResultsSelector"))
+		SVAR SelectedResultsTool=$(CntrlLocation+":SelectedResultsTool")
+		SelectedResultsTool = popStr
+		string ListOfAvailableResults=IR2C_ReturnKnownToolResults(popStr)
+		execute("PopupMenu ResultsTypeSelector, win="+TopPanel+", mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
+		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
+		SelectedResultsType = stringFromList(0,ListOfAvailableResults)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	endif
+	if(stringmatch(ctrlName,"ResultsTypeSelector"))
+		//Update the listbox using start folde popStr
+		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
+		SelectedResultsType = popStr
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	endif
+	if(stringmatch(ctrlName,"ResultsGenerationToUse"))
+		//Update the listbox using start folde popStr
+		SVAR ResultsGenerationToUse=$(CntrlLocation+":ResultsGenerationToUse")
+		ResultsGenerationToUse = popStr
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	endif
+	setDataFolder OldDf
+end
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+Function IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+	string CntrlLocation
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string OldDF=GetDataFolder(1)
+	setDataFolder $(CntrlLocation)
+	
+	NVAR UseIndra2Data=$(CntrlLocation+":UseIndra2Data")
+	NVAR UseQRSdata=$(CntrlLocation+":UseQRSData")
+	NVAR UseResults=$(CntrlLocation+":UseResults")
+	SVAR StartFolderName=$(CntrlLocation+":DataStartFolder")
+	SVAR DataMatchString= $(CntrlLocation+":DataMatchString")
+	SVAR DataSubType = $(CntrlLocation+":DataSubType")
+	NVAR InvertGrepSearch=$(CntrlLocation+":InvertGrepSearch")
+	string LStartFolder, FolderContent
+	if(stringmatch(StartFolderName,"---")||!(DataFolderExists(StartFolderName )))
+		LStartFolder="root:"
+	else
+		LStartFolder = StartFolderName
+	endif
+	//build list of availabe folders here...
+	string CurrentFolders
+	if(UseIndra2Data && !(StringMatch(DataSubType, "DSM_Int")||StringMatch(DataSubType, "SMR_Int")))		//special folders...
+		CurrentFolders=IN2G_FindFolderWithWaveTypes(LStartFolder, 10, DataSubType, 1)							//this does not clean up by matchstring...
+		if(strlen(DataMatchString)>0)																							//match string selections
+			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
+		endif
+	elseif(UseIndra2Data && (StringMatch(DataSubType, "DSM_Int")||StringMatch(DataSubType, "SMR_Int")))			//DSM or SMR data wanted. 
+		//need to check if user wants DSM or SMR data. 
+		if(StringMatch(DataSubType, "DSM_Int"))
+			CurrentFolders=IR3C_MultiGenStringOfFolders(CntrlLocation, LStartFolder,UseIndra2Data, UseQRSData,UseResults, 0,1)
+		else
+			CurrentFolders=IR3C_MultiGenStringOfFolders(CntrlLocation, LStartFolder,UseIndra2Data, UseQRSData,UseResults, 1,1)
+		endif
+		//apply grep list. 
+		if(strlen(DataMatchString)>0)
+			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
+		endif
+	else
+		CurrentFolders=IR3C_MultiGenStringOfFolders(CntrlLocation, LStartFolder,UseIndra2Data, UseQRSData,UseResults, 0,1)
+		//apply grep list. 
+		if(strlen(DataMatchString)>0)
+			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
+		endif
+	endif
+
+	
+
+	Wave/T ListOfAvailableData=$(CntrlLocation+":ListOfAvailableData")
+	Wave SelectionOfAvailableData=$(CntrlLocation+":SelectionOfAvailableData")
+	variable i, j, match
+	string TempStr, FolderCont
+
+		
+	Redimension/N=(ItemsInList(CurrentFolders , ";")) ListOfAvailableData, SelectionOfAvailableData
+	j=0
+	For(i=0;i<ItemsInList(CurrentFolders , ";");i+=1)
+		TempStr = ReplaceString(LStartFolder, StringFromList(i, CurrentFolders , ";"),"")
+		if(strlen(TempStr)>0)
+			ListOfAvailableData[j] = tempStr
+			j+=1
+		endif
+	endfor
+	if(j<ItemsInList(CurrentFolders , ";"))
+		DeletePoints j, numpnts(ListOfAvailableData)-j, ListOfAvailableData, SelectionOfAvailableData
+	endif
+	SelectionOfAvailableData = 0
+	IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
+	setDataFolder OldDF
+end
+
+
+//**************************************************************************************
+//**************************************************************************************
+Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
+	string CntrlLocation
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	SVAR FolderSortString=$(CntrlLocation+":FolderSortString")
+	Wave/T ListOfAvailableData=$(CntrlLocation+":ListOfAvailableData")
+	Wave SelectionOfAvailableData=$(CntrlLocation+":SelectionOfAvailableData")
+	if(numpnts(ListOfAvailableData)<2)
+		return 0
+	endif
+	Duplicate/Free SelectionOfAvailableData, TempWv
+	variable i, InfoLoc, j=0
+	variable DIDNotFindInfo
+	DIDNotFindInfo =0
+	string tempstr 
+	SelectionOfAvailableData=0
+	if(stringMatch(FolderSortString,"---"))
+		//nothing to do
+	elseif(stringMatch(FolderSortString,"Alphabetical"))
+		Sort /A ListOfAvailableData, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
+		Sort /A /R ListOfAvailableData, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyz"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Sxyz_"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse Sxyz_"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
+		endfor
+		Sort/R TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyzmin"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoALert /T="Information not found" 0, "Cannot find location of _xyzmin information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*min*" ))
+					TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
+	elseif(stringMatch(FolderSortString,"_xyzpct"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoAlert/T="Information not found" 0, "Cannot find location of _xyzpct information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*pct*" ))
+					TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
+	elseif(stringMatch(FolderSortString,"_xyzC"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoAlert /T="Information not found" 0, "Cannot find location of _xyzC information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*C*" ))
+					TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
+	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort /R  TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyz.ext"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
+			TempWv[i] = str2num(StringFromList(ItemsInList(tempstr , "_")-1, tempstr , "_"))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse _xyz.ext"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
+			TempWv[i] = str2num(StringFromList(ItemsInList(tempstr , "_")-1, tempstr , "_"))
+		endfor
+		Sort /R  TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_xyz_000"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse _xyz_000"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort /R  TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"_XYZ_xyz"))
+		For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))*1e6+str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+		endfor
+		Sort  TempWv, ListOfAvailableData
+	endif
+
+end
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+Function/T IR3C_MultiGenStringOfFolders(CntrlLocation, StartFolder,UseIndra2Structure, UseQRSStructure, UseResults, SlitSmearedData, AllowQRDataOnly)
+	string StartFolder, CntrlLocation
+	variable UseIndra2Structure, UseQRSStructure, UseResults, SlitSmearedData, AllowQRDataOnly
+		//SlitSmearedData =0 for DSM data, 
+		//                          =1 for SMR data 
+		//                    and =2 for both
+		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string ListOfQFolders
+	string TempStr, tempStr2
+	variable i
+	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
+	string result
+	if (UseIndra2Structure)
+		if(SlitSmearedData==1)
+			result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*SMR*", 1)
+		elseif(SlitSmearedData==2)
+			tempStr=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*SMR*", 1)
+			result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*DSM*", 1)+";"
+			for(i=0;i<ItemsInList(tempStr);i+=1)
+			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
+				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
+					result+=StringFromList(i, tempStr,";")+";"
+				endif
+			endfor
+		else
+			result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*DSM*", 1)
+		endif
+	elseif (UseQRSStructure)
+			make/N=0/FREE/T ResultingWave
+			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, "(?i)^r|i$", 1, ResultingWave)
+			result=IR3C_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
+	elseif (UseResults)
+		SVAR SelectedResultsTool=$(CntrlLocation+":SelectedResultsTool")
+		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
+		SVAR ResultsGenerationToUse=$(CntrlLocation+":ResultsGenerationToUse")
+		if(stringmatch(ResultsGenerationToUse,"Latest"))
+			result=IN2G_FindFolderWithWvTpsList(StartFolder, 10,SelectedResultsType+"*", 1) 
+		else
+			result=IN2G_FindFolderWithWvTpsList(StartFolder, 10,SelectedResultsType+ResultsGenerationToUse, 1) 
+		endif
+	else
+		result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*", 1)
+	endif
+	if(stringmatch(";",result[0]))
+		result = result [1, inf]
+	endif
+	return result
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function/T IR3C_CheckForRightQRSTripletWvs(ResultingWave, AllowQROnly)
+	wave/T ResultingWave
+	variable AllowQROnly	
+
+	string oldDf=GetDataFolder(1)
+	string result=""
+	string tempResult="" , FullFldrName
+ 	variable i,j, matchX=0,matchE=0
+	string AllWaves
+	string allRwaves
+	string ts, tx, ty
+
+	for(i=0;i<numpnts(ResultingWave);i+=1)			//this looks for qrs tripplets
+		FullFldrName = ResultingWave[i]
+		AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
+		allRwaves=GrepList(AllWaves,"(?i)^r")
+		tempresult=""
+			for(j=0;j<ItemsInList(allRwaves);j+=1)
+				matchX=0
+				matchE=0
+				ty=stringFromList(j,allRwaves)[1,inf]
+				if((stringmatch(";"+AllWaves, ";*q"+ty+";*" )||stringmatch(";"+AllWaves, ";*m"+ty+";*" )||stringmatch(";"+AllWaves, ";*t"+ty+";*" )||stringmatch(";"+AllWaves, ";*d"+ty+";*" )||stringmatch(";"+AllWaves, ";*az"+ty+";*" )&&!stringmatch(";"+AllWaves, ";*DSM"+ty+";*" )))
+					matchX=1
+				endif
+				if(stringmatch(";"+AllWaves,";*s"+ty+";*" ))
+					matchE=1
+				endif
+				if(matchX && (matchE || AllowQROnly))
+					tempResult+= FullFldrName+";"
+					break
+				endif
+			endfor
+			result+=tempresult
+		allRwaves=GrepList(AllWaves,"(?i)i$")
+		tempresult=""
+			for(j=0;j<ItemsInList(allRwaves);j+=1)
+				matchX=0
+				matchE=0
+				if(stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"q;*" ))
+					matchX=1
+				endif
+				if(stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"s;*" ))
+					matchE=1
+				endif
+				if(matchX && matchE)
+					tempResult+= FullFldrName+";"
+					break
+				endif
+			endfor
+			result+=tempresult
+	endfor
+//	print ticks-startTime
+	if(strlen(result)>1)
+		return result
+	else
+		return "---"
+	endif
+	
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//**********************************************************************************************************
+
+
+Function/T IR3C_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly)
+	variable UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly
+		//SlitSmearedData =0 for DSM data, 
+		//                          =1 for SMR data 
+		//                    and =2 for both
+		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
+	
+	string ListOfQFolders
+	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
+	string result
+	variable i
+	if (UseIndra2Structure)
+		if(SlitSmearedData==1)
+			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
+		elseif(SlitSmearedData==2)
+			string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
+			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
+			for(i=0;i<ItemsInList(tempStr);i+=1)
+			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
+				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
+					result+=StringFromList(i, tempStr,";")+";"
+				endif
+			endfor
+		else
+			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
+		endif
+	elseif (UseQRSStructure)
+		make/N=0/FREE/T ResultingWave
+		IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, ResultingWave)
+		//IR2S_SortWaveOfFolders(ResultingWave)
+		result=IR3C_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
+	else
+		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
+	endif
+	
+	//now the result contains folder, we want list of parents and grandparents here. create new list...
+	string newresult=""
+	string tempstr2, tempstr3
+	for(i=0;i<ItemsInList(result , ";");i+=1)
+		tempstr2=stringFromList(i,result,";")
+		tempstr2=RemoveListItem(ItemsInList(tempstr2,":")-1, tempstr2  , ":")
+		if(ItemsInList(tempstr2,":")>1)
+			tempstr3=RemoveListItem(ItemsInList(tempstr2,":")-1, tempstr2  , ":")
+			if(!stringmatch(newresult, "*"+tempstr3+";*" ))
+				newresult+=tempstr3+";"
+			endif
+		endif
+		if(!stringmatch(newresult, "*"+tempstr2+";*" ))
+			newresult+=tempstr2+";"
+		endif
+	endfor
+	
+	newresult=GrepList(newresult, "^((?!Packages).)*$" )
+	return newresult
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//**********************************************************************************************************

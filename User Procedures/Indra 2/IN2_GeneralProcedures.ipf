@@ -3344,10 +3344,16 @@ end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 
-Function IN2G_ColorTopGrphRainbow()
+Function IN2G_ColorTopGrphRainbow([topGraphStr])
+	string topGraphStr
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String topGraph=WinName(0,1)
+	String topGraph
+	if(ParamIsDefault(topGraphStr))
+		topGraph=WinName(0,1)
+	else
+		topGraph=topGraphStr	
+	endif
 	Variable traceIndex, numTraces
 	Variable i, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
 	if( strlen(topGraph) )
@@ -3454,50 +3460,86 @@ Function IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
 end
 ///******************************************************************************************
 ///******************************************************************************************
-Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
+Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, [topGraphStr])
 	variable FontSize, MaxItems, UseFolderName, UseWavename
+	string topGraphStr
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String topGraph=WinName(0,1)
-	string Traces=TraceNameList(topGraph, ";", 1 )
-	string legendStr="", tmpStr
-	if(Fontsize<10)
-		legendStr="\Z0"+num2str(floor(FontSize))	
+	String topGraph
+	if(ParamIsDefault(topGraphStr))
+		topGraph=WinName(0,1)
 	else
-		legendStr="\Z"+num2str(floor(FontSize))	
+		topGraph=topGraphStr	
 	endif
-	variable i, imax, test2
-	imax=ItemsInList(Traces , ";")
-	variable stepI=1
-	if(imax>MaxItems)
-			stepI = ceil(imax/MaxItems)
-	endif
-	For(i=0;i<imax;i+=stepI)
-		tmpStr = StringFromList(i,traces)
-		if(UseFolderName && UseWavename)
-			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)+":"+tmpStr
-		elseif(UseFolderName && !UseWavename)
-			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
-		elseif(!UseFolderName && UseWavename)
-			legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+	if(strlen(topGraph)>0)
+		string Traces=TraceNameList(topGraph, ";", 1 )
+		string legendStr="", tmpStr
+		if(Fontsize<10)
+			legendStr="\Z0"+num2str(floor(FontSize))	
+		else
+			legendStr="\Z"+num2str(floor(FontSize))	
 		endif
-		if (i<imax-stepI)
+		variable i, imax, test2
+		imax=ItemsInList(Traces , ";")
+		variable stepI=1
+		if(imax>MaxItems)
+				stepI = ceil(imax/MaxItems)
+		endif
+		For(i=0;i<imax;i+=stepI)
+			tmpStr = StringFromList(i,traces)
+			if(UseFolderName && UseWavename)
+				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)+":"+tmpStr
+			elseif(UseFolderName && !UseWavename)
+				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
+			elseif(!UseFolderName && UseWavename)
+				legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+			endif
+			if (i<imax-stepI)
+				legendStr+="\r"
+			endif
+		endfor
+		if(i!=(imax+stepI-1))	//append the very last one if not done yet... 
+			i=imax-1
 			legendStr+="\r"
-		endif
-	endfor
-	if(i!=(imax+stepI-1))	//append the very last one if not done yet... 
-		i=imax-1
-		legendStr+="\r"
-		tmpStr = StringFromList(i,traces)
-		if(UseFolderName && UseWavename)
-			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)+":"+tmpStr
-		elseif(UseFolderName && !UseWavename)
-			legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
-		elseif(!UseFolderName && UseWavename)
-			legendStr+="\\s("+tmpStr+") "+":"+tmpStr
-		endif
-	endif	
-	Legend/C/N=text0/A=LB legendStr
+			tmpStr = StringFromList(i,traces)
+			if(UseFolderName && UseWavename)
+				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)+":"+tmpStr
+			elseif(UseFolderName && !UseWavename)
+				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
+			elseif(!UseFolderName && UseWavename)
+				legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+			endif
+		endif	
+		Legend/C/N=text0/A=LB/W=$(topGraph) legendStr
+	endif
+end
+///******************************************************************************************
+///******************************************************************************************
+Function IN2G_ShowHideErrorBars(ShowErroBars, [topGraphStr])
+	variable ShowErroBars
+	string topGraphStr
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String topGraph, TraceNames
+	variable numTraces, i
+	variable LT, TT
+	if(ParamIsDefault(topGraphStr))
+		topGraph=WinName(0,1)
+	else
+		topGraph=topGraphStr	
+	endif
+
+	if(strlen(topGraph)>0)
+		TraceNames=TraceNameList(topGraph,";",3)
+		numTraces =  ItemsInList(TraceNames)
+			For(i=0;i<numTraces;i+=1)
+				if(ShowErroBars)
+			   	   ErrorBars/W=$(topGraph)/L=1/T=1  $(StringFromList(i,TraceNames)),Y, nochange, nochange
+				else
+			   	   ErrorBars/W=$(topGraph)/L=0/T=0  $(StringFromList(i,TraceNames)),Y, nochange, nochange
+				endif
+			endfor	
+	endif
 end
 
 //*****************************************************************************************************************

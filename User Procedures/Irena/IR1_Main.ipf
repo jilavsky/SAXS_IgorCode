@@ -159,7 +159,7 @@ Menu "SAS"
 	help = {"Plotting tool with wide functionality, hopefully"}
 	"Plotting II", IR2D_DWSPlotToolMain()
 	help = {"Plotting tool which controls any top graph"}
-	"Multi-Plotting tool - beta 1", IR3L_MultiSaPlotFit()
+	"Multi-Plotting tool (beta)", IR3L_MultiSaPlotFit()
 	help={"Plotting of multiple SAS data. Developement for now. Do not use. "}
 		SubMenu "Support Tools for plots and tables"
 		"Draw Line Of Any Slope", IR2P_DrawLineOfAnySlope()
@@ -174,16 +174,16 @@ Menu "SAS"
 	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
-	"Multi Sample Fit - alfa", IR3J_SimpleFits()
-	help={"Plotting and fitting of multiple SAS data. Developement for now. Do not use. "}
+	"Simple Fits (beta)", IR3J_SimpleFits()
+	help={"Quick and simple fitting of multiple SAS data. Guinier, Porod, Sphere and Spheroid. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
 	"Size Distribution", IR1R_Sizes()
 	help = {"SAS evaluation by regularization and maximum entropy fitting using spheroids"}
 	"Modeling",IR2L_Main()
 	help = {"Complicated modeling of SAS with Least square fitting or genetic optimization, allows multiple data input and is much more flexible than LSqF. Much more complicated also!)"}
-	"Gunier Porod Fit", IR3GP_Main()
-	help = {"Modeling of SAS as Guinier and Power law dependecies, based on Gunier-Porod model by Bualem Hammouda"}
+	"Guinier Porod Fit", IR3GP_Main()
+	help = {"Modeling of SAS as Guinier and Power law dependecies, based on Guinier-Porod model by Bualem Hammouda"}
 	"Fractals model", IR1V_FractalsModel()
 	help = {"Modeling of SAS by combining mass and surface fractal dependecies, based on model by Andrew Allen"}
 	"Analytical models", IR2H_GelsMainFnct()
@@ -259,6 +259,18 @@ Menu "SAS"
 			help={"Removes Irena macros from current Igor experiment"}
 		end
 end
+
+Menu "BioSAXS"
+	help={"Tools specifically for bioSAXS work flow"}
+	"ASCII data import", IRB1_ImportASCII()
+	help={"Tool to import 1D bioSAXS data"}
+	"Average and Subtract Data", IRB1_DataManipulation()
+	help={"Tools to average many data sets and subtract buffer"}
+	
+end
+
+
+
 Menu "Macros", dynamic
 	IR2_MacrosMenuItem()
 end

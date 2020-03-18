@@ -293,7 +293,7 @@ Window IR2D_ControlPanel()
 //	/ListOfVariables+="PwrLawPref;FitPwrLawPref;PwrLawPrefLowLimit;PwrLawPrefHighLimit;"
 //	ListOfVariables+="PwrLawSlope;FitPwrLawSlope;PwrLawSlopeLowLimit;PwrLawSlopeHighLimit;"
 	SetVariable RgPrefactor,pos={14,280},size={180,16},proc=IR2D_PanelSetVarProc,title="G   ", format="%.4g"
-	SetVariable RgPrefactor,limits={0,inf,0.03*root:Packages:Irena_SAD:RgPrefactor},value= root:Packages:Irena_SAD:RgPrefactor, help={"Gunier prefactor"}
+	SetVariable RgPrefactor,limits={0,inf,0.03*root:Packages:Irena_SAD:RgPrefactor},value= root:Packages:Irena_SAD:RgPrefactor, help={"Guinier prefactor"}
 	CheckBox FitRgPrefactor,pos={200,281},size={80,16},proc=IR2D_InputPanelCheckboxProc,title=" "
 	CheckBox FitRgPrefactor,variable= root:Packages:Irena_SAD:FitRgPrefactor, help={"Fit G?, find god starting conditions and select fitting limits..."}
 	SetVariable RgPrefactorLowLimit,pos={230,280},size={60,16}, title=" ", format="%.3g"
@@ -302,7 +302,7 @@ Window IR2D_ControlPanel()
 	SetVariable RgPrefactorHighLimit,limits={0,inf,0},value= root:Packages:Irena_SAD:RgPrefactorHighLimit, help={"High limit for G fitting"}
 
 	SetVariable Rg,pos={14,300},size={180,16},proc=IR2D_PanelSetVarProc,title="Rg  ", format="%.4g"
-	SetVariable Rg,limits={0,inf,0.03*root:Packages:Irena_SAD:Rg},value= root:Packages:Irena_SAD:Rg, help={"Gunier radius"}
+	SetVariable Rg,limits={0,inf,0.03*root:Packages:Irena_SAD:Rg},value= root:Packages:Irena_SAD:Rg, help={"Guinier radius"}
 	CheckBox FitRg,pos={200,301},size={80,16},proc=IR2D_InputPanelCheckboxProc,title=" "
 	CheckBox FitRg,variable= root:Packages:Irena_SAD:FitRg, help={"Fit Rg?, find god starting conditions and select fitting limits..."}
 	SetVariable RgLowLimit,pos={230,300},size={60,16}, title=" ", format="%.3g"

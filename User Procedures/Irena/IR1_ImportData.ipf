@@ -64,7 +64,6 @@ Constant IR1TrimNameLength = 28
 
 Function IR1I_ImportSASASCIIDataMain()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		//IR1_KillGraphsAndPanels()
 	IN2G_CheckScreenSize("height",720)
 	DoWindow IR1I_ImportOtherASCIIData
 	if(V_Flag)

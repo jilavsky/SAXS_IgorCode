@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.24 added IRB1_bioSAXS
 //2.23 February 2020 release
 //2.22 added 3DSupportFunctions, February 2019
 //2.21 Added 3DModels, December/January 2018
@@ -81,6 +82,8 @@
 #include ":IR3_MultiDataPlot", version>=1
 #include ":IR3_SimpleFits", version>=1.10
 #include ":IR3_WAXSDiffraction", version>=1.14
+
+#include ":IRB1_bioSAXS", version>=0.1
 
 //these are in different folders... 
 #include "::CanSAS:cansasXML_GUI", version>=1.04

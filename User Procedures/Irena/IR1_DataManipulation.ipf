@@ -9,6 +9,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.70 added option to porpagate errors through avergaing, needs to be added to GUI. 
 //2.69 fixed leftover RT global issues which threw errors on users due to incorrect search for high-q end of usabel data. Fixed positions on DMII after creation. 
 //2.68 handle weird case of DM I when data 1 is regular Q-I-S data set and data 2 are model data without error. Generate fake error here is the solution. 
 //2.67 add toDataManipulation II ability to rescale to Q scale for data set to produce data at same Q values
@@ -4045,9 +4046,10 @@ Function IR3M_ProcessTheDataFunction()
 	if(sum(SelFldrs)<1)
 		Abort "Nothing to do, select at least one data set to work with"
 	endif
+	variable PropagateErrors = 0
 	if(AverageWaves)
 		//call average waves routine. Let's create the routine as folder/parameters agnostic to be able to be reused... 
-		NumberOfProcessedDataSets = IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm,UseStdDev,UseSEM, UseMinMax)
+		NumberOfProcessedDataSets = IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,UseStdDev,UseSEM, UseMinMax, PropagateErrors)
 		Wave AveragedDataXwave
 		Wave AveragedDataYwave
 		Wave AveragedDataEwave
@@ -4132,7 +4134,7 @@ Function IR3M_ProcessTheDataFunction()
 	 			lastIndx+=1
 	 		while(jj<NforAveraging)
 			//call average waves routine. Let's create the routine as folder/parameters agnostic to be able to be reused... 
-			IR3M_AverageMultipleWaves(FldrNamesTWv,NSelFldrs,Xtmplt,Ytmplt,Etmplt,OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm,UseStdDev,UseSEM, UseMinMax)
+			IR3M_AverageMultipleWaves(FldrNamesTWv,NSelFldrs,Xtmplt,Ytmplt,Etmplt,UseStdDev,UseSEM, UseMinMax, PropagateErrors)
 			Wave AveragedDataXwave
 			Wave AveragedDataYwave
 			Wave AveragedDataEwave
@@ -5219,19 +5221,21 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 ///******************************************************************************************
-Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm,UseStdDev,UseSEM,UseMinMax)
+Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,UseStdDev,UseSEM,UseMinMax, PropagateErrors)
 	Wave/T FldrNamesTWv
 	Wave SelFldrs
-	String Xtmplt,Ytmplt,Etmplt,OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm
-	Variable UseStdDev,UseSEM, useMinMax
+	String Xtmplt,Ytmplt,Etmplt
+	Variable UseStdDev,UseSEM, useMinMax, PropagateErrors
 	//for other uses, here is the parameters description:
 	//FldrNamesTWv is text wave pointing to existing folders with waves to be processed. One fodler per line... It can contain more lines, since only...
 	// lines which have 1 in wave  SelFldrs (has to have same number of points as the FldrNamesTWv) will be processed. This is to enable user selectiong throught listbox.
 	// Xtmplt,Ytmplt,Etmplt - striongs with templates to match wave names. Non-fatal error will be generated if data cannot be found and printed in history area. The folder will be then skipped.
+	// 2020-03-12 the saving is not working... So output strigns below are useless... 
 	// OutFldrNm,OutXWvNm, OutYWvNm,OutEWvNm - string for output data. Folder will be created, if it does not exist. User will be warned if data should be overwritten. 
 	// note: if Etmplt is empty, no error wave is expected and no error is generated. BUT, output error wave is produced
-	// UseStdDev,UseSEM - which error is produced for each point. Either standard deviation of Std of mean (std Dev /sqrt(numpnts)). NOTE: At this time there is no use for measurement errors.
+	// UseStdDev,UseSEM - which error is produced for each point. Either standard deviation of Std of mean (std Dev /sqrt(numpnts)). 
 	// UseMinMax -  generate also values for Min and Max for each point, separate waves
+	// PropagateErrors  - propoagates error through, error = sqrt(sum(Error_i^2))/NumDataSets
 	// Processing:
 	//The tool will interpolate (linearly for now) for Qs from first data set selected (can be changed in the future) Y values and then in each point will calculate mean and either stdDev or SEM. 
 	// to address in the future: How to propagate uncertainities (Ewaves) through in meaningful way
@@ -5265,7 +5269,7 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Ou
 	Duplicate/O tmpWv, AveragedDataXwave
 	Wave AveragedDataXwave
 	//create matric where we will put all the data (interpolated)
-	Make/O/N=(NumOfXsToProcess,NumOfFoldersToTest) AverageWvsTempMatrix
+	Make/Free/N=(NumOfXsToProcess,NumOfFoldersToTest) AverageWvsTempMatrix, AverageErsTempMatrix
 	String NewWaveNote="Data averaged from following data sets="
 	//Now fill the Matrix with the right values...
 	j=0
@@ -5273,6 +5277,7 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Ou
 		if(SelFldrs[i]>0)		//set to 1, selected
 			wave/Z tmpWvX=$(FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Xtmplt)))
 			wave/Z tmpWvY=$(FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)))
+			wave/Z tmpWvE=$(FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Etmplt)))
 			if(WaveExists(tmpWvX) && WaveExists(tmpWvY))
 				AverageWvsTempMatrix[][j]=interp(AveragedDataXwave[p], tmpWvX, tmpWvY )
 				NewWaveNote+=FldrNamesTWv[i]+possiblyquotename(IN2G_ReturnExistingWaveNameGrep(FldrNamesTWv[i],Ytmplt)) +","
@@ -5280,31 +5285,40 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Ou
 				AverageWvsTempMatrix[p][j]=Nan
 				Print "Error found... " + FldrNamesTWv[i] + " selected data were not found. Please, check data selection and if persistent, report this as error."
 			endif
+			if(PropagateErrors&& WaveExists(tmpWvE))
+				AverageErsTempMatrix[][j]=interp(AveragedDataXwave[p], tmpWvX, tmpWvE )
+			endif
 			j+=1
 			NumOfFolderstoProcess+=1
 		endif
 	endfor
 	NewWaveNote+=";"
 	//And now we should be simply able to do row-by=row analysis and stuff it into resulting wave.
-	Redimension/N=(NumOfXsToProcess,NumOfFolderstoProcess) AverageWvsTempMatrix
+	Redimension/N=(NumOfXsToProcess,NumOfFolderstoProcess) AverageWvsTempMatrix,AverageErsTempMatrix
 	Duplicate/O AveragedDataXwave, AveragedDataYwave, AveragedDataEwave, AveragedDataYwaveMin, AveragedDataYwaveMax 
 	variable tmpError
-	Make/O/N=(NumOfFolderstoProcess) tempWvForStatistics
+	Make/Free/N=(NumOfFolderstoProcess) tempWvForStatistics
 	For(i=0;i<NumOfXsToProcess;i+=1)
 		tempWvForStatistics[] = AverageWvsTempMatrix[i][p]
 		wavestats/Q tempWvForStatistics
 		AveragedDataYwave[i]=V_avg
 		AveragedDataYwaveMin[i]=V_min
 		AveragedDataYwaveMax[i]=V_max
-		tmpError = V_sdev
-		if(UseSEM)
-			tmpError/=sqrt(V_npnts)
+		if(PropagateErrors)
+			tempWvForStatistics[] = (AverageErsTempMatrix[i][p])^2
+			AveragedDataEwave[i]=sqrt(sum(tempWvForStatistics))/V_npnts
 		else
+			tmpError = V_sdev
+			if(UseSEM)
+				tmpError/=sqrt(V_npnts)
+			endif
+			AveragedDataEwave[i]=tmpError
 		endif
-		AveragedDataEwave[i]=tmpError
 	endfor
 		if(UseSEM)
 			NewWaveNote+="Statistical error=Standard error of mean;"
+		elseif(PropagateErrors)
+			NewWaveNote+="Statistical error=Propagate uncertainties;;"
 		else
 			NewWaveNote+="Statistical error=Standard deviation;"
 		endif

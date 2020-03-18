@@ -18,7 +18,7 @@ Constant IR2SversionNumber=1.30
 //1.23 Modeling II - fixed the preservation of user choices on error settings and Intensity scaling. 
 //1.22 added AfterDataLoaded_Hook() to Modeling II call function to enable user modify something after the data set is loaded. 
 //1.21 added for QRS data wave name match string. 
-//1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Gunier-Porod and Size Dist with uncertainities appering in wrong time. 
+//1.20 Plotting tool now - if not opened will open now, not abort. Fixed Buttons for Guinier-Porod and Size Dist with uncertainities appering in wrong time. 
 //1.19 fix for Diameters/Radii option in Modeling II - it was failing to add such data in Plotting tool. 
 //1.18 will set cursors for first and last point of data, if not set by user ahead of fitting. Sync FolderNameStr and set WavenameStr=""
 //1.17 minor fix when list fo folders contained ;; somehow and we got stale content in the listbox. 
@@ -368,7 +368,7 @@ Window IR2S_ScriptingToolPnl()
 //	Button GetHelp,pos={280,105},size={80,15},fColor=(65535,32768,32768), proc=IR2S_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 	PopupMenu StartFolderSelection,pos={10,40},size={130,15},proc=IR2S_PopMenuProc,title="Select start folder"
-	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:ScriptingTool:StartFolderName,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:ScriptingTool:UseIndra2Data, root:Packages:Irena:ScriptingTool:UseQRSdata,2,1)"
+	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:ScriptingTool:StartFolderName,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:ScriptingTool:UseIndra2Data, root:Packages:Irena:ScriptingTool:UseQRSdata,2,1)"
 
 	CheckBox UseIndra2data,pos={302,45},size={76,14},proc=IR2S_CheckProc,title="USAXS?"
 	CheckBox UseIndra2data,variable= root:Packages:Irena:ScriptingTool:UseIndra2Data
@@ -466,64 +466,15 @@ end
 //**************************************************************************************
 //**************************************************************************************
 
-
-Function/T IR2S_GenStringOfFolders2(UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly)
-	variable UseIndra2Structure, UseQRSStructure, SlitSmearedData, AllowQRDataOnly
-		//SlitSmearedData =0 for DSM data, 
-		//                          =1 for SMR data 
-		//                    and =2 for both
-		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
-	
-	string ListOfQFolders
-	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
-	string result
-	variable i
-	if (UseIndra2Structure)
-		if(SlitSmearedData==1)
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-		elseif(SlitSmearedData==2)
-			string tempStr=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*SMR*", 1)
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)+";"
-			for(i=0;i<ItemsInList(tempStr);i+=1)
-			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
-				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
-					result+=StringFromList(i, tempStr,";")+";"
-				endif
-			endfor
-		else
-			result=IN2G_FindFolderWithWaveTypes("root:USAXS:", 10, "*DSM*", 1)
-		endif
-	elseif (UseQRSStructure)
-		make/N=0/FREE/T ResultingWave
-		IR2P_FindFolderWithWaveTypesWV("root:", 10, "(?i)^r|i$", 1, ResultingWave)
-		result=IR2S_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
-	else
-		result=IN2G_FindFolderWithWaveTypes("root:", 10, "*", 1)
-	endif
-	
-	//now the result contains folder, we want list of parents and grandparents here. create new list...
-	string newresult=""
-	string tempstr2
-	for(i=0;i<ItemsInList(result , ";");i+=1)
-		tempstr2=stringFromList(i,result,";")
-		tempstr2=RemoveListItem(ItemsInList(tempstr2,":")-1, tempstr2  , ":")
-		if(!stringmatch(newresult, "*"+tempstr2+";*" ))
-			newresult+=tempstr2+";"
-		endif
-		if(ItemsInList(tempstr2,":")>1)
-			tempstr2=RemoveListItem(ItemsInList(tempstr2,":")-1, tempstr2  , ":")
-			if(!stringmatch(newresult, "*"+tempstr2+";*" ))
-				newresult+=tempstr2+";"
-			endif
-		endif
-	endfor
-	
-	newresult=GrepList(newresult, "^((?!Packages).)*$" )
-	return newresult
-end
-
 //**************************************************************************************
 //**************************************************************************************
+//static Function IR2S_SortWaveOfFolders(WaveToSort)
+//	wave/T WaveToSort
+//	
+//	make/N=(numpnts(WaveToSort))/Free IndexWv
+//	IndexWv = ItemsInList(WaveToSort[p],":")
+//	Sort IndexWv, WaveToSort
+//end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
@@ -566,7 +517,7 @@ Function/T IR2S_GenStringOfFolders(StartFolder,UseIndra2Structure, UseQRSStructu
 			make/N=0/FREE/T ResultingWave
 			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, "(?i)^r|i$", 1, ResultingWave)
 			//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
-			result=IR2S_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
+			result=IR3C_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
 	elseif (UseResults)
 		SVAR SelectedResultsTool=root:Packages:Irena:ScriptingTool:SelectedResultsTool
 		SVAR SelectedResultsType=root:Packages:Irena:ScriptingTool:SelectedResultsType
@@ -589,69 +540,6 @@ Function/T IR2S_GenStringOfFolders(StartFolder,UseIndra2Structure, UseQRSStructu
 	return result
 end
 
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//*****************************************************************************************************************
-//**********************************************************************************************************
-Function/T IR2S_CheckForRightQRSTripletWvs(ResultingWave, AllowQROnly)
-	wave/T ResultingWave
-	variable AllowQROnly	
-
-	string oldDf=GetDataFolder(1)
-	string result=""
-	string tempResult="" , FullFldrName
- 	variable i,j, matchX=0,matchE=0
-	string AllWaves
-	string allRwaves
-	string ts, tx, ty
-
-	for(i=0;i<numpnts(ResultingWave);i+=1)			//this looks for qrs tripplets
-		FullFldrName = ResultingWave[i]
-		AllWaves = IN2G_CreateListOfItemsInFolder(FullFldrName,2)
-		allRwaves=GrepList(AllWaves,"(?i)^r")
-		tempresult=""
-			for(j=0;j<ItemsInList(allRwaves);j+=1)
-				matchX=0
-				matchE=0
-				ty=stringFromList(j,allRwaves)[1,inf]
-				if((stringmatch(";"+AllWaves, ";*q"+ty+";*" )||stringmatch(";"+AllWaves, ";*m"+ty+";*" )||stringmatch(";"+AllWaves, ";*t"+ty+";*" )||stringmatch(";"+AllWaves, ";*d"+ty+";*" )||stringmatch(";"+AllWaves, ";*az"+ty+";*" )&&!stringmatch(";"+AllWaves, ";*DSM"+ty+";*" )))
-					matchX=1
-				endif
-				if(stringmatch(";"+AllWaves,";*s"+ty+";*" ))
-					matchE=1
-				endif
-				if(matchX && (matchE || AllowQROnly))
-					tempResult+= FullFldrName+";"
-					break
-				endif
-			endfor
-			result+=tempresult
-		allRwaves=GrepList(AllWaves,"(?i)i$")
-		tempresult=""
-			for(j=0;j<ItemsInList(allRwaves);j+=1)
-				matchX=0
-				matchE=0
-				if(stringmatch(";"+AllWaves, ";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"q;*" ))
-					matchX=1
-				endif
-				if(stringmatch(";"+AllWaves,";*"+stringFromList(j,allRwaves)[0,strlen(stringFromList(j,allRwaves))-2]+"s;*" ))
-					matchE=1
-				endif
-				if(matchX && matchE)
-					tempResult+= FullFldrName+";"
-					break
-				endif
-			endfor
-			result+=tempresult
-	endfor
-//	print ticks-startTime
-	if(strlen(result)>1)
-		return result
-	else
-		return "---"
-	endif
-	
-end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
@@ -858,16 +746,7 @@ Function IR2S_UpdateListOfAvailFiles()
 			if(strlen(GrepList(FolderCont,"(?i)^r.*"+WaveNameMatchString+"|"+WaveNameMatchString+".*(?i)i$"))<1)
 				DeletePoints i, 1, ListOfAvailableData, SelectionOfAvailableData
 			endif
-//			For(j=0;j<CountObjects(TempStr, 1);j+=1)
-//				if(GrepString(GetIndexedObjName(TempStr, 1, j),"(?i)^r.*"+WaveNameMatchString+"|"+WaveNameMatchString+".*(?i)i$"))
-//					match = 1
-//				endif
-//			endfor
-//			if(!match)
-//				DeletePoints i, 1, ListOfAvailableData, SelectionOfAvailableData	
-//			endif
-		endfor
-		
+		endfor		
 	endif
 	SelectionOfAvailableData = 0
 	setDataFolder OldDF
@@ -1496,11 +1375,11 @@ Function IR2S_FitWithGuinierPorod()
 		DoWIndow/F IR3DP_MainPanel 
 	endif
 	
-	DoWindow GunierPorod_LogLogPlot
+	DoWindow GuinierPorod_LogLogPlot
 	if(!V_Flag)
 		Abort  "The Guinier Porod tool panel and graph must be opened"
 	else
-		DoWIndow/F GunierPorod_LogLogPlot 
+		DoWIndow/F GuinierPorod_LogLogPlot 
 	endif
 
 
@@ -1543,23 +1422,23 @@ Function IR2S_FitWithGuinierPorod()
 	variable i
 	string CurrentFolderName
 	variable StartQ, EndQ		//need to store these from cursor positions (if set)
-	DoWIndow GunierPorod_LogLogPlot
+	DoWIndow GuinierPorod_LogLogPlot
 //	if(V_Flag)
-//		Wave Ywv = csrXWaveRef(A  , "GunierPorod_LogLogPlot" )
-//		StartQ = Ywv[pcsr(A  , "GunierPorod_LogLogPlot" )]
-//		EndQ = Ywv[pcsr(B  , "GunierPorod_LogLogPlot" )]
+//		Wave Ywv = csrXWaveRef(A  , "GuinierPorod_LogLogPlot" )
+//		StartQ = Ywv[pcsr(A  , "GuinierPorod_LogLogPlot" )]
+//		EndQ = Ywv[pcsr(B  , "GuinierPorod_LogLogPlot" )]
 //	endif
 	if(V_Flag)
-		if(strlen(CsrInfo(A , "GunierPorod_LogLogPlot"))>0)
-			Wave Ywv = csrXWaveRef(A  , "GunierPorod_LogLogPlot" )
-			StartQ = Ywv[pcsr(A  , "GunierPorod_LogLogPlot" )]
+		if(strlen(CsrInfo(A , "GuinierPorod_LogLogPlot"))>0)
+			Wave Ywv = csrXWaveRef(A  , "GuinierPorod_LogLogPlot" )
+			StartQ = Ywv[pcsr(A  , "GuinierPorod_LogLogPlot" )]
 		else
 			Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
 			StartQ=Qwave[0]
 		endif
-		if(strlen(CsrInfo(B , "GunierPorod_LogLogPlot"))>0)
-			Wave Ywv = csrXWaveRef(B  , "GunierPorod_LogLogPlot" )
-			EndQ = Ywv[pcsr(B  , "GunierPorod_LogLogPlot" )]
+		if(strlen(CsrInfo(B , "GuinierPorod_LogLogPlot"))>0)
+			Wave Ywv = csrXWaveRef(B  , "GuinierPorod_LogLogPlot" )
+			EndQ = Ywv[pcsr(B  , "GuinierPorod_LogLogPlot" )]
 		else
 			Wave Qwave = root:Packages:Irena:GuinierPorod:OriginalQvector
 			EndQ=Qwave[numpnts(Qwave)-1]
@@ -1825,12 +1704,12 @@ Function IR2S_SaveResInNbkGunPor(FitFailed)
 		Notebook ScriptingToolNbk text="***********************************************\r"
 		Notebook ScriptingToolNbk text="***********************************************\r"
 		Notebook ScriptingToolNbk text=date()+"   "+time()+"\r"
-		Notebook ScriptingToolNbk text="Gunier-Porod results from folder :   "+ DataFolderName+"\r"
+		Notebook ScriptingToolNbk text="Guinier-Porod results from folder :   "+ DataFolderName+"\r"
 		Notebook ScriptingToolNbk text="\r"
 		if(FitFailed)
 			Notebook ScriptingToolNbk text="Fit failed\r"
 		else
-			Notebook ScriptingToolNbk  scaling={50,50}, frame=1, picture={GunierPorod_LogLogPlot,2,1}	
+			Notebook ScriptingToolNbk  scaling={50,50}, frame=1, picture={GuinierPorod_LogLogPlot,2,1}	
 			Notebook ScriptingToolNbk text="\r"
 			IR2S_RecordResultsToNbkGP()
 		endif
@@ -1862,7 +1741,7 @@ Function IR2S_RecordResultsToNbkGP()
 
 	Notebook ScriptingToolNbk   selection={endOfFile, endOfFile}
 	Notebook ScriptingToolNbk text="\r"
-	Notebook ScriptingToolNbk text="Summary of Gunier Porod fit results :"+"\r"
+	Notebook ScriptingToolNbk text="Summary of Guinier Porod fit results :"+"\r"
 	if(UseSMRData)
 		Notebook ScriptingToolNbk text="Slit smeared data were. Slit length [A^-1] = "+num2str(SlitLengthUnif)+"\r"
 	endif
@@ -1871,7 +1750,7 @@ Function IR2S_RecordResultsToNbkGP()
 	Notebook ScriptingToolNbk text="SAS background = "+num2str(SASBackground)+", was fitted? = "+num2str(FitSASBackground)+"       (yes=1/no=0)"+"\r"
 	Notebook ScriptingToolNbk text="\r"
 	variable i
-	STRUCT GunierPorodLevel Par
+	STRUCT GuinierPorodLevel Par
 	For (i=1;i<=NumberOfLevels;i+=1)
 		IR3GP_LoadStructureFromWave(Par, i)
 		Notebook ScriptingToolNbk text="***********  Level  "+num2str(i)+"\r"
@@ -1906,7 +1785,7 @@ Function IR2S_RecordResultsToNbkGP()
 		NVAR AchievedChisq=root:Packages:Irena:GuinierPorod:AchievedChisq
 		Notebook ScriptingToolNbk text="Chi-Squared \t"+ num2str(AchievedChisq)+"\r"
 
-		DoWindow /F GunierPorod_LogLogPlot
+		DoWindow /F GuinierPorod_LogLogPlot
 		if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
 			Notebook ScriptingToolNbk text="Points selected for fitting \t"+ num2str(pcsr(A)) + "   to \t"+num2str(pcsr(B))+"\r"
 		else

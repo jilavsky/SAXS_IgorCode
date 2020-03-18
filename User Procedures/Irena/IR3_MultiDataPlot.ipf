@@ -31,7 +31,8 @@ Function IR3L_MultiSaPlotFit()
 		//link it to top graph, if exists
 		IR3L_SetStartConditions()
 	endif
-	IR3L_UpdateListOfAvailFiles()
+	//IR3L_UpdateListOfAvailFiles()
+	IR3C_MultiUpdateListOfAvailFiles("root:Packages:Irena:MultiSaPlotFit")
 //	IR3D_RebuildListboxTables()
 end
 //*****************************************************************************************************************
@@ -92,40 +93,60 @@ Function IR3L_MultiSaPlotFitPanelFnct()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
 	DoWIndow/C IR3L_MultiSaPlotFitPanel
-	TitleBox MainTitle title="\Zr220Multi Data plots",pos={190,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
-//	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
+	TitleBox MainTitle title="\Zr220Multi Data ploting tool",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
+								//	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-
-	TitleBox Dataselection title="\Zr130Data selection",size={100,15},pos={10,10},frame=0,fColor=(0,0,65535),labelBack=0
-	Checkbox UseIndra2Data, pos={10,30},size={76,14},title="USAXS", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	checkbox UseQRSData, pos={120,30}, title="QRS(QIS)", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
-	PopupMenu StartFolderSelection,pos={10,50},size={180,15},proc=IR3L_PopMenuProc,title="Start fldr"
-	SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
-	PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:MultiSaPlotFit:UseIndra2Data, root:Packages:Irena:MultiSaPlotFit:UseQRSdata,2,1)"
-	SetVariable FolderNameMatchString,pos={10,75},size={210,15}, proc=IR3L_SetVarProc,title="Folder Match (RegEx)"
-	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:DataMatchString
-	checkbox InvertGrepSearch, pos={222,75}, title="Invert?", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:InvertGrepSearch
-
-	PopupMenu SortFolders,pos={10,100},size={180,20},fStyle=2,proc=IR3L_PopMenuProc,title="Sort Folders"
-	SVAR FolderSortString = root:Packages:Irena:MultiSaPlotFit:FolderSortString
-	PopupMenu SortFolders,mode=1,popvalue=FolderSortString,value= #"root:Packages:Irena:MultiSaPlotFit:FolderSortStringAll"
-
-	PopupMenu SubTypeData,pos={10,120},size={180,20},fStyle=2,proc=IR3L_PopMenuProc,title="Sub-type Data"
-	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-	PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value= ""
-
-
-	ListBox DataFolderSelection,pos={4,165},size={250,495}, mode=10
-	ListBox DataFolderSelection,listWave=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
-	ListBox DataFolderSelection,selWave=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
-	ListBox DataFolderSelection,proc=IR3L_MultDataPlotsListBoxProc
-
-	
+	IR3C_MultiAppendControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel", "IR3L_DoubleClickAction",0,1)
+														//	NVAR UseIndra2Data = root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
+														//	NVAR UseQRSdata = root:Packages:Irena:MultiSaPlotFit:UseQRSdata
+														//	NVAR UseResults = root:Packages:Irena:MultiSaPlotFit:UseResults
+														//	if(UseResults+UseQRSdata+UseIndra2Data!=1)
+														//		UseIndra2Data = 0
+														//		UseQRSdata = 1
+														//		UseResults = 0
+														//	endif
+														//	TitleBox Dataselection title="\Zr130Data selection",size={100,15},pos={10,10},frame=0,fColor=(0,0,65535),labelBack=0
+														//	Checkbox UseIndra2Data, pos={10,30},size={76,14},title="USAXS", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
+														//	checkbox UseQRSData, pos={100,30}, title="QRS(QIS)", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
+														//	checkbox UseResults, pos={190,30}, title="Irena results", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:UseResults
+														//	PopupMenu StartFolderSelection,pos={10,50},size={180,15},proc=IR3L_PopMenuProc,title="Start fldr"
+														//	SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
+														//	PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:MultiSaPlotFit:UseIndra2Data, root:Packages:Irena:MultiSaPlotFit:UseQRSdata,2,1)"
+														//	SetVariable FolderNameMatchString,pos={10,75},size={210,15}, proc=IR3L_SetVarProc,title="Folder Match (RegEx)"
+														//	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSaPlotFit:DataMatchString
+														//	checkbox InvertGrepSearch, pos={222,75}, title="Invert?", size={76,14},proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSaPlotFit:InvertGrepSearch
+														//
+														//	PopupMenu SortFolders,pos={10,100},size={180,20},fStyle=2,proc=IR3L_PopMenuProc,title="Sort Folders"
+														//	SVAR FolderSortString = root:Packages:Irena:MultiSaPlotFit:FolderSortString
+														//	PopupMenu SortFolders,mode=1,popvalue=FolderSortString,value= #"root:Packages:Irena:MultiSaPlotFit:FolderSortStringAll"
+														//	
+														//	//Indra data types:
+														//	PopupMenu SubTypeData,pos={10,120},size={180,20},fStyle=2,proc=IR3L_PopMenuProc,title="Sub-type Data"
+														//	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
+														//	PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value= ""
+														//	//results data types
+														//	SVAR SelectedResultsTool = root:Packages:Irena:MultiSaPlotFit:SelectedResultsTool
+														//	SVAR SelectedResultsType = root:Packages:Irena:MultiSaPlotFit:SelectedResultsType
+														//	SVAR ResultsGenerationToUse = root:Packages:Irena:MultiSaPlotFit:ResultsGenerationToUse
+														//	PopupMenu ToolResultsSelector,pos={10,120},size={230,15},fStyle=2,proc=IR3L_PopMenuProc,title="Which tool results?    "
+														//	PopupMenu ToolResultsSelector,mode=1,popvalue=SelectedResultsTool,value= #"root:Packages:IrenaControlProcs:AllKnownToolsResults"
+														//	PopupMenu ResultsTypeSelector,pos={10,140},size={230,15},fStyle=2,proc=IR3L_PopMenuProc,title="Which results?          "
+														//	PopupMenu ResultsTypeSelector,mode=1,popvalue=SelectedResultsType,value= #"IR2C_ReturnKnownToolResults(root:Packages:Irena:MultiSaPlotFit:SelectedResultsTool)"
+														//	PopupMenu ResultsGenerationToUse,pos={10,160},size={230,15},fStyle=2,proc=IR3L_PopMenuProc,title="Results Generation?           "
+														//	PopupMenu ResultsGenerationToUse,mode=1,popvalue=ResultsGenerationToUse,value= "Latest;_0;_1;_2;_3;_4;_5;_6;_7;_8;_9;_10;"
+														//
+														//
+														//	ListBox DataFolderSelection,pos={4,180},size={250,495}, mode=10
+														//	ListBox DataFolderSelection,listWave=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
+														//	ListBox DataFolderSelection,selWave=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
+														//	ListBox DataFolderSelection,proc=IR3L_ListBoxProc
+														//
+															
 	//graph controls
 
 	SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
@@ -189,22 +210,19 @@ Function IR3L_MultiSaPlotFitPanelFnct()
 	PopupMenu LegendSize,pos={430,580},size={310,20},proc=IR3L_PopMenuProc, title="Legend Size : ",help={"legend Size"}
 	PopupMenu LegendSize,value="8;10;12;14;16;20;24;",mode=1, popvalue=num2str(LegendSize)
 
+	PopupMenu ApplyStyle,pos={260,700},size={400,20},proc=IR3L_PopMenuProc, title="Apply style : ",help={"Set tool setting to defined conditions and apply to graph"}
+	PopupMenu ApplyStyle,value=#"root:Packages:Irena:MultiSaPlotFit:ListOfDefinedStyles",mode=1, mode=1
 
-	TitleBox Instructions1 title="\Zr100Double click to add data to graph.",size={330,15},pos={4,665},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions2 title="\Zr100Shift-click to select range of data.",size={330,15},pos={4,683},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions3 title="\Zr100Ctrl/Cmd-click to select one data set.",size={330,15},pos={4,701},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions4 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={4,719},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions5 title="\Zr100Regex for contain:  string.",size={330,15},pos={4,737},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions6 title="\Zr100Regex for case independent contain:  (?i)string.",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
 
-//	DrawText 4,678,"Double click to add data to graph."
-//	DrawText 4,695,"Shift-click to select range of data."
-//	DrawText 4,710,"Ctrl/Cmd-click to select one data set."
-//	DrawText 4,725,"Regex for not contain: ^((?!string).)*$"
-//	DrawText 4,740,"Regex for contain:  string"
-//	DrawText 4,755,"Regex for case independent contain:  (?i)string"
-	
-	IR3L_FixPanelControls()
+
+	TitleBox Instructions1 title="\Zr100Double click to add data to graph",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions2 title="\Zr100Shift-click to select range of data",size={330,15},pos={4,695},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions3 title="\Zr100Ctrl/Cmd-click to select one data set",size={330,15},pos={4,710},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions4 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions5 title="\Zr100Regex for contain:  string, two: str2.*str1",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
+
+	//IR3L_FixPanelControls()
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -233,26 +251,6 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-//**********************************************************************************************************
-Function IR3L_FixPanelControls()
-
-	NVAR UseIndra2Data = root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	NVAR UseQRSData=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
-	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-	SVAR DataSubTypeResultsList=root:Packages:Irena:MultiSaPlotFit:DataSubTypeResultsList
-	SVAR DataSubTypeUSAXSList = root:Packages:Irena:MultiSaPlotFit:DataSubTypeUSAXSList 
-	if(UseIndra2Data)
-			PopupMenu SubTypeData, disable =0
-			PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value=#"root:Packages:Irena:MultiSaPlotFit:DataSubTypeUSAXSList"
-	else
-			PopupMenu SubTypeData,mode=1,popvalue=DataSubType,value= ""
-			PopupMenu SubTypeData, disable=1
-	endif
-end
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
 
 Function IR3L_InitMultiSaPlotFit()	
 
@@ -273,22 +271,19 @@ Function IR3L_InitMultiSaPlotFit()
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;DataUnits;"
 	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;"
-	ListOfStrings+="SimpleModel;ListOfSimpleModels;"
+	ListOfStrings+="SelectedResultsTool;SelectedResultsType;ResultsGenerationToUse;"
 	ListOfStrings+="DataSubTypeUSAXSList;DataSubTypeResultsList;DataSubType;"
 	ListOfStrings+="GraphUserTitle;GraphWindowName;XAxisLegend;YAxislegend;"
 	ListOfStrings+="QvecLookupUSAXS;ErrorLookupUSAXS;dQLookupUSAXS;"
+	ListOfStrings+="ListOfDefinedStyles;"
 
-	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
+	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;"
 	ListOfVariables+="InvertGrepSearch;"
 	ListOfVariables+="LogXAxis;LogYAxis;MajorGridXaxis;MajorGridYaxis;MinorGridXaxis;MinorGridYaxis;"
 	ListOfVariables+="Colorize;UseSymbols;UseLines;SymbolSize;LineThickness;"
 	ListOfVariables+="XOffset;YOffset;"
 	ListOfVariables+="AddLegend;UseOnlyFoldersInLegend;LegendSize;"
 	
-	//ListOfVariables+="Guinier_Rg;Guinier_I0;"
-	//ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
-	///ListOfVariables+="DataQEnd;DataQstart;"
-
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -317,20 +312,17 @@ Function IR3L_InitMultiSaPlotFit()
 			teststr ="root:"
 		endif
 	endfor		
-	SVAR ListOfSimpleModels
-	ListOfSimpleModels="Guinier;"
 	SVAR FolderSortStringAll
 	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
-	SVAR SimpleModel
-	if(strlen(SimpleModel)<1)
-		SimpleModel="Guinier"
-	endif
 	SVAR DataSubTypeUSAXSList
 	DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;Blank_R_Int;USAXS_PD;Monitor;"
 	SVAR DataSubTypeResultsList
 	DataSubTypeResultsList="Size"
 	SVAR DataSubType
 	DataSubType="DSM_Int"
+	
+	SVAR ListOfDefinedStyles
+	ListOfDefinedStyles = "Log-Log;Lin-Log;VolumeSizeDistribution;NumberSizeDistribution;"
 
 	SVAR QvecLookupUSAXS
 	QvecLookupUSAXS="R_Int=R_Qvec;Blank_R_Int=Blank_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
@@ -346,19 +338,41 @@ Function IR3L_InitMultiSaPlotFit()
 	if(strlen(GraphWindowName)<2)
 		GraphWindowName="---"
 	endif
+	SVAR SelectedResultsTool 
+	SVAR SelectedResultsType 
+	SVAR ResultsGenerationToUse
+	if(strlen(SelectedResultsTool)<1)
+		SelectedResultsTool="Unified Fit"
+	endif
+	if(strlen(SelectedResultsTool)<1)
+		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
+	endif
+	if(strlen(ResultsGenerationToUse)<1)
+		ResultsGenerationToUse="Latest"
+	endif
+	
 	NVAR LegendSize
 	if(LegendSize<8)
 		LegendSize=12
 	endif
-
-//	NVAR OverwriteExistingData
-//	NVAR AutosaveAfterProcessing
-//	OverwriteExistingData=1
-//	AutosaveAfterProcessing=1
-//	if(ProcessTest)
-//		AutosaveAfterProcessing=0
-//	endif
-
+	NVAR UseSymbols
+	NVAR UseLines
+	NVAR Colorize
+	NVAR SymbolSize
+	NVAR LineThickness
+	NVAR AddLegend
+	NVAR UseOnlyFoldersInLegend
+	NVAR LegendSize
+	if(UseSymbols+UseLines < 1)			//seems to start new tool
+		UseLines = 1
+		Colorize = 1
+		SymbolSize = 2
+		LineThickness = 2
+		AddLegend = 1
+		UseOnlyFoldersInLegend = 1
+		LegendSize = 12
+	endif
+	
 	Make/O/T/N=(0) ListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData
 	SetDataFolder oldDf
@@ -381,6 +395,7 @@ Function IR3L_CheckProc(cba) : CheckBoxControl
 			Variable checked = cba.checked
 			NVAR UseIndra2Data =  root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
 			NVAR UseQRSData =  root:Packages:Irena:MultiSaPlotFit:UseQRSData
+			NVAR UseResults =  root:Packages:Irena:MultiSaPlotFit:UseResults
 			SVAR DataStartFolder = root:Packages:Irena:MultiSaPlotFit:DataStartFolder
 			SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
 		  	NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
@@ -390,26 +405,38 @@ Function IR3L_CheckProc(cba) : CheckBoxControl
 		  	NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
 		  	NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
 		  	NVAR AddLegend= root:Packages:Irena:MultiSaPlotFit:AddLegend
-		  	if(stringmatch(cba.ctrlName,"InvertGrepSearch"))
-					IR3L_UpdateListOfAvailFiles()	
-		  	endif
-		  	if(stringmatch(cba.ctrlName,"UseIndra2Data"))
-		  		if(checked)
-		  			UseQRSData = 0
-		  			IR3L_FixPanelControls()
-		  		endif
-		  	endif
-		  	if(stringmatch(cba.ctrlName,"UseQRSData"))
-		  		if(checked)
-		  			UseIndra2Data = 0
-		  			IR3L_FixPanelControls()
-		  		endif
-		  	endif
-		  	if(stringmatch(cba.ctrlName,"UseQRSData")||stringmatch(cba.ctrlName,"UseIndra2Data"))
-		  		DataStartFolder = "root:"
-		  		PopupMenu StartFolderSelection,win=IR3L_MultiSaPlotFitPanel, mode=1,popvalue="root:"
-				IR3L_UpdateListOfAvailFiles()
-		  	endif
+//		  	if(stringmatch(cba.ctrlName,"InvertGrepSearch"))
+//					IR3L_UpdateListOfAvailFiles()	
+//		  	endif
+//		  	if(stringmatch(cba.ctrlName,"UseIndra2Data"))
+//		  		if(checked)
+//		  			UseQRSData = 0
+//		  			UseResults = 0
+//		  			IR3L_FixPanelControls()
+//					IR3L_UpdateListOfAvailFiles()
+//		  		endif
+//		  	endif
+//		  	if(stringmatch(cba.ctrlName,"UseResults"))
+//		  		if(checked)
+//		  			UseQRSData = 0
+//		  			UseIndra2Data = 0
+//		  			IR3L_FixPanelControls()
+//					IR3L_UpdateListOfAvailFiles()
+//		  		endif
+//		  	endif
+//		  	if(stringmatch(cba.ctrlName,"UseQRSData"))
+//		  		if(checked)
+//		  			UseIndra2Data = 0
+//		  			UseResults = 0
+//		  			IR3L_FixPanelControls()
+//					IR3L_UpdateListOfAvailFiles()
+//		  		endif
+//		  	endif
+//		  	if(stringmatch(cba.ctrlName,"UseQRSData")||stringmatch(cba.ctrlName,"UseIndra2Data"))
+//		  		DataStartFolder = "root:"
+//		  		PopupMenu StartFolderSelection,win=IR3L_MultiSaPlotFitPanel, mode=1,popvalue="root:"
+//				IR3L_UpdateListOfAvailFiles()
+//		  	endif
 		  	if(stringmatch(cba.ctrlName,"LogXAxis"))
 		  		if(checked)
 		  			ModifyGraph/W=$(GraphWindowName) log(bottom)=1
@@ -468,7 +495,6 @@ Function IR3L_CheckProc(cba) : CheckBoxControl
 		  	if(stringmatch(cba.ctrlName,"AddLegend") || stringmatch(cba.ctrlName,"UseOnlyFoldersInLegend"))
  	 			DoWIndow/F $(GraphWindowName)
 		  		if(AddLegend)
-		  			//IN2G_LegendTopGrphFldr(fontsize, numberofItems, UseFolderName, UseWavename)
 		  			IN2G_LegendTopGrphFldr(LegendSize, 20, 1, !(UseOnlyFoldersInLegend))
 		  		else
 					Legend/K/N=text0/W=$(GraphWindowName)
@@ -488,303 +514,79 @@ End
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
-Function IR3L_UpdateListOfAvailFiles()
+//**************************************************************************************
+//**************************************************************************************
 
+Function IR3L_PopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
 
-	string OldDF=GetDataFolder(1)
-	setDataFolder root:Packages:Irena:MultiSaPlotFit
+	String ctrlName=Pa.ctrlName
+	Variable popNum=Pa.popNum
+	String popStr=Pa.popStr
 	
-	NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-	NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSData
-	SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
-	SVAR DataMatchString= root:Packages:Irena:MultiSaPlotFit:DataMatchString
-	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-	NVAR InvertGrepSearch=root:Packages:Irena:MultiSaPlotFit:InvertGrepSearch
-	string LStartFolder, FolderContent
-	if(stringmatch(StartFolderName,"---"))
-		LStartFolder="root:"
-	else
-		LStartFolder = StartFolderName
-	endif
-	//build list of availabe folders here...
-	string CurrentFolders
-	if(UseIndra2Data && !(StringMatch(DataSubType, "DSM_Int")||StringMatch(DataSubType, "SMR_Int")))		//special folders...
-		CurrentFolders=IN2G_FindFolderWithWaveTypes(LStartFolder, 10, DataSubType, 1)							//this does not clean up by matchstring...
-		if(strlen(DataMatchString)>0)																							//match string selections
-			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
-		endif
-	else
-		CurrentFolders=IR3D_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData, 2,0,"")
-		if(strlen(DataMatchString)>0)
-			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
-		endif
-	endif
-
-	
-
-	Wave/T ListOfAvailableData=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
-	Wave SelectionOfAvailableData=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
-	variable i, j, match
-	string TempStr, FolderCont
-
-		
-	Redimension/N=(ItemsInList(CurrentFolders , ";")) ListOfAvailableData, SelectionOfAvailableData
-	j=0
-	For(i=0;i<ItemsInList(CurrentFolders , ";");i+=1)
-		//TempStr = RemoveFromList("USAXS",RemoveFromList("root",StringFromList(i, CurrentFolders , ";"),":"),":")
-		TempStr = ReplaceString(LStartFolder, StringFromList(i, CurrentFolders , ";"),"")
-		if(strlen(TempStr)>0)
-			ListOfAvailableData[j] = tempStr
-			j+=1
-		endif
-	endfor
-	if(j<ItemsInList(CurrentFolders , ";"))
-		DeletePoints j, numpnts(ListOfAvailableData)-j, ListOfAvailableData, SelectionOfAvailableData
-	endif
-	SelectionOfAvailableData = 0
-	IR3L_SortListOfAvailableFldrs()
-	setDataFolder OldDF
-end
-
-
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-Function IR3L_SortListOfAvailableFldrs()
-	
-	SVAR FolderSortString=root:Packages:Irena:MultiSaPlotFit:FolderSortString
-	Wave/T ListOfAvailableData=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
-	Wave SelectionOfAvailableData=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
-	if(numpnts(ListOfAvailableData)<2)
+	if(Pa.eventcode!=2)
 		return 0
 	endif
-	Duplicate/Free SelectionOfAvailableData, TempWv
-	variable i, InfoLoc, j=0
-	variable DIDNotFindInfo
-	DIDNotFindInfo =0
-	string tempstr 
-	SelectionOfAvailableData=0
-	if(stringMatch(FolderSortString,"---"))
-		//nothing to do
-	elseif(stringMatch(FolderSortString,"Alphabetical"))
-		Sort /A ListOfAvailableData, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
-		Sort /A /R ListOfAvailableData, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"_xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
-		Sort TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"Sxyz_"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"Reverse Sxyz_"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
-		endfor
-		Sort/R TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"_xyzmin"))
-		Do
-			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
-				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
-					InfoLoc = i
-					break
-				endif
-			endfor
-			j+=1
-			if(j>(numpnts(ListOfAvailableData)-1))
-				DIDNotFindInfo=1
-				break
-			endif
-		while (InfoLoc<1) 
-		if(DIDNotFindInfo)
-			DoALert /T="Information not found" 0, "Cannot find location of _xyzmin information, sorting alphabetically" 
-			Sort /A ListOfAvailableData, ListOfAvailableData
-		else
-			For(i=0;i<numpnts(TempWv);i+=1)
-				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*min*" ))
-					TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-				else	//data not found
-					TempWv[i] = inf
-				endif
-			endfor
-			Sort TempWv, ListOfAvailableData
-		endif
-	elseif(stringMatch(FolderSortString,"_xyzpct"))
-		Do
-			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
-				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
-					InfoLoc = i
-					break
-				endif
-			endfor
-			j+=1
-			if(j>(numpnts(ListOfAvailableData)-1))
-				DIDNotFindInfo=1
-				break
-			endif
-		while (InfoLoc<1) 
-		if(DIDNotFindInfo)
-			DoAlert/T="Information not found" 0, "Cannot find location of _xyzpct information, sorting alphabetically" 
-			Sort /A ListOfAvailableData, ListOfAvailableData
-		else
-			For(i=0;i<numpnts(TempWv);i+=1)
-				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*pct*" ))
-					TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-				else	//data not found
-					TempWv[i] = inf
-				endif
-			endfor
-			Sort TempWv, ListOfAvailableData
-		endif
-	elseif(stringMatch(FolderSortString,"_xyzC"))
-		Do
-			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
-				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
-					InfoLoc = i
-					break
-				endif
-			endfor
-			j+=1
-			if(j>(numpnts(ListOfAvailableData)-1))
-				DIDNotFindInfo=1
-				break
-			endif
-		while (InfoLoc<1) 
-		if(DIDNotFindInfo)
-			DoAlert /T="Information not found" 0, "Cannot find location of _xyzC information, sorting alphabetically" 
-			Sort /A ListOfAvailableData, ListOfAvailableData
-		else
-			For(i=0;i<numpnts(TempWv);i+=1)
-				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*C*" ))
-					TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
-				else	//data not found
-					TempWv[i] = inf
-				endif
-			endfor
-			Sort TempWv, ListOfAvailableData
-		endif
-	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
-		Sort /R  TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"_xyz.ext"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
-			TempWv[i] = str2num(StringFromList(ItemsInList(tempstr , "_")-1, tempstr , "_"))
-		endfor
-		Sort TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"Reverse _xyz.ext"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
-			TempWv[i] = str2num(StringFromList(ItemsInList(tempstr , "_")-1, tempstr , "_"))
-		endfor
-		Sort /R  TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"_xyz_000"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
-		endfor
-		Sort TempWv, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"Reverse _xyz_000"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
-		endfor
-		Sort /R  TempWv, ListOfAvailableData
-	endif
-
-end
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-
-Function IR3L_PopMenuProc(ctrlName,popNum,popStr) : PopupMenuControl
-	String ctrlName
-	Variable popNum
-	String popStr
-
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-	if(stringmatch(ctrlName,"StartFolderSelection"))
-		//Update the listbox using start folde popStr
-		SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
-		StartFolderName = popStr
-		IR3L_UpdateListOfAvailFiles()
-	endif
-	if(stringmatch(ctrlName,"SortFolders"))
-		//do something here
-		SVAR FolderSortString = root:Packages:Irena:MultiSaPlotFit:FolderSortString
-		FolderSortString = popStr
-		IR3L_UpdateListOfAvailFiles()
-	endif
-	if(stringmatch(ctrlName,"SelectGraphWindows"))
-		//do something here
-		SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
-		if(stringmatch(popStr,"---"))
-			GraphWindowName = ""
-			GraphUserTitle=""
-			return 0
+	if(strlen(GraphWindowName)>0)
+		if(stringmatch(ctrlName,"SelectGraphWindows"))
+			//do something here
+			SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+			SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+			if(stringmatch(popStr,"---"))
+				GraphWindowName = ""
+				GraphUserTitle=""
+				return 0
+			endif
+			string StartPopStr=stringFromList(0,popStr,"=")
+			if(StringMatch(StartPopStr, "Top Graph"))
+				GetWindow $(stringFromList(0,WinList("*", ";", "WIN:1" ))) title 
+				GraphUserTitle = S_value
+				GraphWindowName = stringFromList(0,WinList("*", ";", "WIN:1" ))
+			else
+				GetWindow $(StartPopStr) title 
+				GraphUserTitle = S_value
+				GraphWindowName = StartPopStr		
+			endif
+			DoWIndow/F $(GraphWindowName)
 		endif
-		string StartPopStr=stringFromList(0,popStr,"=")
-		if(StringMatch(StartPopStr, "Top Graph"))
-			GetWindow $(stringFromList(0,WinList("*", ";", "WIN:1" ))) title 
-			GraphUserTitle = S_value
-			GraphWindowName = stringFromList(0,WinList("*", ";", "WIN:1" ))
-		else
-			GetWindow $(StartPopStr) title 
-			GraphUserTitle = S_value
-			GraphWindowName = StartPopStr		
+	
+		if(stringmatch(ctrlName,"SymbolSize"))
+			//do something here
+			NVAR UseSymbols = root:Packages:Irena:MultiSaPlotFit:UseSymbols
+			NVAR SymbolSize = root:Packages:Irena:MultiSaPlotFit:SymbolSize
+			NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
+			SymbolSize = str2num(popStr)
+	  		if(UseLines+UseSymbols<1)
+	  			UseSymbols = 1
+	  		endif
+			DoWIndow/F $(GraphWindowName)
+			if(UseSymbols)
+				ModifyGraph mode=3*UseSymbols+UseLines 	
+				IN2G_VaryMarkersTopGrphRainbow(1, SymbolSize, 0)
+			else
+				ModifyGraph mode=!(UseLines) 	
+			endif
+	
 		endif
-		DoWIndow/F $(GraphWindowName)
-	endif
-
-	if(stringmatch(ctrlName,"SubTypeData"))
-		//do something here
-		SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-		DataSubType = popStr
-		IR3L_UpdateListOfAvailFiles()
-	endif
-	if(stringmatch(ctrlName,"SymbolSize"))
-		//do something here
-		NVAR UseSymbols = root:Packages:Irena:MultiSaPlotFit:UseSymbols
-		NVAR SymbolSize = root:Packages:Irena:MultiSaPlotFit:SymbolSize
-		NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
-		SymbolSize = str2num(popStr)
-  		if(UseLines+UseSymbols<1)
-  			UseSymbols = 1
-  		endif
-		DoWIndow/F $(GraphWindowName)
-		if(UseSymbols)
-			ModifyGraph mode=3*UseSymbols+UseLines 	
-			IN2G_VaryMarkersTopGrphRainbow(1, SymbolSize, 0)
-		else
-			ModifyGraph mode=!(UseLines) 	
+	
+		if(stringmatch(ctrlName,"LegendSize"))
+			//do something here
+			NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
+			NVAR AddLegend = root:Packages:Irena:MultiSaPlotFit:AddLegend
+			NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
+			LegendSize = str2num(popStr)
+			if(AddLegend)
+		 			IN2G_LegendTopGrphFldr(LegendSize, 20, 1, !(UseOnlyFoldersInLegend))
+			endif
 		endif
-
-	endif
-
-	if(stringmatch(ctrlName,"LegendSize"))
-		//do something here
-		NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
-		NVAR AddLegend = root:Packages:Irena:MultiSaPlotFit:AddLegend
-		NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
-		LegendSize = str2num(popStr)
-		if(AddLegend)
-	 			IN2G_LegendTopGrphFldr(LegendSize, 20, 1, !(UseOnlyFoldersInLegend))
+		if(stringmatch(ctrlName,"ApplyStyle"))
+			//do something here
+			IR3L_SetAndApplyStyle(popStr)	
 		endif
+				
 	endif
-
-
-
 	DOWIndow/F IR3L_MultiSaPlotFitPanel
 end
 
@@ -800,38 +602,36 @@ Function IR3L_SetVarProc(sva) : SetVariableControl
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
-			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
-				IR3L_UpdateListOfAvailFiles()
-			endif
-			if(stringmatch(sva.ctrlName,"GraphUserTitle"))
-				SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
-				SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-				DoWindow/T $(GraphWindowName),(GraphUserTitle)
-			endif
-			
-			if(stringmatch(sva.ctrlName,"LineThickness"))
-				SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-				NVAR LineThickness = root:Packages:Irena:MultiSaPlotFit:LineThickness
-				if(LineThickness<0.5)
-					LineThickness = 0.5
+				//			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
+				//				IR3L_UpdateListOfAvailFiles()
+				//			endif
+		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+		SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+			if(strlen(GraphWindowName)>0)
+				if(stringmatch(sva.ctrlName,"GraphUserTitle"))
+					DoWindow/T $(GraphWindowName),(GraphUserTitle)
 				endif
-				DoWindow/F $(GraphWindowName)
-	  			IN2G_VaryLinesTopGrphRainbow(LineThickness, 1)
+				
+				if(stringmatch(sva.ctrlName,"LineThickness"))
+					NVAR LineThickness = root:Packages:Irena:MultiSaPlotFit:LineThickness
+					if(LineThickness<0.5)
+						LineThickness = 0.5
+					endif
+					DoWindow/F $(GraphWindowName)
+		  			IN2G_VaryLinesTopGrphRainbow(LineThickness, 1)
+				endif
+				
+				if(stringmatch(sva.ctrlName,"XOffset") || stringmatch(sva.ctrlName,"YOffset"))
+					NVAR XOffset=root:Packages:Irena:MultiSaPlotFit:XOffset
+					NVAR YOffset=root:Packages:Irena:MultiSaPlotFit:YOffset
+					NVAR LogXAxis=root:Packages:Irena:MultiSaPlotFit:LogXAxis
+					NVAR LogYAxis=root:Packages:Irena:MultiSaPlotFit:LogYAxis
+					DoWindow/F $(GraphWindowName)
+					IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
+				endif
+	
+				break
 			endif
-			
-			if(stringmatch(sva.ctrlName,"XOffset") || stringmatch(sva.ctrlName,"YOffset"))
-				NVAR XOffset=root:Packages:Irena:MultiSaPlotFit:XOffset
-				NVAR YOffset=root:Packages:Irena:MultiSaPlotFit:YOffset
-				NVAR LogXAxis=root:Packages:Irena:MultiSaPlotFit:LogXAxis
-				NVAR LogYAxis=root:Packages:Irena:MultiSaPlotFit:LogYAxis
-				SVAR GraphWindowName = root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-				DoWindow/F $(GraphWindowName)
-				IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
-				//ModifyGraph/W=$(GraphWindowName) offset={XOffset,YOffset}
-			endif
-
-			break
-
 		case 3: // live update
 			break
 		case -1: // control being killed
@@ -841,47 +641,36 @@ Function IR3L_SetVarProc(sva) : SetVariableControl
 	return 0
 End
 
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
 
-Function IR3L_MultDataPlotsListBoxProc(lba) : ListBoxControl
-	STRUCT WMListboxAction &lba
-
-	Variable row = lba.row
-	WAVE/T/Z listWave = lba.listWave
-	WAVE/Z selWave = lba.selWave
-	string FoldernameStr
-	Variable isData1or2
-	switch( lba.eventCode )
-		case -1: // control being killed
-			break
-		case 1: // mouse down
-			break
-		case 3: // double click
+//**************************************************************************************
+//**************************************************************************************
+Function IR3L_DoubleClickAction(FoldernameStr)
+			string FoldernameStr
 			//if called with GraphWindowName = "---" need to create new graph and direct data there, or the tool doe snothing
 			SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-			string OldWinName=GraphWindowName			//store old GraphWindowName
-			FoldernameStr=listWave[row]
+			string LocalGraphName
+			variable CreatedNewGraph=0
+			if(strlen(GraphWindowName)<2 || StringMatch(GraphWindowName, "---" ))
+				LocalGraphName="none"
+			else
+				LocalGraphName = GraphWindowName
+			endif
+			DOWIndow $(LocalGraphName)
+			if(V_Flag<1)			//widnow does not exist, need new window to use... 
+				//set some meaningful values for these data first
+				IR3L_SetPlotLegends()								
+				//Create new graph and append data to graph
+				IR3L_CreateNewGraph()		
+				CreatedNewGraph = 1
+			endif		
 			IR3L_AppendData(FoldernameStr)
-			if(StringMatch(OldWinName, "---" ))		//if GraphWindowName = ---
+			if(CreatedNewGraph)
 				IR3L_ApplyPresetFormating(GraphWindowName)
 			endif
-			break
-		case 4: // cell selection
-		case 5: // cell selection plus shift key
-			break
-		case 6: // begin edit
-			break
-		case 7: // finish edit
-			break
-		case 13: // checkbox clicked (Igor 6.2 or later)
-			break
-	endswitch
 
-	return 0
-End
+end
+
+
 //**************************************************************************************
 //**************************************************************************************
 Function IR3L_AppendData(FolderNameStr)
@@ -899,9 +688,9 @@ Function IR3L_AppendData(FolderNameStr)
 		SVAR dQWavename=root:Packages:Irena:MultiSaPlotFit:dQWavename
 		NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
 		NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
+		NVAR useResults=root:Packages:Irena:MultiSaPlotFit:useResults
 		SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
 		//these are variables used by the control procedure
-		NVAR  UseResults=  root:Packages:Irena:MultiSaPlotFit:UseResults
 		NVAR  UseUserDefinedData=  root:Packages:Irena:MultiSaPlotFit:UseUserDefinedData
 		NVAR  UseModelData = root:Packages:Irena:MultiSaPlotFit:UseModelData
 		SVAR DataFolderName  = root:Packages:Irena:MultiSaPlotFit:DataFolderName 
@@ -911,8 +700,15 @@ Function IR3L_AppendData(FolderNameStr)
 		//graph control variable
 		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
 		SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-
-		UseResults = 0
+		SVAR ResultsDataTypesLookup=root:Packages:IrenaControlProcs:ResultsDataTypesLookup
+		
+		if(UseQRSdata+UseIndra2Data+useResults!= 1)
+			Abort "Data type not selected right, please, select type of data first" 
+		endif
+		
+		string TempStr, result, tempStr2, TempYName, TempXName, tempStr3
+		variable i, j
+		
 		UseUserDefinedData = 0
 		UseModelData = 0
 		DataFolderName = DataStartFolder+FolderNameStr
@@ -943,6 +739,69 @@ Function IR3L_AppendData(FolderNameStr)
 			QWavename = DataSubTypeQvec
 			ErrorWaveName = DataSubTypeError
 			dQWavename = DataSubTypedQ
+		elseif(useResults)
+			SVAR SelectedResultsTool = root:Packages:Irena:MultiSaPlotFit:SelectedResultsTool
+			SVAR SelectedResultsType = root:Packages:Irena:MultiSaPlotFit:SelectedResultsType
+			SVAR ResultsGenerationToUse = root:Packages:Irena:MultiSaPlotFit:ResultsGenerationToUse
+			//follow IR2S_CallWithPlottingToolII
+			if(stringmatch(ResultsGenerationToUse,"Latest"))
+					DFREF TestFldr=$(DataFolderName)
+					TempStr = GrepList(stringfromList(1,RemoveEnding(DataFolderDir(2, TestFldr),";\r"),":"), SelectedResultsType,0,",")
+					//and need to find the one with highest generation number.
+					result = stringFromList(0,TempStr,",")
+					For(j=1;j<ItemsInList(TempStr,",");j+=1)
+						tempStr2=stringFromList(j,TempStr,",")
+						if(str2num(StringFromList(ItemsInList(result,"_")-1, result, "_"))<str2num(StringFromList(ItemsInList(tempStr2,"_")-1, tempStr2, "_")))
+							result = tempStr2
+						endif
+					endfor
+					IntensityWaveName = result				//this is intensity wave name
+					tempStr2 = removeending(result, "_"+StringFromList(ItemsInList(result,"_")-1, result, "_"))
+					//for some (Modeling II there are two x-wave options, need to figure out which one is present...
+					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
+					TempXName=RemoveEnding(TempXName , ",")+","
+					if(ItemsInList(TempXName,",")>1)
+						j=0
+						Do
+							tempStr3=stringFromList(j,TempXName,",")
+							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")+"*" ))
+								TempXName=tempStr3
+								break
+							endif
+							j+=1
+						while(j<ItemsInList(TempXName,","))	
+					endif
+					TempXName=RemoveEnding(TempXName , ",")
+					QWavename = TempXName+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")			//this is X wave name
+					ErrorWaveName = ""
+					dQWavename = ""
+					
+				else	//known result we want to use... It should exist (guarranteed by prior code)
+					DFREF TestFldr=$(DataFolderName)
+					IntensityWaveName = SelectedResultsType+ResultsGenerationToUse
+					TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")
+					TempXName=RemoveEnding(TempXName , ",")+","
+					if(ItemsInList(TempXName,",")>1)
+						j=0
+						Do
+							tempStr3=stringFromList(j,TempXName,",")
+							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+ResultsGenerationToUse+"*" ))
+								TempXName=tempStr3+ResultsGenerationToUse
+								break
+							endif
+							j+=1
+						while(j<ItemsInList(TempXName,","))	
+					endif
+					TempXName=RemoveEnding(TempXName , ",")
+					QWavename = TempXName+ResultsGenerationToUse
+					ErrorWaveName = ""
+					dQWavename = ""
+				endif
+	
+
+		
+		else
+			ABort "Data type not known, error in IR3L_AppendData"
 		endif
 		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
 		Wave/Z SourceQWv=$(DataFolderName+QWavename)
@@ -973,30 +832,7 @@ Function IR3L_AppendData(FolderNameStr)
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
-//**********************************************************************************************************
-Function IR3L_CreateLinearizedData()
-
-	string oldDf=GetDataFolder(1)
-	SetDataFolder root:Packages:Irena:MultiSaPlotFit					//go into the folder
-	Wave OriginalDataIntWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataIntWave
-	Wave OriginalDataQWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataQWave
-	Wave OriginalDataErrorWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataErrorWave
-	SVAR SimpleModel=root:Packages:Irena:MultiSaPlotFit:SimpleModel
-	Duplicate/O OriginalDataIntWave, LinModelDataIntWave, ModelNormalizedResidual
-	Duplicate/O OriginalDataQWave, LinModelDataQWave, ModelNormResXWave
-	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
-	ModelNormalizedResidual = 0
-	if(stringmatch(SimpleModel,"Guinier"))
-		LinModelDataQWave = OriginalDataQWave^2
-		ModelNormResXWave = OriginalDataQWave^2
-	endif
-	
-	
-	SetDataFolder oldDf
-end
-
-//**********************************************************************************************************
-//**********************************************************************************************************
+////**********************************************************************************************************
 //**********************************************************************************************************
 Function IR3L_ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
@@ -1090,7 +926,75 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+Function IR3L_SetAndApplyStyle(WHichStyle)	
+	string WHichStyle
+	
+//	ListOfDefinedStyles = "Log-Log;Lin-Log;VolumeSizeDistribution;NumberSizeDistribution;"
+		SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+		NVAR LogXAxis=root:Packages:Irena:MultiSaPlotFit:LogXAxis
+		NVAR LogYAxis=root:Packages:Irena:MultiSaPlotFit:LogYAxis
+		NVAR Colorize=root:Packages:Irena:MultiSaPlotFit:Colorize
+		NVAR AddLegend=root:Packages:Irena:MultiSaPlotFit:AddLegend
+		SVAR XAxisLegend=root:Packages:Irena:MultiSaPlotFit:XAxisLegend
+		SVAR YAxislegend=root:Packages:Irena:MultiSaPlotFit:YAxislegend	
+		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+		NVAR LineThickness = root:Packages:Irena:MultiSaPlotFit:LineThickness
+		NVAR UseSymbols = root:Packages:Irena:MultiSaPlotFit:UseSymbols
+		NVAR UseLines = root:Packages:Irena:MultiSaPlotFit:UseLines
+		NVAR SymbolSize = root:Packages:Irena:MultiSaPlotFit:SymbolSize
+		NVAR LegendSize = root:Packages:Irena:MultiSaPlotFit:LegendSize
+		NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSaPlotFit:UseOnlyFoldersInLegend
 
+	if(stringmatch(WHichStyle,"log-Log"))
+		LogXAxis = 1
+		LogYAxis = 1
+		Colorize = 1
+		AddLegend = 1
+		LineThickness  = 2
+		UseSymbols = 0
+		UseLines = 1
+		SymbolSize = 2
+		LegendSize = 12
+		UseOnlyFoldersInLegend = 1
+	elseif(stringmatch(WHichStyle,"Lin-Log"))
+		LogXAxis = 1
+		LogYAxis = 0
+		Colorize = 1
+		AddLegend = 1
+		LineThickness  = 2
+		UseSymbols = 0
+		UseLines = 1
+		SymbolSize = 2
+		LegendSize = 12
+		UseOnlyFoldersInLegend = 1
+	elseif(stringmatch(WHichStyle,"VolumeSizeDistribution"))
+		LogXAxis = 1
+		LogYAxis = 0
+		Colorize = 1
+		AddLegend = 1
+		LineThickness  = 2
+		UseSymbols = 0
+		UseLines = 1
+		SymbolSize = 2
+		LegendSize = 12
+		UseOnlyFoldersInLegend = 1
+	elseif(stringmatch(WHichStyle,"NumberSizeDistribution"))
+		LogXAxis = 1
+		LogYAxis = 0
+		Colorize = 1
+		AddLegend = 1
+		LineThickness  = 2
+		UseSymbols = 0
+		UseLines = 1
+		SymbolSize = 2
+		LegendSize = 12
+		UseOnlyFoldersInLegend = 1
+	endif
+	IR3L_ApplyPresetFormating(GraphWindowName)	
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 Function IR3L_ApplyPresetFormating(GraphNameString)
 		string GraphNameString
 
@@ -1182,6 +1086,168 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
+Function IR3L_SetPlotLegends()				//this function will set axis legends and otehr stuff based on waves
+		//applies only when creating new graph...
+
+		NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
+		NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
+		NVAR  UseResults=  root:Packages:Irena:MultiSaPlotFit:UseResults
+		NVAR  UseUserDefinedData=  root:Packages:Irena:MultiSaPlotFit:UseUserDefinedData
+		NVAR  UseModelData = root:Packages:Irena:MultiSaPlotFit:UseModelData
+		
+		SVAR XAxisLegend=root:Packages:Irena:MultiSaPlotFit:XAxisLegend
+		SVAR YAxislegend=root:Packages:Irena:MultiSaPlotFit:YAxislegend	
+		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
+		SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
+		SVAR DataFolderName  = root:Packages:Irena:MultiSaPlotFit:DataFolderName 
+		SVAR IntensityWaveName = root:Packages:Irena:MultiSaPlotFit:IntensityWaveName
+		SVAR QWavename = root:Packages:Irena:MultiSaPlotFit:QWavename
+		SVAR ErrorWaveName = root:Packages:Irena:MultiSaPlotFit:ErrorWaveName
+		SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
+		SVAR SelectedResultsTool = root:Packages:Irena:MultiSaPlotFit:SelectedResultsTool
+		SVAR SelectedResultsType = root:Packages:Irena:MultiSaPlotFit:SelectedResultsType
+		SVAR ResultsGenerationToUse = root:Packages:Irena:MultiSaPlotFit:ResultsGenerationToUse
+		
+		string yAxisUnits="arbitrary"
+		string xAxisUnits
+		//now, what can we do about naming this for users....
+		if(UseIndra2Data)
+			IntensityWaveName = DataSubType
+			Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+			if(WaveExists(SourceIntWv))
+				yAxisUnits= StringByKey("Units", note(SourceIntWv),"=",";")
+				//format the units...
+				if(stringmatch(yAxisUnits,"cm2/g"))
+					yAxisUnits = "cm\S2\Mg\S-1\M"
+				elseif(stringmatch(yAxisUnits,"1/cm"))
+					yAxisUnits = "cm\S2\M/cm\S3\M"
+				endif
+			endif
+			if(StringMatch(DataSubType, "DSM_Int" ))
+				GraphUserTitle = "USAXS desmeared data"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity ["+yAxisUnits+"]"
+			elseif(StringMatch(DataSubType, "SMR_Int" ))
+				GraphUserTitle = "USAXS slit smeared data"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity ["+yAxisUnits+"]"
+			elseif(StringMatch(DataSubType, "Blank_R_int" ))
+				GraphUserTitle = "USAXS Blank R Intensity"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity"
+			elseif(StringMatch(DataSubType, "R_int" ))
+				GraphUserTitle = "USAXS R Intensity"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [normalized, arbitrary]"
+			elseif(StringMatch(DataSubType, "USAXS_PD" ))
+				GraphUserTitle = "USAXS Diode Intensity"
+				XAxisLegend = "AR angle [degrees]"
+				YAxislegend = "Diode Intensity [not normalized, arbitrary counts]"
+			elseif(StringMatch(DataSubType, "Monitor" ))
+				GraphUserTitle = "USAXS I0 Intensity"
+				XAxisLegend = "AR angle [degrees]"
+				YAxislegend = "I0 Intensity [not normalized, counts]"
+			else
+				GraphUserTitle = "USAXS data"
+				XAxisLegend = ""
+				YAxislegend = ""			
+			endif
+		elseif(UseQRSdata)
+				GraphUserTitle = "SAXS/WAXS data"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+		elseif(UseResults)
+			//	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;"
+			if(StringMatch(SelectedResultsTool, "Unified Fit" ))
+				GraphUserTitle = "Unified Fit results"
+				if(StringMatch(SelectedResultsType, "*SizeDistVol*" ))
+					XAxisLegend = "Size [A]"
+					YAxislegend = "Volume Fraction [arbitrary]"
+				elseif(StringMatch(SelectedResultsType, "*SizeDistNum*" ))
+					XAxisLegend = "Size [A]"
+					YAxislegend = "Number Fraction [arbitrary]"
+				endif
+			elseif(StringMatch(SelectedResultsTool, "Size Distribution" ))
+				GraphUserTitle = "Size Distribution results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+				if(StringMatch(SelectedResultsType, "SizesVolume*" ))
+					XAxisLegend = "Size [A]"
+					YAxislegend = "Volume Fraction [1/A]"
+				elseif(StringMatch(SelectedResultsType, "SizesNumber*" ))
+					XAxisLegend = "Size [A]"
+					YAxislegend = "Number Fraction [1/(Acm\S3\M)]"
+				endif
+			elseif(StringMatch(SelectedResultsTool, "Modeling II" ))
+				GraphUserTitle = "Modeling results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+				if(StringMatch(SelectedResultsType, "VolumeDist*" ))
+					XAxisLegend = "Size [A]"
+					YAxislegend = "Volume Fraction [1/A]"
+				elseif(StringMatch(SelectedResultsType, "NumberDist*" ))
+					XAxisLegend = "Size [A]"
+					YAxislegend = "Number Fraction [1/(Acm\S3\M)]"
+				endif
+			elseif(StringMatch(SelectedResultsTool, "Small-angle diffraction" ))
+				GraphUserTitle = "Small-angle diffraction results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+			elseif(StringMatch(SelectedResultsTool, "Analytical models" ))
+				GraphUserTitle = "Analytical models results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+			elseif(StringMatch(SelectedResultsTool, "Fractals" ))
+				GraphUserTitle = "Fractals results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+			elseif(StringMatch(SelectedResultsTool, "Reflectivity" ))
+				GraphUserTitle = "Reflectivity results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+			elseif(StringMatch(SelectedResultsTool, "Guinier-Porod" ))
+				GraphUserTitle = "Guinier-Porod results"
+				XAxisLegend = "Q [A\S-1\M]"
+				YAxislegend = "Intensity [arb]"
+			endif
+		else
+		
+		endif
+		
+	
+end
+
+//				GraphUserTitle = "Size Distribution results"
+//				XAxisLegend = "Q [A\S-1\M]"
+//				YAxislegend = "Intensity [arb]"
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+////**********************************************************************************************************
+//Function IR3L_CreateLinearizedData()
+//
+//	string oldDf=GetDataFolder(1)
+//	SetDataFolder root:Packages:Irena:MultiSaPlotFit					//go into the folder
+//	Wave OriginalDataIntWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataIntWave
+//	Wave OriginalDataQWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataQWave
+//	Wave OriginalDataErrorWave=root:Packages:Irena:MultiSaPlotFit:OriginalDataErrorWave
+//	SVAR SimpleModel=root:Packages:Irena:MultiSaPlotFit:SimpleModel
+//	Duplicate/O OriginalDataIntWave, LinModelDataIntWave, ModelNormalizedResidual
+//	Duplicate/O OriginalDataQWave, LinModelDataQWave, ModelNormResXWave
+//	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
+//	ModelNormalizedResidual = 0
+//	if(stringmatch(SimpleModel,"Guinier"))
+//		LinModelDataQWave = OriginalDataQWave^2
+//		ModelNormResXWave = OriginalDataQWave^2
+//	endif
+//	
+//	
+//	SetDataFolder oldDf
+//end
+//
+////**********************************************************************************************************
+
 //Function IR3L_AppendDataToGraphModel()
 //	
 //	DoWindow IR3L_MultiSaPlotFitPanel
@@ -1261,88 +1327,6 @@ end
 //end
 //**********************************************************************************************************
 //**********************************************************************************************************
-//**********************************************************************************************************
-
-Function IR3L_SetPlotLegends()				//this function will set axis legends and otehr stuff based on waves
-		//applies only when creating new graph...
-
-		NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
-		NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSdata
-		NVAR  UseResults=  root:Packages:Irena:MultiSaPlotFit:UseResults
-		NVAR  UseUserDefinedData=  root:Packages:Irena:MultiSaPlotFit:UseUserDefinedData
-		NVAR  UseModelData = root:Packages:Irena:MultiSaPlotFit:UseModelData
-		
-		SVAR XAxisLegend=root:Packages:Irena:MultiSaPlotFit:XAxisLegend
-		SVAR YAxislegend=root:Packages:Irena:MultiSaPlotFit:YAxislegend	
-		SVAR GraphUserTitle=root:Packages:Irena:MultiSaPlotFit:GraphUserTitle
-		SVAR GraphWindowName=root:Packages:Irena:MultiSaPlotFit:GraphWindowName
-		SVAR DataFolderName  = root:Packages:Irena:MultiSaPlotFit:DataFolderName 
-		SVAR IntensityWaveName = root:Packages:Irena:MultiSaPlotFit:IntensityWaveName
-		SVAR QWavename = root:Packages:Irena:MultiSaPlotFit:QWavename
-		SVAR ErrorWaveName = root:Packages:Irena:MultiSaPlotFit:ErrorWaveName
-		SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
-		
-		string yAxisUnits="arbitrary"
-		string xAxisUnits
-		//now, what can we do about naming this for users....
-		if(UseIndra2Data)
-			IntensityWaveName = DataSubType
-			Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
-			if(WaveExists(SourceIntWv))
-				yAxisUnits= StringByKey("Units", note(SourceIntWv),"=",";")
-				//format the units...
-				if(stringmatch(yAxisUnits,"cm2/g"))
-					yAxisUnits = "cm\S2\Mg\S-1\M"
-				elseif(stringmatch(yAxisUnits,"1/cm"))
-					yAxisUnits = "cm\S2\M/cm\S3\M"
-				endif
-			endif
-			if(StringMatch(DataSubType, "DSM_Int" ))
-				GraphUserTitle = "USAXS desmeared data"
-				XAxisLegend = "Q [A\S-1\M]"
-				YAxislegend = "Intensity ["+yAxisUnits+"]"
-			elseif(StringMatch(DataSubType, "SMR_Int" ))
-				GraphUserTitle = "USAXS slit smeared data"
-				XAxisLegend = "Q [A\S-1\M]"
-				YAxislegend = "Intensity ["+yAxisUnits+"]"
-			elseif(StringMatch(DataSubType, "Blank_R_int" ))
-				GraphUserTitle = "USAXS Blank R Intensity"
-				XAxisLegend = "Q [A\S-1\M]"
-				YAxislegend = "Intensity"
-			elseif(StringMatch(DataSubType, "R_int" ))
-				GraphUserTitle = "USAXS R Intensity"
-				XAxisLegend = "Q [A\S-1\M]"
-				YAxislegend = "Intensity [normalized, arbitrary]"
-			elseif(StringMatch(DataSubType, "USAXS_PD" ))
-				GraphUserTitle = "USAXS Diode Intensity"
-				XAxisLegend = "AR angle [degrees]"
-				YAxislegend = "Diode Intensity [not normalized, arbitrary counts]"
-			elseif(StringMatch(DataSubType, "Monitor" ))
-				GraphUserTitle = "USAXS I0 Intensity"
-				XAxisLegend = "AR angle [degrees]"
-				YAxislegend = "I0 Intensity [not normalized, counts]"
-			else
-				GraphUserTitle = "USAXS data"
-				XAxisLegend = ""
-				YAxislegend = ""			
-			endif
-		elseif(UseQRSdata)
-				GraphUserTitle = "SAXS/WAXS data"
-				XAxisLegend = "Q [A\S-1\M]"
-				YAxislegend = "Intensity [arb]"
-		elseif(UseResults)
-		
-		
-		else
-		
-		endif
-		
-	
-end
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//**********************************************************************************************************
 //
 //
 //Function IR3L_AppendDataToGraphLogLog()
@@ -1410,3 +1394,286 @@ end
 ////**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//Function IR3L_UpdateListOfAvailFiles()
+//
+//
+//	string OldDF=GetDataFolder(1)
+//	setDataFolder root:Packages:Irena:MultiSaPlotFit
+//	
+//	NVAR UseIndra2Data=root:Packages:Irena:MultiSaPlotFit:UseIndra2Data
+//	NVAR UseQRSdata=root:Packages:Irena:MultiSaPlotFit:UseQRSData
+//	NVAR UseResults=root:Packages:Irena:MultiSaPlotFit:UseResults
+//	SVAR StartFolderName=root:Packages:Irena:MultiSaPlotFit:DataStartFolder
+//	SVAR DataMatchString= root:Packages:Irena:MultiSaPlotFit:DataMatchString
+//	SVAR DataSubType = root:Packages:Irena:MultiSaPlotFit:DataSubType
+//	NVAR InvertGrepSearch=root:Packages:Irena:MultiSaPlotFit:InvertGrepSearch
+//	string LStartFolder, FolderContent
+//	if(stringmatch(StartFolderName,"---"))
+//		LStartFolder="root:"
+//	else
+//		LStartFolder = StartFolderName
+//	endif
+//	//build list of availabe folders here...
+//	string CurrentFolders
+//	if(UseIndra2Data && !(StringMatch(DataSubType, "DSM_Int")||StringMatch(DataSubType, "SMR_Int")))		//special folders...
+//		CurrentFolders=IN2G_FindFolderWithWaveTypes(LStartFolder, 10, DataSubType, 1)							//this does not clean up by matchstring...
+//		if(strlen(DataMatchString)>0)																							//match string selections
+//			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
+//		endif
+//	elseif(UseIndra2Data && (StringMatch(DataSubType, "DSM_Int")||StringMatch(DataSubType, "SMR_Int")))			//DSM or SMR data wanted. 
+//		//need to check if user wants DSM or SMR data. 
+//		if(StringMatch(DataSubType, "DSM_Int"))
+//			CurrentFolders=IR3L_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData,UseResults, 0,1)
+//		else
+//			CurrentFolders=IR3L_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData,UseResults, 1,1)
+//		endif
+//		//apply grep list. 
+//		if(strlen(DataMatchString)>0)
+//			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
+//		endif
+//	else
+//		CurrentFolders=IR3L_GenStringOfFolders(LStartFolder,UseIndra2Data, UseQRSData,UseResults, 0,1)
+//		//apply grep list. 
+//		if(strlen(DataMatchString)>0)
+//			CurrentFolders = GrepList(CurrentFolders, DataMatchString, InvertGrepSearch) 
+//		endif
+//	endif
+//
+//	
+//
+//	Wave/T ListOfAvailableData=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
+//	Wave SelectionOfAvailableData=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
+//	variable i, j, match
+//	string TempStr, FolderCont
+//
+//		
+//	Redimension/N=(ItemsInList(CurrentFolders , ";")) ListOfAvailableData, SelectionOfAvailableData
+//	j=0
+//	For(i=0;i<ItemsInList(CurrentFolders , ";");i+=1)
+//		TempStr = ReplaceString(LStartFolder, StringFromList(i, CurrentFolders , ";"),"")
+//		if(strlen(TempStr)>0)
+//			ListOfAvailableData[j] = tempStr
+//			j+=1
+//		endif
+//	endfor
+//	if(j<ItemsInList(CurrentFolders , ";"))
+//		DeletePoints j, numpnts(ListOfAvailableData)-j, ListOfAvailableData, SelectionOfAvailableData
+//	endif
+//	SelectionOfAvailableData = 0
+//	IR3L_SortListOfAvailableFldrs()
+//	setDataFolder OldDF
+//end
+//
+
+////**************************************************************************************
+////**************************************************************************************
+//Function/T IR3L_GenStringOfFolders(StartFolder,UseIndra2Structure, UseQRSStructure, UseResults, SlitSmearedData, AllowQRDataOnly)
+//	string StartFolder
+//	variable UseIndra2Structure, UseQRSStructure, UseResults, SlitSmearedData, AllowQRDataOnly
+//		//SlitSmearedData =0 for DSM data, 
+//		//                          =1 for SMR data 
+//		//                    and =2 for both
+//		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
+//	
+//	string ListOfQFolders
+//	string TempStr, tempStr2
+//	variable i
+//	//	if UseIndra2Structure = 1 we are using Indra2 data, else return all folders 
+//	string result
+//	if (UseIndra2Structure)
+//		if(SlitSmearedData==1)
+//			result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*SMR*", 1)
+//		elseif(SlitSmearedData==2)
+//			tempStr=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*SMR*", 1)
+//			result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*DSM*", 1)+";"
+//			for(i=0;i<ItemsInList(tempStr);i+=1)
+//			//print stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")
+//				if(stringmatch(result, "*"+StringFromList(i, tempStr,";")+"*")==0)
+//					result+=StringFromList(i, tempStr,";")+";"
+//				endif
+//			endfor
+//		else
+//			result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*DSM*", 1)
+//		endif
+//	elseif (UseQRSStructure)
+////		ListOfQFolders=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "q*", 1)
+////		result=IR1_ReturnListQRSFolders(ListOfQFolders,AllowQRDataOnly)
+//			make/N=0/FREE/T ResultingWave
+//			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, "(?i)^r|i$", 1, ResultingWave)
+//			//IR2P_FindFolderWithWaveTypesWV("root:", 10, "*i*", 1, ResultingWave)
+//			result=IR3C_CheckForRightQRSTripletWvs(ResultingWave,AllowQRDataOnly)
+//	elseif (UseResults)
+//		SVAR SelectedResultsTool=root:Packages:Irena:MultiSaPlotFit:SelectedResultsTool
+//		SVAR SelectedResultsType=root:Packages:Irena:MultiSaPlotFit:SelectedResultsType
+//		SVAR ResultsGenerationToUse=root:Packages:Irena:MultiSaPlotFit:ResultsGenerationToUse
+//		if(stringmatch(ResultsGenerationToUse,"Latest"))
+//			result=IN2G_FindFolderWithWvTpsList(StartFolder, 10,SelectedResultsType+"*", 1) 
+//		else
+//			result=IN2G_FindFolderWithWvTpsList(StartFolder, 10,SelectedResultsType+ResultsGenerationToUse, 1) 
+//		endif
+//	else
+//		result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*", 1)
+//	endif
+//	if(stringmatch(";",result[0]))
+//		result = result [1, inf]
+//	endif
+//	return result
+//end
+
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//Function IR3L_SortListOfAvailableFldrs()
+//	
+//	SVAR FolderSortString=root:Packages:Irena:MultiSaPlotFit:FolderSortString
+//	Wave/T ListOfAvailableData=root:Packages:Irena:MultiSaPlotFit:ListOfAvailableData
+//	Wave SelectionOfAvailableData=root:Packages:Irena:MultiSaPlotFit:SelectionOfAvailableData
+//	if(numpnts(ListOfAvailableData)<2)
+//		return 0
+//	endif
+//	Duplicate/Free SelectionOfAvailableData, TempWv
+//	variable i, InfoLoc, j=0
+//	variable DIDNotFindInfo
+//	DIDNotFindInfo =0
+//	string tempstr 
+//	SelectionOfAvailableData=0
+//	if(stringMatch(FolderSortString,"---"))
+//		//nothing to do
+//	elseif(stringMatch(FolderSortString,"Alphabetical"))
+//		Sort /A ListOfAvailableData, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
+//		Sort /A /R ListOfAvailableData, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"_xyz"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+//		endfor
+//		Sort TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"Sxyz_"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
+//		endfor
+//		Sort TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"Reverse Sxyz_"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
+//		endfor
+//		Sort/R TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"_xyzmin"))
+//		Do
+//			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+//				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*min" ))
+//					InfoLoc = i
+//					break
+//				endif
+//			endfor
+//			j+=1
+//			if(j>(numpnts(ListOfAvailableData)-1))
+//				DIDNotFindInfo=1
+//				break
+//			endif
+//		while (InfoLoc<1) 
+//		if(DIDNotFindInfo)
+//			DoALert /T="Information not found" 0, "Cannot find location of _xyzmin information, sorting alphabetically" 
+//			Sort /A ListOfAvailableData, ListOfAvailableData
+//		else
+//			For(i=0;i<numpnts(TempWv);i+=1)
+//				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*min*" ))
+//					TempWv[i] = str2num(ReplaceString("min", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+//				else	//data not found
+//					TempWv[i] = inf
+//				endif
+//			endfor
+//			Sort TempWv, ListOfAvailableData
+//		endif
+//	elseif(stringMatch(FolderSortString,"_xyzpct"))
+//		Do
+//			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+//				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*pct" ))
+//					InfoLoc = i
+//					break
+//				endif
+//			endfor
+//			j+=1
+//			if(j>(numpnts(ListOfAvailableData)-1))
+//				DIDNotFindInfo=1
+//				break
+//			endif
+//		while (InfoLoc<1) 
+//		if(DIDNotFindInfo)
+//			DoAlert/T="Information not found" 0, "Cannot find location of _xyzpct information, sorting alphabetically" 
+//			Sort /A ListOfAvailableData, ListOfAvailableData
+//		else
+//			For(i=0;i<numpnts(TempWv);i+=1)
+//				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*pct*" ))
+//					TempWv[i] = str2num(ReplaceString("pct", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+//				else	//data not found
+//					TempWv[i] = inf
+//				endif
+//			endfor
+//			Sort TempWv, ListOfAvailableData
+//		endif
+//	elseif(stringMatch(FolderSortString,"_xyzC"))
+//		Do
+//			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+//				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*C" ))
+//					InfoLoc = i
+//					break
+//				endif
+//			endfor
+//			j+=1
+//			if(j>(numpnts(ListOfAvailableData)-1))
+//				DIDNotFindInfo=1
+//				break
+//			endif
+//		while (InfoLoc<1) 
+//		if(DIDNotFindInfo)
+//			DoAlert /T="Information not found" 0, "Cannot find location of _xyzC information, sorting alphabetically" 
+//			Sort /A ListOfAvailableData, ListOfAvailableData
+//		else
+//			For(i=0;i<numpnts(TempWv);i+=1)
+//				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*C*" ))
+//					TempWv[i] = str2num(ReplaceString("C", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+//				else	//data not found
+//					TempWv[i] = inf
+//				endif
+//			endfor
+//			Sort TempWv, ListOfAvailableData
+//		endif
+//	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+//		endfor
+//		Sort /R  TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"_xyz.ext"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
+//			TempWv[i] = str2num(StringFromList(ItemsInList(tempstr , "_")-1, tempstr , "_"))
+//		endfor
+//		Sort TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"Reverse _xyz.ext"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
+//			TempWv[i] = str2num(StringFromList(ItemsInList(tempstr , "_")-1, tempstr , "_"))
+//		endfor
+//		Sort /R  TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"_xyz_000"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
+//		endfor
+//		Sort TempWv, ListOfAvailableData
+//	elseif(stringMatch(FolderSortString,"Reverse _xyz_000"))
+//		For(i=0;i<numpnts(TempWv);i+=1)
+//			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-2, ListOfAvailableData[i]  , "_"))
+//		endfor
+//		Sort /R  TempWv, ListOfAvailableData
+//	endif
+//
+//end
+////**************************************************************************************

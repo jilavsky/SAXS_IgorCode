@@ -278,7 +278,7 @@ Function IR2L_MainPanel()
 		Button GetSFHelp,pos={320,468},size={80,15}, proc=IR2L_InputPanelButtonProc,title="S.F. Help", help={"Get Help for Structure factor"}
 
 // Unified controls
-		Button FitRgAndG,pos={200,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit Rg/G bwtn csrs", help={"Do local fit of Gunier dependence between the cursors amd put resulting values into the Rg and G fields"}
+		Button FitRgAndG,pos={200,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit Rg/G bwtn csrs", help={"Do local fit of Guinier dependence between the cursors amd put resulting values into the Rg and G fields"}
 		Button FitPandB,pos={301,320},size={100,15}, proc=IR2L_InputPanelButtonProc,title="Fit P/B bwtn csrs", help={"Do local fit of Powerlaw dependence between the cursors amd put resulting values into the Rg and G fields"}
 
 		CheckBox UF_LinkB,pos={20,328},size={20,16},proc=IR2L_ModelTabCheckboxProc,title="Link B to G/Rg/P?"

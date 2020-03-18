@@ -857,7 +857,6 @@ Function IR1P_DoFitting()
 		Tag/C/W=GeneralGraph/N=$(TagName)/L=2 $NameOfWave(CursorAWave), ((pcsr(A) + pcsr(B))/2),"Volume/Number of scatterers = "+num2str(volume)
 	endif
 	if(cmpstr(FittingSelectedFitFunction,"Porod in loglog")==0)
-		//do line fitting
 		Redimension /N=2 W_coef
 		Redimension/N=1 T_Constraints
 		T_Constraints[0] = {"K1 > 0"}

@@ -90,7 +90,7 @@ Proc IR3W_WAXSPanel()
 		root:Packages:Irena:WAXS:UseQRSdata = 1
 	endif
 	PopupMenu StartFolderSelection,pos={10,70},size={180,15},proc=IR3W_PopMenuProc,title="Start fldr"
-	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:WAXS:DataStartFolder,value= #"\"root:;\"+IR2S_GenStringOfFolders2(root:Packages:Irena:WAXS:UseIndra2Data, root:Packages:Irena:WAXS:UseQRSdata, 2,1)"
+	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:WAXS:DataStartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:WAXS:UseIndra2Data, root:Packages:Irena:WAXS:UseQRSdata, 2,1)"
 	SetVariable FolderNameMatchString,pos={10,95},size={210,15}, proc=IR3W_SetVarProc,title="Folder Match (RegEx)"
 	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:WAXS:DataMatchString
 	PopupMenu SortFolders,pos={10,115},size={180,20},fStyle=2,proc=IR3W_PopMenuProc,title="Sort Folders"

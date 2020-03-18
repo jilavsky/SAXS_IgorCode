@@ -1034,7 +1034,7 @@ Function IN3_Initialize()
 	endif
 	SVAR DsmBackgroundFunction
 	if(strlen(DsmBackgroundFunction)<3)
-		DsmBackgroundFunction = "PowerLaw w flat"
+		DsmBackgroundFunction = "flat"
 	endif
 	NVAR DesmearBckgStart
 	if(DesmearBckgStart<0.01)
