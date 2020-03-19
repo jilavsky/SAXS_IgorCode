@@ -1819,8 +1819,14 @@ Function NI1A_ButtonProc(ctrlName) : ButtonControl
 	//create squared sector graph...
 	if(StringMatch(ctrlName,"CreateSectorGraph"))
 		//call create mask routine here
-		NI1_MakeSectorGraph()
+		NI1_MakeSectorGraph(0)
 	endif
+	if(StringMatch(ctrlName,"CreateSectorGraphTilts"))
+		//call create mask routine here
+		NI1_MakeSectorGraph(1)
+	endif
+
+
 	
 	//print "The processing took : "+num2str((ticks-StartTicks)/60)+" seconds to process" 
 	
@@ -4014,6 +4020,8 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	//tab 6 - sectors for namual processing...
 	Button CreateSectorGraph,pos={20,530},size={160,20},title="Create sector graph"
 	Button CreateSectorGraph,help={"Create graph in of angle vs pixel for manual processing"},proc=NI1A_ButtonProc
+	Button CreateSectorGraphTilts,pos={20,555},size={160,20},title="Create sector graph w/tilts"
+	Button CreateSectorGraphTilts,help={"Create graph in of angle vs pixel for manual processing and account for tilts"},proc=NI1A_ButtonProc
 	SetVariable SectorsNumSect,pos={20,320},size={180,16},title="Number of sectors   "
 	SetVariable SectorsNumSect,help={"How many sectors to use for creating the graph?"}, proc=NI1A_SetVarProcMainPanel
 	SetVariable SectorsNumSect,value= root:Packages:Convert2Dto1D:SectorsNumSect, limits={2,720,1}
@@ -4787,6 +4795,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	SetVariable SectorsStepInAngle,disable=(tabNum!=4 || !DoSectorAverages||!UseSectors), win=NI1A_Convert2Dto1DPanel
 	//tab 5 controls
 	Button CreateSectorGraph,disable=(tabNum!=5), win=NI1A_Convert2Dto1DPanel
+	Button CreateSectorGraphTilts,disable=(tabNum!=5), win=NI1A_Convert2Dto1DPanel
 	SetVariable SectorsNumSect,disable=(tabNum!=5), win=NI1A_Convert2Dto1DPanel
 	SetVariable SectorsSectWidth,disable=(tabNum!=5), win=NI1A_Convert2Dto1DPanel
 	SetVariable SectorsGraphStartAngle,disable=(tabNum!=5), win=NI1A_Convert2Dto1DPanel

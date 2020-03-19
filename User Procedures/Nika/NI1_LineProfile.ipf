@@ -245,7 +245,7 @@ Function NI1_FindFirstLastNotNaNPoint(inputWave, FirstOrLast)
 		while (i<numpnts(inputWave))
 		return i
 	else
-		i=numpnts(inputWave)
+		i=numpnts(inputWave)-1
 		Do
 			if(numtype(inputWave[i])==0)
 				break
@@ -262,7 +262,7 @@ Function NI1_CalculateQdTTHwaves()
 	setDataFolder root:Packages:NI1_ImProcess:LineProfile:
 	
 		wave profile=root:Packages:NI1_ImProcess:LineProfile:profile
-		make/O/N=(numpnts(profile)) qvector, TwoTheta, DspacingWv
+		make/O/N=(numpnts(profile)) qvector, TwoTheta, Dspacing
 		NVAR Wavelength=root:Packages:Convert2Dto1D:Wavelength
 		NVAR PixelSizeX=root:Packages:Convert2Dto1D:PixelSizeX
 		NVAR PixelSizeY=root:Packages:Convert2Dto1D:PixelSizeY
@@ -271,8 +271,8 @@ Function NI1_CalculateQdTTHwaves()
 		//	Qdistribution1D = ((4*pi)/Wavelength)*sin(0.5*Rdistribution1D/SampleToCCDDistance)
 		TwoTheta = 180/pi * asin(p*((PixelSizeX+PixelSizeY)/2) / SampleToCCDDistance)
 		// d = 0.5 * Lambda / sin(theta) = 2 * pi / Q    Q = 2pi/d
-		DspacingWv = 0.5 * Wavelength /sin(TwoTheta * pi/360)
-		qvector = 2 *pi / DspacingWv
+		Dspacing = 0.5 * Wavelength /sin(TwoTheta * pi/360)
+		qvector = 2 *pi / Dspacing
 	setDataFolder OldDf
 
 end

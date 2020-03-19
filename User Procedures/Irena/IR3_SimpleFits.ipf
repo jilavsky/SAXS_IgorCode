@@ -99,7 +99,9 @@ Function IR3J_SimpleFitsPanelFnct()
 
 	Button GetTableWithResults,pos={280,590},size={180,20}, proc=IR3J_ButtonProc,title="Get Table With Results", help={"Open Table with results for current Model"}
 
-	Button DeleteOldResults,pos={280,620},size={180,20}, proc=IR3J_ButtonProc,title="Delete Existing Results", help={"Delete results for the current model"}
+	Button GetNotebookWithResults,pos={280,620},size={180,20}, proc=IR3J_ButtonProc,title="Get Notebook With Results", help={"Open Notebook with results for current Model"}
+
+	Button DeleteOldResults,pos={280,690},size={180,20}, proc=IR3J_ButtonProc,title="Delete Existing Results", help={"Delete results for the current model"}, fColor=(34952,34952,34952)
 
 
 //	Display /W=(521,10,1183,400) /HOST=# /N=LogLogDataDisplay
@@ -544,21 +546,26 @@ Function IR3J_AppendDataToGraphModel()
 	strswitch(SimpleModel)	// string switch
 		case "Guinier":			// execute if case matches expression
 				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+				SetAxis/A/W=IR3J_LinDataDisplay 
 				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
 				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 			break		// exit from switch
 		case "Sphere":			// execute if case matches expression
 				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+				SetAxis/A/W=IR3J_LinDataDisplay
 				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
 				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 			break		// exit from switch
 		case "Spheroid":			// execute if case matches expression
 				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+				SetAxis/A/W=IR3J_LinDataDisplay
 				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
 				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 			break		// exit from switch
 		case "Porod":	// execute if case matches expression
 				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+				SetAxis/A/W=IR3J_LinDataDisplay
+				SetAxis/W=IR3J_LinDataDisplay left 0,*
 				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Int * Q\\S4"
 				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S4\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-4\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 			break
@@ -667,6 +674,9 @@ Function IR3J_ButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlName,"DeleteOldResults"))
 				IR3J_DeleteExistingModelResults()	
+			endif
+			if(stringmatch(ba.ctrlName,"GetNotebookWithResults"))
+				IR1_CreateResultsNbk()
 			endif
 
 
@@ -782,7 +792,7 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	Wave LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
 	Wave LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
-	variable tempMaxQ, tempMaxQY
+	variable tempMaxQ, tempMaxQY, tempMinQY
 	
 	//check if user removed cursor from graph, in which case do nothing for now...
 	if(numtype(PointNumber)==0)
@@ -812,8 +822,10 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 					cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
 					tempMaxQ = LinModelDataQWave[DataQEndPoint]
 					SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
-					tempMaxQY = LinModelDataIntWave[DataQEndPoint]
-					SetAxis/W=IR3J_LinDataDisplay left 0,tempMaxQY*1.5
+					tempMaxQY = 0.8*LinModelDataIntWave[DataQstartPoint]
+					tempMinQY = 1.2*LinModelDataIntWave[DataQEndPoint]
+					//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
+					SetAxis/W=IR3J_LinDataDisplay left tempMinQY, tempMaxQY
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
 				checkDisplayed /W=IR3J_LogLogDataDisplay OriginalDataIntWave

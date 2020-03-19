@@ -2909,7 +2909,7 @@ Function IR3M_DataManipulationIIPanel()
 	CheckBox NormalizeData,pos={15,340},size={80,14},title="Normalize Data?",proc= IR3M_CheckProc
 	CheckBox NormalizeData,variable= root:Packages:DataManipulationII:NormalizeData, help={"Normalize data to another data set or value"}
 	CheckBox AverageWaves,pos={15,355},size={80,14},title="Average Waves?",proc= IR3M_CheckProc
-	CheckBox AverageWaves,variable= root:Packages:DataManipulationII:AverageWaves, help={"Average waves using Q values of the first selected wave"}
+	CheckBox AverageWaves,variable= root:Packzages:DataManipulationII:AverageWaves, help={"Average waves using Q values of the first selected wave"}
 	CheckBox AverageNWaves,pos={15,370},size={80,14},title="Average every N Waves?",proc= IR3M_CheckProc
 	CheckBox AverageNWaves,variable= root:Packages:DataManipulationII:AverageNWaves, help={"Average every N selected waves using Q values of the first selected wave"}
 	SetVariable NforAveraging,variable= root:Packages:DataManipulationII:NforAveraging,noProc, frame=1, disable=!(AverageNWaves)
@@ -2934,7 +2934,7 @@ Function IR3M_DataManipulationIIPanel()
 	CheckBox ErrorUseStdErOfMean,pos={250,405},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
 	CheckBox ErrorUseStdErOfMean,variable= root:Packages:DataManipulationII:ErrorUseStdErOfMean, help={"Generate Standard error of mean of each point?"}, mode=1
 	
-	CheckBox NormalizeDataToData,pos={15,405},size={80,14},title="Normalize to Data?",proc= IR3M_CheckProc, disable=!(NormalizeData)
+	CheckBox NormalizeDataToData,pos={15,415},size={80,14},title="Normalize to Data?",proc= IR3M_CheckProc, disable=!(NormalizeData)
 	CheckBox NormalizeDataToData,variable= root:Packages:DataManipulationII:NormalizeDataToData, help={"Normalize to value obtained fro another data set"}
 	SetVariable NormalizeDataToValue,variable= root:Packages:DataManipulationII:NormalizeDataToValue,noproc, frame=1, disable=!(NormalizeData)
 	SetVariable NormalizeDataToValue,pos={150,405},size={180,25},title="Normalization value =", help={"Value for normalziation"}//, fSize=10,fstyle=1,labelBack=(65280,21760,0)

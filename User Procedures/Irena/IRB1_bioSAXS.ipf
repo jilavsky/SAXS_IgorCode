@@ -84,6 +84,52 @@ Function IRB1_DataManipulation()
 	endif
 end
 
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//				This is customized Merge multiple data sets for BioSAXS Data 
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function IRB1_MergeMultipleData()
+		IR3D_DataMerging()
+		//tweak values for users
+		NVAR UseQRSdata1 = root:Packages:Irena:SASDataMerging:UseQRSdata1
+		UseQRSdata1 = 1
+		NVAR UseQRSdata2 = root:Packages:Irena:SASDataMerging:UseQRSdata2
+		UseQRSdata1 = 2
+		SVAR MatchStr1 = root:Packages:Irena:SASDataMerging:Data1MatchString
+		SVAR MatchStr2 = root:Packages:Irena:SASDataMerging:Data2MatchString
+		MatchStr1 = "sub"
+		MatchStr2 = "sub"
+		IR3D_UpdateListOfAvailFiles(1)
+		IR3D_UpdateListOfAvailFiles(2)
+		IR3D_RebuildListboxTables()
+		
+end
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+//				This is customized ASCII export for BioSAXS Data 
+//************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function IRB1_ASCIIExport()
+		IR2E_UniversalDataExport()
+		//tweak values for users
+		NVAR useQRS=root:Packages:IR2_UniversalDataExport:UseQRSdata
+		NVAR useResults=root:Packages:IR2_UniversalDataExport:UseResults
+		NVAR useUSAXS=root:Packages:IR2_UniversalDataExport:UseIndra2data
+		useQRS=1
+		useUSAXS = 0
+		useResults = 0
+		SVAR FolderMatchStr = root:Packages:IrenaControlProcs:UnivDataExportPanel:FolderMatchStr
+		FolderMatchStr = "sub"
+		
+		
+end
 
 
 //************************************************************************************************************
@@ -432,7 +478,7 @@ Function IRB1_DataManPanelFnct()
 	SetVariable BufferScalingFraction,pos={270,275},size={220,15}, proc=IRB1_SetVarProc,title="Scale buffer =", noedit=0, frame=1, limits={0,10,0.002}
 	Setvariable BufferScalingFraction, variable=root:Packages:Irena:BioSAXSDataMan:BufferScalingFraction, bodyWidth=100
 
-	Button SubtractBuffer,pos={280,300},size={190,20}, proc=IRB1_DataManButtonProc,title="4. Subtract Buffer", help={"Subtract Buffer from data and save with _sub in name"}
+	Button SubtractBuffer,pos={280,300},size={190,20}, proc=IRB1_DataManButtonProc,title="4. Subtract Buffer & Save", help={"Subtract Buffer from data and save with _sub in name"}
 	TitleBox AverageInstructions9 title="\Zr120Or, select many and process all ",size={330,15},pos={270,350},frame=0,fColor=(0,0,65535),labelBack=0
 	Button SubtractBufferMany,pos={280,375},size={190,20}, proc=IRB1_DataManButtonProc,title="Sub. Buffer On Selected", help={"Subtract Buffer from all selected data and save with _sub in name"}
 

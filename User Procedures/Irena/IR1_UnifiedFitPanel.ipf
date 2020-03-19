@@ -1,8 +1,8 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.26
+#pragma version=2.27
 
-Constant IR1AversionNumber=2.26
+Constant IR1AversionNumber=2.27
 
 
 //*************************************************************************\
@@ -11,6 +11,7 @@ Constant IR1AversionNumber=2.26
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.27 added button to open wikipedia page. 
 //2.26 added info on K value to panel. Need to force reopen now, unluckily. 
 //2.25 combined with IR1_Unified_Panel_Fncts.ipf and removed that from code
 //2.23 removed Execute for main panel, added button to move around the levels if users needs...
@@ -460,7 +461,7 @@ Function IR1A_ControlPanelFnct()
 	IR2C_AddDataControls("Irena_UnifFit","IR1A_ControlPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 1,1)
 
 	SetVariable RebinDataTo,limits={0,1000,0},variable= root:Packages:Irena_UnifFit:RebinDataTo, noproc
-	SetVariable RebinDataTo,pos={290,130},size={100,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
+	SetVariable RebinDataTo,pos={290,140},size={100,15},title="Rebin to:", help={"To rebin data on import, set to integer number. 0 means no rebinning. "}
 	TitleBox MainTitle title="\Zr200Unified fit input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,181},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info1 title="\Zr150Data input",pos={10,30},frame=0,fstyle=1, fixedSize=1,size={80,20},fColor=(0,0,52224)
@@ -480,7 +481,8 @@ Function IR1A_ControlPanelFnct()
 	SetVariable SubtractBackground,limits={0,Inf,0.1},value= root:Packages:Irena_UnifFit:SubtractBackground
 	SetVariable SubtractBackground,pos={110,162},size={150,16},title="Subtract backg.",proc=IR1A_PanelSetVarProc, help={"Subtract flat background from data"}
 
-	Button GetHelp,pos={305,105},size={80,15},fColor=(65535,32768,32768), proc=IR1A_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetHelp,pos={305,100},size={80,15},fColor=(65535,32768,32768), proc=IR1A_InputPanelButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetWiki,pos={305,120},size={80,15},fColor=(65535,32768,32768), proc=IR1A_InputPanelButtonProc,title="Get wiki", help={"Open wikipedia page for this tool"}
 
 	//Modeling input, common for all distributions
 	PopupMenu NumberOfLevels,pos={200,190},size={170,21},proc=IR1A_PanelPopupControl,title="Number of levels :", help={"Select number of levels to use, NOTE that the level 1 has to have the smallest Rg"}
@@ -3002,6 +3004,11 @@ Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 		//Open www manual with the right page
 		IN2G_OpenWebManual("Irena/UnifiedFit.html")
 	endif
+	if(cmpstr(ctrlName,"GetWiki")==0)
+		//Open wikipedia with the right page
+		BrowseURL "https://en.wikipedia.org/wiki/Unified_scattering_function"
+	endif
+
 	if(cmpstr(ctrlName,"CopyMoveLevel")==0)
 		 IR1A_CopySwapUnifiedLevel()
 	endif

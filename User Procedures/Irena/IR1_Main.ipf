@@ -225,7 +225,7 @@ Menu "SAS"
 			"Show SAS logbook", IR1_PullUpLoggbook()
 			help = {"Some of these macros make ongoing record of what is done, you'll find it here..."}
 			"Export To XLS File Panel", ExportToXLSFilePanel()
-			help={"This is tool for Unified fit, made by Gragg Beaucage. For help, contact him..."}
+			help={"This is tool for Unified fit, made by Gregg Beaucage. For help, contact him..."}
 		End
 		Submenu "Help, About, Manuals, Remove Irena"
 			"About", IR1_AboutPanel()
@@ -238,7 +238,7 @@ Menu "SAS"
 			"Open Irena Web page ", IR2_OpenIrenaPage()
 			help={"Opens Irena web page in the browser "}
 			"Open Irena web manual", IN2G_OpenWebManual("")
-			help={"Opens Irena web manual in default web bropwser."}
+			help={"Opens Irena web manual in default web browser."}
 			"Open Form and Structure Factor description", IR2T_LoadFFDescription()
 			help={"Opens Description of included form factors and structure factors"}
 			"Open Irena manuscript", IR2_GetIrenaManuscript()
@@ -266,7 +266,15 @@ Menu "BioSAXS"
 	help={"Tool to import 1D bioSAXS data"}
 	"Average and Subtract Data", IRB1_DataManipulation()
 	help={"Tools to average many data sets and subtract buffer"}
-	
+	"Plot data", IR3L_MultiSaPlotFit()
+	help={"Multi sample ploting tool, same as in SAS menu."}
+	"Simple fits", IR3J_SimpleFits()
+	help={"Tool to fit data with Guinier, Porod, SphereFF, SpheroidFF etc."}
+	"Merge SAXS-WAXS data", IRB1_MergeMultipleData()
+	help={"Merge data sets - two segments at different q ranges"}
+	"Export ASCII data", IRB1_ASCIIExport()
+	help={"Export ASCII data as files"}
+
 end
 
 
