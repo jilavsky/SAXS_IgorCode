@@ -411,8 +411,10 @@ Function IR3D_RebuildListboxTables()
 	redimension/N=(length,2) ListOfAvailableData, SelectionOfAvailableData
 	SelectionOfAvailableData = 0
 	ListOfAvailableData = ""
-	ListOfAvailableData[][0] = ListOfAvailableData1[p]
-	ListOfAvailableData[][1] = ListOfAvailableData2[p]
+	if(length>0)
+		ListOfAvailableData[][0] = ListOfAvailableData1[p]
+		ListOfAvailableData[][1] = ListOfAvailableData2[p]
+	endif
 end
 //**************************************************************************************
 //**************************************************************************************
