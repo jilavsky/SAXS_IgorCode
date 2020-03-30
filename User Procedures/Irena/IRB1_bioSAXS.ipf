@@ -228,16 +228,6 @@ Function IRB1_ImportBioSAXSASCIIDataFnct()
 	Button ImportSelectedData,pos={230,400},size={180,20}, proc=IRB1_ButtonProc,title="Import Selected Data"
 	Button ImportSelectedData,help={"Test how if import can be succesful and how many waves are found"}
 	Button GetHelp,pos={335,50},size={80,15},fColor=(65535,32768,32768), proc=IRB1_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-////
-////
-////
-//	SetVariable FoundNWaves,pos={239,296},size={160,19},title="Found cols.:  ",proc=IR1I_SetVarProc
-//	SetVariable FoundNWaves,help={"This is how many columns were found in the tested file"}, disable=2
-//	SetVariable FoundNWaves,limits={0,Inf,0},value= root:Packages:ImportData:FoundNWaves
-//
-//	Button Plot,pos={330,317},size={80,15}, proc=IR1I_ButtonProc,title="Plot"
-//	Button Plot,help={"Preview selected file."}
-//
 
 end
 //**********************************************************************************************************
@@ -301,7 +291,7 @@ Function IRB1_ButtonProc(ba) : ButtonControl
 				IRB1_PreviewDataFnct()
 			endif
 			if(stringmatch(ba.ctrlName,"GetHelp"))
-					IN2G_OpenWebManual("Irena/ImportData.html")				//fix me!!			
+					IN2G_OpenWebManual("Irena/ImportDataBio.html")				//fix me!!			
 			endif
 			
 			break

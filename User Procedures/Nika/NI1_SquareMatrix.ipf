@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.04
+#pragma version=1.05
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.05 fixes for ImageLineProfile which seems to produce sometimes points at non exptected location. This is actually documented feature.  
 //1.04 fixed /NTHR=1 to /NTHR=0
 //1.03 fixed masking which was failing due to bug. 
 //1.02 added mutlithread and MatrixOp/NTHR=1 where seemed possible to use multile cores
@@ -149,7 +150,7 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 	Duplicate/O CCDImageToConvert, MaskedImage	//working waves
 	Redimension/S MaskedImage					//to use NaN as masked point, this has to be single precision
 	Make/O/N=(MaxDist,SectorsNumSect) SquareMap			//create angle vs point number squared intensity wave
-	SquareMap = 0
+	SquareMap = NaN
 	Make/O/N=(MaxDist) PixelAddressesX, PixelAddressesY, PathWidth, PathWidthTemp	//create addresses and width for path around which to get profile 
 	PathWidth = 2* p * tan(AngleWidth*(pi/180))		//create the path profile width - same for all sectors
 
@@ -164,20 +165,25 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 		PathWidthTemp = PathWidth
 		ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskedImage , widthWave=PathWidthTemp
 		Wave W_ImageLineProfile
-			//				if(i>268&&i<272)  debug for Igor bug... 
-			//					DUplicate/O PixelAddressesX, $("PixelAddressesX"+num2str(i))
-			//					DUplicate/O PixelAddressesY, $("PixelAddressesY"+num2str(i))
-			//					Duplicate/O W_ImageLineProfile, $("LineProfileTest"+num2str(i))
-			//				endif		
-		Redimension /N=(MaxDist) W_ImageLineProfile			//fix for rtGlobals=3
-		SquareMap[][i] = W_ImageLineProfile[p]
+		//this is collected at points: W_LineProfileX and W_LineProfileY, scaled distance measured along the path is stored in the wave W_LineProfileDisplacement
+		// W_LineProfileDisplacement is needed for placing the points correctly... 
+		Wave W_LineProfileDisplacement
+		Redimension /N=(MaxDist) W_ImageLineProfile		//fix for rtGlobals=3
+		//this was failing sometimes because in some cases ImageLineProfile generates points at different distcances than expected. 
+		// we need to assign intensities to proper distances... 
+		//so this does not work sometimes: 		SquareMap[][i] = W_ImageLineProfile[p]
+		//limited range below is needed to avoid bombing on index out of range... First few and last points are rarely needed,
+		//code needed to fix this would be ugly and slow. 
+		multithread SquareMap[2,MaxDist-10][i] = W_ImageLineProfile[BinarySearchInterp(W_LineProfileDisplacement,p)]
 		if(recalculateMask)
 			ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskS , widthWave=PathWidthTemp
 			Wave W_ImageLineProfile
+			Wave W_LineProfileDisplacement
 			W_ImageLineProfile = W_ImageLineProfile[p]>0.9999 ? W_ImageLineProfile[p] : NaN
  			//Redimension /N=(MaxDist) W_ImageLineProfile
 			//W_ImageLineProfile[tempVal,inf ] = NaN
-			MaskSquareImage[][i] = W_ImageLineProfile[p]
+			//MaskSquareImage[][i] = W_ImageLineProfile[p]
+			MaskSquareImage[2,MaxDist-10][i] = W_ImageLineProfile[BinarySearchInterp(W_LineProfileDisplacement,p)]
 		endif
 	endfor	
 	Note SquareMap, NewNote
@@ -284,7 +290,7 @@ Function NI1_MakeSqMatrixOfLineoutswtilts(SectorsNumSect,AngleWidth,SectorsGraph
 	Duplicate/O CCDImageToConvert, MaskedImage	//working waves
 	Redimension/S MaskedImage					//to use NaN as masked point, this has to be single precision
 	Make/O/N=(MaxDist,SectorsNumSect) SquareMap,Qbin4SquareMap,SquareMap4Qbin			//create angle vs point number squared intensity wave
-	SquareMap = 0
+	SquareMap = NaN
 	Make/O/N=(MaxDist) PixelAddressesX, PixelAddressesY, PathWidth, PathWidthTemp	//create addresses and width for path around which to get profile 
 	PathWidth = 2* p * tan(AngleWidth*(pi/180))		//create the path profile width - same for all sectors
 
@@ -298,26 +304,36 @@ Function NI1_MakeSqMatrixOfLineoutswtilts(SectorsNumSect,AngleWidth,SectorsGraph
 		PixelAddressesY=BeamCenterY - p * sin((SectorsGraphStartAngle+(i*AngleStep))*(pi/180))		// pixel size in both directions
 		PathWidthTemp = PathWidth
 		ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskedImage , widthWave=PathWidthTemp
-		
-		
 		Wave W_ImageLineProfile
-		Redimension /N=(MaxDist) W_ImageLineProfile			//fix for rtGlobals=3
-					//		W_ImageLineProfile[tempVal,inf ] = NaN
-		SquareMap[][i] = W_ImageLineProfile[p]
+		//this is collected at points: W_LineProfileX and W_LineProfileY, scaled distance measured along the path is stored in the wave W_LineProfileDisplacement
+		// W_LineProfileDisplacement is needed for placing the points correctly... 
+		Wave W_LineProfileDisplacement
+		Wave W_LineProfileX
+		Wave W_LineProfileY
+		Redimension /N=(MaxDist) W_ImageLineProfile, W_LineProfileY, W_LineProfileX		//fix for rtGlobals=3
+		//this failed because in some cases ImageLineProfile generates points at different distcances than expected. 
+		// we need to assign intnesities to proper distances... 
+		//SquareMap[][i] = W_ImageLineProfile[p]
+		//limted reange below is needed to avoid boming on index out of range... 
+		SquareMap[2,MaxDist-10][i] = W_ImageLineProfile[BinarySearchInterp(W_LineProfileDisplacement,p)]
+		//SquareMap[][i] = W_ImageLineProfile[p]
 		//josh add:  make an analogous qmap wave
 		STRUCT NikadetectorGeometry d
 		NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength	
 		NI2T_ReadOrientationFromGlobals(d)
 		NI2T_SaveStructure(d)
-		multithread Qbin4SquareMap[][i] = ((4*pi)/Wavelength)*sin(NI2T_pixelTheta(d,PixelAddressesX[p],PixelAddressesY[p]))
+		multithread Qbin4SquareMap[][i] = ((4*pi)/Wavelength)*sin(NI2T_pixelTheta(d,W_LineProfileX[p],W_LineProfileY[p]))
 		//josh done
 		if(recalculateMask)
 			ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskS , widthWave=PathWidthTemp
 			Wave W_ImageLineProfile
+			Wave W_LineProfileDisplacement
 			W_ImageLineProfile = W_ImageLineProfile[p]>0.9999 ? W_ImageLineProfile[p] : NaN
+			Redimension /N=(MaxDist) W_ImageLineProfile		//fix for rtGlobals=3
  			//Redimension /N=(MaxDist) W_ImageLineProfile
 			//W_ImageLineProfile[tempVal,inf ] = NaN
-			MaskSquareImage[][i] = W_ImageLineProfile[p]
+			//MaskSquareImage[][i] = W_ImageLineProfile[p]
+			MaskSquareImage[2,MaxDist-10][i] = W_ImageLineProfile[BinarySearchInterp(W_LineProfileDisplacement,p)]
 		endif
 	endfor	
 	
