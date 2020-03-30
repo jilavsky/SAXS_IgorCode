@@ -483,7 +483,8 @@ Function IR1I_RecordResults(selectedFile)
 	string selectedFile	//before or after - that means fit...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:ImportData
 
 	SVAR DataPathName=root:Packages:ImportData:DataPathName

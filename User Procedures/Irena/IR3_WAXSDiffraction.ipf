@@ -310,7 +310,8 @@ Function IR3W_InitWAXS()
 
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -489,7 +490,8 @@ Function IR3W_UpdateListOfAvailFiles()
 
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:WAXS
 	
 	NVAR UseIndra2Data=root:Packages:Irena:WAXS:UseIndra2Data
@@ -559,9 +561,10 @@ Function IR3W_SortListOfAvailableFldrs()
 	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Sxyz_"))
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -709,9 +712,10 @@ Function IR3W_SortListOfAvailableFldrs()
 			Sort/R TempWv, ListOfAvailableData
 		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort /R  TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz.ext"))
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -792,7 +796,8 @@ end
 
 Function/S IR3W_InitMPF2FromMenuString()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:MultiPeakFit2
 	String theList = "Start Fresh;"
 	if(DataFolderExists("root:Packages:MultiPeakFit2:")) 
@@ -970,7 +975,8 @@ Function IR3W_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
 	//IR3D_SetSavedNotSavedMessage(0)
 
@@ -1117,7 +1123,8 @@ end
 //Function IR3W_CreateLinearizedData()
 //
 //	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	string oldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder root:Packages:Irena:WAXS					//go into the folder
 //	Wave DataIntWave=root:Packages:Irena:WAXS:DataIntWave
 //	Wave DataQWave=root:Packages:Irena:WAXS:DataQWave
@@ -1208,7 +1215,8 @@ end
 Function IR3W_AddBackgroundToGraph()
 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		string OldDf=GetDataFOlder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFOlder root:Packages:Irena:WAXS:
 		NVAR  DisplayBackg = root:Packages:Irena:WAXS:DisplayDataBackground
 		NVAR  Energy = root:Packages:Irena:WAXS:Energy
@@ -1514,7 +1522,8 @@ Function IR3W_MPF2CreateBckgParTable()
 
 	//string WhichUnit		//Angle, - use only Dspacing
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string NewGraphName
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
 	if(StringMatch(MPF2PlotFolderStart, "---") )
@@ -1582,7 +1591,8 @@ end
 Function IR3W_MPF2CreateAllParTable()
 	//string WhichUnit		//Angle, - use only Dspacing
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string NewGraphName
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
 	if(StringMatch(MPF2PlotFolderStart, "---") )
@@ -1780,7 +1790,8 @@ Function IR3W_MPF2PanelHookFunction(s)
 				TitleBox Info6,fSize=12,win=IR3W_WAXSPanel, disable=(tab!=0)
 				//Get User comment and store it in IrenaUserComment
 				NVAR CurrentSetNumber=root:Packages:MultiPeakFit2:currentSetNumber
-				string OldDf=GetDataFolder(1)
+				DFref oldDf= GetDataFolderDFR()
+
 				if(DataFolderExists("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(CurrentSetNumber)))
 					setDataFolder $("root:Packages:MultiPeakFit2:MPF_SetFolder_"+num2str(CurrentSetNumber))
 					string UserComment=""
@@ -1901,7 +1912,8 @@ static function IR3W_SaveMultiPeakResults()
 		SVAR MultiFitResultsFolder = root:Packages:Irena:WAXS:MultiFitResultsFolder
 		SVAR DataFolderName = root:Packages:Irena:WAXS:DataFolderName
 		NVAR Wavelength = root:Packages:Irena:WAXS:Wavelength
-		string OldDf=GetDataFOlder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		if (cmpstr(MultiFitResultsFolder[strlen(MultiFitResultsFolder)-1],":")!=0)
 			MultiFitResultsFolder+=":"
 		endif
@@ -2424,7 +2436,8 @@ Function/S IR3W_PlotUpdateListsOfResults(ReturnWhat)
 	string ReturnWhat
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	if(!DataFolderExists("root:WAXSFitResults"))
 		return ""
 	endif
@@ -2454,7 +2467,8 @@ end
 
 Function IR3W_MPF2PlotPeakGraph()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
 	if(StringMatch(MPF2PlotFolderStart, "---") )
 		return 0
@@ -2526,7 +2540,8 @@ end
 Function IR3W_MPF2PlotPeakParameters(WhichUnit)
 	string WhichUnit		//Angle, Dspacing
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string NewGraphName
 	SVAR MPF2PlotFolderStart = root:Packages:Irena:WAXS:MPF2PlotFolderStart
 	if(StringMatch(MPF2PlotFolderStart, "---") )
@@ -2718,7 +2733,8 @@ end
 
 Function IR3W_PDF4AddManually()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string NewCardFullName
 	KillWIndow/Z JCPDS_Input
  	NewDataFolder/O/S root:WAXS_PDF
@@ -2788,7 +2804,8 @@ end
 Function IR3W_ImportAMSData()
 	//for data from http://rruff.geo.arizona.edu/AMS/amcsd.php
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string NewCardFullName
  	NewDataFolder/O/S root:WAXS_PDF
 	//Get the file to read:
@@ -2918,7 +2935,8 @@ end
 
 Function IR3W_ImportPDF4xmlFile()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string NewCardFullName
 	KillWIndow/Z JCPDS_Input
  	NewDataFolder/O/S root:WAXS_PDF
@@ -3111,7 +3129,8 @@ end
 
 Function IR3W_UpdatePDF4OfAvailFiles()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string AvailableCards=""
 	string AvailableCardsHKL=""
 	if(DataFolderExists("root:WAXS_PDF" ))
@@ -3287,7 +3306,8 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	string cardname
 	variable V_Red, V_Green, V_Blue
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
 	wave TheCard=$("root:WAXS_PDF:"+possiblyquotename(CardName))
 	wave/T TheCardHKL=$("root:WAXS_PDF:"+possiblyquotename(CardName[0,23]+"_hklStr"))
@@ -3339,7 +3359,8 @@ end
 //**************************************************************************************
 //**************************************************************************************
 Function IR3W_PDF4SaveLoadDifPtnPnl()
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SetDataFolder root:Packages:Irena:WAXS:
 	string PathToFiles=FunctionPath("")
@@ -3412,7 +3433,8 @@ Function IR3W_PDF4ButtonProc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ctrlName=ba.ctrlName
 	variable i
 	switch( ba.eventCode )
@@ -3623,7 +3645,8 @@ Function IR3W_PDF4readPDFfromXML(NewFileName)
 		if(!DataFolderExists("root:WAXS_PDF"))
 			abort
 		endif
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:WAXS_PDF
 		PathInfo WAXSPDF4Path
 		if(V_Flag==0)
@@ -3707,7 +3730,8 @@ Function IR3W_PDF4parseXMLFileLine(line,InternalName)
 	if(!DataFolderExists("root:WAXS_PDF"))
 		abort
 	endif
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:WAXS_PDF
 	InternalName  = cleanupname(InternalName,0)
 	wave/Z ww=$(InternalName)
@@ -3756,7 +3780,8 @@ end
 //
 //Function IR3W_PDF4AddFromLaueGo()
 //	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	String OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	NewDataFolder/O/S root:WAXS_PDF 
 //	
 //	DoWindow LatticeSet
@@ -3880,7 +3905,8 @@ end
 //	
 //	String abortMessage	//HR Used if we have to abort because of an unexpected error
 //	
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	//create location for the results waves...
 //	NewDataFolder/O/S root:Packages
 //	NewDataFolder/O/S root:Packages:UseProcedureFiles

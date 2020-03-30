@@ -275,7 +275,8 @@ end
 
 Function  IR1K_LoadDataToMatrix()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 
 	NVAR StoreCompoundsInIgorExperiment = root:Packages:ScatteringContrast:StoreCompoundsInIgorExperiment
@@ -322,7 +323,8 @@ end
 
 Function IR1K_SaveDataCompound()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 
 	string CompoundDescription=""
@@ -964,7 +966,8 @@ End
 Function IR1K_InitializeScattContrast()
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:ScatteringContrast
@@ -1096,7 +1099,8 @@ end
 //
 Function IR1K_DefaultValues()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	SetDataFolder root:Packages:ScatteringContrast
 	
@@ -1142,7 +1146,8 @@ End
 //
 Function IR1K_InitCalculatorExportDta()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//create if does not exist the internal place for styles
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:ScatteringContrast
@@ -1193,7 +1198,8 @@ end
 ////**********************************************************************************************************
 Function IR1K_UpdateCalcExportDta()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 	//create if does not exist the internal place for styles
 	
@@ -1237,7 +1243,8 @@ end
 //
 Function  IR1K_LoadDataCompound()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 
 	NVAR Density=root:Packages:ScatteringContrast:Density
@@ -1312,7 +1319,8 @@ end
 //
 Function  IR1K_CleanCompoundTool()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 
 	NVAR Density=root:Packages:ScatteringContrast:Density
@@ -1370,7 +1378,8 @@ end
 //
 Function  IR1K_DeleteDataCompound()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 
 
@@ -2306,7 +2315,8 @@ EndMacro
 
 Function IR1K_SetCompounds()
 
-	string oldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:ScatteringContrast
 	SVAR Anom_Compound1=root:Packages:ScatteringContrast:Anom_Compound1
 	SVAR Anom_Compound2=root:Packages:ScatteringContrast:Anom_Compound2
@@ -2342,7 +2352,8 @@ end
 Function IR1K_Calculate(which)
 	variable which		//this is which compound to calculate, yet to be decided which form this will be in...
 	
-	string oldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:ScatteringContrast
 
 	NVAR Anom_UseSingleEnergy=root:Packages:ScatteringContrast:Anom_UseSingleEnergy
@@ -2707,7 +2718,8 @@ end
 Function  IR1K_AnomLoadDataCom(which)
 	variable which
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:ScatteringContrast
 	SVAR Anom_Compound=$("root:Packages:ScatteringContrast:Anom_Compound"+num2str(which))
 	NVAR Density=root:Packages:ScatteringContrast:Density

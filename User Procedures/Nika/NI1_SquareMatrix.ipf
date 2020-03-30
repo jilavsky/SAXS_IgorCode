@@ -164,8 +164,12 @@ Function NI1_MakeSqMatrixOfLineouts(SectorsNumSect,AngleWidth,SectorsGraphStartA
 		PathWidthTemp = PathWidth
 		ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskedImage , widthWave=PathWidthTemp
 		Wave W_ImageLineProfile
+			//				if(i>268&&i<272)  debug for Igor bug... 
+			//					DUplicate/O PixelAddressesX, $("PixelAddressesX"+num2str(i))
+			//					DUplicate/O PixelAddressesY, $("PixelAddressesY"+num2str(i))
+			//					Duplicate/O W_ImageLineProfile, $("LineProfileTest"+num2str(i))
+			//				endif		
 		Redimension /N=(MaxDist) W_ImageLineProfile			//fix for rtGlobals=3
-					//		W_ImageLineProfile[tempVal,inf ] = NaN
 		SquareMap[][i] = W_ImageLineProfile[p]
 		if(recalculateMask)
 			ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskS , widthWave=PathWidthTemp

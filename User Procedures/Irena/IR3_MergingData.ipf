@@ -249,7 +249,8 @@ End
 Function IR3D_InitDataMerging()	
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -419,7 +420,8 @@ end
 Function IR3D_UpdateListOfAvailFiles(WhichOne)
 	variable WhichOne
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:SASDataMerging
 	
 	NVAR UseIndra2Data=$("root:Packages:Irena:SASDataMerging:UseIndra2Data"+num2str(WhichOne))
@@ -985,7 +987,8 @@ Function IR3D_CopyAndAppendData(Data1or2,FolderNameStr)
 	variable Data1or2			//set to 1 for Data1, 2 for Data2
 	string FolderNameStr
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena:SASDataMerging					//go into the folder
 	IR3D_SetSavedNotSavedMessage(0)
 	
@@ -1449,9 +1452,10 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz_string"))
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -1555,9 +1559,10 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 			Sort TempWv, ListOfAvailableData
 		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort /R  TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz.ext"))
 		For(i=0;i<numpnts(TempWv);i+=1)

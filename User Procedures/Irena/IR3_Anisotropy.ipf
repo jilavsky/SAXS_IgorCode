@@ -149,7 +149,8 @@ Function IR3N_AniSysButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
-			string oldDf=GetDataFolder(1)
+			DFref oldDf= GetDataFolderDFR()
+
 			setDataFolder root:Packages:AnisotropicSystems
 	
 			if (cmpstr(ba.ctrlName,"DrawGraphs")==0)
@@ -243,7 +244,8 @@ static Function IR3N_SaveResultsToNotebook()
 
 	IR1_CreateResultsNbk()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:AnisotropicSystems
 
 	SVAR DataFolderName=root:Packages:AnisotropicSystems:DataFolderName
@@ -284,7 +286,8 @@ end
 //******************************************************************************************************************************************************
 
 static Function IR3N_FitPeakOnDataData()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:AnisotropicSystems
 
 	wave/Z OriginalIntensity=root:Packages:AnisotropicSystems:OriginalIntensity
@@ -399,7 +402,8 @@ end
 ///******************************************************************************************
 
 STATIC Function IR3N_FitHOPOnDataData()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:AnisotropicSystems
 
 	wave/Z OriginalIntensity=root:Packages:AnisotropicSystems:OriginalIntensity
@@ -515,7 +519,8 @@ end
 static Function IR3N_CopyAndGraphInputData()
 	//this function graphs data into the various graphs as needed
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:AnisotropicSystems
 	SVAR DataFolderName=root:Packages:AnisotropicSystems:DataFolderName
 	SVAR IntensityWaveName=root:Packages:AnisotropicSystems:IntensityWaveName
@@ -608,7 +613,8 @@ end
 static Function IR3N_InitAnisotropicSystems()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:AnisotropicSystems
 	string/g ListOfVariables

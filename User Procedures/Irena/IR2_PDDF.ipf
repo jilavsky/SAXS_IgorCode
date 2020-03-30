@@ -94,9 +94,10 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function IR2Pr_InitializePDDF()
+Function IR2Pr_InitializePDDF()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:Irena_PDDF
@@ -174,7 +175,6 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-
 
 Window IR2Pr_ControlPanel() 
 	PauseUpdate; Silent 1		// building window...
@@ -304,9 +304,10 @@ End
 //*****************************************************************************************************************
 
 
-static Function IR2Pr_EstimateDmax()
+Function IR2Pr_EstimateDmax()
 	variable level
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 
 	Wave OriginalIntensity=root:Packages:Irena_PDDF:Intensity
@@ -429,7 +430,8 @@ Function IR2Pr_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	NVAR UseUserErrors=root:packages:Irena_PDDF:UseUserErrors
 	NVAR UseSQRTErrors=root:packages:Irena_PDDF:UseSQRTErrors
@@ -559,7 +561,8 @@ Function IR2Pr_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 
 	NVAR UseRegularization= root:packages:Irena_PDDF:UseRegularization
@@ -610,7 +613,8 @@ end
 Function IR2Pr_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	
 
@@ -670,7 +674,10 @@ Proc  IR2Pr_PdfInputGraph()
 	//Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
 	DoWindow/C IR2Pr_PDFInputGraph
 	DoWindow/T IR2Pr_PDFInputGraph,"Pair distribution function"
-	AutoPositionWindow/M=0/R=IR2Pr_ControlPanel  IR2Pr_PDFInputGraph	
+	DoWIndow IR2Pr_ControlPanel
+	if(V_Flag)
+		AutoPositionWindow/M=0/R=IR2Pr_ControlPanel  IR2Pr_PDFInputGraph	
+	endif
 	IR2Pr_AppendIntOriginal()	//appends original Intensity 
 //	IN2G_AppendSizeTopWave("IR1R_SizesInputGraph",Q_vecOriginal, IntensityOriginal,-25,0,40)		//appends the size wave
 //	removed on request of Pete
@@ -836,7 +843,7 @@ end
 //*****************************************************************************************************************
 
 
-static Function IR2Pr_SelectAndCopyData()		//this function selects data to be used and copies them with proper names to Sizes folder
+Function IR2Pr_SelectAndCopyData()		//this function selects data to be used and copies them with proper names to Sizes folder
 
 	string OldDf
 	OldDf=GetDataFolder(1)
@@ -872,8 +879,11 @@ static Function IR2Pr_SelectAndCopyData()		//this function selects data to be us
 		UseUserErrors=1
 		UseSQRTErrors=0
 		UsePercentErrors=0
-		SetVariable ErrorMultiplier,disable=!(UseUserErrors||UseSQRTErrors), WIN=IR2Pr_ControlPanel
-		SetVariable PercentErrorToUse, disable=!(UsePercentErrors), WIN=IR2Pr_ControlPanel
+		DoWIndow IR2Pr_ControlPanel
+		if(V_Flag)
+			SetVariable ErrorMultiplier,disable=!(UseUserErrors||UseSQRTErrors), WIN=IR2Pr_ControlPanel
+			SetVariable PercentErrorToUse, disable=!(UsePercentErrors), WIN=IR2Pr_ControlPanel
+		endif
 //		PopupMenu SizesPowerToUse, disable=!(UseNoErrors), WIN=IR2Pr_ControlPanel
 	else	//errors do not exist, create errors with 0 in them...
 		Duplicate/O $(DataFolderName+Intname), root:Packages:Irena_PDDF:Errors						//errors
@@ -888,8 +898,11 @@ static Function IR2Pr_SelectAndCopyData()		//this function selects data to be us
 		UseUserErrors=0
 		UseSQRTErrors=0
 		UsePercentErrors=0
-		SetVariable ErrorMultiplier,disable=!(UseUserErrors||UseSQRTErrors), WIN=IR2Pr_ControlPanel
-		SetVariable PercentErrorToUse, disable=!(UsePercentErrors), WIN=IR2Pr_ControlPanel
+		DoWIndow IR2Pr_ControlPanel
+		if(V_Flag)
+			SetVariable ErrorMultiplier,disable=!(UseUserErrors||UseSQRTErrors), WIN=IR2Pr_ControlPanel
+			SetVariable PercentErrorToUse, disable=!(UsePercentErrors), WIN=IR2Pr_ControlPanel
+		endif
 	//	PopupMenu SizesPowerToUse, disable=!(UseNoErrors), WIN=IR2Pr_ControlPanel
 	endif
 		
@@ -1070,7 +1083,8 @@ end
 
 static Function IR2Pr_FitMooreAutocorrelation()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFOlder root:Packages:Irena_PDDF
 
 	NVAR Moore_DetNumFncts=root:Packages:Irena_PDDF:Moore_DetNumFncts
@@ -1141,12 +1155,12 @@ static Function IR2Pr_FitMooreAutocorrelation()
 	MooreParametersS[Moore_NumOfFncts+4]=MooreParametersS[Moore_NumOfFncts+4]/(2*MooreParametersV[Moore_NumOfFncts+4])
 	maximumR=MooreParametersV[Moore_NumOfFncts+2]
 	string FitNote="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fit using Moore's indirect Fourier transform"
-	Fitnote+="\rMaximum extent "+num2str(maximumR)+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" ≈"
+	Fitnote+="\rMaximum extent = "+num2str(maximumR)+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" ≈"
 	Fitnote+="\r"+num2str(Moore_NumOfFncts)+" basis functions used"
 	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
 	fitnote+="\rRadius of Gyration = "+num2str(MooreParametersV[Moore_NumOfFncts+4])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+4])+" ≈"
-	Fitnote+="\rBackground "+num2str(MooreParametersV[Moore_NumOfFncts])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts])
-	Fitnote+="\rReduced Chi Squared "+num2str(rchisq)
+	Fitnote+="\rBackground = "+num2str(MooreParametersV[Moore_NumOfFncts])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts])
+	Fitnote+="\rReduced Chi Squared = "+num2str(rchisq)
 	variable/g CurrentRg = MooreParametersV[Moore_NumOfFncts+4]
 	variable/g CurrentRgError = MooreParametersS[Moore_NumOfFncts+4]
 	print fitnote
@@ -1195,7 +1209,8 @@ EndMacro
 
 
 static Function IR2Pr_RecoverOldParameters()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	SVAR ListOfStrings
 	SVAR ListOfVariables	
@@ -1265,7 +1280,8 @@ end
 
 
 static Function IR2Pr_SaveResultsToFldr()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	//save data here... For Moore include "Fittingresults" which is Intensity Fit stuff
 	//Parameters: 
@@ -1359,7 +1375,8 @@ static Function IR2Pr_SaveResultsToNotebook()
 
 	IR1_CreateResultsNbk()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	SVAR  DataFolderName=root:Packages:Irena_PDDF:DataFolderName
 	SVAR  IntensityWaveName=root:Packages:Irena_PDDF:IntensityWaveName
@@ -1651,7 +1668,7 @@ Function IR2Pr_PdfFitting(ctrlName) : ButtonControl			//this function is called 
 	endif
 
 	RemoveFromGraph/Z/W=IR2Pr_PDFInputGraph GuessFitScattProfile
-	Tag/K/N=GuessRg
+	Tag/K/W=IR2Pr_PDFInputGraph/N=GuessRg
 	DoUpdate
 	
 	IR2Pr_FinishSetupOfRegParam()					//finishes the setup of parametes
@@ -1663,7 +1680,7 @@ Function IR2Pr_PdfFitting(ctrlName) : ButtonControl			//this function is called 
 	endif		
 
 	//testing....	New Formfactor calculations Check that the G matrix actually exists. We need it... 
-	//we will setup only form factor G matrix G_matrixFF, which will be scaled by contrats later on...
+	//we will setup only form factor G matrix G_matrixFF, which will be scaled by contrast later on...
 	Wave/Z G_matrix=root:Packages:Irena_PDDF:G_matrix
 	Wave Q_vec=root:Packages:Irena_PDDF:Q_vec
 	Wave R_distribution=root:Packages:Irena_PDDF:R_distribution
@@ -2005,7 +2022,8 @@ end
 
 static  Function IR2Pr_FinishSetupOfRegParam()			//Finish the preparation for parameters selected in the panel
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	
 	Wave DeletePointsMaskWave	=root:Packages:Irena_PDDF:DeletePointsMaskWave
@@ -2156,7 +2174,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR2Pr_SetExportGNOMoutFile()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	
 	NewPath/O/Q/M="Select path for saving GNOM output files" GNOMOutputPath
@@ -2173,7 +2192,8 @@ end
 
 
 Function IR2Pr_ExportGNOMoutFile()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	
 	PathInfo GNOMOutputPath
@@ -2310,7 +2330,8 @@ end
 //*****************************************************************************************************************
 
 Function IR2Pr_GenerateMissingData()
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_PDDF
 	Wave S_vec=root:Packages:Irena_PDDF:Q_vec
 	Wave PDDF=root:Packages:Irena_PDDF:CurrentResultPdf
@@ -2549,11 +2570,11 @@ static Function IR2Pr_FindOptimumAvalue(Evalue)						//does the fitting itself, 
 	variable/g CurrentRg=IR2Pr_regRg(CurrentResultPdf,R_distribution)
 	variable/g CurrentRgError=NaN
 	string FitNote="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fit using Regularization "
-	Fitnote+="\rMaximum extent "+num2str(maximumR)+"  A"//+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" ≈"
+	Fitnote+="\rMaximum extent = "+num2str(maximumR)+"  A"//+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+2])+" ≈"
 //	Fitnote+="\r"+num2str(Moore_NumOfFncts)+" basis functions used"
 //	fitnote+="\rScale Factor = "+num2str(MooreParametersV[Moore_NumOfFncts+3])+" ± "+num2str(MooreParametersS[Moore_NumOfFncts+3])
 	fitnote+="\rRadius of Gyration = "+num2str(CurrentRg)+"  A"
-	Fitnote+="\rBackground "+num2str(Background)
+	Fitnote+="\rBackground = "+num2str(Background)
 //	Fitnote+="\rReduced Chi Squared "+num2str(Chisquared/(numpnts(Intensity)-1))
 	print fitnote
 	string/g FittingResults

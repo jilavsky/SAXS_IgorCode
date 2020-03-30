@@ -234,7 +234,8 @@ End
 //**************************************************************************************
 Function IR2E_ExportMultipleFiles()
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 
 	NVAR UseQRSdata=root:Packages:IR2_UniversalDataExport:UseQRSData
@@ -297,7 +298,8 @@ end
 
 Function IR2E_UpdateListOfAvailFiles()
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 	
 	NVAR UseIndra2Data=root:Packages:IR2_UniversalDataExport:UseIndra2Data
@@ -377,7 +379,8 @@ Function IR2E_UnivExportToolSetVarProc(ctrlName,varNum,varStr,varName) : SetVari
 			abort
 		endif
 
-		string oldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:IR2_UniversalDataExport
 
 		NVAR AttachWaveNote
@@ -427,7 +430,8 @@ Function IR2E_UnivExportCheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 	
 	NVAR UseFolderNameForOutput
@@ -531,7 +535,8 @@ End
 Function IR2E_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 	if(cmpstr(ctrlName,"LoadAndGraphData")==0)
 		//here we load the data and create default values
@@ -560,7 +565,8 @@ end
 
 Function IR2E_ExportTheData()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 
 	NVAR AttachWaveNote
@@ -757,7 +763,8 @@ Function IR2E_LoadDataInTool()
  	KillWaves/Z TempX, TampY, TempE
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 
 	NVAR AttachWaveNote = root:Packages:IR2_UniversalDataExport:AttachWaveNote
@@ -837,7 +844,8 @@ end
 
 Function IR2E_ChangeExportPath()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2_UniversalDataExport
 	SVAR CurrentlySetOutputPath=root:Packages:IR2_UniversalDataExport:CurrentlySetOutputPath
 	NewPath/O/M="Select new output folder" IR2E_ExportPath
@@ -859,7 +867,8 @@ end
 Function IR2E_InitUnivDataExport()
 
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S IR2_UniversalDataExport

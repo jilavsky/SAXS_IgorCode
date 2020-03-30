@@ -1,6 +1,6 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.1
-constant IR3JversionNumber = 0.1			//Data merging panel version number
+#pragma version=1.11
+constant IR3JversionNumber = 0.3			//Data merging panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,10 +8,39 @@ constant IR3JversionNumber = 0.1			//Data merging panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+
 //1.1 combined this ipf with "Simple fits models"
 //1.0 Simple Fits tool first release version 
 
 
+//To add new function:
+//at this moment we have: 	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
+//IR3J_InitSimpleFits()	
+//			add to: ListOfSimpleModels list as new data type ("Guinier")
+//			add any new parameters, which will need to be fit. Keep in mind, all will be fit. 
+//IR3J_SimpleFitsPanelFnct()
+//			set controsl for the new parameters.
+//IR3J_PopMenuProc()
+//			make sure controls show as needed only
+//IR3J_CreateLinearizedData()
+//			create new linearized data if needed. Example: Guiniers, Porod... 
+//IR3J_AppendDataToGraphModel()
+//			if linearized data exist, append them here... 
+//IR3J_CalculateModel()
+//			Add model calculations here... 
+//IR3J_FitData()
+//			Add fitting function and fit here. 				
+//IR3J_SaveResultsToNotebook()
+//IR3J_SaveResultsToFolder()
+//IR3J_SaveResultsToWaves()
+//			Add to both of these above string results in appropriate media... 
+//IR3J_GetTableWithResults()
+//			here create proper table to present to users... 
+//IR3J_DeleteExistingModelResults()
+//			add here how to delete new data types being created... 
+//add also results type to IR2_PanelControLProcedures.ipf 
+//			Procedrfue is IR2C_InitControls
+//existing:  	AllCurrentlyAllowedTypes+="SimFitYGuinier;SimFitYGuinierR;SimFitYGuinierS;SimFitYSphere;SimFitYSpheroid;"
 
 ///******************************************************************************************
 ///******************************************************************************************
@@ -19,6 +48,7 @@ constant IR3JversionNumber = 0.1			//Data merging panel version number
 ///******************************************************************************************
 Function IR3J_SimpleFits()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("width",1200)
 	DoWIndow IR3J_SimpleFitsPanel
 	if(V_Flag)
@@ -29,9 +59,25 @@ Function IR3J_SimpleFits()
 		IR3J_SimpleFitsPanelFnct()
 		ING2_AddScrollControl()
 		IR1_UpdatePanelVersionNumber("IR3J_SimpleFitsPanel", IR3JversionNumber,1)
-		IR3C_MultiUpdateListOfAvailFiles("root:Packages:Irena:SimpleFits")	
+		IR3C_MultiUpdateListOfAvailFiles("Irena:SimpleFits")	
 	endif
 	IR3J_CreateCheckGraphs()
+end
+//************************************************************************************************************
+Function IR1B_SimpleFitsMainCheckVersion()	
+	DoWindow IR3J_SimpleFitsPanel
+	if(V_Flag)
+		if(!IR1_CheckPanelVersionNumber("IR3J_SimpleFitsPanel", IR3JversionNumber))
+			DoAlert /T="The Simple Fits panel was created by incorrect version of Irena " 1, "Import Simple Fits needa to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				KillWIndow/Z IR3J_SimpleFitsPanel
+				IR3J_SimpleFits()
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IR3J_InitSimpleFits()
+				IR1T_InitFormFactors()
+			endif
+		endif
+	endif
 end
 
 //************************************************************************************************************
@@ -39,10 +85,11 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function IR3J_SimpleFitsPanelFnct()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Multi Sample Fits"
 	DoWIndow/C IR3J_SimpleFitsPanel
-	TitleBox MainTitle title="Multi-Sample Simple Fits",pos={200,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
+	TitleBox MainTitle title="Multi-Sample Basic Fits",pos={200,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -83,34 +130,26 @@ Function IR3J_SimpleFitsPanelFnct()
 	Setvariable Spheroid_Radius, variable=root:Packages:Irena:SimpleFits:Spheroid_Radius, limits={3,inf,0}, help={"Radius of particle, particle is R x R x Beta*R"}
 	SetVariable Spheroid_Beta,pos={240,290},size={220,15}, proc=IR3J_SetVarProc,title="Beta (RxRxBR)", bodywidth=80
 	Setvariable Spheroid_Beta, variable=root:Packages:Irena:SimpleFits:Spheroid_Beta, limits={0.001,1000,0}, help={"Particle aspect ratio, beta, particle is R x R x Beta*R"}
-
-
 	SetVariable DataBackground,pos={240,320},size={220,15}, proc=IR3J_SetVarProc,title="Flat Background ", bodywidth=80
 	Setvariable DataBackground, variable=root:Packages:Irena:SimpleFits:DataBackground, limits={-inf,inf,0}, help={"Flat background for scattering intensity"}
-
-
-
 	Button FitCurrentDataSet,pos={280,450},size={180,20}, proc=IR3J_ButtonProc,title="Fit Current (one) Dataset", help={"Fit current data set"}
-	SetVariable AchievedChiSquare,pos={270,480},size={220,15}, noproc,title="Achieved chi-square"
+
+	Button FitSelectionDataSet,pos={280,480},size={180,20}, proc=IR3J_ButtonProc,title="Fit (All) Selected Data", help={"Fit all data selected in listbox"}
+
+	SetVariable AchievedChiSquare,pos={270,510},size={220,15}, noproc,title="Achieved chi-square"
 	Setvariable AchievedChiSquare, variable=root:Packages:Irena:SimpleFits:AchievedChiSquare, disable=2
 
-	Button RecordCurrentresults,pos={280,530},size={180,20}, proc=IR3J_ButtonProc,title="Record results", help={"Record results in notebook and table"}
-	Button FitSelectionDataSet,pos={280,560},size={180,20}, proc=IR3J_ButtonProc,title="Fit (All) Selected Data", help={"Fit all data selected in listbox"}
+	Checkbox SaveToNotebook, pos={280,537},size={76,14},title="Record to Notebook?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToNotebook, help={"Record results in notebook"}
+	Checkbox SaveToWaves, pos={280,552},size={76,14},title="Record to Waves?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToWaves, help={"Record results in waves, can then create a table"}
+	Checkbox SaveToFolder, pos={280,567},size={76,14},title="Record to Folder?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToFolder, help={"Saves Intensity and Q in teh data folder"}
 
-	Button GetTableWithResults,pos={280,590},size={180,20}, proc=IR3J_ButtonProc,title="Get Table With Results", help={"Open Table with results for current Model"}
+	Button RecordCurrentresults,pos={280,590},size={180,20}, proc=IR3J_ButtonProc,title="Record Results", help={"Record results in notebook and table"}
 
-	Button GetNotebookWithResults,pos={280,620},size={180,20}, proc=IR3J_ButtonProc,title="Get Notebook With Results", help={"Open Notebook with results for current Model"}
+	Button GetTableWithResults,pos={280,620},size={180,20}, proc=IR3J_ButtonProc,title="Get Table With Results", help={"Open Table with results for current Model"}
 
-	Button DeleteOldResults,pos={280,690},size={180,20}, proc=IR3J_ButtonProc,title="Delete Existing Results", help={"Delete results for the current model"}, fColor=(34952,34952,34952)
+	Button GetNotebookWithResults,pos={280,650},size={180,20}, proc=IR3J_ButtonProc,title="Get Notebook With Results", help={"Open Notebook with results for current Model"}
 
-
-//	Display /W=(521,10,1183,400) /HOST=# /N=LogLogDataDisplay
-//	SetActiveSubwindow ##
-//	//Display /W=(521,350,1183,410) /HOST=# /N=ResidualDataDisplay
-//	//SetActiveSubwindow ##
-//	Display /W=(521,410,1183,750) /HOST=# /N=LinearizedDataDisplay
-//	SetActiveSubwindow ##
-//	//SetWindow IR3J_LogLogDataDisplay, hook(SimpleFitsLogLog) = IR3J_GraphWindowHook
+	Button DeleteOldResults,pos={280,710},size={180,20}, proc=IR3J_ButtonProc,title="Delete Existing Results", help={"Delete results for the current model"}, fColor=(34952,34952,34952)
 
 	TitleBox Instructions1 title="\Zr100Double click to add data to graph",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
 	TitleBox Instructions2 title="\Zr100Shift-click to select range of data",size={330,15},pos={4,695},frame=0,fColor=(0,0,65535),labelBack=0
@@ -128,6 +167,7 @@ end
 //************************************************************************************************************
 Function IR3J_CreateCheckGraphs()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable exists1=0
 	DoWIndow IR3J_LogLogDataDisplay
 	if(V_Flag)
@@ -142,62 +182,30 @@ Function IR3J_CreateCheckGraphs()
 	endif
 
 	variable exists2=0
-	DoWIndow IR3J_LinDataDisplay
-	if(V_Flag)
-		DoWIndow/hide=? IR3J_LinDataDisplay
-		if(V_Flag==2)
-			DoWIndow/F IR3J_LinDataDisplay
+	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	if(StringMatch(SimpleModel,"Guinier*") || StringMatch(SimpleModel,"Porod*"))
+		DoWIndow IR3J_LinDataDisplay
+		if(V_Flag)
+			DoWIndow/hide=? IR3J_LinDataDisplay
+			if(V_Flag==2)
+				DoWIndow/F IR3J_LinDataDisplay
+			endif
+		else
+			Display /W=(521,10,1183,400)/K=1 /N=IR3J_LinDataDisplay
+			ShowInfo/W=IR3J_LinDataDisplay
+			exists2=1
 		endif
 	else
-		Display /W=(521,10,1183,400)/K=1 /N=IR3J_LinDataDisplay
-		ShowInfo/W=IR3J_LinDataDisplay
-		exists2=1
+		KillWindow/Z IR3J_LinDataDisplay
+		exists2=0
 	endif
-	
-	if(exists1 || exists2)
+	if(exists1 && exists2)
 		AutoPositionWindow/M=0/R=IR3J_SimpleFitsPanel IR3J_LogLogDataDisplay	
 		AutoPositionWindow/M=1/R=IR3J_LogLogDataDisplay IR3J_LinDataDisplay	
+	elseif(exists1 && exists2==0)
+		AutoPositionWindow/M=0/R=IR3J_SimpleFitsPanel IR3J_LogLogDataDisplay	
 	endif
 end
-
-
-//**********************************************************************************************************
-//	ListOfVariables+="DataBackground;"
-//	ListOfVariables+="Guinier_Rg;Guinier_I0;"
-//	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
-//	ListOfVariables+="DataQEnd;DataQstart;"
-				//	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,148},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-				//	TitleBox FakeLine2 title=" ",fixedSize=1,size={330,3},pos={16,428},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-				//	TitleBox FakeLine3 title=" ",fixedSize=1,size={330,3},pos={16,512},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-				//	TitleBox FakeLine4 title=" ",fixedSize=1,size={330,3},pos={16,555},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-				//	TitleBox Info1 title="Modify data 1                            Modify Data 2",pos={36,325},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
-				//	TitleBox FakeLine5 title=" ",fixedSize=1,size={330,3},pos={16,300},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
-//	Button ProcessSaveData, pos={490,135}, size={20,500}, title="S\rA\rV\rE\r\rD\rA\rT\rA", proc=IR3D_MergeButtonProc, help={"Saves data which were automtaticaly processed already. "}, labelBack=(65535,60076,49151)
-//	//TextBox/C/N=text1/O=90/A=MC "Save Data", TextBox/C/N=text1/A=MC "S\rA\rV\rE\r\rD\rA\rT\rA"
-//
-//	Checkbox ProcessTest, pos={520,30},size={76,14},title="Test mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessTest
-//	Checkbox ProcessMerge, pos={520,50},size={76,14},title="Merge mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessMerge
-//	Checkbox ProcessMerge2, pos={520,70},size={76,14},title="Merge 2 mode", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessMerge2
-//
-//	Checkbox ProcessManually, pos={650,30},size={76,14},title="Process individually", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessManually
-//	Checkbox ProcessSequentially, pos={650,50},size={76,14},title="Process as sequence", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:ProcessSequentially
-//
-//	Checkbox AutosaveAfterProcessing, pos={780,30},size={76,14},title="Save Immediately", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:AutosaveAfterProcessing, disable=!root:Packages:Irena:SASDataMerging:ProcessManually
-//	Checkbox OverwriteExistingData, pos={780,50},size={76,14},title="Overwrite existing data", proc=IR3D_DatamergeCheckProc, variable=root:Packages:Irena:SASDataMerging:OverwriteExistingData
-//	TitleBox SavedDataMessage title="",fixedSize=1,size={100,17}, pos={780,70}, variable= root:Packages:Irena:SASDataMerging:SavedDataMessage
-//	TitleBox SavedDataMessage help={"Are the data saved?"}, fColor=(65535,16385,16385), frame=0, fSize=12,fstyle=1
-//
-//	TitleBox UserMessage title="",fixedSize=1,size={470,20}, pos={480,90}, variable= root:Packages:Irena:SASDataMerging:UserMessageString
-//	TitleBox UserMessage help={"This is what will happen"}
-//
-//		
-//	Button AutoScale,pos={520,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test AutoScale", help={"Autoscales. Set cursors on data overlap and the data 2 will be scaled to Data 1 using integral intensity"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-//	Button MergeData,pos={640,117},size={100,17}, proc=IR3D_MergeButtonProc,title="Test Merge", help={"Scales data 2 to data 1 and sets background for data 1 for merging. Sets checkboxes and trims. Saves data also"}, disable=!root:Packages:Irena:SASDataMerging:ProcessTest
-//	SetVariable DataFolderName1,pos={550,625},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName1, title="Data 1:       ", disable=2
-//	SetVariable DataFolderName2,pos={550,642},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:DataFolderName2, title="Data 2:       ", disable=2
-//	SetVariable NewDataFolderName,pos={550,659},size={510,15}, noproc,variable=root:Packages:Irena:SASDataMerging:NewDataFolderName, title="Merged Data: "
-
-
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -205,7 +213,8 @@ end
 Function IR3J_InitSimpleFits()	
 
 
-	string oldDf=GetDataFolder(1)
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -230,6 +239,7 @@ Function IR3J_InitSimpleFits()
 	ListOfVariables+="Spheroid_Radius;Spheroid_ScalingConstant;Spheroid_Beta;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="DataQEnd;DataQstart;DataQEndPoint;DataQstartPoint;"
+	ListOfVariables+="SaveToNotebook;SaveToWaves;SaveToFolder;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -261,9 +271,7 @@ Function IR3J_InitSimpleFits()
 		endif
 	endfor		
 	SVAR ListOfSimpleModels
-	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;"
-//	SVAR FolderSortStringAll
-//	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
+	ListOfSimpleModels="Guinier;Porod;Sphere;Spheroid;Guinier Rod;Guinier Sheet;"
 	SVAR SimpleModel
 	if(strlen(SimpleModel)<1)
 		SimpleModel="Guinier"
@@ -398,10 +406,9 @@ End
 Function IR3J_CopyAndAppendData(FolderNameStr)
 	string FolderNameStr
 	
-	string oldDf=GetDataFolder(1)
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
-	//IR3D_SetSavedNotSavedMessage(0)
-
 		SVAR DataStartFolder=root:Packages:Irena:SimpleFits:DataStartFolder
 		SVAR DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 		SVAR IntensityWaveName=root:Packages:Irena:SimpleFits:IntensityWaveName
@@ -422,17 +429,7 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		UseUserDefinedData = 0
 		UseModelData = 0
 		//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
-		DataFolderName = DataStartFolder+FolderNameStr
-		QWavename = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3J_SimpleFitsPanel"))
-		IntensityWaveName = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3J_SimpleFitsPanel"))
-		ErrorWaveName = stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3J_SimpleFitsPanel"))
-		if(UseIndra2Data)
-			dQWavename = ReplaceString("Qvec", QWavename, "dQ")
-		elseif(UseQRSdata)
-			dQWavename = "w"+QWavename[1,31]
-		else
-			dQWavename = ""
-		endif
+		IR3C_SelectWaveNamesData("Irena:SimpleFits", FolderNameStr)			//this routine will preset names in strings as needed,		
 		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
 		Wave/Z SourceQWv=$(DataFolderName+QWavename)
 		Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
@@ -458,19 +455,20 @@ Function IR3J_CopyAndAppendData(FolderNameStr)
 		if(WaveExists(NormRes2))
 			NormRes2=0
 		endif
-		RemoveFromGraph /W=IR3J_LogLogDataDisplay /Z NormalizedResidualLogLog
-		RemoveFromGraph /W=IR3J_LinDataDisplay /Z NormalizedResidualLinLin
 		//done cleaning... 
 		DoWIndow IR3J_LogLogDataDisplay
 		if(V_Flag)
+			RemoveFromGraph /W=IR3J_LogLogDataDisplay /Z NormalizedResidualLogLog
 			DoWIndow/F IR3J_LogLogDataDisplay
 		endif
 		DoWIndow IR3J_LinDataDisplay
 		if(V_Flag)
+			RemoveFromGraph /W=IR3J_LinDataDisplay /Z NormalizedResidualLinLin
 			DoWIndow/F IR3J_LinDataDisplay
 		endif
 		pauseUpdate
 		IR3J_AppendDataToGraphLogLog()
+		//now this deals with linearized data, if needed...
 		IR3J_CreateLinearizedData()
 		IR3J_AppendDataToGraphModel()
 		DoUpdate
@@ -482,32 +480,43 @@ end
 //**********************************************************************************************************
 Function IR3J_CreateLinearizedData()
 
-	string oldDf=GetDataFolder(1)
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
 	Wave OriginalDataQWave=root:Packages:Irena:SimpleFits:OriginalDataQWave
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
 	SVAR SimpleModel=root:Packages:Irena:SimpleFits:SimpleModel
-	Duplicate/O OriginalDataIntWave, LinModelDataIntWave	///, ModelNormalizedResidual
-	Duplicate/O OriginalDataQWave, LinModelDataQWave//, ModelNormResXWave
+	Duplicate/O OriginalDataIntWave, LinModelDataIntWave	
+	Duplicate/O OriginalDataQWave, LinModelDataQWave
 	Duplicate/O OriginalDataErrorWave, LinModelDataEWave
-	if(stringmatch(SimpleModel,"Guinier"))
-		LinModelDataIntWave = ln(OriginalDataIntWave)
-		LinModelDataEWave = OriginalDataErrorWave/OriginalDataIntWave			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
-		LinModelDataQWave = OriginalDataQWave^2
-	elseif(stringmatch(SimpleModel,"Porod"))
-		LinModelDataIntWave = OriginalDataIntWave*OriginalDataQWave^4
-		LinModelDataEWave = OriginalDataErrorWave*OriginalDataQWave^4			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
-		LinModelDataQWave = OriginalDataQWave^4
-	elseif(stringmatch(SimpleModel,"Sphere"))
-		LinModelDataIntWave = ln(OriginalDataIntWave)
-		LinModelDataEWave = OriginalDataErrorWave/OriginalDataIntWave			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
-		LinModelDataQWave = OriginalDataQWave^2
-	elseif(stringmatch(SimpleModel,"Spheroid"))
-		LinModelDataIntWave = ln(OriginalDataIntWave)
-		LinModelDataEWave = OriginalDataErrorWave/OriginalDataIntWave			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
-		LinModelDataQWave = OriginalDataQWave^2
-	endif
+	
+	strswitch(SimpleModel)				// string switch
+		case "Guinier":						// execute if case matches expression
+			LinModelDataIntWave = ln(OriginalDataIntWave)
+			LinModelDataEWave = OriginalDataErrorWave/OriginalDataIntWave			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
+			LinModelDataQWave = OriginalDataQWave^2
+			break								// exit from switch
+		case "Guinier Rod":				// execute if case matches expression
+			LinModelDataIntWave = ln(OriginalDataIntWave*LinModelDataQWave)
+			LinModelDataEWave = OriginalDataErrorWave/OriginalDataIntWave			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
+			LinModelDataQWave = OriginalDataQWave^2
+			break
+		case "Guinier Sheet":				// execute if case matches expression
+			LinModelDataIntWave = ln(OriginalDataIntWave*LinModelDataQWave^2)
+			LinModelDataEWave = OriginalDataErrorWave/OriginalDataIntWave			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
+			LinModelDataQWave = OriginalDataQWave^2
+			break
+		case "Porod":				// execute if case matches expression
+			LinModelDataIntWave = OriginalDataIntWave*OriginalDataQWave^4
+			LinModelDataEWave = OriginalDataErrorWave*OriginalDataQWave^4			//error propagation, see: https://terpconnect.umd.edu/~toh/models/ErrorPropagation.pdf
+			LinModelDataQWave = OriginalDataQWave^4
+			break
+		default:							// optional default expression executed
+			//no linearization graphs needed for "Sphere", "Spheroid",...
+			KillWaves/Z LinModelDataIntWave, LinModelDataEWave, LinModelDataQWave			// when no case matches
+	endswitch
 	SetDataFolder oldDf
 end
 
@@ -519,60 +528,85 @@ end
 
 Function IR3J_AppendDataToGraphModel()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
 	variable startQp, endQp, tmpStQ
-	
-	Wave LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
-	Wave LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
-	Wave LinModelDataEWave=root:Packages:Irena:SimpleFits:LinModelDataEWave
-	CheckDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
-	if(!V_flag)
-		AppendToGraph /W=IR3J_LinDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
-		ErrorBars /W=IR3J_LinDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
-	endif
-	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
-	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
-	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
-	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
-	SetWindow IR3J_LinDataDisplay, hook(SimpleFitsLinCursorMoved) = $""
-	cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
-	cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
-	SetWindow IR3J_LinDataDisplay, hook(SimpleFitsLinCursorMoved) = IR3J_GraphWindowHook
-	variable tempMaxQ
-	tempMaxQ = LinModelDataQWave[DataQEndPoint]
-	SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
-	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
-	strswitch(SimpleModel)	// string switch
-		case "Guinier":			// execute if case matches expression
-				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
-				SetAxis/A/W=IR3J_LinDataDisplay 
-				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
-				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-			break		// exit from switch
-		case "Sphere":			// execute if case matches expression
-				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
-				SetAxis/A/W=IR3J_LinDataDisplay
-				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
-				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-			break		// exit from switch
-		case "Spheroid":			// execute if case matches expression
-				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
-				SetAxis/A/W=IR3J_LinDataDisplay
-				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
-				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-			break		// exit from switch
-		case "Porod":	// execute if case matches expression
-				ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
-				SetAxis/A/W=IR3J_LinDataDisplay
-				SetAxis/W=IR3J_LinDataDisplay left 0,*
-				Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Int * Q\\S4"
-				Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S4\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-4\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
-			break
-		default:			// optional default expression executed
-			//<code>]		// when no case matches
-	endswitch
 
+	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+	if(StringMatch(SimpleModel,"Guinier*") || StringMatch(SimpleModel,"Porod*"))		
+		Wave LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
+		Wave LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
+		Wave LinModelDataEWave=root:Packages:Irena:SimpleFits:LinModelDataEWave
+		CheckDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
+		if(!V_flag)
+			AppendToGraph /W=IR3J_LinDataDisplay  LinModelDataIntWave  vs LinModelDataQWave
+			ErrorBars /W=IR3J_LinDataDisplay LinModelDataIntWave Y,wave=(LinModelDataEWave,LinModelDataEWave)		
+		endif
+		NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
+		NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
+		NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
+		NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
+		SetWindow IR3J_LinDataDisplay, hook(SimpleFitsLinCursorMoved) = $""
+		cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
+		cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
+		SetWindow IR3J_LinDataDisplay, hook(SimpleFitsLinCursorMoved) = IR3J_GraphWindowHook
+		SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
+		strswitch(SimpleModel)	// string switch
+			case "Guinier":			// execute if case matches expression
+					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					SetAxis/A/W=IR3J_LinDataDisplay 
+					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
+					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+				break		// exit from switch
+			case "Guinier rod":			// execute if case matches expression
+					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					SetAxis/A/W=IR3J_LinDataDisplay 
+					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Q*Intensity)"
+					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+				break		// exit from switch
+			case "Guinier sheet":			// execute if case matches expression
+					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					SetAxis/A/W=IR3J_LinDataDisplay 
+					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"*Intensity)"
+					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+				break		// exit from switch
+				//			case "Sphere":			// execute if case matches expression
+				//					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+				//					SetAxis/A/W=IR3J_LinDataDisplay
+				//					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
+				//					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+				//				break		// exit from switch
+				//			case "Spheroid":			// execute if case matches expression
+				//					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+				//					SetAxis/A/W=IR3J_LinDataDisplay
+				//					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
+				//					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+				//				break		// exit from switch
+			case "Porod":	// execute if case matches expression
+					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					SetAxis/A/W=IR3J_LinDataDisplay
+					SetAxis/W=IR3J_LinDataDisplay left 0,*
+					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Int * Q\\S4"
+					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S4\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-4\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
+				break
+			default:			// optional default expression executed
+				//<code>]		// when no case matches
+		endswitch
+		//and set limtis on axis
+		variable tempMaxQ
+		tempMaxQ = LinModelDataQWave[DataQEndPoint]
+		SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
+		variable tempMaxQY, tempMinQY, maxY, minY
+		tempMaxQY = 0.8*LinModelDataIntWave[DataQstartPoint]
+		tempMinQY = 1.2*LinModelDataIntWave[DataQEndPoint]
+		maxY = max(tempMaxQY, tempMinQY)
+		minY = min(tempMaxQY, tempMinQY)
+		//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
+		SetAxis/W=IR3J_LinDataDisplay left minY, maxY
+	else
+		KillWindow/Z IR3J_LinDataDisplay
+	endif
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -581,6 +615,7 @@ end
 
 Function IR3J_AppendDataToGraphLogLog()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	variable WhichLegend=0
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
@@ -663,8 +698,15 @@ Function IR3J_ButtonProc(ba) : ButtonControl
 				IR3J_FitData()
 			endif
 			if(stringmatch(ba.ctrlName,"RecordCurrentresults"))
+				NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+				NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+				NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+				if(SaveToNotebook+SaveToWaves+SaveToFolder<1)
+					Abort "Nothing is selected to Record, check at least on checkbox above" 
+				endif	
 				IR3J_SaveResultsToNotebook()
 				IR3J_SaveResultsToWaves()
+				IR3J_SaveResultsToFolder()
 			endif
 			if(stringmatch(ba.ctrlName,"FitSelectionDataSet"))
 				IR3J_FitSequenceOfData()
@@ -700,25 +742,36 @@ End
 
 static Function IR3J_FitData()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	strswitch(SimpleModel)	// string switch
-		case "Guinier":	// execute if case matches expression
-			IR3J_FitGuinier()
+		case "Guinier":				// Regular Guinier, aka: Sphere, globular. 
+			IR3J_FitGuinier("Sphere")
 			IR3J_CalculateModel()		
-			break		// exit from switch
-		case "Porod":	// execute if case matches expression
+			break			
+		case "Guinier Rod":		// Guinier for rod
+			IR3J_FitGuinier("Rod")
+			IR3J_CalculateModel()		
+			break			
+		case "Guinier Sheet":		// Guinier for sheet
+			IR3J_FitGuinier("Sheet")
+			IR3J_CalculateModel()		
+			break		
+		case "Porod":				// Porod
 			IR3J_FitPorod()
 			IR3J_CalculateModel()		
 			break
-		case "Sphere":	// execute if case matches expression
+		case "Sphere":				// Sphere
 			IR3J_FitSphere()
 			IR3J_CalculateModel()		
 			break
-		case "Spheroid":	// execute if case matches expression
+		case "Spheroid":			// Spheroid
 			IR3J_FitSpheroid()
 			IR3J_CalculateModel()		
 			break
-		default:			// optional default expression executed
+		default:			
+		//nothing here.
+		Abort "No model calculated in static IR3J_FitData()" 
 	endswitch
 
 end
@@ -729,6 +782,26 @@ end
 
 static Function IR3J_FitSequenceOfData()
 
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		//warn user if not saving results...
+		NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+		NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+		NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+		if(SaveToNotebook+SaveToWaves+SaveToFolder<1)
+			DoAlert /T="Results not being saved anywhere" 1, "Results of the fits are not being saved anywhere. Do you want to continue (Yes) or abort (No)?"
+			if(V_Flag==2)
+				abort
+			endif
+		endif	
+		if(SaveToFolder)
+			print "Fit results will be saved in original fits as Intensity and Q vector"
+		endif
+		if(SaveToWaves)
+			print "Fit results will be saved in waves to create a table"
+		endif
+		if(SaveToNotebook)
+			print "Fit results will be saved in notebook"
+		endif
 		Wave SelectionOfAvailableData = root:Packages:Irena:SimpleFits:SelectionOfAvailableData
 		Wave/T ListOfAvailableData = root:Packages:Irena:SimpleFits:ListOfAvailableData
 		variable i, imax
@@ -739,6 +812,7 @@ static Function IR3J_FitSequenceOfData()
 				IR3J_FitData()
 				IR3J_SaveResultsToNotebook()
 				IR3J_SaveResultsToWaves()
+				IR3J_SaveResultsToFolder()
 				DoUpdate 
 				sleep/S/C=6/M="Fitted data for "+ListOfAvailableData[i] 2
 			endif
@@ -763,10 +837,6 @@ Function IR3J_GraphWindowHook(s)
 			// Handle deactivate
 			break
 		case 7:				//coursor moved
-//			print "Cursor moved" 
-//			print s.winName 
-//			print s.cursorName
-//			print s.pointNumber
 			IR3J_SyncCursorsTogether(s.traceName,s.cursorName,s.pointNumber)
 			hookResult = 1
 		// And so on . . .
@@ -783,17 +853,22 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 	string traceName,CursorName
 	variable PointNumber
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
 	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
 	NVAR DataQEndPoint = root:Packages:Irena:SimpleFits:DataQEndPoint
 	NVAR DataQstartPoint = root:Packages:Irena:SimpleFits:DataQstartPoint
 	Wave OriginalDataQWave=root:Packages:Irena:SimpleFits:OriginalDataQWave
-	Wave LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
+	Wave/Z LinModelDataIntWave=root:Packages:Irena:SimpleFits:LinModelDataIntWave
 	Wave OriginalDataIntWave=root:Packages:Irena:SimpleFits:OriginalDataIntWave
-	Wave LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
-	variable tempMaxQ, tempMaxQY, tempMinQY
-	
+	Wave/Z LinModelDataQWave=root:Packages:Irena:SimpleFits:LinModelDataQWave
+	variable tempMaxQ, tempMaxQY, tempMinQY, maxY, minY
+	variable LinDataExist = 0
+	DoWIndow IR3J_LinDataDisplay		//does linearization graph even exist???
+	if(V_Flag)
+		LinDataExist = 1
+	endif
 	//check if user removed cursor from graph, in which case do nothing for now...
 	if(numtype(PointNumber)==0)
 		if(stringmatch(CursorName,"A"))		//moved cursor A, which is start of Q range
@@ -801,9 +876,11 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 			DataQstart = OriginalDataQWave[PointNumber]
 			//now move the cursor in the other graph... 
 			if(StringMatch(traceName, "OriginalDataIntWave" ))
-				checkDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
-				if(V_Flag)
-					cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
+				if(LinDataExist)
+					checkDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
+					if(V_Flag)
+						cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
+					endif
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
 				checkDisplayed /W=IR3J_LogLogDataDisplay OriginalDataIntWave
@@ -817,15 +894,19 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 			DataQEnd = OriginalDataQWave[PointNumber]
 			//now move the cursor in the other graph... 
 			if(StringMatch(traceName, "OriginalDataIntWave" ))
-				checkDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
-				if(V_Flag)
-					cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
-					tempMaxQ = LinModelDataQWave[DataQEndPoint]
-					SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
-					tempMaxQY = 0.8*LinModelDataIntWave[DataQstartPoint]
-					tempMinQY = 1.2*LinModelDataIntWave[DataQEndPoint]
-					//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
-					SetAxis/W=IR3J_LinDataDisplay left tempMinQY, tempMaxQY
+				if(LinDataExist)
+					checkDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
+					if(V_Flag)
+						cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
+						tempMaxQ = LinModelDataQWave[DataQEndPoint]
+						SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
+						tempMaxQY = 0.8*LinModelDataIntWave[DataQstartPoint]
+						tempMinQY = 1.2*LinModelDataIntWave[DataQEndPoint]
+						maxY = max(tempMaxQY, tempMinQY)
+						minY = min(tempMaxQY, tempMinQY)
+						//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
+						SetAxis/W=IR3J_LinDataDisplay left minY, maxY
+					endif
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
 				checkDisplayed /W=IR3J_LogLogDataDisplay OriginalDataIntWave
@@ -840,8 +921,9 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-static Function IR3J_FitGuinier()
-
+static Function IR3J_FitGuinier(which)
+	string which			//Sphere, Rod, Sheet
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -878,11 +960,23 @@ static Function IR3J_FitGuinier()
 	LocalEwave[1]=(Guinier_Rg/20)
 	variable/g V_FitError
 	V_FitError=0			//This should prevent errors from being generated
-	//if (FitUseErrors && WaveExists(ErrorWave))
-	FuncFit IR1_GuinierFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
-	//		else
-	//FuncFit IR1_GuinierFit W_coef CursorAWave[pcsr(A),pcsr(B)] /X=CursorAXWave /D /C=T_Constraints 
-	//	endif
+	strswitch(which)		// string switch
+		case "Sphere":		// execute if case matches expression
+			FuncFit IR1_GuinierFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
+			break					// exit from switch
+		case "Rod":	// execute if case matches expression
+			FuncFit IR1_GuinierRodFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
+			break
+		case "Sheet":	// execute if case matches expression
+			FuncFit IR1_GuinierSheetFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
+			break
+		default:			// optional default expression executed
+			abort
+	endswitch
+						//if (FitUseErrors && WaveExists(ErrorWave))
+						//		else - no error bars Fit commands... ... 
+						//FuncFit IR1_GuinierFit W_coef CursorAWave[pcsr(A),pcsr(B)] /X=CursorAXWave /D /C=T_Constraints 
+						//	endif
 	if (V_FitError!=0)	//there was error in fitting
 		RemoveFromGraph $("fit_"+NameOfWave(CursorAWave))
 		beep
@@ -890,13 +984,27 @@ static Function IR3J_FitGuinier()
 	endif
 	Wave W_sigma
 	string TagText
-	TagText = "Fitted Guinier  "+"Int = G*exp(-q^2*Rg^2/3))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
-	//if (FitUseErrors && WaveExists(ErrorWave))
-	TagText+="\r chi-square = "+num2str(V_chisq)
-	//endif
+
+	strswitch(which)		// string switch
+		case "Sphere":		// execute if case matches expression
+			TagText = "Fitted Guinier  "+"Int = G*exp(-q^2*Rg^2/3))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
+			TagText+="\r chi-square = "+num2str(V_chisq)
+			break					// exit from switch
+		case "Rod":	// execute if case matches expression
+			TagText = "Fitted Guinier  "+"Int*Q = G*exp(-q^2*Rg^2/2))"+" \r G = "+num2str(W_coef[0])+"\r Rc = "+num2str(W_coef[1])
+			TagText+="\r chi-square = "+num2str(V_chisq)
+			break
+		case "Sheet":	// execute if case matches expression
+			TagText = "Fitted Guinier  "+"Int*Q^2 = G*exp(-q^2*Rg^2))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
+			TagText+="\r Thickness = "+num2str(W_coef[1]*sqrt(12))
+			TagText+="\r chi-square = "+num2str(V_chisq)
+			break
+		default:			// optional default expression executed
+			abort
+	endswitch
 	string TagName= "GuinierFit" //UniqueName("GuinierFit",14,0,"IR3J_LogLogDataDisplay")
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
-		
+	
 	Guinier_I0=W_coef[0] 	//G
 	Guinier_Rg=W_coef[1]	//Rg
 
@@ -904,11 +1012,59 @@ static Function IR3J_FitGuinier()
 
 end
 
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR1_GuinierRodFit(w,q) : FitFunc
+	Wave w
+	Variable q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ Prefactor=abs(Prefactor)
+	//CurveFitDialog/ Rg=abs(Rg)
+	//CurveFitDialog/ f(q) = Prefactor*exp(-q^2*Rg^2/3))
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ q
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = Prefactor
+	//CurveFitDialog/ w[1] = Rg
+
+	w[0]=abs(w[0])
+	w[1]=abs(w[1])
+	return w[0]/q * exp(-0.5 * q^2*w[1]^2)
+End
+//**********************************************************************************************************
+Function IR1_GuinierSheetFit(w,q) : FitFunc
+	Wave w
+	Variable q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ Prefactor=abs(Prefactor)
+	//CurveFitDialog/ Rg=abs(Rg)
+	//CurveFitDialog/ f(q) = Prefactor*exp(-q^2*Rg^2/3))
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ q
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = Prefactor
+	//CurveFitDialog/ w[1] = Rg
+
+	w[0]=abs(w[0])
+	w[1]=abs(w[1])
+	return w[0]/(q*q) * exp(-q^2*w[1]^2)
+End
+
 //**********************************************************************************************************
 //**********************************************************************************************************
 
 static Function IR3J_FitPorod()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -968,6 +1124,7 @@ end
 
 static Function IR3J_FitSphere()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1055,6 +1212,7 @@ End
 
 static Function IR3J_FitSpheroid()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1074,9 +1232,9 @@ static Function IR3J_FitSpheroid()
 	Redimension/N=4 T_Constraints
 	T_Constraints[0] = {"K0 > 0"}
 	T_Constraints[1] = {"K1 > 3"}
-	T_Constraints[2] = {"K2 < 10"}
-	T_Constraints[3] = {"K2 > 0.1"}
-	W_coef = {Spheroid_ScalingConstant, Spheroid_Radius,Spheroid_Beta, DataBackground}
+	T_Constraints[2] = {"K2 < 20"}
+	T_Constraints[3] = {"K2 > 0.05"}
+	T_Constraints[4] = {"K3 < K0/20"}
 	Wave/Z CursorAWave = CsrWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
@@ -1087,8 +1245,9 @@ static Function IR3J_FitSpheroid()
 	//make a good starting guesses:
 	Spheroid_ScalingConstant=CursorAWave[DataQstartPoint]
 	Spheroid_Radius=2*pi/CursorAWave[DataQstartPoint]
-	DataBackground=0.05*CursorAwave[DataQEndPoint]
+	DataBackground=0.01*CursorAwave[DataQEndPoint]
 	Spheroid_Beta = 1
+	W_coef = {Spheroid_ScalingConstant, Spheroid_Radius,Spheroid_Beta,DataBackground}
 	
 	LocalEwave[0]=(Spheroid_ScalingConstant/20)
 	LocalEwave[1]=(Spheroid_Radius/20)
@@ -1108,7 +1267,8 @@ static Function IR3J_FitSpheroid()
 	endif
 	Wave W_sigma
 	string TagText
-	TagText = "Fitted Spheroid Form Factor   \r"+"Int=Scale*SpheroidFF(Q,R,beta)+bck"+" \r Radius [A] = "+num2str(W_coef[1])+" \r Aspect ratio = "+num2str(W_coef[2])+" \r Scale = "+num2str(W_coef[0])+"\r Background = "+num2str(W_coef[3])
+	TagText = "Fitted Spheroid Form Factor   \r"+"Int=Scale*SpheroidFF(Q,R,beta)+bck"+" \r Radius [A] = "+num2str(W_coef[1])+" \r Aspect ratio = "+num2str(W_coef[2])+" \r Scale = "+num2str(W_coef[0])
+	TagText+="\r Background = "+num2str(W_coef[3])
 	TagText+="\r chi-square = "+num2str(V_chisq)
 	string TagName= "SpheroidFit" 
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
@@ -1138,7 +1298,7 @@ Function IR3J_SpheroidFormfactor(w,Q) : FitFunc
 	//CurveFitDialog/ w[2] = Beta - aspect ratio
 	//CurveFitDialog/ w[3] = Background
 
-	return w[0]*IR1T_CalcIntgSpheroidFFPoints(Q,w[1],w[2])+ w[3]
+	return w[0]*IR1T_CalcIntgSpheroidFFPoints(Q,w[1],w[2])+w[3]
 End
 
 
@@ -1149,6 +1309,7 @@ End
 //**********************************************************************************************************
 static Function IR3J_CalculateModel()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR3J_CreateCheckGraphs()
 	DFref oldDf= GetDataFolderDFR()
 	SetDataFolder root:Packages:Irena:SimpleFits					//go into the folder
@@ -1159,9 +1320,9 @@ static Function IR3J_CalculateModel()
 	Wave OriginalDataIntWave		=root:Packages:Irena:SimpleFits:OriginalDataIntWave
 	Wave OriginalDataQWave		=root:Packages:Irena:SimpleFits:OriginalDataQWave
 	Wave OriginalDataErrorWave	=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
-	Wave LinModelDataIntWave		=root:Packages:Irena:SimpleFits:LinModelDataIntWave
-	Wave LinModelDataQWave		=root:Packages:Irena:SimpleFits:LinModelDataQWave
-	Wave LinModelDataEWave		=root:Packages:Irena:SimpleFits:LinModelDataEWave
+	Wave/Z LinModelDataIntWave		=root:Packages:Irena:SimpleFits:LinModelDataIntWave
+	Wave/Z LinModelDataQWave		=root:Packages:Irena:SimpleFits:LinModelDataQWave
+	Wave/Z LinModelDataEWave		=root:Packages:Irena:SimpleFits:LinModelDataEWave
 	NVAR AchievedChiSquare		=root:Packages:Irena:SimpleFits:AchievedChiSquare
 	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
@@ -1175,71 +1336,96 @@ static Function IR3J_CalculateModel()
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataQWave, ModelLogLogQ, ModelLogLogInt, NormalizedResidualLogLogQ
-	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataQWave, ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, NormalizedResidualLogLog
-	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataIntWave, NormalizedResidualLinLin
+	//do we need linearized data? 
+	variable UsingLinearizedModel=0
+	if(WaveExists(LinModelDataIntWave))
+		UsingLinearizedModel=1
+		Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataQWave, ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ
+		Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataIntWave, NormalizedResidualLinLin
+	else
+		UsingLinearizedModel=0
+		KillWaves/Z ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ, NormalizedResidualLinLin
+	endif
 
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, TempOriginalIntensity
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] OriginalDataErrorWave, TempOriginalError
-	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] LinModelDataEWave, TempLinError
-	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] LinModelDataIntWave, TempLinIntensity
-	
-	strswitch(SimpleModel)	// string switch
-		case "Guinier":	// execute if case matches expression
+	if(UsingLinearizedModel)
+		Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] LinModelDataEWave, TempLinError
+		Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] LinModelDataIntWave, TempLinIntensity
+	endif
+	//now calculate the data... 
+	strswitch(SimpleModel)				// Guinier
+		case "Guinier":						// execute if case matches expression
 			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2/3)
-			ModelLinLinLogInt = ln(ModelLogLogInt)	
-			break		// exit from switch
-		case "Porod":	// execute if case matches expression
+			if(UsingLinearizedModel)
+				ModelLinLinLogInt = ln(ModelLogLogInt)	
+			endif
+			break								// exit from switch
+		case "Guinier Rod":				// Guinier rod
+			ModelLogLogInt = Guinier_I0*exp(-ModelLogLogQ[p]^2*Guinier_Rg^2/2)/ModelLogLogQ
+			if(UsingLinearizedModel)
+				ModelLinLinLogInt = ln(ModelLogLogInt*ModelLogLogQ)	
+			endif
+			break		
+		case "Guinier Sheet":				// Guinier Sheet
+			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2)/ModelLogLogQ^2
+			if(UsingLinearizedModel)
+				ModelLinLinLogInt = ln(ModelLogLogInt*ModelLogLogQ^2)	
+			endif
+			break		
+		case "Porod":						// Porod
 			ModelLogLogInt = DataBackground+Porod_Constant * ModelLogLogQ^(-4)
-			ModelLinLinLogInt = ModelLogLogInt*ModelLogLogQ^4	
+			if(UsingLinearizedModel)
+				ModelLinLinLogInt = ModelLogLogInt*ModelLogLogQ^4	
+			endif
 			break
-		case "Sphere":	// execute if case matches expression
+		case "Sphere":						// spehre calculation
 			ModelLogLogInt = DataBackground + 	Sphere_ScalingConstant * (3/(ModelLogLogQ[p]*Sphere_Radius)^3)*(sin(ModelLogLogQ[p]*Sphere_Radius)-(ModelLogLogQ[p]*Sphere_Radius*cos(ModelLogLogQ[p]*Sphere_Radius)))
-			ModelLinLinLogInt = ln(ModelLogLogInt)	
 			break
-		case "Spheroid":	// execute if case matches expression
+		case "Spheroid":					// spheroid
 			ModelLogLogInt = 	DataBackground +  Spheroid_ScalingConstant*IR1T_CalcIntgSpheroidFFPoints(ModelLogLogQ[p],Spheroid_Radius,Spheroid_Beta)
-			ModelLinLinLogInt = ln(ModelLogLogInt)	
 			break
-		default:			// optional default expression executed
-
+		default:						// optional default expression executed
+		//nothing is default here, so set values to 0 to know there is problem. 
+		ModelLogLogInt = 0
+		if(UsingLinearizedModel)
+			ModelLinLinLogInt = 0	
+		endif		
 	endswitch
+	//calculate residuals, chi^2 and append to graph
 	NormalizedResidualLogLog = (TempOriginalIntensity-ModelLogLogInt)/TempOriginalError
-	NormalizedResidualLinLin = (TempLinIntensity-ModelLinLinLogInt)/TempLinError
-	
 	Duplicate/Free NormalizedResidualLogLog, ChiSquareTemp
 	ChiSquareTemp = ((TempOriginalIntensity-ModelLogLogInt)/TempOriginalError)^2
 	AchievedChiSquare = (sum(ChiSquareTemp))
-
 	CheckDisplayed /W=IR3J_LogLogDataDisplay ModelLogLogInt
 	if(!V_flag)
 		AppendToGraph /W=IR3J_LogLogDataDisplay  ModelLogLogInt  vs ModelLogLogQ
 		ModifyGraph/W=IR3J_LogLogDataDisplay  lsize(ModelLogLogInt)=2,rgb(ModelLogLogInt)=(0,0,0)
 	endif
-
 	CheckDisplayed /W=IR3J_LogLogDataDisplay NormalizedResidualLogLog
 	if(!V_flag)
 		AppendToGraph /W=IR3J_LogLogDataDisplay/R  NormalizedResidualLogLog  vs NormalizedResidualLogLogQ
 		ModifyGraph/W=IR3J_LogLogDataDisplay  mode(NormalizedResidualLogLog)=2,lsize(NormalizedResidualLogLog)=3,rgb(NormalizedResidualLogLog)=(0,0,0)
 		Label/W=IR3J_LogLogDataDisplay right "Normalized residuals"
 	endif
-
-
-
-	CheckDisplayed /W=IR3J_LinDataDisplay ModelLinLinLogInt
-	if(!V_flag)
-		AppendToGraph /W=IR3J_LinDataDisplay  ModelLinLinLogInt  vs ModelLlinLinQ2
-		ModifyGraph/W=IR3J_LinDataDisplay  lsize(ModelLinLinLogInt)=2,rgb(ModelLinLinLogInt)=(0,0,0)
-	endif
-
-	CheckDisplayed /W=IR3J_LinDataDisplay NormalizedResidualLinLin
-	if(!V_flag)
-		AppendToGraph /W=IR3J_LinDataDisplay/R  NormalizedResidualLinLin  vs NormalizedResidualLinLinQ
-		ModifyGraph/W=IR3J_LinDataDisplay mode(NormalizedResidualLinLin)=2,lsize(NormalizedResidualLinLin)=3,rgb(NormalizedResidualLinLin)=(0,0,0)
-		Label/W=IR3J_LinDataDisplay right "Normalized residuals"
-	endif
+	//now same, if we are using linearized data
+	if(UsingLinearizedModel)
+		NormalizedResidualLinLin = (TempLinIntensity-ModelLinLinLogInt)/TempLinError
+		CheckDisplayed /W=IR3J_LinDataDisplay ModelLinLinLogInt
+		if(!V_flag)
+			AppendToGraph /W=IR3J_LinDataDisplay  ModelLinLinLogInt  vs ModelLlinLinQ2
+			ModifyGraph/W=IR3J_LinDataDisplay  lsize(ModelLinLinLogInt)=2,rgb(ModelLinLinLogInt)=(0,0,0)
+		endif
 	
-	
+		CheckDisplayed /W=IR3J_LinDataDisplay NormalizedResidualLinLin
+		if(!V_flag)
+			AppendToGraph /W=IR3J_LinDataDisplay/R  NormalizedResidualLinLin  vs NormalizedResidualLinLinQ
+			ModifyGraph/W=IR3J_LinDataDisplay mode(NormalizedResidualLinLin)=2,lsize(NormalizedResidualLinLin)=3,rgb(NormalizedResidualLinLin)=(0,0,0)
+			Label/W=IR3J_LinDataDisplay right "Normalized residuals"
+		endif
+
+	endif
 	SetDataFolder oldDf
 
 end
@@ -1248,8 +1434,8 @@ end
 //**********************************************************************************************************
 static Function IR3J_SaveResultsToNotebook()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IR1_CreateResultsNbk()
-	
 	DFref oldDf= GetDataFolderDFR()	
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
 	SVAR  DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
@@ -1270,6 +1456,18 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+	if(!SaveToNotebook)
+		return 0
+	endif	
+	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
+	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
+	//others can be created via Simple polots as needed... 
+	if(!WaveExists(modelInt)||!WaveExists(ModelQ))
+		return 0			//cannot do anything, bail out. 
+	endif
 
 	IR1_AppendAnyText("\r Results of "+SimpleModel+" fitting\r",1)	
 	IR1_AppendAnyText("Date & time: \t"+Date()+"   "+time(),0)	
@@ -1280,6 +1478,12 @@ static Function IR3J_SaveResultsToNotebook()
 	IR1_AppendAnyText(" ",0)	
 	if(stringmatch(SimpleModel,"Guinier"))
 		IR1_AppendAnyText("\tRg = "+num2str(Guinier_Rg),0)
+		IR1_AppendAnyText("\tI0 = "+num2str(Guinier_I0),0)
+	elseif(stringmatch(SimpleModel,"Guinier Rod"))
+		IR1_AppendAnyText("\tRc = "+num2str(Guinier_Rg),0)
+		IR1_AppendAnyText("\tI0 = "+num2str(Guinier_I0),0)
+	elseif(stringmatch(SimpleModel,"Guinier Sheet"))
+		IR1_AppendAnyText("\tThickness = "+num2str(sqrt(12)*Guinier_Rg),0)
 		IR1_AppendAnyText("\tI0 = "+num2str(Guinier_I0),0)
 	elseif(stringmatch(SimpleModel,"Porod"))
 		IR1_AppendAnyText("\tPorod Constant = "+num2str(Porod_Constant),0)
@@ -1299,7 +1503,10 @@ static Function IR3J_SaveResultsToNotebook()
 	IR1_AppendAnyText("Qmin = "+num2str(DataQstart),0)
 	IR1_AppendAnyText("Qmax = "+num2str(DataQEnd),0)
 	IR1_AppendAnyGraph("IR3J_LogLogDataDisplay")
-	IR1_AppendAnyGraph("IR3J_LinDataDisplay")
+	DOWIndow IR3J_LinDataDisplay
+	if(V_Flag)
+		IR1_AppendAnyGraph("IR3J_LinDataDisplay")
+	endif
 	IR1_AppendAnyText("******************************************\r",0)	
 	SetDataFolder OldDf
 	SVAR/Z nbl=root:Packages:Irena:ResultsNotebookName	
@@ -1307,8 +1514,10 @@ static Function IR3J_SaveResultsToNotebook()
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function IR3J_SaveResultsToWaves()
+//**********************************************************************************************************
+static Function IR3J_SaveResultsToFolder()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
 	SVAR  DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
@@ -1331,6 +1540,140 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+	if(!SaveToFolder)
+		return 0
+	endif	
+	//create new results names...
+	//AllCurrentlyAllowedTypes+="SimFitGuinierY;SimFitGuinierRY;SimFitGuinierSY;SimFitSphereY;SimFitSpheroidY;"
+	//save these waves here:
+	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
+	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
+	//others can be created via Simple polots as needed... 
+	if(!WaveExists(modelInt)||!WaveExists(ModelQ))
+		return 0			//cannot do anything, bail out. 
+	endif
+	//get old note here... 
+	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+	string OldNote=note(SourceIntWv)
+	string NoteWithResults=""
+	variable generation=0
+	NoteWithResults="Results of "+SimpleModel+" fitting;"+date()+";"+time()+";DataFolder="+DataFolderName+";Intensity="+IntensityWaveName+";"
+	NoteWithResults+="Q="+QWavename+";"+"Error="+ErrorWaveName+";"+"ChiSquared="+num2str(AchievedChiSquare)+";"
+	strswitch(SimpleModel)	
+		case "Guinier":	
+			NoteWithResults+="Rg="+num2str(Guinier_Rg)+";"+"I0="+num2str(Guinier_I0)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitGuinierI", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitGuinierI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitGuinierQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitGuinierI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitGuinierQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break	
+		case "Guinier Rod":	// execute if case matches expression
+			NoteWithResults+="Rc="+num2str(Guinier_Rg)+";"+"I0="+num2str(Guinier_I0)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitGuinierRI", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitGuinierRI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitGuinierRQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitGuinierRI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitGuinierRQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break	
+	case "Guinier Sheet":	// execute if case matches expression
+			NoteWithResults+="Thickness="+num2str(sqrt(12)*Guinier_Rg)+";"+"I0="+num2str(Guinier_I0)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitGuinierSI", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitGuinierSI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitGuinierSQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitGuinierSI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitGuinierSQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break	
+		case "Porod":	// execute if case matches expression
+			NoteWithResults+="PorodConstant="+num2str(Porod_Constant)+";"+"DataBackground="+num2str(DataBackground)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitPorodI_", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitPorodI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitPorodQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitPorodI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitPorodQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break	
+		case "Sphere":	// execute if case matches expression
+			NoteWithResults+="SphereRadius="+num2str(Sphere_Radius)+";"+"SphereScalingFactor="+num2str(Sphere_ScalingConstant)+";"+"SphereBackground="+num2str(DataBackground)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitSphereI_", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitSphereI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitSphereQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitSphereI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitSphereQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break	
+		case "Spheroid":	// execute if case matches expression
+			NoteWithResults+="SpheroidRadius="+num2str(Spheroid_Radius)+";"+"SpheroidAspectRatio="+num2str(Spheroid_Beta)+";"
+			NoteWithResults+="SpheroidScalingFactor="+num2str(Spheroid_ScalingConstant)+";"+"SpheroidBackground="+num2str(DataBackground)+";"
+			NoteWithResults+=OldNote
+			generation=IN2G_FindAVailableResultsGen("SimFitSpheroidI_", DataFolderName)
+			Duplicate/O ModelInt, $(DataFolderName+"SimFitSpheroidI_"+num2str(generation))
+			Duplicate/O ModelQ, $(DataFolderName+"SimFitSpheroidQ_"+num2str(generation))
+			Wave ResultInt=$(DataFolderName+"SimFitSpheroidI_"+num2str(generation))
+			Wave ResuldQ = $(DataFolderName+"SimFitSpheroidQ_"+num2str(generation))
+			Note /K/NOCR ResultInt, NoteWithResults
+			Note /K/NOCR ResuldQ, NoteWithResults
+			break
+		default:			// optional default expression executed
+			Abort "Unknown data type, cannot save the data"
+	endswitch	
+end
+//*****************************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+static Function IR3J_SaveResultsToWaves()
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()	
+	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
+	SVAR  DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
+	SVAR  IntensityWaveName=root:Packages:Irena:SimpleFits:IntensityWaveName
+	SVAR  QWavename=root:Packages:Irena:SimpleFits:QWavename
+	SVAR  ErrorWaveName=root:Packages:Irena:SimpleFits:ErrorWaveName
+	SVAR SimpleModel=root:Packages:Irena:SimpleFits:SimpleModel
+	NVAR DataQEnd = root:Packages:Irena:SimpleFits:DataQEnd
+	NVAR DataQstart = root:Packages:Irena:SimpleFits:DataQstart
+	NVAR Guinier_I0 = root:Packages:Irena:SimpleFits:Guinier_I0
+	NVAR Guinier_Rg=root:Packages:Irena:SimpleFits:Guinier_Rg
+	NVAR AchievedChiSquare=root:Packages:Irena:SimpleFits:AchievedChiSquare
+	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
+	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
+	NVAR Porod_Constant			=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
+	NVAR Sphere_ScalingConstant	=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
+	NVAR Spheroid_Radius			=root:Packages:Irena:SimpleFits:Spheroid_Radius
+	NVAR Spheroid_ScalingConstant=root:Packages:Irena:SimpleFits:Spheroid_ScalingConstant
+	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
+	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
+	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
+	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+	if(!SaveToWaves)
+		return 0
+	endif	
+	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
+	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
+	//others can be created via Simple polots as needed... 
+	if(!WaveExists(modelInt)||!WaveExists(ModelQ))
+		return 0			//cannot do anything, bail out. 
+	endif
 
 	variable curlength
 	if(stringmatch(SimpleModel,"Guinier"))
@@ -1345,6 +1688,40 @@ static Function IR3J_SaveResultsToWaves()
 		redimension/N=(curlength+1) SampleName,GuinierRg, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare 
 		SampleName[curlength] = DataFolderName
 		GuinierRg[curlength] = Guinier_Rg
+		GuinierI0[curlength] = Guinier_I0
+		GuinierQmin[curlength] = DataQstart
+		GuinierQmax[curlength] = DataQEnd
+		GuinierChiSquare[curlength] = AchievedChiSquare
+		IR3J_GetTableWithresults()
+	elseif(stringmatch(SimpleModel,"Guinier Rod"))
+		//tabulate data for Guinier
+		NewDATAFolder/O/S root:GuinierRodFitResults
+		Wave/Z GuinierRc
+		if(!WaveExists(GuinierRc))
+			make/O/N=0 GuinierRc, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare
+			make/O/N=0/T SampleName
+		endif
+		curlength = numpnts(GuinierRc)
+		redimension/N=(curlength+1) SampleName,GuinierRc, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare 
+		SampleName[curlength] = DataFolderName
+		GuinierRc[curlength] = Guinier_Rg
+		GuinierI0[curlength] = Guinier_I0
+		GuinierQmin[curlength] = DataQstart
+		GuinierQmax[curlength] = DataQEnd
+		GuinierChiSquare[curlength] = AchievedChiSquare
+		IR3J_GetTableWithresults()
+	elseif(stringmatch(SimpleModel,"Guinier Sheet"))
+		//tabulate data for Guinier
+		NewDATAFolder/O/S root:GuinierSheetFitResults
+		Wave/Z GuinierTh
+		if(!WaveExists(GuinierTh))
+			make/O/N=0 GuinierTh, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare
+			make/O/N=0/T SampleName
+		endif
+		curlength = numpnts(GuinierTh)
+		redimension/N=(curlength+1) SampleName,GuinierTh, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare 
+		SampleName[curlength] = DataFolderName
+		GuinierTh[curlength] = sqrt(12)*Guinier_Rg
 		GuinierI0[curlength] = Guinier_I0
 		GuinierQmin[curlength] = DataQstart
 		GuinierQmax[curlength] = DataQEnd
@@ -1410,8 +1787,9 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-Function IR3J_GetTableWithresults()
+static Function IR3J_GetTableWithResults()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 	strswitch(SimpleModel)	// string switch
 		case "Guinier":	// execute if case matches expression
@@ -1420,6 +1798,22 @@ Function IR3J_GetTableWithresults()
 				DoWIndow/F IR3J_GuinierFitResultsTable
 			else
 				IR3J_GuinierFitResultsTableFnct()
+			endif		
+			break		// exit from switch
+		case "Guinier Rod":	// execute if case matches expression
+			DoWindow IR3J_GuinierRodFitResultsTable
+			if(V_Flag)
+				DoWIndow/F IR3J_GuinierRodFitResultsTable
+			else
+				IR3J_GuinierRodFitResultsTableFnct()
+			endif		
+			break		// exit from switch
+		case "Guinier Sheet":	// execute if case matches expression
+			DoWindow IR3J_GuinierSheetFitResultsTable
+			if(V_Flag)
+				DoWIndow/F IR3J_GuinierSheetFitResultsTable
+			else
+				IR3J_GuinierSheetFitResultsTableFnct()
 			endif		
 			break		// exit from switch
 		case "Porod":	// execute if case matches expression
@@ -1456,6 +1850,7 @@ end
 
 Function IR3J_DeleteExistingModelResults()
 
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel 	= root:Packages:Irena:SimpleFits:SimpleModel
 	DoAlert /T="This is delete resutls warning" 1, "This will delete all existing results for model : "+SimpleModel+"  . Do you WANT to continue?"
 	if(V_Flag==1)
@@ -1465,6 +1860,20 @@ Function IR3J_DeleteExistingModelResults()
 				KillDataFolder/Z root:GuinierFitResults:
 				if(V_Flag!=0)
 					DoAlert/T="Could not delete data folder" 0, "Guinier results folder root:GuinierFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
+				endif
+				break		// exit from switch
+			case "Guinier Rod":	// execute if case matches expression
+				DoWindow/K/Z IR3J_GuinierRodFitResultsTable
+				KillDataFolder/Z root:GuinierRodFitResults:
+				if(V_Flag!=0)
+					DoAlert/T="Could not delete data folder" 0, "Guinier results folder root:GuinierRodFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
+				endif
+				break		// exit from switch
+			case "Guinier Sheet":	// execute if case matches expression
+				DoWindow/K/Z IR3J_GuinierSheetFitResultsTable
+				KillDataFolder/Z root:GuinierSheetFitResults:
+				if(V_Flag!=0)
+					DoAlert/T="Could not delete data folder" 0, "Guinier results folder root:GuinierSheetFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
 				endif
 				break		// exit from switch
 			case "Porod":	// execute if case matches expression
@@ -1489,7 +1898,6 @@ Function IR3J_DeleteExistingModelResults()
 				endif
 				break
 			default:			// optional default expression executed
-	
 		endswitch
 	endif
 end
@@ -1499,6 +1907,7 @@ end
 //*****************************************************************************************************************
 static Function IR3J_GuinierFitResultsTableFnct() : Table
 	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	if(!DataFolderExists("root:GuinierFitResults:"))
 		Abort "No Guinier Fit data exist."
@@ -1517,10 +1926,55 @@ static Function IR3J_GuinierFitResultsTableFnct() : Table
 	ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
 	SetDataFolder oldDf
 EndMacro
+//*****************************************************************************************************************
+static Function IR3J_GuinierRodFitResultsTableFnct() : Table
+	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()	
+	if(!DataFolderExists("root:GuinierRodFitResults:"))
+		Abort "No Guinier Rod Fit data exist."
+	endif
+	SetDataFolder root:GuinierRodFitResults:
+	Wave/T SampleName
+	Wave GuinierRc,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
+	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierRodFitResultsTable SampleName,GuinierRc,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Rod fitting results Table"
+	AppendToTable GuinierQmin
+	ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
+	ModifyTable alignment(GuinierRc)=1,sigDigits(GuinierRc)=4,title(GuinierRc)="Rc [A]"
+	ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
+	ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
+	ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
+	ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
+	ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
+	SetDataFolder oldDf
+EndMacro
+//*****************************************************************************************************************
+static Function IR3J_GuinierSheetFitResultsTableFnct() : Table
+	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()	
+	if(!DataFolderExists("root:GuinierSheetFitResults:"))
+		Abort "No Guinier Sheet Fit data exist."
+	endif
+	SetDataFolder root:GuinierSheetFitResults:
+	Wave/T SampleName
+	Wave GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
+	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierSheetFitResultsTable SampleName,GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Sheet fitting results Table"
+	AppendToTable GuinierQmin
+	ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
+	ModifyTable alignment(GuinierTh)=1,sigDigits(GuinierTh)=4,title(GuinierTh)="Tc [A]"
+	ModifyTable alignment(GuinierI0)=1,sigDigits(GuinierI0)=4,width(GuinierI0)=100,title(GuinierI0)="Guinier I0"
+	ModifyTable alignment(GuinierChiSquare)=1,sigDigits(GuinierChiSquare)=4,width(GuinierChiSquare)=104
+	ModifyTable title(GuinierChiSquare)="Chi^2",alignment(GuinierQmax)=1,sigDigits(GuinierQmax)=4
+	ModifyTable width(GuinierQmax)=92,title(GuinierQmax)="Qmax [1/A]",alignment(GuinierQmin)=1
+	ModifyTable sigDigits(GuinierQmin)=4,width(GuinierQmin)=110,title(GuinierQmin)="Qmin [1/A]"
+	SetDataFolder oldDf
+EndMacro
 
 //*****************************************************************************************************************
 Function IR3J_PorodFitResultsTableFnct() : Table
 	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:PorodFitResults:"))
 		Abort "No Porod Fit data exist."
@@ -1542,6 +1996,7 @@ EndMacro
 //*****************************************************************************************************************
 Function IR3J_SphereFFFitResultsTableFnct() : Table
 	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:SphereFitResults:"))
 		Abort "No Sphere FF Fit data exist."
@@ -1565,6 +2020,7 @@ EndMacro
 
 Function IR3J_SpheroidFFFitResultsTableFnct() : Table
 	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:SpheroidFitResults:"))
 		Abort "No Spheroid FF Fit data exist."
@@ -1599,6 +2055,8 @@ Function IR3J_PopMenuProc(pa) : PopupMenuControl
 				SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 				SimpleModel = popStr
 				IR3J_SetupControlsOnMainpanel()
+				KillWaves/Z $("root:Packages:Irena:SimpleFits:ModelLogLogInt")
+				KillWaves/Z $("root:Packages:Irena:SimpleFits:ModelLogLogQ")
 				KillWIndow/Z IR3J_LinDataDisplay
 				KillWindow/Z IR3J_LogLogDataDisplay
 				IR3J_CreateCheckGraphs()
@@ -1618,6 +2076,7 @@ End
 
 static Function IR3J_SetupControlsOnMainpanel()
 	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	DoWindow IR3J_SimpleFitsPanel
 	if(V_Flag)

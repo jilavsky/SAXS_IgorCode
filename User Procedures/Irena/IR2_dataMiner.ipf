@@ -116,7 +116,8 @@ end
 
 Function IR2M_DataMinerPanel()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	SVAR DataFolderName=root:Packages:DataMiner:DataFolderName
 	DataFolderName="---"
@@ -258,7 +259,8 @@ Function IR2M_MinerSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	String varName
 	
 	variable i
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	
 	if(cmpstr(ctrlName,"Others_FolderForWaves")==0)
@@ -363,7 +365,8 @@ Function IR2M_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 
 	NVAR GraphFontSize=root:Packages:DataMiner:GraphFontSize
@@ -389,7 +392,8 @@ end
 
 Function IR2M_FixPanelControls()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	DoWindow/F DataMiningTool
 	
@@ -475,7 +479,8 @@ end
 Function IR2M_DataMinerPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 
 	if(cmpstr(ctrlName,"Waves_ReadX")==0)
@@ -519,7 +524,8 @@ end
 Function IR2M_ReadOthersIntoLists()
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 
 	SVAR Variables_ListToFind
@@ -592,7 +598,8 @@ end
 Function IR2M_ClearOthersLists()
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 
 	SVAR Variables_ListToFind
@@ -638,7 +645,8 @@ end
 
 Function IR2M_MineTheDataFunction()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 
 	NVAR MineVariables = root:Packages:DataMiner:MineVariables
@@ -851,7 +859,8 @@ Function IR2M_ConvertWavestoMineOthers()
     
 	variable i, tempVal
 	string curWvName
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder $("root:"+Others_FolderForWaves)
 	
 //	Wave/T/Z DataFolderName
@@ -917,7 +926,8 @@ Function IR2M_CreateWavestoMineOthers()
 
 	variable i, tempVal
 	string curWvName
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	if(!DataFolderExists("root:"+Others_FolderForWaves))
 		setDataFolder root:
 		For(i=0;i<itemsInList(Others_FolderForWaves,":");i+=1)
@@ -1055,7 +1065,8 @@ Function IR2M_CreateOutputTable()
 
 	variable i
 	string curWvName
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder $(" root:"+Others_FolderForWaves)
 	
 	For(i=0;i<ItemsInList(Variables_ListToFind);i+=1)
@@ -1276,7 +1287,8 @@ end
 
 Function IR2M_FormatGraphAsRequested()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 
 	NVAR GraphLogX
@@ -1632,7 +1644,8 @@ end
 ///******************************************************************************************
 Function IR2M_ReadWavesFromListBox(which)
 	string which
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	Wave/T ItemsInFolder
 	
@@ -1666,7 +1679,8 @@ end
 Function IR2M_MakePanelWithListBox(skipCreatePanel)
 	variable skipCreatePanel
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	if(!skipCreatePanel)
 		KillWIndow/Z ItemsInFolderPanel
@@ -1835,7 +1849,8 @@ End
 ///******************************************************************************************
 
 Function IR2M_UpdateValueListBox()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	
 	SVAR DataFolderName=root:Packages:DataMiner:DataFolderName
@@ -1927,7 +1942,8 @@ Function  IR2M_DataMinerCheckProc(ctrlName,checked) : CheckBoxControl
 
 //	ListOfVariables+="MineVariables;MineStrings;MineWaves;MineWavenotes;"
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	NVAR MineVariables = root:Packages:DataMiner:MineVariables
 	NVAR MineStrings = root:Packages:DataMiner:MineStrings
@@ -2072,7 +2088,8 @@ End
 ///******************************************************************************************
 Function IR2M_SyncSearchListAndListBox()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataMiner
 	SVAR Variables_ListToFind
 	SVAR Strings_ListToFind
@@ -2110,7 +2127,8 @@ end
 Function IR2M_InitDataMiner()
 
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S DataMiner

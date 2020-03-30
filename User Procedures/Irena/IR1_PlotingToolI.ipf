@@ -384,7 +384,8 @@ end
 Function IR1P_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:GeneralplottingTool
 	
 	variable IsAllAllRight
@@ -656,7 +657,8 @@ Function IR1P_PanelPopupControlFitting(ctrlName,popNum,popStr) : PopupMenuContro
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:GeneralplottingTool
 
 	if (cmpstr(ctrlName,"SelectFitFunction")==0)		
@@ -1327,7 +1329,8 @@ end
 //	String ctrlName
 //	Variable checked
 //
-//	string oldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:GeneralplottingTool
 //
 //	if (cmpstr(ctrlName,"UseIndra2Data")==0)
@@ -1415,7 +1418,8 @@ Function IR1P_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:GeneralplottingTool
 
 	NVAR UseIndra2Data=root:Packages:GeneralplottingTool:UseIndra2Data
@@ -1648,7 +1652,8 @@ end
 
 Function IR1P_InitializeGenGraph()			//initialize general plotting tool.
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -2075,7 +2080,8 @@ end
 
 Function IR1P_StoreGraphInit()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages
 	NewDataFolder/O root:Packages:StoredGraphs
 	setDataFolder root:Packages:GeneralplottingTool
@@ -2110,7 +2116,8 @@ end
 
 Function IR1P_UpdateListOfStoredGraphs()
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:GeneralplottingTool
 	Wave/T ListOfStoredGraphs=root:Packages:GeneralplottingTool:ListOfStoredGraphs
 	
@@ -2169,7 +2176,8 @@ End
 //*************************************************************************************************************
 Function IR1P_KillIrena1Macro()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	Wave/T ListOfStoredGraphs=root:Packages:GeneralplottingTool:ListOfStoredGraphs	
 	string StringToLoad=""
 	variable i
@@ -2190,7 +2198,8 @@ end
 
 Function IR1P_LoadIrena1Macro()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:GeneralplottingTool
 	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
 	SVAR ListOfDataWaveNames=root:Packages:GeneralplottingTool:ListOfDataWaveNames
@@ -2224,7 +2233,8 @@ end
 
 Function IR1P_SaveIrena1Macro()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:GeneralplottingTool
 	SVAR ListOfDataFolderNames=root:Packages:GeneralplottingTool:ListOfDataFolderNames
 	SVAR ListOfDataWaveNames=root:Packages:GeneralplottingTool:ListOfDataWaveNames
@@ -2264,7 +2274,8 @@ Function IR1P_StoreGraphSetVarProc(ctrlName,varNum,varStr,varName) : SetVariable
 	
 	if(cmpstr("NewGraphMacroName",ctrlName)==0)
 		SVAR NewStoredGraphName=root:Packages:GeneralplottingTool:NewStoredGraphName
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:StoredGraphs
 		NewStoredGraphName=cleanupName(NewStoredGraphName,0)
 		if(CheckName(NewStoredGraphName, 4)!=0)

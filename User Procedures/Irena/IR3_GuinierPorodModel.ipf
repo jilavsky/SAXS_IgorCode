@@ -758,7 +758,8 @@ Function IR3GP_PanelTabControl(name,tab)
 		abort
 	endif
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	NVAR NumberOfLevels=root:Packages:Irena:GuinierPorod:NumberOfLevels
 	NVAR UseNoLimits=root:Packages:Irena:GuinierPorod:UseNoLimits
@@ -827,7 +828,8 @@ end
 Function IR3GP_PanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	variable i
 
@@ -1244,7 +1246,8 @@ end
 
 Function IR3GP_GraphMeasuredData()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -1361,7 +1364,8 @@ Function IR3GP_Initialize(enforceReset)
 	variable enforceReset
 	//function, which creates the folder for SAS modeling and creates the strings and variables
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Irena
@@ -1537,7 +1541,8 @@ Function IR3GP_FitData(skipreset)
 	variable skipreset
 	//here we need to construct the fitting command and prepare the data for fit...
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	STRUCT GuinierPorodLevel Par
 	
@@ -1850,7 +1855,8 @@ end
 
 Function IR3GP_FixLimits()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable i
 	NVAR ActiveLevel=root:Packages:Irena:GuinierPorod:ActiveLevel
 	STRUCT GuinierPorodLevel Par	
@@ -2019,7 +2025,8 @@ Function IR3GP_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	if(ParamIsDefault(SaveMe))
 		SaveMe="NO"
 	ENDIF
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	
 	string UsersComment="Guinier-Porod Fit results from "+date()+"  "+time()
@@ -2121,7 +2128,8 @@ end
 Function IR3GP_AppendWaveNote(ListOfWavesForNotes)
 	string ListOfWavesForNotes
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	NVAR NumberOfLevels=root:Packages:Irena:GuinierPorod:NumberOfLevels
@@ -2318,7 +2326,8 @@ end
 Function IR3GP_FitLocalGuinier(Level, WhichOne)
 	variable level
 	variable WhichOne		//1 for Rg1, 2 for Rg2
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	STRUCT GuinierPorodLevel Par
 
@@ -2445,7 +2454,8 @@ Function IR3GP_AppendGuinierFit(level, overwride, FitWaveName)
 	variable level, overwride
 	string FitWaveName
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	RemoveFromGraph /W=GuinierPorod_LogLogPlot /Z FitLevel1Guinier,FitLevel2Guinier,FitLevel3Guinier,FitLevel4Guinier,FitLevel5Guinier
@@ -2468,7 +2478,8 @@ Function IR3GP_AppendPorodFit(level, overwride, FitWaveName)
 	variable level, overwride
 	string FitWaveName
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	RemoveFromGraph /W=GuinierPorod_LogLogPlot /Z FitLevel1Porod,FitLevel2Porod,FitLevel3Porod,FitLevel4Porod,FitLevel5Porod
@@ -2498,7 +2509,8 @@ end
 
 Function IR3GP_FitLocalPorod(Level, whichOne)
 	variable level, WhichOne	//1 for d, 2 for S1 and 3 for S2
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	STRUCT GuinierPorodLevel Par
 	
 	setDataFolder root:Packages:Irena:GuinierPorod
@@ -2758,7 +2770,8 @@ end
 //******************************************************************************************************************
 
 Function IR3GP_ConfidenceEvaluation()
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 
 	IR3GP_ConfEvResetList()
@@ -2900,7 +2913,8 @@ end
 
 Function/S IR3GP_ConfEvalBuildListOfParams()
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	variable i,j
 	SVAR ConfEvListOfParameters=root:Packages:Irena:GuinierPorod:ConfEvListOfParameters
@@ -3089,7 +3103,8 @@ End
 //******************************************************************************************************************
 Function IR3GP_ConfEvResetList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	DoWIndow IR3GP_ConfEvaluationPanel
 	if(V_Flag)
@@ -3115,7 +3130,8 @@ end
 //******************************************************************************************************************
 static Function IR3GP_ConfEvAnalyzeList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	DoWIndow IR3GP_ConfEvaluationPanel
 	if(!V_Flag)
@@ -3166,7 +3182,8 @@ end
 //******************************************************************************************************************
 static Function IR3GP_ConfEvAddToList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:GuinierPorod
 	//SVAR ParamName = root:Packages:Irena:GuinierPorod:ConEvSelParameter
 	string ParamName
@@ -3207,7 +3224,8 @@ end
 //******************************************************************************************************************
 static function IR3GP_ConEvFixParamsIfNeeded()
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NVAR ConfEvFixRanges = root:Packages:Irena:GuinierPorod:ConfEvFixRanges
 	if(ConfEvFixRanges)
 		IR3GP_FixLimits()
@@ -3638,7 +3656,8 @@ end
 Function IR3GP_ConEvRestoreBackupSet(BackupLocation)
 	string BackupLocation
 	//restores backup waves (names/values) for all parameters used in current folder
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder $(BackupLocation)
 	Wave/T BackupParamNames
 	Wave BackupParamValues
@@ -3668,7 +3687,8 @@ end
 static Function IR3GP_ConEvBackupCurrentSet(BackupLocation)
 	string BackupLocation
 	//creates backup waves (names/values) for all parameters used in current folder
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//create folder where we dump this thing...
 	setDataFolder $(BackupLocation)
 	NVAR NumberOfLevels= root:Packages:Irena:GuinierPorod:NumberOfLevels	

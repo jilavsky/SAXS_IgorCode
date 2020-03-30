@@ -656,14 +656,16 @@ Function IR2S_SortListOfAvailableFldrs()
 			Sort TempWv, ListOfAvailableData
 		endif
 	elseif(stringMatch(FolderSortString,"_xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[p])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort /R  TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz.ext"))
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -700,7 +702,8 @@ end
 
 Function IR2S_UpdateListOfAvailFiles()
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:ScriptingTool
 	
 	NVAR UseIndra2Data=root:Packages:Irena:ScriptingTool:UseIndra2Data
@@ -764,7 +767,8 @@ end
 
 Function IR2S_InitScriptingTool()
 	
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S Irena
@@ -835,7 +839,8 @@ Function IR2S_CallWithPlottingToolII(reset)
 		DoWIndow/F IR1P_ControlPanel 
 	endif
 	
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:ScriptingTool
 	//set to same data types...
 	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
@@ -1038,7 +1043,8 @@ Function IR2S_FItWithModelingII()
 		DoWIndow/F LSQF_MainGraph 
 	endif
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:ScriptingTool
 	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
 	NVAR STUseQRSdata =root:Packages:Irena:ScriptingTool:UseQRSdata
@@ -1210,7 +1216,8 @@ Function IR2S_FItWithSizes(Uncert)
 		DoWIndow/F IR1R_SizesInputGraph 
 	endif
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:ScriptingTool
 	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
 	NVAR STUseQRSdata =root:Packages:Irena:ScriptingTool:UseQRSdata
@@ -1383,7 +1390,8 @@ Function IR2S_FitWithGuinierPorod()
 	endif
 
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:ScriptingTool
 	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
 	NVAR STUseQRSdata =root:Packages:Irena:ScriptingTool:UseQRSdata
@@ -1542,7 +1550,8 @@ Function IR2S_FItWithUnifiedFit()
 	endif
 
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena:ScriptingTool
 	NVAR STUseIndra2Data = root:Packages:Irena:ScriptingTool:UseIndra2Data
 	NVAR STUseQRSdata =root:Packages:Irena:ScriptingTool:UseQRSdata
@@ -1723,7 +1732,8 @@ end
 
 Function IR2S_RecordResultsToNbkGP()	
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Irena_UnifFit
 
 	NVAR NumberOfLevels=root:Packages:Irena:GuinierPorod:NumberOfLevels
@@ -1879,7 +1889,8 @@ end
 
 Function IR2S_RecordResultsToNbkSizes()
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Sizes
 
 	SVAR DataFolderName=root:Packages:Sizes:DataFolderName
@@ -1924,7 +1935,8 @@ end
 
 Function IR2S_RecordResultsToNbkUnif()	
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Irena_UnifFit
 
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
@@ -2025,7 +2037,8 @@ end
 
 //Function IR1A_SaveRecordResults()	
 //
-//	string OldDF=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setdataFolder root:Packages:Irena_UnifFit
 //
 //	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels

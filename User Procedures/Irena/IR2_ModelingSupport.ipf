@@ -113,7 +113,8 @@ end
 Function IR2L_InputGraphButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	if(cmpstr(ctrlName,"AutoSetAxis")==0)
@@ -194,7 +195,8 @@ end
 
 Function IR2L_FitLocalGuinier(Level)
 	variable level
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	//first set to display local fits
@@ -285,7 +287,8 @@ end
 
 Function IR2L_FitLocalPorod(Level)
 	variable level
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	setDataFolder root:Packages:IR2L_NLSQF
 
@@ -485,7 +488,8 @@ End
 
 Function IR2L_RemoveAllDataSets()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i
 	DoAlert 1, "All data sets will be removed. Do you really want to do it?"
@@ -529,7 +533,8 @@ end
 //*****************************************************************************************************************
 
 Function IR2L_unUseAllDataSets()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i
 	For(i=1;i<11;i+=1)
@@ -547,7 +552,8 @@ end
 //*****************************************************************************************************************
 Function IR2L_CheckForTooManyUniflevels()
 	//let use know that only one unified level should be used. 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i, numberOfUFs
 	numberOfUFs=0
@@ -579,7 +585,8 @@ Function IR2L_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	if (stringmatch(ctrlName,"FormFactorPop"))
 		ControlInfo/W=LSQF2_MainPanel DistTabs
@@ -827,7 +834,8 @@ Function IR2L_MakeFFParamPanel(TitleStr, which)
 	variable which
 	string TitleStr
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	KillWIndow/Z FormFactorControlScreen
  	//make the new panel 
@@ -869,7 +877,8 @@ Function IR2L_Data_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 		SVAR rgbIntensity_set=$("root:Packages:IR2L_NLSQF:rgbIntensity_set"+num2str(tab+1))
@@ -930,7 +939,8 @@ Function IR2L_Model_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	NVAR DisplayInputDataControls=root:Packages:IR2L_NLSQF:DisplayInputDataControls
@@ -1329,7 +1339,8 @@ end
 //*****************************************************************************************************************
 Function IR2L_SetQminQmaxWCursors(WhichDataSet)
 	variable WhichDataSet
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	Wave CurQ=$("Q_set"+num2str(whichDataSet))
@@ -1370,7 +1381,8 @@ Function IR2L_PopSetVarProc(SV_Struct) : SetVariableControl
 		//	Bit 4:	Contextual menu click occurred.
 	if(SV_struct.eventcode==1 || SV_struct.eventcode==2)
 			SV_struct.blockReentry = 1
-			string OldDf=GetDataFolder(1)
+			DFref oldDf= GetDataFolderDFR()
+
 			setDataFolder root:Packages:IR2L_NLSQF
 			variable whichDataSet
 			//BackgStep_set
@@ -1734,7 +1746,8 @@ Function IR2L_DataTabSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCon
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable whichDataSet
 	//BackgStep_set
@@ -1786,7 +1799,8 @@ end
 //*****************************************************************************************************************
 Function IR2L_setQMinMax(whichDataSet)
 	variable whichDataSet
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	Wave CurMask=$("IntensityMask_set"+num2str(whichDataSet))
 	Wave CurQ=$("Q_set"+num2str(whichDataSet))
@@ -1864,7 +1878,8 @@ Function IR2L_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 
@@ -2048,7 +2063,8 @@ end
 
 Function IR2L_RecalculateIntAndErrors(WhichDataSet)
 	variable WhichDataSet
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 
@@ -2122,7 +2138,8 @@ end
 
 Function IR2L_Initialize()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S IR2L_NLSQF
@@ -2335,7 +2352,8 @@ Function IR2L_SetInitialValues(enforce)
 	variable enforce
 	//and here set default values...
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 //	abort "finish me - IE2L_SetInitialValues"
@@ -2814,7 +2832,8 @@ end
 Function IR2L_AddRemoveTagsToGraph(AddAlso)
 	variable AddAlso		//set to 1 if you want to add new tags not only removce old ones
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable k, i
 	string ListOfPopulationVariables
@@ -3081,7 +3100,8 @@ Function IR2L_SvNbk_ModelInf()
 	if(!SVAR_Exists(nbl))
 		abort
 	endif
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable k, i
 	string ListOfPopulationVariables
@@ -3486,7 +3506,8 @@ Function IR2L_SvNbk_SampleInf()
 	if(!SVAR_Exists(nbl))
 		abort
 	endif
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	//write header here... separator and some heading to divide the record.... 
@@ -3530,7 +3551,8 @@ Function IR2L_SvNbk_DataSetSave(WdtSt)
 	variable WdtSt
 
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	string ListOfVariables, ListOfDataVariables, ListOfPopulationVariables
@@ -3752,7 +3774,8 @@ end
 
 Function  IR2L_AnalyzeUncertainities()
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	//follow IR1A_ConfidenceEvaluation()
 	IR2L_ConfEvResetList()
@@ -3772,7 +3795,8 @@ end
 //******************************************************************************************************************
 Function IR2L_ConfEvResetList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	DoWIndow IR2L_ConfEvaluationPanel
 	if(V_Flag)
@@ -3916,7 +3940,8 @@ End
 static Function IR2L_ConEvBackupCurrentSettings(BackupLocation)
 	string BackupLocation
 	//creates backup waves (names/values) for all parameters used in current folder
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//create folder where we dump this thing...
 	setDataFolder $(BackupLocation)
 	string ParamNames=IR2L_ConfEvalBuildListOfParams(0)
@@ -3944,7 +3969,8 @@ end
 static Function IR2L_ConEvRestoreBackupSettings(BackupLocation)
 	string BackupLocation
 	//restores backup waves (names/values) for all parameters used in current folder
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder $(BackupLocation)
 	Wave/T BackupParamNames
 	Wave BackupParamValues
@@ -3966,7 +3992,8 @@ end
 //******************************************************************************************************************
 static Function IR2L_ConfEvAnalyzeList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	DoWIndow IR2L_ConfEvaluationPanel
 	if(!V_Flag)
@@ -4017,7 +4044,8 @@ end
 //******************************************************************************************************************
 static Function IR2L_ConfEvAddToList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	SVAR ParamName = root:Packages:IR2L_NLSQF:ConEvSelParameter
 	SVAR Method = root:Packages:IR2L_NLSQF:ConEvMethod
@@ -4605,7 +4633,8 @@ end
 Function/S IR2L_ConfEvalBuildListOfParams(SetLimits)
 	variable SetLimits
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i,j
 	SVAR ConfEvListOfParameters=root:Packages:IR2L_NLSQF:ConfEvListOfParameters
@@ -4779,7 +4808,8 @@ end
 Function IR2L_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i
 
@@ -5006,7 +5036,8 @@ Function IR2L_DataTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	ControlInfo/W=LSQF2_MainPanel DataTabs
@@ -5974,7 +6005,8 @@ Function IR2L_CalcMassFIntPopXDataSetY(pop,dataSet)
 	
 //Calculate Intensity for pop X into data set Y
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
@@ -6096,7 +6128,8 @@ Function IR2L_CalcSurfFIntPopXDataSetY(pop,dataSet)
 	
 //Calculate Intensity for pop X into data set Y
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
@@ -6202,7 +6235,8 @@ Function IR2L_CalcDiffIntPopXDataSetY(pop,dataSet)
 
 //Calculate Intensity for pop X into data set Y
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
@@ -6346,7 +6380,8 @@ Function IR2L_CalcUnifiedIntPopXDataSetY(pop,dataSet)
 
 //Calculate Intensity for pop X into data set Y
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
@@ -6779,7 +6814,8 @@ Function IR2L_CalcIntPopXDataSetY(pop,dataSet)
 
 //Calculate Intensity for pop X into data set Y
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	NVAR UseTheData=$("root:Packages:IR2L_NLSQF:UseTheData_set"+num2str(DataSet))
@@ -7017,7 +7053,8 @@ Function IR2L_SlitSmearLSQFData(IntWave,Qwave,SlitLength)
 	wave IntWave,Qwave
 	variable SlitLength
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	Duplicate/Free IntWave, SmearedIntWave
 	IR1B_SmearData(IntWave,Qwave, slitLength, SmearedIntWave)
@@ -7383,7 +7420,8 @@ Function IR2L_CalculateDistributions(pop,Radius,NumDist,VolumeDist) //calculates
 	variable pop
 	wave Radius,NumDist,VolumeDist
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	NVAR UseNumberDistributions=root:Packages:IR2L_NLSQF:UseNumberDistributions
 	
@@ -7468,7 +7506,8 @@ Function IR2L_CalculateAveVolWave(ResultsWave,Radius,pop) //calculates average v
 	variable pop
 	wave ResultsWave, Radius
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	NVAR UseNumberDistributions=root:Packages:IR2L_NLSQF:UseNumberDistributions
 	
@@ -7500,7 +7539,8 @@ end
 Function IR2L_CreateDistributionWaves(pop)
 	variable pop
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(pop))
 	SVAR Model=$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(pop))	
@@ -7605,7 +7645,8 @@ Function IR2L_GenerateRadiiDist(MyFunction, OutputWave, numberOfPoints, myprecis
 	//we end. If we walk out of reasonable values (10A and 10^15A), we stop.
 	
 	//first we need to find step, which we will use to step from median
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:IR2L_NLSQF
 
 
@@ -7815,7 +7856,8 @@ Function IR2L_LSWCumulative(xx,location,scale, shape)
 		variable xx, location,scale, shape
 	//this function calculates probability for LSW distribution
 	//I do not have cumulative probability function, so it is done numerically... More complex and much more annoying...
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:IR2L_NLSQF
 			
 	variable result, pointsNeeded=ceil(xx/30+30)
@@ -7861,7 +7903,8 @@ end
 Function IR2L_UpdtSeparateMMM(distNum)
 	Variable distNum
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:IR2L_NLSQF
 	SVAR FormFactor=$("root:Packages:IR2L_NLSQF:FormFactor_pop"+num2str(distNum))
 	SVAR Model=	$("root:Packages:IR2L_NLSQF:Model_pop"+num2str(distNum))

@@ -221,7 +221,8 @@ end
 
 Function IR2D_InitializeDWSGraph()			//initialize general plotting tool.
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ListOfVariables
 	string ListOfStrings
 	variable i

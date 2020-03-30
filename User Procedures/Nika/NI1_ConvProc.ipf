@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=2.69
+#pragma version=2.70
 #include <TransformAxis1.2>
 
 //*************************************************************************\
@@ -10,6 +10,8 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.70 fixed NI1A_FindeOrderNumber to utilize for sorting in "_001" option the last number, ignores any string, even if at the end of name. 
+//			can sort nases as "name_With_Order_0001344_waxs.tif" based on teh 0001344 
 //2.69 fixed NI1A_GenerAngleLine for angles between 135 - 360 deg. Allow negative angles, If Angle<0, Angle = 180+Angle
 //2.68 Fixed to accept tiff as tif extension.
 //2.67 Added Batch processing
@@ -3488,14 +3490,16 @@ Function NI1A_UpdateDataListBox()
 				elseif(FIlesSortOrder==3)
 					//extract the order number and use that to sort out..
 					Make/O/N=(numpnts(ListOf2DSampleData)) tempSortWv
-					tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p]) 
+					tempSortWv = IN2G_FindNumericalIndexForSorting(ListOf2DSampleData[p])
+					//tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p]) 
 					sort tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
 					KillWaves/Z tempSortWv
 					ListOf2DSampleDataNumbers[numpnts(ListOf2DSampleDataNumbers)-1]=1
 				elseif(FIlesSortOrder==4)
 					//extract the order number and use that to sort out.. Inverted
 					Make/O/N=(numpnts(ListOf2DSampleData)) tempSortWv
-					tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p]) 
+					//tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p]) 
+					tempSortWv = IN2G_FindNumericalIndexForSorting(ListOf2DSampleData[p])
 					sort/R tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
 					KillWaves/Z tempSortWv
 					ListOf2DSampleDataNumbers[0]=1
@@ -3524,14 +3528,25 @@ end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-
-Function NI1A_FindeOrderNumber(stringWithName)	
-	string stringWithName
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string FoundON
-	FoundON = stringWithName[strsearch(stringWithName, "_", inf ,1)+1, strsearch(stringWithName, ".", inf ,1)-1]
-	return str2num(FoundON)
-end
+//
+//Function NI1A_FindeOrderNumber(stringWithName)	
+//	string stringWithName
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	//FoundON = stringWithName[strsearch(stringWithName, "_", inf ,1)+1, strsearch(stringWithName, ".", inf ,1)-1]
+//	//change to search from teh back side for frst useful number. Some palces append text at the end. 
+//	string FoundON, tempname
+//	variable OrderNum, i, imax
+//	tempname = stringWithName[0,strsearch(stringWithName, ".", inf ,1)-1]
+//	imax = ItemsInList(tempname,"_")
+//	For(i=imax-1;i>=0;i-=1)	
+//		FoundON = StringFromList(i, tempname , "_")
+//		OrderNum = str2num(FoundON)
+//		if(numtype(OrderNum)==0)
+//			return OrderNum
+//		endif	
+//	endfor
+//	return 0
+//end
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************

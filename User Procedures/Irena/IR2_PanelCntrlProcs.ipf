@@ -9,7 +9,10 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.60 addd Multi controls - controsl with listbox... For tools needing ability to select multipel data sets. 
+//1.60 add Multi controls - controls with listbox... For tools needing ability to select multiple data sets. 
+//			changed bahavior for generic (no defined data types selected) data. Now, if user selects X, Y, or E wave and in next folder user selects such waves exist, 
+//							the names will be reatined and not repalced by "---" as before. Seems mopre reasonable. If waves do nto exist in the new folder, names are reset to "---" 
+//			fixes to handling of fUserDefined data - Dale has found few bugs as he is using the tool. Still, some bugs left in there... 
 // 
 //1.53 addes Level fits for Guinier-Porod. Adds Level0 for Unified/GP and pop0 for Modeling which are simply flat background wave. 
 			//fixed results lookup which seemed to have failed for more than two results available... 
@@ -88,7 +91,8 @@
 	//this is how the double click action suppose to look:
 	//Function IR3L_DoubleClickAction(FoldernameStr)
 	//		string FoldernameStr
-
+	//		IR3C_SelectWaveNamesData("Irena:MultiSaPlotFit", FolderNameStr)			//this routine will preset names in strings as needed, so later code know what X, Y, and Z is!!!!
+	//	Important note, this double click routine must use the above function before other functionality so the code defines what X, Y, and E is. Else, everything else will break... 
 
 //2.   External files picker....   there is listbox support to select external files :
 //	Function IR3C_AddDataControls(PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr,DefaultSortString, DoubleCLickFnctName)
@@ -122,12 +126,12 @@
 //	PauseUpdate; Silent 1		// building window...
 //	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Test"
 //Uncomment either Example 1 or Example 2 
-//Example 1 - User data of Irena type
+//Example 1 - User data of Irena type, in this case the names are fully specified with no * in the name.
 //	string UserDataTypes="DSM_Int;SMR_Int;"
 //	string UserNameString="Test me"
 //	string XUserLookup="DSM_Int:DSM_Qvec;SMR_Int:SMR_Qvec;"
 //	string EUserLookup="DSM_Int:DSM_Error;SMR_Int:SMR_Error;"
-//Example 2 - qrs data type
+//Example 2 - qrs data type. In thi scase the names are partically specified,. NOTE: The * repalces SAME string in the name, so in this case the names must have same ending as QRS names have. 
 //	string UserDataTypes="r_*;"
 //	string UserNameString="Test me"
 //	string XUserLookup="r_*:q_*;"
@@ -216,7 +220,8 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	variable RequireErrorWaves,AllowModelData
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S IrenaControlProcs
@@ -251,9 +256,11 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="UniLocalLevel4Unified;UniLocalLevel4Pwrlaw;UniLocalLevel4Guinier;"
 	AllCurrentlyAllowedTypes+="UniLocalLevel5Unified;UniLocalLevel5Pwrlaw;UniLocalLevel5Guinier;"
 	AllCurrentlyAllowedTypes+="GuinierPorodFitIntensity;GuinierPorodIntLevel0;GuinierPorodIntLevel1;GuinierPorodIntLevel2;GuinierPorodIntLevel3;GuinierPorodIntLevel4;GuinierPorodIntLevel5;"
+	//Simple fits
+	AllCurrentlyAllowedTypes+="SimFitGuinierI;SimFitGuinierRI;SimFitGuinierSII;SimFitSphereI;SimFitSpheroidI;SimFitPorodI;"
 
 	string/g AllKnownToolsResults
-	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;"
+	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;"
 
 	if(cmpstr(AllowedResultsTypes,"AllCurrentlyAllowedTypes")==0)
 		AllowedResultsTypes=AllCurrentlyAllowedTypes
@@ -487,6 +494,14 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	ResultsDataTypesLookup+="CumulativeSfcArea:CumulativeDistDiameters;"
 	ResultsDataTypesLookup+="MIPVolume:MIPPressure;"
 
+	//SimpleFits
+	ResultsDataTypesLookup+="SimFitGuinierI:SimFitGuinierQ;"
+	ResultsDataTypesLookup+="SimFitGuinierRI:SimFitGuinierRQ;"
+	ResultsDataTypesLookup+="SimFitGuinierSII:SimFitGuinierSQ;"
+	ResultsDataTypesLookup+="SimFitSphereI:SimFitSphereQ;"
+	ResultsDataTypesLookup+="SimFitSpheroidI:SimFitSpheroidQ;"
+	ResultsDataTypesLookup+="SimFitPorodI:SimFitPorodQ;"
+
 
 	string ListOfVariables
 	string ListOfStrings
@@ -679,7 +694,8 @@ Function IR2C_ModelQSetVarProc(SV_Struct) : SetVariableControl
 	String varStr=SV_Struct.sVal
 	String varName=SV_Struct.vName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=SV_Struct.win
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -730,7 +746,8 @@ Function IR2C_FixDisplayedControls(WnName)
 	string WnName
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=WnName
 	//GetWindow $(TopPanel), activeSW		//fix for subwindow controls... This will add teh subwidnow which is selected, I hope that means in which we operate!
 	//TopPanel=S_value
@@ -789,7 +806,8 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String ctrlName=CB_Struct.ctrlName
 	Variable checked=CB_Struct.checked
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=CB_Struct.win
 	//string TopPanel=WinName(0,65)
 	//GetWindow $(TopPanel), activeSW
@@ -890,10 +908,10 @@ Function IR2C_InputPanelCheckboxProc(CB_Struct)
 		SVAR IntDf=$(CntrlLocation+":IntensityWaveName")
 		SVAR QDf=$(CntrlLocation+":QWaveName")
 		SVAR EDf=$(CntrlLocation+":ErrorWaveName")
-			Dtf=" "
-			IntDf=" "
-			QDf=" "
-			EDf=" "
+			Dtf="---"
+			IntDf="---"
+			QDf="---"
+			EDf="---"
 			string TpPnl=TopPanel
 			PopupMenu SelectDataFolder mode=1, win=$(TopPanel)
 		//	PopupMenu IntensityDataName mode=1,value= #"\"---;\"+IR2P_ListOfWaves(\"Yaxis\",\"*\",\""+TpPnl+"\")", win=$(TopPanel)
@@ -931,7 +949,8 @@ Function/T IR2P_GenStringOfFolders([winNm])
 	//variable startTicks=ticks
 	//part to copy everywhere...	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel
 	if( ParamIsDefault(winNm))
 		TopPanel=WinName(0,65)
@@ -1299,7 +1318,8 @@ static Function/T IR2P_CheckForRightINResultsWvs(TopPanel, FullFldrNames,WNMStr)
 	string TopPanel, FullFldrNames, WNMStr
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
@@ -1374,7 +1394,8 @@ static Function/T IR2P_CheckForRightQRSTripletWvs(TopPanel, ResultingWave,WNMStr
 	//FullFldrNames
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
@@ -1504,7 +1525,8 @@ static Function/T IR2P_CheckForRightUsrTripletWvs(TopPanel, FullFldrNames,DataTy
 	string TopPanel, FullFldrNames,DataTypeSearchedFor, WNMStr
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedUserTypes=root:Packages:IrenaControlProcs:ControlAllowedUserTypes
@@ -1613,7 +1635,8 @@ static Function/T IR2P_CheckForRightIN2TripletWvs(TopPanel, FullFldrNames,DataTy
 	string TopPanel, FullFldrNames,DataTypeSearchedFor
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
 	SVAR ControlAllowedResultsTypes=root:Packages:IrenaControlProcs:ControlAllowedResultsTypes
@@ -1668,7 +1691,8 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 	string DataType, MatchMeTo, winNm			//data type   : Xaxis, Yaxis, Error
 										//Match me to is string to match the type to... Use "*" to get all... Applicable ONLY to Y and error data
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=winNm
 
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
@@ -1864,14 +1888,16 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 					tempstringY2=tempstringY
 					tempstringX2=tempstringX
 					tempstringE2=tempstringE
-					For (j=0;j<ItemsInList(existingYWvs);j+=1)
+					//For (j=0;j<ItemsInList(existingYWvs);j+=1)
 					//this is purely wrong here. We need to just test, that the xwave is here for the y wave, nothing else... ZRewire this to make sense... 
-//						if (stringMatch(";"+existingXWvs,"*;"+StringFromList(j,existingYWvs)) && (!RequireErrorWvs || stringMatch(";"+existingEWvs,"*;"+StringFromList(j,existingYWvs))))
-//							if(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(j,existingYWvs)[strlen(tempstringY),inf],MatchMeTo[strlen(tempstringX),inf])==0)
-								result+=StringFromList(j,existingYWvs)+";"
-//							endif
-//						endif
-					endfor
+					//	if (stringMatch(";"+existingXWvs,"*;"+StringFromList(j,existingYWvs)) && (!RequireErrorWvs || stringMatch(";"+existingEWvs,"*;"+StringFromList(j,existingYWvs))))
+					//		if(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(j,existingYWvs)[strlen(tempstringY),inf],MatchMeTo[strlen(tempstringX),inf])==0)
+					if(StringMatch(tempstringX2, matchMeTo))
+							result+=StringFromList(j,existingYWvs)+";"
+					endif
+					//		endif
+					//	endif
+					//endfor
 				endif
 			endfor
 		elseif(cmpstr(DataType,"Error")==0)
@@ -1895,33 +1921,47 @@ Function/T IR2P_ListOfWaves(DataType,MatchMeTo, winNm)
 						endif
 					endfor
 				
-				else									//asume IN2 type data
-
+				elseif(stringmatch(tmpp, "&*" ))										//asume IN2 type data
+						//this is clearly unfinished...
 					tempstringY2=stringFromList(1,tempstringY,"*")
 					tempstringX2=stringFromList(1,tempstringX,"*")
 					tempstringE2=stringFromList(1,tempstringE,"*")
-					For (j=0;j<ItemsInList(existingEWvs);j+=1)
-//						if (stringMatch(";"+existingXWvs,"*;"+StringFromList(j,existingEWvs)[0,strlen(StringFromList(j,existingEWvs))-strlen(tempstringE)]+tempstringX2+";*") && (stringMatch(";"+existingYWvs,"*;"+StringFromList(j,existingEWvs)[0,strlen(StringFromList(j,existingEWvs))-strlen(tempstringE)]+tempstringY2+";*")))
-//							if(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(j,existingEWvs)[strlen(tempstringE),inf],MatchMeTo[strlen(tempstringX),inf])==0)
-								result+=StringFromList(j,existingEWvs)+";"
-//							endif
-//						endif
-					endfor
-
-//					For (j=0;j<ItemsInList(existingEWvs);j+=1)
-//						if (stringMatch(";"+existingXWvs,"*;"+tempstringX2+StringFromList(j,existingEWvs)[strlen(tempstringE2),inf]+";*") && stringMatch(";"+existingYWvs,"*;"+tempstringY2+StringFromList(j,existingEWvs)[strlen(tempstringE2),inf]+";*"))
-//							if(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(j,existingEWvs)[strlen(tempstringE2),inf],MatchMeTo[strlen(tempstringX2),inf])==0)
-//								result+=StringFromList(j,existingEWvs)+";"
-//							endif
-//						endif
-//					endfor
-//					if(stringmatch(";"+tempresult, "*;"+tempStringY+";*") && stringmatch(";"+tempresult, "*;"+tempStringX+";*") && (!RequireErrorWvs || stringmatch(";"+tempresult, "*;"+tempStringE+";*")))
-//						if(cmpstr(MatchMeTo,"*")==0 || (cmpstr(stringByKey(tempStringY,XwaveUserDataTypesLookup),MatchMeTo)==0 && stringmatch(";"+tempresult, "*;"+tempStringE+";*")))
-//							result+=tempStringE+";"
-//						endif
-//					endif
+					if(StringMatch(tempstringX2, matchMeTo))
+							result+=StringFromList(j,existingEWvs)+";"
+					endif
+					
+				else
+					tempstringY2=tempstringY
+					tempstringX2=tempstringX
+					tempstringE2=tempstringE
+					if(StringMatch(tempstringX2, matchMeTo)&&strlen(existingEWvs)>0)
+							result+=StringFromList(j,existingEWvs)+";"
+					endif
+							//For (j=0;j<ItemsInList(existingEWvs);j+=1)
+							//						if (stringMatch(";"+existingXWvs,"*;"+StringFromList(j,existingEWvs)[0,strlen(StringFromList(j,existingEWvs))-strlen(tempstringE)]+tempstringX2+";*") && (stringMatch(";"+existingYWvs,"*;"+StringFromList(j,existingEWvs)[0,strlen(StringFromList(j,existingEWvs))-strlen(tempstringE)]+tempstringY2+";*")))
+							//							if(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(j,existingEWvs)[strlen(tempstringE),inf],MatchMeTo[strlen(tempstringX),inf])==0)
+														//	result+=StringFromList(j,existingEWvs)+";"
+							//							endif
+							//						endif
+												//endfor
+							
+							//					For (j=0;j<ItemsInList(existingEWvs);j+=1)
+							//						if (stringMatch(";"+existingXWvs,"*;"+tempstringX2+StringFromList(j,existingEWvs)[strlen(tempstringE2),inf]+";*") && stringMatch(";"+existingYWvs,"*;"+tempstringY2+StringFromList(j,existingEWvs)[strlen(tempstringE2),inf]+";*"))
+							//							if(cmpstr(MatchMeTo,"*")==0 || cmpstr(StringFromList(j,existingEWvs)[strlen(tempstringE2),inf],MatchMeTo[strlen(tempstringX2),inf])==0)
+							//								result+=StringFromList(j,existingEWvs)+";"
+							//							endif
+							//						endif
+							//					endfor
+							//					if(stringmatch(";"+tempresult, "*;"+tempStringY+";*") && stringmatch(";"+tempresult, "*;"+tempStringX+";*") && (!RequireErrorWvs || stringmatch(";"+tempresult, "*;"+tempStringE+";*")))
+							//						if(cmpstr(MatchMeTo,"*")==0 || (cmpstr(stringByKey(tempStringY,XwaveUserDataTypesLookup),MatchMeTo)==0 && stringmatch(";"+tempresult, "*;"+tempStringE+";*")))
+							//							result+=tempStringE+";"
+							//						endif
+							//					endif
 				endif
 			endfor
+			if(strlen(result)<1)
+				result="---;"
+			endif
 		endif
 	elseif(UseQRSStructure) 
 		tempStringX=IR2P_RemoveDuplicateStrfLst(IR2P_ListOfWavesOfType("q*",tempresult)+IR2P_ListOfWavesOfType("*q",tempresult)+IR2P_ListOfWavesOfType("t_*",tempresult)+IR2P_ListOfWavesOfType("m_*",tempresult)+IR2P_ListOfWavesOfType("d_*",tempresult)+IR2P_ListOfWavesOfType("a*",tempresult))
@@ -2173,7 +2213,8 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 	String popStr=Pa.popStr
 
 	//part to copy everywhere...	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=Pa.win	
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
 	SVAR ControlAllowedIrenaTypes=root:Packages:IrenaControlProcs:ControlAllowedIrenaTypes
@@ -2286,7 +2327,11 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 		if(!SVAR_Exists(RealLongListOfFolder))
 			Abort "Stale control procedures. Please, reopen the panel for the tool you are trying to use and try operating once manually. If persists, send this Igor experiment to Jan Ilavsky, ilavsky@aps.anl.gov"
 		endif
-		
+		//may be we need to know what was the last names for Int, Q, error???
+		string OldIntname=IntDf
+		string OldQname=QDf
+		string OldEname=EDf
+		//Now lets move on... 
 		if(popNum>=0)
 			//let's try to look up using popNum
 			//but we need to find how many paths with "-----------" are here before the popNum
@@ -2392,12 +2437,32 @@ Function IR2C_PanelPopupControl(Pa) : PopupMenuControl
 			IntDf=stringFromList(0,TempYlist)
 			EDf=stringFromList(0,TempElist)
 		else
-			IntDf="---"
-			QDf="---"
-			EDf="---"
-			Execute ("PopupMenu IntensityDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
-			Execute ("PopupMenu QvecDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
-			Execute ("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			//Dale would like to remember last selected wavenames... It may be possible here.  
+				//		string OldIntname=IntDf
+				//		string OldQname=QDf
+				//		string OldEname=EDf
+			if(StringMatch(TempYlist, "*"+OldIntname+"*" ))
+				IntDf=OldIntname
+				Execute ("PopupMenu IntensityDataName mode="+num2str(WhichListItem(IntDf, TempYlist, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
+			else
+				IntDf="---"
+				Execute ("PopupMenu IntensityDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempYList\", win="+TopPanel)
+			endif
+			if(StringMatch(TempXlist, "*"+OldQname+"*" ))
+				QDf=OldQname
+				Execute ("PopupMenu QvecDataName mode="+num2str(WhichListItem(QDf, tempEList, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
+			else
+				QDf="---"
+				Execute ("PopupMenu QvecDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempXList\", win="+TopPanel)
+			endif
+			if(StringMatch(TempElist, "*"+OldEname+"*" ))
+				EDf=OldQname
+				Execute ("PopupMenu ErrorDataName mode="+num2str(WhichListItem(QDf, tempEList, ";")+1)+",value= #\"root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			else
+				EDf="---"
+				Execute ("PopupMenu ErrorDataName mode=1,value= #\"\\\"---;\\\"+root:Packages:IrenaControlProcs:"+TopPanelFixed+":tempEList\", win="+TopPanel)
+			endif
+
 		endif
 
 	 	//allow user function through hook function...
@@ -2412,7 +2477,7 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function/T IR2P_RemoveDUplicatesFromList(Listin)
+Function/T IR2P_RemoveDuplicatesFromList(Listin)
 	string ListIn
 	string ListOut="", tmpStr
 	variable i
@@ -2518,6 +2583,8 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "ModelLSQF",0, ";" )
 	elseif(stringmatch(ToolName,"Guinier-Porod"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "GuinierPorod",0, ";" )
+	elseif(stringmatch(ToolName,"Simple Fits"))
+		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SimFit",0, ";" )
 	else
 		ListOfLookups = ""
 	endif
@@ -2858,14 +2925,16 @@ Function IR3C_SortListOfFilesInWvs(TopPanel)
 	elseif(StringMatch(DataSelSortString, "Inv_Sort" ))
 		Sort/R WaveOfFiles, WaveOfFiles, WaveOfSelections
 	elseif(StringMatch(DataSelSortString, "Sort _XYZ" ))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(WaveOfFiles[p])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
+			//endfor
 		Sort TempWv, WaveOfFiles, WaveOfSelections
 	elseif(StringMatch(DataSelSortString, "Inv Sort _XYZ" ))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(WaveOfFiles[p])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
+			//endfor
 		Sort/R TempWv, WaveOfFiles, WaveOfSelections
 	elseif(StringMatch(DataSelSortString, "Sort _XYZ_xyz" ))			//sort by XYZ first and then by xyz
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -3068,7 +3137,8 @@ Function IR3C_InitControls(PckgPathName, PckgDataFolder, PanelWindowName,Default
 	string PckgPathName, PckgDataFolder, PanelWindowName,DefaultExtensionStr, DefaultMatchStr, DefaultSortString, DoubleCLickFnctName
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S IrenaListboxProcs
@@ -3171,7 +3241,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
 		//initialize controls first by running this command
 		//IR2C_AddDataControls("Irena:MultiSaPlotFit","IR3L_MultiSaPlotFitPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-		//then call this function, it will add listbopx and other controls. 
+		//then call this function, it will add listbox and other controls. 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		string PathToPackagesFolder="root:Packages:"+ToolPackageFolder
 		IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunNm,OnlyUSAXSReducedData,AllowSlitSmearedData)			
@@ -3185,7 +3255,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		PopupMenu StartFolderSelection,mode=1,popvalue=DataStartFolder,value= IR2C_MultiSTartFolderSelection()
 		
 		SetVariable FolderNameMatchString,win=$(PanelName),pos={10,75},size={210,15}, proc=IR3C_MultiSetVarProc,title="Folder Match (RegEx)"
-		Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=$(PathToPackagesFolder+":DataMatchString")
+		Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=$(PathToPackagesFolder+":DataMatchString"), help={"Scope down the folder selection using grep"}
 		checkbox InvertGrepSearch, win=$(PanelName),pos={222,75}, title="Invert?", size={76,14},proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":InvertGrepSearch")
 	
 		PopupMenu SortFolders,win=$(PanelName),pos={10,100},size={180,20},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Sort Folders"
@@ -3208,18 +3278,173 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		PopupMenu ResultsTypeSelector,win=$(PanelName),mode=1,popvalue=SelectedResultsType,value= #"IR2C_ReturnKnownToolResults(\"+PathToPackagesFolder+\":SelectedResultsTool)"
 		PopupMenu ResultsGenerationToUse,pos={10,160},size={230,15},fStyle=2,proc=IR3C_MultiPopMenuProc,title="Results Generation?           "
 		PopupMenu ResultsGenerationToUse,win=$(PanelName),mode=1,popvalue=ResultsGenerationToUse,value= "Latest;_0;_1;_2;_3;_4;_5;_6;_7;_8;_9;_10;"
-	
-	
+
+		SetVariable genericXgrepString,win=$(PanelName),pos={10,120},size={210,15}, proc=IR3C_MultiSetVarProc,title="X match (RegEx)"
+		Setvariable genericXgrepString,fSize=10,fStyle=2, variable=$(PathToPackagesFolder+":genericXgrepString"), help={"Scope down the X wave selection using grep"}
+		SetVariable genericYgrepString,win=$(PanelName),pos={10,140},size={210,15}, proc=IR3C_MultiSetVarProc,title="Y match (RegEx)"
+		Setvariable genericYgrepString,fSize=10,fStyle=2, variable=$(PathToPackagesFolder+":genericYgrepString"), help={"Scope down the Y wave selection using grep"}
+		SetVariable genericEgrepString,win=$(PanelName),pos={10,160},size={210,15}, proc=IR3C_MultiSetVarProc,title="E match (RegEx)"
+		Setvariable genericEgrepString,fSize=10,fStyle=2, variable=$(PathToPackagesFolder+":genericEgrepString"), help={"Scope down the E wave selection using grep"}
+		
 		ListBox DataFolderSelection,win=$(PanelName),pos={4,180},size={250,495}, mode=10
 		ListBox DataFolderSelection,listWave=$(PathToPackagesFolder+":ListOfAvailableData")
 		ListBox DataFolderSelection,selWave=$(PathToPackagesFolder+":SelectionOfAvailableData")
 		ListBox DataFolderSelection,proc=IR3C_MultiListBoxProc
 	
 	
-		IR3C_MultiFixPanelControls(PanelName,"root:Packages:"+ToolPackageFolder)	
+		IR3C_MultiFixPanelControls(PanelName,ToolPackageFolder)	
 
 end
+//**************************************************************************************
+//**************************************************************************************
+//					this follwoing is very importnat function, 
+//			it sets the names of selected X, Y, and E data for user
+//					this may require bit more of debugging... 
+//**************************************************************************************
+//**************************************************************************************
 
+Function IR3C_SelectWaveNamesData(CntrlLocationG, SelectedDataFolderName)
+		string CntrlLocationG, SelectedDataFolderName
+		
+		string CntrlLocation="root:Packages:"+CntrlLocationG
+
+		SVAR StartFolderName=$(CntrlLocation+":DataStartFolder")
+		SVAR DataFolderName=$(CntrlLocation+":DataFolderName")
+		SVAR IntensityWaveName=$(CntrlLocation+":IntensityWaveName")
+		SVAR QWavename=$(CntrlLocation+":QWavename")
+		SVAR ErrorWaveName=$(CntrlLocation+":ErrorWaveName")
+		SVAR dQWavename=$(CntrlLocation+":dQWavename")
+		NVAR UseIndra2Data=$(CntrlLocation+":UseIndra2Data")
+		NVAR UseQRSdata=$(CntrlLocation+":UseQRSdata")
+		NVAR useResults=$(CntrlLocation+":useResults")
+		SVAR DataSubType = $(CntrlLocation+":DataSubType")
+		//these are variables used by the control procedure
+		NVAR  UseUserDefinedData=  $(CntrlLocation+":UseUserDefinedData")
+		NVAR  UseModelData = $(CntrlLocation+":UseModelData")
+		SVAR DataFolderName  = $(CntrlLocation+":DataFolderName")
+		SVAR IntensityWaveName = $(CntrlLocation+":IntensityWaveName")
+		SVAR QWavename = $(CntrlLocation+":QWavename")
+		SVAR ErrorWaveName = $(CntrlLocation+":ErrorWaveName")
+		SVAR ResultsDataTypesLookup=root:Packages:IrenaControlProcs:ResultsDataTypesLookup
+		
+		if(UseQRSdata+UseIndra2Data+useResults> 1)
+			Abort "Data type not selected right, please, select type of data first" 
+		endif
+		
+		string ControlPanelName			///name of top panel which this is called from...
+		ControlPanelName = WinName(0,64)
+		string TempStr, result, tempStr2, TempYName, TempXName, tempStr3
+		variable i, j
+		
+		UseUserDefinedData = 0
+		UseModelData = 0
+		DataFolderName = StartFolderName+SelectedDataFolderName
+		if(UseQRSdata)
+			//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
+			QWavename = stringFromList(0,IR2P_ListOfWaves("Xaxis","", ControlPanelName))
+			IntensityWaveName = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", ControlPanelName))
+			ErrorWaveName = stringFromList(0,IR2P_ListOfWaves("Error","*", ControlPanelName))
+			if(UseIndra2Data)
+				dQWavename = ReplaceString("Qvec", QWavename, "dQ")
+			elseif(UseQRSdata)
+				dQWavename = "w"+QWavename[1,31]
+			else
+				dQWavename = ""
+			endif
+		elseif(UseIndra2Data)
+			string DataSubTypeInt = DataSubType
+			SVAR QvecLookup = $(CntrlLocation+":QvecLookupUSAXS")
+			SVAR ErrorLookup = $(CntrlLocation+":ErrorLookupUSAXS")
+			SVAR dQLookup = $(CntrlLocation+":dQLookupUSAXS")
+			//string QvecLookup="R_Int=R_Qvec;BL_R_Int=BL_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
+			//string ErrorLookup="R_Int=R_Error;BL_R_Int=BL_R_error;SMR_Int=SMR_Error;DSM_Int=DSM_error;"
+			// string dQLookup="SMR_Int=SMR_dQ;DSM_Int=DSM_dQ;"
+			string DataSubTypeQvec = StringByKey(DataSubTypeInt, QvecLookup,"=",";")
+			string DataSubTypeError = StringByKey(DataSubTypeInt, ErrorLookup,"=",";")
+			string DataSubTypedQ = StringByKey(DataSubTypeInt, dQLookup,"=",";")
+			IntensityWaveName = DataSubTypeInt
+			QWavename = DataSubTypeQvec
+			ErrorWaveName = DataSubTypeError
+			dQWavename = DataSubTypedQ
+		elseif(useResults)
+			SVAR SelectedResultsTool = $(CntrlLocation+":SelectedResultsTool")
+			SVAR SelectedResultsType = $(CntrlLocation+":SelectedResultsType")
+			SVAR ResultsGenerationToUse = $(CntrlLocation+":ResultsGenerationToUse")
+			//follow IR2S_CallWithPlottingToolII
+			if(stringmatch(ResultsGenerationToUse,"Latest"))
+					DFREF TestFldr=$(DataFolderName)
+					TempStr = GrepList(stringfromList(1,RemoveEnding(DataFolderDir(2, TestFldr),";\r"),":"), SelectedResultsType,0,",")
+					//and need to find the one with highest generation number.
+					result = stringFromList(0,TempStr,",")
+					For(j=1;j<ItemsInList(TempStr,",");j+=1)
+						tempStr2=stringFromList(j,TempStr,",")
+						if(str2num(StringFromList(ItemsInList(result,"_")-1, result, "_"))<str2num(StringFromList(ItemsInList(tempStr2,"_")-1, tempStr2, "_")))
+							result = tempStr2
+						endif
+					endfor
+					IntensityWaveName = result				//this is intensity wave name
+					tempStr2 = removeending(result, "_"+StringFromList(ItemsInList(result,"_")-1, result, "_"))
+					//for some (Modeling II there are two x-wave options, need to figure out which one is present...
+					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
+					TempXName=RemoveEnding(TempXName , ",")+","
+					if(ItemsInList(TempXName,",")>1)
+						j=0
+						Do
+							tempStr3=stringFromList(j,TempXName,",")
+							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")+"*" ))
+								TempXName=tempStr3
+								break
+							endif
+							j+=1
+						while(j<ItemsInList(TempXName,","))	
+					endif
+					TempXName=RemoveEnding(TempXName , ",")
+					QWavename = TempXName+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")			//this is X wave name
+					ErrorWaveName = ""
+					dQWavename = ""
+					
+				else	//known result we want to use... It should exist (guarranteed by prior code)
+					DFREF TestFldr=$(DataFolderName)
+					IntensityWaveName = SelectedResultsType+ResultsGenerationToUse
+					TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")
+					TempXName=RemoveEnding(TempXName , ",")+","
+					if(ItemsInList(TempXName,",")>1)
+						j=0
+						Do
+							tempStr3=stringFromList(j,TempXName,",")
+							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+ResultsGenerationToUse+"*" ))
+								TempXName=tempStr3+ResultsGenerationToUse
+								break
+							endif
+							j+=1
+						while(j<ItemsInList(TempXName,","))	
+					endif
+					TempXName=RemoveEnding(TempXName , ",")
+					QWavename = TempXName+ResultsGenerationToUse
+					ErrorWaveName = ""
+					dQWavename = ""
+				endif
+		else
+			//these are generic data... 
+			SVAR genericXgrepString=$(CntrlLocation+":genericXgrepString")
+			SVAR genericYgrepString=$(CntrlLocation+":genericYgrepString")
+			SVAR genericEgrepString=$(CntrlLocation+":genericEgrepString")
+			DFREF TestFldr=$(DataFolderName)
+			string ListOfWavesStr=DataFolderDir(2, TestFldr)
+			ListOfWavesStr = removeListItem(0,ListOfWavesStr,":")
+			ListOfWavesStr = ReplaceString("\r", ListOfWavesStr, "")
+			ListOfWavesStr = ReplaceString(",", ListOfWavesStr, ";")
+			IntensityWaveName=StringFromList(0,GrepList(ListOfWavesStr, genericYgrepString ))
+			QWavename = StringFromList(0,GrepList(ListOfWavesStr, genericXgrepString ))
+			if(strlen(genericEgrepString)>0)
+				ErrorWaveName = StringFromList(0,GrepList(ListOfWavesStr, genericEgrepString ))
+			else
+				ErrorWaveName=""
+			endif
+		endif
+
+
+end
 //**************************************************************************************
 //**************************************************************************************
 Function/S IR2C_MultiSTartFolderSelection()
@@ -3285,7 +3510,8 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	string PathToPackagesFolder, PanelName, DoubleClickFunction
 	variable OnlyUSAXSReducedData,AllowSlitSmearedData
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -3303,6 +3529,7 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	ListOfStrings+="SelectedResultsTool;SelectedResultsType;ResultsGenerationToUse;"
 	ListOfStrings+="DataSubTypeUSAXSList;DataSubTypeResultsList;DataSubType;"
 	ListOfStrings+="QvecLookupUSAXS;ErrorLookupUSAXS;dQLookupUSAXS;"
+	ListOfStrings+="genericXgrepString;genericYgrepString;genericEgrepString;"
 
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;"
 	ListOfVariables+="InvertGrepSearch;"
@@ -3401,13 +3628,13 @@ Function IR3C_MultiSetVarProc(sva) : SetVariableControl
 	String WinNm = sva.win
 	string ctrlName = sva.ctrlName
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
-	string CntrlLocation="root:Packages:"+StringByKey(WinNm, ControlProcsLocations,":",";")
+	string CntrlLocation=StringByKey(WinNm, ControlProcsLocations,":",";")
 
 	variable tempP
 	switch( sva.eventCode )
 		case 1: // mouse up
 		case 2: // Enter key
-			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
+			if(stringmatch(sva.ctrlName,"FolderNameMatchString")||stringmatch(sva.ctrlName,"genericXgrepString")||stringmatch(sva.ctrlName,"genericYgrepString")||stringmatch(sva.ctrlName,"genericEgrepString"))
 				IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 			endif
 		break
@@ -3434,11 +3661,13 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 	//figure out where are controls
 	String ctrlName=cba.ctrlName
 	Variable checked=cba.checked
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=cba.win
 
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
-	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,":",";")
+	string CntrolLocationShort=StringByKey(TopPanel, ControlProcsLocations,":",";")
+	string CntrlLocation="root:Packages:"+CntrolLocationShort
 
 	switch( cba.eventCode )
 		case 2: // mouse up
@@ -3450,36 +3679,36 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 			SVAR DataStartFolder=$(CntrlLocation+":DataStartFolder")
 
 		  	if(stringmatch(cba.ctrlName,"InvertGrepSearch"))
-					IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)	
+					IR3C_MultiUpdateListOfAvailFiles(CntrolLocationShort)	
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data"))
 		  		if(checked)
 		  			UseQRSData = 0
 		  			UseResults = 0
-					IR3C_MultiFixPanelControls(TopPanel,CntrlLocation)	
-					//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		  		endif
+				IR3C_MultiFixPanelControls(TopPanel,CntrolLocationShort)	
+				//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseResults"))
 		  		if(checked)
 		  			UseQRSData = 0
 		  			UseIndra2Data = 0
-					IR3C_MultiFixPanelControls(TopPanel,CntrlLocation)	
-					//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		  		endif
+				IR3C_MultiFixPanelControls(TopPanel,CntrolLocationShort)	
+				//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData"))
 		  		if(checked)
 		  			UseIndra2Data = 0
 		  			UseResults = 0
-					IR3C_MultiFixPanelControls(TopPanel,CntrlLocation)	
-					//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		  		endif
+				IR3C_MultiFixPanelControls(TopPanel,CntrolLocationShort)	
+				//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData")||stringmatch(cba.ctrlName,"UseIndra2Data")||stringmatch(cba.ctrlName,"UseResults"))
 		  		DataStartFolder = "root:"
 		  		PopupMenu StartFolderSelection,win=$(TopPanel), mode=1,popvalue="root:"
-				IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+				IR3C_MultiUpdateListOfAvailFiles(CntrolLocationShort)
 		  	endif
 			break
 		case -1: // control being killed
@@ -3490,10 +3719,11 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 End
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IR3C_MultiFixPanelControls(TopPanel,CntrlLocation )	
-	string TopPanel,CntrlLocation
+Function IR3C_MultiFixPanelControls(TopPanel,CntrlLocationG)	
+	string TopPanel,CntrlLocationG
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	string CntrlLocation="root:Packages:"+CntrlLocationG
 	NVAR UseIndra2Data=$(CntrlLocation+":UseIndra2Data")
 	NVAR UseQRSData=$(CntrlLocation+":UseQRSData")
 	NVAR UseResults=$(CntrlLocation+":UseResults")
@@ -3509,17 +3739,35 @@ Function IR3C_MultiFixPanelControls(TopPanel,CntrlLocation )
 			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=1
 			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=1
 			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=1
+			SetVariable genericXgrepString,win=$(TopPanel),disable=1
+			SetVariable genericYgrepString,win=$(TopPanel),disable=1
+			SetVariable genericEgrepString,win=$(TopPanel),disable=1
 	elseif(UseQRSData)
 			PopupMenu SubTypeData,win=$(TopPanel),mode=1,popvalue=DataSubType,value= ""
 			PopupMenu SubTypeData, disable=1
 			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=1
 			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=1
 			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=1
-	else	//Results
+			SetVariable genericXgrepString,win=$(TopPanel),disable=1
+			SetVariable genericYgrepString,win=$(TopPanel),disable=1
+			SetVariable genericEgrepString,win=$(TopPanel),disable=1
+	elseif(UseResults)
 			PopupMenu SubTypeData, win=$(TopPanel),disable=1
 			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=0
 			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=0
 			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=0
+			SetVariable genericXgrepString,win=$(TopPanel),disable=1
+			SetVariable genericYgrepString,win=$(TopPanel),disable=1
+			SetVariable genericEgrepString,win=$(TopPanel),disable=1
+	else		//this is generic type
+			PopupMenu SubTypeData,win=$(TopPanel),mode=1,popvalue=DataSubType,value= ""
+			PopupMenu SubTypeData, disable=1
+			PopupMenu ToolResultsSelector,win=$(TopPanel),disable=1
+			PopupMenu ResultsTypeSelector,win=$(TopPanel),disable=1
+			PopupMenu ResultsGenerationToUse,win=$(TopPanel),disable=1
+			SetVariable genericXgrepString,win=$(TopPanel),disable=0
+			SetVariable genericYgrepString,win=$(TopPanel),disable=0
+			SetVariable genericEgrepString,win=$(TopPanel),disable=0
 	endif
 end
 
@@ -3539,28 +3787,30 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 	Variable popNum=Pa.popNum
 	String popStr=Pa.popStr
 	//part to copy everywhere...	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string TopPanel=Pa.win	
 	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
-	string CntrlLocation="root:Packages:"+StringByKey(TopPanel, ControlProcsLocations,":",";")
+	string CntrlLocationShort=StringByKey(TopPanel, ControlProcsLocations,":",";")
+	string CntrlLocation="root:packages:"+CntrlLocationShort
 
 	if(stringmatch(ctrlName,"StartFolderSelection"))
 		//Update the listbox using start folde popStr
 		SVAR StartFolderName=$(CntrlLocation+":DataStartFolder")
 		StartFolderName = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"SortFolders"))
 		//do something here
 		SVAR FolderSortString = $(CntrlLocation+":FolderSortString")
 		FolderSortString = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"SubTypeData"))
 		//do something here
 		SVAR DataSubType = $(CntrlLocation+":DataSubType")
 		DataSubType = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ToolResultsSelector"))
 		SVAR SelectedResultsTool=$(CntrlLocation+":SelectedResultsTool")
@@ -3569,19 +3819,19 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 		execute("PopupMenu ResultsTypeSelector, win="+TopPanel+", mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
 		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
 		SelectedResultsType = stringFromList(0,ListOfAvailableResults)
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ResultsTypeSelector"))
 		//Update the listbox using start folde popStr
 		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
 		SelectedResultsType = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ResultsGenerationToUse"))
 		//Update the listbox using start folde popStr
 		SVAR ResultsGenerationToUse=$(CntrlLocation+":ResultsGenerationToUse")
 		ResultsGenerationToUse = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
 	endif
 	setDataFolder OldDf
 end
@@ -3591,11 +3841,13 @@ end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
-Function IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
-	string CntrlLocation
+Function IR3C_MultiUpdateListOfAvailFiles(CntrlLocationG)
+	string CntrlLocationG
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+	string CntrlLocation="root:Packages:"+CntrlLocationG
+
 	setDataFolder $(CntrlLocation)
 	
 	NVAR UseIndra2Data=$(CntrlLocation+":UseIndra2Data")
@@ -3637,7 +3889,7 @@ Function IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
 		endif
 	endif
 
-	
+	CurrentFolders = GrepList(CurrentFolders, "Packages", 1) 
 
 	Wave/T ListOfAvailableData=$(CntrlLocation+":ListOfAvailableData")
 	Wave SelectionOfAvailableData=$(CntrlLocation+":SelectionOfAvailableData")
@@ -3688,9 +3940,10 @@ Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
 	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Sxyz_"))
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -3784,9 +4037,10 @@ Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
 			Sort TempWv, ListOfAvailableData
 		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
-		For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-		endfor
+			//For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[p])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
 		Sort /R  TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz.ext"))
 		For(i=0;i<numpnts(TempWv);i+=1)
@@ -3831,6 +4085,7 @@ Function/T IR3C_MultiGenStringOfFolders(CntrlLocation, StartFolder,UseIndra2Stru
 		//                          =1 for SMR data 
 		//                    and =2 for both
 		// AllowQRDataOnly=1 if Q and R data are allowed only (no error wave). For QRS data ONLY!
+	DFref oldDf= GetDataFolderDFR()
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string ListOfQFolders
@@ -3866,13 +4121,42 @@ Function/T IR3C_MultiGenStringOfFolders(CntrlLocation, StartFolder,UseIndra2Stru
 		else
 			result=IN2G_FindFolderWithWvTpsList(StartFolder, 10,SelectedResultsType+ResultsGenerationToUse, 1) 
 		endif
-	else
-		result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*", 1)
+	else			//modify to get folder with matching type of X, Y, Z waves using grep
+			//result=IN2G_FindFolderWithWaveTypes(StartFolder, 10, "*", 1)
+			SVAR genericXgrepString=$(CntrlLocation+":genericXgrepString")
+			SVAR genericYgrepString=$(CntrlLocation+":genericYgrepString")
+			SVAR genericEgrepString=$(CntrlLocation+":genericEgrepString")
+			make/N=0/FREE/T ResultingWave
+			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, genericXgrepString, 1, ResultingWave)		//these folder should match X grep string
+			IR3C_SelectFolderWithWaveMatching(ResultingWave,genericYgrepString)								//these should match Y grep string
+			//ignore E string for now, assume we can use just X/Y
+			result=IN2G_COnvertTextWaveToStringList(ResultingWave) 
 	endif
 	if(stringmatch(";",result[0]))
 		result = result [1, inf]
 	endif
+	setDataFolder oldDf
 	return result
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IR3C_SelectFolderWithWaveMatching(WaveOfFolders,grepStringS)
+			wave/T WaveOfFolders
+			string grepStringS
+		DFref oldDf= GetDataFolderDFR()
+		variable i, imax
+		string curfldr, AllWaves
+		imax=numpnts(WaveOfFolders)
+		For(i=imax-1;i>=0;i-=1)
+			curfldr = WaveOfFolders[i]
+			AllWaves = IN2G_CreateListOfItemsInFolder(curfldr,2)
+			AllWaves=GrepList(AllWaves,grepStringS)
+			if(strlen(AllWaves)<1)
+				DeletePoints i, 1, WaveOfFolders 
+			endif
+		endfor
+	setDataFolder oldDf			
 end
 
 //*****************************************************************************************************************
@@ -3882,7 +4166,8 @@ Function/T IR3C_CheckForRightQRSTripletWvs(ResultingWave, AllowQROnly)
 	wave/T ResultingWave
 	variable AllowQROnly	
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string result=""
 	string tempResult="" , FullFldrName
  	variable i,j, matchX=0,matchE=0

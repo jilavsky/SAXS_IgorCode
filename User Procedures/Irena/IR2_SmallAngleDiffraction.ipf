@@ -96,7 +96,8 @@ end
 
 Function IR2D_InitializeSAD()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:Irena_SAD
@@ -663,7 +664,8 @@ end
 //	String varStr
 //	String varName
 //	
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:Irena_SAD
 //	variable whichDataSet
 //	//BackgStep_set
@@ -684,7 +686,8 @@ Function IR2D_ModelTabCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	
 
@@ -705,7 +708,8 @@ Function IR2D_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	if (stringmatch(ctrlName,"PopSizeDistShape"))
 		ControlInfo/W=IR2D_ControlPanel DataTabs
@@ -740,7 +744,8 @@ end
 //*****************************************************************************************************************
 
 Function IR2D_SetStructure()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	SVAR PeakRelationship
 	variable i
@@ -854,7 +859,8 @@ Function IR2D_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 
 	SetVariable RgPrefactor, disable =  (tab!=0)
@@ -1015,7 +1021,8 @@ end
 Function IR2D_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	
 
@@ -1087,7 +1094,8 @@ static Function IR2D_SaveResultsToNotebook()
 
 	IR1_CreateResultsNbk()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	SVAR  DataFolderName=root:Packages:Irena_SAD:DataFolderName
 	SVAR  IntensityWaveName=root:Packages:Irena_SAD:IntensityWaveName
@@ -1150,7 +1158,8 @@ end
 
 Function IR2D_RecoverOldParameters()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 
 	SVAR DataFolderName = root:Packages:Irena_SAD:DataFolderName
 	SetDataFolder DataFolderName
@@ -1213,7 +1222,8 @@ end
 //*****************************************************************************************************************
 Function IR2D_SaveResultsToFolder()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 
 	SVAR/Z ListOfVariables=root:Packages:Irena_SAD:ListOfVariables
@@ -1332,7 +1342,8 @@ Function IR2D_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	ControlInfo/W=IR2D_ControlPanel DataTabs
 	String whichTab=num2str(V_Value)
@@ -1396,7 +1407,8 @@ Function IR2D_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 
 
@@ -1448,7 +1460,8 @@ Function IR2D_InputPanelCheckboxProc2(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 
 
@@ -1491,7 +1504,8 @@ end
 
 Function IR2D_AppendRemoveResiduals()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	NVAR AppendResiduals
 	NVAR AppendNormalizedResiduals
@@ -1556,7 +1570,8 @@ end
 Function IR2D_GraphMeasuredData()
 	//this function graphs data into the various graphs as needed
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -1692,7 +1707,8 @@ Function IR2D_CalculateIntensity(force)
 	if(!AutoRecalculate && !force)
 		return 1
 	endif
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 
 	NVAR Background=root:Packages:Irena_SAD:Background
@@ -1842,7 +1858,8 @@ Function IR2D_UnifiedIntensity(ReturnInt,Qvector,G,Rg,B,P)
 	variable G,Rg,B,P
 	wave Qvector, ReturnInt
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	Wave OriginalIntensity
 	
@@ -1867,7 +1884,8 @@ Function  IR2D_CalcOnePeakInt(i, tempInt, qwv)
 	variable i
 	wave tempInt, qwv
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	
 	NVAR UsePeak=$("root:Packages:Irena_SAD:UsePeak"+num2str(i))	
@@ -2182,7 +2200,8 @@ end
 
 Function IR2D_AppendDataToGraph()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	
 	DoWindow IR2D_LogLogPlotSAD
@@ -2235,7 +2254,8 @@ end
 //*****************************************************************************************************************
 
 Function IR2D_Fitting()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 
 
@@ -2547,7 +2567,8 @@ End
 Function IR2D_FitFunction(w,yw,xw) : FitFunc
 	Wave w,yw,xw
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	variable i
 
@@ -2582,7 +2603,8 @@ end
 Function IR2D_RecordResults(CalledFromWere)
 	string CalledFromWere	//before or after - that means fit...
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Irena_SAD
 	variable i, j
 	IR1_CreateLoggbook()		//this creates the logbook
@@ -2655,7 +2677,8 @@ end
 
 Function IR2D_ResetParamsAfterBadFit()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	variable i
 	Wave/Z w=root:Packages:Irena_SAD:CoefficientInput
@@ -2684,7 +2707,8 @@ end
 //*****************************************************************************************************************
 Function IR2D_UpdatePeakParams()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	variable i
 	For(i=1;i<=6;i+=1)
@@ -2730,7 +2754,8 @@ end
 //*****************************************************************************************************************
 Function IR2D_AppendTagsToGraph()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_SAD
 	variable i, LocationPnt
 	string TagName, TagText

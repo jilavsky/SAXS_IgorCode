@@ -601,7 +601,8 @@ Function NEXUS_NexusNXsasDataReader(FilePathName,Filename)
 		string FilePathName,Filename
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
-		string OldDf=getDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		//check if the file was recently imported... SKip to save time. 
 		//string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(stringFromList(0,Filename,"."))
 		string PathToOldData = "root:Packages:NexusImportTMP:"+possiblyQuoteName(IN2G_CreateUserName(Filename,30, 0, 11))
@@ -693,7 +694,8 @@ End
 static Function NEXUS_ReadNXparameters(PathToNewData)
 		string PathToNewData
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		string OldDf=getDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		NVAR ReadParams = root:Packages:Irena_Nexus:NX_ReadParametersOnLoad
 		variable i, ScaleFctVal, skipLoading
 		string NikaParameterStr, NexusPathStr
@@ -1024,7 +1026,8 @@ static Function/T NEXUS_FindNXdataClassData(DataPathStr, NXClassStr)
 	string DataPathStr, NXClassStr
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:Irena_Nexus
 	string/g FoundClassDataLocation
 	FoundClassDataLocation = ""
@@ -1039,7 +1042,8 @@ static Function/T NEXUS_IdentifyNxData(PathToData, dimensions)
 	string PathToData
 	variable dimensions
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder $(PathToData)
 	Wave/Z Igor___folder_attributes
 	string tmpnote,result, tmpSigName,tmpIndices
@@ -1167,7 +1171,8 @@ Function NEXUS_Initialize(enforceReset)
 	//function, which creates the folder and creates the strings and variables
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Irena_Nexus	
 	string ListOfVariables
@@ -1291,7 +1296,8 @@ Function NEXUS_ResetParamXRef(enforce)
 	variable enforce
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena_Nexus
 	SVAR ParamsNames=root:Packages:Irena_Nexus:NikaParamsNames
 	variable i
@@ -1331,7 +1337,8 @@ end
 Function NEXUS_GuessParamXRef()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena_Nexus
 	SVAR ParamsNames=root:Packages:Irena_Nexus:NikaParamsNames
 	variable i
@@ -2761,7 +2768,8 @@ Function NEXUS_NXcanSASDataReader(FilePathName,Filename,Read1D, Read2D, UseFileN
 			//3.	2D is TBD as Irena cannot use it for now. Nika can, but I may not be able to finish this now. 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	
-		string OldDf=getDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		string NewFileDataLocation = NEXUS_ImportAFile(FilePathName,Filename)			//import file as HFD5 in Igor 
 		if(strlen(NewFileDataLocation)<1)
 			Abort "Import of the data failed"
@@ -3163,7 +3171,8 @@ static Function/T NEXUS_FindNXClassData(DataPathStr, NXClassStr)
 	string DataPathStr, NXClassStr
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetdataFolder root:Packages:Irena_Nexus
 	string/g FoundClassDataLocation
 	FoundClassDataLocation = ""
@@ -3180,7 +3189,8 @@ static Function/T NEXUS_IdentifyNxclassFolder(PathToData, ClassList)	//find loca
 	
 	//e.g., 	ClassList = "NX_class=NXdata;canSAS_class=SASdata;"	- must match the Nexus spelling/format
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder $(PathToData)
 	Wave/Z Igor___folder_attributes
 	string tmpnote,result, tmpClass
@@ -3238,7 +3248,8 @@ End
 FUnction/S NEXUS_Read_Metadata(RawFolderWithData)	
 	string RawFolderWithData
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder RawFolderWithData	
 	string StringWithData
 	StringWithData = ""
@@ -3255,7 +3266,8 @@ end
 //this function returns content of Sample folder for HDF5 file loaded in Igor
 FUnction/S NEXUS_Read_Sample(RawFolderWithData)	
 	string RawFolderWithData	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder RawFolderWithData	
 	string StringWithData
 	StringWithData = ""
@@ -3271,7 +3283,8 @@ end
 //this function returns content of user folder for HDF5 file loaded in Igor
 FUnction/S NEXUS_Read_User(RawFolderWithData)	
 	string RawFolderWithData	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder RawFolderWithData	
 	string StringWithData
 	StringWithData = ""
@@ -3289,7 +3302,8 @@ end
 FUnction/S NEXUS_Read_Instrument(RawFolderWithData)	
 	string RawFolderWithData
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder RawFolderWithData
 	
 	string StringWithData

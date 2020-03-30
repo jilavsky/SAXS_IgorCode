@@ -390,7 +390,8 @@ Function IR1V_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	NVAR/Z ActiveTab=root:Packages:FractalsModel:ActiveTab
@@ -519,7 +520,8 @@ Function IR1V_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	ControlInfo/W=IR1V_ControlPanel DistTabs
 	VARIABLE ActiveTab=V_Value
@@ -652,7 +654,8 @@ end
 Function IR1V_DisplayLocalFits(level)
 	variable level
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	DoWindow IR1V_LogLogPlotV
@@ -706,7 +709,8 @@ end
 //	Variable popNum
 //	String popStr
 //
-//	string oldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:FractalsModel
 //		NVAR UseIndra2Data=root:Packages:FractalsModel:UseIndra2Data
 //		NVAR UseQRSData=root:Packages:FractalsModel:UseQRSdata
@@ -847,7 +851,8 @@ end
 Function IR1V_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 
@@ -936,7 +941,8 @@ Function IR1V_ExportASCIIResults()
 	//here we need to copy the export results out of Igor
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	Wave OriginalQvector=root:Packages:FractalsModel:OriginalQvector
@@ -1002,7 +1008,8 @@ end
 
 Function IR1V_InsertResultsIntoGraphs()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	NVAR UseMassFract1=root:Packages:FractalsModel:UseMassFract1
 	NVAR UseMassFract2=root:Packages:FractalsModel:UseMassFract2
@@ -1034,7 +1041,8 @@ end
 Function IR1V_InsertSurfaceFractRes(Lnmb)
 	variable Lnmb
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 		NVAR Surface=$("SurfFr"+num2str(lnmb)+"_Surface")
@@ -1089,7 +1097,8 @@ end
 Function IR1V_InsertMassFractRes(Lnmb)
 	variable Lnmb
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 		NVAR Phi=$("MassFr"+num2str(lnmb)+"_Phi")
 		NVAR PhiError=$("MassFr"+num2str(lnmb)+"_PhiError")
@@ -1160,7 +1169,8 @@ end
 
 Function IR1V_RecoverOldParameters()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	NVAR SASBackground=root:Packages:FractalsModel:SASBackground
@@ -1237,7 +1247,8 @@ Function IR1V_CopyDataBackToFolder(StandardOrUser)
 	//here we need to copy the final data back to folder
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	string UsersComment="Fractals model Fit results from "+date()+"  "+time()
@@ -1353,7 +1364,8 @@ end
 Function IR1V_AppendWaveNote(ListOfWavesForNotes)
 	string ListOfWavesForNotes
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	NVAR SASBackground=root:Packages:FractalsModel:SASBackground
@@ -1383,7 +1395,8 @@ Function IR1V_AppendWNOfDist(level,ListOfWavesForNotes)
 	variable level
 	string ListOfWavesForNotes
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	
@@ -1481,7 +1494,8 @@ end
 
 Function IR1V_UpdateLocalFitsForOutput()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 		NVAR UseMassFract1=root:Packages:FractalsModel:UseMassFract1
@@ -1529,7 +1543,8 @@ Function IR1V_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	NVAR AutoUpdate=root:Packages:FractalsModel:UpdateAutomatically
@@ -1695,7 +1710,8 @@ end
 
 Function IR1V_GraphMeasuredData()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -1813,7 +1829,8 @@ EndMacro
 Function IR1V_CalculateSfcFractal(which)
 	variable which
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	NVAR Surface=$("SurfFr"+num2str(which)+"_Surface")
@@ -1871,7 +1888,8 @@ end
 Function IR1V_CalculateMassFractal(which)
 	variable which
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	NVAR Phi=$("root:Packages:FractalsModel:MassFr"+num2str(which)+"_Phi")
@@ -1966,7 +1984,8 @@ end
 Function IR1V_CalculateFSquared(which,Qval)
 	variable which,Qval
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	NVAR Phi=$("MassFr"+num2str(which)+"_Phi")
@@ -2030,7 +2049,8 @@ end
 
 Function IR1V_FractalCalculateIntensity()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	Wave/Z OriginalIntensity
@@ -2112,7 +2132,8 @@ end
 Function IR1V_AppendModelToMeasuredData()
 	//here we need to append waves with calculated intensities to the measured data
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	Wave Intensity=root:Packages:FractalsModel:FractFitIntensity
@@ -2220,7 +2241,8 @@ end
 
 Function IR1V_InitializeFractals()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:FractalsModel
@@ -2294,7 +2316,8 @@ end
 Function IR1V_SetInitialValues()
 	//and here set default values...
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	string ListOfVariables
@@ -2478,7 +2501,8 @@ end
 
 Function IR1V_SetErrorsToZero()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	string ListOfVariables="SASBackgroundError;"
@@ -2520,7 +2544,8 @@ end
 Function IR1V_ConstructTheFittingCommand()
 	//here we need to construct the fitting command and prepare the data for fit...
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	NVAR UseMassFract1=root:Packages:FractalsModel:UseMassFract1
@@ -2900,7 +2925,8 @@ end
 
 Function IR1V_ResetParamsAfterBadFit()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 	Wave w=root:Packages:FractalsModel:CoefficientInput
@@ -2928,7 +2954,8 @@ end
 
 Function IR1V_RecordErrorsAfterFit()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	Wave W_sigma=root:Packages:FractalsModel:W_sigma
@@ -2963,7 +2990,8 @@ Function IR1V_FitFunction(w,yw,xw) : FitFunc
 	//CurveFitDialog/ Independent Variables 1 - the q vector...
 	//CurveFitDialog/ q
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 	
 	NVAR SASBackground=root:Packages:FractalsModel:SASBackground
@@ -3010,7 +3038,8 @@ End
 Function IR1V_FitFractalCalcIntensity(OriginalQvector)
 	wave OriginalQvector
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:FractalsModel
 
 //	Wave OriginalQvector

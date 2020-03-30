@@ -324,7 +324,8 @@ end
 
 Function IR1A_FitLocalPorod(Level)
 	variable level
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	setDataFolder root:Packages:Irena_UnifFit
 	
@@ -445,7 +446,8 @@ end
 
 Function IR1A_FitLocalGuinier(Level)
 	variable level
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 
 	//first set to display local fits
@@ -1451,7 +1453,8 @@ End
 //***********************************************************
 Function IR2U_InitUnifAnalysis()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Irena_AnalUnifFit
@@ -2343,7 +2346,8 @@ end
 
 Function IR2U_CalcLogNormalDistribution()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_AnalUnifFit
 	NVAR SizeDist_sigmag=root:Packages:Irena_AnalUnifFit:SizeDist_sigmag
 	NVAR SizeDist_GeomMean=root:Packages:Irena_AnalUnifFit:SizeDist_GeomMean
@@ -2408,7 +2412,8 @@ End
 //***********************************************************
 Function IR2U_ReCalculateLogNormalSD()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_AnalUnifFit
 	NVAR SizeDist_sigmag=root:Packages:Irena_AnalUnifFit:SizeDist_sigmag
 	NVAR SizeDist_GeomMean=root:Packages:Irena_AnalUnifFit:SizeDist_GeomMean
@@ -2890,7 +2895,8 @@ End
 //***********************************************************
 
 Function IR2U_CalculateInvariantbutton()				//Removed plotting capabilitires JIL 2017
-	string OldDf=GetDataFolder(1)	
+	DFref oldDf= GetDataFolderDFR()
+	
 	variable extrapts=600 //number of points in extrapolation waves	
 	Variable overlap=1//number of overlaped points for Porod extrapolation	
 	SVAR rwavename=root:Packages:Irena_UnifFit:IntensityWaveName
@@ -3050,7 +3056,8 @@ End
 //***********************************************************
 
 Function IR2U_PlotCalcInvariantFnct()			//JIL 2017 - created to create the funny graph Dale wants
-	string OldDf=GetDataFolder(1)	
+	DFref oldDf= GetDataFolderDFR()
+	
 	NVAR majorityphi=root:Packages:Irena_AnalUnifFit:MajorityPhasePhi//phi is picked up from unified fit data evaluation panel
 	NVAR inv=root:Packages:Irena_AnalUnifFit:TwoPhaseInvariantBetweenCursors//***DWS
 	NVAR dens=root:Packages:Irena_AnalUnifFit:SampleBulkDensity
@@ -3160,7 +3167,8 @@ End
 Function  IR2U_SaveLogNormalDistData()
 
 //	DoAlert 0, "IR2U_SaveLogNormalDistData is not yet finished"
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_AnalUnifFit
 	Wave RadiusWave=root:Packages:Irena_AnalUnifFit:RadiusWave
 	Wave SizeVolDistribution=root:Packages:Irena_AnalUnifFit:SizeVolDistribution
@@ -3817,7 +3825,8 @@ end
 
 Function IR2U_TwoPhaseModelCalc()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena_AnalUnifFit
 	
 	SVAR DF=root:Packages:Irena_UnifFit:DataFolderName
@@ -4697,7 +4706,8 @@ end
 //******************************************************************************************************************
 
 Function IR1A_ConfidenceEvaluation()
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	//SVAR ConfEvListOfParameters=root:Packages:Irena_UnifFit:ConfEvListOfParameters
 	//NVAR NumberOfLevels= root:Packages:Irena_UnifFit:NumberOfLevels
@@ -4834,7 +4844,8 @@ end
 
 Function/S IR1A_ConfEvalBuildListOfParams()
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	variable i,j
 	SVAR ConfEvListOfParameters=root:Packages:Irena_UnifFit:ConfEvListOfParameters
@@ -5016,7 +5027,8 @@ End
 //******************************************************************************************************************
 Function IR1A_ConfEvResetList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	DoWIndow IR1A_ConfEvaluationPanel
 	if(V_Flag)
@@ -5042,7 +5054,8 @@ end
 //******************************************************************************************************************
 static Function IR1A_ConfEvAnalyzeList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	DoWIndow IR1A_ConfEvaluationPanel
 	if(!V_Flag)
@@ -5090,7 +5103,8 @@ end
 //******************************************************************************************************************
 static Function IR1A_ConfEvAddToList()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	SVAR ParamName = root:Packages:Irena_UnifFit:ConEvSelParameter
 	SVAR Method = root:Packages:Irena_UnifFit:ConEvMethod
@@ -5539,7 +5553,8 @@ end
 static Function IR1A_ConEvRestoreBackupSettings(BackupLocation)
 	string BackupLocation
 	//restores backup waves (names/values) for all parameters used in current folder
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder $(BackupLocation)
 	Wave/T BackupParamNames
 	Wave BackupParamValues
@@ -5560,7 +5575,8 @@ end
 static Function IR1A_ConEvBackupCurrentSettings(BackupLocation)
 	string BackupLocation
 	//creates backup waves (names/values) for all parameters used in current folder
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//create folder where we dump this thing...
 	setDataFolder $(BackupLocation)
 	NVAR NumberOfLevels= root:Packages:Irena_UnifFit:NumberOfLevels	
@@ -5691,7 +5707,8 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 	variable skipreset
 	//here we need to construct the fitting command and prepare the data for fit...
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 
@@ -7420,7 +7437,8 @@ Function IR1A_RecordResults(CalledFromWere)
 	string CalledFromWere	//before or after - that means fit...
 	
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Irena_UnifFit
 
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
@@ -7544,7 +7562,8 @@ end
 
 Function IR1A_SaveRecordResults()	
 	
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Irena_UnifFit
 
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
@@ -7945,7 +7964,8 @@ Function IR1A_ExportASCIIResults()
 	//here we need to copy the export results out of Igor
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
@@ -8014,7 +8034,8 @@ end
 Function IR1A_AppendWaveNote(ListOfWavesForNotes)
 	string ListOfWavesForNotes
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 
 	NVAR NumberOfLevels=root:Packages:Irena_UnifFit:NumberOfLevels
@@ -8123,7 +8144,8 @@ Function IR1A_CopyDataBackToFolder(StandardOrUser, [Saveme])
 	if(ParamIsDefault(SaveMe ))
 		SaveMe="NO"
 	ENDIF
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	string UsersComment="Unified Fit results from "+date()+"  "+time()
@@ -8275,7 +8297,8 @@ EndMacro
 Function IR1A_InputPanelButtonXLSProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	if (cmpstr(ctrlName,"AutoSaveXLS")==0)
@@ -8347,7 +8370,8 @@ end
 //Function IR1A_XLS_Output_PanelButtonProc(ctrlName) : ButtonControl
 //	String ctrlName
 //
-//	string oldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:Irena_UnifFit
 //
 //	if (cmpstr(ctrlName,"Add_NewData_to_XLS")==0)
@@ -8496,7 +8520,8 @@ Function IR1A_PanelPopupControlXLS(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 
 	if (cmpstr(ctrlName,"SelectDataFolderXLS")==0)
@@ -8524,7 +8549,8 @@ Function IR1A_ExportASCII_ToXLS_notebook()
 	//here we need to copy the export results out of Igor
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit//:XLS_Export
 	
 	//Wave OriginalQvector=root:Packages:Irena_UnifFit:OriginalQvector
@@ -8695,7 +8721,8 @@ end
 
 Function AutoSaveXLSResults()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	nvar UseIndra2Data
 	string FolderNames=IN2G_NewFindFolderWithWaveTypes("root:", 10, "*", 1)

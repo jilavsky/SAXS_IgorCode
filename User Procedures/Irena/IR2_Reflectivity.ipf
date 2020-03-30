@@ -341,7 +341,8 @@ end
 
 static Function IR2R_GraphMeasuredData()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -488,7 +489,8 @@ EndMacro
 
 static Function IR2R_InitializeSimpleTool()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Refl_SimpleTool
@@ -555,7 +557,8 @@ end
 static Function IR2R_SetInitialValues()
 //	//and here set default values...
 //
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 //	
 	string ListOfVariables
@@ -712,7 +715,8 @@ end
 /////******************************************************************************************
 static Function IR2R_SetErrorsToZero()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 	string ListOfVariables="Roughness_BotError;BackgroundError;"
@@ -749,7 +753,8 @@ static Function IR2R_CalculateSLDProfile()
 //	ywave_Cref:= Motofit_Imag(coef_Cref,xwave_Cref)
 
 	variable i, j
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 		//Need to create wave with parameters for Motofit_Imag here
@@ -863,7 +868,8 @@ static Function IR2R_SLDplot(w,z)
 	Wave w
 	Variable z
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 //	Wave SLDThicknessWv=root:Packages:Refl_SimpleTool:SLDThicknessWv
 //	variable  SLDpts=numpnts(SLDThicknessWv)
@@ -1302,7 +1308,8 @@ Function IR2R_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	variable currentVar
 
@@ -1453,7 +1460,8 @@ Function IR2R_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	variable tempVal
 	string tempStr
@@ -1537,7 +1545,8 @@ Function IR2R_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	
 	NVAR ActiveTab=root:Packages:Refl_SimpleTool:ActiveTab
@@ -1654,7 +1663,8 @@ Function IR2R_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	
 	NVAR ActiveTab=root:Packages:Refl_SimpleTool:ActiveTab
@@ -1790,7 +1800,8 @@ end
 Function IR2R_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	
 
@@ -1917,7 +1928,8 @@ end
 
 static Function IR2R_RecoverOldParameters()
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 //	NVAR SASBackground=root:Packages:FractalsModel:SASBackground
@@ -1997,7 +2009,8 @@ end
 
 static Function IR2R_SaveASCII()
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 	string UsersComment="Reflectivity results from : "+date()+" "+time()
@@ -2089,7 +2102,8 @@ end
 
 static Function IR2R_SaveDataToFolder()
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 	string UsersComment="Reflectivity results from : "+date()+" "+time()
@@ -2207,7 +2221,8 @@ static Function IR2R_CalculateModelResults()
 	//this function calculates model data
 //variable startTime=ticks
 	variable i, j
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	IR2R_UpdateLinkedVariables()
 	
@@ -2314,7 +2329,8 @@ end
 static Function IR2R_GraphModelResults()
 	//this function graphs model data
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	Wave/Z ModelIntensity=root:Packages:Refl_SimpleTool:ModelIntensity
 	if(!WaveExists(ModelIntensity))
@@ -2364,7 +2380,8 @@ end
 
 static Function IR2R_SimpleToolFit()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	//setup waves for fitting
 	string ListOfVariables
@@ -2770,7 +2787,8 @@ End
 
 static Function IR2R_ResetParamsAfterBadFit()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 	Wave w=root:Packages:Refl_SimpleTool:CoefficientInput
@@ -2814,7 +2832,8 @@ Function IR2R_ST_FitFunction(w,yw,xw) : FitFunc
 	//CurveFitDialog/ Independent Variables 1 - the q vector...
 	//CurveFitDialog/ q
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 
 	Wave/T CoefNames=root:Packages:Refl_SimpleTool:CoefNames		//text wave with names of parameters
@@ -2869,7 +2888,8 @@ static Function IR2R_FitCalculateModelResults(FitQvector)
 //	ywave_Cref:= Motofit_Imag(coef_Cref,xwave_Cref)
 
 	variable i,j
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	//Need to create wave with parameters for Motofit_Imag here
 	NVAR NumberOfLayers= root:Packages:Refl_SimpleTool:NumberOfLayers
@@ -2954,7 +2974,8 @@ end
 
 static Function IR2R_CreateResolutionWave()
 	//add on to create resolution wave... 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	
 	NVAR/Z Res_DeltaLambdaOverLambda
@@ -3039,7 +3060,8 @@ end
 ///******************************************************************************************
 static Function IR2R_ResRecalculateResolution()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	SVAR DataFolderName
 	SVAR QWavename
@@ -3091,7 +3113,8 @@ Function IR2R_ResPanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableCo
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Refl_SimpleTool
 	NVAR Res_DeltaLambdaOverLambda
 	NVAR Res_DeltaLambda
@@ -3128,7 +3151,8 @@ end
 
 static Function IR2R_AddRemoveLayersFnct()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder   root:Packages:Refl_SimpleTool
 	NVAR NumberOfLayers=root:Packages:Refl_SimpleTool:NumberOfLayers
 	
@@ -3177,7 +3201,8 @@ End
 
 static Function IR2R_RemoveLayer(WhichLayer)
 	variable WhichLayer
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder  root:Packages:Refl_SimpleTool
 	NVAR NumberOfLayers=root:Packages:Refl_SimpleTool:NumberOfLayers
 	if(NumberOfLayers<=1)
@@ -3245,7 +3270,8 @@ end
 
 static Function IR2R_InsertLayer(WhichLayer)
 	variable WhichLayer
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder  root:Packages:Refl_SimpleTool
 	NVAR NumberOfLayers=root:Packages:Refl_SimpleTool:NumberOfLayers
 	if(NumberOfLayers>=8)

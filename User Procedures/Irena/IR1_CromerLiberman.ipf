@@ -177,7 +177,8 @@ Function/C IR1_Get_f(AtomType,Q, keV)				//returns complex value of f0+fp+i*fpp
 	//Q is scattering vector (2*pi/d) or also (4*pi*sin(theta)/lambda) [A^-1]
 	//AtomType is "Fe" etc. 
 
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable/C result
 	result= Cromer_Get_fp(CleanupAtomName(AtomType), keV, "ComplexF")+IR1_Get_f0(AtomType,Q)		
 	setDataFOlder OldDf
@@ -190,7 +191,8 @@ Function/C IR1_Get_fp(AtomType, keV)				//returns complex value of fp+i*fpp
 	//keV - energy in keV
 	//AtomType is "Fe" etc. 
 	
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable/C result
 	result= Cromer_Get_fp(CleanupAtomName(AtomType), keV, "ComplexF")			//call static routine to calculate this....	
 	setDataFOlder OldDf
@@ -203,7 +205,8 @@ Function IR1_Get_RealPartfp(AtomType, keV)				//returns real value of fp
 	//keV - energy in keV
 	//AtomType is "Fe" etc. 
 	
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable result
 	result= Cromer_Get_fp(CleanupAtomName(AtomType), keV, "Fprime")		//call static routine to calculate this....
 	setDataFOlder OldDf
@@ -216,7 +219,8 @@ Function IR1_Get_ImagPartfpp(AtomType, keV)			//returns real value of fpp
 	//keV - energy in keV
 	//AtomType is "Fe" etc. 
 	
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable result
 	result= Cromer_Get_fp(CleanupAtomName(AtomType), keV, "FDoublePrime")	//call static routine to calculate this....
 	setDataFOlder OldDf
@@ -229,7 +233,8 @@ Function IR1_Get_MuOverRho(AtomType, keV)			//returns real value of mu over rho
 	//keV - energy in keV
 	//AtomType is "Fe" etc. 
 	
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable result
 	result= Cromer_Get_fp(CleanupAtomName(AtomType), keV, "pmu")			//call static routine to calculate this....
 	setDataFOlder OldDf
@@ -243,7 +248,8 @@ Function IR1_Get_f0(AtomType,Q)					//returns value of f0
 	variable ScattVct
 	ScattVct=Q/(4*pi)								//this scales the Q to sin(theta)/Lambda from input Q value. 
 	//Cromer Mann code uses sin(theta)/Lambda, which is = Q/(4*pi)
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable result
 	result= Cromer_Get_f0(AtomType,ScattVct)		//calls static function to calculate this
 	setDataFolder OldDf
@@ -252,7 +258,8 @@ end
 //********************************************************************************************************************************
 Function IR1_ResetCromerDataBase()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	Cromer_Initialize(1)							//initialize
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:CromerCalculations
@@ -337,7 +344,8 @@ static Function Cromer_RecordData(AtomType, xk, fp,fpp, pmu)
 	string AtomType
 	variable xk, fp,fpp, pmu
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:CromerCalculations
 	Wave/Z FPrimeDataBase=root:Packages:CromerCalculations:FPrimeDataBase
@@ -416,7 +424,8 @@ end
 static Function Cromer_Initialize(Force)
 	variable force
 	
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages	
 	NewDataFolder/O/S root:Packages:CromerCalculations
 
@@ -466,7 +475,8 @@ static Function/C Cromer_Get_fp(AtomType, xK, ReturnWhat)
 	//pmu - mu over rho (cm^2/g)
 	//ReturnWhat - ComplexF, FPrime, FDoublePrime, pmu
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	Cromer_Initialize(0)		//initialize, if needed		
 	//first check the database, if we have appropriate record for this atom and energy
 	if (cmpstr(ReturnWhat,"ComplexF")==0)
@@ -695,7 +705,8 @@ static Function Cromer_Get_f0(AtomName,Svector)
 	variable Svector				//2*pi/d for scattering
 	//this function retuns for give scattering vector value of f0 for any atom
 	
-	string oldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//NewDataFolder/O root:Packages
 	//NewDataFolder/O/S root:Packages:F0_calculations
 	
@@ -1043,7 +1054,8 @@ end
 //********************************************************************************************************************************
 static Function Initialize_f0()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/S/O root:Packages
 	NewDataFolder/O/S root:Packages:CromerCalculations
 	
@@ -2511,7 +2523,8 @@ end
 
 static Function Cromer_InitializeStrings()
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O root:Packages
 	NewDataFolder/O/S root:Packages:CromerCalculations
 
@@ -3921,7 +3934,8 @@ end
 
 static Function Cromer_InitializeWaves()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O root:Packages
 	NewDataFolder/O/S root:Packages:CromerCalculations   
 	Make/O/N=(0,11,2) '2Wv'  
@@ -6383,7 +6397,8 @@ end
 static Function Cromer_SetLookupLists()
 
 //here we fill in the infor for all known elements
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages	
 	NewDataFolder/O/S root:Packages:CromerCalculations
 

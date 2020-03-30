@@ -199,7 +199,8 @@ end
 Function IR3T_TwoPhaseTabProc(tca) : TabControl
 	STRUCT WMTabControlAction &tca
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:TwoPhaseSolidModel
 	switch( tca.eventCode )
 		case 2: // mouse up
@@ -312,7 +313,8 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
-			string oldDf=GetDataFolder(1)
+			DFref oldDf= GetDataFolderDFR()
+
 			setDataFolder root:Packages:TwoPhaseSolidModel
 	
 			if (cmpstr(ba.ctrlName,"DrawGraphs")==0)
@@ -438,7 +440,8 @@ end
 Function IR3T_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:TwoPhaseSolidModel
 	if (stringMatch(ctrlName,"CalculatePorosityFromInvariant"))
 		IR3T_SetControlsInPanel()
@@ -461,7 +464,8 @@ Function IR3T_ExtrapolatelowQ()
 	
 	DoWindow TwoPhaseSystemData
 	if(V_Flag)
-		string oldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:TwoPhaseSolidModel
 		//check is cursors are set, if not, ask user to set tehm
 		if (strlen(CsrWave(A))==0 || strlen(CsrWave(B))==0)
@@ -533,7 +537,8 @@ Function IR3T_CalculateRg()
 	
 	DoWindow TwoPhaseSystemData
 	if(V_Flag)
-		string oldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:TwoPhaseSolidModel
 		//check is cursors are set, if not, ask user to set tehm
 		if (strlen(CsrWave(A))==0 || strlen(CsrWave(B))==0)
@@ -618,7 +623,8 @@ Function IR3T_ExtrapolateHighQ()
 	
 	DoWindow TwoPhaseSystemData
 	if(V_Flag)
-		string oldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:TwoPhaseSolidModel
 		//check is cursors are set, if not, ask user to set tehm
 		if (strlen(CsrWave(A))==0 || strlen(CsrWave(B))==0)
@@ -697,7 +703,8 @@ end
 Function IR3T_CopyAndGraphInputData()
 	//this function graphs data into the various graphs as needed
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:TwoPhaseSolidModel
 	SVAR DataFolderName=root:Packages:TwoPhaseSolidModel:DataFolderName
 	SVAR IntensityWaveName=root:Packages:TwoPhaseSolidModel:IntensityWaveName
@@ -744,7 +751,8 @@ end
 ///******************************************************************************************
 FUnction IR3T_ExtendDataCalcParams()
 	
-		string oldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:TwoPhaseSolidModel
 		Wave/Z HighQExtrapolatedIntensity
 		Wave/Z highQExtrapolatedQvector
@@ -923,7 +931,8 @@ end
 Function IR3T_InitializeTwoPhaseSys()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:TwoPhaseSolidModel
 	string/g ListOfVariables
@@ -962,7 +971,8 @@ static Function IR3T_SetInitialValues()
 	//template: IR1A_SetInitialValues(enforce)
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:TwoPhaseSolidModel
 	variable ListOfVariables
 	variable i
@@ -1063,7 +1073,8 @@ Function IR3T_GenerateTwoPhaseSolid()
 	endif
 	
 	Wave/Z Qvec	= root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	PauseUpdate
 	NewDataFOlder/O/S root:Packages
 	NewDataFOlder/O/S root:Packages:TwoPhaseSolidModel
@@ -1807,7 +1818,8 @@ end
 
 static Function IR3T_Display1DTempData()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFOlder/O/S root:Packages
 	NewDataFOlder/O/S root:Packages:TwoPhaseSolidModel
 	

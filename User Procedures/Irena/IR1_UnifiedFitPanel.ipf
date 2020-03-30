@@ -155,7 +155,8 @@ Function IR1A_Initialize(enforceReset)
 	variable enforceReset
 	//function, which creates the folder for SAS modeling and creates the strings and variables
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Irena_UnifFit
@@ -241,7 +242,8 @@ Function IR1A_SetInitialValues(enforce)
 	variable enforce
 	//and here set default values...
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	string ListOfVariables
@@ -1025,7 +1027,8 @@ Function IR1A_TabPanelControl(name,tab)
 //variable timerRefNum
 //timerRefNum = startMSTimer
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	NVAR/Z ActiveTab=root:Packages:Irena_UnifFit:ActiveTab
@@ -1451,7 +1454,8 @@ Function IR1A_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	NVAR AutoUpdate=root:Packages:Irena_UnifFit:UpdateAutomatically
@@ -2233,7 +2237,8 @@ Function IR1A_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	Variable checked
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	if (cmpstr(ctrlName,"UseSMRData")==0)
 		//here we control the data structure checkbox
@@ -2763,7 +2768,8 @@ Function IR1A_GraphMeasuredData(Package)
 	string Package	//tells me, if this is called from Unified or LSQF
 	//this function graphs data into the various graphs as needed
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	SVAR DataFolderName=root:Packages:Irena_UnifFit:DataFolderName
 	SVAR IntensityWaveName=root:Packages:Irena_UnifFit:IntensityWaveName
@@ -2933,7 +2939,8 @@ EndMacro
 Function IR1A_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 
@@ -3166,7 +3173,8 @@ Function IR1A_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 		NVAR UseIndra2Data=root:Packages:Irena_UnifFit:UseIndra2Data
 		NVAR UseQRSData=root:Packages:Irena_UnifFit:UseQRSdata
@@ -3553,7 +3561,8 @@ end
 Function IR1A_AppendModelToMeasuredData()
 	//here we need to append waves with calculated intensities to the measured data
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_UnifFit
 	
 	Wave Intensity=root:Packages:Irena_UnifFit:UnifiedFitIntensity

@@ -12,6 +12,10 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 ********************************************
+1.83 - TBA
+Main panel - change sorting option "_001". This will now look from the end of name for first number. This si to help with NSLS samples names MyName_00001_waxs.ext etc. Will work for normal files Myname_0001.ext also. 
+
+
 1.82 - 2/9/2020
 Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please. 
 Main code - added Batch processing - this prevents display of images and all graphing updates. Speeds up code by 2-3x in my testing. Added info window when in use and comments in History since else it looks like Nika hangs.  

@@ -293,7 +293,8 @@ end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
 static Function IR3A_Create3DAggListForListbox()
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 
 	DOWindow FractalAggregatePanel
 	if(!V_Flag)
@@ -334,7 +335,8 @@ end
 //******************************************************************************************************************************************************
 static Function/T IR3A_BuildUser3DAggNames(PathToFolder)
 	string PathToFOlder
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string UserFriendlyString=""
 	SetDataFolder PathToFolder
 	NVAR DOA=DegreeOfAggregation
@@ -510,7 +512,8 @@ end
 //******************************************************************************************************************************************************
 static Function IR3A_Calculate1DIntensity()
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	//decide which data - if table has selected data, use that, else current data in the tool
 	string selection = IR3A_FindSelectedAggData()
@@ -735,7 +738,8 @@ end
 static Function IR3A_Model1DIntensity()
 	
 	variable recalculate3D = 0
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//follow this: IR3P_Calculate1DDataFile()
 	//decide which data - if table has selected data, use that, else current data in the tool
 	string selection = IR3A_FindSelectedAggData()
@@ -986,7 +990,8 @@ end
 static Function IR3A_Grow1MassFractAgreg(breakOnFail)
 	variable breakOnFail
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
 	KillWIndow/Z MassFractalAggregateView
@@ -1022,7 +1027,8 @@ End
 //******************************************************************************************************************************************************
 
 static Function IR3A_GrowAggregate()
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	IR3A_InitializeMassFractAgg()
 	SetDataFolder root:Packages:AggregateModeling
 
@@ -1047,7 +1053,8 @@ End
 static Function IR3A_InitializeMassFractAgg()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:AggregateModeling
 	IR3A_MakeNBROffsetList()
@@ -1148,7 +1155,8 @@ static Function IR3A_MakeNBROffsetList()
 end
 //******************************************************************************************************************************************************
 //Function ProfilingRun()
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder root:Packages:AggregateModeling
 //	AggMod_Initialize()
 //
@@ -1190,7 +1198,8 @@ end
 	variable DegreeOfAggregation,StickingProbability, AllowedNearDistance
 	wave MassFractalAggregate
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	Wave Distances
 	make/Free/N=(dimsize(MassFractalAggregate,0),3) CurSite
@@ -1414,7 +1423,8 @@ static Function IR3A_Ends(MassFractalAggregate, breakOnFail)
 	wave MassFractalAggregate
 	variable breakOnFail
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	NVAR DegreeOfAggregation
 	Wave endpoints
@@ -1470,7 +1480,8 @@ End
 static Function IR3A_Reted(endpoints)
 	wave endpoints
 	// calculate longest end-to-end distance for each combination of endpoints and its square for weight-averaged end-to-end distance	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	NVAR DegreeOfAggregation
 	NVAR RValue
@@ -1523,7 +1534,8 @@ End
 static Function IR3A_Path(NumberOfTestPaths)
 	variable NumberOfTestPaths
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	print time()+"  Started parameters evaluation, Calculating...   this takes longest time for these functions "
 	wave MassFractalAggregate
@@ -1678,7 +1690,8 @@ End
 
 
 static Function IR3A_GetResults()
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	NVAR RgPrimary=root:Packages:AggregateModeling:RgPrimary
 	NVAR RxRgPrimaryValue=root:Packages:AggregateModeling:RxRgPrimaryValue
@@ -2310,7 +2323,8 @@ static Function IR3A_DeleteStoredResults()
 	DoAlert /T="Did you thnk about this?" 1, "You will delete all stored Mass Fractal AGgregates, really want to do it?" 
 
 	if(V_FLag==1)
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		KillWIndow/Z MassFractalAggregateView
 		KillWIndow/Z MassFractalAggDataPlot
 		KillWindow/Z AggStoredResultsOverview
@@ -2331,7 +2345,8 @@ end
 	
 static Function IR3A_CompareStoredResults()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 
 	DOWindow FractalAggregatePanel
 	if(!V_Flag)
@@ -2442,7 +2457,8 @@ end
 
 static Function IR3A_Return3DAggParamVal(PathToFolder, ParName)
 	string PathToFOlder, ParName
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder PathToFolder
 	variable RetValue
 	if(StringMatch(ParName, "cval" ))
@@ -2469,7 +2485,8 @@ end
 
 
 static Function IR3A_StoreCurrentMassFractAgreg()
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:AggregateModeling
 	NVAR OldDegreeOfAggregation=root:Packages:AggregateModeling:DegreeOfAggregation
 	NVAR OldStickingProbability=root:Packages:AggregateModeling:StickingProbability
@@ -2582,7 +2599,8 @@ Function IR3P_POVPDBButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
-			string oldDf=GetDataFolder(1)
+			DFref oldDf= GetDataFolderDFR()
+
 			setDataFolder root:Packages:POVPDBImport	
 			if(StringMatch(ba.ctrlName, "CreateFolder" ))
 					IR3P_CreateFolder()	
@@ -2622,7 +2640,8 @@ End
 Function IR3P_InitializePOVPDB()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:POVPDBImport
 	string/g ListOfVariables

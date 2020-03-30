@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.691
+constant CurrentIrenaVersionNumber = 2.692
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -159,7 +159,7 @@ Menu "SAS"
 	help = {"Plotting tool with wide functionality, hopefully"}
 	"Plotting II", IR2D_DWSPlotToolMain()
 	help = {"Plotting tool which controls any top graph"}
-	"Multi-Plotting tool (beta)", IR3L_MultiSaPlotFit()
+	"Multi-Sample Plotting", IR3L_MultiSamplePlot()
 	help={"Plotting of multiple SAS data. Developement for now. Do not use. "}
 		SubMenu "Support Tools for plots and tables"
 		"Draw Line Of Any Slope", IR2P_DrawLineOfAnySlope()
@@ -174,7 +174,7 @@ Menu "SAS"
 	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
-	"Simple Fits (beta)", IR3J_SimpleFits()
+	"Basic Fits", IR3J_SimpleFits()
 	help={"Quick and simple fitting of multiple SAS data. Guinier, Porod, Sphere and Spheroid. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
@@ -264,17 +264,20 @@ Menu "BioSAXS"
 	help={"Tools specifically for bioSAXS work flow"}
 	"ASCII data import", IRB1_ImportASCII()
 	help={"Tool to import 1D bioSAXS data"}
-	"Average and Subtract Data", IRB1_DataManipulation()
+	"Average, Subtract, Scale Data", IRB1_DataManipulation()
 	help={"Tools to average many data sets and subtract buffer"}
-	"Plot data", IR3L_MultiSaPlotFit()
+	"Plot data", IR3L_MultiSamplePlot()
 	help={"Multi sample ploting tool, same as in SAS menu."}
-	"Simple fits", IR3J_SimpleFits()
+	"Basic fits", IR3J_SimpleFits()
 	help={"Tool to fit data with Guinier, Porod, SphereFF, SpheroidFF etc."}
 	"Merge SAXS-WAXS data", IRB1_MergeMultipleData()
 	help={"Merge data sets - two segments at different q ranges"}
 	"Export ASCII data", IRB1_ASCIIExport()
 	help={"Export ASCII data as files"}
-
+	//"Irena PDF", IR2Pr_MainPDDF()
+	//help={"Calculate pair distribution function using various methods in Irena"}
+	"PDDF (Gnom, AutoGnom, Regulr, Moore)", IRB1_PDDFInterfaceFunction()
+	help={"GUI to run PDDF and some ATSAS tools from Irena"}
 end
 
 
@@ -316,8 +319,10 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR1D_DataManipulationPanel=IR1D_MainCheckVersion;IR3D_DataMergePanel=IR3D_MainCheckVersion;IR3W_WAXSPanel=IR3W_MainCheckVersion;"
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
 	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;TwoPhaseSystems=IR3T_MainCheckVersion;"
-	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;IR3L_MultiSaPlotFitPanel=IR3L_MainCheckVersion;"
- 
+	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;IR3L_MultiSamplePlotPanel=IR3L_MainCheckVersion;"
+	WindowProcNames+="IR1I_ImportBioSAXSASCIIData=IR1B_ImportASCIIMainCheckVersion;IRB1_DataManipulationPanel=IR1B_DataManMainCheckVersion;"
+	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;"
+  
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
 	IN2G_CheckPlatformGUIFonts()
@@ -372,7 +377,7 @@ end
 
 //***********************************************************
 //***********************************************************
-//***********************************************************
+//*********************************************************** 
 //***********************************************************
 Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddResizeHookFunction)
 	string panelName
@@ -486,7 +491,8 @@ end
 
 Proc IR2P_FitPowerLawWithCursors()
 
-	string olddf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages:FittingData
 	
 	string name="MyFitWave"
@@ -895,7 +901,8 @@ end
 //Function IR1S_Initialize()
 //	//function, which creates the folder for SAS modeling and creates the strings and variables
 //	
-//	string oldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	
 //	NewDataFolder/O/S root:Packages
 //	NewdataFolder/O/S root:Packages:SAS_Modeling
@@ -1000,7 +1007,8 @@ end
 //Function IR1S_SetInitialValues()
 //	//and here set default values...
 //
-//	string OldDf=getDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:SAS_Modeling
 //	NVAR UseQRSData=root:Packages:SAS_Modeling:UseQRSData
 //	NVAR UseIndra2data=root:Packages:SAS_Modeling:UseIndra2data
@@ -1059,7 +1067,8 @@ end
 //Function IR1S_SetInitialValuesForAdist(distNum)
 //	variable distNum
 //	//default values for distribution 1
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	
 //	setDataFOlder root:Packages:SAS_Modeling
 //	
@@ -1247,7 +1256,8 @@ Function IR1_GraphMeasuredData(Package)
 	string Package	//tells me, if this is called from Unified or LSQF
 	//this function graphs data into the various graphs as needed
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SAS_Modeling
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -1454,7 +1464,8 @@ Function IR1_CopyDataBackToFolder(StandardOrUser)
 	//here we need to copy the final data back to folder
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SAS_Modeling
 	
 	Wave Distdiameters=root:Packages:SAS_Modeling:Distdiameters
@@ -1621,7 +1632,8 @@ end
 Function IR1_AppendWaveNote(ListOfWavesForNotes, StandardOrUser)
 	string ListOfWavesForNotes, StandardOrUser
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SAS_Modeling
 
 	NVAR NumberOfDistributions=root:Packages:SAS_Modeling:NumberOfDistributions
@@ -1683,7 +1695,8 @@ Function IR1_AppendWNOfDist(DistNum,ListOfWavesForNotes, StandardOrUser)
 	variable DistNum
 	string ListOfWavesForNotes, StandardOrUser
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SAS_Modeling
 
 	NVAR DistVolFraction=$("root:Packages:SAS_Modeling:Dist"+num2str(DistNum)+"VolFraction")
@@ -1799,7 +1812,8 @@ Function IR1_ExportASCIIResults(standardOrUser)
 	//here we need to copy the export results out of Igor
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SAS_Modeling
 	
 	Wave Distdiameters=root:Packages:SAS_Modeling:Distdiameters
@@ -1891,7 +1905,8 @@ static Function IR2C_CheckVersions()
 		Execute("CheckForIrenaUpdatePanel()")			
 	endif
 	//Irena code
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//create location for the results waves...
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:UseProcedureFiles
@@ -2350,7 +2365,8 @@ end
 Function/T IR1F_CreateListQRSOfData(FolderWithData)
 	string FolderWithData
 	
-	string OldDf=GetDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder FolderWithData
 	
 	variable NumberOfAllWaves=CountObjects(FolderWithData, 1 )
@@ -2438,7 +2454,8 @@ Function IR1_LSWCumulative(xx,location,scale, shape)
 		variable xx, location,scale, shape
 	//this function calculates probability for LSW distribution
 	//I do not have cumulative probability function, so it is done numerically... More complex and much more annoying...
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SAS_Modeling
 			
 	variable result, pointsNeeded=ceil(xx/30+30)
@@ -2883,7 +2900,8 @@ end
 //Function IR1S_UpdtSeparateMMM(distNum)
 //	Variable distNum
 //
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder root:Packages:SAS_Modeling
 //
 //	NVAR DistMean=$("root:Packages:SAS_Modeling:Dist"+num2str(distNum)+"Mean")
@@ -2963,7 +2981,8 @@ end
 Function IR1_FindFWHM(IntProbWave,DiaWave)
 	wave IntProbWave,DiaWave
 
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder root:Packages:SAS_Modeling
 
 	wavestats/Q IntProbWave
@@ -3022,7 +3041,8 @@ Function IR1_GenerateDiametersDist(MyFunction, OutputWaveName, numberOfPoints, m
 	//we end. If we walk out of reasonable values (10A and 10^15A), we stop.
 	
 	//first we need to find step, which we will use to step from median
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SAS_Modeling
 
 

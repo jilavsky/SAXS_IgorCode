@@ -90,7 +90,8 @@ end
 static Function IR2H_Initialize()
 	//function, which creates the folder for SAS modeling and creates the strings and variables
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Gels_Modeling
@@ -157,7 +158,8 @@ end
 static Function IR2H_SetInitialValues()
 	//and here set default values...
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 	NVAR UseQRSData=root:Packages:Gels_Modeling:UseQRSData
 	NVAR UseIndra2data=root:Packages:Gels_Modeling:UseIndra2data
@@ -570,7 +572,8 @@ Function IR2H_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 
 
@@ -692,7 +695,8 @@ end
 Function IR2H_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 	
 
@@ -810,7 +814,8 @@ static Function IR2H_SaveResultsToNotebook()
 	IR1_CreateResultsNbk()
 	MoveWindow /W=IR2H_LogLogPlotGels 400, 30, 980, 530
 	IR2H_AttachTags()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 	SVAR  DataFolderName=root:Packages:Gels_Modeling:DataFolderName
 	SVAR  IntensityWaveName=root:Packages:Gels_Modeling:IntensityWaveName
@@ -1046,7 +1051,8 @@ end
 Function IR2H_CalcAndPlotResiduals(OriginalIntensity,OriginalError, DBModelIntensity)
 	wave OriginalIntensity,OriginalError, DBModelIntensity
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling:
 	Duplicate/O OriginalIntensity, Residuals
 	Residuals = (OriginalIntensity - DBModelIntensity) / OriginalError
@@ -1157,7 +1163,8 @@ end
 static Function IR2H_CalculateModel(OriginalIntensity,OriginalQvector)
 	wave OriginalIntensity,OriginalQvector
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 
 	
@@ -1319,7 +1326,8 @@ end
 Function IR2H_CiccBenFiFunction(Xval)
 	variable Xval
 	variable result	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 	make/O/N=1 TWv1	
 	TWv1={0.5}
@@ -1338,7 +1346,8 @@ end
 static Function IR2H_AppendModelToMeasuredData()
 	//here we need to append waves with calculated intensities to the measured data
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 
 	DoWindow IR2H_LogLogPlotGels
@@ -1475,7 +1484,8 @@ end
 static Function IR2H_GraphMeasuredData()
 	//this function graphs data into the various graphs as needed
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 	SVAR DataFolderName
 	SVAR IntensityWaveName
@@ -1691,7 +1701,8 @@ Function IR2H_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 
 	NVAR CurrentTab=root:Packages:Gels_Modeling:CurrentTab
@@ -1901,7 +1912,8 @@ Function IR2H_PanelSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableContr
 	String varStr
 	String varName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 	
 
@@ -2096,7 +2108,8 @@ end
 static Function IR2H_ConstructTheFittingCommand()
 	//here we need to construct the fitting command and prepare the data for fit...
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 
 	NVAR SASBackground=root:Packages:Gels_Modeling:SASBackground
@@ -2709,7 +2722,8 @@ static Function IR2H_CopyDataBackToFolder()
 	//here we need to copy the final data back to folder
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling	
 	Wave DBmodelIntensity=root:Packages:Gels_Modeling:DBmodelIntensity
 	Wave DBmodelQvector=root:Packages:Gels_Modeling:DBmodelQvector
@@ -2810,7 +2824,8 @@ static Function IR2H_ExportASCIIResults()
 	//here we need to copy the export results out of Igor
 	//before that we need to also attach note to teh waves with the results
 	
-	string OldDf=getDataFOlder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling	
 	Wave DBmodelIntensity=root:Packages:Gels_Modeling:DBmodelIntensity
 	Wave DBmodelQvector=root:Packages:Gels_Modeling:DBmodelQvector
@@ -2909,7 +2924,8 @@ Function IR2H_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Gels_Modeling
 		SVAR LowQLinkRGCOTo=root:Packages:Gels_Modeling:LowQLinkRGCOTo
 		NVAR UseDB=root:Packages:Gels_Modeling:UseDB

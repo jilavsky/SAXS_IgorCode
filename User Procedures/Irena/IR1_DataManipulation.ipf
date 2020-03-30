@@ -1,5 +1,5 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.69
+#pragma version=2.70
 constant IR3MversionNumber = 2.62		//Data manipulation II panel version number
 constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 
@@ -9,7 +9,7 @@ constant IR1DversionNumber = 2.61			//Data manipulation I panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//2.70 added option to porpagate errors through avergaing, needs to be added to GUI. 
+//2.70 added option to propagate measurement errors through averaging, it is now default option, unless user picks another method. No need to chaneg GUI.  
 //2.69 fixed leftover RT global issues which threw errors on users due to incorrect search for high-q end of usabel data. Fixed positions on DMII after creation. 
 //2.68 handle weird case of DM I when data 1 is regular Q-I-S data set and data 2 are model data without error. Generate fake error here is the solution. 
 //2.67 add toDataManipulation II ability to rescale to Q scale for data set to produce data at same Q values
@@ -699,7 +699,8 @@ End
 
 static Function IR1D_RecordResults()
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:SASDataModification
 
 	SVAR DataFolderName2 =root:Packages:SASDataModification:DataFolderName2
@@ -2234,7 +2235,8 @@ Function IR1D_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SASDataModification
 		SVAR Dtf=root:Packages:SASDataModification:DataFolderName
 		SVAR IntDf=root:Packages:SASDataModification:IntensityWaveName
@@ -2647,7 +2649,8 @@ end
 Function IR1D_InitDataManipulation()	//cannot be static, Dale is using it
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	string ListOfVariables
 	string ListOfStrings
 	variable i
@@ -2840,7 +2843,8 @@ End
 
 Function IR3M_DataManipulationIIPanel()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	SVAR DataFolderName=root:Packages:DataManipulationII:DataFolderName
 	DataFolderName="---"
@@ -2909,7 +2913,7 @@ Function IR3M_DataManipulationIIPanel()
 	CheckBox NormalizeData,pos={15,340},size={80,14},title="Normalize Data?",proc= IR3M_CheckProc
 	CheckBox NormalizeData,variable= root:Packages:DataManipulationII:NormalizeData, help={"Normalize data to another data set or value"}
 	CheckBox AverageWaves,pos={15,355},size={80,14},title="Average Waves?",proc= IR3M_CheckProc
-	CheckBox AverageWaves,variable= root:Packzages:DataManipulationII:AverageWaves, help={"Average waves using Q values of the first selected wave"}
+	CheckBox AverageWaves,variable= root:Packages:DataManipulationII:AverageWaves, help={"Average waves using Q values of the first selected wave"}
 	CheckBox AverageNWaves,pos={15,370},size={80,14},title="Average every N Waves?",proc= IR3M_CheckProc
 	CheckBox AverageNWaves,variable= root:Packages:DataManipulationII:AverageNWaves, help={"Average every N selected waves using Q values of the first selected wave"}
 	SetVariable NforAveraging,variable= root:Packages:DataManipulationII:NforAveraging,noProc, frame=1, disable=!(AverageNWaves)
@@ -2924,15 +2928,15 @@ Function IR3M_DataManipulationIIPanel()
 	CheckBox PassTroughProcessing,pos={15,400},size={80,14},title="Pass through",proc= IR3M_CheckProc
 	CheckBox PassTroughProcessing,variable= root:Packages:DataManipulationII:PassTroughProcessing, help={"Normalize data to another data set or value"}
 
-//error decisions, ErrorUseStdDev;ErrorUseStdErOfMean
+//error decisions, ErrorUseStdDev;ErrorUseStdErOfMean, ErrorPropagateErrors
 
 	
-	CheckBox GenerateMinMax,pos={10,405},size={80,14},title="Min/Max?", noproc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox GenerateMinMax,pos={10,420},size={80,14},title="Min/Max?", noproc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
 	CheckBox GenerateMinMax,variable= root:Packages:DataManipulationII:GenerateMinMax, help={"Generate Sdev of each point?"}, mode=0
-	CheckBox ErrorUseStdDev,pos={120,405},size={80,14},title="Std Deviation?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-	CheckBox ErrorUseStdDev,variable= root:Packages:DataManipulationII:ErrorUseStdDev, help={"Generate Sdev of each point?"}, mode=1
-	CheckBox ErrorUseStdErOfMean,pos={250,405},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
-	CheckBox ErrorUseStdErOfMean,variable= root:Packages:DataManipulationII:ErrorUseStdErOfMean, help={"Generate Standard error of mean of each point?"}, mode=1
+	CheckBox ErrorUseStdDev,pos={120,420},size={80,14},title="Std Deviation?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox ErrorUseStdDev,variable= root:Packages:DataManipulationII:ErrorUseStdDev, help={"Generate Sdev of each point?"}, mode=0
+	CheckBox ErrorUseStdErOfMean,pos={250,420},size={80,14},title="Std Dev of Mean?", proc= IR3M_CheckProc, disable=!(GenerateStatisticsForAveWvs&&AverageWaves)
+	CheckBox ErrorUseStdErOfMean,variable= root:Packages:DataManipulationII:ErrorUseStdErOfMean, help={"Generate Standard error of mean of each point?"}, mode=0
 	
 	CheckBox NormalizeDataToData,pos={15,415},size={80,14},title="Normalize to Data?",proc= IR3M_CheckProc, disable=!(NormalizeData)
 	CheckBox NormalizeDataToData,variable= root:Packages:DataManipulationII:NormalizeDataToData, help={"Normalize to value obtained fro another data set"}
@@ -3236,7 +3240,8 @@ Function  IR3M_DataMinerCheckProc(CB_Struct) : CheckBoxControl
 		return 0
 	endif
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	DoWIndow ItemsInFolderPanel_DMII
 	if(!V_Flag)
@@ -3318,17 +3323,40 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 				SVAR NameModifier=root:Packages:DataManipulationII:NameModifier
 				NVAR PassTroughProcessing=root:Packages:DataManipulationII:PassTroughProcessing
 				NVAR PutOnQScaleOfData=root:Packages:DataManipulationII:PutOnQScaleOfData
+				NVAR ErrorPropagateErrors = root:Packages:DataManipulationII:ErrorPropagateErrors
+				NVAR ErrorUseStdDev= root:Packages:DataManipulationII:ErrorUseStdDev
+				NVAR ErrorUseStdErOfMean = root:Packages:DataManipulationII:ErrorUseStdErOfMean
 
 			if(stringmatch(cba.CtrlName, "GenerateStatisticsForAveWvs"))
 				CheckBox ErrorUseStdDev win=DataManipulationII, disable=!checked
 				CheckBox ErrorUseStdErOfMean win=DataManipulationII, disable=!checked
 				CheckBox GenerateMinMax win=DataManipulationII,disable=!(checked&&!AverageNWaves)
+				if(!checked)
+					ErrorPropagateErrors = 1
+					ErrorUseStdErOfMean = 0
+					ErrorUseStdDev = 0
+				endif
 			endif
+
 			if(stringmatch(cba.CtrlName, "ErrorUseStdDev"))
-				NVAR ErrorUseStdDev= root:Packages:DataManipulationII:ErrorUseStdDev
-				NVAR ErrorUseStdErOfMean = root:Packages:DataManipulationII:ErrorUseStdErOfMean
-				ErrorUseStdErOfMean=!ErrorUseStdDev
+				if(checked)
+					ErrorUseStdErOfMean=0
+					ErrorPropagateErrors = 0
+				endif
 			endif			
+
+			if(stringmatch(cba.CtrlName,"ErrorUseStdErOfMean"))
+				if(checked)
+					ErrorUseStdDev=0
+					ErrorPropagateErrors = 0
+				endif
+			endif			
+			if(ErrorUseStdErOfMean+ErrorPropagateErrors+ErrorUseStdDev!=1)
+				ErrorUseStdErOfMean = 0
+				ErrorPropagateErrors = 1
+				ErrorUseStdDev = 0
+				print "Will propagate measurement uncertainties through averaging" 
+			endif
 			if(stringmatch(cba.CtrlName, "ScaleData"))
 				NVAR ScaleData= root:Packages:DataManipulationII:ScaleData
 				//NVAR ErrorUseStdErOfMean = root:Packages:DataManipulationII:ErrorUseStdErOfMean
@@ -3354,11 +3382,6 @@ Function IR3M_CheckProc(cba) : CheckBoxControl
 				CreateSQRTErrors=!CreatePctErrors
 			endif			
 
-			if(stringmatch(cba.CtrlName,"ErrorUseStdErOfMean"))
-				NVAR ErrorUseStdDev= root:Packages:DataManipulationII:ErrorUseStdDev
-				NVAR ErrorUseStdErOfMean = root:Packages:DataManipulationII:ErrorUseStdErOfMean
-				ErrorUseStdDev=!ErrorUseStdErOfMean
-			endif			
 			if(stringmatch(cba.CtrlName,"PassTroughProcessing"))
 				if(checked)
 					SubtractDataFromAll=0
@@ -3677,7 +3700,8 @@ Function IR3M_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 
 	NVAR GraphFontSize=root:Packages:DataManipulationII:GraphFontSize
@@ -3729,7 +3753,8 @@ end
 Function IR3M_DataManIIPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 
 	if(cmpstr(ctrlName,"Waves_ReadX")==0)
@@ -3826,7 +3851,8 @@ end
 ///******************************************************************************************
 Function IR3M_ReadWavesFromListBox(which)
 	string which
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	Wave/T ItemsInFolder
 	
@@ -3859,7 +3885,8 @@ end
 ///******************************************************************************************
 Function IR3M_PreviewListOfSelFolders()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	Wave/T PreviewSelectedFolder =root:Packages:DataManipulationII:PreviewSelectedFolder
 	Redimension/N=0 PreviewSelectedFolder
@@ -3989,7 +4016,8 @@ end
 
 Function IR3M_ProcessTheDataFunction()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	//here we prepare teh list of folders and waves to process... 
 	variable NumWavesToProcess
@@ -4021,6 +4049,7 @@ Function IR3M_ProcessTheDataFunction()
 	NVAR UseStdDev = root:Packages:DataManipulationII:ErrorUseStdDev
 	NVAR UseSEM = root:Packages:DataManipulationII:ErrorUseStdErOfMean
 	NVAR UseMinMax = root:Packages:DataManipulationII:GenerateMinMax
+	NVAR PropagateErrors = root:Packages:DataManipulationII:ErrorPropagateErrors
 	NVAR NforAveraging = root:Packages:DataManipulationII:NforAveraging
 	NVAR NormalizeData = root:Packages:DataManipulationII:NormalizeData
 	NVAR NormalizeDataToData= root:Packages:DataManipulationII:NormalizeDataToData
@@ -4046,7 +4075,6 @@ Function IR3M_ProcessTheDataFunction()
 	if(sum(SelFldrs)<1)
 		Abort "Nothing to do, select at least one data set to work with"
 	endif
-	variable PropagateErrors = 0
 	if(AverageWaves)
 		//call average waves routine. Let's create the routine as folder/parameters agnostic to be able to be reused... 
 		NumberOfProcessedDataSets = IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,UseStdDev,UseSEM, UseMinMax, PropagateErrors)
@@ -4294,7 +4322,8 @@ Function IR3M_NormalizeData(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt)
 	NVAR NormalizeDataQmin= root:Packages:DataManipulationII:NormalizeDataQmin
 	NVAR NormalizeDataQmax= root:Packages:DataManipulationII:NormalizeDataQmax
 	variable NumberOfProcessedDataSets=0
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:
 	NewDataFolder /O/S root:Packages
 	NewDataFolder /O/S root:Packages:DataManipulationII
@@ -4450,7 +4479,8 @@ Function IR3M_ProcessListOfFoldersONLY(FldrNamesTWv, SelFldrs, Xtmplt,Ytmplt,Etm
 	String Xtmplt,Ytmplt,Etmplt
 
 	variable NumberOfProcessedDataSets=0
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:
 	NewDataFolder /O/S root:Packages
 	NewDataFolder /O/S root:Packages:DataManipulationII
@@ -4661,7 +4691,8 @@ Function IR3M_SubtractWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmp
 		Abort "Bad call to IR3M_SubtractWave, number of points on input subtract waves do not agree"
 	endif
 	variable NumberOfProcessedDataSets=0
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:
 	NewDataFolder /O/S root:Packages
 	NewDataFolder /O/S root:Packages:DataManipulationII
@@ -4843,7 +4874,8 @@ Function IR3M_RebinToQWave(FldrNamesTWv,SelFldrs,RebinWvX,Xtmplt,Ytmplt,Etmplt)
 	// enable user defined Q scale. 
 	
 	variable NumberOfProcessedDataSets=0
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:
 	NewDataFolder /O/S root:Packages
 	NewDataFolder /O/S root:Packages:DataManipulationII
@@ -5029,7 +5061,8 @@ Function IR3M_DivideWave(FldrNamesTWv,SelFldrs,SubtrWvX,SubtrWvY,SubtrWvE,Xtmplt
 		Abort "Bad call to IR3M_DivideWave, number of points on input subtract waves do not agree"
 	endif
 	variable NumberOfProcessedDataSets=0
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:
 	NewDataFolder /O/S root:Packages
 	NewDataFolder /O/S root:Packages:DataManipulationII
@@ -5242,7 +5275,8 @@ Function IR3M_AverageMultipleWaves(FldrNamesTWv,SelFldrs,Xtmplt,Ytmplt,Etmplt,Us
 	// May be interpolate in log-space?
 	// enable user defined Q scale. 
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:
 	NewDataFolder /O/S root:Packages
 	NewDataFolder /O/S root:Packages:DataManipulationII
@@ -5376,7 +5410,8 @@ End
 ///******************************************************************************************
 
 Function IR3M_MakePanelWithListBox()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	
 	KillWIndow/Z ItemsInFolderPanel_DMII
@@ -5465,7 +5500,8 @@ End
 ///******************************************************************************************
 
 Function IR3M_UpdateValueListBox()
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	
 	SVAR DataFolderName=root:Packages:DataManipulationII:DataFolderName
@@ -5515,7 +5551,8 @@ end
 Function IR3M_InitDataManipulationII()
 
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdatafolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S DataManipulationII
@@ -5528,7 +5565,7 @@ Function IR3M_InitDataManipulationII()
 	
 	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;UseSMRData;UseUserDefinedData;"
 	ListOfVariables+="ManualFolderSelection;DisplayResults;DisplaySourceData;"
-	ListOfVariables+="ErrorUseStdDev;ErrorUseStdErOfMean;GenerateMinMax;"
+	ListOfVariables+="ErrorUseStdDev;ErrorUseStdErOfMean;ErrorPropagateErrors;GenerateMinMax;"
 	ListOfVariables+="GraphLogX;GraphLogY;GraphColorScheme1;GraphColorScheme2;GraphColorScheme3;GraphFontSize;"
 	ListOfVariables+="AverageWaves;AverageNWaves;NforAveraging;GenerateStatisticsForAveWvs;SubtractDataFromAll;"
 	ListOfVariables+="DivideDataByOneSet;PutOnQScaleOfData;"
@@ -5570,9 +5607,11 @@ Function IR3M_InitDataManipulationII()
 	endif
 	NVAR ErrorUseStdDev
 	NVAR ErrorUseStdErOfMean
-	if(ErrorUseStdDev+ErrorUseStdErOfMean!=1)
+	NVAR ErrorPropagateErrors
+	if(ErrorUseStdDev+ErrorPropagateErrors+ErrorUseStdErOfMean!=1)
 		ErrorUseStdDev=1
 		ErrorUseStdErOfMean=0
+		ErrorPropagateErrors=0
 	endif
 	NVAR NforAveraging
 	if(NforAveraging<1)
@@ -5728,7 +5767,8 @@ end
 Function IR3M_AppendDataToGraph([OutFldrNmL,OutXWvNmL,OutYWvNmL,OutEWvNmL])
 	string OutFldrNmL,OutXWvNmL,OutYWvNmL,OutEWvNmL
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	SVAR Xtmplt=root:Packages:DataManipulationII:Waves_Xtemplate
 	SVAR Ytmplt=root:Packages:DataManipulationII:Waves_Ytemplate
@@ -5836,7 +5876,8 @@ end
 
 Function IR3M_SaveProcessedData()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:DataManipulationII
 	SVAR OutFldrNm = root:Packages:DataManipulationII:ResultsDataFolderName
 	SVAR OutYWvNm=root:Packages:DataManipulationII:ResultsIntWaveName
@@ -5922,7 +5963,8 @@ Function IR1D_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	SVAR QWavename2=root:Packages:SASDataModification:QWavename2
 	SVAR ErrorWaveName2=root:Packages:SASDataModification:ErrorWaveName2
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:SASDataModification
 		NVAR UseIndra2Data=root:Packages:SASDataModification:UseIndra2Data
 		NVAR UseQRSData=root:Packages:SASDataModification:UseQRSdata

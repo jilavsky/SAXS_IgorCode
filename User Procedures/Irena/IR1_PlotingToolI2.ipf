@@ -1342,7 +1342,8 @@ Function IR1P_CreateNewUserStyle()
 	Prompt NewStyleName, "Input name for new style"
 	DoPrompt "Modify for new style name macro",NewStyleName
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:plottingToolsStyles
 	NewStyleName = CleanupName(NewStyleName, 0)
 	if(CheckName(NewStyleName,4)!=0)

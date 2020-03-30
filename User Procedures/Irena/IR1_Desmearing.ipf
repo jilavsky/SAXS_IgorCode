@@ -179,7 +179,8 @@ end
 Function IR1B_Trim(ctrlName) : ButtonControl
 	String ctrlName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 	Wave OrgIntwave=root:Packages:Irena_desmearing:OrgIntwave
 	Wave OrgQwave=root:Packages:Irena_desmearing:OrgQwave
@@ -209,7 +210,8 @@ End
 Function/T IR1B_ListOfWaves(WaveTp)
 	string WaveTp
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	string result, tempresult, dataType, tempStringQ, tempStringR, tempStringS
@@ -273,7 +275,8 @@ end
 Function IR1B_Initialize()
 	//function, which creates the folder for SAS modeling and creates the strings and variables
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	NewDataFolder/O/S root:Packages
 	NewdataFolder/O/S root:Packages:Irena_desmearing
@@ -490,7 +493,8 @@ end
 Function IR1B_OneDesmearIteration()
 	String ctrlName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	SVAR BackgroundFunction    = root:Packages:Irena_desmearing:BackgroundFunction
@@ -588,7 +592,8 @@ Function IR1B_SmearData(Int_to_smear, Q_vec_sm, slitLength, Smeared_int)
 	wave Int_to_smear, Q_vec_sm, Smeared_int
 	variable slitLength
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:
 	NewDataFolder/O/S Irena_desmearing
 	//modified 5/14/2010 to manage cases when slit length is higher than last Q point. Basically, we need to manage extending the data automatically for use with other tools then desmearing. 
@@ -660,7 +665,8 @@ Function IR1B_SmearDataTrapeziod(Int_to_smear, Q_vec_sm, slitLength, slitLegthL,
 	wave Int_to_smear, Q_vec_sm, Smeared_int
 	variable slitLength, slitLegthL
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:
 	NewDataFolder/O/S Irena_desmearing
 	
@@ -707,7 +713,8 @@ end
 Function IR1B_DoDesmearing()
 	// this is continuation of dismearing procedure1, Here we return after trimming the data and checking the background extrapolation
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	NVAR BckgStartQ = root:Packages:Irena_desmearing:BckgStartQ
@@ -819,7 +826,8 @@ end
 
 Function IR1B_CheckTheBackgroundExtns()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	NVAR BckgStartQ = root:Packages:Irena_desmearing:BckgStartQ
@@ -929,7 +937,8 @@ Function IR1B_ChangeBkgFunction(ctrlname, popNum, popStr)  : PopupMenuControl
 	variable popNum
 	string popStr
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	SVAR BackgroundFunction=root:Packages:Irena_desmearing:BackgroundFunction
@@ -954,7 +963,8 @@ end
 
 Function IR1B_SetCsrAToExtendData()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	Wave ExtrapQwave=root:Packages:Irena_desmearing:ExtrapQwave
@@ -977,7 +987,8 @@ end
 Function IR1B_CursorMoved()
 	
 //	SVAR info=root:Packages:Irena_desmearing:CsrMoveInfo
-	String oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:Irena_desmearing:
 
 	string info= csrinfo(A)
@@ -1018,7 +1029,8 @@ End
 
 Function IR1B_RecalcBackgroundExt()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	WAVE ExtrapIntwave=root:Packages:Irena_desmearing:ExtrapIntwave
@@ -1052,7 +1064,8 @@ Function IR1B_ExtendData(Int_wave, Q_vct, Err_wave, slitLength, Qstart, Selected
 		DoALert 0, "Weird value for Slit length, please check"
 	endif
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	WAVE/Z ColorWave=root:Packages:Irena_desmearing:ColorWave
@@ -1333,7 +1346,8 @@ end
 //***********************************************************************************************************************************
 Function IR1B_CopyDataLocally()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 	 
 	 KillWaves/Z SmoothIntwave, SmoothQwave, SmoothEwave
@@ -1436,7 +1450,8 @@ end
 //***********************************************************************************************************************************
 Function IR1B_TrimTheData()							//this function trims the data before desmearing.
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	KillWIndow/Z TrimGraph
@@ -1476,7 +1491,8 @@ end
 
 Function IR1B_SmoothDSMData()							//this smooths the data before desmearing.
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	NVAR SmoothSMRData=root:Packages:Irena_desmearing:SmoothSMRData
@@ -1541,7 +1557,8 @@ end
 
 Function IR1B_SmoothSMRData()							//this smooths the data before desmearing.
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing:
 
 	NVAR SmoothSMRData=root:Packages:Irena_desmearing:SmoothSMRData
@@ -1600,7 +1617,8 @@ end
 //	String varStr		// value of variable as string
 //	String varName	// name of variable
 //
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:Irena_desmearing:
 //
 //	WAVE ExtrapIntwave=root:Packages:Irena_desmearing:ExtrapIntwave
@@ -1625,7 +1643,8 @@ Function IR1B_TabPanelControl(name,tab)
 	String name
 	Variable tab
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	Button TrimDataBtn,disable=1, win=IR1B_DesmearingControlPanel
@@ -1825,7 +1844,8 @@ End
 Function  IR1B_SliderSmoothDSMData(sliderValue)
 	variable sliderValue
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	Wave Int=root:Packages:Irena_desmearing:DesmearedIntWave
@@ -1883,7 +1903,8 @@ end
 Function  IR1B_SliderSmoothSMRData(sliderValue)
 	variable sliderValue
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	Wave Int=root:Packages:Irena_desmearing:OrgIntwave
@@ -1937,7 +1958,8 @@ Function IR1B_InputPanelCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	NVAR DesmearRemoveNegatives=root:Packages:Irena_desmearing:DesmearRemoveNegatives	
@@ -2098,7 +2120,8 @@ Function IR1B_PanelPopupControl(ctrlName,popNum,popStr) : PopupMenuControl
 	Variable popNum
 	String popStr
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 		NVAR UseIndra2Data=root:Packages:Irena_desmearing:UseIndra2Data
@@ -2250,7 +2273,8 @@ end
 Function IR1B_InputPanelButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 	variable IsAllAllRight
 	
@@ -2435,7 +2459,8 @@ end
 //***********************************************************************************************************************************
 Function IR1B_SaveData()
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:Irena_desmearing
 
 	SVAR ExportDataFolderName=root:Packages:Irena_desmearing:ExportDataFolderName
@@ -2613,7 +2638,8 @@ end
 
 Function IR1B_RecordResults()
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:Irena_desmearing
 
 	SVAR DataFolderName=root:Packages:Irena_desmearing:DataFolderName

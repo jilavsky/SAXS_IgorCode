@@ -137,7 +137,8 @@ Function IR2S_CalcStructureFactor(SFname,Qvalue,Param1,Param2,Param3,Param4,Para
 		//Dilute system;Interferences;HardSpheres;SquareWell;StickyHardSpheres,HayerPenfoldMSA
 		
 		variable result
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		SetDataFolder root:Packages:StructureFactorCalc
 		make/O/N=6 parWv
 		parWv={Param1,Param2,Param3,Param4,Param5,Param6}
@@ -183,7 +184,8 @@ end
 Function IR2S_InitStructureFactors()
 	//here we initialize the form factor calculations
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:StructureFactorCalc
 	
@@ -205,7 +207,8 @@ end
 Function IR2S_CheckFitParameter(StructureFactor,FitP1Str,FitP2Str,FitP3Str,FitP4Str,FitP5Str,FitP6Str)
 	string StructureFactor, FitP1Str,FitP2Str,FitP3Str,FitP4Str,FitP5Str,FitP6Str
 	 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	if(!DataFolderExists("root:Packages:StructureFactorCalc"))
 		IR2S_InitStructureFactors()
 	endif
@@ -279,7 +282,8 @@ Function IR2S_MakeSFParamPanel(TitleStr,SFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	if(!ParamIsDefault(NoFittingLimits))	
 		NoFittingLimitsL=NoFittingLimits
 	endif
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	if(!DataFolderExists("root:Packages:StructureFactorCalc"))
 		IR2S_InitStructureFactors()
 	endif
@@ -667,7 +671,8 @@ Function IR2S_SFCntrlPnlCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:StructureFactorCalc
 	SVAR ListOfStructureFactors=root:Packages:StructureFactorCalc:ListOfStructureFactors
 	GetWindow StructureFactorControlScreen note
@@ -1797,7 +1802,8 @@ Function/T IR1T_IdentifySFParamName(SFactorName,ParameterOrder)
 	string SFactorName
 	variable ParameterOrder
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:StructureFactorCalc
 	string SFParamName=""
 	

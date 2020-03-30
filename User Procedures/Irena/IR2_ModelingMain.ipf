@@ -674,7 +674,8 @@ Function IR2L_LoadDataIntoSet(whichDataSet, skipRecover)
 	variable whichDataSet, skipRecover
 	
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 		SVAR InputFoldrName=root:Packages:IR2L_NLSQF:DataFolderName
@@ -914,7 +915,8 @@ end
 //*****************************************************************************************************************
 Function IR2L_AutosetGraphAxis(autoset)
 	variable autoset
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 		NVAR GraphXMin = root:Packages:IR2L_NLSQF:GraphXMin
@@ -946,7 +948,8 @@ Function  IR2L_AppendDataIntoGraph(whichDataSet) //Adds user data into the graph
 	variable whichDataSet
 	
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	DoWindow LSQF_MainGraph
@@ -1009,7 +1012,8 @@ End
 //	variable whichDataSet
 //	
 //	
-//	string oldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages:IR2L_NLSQF
 //	
 //	DoWindow LSQF_ResidualsGraph
@@ -1050,7 +1054,8 @@ End
 Function IR2L_AppendOrRemoveLocalPopInts()
 
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	DoWindow LSQF_MainGraph
@@ -1109,7 +1114,8 @@ Function IR2L_GraphsCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	ControlInfo/W=LSQF2_MainPanel PopTabs
@@ -1135,7 +1141,8 @@ end
 
 Function  IR2L_RemoveDataFromGraph(whichDataSet)
 	variable whichDataSet
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	DoWindow LSQF_MainGraph
 	if(V_Flag)
@@ -1335,7 +1342,8 @@ end
 Function IR2L_Fitting(SkipDialogs)
 	variable SkipDialogs			//if set to 0 we present dialogs for user, if 1 we skip them. Called from scripting tool
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	SVAR/Z AdditionalFittingConstraints = root:Packages:IR2L_NLSQF:AdditionalFittingConstraints
 	NVAR UseGeneticOptimization=root:Packages:IR2L_NLSQF:UseGeneticOptimization
@@ -2108,7 +2116,8 @@ End
 
 Function IR2L_ResetParamsAfterBadFit()
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i
 	Wave/Z w=root:Packages:IR2L_NLSQF:CoefficientInput
@@ -2141,7 +2150,8 @@ end
 Function IR2L_FitFunction(w,yw,xw) : FitFunc
 	Wave w,yw,xw
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	variable i
 
@@ -2184,7 +2194,8 @@ end
 Function IR2L_RecordResults(CalledFromWere)
 	string CalledFromWere	//before or after - that means fit...
 
-	string OldDF=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:IR2L_NLSQF
 	variable i
 	IR1_CreateLoggbook()		//this creates the logbook
@@ -2249,7 +2260,8 @@ end
 Function IR2L_SaveResultsInDataFolder(SkipDialogs, ExportSeparatePopData)
 	variable SkipDialogs, ExportSeparatePopData
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	SVAR/Z ListOfVariables=root:Packages:IR2L_NLSQF:ListOfVariables
@@ -2484,7 +2496,8 @@ Function IR2L_ReturnOneDataSetToFolder(whichDataSet, WaveNoteText, SkipDialogs, 
 	variable whichDataSet, SkipDialogs, ExportSeparatePopData
 	string WaveNoteText
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	SVAR DataFolderName = $("root:Packages:IR2L_NLSQF:FolderName_set"+num2str(whichDataSet))
@@ -2757,7 +2770,8 @@ end
 Function IR2L_SaveResultsInWaves(SkipDialog)
 	variable SkipDialog
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	//define new folder through dialog... stuff in NewFolderName
 	string/g ExportWvsDataFolderName
@@ -2797,7 +2811,8 @@ Function IR2L_SaveResInWavesIndivDtSet(WdtSt, NewFolderName)
 	variable WdtSt
 	string NewFolderName
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	string ListOfVariables, ListOfDataVariables, ListOfPopulationVariables
@@ -3160,7 +3175,8 @@ end
 Function IR2L_SaveResInWavesIndivDtSet2(ListOfParameters,ListOfParametersStr,NewFolderName )
 	String ListOfParameters,ListOfParametersStr,NewFolderName
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	string NewFolderNameClean = CleanupName(NewFolderName, 1 )
 	setDatafolder root:
@@ -3226,7 +3242,8 @@ end
 Function Ir2L_WriteOneFitVarPop(VarName, which)
 	String VarName
 	variable which
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	NVAR testVar = $(VarName+"_pop"+num2str(which))
@@ -3251,7 +3268,8 @@ end
 
 Function IR2L_RecordModelResults(which)
 	variable which
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 
 	string ListOfVariables, ListOfDataVariables, ListOfPopulationVariables
@@ -3351,7 +3369,8 @@ end
 Function IR2L_RecordDataResults(which)
 	variable which
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	
 	string ListOfVariables, ListOfDataVariables, ListOfPopulationVariables
@@ -3382,7 +3401,8 @@ Function IR2L_WriteOneFitVar(VarName, which)
 	String VarName
 	variable which
 	
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages:IR2L_NLSQF
 	NVAR testVar = $(VarName+"_set"+num2str(which))
 	NVAR FittestVar = $(VarName+"Fit_set"+num2str(which))

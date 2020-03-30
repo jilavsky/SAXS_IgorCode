@@ -97,7 +97,8 @@ static constant JanusCoreShellMicNumIngtPnts=66		//weird, with 40 there are spec
 Function IR1T_InitFormFactors()
 	//here we initialize the form factor calculations
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	
@@ -264,7 +265,8 @@ Function IR1T_GenerateGMatrix(Gmatrix,Q_vec,R_dist,VolumePower,ParticleModel,Par
 		//CoreShellThicknessRatio;CoreShellContrastRatio;TubeWallThickness;TubeCoreContrastRatio
 		//for now...
 		
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		SetDataFolder root:Packages:FormFactorCalc
 		//check the volume multiplier, shoudl be either 1 or 2 or dissasters can happen
 		if(!(VolumePower==1) &&!(VolumePower==0) && !(VolumePower==2))
@@ -854,7 +856,8 @@ threadsafe static Function IR1T_CalcCoreShellShellFFPoints(Qvalue,radius,VolumeP
 	variable Qvalue, radius, radiusMin,radiusMax, CoreShell_1_Thickness, CoreShell_2_Thickness,SolventRho,CoreRho, Shell1Rho,Shell2Rho, VolumePower
 	string VolDefL
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder root:Packages:FormFactorCalc
 	
 	variable QR=Qvalue*radius					//OK, these are just some limiting values
@@ -950,7 +953,8 @@ threadsafe   Function IR1T_CalculateCoreShellFFPoints(Qvalue,radius,VolumePower,
 	//Param4 is solvent rho (not delta rho squared)
 
 	//this is first part - core
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder root:Packages:FormFactorCalc
 	
 	variable QR=Qvalue*radius					//OK, these are just some limiting values
@@ -1216,7 +1220,8 @@ end
 static Function IR1T_CalcIntgTubeFFPoints(Qvalue,radius,VolumePower,radiusMin,radiusMax,Length,WallThickness,CoreShellCoreRho,CoreShellShellRho, CoreShellSolvntRho)		//we have to integrate from 0 to 1 over cos(th)
 	variable Qvalue, radius, Length,radiusMin,radiusMax,WallThickness,CoreShellCoreRho,CoreShellShellRho, CoreShellSolvntRho,VolumePower				//and integrate over points in QR...
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:FormFactorCalc
 
 
@@ -1456,7 +1461,8 @@ end
 static Function IR1T_Solve3rdPolyShellVol(Volume,Radius)
 	variable Volume,Radius
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	
 	setDataFolder root:Packages:FormFactorCalc	
 	variable a, b, c, d, result
@@ -2041,7 +2047,8 @@ end
 //	variable StartValue, EndValue, tempVolume, tempRadius
 //	string cmd2, infostr
 //	
-//	string OldDf=GetDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	setDataFolder root:Packages
 //	NewDataFolder/O/S root:Packages:FormFactorCalc
 //	variable/g tempVolCalc
@@ -2124,7 +2131,8 @@ Function IR1T_MakeFFParamPanel(TitleStr,FFStr,P1Str,FitP1Str,LowP1Str,HighP1Str,
 	if(!ParamIsDefault(NoFittingLimits))	
 		NoFittingLimitsL=NoFittingLimits
 	endif
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	if(!DataFolderExists("root:Packages:FormFactorCalc"))
 		IR1T_InitFormFactors()
 	endif
@@ -2666,7 +2674,8 @@ Function IR1T_FFCntrlPnlCheckboxProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string oldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:FormFactorCalc
 	SVAR ListOfFormFactors=root:Packages:FormFactorCalc:ListOfFormFactors
 	GetWindow FormFactorControlScreen note
@@ -2724,7 +2733,8 @@ Function/T IR1T_IdentifyFFParamName(FormFactorName,ParameterOrder)
 	string FormFactorName
 	variable ParameterOrder
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:FormFactorCalc
 	string FFParamName=""
 	
@@ -2788,7 +2798,8 @@ Function IR1T_CreateAveVolumeWave(AveVolumeWave,Distdiameters,DistShapeModel,Par
 	variable StartValue, EndValue, tempVolume, tempRadius
 	string cmd2, infostr
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	variable/g tempVolCalc
@@ -2886,7 +2897,8 @@ Function IR1T_CreateAveSurfaceAreaWave(AveSurfaceAreaWave,Distdiameters,DistShap
 	variable StartValue, EndValue, tempSurface, tempRadius, exc
 	string cmd2, infostr
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder root:Packages
 	NewDataFolder/O/S root:Packages:FormFactorCalc
 	variable/g tempVolCalc

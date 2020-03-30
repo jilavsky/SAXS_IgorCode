@@ -61,7 +61,8 @@ Function IRG1_MainHookFunction(H_Struct)
     
     if (h_struct.eventCode==7 && stringMatch(h_struct.winName,"IR1G_OneSampleEvaluationGraph"))
 	//    print h_struct.eventCode, h_struct.winName
-		string oldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		setDataFolder root:Packages:SASDataEvaluation
 				string Values=""
 				string WvNote=""
@@ -182,7 +183,8 @@ end
 
 Function IR1G_CalculateStatistics()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 
 	NVAR GR1_Mean=root:Packages:SASDataEvaluation:GR1_Mean
@@ -303,7 +305,8 @@ end
 //*****************************************************************************************************************
 Function IR1G_MIPDataGraph()
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Wave MIPVOlume
 	Wave MIPPressure
@@ -334,7 +337,8 @@ Function IR1G_FindFWHM(IntProbWave,DiaWave, StartP, EndP)
 	wave IntProbWave,DiaWave
 	variable StartP, EndP
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	
 	Duplicate/O/R=(StartP, EndP) IntProbWave, Int_temp
@@ -390,7 +394,8 @@ Function IR1G_CreateCumulativeCurves(DistributionWv,diametersWv, StartP, EndP, D
 	variable StartP, EndP
 	string DistWaveName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, CumulativeSizeDist, CumulativeSfcArea, ParticleVolumes, ParticleSurfaces
 	Duplicate/O/R=(StartP, EndP) diametersWv, CumulativeDistDiameters
@@ -466,7 +471,8 @@ Function IR1G_CreateMIPCurve(DistributionWv,diametersWv, StartP, EndP, DistWaveN
 	variable StartP, EndP
 	string DistWaveName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, MIPVolume, ParticleVolumes, ParticleSurfaces
 	Duplicate/O/R=(StartP, EndP) diametersWv, MIPDistDiameters, MIPPressure
@@ -556,7 +562,8 @@ Function IR1G_CalculateSurfaceArea(DistributionWv,diametersWv, StartP, EndP, Dis
 	variable StartP, EndP
 	string DistWaveName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP)/Free DistributionWv, Dist_temp, ParticleSurface, ParticleVolumes
 	Duplicate/O/R=(StartP, EndP)/Free diametersWv, Dia_temp, Dia_tempOrig
@@ -594,7 +601,8 @@ Function IR1G_CalculateNumber(DistributionWv,diametersWv, StartP, EndP, DistWave
 	variable StartP, EndP
 	string DistWaveName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP)/Free DistributionWv, Dist_temp,  ParticleVolumes
 	Duplicate/O/R=(StartP, EndP)/Free diametersWv, Dia_temp, Dia_tempOrig
@@ -633,7 +641,8 @@ Function IR1G_CalculateVolume(DistributionWv,diametersWv, StartP, EndP, DistWave
 	variable StartP, EndP
 	string DistWaveName
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, ParticleVolumes
 	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
@@ -664,7 +673,8 @@ Function IR1G_CalculateMean(DistributionWv,diametersWv, StartP, EndP)
 	Wave DistributionWv,diametersWv
 	variable StartP, EndP
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, Another_temp
 	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
@@ -686,7 +696,8 @@ Function IR1G_CalculateMedian(DistributionWv,diametersWv, StartP, EndP)
 	Wave DistributionWv,diametersWv
 	variable StartP, EndP
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	variable DistMedian
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, Another_temp
@@ -712,7 +723,8 @@ Function IR1G_CalculateMode(DistributionWv,diametersWv, StartP, EndP)
 	Wave DistributionWv,diametersWv
 	variable StartP, EndP
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:Packages:SASDataEvaluation
 	Duplicate/O/R=(StartP, EndP) DistributionWv, Dist_temp, Another_temp
 	Duplicate/O/R=(StartP, EndP) diametersWv, Dia_temp
@@ -795,7 +807,8 @@ end
 
 Function IR1G_IniEvaluationGraph()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S  root:Packages:SASDataEvaluation
 	string ListOfVariables
@@ -845,7 +858,8 @@ Function IR1G_CheckDisplayedDist(Ywv,Xwv)
 	
 	variable NewDataAdded=0
 		
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 	
 	
@@ -882,7 +896,8 @@ end
 //
 //Function IR1G_CheckDisplayedND()
 //		
-//	string OldDf=getDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder  root:Packages:SASDataEvaluation
 //
 //		//check that NR is as requested
@@ -913,7 +928,8 @@ end
 //
 //Function IR1G_CheckDisplayedVD()
 //		
-//	string OldDf=getDataFolder(1)
+//	DFref oldDf= GetDataFolderDFR()
+
 //	SetDataFolder  root:Packages:SASDataEvaluation
 //
 //		//check that VD is as requested
@@ -948,7 +964,8 @@ Function IR1G_CheckProc(ctrlName,checked) : CheckBoxControl
 	String ctrlName
 	Variable checked
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 
 	if (cmpstr(ctrlName,"AutoUpdate")==0)
@@ -1038,7 +1055,8 @@ End
 //*****************************************************************************************************************
 
 Function IR1G_SaveCumulativeSizeDist()
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 
 	Wave/Z CumulativeSizeDist=root:Packages:SASDataEvaluation:CumulativeSizeDist
@@ -1124,7 +1142,8 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IR1G_ClearGraph()
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 
 	Variable numOfDisplayedWaves, i
@@ -1149,7 +1168,8 @@ end
 
 Function IR1G_AddDataToGraph()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 
 	SVAR DataFoldername=root:Packages:SASDataEvaluation:DataFolderName
@@ -1220,7 +1240,8 @@ end
 
 Function IR1G_ResetGraphAfterChanges()
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 
 	DoWindow /F IR1G_OneSampleEvaluationGraph
@@ -1327,7 +1348,8 @@ end
 
 Function IR1G_SetProperlyTheCheckboxes()
 	
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setdataFolder root:Packages:SASDataEvaluation
 	
 //	NVAR GR1_DisplayDistribution1
@@ -1503,7 +1525,8 @@ Function IR1G_CreateAveVolSfcWvUsingNote(AveDataWave,DiameterWave,NoteStr,VolOrS
 	string NoteStr, VolOrSfc
 	// set VolOrSfc to either "Volume" or "Surface"
 
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 	variable Par1, Par2, Par3, Par4, Par5, Par6
 	variable UPar1, UPar2, UPar3, UPar4, UPar5
@@ -1590,7 +1613,8 @@ end
 Function IR1G_FindNumOfPopsUsed(WaveWithWv)	//return number of populations (1..5) or for separate populations, returns the population number (as negative value)
 	wave WaveWithWv
 	
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder  root:Packages:SASDataEvaluation
 	string WvName=NameOfWave(WaveWithWv)
 	variable numOfPops=0

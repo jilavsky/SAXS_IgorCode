@@ -1,5 +1,5 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.21
+#pragma version = 2.22
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -16,9 +16,9 @@ Constant TypicalPanelHorizontalSize = 350
 
    //For releases uncomment the next line and set to correct version number:
 //Strconstant ManualVersionString = "en/1.4/"					//1.4 is December2018 release
-//Strconstant ManualVersionString = "en/1.4.1/"		//this was for February2020 release. 
+//Strconstant ManualVersionString = "en/1.4.1/"				//this was for February2020 release. 
    //For development version uncomment next line, it points to latest (development) version of manuals:
-Strconstant ManualVersionString = "en/latest/"		//thsi is for beta version, so it sees current version of manual. 
+Strconstant ManualVersionString = "en/latest/"		//this is for beta version, so it sees current version of manual. 
 strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan-ilavsky/IrenaNikaRecords/VersionCheck.php?"
 		//this is probably useless... strconstant strConstVerCheckwwwAddress="http://usaxs.xray.aps.anl.gov/staff/ilavsky/IrenaNikaRecords/VersionCheck.php?"
 //constant useUserFileNames = 0			//this controls, if IN2G_ReturnUserSampleName(FolderPathToData) returns folder name (=0) or SmapleName (string, if exists, =1)
@@ -34,6 +34,10 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.22 minor fix to IN2G_ColorTopGrphRainbow
+		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
+		//fix IN2G_ResetSizesForAllPanels so it does not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
+		// add IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
 //2.21 added bunch of formating tools for graphs:
 		//IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
 		//IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
@@ -118,6 +122,16 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 // e-mail me: ilavsky@aps.anl.gov.
 
 //This is list of procedures with short description. 
+
+
+//Function IN2G_FindAVailableResultsGen(StringName, Foldername)
+//			returns next available _XY number for results generation
+//Function/T IN2G_COnvertTextWaveToStringList(txWvIn)
+//			this takes text wave and converts to list
+//
+//Function IN2G_DuplGraphInPanelSubwndw(String gname)
+//    Recreates graph embedded in panel with name DupWindwFromPanel()
+//		use: IN2G_DuplGraphInPanelSubwndw("IRB1_PDDFInterfacePanel#PDFDisplay")
 //
 //IN2G_ConvertTologspacing (qwave) converts Q wave in range of Qmin-Qmax to log spacing
 //
@@ -468,6 +482,60 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+//************************************************************************************************
+//************************************************************************************************
+threadsafe Function IN2G_FindNumericalIndexForSorting(StrnameIn)
+	string StrnameIn
+	//finds - starting at the end - number, separated by _ 
+	//assume MaySampleName_0037_sub for example. Finds 0037 
+	string tempStr
+	variable i, imax, temVal
+	imax = ItemsInList(StrnameIn, "_")
+	For(i=imax-1;i>=0;i-=1)
+		tempStr = StringFromList(i,StrnameIn,"_")
+		if(numtype(str2num(tempStr))==0)
+			return str2num(tempStr)
+		endif
+	endfor
+	return 0
+end
+//************************************************************************************************
+//************************************************************************************************
+
+Function IN2G_FindAVailableResultsGen(StringName, Foldername)
+	string StringName, Foldername
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()	
+	setDataFolder $Foldername
+	string tempname
+	variable ii=0
+	For(ii=0;ii<1000;ii+=1)
+		tempname=StringName+"_"+num2str(ii)
+		if (checkname(tempname,1)==0)
+			break
+		endif
+	endfor
+	setDataFolder oldDf
+	return ii	
+end
+
+
+//************************************************************************************************
+//************************************************************************************************
+
+Function/T IN2G_ConvertTextWaveToStringList(txtWvIn)
+	wave/T txtWvIn
+	
+	string strOut=""
+	variable i
+	variable imax=numpnts(txtWvIn)
+	For(i=0;i<imax;i+=1)
+		strOut+=txtWvIn[i]+";"
+	endfor	
+	return strOut	
+end
+
 
 //************************************************************************************************
 //************************************************************************************************
@@ -513,6 +581,46 @@ Function/T IN2G_CreateUserName(NameIn,I7MaxShortLength, MakeUnique, FolderWaveSt
 	return resultStr
 end
 
+
+
+
+//************************************************************************************************
+//************************************************************************************************
+Function IN2G_DuplGraphInPanelSubwndw(String gname)
+    String rec = WinRecreation(gname, 0)    
+    Variable lines=ItemsInList(rec, "\r")
+    Variable i
+    String newrec=""
+    for (i = 0; i < lines; i++)
+        String oneline = StringFromList(i, rec, "\r")
+        if (StringMatch(oneline, "*Display*") && StringMatch(oneline, "*HOST*"))
+            oneline = IN2G_RemoveSlashW(oneline)
+            oneline = IN2G_RemoveSlashHost(oneline)
+        endif
+        newrec += oneline+"\r"
+    endfor
+    Execute newrec
+end
+static Function/S IN2G_RemoveSlashW(String aLine)
+    String newstr = ""
+    if (StringMatch(aLine, "*/W=*"))
+        Variable pos1 = StrSearch(aLine, "/W=", 0)
+        Variable pos2 = StrSearch(aLine, ")", pos1)
+        newstr = aLine[0,pos1-1]
+        newstr += aLine[pos2+1,strlen(aLine)]
+    endif  
+    return newstr
+end
+static Function/S IN2G_RemoveSlashHost(String aLine)
+    String newstr = ""
+    if (StringMatch(aLine, "*/HOST=*"))
+        Variable pos1 = StrSearch(aLine, "/HOST=", 0)
+        Variable pos2 = StrSearch(aLine, " ", pos1)     // This fails if there is another flag after /HOST=...
+        newstr = aLine[0,pos1-1]
+        newstr += aLine[pos2,strlen(aLine)]
+    endif 
+    return newstr
+end
 //************************************************************************************************
 //************************************************************************************************
 
@@ -781,7 +889,8 @@ static Function IN2G_ListProcFiles(PathStr, resetWaves)
 	string PathStr
 	variable resetWaves
 	String abortMessage	//HR Used if we have to abort because of an unexpected error
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	//create location for the results waves...
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:UseProcedureFiles
@@ -1071,7 +1180,8 @@ Function IN2G_InitConfigMain()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	//initialize lookup parameters for user selected items.
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:IrenaConfigFolder
@@ -1322,7 +1432,8 @@ Function IN2G_ReadIrenaGUIPackagePrefs(ForceRead)
 				NVAR/z ErrorCalculationsUseOld=root:Packages:Convert2Dto1D:ErrorCalculationsUseOld
 				NVAR/z ErrorCalculationsUseStdDev=root:Packages:Convert2Dto1D:ErrorCalculationsUseStdDev
 				NVAR/z ErrorCalculationsUseSEM=root:Packages:Convert2Dto1D:ErrorCalculationsUseSEM
-				string OldDf=GetDataFolder(1)
+				DFref oldDf= GetDataFolderDFR()
+
 				if(!NVAR_Exists(ErrorCalculationsUseOld))
 					setDataFolder root:
 					NewDataFolder/S/O Packages
@@ -1613,7 +1724,8 @@ Function/S IN2G_LkUpDfltStr(StrName)
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string result
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:
 	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
 		IN2G_InitConfigMain()
@@ -1637,7 +1749,8 @@ Function/S IN2G_LkUpDfltVar(VarName)
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string result
-	string OldDf=getDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SetDataFolder root:
 	if(!DataFolderExists("root:Packages:IrenaConfigFolder"))
 		IN2G_InitConfigMain()
@@ -1881,7 +1994,7 @@ EndStructure
 
 //***********************************************************
 //***********************************************************
-Function IN2G_ResetSizesForALlPanels(WindowProcNames)
+Function IN2G_ResetSizesForAllPanels(WindowProcNames)
 	string WindowProcNames			//contains list of panels of this package
 	//this function is used after compile and will reset all panels to proper size...
 	variable i
@@ -1890,14 +2003,18 @@ Function IN2G_ResetSizesForALlPanels(WindowProcNames)
 		PanelName = StringFromList(0,(StringFromList(i, WindowProcNames, ";")+"="),"=")
 		DoWindow $PanelName 
 		if(V_Flag)
-			//Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
-			//debugger
-			IN2G_ResetPanelSize(PanelName, 0)
-			DoWIndow/F $(PanelName)
-			STRUCT WMWinHookStruct s
-			s.eventcode=6
-			s.winName=panelName
-			IN2G_PanelResizePanelSize(s)
+			//Need to check, if the panel has panel note with description, and if needed do nothing
+			//look in note for "PanelLeft:"
+			GetWindow $panelName, note				//store existing note. 
+			string ExistingNote=S_Value
+			if(GrepString(S_Value, "PanelLeft:" ))		//there is record of size, we can continue...
+				IN2G_ResetPanelSize(PanelName, 0)
+				DoWIndow/F $(PanelName)
+				STRUCT WMWinHookStruct s
+				s.eventcode=6
+				s.winName=panelName
+				IN2G_PanelResizePanelSize(s)
+			endif
 		endif 
 	endfor
 end
@@ -3055,8 +3172,8 @@ static Function IN2G_MoveControlsPerRequest(WIndowName, HowMuch)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//*****************************************************************************************************************
-
+////*****************************************************************************************************************
+//
 Function IN2G_FindNewTextElements(w1,w2,reswave)
 	Wave/t w1,w2,reswave
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -3080,8 +3197,8 @@ Function IN2G_FindNewTextElements(w1,w2,reswave)
 	duplicate/O/T total, reswave
 
 End
-
-//*****************************************************************************************************************
+//
+////*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Function/T IN2G_ReturnExistingWaveName(FolderNm,WaveMatchStr)
@@ -3090,7 +3207,8 @@ Function/T IN2G_ReturnExistingWaveName(FolderNm,WaveMatchStr)
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder FolderNm
 	string ListOfWvs=IN2G_ConvertDataDirToList(DataFolderDir(2))
 	setDataFolder OldDf
@@ -3113,7 +3231,8 @@ Function/T IN2G_ReturnExistingWaveNameGrep(FolderNm,WaveMatchStr)
 	if(!DataFolderExists(FolderNm))
 		return ""
 	endif
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	setDataFolder FolderNm
 	string ListOfWvs=IN2G_ConvertDataDirToList(DataFolderDir(2))
 	setDataFolder OldDf
@@ -3343,6 +3462,30 @@ end
 
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
+Function IN2G_RemoveDataFromGraph([topGraphStr])
+	string topGraphStr
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String topGraph
+	if(ParamIsDefault(topGraphStr))
+		topGraph=WinName(0,1)
+	else
+		topGraph=topGraphStr	
+	endif
+	variable i, numTraces
+	string TraceNames
+	
+	TraceNames= TraceNameList(topGraph,";",3)
+	numTraces = ItemsInList(TraceNames)
+	//remove all traces...
+	For(i=0;i<numTraces;i+=1)
+		RemoveFromGraph/W=$(topGraph) /Z $(StringFromList(i,TraceNames))
+	endfor
+
+end
+
+////*****************************************************************************************************************
+////*****************************************************************************************************************
 
 Function IN2G_ColorTopGrphRainbow([topGraphStr])
 	string topGraphStr
@@ -3358,13 +3501,12 @@ Function IN2G_ColorTopGrphRainbow([topGraphStr])
 	Variable i, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm
 	if( strlen(topGraph) )
 		numTraces =  ItemsInList(TraceNameList(topGraph,";",3))
-		//print TraceNameList(topGraph,";",3)
 		if (numTraces > 4)
 		    variable r,g,b,scale
 		    colortab2wave Rainbow
 		    wave M_colors
 			 For(i=0;i<numTraces;i+=1)
-			        scale =  (numTraces-i)  / (numTraces-1) * dimsize(M_colors,0)
+			        scale =  (numTraces-i-1)  / (numTraces-1) * dimsize(M_colors,0)
 			        r = M_colors[scale][0]
 			        g = M_colors[scale][1]
 			        b = M_colors[scale][2]
@@ -3374,6 +3516,7 @@ Function IN2G_ColorTopGrphRainbow([topGraphStr])
 			ModifyGraph/Z/W=$(topGraph) rgb[0]=(65535,0,0),rgb[1]=(0,0,65535),rgb[2]=(0,65535,0),rgb[3]=(0,0,0)
 		endif
 	endif
+	KillWaves/Z M_colors
 end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
@@ -3592,8 +3735,9 @@ Function IN2G_FolderSelectPanel(SVARString, TitleString,StartingFolder,FolderOrF
 	// 	IN2G_FolderSelectPanel("root:Packages:ControlString","Select this particular path","root:",1,1,1,1,"YourContinueFunction()")
 
 	
-	string OldDf=GetDataFolder(1)
-	IN2G_FolderSelectInitialize(OldDf,SVARString,StartingFolder,FolderOrFile,AllowLiberal,ExecuteMyFunction)
+	string CurrentDF= GetDataFolder(1)
+
+	IN2G_FolderSelectInitialize(CurrentDF,SVARString,StartingFolder,FolderOrFile,AllowLiberal,ExecuteMyFunction)
 	IN2G_FolderSelectRefreshList()
 	IN2G_FolderSelectRefFldrCont()
 	IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowDelete,AllowRename)
@@ -3645,7 +3789,8 @@ end
 static Function IN2G_FolderSelectRefreshList()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	Wave/T ListOfSubfolders=root:Packages:FolderSelectPanel:ListOfSubfolders
 	if (cmpstr(CurrentFolder[strlen(CurrentFolder)-1],":")!=0)
@@ -3684,7 +3829,8 @@ end
 static Function IN2G_FolderSelectRefFldrCont()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 	SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 	SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
 	Wave/T ListWithFolderContent=root:Packages:FolderSelectPanel:ListWithFolderContent
@@ -3756,7 +3902,8 @@ Function IN2G_FolderSelectListBoxProc(ctrlName,row,col,event)
 	Wave/T ListOfSubfolders=root:Packages:FolderSelectPanel:ListOfSubfolders
 	Wave/T ListWithFolderContent=root:Packages:FolderSelectPanel:ListWithFolderContent
 
-	string OldDf=GetDataFolder(1)
+	DFref oldDf= GetDataFolderDFR()
+
 
 	if(cmpstr(ctrlName,"ListOfSubfolders")==0)
 		if(event==3)
@@ -3839,7 +3986,8 @@ Function IN2G_FolderSelectButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 		SVAR LastFolder=root:Packages:FolderSelectPanel:LastFolder
 		Wave/T ListOfSubfolders=root:Packages:FolderSelectPanel:ListOfSubfolders
@@ -3974,7 +4122,8 @@ Function IN2G_FolderSelectSetVarProc(ctrlName,varNum,varStr,varName) : SetVariab
 		SVAR CurrentFolder=root:Packages:FolderSelectPanel:CurrentFolder
 		SVAR NewName=root:Packages:FolderSelectPanel:NewName
 		NVAR FolderOrFile=root:Packages:FolderSelectPanel:FolderOrFile
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		variable isOK=0
 		setDataFolder CurrentFolder
 		NewName = (cleanupName((NewName)[0,31],AllowLiberal))
@@ -6747,7 +6896,8 @@ Function IN2G_SplineSmooth(n1,n2,xWv,yWv,dyWv,S,AWv,CWv)
 		if((n1>n2) || (n1<0) || (n2>=numpnts(xWv)))
 			abort "Data range selection in IN2G_SplineSmooth is wrong, input range out of input wave length"
 		endif
-		string OldDf=GetDataFolder(1)
+		DFref oldDf= GetDataFolderDFR()
+
 		NewDataFolder/O/S root:Packages
 		NewDataFolder/O/S root:Packages:SmoothData
 		variable i,m1,m2,e,f,f2,g,h,pv, WaveCWvExisted
