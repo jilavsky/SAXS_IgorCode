@@ -512,7 +512,7 @@ static Function IRB1_DataManPanelFnct()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:BioSAXSDataMan","IRB1_DataManipulationPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	IR3C_MultiAppendControls("Irena:BioSAXSDataMan","IRB1_DataManipulationPanel", "IRB1_DataManAppendOneDataSet",1,0)
+	IR3C_MultiAppendControls("Irena:BioSAXSDataMan","IRB1_DataManipulationPanel", "IRB1_DataManAppendOneDataSet","",1,0)
 	TitleBox Dataselection pos={10,25}
 	ListBox DataFolderSelection pos={4,135},size={250,540}
 	CheckBox UseIndra2Data disable=3
@@ -1489,7 +1489,7 @@ Function IRB1_PDDFPanelFnct()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:PDDFInterface","IRB1_PDDFInterfacePanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	IR3C_MultiAppendControls("Irena:PDDFInterface","IRB1_PDDFInterfacePanel", "IRB1_PDDFAppendOneDataSet",1,0)
+	IR3C_MultiAppendControls("Irena:PDDFInterface","IRB1_PDDFInterfacePanel", "IRB1_PDDFAppendOneDataSet","",1,0)
 	TitleBox Dataselection pos={10,25}
 	ListBox DataFolderSelection pos={4,135},size={250,540}
 	CheckBox UseIndra2Data disable=3
@@ -1508,42 +1508,55 @@ Function IRB1_PDDFPanelFnct()
 	SetVariable DataQEnd,pos={290,110},size={170,15}, proc=IR3J_SetVarProc,title="Q max for fitting    "
 	Setvariable DataQEnd, variable=root:Packages:Irena:PDDFInterface:DataQEnd, limits={-inf,inf,0}
 
-	TitleBox PDDFInstructions1 title="\Zr100Double click data, pick method",size={330,15},pos={275,140},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox PDDFInstructions1 title="\Zr100Double click data, pick & run method",size={330,15},pos={270,136},frame=0,fColor=(0,0,65535),labelBack=0
 	//PDDFUseGNOM;PDDFuseMoore;PDDFuseregularization
-	checkbox PDDFUseGNOM, pos={290,170}, title="GNOM", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFUseGNOM, mode=1, help={"Run PDDF using ATSAS gnom"}
-	checkbox PDDFUseAutoGNOM, pos={400,170}, title="autoGNOM", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFUseAutoGNOM, mode=1, help={"Run PDDF using ATSAS datgnom"}
-	checkbox PDDFuseMoore, pos={290,195}, title="Moore", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFuseMoore,mode=1,  help={"Run PDDF using Irena Moore method"}
-	checkbox PDDFuseregularization, pos={400,195}, title="Regularization", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFuseregularization,mode=1 , help={"Run PDDF using Irena regularization method"}
+	checkbox PDDFUseGNOM, pos={270,160}, title="GNOM", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFUseGNOM, mode=1, help={"Run PDDF using ATSAS gnom"}
+	checkbox PDDFUseAutoGNOM, pos={370,160}, title="autoGNOM", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFUseAutoGNOM, mode=1, help={"Run PDDF using ATSAS datgnom"}
+	checkbox PDDFuseregularization, pos={310,185}, title="Regularization", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFuseregularization,mode=1 , help={"Run PDDF using Irena regularization method"}
+	checkbox PDDFuseMoore, pos={430,185}, title="Moore", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFuseMoore,mode=1,  help={"Run PDDF using Irena Moore method"}
 	//controls for various methods as needed... 
 	//Dmax
-	SetVariable DmaxEstimate,pos={270,230},size={130,15}, proc=IR3J_SetVarProc,title="Dmax =", variable=root:Packages:Irena:PDDFInterface:DmaxEstimate, limits={1,3000,5}, format="%1.4g"
-	Button CalculateDmaxOnData,pos={410,229},size={100,15}, proc=IRB1_PDDFButtonProc,title="Calc. Dmax", help={"Calculate Dmax on these data"}
-	checkbox CalculateDmaxEstOnImport, pos={280,252}, title="Calc. Dmax on add data?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:CalculateDmaxEstOnImport, help={"Calculate Dmax when new data are added (useful when multiprocessing)"}
+	SetVariable DmaxEstimate,pos={270,212},size={130,15}, noproc,title="Dmax =  ", variable=root:Packages:Irena:PDDFInterface:DmaxEstimate, limits={1,3000,5}, format="%1.4g"
+	Button CalculateDmaxOnData,pos={410,213},size={100,15}, proc=IRB1_PDDFButtonProc,title="Calc. Dmax", help={"Calculate Dmax on these data"}
+	checkbox CalculateDmaxEstOnImport, pos={270,237}, title="Calc. Dmax on add data?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:CalculateDmaxEstOnImport, help={"Calculate Dmax when new data are added (useful when multiprocessing)"}
 	//Gnom specifics
-	checkbox GnomForceRmin0, pos={280,270}, title="Rmin==0?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:GnomForceRmin0, help={"Force Rmin=0 for Gnom"}
-	checkbox GnomForceRmax0, pos={280,288}, title="Rmax==0?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:GnomForceRmax0, help={"Force Dmax=0 for Gnom"}
-	SetVariable GnomAlfaValue,pos={270,310},size={160,15}, proc=IR3J_SetVarProc,title="Alfa =           ",variable=root:Packages:Irena:PDDFInterface:GnomAlfaValue, limits={0,5,0.1}
+	checkbox GnomForceRmin0, pos={270,260}, title="Rmin==0?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:GnomForceRmin0, help={"Force Rmin=0 for Gnom"}
+	checkbox GnomForceRmax0, pos={400,260}, title="Rmax==0?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:GnomForceRmax0, help={"Force Dmax=0 for Gnom"}
+	SetVariable GnomAlfaValue,pos={260,285},size={110,15}, noproc,title="Alfa = ",variable=root:Packages:Irena:PDDFInterface:GnomAlfaValue, limits={0,5,0.1}
 	//common settings
-	SetVariable NumBinsInR,pos={270,335},size={160,15}, proc=IR3J_SetVarProc,title="Num R pnts =",variable=root:Packages:Irena:PDDFInterface:NumBinsInR, limits={0,1000,20}
+	SetVariable NumBinsInR,pos={400,285},size={110,15}, noproc,title="R pnts=",variable=root:Packages:Irena:PDDFInterface:NumBinsInR, limits={0,1000,20}
 	//Moore settings
-	SetVariable MooreNumFunctions,pos={270,360},size={160,15}, proc=IR3J_SetVarProc,title="Num Func =",variable=root:Packages:Irena:PDDFInterface:MooreNumFunctions, limits={10,300,10}
-	checkbox MooreDetNumFunctions, pos={280,385}, title="Det Num Functions?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:MooreDetNumFunctions, help={"Determine number of functions"}
-	checkbox MooreFitMaxSize, pos={280,403}, title="Fit max size?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:MooreFitMaxSize, help={"Fit max size"}
+	SetVariable MooreNumFunctions,pos={270,315},size={160,15}, noproc,title="Num Func =",variable=root:Packages:Irena:PDDFInterface:MooreNumFunctions, limits={10,300,10}
+	checkbox MooreDetNumFunctions, pos={265,340}, title="Det Num Functions?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:MooreDetNumFunctions, help={"Determine number of functions"}
+	checkbox MooreFitMaxSize, pos={405,340}, title="Fit max size?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:MooreFitMaxSize, help={"Fit max size"}
+	//run the fit
+	Button RunPDDFonData,pos={280,395},size={190,20}, proc=IRB1_PDDFButtonProc,title="Run PDDF on current data", help={"Run PDDF method of yoru choice on these data"}
+	Button SelectAllData,pos={265,420},size={80,20}, proc=IRB1_PDDFButtonProc,title="Select All", help={"Select all data in the Listbox"}
+	Button RunSequenceofPDDF,pos={360,420},size={150,20}, proc=IRB1_PDDFButtonProc,title="Run all selected", help={"Run GNOM on these data"}
+	//calculated results
+	TitleBox PDDFInstructions2 title="\Zr120Calculated results:",size={330,15},pos={300,448},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable CalculatedRg,pos={270,470},size={200,15}, noproc,title="Calculated Rg =     ",variable=root:Packages:Irena:PDDFInterface:CalculatedRg, disable=0, noedit=1,limits={0,inf,0},frame=0,fstyle=1, fsize=13
+	SetVariable CalculatedI0,pos={270,490},size={200,15}, noproc,title="Calculated I0 =     ",variable=root:Packages:Irena:PDDFInterface:CalculatedI0,  disable=0, noedit=1,limits={0,inf,0},frame=0,fstyle=1, fsize=13
+	//ConcentrationForCals;ScattLengthDensDifference;CalculatedMW
+	SetVariable ConcentrationForCals,pos={270,510},size={220,15}, proc=IR1B_PDDFSetVarProc,title="c [mg/ml] =              ",variable=root:Packages:Irena:PDDFInterface:ConcentrationForCals,limits={0,inf,0.1}, help={"Concentration for MW calculations"}
+	SetVariable ScattLengthDensDifference,pos={270,530},size={220,15}, proc=IR1B_PDDFSetVarProc,title="SLD [10^10 cm^-2]= ",variable=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference,  limits={0.01,100,0.1}, help={"Scattering length density (without 10^10)"}
+	SetVariable CalculatedMW,pos={270,555},size={200,15}, noproc,title="Calculated MW =     ",variable=root:Packages:Irena:PDDFInterface:CalculatedMW, disable=0, noedit=1,limits={0,inf,0},frame=0,fstyle=1, fsize=13
+	//Buttons for results	
+	TitleBox PDDFInstructions3 title="\Zr100How to save results?",size={330,15},pos={320,575},frame=0,fColor=(0,0,65535),labelBack=0
+	checkbox SaveToFolderAutomatically, pos={265,591}, title="Folder", size={76,14},noproc, variable=root:Packages:Irena:PDDFInterface:SaveToFolderAutomatically, mode=0, help={"Save to folder when running sequence"}
+	checkbox SaveToNotebookAutomatically, pos={340,591}, title="Notebook", size={76,14},noproc, variable=root:Packages:Irena:PDDFInterface:SaveToNotebookAutomatically, mode=0, help={"Save to notebook when running sequence"}
+	checkbox SaveToWavesAutomatically, pos={430,591}, title="Waves", size={76,14},noproc, variable=root:Packages:Irena:PDDFInterface:SaveToWavesAutomatically, mode=0, help={"Save to notebook when running sequence"}
+	Button SavePDDFresults,pos={280,612},size={190,20}, proc=IRB1_PDDFButtonProc,title="Save PDDF results", help={"Save PDDF results to folder"}
 
-	
-	Button RunPDDFonData,pos={280,500},size={190,20}, proc=IRB1_PDDFButtonProc,title="Run PDDF on the data", help={"Run PDDF method of yoru choice on these data"}
-	Button SavePDDFresults,pos={280,530},size={190,20}, proc=IRB1_PDDFButtonProc,title="Save PDDF results", help={"Save PDDF results to folder"}
-	Button SelectAllData,pos={280,570},size={190,20}, proc=IRB1_PDDFButtonProc,title="Select All Data", help={"Select all data in the Listbox"}
-	Button RunSequenceofPDDF,pos={280,600},size={190,20}, proc=IRB1_PDDFButtonProc,title="Run PDDF on selected", help={"Run GNOM on these data"}
+	Button OpenResultsAndTable,pos={280,643},size={190,15}, proc=IRB1_PDDFButtonProc,title="Open Table and Notebook", help={"Open Table and Notebook with results"}
+	Button DeleteResultsAndTable,pos={280,662},size={190,15}, proc=IRB1_PDDFButtonProc,title="Delete results waves", help={"Delete waves wirth results, this will clean the records!"}
 
+	SetVariable SleepBetweenDataProcesses,pos={275,684},size={220,15}, noproc,variable=root:Packages:Irena:PDDFInterface:SleepBetweenDataProcesses
+	SetVariable SleepBetweenDataProcesses, title="Sleep between data sets", limits={0.0,30,1}
+	Checkbox OverwriteExistingData, pos={250,705},size={76,14},title="Overwrite Ouput?", noproc, variable=root:Packages:Irena:PDDFInterface:OverwriteExistingData
+	Checkbox DisplayErrorBars, pos={390,705},size={76,14},title="Display Error Bars", proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:DisplayErrorBars
+	Button AutoScaleGraph,pos={350,730},size={140,15}, proc=IRB1_PDDFButtonProc,title="Autoscale Graph", help={"Autoscale the graph axes"}
 
-	TitleBox Instructions1 title="\Zr100Double click to add data to graph",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions2 title="\Zr100Shift-click to select range of data",size={330,15},pos={4,695},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions3 title="\Zr100Ctrl/Cmd-click to select one data set",size={330,15},pos={4,710},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions4 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions5 title="\Zr100Regex for contain:  string, two: str2.*str1",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
-	
 	//create graph
 	
 	Display /W=(521,10,1183,410) /HOST=# /N=DataDisplay
@@ -1552,14 +1565,12 @@ Function IRB1_PDDFPanelFnct()
 	Display /W=(521,420,1183,750) /HOST=# /N=PDFDisplay
 	SetActiveSubwindow ##
 
-
-
-	SetVariable SleepBetweenDataProcesses,pos={275,640},size={220,15}, noproc,variable=root:Packages:Irena:PDDFInterface:SleepBetweenDataProcesses
-	SetVariable SleepBetweenDataProcesses, title="Sleep between data sets", limits={0.0,30,1}
-
-	Checkbox OverwriteExistingData, pos={320,670},size={76,14},title="Overwrite Ouput?", noproc, variable=root:Packages:Irena:PDDFInterface:OverwriteExistingData
-	Checkbox DisplayErrorBars, pos={320,695},size={76,14},title="Display Error Bars", proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:DisplayErrorBars
-	Button AutoScaleGraph,pos={280,720},size={190,20}, proc=IRB1_PDDFButtonProc,title="Autoscale Graph", help={"Autoscale the graph axes"}
+	TitleBox Instructions1 title="\Zr100Double click to add data to graph",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions2 title="\Zr100Shift-click to select range of data",size={330,15},pos={4,695},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions3 title="\Zr100Ctrl/Cmd-click to select one data set",size={330,15},pos={4,710},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions4 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions5 title="\Zr100Regex for contain:  string, two: str2.*str1",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0	
 	
 	IR1B_PDDFSetControls()
 end
@@ -1582,8 +1593,30 @@ Function IR1B_PDDFSetControls()
 	checkbox MooreDetNumFunctions, win=IRB1_PDDFInterfacePanel, disable=!PDDFuseMoore
 	checkbox MooreFitMaxSize, win=IRB1_PDDFInterfacePanel, disable=!PDDFuseMoore
 end
+//**********************************************************************************************************
+//**********************************************************************************************************
+Function IR1B_PDDFSetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
 
-//**************************************************************************************
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+			if(StringMatch(sva.ctrlName, "ConcentrationForCals" )||StringMatch(sva.ctrlName, "ScattLengthDensDifference" ))
+				IRB1_PDDFCalculateRgI0()
+			endif
+			break
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
 Function IRB1_PDDFCheckProc(cba) : CheckBoxControl
 	STRUCT WMCheckboxAction &cba
 
@@ -1663,19 +1696,23 @@ Function IRB1_PDDFButtonProc(ba) : ButtonControl
 					IRB1_PDDFRunIrenaPDDF()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel() 
+					IRB1_PDDFCalculateRgI0()
 				elseif(PDDFuseMoore)
 					IRB1_PDDFRunIrenaPDDF()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel()
+					IRB1_PDDFCalculateRgI0()
 				else //this is autognom or gom, handled by oen function
 					IRB1_PDDFRunGNOM()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel()				
+					IRB1_PDDFCalculateRgI0()
 				endif
 			endif
 			if(stringMatch(ba.ctrlName,"SavePDDFresults"))
 				IRB1_PDDFSaveResultsToNotebook()
 				IRB1_PDDFSaveResultsToFldr()
+				IRB1_PDDFSaveToWaves()
 			endif
 			if(stringMatch(ba.ctrlName,"RunSequenceofPDDF"))
 				IRB1_PDDFFitSequenceOfData()
@@ -1696,6 +1733,21 @@ Function IRB1_PDDFButtonProc(ba) : ButtonControl
 			if(stringMatch(ba.ctrlName,"CalculateDmaxOnData"))
 				IRB1_PDDFEstimateRgAndDmax()
 			endif
+			if(stringMatch(ba.ctrlName,"OpenResultsAndTable"))
+				IR1_CreateResultsNbk()
+				DoWindow IRB1_PDDFFitResultsTable
+				if(V_Flag)
+					DoWIndow/F IRB1_PDDFFitResultsTable
+				else
+					IRB1_PDDFFitResultsTableFnct()
+				endif		
+			endif
+			if(stringMatch(ba.ctrlName,"DeleteResultsAndTable"))
+				KillWIndow/Z IRB1_PDDFFitResultsTable
+				KillDataFOlder/Z root:PDDFFitResults: 
+			endif
+
+
 			break
 		case -1: // control being killed
 			break
@@ -1711,6 +1763,7 @@ static Function IRB1_PDDFFitSequenceOfData()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		Wave SelectionOfAvailableData = root:Packages:Irena:PDDFInterface:SelectionOfAvailableData
 		Wave/T ListOfAvailableData = root:Packages:Irena:PDDFInterface:ListOfAvailableData
+		NVAR SleepBetweenDataProcesses=root:Packages:Irena:PDDFInterface:SleepBetweenDataProcesses
 		variable i, imax
 		imax = numpnts(ListOfAvailableData)
 		For(i=0;i<imax;i+=1)
@@ -1723,24 +1776,51 @@ static Function IRB1_PDDFFitSequenceOfData()
 					IRB1_PDDFRunIrenaPDDF()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel() 
+					IRB1_PDDFCalculateRgI0()
 				elseif(PDDFuseMoore)
 					IRB1_PDDFRunIrenaPDDF()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel()
+					IRB1_PDDFCalculateRgI0()
 				else
 					IRB1_PDDFRunGNOM()
 					IRB1_PDDFMakeResChi2()
-					IRB1_PDDFAppendPDDFModel()				
+					IRB1_PDDFAppendPDDFModel()	
+					IRB1_PDDFCalculateRgI0()			
 				endif
 				IRB1_PDDFSaveResultsToNotebook()
 				IRB1_PDDFSaveResultsToFldr()
+				IRB1_PDDFSaveToWaves()
 				DoUpdate 
-				sleep/S/C=6/M="Fitted data for "+ListOfAvailableData[i] 2
+				if(SleepBetweenDataProcesses>0.5)
+					sleep/S/C=6/M="Fitted data for "+ListOfAvailableData[i] SleepBetweenDataProcesses
+				endif
 			endif
 		endfor
 		print "all selected data processed"
 end
 //**********************************************************************************************************
+
+Function IRB1_PDDFCalculateRgI0()
+
+	NVAR CalcRg=root:Packages:Irena:PDDFInterface:CalculatedRg
+	NVAR CalcI0=root:Packages:Irena:PDDFInterface:CalculatedI0
+	Wave Radius = root:Packages:Irena:PDDFInterface:pddfRadius
+	Wave Pr = root:Packages:Irena:PDDFInterface:pddfPr
+	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
+	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
+	NVAR CalculatedMW=root:Packages:Irena:PDDFInterface:CalculatedMW
+	
+	Duplicate/Free Pr, R2Pr
+	R2Pr = Radius^2 * Pr
+	
+	CalcI0 = 4*pi*areaXY(Radius, Pr )
+	
+	CalcRg = sqrt(areaXY(Radius, R2Pr )/areaXY(Radius, Pr ))
+	
+	CalculatedMW = 6.023e23*CalcI0/(ConcentrationForCals*(ScattLengthDensDifference*1e10)^2)
+
+end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
@@ -1753,6 +1833,8 @@ static Function IRB1_PDDFEstimateRgAndDmax()
 	Wave OriginalIntensity=root:Packages:Irena:PDDFInterface:Intensity
 	Wave OriginalQvector=root:Packages:Irena:PDDFInterface:Q_vec
 	Wave OriginalError=root:Packages:Irena:PDDFInterface:Errors
+	variable AcsrPnt=pcsr(A, "IRB1_PDDFInterfacePanel#DataDisplay")
+	variable BcsrPnt=pcsr(B, "IRB1_PDDFInterfacePanel#DataDisplay")
 
 	variable Rg
 	Variable G
@@ -1760,39 +1842,84 @@ static Function IRB1_PDDFEstimateRgAndDmax()
 	G = OriginalIntensity[0]
 	FindLevel /P/Q OriginalIntensity, OriginalIntensity[0]*0.3
 	variable GetQAtRg=OriginalQvector[V_levelX]
-	Rg = 1/GetQAtRg
+	Rg = 2/GetQAtRg
 	B = OriginalIntensity[V_levelX]*OriginalQvector[V_levelX]^4
-	Make /N=3/O W_coef, LocalEwave
-	Make/N=3/T/O T_Constraints
+	Make /N=5/O W_coef, LocalEwave
+	Make/N=5/T/O T_Constraints
 	T_Constraints[0] = {"K1 > 0"}
 	T_Constraints[1] = {"K0 > 0"}
 	T_Constraints[2] = {"K2 > 0"}
+	T_Constraints[3] = {"K3 > 2"}
+	T_Constraints[4] = {"K4 > 0"}
 	Variable V_FitError=0			//This should prevent errors from being generated
 	W_coef[0]=G 	//G
 	W_coef[1]=Rg	//Rg
 	W_coef[2]=B	//B
-	FuncFit IR2Pr_IntensityFit W_coef OriginalIntensity /X=OriginalQvector /C=T_Constraints //W=OriginalError //I=1//E=LocalEwave 
+	W_coef[3]=4	//Porod slope
+	W_coef[4]=OriginalIntensity[numpnts(OriginalIntensity)-20]	//background
+	FuncFit IRB1_PDDFIntensityFit W_coef OriginalIntensity[AcsrPnt,]  /X=OriginalQvector /C=T_Constraints //W=OriginalError //I=1//E=LocalEwave 
 	if (V_FitError!=0)	//there was error in fitting
 		beep
 		Abort "Fitting error, Cannot fit Rg" 
 	endif
-//	Duplicate/O OriginalIntensity, QstarVector, GuessFitScattProfile
-//	QstarVector = OriginalQvector / (erf(OriginalQvector*w_coef[1]/sqrt(6)))^3
-//	GuessFitScattProfile =  w_coef[0]*exp(-OriginalQvector^2*w_coef[1]^2/3)+(w_coef[2]/QstarVector^4) 
-//	CheckDisplayed /W=IRB1_PDDFInterfacePanel#DataDisplay  GuessFitScattProfile  
-//	if(!V_flag)
-//		GetAxis /W=IRB1_PDDFInterfacePanel#DataDisplay /Q left
-//		AppendToGraph  /W=IRB1_PDDFInterfacePanel#DataDisplay  GuessFitScattProfile  vs OriginalQvector
-//		SetAxis/W=IRB1_PDDFInterfacePanel#DataDisplay left, V_min, V_max
-//		ModifyGraph /W=IRB1_PDDFInterfacePanel#DataDisplay lstyle(GuessFitScattProfile)=8,lsize(GuessFitScattProfile)=3
-//		ModifyGraph /W=IRB1_PDDFInterfacePanel#DataDisplay rgb(GuessFitScattProfile)=(1,3,39321)
-//		Tag/C/N=GuessRg/L=0/TL=0/W=IRB1_PDDFInterfacePanel#DataDisplay GuessFitScattProfile, numpnts(GuessFitScattProfile)/10,"\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Estimated Rg = "+num2str(W_Coef[1])
-//	endif
+	Duplicate/O OriginalIntensity, QstarVector, GuessFitScattProfile
+	QstarVector = OriginalQvector / (erf(OriginalQvector*w_coef[1]/sqrt(6)))^3
+	GuessFitScattProfile =  w_coef[0]*exp(-OriginalQvector^2*w_coef[1]^2/3)+(w_coef[2]/QstarVector^w_coef[3]) + w_coef[4]
+	CheckDisplayed /W=IRB1_PDDFInterfacePanel#DataDisplay  GuessFitScattProfile  
+	if(!V_flag)
+		GetAxis /W=IRB1_PDDFInterfacePanel#DataDisplay /Q left
+		AppendToGraph  /W=IRB1_PDDFInterfacePanel#DataDisplay  GuessFitScattProfile  vs OriginalQvector
+		SetAxis/W=IRB1_PDDFInterfacePanel#DataDisplay left, V_min, V_max
+		ModifyGraph /W=IRB1_PDDFInterfacePanel#DataDisplay lstyle(GuessFitScattProfile)=2,lsize(GuessFitScattProfile)=1
+		ModifyGraph /W=IRB1_PDDFInterfacePanel#DataDisplay rgb(GuessFitScattProfile)=(1,3,39321)
+	endif
+	//Update tag result...
+	string Tagtext="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fitted Rg [A] = "+num2str(W_Coef[1])+"\r"
+	Tagtext+="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Fitted I0 = "+num2str(W_Coef[0])
+	Tag/C/N=GuessRg/L=0/TL=0/W=IRB1_PDDFInterfacePanel#DataDisplay GuessFitScattProfile, numpnts(GuessFitScattProfile)/10,Tagtext
+
 	NVAR Dmax=root:Packages:Irena:PDDFInterface:DmaxEstimate
 	Dmax=2.5*abs(W_coef[1])
 	KillWaves/Z LocalEwave, W_coef, T_constraints, QstarVector
 	SetDataFolder oldDf
 end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IRB1_PDDFIntensityFit(w,q) : FitFunc
+	Wave w
+	Variable q
+
+	//CurveFitDialog/ These comments were created by the Curve Fitting dialog. Altering them will
+	//CurveFitDialog/ make the function less convenient to work with in the Curve Fitting dialog.
+	//CurveFitDialog/ Equation:
+	//CurveFitDialog/ Prefactor=abs(Prefactor)
+	//CurveFitDialog/ Rg=abs(Rg)
+	//CurveFitDialog/ f(q) = Prefactor*exp(-q^2*Rg^2/3))
+	//CurveFitDialog/ End of Equation
+	//CurveFitDialog/ Independent Variables 1
+	//CurveFitDialog/ q
+	//CurveFitDialog/ Coefficients 2
+	//CurveFitDialog/ w[0] = Prefactor
+	//CurveFitDialog/ w[1] = Rg
+	//CurveFitDialog/ w[2] = Porod prefactor
+	//CurvefitDialog/ w[3] = PorodSlope
+	//CurvefitDialog/ w[4] = Background
+
+	w[0]=abs(w[0])
+	w[1]=abs(w[1])
+	w[2]=abs(w[2])
+	w[3]=abs(W[3])
+	w[4]=abs(W[4])
+	variable qstar=q/(erf(q*w[1]/sqrt(6)))^3
+	return w[0]*exp(-q^2*w[1]^2/3)+(w[2]/qstar^w[3])+w[4]
+//	QstarVector=QvectorWave/(erf(QvectorWave*Rg/sqrt(6)))^3
+//G*exp(-QvectorWave^2*Rg^2/3)+(B/QstarVector^P) 
+
+End
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 
 //*****************************************************************************************************************
 //**********************************************************************************************************
@@ -1854,10 +1981,10 @@ Function IRB1_PDDFRunGNOM()
 
 
 	//locate system tempPath
-	newPath/O/Q/C ATSASWorkPath, (SpecialDirPath("Desktop", 0, 0, 0)+"IrenaATSAStmp:")		//this is Igor formated path
+	newPath/O/Q/C ATSASWorkPath, (SpecialDirPath("Temporary", 0, 0, 0)+"IrenaATSAStmp:")		//this is Igor formated path
 	PathInfo ATSASWorkPath
 	String PathToATSASWorkPath = ParseFilePath(5, S_Path, "*", 0, 0) 							//this is system formated path
-	////   PRG2 HD:Users:ilavsky:Desktop:IrenaATSAStmp:
+	////   PRG2 HD:Users:ilavsky:tmp:IrenaATSAStmp:
 	//locate DATGNOM
 	PathInfo DATGNOMPath
 	if(V_Flag<0.5)	//does not exist
@@ -1912,9 +2039,8 @@ Function IRB1_PDDFRunGNOM()
 	//save the data file. Simply 3 columns, QRS
 	Save/G/O/M="\n"/P=ATSASWorkPath ExportQ,ExportInt,ExportErr as "DataIn.dat"
 	//create script file...
-	string cmd, ATSASPath, DataFilePath, OutputFilePath, InputFilePath
+	string cmd, ATSASPath, OutputFilePath, InputFilePath
 	ATSASPath = RemoveFromList("bin", DATGNOMLocation, ":") 
-	DataFilePath = PathToATSASWorkPath
 	//notes on how to run this nightmare:
 	//1. One needs to change directory to ATSAS folder. 
 	//2. there we can start ./bin/datpddf4 
@@ -1949,8 +2075,8 @@ Function IRB1_PDDFRunGNOM()
 	if(stringmatch(IgorInfo(2),"Windows"))								//Windows script... 	
 		//this will need to be customized on Windows... 
 		GnomWInPath =  ParseFilePath(5, DATGNOMLocation, "\\", 0, 0)
-		InputFilePath = ParseFilePath(5, DataFilePath, "\\", 0, 0)+"DataIn.dat"
-		OutputFilePath = ParseFilePath(5, DataFilePath, "\\", 0, 0)+"DataOut.out"	
+		InputFilePath = ParseFilePath(5, PathToATSASWorkPath, "\\", 0, 0)+"DataIn.dat"
+		OutputFilePath = ParseFilePath(5, PathToATSASWorkPath, "\\", 0, 0)+"DataOut.out"	
 		if(PDDFUseGNOM)
 			//and now build it together
 			//note, this is needeed, see the " - whole command is "" as well as each part which may contain spaces. 
@@ -1972,8 +2098,8 @@ Function IRB1_PDDFRunGNOM()
 		//FittingResults = S_value
 	else										//Mac, need to convert to Posix path
 		ATSASPath = "'"+ParseFilePath(9, ATSASPath, "*", 0, 0)+"'"
-		InputFilePath ="'"+ ParseFilePath(9, DataFilePath, "*", 0, 0)+"DataIn.dat'"
-		OutputFilePath = "'"+ParseFilePath(9, DataFilePath, "*", 0, 0)+"DataOut.out'"	
+		InputFilePath ="'"+ ParseFilePath(9, PathToATSASWorkPath, "*", 0, 0)+"DataIn.dat'"
+		OutputFilePath = "'"+ParseFilePath(9, PathToATSASWorkPath, "*", 0, 0)+"DataOut.out'"	
 		if(PDDFUseGNOM)
 			//and now build it together
 			unixCmd="cd "+ATSASPath+";./bin/"+datgnomName+" "+InputFilePath+RgForce+NumBinsForce+alphaValForce+rmaxForce+rminForce+" -o "+OutputFilePath		
@@ -2039,10 +2165,12 @@ Function IRB1_PDDFRunGNOM()
 	pddfModelIntExtrap[0,numpnts(pddfModelIntGunierSt)-1] = pddfModelIntGunierSt[p]
 	pddfModelIntExtrap[numpnts(pddfModelIntGunierSt), ] = pddfModelIntGunier[p-numpnts(pddfModelIntGunierSt)]
 	
-	
+	//and delete teh path we created... 
+	PathInfo ATSASWorkPath
+	//IN2G_ForceDeleteFolder(S_Path)		//leave the file in Temporary folder, system will clean it up at some point. 
 	KillPath/Z DATGNOMPath
 	KillPath/Z ATSASWorkPath
-	print "Delete following folder from your desktop : "+PathToATSASWorkPath
+	//print "Delete following folder from your desktop : "+PathToATSASWorkPath
 	setDataFolder OldDf
 end
 //**************************************************************************************
@@ -2130,8 +2258,8 @@ static Function IRB1_PDDFRunIrenaPDDF()
 	Duplicate/O R_distribution, pddfRadius
 	Duplicate/O CurrentResultPdf, pddfPr
 	Duplicate/O PDDFErrors, pddfPrError
-	DmaxBio = MaximumR
-	NumBinsBio = NumberOfBins
+	//DmaxBio = MaximumR
+	//NumBinsBio = NumberOfBins
 	KillWindow/Z IR2PR_GammaFunction
 	setDataFolder OldDf
 	
@@ -2346,7 +2474,8 @@ static Function IRB1_PDDFInitialize()
 	ListOfVariables += "PDDFUseGNOM;PDDFuseMoore;PDDFuseregularization;PDDFUseAutoGNOM;"	
 	ListOfVariables += "DmaxEstimate;CalculateDmaxEstOnImport;GnomForceRmin0;GnomForceRmax0;NumBinsInR;GnomAlfaValue;"	
 	ListOfVariables += "MooreNumFunctions;MooreDetNumFunctions;MooreFitMaxSize;"	
-
+	ListOfVariables += "CalculatedRg;CalculatedI0;ConcentrationForCals;ScattLengthDensDifference;CalculatedMW;"	
+	ListOfVariables += "SaveToFolderAutomatically;SaveToNotebookAutomatically;SaveToWavesAutomatically;"	
 		//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -2387,15 +2516,31 @@ static Function IRB1_PDDFInitialize()
 //		NumBinsInR = 100
 //	endif
 	NVAR GnomAlfaValue
-//	if(GnomAlfaValue<0.2)
-//		GnomAlfaValue=1
-//	endif
+	NVAR ConcentrationForCals
+	if(ConcentrationForCals<0.0001)
+		GnomAlfaValue=1
+	endif
+	NVAR ScattLengthDensDifference
+	if(ScattLengthDensDifference<0.1)
+		ScattLengthDensDifference = 2.086		//average protein
+	endif
 	NVAR MooreNumFunctions
 	if(MooreNumFunctions<50)
 		MooreNumFunctions = 101
 	endif
 	NVAR MooreFitMaxSize
 	MooreFitMaxSize = 1
+	
+	
+	NVAR SaveToFolderAutomatically
+	NVAR SaveToNotebookAutomatically
+	NVAR SaveToWavesAutomatically
+	if(SaveToFolderAutomatically+SaveToNotebookAutomatically+SaveToWavesAutomatically<1)
+		SaveToFolderAutomatically=1
+		SaveToNotebookAutomatically=1
+		SaveToWavesAutomatically=1
+	endif
+	
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2404,10 +2549,17 @@ end
 //**********************************************************************************************************
 static Function IRB1_PDDFSaveResultsToNotebook()
 
-	IR1_CreateResultsNbk()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
 	DFref oldDf= GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:PDDFInterface
+	NVAR SaveToFolderAutomatically=root:Packages:Irena:PDDFInterface:SaveToFolderAutomatically
+	NVAR SaveToNotebookAutomatically=root:Packages:Irena:PDDFInterface:SaveToNotebookAutomatically
+	NVAR SaveToWavesAutomatically=root:Packages:Irena:PDDFInterface:SaveToWavesAutomatically
+	if(SaveToNotebookAutomatically!=1)
+		setDataFolder OldDf
+		return 0
+	endif
+	IR1_CreateResultsNbk()
 	SVAR DataFolderName=root:Packages:Irena:PDDFInterface:DataFolderName
 	SVAR IntensityWaveName=root:Packages:Irena:PDDFInterface:IntensityWaveName
 	SVAR QWavename=root:Packages:Irena:PDDFInterface:QWavename
@@ -2420,12 +2572,15 @@ static Function IRB1_PDDFSaveResultsToNotebook()
 	NVAR PDDFUseGNOM = root:Packages:Irena:PDDFInterface:PDDFUseGNOM
 	NVAR PDDFuseMoore = root:Packages:Irena:PDDFInterface:PDDFuseMoore
 	NVAR PDDFuseregularization = root:Packages:Irena:PDDFInterface:PDDFuseregularization
-	if(PDDFuseregularization)
-		MethodRun = "Irena regularization" 
+	NVAR PPDFUseAutoGNOM=root:Packages:Irena:PDDFInterface:PDDFUseAutoGNOM
+	if(PPDFUseAutoGNOM)	
+		MethodRun = "AutoGNOM"
+	elseif(PDDFUseGNOM)
+		MethodRun = "GNOM"
 	elseif(PDDFuseMoore)
-		MethodRun = "Irena Moore" 
-	else
-		MethodRun = "ATSAS datgnom4" 
+		MethodRun = "Moore"
+	elseif(PDDFuseregularization)
+		MethodRun = "Regularization"
 	endif
 
 	IR1_AppendAnyText("\r Results of Pair distance distribution function fitting\r",1)	
@@ -2453,12 +2608,95 @@ static Function IRB1_PDDFSaveResultsToNotebook()
 	SetDataFolder OldDf
 	SVAR/Z nbl=root:Packages:Irena:ResultsNotebookName	
 	DoWindow/F $nbl
-
+	setDataFolder OldDf
 end
 
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
+static Function IRB1_PDDFSaveToWaves()
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")	
+	DFref oldDf= GetDataFolderDFR()
+	NVAR SaveToFolderAutomatically=root:Packages:Irena:PDDFInterface:SaveToFolderAutomatically
+	NVAR SaveToNotebookAutomatically=root:Packages:Irena:PDDFInterface:SaveToNotebookAutomatically
+	NVAR SaveToWavesAutomatically=root:Packages:Irena:PDDFInterface:SaveToWavesAutomatically
+	if(SaveToWavesAutomatically!=1)
+		setDataFolder OldDf
+		return 0
+	endif
+
+	NVAR CalcRg=root:Packages:Irena:PDDFInterface:CalculatedRg
+	NVAR CalcI0=root:Packages:Irena:PDDFInterface:CalculatedI0
+	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
+	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
+	NVAR CalculatedMW=root:Packages:Irena:PDDFInterface:CalculatedMW
+	SVAR DataFolderName = root:Packages:Irena:PDDFInterface:DataFolderName
+
+	NVAR PDDFUseGNOM = root:Packages:Irena:PDDFInterface:PDDFUseGNOM
+	NVAR PDDFuseMoore = root:Packages:Irena:PDDFInterface:PDDFuseMoore
+	NVAR PDDFuseregularization = root:Packages:Irena:PDDFInterface:PDDFuseregularization
+	NVAR PPDFUseAutoGNOM=root:Packages:Irena:PDDFInterface:PDDFUseAutoGNOM
+	string Methodused=""
+	if(PPDFUseAutoGNOM)	
+		Methodused = "AutoGNOM"
+	elseif(PDDFUseGNOM)
+		Methodused = "GNOM"
+	elseif(PDDFuseMoore)
+		Methodused = "Moore"
+	elseif(PDDFuseregularization)
+		Methodused = "Regularization"
+	endif
+	NewDATAFolder/O/S root:PDDFFitResults
+	Wave/Z PDDF_Rg
+	if(!WaveExists(PDDF_Rg))
+		make/O/N=0 PDDF_Rg, PDDF_I0, PDDF_MW, PDDF_Conc, PDDF_SLD
+		make/O/N=0/T SampleName, MethodName
+	endif
+	variable curlength = numpnts(PDDF_Rg)
+	redimension/N=(curlength+1) SampleName,MethodName, PDDF_Rg, PDDF_I0, PDDF_MW, PDDF_Conc, PDDF_SLD 
+	SampleName[curlength] = stringFromList(ItemsInList(DataFolderName, ":")-1, DataFolderName,":")
+	MethodName[curlength] = Methodused
+	PDDF_Rg[curlength] = CalcRg
+	PDDF_I0[curlength] = CalcI0
+	PDDF_MW[curlength] = CalculatedMW
+	PDDF_Conc[curlength] = ConcentrationForCals
+	PDDF_SLD[curlength] = ScattLengthDensDifference
+	DoWindow IRB1_PDDFFitResultsTable
+	if(V_Flag)
+		DoWIndow/F IRB1_PDDFFitResultsTable
+	else
+		IRB1_PDDFFitResultsTableFnct()
+	endif		
+	setDataFolder OldDf	
+end
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+static Function IRB1_PDDFFitResultsTableFnct() : Table
+	PauseUpdate; Silent 1		// building window...
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()	
+	if(!DataFolderExists("root:PDDFFitResults:"))
+		Abort "No PDDF Fit data exist."
+	endif
+	SetDataFolder root:PDDFFitResults:
+	Wave/T SampleName, MethodName
+	Wave PDDF_Rg, PDDF_I0, PDDF_MW, PDDF_Conc, PDDF_SLD
+	Edit/K=1/W=(860,772,1831,1334)/N=IRB1_PDDFFitResultsTable SampleName,PDDF_Rg, PDDF_I0, PDDF_MW, MethodName as "PDDF fitting results Table"
+	AppendToTable PDDF_Conc, PDDF_SLD
+	ModifyTable format(Point)=1,width(SampleName)=150,title(SampleName)="Sample Folder"
+	ModifyTable width(MethodName)=100,title(MethodName)="Method"
+	ModifyTable alignment(PDDF_Rg)=1,sigDigits(PDDF_Rg)=4,title(PDDF_Rg)="Rg [A]"
+	ModifyTable alignment(PDDF_I0)=1,sigDigits(PDDF_I0)=4,width(PDDF_I0)=100,title(PDDF_I0)="I0"
+	ModifyTable alignment(PDDF_MW)=1,sigDigits(PDDF_MW)=4,width(PDDF_MW)=104
+	ModifyTable title(PDDF_MW)="MW",alignment(PDDF_Conc)=1,sigDigits(PDDF_Conc)=4
+	ModifyTable width(PDDF_Conc)=92,title(PDDF_Conc)="Conc [mg/ml]",alignment(PDDF_SLD)=1
+	ModifyTable sigDigits(PDDF_SLD)=4,width(PDDF_SLD)=110,title(PDDF_SLD)="SLD [10^10 cm^2]"
+	SetDataFolder oldDf
+EndMacro
+//*****************************************************************************************************************
+
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
@@ -2468,6 +2706,13 @@ static Function IRB1_PDDFSaveResultsToFldr()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	setDataFolder root:Packages:Irena:PDDFInterface
+
+	NVAR SaveToFolderAutomatically=root:Packages:Irena:PDDFInterface:SaveToFolderAutomatically
+	NVAR SaveToNotebookAutomatically=root:Packages:Irena:PDDFInterface:SaveToNotebookAutomatically
+	NVAR SaveToWavesAutomatically=root:Packages:Irena:PDDFInterface:SaveToWavesAutomatically
+	if(SaveToFolderAutomatically!=1)
+		return 0
+	endif
 	//save data here... For Moore include "Fittingresults" which is Intensity Fit stuff
 	//Parameters: 
 	SVAR DataFolderName=root:Packages:Irena:PDDFInterface:DataFolderName
@@ -2482,12 +2727,15 @@ static Function IRB1_PDDFSaveResultsToFldr()
 	NVAR PDDFUseGNOM = root:Packages:Irena:PDDFInterface:PDDFUseGNOM
 	NVAR PDDFuseMoore = root:Packages:Irena:PDDFInterface:PDDFuseMoore
 	NVAR PDDFuseregularization = root:Packages:Irena:PDDFInterface:PDDFuseregularization
-	if(PDDFuseregularization)
-		MethodRun = "Irena regularization" 
+	NVAR PPDFUseAutoGNOM=root:Packages:Irena:PDDFInterface:PDDFUseAutoGNOM
+	if(PPDFUseAutoGNOM)	
+		MethodRun = "AutoGNOM"
+	elseif(PDDFUseGNOM)
+		MethodRun = "GNOM"
 	elseif(PDDFuseMoore)
-		MethodRun = "Irena Moore" 
-	else
-		MethodRun = "ATSAS datgnom4" 
+		MethodRun = "Moore"
+	elseif(PDDFuseregularization)
+		MethodRun = "Regularization"
 	endif
 	SVAR FittingResults=root:Packages:Irena:PDDFInterface:FittingResults
 	Wave pddfInputIntensity = root:Packages:Irena:PDDFInterface:pddfInputIntensity
@@ -2502,7 +2750,7 @@ static Function IRB1_PDDFSaveResultsToFldr()
 	Wave/Z pddfInputError			=root:Packages:Irena:PDDFInterface:pddfInputError
 	Wave/Z pddfModelQvector		=root:Packages:Irena:PDDFInterface:pddfModelQvector
 	Wave/Z pddfModelIntensity	=root:Packages:Irena:PDDFInterface:pddfModelIntensity
-	Wave/Z pddfModelError			=root:Packages:Irena:PDDFInterface:pddfModelError
+	//Wave/Z pddfModelError			=root:Packages:Irena:PDDFInterface:pddfModelError
 	Wave/Z pddfRadius				=root:Packages:Irena:PDDFInterface:pddfRadius
 	Wave/Z pddfPr					=root:Packages:Irena:PDDFInterface:pddfPr
 	Wave/Z pddfPrError				=root:Packages:Irena:PDDFInterface:pddfPrError
@@ -2513,7 +2761,7 @@ static Function IRB1_PDDFSaveResultsToFldr()
 	Duplicate/O pddfRadius, tempR_distribution
 	Duplicate/O pddfPr, tempCurrentResultPdf
 	Duplicate/O CurrentResultsGamma, tempCurrentResultsGamma
-	Duplicate/O pddfModelError, tempPDDFErrors
+	//Duplicate/O pddfModelError, tempPDDFErrors
 	Duplicate/O pddfInputQVector, tempQ_vec
 	Duplicate/O ChisquaredWave, tempCurrentChiSq
 	Duplicate/O pddfModelIntensity, tempPdfFitIntensity
@@ -2538,8 +2786,8 @@ static Function IRB1_PDDFSaveResultsToFldr()
 	Duplicate /O tempCurrentChiSq, $tempname
 	tempname="PDDFDistFunction_"+num2str(ii)
 	Duplicate /O tempCurrentResultPdf, $tempname
-	tempname="PDDFErrors_"+num2str(ii)
-	Duplicate /O tempPDDFErrors, $tempname
+	//tempname="PDDFErrors_"+num2str(ii)
+	//Duplicate /O tempPDDFErrors, $tempname
 	tempname="PDDFDistances_"+num2str(ii)
 	Duplicate /O tempR_distribution, $tempname
 	tempname="PDDFGammaFunction_"+num2str(ii)

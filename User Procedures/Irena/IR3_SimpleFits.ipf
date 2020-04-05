@@ -95,7 +95,7 @@ Function IR3J_SimpleFitsPanelFnct()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:SimpleFits","IR3J_SimpleFitsPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	IR3C_MultiAppendControls("Irena:SimpleFits","IR3J_SimpleFitsPanel", "IR3J_CopyAndAppendData",1,0)
+	IR3C_MultiAppendControls("Irena:SimpleFits","IR3J_SimpleFitsPanel", "IR3J_CopyAndAppendData","",1,0)
 	//hide what is not needed
 	checkbox UseResults, disable=1
 	SetVariable DataQEnd,pos={290,90},size={170,15}, proc=IR3J_SetVarProc,title="Q max for fitting    "

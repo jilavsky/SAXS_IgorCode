@@ -386,7 +386,7 @@ Function IR2Pr_IntensityFit(w,q) : FitFunc
 	w[1]=abs(w[1])
 	w[2]=abs(w[2])
 	variable qstar=q/(erf(q*w[1]/sqrt(6)))^3
-	return w[0]*exp(-q^2*w[1]^2/3)+(w[2]/qstar^4) 
+	return w[0]*exp(-q^2*w[1]^2/3)+(w[2]/qstar^4)
 //	QstarVector=QvectorWave/(erf(QvectorWave*Rg/sqrt(6)))^3
 //G*exp(-QvectorWave^2*Rg^2/3)+(B/QstarVector^P) 
 

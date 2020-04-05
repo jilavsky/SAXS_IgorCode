@@ -15,6 +15,8 @@ constant CurrentIrenaVersionNumber = 2.692
 
 
 //2.691	Beta version after February2020 release
+//			New bioSAXS tools
+//			New Metadata Browser tool
 //2.69 	Removed 14 ipf files to reduce clutter. 
 //			Combined with IR1_CreateFldrStrctr.ipf, IR1_Functions.ipf
 //			added 3DModels, 4D aggregate and Two Phase ssytems. 
@@ -151,6 +153,8 @@ Menu "SAS"
 		help={"Manipulate - for now only average - many data sets"}
 		"Merge two data sets", IR3D_DataMerging()
 		help={"Merge two data sets - two segments at different q ranges"}
+		"Metadata Browser", IR3B_MetadataBrowser()
+		help={"Tool to extarct quickly metadata stored in wave notes"}
 		"Data mining [extract information]", IR2M_GetDataMiner()
 		help={"Data miner to find various data and plot various waves"}
 	end
@@ -321,7 +325,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;TwoPhaseSystems=IR3T_MainCheckVersion;"
 	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;IR3L_MultiSamplePlotPanel=IR3L_MainCheckVersion;"
 	WindowProcNames+="IR1I_ImportBioSAXSASCIIData=IR1B_ImportASCIIMainCheckVersion;IRB1_DataManipulationPanel=IR1B_DataManMainCheckVersion;"
-	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;"
+	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;IR3B_MetadataBrowserPanel=IR3B_MainCheckVersion;"
   
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)
 	IR2C_CheckIrenaUpdate(0)
@@ -357,7 +361,7 @@ Function IR2C_CheckWIndowsProcVersions(WindowProcNames)
 			Execute (ProcedureName+"()") 
 		endif
 	endfor
-	
+	 
 end
 ///////////////////////////////////////////
 //****************************************************************************************

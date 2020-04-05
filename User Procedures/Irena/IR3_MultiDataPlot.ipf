@@ -106,7 +106,7 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
-	IR3C_MultiAppendControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel", "IR3L_DoubleClickAction",0,1)
+	IR3C_MultiAppendControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel", "IR3L_DoubleClickAction","",0,1)
 	//graph controls
 	SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	PopupMenu SelectGraphWindows,pos={280,90},size={310,20},proc=IR3L_PopMenuProc, title="Select Graph",help={"Select one of controllable graphs"}
@@ -703,119 +703,6 @@ static Function IR3L_AppendData(FolderNameStr)
 		SVAR ListOfDefinedDataPlots=root:Packages:Irena:MultiSamplePlot:ListOfDefinedDataPlots
 
 		IR3C_SelectWaveNamesData("Irena:MultiSamplePlot", FolderNameStr)			//thsi routine will presetn names in strings as needed
-				//		if(UseQRSdata+UseIndra2Data+useResults> 1)
-				//			Abort "Data type not selected right, please, select type of data first" 
-				//		endif
-				//		
-				//		string TempStr, result, tempStr2, TempYName, TempXName, tempStr3
-				//		variable i, j
-				//		
-				//		UseUserDefinedData = 0
-				//		UseModelData = 0
-				//		DataFolderName = DataStartFolder+FolderNameStr
-				//		if(UseQRSdata)
-				//			//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
-				//			QWavename = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IR3L_MultiSamplePlotPanel"))
-				//			IntensityWaveName = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IR3L_MultiSamplePlotPanel"))
-				//			ErrorWaveName = stringFromList(0,IR2P_ListOfWaves("Error","*", "IR3L_MultiSamplePlotPanel"))
-				//			if(UseIndra2Data)
-				//				dQWavename = ReplaceString("Qvec", QWavename, "dQ")
-				//			elseif(UseQRSdata)
-				//				dQWavename = "w"+QWavename[1,31]
-				//			else
-				//				dQWavename = ""
-				//			endif
-				//		elseif(UseIndra2Data)
-				//			string DataSubTypeInt = DataSubType
-				//			SVAR QvecLookup = root:Packages:Irena:MultiSamplePlot:QvecLookupUSAXS
-				//			SVAR ErrorLookup = root:Packages:Irena:MultiSamplePlot:ErrorLookupUSAXS
-				//			SVAR dQLookup = root:Packages:Irena:MultiSamplePlot:dQLookupUSAXS
-				//			//string QvecLookup="R_Int=R_Qvec;BL_R_Int=BL_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
-				//			//string ErrorLookup="R_Int=R_Error;BL_R_Int=BL_R_error;SMR_Int=SMR_Error;DSM_Int=DSM_error;"
-				//			// string dQLookup="SMR_Int=SMR_dQ;DSM_Int=DSM_dQ;"
-				//			string DataSubTypeQvec = StringByKey(DataSubTypeInt, QvecLookup,"=",";")
-				//			string DataSubTypeError = StringByKey(DataSubTypeInt, ErrorLookup,"=",";")
-				//			string DataSubTypedQ = StringByKey(DataSubTypeInt, dQLookup,"=",";")
-				//			IntensityWaveName = DataSubTypeInt
-				//			QWavename = DataSubTypeQvec
-				//			ErrorWaveName = DataSubTypeError
-				//			dQWavename = DataSubTypedQ
-				//		elseif(useResults)
-				//			SVAR SelectedResultsTool = root:Packages:Irena:MultiSamplePlot:SelectedResultsTool
-				//			SVAR SelectedResultsType = root:Packages:Irena:MultiSamplePlot:SelectedResultsType
-				//			SVAR ResultsGenerationToUse = root:Packages:Irena:MultiSamplePlot:ResultsGenerationToUse
-				//			//follow IR2S_CallWithPlottingToolII
-				//			if(stringmatch(ResultsGenerationToUse,"Latest"))
-				//					DFREF TestFldr=$(DataFolderName)
-				//					TempStr = GrepList(stringfromList(1,RemoveEnding(DataFolderDir(2, TestFldr),";\r"),":"), SelectedResultsType,0,",")
-				//					//and need to find the one with highest generation number.
-				//					result = stringFromList(0,TempStr,",")
-				//					For(j=1;j<ItemsInList(TempStr,",");j+=1)
-				//						tempStr2=stringFromList(j,TempStr,",")
-				//						if(str2num(StringFromList(ItemsInList(result,"_")-1, result, "_"))<str2num(StringFromList(ItemsInList(tempStr2,"_")-1, tempStr2, "_")))
-				//							result = tempStr2
-				//						endif
-				//					endfor
-				//					IntensityWaveName = result				//this is intensity wave name
-				//					tempStr2 = removeending(result, "_"+StringFromList(ItemsInList(result,"_")-1, result, "_"))
-				//					//for some (Modeling II there are two x-wave options, need to figure out which one is present...
-				//					TempXName=StringByKey(tempStr2, ResultsDataTypesLookup  , ":", ";")
-				//					TempXName=RemoveEnding(TempXName , ",")+","
-				//					if(ItemsInList(TempXName,",")>1)
-				//						j=0
-				//						Do
-				//							tempStr3=stringFromList(j,TempXName,",")
-				//							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")+"*" ))
-				//								TempXName=tempStr3
-				//								break
-				//							endif
-				//							j+=1
-				//						while(j<ItemsInList(TempXName,","))	
-				//					endif
-				//					TempXName=RemoveEnding(TempXName , ",")
-				//					QWavename = TempXName+"_"+StringFromList(ItemsInList(result,"_")-1, result, "_")			//this is X wave name
-				//					ErrorWaveName = ""
-				//					dQWavename = ""
-				//					
-				//				else	//known result we want to use... It should exist (guarranteed by prior code)
-				//					DFREF TestFldr=$(DataFolderName)
-				//					IntensityWaveName = SelectedResultsType+ResultsGenerationToUse
-				//					TempXName=StringByKey(SelectedResultsType, ResultsDataTypesLookup  , ":", ";")
-				//					TempXName=RemoveEnding(TempXName , ",")+","
-				//					if(ItemsInList(TempXName,",")>1)
-				//						j=0
-				//						Do
-				//							tempStr3=stringFromList(j,TempXName,",")
-				//							if(stringmatch(DataFolderDir(2, TestFldr), "*"+tempStr3+ResultsGenerationToUse+"*" ))
-				//								TempXName=tempStr3+ResultsGenerationToUse
-				//								break
-				//							endif
-				//							j+=1
-				//						while(j<ItemsInList(TempXName,","))	
-				//					endif
-				//					TempXName=RemoveEnding(TempXName , ",")
-				//					QWavename = TempXName+ResultsGenerationToUse
-				//					ErrorWaveName = ""
-				//					dQWavename = ""
-				//				endif
-				//		else
-				//			//these are generic data... 
-				//			SVAR genericXgrepString=root:Packages:Irena:MultiSamplePlot:genericXgrepString
-				//			SVAR genericYgrepString=root:Packages:Irena:MultiSamplePlot:genericYgrepString
-				//			SVAR genericEgrepString=root:Packages:Irena:MultiSamplePlot:genericEgrepString
-				//			DFREF TestFldr=$(DataFolderName)
-				//			string ListOfWavesStr=DataFolderDir(2, TestFldr)
-				//			ListOfWavesStr = removeListItem(0,ListOfWavesStr,":")
-				//			ListOfWavesStr = ReplaceString("\r", ListOfWavesStr, "")
-				//			ListOfWavesStr = ReplaceString(",", ListOfWavesStr, ";")
-				//			IntensityWaveName=StringFromList(0,GrepList(ListOfWavesStr, genericYgrepString ))
-				//			QWavename = StringFromList(0,GrepList(ListOfWavesStr, genericXgrepString ))
-				//			if(strlen(genericEgrepString)>0)
-				//				ErrorWaveName = StringFromList(0,GrepList(ListOfWavesStr, genericEgrepString ))
-				//			else
-				//				ErrorWaveName=""
-				//			endif
-				//		endif
 		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
 		Wave/Z SourceQWv=$(DataFolderName+QWavename)
 		Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)

@@ -3234,8 +3234,8 @@ end
 //**************************************************************************************
 //**************************************************************************************
 
-Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm, OnlyUSAXSReducedData,AllowSlitSmearedData)
-		string PanelName,ToolPackageFolder,DoubleClickFunNm
+Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm, MouseDownFunNm, OnlyUSAXSReducedData,AllowSlitSmearedData)
+		string PanelName,ToolPackageFolder,DoubleClickFunNm, MouseDownFunNm
 		variable OnlyUSAXSReducedData,AllowSlitSmearedData
 		//this will append controls to panels, which require set of control for multi sample selection	
 		//	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
@@ -3244,7 +3244,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		//then call this function, it will add listbox and other controls. 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		string PathToPackagesFolder="root:Packages:"+ToolPackageFolder
-		IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunNm,OnlyUSAXSReducedData,AllowSlitSmearedData)			
+		IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunNm,MouseDownFunNm, OnlyUSAXSReducedData,AllowSlitSmearedData)			
 		TitleBox Dataselection, win=$(PanelName), title="\Zr130Data selection",size={100,15},pos={10,10},frame=0,fColor=(0,0,65535),labelBack=0
 		Checkbox UseIndra2Data, win=$(PanelName),pos={10,30},size={76,14},title="USAXS", proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":UseIndra2Data")
 		checkbox UseQRSData, win=$(PanelName),pos={100,30}, title="QRS(QIS)", size={76,14},proc=IR3C_MultiCheckProc, variable=$(PathToPackagesFolder+":UseQRSdata") 
@@ -3477,15 +3477,24 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 	string DoubleClickFunctionName
 	SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
 	DoubleClickFunctionName=StringByKey(WinNameStr, ControlDoubleClickFunction,":",";" )
+	string ControlMouseDownFunctionName
+	SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
+	ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
 
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
+			FoldernameStr=listWave[row]
+			if(strlen(ControlMouseDownFunctionName)>0)
+				Execute(ControlMouseDownFunctionName+"(\""+FoldernameStr+"\")")
+			endif
 			break
 		case 3: // double click
 			FoldernameStr=listWave[row]
-			Execute(DoubleClickFunctionName+"(\""+FoldernameStr+"\")")
+			if(strlen(DoubleClickFunctionName)>0)
+				Execute(DoubleClickFunctionName+"(\""+FoldernameStr+"\")")
+			endif
 			break
 		case 4: // cell selection
 		case 5: // cell selection plus shift key
@@ -3506,8 +3515,8 @@ End
 //**************************************************************************************
 
 
-Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunction,OnlyUSAXSReducedData,AllowSlitSmearedData)	
-	string PathToPackagesFolder, PanelName, DoubleClickFunction
+Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunction,MouseDownFunction, OnlyUSAXSReducedData,AllowSlitSmearedData)	
+	string PathToPackagesFolder, PanelName, DoubleClickFunction, MouseDownFunction
 	variable OnlyUSAXSReducedData,AllowSlitSmearedData
 
 	DFref oldDf= GetDataFolderDFR()
@@ -3517,9 +3526,14 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	variable i
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		
+	string/G root:Packages:IrenaControlProcs:ControlMouseDownFunction
+	SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
+	ControlMouseDownFunction=ReplaceStringByKey(PanelName, ControlMouseDownFunction, MouseDownFunction,":",";" )
+	
 	string/G root:Packages:IrenaControlProcs:ControlDoubleClickFunction
 	SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
 	ControlDoubleClickFunction=ReplaceStringByKey(PanelName, ControlDoubleClickFunction, DoubleClickFunction,":",";" )
+
 
 	SetDataFolder $(PathToPackagesFolder)					//go into the folder
 

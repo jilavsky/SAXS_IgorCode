@@ -37,7 +37,8 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //2.22 minor fix to IN2G_ColorTopGrphRainbow
 		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
 		//fix IN2G_ResetSizesForAllPanels so it does not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
-		// add IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
+		//add IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
+		//added IN2G_ForceDeleteFolder(fullPathToFolder)	- this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
 //2.21 added bunch of formating tools for graphs:
 		//IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
 		//IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
@@ -124,6 +125,14 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //This is list of procedures with short description. 
 
 
+//IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")		
+//					removes all data from a graph, cleans it up. Needed for graphs in inserts of panesl
+//
+//IN2G_DuplGraphInPanelSubwndw(String gname)	
+//					recreates graph from panel as separate graph. New graph name is subwindown name. 
+//
+//IN2G_ForceDeleteFolder(fullPathToFolder) 
+//						this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
 //Function IN2G_FindAVailableResultsGen(StringName, Foldername)
 //			returns next available _XY number for results generation
 //Function/T IN2G_COnvertTextWaveToStringList(txWvIn)
@@ -484,6 +493,105 @@ End
 
 //************************************************************************************************
 //************************************************************************************************
+//**
+// Forcefully delete a folder.  DeleteFolder also
+// works but if the user hasn't told Igor not to prompt
+// them before doing so then the tests won't finish running.
+//
+// BE CAREFUL USING THIS.
+//*
+Function IN2G_ForceDeleteFolder(fullPathToFolder)
+	String fullPathToFolder
+	Variable error
+	String platform = IgorInfo(2)
+	String errorMessage
+	String envInfoString
+	StrSwitch (platform)
+		Case "Windows":
+			try
+				// Do some setup.
+				String tmpDir = SpecialDirPath("Temporary", 0, 0, 0)
+				AbortOnValue (numtype(strlen(tmpDir)) != 0 || !(strlen(tmpDir) > 0)), 1
+  
+				// Make sure that the directory we just got is, in fact, a directory.
+				GetFileFolderInfo/Q tmpDir
+				AbortOnValue (V_Flag >= 0 && !V_isFolder), 3
+ 
+				// Set an Igor symbolic path to the temporary directory. 
+				String tmpDirectoryPath = UniqueName("tmpPath", 12, 0)
+				NewPath/Q $(tmpDirectoryPath), tmpDir
+				AbortOnValue (V_flag), 5		// Setting of the new path failed.
+ 
+				// Write a temporary batch file to the temporary directory that will
+				// call the "rmdir" command from the command shell and save the
+				// output of the command to a temporary file.
+				String tempBatFileName, tempResultsFileName
+				String tempBatFileFullPath, tempResultsFileFullPath
+				Variable tempBatFileRefNum, tempResultsFileRefNum
+ 
+				sprintf tempBatFileName, "IgorCommandScript_%.4u.bat", abs(trunc(StopMsTimer(-2)))
+				Open/P=$(tmpDirectoryPath)/T=".bat"/Z=1 tempBatFileRefNum as tempBatFileName
+				AbortOnValue (V_flag != 0), 7
+ 
+				// Add a path separator character to the end of the path, if necessary, and add on the file name.
+				tempBatFileFullPath = ParseFilePath(2, tmpDir, ":", 0, 0) + tempBatFileName
+ 
+				// Convert the path into a windows path that uses "\" as the path separator.
+				tempBatFileFullPath = ParseFilePath(5, tempBatFileFullPath, "\\", 0, 0)
+ 
+ 				// /s deletes all contents of directory and then the directory
+ 				// /q prevents DOS from asking us if we're sure.
+ 				String windowsFilePath = ParseFilePath(5, fullPathToFolder, "\\", 0, 0)
+ 				if (strlen(windowsFilePath) <= 0)
+ 					AbortOnValue 1, 8
+ 				endif
+				fprintf tempBatFileRefNum, "rmdir \"%s\"/s /q \r\n", windowsFilePath
+				Close tempBatFileRefNum
+ 
+				// Call the batch file we just created.  Timeout after 2 seconds if this doesn't succeed.
+				String scriptText
+				sprintf scriptText, "cmd.exe /C \"%s\"", tempBatFileFullPath
+				ExecuteScriptText/W=2/Z scriptText
+ 
+				// Check for an error.
+				AbortOnValue (V_flag != 0), 9
+ 
+				// Delete the temporary batch file and temporary results file.
+				DeleteFile/P=$(tmpDirectoryPath)/Z=1 tempBatFileName
+				// If we get an error here we don't really care.  We've already got
+				// the goods, so just run.
+				break
+			catch
+				error = -1
+			endtry
+ 
+		Case "Macintosh":
+			// This is a lot easier on the Macintosh because we can just use AppleScript.
+			try
+				// Figure out the POSIX path of the folder to delete.
+				String posixPath = ParseFilePath(5, fullPathToFolder, "/", 0, 0)
+				if (strlen(posixPath) > 0)
+					String appleScriptCommand
+					sprintf appleScriptCommand, "tell application \"Finder\"  to delete ((POSIX file \"%s\") as alias)", posixPath
+					ExecuteScriptText/Z appleScriptCommand
+					AbortOnValue V_flag, 1				
+				endif
+				envInfoString = S_Value
+			catch
+				errorMessage = "Could not execute AppleScript command."
+				print errorMessage
+				error = -1				
+			endtry
+			break
+	EndSwitch
+	if (numtype(strlen(tmpDirectoryPath)) == 0)		// Check for a null string
+		KillPath/Z $(tmpDirectoryPath)	
+	endif
+	return error
+end
+//************************************************************************************************
+//************************************************************************************************
+
 threadsafe Function IN2G_FindNumericalIndexForSorting(StrnameIn)
 	string StrnameIn
 	//finds - starting at the end - number, separated by _ 
@@ -586,41 +694,70 @@ end
 
 //************************************************************************************************
 //************************************************************************************************
+//https://www.wavemetrics.com/forum/igor-pro-wish-list/request-duplicategraph-function
+static Function/S IN2G_ReFactorWinRec(WRstr)
+    string WRstr
+   
+    string gstr
+    string fstr, istr, rstr, estr
+   
+    // remove the /W component
+    gstr = "((?s).+)(Display/W=\(\\d+,\\d+,\\d+,\\d+\))((?s).+)"   
+    SplitString/E=gstr WRstr, istr, rstr, estr   
+    fstr = istr + "Display" + estr
+   
+    // remove the /HOST component
+    gstr = "((?s).+)(/HOST=#)((?s).+)" 
+    SplitString/E=gstr fstr, istr, rstr, estr  
+
+    fstr = istr + estr
+    return (fstr)
+end
+
 Function IN2G_DuplGraphInPanelSubwndw(String gname)
-    String rec = WinRecreation(gname, 0)    
+    String rec = WinRecreation(gname, 0)   
     Variable lines=ItemsInList(rec, "\r")
     Variable i
-    String newrec=""
-    for (i = 0; i < lines; i++)
-        String oneline = StringFromList(i, rec, "\r")
-        if (StringMatch(oneline, "*Display*") && StringMatch(oneline, "*HOST*"))
-            oneline = IN2G_RemoveSlashW(oneline)
-            oneline = IN2G_RemoveSlashHost(oneline)
-        endif
-        newrec += oneline+"\r"
-    endfor
+    String newrec = IN2G_ReFactorWinRec(rec)
     Execute newrec
 end
-static Function/S IN2G_RemoveSlashW(String aLine)
-    String newstr = ""
-    if (StringMatch(aLine, "*/W=*"))
-        Variable pos1 = StrSearch(aLine, "/W=", 0)
-        Variable pos2 = StrSearch(aLine, ")", pos1)
-        newstr = aLine[0,pos1-1]
-        newstr += aLine[pos2+1,strlen(aLine)]
-    endif  
-    return newstr
-end
-static Function/S IN2G_RemoveSlashHost(String aLine)
-    String newstr = ""
-    if (StringMatch(aLine, "*/HOST=*"))
-        Variable pos1 = StrSearch(aLine, "/HOST=", 0)
-        Variable pos2 = StrSearch(aLine, " ", pos1)     // This fails if there is another flag after /HOST=...
-        newstr = aLine[0,pos1-1]
-        newstr += aLine[pos2,strlen(aLine)]
-    endif 
-    return newstr
-end
+
+//
+//Function IN2G_DuplGraphInPanelSubwndw(String gname)
+//    String rec = WinRecreation(gname, 0)    
+//    Variable lines=ItemsInList(rec, "\r")
+//    Variable i
+//    String newrec=""
+//    for (i = 0; i < lines; i++)
+//        String oneline = StringFromList(i, rec, "\r")
+//        if (StringMatch(oneline, "*Display*") && StringMatch(oneline, "*HOST*"))
+//            oneline = IN2G_RemoveSlashW(oneline)
+//            oneline = IN2G_RemoveSlashHost(oneline)
+//        endif
+//        newrec += oneline+"\r"
+//    endfor
+//    Execute newrec
+//end
+//static Function/S IN2G_RemoveSlashW(String aLine)
+//    String newstr = ""
+//    if (StringMatch(aLine, "*/W=*"))
+//        Variable pos1 = StrSearch(aLine, "/W=", 0)
+//        Variable pos2 = StrSearch(aLine, ")", pos1)
+//        newstr = aLine[0,pos1-1]
+//        newstr += aLine[pos2+1,strlen(aLine)]
+//    endif  
+//    return newstr
+//end
+//static Function/S IN2G_RemoveSlashHost(String aLine)
+//    String newstr = ""
+//    if (StringMatch(aLine, "*/HOST=*"))
+//        Variable pos1 = StrSearch(aLine, "/HOST=", 0)
+//        Variable pos2 = StrSearch(aLine, " ", pos1)     // This fails if there is another flag after /HOST=...
+//        newstr = aLine[0,pos1-1]
+//        newstr += aLine[pos2,strlen(aLine)]
+//    endif 
+//    return newstr
+//end
 //************************************************************************************************
 //************************************************************************************************
 

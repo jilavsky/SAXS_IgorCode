@@ -1,6 +1,8 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
-Constant IR2MversionNumber = 1.13
+#pragma version=1.14
+
+Constant IR2MversionNumber = 1.13			//Data mining tool version number
+constant IR3BversionNumber = 0.1			//MetadataBrowser tool version number. 
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,6 +10,7 @@ Constant IR2MversionNumber = 1.13
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 added MetadataBrowser tool in this package,
 //1.13 GetHelp button
 //1.12 more fixes for panel scaling. 
 //1.11 fixes for panel scaling
@@ -59,6 +62,17 @@ Constant IR2MversionNumber = 1.13
 //     shape = shapes[ index % number(shapes) ]
 //     fill  = fills[ int(2*index/number(fills)) ]
 
+
+
+
+
+
+
+///******************************************************************************************
+///******************************************************************************************
+///			Data mining tool main procedures. 
+///******************************************************************************************
+///******************************************************************************************
 Function IR2M_GetDataMiner()
 
 	IR2M_InitDataMiner()
@@ -110,6 +124,657 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+
+
+///******************************************************************************************
+///******************************************************************************************
+///			Metadata Browser tool, easy way to pull metadata out of wave notes
+///******************************************************************************************
+///******************************************************************************************
+Function IR3B_MetadataBrowser()
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	IN2G_CheckScreenSize("width",1000)
+	IN2G_CheckScreenSize("height",670)
+	DoWIndow IR3B_MetadataBrowserPanel
+	if(V_Flag)
+		DoWindow/F IR3B_MetadataBrowserPanel
+	else
+		IR3B_InitMetadataBrowser()
+		IR3B_MetadataBrowserPanelFnct()
+		IR1_UpdatePanelVersionNumber("IR3B_MetadataBrowserPanel", IR3BversionNumber,1)
+	endif
+	IR3C_MultiUpdateListOfAvailFiles("Irena:MetadataBrowser")
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3B_MainCheckVersion()	
+	DoWindow IR3B_MetadataBrowserPanel
+	if(V_Flag)
+		if(!IR1_CheckPanelVersionNumber("IR3B_MetadataBrowserPanel", IR3BversionNumber))
+			DoAlert /T="The Metadata Browser panel was created by different version of Irena " 1, "Metadata Browser may need to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+				KillWIndow/Z IR3B_MetadataBrowserPanel
+				IR3B_MetadataBrowser()
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IR3B_InitMetadataBrowser()
+			endif
+		endif
+	endif
+end 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+Function IR3B_MetadataBrowserPanelFnct()
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	PauseUpdate; Silent 1		// building window...
+	NewPanel /K=1 /W=(5.25,43.25,800,820) as "MultiData Ploting tool"
+	DoWIndow/C IR3B_MetadataBrowserPanel
+	TitleBox MainTitle title="\Zr220Metadata Browser",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
+	string UserDataTypes=""
+	string UserNameString=""
+	string XUserLookup=""
+	string EUserLookup=""
+	IR2C_AddDataControls("Irena:MetadataBrowser","IR3B_MetadataBrowserPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
+	Button GetHelp,pos={700,10},size={80,15},fColor=(65535,32768,32768), proc=IR3B_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	IR3C_MultiAppendControls("Irena:MetadataBrowser","IR3B_MetadataBrowserPanel", "IR3B_DoubleClickAction","IR3B_MouseDownAction", 0,1)
+	//graph controls
+	TitleBox Instructions1 title="\Zr100Single/Double click to check data note",size={330,15},pos={4,680},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions2 title="\Zr100Shift-click to select range of data",size={330,15},pos={4,695},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions3 title="\Zr100Ctrl/Cmd-click to select one data set",size={330,15},pos={4,710},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions4 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions5 title="\Zr100Regex for contain:  string, two: str2.*str1",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
+ 
+	//Note listing and selection options 
+	TitleBox KeySelectionInfo title="\Zr140Selected sample & metadata : ",fixedSize=1,size={220,20},pos={290,100},frame=0,fstyle=1, fixedSize=1,fColor=(0,0,52224)
+	SetVariable DataFolderName,pos={270,124},size={280,20}, proc=IR3B_SetVarProc,title=" ",noedit=1,frame=0,fstyle=1, valueColor=(65535,0,0)
+	Setvariable DataFolderName,fStyle=2, variable=root:Packages:Irena:MetadataBrowser:DataFolderName, help={"This is grep string to clean up the key names"}
+	SetVariable GrepItemNameString,pos={270,150},size={240,20}, proc=IR3B_SetVarProc,title="\Zr120Regex key name: "
+	Setvariable GrepItemNameString,fStyle=2, variable=root:Packages:Irena:MetadataBrowser:GrepItemNameString, help={"This is grep string to clean up the key names"}
+	ListBox NoteItemsSelection,win=IR3B_MetadataBrowserPanel,pos={265,180},size={250,495}, mode=10
+	ListBox NoteItemsSelection,listWave=root:Packages:Irena:MetadataBrowser:ListOfWaveNoteItems
+	ListBox NoteItemsSelection,selWave=root:Packages:Irena:MetadataBrowser:SelectionOfWaveNoteItems
+	ListBox NoteItemsSelection,proc=IR3B_MultiListBoxProc
+	
+	TitleBox Instructions11 title="\Zr100Double click to add item to list",size={330,15},pos={280,680},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions21 title="\Zr100Use Regex to display less",size={330,15},pos={280,695},frame=0,fColor=(0,0,65535),labelBack=0
+	//TitleBox Instructions31 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={280,710},frame=0,fColor=(0,0,65535),labelBack=0
+	//TitleBox Instructions41 title="\Zr100Regex for contain:  string, two: str2.*str1",size={330,15},pos={280,725},frame=0,fColor=(0,0,65535),labelBack=0
+	//TitleBox Instructions51 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={280,740},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox Instructions61 title="\Zr100https://www.rexegg.com/regex-quickstart.html",size={330,15},pos={280,755},frame=0,fColor=(0,0,65535),labelBack=0
+
+	//selected data
+	TitleBox SelectedItemsInfo title="\Zr140List to process : ",fixedSize=1,size={150,20},pos={590,110},frame=0,fstyle=1, fixedSize=1,fColor=(0,0,52224)
+	PopupMenu ExtractFromFileName,pos={560,150},size={310,20},proc=IR3B_PopMenuProc, title="Extract From Folder Name : ",help={"Select if to extarct from name some information"}
+	PopupMenu ExtractFromFileName,value="---;_xyzC;_xyzmin;_xyz;_xyzpct;",mode=1, popvalue="---"
+	ListBox SeletectedItems,win=IR3B_MetadataBrowserPanel,pos={530,180},size={250,250}, mode=10
+	ListBox SeletectedItems,listWave=root:Packages:Irena:MetadataBrowser:SeletectedItems
+	ListBox SeletectedItems,selWave=root:Packages:Irena:MetadataBrowser:SelectionOfSelectedItems
+	ListBox SeletectedItems,proc=IR3B_MultiListBoxProc
+	TitleBox Instructions12 title="\Zr100Double click to remove item from list",size={330,15},pos={550,440},frame=0,fColor=(0,0,65535),labelBack=0
+
+	TitleBox Instructions13 title="\Zr100Select where and extract data",size={330,15},pos={550,460},frame=0,fColor=(0,0,65535),labelBack=0
+
+
+	SetVariable SaveToFoldername,pos={525,490},size={260,20}, noproc,title="\Zr120Save to:"
+	Setvariable SaveToFoldername,fStyle=2, variable=root:Packages:Irena:MetadataBrowser:SaveToFoldername, help={"Where to store saved metadata"}
+
+	Button ExtractDataInWave,pos={540,530},size={220,20}, proc=IR3B_ButtonProc,title="Process Selected folders", help={"Extract above listed metadata as waves and save"}
+		//	Button ExportGraphJPG,pos={450,680},size={140,20}, proc=IR3L_ButtonProc,title="Export as jpg", help={"Export as jpg file"}
+		//	Button ExportGraphTIF,pos={450,705},size={140,20}, proc=IR3L_ButtonProc,title="Export as tiff", help={"Export as tiff file"}
+		//	Button SaveGraphAsFile,pos={450,730},size={140,20}, proc=IR3L_ButtonProc,title="Export as pxp", help={"Save Graph As Igor experiment"}
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3B_ButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	variable i
+	string FoldernameStr
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(cmpstr(ba.ctrlname,"ExtractDataInWave")==0)
+				IR3B_ExtractMetadataFromList()
+			endif
+			break
+			if(cmpstr(ba.ctrlname,"GetHelp")==0)
+				//Open www manual with the right page
+				IN2G_OpenWebManual("Irena/DataManipulation.html")
+			endif
+		case -1: // control being killed
+			break
+	endswitch
+	return 0
+End
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3B_PopMenuProc(pa) : PopupMenuControl
+	STRUCT WMPopupAction &pa
+
+	String ctrlName=Pa.ctrlName
+	Variable popNum=Pa.popNum
+	String popStr=Pa.popStr
+	
+	if(Pa.eventcode!=2)
+		return 0
+	endif
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	if(stringmatch(ctrlName,"ExtractFromFileName"))
+		//do something here
+		IR3B_AddToSelectedItems("Extract"+popStr,1)
+	endif
+	DOWIndow/F IR3L_MultiSamplePlotPanel
+end
+
+//**************************************************************************************
+//**************************************************************************************
+///**************************************************************************************
+//**************************************************************************************
+
+Function IR3B_SetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	variable tempP
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+				//			if(stringmatch(sva.ctrlName,"FolderNameMatchString"))
+				//				IR3L_UpdateListOfAvailFiles()
+				//			endif
+				if(stringmatch(sva.ctrlName,"GrepItemNameString"))
+					IR3B_DisplayWaveNote("")
+				endif
+				break
+		case 3: // live update
+			break
+		case -1: // control being killed
+			break
+	endswitch
+	DoWIndow/F IR3L_MultiSamplePlotPanel
+	return 0
+End
+
+//**************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+
+Function IR3B_MultiListBoxProc(lba) : ListBoxControl
+	STRUCT WMListboxAction &lba
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	Variable row = lba.row
+	WAVE/T/Z listWave = lba.listWave
+	WAVE/Z selWave = lba.selWave
+	string WinNameStr=lba.win
+
+	switch( lba.eventCode )
+		case -1: // control being killed
+			break
+		case 1: // mouse down
+			break
+		case 2: // mouse up
+			break
+		case 3: // double click
+			if(stringmatch(lba.ctrlName,"NoteItemsSelection"))
+				IR3B_AddToSelectedItems(listWave[row],1)
+			endif
+			if(stringmatch(lba.ctrlName,"SeletectedItems"))
+				IR3B_AddToSelectedItems(listWave[row],0)
+			endif
+			break
+		case 4: // cell selection
+		case 5: // cell selection plus shift key
+			break
+		case 6: // begin edit
+			break
+		case 7: // finish edit
+			break
+		case 13: // checkbox clicked (Igor 6.2 or later)
+			break
+	endswitch
+
+	return 0
+End
+//**************************************************************************************
+//**************************************************************************************
+Function IR3B_AddToSelectedItems(ItemToAddorRemove,Add)
+	string ItemToAddorRemove
+	variable Add			//Add=1 to add, 0 to remove
+
+	string KeyName=StringFromList(0, ItemToAddorRemove, "=")
+	Wave/T listWave=root:Packages:Irena:MetadataBrowser:SeletectedItems
+	Wave selWave=root:Packages:Irena:MetadataBrowser:SelectionOfSelectedItems
+	//no issue to remove it first, if it is nto there, no issue. 
+	//this prevents duplicates... 
+	//exact match: "\bdeiauk\b"
+	make/T/Free wt
+	Grep/E={"\b"+KeyName+"\b",0} listWave as wt
+	if(numpnts(wt)>0 && Add==0)				//item is already there... Remove
+		Grep/E={"\b"+KeyName+"\b",1} listWave as listWave
+	elseif(numpnts(wt)>0 && Add)				//item is already there... nothing to do
+		//nothing to do
+	else											//next, add it if needed
+		variable NewLength=numpnts(listWave)
+		if(NewLength<1)
+			NewLength=1
+		endif
+		if(Add)	
+			Redimension/N=(NewLength+1) listWave
+			listWave[0]="FolderName"
+			listWave[NewLength] = KeyName
+		endif
+	endif
+	Redimension/N=(numpnts(listWave)) selWave
+	selWave = 0
+end
+//**************************************************************************************
+//**************************************************************************************
+Function IR3B_DoubleClickAction(FoldernameStr)
+		string FoldernameStr
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+
+		IR3B_DisplayWaveNote(FoldernameStr)
+end
+//**************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3B_MouseDownAction(FoldernameStr)
+		string FoldernameStr
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+
+		IR3B_DisplayWaveNote(FoldernameStr)
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+
+Function IR3B_ExtractMetadataFromList()
+	
+	Wave/T ListOfAvailableData=root:Packages:Irena:MetadataBrowser:ListOfAvailableData
+	Wave SelectionOfAvailableData=root:Packages:Irena:MetadataBrowser:SelectionOfAvailableData
+	variable i, imax=numpnts(ListOfAvailableData)
+	For(i=0;i<imax;i+=1)
+		if(SelectionOfAvailableData[i])
+			print "Extracting data from "+ListOfAvailableData[i]
+			IR3B_ExtractMetadataFromOneFolder(ListOfAvailableData[i])
+		endif	
+	endfor
+	print "Extracted data from "+num2str(sum(SelectionOfAvailableData))+"   folder with data"
+end
+
+Function IR3B_ExtractMetadataFromOneFolder(FolderNameStr)
+	string FolderNameStr
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DfRef OldDf=GetDataFolderDFR()
+	SetDataFolder root:Packages:Irena:MetadataBrowser					//go into the folder
+	SVAR SaveToFoldername = root:Packages:Irena:MetadataBrowser:SaveToFoldername
+	SVAR DataStartFolder=root:Packages:Irena:MetadataBrowser:DataStartFolder
+	SVAR DataFolderName=root:Packages:Irena:MetadataBrowser:DataFolderName
+	SVAR IntensityWaveName=root:Packages:Irena:MetadataBrowser:IntensityWaveName
+//	if(DataFolderExists(SaveToFoldername))
+//		Abort "This data folder exists, change the name. Improve me to allow overwrite here"
+//	else
+	NewDataFOlder/O/S $(SaveToFoldername) 
+//	endif
+
+	
+	//to decide if this value is number of string...
+	//print GrepString("Sample1", "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$")
+	// prints 1 for number, 0 for string. 
+	
+	if(strlen(FolderNameStr)>0)		//if strlen(FolderNameStr)=0, this is called from other otherols and all is set here... 
+		IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
+	endif
+	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+	if(!WaveExists(SourceIntWv))
+		DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
+		SetDataFolder oldDf
+		abort 
+	endif
+	//OK, this is list of stuff we can get values from...
+	string CurrentNote=note(SourceIntWv)
+	//now which values?
+	Wave/T listofItemsWave=root:Packages:Irena:MetadataBrowser:SeletectedItems	
+	variable i, imax=numpnts(listofItemsWave)
+	string KeyString, ValueString, CleanKeyName
+	Wave/Z/T FolderNameWv
+	if(!WaveExists(FolderNameWv))
+		Make/O/N=0/T FolderNameWv
+	endif
+	variable NumberOfExtractedItems
+	NumberOfExtractedItems = numpnts(FolderNameWv)
+	For(i=0;i<imax;i+=1)
+		KeyString = listofItemsWave[i] 
+		ValueString = StringByKey(KeyString, CurrentNote, "=", ";")
+		if(StringMatch(KeyString, "FolderName"))
+			Redimension/N=(NumberOfExtractedItems+1) FolderNameWv
+			FolderNameWv[NumberOfExtractedItems] = DataFolderName
+		elseif(StringMatch(KeyString, "Extract_xyzC"))		//_xyzC, _xyzmin, _xyzpct, _xyz
+				Wave/Z TmpWv=TemperatureWv
+				if(!WaveExists(TmpWv))
+					Make/O/N=(NumberOfExtractedItems+1) TemperatureWv
+				endif
+				Wave TmpWv=TemperatureWv
+				Redimension/N=(NumberOfExtractedItems+1) TmpWv
+				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyzC")
+		elseif(StringMatch(KeyString, "Extract_xyzmin"))		//_xyzC, _xyzmin, _xyzpct, _xyz
+				Wave/Z TmpWv=TimeWv
+				if(!WaveExists(TmpWv))
+					Make/O/N=(NumberOfExtractedItems+1) TimeWv
+				endif
+				Wave TmpWv=TimeWv
+				Redimension/N=(NumberOfExtractedItems+1) TmpWv
+				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		elseif(StringMatch(KeyString, "Extract_xyz"))		//_xyzC, _xyzmin, _xyzpct, _xyz
+				Wave/Z TmpWv=OrderWv
+				if(!WaveExists(TmpWv))
+					Make/O/N=(NumberOfExtractedItems+1) OrderWv
+				endif
+				Wave TmpWv=OrderWv
+				Redimension/N=(NumberOfExtractedItems+1) OrderWv
+				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyz")
+		elseif(StringMatch(KeyString, "Extract_xyzpct"))		//_xyzC, _xyzmin, _xyzpct, _xyz
+				Wave/Z TmpWv=PercentWv
+				if(!WaveExists(TmpWv))
+					Make/O/N=(NumberOfExtractedItems+1) PercentWv
+				endif
+				Wave TmpWv=PercentWv
+				Redimension/N=(NumberOfExtractedItems+1) PercentWv
+				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		//done with special name based waves... 
+		else		///all others. 
+			if(GrepString(ValueString, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))		//thsi si number
+				CleanKeyName = CleanupName(KeyString, 0, 31)
+				Wave/Z TmpWv=$(CleanKeyName)
+				if(!WaveExists(TmpWv))
+					Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
+				endif
+				Wave TmpWv=$(CleanKeyName)
+				Redimension/N=(NumberOfExtractedItems+1) TmpWv
+				TmpWv[NumberOfExtractedItems] = str2num(ValueString)
+			else	//string, may be add handling of dates later. 
+				CleanKeyName = CleanupName(KeyString, 0, 31)
+				Wave/Z/T TmpStrWv=$(CleanKeyName)
+				if(!WaveExists(TmpStrWv))
+					Make/O/N=(NumberOfExtractedItems+1)/T $(CleanKeyName)
+				endif
+				Wave/T TmpStrWv=$(CleanKeyName)
+				Redimension/N=(NumberOfExtractedItems+1) TmpStrWv
+				TmpStrWv[NumberOfExtractedItems] = ValueString
+			endif
+		endif
+
+	endfor	
+
+	SetDataFolder oldDf
+	return 1
+
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+
+Function IR3B_IdentifyNameComponent(NameStr, whichComp)
+		string NameStr, whichComp		//"_xyzC",  _xyzmin, _xyzpct, _xyz
+		
+		string NameStrLoc=StringFromList(ItemsInList(NameStr, ":")-1, NameStr, ":"  )
+		string result="", tmpStr
+		variable i
+		if(StringMatch(whichComp, "_xyz"))
+			FOr(i=ItemsInList(NameStrLoc, "_")-1;i>=0;i-=1)
+				tmpStr = StringFromList(i, NameStrLoc, "_")
+				if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))
+					return str2num(tmpStr)
+				endif
+			endfor
+		endif
+		FOr(i=0;i<ItemsInList(NameStrLoc, "_");i+=1)
+			tmpStr = StringFromList(i, NameStrLoc, "_")
+			strswitch(whichComp)					// string switch
+				case "_xyzC":						// execute if case matches expression
+					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+C$" ))
+						return str2num(tmpStr)
+					endif
+					break							// exit from switch
+				case "_xyzmin":	// execute if case matches expression
+					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+min$" ))
+						return str2num(tmpStr)
+					endif
+					break
+				case "_xyzpct":	// execute if case matches expression
+					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+pct$" ))
+						return str2num(tmpStr)
+					endif
+					break
+			endswitch		
+		endfor
+	return Nan
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+static Function IR3B_DisplayWaveNote(FolderNameStr)
+	string FolderNameStr
+	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DfRef OldDf=GetDataFolderDFR()
+	SetDataFolder root:Packages:Irena:MetadataBrowser					//go into the folder
+		SVAR DataStartFolder=root:Packages:Irena:MetadataBrowser:DataStartFolder
+		SVAR DataFolderName=root:Packages:Irena:MetadataBrowser:DataFolderName
+		SVAR IntensityWaveName=root:Packages:Irena:MetadataBrowser:IntensityWaveName
+		SVAR QWavename=root:Packages:Irena:MetadataBrowser:QWavename
+		SVAR ErrorWaveName=root:Packages:Irena:MetadataBrowser:ErrorWaveName
+		SVAR dQWavename=root:Packages:Irena:MetadataBrowser:dQWavename
+		NVAR UseIndra2Data=root:Packages:Irena:MetadataBrowser:UseIndra2Data
+		NVAR UseQRSdata=root:Packages:Irena:MetadataBrowser:UseQRSdata
+		NVAR useResults=root:Packages:Irena:MetadataBrowser:useResults
+		SVAR DataSubType = root:Packages:Irena:MetadataBrowser:DataSubType
+		//these are variables used by the control procedure
+		NVAR  UseUserDefinedData=  root:Packages:Irena:MetadataBrowser:UseUserDefinedData
+		NVAR  UseModelData = root:Packages:Irena:MetadataBrowser:UseModelData
+		SVAR DataFolderName  = root:Packages:Irena:MetadataBrowser:DataFolderName 
+		SVAR IntensityWaveName = root:Packages:Irena:MetadataBrowser:IntensityWaveName
+		SVAR QWavename = root:Packages:Irena:MetadataBrowser:QWavename
+		SVAR ErrorWaveName = root:Packages:Irena:MetadataBrowser:ErrorWaveName
+		//graph control variable
+		//SVAR GraphUserTitle=root:Packages:Irena:MetadataBrowser:GraphUserTitle
+		//SVAR GraphWindowName=root:Packages:Irena:MetadataBrowser:GraphWindowName
+		SVAR ResultsDataTypesLookup=root:Packages:IrenaControlProcs:ResultsDataTypesLookup
+		//Grep controls  
+		SVAR GrepItemNameString=root:Packages:Irena:MetadataBrowser:GrepItemNameString
+		//SVAR ListOfDefinedDataPlots=root:Packages:Irena:MetadataBrowser:ListOfDefinedDataPlots
+		if(strlen(FolderNameStr)>0)		//if strlen(FolderNameStr)=0, this is called from other otherols and all is set here... 
+			IR3C_SelectWaveNamesData("Irena:MetadataBrowser", FolderNameStr)			//this routine will preset names in strings as needed
+		endif
+		Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
+		if(!WaveExists(SourceIntWv))
+			DoAlert /T="Incorrectly defined data type" 0, "Please, check definition of data type, it seems incorrectly defined yet"
+			SetDataFolder oldDf
+			abort 
+		endif
+		string CurrentNote=note(SourceIntWv)
+		
+		WAVE/T ListOfWaveNoteItems = root:Packages:Irena:MetadataBrowser:ListOfWaveNoteItems
+		WAVE	 SelectionOfWaveNoteItems = root:Packages:Irena:MetadataBrowser:SelectionOfWaveNoteItems
+
+		Wave/T w = ListToTextWave(CurrentNote, ";")
+		Grep/E=GrepItemNameString w as w
+		REDIMENSION/N=(numpnts(w)) SelectionOfWaveNoteItems, ListOfWaveNoteItems
+		ListOfWaveNoteItems = w
+		SelectionOfWaveNoteItems=0
+
+	SetDataFolder oldDf
+	return 1
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+
+Function IR3B_InitMetadataBrowser()	
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DfRef OldDf=GetDataFolderDFR()
+	string ListOfVariables
+	string ListOfStrings
+	variable i
+		
+	if (!DataFolderExists("root:Packages:Irena:MetadataBrowser"))		//create folder
+		NewDataFolder/O root:Packages
+		NewDataFolder/O root:Packages:Irena
+		NewDataFolder/O root:Packages:Irena:MetadataBrowser
+	endif
+	SetDataFolder root:Packages:Irena:MetadataBrowser					//go into the folder
+
+	//here define the lists of variables and strings needed, separate names by ;...
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;DataUnits;"
+	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
+	ListOfStrings+="GrepItemNameString;"
+	ListOfStrings+="SelectedResultsTool;SelectedResultsType;ResultsGenerationToUse;"
+	ListOfStrings+="DataSubTypeUSAXSList;DataSubTypeResultsList;DataSubType;"
+	ListOfStrings+="SaveToFoldername;"
+	ListOfStrings+="QvecLookupUSAXS;ErrorLookupUSAXS;dQLookupUSAXS;"
+//	ListOfStrings+="ListOfDefinedStyles;SelectedStyle;ListOfDefinedDataPlots;SelectedDataPlot;"
+
+	ListOfVariables="UseIndra2Data;UseQRSdata;UseResults;"
+	ListOfVariables+="InvertGrepSearch;"
+//	ListOfVariables+="LogXAxis;LogYAxis;MajorGridXaxis;MajorGridYaxis;MinorGridXaxis;MinorGridYaxis;"
+//	ListOfVariables+="Colorize;UseSymbols;UseLines;SymbolSize;LineThickness;"
+//	ListOfVariables+="XOffset;YOffset;DisplayErrorBars;ApplyFormatingEveryTime;"
+//	ListOfVariables+="AddLegend;UseOnlyFoldersInLegend;LegendSize;"
+	
+	//and here we create them
+	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
+		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
+	endfor		
+								
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
+	endfor	
+
+	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;"
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		SVAR teststr=$(StringFromList(i,ListOfStrings))
+		teststr =""
+	endfor		
+	ListOfStrings="DataMatchString;FolderSortString;FolderSortStringAll;"
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		SVAR teststr=$(StringFromList(i,ListOfStrings))
+		if(strlen(teststr)<1)
+			teststr =""
+		endif
+	endfor		
+	ListOfStrings="DataStartFolder;"
+	for(i=0;i<itemsInList(ListOfStrings);i+=1)	
+		SVAR teststr=$(StringFromList(i,ListOfStrings))
+		if(strlen(teststr)<1)
+			teststr ="root:"
+		endif
+	endfor		
+	SVAR FolderSortStringAll
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;"
+	SVAR DataSubTypeUSAXSList
+	DataSubTypeUSAXSList="DSM_Int;SMR_Int;R_Int;Blank_R_Int;USAXS_PD;Monitor;"
+	SVAR DataSubTypeResultsList
+	DataSubTypeResultsList="Size"
+	SVAR DataSubType
+	DataSubType="DSM_Int"
+	
+	SVAR QvecLookupUSAXS
+	QvecLookupUSAXS="R_Int=R_Qvec;Blank_R_Int=Blank_R_Qvec;SMR_Int=SMR_Qvec;DSM_Int=DSM_Qvec;USAXS_PD=Ar_encoder;Monitor=Ar_encoder;"
+	SVAR ErrorLookupUSAXS
+	ErrorLookupUSAXS="R_Int=R_Error;Blank_R_Int=Blank_R_error;SMR_Int=SMR_Error;DSM_Int=DSM_error;"
+	SVAR dQLookupUSAXS
+	dQLookupUSAXS="SMR_Int=SMR_dQ;DSM_Int=DSM_dQ;"
+	
+	SVAR SaveToFoldername
+	if(strlen(SaveToFoldername)<5)
+		SaveToFoldername="root:SavedMetadata"
+	endif
+//	SVAR GraphWindowName
+//	GraphUserTitle=""
+//	GraphWindowName=stringFromList(0,WinList("MultiDataPlot_*", ";", "WIN:1" ))
+//	if(strlen(GraphWindowName)<2)
+//		GraphWindowName="---"
+//	endif
+	SVAR SelectedResultsTool 
+	SVAR SelectedResultsType 
+	SVAR ResultsGenerationToUse
+	if(strlen(SelectedResultsTool)<1)
+		SelectedResultsTool="Unified Fit"
+	endif
+	if(strlen(SelectedResultsTool)<1)
+		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
+	endif
+	if(strlen(ResultsGenerationToUse)<1)
+		ResultsGenerationToUse="Latest"
+	endif
+	
+//	NVAR LegendSize
+//	if(LegendSize<8)
+//		LegendSize=12
+//	endif
+//	NVAR UseSymbols
+//	NVAR UseLines
+//	NVAR Colorize
+//	NVAR SymbolSize
+//	NVAR LineThickness
+//	NVAR AddLegend
+//	NVAR UseOnlyFoldersInLegend
+//	NVAR LegendSize
+//	if(UseSymbols+UseLines < 1)			//seems to start new tool
+//		UseLines = 1
+//		Colorize = 1
+//		SymbolSize = 2
+//		LineThickness = 2
+//		AddLegend = 1
+//		UseOnlyFoldersInLegend = 1
+//		LegendSize = 12
+//	endif
+	
+	Make/O/T/N=(0) ListOfAvailableData, ListOfWaveNoteItems
+	Make/O/N=(0) SelectionOfAvailableData, SelectionOfWaveNoteItems
+	Make/O/T/N=(1) SeletectedItems
+	Make/O/N=(1) SelectionOfSelectedItems
+	Wave/T SeletectedItems
+	SeletectedItems[0]="FolderName"
+	Wave SelectionOfSelectedItems
+	SelectionOfSelectedItems = 0
+	SetDataFolder oldDf
+
+end
+//**************************************************************************************
+//**************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+///******************************************************************************************
+///******************************************************************************************
+///			Data mining tool procedrues. 
+///******************************************************************************************
+///******************************************************************************************
+//**********************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
