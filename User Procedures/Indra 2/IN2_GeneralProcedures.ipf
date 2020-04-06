@@ -1943,12 +1943,12 @@ Function IN2G_PanelResizePanelSize(s)
 	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		GetWindow $(s.winName), note
-		//string OrigInfo=StringByKey("PanelSize", S_Value, "=", ";")
 		string OrigInfo=S_Value
 		if(strlen(OrigInfo)<20)				//too short for anything meaningful
 			return 0
 		endif
-		//print s
+		//print OrigInfo
+		//print StringByKey("DataDisplay", OrigInfo)	
 		GetWindow $s.winName wsize					 
 		//wsizeRM?, wsizeDC returns pixels, wsize is in points.
 		//MoveWindow is in points <<<<<< !!!!!!!   
@@ -2022,7 +2022,6 @@ Function IN2G_PanelResizePanelSize(s)
 			moveLeft = 0.8*ScreenWidth
 			MoveTop = 0.8*ScreenHeight
 			MoveWindow/W=$(s.winName) moveLeft, MoveTop, -1, -1
-
 		endif		
 		
 		variable scale= min(horScale, verScale )
@@ -2039,8 +2038,8 @@ Function IN2G_PanelResizePanelSize(s)
 		DefaultGUIFont /W=$(s.winName) popup= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
 		DefaultGUIFont /W=$(s.winName) panel= {FontName, ceil(scale*str2num(IN2G_LkUpDfltVar("defaultFontSize"))), 0 }
 		variable i, j
-		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top
-		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth
+		variable OrigCntrlV_left, OrigCntrlV_top, NewCntrolV_left, NewCntrlV_top, OrigCntrlV_right, OrigCntrlV_bottom
+		variable OrigWidth, OrigHeight, NewWidth, NewHeight, OrigBodyWidth, NewCntrlV_right, NewCntrlV_bottom
 		string ControlsRecords=""
 		string ListOfPanels=s.winName+";"
 		string TmpNm="", tmpName1
@@ -2076,26 +2075,43 @@ Function IN2G_PanelResizePanelSize(s)
 				tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
 				setActiveSubwindow $tmpName1
 				controlslist = ControlNameList(tmpName1, ";")		
-				For(i=0;i<ItemsInList(controlslist, ";");i+=1)
-					TmpNm = StringFromList(i, controlslist, ";")			
-					OrigCntrlV_left=NumberByKey(tmpPanelName+TmpNm+"Left", OrigInfo, ":", ";")
-					OrigCntrlV_top=NumberByKey(tmpPanelName+TmpNm+"Top", OrigInfo, ":", ";")
-					OrigWidth=NumberByKey(tmpPanelName+TmpNm+"Width", OrigInfo, ":", ";")
-					OrigHeight=NumberByKey(tmpPanelName+TmpNm+"Height", OrigInfo, ":", ";")
+				//fix for embedded graphs. These have no controls on them...
+				//question - this now works for graph subwindows on panels. 
+				//any otehr types need special treatment? 
+				if(strlen(controlslist)<2)	//this is embedded graph, not panel actually...
+					//			//print V_left; print V_right; print V_top; print V_Bottom
+					//			ControlsRecords+=tmpName1+"Left:"+num2str(V_left)+";"+tmpName1+"Right:"+num2str(V_width)+";"+tmpName1+"Top:"+num2str(V_top)+";"+tmpName1+"Bottom:"+num2str(V_Height)+";"
+					OrigCntrlV_left=NumberByKey(tmpName1+"Left", OrigInfo, ":", ";")
+					OrigCntrlV_top=NumberByKey(tmpName1+"Top", OrigInfo, ":", ";")
+					OrigCntrlV_right=NumberByKey(tmpName1+"Right", OrigInfo, ":", ";")
+					OrigCntrlV_bottom=NumberByKey(tmpName1+"Bottom", OrigInfo, ":", ";")
 					NewCntrolV_left=OrigCntrlV_left* horScale 
 					NewCntrlV_top = OrigCntrlV_top * verScale
-					NewWidth = OrigWidth * horScale
-					NewHeight = OrigHeight * verScale
-					ModifyControl $(TmpNm) win=$(tmpName1),pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
-					//special cases...
-					ControlInfo/W=$(tmpName1) $(TmpNm)
-					if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
-						OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
-						if(numtype(OrigBodyWidth)==0)
-							ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth, win=$(tmpName1)
+					NewCntrlV_right = OrigCntrlV_right* horScale 
+					NewCntrlV_bottom = OrigCntrlV_bottom* verScale
+					MoveSubwindow /W=$(tmpName1) fnum=(NewCntrolV_left, NewCntrlV_top, NewCntrlV_right, NewCntrlV_bottom)		
+				else
+					For(i=0;i<ItemsInList(controlslist, ";");i+=1)
+						TmpNm = StringFromList(i, controlslist, ";")			
+						OrigCntrlV_left=NumberByKey(tmpPanelName+TmpNm+"Left", OrigInfo, ":", ";")
+						OrigCntrlV_top=NumberByKey(tmpPanelName+TmpNm+"Top", OrigInfo, ":", ";")
+						OrigWidth=NumberByKey(tmpPanelName+TmpNm+"Width", OrigInfo, ":", ";")
+						OrigHeight=NumberByKey(tmpPanelName+TmpNm+"Height", OrigInfo, ":", ";")
+						NewCntrolV_left=OrigCntrlV_left* horScale 
+						NewCntrlV_top = OrigCntrlV_top * verScale
+						NewWidth = OrigWidth * horScale
+						NewHeight = OrigHeight * verScale
+						ModifyControl $(TmpNm) win=$(tmpName1),pos = {NewCntrolV_left,NewCntrlV_top}, size={NewWidth,NewHeight}
+						//special cases...
+						ControlInfo/W=$(tmpName1) $(TmpNm)
+						if(abs(V_Flag)==5 ||abs(V_Flag)==3)		//SetVariable
+							OrigBodyWidth=NumberByKey(tmpPanelName+TmpNm+"bodyWidth", OrigInfo, ":", ";")
+							if(numtype(OrigBodyWidth)==0)
+								ModifyControl $(TmpNm)  bodywidth =horScale*OrigBodyWidth, win=$(tmpName1)
+							endif
 						endif
-					endif
-				endfor
+					endfor
+				endif
 				SetActiveSubwindow $(StringFromList(0, ListOfPanels,";"))
 		endfor
 		//Better way, let's lets store it in preferences...
@@ -2276,6 +2292,10 @@ Function IN2G_PanelAppendSizeRecordNote(panelName)
 	For(j=1;j<ItemsInList(ListOfPanels,";");j+=1)
 			tmpPanelName = StringFromList(j, ListOfPanels,";")
 			tmpName1 = StringFromList(0, ListOfPanels,";")+"#"+StringFromList(j, ListOfPanels,";")
+			//record position of the subwindow, may be needed... 
+			GetWindow $tmpName1 wsize 
+			//print V_left; print V_right; print V_top; print V_Bottom
+			ControlsRecords+=tmpName1+"Left:"+num2str(V_left)+";"+tmpName1+"Right:"+num2str(V_right)+";"+tmpName1+"Top:"+num2str(V_top)+";"+tmpName1+"Bottom:"+num2str(V_Bottom)+";"
 			setActiveSubwindow $tmpName1
 			controlslist = ControlNameList(tmpName1, ";")		
 			For(i=0;i<ItemsInList(controlslist, ";");i+=1)

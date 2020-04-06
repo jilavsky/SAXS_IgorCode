@@ -173,7 +173,7 @@ end
 Function IR3B_MetadataBrowserPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	PauseUpdate; Silent 1		// building window...
-	NewPanel /K=1 /W=(5.25,43.25,800,820) as "MultiData Ploting tool"
+	NewPanel /K=1 /W=(5.25,43.25,800,820) as "Metadata Browser tool"
 	DoWIndow/C IR3B_MetadataBrowserPanel
 	TitleBox MainTitle title="\Zr220Metadata Browser",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
 	string UserDataTypes=""

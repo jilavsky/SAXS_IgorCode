@@ -92,7 +92,7 @@ Function IRB1_DataManipulation()
 		IRB1_DataManPanelFnct()
 		IR3C_MultiUpdateListOfAvailFiles("Irena:BioSAXSDataMan")
 		ING2_AddScrollControl()
-		IR1_UpdatePanelVersionNumber("IRB1_DataManipulationPanel", IRB1_DataManipulation,0)
+		IR1_UpdatePanelVersionNumber("IRB1_DataManipulationPanel", IRB1_DataManipulation,1)
 	endif
 end
 //************************************************************************************************************
@@ -131,7 +131,7 @@ Function IRB1_PDDFInterfaceFunction()
 		SetWindow IRB1_PDDFInterfacePanel, hook(ATSASCursorMoved) = IRB1_PDDFGraphWindowHook
 		IR3C_MultiUpdateListOfAvailFiles("Irena:PDDFInterface")
 		ING2_AddScrollControl()
-		IR1_UpdatePanelVersionNumber("IRB1_PDDFInterfacePanel", IRB1_PDDFInterfaceVersion,0)
+		IR1_UpdatePanelVersionNumber("IRB1_PDDFInterfacePanel", IRB1_PDDFInterfaceVersion,1)
 	endif
 end
 //************************************************************************************************************

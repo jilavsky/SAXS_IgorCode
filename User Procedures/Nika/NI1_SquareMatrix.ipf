@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.05 fixes for ImageLineProfile which seems to produce sometimes points at non exptected location. This is actually documented feature.  
+//1.05 fixes for ImageLineProfile which seems to produce sometimes points at non expected location. This is actually documented feature.  
 //1.04 fixed /NTHR=1 to /NTHR=0
 //1.03 fixed masking which was failing due to bug. 
 //1.02 added mutlithread and MatrixOp/NTHR=1 where seemed possible to use multile cores
@@ -314,7 +314,7 @@ Function NI1_MakeSqMatrixOfLineoutswtilts(SectorsNumSect,AngleWidth,SectorsGraph
 		//this failed because in some cases ImageLineProfile generates points at different distcances than expected. 
 		// we need to assign intnesities to proper distances... 
 		//SquareMap[][i] = W_ImageLineProfile[p]
-		//limted reange below is needed to avoid boming on index out of range... 
+		//limited range below is needed to avoid bombing on index out of range... 
 		SquareMap[2,MaxDist-10][i] = W_ImageLineProfile[BinarySearchInterp(W_LineProfileDisplacement,p)]
 		//SquareMap[][i] = W_ImageLineProfile[p]
 		//josh add:  make an analogous qmap wave
@@ -322,7 +322,7 @@ Function NI1_MakeSqMatrixOfLineoutswtilts(SectorsNumSect,AngleWidth,SectorsGraph
 		NVAR Wavelength = root:Packages:Convert2Dto1D:Wavelength	
 		NI2T_ReadOrientationFromGlobals(d)
 		NI2T_SaveStructure(d)
-		multithread Qbin4SquareMap[][i] = ((4*pi)/Wavelength)*sin(NI2T_pixelTheta(d,W_LineProfileX[p],W_LineProfileY[p]))
+		multithread Qbin4SquareMap[][i] = ((4*pi)/Wavelength)*sin(NI2T_pixelTheta(d,PixelAddressesX[p],PixelAddressesY[p]))
 		//josh done
 		if(recalculateMask)
 			ImageLineProfile xWave=PixelAddressesX, yWave=PixelAddressesY, srcwave=MaskS , widthWave=PathWidthTemp
