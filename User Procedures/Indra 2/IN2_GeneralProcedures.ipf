@@ -37,8 +37,10 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //2.22 minor fix to IN2G_ColorTopGrphRainbow
 		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
 		//fix IN2G_ResetSizesForAllPanels so it does not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
+		//		improved all panel scaling support, so it now scales embedded graphs.  
 		//add IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
 		//added IN2G_ForceDeleteFolder(fullPathToFolder)	- this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
+		//added IN2G_ConvertTimeStringToSecs(instring) converts various string type times into real time in seconds
 //2.21 added bunch of formating tools for graphs:
 		//IN2G_OffsetTopGrphTraces(LogXAxis, XOffset ,LogYAxis, YOffset)
 		//IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename)
@@ -123,8 +125,15 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 // e-mail me: ilavsky@aps.anl.gov.
 
 //This is list of procedures with short description. 
-
-
+//IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
+//
+//IN2G_ForceDeleteFolder(fullPathToFolder)	- this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
+//
+//IN2G_ConvertTimeStringToSecs(instring)		-- return time in seconds from those formats below. Can be extended if needed. 
+//							ISO format, without time zone String instring	// format     2013-10-02T01:22:35  (the seconds are optional)
+//							YYYY-MM-DD hh:mm,     //"2019-06-20 13:44:26.555304"
+//							Fri Jun 21 00:28:59 2019
+//
 //IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")		
 //					removes all data from a graph, cleans it up. Needed for graphs in inserts of panesl
 //
@@ -592,6 +601,87 @@ end
 //************************************************************************************************
 //************************************************************************************************
 
+threadsafe Function IN2G_ConvertTimeStringToSecs(instring)
+    String instring
+    //what strings?
+    Variable year, month, day,hour,minute,second
+    string WeekdayStr, MonthStr
+ 	 Variable N, UTC
+	//	ISO format, without time zone String instring	// format     2013-10-02T01:22:35  (the seconds are optional)
+	sscanf instring,"%4d-%2d-%2dT%2d:%2d:%2d", year,month,day,hour,minute,second
+	N=V_flag
+	if (N>5)
+		UTC = date2secs(year, month, day )
+		UTC += N>=4 ? hour*3600 : 0
+		UTC += N>=5 ? minute*60 : 0
+		UTC += N>=6 ? second : 0
+		return UTC
+	endif
+	//YYYY-MM-DD hh:mm,     //"2019-06-20 13:44:26.555304"
+    sscanf instring, "%4d%*[-]%2d%*[-]%2d%*[ ] %2d%*[:] %2d%*[:]%9f", year, month, day,hour,minute,second
+    N=V_flag
+    if(N>5)
+		UTC = date2secs(year, month, day )
+		UTC += N>=4 ? hour*3600 : 0
+		UTC += N>=5 ? minute*60 : 0
+		UTC += N>=6 ? second : 0
+		return UTC
+	endif
+   	//Fri Jun 21 00:28:59 2019
+    sscanf instring, "%3s%*[ ]%3s%*[ ]%2d%*[ ] %2d%*[:] %2d%*[:]%2d%*[ ]%4d", WeekdayStr, MonthStr, day, hour, minute, second, year
+    N=V_flag
+    if(N>5)
+    	strswitch(MonthStr)	
+    		case "Jan":	// execute if case matches expression
+    			month=1
+    			break		// exit from switch
+    		case "Feb":	// execute if case matches expression
+    			month=2
+    			break		// exit from switch
+    		case "Mar":	// execute if case matches expression
+    			month=3
+    			break		// exit from switch
+    		case "Apr":	// execute if case matches expression
+    			month=4
+    			break		// exit from switch
+    		case "May":	// execute if case matches expression
+    			month=5
+    			break		// exit from switch
+    		case "Jun":	// execute if case matches expression
+    			month=6
+    			break		// exit from switch
+    		case "Jul":	// execute if case matches expression
+    			month=7
+    			break		// exit from switch
+    		case "Aug":	// execute if case matches expression
+    			month=8
+    			break		// exit from switch
+    		case "Sep":	// execute if case matches expression
+    			month=9
+    			break		// exit from switch
+    		case "Oct":	// execute if case matches expression
+    			month=10
+    			break		// exit from switch
+    		case "Nov":	// execute if case matches expression
+    			month=11
+    			break		// exit from switch
+    		case "Dec":	// execute if case matches expression
+    			month=12
+    			break		// exit from switch
+    	endswitch
+		UTC = date2secs(year, month, day )
+		UTC += N>=4 ? hour*3600 : 0
+		UTC += N>=5 ? minute*60 : 0
+		UTC += N>=6 ? second : 0
+		return UTC
+	endif
+	//default, return NaN so we can treat this as non-time string. 
+   	return NaN
+end
+//************************************************************************************************
+//************************************************************************************************
+  	
+   	
 threadsafe Function IN2G_FindNumericalIndexForSorting(StrnameIn)
 	string StrnameIn
 	//finds - starting at the end - number, separated by _ 

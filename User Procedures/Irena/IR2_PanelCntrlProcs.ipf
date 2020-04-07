@@ -3603,13 +3603,13 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 	SVAR SelectedResultsTool 
 	SVAR SelectedResultsType 
 	SVAR ResultsGenerationToUse
-	if(strlen(SelectedResultsTool)<1)
+	if(strlen(SelectedResultsTool)<1 || strlen(SelectedResultsType)<1)
 		SelectedResultsTool="Unified Fit"
 		SelectedResultsType="UnifiedFitIntensity"
 	endif
-	if(strlen(SelectedResultsTool)<1)
-		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
-	endif
+//	if(strlen(SelectedResultsTool)<1)
+//		SelectedResultsTool=IR2C_ReturnKnownToolResults(SelectedResultsTool)
+//	endif
 	if(strlen(ResultsGenerationToUse)<1)
 		ResultsGenerationToUse="Latest"
 	endif
