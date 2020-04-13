@@ -680,8 +680,6 @@ threadsafe Function IN2G_ConvertTimeStringToSecs(instring)
 end
 //************************************************************************************************
 //************************************************************************************************
-  	
-   	
 threadsafe Function IN2G_FindNumericalIndexForSorting(StrnameIn)
 	string StrnameIn
 	//finds - starting at the end - number, separated by _ 

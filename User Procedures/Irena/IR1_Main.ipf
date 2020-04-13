@@ -153,11 +153,11 @@ Menu "SAS"
 		help={"Manipulate - for now only average - many data sets"}
 		"Merge two data sets", IR3D_DataMerging()
 		help={"Merge two data sets - two segments at different q ranges"}
-		"Metadata Browser", IR3B_MetadataBrowser()
-		help={"Tool to extarct quickly metadata stored in wave notes"}
 		"Data mining [extract information]", IR2M_GetDataMiner()
 		help={"Data miner to find various data and plot various waves"}
 	end
+	"Metadata Browser", IR3B_MetadataBrowser()
+	help={"Tool to extarct quickly metadata stored in wave notes"}
 	"---"
 	"Plotting I", IR1P_GeneralPlotTool()
 	help = {"Plotting tool with wide functionality, hopefully"}
@@ -280,7 +280,7 @@ Menu "BioSAXS"
 	help={"Export ASCII data as files"}
 	//"Irena PDF", IR2Pr_MainPDDF()
 	//help={"Calculate pair distribution function using various methods in Irena"}
-	"PDDF (Gnom, AutoGnom, Regulr, Moore)", IRB1_PDDFInterfaceFunction()
+	"PDDF + MW (Gnom, AutoGnom, ...)", IRB1_PDDFInterfaceFunction()
 	help={"GUI to run PDDF and some ATSAS tools from Irena"}
 end
 

@@ -2918,6 +2918,9 @@ Function IR3C_SortListOfFilesInWvs(TopPanel)
 	Wave WaveOfSelections 	= $(CntrlLocation+":WaveOfSelections")
 	SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
 	variable i
+	if(numpnts(WaveOfFiles)<2)
+		return 0
+	endif
 //	string/g SortOptionsString="Sort;Inv_Sort;Sort _XYZ;Inv Sort _XYZ;"
 	Duplicate/Free WaveOfSelections, TempWv
 	if(StringMatch(DataSelSortString, "Sort" ))
@@ -3475,22 +3478,22 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 	string FoldernameStr
 	Variable isData1or2
 	string DoubleClickFunctionName
-	SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
-	DoubleClickFunctionName=StringByKey(WinNameStr, ControlDoubleClickFunction,":",";" )
 	string ControlMouseDownFunctionName
-	SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
-	ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
 
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
+			SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
+			ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
 			FoldernameStr=listWave[row]
 			if(strlen(ControlMouseDownFunctionName)>0)
 				Execute(ControlMouseDownFunctionName+"(\""+FoldernameStr+"\")")
 			endif
 			break
 		case 3: // double click
+			SVAR ControlDoubleClickFunction = root:Packages:IrenaControlProcs:ControlDoubleClickFunction
+			DoubleClickFunctionName=StringByKey(WinNameStr, ControlDoubleClickFunction,":",";" )
 			FoldernameStr=listWave[row]
 			if(strlen(DoubleClickFunctionName)>0)
 				Execute(DoubleClickFunctionName+"(\""+FoldernameStr+"\")")
@@ -3953,7 +3956,7 @@ Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
 		Sort /A ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Reverse Alphabetical"))
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
-	elseif(stringMatch(FolderSortString,"_xyz"))
+	elseif(stringMatch(FolderSortString,"_xyz")&&(numpnts(ListOfAvailableData)>2))
 			//For(i=0;i<numpnts(TempWv);i+=1)
 		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
