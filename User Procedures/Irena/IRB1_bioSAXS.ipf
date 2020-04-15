@@ -1559,7 +1559,7 @@ Function IRB1_PDDFPanelFnct()
 	//MW controls
 	checkbox PDDFUseProtein, pos={300,155}, title="\Zr120Protein", size={120,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFUseProtein, fColor=(65535,0,0), mode=1, help={"Run PDDF with setting for Proteins. Changes density and SLD"}
 	checkbox PDDFUseNucleicAcid, pos={450,155}, title="\Zr120Nucleic Acid", size={120,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:PDDFUseNucleicAcid, fColor=(65535,0,0), mode=1, help={"Run PDDF with settings from Nucleai acid. Changes density and SLD"}
-	Button CalcRgAndMolecularWeight,pos={310,180},size={170,20}, proc=IRB1_PDDFButtonProc,title="Fit Rg and calculate MW", help={"Calculate Dmax on these data"}
+	Button PDDFCalcRgAndMolecularWeight,pos={310,180},size={170,20}, proc=IRB1_PDDFButtonProc,title="Fit Rg and calculate MW", help={"Calculate Dmax on these data"}
 	TitleBox PDDFInstructions1 title="\Zr120SAXSMoW2 & Rambo-Tainer Qmax : ",size={230,15},pos={270,220},frame=0,fColor=(0,0,65535),labelBack=0
 	checkbox InvariantCalcQmax8overRg, pos={270,250}, title="Qmax 8/Rg?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:InvariantCalcQmax8overRg, mode=0, help={"Set Qmax to 8/Rg automatically"}
 	checkbox InvariantCalcQmaxLog225, pos={400,250}, title="Qmax I(0)/200?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:InvariantCalcQmaxLog225, mode=0, help={"Set Qmax to Q when I(0)/200"}
@@ -1568,7 +1568,8 @@ Function IRB1_PDDFPanelFnct()
 	TitleBox PDDFInstructions11 title="\Zr120Rambo-Tainer Background : ",size={230,15},pos={270,310},frame=0,fColor=(0,0,65535),labelBack=0
 	checkbox RamboTainerAutoSetBckg, pos={270,330}, title="Auto Find Backg.?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerAutoSetBckg, mode=0, help={"Find Background AUtomatically background from I(Q)"}
 	checkbox RamboTainerSubtractFlatBackground, pos={420,330}, title="Subtract Background?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerSubtractFlatBackground, mode=0, help={"Subtract background from I(Q)"}
-	SetVariable RamboTainerFlatBackground,pos={270,355},size={250,18}, bodyWidth=90, proc=IRB1_PDDFSetVarProc,title="Flat Background = ", variable=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground, limits={0.01,1,0.02},frame=1, help={"Flat Background"}, format="%4.2f"
+	NVAR RamboTainerFlatBackground=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground
+	SetVariable RamboTainerFlatBackground,pos={270,355},size={250,18}, bodyWidth=90, proc=IRB1_PDDFSetVarProc,title="Flat Background = ", variable=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground, limits={0.00,inf,RamboTainerFlatBackground*0.01},frame=1, help={"Flat Background"}, format="%4.2f"
 
 	TitleBox PDDFInstructions12 title="\Zr120Real Space/PDDF (GNOM) Mol. Weight Conc.",size={330,15},pos={270,390},frame=0,fColor=(0,0,65535),labelBack=0
 	SetVariable ConcentrationForCals,pos={270,410},size={250,18}, proc=IRB1_PDDFSetVarProc,title="c [mg/ml] = ", bodyWidth=90,variable=root:Packages:Irena:PDDFInterface:ConcentrationForCals,limits={0,inf,0.1}, help={"Concentration for MW calculations"}
@@ -1581,7 +1582,7 @@ Function IRB1_PDDFPanelFnct()
 	SetVariable ReciprocalSpaceI0,pos={350,500},size={120,15},bodyWidth=50, noproc,title="I0 = ", variable=root:Packages:Irena:PDDFInterface:ReciprocalSpaceI0, noedit=1,limits={0,inf,0},frame=0,size={180,17}, bodyWidth=70, help={"Porod Invariant calcualtion result"}, format="%4.2f"
 	SetVariable ReciprocalSpaceRg,pos={480,500},size={120,17},bodyWidth=50, noproc,title="Rg [A] = ", variable=root:Packages:Irena:PDDFInterface:ReciprocalSpaceRg, noedit=1,limits={0,inf,0},frame=0, help={"Density of protein, user changeable, in g/cm3"}, format="%4.2f"
 	SetVariable SAXSMoW2MWRecSpacekDa,pos={300,520},size={250,15},bodyWidth=70, noproc,title="SAXSMoW2 MW [kDa]  = ", variable=root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa, noedit=1,fstyle=1, fsize=13, limits={0,inf,0},frame=0, help={"Molecular weight calculated from SAXSMoW2 method in kDa"}, fColor=(52428,1,1), format="%8.2f"
-	SetVariable RamboTainerMW,pos={300,540},size={250,15},bodyWidth=70, noproc,title="Rambo-Tainer MW [kDa]  = ",variable=root:Packages:Irena:PDDFInterface:RamboTainerMW, disable=0, noedit=1,limits={0,inf,0},frame=0,fstyle=1, fsize=13, fColor=(52428,1,1), help={"Molecular weight calculated from Rambo-Tainer method in kDa"}, format="%8.2f"
+	SetVariable RamboTainerMWRecSpacekDa,pos={300,540},size={250,15},bodyWidth=70, noproc,title="Rambo-Tainer MW [kDa]  = ",variable=root:Packages:Irena:PDDFInterface:RamboTainerMWRecSpacekDa, disable=0, noedit=1,limits={0,inf,0},frame=0,fstyle=1, fsize=13, fColor=(52428,1,1), help={"Molecular weight calculated from Rambo-Tainer method in kDa"}, format="%8.2f"
 	
 	TitleBox PDDFInstructions22 title="\Zr110Real space (GNOM+abs. Int.+conc.):",size={330,15},pos={270,570},frame=0,fColor=(0,0,65535),labelBack=0
 	SetVariable RealSpacePorodVolumeA3,pos={290,590},size={100,15},bodyWidth=50, format="%4.0f", noproc,title="Vol [A^3] = ", variable=root:Packages:Irena:PDDFInterface:RealSpacePorodVolumeA3, noedit=1,limits={0,inf,0},frame=0, help={"True Volume of protein in [A^3] "}
@@ -1708,6 +1709,9 @@ Function IRB1_PDDFSetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"RamboTainerFlatBackground"))
 				NVAR RamboTainerAutoSetBckg = root:Packages:Irena:PDDFInterface:RamboTainerAutoSetBckg
 				RamboTainerAutoSetBckg = 0
+				NVAR Backg=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground
+				SetVariable RamboTainerFlatBackground, limits={0.00,inf,Backg*0.05}
+
 				//IRB1_PDDFFitRgAndG()
 				IRB1_PDDFCalcRamboTainer()
 			endif
@@ -1773,7 +1777,7 @@ static Function IRB1_PDDFFixTabControls(whichTab)
 	checkbox PDDFUseProtein, win=IRB1_PDDFInterfacePanel, disable = (whichTab!=1)
 	checkbox PDDFUseNucleicAcid, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
 	TitleBox PDDFInstructions1, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
-	Button CalcRgAndMolecularWeight, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
+	Button PDDFCalcRgAndMolecularWeight, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
 	//SetVariable ReciprocalPorodVolumeA3, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
 	checkbox RamboTainerAutoSetBckg,  disable = (whichTab!=1)
 	checkbox InvariantCalcQmax8overRg,  disable = (whichTab!=1)
@@ -1933,17 +1937,20 @@ Function IRB1_PDDFButtonProc(ba) : ButtonControl
 					IRB1_PDDFRunIrenaPDDF()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel() 
+					//update calculations...
 					IRB1_PDDFCalculateRgI0()
 				elseif(PDDFuseMoore)
 					IRB1_PDDFRunIrenaPDDF()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel()
+					//update calculations...
 					IRB1_PDDFCalculateRgI0()
 				else //this is autognom or gnom, handled by one function
 					IRB1_PDDFRunGNOM()
+					//update calculations...
+					IRB1_PDDFCalcSAXSMoW2()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel()				
-					IRB1_PDDFCalculateRgI0()
 				endif
 			endif
 			if(stringMatch(ba.ctrlName,"SavePDDFresults"))
@@ -1969,7 +1976,7 @@ Function IRB1_PDDFButtonProc(ba) : ButtonControl
 			if(stringmatch(ba.ctrlName,"GetHelp"))
 				IN2G_OpenWebManual("Irena/ImportData.html")				//fix me!!			
 			endif
-			if(stringMatch(ba.ctrlName,"CalcRgAndMolecularWeight"))
+			if(stringMatch(ba.ctrlName,"PDDFCalcRgAndMolecularWeight"))
 				IRB1_PDDFFitRgAndG()
 				IRB1_PDDFCalcSAXSMoW2()
 				IRB1_PDDFCalcRamboTainer()
@@ -2027,7 +2034,7 @@ static Function IRB1_PDDFFitSequenceOfData()
 					IRB1_PDDFRunGNOM()
 					IRB1_PDDFMakeResChi2()
 					IRB1_PDDFAppendPDDFModel()	
-					IRB1_PDDFCalculateRgI0()			
+					IRB1_PDDFCalcSAXSMoW2()			
 				endif
 				IRB1_PDDFSaveResultsToNotebook()
 				IRB1_PDDFSaveResultsToFldr()
@@ -2044,25 +2051,24 @@ end
 //**********************************************************************************************************
 //
 Function IRB1_PDDFCalculateRgI0()
-	print "IRB1_PDDFCalculateRgI0 does nothing, it needs to be used when using Irena PDDF calculations."
-//
-//	NVAR CalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
-//	NVAR CalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
-//	Wave Radius = root:Packages:Irena:PDDFInterface:pddfRadius
-//	Wave Pr = root:Packages:Irena:PDDFInterface:pddfPr
-//	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
-//	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
-//	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
-//	
-//	Duplicate/Free Pr, R2Pr
-//	R2Pr = Radius^2 * Pr
-//	
-//	//CalcI0 = 4*pi*areaXY(Radius, Pr )
-//	
-//	//CalcRg = sqrt(areaXY(Radius, R2Pr )/areaXY(Radius, Pr ))
-//	
-//	PDDFCalculatedMW = 6.023e23*CalcI0/(ConcentrationForCals*(ScattLengthDensDifference*1e10)^2)
-//
+
+	NVAR PDDFCalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
+	NVAR PDDFCalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
+	Wave Radius = root:Packages:Irena:PDDFInterface:pddfRadius
+	Wave Pr = root:Packages:Irena:PDDFInterface:pddfPr
+	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
+	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
+	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	
+	Duplicate/Free Pr, R2Pr
+	R2Pr = Radius^2 * Pr
+	
+	PDDFCalcI0 = 4*pi*areaXY(Radius, Pr )
+	
+	PDDFCalcRg = sqrt(areaXY(Radius, R2Pr )/areaXY(Radius, Pr ))
+	
+	PDDFCalculatedMW = 6.023e23*PDDFCalcI0/(ConcentrationForCals*(ScattLengthDensDifference*1e10)^2)
+
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2201,7 +2207,7 @@ Function IRB1_PDDFCalcRamboTainer()
 	//QstarVector = OriginalQvector / (erf(OriginalQvector*w_coef[1]/sqrt(6)))^3
 	//FitScatteringProfile =  w_coef[0]*exp(-OriginalQvector^2*w_coef[1]^2/3)+(w_coef[2]/QstarVector^w_coef[3]) + w_coef[4]
 	variable TempNumPoints=2000
-	NVAR RamboTainerMW=root:Packages:Irena:PDDFInterface:RamboTainerMW
+	NVAR RamboTainerMWRecSpacekDa=root:Packages:Irena:PDDFInterface:RamboTainerMWRecSpacekDa
 	NVAR PDDFUseNucleicAcid=root:Packages:Irena:PDDFInterface:PDDFUseNucleicAcid
 	NVAR PDDFUseProtein=root:Packages:Irena:PDDFInterface:PDDFUseProtein
 	NVAR ReciprocalSpaceI0=root:Packages:Irena:PDDFInterface:ReciprocalSpaceI0
@@ -2244,12 +2250,12 @@ Function IRB1_PDDFCalcRamboTainer()
 	variable RTVc 		= 	ReciprocalSpaceI0/IntgQIQ
 	variable RTQr		=	(RTVc)^2 / ReciprocalSpaceRg
 	if(PDDFUseProtein)
-		RamboTainerMW 	= 	(RTQr/0.1231)^1.0
-		RamboTainerMW	/=	1000						//convert to kDA from DA		
+		RamboTainerMWRecSpacekDa 	= 	(RTQr/0.1231)^1.0
+		RamboTainerMWRecSpacekDa	/=	1000						//convert to kDA from DA		
 	elseif(PDDFUseNucleicAcid)
 	//Update tag result...
-		RamboTainerMW 	= 	(RTQr/0.00934)^0.808
-		RamboTainerMW	/=	1000						//convert to kDA from DA		
+		RamboTainerMWRecSpacekDa 	= 	(RTQr/0.00934)^0.808
+		RamboTainerMWRecSpacekDa	/=	1000						//convert to kDA from DA		
 	endif
 
 end
@@ -2734,8 +2740,6 @@ Function IRB1_PDDFRunGNOM()
 	KillPath/Z DATGNOMPath
 	KillPath/Z ATSASWorkPath
 	//print "Delete following folder from your desktop : "+PathToATSASWorkPath
-	//update calculations...
-	IRB1_PDDFCalcSAXSMoW2()
 	setDataFolder OldDf
 end
 //**************************************************************************************
@@ -2827,7 +2831,7 @@ static Function IRB1_PDDFRunIrenaPDDF()
 	DFE = ErrorWaveName
 	Moore_DetNumFncts=MooreDetNumFnctsBio
 	Moore_HolDmaxSize = MooreFitMaxSizeBio
-	MaximumR = DmaxBio*1.5
+	MaximumR = DmaxBio
 	NumberOfBins = NumBinsBio
 	if(NumberOfBins<100)
 	 	NumberOfBins = 100
@@ -3081,7 +3085,7 @@ static Function IRB1_PDDFInitialize()
 	ListOfVariables += "DmaxEstimate;CalculateDmaxEstOnImport;GnomForceRmin0;GnomForceRmax0;NumBinsInR;GnomAlfaValue;"	
 	ListOfVariables += "MooreNumFunctions;MooreDetNumFunctions;MooreFitMaxSize;"	
 	ListOfVariables += "RealSpaceRg;RealSpaceI0;ConcentrationForCals;ScattLengthDensDifference;PDDFCalculatedMW;RealSpacePorodVolumeA3;"	
-	ListOfVariables += "RamboTainerMW;InvariantCalcQmax8overRg;InvariantCalcQmax;InvariantCalcQmaxLog225;"
+	ListOfVariables += "RamboTainerMWRecSpacekDa;InvariantCalcQmax8overRg;InvariantCalcQmax;InvariantCalcQmaxLog225;"
 	ListOfVariables += "RamboTainerSubtractFlatBackground;RamboTainerFlatBackground;RamboTainerAutoSetBckg;"
 	ListOfVariables += "SaveToFolder;SaveToNotebook;SaveToWaves;SaveToGNOMOut;"	
 	ListOfVariables += "MWPorodInvariant;ReciprocalPorodVolumeA3;MWMassDensityProtein;SAXSMoW2MWRecSpacekDa;SAXSMoW2MWRealSpacekDa;"	
@@ -3178,9 +3182,9 @@ static Function IRB1_PDDFResetValuesToPreventStale()
 	NVAR RealSpaceI0 = root:Packages:Irena:PDDFInterface:RealSpaceI0
 	NVAR PDDFCalculatedMW = root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
 	NVAR GNOMAlfaResult=root:Packages:Irena:PDDFInterface:GNOMAlfaResult
-	NVAR RamboTainerMW = root:Packages:Irena:PDDFInterface:RamboTainerMW
-	NVAR CalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
-	NVAR CalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
+	NVAR RamboTainerMWRecSpacekDa = root:Packages:Irena:PDDFInterface:RamboTainerMWRecSpacekDa
+	NVAR PDDFCalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
+	NVAR PDDFCalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
 	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
 	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
 	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
@@ -3188,19 +3192,19 @@ static Function IRB1_PDDFResetValuesToPreventStale()
 	NVAR SAXSMoW2MWRealSpacekDa = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRealSpacekDa
 	NVAR RealSpacePorodVolumeA3=root:Packages:Irena:PDDFInterface:RealSpacePorodVolumeA3
 	//these are variables used by the control procedure
-	NVAR UseResults=  root:Packages:Irena:PDDFInterface:UseResults
-	NVAR UseUserDefinedData=  root:Packages:Irena:PDDFInterface:UseUserDefinedData
-	NVAR UseModelData = root:Packages:Irena:PDDFInterface:UseModelData
+	//NVAR UseResults=  root:Packages:Irena:PDDFInterface:UseResults
+	//NVAR UseUserDefinedData=  root:Packages:Irena:PDDFInterface:UseUserDefinedData
+	//NVAR UseModelData = root:Packages:Irena:PDDFInterface:UseModelData
 	SAXSMoW2MWRealSpacekDa = 0
 	RealSpacePorodVolumeA3 = 0
-	UseResults = 0
-	UseUserDefinedData = 0
-	UseModelData = 0
+	//UseResults = 0
+	//UseUserDefinedData = 0
+	//UseModelData = 0
 	//delete GNOM out file, if exists... 
 	//Wave/Z GNOMOutFileTextWave = root:Packages:Irena:PDDFInterface:GNOMOutFileTextWave
 	KillWaves /Z GNOMOutFileTextWave
-	CalcRg = 0
-	CalcI0 = 0
+	PDDFCalcRg = 0
+	PDDFCalcI0 = 0
 	PDDFCalculatedMW = 0
 	GNOMAlfaResult = 0
 	//delete old waves
@@ -3213,7 +3217,7 @@ static Function IRB1_PDDFResetValuesToPreventStale()
 	ReciprocalSpaceRg = 0
 	ReciprocalSpaceB = 0
 	ReciprocalSpacePorodSlope = 0
-	RamboTainerMW = 0
+	RamboTainerMWRecSpacekDa = 0
 	MWPorodInvariant = 0
 	ReciprocalPorodVolumeA3 = 0
 	SAXSMoW2MWRecSpacekDa = 0
@@ -3273,17 +3277,25 @@ static Function IRB1_PDDFSaveResultsToNotebook()
 	NVAR DataQEndPoint = root:Packages:Irena:PDDFInterface:DataQEndPoint
 	NVAR DataQstartPoint = root:Packages:Irena:PDDFInterface:DataQstartPoint
 
-	NVAR MWPorodInvariant = root:Packages:Irena:PDDFInterface:MWPorodInvariant
+	//reciprocal space results, result of Guinier fitting (I(0) and Rg, Porod volume, invariant etc.)
 	NVAR ReciprocalPorodVolumeA3 = root:Packages:Irena:PDDFInterface:ReciprocalPorodVolumeA3
-	NVAR MWMassDensityProtein = root:Packages:Irena:PDDFInterface:MWMassDensityProtein
-	NVAR SAXSMoW2MWRecSpacekDa = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa
-	NVAR GNOMAlfaResult = root:Packages:Irena:PDDFInterface:GNOMAlfaResult
+	NVAR ReciprocalSpaceI0		 = root:Packages:Irena:PDDFInterface:ReciprocalSpaceI0
+	NVAR ReciprocalSpaceRg		 = root:Packages:Irena:PDDFInterface:ReciprocalSpaceRg
+	NVAR SAXSMoW2MWRecSpacekDa	 = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa
+	NVAR RamboTainerMWRecSpacekDa				 = root:Packages:Irena:PDDFInterface:RamboTainerMWRecSpacekDa
 
-	NVAR CalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
-	NVAR CalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
+	//Real space results, result of GNOM (I(0), Rg, Output extrapolated data, Porod volume, invariant etc.)
+	NVAR RealSpacePorodVolumeA3	 	= root:Packages:Irena:PDDFInterface:RealSpacePorodVolumeA3
+	NVAR RealSpaceI0 					= root:Packages:Irena:PDDFInterface:RealSpaceI0
+	NVAR RealSpaceRg 					= root:Packages:Irena:PDDFInterface:RealSpaceRg
+	NVAR SAXSMoW2MWRealSpacekDa		= root:Packages:Irena:PDDFInterface:SAXSMoW2MWRealSpacekDa
+	NVAR PDDFCalculatedMW 			= root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	NVAR GNOMAlfaResult 				= root:Packages:Irena:PDDFInterface:GNOMAlfaResult
+
+	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
 	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
 	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
-	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	NVAR MWMassDensityProtein = root:Packages:Irena:PDDFInterface:MWMassDensityProtein
 
 	string MethodRun
 	NVAR PDDFUseGNOM = root:Packages:Irena:PDDFInterface:PDDFUseGNOM
@@ -3307,17 +3319,24 @@ static Function IRB1_PDDFSaveResultsToNotebook()
 	IR1_AppendAnyText("Q: \t"+QWavename,0)	
 	IR1_AppendAnyText("Error: \t"+ErrorWaveName,0)	
 	IR1_AppendAnyText("Method used: \t"+MethodRun,0)	
-
-	IR1_AppendAnyText("\rPDDF MW [kDa] = \t"+num2str(PDDFCalculatedMW),0)	
-	IR1_AppendAnyText("PDDF Rg [A] = \t"+num2str(CalcRg),0)	
-	IR1_AppendAnyText("PDDF I0     = \t"+num2str(CalcI0),0)	
-	IR1_AppendAnyText("PDDF Concentration [mg/ml] = \t"+num2str(ConcentrationForCals),0)	
-	IR1_AppendAnyText("PDDF SLD [10^10 cm^-2] = \t"+num2str(ScattLengthDensDifference),0)	
-
-	IR1_AppendAnyText("\rPorod MW [kDa] = \t"+num2str(SAXSMoW2MWRecSpacekDa),0)	
+	IR1_AppendAnyText(" ",0)
+	IR1_AppendAnyText("Real space (PDDF) results, GNOM OUT or direct calcs.",0)	
+	IR1_AppendAnyText("Rg [A] = \t"+num2str(RealSpaceRg),0)	
+	IR1_AppendAnyText("I0     = \t"+num2str(RealSpaceI0),0)	
 	IR1_AppendAnyText("Porod Volume [cm3] = \t"+num2str(ReciprocalPorodVolumeA3),0)	
-	IR1_AppendAnyText("Porod Density prot [g/cm3] = \t"+num2str(MWMassDensityProtein),0)	
-	IR1_AppendAnyText("\rGNOM resulting alfa = \t"+num2str(GNOMAlfaResult),0)	
+	IR1_AppendAnyText("Assumed Concentration [mg/ml] = \t"+num2str(ConcentrationForCals),0)	
+	IR1_AppendAnyText("Assumed SLD [10^10 cm^-2] = \t"+num2str(ScattLengthDensDifference),0)	
+	IR1_AppendAnyText("GNOM alfa final value = \t"+num2str(GNOMAlfaResult),0)	
+	IR1_AppendAnyText("** SAXSMoW2 MW [kDa] = \t"+num2str(SAXSMoW2MWRealSpacekDa)+" ** ",0)	
+	IR1_AppendAnyText("** Abs. Int. Estimated MW [kDa] = \t"+num2str(PDDFCalculatedMW)+" ** ",0)	
+	IR1_AppendAnyText(" ",0)
+	IR1_AppendAnyText("Reciprocal space (Guinier fit) results",0)	
+	IR1_AppendAnyText("Rg [A] = \t"+num2str(ReciprocalSpaceRg),0)	
+	IR1_AppendAnyText("I0     = \t"+num2str(ReciprocalSpaceI0),0)	
+	IR1_AppendAnyText("Porod Volume [cm3] = \t"+num2str(RealSpacePorodVolumeA3),0)	
+	IR1_AppendAnyText("Assumed Density prot [g/cm3] = \t"+num2str(MWMassDensityProtein),0)	
+	IR1_AppendAnyText("** SAXSMoW2 MW [kDa] = \t"+num2str(SAXSMoW2MWRecSpacekDa)+" ** ",0)	
+	IR1_AppendAnyText("** Rambo-Tainer MW [kDa] = \t"+num2str(RamboTainerMWRecSpacekDa)+" ** ",0)	
 	
 	DoWindow/K/Z DupWindwFromPanel					//kill the window... 
 	IN2G_DuplGraphInPanelSubwndw("IRB1_PDDFInterfacePanel#DataDisplay")
@@ -3354,18 +3373,27 @@ static Function IRB1_PDDFSaveToWaves()
 		return 0
 	endif
 
-	NVAR CalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
-	NVAR CalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
-	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
-	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
-	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
 	SVAR DataFolderName = root:Packages:Irena:PDDFInterface:DataFolderName
 
-	NVAR MWPorodInvariant = root:Packages:Irena:PDDFInterface:MWPorodInvariant
+	//reciprocal space results, result of Guinier fitting (I(0) and Rg, Porod volume, invariant etc.)
 	NVAR ReciprocalPorodVolumeA3 = root:Packages:Irena:PDDFInterface:ReciprocalPorodVolumeA3
+	NVAR ReciprocalSpaceI0		 = root:Packages:Irena:PDDFInterface:ReciprocalSpaceI0
+	NVAR ReciprocalSpaceRg		 = root:Packages:Irena:PDDFInterface:ReciprocalSpaceRg
+	NVAR SAXSMoW2MWRecSpacekDa	 = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa
+	NVAR RamboTainerMWRecSpacekDa= root:Packages:Irena:PDDFInterface:RamboTainerMWRecSpacekDa
+
+	//Real space results, result of GNOM (I(0), Rg, Output extrapolated data, Porod volume, invariant etc.)
+	NVAR RealSpacePorodVolumeA3	 	= root:Packages:Irena:PDDFInterface:RealSpacePorodVolumeA3
+	NVAR RealSpaceI0 					= root:Packages:Irena:PDDFInterface:RealSpaceI0
+	NVAR RealSpaceRg 					= root:Packages:Irena:PDDFInterface:RealSpaceRg
+	NVAR SAXSMoW2MWRealSpacekDa		= root:Packages:Irena:PDDFInterface:SAXSMoW2MWRealSpacekDa
+	NVAR PDDFCalculatedMW 			= root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	NVAR GNOMAlfaResult 				= root:Packages:Irena:PDDFInterface:GNOMAlfaResult
+
+	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
+	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
 	NVAR MWMassDensityProtein = root:Packages:Irena:PDDFInterface:MWMassDensityProtein
-	NVAR SAXSMoW2MWRecSpacekDa = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa
-	NVAR GNOMAlfaResult = root:Packages:Irena:PDDFInterface:GNOMAlfaResult
 
 	NVAR PDDFUseGNOM = root:Packages:Irena:PDDFInterface:PDDFUseGNOM
 	NVAR PDDFuseMoore = root:Packages:Irena:PDDFInterface:PDDFuseMoore
@@ -3382,34 +3410,47 @@ static Function IRB1_PDDFSaveToWaves()
 		Methodused = "Regularization"
 	endif
 	NewDATAFolder/O/S root:PDDFFitResults
-	Wave/Z PDDF_Rg
-	if(!WaveExists(PDDF_Rg))
-		make/O/N=0 PDDF_Rg, PDDF_I0, PDDF_MW, PDDF_Conc, PDDF_SLD, PorodInvariant, PorodTrueVolume, MassDensityProtein, InvariantPDDFCalculatedMW, GnomAlfaFinal
+	Wave/Z RealSpace_Rg
+	if(!WaveExists(RealSpace_Rg))
+		make/O/N=0 RealSpace_Rg, RealSpace_I0, RealSpace_MW, RealSpaceSAXSMo2_MW, RealSpace_PorodVolume, ConcForCals, ScattLengthDensDiff 
+		make/O/N=0 GnomAlfaFinal, RecipSpace_PorodVolume, RecipSpace_I0, RecipSpace_Rg, RecipSpaceSAXSMoW2_MW, RecipSpaceRamboTainer_MW, MassDensityProtein
 		make/O/N=0/T SampleName, MethodName
-		SetScale/P x 0,1,"A", PDDF_Rg
-		SetScale/P x 0,1,"kDa", PDDF_MW
-		SetScale/P x 0,1,"1/cm", PDDF_I0
-		SetScale/P x 0,1,"mg/ml", PDDF_Conc
-		SetScale/P x 0,1,"10^10 cm^-2", PDDF_SLD
-		SetScale/P x 0,1,"arb", PorodInvariant
-		SetScale/P x 0,1,"cm3", PorodTrueVolume
+		SetScale/P x 0,1,"A", RealSpace_Rg
+		SetScale/P x 0,1,"A", RecipSpace_Rg
+		SetScale/P x 0,1,"kDa", RealSpace_MW
+		SetScale/P x 0,1,"kDa", RecipSpaceRamboTainer_MW
+		SetScale/P x 0,1,"kDa", RealSpaceSAXSMo2_MW
+		SetScale/P x 0,1,"kDa", RecipSpaceSAXSMoW2_MW
+		SetScale/P x 0,1,"1/cm", RealSpace_I0
+		SetScale/P x 0,1,"1/cm", RecipSpace_I0
+		SetScale/P x 0,1,"mg/ml", ConcForCals
+		SetScale/P x 0,1,"10^10 cm^-2", ScattLengthDensDiff
+		SetScale/P x 0,1,"cm3", RealSpace_PorodVolume
+		SetScale/P x 0,1,"cm3", RecipSpace_PorodVolume
 		SetScale/P x 0,1,"g/cm3", MassDensityProtein
-		SetScale/P x 0,1,"kDa", InvariantPDDFCalculatedMW
 	endif
-	variable curlength = numpnts(PDDF_Rg)
-	redimension/N=(curlength+1) SampleName,MethodName, PDDF_Rg, PDDF_I0, PDDF_MW, PDDF_Conc, PDDF_SLD, PorodInvariant, PorodTrueVolume, MassDensityProtein, InvariantPDDFCalculatedMW, GnomAlfaFinal
-	SampleName[curlength] = stringFromList(ItemsInList(DataFolderName, ":")-1, DataFolderName,":")
-	MethodName[curlength] = Methodused
-	PDDF_Rg[curlength] = CalcRg
-	PDDF_I0[curlength] = CalcI0
-	PDDF_MW[curlength] = PDDFCalculatedMW
-	PDDF_Conc[curlength] = ConcentrationForCals
-	PDDF_SLD[curlength] = ScattLengthDensDifference
-	PorodInvariant[curlength] = MWPorodInvariant
-	PorodTrueVolume[curlength] = ReciprocalPorodVolumeA3
-	MassDensityProtein[curlength] = MWMassDensityProtein
-	InvariantPDDFCalculatedMW[curlength] = SAXSMoW2MWRecSpacekDa
-	GnomAlfaFinal[curlength] = GNOMAlfaResult
+	variable curlength = numpnts(RealSpace_Rg)
+	redimension/N=(curlength+1) SampleName,MethodName, RealSpace_Rg, RealSpace_I0, RealSpace_MW, RealSpaceSAXSMo2_MW, RealSpace_PorodVolume, ConcForCals, ScattLengthDensDiff
+	redimension/N=(curlength+1) GnomAlfaFinal, RecipSpace_PorodVolume, RecipSpace_I0, RecipSpace_Rg, RecipSpaceSAXSMoW2_MW, RecipSpaceRamboTainer_MW, MassDensityProtein
+
+	SampleName[curlength] 					= stringFromList(ItemsInList(DataFolderName, ":")-1, DataFolderName,":")
+	MethodName[curlength] 					= Methodused
+	RealSpace_Rg[curlength] 					= RealSpaceRg
+	RealSpace_I0[curlength] 					= RealSpaceI0
+	RealSpace_MW[curlength] 					= PDDFCalculatedMW
+	RealSpaceSAXSMo2_MW[curlength] 			= SAXSMoW2MWRealSpacekDa	
+	RealSpace_PorodVolume[curlength] 		= RealSpacePorodVolumeA3
+	ConcForCals[curlength] 					= ConcentrationForCals
+	ScattLengthDensDiff[curlength] 			= ScattLengthDensDifference
+	GnomAlfaFinal[curlength] 				= GNOMAlfaResult
+	
+	RecipSpace_PorodVolume[curlength] 		= ReciprocalPorodVolumeA3
+	RecipSpace_I0[curlength] 				= ReciprocalSpaceI0
+	RecipSpace_Rg[curlength] 				= ReciprocalSpaceRg
+	RecipSpaceSAXSMoW2_MW[curlength] 		= SAXSMoW2MWRecSpacekDa
+	RecipSpaceRamboTainer_MW[curlength] 	= RamboTainerMWRecSpacekDa
+	MassDensityProtein[curlength] 			= MWMassDensityProtein
+
 	DoWindow IRB1_PDDFFitResultsTable
 	if(V_Flag)
 		DoWIndow/F IRB1_PDDFFitResultsTable
@@ -3430,29 +3471,32 @@ static Function IRB1_PDDFFitResultsTableFnct() : Table
 	endif
 	SetDataFolder root:PDDFFitResults:
 	Wave/T SampleName, MethodName
-	Wave PDDF_Rg, PDDF_I0, PDDF_MW, PDDF_Conc, PDDF_SLD,PorodInvariant, PorodTrueVolume, MassDensityProtein, InvariantPDDFCalculatedMW, GnomAlfaFinal
-	Edit/K=1/W=(860,772,1831,1334)/N=IRB1_PDDFFitResultsTable SampleName,PDDF_Rg, PDDF_I0, PDDF_MW, MethodName as "PDDF fitting results Table"
-	AppendToTable InvariantPDDFCalculatedMW, PorodInvariant, PorodTrueVolume, MassDensityProtein, PDDF_Conc, PDDF_SLD, GnomAlfaFinal
+	Wave RealSpace_Rg, RealSpace_I0, RealSpace_MW, RealSpaceSAXSMo2_MW, RealSpace_PorodVolume, ConcForCals, ScattLengthDensDiff
+	Wave GnomAlfaFinal, RecipSpace_PorodVolume, RecipSpace_I0, RecipSpace_Rg, RecipSpaceSAXSMoW2_MW, RecipSpaceRamboTainer_MW, MassDensityProtein
+	
+	Edit/K=1/W=(860,772,1831,1334)/N=IRB1_PDDFFitResultsTable SampleName,RealSpace_Rg, RealSpace_I0, RealSpace_MW, RealSpaceSAXSMo2_MW, MethodName as "PDDF fitting results Table"
+	AppendToTable RecipSpace_Rg, RecipSpace_I0, RecipSpaceSAXSMoW2_MW, RecipSpaceRamboTainer_MW, RecipSpace_PorodVolume, GnomAlfaFinal
+	AppendToTable RealSpace_PorodVolume, ConcForCals, ScattLengthDensDiff, RecipSpace_PorodVolume, MassDensityProtein
 	ModifyTable format(Point)=1,width(SampleName)=150,title(SampleName)="Sample Folder"
-	ModifyTable width(MethodName)=100,title(MethodName)="Method"
-	ModifyTable alignment(PDDF_Rg)=1,sigDigits(PDDF_Rg)=4,title(PDDF_Rg)="Rg [A]"
-	ModifyTable alignment(PDDF_I0)=1,sigDigits(PDDF_I0)=4,width(PDDF_I0)=100,title(PDDF_I0)="I0"
-	ModifyTable alignment(PDDF_MW)=1,sigDigits(PDDF_MW)=4,width(PDDF_MW)=104
-	ModifyTable title(PDDF_MW)="MW"
-	ModifyTable alignment(PDDF_Conc)=1,sigDigits(PDDF_Conc)=4
-	ModifyTable width(PDDF_Conc)=92,title(PDDF_Conc)="Conc [mg/ml]",alignment(PDDF_SLD)=1
-	ModifyTable sigDigits(PDDF_SLD)=4,width(PDDF_SLD)=110,title(PDDF_SLD)="SLD [10^10 cm^2]"
-	ModifyTable alignment(InvariantPDDFCalculatedMW)=1,sigDigits(InvariantPDDFCalculatedMW)=4,width(InvariantPDDFCalculatedMW)=104
-	ModifyTable title(InvariantPDDFCalculatedMW)="MW (Porod)"
-	ModifyTable alignment(PorodInvariant)=1,sigDigits(PorodInvariant)=4,width(PorodInvariant)=104
-	ModifyTable title(PorodInvariant)="Porod Invariant"
-	ModifyTable alignment(PorodTrueVolume)=1,sigDigits(PorodTrueVolume)=4,width(PorodTrueVolume)=104
-	ModifyTable title(PorodTrueVolume)="Porod Volume"
-	ModifyTable alignment(MassDensityProtein)=1,sigDigits(MassDensityProtein)=4,width(MassDensityProtein)=104
-	ModifyTable title(MassDensityProtein)="Density Protein"
-	ModifyTable alignment(GnomAlfaFinal)=1,sigDigits(GnomAlfaFinal)=4,width(GnomAlfaFinal)=104
-	ModifyTable title(GnomAlfaFinal)="GNOM ALfa res."
-
+//	ModifyTable width(MethodName)=100,title(MethodName)="Method"
+//	ModifyTable alignment(PDDF_Rg)=1,sigDigits(PDDF_Rg)=4,title(PDDF_Rg)="Rg [A]"
+//	ModifyTable alignment(PDDF_I0)=1,sigDigits(PDDF_I0)=4,width(PDDF_I0)=100,title(PDDF_I0)="I0"
+//	ModifyTable alignment(PDDF_MW)=1,sigDigits(PDDF_MW)=4,width(PDDF_MW)=104
+//	ModifyTable title(PDDF_MW)="MW"
+//	ModifyTable alignment(PDDF_Conc)=1,sigDigits(PDDF_Conc)=4
+//	ModifyTable width(PDDF_Conc)=92,title(PDDF_Conc)="Conc [mg/ml]",alignment(PDDF_SLD)=1
+//	ModifyTable sigDigits(PDDF_SLD)=4,width(PDDF_SLD)=110,title(PDDF_SLD)="SLD [10^10 cm^2]"
+//	ModifyTable alignment(InvariantPDDFCalculatedMW)=1,sigDigits(InvariantPDDFCalculatedMW)=4,width(InvariantPDDFCalculatedMW)=104
+//	ModifyTable title(InvariantPDDFCalculatedMW)="MW (Porod)"
+//	ModifyTable alignment(PorodInvariant)=1,sigDigits(PorodInvariant)=4,width(PorodInvariant)=104
+//	ModifyTable title(PorodInvariant)="Porod Invariant"
+//	ModifyTable alignment(PorodTrueVolume)=1,sigDigits(PorodTrueVolume)=4,width(PorodTrueVolume)=104
+//	ModifyTable title(PorodTrueVolume)="Porod Volume"
+//	ModifyTable alignment(MassDensityProtein)=1,sigDigits(MassDensityProtein)=4,width(MassDensityProtein)=104
+//	ModifyTable title(MassDensityProtein)="Density Protein"
+//	ModifyTable alignment(GnomAlfaFinal)=1,sigDigits(GnomAlfaFinal)=4,width(GnomAlfaFinal)=104
+//	ModifyTable title(GnomAlfaFinal)="GNOM ALfa res."
+//
 
 
 	SetDataFolder oldDf
@@ -3486,17 +3530,26 @@ static Function IRB1_PDDFSaveResultsToFldr()
 	NVAR DataQEndPoint = root:Packages:Irena:PDDFInterface:DataQEndPoint
 	NVAR DataQstartPoint = root:Packages:Irena:PDDFInterface:DataQstartPoint
 	//additional Porod results... 
-	NVAR MWPorodInvariant = root:Packages:Irena:PDDFInterface:MWPorodInvariant
+	//reciprocal space results, result of Guinier fitting (I(0) and Rg, Porod volume, invariant etc.)
 	NVAR ReciprocalPorodVolumeA3 = root:Packages:Irena:PDDFInterface:ReciprocalPorodVolumeA3
-	NVAR MWMassDensityProtein = root:Packages:Irena:PDDFInterface:MWMassDensityProtein
-	NVAR SAXSMoW2MWRecSpacekDa = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa
-	NVAR GNOMAlfaResult = root:Packages:Irena:PDDFInterface:GNOMAlfaResult
+	NVAR ReciprocalSpaceI0		 = root:Packages:Irena:PDDFInterface:ReciprocalSpaceI0
+	NVAR ReciprocalSpaceRg		 = root:Packages:Irena:PDDFInterface:ReciprocalSpaceRg
+	NVAR SAXSMoW2MWRecSpacekDa	 = root:Packages:Irena:PDDFInterface:SAXSMoW2MWRecSpacekDa
+	NVAR RamboTainerMWRecSpacekDa = root:Packages:Irena:PDDFInterface:RamboTainerMWRecSpacekDa
 
-	NVAR CalcRg=root:Packages:Irena:PDDFInterface:RealSpaceRg
-	NVAR CalcI0=root:Packages:Irena:PDDFInterface:RealSpaceI0
-	NVAR ConcentrationForCals=root:Packages:Irena:PDDFInterface:ConcentrationForCals
-	NVAR ScattLengthDensDifference=root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
-	NVAR PDDFCalculatedMW=root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	//Real space results, result of GNOM (I(0), Rg, Output extrapolated data, Porod volume, invariant etc.)
+	NVAR RealSpacePorodVolumeA3	 	= root:Packages:Irena:PDDFInterface:RealSpacePorodVolumeA3
+	NVAR RealSpaceI0 					= root:Packages:Irena:PDDFInterface:RealSpaceI0
+	NVAR RealSpaceRg 					= root:Packages:Irena:PDDFInterface:RealSpaceRg
+	NVAR SAXSMoW2MWRealSpacekDa		= root:Packages:Irena:PDDFInterface:SAXSMoW2MWRealSpacekDa
+	NVAR PDDFCalculatedMW 			= root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	NVAR GNOMAlfaResult 				= root:Packages:Irena:PDDFInterface:GNOMAlfaResult
+
+	NVAR PDDFCalculatedMW				=	root:Packages:Irena:PDDFInterface:PDDFCalculatedMW
+	NVAR ConcentrationForCals		=	root:Packages:Irena:PDDFInterface:ConcentrationForCals
+	NVAR ScattLengthDensDifference	=	root:Packages:Irena:PDDFInterface:ScattLengthDensDifference
+	NVAR MWMassDensityProtein 		= 	root:Packages:Irena:PDDFInterface:MWMassDensityProtein
+	
 	string MethodRun
 	NVAR PDDFUseGNOM = root:Packages:Irena:PDDFInterface:PDDFUseGNOM
 	NVAR PDDFuseMoore = root:Packages:Irena:PDDFInterface:PDDFuseMoore
@@ -3515,17 +3568,22 @@ static Function IRB1_PDDFSaveResultsToFldr()
 	string oldNote=note(pddfInputIntensity)
 	variable i
 	//SVAR FittingResults=root:Packages:Irena:PDDFInterface:FittingResults
-	string ResultsComment="PDDFMetod="+MethodRun+";"+"PDDFQmin="+num2str(DataQstart)+";"
-	ResultsComment="PDDFMW="+num2str(PDDFCalculatedMW)+";"
-	ResultsComment="PDDFRg="+num2str(CalcRg)+";"
-	ResultsComment="PDDFI0="+num2str(CalcI0)+";"
-	ResultsComment="PDDFConcentration="+num2str(ConcentrationForCals)+";"
-	ResultsComment="PDDFSLD="+num2str(ScattLengthDensDifference)+";"
-	ResultsComment="PDDFAlfaFinal="+num2str(GNOMAlfaResult)+";"
-	ResultsComment="PorodMW="+num2str(SAXSMoW2MWRecSpacekDa)+";"
-	ResultsComment="PorodInvariant="+num2str(MWPorodInvariant)+";"
-	ResultsComment="PorodVolume="+num2str(ReciprocalPorodVolumeA3)+";"
-	ResultsComment="PorodMassDensityProtein="+num2str(MWMassDensityProtein)+";"
+	string ResultsComment="PDDFMetod="+MethodRun+";PDDFQmin="+num2str(DataQstart)+";PDDFQmax="+num2str(DataQEnd)+";" 
+	ResultsComment="RealSpaceEstimatedMW="+num2str(PDDFCalculatedMW)+";"
+	ResultsComment="RealSpaceSAXSMoW2MW="+num2str(SAXSMoW2MWRealSpacekDa)+";"
+	ResultsComment="RealSpaceRg="+num2str(RealSpaceRg)+";"
+	ResultsComment="RealSpaceI0="+num2str(RealSpaceI0)+";"
+	ResultsComment="RealSpacePorodVolume="+num2str(RealSpacePorodVolumeA3)+";"
+	ResultsComment="AssumedConcentration="+num2str(ConcentrationForCals)+";"
+	ResultsComment="AssumedSLD="+num2str(ScattLengthDensDifference)+";"
+	ResultsComment="GNOMAlfaFinal="+num2str(GNOMAlfaResult)+";"
+	//and now real space parameters
+	ResultsComment="RecipSpaceSAXSMoW2MW="+num2str(SAXSMoW2MWRecSpacekDa)+";"
+	ResultsComment="RecipSpaceRamoTainerMW="+num2str(RamboTainerMWRecSpacekDa)+";"
+	ResultsComment="RecipSpaceRg="+num2str(RealSpaceRg)+";"
+	ResultsComment="RecipSpaceI0="+num2str(ReciprocalSpaceI0)+";"
+	ResultsComment="RecipSpacePorodVolume="+num2str(ReciprocalPorodVolumeA3)+";"
+	ResultsComment="AssumedDensityProtein="+num2str(MWMassDensityProtein)+";"
 	String NewWaveNote="PDDF analysis;"+date()+";"+time()+ResultsComment
 	NewWaveNote+=oldNote
 

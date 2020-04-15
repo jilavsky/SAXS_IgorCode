@@ -879,7 +879,9 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 				if(LinDataExist)
 					checkDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
 					if(V_Flag)
+						GetAxis/W=IR3J_LinDataDisplay /Q left
 						cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
+						SetAxis /W=IR3J_LinDataDisplay left V_min, 1.05*LinModelDataIntWave[DataQstartPoint]
 					endif
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
@@ -900,8 +902,8 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 						cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
 						tempMaxQ = LinModelDataQWave[DataQEndPoint]
 						SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
-						tempMaxQY = 0.8*LinModelDataIntWave[DataQstartPoint]
-						tempMinQY = 1.2*LinModelDataIntWave[DataQEndPoint]
+						tempMaxQY = 1.1*LinModelDataIntWave[DataQstartPoint]
+						tempMinQY = 0.9*LinModelDataIntWave[DataQEndPoint]
 						maxY = max(tempMaxQY, tempMinQY)
 						minY = min(tempMaxQY, tempMinQY)
 						//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
