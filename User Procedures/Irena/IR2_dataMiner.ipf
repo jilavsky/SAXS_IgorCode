@@ -285,7 +285,7 @@ Function IR3B_ButtonProc(ba) : ButtonControl
 			endif
 			if(cmpstr(ba.ctrlname,"GetHelp")==0)
 				//Open www manual with the right page
-				IN2G_OpenWebManual("Irena/DataManipulation.html")
+				IN2G_OpenWebManual("Irena/MetadataBrowser.html")
 			endif
 			break
 		case -1: // control being killed

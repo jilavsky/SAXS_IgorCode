@@ -324,7 +324,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IR2D_DWSGraphPanel=IR2D_DWSMainCheckVersion;IR1I_ImportOtherASCIIData=IR1I_MainCheckVersion2;IR1I_MainCheckVersionNexus=IR1I_ImportNexusCanSASData;"
 	WindowProcNames+="UnifiedEvaluationPanel=IR2U_MainCheckVersion;FractalAggregatePanel=IR3A_MainCheckVersion;TwoPhaseSystems=IR3T_MainCheckVersion;"
 	WindowProcNames+="POVPDBPanel=IR3P_MainCheckVersion;AnisotropicSystemsPanel=IR3N_MainCheckVersion;IR3L_MultiSamplePlotPanel=IR3L_MainCheckVersion;"
-	WindowProcNames+="IR1I_ImportBioSAXSASCIIData=IR1B_ImportASCIIMainCheckVersion;IRB1_DataManipulationPanel=IR1B_DataManMainCheckVersion;"
+	WindowProcNames+="IR1I_ImportBioSAXSASCIIData=IR1B_ImportASCIIMainCheckVersion;IRB1_DataManipulationPanel=IRB1_DataManMainCheckVersion;"
 	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;IR3B_MetadataBrowserPanel=IR3B_MainCheckVersion;"
   
 	IR2C_CheckWIndowsProcVersions(WindowProcNames)

@@ -237,7 +237,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
-static Function/S IR3L_GraphListPopupString()
+Function/S IR3L_GraphListPopupString()
 	// Create some waves for demo purposes
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	string list = WinList("MultiDataPlot_*", ";", "WIN:1" )
@@ -923,7 +923,7 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 			endif
 			if(cmpstr(ba.ctrlname,"GetHelp")==0)
 				//Open www manual with the right page
-				IN2G_OpenWebManual("Irena/Plotting.html")
+				IN2G_OpenWebManual("Irena/Plotting.html#plotting-tool-3")
 			endif
 			if(cmpstr(ba.ctrlname,"ExportGraphJPG")==0)
 				DoWindow/F $(GraphWindowName)

@@ -4135,6 +4135,7 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	ListOfGroups = S_HDF5ListGroup
 	For (i=0;i<ItemsInList(ListOfGroups);i+=1)
 		AttribList = NI1_HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
+		//version 0.1 of the standard...
 		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata") && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
 			PathToData = stringfromlist(i,ListOfGroups)
 			//print "Found location of data : " + PathToData
@@ -4171,12 +4172,56 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 					DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
 					DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
 					DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
+				endif			
+			endfor
+		endif
+		//this is generic NXcanSAS as avilable on https://github.com/canSAS-org/NXcanSAS_examples April 2020
+		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))
+			PathToData = stringfromlist(i,ListOfGroups)
+			//print "Found location of data : " + PathToData
+			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
+			ListOfDataSets = S_HDF5ListGroup
+			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
+				tempStr = NI1_HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
+				if(stringmatch(stringByKey("signal", tempStr),"I"))			//the group has signal=I attribute
+					TempDataPath = stringfromlist(j,ListOfDataSets)
+					tempStr2 = stringByKey("I_axes", tempStr)
+					if(stringmatch(tempStr2,"Q"))
+						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Q"
+					elseif(stringmatch(tempStr2,"Qx,Qy"))
+						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Qx"+";"
+						TempQPath += TempDataPath[0,strlen(TempDataPath)-2]+"Qy"
+					else
+						abort "Problem identifying Q axes"
+					endif
+					if(StringMatch(ListOfDataSets,"*Mask*"))
+						TempMaskPath = TempDataPath[0,strlen(TempDataPath)-2]+"Mask"
+					endif
+					if(StringMatch(ListOfDataSets,"*Idev*"))
+						TempIdevPath = TempDataPath[0,strlen(TempDataPath)-2]+"Idev"
+					endif
+					if(StringMatch(ListOfDataSets,"*AzimAngles*"))
+						TempAzAPath = TempDataPath[0,strlen(TempDataPath)-2]+"AzimAngles"
+					endif
+					if(StringMatch(ListOfDataSets,"*UnbinnedQx*"))
+						OrigQxPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQx"
+					endif
+					if(StringMatch(ListOfDataSets,"*UnbinnedQy*"))
+						OrigQyPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQy"
+					endif
+					DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
+					DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
+					DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
 
 				endif			
 			endfor
 		endif
+
 	endfor
 	HDF5CloseFile fileID  
+	if(strlen(DataIdentification)<5)
+		abort "Do not understand canSAS version/data in NI1_ReadNexusCanSAS"
+	endif
 	return DataIdentification
 end
 //*************************************************************************************************

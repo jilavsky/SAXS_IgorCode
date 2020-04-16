@@ -295,7 +295,7 @@ Function IRB1_ButtonProc(ba) : ButtonControl
 				IRB1_PreviewDataFnct()
 			endif
 			if(stringmatch(ba.ctrlName,"GetHelp"))
-					IN2G_OpenWebManual("Irena/ImportDataBio.html")				//fix me!!			
+				IN2G_OpenWebManual("Irena/bioSAXS.html#import-biosaxs-ascii")				//fix me!!			
 			endif
 			
 			break
@@ -538,7 +538,7 @@ static Function IRB1_DataManPanelFnct()
 	UseResults = 0
 	UseIndra2Data = 0
 	UseQRSData = 1
-	Button GetHelp,pos={335,50},size={80,15},fColor=(65535,32768,32768), proc=IRB1_DataManButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+	Button GetHelp,pos={430,50},size={80,15},fColor=(65535,32768,32768), proc=IRB1_DataManButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
 
 
@@ -738,7 +738,7 @@ Function IRB1_DataManButtonProc(ba) : ButtonControl
 				IRB1_DataManScaleMany()
 			endif
 			if(stringmatch(ba.ctrlName,"GetHelp"))
-				IN2G_OpenWebManual("Irena/ImportData.html")				//fix me!!			
+				IN2G_OpenWebManual("Irena/bioSAXS.html#average-subtract-scale")				//fix me!!			
 			endif
 
 			break

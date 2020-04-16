@@ -105,6 +105,8 @@ Function IR3J_SimpleFitsPanelFnct()
 	SetVariable DataBackground,pos={280,130},size={170,15}, proc=IR3J_SetVarProc,title="Background    "
 	Setvariable DataBackground, variable=root:Packages:Irena:SimpleFits:DataBackground, limits={-inf,inf,0}
 
+	Button GetHelp,pos={430,50},size={80,15},fColor=(65535,32768,32768), proc=IR3J_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
+
 	PopupMenu SimpleModel,pos={280,175},size={200,20},fStyle=2,proc=IR3J_PopMenuProc,title="Model to fit : "
 	SVAR SimpleModel = root:Packages:Irena:SimpleFits:SimpleModel
 	PopupMenu SimpleModel,mode=1,popvalue=SimpleModel,value= #"root:Packages:Irena:SimpleFits:ListOfSimpleModels" 
@@ -721,6 +723,9 @@ Function IR3J_ButtonProc(ba) : ButtonControl
 				IR1_CreateResultsNbk()
 			endif
 
+			if(stringmatch(ba.ctrlName,"GetHelp"))
+				IN2G_OpenWebManual("Irena/bioSAXS.html#basic-fits")				//fix me!!			
+			endif
 
 			
 			break
@@ -881,7 +886,7 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 					if(V_Flag)
 						GetAxis/W=IR3J_LinDataDisplay /Q left
 						cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
-						SetAxis /W=IR3J_LinDataDisplay left V_min, 1.05*LinModelDataIntWave[DataQstartPoint]
+						SetAxis /W=IR3J_LinDataDisplay left V_min, 1.0*LinModelDataIntWave[DataQstartPoint]
 					endif
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
@@ -902,8 +907,8 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 						cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
 						tempMaxQ = LinModelDataQWave[DataQEndPoint]
 						SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
-						tempMaxQY = 1.1*LinModelDataIntWave[DataQstartPoint]
-						tempMinQY = 0.9*LinModelDataIntWave[DataQEndPoint]
+						tempMaxQY = 1.0*LinModelDataIntWave[DataQstartPoint]
+						tempMinQY = 1*LinModelDataIntWave[DataQEndPoint]
 						maxY = max(tempMaxQY, tempMinQY)
 						minY = min(tempMaxQY, tempMinQY)
 						//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
