@@ -495,7 +495,8 @@ end
 
 Proc IR2P_FitPowerLawWithCursors()
 
-	DFref oldDf= GetDataFolderDFR()
+	
+	string oldDf= GetDataFolder(1)
 
 	NewDataFolder/O/S root:Packages:FittingData
 	
