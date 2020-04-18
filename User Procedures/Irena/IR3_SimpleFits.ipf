@@ -1,12 +1,15 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=1.11
-constant IR3JversionNumber = 0.3			//Data merging panel version number
+constant IR3JversionNumber = 0.3			//Simple Fit panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
+
+constant SimpleFitsLinPlotMaxScale = 1.07
+constant SimpleFitsLinPlotMinScale = 0.8
 
 
 //1.1 combined this ipf with "Simple fits models"
@@ -139,7 +142,7 @@ Function IR3J_SimpleFitsPanelFnct()
 	Button FitSelectionDataSet,pos={280,480},size={180,20}, proc=IR3J_ButtonProc,title="Fit (All) Selected Data", help={"Fit all data selected in listbox"}
 
 	SetVariable AchievedChiSquare,pos={270,510},size={220,15}, noproc,title="Achieved chi-square"
-	Setvariable AchievedChiSquare, variable=root:Packages:Irena:SimpleFits:AchievedChiSquare, disable=2
+	Setvariable AchievedChiSquare, variable=root:Packages:Irena:SimpleFits:AchievedChiSquare, disable=2, limits={0,inf,0}, format="%3.2f"
 
 	Checkbox SaveToNotebook, pos={280,537},size={76,14},title="Record to Notebook?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToNotebook, help={"Record results in notebook"}
 	Checkbox SaveToWaves, pos={280,552},size={76,14},title="Record to Waves?", noproc, variable=root:Packages:Irena:SimpleFits:SaveToWaves, help={"Record results in waves, can then create a table"}
@@ -557,18 +560,21 @@ Function IR3J_AppendDataToGraphModel()
 		strswitch(SimpleModel)	// string switch
 			case "Guinier":			// execute if case matches expression
 					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					ModifyGraph /W=IR3J_LinDataDisplay  mode(LinModelDataIntWave)=3,marker(LinModelDataIntWave)=8
 					SetAxis/A/W=IR3J_LinDataDisplay 
 					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Intensity)"
 					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 				break		// exit from switch
 			case "Guinier rod":			// execute if case matches expression
 					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					ModifyGraph /W=IR3J_LinDataDisplay  mode(LinModelDataIntWave)=3,marker(LinModelDataIntWave)=8
 					SetAxis/A/W=IR3J_LinDataDisplay 
 					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Q*Intensity)"
 					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
 				break		// exit from switch
 			case "Guinier sheet":			// execute if case matches expression
 					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					ModifyGraph /W=IR3J_LinDataDisplay  mode(LinModelDataIntWave)=3,marker(LinModelDataIntWave)=8
 					SetAxis/A/W=IR3J_LinDataDisplay 
 					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"ln(Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"*Intensity)"
 					Label /W=IR3J_LinDataDisplay bottom "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Q\\S2\\M\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"[A\\S-2\\M"+"\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"]"
@@ -587,6 +593,7 @@ Function IR3J_AppendDataToGraphModel()
 				//				break		// exit from switch
 			case "Porod":	// execute if case matches expression
 					ModifyGraph /W=IR3J_LinDataDisplay log=0, mirror(bottom)=1
+					ModifyGraph /W=IR3J_LinDataDisplay mode(LinModelDataIntWave)=3,marker(LinModelDataIntWave)=8
 					SetAxis/A/W=IR3J_LinDataDisplay
 					SetAxis/W=IR3J_LinDataDisplay left 0,*
 					Label /W=IR3J_LinDataDisplay left "\\Z"+IN2G_LkUpDfltVar("AxisLabelSize")+"Int * Q\\S4"
@@ -598,13 +605,22 @@ Function IR3J_AppendDataToGraphModel()
 		//and set limtis on axis
 		variable tempMaxQ
 		tempMaxQ = LinModelDataQWave[DataQEndPoint]
-		SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
+		SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*SimpleFitsLinPlotMaxScale
 		variable tempMaxQY, tempMinQY, maxY, minY
-		tempMaxQY = 0.8*LinModelDataIntWave[DataQstartPoint]
-		tempMinQY = 1.2*LinModelDataIntWave[DataQEndPoint]
+		tempMaxQY = LinModelDataIntWave[DataQstartPoint]
+		tempMinQY = LinModelDataIntWave[DataQEndPoint]
 		maxY = max(tempMaxQY, tempMinQY)
 		minY = min(tempMaxQY, tempMinQY)
-		//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
+		if(maxY>0)
+			maxY*=SimpleFitsLinPlotMaxScale
+		else
+			maxY*=SimpleFitsLinPlotMinScale
+		endif
+		if(minY>0)
+			minY*=SimpleFitsLinPlotMinScale
+		else
+			minY*=SimpleFitsLinPlotMaxScale
+		endif
 		SetAxis/W=IR3J_LinDataDisplay left minY, maxY
 	else
 		KillWindow/Z IR3J_LinDataDisplay
@@ -884,9 +900,30 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 				if(LinDataExist)
 					checkDisplayed /W=IR3J_LinDataDisplay LinModelDataIntWave
 					if(V_Flag)
-						GetAxis/W=IR3J_LinDataDisplay /Q left
+						//GetAxis/W=IR3J_LinDataDisplay /Q left
 						cursor /W=IR3J_LinDataDisplay A, LinModelDataIntWave, DataQstartPoint
-						SetAxis /W=IR3J_LinDataDisplay left V_min, 1.0*LinModelDataIntWave[DataQstartPoint]
+						tempMaxQ = LinModelDataQWave[DataQEndPoint]
+						tempMaxQY = LinModelDataIntWave[DataQstartPoint]
+						tempMinQY = LinModelDataIntWave[DataQEndPoint]
+						maxY = max(tempMaxQY, tempMinQY)
+						minY = min(tempMaxQY, tempMinQY)
+						if(maxY>0)
+							maxY*=SimpleFitsLinPlotMaxScale
+						else
+							maxY*=SimpleFitsLinPlotMinScale
+						endif
+						if(minY>0)
+							minY*=SimpleFitsLinPlotMinScale
+						else
+							minY*=SimpleFitsLinPlotMaxScale
+						endif
+						if(maxY>0)
+							maxY*=SimpleFitsLinPlotMaxScale
+						else
+							maxY*=SimpleFitsLinPlotMinScale
+						endif
+						SetAxis /W=IR3J_LinDataDisplay left minY, maxY
+						SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*SimpleFitsLinPlotMaxScale
 					endif
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
@@ -906,13 +943,23 @@ static Function IR3J_SyncCursorsTogether(traceName,CursorName,PointNumber)
 					if(V_Flag)
 						cursor /W=IR3J_LinDataDisplay B, LinModelDataIntWave, DataQEndPoint
 						tempMaxQ = LinModelDataQWave[DataQEndPoint]
-						SetAxis/W=IR3J_LinDataDisplay bottom 0,tempMaxQ*1.5
-						tempMaxQY = 1.0*LinModelDataIntWave[DataQstartPoint]
-						tempMinQY = 1*LinModelDataIntWave[DataQEndPoint]
+						tempMaxQY = LinModelDataIntWave[DataQstartPoint]
+						tempMinQY = LinModelDataIntWave[DataQEndPoint]
 						maxY = max(tempMaxQY, tempMinQY)
 						minY = min(tempMaxQY, tempMinQY)
-						//SetAxis/W=IR3J_LinDataDisplay left 0.5*tempMinQY,tempMaxQY*1.5
+						if(maxY>0)
+							maxY*=SimpleFitsLinPlotMaxScale
+						else
+							maxY*=SimpleFitsLinPlotMinScale
+						endif
+						if(minY>0)
+							minY*=SimpleFitsLinPlotMinScale
+						else
+							minY*=SimpleFitsLinPlotMaxScale
+						endif
 						SetAxis/W=IR3J_LinDataDisplay left minY, maxY
+						GetAxis/W=IR3J_LinDataDisplay/Q bottom
+						SetAxis/W=IR3J_LinDataDisplay bottom V_min, LinModelDataQWave[DataQEndPoint*SimpleFitsLinPlotMaxScale]
 					endif
 				endif
 			elseif(StringMatch(traceName, "LinModelDataIntWave" ))
@@ -948,11 +995,11 @@ static Function IR3J_FitGuinier(which)
 	Redimension/N=2 T_Constraints
 	Wave/Z CursorAWave = CsrWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave/Z CursorBWave = CsrWaveRef(B, "IR3J_LogLogDataDisplay")
+	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
+		Abort "Daat do not exist or cursors are not properly set on same wave"
+	endif
 	Wave CursorAXWave= CsrXWaveRef(A, "IR3J_LogLogDataDisplay")
 	Wave OriginalDataErrorWave=root:Packages:Irena:SimpleFits:OriginalDataErrorWave
-	if(!WaveExists(CursorAWave)||!WaveExists(CursorBWave))
-		Abort "Cursors are not properly set on same wave"
-	endif
 	//make a good starting guesses:
 	Guinier_I0 = CursorAXWave[DataQstartPoint]
 	Guinier_Rg = pi/(DataQEnd/2)
@@ -965,52 +1012,80 @@ static Function IR3J_FitGuinier(which)
 
 	LocalEwave[0]=(Guinier_I0/20)
 	LocalEwave[1]=(Guinier_Rg/20)
+	variable QminFit, QmaxFit
+	QminFit = CursorAXWave[DataQstartPoint]
+	QmaxFit = CursorAXWave[DataQEndPoint]
 	variable/g V_FitError
+	
 	V_FitError=0			//This should prevent errors from being generated
 	strswitch(which)		// string switch
 		case "Sphere":		// execute if case matches expression
-			FuncFit IR1_GuinierFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
+			FuncFit IR1_GuinierFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
 			break					// exit from switch
 		case "Rod":	// execute if case matches expression
-			FuncFit IR1_GuinierRodFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
+			FuncFit IR1_GuinierRodFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
 			break
 		case "Sheet":	// execute if case matches expression
-			FuncFit IR1_GuinierSheetFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
+			FuncFit IR1_GuinierSheetFit W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /C=T_Constraints /W=OriginalDataErrorWave /I=1
 			break
 		default:			// optional default expression executed
 			abort
 	endswitch
-						//if (FitUseErrors && WaveExists(ErrorWave))
-						//		else - no error bars Fit commands... ... 
-						//FuncFit IR1_GuinierFit W_coef CursorAWave[pcsr(A),pcsr(B)] /X=CursorAXWave /D /C=T_Constraints 
-						//	endif
 	if (V_FitError!=0)	//there was error in fitting
 		RemoveFromGraph $("fit_"+NameOfWave(CursorAWave))
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
 	Wave W_sigma
-	string TagText
-
+	string TagText, TagTextLin
+	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+	string QminRg, QmaxRg, AchiCHiStr
+	sprintf QminRg, "%2.2f",(W_coef[1]*QminFit)
+	sprintf QmaxRg, "%2.2f",(W_coef[1]*QmaxFit)
+	sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 	strswitch(which)		// string switch
 		case "Sphere":		// execute if case matches expression
-			TagText = "Fitted Guinier  "+"Int = G*exp(-q^2*Rg^2/3))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
-			TagText+="\r chi-square = "+num2str(V_chisq)
+			TagText = "Fited Guinier : I(Q) = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/3)\rI(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
+			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
+			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
+			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break					// exit from switch
 		case "Rod":	// execute if case matches expression
-			TagText = "Fitted Guinier  "+"Int*Q = G*exp(-q^2*Rg^2/2))"+" \r G = "+num2str(W_coef[0])+"\r Rc = "+num2str(W_coef[1])
-			TagText+="\r chi-square = "+num2str(V_chisq)
+//			TagText = "Fitted Guinier  "+"Int*Q = G*exp(-q^2*Rg^2/2))"+" \r G = "+num2str(W_coef[0])+"\r Rc = "+num2str(W_coef[1])
+//			TagText+="\rchi-square = "+num2str(V_chisq)
+			TagText = "Fited Guinier : I(Q)*Q = I(0)*exp(-q\\S2\\M*Rg\\S2\\M/2)\rI(0) = "+num2str(W_coef[0])+";   Rc = "+num2str(W_coef[1])
+			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
+			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
+			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\t\tRc = "+num2str(W_coef[1])
+			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
+			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break
 		case "Sheet":	// execute if case matches expression
-			TagText = "Fitted Guinier  "+"Int*Q^2 = G*exp(-q^2*Rg^2))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
-			TagText+="\r Thickness = "+num2str(W_coef[1]*sqrt(12))
-			TagText+="\r chi-square = "+num2str(V_chisq)
+//			TagText = "Fitted Guinier  "+"Int*Q^2 = G*exp(-q^2*Rg^2))"+" \r G = "+num2str(W_coef[0])+"\r Rg = "+num2str(W_coef[1])
+//			TagText+="\r Thickness = "+num2str(W_coef[1]*sqrt(12))
+//			TagText+="\r chi-square = "+num2str(V_chisq)
+			TagText = "Fited Guinier : I(Q)*Q\S2\M = I(0)*exp(-q\\S2\\M*Rg\\S2\\M)\rI(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagText+="\rThickness = "+num2str(W_coef[1]*sqrt(12))
+			TagText+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
+			TagText+="\rχ\\S2\\M  = "+AchiCHiStr
+			TagTextLin = "I(0) = "+num2str(W_coef[0])+"\t\tRg = "+num2str(W_coef[1])
+			TagTextLin+="\rThickness = "+num2str(W_coef[1]*sqrt(12))
+			TagTextLin+="\rQ\Bmin\MRg = "+QminRg+"\tQ\Bmax\MRg = "+QmaxRg
+			TagTextLin +="\rχ\\S2\\M  = "+AchiCHiStr
 			break
 		default:			// optional default expression executed
 			abort
 	endswitch
 	string TagName= "GuinierFit" //UniqueName("GuinierFit",14,0,"IR3J_LogLogDataDisplay")
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
+	
+	DoWindow IR3J_LinDataDisplay
+	if(V_Flag)
+		Wave/Z CursorAWaveLin = CsrWaveRef(A, "IR3J_LinDataDisplay")	
+		Tag/C/W=IR3J_LinDataDisplay/N=$(TagName)/L=2/X=15.00/Y=15.00  $NameOfWave(CursorAWaveLin), ((DataQstartPoint + DataQEndPoint)/2),TagTextLin	
+	endif
 	
 	Guinier_I0=W_coef[0] 	//G
 	Guinier_Rg=W_coef[1]	//Rg
@@ -1104,26 +1179,24 @@ static Function IR3J_FitPorod()
 	LocalEwave[1]=(DataBackground/20)
 
 	variable/g V_FitError=0			//This should prevent errors from being generated
-//		if (FitUseErrors && WaveExists(ErrorWave))
 	FuncFit PorodInLogLog W_coef CursorAWave[DataQstartPoint,DataQEndPoint] /X=CursorAXWave /D /C=T_Constraints /W=OriginalDataErrorWave /I=1
-//		else
-//			FuncFit PorodInLogLog W_coef CursorAWave[pcsr(A),pcsr(B)] /X=CursorAXWave /D /C=T_Constraints			
-//		endif
 	if (V_FitError!=0)	//there was error in fitting
 		RemoveFromGraph $("fit_"+NameOfWave(CursorAWave))
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
 	Wave W_sigma
+	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
+	string QminRg, QmaxRg, AchiCHiStr
+	sprintf AchiCHiStr, "%2.2f",(AchievedChiSquare)
 	string TagText
-	TagText = "Fitted Porod  "+"Int = PC * Q^(-4) + background"+" \r PC = "+num2str(W_coef[0])+"\r Background = "+num2str(W_coef[1])
-	TagText+="\r chi-square = "+num2str(V_chisq)
+	TagText = "Fitted Porod  "+"I(Q) = P\BC\M * Q\S-4\M + background"+" \r P\BC\M = "+num2str(W_coef[0])+"\r Background = "+num2str(W_coef[1])
+	TagText +="\rχ\\S2\\M  = "+AchiCHiStr
 	string TagName= "PorodFit" 
 	Tag/C/W=IR3J_LogLogDataDisplay/N=$(TagName)/L=2/X=-15.00/Y=-15.00  $NameOfWave(CursorAWave), ((DataQstartPoint + DataQEndPoint)/2),TagText	
 	Porod_Constant=W_coef[0] 	//PC
 	DataBackground=W_coef[1]	//Background
 	SetDataFolder oldDf
-
 end
 
 //**********************************************************************************************************
@@ -1273,6 +1346,7 @@ static Function IR3J_FitSpheroid()
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
 	Wave W_sigma
+	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
 	string TagText
 	TagText = "Fitted Spheroid Form Factor   \r"+"Int=Scale*SpheroidFF(Q,R,beta)+bck"+" \r Radius [A] = "+num2str(W_coef[1])+" \r Aspect ratio = "+num2str(W_coef[2])+" \r Scale = "+num2str(W_coef[0])
 	TagText+="\r Background = "+num2str(W_coef[3])
@@ -1343,16 +1417,18 @@ static Function IR3J_CalculateModel()
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
 
 	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataQWave, ModelLogLogQ, ModelLogLogInt, NormalizedResidualLogLogQ
-	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, NormalizedResidualLogLog
+	Duplicate/O/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, NormalizedResidualLogLog, ZeroLineResidualLogLog
+	ZeroLineResidualLogLog = 0
 	//do we need linearized data? 
 	variable UsingLinearizedModel=0
 	if(WaveExists(LinModelDataIntWave))
 		UsingLinearizedModel=1
 		Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataQWave, ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ
-		Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataIntWave, NormalizedResidualLinLin
+		Duplicate/O/R=[DataQstartPoint,DataQEndPoint] LinModelDataIntWave, NormalizedResidualLinLin, ZeroLineResidualLinLin
+		ZeroLineResidualLinLin = 0
 	else
 		UsingLinearizedModel=0
-		KillWaves/Z ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ, NormalizedResidualLinLin
+		KillWaves/Z ModelLlinLinQ2, ModelLinLinLogInt, NormalizedResidualLinLinQ, NormalizedResidualLinLin, ZeroLineResidualLinLin
 	endif
 
 	Duplicate/Free/R=[DataQstartPoint,DataQEndPoint] OriginalDataIntWave, TempOriginalIntensity
@@ -1404,17 +1480,23 @@ static Function IR3J_CalculateModel()
 	NormalizedResidualLogLog = (TempOriginalIntensity-ModelLogLogInt)/TempOriginalError
 	Duplicate/Free NormalizedResidualLogLog, ChiSquareTemp
 	ChiSquareTemp = ((TempOriginalIntensity-ModelLogLogInt)/TempOriginalError)^2
-	AchievedChiSquare = (sum(ChiSquareTemp))
+	AchievedChiSquare = (sum(ChiSquareTemp)/numpnts(ChiSquareTemp))
 	CheckDisplayed /W=IR3J_LogLogDataDisplay ModelLogLogInt
 	if(!V_flag)
 		AppendToGraph /W=IR3J_LogLogDataDisplay  ModelLogLogInt  vs ModelLogLogQ
-		ModifyGraph/W=IR3J_LogLogDataDisplay  lsize(ModelLogLogInt)=2,rgb(ModelLogLogInt)=(0,0,0)
+		ModifyGraph/W=IR3J_LogLogDataDisplay  lsize(ModelLogLogInt)=3,rgb(ModelLogLogInt)=(0,0,0)
 	endif
 	CheckDisplayed /W=IR3J_LogLogDataDisplay NormalizedResidualLogLog
 	if(!V_flag)
-		AppendToGraph /W=IR3J_LogLogDataDisplay/R  NormalizedResidualLogLog  vs NormalizedResidualLogLogQ
-		ModifyGraph/W=IR3J_LogLogDataDisplay  mode(NormalizedResidualLogLog)=2,lsize(NormalizedResidualLogLog)=3,rgb(NormalizedResidualLogLog)=(0,0,0)
-		Label/W=IR3J_LogLogDataDisplay right "Normalized residuals"
+			//ModifyGraph /W=IR3J_LogLogDataDisplay standoff(left)=0,axisEnab(left)={0,1}
+			AppendToGraph /W=IR3J_LogLogDataDisplay /L=VertCrossing NormalizedResidualLogLog vs NormalizedResidualLogLogQ
+			ModifyGraph/W=IR3J_LogLogDataDisplay mode(NormalizedResidualLogLog)=2,rgb(NormalizedResidualLogLog)=(0,0,0)
+			ModifyGraph/W=IR3J_LogLogDataDisplay  mirror=1,nticks(VertCrossing)=0,axisEnab(VertCrossing)={0,0.1},freePos(VertCrossing)=0
+			SetAxis/W=IR3J_LogLogDataDisplay /A/E=2 VertCrossing
+			ModifyGraph/W=IR3J_LogLogDataDisplay standoff=0
+			//Label/W=IR3J_LogLogDataDisplay VertCrossing "Norm res"
+			AppendToGraph /W=IR3J_LogLogDataDisplay /L=VertCrossing ZeroLineResidualLogLog vs NormalizedResidualLogLogQ
+			ModifyGraph/W=IR3J_LogLogDataDisplay rgb(ZeroLineResidualLogLog)=(0,0,0)
 	endif
 	//now same, if we are using linearized data
 	if(UsingLinearizedModel)
@@ -1427,9 +1509,17 @@ static Function IR3J_CalculateModel()
 	
 		CheckDisplayed /W=IR3J_LinDataDisplay NormalizedResidualLinLin
 		if(!V_flag)
-			AppendToGraph /W=IR3J_LinDataDisplay/R  NormalizedResidualLinLin  vs NormalizedResidualLinLinQ
-			ModifyGraph/W=IR3J_LinDataDisplay mode(NormalizedResidualLinLin)=2,lsize(NormalizedResidualLinLin)=3,rgb(NormalizedResidualLinLin)=(0,0,0)
-			Label/W=IR3J_LinDataDisplay right "Normalized residuals"
+			//AppendToGraph /W=IR3J_LinDataDisplay/R  NormalizedResidualLinLin  vs NormalizedResidualLinLinQ
+			//ModifyGraph/W=IR3J_LinDataDisplay mode(NormalizedResidualLinLin)=2,lsize(NormalizedResidualLinLin)=3,rgb(NormalizedResidualLinLin)=(0,0,0)
+			//Label/W=IR3J_LinDataDisplay right "Norm res"
+			//ModifyGraph /W=IR3J_LinDataDisplay standoff(left)=0,axisEnab(left)={0,1}
+			AppendToGraph /W=IR3J_LinDataDisplay /L=VertCrossing NormalizedResidualLinLin vs NormalizedResidualLinLinQ
+			ModifyGraph/W=IR3J_LinDataDisplay mode(NormalizedResidualLinLin)=2,rgb(NormalizedResidualLinLin)=(0,0,0)
+			ModifyGraph/W=IR3J_LinDataDisplay  mirror=1,nticks(VertCrossing)=0,axisEnab(VertCrossing)={0,0.1},freePos(VertCrossing)=0
+			SetAxis/W=IR3J_LinDataDisplay /A/E=2 VertCrossing
+			ModifyGraph/W=IR3J_LinDataDisplay standoff=0
+			AppendToGraph /W=IR3J_LinDataDisplay /L=VertCrossing ZeroLineResidualLinLin vs NormalizedResidualLinLinQ
+			ModifyGraph /W=IR3J_LinDataDisplay rgb(ZeroLineResidualLinLin)=(0,0,0)
 		endif
 
 	endif

@@ -738,7 +738,7 @@ Function IRB1_DataManButtonProc(ba) : ButtonControl
 				IRB1_DataManScaleMany()
 			endif
 			if(stringmatch(ba.ctrlName,"GetHelp"))
-				IN2G_OpenWebManual("Irena/bioSAXS.html#average-subtract-scale")				//fix me!!			
+				IN2G_OpenWebManual("Irena/bioSAXS.html#biosaxs-pddf")				//fix me!!			
 			endif
 
 			break
@@ -1540,7 +1540,7 @@ Function IRB1_PDDFPanelFnct()
 	TitleBox PDDFInstructions8 title="\Zr100Optional PDDF input parameters : ",size={500,15},pos={270,210},frame=0,fColor=(0,0,65535),labelBack=0
 	checkbox GnomForceRmin0, pos={300,235}, title="Rmin==0?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:GnomForceRmin0, help={"Force Rmin=0 for Gnom"}
 	checkbox GnomForceRmax0, pos={440,235}, title="Rmax==0?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:GnomForceRmax0, help={"Force Dmax=0 for Gnom"}
-	SetVariable GnomAlfaValue,pos={270,260},size={140,15}, noproc,title="Alfa in = ",variable=root:Packages:Irena:PDDFInterface:GnomAlfaValue, limits={0,5,0.1}, help={"Alfa value estimate for Gnom, if you know. ) for automatic"}
+	SetVariable GnomAlfaValue,pos={270,260},size={140,15}, noproc,title="Alfa in = ",variable=root:Packages:Irena:PDDFInterface:GnomAlfaValue, limits={0,5,0.1}, help={"Alfa value estimate for Gnom, if you know. Use 0 for automatic"}
 	//common settings
 	SetVariable NumBinsInR,pos={440,260},size={140,15}, noproc,title="R pnts in =",variable=root:Packages:Irena:PDDFInterface:NumBinsInR, limits={0,1000,20}, help={"Set to specific number (100) or leave to 0 for automatic"}
 	//Dmax
@@ -1553,7 +1553,9 @@ Function IRB1_PDDFPanelFnct()
 	Button RunPDDFonData,pos={300,350},size={200,20}, proc=IRB1_PDDFButtonProc,title="Run PDDF on current data", help={"Run PDDF method of yoru choice on these data"}
 	Button RunSequenceofPDDF,pos={300,375},size={200,20}, proc=IRB1_PDDFButtonProc,title="Run PDDF on all selected", help={"Run GNOM on these data"}
 	//here we need some output values from GNOM, need space at leats for Alfa
-	SetVariable GNOMAlfaResult,pos={270,400},size={160,15}, noproc,title="GNOM Alfa out =",variable=root:Packages:Irena:PDDFInterface:GNOMAlfaResult,disable=0, noedit=1,limits={0,inf,0},frame=0
+	SetVariable GNOMAlfaResult,pos={330,410},size={160,15}, noproc,title="GNOM Alfa out =",variable=root:Packages:Irena:PDDFInterface:GNOMAlfaResult,disable=0, noedit=1,limits={0,inf,0},frame=0, help={"Alfa value reported by GNOM as output value"}
+	SetVariable GNOMDmaxOut,pos={330,430},size={160,15}, noproc,title="GNOM Dmax out =",variable=root:Packages:Irena:PDDFInterface:GNOMDmaxOut,disable=0, noedit=1,limits={0,inf,0},frame=0, help={"Dmax value reported by GNOM as output value"}
+
 
 	//TAB 1
 	//MW controls
@@ -1569,6 +1571,9 @@ Function IRB1_PDDFPanelFnct()
 	checkbox RamboTainerAutoSetBckg, pos={270,330}, title="Auto Find Backg.?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerAutoSetBckg, mode=0, help={"Find Background AUtomatically background from I(Q)"}
 	checkbox RamboTainerSubtractFlatBackground, pos={420,330}, title="Subtract Background?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerSubtractFlatBackground, mode=0, help={"Subtract background from I(Q)"}
 	NVAR RamboTainerFlatBackground=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground
+	if(RamboTainerFlatBackground==0)
+		RamboTainerFlatBackground = 0.0001
+	endif
 	SetVariable RamboTainerFlatBackground,pos={270,355},size={250,18}, bodyWidth=90, proc=IRB1_PDDFSetVarProc,title="Flat Background = ", variable=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground, limits={0.00,inf,RamboTainerFlatBackground*0.01},frame=1, help={"Flat Background"}, format="%4.2f"
 
 	TitleBox PDDFInstructions12 title="\Zr120Real Space/PDDF (GNOM) Mol. Weight Conc.",size={330,15},pos={270,390},frame=0,fColor=(0,0,65535),labelBack=0
@@ -1811,6 +1816,7 @@ static Function IRB1_PDDFFixTabControls(whichTab)
 	Button RunPDDFonData, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=0)
 	Button RunSequenceofPDDF, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=0)
 	SetVariable GNOMAlfaResult, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=0)
+	SetVariable GNOMDmaxOut, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=0)
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -2081,6 +2087,8 @@ Function IRB1_PDDFCalcSAXSMoW2()
 	Wave OriginalIntensity=root:Packages:Irena:PDDFInterface:Intensity
 	Wave OriginalQvector=root:Packages:Irena:PDDFInterface:Q_vec
 	Wave OriginalError=root:Packages:Irena:PDDFInterface:Errors
+	NVAR DataQstart = root:Packages:Irena:PDDFInterface:DataQstart
+	NVAR DataQend = root:Packages:Irena:PDDFInterface:DataQend
 	//now method 1 how to calcualet MW:	
 	//calculate Molecular weight using SAXSMol2 method... 
 	//now, calculate invariant.
@@ -2158,13 +2166,20 @@ Function IRB1_PDDFCalcSAXSMoW2()
 	endif
 	//this ends calculations for SAXSMoW2 ... 
 	Wave/Z FitScatteringProfile=root:Packages:Irena:PDDFInterface:FitScatteringProfile
+	NVAR DataQstart = root:Packages:Irena:PDDFInterface:DataQstart
+	NVAR DataQend = root:Packages:Irena:PDDFInterface:DataQend
+	string QminRg, QmaxRg
+	sprintf QminRg, "%2.2f",(ReciprocalSpaceRg*DataQstart)
+	sprintf QmaxRg, "%2.2f",(ReciprocalSpaceRg*DataQend)
+
 	if(WaveExists(FitScatteringProfile))
 		CheckDisplayed /W=IRB1_PDDFInterfacePanel#DataDisplay FitScatteringProfile
 		if(V_Flag)
-			string Tagtext="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"SAXSMoW2 Rg [A] = "+num2str(ReciprocalSpaceRg)+"\r"
+			string Tagtext="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Rg [A] = "+num2str(ReciprocalSpaceRg)+";   "
 			Tagtext+="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"I0 = "+num2str(ReciprocalSpaceI0)
 			//Tagtext+="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"Protein Vol [cm3] = "+num2str(ReciprocalPorodVolumeA3)+"\r"
-			Tagtext+="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"     MW [kDa] = "+num2str(SAXSMoW2MWRecSpacekDa)
+			TagText+="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"\rQmin*Rg = "+QminRg+"\tQmax*Rg = "+QmaxRg
+			Tagtext+="\\F"+IN2G_LkUpDfltStr("FontType")+"\\Z"+IN2G_LkUpDfltVar("TagSize")+"\rSAXSMoW2 MW [kDa] = "+num2str(SAXSMoW2MWRecSpacekDa)
 			Tag/C/N=GuessRg/A=LT/L=0/TL=0/W=IRB1_PDDFInterfacePanel#DataDisplay FitScatteringProfile, numpnts(FitScatteringProfile)/10,Tagtext
 		endif
 	endif
@@ -2717,6 +2732,8 @@ Function IRB1_PDDFRunGNOM()
 	//now parse this into a document and alfa
 	Wave/T GNOMOutFileTextWave = root:Packages:Irena:PDDFInterface:GNOMOutFileTextWave 
 	//read values from out file...	
+
+	NVAR GNOMDmaxOut = root:Packages:Irena:PDDFInterface:GNOMDmaxOut
 	NVAR GNOMAlfaResult = root:Packages:Irena:PDDFInterface:GNOMAlfaResult
 	NVAR RealSpaceRg = root:Packages:Irena:PDDFInterface:RealSpaceRg
 	NVAR RealSpaceI0 = root:Packages:Irena:PDDFInterface:RealSpaceI0
@@ -2727,6 +2744,8 @@ Function IRB1_PDDFRunGNOM()
 	RealSpaceRg = str2num(StringFromList(1, TempStrWave[0]+":", ":"))
 	Grep /E="Real space I" GNOMOutFileTextWave as TempStrWave	
 	RealSpaceI0 = str2num(StringFromList(1, TempStrWave[0]+":", ":"))
+	Grep /E="Maximum characteristic size:" GNOMOutFileTextWave as TempStrWave	
+	GNOMDmaxOut = str2num(StringFromList(1, TempStrWave[0]+":", ":"))
 	print "***************************************************************************"
 	For(i=0;i<60;i+=1)
 		if(strlen(GNOMOutFileTextWave[i])>5)
@@ -3082,7 +3101,7 @@ static Function IRB1_PDDFInitialize()
 	ListOfVariables += "DisplayErrorBars;DataQEnd;DataQstart;DataQEndPoint;DataQstartPoint;"	
 	ListOfVariables += "SleepBetweenDataProcesses;OverwriteExistingData;DisplayErrorBars;"	
 	ListOfVariables += "PDDFUseGNOM;PDDFuseMoore;PDDFuseregularization;PDDFUseAutoGNOM;"	
-	ListOfVariables += "DmaxEstimate;CalculateDmaxEstOnImport;GnomForceRmin0;GnomForceRmax0;NumBinsInR;GnomAlfaValue;"	
+	ListOfVariables += "DmaxEstimate;CalculateDmaxEstOnImport;GnomForceRmin0;GnomForceRmax0;NumBinsInR;GnomAlfaValue;GNOMDmaxOut;"	
 	ListOfVariables += "MooreNumFunctions;MooreDetNumFunctions;MooreFitMaxSize;"	
 	ListOfVariables += "RealSpaceRg;RealSpaceI0;ConcentrationForCals;ScattLengthDensDifference;PDDFCalculatedMW;RealSpacePorodVolumeA3;"	
 	ListOfVariables += "RamboTainerMWRecSpacekDa;InvariantCalcQmax8overRg;InvariantCalcQmax;InvariantCalcQmaxLog225;"

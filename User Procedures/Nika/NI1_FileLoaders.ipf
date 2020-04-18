@@ -4176,16 +4176,26 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 			endfor
 		endif
 		//this is generic NXcanSAS as avilable on https://github.com/canSAS-org/NXcanSAS_examples April 2020
-		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))
+		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && (stringMatch(StringByKey("canSAS_class", AttribList),"SASdata") || stringMatch(StringByKey("SAS_class", AttribList),"SASdata")))
+			 // data : NXdata				minimum content here...
+			    //  @NX_class = "NXdata"
+			    //  @canSAS_class = "SASdata"
+			    //  @signal = "I"
+			    //  @I_axes = "<see the documentation>"
+			    //  @Q_indices : NX_INT = <see the documentation>
+			    //  I : NX_NUMBER
+			    //     @units = <see the documentation>
+			    //  Q : NX_NUMBER
+			    //     @units = NX_PER_LENGTH
 			PathToData = stringfromlist(i,ListOfGroups)
 			//print "Found location of data : " + PathToData
 			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
 			ListOfDataSets = S_HDF5ListGroup
 			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
 				tempStr = NI1_HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
-				if(stringmatch(stringByKey("signal", tempStr),"I"))			//the group has signal=I attribute
+				if(stringmatch(stringByKey("signal", AttribList),"I"))									//the group has signal=I attribute
 					TempDataPath = stringfromlist(j,ListOfDataSets)
-					tempStr2 = stringByKey("I_axes", tempStr)
+					tempStr2 = stringByKey("I_axes", AttribList)
 					if(stringmatch(tempStr2,"Q"))
 						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Q"
 					elseif(stringmatch(tempStr2,"Qx,Qy"))
