@@ -12,6 +12,10 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 _____________________________________________________________________________________
+1.971 beta 4/20/2020
+no change in main code. 
+
+
 1.97 2/9/2020
 Many tools - changed code compiler instruction to rtGLobals=3, this is less forgiving compile which prevents more accidental bugs, but may generate new errors in old code. Report as many errors as possible to author, please.  
 Added ability of Flyscanniong data reduction to guess minimum useable q for data reduction. Based on intensity ratio between sample and blank - note, it is q dependent ratio. Black magic.  

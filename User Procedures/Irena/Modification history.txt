@@ -13,8 +13,10 @@ Modification history:
 2.691 (beta)
 Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are nto reasonable for most cases. 
 Added Multi Data Plot tool, new tool to plot quickly many data sets. New ipf file... 
-Added Simple fits tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to coem as needed
+Added Metadata Browser tool, enables relatively easy extraction of values from metadata in wave notes. 
+Added Basic fits tool, new tool and new capabilities. Guinier, Porod, Sphere and Spheroid, more to coem as needed
 Added group of bioSAS tools - specialized simple import, data averaging and buffer subtraction, etc. Linked to menu also some existing tools for other functions bioSAS needs. 
+tools: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF. 
 
 
 2.69 2/9/2020

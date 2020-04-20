@@ -3920,10 +3920,11 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 	string TempStr, TempStr1
 	UsedQXY = 0
 	UsedAzimAngle = 0
+	string QUnits = "1/Angstrom"
 	//Abort "Need finishing NI1_ReadCalibCanSASNexusFile"
 	if (stringmatch(NewWaveName,"CCDImageToConvert"))
-		//DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
-		//  DataWv:/sasentry01/sasdata01/I;QWv:/sasentry01/sasdata01/Q;IdevWv:;MaskWv:;
+			//DataIdentification = "DataWv:"+TempDataPath+";"+"QWv:"+TempQPath+";"+"IdevWv:"+TempIdevPath+";"+"MaskWv:"+TempMaskPath+";"
+			//  DataWv:/sasentry01/sasdata01/I;QWv:/sasentry01/sasdata01/Q;IdevWv:;MaskWv:;
 			HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 			//load data - Intensity
 			TempStr = StringByKey("DataWv", FileContent, ":", ",")
@@ -3947,6 +3948,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				endif			
 				UsedQXY=1	
 			endif
+			QUnits =  StringByKey("QUnits", FileContent, ":", ",")
 			TempStr = StringByKey("IdevWv", FileContent, ":", ",")
 			if(strlen(TempStr)>2)	//only Q wave
 				HDF5LoadData /N=CCDImageToConvert_Errs  /O  fileID , TempStr 
@@ -3982,6 +3984,20 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			if(UsedQXY)
 				Wave Qx2D
 				Wave Qy2D
+				//convert Q in appropriate units...
+				strswitch(QUnits)	
+					case "1/Angstrom":	
+						//this is OK, nothing to do... 
+						break
+					case "1/nm":
+						MatrixOp /O Qx2D = Qx2D/10
+						MatrixOp /O Qy2D = Qy2D/10
+						break
+					case "1/m":
+						MatrixOp /O Qx2D = Qx2D/(1e10)
+						MatrixOp /O Qy2D = Qy2D/(1e10)
+						break
+				endswitch
 				if(!UsedAzimAngle)
 					MatrixOP/O AnglesWave = atan(Qy2D/Qx2D)
 					AnglesWave += pi/2
@@ -3996,15 +4012,29 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 		 		BeamCenterY = V_minColLoc
 			else		//used just Q, need to create AzimuthalWave
 				Wave Q2Dwave
-				Wave Qvector
+				//Wave Qvector
+				//convert Q in appropriate units...
+				strswitch(QUnits)	
+					case "1/Angstrom":	
+						//this is OK, nothing to do... 
+						break
+					case "1/nm":
+						MatrixOp /O Q2Dwave = Q2Dwave/10
+						break
+					case "1/m":
+						MatrixOp /O Q2Dwave = Q2Dwave/(1e10)
+						break
+				endswitch
 				Wavestats/Q Q2DWave
 				BeamCenterX = V_minRowLoc
 		 		BeamCenterY = V_minColLoc
 				if(!UsedAzimAngle)
-					Duplicate/O Qvector, AnglesWave
+					Duplicate/O Q2Dwave, AnglesWave
 					Multithread AnglesWave = abs(atan2((BeamCenterY-q),(BeamCenterX-p))-pi)		
 				endif	
 			endif
+			
+			
 			Redimension/S AnglesWave
 			Wave CCDImageToConvert
 			Wave/Z UnbinnedQxW
@@ -4125,6 +4155,8 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	OrigQxPath=" "
 	OrigQyPath=" "
 	DataIdentification=" "
+	string QUnits="1/angstrom"		
+	string tempStrUnits, tempStr65
 	
 	HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 	if (V_flag != 0)
@@ -4148,17 +4180,26 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 			ListOfDataSets = S_HDF5ListGroup
 			SignalNameAtrr=stringByKey("signal",AttribList)
 			QNamesAtrr=stringByKey("I_axes",AttribList)
-			print ListOfDataSets
 			TempDataPath = RemoveEnding(GrepList(ListOfDataSets, "I$",0,";"), ";") 
 			if(StringMatch(QNamesAtrr, "Q,Q" ))
 				TempQPath = RemoveEnding(GrepList(ListOfDataSets, "Q$",0,";"), ";") 
+				//need to locate Q units here also... QUnits
+				tempStrUnits = NI1_HdfReadAllAttributes(fileID, TempQPath,1)
+				QUnits = StringByKey("units", tempStrUnits, ":", ";")
+			elseif(StringMatch(QNamesAtrr, "Qx,Qy" ))
+					tempStr65 = RemoveEnding(GrepList(ListOfDataSets, "Qx$",0,";"), ";")
+					TempQPath = tempStr65+";"
+					TempQPath += RemoveEnding(GrepList(ListOfDataSets, "Qy$",0,";"), ";")+";"
+					//need to locate Q units here also... QUnits
+					tempStrUnits = NI1_HdfReadAllAttributes(fileID, tempStr65,1)			
+					QUnits = StringByKey("units", tempStrUnits, ":", ";")
 			endif
 			TempAzAPath  =   RemoveEnding(GrepList(ListOfDataSets, "AzimAngles",0,";"), ";") 
 			TempMaskPath =   RemoveEnding(GrepList(ListOfDataSets, "Mask",0,";"), ";") 
 			TempIdevPath =   RemoveEnding(GrepList(ListOfDataSets, "Idev",0,";"), ";") 
 
 			DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
-			DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
+			DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","+"QUnits:"+QUnits+";"
 			//DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
 			break
 //			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
