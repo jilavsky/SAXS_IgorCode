@@ -145,7 +145,7 @@ Function IR3B_MetadataBrowser()
 		IR3B_MetadataBrowserPanelFnct()
 		IR1_UpdatePanelVersionNumber("IR3B_MetadataBrowserPanel", IR3BversionNumber,1)
 	endif
-	IR3C_MultiUpdateListOfAvailFiles("Irena:MetadataBrowser")
+	IR3C_MultiUpdListOfAvailFiles("Irena:MetadataBrowser")
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -557,8 +557,8 @@ static Function 	IR3B_DisplayTestMetadataValues(ParameterSelected)
 	KillWindow/Z MetadataBrowserTempGraph
 	KillWindow/Z MetadataBrowsertempTable
 	if(GrepString(TempStrValues[0], "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))		//this si number
-		Make/O/N=(numpnts(TempStrValues)) $(CleanupName(KeyName, 0, 25)+"TmpWv")
-		Wave ResultsWv=$(CleanupName(KeyName, 0, 25)+"TmpWv")
+		Make/O/N=(numpnts(TempStrValues)) $(CleanupName(KeyName[0,25], 0)+"TmpWv")
+		Wave ResultsWv=$(CleanupName(KeyName[0,25], 0)+"TmpWv")
 		ResultsWv = str2num(TempStrValues[p])
 		Display/W=(423,162,1293,747)/K=1/N=MetadataBrowserTempGraph ResultsWv as "Temporary display of selected parameter"
 		ModifyGraph mirror=1, mode=4, marker=19
@@ -567,16 +567,16 @@ static Function 	IR3B_DisplayTestMetadataValues(ParameterSelected)
 	else
 		TimeInSeconds = IN2G_ConvertTimeStringToSecs(TempStrValues[0])
 		if(numtype(TimeInSeconds)==0)		//looks like time!
-			Make/O/N=(numpnts(TempStrValues)) $(CleanupName(KeyName, 0, 22)+"TmpTimeWv")
-			Wave ResultsTimeWv=$(CleanupName(KeyName, 0, 22)+"TmpTimeWv")
+			Make/O/N=(numpnts(TempStrValues)) $(CleanupName(KeyName[0,22], 0)+"TmpTimeWv")
+			Wave ResultsTimeWv=$(CleanupName(KeyName[0,22], 0)+"TmpTimeWv")
 			ResultsTimeWv = IN2G_ConvertTimeStringToSecs(TempStrValues[p])
 			Display/W=(423,162,1293,747)/K=1/N=MetadataBrowserTempGraph ResultsTimeWv as "Temporary display of selected parameter"
 			ModifyGraph mirror=1, mode=4, marker=19
 			Label left KeyName
 			Label bottom "Sample Order"
 		else		//ok, this is really string now... 
-			Make/O/N=(numpnts(TempStrValues))/T $(CleanupName(KeyName, 0, 22)+"TmpStrWv")
-			Wave/T ResultsStrWv=$(CleanupName(KeyName, 0, 25)+"TmpStrWv")
+			Make/O/N=(numpnts(TempStrValues))/T $(CleanupName(KeyName[0,22], 0)+"TmpStrWv")
+			Wave/T ResultsStrWv=$(CleanupName(KeyName[0,22], 0)+"TmpStrWv")
 			ResultsStrWv = TempStrValues[p]
 			Edit/W=(423,162,902,874)/K=1/N=MetadataBrowsertempTable ResultsStrWv as "Temporary Display of selected parameter"
 			ModifyTable format(Point)=1,width($nameofwave(ResultsStrWv))=208
@@ -620,14 +620,14 @@ static Function IR3B_ExtractMetadataFromList()
 	For(i=0;i<imax;i+=1)
 		if(SelectionOfAvailableData[i])
 			//print "Extracting data from "+ListOfAvailableData[i]
-			IR3B_ExtractMetadataFromOneFolder(ListOfAvailableData[i])
+			IR3B_ExtrMtdtFromOneFolder(ListOfAvailableData[i])
 		endif	
 	endfor
 	print "Extracted data from "+num2str(sum(SelectionOfAvailableData))+"   folder with data"
 end
 //**********************************************************************************************************
 //**********************************************************************************************************
-static Function IR3B_ExtractMetadataFromOneFolder(FolderNameStr)
+static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 	string FolderNameStr
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -704,7 +704,7 @@ static Function IR3B_ExtractMetadataFromOneFolder(FolderNameStr)
 		//done with special name based waves... 
 		else		///all others. 
 			if(GrepString(ValueString, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))		//this si number
-				CleanKeyName = CleanupName(KeyString, 0, 31)
+				CleanKeyName = CleanupName(KeyString[0,31], 0)
 				Wave/Z TmpWv=$(CleanKeyName)
 				if(!WaveExists(TmpWv))
 					Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
@@ -715,7 +715,7 @@ static Function IR3B_ExtractMetadataFromOneFolder(FolderNameStr)
 			else						//string, check if not date...
 				TimeInSeconds = IN2G_ConvertTimeStringToSecs(ValueString)
 				if(numtype(TimeInSeconds)==0)		//looks like time!
-					CleanKeyName = CleanupName(KeyString, 0, 24)+"Time"
+					CleanKeyName = CleanupName(KeyString[0,24], 0)+"Time"
 					Wave/Z TmpTimeWv=$(CleanKeyName)
 					if(!WaveExists(TmpStrWv))
 						Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
@@ -724,7 +724,7 @@ static Function IR3B_ExtractMetadataFromOneFolder(FolderNameStr)
 					Redimension/N=(NumberOfExtractedItems+1) TmpTimeWv
 					TmpTimeWv[NumberOfExtractedItems] = TimeInSeconds
 				else		//ok, this is really string now... 
-					CleanKeyName = CleanupName(KeyString, 0, 31)
+					CleanKeyName = CleanupName(KeyString[0,31], 0)
 					Wave/Z/T TmpStrWv=$(CleanKeyName)
 					if(!WaveExists(TmpStrWv))
 						Make/O/N=(NumberOfExtractedItems+1)/T $(CleanKeyName)

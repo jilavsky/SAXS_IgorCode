@@ -62,7 +62,7 @@ Function IR3J_SimpleFits()
 		IR3J_SimpleFitsPanelFnct()
 		ING2_AddScrollControl()
 		IR1_UpdatePanelVersionNumber("IR3J_SimpleFitsPanel", IR3JversionNumber,1)
-		IR3C_MultiUpdateListOfAvailFiles("Irena:SimpleFits")	
+		IR3C_MultiUpdListOfAvailFiles("Irena:SimpleFits")	
 	endif
 	IR3J_CreateCheckGraphs()
 end
@@ -1902,15 +1902,15 @@ static Function IR3J_GetTableWithResults()
 			if(V_Flag)
 				DoWIndow/F IR3J_GuinierRodFitResultsTable
 			else
-				IR3J_GuinierRodFitResultsTableFnct()
+				IR3J_GuinRodFitResTblFnct()
 			endif		
 			break		// exit from switch
 		case "Guinier Sheet":	// execute if case matches expression
-			DoWindow IR3J_GuinierSheetFitResultsTable
+			DoWindow IR3J_GuinierSheetFitResTable
 			if(V_Flag)
-				DoWIndow/F IR3J_GuinierSheetFitResultsTable
+				DoWIndow/F IR3J_GuinierSheetFitResTable
 			else
-				IR3J_GuinierSheetFitResultsTableFnct()
+				IR3J_GuinSheetFitResTblFnct()
 			endif		
 			break		// exit from switch
 		case "Porod":	// execute if case matches expression
@@ -1926,7 +1926,7 @@ static Function IR3J_GetTableWithResults()
 			if(V_Flag)
 				DoWindow/F IR3J_SphereFFFitResultsTable
 			else
-				IR3J_SphereFFFitResultsTableFnct() 
+				IR3J_SphFFFitResTblFnct() 
 			endif 
 			break
 		case "Spheroid":	// execute if case matches expression
@@ -1934,7 +1934,7 @@ static Function IR3J_GetTableWithResults()
 			if(V_Flag)
 				DoWindow/F IR3J_SpheroidFFFitResultsTable
 			else
-				IR3J_SpheroidFFFitResultsTableFnct() 
+				IR3J_SpheroidFFFitResTblFnct() 
 			endif 
 			break
 		default:			// optional default expression executed
@@ -1967,7 +1967,7 @@ Function IR3J_DeleteExistingModelResults()
 				endif
 				break		// exit from switch
 			case "Guinier Sheet":	// execute if case matches expression
-				DoWindow/K/Z IR3J_GuinierSheetFitResultsTable
+				DoWindow/K/Z IR3J_GuinierSheetFitResTable
 				KillDataFolder/Z root:GuinierSheetFitResults:
 				if(V_Flag!=0)
 					DoAlert/T="Could not delete data folder" 0, "Guinier results folder root:GuinierSheetFitResults could not be deleted. It is likely used in some graph or table. Close graphs/tables and try again."
@@ -2024,7 +2024,7 @@ static Function IR3J_GuinierFitResultsTableFnct() : Table
 	SetDataFolder oldDf
 EndMacro
 //*****************************************************************************************************************
-static Function IR3J_GuinierRodFitResultsTableFnct() : Table
+static Function IR3J_GuinRodFitResTblFnct() : Table
 	PauseUpdate; Silent 1		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
@@ -2046,7 +2046,7 @@ static Function IR3J_GuinierRodFitResultsTableFnct() : Table
 	SetDataFolder oldDf
 EndMacro
 //*****************************************************************************************************************
-static Function IR3J_GuinierSheetFitResultsTableFnct() : Table
+static Function IR3J_GuinSheetFitResTblFnct() : Table
 	PauseUpdate; Silent 1		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
@@ -2056,7 +2056,7 @@ static Function IR3J_GuinierSheetFitResultsTableFnct() : Table
 	SetDataFolder root:GuinierSheetFitResults:
 	Wave/T SampleName
 	Wave GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax,GuinierQmin
-	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierSheetFitResultsTable SampleName,GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Sheet fitting results Table"
+	Edit/K=1/W=(860,772,1831,1334)/N=IR3J_GuinierSheetFitResTable SampleName,GuinierTh,GuinierI0,GuinierChiSquare,GuinierQmax as "Guinier Sheet fitting results Table"
 	AppendToTable GuinierQmin
 	ModifyTable format(Point)=1,width(SampleName)=304,title(SampleName)="Sample Folder"
 	ModifyTable alignment(GuinierTh)=1,sigDigits(GuinierTh)=4,title(GuinierTh)="Tc [A]"
@@ -2091,7 +2091,7 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 	SetDataFolder fldrSav0
 EndMacro
 //*****************************************************************************************************************
-Function IR3J_SphereFFFitResultsTableFnct() : Table
+Function IR3J_SphFFFitResTblFnct() : Table
 	PauseUpdate; Silent 1		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
@@ -2115,7 +2115,7 @@ Function IR3J_SphereFFFitResultsTableFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 
-Function IR3J_SpheroidFFFitResultsTableFnct() : Table
+Function IR3J_SpheroidFFFitResTblFnct() : Table
 	PauseUpdate; Silent 1		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)

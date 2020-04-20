@@ -3490,7 +3490,7 @@ Function NI1A_UpdateDataListBox()
 				elseif(FIlesSortOrder==3)
 					//extract the order number and use that to sort out..
 					Make/O/N=(numpnts(ListOf2DSampleData)) tempSortWv
-					tempSortWv = IN2G_FindNumericalIndexForSorting(ListOf2DSampleData[p])
+					tempSortWv = IN2G_FindNumIndxForSort(ListOf2DSampleData[p])
 					//tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p]) 
 					sort tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
 					KillWaves/Z tempSortWv
@@ -3499,7 +3499,7 @@ Function NI1A_UpdateDataListBox()
 					//extract the order number and use that to sort out.. Inverted
 					Make/O/N=(numpnts(ListOf2DSampleData)) tempSortWv
 					//tempSortWv = NI1A_FindeOrderNumber(ListOf2DSampleData[p]) 
-					tempSortWv = IN2G_FindNumericalIndexForSorting(ListOf2DSampleData[p])
+					tempSortWv = IN2G_FindNumIndxForSort(ListOf2DSampleData[p])
 					sort/R tempSortWv, tempSortWv, ListOf2DSampleData, ListOf2DSampleDataNumbers
 					KillWaves/Z tempSortWv
 					ListOf2DSampleDataNumbers[0]=1

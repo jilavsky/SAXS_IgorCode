@@ -1,4 +1,4 @@
-#pragma rtGlobals=2		// Use modern global access method.
+IN2G_FindNu#pragma rtGlobals=2		// Use modern global access method.
 #pragma version = 2.22
 #pragma IgorVersion = 7.05
 
@@ -144,7 +144,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //						this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
 //Function IN2G_FindAVailableResultsGen(StringName, Foldername)
 //			returns next available _XY number for results generation
-//Function/T IN2G_COnvertTextWaveToStringList(txWvIn)
+//Function/T IN2G_ConvTextWaveToStringList(txWvIn)
 //			this takes text wave and converts to list
 //
 //Function IN2G_DuplGraphInPanelSubwndw(String gname)
@@ -680,7 +680,7 @@ threadsafe Function IN2G_ConvertTimeStringToSecs(instring)
 end
 //************************************************************************************************
 //************************************************************************************************
-threadsafe Function IN2G_FindNumericalIndexForSorting(StrnameIn)
+threadsafe Function IN2G_FindNumIndxForSort(StrnameIn)
 	string StrnameIn
 	//finds - starting at the end - number, separated by _ 
 	//assume MaySampleName_0037_sub for example. Finds 0037 
@@ -720,7 +720,7 @@ end
 //************************************************************************************************
 //************************************************************************************************
 
-Function/T IN2G_ConvertTextWaveToStringList(txtWvIn)
+Function/T IN2G_ConvTextWaveToStringList(txtWvIn)
 	wave/T txtWvIn
 	
 	string strOut=""
@@ -3916,7 +3916,7 @@ Function IN2G_ShowHideErrorBars(ShowErroBars, [topGraphStr])
 	else
 		topGraph=topGraphStr	
 	endif
-
+#if(IgorVersion()>=8)
 	if(strlen(topGraph)>0)
 		TraceNames=TraceNameList(topGraph,";",3)
 		numTraces =  ItemsInList(TraceNames)
@@ -3928,6 +3928,7 @@ Function IN2G_ShowHideErrorBars(ShowErroBars, [topGraphStr])
 				endif
 			endfor	
 	endif
+#endif
 end
 
 //*****************************************************************************************************************

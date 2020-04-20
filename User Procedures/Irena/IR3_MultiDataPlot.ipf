@@ -35,7 +35,7 @@ Function IR3L_MultiSamplePlot()
 		//link it to top graph, if exists
 		IR3L_SetStartConditions()
 	endif
-	IR3C_MultiUpdateListOfAvailFiles("Irena:MultiSamplePlot")
+	IR3C_MultiUpdListOfAvailFiles("Irena:MultiSamplePlot")
 end
 //**********************************************************************************************************
 //**********************************************************************************************************

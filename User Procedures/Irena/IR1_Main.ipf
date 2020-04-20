@@ -5,7 +5,7 @@
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.692
+constant CurrentIrenaVersionNumber = 2.691
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory

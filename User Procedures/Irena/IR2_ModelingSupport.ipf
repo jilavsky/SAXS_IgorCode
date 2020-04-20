@@ -1315,14 +1315,14 @@ Function IR2L_Model_TabPanelControl(name,tab)
 	setDataFolder OldDf
 	
 	//update the graph with displayed Mean mode etc...
-	IR2L_RemoveLocalGuinierPorodFits()
+	IR2L_RemLocalGuinPorodFits()
 	IR2L_GraphSizeDistUpdate()
 	IR2L_AppendOrRemoveLocalPopInts()
 	DoWindow/F LSQF2_MainPanel
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR2L_RemoveLocalGuinierPorodFits()
+Function IR2L_RemLocalGuinPorodFits()
 	//remove Local fits from LSQF_MainGraph
 	string ListOFDisplayedWave=TraceNameList("LSQF_MainGraph", ";", 5)
 	variable i

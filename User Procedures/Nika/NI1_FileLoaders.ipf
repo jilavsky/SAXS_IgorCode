@@ -3916,7 +3916,7 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 	string PathName, FileNameToLoad, NewWaveName
 	
 	string FileContent=NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
-	variable fileID, UsedQXY, UsedAzimAngle, UnbinnedQx, UnbinnedQy, HaveMask, HaveErrors
+	variable fileID, UsedQXY, UsedAzimAngle, UnbinnedQx, UnbinnedQy, HaveMask, HaveErrors, i
 	string TempStr, TempStr1
 	UsedQXY = 0
 	UsedAzimAngle = 0
@@ -3933,19 +3933,17 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 			TempStr = StringByKey("QWv", FileContent, ":", ",")
 			if(ItemsInList(TempStr)<2)	//only Q wave
 				HDF5LoadData /N=Q2Dwave  /O  fileID , TempStr 
-			else		//assume Qx, Qy
-				TempStr1=stringfromList(0,TempStr)
-				if(stringmatch(TempStr1,"*Qx"))
-					HDF5LoadData /N=Qx2D  /O  fileID , TempStr1 
-				elseif(stringmatch(TempStr1,"*Qy"))
-					HDF5LoadData /N=Qy2D  /O  fileID , TempStr1 
-				endif
-				TempStr1=stringfromList(1,TempStr)
-				if(stringmatch(TempStr1,"*Qx"))
-					HDF5LoadData /N=Qx2D  /O  fileID , TempStr1 
-				elseif(stringmatch(TempStr1,"*Qy"))
-					HDF5LoadData /N=Qy2D  /O  fileID , TempStr1 
-				endif			
+			else		//assume Qx, Qy, optionally Qz
+				For(i=0;i<ItemsInList(TempStr);i+=1)
+					TempStr1=stringfromList(i,TempStr)
+					if(stringmatch(TempStr1,"*Qx"))
+						HDF5LoadData /N=Qx2D  /O  fileID , TempStr1 
+					elseif(stringmatch(TempStr1,"*Qy"))
+						HDF5LoadData /N=Qy2D  /O  fileID , TempStr1 
+					elseif(stringmatch(TempStr1,"*Qz"))
+						HDF5LoadData /N=Qz2D  /O  fileID , TempStr1 
+					endif
+				endfor
 				UsedQXY=1	
 			endif
 			QUnits =  StringByKey("QUnits", FileContent, ":", ",")
@@ -3977,13 +3975,21 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				UnbinnedQy=1
 			endif
 			HDF5CloseFile fileID  
-
+			//TitleOfData
+			SVAR UserSampleName = root:Packages:Convert2Dto1D:UserSampleName
+			UserSampleName = StringByKey("TitleOfData", FileContent, ":", ",")
+			
 			NVAR ReverseBinnedData=root:Packages:Convert2Dto1D:ReverseBinnedData
 			NVAR BeamCenterX = root:Packages:Convert2Dto1D:BeamCenterX
 			NVAR BeamCenterY = root:Packages:Convert2Dto1D:BeamCenterY
 			if(UsedQXY)
 				Wave Qx2D
 				Wave Qy2D
+				Wave/Z Qz2D
+				if(!WaveExists(Qz2D))
+					Duplicate/Free Qy2D, Qz2D
+					Qz2D = 0
+				endif
 				//convert Q in appropriate units...
 				strswitch(QUnits)	
 					case "1/Angstrom":	
@@ -3992,10 +3998,12 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 					case "1/nm":
 						MatrixOp /O Qx2D = Qx2D/10
 						MatrixOp /O Qy2D = Qy2D/10
+						MatrixOp /O Qz2D = Qz2D/10
 						break
 					case "1/m":
 						MatrixOp /O Qx2D = Qx2D/(1e10)
 						MatrixOp /O Qy2D = Qy2D/(1e10)
+						MatrixOp /O Qz2D = Qz2D/(1e10)
 						break
 				endswitch
 				if(!UsedAzimAngle)
@@ -4006,7 +4014,8 @@ Function NI1_ReadCalibCanSASNexusFile(PathName, FileNameToLoad, NewWaveName)
 				//create Q waves
 				matrixOP/O Qx2D = powR(Qx2D,2)
 				matrixOP/O Qy2D = powR(Qy2D,2)
-				matrixOp/O Q2DWave = sqrt(Qx2D + Qy2D)
+				matrixOP/O Qz2D = powR(Qz2D,2)
+				matrixOp/O Q2DWave = sqrt(Qx2D + Qy2D + Qz2D)
 				Wavestats/Q Q2DWave
 				BeamCenterX = V_minRowLoc
 		 		BeamCenterY = V_minColLoc
@@ -4157,6 +4166,7 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	DataIdentification=" "
 	string QUnits="1/angstrom"		
 	string tempStrUnits, tempStr65
+	string TitleOfData=""
 	
 	HDF5OpenFile/P=$(PathName)/R fileID as FileNameToLoad
 	if (V_flag != 0)
@@ -4169,7 +4179,6 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 	For (i=0;i<ItemsInList(ListOfGroups);i+=1)
 		AttribList = NI1_HdfReadAllAttributes(fileID, stringfromlist(i,ListOfGroups),0)
 		GroupName = stringfromlist(i,ListOfGroups)
-		//version 0.1 of the standard...
 		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && stringMatch(StringByKey("canSAS_class", AttribList),"SASdata"))					// skip version check and hope for best. && stringMatch(StringByKey("canSAS_version", AttribList),"0.1"))
 			PathToData = stringfromlist(i,ListOfGroups)
 			//print "Found location of data : " + PathToData
@@ -4178,14 +4187,28 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 			//  NX_class:NXdata;canSAS_class:SASdata;canSAS_version:1.0;signal:I;canSAS_name:GC_SRM3600_0125;Q_indices:0,1;I_axes:Q,Q;
 			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
 			ListOfDataSets = S_HDF5ListGroup
+			TitleOfData=stringByKey("title",AttribList)
+			if(strlen(TitleOfData)<1)	//no title in the file...
+				TitleOfData = stringFromList(0,FileNameToLoad,".")
+			endif
 			SignalNameAtrr=stringByKey("signal",AttribList)
 			QNamesAtrr=stringByKey("I_axes",AttribList)
 			TempDataPath = RemoveEnding(GrepList(ListOfDataSets, "I$",0,";"), ";") 
 			if(StringMatch(QNamesAtrr, "Q,Q" ))
 				TempQPath = RemoveEnding(GrepList(ListOfDataSets, "Q$",0,";"), ";") 
-				//need to locate Q units here also... QUnits
-				tempStrUnits = NI1_HdfReadAllAttributes(fileID, TempQPath,1)
-				QUnits = StringByKey("units", tempStrUnits, ":", ";")
+				if(strlen(TempQPath)>1)		//Name ending with Q was found, we are done. 			
+					//need to locate Q units here also... QUnits
+					tempStrUnits = NI1_HdfReadAllAttributes(fileID, TempQPath,1)
+					QUnits = StringByKey("units", tempStrUnits, ":", ";")
+				else		//we could have Qx, Qy, Qz
+					tempStr65 = RemoveEnding(GrepList(ListOfDataSets, "Qx$",0,";"), ";")
+					TempQPath = tempStr65+";"
+					TempQPath += RemoveEnding(GrepList(ListOfDataSets, "Qy$",0,";"), ";")+";"
+					TempQPath += RemoveEnding(GrepList(ListOfDataSets, "Qz$",0,";"), ";")+";"
+					//need to locate Q units here also... QUnits
+					tempStrUnits = NI1_HdfReadAllAttributes(fileID, tempStr65,1)			
+					QUnits = StringByKey("units", tempStrUnits, ":", ";")
+				endif
 			elseif(StringMatch(QNamesAtrr, "Qx,Qy" ))
 					tempStr65 = RemoveEnding(GrepList(ListOfDataSets, "Qx$",0,";"), ";")
 					TempQPath = tempStr65+";"
@@ -4199,98 +4222,45 @@ Function/S NI1_ReadNexusCanSAS(PathName, FileNameToLoad)
 			TempIdevPath =   RemoveEnding(GrepList(ListOfDataSets, "Idev",0,";"), ";") 
 
 			DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
-			DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","+"QUnits:"+QUnits+";"
+			DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","+"QUnits:"+QUnits+","
+			DataIdentification += "TitleOfData:"+TitleOfData+"," 
 			//DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
 			break
-//			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
-//				tempGroupName = stringfromlist(j,ListOfDataSets)
-//				tempStr = NI1_HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
-//				if(stringmatch(stringByKey("signal",AttribList),"I"))			//I is intensity data
-//					TempDataPath = stringfromlist(j,ListOfDataSets)
-//					tempStr2 = stringByKey("axes", tempStr)
-//					if(stringmatch(tempStr2,"Q"))
-//						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Q"
-//					elseif(stringmatch(tempStr2,"Qx,Qy"))
-//						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Qx"+";"
-//						TempQPath += TempDataPath[0,strlen(TempDataPath)-2]+"Qy"
-//					else
-//						abort "Problem identifying Q axes"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*Mask*"))
-//						TempMaskPath = TempDataPath[0,strlen(TempDataPath)-2]+"Mask"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*Idev*"))
-//						TempIdevPath = TempDataPath[0,strlen(TempDataPath)-2]+"Idev"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*AzimAngles*"))
-//						TempAzAPath = TempDataPath[0,strlen(TempDataPath)-2]+"AzimAngles"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*UnbinnedQx*"))
-//						OrigQxPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQx"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*UnbinnedQy*"))
-//						OrigQyPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQy"
-//					endif
-//					DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
-//					DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
-//					DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
-//				endif			
-//			endfor
+									//			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
+									//				tempGroupName = stringfromlist(j,ListOfDataSets)
+									//				tempStr = NI1_HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
+									//				if(stringmatch(stringByKey("signal",AttribList),"I"))			//I is intensity data
+									//					TempDataPath = stringfromlist(j,ListOfDataSets)
+									//					tempStr2 = stringByKey("axes", tempStr)
+									//					if(stringmatch(tempStr2,"Q"))
+									//						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Q"
+									//					elseif(stringmatch(tempStr2,"Qx,Qy"))
+									//						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Qx"+";"
+									//						TempQPath += TempDataPath[0,strlen(TempDataPath)-2]+"Qy"
+									//					else
+									//						abort "Problem identifying Q axes"
+									//					endif
+									//					if(StringMatch(ListOfDataSets,"*Mask*"))
+									//						TempMaskPath = TempDataPath[0,strlen(TempDataPath)-2]+"Mask"
+									//					endif
+									//					if(StringMatch(ListOfDataSets,"*Idev*"))
+									//						TempIdevPath = TempDataPath[0,strlen(TempDataPath)-2]+"Idev"
+									//					endif
+									//					if(StringMatch(ListOfDataSets,"*AzimAngles*"))
+									//						TempAzAPath = TempDataPath[0,strlen(TempDataPath)-2]+"AzimAngles"
+									//					endif
+									//					if(StringMatch(ListOfDataSets,"*UnbinnedQx*"))
+									//						OrigQxPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQx"
+									//					endif
+									//					if(StringMatch(ListOfDataSets,"*UnbinnedQy*"))
+									//						OrigQyPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQy"
+									//					endif
+									//					DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
+									//					DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
+									//					DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
+									//				endif			
+									//			endfor
 		endif
-		//this is generic NXcanSAS as available on https://github.com/canSAS-org/NXcanSAS_examples April 2020
-//		if(stringMatch(StringByKey("NX_class", AttribList),"NXdata") && (stringMatch(StringByKey("canSAS_class", AttribList),"SASdata") || stringMatch(StringByKey("SAS_class", AttribList),"SASdata")))
-//			 // data : NXdata				minimum content here...
-//			    //  @NX_class = "NXdata"
-//			    //  @canSAS_class = "SASdata"
-//			    //  @signal = "I"
-//			    //  @I_axes = "<see the documentation>"
-//			    //  @Q_indices : NX_INT = <see the documentation>
-//			    //  I : NX_NUMBER
-//			    //     @units = <see the documentation>
-//			    //  Q : NX_NUMBER
-//			    //     @units = NX_PER_LENGTH
-//			PathToData = stringfromlist(i,ListOfGroups)
-//			//print "Found location of data : " + PathToData
-//			HDF5ListGroup /F /TYPE=2  /Z fileID , PathToData
-//			ListOfDataSets = S_HDF5ListGroup
-//			string IdataSetname=stringByKey("signal", AttribList)
-//			string QdataSetname=stringByKey("I_axes", AttribList)
-//			//this simply does not work, examples do not match standard. 
-//			For(j=0;j<ItemsInList(ListOfDataSets);j+=1)
-//				tempStr = NI1_HdfReadAllAttributes(fileID, stringfromlist(j,ListOfDataSets),1)
-//				if(stringmatch(stringByKey("signal", AttribList),"I"))									//the group has signal=I attribute
-//					TempDataPath = stringfromlist(j,ListOfDataSets)
-//					tempStr2 = stringByKey("I_axes", AttribList)
-//					if(stringmatch(tempStr2,"Q"))
-//						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Q"
-//					elseif(stringmatch(tempStr2,"Qx,Qy"))
-//						TempQPath = TempDataPath[0,strlen(TempDataPath)-2]+"Qx"+";"
-//						TempQPath += TempDataPath[0,strlen(TempDataPath)-2]+"Qy"
-//					else
-//						abort "Problem identifying Q axes"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*Mask*"))
-//						TempMaskPath = TempDataPath[0,strlen(TempDataPath)-2]+"Mask"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*Idev*"))
-//						TempIdevPath = TempDataPath[0,strlen(TempDataPath)-2]+"Idev"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*AzimAngles*"))
-//						TempAzAPath = TempDataPath[0,strlen(TempDataPath)-2]+"AzimAngles"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*UnbinnedQx*"))
-//						OrigQxPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQx"
-//					endif
-//					if(StringMatch(ListOfDataSets,"*UnbinnedQy*"))
-//						OrigQyPath = TempDataPath[0,strlen(TempDataPath)-2]+"UnbinnedQy"
-//					endif
-//					DataIdentification = "DataWv:"+TempDataPath+","+"QWv:"+TempQPath+","+"IdevWv:"+TempIdevPath+","
-//					DataIdentification += "MaskWv:"+TempMaskPath+","+"AzimAngles:"+TempAzAPath+","
-//					DataIdentification += "UnbinnedQx:"+OrigQxPath+","+"UnbinnedQy:"+OrigQyPath+","
-//
-//				endif			
-//			endfor
-//		endif
 
 	endfor
 	HDF5CloseFile fileID  

@@ -33,7 +33,7 @@ Function NI1_MakeSectorGraph(withTilts)
 		NI1A_CorrectDataPerUserReq("")								//calibrate data
 	endif
 	if(withTilts)
-		NI1_MakeSqMatrixOfLineoutswtilts(SectorsNumSect,SectorsSectWidth,SectorsGraphStartAngle,SectorsGraphEndAngle)	
+		NI1_MakeSqMtxOfLinswtilts(SectorsNumSect,SectorsSectWidth,SectorsGraphStartAngle,SectorsGraphEndAngle)	
 	else
 		NI1_MakeSqMatrixOfLineouts(SectorsNumSect,SectorsSectWidth,SectorsGraphStartAngle,SectorsGraphEndAngle)		//convert to lineout
 	endif
@@ -209,7 +209,7 @@ end
 //********************************************************************
 
 //josh add with tilts
-Function NI1_MakeSqMatrixOfLineoutswtilts(SectorsNumSect,AngleWidth,SectorsGraphStartAngle,SectorsGraphEndAngle)
+Function NI1_MakeSqMtxOfLinswtilts(SectorsNumSect,AngleWidth,SectorsGraphStartAngle,SectorsGraphEndAngle)
 //strategy:  this function will return a squaremap just like the original, but with row points that each correspond to
 //a specific q-bin. To do this, the q2dwave is used (and must have been already created) to make squaremap with q-points. 
 //looking at how it is created, the tilts are incorporated into the calculation.

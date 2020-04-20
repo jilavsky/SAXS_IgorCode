@@ -2929,13 +2929,13 @@ Function IR3C_SortListOfFilesInWvs(TopPanel)
 		Sort/R WaveOfFiles, WaveOfFiles, WaveOfSelections
 	elseif(StringMatch(DataSelSortString, "Sort _XYZ" ))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-		TempWv = IN2G_FindNumericalIndexForSorting(WaveOfFiles[p])
+		TempWv = IN2G_FindNumIndxForSort(WaveOfFiles[p])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
 			//endfor
 		Sort TempWv, WaveOfFiles, WaveOfSelections
 	elseif(StringMatch(DataSelSortString, "Inv Sort _XYZ" ))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-		TempWv = IN2G_FindNumericalIndexForSorting(WaveOfFiles[p])
+		TempWv = IN2G_FindNumIndxForSort(WaveOfFiles[p])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(WaveOfFiles[i]  , "_")-1, WaveOfFiles[i]  , "_"))
 			//endfor
 		Sort/R TempWv, WaveOfFiles, WaveOfSelections
@@ -3652,7 +3652,7 @@ Function IR3C_MultiSetVarProc(sva) : SetVariableControl
 		case 1: // mouse up
 		case 2: // Enter key
 			if(stringmatch(sva.ctrlName,"FolderNameMatchString")||stringmatch(sva.ctrlName,"genericXgrepString")||stringmatch(sva.ctrlName,"genericYgrepString")||stringmatch(sva.ctrlName,"genericEgrepString"))
-				IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+				IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
 			endif
 		break
 		case 3: // live update
@@ -3696,7 +3696,7 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 			SVAR DataStartFolder=$(CntrlLocation+":DataStartFolder")
 
 		  	if(stringmatch(cba.ctrlName,"InvertGrepSearch"))
-					IR3C_MultiUpdateListOfAvailFiles(CntrolLocationShort)	
+					IR3C_MultiUpdListOfAvailFiles(CntrolLocationShort)	
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseIndra2Data"))
 		  		if(checked)
@@ -3704,7 +3704,7 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 		  			UseResults = 0
 		  		endif
 				IR3C_MultiFixPanelControls(TopPanel,CntrolLocationShort)	
-				//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+				//IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseResults"))
 		  		if(checked)
@@ -3712,7 +3712,7 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 		  			UseIndra2Data = 0
 		  		endif
 				IR3C_MultiFixPanelControls(TopPanel,CntrolLocationShort)	
-				//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+				//IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData"))
 		  		if(checked)
@@ -3720,12 +3720,12 @@ Function IR3C_MultiCheckProc(cba) : CheckBoxControl
 		  			UseResults = 0
 		  		endif
 				IR3C_MultiFixPanelControls(TopPanel,CntrolLocationShort)	
-				//IR3C_MultiUpdateListOfAvailFiles(CntrlLocation)
+				//IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
 		  	endif
 		  	if(stringmatch(cba.ctrlName,"UseQRSData")||stringmatch(cba.ctrlName,"UseIndra2Data")||stringmatch(cba.ctrlName,"UseResults"))
 		  		DataStartFolder = "root:"
 		  		PopupMenu StartFolderSelection,win=$(TopPanel), mode=1,popvalue="root:"
-				IR3C_MultiUpdateListOfAvailFiles(CntrolLocationShort)
+				IR3C_MultiUpdListOfAvailFiles(CntrolLocationShort)
 		  	endif
 			break
 		case -1: // control being killed
@@ -3815,19 +3815,19 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 		//Update the listbox using start folde popStr
 		SVAR StartFolderName=$(CntrlLocation+":DataStartFolder")
 		StartFolderName = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
+		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"SortFolders"))
 		//do something here
 		SVAR FolderSortString = $(CntrlLocation+":FolderSortString")
 		FolderSortString = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
+		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"SubTypeData"))
 		//do something here
 		SVAR DataSubType = $(CntrlLocation+":DataSubType")
 		DataSubType = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
+		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ToolResultsSelector"))
 		SVAR SelectedResultsTool=$(CntrlLocation+":SelectedResultsTool")
@@ -3836,19 +3836,19 @@ Function IR3C_MultiPopMenuProc(pa) : PopupMenuControl
 		execute("PopupMenu ResultsTypeSelector, win="+TopPanel+", mode=1, value=IR2C_ReturnKnownToolResults(\""+popStr+"\")")
 		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
 		SelectedResultsType = stringFromList(0,ListOfAvailableResults)
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
+		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ResultsTypeSelector"))
 		//Update the listbox using start folde popStr
 		SVAR SelectedResultsType=$(CntrlLocation+":SelectedResultsType")
 		SelectedResultsType = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
+		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	if(stringmatch(ctrlName,"ResultsGenerationToUse"))
 		//Update the listbox using start folde popStr
 		SVAR ResultsGenerationToUse=$(CntrlLocation+":ResultsGenerationToUse")
 		ResultsGenerationToUse = popStr
-		IR3C_MultiUpdateListOfAvailFiles(CntrlLocationShort)
+		IR3C_MultiUpdListOfAvailFiles(CntrlLocationShort)
 	endif
 	setDataFolder OldDf
 end
@@ -3858,7 +3858,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
-Function IR3C_MultiUpdateListOfAvailFiles(CntrlLocationG)
+Function IR3C_MultiUpdListOfAvailFiles(CntrlLocationG)
 	string CntrlLocationG
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -3927,14 +3927,14 @@ Function IR3C_MultiUpdateListOfAvailFiles(CntrlLocationG)
 		DeletePoints j, numpnts(ListOfAvailableData)-j, ListOfAvailableData, SelectionOfAvailableData
 	endif
 	SelectionOfAvailableData = 0
-	IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
+	IR3C_MultiSortListOfAvailFldrs(CntrlLocation)
 	setDataFolder OldDF
 end
 
 
 //**************************************************************************************
 //**************************************************************************************
-Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
+Function IR3C_MultiSortListOfAvailFldrs(CntrlLocation)
 	string CntrlLocation
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
@@ -3958,7 +3958,7 @@ Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz")&&(numpnts(ListOfAvailableData)>2))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+		TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[i])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
 			//endfor
 		Sort TempWv, ListOfAvailableData
@@ -4055,7 +4055,7 @@ Function IR3C_MultiSortListOfAvailableFldrs(CntrlLocation)
 		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[p])
+			TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[p])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
 			//endfor
 		Sort /R  TempWv, ListOfAvailableData
@@ -4145,9 +4145,9 @@ Function/T IR3C_MultiGenStringOfFolders(CntrlLocation, StartFolder,UseIndra2Stru
 			SVAR genericEgrepString=$(CntrlLocation+":genericEgrepString")
 			make/N=0/FREE/T ResultingWave
 			IR2P_FindFolderWithWaveTypesWV(StartFolder, 10, genericXgrepString, 1, ResultingWave)		//these folder should match X grep string
-			IR3C_SelectFolderWithWaveMatching(ResultingWave,genericYgrepString)								//these should match Y grep string
+			IR3C_SelectFldrWithWaveMatch(ResultingWave,genericYgrepString)								//these should match Y grep string
 			//ignore E string for now, assume we can use just X/Y
-			result=IN2G_COnvertTextWaveToStringList(ResultingWave) 
+			result=IN2G_ConvTextWaveToStringList(ResultingWave) 
 	endif
 	if(stringmatch(";",result[0]))
 		result = result [1, inf]
@@ -4158,7 +4158,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IR3C_SelectFolderWithWaveMatching(WaveOfFolders,grepStringS)
+Function IR3C_SelectFldrWithWaveMatch(WaveOfFolders,grepStringS)
 			wave/T WaveOfFolders
 			string grepStringS
 		DFref oldDf= GetDataFolderDFR()

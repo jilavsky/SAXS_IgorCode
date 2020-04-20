@@ -1455,7 +1455,7 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz"))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+		TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[i])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
 			//endfor
 		Sort TempWv, ListOfAvailableData
@@ -1562,7 +1562,7 @@ Function IR3D_SortListOfAvailableFldrs(WhichOne)
 		endif
 	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-		TempWv = IN2G_FindNumericalIndexForSorting(ListOfAvailableData[i])
+		TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[i])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
 			//endfor
 		Sort /R  TempWv, ListOfAvailableData

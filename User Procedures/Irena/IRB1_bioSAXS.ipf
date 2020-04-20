@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 #pragma version=0.1
-#pragma IgorVersion = 8.03
+#pragma IgorVersion = 7.08
 
 
 //*************************************************************************\
@@ -9,7 +9,7 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-constant IRB1_ImportBioSAXSASCIIDataVersion = 0.1			//IRB1_ImportBioSAXSASCIIData tool version number. 
+constant IRB1_ImpBioSAXSASCIIVer = 0.1			//IRB1_ImportBioSAXSASCIIData tool version number. 
 constant IRB1_DataManipulation = 0.1							//IRB1_DataManipulation tool version number. 
 constant IRB1_SetVariableStepScaling = 0.01					//this is fraction of the value to which the step in SetVariable is set.  
 constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction version number
@@ -51,14 +51,14 @@ Function IRB1_ImportASCII()
 		IRB1_InitializeImportData()
 		IRB1_ImportBioSAXSASCIIDataFnct()
 		ING2_AddScrollControl()
-		IR1_UpdatePanelVersionNumber("IRB1_ImportBioSAXSASCIIData", IRB1_ImportBioSAXSASCIIDataVersion,1)
+		IR1_UpdatePanelVersionNumber("IRB1_ImportBioSAXSASCIIData", IRB1_ImpBioSAXSASCIIVer,1)
 	endif
 end
 //************************************************************************************************************
-Function IRB1_ImportASCIIMainCheckVersion()	
+Function IRB1_ImpASCIIMainCheckVer()	
 	DoWindow IR1I_ImportBioSAXSASCIIData
 	if(V_Flag)
-		if(!IR1_CheckPanelVersionNumber("IR1I_ImportBioSAXSASCIIData", IRB1_ImportBioSAXSASCIIDataVersion))
+		if(!IR1_CheckPanelVersionNumber("IR1I_ImportBioSAXSASCIIData", IRB1_ImpBioSAXSASCIIVer))
 			DoAlert /T="The Import ASCII panel was created by incorrect version of Irena " 1, "Import ASCII tool needa to be restarted to work properly. Restart now?"
 			if(V_flag==1)
 				KillWIndow/Z IR1I_ImportBioSAXSASCIIData
@@ -90,7 +90,7 @@ Function IRB1_DataManipulation()
 	else
 		IRB1_DataManInitBioSAXS()
 		IRB1_DataManPanelFnct()
-		IR3C_MultiUpdateListOfAvailFiles("Irena:BioSAXSDataMan")
+		IR3C_MultiUpdListOfAvailFiles("Irena:BioSAXSDataMan")
 		ING2_AddScrollControl()
 		IR1_UpdatePanelVersionNumber("IRB1_DataManipulationPanel", IRB1_DataManipulation,1)
 	endif
@@ -129,10 +129,10 @@ Function IRB1_PDDFInterfaceFunction()
 		IRB1_PDDFInitialize()
 		IRB1_PDDFPanelFnct()
 		SetWindow IRB1_PDDFInterfacePanel, hook(ATSASCursorMoved) = IRB1_PDDFGraphWindowHook
-		IR3C_MultiUpdateListOfAvailFiles("Irena:PDDFInterface")
+		IR3C_MultiUpdListOfAvailFiles("Irena:PDDFInterface")
 		ING2_AddScrollControl()
 		IR1_UpdatePanelVersionNumber("IRB1_PDDFInterfacePanel", IRB1_PDDFInterfaceVersion,1)
-		IRB1_PDDFResetValuesToPreventStale()
+		IRB1_PDDFResetValsToPrevStale()
 	endif
 end
 //************************************************************************************************************
@@ -693,7 +693,7 @@ Function IRB1_DataManTabProc(tca) : TabControl
 				DataMatchString=""
 			endif
 			
-				IR3C_MultiUpdateListOfAvailFiles("Irena:BioSAXSDataMan")
+				IR3C_MultiUpdListOfAvailFiles("Irena:BioSAXSDataMan")
 			break
 		case -1: // control being killed
 			break
@@ -712,7 +712,7 @@ Function IRB1_DataManButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 			if(stringMatch(ba.ctrlName,"PlotSelectedData"))
-				IRB1_DataManAppendSelectedDataSets()
+				IRB1_DataManAppendSelDtaSets()
 			endif
 			if(stringMatch(ba.ctrlName,"AverageData"))
 				IRB1_DataManAverageDataSetsts()
@@ -896,7 +896,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 //**********************************************************************************************************
-Function IRB1_DataManAppendSelectedDataSets()
+Function IRB1_DataManAppendSelDtaSets()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	variable i
@@ -1569,12 +1569,12 @@ Function IRB1_PDDFPanelFnct()
 
 	TitleBox PDDFInstructions11 title="\Zr120Rambo-Tainer Background : ",size={230,15},pos={270,310},frame=0,fColor=(0,0,65535),labelBack=0
 	checkbox RamboTainerAutoSetBckg, pos={270,330}, title="Auto Find Backg.?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerAutoSetBckg, mode=0, help={"Find Background AUtomatically background from I(Q)"}
-	checkbox RamboTainerSubtractFlatBackground, pos={420,330}, title="Subtract Background?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerSubtractFlatBackground, mode=0, help={"Subtract background from I(Q)"}
+	checkbox RamboTainerSubFlatBack, pos={420,330}, title="Subtract Background?", size={76,14},proc=IRB1_PDDFCheckProc, variable=root:Packages:Irena:PDDFInterface:RamboTainerSubFlatBack, mode=0, help={"Subtract background from I(Q)"}
 	NVAR RamboTainerFlatBackground=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground
 	if(RamboTainerFlatBackground==0)
 		RamboTainerFlatBackground = 0.0001
 	endif
-	SetVariable RamboTainerFlatBackground,pos={270,355},size={250,18}, bodyWidth=90, proc=IRB1_PDDFSetVarProc,title="Flat Background = ", variable=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground, limits={0.00,inf,RamboTainerFlatBackground*0.01},frame=1, help={"Flat Background"}, format="%4.2f"
+	SetVariable RamboTainerFlatBackground,pos={270,355},size={250,18}, bodyWidth=90, proc=IRB1_PDDFSetVarProc,title="Flat Background = ", variable=root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground, limits={0.00,inf,RamboTainerFlatBackground*0.01},frame=1, help={"Flat Background"}, format="%4.2e"
 
 	TitleBox PDDFInstructions12 title="\Zr120Real Space/PDDF (GNOM) Mol. Weight Conc.",size={330,15},pos={270,390},frame=0,fColor=(0,0,65535),labelBack=0
 	SetVariable ConcentrationForCals,pos={270,410},size={250,18}, proc=IRB1_PDDFSetVarProc,title="c [mg/ml] = ", bodyWidth=90,variable=root:Packages:Irena:PDDFInterface:ConcentrationForCals,limits={0,inf,0.1}, help={"Concentration for MW calculations"}
@@ -1788,7 +1788,7 @@ static Function IRB1_PDDFFixTabControls(whichTab)
 	checkbox InvariantCalcQmax8overRg,  disable = (whichTab!=1)
 	checkbox InvariantCalcQmaxLog225,  disable = (whichTab!=1)
 	SetVariable InvariantCalcQmax,  disable = (whichTab!=1)
-	checkbox RamboTainerSubtractFlatBackground,  disable = (whichTab!=1)
+	checkbox RamboTainerSubFlatBack,  disable = (whichTab!=1)
 	SetVariable RamboTainerFlatBackground,  disable = (whichTab!=1)
 	SetVariable ConcentrationForCals, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
 	TitleBox PDDFInstructions2, win=IRB1_PDDFInterfacePanel,  disable = (whichTab!=1)
@@ -1846,7 +1846,7 @@ Function IRB1_PDDFCheckProc(cba) : CheckBoxControl
 				//IRB1_PDDFCalcSAXSMoW2()
 				IRB1_PDDFCalcRamboTainer()
 			endif
-			if(stringmatch(cba.ctrlname,"RamboTainerSubtractFlatBackground"))
+			if(stringmatch(cba.ctrlname,"RamboTainerSubFlatBack"))
 				//IRB1_PDDFFitRgAndG()
 				//IRB1_PDDFCalcSAXSMoW2()
 				IRB1_PDDFCalcRamboTainer()
@@ -1912,12 +1912,12 @@ Function IRB1_PDDFCheckProc(cba) : CheckBoxControl
 			if(stringmatch(cba.ctrlname,"PDDFUseProtein"))
 				PDDFUseNucleicAcid=!PDDFUseProtein
 				IRB1_PDDFSetDensitySLD()	
-				IRB1_PDDFResetValuesToPreventStale()
+				IRB1_PDDFResetValsToPrevStale()
 			endif			
 			if(stringmatch(cba.ctrlname,"PDDFUseNucleicAcid"))
 				PDDFUseProtein=!PDDFUseNucleicAcid
 				IRB1_PDDFSetDensitySLD()	
-				IRB1_PDDFResetValuesToPreventStale()
+				IRB1_PDDFResetValsToPrevStale()
 			endif
 			break
 		case -1: // control being killed
@@ -2215,7 +2215,7 @@ Function IRB1_PDDFCalcRamboTainer()
 	NVAR InvariantCalcQmax8overRg = root:Packages:Irena:PDDFInterface:InvariantCalcQmax8overRg
 	NVAR InvariantCalcQmaxLog225 = root:Packages:Irena:PDDFInterface:InvariantCalcQmaxLog225	
 	NVAR InvariantCalcQmax = root:Packages:Irena:PDDFInterface:InvariantCalcQmax
-	NVAR RamboTainerSubtractFlatBackground = root:Packages:Irena:PDDFInterface:RamboTainerSubtractFlatBackground
+	NVAR RamboTainerSubFlatBack = root:Packages:Irena:PDDFInterface:RamboTainerSubFlatBack
 	NVAR RamboTainerFlatBackground = root:Packages:Irena:PDDFInterface:RamboTainerFlatBackground
 	NVAR RamboTainerAutoSetBckg = root:Packages:Irena:PDDFInterface:RamboTainerAutoSetBckg
 	IRB1_PDDFRecalculareQmax()				//this will set Qmax as needed...
@@ -2241,7 +2241,7 @@ Function IRB1_PDDFCalcRamboTainer()
 	variable QValueToChange 	= 	0.4*pi/ReciprocalSpaceRg
 	variable ChangeToRealIntP=BinarySearch(RamboTainerQ,QValueToChange)
 	RamboTainerInt[ChangeToRealIntP, ] = OriginalIntensity[BinarySearchInterp(OriginalQvector, RamboTainerQ[p])]
-	if(RamboTainerSubtractFlatBackground)
+	if(RamboTainerSubFlatBack)
 		RamboTainerInt -= RamboTainerFlatBackground						//this subtract approximate background from the data. 
 	endif
 	RamboTainerIntQ = RamboTainerInt*RamboTainerQ
@@ -2956,7 +2956,7 @@ Function IRB1_PDDFAppendOneDataSet(FolderNameStr)
 	NVAR UseIndra2Data=root:Packages:Irena:PDDFInterface:UseIndra2Data
 	NVAR UseQRSdata=root:Packages:Irena:PDDFInterface:UseQRSdata
 	//zero old values to prevent stale. 
-	IRB1_PDDFResetValuesToPreventStale	()
+	IRB1_PDDFResetValsToPrevStale	()
 	//get the names of waves, assume this tool actually works. May not under some conditions. In that case this tool will not work. 
 	IR3C_SelectWaveNamesData("Irena:PDDFInterface", FolderNameStr)			//this routine will preset names in strings as needed,	DataFolderName = DataStartFolder+FolderNameStr
 	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
@@ -3105,7 +3105,7 @@ static Function IRB1_PDDFInitialize()
 	ListOfVariables += "MooreNumFunctions;MooreDetNumFunctions;MooreFitMaxSize;"	
 	ListOfVariables += "RealSpaceRg;RealSpaceI0;ConcentrationForCals;ScattLengthDensDifference;PDDFCalculatedMW;RealSpacePorodVolumeA3;"	
 	ListOfVariables += "RamboTainerMWRecSpacekDa;InvariantCalcQmax8overRg;InvariantCalcQmax;InvariantCalcQmaxLog225;"
-	ListOfVariables += "RamboTainerSubtractFlatBackground;RamboTainerFlatBackground;RamboTainerAutoSetBckg;"
+	ListOfVariables += "RamboTainerSubFlatBack;RamboTainerFlatBackground;RamboTainerAutoSetBckg;"
 	ListOfVariables += "SaveToFolder;SaveToNotebook;SaveToWaves;SaveToGNOMOut;"	
 	ListOfVariables += "MWPorodInvariant;ReciprocalPorodVolumeA3;MWMassDensityProtein;SAXSMoW2MWRecSpacekDa;SAXSMoW2MWRealSpacekDa;"	
 	ListOfVariables += "GNOMAlfaResult;ReciprocalSpaceI0;ReciprocalSpaceRg;PDDFUseProtein;PDDFUseNucleicAcid;ReciprocalSpaceB;ReciprocalSpacePorodSlope;"
@@ -3170,7 +3170,7 @@ static Function IRB1_PDDFInitialize()
 		PDDFUseNucleicAcid = 0
 	endif
 	IRB1_PDDFSetDensitySLD()	
-	IRB1_PDDFResetValuesToPreventStale()
+	IRB1_PDDFResetValsToPrevStale()
 	
 	NVAR SaveToFolder
 	NVAR SaveToNotebook
@@ -3184,7 +3184,7 @@ static Function IRB1_PDDFInitialize()
 	CalculateDmaxEstOnImport= 0
 end
 //**********************************************************************************************************
-static Function IRB1_PDDFResetValuesToPreventStale()
+static Function IRB1_PDDFResetValsToPrevStale()
 	//zero old values to prevent stale. 
 	DFRef OldDF=GetDataFolderDFR()
 	setDataFolder root:Packages:Irena:PDDFInterface
