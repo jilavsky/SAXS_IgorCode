@@ -1,11 +1,11 @@
 # SAXS_IgorCode
-Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher (will still work also on Igor Pro 7.08). Note, that Igor Pro is offically **unsupported** on macOS **Catalina** for now. *My code will install and run on Catalina + Igor Pro 8.04 (I tested it), but there are issues with used xop packages.* 
-
-**Catalina :** If you need to use Catalina, here are some helpful links. General Wavemetrics statement: https://www.wavemetrics.com/news/igor-pro-macos-1015-catalina, and how to get xops loading: https://www.wavemetrics.com/node/21088
+Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher (will still work also on Igor Pro 7.08). Note, that Igor Pro has issues running old xop packages on macOS **Catalina** for now. **Catalina :** If you need to use Catalina, here are some helpful links. General Wavemetrics statement: https://www.wavemetrics.com/news/igor-pro-macos-1015-catalina, and how to get xops loading: https://www.wavemetrics.com/node/21088
 
 **The current stable release version is February 2020.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
 **The Beta release release version is April 2020Beta.** This new version contains first releases of number of new Irena tools: Multi Sample plotting tool, Simple fits, Metadata browser tool, and support for bioSAXS communiy: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF... 
+
+Installer package: https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.10.pxp
 
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
