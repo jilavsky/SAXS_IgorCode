@@ -22,23 +22,23 @@
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="May2019" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2019.zip</SourceFileAddress>
+		<release name="April2020Beta" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/April2020Beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.69</version>
+				<version>2.691</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.82</version>
+				<version>1.821</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.97</version>
+				<version>1.971</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release May 2019, adds new 3D models.</VersionComment>
+			<VersionComment>Beta release April 2020, adds number of new tools.</VersionComment>
 		</release>
 		<release name="February2020">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2020.zip</SourceFileAddress>
