@@ -5,6 +5,8 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher
 
 **The current stable release version is February 2020.** For details on releases and current changes to master version, check Wiki https://github.com/jilavsky/SAXS_IgorCode/wiki - "Release notes". There is useful information in the Wiki, especially check "Known issues"... 
 
+**The Beta release release version is April 2020Beta.** This new version contains first releases of number of new Irena tools: Multi Sample plotting tool, Simple fits, Metadata browser tool, and support for bioSAXS communiy: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF... 
+
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
 
