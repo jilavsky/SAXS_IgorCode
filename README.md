@@ -5,16 +5,11 @@ Irena, Nika, and Indra SAXS Igor code by Jan Ilavsky for Igor Pro 8.0 and higher
 
 **The Beta release release version is April 2020Beta.** This new version contains first releases of number of new Irena tools: Multi Sample plotting tool, Simple fits, Metadata browser tool, and support for bioSAXS communiy: Import ASCII, Average/Subtract/Scale tool, and PDDF + Molecular weight calculator. Uses ATSAS to get PDDF... 
 
-Installer package: https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.10.pxp?raw=true
+This code can be installed using Igor installer from https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub If you want to install one or more packages from here, download the latest version of 
+"GHInstaller_IrenaNika_vxxx.pxp" and use that to install. Direct link to latest version of installer is : https://github.com/jilavsky/SAXS_IgorInstaller/blob/master/Igor_GitHub/GHInstaller_IrenaNika_v1.10.pxp?raw=true
 
 Web based manuals pages
 http://saxs-igorcodedocs.readthedocs.io/
-
-This code can be installed manually or using Igor installer from : 
-https://github.com/jilavsky/SAXS_IgorInstaller/tree/master/Igor_GitHub
-
-If you want to install one or more packages from here, download the latest version of 
-"GHInstaller_IrenaNika_vxxx.pxp" and use that to install. 
 
 For more information on releases of distributions, please visit:
 
