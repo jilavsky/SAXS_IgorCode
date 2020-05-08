@@ -125,10 +125,10 @@ Proc IR3W_WAXSPanel()
 	SetDrawEnv fsize= 12,fstyle= 1
 	DrawText 10,20,"Background if needed for fitting"
 	//fix case when neither is selected and default to qrs
-	root:Packages:Irena:WAXSBackground:DataFolderName=""
+	root:Packages:Irena:WAXSBackground:DataFolderName =""
 	//note, this sets up the dependence for same type of data for background and fit data, seems logical. 
 	root:Packages:Irena:WAXSBackground:UseIndra2Data := root:Packages:Irena:WAXS:UseIndra2Data
-	root:Packages:Irena:WAXSBackground:UseQRSdata := root:Packages:Irena:WAXS:UseQRSdata
+	root:Packages:Irena:WAXSBackground:UseQRSdata  := root:Packages:Irena:WAXS:UseQRSdata
 	// done... 
 	Checkbox UseIndra2Data, pos={100,5}, disable=1
 	Checkbox UseResults, pos={250,5}, disable=1
@@ -143,7 +143,7 @@ Proc IR3W_WAXSPanel()
 
 	//TitleBox FakeLine1 title=" ",fixedSize=1,size={200,3},pos={290,130},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	//Data Tabs definition
-	TabControl AnalysisTabs,pos={265,135},size={280,400}
+	TabControl AnalysisTabs,pos={265,135},size={280,420}
 	TabControl AnalysisTabs,tabLabel(0)="Peak Fit",tabLabel(1)="Diff. Lines"
 	TabControl AnalysisTabs proc=IR3W_PDF4TabProc
 //tab0
@@ -191,6 +191,10 @@ Proc IR3W_WAXSPanel()
 	Button AMSOpenWebSite, pos={275,491}, size={90,20}, title="AMS www", proc=IR3W_WAXSButtonProc, help={"Open http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button AMSImportAMStxt, pos={375,491}, size={160,20}, title="Import AMS txt card", proc=IR3W_WAXSButtonProc, help={"Add Diffraction lines from http://rruff.geo.arizona.edu/AMS/amcsd.php"}
 	Button PDF4AddManually, pos={300,513}, size={200,20}, title="Add manually or Edit PDF card", proc=IR3W_WAXSButtonProc, help={"Add/Edit manually card, e.g. type from JCPDS PDF2 or 4 cards"}
+
+	SetVariable DistanceCorrection,pos={280,535},size={200,15}, proc=IR3W_SetVarProc,title="Distance correction   ", help={"This corrects for distance calibration of instrument. Should be close to 1."}
+	Setvariable DistanceCorrection, variable=root:Packages:Irena:WAXS:DistanceCorrection, limits={0.9,1.1,0.0005}
+
 
 	TitleBox txt1 title="\Zr100Double click to add data to graph.",pos={4,665},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
 	TitleBox txt2 title="\Zr100Shift-click to select range of data.",pos={4,678},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428)
@@ -250,6 +254,7 @@ Function IR3W_PDF4TabProc(tca) : TabControl
 				Button PDF4UpdateList, win=IR3W_WAXSPanel, disable=(tab!=1)
 				Button PDF4ExportImport, win=IR3W_WAXSPanel, disable=(tab!=1)			
 				Checkbox PDF4_DisplayHKLTags, win=IR3W_WAXSPanel, disable=(tab!=1)
+				SetVariable DistanceCorrection, win=IR3W_WAXSPanel, disable=(tab!=1)
 			break
 		case -1: // control being killed
 			break
@@ -338,7 +343,7 @@ Function IR3W_InitWAXS()
 	ListOfVariables+="DisplayUncertainties;DataTTHEnd;DataTTHstart;MPF2CurrentFolderNumber;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;"
 	ListOfVariables+="Energy;Wavelength;"
-	ListOfVariables+="PDF4_DisplayHKLTags;"
+	ListOfVariables+="PDF4_DisplayHKLTags;DistanceCorrection;"
 
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
@@ -402,6 +407,9 @@ Function IR3W_InitWAXS()
 		Wavelength = 1
 	endif
 	Energy = 12.39842 / Wavelength
+	
+	NVAR DistanceCorrection
+	DistanceCorrection = 1
 
 	Make/O/T/N=(0) ListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData
@@ -901,6 +909,9 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 				endif
 				Energy = 12.39842 / wavelength
 				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
+			endif
+			if(stringmatch(sva.ctrlName,"DistanceCorrection"))
+				IR3W_WAXSCorForDistance()
 			endif
 			if(stringmatch(sva.ctrlName,"Energy"))
 				wavelength = 12.39842 / Energy
@@ -2817,7 +2828,7 @@ Function IR3W_ImportAMSData()
 	variable refNum
 	Open /R /Z refNum  as PathToFile
 	if(V_Flag!=0) //no success
-		abort "Could not load file correctly"
+		abort //"Could not load file correctly"
 	endif
 	FReadLine  refNum, MaterialName
 	Do
@@ -2946,12 +2957,25 @@ Function IR3W_ImportPDF4xmlFile()
 	String PathToFile = S_fileName
 	string pdfNumber
 	pdfNumber = IR3W_ReadXMLJCPDSCard(PathToFile)
+	SVAR chemical_formula = root:Packages:Irena_JCPDSImport:chemical_formula
+	SVAR empirical_formula = root:Packages:Irena_JCPDSImport:empirical_formula
+	SVAR chemical_name = root:Packages:Irena_JCPDSImport:chemical_name
+
 	string OldCardName, NewCardNumber, NewCardName, NewCardNote, DeleteCardName
 	DeleteCardName="---"
 	OldCardName = "---"
 	NewCardNumber = pdfNumber
-	NewCardName=StringFromList(0,StringFromList(ItemsInList(PathToFile,":")-1, PathToFile, ":"),".")+" "+pdfNumber
-	NewCardNote =""
+	if(strlen(chemical_name)>1)
+		NewCardName=chemical_name+" "+pdfNumber
+	elseif(strlen(chemical_formula)>1)
+		NewCardName=chemical_formula+" "+pdfNumber
+	elseif(strlen(empirical_formula)>1)
+		NewCardName=empirical_formula+" "+pdfNumber
+	else
+		NewCardName=StringFromList(0,StringFromList(ItemsInList(PathToFile,":")-1, PathToFile, ":"),".")+" "+pdfNumber
+	endif
+	NewCardName = IN2G_CreateUserName(NewCardName,23, 0, 0)
+	NewCardNote ="JPCDSnumber:"+pdfNumber+";chemical_name:"+chemical_name+";chemical_formula:"+chemical_formula+";empirical_formula:"+empirical_formula+";"
 	Prompt OldCardName, "Select existing card to overwrite", popup "---;"+IR3W_PDF4CreateListOfCards()
 	Prompt NewCardName, "Enter new card name, e.g. Corundum"
 	DoPrompt "Overwrite existing card or Create new card? " OldCardName, NewCardName//, NewCardNote
@@ -2962,7 +2986,7 @@ Function IR3W_ImportPDF4xmlFile()
 		return 0
 	endif
 	if(stringmatch(OldCardName,"---"))
-		NewCardFullName=((NewCardName)[0,23])
+		NewCardFullName=NewCardName
 		if(CheckName(NewCardFullName,1)!=0)
 			KillWIndow/Z JCPDS_Input
  			KillDataFolder root:Packages:Irena_JCPDSImport:
@@ -2993,6 +3017,8 @@ Function IR3W_ImportPDF4xmlFile()
 	else
 		Print "Could not figure out what to do..."
 	endif
+	Note /NOCR NewCard, NewCardNote
+	Note /NOCR NewCard_hkl, NewCardNote
 	KillDataFOlder/Z root:Packages:Irena_JCPDSImport
 	Edit/K=1/W=(351,213,873,819) NewCard
 	DoWindow/C/R JCPDS_Input
@@ -3066,6 +3092,11 @@ static Function/T IR3W_ReadXMLJCPDSCard(PathToDataFull)
 	i=0
 	continueLoop = 1
 	pdfNumber = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/pdf_number","","")
+	//and read materials names etc.
+	string/g chemical_formula, empirical_formula, chemical_name
+	chemical_formula = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/chemical_formula","","")
+	empirical_formula = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/empirical_formula","","")
+	chemical_name = XMLstrFmXpath(fileID,"/pdfcard/pdf_data/chemical_name","","") 
 	DO
 		i+=1
 		tempStr = "/pdfcard/graphs/stick_series/intensity["+num2str(i)+"]"
@@ -3164,15 +3195,18 @@ Function IR3W_UpdatePDF4OfAvailFiles()
 	endfor
 	SelectionOfAvailableData[][][0] = 0x20
 	SelectionOfAvailableData[][][1] = p
-
+	string tempNameStr
 	For(i=0;i<ItemsInList(AvailableCards , ";");i+=1)
 		TempStr =  StringFromList(i, AvailableCards , ";")
 		//let's also check that hklStr waves are correct...
 		Wave DtaWv=$("root:WAXS_PDF:"+possiblyquotename(TempStr))
-		Wave/T/Z DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+		//Wave/T/Z DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+		tempNameStr = IN2G_CreateUserName(TempStr,24, 0, 1)
+		Wave/T/Z DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(tempNameStr+"_hklStr"))
 		if(!WaveExists(DtaWvHklDStr))
-			make/O/T/N=(DimSize(DtaWv, 0 )) $("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
-			Wave/T DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+			//make/O/T/N=(DimSize(DtaWv, 0 )) $("root:WAXS_PDF:"+possiblyquotename(TempStr[0,23]+"_hklStr"))
+			make/O/T/N=(DimSize(DtaWv, 0 )) $("root:WAXS_PDF:"+possiblyquotename(tempNameStr+"_hklStr"))
+			Wave/T DtaWvHklDStr=$("root:WAXS_PDF:"+possiblyquotename(tempNameStr+"_hklStr"))
 		endif
 		if(strlen(DtaWvHklDStr[0])<1)	//empty wave, not filled...
 			For(j=0;j<numpnts(DtaWvHklDStr);j+=1)
@@ -3270,7 +3304,8 @@ Function IR3W_PDF4AddLines()
 			IR3W_PDF4AppendLinesToGraph(listWave[i][0],ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
 			if(PDF4_DisplayHKLTags)
 				TmpStrName=IN2G_RemoveExtraQuote(listWave[i][0],1,1)
-				Wave LabelWave=$("root:WAXS_PDF:"+PossiblyQUoteName(TmpStrName[0,23]+"_hklStr"))
+				//Wave LabelWave=$("root:WAXS_PDF:"+PossiblyQUoteName(TmpStrName[0,23]+"_hklStr"))
+				Wave LabelWave=$("root:WAXS_PDF:"+PossiblyQUoteName(IN2G_CreateUserName(TmpStrName,23, 0, 0)+"_hklStr"))
 				IR3W_PDF4AddTagsFromWave("IR3W_WAXSMainGraph", listWave[i][0], labelWave, ListOfPDF4DataColors[i][0], ListOfPDF4DataColors[i][1],ListOfPDF4DataColors[i][2])
 			endif
 		else 		//remove if needed...
@@ -3299,6 +3334,35 @@ Function IR3W_PDF4AddTagsFromWave(graphName, traceName, labelWave, Cr, Cg, Cb )
 	endfor
 End
 
+
+//**************************************************************************************
+//**************************************************************************************
+
+static Function IR3W_WAXSCorForDistance()
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	DFref oldDf= GetDataFolderDFR()
+	
+	if(DataFolderExists("root:Packages:Irena:WAXSTemp"))	
+		setDataFolder root:Packages:Irena:WAXSTemp
+		
+		NVAR DistanceCorrection = root:Packages:Irena:WAXS:DistanceCorrection			//when DistanceCorrection=1, distacne calibration is perfect, based on my sketch, correction is linear fix. 
+		NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
+		string AllWaves = WaveList("*", ";", "DIMS:2,TEXT:0,MINCOLS:8" )
+		variable i
+		string DimensionUnit
+		For(i=0;i<ItemsInList(AllWaves);i+=1)
+			Wave TheCardNew = $(StringFromList(i, AllWaves))
+			DimensionUnit=GetDimLabel(TheCardNew, 1, 0 )
+			if(stringmatch(DimensionUnit,"d_A"))		//manually inserted, dimension is in d and A
+				TheCardNew[][4] =   114.592 * asin((2 * pi / (DistanceCorrection*TheCardNew[p][0]))* wavelength / (4*pi))
+			else		//other choice is "Q_nm" from LaueGo
+				TheCardNew[][4] =  114.592 * asin((TheCardNew[p][0]*wavelength/125.664 ))		//this is conversion to A and from Q
+			endif
+		endfor
+	endif
+	setDataFolder oldDf
+end
 //**************************************************************************************
 //**************************************************************************************
 
@@ -3310,14 +3374,15 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 
 	NVAR  Wavelength = root:Packages:Irena:WAXS:Wavelength
 	wave TheCard=$("root:WAXS_PDF:"+possiblyquotename(CardName))
-	wave/T TheCardHKL=$("root:WAXS_PDF:"+possiblyquotename(CardName[0,23]+"_hklStr"))
+	wave/T TheCardHKL=$("root:WAXS_PDF:"+possiblyquotename(IN2G_CreateUserName(CardName,23, 0, 0)+"_hklStr"))
 	NewDataFolder/O/S root:Packages:Irena:WAXSTemp
 	Duplicate/O TheCard, $(CardName)
-	Duplicate/O/T TheCardHKL, $(CardName[0,23]+"_hklStr")
+	Duplicate/O/T TheCardHKL, $(IN2G_CreateUserName(CardName,23, 0, 0)+"_hklStr")
 	Wave TheCardNew = $((CardName))
 	string DimensionUnit=GetDimLabel(TheCardNew, 1, 0 )
+	NVAR DistanceCorrection = root:Packages:Irena:WAXS:DistanceCorrection			//when DistanceCorrection=1, distacne calibration is perfect, based on my sketch, correction is linear fix. 
 	if(stringmatch(DimensionUnit,"d_A"))		//manually inserted, dimension is in d and A
-		TheCardNew[][4] =   114.592 * asin((2 * pi / TheCard[p][0])* wavelength / (4*pi))
+		TheCardNew[][4] =   114.592 * asin((2 * pi / (DistanceCorrection*TheCard[p][0]))* wavelength / (4*pi))
 	else		//other choice is "Q_nm" from LaueGo
 		TheCardNew[][4] =  114.592 * asin((TheCard[p][0]*wavelength/125.664 ))		//this is conversion to A and from Q
 		//10*4*pi = 

@@ -190,6 +190,8 @@ Function IR3B_MetadataBrowserPanelFnct()
 	TitleBox Instructions4 title="\Zr100Regex for not contain: ^((?!string).)*$",size={330,15},pos={4,725},frame=0,fColor=(0,0,65535),labelBack=0
 	TitleBox Instructions5 title="\Zr100Regex for contain:  string, two: str2.*str1",size={330,15},pos={4,740},frame=0,fColor=(0,0,65535),labelBack=0
 	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
+
+	Button SelectAll,pos={205,695},size={70,15}, proc=IR3B_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
  
 	//Note listing and selection options 
 	TitleBox KeySelectionInfo title="\Zr140Selected sample & metadata : ",fixedSize=1,size={220,20},pos={290,100},frame=0,fstyle=1, fixedSize=1,fColor=(0,0,52224)
@@ -278,10 +280,20 @@ Function IR3B_ButtonProc(ba) : ButtonControl
 			if(cmpstr(ba.ctrlname,"DisplayDataInTable")==0)
 				IR3B_DisplayMetadataResults()
 			endif
+			if(stringmatch(ba.ctrlName,"SelectAll"))
+				Wave/Z SelectionOfAvailableData = root:Packages:Irena:MetadataBrowser:SelectionOfAvailableData
+				if(WaveExists(SelectionOfAvailableData))
+					SelectionOfAvailableData=1
+				endif
+			endif
 			if(cmpstr(ba.ctrlname,"DisplayDataInBrowser")==0)
 				SVAR FldrWithData=root:Packages:Irena:MetadataBrowser:SaveToFoldername
-				CreateBrowser 
-				ModifyBrowser  setDataFolder=FldrWithData, showWaves=1							
+				if(DataFolderExists(FldrWithData ))
+					CreateBrowser 
+					ModifyBrowser  setDataFolder=FldrWithData, showWaves=1		
+				else
+					abort "Data Folder "+FldrWithData+" does not exist" 
+				endif					
 			endif
 			if(cmpstr(ba.ctrlname,"GetHelp")==0)
 				//Open www manual with the right page
@@ -341,7 +353,7 @@ Function IR3B_SetVarProc(sva) : SetVariableControl
 		case -1: // control being killed
 			break
 	endswitch
-	DoWIndow/F IR3L_MultiSamplePlotPanel
+	DoWIndow/F IR3B_MetadataBrowserPanel
 	return 0
 End
 
@@ -401,6 +413,10 @@ static Function IR3B_DisplayMetadataResults()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DfRef OldDf=GetDataFolderDFR()
 	SVAR FldrWithData=root:Packages:Irena:MetadataBrowser:SaveToFoldername
+	if(!DataFolderExists(FldrWithData))
+		setDataFolder OldDF
+		Abort "Data Folder : "+ FldrWithData+" does not exist."
+	endif
 	SetDataFolder $(FldrWithData)					//go into the folder
 	string ListOfWaves=IN2G_ConvertDataDirToList(DataFolderDir(2))
 	KillWIndow/Z MetadataBrowserResTable
@@ -437,6 +453,10 @@ static Function IR3B_DeleteMetadataResults()
 	DoAlert/T="Are you sure???" 1, "Extracted metadata waves will be deleted, are you REALLY sure you want to do this?"
 	if(V_Flag)
 		SVAR FldrWithData=root:Packages:Irena:MetadataBrowser:SaveToFoldername
+		if(!DataFolderExists(FldrWithData))
+			setDataFolder OldDF
+			return 0	
+		endif
 		SetDataFolder $(FldrWithData)					//go into the folder
 		KillWIndow/Z MetadataBrowserResTable
 		KillWaves /A/Z

@@ -763,37 +763,40 @@ static Function IR3A_Model1DIntensity()
 	
 	//pick the parameters... 
 	variable voxelSize = PrimarySize/10
-	variable NumRSteps = 200
-	variable IsoValue = 0.5
-	variable oversample = 1
+	variable IsoValue = 0.1
 	variable Qmin = 0.5 * pi/AggSize 
 	variable Qmax = 6 * pi/PrimarySize
 	variable NumQSteps = 200
 	variable PrimarySphereRadius = 6		//this is RADIUS of sphere in voxels, not in angstroms. 
 	//Internally, each particle volume is made 10xx10x10, 8 seems to be value when the spheres are exactly touching in xy direction, 9 when in xyz direction. 
-	Wave/Z ThreeDVoxelGram = Wave3DwithPrimary  		//this is voxelgram	
+	Wave/Z ThreeDVoxelGram = Wave3DwithPrimaryShrunk  		//this is voxelgram shrunk to min size	
 	if(!WaveExists(ThreeDVoxelGram) || isInWorkFolder || recalculate3D)
 		//convert to voxelgram
 		IR3T_ConvertToVoxelGram(MassFractalAggregate, PrimarySphereRadius)
-		Wave ThreeDVoxelGram = Wave3DwithPrimary  		//thsi is voxelgram
-	endif
-	//if the 3DVocelgram is sufficiently small, oversample to get better data...
-	if(dimsize(ThreeDVoxelGram,0)*dimsize(ThreeDVoxelGram,1)*dimsize(ThreeDVoxelGram,2)< 80^3)
-		oversample = 4
-	elseif(dimsize(ThreeDVoxelGram,0)*dimsize(ThreeDVoxelGram,1)*dimsize(ThreeDVoxelGram,2)< 150^3)
-		oversample = 2
-	else
-		oversample = 1
+		Wave ThreeDVoxelGram = Wave3DwithPrimaryShrunk  		//this is voxelgram shrunk to min size... 
 	endif
 
-
-abort
 	//Calculate pdf intensity
-	IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversample, Qmin, Qmax, NumQSteps)
+	//TODO: check these are set correctly: VoxelSize, NumRSteps
+	SetScale /P x, 0, VoxelSize, "A" ,ThreeDVoxelGram
+	SetScale /P y, 0, VoxelSize, "A" ,ThreeDVoxelGram
+	SetScale /P z, 0, VoxelSize, "A" ,ThreeDVoxelGram
+	IR3T_CreatePDFIntensity(ThreeDVoxelGram, IsoValue,  Qmin, Qmax, NumQSteps)
 	//append to graph... 
 	Wave PDFQWv
 	Wave PDFIntensityWv
 	IR3A_Append1DInMassFracAgg(PDFIntensityWv,PDFQWv)
+
+	Wave/Z ThreeDVoxelGram = Wave3DwithPrimary 		//this is voxelgram with even number of rows/columns/layers. 	
+	SetScale /P x, 0, VoxelSize, "A" ,ThreeDVoxelGram
+	SetScale /P y, 0, VoxelSize, "A" ,ThreeDVoxelGram
+	SetScale /P z, 0, VoxelSize, "A" ,ThreeDVoxelGram
+	IR3T_CalcAutoCorelIntensity(ThreeDVoxelGram, IsoValue,  Qmin, Qmax, NumQSteps)
+	//these are autocorrelation calculated intensities... 
+	Wave AutoCorIntensityWv
+	Wave AutoCorQWv
+	IR3A_Append1DInMassFracAgg(AutoCorIntensityWv,AutoCorQWv)
+
 	//display the intensity. 
 //	DoWIndow IR1_LogLogPlotU
 //	if(V_Flag)
@@ -2552,16 +2555,23 @@ Function IR3P_POVPDBPanel()
 	SetVariable NewFolderName,pos={15,90},size={200,20},title="root:",noproc, help={"Type in new folder name"}
 	Button CreateFolder,pos={250,87},size={100,20},proc=IR3P_POVPDBButtonProc,title="Create Folder", help={"Create Folder for data"}
 
-	SetVariable CurrentFolderName,value= root:Packages:POVPDBImport:CurrentFolderName, noedit=1,frame=0
+	SetVariable CurrentFolderName,value= root:Packages:POVPDBImport:CurrentFolderName
 	SetVariable CurrentFolderName,pos={15,120},size={280,20},title="Current Folder Name",noproc, help={"Current FOlder name to use"}
 
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,145},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
 	TitleBox Info2 title="\Zr120Import data",pos={60,160},frame=0,fstyle=1, fixedSize=1,size={300,20},fColor=(0,0,52224)
-	Button Import3DData,pos={30,190},size={150,20},proc=IR3P_POVPDBButtonProc,title="Import 3D Data", help={"Import 3D data in this folder"}
-	Button Display3DData,pos={30,220},size={150,20},proc=IR3P_POVPDBButtonProc,title="Display 3D Data", help={"Display 3D data in this folder"}
-	Button ImportIntQData,pos={30,250},size={150,20},proc=IR3P_POVPDBButtonProc,title="Import Int/Q Data", help={"Import 1D data in this folder"}
-	Button DisplayIntQData,pos={30,280},size={150,20},proc=IR3P_POVPDBButtonProc,title="Display Int/Q Data", help={"Display 1D data in this folder"}
-	Button CalculateIntQData,pos={30,310},size={150,20},proc=IR3P_POVPDBButtonProc,title="Calculate Int/Q Data", help={"Calculate 1D data and append"}
+
+
+	SetVariable voxelSize,value= root:packages:POVPDBImport:voxelSize, frame=1
+	SetVariable voxelSize,pos={15,190},noproc, help={"WHat is voxel Size of the imported 3D structure? "}
+	SetVariable voxelSize title="Voxel Size [A]                ",size={200,17},limits={1,100,1}
+
+
+	Button Import3DData,pos={30,220},size={150,20},proc=IR3P_POVPDBButtonProc,title="Import 3D Data", help={"Import 3D data in this folder"}
+	Button Display3DData,pos={30,250},size={150,20},proc=IR3P_POVPDBButtonProc,title="Display 3D Data", help={"Display 3D data in this folder"}
+	Button ImportIntQData,pos={30,300},size={150,20},proc=IR3P_POVPDBButtonProc,title="Import Int/Q Data", help={"Import 1D data in this folder"}
+	Button DisplayIntQData,pos={30,330},size={150,20},proc=IR3P_POVPDBButtonProc,title="Display Int/Q Data", help={"Display 1D data in this folder"}
+	Button CalculateIntQData,pos={30,360},size={150,20},proc=IR3P_POVPDBButtonProc,title="Calculate Int/Q Data", help={"Calculate 1D data and append"}
 
 end
 
@@ -2647,7 +2657,7 @@ Function IR3P_InitializePOVPDB()
 	string/g ListOfVariables
 	string/g ListOfStrings
 	//here define the lists of variables and strings needed, separate names by ;...
-	ListOfVariables="UseForPOV;UseForPDB;"
+	ListOfVariables="UseForPOV;UseForPDB;VoxelSize;"
 	ListOfStrings="NewFolderName;CurrentFolderName;"
 	variable i
 	//and here we create them
@@ -2658,6 +2668,10 @@ Function IR3P_InitializePOVPDB()
 		IN2G_CreateItem("string",StringFromList(i,ListOfStrings))
 	endfor	
 		
+	NVAR VoxelSize
+	if(VoxelSize<1)
+		VoxelSize = 1		//default to 1A
+	endif
 	setDataFOlder OldDf
 end
 //******************************************************************************************************************************************************
@@ -2716,9 +2730,13 @@ end
 Function IR3P_CreateFolder()	
 	SVAR NewFolderName=root:packages:POVPDBImport:NewFolderName
 	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
-	setDataFOlder root:
-	NewDataFOlder/O/S $(PossiblyQuoteName(NewFolderName))
-	CurrentFolderName = GetDataFolder(1)
+	if(Strlen(NewFolderName)>2)
+		setDataFOlder root:
+		NewDataFOlder/O/S $(PossiblyQuoteName(NewFolderName))
+		CurrentFolderName = GetDataFolder(1)
+	else
+		Abort "No Folder name exists, type in name first" 
+	endif
 end
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -2755,21 +2773,32 @@ Function IR3P_Calculate1DDataFile()
 	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
 	SetDataFOlder $(CurrentFolderName)
 	Wave ThreeDVoxelGram = POVVoxelWave
-	variable voxelSize = 2
-	variable NumRSteps=300
+	NVAR voxelSize = root:packages:POVPDBImport:voxelSize
+	print "Warning = IR3P_Calculate1DDataFile needs to get VoxelSize fixzed, it is fixerd at 2A"
+	//variable NumRSteps=300
 	variable IsoValue = 0.5
-	variable oversample = 4
 	variable Qmin = 0.001 
-	variable Qmax = 0.3
+	variable Qmax = 0.6
 	variable NumQSteps = 200
-	IR3T_CreatePDF(ThreeDVoxelGram,VoxelSize, NumRSteps, IsoValue, oversample, Qmin, Qmax, NumQSteps)
+	setScale/P x, 0, VoxelSize, ThreeDVoxelGram
+	setScale/P y, 0, VoxelSize, ThreeDVoxelGram
+	setScale/P z, 0, VoxelSize, ThreeDVoxelGram
+	IR3T_CreatePDFIntensity(ThreeDVoxelGram, IsoValue, Qmin, Qmax, NumQSteps)
 	Wave PDFQWv
 	Wave PDFIntensityWv
 	Wave Qwave
 	Wave IntWave
+	//and this does not work for odd number of rows/columns/... 
+	//IR3T_CalcAutoCorelIntensity(ThreeDVoxelGram, IsoValue, Qmin, Qmax, NumQSteps)
+	//these are autocorrelation calculated intensities... 
+	//Wave AutoCorIntensityWv
+	//Wave AutoCorQWv
 	variable InvarModel=areaXY(PDFQWv, PDFIntensityWv )
 	variable InvarData=areaXY(Qwave, IntWave )
 	PDFIntensityWv*=InvarData/InvarModel
+	//InvarModel=areaXY(AutoCorQWv, AutoCorIntensityWv )
+	//AutoCorIntensityWv*=InvarData/InvarModel
+	
 	DOWIndow POV1DGraph
 	if(V_Flag)
 		DoWIndow/F POV1DGraph
@@ -2777,9 +2806,15 @@ Function IR3P_Calculate1DDataFile()
 		if(V_flag==0)
 			AppendToGraph/W=POV1DGraph  PDFIntensityWv vs PDFQWv
 		endif
+		//CheckDisplayed /W=POV1DGraph AutoCorIntensityWv
+		//if(V_flag==0)
+		//	AppendToGraph/W=POV1DGraph  AutoCorIntensityWv vs AutoCorQWv
+		//endif
 		ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
 		ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
 		ModifyGraph msize(PDFIntensityWv)=3
+		//ModifyGraph lsize(AutoCorIntensityWv)=3,rgb(AutoCorIntensityWv)=(3,52428,1)
+		Legend/C/N=text0/A=MC
 	endif
 end
 ///*************************************************************************************************************************************

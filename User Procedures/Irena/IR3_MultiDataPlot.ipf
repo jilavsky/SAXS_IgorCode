@@ -107,6 +107,9 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	IR2C_AddDataControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
 	Button GetHelp,pos={480,10},size={80,15},fColor=(65535,32768,32768), proc=IR3L_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 	IR3C_MultiAppendControls("Irena:MultiSamplePlot","IR3L_MultiSamplePlotPanel", "IR3L_DoubleClickAction","",0,1)
+
+	Button SelectAll,pos={190,680},size={80,15}, proc=IR3L_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
+
 	//graph controls
 	SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	PopupMenu SelectGraphWindows,pos={280,90},size={310,20},proc=IR3L_PopMenuProc, title="Select Graph",help={"Select one of controllable graphs"}
@@ -184,7 +187,7 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	TitleBox Instructions6 title="\Zr100Regex for case independent:  (?i)string",size={330,15},pos={4,755},frame=0,fColor=(0,0,65535),labelBack=0
 
 	SVAR SelectedStyle = root:Packages:Irena:MultiSamplePlot:SelectedStyle
-	PopupMenu ApplyStyle,pos={260,680},size={400,20},proc=IR3L_PopMenuProc, title="Apply style:",help={"Set tool setting to defined conditions and apply to graph"}
+	PopupMenu ApplyStyle,pos={280,660},size={400,20},proc=IR3L_PopMenuProc, title="Apply style:",help={"Set tool setting to defined conditions and apply to graph"}
 	PopupMenu ApplyStyle,value=#"root:Packages:Irena:MultiSamplePlot:ListOfDefinedStyles",popvalue=SelectedStyle
 	Button ApplyPresetFormating,pos={260,710},size={160,20}, proc=IR3L_ButtonProc,title="Apply All Formating", help={"Apply Preset Formating to update graph based on these choices"}
 	Checkbox ApplyFormatingEveryTime, pos={250,735},size={76,14},title="Apply Formating automatically?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSamplePlot:ApplyFormatingEveryTime, help={"Should all formatting be applied after every data additon?"}
@@ -941,6 +944,12 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 				DoWIndow/F IR3L_MultiSamplePlotPanel
 			endif
 
+			if(stringmatch(ba.ctrlName,"SelectAll"))
+				Wave/Z SelectionOfAvailableData = root:Packages:Irena:MultiSamplePlot:SelectionOfAvailableData
+				if(WaveExists(SelectionOfAvailableData))
+					SelectionOfAvailableData=1
+				endif
+			endif
 
 			break
 		case -1: // control being killed

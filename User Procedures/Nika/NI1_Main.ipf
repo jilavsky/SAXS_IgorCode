@@ -1,12 +1,12 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.821
+#pragma version=1.822
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.821
+constant CurrentNikaVersionNumber = 1.822
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -15,8 +15,8 @@ constant NikaNumberOfQCirclesDisp=15
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.821 	Beta version after February2020 release
-//1.82 	rtGLolab=3 forced for all
+//1.822 	Beta version after February2020 release
+//1.82 	rtGlobal=3 forced for all
 //			Added support for 12ID-C data. 
 //			Add print in history which version has compiled, Useful info later when debugging.
 //1.81   December 2018 release. Updated 64bit xops, mainly for OSX. 

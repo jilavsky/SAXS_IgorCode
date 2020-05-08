@@ -10,7 +10,9 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 ********************************************
-2.691 (beta)
+2.262 (beta)
+WAXS - changed how JCPDS cards are named (using chemical name or formula+PDF number) + enabled long name support for Igor 8 and when user chooses. 
+WAXS - added "Distance correction" for sticks. Tweaks calculated 2Theta angle using distance ratio correction.  
 Fractals - added optional use of Unified Fit Sphere form factor. This removes high-q Bessel function oscillations which are nto reasonable for most cases. 
 Added Multi Data Plot tool, new tool to plot quickly many data sets. New ipf file... 
 Added Metadata Browser tool, enables relatively easy extraction of values from metadata in wave notes. 

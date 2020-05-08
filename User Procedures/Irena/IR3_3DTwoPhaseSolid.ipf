@@ -17,7 +17,7 @@
 	//and  
 	//John A Quintanilla, Jordan T Chen, Richard F Reidy and Andrew J Allen Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351, doi:10.1088/0965-0393/15/4/S02
 
-constant useSAXSMorphCode = 0
+//constant useSAXSMorphCode = 0
 
 //******************************************************************************************************************************************************
 //******************************************************************************************************************************************************
@@ -94,10 +94,14 @@ Function IR3T_TwoPhaseControlPanel()
 
 
 	SetVariable BoxSideSize,limits={100,100000,50},value= root:Packages:TwoPhaseSolidModel:BoxSideSize, proc=IR3T_SetVarProc
-	SetVariable BoxSideSize,pos={10,265},size={200,16},title="Box size [A]           ", help={"Physical size of the box for modeling in Angstroms"}
+	SetVariable BoxSideSize,pos={10,265},size={200,16},title="Box Physical size [A] ", help={"Physical size of the box for modeling in Angstroms"}
 
-	SetVariable BoxResolution,limits={10,500,50},proc=IR3T_SetVarProc, value= root:Packages:TwoPhaseSolidModel:BoxResolution
-	SetVariable BoxResolution,pos={10,290},size={200,16},title="Box divisions           ", help={"How many steps per side to take"}
+//	SetVariable BoxResolution,limits={10,500,50},proc=IR3T_SetVarProc, value= root:Packages:TwoPhaseSolidModel:BoxResolution
+//	SetVariable BoxResolution,pos={10,290},size={200,16},title="Box divisions           ", help={"How many steps per side to take"}
+	NVAR BoxResolution=root:Packages:TwoPhaseSolidModel:BoxResolution
+	PopupMenu BoxResolution,pos={20,290},size={180,21},proc=IR3T_PopupControl,title="Box divisions : ", help={"Select how many divisions per side"}
+	PopupMenu BoxResolution,mode=1,value= "64x64x64;128x128x128;256x256x256;512x512x512;"
+	BoxResolution = 64
 
 	SetVariable VoxelResolution,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:VoxelResolution, noedit=1, frame=0 //proc=IR1A_PanelSetVarProc
 	SetVariable VoxelResolution,pos={230,270},size={200,16},title="Voxels size [A] ",noproc, help={"How big is each voxels in box = model resolution"}
@@ -105,8 +109,12 @@ Function IR3T_TwoPhaseControlPanel()
 	SetVariable TotalNumberOfVoxels,limits={0,inf,0},value= root:Packages:TwoPhaseSolidModel:TotalNumberOfVoxels, noedit=1, frame=0, format="%2.2e" //proc=IR1A_PanelSetVarProc
 	SetVariable TotalNumberOfVoxels,pos={230,290},size={200,16},title="No of Voxels ",noproc, help={"How many voxels is in box, impacts speed!"}
 
+	CheckBox useSAXSMorphCode,pos={100,310},size={250,14},proc=IR3T_InputPanelCheckboxProc,title="use SAXSMorph code (slower)"
+	CheckBox useSAXSMorphCode,variable=root:Packages:TwoPhaseSolidModel:useSAXSMorphCode, help={"To use GRF generation using SAXSMorph method"}
+
+
 	//Dist Tabs definition
-	TabControl TwoPhaseModelTabs,pos={5,320},size={370,280},proc=IR3T_TwoPhaseTabProc
+	TabControl TwoPhaseModelTabs,pos={5,330},size={370,280},proc=IR3T_TwoPhaseTabProc
 	TabControl TwoPhaseModelTabs,tabLabel(0)="1. Extrapolate ",tabLabel(1)="2. Advanced Pars ",tabLabel(2)="3. Results "
 
 	Button CalculateRg,pos={100,355},size={150,20}, proc=IR3T_TwoPhaseButtonProc,title="Calculate Rg", help={"Set cursors and calculate Rg fro main feature"}
@@ -132,7 +140,7 @@ Function IR3T_TwoPhaseControlPanel()
 	
 
 	//these are advanced parameters. Need to move to Tab 2... 
-	CheckBox RKParametersManual,pos={100,345},size={200,14},proc=IR3T_InputPanelCheckboxProc,title="Manual R/K parameters?"
+	CheckBox RKParametersManual,pos={100,355},size={200,14},proc=IR3T_InputPanelCheckboxProc,title="Manual R/K parameters?"
 	CheckBox RKParametersManual,variable= root:packages:TwoPhaseSolidModel:RKParametersManual, help={"Check to select manually R/K parameetrs below. "}
 	SetVariable NumberofRPoints,limits={100,10000,50},value= root:Packages:TwoPhaseSolidModel:NumberofRPoints
 	SetVariable NumberofRPoints,pos={15,375},size={170,16},title="R vector points ",noproc, help={"Number of points on R vector"}
@@ -194,6 +202,23 @@ end
 
 
 //******************************************************************************************************************************************************
+ 
+Function IR3T_PopupControl(PU_Struct): PopupMenuControl
+	STRUCT WMPopupAction &PU_Struct
+
+	if(PU_Struct.eventCode==2)
+		NVAR BoxResolution = root:Packages:TwoPhaseSolidModel:BoxResolution
+		NVAR VoxelResolution = root:Packages:TwoPhaseSolidModel:VoxelResolution
+		NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
+		NVAR Voxels=root:Packages:TwoPhaseSolidModel:TotalNumberOfVoxels
+		//"64x64x64;128x128x128;256x256x256;512x512x512;"
+		BoxResolution=str2num(PU_Struct.popStr)
+		Voxels = BoxResolution^3
+		VoxelResolution = BoxSideSize / BoxResolution
+	endif
+
+end
+
 //******************************************************************************************************************************************************
 ///******************************************************************************************
 Function IR3T_TwoPhaseTabProc(tca) : TabControl
@@ -373,7 +398,7 @@ Function IR3T_TwoPhaseButtonProc(ba) : ButtonControl
 					IR3T_GenerateTwoPhaseSolid()
 					//This thing does not work - we always get scattering from the box size, not from internal strucutre. So this is probably not realistic to do...  
 					//IR3T_CreatePDF(TwoPhaseSolidMatrix,VoxelSize, NumStepsToUse, 0.5, oversample, 0.001, 0.5, 200)
-					IR3T_AppendModelIntToGraph()
+					//IR3T_AppendModelIntToGraph()
 					IR3T_CalculateAchievedValues()
 			endif
 			if(StringMatch(ba.ctrlName, "Generate3DView" ))
@@ -405,9 +430,42 @@ End
 //******************************************************************************************************************************************************
 
 Function IR3T_Calc1DSASData()
-
-		IR3T_Calc3DTwoPntCorrelation()
-		IR3T_CalcTwoPntsCorFIntensity()
+		
+		wave My3DWv = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
+		//note, assumes My3DWave has proper x scaling to indicate voxelsize in A. 
+		//this does not work for 3D solid, since it gives scattering from external box size... 
+		//use this for Fractal aggregate and not for 3D solid... 
+		//IR3T_CreatePDFIntensity(My3DWv, 0.5, 0.001, 0.5, 200)
+		//these are PDF distance calculation results
+		//Wave PDFIntensityWv 
+		//wave PDFQWv
+		IR3T_CalcAutoCorelIntensity(My3DWv, 0.5, 0.001, 0.5, 200)
+		//these are autocorrelation calculated intensities... 
+		Wave AutoCorIntensityWv
+		Wave AutoCorQWv
+	 	Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
+	 	Wave OriginalQvector = root:Packages:TwoPhaseSolidModel:OriginalQvector
+	 	variable IntgInt=areaXY(OriginalQvector, OriginalIntensity)
+	 	variable ModelIntgInt=areaXY(AutoCorQWv, AutoCorIntensityWv)
+	 	AutoCorIntensityWv*=IntgInt/ModelIntgInt
+		
+		DOWIndow TwoPhaseSystemData
+		if(V_Flag)
+			DoWIndow/F TwoPhaseSystemData
+			//CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
+			//if(V_flag==0)
+			//	AppendToGraph/W=TwoPhaseSystemData/R  PDFIntensityWv vs PDFQWv
+			//endif
+			CheckDisplayed /W=TwoPhaseSystemData AutoCorIntensityWv
+			if(V_flag==0)
+				AppendToGraph/W=TwoPhaseSystemData  AutoCorIntensityWv vs AutoCorQWv
+			endif
+			//ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
+			//ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
+			//ModifyGraph msize(PDFIntensityWv)=3
+			ModifyGraph lsize(AutoCorIntensityWv)=3,rgb(AutoCorIntensityWv)=(3,52428,1)
+		endif
+		
 end
 
 
@@ -808,7 +866,7 @@ FUnction IR3T_ExtendDataCalcParams()
 				ModifyGraph/W=TwoPhaseSystemData lstyle(ExtrapolatedIntensity)=6,rgb(ExtrapolatedIntensity)=(1,12815,52428)
 			endif
 			//calculate Invariant
-			variable Qmax=2		//Qmax=2 hardwired here... 
+			variable Qmax=5		//Qmax=5 hardwired here... 
 			Duplicate/Free ExtrapolatedQvector, ExtrapolatedIntQ2
 			ExtrapolatedIntQ2 = ExtrapolatedIntensity * ExtrapolatedQvector^2
 			Invariant  = areaXY(ExtrapolatedQvector, ExtrapolatedIntQ2,0,Qmax)
@@ -824,20 +882,25 @@ FUnction IR3T_ExtendDataCalcParams()
 					CalculatePorosityFromInvariant = 0
 					Porosity = 0.1
 					IR3T_SetControlsInPanel()
+				else
+					Porosity = (1-sqrt(1-4*Porosity))/2					//this is quadratic equation solver
 				endif
 			else
 				ScatteringContrast  = (Invariant / Porosity )*1e-20/(2*pi^2)
 			endif
-			Porosity = (1-sqrt(1-4*Porosity))/2					//this is quadratic equation solver
 			SurfaceToVolumeRatio = Porosity*(1-porosity)* 1e4*pi*PorodConstant/Invariant	// this is not really S/V, that would be S/V = piB/Q * (phi*(1-phi))
 			if(RKParametersManual==0)		//calculate and set R and K parameters here...
 				//Rmin = BoxSideSize / BoxResolution / 2
 				Rmin = 0.1
 				//Rmax = IN2G_roundSignificant(35/lowQExtrapolationStart,2)
-				Rmax = IN2G_roundSignificant(10*RgValue,2)			
+				variable Rmax1 = IN2G_roundSignificant(10*RgValue,2)	
+				variable RadMax2 = ceil(1.1*sqrt(BoxSideSize^2+BoxSideSize^2+BoxSideSize^2))
+				Rmax = max(RadMax2,Rmax1)
 				Kmin =IN2G_roundSignificant(lowQExtrapolationStart/10,1)
 				Kmax = IN2G_roundSignificant(highQExtrapolationStart*10, 1)	
 				Kmax =  Kmax>6.28 ? Kmax : 2*pi		
+			else
+				//Rmax = ceil(1.3*sqrt(BoxSideSize^2+BoxSideSize^2+BoxSideSize^2))	
 			endif
 			DoWIndow TwoPhaseSystems
 			if(V_Flag)	
@@ -943,7 +1006,7 @@ Function IR3T_InitializeTwoPhaseSys()
 	ListOfVariables+="NumberofRPoints;NumberOfKPoints;Kmin;Kmax;Rmin;Rmax;RKlogSpaced;TotalNumberOfVoxels;RKParametersManual;"
 	ListOfVariables+="LowQExtrapolationMin;LowQExtrapolationStart;LowQExtrapolationEnd;HighQExtrapolationEnd;HighQExtrapolationStart;HighQExtrapolationMax;"
 	ListOfVariables+="PorodConstant;Background;RgValue;VoxelResolution;GizmoFillSolid;"
-	ListOfVariables+="AchievedVolumeFraction;"
+	ListOfVariables+="AchievedVolumeFraction;useSAXSMorphCode;"
 	
 	ListOfStrings="LowQExtrapolationMethod;"
 	ListOfStrings+="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;"
@@ -1089,6 +1152,7 @@ Function IR3T_GenerateTwoPhaseSolid()
 	NVAR KMax = root:Packages:TwoPhaseSolidModel:KMax
 	NVAR RadMin = root:Packages:TwoPhaseSolidModel:RMin
 	NVAR RadMax = root:Packages:TwoPhaseSolidModel:RMax
+	RadMax = ceil(1.1*sqrt(BoxSideSize^2+BoxSideSize^2+BoxSideSize^2))
 
 	make/O/N=(NumberOfKPoints)/D Kvalues
 	Make/O/N=(NumberofRPoints)/D PhaseAutocorFnctRadii, PhaseAutocorFnct, Radii
@@ -1130,18 +1194,18 @@ Function IR3T_GenerateTwoPhaseSolid()
 	multithread PhaseAutocorFnct = IR3T_ConvertIntToDACF(PhaseAutocorFnctRadii[p],Intensity,Qvec)			//this is really Debye Autocorreclation Function  
 	print "Gamma_alfa(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//renormalize
-	wavestats/Q PhaseAutocorFnct
+	variable MaxValue=wavemax(PhaseAutocorFnct)
 	//Refer to original SAXSMorph java code, and John A. Quintanilla papers, explains why this is normalized as below:
 	// Quintanilla: DebyeAutoCorFnct = S2, and S2(0) = porosity (volume fractio of pores)
 	//   limit(R->inf) DebyeAutoCorFnct  = porosity^2
 	//Java code:      this.gammar[i][1] = ((this.porosity - this.porosity * this.porosity) * gamma_r_val[i] / gamma_r_max + this.porosity * this.porosity);
 	Duplicate/O PhaseAutocorFnct, TwoPointsCorFData																	//thsi is two points correlation function. 
-	TwoPointsCorFData = (porosity - porosity^2) * PhaseAutocorFnct[p]/V_max + porosity^2					//this converts Two Points Correlation function... . 
+	TwoPointsCorFData = (porosity - porosity^2) * PhaseAutocorFnct[p]/MaxValue + porosity^2					//this converts Two Points Correlation function... . 
  	// Makes sense, porosity^2 is random probability that two random points will be both in pore/solid (whatever the minority phase is).
  	//       >>>>>>      this now works, 2-24-2019, but still seem to get different values than SAXSMorph
 
-	display PhaseAutocorFnct vs Radii as "PhaseAutocorFnct"
-	display TwoPointsCorFData vs Radii as "TwoPointsCorFData"
+	//display/K=1 PhaseAutocorFnct vs Radii as "PhaseAutocorFnct"
+	//display/K=1 TwoPointsCorFData vs Radii as "TwoPointsCorFData"
 
 			  	//**************************************************************
 				// >>>>   Step 2 from Quintanilla   <<<<<<
@@ -1166,6 +1230,7 @@ Function IR3T_GenerateTwoPhaseSolid()
  	startTicks=ticks
 	print "Calculating gR(r) - the two-point correlation function g(r)" 		
 	Duplicate/O Radii,AutoCorfnctGr
+	NVAR useSAXSMorphCode=root:Packages:TwoPhaseSolidModel:useSAXSMorphCode
 	if(useSAXSMorphCode)
 		print "Calculating g(r) using SAXSMorph code"
 		AutoCorfnctGr = IR3T_SMcalcgr(alfaValue, GammAlfa0, TwoPointsCorFData[p])	//this is complete voodoo in the SAXSMorph code. See notes in IR3T_SMcalcgr to try to explain...
@@ -1179,11 +1244,11 @@ Function IR3T_GenerateTwoPhaseSolid()
 		variable alfaValueQ = -1 * alfaValue
 		print "Calculating g(r) using code in Quantanilla paper"
   		multithread AutoCorfnctGr = IR3T_ProperCalcgr(alfaValueQ, XiFunctionQuint[p])				//this is correct way of calculating gr
-		AutoCorfnctGr[0]=1																				//first point is 1 by definition and code gets NaN
-		AutoCorfnctGr = numtype(AutoCorfnctGr[p]) == 0 ? AutoCorfnctGr[p] : 1											//for log scaled data we have number of nans at the begginign due to really small values, need to be 1 for all such values. 
+		AutoCorfnctGr[0]=1																							//first point is 1 by definition and code gets NaN
+		AutoCorfnctGr = numtype(AutoCorfnctGr[p]) == 0 ? AutoCorfnctGr[p] : 1						//for log scaled data we have number of nans at the begginign due to really small values, need to be 1 for all such values. 
 	endif
 
-	display AutoCorfnctGr vs Radii as "AutoCorfnctGr"
+	//display/K=1 AutoCorfnctGr vs Radii as "AutoCorfnctGr"
 
 	print "gamma(r) calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 	//    fascinating. So the complete voddo in SAXSMorph creates same gR function as code from Quintanilla 
@@ -1199,51 +1264,46 @@ Function IR3T_GenerateTwoPhaseSolid()
 	duplicate/O Kvalues, SpectralFk 
 	multithread SpectralFk = IR3T_Formula4_SpectralFnct(Kvalues[p],AutoCorfnctGr,PhaseAutocorFnctRadii)
 	// spectral function is ridiculously noisy, lets smooth it. 
-
-	display SpectralFk vs Kvalues as "SpectralFk"
-
+	//display/K=1 SpectralFk vs Kvalues as "SpectralFk"
 	print "Spectral function calculation time was "+num2str((ticks-startTicks)/60) +" sec"
 				//********************************************
 				// >>>>   Step 5 from Quintanilla   <<<<<<
 				//********************************************
 				//Step 5. Compute a nonnegative approximation of SpectralFk by solving the following convex quadratic programming problem:
 	Duplicate/O SpectralFk, PositiveSpectralFk
-
 	//note: this makes HUGE difference and results look lot closer to SAXSMorph and expectations... 
 	variable SMoothBy = ceil(numpnts(PositiveSpectralFk)/60)
 	Smooth/EVEN/B SMoothBy, PositiveSpectralFk
 	//this gets some differeces between SAXSMorph and Igor code, but it may be just different rounding and methods. Not sure which one is actually right here anyway. 
-
-	display PositiveSpectralFk vs Kvalues as "PositiveSpectralFk"
-
-				//********************************************
-				// >>>>   Step 6 from Quintanilla   <<<<<<
-				//********************************************
-				//Evaluate G(r), the optimal positive-deﬁnite approximation to g(r).
-	duplicate/O Radii, PositiveAutoCorfnctGr
-	multithread PositiveAutoCorfnctGr = 	IR3T_ConvertSpectrFtoGr(Radii[p],PositiveSpectralFk,Kvalues)			
-				
-	display PositiveAutoCorfnctGr vs Radii as "PositiveAutoCorfnctGr"
+	//display/K=1 PositiveSpectralFk vs Kvalues as "PositiveSpectralFk"		
+	///display/K=1 PositiveAutoCorfnctGr vs Radii as "PositiveAutoCorfnctGr"
  	startTicks=ticks
- 	if(!useSAXSMorphCode)
- 		print "Using FFT to genrate 2 phase solid, this is not optimized yet"
- 		//need to first create 
-		//here we can take over by use of FFT... 
-		IR3T_UseFFTtoGenerateMatrix(PositiveAutoCorfnctGr,Radii, alfaValue, BoxResolution, BoxSideSize)
-	else
+ 	if(useSAXSMorphCode)
 		print "Using SAXSMorph code... "
 		//this is SAXSMorph
 		//now we need to implement function calcGRF from java code...
 		//this has lots of check code and them calls generateMatrix() 
 		startTicks=ticks
 		print "Calculating Matrix" 		
-		//this is SAXSMoprh way
+		//this is SAXSMorph way
 		IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, alfaValue)
-		//and this is using FFT
-		//you need FFTGRF.ipf for following step. Its is much faster but the sizes generated are smaller and make not much sense for now... 
-		//may be need better - properly fft's gR (bot spectralfk, which has same absolute values and shape, but seem shfited by Rmin...
-		//and ????
-		//	IR3T_GenerateMatrixFFT(SpectralFk, Kvalues, BoxSideSize, BoxResolution, porosity)
+	else
+		//and this is using FFT based on Quintanilla 
+		//********************************************
+		// >>>>   Step 6 from Quintanilla   <<<<<<
+		//********************************************
+		//Evaluate G(r), the optimal positive-deﬁnite approximation to g(r).
+		duplicate/O Radii, PositiveAutoCorfnctGr
+		multithread PositiveAutoCorfnctGr = 	IR3T_ConvertSpectrFtoGr(Radii[p],PositiveSpectralFk,Kvalues)	
+		variable NormalizeVal= wavemax(PositiveAutoCorfnctGr)
+		multithread PositiveAutoCorfnctGr = PositiveAutoCorfnctGr/NormalizeVal	
+ 		print "Using FFT to generate 2 phase solid, this is not optimized yet"
+		//here we can take over by use of FFT... 
+		Duplicate AutoCorfnctGr, PositiveAutoCorfnctGr
+		PositiveAutoCorfnctGr = PositiveAutoCorfnctGr[p]>0 ? PositiveAutoCorfnctGr : 0 
+		IR3T_UseFFTtoGenerateMatrix(AutoCorfnctGr,PositiveAutoCorfnctGr, alfaValue, BoxResolution, BoxSideSize)
+
+//		IR3T_UseFFTtoGenerateMatrix(PositiveAutoCorfnctGr,Radii, alfaValue, BoxResolution, BoxSideSize)
 	endif
 	print "GenerateMatrix time is "+num2str((ticks-startTicks)/60) +" sec"
 	//calculate theoretical intensity from gR data per Quintanilla, Modelling Simul. Mater. Sci. Eng. 15 (2007) S337–S351
@@ -1277,6 +1337,8 @@ Function IR3T_GenerateTwoPhaseSolid()
 	print "Calculating PDF and SAS curve."
 	Wave TwoPhaseSolidMatrix
 	//oversample = BoxResolution>100 ? 2 : 4
+	KillWaves/Z RandomField_FFT_Covar_IFFT_norm,AutoCorMatrix,RandomField,CovarFunction3D
+
 	print "Done..."
 	resumeUpdate
 	setDataFOlder OldDf	
@@ -1290,80 +1352,84 @@ end
 //what to do here?  
 
 Function IR3T_UseFFTtoGenerateMatrix(Gr,Radii, alfaValue, BoxDivisions, BoxSide )
-	wave Gr, radii					//this is covariance function (1D)
-	variable alfaValue					//this is cut off value
+	wave Gr, radii							//this is covariance function (1D)
+	variable alfaValue						//this is cut off value
 	variable BoxDivisions, BoxSide		//Divisions is number of pixels per side, Side is length in A
 	
 	//need to add radius 0 = Gr = 1
-	Make/O/N=(numpnts(Gr)+1) GRtemp, Radiitemp
-	GRtemp[0]=1
-	GRtemp[1, ] = Gr[p-1]
+	Duplicate/O Gr, GRtemp, Radiitemp
+	//GRtemp[0]=1
+	GRtemp = Gr/wavemax(Gr)			//Positive Gr has not been normalized... Need to normalize to 1 at max.  
 	Radiitemp[0]=0
 	Radiitemp[1, ]=Radii[p-1]	
 	//now we need to create Corelation. 
 	make/O/N=5000 CovarFunction1D
-	variable maxRadgR = radii[numpnts(radii)-1] - 10
-	SetScale x -2*maxRadgR,2*maxRadgR,"A", CovarFunction1D
+	variable maxRadgR = radii[numpnts(radii)-1]
+	SetScale x -0.95*maxRadgR,0.95*maxRadgR,"A", CovarFunction1D
 
+	CovarFunction1D = GRtemp[binarysearchInterp(Radiitemp, abs(x) )]
+	
 	//for testing
-	Duplicate/O CovarFunction1D, CovarFunction1DGauss, CovarFunction1DOrig
+	//Duplicate/O CovarFunction1D, CovarFunction1DGauss, CovarFunction1DOrig
 		
 	//Let's see what using smooth function would do...
 	//Curve fitting with Gaussian works fine, but is not generic enough...
-	make/N=4/O W_coef
-	W_coef={0,1,0,50}
-	K0 = 0;K1 = 1;K2 = 0;K3 = 50;
-	CurveFit/G/H="1110" gauss GRtemp /X=Radiitemp	
-	CovarFunction1D =  W_coef[0]+W_coef[1]*exp(-((x-W_coef[2])/(W_coef[3]))^2)				//<<<< is this to convert radius to distance??? I think Covar FUnction needs distance. 
+	//make/N=4/O W_coef
+	//W_coef={0,1,0,50}
+	//K0 = 0;K1 = 1;K2 = 0;K3 = 50;
+	//CurveFit/G/H="1110" gauss GRtemp /X=Radiitemp	
+	//CovarFunction1D =  W_coef[0]+W_coef[1]*exp(-((x-W_coef[2])/(W_coef[3]))^2)				//<<<< is this to convert radius to distance??? I think Covar FUnction needs distance. 
 	//end of use of gauss to smooth Gr...
 
-					//use FFT to remove high osciallations... 
+				//use FFT to remove high osciallations... 
 				//	CovarFunction1D = abs(x)<maxRadgR ? GRtemp[binarysearchInterp(Radiitemp, abs(x) )] : 0
 				//	FFT/OUT=3/DEST=CovarFunction1D_FFT 	CovarFunction1D
 				//	Smooth/EVEN/B 30, CovarFunction1D_FFT
-					//IFFT/DEST=CovarFunction1D_FFT_SM_IFFT  CovarFunction1D_FFT
+				// IFFT/DEST=CovarFunction1D_FFT_SM_IFFT  CovarFunction1D_FFT
 				//end, this seems to be a problem...
 		
 	Make/N=(BoxDivisions,BoxDivisions,BoxDivisions)/O RandomField, CovarFunction3D
-	variable HalfBox = BoxSide/2
-	SetScale x 0,BoxSide,"A", RandomField
-	SetScale y 0,BoxSide,"A", RandomField
-	SetScale z 0,BoxSide,"A", RandomField
 	multithread RandomField = gnoise(1)
-	SetScale y -1*BoxSide,BoxSide,"A", CovarFunction3D
-	SetScale x -1*BoxSide,BoxSide,"A", CovarFunction3D
-	SetScale z -1*BoxSide,BoxSide,"A", CovarFunction3D
-	//thsi does not fix anything... This is generating too small particles, something is off here. 
-	//Need to increase size of the particles twice, but cannot find way to scaqle them up. 
-//	SetScale y -1*HalfBox,HalfBox,"A", CovarFunction3D
-//	SetScale x -1*HalfBox,HalfBox,"A", CovarFunction3D
-//	SetScale z -1*HalfBox,HalfBox,"A", CovarFunction3D
-//	SetScale x -1*HalfBox,HalfBox,"A", RandomField
-//	SetScale y -1*HalfBox,HalfBox,"A", RandomField
-//	SetScale z -1*HalfBox,HalfBox,"A", RandomField
-
-	multithread CovarFunction3D = CovarFunction1D(sqrt(x^2+y^2+z^2))
+	variable HalfBox = BoxSide/2
+//	SetScale x 0,BoxSide,"A", RandomField
+//	SetScale y 0,BoxSide,"A", RandomField
+//	SetScale z 0,BoxSide,"A", RandomField
+//	SetScale y 0,BoxSide,"A", CovarFunction3D
+//	SetScale x 0,BoxSide,"A", CovarFunction3D
+//	SetScale z 0,BoxSide,"A", CovarFunction3D
+	SetScale x -HalfBox, HalfBox,"A", RandomField, CovarFunction3D
+	SetScale y -HalfBox, HalfBox,"A", RandomField, CovarFunction3D
+	SetScale z -HalfBox, HalfBox,"A", RandomField, CovarFunction3D
+	//this is generating too small particles, something is off here. 
+//	variable BoxCenterX, BoxCenterY, BoxCenterZ
+//	BoxCenterX = BoxSide/2
+//	BoxCenterY = BoxSide/2
+//	BoxCenterZ = BoxSide/2
+	multithread CovarFunction3D = CovarFunction1D(sqrt((x)^2+(y)^2+(z)^2))		
 
 	//Now FFT the two components:
-	FFT/OUT=1/DEST=RandomField_FFT  RandomField				// this is random field after FFT, it should be more or less another random Gauss field. 
+	FFT/OUT=1/DEST=RandomField_FFT  RandomField					// this is random field after FFT, it should be more or less another random Gauss field. 
 	FFT/OUT=1/DEST=CovarFunction3D_FFT  CovarFunction3D		// this is FFT of covariance function
-	
-	//cannot make this below work somehow.... 
-	//multithread CovarFunction3D_FFT = CovarFunction1D_FFT(sqrt(x^2+y^2+z^2))
 
-
-	matrixOp/NTHR=0/O CovarFunction3D_FFTpwr = powC(CovarFunction3D_FFT, 1/2)	//	<< even for 3D this needs to be sqrt, so why is it for 1D not sqrt??? 
-	
+	//cannot make this below work somehow.... this is what causes my GRF to be wrong and narrow... 
+	//matrixOp does not preserve wave scaling, we need to copy scales after MatrixOps here!
+	//still, this is incorrect. I am unable to get proper GRF generation here. 
+	matrixOp/NTHR=0/O CovarFunction3D_FFTpwr = powC(CovarFunction3D_FFT, 1/2)					//	<< even for 3D this needs to be sqrt, so why is it for 1D not sqrt??? 
 	matrixOp/NTHR=0/O RandomField_FFT_Covar = RandomField_FFT * CovarFunction3D_FFTpwr
+	//return the wave scaling here so IFFT can work...
+	CopyScales /P RandomField_FFT, RandomField_FFT_Covar
 
 	IFFT/DEST=RandomField_FFT_Covar_IFFT  RandomField_FFT_Covar
-
-
+	//no normalization lost or needed, when Gr is normalized to 1 at max. 
+	
 	MatrixOp/NTHR=0/O TwoPhaseSolidMatrix = greater(RandomField_FFT_Covar_IFFT,alfaValue)
+	CopyScales /P RandomField_FFT_Covar_IFFT, TwoPhaseSolidMatrix
 
-	SetScale x 0,BoxSide,"A", TwoPhaseSolidMatrix
-	SetScale y 0,BoxSide,"A", TwoPhaseSolidMatrix
-	SetScale z 0,BoxSide,"A", TwoPhaseSolidMatrix
+	KillWaves/Z CovarFunction3D_FFTpwr, RandomField_FFT_Covar, RandomField_FFT_Covar_IFFT
+//
+//	SetScale/I x 0,BoxSide,"A", TwoPhaseSolidMatrix
+//	SetScale/I y 0,BoxSide,"A", TwoPhaseSolidMatrix
+//	SetScale/I z 0,BoxSide,"A", TwoPhaseSolidMatrix
 
 	print "Done"
 end
@@ -1385,51 +1451,51 @@ Function IR3T_CalculateAchievedValues()
 
 end
 ///*************************************************************************************************************************************
-Function IR3T_AppendModelIntToGraph()
-	DoWindow TwoPhaseSystemData
-	if(V_Flag)
-		DoWIndow/F TwoPhaseSystemData
-		Wave/Z PDFQWv = root:Packages:TwoPhaseSolidModel:PDFQWv
-		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
-		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
-		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
-		Wave OriginalQvector = root:Packages:TwoPhaseSolidModel:OriginalQvector
-		Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
-		Wave/Z TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
-		Wave/Z QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
-		NVAR Qmin = root:Packages:TwoPhaseSolidModel:LowQExtrapolationStart
-		NVAR Qmax = root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd
-		variable InvarModel
-		variable InvarData
-//		if(WaveExists(PDFQWv))
-//			//need to renormalzie this together...
-//			InvarModel=areaXY(PDFQWv, PDFIntensityWv )
-//			InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
-//			PDFIntensityWv*=InvarData/InvarModel
-//			CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
-//			if(V_flag==0)
-//				AppendToGraph/W=TwoPhaseSystemData  PDFIntensityWv vs PDFQWv
-//			endif
-//			ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
-//			ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
-//			ModifyGraph msize(PDFIntensityWv)=3
-//		endif
-//		if(WaveExists(TheoreticalIntensityDACF))
-//			//need to renormalzie this together...
-//			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
-//			InvarData=areaXY(OriginalQvector, OriginalIntensity, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
-//			TheoreticalIntensityDACF*=InvarData/InvarModel
-//			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
-//			if(V_flag==0)
-//				AppendToGraph/W=TwoPhaseSystemData  TheoreticalIntensityDACF vs QvecTheorIntensityDACF
-//			endif
-//			ModifyGraph lstyle(TheoreticalIntensityDACF)=9,lsize(TheoreticalIntensityDACF)=3,rgb(TheoreticalIntensityDACF)=(1,16019,65535)
-//			ModifyGraph mode(TheoreticalIntensityDACF)=4,marker(TheoreticalIntensityDACF)=19
-//			ModifyGraph msize(TheoreticalIntensityDACF)=3
-//		endif
-	endif
-
-end
+//Function IR3T_AppendModelIntToGraph()
+//	DoWindow TwoPhaseSystemData
+//	if(V_Flag)
+//		DoWIndow/F TwoPhaseSystemData
+//		Wave/Z PDFQWv = root:Packages:TwoPhaseSolidModel:PDFQWv
+//		Wave/Z PDFIntensityWv = root:Packages:TwoPhaseSolidModel:PDFIntensityWv
+//		Wave ExtrapolatedIntensity = root:Packages:TwoPhaseSolidModel:ExtrapolatedIntensity
+//		Wave ExtrapolatedQvector = root:Packages:TwoPhaseSolidModel:ExtrapolatedQvector
+//		Wave OriginalQvector = root:Packages:TwoPhaseSolidModel:OriginalQvector
+//		Wave OriginalIntensity = root:Packages:TwoPhaseSolidModel:OriginalIntensity
+//		Wave/Z TheoreticalIntensityDACF = root:Packages:TwoPhaseSolidModel:TheoreticalIntensityDACF
+//		Wave/Z QvecTheorIntensityDACF=root:Packages:TwoPhaseSolidModel:QvecTheorIntensityDACF
+//		NVAR Qmin = root:Packages:TwoPhaseSolidModel:LowQExtrapolationStart
+//		NVAR Qmax = root:Packages:TwoPhaseSolidModel:HighQExtrapolationEnd
+//		variable InvarModel
+//		variable InvarData
+////		if(WaveExists(PDFQWv))
+////			//need to renormalzie this together...
+////			InvarModel=areaXY(PDFQWv, PDFIntensityWv )
+////			InvarData=areaXY(ExtrapolatedQvector, ExtrapolatedIntensity )
+////			PDFIntensityWv*=InvarData/InvarModel
+////			CheckDisplayed /W=TwoPhaseSystemData PDFIntensityWv
+////			if(V_flag==0)
+////				AppendToGraph/W=TwoPhaseSystemData  PDFIntensityWv vs PDFQWv
+////			endif
+////			ModifyGraph lstyle(PDFIntensityWv)=9,lsize(PDFIntensityWv)=3,rgb(PDFIntensityWv)=(1,16019,65535)
+////			ModifyGraph mode(PDFIntensityWv)=4,marker(PDFIntensityWv)=19
+////			ModifyGraph msize(PDFIntensityWv)=3
+////		endif
+////		if(WaveExists(TheoreticalIntensityDACF))
+////			//need to renormalzie this together...
+////			InvarModel=areaXY(QvecTheorIntensityDACF, TheoreticalIntensityDACF, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2] )
+////			InvarData=areaXY(OriginalQvector, OriginalIntensity, Qmin, QvecTheorIntensityDACF[numpnts(QvecTheorIntensityDACF)-2]  )
+////			TheoreticalIntensityDACF*=InvarData/InvarModel
+////			CheckDisplayed /W=TwoPhaseSystemData TheoreticalIntensityDACF
+////			if(V_flag==0)
+////				AppendToGraph/W=TwoPhaseSystemData  TheoreticalIntensityDACF vs QvecTheorIntensityDACF
+////			endif
+////			ModifyGraph lstyle(TheoreticalIntensityDACF)=9,lsize(TheoreticalIntensityDACF)=3,rgb(TheoreticalIntensityDACF)=(1,16019,65535)
+////			ModifyGraph mode(TheoreticalIntensityDACF)=4,marker(TheoreticalIntensityDACF)=19
+////			ModifyGraph msize(TheoreticalIntensityDACF)=3
+////		endif
+//	endif
+//
+//end
 
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
@@ -1441,16 +1507,16 @@ end
 
 Function IR3T_Autocorelate3D(Mat)
 	wave Mat
-	FFT/Dest=TmpFFTMat/Free Mat			//this is fft2(H)
-	Duplicate/O/C/Free TmpFFTMat, TmpFFTMatConj, TmpInternal
-	multithread TmpFFTMatConj = conj(TmpFFTMat)		//this is conj(fft2(H))	
-	multithread TmpInternal=TmpFFTMat*TmpFFTMatConj
-	IFFT/Dest=AutoCorMatrix TmpInternal
-	//AutoCorMatrix/=(dimsize(Mat,0)*dimSize(Mat,1))
-	ImageTransform swap3D AutoCorMatrix			//this is for 3D waves. 
-	//ImageTransform swap AutoCorMatrix
-	wavestats/Q AutoCorMatrix
-	AutoCorMatrix = AutoCorMatrix/V_max				//this scales to max =1 for autocorrelation 
+	//this autocorelates Mat with itself. 
+	FFT/Dest=TmpFFTMat/Free Mat											//this is slow process... 15 sec in 512^3 wave test
+	Duplicate/C/Free TmpFFTMat, TmpFFTMatConj, TmpInternal		//~1 sec in test, MatrixOp is only slightlly faster. 
+	multithread TmpFFTMatConj = conj(TmpFFTMat)						//this is quite fast 	
+	multithread TmpInternal=TmpFFTMat*TmpFFTMatConj				//2 sec on test
+	IFFT/Dest=AutoCorMatTmp/Free TmpInternal							//this is slow process... 15 sec in 512^3 wave test
+	ImageTransform swap3D AutoCorMatTmp								//this is for 3D waves. 
+	variable MaxValue=WaveMax(AutoCorMatTmp)
+	MatrixOp/O/NTHR=0 AutoCorMatrix = AutoCorMatTmp/MaxValue	//this is relatively fast. 
+	//result is AutoCorMatrix scaled to max=1 in current data folder. 
 end
 
 
@@ -1478,8 +1544,19 @@ threadsafe Function IR3T_ConvertDACFToInt(Radius,DACF,Qvec)		//Convert DACF (Deb
 	matrixOP/Free tempWave = powR(Radius, 2) * DACF * QRWave
 	return 4*pi*areaXY(Radius, TempWave)
 end
+///*************************************************************************************************************************************
+///*************************************************************************************************************************************
 
-
+//threadsafe
+threadsafe Function IR3T_CalcIntensityPDF(Qvalue,PDF,Radius)		//AMemiys - my theory powerpoint
+	variable Qvalue
+	wave PDF,Radius	
+	Make/Free/N=(numpnts(PDF))/D QRWave
+	QRWave=sinc(Qvalue*Radius[p])								//(sin(Qvec[p]*Radius))/(Qvec[p]*Radius)		
+	matrixOP/Nthr=0/Free tempWave = PDF * QRWave
+	//variable AreaW = areaXY(Radius, TempWave)
+	return (4*pi*(areaXY(Radius, TempWave)))
+end
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 threadsafe Function IR3T_CalcTheorAutocorF(alfa,grValue)
@@ -1665,7 +1742,10 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 	//BoxSideSize size of box, called in program... 
 	//Kvalues is fk[i][0]
 	//SPectralFK is fk[i][1] in original java code
-
+	variable BoxXstep = BoxSideSize/BoxResolution
+	variable BoxYstep = BoxSideSize/BoxResolution
+	variable BoxZStep = BoxSideSize/BoxResolution
+	
 	//description of java code 
 	//get Kvalues
 	//find min and max and set limits to 
@@ -1687,16 +1767,13 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
    variable kamp = 0.0
    variable IntgNumber = 10000
 	variable xmax, ymax, zmax
-	xmax = BoxResolution-1 		//num points per side of the box
-	ymax = BoxResolution-1
-	zmax = BoxResolution-1
+	xmax = BoxResolution 		//num points per side of the box
+	ymax = BoxResolution
+	zmax = BoxResolution
 	Make/Free/N=(xmax,3) rmat		//this assumes xmax is at least largest, if not all same??? 
 	//this is radius matrix, these are dimensions to match with k-vectors randomly generated...
 	// BoxSideSize is real world dimension in Angstroms 
 	// 
-	rmat[][0] = p*BoxSideSize/xmax
-	rmat[][1] = p*BoxSideSize/ymax
-	rmat[][2] = p*BoxSideSize/zmax
 		//    int xmax = this.BoxResolution;
 		//    int ymax = this.BoxResolution;
 		//    int zmax = this.BoxResolution;
@@ -1706,9 +1783,13 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 		//      rmat[i][1] = (i * 10.0D * this.BoxSideSize / ymax);
 		//      rmat[i][2] = (i * 10.0D * this.BoxSideSize / zmax);
 		//    }
+	rmat[][0] = 10*p*BoxSideSize/xmax
+	rmat[][1] = 10*p*BoxSideSize/ymax
+	rmat[][2] = 10*p*BoxSideSize/zmax
 	//in the Java code there is 10.0D* this.BoxSideSize, which is confusing what is it doing...
 	//looks like conversion from A to nm, but the manual indicates it is using A or nm based on Q units and that seems logical. No conversion is done as far as I can say.  	
-
+	// for some reason, no clue why, this 10 is needed or we get too small features. Confusing, but with 10* it seems to get about the same results as SAXSMorph. 
+	
    make/Free/N=3 kvec
    variable kvecnorm = 0.0
    make/Free/N=(IntgNumber,3) Kn
@@ -1749,9 +1830,9 @@ Function IR3T_GenerateMatrix(Kvalues, SpectralFk, BoxSideSize, BoxResolution, al
 
 	print "Calculating Gauss random fields, this is the slowest part of the code!" 		
 	multithread TwoPhaseSolidMatrix = IR3T_GenGRFUsingCosSaxsMorph(Kn,rmat[p][0],rmat[q][1], rmat[r][2], phin, alpha)	
-	SetScale/I x 0,BoxSideSize,"A", TwoPhaseSolidMatrix
-	SetScale/I y 0,BoxSideSize,"A", TwoPhaseSolidMatrix
-	SetScale/I z 0,BoxSideSize,"A", TwoPhaseSolidMatrix
+	SetScale/P x 0,BoxXstep,"A", TwoPhaseSolidMatrix
+	SetScale/P y 0,BoxYstep,"A", TwoPhaseSolidMatrix
+	SetScale/P z 0,BoxZStep,"A", TwoPhaseSolidMatrix
 
 end
 
@@ -1927,7 +2008,10 @@ Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 	NVAR BoxSideSize = root:Packages:TwoPhaseSolidModel:BoxSideSize
 	NVAR GizmoFillSolid = 	root:packages:TwoPhaseSolidModel:GizmoFillSolid
 	KillWIndow/Z TwoPhaseSolid3D
-
+	variable Xsize, Ysize, ZSize
+	Xsize = DimDelta(TwoPhaseSolidMatrix,0)*DimSize(TwoPhaseSolidMatrix,0)
+	Ysize = DimDelta(TwoPhaseSolidMatrix,1)*DimSize(TwoPhaseSolidMatrix,1)
+	ZSize = DimDelta(TwoPhaseSolidMatrix,2)*DimSize(TwoPhaseSolidMatrix,2)
 	//need to make surfaces here... AGs instructions
 		//2.  I noted that the dimensions are 64x64
 		//
@@ -1996,7 +2080,7 @@ Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 	z1ColorWave[][][3]=z1[p][q]
 	
 
-	NewGizmo/K=1/T="TwoPhaseSolid3D"/W=(627,70,1142,530)
+	NewGizmo/K=1/N=TwoPhaseSolid3D/T="TwoPhaseSolid3D"/W=(627,70,1142,530)
 	ModifyGizmo startRecMacro=700
 	ModifyGizmo scalingOption=63
 	AppendToGizmo isoSurface=root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix,name=TwoPhaseSolidSurface
@@ -2024,18 +2108,18 @@ Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabel,1}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabel,1}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabel,1}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabelText,"300 [A]"}
-	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabelText,"300 [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabelText,num2str(Xsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabelText,num2str(Xsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabelText,num2str(Xsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={3,axisLabelText,num2str(Xsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={4,axisLabelText,num2str(Ysize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={5,axisLabelText,num2str(Ysize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={6,axisLabelText,num2str(Ysize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={7,axisLabelText,num2str(Ysize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={8,axisLabelText,num2str(Zsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={9,axisLabelText,num2str(Zsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={10,axisLabelText,num2str(Zsize)+" [A]"}
+	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={11,axisLabelText,num2str(Zsize)+" [A]"}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={0,axisLabelDistance,0}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={1,axisLabelDistance,0}
 	ModifyGizmo ModifyObject=axes0,objectType=Axes,property={2,axisLabelDistance,0}

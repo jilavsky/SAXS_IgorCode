@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.691
+#pragma version=2.692
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.691
+constant CurrentIrenaVersionNumber = 2.692
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -14,7 +14,7 @@ constant CurrentIrenaVersionNumber = 2.691
 //*************************************************************************/
 
 
-//2.691	Beta version after February2020 release
+//2.692	Beta version after February2020 release
 //			New bioSAXS tools
 //			New Metadata Browser tool
 //2.69 	Removed 14 ipf files to reduce clutter. 
@@ -178,8 +178,8 @@ Menu "SAS"
 	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
-	"Basic Fits", IR3J_SimpleFits()
-	help={"Quick and simple fitting of multiple SAS data. Guinier, Porod, Sphere and Spheroid. "}
+	"Basic+Simple Analysis", IR3J_SimpleFits()
+	help={"Quick and simple fitting of multiple SAS or results data. Guinier, Porod, Sphere and Spheroid. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
 	"Size Distribution", IR1R_Sizes()
@@ -203,8 +203,8 @@ Menu "SAS"
 	SubMenu "3D Models"
 		"Mass Fractal Aggregate", IR3A_MassFractalAggregate()
 		//"Two Phase Solids", IR3T_TwoPhaseSystem()
-		//"Display 3D data", IR3A_Display3DData()
-		//"Import POV or PDB", IR3P_ImportPOVPDB()
+		"Display 3D data", IR3A_Display3DData()
+		"Import POV or PDB", IR3P_ImportPOVPDB()
 	end
 	SubMenu "Anisotropy"
 		"Anisotropy analysis (HOP)", IR3N_AnisotropicSystems()
@@ -272,7 +272,7 @@ Menu "BioSAXS"
 	help={"Tools to average many data sets and subtract buffer"}
 	"Plot data", IR3L_MultiSamplePlot()
 	help={"Multi sample ploting tool, same as in SAS menu."}
-	"Basic fits", IR3J_SimpleFits()
+	"Simple fits", IR3J_SimpleFits()
 	help={"Tool to fit data with Guinier, Porod, SphereFF, SpheroidFF etc."}
 	"Merge SAXS-WAXS data", IRB1_MergeMultipleData()
 	help={"Merge data sets - two segments at different q ranges"}
@@ -1956,7 +1956,7 @@ Function IR2C_CheckVersionButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlName,"OpenGCManuscriptWebPage"))
 				//doi:10.1007/s11661-009-9950-x
-				BrowseURL "http://www.jomgateway.net/ArticlePage.aspx?DOI=10.1007/s11661-009-9950-x"
+				BrowseURL "http://dx.doi.org/10.1007/s11661-009-9950-x"
 			endif
 			if(stringmatch(ba.ctrlName,"OpenMotofitManuscriptWebPage"))
 				//doi:10.1007/s11661-009-9950-x
@@ -3240,6 +3240,7 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "TwoPhaseSystemData;TwoPhaseSolidGizmo;TwoPhaseSystems;FractalAggregatePanel;MassFractalAggregateView;TwoPhaseSolid2DImage;"
 	ListOfWindows += "IR3D_DataMergePanel;IRB1_PDDFInterfacePanel;IR3J_SimpleFitsPanel;IRB1_DataManipulationPanel;IR3J_LinDataDisplay;"
 	ListOfWindows += "IR3L_MultiSamplePlotPanel;IR3J_LogLogDataDisplay;IR3L_MultiSamplePlotPanel;IRB1_ImportBioSAXSASCIIData;"
+	ListOfWindows += "IR2E_MultipleDataSelectionPnl;IR3W_WAXSPanel;"
 	
 	
 	variable i
