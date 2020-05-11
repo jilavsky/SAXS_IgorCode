@@ -22,7 +22,7 @@ Function TriaxSpheroid(Q,radius, par1,par2,par3,par4,par5)	//Triaxial Spheroid,
 	aa=radius
 	bb=Par1*radius
 	cc=Par2*radius
-	return TriaxSpheroidIntgOut(Q,aa,bb,cc)
+	return sqrt(TriaxSpheroidIntgOut(Q,aa,bb,cc))		//TriaxSpheroidIntgOut return F^2, code expect F. 
 end
 //****************************************************************************************************
 Function TriaxSpheroidVolume(radius, par1,par2,par3,par4,par5)
