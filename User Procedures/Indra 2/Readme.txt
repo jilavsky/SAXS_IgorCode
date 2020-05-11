@@ -12,8 +12,9 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 
 Modification history:
 _____________________________________________________________________________________
-1.971 beta 4/20/2020
-no change in main code. 
+1.972 beta 
+Added for every graph right click option to export as jpg and pxp. Also to duplicate, but that fails on some error bars fro now.  
+
 
 
 1.97 2/9/2020

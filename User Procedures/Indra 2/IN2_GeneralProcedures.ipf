@@ -500,6 +500,21 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+Menu "GraphPopup"
+       "Save as jpg", IN2G_SaveTopGraphJpg()
+       "Save as pxp", IN2G_SaveTopGraphPXP()
+       "Clone this window with data", IN2G_CloneWindow()
+End
+
+Function IN2G_SaveTopGraphJpg()
+		string topWindow=WinName(0,1)
+		SavePICT/E=-6/B=288	as (topWindow)				//this is jpg
+end
+Function IN2G_SaveTopGraphPXP()
+		string topWindow=WinName(0,1)
+		SaveGraphCopy /I /W=$(topWindow)	  					//this is pxp
+end
+
 //************************************************************************************************
 //************************************************************************************************
 //**
@@ -2516,12 +2531,13 @@ static Function IN2G_CloneWindow2([win,name,times])
 		String line=StringFromList(i,win_rec,"\r")
 		if(StringMatch(line,"*ErrorBars*"))
 			String errorbar_names
-			sscanf line,"%*[^=]=(%[^)])",errorbar_names
+			SplitString/E=",.*" line
+			sscanf S_value,"%*[^=]=(%[^)])",errorbar_names
 			for(j=0;j<2;j+=1)
 				String errorbar_path=StringFromList(j,errorbar_names,",")
 				sscanf errorbar_path,"%[^[])",errorbar_path
 				String errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")
-				Duplicate /o $("root:"+errorbar_path) $errorbar_name
+				Duplicate /o $("root"+errorbar_path) $errorbar_name
 			endfor
 		endif
 	endfor

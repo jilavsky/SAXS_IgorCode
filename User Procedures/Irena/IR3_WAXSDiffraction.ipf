@@ -4,7 +4,7 @@
 
 //local configurations
 Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
-constant IR3WversionNumber = 1.14	//Diffraction panel version number
+constant IR3WversionNumber = 1.15	//Diffraction panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.14	//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.15 add "Distance correction" value which enables one to shift sticks to correct for poor calibration of distacne. 
 //1.14 add button to open AMS www so users can search for cards easily. 
 //1.13 add background parameters to recorded values and add GUI to extract them into table. Add Graph of peak areas. 
 //1.12 fix IR3W_PDF4AppendLinesToGraph for when user scales vertical axis with minimum being negative value
@@ -76,7 +77,7 @@ Proc IR3W_WAXSPanel()
 	PauseUpdate; Silent 1		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,550,800) as "Powder Diffraction/WAXS Fits"
 	DoWIndow/C IR3W_WAXSPanel
-	TitleBox MainTitle title="\Zr220Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},anchor=MC,fColor=(0,0,52224)
+	TitleBox MainTitle title="\Zr200Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},anchor=MC,fColor=(0,0,52224)
 	string UserDataTypes=""
 	string UserNameString=""
 	string XUserLookup=""
@@ -1241,13 +1242,14 @@ Function IR3W_AddBackgroundToGraph()
 		SVAR QWavenameB = root:Packages:Irena:WAXSBackground:QWavename
 		SVAR ErrorWaveNameB = root:Packages:Irena:WAXSBackground:ErrorWaveName
 
-		if(stringmatch(DataFolderNameB,"*---*")||(DisplayBackg==0))
+		if(stringmatch(DataFolderNameB,"*---*")||(DisplayBackg==0)||strlen(DataFolderNameB)<3)
 			//to do: remove from graph!
 			RemoveFromGraph/Z BackgroundIntWave#0, BackgroundIntWave#1, BackgroundIntWave#2, BackgroundIntWave#3, BackgroundIntWave#4
 			Wave/Z BackgroundIntWave=root:Packages:Irena:WAXS:BackgroundIntWave
 			Wave/Z Background2ThetaWave=root:Packages:Irena:WAXS:Background2ThetaWave
 			Wave/Z BackgroundErrorWave=root:Packages:Irena:WAXS:BackgroundErrorWave
 			KillWaves/Z BackgroundIntWave, Background2ThetaWave, BackgroundErrorWave, BackgroundD2ThetaWave
+			DisplayBackg = 0
 		else
 			Wave/Z SourceBIntWv=$(DataFolderNameB+IntensityWaveNameB)
 			Wave/Z SourceBQWv=$(DataFolderNameB+QWavenameB)
@@ -3380,7 +3382,8 @@ Function IR3W_PDF4AppendLinesToGraph(CardName, V_Red, V_Green, V_Blue)
 	Duplicate/O/T TheCardHKL, $(IN2G_CreateUserName(CardName,23, 0, 0)+"_hklStr")
 	Wave TheCardNew = $((CardName))
 	string DimensionUnit=GetDimLabel(TheCardNew, 1, 0 )
-	NVAR DistanceCorrection = root:Packages:Irena:WAXS:DistanceCorrection			//when DistanceCorrection=1, distacne calibration is perfect, based on my sketch, correction is linear fix. 
+	NVAR DistanceCorrection = root:Packages:Irena:WAXS:DistanceCorrection			//when DistanceCorrection=1, distacne calibration is perfect, 
+	// based on my sketch, correction is linear fix. actually, approximately (small angle approximation) d = Lambda*Distance/Radius 
 	if(stringmatch(DimensionUnit,"d_A"))		//manually inserted, dimension is in d and A
 		TheCardNew[][4] =   114.592 * asin((2 * pi / (DistanceCorrection*TheCard[p][0]))* wavelength / (4*pi))
 	else		//other choice is "Q_nm" from LaueGo
