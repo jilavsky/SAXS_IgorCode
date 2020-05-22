@@ -178,7 +178,7 @@ Menu "SAS"
 	       "Clone top window with data", IN2G_CloneWindow()
 		End
 	"---"
-	"Basic+Simple Analysis", IR3J_SimpleFits()
+	"Basic Fits+Simple Analysis", IR3J_SimpleFits()
 	help={"Quick and simple fitting of multiple SAS or results data. Guinier, Porod, Sphere and Spheroid. "}
 	"Unified Fit", IR1A_UnifiedModel()
 	help = {"Modeling of SAS by modeling Guinier and Power law dependecies, based on Unified model by Gregg Beaucage"}
@@ -332,6 +332,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_CheckForGraphicsSetting(0)
 	IN2G_ResetSizesForALlPanels(WindowProcNames) 
+	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
 
 	//and print in history which version of codeis being used for future reference.
 	string file= StringFromList((ItemsInList(FunctionPath("LoadIrenaSASMacros"), ":")-1), FunctionPath("LoadIrenaSASMacros"), ":")
@@ -598,7 +599,7 @@ Function IR2P_DrawLineOfAnySlope()
 	if (V_Flag)
 			Abort
 	endif
-	Silent 1
+	    
 	do
 		if(lineslope==12)
 			lineslope=0
@@ -844,7 +845,7 @@ End
 
 Function IR1_AboutPanel()
 	KillWIndow/Z About_Irena_1_Macros
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
@@ -1375,7 +1376,7 @@ end
 //*****************************************************************************************************************
 
 Proc  IR1_IQ4_Q_PlotLSQF() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:SAS_Modeling:
 	Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
@@ -1406,7 +1407,7 @@ EndMacro
 //*****************************************************************************************************************
 
 //Window IR1_IQ4_Q_PlotLSQF() : Graph
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 //	String fldrSav= GetDataFolder(1)
 //	SetDataFolder root:Packages:SAS_Modeling:
 //	Display /W=(295.5,237.5,753.75,421.25)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
@@ -1433,7 +1434,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Proc  IR1_LogLogPlotLSQF() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:SAS_Modeling:
 	Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
@@ -1979,7 +1980,7 @@ End
 //***********************************
 
 Window CheckForIrenaUpdatePanel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /W=(116,68,880,550)/K=1 as "Irena check for updates"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65535)
@@ -2049,7 +2050,7 @@ end
 //************************************************************************************************************
 
 Proc IR1F_CreateQRSFldrStructure() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(135,98,551.25,392.75) as "Create QRS Folder Structure"
 	DoWIndow/C IR1F_CreateQRSFldrStructure
 	SetDrawLayer UserBack
@@ -2750,7 +2751,7 @@ end
 //
 Function IR1L_AppendAnyText(TextToBeInserted)		//this function checks for existance of notebook
 	string TextToBeInserted						//and appends text to the end of the notebook
-	Silent 1
+	    
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:SAS_Modeling:NotebookName
 	if(SVAR_exists(nbl))
@@ -2763,7 +2764,7 @@ end
 
 Function IR1L_AppendAnyPorodText(TextToBeInserted)		//**DWS
 	string TextToBeInserted						//and appends text to the end of the notebook
-	Silent 1
+	    
 	TextToBeInserted=TextToBeInserted+"\r"
    SVAR/Z nbl=root:Packages:Irena_AnalUnifFit:PorodNotebookName
 	if(SVAR_exists(nbl))
@@ -2790,7 +2791,7 @@ Function IR1_PullUpLoggbook()
 	endif
 	string nbLL=nbl
 //	string nbLL="SAS_FitLog"
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbLL,0)!=-1) 		///Logbook exists
 		DoWindow/F $nbLL
 	endif
@@ -2807,7 +2808,7 @@ Function IR1_CreatePorodLogbook()//***DWS
 		SVAR nb=root:Packages:Irena_AnalUnifFit:PorodNotebookName
 		nb="PorodAnalysisResults"
 	endif
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nb,0)!=-1) 		///Logbook exists
 		DoWindow/HIDE=1 $nb
 	else
@@ -2836,7 +2837,7 @@ end
 Function IR1_InsertDateAndTime(nbl)
 	string nbl
 	
-	Silent 1
+	    
 	string bucket11
 	Variable now=datetime
 	bucket11=Secs2Date(now,0)+",  "+Secs2Time(now,0) +"\r"
@@ -2878,7 +2879,7 @@ Function IR1_CreateLoggbook()
 	
 	string nbLL=nbl
 	
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
 		DoWindow/B $nbl
 	else

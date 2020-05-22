@@ -138,7 +138,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Function NI1_9IDCConfigPanelFunction() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(470,87,1016,439)/N=NI1_9IDCConfigPanel
 	DoWindow/C NI1_9IDCConfigPanel
 	SetDrawLayer UserBack

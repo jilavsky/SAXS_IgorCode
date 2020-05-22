@@ -49,7 +49,7 @@ end
 
 
 Function IR1B_DesmearingControlPanelFnct() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690)/N=IR1B_DesmearingControlPanel as "Desmearing"
 	string UserDataTypes=""
 	string UserNameString=""
@@ -1579,7 +1579,7 @@ Function IR1B_SmoothSMRData()							//this smooths the data before desmearing.
 	Duplicate/O OrgEwave, SmoothEwave
 	Duplicate/O OrgdQwave, SmoothdQwave
 	
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 	Display/K=1 /W=(300,60,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=SmoothGraph OrgIntwave vs OrgQwave as "Smooth the data"
 	AppendToGraph SmoothIntwave vs SmoothQwave
 	AutoPositionWindow/M=0/R=IR1B_DesmearingControlPanel  SmoothGraph	
@@ -2735,7 +2735,7 @@ end
 Function IR1B_GetErrors(SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector)		//calculates errors using Petes formulas
 	wave SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector
 	
-	Silent 1	
+	    	
 	
 	DsmErrors=FitIntensity*(SmErrors/SmIntensity)						//error proportional to input data
 	WAVE W_coef=W_coef

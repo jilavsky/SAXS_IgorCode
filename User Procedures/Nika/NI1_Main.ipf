@@ -208,6 +208,8 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 
 	NI1_CheckNikaUpdate(0)
 	IN2G_CheckForGraphicsSetting(0)
+	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
+	
 	//and print in history which version of codeis being used for future reference.
 	string file= StringFromList((ItemsInList(FunctionPath("LoadNika2DSASMacros"), ":")-1), FunctionPath("LoadNika2DSASMacros"), ":")
 	String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
@@ -274,7 +276,7 @@ end
 
 Function NI1_AboutPanel()
 	KillWIndow/Z About_Nika_1_Macros
- 	PauseUpdate; Silent 1		// building window...
+ 	PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(173.25,101.75,490,370) as "About_Nika_1_Macros"
 	DoWindow/C About_Nika_1_Macros
 	SetDrawLayer UserBack
@@ -538,7 +540,7 @@ End
 //***********************************
 
 Window CheckForNikaUpdatePanel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /W=(116,68,880,400)/K=1 as "Nika check for updates"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 3,textrgb= (0,0,65535)
@@ -844,7 +846,7 @@ End
 //**************************************************************************
 
 Window NI1_GeometriesManagerPanel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(600,45,1000,337) as "NIka Configuration manager"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,textrgb= (16385,16388,65535)

@@ -1,7 +1,12 @@
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=2		// Use modern global access method.
 #pragma version=2.40
+
+#if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
+#endif
+
+
 Constant IR1IversionNumber = 2.37
 Constant IR1IversionNumber2 = 2.36
 Constant IR1IversionNumberNexus = 2.36
@@ -153,7 +158,7 @@ end
 
 Proc IR1I_ImportSASASCIIData() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,40,430,760)/N=IR1I_ImportData as "Import SAXS/SANS data"
 	TitleBox MainTitle title="\Zr200Import SAS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -2369,7 +2374,7 @@ end
 
 Function IR1I_ImportOtherASCIIDataFnct() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,40,430,760)/N=IR1I_ImportOtherASCIIData as "Import non-SAS data"
 	TitleBox MainTitle title="\Zr200Import non SAS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={400,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -3005,7 +3010,7 @@ end
 
 Function IR1I_ImportNexusDataFnct() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,40,430,620)/N=IR1I_ImportNexusCanSASData as "Import Nexus canSAS data"
 	TitleBox MainTitle title="\Zr200Import Nexus canSAS Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={400,24},anchor=MC,fColor=(0,0,52224)
 	IR3C_AddDataControls("ImportDataPath", "ImportData", "IR1I_ImportNexusCanSASData","", "","","IR1I_NexusDoubleClickFUnction")
@@ -3180,11 +3185,6 @@ Function IR1I_NexusOpenHdf5File()
 			endif
 		endif
 	endfor
-	//HDf5Browser#LoadGroupButtonProc("LoadGroup")
-	
-	//HDf5Browser#CloseFileButtonProc("CloseFIle")
-	
-	//KillWindow $(browserName)
 end
 
 //************************************************************************************************************

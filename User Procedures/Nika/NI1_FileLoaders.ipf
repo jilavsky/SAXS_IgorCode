@@ -1481,7 +1481,7 @@ Function NI1_GBLoaderPanelFnct() : Panel
 		SVAR NIGBDataType=root:Packages:Convert2Dto1D:NIGBDataType
 		SVAR NIGBByteOrder=root:Packages:Convert2Dto1D:NIGBByteOrder
 		SVAR NIGBFloatDataType=root:Packages:Convert2Dto1D:NIGBFloatDataType
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		NewPanel/K=1 /W=(240,98,644,414)/N=NI_GBLoaderPanel as "General Binary loader config panel"
 		//DoWindow/C NI_GBLoaderPanel
 		SetDrawLayer UserBack
@@ -1535,7 +1535,7 @@ Function NI1_PilatusLoaderPanelFnct() : Panel
 		endif
 		SVAR PilatusFileType=root:Packages:Convert2Dto1D:PilatusFileType
 		SVAR PilatusColorDepth=root:Packages:Convert2Dto1D:PilatusColorDepth
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		NewPanel/K=1 /W=(240,98,644,414) as "Pilatus loader config panel"
 		DoWindow/C NI_PilatusLoaderPanel
 		SetDrawLayer UserBack
@@ -3266,7 +3266,7 @@ Function NI1_ESRFEdfLoaderPanelFnct() : Panel
 		NVAR ESRFEdf_SampleThickness=root:Packages:Convert2Dto1D:ESRFEdf_SampleThickness
 		NVAR ESRFEdf_WaveLength=root:Packages:Convert2Dto1D:ESRFEdf_WaveLength
 		NVAR ESRFEdf_Title=root:Packages:Convert2Dto1D:ESRFEdf_Title
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		NewPanel/K=1 /W=(240,98,600,300) as "ESRF EDF loader config panel"
 		DoWindow/C NI1_ESRFEdfLoaderPanel
 		SetDrawLayer UserBack

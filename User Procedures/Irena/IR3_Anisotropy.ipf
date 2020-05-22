@@ -57,7 +57,7 @@ end
 //*****************************************************************************************************************
 
 Function IR3N_AnisotropicSystemsPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,396,720)/N=AnisotropicSystemsPanel as "Anisotropic Systems"
 	//DefaultGUIControls /W=TwoPhaseSystems ///Mac os9
 	string UserDataTypes="r*;"
@@ -569,7 +569,7 @@ end
 
 static Function IR3N_GraphInputData()
 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:AnisotropicSystems:
 	SVAR DataFolderName=root:Packages:AnisotropicSystems:DataFolderName

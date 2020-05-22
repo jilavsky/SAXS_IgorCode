@@ -30,7 +30,7 @@ end
 //***********************************************************************************
 
 Window IN2Y_ChannelCutPosCalculations() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(287,93,1087,506) as "ChannelCut Position Calculations"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 30,fstyle= 1,textrgb= (65280,0,0)

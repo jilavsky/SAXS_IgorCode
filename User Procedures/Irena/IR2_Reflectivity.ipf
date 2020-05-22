@@ -74,7 +74,7 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 Window IR2R_ReflSimpleToolMainPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,720) as "Reflectivity Simple Tool"
 	string UserDataTypes="*_R;"
 	string UserNameString="Motofit"
@@ -422,7 +422,7 @@ static Function IR2R_GraphMeasuredData()
 end
 
 Proc  IR2R_LogLogPlotRefl() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Refl_SimpleTool
 	//Display /W=(300,37.25,850,300)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
@@ -443,7 +443,7 @@ Proc  IR2R_LogLogPlotRefl()
 EndMacro
 
 Proc  IR2R_IQN_Q_PlotV() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Refl_SimpleTool:
 	//Display /W=(300,250,850,430)/K=1  IntensityQN vs OriginalQvector as "IQ^N_Q_Plot"
@@ -462,7 +462,7 @@ Proc  IR2R_IQN_Q_PlotV()
 EndMacro
 
 Proc  IR2R_SLDProfile()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:Refl_SimpleTool:
 	//Display /W=(298.5,390.5,847.5,567.5)/K=1 SLDProfile as "SLD profile (top=left, substrate=right)"
@@ -2684,7 +2684,7 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 Function UserOptimizationWidnowP() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /W=(352,245,806,366) as "Optimization in Progress"
 	DoWindow/C UserOptimizationWidnow
 	SetDrawLayer UserBack
@@ -2707,7 +2707,7 @@ EndMacro
 //*****************************************************************************************************************
 
 static Function IR2R_CheckFittingParamsFnct() 
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1/W=(400,140,870,600) as "Check fitting parameters"
 	Dowindow/C IR2R_CheckFittingParams
 	SetDrawLayer UserBack
@@ -3010,7 +3010,7 @@ static Function IR2R_CreateResolutionWave()
 		DoWindow/F ResolutionCalculator
 	else
 		//create new panel...
-		//PauseUpdate; Silent 1		// building window...
+		//PauseUpdate    		// building window...
 		NewPanel/K=1 /W=(195,94,658,561) as "Resolution calculator"
 		DoWindow/C ResolutionCalculator
 		SetDrawLayer UserBack
@@ -3340,7 +3340,7 @@ end
 ///******************************************************************************************
 
 Function IR2R_InsRemoveLayers() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(389,217,687,427) as "Insert/ Remove Layers"
 	DoWindow/C IR2R_InsertRemoveLayers
 	SetDrawLayer UserBack

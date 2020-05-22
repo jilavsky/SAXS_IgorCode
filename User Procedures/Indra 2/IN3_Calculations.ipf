@@ -967,7 +967,7 @@ end
 
 
 static Function IN3_RcurvePlot() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:Indra3:
 	Wave R_Int
@@ -1096,7 +1096,7 @@ end
 //*****************************************************************************************************************
 
 static Function IN3_PeakCenter() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:Indra3:
 	Wave R_Int
@@ -1148,7 +1148,7 @@ End
 //*****************************************************************************************************************
 
 static Function IN3_AlignSampleAndBlank() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:Indra3:
 	
@@ -2783,27 +2783,49 @@ end
 Function IN3_GetErrors(SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector)		//calculates errors using Petes formulas
 	wave SmErrors, SmIntensity, FitIntensity, DsmErrors, Qvector
 	
-	Silent 1	
-	
 	DsmErrors=FitIntensity*(SmErrors/SmIntensity)						//error proportional to input data
 	WAVE W_coef=W_coef
 	variable i=1, imax=numpnts(FitIntensity)
 	Redimension/N=(numpnts(FitIntensity)) DsmErrors
+	//Variable start = StopMSTimer(-2)
 	Do
-		if( (numtype(FitIntensity[i-1])==0) && (numtype(FitIntensity[i])==0) && (numtype(FitIntensity[i+1])==0) )
-			CurveFit/Q line, FitIntensity (i-1, i+1) /X=Qvector				//linear function here 
-			DsmErrors[i]+=abs(W_coef[0]+W_coef[1]*Qvector[i] - FitIntensity[i])	//error due to scatter of data
+		if( (numtype(FitIntensity[i-1])==0) && (numtype(FitIntensity[i])==0) && (numtype(FitIntensity[i+1])==0))
+			//TBD: find easier way, this is ridiculous. And in Igor 9 alfa needs to add /N=2 to prevent updates to graph... 
+			//CurveFit/Q line, FitIntensity (i-1, i+1) /X=Qvector									//linear function here 
+			//DsmErrors[i]+=abs(W_coef[0]+W_coef[1]*Qvector[i] - FitIntensity[i])	//error due to scatter of data
+			//this calculation is about 50x or more faster than using Curvefit above. 
+			DsmErrors[i]+= IN3_CalculateLineAvegare(FitIntensity,Qvector, i)	
 		endif
 	i+=1
 	while (i<imax-1)
-
+	//Variable theend = StopMSTimer(-2)
+	//print "IN3_GetErrors took : "+num2str((theend-start)/100)
 	DsmErrors[0]=DsmErrors[1]									//some error needed for 1st point
 	DsmErrors[imax-1]=DsmErrors[imax-2]								//and error for last point	
-
+ 
 	Smooth /E=2 3, DsmErrors
-	
+	//abort
 end
-
+//***********************************************************************************************************************************
+//***********************************************************************************************************************************
+//this calculates line average without doing line fit...
+Function IN3_CalculateLineAvegare(WaveY,waveX, ivalue)
+	wave WaveY, WaveX
+	variable ivalue  
+	
+	if(ivalue==3)
+		variable sumx, sumy, sumxy, sumx2
+		sumx 	= WaveX[ivalue-1]+WaveX[ivalue]+WaveX[ivalue+1]
+		sumx2 = WaveX[ivalue-1]^2+WaveX[ivalue]^2+WaveX[ivalue+1]^2
+		sumy 	= WaveY[ivalue-1]+WaveY[ivalue]+WaveY[ivalue+1]
+		sumxy =  WaveX[ivalue-1]*WaveY[ivalue-1]+WaveX[ivalue]*WaveY[ivalue]+WaveX[ivalue+1]*WaveY[ivalue+1]
+		variable mval = (ivalue * sumxy - sumx*sumy) / (ivalue*sumx2 - sumx^2)
+		variable cval = (sumy - mval * sumx) / ivalue
+		//print mval, cval
+		return mval*WaveX[ivalue] + cval
+	endif
+	return 0
+end
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
 

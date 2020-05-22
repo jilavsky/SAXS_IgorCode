@@ -326,7 +326,7 @@ end
 
 
 Proc IR2H_ControlPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,20,390,670) as "Analytical models"
 	DoWindow/C IR2H_Controlpanel
 
@@ -1593,7 +1593,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Proc  IR2H_SI_Q2_PlotGels() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Gels_Modeling:
 	//Display /W=(283.5,384,761.25,545)/K=1  OriginalSqrtIntN1 vs OriginalQ2 as "DB_Plot"
@@ -1625,7 +1625,7 @@ EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Proc  IR2H_IQ4_Q_PlotGels() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Gels_Modeling:
 //	 UseSlitSmearedData = root:Packages:Gels_Modeling:UseSlitSmearedData	
@@ -1667,7 +1667,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Proc  IR2H_LogLogPlotGels() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Gels_Modeling:
 	//Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"

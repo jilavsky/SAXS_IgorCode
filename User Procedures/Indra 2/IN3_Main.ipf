@@ -112,7 +112,7 @@ Function IN3_MainPanelNew()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(22.25,43.25,445,860) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
 	TitleBox Title title="\Zr170USAXS data reduction panel",pos={5,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
@@ -471,7 +471,7 @@ end
 //*****************************************************************************************************************
 Function IN3_FailedLoadMessage(Filename) : Panel
       string FileName
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /W=(348,238,695,363)/K=1 as "File Failed to Load Message"
 	DoWindow/C FailedLoadmessage
 	ModifyPanel cbRGB=(65535,0,0)
@@ -1054,7 +1054,7 @@ Function IN3_MainPanel()
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:Indra3
 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,710) as "USAXS data reduction"
 	DoWindow/C USAXSDataReduction
 	TitleBox Title title="\Zr210USAXS data reduction panel",pos={40,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC

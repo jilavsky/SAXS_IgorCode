@@ -54,7 +54,7 @@ end
 //*****************************************************************************************************************
 
 Function IR3T_TwoPhaseControlPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,396,720)/N=TwoPhaseSystems as "Two Phase 3D modeling"
 	//DefaultGUIControls /W=TwoPhaseSystems ///Mac os9
 	string UserDataTypes=""
@@ -953,7 +953,7 @@ end
 
 Function IR3T_GraphInputData()
 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:TwoPhaseSolidModel:
 	SVAR DataFolderName=root:Packages:TwoPhaseSolidModel:DataFolderName
@@ -1956,7 +1956,7 @@ Function IR3T_TwoPhaseSolid2DImage() : Graph
 		DoWIndow/F TwoPhaseSolid2DImage
 	else
 		Wave TwoPhaseSolidMatrix = root:Packages:TwoPhaseSolidModel:TwoPhaseSolidMatrix
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		Display /W=(110,106,585,640)/K=1/N=TwoPhaseSolid2DImage  as "2D Image Slices"
 		AppendImage/T TwoPhaseSolidMatrix
 		ModifyImage TwoPhaseSolidMatrix ctab= {*,*,Grays,1}
@@ -2214,7 +2214,7 @@ Function IR3T_TwoPhaseSolidGizmo() : GizmoPlot
 	ModifyGizmo SETQUATERNION={0.059717,-0.967522,-0.237711,0.061868}
 
 
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 //	// Building Gizmo 8 window...
 //	NewGizmo/K=1/T="Two Phase Solid"/W=(796,73,1311,533)
 //	DoWindow/C TwoPhaseSolid3D

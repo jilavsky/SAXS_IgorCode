@@ -60,7 +60,7 @@ end
 
 
 Function IN2_USAXSInitPackage()									//initialization of USAXS folderin Packages
-	Silent 1
+	    
 	NewDataFolder /O root:Packages								//create Packages folder
 	NewDataFolder /O root:Packages:Indra3						//create USAXS folder there
 	if (exists("root:Packages:Indra3:RawToUSAXS")!=2)				//create RawToUSAXS conversion if needed		
@@ -486,7 +486,7 @@ Function IN2_RAWtoUSAXSParametersSetup(here)							//This offerss user panel to 
 end
 
 Window IN2_RawToUSAXSPanel() : Panel								//the panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(297.75,56.75,627,450)
 	SetDrawLayer UserBack
 	SetDrawEnv fstyle= 1
@@ -645,7 +645,7 @@ Function IN2_AddToDeleteList(ctrlName) : ButtonControl				//button control which
 End
 
 Window IN2_PanelToSelectDeleteWaves() : Panel								//panel for user to select waves to delete
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(320.25,305,728.25,553.25)
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 1
@@ -722,7 +722,7 @@ end
 
 
 Window IN2_ConvertRAW_To_USAXS() : Panel			//the panel to convert Raw to USAXS one by one
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(393.75,77,906,449)
 	SetDrawLayer UserBack
 	DrawRect 55,253,460,295
@@ -1464,7 +1464,7 @@ end
 
 
 Window IN2_PhotodiodeConvPanel() : Panel						//this allows user intervention if needed becaused my conversion does not work automatically
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(356.25,40.25,783.75,733.25)
 	SetDrawLayer UserBack
 	SetDrawEnv fstyle= 5
@@ -1617,7 +1617,7 @@ Function IN2_ConvertRawToOthersFnct()		//simple conversion of non usaxs data to 
 end
 
 Window IN2_ConvertRAW_To_Others() : Panel					//panel to transfer non usaxs data 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(393.75,77.75,933.75,449)
 	SetDrawLayer UserBack
 	DrawRect 55,253,434,295
@@ -1864,7 +1864,7 @@ End
 
 Function IN2_ExtractComments()					// scans spec file to extract #S lines and offer list of them
 	
-	Silent 1
+	    
 	Variable refNum
 	String TempFileName
 //********************************lets set path for temp file
@@ -1940,7 +1940,7 @@ Function IN2_ExtractComments()					// scans spec file to extract #S lines and of
 		FStatus(fileVar)
 														//lookup all the scans
 		scanNum=1
-	Silent 1
+	    
 	FSetPos fileVar, 0
 	string PosList=ListPosOfLineTypes(fileVar,"#S ")
 	FSetPos fileVar, 0
@@ -2023,7 +2023,7 @@ Function IN2_CreateNbkForSpecComments()
 	nbl=nbl[0,32]
 	
 	
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)==0) 		///Logbook exists
 		nbl=UniqueName(nbl, 10,0)
 	//	IN2_CreateNbkForSpecComments()
@@ -2214,7 +2214,7 @@ End
 //End
 
 Function  IN2_ConvertSpecScans()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(212.25,116.75,743.25,479.75) as "IN2_ConvertSpecScans"
 	DoWindow/C IN2_ConvertSpecScansPanel
 	SetDrawLayer UserBack

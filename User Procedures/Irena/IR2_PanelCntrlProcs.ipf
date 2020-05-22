@@ -123,7 +123,7 @@
 //	
 // example which creates test panel:
 //Window TestPanel2() : Panel
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 //	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Test"
 //Uncomment either Example 1 or Example 2 
 //Example 1 - User data of Irena type, in this case the names are fully specified with no * in the name.
@@ -3486,6 +3486,9 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 		case 1: // mouse down
 			SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
 			ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
+			if(numpnts(listWave)<(row+1))
+				return 0
+			endif		
 			FoldernameStr=listWave[row]
 			if(strlen(ControlMouseDownFunctionName)>0)
 				Execute(ControlMouseDownFunctionName+"(\""+FoldernameStr+"\")")

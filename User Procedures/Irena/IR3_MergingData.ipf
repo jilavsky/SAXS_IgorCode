@@ -83,7 +83,7 @@ end
 
 
 Function IR3D_DataMergePanelFnct()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,720) as "Data Merging"
 	DoWIndow/C IR3D_DataMergePanel
 	TitleBox MainTitle title="\Zr230Data merging  panel",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1192,30},anchor=MC,fColor=(0,0,52224)

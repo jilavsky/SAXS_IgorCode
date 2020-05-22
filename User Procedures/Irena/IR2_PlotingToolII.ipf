@@ -664,7 +664,7 @@ function IR2D_ChangetoLineandPoints(modetype,qcolors)//keep
 	Prompt modetype, "Type of display", popup,"Lines;Sticks;Dots;Markers;Lines &Markers"
 	Prompt qcolors,"Mixed Colors?",popup,"Colors;Grays;No"
 	
-	//Silent 1;pauseupdate
+	//    ;pauseupdate
 	string markertypes="19;17;16;23;18;8;5;6;22;7;0;1;2;25;26;28;29;15;14;4;3;17;16;23;18;8;5;6;22;7;0;1;2;25;26;28;29;15;14;4;3"
 	string rcolortypes="65535;0;0;65535;52428;0;39321;52428;1;26214;65535;0;0;65535;52428;0;39321;52428;1;26214"
 	string gcolortypes="0;0;65535;43690;1;0;13101;52425;24548;26214;65535;0;0;65535;52428;0;39321;52428;1;26214"
@@ -1140,7 +1140,7 @@ Proc IR2D_DWSStdGraph(width,maxY,minY,BW,ylabel,xlabel,modetype,aspect,linewidth
 	Prompt xlabel,"X axis Label", popup, "No Change;\Z16Distance from Si (Å);\F'Helvetica'\Z16\f01q (Å\S-1\M\Z16);\F'Helvetica'\Z16\f01q(µm\S-1\M\Z16);\F'Helvetica'\Z16\f01Diameter (µm);\F'Helvetica'\Z12\f01q (Å\S-1\M\Z12)"
 	prompt linewidth, "Line width"
 	prompt markersize, "Marker size"
-	silent 1
+	    
 	root:Packages:Irena:DWSPFolder:gylabel=ylabel
 	root:Packages:Irena:DWSPFolder:gxlabel=xlabel
 	root:Packages:Irena:DWSPFolder:gmaxy=maxy;root:Packages:Irena:DWSPFolder:gminY=minY;root:Packages:Irena:DWSPFolder:modetype=modetype

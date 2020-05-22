@@ -99,7 +99,7 @@ end
 //makes graph 
 Proc  IR1P_makeGraphWindow() 
 	KillWIndow/Z GeneralGraph
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	Display /K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height"))/N=GeneralGraph  as "GeneralGraph"
 	showInfo
 EndMacro
@@ -1821,7 +1821,7 @@ Function IR1P_Create3DGraph()
 	IR1P_CreateDataToPlot()
 	
 	IR1P_genGraphCreateDataWF()
-	//PauseUpdate; Silent 1		// create new 3D graph.
+	//PauseUpdate    		// create new 3D graph.
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:GeneralplottingTool:Waterfall:
 	WAVE PlottingTool_Int_M=root:Packages:GeneralplottingTool:Waterfall:PlottingTool_Int_M
@@ -2629,7 +2629,7 @@ end
 
 
 Function IR1P_CreateMovieFnct() : Panel
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1/W=(376,264,674,504)/N=IR1P_CreateMovie as "Ploting tool I Create Movie"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 3,textrgb= (0,0,65535)

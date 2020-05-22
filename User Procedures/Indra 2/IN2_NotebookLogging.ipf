@@ -36,7 +36,7 @@ Function IN2N_CreateShowNtbkForLogging(show)
 //	nbl=nbl[0,10]
 
 	
-	Silent 1
+	    
 	if ((strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1))		///Logbook exists 
 		//DoWindow/F $nbl
 	else
@@ -71,7 +71,7 @@ Function IN2N_CreateSummaryNotebook(AutoExport)
 	nbl=CleanupName(nbl,0)
 	nbl=nbl[0,10]
 	
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)==0) 		///Logbook exists
 		Abort "Notebook with this name exists, use another name please..."
 	endif
@@ -204,7 +204,7 @@ end
 
 Function IN2N_CopyGraphInNotebook(color)
 	variable color
-	Silent 1
+	    
 	string bucket11=WinName(0, 1)
 	SVAR nbl=root:Packages:Indra3:NotebookName
 	Notebook $nbl selection={endOfFile, endOfFile}
@@ -217,7 +217,7 @@ End
 //**********************************************************************************************
 
 Function IN2N_InsertDateAndTime()
-	Silent 1
+	    
 	string bucket11
 	Variable/D now=datetime
 	bucket11=Secs2Date(now,0)+",  "+Secs2Time(now,0) +"\r"
@@ -230,7 +230,7 @@ end
 
 Function IN2N_LogBookControlPanel()
 //Let's create panel to control changes in dark currents etc.
-	Silent 1
+	    
 	if (strlen(WinList("LogBookControl",";","WIN:64"))>0)
 			KillWIndow/Z LogBookControl
 	endif

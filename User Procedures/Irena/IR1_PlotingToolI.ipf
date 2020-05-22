@@ -107,7 +107,7 @@ end
 
 
 Function IR1P_ControlPanelFunc() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,402,690)/N=IR1P_ControlPanel as "General Plotting tool"
 	TitleBox MainTitle title="\Zr200Plotting tool input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,200},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -620,7 +620,7 @@ end
 //**********************************************************************************************************
 //another of modify data panel macros
 Window IR1P_FittingDataPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(63,128.75,375,425.75) as "IR1P_FittingDataPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,65280)
@@ -1013,7 +1013,7 @@ end
 //**********************************************************************************************************
 //another of modify data panel macros
 Window IR1P_ModifyDataPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(63,128.75,375,490) as "IR1P_ModifyDataPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,65280)
@@ -1050,7 +1050,7 @@ EndMacro
 //**********************************************************************************************************
 //**********************************************************************************************************
 Window IR1P_RemoveDataPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(63,128.75,375,425.75) as "IR1P_RemoveDataPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,65280)
@@ -1159,7 +1159,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 Window IR1P_MoreToolsPanel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(473,73,785,400) as "IR1P_MoreToolsPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
@@ -1251,7 +1251,7 @@ end
 //**********************************************************************************************************
 //and macro for this job...
 Window IR1P_ChangeGraphDetailsPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(63,128.75,400,455.75) as "IR1P_ChangeGraphDetailsPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,textrgb= (0,0,65280)
@@ -2291,7 +2291,7 @@ End
 //*************************************************************************************************************
 //*************************************************************************************************************
 Window IR1P_StoreGraphsCtrlPnl() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(99,127.25,458.25,550.25) as "IR1P_StoreGraphsCtrlPnl"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 3,textrgb= (0,0,65280)
@@ -2816,7 +2816,7 @@ end
 //**********************************************************************************************************
 
 Window IR1P_genGraphGizmo() : GizmoPlot
-	PauseUpdate; Silent 1	// Building Gizmo 6 window...
+	PauseUpdate    	// Building Gizmo 6 window...
 
 	// Do nothing if the Gizmo XOP is not available.
 	if(exists("NewGizmo")!=4)
@@ -2870,7 +2870,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 Window IR1P_StylesManagementPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(63,50,380,470) as "IR1P_StylesManagementPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (0,0,65280)

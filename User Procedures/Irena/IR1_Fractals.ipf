@@ -85,7 +85,7 @@ end
 ///******************************************************************************************
 
 Function IR1V_ControlPanelFnct() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Fractals model"
 	DoWindow/C IR1V_ControlPanel
 	string UserDataTypes=""
@@ -1766,7 +1766,7 @@ Function IR1V_GraphMeasuredData()
 end
 
 Proc  IR1V_LogLogPlotV()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:FractalsModel:
 	//Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
@@ -1793,7 +1793,7 @@ Proc  IR1V_LogLogPlotV()
 EndMacro
 
 Proc  IR1V_IQ4_Q_PlotV() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:FractalsModel:
 	//Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
@@ -1915,7 +1915,7 @@ Function IR1V_CalculateMassFractal(which)
 	tempFractFitIntensity=0
 	Bracket = ( Eta * RC^3 / (BetaVar * Radius^3)) * ((Ksi/RC)^Dv )
 	if(UseUFFormFactor)								//use Unified fit Form factor for sphere...
-		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,1) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(which,Qvec, PDI)
+		tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,1) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(Radius,Qvec, PDI)
 	else
 		if(BetaVar>1.01 || BetaVar<0.99)
 			tempFractFitIntensity = Phi * Contrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(Qvec*Ksi)) / ((Dv-1)*Qvec*Ksi*(1+(Qvec*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_CalculateFSquared(which,Qvec)
@@ -1950,10 +1950,10 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 
-Function IR1V_UnifiedSphereFFSquared(which, Qvalue, PDI)
-	variable Qvalue, which, PDI										//does the math for Unified fit Sphere Form factor function
+Function IR1V_UnifiedSphereFFSquared(Radius, Qvalue, PDI)
+	variable Qvalue, Radius, PDI										//does the math for Unified fit Sphere Form factor function
 
-	NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
+	//NVAR Radius=$("MassFr"+num2str(which)+"_Radius")
    Variable G1=1, P1=4, Rg1=sqrt(3/5)*radius
    variable B1=PDI*1.62*G1/Rg1^4
    variable QstarVector=qvalue/(erf(qvalue*Rg1/sqrt(6)))^3

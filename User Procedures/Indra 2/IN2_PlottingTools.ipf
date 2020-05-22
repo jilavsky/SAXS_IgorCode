@@ -34,7 +34,7 @@ End
 //	Prompt modetype, "Type of display", popup,"line and marker;markers;line"
 //	Prompt qcolors,"Mixed Colors?",popup,"Colors;Grays;No"
 //
-//	Silent 1;pauseupdate
+//	    ;pauseupdate
 //	string markertypes="19;17;16;23;18;8;5;6;22;7;0;1;2;25;26;28;29;15;14;4;3"
 //	string rcolortypes="65535;0;0;65535;52428;0;39321;52428;1;26214"
 //	string gcolortypes="0;0;65535;43690;1;0;13101;52425;24548;26214"
@@ -138,7 +138,7 @@ Function IN2P_DrawLineOfAnySlope()
 	if (V_Flag)
 			Abort
 	endif
-	Silent 1
+	    
 	do
 		if(lineslope==12)
 			lineslope=0
@@ -269,7 +269,7 @@ Function IN2P_CommonUSAXSPlots()			//this function generates graph of standard U
 	if (V_Flag)
 		Abort
 	endif
-	Silent 1	
+	    	
 
 	SetDataFolder SampleFolder						//sets working directory to sample
   	String PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
@@ -327,7 +327,7 @@ End
 //		Power=4
 //	endif
 //
-//	Silent 1	
+//	    	
 //
 //	SetDataFolder StringFromList(0,CurrentDataFolder, ",")							//sets working directory to sample
 //  	String/G PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
@@ -391,7 +391,7 @@ End
 //	else
 //		Power=4
 //	endif
-//	Silent 1	
+//	    	
 //
 //	SetDataFolder StringFromList(0,CurrentDataFolder, ",")							//sets working directory to sample
 //  	String/G PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
@@ -518,7 +518,7 @@ End
 //	String CurrentDataFolder, ScanTypeBucketError, SampleBucket,ScanTypeBucketY,ScanTypeBucketX
 //	Prompt CurrentDataFolder, "Select sample data folder", popup, FindPathAndComments("root:", "SMR_Int", 33)
 //	
-//	Silent 1	
+//	    	
 //
 //	SetDataFolder StringFromList(0,CurrentDataFolder, ",")							//sets working directory to sample
 //  	String/G PathToFirstPlotY, PathToFirstPlotX, PathToFirstPlotError
@@ -591,7 +591,7 @@ Function IN2P_AddAnotherWave(ctrlname) : Buttoncontrol
 	
 	IN2G_GenerateLegendForGraph(10,1,1)
 
-	Silent 1
+	    
  	 
 	ModifyGraph/Z msize=1, mode=4, marker[0]=1, marker[1]=3,marker[2]=5, marker[3]=7,marker[4]=9, marker[5]=11,marker[6]=13, marker[7]=30,marker[8]=35
 	ModifyGraph/Z rgb[0]=(0,0,0),rgb[1]=(65280,16320,16320),rgb[2]=(65280,50000,16320),rgb[3]=(16320,65280,65280), rgb[4]=(0,43520,65280),rgb[5]=(32640,65280,0),rgb[6]=(0,32640,0),rgb[7]=(0,16320,65280),rgb[8]=(65280,0,52240)
@@ -616,7 +616,7 @@ End
 //	ScanTypeBucketY="SMR_Int"
 //	ScanTypeBucketX="SMR_Qvec"
 //
-//	Silent 1
+//	    
 //
 //	string oldX, oldY
 //	oldX=StringFromList(0,ScanTypeBucketX)
@@ -657,7 +657,7 @@ End
 //	ScanTypeBucketY="M_SMR_Int"
 //	ScanTypeBucketX="SMR_Qvec"
 //
-//	Silent 1
+//	    
 //
 //	string oldX, oldY
 //	oldX=StringFromList(0,ScanTypeBucketX)
@@ -979,7 +979,7 @@ End
 //	while (strlen(bucket1)!=0)
 //	
 //	root:GraphType=ReplaceStringByKey("FOLDER"+num2str(numberOfWaves), root:GraphType, GetDataFolder(1), ":",";")
-//	Silent 1	
+//	    	
 //	
 //	//********************generate new data if necessary
 //	string  PlotNewYwaveString="PlotNewYwave"+num2str(numberOfWaves)

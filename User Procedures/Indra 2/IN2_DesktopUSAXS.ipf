@@ -55,7 +55,7 @@ end
 //***********************************************************************************************************
 
 Window IN2U_MainDektpUSAXSPanel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(48,60,426,612) as "Load Desktop USAXS data "
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,fstyle= 1

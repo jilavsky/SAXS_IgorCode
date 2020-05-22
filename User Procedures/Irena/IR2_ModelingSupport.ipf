@@ -1108,13 +1108,16 @@ Function IR2L_Model_TabPanelControl(name,tab)
 		SetVariable MassFrKsi,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsi_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
 		NVAR tempNVR=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(tab+1))
 		SetVariable MassFrKsi,win=LSQF2_MainPanel, Limits= {0,inf,0.05*tempNVR}
+		Checkbox MassFrUseUFFF,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrUseUFFF_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
 		Checkbox MassFrKsiFit,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsiFit_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
 		SetVariable MassFrKsiMin,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsiMin_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
 		SetVariable MassFrKsiMax,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrKsiMax_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| (NoFittingLimits)|| !(F_sw==3)|| !(UsePop))
 
-		SetVariable MassFrBeta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrBeta_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
 		SetVariable MassFrEta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrEta_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
 		SetVariable MassFrIntgNumPnts,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrIntgNumPnts_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop))
+		NVAR UseUFFF = $("root:Packages:IR2L_NLSQF:MassFrUseUFFF_pop"+num2str(tab+1))
+		SetVariable MassFrPDI,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrPDI_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop) || !UseUFFF)
+		SetVariable MassFrBeta,win=LSQF2_MainPanel,variable= root:Packages:IR2L_NLSQF:$("MassFrBeta_pop"+num2str(tab+1)), disable=(!(DisplayModelControls)|| !(F_sw==3)|| !(UsePop) || UseUFFF)
 
 
 		//SurfaceFractal
@@ -2221,7 +2224,7 @@ Function IR2L_Initialize()
 	
 		//Fractals parameters - Mass
 	ListOfPopulationVariablesFR+="MassFrPhi;MassFrRadius;MassFrDv;MassFrKsi;MassFrBeta;MassFrEta;MassFrIntgNumPnts;"
-	ListOfPopulationVariablesFR+="MassFrPhiFit;MassFrRadiusFit;MassFrDvFit;MassFrKsiFit;"
+	ListOfPopulationVariablesFR+="MassFrPhiFit;MassFrRadiusFit;MassFrDvFit;MassFrKsiFit;MassFrUseUFFF;MassFrPDI;"
 	//ListOfPopulationVariables+="MassFrPhiError;MassFrRadiusError;MassFrDvError;MassFrKsiError;"
 	ListOfPopulationVariablesFR+="MassFrPhiMin;MassFrRadiusMin;MassFrDvMin;MassFrKsiMin;"
 	ListOfPopulationVariablesFR+="MassFrPhiMax;MassFrRadiusMax;MassFrDvMax;MassFrKsiMax;"
@@ -2697,6 +2700,14 @@ Function IR2L_SetInitialValues(enforce)
 					testVar=0.01
 					NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"Max_pop"+num2str(j))
 					testVar=1		
+				endif
+			endfor
+			
+			ListOfVariables = "MassFrPDI;"		//other parameter
+			For(i=0;i<itemsInList(ListOfVariables);i+=1)
+				NVAR/Z testVar=$(StringFromList(i,ListOfVariables)+"_pop"+num2str(j))
+				if(testVar==0)
+					testVar=3
 				endif
 			endfor
 			ListOfVariables = "SurfFrQcWidth;"		//other parameter
@@ -3441,7 +3452,7 @@ end
 
 Function IR2L_SvNbk_Graphs(color)
 	variable color
-	Silent 1
+	    
 	SVAR nbl=root:Packages:IR2L_NLSQF:NotebookName
 	DoWIndow LSQF_MainGraph
 	if(V_Flag)
@@ -3484,7 +3495,7 @@ end
 
 Function IR2L_SvNbk_PgBreak()
 	
-	Silent 1
+	    
 	SVAR nbl=root:Packages:IR2L_NLSQF:NotebookName
 	Notebook $nbl selection={endOfFile, endOfFile}
 	Notebook $nbl SpecialChar={1,0,""}
@@ -3601,7 +3612,7 @@ end
 Function IR2L_AppendAnyText(TextToBeInserted, level)		//this function checks for existance of notebook
 	string TextToBeInserted						//and appends text to the end of the notebook
 	variable level 								//formating level... 0 for base, 1 and higher define my own
-	Silent 1
+	    
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:IR2L_NLSQF:NotebookName
 	if(SVAR_exists(nbl))
@@ -3644,7 +3655,7 @@ Function IR2L_SvNbk_CreateNbk()
 	
 	string nbLL=nbl
 	
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
 		DoWindow/F $nbl
 	else
@@ -3824,7 +3835,7 @@ end
 //******************************************************************************************************************
 
 Function IR2L_ConfEvaluationPanelF() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(405,136,793,600) as "Modeling II uncertainitiy evaluation"
 	DoWIndow/C IR2L_ConfEvaluationPanel
 	//ShowTools/A
@@ -5314,7 +5325,7 @@ Function IR2L_ResolutionSmearing(WhichSet) : Panel
 	variable WhichSet
 	KillWIndow/Z IR2L_ResSmearingPanel
  	variable CurDataTab = WhichSet+1
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(456,270,878,560) as "Resolution Smearing"
 	DoWindow/C IR2L_ResSmearingPanel
 	SetDrawLayer UserBack
@@ -6018,24 +6029,6 @@ Function IR2L_CalcMassFIntPopXDataSetY(pop,dataSet)
 		UseDatasw=0
 	endif
 	if(UseThePop && UseDatasw)
-//	//and now we need to calculate the model Intensity
-//		NVAR QMin=$("root:Packages:IR2L_NLSQF:Qmin_set"+num2str(DataSet))
-//		NVAR QMax=$("root:Packages:IR2L_NLSQF:Qmax_set"+num2str(DataSet))
-//		Wave/Z Qwave=$("root:Packages:IR2L_NLSQF:Q_set"+num2str(DataSet))
-//		if (!WaveExists (Qwave))
-//			Abort "Select original data first"
-//		endif
-//		variable StartPoint, EndPoint
-//		StartPoint = BinarySearch(Qwave, QMin)
-//		EndPoint = BinarySearch(Qwave, QMax)
-//		if(StartPoint<0)
-//			StartPoint=0
-//		endif
-//		if(EndPoint<0)
-//			EndPoint = numpnts(Qwave)-1
-//		endif
-//		Duplicate/O/R=[StartPoint,EndPoint] Qwave, $("Qmodel_set"+num2str(DataSet))
-//		Wave ModelQ = $("Qmodel_set"+num2str(DataSet))
 		Wave/Z ModelQ = $("Qmodel_set"+num2str(DataSet))
 		if (!WaveExists (ModelQ))
 			Abort "Select original data first"
@@ -6061,6 +6054,8 @@ Function IR2L_CalcMassFIntPopXDataSetY(pop,dataSet)
 		NVAR Ksi=$("root:Packages:IR2L_NLSQF:MassFrKsi_pop"+num2str(pop))
 		NVAR BetaVar=$("root:Packages:IR2L_NLSQF:MassFrBeta_pop"+num2str(pop))
 		NVAR Eta=$("root:Packages:IR2L_NLSQF:MassFrEta_pop"+num2str(pop))
+		NVAR UseUFFormFactor=$("root:Packages:IR2L_NLSQF:MassFrUseUFFF_pop"+num2str(pop))
+		NVAR PDI= $("root:Packages:IR2L_NLSQF:MassFrPDI_pop"+num2str(pop)) 
 		
 		variable CHiS=IR1V_CaculateChiS(BetaVar)
 		variable RC=Radius*sqrt(2)/ChiS * sqrt(1+((2+BetaVar^2)/3)*ChiS^2)
@@ -6069,10 +6064,14 @@ Function IR2L_CalcMassFIntPopXDataSetY(pop,dataSet)
 		//	tempFractFitIntensity *= IR1V_SpheroidVolume(Radius,Beta)* 1e-24		//volume of particle
 		variable Bracket
 		Bracket = ( Eta * RC^3 / (BetaVar * Radius^3)) * ((Ksi/RC)^Dv )
-		if(BetaVar!=1)
-			ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR2L_CalculateFSquared(pop,ModelQ)
+		if(UseUFFormFactor)								//use Unified fit Form factor for sphere...
+			ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,1) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR1V_UnifiedSphereFFSquared(Radius,ModelQ, PDI)
 		else
-			ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR2L_CalculateFSquared(pop,ModelQ)
+			if(BetaVar!=1)
+				ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR2L_CalculateFSquared(pop,ModelQ)
+			else
+				ModelInt = Phi * LocalContrast* 1e-4 * IR1V_SpheroidVolume(Radius,BetaVar) * (Bracket * sin((Dv-1)*atan(ModelQ*Ksi)) / ((Dv-1)*ModelQ*Ksi*(1+(ModelQ*Ksi)^2)^((Dv-1)/2)) + (1-Eta)^2 )* IR2L_CalculateFSquared(pop,ModelQ)
+			endif
 		endif
 		//	tempFractFitIntensity*=1e-48									//this is conversion for Volume of particles from A to cm	
 	endif

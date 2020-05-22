@@ -123,7 +123,7 @@ end
 //************************************************************************************************************
 
 Function IN3_FlyScanImportPanelFnct() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(49,49,412,545) as "USAXS FlyScan Import data"
 	DoWindow/C IN3_FlyScanImportPanel
 	TitleBox MainTitle,pos={13,5},size={330,24},title="\Zr210Import USAXS Data "
@@ -304,7 +304,7 @@ Function IN3_FlyScanOpenHdf5File()
 			OpenMultipleFiles=1
 		endif
 	endif
-	
+
 	variable i
 	string FileName
 	String browserName
@@ -323,11 +323,6 @@ Function IN3_FlyScanOpenHdf5File()
 			endif
 		endif
 	endfor
-	//HDf5Browser#LoadGroupButtonProc("LoadGroup")
-	
-	//HDf5Browser#CloseFileButtonProc("CloseFIle")
-	
-	//KillWindow $(browserName)
 end
 
 //************************************************************************************************************
@@ -1036,7 +1031,7 @@ End
 //**********************************************************************************************************
 
 Function IN3_FailedPositionsFixedGraph() : Graph
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	wave MeasTime
 	wave Ar_encoder
 	Display/K=1 /W=(640,52,1250,753) MeasTime vs Ar_encoder

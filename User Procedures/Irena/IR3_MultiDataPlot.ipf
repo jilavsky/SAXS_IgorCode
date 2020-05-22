@@ -95,7 +95,7 @@ end
 //************************************************************************************************************
 Function IR3L_MultiSamplePlotPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(5.25,43.25,605,820) as "MultiData Ploting tool"
 	DoWIndow/C IR3L_MultiSamplePlotPanel
 	TitleBox MainTitle title="\Zr220Multi Data ploting tool",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
@@ -140,17 +140,17 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	TitleBox YAxisLegendTB title="\Zr100Y Axis Legend",fixedSize=1,size={150,20},pos={450,280},frame=0,fstyle=1, fixedSize=1
 
 	SetVariable XAxisLegend,pos={260,300},size={160,15}, proc=IR3L_SetVarProc,title=" "
-	Setvariable XAxisLegend,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:XAxisLegend, help={"Legend for X axis, you can change it. "}
+	Setvariable XAxisLegend, fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:XAxisLegend, help={"Legend for X axis, you can change it. "}
 	SetVariable YAxislegend,pos={430,300},size={160,15}, proc=IR3L_SetVarProc,title=" "
-	Setvariable YAxislegend,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:YAxislegend, help={"legend for Y axis. You can change it. "}
+	Setvariable YAxislegend, fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:YAxislegend, help={"legend for Y axis. You can change it. "}
 	
 	Checkbox LogXAxis, pos={280,320},size={76,14},title="LogXAxis?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSamplePlot:LogXAxis, help={"Use log X axis. You can change it. "}
 	Checkbox LogYAxis, pos={450,320},size={76,14},title="LogYAxis?", proc=IR3L_CheckProc, variable=root:Packages:Irena:MultiSamplePlot:LogYAxis, help={"Use log X axis. You can change it. "}
 
 	SetVariable XOffset,pos={260,340},size={130,15}, proc=IR3L_SetVarProc,title="X offset :     ", limits={0,inf,1}
-	Setvariable XOffset,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:XOffset, help={"X Offxet for X axis, you can change it. "}
+	Setvariable XOffset, fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:XOffset, help={"X Offxet for X axis, you can change it. "}
 	SetVariable YOffset,pos={430,340},size={130,15}, proc=IR3L_SetVarProc,title="Y offset :     ",limits={0,inf,1}
-	Setvariable YOffset,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:YOffset, help={"Y Offset for Y axis. You can change it. "}
+	Setvariable YOffset, fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:YOffset, help={"Y Offset for Y axis. You can change it. "}
 
 
 	TitleBox GraphTraceControls title="\Zr100Graph Trace Options",fixedSize=1,size={150,20},pos={350,420},frame=0,fstyle=1, fixedSize=1
@@ -166,7 +166,7 @@ Function IR3L_MultiSamplePlotPanelFnct()
 	PopupMenu SymbolSize,pos={430,480},size={310,20},proc=IR3L_PopMenuProc, title="Symbol Size : ",help={"Symbol Size"}
 	PopupMenu SymbolSize,value="0;1;2;3;5;7;10;",mode=1, popvalue=num2str(SymbolSize)
 	SetVariable LineThickness,pos={430,500},size={160,15}, proc=IR3L_SetVarProc,title="Line Thickness",limits={0.5,10,0.5}
-	Setvariable LineThickness,fSize=10,fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:LineThickness, help={"Line Thickness. You can change it. "}
+	Setvariable LineThickness, fStyle=2, variable=root:Packages:Irena:MultiSamplePlot:LineThickness, help={"Line Thickness. You can change it. "}
 
 
 	TitleBox GraphOtherControls title="\Zr100Graph Other Options",fixedSize=1,size={150,20},pos={350,560},frame=0,fstyle=1, fixedSize=1
@@ -879,10 +879,10 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 
 	variable i
 	string FoldernameStr
-	SVAR GraphUserTitle=root:Packages:Irena:MultiSamplePlot:GraphUserTitle
-	SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
 	switch( ba.eventCode )
 		case 2: // mouse up
+			SVAR GraphUserTitle=root:Packages:Irena:MultiSamplePlot:GraphUserTitle
+			SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
 			// click code here
 			if(stringmatch(ba.ctrlname,"NewGraphPlotData"))
 				//set some meaningful values for these data first

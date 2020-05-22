@@ -60,7 +60,7 @@ end
 Window IR1K_ScatteringContCalc() 
 	setDataFolder root:Packages:ScatteringContrast:
 	
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(19,52,780,530)
 	DoWindow/T IR1K_ScatteringContCalc,"Scattering contrast calculator main"
 	SetDrawLayer UserBack
@@ -1865,7 +1865,7 @@ end
 //**********************************************************************************************************
 
 Function IR1K_DeltaRhoSquaredGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z DeltaRhoSq=root:Packages:ScatteringContrast:DeltaRhoSq
@@ -1889,7 +1889,7 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR1K_FPrimeGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z Fprime_1=root:Packages:ScatteringContrast:Fprime_1
@@ -1913,7 +1913,7 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR1K_F0FPrimeGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z Fprime_1=root:Packages:ScatteringContrast:F0Fprime_1
@@ -1940,7 +1940,7 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR1K_FDoublePrimeGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z FDoublePrime_1=root:Packages:ScatteringContrast:FDoublePrime_1
@@ -1965,7 +1965,7 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR1K_MuOverRhoGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z MuOverRho_1=root:Packages:ScatteringContrast:MuOverRho_1
@@ -1990,7 +1990,7 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR1K_OneOverMuGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z OneOverMu_1=root:Packages:ScatteringContrast:OneOverMu_1
@@ -2015,7 +2015,7 @@ End
 //**********************************************************************************************************
 //**********************************************************************************************************
 Function IR1K_eToMinusMuTGraph() : Graph
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	SetDataFolder root:Packages:ScatteringContrast:
 	wave/Z eToMinusMuT_1=root:Packages:ScatteringContrast:eToMinusMuT_1
@@ -2060,7 +2060,7 @@ Function IR1K_AnomScattContCalc()
 	
 	NVAR Anom_MatrixVacuum=root:Packages:ScatteringContrast:Anom_MatrixVacuum
 	
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(5,52,611,580)
 	DoWindow/C/T IR1K_AnomCalcPnl,"Anomalous scattering contrast calculator"
 	SetDrawLayer UserBack

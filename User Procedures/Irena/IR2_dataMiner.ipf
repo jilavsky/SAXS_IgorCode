@@ -172,7 +172,7 @@ end
 //************************************************************************************************************
 Function IR3B_MetadataBrowserPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(5.25,43.25,800,820) as "Metadata Browser tool"
 	DoWIndow/C IR3B_MetadataBrowserPanel
 	TitleBox MainTitle title="\Zr220Metadata Browser",pos={140,1},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fColor=(0,0,52224)
@@ -696,7 +696,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 				endif
 				Wave TmpWv=TemperatureWv
 				Redimension/N=(NumberOfExtractedItems+1) TmpWv
-				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyzC")
+				TmpWv[NumberOfExtractedItems] = IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
 		elseif(StringMatch(KeyString, "Extract_xyzmin"))		//_xyzC, _xyzmin, _xyzpct, _xyz
 				Wave/Z TmpWv=TimeWv
 				if(!WaveExists(TmpWv))
@@ -704,7 +704,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 				endif
 				Wave TmpWv=TimeWv
 				Redimension/N=(NumberOfExtractedItems+1) TmpWv
-				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyzmin")
+				TmpWv[NumberOfExtractedItems] = IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
 		elseif(StringMatch(KeyString, "Extract_xyz"))		//_xyzC, _xyzmin, _xyzpct, _xyz
 				Wave/Z TmpWv=OrderWv
 				if(!WaveExists(TmpWv))
@@ -712,7 +712,7 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 				endif
 				Wave TmpWv=OrderWv
 				Redimension/N=(NumberOfExtractedItems+1) OrderWv
-				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyz")
+				TmpWv[NumberOfExtractedItems] = IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		elseif(StringMatch(KeyString, "Extract_xyzpct"))		//_xyzC, _xyzmin, _xyzpct, _xyz
 				Wave/Z TmpWv=PercentWv
 				if(!WaveExists(TmpWv))
@@ -720,38 +720,40 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 				endif
 				Wave TmpWv=PercentWv
 				Redimension/N=(NumberOfExtractedItems+1) PercentWv
-				TmpWv[NumberOfExtractedItems] = IR3B_IdentifyNameComponent(DataFolderName, "_xyzpct")
+				TmpWv[NumberOfExtractedItems] = IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
 		//done with special name based waves... 
 		else		///all others. 
-			if(GrepString(ValueString, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))		//this si number
-				CleanKeyName = CleanupName(KeyString[0,31], 0)
-				Wave/Z TmpWv=$(CleanKeyName)
-				if(!WaveExists(TmpWv))
-					Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
-				endif
-				Wave TmpWv=$(CleanKeyName)
-				Redimension/N=(NumberOfExtractedItems+1) TmpWv
-				TmpWv[NumberOfExtractedItems] = str2num(ValueString)
-			else						//string, check if not date...
-				TimeInSeconds = IN2G_ConvertTimeStringToSecs(ValueString)
-				if(numtype(TimeInSeconds)==0)		//looks like time!
-					CleanKeyName = CleanupName(KeyString[0,24], 0)+"Time"
-					Wave/Z TmpTimeWv=$(CleanKeyName)
-					if(!WaveExists(TmpStrWv))
+			if(strlen(ValueString)>1)			//if "", we cannot process it... 
+				if(GrepString(ValueString, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))		//this is number
+					CleanKeyName = CleanupName(KeyString[0,31], 0)
+					Wave/Z TmpWv=$(CleanKeyName)
+					if(!WaveExists(TmpWv))
 						Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
 					endif
-					Wave TmpTimeWv=$(CleanKeyName)
-					Redimension/N=(NumberOfExtractedItems+1) TmpTimeWv
-					TmpTimeWv[NumberOfExtractedItems] = TimeInSeconds
-				else		//ok, this is really string now... 
-					CleanKeyName = CleanupName(KeyString[0,31], 0)
-					Wave/Z/T TmpStrWv=$(CleanKeyName)
-					if(!WaveExists(TmpStrWv))
-						Make/O/N=(NumberOfExtractedItems+1)/T $(CleanKeyName)
+					Wave TmpWv=$(CleanKeyName)
+					Redimension/N=(NumberOfExtractedItems+1) TmpWv
+					TmpWv[NumberOfExtractedItems] = str2num(ValueString)
+				else						//string, check if not date...
+					TimeInSeconds = IN2G_ConvertTimeStringToSecs(ValueString)
+					if(numtype(TimeInSeconds)==0)		//looks like time!
+						CleanKeyName = CleanupName(KeyString[0,24], 0)+"Time"
+						Wave/Z TmpTimeWv=$(CleanKeyName)
+						if(!WaveExists(TmpStrWv))
+							Make/O/N=(NumberOfExtractedItems+1) $(CleanKeyName)
+						endif
+						Wave TmpTimeWv=$(CleanKeyName)
+						Redimension/N=(NumberOfExtractedItems+1) TmpTimeWv
+						TmpTimeWv[NumberOfExtractedItems] = TimeInSeconds
+					else		//ok, this is really string now... 
+						CleanKeyName = CleanupName(KeyString[0,31], 0)
+						Wave/Z/T TmpStrWv=$(CleanKeyName)
+						if(!WaveExists(TmpStrWv))
+							Make/O/N=(NumberOfExtractedItems+1)/T $(CleanKeyName)
+						endif
+						Wave/T TmpStrWv=$(CleanKeyName)
+						Redimension/N=(NumberOfExtractedItems+1) TmpStrWv
+						TmpStrWv[NumberOfExtractedItems] = ValueString
 					endif
-					Wave/T TmpStrWv=$(CleanKeyName)
-					Redimension/N=(NumberOfExtractedItems+1) TmpStrWv
-					TmpStrWv[NumberOfExtractedItems] = ValueString
 				endif
 			endif
 		endif
@@ -763,45 +765,6 @@ static Function IR3B_ExtrMtdtFromOneFolder(FolderNameStr)
 
 end
 //**********************************************************************************************************
-//**********************************************************************************************************
-
-
-static Function IR3B_IdentifyNameComponent(NameStr, whichComp)
-		string NameStr, whichComp		//"_xyzC",  _xyzmin, _xyzpct, _xyz
-		
-		string NameStrLoc=StringFromList(ItemsInList(NameStr, ":")-1, NameStr, ":"  )
-		string result="", tmpStr
-		variable i
-		if(StringMatch(whichComp, "_xyz"))
-			FOr(i=ItemsInList(NameStrLoc, "_")-1;i>=0;i-=1)
-				tmpStr = StringFromList(i, NameStrLoc, "_")
-				if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))
-					return str2num(tmpStr)
-				endif
-			endfor
-		endif
-		FOr(i=0;i<ItemsInList(NameStrLoc, "_");i+=1)
-			tmpStr = StringFromList(i, NameStrLoc, "_")
-			strswitch(whichComp)					// string switch
-				case "_xyzC":						// execute if case matches expression
-					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+C$" ))
-						return str2num(tmpStr)
-					endif
-					break							// exit from switch
-				case "_xyzmin":	// execute if case matches expression
-					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+min$" ))
-						return str2num(tmpStr)
-					endif
-					break
-				case "_xyzpct":	// execute if case matches expression
-					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+pct$" ))
-						return str2num(tmpStr)
-					endif
-					break
-			endswitch		
-		endfor
-	return Nan
-end
 //**********************************************************************************************************
 //**********************************************************************************************************
 
@@ -1023,7 +986,7 @@ Function IR2M_DataMinerPanel()
 	SVAR DataFolderName=root:Packages:DataMiner:DataFolderName
 	DataFolderName="---"
 
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Data mining tool"
 	DoWindow/C DataMiningTool
 	
@@ -1530,7 +1493,7 @@ end
 Function IR2M_KillNotebook()
 
 	string nbl="DataMinerNotebook"
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
 		KillWIndow/Z $nbl
 	endif
@@ -1949,7 +1912,7 @@ end
 ///******************************************************************************************
 ///******************************************************************************************
 Function IR2M_CreateOutputTable()
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	
 	SVAR Variables_ListToFind=root:Packages:DataMiner:Variables_ListToFind
@@ -2522,7 +2485,7 @@ end
 Function IR2M_CreateNotebook()
 	
 	string nbl="DataMinerNotebook"
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
 		DoWindow/F $nbl
 	else
@@ -2658,7 +2621,7 @@ Function IR2M_MakePanelWithListBox(skipCreatePanel)
 	ItemsInFolderSelections = 0
 	if(!skipCreatePanel)
 		KillWIndow/Z ItemsInFolderPanel
- 		//PauseUpdate; Silent 1		// building window...
+ 		//PauseUpdate    		// building window...
 		NewPanel /K=1 /W=(400,50,720,696) as "Items in selected folder"
 		DoWindow/C ItemsInFolderPanel
 		SetDrawLayer UserBack
@@ -3179,7 +3142,7 @@ end
 
 
 Function IR2M_ColorCurves()
-        //PauseUpdate; Silent 1
+        //PauseUpdate    
 
 
         Variable i, NumTraces, iRed, iBlue, iGreen, io, w, Red, Blue, Green,  ColorNorm

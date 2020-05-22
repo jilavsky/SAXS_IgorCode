@@ -61,5 +61,8 @@
 #include "::Irena:IR2_PanelCntrlProcs", version>=1.53
 #include "::CanSAS:IRNI_NexusSupport", version>=1.14
 
+#if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
+#endif
+
 

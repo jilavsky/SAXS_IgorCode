@@ -453,7 +453,7 @@ end
 //*****************************************************************************************************************
 
 Function IR1A_ControlPanelFnct() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,396,720)/N=IR1A_ControlPanel as "Unified fit"
 	//DefaultGUIControls /W=IR1A_ControlPanel ///Mac os9
 	string UserDataTypes=""
@@ -2887,7 +2887,7 @@ end
 //*****************************************************************************************************************
 
 Proc  IR1_IQ4_Q_PlotU() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Irena_UnifFit:
 	Display /W=(283.5,228.5,761.25,383)/K=1  OriginalIntQ4 vs OriginalQvector as "IQ4_Q_Plot"
@@ -2907,7 +2907,7 @@ EndMacro
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 Proc  IR1_LogLogPlotU() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Irena_UnifFit:
 	Display /W=(282.75,37.25,759.75,208.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"

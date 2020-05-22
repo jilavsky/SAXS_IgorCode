@@ -1419,7 +1419,7 @@ end
 
 Function NI1_GISAXSOptions() : Panel
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(520,221,965,409) as "GISAXS Options"
 	DoWindow/C GISAXSOptionsPanel
 	SetDrawLayer UserBack
@@ -3629,7 +3629,7 @@ end
 
 Function NI1A_Convert2Dto1DPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/N=NI1A_Convert2Dto1DPanel /W=(16,57,459,810) as "Main 2D to 1D conversion panel"
 	SVAR DataFileExtension = root:Packages:Convert2Dto1D:DataFileExtension
 
@@ -5009,7 +5009,7 @@ End
 //*******************************************************************************************************************************************
 
 WIndow NI1A_PolCorPanel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(345,282,645,482) as "Polarization Correction"
 	Dowindow/C NI1A_PolCorPanel
 	SetDrawLayer UserBack

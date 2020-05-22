@@ -1158,7 +1158,7 @@ end
 //***********************************************************
 
 Function IR2U_UnifiedEvaPanelFnct() : Panel
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1/W=(311,63,700,600) as "Unified fit data evaluation"
 	DoWindow/C UnifiedEvaluationPanel
 	SetDrawLayer UserBack
@@ -4729,7 +4729,7 @@ end
 //******************************************************************************************************************
 
 Function IR1A_ConfEvaluationPanelF() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(405,136,793,600) as "Unified Uncertainity Evaluation"
 	DoWIndow/C IR1A_ConfEvaluationPanel
 	//ShowTools/A
@@ -8263,7 +8263,7 @@ end
 
 
 Window ExportToXLSFilePanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(562.2,177.8,1099.2,518)
 	ModifyPanel cbRGB=(0,52224,52224)
 	SetDrawLayer UserBack

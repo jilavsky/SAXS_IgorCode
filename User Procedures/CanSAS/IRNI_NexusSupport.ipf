@@ -173,7 +173,7 @@ Function NEXUS_NikaConfigPanelFnct() : Panel
 	if(V_Flag)
 		DoWIndow/F NEXUS_ConfigurationPanel
 	else
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		NewPanel /K=1/N= NEXUS_ConfigurationPanel/ W=(455,65,855,705) as "Nexus Configuration"
 	
 		TitleBox MainTitle title="\Zr200Nexus configuration panel",pos={5,2},frame=0,fstyle=3,size={395,24},fColor=(1,4,52428), anchor=MC
@@ -581,11 +581,7 @@ Function Nexus_NexusOpenHdf5File()
 			endif
 		endif
 	endfor
-	//HDf5Browser#LoadGroupButtonProc("LoadGroup")
-	
-	//HDf5Browser#CloseFileButtonProc("CloseFIle")
-	
-	//KillWindow $(browserName)
+
 end
 
 //************************************************************************************************************

@@ -244,7 +244,7 @@ end
 
 
 Window IR2D_ControlPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Small angle diffraction panel"
 
 	string UserDataTypes=""
@@ -1651,7 +1651,7 @@ end
 
 
 Proc  IR2D_LogLogPlotSAD() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Irena_SAD:
 	//Display /W=(400.75,37.25,959.75,508.25)/K=1  OriginalIntensity vs OriginalQvector as "LogLogPlot"
@@ -2472,7 +2472,7 @@ end
 //*****************************************************************************************************************
 
 Function IR2D_CheckFittingParamsFnct() 
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1/W=(400,140,870,600) as "Check fitting parameters"
 	Dowindow/C IR2D_CheckFittingParams
 	SetDrawLayer UserBack

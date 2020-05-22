@@ -261,7 +261,7 @@ end
 //************************************************************************************************************
 
 Function NI1_RSoXSMainPanelFnct() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(464,54,908,300) as "RSoXS Data reduction panel"
 	DoWIndow/C NI1_RSoXSMainPanel
 	SetDrawLayer UserBack

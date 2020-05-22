@@ -384,7 +384,7 @@ Function NI1_SquareGraph() : Graph
 	Wave SquareMap_dis=root:Packages:Convert2Dto1D:SquareMap_dis
 	NVAR A2DImageRangeMinLimit=root:Packages:Convert2Dto1D:A2DImageRangeMinLimit
 	NVAR A2DImageRangeMaxLimit=root:Packages:Convert2Dto1D:A2DImageRangeMaxLimit
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	Display /W=(191.25,169.25,705,562.25)/K=1; AppendImage SquareMap_dis
 	DoWindow/C/T SquareMapIntvsPixels,"SquareMap of intensity vs pixel"
 	ControlBar 40

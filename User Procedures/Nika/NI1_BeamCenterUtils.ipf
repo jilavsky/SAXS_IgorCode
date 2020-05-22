@@ -103,7 +103,7 @@ Function NI1BC_CreateBmCntrField()
 
 //	NVAR =root:Packages:Convert2Dto1D:
 	
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(22,58,450,730)/N=NI1_CreateBmCntrFieldPanel as "Beam center and calibration panel"
 	//Dowindow/C NI1_CreateBmCntrFieldPanel
 	SetDrawLayer UserBack
@@ -1182,7 +1182,7 @@ Function NI1BC_Fitto2DGaussian1(left,right,bottom,top,wvToFItTo)
 		stddev=2
 	endif
 	wave fit_BmCntrCCDImg
-	Silent 1
+	    
 //	root:P:gPeakInt=PeakInt ;root:P:gxcenter=xcenter ;root:P:gycenter=ycenter ;root:P:gstddev=stddev
 	Make/o/n=4 gw2DGaussian
 	gw2DGaussian[0]=PeakInt

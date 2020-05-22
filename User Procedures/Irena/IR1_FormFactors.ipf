@@ -1691,6 +1691,9 @@ Static Function IR1T_StartOfBinInDiameters(D_distribution,i)			//calculates the 
 	
 	variable start
 	variable Imax=numpnts(D_Distribution)
+	if(Imax==1)
+		return D_Distribution[0]
+	endif
 	
 	if (i==0)
 		start=D_Distribution[0]-(D_Distribution[1]-D_Distribution[0])/2
@@ -1718,6 +1721,9 @@ static Function IR1T_EndOfBinInDiameters(D_distribution,i)			//calculates the st
 	
 	variable endL
 	variable Imax=numpnts(D_distribution)
+	if(Imax==1)
+		return D_Distribution[0]
+	endif
 	
 	if (i==0)
 		endL=D_distribution[0]+(D_distribution[1]-D_distribution[0])/2

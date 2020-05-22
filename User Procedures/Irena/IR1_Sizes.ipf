@@ -875,7 +875,7 @@ end
 
 
 Window IR1R_SizesUserFFInputPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(306,271,666,604) as "IR1R_SizesUserFFInputPanel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 1,textrgb= (0,0,65280)
@@ -2613,7 +2613,7 @@ end
 //*****************************************************************************************************************
 
 Window IR1R_SizesInputPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(6,10,406,700) as "Size distribution"
 	TitleBox MainTitle title="\Zr230Sizes input panel",pos={50,0},frame=0,fstyle=3,font= "Times New Roman", size={300,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={72,3},pos={8,26},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -3152,7 +3152,7 @@ End
 Window Reg_FractalAgg_Input_Panel() 
 	Variable which
 	KillWIndow/Z Shape_Model_Input_Panel
- 	PauseUpdate; Silent 1		// building window...
+ 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(189,124.25,485.25,299.75)/N=Shape_Model_Input_Panel as "Fractal_Aggregate_Input_Panel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 14,fstyle= 1,textrgb= (0,0,65280)
@@ -3269,7 +3269,7 @@ end
 //*****************************************************************************************************************
 
 Function  IR1R_SizesInputGraphFnct() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	SetDataFolder root:Packages:Sizes:
 	Wave IntensityOriginal 
 	Wave Q_vecOriginal
@@ -4006,7 +4006,7 @@ end
 //*****************************************************************************************************************
 
 Proc  IR1R_RegDiagnosticsWindow() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:Sizes:
 	Display /K=1/W=(10,250,350,450)/N=IR1R_RegDiagnosticsWindow CurrentEntropyW as "Diagnostic of the Sizes"
@@ -4883,7 +4883,7 @@ Function IR1R_SizeDistImpFitPanelF() : Panel
 		return 0
 	endif
 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(20,470,420,690) as "Size Distribution Import Fitting"
 	DoWIndow/C  IR1R_SizeDistImportFitPanel
 	SetDrawLayer UserBack

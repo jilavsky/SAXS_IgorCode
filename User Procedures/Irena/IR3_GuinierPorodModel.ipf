@@ -538,7 +538,7 @@ end
 //******************************************************************************************
 
 Function IR3DP_MainPanelFunction()
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,42,410,730) as "Guinier-Porod main panel"
 	DoWindow/C IR3DP_MainPanel
 	DefaultGUIControls /W=IR3DP_MainPanel ///Mac os9
@@ -1324,7 +1324,7 @@ Function  IR3GP_LogLogPlotU()
 	if(V_Flag)
 		DoWIndow/F GuinierPorod_LogLogPlot
 	else
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		String fldrSav= GetDataFolder(1)
 		SetDataFolder root:Packages:Irena:GuinierPorod:
 		Wave OriginalIntensity
@@ -2790,7 +2790,7 @@ end
 //******************************************************************************************************************
 
 Function IR3GP_ConfEvaluationPanelF() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(405,136,793,600) as "Guinier-Porod Uncertainity Evaluation"
 	DoWIndow/C IR3GP_ConfEvaluationPanel
 	//ShowTools/A

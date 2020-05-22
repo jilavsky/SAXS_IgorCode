@@ -48,7 +48,7 @@ Function NI1_CreateFloodField()
 	NVAR ImageRangeMinLimit=root:Packages:Convert2Dto1D:ImageRangeMinLimit
 	NVAR AddFlat=root:Packages:Convert2Dto1D:AddFlat
 	
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(22,58,450,560) as "Create FLOOD panel"
 	Dowindow/C NI1_CreateFloodFieldPanel
 	SetDrawLayer UserBack

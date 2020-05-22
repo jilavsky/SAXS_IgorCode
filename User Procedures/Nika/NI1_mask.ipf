@@ -66,7 +66,7 @@ Function NI1M_CreateImageROIPanel()
 	SVAR ListOfKnownExtensions=root:Packages:Convert2Dto1D:ListOfKnownExtensions
 	SVAR ListOfKnownCalibExtensions=root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions
 	
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(22,58,450,560) as "Create MASK panel"
 	Dowindow/C NI1M_ImageROIPanel
 	//SetDrawLayer UserBack

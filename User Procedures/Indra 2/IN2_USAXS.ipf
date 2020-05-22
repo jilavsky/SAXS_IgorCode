@@ -181,6 +181,8 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_ResetSizesForALlPanels(WindowProcNames)
+	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
+
 	//and print in history which version of codeis being used for future reference.
 	string file= StringFromList((ItemsInList(FunctionPath("LoadUSAXSMacros"), ":")-1), FunctionPath("LoadUSAXSMacros"), ":")
 	String path = RemoveFromList(file, FunctionPath("LoadUSAXSMacros") , ":")
@@ -496,7 +498,7 @@ End
 //*****************************************************************************************************************
 
 Function IN2_AboutPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(173.25,101.75,500,302) as "About_Indra_2_Macros"
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
@@ -743,7 +745,7 @@ end
 
 
 Window IN2A_UPDControlPanel() : Panel						//UPD control panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(558,50,880,427.25) as "UPD control"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 5,textrgb= (65280,0,0)
@@ -1012,7 +1014,7 @@ Function IN2A_PlotToGetBeamCenter()		//here we get the plot to get beam center
 	endif 
 	DisplayEndPoint=ceil(DisplayEndPoint)+3
 	
-	Silent 1
+	    
 	PauseUpdate //*************************Graph section**********************************
 	//Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs ar_encoder as "Lin-lin plot of Int vs Ar encoder"
 	Display/k=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) PD_Intensity vs ar_encoder as "Lin-lin plot of Int vs Ar encoder"
@@ -1296,7 +1298,7 @@ Function IN2A_CreateLogLogPlot()	//this creates log log plot for check of dark c
 	Qvec=((4*pi)/wavelength)*sin((pi/360)*(BeamCenter-ar_encoder))
 	
 	Wave PD_Intensity
-	Silent 1
+	    
 	PauseUpdate    //*************************Graph section**********************************
 		//Display /k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) PD_Intensity vs Qvec as "Log-log R for sample/blank"		//plots selected data, axis lin-lin
 		Display /k=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) PD_Intensity vs Qvec as "Log-log R for sample/blank"		//plots selected data, axis lin-lin
@@ -1339,7 +1341,7 @@ End
 Function IN2A_SaveRWave(ctrlname) : Buttoncontrol						//Save the PD_current wave into R_Int
 	string ctrlname
 
-	Silent 1
+	    
 	Wave PD_Intensity
 	Wave Qvec
 	Wave PD_error
@@ -1877,7 +1879,7 @@ End
 
 Function IN2B_CalculateSMRdata(ctrlname) : Buttoncontrol			//=Calculates SMR data
 	string ctrlname
-	Silent 1
+	    
 		SVAR ASBparameters=ListOfASBParameters
 		Wave R_Int
 		Wave R_error
@@ -2177,7 +2179,7 @@ Function IN2A_MSAXScorrection()
 	FindLevel/R=(V_maxloc) R_Int, 0.01*V_max
 	variable EndPlot=V_levelX
 	
-	Silent 1
+	    
 
 	//Display/k=1 /W=(0.3*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),60*IN2G_ScreenWidthHeight("width"),70*IN2G_ScreenWidthHeight("height")) R_Int vs R_Qvec as "Sample PD Intensity vs Q vector"						//plots intensity vs ar encoder
 	Display/k=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) R_Int vs R_Qvec as "Sample PD Intensity vs Q vector"						//plots intensity vs ar encoder
@@ -2412,7 +2414,7 @@ Window IN2A_MSAXSPanel() : Panel
 	if (strlen(WinList("IN2A_MSAXSPanel",";","WIN:64"))>0)
 			KillWIndow/Z IN2A_MSAXSPanel
 	endif
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel/k=1 /W=(738.75,52.25,1120,311) as "MSAXS corrections"
 	SetVariable SampleIntensity,pos={22,22},size={283,18},title="Int. Intensity sample", help={"Calcualted integral intensity"}
 	SetVariable SampleIntensity,limits={0,Inf,1},value= root:Packages:MSAXSCorrection:IntegralIntensitySample
@@ -2952,7 +2954,7 @@ end
 //**************************************************************************************************
 
 Window IN2A_AMSAXS_Panel() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3.75,47,357.75,445.25) as "Anisotropic MSAXS Input Panel"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,52224)
@@ -2988,7 +2990,7 @@ EndMacro
 
 
 Window IN2A_AMSAXSTable() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:MSAXSCorrection:
 	Edit/K=1/W=(285.75,38.75,687,426.5) Folder,Transm,Weight,CorrectWv as "Anisotropic MSAXS Correction review"

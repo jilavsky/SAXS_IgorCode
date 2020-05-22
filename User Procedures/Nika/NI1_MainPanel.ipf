@@ -1912,7 +1912,7 @@ end
 
 Window NI1A_CreateMoviesPanel() : Panel
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(455,63,762,443) as "Nika Create Movies panel"
 	SetDrawLayer UserBack
 	SetDrawEnv fname= "Times New Roman",fsize= 18,fstyle= 3,textrgb= (0,0,65535)

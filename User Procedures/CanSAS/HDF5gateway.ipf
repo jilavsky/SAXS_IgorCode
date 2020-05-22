@@ -1,8 +1,9 @@
 #pragma rtGlobals=3		// Use modern global access method.
 #pragma version=1.01
 
+#if(IgorVersion()<9)  	//no need to include, Igor 9 has this by default.  
 #include <HDF5 Browser>
-
+#endif
 
 //1.01 rmoeved KillWaves/Z which took surprisngly long time. Not needed. 
 
@@ -938,16 +939,22 @@ Static Function H5GW__OpenHDF5_RO(DataPathStr, fileName)
 		return 0
 	endif
 
+	Variable err
 	if ( 0 )
 		STRUCT HDF5DataInfo di	// Defined in HDF5 Browser.ipf.
 		InitHDF5DataInfo(di)	// Initialize structure.
+#if(IgorVersion()<9)
 		HDF5AttributeInfo(fileID, "/", 1, "file_name", 0, di)
+#else
+		err = HDF5AttributeInfo(fileID, "/", 1, "file_name", 0, di)
+#endif		
 		Print di
 	endif
 
 
 	String/G file_path = S_path
 	String/G file_name = fileName
+
 	return fileID
 End
 

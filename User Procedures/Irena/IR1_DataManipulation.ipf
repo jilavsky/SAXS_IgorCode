@@ -118,7 +118,7 @@ end
 
 
 Proc IR1D_DataManipulationPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,415,720) as "Data Manipulation"
 	DoWIndow/C IR1D_DataManipulationPanel
 	TitleBox MainTitle title="\Zr200Data manipulation input panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={355,24},anchor=MC,fColor=(0,0,52224)
@@ -2022,7 +2022,7 @@ end
 //**********************************************************************************************************
 //**********************************************************************************************************
 Proc IR1D_DataManipulationGraph()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	//Display/K=1 /W=(320.25,41.75,1014.75,671.75) as "IR1D_DataManipulationGraph"
 	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) as "IR1D_DataManipulationGraph"
 	DoWIndow/C IR1D_DataManipulationGraph
@@ -2849,7 +2849,7 @@ Function IR3M_DataManipulationIIPanel()
 	SVAR DataFolderName=root:Packages:DataManipulationII:DataFolderName
 	DataFolderName="---"
 
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690)/N=DataManipulationII as "Data manipulation II"
 	
 	string AllowedIrenaTypes="DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;R_Int;"
@@ -5442,7 +5442,7 @@ Function IR3M_MakePanelWithListBox()
 
 	KillWIndow/Z ItemsInFolderPanel
 	
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(400,50,720,696)/N=ItemsInFolderPanel_DMII as "Items in selected folder"
 	//DoWindow/C ItemsInFolderPanel_DMII
 	SetDrawLayer UserBack

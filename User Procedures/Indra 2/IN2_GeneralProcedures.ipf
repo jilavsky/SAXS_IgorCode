@@ -1,5 +1,5 @@
 IN2G_FindNu#pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.22
+#pragma version = 2.23
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -34,6 +34,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.23 add IN2G_AddButtonsToBrowser(), which calls IN2G_ExtractInfoFromFldrname(). Use: adds button (via hooks functions) tgo DataBrowser and that will extract info from SampleName strings we are using. 
 //2.22 minor fix to IN2G_ColorTopGrphRainbow
 		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
 		//fix IN2G_ResetSizesForAllPanels so it does not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
@@ -506,6 +507,21 @@ Menu "GraphPopup"
        "Clone this window with data", IN2G_CloneWindow()
 End
 
+//Does not seem we can modify DataBrowser right clcik menu... 
+//Menu "DataBrowser"
+//		"Samplenames-to-Values", IN2G_ExtractInfoFromFldrname()
+//end
+
+//here is add to Browser button, it will be in after compile hooks. 
+Function IN2G_AddButtonsToBrowser()
+
+	ModifyBrowser appendUserButton={'SampleName-to-Values',"IN2G_ExtractInfoFromFldrname()"}
+	ModifyBrowser appendUserButton={'Graph w1 vs w2',"IN2G_PlotBrowserSelectionXY()"}
+
+end
+//************************************************************************************************
+//************************************************************************************************
+
 Function IN2G_SaveTopGraphJpg()
 		string topWindow=WinName(0,1)
 		SavePICT/E=-6/B=288	as (topWindow)				//this is jpg
@@ -513,6 +529,138 @@ end
 Function IN2G_SaveTopGraphPXP()
 		string topWindow=WinName(0,1)
 		SaveGraphCopy /I /W=$(topWindow)	  					//this is pxp
+end
+//************************************************************************************************
+//************************************************************************************************
+Function IN2G_PlotBrowserSelectionXY()
+
+	string SelectedWaveNm1=GetBrowserSelection (0, 1)
+	if(strlen(SelectedWaveNm1)<=3)		//path must contain at least "root:"
+			return 0
+	endif
+	string SelectedWaveNm2=GetBrowserSelection (1, 1)
+	if(strlen(SelectedWaveNm2)<=3)		//path must contain at least "root:"
+			return 0
+	endif
+	//check for wave type, need numerical waves ...
+	if(WaveType($(SelectedWaveNm1),1)!=1 || WaveType($(SelectedWaveNm2),1)!=1)		//not numerical waves, bail out...
+			return 0
+	endif
+	Wave/Z Wave1 = $(SelectedWaveNm1)
+	Wave/Z Wave2 = $(SelectedWaveNm2)
+	if(WaveExists(Wave1) && WaveExists(Wave2))
+		Variable keys = GetKeyState(0)
+		if (keys == 0)
+			Display/K=1 Wave1 vs Wave2 as NameofWave(Wave1)+" vs "+NameofWave(Wave2)
+			Label left (NameofWave(Wave1))
+			Label bottom (NameofWave(Wave2))
+		else 
+			Display/K=1 Wave2 vs Wave1 as NameofWave(Wave2)+" vs "+NameofWave(Wave1)
+			Label left (NameofWave(Wave2))
+			Label bottom (NameofWave(Wave1))
+		endif
+	else
+		return 0
+	endif
+	return 1
+end
+
+//************************************************************************************************
+//************************************************************************************************
+
+Function IN2G_ExtractInfoFromFldrname()
+
+	string SelectedWaveNm=GetBrowserSelection (0, 1)
+	if(strlen(SelectedWaveNm)<=3)		//path must contain at least "root:"
+			return 0
+	endif
+		//check for wave type, need string wave with foldernames...
+	if(WaveType($(SelectedWaveNm),1)!=2)		//not text wave, bail out...
+			return 0
+	endif
+	Wave/T SampleName = $(SelectedWaveNm)
+	if(WaveDims(SampleName)!=1)			//thsi is not 1D array of somethign, which should be names. 
+		return 0
+	endif
+	variable i, imax=numpnts(SampleName)
+	
+	DFref oldDf=GetDataFolderDFR()
+	setDataFolder GetWavesDataFolderDFR(SampleName)
+	make/O/N=(imax) TimeWave, TemperatureWave, PercentWave, OrderWave
+	String DataFolderName
+	For(i=0;i<imax;i+=1)
+		DataFolderName = SampleName[i]
+		TimeWave[i]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[i] 	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[i] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[i]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+	endfor
+	//clean up and leave only thoser who contain some numbers in tehm. 
+	string ReportExisting=""
+	if(sum(TimeWave)<=0 || numtype(sum(TimeWave))!=0)
+		KillWaves  TimeWave
+	else
+		ReportExisting+= " TimeWave;"
+	endif
+	if(sum(TemperatureWave)<=0 || numtype(sum(TemperatureWave))!=0)
+		KillWaves  TemperatureWave
+	else
+		ReportExisting+= " TemperatureWave;"
+	endif
+	if(sum(PercentWave)<=0|| numtype(sum(PercentWave))!=0)
+		KillWaves  PercentWave
+	else
+		ReportExisting+= " PercentWave;"
+	endif
+	if(sum(OrderWave)<=0|| numtype(sum(OrderWave))!=0)
+		KillWaves  OrderWave
+	else
+		ReportExisting+= " OrderWave;"
+	endif
+	print "Processed wave :"+SelectedWaveNm
+	print "Extracted following data from names :"+ReportExisting
+	
+	setDataFolder oldDf
+end
+
+//**********************************************************************************************************
+
+
+Function IN2G_IdentifyNameComponent(NameStr, whichComp)
+		string NameStr, whichComp		//"_xyzC",  _xyzmin, _xyzpct, _xyz
+		
+		string NameStrLoc=StringFromList(ItemsInList(NameStr, ":")-1, NameStr, ":"  )
+		string result="", tmpStr
+		variable i
+		if(StringMatch(whichComp, "_xyz"))
+			FOr(i=ItemsInList(NameStrLoc, "_")-1;i>=0;i-=1)
+				tmpStr = StringFromList(i, NameStrLoc, "_")
+				if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"))
+					return str2num(tmpStr)
+				endif
+			endfor
+		endif
+		FOr(i=0;i<ItemsInList(NameStrLoc, "_");i+=1)
+			tmpStr = StringFromList(i, NameStrLoc, "_")
+			strswitch(whichComp)					// string switch
+				case "_xyzC":						// execute if case matches expression
+					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+C$" ))
+						return str2num(tmpStr)
+					endif
+					break							// exit from switch
+				case "_xyzmin":	// execute if case matches expression
+					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+min$" ))
+						return str2num(tmpStr)
+					endif
+					break
+				case "_xyzpct":	// execute if case matches expression
+					if(GrepString(tmpStr, "^[-+]?[0-9]*\.?[0-9]+pct$" ))
+						return str2num(tmpStr)
+					endif
+					break
+			endswitch		
+		endfor
+	return Nan
 end
 
 //************************************************************************************************
@@ -1130,7 +1278,8 @@ static Function IN2G_ListProcFiles(PathStr, resetWaves)
 	variable resetWaves
 	String abortMessage	//HR Used if we have to abort because of an unexpected error
 	DFref oldDf= GetDataFolderDFR()
-
+	//if PathStr="", we get weird errros on Igor 9
+	//print PathStr
 	//create location for the results waves...
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:UseProcedureFiles
@@ -1195,14 +1344,14 @@ static Function IN2G_ListProcFiles(PathStr, resetWaves)
 			if(strlen(S_aliasPath)>3)		//in case user has stale alias, S_aliasPath has 0 length. Need to skip this pathological case. 
 				//HR Recurse only if S_aliasPath points to a folder. I don't really know what I'm doing here but this seems like it will prevent the infinite loop.
 				GetFileFolderInfo/Z/Q/P=tempPath S_aliasPath	
-				isItXOP = IamOnMac * stringmatch(S_aliasPath, "*xop*" )
+				isItXOP = IamOnMac * stringmatch(S_Path, "*xop*" )
 				if (V_flag==0 && V_isFolder&&!isItXOP)		//this is folder, so all items in the folder are included... Except XOP is folder too... 
-					IN2G_ListProcFiles(S_aliasPath, 0)
+					IN2G_ListProcFiles(S_Path, 0)
 				elseif(V_flag==0 && (!V_isFolder || isItXOP))	//this is link to file. Need to include the info on the file...
 					//*************
 					Redimension/N=(numpnts(FileNames)+1) FileNames, PathToFiles,FileVersions
-					tempFileName =stringFromList(ItemsInList(S_aliasPath,":")-1, S_aliasPath,":")
-					tempPathStr = RemoveFromList(tempFileName, S_aliasPath,":")
+					tempFileName =stringFromList(ItemsInList(S_Path,":")-1, S_Path,":")
+					tempPathStr = RemoveFromList(tempFileName, S_Path,":")
 					FileNames[numpnts(FileNames)] = tempFileName
 					PathToFiles[numpnts(FileNames)] = tempPathStr
 					NewPath/Q/O tempPath, tempPathStr
@@ -1771,7 +1920,7 @@ Proc IN2G_MainConfigPanelProc()
 	if(V_Flag)
 		DoWIndow/F IN2G_MainConfigPanel
 	else
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		NewPanel /K=1/W=(282,48,707,500) as "Configure Irena/Nika default fonts and names"
 		DoWindow /C IN2G_MainConfigPanel
 		SetDrawLayer UserBack
@@ -4423,7 +4572,7 @@ static Function IN2G_FolderSelectPanelW(TitleString,FolderOrFile,AllowNew,AllowD
 	variable FolderOrFile,AllowNew,AllowDelete,AllowRename
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	KillWIndow/Z IN2G_FolderSelectPanelPanel
- 	//PauseUpdate; Silent 1		// building window...
+ 	//PauseUpdate    		// building window...
 	NewPanel /K=1/W=(100,60,630,340)/N=IN2G_FolderSelectPanelPanel as TitleString
 	//DoWindow/C IN2G_FolderSelectPanelPanel
 	TitleBox Title title="   "+TitleString+"   ",disable=2,frame=0,pos={1,3}
@@ -4862,7 +5011,7 @@ end
 	
 Function IN2G_AppendAnyText(TextToBeInserted)	//this function checks for existance of notebook
 	string TextToBeInserted						//and appends text to the end of the notebook
-	Silent 1
+	    
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:Indra3:NotebookName
@@ -4880,7 +5029,7 @@ end
 Function/S IN2G_WindowTitle(WindowName)		//this function returns the title of the Window 
              String WindowName						//wwith WindowName
       
-	Silent 1
+	    
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
              String RecMacro
              Variable AsPosition, TitleEnd
@@ -5324,7 +5473,7 @@ end
 //**********************************************************************************************
 
 Proc IN2G_BasicGraphStyle()
-	PauseUpdate; Silent 1		// modifying window...
+	PauseUpdate    		// modifying window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	ModifyGraph/Z margin(top)=100
 	ModifyGraph/Z mode=4, gaps=0
@@ -6968,7 +7117,7 @@ end
 Function IN2G_InputPeriodicTable(ButonFunctionName, NewWindowName, NewWindowTitleStr, PositionLeft,PositionTop)
 	string ButonFunctionName, NewWindowName, NewWindowTitleStr
 	variable PositionLeft,PositionTop
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	Variable pleft=PositionLeft,ptop=PositionTop,pright=PositionLeft+380,pbottom=PositionTop+145			// these change panel size
 	NewPanel/K=1 /W=(pleft,ptop,pright,pbottom)

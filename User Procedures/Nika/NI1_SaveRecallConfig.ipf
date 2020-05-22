@@ -34,7 +34,7 @@ Function NI1A_StoreLoadCurSettingPnl()
 end
 
 Proc NI1A_SaveLoadPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(236,50,605,338) as "Save and Recall Configurations"
 	DoWindow/C NI1A_SaveLoadPanel
 	SetDrawLayer UserBack

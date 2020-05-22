@@ -134,7 +134,7 @@ end
 //******************************************************************************************************************************************************
 
 Function IR3A_FractalAggregatePanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(5,20,395,680) as "Fractal Aggregate Model"
 	DoWindow/C FractalAggregatePanel
 	DefaultGUIControls /W=FractalAggregatePanel ///Mac os9
@@ -1743,7 +1743,7 @@ static Function IR3A_GizmoViewScatterPlot(ScatterPlotWave) : GizmoPlot
 		ModifyGizmo scalingOption=0
 		ModifyGizmo modifyObject=Particle,objectType=Sphere,property={radius,1/(4+mnd)}
 	else
-		PauseUpdate; Silent 1		// building window...
+		PauseUpdate    		// building window...
 		// Building Gizmo 7 window...
 		NewGizmo/K=1/T="Mass Fractal Aggregate View"/W=(35,45,550,505)
 		DoWIndow/C MassFractalAggregateView
@@ -2537,7 +2537,7 @@ end
 //******************************************************************************************************************************************************
 
 Function IR3P_POVPDBPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(5,20,395,680) as "POV/PDB Panel"
 	DoWindow/C POVPDBPanel
 	TitleBox MainTitle title="\Zr200POV/PDB panel",pos={20,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={350,24},anchor=MC,fColor=(0,0,52224)
@@ -2679,7 +2679,7 @@ end
 ////******************************************************************************************************************************************************
 //
 //Window POV3DData() : GizmoPlot
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 //	// Building Gizmo 8 window...
 //	NewGizmo/T="POV Imported 3D data"/W=(919,45,1434,505)
 //	ModifyGizmo startRecMacro=700
@@ -2888,7 +2888,7 @@ End
 
 Function IR3P_POV3DDataGizmo() : GizmoPlot
 	DoWIndow/K/Z POV3DData
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	SVAR CurrentFolderName=root:packages:POVPDBImport:CurrentFolderName
 	Wave Imported3DPOVWave = $(CurrentFolderName+"POVVoxelWave")
 	// Building Gizmo 8 window...

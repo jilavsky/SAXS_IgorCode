@@ -203,7 +203,7 @@ end
 
 Function IRB1_ImportBioSAXSASCIIDataFnct() 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,40,430,760)/N=IRB1_ImportBioSAXSASCIIData as "Import Bio SAXS data"
 	TitleBox MainTitle title="\Zr200Import bioSAXS ASCII Data in Igor",pos={20,5},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={400,24},anchor=MC,fColor=(0,0,52224)
 	TitleBox FakeLine1 title=" ",fixedSize=1,size={330,3},pos={16,40},frame=0,fColor=(0,0,52224), labelBack=(0,0,52224)
@@ -517,7 +517,7 @@ end
 //************************************************************************************************************
 static Function IRB1_DataManPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1195,800) as "BioSAXS data manipulation"
 	DoWIndow/C IRB1_DataManipulationPanel
 	TitleBox MainTitle title="BioSAXS data manipulation",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -1494,7 +1494,7 @@ end
 //************************************************************************************************************
 Function IRB1_PDDFPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,1210,800) as "PDDF-MW-Rg"
 	DoWIndow/C IRB1_PDDFInterfacePanel
 	TitleBox MainTitle title="PDDF using Irena or ATSAS",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -3482,7 +3482,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IRB1_PDDFFitResultsTableFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	if(!DataFolderExists("root:PDDFFitResults:"))

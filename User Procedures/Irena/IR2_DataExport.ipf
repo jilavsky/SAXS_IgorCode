@@ -71,7 +71,7 @@ end
 //************************************************************************************************************
 
 Function IR2E_UnivDataExportPanel()
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Universal data export tool"
 	DoWindow/C UnivDataExportPanel
 	

@@ -74,7 +74,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 Proc IR3W_WAXSPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,550,800) as "Powder Diffraction/WAXS Fits"
 	DoWIndow/C IR3W_WAXSPanel
 	TitleBox MainTitle title="\Zr200Powder diffraction/WAXS fits panel",pos={20,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},anchor=MC,fColor=(0,0,52224)
@@ -1667,7 +1667,7 @@ Function IR3W_MPF2ResultsPanel(ParamWv, ParamLabels, SampleLabels) : Panel
 	string/g root:Packages:Irena:WAXS:TableCrystalStructure
 	SVAR CrystalStructure=root:Packages:Irena:WAXS:TableCrystalStructure
 	CrystalStructure = "Cubic"
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(100,50,1150,350) as "Parameters Table and Analysis"
 	DoWindow/C ParametersTable
 	TitleBox MainTitle title="\Zr200WAXS results Table",pos={0,0},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={1000,30},anchor=MC,fColor=(0,0,52224)
@@ -2418,7 +2418,7 @@ end
 //**********************************************************************************************************
 
 Window IR3W_WAXS_MPFPlots() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(625,232,970,600) as "PowderMPF2 DIff/WAXS plots"
 	DoWIndow/C IR3W_WAXS_MPFPlots
 	SetDrawLayer UserBack
@@ -3458,7 +3458,7 @@ end
 //**************************************************************************************
 //**************************************************************************************
 Proc IR3W_PDF4SaveLoadPanel()
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(236,50,600,555) as "Save and Recall PDF data"
 	DoWindow/C IR3W_PDF4SaveLoadPanel
 	TitleBox TitleStuff title="Save and Load PDF files",pos={40,15},frame=0,fstyle=3, fixedSize=1,size={350,20},fSize=16, fColor=(1,4,52428)
@@ -3904,7 +3904,7 @@ end
 ////********
 //Function IR3W_LaueGoProgressPanelF() : Panel
 //	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 //	NewPanel /K=1/W=(593,358,1039,435) as "Checking for LaueGo Presence"
 //	DoWindow/C IR3W_LaueGoProgressPanel
 //	SetDrawLayer UserBack

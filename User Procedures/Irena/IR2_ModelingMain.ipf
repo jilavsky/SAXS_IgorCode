@@ -1,6 +1,9 @@
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.31
-Constant IR2LversionNumber = 1.24
+#pragma version=1.32
+
+
+
+Constant IR2LversionNumber = 1.25
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -8,7 +11,7 @@ Constant IR2LversionNumber = 1.24
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
+//1.32 add Unified Fit Form Factor to MassFractals. 
 //1.31 added ability to save individual pop data when running from Scripting tool. COnverted to rtGlobals=3, which may cause some issues... 
 //1.30 Combined together with IR2L_NLSQFfunctions
 //1.25 mofied min number of Num points to 6, G matrix breask when less... 
@@ -117,7 +120,7 @@ end
 
 
 Function IR2L_MainPanel()
-	//PauseUpdate; Silent 1		// building window...
+	//PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(3,42,410,730) as "Modeling II main panel"
 	DoWindow/C LSQF2_MainPanel
 	//DefaultGUIControls /W=LSQF2_MainPanel /Mac native
@@ -480,8 +483,11 @@ Function IR2L_MainPanel()
 		SetVariable DiffPeakIntgInt,pos={5,470},size={280,16},title="Peak Integral Intensity:", help={"peak integral inetnsity"} 
 
 		//Mass Fractal
+		CheckBox MassFrUseUFFF,pos={30,300},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Use Unified Fit Form Factor?"
+		CheckBox MassFrUseUFFF,variable= root:Packages:IR2L_NLSQF:MassFrUseUFFF_pop1, help={"Mass Fractal Use Uniofied Fit Form Factor?"}
+
 		SetVariable MassFrPhi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrPhi_pop1,proc=IR2L_PopSetVarProc
-		SetVariable MassFrPhi,pos={8,330},size={140,15},title="Particle Volume = ", help={"Volume of particle (see manual)"} 
+		SetVariable MassFrPhi,pos={8,330},size={140,15},title="Part Vol   = ", help={"Volume of particle (see manual)"} 
 		CheckBox MassFrPhiFit,pos={155,330},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox MassFrPhiFit,variable= root:Packages:IR2L_NLSQF:MassFrPhiFit_pop1, help={"Fit the MassFrPhi?"}
 		SetVariable MassFrPhiMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrPhiMin_pop1,noproc
@@ -490,7 +496,7 @@ Function IR2L_MainPanel()
 		SetVariable MassFrPhiMax,pos={290,330},size={80,15},title="Max ", help={"High limit for MassFrPhi"} 
 	
 		SetVariable MassFrRadius,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrRadius_pop1,proc=IR2L_PopSetVarProc
-		SetVariable MassFrRadius,pos={8,350},size={140,15},title="Radius           = ", help={"Q position for this peak"} 
+		SetVariable MassFrRadius,pos={8,350},size={140,15},title="Radius      = ", help={"Q position for this peak"} 
 		CheckBox MassFrRadiusFit,pos={155,350},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox MassFrRadiusFit,variable= root:Packages:IR2L_NLSQF:MassFrRadiusFit_pop1, help={"Fit the Radius position?"}
 		SetVariable MassFrRadiusMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrRadiusMin_pop1,noproc
@@ -499,7 +505,7 @@ Function IR2L_MainPanel()
 		SetVariable MassFrRadiusMax,pos={290,350},size={80,15},title="Max ", help={"High limit for Radius position"} 
 
 		SetVariable MassFrDv,limits={1,2.999,0.1},variable= root:Packages:IR2L_NLSQF:MassFrDv_pop1,proc=IR2L_PopSetVarProc
-		SetVariable MassFrDv,pos={8,370},size={140,15},title="Dv (Fract. dim.)  = ", help={"Dv for this fractal"} 
+		SetVariable MassFrDv,pos={8,370},size={140,15},title="Dv (Frac D)= ", help={"Dv for this fractal"} 
 		CheckBox MassFrDvFit,pos={155,370},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox MassFrDvFit,variable= root:Packages:IR2L_NLSQF:MassFrDvFit_pop1, help={"Fit the Dv width position?"}
 		SetVariable MassFrDvMin,limits={1,3,0},variable= root:Packages:IR2L_NLSQF:MassFrDvMin_pop1,noproc
@@ -508,7 +514,7 @@ Function IR2L_MainPanel()
 		SetVariable MassFrDvMax,pos={290,370},size={80,15},title="Max ", help={"High limit for Dv width position"} 
 
 		SetVariable MassFrKsi,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrKsi_pop1,proc=IR2L_PopSetVarProc
-		SetVariable MassFrKsi,pos={8,390},size={140,15},title="Correl. length = ", help={"Correlation lenght [A]"} 
+		SetVariable MassFrKsi,pos={8,390},size={140,15},title="Correl. len = ", help={"Correlation lenght [A]"} 
 		CheckBox MassFrKsiFit,pos={155,390},size={25,16},proc=IR2L_ModelTabCheckboxProc,title="Fit?"
 		CheckBox MassFrKsiFit,variable= root:Packages:IR2L_NLSQF:MassFrKsiFit_pop1, help={"Fit the Correlation lenght?"}
 		SetVariable MassFrKsiMin,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:MassFrKsiMin_pop1,noproc
@@ -517,11 +523,14 @@ Function IR2L_MainPanel()
 		SetVariable MassFrKsiMax,pos={290,390},size={80,15},title="Max ", help={"High limit for Correlation lenght"} 
 
 		SetVariable MassFrBeta,limits={0,inf,0},variable= root:Packages:IR2L_NLSQF:MassFrBeta_pop1, proc=IR2L_PopSetVarProc
-		SetVariable MassFrBeta,pos={5,410},size={200,16},title="Particle aspect ratio          =    ", help={"Aspect ratio, 1 for sphere"} 
+		SetVariable MassFrBeta,pos={5,410},size={230,16},title="Particle aspect ratio        =    ", help={"Aspect ratio, 1 for sphere"} 
 		SetVariable MassFrEta,limits={0,1,0},variable= root:Packages:IR2L_NLSQF:MassFrEta_pop1, proc=IR2L_PopSetVarProc
-		SetVariable MassFrEta,pos={5,430},size={200,16},title="Volume filling                   =      ", help={"Volume filling, between 0 and 1"} 
+		SetVariable MassFrEta,pos={5,430},size={230,16},title="Volume filling                 =     ", help={"Volume filling, between 0 and 1"} 
 		SetVariable MassFrIntgNumPnts,limits={0,inf,0},variable= root:Packages:IR2L_NLSQF:MassFrIntgNumPnts_pop1, proc=IR2L_PopSetVarProc
-		SetVariable MassFrIntgNumPnts,pos={5,450},size={200,16},title="Intg. Num. pnts.               =       ", help={"Internal integration pnts, typically 500"} 
+		SetVariable MassFrIntgNumPnts,pos={5,450},size={230,16},title="Intg. Num. pnts.             =     ", help={"Internal integration pnts, typically 500"} 
+		SetVariable MassFrPDI,limits={0,inf,0},variable= root:Packages:IR2L_NLSQF:MassFrPDI_pop1, proc=IR2L_PopSetVarProc
+		SetVariable MassFrPDI,pos={5,470},size={230,16},title="Unified Fit Form F. PDI     =    ", help={"PDI for Unified Fit Form factor"} 
+
 			
 
 
@@ -576,7 +585,7 @@ Function IR2L_MainPanel()
 		PopupMenu StructureFactorModel help={"Select Dilute system or Structure factor to be used for this population of scatterers"}
 
 		SetVariable Contrast,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_pop1,proc=IR2L_PopSetVarProc
-		SetVariable Contrast,pos={8,495},size={150,15},title="Contrast [*10^20] = ", help={"Contrast [*10^20]  of this population"} 
+		SetVariable Contrast,pos={8,495},size={250,15},title="Contrast [*10^20] = ", help={"Contrast [*10^20]  of this population"} 
 		SetVariable Contrast_set1,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set1_pop1,proc=IR2L_PopSetVarProc
 		SetVariable Contrast_set1,pos={8,490},size={150,15},title="Contrast data 1 = ", help={"Contrast [*10^20]  of this population for data set 1"} 
 		SetVariable Contrast_set2,limits={0,Inf,0},variable= root:Packages:IR2L_NLSQF:Contrast_set2_pop1,proc=IR2L_PopSetVarProc
@@ -636,7 +645,7 @@ end
 
 
 Function LSQF2_ModelingII_MoreDetailsF() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(188,240,613,383) as "Modeling II more parameters"
 	DoWindow/C LSQF2_ModelingII_MoreDetails
 	SetDrawLayer UserBack
@@ -2029,7 +2038,7 @@ end
 Function IR2L_CheckFittingParamsFnct() 
 
 	//KillWIndow/Z IR2L_CheckFittingParams
- 	//PauseUpdate; Silent 1		// building window...
+ 	//PauseUpdate    		// building window...
 	NewPanel /K=1/W=(400,140,1000,600) as "Check fitting parameters"
 	Dowindow/C IR2L_CheckFittingParams
 	SetDrawLayer UserBack

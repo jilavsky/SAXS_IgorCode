@@ -311,7 +311,7 @@ Function IR1G_MIPDataGraph()
 	Wave MIPVOlume
 	Wave MIPPressure
 
-//	PauseUpdate; Silent 1		// building window...
+//	PauseUpdate    		// building window...
 	String fldrSav0= GetDataFolder(1)
 	string WavesFrom=GetWavesDataFolder(CsrWaveRef(A), 0 )
 	Display /K=1/W=(35,84,380,291)/N=MIPDataGraph MIPVolume vs MIPPressure as "MIP curve for "+WavesFrom
@@ -1407,7 +1407,7 @@ end
 
 
 Proc  IR1G_OneSampleEvaluationGraph() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	String fldrSav= GetDataFolder(1)
 	SetDataFolder root:Packages:SASDataEvaluation:
 	Display /W=(5.25,42,1000,590)/K=1 /R  as "Evaluate Irena results"

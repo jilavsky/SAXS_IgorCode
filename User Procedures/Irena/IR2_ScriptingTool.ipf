@@ -347,7 +347,7 @@ end
 
 
 Window IR2S_ScriptingToolPnl() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(28,44,412,660) as "Scripting tool"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (0,0,65535)
@@ -1157,6 +1157,7 @@ Function IR2S_FItWithModelingII()
 			//and recalculate as needed... 
 			IR2L_RecalculateIntAndErrors(1)
 			doUpdate
+			sleep/s 0.2		//this seems to be needed for Igor 9 or we are getting failed fits. 
 
 			variable/g root:Packages:IR2L_NLSQF:FitFailed
 			//do fitting
@@ -1349,6 +1350,7 @@ Function IR2S_FItWithSizes(Uncert)
 				IR1R_SizesFitting("DoFittingSkipReset")
 			endif
 			DoUpdate
+			sleep/s 0.2		//this seems to be needed for Igor 9 or we are getting failed fits. 
 			NVAR FitFailed=root:Packages:Sizes:FitFailed
 			
 			if(SaveResultsInNotebook)
@@ -1506,6 +1508,7 @@ Function IR2S_FitWithGuinierPorod()
 			//do fitting
 			IR3GP_PanelButtonProc("DoFittingSkipReset")
 			DoUpdate
+			sleep/s 0.2		//this seems to be needed for Igor 9 or we are getting failed fits. 
 			NVAR FitFailed=root:Packages:Irena:GuinierPorod:FitFailed
 			
 			if(SaveResultsInNotebook)
@@ -1666,6 +1669,7 @@ Function IR2S_FItWithUnifiedFit()
 			//do fitting
 			IR1A_InputPanelButtonProc("DoFittingSkipReset")
 			DoUpdate
+			sleep/s 0.2		//this seems to be needed for Igor 9 or we are getting failed fits. 
 			NVAR FitFailed=root:Packages:Irena_UnifFit:FitFailed
 			NVAR ExportSeparatePopData=root:Packages:Irena:ScriptingTool:ExportSeparatePopData
 			

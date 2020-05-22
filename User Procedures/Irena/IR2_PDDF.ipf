@@ -177,7 +177,7 @@ end
 //*****************************************************************************************************************
 
 Window IR2Pr_ControlPanel() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,390,690) as "Pair Distnce Dist function panel"
 
 	string UserDataTypes=""
@@ -668,7 +668,7 @@ end
 //*****************************************************************************************************************
 
 Proc  IR2Pr_PdfInputGraph() 
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	SetDataFolder root:Packages:Irena_PDDF:
 	Display/K=1 /W=(0,0,IN2G_GetGraphWidthHeight("width"),IN2G_GetGraphWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
 	//Display/K=1 /W=(35*IN2G_ScreenWidthHeight("width"),5*IN2G_ScreenWidthHeight("height"),95*IN2G_ScreenWidthHeight("width"),80*IN2G_ScreenWidthHeight("height")) IntensityOriginal vs Q_vecOriginal
@@ -949,7 +949,7 @@ Function IR1_CreateResultsNbk()
 	
 	string nbLL=nbl
 	
-	Silent 1
+	    
 	if (strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1) 		///Logbook exists
 		DoWindow/F $nbl
 	else
@@ -980,7 +980,7 @@ end
 
 Function IR1_AppendAnyGraph(GraphName)		//this function checks for existance of notebook
 	string GraphName						//and appends text to the end of the notebook
-	Silent 1
+	    
 	string TextToBeInserted="\r"
     SVAR/Z nbl=root:Packages:Irena:ResultsNotebookName
 	if(SVAR_exists(nbl))
@@ -1003,7 +1003,7 @@ end
 Function IR1_AppendAnyText(TextToBeInserted, style)		//this function checks for existance of notebook
 	string TextToBeInserted						//and appends text to the end of the notebook
 	variable style
-	Silent 1
+	    
 	TextToBeInserted=TextToBeInserted+"\r"
     SVAR/Z nbl=root:Packages:Irena:ResultsNotebookName
 	if(SVAR_exists(nbl))

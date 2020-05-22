@@ -77,7 +77,7 @@ Function IR1B_SimpleFitsMainCheckVersion()
 				IR3J_SimpleFits()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IR3J_InitSimpleFits()
-				IR1T_InitFormFactors()
+				IR1T_InitFormFactors()  
 			endif
 		endif
 	endif
@@ -89,7 +89,7 @@ end
 //************************************************************************************************************
 Function IR3J_SimpleFitsPanelFnct()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,530,800) as "Multi Sample Fits"
 	DoWIndow/C IR3J_SimpleFitsPanel
 	TitleBox MainTitle title="Simple & Basic Analysis tool",pos={140,2},frame=0,fstyle=3, fixedSize=1,font= "Times New Roman", size={360,30},fSize=22,fColor=(0,0,52224)
@@ -101,12 +101,14 @@ Function IR3J_SimpleFitsPanelFnct()
 	IR3C_MultiAppendControls("Irena:SimpleFits","IR3J_SimpleFitsPanel", "IR3J_CopyAndAppendData","",1,0)
 	//hide what is not needed
 	checkbox UseResults, disable=0
-	SetVariable DataQEnd,pos={290,90},size={170,15}, proc=IR3J_SetVarProc,title="Q max for fitting    "
+	SetVariable DataQEnd,pos={290,90},size={190,15}, proc=IR3J_SetVarProc,title="Q max for fitting    "
 	Setvariable DataQEnd, variable=root:Packages:Irena:SimpleFits:DataQEnd, limits={-inf,inf,0}
-	SetVariable DataQstart,pos={290,110},size={170,15}, proc=IR3J_SetVarProc,title="Q min for fitting     "
+	SetVariable DataQstart,pos={290,110},size={190,15}, proc=IR3J_SetVarProc,title="Q min for fitting     "
 	Setvariable DataQstart, variable=root:Packages:Irena:SimpleFits:DataQstart, limits={-inf,inf,0}
-	SetVariable DataBackground,pos={280,130},size={170,15}, proc=IR3J_SetVarProc,title="Background    "
-	Setvariable DataBackground, variable=root:Packages:Irena:SimpleFits:DataBackground, limits={-inf,inf,0}
+	SetVariable DataFolderName,noproc,title=" ",pos={250,140},size={270,17},frame=0, fstyle=1,valueColor=(0,0,65535)
+	Setvariable DataFolderName, variable=root:Packages:Irena:SimpleFits:DataFolderName, noedit=1
+
+
 
 	Button SelectAll,pos={200,680},size={80,15}, proc=IR3J_ButtonProc,title="SelectAll", help={"Select All data in Listbox"}
 
@@ -122,8 +124,12 @@ Function IR3J_SimpleFitsPanelFnct()
 	SetVariable Guinier_Rg,pos={240,260},size={220,15}, proc=IR3J_SetVarProc,title="Rg [A] ", bodywidth=80
 	Setvariable Guinier_Rg, variable=root:Packages:Irena:SimpleFits:Guinier_Rg, limits={3,inf,0}, help={"Guinier Rg value"}
 	//Porod
-	SetVariable Porod_Constant,pos={240,230},size={220,15}, proc=IR3J_SetVarProc,title="Porod Constant ", bodywidth=80
+	SetVariable Porod_Constant,pos={290,230},size={220,15}, proc=IR3J_SetVarProc,title="Porod Con. [cm2/cm3/A^4] ", bodywidth=80
 	Setvariable Porod_Constant, variable=root:Packages:Irena:SimpleFits:Porod_Constant, limits={1e-20,inf,0}, help={"Porod constant"}
+	SetVariable ScatteringContrast,pos={290,260},size={220,15}, proc=IR3J_SetVarProc,title="Contrast [10^20 cm^-4]", bodywidth=80
+	Setvariable ScatteringContrast, variable=root:Packages:Irena:SimpleFits:ScatteringContrast, limits={1,inf,0}, help={"Scattering Contrast for the scatterers"}
+	SetVariable Porod_SpecificSurface,pos={290,290},size={220,15}, proc=IR3J_SetVarProc,title="Spec. Sfc area [cm2/cm3]", bodywidth=80, limits={0,inf,0}
+	Setvariable Porod_SpecificSurface, variable=root:Packages:Irena:SimpleFits:Porod_SpecificSurface, disable=0, noedit=1, help={"Porod constant"}
 	//Sphere controls
 	SetVariable Sphere_ScalingConstant,pos={240,230},size={220,15}, proc=IR3J_SetVarProc,title="Scaling ", bodywidth=80
 	Setvariable Sphere_ScalingConstant, variable=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant, limits={1e-20,inf,0}, help={"Scaling prefactor, I0"}
@@ -244,9 +250,9 @@ Function IR3J_InitSimpleFits()
 	ListOfStrings+="SimpleModel;ListOfSimpleModels;"
 
 	ListOfVariables="UseIndra2Data1;UseQRSdata1;"
-	ListOfVariables+="DataBackground;AchievedChiSquare;"
+	ListOfVariables+="DataBackground;AchievedChiSquare;ScatteringContrast;"
 	ListOfVariables+="Guinier_Rg;Guinier_I0;"
-	ListOfVariables+="Porod_Constant;Sphere_Radius;Sphere_ScalingConstant;"
+	ListOfVariables+="Porod_Constant;Porod_SpecificSurface;Sphere_Radius;Sphere_ScalingConstant;"
 	ListOfVariables+="Spheroid_Radius;Spheroid_ScalingConstant;Spheroid_Beta;"
 	ListOfVariables+="ProcessManually;ProcessSequentially;OverwriteExistingData;AutosaveAfterProcessing;DelayBetweenProcessing;"
 	ListOfVariables+="DataQEnd;DataQstart;DataQEndPoint;DataQstartPoint;"
@@ -325,7 +331,10 @@ Function IR3J_InitSimpleFits()
 	if(DelayBetweenProcessing<=0)
 		DelayBetweenProcessing = 2
 	endif
-
+	NVAR ScatteringContrast
+	if(ScatteringContrast<1)
+		ScatteringContrast = 1
+	endif
 	Make/O/T/N=(0) ListOfAvailableData
 	Make/O/N=(0) SelectionOfAvailableData
 	SetDataFolder oldDf
@@ -746,6 +755,7 @@ Function IR3J_ButtonProc(ba) : ButtonControl
 				endif	
 				IR3J_SaveResultsToNotebook()
 				IR3J_SaveResultsToWaves()
+				IR3J_CleanUnusedParamWaves()
 				IR3J_SaveResultsToFolder()
 			endif
 			if(stringmatch(ba.ctrlName,"FitSelectionDataSet"))
@@ -786,7 +796,28 @@ End
 //	Display /W=(521,420,1183,750) /HOST=# /N=LinearizedDataDisplay
 //	SetActiveSubwindow ##
 //**********************************************************************************************************
-//**********************************************************************************************************
+static Function IR3J_CleanUnusedParamWaves()
+
+	Wave/Z TimeWave
+	if(sum(TimeWave)<=0 || numtype(sum(TimeWave))!=0)
+		KillWaves/Z  TimeWave
+	endif
+	Wave/Z TemperatureWave
+	if(sum(TemperatureWave)<=0 || numtype(sum(TemperatureWave))!=0)
+		KillWaves/Z  TemperatureWave
+	endif
+	Wave/Z PercentWave
+	if(sum(PercentWave)<=0|| numtype(sum(PercentWave))!=0)
+		KillWaves/Z  PercentWave
+	endif
+	Wave/Z OrderWave
+	if(sum(OrderWave)<=0|| numtype(sum(OrderWave))!=0)
+		KillWaves/Z  OrderWave
+	endif
+
+end
+//
+////**********************************************************************************************************
 //**********************************************************************************************************
 
 static Function IR3J_FitData()
@@ -875,6 +906,7 @@ static Function IR3J_FitSequenceOfData()
 				sleep/S/C=6/M="Fitted data for "+ListOfAvailableData[i] DelayBetweenProcessing
 			endif
 		endfor
+		IR3J_CleanUnusedParamWaves()
 		print "all selected data processed"
 end
 //**********************************************************************************************************
@@ -886,7 +918,7 @@ Function IR3J_GraphWindowHook(s)
 
 	Variable hookResult = 0
 
-	switch(s.eventCode)
+	switch(s.eventCode) 
 		case 0:				// Activate
 			// Handle activate
 			break
@@ -1532,7 +1564,9 @@ static Function IR3J_CalculateModel()
 	NVAR AchievedChiSquare		=root:Packages:Irena:SimpleFits:AchievedChiSquare
 	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
-	NVAR Porod_Constant			=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Porod_Constant				=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Porod_SpecificSurface	=root:Packages:Irena:SimpleFits:Porod_SpecificSurface
+	NVAR ScatteringContrast		=root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
 	NVAR Sphere_ScalingConstant	=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
 	NVAR Spheroid_Radius			=root:Packages:Irena:SimpleFits:Spheroid_Radius
@@ -1583,6 +1617,7 @@ static Function IR3J_CalculateModel()
 			endif
 			break		
 		case "Porod":						// Porod
+			Porod_SpecificSurface =Porod_Constant *1e32 / (2*pi*ScatteringContrast*1e20)
 			ModelLogLogInt = DataBackground+Porod_Constant * ModelLogLogQ^(-4)
 			if(UsingLinearizedModel)
 				ModelLinLinLogInt = ModelLogLogInt*ModelLogLogQ^4	
@@ -1657,6 +1692,12 @@ end
 static Function IR3J_SaveResultsToNotebook()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+	if(!SaveToNotebook)
+		return 0
+	endif	
 	IR1_CreateResultsNbk()
 	DFref oldDf= GetDataFolderDFR()	
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
@@ -1671,6 +1712,8 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR Porod_Constant			=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Porod_SpecificSurface			=root:Packages:Irena:SimpleFits:Porod_SpecificSurface
+	NVAR ScatteringContrast			=root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
 	NVAR Sphere_ScalingConstant	=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
 	NVAR Spheroid_Radius			=root:Packages:Irena:SimpleFits:Spheroid_Radius
@@ -1678,9 +1721,6 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR Spheroid_Beta				=root:Packages:Irena:SimpleFits:Spheroid_Beta
 	NVAR DataBackground			=root:Packages:Irena:SimpleFits:DataBackground
 	SVAR SimpleModel 				= root:Packages:Irena:SimpleFits:SimpleModel
-	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
-	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
-	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
 	NVAR VOlSD_Rg					=root:Packages:Irena:SimpleFits:VOlSD_Rg
 	NVAR VolSD_Volume				=root:Packages:Irena:SimpleFits:VolSD_Volume
 	NVAR VolSD_MeanDiameter		=root:Packages:Irena:SimpleFits:VolSD_MeanDiameter
@@ -1691,9 +1731,6 @@ static Function IR3J_SaveResultsToNotebook()
 	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
 	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
 
-	if(!SaveToNotebook)
-		return 0
-	endif	
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple polots as needed... 
@@ -1718,7 +1755,9 @@ static Function IR3J_SaveResultsToNotebook()
 		IR1_AppendAnyText("\tThickness           = "+num2str(sqrt(12)*Guinier_Rg),0)
 		IR1_AppendAnyText("\tI0                  = "+num2str(Guinier_I0),0)
 	elseif(stringmatch(SimpleModel,"Porod"))
-		IR1_AppendAnyText("\tPorod Constant      = "+num2str(Porod_Constant),0)
+		IR1_AppendAnyText("\tPorod Constant [1/cm 1/A^4] = "+num2str(Porod_Constant),0)
+		IR1_AppendAnyText("\tSpecific Surface [cm2/cm3] = "+num2str(Porod_SpecificSurface),0)
+		IR1_AppendAnyText("\tContrast [10^20 cm^-4] = "+num2str(Porod_Constant),0)
 		IR1_AppendAnyText("\tBackground          = "+num2str(DataBackground),0)
 	elseif(stringmatch(SimpleModel,"Sphere"))
 		IR1_AppendAnyText("\tSphere Radius [A]   = "+num2str(Sphere_Radius),0)
@@ -1776,6 +1815,8 @@ static Function IR3J_SaveResultsToFolder()
 	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR Porod_Constant			=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Porod_SpecificSurface			=root:Packages:Irena:SimpleFits:Porod_SpecificSurface
+	NVAR ScatteringContrast			=root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
 	NVAR Sphere_ScalingConstant	=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
 	NVAR Spheroid_Radius			=root:Packages:Irena:SimpleFits:Spheroid_Radius
@@ -1843,6 +1884,7 @@ static Function IR3J_SaveResultsToFolder()
 			break	
 		case "Porod":	// execute if case matches expression
 			NoteWithResults+="PorodConstant="+num2str(Porod_Constant)+";"+"DataBackground="+num2str(DataBackground)+";"
+			NoteWithResults+="ScatteringContrast="+num2str(ScatteringContrast)+";"+"Porod_SpecificSurface="+num2str(Porod_SpecificSurface)+";"
 			NoteWithResults+=OldNote
 			generation=IN2G_FindAVailableResultsGen("SimFitPorodI_", DataFolderName)
 			Duplicate/O ModelInt, $(DataFolderName+"SimFitPorodI_"+num2str(generation))
@@ -1875,9 +1917,9 @@ static Function IR3J_SaveResultsToFolder()
 			Note /K/NOCR ResultInt, NoteWithResults
 			Note /K/NOCR ResuldQ, NoteWithResults
 			break
-		case "Volume Size Distribution":	// nothng to do here...
+		case "Volume Size Distribution":	// nothing to do here...
 			break
-		case "Number Size Distribution":	// nothng to do here...
+		case "Number Size Distribution":	// nothing to do here...
 			break
 		default:			// optional default expression executed
 			Abort "Unknown data type, cannot save the data"
@@ -1890,6 +1932,12 @@ static Function IR3J_SaveResultsToWaves()
 	
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
+	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
+	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
+	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
+	if(!SaveToWaves)
+		return 0
+	endif
 	SetDataFolder root:Packages:Irena:SimpleFits								//go into the folder
 	SVAR  DataFolderName=root:Packages:Irena:SimpleFits:DataFolderName
 	SVAR  IntensityWaveName=root:Packages:Irena:SimpleFits:IntensityWaveName
@@ -1904,6 +1952,8 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR Guinier_I0 				= root:Packages:Irena:SimpleFits:Guinier_I0
 	NVAR Guinier_Rg					=root:Packages:Irena:SimpleFits:Guinier_Rg
 	NVAR Porod_Constant			=root:Packages:Irena:SimpleFits:Porod_Constant
+	NVAR Porod_SpecificSurface			=root:Packages:Irena:SimpleFits:Porod_SpecificSurface
+	NVAR ScatteringContrast			=root:Packages:Irena:SimpleFits:ScatteringContrast
 	NVAR Sphere_Radius				=root:Packages:Irena:SimpleFits:Sphere_Radius
 	NVAR Sphere_ScalingConstant	=root:Packages:Irena:SimpleFits:Sphere_ScalingConstant
 	NVAR Spheroid_Radius			=root:Packages:Irena:SimpleFits:Spheroid_Radius
@@ -1920,12 +1970,6 @@ static Function IR3J_SaveResultsToWaves()
 	NVAR NumSD_MeanDiameter		=root:Packages:Irena:SimpleFits:NumSD_MeanDiameter
 	NVAR NumSD_MedianDiameter	=root:Packages:Irena:SimpleFits:NumSD_MedianDiameter
 	NVAR NumSD_ModeDiamater		=root:Packages:Irena:SimpleFits:NumSD_ModeDiamater
-	NVAR SaveToNotebook=root:Packages:Irena:SimpleFits:SaveToNotebook
-	NVAR SaveToWaves=root:Packages:Irena:SimpleFits:SaveToWaves
-	NVAR SaveToFolder=root:Packages:Irena:SimpleFits:SaveToFolder
-	if(!SaveToWaves)
-		return 0
-	endif	
 	Wave/Z ModelInt = root:Packages:Irena:SimpleFits:ModelLogLogInt
 	Wave/Z ModelQ = root:Packages:Irena:SimpleFits:ModelLogLogQ
 	//others can be created via Simple polots as needed... 
@@ -1939,33 +1983,41 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:GuinierFitResults
 		Wave/Z GuinierRg
 		if(!WaveExists(GuinierRg))
-			make/O/N=0 GuinierRg, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare
+			make/O/N=0 GuinierRg, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", GuinierRg
 			SetScale/P x 0,1,"1/A", GuinierQmin, GuinierQmax
 		endif
 		curlength = numpnts(GuinierRg)
-		redimension/N=(curlength+1) SampleName,GuinierRg, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare 
+		redimension/N=(curlength+1) SampleName,GuinierRg, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] = DataFolderName
-		GuinierRg[curlength] = Guinier_Rg
-		GuinierI0[curlength] = Guinier_I0
-		GuinierQmin[curlength] = DataQstart
-		GuinierQmax[curlength] = DataQEnd
-		GuinierChiSquare[curlength] = AchievedChiSquare
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
+		GuinierRg[curlength] 				= Guinier_Rg
+		GuinierI0[curlength] 				= Guinier_I0
+		GuinierQmin[curlength] 			= DataQstart
+		GuinierQmax[curlength] 			= DataQEnd
+		GuinierChiSquare[curlength] 	= AchievedChiSquare
 		IR3J_GetTableWithresults()
 	elseif(stringmatch(SimpleModel,"Guinier Rod"))
 		//tabulate data for Guinier
 		NewDATAFolder/O/S root:GuinierRodFitResults
 		Wave/Z GuinierRc
 		if(!WaveExists(GuinierRc))
-			make/O/N=0 GuinierRc, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare
+			make/O/N=0 GuinierRc, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", GuinierRc
 			SetScale/P x 0,1,"1/A", GuinierQmin, GuinierQmax
 		endif
 		curlength = numpnts(GuinierRc)
-		redimension/N=(curlength+1) SampleName,GuinierRc, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare 
+		redimension/N=(curlength+1) SampleName,GuinierRc, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] = DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		GuinierRc[curlength] = Guinier_Rg
 		GuinierI0[curlength] = Guinier_I0
 		GuinierQmin[curlength] = DataQstart
@@ -1977,14 +2029,18 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:GuinierSheetFitResults
 		Wave/Z GuinierTh
 		if(!WaveExists(GuinierTh))
-			make/O/N=0 GuinierTh, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare
+			make/O/N=0 GuinierTh, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", GuinierTh
 			SetScale/P x 0,1,"1/A", GuinierQmin, GuinierQmax
 		endif
 		curlength = numpnts(GuinierTh)
-		redimension/N=(curlength+1) SampleName,GuinierTh, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare 
+		redimension/N=(curlength+1) SampleName,GuinierTh, GuinierI0, GuinierQmin, GuinierQmax, GuinierChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] = DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		GuinierTh[curlength] = sqrt(12)*Guinier_Rg
 		GuinierI0[curlength] = Guinier_I0
 		GuinierQmin[curlength] = DataQstart
@@ -1996,33 +2052,43 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:PorodFitResults
 		Wave/Z PorodConstant
 		if(!WaveExists(PorodConstant))
-			make/O/N=0 PorodConstant, PorodBackground, PorodQmin, PorodQmax, PorodChiSquare
+			make/O/N=0 PorodConstant, PorodBackground, PorodQmin, PorodQmax, PorodChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave, ScatteringContrastWave, PorodSpecificSurfaceWave 
 			make/O/N=0/T SampleName
-			SetScale/P x 0,1,"cm3/A", PorodConstant			//this may be worng, I suspect
+			SetScale/P x 0,1,"1/cm 1/A^4", PorodConstant			//Unified fit GUI source
 			SetScale/P x 0,1,"1/A", PorodQmin, PorodQmax
 		endif
 		curlength = numpnts(PorodConstant)
-		redimension/N=(curlength+1) SampleName,PorodConstant, PorodBackground, PorodQmin, PorodQmax, PorodChiSquare 
+		redimension/N=(curlength+1) SampleName, PorodConstant, PorodBackground, PorodQmin, PorodQmax, PorodChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave, ScatteringContrastWave, PorodSpecificSurfaceWave 
 		SampleName[curlength] = DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		PorodConstant[curlength] = Porod_Constant
 		PorodBackground[curlength]=DataBackground
 		PorodQmin[curlength] = DataQstart
 		PorodQmax[curlength] = DataQEnd
 		PorodChiSquare[curlength] = AchievedChiSquare
+		ScatteringContrastWave[curlength] = ScatteringContrast
+		PorodSpecificSurfaceWave[curlength] = Porod_SpecificSurface
 		IR3J_GetTableWithresults()
 	elseif(stringmatch(SimpleModel,"Sphere"))
 		//tabulate data for Porod
 		NewDATAFolder/O/S root:SphereFitResults
 		Wave/Z SphereRadius
 		if(!WaveExists(SphereRadius))
-			make/O/N=0 SphereRadius, SphereScalingFactor, SphereBackground, SphereQmin, SphereQmax, SphereChiSquare
+			make/O/N=0 SphereRadius, SphereScalingFactor, SphereBackground, SphereQmin, SphereQmax, SphereChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", SphereRadius
 			SetScale/P x 0,1,"1/A", SphereQmin, SphereQmax
 		endif
 		curlength = numpnts(SphereRadius)
-		redimension/N=(curlength+1) SampleName,SphereRadius, SphereScalingFactor, SphereBackground, SphereQmin, SphereQmax, SphereChiSquare 
+		redimension/N=(curlength+1) SampleName,SphereRadius, SphereScalingFactor, SphereBackground, SphereQmin, SphereQmax, SphereChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] = DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		SphereRadius[curlength] = Sphere_Radius
 		SphereScalingFactor[curlength] = Sphere_ScalingConstant
 		SphereBackground[curlength]=DataBackground
@@ -2035,14 +2101,18 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:SpheroidFitResults
 		Wave/Z SpheroidRadius
 		if(!WaveExists(SpheroidRadius))
-			make/O/N=0 SpheroidRadius, SpheroidScalingFactor, SpheroidAspectRatio, SpheroidBackground, SpheroidQmin, SpheroidQmax, SpheroidChiSquare
+			make/O/N=0 SpheroidRadius, SpheroidScalingFactor, SpheroidAspectRatio, SpheroidBackground, SpheroidQmin, SpheroidQmax, SpheroidChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", SpheroidRadius
 			SetScale/P x 0,1,"1/A", SpheroidQmin, SpheroidQmax
 		endif
 		curlength = numpnts(SpheroidRadius)
-		redimension/N=(curlength+1) SampleName,SpheroidRadius, SpheroidScalingFactor, SpheroidAspectRatio, SpheroidBackground, SpheroidQmin, SpheroidQmax, SpheroidChiSquare 
+		redimension/N=(curlength+1) SampleName,SpheroidRadius, SpheroidScalingFactor, SpheroidAspectRatio, SpheroidBackground, SpheroidQmin, SpheroidQmax, SpheroidChiSquare, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] 			= DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		SpheroidRadius[curlength] 			= Spheroid_Radius
 		SpheroidScalingFactor[curlength] = Spheroid_ScalingConstant
 		SpheroidAspectRatio[curlength] 	= Spheroid_Beta
@@ -2056,14 +2126,18 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:VolSizeDistResults
 		Wave/Z Rg
 		if(!WaveExists(Rg))
-			make/O/N=0 Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist
+			make/O/N=0 Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", Rg, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist
 			SetScale/P x 0,1,"Fraction", VolumeFraction		
 		endif
 		curlength = numpnts(Rg)
-		redimension/N=(curlength+1) SampleName,Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist 
+		redimension/N=(curlength+1) SampleName,Rg, VolumeFraction, MeanDiaVolDist, ModeDiaVolDist, MeadianDiaVolDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] 			= DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		Rg[curlength] 						= VOlSD_Rg
 		VolumeFraction[curlength]		= VolSD_Volume
 		MeanDiaVolDist[curlength] 		= VolSD_MeanDiameter
@@ -2076,14 +2150,18 @@ static Function IR3J_SaveResultsToWaves()
 		NewDATAFolder/O/S root:NumbSizeDistResults
 		Wave/Z NumPartsPercm3
 		if(!WaveExists(NumPartsPercm3))	
-			make/O/N=0 NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist
+			make/O/N=0 NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave
 			make/O/N=0/T SampleName
 			SetScale/P x 0,1,"A", MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist
 			SetScale/P x 0,1,"1/cm3", NumPartsPercm3		
 		endif
 		curlength = numpnts(NumPartsPercm3)
-		redimension/N=(curlength+1) SampleName, NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist 
+		redimension/N=(curlength+1) SampleName, NumPartsPercm3, MeanDiaNumDist, ModeDiaNumDist, MeadianDiaNumDist, TimeWave, TemperatureWave, PercentWave, OrderWave 
 		SampleName[curlength] 			= DataFolderName
+		TimeWave[curlength]				=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzmin")
+		TemperatureWave[curlength]  	=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzC")
+		PercentWave[curlength] 			=	IN2G_IdentifyNameComponent(DataFolderName, "_xyzpct")
+		OrderWave[curlength]				= 	IN2G_IdentifyNameComponent(DataFolderName, "_xyz")
 		NumPartsPercm3[curlength] 		= NumSD_NumPartPerCm3
 		MeanDiaNumDist[curlength] 		= NumSD_MeanDiameter
 		ModeDiaNumDist[curlength]		= NumSD_ModeDiamater
@@ -2262,7 +2340,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 static Function IR3J_GuinierFitResultsTableFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	if(!DataFolderExists("root:GuinierFitResults:"))
@@ -2284,7 +2362,7 @@ static Function IR3J_GuinierFitResultsTableFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinRodFitResTblFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	if(!DataFolderExists("root:GuinierRodFitResults:"))
@@ -2306,7 +2384,7 @@ static Function IR3J_GuinRodFitResTblFnct() : Table
 EndMacro
 //*****************************************************************************************************************
 static Function IR3J_GuinSheetFitResTblFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	DFref oldDf= GetDataFolderDFR()	
 	if(!DataFolderExists("root:GuinierSheetFitResults:"))
@@ -2329,7 +2407,7 @@ EndMacro
 
 //*****************************************************************************************************************
 Function IR3J_PorodFitResultsTableFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:PorodFitResults:"))
@@ -2337,9 +2415,9 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 	endif
 	SetDataFolder root:PorodFitResults:
 	Wave/T SampleName
-	Wave PorodConstant,PorodBackground,PorodChiSquare, PorodQmax,PorodQmin
-	Edit/K=1/W=(576,346,1528,878)/N=IR3J_PorodFitResultsTable SampleName,PorodConstant,PorodBackground,PorodChiSquare as "Porod fitting results Table"
-	AppendToTable PorodQmax,PorodQmin
+	Wave PorodConstant,PorodBackground,PorodChiSquare, PorodQmax,PorodQmin, ScatteringContrastWave, PorodSpecificSurfaceWave
+	Edit/K=1/W=(576,346,1528,878)/N=IR3J_PorodFitResultsTable SampleName,PorodConstant,PorodSpecificSurfaceWave, PorodBackground,PorodChiSquare as "Porod fitting results Table"
+	AppendToTable PorodQmax,PorodQmin, ScatteringContrastWave
 	ModifyTable format(Point)=1,width(SampleName)=314,title(SampleName)="Sample Folder"
 	ModifyTable alignment(PorodConstant)=1,sigDigits(PorodConstant)=4,width(PorodConstant)=122
 	ModifyTable title(PorodConstant)="Porod Constant",alignment(PorodBackground)=1,sigDigits(PorodBackground)=4
@@ -2347,11 +2425,13 @@ Function IR3J_PorodFitResultsTableFnct() : Table
 	ModifyTable sigDigits(PorodChiSquare)=4,width(PorodChiSquare)=106,title(PorodChiSquare)="Chi^2"
 	ModifyTable alignment(PorodQmax)=1,sigDigits(PorodQmax)=4,title(PorodQmax)="Qmax [1/A]"
 	ModifyTable alignment(PorodQmin)=1,sigDigits(PorodQmin)=4,width(PorodQmin)=94,title(PorodQmin)="Qmin [1/A]"
+	ModifyTable alignment(PorodSpecificSurfaceWave)=1,sigDigits(PorodSpecificSurfaceWave)=7,width(PorodSpecificSurfaceWave)=94,title(PorodQmin)="Spec Surface [cm2/cm3]"
+	ModifyTable alignment(ScatteringContrastWave)=1,sigDigits(ScatteringContrastWave)=4,width(ScatteringContrastWave)=94,title(ScatteringContrastWave)="Contrast [10^20 cm^-4]"
 	SetDataFolder fldrSav0
 EndMacro
 //*****************************************************************************************************************
 Function IR3J_SphFFFitResTblFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:SphereFitResults:"))
@@ -2375,7 +2455,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_SpheroidFFFitResTblFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:SpheroidFitResults:"))
@@ -2400,7 +2480,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_VolumeSDResTblFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:VolSizeDistResults:"))
@@ -2423,7 +2503,7 @@ EndMacro
 //*****************************************************************************************************************
 
 Function IR3J_NumberSDResTblFnct() : Table
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String fldrSav0= GetDataFolder(1)
 	if(!DataFolderExists("root:NumbSizeDistResults:"))
@@ -2493,6 +2573,8 @@ static Function IR3J_SetupControlsOnMainpanel()
 		SetVariable Spheroid_Radius, disable=1
 		Setvariable Spheroid_Beta,  disable=1
 		SetVariable DataBackground,  disable=1
+		SetVariable Porod_SpecificSurface, disable=1
+		SetVariable ScatteringContrast, disable=1
 
 		strswitch(SimpleModel)	// string switch
 			case "Guinier":	// execute if case matches expression
@@ -2501,6 +2583,8 @@ static Function IR3J_SetupControlsOnMainpanel()
 				break		// exit from switch
 			case "Porod":	// execute if case matches expression
 				SetVariable Porod_Constant, disable=0
+				SetVariable Porod_SpecificSurface, disable=0
+				SetVariable ScatteringContrast, disable=0
 				SetVariable DataBackground,  disable=0
 				break
 			case "Sphere":	// execute if case matches expression

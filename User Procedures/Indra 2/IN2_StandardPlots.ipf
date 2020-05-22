@@ -688,7 +688,7 @@ End
 Window IN2S_StandardPlotPanel() : Panel
 	KillWIndow/Z IN2S_StandardPlotPanel
 	//creates panel, closes the old one, if it exists
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel /K=1/W=(543.75,49.25,963,688.25) as "Standard Plot panel"
 //	ShowTools
 	SetDrawLayer UserBack
@@ -1467,7 +1467,7 @@ End
 
 
 Window IN2S_SizeDistPanelProc() : Panel
-	PauseUpdate; Silent 1		// building window...
+	PauseUpdate    		// building window...
 	NewPanel/K=1 /W=(764.25,47,1064.25,395.75) as "IN2S_SizeDistPanelProc"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 16,fstyle= 5,textrgb= (0,0,65280)
