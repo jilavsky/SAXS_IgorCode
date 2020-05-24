@@ -13,7 +13,8 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 Modification history:
 ********************************************
 1.822 beta
-Added for every graph right click option to export as jpg and pxp. Also to duplicate, but that fails on some error bars fro now.  
+DataBrowser - Igor 8 - dded Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
+Added for every graph right click option to export as jpg and pxp. Also to duplicate graph (which Igor does on ctrl/cmd-D) but with duplicate of all data in the graph. 1D graphs only.   
 Main panel - change sorting option "_001". This will now look from the end of name for first number. This si to help with NSLS samples names MyName_00001_waxs.ext etc. Will work for normal files Myname_0001.ext also. 
 Attempt to fix NXcanSAS data importer. WIP, no data to test against. 
 Fixed problem with Sector graph sometimes looking weird - apparently ImageLineProfile sometimes makes different point numbers and this needs to be accounted for. 
