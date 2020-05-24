@@ -1,5 +1,5 @@
 IN2G_FindNu#pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.23
+#pragma version = 2.24
 #pragma IgorVersion = 7.05
 
 //control constants
@@ -34,6 +34,7 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.24 new version of IN2G_DuplicateGraphAndData which can copy data with same names. Igor 9 fixes and improvements. 
 //2.23 add IN2G_AddButtonsToBrowser(), which calls IN2G_ExtractInfoFromFldrname(). Use: adds button (via hooks functions) tgo DataBrowser and that will extract info from SampleName strings we are using. 
 //2.22 minor fix to IN2G_ColorTopGrphRainbow
 		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
@@ -507,18 +508,81 @@ Menu "GraphPopup"
        "Clone this window with data", IN2G_CloneWindow()
 End
 
-//Does not seem we can modify DataBrowser right clcik menu... 
-//Menu "DataBrowser"
-//		"Samplenames-to-Values", IN2G_ExtractInfoFromFldrname()
-//end
-
-//here is add to Browser button, it will be in after compile hooks. 
+//DataBrowser  right click menu... 
+//here is add to DataBrowser buttons, it will be in after compile hooks. 
+//this is for Igor 8 and 7, in Igro 9 this is in Data browser right click menu...
 Function IN2G_AddButtonsToBrowser()
-
+#if(IgorVersion()<9)
 	ModifyBrowser appendUserButton={'SampleName-to-Values',"IN2G_ExtractInfoFromFldrname()"}
 	ModifyBrowser appendUserButton={'Graph w1 vs w2',"IN2G_PlotBrowserSelectionXY()"}
-
+#endif
 end
+//this is right click Igor 9+ Data Browser functions, so they do not need to be buttons. 
+#if(IgorVersion()>8.99)
+
+
+Menu "DataBrowserObjectsPopup", dynamic
+
+	"--"
+	IN2G_DisplayYvsXMenuString(),/Q,IN2G_PlotBrowserSelectionXY()
+	IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
+	"--"
+
+End
+//************************************************************************************************
+Function/S IN2G_ShowTextWaveInfoMenuString()
+	WAVE/Z w1
+	String menuText = ""
+	Variable textWaveSelected = GetSelectedTextWave(w1)
+	if (textWaveSelected)
+		sprintf menuText, "%s to Values", NameOfWave(w1)
+	endif
+	return menuText
+End
+//************************************************************************************************
+// Returns the truth that the first selected object is a text wave.
+static Function GetSelectedTextWave(WAVE/Z &w1)
+	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
+		return 0
+	endif
+	
+	WAVE/Z w1 = $(GetBrowserSelection(0))	// may be null
+	if (WaveExists(w1) && (WaveType(w1, 1) == 2))
+		return 1
+	endif
+	return 0
+End
+//************************************************************************************************
+Function/S IN2G_DisplayYvsXMenuString()
+	WAVE/Z w1, w2
+	Variable twoNumericWavesSelected = GetWave1AndWave2(w1, w2)
+	String menuText = ""
+	if (twoNumericWavesSelected)
+		sprintf menuText, "Display %s vs %s", NameOfWave(w1), NameOfWave(w2)
+	endif
+	return menuText
+End
+//************************************************************************************************
+// Returns the truth that the first two selected objects are two numeric waves.
+static Function GetWave1AndWave2(WAVE/Z &w1, WAVE/Z &w2)
+	Variable twoNumericWavesSelected = 0
+	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
+		return 0
+	endif
+	
+	// Reverse w1 and w2 if a modifier key is pressed.
+	Variable keyState = GetKeyState(0)
+	WAVE/Z w1 = $(GetBrowserSelection((keyState == 0) ? 0 : 1))	// may be null
+	WAVE/Z w2 = $(GetBrowserSelection((keyState == 0) ? 1 : 0))	// may be null
+	if (WaveExists(w1) && WaveExists(w2) && (WaveType(w1, 1) == 1) && (WaveType(w2, 1) == 1))
+		twoNumericWavesSelected = 1
+	endif
+	
+	return twoNumericWavesSelected
+End
+
+#endif
+
 //************************************************************************************************
 //************************************************************************************************
 
@@ -534,31 +598,17 @@ end
 //************************************************************************************************
 Function IN2G_PlotBrowserSelectionXY()
 
-	string SelectedWaveNm1=GetBrowserSelection (0, 1)
-	if(strlen(SelectedWaveNm1)<=3)		//path must contain at least "root:"
-			return 0
+	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
+		return 0
 	endif
-	string SelectedWaveNm2=GetBrowserSelection (1, 1)
-	if(strlen(SelectedWaveNm2)<=3)		//path must contain at least "root:"
-			return 0
-	endif
-	//check for wave type, need numerical waves ...
-	if(WaveType($(SelectedWaveNm1),1)!=1 || WaveType($(SelectedWaveNm2),1)!=1)		//not numerical waves, bail out...
-			return 0
-	endif
-	Wave/Z Wave1 = $(SelectedWaveNm1)
-	Wave/Z Wave2 = $(SelectedWaveNm2)
-	if(WaveExists(Wave1) && WaveExists(Wave2))
-		Variable keys = GetKeyState(0)
-		if (keys == 0)
-			Display/K=1 Wave1 vs Wave2 as NameofWave(Wave1)+" vs "+NameofWave(Wave2)
-			Label left (NameofWave(Wave1))
-			Label bottom (NameofWave(Wave2))
-		else 
-			Display/K=1 Wave2 vs Wave1 as NameofWave(Wave2)+" vs "+NameofWave(Wave1)
-			Label left (NameofWave(Wave2))
-			Label bottom (NameofWave(Wave1))
-		endif
+	// Reverse w1 and w2 if a modifier key is pressed.
+	Variable keyState = GetKeyState(0)
+	WAVE/Z Wave1 = $(GetBrowserSelection((keyState == 0) ? 0 : 1))	// may be null
+	WAVE/Z Wave2 = $(GetBrowserSelection((keyState == 0) ? 1 : 0))	// may be null
+	if (WaveExists(Wave1) && WaveExists(Wave2) && (WaveType(Wave1, 1) == 1) && (WaveType(Wave2, 1) == 1))
+		Display/K=1 Wave1 vs Wave2 as NameofWave(Wave1)+" vs "+NameofWave(Wave2)
+		Label left (NameofWave(Wave1))
+		Label bottom (NameofWave(Wave2))
 	else
 		return 0
 	endif
@@ -597,22 +647,26 @@ Function IN2G_ExtractInfoFromFldrname()
 	endfor
 	//clean up and leave only thoser who contain some numbers in tehm. 
 	string ReportExisting=""
-	if(sum(TimeWave)<=0 || numtype(sum(TimeWave))!=0)
+	wavestats/Q TimeWave
+	if(V_npnts<=0 || V_avg<=0)
 		KillWaves  TimeWave
 	else
 		ReportExisting+= " TimeWave;"
 	endif
-	if(sum(TemperatureWave)<=0 || numtype(sum(TemperatureWave))!=0)
+	wavestats/Q TemperatureWave
+	if(V_npnts<=0 || V_avg<=0)
 		KillWaves  TemperatureWave
 	else
 		ReportExisting+= " TemperatureWave;"
 	endif
-	if(sum(PercentWave)<=0|| numtype(sum(PercentWave))!=0)
+	wavestats/Q PercentWave
+	if(V_npnts<=0 || V_avg<=0)
 		KillWaves  PercentWave
 	else
 		ReportExisting+= " PercentWave;"
 	endif
-	if(sum(OrderWave)<=0|| numtype(sum(OrderWave))!=0)
+	wavestats/Q OrderWave
+	if(V_npnts<=0 || V_avg<=0)
 		KillWaves  OrderWave
 	else
 		ReportExisting+= " OrderWave;"
@@ -1556,7 +1610,7 @@ Function IN2G_ConfigMain()		//call configuration routine
 	if(!V_Flag)
 		Execute ("IN2G_MainConfigPanelProc()")
 	else
-		DoWindow/F IN2G_MainConfigPanelProc
+		DoWindow/F IN2G_MainConfigPanel
 	endif
 	IN2G_ReadIrenaGUIPackagePrefs(1)
 end
@@ -2621,88 +2675,173 @@ Function IN2G_CloneWindow()
 	string NewWindowName
 	string topWindow=WinName(0,1)
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	IN2G_CloneWindow2()
-		
+	//IN2G_CloneWindow2()
+	IN2G_DuplicateGraphAndData()	
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //this is from IgorExchange: http://www.igorexchange.com/node/1469
-static Function IN2G_CloneWindow2([win,name,times])
-	String win
-	String name // The new name for the window and data folder. 
-	Variable times // The number of clones to make.  Clones beyond the first will have _2, _3, etc. appended to their names.   
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-	String curr_folder=GetDataFolder(1)
-	setDataFolder root:
-	if(ParamIsDefault(win))
-		win=WinName(0,1)
-	endif
-	if(ParamIsDefault(name))
-		name=UniqueName(win,6,0)
-		name=UniqueName(name,7,0)
-		name=UniqueName(name,11,0)
-	else
-		name=CleanupName(name,0)
-		name=UniqueName(name,6,0)
-		name=UniqueName(name,7,0)
-		name=UniqueName(name,11,0)
-	endif
-	times=ParamIsDefault(times) ? 1 : times
-	NewDataFolder /O/S root:$name
-	String win_rec=WinRecreation(win,0)
-	String traces=TraceNameList(win,";",3)
-	string tempName, trace, AddOn
-	Variable i,j
-	for(i=0;i<ItemsInList(traces);i+=1)
-		trace=StringFromList(i,traces)
-		tempName = trace
-		if(StringMatch(trace, "#"))			//we have wave with multiplier
-			tempName = ReplaceString("'", trace, "")		//removes ' from liberal names
-			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
-			tempName = PossiblyQuoteName(tempName )
-		endif
-		Wave TraceWave=TraceNameToWaveRef(win,trace)
-		Duplicate /o TraceWave $(tempName)
-		win_rec = ReplaceString(trace, win_rec, tempName)
-		//main wave dealt with
-		Wave /Z TraceXWave=XWaveRefFromTrace(win,trace)
-		tempName = NameOfWave(TraceXWave)
-		if(waveexists(TraceXWave))
-			tempName = ReplaceString("'", trace, "")		//remvoes ' from liberal names
-			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
-			tempName = PossiblyQuoteName(tempName )		
-			Duplicate /o TraceXWave $NameOfWave(TraceXWave)
-		endif
-	endfor
- 
-	// Copy error bars if they exist.  Won't work with subrange display syntax.  
-	for(i=0;i<ItemsInList(win_rec,"\r");i+=1)
-		String line=StringFromList(i,win_rec,"\r")
-		if(StringMatch(line,"*ErrorBars*"))
-			String errorbar_names
-			SplitString/E=",.*" line
-			sscanf S_value,"%*[^=]=(%[^)])",errorbar_names
-			for(j=0;j<2;j+=1)
-				String errorbar_path=StringFromList(j,errorbar_names,",")
-				sscanf errorbar_path,"%[^[])",errorbar_path
-				String errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")
-				Duplicate /o $("root"+errorbar_path) $errorbar_name
-			endfor
-		endif
-	endfor
- 
-	for(i=1;i<=times;i+=1)
-		Execute /Q win_rec
-		if(i==1)
-			DoWindow /C $name
-		else
-			DoWindow /C $(name+"_"+num2str(i))
-		endif
-		ReplaceWave allInCDF
-	endfor
-	SetDataFolder $curr_folder
-End
+//does not work for cases when graph has same name waves and cannot fix it...  
+//static Function IN2G_CloneWindow2([win,name,times])
+//	String win
+//	String name // The new name for the window and data folder. 
+//	Variable times // The number of clones to make.  Clones beyond the first will have _2, _3, etc. appended to their names.   
+//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//	String curr_folder=GetDataFolder(1)
+//	setDataFolder root:
+//	if(ParamIsDefault(win))
+//		win=WinName(0,1)
+//	endif
+//	if(ParamIsDefault(name))
+//		name=UniqueName(win,6,0)
+//		name=UniqueName(name,7,0)
+//		name=UniqueName(name,11,0)
+//	else
+//		name=CleanupName(name,0)
+//		name=UniqueName(name,6,0)
+//		name=UniqueName(name,7,0)
+//		name=UniqueName(name,11,0)
+//	endif
+//	times=ParamIsDefault(times) ? 1 : times
+//	NewDataFolder /O/S root:$name
+//	String win_rec=WinRecreation(win,0)
+//	String traces=TraceNameList(win,";",3)
+//	string tempName, trace, AddOn
+//	Variable i,j
+//	for(i=0;i<ItemsInList(traces);i+=1)
+//		trace=StringFromList(i,traces)
+//		tempName = trace
+//		if(StringMatch(trace, "*#*"))			//we have wave with multiplier
+//			tempName = ReplaceString("'", trace, "")		//removes ' from liberal names
+//			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
+//			tempName = PossiblyQuoteName(tempName )
+//		endif
+//		Wave TraceWave=TraceNameToWaveRef(win,trace)
+//		Duplicate /o TraceWave $(tempName)
+//		win_rec = ReplaceString(trace, win_rec, tempName)
+//		//main wave dealt with
+//		Wave /Z TraceXWave=XWaveRefFromTrace(win,trace)
+//		tempName = NameOfWave(TraceXWave)
+//		if(waveexists(TraceXWave))
+//			tempName = ReplaceString("'", trace, "")		//remvoes ' from liberal names
+//			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
+//			tempName = PossiblyQuoteName(tempName )		
+//			Duplicate /o TraceXWave $NameOfWave(TraceXWave)
+//		endif
+//	endfor
+// 
+//	// Copy error bars if they exist.  Won't work with subrange display syntax.  
+//	for(i=0;i<ItemsInList(win_rec,"\r");i+=1)
+//		String line=StringFromList(i,win_rec,"\r")
+//		if(StringMatch(line,"*ErrorBars*"))
+//			String errorbar_names
+//			SplitString/E=",.*" line
+//			sscanf S_value,"%*[^=]=(%[^)])",errorbar_names
+//			for(j=0;j<2;j+=1)
+//				String errorbar_path=StringFromList(j,errorbar_names,",")
+//				sscanf errorbar_path,"%[^[])",errorbar_path
+//				String errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")
+//				Duplicate /o $("root"+errorbar_path) $errorbar_name
+//			endfor
+//		endif
+//	endfor
+//	print win_rec
+// 	string NewName=""
+//	for(i=1;i<=times;i+=1)
+//		Execute /Q win_rec
+//		if(i==1)
+//			DoWindow /C $name
+//			NewName = name
+//		else
+//			DoWindow /C $(name+"_"+num2str(i))
+//			NewName = name+"_"+num2str(i)
+//		endif
+//		ReplaceWave allInCDF
+//		DoWindow/T $(NewName), "Duplicate of "+win+" data in root:"+NewName
+//	endfor
+//	
+//	SetDataFolder $curr_folder
+//End
 
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+static Function IN2G_DuplicateGraphAndData()
+	//this will duplicate top X-Y graph and copy all data (including optional error bars) to new folder. 
+	//Only X-Y graphs supported. 
+	String curr_folder=GetDataFolder(1)
+	string GraphwinNmOld=WinName(0,1)
+	string GraphwinNmNew
+	if(strlen(GraphwinNmOld)<1)
+		print "No top graph"
+		abort
+	endif
+	Variable i,j
+	String trace, tempYName, tempXName, nameStr
+	String traces
+	//create a copy of the current top graph 
+	DoWIndow/F $(GraphwinNmOld)
+	DoIgorMenu "Edit", "Duplicate"		
+	if(V_Flag)																		//success, new graph created 
+		GraphwinNmNew=WinName(0,1)												//name which Duplicate Graph command created 
+		nameStr=GraphwinNmNew
+		setDataFolder root:														//need to be in root to be able to check for name
+		if(CheckName(nameStr, 1)!=0)
+			nameStr = uniquename(nameStr,11,0)									//if needed, modified folder name to be unique in root folder
+		endif
+		//nameStr is now unique folder name based on GraphwinNmNew 
+		NewDataFolder /S root:$nameStr											//new folder for data. 
+		traces=TraceNameList(GraphwinNmNew,";",3)							//all traces in the new graph
+		for(i=ItemsInList(traces)-1;i>=0;i-=1)								//iterate from back or #N will keep being reordered
+			trace=StringFromList(i,traces)										//a trace
+			Wave TraceWave=TraceNameToWaveRef(GraphwinNmNew,trace)		//waveY
+			Wave /Z TraceXWave=XWaveRefFromTrace(GraphwinNmNew,trace)	//waveX if exists
+			tempYName = NameOfWave(TraceWave)									//waveY name
+			if(CheckName(tempYName, 1)!=0)
+				tempYName = uniquename(tempYName,1,0)							//if needed modified waveY name to be unique in current folder
+			endif
+			Duplicate/O TraceWave $tempYName									//copy of waveY in current folder.  
+			if(waveexists(TraceXWave))											//same treatment for X wave, if exists
+				tempXName = NameOfWave(TraceXWave)
+				if(CheckName(tempXName, 1)!=0)
+					tempXName = uniquename(tempXName,1,0)						//if needed modified waveX name to be unique in current folder
+				endif
+				Duplicate /O TraceXWave $tempXName								//copy of waveX in current folder.  
+				ReplaceWave /X/W=$(GraphwinNmNew) trace=$(trace) , $tempXName		//this swaps the old X wave with the new copy
+			endif
+			ReplaceWave /W=$(GraphwinNmNew) trace=$(trace) , $tempYName				//this swaps the old Y wave with the new copy
+		endfor
+		//these are X-Y data, now we need to copy error bars also...
+		String win_rec=WinRecreation(GraphwinNmNew,0)									//recreation macro for current updated graph.
+		String errorbar_names, errorbar_name
+		String errorbar_path
+		String line
+		// Copy error bars if they exist. Assume only symmetric (+/- error wave) error bars   
+		for(i=0;i<ItemsInList(win_rec,"\r");i+=1)		  
+			line=StringFromList(i,win_rec,"\r")
+			if(StringMatch(line,"*ErrorBars*"))								//line with "ErrorBars command"
+				SplitString/E=",.*" line											//ugly way of pulling out errorbar_path
+				sscanf S_value,"%*[^=]=(%[^)])",errorbar_names				//ugly way of pulling out errorbar_path
+				for(j=0;j<1;j+=1)
+					errorbar_path=StringFromList(j,errorbar_names,",")	//errorbar_path now is path to wave for error bars, again, assuming same up/down. 	
+					sscanf errorbar_path,"%[^[])",errorbar_path				//ugly way of pulling out errorbar_path
+					errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")		//get error wave name
+					if(CheckName(errorbar_name, 1)!=0)
+		 				errorbar_name = uniquename(errorbar_name,1,0)			//make the new error wave name unique, if necessary... 
+					endif
+					Duplicate /O $("root"+errorbar_path) $errorbar_name		//duplicate to new wave
+				endfor
+				line = ReplaceString(errorbar_path, line, errorbar_name)		//create a new ErrorBar command line for error bars
+				Execute(line)															//and run it on the graph. 
+			endif
+		endfor
+		//done with error bars now... 
+		DoWindow/T $(GraphwinNmNew), "Duplicate of "+GraphwinNmOld+", data in root:"+nameStr		//append user friendly name. 
+	else
+		print "Could not clone window, something went wrong or no graph window exists"
+	endif
+	SetDataFolder $curr_folder
+end 
+ 
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

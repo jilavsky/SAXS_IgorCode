@@ -204,12 +204,11 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
  	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
 	
 	NI1A_CheckWIndowsProcVersions(WindowProcNames)
+	IN2G_CheckForGraphicsSetting(0)
 	IN2G_ResetSizesForALlPanels(WindowProcNames)
+	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
 
 	NI1_CheckNikaUpdate(0)
-	IN2G_CheckForGraphicsSetting(0)
-	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
-	
 	//and print in history which version of codeis being used for future reference.
 	string file= StringFromList((ItemsInList(FunctionPath("LoadNika2DSASMacros"), ":")-1), FunctionPath("LoadNika2DSASMacros"), ":")
 	String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
