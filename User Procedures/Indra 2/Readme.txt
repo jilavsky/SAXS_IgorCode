@@ -13,6 +13,7 @@ It runs on Wavemetrics Igor Pro version 7.05 and higher.
 Modification history:
 _____________________________________________________________________________________
 1.972 beta 
+Require Igor 8.03 or higher. 
 DataBrowser - Igor 8 - dded Buttons to display w1 vs w2 and extract info from USAXS Folder name strings. Same tools are in Igor 9 right click. 
 Added for every graph right click option to export as jpg and pxp. Also to duplicate graph (which Igor does on ctrl/cmd-D) but with duplicate of all data in the graph. 1D graphs only.   
 

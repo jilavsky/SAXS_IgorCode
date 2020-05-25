@@ -1,16 +1,17 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma IgorVersion=7.05   //requires Igor version 7.05 or higher
-#pragma version = 1.972
+#pragma IgorVersion=8.03   //requires Igor version 8.03 or higher
+#pragma version = 1.975
 
-constant CurrentIndraVersionNumber = 1.972
+constant CurrentIndraVersionNumber = 1.975
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.972 	Beta version after February2020 release
+//			require Igor 8.03, no testing for Igor 7 anymore. 
+//1.975 	Beta version after February2020 release
 //1.97 	Add print in history which version has compiled, Useful info later when debugging.
 //			attempt to set automatically Qmin for the data. Increase default number of points to 500
 //1.96   December 2018 release. Updtaes 64 bit OSX xops.
@@ -503,9 +504,9 @@ Function IN2_AboutPanel()
 	DoWindow/C About_Indra_2_Macros
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 18,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 10,37,"Indra 2 macros for Igor Pro 7 & 8"
+	DrawText 10,37,"Indra 2 macros for Igor Pro 8.03+"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 52,64,"@ Jan Ilavsky, 2018"
+	DrawText 52,64,"@ Jan Ilavsky, 2020"
 	DrawText 49,103,"release "+num2str(CurrentIndraVersionNumber)
 	DrawText 11,136,"To get help please contact: ilavsky@aps.anl.gov"
 	DrawText 11,156,"https://usaxs.xray.aps.anl.gov/"

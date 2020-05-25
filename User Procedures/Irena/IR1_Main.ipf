@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.692
-#pragma IgorVersion=7.05
+#pragma version=2.695
+#pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.692
+constant CurrentIrenaVersionNumber = 2.695
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -13,8 +13,8 @@ constant CurrentIrenaVersionNumber = 2.692
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-
-//2.692	Beta version after February2020 release
+//			Require Igor 8.03 and higher. No testing for Igor 7. 
+//2.695	Beta version after February2020 release
 //			New bioSAXS tools
 //			New Metadata Browser tool
 //2.69 	Removed 14 ipf files to reduce clutter. 
@@ -848,9 +848,9 @@ Function IR1_AboutPanel()
 	NewPanel/K=1 /W=(173.25,50,580,460)/N=About_Irena_1_Macros as "About Irena Macros"
 	SetDrawLayer UserBack
 	SetDrawEnv fsize= 20,fstyle= 1,textrgb= (16384,28160,65280)
-	DrawText 23,30,"Irena macros for Igor Pro 7 & 8"
+	DrawText 23,30,"Irena macros for Igor Pro 8.03+"
 	SetDrawEnv fsize= 16,textrgb= (16384,28160,65280)
-	DrawText 100,60,"@ ANL, 2018"
+	DrawText 100,60,"@ ANL, 2020"
 	DrawText 10,80,"release "+num2str(CurrentIrenaVersionNumber)
 	DrawText 11,100,"To get help please contact: ilavsky@aps.anl.gov"
 	SetDrawEnv textrgb= (0,0,65535)
