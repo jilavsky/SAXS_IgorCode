@@ -1,4 +1,4 @@
-IN2G_FindNu#pragma rtGlobals=2		// Use modern global access method.
+#pragma rtGlobals=2		// Use modern global access method.
 #pragma version = 2.24
 #pragma IgorVersion = 7.05
 
@@ -506,6 +506,7 @@ Menu "GraphPopup"
        "Save as jpg", IN2G_SaveTopGraphJpg()
        "Save as pxp", IN2G_SaveTopGraphPXP()
        "Clone this window with data", IN2G_CloneWindow()
+       "Make limits Nice", IN2G_MakeGrphLimitsNice()
 End
 
 //DataBrowser  right click menu... 
@@ -1534,8 +1535,7 @@ Function IN2G_FindVersionOfSingleFile(tempFileName,PathStr)
 				//oldScrap = GetScrapText()
 				//Grep/P=$(PathStr)/Z/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName as "Clipboard"
 		Grep/P=$(PathStr)/Z/Q/LIST/E="(?i)^#pragma[ ]*version[ ]*=[ ]*" tempFileName 
-				//print S_Value
-				///sleep/s (0.02)
+		//SVAR S_Value
 		tempScraptext = S_Value //GetScrapText()
 		if(strlen(tempScraptext)>10)		//found line with #pragma version"
 			tempScraptext = replaceString("#pragma",tempScraptext,"")	//remove #pragma
@@ -4067,6 +4067,64 @@ Function IN2G_ColorTopGrphRainbow([topGraphStr])
 	endif
 	KillWaves/Z M_colors
 end
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
+Function IN2G_MakeGrphLimitsNice([topGraphStr])
+	string topGraphStr
+
+	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	String topGraph
+	if(ParamIsDefault(topGraphStr))
+		topGraph=WinName(0,1)
+	else
+		topGraph=topGraphStr	
+	endif
+	//this will now set nice limits for the top graph
+	string AxisUsed=AxisList(topGraph)
+	string OneAxis, AxisInfoStr
+	variable i, isLog, CurMin, CurMax, newMin, newMax
+	For(i=0;i<ItemsInList(AxisUsed);i+=1)
+		OneAxis = stringFromList(i, AxisUsed)
+		AxisInfoStr= AxisInfo(topGraph, OneAxis )
+		isLog = NumberByKey("log(x)", AxisInfoStr, "=", ";")
+		GetAxis /W=$(topGraph)/Q $(OneAxis)
+		CurMin = V_min
+		CurMax = V_max
+		if(isLog)		 
+			newMin = IN2G_NiceSignificant(CurMin,1,0)
+			newMax = IN2G_NiceSignificant(CurMax,1,1)
+		else
+			newMin = IN2G_NiceSignificant(CurMin,1,0)
+			newMax = IN2G_NiceSignificant(CurMax,1,1)
+		endif
+		SetAxis /W=$(topGraph) $(OneAxis), newMin, newMax
+
+	endfor
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IN2G_NiceSignificant(val,N, UpDown)        // round val to N significant figures
+        Variable val                    // input value to round
+        Variable N                      // number of significant figures
+        variable UpDown					   // 1 for up, 0 for down. 
+
+			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+        if (val==0 || numtype(val))
+                return val
+        endif
+        Variable is,tens
+        is = sign(val)
+        val = abs(val)
+        tens = 10^(N-floor(log(val))-1)
+        if(UpDown)	
+       	 return is*ceil(val*tens)/tens
+       else
+       	 return is*floor(val*tens)/tens
+       endif
+End
+
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
 
