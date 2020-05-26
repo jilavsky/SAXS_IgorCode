@@ -2680,96 +2680,13 @@ Function IN2G_CloneWindow()
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//this is from IgorExchange: http://www.igorexchange.com/node/1469
-//does not work for cases when graph has same name waves and cannot fix it...  
-//static Function IN2G_CloneWindow2([win,name,times])
-//	String win
-//	String name // The new name for the window and data folder. 
-//	Variable times // The number of clones to make.  Clones beyond the first will have _2, _3, etc. appended to their names.   
-//	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-//	String curr_folder=GetDataFolder(1)
-//	setDataFolder root:
-//	if(ParamIsDefault(win))
-//		win=WinName(0,1)
-//	endif
-//	if(ParamIsDefault(name))
-//		name=UniqueName(win,6,0)
-//		name=UniqueName(name,7,0)
-//		name=UniqueName(name,11,0)
-//	else
-//		name=CleanupName(name,0)
-//		name=UniqueName(name,6,0)
-//		name=UniqueName(name,7,0)
-//		name=UniqueName(name,11,0)
-//	endif
-//	times=ParamIsDefault(times) ? 1 : times
-//	NewDataFolder /O/S root:$name
-//	String win_rec=WinRecreation(win,0)
-//	String traces=TraceNameList(win,";",3)
-//	string tempName, trace, AddOn
-//	Variable i,j
-//	for(i=0;i<ItemsInList(traces);i+=1)
-//		trace=StringFromList(i,traces)
-//		tempName = trace
-//		if(StringMatch(trace, "*#*"))			//we have wave with multiplier
-//			tempName = ReplaceString("'", trace, "")		//removes ' from liberal names
-//			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
-//			tempName = PossiblyQuoteName(tempName )
-//		endif
-//		Wave TraceWave=TraceNameToWaveRef(win,trace)
-//		Duplicate /o TraceWave $(tempName)
-//		win_rec = ReplaceString(trace, win_rec, tempName)
-//		//main wave dealt with
-//		Wave /Z TraceXWave=XWaveRefFromTrace(win,trace)
-//		tempName = NameOfWave(TraceXWave)
-//		if(waveexists(TraceXWave))
-//			tempName = ReplaceString("'", trace, "")		//remvoes ' from liberal names
-//			tempName = ReplaceString("#", trace, "_")		//replaces # for cases when waves of same names are used
-//			tempName = PossiblyQuoteName(tempName )		
-//			Duplicate /o TraceXWave $NameOfWave(TraceXWave)
-//		endif
-//	endfor
-// 
-//	// Copy error bars if they exist.  Won't work with subrange display syntax.  
-//	for(i=0;i<ItemsInList(win_rec,"\r");i+=1)
-//		String line=StringFromList(i,win_rec,"\r")
-//		if(StringMatch(line,"*ErrorBars*"))
-//			String errorbar_names
-//			SplitString/E=",.*" line
-//			sscanf S_value,"%*[^=]=(%[^)])",errorbar_names
-//			for(j=0;j<2;j+=1)
-//				String errorbar_path=StringFromList(j,errorbar_names,",")
-//				sscanf errorbar_path,"%[^[])",errorbar_path
-//				String errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")
-//				Duplicate /o $("root"+errorbar_path) $errorbar_name
-//			endfor
-//		endif
-//	endfor
-//	print win_rec
-// 	string NewName=""
-//	for(i=1;i<=times;i+=1)
-//		Execute /Q win_rec
-//		if(i==1)
-//			DoWindow /C $name
-//			NewName = name
-//		else
-//			DoWindow /C $(name+"_"+num2str(i))
-//			NewName = name+"_"+num2str(i)
-//		endif
-//		ReplaceWave allInCDF
-//		DoWindow/T $(NewName), "Duplicate of "+win+" data in root:"+NewName
-//	endfor
-//	
-//	SetDataFolder $curr_folder
-//End
-
-//*****************************************************************************************************************
-//*****************************************************************************************************************
 static Function IN2G_DuplicateGraphAndData()
 	//this will duplicate top X-Y graph and copy all data (including optional error bars) to new folder. 
 	//Only X-Y graphs supported. 
+	//fails on graphs with subwindow for now!
 	String curr_folder=GetDataFolder(1)
 	string GraphwinNmOld=WinName(0,1)
+	String win_rec=WinRecreation(GraphwinNmOld,0)									//recreation macro for current old graph.
 	string GraphwinNmNew
 	if(strlen(GraphwinNmOld)<1)
 		print "No top graph"
@@ -2777,68 +2694,134 @@ static Function IN2G_DuplicateGraphAndData()
 	endif
 	Variable i,j
 	String trace, tempYName, tempXName, nameStr
-	String traces
+	String traces, SubwindowNames
 	//create a copy of the current top graph 
 	DoWIndow/F $(GraphwinNmOld)
 	DoIgorMenu "Edit", "Duplicate"		
-	if(V_Flag)																		//success, new graph created 
-		GraphwinNmNew=WinName(0,1)												//name which Duplicate Graph command created 
-		nameStr=GraphwinNmNew
-		setDataFolder root:														//need to be in root to be able to check for name
-		if(CheckName(nameStr, 1)!=0)
-			nameStr = uniquename(nameStr,11,0)									//if needed, modified folder name to be unique in root folder
-		endif
-		//nameStr is now unique folder name based on GraphwinNmNew 
-		NewDataFolder /S root:$nameStr											//new folder for data. 
-		traces=TraceNameList(GraphwinNmNew,";",3)							//all traces in the new graph
-		for(i=ItemsInList(traces)-1;i>=0;i-=1)								//iterate from back or #N will keep being reordered
-			trace=StringFromList(i,traces)										//a trace
-			Wave TraceWave=TraceNameToWaveRef(GraphwinNmNew,trace)		//waveY
-			Wave /Z TraceXWave=XWaveRefFromTrace(GraphwinNmNew,trace)	//waveX if exists
-			tempYName = NameOfWave(TraceWave)									//waveY name
-			if(CheckName(tempYName, 1)!=0)
-				tempYName = uniquename(tempYName,1,0)							//if needed modified waveY name to be unique in current folder
-			endif
-			Duplicate/O TraceWave $tempYName									//copy of waveY in current folder.  
-			if(waveexists(TraceXWave))											//same treatment for X wave, if exists
-				tempXName = NameOfWave(TraceXWave)
-				if(CheckName(tempXName, 1)!=0)
-					tempXName = uniquename(tempXName,1,0)						//if needed modified waveX name to be unique in current folder
-				endif
-				Duplicate /O TraceXWave $tempXName								//copy of waveX in current folder.  
-				ReplaceWave /X/W=$(GraphwinNmNew) trace=$(trace) , $tempXName		//this swaps the old X wave with the new copy
-			endif
-			ReplaceWave /W=$(GraphwinNmNew) trace=$(trace) , $tempYName				//this swaps the old Y wave with the new copy
-		endfor
-		//these are X-Y data, now we need to copy error bars also...
-		String win_rec=WinRecreation(GraphwinNmNew,0)									//recreation macro for current updated graph.
-		String errorbar_names, errorbar_name
-		String errorbar_path
-		String line
-		// Copy error bars if they exist. Assume only symmetric (+/- error wave) error bars   
-		for(i=0;i<ItemsInList(win_rec,"\r");i+=1)		  
-			line=StringFromList(i,win_rec,"\r")
-			if(StringMatch(line,"*ErrorBars*"))								//line with "ErrorBars command"
-				SplitString/E=",.*" line											//ugly way of pulling out errorbar_path
-				sscanf S_value,"%*[^=]=(%[^)])",errorbar_names				//ugly way of pulling out errorbar_path
-				for(j=0;j<1;j+=1)
-					errorbar_path=StringFromList(j,errorbar_names,",")	//errorbar_path now is path to wave for error bars, again, assuming same up/down. 	
-					sscanf errorbar_path,"%[^[])",errorbar_path				//ugly way of pulling out errorbar_path
-					errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")		//get error wave name
-					if(CheckName(errorbar_name, 1)!=0)
-		 				errorbar_name = uniquename(errorbar_name,1,0)			//make the new error wave name unique, if necessary... 
-					endif
-					Duplicate /O $("root"+errorbar_path) $errorbar_name		//duplicate to new wave
-				endfor
-				line = ReplaceString(errorbar_path, line, errorbar_name)		//create a new ErrorBar command line for error bars
-				Execute(line)															//and run it on the graph. 
-			endif
-		endfor
-		//done with error bars now... 
-		DoWindow/T $(GraphwinNmNew), "Duplicate of "+GraphwinNmOld+", data in root:"+nameStr		//append user friendly name. 
-	else
+	if(V_Flag!=1)
 		print "Could not clone window, something went wrong or no graph window exists"
+		abort	
+	endif		
+	//was duplicated. need to copy data									//success, new graph created 
+	setDataFolder root:														//need to be in root to be able to check for name
+	GraphwinNmNew=WinName(0,1)												//name which Duplicate Graph command created 
+	nameStr=GraphwinNmNew
+	SubwindowNames = ChildWindowList(GraphwinNmNew)					//list of subwindows... 
+	if(CheckName(nameStr,11)!=0)
+		nameStr = uniquename(nameStr,11,0)									//if needed, modified folder name to be unique in root folder
 	endif
+	//nameStr is now unique folder name based on GraphwinNmNew 
+	//this is the main window... 
+	NewDataFolder /S root:$nameStr											//new folder for data. 
+	traces=TraceNameList(GraphwinNmNew,";",3)							//all traces in the new graph
+	for(i=ItemsInList(traces)-1;i>=0;i-=1)								//iterate from back or #N will keep being reordered
+		trace=StringFromList(i,traces)										//a trace
+		Wave TraceWave=TraceNameToWaveRef(GraphwinNmNew,trace)		//waveY
+		Wave /Z TraceXWave=XWaveRefFromTrace(GraphwinNmNew,trace)	//waveX if exists
+		tempYName = NameOfWave(TraceWave)									//waveY name
+		if(CheckName(tempYName, 1)!=0)
+			tempYName = uniquename(tempYName,1,0)							//if needed modified waveY name to be unique in current folder
+		endif
+		Duplicate/O TraceWave $tempYName									//copy of waveY in current folder.  
+		if(waveexists(TraceXWave))											//same treatment for X wave, if exists
+			tempXName = NameOfWave(TraceXWave)
+			if(CheckName(tempXName, 1)!=0)
+				tempXName = uniquename(tempXName,1,0)						//if needed modified waveX name to be unique in current folder
+			endif
+			Duplicate /O TraceXWave $tempXName								//copy of waveX in current folder.  
+			ReplaceWave /X/W=$(GraphwinNmNew) trace=$(trace) , $tempXName		//this swaps the old X wave with the new copy
+		endif
+		ReplaceWave /W=$(GraphwinNmNew) trace=$(trace) , $tempYName				//this swaps the old Y wave with the new copy
+	endfor
+	//now we need to deal with subwindows, if present...
+	string SubWinName, tempSubWinFullname
+	if(ItemsInList(SubwindowNames)>0)
+		For(j=0;j<ItemsInList(SubwindowNames);j+=1)
+			SubWinName = StringFromList(j,SubwindowNames)
+			tempSubWinFullname = GraphwinNmNew+"#"+SubWinName
+			NewDataFolder /S $(SubWinName)
+			traces=TraceNameList(tempSubWinFullname,";",3)
+			for(i=ItemsInList(traces)-1;i>=0;i-=1)								//iterate from back or #N will keep being reordered
+					trace=StringFromList(i,traces)										//a trace
+					Wave TraceWave=TraceNameToWaveRef(tempSubWinFullname,trace)		//waveY
+					Wave /Z TraceXWave=XWaveRefFromTrace(tempSubWinFullname,trace)	//waveX if exists
+					tempYName = NameOfWave(TraceWave)									//waveY name
+					if(CheckName(tempYName, 1)!=0)
+						tempYName = uniquename(tempYName,1,0)							//if needed modified waveY name to be unique in current folder
+					endif
+					Duplicate/O TraceWave $tempYName									//copy of waveY in current folder.  
+					if(waveexists(TraceXWave))											//same treatment for X wave, if exists
+						tempXName = NameOfWave(TraceXWave)
+						if(CheckName(tempXName, 1)!=0)
+							tempXName = uniquename(tempXName,1,0)						//if needed modified waveX name to be unique in current folder
+						endif
+						Duplicate /O TraceXWave $tempXName								//copy of waveX in current folder.  
+						ReplaceWave /X/W=$(tempSubWinFullname) trace=$(trace) , $tempXName		//this swaps the old X wave with the new copy
+					endif
+					ReplaceWave /W=$(tempSubWinFullname) trace=$(trace) , $tempYName				//this swaps the old Y wave with the new copy
+			endfor
+			setDataFolder root:$nameStr
+		endfor
+	endif
+	//these are X-Y data, now we need to copy error bars also...
+	win_rec=WinRecreation(GraphwinNmNew,0)									//recreation macro for current updated graph.
+	String errorbar_names, errorbar_name
+	String errorbar_path
+	String line, lineNew
+	// Copy error bars if they exist. Assume only symmetric (+/- error wave) error bars   
+	for(i=0;i<ItemsInList(win_rec,"\r");i+=1)		  
+		line=StringFromList(i,win_rec,"\r")
+		if(StringMatch(line, "*/HOST*"))										//here start subwindow syntax, get out of here and go to subwindows... 
+			break
+		endif
+		if(StringMatch(line,"*ErrorBars*"))								//line with "ErrorBars command"
+			SplitString/E=",.*" line											//ugly way of pulling out errorbar_path
+			sscanf S_value,"%*[^=]=(%[^)])",errorbar_names				//ugly way of pulling out errorbar_path
+			for(j=0;j<1;j+=1)
+				errorbar_path=StringFromList(j,errorbar_names,",")	//errorbar_path now is path to wave for error bars, again, assuming same up/down. 	
+				sscanf errorbar_path,"%[^[])",errorbar_path				//ugly way of pulling out errorbar_path
+				errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")		//get error wave name
+				if(CheckName(errorbar_name, 1)!=0)
+	 				errorbar_name = uniquename(errorbar_name,1,0)			//make the new error wave name unique, if necessary... 
+				endif
+				Duplicate /O $("root"+errorbar_path) $errorbar_name		//duplicate to new wave
+			endfor
+			lineNew = ReplaceString(errorbar_path, line, errorbar_name)		//create a new ErrorBar command line for error bars
+			Execute/Q/Z(lineNew)															//and run it on the graph. 
+		endif
+	endfor
+	//done with error bars in main graph... 
+	//subwindows are next... 
+	if(ItemsInList(SubwindowNames)>0)											//are tehre any subwindows?
+		For(j=0;j<ItemsInList(SubwindowNames);j+=1)							//iterate over them
+			SubWinName = StringFromList(j,SubwindowNames)					//this is the subwindow name
+			tempSubWinFullname = GraphwinNmNew+"#"+SubWinName				//full name including main graph name
+			setDataFolder $(SubWinName)											//here should be data 
+			win_rec=WinRecreation(tempSubWinFullname,0)						//this is recreation macro for subwindow only 
+			for(i=0;i<ItemsInList(win_rec,"\r");i+=1)		  				//look for Errorbar line
+				line=StringFromList(i,win_rec,"\r")							
+				if(StringMatch(line,"*ErrorBars*"))								//line with "ErrorBars command"
+					SplitString/E=",.*" line											//ugly way of pulling out errorbar_path
+					sscanf S_value,"%*[^=]=(%[^)])",errorbar_names				//ugly way of pulling out errorbar_path
+					for(j=0;j<1;j+=1)
+						errorbar_path=StringFromList(j,errorbar_names,",")	//errorbar_path now is path to wave for error bars, again, assuming same up/down. 	
+						sscanf errorbar_path,"%[^[])",errorbar_path				//ugly way of pulling out errorbar_path
+						errorbar_name=StringFromList(ItemsInList(errorbar_path,":")-1,errorbar_path,":")		//get error wave name
+						if(CheckName(errorbar_name, 1)!=0)
+			 				errorbar_name = uniquename(errorbar_name,1,0)			//make the new error wave name unique, if necessary... 
+						endif
+						Duplicate /O $("root"+errorbar_path) $errorbar_name		//duplicate to new wave
+					endfor
+					lineNew = ReplaceString(errorbar_path, line, errorbar_name)									//create a new ErrorBar command line for error bars
+					lineNew = ReplaceString("ErrorBars", lineNew, "ErrorBars /W="+tempSubWinFullname)		//create a new ErrorBar command line for error bars, need to add /W=Win#Subwin
+					Execute(lineNew)																						//and run it on the graph. 
+				endif
+			endfor
+			setDataFolder root:$nameStr												//back to main folder. 
+		endfor
+	endif		
+	DoWindow/T $(GraphwinNmNew), "Duplicate of "+GraphwinNmOld+", data in root:"+nameStr					//append user friendly name. 
+	//should be done. 
 	SetDataFolder $curr_folder
 end 
  
