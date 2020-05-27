@@ -18,27 +18,27 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>February2020</current_release>
-		<current_beta_release>May2019</current_beta_release>
+		<current_beta_release>May2020Beta</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
-		<release name="April2020Beta" beta="true">
-			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/April2020Beta.zip</SourceFileAddress>
+		<release name="May2020Beta" beta="true">
+			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/May2020Beta.zip</SourceFileAddress>
 			<Package>
 				<name>Irena</name>
-				<version>2.691</version>
+				<version>2.695</version>
 				<PackageList>IrenaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Irena1 modeling.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Nika</name>
-				<version>1.821</version>
+				<version>1.825</version>
 				<PackageList>NikaPckg.xml</PackageList>
 				<VersionCheckFile>Boot Nika.ipf</VersionCheckFile>
 			</Package>
 			<Package>
 				<name>Indra</name>
-				<version>1.971</version>
+				<version>1.975</version>
 				<PackageList>IndraPckg.xml</PackageList>
 				<VersionCheckFile>Boot Indra2.ipf</VersionCheckFile>
 			</Package>
@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release April 2020, adds number of new tools. Requires Igor 8.03 or higher.</VersionComment>
+			<VersionComment>Beta release May 2020. Requires Igor 8.03 or higher. Version x.xx5 included.</VersionComment>
 		</release>
 		<release name="February2020">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2020.zip</SourceFileAddress>
@@ -88,7 +88,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Irena 2.69, Nika 1.82 and Indra 1.97 from 2/9/2020.</VersionComment>
+			<VersionComment>Irena 2.69, Nika 1.82 and Indra 1.97 from 2/9/2020. Last Igor 7 release.</VersionComment>
 		</release>
 		<release name="December2018">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/December2018.zip</SourceFileAddress>
