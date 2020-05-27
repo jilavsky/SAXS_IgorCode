@@ -1074,10 +1074,10 @@ static Function IR3J_FitGuinier(which)
 	Guinier_Rg = pi/(DataQEnd/2)
 	W_coef[0]=Guinier_I0  	//G
 	W_coef[1]=Guinier_Rg		//Rg
-	T_Constraints[0] = {"K1 > "+num2str(Guinier_Rg/10)}
-	T_Constraints[1] = {"K0 > 0"}
-	LocalEwave[0]=(Guinier_I0/20)
-	LocalEwave[1]=(Guinier_Rg/20)
+	T_Constraints[0] = {"K0 > 0"}
+	T_Constraints[1] = {"K1 > "+num2str(Guinier_Rg/10)}
+	LocalEwave[0]=(Guinier_I0/50)
+	LocalEwave[1]=(Guinier_Rg/50)
 	variable QminFit, QmaxFit
 	QminFit = CursorAXWave[DataQstartPoint]
 	QmaxFit = CursorAXWave[DataQEndPoint]
@@ -1098,11 +1098,12 @@ static Function IR3J_FitGuinier(which)
 			abort
 	endswitch
 	if (V_FitError!=0)	//there was error in fitting
-		RemoveFromGraph $("fit_"+NameOfWave(CursorAWave))
+		RemoveFromGraph/W=IR3J_LogLogDataDisplay /Z $("fit_"+NameOfWave(CursorAWave))
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
 	endif
 	Wave W_sigma
+	W_coef =  abs(W_coef)
 	string TagText, TagTextLin
 	AchievedChiSquare = V_chisq/(DataQEndPoint-DataQstartPoint)
 	string QminRg, QmaxRg, AchiCHiStr
@@ -1182,7 +1183,7 @@ Function IR1_GuinierRodFit(w,q) : FitFunc
 
 	w[0]=abs(w[0])
 	w[1]=abs(w[1])
-	return w[0]/q * exp(-0.5 * q^2*w[1]^2)
+	return w[0]*exp(-q^2 * w[1]^2/2)/q
 End
 //**********************************************************************************************************
 Function IR1_GuinierSheetFit(w,q) : FitFunc
@@ -1611,7 +1612,7 @@ static Function IR3J_CalculateModel()
 			endif
 			break		
 		case "Guinier Sheet":				// Guinier Sheet
-			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2)/ModelLogLogQ^2
+			ModelLogLogInt = Guinier_I0 *exp(-ModelLogLogQ[p]^2*Guinier_Rg^2)*ModelLogLogQ^(-2)
 			if(UsingLinearizedModel)
 				ModelLinLinLogInt = ln(ModelLogLogInt*ModelLogLogQ^2)	
 			endif
