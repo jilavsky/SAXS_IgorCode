@@ -18,7 +18,7 @@
 			<Package>xop64bit</Package>
 		</KnownPackages>
 		<current_release>February2020</current_release>
-		<current_beta_release>May2020</current_beta_release>
+		<current_beta_release>May2020Beta</current_beta_release>
 	</VersionCheck>
 
 	<InstallerConfig>
@@ -54,7 +54,7 @@
 				<PackageList>xopPckg64.xml</PackageList>
 				<VersionCheckFile>IrenaNikaXop64Ver.ipf</VersionCheckFile>
 			</Package>
-			<VersionComment>Beta release May 2020. Requires Igor 8.03 or higher.</VersionComment>
+			<VersionComment>Beta release May 2020. Requires Igor 8.03 or higher. Version x.xx5 included.</VersionComment>
 		</release>
 		<release name="February2020">
 			<SourceFileAddress>https://github.com/jilavsky/SAXS_IgorCode/archive/February2020.zip</SourceFileAddress>
