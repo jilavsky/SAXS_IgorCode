@@ -185,12 +185,12 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
 
 	//and print in history which version of code is being used for future reference.
-	string file= StringFromList((ItemsInList(FunctionPath("LoadUSAXSMacros"), ":")-1), FunctionPath("LoadUSAXSMacros"), ":")
-	String path = RemoveFromList(file, FunctionPath("LoadUSAXSMacros") , ":")
-	NewPath /O/Q TmpPathToIgorProcs  , path
-	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
-	KillPath /Z TmpPathToIgorProcs
-	print "*** >>>  Indra version: "+num2str(version)+", compiled on "+date()+"  "+time()
+	//string file= StringFromList((ItemsInList(FunctionPath("LoadUSAXSMacros"), ":")-1), FunctionPath("LoadUSAXSMacros"), ":")
+	//String path = RemoveFromList(file, FunctionPath("LoadUSAXSMacros") , ":")
+	//NewPath /O/Q TmpPathToIgorProcs  , path
+	//variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	//KillPath /Z TmpPathToIgorProcs
+	print "*** >>>  Indra version: "+num2str(CurrentIndraVersionNumber)+", compiled on "+date()+"  "+time()
 
 end
 //****************************************************************************************

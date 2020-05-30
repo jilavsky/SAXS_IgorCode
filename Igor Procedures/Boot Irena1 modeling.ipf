@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 2.691
+#pragma version = 2.695
 #pragma IgorVersion=7.05
 
-//2.691	Beta version after February2020 release
-//2.69	February 2020 release
+//2.695	Beta version May2020 release
+//2.69		February 2020 release
 //2.68   December 2018,new 64 bit OSX xops. Data Merge improvements, many other fixes. 
 //2.67   July 2018 release, first official Igor 8 release
 //2.66   Converted all procedure files to UTF8 to prevent text encoding issues. 

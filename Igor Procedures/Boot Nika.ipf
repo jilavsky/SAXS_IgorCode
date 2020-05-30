@@ -1,9 +1,9 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.821
+#pragma version = 1.825
 #pragma IgorVersion=7.05
 
-//1.821 	Beta version after February2020 release
-//1.82	February 2020 release. Maintenance, many small changes. 
+//1.825 	Beta version May2020 release
+//1.82		February 2020 release. Maintenance, many small changes. 
 //1.81   December 2018. New OSX 64-bit xop version.  
 //1.80 	July 2018 release, first official Igor 8 release
 //1.79	Converted all procedure files to UTF8 to prevent text encoding issues. 

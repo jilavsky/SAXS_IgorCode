@@ -335,12 +335,12 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 
 	IN2G_CheckForGraphicsSetting(0)
 	//and print in history which version of codeis being used for future reference.
-	string file= StringFromList((ItemsInList(FunctionPath("LoadIrenaSASMacros"), ":")-1), FunctionPath("LoadIrenaSASMacros"), ":")
-	String path = RemoveFromList(file, FunctionPath("LoadIrenaSASMacros") , ":")
-	NewPath /O/Q TmpPathToIgorProcs  , path
-	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
-	KillPath /Z TmpPathToIgorProcs
-	print "*** >>>  Irena version: "+num2str(version)+", compiled on "+date()+"  "+time()
+	//string file= StringFromList((ItemsInList(FunctionPath("LoadIrenaSASMacros"), ":")-1), FunctionPath("LoadIrenaSASMacros"), ":")
+	//String path = RemoveFromList(file, FunctionPath("LoadIrenaSASMacros") , ":")
+	//NewPath /O/Q TmpPathToIgorProcs  , path
+	//variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	//KillPath /Z TmpPathToIgorProcs
+	print "*** >>>  Irena version: "+num2str(CurrentIrenaVersionNumber)+", compiled on "+date()+"  "+time()
 	
 end
 //****************************************************************************************

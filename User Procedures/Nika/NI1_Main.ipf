@@ -210,12 +210,12 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 
 	NI1_CheckNikaUpdate(0)
 	//and print in history which version of codeis being used for future reference.
-	string file= StringFromList((ItemsInList(FunctionPath("LoadNika2DSASMacros"), ":")-1), FunctionPath("LoadNika2DSASMacros"), ":")
-	String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
-	NewPath /O/Q TmpPathToIgorProcs  , path
-	variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
-	KillPath /Z TmpPathToIgorProcs	
-	print "*** >>>  Nika version : "+num2str(version)+", compiled on "+date()+"  "+time()
+	//string file= StringFromList((ItemsInList(FunctionPath("LoadNika2DSASMacros"), ":")-1), FunctionPath("LoadNika2DSASMacros"), ":")
+	//String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
+	//NewPath /O/Q TmpPathToIgorProcs  , path
+	//variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
+	//KillPath /Z TmpPathToIgorProcs	
+	print "*** >>>  Nika version : "+num2str(CurrentNikaVersionNumber)+", compiled on "+date()+"  "+time()
 	
 end
 

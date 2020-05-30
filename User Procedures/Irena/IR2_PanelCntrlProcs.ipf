@@ -3961,10 +3961,16 @@ Function IR3C_MultiSortListOfAvailFldrs(CntrlLocation)
 		Sort /A /R ListOfAvailableData, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz")&&(numpnts(ListOfAvailableData)>2))
 			//For(i=0;i<numpnts(TempWv);i+=1)
-		TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[i])
+		TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[p])
 			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
 			//endfor
 		Sort TempWv, ListOfAvailableData
+	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
+			//For(i=0;i<numpnts(TempWv);i+=1)
+			TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[p])
+			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
+			//endfor
+		Sort /R  TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"Sxyz_"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			TempWv[i] = str2num(ReplaceString("S", StringFromList(0, ListOfAvailableData[i], "_"), ""))
@@ -4056,12 +4062,6 @@ Function IR3C_MultiSortListOfAvailFldrs(CntrlLocation)
 			endfor
 			Sort TempWv, ListOfAvailableData
 		endif
-	elseif(stringMatch(FolderSortString,"Reverse _xyz"))
-			//For(i=0;i<numpnts(TempWv);i+=1)
-			TempWv = IN2G_FindNumIndxForSort(ListOfAvailableData[p])
-			//TempWv[i] = str2num(StringFromList(ItemsInList(ListOfAvailableData[i]  , "_")-1, ListOfAvailableData[i]  , "_"))
-			//endfor
-		Sort /R  TempWv, ListOfAvailableData
 	elseif(stringMatch(FolderSortString,"_xyz.ext"))
 		For(i=0;i<numpnts(TempWv);i+=1)
 			tempstr = StringFromList(ItemsInList(ListOfAvailableData[i]  , ".")-2, ListOfAvailableData[i]  , ".")
