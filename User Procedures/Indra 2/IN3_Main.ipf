@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version = 1.97
+#pragma version = 1.975
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -12,6 +12,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.975 May2020 beta
 //1.97 February 2020, fix GUI for step scanning
 	//1.97 add controls if to remove vibrations or not, seems sometimes is not vibrations which causes less points to be recorded... 
 	//1.97 add is2DCollimated and fix sbFLyscan handling. few more fixes. 
@@ -39,8 +40,8 @@
 //1.79 4/2013 JIL, added pin diode transmission
 //1.78, 2/2013, JIL: Added option to calibrate by weight. Needed for USAXS users.
 
-Constant IN3_ReduceDataMainVersionNumber=1.99		//these two needs to be the same!
-Constant IN3_NewReduceDataMainVersionNum=1.99 	//these two needs to be the same!
+Constant IN3_ReduceDataMainVersionNumber=2.00		//these two needs to be the same!
+Constant IN3_NewReduceDataMainVersionNum=2.00	 	//these two needs to be the same!
 constant SmoothBlankForUSAXS = 1
 Constant Indra_PDIntBackFixScaleVmin=1.1
 Constant Indra_PDIntBackFixScaleVmax=0.3e-10
@@ -181,6 +182,8 @@ Function IN3_MainPanelNew()
 	PopupMenu SelectBlankFolder,mode=1,popvalue=temppopStr,value= #"\"---;\"+IN3_GenStringOfFolders(1)",fColor=(1,16019,65535)
 	PopupMenu SelectBlankFolder, disable = IsBlank
 	TitleBox SelectBlankFolderWarning title="\Zr120 Blank auto selected!!",pos={290,292},frame=0,fstyle=1, anchor=MC,size={120,20},fColor=(65535,0,0), disable=1
+	CheckBox SmartSelectBlank,pos={290,315},size={90,14},noproc,title="Smart select Blank?"
+	CheckBox SmartSelectBlank,variable= root:Packages:Indra3:SmartSelectBlank, help={"Check, if you want to try to select Blank smartly (using order numbers)"}
 
 
 	//Data Tabs definition
@@ -946,6 +949,7 @@ Function IN3_Initialize()
 
 	ListOfVariables+="DesmearData;DesmearNumberOfInterations;DesmearNumPoints;DesmearBckgStart;"
 
+	ListOfVariables+="SmartSelectBlank;"
 
 	// these are created automatically... "DataFoldername;IntensityWavename;QWavename;ErrorWaveName;"
 	ListOfStrings="SampleName;BlankName;userFriendlySamplename;userFriendlyBlankName;userFriendlySampleDFName;"

@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.60
+#pragma version = 1.61
 
 
 //*************************************************************************\
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.61 add to Multi controls sorting by _xyzs as time in seconds. 
 //1.60 add Multi controls - controls with listbox... For tools needing ability to select multiple data sets. 
 //			changed bahavior for generic (no defined data types selected) data. Now, if user selects X, Y, or E wave and in next folder user selects such waves exist, 
 //							the names will be reatined and not repalced by "---" as before. Seems mopre reasonable. If waves do nto exist in the new folder, names are reset to "---" 
@@ -3583,7 +3584,7 @@ Function IR3C_InitMultiControls(PathToPackagesFolder, PanelName, DoubleClickFunc
 		endif
 	endfor		
 	SVAR FolderSortStringAll
-	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;_XYZ_xyz;"
+	FolderSortStringAll = "Alphabetical;Reverse Alphabetical;_xyz;_xyz.ext;Reverse _xyz;Reverse _xyz.ext;Sxyz_;Reverse Sxyz_;_xyzmin;_xyzC;_xyzpct;_xyz_000;Reverse _xyz_000;_XYZ_xyz;_xyzs;Reverse _xyzs;"
 	SVAR DataSubTypeUSAXSList
 	if(OnlyUSAXSReducedData)
 		if(AllowSlitSmearedData)
@@ -4061,6 +4062,60 @@ Function IR3C_MultiSortListOfAvailFldrs(CntrlLocation)
 				endif
 			endfor
 			Sort TempWv, ListOfAvailableData
+		endif
+	elseif(stringMatch(FolderSortString,"_xyzs"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*s" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoAlert /T="Information not found" 0, "Cannot find location of _xyzs information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*s*" ))
+					TempWv[i] = str2num(ReplaceString("s", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort TempWv, ListOfAvailableData
+		endif
+	elseif(stringMatch(FolderSortString,"Reverse _xyzs"))
+		Do
+			For(i=0;i<ItemsInList(ListOfAvailableData[j] , "_");i+=1)
+				if(StringMatch(ReplaceString(":", StringFromList(i, ListOfAvailableData[j], "_"),""), "*s" ))
+					InfoLoc = i
+					break
+				endif
+			endfor
+			j+=1
+			if(j>(numpnts(ListOfAvailableData)-1))
+				DIDNotFindInfo=1
+				break
+			endif
+		while (InfoLoc<1) 
+		if(DIDNotFindInfo)
+			DoAlert /T="Information not found" 0, "Cannot find location of _xyzs information, sorting alphabetically" 
+			Sort /A ListOfAvailableData, ListOfAvailableData
+		else
+			For(i=0;i<numpnts(TempWv);i+=1)
+				if(StringMatch(StringFromList(InfoLoc, ListOfAvailableData[i], "_"), "*s*" ))
+					TempWv[i] = str2num(ReplaceString("s", StringFromList(InfoLoc, ListOfAvailableData[i], "_"), ""))
+				else	//data not found
+					TempWv[i] = inf
+				endif
+			endfor
+			Sort/R TempWv, ListOfAvailableData
 		endif
 	elseif(stringMatch(FolderSortString,"_xyz.ext"))
 		For(i=0;i<numpnts(TempWv);i+=1)

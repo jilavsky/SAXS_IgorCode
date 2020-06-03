@@ -9,13 +9,13 @@
 //* This file is distributed subject to a Software License Agreement found
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
-constant IRB1_ImpBioSAXSASCIIVer = 0.1			//IRB1_ImportBioSAXSASCIIData tool version number. 
+constant IRB1_ImpBioSAXSASCIIVer = 0.2			//IRB1_ImportBioSAXSASCIIData tool version number. 
 constant IRB1_DataManipulation = 0.1							//IRB1_DataManipulation tool version number. 
 constant IRB1_SetVariableStepScaling = 0.01					//this is fraction of the value to which the step in SetVariable is set.  
 constant IRB1_PDDFInterfaceVersion = 0.1					//IRB1_PDDFInterfaceFunction version number
 //functions for bioSAXS community
 //
-//version summary
+//version summary 
 //0.1 early beta version
 
 //Contains these main parts:
@@ -42,9 +42,9 @@ Function IRB1_ImportASCII()
 
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	IN2G_CheckScreenSize("height",720)
-	DoWindow IR1I_ImportBioSAXSASCIIData
+	DoWindow IRB1_ImportBioSAXSASCIIData
 	if(V_Flag)
-		DoWindow/F IR1I_ImportBioSAXSASCIIData
+		DoWindow/F IRB1_ImportBioSAXSASCIIData
 	else
 		//intit first
 		//need to create panel
@@ -56,12 +56,12 @@ Function IRB1_ImportASCII()
 end
 //************************************************************************************************************
 Function IRB1_ImpASCIIMainCheckVer()	
-	DoWindow IR1I_ImportBioSAXSASCIIData
+	DoWindow IRB1_ImportBioSAXSASCIIData
 	if(V_Flag)
-		if(!IR1_CheckPanelVersionNumber("IR1I_ImportBioSAXSASCIIData", IRB1_ImpBioSAXSASCIIVer))
+		if(!IR1_CheckPanelVersionNumber("IRB1_ImportBioSAXSASCIIData", IRB1_ImpBioSAXSASCIIVer))
 			DoAlert /T="The Import ASCII panel was created by incorrect version of Irena " 1, "Import ASCII tool needa to be restarted to work properly. Restart now?"
 			if(V_flag==1)
-				KillWIndow/Z IR1I_ImportBioSAXSASCIIData
+				KillWIndow/Z IRB1_ImportBioSAXSASCIIData
 				IRB1_ImportASCII()
 			else		//at least reinitialize the variables so we avoid major crashes...
 				IRB1_InitializeImportData()
@@ -219,6 +219,8 @@ Function IRB1_ImportBioSAXSASCIIDataFnct()
 	CheckBox GroupSamplesTogether,pos={240,220},size={16,14},proc=IRB1_CheckProc,title="Group by Samples?",variable= root:Packages:Irena:ImportBioSAXSData:GroupSamplesTogether,mode=0, help={"Check if you want multipel sample measurements grouped together"}
 
 	CheckBox QvectorInnm,pos={240,250},size={16,14},proc=IRB1_CheckProc,title="Convert Q from [1/nm]?",variable= root:Packages:Irena:ImportBioSAXSData:QvectorInnm,mode=0, help={"Irena uses Angstroms, if data Q vector is in 1/nm, check here."}
+	
+	CheckBox KeepExtension,pos={240,280},size={16,14},noproc,title="Keep extension with name?",variable= root:Packages:Irena:ImportBioSAXSData:KeepExtension,mode=0, help={"Include extension in data name, for example if avg ot sub."}
 
 
 
@@ -323,6 +325,7 @@ static Function IRB1_ImportDataFnct()
 	NVAR SAXSdata= root:Packages:Irena:ImportBioSAXSData:SAXSData
 	NVAR WAXSData= root:Packages:Irena:ImportBioSAXSData:WAXSData
 	NVAR GroupSamplesTogether	=	root:Packages:Irena:ImportBioSAXSData:GroupSamplesTogether
+	NVAR KeepExtension = root:Packages:Irena:ImportBioSAXSData:KeepExtension
 	KillWindow/Z TestImportGraph 
 	PathInfo ImportDataPath
 	string DataSelPathString=S_path
@@ -347,17 +350,21 @@ static Function IRB1_ImportDataFnct()
 			NewNote=""
 			setDataFolder BaseFolder
 			selectedfile = WaveOfFiles[i]
-	 		SelectedFileName = RemoveEnding(RemoveListItem(ItemsInList(selectedfile,".")-1, selectedfile,"."),".")
+			if(KeepExtension)
+	 			SelectedFileName = ReplaceString(".", selectedfile, "_") //this will simply repalce "." with "_" to prevent issues for Igor pro
+			else
+	 			SelectedFileName = RemoveEnding(RemoveListItem(ItemsInList(selectedfile,".")-1, selectedfile,"."),".")
+	 		endif
 	 		//now make assumption about sample name, we can group samples together.
 	 		if(GroupSamplesTogether)
 	 			SelectedSampleName = RemoveEnding(RemoveListItem(ItemsInList(selectedfile,"_")-1, selectedfile,"_"),"_")
 	 			SelectedSampleName = CleanupName(SelectedSampleName,1)
-	 			SelectedFileName = CleanupName(SelectedFileName, 1)
 				//create and move into the SampleFolder
 				if(strlen(SelectedSampleName)>1)		//cases, when name cannot be deduced in above level. 
 					NewDataFolder/O/S $((SelectedSampleName))
 				endif
 			endif
+ 			SelectedFileName = CleanupName(SelectedFileName, 1)
 			//now folder for the specific imported ASCII file
 			NewDataFolder/O/S $((SelectedFileName))
 			KillWaves/Z wave0, wave1, wave2
@@ -416,7 +423,7 @@ static Function IRB1_InitializeImportData()
 	ListOfStrings+="NewQWaveName;NewErrorWaveName;NewQErrorWavename;NameMatchString;TooManyPointsWarning;RemoveStringFromName;"
 	ListOfVariables = "UseFileNameAsFolder;UseIndra2Names;UseQRSNames;DataContainErrors;UseQISNames;"
 	ListOfVariables += "SAXSData;WAXSdata;GroupSamplesTogether;QvectorInnm;"	
-//	ListOfVariables += "CreateSQRTErrors;Col1Int;Col1Qvec;Col1Err;Col1QErr;FoundNWaves;"	
+	ListOfVariables += "KeepExtension;"	
 //	ListOfVariables += "QvectInA;QvectInNM;QvectInDegrees;CreateSQRTErrors;CreatePercentErrors;PercentErrorsToUse;"
 //	ListOfVariables += "ScaleImportedData;ScaleImportedDataBy;ImportSMRdata;SkipLines;SkipNumberOfLines;"	
 //	ListOfVariables += "IncludeExtensionInName;RemoveNegativeIntensities;AutomaticallyOverwrite;"	
@@ -560,28 +567,30 @@ static Function IRB1_DataManPanelFnct()
 
 	
 	//tab 2 controls
-	TitleBox AverageInstructions3 title="\Zr1201. Pick Buffer folder (ave) : ",size={330,15},pos={270,175},frame=0,fColor=(0,0,65535),labelBack=0
-	PopupMenu SelectBufferData,pos={262,200},size={180,20},fStyle=2,proc=IRB1_PopMenuProc,title=" "
+	TitleBox AverageInstructions3 title="\Zr1201. Pick Buffer folder (ave) : ",size={330,15},pos={270,170},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable BufferMatchString,pos={270,195},size={200,15}, noproc,title="Buffer Match (RegEx)", proc=IRB1_SetVarProc
+	Setvariable BufferMatchString, variable=root:Packages:Irena:BioSAXSDataMan:BufferMatchString
+	PopupMenu SelectBufferData,pos={262,220},size={180,20},fStyle=2,proc=IRB1_PopMenuProc,title=" "
 	SVAR SelectedBufferFolder = root:Packages:Irena:BioSAXSDataMan:SelectedBufferFolder
 	PopupMenu SelectBufferData,mode=1,popvalue=SelectedBufferFolder,value= IRB1_ListBufferScans() 
-	TitleBox AverageInstructions7 title="\Zr1202. Add data (double click) ",size={330,15},pos={270,225},frame=0,fColor=(0,0,65535),labelBack=0
-	TitleBox AverageInstructions8 title="\Zr1203. Tweak scaling ",size={330,15},pos={270,250},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox AverageInstructions7 title="\Zr1202. Add data (double click) ",size={330,15},pos={270,245},frame=0,fColor=(0,0,65535),labelBack=0
+	TitleBox AverageInstructions8 title="\Zr1203. Tweak scaling ",size={330,15},pos={270,265},frame=0,fColor=(0,0,65535),labelBack=0
 
-	SetVariable BufferScalingFraction,pos={270,275},size={220,15}, proc=IRB1_SetVarProc,title="Scale buffer =", noedit=0, frame=1, limits={0,10,0.002}
+	SetVariable BufferScalingFraction,pos={270,290},size={220,15}, proc=IRB1_SetVarProc,title="Scale buffer =", noedit=0, frame=1, limits={0,10,0.002}
 	Setvariable BufferScalingFraction, variable=root:Packages:Irena:BioSAXSDataMan:BufferScalingFraction, bodyWidth=100
 
-	Button SubtractBuffer,pos={280,300},size={190,20}, proc=IRB1_DataManButtonProc,title="4. Subtract Buffer & Save", help={"Subtract Buffer from data and save with _sub in name"}
-	TitleBox AverageInstructions9 title="\Zr120Or, select many and process all ",size={330,15},pos={270,350},frame=0,fColor=(0,0,65535),labelBack=0
-	Button SubtractBufferMany,pos={280,375},size={190,20}, proc=IRB1_DataManButtonProc,title="Sub. Buffer On Selected", help={"Subtract Buffer from all selected data and save with _sub in name"}
+	Button SubtractBuffer,pos={280,320},size={190,20}, proc=IRB1_DataManButtonProc,title="4. Subtract Buffer & Save", help={"Subtract Buffer from data and save with _sub in name"}
+	TitleBox AverageInstructions9 title="\Zr130Or, select many and process all ",size={330,15},pos={270,365},frame=0,fColor=(0,0,65535),labelBack=0
+	Button SubtractBufferMany,pos={280,395},size={190,20}, proc=IRB1_DataManButtonProc,title="Sub. Buffer On Selected", help={"Subtract Buffer from all selected data and save with _sub in name"}
 
-	TitleBox AverageInstructions4 title="\Zr120Input Data Name : ",size={245,15},pos={270,410},frame=0,fColor=(0,0,65535),labelBack=0
-	SetVariable UserSourceDataFolderName,pos={280,430},size={245,15}, noproc,variable=root:Packages:Irena:BioSAXSDataMan:UserSourceDataFolderName
+	TitleBox AverageInstructions4 title="\Zr120Input Data Name : ",size={245,15},pos={270,430},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable UserSourceDataFolderName,pos={280,450},size={245,15}, noproc,variable=root:Packages:Irena:BioSAXSDataMan:UserSourceDataFolderName
 	SetVariable UserSourceDataFolderName, title=" ", limits={0,0,0}, noedit=1, frame=0
-	TitleBox AverageInstructions5 title="\Zr120Buffer Data Name : ",size={245,15},pos={270,460},frame=0,fColor=(0,0,65535),labelBack=0
-	SetVariable UserBufferDataFolderName,pos={280,480},size={245,15}, noproc,variable=root:Packages:Irena:BioSAXSDataMan:UserBufferDataFolderName
+	TitleBox AverageInstructions5 title="\Zr120Buffer Data Name : ",size={245,15},pos={270,480},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable UserBufferDataFolderName,pos={280,500},size={245,15}, noproc,variable=root:Packages:Irena:BioSAXSDataMan:UserBufferDataFolderName
 	SetVariable UserBufferDataFolderName, title=" ", limits={0,0,0}, noedit=1, frame=0
-	TitleBox AverageInstructions6 title="\Zr120Output Data Name : ",size={245,15},pos={270,510},frame=0,fColor=(0,0,65535),labelBack=0
-	SetVariable SubtractedOutputFldrName,pos={280,530},size={245,15}, noproc,variable=root:Packages:Irena:BioSAXSDataMan:SubtractedOutputFldrName
+	TitleBox AverageInstructions6 title="\Zr120Output Data Name : ",size={245,15},pos={270,530},frame=0,fColor=(0,0,65535),labelBack=0
+	SetVariable SubtractedOutputFldrName,pos={280,550},size={245,15}, noproc,variable=root:Packages:Irena:BioSAXSDataMan:SubtractedOutputFldrName
 	SetVariable SubtractedOutputFldrName, title=" ", limits={0,0,0}, noedit=1, frame=0
 
 	//tab 3 - scaling data
@@ -658,6 +667,7 @@ Function IRB1_DataManTabProc(tca) : TabControl
 				TitleBox AverageInstructions3,win=IRB1_DataManipulationPanel, disable=(tab!=1)
 				PopupMenu SelectBufferData,win=IRB1_DataManipulationPanel, disable=(tab!=1)
 				SetVariable BufferScalingFraction,win=IRB1_DataManipulationPanel, disable=(tab!=1)
+				SetVariable BufferMatchString,win=IRB1_DataManipulationPanel, disable=(tab!=1)
 				Button SubtractBuffer,win=IRB1_DataManipulationPanel, disable=(tab!=1)
 				Button SubtractBufferMany,win=IRB1_DataManipulationPanel, disable=(tab!=1)
 				TitleBox AverageInstructions4 ,win=IRB1_DataManipulationPanel, disable=(tab!=1)
@@ -968,17 +978,6 @@ Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 	endif
 	AverageOutputFolderString = RemoveListItem(ItemsInList(tempStr,"_")-1, tempStr, "_") +"ave"
 	IR3C_SelectWaveNamesData("Irena:BioSAXSDataMan", FolderNameStr)			//this routine will preset names in strings as needed,
-//	DataFolderName = DataStartFolder+FolderNameStr
-//	QWavename = stringFromList(0,IR2P_ListOfWaves("Xaxis","", "IRB1_DataManipulationPanel"))
-//	IntensityWaveName = stringFromList(0,IR2P_ListOfWaves("Yaxis","*", "IRB1_DataManipulationPanel"))
-//	ErrorWaveName = stringFromList(0,IR2P_ListOfWaves("Error","*", "IRB1_DataManipulationPanel"))
-//	if(UseIndra2Data)
-//		dQWavename = ReplaceString("Qvec", QWavename, "dQ")
-//	elseif(UseQRSdata)
-//		dQWavename = "w"+QWavename[1,31]
-//	else
-//		dQWavename = ""
-//	endif
 	Wave/Z SourceIntWv=$(DataFolderName+IntensityWaveName)
 	Wave/Z SourceQWv=$(DataFolderName+QWavename)
 	Wave/Z SourceErrorWv=$(DataFolderName+ErrorWaveName)
@@ -989,7 +988,13 @@ Function IRB1_DataManAppendOneDataSet(FolderNameStr)
 	if(Subtracting)		//subtracting buffer from ave data or scaling data, in each case, must remove the existing files. 
 		//preset for user output name for merged data
 		UserSourceDataFolderName = StringFromList(ItemsInList(FolderNameStr, ":")-1, FolderNameStr, ":")
-		SubtractedOutputFldrName = ReplaceString("_ave", UserSourceDataFolderName, "_sub")
+		if(StringMatch(UserSourceDataFolderName, "*_ave"))
+			SubtractedOutputFldrName = ReplaceString("_ave", UserSourceDataFolderName, "_sub")
+		elseif(StringMatch(UserSourceDataFolderName, "*_avg"))
+			SubtractedOutputFldrName = ReplaceString("_avg", UserSourceDataFolderName, "_sub")
+		else
+			SubtractedOutputFldrName = RemoveEnding(UserSourceDataFolderName, ":") +"_sub"	
+		endif
 		//remove, if needed, all data from graph
 		IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_DataManipulationPanel#LogLogDataDisplay")
 		//append Buffer data if exist...
@@ -1049,7 +1054,7 @@ static Function IRB1_DataManInitBioSAXS()
 
 	//here define the lists of variables and strings needed, separate names by ;...
 	ListOfStrings="DataFolderName;IntensityWaveName;QWavename;ErrorWaveName;dQWavename;DataUnits;"
-	ListOfStrings+="DataStartFolder;DataMatchString;FolderSortString;FolderSortStringAll;"
+	ListOfStrings+="DataStartFolder;DataMatchString;BufferMatchString;FolderSortString;FolderSortStringAll;"
 	ListOfStrings+="UserMessageString;SavedDataMessage;UserSourceDataFolderName;UserBufferDataFolderName;"
 	ListOfStrings+="AverageOutputFolderString;SelectedBufferFolder;SubtractedOutputFldrName;"
 
@@ -1087,6 +1092,10 @@ static Function IRB1_DataManInitBioSAXS()
 			teststr ="root:"
 		endif
 	endfor		
+	SVAR BufferMatchString
+	if(strlen(BufferMatchString)<1)
+		BufferMatchString="(?i)Buf"
+	endif
 	SVAR SelectedBufferFolder
 	if(strlen(SelectedBufferFolder)<2)
 		SelectedBufferFolder = "---"
@@ -1122,9 +1131,11 @@ Function/T IRB1_ListBufferScans()
 	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 	String AllDataFolders
 	AllDataFolders=IR3C_MultiGenStringOfFolders("Irena:BioSAXSDataMan", "root:",0, 1,0, 0,1)
-	//seelct only AVeraged data. 
-	AllDataFolders = GrepList(AllDataFolders, "ave", 0) 
-	
+	SVAR BufferMatchString=root:Packages:Irena:BioSAXSDataMan:BufferMatchString
+	//select only Averaged data. 
+	if(strlen(BufferMatchString)>0)
+		AllDataFolders = GrepList(AllDataFolders, BufferMatchString, 0) 
+	endif
 	return AllDataFolders
 end
 //**********************************************************************************************************
@@ -1348,7 +1359,13 @@ static Function IRB1_DataManSubtractBufferOne()
 	IN2G_RemoveNaNsFrom3Waves(ResultsInt,ResultsQ,ResultsE)
 
 	String OutFldrNm, OutXWvNm, OutYWvNm,OutEWvNm
-	OutFldrNm = ReplaceString("_ave", SourceFolderName, "_sub")
+	if(StringMatch(SourceFolderName, "*_ave:"))
+		OutFldrNm = ReplaceString("_ave", SourceFolderName, "_sub")
+	elseif(StringMatch(SourceFolderName, "*_avg:"))
+		OutFldrNm = ReplaceString("_avg", SourceFolderName, "_sub")
+	else
+		OutFldrNm = RemoveEnding(SourceFolderName, ":") +"_sub"	
+	endif
 	string FirstFolderShortName=StringFromList(ItemsInList(OutFldrNm, ":")-1, OutFldrNm, ":")
 	string OutputWaveNameMain = RemoveListItem(ItemsInList(FirstFolderShortName,"_")-1, FirstFolderShortName, "_") +"sub"
 	OutYWvNm = "r_"+OutputWaveNameMain

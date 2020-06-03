@@ -968,7 +968,7 @@ static Function IR3L_CreateNewGraph()
 	//first create a new GraphWindowName, this is new graph...
 	string basename="MultiDataPlot_"
 	GraphWindowName = UniqueName(basename, 6, 0)
- 	Display /K=1/W=(1297,231,2097,841) as GraphUserTitle
+ 	Display /K=1/W=(200,30,1000,730) as GraphUserTitle
  	DoWindow/C $(GraphWindowName)
  	AutoPositionWindow /M=0 /R=IR3L_MultiSamplePlotPanel $(GraphWindowName)
 end

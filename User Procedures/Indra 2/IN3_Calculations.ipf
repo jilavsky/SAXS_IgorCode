@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.41
+#pragma version=1.42
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2019, Argonne National Laboratory
@@ -9,6 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.42 added IN3_SmartBlankSelection(DataFolderName) to automatically select Blank measured before the current sample. 
 //1.41 added some fudge factor for Qmin search and MSAXS handling. And change the logic so one can understand, what is happening. 
 //1.40 added automatci location of the Qmin where data start due to Int Sa/Bl ratio. 
 //1.39 Fixed step scanning GUI issues. 
@@ -133,6 +134,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 				abort
 			endif
 			IN3_LoadData()		//load data in the tool. 
+			IN3_SmartBlankSelection(DataFolderName)
 			IN3_LoadBlank()
 			IN3_SetPDParameters()
 				//	hopefully not needed any more IN2A_CleanWavesForSPECtroubles()				//clean the waves with USAXS data for Spec timing troubles, if needed
@@ -176,6 +178,7 @@ Function IN3_InputPanelButtonProc(B_Struct) : ButtonControl
 			abort
 		endif
 		IN3_LoadData()		//load data in the tool. 
+		IN3_SmartBlankSelection(DataFolderName)
 		IN3_LoadBlank()
 		IN3_SetPDParameters()
 			//	hopefully not needed any more IN2A_CleanWavesForSPECtroubles()				//clean the waves with USAXS data for Spec timing troubles, if needed
@@ -263,7 +266,37 @@ end
 
 //***********************************************************************************************************************************
 //***********************************************************************************************************************************
-//***********************************************************************************************************************************
+Function IN3_SmartBlankSelection(DataFolderName)
+	string DataFolderName
+
+	NVAR/Z SmartSelectBlank = root:Packages:Indra3:SmartSelectBlank
+	if(!NVAR_Exists(SmartSelectBlank))
+		variable/g root:Packages:Indra3:SmartSelectBlank
+		NVAR SmartSelectBlank = root:Packages:Indra3:SmartSelectBlank
+		SmartSelectBlank = 0
+	endif
+	if(SmartSelectBlank)
+		variable DataOrderNum=IN2G_FindNumIndxForSort(DataFolderName)
+		if(DataOrderNum>0)			//found order number
+			string AllBlanks=IN3_GenStringOfFolders(1) 
+			//smart number 1... Nearest to the scan number, preferably one before. 
+			Wave/T AllBlanksWave = ListToTextWave(AllBlanks, ";")
+			make/Free/N=(numpnts(AllBlanksWave)) BlankOrderNumbers
+			BlankOrderNumbers = IN2G_FindNumIndxForSort(AllBlanksWave[p])
+			Sort BlankOrderNumbers, BlankOrderNumbers, AllBlanksWave 
+			variable MatchON = BinarySearch(BlankOrderNumbers,DataOrderNum)
+			if(MatchON<0)
+				MatchON = 0
+			endif
+			String BestBlankName = AllBlanksWave[MatchON]
+			//this si what we need to select... 
+			SVAR BlankName = root:Packages:Indra3:BlankName
+			BlankName = BestBlankName
+			PopupMenu SelectBlankFolder win=USAXSDataReduction, popmatch=BlankName
+			TitleBox SelectBlankFolderWarning win=USAXSDataReduction, disable=0
+		endif
+	endif
+end//***********************************************************************************************************************************
 //***********************************************************************************************************************************
 
 Function IN3_GetDiodeTransmission(SkipMessage)
