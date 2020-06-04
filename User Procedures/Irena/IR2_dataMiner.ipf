@@ -199,7 +199,7 @@ Function IR3B_MetadataBrowserPanelFnct()
 	Setvariable DataFolderName,fStyle=2, variable=root:Packages:Irena:MetadataBrowser:DataFolderName, help={"This is grep string to clean up the key names"}
 	SetVariable GrepItemNameString,pos={270,150},size={240,20}, proc=IR3B_SetVarProc,title="\Zr120Regex key name: "
 	Setvariable GrepItemNameString,fStyle=2, variable=root:Packages:Irena:MetadataBrowser:GrepItemNameString, help={"This is grep string to clean up the key names"}
-	ListBox NoteItemsSelection,win=IR3B_MetadataBrowserPanel,pos={265,180},size={250,495}, mode=10
+	ListBox NoteItemsSelection,win=IR3B_MetadataBrowserPanel,pos={265,180},size={250,495}, mode=10, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox NoteItemsSelection,listWave=root:Packages:Irena:MetadataBrowser:ListOfWaveNoteItems
 	ListBox NoteItemsSelection,selWave=root:Packages:Irena:MetadataBrowser:SelectionOfWaveNoteItems
 	ListBox NoteItemsSelection,proc=IR3B_MultiListBoxProc
@@ -215,7 +215,7 @@ Function IR3B_MetadataBrowserPanelFnct()
 	TitleBox SelectedItemsInfo title="\Zr140List to process : ",fixedSize=1,size={150,20},pos={590,110},frame=0,fstyle=1, fixedSize=1,fColor=(0,0,52224)
 	PopupMenu ExtractFromFileName,pos={560,150},size={310,20},proc=IR3B_PopMenuProc, title="Extract From Folder Name : ",help={"Select if to extarct from name some information"}
 	PopupMenu ExtractFromFileName,value="---;_xyzC;_xyzmin;_xyz;_xyzpct;",mode=1, popvalue="---"
-	ListBox SeletectedItems,win=IR3B_MetadataBrowserPanel,pos={530,180},size={250,250}, mode=10
+	ListBox SeletectedItems,win=IR3B_MetadataBrowserPanel,pos={530,180},size={250,250}, mode=10, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox SeletectedItems,listWave=root:Packages:Irena:MetadataBrowser:SeletectedItems
 	ListBox SeletectedItems,selWave=root:Packages:Irena:MetadataBrowser:SelectionOfSelectedItems
 	ListBox SeletectedItems,proc=IR3B_MultiListBoxProc

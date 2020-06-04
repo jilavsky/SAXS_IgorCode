@@ -97,7 +97,7 @@ Proc IR3W_WAXSPanel()
 	PopupMenu SortFolders,pos={10,115},size={180,20},fStyle=2,proc=IR3W_PopMenuProc,title="Sort Folders"
 	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:WAXS:FolderSortString,value= root:Packages:Irena:WAXS:FolderSortStringAll
 
-	ListBox DataFolderSelection,pos={4,135},size={250,480}, mode=10
+	ListBox DataFolderSelection,pos={4,135},size={250,480}, mode=10, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox DataFolderSelection,listWave=root:Packages:Irena:WAXS:ListOfAvailableData
 	ListBox DataFolderSelection,selWave=root:Packages:Irena:WAXS:SelectionOfAvailableData
 	ListBox DataFolderSelection,proc=IR3W_WAXSListBoxProc
@@ -182,7 +182,7 @@ Proc IR3W_WAXSPanel()
 	ListBox PDF4CardsSelection,pos={290,180},size={240,220}, mode=10
 	ListBox PDF4CardsSelection,listWave=root:Packages:Irena:WAXS:ListOfPDF4Data
 	ListBox PDF4CardsSelection,selWave=root:Packages:Irena:WAXS:SelectionOfPDF4Data
-	ListBox PDF4CardsSelection,proc=IR3W_PDF4ListBoxProc
+	ListBox PDF4CardsSelection,proc=IR3W_PDF4ListBoxProc, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox PDF4CardsSelection colorWave=root:Packages:Irena:WAXS:ListOfPDF4DataColors
 	
 	Checkbox PDF4_DisplayHKLTags, pos={340,405},size={76,14},title="Display HKL tags", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:PDF4_DisplayHKLTags
@@ -3472,13 +3472,13 @@ Proc IR3W_PDF4SaveLoadPanel()
 	ListBox OutsidePDFDataList,pos={5,65},size={170,220}//,proc=NI1A_SaveLoadListBoxProc
 	ListBox OutsidePDFDataList,listWave=root:Packages:Irena:WAXS:SaveLoadPDFOutside
 	ListBox OutsidePDFDataList,selWave=root:Packages:Irena:WAXS:SaveLoadPDFOutsideSel
-	ListBox OutsidePDFDataList, mode= 9
+	ListBox OutsidePDFDataList, mode= 9, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 
 	TitleBox InsideData title="Inside",pos={230,45},frame=0,fstyle=1, fixedSize=1,size={350,20},fSize=12
 	ListBox InsidePDFDataList,pos={180,65},size={170,220}//,proc=NI1A_SaveLoadListBoxProc
 	ListBox InsidePDFDataList,listWave=root:Packages:Irena:WAXS:SaveLoadPDFInside
 	ListBox InsidePDFDataList,selWave=root:Packages:Irena:WAXS:SaveLoadPDFInsideSel
-	ListBox InsidePDFDataList, mode= 9
+	ListBox InsidePDFDataList, mode= 9, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 
 	Button UpdateListbox,pos={65,290},size={230,20},proc=IR3W_PDF4ButtonProc,title="Update listboxes"
 	Button UpdateListbox,help={"Read selected PDF4 from the file"}

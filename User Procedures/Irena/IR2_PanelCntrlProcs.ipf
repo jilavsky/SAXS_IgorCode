@@ -3293,7 +3293,7 @@ Function IR3C_MultiAppendControls(ToolPackageFolder,PanelName, DoubleClickFunNm,
 		ListBox DataFolderSelection,win=$(PanelName),pos={4,180},size={250,495}, mode=10
 		ListBox DataFolderSelection,listWave=$(PathToPackagesFolder+":ListOfAvailableData")
 		ListBox DataFolderSelection,selWave=$(PathToPackagesFolder+":SelectionOfAvailableData")
-		ListBox DataFolderSelection,proc=IR3C_MultiListBoxProc
+		ListBox DataFolderSelection,proc=IR3C_MultiListBoxProc, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	
 	
 		IR3C_MultiFixPanelControls(PanelName,ToolPackageFolder)	
@@ -3480,19 +3480,89 @@ Function IR3C_MultiListBoxProc(lba) : ListBoxControl
 	Variable isData1or2
 	string DoubleClickFunctionName
 	string ControlMouseDownFunctionName
+	string items
+	string TopPanel=WinName(0, 64)
+	SVAR ControlProcsLocations=root:Packages:IrenaControlProcs:ControlProcsLocations
+	string CntrlLocation=StringByKey(WinNameStr, ControlProcsLocations,":",";")
+	//SVAR DataSelSortString = $(CntrlLocation+":DataSelSortString")
+	SVAR DataMatchString = $("root:Packages:"+CntrlLocation+":DataMatchString")
+	NVAR InvertGrepSearch = $("root:Packages:"+CntrlLocation+":InvertGrepSearch")
+	variable oldSets
 
 	switch( lba.eventCode )
 		case -1: // control being killed
 			break
 		case 1: // mouse down
-			SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
-			ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
-			if(numpnts(listWave)<(row+1))
-				return 0
-			endif		
-			FoldernameStr=listWave[row]
-			if(strlen(ControlMouseDownFunctionName)>0)
-				Execute(ControlMouseDownFunctionName+"(\""+FoldernameStr+"\")")
+
+			if (lba.eventMod & 0x10)	// rightclick
+				items = "Refresh Content;Match \"ave\";Match \"avg\";Match \"sub\";Hide \"sub|avg|ave\";Remove Match;"	
+				PopupContextualMenu items
+				// V_flag is index of user selected item
+				switch (V_flag)
+					case 1:	// "Refresh Content"
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						oldSets=V_startRow
+						IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
+						ListBox DataFolderSelection,win=$(TopPanel),row=V_startRow
+						break;
+					case 2:	//Match ave
+						DataMatchString="ave"
+						InvertGrepSearch = 0
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
+						ListBox DataFolderSelection,win=$(TopPanel),row=V_startRow
+						break;
+					case 3:	//Match avg
+						DataMatchString="avg"
+						InvertGrepSearch = 0
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
+						ListBox DataFolderSelection,win=$(TopPanel),row=V_startRow
+						break;
+					case 4:	//Match sub
+						DataMatchString="sub"
+						InvertGrepSearch = 0
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
+						ListBox DataFolderSelection,win=$(TopPanel),row=V_startRow
+						break;
+					case 5:	//Match sub
+						DataMatchString="sub|avg|ave"
+						InvertGrepSearch = 1
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
+						ListBox DataFolderSelection,win=$(TopPanel),row=V_startRow
+						break;
+					case 6:	//remove Match
+						DataMatchString=""
+						InvertGrepSearch = 0
+						ControlInfo/W=$(TopPanel) ListOfAvailableData
+						 oldSets=V_startRow
+						IR3C_MultiUpdListOfAvailFiles(CntrlLocation)
+						ListBox DataFolderSelection,win=$(TopPanel),row=V_startRow
+						break;
+
+					default :	// "Sort"
+						//DataSelSortString = StringFromList(V_flag-1, items)
+						//PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString
+						//IR3C_SortListOfFilesInWvs(TopPanel)	
+						break;
+					endswitch
+				
+			else
+				SVAR ControlMouseDownFunction = root:Packages:IrenaControlProcs:ControlMouseDownFunction
+				ControlMouseDownFunctionName=StringByKey(WinNameStr, ControlMouseDownFunction,":",";" )
+				if(numpnts(listWave)<(row+1))
+					return 0
+				endif		
+				FoldernameStr=listWave[row]
+				if(strlen(ControlMouseDownFunctionName)>0)
+					Execute(ControlMouseDownFunctionName+"(\""+FoldernameStr+"\")")
+				endif
 			endif
 			break
 		case 3: // double click

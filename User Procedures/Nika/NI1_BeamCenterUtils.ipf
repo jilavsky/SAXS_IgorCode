@@ -120,7 +120,7 @@ Function NI1BC_CreateBmCntrField()
 	PopupMenu BmCntrFileType,mode=1,popvalue=BmCntrFileType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	TitleBox BCPathInfoStr, pos={3,56}, size={325,20}, variable=root:Packages:Convert2Dto1D:BCPathInfoStr, fixedSize=0, frame=0, fstyle=2, fColor=(0,12800,32000)
 
-	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1BC_ListBoxProc
+	ListBox CCDDataSelection,pos={17,95},size={300,150}, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
 	ListBox CCDDataSelection,listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInBmCntrPath
 	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0, proc = NI1_BMUListBoxProc

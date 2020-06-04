@@ -65,7 +65,7 @@ Function NI1_CreateFloodField()
 	PopupMenu FloodFileType,mode=1,popvalue=FloodFileType,value= #"root:Packages:Convert2Dto1D:ListOfKnownExtensions"
 	Button GetHelp,pos={335,105},size={80,15},fColor=(65535,32768,32768), proc=NI1_FloodButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 
-	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1M_ListBoxProc
+	ListBox CCDDataSelection,pos={17,95},size={300,150}, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
 	ListBox CCDDataSelection,listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInFloodPath
 	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0

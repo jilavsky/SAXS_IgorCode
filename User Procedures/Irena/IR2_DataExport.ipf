@@ -172,7 +172,7 @@ Function IR2E_UnivExpCheckboxProc(CB_Struct)
 					DrawText 29,29,"Multiple Data Export selection"
 					DrawText 10,255,"Configure Universal export tool panel options"
 					DrawText 10,275,"Select multiple data above and export : "
-					ListBox DataFolderSelection,pos={4,35},size={372,200}, mode=10
+					ListBox DataFolderSelection,pos={4,35},size={372,200}, mode=10, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 					ListBox DataFolderSelection,listWave=root:Packages:IR2_UniversalDataExport:ListOfAvailableData
 					ListBox DataFolderSelection,selWave=root:Packages:IR2_UniversalDataExport:SelectionOfAvailableData
 	

@@ -189,7 +189,7 @@ Proc IR1I_ImportSASASCIIData()
 	ListBox ListOfAvailableData,help={"Select files from this location you want to import"}
 	ListBox ListOfAvailableData,listWave=root:Packages:ImportData:WaveOfFiles
 	ListBox ListOfAvailableData,selWave=root:Packages:ImportData:WaveOfSelections
-	ListBox ListOfAvailableData,mode= 4, proc=IR1_ImportListBoxProc
+	ListBox ListOfAvailableData,mode= 4, proc=IR1_ImportListBoxProc, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 
 
 	SetVariable NameMatchString,pos={10,375},size={180,19},proc=IR1I_SetVarProc,title="Match name (string):"

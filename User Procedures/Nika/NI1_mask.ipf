@@ -92,7 +92,7 @@ Function NI1M_CreateImageROIPanel()
 		PopupMenu CCDFileExtension,mode=1,popvalue=CCDFileExtension,value= #"root:Packages:Convert2Dto1D:ListOfKnownCalibExtensions"
 	endif
 
-	ListBox CCDDataSelection,pos={17,95},size={300,150}//,proc=NI1M_ListBoxProc
+	ListBox CCDDataSelection,pos={17,95},size={300,150}, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox CCDDataSelection,help={"Select CCD file for which you want to create mask"}
 	ListBox CCDDataSelection,listWave=root:Packages:Convert2Dto1D:ListOfCCDDataInCCDPath
 	ListBox CCDDataSelection,row= 0,mode= 1,selRow= 0, proc=NI1_PrepMaskListBoxProc

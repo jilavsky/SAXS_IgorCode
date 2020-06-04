@@ -941,6 +941,7 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 			if(cmpstr(ba.ctrlname,"SaveGraphAsFile")==0)
 				DoWindow/F $(GraphWindowName)
 				SaveGraphCopy /I /W=$(GraphWindowName)  						//	saves current graph as Igor packed experiment
+				//Igor 9: use flag /T=1 and ".h5xp" as the file name extension to save to hdf file
 				DoWIndow/F IR3L_MultiSamplePlotPanel
 			endif
 

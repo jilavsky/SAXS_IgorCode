@@ -157,7 +157,7 @@ Window IR1K_ScatteringContCalc()
 	ListBox ListOfAvailableData,help={"List of stored data "}
 	ListBox ListOfAvailableData,listWave=root:Packages:ScatteringContrast:WaveOfCompoundsOutsideIgor
 //	ListBox ListOfAvailableData,selWave=root:Packages:ScatteringContrast:NumbersOfCompoundsOutsideIgor
-	ListBox ListOfAvailableData,mode= 2
+	ListBox ListOfAvailableData,mode=2, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 
 	SetVariable AvailableCompoundsMask,pos={300,350},size={280,16},title="Mask names (regex) :  ",help={"Mask Stored data list using regex"}
 	SetVariable AvailableCompoundsMask,value= root:Packages:ScatteringContrast:AvailableCompoundsMask, frame=1, proc=IR1K_SetVarProc
@@ -2072,7 +2072,7 @@ Function IR1K_AnomScattContCalc()
 	CheckBox StoreCompoundsInIgorExperiment, variable=root:Packages:ScatteringContrast:StoreCompoundsInIgorExperiment, help={"Compounds are stored inside current Igor experiment? Or on the hard drive?"}
 	ListBox CompoundSelection,pos={10,90},size={220,360},proc=IR1K_ListBoxProc
 	ListBox CompoundSelection,help={"Select two compounds to calculate contrast between"}
-	ListBox CompoundSelection,font="Times New Roman",frame=2
+	ListBox CompoundSelection,font="Times New Roman",frame=2, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox CompoundSelection,listWave=root:Packages:ScatteringContrast:WaveOfCompoundsOutsideIgor
 	ListBox CompoundSelection,selWave=root:Packages:ScatteringContrast:NumbersOfCompoundsOutsideIgor
 	if(Anom_MatrixVacuum)

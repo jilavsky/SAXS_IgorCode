@@ -3691,7 +3691,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox UseBatchProcessing,variable= root:Packages:Convert2Dto1D:UseBatchProcessing
 
 
-	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0, clickEventModifiers=4
+	ListBox Select2DInputWave,pos={16,92},size={300,120},row=0, clickEventModifiers=4, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox Select2DInputWave,help={"Select data file to be converted, you can select multiple data sets"}
 	ListBox Select2DInputWave,listWave=root:Packages:Convert2Dto1D:ListOf2DSampleData
 	ListBox Select2DInputWave,selWave=root:Packages:Convert2Dto1D:ListOf2DSampleDataNumbers
@@ -3897,7 +3897,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 //	PopupMenu Select2DMaskType,pos={232,339},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 //	PopupMenu Select2DMaskType,help={"Masks made by this code are tiff files, the should be: xxxx_mask.ext (tif)"}
 //	PopupMenu Select2DMaskType,mode=1,popvalue=root:Packages:Convert2Dto1D:MaskFileExtension,value= #"\"tif;\""
-	ListBox MaskListBoxSelection,pos={83,375},size={260,100}, row=0, clickEventModifiers=4
+	ListBox MaskListBoxSelection,pos={83,375},size={260,100}, row=0, clickEventModifiers=4, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox MaskListBoxSelection,help={"Select 2D data set for mask"}
 	ListBox MaskListBoxSelection,listWave=root:Packages:Convert2Dto1D:ListOf2DMaskData
 	ListBox MaskListBoxSelection,row= 0,mode= 1,selRow= 0, proc=NI1_MaskListBoxProc
@@ -3921,7 +3921,7 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	PopupMenu SelectBlank2DDataType,pos={270,310},size={111,21},proc=NI1A_PopMenuProc,title="Image type"
 	PopupMenu SelectBlank2DDataType,help={"Select type of 2D images being loaded"}
 
-	ListBox Select2DMaskDarkWave,pos={23,335},size={351,120},disable=1, row=0
+	ListBox Select2DMaskDarkWave,pos={23,335},size={351,120},disable=1, row=0, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox Select2DMaskDarkWave,help={"Select data file to be used as empty beam or dark field"}
 	ListBox Select2DMaskDarkWave,listWave=root:Packages:Convert2Dto1D:ListOf2DEmptyData
 	ListBox Select2DMaskDarkWave,row= 0,mode= 1,selRow= 0, proc=NI1_EmpDarkListBoxProc

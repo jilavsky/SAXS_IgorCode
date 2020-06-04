@@ -502,12 +502,22 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+#if(IgorVersion()>8.99)
+Menu "GraphPopup"
+       "Save as jpg", IN2G_SaveTopGraphJpg()
+       "Save as h5xp or pxp", IN2G_SaveTopGraphPXP()
+       "Clone this window with data", IN2G_CloneWindow()
+       "Make limits Nice", IN2G_MakeGrphLimitsNice()
+End
+#else       
 Menu "GraphPopup"
        "Save as jpg", IN2G_SaveTopGraphJpg()
        "Save as pxp", IN2G_SaveTopGraphPXP()
        "Clone this window with data", IN2G_CloneWindow()
        "Make limits Nice", IN2G_MakeGrphLimitsNice()
 End
+
+#endif
 
 //DataBrowser  right click menu... 
 //here is add to DataBrowser buttons, it will be in after compile hooks. 
@@ -593,7 +603,11 @@ Function IN2G_SaveTopGraphJpg()
 end
 Function IN2G_SaveTopGraphPXP()
 		string topWindow=WinName(0,1)
+#if(IgorVersion()>8.99)
+		SaveGraphCopy /I/T=1 /W=$(topWindow)	  					//this is pxp
+#else
 		SaveGraphCopy /I /W=$(topWindow)	  					//this is pxp
+#endif
 end
 //************************************************************************************************
 //************************************************************************************************

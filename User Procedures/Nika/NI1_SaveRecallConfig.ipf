@@ -42,11 +42,11 @@ Proc NI1A_SaveLoadPanel()
 	DrawText 38,22,"Save and Load configuration files"
 	Button SelectSaveLoadPath,pos={84,31},size={150,20},proc=NI1A_SaveLoadButtonProc,title="Select data path"
 	Button SelectSaveLoadPath,help={"Select path to your configuration files. You can create new folders by typing them in."}
-	ListBox SavedDataList,pos={3,76},size={164,117},proc=NI1A_SaveLoadListBoxProc
+	ListBox SavedDataList,pos={3,76},size={164,117},proc=NI1A_SaveLoadListBoxProc, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox SavedDataList,listWave=root:Packages:Convert2Dto1D:SaveLoadDataAvailable
 	ListBox SavedDataList,mode= 1,selRow= 5
 	ListBox ContentOfTheConfigFile,pos={171,77},size={192,116}
-	ListBox ContentOfTheConfigFile,fSize=9
+	ListBox ContentOfTheConfigFile,fSize=9, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
 	ListBox ContentOfTheConfigFile,listWave=root:Packages:Convert2Dto1D:ConfigFileContent
 	Button SaveCurrentConfig,pos={13,242},size={130,20},proc=NI1A_SaveLoadButtonProc,title="Save configuration"
 	Button SaveCurrentConfig,help={"Store current configuration into the file"}
