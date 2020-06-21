@@ -755,7 +755,7 @@ Function IR3J_ButtonProc(ba) : ButtonControl
 				endif	
 				IR3J_SaveResultsToNotebook()
 				IR3J_SaveResultsToWaves()
-				IR3J_CleanUnusedParamWaves()
+				//IR3J_CleanUnusedParamWaves()
 				IR3J_SaveResultsToFolder()
 			endif
 			if(stringmatch(ba.ctrlName,"FitSelectionDataSet"))
@@ -906,7 +906,7 @@ static Function IR3J_FitSequenceOfData()
 				sleep/S/C=6/M="Fitted data for "+ListOfAvailableData[i] DelayBetweenProcessing
 			endif
 		endfor
-		IR3J_CleanUnusedParamWaves()
+		//IR3J_CleanUnusedParamWaves()
 		print "all selected data processed"
 end
 //**********************************************************************************************************

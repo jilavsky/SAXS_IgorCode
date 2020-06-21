@@ -119,14 +119,15 @@ static Function IR1_UpdatePanelVersionNumber(panelName, CurentProcVersion, AddRe
 		GetWindow $(panelName), note
 		SetWindow $(panelName), note=S_value+";"+"NikaProcVersion:"+num2str(CurentProcVersion)+";"
 		if(AddResizeHookFunction==1)
-			IN2G_PanelAppendSizeRecordNote(panelName)
-			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
-			IN2G_ResetPanelSize(panelName,1)
-			//Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
-			STRUCT WMWinHookStruct s
-			s.eventcode=6
-			s.winName=panelName
-			IN2G_PanelResizePanelSize(s)
+			IN2G_AddResizeInformationToPanel(panelName)
+//			IN2G_PanelAppendSizeRecordNote(panelName)
+//			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+//			IN2G_ResetPanelSize(panelName,1)
+//			//Execute/P/Q("IN2G_ResetPanelSize(\""+PanelName+"\", 0)")
+//			STRUCT WMWinHookStruct s
+//			s.eventcode=6
+//			s.winName=panelName
+//			IN2G_PanelResizePanelSize(s)
 		endif
 	endif
 end

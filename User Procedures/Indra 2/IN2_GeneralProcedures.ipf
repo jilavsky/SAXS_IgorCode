@@ -1,6 +1,6 @@
 #pragma rtGlobals=2		// Use modern global access method.
-#pragma version = 2.24
-#pragma IgorVersion = 7.05
+#pragma version = 2.25
+#pragma IgorVersion = 8.03
 
 //control constants
 constant IrenaDebugLevel=1
@@ -34,11 +34,12 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 //
+//2.25 added IN2G_AddWaveStatistics() to right click TopTrace menu. Adds wave stats results and lines with average, ave+sdev, ave-Sdev
 //2.24 new version of IN2G_DuplicateGraphAndData which can copy data with same names. Igor 9 fixes and improvements. 
 //2.23 add IN2G_AddButtonsToBrowser(), which calls IN2G_ExtractInfoFromFldrname(). Use: adds button (via hooks functions) tgo DataBrowser and that will extract info from SampleName strings we are using. 
 //2.22 minor fix to IN2G_ColorTopGrphRainbow
 		//added 	IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ATSASInterfacePanel#DataDisplay")
-		//fix IN2G_ResetSizesForAllPanels so it does not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
+		//fix IN2G_ResetSizesForAllPanels so it dqes not busticate panels which cannot be scaled (Bio tools) and do not have scaling information
 		//		improved all panel scaling support, so it now scales embedded graphs.  
 		//add IN2G_DuplGraphInPanelSubwndw(String gname)		which recreates graph from panel as separate graph. Return this: DupWindwFromPanel
 		//added IN2G_ForceDeleteFolder(fullPathToFolder)	- this is dangerous function which deletes a folder with no questions asked on user computer. Provided by AC from WM. 
@@ -502,6 +503,10 @@ Menu "GraphMarquee"
  //      "Clone this window with data", IN2G_CloneWindow()
 End
 
+Menu "TracePopup"
+		"Append WaveStats", IN2G_AddWaveStatistics()
+end
+
 #if(IgorVersion()>8.99)
 Menu "GraphPopup"
        "Save as jpg", IN2G_SaveTopGraphJpg()
@@ -522,75 +527,122 @@ End
 //DataBrowser  right click menu... 
 //here is add to DataBrowser buttons, it will be in after compile hooks. 
 //this is for Igor 8 and 7, in Igro 9 this is in Data browser right click menu...
+
+
 Function IN2G_AddButtonsToBrowser()
 #if(IgorVersion()<9)
 	ModifyBrowser appendUserButton={'SampleName-to-Values',"IN2G_ExtractInfoFromFldrname()"}
 	ModifyBrowser appendUserButton={'Graph w1 vs w2',"IN2G_PlotBrowserSelectionXY()"}
 #endif
 end
+
 //this is right click Igor 9+ Data Browser functions, so they do not need to be buttons. 
-#if(IgorVersion()>8.99)
 
+#if(IgorVersion()>8.99)		
+			Menu "DataBrowserObjectsPopup", dynamic		
+				"--"
+				// Only one of these menu items will be visible,
+				// depending on whether or not a modifier key is pressed
+				// when the menu is first displayed.
+				IN2G_Display1vs2MenuString(0),/Q,IN2G_PlotBrowserSelectionXY(0)
+				IN2G_Display1vs2MenuString(1),/Q,IN2G_PlotBrowserSelectionXY(1)
+				IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
+				"--"		
+			End
+			//************************************************************************************************
+			Function/S IN2G_ShowTextWaveInfoMenuString()
+				WAVE/Z w1
+				String menuText = ""
+				Variable textWaveSelected = IN2G_GetSelectedTextWave(w1)
+				if (textWaveSelected)
+					sprintf menuText, "%s to Values", NameOfWave(w1)
+				endif
+				return menuText
+			End
+			//************************************************************************************************
+			// Returns the truth that the first selected object is a text wave.
+			Function IN2G_GetSelectedTextWave(WAVE/Z &w1)
+				if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
+					return 0
+				endif
+				
+				WAVE/Z w1 = $(GetBrowserSelection(0))	// may be null
+				if (WaveExists(w1) && (WaveType(w1, 1) == 2))
+					return 1
+				endif
+				return 0
+			End
+			//************************************************************************************************
+			// If the Data Browser object list has
+			// two numeric waves selected, sets
+			// w1 to be the top selected wave and w2 to be
+			// the bottom selected wave. If reverse1and2
+			// is true, then the order is reversed.
+			// Returns 1 if the first two selected objects
+			// are numeric waves and 0 otherwise.
+			Function IN2G_GetWave1AndWave2(WAVE/Z &w1, WAVE/Z &w2, Variable reverse1and2)
+				Variable twoNumericWavesSelected = 0
+				if (strlen(GetBrowserSelection(-1)) == 0)
+					return 0	// Data Browser is not open
+				endif
+				// Reverse w1 and w2 if a modifier key is pressed.
+				Variable keyState = GetKeyState(0)
+				WAVE/Z w1 = $(GetBrowserSelection(reverse1and2 ? 1 : 0))	// may be null
+				WAVE/Z w2 = $(GetBrowserSelection(reverse1and2 ? 0 : 1))	// may be null
+				if (WaveExists(w1) && WaveExists(w2) && (WaveType(w1, 1) == 1) && (WaveType(w2, 1) == 1))
+					twoNumericWavesSelected = 1
+				endif
+				return twoNumericWavesSelected
+			End
+			//************************************************************************************************
+			// If reverse1and2 is false, do Display 1 vs 2
+			// If reverse1and2 is true, do Display 2 vs 1
+			Function/S IN2G_Display1vs2MenuString(Variable reverse1and2)
+				WAVE/Z w1, w2
+				if (reverse1and2 != (GetKeyState(0) != 0))
+					return ""
+				endif
+				
+				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+				String menuText = ""
+				if (twoNumericWavesSelected)
+					sprintf menuText, "Display %s vs %s", NameOfWave(w1), NameOfWave(w2)
+				endif
+				return menuText
+			End
+			//************************************************************************************************		
+			Function IN2G_PlotBrowserSelectionXY(Variable reverse1and2)
+				WAVE/Z w1, w2
+				Variable twoNumericWavesSelected = IN2G_GetWave1AndWave2(w1, w2, reverse1and2)
+				if (twoNumericWavesSelected)
+					Display/K=1 w1 vs w2 as NameofWave(w1)+" vs "+NameofWave(w2)
+					Label left (NameofWave(w1))
+					Label bottom (NameofWave(w2))
+				endif
+			End
+		//************************************************************************************************
+			
 
-Menu "DataBrowserObjectsPopup", dynamic
-
-	"--"
-	IN2G_DisplayYvsXMenuString(),/Q,IN2G_PlotBrowserSelectionXY()
-	IN2G_ShowTextWaveInfoMenuString(), /Q, IN2G_ExtractInfoFromFldrname()
-	"--"
-
-End
-//************************************************************************************************
-Function/S IN2G_ShowTextWaveInfoMenuString()
-	WAVE/Z w1
-	String menuText = ""
-	Variable textWaveSelected = GetSelectedTextWave(w1)
-	if (textWaveSelected)
-		sprintf menuText, "%s to Values", NameOfWave(w1)
-	endif
-	return menuText
-End
-//************************************************************************************************
-// Returns the truth that the first selected object is a text wave.
-static Function GetSelectedTextWave(WAVE/Z &w1)
-	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
-		return 0
-	endif
-	
-	WAVE/Z w1 = $(GetBrowserSelection(0))	// may be null
-	if (WaveExists(w1) && (WaveType(w1, 1) == 2))
-		return 1
-	endif
-	return 0
-End
-//************************************************************************************************
-Function/S IN2G_DisplayYvsXMenuString()
-	WAVE/Z w1, w2
-	Variable twoNumericWavesSelected = GetWave1AndWave2(w1, w2)
-	String menuText = ""
-	if (twoNumericWavesSelected)
-		sprintf menuText, "Display %s vs %s", NameOfWave(w1), NameOfWave(w2)
-	endif
-	return menuText
-End
-//************************************************************************************************
-// Returns the truth that the first two selected objects are two numeric waves.
-static Function GetWave1AndWave2(WAVE/Z &w1, WAVE/Z &w2)
-	Variable twoNumericWavesSelected = 0
-	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
-		return 0
-	endif
-	
-	// Reverse w1 and w2 if a modifier key is pressed.
-	Variable keyState = GetKeyState(0)
-	WAVE/Z w1 = $(GetBrowserSelection((keyState == 0) ? 0 : 1))	// may be null
-	WAVE/Z w2 = $(GetBrowserSelection((keyState == 0) ? 1 : 0))	// may be null
-	if (WaveExists(w1) && WaveExists(w2) && (WaveType(w1, 1) == 1) && (WaveType(w2, 1) == 1))
-		twoNumericWavesSelected = 1
-	endif
-	
-	return twoNumericWavesSelected
-End
+#else
+		//************************************************************************************************
+		Function IN2G_PlotBrowserSelectionXY()
+			if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
+				return 0
+			endif
+			// Reverse w1 and w2 if a modifier key is pressed.
+			Variable keyState = GetKeyState(0)
+			WAVE/Z Wave1 = $(GetBrowserSelection((keyState == 0) ? 0 : 1))	// may be null
+			WAVE/Z Wave2 = $(GetBrowserSelection((keyState == 0) ? 1 : 0))	// may be null
+			if (WaveExists(Wave1) && WaveExists(Wave2) && (WaveType(Wave1, 1) == 1) && (WaveType(Wave2, 1) == 1))
+				Display/K=1 Wave1 vs Wave2 as NameofWave(Wave1)+" vs "+NameofWave(Wave2)
+				Label left (NameofWave(Wave1))
+				Label bottom (NameofWave(Wave2))
+			else
+				return 0
+			endif
+			return 1
+		end
+		//************************************************************************************************
 
 #endif
 
@@ -604,32 +656,13 @@ end
 Function IN2G_SaveTopGraphPXP()
 		string topWindow=WinName(0,1)
 #if(IgorVersion()>8.99)
-		SaveGraphCopy /I/T=1 /W=$(topWindow)	  					//this is pxp
+		SaveGraphCopy /I/T=1 /W=$(topWindow)	  			//this is h5xp
 #else
-		SaveGraphCopy /I /W=$(topWindow)	  					//this is pxp
+		SaveGraphCopy /I /W=$(topWindow)	  				//this is pxp
 #endif
 end
 //************************************************************************************************
 //************************************************************************************************
-Function IN2G_PlotBrowserSelectionXY()
-
-	if (strlen(GetBrowserSelection(-1)) == 0)	// If true, DB is not open
-		return 0
-	endif
-	// Reverse w1 and w2 if a modifier key is pressed.
-	Variable keyState = GetKeyState(0)
-	WAVE/Z Wave1 = $(GetBrowserSelection((keyState == 0) ? 0 : 1))	// may be null
-	WAVE/Z Wave2 = $(GetBrowserSelection((keyState == 0) ? 1 : 0))	// may be null
-	if (WaveExists(Wave1) && WaveExists(Wave2) && (WaveType(Wave1, 1) == 1) && (WaveType(Wave2, 1) == 1))
-		Display/K=1 Wave1 vs Wave2 as NameofWave(Wave1)+" vs "+NameofWave(Wave2)
-		Label left (NameofWave(Wave1))
-		Label bottom (NameofWave(Wave2))
-	else
-		return 0
-	endif
-	return 1
-end
-
 //************************************************************************************************
 //************************************************************************************************
 
@@ -2251,9 +2284,17 @@ end
 //***********************************************************
 //***********************************************************
 //***********************************************************
-////***********************************************************
+Function IN2G_AddResizeInformationToPanel(panelName)
+			string panelName
+			IN2G_PanelAppendSizeRecordNote(panelName)
+			SetWindow $panelName,hook(ResizePanelControls)=IN2G_PanelResizePanelSize
+			IN2G_ResetPanelSize(panelName,1)
+			STRUCT WMWinHookStruct s
+			s.eventcode=6
+			s.winName=panelName
+			IN2G_PanelResizePanelSize(s)
+end
 //***********************************************************
-
 Function IN2G_PanelResizePanelSize(s)
 	STRUCT WMWinHookStruct &s
 		//add to the end of panel forming macro these two lines:
@@ -2559,7 +2600,8 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	 
 	
 end
-//***********************************************************//*****************************************************************************************************************
+//***********************************************************
+//*****************************************************************************************************************
 //*****************************************************************************************************************
 Function IN2G_PanelAppendSizeRecordNote(panelName)
 	string panelName
@@ -3920,7 +3962,7 @@ Function/S IN2G_roundToUncertainity(val, uncert,N)		//returns properlly formated
 	endif
 	string ValStr, UncertStr
 	if(val<1e6&&val>1e-4)
-		sprintf ValStr, "%."+num2str(decPlaces)+"f" ,val
+		sprintf ValStr, "%."+num2str(decPlaces)+"g" ,val
 	else
 		sprintf ValStr, "%g" ,val
 	endif
@@ -4066,6 +4108,44 @@ Function IN2G_ColorTopGrphRainbow([topGraphStr])
 end
 ////*****************************************************************************************************************
 ////*****************************************************************************************************************
+Function IN2G_AddWaveStatistics()
+
+	GetLastUserMenuInfo
+	Print S_graphName, S_traceName
+	String topGraph = S_graphName
+	Wave Wv=TraceNameToWaveRef(S_graphName, S_traceName)
+	WaveStats/Q Wv
+				//V_sdev = 	IN2G_roundSignificant(V_sdev,2)
+	string TagText="Statistics on "+S_traceName+"\n"
+	TagText+="Average = "+num2str(IN2G_roundSignificant(V_avg,3))+" +/- "+num2str(IN2G_roundSignificant(V_sdev,2))+"\n"
+	TagText+="Standard deviation [%] = "+num2str(100*IN2G_roundSignificant((V_sdev/V_avg),2))+"\n"
+	TagText+="Min  = "+num2str(V_min)+"\n"+"Max = "+num2str(V_max)
+	
+				//TagText+="Average = "+ IN2G_roundToUncertainity(V_avg, V_sdev,2)+"\n" //"Average = "+num2str(IN2G_roundSignificant(V_avg,2))+" ; "+"sdev = "+num2str(V_sdev)+"\n"
+				//TagText+="Min = "+num2str(IN2G_roundSignificant(V_min,4))+" ; "+"Max = "+num2str(IN2G_roundSignificant(V_max,4))
+	TextBox/C/W=$(S_graphName)/N=AutoWaveStatsRes/F=0/A=MC TagText
+	Duplicate/O Wv, $(S_traceName+"_avg"), $(S_traceName+"_min"), $(S_traceName+"_max")
+	Wave MeanWv=$(S_traceName+"_avg")
+	MeanWv = V_avg
+	Wave MinWv=$(S_traceName+"_min")
+	MinWv = V_avg-V_sdev
+	Wave MaxWv=$(S_traceName+"_max")
+	MaxWv = V_avg+V_sdev
+	CheckDisplayed /W=$(S_graphName) $(NameOfWave(MeanWv))
+	if(V_Flag==0)
+		Wave/Z WvX = XWaveRefFromTrace(S_graphName, S_traceName)
+		if(WaveExists(WvX))
+			AppendToGraph /W=$(S_graphName) MeanWv, MinWv,MaxWv vs WvX
+		else
+			AppendToGraph /W=$(S_graphName) MeanWv, MinWv,MaxWv //[vs xwaveName ]
+		endif
+		ModifyGraph /W=$(S_graphName) lstyle($(NameOfWave(MeanWv)))=11,lsize($(NameOfWave(MeanWv)))=2,rgb($(NameOfWave(MeanWv)))=(0,0,65535)
+		ModifyGraph /W=$(S_graphName) lstyle($(NameOfWave(MinWv)))=17,rgb($(NameOfWave(MinWv)))=(0,0,0),lstyle($(NameOfWave(MaxWv)))=17,rgb($(NameOfWave(MaxWv)))=(0,0,0)
+	endif
+end
+////*****************************************************************************************************************
+////*****************************************************************************************************************
+
 
 Function IN2G_MakeGrphLimitsNice([topGraphStr])
 	string topGraphStr
@@ -4239,7 +4319,7 @@ Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, 
 			elseif(UseFolderName && !UseWavename)
 				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
 			elseif(!UseFolderName && UseWavename)
-				legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+				legendStr+="\\s("+tmpStr+") "+tmpStr
 			endif
 			if (i<imax-stepI)
 				legendStr+="\r"
@@ -4254,7 +4334,7 @@ Function IN2G_LegendTopGrphFldr(FontSize, MaxItems, UseFolderName, UseWavename, 
 			elseif(UseFolderName && !UseWavename)
 				legendStr+="\\s("+tmpStr+") "+GetWavesDataFolder(TraceNameToWaveRef(topGraph, tmpStr),0)
 			elseif(!UseFolderName && UseWavename)
-				legendStr+="\\s("+tmpStr+") "+":"+tmpStr
+				legendStr+="\\s("+tmpStr+") "+tmpStr
 			endif
 		endif	
 		Legend/C/N=text0/A=LB/W=$(topGraph) legendStr

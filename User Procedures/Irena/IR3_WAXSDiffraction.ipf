@@ -1,10 +1,10 @@
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
-#pragma version=1.14
+#pragma version=1.16
 #include <Multi-peak fitting 2.0>
 
 //local configurations
 Strconstant  WAXSPDF4Location= "WAXS_PDFCards"
-constant IR3WversionNumber = 1.15	//Diffraction panel version number
+constant IR3WversionNumber = 1.16	//Diffraction panel version number
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -12,6 +12,7 @@ constant IR3WversionNumber = 1.15	//Diffraction panel version number
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.16 change to use MultiSampleSelection Listbox tools and not custom code. 
 //1.15 add "Distance correction" value which enables one to shift sticks to correct for poor calibration of distacne. 
 //1.14 add button to open AMS www so users can search for cards easily. 
 //1.13 add background parameters to recorded values and add GUI to extract them into table. Add Graph of peak areas. 
@@ -61,7 +62,7 @@ Function IR3W_WAXS()
 	if(V_Flag)
 		DoWindow/F IR3W_WAXSPanel
 	else
-		Execute("IR3W_WAXSPanel()")
+		IR3W_WAXSPanelFunction()
 		IR1_UpdatePanelVersionNumber("IR3W_WAXSPanel", IR3WversionNumber,1)
 	endif
 	IR3W_UpdateListOfAvailFiles()
@@ -73,7 +74,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-Proc IR3W_WAXSPanel()
+Function IR3W_WAXSPanelFunction()
 	PauseUpdate    		// building window...
 	NewPanel /K=1 /W=(2.25,43.25,550,800) as "Powder Diffraction/WAXS Fits"
 	DoWIndow/C IR3W_WAXSPanel
@@ -83,24 +84,35 @@ Proc IR3W_WAXSPanel()
 	string XUserLookup=""
 	string EUserLookup=""
 	IR2C_AddDataControls("Irena:WAXS","IR3W_WAXSPanel","DSM_Int;M_DSM_Int;SMR_Int;M_SMR_Int;","AllCurrentlyAllowedTypes",UserDataTypes,UserNameString,XUserLookup,EUserLookup, 0,1, DoNotAddControls=1)
-	TitleBox DataSelection title="\Zr140Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20}
-	Checkbox UseIndra2Data, pos={10,50},size={76,14},title="USAXS", proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseIndra2Data
-	checkbox UseQRSData, pos={120,50}, title="QRS(QIS)", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseQRSdata
-	if(root:Packages:Irena:WAXS:UseQRSdata+root:Packages:Irena:WAXS:UseIndra2Data!=1)
-		root:Packages:Irena:WAXS:UseIndra2Data=0
-		root:Packages:Irena:WAXS:UseQRSdata = 1
-	endif
-	PopupMenu StartFolderSelection,pos={10,70},size={180,15},proc=IR3W_PopMenuProc,title="Start fldr"
-	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:WAXS:DataStartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:WAXS:UseIndra2Data, root:Packages:Irena:WAXS:UseQRSdata, 2,1)"
-	SetVariable FolderNameMatchString,pos={10,95},size={210,15}, proc=IR3W_SetVarProc,title="Folder Match (RegEx)"
-	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:WAXS:DataMatchString
-	PopupMenu SortFolders,pos={10,115},size={180,20},fStyle=2,proc=IR3W_PopMenuProc,title="Sort Folders"
-	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:WAXS:FolderSortString,value= root:Packages:Irena:WAXS:FolderSortStringAll
-
+	NVAR UseQRSdata=root:Packages:Irena:WAXS:UseQRSdata
+	NVAR UseIndra2Data=root:Packages:Irena:WAXS:UseIndra2Data
+	NVAR UseResults=root:Packages:Irena:WAXS:UseResults
+	UseResults = 0
+	UseIndra2Data = 0
+	UseQRSdata = 1
+	IR3C_MultiAppendControls("Irena:WAXS","IR3W_WAXSPanel", "IR3W_WAXSDoubleClickAction","",0,1)
+	//TitleBox DataSelection title="\Zr140Data selection",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	TitleBox DataSelection title="",pos={60,34},frame=0,fstyle=1, fixedSize=1,size={350,20}
+	//Checkbox UseIndra2Data, disable=1
+	Checkbox UseResults, disable=1
+	Checkbox DisplayUncertainties, disable=1
 	ListBox DataFolderSelection,pos={4,135},size={250,480}, mode=10, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
-	ListBox DataFolderSelection,listWave=root:Packages:Irena:WAXS:ListOfAvailableData
-	ListBox DataFolderSelection,selWave=root:Packages:Irena:WAXS:SelectionOfAvailableData
-	ListBox DataFolderSelection,proc=IR3W_WAXSListBoxProc
+//	checkbox UseQRSData, pos={120,50}, title="QRS(QIS)", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:UseQRSdata
+//	if(root:Packages:Irena:WAXS:UseQRSdata+root:Packages:Irena:WAXS:UseIndra2Data!=1)
+//		root:Packages:Irena:WAXS:UseIndra2Data=0
+//		root:Packages:Irena:WAXS:UseQRSdata = 1
+//	endif
+//	PopupMenu StartFolderSelection,pos={10,70},size={180,15},proc=IR3W_PopMenuProc,title="Start fldr"
+//	PopupMenu StartFolderSelection,mode=1,popvalue=root:Packages:Irena:WAXS:DataStartFolder,value= #"\"root:;\"+IR3C_GenStringOfFolders2(root:Packages:Irena:WAXS:UseIndra2Data, root:Packages:Irena:WAXS:UseQRSdata, 2,1)"
+//	SetVariable FolderNameMatchString,pos={10,95},size={210,15}, proc=IR3W_SetVarProc,title="Folder Match (RegEx)"
+//	Setvariable FolderNameMatchString,fSize=10,fStyle=2, variable=root:Packages:Irena:WAXS:DataMatchString
+//	PopupMenu SortFolders,pos={10,115},size={180,20},fStyle=2,proc=IR3W_PopMenuProc,title="Sort Folders"
+//	PopupMenu SortFolders,mode=1,popvalue=root:Packages:Irena:WAXS:FolderSortString,value= root:Packages:Irena:WAXS:FolderSortStringAll
+//
+//	ListBox DataFolderSelection,pos={4,135},size={250,480}, mode=10, special={0,0,1 }		//this will scale the width of column, users may need to slide right using slider at the bottom. 
+//	ListBox DataFolderSelection,listWave=root:Packages:Irena:WAXS:ListOfAvailableData
+//	ListBox DataFolderSelection,selWave=root:Packages:Irena:WAXS:SelectionOfAvailableData
+//	ListBox DataFolderSelection,proc=IR3W_WAXSListBoxProc
 	SetVariable Energy,pos={4,625},size={200,15}, proc=IR3W_SetVarProc,title="X-ray E [keV] ="
 	Setvariable Energy, variable=root:Packages:Irena:WAXS:Energy, limits={0.1,100,0}
 	SetVariable Wavelength,pos={4,645},size={200,15}, proc=IR3W_SetVarProc,title="Wavelength [A] ="
@@ -126,10 +138,13 @@ Proc IR3W_WAXSPanel()
 	SetDrawEnv fsize= 12,fstyle= 1
 	DrawText 10,20,"Background if needed for fitting"
 	//fix case when neither is selected and default to qrs
-	root:Packages:Irena:WAXSBackground:DataFolderName =""
+	SVAR DataFolderName = root:Packages:Irena:WAXSBackground:DataFolderName 
+	DataFolderName = ""
 	//note, this sets up the dependence for same type of data for background and fit data, seems logical. 
-	root:Packages:Irena:WAXSBackground:UseIndra2Data := root:Packages:Irena:WAXS:UseIndra2Data
-	root:Packages:Irena:WAXSBackground:UseQRSdata  := root:Packages:Irena:WAXS:UseQRSdata
+	NVAR UseIndra2DataB = root:Packages:Irena:WAXSBackground:UseIndra2Data 
+	SetFormula UseIndra2DataB,  "root:Packages:Irena:WAXS:UseIndra2Data"
+	NVAR UseQRSdataB = root:Packages:Irena:WAXSBackground:UseQRSdata  
+	SetFormula UseQRSdataB, "root:Packages:Irena:WAXS:UseQRSdata"
 	// done... 
 	Checkbox UseIndra2Data, pos={100,5}, disable=1
 	Checkbox UseResults, pos={250,5}, disable=1
@@ -137,8 +152,10 @@ Proc IR3W_WAXSPanel()
 	checkbox UseQRSData, pos={180,5}, disable=1
 	popupMenu SelectDataFolder, pos={10,20}, proc=IR3W_BackgroundPopMenuProc
 	setVariable FolderMatchStr, pos={10,40}
-	checkbox DisplayDataBackground, pos={140,40}, title="Display in Graph?", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayDataBackground
-	
+	checkbox DisplayDataBackground, pos={120,40}, title="Display in Graph?", size={76,14},proc=IR3W_WAXSCheckProc, variable=root:Packages:Irena:WAXS:DisplayDataBackground
+	PopupMenu QvecDataName pos={3,59}
+	PopupMenu IntensityDataName pos={3,78}
+	SetVariable WaveMatchStr pos={230,40}
 	//setVariable WaveMatchStr, pos={150,120}	
 	SetActiveSubwindow ##
 
@@ -151,7 +168,8 @@ Proc IR3W_WAXSPanel()
 	TitleBox Info1,pos={351.00,160.00},size={99.00,17.00},title="MultiPeak Fit"
 	TitleBox Info1,fSize=12,frame=0,fStyle=1,anchor= MC,fixedSize=1
 	PopupMenu MPFInitializeFromSetMenu,pos={285.00,180.00},size={235.00,23.00},bodyWidth=190,title="Initialize:"
-	PopupMenu MPFInitializeFromSetMenu,mode=1,value= #"IR3W_InitMPF2FromMenuString()", popvalue=root:Packages:Irena:WAXS:MPF2InitFolder, proc=IR3W_PopMenuProc
+	SVAR MPF2InitFolder = root:Packages:Irena:WAXS:MPF2InitFolder
+	PopupMenu MPFInitializeFromSetMenu,mode=1,value= #"IR3W_InitMPF2FromMenuString()", popvalue=MPF2InitFolder, proc=IR3W_PopMenuProc
 	Button MultiPeakFittingStart,pos={300.00,210.00},size={200.00,20.00},proc=IR3W_WAXSButtonProc,title="Start MultiPeak Fitting 2.0"
 	Button MultiPeakFittingStart,help={"Open and configure MultiPeak 2.0 fitting."}
 	TitleBox Info2,pos={350.00,160.00},size={350.00,20.00},disable=1,title="Diffraction lines"
@@ -942,42 +960,54 @@ End
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
+//**************************************************************************************
+Function IR3W_WAXSDoubleClickAction(FoldernameStr)
+		string FoldernameStr
+		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+		DoWindow IR3W_WAXSMainGraph
+		if(V_Flag==1)
+			DoWIndow/F IR3W_WAXSMainGraph
+		endif
+		IR3W_CopyAndAppendData(FoldernameStr)
 
-Function IR3W_WAXSListBoxProc(lba) : ListBoxControl
-	STRUCT WMListboxAction &lba
-
-	Variable row = lba.row
-	WAVE/T/Z listWave = lba.listWave
-	WAVE/Z selWave = lba.selWave
-	string FoldernameStr
-	Variable isData1or2
-	switch( lba.eventCode )
-		case -1: // control being killed
-			break
-		case 1: // mouse down
-			break
-		case 3: // double click
-			DoWindow IR3W_WAXSMainGraph
-			if(V_Flag==1)
-				DoWIndow/F IR3W_WAXSMainGraph
-			endif
-			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
-			FoldernameStr=listWave[row]
-			IR3W_CopyAndAppendData(FoldernameStr)
-			break
-		case 4: // cell selection
-		case 5: // cell selection plus shift key
-			break
-		case 6: // begin edit
-			break
-		case 7: // finish edit
-			break
-		case 13: // checkbox clicked (Igor 6.2 or later)
-			break
-	endswitch
-
-	return 0
-End
+end
+//**********************************************************************************************************
+//
+//Function IR3W_WAXSListBoxProc(lba) : ListBoxControl
+//	STRUCT WMListboxAction &lba
+//
+//	Variable row = lba.row
+//	WAVE/T/Z listWave = lba.listWave
+//	WAVE/Z selWave = lba.selWave
+//	string FoldernameStr
+//	Variable isData1or2
+//	switch( lba.eventCode )
+//		case -1: // control being killed
+//			break
+//		case 1: // mouse down
+//			break
+//		case 3: // double click
+//			DoWindow IR3W_WAXSMainGraph
+//			if(V_Flag==1)
+//				DoWIndow/F IR3W_WAXSMainGraph
+//			endif
+//			IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+//			FoldernameStr=listWave[row]
+//			IR3W_CopyAndAppendData(FoldernameStr)
+//			break
+//		case 4: // cell selection
+//		case 5: // cell selection plus shift key
+//			break
+//		case 6: // begin edit
+//			break
+//		case 7: // finish edit
+//			break
+//		case 13: // checkbox clicked (Igor 6.2 or later)
+//			break
+//	endswitch
+//
+//	return 0
+//End
 //**************************************************************************************
 //**************************************************************************************
 //**********************************************************************************************************
@@ -1292,10 +1322,13 @@ Function IR3W_AddBackgroundToGraph()
 		endif
 	if(DisplayBackg)	
 		if(WaveExists(BackgroundIntWave)&&WaveExists(Background2ThetaWave))
-		 	CheckDisplayed /W=IR3W_WAXSMainGraph BackgroundIntWave
-		 	if(!V_Flag)
-				AppendToGraph/W=IR3W_WAXSMainGraph BackgroundIntWave vs Background2ThetaWave
-				ModifyGraph lstyle(BackgroundIntWave)=7,rgb(BackgroundIntWave)=(0,0,0)
+			DoWIndow IR3W_WAXSMainGraph
+			if(V_Flag)
+			 	CheckDisplayed /W=IR3W_WAXSMainGraph BackgroundIntWave
+			 	if(!V_Flag)
+					AppendToGraph/W=IR3W_WAXSMainGraph BackgroundIntWave vs Background2ThetaWave
+					ModifyGraph lstyle(BackgroundIntWave)=7,rgb(BackgroundIntWave)=(0,0,0)
+				endif
 			endif
 		endif
 	else		//do not display

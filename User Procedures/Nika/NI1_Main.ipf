@@ -523,7 +523,7 @@ Function NI1_CheckVersionButtonProc(ba) : ButtonControl
 			endif
 			if(stringmatch(ba.ctrlName,"OpenGCManuscriptWebPage"))
 				//doi:10.1007/s11661-009-9950-x
-				BrowseURL "http://www.jomgateway.net/ArticlePage.aspx?DOI=10.1007/s11661-009-9950-x"
+				BrowseURL "https://link.springer.com/article/10.1007/s11661-009-9950-x"
 			endif
 			
 			break

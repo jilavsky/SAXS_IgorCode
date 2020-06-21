@@ -325,7 +325,7 @@ Function IR3B_PopMenuProc(pa) : PopupMenuControl
 		//do something here
 		IR3B_AddToSelectedItems("Extract"+popStr,1)
 	endif
-	DOWIndow/F IR3L_MultiSamplePlotPanel
+	DOWIndow/F IR3B_MetadataBrowserPanel
 end
 
 //**************************************************************************************
