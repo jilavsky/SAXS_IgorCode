@@ -919,6 +919,7 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"Wavelength"))
 				Wave/Z SourceQWv=$(DataFolderName+QWavename)
 				Wave/Z SourcedQWv=$(DataFolderName+dQWavename)
+				SetDataFOlder root:Packages:Irena:WAXS:
 				Duplicate/O SourceQWv, Data2ThetaWave
 				if(WaveExists(SourcedQWv))
 					Duplicate/O SourcedQWv, DataD2ThetaWave
@@ -927,6 +928,7 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 					DataD2ThetaWave=0
 				endif
 				Energy = 12.39842 / wavelength
+				XaxisType = 1
 				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
 			endif
 			if(stringmatch(sva.ctrlName,"DistanceCorrection"))
@@ -935,6 +937,7 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 			if(stringmatch(sva.ctrlName,"Energy"))
 				wavelength = 12.39842 / Energy
 				Wave/Z SourceQWv=$(DataFolderName+QWavename)
+				SetDataFOlder root:Packages:Irena:WAXS:
 				Duplicate/O SourceQWv, Data2ThetaWave
 				if(WaveExists(SourcedQWv))
 					Duplicate/O SourcedQWv, DataD2ThetaWave
@@ -942,6 +945,7 @@ Function IR3W_SetVarProc(sva) : SetVariableControl
 					Duplicate/O SourceQWv, DataD2ThetaWave
 					DataD2ThetaWave=0
 				endif
+				XaxisType = 1
 				IR3W_ConvertXdataToTTH(Data2ThetaWave,DataD2ThetaWave,XaxisType,wavelength)
 			endif
 
