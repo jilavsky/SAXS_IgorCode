@@ -551,17 +551,40 @@ Function/T IN3_FlyScanLoadHdf5File2(LoadManyDataSets)
 					Make/T/N=1 Config_Version
 					Config_Version[0]="0"
 				endif
-			   HDF5CloseFile/Z locFileID 		//cose HDF5 file here... 
+			   HDF5CloseFile/Z locFileID 		//cLose HDF5 file here... 
+				//make sure config version is properly created. 
 				Wave/T Config_Version
 				variable/g $(HDF5RawFolderWithData+"HdfWriterVersion")
 				NVAR HdfWriterVersion = $(HDF5RawFolderWithData+"HdfWriterVersion")
 				HdfWriterVersion = str2num(Config_Version[0])
 				KillWaves/Z Config_Version					
+				//Now, figure out if we have flyscan or step scan.  
+				//we are in root:raw here
+				Wave/T/Z program_name = $(HDF5RawFolderWithData+"entry:program_name")
+				variable isStepScan, isFlyScan
+				if(StringMatch(program_name[0], "bluesky"))
+					isStepScan = 1
+					isFlyScan = 0
+				elseif(StringMatch(program_name[0], "saveFlyData.py"))
+					isStepScan = 0
+					isFlyScan = 1
+				else	//default to flyscan. May need to be in the future... 
+					isStepScan = 0
+					isFlyScan = 1
+				endif
+
 				print "Imported HDF5 file : "+FileName
 #if(exists("AfterFlyImportHook")==6)  
 				AfterFlyImportHook(HDF5RawFolderWithData)
 #endif	
-				string tempStrProcessedName = IN3_FSConvertToUSAXS(HDF5RawFolderWithData, FileNameNoExtension)
+				string tempStrProcessedName
+				if(isFlyScan)		//flyscan import
+					tempStrProcessedName = IN3_FSConvertToUSAXS(HDF5RawFolderWithData, FileNameNoExtension)
+				elseif(isStepScan)
+					tempStrProcessedName = IN3_StepScanConvertToUSAXS(HDF5RawFolderWithData, FileNameNoExtension)		
+				else
+					Abort "Unknown scan type. Bug! Report me"		
+				endif
 				ListOfLoadedDataSets += tempStrProcessedName	+";"
 				print "Converted : "+HDF5RawFolderWithData+" into USAXS data : "+ tempStrProcessedName
 				KillDataFOlder/Z HDF5RawFolderWithData

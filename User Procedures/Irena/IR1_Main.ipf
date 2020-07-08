@@ -282,6 +282,8 @@ Menu "BioSAXS"
 	//help={"Calculate pair distribution function using various methods in Irena"}
 	"PDDF + MW (Gnom, AutoGnom, ...)", IRB1_PDDFInterfaceFunction()
 	help={"GUI to run PDDF and some ATSAS tools from Irena"}
+	"Concentration series", IRB1_ConcSeriesExtrapolation()
+	help={"Tool to extrapolate data from cencentration series measurements. "}
 end
 
 
@@ -3241,7 +3243,7 @@ Function IR1_KillGraphsAndPanels()
 	ListOfWindows += "TwoPhaseSystemData;TwoPhaseSolidGizmo;TwoPhaseSystems;FractalAggregatePanel;MassFractalAggregateView;TwoPhaseSolid2DImage;"
 	ListOfWindows += "IR3D_DataMergePanel;IRB1_PDDFInterfacePanel;IR3J_SimpleFitsPanel;IRB1_DataManipulationPanel;IR3J_LinDataDisplay;"
 	ListOfWindows += "IR3L_MultiSamplePlotPanel;IR3J_LogLogDataDisplay;IR3L_MultiSamplePlotPanel;IRB1_ImportBioSAXSASCIIData;"
-	ListOfWindows += "IR2E_MultipleDataSelectionPnl;IR3W_WAXSPanel;"
+	ListOfWindows += "IR2E_MultipleDataSelectionPnl;IR3W_WAXSPanel;IRB1_ConcSeriesPanel;"
 	
 	
 	variable i

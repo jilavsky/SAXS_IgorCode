@@ -1336,7 +1336,7 @@ static Function IRB1_DataManSubtractBufferOne()
 		ModifyGraph /W=IRB1_DataManipulationPanel#LogLogDataDisplay lstyle(r_BufferData)=3,lsize(r_BufferData)=3,rgb(r_BufferData)=(0,0,0)	
 	endif
 	
-	//do subtraction, thhere is not general procedrue in the Data manipulation...
+	//do subtraction, there is not general procedure in the Data manipulation...
 	Duplicate/Free r_SampleData, ResultsInt, TempBufIntInterp2
 	Duplicate/Free q_SampleData, ResultsQ, TempBuffEInterp2
 	Duplicate/Free s_SampleData, ResultsE
@@ -3267,6 +3267,9 @@ static Function IRB1_PDDFResetValsToPrevStale()
 	setDataFolder OldDF
 end
 //**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 
 static Function IRB1_PDDFSetDensitySLD()
 
@@ -3280,11 +3283,11 @@ static Function IRB1_PDDFSetDensitySLD()
 		PDDFUseNucleicAcid = 0
 	endif
 	if(PDDFUseProtein)
-		MWMassDensityProtein = 1.37
-		ScattLengthDensDifference = 2.086		//average protein
+		MWMassDensityProtein = 1.36
+		ScattLengthDensDifference = 2.086	 	//average protein * 10^10 
 	else
 		MWMassDensityProtein = 1.85
-		ScattLengthDensDifference = 1.5*2.086		//average nucleaic acid, needs to be fixed by Xiaobong ASAP. 
+		ScattLengthDensDifference = 3.70		//average nucleaic acid * 10^10 
 	endif
 
 end

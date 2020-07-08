@@ -349,128 +349,128 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
-//************************************************************************************************************
-Function IN3_FlyScanLoadHdf5File()
-	
-	string OldDf=getDataFolder(1)
-	setDataFolder root:
-	NewDataFolder/O root:raw
-	SetDataFolder root:raw
-	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
-	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
-	SVAR DataExtension = root:Packages:USAXS_FlyScanImport:DataExtension
-	SVAR RemoveFromNameString = root:Packages:USAXS_FlyScanImport:RemoveFromNameString	
-	NVAR ReduceXPCSdata = root:Packages:USAXS_FlyScanImport:ReduceXPCSdata
-	
-	variable NumSelFiles=sum(WaveOfSelections)	
-	variable OpenMultipleFiles=0
-	if(NumSelFiles==0)
-		return 0
-	endif	
-	variable i, Overwrite
-	string FileName, ListOfExistingFolders, tmpDtaFldr, shortNameBckp, TargetRawFoldername
-	String browserName, shortFileName, RawFolderWithData, SpecFileName, RawFolderWithFldr
-	String newShortName
-	Variable locFileID
-	For(i=0;i<numpnts(WaveOfSelections);i+=1)
-		if(WaveOfSelections[i])
-			FileName= WaveOfFiles[i]
-			shortFileName = ReplaceString("."+DataExtension, FileName, "")
-			newShortName = ReplaceString(RemoveFromNameString,shortFileName,"")[0,30]
-			shortFileName = shortFileName[0,30]
-			//check if such data exist already...
-			ListOfExistingFolders = DataFolderDir(1)
-			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
-			if (V_flag == 0)					// Open OK?
-				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"			
-				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
-					KillWaves/Z Config_Version
-					HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
-					if(V_Flag!=0)
-						Make/T/N=1 Config_Version
-						Config_Version[0]="0"
-					endif
-					Wave/T Config_Version
-				endif
-				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
-				string TempStrName=PossiblyQuoteName(shortFileName)
-				string TempStrNameShort=PossiblyQuoteName(newShortName)
-				if(DataFolderExists(shortFileName))		//Name exists and folder is fine... 
-					RawFolderWithData = GetDataFOlder(1)+TempStrName
-					RawFolderWithFldr = GetDataFolder(1)
-				else		//something failed. Expect too long name
-						Abort "Cannot find raw data, something went wrong. Send Nexus file to Jan so we can get this fixed."
-				endif
-				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
-					variable/g $(RawFolderWithData+":HdfWriterVersion")
-					NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
-					HdfWriterVersion = str2num(Config_Version[0])
-					KillWaves/Z Config_Version					
-					Wave/T SpecFileNameWv=$(RawFolderWithData+":entry:metadata:SPEC_data_file")
-					SpecFileName=SpecFileNameWv[0]
-					SpecFileName=stringFromList(0,SpecFileName,".")
-					TargetRawFoldername = SpecFileName+"_Fly"
-				else
-					TargetRawFoldername = "Mythen_data"
-				endif
-				if(strlen(TargetRawFoldername)>30)
-					//DoAlert /T="Too long folder name warning" 0, "The folder name is too long for Igor Pro, it will be cut to 30 characters"
-					print "*****    ERROR MESSAGE  ***** "
-					print "The folder name was too long for Igor Pro, it will be cut to 30 characters, it is now:   " +TargetRawFoldername[0,30] 
-					print "^^^^^^    ERROR MESSAGE  ^^^^^^"		
-					TargetRawFoldername = TargetRawFoldername[0,30]  
-				endif
-				NewDataFolder/O $(TargetRawFoldername)
-				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
-				if(DataFolderExists(targetFldrname))
-					DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
-					if(V_Flag==1)
-						KillDataFolder/Z targetFldrname
-						//MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
-						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
-						KillDataFolder $(TempStrName)
-					elseif(V_Flag==2)
-						string OldDf1=getDataFolder(1)
-						SetDataFolder TargetRawFoldername
-						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrNameShort,1,1), 11, 0 ))
-						SetDataFolder OldDf1		
-						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
-						TempStrNameShort = TempStrNameNew		
-						KillDataFolder $(TempStrName)
-					else
-						Abort 
-					endif
-				else
-					//MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
-					DuplicateDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
-					KillDataFolder $(shortFileName)
-				endif
-				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
-				print "Imported HDF5 file : "+RawFolderWithData
-#if(exists("AfterFlyImportHook")==6)  
-			AfterFlyImportHook(RawFolderWithData)
-#endif	
-				if(ReduceXPCSdata)
-					print "here belongs XPCS data conversion routine in the future" 
-					print "IN3_FlyScanLoadHdf5File()"
-				else
-					IN3_FSConvertToUSAXS(RawFolderWithData, FileName)	
-					print "Converted : "+RawFolderWithData+" into USAXS data"
-					if(IN3_DeleteRawData)
-						KillDataFOlder RawFolderWithData
-						//print "Deleted RAW folder : "+ RawFolderWithData +" - not necessary and takes too much space in files" 
-					endif
-				endif
-			else
-				DoAlert 0, "Could not open "+FileName
-			endif
-
-		endif
-	endfor
-	setDataFolder OldDf
-end
-
-//************************************************************************************************************
+////************************************************************************************************************
+//Function IN3_FlyScanLoadHdf5File()
+//	
+//	string OldDf=getDataFolder(1)
+//	setDataFolder root:
+//	NewDataFolder/O root:raw
+//	SetDataFolder root:raw
+//	Wave/T WaveOfFiles      = root:Packages:USAXS_FlyScanImport:WaveOfFiles
+//	Wave WaveOfSelections = root:Packages:USAXS_FlyScanImport:WaveOfSelections
+//	SVAR DataExtension = root:Packages:USAXS_FlyScanImport:DataExtension
+//	SVAR RemoveFromNameString = root:Packages:USAXS_FlyScanImport:RemoveFromNameString	
+//	NVAR ReduceXPCSdata = root:Packages:USAXS_FlyScanImport:ReduceXPCSdata
+//	
+//	variable NumSelFiles=sum(WaveOfSelections)	
+//	variable OpenMultipleFiles=0
+//	if(NumSelFiles==0)
+//		return 0
+//	endif	
+//	variable i, Overwrite
+//	string FileName, ListOfExistingFolders, tmpDtaFldr, shortNameBckp, TargetRawFoldername
+//	String browserName, shortFileName, RawFolderWithData, SpecFileName, RawFolderWithFldr
+//	String newShortName
+//	Variable locFileID
+//	For(i=0;i<numpnts(WaveOfSelections);i+=1)
+//		if(WaveOfSelections[i])
+//			FileName= WaveOfFiles[i]
+//			shortFileName = ReplaceString("."+DataExtension, FileName, "")
+//			newShortName = ReplaceString(RemoveFromNameString,shortFileName,"")[0,30]
+//			shortFileName = shortFileName[0,30]
+//			//check if such data exist already...
+//			ListOfExistingFolders = DataFolderDir(1)
+//			HDF5OpenFile/R /P=USAXSHDFPath locFileID as FileName
+//			if (V_flag == 0)					// Open OK?
+//				HDF5LoadGroup /O /R /T /IMAG=1 :, locFileID, "/"			
+//				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
+//					KillWaves/Z Config_Version
+//					HDF5LoadData/Z /A="config_version"/Q  /Type=2 locFileID , "/entry/program_name" 
+//					if(V_Flag!=0)
+//						Make/T/N=1 Config_Version
+//						Config_Version[0]="0"
+//					endif
+//					Wave/T Config_Version
+//				endif
+//				//need to figure out, if the file name was not just too long for Igor, so this will be bit more complciated...
+//				string TempStrName=PossiblyQuoteName(shortFileName)
+//				string TempStrNameShort=PossiblyQuoteName(newShortName)
+//				if(DataFolderExists(shortFileName))		//Name exists and folder is fine... 
+//					RawFolderWithData = GetDataFolder(1)+TempStrName
+//					RawFolderWithFldr = GetDataFolder(1)
+//				else		//something failed. Expect too long name
+//						Abort "Cannot find raw data, something went wrong. Send Nexus file to Jan so we can get this fixed."
+//				endif
+//				if(!ReduceXPCSdata)			//this is valid only for USAXS fly scan data, not for XPCS. 
+//					variable/g $(RawFolderWithData+":HdfWriterVersion")
+//					NVAR HdfWriterVersion = $(RawFolderWithData+":HdfWriterVersion")
+//					HdfWriterVersion = str2num(Config_Version[0])
+//					KillWaves/Z Config_Version					
+//					Wave/T SpecFileNameWv=$(RawFolderWithData+":entry:metadata:SPEC_data_file")
+//					SpecFileName=SpecFileNameWv[0]
+//					SpecFileName=stringFromList(0,SpecFileName,".")
+//					TargetRawFoldername = SpecFileName+"_Fly"
+//				else
+//					TargetRawFoldername = "Mythen_data"
+//				endif
+//				if(strlen(TargetRawFoldername)>30)
+//					//DoAlert /T="Too long folder name warning" 0, "The folder name is too long for Igor Pro, it will be cut to 30 characters"
+//					print "*****    ERROR MESSAGE  ***** "
+//					print "The folder name was too long for Igor Pro, it will be cut to 30 characters, it is now:   " +TargetRawFoldername[0,30] 
+//					print "^^^^^^    ERROR MESSAGE  ^^^^^^"		
+//					TargetRawFoldername = TargetRawFoldername[0,30]  
+//				endif
+//				NewDataFolder/O $(TargetRawFoldername)
+//				string targetFldrname=":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
+//				if(DataFolderExists(targetFldrname))
+//					DoAlert /T="RAW data folder exists" 2, "Folder with RAW folder with name "+ targetFldrname+" already exists. Overwrite (Yes), Rename (No), or Cancel?"
+//					if(V_Flag==1)
+//						KillDataFolder/Z targetFldrname
+//						//MoveDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername))				
+//						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
+//						KillDataFolder $(TempStrName)
+//					elseif(V_Flag==2)
+//						string OldDf1=getDataFolder(1)
+//						SetDataFolder TargetRawFoldername
+//						string TempStrNameNew = possiblyquoteName(UniqueName(IN2G_RemoveExtraQuote(TempStrNameShort,1,1), 11, 0 ))
+//						SetDataFolder OldDf1		
+//						DuplicateDataFolder $(TempStrName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameNew)
+//						TempStrNameShort = TempStrNameNew		
+//						KillDataFolder $(TempStrName)
+//					else
+//						Abort 
+//					endif
+//				else
+//					//MoveDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername))				
+//					DuplicateDataFolder $(shortFileName), $(":"+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort)
+//					KillDataFolder $(shortFileName)
+//				endif
+//				RawFolderWithData = RawFolderWithFldr+possiblyquoteName(TargetRawFoldername)+":"+TempStrNameShort
+//				print "Imported HDF5 file : "+RawFolderWithData
+//#if(exists("AfterFlyImportHook")==6)  
+//			AfterFlyImportHook(RawFolderWithData)
+//#endif	
+//				if(ReduceXPCSdata)
+//					print "here belongs XPCS data conversion routine in the future" 
+//					print "IN3_FlyScanLoadHdf5File()"
+//				else
+//					IN3_FSConvertToUSAXS(RawFolderWithData, FileName)	
+//					print "Converted : "+RawFolderWithData+" into USAXS data"
+//					if(IN3_DeleteRawData)
+//						KillDataFOlder RawFolderWithData
+//						//print "Deleted RAW folder : "+ RawFolderWithData +" - not necessary and takes too much space in files" 
+//					endif
+//				endif
+//			else
+//				DoAlert 0, "Could not open "+FileName
+//			endif
+//
+//		endif
+//	endfor
+//	setDataFolder OldDf
+//end
+//
+////************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
@@ -790,6 +790,211 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	setDataFolder OldDf
 	return DataFolderName
 end
+//************************************************************************************************************
+//************************************************************************************************************
+
+Function/T IN3_StepScanConvertToUSAXS(RawFolderWithData, origFileName)
+	string RawFolderWithData, origFileName
+
+print "Function IN3_StepScanConvertToUSAXS is not finished yet!"
+print "Can be finished, when finilized step scanning Nexus file is available."
+
+	string OldDf=GetDataFolder(1)
+	setDataFolder RawFolderWithData
+	//here we need to deal with hdf5 data
+	//spec file name
+	//string SpecFileName
+	//Wave/T SpecFileNameWv=:entry:metadata:SPEC_data_file
+	//SpecFileName=SpecFileNameWv[0]
+	//SpecFileName=stringFromList(0,SpecFileName,".")
+	Wave/T SpecSourceFilenameW=:entry:metadata:SPEC_data_file			//TODO: this needs to be added to metadata
+
+	NVAR HdfWriterVersion = HdfWriterVersion
+	Wave/T UserSampleNameWv = :entry:title
+	//wave data to locate
+	Wave TimeWv=:entry:data:seconds
+	Wave I0Wv=:entry:data:I0_USAXS
+	Wave updWv=:entry:data:PD_USAXS
+	Wave I00GainW =:entry:data:I00_autorange_controls_reqrange
+	Wave I0GainW = :entry:data:I0_autorange_controls_reqrange
+	Wave UPDGainWv = :entry:data:upd_autorange_controls_reqrange
+	Wave ARWv 		= :entry:data:a_stage_r
+	Wave AYWv 		= :entry:data:a_stage_y
+	Wave DYWv 		= :entry:data:d_stage_y
+	Wave MRWv 		= :entry:data:m_stage_r
+	Wave SYWv 		= :entry:data:s_stage_y
+
+	Wave/Z UPDsize=:entry:metadata:UPDsize						//TODO: this needs to be added to metadata
+	if(!WaveExists(UPDsize))
+		make/O/N=1 :entry:metadata:UPDsize
+		Wave UPDsize=:entry:metadata:UPDsize	
+		UPDsize[0] = 5.5
+	endif
+	Wave/T SampleNameW=:entry:title
+	Wave/Z SampleThicknessW = :entry:sample:thickness			//TODO: this needs to be added to metadata
+	if(!WaveExists(SampleThicknessW))
+		make/O/N=1 :entry:sample:thickness
+		Wave SampleThicknessW=:entry:sample:thickness	
+		SampleThicknessW[0] = 1
+	endif
+	//diode stufff
+	Wave updG1=:entry:metadata:upd_gain0
+	Wave updG2=:entry:metadata:upd_gain1
+	Wave updG3=:entry:metadata:upd_gain2
+	Wave updG4=:entry:metadata:upd_gain3
+	Wave updG5=:entry:metadata:upd_gain4	
+	Wave updBkg1=:entry:metadata:upd_bkg0
+	Wave updBkg2=:entry:metadata:upd_bkg1
+	Wave updBkg3=:entry:metadata:upd_bkg2
+	Wave updBkg4=:entry:metadata:upd_bkg3
+	Wave updBkg5=:entry:metadata:upd_bkg4	
+	Wave updBkgErr1=:entry:metadata:upd_bkg_err0
+	Wave updBkgErr2=:entry:metadata:upd_bkgErr1
+	Wave updBkgErr3=:entry:metadata:upd_bkgErr2
+	Wave updBkgErr4=:entry:metadata:upd_bkgErr3
+	Wave updBkgErr5=:entry:metadata:upd_bkgErr4	
+	
+	Wave/T TimeW=:entry:start_time
+	//these transmission values are missing for now
+	Wave/Z USAXSPinT_I0Counts=:entry:metadata:trans_I0_counts
+	Wave/Z USAXSPinT_I0Gain=:entry:metadata:trans_I0_gain
+	Wave/Z USAXSPinT_AyPosition=:entry:metadata:trans_pin_aypos
+	Wave/Z USAXSPinT_pinCounts=:entry:metadata:trans_pin_counts
+	Wave/Z USAXSPinT_pinGain=:entry:metadata:trans_pin_gain
+	Wave/Z USAXSPinT_Time= :entry:metadata:trans_pin_time
+	//end of transmission values
+
+
+	//geometry
+	Wave/Z DCM_energyW=:entry:instrument:monochromator:energy
+	Wave SDDW=:entry:instrument:bluesky:metadata:SDD_mm
+	Wave SADW=:entry:instrument:bluesky:metadata:SAD_mm
+	Wave AYW=:entry:instrument:bluesky:metadata:ay0
+	Wave ArCenterW=:entry:instrument:bluesky:metadata:center
+	Wave DYW=:entry:instrument:bluesky:metadata:dy0
+	Wave ExponentW=:entry:instrument:bluesky:metadata:exponent
+	Wave FinishW=:entry:instrument:bluesky:metadata:finish
+	Wave IntervalsW=:entry:instrument:bluesky:metadata:intervals
+	Wave/T LoginIDW=:entry:instrument:bluesky:metadata:login_id
+	Wave nimStepW=:entry:instrument:bluesky:metadata:minStep
+	Wave StartW=:entry:instrument:bluesky:metadata:start
+
+
+	variable is2DScan		//2D collimated USAXS?
+	is2DScan = 0
+	Wave/Z/T is_2D_USAXS_scan= :entry:instrument:bluesky:metadata:useSBUSAXS
+	if(WaveExists(is_2D_USAXS_scan))
+		if(stringMatch(is_2D_USAXS_scan[0],"True"))
+			is2DScan = 1
+		endif
+	endif
+	//here we copy data to new place
+	newDataFolder/O/S root:USAXS
+	string FileName, ListOfExistingFolders
+	FileName = origFileName
+	ListOfExistingFolders = DataFolderDir(1)
+	NVAR OverWriteExistingData=root:Packages:Indra3:OverWriteExistingData
+	if(StringMatch(IN2G_ConvertDataDirToList(ListOfExistingFolders), "*"+IN2G_RemoveExtraQuote(FileName,1,1)+";*" ) && (OverWriteExistingData==0))
+		DoAlert /T="Non unique name alert..." 1, "USAXS Folder with "+FileName+" name already found, Overwrite?" 
+			if(V_Flag!=1)
+				return ""
+			endif	
+	endif
+ 	newDataFolder/O/S $(FileName)
+	string/g UserSampleName=	UserSampleNameWv[0]			 //stringFromList(0,origFileName,".")
+	string/g SpecCommand
+	if(is2DScan)
+		SpecCommand="sbuascan  ar "+num2str(StartW[0])+" "+num2str(ArCenterW[0])+" "+num2str(FinishW[0])+" "+num2str(nimStepW[0])+" "+num2str(DYW[0])+" "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" "+num2str(IntervalsW[0])+" 1"
+	else
+		SpecCommand="uascan  ar "+num2str(StartW[0])+" "+num2str(ArCenterW[0])+" "+num2str(FinishW[0])+" "+num2str(nimStepW[0])+"  "+num2str(DYW[0])+" "+num2str(SDDW[0])+" -0.1 "+num2str(SADW[0])+" "+num2str(SampleThicknessW[0])+" "+num2str(IntervalsW[0])+" 1"
+	endif
+
+	Duplicate/O TimeWv, MeasTime
+	Duplicate/O I0Wv, Monitor
+	Duplicate/O updWv, USAXS_PD
+	Duplicate/O UPDGainWv, PD_range
+	Duplicate/O I0GainW, I0gain
+	Duplicate/O ARWv, Ar_encoder	
+
+	redimension/D MeasTime, Monitor, USAXS_PD
+	redimension/S PD_range, I0gain
+	//need to append the wave notes...
+	string WaveNote
+	if(is2DScan)
+		WaveNote="DATAFILE="+"not available"+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+SpecCommand
+	else
+		WaveNote="DATAFILE="+"not available"+";DATE="+TimeW[0]+";COMMENT="+SampleNameW[0]+";SpecCommand="+SpecCommand	
+	endif
+	WaveNote+=";SpecComment="+SampleNameW[0]+";"+"Nexus_attributesStartHere;"
+	note/K/NOCR MeasTime, WaveNote
+	note/K/NOCR Monitor, WaveNote
+	note/K/NOCR USAXS_PD, WaveNote
+	note/K/NOCR PD_range, WaveNote
+	note/K/NOCR Ar_encoder, WaveNote
+	
+	//let's make some standard strings we need.
+	string/g PathToRawData
+	PathToRawData=RawFolderWithData
+	string/g SpecComment
+	string/g SpecSourceFileName
+	SpecSourceFileName=SpecSourceFilenameW[0]
+	SpecComment = SampleNameW[0]
+	string/g UPDParameters
+	UPDParameters="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
+	UPDParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
+	UPDParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
+	UPDParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";UPDsize="+num2str(UPDsize[0])+";"
+	string/g MeasurementParameters
+	MeasurementParameters="DCM_energy="+num2str(DCM_energyW[0])+";SAD="+num2str(SADW[0])+";SDD="+num2str(SDDW[0])+";thickness="+num2str(SampleThicknessW[0])+";"
+	MeasurementParameters+=";I0AmpDark=;I0AmpGain="+num2str(I0GainW[0])+";I00AmpGain="+num2str(I00GainW[0])+";"
+	MeasurementParameters+="Vfc=100000;Gain1="+num2str(updG1[0])+";Gain2="+num2str(updG2[0])+";Gain3="+num2str(updG3[0])+";Gain4="+num2str(updG4[0])+";Gain5="+num2str(updG5[0])
+	MeasurementParameters+=";Bkg1="+num2str(updBkg1[0])+";Bkg2="+num2str(updBkg2[0])+";Bkg3="+num2str(updBkg3[0])+";Bkg4="+num2str(updBkg4[0])+";Bkg5="+num2str(updBkg5[0])
+	MeasurementParameters+=";Bkg1Err="+num2str(updBkgErr1[0])+";Bkg2Err="+num2str(updBkgErr2[0])+";Bkg3Err="+num2str(updBkgErr3[0])+";Bkg4Err="+num2str(updBkgErr4[0])+";Bkg5Err="+num2str(updBkgErr5[0])
+	if(WaveExists(USAXSPinT_pinCounts))
+		if(USAXSPinT_pinCounts[0]>100)
+		MeasurementParameters+=";USAXSPinT_Measure=1;USAXSPinT_AyPosition="+num2str(USAXSPinT_AyPosition[0])+";USAXSPinT_Time="+num2str(USAXSPinT_Time[0])+";USAXSPinT_pinCounts="+num2str(USAXSPinT_pinCounts[0])+";"
+		MeasurementParameters+="USAXSPinT_pinGain="+num2str(USAXSPinT_pinGain[0])+";USAXSPinT_I0Counts="+num2str(USAXSPinT_I0Counts[0])+";USAXSPinT_I0Gain="+num2str(USAXSPinT_I0Gain[0])+";"
+		endif
+	endif
+	//add recording of metatdata
+	string/g NXMetadata, NXSample, NXInstrument, NXUser 
+	NXMetadata 	= 	NEXUS_Read_Metadata(RawFolderWithData)	
+	NXSample 		= 	NEXUS_Read_Sample(RawFolderWithData)	
+	NXUser 		= 	NEXUS_Read_User(RawFolderWithData)	
+	NXInstrument = 	NEXUS_Read_Instrument(RawFolderWithData)	
+	
+	//add Nexus file Metadata here... 
+	string NXMetadataNote=""
+	NXMetadataNote+="NXUserStart;"+NXUser+";NXUserEnd;"
+	NXMetadataNote+="NXSampleStart;"+NXSample+";NXSampleEnd;"
+	NXMetadataNote+="NXInstrumentStart;"+NXInstrument+";NXInstrumentEnd;"
+	NXMetadataNote+="NXMetadataStart;"+NXMetadata+";NXMetadataEnd;Nexus_attributesEndHere;"
+	note/NOCR MeasTime, NXMetadataNote
+	note/NOCR Monitor, NXMetadataNote
+	note/NOCR USAXS_PD, NXMetadataNote
+	note/NOCR PD_range, NXMetadataNote
+	note/NOCR Ar_encoder, NXMetadataNote
+	//overwrite the UPD5Bkg if user chose to do so. 
+	DoWIndow USAXSDataReduction 
+	if(V_FLag)
+		ControlInfo /W=USAXSDataReduction Bkg5Overwrite
+		NVAR UPD_DK5=root:Packages:Indra3:UPD_DK5
+		if(V_Value!=0)
+				UPD_DK5 = V_Value
+				UPDParameters=ReplaceNumberByKey("Bkg5",UPDParameters, UPD_DK5,"=")
+		else
+				SVAR MeasurementParameters = MeasurementParameters
+				UPD_DK5 = NumberByKey("Bkg5", MeasurementParameters, "=", ";")
+				UPDParameters=ReplaceNumberByKey("Bkg5",UPDParameters, UPD_DK5,"=")
+		endif
+	endif
+	string DataFolderName=GetDataFOlder(1)
+	setDataFolder OldDf
+	return DataFolderName
+end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1450,7 +1655,8 @@ Function IN3_FlyScanButtonProc(ctrlName) : ButtonControl
 		IN3_FSSelectDeselectAll(0)
 	endif
 	if(cmpstr(ctrlName,"ImportData")==0)
-		IN3_FlyScanLoadHdf5File()
+		print "Loading XPCS data is disabled for now, if needed, we need to make changes to the code"
+		IN3_FlyScanLoadHdf5File2(1)
 	endif
 	if(cmpstr(ctrlName,"ConfigureBehavior")==0)
 		IN3_FlyScanConfigureFnct()
@@ -1497,7 +1703,7 @@ Function IN3_FlyScanImportListBoxProc(lba) : ListBoxControl
 			break
 		case 3: // double click
 			if(DoubleClickImports)
-				IN3_FlyScanLoadHdf5File()
+				IN3_FlyScanLoadHdf5File2(0)
 			else
 				IN3_FlyScanOpenHdf5File()
 			endif
