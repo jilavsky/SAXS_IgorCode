@@ -1104,6 +1104,10 @@ Function IRB1_ConcSerOptimizeParams()
 			MyXLimitWave[TempPnt][1]= 1.0
 		endif	
 	endfor
+	if(numpnts(MyPWave)<2)
+		setDataFolder oldDf
+		Abort "Not enough parameters selected for fitting"
+	endif
 	make/O/N=(numpnts(MyPWave),3) stepWave
 	stepWave[][0]=0.1
 	stepWave[][1]=0.001
