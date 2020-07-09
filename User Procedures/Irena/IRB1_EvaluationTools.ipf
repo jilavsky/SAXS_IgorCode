@@ -404,37 +404,12 @@ Function IRB1_ConcSeriesButtonProc(ba) : ButtonControl
 
 	switch( ba.eventCode )
 		case 2: // mouse up
-			// click code here
-//			if(stringMatch(ba.ctrlName,"PlotSelectedData"))
-//				IRB1_DataManAppendSelDtaSets()
-//			endif
-//			if(stringMatch(ba.ctrlName,"AverageData"))
-//				IRB1_DataManAverageDataSetsts()
-//			endif//
-//
-//			if(stringMatch(ba.ctrlName,"SelectAllData"))
-//				Wave SelectionOfAvailableData = root:Packages:Irena:BioSAXSDataMan:SelectionOfAvailableData	
-//				SelectionOfAvailableData = 1
-//			endif
-//			if(stringMatch(ba.ctrlName,"ClearGraph"))
-//				IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_DataManipulationPanel#LogLogDataDisplay")
-//			endif
-//			if(stringMatch(ba.ctrlName,"AutoScaleGraph"))
-//				SetAxis/W=IRB1_DataManipulationPanel#LogLogDataDisplay /A
-//			endif
-//			if(stringMatch(ba.ctrlName,"SubtractBuffer"))
-//				IRB1_DataManSubtractBufferOne()
-//			endif
-//			if(stringMatch(ba.ctrlName,"SubtractBufferMany"))
-//				IRB1_DataManSubtractBufferMany()
-//			endif
 //			if(stringMatch(ba.ctrlName,"ScaleRangeOfData"))
 //				IRB1_DataManScaleMany()
 //			endif
 			if(stringmatch(ba.ctrlName,"GetHelp"))
-				IN2G_OpenWebManual("Irena/bioSAXS.html#biosaxs-pddf")				//fix me!!			
+				IN2G_OpenWebManual("Irena/bioSAXS.html#concentration-series")				//fix me!!			
 			endif
-
 			break
 		case -1: // control being killed
 			break
