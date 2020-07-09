@@ -84,6 +84,7 @@
 #include "IR3_WAXSDiffraction", version>=1.14
 
 #include "IRB1_bioSAXS", version>=0.1
+#include "IRB1_EvaluationTools", version>=0.5
 
 //these are in different folders... 
 #include "cansasXML_GUI", version>=1.04
