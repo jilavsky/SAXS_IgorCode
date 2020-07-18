@@ -169,7 +169,7 @@ Function IRB1_ConcSerPanelFnct()
 
 	Button PlotData,pos={560,670},size={190,20}, proc=IRB1_ConcSerButtonProc,title="Plot Data", help={"Plot input data"}
 	Button CalculateInputData,pos={760,670},size={190,20}, proc=IRB1_ConcSerButtonProc,title="Subtract & Plot", help={"Calculate Data based on input values"}
-	Button OptimizeValues,pos={960,670},size={190,20}, proc=IRB1_ConcSerButtonProc,title="Optimize & Extrapolate", help={"Calculate Data based on input values"}
+	Button OptimizeValues,pos={960,670},size={200,20}, proc=IRB1_ConcSerButtonProc,title="Optimize, Subtract, & Extrapolate", help={"Calculate Data based on input values"}
 
 	SetVariable OptimizedPenalty,pos={990,700},size={150,15}, noproc,title="Fitting error =", frame=0, noedit=1, bodywidth=50
 	Setvariable OptimizedPenalty, variable=root:Packages:Irena:ConcSerExtrap:OptimizedPenalty, limits={0,100,0}, format="%4.2f", help={"Achieved fitting error "}
@@ -710,61 +710,33 @@ Function IRB1_ConcSerAddDataToPlot(WhichData)
 	NVAR UseSameBufferForAll 	= root:Packages:Irena:ConcSerExtrap:UseSameBufferForAll
 	variable i
 	if(V_Flag)
-		//IRB1_ConcSeriesPanel#LogLogDataDisplay
 		if(WhichData==0)			//remove all data
 			IN2G_RemoveDataFromGraph(topGraphStr = "IRB1_ConcSeriesPanel#LogLogDataDisplay")	
 			setDataFolder oldDf
 			return 0
-		elseif(WhichData==1)	//original
+		elseif(WhichData==1)				//original
 			//remove all processed data first. 
 			For(i=1;i<=5;i+=1)
 				RemoveFromGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /Z $("CorrectedIntensity"+num2str(i))
 				KillWaves/Z $("CorrectedIntensity"+num2str(i)), $("CorrectedQ"+num2str(i)), $("CorrectedE"+num2str(i))
 			endfor
 			RemoveFromGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /Z $("ExtrapolatedIntensity")
-			KillWaves/Z ExtrapolatedIntensity, ExtrapolatedQ, ExtrapolatedE
-			
-			For(i=1;i<(NumberOfConcentrations+1);i+=1)
-				Wave OrigInt = $("root:Packages:Irena:ConcSerExtrap:OrigSamIntensity"+num2str(i))
-				Wave OrigQ = $("root:Packages:Irena:ConcSerExtrap:OrigSamQ"+num2str(i))
-				Wave OrigE = $("root:Packages:Irena:ConcSerExtrap:OrigSamErr"+num2str(i))
-				CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(nameofWave(OrigInt))
-				if(V_flag==0)
-					AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay OrigInt vs OrigQ				
-					//ErrorBars /W=IRB1_ConcSeriesPanel#LogLogDataDisplay OrigInt Y,wave=(OrigE,OrigE)		
-				endif
-			endfor
-			variable MaxBuff=1
-			if(!UseSameBufferForAll)
-				MaxBuff= NumberOfConcentrations
-			endif	
-			For(i=1;i<(MaxBuff+1);i+=1)
-				Wave OrigInt = $("root:Packages:Irena:ConcSerExtrap:OrigBuffIntensity"+num2str(i))
-				Wave OrigQ = $("root:Packages:Irena:ConcSerExtrap:OrigBuffQ"+num2str(i))
-				Wave OrigE = $("root:Packages:Irena:ConcSerExtrap:OrigBuffErr"+num2str(i))
-				CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(nameofWave(OrigInt)) 
-				if(V_flag==0)
-					AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay OrigInt vs OrigQ				
-				endif
-			endfor
-		elseif(WhichData==2)	//processed
+			KillWaves/Z ExtrapolatedIntensity, ExtrapolatedQ, ExtrapolatedE		
+			AppendOrigData()
+		elseif(WhichData==2)					//processed
 			RemoveFromGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /Z $("ExtrapolatedIntensity")
-			For(i=1;i<=NumberOfConcentrations;i+=1)
-				Wave CorrectedInt=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(i))
-				Wave CorrectedQ=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(i))
-				CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(NameOfWave(CorrectedInt))
-				if(V_Flag==0)
-					AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /R CorrectedInt vs CorrectedQ
-				endif
-			endfor	
-		elseif(WhichData==3)	//extrapolated
-				Wave ExtrapolatedIntensity=root:Packages:Irena:ConcSerExtrap:ExtrapolatedIntensity
-				Wave ExtrapolatedQ=root:Packages:Irena:ConcSerExtrap:ExtrapolatedQ
-				Wave ExtrapolatedE=root:Packages:Irena:ConcSerExtrap:ExtrapolatedE
-				CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(NameOfWave(ExtrapolatedIntensity))
-				if(V_Flag==0)
-					AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /R ExtrapolatedIntensity vs ExtrapolatedQ
-				endif	
+			AppendOrigData()
+			AppendSubtractedData()
+		elseif(WhichData==3)					//extrapolated
+			AppendOrigData()
+			AppendSubtractedData()
+			Wave ExtrapolatedIntensity=root:Packages:Irena:ConcSerExtrap:ExtrapolatedIntensity
+			Wave ExtrapolatedQ=root:Packages:Irena:ConcSerExtrap:ExtrapolatedQ
+			Wave ExtrapolatedE=root:Packages:Irena:ConcSerExtrap:ExtrapolatedE
+			CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(NameOfWave(ExtrapolatedIntensity))
+			if(V_Flag==0)
+				AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /R ExtrapolatedIntensity vs ExtrapolatedQ
+			endif	
 		endif
 		if(WhichData>0)	
 			DoUpdate /W=IRB1_ConcSeriesPanel#LogLogDataDisplay
@@ -812,6 +784,62 @@ Function IRB1_ConcSerAddDataToPlot(WhichData)
 	setDataFolder oldDf
 end
 
+//**********************************************************************************************************
+//**********************************************************************************************************
+static Function AppendOrigData()
+
+	NVAR NumberOfConcentrations = root:Packages:Irena:ConcSerExtrap:NumberOfConcentrations
+	NVAR UseSameBufferForAll 	= root:Packages:Irena:ConcSerExtrap:UseSameBufferForAll
+	variable i
+	For(i=1;i<(NumberOfConcentrations+1);i+=1)
+			Wave/Z OrigInt = $("root:Packages:Irena:ConcSerExtrap:OrigSamIntensity"+num2str(i))
+			if(!WaveExists(OrigInt))
+				abort "Data do not exist, are data selected correctly?"
+			endif
+			Wave OrigQ = $("root:Packages:Irena:ConcSerExtrap:OrigSamQ"+num2str(i))
+			Wave OrigE = $("root:Packages:Irena:ConcSerExtrap:OrigSamErr"+num2str(i))
+			CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(nameofWave(OrigInt))
+			if(V_flag==0)
+				AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay OrigInt vs OrigQ				
+				//ErrorBars /W=IRB1_ConcSeriesPanel#LogLogDataDisplay OrigInt Y,wave=(OrigE,OrigE)		
+			endif
+	endfor
+	variable MaxBuff=1
+	if(!UseSameBufferForAll)
+		MaxBuff= NumberOfConcentrations
+	endif	
+	For(i=1;i<(MaxBuff+1);i+=1)
+		Wave OrigInt = $("root:Packages:Irena:ConcSerExtrap:OrigBuffIntensity"+num2str(i))
+		Wave OrigQ = $("root:Packages:Irena:ConcSerExtrap:OrigBuffQ"+num2str(i))
+		Wave OrigE = $("root:Packages:Irena:ConcSerExtrap:OrigBuffErr"+num2str(i))
+		CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(nameofWave(OrigInt)) 
+		if(V_flag==0)
+			AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay OrigInt vs OrigQ				
+		endif
+	endfor
+	
+end
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+static Function AppendSubtractedData()
+
+	NVAR NumberOfConcentrations = root:Packages:Irena:ConcSerExtrap:NumberOfConcentrations
+	NVAR UseSameBufferForAll 	= root:Packages:Irena:ConcSerExtrap:UseSameBufferForAll
+	variable i
+	For(i=1;i<=NumberOfConcentrations;i+=1)
+		Wave CorrectedInt=$("root:Packages:Irena:ConcSerExtrap:CorrectedIntensity"+num2str(i))
+		Wave CorrectedQ=$("root:Packages:Irena:ConcSerExtrap:CorrectedQ"+num2str(i))
+		CheckDisplayed /W=IRB1_ConcSeriesPanel#LogLogDataDisplay $(NameOfWave(CorrectedInt))
+		if(V_Flag==0)
+			AppendToGraph /W=IRB1_ConcSeriesPanel#LogLogDataDisplay /R CorrectedInt vs CorrectedQ
+		endif
+	endfor	
+
+end
+//**********************************************************************************************************
+//**********************************************************************************************************
+//**********************************************************************************************************
 //**********************************************************************************************************
 
 Function IRB1_ConcSerGraphWindowHook(s)
@@ -1079,46 +1107,49 @@ Function IRB1_ConcSerOptimizeParams()
 			MyXLimitWave[TempPnt][1]= 1.0
 		endif	
 	endfor
-	if(numpnts(MyPWave)<2)
+	if(numpnts(MyPWave)>1)
+		make/O/N=(numpnts(MyPWave),3) stepWave
+		stepWave[][0]=0.1
+		stepWave[][1]=0.001
+		stepWave[][2]=1
+		Duplicate/O MyPWave, MyXWave
+		print "Optimizing using simulated annealing, this may take little bit of time... " 
+		variable timerRefNum = StartMSTimer
+		Optimize /Q/I=10000/XSA=MyXLimitWave/X=MyXWave/SSA=stepWave/M = {3,0}  IRB1_ConcSerOptimizeMe, MyPWave
+		variable microSeconds = StopMSTimer(timerRefNum)
+		Print microSeconds/1e6, "Simulated annealing was seconds per optimization"
+		print "Now Optimizing using gradient method, this shoudl be fast..." 
+		//now try adding very localized search around...
+		stepWave[][0]=0.1
+		stepWave[][1]=0.0001
+		stepWave[][2]=1
+		MyXLimitWave[][0] = 0.98*MyXWave[p]
+		MyXLimitWave[][1] = 1.02*MyXWave[p]
+		Optimize /Q/I=100/XSA=MyXLimitWave/X=MyXWave/SSA=stepWave/M = {0,0}  IRB1_ConcSerOptimizeMe, MyPWave
+		//restore parameters from the MyXWave which returns optimum values... 
+		NVAR OptimizedPenalty=root:Packages:Irena:ConcSerExtrap:OptimizedPenalty
+		OptimizedPenalty = V_min
+		TempPnt = 0
+		For(i=1;i<=NumberOfConcentrations;i+=1)
+			NVAR FitConc = $("root:Packages:Irena:ConcSerExtrap:FitSample"+num2str(i)+"Conc")
+			NVAR FitBuff = $("root:Packages:Irena:ConcSerExtrap:FitBuffer"+num2str(i)+"Scale")
+			NVAR SamC=$("root:Packages:Irena:ConcSerExtrap:Sample"+num2str(i)+"Conc")
+			NVAR BufferScale=$("root:Packages:Irena:ConcSerExtrap:Buffer"+num2str(i)+"Scale")		
+			if(FitConc)
+				SamC = MyXWave[TempPnt]
+				TempPnt +=1
+			endif
+			if(FitBuff)
+				BufferScale = MyXWave[TempPnt]
+				TempPnt +=1
+			endif	
+		endfor
+	elseif(numpnts(MyPWave)>1)
 		setDataFolder oldDf
-		Abort "Not enough parameters selected for fitting"
-	endif
-	make/O/N=(numpnts(MyPWave),3) stepWave
-	stepWave[][0]=0.1
-	stepWave[][1]=0.001
-	stepWave[][2]=1
-	Duplicate/O MyPWave, MyXWave
-	print "Optimizing using simulated annealing, this may take little bit of time... " 
-	variable timerRefNum = StartMSTimer
-	Optimize /Q/I=10000/XSA=MyXLimitWave/X=MyXWave/SSA=stepWave/M = {3,0}  IRB1_ConcSerOptimizeMe, MyPWave
-	variable microSeconds = StopMSTimer(timerRefNum)
-	Print microSeconds/1e6, "Simulated annealing was seconds per optimization"
-	print "Now Optimizing using gradient method, this shoudl be fast..." 
-	//now try adding very localized search around...
-	stepWave[][0]=0.1
-	stepWave[][1]=0.0001
-	stepWave[][2]=1
-	MyXLimitWave[][0] = 0.98*MyXWave[p]
-	MyXLimitWave[][1] = 1.02*MyXWave[p]
-	Optimize /Q/I=100/XSA=MyXLimitWave/X=MyXWave/SSA=stepWave/M = {0,0}  IRB1_ConcSerOptimizeMe, MyPWave
-	//restore parameters from the MyXWave which returns optimum values... 
-	NVAR OptimizedPenalty=root:Packages:Irena:ConcSerExtrap:OptimizedPenalty
-	OptimizedPenalty = V_min
-	TempPnt = 0
-	For(i=1;i<=NumberOfConcentrations;i+=1)
-		NVAR FitConc = $("root:Packages:Irena:ConcSerExtrap:FitSample"+num2str(i)+"Conc")
-		NVAR FitBuff = $("root:Packages:Irena:ConcSerExtrap:FitBuffer"+num2str(i)+"Scale")
-		NVAR SamC=$("root:Packages:Irena:ConcSerExtrap:Sample"+num2str(i)+"Conc")
-		NVAR BufferScale=$("root:Packages:Irena:ConcSerExtrap:Buffer"+num2str(i)+"Scale")		
-		if(FitConc)
-			SamC = MyXWave[TempPnt]
-			TempPnt +=1
-		endif
-		if(FitBuff)
-			BufferScale = MyXWave[TempPnt]
-			TempPnt +=1
-		endif	
-	endfor
+		Abort "Cannot optimize just one parameter"
+	else
+		print "No optimization requested using Input data only"
+	endif	
 	IRB1_ConcSerRecalculateData(0,0)
 	setDataFolder oldDf
 end
@@ -1563,6 +1594,15 @@ Function IRB1_ConcSerInitialize()
 	if(RollOverQValue<0.01)
 		RollOverQValue=0.09
 	endif
+	For(i=1;i<=5;i+=1)
+		KillWaves/Z $("CorrectedIntensity"+num2str(i)), $("CorrectedQ"+num2str(i)), $("CorrectedE"+num2str(i))
+	endfor
+	KillWaves/Z ExtrapolatedIntensity, ExtrapolatedQ, ExtrapolatedE
+	KillWaves/Z CorrectedIntensity1, CorrectedQ1, CorrectedE1
+	KillWaves/Z CorrectedIntensity2, CorrectedQ2, CorrectedE2
+	KillWaves/Z CorrectedIntensity3, CorrectedQ3, CorrectedE3
+	KillWaves/Z CorrectedIntensity4, CorrectedQ4, CorrectedE4
+	KillWaves/Z CorrectedIntensity5, CorrectedQ5, CorrectedE5
 
 	SetDataFolder oldDf
 

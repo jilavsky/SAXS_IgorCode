@@ -182,6 +182,9 @@ strconstant strConstVerCheckwwwAddress="https://usaxs.xray.aps.anl.gov/staff/jan
 //Function IN2G_ScrollHook(info)
 //  Should make panels scrollable, will need to test. 
 //
+//Function IN2G_FindInRecreation(WInRecIn, keyToFind)
+//	takes widnow recreation and returns line with the keyToFind. Tested for margins...
+//
 //IN2G_AppendAnyText
 //	checks for definitions and existence of logbook and appends the text to the end of the logbook
 //	
@@ -663,7 +666,18 @@ Function IN2G_SaveTopGraphPXP()
 end
 //************************************************************************************************
 //************************************************************************************************
-//************************************************************************************************
+Function/S IN2G_FindInRecreation(WInRecIn, keyToFind)
+	string WInRecIn, keyToFInd
+	//tested on margins for now... 
+	
+	Wave/T wt = ListToTextWave(WInRecIn, "\r")
+	make/Free/T/N=0 wtWIthKey
+	grep/E=(keyToFInd) wt as wtWIthKey
+	string LineToParse=wtWIthKey[0]
+	LineToParse = LineToParse[strsearch(LineToParse, keyToFInd, 0), inf]+","
+	LineToParse = IN2G_TrimFrontBackWhiteSpace(LineToParse)
+	return LineToParse
+end//************************************************************************************************
 //************************************************************************************************
 
 Function IN2G_ExtractInfoFromFldrname()
@@ -2344,6 +2358,24 @@ Function IN2G_PanelResizePanelSize(s)
 		OriginalHeight = NumberByKey("PanelHeight", OrigInfo, ":", ";")	//pixels
 		CurWidth = abs(right-left) 													//with DC is pixels
 		CurHeight = abs(bottom-top)													//with DC is pixels
+#if(IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
+		variable/g LastMessage
+		if(abs(lastmessage-datetime)<60*30)
+			print "In Igor 9 right click on panel and select expansion -> and select scale of original size you prefer" 
+			lastmessage=dateTime
+		endif
+		//MoveWindow/W=$(s.winName) left, top, left+OriginalWidth, top+OriginalHeight
+		//		variable scaleWidth, scaleheight
+		//		scaleWidth = OriginalWidth/CurWidth
+		//		scaleheight = OriginalHeight/CurHeight
+		//		variable scaleSelect=min(scaleWidth,scaleheight)		//pick smaller
+		//		scaleSelect = min(scaleSelect,8)							//8 is max allowed
+		//		scaleSelect = max(scaleSelect,0.25)						//0.25 is min allowed 
+		//		//moveLeft = left//*moveConvFac
+		//		//MoveTop  = top//*moveConvFac
+		//		//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
+		//		modifyPanel/W=$(s.winName) expand=scaleSelect
+#else
 		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
 			moveLeft = left//*moveConvFac
 			MoveTop  = top//*moveConvFac
@@ -2475,12 +2507,13 @@ Function IN2G_PanelResizePanelSize(s)
 				endif
 				SetActiveSubwindow $(StringFromList(0, ListOfPanels,";"))
 		endfor
+#endif
 		//Better way, let's lets store it in preferences...
 		STRUCT IrenaNikaPanelSizePos PrefsPos
 		PrefsPos.version = kPrefsVersion
 		PrefsPos.panelCoords[0] = MoveRight-moveLeft		//width
 		PrefsPos.panelCoords[1] = moveBottom-MoveTop		//height
-		PrefsPos.panelCoords[2] = moveLeft					//left
+		PrefsPos.panelCoords[2] = moveLeft						//left
 		PrefsPos.panelCoords[3] = MoveTop						//top
 		PrefsPos.panelCoords[4] = MoveRight					//right
 		PrefsPos.panelCoords[5] = moveBottom					//bottom
@@ -2557,9 +2590,9 @@ Function IN2G_ResetPanelSize(PanelNameLocal, setSizeIfNeeded)
 	endif
 	width 	= 	PrefsPos.panelCoords[0]
 	height	=	PrefsPos.panelCoords[1]
-	Left		=	PrefsPos.panelCoords[2]
+	Left	=	PrefsPos.panelCoords[2]
 	Top		=	PrefsPos.panelCoords[3]
-	right		=	PrefsPos.panelCoords[4]
+	right	=	PrefsPos.panelCoords[4]
 	bottom	=	PrefsPos.panelCoords[5]
 	variable FoundValidPrefs=0
 	if(width>100 && height>100 && Left < right && top < bottom && PrefsPos.version==kPrefsVersion)

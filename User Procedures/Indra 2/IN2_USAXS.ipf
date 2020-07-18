@@ -65,6 +65,9 @@ Menu "USAXS"
 		"Reduce USAXS data (old)",IN3_Main()
 		help={"This willl reduce USAXS data stored in this experiment"}
 	end
+	"Setup Sample Plates",IN3S_SampleSetupMain()
+	help={"Tool to help users setup sample plates, survey and generate command files"}
+
 	"Calculate Scattering from model", IN3M_CalculateDataFromModel()
 	help={"Use model and sample parameters to calculate scattering"}
 
@@ -178,19 +181,20 @@ End
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
+	NVAR/Z LastCheckIndra=root:Packages:LastCheckIndra
+	if(!NVAR_Exists(LastCheckIndra))
+		variable/g root:Packages:LastCheckIndra 
+		NVAR LastCheckIndra=root:Packages:LastCheckIndra
+	endif	
 	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
-	IN2G_ResetSizesForALlPanels(WindowProcNames)
+	IN2G_ResetSizesForAllPanels(WindowProcNames)
 	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
-
-	//and print in history which version of code is being used for future reference.
-	//string file= StringFromList((ItemsInList(FunctionPath("LoadUSAXSMacros"), ":")-1), FunctionPath("LoadUSAXSMacros"), ":")
-	//String path = RemoveFromList(file, FunctionPath("LoadUSAXSMacros") , ":")
-	//NewPath /O/Q TmpPathToIgorProcs  , path
-	//variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
-	//KillPath /Z TmpPathToIgorProcs
-	print "*** >>>  Indra version: "+num2str(CurrentIndraVersionNumber)+", compiled on "+date()+"  "+time()
+	if((DateTime - LastCheckIndra)>60*60*12)		//run this only once per 12 hours. 
+		print "*** >>>  Indra version: "+num2str(CurrentIndraVersionNumber)+", compiled on "+date()+"  "+time()
+		LastCheckIndra = DateTime
+	endif
 
 end
 //****************************************************************************************

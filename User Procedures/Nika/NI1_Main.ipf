@@ -200,25 +200,25 @@ end
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
-	IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
+	NVAR/Z LastCheckNika=root:Packages:LastCheckNika
+	if(!NVAR_Exists(LastCheckNika))
+		variable/g root:Packages:LastCheckNika 
+		NVAR LastCheckNika=root:Packages:LastCheckNika
+	endif	
  	string WindowProcNames="NI1A_Convert2Dto1DPanel=NI1A_MainCheckVersion;NI1_CreateBmCntrFieldPanel=NIBC_MainCheckVersion;NEXUS_ConfigurationPanel=Nexus_MainCheckVersion;"
-	
+ 	
 	NI1A_CheckWIndowsProcVersions(WindowProcNames)
-	IN2G_CheckForGraphicsSetting(0)
 	IN2G_ResetSizesForALlPanels(WindowProcNames)
 	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
-
-	NI1_CheckNikaUpdate(0)
-	//and print in history which version of codeis being used for future reference.
-	//string file= StringFromList((ItemsInList(FunctionPath("LoadNika2DSASMacros"), ":")-1), FunctionPath("LoadNika2DSASMacros"), ":")
-	//String path = RemoveFromList(file, FunctionPath("LoadNika2DSASMacros") , ":")
-	//NewPath /O/Q TmpPathToIgorProcs  , path
-	//variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
-	//KillPath /Z TmpPathToIgorProcs	
-	print "*** >>>  Nika version : "+num2str(CurrentNikaVersionNumber)+", compiled on "+date()+"  "+time()
+	if((DateTime - LastCheckNika)>60*60*12)		//run this only once per 12 hours. 
+		IN2G_CheckForGraphicsSetting(0)
+		NI1_CheckNikaUpdate(0)
+		print "*** >>>  Nika version : "+num2str(CurrentNikaVersionNumber)+", compiled on "+date()+"  "+time()
+		LastCheckNika = DateTime
+	endif
 	
 end
-
+ 
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************

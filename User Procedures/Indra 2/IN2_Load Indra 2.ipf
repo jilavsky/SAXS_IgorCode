@@ -1,6 +1,6 @@
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma IgorVersion=7.05  	//requires Igor version 7.05 or higher
-#pragma version=1.972
+#pragma IgorVersion=8.03  	//requires Igor version 8.03 or higher
+#pragma version=1.975
 
 
 //*************************************************************************\
@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.972 current beta 
+//1.975 current beta 
 //1.97 February 2020 release. 
 //1.96 December 2018 release. 
 //1.95 July 2018 release
@@ -55,6 +55,7 @@
 #include "IN3_Main", version>=1.97
 #include "IN3_Rwave", version>=1
 #include "IN3_SupportFnct", version>=1.13
+#include "IN3_SamplePlate", version>=0.2
 #include "spec", version>=2.21
 //#include ":IN2_XtalCalculations", version>=1
 #include "IonChamber3.1", version>=3.1

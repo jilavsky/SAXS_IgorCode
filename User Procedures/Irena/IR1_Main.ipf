@@ -317,6 +317,11 @@ End
 
 static Function AfterCompiledHook( )			//check if all windows are up to date to match their code
 
+	NVAR/Z LastCheckIrena=root:Packages:LastCheckIrena
+	if(!NVAR_Exists(LastCheckIrena))
+		variable/g root:Packages:LastCheckIrena 
+		NVAR LastCheckIrena=root:Packages:LastCheckIrena
+	endif	
 	//these are tools which have been upgraded to this functionality 
 	string WindowProcNames="LSQF2_MainPanel=IR2L_MainCheckVersion;IR2H_ControlPanel=IR2H_MainCheckVersion;DataMiningTool=IR2M_MainCheckVersion;DataManipulationII=IR3M_MainCheckVersion;"
 	WindowProcNames+="IR1I_ImportData=IR1I_MainCheckVersion;IR2S_ScriptingToolPnl=IR2S_MainCheckVersion;IR1R_SizesInputPanel=IR1R_MainCheckVersion;IR1A_ControlPanel=IR1A_MainCheckVersion;"
@@ -329,21 +334,17 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 	WindowProcNames+="IRB1_ImportBioSAXSASCIIData=IRB1_ImpASCIIMainCheckVer;IRB1_DataManipulationPanel=IRB1_DataManMainCheckVersion;"
 	WindowProcNames+="IRB1_ATSASInterfacePanel=IR1B_PDDFMainCheckVersion;IR3J_SimpleFitsPanel=IR1B_SimpleFitsMainCheckVersion;IR3B_MetadataBrowserPanel=IR3B_MainCheckVersion;"
   
-	IR2C_CheckWIndowsProcVersions(WindowProcNames)
-	IR2C_CheckIrenaUpdate(0) 
+	IR2C_CheckWindowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
-	IN2G_ResetSizesForALlPanels(WindowProcNames) 
+	IN2G_ResetSizesForAllPanels(WindowProcNames) 
 	IN2G_AddButtonsToBrowser()		//adds button to DataBrowser. 
-
-	IN2G_CheckForGraphicsSetting(0)
-	//and print in history which version of codeis being used for future reference.
-	//string file= StringFromList((ItemsInList(FunctionPath("LoadIrenaSASMacros"), ":")-1), FunctionPath("LoadIrenaSASMacros"), ":")
-	//String path = RemoveFromList(file, FunctionPath("LoadIrenaSASMacros") , ":")
-	//NewPath /O/Q TmpPathToIgorProcs  , path
-	//variable version = IN2G_FindVersionOfSingleFile(file,"TmpPathToIgorProcs")
-	//KillPath /Z TmpPathToIgorProcs
-	print "*** >>>  Irena version: "+num2str(CurrentIrenaVersionNumber)+", compiled on "+date()+"  "+time()
-	
+ 
+	if((DateTime - LastCheckIrena)>60*60*12)		//run this only once per 12 hours. 
+		IR2C_CheckIrenaUpdate(0) 
+		IN2G_CheckForGraphicsSetting(0)
+		print "*** >>>  Irena version: "+num2str(CurrentIrenaVersionNumber)+", compiled on "+date()+"  "+time()
+		LastCheckIrena = DateTime
+	endif
 end
 //****************************************************************************************
 //****************************************************************************************

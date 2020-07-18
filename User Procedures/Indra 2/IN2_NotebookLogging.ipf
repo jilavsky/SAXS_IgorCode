@@ -29,13 +29,6 @@ Function IN2N_CreateShowNtbkForLogging(show)
 	
 	string nbLL=nbl
 	
-//	Prompt nbLL, "Give me Name for the LogBook, 11 letters max"
-//	DoPrompt "Input name for Logbook", nbLL
-//	nbl=nbLL
-//	nbl=CleanupName(nbl,0)
-//	nbl=nbl[0,10]
-
-	
 	    
 	if ((strsearch(WinList("*",";","WIN:16"),nbL,0)!=-1))		///Logbook exists 
 		//DoWindow/F $nbl
