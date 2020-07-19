@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 0.2
+#pragma version = 0.3
 #pragma IgorVersion=8.03
 
 
@@ -13,7 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
-//0.2 developement
+//0.3 developement, with beamline survey code... 
 
 
 //************************************************************************************************************
@@ -28,7 +28,8 @@
 //		WarningForUser = "Could not records values for this positon, no row selected" 
 //************************************************************************************************************
 
-
+constant  IN3SBeamlineSurveyEpicsMonTicks = 15 
+constant  IN3SBeamlineSurveyDevelopOn = 0
 
 
 
@@ -47,10 +48,12 @@ Function IN3S_SampleSetupMain()
 	IN3S_CreateDefaultPlates()
 	IN3S_CreateTablesForPlates(20, 1)
 	IN3S_MainPanel()
-//  ING2_AddScrollControl()
-//	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
+	//  ING2_AddScrollControl()
+	//	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
 	IN3S_FixUSWAXSForAll()
 	IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
+	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+	WarningForUser = " " 
 	setDataFolder OldDf
 end
 
@@ -92,11 +95,12 @@ Function IN3S_MainPanel()
 		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, value= "9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;",fColor=(1,16019,65535)
 		Button PopulateTable,pos={300,85},size={120,15}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
-		Button CreateImage,pos={430,85},size={120,15}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
+		Button CreateImage,pos={440,85},size={120,15}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
+		Button BeamlineSurvey,pos={440,105},size={120,15}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
 
-		TitleBox Info4 title="\Zr120Current set name : ",pos={320,110},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
-		SetVariable UserNameForSampleSet,pos={300,130},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
-		Setvariable UserNameForSampleSet,fStyle=2, variable=root:Packages:SamplePlateSetup:UserNameForSampleSet, help={"Name for these smaples"}
+		TitleBox Info4 title="\Zr120Current set name : ",pos={300,115},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		SetVariable UserNameForSampleSet,pos={300,135},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
+		Setvariable UserNameForSampleSet,fStyle=2, variable=root:Packages:SamplePlateSetup:UserNameForSampleSet, help={"Name for these samples"}
 	
    		TabControl TableTabs  pos={0,160},size={590,420},tabLabel(0)="Sample Table", value= 0, proc=IN3S_TableTabsTabProc
 	    TabControl TableTabs  tabLabel(1)="Option Controls"
@@ -131,8 +135,8 @@ Function IN3S_MainPanel()
 		//save export
 		Button CreateCommandFile,pos={315,585},size={140,20}, proc=IN3S_ButtonProc,title="Display Cmd File", help={"Creates and displays command file with current set of positions"}
 		Button ExportCommandFile,pos={315,610},size={140,20}, proc=IN3S_ButtonProc,title="Export Cmd File", help={"Exports command file with current set of positions"}
-		Setvariable Warnings title="\Zr120Last Warning: ",pos={10,645},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
-		Setvariable Warnings,fStyle=2, variable=root:Packages:SamplePlateSetup:WarningForUser, help={"Last warning which code issued"}
+		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,645},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
+		Setvariable Warnings,variable=root:Packages:SamplePlateSetup:WarningForUser, help={"Last warning which code issued"}
 
 	endif
 	IN3S_FixTabControl()
@@ -180,7 +184,7 @@ Function IN3S_SetVarProc(sva) : SetVariableControl
 End
 //*****************************************************************************************************************
 ///******************************************************************************************
-Function IN3S_FixTabControl()
+static Function IN3S_FixTabControl()
 	
 	variable CurTab
 	ControlInfo /W=SamplePlateSetup TableTabs
@@ -260,19 +264,29 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 								listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
 							endif
 						endfor
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Wrote "+CleanupName(NewSampleName, 0 , 40)+" for all samples without name" 
 						break;
 					case 2:	// "Insert new line"
 						IN3S_InsertDeleteLines(1, row,1)
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Inserted new line" 
 						break
 					case 3:	// "Delete selected lines"
 						IN3S_InsertDeleteLines(2, row,1)
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Deleted selected lines" 
 						break
 					case 4:	// "Duplicate selected Line"
 						IN3S_InsertDeleteLines(3, row,1)
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Duplciate selected line" 
 						break
 					case 5:	// "Set line as Blank"
 						listWave[row][0]="Blank"
 						listWave[row][3]="0"
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Set row "+num2str(row)+" as Blank" 
 						break
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
@@ -363,6 +377,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					NewPlateName = "NewSampleSet"+num2str(abs(round(gnoise(100))))
 					IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 					ListBox CommandsList win=SamplePlateSetup, selRow=0					
+					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+					WarningForUser = "Created a new set of positions" 
 				endif
 			endif
 			if(StringMatch(ba.ctrlName, "CreateImage" ))
@@ -391,6 +407,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							NewPlateName = "AcrylicPlateSet"+num2str(abs(round(gnoise(100))))
 							//select first row
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							break		// exit from switch
 						case "Old Style Al Plate":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:OldStyleAlPlateCenters
@@ -405,6 +423,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "AlPlateSet"+num2str(abs(round(gnoise(100))))
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							break		// exit from switch
 						case "NMR Tubes holder":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolder
@@ -417,6 +437,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 							NewPlateName = "NMRTubesSet"+num2str(abs(round(gnoise(100))))
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							break		// exit from switch
 						case "Another Plate":	
 								//	<code>
@@ -431,9 +453,13 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 			if(StringMatch(ba.ctrlName, "AddMoreLines" ))
 				NVAR NewLines=root:Packages:SamplePlateSetup:NumberOfSamplesToCreate
 				IN3S_InsertDeleteLines(4, 0, NewLines)	
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Added "+num2str(NewLines)+" new lines"
 			endif
 			if(StringMatch(ba.ctrlName, "SavePositionSet" ))
 				IN3S_SaveCurrentSampleSet()				
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Saved set of positions"
 			endif
 			if(StringMatch(ba.ctrlName, "LoadSavedSet" ))
 				ControlInfo /W=SamplePlateSetup  SelectSavedSet
@@ -446,15 +472,26 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					//KillWIndow/Z SamplePlateImageDrawing
 					IN3S_LoadSavedSampleSet()
 				endif
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Loaded set of positions for "+SelectedFolder
 			endif
 			if(StringMatch(ba.ctrlName, "CreateCommandFile" ))
 				IN3S_WriteCommandFile(1)
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Created Notebook with commands for review"
 			endif
 			if(StringMatch(ba.ctrlName, "ExportCommandFile" ))
-				IN3S_WriteCommandFile(1)
+				//IN3S_WriteCommandFile(1)
 				//here we need to save that notebook somewhere
-				DoAlert/T="not finished" 0,  "IN3S_ButtonProc needs to save the file somewhere"
+				IN3S_ExportMacroFile()
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Exported usaxs.mac on your desktop"
 			endif
+			if(StringMatch(ba.ctrlName, "BeamlineSurvey" ))
+				IN3S_BeamlineSurvey()
+			endif
+	
+	
 			
 			break
 		case -1: // control being killed
@@ -505,10 +542,6 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 				ListBox CommandsList, win=SamplePlateSetup, selRow= dimSize(listWave,0)-1
 				IN3S_AddTagToImage(dimSize(listWave,0)-1)
 			endif
-			
-			
-			
-			
 			break
 		case -1: // control being killed
 			break
@@ -518,7 +551,7 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 End
 //************************************************************************************************************
 //************************************************************************************************************
-Function IN3S_FixUSWAXSForAll()
+static Function IN3S_FixUSWAXSForAll()
 
 	NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
 	NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
@@ -544,18 +577,11 @@ Function IN3S_FixUSWAXSForAll()
 		LBTtitleWv[6]=""
 		WAXSWidth = 0
 	endif
-
 	ListBox CommandsList win=SamplePlateSetup, widths={220,50,50,60,USAXSWidth,SAXSWidth,WAXSWidth}
-
 end
-
-
-
 //************************************************************************************************************
 //************************************************************************************************************
-
-
-Function IN3S_LoadSavedSampleSet()
+static Function IN3S_LoadSavedSampleSet()
 
 	DFrEF OldDf=GetDataFolderDFR()
 	ControlInfo /W=SamplePlateSetup  SelectSavedSet
@@ -593,14 +619,13 @@ Function IN3S_LoadSavedSampleSet()
 			SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
 			NewPlateName = SelectedFolder
 		endif
-	endif
-		
+	endif	
 	SetDataFolder OldDf	
 end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IN3S_SaveCurrentSampleSet()
+static Function IN3S_SaveCurrentSampleSet()
 
 	DFrEF OldDf=GetDataFolderDFR()
 		Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
@@ -610,13 +635,6 @@ Function IN3S_SaveCurrentSampleSet()
 		NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
 		NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
 		SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
-		//string NewPlateName="SamplePlate"
-		//		Prompt NewPlateName, "Define new unique name for this sample set"
-		//		DoPrompt /Help="Define name for these samples" "Name for this set of samples", NewPlatename
-		//		if(V_Flag)
-		//			SetDataFolder OldDf
-		//			abort
-		//		endif
 		NewPlateName = CleanupName(NewPlateName, 1)  
 		newDatafolder/O/S root:SavedSampleSets
 		string newUniqueName
@@ -654,9 +672,10 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IN3S_WriteCommandFile(show)
+static Function IN3S_WriteCommandFile(show)
 	variable show
 
+	//create USAXS command file... For now as notebook and just display for user. 
 
 	DFrEF OldDf=GetDataFolderDFR()
 	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
@@ -667,10 +686,6 @@ Function IN3S_WriteCommandFile(show)
 	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
 	NVAR DefaultSampleThickness=root:Packages:SamplePlateSetup:DefaultSampleThickness
 	SVAR UserNameForSampleSet = root:Packages:SamplePlateSetup:UserNameForSampleSet
-
-	//create USAXS command file... For now as notebook and just display for user. 
-	//what is next, we will see later. 
-	
 	SVAR/Z nbl=root:Packages:SamplePlateSetup:NotebookName
 	if(!SVAR_Exists(nbl))
 		NewDataFolder/O root:Packages
@@ -747,6 +762,8 @@ Function IN3S_WriteCommandFile(show)
 
 	if (show)		///Logbook want to show it...
 		DoWindow/F $nbl
+	else
+		DoWindow/HIDE=1 $nbl
 	endif
 	SetDataFolder OldDf
 end
@@ -754,10 +771,21 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
+static Function IN3S_ExportMacroFile()
+	
+	IN3S_WriteCommandFile(0)
+	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+	NewPath /C/Q/O UserDesktop , SpecialDirPath("Desktop", 0, 0, 0 )
+	SaveNotebook /P=UserDesktop $(nbl)  as "usaxs.mac"
+	KillWindow/Z $(nbl)
+	print "Your command file was saved on Desktop as usaxs.mac" 
+end
+
+
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IN3S_Initialize()
+static Function IN3S_Initialize()
 
 	DFrEF OldDf=GetDataFolderDFR()
 	setdatafolder root:
@@ -772,8 +800,11 @@ Function IN3S_Initialize()
 	
 	ListOfVariables="NumberOfSamplesToCreate;DisplayAllSamplesInImage;"
 	ListOfVariables+="DefaultSampleThickness;USAXSAll;SAXSAll;WAXSAll;DisplayUSWAXScntrls;"
+	ListOfVariables+="SampleXRBV;SampleYRBV;SelectedRow;SampleThickness;"
+	ListOfVariables+="SampleXTable;SampleYTable;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
+	ListOfStrings+="SelectedSampleName;"
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -810,7 +841,7 @@ end
 //************************************************************************************************************
 //************************************************************************************************************
 
-Function IN3S_CreateDefaultPlates()
+static Function IN3S_CreateDefaultPlates()
 
 	DFrEF OldDf=GetDataFolderDFR()
 	setdatafolder root:
@@ -884,7 +915,7 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
+static Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
 	variable HowManySamples, forceReset	//set forceReset=1 to rezero all waves. 
 	
 	DFrEF OldDf=GetDataFolderDFR()
@@ -910,7 +941,9 @@ Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
 	SetDataFolder OldDf
 end
 //*****************************************************************************************************************
-Function IN3S_SetAllOptions()
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+static Function IN3S_SetAllOptions()
 
 	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	NVAR USAXSAll = root:Packages:SamplePlateSetup:USAXSAll
@@ -933,7 +966,9 @@ Function IN3S_SetAllOptions()
 		endif
 end
 //*****************************************************************************************************************
-Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDelete = 1 for insert, 2 for delete
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDelete = 1 for insert, 2 for delete
 	variable InsertDelete, row, newLines						//3 duplicate and add there, 4 add at the end. 
 	//newLines used only with InsertDelete=4 and is number of new lines. 
 	
@@ -1007,7 +1042,9 @@ Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDelete = 1 
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IN3S_DrawImageOfPlate(WhichOne)
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+static Function IN3S_DrawImageOfPlate(WhichOne)
 	string WhichOne
 	
 	//WhichOne = "9x9 Acrylic/magnetic plate"
@@ -1094,7 +1131,7 @@ Function IN3S_DrawImageOfPlate(WhichOne)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IN3S_WritePositionInTable(mouseVert, mouseHor)
+static Function IN3S_WritePositionInTable(mouseVert, mouseHor)
 	variable mouseHor, mouseVert
 	
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
@@ -1139,7 +1176,7 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-Function IN3S_AddTagToImage(row)	//add one tag if row is number, all if -1 or DisplayAllSamplesInImage=1
+static Function IN3S_AddTagToImage(row)	//add one tag if row is number, all if -1 or DisplayAllSamplesInImage=1
 	variable row
 	
 	DoWindow SamplePlateImageDrawing
@@ -1359,3 +1396,440 @@ static Function IN3S_CreateCircles(PlateImage, Centers, Radius,Scaling)
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+//				B E A M L I N E    S U R V E Y    C O D E
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+Function IN3S_BeamlineSurvey()
+
+	//abort if epics support does not exist...
+	if(exists("pvOpen")!=4 && IN3SBeamlineSurveyDevelopOn<1)
+		Abort "This is useful only at the beamline on usaxspc7" 
+	endif
+	///
+
+	Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+	NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+	ControlInfo/W=SamplePlateSetup CommandsList
+	if(V_Value>=0 && V_Value<DimSize(ListWV,0)-1)
+		SelectedRow = V_Value
+	else
+		SelectedRow = 0
+	endif	
+	//Sync values
+	SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+	NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+	NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+	NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+	SelectedSampleName = ListWV[SelectedRow][0]
+	ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+	SampleXTable = str2num(ListWV[SelectedRow][1])
+	SampleYTable = str2num(ListWV[SelectedRow][2])
+	SampleThickness = str2num(ListWV[SelectedRow][3])
+	SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+	IN3S_AddTagToImage(SelectedRow)			
+	DoWIndow BeamlinePlateSetup
+	if(V_Flag)
+		DoWindow/F BeamlinePlateSetup
+	else
+		IN3S_BeamlineSurveyPanel()
+	endif
+	SetWindow BeamlinePlateSetup  hook(EpicsMon)=IN3S_BeamlineSurveyEpicsHook
+	IN3S_BeamlineSurveyStartEpicsUpdate()
+end
+
+//*************************************************************************************************
+static Function IN3S_BeamlineSurveyStartEpicsUpdate()
+	//this starts updating epics.
+	CtrlNamedBackground IN2SMonitorEpics, period=IN3SBeamlineSurveyEpicsMonTicks, proc=IN3S_BackgroundEpics 
+	CtrlNamedBackground IN2SMonitorEpics, start
+	return 0
+end
+static Function IN3S_BeamlineSurveyStopEpicsUpdate()
+	//this starts updating epics.
+	//CtrlNamedBackground IN2SMonitorEpics, period=IN3SBeamlineSurveyEpicsMonTicks, proc=IN3S_BackgroundEpics 
+	CtrlNamedBackground IN2SMonitorEpics, stop
+	return 1
+end
+//*************************************************************************************************
+Function IN3S_BeamlineSurveyEpicsHook(s)
+	STRUCT WMWinHookStruct &s
+
+	if(stringMatch(s.winName, "BeamlinePlateSetup"))
+		switch( s.eventCode )
+			case 0: // window being activated
+				//IN3S_BeamlineSurveyStartEpicsUpdate()
+				break
+			case 1: // window being deactivated
+				//IN3S_BeamlineSurveyStopEpicsUpdate()
+				break
+			case 2: // window being killed
+				IN3S_BeamlineSurveyStopEpicsUpdate()
+				break
+			case 15: // hide
+				IN3S_BeamlineSurveyStopEpicsUpdate()
+				break
+			case 16: // show
+				IN3S_BeamlineSurveyStartEpicsUpdate()
+				break
+			case 7: // finish edit
+				break
+		endswitch
+	endif
+	return 0
+end
+//*************************************************************************************************
+Function IN3S_BackgroundEpics(s) // This is the function that will be called periodically 
+	STRUCT WMBackgroundStruct &s	//note: cannot be static or things wil not work. 
+	NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+	NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+#if(exists("pvOpen")==4)
+	variable SxPV, SyPV
+	pvOpen/Q SxPV, "9idcLAX:m58:c2:m1.RBV"
+	pvOpen/Q SyPV, "9idcLAX:m58:c2:m2.RBV"
+	pvWait 1
+	//this needs to be in background function and in 10Hz loop. 	
+	SampleXRBV = IN3S_GetMotorPositions(SxPV)
+	SampleYRBV = IN3S_GetMotorPositions(SyPV)
+	//end of background function loop. 
+	pvClose SxPV
+	pvClose SyPV
+#endif
+	return 0
+end
+//*************************************************************************************************
+static function IN3S_GetMotorPositions(SPV)
+	variable SPV
+
+#if(exists("pvOpen")==4)
+	variable tempRBV
+	pvGet SPV, tempRBV
+	return tempRBV
+#endif
+end
+//*************************************************************************************************
+//*************************************************************************************************
+//*************************************************************************************************
+
+Function IN3S_BeamlineSurveyPanel()
+
+	string oldDf=GetDataFolder(1)
+	setDataFolder root:Packages:SamplePlateSetup
+	//we need to setup backgroud function here which will update the SX and SY values. 
+	
+	DoWindow BeamlinePlateSetup
+	if(V_Flag)
+		DoWindow/F BeamlinePlateSetup
+	else
+		PauseUpdate    		// building window...
+		NewPanel /K=1 /W=(592.25,43.25,990,510)/N=BeamlinePlateSetup as "Beamline Sample Plate setup"
+		TitleBox Title title="\Zr210Beamline setup",pos={50,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
+		//selected row and sample name
+		SetVariable SelectedRow,pos={100,40},size={180,20}, limits={0,200,0}, proc=IN3S_SurveySetVarProc,title="Selected row: ",fSize=14
+		Setvariable SelectedRow,fStyle=2, variable=root:Packages:SamplePlateSetup:SelectedRow, help={"Selected row in the table"},format="%3.0f"
+		Button MoveRowUp,pos={110,70},size={70,25}, proc=IN3S_SurveyButtonProc,title="Row ⇑",fSize=14, help={"Moves row up (lower row number)"}
+		Button MoveRowDown,pos={220,70},size={70,25}, proc=IN3S_SurveyButtonProc,title="Row ⇓",fSize=14, help={"Moves row up (lower row number)"}
+		SetVariable SelectedSampleName,pos={10,105},size={370,25}, limits={0,200,1}, proc=IN3S_SurveySetVarProc,title="Sa Name: ",fSize=14
+		Setvariable SelectedSampleName,fStyle=2, variable=root:Packages:SamplePlateSetup:SelectedSampleName, help={"Sample name from the table or saved to table"}
+		SetVariable SampleThickness,pos={50,130},size={250,25}, limits={0,20,0.1}, proc=IN3S_SurveySetVarProc,title="Sa Thickness [mm]: ",fSize=14
+		Setvariable SampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleThickness, help={"Sample Thickness in mm"},format="%3.2f"
+
+		SetVariable SampleXTable,pos={30,155},size={130,15}, limits={-inf,inf,0}, noproc, noedit=1,title="Sa X tbl =",fSize=12, frame=0
+		Setvariable SampleXTable,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXTable, help={"Sample Thickness in mm"},format="%3.2f"
+		SetVariable SampleYTable,pos={220,155},size={130,15}, limits={-inf,inf,0}, proc=IN3S_SetVarProc,title="Sa Y tbl =",fSize=12, frame=0
+		Setvariable SampleYTable,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYTable, help={"Sample Thickness in mm"},format="%3.2f"
+		
+		Button DriveTovals,pos={130,180},size={150,20}, proc=IN3S_SurveyButtonProc,title="Drive to table values",fSize=12, help={"Moves SX and SY to table positions"}
+		Button DriveTovals fColor=(0,65535,0)
+
+		Button SaveValues,pos={160,220},size={78,40}, proc=IN3S_SurveyButtonProc,title="Save Vals",fSize=14, help={"Copies values to the table of positions"}
+		Button SaveValues fColor=(65535,32768,32768)
+
+		TitleBox Info1 title="\Zr150Sx : ",pos={70,205},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		TitleBox Info2 title="\Zr150Sy : ",pos={275,205},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
+		SetVariable SampleXRBV,pos={40,240},size={100,20}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=20
+		Setvariable SampleXRBV,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXRBV, help={"SX position"},format="%6.2f"
+		SetVariable SampleYRBV,pos={260,240},size={100,20}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=20
+		Setvariable SampleYRBV,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYRBV, help={"SY position"},format="%6.2f"
+
+		Button Move001SXLow,pos={10,275},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐Sx 0.01",fSize=14, help={"Moves SX lower by 0.01mm"}
+		Button Move001SXHigh,pos={100,275},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sx 0.01⇒",fSize=14, help={"Moves SX higher by 0.01mm"}
+		Button Move01SXLow,pos={10,300},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐Sx 0.1",fSize=14, help={"Moves SX lower by 0.1mm"}
+		Button Move01SXHigh,pos={100,300},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sx 0.1⇒",fSize=14, help={"Moves SX higher by 0.1mm"}
+		Button Move1SXLow,pos={10,325},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐ Sx 1",fSize=14, help={"Moves SX lower by 1mm"}
+		Button Move1SXHigh,pos={100,325},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sx 1 ⇒",fSize=14, help={"Moves SX higher by 1mm"}
+		Button Move10SXLow,pos={10,350},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐Sx 10",fSize=14, help={"Moves SX lower by 10mm"}
+		Button Move10SXHigh,pos={100,350},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sx 10⇒",fSize=14, help={"Moves SX higher by 10mm"}
+
+		Button Move001SYLow,pos={220,275},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐Sy 0.01",fSize=14, help={"Moves SY lower by 0.01mm"}
+		Button Move001SYHigh,pos={310,275},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sy 0.01⇒",fSize=14, help={"Moves SY higher by 0.01mm"}
+		Button Move01SYLow,pos={220,300},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐Sy 0.1",fSize=14, help={"Moves SY lower by 0.1mm"}
+		Button Move01SYHigh,pos={310,300},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sy 0.1⇒",fSize=14, help={"Moves SY higher by 0.1mm"}
+		Button Move1SYLow,pos={220,325},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐ Sy 1",fSize=14, help={"Moves SY lower by 1mm"}
+		Button Move1SYHigh,pos={310,325},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sy 1 ⇒",fSize=14, help={"Moves SY higher by 1mm"}
+		Button Move10SYLow,pos={220,350},size={70,20}, proc=IN3S_SurveyButtonProc,title="⇐Sy 10",fSize=14, help={"Moves SY lower by 10mm"}
+		Button Move10SYHigh,pos={310,350},size={70,20}, proc=IN3S_SurveyButtonProc,title="Sy 10⇒",fSize=14, help={"Moves SY higher by 10mm"}
+
+		TitleBox Info1 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,400},frame=0,fColor=(0,0,65535),labelBack=0
+
+	endif
+
+end
+
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+
+Function IN3S_SurveySetVarProc(sva) : SetVariableControl
+	STRUCT WMSetVariableAction &sva
+
+	switch( sva.eventCode )
+		case 1: // mouse up
+		case 2: // Enter key
+		case 3: // Live update
+			Variable dval = sva.dval
+			String sval = sva.sval
+			
+			if(StringMatch(sva.ctrlName, "SelectedRow"))
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				if(SelectedRow>DimSize(ListWV,0)-2)
+					IN3S_InsertDeleteLines(4, SelectedRow, 1)
+				endif
+				SelectedRow=SelectedRow+1
+				SelectedSampleName = ListWV[SelectedRow][0]
+				ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+				SampleXTable = str2num(ListWV[SelectedRow][1])
+				SampleYTable = str2num(ListWV[SelectedRow][2])
+				SampleThickness = str2num(ListWV[SelectedRow][3])
+				SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+				IN3S_AddTagToImage(SelectedRow)			
+			endif
+			
+			if(StringMatch(sva.ctrlName, "SampleXRBV"))
+				IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", dval)	//SX
+				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", SampleYTable)	//SY	
+			endif
+			if(StringMatch(sva.ctrlName, "SampleYRBV"))
+				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", dval)	//SX
+				IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", dval)	//SY	
+			endif
+			
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+
+Function IN3S_SurveyButtonProc(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			if(StringMatch(ba.ctrlName, "Move001SXLow"))
+				IN3S_MoveMotorInEpics("SX",-0.01)
+			endif
+			if(StringMatch(ba.ctrlName, "Move01SXLow"))
+				IN3S_MoveMotorInEpics("SX",-0.1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move1SXLow"))
+				IN3S_MoveMotorInEpics("SX",-1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move10SXLow"))
+				IN3S_MoveMotorInEpics("SX",-10)
+			endif
+			if(StringMatch(ba.ctrlName, "Move001SXHigh"))
+				IN3S_MoveMotorInEpics("SX",0.01)
+			endif
+			if(StringMatch(ba.ctrlName, "Move01SXHigh"))
+				IN3S_MoveMotorInEpics("SX",0.1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move1SXHigh"))
+				IN3S_MoveMotorInEpics("SX",1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move10SXHigh"))
+				IN3S_MoveMotorInEpics("SX",10)
+			endif		
+			if(StringMatch(ba.ctrlName, "Move001SYLow"))
+				IN3S_MoveMotorInEpics("SY",-0.01)
+			endif
+			if(StringMatch(ba.ctrlName, "Move01SYLow"))
+				IN3S_MoveMotorInEpics("SY",-0.1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move1SYLow"))
+				IN3S_MoveMotorInEpics("SY",-1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move10SYLow"))
+				IN3S_MoveMotorInEpics("SY",-10)
+			endif
+			if(StringMatch(ba.ctrlName, "Move001SYHigh"))
+				IN3S_MoveMotorInEpics("SY",0.01)
+			endif
+			if(StringMatch(ba.ctrlName, "Move01SYHigh"))
+				IN3S_MoveMotorInEpics("SY",0.1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move1SYHigh"))
+				IN3S_MoveMotorInEpics("SY",1)
+			endif
+			if(StringMatch(ba.ctrlName, "Move10SYHigh"))
+				IN3S_MoveMotorInEpics("SY",10)
+			endif	
+			if(StringMatch(ba.ctrlName, "MoveRowUp"))
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				if(SelectedRow>0)
+					SelectedRow=SelectedRow-1
+					SelectedSampleName = ListWV[SelectedRow][0]
+					ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+					SampleXTable = str2num(ListWV[SelectedRow][1])
+					SampleYTable = str2num(ListWV[SelectedRow][2])
+					SampleThickness = str2num(ListWV[SelectedRow][3])
+					SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+				endif
+				IN3S_AddTagToImage(SelectedRow)
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Moved selected row up" 
+			endif
+			if(StringMatch(ba.ctrlName, "MoveRowDown"))
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				if(SelectedRow>DimSize(ListWV,0)-2)
+					IN3S_InsertDeleteLines(4, SelectedRow, 1)
+				endif
+				SelectedRow=SelectedRow+1
+				SelectedSampleName = ListWV[SelectedRow][0]
+				ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+				SampleXTable = str2num(ListWV[SelectedRow][1])
+				SampleYTable = str2num(ListWV[SelectedRow][2])
+				SampleThickness = str2num(ListWV[SelectedRow][3])
+				SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+				IN3S_AddTagToImage(SelectedRow)
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Moved selected row down" 
+			endif
+			if(StringMatch(ba.ctrlName, "DriveTovals"))
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", str2num(ListWV[SelectedRow][1]))	//SX
+				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", str2num(ListWV[SelectedRow][2]))	//SY
+				SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
+				DoUpdate
+				IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", SampleXTable)	//SX
+				SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=0
+				SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
+				DoUpdate
+				IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", SampleYTable)	//SY
+				SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=0
+				DoUpdate
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Moved to sample position from table" 
+			endif
+			if(StringMatch(ba.ctrlName, "SaveValues"))
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				ListWV[SelectedRow][0] = SelectedSampleName
+				ListWV[SelectedRow][1] = num2str(SampleXRBV)
+				ListWV[SelectedRow][2] = num2str(SampleYRBV)
+				ListWV[SelectedRow][3] = num2str(SampleThickness)
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				IN3S_AddTagToImage(SelectedRow)
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Saved positions to table" 
+			endif
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+static Function IN3S_MoveMotorInEpics(WhichMotor,moveFraction)
+	string WhichMotor		//SX or SY
+	variable moveFraction	
+	if(stringMatch(WhichMotor,"SX"))
+		NVAR SXNow=root:Packages:SamplePlateSetup:SampleXRBV
+		SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
+		DoUpdate
+		IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", SXNow+moveFraction)
+		SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=0
+		DoUpdate
+	elseif(stringMatch(WhichMotor,"SY"))
+		NVAR SYNow=root:Packages:SamplePlateSetup:SampleYRBV
+		SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
+		DoUpdate
+		IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", SYNow+moveFraction)
+		SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=0
+		DoUpdate
+	endif
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
+
+static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until motor is done moving...
+	string PVAddress
+	variable target
+#if(exists("pvOpen")==4)
+	variable sxRBV
+	pvOpen/Q sxRBV, PVAddress
+	pvWait 1
+	pvPutNumber sxRBV, target
+	pvClose sxRBV
+#endif	
+end
+
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
+//			      E N D     B E A M L I N E    S U R V E Y    C O D E
+
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+
