@@ -78,8 +78,6 @@ Function IN3S_MainPanel()
 		PauseUpdate    		// building window...
 		NewPanel /K=1 /W=(2.25,43.25,590,710)/N=SamplePlateSetup as "Sample Plate setup"
 		TitleBox Title title="\Zr210Sample Plate setup",pos={120,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
-		//TitleBox Info1 title="\Zr100To limit range of data being used for subtraction, set cursor A",pos={5,565},frame=0,fstyle=1,anchor=MC, size={380,20},fColor=(1,4,52428)
-		//TitleBox Info2 title="\Zr100 on first point and B on last point of either sample of blank data",pos={5,580},frame=0,fstyle=1, anchor=MC,size={380,20},fColor=(1,4,52428)
 		Button GetHelp,pos={490,25},size={80,15},fColor=(65535,32768,32768), proc=IN3S_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 		//left size
 		TitleBox Info1 title="\Zr120New positions : ",pos={10,35},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
@@ -95,7 +93,7 @@ Function IN3S_MainPanel()
 		TitleBox Info3 title="\Zr120Templates : ",pos={320,35},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
-		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, value= "9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;",fColor=(1,16019,65535)
+		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, value= "9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Image;",fColor=(1,16019,65535)
 		Button PopulateTable,pos={300,85},size={120,15}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
 		Button CreateImage,pos={440,85},size={120,15}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
 		Button BeamlineSurvey,pos={440,105},size={120,15}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
@@ -241,6 +239,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 	WAVE/Z selWave = lba.selWave
 	string WinNameStr=lba.win
 	string items
+	variable i
 
 
 	switch( lba.eventCode )
@@ -249,18 +248,39 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 		case 1: // mouse down
   
 			if (lba.eventMod & 0x10)	// rightclick
-				items = "Write same name to all empty;Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;"
+				items = "Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;Write same name to all empty;"
+				items += "Same Sx to all empty;Same Sy to all empty;Increment Sx from first;Increment Sy from First;"
 				PopupContextualMenu items
 				// V_flag is index of user selected item    
 				switch (V_flag)
-					case 1:	// "Write same name to all samples"
+					case 1:	// "Insert new line"
+						IN3S_InsertDeleteLines(1, row,1)
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Inserted new line" 
+						break
+					case 2:	// "Delete selected lines"
+						IN3S_InsertDeleteLines(2, row,1)
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Deleted selected lines" 
+						break
+					case 3:	// "Duplicate selected Line"
+						IN3S_InsertDeleteLines(3, row,1)
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Duplicated selected line" 
+						break
+					case 4:	// "Set line as Blank"
+						listWave[row][0]="Blank"
+						listWave[row][3]="0"
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Set row "+num2str(row)+" as Blank" 
+						break
+					case 5:	// "Write same name to all samples"
 						string NewSampleName="SampleName"
 						Prompt NewSampleName, "Write same string in all empty names"
 						DoPrompt /Help="Write same string name for all empty positions" "Default name for all positions", NewSampleName
 						if(V_Flag)
 							abort
 						endif
-						variable i
 						For(i=0;i<DimSize(listWave,0);i+=1)
 							if(strlen(listWave[i][0])==0)
 								listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
@@ -269,27 +289,73 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+CleanupName(NewSampleName, 0 , 40)+" for all samples without name" 
 						break;
-					case 2:	// "Insert new line"
-						IN3S_InsertDeleteLines(1, row,1)
+					case 6:	// "same sx to all empty"
+						variable  NewSxForAll=10
+						Prompt NewSxForAll, "Write same SX in all empty lines?"
+						DoPrompt /Help="Write same SX position for all empty SX?" "Default sx value for all", NewSxForAll
+						if(V_Flag)
+							abort
+						endif
+						For(i=0;i<DimSize(listWave,0);i+=1)
+							if(strlen(listWave[i][1])==0)
+								listWave[i][1] = num2str(NewSxForAll)
+							endif
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Inserted new line" 
-						break
-					case 3:	// "Delete selected lines"
-						IN3S_InsertDeleteLines(2, row,1)
+						WarningForUser = "Wrote "+num2str(NewSxForAll)+" for all samples without SX" 
+						break;
+					case 7:	// "same sy to all empty"
+						variable  NewSyForAll=10
+						Prompt NewSyForAll, "Write same SY in all empty lines?"
+						DoPrompt /Help="Write same SY position for all empty SY?" "Default sy value for all", NewSyForAll
+						if(V_Flag)
+							abort
+						endif
+						For(i=0;i<DimSize(listWave,0);i+=1)
+							if(strlen(listWave[i][2])==0)
+								listWave[i][2] = num2str(NewSyForAll)
+							endif
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Deleted selected lines" 
-						break
-					case 4:	// "Duplicate selected Line"
-						IN3S_InsertDeleteLines(3, row,1)
+						WarningForUser = "Wrote "+num2str(NewSyForAll)+" for all samples without SX" 
+						break;
+					case 8:	// "Increment Sx from first"
+						variable  NewSxStep=10
+						variable sxstart
+						Prompt NewSxStep, "Increment SX from first line for all?"
+						DoPrompt /Help="Increment SX position for all others?" "Input sx step", NewSxStep
+						if(V_Flag)
+							abort
+						endif
+						if(numtype(str2num(listWave[0][1]))==0)
+							sxstart = str2num(listWave[0][1])
+						else
+							sxstart = 0
+						endif
+						For(i=0;i<DimSize(listWave,0);i+=1)
+							listWave[i][1] = num2str(sxstart+i*NewSxStep)
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Duplciate selected line" 
-						break
-					case 5:	// "Set line as Blank"
-						listWave[row][0]="Blank"
-						listWave[row][3]="0"
+						WarningForUser = "Calculated new sx for all samples" 
+					case 9:	// "Increment Sy from first"
+						variable  NewSyStep=10
+						variable systart
+						Prompt NewSyStep, "Increment SY from first line for all?"
+						DoPrompt /Help="Increment SY position for all others?" "Input sy step", NewSyStep
+						if(V_Flag)
+							abort
+						endif
+						if(numtype(str2num(listWave[0][2]))==0)
+							systart = str2num(listWave[0][2])
+						else
+							systart = 0
+						endif
+						For(i=0;i<DimSize(listWave,0);i+=1)
+							listWave[i][2] = num2str(systart+i*NewSyStep)
+						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Set row "+num2str(row)+" as Blank" 
-						break
+						WarningForUser = "Calculated new sy for all samples" 
+						break;
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
 						//PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString
@@ -305,6 +371,29 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			break
 		case 4: // cell selection
 			IN3S_AddTagToImage(row)
+			//sync to Bealine setup, if exists...
+			DoWIndow BeamlinePlateSetup
+			if(V_Flag)
+				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+				NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+				NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				if(row>=0)
+					SelectedRow=row
+					SelectedSampleName = ListWV[SelectedRow][0]
+					ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+					SampleXTable = str2num(ListWV[SelectedRow][1])
+					SampleYTable = str2num(ListWV[SelectedRow][2])
+					SampleThickness = str2num(ListWV[SelectedRow][3])
+					SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+				endif
+				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				WarningForUser = "Moved selected row up" 			
+			endif
 		case 5: // cell selection plus shift key
 			break
 		case 6: // begin edit
@@ -448,6 +537,11 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							break		// exit from switch
+						case "Image":	
+							//nothing to do here... 
+							//here is code which loads image and deal with that. this will be different code and complciated.
+							
+							break
 						case "Another Plate":	
 								//	<code>
 							break
@@ -865,10 +959,10 @@ static Function IN3S_CreateDefaultPlates()
 	//Definitions for:
 	//Acrylic9x9Plate = 9x9 Acrylic/magnetic plate
 	//OldStyleAlPlate = Old Style Al Plate
-	//NMRTubesHolder = NMR Tubes holder
+	//NMRTubesHolder = NMR Tubes holder 300mm x 75mm, sample center sy=25mm 
 	make/O/N=(81,2) Acrylic9x9PlateCenters
 	make/O/N=(60,2) OldStyleAlPlateCenters
-	make/O/N=(14,2) NMRTubesHolder 
+	make/O/N=(20,2) NMRTubesHolder 
 
 	string ListOfVariables
 	string ListOfStrings
@@ -923,8 +1017,8 @@ static Function IN3S_CreateDefaultPlates()
 	NMRTubesHolderRadius=20
 	NMRTubesHolderScale=0.25
 	Wave NMRTubesHolder
-	NMRTubesHolder [][0] = 10+p*10
-	NMRTubesHolder [][1] = 50
+	NMRTubesHolder [][0] = 15+p*10
+	NMRTubesHolder [][1] = 43
 	SetDataFolder OldDf
 end
 
@@ -1102,19 +1196,26 @@ static Function IN3S_DrawImageOfPlate(WhichOne)
 		Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolder
 		NVAR Radius = root:Packages:SamplePlatesAvailable:NMRTubesHolderRadius
 		NVAR Scaling = root:Packages:SamplePlatesAvailable:NMRTubesHolderScale
-		//plate is 250mm wide x 100mm high, use 1000x400 wave with 0.25mm pixel scaling. 
-		HorSize = 250/Scaling
-		VertSize = 100/Scaling
+		//plate is 300mm wide x 75mm high, use 1200x300 wave with 0.25mm pixel scaling. 
+		HorSize = 300/Scaling
+		VertSize = 75/Scaling
 		Make/O/N=(HorSize,VertSize)/B/U PlateImage
 		wave PlateImage
 		//PlateImage = 128				//set image to 128, that is medium grey in our color system. 
 		SetScale/P x 0,Scaling,"mm", PlateImage
 		SetScale/P y 0,Scaling,"mm", PlateImage	
 		Duplicate/Free/R=[1,12] Centers, CentersForDrawing
-		//create circles, set image to 128, that is medium grey in our color system in solid and 0 in opening for samples. 
-		IN3S_CreateCircles(PlateImage, CentersForDrawing, Radius, Scaling)
+		//create opening for samples, set image to 128, that is medium grey in our color system in solid and 0 in opening for samples. 
+		//IN3S_CreateCircles(PlateImage, CentersForDrawing, Radius, Scaling)
+		PlateImage = 128
+		PlateImage[10/Scaling, 210/Scaling][20/Scaling,66/Scaling] = 0
+		
 		//add tube lines...
 		IN3S_AddOtherDrawings(PlateImage, Centers, Radius, Scaling, "VerticalNMR") 
+
+	elseif(stringMatch(whichOne,"Image"))
+		//here is code which loads image and deal with that. this will be different code and complciated.
+
 	else
 		Abort "Unknown sample plate requested in IN3S_DrawImageOfPlate"
 	endif
@@ -1158,7 +1259,7 @@ static Function IN3S_WritePositionInTable(mouseVert, mouseHor)
 	variable margright=NumberByKey("margin(right)", Margins,"=", ",")
 	variable margtop=NumberByKey("margin(top)", Margins,"=", ",")
 	variable margbot=NumberByKey("margin(bottom)", Margins,"=", ",")
-	getwindow SamplePlateImageDrawing wsize
+	getwindow SamplePlateImageDrawing wsizeDC
 	variable horsize=(V_right - V_left)
 	variable versize=(V_bottom - V_top)
 	GetAxis /W=SamplePlateImageDrawing /Q left
@@ -1343,7 +1444,7 @@ static Function IN3S_AddOtherDrawings(PlateImage, Centers, Radius, Scaling, What
 	variable locCenterX, locCenterY, locWidthX
 	variable tmpX, tmpYt, tmpYb
 	
-	variable NMRverticallenght=20
+	variable NMRverticallenght=23
 	variable NMRradius=2
 	if(StringMatch(WhatDrawing, "VerticalNMR"))
 		
