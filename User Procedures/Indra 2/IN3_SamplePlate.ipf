@@ -33,6 +33,11 @@
 constant  IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant  IN3SBeamlineSurveyDevelopOn = 1
 
+//TODO:
+//		add "Saved & Dirty" flag to avoid some dialogs. 
+//		Change survey move buttons to use steps and change the steps 
+//		Add checkbox to move to selected row position when surveying. Optional. 
+//		note sure what this is: Cycle through all sample positions button
 
 
 //************************************************************************************************************
@@ -55,7 +60,7 @@ Function IN3S_SampleSetupMain()
 	IN3S_FixUSWAXSForAll()
 	IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-	WarningForUser = " " 
+	WarningForUser = "Tool started... Report bugs and wishes to author!" 
 	setDataFolder OldDf
 end
 
@@ -93,7 +98,8 @@ Function IN3S_MainPanel()
 		TitleBox Info3 title="\Zr120Templates : ",pos={320,35},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
-		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, value= "9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Image;",fColor=(1,16019,65535)
+		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
+		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;"
 		Button PopulateTable,pos={300,85},size={120,15}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
 		Button CreateImage,pos={440,85},size={120,15}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
 		Button BeamlineSurvey,pos={440,105},size={120,15}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
@@ -116,12 +122,16 @@ Function IN3S_MainPanel()
 			TitleBox Info10 title="\Zr120Data Collection Controls ",size={250,15},pos={20,190},frame=0,fColor=(0,0,65535),labelBack=0
 			CheckBox USAXSAll pos={30,220},size={70,20},title="USAXS All?", help={"Run USAXS for All"}
 			CheckBox USAXSAll variable=root:Packages:SamplePlateSetup:USAXSAll, proc=IN3S_CheckProc
-			CheckBox SAXSAll pos={30,240},size={70,20},title="SAXS All?", help={"Run SAXS for All"}
+			CheckBox SAXSAll pos={30,250},size={70,20},title="SAXS All?", help={"Run SAXS for All"}
 			CheckBox SAXSAll variable=root:Packages:SamplePlateSetup:SAXSAll,  proc=IN3S_CheckProc
-			CheckBox WAXSAll pos={30,260},size={70,20},title="WAXS All?", help={"Run WSAXS for All"}
+			CheckBox WAXSAll pos={30,280},size={70,20},title="WAXS All?", help={"Run WSAXS for All"}
 			CheckBox WAXSAll variable=root:Packages:SamplePlateSetup:WAXSAll,  proc=IN3S_CheckProc
-			SetVariable DefaultSampleThickness,pos={30,280},size={250,20},limits={0.01,20,0.1}, noproc,title="Default Sample thickness [mm]: "
+			SetVariable DefaultSampleThickness,pos={30,310},size={250,20},limits={0.01,20,0.1}, noproc,title="Default Sample thickness [mm]: "
 			Setvariable DefaultSampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:DefaultSampleThickness, help={"Thickness if not defined."}
+
+
+			SetVariable DefaultCommandFileName,pos={100,550},size={450,25},noproc,title="Default Command file name : "
+			Setvariable DefaultCommandFileName,fStyle=2, variable=root:Packages:SamplePlateSetup:DefaultCommandFileName, help={"usaxs.mac typically, or user name if wanted."}
 
 			//GUI controls, rigth side
 			TitleBox Info11 title="\Zr120GUI Controls ",size={250,15},pos={340,190},frame=0,fColor=(0,0,65535),labelBack=0
@@ -133,8 +143,9 @@ Function IN3S_MainPanel()
 		//controls under the table
 		Button SavePositionSet,pos={15,585},size={140,20}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		//save export
-		Button CreateCommandFile,pos={315,585},size={140,20}, proc=IN3S_ButtonProc,title="Display Cmd File", help={"Creates and displays command file with current set of positions"}
-		Button ExportCommandFile,pos={315,610},size={140,20}, proc=IN3S_ButtonProc,title="Export Cmd File", help={"Exports command file with current set of positions"}
+		Button CreateCommandFile,pos={415,580},size={160,20}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
+		Button ExportCommandFile,pos={415,600},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
+		Button ExportCommandFile2,pos={415,620},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
 		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,645},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
 		Setvariable Warnings,variable=root:Packages:SamplePlateSetup:WarningForUser, help={"Last warning which code issued"}
 
@@ -216,6 +227,7 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			TitleBox Info11,  win=SamplePlateSetup, disable=(tab!=1)
 			CheckBox DisplayUSWAXScntrls,  win=SamplePlateSetup, disable=(tab!=1)
 			CheckBox DisplayAllSamplesInImage,  win=SamplePlateSetup, disable=(tab!=1)
+			SetVariable DefaultCommandFileName,  win=SamplePlateSetup, disable=(tab!=1)
 			break
 		case -1: // control being killed
 			break
@@ -256,17 +268,17 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 					case 1:	// "Insert new line"
 						IN3S_InsertDeleteLines(1, row,1)
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Inserted new line" 
+						WarningForUser = "Inserted new line "+num2str(row) 
 						break
 					case 2:	// "Delete selected lines"
 						IN3S_InsertDeleteLines(2, row,1)
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Deleted selected lines" 
+						WarningForUser = "Deleted selected line "+num2str(row) 
 						break
 					case 3:	// "Duplicate selected Line"
 						IN3S_InsertDeleteLines(3, row,1)
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Duplicated selected line" 
+						WarningForUser = "Duplicated selected line " +num2str(row)
 						break
 					case 4:	// "Set line as Blank"
 						listWave[row][0]="Blank"
@@ -391,9 +403,10 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 					SampleThickness = str2num(ListWV[SelectedRow][3])
 					SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
 				endif
-				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-				WarningForUser = "Moved selected row up" 			
+				//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				//WarningForUser = "Moved selected row up" 			
 			endif
+			break
 		case 5: // cell selection plus shift key
 			break
 		case 6: // begin edit
@@ -524,7 +537,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							break		// exit from switch
 						case "NMR Tubes holder":	 
-							Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolder
+							Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolderCenters
 			 				//create enough space:
 							IN3S_CreateTablesForPlates(DimSize(Centers, 0 ), 0)
 							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
@@ -537,6 +550,44 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							break		// exit from switch
+						case "Generic Grid holder":	 
+							Wave Centers = root:Packages:SamplePlatesAvailable:GenericGridHolderCenters
+							//get from user needed information
+							variable SX0=0, SY0=0, NX=5, NY=5, DX=10, DY=10
+							Prompt SX0, "Input sx for first center: "
+							Prompt SY0, "Input sy for first center: "
+							Prompt NX, "Number of points horizontal : "
+							Prompt NY, "Number of points vertical   : "
+							Prompt DX, "Step in x (horizontal) : "
+							Prompt DY, "Step in y (vertical)   : "
+							DoPrompt "Define grid start, point numebrs and steps", SX0, SY0, NX, NY, DX, DY
+							if(V_Flag)
+								abort
+							endif
+							redimension/N=(NX*NY,2) Centers
+							variable i, j, ict
+							ict=0
+							FOr(i=0;i<NX;i+=1)
+								For(j=0;j<NY;j+=1)
+									Centers[ict][0]=SX0+i*DX
+									Centers[ict][1]=SY0+j*DY
+									ict+=1
+								endfor
+							endfor
+							IN3S_CreateTablesForPlates(DimSize(Centers, 0 ), 0)
+							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+							LBCommandWv[][1]=num2str(Centers[p][0])
+							LBCommandWv[][2]=num2str(Centers[p][1])
+							LBCommandWv[][0]=""
+							LBCommandWv[0][0]=""
+							LBCommandWv[1][0]=""
+							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							NewPlateName = "GenericPlateSet"+num2str(abs(round(gnoise(100))))
+							ListBox CommandsList win=SamplePlateSetup, selRow=1					
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							break		// exit from switch
+						
 						case "Image":	
 							//nothing to do here... 
 							//here is code which loads image and deal with that. this will be different code and complciated.
@@ -582,13 +633,27 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Created Notebook with commands for review"
 			endif
+			string newName
 			if(StringMatch(ba.ctrlName, "ExportCommandFile" ))
 				//IN3S_WriteCommandFile(1)
 				//here we need to save that notebook somewhere
-				IN3S_ExportMacroFile()
+				newName = IN3S_ExportMacroFile(0)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Exported usaxs.mac on your desktop"
 			endif
+			if(StringMatch(ba.ctrlName, "ExportCommandFile2" ))
+				//IN3S_WriteCommandFile(1)
+				//here we need to save that notebook somewhere
+				newName = IN3S_ExportMacroFile(1)
+				if(strlen(newName)>0)
+					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+					WarningForUser = "Exported command file as "+newName
+				else
+					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+					WarningForUser = "Command file export was cancelled"
+				endif
+			endif
+
 			if(StringMatch(ba.ctrlName, "BeamlineSurvey" ))
 				IN3S_BeamlineSurvey()
 			endif
@@ -880,14 +945,38 @@ end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 
-static Function IN3S_ExportMacroFile()
+static Function/T IN3S_ExportMacroFile(UseUsername)	
+	variable UseUsername		//set to 0 for usaxs.mac, 1 for user choice. 
 	
 	IN3S_WriteCommandFile(0)
+	string NewFileName
 	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
+	SVAR UserDefinedCmdName=root:Packages:SamplePlateSetup:DefaultCommandFileName
+	string UseCmdName
+	if(strlen(UserDefinedCmdName)>4)
+		UseCmdName = UserDefinedCmdName
+	else
+		UseCmdName = "usaxs.mac" 
+	endif
 	NewPath /C/Q/O UserDesktop , SpecialDirPath("Desktop", 0, 0, 0 )
-	SaveNotebook /P=UserDesktop $(nbl)  as "usaxs.mac"
+	if(UseUsername)
+		SaveNotebook /P=UserDesktop/I/M="Select location and name for your command file" $(nbl)  as UseCmdName
+		NewFileName = S_path
+		string NewFullNamePath =  ReplaceString(".txt", NewFileName, "" )
+		MoveFile/O  NewFileName  as NewFullNamePath		
+		NewFileName = NewFullNamePath
+	else
+		SaveNotebook /P=UserDesktop $(nbl)  as UseCmdName
+	endif
 	KillWindow/Z $(nbl)
-	print "Your command file was saved on Desktop as usaxs.mac" 
+	if(strlen(S_path)>0)
+		NewFileName = S_path
+		print "Your command file was saved as "+NewFileName 
+		return NewFileName
+	else
+		print "Save of command file was cancelled " 
+		return ""
+	endif
 end
 
 
@@ -910,10 +999,10 @@ static Function IN3S_Initialize()
 	ListOfVariables="NumberOfSamplesToCreate;DisplayAllSamplesInImage;"
 	ListOfVariables+="DefaultSampleThickness;USAXSAll;SAXSAll;WAXSAll;DisplayUSWAXScntrls;"
 	ListOfVariables+="SampleXRBV;SampleYRBV;SelectedRow;SampleThickness;"
-	ListOfVariables+="SampleXTable;SampleYTable;"
+	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
-	ListOfStrings+="SelectedSampleName;"
+	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;"
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -941,7 +1030,11 @@ static Function IN3S_Initialize()
 		DefaultSampleThickness=1
 	endif
 	SVAR WarningForUser
-	WarningForUser=""
+	WarningForUser="Tool started... Report bugs and wishes to author!"
+	SVAR DefaultCommandFileName
+	if(strlen(DefaultCommandFileName)<4)
+		DefaultCommandFileName="usaxs.mac"
+	endif
 	SetDataFolder OldDf
 end
 
@@ -962,7 +1055,8 @@ static Function IN3S_CreateDefaultPlates()
 	//NMRTubesHolder = NMR Tubes holder 300mm x 75mm, sample center sy=25mm 
 	make/O/N=(81,2) Acrylic9x9PlateCenters
 	make/O/N=(60,2) OldStyleAlPlateCenters
-	make/O/N=(20,2) NMRTubesHolder 
+	make/O/N=(20,2) NMRTubesHolderCenters 
+	make/O/N=(0,2) GenericGridHolderCenters 
 
 	string ListOfVariables
 	string ListOfStrings
@@ -1016,9 +1110,9 @@ static Function IN3S_CreateDefaultPlates()
 	NVAR NMRTubesHolderScale
 	NMRTubesHolderRadius=20
 	NMRTubesHolderScale=0.25
-	Wave NMRTubesHolder
-	NMRTubesHolder [][0] = 15+p*10
-	NMRTubesHolder [][1] = 43
+	Wave NMRTubesHolderCenters
+	NMRTubesHolderCenters[][0] = 15+p*10
+	NMRTubesHolderCenters[][1] = 43
 	SetDataFolder OldDf
 end
 
@@ -1109,11 +1203,15 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 			LBSelectionWv[row][6]=32
 		endif
 		ListBox CommandsList win=SamplePlateSetup, selRow=row					
+		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+		WarningForUser = "Inserted row number "+ num2str(row)
 	elseif(InsertDelete==2)					//delete, easier...
 		DeletePoints /M=0 row, 1, LBSelectionWv, LBCommandWv
 		variable newrow
 		newrow = row<(dimSize(LBCommandWv,0))?row : row-1
 		ListBox CommandsList win=SamplePlateSetup, selRow=newrow					
+		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+		WarningForUser = "Deleted row number "+ num2str(row)
 	elseif(InsertDelete==3)					//duplicate
 		Duplicate/Free/T/R=[row][] LBCommandWv, tempLBCommandWv
 		Duplicate/Free/R=[row][] LBSelectionWv, tempLBSelectionWv
@@ -1121,6 +1219,8 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 		LBCommandWv[row][] 		= tempLBCommandWv[0][q]
 		LBSelectionWv[row][] 	= tempLBSelectionWv[0][q]
 		ListBox CommandsList win=SamplePlateSetup, selRow=row+1					
+		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+		WarningForUser = "Duplicated row number "+ num2str(row)
 	elseif(InsertDelete==4)					//add line at the end
 		variable Curlength=dimsize(LBCommandWv,0)
 		Redimension/N=(Curlength+newLines,-1) LBCommandWv, LBSelectionWv
@@ -1147,6 +1247,8 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 			LBSelectionWv[Curlength, ][6]=32
 		endif
 		ListBox CommandsList win=SamplePlateSetup, selRow=Curlength					
+		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+		WarningForUser = "Added row at the end "
 	endif
 end
 //*****************************************************************************************************************
@@ -1193,7 +1295,7 @@ static Function IN3S_DrawImageOfPlate(WhichOne)
 		//create circles, set image to 128, that is medium grey in our color system in solid and 0 in opening for samples. 
 		IN3S_CreateCircles(PlateImage, CentersForDrawing, Radius, Scaling)
 	elseif(stringMatch(whichOne,"NMR Tubes holder"))
-		Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolder
+		Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolderCenters
 		NVAR Radius = root:Packages:SamplePlatesAvailable:NMRTubesHolderRadius
 		NVAR Scaling = root:Packages:SamplePlatesAvailable:NMRTubesHolderScale
 		//plate is 300mm wide x 75mm high, use 1200x300 wave with 0.25mm pixel scaling. 
@@ -1217,7 +1319,7 @@ static Function IN3S_DrawImageOfPlate(WhichOne)
 		//here is code which loads image and deal with that. this will be different code and complciated.
 
 	else
-		Abort "Unknown sample plate requested in IN3S_DrawImageOfPlate"
+		Abort "This sample plate name does not have drawign available."
 	endif
 	//create plate drawing. 	
 	DoWIndow SamplePlateImageDrawing
@@ -1390,6 +1492,30 @@ Function IN3S_PlateImageHook(s)
 								IN3S_WritePositionInTable(s.mouseLoc.v, s.mouseLoc.h)
 								ControlInfo /W=SamplePlateSetup CommandsList
 								IN3S_AddTagToImage(V_Value)
+								variable serrow=V_Value
+								//sync to Bealine setup, if exists...
+								DoWIndow BeamlinePlateSetup
+								if(V_Flag)
+									NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+									SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+									Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+									NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+									NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+									NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+									NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+									NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+									if(serrow>=0)
+										SelectedRow=serrow
+										SelectedSampleName = ListWV[SelectedRow][0]
+										ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+										SampleXTable = str2num(ListWV[SelectedRow][1])
+										SampleYTable = str2num(ListWV[SelectedRow][2])
+										SampleThickness = str2num(ListWV[SelectedRow][3])
+										SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+									endif
+									SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+									WarningForUser = "Written right click position in table" 			
+								endif
 								return 1
 								break;
 							case 2:	// "Add Line with positions"
@@ -1399,6 +1525,29 @@ Function IN3S_PlateImageHook(s)
 								ListBox CommandsList, win=SamplePlateSetup, selRow= dimSize(listWave,0)-1
 								IN3S_WritePositionInTable(s.mouseLoc.v, s.mouseLoc.h)
 								IN3S_AddTagToImage(dimSize(listWave,0)-1)
+								//sync to Bealine setup, if exists...
+								DoWIndow BeamlinePlateSetup
+								if(V_Flag)
+									NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
+									SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
+									Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
+									NVAR SampleThickness=root:Packages:SamplePlateSetup:SampleThickness
+									NVAR SampleXRBV=root:Packages:SamplePlateSetup:SampleXRBV
+									NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
+									NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+									NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+									if(dimSize(listWave,0)-1>=0)
+										SelectedRow=dimSize(listWave,0)-1
+										SelectedSampleName = ListWV[SelectedRow][0]
+										ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
+										SampleXTable = str2num(ListWV[SelectedRow][1])
+										SampleYTable = str2num(ListWV[SelectedRow][2])
+										SampleThickness = str2num(ListWV[SelectedRow][3])
+										SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+									endif
+									SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+									WarningForUser = "Added new line with rigth click positions" 			
+								endif
 								return 1
 								break
 							case 3:	// "Igor right click cmds"
