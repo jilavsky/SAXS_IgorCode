@@ -1,5 +1,5 @@
 #pragma rtGlobals=1		// Use modern global access method.
-#pragma version=1.13
+#pragma version=1.14
 Constant IR2EversionNumber = 1.10
 
 //*************************************************************************\
@@ -8,6 +8,7 @@ Constant IR2EversionNumber = 1.10
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//1.14 fix missign wwavelength if dsata are imported as ASII from Irena and exported again. 
 //1.13 fix naming bug for Nexus which caused the names not being changed as needed, when Nexus was used. 
 //1.12 fix extensions mess, force extesions, cannot make the old one to be remebered correctly... Too many options. 
 //1.11 fix bug that GSAS-II data type was not updating/chaqnging output name as expected. 
@@ -695,6 +696,16 @@ Function IR2E_ExportTheData()
 		note/K NoteTempY
 		note NoteTempY, OldNoteT1+"Exported="+date()+" "+time()+";"
 		variable wvlgth = NumberByKey("Nika_Wavelength", OldNoteT1 , "=", ";")
+		if(numtype(wvlgth)!=0)
+			wvlgth = NumberByKey("Wavelength", OldNoteT1 , "=", ";")
+			if(numtype(wvlgth)!=0)
+				Prompt wvlgth, "Wavelength not found, please, provide"
+				DoPrompt "Provide wavelength is A", wvlgth
+				if (V_Flag || numtype(wvlgth)!=0 || wvlgth<0.01)
+					return -1								// User canceled
+				endif	
+			endif
+		endif
 		//convert q or d into two theta as needed... 
 		Duplicate/Free tempX, TempXCOnverted 
 		if(StringMatch(QWavename, "q_*") || StringMatch(QWavename, "'q_*"))		//q wave

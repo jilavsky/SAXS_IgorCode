@@ -403,8 +403,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 					SampleThickness = str2num(ListWV[SelectedRow][3])
 					SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
 				endif
-				//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-				//WarningForUser = "Moved selected row up" 			
+				IN3S_MoveToPositionIfOK()
 			endif
 			break
 		case 5: // cell selection plus shift key
@@ -999,7 +998,7 @@ static Function IN3S_Initialize()
 	ListOfVariables="NumberOfSamplesToCreate;DisplayAllSamplesInImage;"
 	ListOfVariables+="DefaultSampleThickness;USAXSAll;SAXSAll;WAXSAll;DisplayUSWAXScntrls;"
 	ListOfVariables+="SampleXRBV;SampleYRBV;SelectedRow;SampleThickness;"
-	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;"
+	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;"
@@ -1034,6 +1033,14 @@ static Function IN3S_Initialize()
 	SVAR DefaultCommandFileName
 	if(strlen(DefaultCommandFileName)<4)
 		DefaultCommandFileName="usaxs.mac"
+	endif
+	NVAR SurveySXStep
+	if(SurveySXStep<0.01)
+		SurveySXStep = 1
+	endif
+	NVAR SurveySYStep
+	if(SurveySYStep<0.01)
+		SurveySYStep = 1
 	endif
 	SetDataFolder OldDf
 end
@@ -1515,6 +1522,7 @@ Function IN3S_PlateImageHook(s)
 									endif
 									SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 									WarningForUser = "Written right click position in table" 			
+									IN3S_MoveToPositionIfOK()
 								endif
 								return 1
 								break;
@@ -1547,6 +1555,7 @@ Function IN3S_PlateImageHook(s)
 									endif
 									SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 									WarningForUser = "Added new line with rigth click positions" 			
+									IN3S_MoveToPositionIfOK()
 								endif
 								return 1
 								break
@@ -1777,6 +1786,18 @@ static function IN3S_GetMotorPositions(SPV)
 #endif
 end
 //*************************************************************************************************
+static function IN3S_GetPVVariableValue(PVString)
+	string  PVString
+
+#if(exists("pvOpen")==4)
+	variable tempRBV, PVv
+	pvOpen/Q PVv, PVString
+	pvGet PVv, tempRBV
+	pvClose PVv
+	return tempRBV
+#endif
+end
+//*************************************************************************************************
 //*************************************************************************************************
 //*************************************************************************************************
 
@@ -1791,13 +1812,17 @@ Function IN3S_BeamlineSurveyPanel()
 		DoWindow/F BeamlinePlateSetup
 	else
 		PauseUpdate    		// building window...
-		NewPanel /K=1 /W=(592.25,43.25,990,510)/N=BeamlinePlateSetup as "Beamline Sample Plate setup"
-		TitleBox Title title="\Zr210Beamline setup",pos={50,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
+		NewPanel /K=1 /W=(592.25,43.25,990,510)/N=BeamlinePlateSetup as "Beamline Sample Plate survey"
+		SetDrawLayer UserBack
+		SetDrawEnv fillfgc= (0,65535,0),fillbgc= (0,65535,0)
+		DrawRect 188,178,390,198
+		TitleBox Title title="\Zr210Beamline survey",pos={50,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 		//selected row and sample name
 		SetVariable SelectedRow,pos={100,40},size={180,20}, limits={0,200,0}, proc=IN3S_SurveySetVarProc,title="Selected row: ",fSize=14
 		Setvariable SelectedRow,fStyle=2, variable=root:Packages:SamplePlateSetup:SelectedRow, help={"Selected row in the table"},format="%3.0f"
-		Button MoveRowUp,pos={110,70},size={70,25}, proc=IN3S_SurveyButtonProc,title="Row ⇑",fSize=14, help={"Moves row up (lower row number)"}
-		Button MoveRowDown,pos={220,70},size={70,25}, proc=IN3S_SurveyButtonProc,title="Row ⇓",fSize=14, help={"Moves row up (lower row number)"}
+
+		Button MoveRowUp,pos={80,70},size={100,25}, proc=IN3S_SurveyButtonProc,title="Row ⇑",fSize=14, help={"Moves row up (lower row number)"}
+		Button MoveRowDown,pos={220,70},size={100,25}, proc=IN3S_SurveyButtonProc,title="Row ⇓",fSize=14, help={"Moves row up (lower row number)"}
 		SetVariable SelectedSampleName,pos={10,105},size={370,25}, limits={0,200,1}, proc=IN3S_SurveySetVarProc,title="Sa Name: ",fSize=14
 		Setvariable SelectedSampleName,fStyle=2, variable=root:Packages:SamplePlateSetup:SelectedSampleName, help={"Sample name from the table or saved to table"}
 		SetVariable SampleThickness,pos={50,130},size={250,25}, limits={0,20,0.1}, proc=IN3S_SurveySetVarProc,title="Sa Thickness [mm]: ",fSize=14
@@ -1808,37 +1833,46 @@ Function IN3S_BeamlineSurveyPanel()
 		SetVariable SampleYTable,pos={220,155},size={130,15}, limits={-inf,inf,0}, proc=IN3S_SetVarProc,title="Sa Y tbl =",fSize=12, frame=0
 		Setvariable SampleYTable,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYTable, help={"Sample Thickness in mm"},format="%3.2f"
 		
-		Button DriveTovals,pos={130,180},size={150,20}, proc=IN3S_SurveyButtonProc,title="Drive to table values",fSize=12, help={"Moves SX and SY to table positions"}
+		Button DriveTovals,pos={30,178},size={150,20}, proc=IN3S_SurveyButtonProc,title="Drive to table values",fSize=12, help={"Moves SX and SY to table positions"}
 		Button DriveTovals fColor=(0,65535,0)
+		CheckBox MoveWhenRowChanges pos={200,180},size={70,20},title="Drive to SX/SY on row change?", help={"When selected, SX and SY will move when row is changed"}
+		CheckBox MoveWhenRowChanges variable=root:Packages:SamplePlateSetup:MoveWhenRowChanges,  noproc, fColor=(0,0,0),labelBack=(0,65535,0)
 
-		Button SaveValues,pos={160,220},size={78,40}, proc=IN3S_SurveyButtonProc,title="Save Vals",fSize=14, help={"Copies values to the table of positions"}
+		Button SaveValues,pos={130,210},size={140,30}, proc=IN3S_SurveyButtonProc,title="Save Values",fSize=14, help={"Copies values to the table of positions"}
 		Button SaveValues fColor=(65535,32768,32768)
 
-		TitleBox Info1 title="\Zr170Sx : ",pos={70,205},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
-		TitleBox Info2 title="\Zr170Sy : ",pos={275,205},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
-		SetVariable SampleXRBV,pos={40,240},size={100,20}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=20
+		TitleBox Info1 title="\Zr200Sx : ",pos={70,235},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
+		TitleBox Info2 title="\Zr200Sy : ",pos={285,235},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
+		SetVariable SampleXRBV,pos={50,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
 		Setvariable SampleXRBV,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXRBV, help={"SX position"},format="%6.2f"
-		SetVariable SampleYRBV,pos={260,240},size={100,20}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=20
+		SetVariable SampleYRBV,pos={260,270},size={90,30}, limits={-200,200, 0}, proc=IN3S_SurveySetVarProc,title=" ",fSize=25
 		Setvariable SampleYRBV,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYRBV, help={"SY position"},format="%6.2f"
 
-		Button Move001SXLow,pos={10,275},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐Sx 0.01",fSize=14, help={"Moves SX lower by 0.01mm"}
-		Button Move001SXHigh,pos={100,275},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sx 0.01⇒",fSize=14, help={"Moves SX higher by 0.01mm"}
-		Button Move01SXLow,pos={10,300},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐Sx 0.1",fSize=14, help={"Moves SX lower by 0.1mm"}
-		Button Move01SXHigh,pos={100,300},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sx 0.1⇒",fSize=14, help={"Moves SX higher by 0.1mm"}
-		Button Move1SXLow,pos={10,325},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐  Sx 1",fSize=14, help={"Moves SX lower by 1mm"}
-		Button Move1SXHigh,pos={100,325},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sx 1  ⇒",fSize=14, help={"Moves SX higher by 1mm"}
-		Button Move10SXLow,pos={10,350},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐Sx 10",fSize=14, help={"Moves SX lower by 10mm"}
-		Button Move10SXHigh,pos={100,350},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sx 10⇒",fSize=14, help={"Moves SX higher by 10mm"}
+		Button MoveSXLow,pos={10,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〈",help={"Moves SX lower by the step value"}
+		Button MoveSXLow,fSize=24,fstyle=1,fColor=(1,16019,65535)
+		Button MoveSXHigh,pos={150,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〉",help={"Moves SX higher by the step value"}
+		Button MoveSXHigh,fSize=24,fstyle=1,fColor=(1,16019,65535)
 
-		Button Move001SYLow,pos={220,275},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐Sy 0.01",fSize=14, help={"Moves SY lower by 0.01mm"}
-		Button Move001SYHigh,pos={310,275},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sy 0.01⇒",fSize=14, help={"Moves SY higher by 0.01mm"}
-		Button Move01SYLow,pos={220,300},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐Sy 0.1",fSize=14, help={"Moves SY lower by 0.1mm"}
-		Button Move01SYHigh,pos={310,300},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sy 0.1⇒",fSize=14, help={"Moves SY higher by 0.1mm"}
-		Button Move1SYLow,pos={220,325},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐  Sy 1",fSize=14, help={"Moves SY lower by 1mm"}
-		Button Move1SYHigh,pos={310,325},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sy 1  ⇒",fSize=14, help={"Moves SY higher by 1mm"}
-		Button Move10SYLow,pos={220,350},size={75,20}, proc=IN3S_SurveyButtonProc,title="⇐Sy 10",fSize=14, help={"Moves SY lower by 10mm"}
-		Button Move10SYHigh,pos={310,350},size={75,20}, proc=IN3S_SurveyButtonProc,title="Sy 10⇒",fSize=14, help={"Moves SY higher by 10mm"}
+		Button MoveSYLow,pos={220,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〈",help={"Moves SY lower by the step value"}
+		Button MoveSYLow,fSize=24,fstyle=1,fColor=(1,16019,65535)
+		Button MoveSYHigh,pos={360,260},size={30,50}, proc=IN3S_SurveyButtonProc,title="〉",help={"Moves SY higher by the step value"}
+		Button MoveSYHigh,fSize=24,fstyle=1,fColor=(1,16019,65535)
 
+
+		TitleBox Info3 title="\Zr130Sx step : ",pos={50,310},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
+		TitleBox Info4 title="\Zr130Sy step : ",pos={265,310},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
+
+		SetVariable SurveySXStep,pos={52,330},size={90,20}, limits={0,100, 1}, proc=IN3S_SurveySetVarProc,title=" ",fSize=20
+		Setvariable SurveySXStep,fStyle=2, variable=root:Packages:SamplePlateSetup:SurveySXStep, help={"SX step"},format="%6.2f"
+		SetVariable SurveySYStep,pos={262,330},size={90,20}, limits={0,100, 1}, proc=IN3S_SurveySetVarProc,title=" ",fSize=20
+		Setvariable SurveySYStep,fStyle=2, variable=root:Packages:SamplePlateSetup:SurveySYStep, help={"SY step"},format="%6.2f"
+
+
+		Button ChangeSXStepLow,pos={10,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 0.1",fSize=14, help={"Changes SX step by 0.1"}
+		Button ChangeSXStepHigh,pos={100,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 10",fSize=14, help={"Changes SX step by 10"}
+
+		Button ChangeSYStepLow,pos={220,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 0.1",fSize=14, help={"Changes SX step by 0.1"}
+		Button ChangeSYStepHigh,pos={310,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 10",fSize=14, help={"Changes SX step by 10"}
 		TitleBox Info3 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,400},frame=0,fColor=(0,0,65535),labelBack=0
 
 	endif
@@ -1885,12 +1919,12 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 			endif
 			
 			if(StringMatch(sva.ctrlName, "SampleXRBV"))
-				IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", dval)	//SX
-				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", SampleYTable)	//SY	
+				IN3S_MoveMotorInEpics("SX",dval)
+				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", dval)		//SX
 			endif
 			if(StringMatch(sva.ctrlName, "SampleYRBV"))
-				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", dval)	//SX
-				IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", dval)	//SY	
+				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", dval)		//SY	
+				IN3S_MoveMotorInEpics("SY",dval)	
 			endif
 			
 			
@@ -1913,54 +1947,39 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 	switch( ba.eventCode )
 		case 2: // mouse up
 			// click code here
-			if(StringMatch(ba.ctrlName, "Move001SXLow"))
-				IN3S_MoveMotorInEpics("SX",-0.01)
+			NVAR SXStep = root:Packages:SamplePlateSetup:SurveySXStep
+			NVAR SYStep = root:Packages:SamplePlateSetup:SurveySYStep
+			NVAR CurentSX=root:Packages:SamplePlateSetup:SampleXRBV
+			NVAR CurentSY=root:Packages:SamplePlateSetup:SampleYRBV
+			if(StringMatch(ba.ctrlName, "MoveSXLow"))		
+				IN3S_MoveMotorInEpics("SX",CurentSX-SXStep)
 			endif
-			if(StringMatch(ba.ctrlName, "Move01SXLow"))
-				IN3S_MoveMotorInEpics("SX",-0.1)
+			if(StringMatch(ba.ctrlName, "MoveSXHigh"))
+				IN3S_MoveMotorInEpics("SX",CurentSX+SXStep)
 			endif
-			if(StringMatch(ba.ctrlName, "Move1SXLow"))
-				IN3S_MoveMotorInEpics("SX",-1)
+			if(StringMatch(ba.ctrlName, "MoveSYLow"))		
+				IN3S_MoveMotorInEpics("SY",CurentSY-SYStep)
 			endif
-			if(StringMatch(ba.ctrlName, "Move10SXLow"))
-				IN3S_MoveMotorInEpics("SX",-10)
+			if(StringMatch(ba.ctrlName, "MoveSYHigh"))
+				IN3S_MoveMotorInEpics("SY",CurentSY+SYStep)
 			endif
-			if(StringMatch(ba.ctrlName, "Move001SXHigh"))
-				IN3S_MoveMotorInEpics("SX",0.01)
+			if(StringMatch(ba.ctrlName, "ChangeSXStepLow"))
+				SXStep = (SXStep<0.01 || SXStep>100) ? 1 : SXStep
+				SXStep = SXStep>0.1 ? SXStep*0.1 : 0.01
 			endif
-			if(StringMatch(ba.ctrlName, "Move01SXHigh"))
-				IN3S_MoveMotorInEpics("SX",0.1)
+			if(StringMatch(ba.ctrlName, "ChangeSXStepHigh"))
+				SXStep = (SXStep<0.01 || SXStep>100) ? 1 : SXStep
+				SXStep = SXStep<10 ? SXStep*10 : 100
 			endif
-			if(StringMatch(ba.ctrlName, "Move1SXHigh"))
-				IN3S_MoveMotorInEpics("SX",1)
+
+			if(StringMatch(ba.ctrlName, "ChangeSYStepLow"))
+				SYStep = (SYStep<0.01 || SYStep>100) ? 1 : SYStep
+				SYStep = SYStep>0.1 ? SYStep*0.1 : 0.01
 			endif
-			if(StringMatch(ba.ctrlName, "Move10SXHigh"))
-				IN3S_MoveMotorInEpics("SX",10)
-			endif		
-			if(StringMatch(ba.ctrlName, "Move001SYLow"))
-				IN3S_MoveMotorInEpics("SY",-0.01)
+			if(StringMatch(ba.ctrlName, "ChangeSYStepHigh"))
+				SYStep = (SYStep<0.01 || SYStep>100) ? 1 : SYStep
+				SYStep = SYStep<10 ? SYStep*10 : 100
 			endif
-			if(StringMatch(ba.ctrlName, "Move01SYLow"))
-				IN3S_MoveMotorInEpics("SY",-0.1)
-			endif
-			if(StringMatch(ba.ctrlName, "Move1SYLow"))
-				IN3S_MoveMotorInEpics("SY",-1)
-			endif
-			if(StringMatch(ba.ctrlName, "Move10SYLow"))
-				IN3S_MoveMotorInEpics("SY",-10)
-			endif
-			if(StringMatch(ba.ctrlName, "Move001SYHigh"))
-				IN3S_MoveMotorInEpics("SY",0.01)
-			endif
-			if(StringMatch(ba.ctrlName, "Move01SYHigh"))
-				IN3S_MoveMotorInEpics("SY",0.1)
-			endif
-			if(StringMatch(ba.ctrlName, "Move1SYHigh"))
-				IN3S_MoveMotorInEpics("SY",1)
-			endif
-			if(StringMatch(ba.ctrlName, "Move10SYHigh"))
-				IN3S_MoveMotorInEpics("SY",10)
-			endif	
 			if(StringMatch(ba.ctrlName, "MoveRowUp"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
@@ -1982,6 +2001,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved selected row up" 
+				IN3S_MoveToPositionIfOK()
 			endif
 			if(StringMatch(ba.ctrlName, "MoveRowDown"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
@@ -2005,23 +2025,15 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved selected row down" 
+				IN3S_MoveToPositionIfOK()
 			endif
 			if(StringMatch(ba.ctrlName, "DriveTovals"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
-				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", str2num(ListWV[SelectedRow][1]))	//SX
-				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", str2num(ListWV[SelectedRow][2]))	//SY
-				//SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
-				//DoUpdate
-				IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", SampleXTable)	//SX
-				//SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=0
-				//SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
-				//DoUpdate
-				IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", SampleYTable)	//SY
-				//SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=0
-				//DoUpdate
+				IN3S_MoveMotorInEpics("SX",SampleXTable)	
+				IN3S_MoveMotorInEpics("SY",SampleYTable)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved to sample position from table" 
 			endif
@@ -2050,27 +2062,49 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 End
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+//*****************************************************************************************************************
+Function IN3S_MoveToPositionIfOK()
+	//moves to SX and SY on row change, if OK
+	//root:Packages:SamplePlateSetup:MoveWhenRowChanges = 1
+	//panel BeamlinePlateSetup exists
+	DoWindow BeamlinePlateSetup
+	if(V_Flag)	//exists
+		NVAR ShouldMove=root:Packages:SamplePlateSetup:MoveWhenRowChanges
+		if(ShouldMove)
+			NVAR TableSX=root:Packages:SamplePlateSetup:SampleXTable
+			NVAR TableSY=root:Packages:SamplePlateSetup:SampleYTable
+			if(numtype(TableSX)==0 && numtype(TableSY)==0) //are these numbers?
+				IN3S_MoveMotorInEpics("SX",TableSX)
+				IN3S_MoveMotorInEpics("SY",TableSY)	
+				//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+				//WarningForUser = "Moving to SX and SY position read from Table" 
+			endif
+		endif
+	endif
+end
+//*****************************************************************************************************************
 //************************************************************************************************************
 //************************************************************************************************************
 
-static Function IN3S_MoveMotorInEpics(WhichMotor,moveFraction)
+static Function IN3S_MoveMotorInEpics(WhichMotor,MovePosition)
 	string WhichMotor		//SX or SY
-	variable moveFraction	
-	if(stringMatch(WhichMotor,"SX"))
-		NVAR SXNow=root:Packages:SamplePlateSetup:SampleXRBV
-		//SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
-		//DoUpdate
-		IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", SXNow+moveFraction)
-		//SetVariable SampleXRBV win=BeamlinePlateSetup, valueBackColor=0
-		//DoUpdate
-	elseif(stringMatch(WhichMotor,"SY"))
-		NVAR SYNow=root:Packages:SamplePlateSetup:SampleYRBV
-		//SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=(16386,65535,16385),labelBack=0
-		//DoUpdate
-		IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", SYNow+moveFraction)
-		//SetVariable SampleYRBV win=BeamlinePlateSetup, valueBackColor=0
-		//DoUpdate
+	variable MovePosition	
+	//avoid moving if instrument is running, 9idcLAX:dataColInProgress = 1
+	variable InstrumentUsed=0
+#if(exists("pvOpen")==4)
+	InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+	if(InstrumentUsed)
+		abort "Instrument is collecting data, cannot move motors"
+	else	
+		if(stringMatch(WhichMotor,"SX"))
+			IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", MovePosition)
+		elseif(stringMatch(WhichMotor,"SY"))
+			IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", MovePosition)
+		endif
 	endif
+#else
+	print "Could not move motors, no epics installed"
+#endif
 end
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -2087,7 +2121,6 @@ static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until moto
 	pvClose sxRBV
 #endif	
 end
-
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
