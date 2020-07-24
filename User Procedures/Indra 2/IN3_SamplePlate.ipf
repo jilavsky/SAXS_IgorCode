@@ -31,7 +31,7 @@
 //************************************************************************************************************
 
 constant  IN3SBeamlineSurveyEpicsMonTicks = 15 
-constant  IN3SBeamlineSurveyDevelopOn = 1
+constant  IN3SBeamlineSurveyDevelopOn = 0
 
 //TODO:
 //		add "Saved & Dirty" flag to avoid some dialogs. 
@@ -117,7 +117,7 @@ Function IN3S_MainPanel()
 			ListBox CommandsList,proc=IN3S_ListBoxMenuProc, selRow= 0, editStyle= 0
 			ListBox CommandsList userColumnResize=1,help={"Fill here list of samples, their positions, thickness etc. "}
 			ListBox CommandsList titleWave=root:Packages:SamplePlateSetup:LBTtitleWv, frame= 2
-			ListBox CommandsList widths={220,50,50,60,40,40,40}
+			ListBox CommandsList widths={220,50,50,60,40,40,40,0}
 		//Tab 1
 			TitleBox Info10 title="\Zr120Data Collection Controls ",size={250,15},pos={20,190},frame=0,fColor=(0,0,65535),labelBack=0
 			CheckBox USAXSAll pos={30,220},size={70,20},title="USAXS All?", help={"Run USAXS for All"}
@@ -261,7 +261,8 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
   
 			if (lba.eventMod & 0x10)	// rightclick
 				items = "Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;Write same name to all empty;"
-				items += "Same Sx to all empty;Same Sy to all empty;Increment Sx from first;Increment Sy from First;"
+				items += "Same Sx to all empty;Same Sy to all empty;Increment Sx from seleted row;Increment Sy from seleted row;"
+				items += "Copy row Values to Table Clipboard;Paste Table Clipboard to row;"
 				PopupContextualMenu items
 				// V_flag is index of user selected item    
 				switch (V_flag)
@@ -331,42 +332,66 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+num2str(NewSyForAll)+" for all samples without SX" 
 						break;
-					case 8:	// "Increment Sx from first"
+					case 8:	// "Increment Sx from selected row"
 						variable  NewSxStep=10
 						variable sxstart
-						Prompt NewSxStep, "Increment SX from first line for all?"
-						DoPrompt /Help="Increment SX position for all others?" "Input sx step", NewSxStep
+						Prompt NewSxStep, "Increment SX from selected row higher?"
+						DoPrompt /Help="Increment SX position for all higher rows?" "Input sx step", NewSxStep
 						if(V_Flag)
 							abort
 						endif
-						if(numtype(str2num(listWave[0][1]))==0)
-							sxstart = str2num(listWave[0][1])
+						if(numtype(str2num(listWave[row][1]))==0)
+							sxstart = str2num(listWave[row][1])
 						else
 							sxstart = 0
 						endif
-						For(i=0;i<DimSize(listWave,0);i+=1)
+						For(i=row;i<DimSize(listWave,0);i+=1)
 							listWave[i][1] = num2str(sxstart+i*NewSxStep)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Calculated new sx for all samples" 
-					case 9:	// "Increment Sy from first"
+						WarningForUser = "Calculated new sx for rown higher than : " +num2str(row) 
+						break;
+					case 9:	// "Increment Sy from selected row"
 						variable  NewSyStep=10
 						variable systart
-						Prompt NewSyStep, "Increment SY from first line for all?"
-						DoPrompt /Help="Increment SY position for all others?" "Input sy step", NewSyStep
+						Prompt NewSyStep, "Increment SY from selected row higher?"
+						DoPrompt /Help="Increment SY position for all higher rows?" "Input sy step", NewSyStep
 						if(V_Flag)
 							abort
 						endif
-						if(numtype(str2num(listWave[0][2]))==0)
-							systart = str2num(listWave[0][2])
+						if(numtype(str2num(listWave[row][2]))==0)
+							systart = str2num(listWave[row][2])
 						else
 							systart = 0
 						endif
-						For(i=0;i<DimSize(listWave,0);i+=1)
+						For(i=row;i<DimSize(listWave,0);i+=1)
 							listWave[i][2] = num2str(systart+i*NewSyStep)
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Calculated new sy for all samples" 
+						break;
+					case 10:	// "Copy in Table Clipboard"
+						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
+						TableClipboard = "SampleName="+listWave[row][0]+";"
+						TableClipboard += "SX="+listWave[row][1]+";"
+						TableClipboard += "SY="+listWave[row][2]+";"
+						TableClipboard += "TH="+listWave[row][3]+";"
+						TableClipboard += "MD="+listWave[row][4]+";"
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Copied row  "+num2str(row)+ "  values in Table Clipboard" 
+						break;
+					case 11:	// "Paste Table Clipboard in a row"
+						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
+						listWave[row][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
+						listWave[row][1] = StringByKey("SX", TableClipboard, "=" , ";")
+						listWave[row][2] = StringByKey("SY", TableClipboard, "=" , ";")
+						listWave[row][3] = StringByKey("TH", TableClipboard, "=" , ";")
+						listWave[row][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
+						listWave[row][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
+						listWave[row][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
+						listWave[row][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Pasted values in Table Clipboard into the row  "+num2str(row)
 						break;
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
@@ -738,8 +763,8 @@ static Function IN3S_FixUSWAXSForAll()
 	NVAR DiasplyCheckb = root:Packages:SamplePlateSetup:DisplayUSWAXScntrls
 	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
-	variable USAXSWidth, SAXSWidth, WAXSWidth
-	//LBTtitleWv = {"Sample Name", "X [mm]", "Y [mm]", "Thick [mm]", "USAXS", "SAXS", "WAXS"}
+	variable USAXSWidth, SAXSWidth, WAXSWidth, MDwidth
+	//LBTtitleWv = {"Sample Name", "X [mm]", "Y [mm]", "Thick [mm]", "USAXS", "SAXS", "WAXS", "Metadata"}
 	//now set the columns based on what is checked... 
 	if(DiasplyCheckb)	//display checkboxes...
 		LBTtitleWv[4]="USAXS"
@@ -748,6 +773,8 @@ static Function IN3S_FixUSWAXSForAll()
 		SAXSWidth = 40
 		LBTtitleWv[6]="WAXS"
 		WAXSWidth = 40
+		LBTtitleWv[7]="MD"
+		MDwidth = 40
 	else
 		LBTtitleWv[4]=""
 		USAXSWidth = 0	
@@ -755,8 +782,10 @@ static Function IN3S_FixUSWAXSForAll()
 		SAXSWidth = 0
 		LBTtitleWv[6]=""
 		WAXSWidth = 0
+		LBTtitleWv[7]=""
+		MDwidth = 0
 	endif
-	ListBox CommandsList win=SamplePlateSetup, widths={220,50,50,60,USAXSWidth,SAXSWidth,WAXSWidth}
+	ListBox CommandsList win=SamplePlateSetup, widths={220,50,50,60,USAXSWidth,SAXSWidth,WAXSWidth,MDwidth}
 end
 //************************************************************************************************************
 //************************************************************************************************************
@@ -1007,7 +1036,7 @@ static Function IN3S_Initialize()
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
-	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;"
+	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
 	//and here we create them
 	for(i=0;i<itemsInList(ListOfVariables);i+=1)	
 		IN2G_CreateItem("variable",StringFromList(i,ListOfVariables))
@@ -1138,21 +1167,22 @@ static Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
 	setdatafolder root:Packages:SamplePlateSetup
 	Wave/T/Z LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
 	Wave/Z LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
-	Make/N=7/T/O LBTtitleWv
+	Make/N=8/T/O LBTtitleWv
 	if(forceReset || !WaveExists(LBSelectionWv) || !WaveExists(LBCommandWv))
-		Make/N=(0,7)/T/O LBCommandWv
-		Make/N=(0,7)/O LBSelectionWv
+		Make/N=(0,8)/T/O LBCommandWv
+		Make/N=(0,8)/O LBSelectionWv
 	endif
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
 	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
-	Redimension/N=(HowManySamples,7) LBCommandWv, LBSelectionWv
-	LBTtitleWv = {"Sample Name", "X [mm]", "Y [mm]", "Thick [mm]", "USAXS", "SAXS", "WAXS"}
+	Redimension/N=(HowManySamples,8) LBCommandWv, LBSelectionWv
+	LBTtitleWv = {"Sample Name", "X [mm]", "Y [mm]", "Thick [mm]", "USAXS", "SAXS", "WAXS", "MetaData"}
 	//setup the LBSelectionWv to allow what is needed...
 	LBSelectionWv[][0] = 2 //set Bit 1, 0x02
 	LBSelectionWv[][1] = 2 //set Bit 1,
 	LBSelectionWv[][2] = 2 //set Bit 1,
 	LBSelectionWv[][3] = 2 //set Bit 1,
+	LBSelectionWv[][7] = 2 //set Bit 1,
 	IN3S_SetAllOptions()
 	SetDataFolder OldDf
 end
@@ -1932,8 +1962,18 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				//IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", dval)		//SY	
 				IN3S_MoveMotorInEpics("SY",dval)	
 			endif
-			
-			
+			if(StringMatch(sva.ctrlName, "SelectedSampleName"))
+				SVAR SelectedSampleName = root:Packages:SamplePlateSetup:SelectedSampleName
+				SelectedSampleName = CleanupName(sval, 0 , 40)
+			endif
+			if(StringMatch(sva.ctrlName, "SampleThickness"))
+				NVAR SampleThickness = root:Packages:SamplePlateSetup:SampleThickness
+				if(dval<0 || dval>20)
+					DoAlert /T="Wrong thickness" 0, "Thickness must be between 0 and 20 [mm]"
+					SampleThickness = 1
+				endif
+			endif
+		
 			break
 		case -1: // control being killed
 			break
