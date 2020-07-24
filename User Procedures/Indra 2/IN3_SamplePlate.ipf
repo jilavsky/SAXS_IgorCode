@@ -656,6 +656,12 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 			if(StringMatch(ba.ctrlName, "BeamlineSurvey" ))
 				IN3S_BeamlineSurvey()
 			endif
+			if(StringMatch(ba.ctrlName, "GetHelp" ))
+			//https://saxs-igorcodedocs.readthedocs.io/en/latest/Indra/SamplePlateSurvey.html
+			//Open www manual with the right page
+			IN2G_OpenWebManual("Indra/SamplePlateSurvey.html")
+			endif
+			
 			break
 		case -1: // control being killed
 			break
