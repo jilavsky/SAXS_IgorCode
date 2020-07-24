@@ -534,6 +534,7 @@ End
 
 Function IN2G_AddButtonsToBrowser()
 #if(IgorVersion()<9)
+	CreateBrowser
 	ModifyBrowser appendUserButton={'SampleName-to-Values',"IN2G_ExtractInfoFromFldrname()"}
 	ModifyBrowser appendUserButton={'Graph w1 vs w2',"IN2G_PlotBrowserSelectionXY()"}
 #endif
