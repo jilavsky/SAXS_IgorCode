@@ -64,9 +64,29 @@ Function IN3S_SampleSetupMain()
 	setDataFolder OldDf
 end
 
+//************************************************************************************************************
+//****************************************************************************************
+Function IN3S_ExportHookFunction(Command, SampleName,SX, SY, Thickness, MD)
+	string Command, SampleName,SX, SY, Thickness, MD 
+	//this hook function will modify output of the command file for given line. This needs to be cutomized for specific need. 
+	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
 
-
-
+	//in this case it will write each command in notebook multiple times, in original position and then +/- 1mm in sx and sy
+	//center	
+	Notebook $nbl text="      "+Command+"        "+SX+"      "+SY+"      "+Thickness+"      \""+SampleName+"\"  \r"
+	//and now the variations, only if Sample Name is NOT Blank or Empty
+	if(!StringMatch(SampleName, "*Blank*")&&!StringMatch(SampleName, "*Empty*"))
+		string TempStr
+		TempStr = num2str(str2num(SX)-1)
+		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_R"+"\"  \r"
+		TempStr = num2str(str2num(SX)+1)
+		Notebook $nbl text="      "+Command+"        "+TempStr+"      "+SY+"      "+Thickness+"      \""+SampleName+"_L"+"\"  \r"
+		TempStr = num2str(str2num(SY)-1)
+		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_B"+"\"  \r"
+		TempStr = num2str(str2num(SY)+1)
+		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_T"+"\"  \r"
+	endif	
+end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
@@ -129,6 +149,8 @@ Function IN3S_MainPanel()
 			SetVariable DefaultSampleThickness,pos={30,310},size={250,20},limits={0.01,20,0.1}, noproc,title="Default Sample thickness [mm]: "
 			Setvariable DefaultSampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:DefaultSampleThickness, help={"Thickness if not defined."}
 
+			CheckBox RunExportHookFunction pos={30,350},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
+			CheckBox RunExportHookFunction variable=root:Packages:SamplePlateSetup:RunExportHookFunction,  noproc
 
 			SetVariable DefaultCommandFileName,pos={100,550},size={450,25},noproc,title="Default Command file name : "
 			Setvariable DefaultCommandFileName,fStyle=2, variable=root:Packages:SamplePlateSetup:DefaultCommandFileName, help={"usaxs.mac typically, or user name if wanted."}
@@ -139,6 +161,7 @@ Function IN3S_MainPanel()
 			CheckBox DisplayUSWAXScntrls variable=root:Packages:SamplePlateSetup:DisplayUSWAXScntrls,  proc=IN3S_CheckProc
 			CheckBox DisplayAllSamplesInImage pos={340,250},size={90,20},title="Display all samples in image? ", help={"Add to image all defined sample positiosn"}
 			CheckBox DisplayAllSamplesInImage variable=root:Packages:SamplePlateSetup:DisplayAllSamplesInImage,  proc=IN3S_CheckProc
+
 
 		//controls under the table
 		Button SavePositionSet,pos={15,585},size={140,20}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
@@ -228,6 +251,7 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			CheckBox DisplayUSWAXScntrls,  win=SamplePlateSetup, disable=(tab!=1)
 			CheckBox DisplayAllSamplesInImage,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable DefaultCommandFileName,  win=SamplePlateSetup, disable=(tab!=1)
+			CheckBox RunExportHookFunction,  win=SamplePlateSetup, disable=(tab!=1)
 			break
 		case -1: // control being killed
 			break
@@ -894,6 +918,7 @@ static Function IN3S_WriteCommandFile(show)
 	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
 	NVAR DefaultSampleThickness=root:Packages:SamplePlateSetup:DefaultSampleThickness
 	SVAR UserNameForSampleSet = root:Packages:SamplePlateSetup:UserNameForSampleSet
+	NVAR RunExportHookFunction= root:Packages:SamplePlateSetup:RunExportHookFunction
 	SVAR/Z nbl=root:Packages:SamplePlateSetup:NotebookName
 	if(!SVAR_Exists(nbl))
 		NewDataFolder/O root:Packages
@@ -934,7 +959,11 @@ static Function IN3S_WriteCommandFile(show)
 	   			haveAnySWAXS=1
 	   			thickness = str2num(listWaveG[i][3])
 	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-				Notebook $nbl text="      saxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+	   			if(RunExportHookFunction)
+	   				IN3S_ExportHookFunction("saxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
+	   			else
+					Notebook $nbl text="      saxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+				endif
 			endif
 		endif   
    endfor
@@ -947,7 +976,11 @@ static Function IN3S_WriteCommandFile(show)
 	   			haveAnySWAXS=1
 	   			thickness = str2num(listWaveG[i][3])
 	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-				Notebook $nbl text="      waxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+	   			if(RunExportHookFunction)
+	   				IN3S_ExportHookFunction("waxsExp",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
+	   			else
+					Notebook $nbl text="      waxsExp        "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+				endif
 			endif
 		endif   
    endfor
@@ -963,7 +996,11 @@ static Function IN3S_WriteCommandFile(show)
 			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
 	   			thickness = str2num(listWaveG[i][3])
 	   			thickness = thickness>0 ? thickness : DefaultSampleThickness
-				Notebook $nbl text="      USAXSscan      "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+	   			if(RunExportHookFunction)
+	   				IN3S_ExportHookFunction("USAXSscan",listWaveG[i][0], listWaveG[i][1],listWaveG[i][2],num2str(thickness), "" )
+	   			else
+					Notebook $nbl text="      USAXSscan      "+listWaveG[i][1]+"      "+listWaveG[i][2]+"      "+num2str(thickness)+"      \""+listWaveG[i][0]+"\"  \r"
+				endif
 			endif
 		endif   
    endfor
@@ -1034,6 +1071,7 @@ static Function IN3S_Initialize()
 	ListOfVariables+="DefaultSampleThickness;USAXSAll;SAXSAll;WAXSAll;DisplayUSWAXScntrls;"
 	ListOfVariables+="SampleXRBV;SampleYRBV;SelectedRow;SampleThickness;"
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
+	ListOfVariables+="RunExportHookFunction;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
