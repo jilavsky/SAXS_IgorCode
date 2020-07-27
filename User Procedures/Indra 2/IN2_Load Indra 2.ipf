@@ -1,6 +1,6 @@
 #pragma rtGlobals=3			// Use modern global access method.
 #pragma IgorVersion=8.03  	//requires Igor version 8.03 or higher
-#pragma version=1.975
+#pragma version=1.976
 
 
 //*************************************************************************\
@@ -9,7 +9,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.975 current beta 
+//1.976  Beta version July2020 release. 
 //1.97 February 2020 release. 
 //1.96 December 2018 release. 
 //1.95 July 2018 release

@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3	// Use strict wave reference mode and runtime bounds checking
-#pragma version=2.695
+#pragma version=2.696
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 //define manual date and release verison 
-constant CurrentIrenaVersionNumber = 2.695
+constant CurrentIrenaVersionNumber = 2.696
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -14,7 +14,7 @@ constant CurrentIrenaVersionNumber = 2.695
 //*************************************************************************/
 
 //			Require Igor 8.03 and higher. No testing for Igor 7. 
-//2.695	Beta version after February2020 release
+//2.696	Beta version after February2020 release
 //			New bioSAXS tools
 //			New Metadata Browser tool
 //2.69 	Removed 14 ipf files to reduce clutter. 

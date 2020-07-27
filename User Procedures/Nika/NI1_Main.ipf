@@ -1,11 +1,11 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method.
-#pragma version=1.825
+#pragma version=1.826
 #pragma IgorVersion=8.03
 
 //DO NOT renumber Main files every time, these are main release numbers...
 
-constant CurrentNikaVersionNumber = 1.825
+constant CurrentNikaVersionNumber = 1.826
 constant FixBackgroundOversubScale=1.05			//this is used to fix oversubtracted background. Adds FixBackgroundOversubScale*abs(V_min) to all intensity value. 
 constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************\
@@ -15,7 +15,7 @@ constant NikaNumberOfQCirclesDisp=15
 //*************************************************************************/
 
 //			require Igor 8.03 now. Not testing Igor 7 anymore. 
-//1.825 	Beta version after February2020 release
+//1.826 	Beta version after February2020 release
 //1.82 	rtGlobal=3 forced for all
 //			Added support for 12ID-C data. 
 //			Add print in history which version has compiled, Useful info later when debugging.

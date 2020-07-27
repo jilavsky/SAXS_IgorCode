@@ -1,6 +1,6 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3			// Use modern global access method.
-#pragma version = 1.975
+#pragma version = 1.976
 #pragma IgorVersion=7.05
 
 //DO NOT renumber Main files every time, these are main release numbers...
@@ -11,7 +11,7 @@
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
-//1.975 May2020 beta
+//1.976  Beta version July2020 release. 
 //1.97 February 2020, fix GUI for step scanning
 	//1.97 add controls if to remove vibrations or not, seems sometimes is not vibrations which causes less points to be recorded... 
 	//1.97 add is2DCollimated and fix sbFLyscan handling. few more fixes. 
