@@ -32,6 +32,15 @@
 
 constant  IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant  IN3SBeamlineSurveyDevelopOn = 0
+//  values for beamtime estimate
+constant IN3BmSrvUSAXSOverhead = 20			//overhead for flyscan 
+constant IN3BmSrvSAXSOverhead = 7			//overhead for SAXS, transmission measurement 
+constant IN3BmSrvWAXSOverhead = 2			//overhead for WAXS 
+constant IN3BmSrvSampleMovement = 10		//avergae moving samples around 
+constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
+constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds 
+constant IN3BmSrvMoveGeometryTime = 20		//overhead to mvoe from USAXS to SAXS to WAXS
+
 
 //TODO:
 //		add "Saved & Dirty" flag to avoid some dialogs. 
@@ -61,6 +70,7 @@ Function IN3S_SampleSetupMain()
 	IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 	WarningForUser = "Tool started... Report bugs and wishes to author!" 
+	IN3S_EstimateRunTime()
 	setDataFolder OldDf
 end
 
@@ -152,6 +162,14 @@ Function IN3S_MainPanel()
 			CheckBox RunExportHookFunction pos={30,350},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
 			CheckBox RunExportHookFunction variable=root:Packages:SamplePlateSetup:RunExportHookFunction,  noproc
 
+			SetVariable USAXSScanTime,pos={30,380},size={250,20},limits={30,360,15}, noproc,title="USAXS time = "
+			Setvariable USAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:USAXSScanTime, help={"USAXS time from epics, used to calculate run time."}
+			SetVariable SAXSScanTime,pos={30,410},size={250,20},limits={1,60,5}, noproc,title="SAXS time = "
+			Setvariable SAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:SAXSScanTime, help={"SAXS time from epics, used to calculate run time."}
+			SetVariable WAXSScanTime,pos={30,440},size={250,20},limits={1,60,5}, noproc,title="WAXS time = "
+			Setvariable WAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:WAXSScanTime, help={"WAXS time from epics, used to calculate run time."}
+	
+
 			SetVariable DefaultCommandFileName,pos={100,550},size={450,25},noproc,title="Default Command file name : "
 			Setvariable DefaultCommandFileName,fStyle=2, variable=root:Packages:SamplePlateSetup:DefaultCommandFileName, help={"usaxs.mac typically, or user name if wanted."}
 
@@ -169,6 +187,10 @@ Function IN3S_MainPanel()
 		Button CreateCommandFile,pos={415,580},size={160,20}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
 		Button ExportCommandFile,pos={415,600},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
 		Button ExportCommandFile2,pos={415,620},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
+
+		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,625},size={350,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
+		Setvariable CalculatedOverAllTime,variable=root:Packages:SamplePlateSetup:CalculatedOverAllTime, help={"Estimated run time for all"}, limits={0,inf,0}
+
 		Setvariable Warnings title="\Zr120Last Info/Warning: ",pos={10,645},size={550,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(65535,0,0), labelBack=0, noedit=1
 		Setvariable Warnings,variable=root:Packages:SamplePlateSetup:WarningForUser, help={"Last warning which code issued"}
 
@@ -252,6 +274,9 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			CheckBox DisplayAllSamplesInImage,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable DefaultCommandFileName,  win=SamplePlateSetup, disable=(tab!=1)
 			CheckBox RunExportHookFunction,  win=SamplePlateSetup, disable=(tab!=1)
+			SetVariable USAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
+			SetVariable SAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
+			SetVariable WAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			break
 		case -1: // control being killed
 			break
@@ -299,17 +324,20 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						IN3S_InsertDeleteLines(2, row,1)
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Deleted selected line "+num2str(row) 
+						IN3S_EstimateRunTime()
 						break
 					case 3:	// "Duplicate selected Line"
 						IN3S_InsertDeleteLines(3, row,1)
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Duplicated selected line " +num2str(row)
+						IN3S_EstimateRunTime()
 						break
 					case 4:	// "Set line as Blank"
 						listWave[row][0]="Blank"
 						listWave[row][3]="0"
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Set row "+num2str(row)+" as Blank" 
+						IN3S_EstimateRunTime()
 						break
 					case 5:	// "Write same name to all samples"
 						string NewSampleName="SampleName"
@@ -325,6 +353,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+CleanupName(NewSampleName, 0 , 40)+" for all samples without name" 
+						IN3S_EstimateRunTime()
 						break;
 					case 6:	// "same sx to all empty"
 						variable  NewSxForAll=10
@@ -340,6 +369,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+num2str(NewSxForAll)+" for all samples without SX" 
+						IN3S_EstimateRunTime()
 						break;
 					case 7:	// "same sy to all empty"
 						variable  NewSyForAll=10
@@ -355,6 +385,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+num2str(NewSyForAll)+" for all samples without SX" 
+						IN3S_EstimateRunTime()
 						break;
 					case 8:	// "Increment Sx from selected row"
 						variable  NewSxStep=10
@@ -374,6 +405,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Calculated new sx for rown higher than : " +num2str(row) 
+						IN3S_EstimateRunTime()
 						break;
 					case 9:	// "Increment Sy from selected row"
 						variable  NewSyStep=10
@@ -393,6 +425,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Calculated new sy for all samples" 
+						IN3S_EstimateRunTime()
 						break;
 					case 10:	// "Copy in Table Clipboard"
 						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
@@ -416,6 +449,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						listWave[row][7] = StringByKey("MD", TableClipboard, "=" , ";")
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Pasted values in Table Clipboard into the row  "+num2str(row)
+						IN3S_EstimateRunTime()
 						break;
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
@@ -483,6 +517,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			endif
 			//add tag
 			IN3S_AddTagToImage(row)
+			IN3S_EstimateRunTime()
 			break
 		case 13: // checkbox clicked (Igor 6.2 or later)
 			break
@@ -531,6 +566,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 					IN3S_AddTagToImage(0)		
 					SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 					WarningForUser = "Created a new set of positions" 
+					IN3S_EstimateRunTime()
 				endif
 			endif
 			if(StringMatch(ba.ctrlName, "CreateImage" ))
@@ -567,6 +603,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							IN3S_EstimateRunTime()
 							break		// exit from switch
 						case "Old Style Al Plate":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:OldStyleAlPlateCenters
@@ -583,6 +620,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							IN3S_EstimateRunTime()
 							break		// exit from switch
 						case "NMR Tubes holder":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:NMRTubesHolderCenters
@@ -597,6 +635,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							IN3S_EstimateRunTime()
 							break		// exit from switch
 						case "Generic Grid holder":	 
 							Wave Centers = root:Packages:SamplePlatesAvailable:GenericGridHolderCenters
@@ -634,8 +673,8 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							ListBox CommandsList win=SamplePlateSetup, selRow=1					
 							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
+							IN3S_EstimateRunTime()
 							break		// exit from switch
-						
 						case "Image":	
 							//nothing to do here... 
 							//here is code which loads image and deal with that. this will be different code and complciated.
@@ -656,6 +695,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				IN3S_InsertDeleteLines(4, 0, NewLines)	
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Added "+num2str(NewLines)+" new lines"
+				IN3S_EstimateRunTime()
 			endif
 			if(StringMatch(ba.ctrlName, "SavePositionSet" ))
 				IN3S_SaveCurrentSampleSet()				
@@ -675,6 +715,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				endif
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Loaded set of positions for "+SelectedFolder
+				IN3S_EstimateRunTime()
 			endif
 			if(StringMatch(ba.ctrlName, "CreateCommandFile" ))
 				IN3S_WriteCommandFile(1)
@@ -1072,6 +1113,7 @@ static Function IN3S_Initialize()
 	ListOfVariables+="SampleXRBV;SampleYRBV;SelectedRow;SampleThickness;"
 	ListOfVariables+="SampleXTable;SampleYTable;SurveySXStep;SurveySYStep;MoveWhenRowChanges;"
 	ListOfVariables+="RunExportHookFunction;"
+	ListOfVariables+="USAXSScanTime;SAXSScanTime;WAXSScanTime;CalculatedOverAllTime;"
 
 	ListOfStrings="SelectedPlateName;UserNameForSampleSet;UserName;WarningForUser;"
 	ListOfStrings+="SelectedSampleName;DefaultCommandFileName;TableClipboard;"
@@ -1115,12 +1157,81 @@ static Function IN3S_Initialize()
 	if(SurveySYStep<0.01)
 		SurveySYStep = 1
 	endif
+	NVAR USAXSScanTime
+	NVAR SAXSScanTime
+	NVAR WAXSScanTime
+	if(USAXSScanTime<30)
+		USAXSScanTime = 90
+	endif
+	if(SAXSScanTime<3)
+		SAXSScanTime = 20
+	endif
+	if(WAXSScanTime<3)
+		WAXSScanTime = 20
+	endif
 	SetDataFolder OldDf
 end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
-//************************************************************************************************************
+static Function IN3S_EstimateRunTime()
+	
+	NVAR USAXSScanTime = root:Packages:SamplePlateSetup:USAXSScanTime
+	NVAR SAXSScanTime = root:Packages:SamplePlateSetup:SAXSScanTime
+	NVAR WAXSScanTime = root:Packages:SamplePlateSetup:WAXSScanTime
+	NVAR CalculatedOverAllTime = root:Packages:SamplePlateSetup:CalculatedOverAllTime
+	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
+	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
+	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
+
+	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
+	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+	//SAXS LBSelectionWvG[i][5]==48
+	//WAXS LBSelectionWvG[i][6]==48
+	//USAXS LBSelectionWvG[i][4]==48
+		//constant IN3BmSrvUSAXSOverhead = 20			//overhead for flyscan 
+		//constant IN3BmSrvSAXSOverhead = 7			//overhead for SAXS, transmission measurement 
+		//constant IN3BmSrvWAXSOverhead = 2			//overhead for WAXS 
+		//constant IN3BmSrvSampleMovement = 10		//average moving samples around 
+		//constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
+		//constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds 
+		//constant IN3BmSrvMoveGeometryTime = 20		//overhead to mvoe from USAXS to SAXS to WAXS
+	variable NumUSAXS, NumSAXS, NumWAXS, numSamples
+	variable i, isused
+	NumUSAXS=0 
+	NumSAXS=0
+	NumWAXS=0
+   For(i=0;i<dimsize(listWaveG,0);i+=1)
+   		isused = (strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+   		if((SAXSAllG || LBSelectionWvG[i][5]==48)&& isused )
+			NumSAXS+=1
+		endif   
+   		if((WAXSAllG || LBSelectionWvG[i][6]==48)&& isused )
+			NumWAXS+=1
+		endif   
+    	if((USAXSAllG || LBSelectionWvG[i][4]==48)&& isused )
+			NumUSAXS+=1
+		endif   
+   endfor
+   numSamples = max(NumUSAXS, NumSAXS, NumWAXS)
+	CalculatedOverAllTime  =  NumUSAXS*(USAXSScanTime+IN3BmSrvUSAXSOverhead+IN3BmSrvSampleMovement)		//this is USAXS
+	if(NumUSAXS>0)
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																//USAXS->SAXS
+	endif
+	CalculatedOverAllTime +=  NumSAXS*(SAXSScanTime+IN3BmSrvSAXSOverhead+IN3BmSrvSampleMovement) 		//SAXS
+	if(NumSAXS>0)
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																//SAXS->WAXS
+	endif
+	CalculatedOverAllTime +=  NumWAXS*(WAXSScanTime+IN3BmSrvWAXSOverhead+IN3BmSrvSampleMovement) 		//SAXS
+	if(NumWAXS>0)
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																//WAXS->USAXS
+	endif
+	variable NumTunes = floor(CalculatedOverAllTime/IN3BmSrvTuneTimeStep)
+	CalculatedOverAllTime +=  NumTunes * IN3BmSrvTuneAveTime
+	//done, calculated avergae scan time for all which are well defined. 
+	CalculatedOverAllTime/=60		//convert to minutes
+	CalculatedOverAllTime = round(CalculatedOverAllTime)
+end//************************************************************************************************************
 //************************************************************************************************************
 
 static Function IN3S_CreateDefaultPlates()
@@ -1989,7 +2100,8 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
 				SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
-				IN3S_AddTagToImage(SelectedRow)			
+				IN3S_AddTagToImage(SelectedRow)
+				IN3S_EstimateRunTime()			
 			endif
 			
 			if(StringMatch(sva.ctrlName, "SampleXRBV"))
@@ -2086,6 +2198,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved selected row up" 
 				IN3S_MoveToPositionIfOK()
+				IN3S_EstimateRunTime()
 			endif
 			if(StringMatch(ba.ctrlName, "MoveRowDown"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
@@ -2110,6 +2223,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved selected row down" 
 				IN3S_MoveToPositionIfOK()
+				IN3S_EstimateRunTime()
 			endif
 			if(StringMatch(ba.ctrlName, "DriveTovals"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
@@ -2136,6 +2250,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Saved positions to table" 
+				IN3S_EstimateRunTime()
 			endif
 			break
 		case -1: // control being killed
