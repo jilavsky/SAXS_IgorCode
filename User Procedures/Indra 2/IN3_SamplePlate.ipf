@@ -30,15 +30,16 @@
 
 //************************************************************************************************************
 
-constant  IN3SBeamlineSurveyEpicsMonTicks = 15 
-constant  IN3SBeamlineSurveyDevelopOn = 0
+constant IN3_SamplePlateSetupVersion=1
+constant IN3SBeamlineSurveyEpicsMonTicks = 15 
+constant IN3SBeamlineSurveyDevelopOn = 1
 //  values for beamtime estimate
-constant IN3BmSrvUSAXSOverhead = 20			//overhead for flyscan 
-constant IN3BmSrvSAXSOverhead = 7			//overhead for SAXS, transmission measurement 
+constant IN3BmSrvUSAXSOverhead = 15			//overhead for flyscan 
+constant IN3BmSrvSAXSOverhead = 5			//overhead for SAXS, transmission measurement 
 constant IN3BmSrvWAXSOverhead = 2			//overhead for WAXS 
-constant IN3BmSrvSampleMovement = 10		//avergae moving samples around 
+constant IN3BmSrvSampleMoveSpeed = 8		//average moving samples around in mm/sec
 constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
-constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds 
+constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
 constant IN3BmSrvMoveGeometryTime = 20		//overhead to mvoe from USAXS to SAXS to WAXS
 
 
@@ -62,10 +63,10 @@ Function IN3S_SampleSetupMain()
 
 	IN3S_Initialize()
 	IN3S_CreateDefaultPlates()
-	IN3S_CreateTablesForPlates(20, 1)
+	IN3S_CreateTablesForPlates(0, 0)
 	IN3S_MainPanel()
-	//  ING2_AddScrollControl()
-	//	IN3_UpdatePanelVersionNumber("USAXSDataReduction", IN3_ReduceDataMainVersionNumber)
+	ING2_AddScrollControl()
+	IN3_UpdatePanelVersionNumber("SamplePlateSetup", IN3_SamplePlateSetupVersion)
 	IN3S_FixUSWAXSForAll()
 	IN3S_AddTagToImage(-4)	//remove all drawings, if needed	
 	SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
@@ -97,9 +98,28 @@ Function IN3S_ExportHookFunction(Command, SampleName,SX, SY, Thickness, MD)
 		Notebook $nbl text="      "+Command+"        "+SX+"      "+TempStr+"      "+Thickness+"      \""+SampleName+"_T"+"\"  \r"
 	endif	
 end
+ 
+//*****************************************************************************************************************
+//*****************************************************************************************************************
+//************************************************************************************************************
+//************************************************************************************************************
 
-//*****************************************************************************************************************
-//*****************************************************************************************************************
+Function IN3S_SaPlateCheckVersion()	
+	DoWindow SamplePlateSetup
+	if(V_Flag)
+		if(!IN3_CheckPanelVersionNumber("SamplePlateSetup", IN3_SamplePlateSetupVersion))
+			DoAlert /T="The Sample Plate setup panel was created by incorrect version of Indra " 1, "Sample Plate setup needs to be restarted to work properly. Restart now?"
+			if(V_flag==1)
+ 				KillWIndow/Z SamplePlateSetup
+				IN3S_SampleSetupMain()
+			else		//at least reinitialize the variables so we avoid major crashes...
+				IN3S_Initialize()
+			endif
+		endif
+	endif
+end
+//************************************************************************************************************
+//************************************************************************************************************
 
 
 Function IN3S_MainPanel()
@@ -116,23 +136,23 @@ Function IN3S_MainPanel()
 		Button GetHelp,pos={490,25},size={80,15},fColor=(65535,32768,32768), proc=IN3S_ButtonProc,title="Get Help", help={"Open www manual page for this tool"}
 		//left size
 		TitleBox Info1 title="\Zr120New positions : ",pos={10,35},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
-		Button CreateNewSet,pos={10,55},size={150,15}, proc=IN3S_ButtonProc,title="Create New Sample Set", help={"Creates new set of sample positions"}
-		Button AddMoreLines,pos={10,75},size={150,15}, proc=IN3S_ButtonProc,title="Add Sample Positions", help={"Adds more sample positions"}
+		Button CreateNewSet,pos={10,55},size={150,17}, proc=IN3S_ButtonProc,title="Create New Sample Set", help={"Creates new set of sample positions"}
+		Button AddMoreLines,pos={10,75},size={150,17}, proc=IN3S_ButtonProc,title="Add Sample Positions", help={"Adds more sample positions"}
 		SetVariable NumberOfSamplesToCreate,pos={170,62},size={100,20}, limits={1, 500, 10}, proc=IN3S_SetVarProc,title="Lines = "
 		Setvariable NumberOfSamplesToCreate,fStyle=2, variable=root:Packages:SamplePlateSetup:NumberOfSamplesToCreate, help={"How many sample positions to create"}
 		TitleBox Info2 title="\Zr120Saved Sets : ",pos={10,90},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		PopupMenu SelectSavedSet,pos={10,110},size={330,21},noproc,title="Select Saved set : ", help={"Select folder with saved set of data"}
 		PopupMenu SelectSavedSet,mode=1,value= #"\"---;\"+IN3S_GenStringOfSets()"
-		Button LoadSavedSet,pos={10,135},size={180,15}, proc=IN3S_ButtonProc,title="Load saved Positions Set", help={"Loads postions set saved before"}
+		Button LoadSavedSet,pos={10,135},size={180,17}, proc=IN3S_ButtonProc,title="Load saved Positions Set", help={"Loads postions set saved before"}
 	
 		TitleBox Info3 title="\Zr120Templates : ",pos={320,35},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
 		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;"
-		Button PopulateTable,pos={300,85},size={120,15}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
-		Button CreateImage,pos={440,85},size={120,15}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
-		Button BeamlineSurvey,pos={440,105},size={120,15}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
+		Button PopulateTable,pos={300,85},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
+		Button CreateImage,pos={440,85},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
+		Button BeamlineSurvey,pos={440,105},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
 
 		TitleBox Info4 title="\Zr120Current set name : ",pos={300,115},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0
 		SetVariable UserNameForSampleSet,pos={300,135},size={270,20}, proc=IN3S_SetVarProc,title="Set Name: "
@@ -162,11 +182,11 @@ Function IN3S_MainPanel()
 			CheckBox RunExportHookFunction pos={30,350},size={90,20},title="Run Export hook function? ", help={"Run export hook function"}
 			CheckBox RunExportHookFunction variable=root:Packages:SamplePlateSetup:RunExportHookFunction,  noproc
 
-			SetVariable USAXSScanTime,pos={30,380},size={250,20},limits={30,360,15}, noproc,title="USAXS time = "
+			SetVariable USAXSScanTime,pos={30,380},size={250,20},limits={30,360,15}, proc=IN3S_SetVarProc,title="USAXS time = "
 			Setvariable USAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:USAXSScanTime, help={"USAXS time from epics, used to calculate run time."}
-			SetVariable SAXSScanTime,pos={30,410},size={250,20},limits={1,60,5}, noproc,title="SAXS time = "
+			SetVariable SAXSScanTime,pos={30,410},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="SAXS time = "
 			Setvariable SAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:SAXSScanTime, help={"SAXS time from epics, used to calculate run time."}
-			SetVariable WAXSScanTime,pos={30,440},size={250,20},limits={1,60,5}, noproc,title="WAXS time = "
+			SetVariable WAXSScanTime,pos={30,440},size={250,20},limits={1,60,5}, proc=IN3S_SetVarProc,title="WAXS time = "
 			Setvariable WAXSScanTime,fStyle=2, variable=root:Packages:SamplePlateSetup:WAXSScanTime, help={"WAXS time from epics, used to calculate run time."}
 	
 
@@ -185,8 +205,8 @@ Function IN3S_MainPanel()
 		Button SavePositionSet,pos={15,585},size={140,20}, proc=IN3S_ButtonProc,title="Save Position Set", help={"Saves set of positions with user name"}
 		//save export
 		Button CreateCommandFile,pos={415,580},size={160,20}, proc=IN3S_ButtonProc,title="Preview cmd file", help={"Creates and displays command file with current set of positions"}
-		Button ExportCommandFile,pos={415,600},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
-		Button ExportCommandFile2,pos={415,620},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
+		Button ExportCommandFile,pos={415,605},size={160,20}, proc=IN3S_ButtonProc,title="Export cmd file", help={"Exports usaxs.mac or defaultname.mac cmd file with current set of positions"}
+		Button ExportCommandFile2,pos={415,630},size={160,20}, proc=IN3S_ButtonProc,title="Dialog Export cmd file", help={"Dialog - Exports cmd file with current set of positions"}
 
 		Setvariable CalculatedOverAllTime title="\Zr120Estimated run time [min]: ",pos={10,625},size={350,15},frame=0,fstyle=3,fColor=(0,0,65535),valueColor=(0,0,0), labelBack=0, noedit=1
 		Setvariable CalculatedOverAllTime,variable=root:Packages:SamplePlateSetup:CalculatedOverAllTime, help={"Estimated run time for all"}, limits={0,inf,0}
@@ -231,6 +251,11 @@ Function IN3S_SetVarProc(sva) : SetVariableControl
 				SVAR UserNameForSampleSet = root:Packages:SamplePlateSetup:UserNameForSampleSet
 				UserNameForSampleSet = CleanupName(sval, 0)
 			endif
+
+			if(stringMatch(sva.ctrlname,"USAXSScanTime")||stringMatch(sva.ctrlname,"SAXSScanTime")||stringMatch(sva.ctrlname,"WAXSScanTime"))
+				IN3S_EstimateRunTime()
+			endif
+			
 			break
 		case -1: // control being killed
 			break
@@ -277,6 +302,7 @@ Function IN3S_TableTabsTabProc(tca) : TabControl
 			SetVariable USAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable SAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
 			SetVariable WAXSScanTime,  win=SamplePlateSetup, disable=(tab!=1)
+			IN3S_EstimateRunTime()
 			break
 		case -1: // control being killed
 			break
@@ -311,25 +337,25 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			if (lba.eventMod & 0x10)	// rightclick
 				items = "Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;Write same name to all empty;"
 				items += "Same Sx to all empty;Same Sy to all empty;Increment Sx from seleted row;Increment Sy from seleted row;"
-				items += "Copy row Values to Table Clipboard;Paste Table Clipboard to row;"
+				items += "Copy row Values to Table Clipboard;Paste Table Clipboard to row;Insert New row with Table Clipboard;"
 				PopupContextualMenu items
 				// V_flag is index of user selected item    
 				switch (V_flag)
 					case 1:	// "Insert new line"
 						IN3S_InsertDeleteLines(1, row,1)
-						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Inserted new line "+num2str(row) 
+						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						//WarningForUser = "Inserted new line "+num2str(row) 
 						break
 					case 2:	// "Delete selected lines"
 						IN3S_InsertDeleteLines(2, row,1)
-						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Deleted selected line "+num2str(row) 
+						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						//WarningForUser = "Deleted selected line "+num2str(row) 
 						IN3S_EstimateRunTime()
 						break
 					case 3:	// "Duplicate selected Line"
 						IN3S_InsertDeleteLines(3, row,1)
-						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						WarningForUser = "Duplicated selected line " +num2str(row)
+						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						//WarningForUser = "Duplicated selected line " +num2str(row)
 						IN3S_EstimateRunTime()
 						break
 					case 4:	// "Set line as Blank"
@@ -451,6 +477,23 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Pasted values in Table Clipboard into the row  "+num2str(row)
 						IN3S_EstimateRunTime()
 						break;
+					case 12:	// "Insert New row with Table Clipboard"
+						IN3S_InsertDeleteLines(1, row,1)
+						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						//WarningForUser = "Inserted new line "+num2str(row) 
+						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
+						listWave[row][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
+						listWave[row][1] = StringByKey("SX", TableClipboard, "=" , ";")
+						listWave[row][2] = StringByKey("SY", TableClipboard, "=" , ";")
+						listWave[row][3] = StringByKey("TH", TableClipboard, "=" , ";")
+						listWave[row][4] = StringByKey("USAXS", TableClipboard, "=" , ";")
+						listWave[row][5] = StringByKey("SAXS", TableClipboard, "=" , ";")
+						listWave[row][6] = StringByKey("WAXS", TableClipboard, "=" , ";")
+						listWave[row][7] = StringByKey("MD", TableClipboard, "=" , ";")
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Inserted new row: "+num2str(row)+"with values from Table Clipboard "
+						IN3S_EstimateRunTime()
+						break;
 					default :	// "Sort"
 						//DataSelSortString = StringFromList(V_flag-1, items)
 						//PopupMenu SortOptionString,win=$(TopPanel), mode=1,popvalue=DataSelSortString
@@ -498,8 +541,12 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 			if(col==0)
 				string Username=listWave[row][col]
 				if(strlen(Username)>0)
-					//Username="Sample_sx"+listWave[row][1]+"_sy"+listWave[row][2]
 					listWave[row][col] = CleanupName(Username, 0 , 40)
+					DoWIndow BeamlinePlateSetup
+					if(V_Flag)
+						SVAR SelectedSampleName = root:Packages:SamplePlateSetup:SelectedSampleName
+						SelectedSampleName = listWave[row][col]
+					endif
 				endif
 			endif
 			//cleanup the numbers for sx, sy and thickness...
@@ -509,6 +556,21 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 					variable valueNumFromUser = str2num(valueStrFromUser)
 					if(numtype(valueNumFromUser)==0)	//something is number... 
 						listWave[row][col] = num2str(IN2G_roundDecimalPlaces(valueNumFromUser,2))
+						DoWIndow BeamlinePlateSetup
+						if(V_Flag)
+							NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
+							NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+							NVAR Thick=root:Packages:SamplePlateSetup:SampleThickness
+							if(col==1)
+								SampleXTable = IN2G_roundDecimalPlaces(valueNumFromUser,2)
+								IN3S_MoveToPositionIfOK()
+							elseif(col==2)
+								SampleYTable = IN2G_roundDecimalPlaces(valueNumFromUser,2)
+								IN3S_MoveToPositionIfOK()
+							elseif(col==3)
+								Thick = IN2G_roundDecimalPlaces(valueNumFromUser,2)
+							endif
+						endif
 					else
 						listWave[row][col] = ""
 						Abort "Input was not valid number, try again"
@@ -777,6 +839,7 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 				else
 					LBSelectionWv[][4]=32
 				endif
+				IN3S_EstimateRunTime()
 			endif
 			if(stringmatch(cba.ctrlName,"SAXSAll"))
 				NVAR SAXSAll = root:Packages:SamplePlateSetup:SAXSAll
@@ -785,6 +848,7 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 				else
 					LBSelectionWv[][5]=32
 				endif
+				IN3S_EstimateRunTime()
 			endif
 			if(stringmatch(cba.ctrlName,"WAXSAll"))
 				NVAR WAXSAll = root:Packages:SamplePlateSetup:WAXSAll
@@ -793,6 +857,7 @@ Function IN3S_CheckProc(cba) : CheckBoxControl
 				else
 					LBSelectionWv[][6]=32
 				endif
+				IN3S_EstimateRunTime()
 			endif
 			if(stringmatch(cba.ctrlName,"DisplayUSWAXScntrls"))
 				IN3S_FixUSWAXSForAll()
@@ -974,8 +1039,9 @@ static Function IN3S_WriteCommandFile(show)
 	variable i, haveAnySWAXS, thickness
 	haveAnySWAXS = 0
 	
-	NewNotebook/K=1/F=0/ENCG=1/N=$nbl/V=1/W=(235.5,44.75,817.5,592.25) as nbl		
-	Notebook $nbl text="     CURRENT_EXPERIMENT_NAME \""+UserNameForSampleSet+"\"\r"
+	NewNotebook/K=1/F=0/ENCG={3,0}/N=$nbl/V=1/W=(235.5,44.75,817.5,592.25) as nbl		
+	Notebook $nbl writeBOM = 0
+	Notebook $nbl text="        CURRENT_EXPERIMENT_NAME \""+UserNameForSampleSet+"\"\r"
 	Notebook $nbl text="		# This file runs USAXS, SAXS and WAXS scans according to the syntax shown below\r"
 	Notebook $nbl text="		#       \r"
 	Notebook $nbl text="		# Scan Type      sx         sy   Thickness  Sample Name\r"
@@ -987,7 +1053,8 @@ static Function IN3S_WriteCommandFile(show)
 	Notebook $nbl text="\r"
 	Notebook $nbl text="		# Run this file by typing the following command in the spec window:   USAXS> CollectData usaxs.mac \r"             
 	Notebook $nbl text="\r"                                   
-	Notebook $nbl text="		# Stop the run using the \"Stop after this scan?\" checkbox in USAXS user main intf and waiting until the USAXS> prompt reappears\r"
+	Notebook $nbl text="		# Stop the run using the \"Stop after this scan?\" checkbox in USAXS user main intf  \r" 
+	Notebook $nbl text="		# and wait until the USAXS> prompt reappears\r"
 	Notebook $nbl text="\r"          
 	Notebook $nbl text="		############ PLACE ALL USER COMMANDS AFTER THIS LINE ############  \r"              
 	Notebook $nbl text="\r"
@@ -1026,7 +1093,12 @@ static Function IN3S_WriteCommandFile(show)
 		endif   
    endfor
    //and USAXS . 
-   if(haveAnySWAXS)
+   //do we have any USAXS scans?
+   Duplicate/Free/R=[][4] LBSelectionWvG, TempUSAXSChoice
+   WaveStats/Q TempUSAXSChoice
+   variable HaveUSAXS = V_max>40 ? 1 : 0
+   
+   if(haveAnySWAXS && (USAXSAllG||HaveUSAXS))
 		Notebook $nbl text="\r"
 		Notebook $nbl text="		preUSAXStune \r"   
    endif
@@ -1072,7 +1144,7 @@ static Function/T IN3S_ExportMacroFile(UseUsername)
 	endif
 	NewPath /C/Q/O UserDesktop , SpecialDirPath("Desktop", 0, 0, 0 )
 	if(UseUsername)
-		SaveNotebook /P=UserDesktop/I/M="Select location and name for your command file" $(nbl)  as UseCmdName
+		SaveNotebook /P=UserDesktop/ENCG=1/S=6/I/M="Select location and name for your command file" $(nbl)  as UseCmdName
 		NewFileName = S_path
 		string NewFullNamePath =  ReplaceString(".txt", NewFileName, "" )
 		MoveFile/O  NewFileName  as NewFullNamePath		
@@ -1186,49 +1258,86 @@ static Function IN3S_EstimateRunTime()
 
 	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
 	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
-	//SAXS LBSelectionWvG[i][5]==48
-	//WAXS LBSelectionWvG[i][6]==48
-	//USAXS LBSelectionWvG[i][4]==48
+	
+	
+	
+		//SAXS LBSelectionWvG[i][5]==48
+		//WAXS LBSelectionWvG[i][6]==48
+		//USAXS LBSelectionWvG[i][4]==48
 		//constant IN3BmSrvUSAXSOverhead = 20			//overhead for flyscan 
-		//constant IN3BmSrvSAXSOverhead = 7			//overhead for SAXS, transmission measurement 
-		//constant IN3BmSrvWAXSOverhead = 2			//overhead for WAXS 
-		//constant IN3BmSrvSampleMovement = 10		//average moving samples around 
+		//constant IN3BmSrvSAXSOverhead = 7				//overhead for SAXS, transmission measurement 
+		//constant IN3BmSrvWAXSOverhead = 2				//overhead for WAXS 
+		//constant IN3BmSrvSampleMoveSpeed = 8			//average speed moving samples around mm/sec
 		//constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
 		//constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds 
-		//constant IN3BmSrvMoveGeometryTime = 20		//overhead to mvoe from USAXS to SAXS to WAXS
+		//constant IN3BmSrvMoveGeometryTime = 20		//overhead to move from USAXS to SAXS to WAXS
 	variable NumUSAXS, NumSAXS, NumWAXS, numSamples
 	variable i, isused
+	variable lastSXSAXS, lastSYSAXS, totalSXSYSAXS, firstSXSAXS, firstSYSAXS
+	variable lastSXUSAXS, lastSYUSAXS, totalSXSYUSAXS, firstSXUSAXS, firstSYUSAXS
+	variable lastSXWAXS, lastSYWAXS, totalSXSYWAXS, firstSXWAXS, firstSYWAXS
 	NumUSAXS=0 
 	NumSAXS=0
 	NumWAXS=0
+	lastSXSAXS = str2num(listWaveG[0][1])
+	lastSYSAXS = str2num(listWaveG[0][2])
+	firstSXSAXS = str2num(listWaveG[0][1])
+	firstSYSAXS = str2num(listWaveG[0][2])
+	lastSXUSAXS = str2num(listWaveG[0][1])
+	lastSYUSAXS = str2num(listWaveG[0][2])
+	firstSXUSAXS = str2num(listWaveG[0][1])
+	firstSYUSAXS = str2num(listWaveG[0][2])
+	lastSXWAXS = str2num(listWaveG[0][1])
+	lastSYWAXS = str2num(listWaveG[0][2])
+	firstSXWAXS = str2num(listWaveG[0][1])
+	firstSYWAXS = str2num(listWaveG[0][2])
    For(i=0;i<dimsize(listWaveG,0);i+=1)
    		isused = (strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
    		if((SAXSAllG || LBSelectionWvG[i][5]==48)&& isused )
 			NumSAXS+=1
+			totalSXSYSAXS += sqrt((str2num(listWaveG[i][1])-lastSXSAXS)^2 + (str2num(listWaveG[i][2])-lastSYSAXS)^2 )
+			lastSXSAXS = str2num(listWaveG[i][1])
+			lastSYSAXS = str2num(listWaveG[i][2])	
 		endif   
    		if((WAXSAllG || LBSelectionWvG[i][6]==48)&& isused )
 			NumWAXS+=1
+			totalSXSYWAXS += sqrt((str2num(listWaveG[i][1])-lastSXWAXS)^2 + (str2num(listWaveG[i][2])-lastSYWAXS)^2 )
+			lastSXWAXS = str2num(listWaveG[i][1])
+			lastSYWAXS = str2num(listWaveG[i][2])	
 		endif   
     	if((USAXSAllG || LBSelectionWvG[i][4]==48)&& isused )
 			NumUSAXS+=1
+			totalSXSYUSAXS += sqrt((str2num(listWaveG[i][1])-lastSXUSAXS)^2 + (str2num(listWaveG[i][2])-lastSYUSAXS)^2 )
+			lastSXUSAXS = str2num(listWaveG[i][1])
+			lastSYUSAXS = str2num(listWaveG[i][2])	
 		endif   
    endfor
    numSamples = max(NumUSAXS, NumSAXS, NumWAXS)
-	CalculatedOverAllTime  =  NumUSAXS*(USAXSScanTime+IN3BmSrvUSAXSOverhead+IN3BmSrvSampleMovement)		//this is USAXS
+
+	CalculatedOverAllTime  =  NumUSAXS*(USAXSScanTime+IN3BmSrvUSAXSOverhead)+totalSXSYUSAXS/IN3BmSrvSampleMoveSpeed+NumUSAXS		//this is USAXS
+																			//Total distance/ speed + assume 1 second speed ramp up and down
 	if(NumUSAXS>0)
-		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																//USAXS->SAXS
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime	
+		//travel from end to start 
+		CalculatedOverAllTime += sqrt((lastSXUSAXS-firstSXSAXS)^2+(lastSYUSAXS-firstSXSAXS)^2)/IN3BmSrvSampleMoveSpeed																//USAXS->SAXS
 	endif
-	CalculatedOverAllTime +=  NumSAXS*(SAXSScanTime+IN3BmSrvSAXSOverhead+IN3BmSrvSampleMovement) 		//SAXS
+	CalculatedOverAllTime +=  NumSAXS*(SAXSScanTime+IN3BmSrvSAXSOverhead)+totalSXSYSAXS/IN3BmSrvSampleMoveSpeed+NumSAXS 		//SAXS
+																			//Total distance/ speed + assume 1 second speed ramp up and down
 	if(NumSAXS>0)
-		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																//SAXS->WAXS
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime												//SAXS->WAXS
+		//travel from end to start 
+		CalculatedOverAllTime += sqrt((lastSXSAXS-firstSXWAXS)^2+(lastSYSAXS-firstSXWAXS)^2)/IN3BmSrvSampleMoveSpeed																//USAXS->SAXS
 	endif
-	CalculatedOverAllTime +=  NumWAXS*(WAXSScanTime+IN3BmSrvWAXSOverhead+IN3BmSrvSampleMovement) 		//SAXS
+	CalculatedOverAllTime +=  NumWAXS*(WAXSScanTime+IN3BmSrvWAXSOverhead)+totalSXSYWAXS/IN3BmSrvSampleMoveSpeed+NumWAXS  		//WAXS
+																			//Total distance/ speed + assume 1 second speed ramp up and down
 	if(NumWAXS>0)
-		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																//WAXS->USAXS
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime												//WAXS->USAXS
+		//travel from end to start 
+		CalculatedOverAllTime += sqrt((lastSXWAXS-firstSXUSAXS)^2+(lastSYWAXS-firstSXUSAXS)^2)/IN3BmSrvSampleMoveSpeed																//USAXS->SAXS
 	endif
 	variable NumTunes = floor(CalculatedOverAllTime/IN3BmSrvTuneTimeStep)
 	CalculatedOverAllTime +=  NumTunes * IN3BmSrvTuneAveTime
-	//done, calculated avergae scan time for all which are well defined. 
+	//done, calculated average scan time for all which are well defined. 
 	CalculatedOverAllTime/=60		//convert to minutes
 	CalculatedOverAllTime = round(CalculatedOverAllTime)
 end//************************************************************************************************************
@@ -1320,11 +1429,14 @@ static Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
 	if(forceReset || !WaveExists(LBSelectionWv) || !WaveExists(LBCommandWv))
 		Make/N=(0,8)/T/O LBCommandWv
 		Make/N=(0,8)/O LBSelectionWv
+		HowManySamples = 20
 	endif
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
 	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
-	Redimension/N=(HowManySamples,8) LBCommandWv, LBSelectionWv
+	if(HowManySamples>0)
+		Redimension/N=(HowManySamples,8) LBCommandWv, LBSelectionWv
+	endif
 	LBTtitleWv = {"Sample Name", "X [mm]", "Y [mm]", "Thick [mm]", "USAXS", "SAXS", "WAXS", "MetaData"}
 	//setup the LBSelectionWv to allow what is needed...
 	LBSelectionWv[][0] = 2 //set Bit 1, 0x02
@@ -1398,12 +1510,17 @@ static Function IN3S_InsertDeleteLines(InsertDelete, row, newLines)	//InsertDele
 		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 		WarningForUser = "Inserted row number "+ num2str(row)
 	elseif(InsertDelete==2)					//delete, easier...
-		DeletePoints /M=0 row, 1, LBSelectionWv, LBCommandWv
-		variable newrow
-		newrow = row<(dimSize(LBCommandWv,0))?row : row-1
-		ListBox CommandsList win=SamplePlateSetup, selRow=newrow					
-		SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-		WarningForUser = "Deleted row number "+ num2str(row)
+		if(dimsize(LBSelectionWv,0)>1)
+			DeletePoints /M=0 row, 1, LBSelectionWv, LBCommandWv
+			variable newrow
+			newrow = row<(dimSize(LBCommandWv,0))?row : row-1
+			ListBox CommandsList win=SamplePlateSetup, selRow=newrow					
+			SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+			WarningForUser = "Deleted row number "+ num2str(row)
+		else
+			SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+			WarningForUser = "Cannot delete last row ! "
+		endif
 	elseif(InsertDelete==3)					//duplicate
 		Duplicate/Free/T/R=[row][] LBCommandWv, tempLBCommandWv
 		Duplicate/Free/R=[row][] LBSelectionWv, tempLBSelectionWv
@@ -1997,10 +2114,14 @@ Function IN3S_BeamlineSurveyPanel()
 		DoWindow/F BeamlinePlateSetup
 	else
 		PauseUpdate    		// building window...
-		NewPanel /K=1 /W=(592.25,43.25,990,510)/N=BeamlinePlateSetup as "Beamline Sample Plate survey"
+		NewPanel /K=1 /W=(592.25,43.25,1000,550)/N=BeamlinePlateSetup as "Beamline Sample Plate survey"
 		SetDrawLayer UserBack
 		SetDrawEnv fillfgc= (0,65535,0),fillbgc= (0,65535,0)
 		DrawRect 188,178,390,198
+		SetDrawEnv fillfgc= (49151,65535,49151)
+		DrawRRect 6,234,189,400
+		SetDrawEnv fillfgc= (49151,65535,49151)
+		DrawRRect 212,234,395,400
 		TitleBox Title title="\Zr210Beamline survey",pos={50,3},frame=0,fstyle=3,size={300,24},fColor=(1,4,52428), anchor=MC
 		//selected row and sample name
 		SetVariable SelectedRow,pos={100,40},size={180,20}, limits={0,200,0}, proc=IN3S_SurveySetVarProc,title="Selected row: ",fSize=14
@@ -2018,12 +2139,15 @@ Function IN3S_BeamlineSurveyPanel()
 		SetVariable SampleYTable,pos={220,155},size={130,15}, limits={-inf,inf,0}, proc=IN3S_SetVarProc,title="Sa Y tbl =",fSize=12, frame=0
 		Setvariable SampleYTable,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleYTable, help={"Sample Thickness in mm"},format="%3.2f"
 		
-		Button DriveTovals,pos={30,178},size={150,20}, proc=IN3S_SurveyButtonProc,title="Drive to table values",fSize=12, help={"Moves SX and SY to table positions"}
+		Button DriveTovals,pos={10,178},size={160,20}, proc=IN3S_SurveyButtonProc,title="Drive to table values",fSize=12, help={"Moves SX and SY to table positions"}
 		Button DriveTovals fColor=(0,65535,0)
 		CheckBox MoveWhenRowChanges pos={200,180},size={70,20},title="Drive to SX/SY on row change?", help={"When selected, SX and SY will move when row is changed"}
 		CheckBox MoveWhenRowChanges variable=root:Packages:SamplePlateSetup:MoveWhenRowChanges,  noproc, fColor=(0,0,0),labelBack=(0,65535,0)
 
-		Button SaveValues,pos={130,210},size={140,30}, proc=IN3S_SurveyButtonProc,title="Save Values",fSize=14, help={"Copies values to the table of positions"}
+		Button GoTo00,pos={10,210},size={100,15}, proc=IN3S_SurveyButtonProc,title="Go 0,0",fSize=14, help={"Moves to 0,0"}
+		Button GoTo00 fColor=(0,65535,0)
+
+		Button SaveValues,pos={129.00,204.00},size={225.00,27.00}, proc=IN3S_SurveyButtonProc,title="Save Values",fSize=14, help={"Copies values to the table of positions"}
 		Button SaveValues fColor=(65535,32768,32768)
 
 		TitleBox Info1 title="\Zr200Sx : ",pos={70,235},size={250,15},frame=0,fColor=(0,0,65535),labelBack=0,fstyle=1
@@ -2058,7 +2182,13 @@ Function IN3S_BeamlineSurveyPanel()
 
 		Button ChangeSYStepLow,pos={220,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 0.1",fSize=14, help={"Changes SX step by 0.1"}
 		Button ChangeSYStepHigh,pos={310,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 10",fSize=14, help={"Changes SX step by 10"}
-		TitleBox Info3 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,400},frame=0,fColor=(0,0,65535),labelBack=0
+
+		Button SetSXAs00,pos={20,435},size={140,15}, proc=IN3S_SurveyButtonProc,title="Set SX 0",fSize=14, help={"Sets current position as 0,0"}
+		Button SetSXAs00 fColor=(65535,32768,32768)
+		Button SetSYAs00,pos={230,435},size={140,15}, proc=IN3S_SurveyButtonProc,title="Set SX 0",fSize=14, help={"Sets current position as 0,0"}
+		Button SetSYAs00 fColor=(65535,32768,32768)
+
+		TitleBox Info3 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,480},frame=0,fColor=(0,0,65535),labelBack=0
 
 	endif
 
@@ -2176,6 +2306,45 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SYStep = (SYStep<0.01 || SYStep>100) ? 1 : SYStep
 				SYStep = SYStep<10 ? SYStep*10 : 100
 			endif
+			
+			if(StringMatch(ba.ctrlName, "GoTo00"))
+				IN3S_MoveMotorInEpics("SX",0)
+				IN3S_MoveMotorInEpics("SY",0)
+			endif
+			if(StringMatch(ba.ctrlName, "SetSXAs00"))
+#if(exists("pvOpen")==4)
+					variable InstrumentUsed
+					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					if(InstrumentUsed)
+						abort "Instrument is collecting data, cannot move motors"
+					else	
+						//"SX"
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.SSET", 1)
+						sleep/T 10
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.VAL", 0)
+						sleep/T 10
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m1.SUSE", 1)
+					endif
+#endif
+			endif		
+			if(StringMatch(ba.ctrlName, "SetSYAs00"))
+#if(exists("pvOpen")==4)
+					variable InstrumentUsed
+					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					if(InstrumentUsed)
+						abort "Instrument is collecting data, cannot move motors"
+					else	
+						//"SY"
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.SSET", 1)
+						sleep/T 10
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.VAL", 0)
+						sleep/T 10
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m2.SUSE", 1)
+					endif
+#endif
+			endif		
+
+			
 			if(StringMatch(ba.ctrlName, "MoveRowUp"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
@@ -2315,7 +2484,7 @@ static Function IN3S_PutEpicsPv(PVAddress, target)	//note, this waits until moto
 	variable target
 #if(exists("pvOpen")==4)
 	variable sxRBV
-	pvOpen/T=0.5 sxRBV, PVAddress			// /T is timeout, shoudl wait only this timeout. 
+	pvOpen/T=0.5 sxRBV, PVAddress			// /T is timeout, should wait only this timeout. 
 	pvPutNumber/Q sxRBV, target				// /Q returns immediately, else waits until completion.  
 	pvClose sxRBV
 #endif	

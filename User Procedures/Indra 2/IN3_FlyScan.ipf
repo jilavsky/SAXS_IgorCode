@@ -756,17 +756,35 @@ Function/T IN3_FSConvertToUSAXS(RawFolderWithData, origFileName)
 	endif
 	//add recording of metatdata
 	string/g NXMetadata, NXSample, NXInstrument, NXUser 
+	NXMetadata=""
+	NXSample=""
+	NXInstrument=""
+	NXUser=""
 	NXMetadata 	= 	NEXUS_Read_Metadata(RawFolderWithData)	
 	NXSample 		= 	NEXUS_Read_Sample(RawFolderWithData)	
 	NXUser 		= 	NEXUS_Read_User(RawFolderWithData)	
 	NXInstrument = 	NEXUS_Read_Instrument(RawFolderWithData)	
+	//seems to have lots of weird control characters. Get rid of them. 
+	//this Zop code needs to be run multiple times for each. Not sure why. 
+	NXMetadata = IN2G_ZapControlCodes(NXMetadata)
+	NXMetadata = IN2G_ZapControlCodes(NXMetadata)
+	NXSample = IN2G_ZapControlCodes(NXSample)
+	NXSample = IN2G_ZapControlCodes(NXSample)
+	NXUser = IN2G_ZapControlCodes(NXUser)
+	NXUser = IN2G_ZapControlCodes(NXUser)
+	NXInstrument = IN2G_ZapControlCodes(NXInstrument)
+	NXInstrument = IN2G_ZapControlCodes(NXInstrument)
+	NXMetadata = ReplaceString(";;", NXMetadata, ";")
+	NXSample = ReplaceString(";;", NXSample, ";")
+	NXUser = ReplaceString(";;", NXUser, ";")
+	NXInstrument = ReplaceString(";;", NXInstrument, ";")
 	
 	//add Nexus file Metadata here... 
 	string NXMetadataNote=""
-	NXMetadataNote+="NXUserStart;"+NXUser+";NXUserEnd;"
-	NXMetadataNote+="NXSampleStart;"+NXSample+";NXSampleEnd;"
-	NXMetadataNote+="NXInstrumentStart;"+NXInstrument+";NXInstrumentEnd;"
-	NXMetadataNote+="NXMetadataStart;"+NXMetadata+";NXMetadataEnd;Nexus_attributesEndHere;"
+	NXMetadataNote+="NXUserStart;"+NXUser+"NXUserEnd;"
+	NXMetadataNote+="NXSampleStart;"+NXSample+"NXSampleEnd;"
+	NXMetadataNote+="NXInstrumentStart;"+NXInstrument+"NXInstrumentEnd;"
+	NXMetadataNote+="NXMetadataStart;"+NXMetadata+"NXMetadataEnd;Nexus_attributesEndHere;"
 	note/NOCR MeasTime, NXMetadataNote
 	note/NOCR Monitor, NXMetadataNote
 	note/NOCR USAXS_PD, NXMetadataNote

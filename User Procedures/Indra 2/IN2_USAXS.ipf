@@ -187,6 +187,7 @@ static Function AfterCompiledHook( )			//check if all windows are up to date to 
 		NVAR LastCheckIndra=root:Packages:LastCheckIndra
 	endif	
 	string WindowProcNames="IN3_FlyScanImportPanel=IN3_FlyScanCheckVersion;USAXSDataReduction=IN3_USAXSDataRedCheckVersion;"
+	WindowProcNames+="SamplePlateSetup=IN3S_SaPlateCheckVersion;"
 	IN3_CheckWIndowsProcVersions(WindowProcNames)
 	IN2G_CheckPlatformGUIFonts()
 	IN2G_ResetSizesForAllPanels(WindowProcNames)

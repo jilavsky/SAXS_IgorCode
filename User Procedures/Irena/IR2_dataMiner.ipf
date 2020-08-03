@@ -808,6 +808,11 @@ static Function IR3B_DisplayWaveNote(FolderNameStr)
 			abort 
 		endif
 		string CurrentNote=note(SourceIntWv)
+		print CurrentNote
+		CurrentNote = IN2G_ZapControlCodes(CurrentNote)
+		CurrentNote = IN2G_ZapControlCodes(CurrentNote)
+		CurrentNote = IN2G_ZapControlCodes(CurrentNote)
+		print CurrentNote
 		
 		WAVE/T ListOfWaveNoteItems = root:Packages:Irena:MetadataBrowser:ListOfWaveNoteItems
 		WAVE	 SelectionOfWaveNoteItems = root:Packages:Irena:MetadataBrowser:SelectionOfWaveNoteItems

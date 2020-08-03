@@ -3326,7 +3326,7 @@ end
 //this function returns is internal function for Create Local list.
 static Function/T NEXUS_Read_CreateLocalList()
 	string StringWithData = ""
-	string ALlWavesNames, CurWaveName, wvNote, Units
+	string ALlWavesNames, CurWaveName, wvNote, Units, tempStr
 	variable i
 	//first create list of all waves here, all HDF5 elements are waves...
 	ALlWavesNames=IN2G_CreateListOfItemsInFolder(GetDataFolder(1), 2)
@@ -3349,9 +3349,15 @@ static Function/T NEXUS_Read_CreateLocalList()
 					endif
 					//print StringByKey("units", note(root:Packages:NexusImportTMP:'TestWAXS_0002.hdf':entry:sample:thickness), "=", "\r")
  					// mm
-				elseif(WaveType(CurWave,1)==2)		//text wave
+				elseif(WaveType(CurWave,1)==2 && !StringMatch(CurWaveName, "*raw" )&& !StringMatch(CurWaveName, "SPEC_data_dir" ))		//text wave
+					//also, added "...raw" fileds are breaking rest of the code... 
 					Wave/T CurWaveT = $(CurWaveName)
-					StringWithData+=CurWaveName+"="+ReplaceString("\r\n",ReplaceString("#", CurWaveT[0], ""),",") +";"
+					tempStr = CurWaveT[0]
+					tempStr = ReplaceString("#",tempStr , "")
+					tempStr = ReplaceString("\u0000",tempStr , "")
+					tempStr = ReplaceString("\r\n",tempStr,",")
+					tempStr = ReplaceString("\\",tempStr,"_")
+					StringWithData+=CurWaveName+"="+IN2G_ZapControlCodes(tempStr) +";"
 				endif
 			endif
 		endfor		
