@@ -2360,22 +2360,26 @@ Function IN2G_PanelResizePanelSize(s)
 		CurWidth = abs(right-left) 													//with DC is pixels
 		CurHeight = abs(bottom-top)													//with DC is pixels
 #if(IgorVersion()>8.99)	//Igor 9, use expand on whole panel... 
-		variable/g LastMessage
-		if(abs(lastmessage-datetime)<60*30)
-			print "In Igor 9 right click on panel and select expansion -> and select scale of original size you prefer" 
-			lastmessage=dateTime
-		endif
-		//MoveWindow/W=$(s.winName) left, top, left+OriginalWidth, top+OriginalHeight
-		//		variable scaleWidth, scaleheight
-		//		scaleWidth = OriginalWidth/CurWidth
-		//		scaleheight = OriginalHeight/CurHeight
-		//		variable scaleSelect=min(scaleWidth,scaleheight)		//pick smaller
-		//		scaleSelect = min(scaleSelect,8)							//8 is max allowed
-		//		scaleSelect = max(scaleSelect,0.25)						//0.25 is min allowed 
-		//		//moveLeft = left//*moveConvFac
-		//		//MoveTop  = top//*moveConvFac
-		//		//MoveWindow/W=$(s.winName) moveLeft, MoveTop, MoveRight, moveBottom
-		//		modifyPanel/W=$(s.winName) expand=scaleSelect
+		//variable/g LastMessage
+		//if(abs(lastmessage-datetime)<60*30)
+		//	print "In Igor 9 right click on panel and select expansion -> and select scale of original size you prefer" 
+		//	lastmessage=dateTime
+		//endif
+		variable scaleWidth, scaleheight
+		scaleWidth = CurWidth/OriginalWidth
+		scaleheight = CurHeight/OriginalHeight
+		//variable scaleSelect=min(scaleWidth,scaleheight)		//pick smaller
+		variable scaleSelect=(scaleWidth+scaleheight)/2		//average values. 
+		scaleSelect = min(scaleSelect,8)							//8 is max allowed
+		scaleSelect = max(scaleSelect,0.25)						//0.25 is min allowed 
+		modifyPanel/W=$(s.winName) expand=scaleSelect
+		variable newWidth = OriginalWidth*scaleSelect
+		variable newHeight = OriginalHeight*scaleSelect
+		MoveWindow/W=$(s.winName) left, top, left+newWidth, top+newHeight
+		moveLeft = left
+		MoveTop = top
+		MoveRight = left+newWidth
+		moveBottom = top+newHeight
 #else
 		if(CurWidth<OriginalWidth && CurHeight<OriginalHeight)
 			moveLeft = left//*moveConvFac
@@ -2471,7 +2475,7 @@ Function IN2G_PanelResizePanelSize(s)
 				controlslist = ControlNameList(tmpName1, ";")		
 				//fix for embedded graphs. These have no controls on them...
 				//question - this now works for graph subwindows on panels. 
-				//any otehr types need special treatment? 
+				//any other types need special treatment? 
 				if(strlen(controlslist)<2)	//this is embedded graph, not panel actually...
 					//			//print V_left; print V_right; print V_top; print V_Bottom
 					//			ControlsRecords+=tmpName1+"Left:"+num2str(V_left)+";"+tmpName1+"Right:"+num2str(V_width)+";"+tmpName1+"Top:"+num2str(V_top)+";"+tmpName1+"Bottom:"+num2str(V_Height)+";"

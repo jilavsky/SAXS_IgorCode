@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 0.4
+#pragma version = 0.5
 #pragma IgorVersion=8.03
 
 
@@ -13,6 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
+//0.5 many fixes
 //0.4 developement, with beamline survey code... 
 
 
@@ -527,7 +528,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
-					SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+					SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 				endif
 				IN3S_MoveToPositionIfOK()
 			endif
@@ -1820,7 +1821,7 @@ Function IN3S_PlateImageHook(s)
 										SampleXTable = str2num(ListWV[SelectedRow][1])
 										SampleYTable = str2num(ListWV[SelectedRow][2])
 										SampleThickness = str2num(ListWV[SelectedRow][3])
-										SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+										SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 									endif
 									SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 									WarningForUser = "Written right click position in table" 			
@@ -1853,7 +1854,7 @@ Function IN3S_PlateImageHook(s)
 										SampleXTable = str2num(ListWV[SelectedRow][1])
 										SampleYTable = str2num(ListWV[SelectedRow][2])
 										SampleThickness = str2num(ListWV[SelectedRow][3])
-										SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+										SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 									endif
 									SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 									WarningForUser = "Added new line with rigth click positions" 			
@@ -1984,8 +1985,9 @@ Function IN3S_BeamlineSurvey()
 	if(exists("pvOpen")!=4 && IN3SBeamlineSurveyDevelopOn<1)
 		Abort "This is useful only at the beamline on usaxspc7" 
 	endif
-	///
-
+	/// abort if instrument in use. 
+	IN3S_BeramlineSurveyAbortIfNeeded()
+	//
 	Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 	NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 	ControlInfo/W=SamplePlateSetup CommandsList
@@ -2006,7 +2008,7 @@ Function IN3S_BeamlineSurvey()
 	SampleXTable = str2num(ListWV[SelectedRow][1])
 	SampleYTable = str2num(ListWV[SelectedRow][2])
 	SampleThickness = str2num(ListWV[SelectedRow][3])
-	SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+	SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 	IN3S_AddTagToImage(SelectedRow)			
 	DoWIndow BeamlinePlateSetup
 	if(V_Flag)
@@ -2019,12 +2021,24 @@ Function IN3S_BeamlineSurvey()
 end
 
 //*************************************************************************************************
+//*************************************************************************************************
+static Function IN3S_BeramlineSurveyAbortIfNeeded()
+	variable InstrumentUsed
+#if(exists("pvOpen")==4)
+		InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+		if(InstrumentUsed)
+			abort "Instrument is collecting data, cannot Use Beamline Survey tool"
+		endif
+#endif
+end
+//*************************************************************************************************
 static Function IN3S_BeamlineSurveyStartEpicsUpdate()
 	//this starts updating epics.
 	CtrlNamedBackground IN2SMonitorEpics, period=IN3SBeamlineSurveyEpicsMonTicks, proc=IN3S_BackgroundEpics 
 	CtrlNamedBackground IN2SMonitorEpics, start
 	return 0
 end
+//*************************************************************************************************
 static Function IN3S_BeamlineSurveyStopEpicsUpdate()
 	//this starts updating epics.
 	//CtrlNamedBackground IN2SMonitorEpics, period=IN3SBeamlineSurveyEpicsMonTicks, proc=IN3S_BackgroundEpics 
@@ -2107,7 +2121,8 @@ Function IN3S_BeamlineSurveyPanel()
 
 	string oldDf=GetDataFolder(1)
 	setDataFolder root:Packages:SamplePlateSetup
-	//we need to setup backgroud function here which will update the SX and SY values. 
+	/// abort if instrument in use. 
+	IN3S_BeramlineSurveyAbortIfNeeded()
 	
 	DoWindow BeamlinePlateSetup
 	if(V_Flag)
@@ -2229,7 +2244,7 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
-				SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+				SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 				IN3S_AddTagToImage(SelectedRow)
 				IN3S_EstimateRunTime()			
 			endif
@@ -2311,9 +2326,9 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				IN3S_MoveMotorInEpics("SX",0)
 				IN3S_MoveMotorInEpics("SY",0)
 			endif
+			variable InstrumentUsed
 			if(StringMatch(ba.ctrlName, "SetSXAs00"))
 #if(exists("pvOpen")==4)
-					variable InstrumentUsed
 					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -2329,7 +2344,6 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 			endif		
 			if(StringMatch(ba.ctrlName, "SetSYAs00"))
 #if(exists("pvOpen")==4)
-					variable InstrumentUsed
 					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
 					if(InstrumentUsed)
 						abort "Instrument is collecting data, cannot move motors"
@@ -2361,7 +2375,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
-					SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+					SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 				endif
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
@@ -2387,7 +2401,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
-				SampleThickness = numtype(SampleThickness)==1 ? SampleThickness : 1
+				SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved selected row down" 
@@ -2412,9 +2426,9 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 				Wave/T ListWV = root:Packages:SamplePlateSetup:LBCommandWv
 				ListWV[SelectedRow][0] = SelectedSampleName
-				ListWV[SelectedRow][1] = num2str(SampleXRBV)
-				ListWV[SelectedRow][2] = num2str(SampleYRBV)
-				ListWV[SelectedRow][3] = num2str(SampleThickness)
+				ListWV[SelectedRow][1] = num2str(IN2G_RoundDecimalPlaces(SampleXRBV,3))
+				ListWV[SelectedRow][2] = num2str(IN2G_RoundDecimalPlaces(SampleYRBV,3))
+				ListWV[SelectedRow][3] = num2str(IN2G_RoundDecimalPlaces(SampleThickness,2))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
