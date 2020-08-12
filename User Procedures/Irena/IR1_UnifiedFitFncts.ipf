@@ -1,7 +1,7 @@
 #pragma TextEncoding = "UTF-8"
 #pragma rtGlobals = 3// Use strict wave reference mode and runtime bounds checking
 //#pragma rtGlobals=1	// Use modern global access method.
-#pragma version=2.33
+#pragma version=2.34
 
 
 constant IR2UversionNumber=2.23 			//Evaluation panel version number. 
@@ -11,6 +11,7 @@ constant IR2UversionNumber=2.23 			//Evaluation panel version number.
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.34 fixed cursor calls to target graph "IR1_LogLogPlotU"
 //2.34 Added Level0 Local level which conatins flat background and fixed minor issues with loacl fits export. Fixed control procs to handle them correctly.  
 //2.33 fixes to how messages for CheckFitting parameters are defined. 
 //2.32 prevent invariant from being negative. Happens when P<3 for level which is extending to infinity at which point invariant makes little sense anyway. 
@@ -331,6 +332,10 @@ Function IR1A_FitLocalPorod(Level)
 	
 	Wave OriginalIntensity
 	Wave OriginalQvector
+	DoWindow IR1_LogLogPlotU
+	if(V_Flag==0)
+		abort
+	endif
 
 	Duplicate/O OriginalIntensity, $("FitLevel"+num2str(Level)+"Porod")
 
@@ -351,7 +356,7 @@ Function IR1A_FitLocalPorod(Level)
 	NVAR BHighLimit=$("root:Packages:Irena_UnifFit:Level"+num2str(level)+"BHighLimit")
 
 	if(FitP)	//fitting P, let's give it some good starting value... 
-		Pp = abs((log(OriginalIntensity[pcsr(A)])-log(OriginalIntensity[pcsr(B)]))/(log(OriginalQvector[pcsr(B)])-log(OriginalQvector[pcsr(A)])))
+		Pp = abs((log(OriginalIntensity[pcsr(A,"IR1_LogLogPlotU")])-log(OriginalIntensity[pcsr(B,"IR1_LogLogPlotU")]))/(log(OriginalQvector[pcsr(B,"IR1_LogLogPlotU")])-log(OriginalQvector[pcsr(A,"IR1_LogLogPlotU")])))
 	else
 		//ntohing to do, we will not be changing P
 	endif
@@ -359,7 +364,7 @@ Function IR1A_FitLocalPorod(Level)
 	if (MassFractal)
 		LocalB=(G*Pp/Rg^Pp)*exp(gammln(Pp/2))
 	else
-		LocalB=OriginalIntensity[pcsr(A)]*(OriginalQvector[pcsr(A)])^Pp
+		LocalB=OriginalIntensity[pcsr(A,"IR1_LogLogPlotU")]*(OriginalQvector[pcsr(A,"IR1_LogLogPlotU")])^Pp
 	endif
 	
 	if (!FitB && !FitP)
@@ -387,32 +392,21 @@ Function IR1A_FitLocalPorod(Level)
 	T_Constraints = {"K1 > 1","K1 < 4.2"}
 
 	Variable V_FitError=0			//This should prevent errors from being generated
-	//FuncFit fails if contraints are applied to parameter, which is held....
-	//therefore we need to make sure, that if user helds the Porod constant, he/she does not run FuncFit with Constaraints..
+	//FuncFit fails if constraints are applied to parameter, which is held....
+	//therefore we need to make sure, that if user helds the Porod constant, he/she does not run FuncFit with Constraints..
 	//modifed 12 20 2004 to use fit at once function to allow use on smeared data
-	DoWindow IR1_LogLogPlotU
-	if(V_Flag)
-		DoWindow/F IR1_LogLogPlotU
-	else
-		abort
-	endif
-	if(strlen(CsrWave(A))<1 || strlen(CsrWave(B))<1)
+	if(strlen(CsrWave(A,"IR1_LogLogPlotU"))<1 || strlen(CsrWave(B,"IR1_LogLogPlotU"))<1)
 		beep
 		SetDataFolder oldDf
 		abort "Set both cursors before fitting"
 	endif
 	Wave OriginalError
-	
+	DoUpdate /W=IR1_LogLogPlotU
 	if (FitP)
-		FuncFit/Q/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFitAllATOnce New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave  /C=T_Constraints 
-		//FuncFit/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFit New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave  /C=T_Constraints 
+		FuncFit/Q/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFitAllATOnce New_FitCoefficients OriginalIntensity[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave  /C=T_Constraints 
 	else
-		FuncFit/Q/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFitAllATOnce New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
-		//FuncFit/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFit New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
+		FuncFit/Q/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFitAllATOnce New_FitCoefficients OriginalIntensity[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
 	endif
-	
-//	FuncFit/H=(num2str(abs(FitB-1))+num2str(abs(FitP-1)))/N IR1_PowerLawFit New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /C=T_Constraints 
-
 	if (V_FitError!=0)	//there was error in fitting
 		beep
 		IR1A_UpdatePorodFit(level,0)
@@ -451,9 +445,9 @@ Function IR1A_FitLocalGuinier(Level)
 	setDataFolder root:Packages:Irena_UnifFit
 
 	//first set to display local fits
-		NVAR DisplayLocalFits=root:Packages:Irena_UnifFit:DisplayLocalFits
-		DisplayLocalFits=1
-		Checkbox DisplayLocalFits, value=DisplayLocalFits
+	NVAR DisplayLocalFits=root:Packages:Irena_UnifFit:DisplayLocalFits
+	DisplayLocalFits=1
+	Checkbox DisplayLocalFits, value=DisplayLocalFits
 	
 	Wave OriginalIntensity
 	Wave OriginalQvector
@@ -481,15 +475,15 @@ Function IR1A_FitLocalGuinier(Level)
 //			abort "Fitting limits set incorrectly, fix the limits before fitting"
 //	endif
 	DoWIndow/F IR1_LogLogPlotU
-	if (strlen(CsrWave(A))==0 || strlen(CsrWave(B))==0)
+	if (strlen(CsrWave(A,"IR1_LogLogPlotU"))==0 || strlen(CsrWave(B,"IR1_LogLogPlotU"))==0)
 		beep
 		abort "Both Cursors Need to be set in Log-log graph on wave OriginalIntensity"
 	endif
 	IR1A_SetErrorsToZero()
 //	Wave w=root:Packages:Irena_UnifFit:CoefficientInput
 //	Wave/T CoefNames=root:Packages:Irena_UnifFit:CoefNames		//text wave with names of parameters
-	variable LocalRg = 2*pi/((OriginalQvector[pcsr(A)]+OriginalQvector[pcsr(B)])/2)
-	variable LocalG = (OriginalIntensity[pcsr(A)]+OriginalIntensity[pcsr(B)])/2
+	variable LocalRg = 2*pi/((OriginalQvector[pcsr(A,"IR1_LogLogPlotU")]+OriginalQvector[pcsr(B,"IR1_LogLogPlotU")])/2)
+	variable LocalG = (OriginalIntensity[pcsr(A,"IR1_LogLogPlotU")]+OriginalIntensity[pcsr(B,"IR1_LogLogPlotU")])/2
 	if(!FitG)
 		localG=G		//not fitting G, needs to be set to current GUI value
 	endif
@@ -508,9 +502,7 @@ Function IR1A_FitLocalGuinier(Level)
 //	Make/O/T/N=0 T_Constraints
 //	T_Constraints=""
 	variable tempLength
-	DoWIndow/F IR1_LogLogPlotU
-
-	if(strlen(CsrWave(A))<1 || strlen(CsrWave(B))<1)
+	if(strlen(CsrWave(A,"IR1_LogLogPlotU"))<1 || strlen(CsrWave(B,"IR1_LogLogPlotU"))<1)
 		beep
 		SetDataFolder oldDf
 		abort "Set both cursors before fitting"
@@ -518,9 +510,8 @@ Function IR1A_FitLocalGuinier(Level)
 	Variable V_FitError=0			//This should prevent errors from being generated
 	//modifed 12 20 2004 to use fit at once function to allow use on smeared data
 	Wave OriginalError
-	FuncFit/Q/H=(num2str(abs(FitG-1))+num2str(abs(FitRg-1)))/N IR1_GuinierFitAllAtOnce New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
-//	FuncFit/H=(num2str(abs(FitG-1))+num2str(abs(FitRg-1)))/N IR1_GuinierFit New_FitCoefficients OriginalIntensity[pcsr(A),pcsr(B)] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
-
+	DoUpdate /W=IR1_LogLogPlotU
+	FuncFit/Q/H=(num2str(abs(FitG-1))+num2str(abs(FitRg-1)))/N IR1_GuinierFitAllAtOnce New_FitCoefficients OriginalIntensity[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] /X=OriginalQvector /W=OriginalError /I=1 /E=LocalEwave 
 	if (V_FitError!=0)	//there was error in fitting
 		beep
 		Abort "Fitting error, check starting parameters and fitting limits" 
@@ -2894,7 +2885,7 @@ End
 //***********************************************************
 //***********************************************************
 
-Function IR2U_CalculateInvariantbutton()				//Removed plotting capabilitires JIL 2017
+Function IR2U_CalculateInvariantbutton()				//Removed plotting capabilities JIL 2017
 	DFref oldDf= GetDataFolderDFR()
 	
 	variable extrapts=600 //number of points in extrapolation waves	
@@ -2922,18 +2913,18 @@ Function IR2U_CalculateInvariantbutton()				//Removed plotting capabilitires JIL
 	setdatafolder root:Packages:Irena_AnalUnifFit:		//do not contaminate users data folder, just store it in Unified Fit folder... 
 	Duplicate/o rwave,$"root:Packages:Irena_AnalUnifFit:rwaveq2"
 	wave rwaveq2=$"root:Packages:Irena_AnalUnifFit:rwaveq2"
-	 rwaveq2=rwave*qwave^2
-	  DoWindow/F IR1_LogLogPlotU
-	 If (0==WinType("IR1_LogLogPlotU" ))
+	rwaveq2=rwave*qwave^2
+	DoWindow/F IR1_LogLogPlotU
+	If (0==WinType("IR1_LogLogPlotU" ))
 	  	Doalert 0, "Load a unified fit in the Unified modeling input panel"
 	  	abort
-	 endif
-	 if ((strlen(CsrInfo(A)) == 0)||(strlen(CsrInfo(B)) == 0))
+	endif
+	if ((strlen(CsrInfo(A,"IR1_LogLogPlotU")) == 0)||(strlen(CsrInfo(B,"IR1_LogLogPlotU")) == 0))
 	 	Doalert 0, "Cursors not on graph"
 	 	abort
 	 endif
 	//bring graph to top
-	variable npts=pcsr(b)-pcsr(a)+1
+	variable npts=pcsr(b,"IR1_LogLogPlotU")-pcsr(a,"IR1_LogLogPlotU")+1
 	make /o/n=(extrapts)  frontrwave,frontrq2,frontqq2,backrq2,backqq2
 	duplicate/o rwave,rq2
 	rq2=rwave*qwave^2	
@@ -2972,7 +2963,7 @@ Function IR2U_CalculateInvariantbutton()				//Removed plotting capabilitires JIL
 		//There is a problem problem if there is a cutoff on Blevel
 	frontrq2=frontrwave*frontqq2^2
 	variable maxqback=10*hcsr(B)//max q for porod extrapolation
-	backqq2=qwave[pcsr(b)-overlap]+P*(maxqback-qwave[pcsr(b)-overlap])/extrapts	
+	backqq2=qwave[pcsr(b,"IR1_LogLogPlotU")-overlap]+P*(maxqback-qwave[pcsr(b,"IR1_LogLogPlotU")-overlap])/extrapts	
 	backrq2=B/backqq2^2
 	variable invariant, PlotDummy=0,plotextensions=1
 	make/N=1000/O DummyRwave,DummyQwave
@@ -3000,7 +2991,7 @@ If(UseCsrInv&&UseUnifiedInv)//use the Unified between cursors suplemented by ana
 	else//(UseCsrInv&&!UseUnifiedInv)
 		//use the Data between cursors and use unified to analytically extend
 		Plotdummy=0
-		invariant=areaXY(qwave, rq2,hcsr(a), hcsr(b))+areaxy(frontqq2,frontrq2)+abs((B*hcsr(B)^-1))//extends with -4 exponent
+		invariant=areaXY(qwave, rq2,hcsr(a,"IR1_LogLogPlotU"), hcsr(b,"IR1_LogLogPlotU"))+areaxy(frontqq2,frontrq2)+abs((B*hcsr(B,"IR1_LogLogPlotU")^-1))//extends with -4 exponent
 		Print "Use Csrs, Data invariant.  Inv from data extended by unified fit.  Default method"
 	Endif
 	IF(StringMatch(model, "TwoPhaseSys1"))
@@ -6553,10 +6544,10 @@ Function IR1A_ConstructTheFittingCommand(skipreset)
 		variable i, LimitsReached
 	
 	//and now the fit...
-	if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
-		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalIntensity, FitIntensityWave		
-		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalQvector, FitQvectorWave
-		Duplicate/O/R=[pcsr(A),pcsr(B)] OriginalError, FitErrorWave
+	if (strlen(csrWave(A,"IR1_LogLogPlotU"))!=0 && strlen(csrWave(B,"IR1_LogLogPlotU"))!=0)		//cursors in the graph
+		Duplicate/O/R=[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] OriginalIntensity, FitIntensityWave		
+		Duplicate/O/R=[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] OriginalQvector, FitQvectorWave
+		Duplicate/O/R=[pcsr(A,"IR1_LogLogPlotU"),pcsr(B,"IR1_LogLogPlotU")] OriginalError, FitErrorWave
 		//***Catch error issues
 		wavestats/Q FitErrorWave
 		if(V_Min<1e-20)
@@ -7548,9 +7539,9 @@ Function IR1A_RecordResults(CalledFromWere)
 		NVAR AchievedChisq
 		IR1L_AppendAnyText("Chi-Squared \t"+ num2str(AchievedChisq))
 
-		DoWindow /F IR1_LogLogPlotU
-		if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
-			IR1L_AppendAnyText("Points selected for fitting \t"+ num2str(pcsr(A)) + "   to \t"+num2str(pcsr(B)))
+		//DoWindow /F IR1_LogLogPlotU
+		if (strlen(csrWave(A,"IR1_LogLogPlotU"))!=0 && strlen(csrWave(B,"IR1_LogLogPlotU"))!=0)		//cursors in the graph
+			IR1L_AppendAnyText("Points selected for fitting \t"+ num2str(pcsr(A,"IR1_LogLogPlotU")) + "   to \t"+num2str(pcsr(B,"IR1_LogLogPlotU")))
 		else
 			IR1L_AppendAnyText("Whole range of data selected for fitting")
 		endif
@@ -7668,9 +7659,9 @@ Function IR1A_SaveRecordResults()
 		if(NVAR_Exists(AchievedChisq))
 			IR1L_AppendAnyText("Chi-Squared \t"+ num2str(AchievedChisq))
 		endif
-		DoWindow /F IR1_LogLogPlotU
-		if (strlen(csrWave(A))!=0 && strlen(csrWave(B))!=0)		//cursors in the graph
-			IR1L_AppendAnyText("Points selected for fitting \t"+ num2str(pcsr(A)) + "   to \t"+num2str(pcsr(B)))
+		//DoWindow /F IR1_LogLogPlotU
+		if (strlen(csrWave(A,"IR1_LogLogPlotU"))!=0 && strlen(csrWave(B,"IR1_LogLogPlotU"))!=0)		//cursors in the graph
+			IR1L_AppendAnyText("Points selected for fitting \t"+ num2str(pcsr(A,"IR1_LogLogPlotU")) + "   to \t"+num2str(pcsr(B,"IR1_LogLogPlotU")))
 		else
 			IR1L_AppendAnyText("Whole range of data selected for fitting")
 		endif
@@ -7827,16 +7818,16 @@ Function IR1A_CheckFittingParamsFnct()
 	Qmin=Nan
 	Qmax=inf
 	Wave OriginalQvector = root:Packages:Irena_UnifFit:OriginalQvector
-	if(strlen(csrInfo(A))>0)		//cursor set
-		Qmin = OriginalQvector(pcsr(A))
+	if(strlen(csrInfo(A,"IR1_LogLogPlotU"))>0)		//cursor set
+		Qmin = OriginalQvector(pcsr(A,"IR1_LogLogPlotU"))
 	endif
 	Qmin = numtype(Qmin) == 0 ? Qmin :  OriginalQvector[0]
-	if(strlen(csrInfo(B))>0)	//cursor set
-		Qmax = OriginalQvector(pcsr(B))
+	if(strlen(csrInfo(B,"IR1_LogLogPlotU"))>0)	//cursor set
+		Qmax = OriginalQvector(pcsr(B,"IR1_LogLogPlotU"))
 	endif
 	Qmax = numtype(Qmax) == 0 ? Qmax :  OriginalQvector[numpnts(OriginalQvector)-1]
 	SetDrawEnv fstyle= 1,fsize= 14
-	DrawText 30,80, "Data Selected for Fitting are "+num2str(pcsr(B)-pcsr(A))+" points from point   "+num2str(pcsr(A)) + "   to   "+num2str(pcsr(B)) 
+	DrawText 30,80, "Data Selected for Fitting are "+num2str(pcsr(B,"IR1_LogLogPlotU")-pcsr(A,"IR1_LogLogPlotU"))+" points from point   "+num2str(pcsr(A,"IR1_LogLogPlotU")) + "   to   "+num2str(pcsr(B,"IR1_LogLogPlotU")) 
 	SetDrawEnv fstyle= 1,fsize= 14
 	DrawText 30,105, "This is Q range from Qmin = " + num2str(Qmin) + " A\S-1\M  to  Qmax = "+num2str(Qmax) + "  A\S-1\M"
 	

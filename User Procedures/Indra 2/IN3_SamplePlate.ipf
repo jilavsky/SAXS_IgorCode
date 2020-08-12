@@ -1,7 +1,7 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3				// Use modern global access method and strict wave access
 #pragma DefaultTab={3,20,4}		// Set default tab width in Igor Pro 9 and later
-#pragma version = 0.5
+#pragma version = 0.61
 #pragma IgorVersion=8.03
 
 
@@ -13,7 +13,7 @@
 
 //this is tool to setup Sample Plates for USAXS, survey sample positions, and generate Command files. 
 
-//0.5 many fixes
+//0.6 many fixes
 //0.4 developement, with beamline survey code... 
 
 
@@ -35,20 +35,19 @@ constant IN3_SamplePlateSetupVersion=1
 constant IN3SBeamlineSurveyEpicsMonTicks = 15 
 constant IN3SBeamlineSurveyDevelopOn = 1
 //  values for beamtime estimate
-constant IN3BmSrvUSAXSOverhead = 15			//overhead for flyscan 
-constant IN3BmSrvSAXSOverhead = 5			//overhead for SAXS, transmission measurement 
-constant IN3BmSrvWAXSOverhead = 2			//overhead for WAXS 
-constant IN3BmSrvSampleMoveSpeed = 8		//average moving samples around in mm/sec
-constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
-constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
-constant IN3BmSrvMoveGeometryTime = 20		//overhead to mvoe from USAXS to SAXS to WAXS
+constant IN3BmSrvUSAXSOverhead 		= 25		//overhead for flyscan 
+constant IN3BmSrvSAXSOverhead 		= 10		//overhead for SAXS, transmission measurement 
+constant IN3BmSrvWAXSOverhead 		= 3			//overhead for WAXS 
+constant IN3BmSrvSampleMoveSpeed 	= 8			//average moving samples around in mm/sec
+constant IN3BmSrvTuneTimeStep 		= 600		//retune every 600 seconds 
+constant IN3BmSrvTuneTimeNumU 		= 3			//retune every 3 USAXS scans 
+constant IN3BmSrvTuneAveTime  		= 40		//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
+constant IN3BmSrvSWTuneAveTime 		= 14		//SWAXS tune MR
+constant IN3BmSrvMoveGeometryTime 	= 20		//overhead to mvoe from USAXS to SAXS to WAXS
 
 
 //TODO:
 //		add "Saved & Dirty" flag to avoid some dialogs. 
-//		Change survey move buttons to use steps and change the steps 
-//		Add checkbox to move to selected row position when surveying. Optional. 
-//		note sure what this is: Cycle through all sample positions button
 
 
 //************************************************************************************************************
@@ -150,7 +149,7 @@ Function IN3S_MainPanel()
 		SVAR SelectedPlateName=root:Packages:SamplePlateSetup:SelectedPlateName
 		PopupMenu NewPlateTemplate,pos={300,55},size={330,21},proc=IN3S_PopMenuProc,title="Template :", help={"Pick Plate template"}
 		PopupMenu NewPlateTemplate,mode=1,popvalue=SelectedPlateName, fColor=(1,16019,65535)
-		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;"
+		PopupMenu NewPlateTemplate,value="9x9 Acrylic/magnetic plate;Old Style Al Plate;NMR Tubes holder;NMR tubes heater;Generic Grid holder;Image;AgBehenateLaB6;"
 		Button PopulateTable,pos={300,85},size={120,17}, proc=IN3S_ButtonProc,title="Populate Table", help={"Creates new set of positions"}
 		Button CreateImage,pos={440,85},size={120,17}, proc=IN3S_ButtonProc,title="Create image", help={"Creates new set of positions"}
 		Button BeamlineSurvey,pos={440,105},size={120,17}, proc=IN3S_ButtonProc,title="Beamline Survey", help={"This opens GUI for survey at the beamline"}
@@ -336,27 +335,21 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 		case 1: // mouse down
   
 			if (lba.eventMod & 0x10)	// rightclick
-				items = "Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;Write same name to all empty;"
-				items += "Same Sx to all empty;Same Sy to all empty;Increment Sx from seleted row;Increment Sy from seleted row;"
+				items = "Insert new line;Delete selected lines;Duplicate selected Line;Set line as Blank;Set as Dist. Std. AgBehLaB6;Write same Name;"
+				items += "Write same Thickness;Same Sx to all empty;Same Sy to all empty;Increment Sx from seleted row;Increment Sy from seleted row;"
 				items += "Copy row Values to Table Clipboard;Paste Table Clipboard to row;Insert New row with Table Clipboard;"
 				PopupContextualMenu items
 				// V_flag is index of user selected item    
 				switch (V_flag)
 					case 1:	// "Insert new line"
 						IN3S_InsertDeleteLines(1, row,1)
-						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						//WarningForUser = "Inserted new line "+num2str(row) 
 						break
 					case 2:	// "Delete selected lines"
 						IN3S_InsertDeleteLines(2, row,1)
-						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						//WarningForUser = "Deleted selected line "+num2str(row) 
 						IN3S_EstimateRunTime()
 						break
 					case 3:	// "Duplicate selected Line"
 						IN3S_InsertDeleteLines(3, row,1)
-						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
-						//WarningForUser = "Duplicated selected line " +num2str(row)
 						IN3S_EstimateRunTime()
 						break
 					case 4:	// "Set line as Blank"
@@ -366,23 +359,95 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Set row "+num2str(row)+" as Blank" 
 						IN3S_EstimateRunTime()
 						break
-					case 5:	// "Write same name to all samples"
+					case 5:	// "Set Line as Distance Standard"
+						listWave[row][0]="AgBehenateLaB6"
+						listWave[row][3]="1"
+						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+						WarningForUser = "Set row "+num2str(row)+" as AgBehenateLaB6" 
+						NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
+						USAXSAll=0
+						IN3S_EstimateRunTime()
+						break
+					case 6:	// "Write same name"
 						string NewSampleName="SampleName"
-						Prompt NewSampleName, "Write same string in all empty names"
-						DoPrompt /Help="Write same string name for all empty positions" "Default name for all positions", NewSampleName
+						string FromWhere = "Empty only"
+						Prompt NewSampleName, "Write same string in names"
+						Prompt FromWhere, "Where to write?", popup "Empty only;From selected row;All;"
+						DoPrompt /Help="Write same string name" "Default name for all positions", NewSampleName, FromWhere
 						if(V_Flag)
 							abort
 						endif
 						For(i=0;i<DimSize(listWave,0);i+=1)
-							if(strlen(listWave[i][0])==0)
-								listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
+							if(StringMatch(FromWhere, "Empty only"))
+								if(strlen(listWave[i][0])==0)
+									if(strlen(NewSampleName)>0)	
+										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
+									else
+										listWave[i][0] = ""
+									endif
+								endif
+							elseif(StringMatch(FromWhere, "From selected row"))
+								if(i>=row)
+									if(strlen(NewSampleName)>0)	
+										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
+									else
+										listWave[i][0] = ""
+									endif
+								endif
+							elseif(StringMatch(FromWhere, "All"))
+									if(strlen(NewSampleName)>0)	
+										listWave[i][0] = CleanupName(NewSampleName, 0 , 40)
+									else
+										listWave[i][0] = ""
+									endif
+							else
+								//nothing here... 
 							endif
 						endfor
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Wrote "+CleanupName(NewSampleName, 0 , 40)+" for all samples without name" 
 						IN3S_EstimateRunTime()
 						break;
-					case 6:	// "same sx to all empty"
+					case 7:	// "Write Same Thickness"
+						variable newThickness
+						NVAR DefSaTh = root:Packages:SamplePlateSetup:DefaultSampleThickness
+						newThickness = DefSaTh
+						Prompt newThickness, "New Thickness [mm] or NaN for empty"
+						string FromWhere2 = "Empty only"
+						Prompt FromWhere2, "Where to write?", popup "Empty only;From selected row;All;"
+						DoPrompt /Help="Write new thickness?" "New thickness and where selection", newThickness, FromWhere2
+						if(V_Flag)
+							abort
+						endif
+						For(i=0;i<DimSize(listWave,0);i+=1)
+							if(StringMatch(FromWhere2, "Empty only"))
+								if(strlen(listWave[i][3])==0)
+									if(numtype(newThickness)==0)
+										listWave[i][3] = num2str(newThickness)
+									else
+										listWave[i][3] = ""
+									endif
+								endif
+							elseif(StringMatch(FromWhere2, "From selected row"))
+								if(i>=row)
+									if(numtype(newThickness)==0)
+										listWave[i][3] = num2str(newThickness)
+									else
+										listWave[i][3] = ""
+									endif
+								endif
+							elseif(StringMatch(FromWhere2, "All"))
+									if(numtype(newThickness)==0)
+										listWave[i][3] = num2str(newThickness)
+									else
+										listWave[i][3] = ""
+									endif
+							else
+								//nothing here... 
+							endif
+						endfor
+						break;						
+					case 8:	// "same sx to all empty"
 						variable  NewSxForAll=10
 						Prompt NewSxForAll, "Write same SX in all empty lines?"
 						DoPrompt /Help="Write same SX position for all empty SX?" "Default sx value for all", NewSxForAll
@@ -398,7 +463,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Wrote "+num2str(NewSxForAll)+" for all samples without SX" 
 						IN3S_EstimateRunTime()
 						break;
-					case 7:	// "same sy to all empty"
+					case 9:	// "same sy to all empty"
 						variable  NewSyForAll=10
 						Prompt NewSyForAll, "Write same SY in all empty lines?"
 						DoPrompt /Help="Write same SY position for all empty SY?" "Default sy value for all", NewSyForAll
@@ -414,7 +479,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Wrote "+num2str(NewSyForAll)+" for all samples without SX" 
 						IN3S_EstimateRunTime()
 						break;
-					case 8:	// "Increment Sx from selected row"
+					case 10:	// "Increment Sx from selected row"
 						variable  NewSxStep=10
 						variable sxstart
 						Prompt NewSxStep, "Increment SX from selected row higher?"
@@ -434,7 +499,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Calculated new sx for rown higher than : " +num2str(row) 
 						IN3S_EstimateRunTime()
 						break;
-					case 9:	// "Increment Sy from selected row"
+					case 11:	// "Increment Sy from selected row"
 						variable  NewSyStep=10
 						variable systart
 						Prompt NewSyStep, "Increment SY from selected row higher?"
@@ -454,7 +519,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Calculated new sy for all samples" 
 						IN3S_EstimateRunTime()
 						break;
-					case 10:	// "Copy in Table Clipboard"
+					case 12:	// "Copy in Table Clipboard"
 						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
 						TableClipboard = "SampleName="+listWave[row][0]+";"
 						TableClipboard += "SX="+listWave[row][1]+";"
@@ -464,7 +529,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						WarningForUser = "Copied row  "+num2str(row)+ "  values in Table Clipboard" 
 						break;
-					case 11:	// "Paste Table Clipboard in a row"
+					case 13:	// "Paste Table Clipboard in a row"
 						SVAR TableClipboard = root:Packages:SamplePlateSetup:TableClipboard
 						listWave[row][0] = StringByKey("SampleName", TableClipboard, "=" , ";")
 						listWave[row][1] = StringByKey("SX", TableClipboard, "=" , ";")
@@ -478,7 +543,7 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 						WarningForUser = "Pasted values in Table Clipboard into the row  "+num2str(row)
 						IN3S_EstimateRunTime()
 						break;
-					case 12:	// "Insert New row with Table Clipboard"
+					case 14:	// "Insert New row with Table Clipboard"
 						IN3S_InsertDeleteLines(1, row,1)
 						//SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 						//WarningForUser = "Inserted new line "+num2str(row) 
@@ -521,14 +586,15 @@ Function IN3S_ListBoxMenuProc(lba) : ListBoxControl
 				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
-				if(row>=0)
+				NVAR defTh=root:Packages:SamplePlateSetup:DefaultSampleThickness
+				if(row>=0&& row<DimSize(ListWV, 0))
 					SelectedRow=row
 					SelectedSampleName = ListWV[SelectedRow][0]
 					ListBox CommandsList, win=SamplePlateSetup, selrow=SelectedRow
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
-					SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
+					SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : defTh
 				endif
 				IN3S_MoveToPositionIfOK()
 			endif
@@ -738,6 +804,20 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 							WarningForUser = "Created a new set of positions for "+ SelectedPlateName
 							IN3S_EstimateRunTime()
 							break		// exit from switch
+						case "AgBehenateLaB6":	 
+							IN3S_CreateTablesForPlates(1, 1)
+							Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
+							LBCommandWv[][0]="AgBehenateLaB6"
+							LBCommandWv[][1]="20"
+							LBCommandWv[][2]="20"
+							LBCommandWv[][3]="1"
+							SVAR NewPlateName = root:Packages:SamplePlateSetup:UserNameForSampleSet
+							NewPlateName = "Standard"
+							NVAR USAXSAll=root:Packages:SamplePlateSetup:USAXSAll
+							USAXSAll=0
+							SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
+							WarningForUser = "Created AgBehenateLaB6 and disabled USAXS"
+							break		// exit from switch
 						case "Image":	
 							//nothing to do here... 
 							//here is code which loads image and deal with that. this will be different code and complciated.
@@ -781,6 +861,7 @@ Function IN3S_ButtonProc(ba) : ButtonControl
 				IN3S_EstimateRunTime()
 			endif
 			if(StringMatch(ba.ctrlName, "CreateCommandFile" ))
+				IN3S_CheckForSensibility()
 				IN3S_WriteCommandFile(1)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Created Notebook with commands for review"
@@ -1011,6 +1092,87 @@ end
 
 //*****************************************************************************************************************
 //*****************************************************************************************************************
+
+static Function IN3S_CheckForSensibility()
+	//this will check table for sensibility fo data.
+	
+	//at this time warns about lack of Blanks...
+	
+	//create USAXS command file... For now as notebook and just display for user. 
+
+	DFrEF OldDf=GetDataFolderDFR()
+	Wave/T listWaveG   =  root:Packages:SamplePlateSetup:LBCommandWv
+	Wave LBSelectionWvG= root:Packages:SamplePlateSetup:LBSelectionWv
+	Wave/T LBTtitleWvG  = root:Packages:SamplePlateSetup:LBTtitleWv
+	NVAR USAXSAllG = root:Packages:SamplePlateSetup:USAXSAll
+	NVAR SAXSAllG = root:Packages:SamplePlateSetup:SAXSAll
+	NVAR WAXSAllG = root:Packages:SamplePlateSetup:WAXSAll
+	NVAR DefaultSampleThickness=root:Packages:SamplePlateSetup:DefaultSampleThickness
+	SVAR UserNameForSampleSet = root:Packages:SamplePlateSetup:UserNameForSampleSet
+	NVAR RunExportHookFunction= root:Packages:SamplePlateSetup:RunExportHookFunction
+	
+	variable i, haveAnySAXS, haveAnyWAXS,haveAnyUSAXS
+	//figure out list of names which will be used... 
+	string ListOfSAXSNames, ListOfWAXSNames, ListOfUSAXSNames
+	ListOfSAXSNames=""
+	ListOfWAXSNames=""
+	ListOfUSAXSNames=""
+   //SAXS is first. 
+   For(i=0;i<dimsize(listWaveG,0);i+=1)
+   		if(SAXSAllG || LBSelectionWvG[i][5]==48)
+			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+	   			haveAnySAXS=1
+				ListOfSAXSNames+=listWaveG[i][0]+";"
+			endif
+		endif   
+   endfor
+   //WAXS is next. 
+   For(i=0;i<dimsize(listWaveG,0);i+=1)
+   		if(WAXSAllG || LBSelectionWvG[i][6]==48)
+			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+	   			haveAnyWAXS=1
+				ListOfWAXSNames+=listWaveG[i][0]+";"
+			endif
+		endif   
+   endfor
+   //do we have any USAXS scans?
+   For(i=0;i<dimsize(listWaveG,0);i+=1)
+   		if(USAXSAllG || LBSelectionWvG[i][4]==48)
+			if(strlen(listWaveG[i][0])>0 && strlen(listWaveG[i][1])>0 && strlen(listWaveG[i][2])>0)
+	   			haveAnyUSAXS=1
+				ListOfUSAXSNames+=listWaveG[i][0]+";"
+			endif
+		endif   
+   endfor
+	variable NumWAXS, NumWAXSBlanks
+	variable NumSAXS, NumSAXSBlanks
+	variable NumUSAXS, NumUSAXSBlanks
+	NumWAXS=ItemsInList(ListOfWAXSNames)
+	NumWAXSBlanks=ItemsInList(GrepList(ListOfWAXSNames, "(?i)blank")+GrepList(ListOfWAXSNames, "(?i)empty"))
+	NumSAXS=ItemsInList(ListOfSAXSNames)
+	NumSAXSBlanks=ItemsInList(GrepList(ListOfSAXSNames, "(?i)blank")+GrepList(ListOfSAXSNames, "(?i)empty"))
+	NumUSAXS=ItemsInList(ListOfUSAXSNames)
+	NumUSAXSBlanks=ItemsInList(GrepList(ListOfUSAXSNames, "(?i)blank")+GrepList(ListOfUSAXSNames, "(?i)empty"))
+	string MessageToUser=""
+   if((NumUSAXSBlanks/NumUSAXS)<(1/15))
+   		MessageToUser+=" Blanks for USAXS, "
+   endif
+   if((NumSAXSBlanks/NumSAXS)<(1/15))
+   		MessageToUser+=" Blanks for SAXS, "
+   endif
+   if((NumWAXSBlanks/NumWAXS)<(1/15))
+   		MessageToUser+=" Blanks for WAXS "
+   endif
+   if(strlen(MessageToUser)>5 &&(NumWAXS>1 || NumSAXS>1 || NumUSAXS>1))
+   	DoAlert /T="Not enough blanks, check history area" 0, "Looks like there is not enough "+MessageToUser
+   	Print "You need enough background = blanks/empty runs. Default is at least 1 blank per 15 samples, Suggested is 1 blank per 10 samples."
+   	print "Code expects background measurements will have blank of empty in the name, but name can contain more. e.g.: TapeBlank is recognized as blank."
+   	print "If your background names are different you can go ahead as is."
+   endif
+	SetDataFolder OldDf
+end
+//*****************************************************************************************************************
+//*****************************************************************************************************************
 static Function IN3S_WriteCommandFile(show)
 	variable show
 
@@ -1133,6 +1295,7 @@ end
 static Function/T IN3S_ExportMacroFile(UseUsername)	
 	variable UseUsername		//set to 0 for usaxs.mac, 1 for user choice. 
 	
+	IN3S_CheckForSensibility()
 	IN3S_WriteCommandFile(0)
 	string NewFileName
 	SVAR nbl=root:Packages:SamplePlateSetup:NotebookName
@@ -1262,21 +1425,24 @@ static Function IN3S_EstimateRunTime()
 	
 	
 	
-		//SAXS LBSelectionWvG[i][5]==48
-		//WAXS LBSelectionWvG[i][6]==48
-		//USAXS LBSelectionWvG[i][4]==48
-		//constant IN3BmSrvUSAXSOverhead = 20			//overhead for flyscan 
-		//constant IN3BmSrvSAXSOverhead = 7				//overhead for SAXS, transmission measurement 
-		//constant IN3BmSrvWAXSOverhead = 2				//overhead for WAXS 
-		//constant IN3BmSrvSampleMoveSpeed = 8			//average speed moving samples around mm/sec
-		//constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
-		//constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds 
-		//constant IN3BmSrvMoveGeometryTime = 20		//overhead to move from USAXS to SAXS to WAXS
+	//SAXS LBSelectionWvG[i][5]==48
+	//WAXS LBSelectionWvG[i][6]==48
+	//USAXS LBSelectionWvG[i][4]==48
+	//constant IN3BmSrvUSAXSOverhead = 25			//overhead for flyscan 
+	//constant IN3BmSrvSAXSOverhead = 10			//overhead for SAXS, transmission measurement 
+	//constant IN3BmSrvWAXSOverhead = 3				//overhead for WAXS 
+	//constant IN3BmSrvSampleMoveSpeed = 8			//average moving samples around in mm/sec
+	//constant IN3BmSrvTuneTimeStep = 600			//retune every 600 seconds 
+	//constant IN3BmSrvTuneTimeNumU = 3				//retune every 3 USAXS scans 
+	//constant IN3BmSrvTuneAveTime  = 40			//retune takes avergate 40 seconds full preUSAXStune is 40 seconds... 
+	//constant IN3BmSrvSWTuneAveTime = 14			//SWAXS tune MR
+	//constant IN3BmSrvMoveGeometryTime = 20		//overhead to mvoe from USAXS to SAXS to WAXS
 	variable NumUSAXS, NumSAXS, NumWAXS, numSamples
 	variable i, isused
 	variable lastSXSAXS, lastSYSAXS, totalSXSYSAXS, firstSXSAXS, firstSYSAXS
 	variable lastSXUSAXS, lastSYUSAXS, totalSXSYUSAXS, firstSXUSAXS, firstSYUSAXS
 	variable lastSXWAXS, lastSYWAXS, totalSXSYWAXS, firstSXWAXS, firstSYWAXS
+    variable SWAXSTime=0
 	NumUSAXS=0 
 	NumSAXS=0
 	NumWAXS=0
@@ -1315,33 +1481,42 @@ static Function IN3S_EstimateRunTime()
    endfor
    numSamples = max(NumUSAXS, NumSAXS, NumWAXS)
 
-	CalculatedOverAllTime  =  NumUSAXS*(USAXSScanTime+IN3BmSrvUSAXSOverhead)+totalSXSYUSAXS/IN3BmSrvSampleMoveSpeed+NumUSAXS		//this is USAXS
-																			//Total distance/ speed + assume 1 second speed ramp up and down
+	CalculatedOverAllTime  =  NumUSAXS*(USAXSScanTime+IN3BmSrvUSAXSOverhead)+totalSXSYUSAXS/IN3BmSrvSampleMoveSpeed+NumUSAXS	//this is USAXS
+								//   USAXS scans 			+				Total distance/ speed + assume 1 second speed ramp up and down
 	if(NumUSAXS>0)
-		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime	
-		//travel from end to start 
-		CalculatedOverAllTime += sqrt((lastSXUSAXS-firstSXSAXS)^2+(lastSYUSAXS-firstSXSAXS)^2)/IN3BmSrvSampleMoveSpeed																//USAXS->SAXS
+		//move to USAXS geometry.... 
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																		//USAXS->SAXS
+		//travel from end to start... 
+		CalculatedOverAllTime += sqrt((lastSXUSAXS-firstSXSAXS)^2+(lastSYUSAXS-firstSXSAXS)^2)/IN3BmSrvSampleMoveSpeed			//last sample to first sample
 	endif
+
 	CalculatedOverAllTime +=  NumSAXS*(SAXSScanTime+IN3BmSrvSAXSOverhead)+totalSXSYSAXS/IN3BmSrvSampleMoveSpeed+NumSAXS 		//SAXS
-																			//Total distance/ speed + assume 1 second speed ramp up and down
+								//	SAXS scans				 +				Total distance/ speed + assume 1 second speed ramp up and down
+	SWAXSTime = NumSAXS*(SAXSScanTime+IN3BmSrvSAXSOverhead)+totalSXSYSAXS/IN3BmSrvSampleMoveSpeed+NumSAXS 
 	if(NumSAXS>0)
-		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime												//SAXS->WAXS
+		//move to SAXS geometry.... 
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																		//SAXS->WAXS
 		//travel from end to start 
-		CalculatedOverAllTime += sqrt((lastSXSAXS-firstSXWAXS)^2+(lastSYSAXS-firstSXWAXS)^2)/IN3BmSrvSampleMoveSpeed																//USAXS->SAXS
+		CalculatedOverAllTime += sqrt((lastSXSAXS-firstSXWAXS)^2+(lastSYSAXS-firstSXWAXS)^2)/IN3BmSrvSampleMoveSpeed			//last sample to first sample
 	endif
 	CalculatedOverAllTime +=  NumWAXS*(WAXSScanTime+IN3BmSrvWAXSOverhead)+totalSXSYWAXS/IN3BmSrvSampleMoveSpeed+NumWAXS  		//WAXS
-																			//Total distance/ speed + assume 1 second speed ramp up and down
+								//  WAXS scans 				+				Total distance/ speed + assume 1 second speed ramp up and down
+	SWAXSTime += NumWAXS*(WAXSScanTime+IN3BmSrvWAXSOverhead)+totalSXSYWAXS/IN3BmSrvSampleMoveSpeed+NumWAXS 
 	if(NumWAXS>0)
-		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime												//WAXS->USAXS
+		//move to WAXS geometry.... 
+		CalculatedOverAllTime +=  IN3BmSrvMoveGeometryTime																		//WAXS->USAXS
 		//travel from end to start 
-		CalculatedOverAllTime += sqrt((lastSXWAXS-firstSXUSAXS)^2+(lastSYWAXS-firstSXUSAXS)^2)/IN3BmSrvSampleMoveSpeed																//USAXS->SAXS
+		CalculatedOverAllTime += sqrt((lastSXWAXS-firstSXUSAXS)^2+(lastSYWAXS-firstSXUSAXS)^2)/IN3BmSrvSampleMoveSpeed			//last sample to first sample
 	endif
-	variable NumTunes = floor(CalculatedOverAllTime/IN3BmSrvTuneTimeStep)
-	CalculatedOverAllTime +=  NumTunes * IN3BmSrvTuneAveTime
-	//done, calculated average scan time for all which are well defined. 
+	variable NumSWTunes = floor(SWAXSTime / IN3BmSrvTuneTimeStep)			//this is approximate number of SAXS/WAXS tunes * tune time
+	variable NumUSAXStunes = floor(NumUSAXS/IN3BmSrvTuneTimeNumU)			//this is typical number of USAXS related tunes (3 flyscans/tune)
+	CalculatedOverAllTime +=  NumSWTunes*IN3BmSrvSWTuneAveTime + NumUSAXStunes*IN3BmSrvTuneAveTime
+																			//done, calculated average scan time for all which are well defined. 
 	CalculatedOverAllTime/=60		//convert to minutes
 	CalculatedOverAllTime = round(CalculatedOverAllTime)
-end//************************************************************************************************************
+end
+
+//************************************************************************************************************
 //************************************************************************************************************
 
 static Function IN3S_CreateDefaultPlates()
@@ -1430,11 +1605,13 @@ static Function IN3S_CreateTablesForPlates(HowManySamples, forceReset)
 	if(forceReset || !WaveExists(LBSelectionWv) || !WaveExists(LBCommandWv))
 		Make/N=(0,8)/T/O LBCommandWv
 		Make/N=(0,8)/O LBSelectionWv
-		HowManySamples = 20
 	endif
 	Wave/T LBCommandWv = root:Packages:SamplePlateSetup:LBCommandWv
 	Wave LBSelectionWv = root:Packages:SamplePlateSetup:LBSelectionWv
 	Wave/T LBTtitleWv = root:Packages:SamplePlateSetup:LBTtitleWv
+	if(DimSize(LBSelectionWv,0)<1 && HowManySamples<1)
+		HowManySamples = 20
+	endif
 	if(HowManySamples>0)
 		Redimension/N=(HowManySamples,8) LBCommandWv, LBSelectionWv
 	endif
@@ -2147,7 +2324,7 @@ Function IN3S_BeamlineSurveyPanel()
 		SetVariable SelectedSampleName,pos={10,105},size={370,25}, limits={0,200,1}, proc=IN3S_SurveySetVarProc,title="Sa Name: ",fSize=14
 		Setvariable SelectedSampleName,fStyle=2, variable=root:Packages:SamplePlateSetup:SelectedSampleName, help={"Sample name from the table or saved to table"}
 		SetVariable SampleThickness,pos={50,130},size={250,25}, limits={0,20,0.1}, proc=IN3S_SurveySetVarProc,title="Sa Thickness [mm]: ",fSize=14
-		Setvariable SampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleThickness, help={"Sample Thickness in mm"},format="%3.2f"
+		Setvariable SampleThickness,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleThickness, help={"Sample Thickness in mm"},format="%3.3f"
 
 		SetVariable SampleXTable,pos={30,155},size={130,15}, limits={-inf,inf,0}, noproc, noedit=1,title="Sa X tbl =",fSize=12, frame=0
 		Setvariable SampleXTable,fStyle=2, variable=root:Packages:SamplePlateSetup:SampleXTable, help={"Sample Thickness in mm"},format="%3.2f"
@@ -2198,10 +2375,17 @@ Function IN3S_BeamlineSurveyPanel()
 		Button ChangeSYStepLow,pos={220,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 0.1",fSize=14, help={"Changes SX step by 0.1"}
 		Button ChangeSYStepHigh,pos={310,370},size={75,20}, proc=IN3S_SurveyButtonProc,title="x 10",fSize=14, help={"Changes SX step by 10"}
 
-		Button SetSXAs00,pos={20,435},size={140,15}, proc=IN3S_SurveyButtonProc,title="Set SX 0",fSize=14, help={"Sets current position as 0,0"}
+		Button SetSXAs00,pos={50,405},size={70,15}, proc=IN3S_SurveyButtonProc,title="Set SX 0",fSize=14, help={"Sets current position as 0,0"}
 		Button SetSXAs00 fColor=(65535,32768,32768)
-		Button SetSYAs00,pos={230,435},size={140,15}, proc=IN3S_SurveyButtonProc,title="Set SX 0",fSize=14, help={"Sets current position as 0,0"}
+		Button SetSYAs00,pos={260,405},size={70,15}, proc=IN3S_SurveyButtonProc,title="Set SY 0",fSize=14, help={"Sets current position as 0,0"}
 		Button SetSYAs00 fColor=(65535,32768,32768)
+
+		Button STOPMotors,pos={10,445},size={105,30}, proc=IN3S_SurveyButtonProc,title="STOP motors",fSize=14, help={"STOP ALL MOTORS MOVEMENT"}
+		Button STOPMotors fColor=(65535,32768,32768)
+
+		Button OpenSlitsLarge,pos={250,425},size={135,20}, proc=IN3S_SurveyButtonProc,title="Open Slits Large",fSize=14, help={"Open slits as large as possible"}
+		Button OpenSlitsUSAXS,pos={250,450},size={135,20}, proc=IN3S_SurveyButtonProc,title="USAXS Slits",fSize=14, help={"Open Slits for USAXS"}
+		Button OpenSlitsSWAXS,pos={250,475},size={135,20}, proc=IN3S_SurveyButtonProc,title="SWAXS Slits",fSize=14, help={"Open Slits for SAXS/WAXS"}
 
 		TitleBox Info3 title="\Zr110NOTE: row numbering is 0 based...",size={355,20},pos={5,480},frame=0,fColor=(0,0,65535),labelBack=0
 
@@ -2235,6 +2419,7 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness
 				if(SelectedRow>DimSize(ListWV,0)-2)
 					IN3S_InsertDeleteLines(4, SelectedRow, 1)
 				endif
@@ -2244,7 +2429,7 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
-				SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
+				SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : DefSaThick
 				IN3S_AddTagToImage(SelectedRow)
 				IN3S_EstimateRunTime()			
 			endif
@@ -2265,7 +2450,7 @@ Function IN3S_SurveySetVarProc(sva) : SetVariableControl
 				NVAR SampleThickness = root:Packages:SamplePlateSetup:SampleThickness
 				if(dval<0 || dval>20)
 					DoAlert /T="Wrong thickness" 0, "Thickness must be between 0 and 20 [mm]"
-					SampleThickness = 1
+					SampleThickness = DefSaThick
 				endif
 			endif
 		
@@ -2357,8 +2542,72 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					endif
 #endif
 			endif		
+			if(StringMatch(ba.ctrlName, "STOPMotors"))
+#if(exists("pvOpen")==4)
+					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					if(InstrumentUsed)
+						abort "Instrument is collecting data, cannot move motors"
+					else	
+						IN3S_PutEpicsPv("9idcLAX:alltop", 1)
+					endif
+#endif
+			endif		
+			variable HorSlit, VertSLit, HorGuardSlit, VertGuardSlit
+			if(StringMatch(ba.ctrlName, "OpenSlitsLarge"))
+#if(exists("pvOpen")==4)
+					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					if(InstrumentUsed)
+						abort "Instrument is collecting data, cannot move motors"
+					else	
+						//c2:m8 is Horizontal slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m8.VAL", 2.5)
+						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", 2.8)
+						//c2:m8 is Vertical slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m7.VAL", 1.2)
+						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", 1.4)
+					endif
+#endif
+			endif		
 
-			
+			if(StringMatch(ba.ctrlName, "OpenSlitsUSAXS"))
+#if(exists("pvOpen")==4)
+					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					if(InstrumentUsed)
+						abort "Instrument is collecting data, cannot move motors"
+					else	
+						HorSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_hslit_ap")
+						VertSLit = IN3S_GetPVVariableValue("9idcLAX:USAXS_vslit_ap")
+						HorGuardSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_hgslit_ap")
+						VertGuardSlit = IN3S_GetPVVariableValue("9idcLAX:USAXS_vgslit_ap")
+						//c2:m8 is Horizontal slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m8.VAL", HorSlit)
+						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", HorGuardSlit)
+						//c2:m8 is Vertical slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m7.VAL", VertSLit)
+						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", VertGuardSlit)
+					endif
+#endif
+			endif		
+			if(StringMatch(ba.ctrlName, "OpenSlitsWSAXS"))
+#if(exists("pvOpen")==4)
+					InstrumentUsed = IN3S_GetPVVariableValue("9idcLAX:dataColInProgress")	
+					if(InstrumentUsed)
+						abort "Instrument is collecting data, cannot move motors"
+					else	
+						HorSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_hslit_ap")
+						VertSLit = IN3S_GetPVVariableValue("9idcLAX:SAXS_vslit_ap")
+						HorGuardSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_hgslit_ap")
+						VertGuardSlit = IN3S_GetPVVariableValue("9idcLAX:SAXS_vgslit_ap")
+						//c2:m8 is Horizontal slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m8.VAL", HorSlit)
+						IN3S_PutEpicsPv("9idcLAX:GSlit1H:size", HorGuardSlit)
+						//c2:m8 is Vertical slit size
+						IN3S_PutEpicsPv("9idcLAX:m58:c2:m7.VAL", VertSLit)
+						IN3S_PutEpicsPv("9idcLAX:GSlit1V:size", VertGuardSlit)
+					endif
+#endif
+			endif		
+		
 			if(StringMatch(ba.ctrlName, "MoveRowUp"))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				SVAR SelectedSampleName=root:Packages:SamplePlateSetup:SelectedSampleName
@@ -2368,6 +2617,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness
 				if(SelectedRow>0)
 					SelectedRow=SelectedRow-1
 					SelectedSampleName = ListWV[SelectedRow][0]
@@ -2375,7 +2625,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 					SampleXTable = str2num(ListWV[SelectedRow][1])
 					SampleYTable = str2num(ListWV[SelectedRow][2])
 					SampleThickness = str2num(ListWV[SelectedRow][3])
-					SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
+					SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : DefSaThick
 				endif
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
@@ -2392,6 +2642,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				NVAR SampleYRBV=root:Packages:SamplePlateSetup:SampleYRBV
 				NVAR SampleXTable = root:Packages:SamplePlateSetup:SampleXTable
 				NVAR SampleYTable = root:Packages:SamplePlateSetup:SampleYTable
+				NVAR DefSaThick = root:Packages:SamplePlateSetup:DefaultSampleThickness
 				if(SelectedRow>DimSize(ListWV,0)-2)
 					IN3S_InsertDeleteLines(4, SelectedRow, 1)
 				endif
@@ -2401,7 +2652,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				SampleXTable = str2num(ListWV[SelectedRow][1])
 				SampleYTable = str2num(ListWV[SelectedRow][2])
 				SampleThickness = str2num(ListWV[SelectedRow][3])
-				SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : 1
+				SampleThickness = numtype(SampleThickness)==0 ? SampleThickness : DefSaThick
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser
 				WarningForUser = "Moved selected row down" 
@@ -2428,7 +2679,7 @@ Function IN3S_SurveyButtonProc(ba) : ButtonControl
 				ListWV[SelectedRow][0] = SelectedSampleName
 				ListWV[SelectedRow][1] = num2str(IN2G_RoundDecimalPlaces(SampleXRBV,3))
 				ListWV[SelectedRow][2] = num2str(IN2G_RoundDecimalPlaces(SampleYRBV,3))
-				ListWV[SelectedRow][3] = num2str(IN2G_RoundDecimalPlaces(SampleThickness,2))
+				ListWV[SelectedRow][3] = num2str(IN2G_RoundDecimalPlaces(SampleThickness,3))
 				NVAR SelectedRow=root:Packages:SamplePlateSetup:SelectedRow
 				IN3S_AddTagToImage(SelectedRow)
 				SVAR WarningForUser = root:Packages:SamplePlateSetup:WarningForUser

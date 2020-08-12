@@ -925,6 +925,8 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 			
 				NI1A_SetCalibrationFormula()			
 				
+				SVAR BMFunctionName=root:Packages:Convert2Dto1D:BMFunctionName
+				BMFunctionName = "Gauss"
 				NVAR BMCalibrantD1LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD1LineWidth
 				NVAR BMCalibrantD2LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD2LineWidth
 				NVAR BMCalibrantD3LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth
@@ -1118,6 +1120,8 @@ Function/S NI1_9IDCSetDefaultConfiguration()
 			
 				NI1A_SetCalibrationFormula()			
 				
+				SVAR BMFunctionName=root:Packages:Convert2Dto1D:BMFunctionName
+				BMFunctionName = "GaussWithSlopedBckg"
 				NVAR BMCalibrantD1LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD1LineWidth
 				NVAR BMCalibrantD2LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD2LineWidth
 				NVAR BMCalibrantD3LineWidth = root:Packages:Convert2Dto1D:BMCalibrantD3LineWidth

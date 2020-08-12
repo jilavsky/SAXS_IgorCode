@@ -396,6 +396,7 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 	NVAR BackgroundMeasTime = root:Packages:Convert2Dto1D:BackgroundMeasTime
 	NVAR EmptyMeasurementTime = root:Packages:Convert2Dto1D:EmptyMeasurementTime
 	NVAR SubtractFixedOffset = root:Packages:Convert2Dto1D:SubtractFixedOffset
+	NVAR CorrectSelfAbsorption = root:Packages:Convert2Dto1D:CorrectSelfAbsorption
 	
 	NVAR DoGeometryCorrection=root:Packages:Convert2Dto1D:DoGeometryCorrection
 
@@ -487,6 +488,28 @@ Function NI1A_CorrectDataPerUserReq(orientation)
 		endif
 		if(UseSampleTransmission)
 			MatrixOP/O/NTHR=0 tempDataWv=tempDataWv/SampleTransmission
+			if(CorrectSelfAbsorption && SampleTransmission<1)
+				variable MuCalc=-1*ln(SampleTransmission)/SampleThickness
+				variable muD = MuCalc*SampleThickness
+				Wave Theta2DWave = root:Packages:Convert2Dto1D:Theta2DWave		//this is actually Theta in radians. 
+				if(DimSize(Theta2DWave, 0 )!=DimSize(tempDataWv, 0) || DimSize(Theta2DWave, 1)!=DimSize(tempDataWv, 1) )
+					NI1A_Create2DQWave(tempDataWv)				//creates 2-D Q wave does not need to be run always...
+					NI1A_Create2DAngleWave(tempDataWv)			//creates 2-D Azimuth Angle wave does not need to be run always...
+				endif 
+				MatrixOP/free/NTHR=0 SelfAbsorption2D=tempDataWv
+				//next is formula 29, chapter 3.4.7 Brain Pauw paper
+				MatrixOp/Free/NTHR=0 MuDdivCos2TH=MuD*rec(cos(2*Theta2DWave))
+				MatrixOp/Free/NTHR=0 OneOverBottomPart = rec( -1*MuDdivCos2TH + MuD)
+				variable expmud=exp(muD)
+				variable expNmud=exp(-1*MuD)
+				MatrixOP/O/NTHR=0 SelfAbsorption2D=expmud * (exp(-MuDdivCos2TH) - expNmud) * OneOverBottomPart
+				//replace nans around center... 
+				MatrixOP/O/NTHR=0 SelfAbsorption2D=replaceNaNs(SelfAbsorption2D,1)
+				//and now correct... 
+				MatrixOP/O/NTHR=0 tempDataWv=tempDataWv / SelfAbsorption2D
+			else
+				print "Could not do corection for self absorption, wrong parameters" 
+			endif
 		endif
 		tempEmptyField=0
 		variable ScalingConstEF=1
@@ -3789,9 +3812,13 @@ Function NI1A_Convert2Dto1DPanelFnct()
 	CheckBox DoGeometryCorrection,help={"Correct for change in relative angular size and obliqueness of off-axis pixels. Correction to the output intensities to be equivalent to 2-theta scan. "}
 	CheckBox DoGeometryCorrection,variable= root:Packages:Convert2Dto1D:DoGeometryCorrection
 
-	CheckBox DoPolarizationCorrection,pos={220,308},size={100,14},title="Polarization corr?",proc=NI1A_CheckProc
+	CheckBox DoPolarizationCorrection,pos={170,308},size={100,14},title="Polarization corr?",proc=NI1A_CheckProc
 	CheckBox DoPolarizationCorrection,help={"Correct intensities for Polarization correction."}
 	CheckBox DoPolarizationCorrection,variable= root:Packages:Convert2Dto1D:DoPolarizationCorrection
+
+	CheckBox CorrectSelfAbsorption,pos={290,308},size={100,14},title="Self-Absorption corr?",proc=NI1A_CheckProc
+	CheckBox CorrectSelfAbsorption,help={"Correct intensities for self absorption. Needs correct thickness!"}
+	CheckBox CorrectSelfAbsorption,variable= root:Packages:Convert2Dto1D:CorrectSelfAbsorption
 
 	CheckBox DezingerCCDData,pos={20,328},size={112,14},title="Dezinger 2D Data?"
 	CheckBox DezingerCCDData,help={"Remove speckles from image"}, proc=NI1A_CheckProc
@@ -4715,6 +4742,7 @@ Function NI1A_TabProc(ctrlName,tabNum)
 	//tab 1 controls
 	NVAR UseI0ToCalibrate=root:Packages:Convert2Dto1D:UseI0ToCalibrate
 	NVAR UseMonitorForEF= root:Packages:Convert2Dto1D:UseMonitorForEF
+	CheckBox CorrectSelfAbsorption, disable=(tabNum!=1 || !UseSampleThickness || !UseSampleTransmission ), win=NI1A_Convert2Dto1DPanel
 	SetVariable SampleThickness,disable=(tabNum!=1 || !UseSampleThickness || UseSampleThicknFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	CheckBox UseSampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness||UseCalib2DData), win=NI1A_Convert2Dto1DPanel
 	SetVariable SampleThicknFnct,disable=(tabNum!=1 || !UseSampleThickness || !UseSampleThicknFnct||UseCalib2DData), win=NI1A_Convert2Dto1DPanel

@@ -261,7 +261,7 @@ Function IR2C_InitControls(PckgDataFolder,PanelWindowName,AllowedIrenaTypes, All
 	AllCurrentlyAllowedTypes+="SimFitGuinierI;SimFitGuinierRI;SimFitGuinierSII;SimFitSphereI;SimFitSpheroidI;SimFitPorodI;"
 
 	string/g AllKnownToolsResults
-	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;"
+	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Simple Fits;Evaluate Size Dist;"
 
 	if(cmpstr(AllowedResultsTypes,"AllCurrentlyAllowedTypes")==0)
 		AllowedResultsTypes=AllCurrentlyAllowedTypes
@@ -2586,6 +2586,10 @@ Function/S IR2C_ReturnKnownToolResults(ToolName)
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "GuinierPorod",0, ";" )
 	elseif(stringmatch(ToolName,"Simple Fits"))
 		ListOfLookups = GrepList(ResultsDataTypesLookup, "^SimFit",0, ";" )
+	elseif(stringmatch(ToolName,"Evaluate Size Dist"))
+		ListOfLookups = GrepList(ResultsDataTypesLookup, "^(Cumulative|MIP)",0, ";" )
+		//ListOfLookups += GrepList(ResultsDataTypesLookup, "^CumulativeSfcArea",0, ";" )
+		//ListOfLookups += GrepList(ResultsDataTypesLookup, "^MIPVolume",0, ";" )
 	else
 		ListOfLookups = ""
 	endif

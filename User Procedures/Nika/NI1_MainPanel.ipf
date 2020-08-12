@@ -2,7 +2,7 @@
 #pragma rtGlobals=3		// Use modern global access method.
 //#pragma rtGlobals=1		// Use modern global access method.
 #pragma version=2.69
-Constant NI1AversionNumber = 2.67
+Constant NI1AversionNumber = 2.70
 
 //*************************************************************************\
 //* Copyright (c) 2005 - 2020, Argonne National Laboratory
@@ -10,6 +10,7 @@ Constant NI1AversionNumber = 2.67
 //* in the file LICENSE that is included with this distribution. 
 //*************************************************************************/
 
+//2.70 added correction for self absorption. 
 //2.69 added 12ID-B tiff file which is tiff file combined with metadata log file. 
 //2.68 added passing through NXMetadata, NXSample, NXInstrument, NXUser
 //2.67 Fixed case when user set ASCII name for output - apprently this was broken forever... 
@@ -290,7 +291,7 @@ Function NI1A_Initialize2Dto1DConversion()
 	ListOfVariables+="UseBatchProcessing;"
 	ListOfVariables+="DelayBetweenImages;CalculateStatistics;"
 	ListOfVariables+="SampleThickness;SampleTransmission;UseI0ToCalibrate;SampleI0;EmptyI0;"
-	ListOfVariables+="UseSampleThickness;UseSampleTransmission;UseI0ToCalibrate;UseSampleI0;UseEmptyI0;"
+	ListOfVariables+="UseSampleThickness;UseSampleTransmission;UseI0ToCalibrate;UseSampleI0;UseEmptyI0;CorrectSelfAbsorption;"
 	ListOfVariables+="UseCorrectionFactor;UseMask;UseDarkField;UseEmptyField;UseSubtractFixedOffset;SubtractFixedOffset;UseSolidAngle;"
 	ListOfVariables+="UseSampleMeasTime;UseEmptyMeasTime;UseDarkMeasTime;UsePixelSensitivity;UseMonitorForEF;"
 	ListOfVariables+="SampleMeasurementTime;BackgroundMeasTime;EmptyMeasurementTime;"

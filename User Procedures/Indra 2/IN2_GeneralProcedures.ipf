@@ -2316,6 +2316,9 @@ Function IN2G_PanelResizePanelSize(s)
 		//	IR1_PanelAppendSizeRecordNote()
 		//	SetWindow kwTopWin,hook(ResizePanelControls)=IR1_PanelResizeFontSize
 		//for font scaling in Titlebox use "\ZrnnnText is here" - scales font by nnn%. Do not use fixed font then. 
+		//getmouse /W=$(s.winName)
+		//print V_Flag
+		//print V_left
 	if ( s.eventCode == 6 && (WinType(s.winName)==7))	// resized and is panel, not usable for others. 
 		IN2G_PrintDebugStatement(IrenaDebugLevel, 5,"")
 		GetWindow $(s.winName), note

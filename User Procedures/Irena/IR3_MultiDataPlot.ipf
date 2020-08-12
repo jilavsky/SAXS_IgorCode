@@ -424,6 +424,15 @@ Function IR3L_CheckProc(cba) : CheckBoxControl
 		  	NVAR LegendSize = root:Packages:Irena:MultiSamplePlot:LegendSize
 		  	NVAR UseOnlyFoldersInLegend = root:Packages:Irena:MultiSamplePlot:UseOnlyFoldersInLegend
 		  	NVAR AddLegend= root:Packages:Irena:MultiSamplePlot:AddLegend
+		  	//abort if GraphWindowName is not right
+		  	if(strlen(GraphWindowName)<1)	//name has any length	
+		  		return 0
+			endif		  	
+		  	DOWindow $(GraphWindowName)	//widnow doesnot exist
+		  	if(V_Flag==0)
+		  		return 0
+		  	endif
+		  	
 		  	if(stringmatch(cba.ctrlName,"DisplayErrorBars"))
 		  		NVAR DisplayErrorBars = root:Packages:Irena:MultiSamplePlot:DisplayErrorBars
 				IN2G_ShowHideErrorBars(DisplayErrorBars, topGraphStr=GraphWindowName)
@@ -883,6 +892,14 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 		case 2: // mouse up
 			SVAR GraphUserTitle=root:Packages:Irena:MultiSamplePlot:GraphUserTitle
 			SVAR GraphWindowName=root:Packages:Irena:MultiSamplePlot:GraphWindowName
+		  	//abort if GraphWindowName is not right
+		  	if(strlen(GraphWindowName)<1)	//name has any length	
+		  		return 0
+			endif		  	
+			//  	DoWindow $(GraphWindowName)	//widnow does not exist
+			//  	if(V_Flag==0)
+			//  		return 0
+			//  	endif
 			// click code here
 			if(stringmatch(ba.ctrlname,"NewGraphPlotData"))
 				//set some meaningful values for these data first
@@ -929,20 +946,30 @@ Function IR3L_ButtonProc(ba) : ButtonControl
 				IN2G_OpenWebManual("Irena/Plotting.html#plotting-tool-3")
 			endif
 			if(cmpstr(ba.ctrlname,"ExportGraphJPG")==0)
-				DoWindow/F $(GraphWindowName)
-				SavePICT/E=-6/B=288	as (GraphUserTitle)				//this is jpg
-				DoWIndow/F IR3L_MultiSamplePlotPanel
+				//append data to graph
+				DoWIndow $(GraphWindowName)
+				if(V_Flag)
+					DoWindow/F $(GraphWindowName)
+					SavePICT/E=-6/B=288	as (GraphUserTitle)				//this is jpg
+					DoWIndow/F IR3L_MultiSamplePlotPanel
+				endif
 			endif
 			if(cmpstr(ba.ctrlname,"ExportGraphTif")==0)
-				DoWindow/F $(GraphWindowName)
-				SavePICT/E=-7/B=288	as (GraphUserTitle)					//this is TIFF
-				DoWIndow/F IR3L_MultiSamplePlotPanel
+				DoWIndow $(GraphWindowName)
+				if(V_Flag)
+					DoWindow/F $(GraphWindowName)
+					SavePICT/E=-7/B=288	as (GraphUserTitle)					//this is TIFF
+					DoWIndow/F IR3L_MultiSamplePlotPanel
+				endif
 			endif
 			if(cmpstr(ba.ctrlname,"SaveGraphAsFile")==0)
-				DoWindow/F $(GraphWindowName)
-				SaveGraphCopy /I /W=$(GraphWindowName)  						//	saves current graph as Igor packed experiment
-				//Igor 9: use flag /T=1 and ".h5xp" as the file name extension to save to hdf file
-				DoWIndow/F IR3L_MultiSamplePlotPanel
+				DoWIndow $(GraphWindowName)
+				if(V_Flag)
+					DoWindow/F $(GraphWindowName)
+					SaveGraphCopy /I /W=$(GraphWindowName)  						//	saves current graph as Igor packed experiment
+					//Igor 9: use flag /T=1 and ".h5xp" as the file name extension to save to hdf file
+					DoWIndow/F IR3L_MultiSamplePlotPanel
+				endif
 			endif
 
 			if(stringmatch(ba.ctrlName,"SelectAll"))
@@ -1240,7 +1267,7 @@ static Function IR3L_SetPlotLegends()				//this function will set axis legends a
 				CanDoLinearization = 1
 				InputDataType="QRS data"
 		elseif(UseResults)
-			//	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;"
+			//	AllKnownToolsResults = "Unified Fit;Size Distribution;Modeling II;Modeling I;Small-angle diffraction;Analytical models;Fractals;PDDF;Reflectivity;Guinier-Porod;Evaluate Size Dist;"
 			if(StringMatch(SelectedResultsTool, "Unified Fit" ))
 				GraphUserTitle = "Unified Fit results"
 				if(StringMatch(SelectedResultsType, "*SizeDistVol*" ))
@@ -1318,7 +1345,25 @@ static Function IR3L_SetPlotLegends()				//this function will set axis legends a
 				XAxisLegend = "Q [A\S-1\M]"
 				YAxislegend = "Intensity [arb]"
 				InputDataType="Guinier-Porod results"
+			elseif(StringMatch(SelectedResultsTool, "Evaluate Size Dist" ))
+					if(StringMatch(SelectedResultsType, "*CumulativeSizeDist*" ))
+					GraphUserTitle = "SSA from Evaluate Size Dist"
+					XAxisLegend = "Diameter [A]"
+					YAxislegend = "Cumulative Volume [cm\S3\M/cm\S3\M]"
+					InputDataType="Cumulative Volume from Evaluate Size Dist"
+				elseif(StringMatch(SelectedResultsType, "*CumulativeSfcArea*" ))
+					GraphUserTitle = "Cumulative Volume from Evaluate Size Dist"
+					XAxisLegend = "Diameter [A]"
+					YAxislegend = "Cumulative Specific surface area [cm\S2\M/cm\S3\M]"
+					InputDataType="SSA from Evaluate Size Dist"
+				elseif(StringMatch(SelectedResultsType, "*MIPVolume*" ))
+					GraphUserTitle = "MIP from Evaluate Size Dist"
+					XAxisLegend = "Pressure [Psi]"
+					YAxislegend = "Intruded Volume [cm\S3\M / cm\S3\M]"
+					InputDataType="MIP from Evaluate Size Dist"
+				endif
 			endif
+
 		else
 				GraphUserTitle = "Arbitrary data Plot"
 				XAxisLegend = "X"
